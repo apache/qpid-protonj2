@@ -1,0 +1,14 @@
+Manifest-Version: 1.0
+Bnd-LastModified: 1498161799885
+Build-Jdk: 1.8.0_131
+Built-By: timothy
+Bundle-Description: proton4j is a library for speaking AMQP 1.0.
+Bundle-DocURL: https://www.apache.org/
+Bundle-License: https://www.apache.org/licenses/LICENSE-2.0.txt
+Bundle-ManifestVersion: 2
+Bundle-Name: Qpid Proton4J Engine
+Bundle-SymbolicName: org.apache.qpid.proton4j-engine
+Bundle-Vendor: The Apache Software Foundation
+Bundle-Version: 0.1.0.SNAPSHOT
+Created-By: Apache Maven Bundle Plugin
+Tool: Bnd-3.2.0.201605172007

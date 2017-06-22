@@ -1,0 +1,40 @@
+Manifest-Version: 1.0
+Bnd-LastModified: 1498161799740
+Build-Jdk: 1.8.0_131
+Built-By: timothy
+Bundle-Description: proton4j is a library for speaking AMQP 1.0.
+Bundle-DocURL: https://www.apache.org/
+Bundle-License: https://www.apache.org/licenses/LICENSE-2.0.txt
+Bundle-ManifestVersion: 2
+Bundle-Name: Qpid Proton4J Codec
+Bundle-SymbolicName: org.apache.qpid.proton4j-codec
+Bundle-Vendor: The Apache Software Foundation
+Bundle-Version: 0.1.0.SNAPSHOT
+Created-By: Apache Maven Bundle Plugin
+Export-Package: org.apache.qpid.proton4j.amqp;version="0.1.0",org.apache
+ .qpid.proton4j.amqp.messaging;uses:="org.apache.qpid.proton4j.amqp";ver
+ sion="0.1.0",org.apache.qpid.proton4j.buffer;version="0.1.0",org.apache
+ .qpid.proton4j.codec;uses:="io.netty.buffer,org.apache.qpid.proton4j.am
+ qp";version="0.1.0",org.apache.qpid.proton4j.codec.decoders;uses:="io.n
+ etty.buffer,org.apache.qpid.proton4j.codec";version="0.1.0",org.apache.
+ qpid.proton4j.codec.decoders.messaging;uses:="io.netty.buffer,org.apach
+ e.qpid.proton4j.amqp,org.apache.qpid.proton4j.amqp.messaging,org.apache
+ .qpid.proton4j.codec,org.apache.qpid.proton4j.codec.decoders.primitives
+ ";version="0.1.0",org.apache.qpid.proton4j.codec.decoders.primitives;us
+ es:="io.netty.buffer,org.apache.qpid.proton4j.amqp,org.apache.qpid.prot
+ on4j.codec";version="0.1.0",org.apache.qpid.proton4j.codec.encoders;use
+ s:="io.netty.buffer,org.apache.qpid.proton4j.amqp,org.apache.qpid.proto
+ n4j.codec";version="0.1.0",org.apache.qpid.proton4j.codec.encoders.mess
+ aging;uses:="io.netty.buffer,org.apache.qpid.proton4j.amqp,org.apache.q
+ pid.proton4j.amqp.messaging,org.apache.qpid.proton4j.codec";version="0.
+ 1.0",org.apache.qpid.proton4j.codec.encoders.primitives;uses:="io.netty
+ .buffer,org.apache.qpid.proton4j.amqp,org.apache.qpid.proton4j.codec";v
+ ersion="0.1.0"
+Import-Package: io.netty.buffer;version="[4.1,5)",org.apache.qpid.proton
+ 4j.amqp,org.apache.qpid.proton4j.amqp.messaging,org.apache.qpid.proton4
+ j.codec,org.apache.qpid.proton4j.codec.decoders,org.apache.qpid.proton4
+ j.codec.decoders.primitives,org.apache.qpid.proton4j.codec.encoders,org
+ .apache.qpid.proton4j.codec.encoders.messaging,org.apache.qpid.proton4j
+ .codec.encoders.primitives
+Require-Capability: osgi.ee;filter:="(&(osgi.ee=JavaSE)(version=1.8))"
+Tool: Bnd-3.2.0.201605172007
