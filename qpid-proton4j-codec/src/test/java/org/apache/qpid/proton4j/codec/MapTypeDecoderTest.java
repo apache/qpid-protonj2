@@ -16,6 +16,7 @@
  */
 package org.apache.qpid.proton4j.codec;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
@@ -31,8 +32,21 @@ import io.netty.buffer.Unpooled;
 
 public class MapTypeDecoderTest extends CodecTestSupport {
 
+    private final int LARGE_SIZE = 1024;
+    private final int SMALL_SIZE = 32;
+
     @Test
-    public void testDecodeSimpleMap() throws IOException {
+    public void testDecodeSmallSeriesOfMaps() throws IOException {
+        doTestDecodeMapSeries(SMALL_SIZE);
+    }
+
+    @Test
+    public void testDecodeLargeSeriesOfMaps() throws IOException {
+        doTestDecodeMapSeries(LARGE_SIZE);
+    }
+
+    @SuppressWarnings("unchecked")
+    private void doTestDecodeMapSeries(int size) throws IOException {
 
         String myBoolKey = "myBool";
         boolean myBool = true;
@@ -69,12 +83,19 @@ public class MapTypeDecoderTest extends CodecTestSupport {
 
         ByteBuf buffer = Unpooled.buffer();
 
-        // Encode
-        encoder.writeObject(buffer, encoderState, map);
+        for (int i = 0; i < size; ++i) {
+            encoder.writeObject(buffer, encoderState, map);
+        }
 
-        // Decode
-        Object result = decoder.readObject(buffer, decoderState);
-        assertNotNull(result);
-        assertTrue(result instanceof Map);
+        for (int i = 0; i < size; ++i) {
+            final Object result = decoder.readObject(buffer, decoderState);
+
+            assertNotNull(result);
+            assertTrue(result instanceof Map);
+
+            Map<String, Object> resultMap = (Map<String, Object>) result;
+
+            assertEquals(map.size(), resultMap.size());
+        }
     }
 }
