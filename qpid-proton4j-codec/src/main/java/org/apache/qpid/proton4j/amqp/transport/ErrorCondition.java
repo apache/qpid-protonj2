@@ -19,9 +19,13 @@ package org.apache.qpid.proton4j.amqp.transport;
 import java.util.Map;
 
 import org.apache.qpid.proton4j.amqp.Symbol;
+import org.apache.qpid.proton4j.amqp.UnsignedLong;
 
-public final class ErrorCondition
-{
+public final class ErrorCondition {
+
+    public static final UnsignedLong DESCRIPTOR_CODE = UnsignedLong.valueOf(0x000000000000001dL);
+    public static final Symbol DESCRIPTOR_SYMBOL = Symbol.valueOf("amqp:error:list");
+
     private Symbol condition;
     private String description;
     private Map<Object, Object> info;
