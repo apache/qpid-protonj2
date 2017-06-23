@@ -29,9 +29,6 @@ import org.apache.qpid.proton4j.codec.DescribedMapTypeEncoder;
  */
 public class FooterTypeEncoder implements DescribedMapTypeEncoder<Object, Object, Footer> {
 
-    private static final UnsignedLong descriptorCode = UnsignedLong.valueOf(0x0000000000000078L);
-    private static final Symbol descriptorSymbol = Symbol.valueOf("amqp:footer:map");
-
     @Override
     public Class<Footer> getTypeClass() {
         return Footer.class;
@@ -39,12 +36,12 @@ public class FooterTypeEncoder implements DescribedMapTypeEncoder<Object, Object
 
     @Override
     public UnsignedLong getDescriptorCode() {
-        return descriptorCode;
+        return Footer.DESCRIPTOR_CODE;
     }
 
     @Override
     public Symbol getDescriptorSymbol() {
-        return descriptorSymbol;
+        return Footer.DESCRIPTOR_SYMBOL;
     }
 
     @Override

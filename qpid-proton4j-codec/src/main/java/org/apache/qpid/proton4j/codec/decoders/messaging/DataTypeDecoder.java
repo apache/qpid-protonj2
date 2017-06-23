@@ -34,9 +34,6 @@ import io.netty.buffer.ByteBuf;
  */
 public class DataTypeDecoder implements DescribedTypeDecoder<Data> {
 
-    private static final UnsignedLong descriptorCode = UnsignedLong.valueOf(0x0000000000000075L);
-    private static final Symbol descriptorSymbol = Symbol.valueOf("amqp:data:binary");
-
     @Override
     public Class<Data> getTypeClass() {
         return Data.class;
@@ -44,12 +41,12 @@ public class DataTypeDecoder implements DescribedTypeDecoder<Data> {
 
     @Override
     public UnsignedLong getDescriptorCode() {
-        return descriptorCode;
+        return Data.DESCRIPTOR_CODE;
     }
 
     @Override
     public Symbol getDescriptorSymbol() {
-        return descriptorSymbol;
+        return Data.DESCRIPTOR_SYMBOL;
     }
 
     @Override

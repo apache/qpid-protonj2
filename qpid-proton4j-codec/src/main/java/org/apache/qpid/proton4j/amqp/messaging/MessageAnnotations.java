@@ -19,8 +19,12 @@ package org.apache.qpid.proton4j.amqp.messaging;
 import java.util.Map;
 
 import org.apache.qpid.proton4j.amqp.Symbol;
+import org.apache.qpid.proton4j.amqp.UnsignedLong;
 
 public final class MessageAnnotations implements Section {
+
+    public static final UnsignedLong DESCRIPTOR_CODE = UnsignedLong.valueOf(0x0000000000000072L);
+    public static final Symbol DESCRIPTOR_SYMBOL = Symbol.valueOf("amqp:message-annotations:map");
 
     private final Map<Symbol, Object> value;
 

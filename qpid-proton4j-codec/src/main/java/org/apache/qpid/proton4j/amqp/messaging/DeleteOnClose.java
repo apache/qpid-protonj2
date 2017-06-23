@@ -14,38 +14,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.qpid.proton4j.codec.encoders.messaging;
+package org.apache.qpid.proton4j.amqp.messaging;
 
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
-import org.apache.qpid.proton4j.amqp.messaging.Data;
-import org.apache.qpid.proton4j.codec.DescribedTypeEncoder;
-import org.apache.qpid.proton4j.codec.EncoderState;
 
-import io.netty.buffer.ByteBuf;
+public final class DeleteOnClose implements LifetimePolicy {
 
-/**
- * Encoder of AMQP Data type values to a byte stream.
- */
-public class DataTypeEncoder implements DescribedTypeEncoder<Data> {
+    public static final UnsignedLong DESCRIPTOR_CODE = UnsignedLong.valueOf(0x000000000000002bL);
+    public static final Symbol DESCRIPTOR_SYMBOL = Symbol.valueOf("amqp:delete-on-close:list");
 
-    @Override
-    public Class<Data> getTypeClass() {
-        return Data.class;
+    private static final DeleteOnClose INSTANCE = new DeleteOnClose();
+
+    private DeleteOnClose() {
     }
 
     @Override
-    public UnsignedLong getDescriptorCode() {
-        return Data.DESCRIPTOR_CODE;
+    public String toString() {
+        return "DeleteOnClose{}";
     }
 
-    @Override
-    public Symbol getDescriptorSymbol() {
-        return Data.DESCRIPTOR_SYMBOL;
-    }
-
-    @Override
-    public void writeValue(ByteBuf buffer, EncoderState state, Data value) {
-        state.getEncoder().writeBinary(buffer, state, value.getValue());
+    public static DeleteOnClose getInstance() {
+        return INSTANCE;
     }
 }

@@ -16,27 +16,5 @@
  */
 package org.apache.qpid.proton4j.amqp.messaging;
 
-import org.apache.qpid.proton4j.amqp.Binary;
-import org.apache.qpid.proton4j.amqp.Symbol;
-import org.apache.qpid.proton4j.amqp.UnsignedLong;
-
-public final class Data implements Section {
-
-    public static final UnsignedLong DESCRIPTOR_CODE = UnsignedLong.valueOf(0x0000000000000075L);
-    public static final Symbol DESCRIPTOR_SYMBOL = Symbol.valueOf("amqp:data:binary");
-
-    private final Binary value;
-
-    public Data(Binary value) {
-        this.value = value;
-    }
-
-    public Binary getValue() {
-        return value;
-    }
-
-    @Override
-    public String toString() {
-        return "Data{ " + value + " }";
-    }
+public interface LifetimePolicy {
 }

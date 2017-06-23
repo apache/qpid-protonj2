@@ -35,9 +35,6 @@ import io.netty.buffer.ByteBuf;
  */
 public class ApplicationPropertiesTypeDecoder implements DescribedTypeDecoder<ApplicationProperties> {
 
-    private static final UnsignedLong descriptorCode = UnsignedLong.valueOf(0x0000000000000074L);
-    private static final Symbol descriptorSymbol = Symbol.valueOf("amqp:application-properties:map");
-
     @Override
     public Class<ApplicationProperties> getTypeClass() {
         return ApplicationProperties.class;
@@ -45,12 +42,12 @@ public class ApplicationPropertiesTypeDecoder implements DescribedTypeDecoder<Ap
 
     @Override
     public UnsignedLong getDescriptorCode() {
-        return descriptorCode;
+        return ApplicationProperties.DESCRIPTOR_CODE;
     }
 
     @Override
     public Symbol getDescriptorSymbol() {
-        return descriptorSymbol;
+        return ApplicationProperties.DESCRIPTOR_SYMBOL;
     }
 
     @SuppressWarnings("unchecked")

@@ -34,9 +34,6 @@ import io.netty.buffer.ByteBuf;
  */
 public class FooterTypeDecoder implements DescribedTypeDecoder<Footer> {
 
-    private static final UnsignedLong descriptorCode = UnsignedLong.valueOf(0x0000000000000078L);
-    private static final Symbol descriptorSymbol = Symbol.valueOf("amqp:footer:map");
-
     @Override
     public Class<Footer> getTypeClass() {
         return Footer.class;
@@ -44,15 +41,15 @@ public class FooterTypeDecoder implements DescribedTypeDecoder<Footer> {
 
     @Override
     public UnsignedLong getDescriptorCode() {
-        return descriptorCode;
+        return Footer.DESCRIPTOR_CODE;
     }
 
     @Override
     public Symbol getDescriptorSymbol() {
-        return descriptorSymbol;
+        return Footer.DESCRIPTOR_SYMBOL;
     }
 
-    @SuppressWarnings("rawtypes")
+    @SuppressWarnings({ "unchecked" })
     @Override
     public Footer readValue(ByteBuf buffer, DecoderState state) throws IOException {
         TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
@@ -63,7 +60,7 @@ public class FooterTypeDecoder implements DescribedTypeDecoder<Footer> {
 
         MapTypeDecoder mapDecoder = (MapTypeDecoder) decoder;
 
-        Map map = mapDecoder.readValue(buffer, state);
+        Map<Object, Object> map = mapDecoder.readValue(buffer, state);
         return new Footer(map);
     }
 }

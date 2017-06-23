@@ -14,38 +14,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.qpid.proton4j.codec.encoders.messaging;
+package org.apache.qpid.proton4j.amqp.messaging;
 
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
-import org.apache.qpid.proton4j.amqp.messaging.Data;
-import org.apache.qpid.proton4j.codec.DescribedTypeEncoder;
-import org.apache.qpid.proton4j.codec.EncoderState;
+import org.apache.qpid.proton4j.amqp.transport.DeliveryState;
+import org.apache.qpid.proton4j.amqp.transport.ErrorCondition;
 
-import io.netty.buffer.ByteBuf;
+public final class Rejected implements DeliveryState, Outcome {
 
-/**
- * Encoder of AMQP Data type values to a byte stream.
- */
-public class DataTypeEncoder implements DescribedTypeEncoder<Data> {
+    public static final UnsignedLong DESCRIPTOR_CODE = UnsignedLong.valueOf(0x0000000000000025L);
+    public static final Symbol DESCRIPTOR_SYMBOL = Symbol.valueOf("amqp:rejected:list");
 
-    @Override
-    public Class<Data> getTypeClass() {
-        return Data.class;
+    private ErrorCondition error;
+
+    public ErrorCondition getError() {
+        return error;
+    }
+
+    public void setError(ErrorCondition error) {
+        this.error = error;
     }
 
     @Override
-    public UnsignedLong getDescriptorCode() {
-        return Data.DESCRIPTOR_CODE;
-    }
-
-    @Override
-    public Symbol getDescriptorSymbol() {
-        return Data.DESCRIPTOR_SYMBOL;
-    }
-
-    @Override
-    public void writeValue(ByteBuf buffer, EncoderState state, Data value) {
-        state.getEncoder().writeBinary(buffer, state, value.getValue());
+    public String toString() {
+        return "Rejected{" +
+               "error=" + error + "}";
     }
 }

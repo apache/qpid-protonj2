@@ -18,7 +18,13 @@ package org.apache.qpid.proton4j.amqp.messaging;
 
 import java.util.Map;
 
+import org.apache.qpid.proton4j.amqp.Symbol;
+import org.apache.qpid.proton4j.amqp.UnsignedLong;
+
 public final class ApplicationProperties implements Section {
+
+    public static final UnsignedLong DESCRIPTOR_CODE = UnsignedLong.valueOf(0x0000000000000074L);
+    public static final Symbol DESCRIPTOR_SYMBOL = Symbol.valueOf("amqp:application-properties:map");
 
     private final Map<String, Object> value;
 

@@ -16,7 +16,13 @@
  */
 package org.apache.qpid.proton4j.amqp.messaging;
 
+import org.apache.qpid.proton4j.amqp.Symbol;
+import org.apache.qpid.proton4j.amqp.UnsignedLong;
+
 public final class AmqpValue implements Section {
+
+    public static final UnsignedLong DESCRIPTOR_CODE = UnsignedLong.valueOf(0x0000000000000077L);
+    public static final Symbol DESCRIPTOR_SYMBOL = Symbol.valueOf("amqp:amqp-value:*");
 
     private final Object value;
 

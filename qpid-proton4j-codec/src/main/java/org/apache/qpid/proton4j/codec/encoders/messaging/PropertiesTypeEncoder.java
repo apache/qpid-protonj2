@@ -29,17 +29,14 @@ import io.netty.buffer.ByteBuf;
  */
 public class PropertiesTypeEncoder implements DescribedListTypeEncoder<Properties> {
 
-    private static final UnsignedLong descriptorCode = UnsignedLong.valueOf(0x0000000000000073L);
-    private static final Symbol descriptorSymbol = Symbol.valueOf("amqp:properties:list");
-
     @Override
     public UnsignedLong getDescriptorCode() {
-        return descriptorCode;
+        return Properties.DESCRIPTOR_CODE;
     }
 
     @Override
     public Symbol getDescriptorSymbol() {
-        return descriptorSymbol;
+        return Properties.DESCRIPTOR_SYMBOL;
     }
 
     @Override

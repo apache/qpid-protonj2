@@ -18,7 +18,13 @@ package org.apache.qpid.proton4j.amqp.messaging;
 
 import java.util.Map;
 
+import org.apache.qpid.proton4j.amqp.Symbol;
+import org.apache.qpid.proton4j.amqp.UnsignedLong;
+
 public final class Footer implements Section {
+
+    public static final UnsignedLong DESCRIPTOR_CODE = UnsignedLong.valueOf(0x0000000000000078L);
+    public static final Symbol DESCRIPTOR_SYMBOL = Symbol.valueOf("amqp:footer:map");
 
     private final Map<Object, Object> value;
 

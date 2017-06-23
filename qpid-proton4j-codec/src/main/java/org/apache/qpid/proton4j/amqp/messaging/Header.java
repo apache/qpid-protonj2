@@ -16,10 +16,15 @@
  */
 package org.apache.qpid.proton4j.amqp.messaging;
 
+import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedByte;
 import org.apache.qpid.proton4j.amqp.UnsignedInteger;
+import org.apache.qpid.proton4j.amqp.UnsignedLong;
 
 public final class Header implements Section {
+
+    public static final UnsignedLong DESCRIPTOR_CODE = UnsignedLong.valueOf(0x0000000000000070L);
+    public static final Symbol DESCRIPTOR_SYMBOL = Symbol.valueOf("amqp:header:list");
 
     private Boolean durable;
     private UnsignedByte priority;

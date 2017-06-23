@@ -34,9 +34,6 @@ import io.netty.buffer.ByteBuf;
  */
 public class MessageAnnotationsTypeDecoder implements DescribedTypeDecoder<MessageAnnotations> {
 
-    private static final UnsignedLong descriptorCode = UnsignedLong.valueOf(0x0000000000000072L);
-    private static final Symbol descriptorSymbol = Symbol.valueOf("amqp:message-annotations:map");
-
     @Override
     public Class<MessageAnnotations> getTypeClass() {
         return MessageAnnotations.class;
@@ -44,15 +41,15 @@ public class MessageAnnotationsTypeDecoder implements DescribedTypeDecoder<Messa
 
     @Override
     public UnsignedLong getDescriptorCode() {
-        return descriptorCode;
+        return MessageAnnotations.DESCRIPTOR_CODE;
     }
 
     @Override
     public Symbol getDescriptorSymbol() {
-        return descriptorSymbol;
+        return MessageAnnotations.DESCRIPTOR_SYMBOL;
     }
 
-    @SuppressWarnings({ "rawtypes", "unchecked" })
+    @SuppressWarnings({ "unchecked" })
     @Override
     public MessageAnnotations readValue(ByteBuf buffer, DecoderState state) throws IOException {
         TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
@@ -63,7 +60,7 @@ public class MessageAnnotationsTypeDecoder implements DescribedTypeDecoder<Messa
 
         MapTypeDecoder mapDecoder = (MapTypeDecoder) decoder;
 
-        Map map = mapDecoder.readValue(buffer, state);
+        Map<Symbol, Object> map = mapDecoder.readValue(buffer, state);
         return new MessageAnnotations(map);
     }
 }

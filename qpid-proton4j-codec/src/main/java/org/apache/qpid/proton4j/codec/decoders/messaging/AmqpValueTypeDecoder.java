@@ -32,9 +32,6 @@ import io.netty.buffer.ByteBuf;
  */
 public class AmqpValueTypeDecoder implements DescribedTypeDecoder<AmqpValue> {
 
-    private static final UnsignedLong descriptorCode = UnsignedLong.valueOf(0x0000000000000077L);
-    private static final Symbol descriptorSymbol = Symbol.valueOf("amqp:amqp-value:*");
-
     @Override
     public Class<AmqpValue> getTypeClass() {
         return AmqpValue.class;
@@ -42,12 +39,12 @@ public class AmqpValueTypeDecoder implements DescribedTypeDecoder<AmqpValue> {
 
     @Override
     public UnsignedLong getDescriptorCode() {
-        return descriptorCode;
+        return AmqpValue.DESCRIPTOR_CODE;
     }
 
     @Override
     public Symbol getDescriptorSymbol() {
-        return descriptorSymbol;
+        return AmqpValue.DESCRIPTOR_SYMBOL;
     }
 
     @Override

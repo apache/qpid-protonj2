@@ -16,27 +16,40 @@
  */
 package org.apache.qpid.proton4j.amqp.messaging;
 
-import org.apache.qpid.proton4j.amqp.Binary;
 import org.apache.qpid.proton4j.amqp.Symbol;
+import org.apache.qpid.proton4j.amqp.UnsignedInteger;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
+import org.apache.qpid.proton4j.amqp.transport.DeliveryState;
 
-public final class Data implements Section {
+public final class Received implements DeliveryState {
 
-    public static final UnsignedLong DESCRIPTOR_CODE = UnsignedLong.valueOf(0x0000000000000075L);
-    public static final Symbol DESCRIPTOR_SYMBOL = Symbol.valueOf("amqp:data:binary");
+    public static final UnsignedLong DESCRIPTOR_CODE = UnsignedLong.valueOf(0x0000000000000023L);
+    public static final Symbol DESCRIPTOR_SYMBOL = Symbol.valueOf("amqp:received:list");
 
-    private final Binary value;
+    private UnsignedInteger sectionNumber;
+    private UnsignedLong sectionOffset;
 
-    public Data(Binary value) {
-        this.value = value;
+    public UnsignedInteger getSectionNumber() {
+        return sectionNumber;
     }
 
-    public Binary getValue() {
-        return value;
+    public void setSectionNumber(UnsignedInteger sectionNumber) {
+        this.sectionNumber = sectionNumber;
+    }
+
+    public UnsignedLong getSectionOffset() {
+        return sectionOffset;
+    }
+
+    public void setSectionOffset(UnsignedLong sectionOffset) {
+        this.sectionOffset = sectionOffset;
     }
 
     @Override
     public String toString() {
-        return "Data{ " + value + " }";
+        return "Received{" +
+               "sectionNumber=" + sectionNumber +
+               ", sectionOffset=" + sectionOffset +
+               '}';
     }
 }

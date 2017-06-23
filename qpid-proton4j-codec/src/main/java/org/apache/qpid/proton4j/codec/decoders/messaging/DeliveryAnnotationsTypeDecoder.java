@@ -34,9 +34,6 @@ import io.netty.buffer.ByteBuf;
  */
 public class DeliveryAnnotationsTypeDecoder implements DescribedTypeDecoder<DeliveryAnnotations> {
 
-    private static final UnsignedLong descriptorCode = UnsignedLong.valueOf(0x0000000000000071L);
-    private static final Symbol descriptorSymbol = Symbol.valueOf("amqp:delivery-annotations:map");
-
     @Override
     public Class<DeliveryAnnotations> getTypeClass() {
         return DeliveryAnnotations.class;
@@ -44,12 +41,12 @@ public class DeliveryAnnotationsTypeDecoder implements DescribedTypeDecoder<Deli
 
     @Override
     public UnsignedLong getDescriptorCode() {
-        return descriptorCode;
+        return DeliveryAnnotations.DESCRIPTOR_CODE;
     }
 
     @Override
     public Symbol getDescriptorSymbol() {
-        return descriptorSymbol;
+        return DeliveryAnnotations.DESCRIPTOR_SYMBOL;
     }
 
     @SuppressWarnings({ "rawtypes", "unchecked" })

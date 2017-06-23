@@ -35,9 +35,6 @@ import io.netty.buffer.ByteBuf;
  */
 public class HeaderTypeDecoder implements DescribedTypeDecoder<Header>, ListTypeDecoder.ListEntryHandler {
 
-    private static final UnsignedLong descriptorCode = UnsignedLong.valueOf(0x0000000000000070L);
-    private static final Symbol descriptorSymbol = Symbol.valueOf("amqp:header:list");
-
     @Override
     public Class<Header> getTypeClass() {
         return Header.class;
@@ -45,12 +42,12 @@ public class HeaderTypeDecoder implements DescribedTypeDecoder<Header>, ListType
 
     @Override
     public UnsignedLong getDescriptorCode() {
-        return descriptorCode;
+        return Header.DESCRIPTOR_CODE;
     }
 
     @Override
     public Symbol getDescriptorSymbol() {
-        return descriptorSymbol;
+        return Header.DESCRIPTOR_SYMBOL;
     }
 
     @Override

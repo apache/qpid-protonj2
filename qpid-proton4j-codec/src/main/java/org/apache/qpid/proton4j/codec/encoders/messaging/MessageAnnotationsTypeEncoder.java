@@ -29,9 +29,6 @@ import org.apache.qpid.proton4j.codec.DescribedMapTypeEncoder;
  */
 public class MessageAnnotationsTypeEncoder implements DescribedMapTypeEncoder<Symbol, Object, MessageAnnotations> {
 
-    private static final UnsignedLong descriptorCode = UnsignedLong.valueOf(0x0000000000000072L);
-    private static final Symbol descriptorSymbol = Symbol.valueOf("amqp:message-annotations:map");
-
     @Override
     public Class<MessageAnnotations> getTypeClass() {
         return MessageAnnotations.class;
@@ -39,12 +36,12 @@ public class MessageAnnotationsTypeEncoder implements DescribedMapTypeEncoder<Sy
 
     @Override
     public UnsignedLong getDescriptorCode() {
-        return descriptorCode;
+        return MessageAnnotations.DESCRIPTOR_CODE;
     }
 
     @Override
     public Symbol getDescriptorSymbol() {
-        return descriptorSymbol;
+        return MessageAnnotations.DESCRIPTOR_SYMBOL;
     }
 
     @Override

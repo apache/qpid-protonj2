@@ -29,9 +29,6 @@ import io.netty.buffer.ByteBuf;
  */
 public class AmqpSequenceTypeEncoder implements DescribedTypeEncoder<AmqpSequence> {
 
-    private static final UnsignedLong descriptorCode = UnsignedLong.valueOf(0x0000000000000076L);
-    private static final Symbol descriptorSymbol = Symbol.valueOf("amqp:amqp-sequence:list");
-
     @Override
     public Class<AmqpSequence> getTypeClass() {
         return AmqpSequence.class;
@@ -39,12 +36,12 @@ public class AmqpSequenceTypeEncoder implements DescribedTypeEncoder<AmqpSequenc
 
     @Override
     public UnsignedLong getDescriptorCode() {
-        return descriptorCode;
+        return AmqpSequence.DESCRIPTOR_CODE;
     }
 
     @Override
     public Symbol getDescriptorSymbol() {
-        return descriptorSymbol;
+        return AmqpSequence.DESCRIPTOR_SYMBOL;
     }
 
     @Override

@@ -14,29 +14,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.qpid.proton4j.amqp.messaging;
+package org.apache.qpid.proton4j.amqp.transport;
 
-import org.apache.qpid.proton4j.amqp.Binary;
-import org.apache.qpid.proton4j.amqp.Symbol;
-import org.apache.qpid.proton4j.amqp.UnsignedLong;
-
-public final class Data implements Section {
-
-    public static final UnsignedLong DESCRIPTOR_CODE = UnsignedLong.valueOf(0x0000000000000075L);
-    public static final Symbol DESCRIPTOR_SYMBOL = Symbol.valueOf("amqp:data:binary");
-
-    private final Binary value;
-
-    public Data(Binary value) {
-        this.value = value;
-    }
-
-    public Binary getValue() {
-        return value;
-    }
-
-    @Override
-    public String toString() {
-        return "Data{ " + value + " }";
-    }
+/**
+ * Describes the state of a delivery at a link end-point.
+ *
+ * Note that the the sender is the owner of the state.
+ * The receiver merely influences the state.
+ */
+public interface DeliveryState {
 }
