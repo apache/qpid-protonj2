@@ -73,21 +73,23 @@ public class ProtonDecoder implements Decoder {
     public TypeDecoder<?> readNextTypeDecoder(ByteBuf buffer, DecoderState state) throws IOException {
         int encodingCode = buffer.readByte() & 0xff;
 
+        final TypeDecoder<?> decoder;
+
         if (encodingCode == EncodingCodes.DESCRIBED_TYPE_INDICATOR) {
             Object descriptor = readObject(buffer, state);
-            TypeDecoder<?> decoder = describedTypeDecoders.get(descriptor);
+            decoder = describedTypeDecoders.get(descriptor);
             if (decoder == null) {
                 throw new IllegalStateException("No registered decoder for described: " + descriptor);
             }
-
-            return decoder;
         } else {
             if (encodingCode > primitiveDecoders.length) {
                 throw new IOException("Read unknown encoding code from buffer");
             }
 
-            return primitiveDecoders[encodingCode];
+            decoder = primitiveDecoders[encodingCode];
         }
+
+        return decoder;
     }
 
     @Override

@@ -16,7 +16,6 @@
  */
 package org.apache.qpid.proton4j.codec.decoders;
 
-import org.apache.qpid.proton4j.codec.Decoder;
 import org.apache.qpid.proton4j.codec.DecoderState;
 
 /**
@@ -31,7 +30,7 @@ public class ProtonDecoderState implements DecoderState {
     }
 
     @Override
-    public Decoder getDecoder() {
+    public ProtonDecoder getDecoder() {
         return decoder;
     }
 }
