@@ -68,13 +68,13 @@ import org.apache.qpid.proton4j.codec.decoders.primitives.UnsignedShortTypeDecod
 /**
  * Factory that create and initializes new BuiltinDecoder instances
  */
-public class BuiltinDecoderFactory {
+public class ProtonDecoderFactory {
 
-    private BuiltinDecoderFactory() {
+    private ProtonDecoderFactory() {
     }
 
-    public static BuiltinDecoder create() {
-        BuiltinDecoder decoder = new BuiltinDecoder();
+    public static ProtonDecoder create() {
+        ProtonDecoder decoder = new ProtonDecoder();
 
         addPrimitiveDecoders(decoder);
         addMessagingTypeDecoders(decoder);
@@ -82,7 +82,7 @@ public class BuiltinDecoderFactory {
         return decoder;
     }
 
-    private static void addMessagingTypeDecoders(BuiltinDecoder decoder) {
+    private static void addMessagingTypeDecoders(ProtonDecoder decoder) {
         decoder.registerDescribedTypeDecoder(new AmqpSequenceTypeDecoder());
         decoder.registerDescribedTypeDecoder(new AmqpValueTypeDecoder());
         decoder.registerDescribedTypeDecoder(new ApplicationPropertiesTypeDecoder());
@@ -94,7 +94,7 @@ public class BuiltinDecoderFactory {
         decoder.registerDescribedTypeDecoder(new PropertiesTypeDecoder());
     }
 
-    private static void addPrimitiveDecoders(BuiltinDecoder decoder) {
+    private static void addPrimitiveDecoders(ProtonDecoder decoder) {
         decoder.registerPrimitiveTypeDecoder(new BooleanTypeDecoder());
         decoder.registerPrimitiveTypeDecoder(new BooleanFalseTypeDecoder());
         decoder.registerPrimitiveTypeDecoder(new BooleanTrueTypeDecoder());

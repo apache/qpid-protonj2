@@ -33,7 +33,7 @@ import io.netty.buffer.ByteBuf;
 /**
  * The default AMQP Decoder implementation.
  */
-public class BuiltinDecoder implements Decoder {
+public class ProtonDecoder implements Decoder {
 
     // The decoders for primitives are fixed and cannot be altered by users who want
     // to register custom decoders.
@@ -45,7 +45,7 @@ public class BuiltinDecoder implements Decoder {
 
     @Override
     public DecoderState newDecoderState() {
-        return new BuiltinDecoderState(this);
+        return new ProtonDecoderState(this);
     }
 
     @Override
@@ -101,14 +101,14 @@ public class BuiltinDecoder implements Decoder {
     }
 
     @Override
-    public <V> BuiltinDecoder registerDescribedTypeDecoder(DescribedTypeDecoder<V> decoder) {
+    public <V> ProtonDecoder registerDescribedTypeDecoder(DescribedTypeDecoder<V> decoder) {
         describedTypeDecoders.put(decoder.getDescriptorCode(), decoder);
         describedTypeDecoders.put(decoder.getDescriptorSymbol(), decoder);
         return this;
     }
 
     @Override
-    public <V> BuiltinDecoder registerPrimitiveTypeDecoder(PrimitiveTypeDecoder<V> decoder) {
+    public <V> ProtonDecoder registerPrimitiveTypeDecoder(PrimitiveTypeDecoder<V> decoder) {
         primitiveDecoders[decoder.getTypeCode()] = decoder;
         return this;
     }

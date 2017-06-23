@@ -16,8 +16,8 @@
  */
 package org.apache.qpid.proton4j.codec;
 
-import org.apache.qpid.proton4j.codec.decoders.BuiltinDecoderFactory;
-import org.apache.qpid.proton4j.codec.encoders.BuiltinEncoderFactory;
+import org.apache.qpid.proton4j.codec.decoders.ProtonDecoderFactory;
+import org.apache.qpid.proton4j.codec.encoders.ProtonEncoderFactory;
 import org.junit.Before;
 
 /**
@@ -32,10 +32,10 @@ public class CodecTestSupport {
 
     @Before
     public void setUp() {
-        decoder = BuiltinDecoderFactory.create();
+        decoder = ProtonDecoderFactory.create();
         decoderState = decoder.newDecoderState();
 
-        encoder = BuiltinEncoderFactory.create();
+        encoder = ProtonEncoderFactory.create();
         encoderState = encoder.newEncoderState();
     }
 }

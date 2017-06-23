@@ -22,11 +22,11 @@ import org.apache.qpid.proton4j.codec.DecoderState;
 /**
  * State object used by the Built in Decoder implementation.
  */
-public class BuiltinDecoderState implements DecoderState {
+public class ProtonDecoderState implements DecoderState {
 
-    private final BuiltinDecoder decoder;
+    private final ProtonDecoder decoder;
 
-    public BuiltinDecoderState(BuiltinDecoder decoder) {
+    public ProtonDecoderState(ProtonDecoder decoder) {
         this.decoder = decoder;
     }
 

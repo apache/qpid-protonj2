@@ -52,13 +52,13 @@ import org.apache.qpid.proton4j.codec.encoders.primitives.UnsignedShortTypeEncod
 /**
  * Factory that create and initializes new BuiltinEncoder instances
  */
-public class BuiltinEncoderFactory {
+public class ProtonEncoderFactory {
 
-    private BuiltinEncoderFactory() {
+    private ProtonEncoderFactory() {
     }
 
-    public static BuiltinEncoder create() {
-        BuiltinEncoder encoder = new BuiltinEncoder();
+    public static ProtonEncoder create() {
+        ProtonEncoder encoder = new ProtonEncoder();
 
         addPrimitiveTypeEncoders(encoder);
         addMessagingTypeDecoders(encoder);
@@ -66,7 +66,7 @@ public class BuiltinEncoderFactory {
         return encoder;
     }
 
-    private static void addMessagingTypeDecoders(BuiltinEncoder encoder) {
+    private static void addMessagingTypeDecoders(ProtonEncoder encoder) {
         encoder.registerTypeEncoder(new AmqpSequenceTypeEncoder());
         encoder.registerTypeEncoder(new AmqpValueTypeEncoder());
         encoder.registerTypeEncoder(new ApplicationPropertiesTypeEncoder());
@@ -78,7 +78,7 @@ public class BuiltinEncoderFactory {
         encoder.registerTypeEncoder(new PropertiesTypeEncoder());
     }
 
-    private static void addPrimitiveTypeEncoders(BuiltinEncoder encoder) {
+    private static void addPrimitiveTypeEncoders(ProtonEncoder encoder) {
         encoder.registerTypeEncoder(new BinaryTypeEncoder());
         encoder.registerTypeEncoder(new BooleanTypeEncoder());
         encoder.registerTypeEncoder(new ByteTypeEncoder());

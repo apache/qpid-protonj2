@@ -65,7 +65,7 @@ import io.netty.buffer.ByteBuf;
 /**
  * The default AMQP Encoder implementation.
  */
-public class BuiltinEncoder implements Encoder {
+public class ProtonEncoder implements Encoder {
 
     private final BinaryTypeEncoder binaryEncoder = new BinaryTypeEncoder();
     private final BooleanTrueTypeEncoder trueEncoder = new BooleanTrueTypeEncoder();
@@ -96,7 +96,7 @@ public class BuiltinEncoder implements Encoder {
 
     @Override
     public EncoderState newEncoderState() {
-        return new BuiltinEncoderState(this);
+        return new ProtonEncoderState(this);
     }
 
     @Override
@@ -459,7 +459,7 @@ public class BuiltinEncoder implements Encoder {
     }
 
     @Override
-    public <V> BuiltinEncoder registerTypeEncoder(TypeEncoder<V> encoder) {
+    public <V> ProtonEncoder registerTypeEncoder(TypeEncoder<V> encoder) {
         typeEncoders.put(encoder.getTypeClass(), encoder);
         return this;
     }

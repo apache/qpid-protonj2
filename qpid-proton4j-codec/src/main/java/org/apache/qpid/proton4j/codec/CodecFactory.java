@@ -20,8 +20,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.NoSuchElementException;
 
-import org.apache.qpid.proton4j.codec.decoders.BuiltinDecoderFactory;
-import org.apache.qpid.proton4j.codec.encoders.BuiltinEncoderFactory;
+import org.apache.qpid.proton4j.codec.decoders.ProtonDecoderFactory;
+import org.apache.qpid.proton4j.codec.encoders.ProtonEncoderFactory;
 
 /**
  * Factory Class used to create new instances of AMQP type
@@ -62,10 +62,10 @@ public final class CodecFactory {
     }
 
     public static Encoder getDefaultEncoder() {
-        return BuiltinEncoderFactory.create();
+        return ProtonEncoderFactory.create();
     }
 
     public static Decoder getDefaultDecoder() {
-        return BuiltinDecoderFactory.create();
+        return ProtonDecoderFactory.create();
     }
 }
