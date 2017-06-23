@@ -35,23 +35,25 @@ public class SymbolTypeEncoder implements PrimitiveTypeEncoder<Symbol> {
 
     @Override
     public void writeType(ByteBuf buffer, EncoderState state, Symbol value) {
-        if (value.length() <= 255) {
-            buffer.writeByte(EncodingCodes.SYM8);
-            buffer.writeByte(value.length());
-            value.chars().forEach(charAt -> buffer.writeByte(charAt));
-        } else {
-            buffer.writeByte(EncodingCodes.SYM32);
-            buffer.writeInt(value.length());
-            value.chars().forEach(charAt -> buffer.writeByte(charAt));
-        }
+        write(buffer, state, value, true);
     }
 
     @Override
     public void writeValue(ByteBuf buffer, EncoderState state, Symbol value) {
+        write(buffer, state, value, false);
+    }
+
+    protected void write(ByteBuf buffer, EncoderState state, Symbol value, boolean writeEncoding) {
         if (value.length() <= 255) {
+            if (writeEncoding) {
+                buffer.writeByte(EncodingCodes.SYM8);
+            }
             buffer.writeByte(value.length());
             value.chars().forEach(charAt -> buffer.writeByte(charAt));
         } else {
+            if (writeEncoding) {
+                buffer.writeByte(EncodingCodes.SYM32);
+            }
             buffer.writeInt(value.length());
             value.chars().forEach(charAt -> buffer.writeByte(charAt));
         }

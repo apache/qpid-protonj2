@@ -32,7 +32,7 @@ import io.netty.buffer.Unpooled;
 
 public class MapTypeDecoderTest extends CodecTestSupport {
 
-    private final int LARGE_SIZE = 1024;
+    private final int LARGE_SIZE = 1024 * 1024;
     private final int SMALL_SIZE = 32;
 
     @Test

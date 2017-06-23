@@ -34,57 +34,43 @@ public class StringTypeEncoder implements PrimitiveTypeEncoder<String> {
 
     @Override
     public void writeType(ByteBuf buffer, EncoderState state, String value) {
-        int startIndex = buffer.writerIndex() + 1;
-
-        int fieldWidth = 1;
-        if (value.length() > 64) {
-            fieldWidth = 4;
-        } else {
-            int encodedSize = calculateUTF8Length(value);
-            if (encodedSize > 255) {
-                fieldWidth = 4;
-            }
-        }
-
-        // Reserve space for the size
-        if (fieldWidth == 1) {
-            buffer.writeByte(EncodingCodes.STR8);
-            buffer.writeByte(0);
-        } else {
-            buffer.writeByte(EncodingCodes.STR32);
-            buffer.writeInt(0);
-        }
-
-        // Write the full string value
-        writeString(buffer, state, value);
-
-        // Move back and write the size
-        int endIndex = buffer.writerIndex();
-        if (fieldWidth == 1) {
-            buffer.setByte(startIndex, endIndex - startIndex - fieldWidth);
-        } else {
-            buffer.setInt(startIndex, endIndex - startIndex - fieldWidth);
-        }
+        write(buffer, state, value, true);
     }
 
     @Override
     public void writeValue(ByteBuf buffer, EncoderState state, String value) {
-        int startIndex = buffer.writerIndex();
+        write(buffer, state, value, false);
+    }
+
+    private void write(ByteBuf buffer, EncoderState state, String value, boolean writeEncoding) {
+        int startIndex = buffer.writerIndex() + 1;
 
         int fieldWidth = 1;
+
+        // We are pessimistic and assume larger strings will encode
+        // at the max 4 bytes per character instead of calculating
         if (value.length() > 64) {
             fieldWidth = 4;
-        } else {
-            int encodedSize = calculateUTF8Length(value);
-            if (encodedSize > 255) {
-                fieldWidth = 4;
-            }
         }
+
+        // TODO - We can have a profile where we actually do this but the
+        //        overall savings of bytes written doesn't seem worth it.
+        //
+        //          int encodedSize = calculateUTF8Length(value);
+        //          if (encodedSize > 255) {
+        //              fieldWidth = 4;
+        //          }
 
         // Reserve space for the size
         if (fieldWidth == 1) {
+            if (writeEncoding) {
+                buffer.writeByte(EncodingCodes.STR8);
+            }
             buffer.writeByte(0);
         } else {
+            if (writeEncoding) {
+                buffer.writeByte(EncodingCodes.STR32);
+            }
             buffer.writeInt(0);
         }
 
@@ -100,6 +86,8 @@ public class StringTypeEncoder implements PrimitiveTypeEncoder<String> {
         }
     }
 
+    // TODO - Can be used later if we have an optimized for space profile.
+    @SuppressWarnings("unused")
     private int calculateUTF8Length(final String s) {
         int encodedSize = s.length();
         final int length = encodedSize;

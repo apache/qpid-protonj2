@@ -47,7 +47,7 @@ public class Benchmark {
             test = args[1];
         }
 
-        boolean runNew = false; //test.equals("all") || test.equals("new");
+        boolean runNew = test.equals("all") || test.equals("new");
         boolean runExisting = test.equals("all") || test.equals("existing");
 
         long start, end;
@@ -88,9 +88,9 @@ public class Benchmark {
     private static final int newEncode(byte[] bytes, int loop) {
         ByteArrayEncoder enc = new ByteArrayEncoder();
 
-//        UUID uuid = UUID.randomUUID();
-//        long hi = uuid.getMostSignificantBits();
-//        long lo = uuid.getLeastSignificantBits();
+        UUID uuid = UUID.randomUUID();
+        long hi = uuid.getMostSignificantBits();
+        long lo = uuid.getLeastSignificantBits();
 
         for (int i = 0; i < loop; i++) {
             enc.init(bytes, 0, bytes.length);
@@ -99,7 +99,7 @@ public class Benchmark {
                 enc.putInt(i + j);
             }
             enc.end();
-//            enc.putUUID(hi, lo);
+            enc.putUUID(hi, lo);
         }
 
         return enc.getPosition();
@@ -130,7 +130,7 @@ public class Benchmark {
         org.apache.qpid.proton4j.codec.Encoder encoder = CodecFactory.getDefaultEncoder();
         EncoderState state = encoder.newEncoderState();
 
-//        UUID uuid = UUID.randomUUID();
+        UUID uuid = UUID.randomUUID();
 
         ArrayList<Object> list = new ArrayList<>(10);
         for (int j = 0; j < 10; j++) {
@@ -138,12 +138,13 @@ public class Benchmark {
         }
 
         for (int i = 0; i < loop; i++) {
+            buffer.clear();
             for (int j = 0; j < 10; j++) {
                 list.set(j, i + j);
             }
 
             encoder.writeList(buffer, state, list);
-//            encoder.writeUUID(buffer, state, uuid);
+            encoder.writeUUID(buffer, state, uuid);
         }
     }
 
@@ -152,8 +153,9 @@ public class Benchmark {
         DecoderState state = decoder.newDecoderState();
 
         for (int i = 0; i < loop; i++) {
+            buffer.readerIndex(0);
             decoder.readObject(buffer, state); // List
-//            decoder.readObject(buffer, state); // UUID
+            decoder.readObject(buffer, state); // UUID
         }
     }
 }

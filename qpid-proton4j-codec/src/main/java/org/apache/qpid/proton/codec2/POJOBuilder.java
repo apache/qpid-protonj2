@@ -20,15 +20,16 @@
  */
 package org.apache.qpid.proton.codec2;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
 /**
  * POJOBuilder
- *
  */
-
-public class POJOBuilder implements DataHandler
-{
+public class POJOBuilder implements DataHandler {
 
     public static class Described {
 
@@ -48,14 +49,15 @@ public class POJOBuilder implements DataHandler
             return value;
         }
 
+        @Override
         public String toString() {
             return String.format("Described(%s, %s)", descriptor, value);
         }
-
     }
 
     private interface Builder {
         void add(Object o);
+
         Object build();
     }
 
@@ -65,8 +67,10 @@ public class POJOBuilder implements DataHandler
         private Described described;
         private boolean first = true;
 
-        public DescribedBuilder() {}
+        public DescribedBuilder() {
+        }
 
+        @Override
         public void add(Object o) {
             if (first) {
                 descriptor = o;
@@ -77,28 +81,29 @@ public class POJOBuilder implements DataHandler
             }
         }
 
+        @Override
         public Described build() {
             return described;
         }
-
     }
 
     private class ListBuilder implements Builder {
 
-        private List list;
+        private List<Object> list;
 
         public ListBuilder(int count) {
-            list = new ArrayList(count);
+            list = new ArrayList<>(count);
         }
 
+        @Override
         public void add(Object o) {
             list.add(o);
         }
 
-        public List build() {
+        @Override
+        public List<Object> build() {
             return list;
         }
-
     }
 
     private class MapBuilder implements Builder {
@@ -108,10 +113,11 @@ public class POJOBuilder implements DataHandler
         private int count;
 
         public MapBuilder(int count) {
-            map = new HashMap(count/2);
+            map = new HashMap(count / 2);
             this.count = 0;
         }
 
+        @Override
         public void add(Object o) {
             if ((count % 2) == 0) {
                 key = o;
@@ -121,10 +127,10 @@ public class POJOBuilder implements DataHandler
             count++;
         }
 
+        @Override
         public Map build() {
             return map;
         }
-
     }
 
     private class ArrayBuilder implements Builder {
@@ -141,6 +147,7 @@ public class POJOBuilder implements DataHandler
             described = false;
         }
 
+        @Override
         public void add(Object o) {
             if (described) {
                 if (index == 0) {
@@ -154,10 +161,10 @@ public class POJOBuilder implements DataHandler
             index++;
         }
 
+        @Override
         public Object[] build() {
             return array;
         }
-
     }
 
     private List<Builder> stack = new ArrayList();
@@ -284,6 +291,7 @@ public class POJOBuilder implements DataHandler
         // TODO
     }
 
+    @Override
     public void onFloat(Decoder decoder) {
         builder.add(decoder.getFloat());
     }
@@ -337,7 +345,6 @@ public class POJOBuilder implements DataHandler
     @Override
     public void onBinary(Decoder decoder) {
         // TODO
-        //builder.add(decoder.getBytes());
+        // builder.add(decoder.getBytes());
     }
-
 }
