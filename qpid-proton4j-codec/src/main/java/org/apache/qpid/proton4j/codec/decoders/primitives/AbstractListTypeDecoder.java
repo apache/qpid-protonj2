@@ -21,6 +21,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.qpid.proton4j.codec.DecoderState;
+import org.apache.qpid.proton4j.codec.EncodingCodes;
+import org.apache.qpid.proton4j.codec.PrimitiveTypeDecoder;
+import org.apache.qpid.proton4j.codec.TypeDecoder;
 
 import io.netty.buffer.ByteBuf;
 
@@ -29,6 +32,7 @@ import io.netty.buffer.ByteBuf;
  */
 public abstract class AbstractListTypeDecoder implements ListTypeDecoder {
 
+    @SuppressWarnings("rawtypes")
     @Override
     public List<Object> readValue(ByteBuf buffer, DecoderState state) throws IOException {
         int size = readSize(buffer);
@@ -41,9 +45,27 @@ public abstract class AbstractListTypeDecoder implements ListTypeDecoder {
                     "of data available (%d)", size, buffer.readableBytes()));
         }
 
+        TypeDecoder typeDecoder = null;
+
         List<Object> list = new ArrayList<>(count);
         for (int i = 0; i < count; i++) {
-            list.add(state.getDecoder().readObject(buffer, state));
+            if (typeDecoder == null) {
+                typeDecoder = state.getDecoder().readNextTypeDecoder(buffer, state);
+            } else {
+                byte encodingCode = buffer.getByte(buffer.readerIndex());
+                if (encodingCode == EncodingCodes.DESCRIBED_TYPE_INDICATOR) {
+                    typeDecoder = state.getDecoder().readNextTypeDecoder(buffer, state);
+                } else {
+                    PrimitiveTypeDecoder primitiveTypeDecoder = (PrimitiveTypeDecoder) typeDecoder;
+                    if (encodingCode != primitiveTypeDecoder.getTypeCode()) {
+                        typeDecoder = state.getDecoder().readNextTypeDecoder(buffer, state);
+                    } else {
+                        buffer.readByte();
+                    }
+                }
+            }
+
+            list.add(typeDecoder.readValue(buffer, state));
         }
 
         return list;

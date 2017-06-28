@@ -52,6 +52,42 @@ public class ListTypeCodecTest extends CodecTestSupport {
         doTestDecodeListSeries(LARGE_SIZE);
     }
 
+    @Test
+    public void testDecodeSmallSeriesOfSymbolLists() throws IOException {
+        doTestDecodeSymbolListSeries(SMALL_SIZE);
+    }
+
+    @Test
+    public void testDecodeLargeSeriesOfSymbolLists() throws IOException {
+        doTestDecodeSymbolListSeries(LARGE_SIZE);
+    }
+
+    @SuppressWarnings("unchecked")
+    private void doTestDecodeSymbolListSeries(int size) throws IOException {
+        ByteBuf buffer = Unpooled.buffer();
+
+        List<Object> list = new ArrayList<>();
+
+        for (int i = 0; i < 50; ++i) {
+            list.add(Symbol.valueOf(String.valueOf(i)));
+        }
+
+        for (int i = 0; i < size; ++i) {
+            encoder.writeObject(buffer, encoderState, list);
+        }
+
+        for (int i = 0; i < size; ++i) {
+            final Object result = decoder.readObject(buffer, decoderState);
+
+            assertNotNull(result);
+            assertTrue(result instanceof List);
+
+            List<Object> resultList = (List<Object>) result;
+
+            assertEquals(list.size(), resultList.size());
+        }
+    }
+
     @SuppressWarnings("unchecked")
     private void doTestDecodeListSeries(int size) throws IOException {
         ByteBuf buffer = Unpooled.buffer();
