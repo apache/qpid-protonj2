@@ -155,7 +155,7 @@ public class Benchmark {
         for (int i = 0; i < loop; i++) {
             buffer.readerIndex(0);
             decoder.readObject(buffer, state); // List
-            decoder.readObject(buffer, state); // UUID
+            decoder.readUUID(buffer, state); // UUID
         }
     }
 }

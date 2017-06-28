@@ -19,11 +19,17 @@ package org.apache.qpid.proton4j.codec.decoders;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 import org.apache.qpid.proton4j.amqp.Binary;
+import org.apache.qpid.proton4j.amqp.Decimal128;
+import org.apache.qpid.proton4j.amqp.Decimal32;
+import org.apache.qpid.proton4j.amqp.Decimal64;
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedByte;
 import org.apache.qpid.proton4j.amqp.UnsignedInteger;
+import org.apache.qpid.proton4j.amqp.UnsignedLong;
+import org.apache.qpid.proton4j.amqp.UnsignedShort;
 import org.apache.qpid.proton4j.codec.Decoder;
 import org.apache.qpid.proton4j.codec.DecoderState;
 import org.apache.qpid.proton4j.codec.DescribedTypeDecoder;
@@ -31,8 +37,6 @@ import org.apache.qpid.proton4j.codec.EncodingCodes;
 import org.apache.qpid.proton4j.codec.PrimitiveArrayTypeDecoder;
 import org.apache.qpid.proton4j.codec.PrimitiveTypeDecoder;
 import org.apache.qpid.proton4j.codec.TypeDecoder;
-import org.apache.qpid.proton4j.codec.decoders.primitives.Array32TypeDecoder;
-import org.apache.qpid.proton4j.codec.decoders.primitives.Array8TypeDecoder;
 import org.apache.qpid.proton4j.codec.decoders.primitives.Binary32TypeDecoder;
 import org.apache.qpid.proton4j.codec.decoders.primitives.Binary8TypeDecoder;
 import org.apache.qpid.proton4j.codec.decoders.primitives.BooleanFalseTypeDecoder;
@@ -47,14 +51,8 @@ import org.apache.qpid.proton4j.codec.decoders.primitives.DoubleTypeDecoder;
 import org.apache.qpid.proton4j.codec.decoders.primitives.FloatTypeDecoder;
 import org.apache.qpid.proton4j.codec.decoders.primitives.Integer32TypeDecoder;
 import org.apache.qpid.proton4j.codec.decoders.primitives.Integer8TypeDecoder;
-import org.apache.qpid.proton4j.codec.decoders.primitives.List0TypeDecoder;
-import org.apache.qpid.proton4j.codec.decoders.primitives.List32TypeDecoder;
-import org.apache.qpid.proton4j.codec.decoders.primitives.List8TypeDecoder;
 import org.apache.qpid.proton4j.codec.decoders.primitives.Long8TypeDecoder;
 import org.apache.qpid.proton4j.codec.decoders.primitives.LongTypeDecoder;
-import org.apache.qpid.proton4j.codec.decoders.primitives.Map32TypeDecoder;
-import org.apache.qpid.proton4j.codec.decoders.primitives.Map8TypeDecoder;
-import org.apache.qpid.proton4j.codec.decoders.primitives.NullTypeDecoder;
 import org.apache.qpid.proton4j.codec.decoders.primitives.ShortTypeDecoder;
 import org.apache.qpid.proton4j.codec.decoders.primitives.String32TypeDecoder;
 import org.apache.qpid.proton4j.codec.decoders.primitives.String8TypeDecoder;
@@ -67,7 +65,7 @@ import org.apache.qpid.proton4j.codec.decoders.primitives.UnsignedInteger0TypeDe
 import org.apache.qpid.proton4j.codec.decoders.primitives.UnsignedInteger32TypeDecoder;
 import org.apache.qpid.proton4j.codec.decoders.primitives.UnsignedInteger8TypeDecoder;
 import org.apache.qpid.proton4j.codec.decoders.primitives.UnsignedLong0TypeDecoder;
-import org.apache.qpid.proton4j.codec.decoders.primitives.UnsignedLong32TypeDecoder;
+import org.apache.qpid.proton4j.codec.decoders.primitives.UnsignedLong64TypeDecoder;
 import org.apache.qpid.proton4j.codec.decoders.primitives.UnsignedLong8TypeDecoder;
 import org.apache.qpid.proton4j.codec.decoders.primitives.UnsignedShortTypeDecoder;
 
@@ -86,8 +84,6 @@ public class ProtonDecoder implements Decoder {
     // decoders as well as the default decoders.
     private Map<Object, DescribedTypeDecoder<?>> describedTypeDecoders = new HashMap<>();
 
-    private final Array8TypeDecoder array8Decoder = new Array8TypeDecoder();
-    private final Array32TypeDecoder array32Decoder = new Array32TypeDecoder();
     private final Binary8TypeDecoder binary8Decoder = new Binary8TypeDecoder();
     private final Binary32TypeDecoder binary32Decoder = new Binary32TypeDecoder();
     private final BooleanTrueTypeDecoder trueDecoder = new BooleanTrueTypeDecoder();
@@ -102,14 +98,8 @@ public class ProtonDecoder implements Decoder {
     private final FloatTypeDecoder floatDecoder = new FloatTypeDecoder();
     private final Integer8TypeDecoder int8Decoder = new Integer8TypeDecoder();
     private final Integer32TypeDecoder int32Decoder = new Integer32TypeDecoder();
-    private final List0TypeDecoder list0Decoder = new List0TypeDecoder();
-    private final List8TypeDecoder list8Decoder = new List8TypeDecoder();
-    private final List32TypeDecoder list32Decoder = new List32TypeDecoder();
     private final Long8TypeDecoder long8Decoder = new Long8TypeDecoder();
     private final LongTypeDecoder longDecoder = new LongTypeDecoder();
-    private final Map8TypeDecoder map8Decoder = new Map8TypeDecoder();
-    private final Map32TypeDecoder map32Decoder = new Map32TypeDecoder();
-    private final NullTypeDecoder nullDecoder = new NullTypeDecoder();
     private final ShortTypeDecoder shortDecoder = new ShortTypeDecoder();
     private final String8TypeDecoder string8Decoder = new String8TypeDecoder();
     private final String32TypeDecoder string32Decoder = new String32TypeDecoder();
@@ -122,7 +112,7 @@ public class ProtonDecoder implements Decoder {
     private final UnsignedInteger32TypeDecoder uint32Decoder = new UnsignedInteger32TypeDecoder();
     private final UnsignedLong0TypeDecoder ulong0Decoder = new UnsignedLong0TypeDecoder();
     private final UnsignedLong8TypeDecoder ulong8Decoder = new UnsignedLong8TypeDecoder();
-    private final UnsignedLong32TypeDecoder ulong32Decoder = new UnsignedLong32TypeDecoder();
+    private final UnsignedLong64TypeDecoder ulong64Decoder = new UnsignedLong64TypeDecoder();
     private final UnsignedShortTypeDecoder ushortDecoder = new UnsignedShortTypeDecoder();
     private final UUIDTypeDecoder uuidDecoder = new UUIDTypeDecoder();
 
@@ -243,6 +233,62 @@ public class ProtonDecoder implements Decoder {
     }
 
     @Override
+    public Character readCharacter(ByteBuf buffer, DecoderState state) throws IOException {
+        byte encodingCode = buffer.readByte();
+
+        switch (encodingCode) {
+            case EncodingCodes.CHAR:
+                return charDecoder.readValue(buffer, state);
+            case EncodingCodes.NULL:
+                return null;
+            default:
+                throw new IOException("Expected Character type but found encoding: " + encodingCode);
+        }
+    }
+
+    @Override
+    public Decimal32 readDecimal32(ByteBuf buffer, DecoderState state) throws IOException {
+        byte encodingCode = buffer.readByte();
+
+        switch (encodingCode) {
+            case EncodingCodes.DECIMAL32:
+                return decimal32Decoder.readValue(buffer, state);
+            case EncodingCodes.NULL:
+                return null;
+            default:
+                throw new IOException("Expected Decimal32 type but found encoding: " + encodingCode);
+        }
+    }
+
+    @Override
+    public Decimal64 readDecimal64(ByteBuf buffer, DecoderState state) throws IOException {
+        byte encodingCode = buffer.readByte();
+
+        switch (encodingCode) {
+            case EncodingCodes.DECIMAL64:
+                return decimal64Decoder.readValue(buffer, state);
+            case EncodingCodes.NULL:
+                return null;
+            default:
+                throw new IOException("Expected Decimal64 type but found encoding: " + encodingCode);
+        }
+    }
+
+    @Override
+    public Decimal128 readDecimal128(ByteBuf buffer, DecoderState state) throws IOException {
+        byte encodingCode = buffer.readByte();
+
+        switch (encodingCode) {
+            case EncodingCodes.DECIMAL128:
+                return decimal128Decoder.readValue(buffer, state);
+            case EncodingCodes.NULL:
+                return null;
+            default:
+                throw new IOException("Expected Decimal128 type but found encoding: " + encodingCode);
+        }
+    }
+
+    @Override
     public Short readShort(ByteBuf buffer, DecoderState state) throws IOException {
         byte encodingCode = buffer.readByte();
 
@@ -253,6 +299,20 @@ public class ProtonDecoder implements Decoder {
                 return null;
             default:
                 throw new IOException("Expected Short type but found encoding: " + encodingCode);
+        }
+    }
+
+    @Override
+    public UnsignedShort readUnsignedShort(ByteBuf buffer, DecoderState state) throws IOException {
+        byte encodingCode = buffer.readByte();
+
+        switch (encodingCode) {
+            case EncodingCodes.USHORT:
+                return ushortDecoder.readValue(buffer, state);
+            case EncodingCodes.NULL:
+                return null;
+            default:
+                throw new IOException("Expected UnsignedShort type but found encoding: " + encodingCode);
         }
     }
 
@@ -303,6 +363,52 @@ public class ProtonDecoder implements Decoder {
                 return null;
             default:
                 throw new IOException("Expected Long type but found encoding: " + encodingCode);
+        }
+    }
+
+    @Override
+    public UnsignedLong readUnsignedLong(ByteBuf buffer, DecoderState state) throws IOException {
+        byte encodingCode = buffer.readByte();
+
+        switch (encodingCode) {
+            case EncodingCodes.ULONG0:
+                return ulong0Decoder.readValue(buffer, state);
+            case EncodingCodes.SMALLULONG:
+                return ulong8Decoder.readValue(buffer, state);
+            case EncodingCodes.ULONG:
+                return ulong64Decoder.readValue(buffer, state);
+            case EncodingCodes.NULL:
+                return null;
+            default:
+                throw new IOException("Expected Long type but found encoding: " + encodingCode);
+        }
+    }
+
+    @Override
+    public Float readFloat(ByteBuf buffer, DecoderState state) throws IOException {
+        byte encodingCode = buffer.readByte();
+
+        switch (encodingCode) {
+            case EncodingCodes.FLOAT:
+                return floatDecoder.readValue(buffer, state);
+            case EncodingCodes.NULL:
+                return null;
+            default:
+                throw new IOException("Expected Float type but found encoding: " + encodingCode);
+        }
+    }
+
+    @Override
+    public Double readDouble(ByteBuf buffer, DecoderState state) throws IOException {
+        byte encodingCode = buffer.readByte();
+
+        switch (encodingCode) {
+            case EncodingCodes.DOUBLE:
+                return doubleDecoder.readValue(buffer, state);
+            case EncodingCodes.NULL:
+                return null;
+            default:
+                throw new IOException("Expected Double type but found encoding: " + encodingCode);
         }
     }
 
@@ -365,6 +471,20 @@ public class ProtonDecoder implements Decoder {
                 return null;
             default:
                 throw new IOException("Expected Timestamp type but found encoding: " + encodingCode);
+        }
+    }
+
+    @Override
+    public UUID readUUID(ByteBuf buffer, DecoderState state) throws IOException {
+        byte encodingCode = buffer.readByte();
+
+        switch (encodingCode) {
+            case EncodingCodes.UUID:
+                return uuidDecoder.readValue(buffer, state);
+            case EncodingCodes.NULL:
+                return null;
+            default:
+                throw new IOException("Expected UUID type but found encoding: " + encodingCode);
         }
     }
 }

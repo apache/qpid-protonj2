@@ -61,7 +61,7 @@ import org.apache.qpid.proton4j.codec.decoders.primitives.UnsignedInteger0TypeDe
 import org.apache.qpid.proton4j.codec.decoders.primitives.UnsignedInteger32TypeDecoder;
 import org.apache.qpid.proton4j.codec.decoders.primitives.UnsignedInteger8TypeDecoder;
 import org.apache.qpid.proton4j.codec.decoders.primitives.UnsignedLong0TypeDecoder;
-import org.apache.qpid.proton4j.codec.decoders.primitives.UnsignedLong32TypeDecoder;
+import org.apache.qpid.proton4j.codec.decoders.primitives.UnsignedLong64TypeDecoder;
 import org.apache.qpid.proton4j.codec.decoders.primitives.UnsignedLong8TypeDecoder;
 import org.apache.qpid.proton4j.codec.decoders.primitives.UnsignedShortTypeDecoder;
 
@@ -118,7 +118,7 @@ public class ProtonDecoderFactory {
         decoder.registerPrimitiveTypeDecoder(new UnsignedInteger8TypeDecoder());
         decoder.registerPrimitiveTypeDecoder(new LongTypeDecoder());
         decoder.registerPrimitiveTypeDecoder(new Long8TypeDecoder());
-        decoder.registerPrimitiveTypeDecoder(new UnsignedLong32TypeDecoder());
+        decoder.registerPrimitiveTypeDecoder(new UnsignedLong64TypeDecoder());
         decoder.registerPrimitiveTypeDecoder(new UnsignedLong0TypeDecoder());
         decoder.registerPrimitiveTypeDecoder(new UnsignedLong8TypeDecoder());
         decoder.registerPrimitiveTypeDecoder(new String32TypeDecoder());

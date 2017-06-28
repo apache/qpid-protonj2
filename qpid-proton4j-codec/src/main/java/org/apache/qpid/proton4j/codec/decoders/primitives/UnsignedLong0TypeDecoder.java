@@ -25,7 +25,7 @@ import io.netty.buffer.ByteBuf;
 /**
  * Decode AMQP Zero value Unsigned Long values from a byte stream
  */
-public class UnsignedLong0TypeDecoder extends UnsignedLong32TypeDecoder {
+public class UnsignedLong0TypeDecoder extends UnsignedLong64TypeDecoder {
 
     @Override
     public int getTypeCode() {

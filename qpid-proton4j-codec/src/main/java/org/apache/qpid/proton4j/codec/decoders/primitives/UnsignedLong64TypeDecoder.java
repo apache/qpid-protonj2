@@ -26,7 +26,7 @@ import io.netty.buffer.ByteBuf;
 /**
  * Decode AMQP Unsigned Long values from a byte stream
  */
-public class UnsignedLong32TypeDecoder implements PrimitiveTypeDecoder<UnsignedLong> {
+public class UnsignedLong64TypeDecoder implements PrimitiveTypeDecoder<UnsignedLong> {
 
     @Override
     public Class<UnsignedLong> getTypeClass() {
