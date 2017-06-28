@@ -18,6 +18,11 @@ package org.apache.qpid.proton4j.codec;
 
 import java.io.IOException;
 
+import org.apache.qpid.proton4j.amqp.Binary;
+import org.apache.qpid.proton4j.amqp.Symbol;
+import org.apache.qpid.proton4j.amqp.UnsignedByte;
+import org.apache.qpid.proton4j.amqp.UnsignedInteger;
+
 import io.netty.buffer.ByteBuf;
 
 /**
@@ -27,8 +32,29 @@ public interface Decoder {
 
     DecoderState newDecoderState();
 
+    Boolean readBoolean(ByteBuf buffer, DecoderState state) throws IOException;
+
+    Byte readByte(ByteBuf buffer, DecoderState state) throws IOException;
+
+    UnsignedByte readUnsignedByte(ByteBuf buffer, DecoderState state) throws IOException;
+
+    Short readShort(ByteBuf buffer, DecoderState state) throws IOException;
+
+    Integer readInteger(ByteBuf buffer, DecoderState state) throws IOException;
+
+    UnsignedInteger readUnsignedInteger(ByteBuf buffer, DecoderState state) throws IOException;
+
+    Long readLong(ByteBuf buffer, DecoderState state) throws IOException;
+
+    Binary readBinary(ByteBuf buffer, DecoderState state) throws IOException;
+
+    String readString(ByteBuf buffer, DecoderState state) throws IOException;
+
+    Symbol readSymbol(ByteBuf buffer, DecoderState state) throws IOException;
+
+    Long readTimestamp(ByteBuf buffer, DecoderState state) throws IOException;
+
     Object readObject(ByteBuf buffer, DecoderState state) throws IOException;
-    Object readObject(ByteBuf buffer, DecoderState state, Object defaultValue) throws IOException;
 
     TypeDecoder<?> readNextTypeDecoder(ByteBuf buffer, DecoderState state) throws IOException;
 

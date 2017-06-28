@@ -19,8 +19,6 @@ package org.apache.qpid.proton4j.codec.decoders.messaging;
 import java.io.IOException;
 
 import org.apache.qpid.proton4j.amqp.Symbol;
-import org.apache.qpid.proton4j.amqp.UnsignedByte;
-import org.apache.qpid.proton4j.amqp.UnsignedInteger;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.amqp.messaging.Header;
 import org.apache.qpid.proton4j.codec.DecoderState;
@@ -68,24 +66,24 @@ public class HeaderTypeDecoder implements DescribedTypeDecoder<Header>, ListType
     }
 
     @Override
-    public void onListEntry(int index, Object entry, Object target) {
+    public void onListEntry(int index, Object target, ByteBuf buffer, DecoderState state) throws IOException {
         Header header = (Header) target;
 
         switch (index) {
             case 4:
-                header.setDeliveryCount((UnsignedInteger) entry);
+                header.setDeliveryCount(state.getDecoder().readUnsignedInteger(buffer, state));
                 break;
             case 3:
-                header.setFirstAcquirer((Boolean) entry);
+                header.setFirstAcquirer(state.getDecoder().readBoolean(buffer, state));
                 break;
             case 2:
-                header.setTtl((UnsignedInteger) entry);
+                header.setTtl(state.getDecoder().readUnsignedInteger(buffer, state));
                 break;
             case 1:
-                header.setPriority((UnsignedByte) entry);
+                header.setPriority(state.getDecoder().readUnsignedByte(buffer, state));
                 break;
             case 0:
-                header.setDurable((Boolean) entry);
+                header.setDurable(state.getDecoder().readBoolean(buffer, state));
                 break;
             default:
                 throw new IllegalStateException("To many entries in Header encoding");

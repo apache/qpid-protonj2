@@ -32,7 +32,8 @@ public interface ListTypeDecoder extends PrimitiveTypeDecoder<List> {
 
     public interface ListEntryHandler {
 
-        void onListEntry(int index, Object entry, Object target);
+        //void onListEntry(int index, Object entry, Object target);
+        void onListEntry(int index, Object target, ByteBuf buffer, DecoderState state) throws IOException;
 
     }
 

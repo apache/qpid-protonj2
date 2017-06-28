@@ -32,7 +32,6 @@ import io.netty.buffer.ByteBuf;
  */
 public abstract class AbstractListTypeDecoder implements ListTypeDecoder {
 
-    @SuppressWarnings("rawtypes")
     @Override
     public List<Object> readValue(ByteBuf buffer, DecoderState state) throws IOException {
         int size = readSize(buffer);
@@ -49,6 +48,8 @@ public abstract class AbstractListTypeDecoder implements ListTypeDecoder {
 
         List<Object> list = new ArrayList<>(count);
         for (int i = 0; i < count; i++) {
+            // Whenever we can just reuse the previously used TypeDecoder instead
+            // of spending time looking up the same one again.
             if (typeDecoder == null) {
                 typeDecoder = state.getDecoder().readNextTypeDecoder(buffer, state);
             } else {
@@ -59,7 +60,7 @@ public abstract class AbstractListTypeDecoder implements ListTypeDecoder {
                     buffer.resetReaderIndex();
                     typeDecoder = state.getDecoder().readNextTypeDecoder(buffer, state);
                 } else {
-                    PrimitiveTypeDecoder primitiveTypeDecoder = (PrimitiveTypeDecoder) typeDecoder;
+                    PrimitiveTypeDecoder<?> primitiveTypeDecoder = (PrimitiveTypeDecoder<?>) typeDecoder;
                     if (encodingCode != primitiveTypeDecoder.getTypeCode()) {
                         buffer.resetReaderIndex();
                         typeDecoder = state.getDecoder().readNextTypeDecoder(buffer, state);
@@ -86,7 +87,7 @@ public abstract class AbstractListTypeDecoder implements ListTypeDecoder {
         }
 
         for (int i = 0; i < count; i++) {
-            handler.onListEntry(i, state.getDecoder().readObject(buffer, state), target);
+            handler.onListEntry(i, target, buffer, state);
         }
     }
 
