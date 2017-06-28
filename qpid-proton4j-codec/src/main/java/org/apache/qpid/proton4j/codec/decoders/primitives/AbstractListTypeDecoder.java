@@ -45,22 +45,24 @@ public abstract class AbstractListTypeDecoder implements ListTypeDecoder {
                     "of data available (%d)", size, buffer.readableBytes()));
         }
 
-        TypeDecoder typeDecoder = null;
+        TypeDecoder<?> typeDecoder = null;
 
         List<Object> list = new ArrayList<>(count);
         for (int i = 0; i < count; i++) {
             if (typeDecoder == null) {
                 typeDecoder = state.getDecoder().readNextTypeDecoder(buffer, state);
             } else {
-                byte encodingCode = buffer.getByte(buffer.readerIndex());
-                if (encodingCode == EncodingCodes.DESCRIBED_TYPE_INDICATOR) {
+                buffer.markReaderIndex();
+
+                byte encodingCode = buffer.readByte();
+                if (encodingCode == EncodingCodes.DESCRIBED_TYPE_INDICATOR || !(typeDecoder instanceof PrimitiveTypeDecoder<?>)) {
+                    buffer.resetReaderIndex();
                     typeDecoder = state.getDecoder().readNextTypeDecoder(buffer, state);
                 } else {
                     PrimitiveTypeDecoder primitiveTypeDecoder = (PrimitiveTypeDecoder) typeDecoder;
                     if (encodingCode != primitiveTypeDecoder.getTypeCode()) {
+                        buffer.resetReaderIndex();
                         typeDecoder = state.getDecoder().readNextTypeDecoder(buffer, state);
-                    } else {
-                        buffer.readByte();
                     }
                 }
             }
