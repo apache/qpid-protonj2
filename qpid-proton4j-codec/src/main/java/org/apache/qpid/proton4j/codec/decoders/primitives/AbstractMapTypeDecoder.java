@@ -21,6 +21,9 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 import org.apache.qpid.proton4j.codec.DecoderState;
+import org.apache.qpid.proton4j.codec.EncodingCodes;
+import org.apache.qpid.proton4j.codec.PrimitiveTypeDecoder;
+import org.apache.qpid.proton4j.codec.TypeDecoder;
 
 import io.netty.buffer.ByteBuf;
 
@@ -41,15 +44,44 @@ public abstract class AbstractMapTypeDecoder implements MapTypeDecoder {
                     "of data available (%d)", size, buffer.readableBytes()));
         }
 
+        TypeDecoder<?> keyDecoder = null;
+        TypeDecoder<?> valueDecoder = null;
+
         // Count include both key and value so we must include that in the loop
         Map<Object, Object> map = new LinkedHashMap<>(count);
         for (int i = 0; i < count / 2; i++) {
-            Object key = state.getDecoder().readObject(buffer, state);
-            Object value = state.getDecoder().readObject(buffer, state);
+            keyDecoder = findNextDecoder(buffer, state, keyDecoder);
+            Object key = keyDecoder.readValue(buffer, state);
+
+            valueDecoder = findNextDecoder(buffer, state, valueDecoder);
+            Object value = valueDecoder.readValue(buffer, state);
+
             map.put(key, value);
         }
 
         return map;
+    }
+
+    private TypeDecoder<?> findNextDecoder(ByteBuf buffer, DecoderState state, TypeDecoder<?> prevoudDecoder) throws IOException {
+        if (prevoudDecoder == null) {
+            return state.getDecoder().readNextTypeDecoder(buffer, state);
+        } else {
+            buffer.markReaderIndex();
+
+            byte encodingCode = buffer.readByte();
+            if (encodingCode == EncodingCodes.DESCRIBED_TYPE_INDICATOR || !(prevoudDecoder instanceof PrimitiveTypeDecoder<?>)) {
+                buffer.resetReaderIndex();
+                return state.getDecoder().readNextTypeDecoder(buffer, state);
+            } else {
+                PrimitiveTypeDecoder<?> primitiveTypeDecoder = (PrimitiveTypeDecoder<?>) prevoudDecoder;
+                if (encodingCode != primitiveTypeDecoder.getTypeCode()) {
+                    buffer.resetReaderIndex();
+                    return state.getDecoder().readNextTypeDecoder(buffer, state);
+                }
+            }
+        }
+
+        return prevoudDecoder;
     }
 
     protected abstract int readSize(ByteBuf buffer);
