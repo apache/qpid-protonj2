@@ -53,55 +53,55 @@ public abstract class Terminus {
 
     public abstract Terminus copy();
 
-    public final String getAddress() {
+    public String getAddress() {
         return address;
     }
 
-    public final void setAddress(String address) {
+    public void setAddress(String address) {
         this.address = address;
     }
 
-    public final TerminusDurability getDurable() {
+    public TerminusDurability getDurable() {
         return durable;
     }
 
-    public final void setDurable(TerminusDurability durable) {
+    public void setDurable(TerminusDurability durable) {
         this.durable = durable == null ? TerminusDurability.NONE : durable;
     }
 
-    public final TerminusExpiryPolicy getExpiryPolicy() {
+    public TerminusExpiryPolicy getExpiryPolicy() {
         return expiryPolicy;
     }
 
-    public final void setExpiryPolicy(TerminusExpiryPolicy expiryPolicy) {
+    public void setExpiryPolicy(TerminusExpiryPolicy expiryPolicy) {
         this.expiryPolicy = expiryPolicy == null ? TerminusExpiryPolicy.SESSION_END : expiryPolicy;
     }
 
-    public final UnsignedInteger getTimeout() {
+    public UnsignedInteger getTimeout() {
         return timeout;
     }
 
-    public final void setTimeout(UnsignedInteger timeout) {
+    public void setTimeout(UnsignedInteger timeout) {
         this.timeout = timeout;
     }
 
-    public final boolean getDynamic() {
+    public boolean getDynamic() {
         return dynamic;
     }
 
-    public final void setDynamic(boolean dynamic) {
+    public void setDynamic(boolean dynamic) {
         this.dynamic = dynamic;
     }
 
-    public final Map<Symbol, Object> getDynamicNodeProperties() {
+    public Map<Symbol, Object> getDynamicNodeProperties() {
         return dynamicNodeProperties;
     }
 
-    public final void setDynamicNodeProperties(Map<Symbol, Object> dynamicNodeProperties) {
+    public void setDynamicNodeProperties(Map<Symbol, Object> dynamicNodeProperties) {
         this.dynamicNodeProperties = dynamicNodeProperties;
     }
 
-    public final Symbol[] getCapabilities() {
+    public Symbol[] getCapabilities() {
         return capabilities;
     }
 

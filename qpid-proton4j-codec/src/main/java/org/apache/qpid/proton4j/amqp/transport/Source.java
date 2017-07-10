@@ -23,7 +23,7 @@ import java.util.Map;
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.messaging.Outcome;
 
-public final class Source extends Terminus {
+public class Source extends Terminus {
 
     private Symbol distributionMode;
     private Map<Symbol, Object> filter;

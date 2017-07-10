@@ -14,35 +14,32 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.qpid.proton4j.amqp.transport;
+package org.apache.qpid.proton4j.amqp.transactions;
 
 import java.util.Arrays;
 
-public class Target extends Terminus {
+import org.apache.qpid.proton4j.amqp.transport.Target;
 
-    public Target() {
-    }
+public class Coordinator extends Target {
 
-    protected Target(Target other) {
+    // TODO - This is not really a "Target" but it provides "target"
+
+    protected Coordinator(Coordinator other) {
         super(other);
     }
 
     @Override
-    public String toString()
-    {
-        return "Target{" +
-               "address='" + getAddress() + '\'' +
-               ", durable=" + getDurable() +
-               ", expiryPolicy=" + getExpiryPolicy() +
-               ", timeout=" + getTimeout() +
-               ", dynamic=" + getDynamic() +
-               ", dynamicNodeProperties=" + getDynamicNodeProperties() +
-               ", capabilities=" + (getCapabilities() == null ? null : Arrays.asList(getCapabilities())) +
-               '}';
+    public String toString() {
+        return "Coordinator{" + "capabilities=" + (getCapabilities() == null ? null : Arrays.asList(getCapabilities())) + '}';
     }
 
     @Override
-    public Target copy() {
-        return new Target(this);
+    public String getAddress() {
+        return null;
+    }
+
+    @Override
+    public Coordinator copy() {
+        return new Coordinator(this);
     }
 }

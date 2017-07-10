@@ -14,35 +14,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.qpid.proton4j.amqp.transport;
+package org.apache.qpid.proton4j.amqp.transactions;
 
-import java.util.Arrays;
+public final class Declare {
 
-public class Target extends Terminus {
+    private GlobalTxId globalId;
 
-    public Target() {
+    public GlobalTxId getGlobalId() {
+        return globalId;
     }
 
-    protected Target(Target other) {
-        super(other);
-    }
-
-    @Override
-    public String toString()
-    {
-        return "Target{" +
-               "address='" + getAddress() + '\'' +
-               ", durable=" + getDurable() +
-               ", expiryPolicy=" + getExpiryPolicy() +
-               ", timeout=" + getTimeout() +
-               ", dynamic=" + getDynamic() +
-               ", dynamicNodeProperties=" + getDynamicNodeProperties() +
-               ", capabilities=" + (getCapabilities() == null ? null : Arrays.asList(getCapabilities())) +
-               '}';
+    public void setGlobalId(GlobalTxId globalId) {
+        this.globalId = globalId;
     }
 
     @Override
-    public Target copy() {
-        return new Target(this);
+    public String toString() {
+        return "Declare{" + "globalId=" + globalId + '}';
     }
 }

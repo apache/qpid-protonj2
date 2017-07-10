@@ -14,35 +14,39 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.qpid.proton4j.amqp.transport;
+package org.apache.qpid.proton4j.amqp.transactions;
 
-import java.util.Arrays;
+import org.apache.qpid.proton4j.amqp.Binary;
+import org.apache.qpid.proton4j.amqp.messaging.Outcome;
+import org.apache.qpid.proton4j.amqp.transport.DeliveryState;
 
-public class Target extends Terminus {
+public final class TransactionalState implements DeliveryState {
 
-    public Target() {
+    private Binary txnId;
+    private Outcome outcome;
+
+    public Binary getTxnId() {
+        return txnId;
     }
 
-    protected Target(Target other) {
-        super(other);
+    public void setTxnId(Binary txnId) {
+        if (txnId == null) {
+            throw new NullPointerException("the txn-id field is mandatory");
+        }
+
+        this.txnId = txnId;
+    }
+
+    public Outcome getOutcome() {
+        return outcome;
+    }
+
+    public void setOutcome(Outcome outcome) {
+        this.outcome = outcome;
     }
 
     @Override
-    public String toString()
-    {
-        return "Target{" +
-               "address='" + getAddress() + '\'' +
-               ", durable=" + getDurable() +
-               ", expiryPolicy=" + getExpiryPolicy() +
-               ", timeout=" + getTimeout() +
-               ", dynamic=" + getDynamic() +
-               ", dynamicNodeProperties=" + getDynamicNodeProperties() +
-               ", capabilities=" + (getCapabilities() == null ? null : Arrays.asList(getCapabilities())) +
-               '}';
-    }
-
-    @Override
-    public Target copy() {
-        return new Target(this);
+    public String toString() {
+        return "TransactionalState{" + "txnId=" + txnId + ", outcome=" + outcome + '}';
     }
 }
