@@ -17,9 +17,14 @@
 package org.apache.qpid.proton4j.amqp.transport;
 
 import org.apache.qpid.proton4j.amqp.Binary;
+import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedInteger;
+import org.apache.qpid.proton4j.amqp.UnsignedLong;
 
 public final class Transfer {
+
+    public static final UnsignedLong DESCRIPTOR_CODE = UnsignedLong.valueOf(0x0000000000000014L);
+    public static final Symbol DESCRIPTOR_SYMBOL = Symbol.valueOf("amqp:transfer:list");
 
     private UnsignedInteger handle;
     private UnsignedInteger deliveryId;

@@ -17,6 +17,7 @@
 package org.apache.qpid.proton4j.codec.decoders;
 
 import java.io.IOException;
+import java.lang.reflect.Array;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -52,38 +53,6 @@ public class ProtonDecoder implements Decoder {
     // Registry of decoders for described types which can be updated with user defined
     // decoders as well as the default decoders.
     private Map<Object, DescribedTypeDecoder<?>> describedTypeDecoders = new HashMap<>();
-
-//    private final Binary8TypeDecoder binary8Decoder = new Binary8TypeDecoder();
-//    private final Binary32TypeDecoder binary32Decoder = new Binary32TypeDecoder();
-//    private final BooleanTrueTypeDecoder trueDecoder = new BooleanTrueTypeDecoder();
-//    private final BooleanFalseTypeDecoder falseDecoder = new BooleanFalseTypeDecoder();
-//    private final BooleanTypeDecoder booleanDecoder = new BooleanTypeDecoder();
-//    private final ByteTypeDecoder byteDecoder = new ByteTypeDecoder();
-//    private final CharacterTypeDecoder charDecoder = new CharacterTypeDecoder();
-//    private final Decimal128TypeDecoder decimal128Decoder = new Decimal128TypeDecoder();
-//    private final Decimal64TypeDecoder decimal64Decoder = new Decimal64TypeDecoder();
-//    private final Decimal32TypeDecoder decimal32Decoder = new Decimal32TypeDecoder();
-//    private final DoubleTypeDecoder doubleDecoder = new DoubleTypeDecoder();
-//    private final FloatTypeDecoder floatDecoder = new FloatTypeDecoder();
-//    private final Integer8TypeDecoder int8Decoder = new Integer8TypeDecoder();
-//    private final Integer32TypeDecoder int32Decoder = new Integer32TypeDecoder();
-//    private final Long8TypeDecoder long8Decoder = new Long8TypeDecoder();
-//    private final LongTypeDecoder longDecoder = new LongTypeDecoder();
-//    private final ShortTypeDecoder shortDecoder = new ShortTypeDecoder();
-//    private final String8TypeDecoder string8Decoder = new String8TypeDecoder();
-//    private final String32TypeDecoder string32Decoder = new String32TypeDecoder();
-//    private final Symbol8TypeDecoder sym8Decoder = new Symbol8TypeDecoder();
-//    private final Symbol32TypeDecoder sym32Decoder = new Symbol32TypeDecoder();
-//    private final TimestampTypeDecoder timestampDecoder = new TimestampTypeDecoder();
-//    private final UnsignedByteTypeDecoder ubyteDecoder = new UnsignedByteTypeDecoder();
-//    private final UnsignedInteger0TypeDecoder uint0Decoder = new UnsignedInteger0TypeDecoder();
-//    private final UnsignedInteger8TypeDecoder uint8Decoder = new UnsignedInteger8TypeDecoder();
-//    private final UnsignedInteger32TypeDecoder uint32Decoder = new UnsignedInteger32TypeDecoder();
-//    private final UnsignedLong0TypeDecoder ulong0Decoder = new UnsignedLong0TypeDecoder();
-//    private final UnsignedLong8TypeDecoder ulong8Decoder = new UnsignedLong8TypeDecoder();
-//    private final UnsignedLong64TypeDecoder ulong64Decoder = new UnsignedLong64TypeDecoder();
-//    private final UnsignedShortTypeDecoder ushortDecoder = new UnsignedShortTypeDecoder();
-//    private final UUIDTypeDecoder uuidDecoder = new UUIDTypeDecoder();
 
     @Override
     public DecoderState newDecoderState() {
@@ -455,5 +424,32 @@ public class ProtonDecoder implements Decoder {
             default:
                 throw new IOException("Expected UUID type but found encoding: " + encodingCode);
         }
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public <T> T[] readMultiple(ByteBuf buffer, DecoderState state, final Class<T> clazz) throws IOException {
+        Object val = readObject(buffer, state);
+
+        if (val == null) {
+            return null;
+        } else if (val.getClass().isArray()) {
+            if (clazz.isAssignableFrom(val.getClass().getComponentType())) {
+                return (T[]) val;
+            } else {
+                throw signalUnexpectedType(val, Array.newInstance(clazz, 0).getClass());
+            }
+        } else if (clazz.isAssignableFrom(val.getClass())) {
+            T[] array = (T[]) Array.newInstance(clazz, 1);
+            array[0] = (T) val;
+            return array;
+        } else {
+            throw signalUnexpectedType(val, Array.newInstance(clazz, 0).getClass());
+        }
+    }
+
+    private ClassCastException signalUnexpectedType(final Object val, Class clazz) {
+        return new ClassCastException("Unexpected type " + val.getClass().getName() +
+                                      ". Expected " + clazz.getName() + ".");
     }
 }

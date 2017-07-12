@@ -16,7 +16,13 @@
  */
 package org.apache.qpid.proton4j.amqp.transactions;
 
+import org.apache.qpid.proton4j.amqp.Symbol;
+import org.apache.qpid.proton4j.amqp.UnsignedLong;
+
 public final class Declare {
+
+    public static final UnsignedLong DESCRIPTOR_CODE = UnsignedLong.valueOf(0x0000000000000031L);
+    public static final Symbol DESCRIPTOR_SYMBOL = Symbol.valueOf("amqp:declare:list");
 
     private GlobalTxId globalId;
 

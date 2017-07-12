@@ -16,9 +16,14 @@
  */
 package org.apache.qpid.proton4j.amqp.transport;
 
+import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedInteger;
+import org.apache.qpid.proton4j.amqp.UnsignedLong;
 
 public final class Detach {
+
+    public static final UnsignedLong DESCRIPTOR_CODE = UnsignedLong.valueOf(0x0000000000000016L);
+    public static final Symbol DESCRIPTOR_SYMBOL = Symbol.valueOf("amqp:detach:list");
 
     private UnsignedInteger handle;
     private boolean closed;

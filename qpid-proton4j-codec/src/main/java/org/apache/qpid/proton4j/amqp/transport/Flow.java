@@ -18,9 +18,14 @@ package org.apache.qpid.proton4j.amqp.transport;
 
 import java.util.Map;
 
+import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedInteger;
+import org.apache.qpid.proton4j.amqp.UnsignedLong;
 
 public final class Flow {
+
+    public static final UnsignedLong DESCRIPTOR_CODE = UnsignedLong.valueOf(0x0000000000000013L);
+    public static final Symbol DESCRIPTOR_SYMBOL = Symbol.valueOf("amqp:flow:list");
 
     private UnsignedInteger nextIncomingId;
     private UnsignedInteger incomingWindow;

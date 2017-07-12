@@ -17,8 +17,13 @@
 package org.apache.qpid.proton4j.amqp.transactions;
 
 import org.apache.qpid.proton4j.amqp.Binary;
+import org.apache.qpid.proton4j.amqp.Symbol;
+import org.apache.qpid.proton4j.amqp.UnsignedLong;
 
 public final class Discharge {
+
+    public static final UnsignedLong DESCRIPTOR_CODE = UnsignedLong.valueOf(0x0000000000000032L);
+    public static final Symbol DESCRIPTOR_SYMBOL = Symbol.valueOf("amqp:discharge:list");
 
     private Binary txnId;
     private Boolean fail;

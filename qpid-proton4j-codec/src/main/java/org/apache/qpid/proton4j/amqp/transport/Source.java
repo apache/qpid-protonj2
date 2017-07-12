@@ -21,9 +21,13 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.qpid.proton4j.amqp.Symbol;
+import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.amqp.messaging.Outcome;
 
 public class Source extends Terminus {
+
+    public static final UnsignedLong DESCRIPTOR_CODE = UnsignedLong.valueOf(0x0000000000000028L);
+    public static final Symbol DESCRIPTOR_SYMBOL = Symbol.valueOf("amqp:source:list");
 
     private Symbol distributionMode;
     private Map<Symbol, Object> filter;

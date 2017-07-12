@@ -21,9 +21,13 @@ import java.util.Map;
 
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedInteger;
+import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.amqp.UnsignedShort;
 
 public final class Open {
+
+    public static final UnsignedLong DESCRIPTOR_CODE = UnsignedLong.valueOf(0x0000000000000010L);
+    public static final Symbol DESCRIPTOR_SYMBOL = Symbol.valueOf("amqp:open:list");
 
     private String containerId;
     private String hostname;

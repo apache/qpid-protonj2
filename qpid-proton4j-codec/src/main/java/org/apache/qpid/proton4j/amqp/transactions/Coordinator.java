@@ -18,11 +18,20 @@ package org.apache.qpid.proton4j.amqp.transactions;
 
 import java.util.Arrays;
 
+import org.apache.qpid.proton4j.amqp.Symbol;
+import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.amqp.transport.Target;
 
 public class Coordinator extends Target {
 
     // TODO - This is not really a "Target" but it provides "target"
+
+    public static final UnsignedLong DESCRIPTOR_CODE = UnsignedLong.valueOf(0x0000000000000030L);
+    public static final Symbol DESCRIPTOR_SYMBOL = Symbol.valueOf("amqp:coordinator:list");
+
+    public Coordinator() {
+        super();
+    }
 
     protected Coordinator(Coordinator other) {
         super(other);

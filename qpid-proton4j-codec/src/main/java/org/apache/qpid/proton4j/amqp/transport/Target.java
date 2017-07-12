@@ -18,7 +18,13 @@ package org.apache.qpid.proton4j.amqp.transport;
 
 import java.util.Arrays;
 
+import org.apache.qpid.proton4j.amqp.Symbol;
+import org.apache.qpid.proton4j.amqp.UnsignedLong;
+
 public class Target extends Terminus {
+
+    public static final UnsignedLong DESCRIPTOR_CODE = UnsignedLong.valueOf(0x0000000000000029L);
+    public static final Symbol DESCRIPTOR_SYMBOL = Symbol.valueOf("amqp:target:list");
 
     public Target() {
     }

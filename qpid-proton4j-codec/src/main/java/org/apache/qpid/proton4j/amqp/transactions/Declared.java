@@ -18,11 +18,13 @@ package org.apache.qpid.proton4j.amqp.transactions;
 
 import org.apache.qpid.proton4j.amqp.Binary;
 import org.apache.qpid.proton4j.amqp.Symbol;
+import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.amqp.messaging.Outcome;
 import org.apache.qpid.proton4j.amqp.transport.DeliveryState;
 
 public final class Declared implements DeliveryState, Outcome {
 
+    public static final UnsignedLong DESCRIPTOR_CODE = UnsignedLong.valueOf(0x0000000000000033L);
     public static final Symbol DESCRIPTOR_SYMBOL = Symbol.valueOf("amqp:declared:list");
 
     private Binary txnId;

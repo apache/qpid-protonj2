@@ -26,6 +26,9 @@ import org.apache.qpid.proton4j.amqp.UnsignedLong;
 
 public final class Attach {
 
+    public static final UnsignedLong DESCRIPTOR_CODE = UnsignedLong.valueOf(0x0000000000000012L);
+    public static final Symbol DESCRIPTOR_SYMBOL = Symbol.valueOf("amqp:attach:list");
+
     private String name;
     private UnsignedInteger handle;
     private Role role = Role.SENDER;
