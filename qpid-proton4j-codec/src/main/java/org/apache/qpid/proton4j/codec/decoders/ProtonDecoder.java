@@ -426,6 +426,20 @@ public class ProtonDecoder implements Decoder {
         }
     }
 
+    @SuppressWarnings("unchecked")
+    @Override
+    public <T> T readObject(ByteBuf buffer, DecoderState state, final Class<T> clazz) throws IOException {
+        Object result = readObject(buffer, state);
+
+        if (result == null) {
+            return null;
+        } else if (clazz.isAssignableFrom(result.getClass())) {
+            return (T) result;
+        } else {
+            throw signalUnexpectedType(result, Array.newInstance(clazz, 0).getClass());
+        }
+    }
+
     @Override
     @SuppressWarnings("unchecked")
     public <T> T[] readMultiple(ByteBuf buffer, DecoderState state, final Class<T> clazz) throws IOException {
@@ -448,7 +462,7 @@ public class ProtonDecoder implements Decoder {
         }
     }
 
-    private ClassCastException signalUnexpectedType(final Object val, Class clazz) {
+    private ClassCastException signalUnexpectedType(final Object val, Class<?> clazz) {
         return new ClassCastException("Unexpected type " + val.getClass().getName() +
                                       ". Expected " + clazz.getName() + ".");
     }

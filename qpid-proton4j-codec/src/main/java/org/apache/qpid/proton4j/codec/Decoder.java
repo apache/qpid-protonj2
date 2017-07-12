@@ -80,6 +80,8 @@ public interface Decoder {
 
     Object readObject(ByteBuf buffer, DecoderState state) throws IOException;
 
+    <T> T readObject(ByteBuf buffer, DecoderState state, final Class<T> clazz) throws IOException;
+
     <T> T[] readMultiple(ByteBuf buffer, DecoderState state, final Class<T> clazz) throws IOException;
 
     TypeDecoder<?> readNextTypeDecoder(ByteBuf buffer, DecoderState state) throws IOException;
