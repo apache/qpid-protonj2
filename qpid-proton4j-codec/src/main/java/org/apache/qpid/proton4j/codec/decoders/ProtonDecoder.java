@@ -19,6 +19,7 @@ package org.apache.qpid.proton4j.codec.decoders;
 import java.io.IOException;
 import java.lang.reflect.Array;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -72,6 +73,42 @@ public class ProtonDecoder implements Decoder {
             return arrayDecoder.readValueAsObject(buffer, state);
         } else {
             return decoder.readValue(buffer, state);
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public <T> T readObject(ByteBuf buffer, DecoderState state, final Class<T> clazz) throws IOException {
+        Object result = readObject(buffer, state);
+
+        if (result == null) {
+            return null;
+        } else if (clazz.isAssignableFrom(result.getClass())) {
+            return (T) result;
+        } else {
+            throw signalUnexpectedType(result, Array.newInstance(clazz, 0).getClass());
+        }
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public <T> T[] readMultiple(ByteBuf buffer, DecoderState state, final Class<T> clazz) throws IOException {
+        Object val = readObject(buffer, state);
+
+        if (val == null) {
+            return null;
+        } else if (val.getClass().isArray()) {
+            if (clazz.isAssignableFrom(val.getClass().getComponentType())) {
+                return (T[]) val;
+            } else {
+                throw signalUnexpectedType(val, Array.newInstance(clazz, 0).getClass());
+            }
+        } else if (clazz.isAssignableFrom(val.getClass())) {
+            T[] array = (T[]) Array.newInstance(clazz, 1);
+            array[0] = (T) val;
+            return array;
+        } else {
+            throw signalUnexpectedType(val, Array.newInstance(clazz, 0).getClass());
         }
     }
 
@@ -428,37 +465,37 @@ public class ProtonDecoder implements Decoder {
 
     @SuppressWarnings("unchecked")
     @Override
-    public <T> T readObject(ByteBuf buffer, DecoderState state, final Class<T> clazz) throws IOException {
-        Object result = readObject(buffer, state);
+    public <K, V> Map<K, V> readMap(ByteBuf buffer, DecoderState state) throws IOException {
+        byte encodingCode = buffer.readByte();
 
-        if (result == null) {
-            return null;
-        } else if (clazz.isAssignableFrom(result.getClass())) {
-            return (T) result;
-        } else {
-            throw signalUnexpectedType(result, Array.newInstance(clazz, 0).getClass());
+        switch (encodingCode) {
+            case EncodingCodes.MAP8:
+                return (Map<K, V>) primitiveDecoders[EncodingCodes.MAP8 & 0xff].readValue(buffer, state);
+            case EncodingCodes.MAP32:
+                return (Map<K, V>) primitiveDecoders[EncodingCodes.MAP8 & 0xff].readValue(buffer, state);
+            case EncodingCodes.NULL:
+                return null;
+            default:
+                throw new IOException("Expected Map type but found encoding: " + encodingCode);
         }
     }
 
-    @Override
     @SuppressWarnings("unchecked")
-    public <T> T[] readMultiple(ByteBuf buffer, DecoderState state, final Class<T> clazz) throws IOException {
-        Object val = readObject(buffer, state);
+    @Override
+    public <V> List<V> readList(ByteBuf buffer, DecoderState state) throws IOException {
+        byte encodingCode = buffer.readByte();
 
-        if (val == null) {
-            return null;
-        } else if (val.getClass().isArray()) {
-            if (clazz.isAssignableFrom(val.getClass().getComponentType())) {
-                return (T[]) val;
-            } else {
-                throw signalUnexpectedType(val, Array.newInstance(clazz, 0).getClass());
-            }
-        } else if (clazz.isAssignableFrom(val.getClass())) {
-            T[] array = (T[]) Array.newInstance(clazz, 1);
-            array[0] = (T) val;
-            return array;
-        } else {
-            throw signalUnexpectedType(val, Array.newInstance(clazz, 0).getClass());
+        switch (encodingCode) {
+            case EncodingCodes.LIST0:
+                return (List<V>) primitiveDecoders[EncodingCodes.LIST0 & 0xff].readValue(buffer, state);
+            case EncodingCodes.LIST8:
+                return (List<V>) primitiveDecoders[EncodingCodes.LIST8 & 0xff].readValue(buffer, state);
+            case EncodingCodes.LIST32:
+                return (List<V>) primitiveDecoders[EncodingCodes.LIST32 & 0xff].readValue(buffer, state);
+            case EncodingCodes.NULL:
+                return null;
+            default:
+                throw new IOException("Expected List type but found encoding: " + encodingCode);
         }
     }
 

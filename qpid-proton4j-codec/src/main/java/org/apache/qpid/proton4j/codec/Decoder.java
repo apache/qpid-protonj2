@@ -17,6 +17,8 @@
 package org.apache.qpid.proton4j.codec;
 
 import java.io.IOException;
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import org.apache.qpid.proton4j.amqp.Binary;
@@ -83,6 +85,10 @@ public interface Decoder {
     <T> T readObject(ByteBuf buffer, DecoderState state, final Class<T> clazz) throws IOException;
 
     <T> T[] readMultiple(ByteBuf buffer, DecoderState state, final Class<T> clazz) throws IOException;
+
+    <K,V> Map<K, V> readMap(ByteBuf buffer, DecoderState state) throws IOException;
+
+    <V> List<V> readList(ByteBuf buffer, DecoderState state) throws IOException;
 
     TypeDecoder<?> readNextTypeDecoder(ByteBuf buffer, DecoderState state) throws IOException;
 
