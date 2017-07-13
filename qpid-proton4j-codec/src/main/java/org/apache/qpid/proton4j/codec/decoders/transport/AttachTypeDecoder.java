@@ -121,7 +121,7 @@ public class AttachTypeDecoder implements DescribedTypeDecoder<Attach>, ListEntr
                 attach.setProperties(state.getDecoder().readMap(buffer, state));
                 break;
             default:
-                throw new IllegalStateException("To many entries in Declared encoding");
+                throw new IllegalStateException("To many entries in Attach encoding");
         }
     }
 }
