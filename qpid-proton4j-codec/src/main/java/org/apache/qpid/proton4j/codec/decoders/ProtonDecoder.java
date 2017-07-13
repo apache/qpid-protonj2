@@ -90,6 +90,8 @@ public class ProtonDecoder implements Decoder {
         }
     }
 
+    // TODO - Remove this later and do a decode of the correct type without allocating an array
+    //        if only a single is provided.  For now it makes implementing the basic decoders easier
     @Override
     @SuppressWarnings("unchecked")
     public <T> T[] readMultiple(ByteBuf buffer, DecoderState state, final Class<T> clazz) throws IOException {
