@@ -20,8 +20,7 @@ import java.io.IOException;
 
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
-import org.apache.qpid.proton4j.amqp.transactions.Declare;
-import org.apache.qpid.proton4j.amqp.transactions.GlobalTxId;
+import org.apache.qpid.proton4j.amqp.transactions.Declared;
 import org.apache.qpid.proton4j.codec.DecoderState;
 import org.apache.qpid.proton4j.codec.DescribedTypeDecoder;
 import org.apache.qpid.proton4j.codec.TypeDecoder;
@@ -31,27 +30,27 @@ import org.apache.qpid.proton4j.codec.decoders.primitives.ListTypeDecoder.ListEn
 import io.netty.buffer.ByteBuf;
 
 /**
- * Decoder of AMQP Declare type values from a byte stream
+ * Decoder of AMQP Declared types from a byte stream.
  */
-public class DeclareTypeDecoder implements DescribedTypeDecoder<Declare>, ListEntryHandler {
+public class DeclaredTypeDecoder implements DescribedTypeDecoder<Declared>, ListEntryHandler {
 
     @Override
-    public Class<Declare> getTypeClass() {
-        return Declare.class;
+    public Class<Declared> getTypeClass() {
+        return Declared.class;
     }
 
     @Override
     public UnsignedLong getDescriptorCode() {
-        return Declare.DESCRIPTOR_CODE;
+        return Declared.DESCRIPTOR_CODE;
     }
 
     @Override
     public Symbol getDescriptorSymbol() {
-        return Declare.DESCRIPTOR_SYMBOL;
+        return Declared.DESCRIPTOR_SYMBOL;
     }
 
     @Override
-    public Declare readValue(ByteBuf buffer, DecoderState state) throws IOException {
+    public Declared readValue(ByteBuf buffer, DecoderState state) throws IOException {
 
         TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
@@ -60,23 +59,23 @@ public class DeclareTypeDecoder implements DescribedTypeDecoder<Declare>, ListEn
         }
 
         ListTypeDecoder listDecoder = (ListTypeDecoder) decoder;
-        Declare declare = new Declare();
+        Declared declared = new Declared();
 
-        listDecoder.readValue(buffer, state, this, declare);
+        listDecoder.readValue(buffer, state, this, declared);
 
-        return declare;
+        return declared;
     }
 
     @Override
     public void onListEntry(int index, Object target, ByteBuf buffer, DecoderState state) throws IOException {
-        Declare declare = (Declare) target;
+        Declared declared = (Declared) target;
 
         switch (index) {
             case 0:
-                declare.setGlobalId(state.getDecoder().readObject(buffer, state, GlobalTxId.class));
+                declared.setTxnId(state.getDecoder().readBinary(buffer, state));
                 break;
             default:
-                throw new IllegalStateException("To many entries in Declare encoding");
+                throw new IllegalStateException("To many entries in Declared encoding");
         }
     }
 }
