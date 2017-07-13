@@ -74,6 +74,7 @@ public abstract class AbstractListTypeDecoder implements ListTypeDecoder {
         return list;
     }
 
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     @Override
     public void readValue(ByteBuf buffer, DecoderState state, ListEntryHandler handler, Object target) throws IOException {
         int size = readSize(buffer);

@@ -32,7 +32,7 @@ import io.netty.buffer.ByteBuf;
 /**
  * Decoder of AMQP Properties type values from a byte stream
  */
-public class PropertiesTypeDecoder implements DescribedTypeDecoder<Properties>, ListTypeDecoder.ListEntryHandler {
+public class PropertiesTypeDecoder implements DescribedTypeDecoder<Properties>, ListTypeDecoder.ListEntryHandler<Properties> {
 
     @Override
     public UnsignedLong getDescriptorCode() {
@@ -66,9 +66,7 @@ public class PropertiesTypeDecoder implements DescribedTypeDecoder<Properties>, 
     }
 
     @Override
-    public void onListEntry(int index, Object target, ByteBuf buffer, DecoderState state) throws IOException {
-        Properties properties = (Properties) target;
-
+    public void onListEntry(int index, Properties properties, ByteBuf buffer, DecoderState state) throws IOException {
         switch (index) {
             case 0:
                 properties.setMessageId(state.getDecoder().readObject(buffer, state));

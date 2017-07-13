@@ -33,7 +33,7 @@ import io.netty.buffer.ByteBuf;
 /**
  * Decoder of AMQP Declare type values from a byte stream
  */
-public class DeclareTypeDecoder implements DescribedTypeDecoder<Declare>, ListEntryHandler {
+public class DeclareTypeDecoder implements DescribedTypeDecoder<Declare>, ListEntryHandler<Declare> {
 
     @Override
     public Class<Declare> getTypeClass() {
@@ -68,9 +68,7 @@ public class DeclareTypeDecoder implements DescribedTypeDecoder<Declare>, ListEn
     }
 
     @Override
-    public void onListEntry(int index, Object target, ByteBuf buffer, DecoderState state) throws IOException {
-        Declare declare = (Declare) target;
-
+    public void onListEntry(int index, Declare declare, ByteBuf buffer, DecoderState state) throws IOException {
         switch (index) {
             case 0:
                 declare.setGlobalId(state.getDecoder().readObject(buffer, state, GlobalTxId.class));

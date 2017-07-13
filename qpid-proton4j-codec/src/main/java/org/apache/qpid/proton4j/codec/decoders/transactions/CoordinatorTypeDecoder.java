@@ -25,13 +25,14 @@ import org.apache.qpid.proton4j.codec.DecoderState;
 import org.apache.qpid.proton4j.codec.DescribedTypeDecoder;
 import org.apache.qpid.proton4j.codec.TypeDecoder;
 import org.apache.qpid.proton4j.codec.decoders.primitives.ListTypeDecoder;
+import org.apache.qpid.proton4j.codec.decoders.primitives.ListTypeDecoder.ListEntryHandler;
 
 import io.netty.buffer.ByteBuf;
 
 /**
  * Decoder of AMQP Coordinator type values from a byte stream.
  */
-public class CoordinatorTypeDecoder implements DescribedTypeDecoder<Coordinator>, ListTypeDecoder.ListEntryHandler {
+public class CoordinatorTypeDecoder implements DescribedTypeDecoder<Coordinator>, ListEntryHandler<Coordinator> {
 
     @Override
     public Class<Coordinator> getTypeClass() {
@@ -66,9 +67,7 @@ public class CoordinatorTypeDecoder implements DescribedTypeDecoder<Coordinator>
     }
 
     @Override
-    public void onListEntry(int index, Object target, ByteBuf buffer, DecoderState state) throws IOException {
-        Coordinator coordinator = (Coordinator) target;
-
+    public void onListEntry(int index, Coordinator coordinator, ByteBuf buffer, DecoderState state) throws IOException {
         switch (index) {
             case 0:
                 coordinator.setCapabilities(state.getDecoder().readMultiple(buffer, state, Symbol.class));

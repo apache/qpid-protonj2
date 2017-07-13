@@ -31,7 +31,7 @@ import io.netty.buffer.ByteBuf;
 /**
  * Decoder of AMQP Header types from a byte stream
  */
-public class HeaderTypeDecoder implements DescribedTypeDecoder<Header>, ListTypeDecoder.ListEntryHandler {
+public class HeaderTypeDecoder implements DescribedTypeDecoder<Header>, ListTypeDecoder.ListEntryHandler<Header> {
 
     @Override
     public Class<Header> getTypeClass() {
@@ -66,9 +66,7 @@ public class HeaderTypeDecoder implements DescribedTypeDecoder<Header>, ListType
     }
 
     @Override
-    public void onListEntry(int index, Object target, ByteBuf buffer, DecoderState state) throws IOException {
-        Header header = (Header) target;
-
+    public void onListEntry(int index, Header header, ByteBuf buffer, DecoderState state) throws IOException {
         switch (index) {
             case 4:
                 header.setDeliveryCount(state.getDecoder().readUnsignedInteger(buffer, state));

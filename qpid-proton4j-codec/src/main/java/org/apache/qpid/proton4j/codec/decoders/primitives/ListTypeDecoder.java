@@ -30,9 +30,9 @@ import io.netty.buffer.ByteBuf;
 @SuppressWarnings("rawtypes")
 public interface ListTypeDecoder extends PrimitiveTypeDecoder<List> {
 
-    public interface ListEntryHandler {
+    public interface ListEntryHandler<T> {
 
-        void onListEntry(int index, Object target, ByteBuf buffer, DecoderState state) throws IOException;
+        void onListEntry(int index, T target, ByteBuf buffer, DecoderState state) throws IOException;
 
     }
 
