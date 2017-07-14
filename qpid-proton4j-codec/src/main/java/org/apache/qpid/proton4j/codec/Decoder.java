@@ -38,6 +38,9 @@ import io.netty.buffer.ByteBuf;
  */
 public interface Decoder {
 
+    // TODO - Decide if we should provide read methods that accept a default
+    //        value to return when the read in value is a null encoding.
+
     DecoderState newDecoderState();
 
     Boolean readBoolean(ByteBuf buffer, DecoderState state) throws IOException;
