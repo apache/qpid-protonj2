@@ -20,36 +20,37 @@ import java.io.IOException;
 
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
-import org.apache.qpid.proton4j.amqp.messaging.Header;
+import org.apache.qpid.proton4j.amqp.messaging.Received;
 import org.apache.qpid.proton4j.codec.DecoderState;
 import org.apache.qpid.proton4j.codec.DescribedTypeDecoder;
 import org.apache.qpid.proton4j.codec.TypeDecoder;
 import org.apache.qpid.proton4j.codec.decoders.primitives.ListTypeDecoder;
+import org.apache.qpid.proton4j.codec.decoders.primitives.ListTypeDecoder.ListEntryHandler;
 
 import io.netty.buffer.ByteBuf;
 
 /**
- * Decoder of AMQP Header types from a byte stream
+ * Decoder of AMQP Received type value from a byte stream.
  */
-public class HeaderTypeDecoder implements DescribedTypeDecoder<Header>, ListTypeDecoder.ListEntryHandler<Header> {
+public class ReceivedTypeDecoder implements DescribedTypeDecoder<Received>, ListEntryHandler<Received> {
 
     @Override
-    public Class<Header> getTypeClass() {
-        return Header.class;
+    public Class<Received> getTypeClass() {
+        return Received.class;
     }
 
     @Override
     public UnsignedLong getDescriptorCode() {
-        return Header.DESCRIPTOR_CODE;
+        return Received.DESCRIPTOR_CODE;
     }
 
     @Override
     public Symbol getDescriptorSymbol() {
-        return Header.DESCRIPTOR_SYMBOL;
+        return Received.DESCRIPTOR_SYMBOL;
     }
 
     @Override
-    public Header readValue(ByteBuf buffer, DecoderState state) throws IOException {
+    public Received readValue(ByteBuf buffer, DecoderState state) throws IOException {
         TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
         if (!(decoder instanceof ListTypeDecoder)) {
@@ -57,33 +58,24 @@ public class HeaderTypeDecoder implements DescribedTypeDecoder<Header>, ListType
         }
 
         ListTypeDecoder listDecoder = (ListTypeDecoder) decoder;
-        Header header = new Header();
+        Received received = new Received();
 
-        listDecoder.readValue(buffer, state, this, header);
+        listDecoder.readValue(buffer, state, this, received);
 
-        return header;
+        return received;
     }
 
     @Override
-    public void onListEntry(int index, Header header, ByteBuf buffer, DecoderState state) throws IOException {
+    public void onListEntry(int index, Received received, ByteBuf buffer, DecoderState state) throws IOException {
         switch (index) {
             case 0:
-                header.setDurable(state.getDecoder().readBoolean(buffer, state));
+                received.setSectionNumber(state.getDecoder().readUnsignedInteger(buffer, state));
                 break;
             case 1:
-                header.setPriority(state.getDecoder().readUnsignedByte(buffer, state));
-                break;
-            case 2:
-                header.setTtl(state.getDecoder().readUnsignedInteger(buffer, state));
-                break;
-            case 3:
-                header.setFirstAcquirer(state.getDecoder().readBoolean(buffer, state));
-                break;
-            case 4:
-                header.setDeliveryCount(state.getDecoder().readUnsignedInteger(buffer, state));
+                received.setSectionOffset(state.getDecoder().readUnsignedLong(buffer, state));
                 break;
             default:
-                throw new IllegalStateException("To many entries in Header encoding");
+                throw new IllegalStateException("To many entries in Received encoding");
         }
     }
 }
