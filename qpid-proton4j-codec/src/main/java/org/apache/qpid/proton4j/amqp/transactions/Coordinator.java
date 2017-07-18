@@ -20,31 +20,36 @@ import java.util.Arrays;
 
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
-import org.apache.qpid.proton4j.amqp.messaging.Target;
+import org.apache.qpid.proton4j.amqp.messaging.Terminus;
 
-public class Coordinator extends Target {
-
-    // TODO - This is not really a "Target" but it provides "target"
+public final class Coordinator implements Terminus {
 
     public static final UnsignedLong DESCRIPTOR_CODE = UnsignedLong.valueOf(0x0000000000000030L);
     public static final Symbol DESCRIPTOR_SYMBOL = Symbol.valueOf("amqp:coordinator:list");
+
+    private Symbol[] capabilities;
 
     public Coordinator() {
         super();
     }
 
     protected Coordinator(Coordinator other) {
-        super(other);
+        if (other.capabilities != null) {
+            this.capabilities = other.capabilities.clone();
+        }
+    }
+
+    public Symbol[] getCapabilities() {
+        return capabilities;
+    }
+
+    public final void setCapabilities(Symbol... capabilities) {
+        this.capabilities = capabilities;
     }
 
     @Override
     public String toString() {
         return "Coordinator{" + "capabilities=" + (getCapabilities() == null ? null : Arrays.asList(getCapabilities())) + '}';
-    }
-
-    @Override
-    public String getAddress() {
-        return null;
     }
 
     @Override
