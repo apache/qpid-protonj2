@@ -14,16 +14,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.qpid.proton4j.codec.decoders.transport;
+package org.apache.qpid.proton4j.codec.decoders.messaging;
 
 import java.io.IOException;
 
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedInteger;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
-import org.apache.qpid.proton4j.amqp.transport.Target;
-import org.apache.qpid.proton4j.amqp.transport.TerminusDurability;
-import org.apache.qpid.proton4j.amqp.transport.TerminusExpiryPolicy;
+import org.apache.qpid.proton4j.amqp.messaging.Target;
+import org.apache.qpid.proton4j.amqp.messaging.TerminusDurability;
+import org.apache.qpid.proton4j.amqp.messaging.TerminusExpiryPolicy;
 import org.apache.qpid.proton4j.codec.DecoderState;
 import org.apache.qpid.proton4j.codec.DescribedTypeDecoder;
 import org.apache.qpid.proton4j.codec.TypeDecoder;

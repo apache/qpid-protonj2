@@ -20,7 +20,7 @@ import java.util.Arrays;
 
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
-import org.apache.qpid.proton4j.amqp.transport.Target;
+import org.apache.qpid.proton4j.amqp.messaging.Target;
 
 public class Coordinator extends Target {
 
