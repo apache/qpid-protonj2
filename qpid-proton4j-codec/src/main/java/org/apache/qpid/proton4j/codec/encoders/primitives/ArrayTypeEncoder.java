@@ -14,17 +14,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.qpid.proton4j.codec;
+package org.apache.qpid.proton4j.codec.encoders.primitives;
+
+import org.apache.qpid.proton4j.codec.EncoderState;
+import org.apache.qpid.proton4j.codec.PrimitiveArrayTypeEncoder;
+
+import io.netty.buffer.ByteBuf;
 
 /**
- * Encoder of Primitive types such as Integer or Boolean
- *
- * @param <V> the type that this encoder writes.
+ * Encoder of AMQP Array types to a byte stream.
  */
-public interface PrimitiveTypeEncoder<V> extends TypeEncoder<V> {
+public class ArrayTypeEncoder implements PrimitiveArrayTypeEncoder {
 
-    default boolean isArryTypeDecoder() {
-        return false;
+    @Override
+    public void writeType(ByteBuf buffer, EncoderState state, Object[] value) {
+    }
+
+    @Override
+    public void writeValue(ByteBuf buffer, EncoderState state, Object[] value) {
     }
 
 }

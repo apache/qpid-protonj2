@@ -16,15 +16,15 @@
  */
 package org.apache.qpid.proton4j.codec;
 
-/**
- * Encoder of Primitive types such as Integer or Boolean
- *
- * @param <V> the type that this encoder writes.
- */
-public interface PrimitiveTypeEncoder<V> extends TypeEncoder<V> {
+public interface PrimitiveArrayTypeEncoder extends PrimitiveTypeEncoder<Object[]> {
 
+    @Override
     default boolean isArryTypeDecoder() {
-        return false;
+        return true;
     }
 
+    @Override
+    default Class<Object[]> getTypeClass() {
+        return Object[].class;
+    }
 }
