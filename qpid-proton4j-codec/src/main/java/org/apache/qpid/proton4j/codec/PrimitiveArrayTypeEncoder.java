@@ -16,7 +16,20 @@
  */
 package org.apache.qpid.proton4j.codec;
 
-public interface PrimitiveArrayTypeEncoder extends PrimitiveTypeEncoder<Object[]> {
+import java.util.UUID;
+
+import org.apache.qpid.proton4j.amqp.Decimal128;
+import org.apache.qpid.proton4j.amqp.Decimal32;
+import org.apache.qpid.proton4j.amqp.Decimal64;
+import org.apache.qpid.proton4j.amqp.Symbol;
+import org.apache.qpid.proton4j.amqp.UnsignedByte;
+import org.apache.qpid.proton4j.amqp.UnsignedInteger;
+import org.apache.qpid.proton4j.amqp.UnsignedLong;
+import org.apache.qpid.proton4j.amqp.UnsignedShort;
+
+import io.netty.buffer.ByteBuf;
+
+public interface PrimitiveArrayTypeEncoder extends PrimitiveTypeEncoder<Object> {
 
     @Override
     default boolean isArryTypeDecoder() {
@@ -24,7 +37,44 @@ public interface PrimitiveArrayTypeEncoder extends PrimitiveTypeEncoder<Object[]
     }
 
     @Override
-    default Class<Object[]> getTypeClass() {
-        return Object[].class;
+    default Class<Object> getTypeClass() {
+        return Object.class;
     }
+
+    void writeArray(ByteBuf buffer, EncoderState state, Object[] value);
+
+    void writeArray(ByteBuf buffer, EncoderState state, boolean[] value);
+
+    void writeArray(ByteBuf buffer, EncoderState state, byte[] value);
+
+    void writeArray(ByteBuf buffer, EncoderState state, short[] value);
+
+    void writeArray(ByteBuf buffer, EncoderState state, int[] value);
+
+    void writeArray(ByteBuf buffer, EncoderState state, long[] value);
+
+    void writeArray(ByteBuf buffer, EncoderState state, float[] value);
+
+    void writeArray(ByteBuf buffer, EncoderState state, double[] value);
+
+    void writeArray(ByteBuf buffer, EncoderState state, char[] value);
+
+    void writeArray(ByteBuf buffer, EncoderState state, Decimal32[] value);
+
+    void writeArray(ByteBuf buffer, EncoderState state, Decimal64[] value);
+
+    void writeArray(ByteBuf buffer, EncoderState state, Decimal128[] value);
+
+    void writeArray(ByteBuf buffer, EncoderState state, Symbol[] value);
+
+    void writeArray(ByteBuf buffer, EncoderState state, UnsignedByte[] value);
+
+    void writeArray(ByteBuf buffer, EncoderState state, UnsignedShort[] value);
+
+    void writeArray(ByteBuf buffer, EncoderState state, UnsignedInteger[] value);
+
+    void writeArray(ByteBuf buffer, EncoderState state, UnsignedLong[] value);
+
+    void writeArray(ByteBuf buffer, EncoderState state, UUID[] value);
+
 }

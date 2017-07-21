@@ -16,6 +16,16 @@
  */
 package org.apache.qpid.proton4j.codec.encoders.primitives;
 
+import java.util.UUID;
+
+import org.apache.qpid.proton4j.amqp.Decimal128;
+import org.apache.qpid.proton4j.amqp.Decimal32;
+import org.apache.qpid.proton4j.amqp.Decimal64;
+import org.apache.qpid.proton4j.amqp.Symbol;
+import org.apache.qpid.proton4j.amqp.UnsignedByte;
+import org.apache.qpid.proton4j.amqp.UnsignedInteger;
+import org.apache.qpid.proton4j.amqp.UnsignedLong;
+import org.apache.qpid.proton4j.amqp.UnsignedShort;
 import org.apache.qpid.proton4j.codec.EncoderState;
 import org.apache.qpid.proton4j.codec.PrimitiveArrayTypeEncoder;
 
@@ -27,11 +37,108 @@ import io.netty.buffer.ByteBuf;
 public class ArrayTypeEncoder implements PrimitiveArrayTypeEncoder {
 
     @Override
-    public void writeType(ByteBuf buffer, EncoderState state, Object[] value) {
+    public void writeType(ByteBuf buffer, EncoderState state, Object value) {
+        Class<?> componentType = value.getClass().getComponentType();
+        if (componentType.isPrimitive()) {
+            if (componentType == Boolean.TYPE) {
+                writeArray(buffer, state, (boolean[]) value);
+            } else if (componentType == Byte.TYPE) {
+                writeArray(buffer, state, (byte[]) value);
+            } else if (componentType == Short.TYPE) {
+                writeArray(buffer, state, (short[]) value);
+            } else if (componentType == Integer.TYPE) {
+                writeArray(buffer, state, (int[]) value);
+            } else if (componentType == Long.TYPE) {
+                writeArray(buffer, state, (long[]) value);
+            } else if (componentType == Float.TYPE) {
+                writeArray(buffer, state, (float[]) value);
+            } else if (componentType == Double.TYPE) {
+                writeArray(buffer, state, (double[]) value);
+            } else if (componentType == Character.TYPE) {
+                writeArray(buffer, state, (char[]) value);
+            } else {
+                throw new IllegalArgumentException(
+                    "Cannot write arrays of type " + componentType.getName());
+            }
+        } else {
+            writeArray(buffer, state, (Object[]) value);
+        }
     }
 
     @Override
-    public void writeValue(ByteBuf buffer, EncoderState state, Object[] value) {
+    public void writeValue(ByteBuf buffer, EncoderState state, Object value) {
+    }
+
+    @Override
+    public void writeArray(ByteBuf buffer, EncoderState state, Object[] value) {
+    }
+
+    @Override
+    public void writeArray(ByteBuf buffer, EncoderState state, boolean[] value) {
+    }
+
+    @Override
+    public void writeArray(ByteBuf buffer, EncoderState state, byte[] value) {
+    }
+
+    @Override
+    public void writeArray(ByteBuf buffer, EncoderState state, short[] value) {
+    }
+
+    @Override
+    public void writeArray(ByteBuf buffer, EncoderState state, int[] value) {
+    }
+
+    @Override
+    public void writeArray(ByteBuf buffer, EncoderState state, long[] value) {
+    }
+
+    @Override
+    public void writeArray(ByteBuf buffer, EncoderState state, float[] value) {
+    }
+
+    @Override
+    public void writeArray(ByteBuf buffer, EncoderState state, double[] value) {
+    }
+
+    @Override
+    public void writeArray(ByteBuf buffer, EncoderState state, char[] value) {
+    }
+
+    @Override
+    public void writeArray(ByteBuf buffer, EncoderState state, Decimal32[] value) {
+    }
+
+    @Override
+    public void writeArray(ByteBuf buffer, EncoderState state, Decimal64[] value) {
+    }
+
+    @Override
+    public void writeArray(ByteBuf buffer, EncoderState state, Decimal128[] value) {
+    }
+
+    @Override
+    public void writeArray(ByteBuf buffer, EncoderState state, Symbol[] value) {
+    }
+
+    @Override
+    public void writeArray(ByteBuf buffer, EncoderState state, UUID[] value) {
+    }
+
+    @Override
+    public void writeArray(ByteBuf buffer, EncoderState state, UnsignedByte[] value) {
+    }
+
+    @Override
+    public void writeArray(ByteBuf buffer, EncoderState state, UnsignedShort[] value) {
+    }
+
+    @Override
+    public void writeArray(ByteBuf buffer, EncoderState state, UnsignedInteger[] value) {
+    }
+
+    @Override
+    public void writeArray(ByteBuf buffer, EncoderState state, UnsignedLong[] value) {
     }
 
 }

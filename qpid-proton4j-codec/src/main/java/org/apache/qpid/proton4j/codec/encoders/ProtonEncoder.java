@@ -35,6 +35,7 @@ import org.apache.qpid.proton4j.amqp.UnsignedShort;
 import org.apache.qpid.proton4j.codec.Encoder;
 import org.apache.qpid.proton4j.codec.EncoderState;
 import org.apache.qpid.proton4j.codec.TypeEncoder;
+import org.apache.qpid.proton4j.codec.encoders.primitives.ArrayTypeEncoder;
 import org.apache.qpid.proton4j.codec.encoders.primitives.BinaryTypeEncoder;
 import org.apache.qpid.proton4j.codec.encoders.primitives.BooleanFalseTypeEncoder;
 import org.apache.qpid.proton4j.codec.encoders.primitives.BooleanTrueTypeEncoder;
@@ -67,6 +68,7 @@ import io.netty.buffer.ByteBuf;
  */
 public class ProtonEncoder implements Encoder {
 
+    private final ArrayTypeEncoder arrayEncoder = new ArrayTypeEncoder();
     private final BinaryTypeEncoder binaryEncoder = new BinaryTypeEncoder();
     private final BooleanTrueTypeEncoder trueEncoder = new BooleanTrueTypeEncoder();
     private final BooleanFalseTypeEncoder falseEncoder = new BooleanFalseTypeEncoder();
@@ -353,62 +355,169 @@ public class ProtonEncoder implements Encoder {
 
     @Override
     public void writeDescribedType(ByteBuf buffer, EncoderState state, DescribedType value) {
-        // TODO Auto-generated method stub
-
+        // TODO Write random described types
     }
 
     @Override
     public void writeArray(ByteBuf buffer, EncoderState state, boolean[] value) {
-        // TODO Auto-generated method stub
-
+        if (value == null) {
+            nullEncoder.writeType(buffer, state, null);
+        } else {
+            arrayEncoder.writeArray(buffer, state, value);
+        }
     }
 
     @Override
     public void writeArray(ByteBuf buffer, EncoderState state, byte[] value) {
-        // TODO Auto-generated method stub
-
+        if (value == null) {
+            nullEncoder.writeType(buffer, state, null);
+        } else {
+            arrayEncoder.writeArray(buffer, state, value);
+        }
     }
 
     @Override
     public void writeArray(ByteBuf buffer, EncoderState state, short[] value) {
-        // TODO Auto-generated method stub
-
+        if (value == null) {
+            nullEncoder.writeType(buffer, state, null);
+        } else {
+            arrayEncoder.writeArray(buffer, state, value);
+        }
     }
 
     @Override
     public void writeArray(ByteBuf buffer, EncoderState state, int[] value) {
-        // TODO Auto-generated method stub
-
+        if (value == null) {
+            nullEncoder.writeType(buffer, state, null);
+        } else {
+            arrayEncoder.writeArray(buffer, state, value);
+        }
     }
 
     @Override
     public void writeArray(ByteBuf buffer, EncoderState state, long[] value) {
-        // TODO Auto-generated method stub
-
+        if (value == null) {
+            nullEncoder.writeType(buffer, state, null);
+        } else {
+            arrayEncoder.writeArray(buffer, state, value);
+        }
     }
 
     @Override
     public void writeArray(ByteBuf buffer, EncoderState state, float[] value) {
-        // TODO Auto-generated method stub
-
+        if (value == null) {
+            nullEncoder.writeType(buffer, state, null);
+        } else {
+            arrayEncoder.writeArray(buffer, state, value);
+        }
     }
 
     @Override
     public void writeArray(ByteBuf buffer, EncoderState state, double[] value) {
-        // TODO Auto-generated method stub
-
+        if (value == null) {
+            nullEncoder.writeType(buffer, state, null);
+        } else {
+            arrayEncoder.writeArray(buffer, state, value);
+        }
     }
 
     @Override
     public void writeArray(ByteBuf buffer, EncoderState state, char[] value) {
-        // TODO Auto-generated method stub
-
+        if (value == null) {
+            nullEncoder.writeType(buffer, state, null);
+        } else {
+            arrayEncoder.writeArray(buffer, state, value);
+        }
     }
 
     @Override
     public void writeArray(ByteBuf buffer, EncoderState state, Object[] value) {
-        // TODO Auto-generated method stub
+        if (value == null) {
+            nullEncoder.writeType(buffer, state, null);
+        } else {
+            arrayEncoder.writeArray(buffer, state, value);
+        }
+    }
 
+    @Override
+    public void writeArray(ByteBuf buffer, EncoderState state, Decimal32[] value) {
+        if (value == null) {
+            nullEncoder.writeType(buffer, state, null);
+        } else {
+            arrayEncoder.writeArray(buffer, state, value);
+        }
+    }
+
+    @Override
+    public void writeArray(ByteBuf buffer, EncoderState state, Decimal64[] value) {
+        if (value == null) {
+            nullEncoder.writeType(buffer, state, null);
+        } else {
+            arrayEncoder.writeArray(buffer, state, value);
+        }
+    }
+
+    @Override
+    public void writeArray(ByteBuf buffer, EncoderState state, Decimal128[] value) {
+        if (value == null) {
+            nullEncoder.writeType(buffer, state, null);
+        } else {
+            arrayEncoder.writeArray(buffer, state, value);
+        }
+    }
+
+    @Override
+    public void writeArray(ByteBuf buffer, EncoderState state, Symbol[] value) {
+        if (value == null) {
+            nullEncoder.writeType(buffer, state, null);
+        } else {
+            arrayEncoder.writeArray(buffer, state, value);
+        }
+    }
+
+    @Override
+    public void writeArray(ByteBuf buffer, EncoderState state, UnsignedByte[] value) {
+        if (value == null) {
+            nullEncoder.writeType(buffer, state, null);
+        } else {
+            arrayEncoder.writeArray(buffer, state, value);
+        }
+    }
+
+    @Override
+    public void writeArray(ByteBuf buffer, EncoderState state, UnsignedShort[] value) {
+        if (value == null) {
+            nullEncoder.writeType(buffer, state, null);
+        } else {
+            arrayEncoder.writeArray(buffer, state, value);
+        }
+    }
+
+    @Override
+    public void writeArray(ByteBuf buffer, EncoderState state, UnsignedInteger[] value) {
+        if (value == null) {
+            nullEncoder.writeType(buffer, state, null);
+        } else {
+            arrayEncoder.writeArray(buffer, state, value);
+        }
+    }
+
+    @Override
+    public void writeArray(ByteBuf buffer, EncoderState state, UnsignedLong[] value) {
+        if (value == null) {
+            nullEncoder.writeType(buffer, state, null);
+        } else {
+            arrayEncoder.writeArray(buffer, state, value);
+        }
+    }
+
+    @Override
+    public void writeArray(ByteBuf buffer, EncoderState state, UUID[] value) {
+        if (value == null) {
+            nullEncoder.writeType(buffer, state, null);
+        } else {
+            arrayEncoder.writeArray(buffer, state, value);
+        }
     }
 
     @SuppressWarnings({ "rawtypes", "unchecked" })
@@ -480,12 +589,12 @@ public class ProtonEncoder implements Encoder {
 
         if (encoder == null) {
             if (typeClass.isArray()) {
-                // TODO encoder = arrayEncoder;
+                encoder = arrayEncoder;
             } else {
                 if (List.class.isAssignableFrom(typeClass)) {
-                    // TODO encoder = listEncoder;
+                    encoder = listEncoder;
                 } else if (Map.class.isAssignableFrom(typeClass)) {
-                    // TODO encoder = mapEncoder;
+                    encoder = mapEncoder;
                 } else if (DescribedType.class.isAssignableFrom(typeClass)) {
                     // TODO encoder =
                     // describedTypesClassRegistry.get(typeClass);

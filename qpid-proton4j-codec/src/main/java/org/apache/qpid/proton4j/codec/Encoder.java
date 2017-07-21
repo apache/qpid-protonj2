@@ -107,14 +107,40 @@ public interface Encoder {
     void writeDescribedType(ByteBuf buffer, EncoderState state, DescribedType value);
 
     void writeArray(ByteBuf buffer, EncoderState state, boolean[] value);
+
     void writeArray(ByteBuf buffer, EncoderState state, byte[] value);
+
     void writeArray(ByteBuf buffer, EncoderState state, short[] value);
+
     void writeArray(ByteBuf buffer, EncoderState state, int[] value);
+
     void writeArray(ByteBuf buffer, EncoderState state, long[] value);
+
     void writeArray(ByteBuf buffer, EncoderState state, float[] value);
+
     void writeArray(ByteBuf buffer, EncoderState state, double[] value);
+
     void writeArray(ByteBuf buffer, EncoderState state, char[] value);
+
     void writeArray(ByteBuf buffer, EncoderState state, Object[] value);
+
+    void writeArray(ByteBuf buffer, EncoderState state, Decimal32[] value);
+
+    void writeArray(ByteBuf buffer, EncoderState state, Decimal64[] value);
+
+    void writeArray(ByteBuf buffer, EncoderState state, Decimal128[] value);
+
+    void writeArray(ByteBuf buffer, EncoderState state, Symbol[] value);
+
+    void writeArray(ByteBuf buffer, EncoderState state, UnsignedByte[] value);
+
+    void writeArray(ByteBuf buffer, EncoderState state, UnsignedShort[] value);
+
+    void writeArray(ByteBuf buffer, EncoderState state, UnsignedInteger[] value);
+
+    void writeArray(ByteBuf buffer, EncoderState state, UnsignedLong[] value);
+
+    void writeArray(ByteBuf buffer, EncoderState state, UUID[] value);
 
     void writeObject(ByteBuf buffer, EncoderState state, Object value);
 
