@@ -21,7 +21,9 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
+import java.util.UUID;
 
+import org.apache.qpid.proton4j.amqp.Symbol;
 import org.junit.Test;
 
 import io.netty.buffer.ByteBuf;
@@ -32,7 +34,7 @@ import io.netty.buffer.Unpooled;
  */
 public class ArrayTypeDecoderTest extends CodecTestSupport {
 
-    private final int LARGE_ARRAY_SIZE = 10 * 1024 * 1024;
+    private final int LARGE_ARRAY_SIZE = 1024 * 1024;
     private final int SMALL_ARRAY_SIZE = 32;
 
     @Test
@@ -61,6 +63,70 @@ public class ArrayTypeDecoderTest extends CodecTestSupport {
         assertTrue(result.getClass().getComponentType().isPrimitive());
 
         boolean[] array = (boolean[]) result;
+        assertEquals(size, array.length);
+
+        for (int i = 0; i < size; ++i) {
+            assertEquals(source[i], array[i]);
+        }
+    }
+
+    @Test
+    public void testDecodeSmallSymbolArray() throws IOException {
+        doTestDecodeSymbolArrayType(SMALL_ARRAY_SIZE);
+    }
+
+    @Test
+    public void testDecodeLargeSymbolArray() throws IOException {
+        doTestDecodeSymbolArrayType(LARGE_ARRAY_SIZE);
+    }
+
+    private void doTestDecodeSymbolArrayType(int size) throws IOException {
+        ByteBuf buffer = Unpooled.buffer();
+
+        Symbol[] source = new Symbol[size];
+        for (int i = 0; i < size; ++i) {
+            source[i] = Symbol.valueOf("test->" + i);
+        }
+
+        encoder.writeArray(buffer, encoderState, source);
+
+        Object result = decoder.readObject(buffer, decoderState);
+        assertNotNull(result);
+        assertTrue(result.getClass().isArray());
+
+        Symbol[] array = (Symbol[]) result;
+        assertEquals(size, array.length);
+
+        for (int i = 0; i < size; ++i) {
+            assertEquals(source[i], array[i]);
+        }
+    }
+
+    @Test
+    public void testDecodeSmallUUIDArray() throws IOException {
+        doTestDecodeUUDIArrayType(SMALL_ARRAY_SIZE);
+    }
+
+    @Test
+    public void testDecodeLargeUUDIArray() throws IOException {
+        doTestDecodeUUDIArrayType(LARGE_ARRAY_SIZE);
+    }
+
+    private void doTestDecodeUUDIArrayType(int size) throws IOException {
+        ByteBuf buffer = Unpooled.buffer();
+
+        UUID[] source = new UUID[size];
+        for (int i = 0; i < size; ++i) {
+            source[i] = UUID.randomUUID();
+        }
+
+        encoder.writeArray(buffer, encoderState, source);
+
+        Object result = decoder.readObject(buffer, decoderState);
+        assertNotNull(result);
+        assertTrue(result.getClass().isArray());
+
+        UUID[] array = (UUID[]) result;
         assertEquals(size, array.length);
 
         for (int i = 0; i < size; ++i) {
