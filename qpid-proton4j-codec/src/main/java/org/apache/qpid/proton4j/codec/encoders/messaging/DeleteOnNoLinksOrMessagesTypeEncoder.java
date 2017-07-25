@@ -18,34 +18,44 @@ package org.apache.qpid.proton4j.codec.encoders.messaging;
 
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
-import org.apache.qpid.proton4j.amqp.messaging.AmqpSequence;
-import org.apache.qpid.proton4j.codec.DescribedTypeEncoder;
+import org.apache.qpid.proton4j.amqp.messaging.DeleteOnNoLinksOrMessages;
+import org.apache.qpid.proton4j.codec.DescribedListTypeEncoder;
 import org.apache.qpid.proton4j.codec.EncoderState;
+import org.apache.qpid.proton4j.codec.EncodingCodes;
 
 import io.netty.buffer.ByteBuf;
 
 /**
- * Encoder of AMQP AmqpSequence type values to a byte stream.
+ * Encoder of AMQP DeleteOnNoLinksOrMessages type values to a byte stream
  */
-public class AmqpSequenceTypeEncoder implements DescribedTypeEncoder<AmqpSequence> {
-
-    @Override
-    public Class<AmqpSequence> getTypeClass() {
-        return AmqpSequence.class;
-    }
+public class DeleteOnNoLinksOrMessagesTypeEncoder implements DescribedListTypeEncoder<DeleteOnNoLinksOrMessages> {
 
     @Override
     public UnsignedLong getDescriptorCode() {
-        return AmqpSequence.DESCRIPTOR_CODE;
+        return DeleteOnNoLinksOrMessages.DESCRIPTOR_CODE;
     }
 
     @Override
     public Symbol getDescriptorSymbol() {
-        return AmqpSequence.DESCRIPTOR_SYMBOL;
+        return DeleteOnNoLinksOrMessages.DESCRIPTOR_SYMBOL;
     }
 
     @Override
-    public void writeValue(ByteBuf buffer, EncoderState state, AmqpSequence value) {
-        state.getEncoder().writeList(buffer, state, value.getValue());
+    public Class<DeleteOnNoLinksOrMessages> getTypeClass() {
+        return DeleteOnNoLinksOrMessages.class;
+    }
+
+    @Override
+    public int getLargestEncoding() {
+        return EncodingCodes.LIST0 & 0xff;
+    }
+
+    @Override
+    public void writeElement(DeleteOnNoLinksOrMessages source, int index, ByteBuf buffer, EncoderState state) {
+    }
+
+    @Override
+    public int getElementCount(DeleteOnNoLinksOrMessages value) {
+        return 0;
     }
 }

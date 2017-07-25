@@ -336,7 +336,7 @@ public class ProtonEncoder implements Encoder {
     }
 
     @Override
-    public void writeList(ByteBuf buffer, EncoderState state, List<Object> value) {
+    public <T> void writeList(ByteBuf buffer, EncoderState state, List<T> value) {
         if (value == null) {
             nullEncoder.writeType(buffer, state, null);
         } else {
@@ -345,7 +345,7 @@ public class ProtonEncoder implements Encoder {
     }
 
     @Override
-    public void writeMap(ByteBuf buffer, EncoderState state, Map<Object, Object> value) {
+    public <K, V> void writeMap(ByteBuf buffer, EncoderState state, Map<K, V> value) {
         if (value == null) {
             nullEncoder.writeType(buffer, state, null);
         } else {

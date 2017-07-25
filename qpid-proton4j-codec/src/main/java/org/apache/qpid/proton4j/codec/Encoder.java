@@ -100,9 +100,9 @@ public interface Encoder {
 
     void writeSymbol(ByteBuf buffer, EncoderState state, Symbol value);
 
-    void writeList(ByteBuf buffer, EncoderState state, List<Object> value);
+    <T> void writeList(ByteBuf buffer, EncoderState state, List<T> value);
 
-    void writeMap(ByteBuf buffer, EncoderState state, Map<Object, Object> value);
+    <K, V> void writeMap(ByteBuf buffer, EncoderState state, Map<K, V> value);
 
     void writeDescribedType(ByteBuf buffer, EncoderState state, DescribedType value);
 

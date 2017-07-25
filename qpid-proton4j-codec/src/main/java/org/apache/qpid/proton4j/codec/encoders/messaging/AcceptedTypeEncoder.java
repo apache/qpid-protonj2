@@ -18,34 +18,44 @@ package org.apache.qpid.proton4j.codec.encoders.messaging;
 
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
-import org.apache.qpid.proton4j.amqp.messaging.AmqpSequence;
-import org.apache.qpid.proton4j.codec.DescribedTypeEncoder;
+import org.apache.qpid.proton4j.amqp.messaging.Accepted;
+import org.apache.qpid.proton4j.codec.DescribedListTypeEncoder;
 import org.apache.qpid.proton4j.codec.EncoderState;
+import org.apache.qpid.proton4j.codec.EncodingCodes;
 
 import io.netty.buffer.ByteBuf;
 
 /**
- * Encoder of AMQP AmqpSequence type values to a byte stream.
+ * Encoder of AMQP Accepted type values to a byte stream
  */
-public class AmqpSequenceTypeEncoder implements DescribedTypeEncoder<AmqpSequence> {
+public class AcceptedTypeEncoder implements DescribedListTypeEncoder<Accepted> {
 
     @Override
-    public Class<AmqpSequence> getTypeClass() {
-        return AmqpSequence.class;
+    public Class<Accepted> getTypeClass() {
+        return Accepted.class;
     }
 
     @Override
     public UnsignedLong getDescriptorCode() {
-        return AmqpSequence.DESCRIPTOR_CODE;
+        return Accepted.DESCRIPTOR_CODE;
     }
 
     @Override
     public Symbol getDescriptorSymbol() {
-        return AmqpSequence.DESCRIPTOR_SYMBOL;
+        return Accepted.DESCRIPTOR_SYMBOL;
     }
 
     @Override
-    public void writeValue(ByteBuf buffer, EncoderState state, AmqpSequence value) {
-        state.getEncoder().writeList(buffer, state, value.getValue());
+    public int getLargestEncoding() {
+        return EncodingCodes.LIST0 & 0xff;
+    }
+
+    @Override
+    public void writeElement(Accepted source, int index, ByteBuf buffer, EncoderState state) {
+    }
+
+    @Override
+    public int getElementCount(Accepted value) {
+        return 0;
     }
 }
