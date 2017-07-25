@@ -14,53 +14,56 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.qpid.proton4j.codec.encoders.messaging;
+package org.apache.qpid.proton4j.codec.encoders.transactions;
 
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
-import org.apache.qpid.proton4j.amqp.messaging.Rejected;
+import org.apache.qpid.proton4j.amqp.transactions.Discharge;
 import org.apache.qpid.proton4j.codec.DescribedListTypeEncoder;
 import org.apache.qpid.proton4j.codec.EncoderState;
 
 import io.netty.buffer.ByteBuf;
 
 /**
- * Encoder of AMQP Rejected type values to a byte stream.
+ * Encoder of AMQP Discharge type values to a byte stream.
  */
-public class RejectedTypeEncoder implements DescribedListTypeEncoder<Rejected> {
+public class DischargeTypeEncoder implements DescribedListTypeEncoder<Discharge> {
 
     @Override
     public UnsignedLong getDescriptorCode() {
-        return Rejected.DESCRIPTOR_CODE;
+        return Discharge.DESCRIPTOR_CODE;
     }
 
     @Override
     public Symbol getDescriptorSymbol() {
-        return Rejected.DESCRIPTOR_SYMBOL;
+        return Discharge.DESCRIPTOR_SYMBOL;
     }
 
     @Override
-    public Class<Rejected> getTypeClass() {
-        return Rejected.class;
+    public Class<Discharge> getTypeClass() {
+        return Discharge.class;
     }
 
     @Override
-    public void writeElement(Rejected source, int index, ByteBuf buffer, EncoderState state) {
+    public void writeElement(Discharge discharge, int index, ByteBuf buffer, EncoderState state) {
         switch (index) {
             case 0:
-                state.getEncoder().writeObject(buffer, state, source.getError());
+                state.getEncoder().writeBinary(buffer, state, discharge.getTxnId());
+                break;
+            case 1:
+                state.getEncoder().writeBoolean(buffer, state, discharge.getFail());
                 break;
             default:
-                throw new IllegalArgumentException("Unknown Rejected value index: " + index);
+                throw new IllegalArgumentException("Unknown Discharge value index: " + index);
         }
     }
 
     @Override
-    public int getElementCount(Rejected value) {
-        if (value.getError() != null) {
-            return 1;
+    public int getElementCount(Discharge discharge) {
+        if (discharge.getFail() != null) {
+            return 2;
         } else {
-            return 0;
+            return 1;
         }
     }
 }

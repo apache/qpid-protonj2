@@ -14,50 +14,50 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.qpid.proton4j.codec.encoders.messaging;
+package org.apache.qpid.proton4j.codec.encoders.transactions;
 
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
-import org.apache.qpid.proton4j.amqp.messaging.Rejected;
+import org.apache.qpid.proton4j.amqp.transactions.Declare;
 import org.apache.qpid.proton4j.codec.DescribedListTypeEncoder;
 import org.apache.qpid.proton4j.codec.EncoderState;
 
 import io.netty.buffer.ByteBuf;
 
 /**
- * Encoder of AMQP Rejected type values to a byte stream.
+ * Encoder of AMQP Declare type values to a byte stream.
  */
-public class RejectedTypeEncoder implements DescribedListTypeEncoder<Rejected> {
+public class DeclareTypeEncoder implements DescribedListTypeEncoder<Declare> {
 
     @Override
     public UnsignedLong getDescriptorCode() {
-        return Rejected.DESCRIPTOR_CODE;
+        return Declare.DESCRIPTOR_CODE;
     }
 
     @Override
     public Symbol getDescriptorSymbol() {
-        return Rejected.DESCRIPTOR_SYMBOL;
+        return Declare.DESCRIPTOR_SYMBOL;
     }
 
     @Override
-    public Class<Rejected> getTypeClass() {
-        return Rejected.class;
+    public Class<Declare> getTypeClass() {
+        return Declare.class;
     }
 
     @Override
-    public void writeElement(Rejected source, int index, ByteBuf buffer, EncoderState state) {
+    public void writeElement(Declare declare, int index, ByteBuf buffer, EncoderState state) {
         switch (index) {
             case 0:
-                state.getEncoder().writeObject(buffer, state, source.getError());
+                state.getEncoder().writeObject(buffer, state, declare.getGlobalId());
                 break;
             default:
-                throw new IllegalArgumentException("Unknown Rejected value index: " + index);
+                throw new IllegalArgumentException("Unknown Declare value index: " + index);
         }
     }
 
     @Override
-    public int getElementCount(Rejected value) {
-        if (value.getError() != null) {
+    public int getElementCount(Declare declare) {
+        if (declare.getGlobalId() != null) {
             return 1;
         } else {
             return 0;

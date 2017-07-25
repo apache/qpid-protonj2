@@ -22,7 +22,6 @@ import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.amqp.messaging.Source;
 import org.apache.qpid.proton4j.codec.DescribedListTypeEncoder;
 import org.apache.qpid.proton4j.codec.EncoderState;
-import org.apache.qpid.proton4j.codec.EncodingCodes;
 
 import io.netty.buffer.ByteBuf;
 
@@ -44,11 +43,6 @@ public class SourceTypeEncoder implements DescribedListTypeEncoder<Source> {
     @Override
     public Class<Source> getTypeClass() {
         return Source.class;
-    }
-
-    @Override
-    public int getLargestEncoding() {
-        return EncodingCodes.LIST32 & 0xff;
     }
 
     @Override

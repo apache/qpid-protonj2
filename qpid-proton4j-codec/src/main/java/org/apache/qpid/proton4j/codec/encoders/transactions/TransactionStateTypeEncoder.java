@@ -14,53 +14,56 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.qpid.proton4j.codec.encoders.messaging;
+package org.apache.qpid.proton4j.codec.encoders.transactions;
 
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
-import org.apache.qpid.proton4j.amqp.messaging.Rejected;
+import org.apache.qpid.proton4j.amqp.transactions.TransactionalState;
 import org.apache.qpid.proton4j.codec.DescribedListTypeEncoder;
 import org.apache.qpid.proton4j.codec.EncoderState;
 
 import io.netty.buffer.ByteBuf;
 
 /**
- * Encoder of AMQP Rejected type values to a byte stream.
+ * Encoder of AMQP TransactionState type values to a byte stream.
  */
-public class RejectedTypeEncoder implements DescribedListTypeEncoder<Rejected> {
+public class TransactionStateTypeEncoder implements DescribedListTypeEncoder<TransactionalState> {
 
     @Override
     public UnsignedLong getDescriptorCode() {
-        return Rejected.DESCRIPTOR_CODE;
+        return TransactionalState.DESCRIPTOR_CODE;
     }
 
     @Override
     public Symbol getDescriptorSymbol() {
-        return Rejected.DESCRIPTOR_SYMBOL;
+        return TransactionalState.DESCRIPTOR_SYMBOL;
     }
 
     @Override
-    public Class<Rejected> getTypeClass() {
-        return Rejected.class;
+    public Class<TransactionalState> getTypeClass() {
+        return TransactionalState.class;
     }
 
     @Override
-    public void writeElement(Rejected source, int index, ByteBuf buffer, EncoderState state) {
+    public void writeElement(TransactionalState txState, int index, ByteBuf buffer, EncoderState state) {
         switch (index) {
             case 0:
-                state.getEncoder().writeObject(buffer, state, source.getError());
+                state.getEncoder().writeBinary(buffer, state, txState.getTxnId());
+                break;
+            case 1:
+                state.getEncoder().writeObject(buffer, state, txState.getOutcome());
                 break;
             default:
-                throw new IllegalArgumentException("Unknown Rejected value index: " + index);
+                throw new IllegalArgumentException("Unknown TransactionalState value index: " + index);
         }
     }
 
     @Override
-    public int getElementCount(Rejected value) {
-        if (value.getError() != null) {
-            return 1;
+    public int getElementCount(TransactionalState txState) {
+        if (txState.getOutcome() != null) {
+            return 2;
         } else {
-            return 0;
+            return 1;
         }
     }
 }
