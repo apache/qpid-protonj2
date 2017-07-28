@@ -580,11 +580,13 @@ public class ProtonEncoder implements Encoder {
 
     @Override
     public TypeEncoder<?> getTypeEncoder(Object value) {
-        if (value instanceof DescribedType) {
+        if (value == null) {
+            return nullEncoder;
+        } else if (value instanceof DescribedType) {
             // TODO - Handle Described Types
             throw new UnsupportedOperationException();
         } else {
-            return getTypeEncoder(value == null ? Void.class : value.getClass());
+            return getTypeEncoder(value.getClass());
         }
     }
 

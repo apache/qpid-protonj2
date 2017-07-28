@@ -23,9 +23,16 @@ package org.apache.qpid.proton.codec2;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.UUID;
 
+import org.apache.qpid.proton4j.amqp.Symbol;
+import org.apache.qpid.proton4j.amqp.UnsignedByte;
+import org.apache.qpid.proton4j.amqp.UnsignedInteger;
+import org.apache.qpid.proton4j.amqp.UnsignedShort;
 import org.apache.qpid.proton4j.amqp.messaging.Header;
+import org.apache.qpid.proton4j.amqp.messaging.MessageAnnotations;
+import org.apache.qpid.proton4j.amqp.messaging.Properties;
 import org.apache.qpid.proton4j.codec.CodecFactory;
 import org.apache.qpid.proton4j.codec.DecoderState;
 import org.apache.qpid.proton4j.codec.EncoderState;
@@ -140,6 +147,14 @@ public class Benchmark {
         header.setDurable(true);
         header.setFirstAcquirer(true);
 
+        Properties properties = new Properties();
+        properties.setTo("queue:1");
+
+        MessageAnnotations annotations = new MessageAnnotations(new HashMap<>());
+        annotations.getValue().put(Symbol.valueOf("test1"), UnsignedByte.valueOf((byte) 128));
+        annotations.getValue().put(Symbol.valueOf("test2"), UnsignedShort.valueOf((short) 128));
+        annotations.getValue().put(Symbol.valueOf("test3"), UnsignedInteger.valueOf((byte) 128));
+
         ArrayList<Object> list = new ArrayList<>(10);
         for (int j = 0; j < 10; j++) {
             list.add(0);
@@ -150,7 +165,9 @@ public class Benchmark {
 
 //            encoder.writeList(buffer, state, list);
 //            encoder.writeUUID(buffer, state, uuid);
-            encoder.writeObject(buffer, state, header);
+//            encoder.writeObject(buffer, state, header);
+//            encoder.writeObject(buffer, state, properties);
+            encoder.writeObject(buffer, state, annotations);
         }
     }
 
@@ -162,7 +179,9 @@ public class Benchmark {
             buffer.readerIndex(0);
 //            decoder.readObject(buffer, state); // List
 //            decoder.readUUID(buffer, state); // UUID
-            decoder.readObject(buffer, state); // Header
+//            decoder.readObject(buffer, state); // Header
+//            decoder.readObject(buffer, state); // Properties
+            decoder.readObject(buffer, state); // MessageAnnotations
         }
     }
 }
