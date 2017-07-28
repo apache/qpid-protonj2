@@ -117,13 +117,24 @@ public class ProtonDecoder implements Decoder {
         int encodingCode = buffer.readByte() & 0xff;
 
         if (encodingCode == EncodingCodes.DESCRIBED_TYPE_INDICATOR) {
-            Object descriptor = readObject(buffer, state);
-            final TypeDecoder<?> decoder = describedTypeDecoders.get(descriptor);
-            if (decoder == null) {
+            byte encoding = buffer.getByte(buffer.readerIndex());
+
+            final Object descriptor;
+
+            if (EncodingCodes.SMALLULONG == encoding || EncodingCodes.ULONG == encoding) {
+                descriptor = readUnsignedLong(buffer, state);
+            } else if (EncodingCodes.SYM8 == encoding || EncodingCodes.SYM32 == encoding) {
+                descriptor = readSymbol(buffer, state);
+            } else {
+                throw new IllegalStateException("Invalid type found in descriptor location: " + encoding);
+            }
+
+            final TypeDecoder<?> typeDecoder = describedTypeDecoders.get(descriptor);
+            if (typeDecoder == null) {
                 throw new IllegalStateException("No registered decoder for described: " + descriptor);
             }
 
-            return decoder;
+            return typeDecoder;
         } else {
             if (encodingCode > primitiveDecoders.length) {
                 throw new IOException("Read unknown encoding code from buffer");
