@@ -523,7 +523,12 @@ public class ProtonEncoder implements Encoder {
     @SuppressWarnings({ "rawtypes", "unchecked" })
     @Override
     public void writeObject(ByteBuf buffer, EncoderState state, Object value) {
-        TypeEncoder encoder = typeEncoders.get(value == null ? Void.class : value.getClass());
+        if (value == null) {
+            nullEncoder.writeType(buffer, state, null);
+            return;
+        }
+
+        TypeEncoder encoder = typeEncoders.get(value.getClass());
 
         if (encoder == null) {
             if (value.getClass().isArray()) {
