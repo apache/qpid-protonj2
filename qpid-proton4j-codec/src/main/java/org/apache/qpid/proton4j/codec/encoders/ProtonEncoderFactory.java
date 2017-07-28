@@ -16,15 +16,27 @@
  */
 package org.apache.qpid.proton4j.codec.encoders;
 
+import org.apache.qpid.proton4j.codec.encoders.messaging.AcceptedTypeEncoder;
 import org.apache.qpid.proton4j.codec.encoders.messaging.AmqpSequenceTypeEncoder;
 import org.apache.qpid.proton4j.codec.encoders.messaging.AmqpValueTypeEncoder;
 import org.apache.qpid.proton4j.codec.encoders.messaging.ApplicationPropertiesTypeEncoder;
 import org.apache.qpid.proton4j.codec.encoders.messaging.DataTypeEncoder;
+import org.apache.qpid.proton4j.codec.encoders.messaging.DeleteOnCloseTypeEncoder;
+import org.apache.qpid.proton4j.codec.encoders.messaging.DeleteOnNoLinksOrMessagesTypeEncoder;
+import org.apache.qpid.proton4j.codec.encoders.messaging.DeleteOnNoLinksTypeEncoder;
+import org.apache.qpid.proton4j.codec.encoders.messaging.DeleteOnNoMessagesTypeEncoder;
 import org.apache.qpid.proton4j.codec.encoders.messaging.DeliveryAnnotationsTypeEncoder;
 import org.apache.qpid.proton4j.codec.encoders.messaging.FooterTypeEncoder;
 import org.apache.qpid.proton4j.codec.encoders.messaging.HeaderTypeEncoder;
 import org.apache.qpid.proton4j.codec.encoders.messaging.MessageAnnotationsTypeEncoder;
+import org.apache.qpid.proton4j.codec.encoders.messaging.ModifiedTypeEncoder;
 import org.apache.qpid.proton4j.codec.encoders.messaging.PropertiesTypeEncoder;
+import org.apache.qpid.proton4j.codec.encoders.messaging.ReceivedTypeEncoder;
+import org.apache.qpid.proton4j.codec.encoders.messaging.RejectedTypeEncoder;
+import org.apache.qpid.proton4j.codec.encoders.messaging.ReleasedTypeEncoder;
+import org.apache.qpid.proton4j.codec.encoders.messaging.SourceTypeEncoder;
+import org.apache.qpid.proton4j.codec.encoders.messaging.TargetTypeEncoder;
+import org.apache.qpid.proton4j.codec.encoders.primitives.ArrayTypeEncoder;
 import org.apache.qpid.proton4j.codec.encoders.primitives.BinaryTypeEncoder;
 import org.apache.qpid.proton4j.codec.encoders.primitives.BooleanTypeEncoder;
 import org.apache.qpid.proton4j.codec.encoders.primitives.ByteTypeEncoder;
@@ -48,6 +60,21 @@ import org.apache.qpid.proton4j.codec.encoders.primitives.UnsignedByteTypeEncode
 import org.apache.qpid.proton4j.codec.encoders.primitives.UnsignedIntegerTypeEncoder;
 import org.apache.qpid.proton4j.codec.encoders.primitives.UnsignedLongTypeEncoder;
 import org.apache.qpid.proton4j.codec.encoders.primitives.UnsignedShortTypeEncoder;
+import org.apache.qpid.proton4j.codec.encoders.transactions.CoordinatorTypeEncoder;
+import org.apache.qpid.proton4j.codec.encoders.transactions.DeclareTypeEncoder;
+import org.apache.qpid.proton4j.codec.encoders.transactions.DeclaredTypeEncoder;
+import org.apache.qpid.proton4j.codec.encoders.transactions.DischargeTypeEncoder;
+import org.apache.qpid.proton4j.codec.encoders.transactions.TransactionStateTypeEncoder;
+import org.apache.qpid.proton4j.codec.encoders.transport.AttachTypeEncoder;
+import org.apache.qpid.proton4j.codec.encoders.transport.BeginTypeEncoder;
+import org.apache.qpid.proton4j.codec.encoders.transport.CloseTypeEncoder;
+import org.apache.qpid.proton4j.codec.encoders.transport.DetachTypeEncoder;
+import org.apache.qpid.proton4j.codec.encoders.transport.DispositionTypeEncoder;
+import org.apache.qpid.proton4j.codec.encoders.transport.EndTypeEncoder;
+import org.apache.qpid.proton4j.codec.encoders.transport.ErrorConditionTypeEncoder;
+import org.apache.qpid.proton4j.codec.encoders.transport.FlowTypeEncoder;
+import org.apache.qpid.proton4j.codec.encoders.transport.OpenTypeEncoder;
+import org.apache.qpid.proton4j.codec.encoders.transport.TransferTypeEncoder;
 
 /**
  * Factory that create and initializes new BuiltinEncoder instances
@@ -61,24 +88,59 @@ public class ProtonEncoderFactory {
         ProtonEncoder encoder = new ProtonEncoder();
 
         addPrimitiveTypeEncoders(encoder);
-        addMessagingTypeDecoders(encoder);
+        addMessagingTypeEncoders(encoder);
+        addTransactionTypeEncoders(encoder);
+        addTransportTypeEncoders(encoder);
 
         return encoder;
     }
 
-    private static void addMessagingTypeDecoders(ProtonEncoder encoder) {
+    private static void addMessagingTypeEncoders(ProtonEncoder encoder) {
+        encoder.registerTypeEncoder(new AcceptedTypeEncoder());
         encoder.registerTypeEncoder(new AmqpSequenceTypeEncoder());
         encoder.registerTypeEncoder(new AmqpValueTypeEncoder());
         encoder.registerTypeEncoder(new ApplicationPropertiesTypeEncoder());
         encoder.registerTypeEncoder(new DataTypeEncoder());
+        encoder.registerTypeEncoder(new DeleteOnCloseTypeEncoder());
+        encoder.registerTypeEncoder(new DeleteOnNoLinksOrMessagesTypeEncoder());
+        encoder.registerTypeEncoder(new DeleteOnNoLinksTypeEncoder());
+        encoder.registerTypeEncoder(new DeleteOnNoMessagesTypeEncoder());
         encoder.registerTypeEncoder(new DeliveryAnnotationsTypeEncoder());
         encoder.registerTypeEncoder(new FooterTypeEncoder());
         encoder.registerTypeEncoder(new HeaderTypeEncoder());
         encoder.registerTypeEncoder(new MessageAnnotationsTypeEncoder());
+        encoder.registerTypeEncoder(new ModifiedTypeEncoder());
         encoder.registerTypeEncoder(new PropertiesTypeEncoder());
+        encoder.registerTypeEncoder(new ReceivedTypeEncoder());
+        encoder.registerTypeEncoder(new RejectedTypeEncoder());
+        encoder.registerTypeEncoder(new ReleasedTypeEncoder());
+        encoder.registerTypeEncoder(new SourceTypeEncoder());
+        encoder.registerTypeEncoder(new TargetTypeEncoder());
+    }
+
+    private static void addTransactionTypeEncoders(ProtonEncoder encoder) {
+        encoder.registerTypeEncoder(new CoordinatorTypeEncoder());
+        encoder.registerTypeEncoder(new DeclaredTypeEncoder());
+        encoder.registerTypeEncoder(new DeclareTypeEncoder());
+        encoder.registerTypeEncoder(new DischargeTypeEncoder());
+        encoder.registerTypeEncoder(new TransactionStateTypeEncoder());
+    }
+
+    private static void addTransportTypeEncoders(ProtonEncoder encoder) {
+        encoder.registerTypeEncoder(new AttachTypeEncoder());
+        encoder.registerTypeEncoder(new BeginTypeEncoder());
+        encoder.registerTypeEncoder(new CloseTypeEncoder());
+        encoder.registerTypeEncoder(new DetachTypeEncoder());
+        encoder.registerTypeEncoder(new DispositionTypeEncoder());
+        encoder.registerTypeEncoder(new EndTypeEncoder());
+        encoder.registerTypeEncoder(new ErrorConditionTypeEncoder());
+        encoder.registerTypeEncoder(new FlowTypeEncoder());
+        encoder.registerTypeEncoder(new OpenTypeEncoder());
+        encoder.registerTypeEncoder(new TransferTypeEncoder());
     }
 
     private static void addPrimitiveTypeEncoders(ProtonEncoder encoder) {
+        encoder.registerTypeEncoder(new ArrayTypeEncoder());
         encoder.registerTypeEncoder(new BinaryTypeEncoder());
         encoder.registerTypeEncoder(new BooleanTypeEncoder());
         encoder.registerTypeEncoder(new ByteTypeEncoder());

@@ -21,9 +21,11 @@
 package org.apache.qpid.proton.codec2;
 
 import java.io.IOException;
+import java.lang.management.ManagementFactory;
 import java.util.ArrayList;
 import java.util.UUID;
 
+import org.apache.qpid.proton4j.amqp.messaging.Header;
 import org.apache.qpid.proton4j.codec.CodecFactory;
 import org.apache.qpid.proton4j.codec.DecoderState;
 import org.apache.qpid.proton4j.codec.EncoderState;
@@ -47,7 +49,9 @@ public class Benchmark {
             test = args[1];
         }
 
-        boolean runNew = test.equals("all") || test.equals("new");
+        System.out.println("Current PID: " + ManagementFactory.getRuntimeMXBean().getName());
+
+        boolean runNew = false; //test.equals("all") || test.equals("new");
         boolean runExisting = test.equals("all") || test.equals("existing");
 
         long start, end;
@@ -132,6 +136,10 @@ public class Benchmark {
 
         UUID uuid = UUID.randomUUID();
 
+        Header header = new Header();
+        header.setDurable(true);
+        header.setFirstAcquirer(true);
+
         ArrayList<Object> list = new ArrayList<>(10);
         for (int j = 0; j < 10; j++) {
             list.add(0);
@@ -139,12 +147,10 @@ public class Benchmark {
 
         for (int i = 0; i < loop; i++) {
             buffer.clear();
-            for (int j = 0; j < 10; j++) {
-                list.set(j, i + j);
-            }
 
-            encoder.writeList(buffer, state, list);
-            encoder.writeUUID(buffer, state, uuid);
+//            encoder.writeList(buffer, state, list);
+//            encoder.writeUUID(buffer, state, uuid);
+            encoder.writeObject(buffer, state, header);
         }
     }
 
@@ -154,8 +160,9 @@ public class Benchmark {
 
         for (int i = 0; i < loop; i++) {
             buffer.readerIndex(0);
-            decoder.readObject(buffer, state); // List
-            decoder.readUUID(buffer, state); // UUID
+//            decoder.readObject(buffer, state); // List
+//            decoder.readUUID(buffer, state); // UUID
+            decoder.readObject(buffer, state); // Header
         }
     }
 }
