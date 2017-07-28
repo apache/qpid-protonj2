@@ -35,12 +35,36 @@ public class UnsignedLongTypeEncoder implements PrimitiveTypeEncoder<UnsignedLon
 
     @Override
     public void writeType(ByteBuf buffer, EncoderState state, UnsignedLong value) {
-        buffer.writeByte(EncodingCodes.ULONG);
-        buffer.writeLong(value.longValue());
+        write(buffer, state, value, true, true);
     }
 
     @Override
     public void writeValue(ByteBuf buffer, EncoderState state, UnsignedLong value) {
-        buffer.writeLong(value.longValue());
+        write(buffer, state, value, false, true);
+    }
+
+    public void write(ByteBuf buffer, EncoderState state, UnsignedLong value, boolean writeType, boolean compact) {
+        if (!compact) {
+            if (writeType) {
+                buffer.writeByte(EncodingCodes.ULONG);
+            }
+            buffer.writeLong(value.longValue());
+        } else {
+            if (value.equals(UnsignedLong.ZERO)) {
+                if (writeType) {
+                    buffer.writeByte(EncodingCodes.ULONG0);
+                }
+            } else if (value.longValue() <= 255l) {
+                if (writeType) {
+                    buffer.writeByte(EncodingCodes.SMALLULONG);
+                }
+                buffer.writeByte(value.byteValue());
+            } else {
+                if (writeType) {
+                    buffer.writeByte(EncodingCodes.ULONG);
+                }
+                buffer.writeLong(value.longValue());
+            }
+        }
     }
 }
