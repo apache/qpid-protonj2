@@ -16,47 +16,41 @@
  */
 package org.apache.qpid.proton4j.amqp;
 
+import java.nio.charset.StandardCharsets;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-public final class Symbol implements Comparable<Symbol>, CharSequence {
+public final class Symbol implements Comparable<Symbol> {
 
     private static final ConcurrentMap<String, Symbol> symbols = new ConcurrentHashMap<String, Symbol>(2048);
 
-    private final String underlying;
+    private static final Symbol EMPTY_SYMBOL = new Symbol(new byte[0], "");
 
-    private Symbol(String underlying) {
+    private final byte[] underlying;
+    private final String view;
+
+    private Symbol(byte[] underlying, String view) {
         this.underlying = underlying;
-    }
-
-    @Override
-    public int length() {
-        return underlying.length();
+        this.view = view;
     }
 
     @Override
     public int compareTo(Symbol o) {
-        return underlying.compareTo(o.underlying);
-    }
-
-    @Override
-    public char charAt(int index) {
-        return underlying.charAt(index);
-    }
-
-    @Override
-    public CharSequence subSequence(int beginIndex, int endIndex) {
-        return underlying.subSequence(beginIndex, endIndex);
+        return view.compareTo(o.view);
     }
 
     @Override
     public String toString() {
-        return underlying;
+        return view;
     }
 
     @Override
     public int hashCode() {
-        return underlying.hashCode();
+        return view.hashCode();
+    }
+
+    public byte[] getBytes() {
+        return underlying;
     }
 
     public static Symbol valueOf(String symbolVal) {
@@ -66,13 +60,15 @@ public final class Symbol implements Comparable<Symbol>, CharSequence {
     public static Symbol getSymbol(String symbolVal) {
         if (symbolVal == null) {
             return null;
+        } else if (symbolVal.isEmpty()) {
+            return EMPTY_SYMBOL;
         }
 
         Symbol symbol = symbols.get(symbolVal);
 
         if (symbol == null) {
             symbolVal = symbolVal.intern();
-            symbol = new Symbol(symbolVal);
+            symbol = new Symbol(symbolVal.getBytes(StandardCharsets.UTF_8), symbolVal);
             Symbol existing;
             if ((existing = symbols.putIfAbsent(symbolVal, symbol)) != null) {
                 symbol = existing;

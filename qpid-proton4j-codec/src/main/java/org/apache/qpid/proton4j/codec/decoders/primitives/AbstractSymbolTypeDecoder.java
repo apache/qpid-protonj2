@@ -36,11 +36,9 @@ public abstract class AbstractSymbolTypeDecoder implements SymbolTypeDecoder {
         // TODO - We could pull this from a pool if we had an allocator
         byte[] bytes = new byte[length];
         buffer.readBytes(bytes, 0, length);
+        String symbolString = new String(bytes, StandardCharsets.US_ASCII);
 
-        String stringView = new String(bytes, StandardCharsets.US_ASCII);
-        Symbol symbol = Symbol.getSymbol(stringView);
-
-        return symbol;
+        return Symbol.getSymbol(symbolString);
     }
 
     protected abstract int readSize(ByteBuf buffer);

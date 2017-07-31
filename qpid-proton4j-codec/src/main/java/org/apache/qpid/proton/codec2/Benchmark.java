@@ -166,8 +166,8 @@ public class Benchmark {
 //            encoder.writeList(buffer, state, list);
 //            encoder.writeUUID(buffer, state, uuid);
 //            encoder.writeObject(buffer, state, header);
-//            encoder.writeObject(buffer, state, properties);
-            encoder.writeObject(buffer, state, annotations);
+            encoder.writeObject(buffer, state, properties);
+//            encoder.writeObject(buffer, state, annotations);
         }
     }
 
@@ -180,8 +180,8 @@ public class Benchmark {
 //            decoder.readObject(buffer, state); // List
 //            decoder.readUUID(buffer, state); // UUID
 //            decoder.readObject(buffer, state); // Header
-//            decoder.readObject(buffer, state); // Properties
-            decoder.readObject(buffer, state); // MessageAnnotations
+            decoder.readObject(buffer, state); // Properties
+//            decoder.readObject(buffer, state); // MessageAnnotations
         }
     }
 }

@@ -95,8 +95,7 @@ public class ArrayTypeEncoder implements PrimitiveArrayTypeEncoder {
         buffer.writeInt(size);
         buffer.writeInt(value.length);
         buffer.writeByte(EncodingCodes.BOOLEAN);
-        for (boolean bool : value)
-        {
+        for (boolean bool : value) {
             buffer.writeByte(bool ? 1 : 0);
         }
     }
@@ -111,8 +110,7 @@ public class ArrayTypeEncoder implements PrimitiveArrayTypeEncoder {
         buffer.writeInt(size);
         buffer.writeInt(value.length);
         buffer.writeByte(EncodingCodes.BYTE);
-        for (byte byteVal : value)
-        {
+        for (byte byteVal : value) {
             buffer.writeByte(byteVal);
         }
     }
@@ -127,8 +125,7 @@ public class ArrayTypeEncoder implements PrimitiveArrayTypeEncoder {
         buffer.writeInt(size);
         buffer.writeInt(value.length);
         buffer.writeByte(EncodingCodes.SHORT);
-        for (short shortValue : value)
-        {
+        for (short shortValue : value) {
             buffer.writeShort(shortValue);
         }
     }
@@ -147,8 +144,7 @@ public class ArrayTypeEncoder implements PrimitiveArrayTypeEncoder {
         buffer.writeInt((int) size);
         buffer.writeInt(value.length);
         buffer.writeByte(EncodingCodes.INT);
-        for (int intValue : value)
-        {
+        for (int intValue : value) {
             buffer.writeInt(intValue);
         }
     }
@@ -167,8 +163,7 @@ public class ArrayTypeEncoder implements PrimitiveArrayTypeEncoder {
         buffer.writeInt((int) size);
         buffer.writeInt(value.length);
         buffer.writeByte(EncodingCodes.LONG);
-        for (long longValue : value)
-        {
+        for (long longValue : value) {
             buffer.writeLong(longValue);
         }
     }
@@ -187,8 +182,7 @@ public class ArrayTypeEncoder implements PrimitiveArrayTypeEncoder {
         buffer.writeInt((int) size);
         buffer.writeInt(value.length);
         buffer.writeByte(EncodingCodes.FLOAT);
-        for (float floatValue : value)
-        {
+        for (float floatValue : value) {
             buffer.writeFloat(floatValue);
         }
     }
@@ -207,8 +201,7 @@ public class ArrayTypeEncoder implements PrimitiveArrayTypeEncoder {
         buffer.writeInt((int) size);
         buffer.writeInt(value.length);
         buffer.writeByte(EncodingCodes.DOUBLE);
-        for (double doubleValue : value)
-        {
+        for (double doubleValue : value) {
             buffer.writeDouble(doubleValue);
         }
     }
@@ -227,8 +220,7 @@ public class ArrayTypeEncoder implements PrimitiveArrayTypeEncoder {
         buffer.writeInt((int) size);
         buffer.writeInt(value.length);
         buffer.writeByte(EncodingCodes.CHAR);
-        for (char charValue : value)
-        {
+        for (char charValue : value) {
             buffer.writeInt(charValue & 0xffff);
         }
     }
@@ -247,8 +239,7 @@ public class ArrayTypeEncoder implements PrimitiveArrayTypeEncoder {
         buffer.writeInt((int) size);
         buffer.writeInt(value.length);
         buffer.writeByte(EncodingCodes.DECIMAL32);
-        for (Decimal32 dec32Value : value)
-        {
+        for (Decimal32 dec32Value : value) {
             buffer.writeInt(dec32Value.getBits());
         }
     }
@@ -267,8 +258,7 @@ public class ArrayTypeEncoder implements PrimitiveArrayTypeEncoder {
         buffer.writeInt((int) size);
         buffer.writeInt(value.length);
         buffer.writeByte(EncodingCodes.DECIMAL64);
-        for (Decimal64 dec64Value : value)
-        {
+        for (Decimal64 dec64Value : value) {
             buffer.writeLong(dec64Value.getBits());
         }
     }
@@ -287,8 +277,7 @@ public class ArrayTypeEncoder implements PrimitiveArrayTypeEncoder {
         buffer.writeInt((int) size);
         buffer.writeInt(value.length);
         buffer.writeByte(EncodingCodes.DECIMAL128);
-        for (Decimal128 dec128Value : value)
-        {
+        for (Decimal128 dec128Value : value) {
             buffer.writeLong(dec128Value.getMostSignificantBits());
             buffer.writeLong(dec128Value.getLeastSignificantBits());
         }
@@ -309,10 +298,10 @@ public class ArrayTypeEncoder implements PrimitiveArrayTypeEncoder {
 
         buffer.writeInt(value.length);
         buffer.writeByte(EncodingCodes.SYM32);
-        for (Symbol symbol : value)
-        {
-            buffer.writeInt(symbol.length());
-            symbol.chars().forEach(charAt -> buffer.writeByte(charAt));
+        for (Symbol symbol : value) {
+            byte[] symbolByte = symbol.getBytes();
+            buffer.writeInt(symbolByte.length);
+            buffer.writeBytes(symbolByte);
         }
 
         // Move back and write the size
@@ -340,8 +329,7 @@ public class ArrayTypeEncoder implements PrimitiveArrayTypeEncoder {
         buffer.writeInt((int) size);
         buffer.writeInt(value.length);
         buffer.writeByte(EncodingCodes.UUID);
-        for (UUID uuid : value)
-        {
+        for (UUID uuid : value) {
             buffer.writeLong(uuid.getMostSignificantBits());
             buffer.writeLong(uuid.getLeastSignificantBits());
         }
@@ -357,8 +345,7 @@ public class ArrayTypeEncoder implements PrimitiveArrayTypeEncoder {
         buffer.writeInt((int) size);
         buffer.writeInt(value.length);
         buffer.writeByte(EncodingCodes.UBYTE);
-        for (UnsignedByte byteVal : value)
-        {
+        for (UnsignedByte byteVal : value) {
             buffer.writeByte(byteVal.byteValue());
         }
     }
@@ -373,8 +360,7 @@ public class ArrayTypeEncoder implements PrimitiveArrayTypeEncoder {
         buffer.writeInt(size);
         buffer.writeInt(value.length);
         buffer.writeByte(EncodingCodes.USHORT);
-        for (UnsignedShort shortVal : value)
-        {
+        for (UnsignedShort shortVal : value) {
             buffer.writeShort(shortVal.shortValue());
         }
     }
@@ -393,8 +379,7 @@ public class ArrayTypeEncoder implements PrimitiveArrayTypeEncoder {
         buffer.writeInt((int) size);
         buffer.writeInt(value.length);
         buffer.writeByte(EncodingCodes.UINT);
-        for (UnsignedInteger intValue : value)
-        {
+        for (UnsignedInteger intValue : value) {
             buffer.writeInt(intValue.intValue());
         }
     }
@@ -413,8 +398,7 @@ public class ArrayTypeEncoder implements PrimitiveArrayTypeEncoder {
         buffer.writeInt((int) size);
         buffer.writeInt(value.length);
         buffer.writeByte(EncodingCodes.ULONG);
-        for (UnsignedLong longValue : value)
-        {
+        for (UnsignedLong longValue : value) {
             buffer.writeLong(longValue.longValue());
         }
     }
