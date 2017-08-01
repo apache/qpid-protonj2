@@ -18,7 +18,7 @@
  * under the License.
  *
  */
-package org.apache.qpid.proton.codec2;
+package org.apache.qpid.proton4j.codec.benchmark;
 
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
@@ -35,6 +35,7 @@ import org.apache.qpid.proton4j.amqp.messaging.Header;
 import org.apache.qpid.proton4j.amqp.messaging.MessageAnnotations;
 import org.apache.qpid.proton4j.amqp.messaging.Properties;
 import org.apache.qpid.proton4j.codec.CodecFactory;
+import org.apache.qpid.proton4j.codec.Decoder;
 import org.apache.qpid.proton4j.codec.DecoderState;
 import org.apache.qpid.proton4j.codec.Encoder;
 import org.apache.qpid.proton4j.codec.EncoderState;
