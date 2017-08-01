@@ -32,7 +32,7 @@ import io.netty.buffer.Unpooled;
 /**
  * Test decoding of AMQP Array types
  */
-public class ArrayTypeDecoderTest extends CodecTestSupport {
+public class ArrayTypeCodecTest extends CodecTestSupport {
 
     private final int LARGE_ARRAY_SIZE = 1024 * 1024;
     private final int SMALL_ARRAY_SIZE = 32;

@@ -17,7 +17,6 @@
 package org.apache.qpid.proton4j.codec.decoders.primitives;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.codec.DecoderState;
@@ -33,12 +32,10 @@ public abstract class AbstractSymbolTypeDecoder implements SymbolTypeDecoder {
     public Symbol readValue(ByteBuf buffer, DecoderState state) throws IOException {
         int length = readSize(buffer);
 
-        // TODO - We could pull this from a pool if we had an allocator
         byte[] bytes = new byte[length];
         buffer.readBytes(bytes, 0, length);
-        String symbolString = new String(bytes, StandardCharsets.US_ASCII);
 
-        return Symbol.getSymbol(symbolString);
+        return state.getSymbol(bytes);
     }
 
     protected abstract int readSize(ByteBuf buffer);

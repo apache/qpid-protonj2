@@ -34,7 +34,7 @@ import org.junit.Test;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 
-public class MessageAnnotationsTypeTest extends CodecTestSupport {
+public class MessageAnnotationsTypeCodecTest extends CodecTestSupport {
 
     private final int LARGE_SIZE = 1024 * 1024;
     private final int SMALL_SIZE = 32;

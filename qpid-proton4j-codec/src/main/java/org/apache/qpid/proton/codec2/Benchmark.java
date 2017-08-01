@@ -25,6 +25,7 @@ import java.lang.management.ManagementFactory;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedByte;
@@ -35,153 +36,197 @@ import org.apache.qpid.proton4j.amqp.messaging.MessageAnnotations;
 import org.apache.qpid.proton4j.amqp.messaging.Properties;
 import org.apache.qpid.proton4j.codec.CodecFactory;
 import org.apache.qpid.proton4j.codec.DecoderState;
+import org.apache.qpid.proton4j.codec.Encoder;
 import org.apache.qpid.proton4j.codec.EncoderState;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 
-/**
- * Benchmark
- */
-public class Benchmark {
+public class Benchmark implements Runnable {
+
+    private static final int ITERATIONS = 10 * 1024 * 1024;
+
+    private ByteBuf byteBuf = Unpooled.buffer(8192);
+    private BenchmarkResult resultSet = new BenchmarkResult();
+    private boolean warming = true;
+
+    private Encoder encoder = CodecFactory.getDefaultEncoder();
+    private EncoderState encoderState = encoder.newEncoderState();
+    private org.apache.qpid.proton4j.codec.Decoder decoder = CodecFactory.getDefaultDecoder();
+    private DecoderState decoderState = decoder.newDecoderState();
 
     public static final void main(String[] args) throws IOException, InterruptedException {
-        int loop = 10 * 1024 * 1024;
-        if (args.length > 0) {
-            loop = Integer.parseInt(args[0]);
-        }
-
-        String test = "all";
-        if (args.length > 1) {
-            test = args[1];
-        }
-
         System.out.println("Current PID: " + ManagementFactory.getRuntimeMXBean().getName());
+        Benchmark benchmark = new Benchmark();
+        benchmark.run();
+    }
 
-        boolean runNew = false; //test.equals("all") || test.equals("new");
-        boolean runExisting = test.equals("all") || test.equals("existing");
+    @Override
+    public void run() {
+        try {
+            warmup();
 
-        long start, end;
-
-        if (runNew) {
-            byte[] bytes = new byte[1024];
-
-            start = System.currentTimeMillis();
-            int size = newEncode(bytes, loop);
-            end = System.currentTimeMillis();
-            time("new encode", start, end);
-
-            start = System.currentTimeMillis();
-            newDecode(bytes, size, loop);
-            end = System.currentTimeMillis();
-            time("new decode", start, end);
-        }
-
-        if (runExisting) {
-            ByteBuf byteBuf = Unpooled.buffer(1024);
-
-            start = System.currentTimeMillis();
-            existingEncode(byteBuf, loop);
-            end = System.currentTimeMillis();
-            time("existing encode", start, end);
-
-            start = System.currentTimeMillis();
-            existingDecode(byteBuf, loop);
-            end = System.currentTimeMillis();
-            time("existing decode", start, end);
+            benchmarkListOfInts();
+            benchmarkUUIDs();
+            benchmarkHeader();
+            benchmarkProperties();
+            benchmarkMessageAnnotations();
+        } catch (IOException e) {
+            System.out.println("Unexpected error: " + e.getMessage());
         }
     }
 
-    private static final void time(String message, long start, long end) {
-        System.out.println(message + ": " + (end - start) + " millis");
-    }
-
-    private static final int newEncode(byte[] bytes, int loop) {
-        ByteArrayEncoder enc = new ByteArrayEncoder();
-
-        UUID uuid = UUID.randomUUID();
-        long hi = uuid.getMostSignificantBits();
-        long lo = uuid.getLeastSignificantBits();
-
-        for (int i = 0; i < loop; i++) {
-            enc.init(bytes, 0, bytes.length);
-            enc.putList();
-            for (int j = 0; j < 10; j++) {
-                enc.putInt(i + j);
-            }
-            enc.end();
-            enc.putUUID(hi, lo);
-        }
-
-        return enc.getPosition();
-    }
-
-    private static final void newDecode(byte[] bytes, int size, int loop) {
-        DataHandler dh = new AbstractDataHandler() {
-
-            @Override
-            public void onInt(org.apache.qpid.proton.codec2.Decoder d) {
-                d.getIntBits();
-            }
-
-            @Override
-            public void onUUID(org.apache.qpid.proton.codec2.Decoder d) {
-                new UUID(d.getHiBits(), d.getLoBits());
-            }
-        };
-
-        ByteArrayDecoder dec = new ByteArrayDecoder();
-        for (int i = 0; i < loop; i++) {
-            dec.init(bytes, 0, size);
-            dec.decode(dh);
+    private void time(String message, BenchmarkResult resultSet) {
+        if (!warming) {
+            System.out.println("Benchamrk of type: " + message + ": ");
+            System.out.println("    Encode time = " + resultSet.getEncodeTimeMills());
+            System.out.println("    Decode time = " + resultSet.getDecodeTimeMills());
         }
     }
 
-    private static final void existingEncode(ByteBuf buffer, int loop) {
-        org.apache.qpid.proton4j.codec.Encoder encoder = CodecFactory.getDefaultEncoder();
-        EncoderState state = encoder.newEncoderState();
+    private final void warmup() throws IOException {
+        benchmarkListOfInts();
+        benchmarkUUIDs();
+        benchmarkHeader();
+        benchmarkProperties();
+        benchmarkMessageAnnotations();
+        warming = false;
+    }
 
-        UUID uuid = UUID.randomUUID();
-
-        Header header = new Header();
-        header.setDurable(true);
-        header.setFirstAcquirer(true);
-
-        Properties properties = new Properties();
-        properties.setTo("queue:1");
-
-        MessageAnnotations annotations = new MessageAnnotations(new HashMap<>());
-        annotations.getValue().put(Symbol.valueOf("test1"), UnsignedByte.valueOf((byte) 128));
-        annotations.getValue().put(Symbol.valueOf("test2"), UnsignedShort.valueOf((short) 128));
-        annotations.getValue().put(Symbol.valueOf("test3"), UnsignedInteger.valueOf((byte) 128));
-
+    private void benchmarkListOfInts() throws IOException {
         ArrayList<Object> list = new ArrayList<>(10);
         for (int j = 0; j < 10; j++) {
             list.add(0);
         }
 
-        for (int i = 0; i < loop; i++) {
-            buffer.clear();
-
-//            encoder.writeList(buffer, state, list);
-//            encoder.writeUUID(buffer, state, uuid);
-//            encoder.writeObject(buffer, state, header);
-            encoder.writeObject(buffer, state, properties);
-//            encoder.writeObject(buffer, state, annotations);
+        resultSet.start();
+        for (int i = 0; i < ITERATIONS; i++) {
+            byteBuf.clear();
+            encoder.writeList(byteBuf, encoderState, list);
         }
+        resultSet.encodesComplete();
+
+        resultSet.start();
+        for (int i = 0; i < ITERATIONS; i++) {
+            byteBuf.readerIndex(0);
+            decoder.readList(byteBuf, decoderState);
+        }
+        resultSet.decodesComplete();
+
+        time("List<Integer>", resultSet);
     }
 
-    private static final void existingDecode(ByteBuf buffer, int loop) throws IOException {
-        org.apache.qpid.proton4j.codec.Decoder decoder = CodecFactory.getDefaultDecoder();
-        DecoderState state = decoder.newDecoderState();
+    private void benchmarkUUIDs() throws IOException {
+        UUID uuid = UUID.randomUUID();
 
-        for (int i = 0; i < loop; i++) {
-            buffer.readerIndex(0);
-//            decoder.readObject(buffer, state); // List
-//            decoder.readUUID(buffer, state); // UUID
-//            decoder.readObject(buffer, state); // Header
-            decoder.readObject(buffer, state); // Properties
-//            decoder.readObject(buffer, state); // MessageAnnotations
+        resultSet.start();
+        for (int i = 0; i < ITERATIONS; i++) {
+            byteBuf.clear();
+            encoder.writeUUID(byteBuf, encoderState, uuid);
+        }
+        resultSet.encodesComplete();
+
+        resultSet.start();
+        for (int i = 0; i < ITERATIONS; i++) {
+            byteBuf.readerIndex(0);
+            decoder.readUUID(byteBuf, decoderState);
+        }
+        resultSet.decodesComplete();
+
+        time("UUID", resultSet);
+    }
+
+    private void benchmarkHeader() throws IOException {
+        Header header = new Header();
+        header.setDurable(true);
+        header.setFirstAcquirer(true);
+
+        resultSet.start();
+        for (int i = 0; i < ITERATIONS; i++) {
+            byteBuf.clear();
+            encoder.writeObject(byteBuf, encoderState, header);
+        }
+        resultSet.encodesComplete();
+
+        resultSet.start();
+        for (int i = 0; i < ITERATIONS; i++) {
+            byteBuf.readerIndex(0);
+            decoder.readObject(byteBuf, decoderState);
+        }
+        resultSet.decodesComplete();
+
+        time("Header", resultSet);
+    }
+
+    private void benchmarkProperties() throws IOException {
+        Properties properties = new Properties();
+        properties.setTo("queue:1");
+
+        resultSet.start();
+        for (int i = 0; i < ITERATIONS; i++) {
+            byteBuf.clear();
+            encoder.writeObject(byteBuf, encoderState, properties);
+        }
+        resultSet.encodesComplete();
+
+        resultSet.start();
+        for (int i = 0; i < ITERATIONS; i++) {
+            byteBuf.readerIndex(0);
+            decoder.readObject(byteBuf, decoderState);
+        }
+        resultSet.decodesComplete();
+
+        time("Properties", resultSet);
+    }
+
+    private void benchmarkMessageAnnotations() throws IOException {
+        MessageAnnotations annotations = new MessageAnnotations(new HashMap<>());
+        annotations.getValue().put(Symbol.valueOf("test1"), UnsignedByte.valueOf((byte) 128));
+        annotations.getValue().put(Symbol.valueOf("test2"), UnsignedShort.valueOf((short) 128));
+        annotations.getValue().put(Symbol.valueOf("test3"), UnsignedInteger.valueOf((byte) 128));
+
+        resultSet.start();
+        for (int i = 0; i < ITERATIONS; i++) {
+            byteBuf.clear();
+            encoder.writeObject(byteBuf, encoderState, annotations);
+        }
+        resultSet.encodesComplete();
+
+        resultSet.start();
+        for (int i = 0; i < ITERATIONS; i++) {
+            byteBuf.readerIndex(0);
+            decoder.readObject(byteBuf, decoderState);
+        }
+        resultSet.decodesComplete();
+
+        time("MessageAnnotations", resultSet);
+    }
+
+    private static class BenchmarkResult {
+
+        private long startTime;
+
+        private long encodeTime;
+        private long decodeTime;
+
+        public void start() {
+            startTime = System.nanoTime();
+        }
+
+        public void encodesComplete() {
+            encodeTime = System.nanoTime() - startTime;
+        }
+
+        public void decodesComplete() {
+            decodeTime = System.nanoTime() - startTime;
+        }
+
+        public long getEncodeTimeMills() {
+            return TimeUnit.NANOSECONDS.toMillis(encodeTime);
+        }
+
+        public long getDecodeTimeMills() {
+            return TimeUnit.NANOSECONDS.toMillis(decodeTime);
         }
     }
 }

@@ -16,6 +16,8 @@
  */
 package org.apache.qpid.proton4j.codec;
 
+import org.apache.qpid.proton4j.amqp.Symbol;
+
 /**
  * Retains Encoder state information either between calls or across encode iterations.
  */
@@ -25,5 +27,16 @@ public interface EncoderState {
      * @return the Encoder instance that create this state object.
      */
     Encoder getEncoder();
+
+    /**
+     * Returns the bytes that represent an encoded Symbol.  The encoder can perform
+     * caching or other optimization to make this translation faster.
+     *
+     * @param symbol
+     *      The Symbol being encoded.
+     *
+     * @return the bytes that represent the Symbol.
+     */
+    byte[] getSymbolBytes(Symbol symbol);
 
 }

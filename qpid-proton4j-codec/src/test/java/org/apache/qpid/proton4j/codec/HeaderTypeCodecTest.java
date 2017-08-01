@@ -21,63 +21,63 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
-import java.util.UUID;
 
-import org.apache.qpid.proton4j.amqp.messaging.AmqpValue;
+import org.apache.qpid.proton4j.amqp.UnsignedByte;
+import org.apache.qpid.proton4j.amqp.UnsignedInteger;
+import org.apache.qpid.proton4j.amqp.messaging.Header;
 import org.junit.Test;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 
 /**
- * Test for decoder of the AmqpValue type.
+ * Test for decoder of AMQP Header type.
  */
-public class AmqpValueTypeDecoderTest extends CodecTestSupport {
+public class HeaderTypeCodecTest extends CodecTestSupport {
 
-    private final int LARGE_SIZE = 1024;
+    private final int LARGE_SIZE = 1024 * 1024;
     private final int SMALL_SIZE = 32;
 
     @Test
-    public void testDecodeAmqpValueString() throws IOException {
-        doTestDecodeAmqpValueSeries(1, new AmqpValue("test"));
+    public void testDecodeHeader() throws IOException {
+        doTestDecodeHeaderSeries(1);
     }
 
     @Test
-    public void testDecodeAmqpValueNull() throws IOException {
-        doTestDecodeAmqpValueSeries(1, new AmqpValue(null));
+    public void testDecodeSmallSeriesOfHeaders() throws IOException {
+        doTestDecodeHeaderSeries(SMALL_SIZE);
     }
 
     @Test
-    public void testDecodeAmqpValueUUID() throws IOException {
-        doTestDecodeAmqpValueSeries(1, new AmqpValue(UUID.randomUUID()));
+    public void testDecodeLargeSeriesOfHeaders() throws IOException {
+        doTestDecodeHeaderSeries(LARGE_SIZE);
     }
 
-    @Test
-    public void testDecodeSmallSeriesOfAmqpValue() throws IOException {
-        doTestDecodeAmqpValueSeries(SMALL_SIZE, new AmqpValue("test"));
-    }
-
-    @Test
-    public void testDecodeLargeSeriesOfAmqpValue() throws IOException {
-        doTestDecodeAmqpValueSeries(LARGE_SIZE, new AmqpValue("test"));
-    }
-
-    private void doTestDecodeAmqpValueSeries(int size, AmqpValue value) throws IOException {
+    private void doTestDecodeHeaderSeries(int size) throws IOException {
         ByteBuf buffer = Unpooled.buffer();
 
+        Header header = new Header();
+
+        header.setDurable(Boolean.TRUE);
+        header.setPriority(UnsignedByte.valueOf((byte) 3));
+        header.setDeliveryCount(UnsignedInteger.valueOf(10));
+        header.setFirstAcquirer(Boolean.FALSE);
+        header.setTtl(UnsignedInteger.valueOf(500));
+
         for (int i = 0; i < size; ++i) {
-            encoder.writeObject(buffer, encoderState, value);
+            encoder.writeObject(buffer, encoderState, header);
         }
 
         for (int i = 0; i < size; ++i) {
             final Object result = decoder.readObject(buffer, decoderState);
 
             assertNotNull(result);
-            assertTrue(result instanceof AmqpValue);
+            assertTrue(result instanceof Header);
 
-            AmqpValue decoded = (AmqpValue) result;
+            Header decoded = (Header) result;
 
-            assertEquals(value.getValue(), decoded.getValue());
+            assertEquals(3, decoded.getPriority().intValue());
+            assertTrue(decoded.getDurable().booleanValue());
         }
     }
 }

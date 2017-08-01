@@ -17,72 +17,67 @@
 package org.apache.qpid.proton4j.codec;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
+import java.util.UUID;
 
+import org.apache.qpid.proton4j.amqp.messaging.AmqpValue;
 import org.junit.Test;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 
 /**
- * Test the BooleanTypeDecoder for correctness
+ * Test for decoder of the AmqpValue type.
  */
-public class BooleanTypeDecoderTest extends CodecTestSupport {
+public class AmqpValueTypeCodecTest extends CodecTestSupport {
 
     private final int LARGE_SIZE = 1024;
     private final int SMALL_SIZE = 32;
 
     @Test
-    public void testDecodeBooleanTrue() throws Exception {
-        ByteBuf buffer = Unpooled.buffer();
-
-        encoder.writeBoolean(buffer, encoderState, true);
-
-        Object result = decoder.readObject(buffer, decoderState);
-        assertTrue(result instanceof Boolean);
-        assertTrue(((Boolean) result).booleanValue());
+    public void testDecodeAmqpValueString() throws IOException {
+        doTestDecodeAmqpValueSeries(1, new AmqpValue("test"));
     }
 
     @Test
-    public void testDecodeBooleanFalse() throws Exception {
-        ByteBuf buffer = Unpooled.buffer();
-
-        encoder.writeBoolean(buffer, encoderState, false);
-
-        Object result = decoder.readObject(buffer, decoderState);
-        assertTrue(result instanceof Boolean);
-        assertFalse(((Boolean) result).booleanValue());
+    public void testDecodeAmqpValueNull() throws IOException {
+        doTestDecodeAmqpValueSeries(1, new AmqpValue(null));
     }
 
     @Test
-    public void testDecodeSmallSeriesOfBooleans() throws IOException {
-        doTestDecodeBooleanSeries(SMALL_SIZE);
+    public void testDecodeAmqpValueUUID() throws IOException {
+        doTestDecodeAmqpValueSeries(1, new AmqpValue(UUID.randomUUID()));
     }
 
     @Test
-    public void testDecodeLargeSeriesOfBooleans() throws IOException {
-        doTestDecodeBooleanSeries(LARGE_SIZE);
+    public void testDecodeSmallSeriesOfAmqpValue() throws IOException {
+        doTestDecodeAmqpValueSeries(SMALL_SIZE, new AmqpValue("test"));
     }
 
-    private void doTestDecodeBooleanSeries(int size) throws IOException {
+    @Test
+    public void testDecodeLargeSeriesOfAmqpValue() throws IOException {
+        doTestDecodeAmqpValueSeries(LARGE_SIZE, new AmqpValue("test"));
+    }
+
+    private void doTestDecodeAmqpValueSeries(int size, AmqpValue value) throws IOException {
         ByteBuf buffer = Unpooled.buffer();
 
         for (int i = 0; i < size; ++i) {
-            encoder.writeBoolean(buffer, encoderState, i % 2 == 0);
+            encoder.writeObject(buffer, encoderState, value);
         }
 
         for (int i = 0; i < size; ++i) {
             final Object result = decoder.readObject(buffer, decoderState);
 
             assertNotNull(result);
-            assertTrue(result instanceof Boolean);
+            assertTrue(result instanceof AmqpValue);
 
-            Boolean boolValue = (Boolean) result;
-            assertEquals(i % 2 == 0, boolValue.booleanValue());
+            AmqpValue decoded = (AmqpValue) result;
+
+            assertEquals(value.getValue(), decoded.getValue());
         }
     }
 }

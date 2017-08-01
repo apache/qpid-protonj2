@@ -17,67 +17,72 @@
 package org.apache.qpid.proton4j.codec;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 
-import org.apache.qpid.proton4j.amqp.UnsignedByte;
-import org.apache.qpid.proton4j.amqp.UnsignedInteger;
-import org.apache.qpid.proton4j.amqp.messaging.Header;
 import org.junit.Test;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 
 /**
- * Test for decoder of AMQP Header type.
+ * Test the BooleanTypeDecoder for correctness
  */
-public class HeaderTypeDecoderTest extends CodecTestSupport {
+public class BooleanTypeCodecTest extends CodecTestSupport {
 
-    private final int LARGE_SIZE = 1024 * 1024;
+    private final int LARGE_SIZE = 1024;
     private final int SMALL_SIZE = 32;
 
     @Test
-    public void testDecodeHeader() throws IOException {
-        doTestDecodeHeaderSeries(1);
-    }
-
-    @Test
-    public void testDecodeSmallSeriesOfHeaders() throws IOException {
-        doTestDecodeHeaderSeries(SMALL_SIZE);
-    }
-
-    @Test
-    public void testDecodeLargeSeriesOfHeaders() throws IOException {
-        doTestDecodeHeaderSeries(LARGE_SIZE);
-    }
-
-    private void doTestDecodeHeaderSeries(int size) throws IOException {
+    public void testDecodeBooleanTrue() throws Exception {
         ByteBuf buffer = Unpooled.buffer();
 
-        Header header = new Header();
+        encoder.writeBoolean(buffer, encoderState, true);
 
-        header.setDurable(Boolean.TRUE);
-        header.setPriority(UnsignedByte.valueOf((byte) 3));
-        header.setDeliveryCount(UnsignedInteger.valueOf(10));
-        header.setFirstAcquirer(Boolean.FALSE);
-        header.setTtl(UnsignedInteger.valueOf(500));
+        Object result = decoder.readObject(buffer, decoderState);
+        assertTrue(result instanceof Boolean);
+        assertTrue(((Boolean) result).booleanValue());
+    }
+
+    @Test
+    public void testDecodeBooleanFalse() throws Exception {
+        ByteBuf buffer = Unpooled.buffer();
+
+        encoder.writeBoolean(buffer, encoderState, false);
+
+        Object result = decoder.readObject(buffer, decoderState);
+        assertTrue(result instanceof Boolean);
+        assertFalse(((Boolean) result).booleanValue());
+    }
+
+    @Test
+    public void testDecodeSmallSeriesOfBooleans() throws IOException {
+        doTestDecodeBooleanSeries(SMALL_SIZE);
+    }
+
+    @Test
+    public void testDecodeLargeSeriesOfBooleans() throws IOException {
+        doTestDecodeBooleanSeries(LARGE_SIZE);
+    }
+
+    private void doTestDecodeBooleanSeries(int size) throws IOException {
+        ByteBuf buffer = Unpooled.buffer();
 
         for (int i = 0; i < size; ++i) {
-            encoder.writeObject(buffer, encoderState, header);
+            encoder.writeBoolean(buffer, encoderState, i % 2 == 0);
         }
 
         for (int i = 0; i < size; ++i) {
             final Object result = decoder.readObject(buffer, decoderState);
 
             assertNotNull(result);
-            assertTrue(result instanceof Header);
+            assertTrue(result instanceof Boolean);
 
-            Header decoded = (Header) result;
-
-            assertEquals(3, decoded.getPriority().intValue());
-            assertTrue(decoded.getDurable().booleanValue());
+            Boolean boolValue = (Boolean) result;
+            assertEquals(i % 2 == 0, boolValue.booleanValue());
         }
     }
 }

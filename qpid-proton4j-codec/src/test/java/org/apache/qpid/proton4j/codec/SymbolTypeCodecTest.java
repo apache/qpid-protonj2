@@ -23,18 +23,19 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 
+import org.apache.qpid.proton4j.amqp.Symbol;
 import org.junit.Test;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 
-public class StringCodecTest extends CodecTestSupport {
+public class SymbolTypeCodecTest extends CodecTestSupport {
 
     private final int LARGE_SIZE = 2048;
     private final int SMALL_SIZE = 32;
 
-    private final String SMALL_STRING_VALUIE = "Small String";
-    private final String LARGE_STRING_VALUIE = "Large String: " +
+    private final String SMALL_SYMBOL_VALUIE = "Small String";
+    private final String LARGE_SYMBOL_VALUIE = "Large String: " +
         "The quick brown fox jumps over the lazy dog. " +
         "The quick brown fox jumps over the lazy dog. " +
         "The quick brown fox jumps over the lazy dog. " +
@@ -45,35 +46,35 @@ public class StringCodecTest extends CodecTestSupport {
         "The quick brown fox jumps over the lazy dog.";
 
     @Test
-    public void testEncodeSmallString() throws IOException {
-        doTestEncodeDecode(SMALL_STRING_VALUIE);
+    public void testEncodeSmallSymbol() throws IOException {
+        doTestEncodeDecode(Symbol.valueOf(SMALL_SYMBOL_VALUIE));
     }
 
     @Test
-    public void testEncodeLargeString() throws IOException {
-        doTestEncodeDecode(LARGE_STRING_VALUIE);
+    public void testEncodeLargeSymbol() throws IOException {
+        doTestEncodeDecode(Symbol.valueOf(LARGE_SYMBOL_VALUIE));
     }
 
     @Test
-    public void testEncodeEmptyString() throws IOException {
-        doTestEncodeDecode("");
+    public void testEncodeEmptySymbol() throws IOException {
+        doTestEncodeDecode(Symbol.valueOf(""));
     }
 
     @Test
-    public void testEncodeNullString() throws IOException {
+    public void testEncodeNullSymbol() throws IOException {
         doTestEncodeDecode(null);
     }
 
-    private void doTestEncodeDecode(String value) throws IOException {
+    private void doTestEncodeDecode(Symbol value) throws IOException {
         ByteBuf buffer = Unpooled.buffer();
 
-        encoder.writeObject(buffer, encoderState, value);
+        encoder.writeSymbol(buffer, encoderState, value);
 
-        final Object result = decoder.readObject(buffer, decoderState);
+        final Object result = decoder.readSymbol(buffer, decoderState);
 
         if (value != null) {
             assertNotNull(result);
-            assertTrue(result instanceof String);
+            assertTrue(result instanceof Symbol);
         } else {
             assertNull(result);
         }
@@ -82,28 +83,28 @@ public class StringCodecTest extends CodecTestSupport {
     }
 
     @Test
-    public void testDecodeSmallSeriesOfStrings() throws IOException {
-        doTestDecodeStringSeries(SMALL_SIZE);
+    public void testDecodeSmallSeriesOfSymbols() throws IOException {
+        doTestDecodeSymbolSeries(SMALL_SIZE);
     }
 
     @Test
-    public void testDecodeLargeSeriesOfStrings() throws IOException {
-        doTestDecodeStringSeries(LARGE_SIZE);
+    public void testDecodeLargeSeriesOfSymbols() throws IOException {
+        doTestDecodeSymbolSeries(LARGE_SIZE);
     }
 
-    private void doTestDecodeStringSeries(int size) throws IOException {
+    private void doTestDecodeSymbolSeries(int size) throws IOException {
         ByteBuf buffer = Unpooled.buffer();
 
         for (int i = 0; i < size; ++i) {
-            encoder.writeString(buffer, encoderState, LARGE_STRING_VALUIE);
+            encoder.writeSymbol(buffer, encoderState, Symbol.valueOf(LARGE_SYMBOL_VALUIE));
         }
 
         for (int i = 0; i < size; ++i) {
-            final Object result = decoder.readObject(buffer, decoderState);
+            final Object result = decoder.readSymbol(buffer, decoderState);
 
             assertNotNull(result);
-            assertTrue(result instanceof String);
-            assertEquals(LARGE_STRING_VALUIE, result);
+            assertTrue(result instanceof Symbol);
+            assertEquals(LARGE_SYMBOL_VALUIE, result.toString());
         }
     }
 }
