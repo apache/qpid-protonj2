@@ -31,6 +31,7 @@ import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedByte;
 import org.apache.qpid.proton4j.amqp.UnsignedInteger;
 import org.apache.qpid.proton4j.amqp.UnsignedShort;
+import org.apache.qpid.proton4j.amqp.messaging.ApplicationProperties;
 import org.apache.qpid.proton4j.amqp.messaging.Header;
 import org.apache.qpid.proton4j.amqp.messaging.MessageAnnotations;
 import org.apache.qpid.proton4j.amqp.messaging.Properties;
@@ -53,7 +54,7 @@ public class Benchmark implements Runnable {
 
     private Encoder encoder = CodecFactory.getDefaultEncoder();
     private EncoderState encoderState = encoder.newEncoderState();
-    private org.apache.qpid.proton4j.codec.Decoder decoder = CodecFactory.getDefaultDecoder();
+    private Decoder decoder = CodecFactory.getDefaultDecoder();
     private DecoderState decoderState = decoder.newDecoderState();
 
     public static final void main(String[] args) throws IOException, InterruptedException {
@@ -72,6 +73,7 @@ public class Benchmark implements Runnable {
             benchmarkHeader();
             benchmarkProperties();
             benchmarkMessageAnnotations();
+            benchmarkApplicationProperties();
         } catch (IOException e) {
             System.out.println("Unexpected error: " + e.getMessage());
         }
@@ -91,6 +93,7 @@ public class Benchmark implements Runnable {
         benchmarkHeader();
         benchmarkProperties();
         benchmarkMessageAnnotations();
+        benchmarkApplicationProperties();
         warming = false;
     }
 
@@ -201,6 +204,29 @@ public class Benchmark implements Runnable {
         resultSet.decodesComplete();
 
         time("MessageAnnotations", resultSet);
+    }
+
+    private void benchmarkApplicationProperties() throws IOException {
+        ApplicationProperties properties = new ApplicationProperties(new HashMap<>());
+        properties.getValue().put("test1", UnsignedByte.valueOf((byte) 128));
+        properties.getValue().put("test2", UnsignedShort.valueOf((short) 128));
+        properties.getValue().put("test3", UnsignedInteger.valueOf((byte) 128));
+
+        resultSet.start();
+        for (int i = 0; i < ITERATIONS; i++) {
+            byteBuf.clear();
+            encoder.writeObject(byteBuf, encoderState, properties);
+        }
+        resultSet.encodesComplete();
+
+        resultSet.start();
+        for (int i = 0; i < ITERATIONS; i++) {
+            byteBuf.readerIndex(0);
+            decoder.readObject(byteBuf, decoderState);
+        }
+        resultSet.decodesComplete();
+
+        time("ApplicationProperties", resultSet);
     }
 
     private static class BenchmarkResult {
