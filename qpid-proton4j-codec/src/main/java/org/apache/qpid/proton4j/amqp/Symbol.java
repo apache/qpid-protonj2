@@ -18,13 +18,13 @@ package org.apache.qpid.proton4j.amqp;
 
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 
 public final class Symbol implements Comparable<Symbol> {
 
-    private static final ConcurrentMap<String, Symbol> stringToSymbols = new ConcurrentHashMap<>(2048);
-    private static final ConcurrentMap<ByteBuffer, Symbol> bufferToSymbols = new ConcurrentHashMap<>(2048);
+    private static final Map<String, Symbol> stringToSymbols = new ConcurrentHashMap<>(2048);
+    private static final Map<ByteBuffer, Symbol> bufferToSymbols = new ConcurrentHashMap<>(2048);
 
     private static final Symbol EMPTY_SYMBOL = new Symbol(new byte[0], "");
 
