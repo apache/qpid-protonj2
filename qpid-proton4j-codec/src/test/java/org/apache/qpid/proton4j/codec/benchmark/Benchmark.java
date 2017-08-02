@@ -66,14 +66,9 @@ public class Benchmark implements Runnable {
     @Override
     public void run() {
         try {
-            warmup();
-
-            benchmarkListOfInts();
-            benchmarkUUIDs();
-            benchmarkHeader();
-            benchmarkProperties();
-            benchmarkMessageAnnotations();
-            benchmarkApplicationProperties();
+            doBenchmarks();
+            warming = false;
+            doBenchmarks();
         } catch (IOException e) {
             System.out.println("Unexpected error: " + e.getMessage());
         }
@@ -87,13 +82,14 @@ public class Benchmark implements Runnable {
         }
     }
 
-    private final void warmup() throws IOException {
+    private final void doBenchmarks() throws IOException {
         benchmarkListOfInts();
         benchmarkUUIDs();
         benchmarkHeader();
         benchmarkProperties();
         benchmarkMessageAnnotations();
         benchmarkApplicationProperties();
+        benchmarkSymbols();
         warming = false;
     }
 
@@ -227,6 +223,32 @@ public class Benchmark implements Runnable {
         resultSet.decodesComplete();
 
         time("ApplicationProperties", resultSet);
+    }
+
+    private void benchmarkSymbols() throws IOException {
+        Symbol symbol1 = Symbol.valueOf("Symbol-1");
+        Symbol symbol2 = Symbol.valueOf("Symbol-2");
+        Symbol symbol3 = Symbol.valueOf("Symbol-3");
+
+        resultSet.start();
+        for (int i = 0; i < ITERATIONS; i++) {
+            byteBuf.clear();
+            encoder.writeSymbol(byteBuf, encoderState, symbol1);
+            encoder.writeSymbol(byteBuf, encoderState, symbol2);
+            encoder.writeSymbol(byteBuf, encoderState, symbol3);
+        }
+        resultSet.encodesComplete();
+
+        resultSet.start();
+        for (int i = 0; i < ITERATIONS; i++) {
+            byteBuf.readerIndex(0);
+            decoder.readSymbol(byteBuf, decoderState);
+            decoder.readSymbol(byteBuf, decoderState);
+            decoder.readSymbol(byteBuf, decoderState);
+        }
+        resultSet.decodesComplete();
+
+        time("Symbol", resultSet);
     }
 
     private static class BenchmarkResult {
