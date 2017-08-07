@@ -20,7 +20,7 @@ import java.io.IOException;
 
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
-import org.apache.qpid.proton4j.amqp.messaging.DeleteOnNoMessages;
+import org.apache.qpid.proton4j.amqp.messaging.DeleteOnNoLinksOrMessages;
 import org.apache.qpid.proton4j.codec.DecoderState;
 import org.apache.qpid.proton4j.codec.DescribedTypeDecoder;
 import org.apache.qpid.proton4j.codec.EncodingCodes;
@@ -28,33 +28,33 @@ import org.apache.qpid.proton4j.codec.EncodingCodes;
 import io.netty.buffer.ByteBuf;
 
 /**
- * Decoder of AMQP DeleteOnNoMessages type values from a byte stream
+ * Decoder of AMQP DeleteOnNoLinksOrMessages type values from a byte stream
  */
-public class DeleteOnNoLinksOrMessagesTypeDecoder implements DescribedTypeDecoder<DeleteOnNoMessages> {
+public class DeleteOnNoLinksOrMessagesTypeDecoder implements DescribedTypeDecoder<DeleteOnNoLinksOrMessages> {
 
     @Override
-    public Class<DeleteOnNoMessages> getTypeClass() {
-        return DeleteOnNoMessages.class;
+    public Class<DeleteOnNoLinksOrMessages> getTypeClass() {
+        return DeleteOnNoLinksOrMessages.class;
     }
 
     @Override
     public UnsignedLong getDescriptorCode() {
-        return DeleteOnNoMessages.DESCRIPTOR_CODE;
+        return DeleteOnNoLinksOrMessages.DESCRIPTOR_CODE;
     }
 
     @Override
     public Symbol getDescriptorSymbol() {
-        return DeleteOnNoMessages.DESCRIPTOR_SYMBOL;
+        return DeleteOnNoLinksOrMessages.DESCRIPTOR_SYMBOL;
     }
 
     @Override
-    public DeleteOnNoMessages readValue(ByteBuf buffer, DecoderState state) throws IOException {
+    public DeleteOnNoLinksOrMessages readValue(ByteBuf buffer, DecoderState state) throws IOException {
         byte code = buffer.readByte();
 
         if (code != EncodingCodes.LIST0) {
             throw new IOException("Expected List0 type indicator but got code for type: " + code);
         }
 
-        return DeleteOnNoMessages.getInstance();
+        return DeleteOnNoLinksOrMessages.getInstance();
     }
 }

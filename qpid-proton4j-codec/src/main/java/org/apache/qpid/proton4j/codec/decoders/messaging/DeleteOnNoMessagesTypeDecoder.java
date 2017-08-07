@@ -20,7 +20,7 @@ import java.io.IOException;
 
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
-import org.apache.qpid.proton4j.amqp.messaging.DeleteOnNoLinks;
+import org.apache.qpid.proton4j.amqp.messaging.DeleteOnNoMessages;
 import org.apache.qpid.proton4j.codec.DecoderState;
 import org.apache.qpid.proton4j.codec.DescribedTypeDecoder;
 import org.apache.qpid.proton4j.codec.EncodingCodes;
@@ -30,31 +30,31 @@ import io.netty.buffer.ByteBuf;
 /**
  * Decoder of AMQP DeleteOnNoLinks type values from a byte stream
  */
-public class DeleteOnNoMessagesTypeDecoder implements DescribedTypeDecoder<DeleteOnNoLinks> {
+public class DeleteOnNoMessagesTypeDecoder implements DescribedTypeDecoder<DeleteOnNoMessages> {
 
     @Override
-    public Class<DeleteOnNoLinks> getTypeClass() {
-        return DeleteOnNoLinks.class;
+    public Class<DeleteOnNoMessages> getTypeClass() {
+        return DeleteOnNoMessages.class;
     }
 
     @Override
     public UnsignedLong getDescriptorCode() {
-        return DeleteOnNoLinks.DESCRIPTOR_CODE;
+        return DeleteOnNoMessages.DESCRIPTOR_CODE;
     }
 
     @Override
     public Symbol getDescriptorSymbol() {
-        return DeleteOnNoLinks.DESCRIPTOR_SYMBOL;
+        return DeleteOnNoMessages.DESCRIPTOR_SYMBOL;
     }
 
     @Override
-    public DeleteOnNoLinks readValue(ByteBuf buffer, DecoderState state) throws IOException {
+    public DeleteOnNoMessages readValue(ByteBuf buffer, DecoderState state) throws IOException {
         byte code = buffer.readByte();
 
         if (code != EncodingCodes.LIST0) {
             throw new IOException("Expected List0 type indicator but got code for type: " + code);
         }
 
-        return DeleteOnNoLinks.getInstance();
+        return DeleteOnNoMessages.getInstance();
     }
 }

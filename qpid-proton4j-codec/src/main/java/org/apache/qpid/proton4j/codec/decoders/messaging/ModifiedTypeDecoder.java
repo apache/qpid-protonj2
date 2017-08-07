@@ -30,7 +30,7 @@ import org.apache.qpid.proton4j.codec.decoders.primitives.ListTypeDecoder.ListEn
 import io.netty.buffer.ByteBuf;
 
 /**
- *
+ * Decoder of AMQP Modified type values from a byte stream.
  */
 public class ModifiedTypeDecoder implements DescribedTypeDecoder<Modified>, ListEntryHandler<Modified> {
 
