@@ -39,6 +39,7 @@ import org.apache.qpid.proton4j.codec.encoders.primitives.ArrayTypeEncoder;
 import org.apache.qpid.proton4j.codec.encoders.primitives.BinaryTypeEncoder;
 import org.apache.qpid.proton4j.codec.encoders.primitives.BooleanFalseTypeEncoder;
 import org.apache.qpid.proton4j.codec.encoders.primitives.BooleanTrueTypeEncoder;
+import org.apache.qpid.proton4j.codec.encoders.primitives.BooleanTypeEncoder;
 import org.apache.qpid.proton4j.codec.encoders.primitives.ByteTypeEncoder;
 import org.apache.qpid.proton4j.codec.encoders.primitives.CharacterTypeEncoder;
 import org.apache.qpid.proton4j.codec.encoders.primitives.Decimal128TypeEncoder;
@@ -70,6 +71,7 @@ public class ProtonEncoder implements Encoder {
 
     private final ArrayTypeEncoder arrayEncoder = new ArrayTypeEncoder();
     private final BinaryTypeEncoder binaryEncoder = new BinaryTypeEncoder();
+    private final BooleanTypeEncoder booleanEncoder = new BooleanTypeEncoder();
     private final BooleanTrueTypeEncoder trueEncoder = new BooleanTrueTypeEncoder();
     private final BooleanFalseTypeEncoder falseEncoder = new BooleanFalseTypeEncoder();
     private final ByteTypeEncoder byteEncoder = new ByteTypeEncoder();
@@ -117,10 +119,10 @@ public class ProtonEncoder implements Encoder {
 
     @Override
     public void writeBoolean(ByteBuf buffer, EncoderState state, Boolean value) {
-        if (value.booleanValue()) {
-            trueEncoder.writeType(buffer, state, Boolean.TRUE);
+        if (value == null) {
+            nullEncoder.writeType(buffer, state, null);
         } else {
-            falseEncoder.writeType(buffer, state, Boolean.FALSE);
+            booleanEncoder.writeType(buffer, state, value);
         }
     }
 
