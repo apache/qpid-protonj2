@@ -90,6 +90,7 @@ public class ProtonEncoder implements Encoder {
     private final StringTypeEncoder stringEncoder = new StringTypeEncoder();
     private final SymbolTypeEncoder symbolEncoder = new SymbolTypeEncoder();
     private final TimestampTypeEncoder timestampEncoder = new TimestampTypeEncoder();
+    private final UnknownDescribedTypeEncoder unknownTypeEncoder = new UnknownDescribedTypeEncoder();
     private final UUIDTypeEncoder uuidEncoder = new UUIDTypeEncoder();
     private final UnsignedByteTypeEncoder ubyteEncoder = new UnsignedByteTypeEncoder();
     private final UnsignedShortTypeEncoder ushortEncoder = new UnsignedShortTypeEncoder();
@@ -357,7 +358,11 @@ public class ProtonEncoder implements Encoder {
 
     @Override
     public void writeDescribedType(ByteBuf buffer, EncoderState state, DescribedType value) {
-        // TODO Write random described types
+        if (value == null) {
+            writeNull(buffer, state);
+        } else {
+            unknownTypeEncoder.writeType(buffer, state, value);
+        }
     }
 
     @Override
@@ -584,9 +589,6 @@ public class ProtonEncoder implements Encoder {
     public TypeEncoder<?> getTypeEncoder(Object value) {
         if (value == null) {
             return nullEncoder;
-        } else if (value instanceof DescribedType) {
-            // TODO - Handle Described Types
-            throw new UnsupportedOperationException();
         } else {
             return getTypeEncoder(value.getClass());
         }
@@ -605,8 +607,7 @@ public class ProtonEncoder implements Encoder {
                 } else if (Map.class.isAssignableFrom(typeClass)) {
                     encoder = mapEncoder;
                 } else if (DescribedType.class.isAssignableFrom(typeClass)) {
-                    // TODO encoder =
-                    // describedTypesClassRegistry.get(typeClass);
+                    encoder = unknownTypeEncoder;
                 }
             }
 

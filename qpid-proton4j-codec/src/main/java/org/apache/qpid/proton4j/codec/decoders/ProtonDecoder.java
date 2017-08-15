@@ -129,9 +129,17 @@ public class ProtonDecoder implements Decoder {
                 throw new IllegalStateException("Invalid type found in descriptor location: " + encoding);
             }
 
-            final TypeDecoder<?> typeDecoder = describedTypeDecoders.get(descriptor);
+            TypeDecoder<?> typeDecoder = describedTypeDecoders.get(descriptor);
             if (typeDecoder == null) {
-                throw new IllegalStateException("No registered decoder for described: " + descriptor);
+                typeDecoder = new UnknownDescribedTypeDecoder() {
+
+                    @Override
+                    public Object getDescriptor() {
+                        return descriptor;
+                    }
+                };
+
+                describedTypeDecoders.put(descriptor, (UnknownDescribedTypeDecoder) typeDecoder);
             }
 
             return typeDecoder;
