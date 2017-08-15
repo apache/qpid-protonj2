@@ -16,6 +16,8 @@
  */
 package org.apache.qpid.proton4j.codec.decoders.primitives;
 
+import java.io.IOException;
+
 import org.apache.qpid.proton4j.amqp.Decimal32;
 import org.apache.qpid.proton4j.codec.DecoderState;
 import org.apache.qpid.proton4j.codec.EncodingCodes;
@@ -41,5 +43,10 @@ public class Decimal32TypeDecoder implements PrimitiveTypeDecoder<Decimal32> {
     @Override
     public int getTypeCode() {
         return EncodingCodes.DECIMAL32 & 0xff;
+    }
+
+    @Override
+    public void skipValue(ByteBuf buffer, DecoderState state) throws IOException {
+        buffer.skipBytes(Decimal32.BYTES);
     }
 }

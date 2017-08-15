@@ -62,4 +62,15 @@ public class DataTypeDecoder implements DescribedTypeDecoder<Data> {
 
         return new Data(result);
     }
+
+    @Override
+    public void skipValue(ByteBuf buffer, DecoderState state) throws IOException {
+        TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
+
+        if (!(decoder instanceof BinaryTypeDecoder)) {
+            throw new IOException("Expected Binary type indicator but got decoder for type: " + decoder.getClass().getSimpleName());
+        }
+
+        decoder.skipValue(buffer, state);
+    }
 }

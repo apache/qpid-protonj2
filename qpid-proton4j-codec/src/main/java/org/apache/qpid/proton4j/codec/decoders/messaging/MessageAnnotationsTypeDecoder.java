@@ -63,4 +63,15 @@ public class MessageAnnotationsTypeDecoder implements DescribedTypeDecoder<Messa
         Map<Symbol, Object> map = mapDecoder.readValue(buffer, state);
         return new MessageAnnotations(map);
     }
+
+    @Override
+    public void skipValue(ByteBuf buffer, DecoderState state) throws IOException {
+        TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
+
+        if (!(decoder instanceof MapTypeDecoder)) {
+            throw new IOException("Expected Map type indicator but got decoder for type: " + decoder.getClass().getSimpleName());
+        }
+
+        decoder.skipValue(buffer, state);
+    }
 }

@@ -26,8 +26,18 @@ import org.apache.qpid.proton4j.amqp.UnsignedLong;
  */
 public interface DescribedTypeDecoder<V> extends TypeDecoder<V> {
 
+    /**
+     * Returns the AMQP descriptor code for the type this decoder reads.
+     *
+     * @return an unsigned long descriptor code value.
+     */
     UnsignedLong getDescriptorCode();
 
+    /**
+     * Returns the AMQP descriptor symbol for the type this decoder reads.
+     *
+     * @return an symbol descriptor code value.
+     */
     Symbol getDescriptorSymbol();
 
 }

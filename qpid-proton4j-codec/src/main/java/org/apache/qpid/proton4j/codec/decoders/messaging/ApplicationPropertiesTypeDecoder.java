@@ -25,6 +25,7 @@ import org.apache.qpid.proton4j.amqp.messaging.ApplicationProperties;
 import org.apache.qpid.proton4j.codec.DecoderState;
 import org.apache.qpid.proton4j.codec.DescribedTypeDecoder;
 import org.apache.qpid.proton4j.codec.TypeDecoder;
+import org.apache.qpid.proton4j.codec.decoders.primitives.ListTypeDecoder;
 import org.apache.qpid.proton4j.codec.decoders.primitives.MapTypeDecoder;
 import org.apache.qpid.proton4j.codec.decoders.primitives.NullTypeDecoder;
 
@@ -68,5 +69,20 @@ public class ApplicationPropertiesTypeDecoder implements DescribedTypeDecoder<Ap
 
         Map<String, Object> map = mapDecoder.readValue(buffer, state);
         return new ApplicationProperties(map);
+    }
+
+    @Override
+    public void skipValue(ByteBuf buffer, DecoderState state) throws IOException {
+        TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
+
+        if (decoder instanceof NullTypeDecoder) {
+            return;
+        }
+
+        if (!(decoder instanceof ListTypeDecoder)) {
+            throw new IOException("Expected List type indicator but got decoder for type: " + decoder.getClass().getSimpleName());
+        }
+
+        decoder.skipValue(buffer, state);
     }
 }

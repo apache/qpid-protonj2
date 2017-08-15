@@ -16,6 +16,8 @@
  */
 package org.apache.qpid.proton4j.codec.decoders.primitives;
 
+import java.io.IOException;
+
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.codec.DecoderState;
 import org.apache.qpid.proton4j.codec.EncodingCodes;
@@ -35,5 +37,10 @@ public class UnsignedLong8TypeDecoder extends UnsignedLong64TypeDecoder {
     @Override
     public UnsignedLong readValue(ByteBuf buffer, DecoderState state) {
         return UnsignedLong.valueOf((buffer.readByte() & 0xff));
+    }
+
+    @Override
+    public void skipValue(ByteBuf buffer, DecoderState state) throws IOException {
+        buffer.skipBytes(Byte.BYTES);
     }
 }

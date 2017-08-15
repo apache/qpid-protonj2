@@ -57,4 +57,9 @@ public class ReleasedTypeDecoder implements DescribedTypeDecoder<Released> {
 
         return Released.getInstance();
     }
+
+    @Override
+    public void skipValue(ByteBuf buffer, DecoderState state) throws IOException {
+        buffer.skipBytes(Byte.BYTES);
+    }
 }

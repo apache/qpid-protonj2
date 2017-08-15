@@ -71,6 +71,11 @@ public abstract class AbstractArrayTypeDecoder implements PrimitiveArrayTypeDeco
         return decodeAsObject(buffer, state, count);
     }
 
+    @Override
+    public void skipValue(ByteBuf buffer, DecoderState state) throws IOException {
+        buffer.skipBytes(readSize(buffer));
+    }
+
     protected abstract int readSize(ByteBuf buffer);
 
     protected abstract int readCount(ByteBuf buffer);

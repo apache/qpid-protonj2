@@ -16,6 +16,7 @@
  */
 package org.apache.qpid.proton4j.codec.decoders.primitives;
 
+import java.io.IOException;
 import java.util.UUID;
 
 import org.apache.qpid.proton4j.codec.DecoderState;
@@ -28,6 +29,8 @@ import io.netty.buffer.ByteBuf;
  * Decoder of AMQP UUID values from a byte stream
  */
 public class UUIDTypeDecoder implements PrimitiveTypeDecoder<UUID> {
+
+    private static final int BYTES = Long.BYTES * 2;
 
     @Override
     public Class<UUID> getTypeClass() {
@@ -45,5 +48,10 @@ public class UUIDTypeDecoder implements PrimitiveTypeDecoder<UUID> {
         long lsb = buffer.readLong();
 
         return new UUID(msb, lsb);
+    }
+
+    @Override
+    public void skipValue(ByteBuf buffer, DecoderState state) throws IOException {
+        buffer.skipBytes(BYTES);
     }
 }

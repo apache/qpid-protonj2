@@ -46,4 +46,8 @@ public class List0TypeDecoder implements ListTypeDecoder {
     public void readValue(ByteBuf buffer, DecoderState state, ListEntryHandler handler, Object target) throws IOException {
         // Nothing to do here, no entries in the list.
     }
+
+    @Override
+    public void skipValue(ByteBuf buffer, DecoderState state) throws IOException {
+    }
 }

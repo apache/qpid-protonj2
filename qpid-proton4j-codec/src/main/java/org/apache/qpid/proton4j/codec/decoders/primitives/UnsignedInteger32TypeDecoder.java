@@ -16,6 +16,8 @@
  */
 package org.apache.qpid.proton4j.codec.decoders.primitives;
 
+import java.io.IOException;
+
 import org.apache.qpid.proton4j.amqp.UnsignedInteger;
 import org.apache.qpid.proton4j.codec.DecoderState;
 import org.apache.qpid.proton4j.codec.EncodingCodes;
@@ -41,5 +43,10 @@ public class UnsignedInteger32TypeDecoder implements PrimitiveTypeDecoder<Unsign
     @Override
     public UnsignedInteger readValue(ByteBuf buffer, DecoderState state) {
         return UnsignedInteger.valueOf((buffer.readInt()));
+    }
+
+    @Override
+    public void skipValue(ByteBuf buffer, DecoderState state) throws IOException {
+        buffer.skipBytes(Integer.BYTES);
     }
 }

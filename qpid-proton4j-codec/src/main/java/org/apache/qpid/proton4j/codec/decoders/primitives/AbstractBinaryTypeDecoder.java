@@ -16,6 +16,8 @@
  */
 package org.apache.qpid.proton4j.codec.decoders.primitives;
 
+import java.io.IOException;
+
 import org.apache.qpid.proton4j.amqp.Binary;
 import org.apache.qpid.proton4j.codec.DecoderState;
 
@@ -41,6 +43,19 @@ public abstract class AbstractBinaryTypeDecoder implements BinaryTypeDecoder {
         buffer.readBytes(data, 0, length);
 
         return new Binary(data);
+    }
+
+    @Override
+    public void skipValue(ByteBuf buffer, DecoderState state) throws IOException {
+        int length = readSize(buffer);
+
+        if (length > buffer.readableBytes()) {
+            throw new IllegalArgumentException(
+                String.format("Binary data size %d is specified to be greater than the amount " +
+                              "of data available (%d)", length, buffer.readableBytes()));
+        }
+
+        buffer.skipBytes(length);
     }
 
     protected abstract int readSize(ByteBuf buffer);

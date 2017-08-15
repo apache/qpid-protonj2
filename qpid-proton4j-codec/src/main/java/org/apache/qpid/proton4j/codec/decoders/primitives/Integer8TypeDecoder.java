@@ -16,6 +16,8 @@
  */
 package org.apache.qpid.proton4j.codec.decoders.primitives;
 
+import java.io.IOException;
+
 import org.apache.qpid.proton4j.codec.DecoderState;
 import org.apache.qpid.proton4j.codec.EncodingCodes;
 
@@ -34,5 +36,10 @@ public class Integer8TypeDecoder extends Integer32TypeDecoder {
     @Override
     public int getTypeCode() {
         return EncodingCodes.SMALLINT & 0xff;
+    }
+
+    @Override
+    public void skipValue(ByteBuf buffer, DecoderState state) throws IOException {
+        buffer.skipBytes(Byte.BYTES);
     }
 }

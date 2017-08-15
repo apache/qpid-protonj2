@@ -78,4 +78,15 @@ public class ReceivedTypeDecoder implements DescribedTypeDecoder<Received>, List
                 throw new IllegalStateException("To many entries in Received encoding");
         }
     }
+
+    @Override
+    public void skipValue(ByteBuf buffer, DecoderState state) throws IOException {
+        TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
+
+        if (!(decoder instanceof ListTypeDecoder)) {
+            throw new IOException("Expected List type indicator but got decoder for type: " + decoder.getTypeClass().getName());
+        }
+
+        decoder.skipValue(buffer, state);
+    }
 }

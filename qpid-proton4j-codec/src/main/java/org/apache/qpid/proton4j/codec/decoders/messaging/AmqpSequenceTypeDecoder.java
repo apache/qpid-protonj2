@@ -63,4 +63,15 @@ public class AmqpSequenceTypeDecoder implements DescribedTypeDecoder<AmqpSequenc
 
         return new AmqpSequence(result);
     }
+
+    @Override
+    public void skipValue(ByteBuf buffer, DecoderState state) throws IOException {
+        TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
+
+        if (!(decoder instanceof ListTypeDecoder)) {
+            throw new IOException("Expected List type indicator but got decoder for type: " + decoder.getClass().getSimpleName());
+        }
+
+        decoder.skipValue(buffer, state);
+    }
 }

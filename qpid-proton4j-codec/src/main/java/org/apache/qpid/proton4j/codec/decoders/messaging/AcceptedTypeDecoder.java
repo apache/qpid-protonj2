@@ -57,4 +57,9 @@ public class AcceptedTypeDecoder implements DescribedTypeDecoder<Accepted> {
 
         return Accepted.getInstance();
     }
+
+    @Override
+    public void skipValue(ByteBuf buffer, DecoderState state) throws IOException {
+        buffer.skipBytes(Byte.BYTES);
+    }
 }

@@ -16,6 +16,8 @@
  */
 package org.apache.qpid.proton4j.codec.decoders.primitives;
 
+import java.io.IOException;
+
 import org.apache.qpid.proton4j.codec.DecoderState;
 import org.apache.qpid.proton4j.codec.EncodingCodes;
 import org.apache.qpid.proton4j.codec.PrimitiveTypeDecoder;
@@ -49,5 +51,10 @@ public class ByteTypeDecoder implements PrimitiveTypeDecoder<Byte> {
 
     public byte readPrimitiveValue(ByteBuf buffer, DecoderState state) {
         return buffer.readByte();
+    }
+
+    @Override
+    public void skipValue(ByteBuf buffer, DecoderState state) throws IOException {
+        buffer.skipBytes(Byte.BYTES);
     }
 }

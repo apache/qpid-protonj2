@@ -92,6 +92,11 @@ public abstract class AbstractListTypeDecoder implements ListTypeDecoder {
         }
     }
 
+    @Override
+    public void skipValue(ByteBuf buffer, DecoderState state) throws IOException {
+        buffer.skipBytes(readSize(buffer));
+    }
+
     protected abstract int readSize(ByteBuf buffer);
 
     protected abstract int readCount(ByteBuf buffer);

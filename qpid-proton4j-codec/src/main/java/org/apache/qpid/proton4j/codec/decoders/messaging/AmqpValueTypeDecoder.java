@@ -52,4 +52,10 @@ public class AmqpValueTypeDecoder implements DescribedTypeDecoder<AmqpValue> {
         TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
         return new AmqpValue(decoder.readValue(buffer, state));
     }
+
+    @Override
+    public void skipValue(ByteBuf buffer, DecoderState state) throws IOException {
+        TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
+        decoder.skipValue(buffer, state);
+    }
 }

@@ -57,4 +57,9 @@ public class DeleteOnCloseTypeDecoder implements DescribedTypeDecoder<DeleteOnCl
 
         return DeleteOnClose.getInstance();
     }
+
+    @Override
+    public void skipValue(ByteBuf buffer, DecoderState state) throws IOException {
+        buffer.skipBytes(Byte.BYTES);
+    }
 }

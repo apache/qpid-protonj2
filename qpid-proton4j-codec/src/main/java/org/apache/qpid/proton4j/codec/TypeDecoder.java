@@ -46,4 +46,20 @@ public interface TypeDecoder<V> {
      */
     V readValue(ByteBuf buffer, DecoderState state) throws IOException;
 
+    /**
+     * Skips over the bytes that compose the type this descriptor decodes.
+     * <p>
+     * Skipping values can be used when the type is not used or processed by the
+     * application doing the decoding.  An example might be an AMQP message decoder
+     * that only needs to decode certain parts of the message and not others.
+     *
+     * @param buffer
+     *      The buffer that contains the encoded type.
+     * @param state
+     *      The decoder state.
+     *
+     * @throws IOException if an error occurs while skipping the value.
+     */
+    void skipValue(ByteBuf buffer, DecoderState state) throws IOException;
+
 }

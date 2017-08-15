@@ -16,12 +16,25 @@
  */
 package org.apache.qpid.proton4j.amqp;
 
+import java.lang.annotation.Native;
 import java.math.BigDecimal;
 import java.nio.ByteBuffer;
 
 public final class Decimal128 extends Number {
 
     private static final long serialVersionUID = -4863018398624288737L;
+
+    /**
+     * The number of bits used to represent an {@code Decimal128} value in two's
+     * complement binary form.
+     */
+    @Native public static final int SIZE = 128;
+
+    /**
+     * The number of bytes used to represent a {@code Decimal128} value in two's
+     * complement binary form.
+     */
+    public static final int BYTES = SIZE / Byte.SIZE;
 
     private final BigDecimal underlying;
     private final long msb;

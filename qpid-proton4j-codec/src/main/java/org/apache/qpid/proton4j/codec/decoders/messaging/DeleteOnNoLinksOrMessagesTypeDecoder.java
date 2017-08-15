@@ -57,4 +57,9 @@ public class DeleteOnNoLinksOrMessagesTypeDecoder implements DescribedTypeDecode
 
         return DeleteOnNoLinksOrMessages.getInstance();
     }
+
+    @Override
+    public void skipValue(ByteBuf buffer, DecoderState state) throws IOException {
+        buffer.skipBytes(Byte.BYTES);
+    }
 }

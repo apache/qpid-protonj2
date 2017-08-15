@@ -16,6 +16,8 @@
  */
 package org.apache.qpid.proton4j.codec.decoders.primitives;
 
+import java.io.IOException;
+
 import org.apache.qpid.proton4j.codec.DecoderState;
 import org.apache.qpid.proton4j.codec.EncodingCodes;
 
@@ -34,5 +36,9 @@ public class BooleanFalseTypeDecoder extends BooleanTypeDecoder {
     @Override
     public int getTypeCode() {
         return EncodingCodes.BOOLEAN_FALSE & 0xff;
+    }
+
+    @Override
+    public void skipValue(ByteBuf buffer, DecoderState state) throws IOException {
     }
 }
