@@ -17,22 +17,23 @@
 package org.apache.qpid.proton4j.amqp;
 
 public class UnknownDescribedType implements DescribedType {
-    private final Object _descriptor;
-    private final Object _described;
+
+    private final Object descriptor;
+    private final Object described;
 
     public UnknownDescribedType(final Object descriptor, final Object described) {
-        this._descriptor = descriptor;
-        this._described = described;
+        this.descriptor = descriptor;
+        this.described = described;
     }
 
     @Override
     public Object getDescriptor() {
-        return _descriptor;
+        return descriptor;
     }
 
     @Override
     public Object getDescribed() {
-        return _described;
+        return described;
     }
 
     @Override
@@ -46,10 +47,10 @@ public class UnknownDescribedType implements DescribedType {
 
         final UnknownDescribedType that = (UnknownDescribedType) o;
 
-        if (_described != null ? !_described.equals(that._described) : that._described != null) {
+        if (described != null ? !described.equals(that.described) : that.described != null) {
             return false;
         }
-        if (_descriptor != null ? !_descriptor.equals(that._descriptor) : that._descriptor != null) {
+        if (descriptor != null ? !descriptor.equals(that.descriptor) : that.descriptor != null) {
             return false;
         }
 
@@ -58,13 +59,13 @@ public class UnknownDescribedType implements DescribedType {
 
     @Override
     public int hashCode() {
-        int result = _descriptor != null ? _descriptor.hashCode() : 0;
-        result = 31 * result + (_described != null ? _described.hashCode() : 0);
+        int result = descriptor != null ? descriptor.hashCode() : 0;
+        result = 31 * result + (described != null ? described.hashCode() : 0);
         return result;
     }
 
     @Override
     public String toString() {
-        return "UnknownDescribedType{" + "descriptor=" + _descriptor + ", described=" + _described + '}';
+        return "UnknownDescribedType{" + "descriptor=" + descriptor + ", described=" + described + '}';
     }
 }

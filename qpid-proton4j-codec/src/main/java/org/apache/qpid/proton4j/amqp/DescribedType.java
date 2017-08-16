@@ -31,4 +31,5 @@ public interface DescribedType {
      * @return the value carried inside this described instance.
      */
     public Object getDescribed();
+
 }
