@@ -538,44 +538,49 @@ public class ProtonEncoder implements Encoder {
         TypeEncoder encoder = typeEncoders.get(value.getClass());
 
         if (encoder == null) {
-            if (value.getClass().isArray()) {
-                Class<?> componentType = value.getClass().getComponentType();
-                if (componentType.isPrimitive()) {
-                    if (componentType == Boolean.TYPE) {
-                        writeArray(buffer, state, (boolean[]) value);
-                    } else if (componentType == Byte.TYPE) {
-                        writeArray(buffer, state, (byte[]) value);
-                    } else if (componentType == Short.TYPE) {
-                        writeArray(buffer, state, (short[]) value);
-                    } else if (componentType == Integer.TYPE) {
-                        writeArray(buffer, state, (int[]) value);
-                    } else if (componentType == Long.TYPE) {
-                        writeArray(buffer, state, (long[]) value);
-                    } else if (componentType == Float.TYPE) {
-                        writeArray(buffer, state, (float[]) value);
-                    } else if (componentType == Double.TYPE) {
-                        writeArray(buffer, state, (double[]) value);
-                    } else if (componentType == Character.TYPE) {
-                        writeArray(buffer, state, (char[]) value);
-                    } else {
-                        throw new IllegalArgumentException(
-                            "Cannot write arrays of type " + componentType.getName());
-                    }
-                } else {
-                    writeArray(buffer, state, (Object[]) value);
-                }
-            } else if (value instanceof List) {
-                writeList(buffer, state, (List) value);
-            } else if (value instanceof Map) {
-                writeMap(buffer, state, (Map) value);
-            } else if (value instanceof DescribedType) {
-                writeDescribedType(buffer, state, (DescribedType) value);
-            } else {
-                throw new IllegalArgumentException(
-                    "Do not know how to write Objects of class " + value.getClass().getName());
-            }
+            writeUnregisteredType(buffer, state, value);
         } else {
             encoder.writeType(buffer, state, value);
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private void writeUnregisteredType(ByteBuf buffer, EncoderState state, Object value) {
+        if (value.getClass().isArray()) {
+            Class<?> componentType = value.getClass().getComponentType();
+            if (componentType.isPrimitive()) {
+                if (componentType == Boolean.TYPE) {
+                    writeArray(buffer, state, (boolean[]) value);
+                } else if (componentType == Byte.TYPE) {
+                    writeArray(buffer, state, (byte[]) value);
+                } else if (componentType == Short.TYPE) {
+                    writeArray(buffer, state, (short[]) value);
+                } else if (componentType == Integer.TYPE) {
+                    writeArray(buffer, state, (int[]) value);
+                } else if (componentType == Long.TYPE) {
+                    writeArray(buffer, state, (long[]) value);
+                } else if (componentType == Float.TYPE) {
+                    writeArray(buffer, state, (float[]) value);
+                } else if (componentType == Double.TYPE) {
+                    writeArray(buffer, state, (double[]) value);
+                } else if (componentType == Character.TYPE) {
+                    writeArray(buffer, state, (char[]) value);
+                } else {
+                    throw new IllegalArgumentException(
+                        "Cannot write arrays of type " + componentType.getName());
+                }
+            } else {
+                writeArray(buffer, state, (Object[]) value);
+            }
+        } else if (value instanceof List) {
+            writeList(buffer, state, (List<Object>) value);
+        } else if (value instanceof Map) {
+            writeMap(buffer, state, (Map<Object, Object>) value);
+        } else if (value instanceof DescribedType) {
+            writeDescribedType(buffer, state, (DescribedType) value);
+        } else {
+            throw new IllegalArgumentException(
+                "Do not know how to write Objects of class " + value.getClass().getName());
         }
     }
 

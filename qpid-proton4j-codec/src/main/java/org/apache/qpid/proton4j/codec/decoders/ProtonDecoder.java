@@ -131,15 +131,7 @@ public class ProtonDecoder implements Decoder {
 
             TypeDecoder<?> typeDecoder = describedTypeDecoders.get(descriptor);
             if (typeDecoder == null) {
-                typeDecoder = new UnknownDescribedTypeDecoder() {
-
-                    @Override
-                    public Object getDescriptor() {
-                        return descriptor;
-                    }
-                };
-
-                describedTypeDecoders.put(descriptor, (UnknownDescribedTypeDecoder) typeDecoder);
+                typeDecoder = handleUnknownDescribedType(descriptor);
             }
 
             return typeDecoder;
@@ -521,5 +513,19 @@ public class ProtonDecoder implements Decoder {
     private ClassCastException signalUnexpectedType(final Object val, Class<?> clazz) {
         return new ClassCastException("Unexpected type " + val.getClass().getName() +
                                       ". Expected " + clazz.getName() + ".");
+    }
+
+    private TypeDecoder<?> handleUnknownDescribedType(final Object descriptor) {
+        TypeDecoder<?> typeDecoder = new UnknownDescribedTypeDecoder() {
+
+            @Override
+            public Object getDescriptor() {
+                return descriptor;
+            }
+        };
+
+        describedTypeDecoders.put(descriptor, (UnknownDescribedTypeDecoder) typeDecoder);
+
+        return typeDecoder;
     }
 }
