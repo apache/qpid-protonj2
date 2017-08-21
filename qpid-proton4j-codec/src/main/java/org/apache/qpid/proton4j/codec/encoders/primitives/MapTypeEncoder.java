@@ -64,18 +64,18 @@ public class MapTypeEncoder implements PrimitiveTypeEncoder<Map> {
             Object entryValue = entry.getValue();
 
             if (keyEncoder == null || !keyEncoder.getTypeClass().equals(entryKey.getClass())) {
-                keyEncoder = state.getEncoder().getTypeEncoder(entry.getKey());
+                keyEncoder = state.getEncoder().getTypeEncoder(entryKey);
                 if (keyEncoder == null) {
                     throw new IllegalArgumentException(
-                        "No TypeEncoder exists for requested key type: " + entry.getKey().getClass().getName());
+                        "No TypeEncoder exists for requested key type: " + entryKey.getClass().getName());
                 }
             }
 
             if (valueEncoder == null || !valueEncoder.getTypeClass().equals(entryValue.getClass())) {
-                valueEncoder = state.getEncoder().getTypeEncoder(entry.getValue());
+                valueEncoder = state.getEncoder().getTypeEncoder(entryValue);
                 if (valueEncoder == null) {
                     throw new IllegalArgumentException(
-                        "No TypeEncoder exists for requested value type: " + entry.getValue().getClass().getName());
+                        "No TypeEncoder exists for requested value type: " + entryValue.getClass().getName());
                 }
             }
 
