@@ -43,4 +43,19 @@ public class UnsignedByteTypeEncoder implements PrimitiveTypeEncoder<UnsignedByt
     public void writeValue(ByteBuf buffer, EncoderState state, UnsignedByte value) {
         buffer.writeByte(value.byteValue());
     }
+
+    @Override
+    public void writeArray(ByteBuf buffer, EncoderState state, UnsignedByte[] values) {
+        buffer.writeByte(EncodingCodes.ARRAY32);
+
+        // Array Size -> Total Bytes + Number of elements + Type Code
+        long size = (Byte.BYTES * values.length) + Integer.BYTES + Byte.BYTES;
+
+        buffer.writeInt((int) size);
+        buffer.writeInt(values.length);
+        buffer.writeByte(EncodingCodes.UBYTE);
+        for (UnsignedByte value : values) {
+            buffer.writeByte(value.byteValue());
+        }
+    }
 }

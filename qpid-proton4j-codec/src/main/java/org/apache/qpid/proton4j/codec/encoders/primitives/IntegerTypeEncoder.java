@@ -51,4 +51,41 @@ public class IntegerTypeEncoder implements PrimitiveTypeEncoder<Integer> {
     public void writeValue(ByteBuf buffer, EncoderState state, int value) {
         buffer.writeInt(value);
     }
+
+    @Override
+    public void writeArray(ByteBuf buffer, EncoderState state, Integer[] values) {
+        buffer.writeByte(EncodingCodes.ARRAY32);
+
+        // Array Size -> Total Bytes + Number of elements + Type Code
+        long size = (Integer.BYTES * values.length) + Integer.BYTES + Byte.BYTES;
+
+        if (size > Integer.MAX_VALUE) {
+            throw new IllegalArgumentException("Cannot encode given int array, encoded size to large: " + size);
+        }
+
+        buffer.writeInt((int) size);
+        buffer.writeInt(values.length);
+        buffer.writeByte(EncodingCodes.INT);
+        for (Integer value : values) {
+            buffer.writeInt(value.intValue());
+        }
+    }
+
+    public void writeArray(ByteBuf buffer, EncoderState state, int[] values) {
+        buffer.writeByte(EncodingCodes.ARRAY32);
+
+        // Array Size -> Total Bytes + Number of elements + Type Code
+        long size = (Integer.BYTES * values.length) + Integer.BYTES + Byte.BYTES;
+
+        if (size > Integer.MAX_VALUE) {
+            throw new IllegalArgumentException("Cannot encode given int array, encoded size to large: " + size);
+        }
+
+        buffer.writeInt((int) size);
+        buffer.writeInt(values.length);
+        buffer.writeByte(EncodingCodes.INT);
+        for (int value : values) {
+            buffer.writeInt(value);
+        }
+    }
 }

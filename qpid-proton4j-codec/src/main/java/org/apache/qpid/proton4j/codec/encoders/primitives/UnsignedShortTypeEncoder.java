@@ -43,4 +43,19 @@ public class UnsignedShortTypeEncoder implements PrimitiveTypeEncoder<UnsignedSh
     public void writeValue(ByteBuf buffer, EncoderState state, UnsignedShort value) {
         buffer.writeShort(value.shortValue());
     }
+
+    @Override
+    public void writeArray(ByteBuf buffer, EncoderState state, UnsignedShort[] values) {
+        buffer.writeByte(EncodingCodes.ARRAY32);
+
+        // Array Size -> Total Bytes + Number of elements + Type Code
+        int size = (Short.BYTES * values.length) + Integer.BYTES + Byte.BYTES;
+
+        buffer.writeInt(size);
+        buffer.writeInt(values.length);
+        buffer.writeByte(EncodingCodes.USHORT);
+        for (UnsignedShort value : values) {
+            buffer.writeShort(value.shortValue());
+        }
+    }
 }

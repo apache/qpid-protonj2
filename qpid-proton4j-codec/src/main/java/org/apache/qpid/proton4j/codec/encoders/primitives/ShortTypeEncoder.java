@@ -51,4 +51,33 @@ public class ShortTypeEncoder implements PrimitiveTypeEncoder<Short> {
     public void writeValue(ByteBuf buffer, EncoderState state, short value) {
         buffer.writeShort(value);
     }
+
+    @Override
+    public void writeArray(ByteBuf buffer, EncoderState state, Short[] values) {
+        buffer.writeByte(EncodingCodes.ARRAY32);
+
+        // Array Size -> Total Bytes + Number of elements + Type Code
+        int size = (Short.BYTES * values.length) + Integer.BYTES + Byte.BYTES;
+
+        buffer.writeInt(size);
+        buffer.writeInt(values.length);
+        buffer.writeByte(EncodingCodes.SHORT);
+        for (Short value : values) {
+            buffer.writeShort(value.shortValue());
+        }
+    }
+
+    public void writeArray(ByteBuf buffer, EncoderState state, short[] values) {
+        buffer.writeByte(EncodingCodes.ARRAY32);
+
+        // Array Size -> Total Bytes + Number of elements + Type Code
+        int size = (Short.BYTES * values.length) + Integer.BYTES + Byte.BYTES;
+
+        buffer.writeInt(size);
+        buffer.writeInt(values.length);
+        buffer.writeByte(EncodingCodes.SHORT);
+        for (short value : values) {
+            buffer.writeShort(value);
+        }
+    }
 }

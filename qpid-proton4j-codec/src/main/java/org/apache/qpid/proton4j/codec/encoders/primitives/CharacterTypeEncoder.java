@@ -42,4 +42,41 @@ public class CharacterTypeEncoder implements PrimitiveTypeEncoder<Character> {
     public void writeValue(ByteBuf buffer, EncoderState state, Character value) {
         buffer.writeInt(value.charValue() & 0xffff);
     }
+
+    @Override
+    public void writeArray(ByteBuf buffer, EncoderState state, Character[] value) {
+        buffer.writeByte(EncodingCodes.ARRAY32);
+
+        // Array Size -> Total Bytes + Number of elements + Type Code
+        long size = (Integer.BYTES * value.length) + Integer.BYTES + Byte.BYTES;
+
+        if (size > Integer.MAX_VALUE) {
+            throw new IllegalArgumentException("Cannot encode given char array, encoded size to large: " + size);
+        }
+
+        buffer.writeInt((int) size);
+        buffer.writeInt(value.length);
+        buffer.writeByte(EncodingCodes.CHAR);
+        for (Character charValue : value) {
+            buffer.writeInt(charValue.charValue() & 0xffff);
+        }
+    }
+
+    public void writeArray(ByteBuf buffer, EncoderState state, char[] value) {
+        buffer.writeByte(EncodingCodes.ARRAY32);
+
+        // Array Size -> Total Bytes + Number of elements + Type Code
+        long size = (Integer.BYTES * value.length) + Integer.BYTES + Byte.BYTES;
+
+        if (size > Integer.MAX_VALUE) {
+            throw new IllegalArgumentException("Cannot encode given char array, encoded size to large: " + size);
+        }
+
+        buffer.writeInt((int) size);
+        buffer.writeInt(value.length);
+        buffer.writeByte(EncodingCodes.CHAR);
+        for (char charValue : value) {
+            buffer.writeInt(charValue & 0xffff);
+        }
+    }
 }

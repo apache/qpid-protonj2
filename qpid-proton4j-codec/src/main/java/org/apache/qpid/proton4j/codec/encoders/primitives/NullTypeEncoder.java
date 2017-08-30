@@ -40,4 +40,8 @@ public class NullTypeEncoder implements PrimitiveTypeEncoder<Void> {
     @Override
     public void writeValue(ByteBuf buffer, EncoderState state, Void value) {
     }
+
+    @Override
+    public void writeArray(ByteBuf buffer, EncoderState state, Void[] value) {
+    }
 }

@@ -51,4 +51,41 @@ public class DoubleTypeEncoder implements PrimitiveTypeEncoder<Double> {
     public void writeValue(ByteBuf buffer, EncoderState state, double value) {
         buffer.writeDouble(value);
     }
+
+    @Override
+    public void writeArray(ByteBuf buffer, EncoderState state, Double[] values) {
+        buffer.writeByte(EncodingCodes.ARRAY32);
+
+        // Array Size -> Total Bytes + Number of elements + Type Code
+        long size = (Long.BYTES * values.length) + Integer.BYTES + Byte.BYTES;
+
+        if (size > Integer.MAX_VALUE) {
+            throw new IllegalArgumentException("Cannot encode given double array, encoded size to large: " + size);
+        }
+
+        buffer.writeInt((int) size);
+        buffer.writeInt(values.length);
+        buffer.writeByte(EncodingCodes.DOUBLE);
+        for (Double value : values) {
+            buffer.writeDouble(value.doubleValue());
+        }
+    }
+
+    public void writeArray(ByteBuf buffer, EncoderState state, double[] values) {
+        buffer.writeByte(EncodingCodes.ARRAY32);
+
+        // Array Size -> Total Bytes + Number of elements + Type Code
+        long size = (Long.BYTES * values.length) + Integer.BYTES + Byte.BYTES;
+
+        if (size > Integer.MAX_VALUE) {
+            throw new IllegalArgumentException("Cannot encode given double array, encoded size to large: " + size);
+        }
+
+        buffer.writeInt((int) size);
+        buffer.writeInt(values.length);
+        buffer.writeByte(EncodingCodes.DOUBLE);
+        for (double value : values) {
+            buffer.writeDouble(value);
+        }
+    }
 }

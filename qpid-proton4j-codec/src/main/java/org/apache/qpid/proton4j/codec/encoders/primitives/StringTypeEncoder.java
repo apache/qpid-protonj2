@@ -86,6 +86,46 @@ public class StringTypeEncoder implements PrimitiveTypeEncoder<String> {
         }
     }
 
+    @Override
+    public void writeArray(ByteBuf buffer, EncoderState state, String[] values) {
+        buffer.writeByte(EncodingCodes.ARRAY32);
+
+        // Array Size -> Total Bytes + Number of elements + Type Code
+        //
+        // String types are variable sized values so we write the payload
+        // and then we write the size using the result.
+        int startIndex = buffer.writerIndex();
+
+        // Reserve space for the size
+        buffer.writeInt(0);
+
+        buffer.writeInt(values.length);
+        buffer.writeByte(EncodingCodes.STR32);
+        for (String value : values) {
+            // Reserve space for the size
+            buffer.writeInt(0);
+
+            int stringStart = buffer.writerIndex();
+
+            // Write the full string value
+            writeString(buffer, state, value);
+
+            // Move back and write the string size
+            int stringEnd = buffer.writerIndex();
+            buffer.setInt(startIndex, stringEnd - stringStart);
+        }
+
+        // Move back and write the size
+        int endIndex = buffer.writerIndex();
+
+        long size = endIndex - startIndex;
+        if (size > Integer.MAX_VALUE) {
+            throw new IllegalArgumentException("Cannot encode given Symbol array, encoded size to large: " + size);
+        }
+
+        buffer.setInt(startIndex, (int) size);
+    }
+
     // TODO - Can be used later if we have an optimized for space profile.
     @SuppressWarnings("unused")
     private int calculateUTF8Length(final String s) {

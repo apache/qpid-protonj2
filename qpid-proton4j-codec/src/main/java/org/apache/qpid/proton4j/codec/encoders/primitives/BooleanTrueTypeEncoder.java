@@ -47,4 +47,9 @@ public class BooleanTrueTypeEncoder implements PrimitiveTypeEncoder<Boolean> {
 
     public void writeValue(ByteBuf buffer, EncoderState state, boolean value) {
     }
+
+    @Override
+    public void writeArray(ByteBuf buffer, EncoderState state, Boolean[] value) {
+        throw new UnsupportedOperationException("Cannot encode to an array from this encoder.");
+    }
 }

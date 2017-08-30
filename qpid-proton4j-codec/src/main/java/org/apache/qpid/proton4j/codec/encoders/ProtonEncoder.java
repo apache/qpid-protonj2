@@ -370,7 +370,7 @@ public class ProtonEncoder implements Encoder {
         if (value == null) {
             nullEncoder.writeType(buffer, state, null);
         } else {
-            arrayEncoder.writeArray(buffer, state, value);
+            booleanEncoder.writeArray(buffer, state, value);
         }
     }
 
@@ -379,7 +379,7 @@ public class ProtonEncoder implements Encoder {
         if (value == null) {
             nullEncoder.writeType(buffer, state, null);
         } else {
-            arrayEncoder.writeArray(buffer, state, value);
+            byteEncoder.writeArray(buffer, state, value);
         }
     }
 
@@ -388,7 +388,7 @@ public class ProtonEncoder implements Encoder {
         if (value == null) {
             nullEncoder.writeType(buffer, state, null);
         } else {
-            arrayEncoder.writeArray(buffer, state, value);
+            shortEncoder.writeArray(buffer, state, value);
         }
     }
 
@@ -397,7 +397,7 @@ public class ProtonEncoder implements Encoder {
         if (value == null) {
             nullEncoder.writeType(buffer, state, null);
         } else {
-            arrayEncoder.writeArray(buffer, state, value);
+            integerEncoder.writeArray(buffer, state, value);
         }
     }
 
@@ -406,7 +406,7 @@ public class ProtonEncoder implements Encoder {
         if (value == null) {
             nullEncoder.writeType(buffer, state, null);
         } else {
-            arrayEncoder.writeArray(buffer, state, value);
+            longEncoder.writeArray(buffer, state, value);
         }
     }
 
@@ -415,7 +415,7 @@ public class ProtonEncoder implements Encoder {
         if (value == null) {
             nullEncoder.writeType(buffer, state, null);
         } else {
-            arrayEncoder.writeArray(buffer, state, value);
+            floatEncoder.writeArray(buffer, state, value);
         }
     }
 
@@ -424,7 +424,7 @@ public class ProtonEncoder implements Encoder {
         if (value == null) {
             nullEncoder.writeType(buffer, state, null);
         } else {
-            arrayEncoder.writeArray(buffer, state, value);
+            doubleEncoder.writeArray(buffer, state, value);
         }
     }
 
@@ -433,7 +433,7 @@ public class ProtonEncoder implements Encoder {
         if (value == null) {
             nullEncoder.writeType(buffer, state, null);
         } else {
-            arrayEncoder.writeArray(buffer, state, value);
+            charEncoder.writeArray(buffer, state, value);
         }
     }
 
@@ -451,7 +451,7 @@ public class ProtonEncoder implements Encoder {
         if (value == null) {
             nullEncoder.writeType(buffer, state, null);
         } else {
-            arrayEncoder.writeArray(buffer, state, value);
+            decimal32Encoder.writeArray(buffer, state, value);
         }
     }
 
@@ -460,7 +460,7 @@ public class ProtonEncoder implements Encoder {
         if (value == null) {
             nullEncoder.writeType(buffer, state, null);
         } else {
-            arrayEncoder.writeArray(buffer, state, value);
+            decimal64Encoder.writeArray(buffer, state, value);
         }
     }
 
@@ -469,7 +469,7 @@ public class ProtonEncoder implements Encoder {
         if (value == null) {
             nullEncoder.writeType(buffer, state, null);
         } else {
-            arrayEncoder.writeArray(buffer, state, value);
+            decimal128Encoder.writeArray(buffer, state, value);
         }
     }
 
@@ -478,7 +478,7 @@ public class ProtonEncoder implements Encoder {
         if (value == null) {
             nullEncoder.writeType(buffer, state, null);
         } else {
-            arrayEncoder.writeArray(buffer, state, value);
+            symbolEncoder.writeArray(buffer, state, value);
         }
     }
 
@@ -487,7 +487,7 @@ public class ProtonEncoder implements Encoder {
         if (value == null) {
             nullEncoder.writeType(buffer, state, null);
         } else {
-            arrayEncoder.writeArray(buffer, state, value);
+            ubyteEncoder.writeArray(buffer, state, value);
         }
     }
 
@@ -496,7 +496,7 @@ public class ProtonEncoder implements Encoder {
         if (value == null) {
             nullEncoder.writeType(buffer, state, null);
         } else {
-            arrayEncoder.writeArray(buffer, state, value);
+            ushortEncoder.writeArray(buffer, state, value);
         }
     }
 
@@ -505,7 +505,7 @@ public class ProtonEncoder implements Encoder {
         if (value == null) {
             nullEncoder.writeType(buffer, state, null);
         } else {
-            arrayEncoder.writeArray(buffer, state, value);
+            uintEncoder.writeArray(buffer, state, value);
         }
     }
 
@@ -514,7 +514,7 @@ public class ProtonEncoder implements Encoder {
         if (value == null) {
             nullEncoder.writeType(buffer, state, null);
         } else {
-            arrayEncoder.writeArray(buffer, state, value);
+            ulongEncoder.writeArray(buffer, state, value);
         }
     }
 
@@ -523,7 +523,7 @@ public class ProtonEncoder implements Encoder {
         if (value == null) {
             nullEncoder.writeType(buffer, state, null);
         } else {
-            arrayEncoder.writeArray(buffer, state, value);
+            uuidEncoder.writeArray(buffer, state, value);
         }
     }
 

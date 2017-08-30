@@ -51,4 +51,33 @@ public class BooleanTypeEncoder implements PrimitiveTypeEncoder<Boolean> {
     public void writeValue(ByteBuf buffer, EncoderState state, boolean value) {
         buffer.writeByte(value ? 1 : 0);
     }
+
+    @Override
+    public void writeArray(ByteBuf buffer, EncoderState state, Boolean[] value) {
+        buffer.writeByte(EncodingCodes.ARRAY32);
+
+        // Array Size -> Total Bytes + Number of elements + Type Code
+        int size = (Byte.BYTES * value.length) + Integer.BYTES + Byte.BYTES;
+
+        buffer.writeInt(size);
+        buffer.writeInt(value.length);
+        buffer.writeByte(EncodingCodes.BOOLEAN);
+        for (Boolean bool : value) {
+            buffer.writeByte(bool ? 1 : 0);
+        }
+    }
+
+    public void writeArray(ByteBuf buffer, EncoderState state, boolean[] value) {
+        buffer.writeByte(EncodingCodes.ARRAY32);
+
+        // Array Size -> Total Bytes + Number of elements + Type Code
+        int size = (Byte.BYTES * value.length) + Integer.BYTES + Byte.BYTES;
+
+        buffer.writeInt(size);
+        buffer.writeInt(value.length);
+        buffer.writeByte(EncodingCodes.BOOLEAN);
+        for (boolean bool : value) {
+            buffer.writeByte(bool ? 1 : 0);
+        }
+    }
 }

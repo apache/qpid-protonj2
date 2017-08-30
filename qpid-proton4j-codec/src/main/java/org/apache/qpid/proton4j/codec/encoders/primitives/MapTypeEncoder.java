@@ -87,4 +87,10 @@ public class MapTypeEncoder implements PrimitiveTypeEncoder<Map> {
         int endIndex = buffer.writerIndex();
         buffer.setInt(startIndex, endIndex - startIndex - 4);
     }
+
+    @Override
+    public void writeArray(ByteBuf buffer, EncoderState state, Map[] value) {
+        // TODO - Implement
+        throw new UnsupportedOperationException("Not implemented");
+    }
 }

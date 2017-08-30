@@ -72,4 +72,10 @@ public class ListTypeEncoder implements PrimitiveTypeEncoder<List> {
         int endIndex = buffer.writerIndex();
         buffer.setInt(startIndex, endIndex - startIndex - 4);
     }
+
+    @Override
+    public void writeArray(ByteBuf buffer, EncoderState state, List[] value) {
+        // TODO - Implement
+        throw new UnsupportedOperationException("Not implemented");
+    }
 }

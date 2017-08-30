@@ -43,4 +43,23 @@ public class Decimal32TypeEncoder implements PrimitiveTypeEncoder<Decimal32> {
     public void writeValue(ByteBuf buffer, EncoderState state, Decimal32 value) {
         buffer.writeInt(value.getBits());
     }
+
+    @Override
+    public void writeArray(ByteBuf buffer, EncoderState state, Decimal32[] values) {
+        buffer.writeByte(EncodingCodes.ARRAY32);
+
+        // Array Size -> Total Bytes + Number of elements + Type Code
+        long size = (Integer.BYTES * values.length) + Integer.BYTES + Byte.BYTES;
+
+        if (size > Integer.MAX_VALUE) {
+            throw new IllegalArgumentException("Cannot encode given Decimal32 array, encoded size to large: " + size);
+        }
+
+        buffer.writeInt((int) size);
+        buffer.writeInt(values.length);
+        buffer.writeByte(EncodingCodes.DECIMAL32);
+        for (Decimal32 value : values) {
+            buffer.writeInt(value.getBits());
+        }
+    }
 }

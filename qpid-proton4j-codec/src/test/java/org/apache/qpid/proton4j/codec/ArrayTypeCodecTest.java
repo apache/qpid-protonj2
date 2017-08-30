@@ -38,6 +38,58 @@ public class ArrayTypeCodecTest extends CodecTestSupport {
     private final int SMALL_ARRAY_SIZE = 32;
 
     @Test
+    public void testArrayOfPrimitiveBooleanObjects() throws IOException {
+        ByteBuf buffer = Unpooled.buffer();
+
+        final int size = 10;
+
+        boolean[] source = new boolean[size];
+        for (int i = 0; i < size; ++i) {
+            source[i] = i % 2 == 0;
+        }
+
+        encoder.writeArray(buffer, encoderState, source);
+
+        Object result = decoder.readObject(buffer, decoderState);
+        assertNotNull(result);
+        assertTrue(result.getClass().isArray());
+        assertTrue(result.getClass().getComponentType().isPrimitive());
+
+        boolean[] array = (boolean[]) result;
+        assertEquals(size, array.length);
+
+        for (int i = 0; i < size; ++i) {
+            assertEquals(source[i], array[i]);
+        }
+    }
+
+    @Test
+    public void testArrayOfBooleanObjects() throws IOException {
+        ByteBuf buffer = Unpooled.buffer();
+
+        final int size = 10;
+
+        Boolean[] source = new Boolean[size];
+        for (int i = 0; i < size; ++i) {
+            source[i] = i % 2 == 0;
+        }
+
+        encoder.writeArray(buffer, encoderState, source);
+
+        Object result = decoder.readObject(buffer, decoderState);
+        assertNotNull(result);
+        assertTrue(result.getClass().isArray());
+        assertTrue(result.getClass().getComponentType().isPrimitive());
+
+        boolean[] array = (boolean[]) result;
+        assertEquals(size, array.length);
+
+        for (int i = 0; i < size; ++i) {
+            assertEquals(source[i], array[i]);
+        }
+    }
+
+    @Test
     public void testDecodeSmallBooleanArray() throws IOException {
         doTestDecodeBooleanArrayType(SMALL_ARRAY_SIZE);
     }
