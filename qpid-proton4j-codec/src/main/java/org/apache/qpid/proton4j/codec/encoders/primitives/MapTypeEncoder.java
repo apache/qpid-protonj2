@@ -89,8 +89,32 @@ public class MapTypeEncoder implements PrimitiveTypeEncoder<Map> {
     }
 
     @Override
-    public void writeArray(ByteBuf buffer, EncoderState state, Map[] value) {
-        // TODO - Implement
-        throw new UnsupportedOperationException("Not implemented");
+    public void writeArray(ByteBuf buffer, EncoderState state, Map[] values) {
+        buffer.writeByte(EncodingCodes.ARRAY32);
+
+        // Array Size -> Total Bytes + Number of elements + Type Code
+        //
+        // List types are variable sized values so we write the payload
+        // and then we write the size using the result.
+        int startIndex = buffer.writerIndex();
+
+        // Reserve space for the size
+        buffer.writeInt(0);
+
+        buffer.writeInt(values.length);
+        buffer.writeByte(EncodingCodes.MAP32);
+        for (Map value : values) {
+            writeValue(buffer, state, value);
+        }
+
+        // Move back and write the size
+        int endIndex = buffer.writerIndex();
+
+        long size = endIndex - startIndex;
+        if (size > Integer.MAX_VALUE) {
+            throw new IllegalArgumentException("Cannot encode given Map array, encoded size to large: " + size);
+        }
+
+        buffer.setInt(startIndex, (int) size);
     }
 }

@@ -21,6 +21,10 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import org.apache.qpid.proton4j.amqp.Symbol;
@@ -34,7 +38,7 @@ import io.netty.buffer.Unpooled;
  */
 public class ArrayTypeCodecTest extends CodecTestSupport {
 
-    private final int LARGE_ARRAY_SIZE = 1024 * 1024;
+    private final int LARGE_ARRAY_SIZE = 2048;
     private final int SMALL_ARRAY_SIZE = 32;
 
     @Test
@@ -64,6 +68,23 @@ public class ArrayTypeCodecTest extends CodecTestSupport {
     }
 
     @Test
+    public void testZeroSizedArrayOfPrimitiveBooleanObjects() throws IOException {
+        ByteBuf buffer = Unpooled.buffer();
+
+        boolean[] source = new boolean[0];
+
+        encoder.writeArray(buffer, encoderState, source);
+
+        Object result = decoder.readObject(buffer, decoderState);
+        assertNotNull(result);
+        assertTrue(result.getClass().isArray());
+        assertTrue(result.getClass().getComponentType().isPrimitive());
+
+        boolean[] array = (boolean[]) result;
+        assertEquals(source.length, array.length);
+    }
+
+    @Test
     public void testArrayOfBooleanObjects() throws IOException {
         ByteBuf buffer = Unpooled.buffer();
 
@@ -87,6 +108,23 @@ public class ArrayTypeCodecTest extends CodecTestSupport {
         for (int i = 0; i < size; ++i) {
             assertEquals(source[i], array[i]);
         }
+    }
+
+    @Test
+    public void testZeroSizedArrayOfBooleanObjects() throws IOException {
+        ByteBuf buffer = Unpooled.buffer();
+
+        Boolean[] source = new Boolean[0];
+
+        encoder.writeArray(buffer, encoderState, source);
+
+        Object result = decoder.readObject(buffer, decoderState);
+        assertNotNull(result);
+        assertTrue(result.getClass().isArray());
+        assertTrue(result.getClass().getComponentType().isPrimitive());
+
+        boolean[] array = (boolean[]) result;
+        assertEquals(source.length, array.length);
     }
 
     @Test
@@ -183,6 +221,60 @@ public class ArrayTypeCodecTest extends CodecTestSupport {
 
         for (int i = 0; i < size; ++i) {
             assertEquals(source[i], array[i]);
+        }
+    }
+
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    @Test
+    public void testArrayOfListsOfUUIDs() throws IOException {
+        ByteBuf buffer = Unpooled.buffer();
+
+        ArrayList<UUID>[] source = new ArrayList[2];
+        for (int i = 0; i < source.length; ++i) {
+            source[i] = new ArrayList<UUID>(3);
+            source[i].add(UUID.randomUUID());
+            source[i].add(UUID.randomUUID());
+            source[i].add(UUID.randomUUID());
+        }
+
+        encoder.writeArray(buffer, encoderState, source);
+
+        Object result = decoder.readObject(buffer, decoderState);
+        assertNotNull(result);
+        assertTrue(result.getClass().isArray());
+
+        List[] list = (List[]) result;
+        assertEquals(source.length, list.length);
+
+        for (int i = 0; i < list.length; ++i) {
+            assertEquals(source[i], list[i]);
+        }
+    }
+
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    @Test
+    public void testArrayOfMApsOfStringToUUIDs() throws IOException {
+        ByteBuf buffer = Unpooled.buffer();
+
+        Map<String, UUID>[] source = new LinkedHashMap[2];
+        for (int i = 0; i < source.length; ++i) {
+            source[i] = new LinkedHashMap<String, UUID>();
+            source[i].put("1", UUID.randomUUID());
+            source[i].put("2", UUID.randomUUID());
+            source[i].put("3", UUID.randomUUID());
+        }
+
+        encoder.writeArray(buffer, encoderState, source);
+
+        Object result = decoder.readObject(buffer, decoderState);
+        assertNotNull(result);
+        assertTrue(result.getClass().isArray());
+
+        Map[] map = (Map[]) result;
+        assertEquals(source.length, map.length);
+
+        for (int i = 0; i < map.length; ++i) {
+            assertEquals(source[i], map[i]);
         }
     }
 }

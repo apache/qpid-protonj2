@@ -18,6 +18,8 @@ package org.apache.qpid.proton4j.codec.encoders.primitives;
 
 import org.apache.qpid.proton4j.codec.EncoderState;
 import org.apache.qpid.proton4j.codec.PrimitiveArrayTypeEncoder;
+import org.apache.qpid.proton4j.codec.PrimitiveTypeEncoder;
+import org.apache.qpid.proton4j.codec.TypeEncoder;
 
 import io.netty.buffer.ByteBuf;
 
@@ -61,16 +63,28 @@ public class ArrayTypeEncoder implements PrimitiveArrayTypeEncoder {
 
     @Override
     public void writeValue(ByteBuf buffer, EncoderState state, Object value) {
-
-        // TODO - Need to handle arrays of arrays
-        // buffer.writeByte(EncodingCodes.ARRAY32);
-
+        throw new UnsupportedOperationException("Intentionally not implemented");
     }
 
     //---- One Dimensional Optimized Array of Primitive Write methods --------//
 
+    @SuppressWarnings({ "rawtypes", "unchecked" })
     @Override
     public void writeArray(ByteBuf buffer, EncoderState state, Object[] value) {
-    }
 
+        TypeEncoder<?> typeEncoder = state.getEncoder().getTypeEncoder(value.getClass().getComponentType());
+        if (typeEncoder == null) {
+            throw new IllegalArgumentException(
+                "Do not know how to write Objects of class " + value.getClass().getName());
+        }
+
+        // TODO - Need to figure out how to check that for Object[] arrays there is only
+        //        one type of object in the array.  This could be just the encoder for the
+        //        first element in the array then applied to the full array which should
+        //        throw an error if the array contains mixed types.
+
+        PrimitiveTypeEncoder arrayEncoder = (PrimitiveTypeEncoder) typeEncoder;
+
+        arrayEncoder.writeArray(buffer, state, value);
+    }
 }
