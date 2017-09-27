@@ -21,7 +21,7 @@ import io.netty.buffer.ByteBuf;
 public interface PrimitiveArrayTypeEncoder extends PrimitiveTypeEncoder<Object> {
 
     @Override
-    default boolean isArryTypeDecoder() {
+    default boolean isArryTypeEncoder() {
         return true;
     }
 
@@ -30,6 +30,7 @@ public interface PrimitiveArrayTypeEncoder extends PrimitiveTypeEncoder<Object> 
         return Object.class;
     }
 
+    @Override
     void writeArray(ByteBuf buffer, EncoderState state, Object[] value);
 
 }

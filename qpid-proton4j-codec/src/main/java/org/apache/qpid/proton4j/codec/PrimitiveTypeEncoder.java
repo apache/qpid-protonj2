@@ -25,7 +25,7 @@ import io.netty.buffer.ByteBuf;
  */
 public interface PrimitiveTypeEncoder<V> extends TypeEncoder<V> {
 
-    default boolean isArryTypeDecoder() {
+    default boolean isArryTypeEncoder() {
         return false;
     }
 
