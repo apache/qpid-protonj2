@@ -37,9 +37,9 @@
 
     <!-- Test dependency versions -->
     <junit-version>4.12</junit-version>
-    <mockito-version>1.10.19</mockito-version>
-    <netty-version>4.1.12.Final</netty-version>
-    <proton-version>0.19.0</proton-version>
+    <mockito-version>2.10.0</mockito-version>
+    <netty-version>4.1.16.Final</netty-version>
+    <proton-version>0.22.0</proton-version>
 
     <!-- Plugin versions -->
     <maven-bundle-plugin-version>3.2.0</maven-bundle-plugin-version>
