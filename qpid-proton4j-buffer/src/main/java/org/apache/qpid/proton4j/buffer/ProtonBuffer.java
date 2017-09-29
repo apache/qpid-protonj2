@@ -431,40 +431,40 @@ public interface ProtonBuffer {
      */
     ProtonBuffer getBytes(int index, byte[] dst);
 
-    // TODO - Update docs
     /**
      * Transfers this buffer's data to the specified destination starting at
      * the specified absolute {@code index}.
-     * This method does not modify {@code readIndex} or {@code writeIndex}
+     * This method does not modify {@code #getReadIndex()} or {@code #getWriteIndex()}
      * of this buffer.
      *
-     * @param dstIndex the first index of the destination
-     * @param length   the number of bytes to transfer
+     * @param offset
+     *      the offset into the destination to begin writing the bytes.
+     * @param length
+     *      the number of bytes to transfer from this buffer to the target buffer.
      *
      * @throws IndexOutOfBoundsException
      *         if the specified {@code index} is less than {@code 0},
-     *         if the specified {@code dstIndex} is less than {@code 0},
+     *         if the specified {@code offset} is less than {@code 0},
      *         if {@code index + length} is greater than
      *            {@code this.capacity}, or
-     *         if {@code dstIndex + length} is greater than
-     *            {@code dst.length}
+     *         if {@code offset + length} is greater than
+     *            {@code target.length}
      */
-    ProtonBuffer getBytes(int index, byte[] dst, int dstIndex, int length);
+    ProtonBuffer getBytes(int index, byte[] target, int offset, int length);
 
-    // TODO - Update docs
     /**
      * Transfers this buffer's data to the specified destination starting at
      * the specified absolute {@code index} until the destination's position
      * reaches its limit.
-     * This method does not modify {@code readIndex} or {@code writeIndex} of
+     * This method does not modify {@code #getReadIndex()} or {@code #getWriteIndex()} of
      * this buffer while the destination's {@code position} will be increased.
      *
      * @throws IndexOutOfBoundsException
      *         if the specified {@code index} is less than {@code 0} or
-     *         if {@code index + dst.remaining()} is greater than
-     *            {@code this.capacity}
+     *         if {@code index + destination.remaining()} is greater than
+     *            {@code #capacity()}
      */
-    ProtonBuffer getBytes(int index, ByteBuffer dst);
+    ProtonBuffer getBytes(int index, ByteBuffer destination);
 
     /**
      * Sets the byte value at the given write index in this buffer's backing data store.
