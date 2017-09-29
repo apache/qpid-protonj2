@@ -34,11 +34,10 @@ import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.amqp.UnsignedShort;
 import org.apache.qpid.proton4j.codec.Encoder;
 import org.apache.qpid.proton4j.codec.EncoderState;
+import org.apache.qpid.proton4j.codec.PrimitiveArrayTypeEncoder;
 import org.apache.qpid.proton4j.codec.TypeEncoder;
 import org.apache.qpid.proton4j.codec.encoders.primitives.ArrayTypeEncoder;
 import org.apache.qpid.proton4j.codec.encoders.primitives.BinaryTypeEncoder;
-import org.apache.qpid.proton4j.codec.encoders.primitives.BooleanFalseTypeEncoder;
-import org.apache.qpid.proton4j.codec.encoders.primitives.BooleanTrueTypeEncoder;
 import org.apache.qpid.proton4j.codec.encoders.primitives.BooleanTypeEncoder;
 import org.apache.qpid.proton4j.codec.encoders.primitives.ByteTypeEncoder;
 import org.apache.qpid.proton4j.codec.encoders.primitives.CharacterTypeEncoder;
@@ -69,11 +68,9 @@ import io.netty.buffer.ByteBuf;
  */
 public class ProtonEncoder implements Encoder {
 
-    private final ArrayTypeEncoder arrayEncoder = new ArrayTypeEncoder();
+    private final PrimitiveArrayTypeEncoder arrayEncoder = new ArrayTypeEncoder();
     private final BinaryTypeEncoder binaryEncoder = new BinaryTypeEncoder();
     private final BooleanTypeEncoder booleanEncoder = new BooleanTypeEncoder();
-    private final BooleanTrueTypeEncoder trueEncoder = new BooleanTrueTypeEncoder();
-    private final BooleanFalseTypeEncoder falseEncoder = new BooleanFalseTypeEncoder();
     private final ByteTypeEncoder byteEncoder = new ByteTypeEncoder();
     private final CharacterTypeEncoder charEncoder = new CharacterTypeEncoder();
     private final Decimal32TypeEncoder decimal32Encoder = new Decimal32TypeEncoder();
@@ -111,11 +108,7 @@ public class ProtonEncoder implements Encoder {
 
     @Override
     public void writeBoolean(ByteBuf buffer, EncoderState state, boolean value) {
-        if (value) {
-            trueEncoder.writeType(buffer, state, value);
-        } else {
-            falseEncoder.writeType(buffer, state, value);
-        }
+        booleanEncoder.writeType(buffer, state, value);
     }
 
     @Override
