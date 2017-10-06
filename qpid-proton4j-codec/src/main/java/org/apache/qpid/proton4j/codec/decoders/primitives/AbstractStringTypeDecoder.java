@@ -22,9 +22,8 @@ import java.nio.charset.CharacterCodingException;
 import java.nio.charset.CharsetDecoder;
 import java.nio.charset.StandardCharsets;
 
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.DecoderState;
-
-import io.netty.buffer.ByteBuf;
 
 /**
  * Base for the various String type Decoders used to read AMQP String values.
@@ -34,7 +33,7 @@ public abstract class AbstractStringTypeDecoder implements StringTypeDecoder {
     private static final CharsetDecoder STRING_DECODER = StandardCharsets.UTF_8.newDecoder();
 
     @Override
-    public String readValue(ByteBuf buffer, DecoderState state) throws IOException {
+    public String readValue(ProtonBuffer buffer, DecoderState state) throws IOException {
         int length = readSize(buffer);
 
         byte[] bytes = new byte[length];
@@ -48,10 +47,10 @@ public abstract class AbstractStringTypeDecoder implements StringTypeDecoder {
     }
 
     @Override
-    public void skipValue(ByteBuf buffer, DecoderState state) throws IOException {
+    public void skipValue(ProtonBuffer buffer, DecoderState state) throws IOException {
         buffer.skipBytes(readSize(buffer));
     }
 
-    protected abstract int readSize(ByteBuf buffer);
+    protected abstract int readSize(ProtonBuffer buffer);
 
 }

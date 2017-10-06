@@ -16,11 +16,10 @@
  */
 package org.apache.qpid.proton4j.codec.encoders.primitives;
 
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.EncoderState;
 import org.apache.qpid.proton4j.codec.EncodingCodes;
 import org.apache.qpid.proton4j.codec.PrimitiveTypeEncoder;
-
-import io.netty.buffer.ByteBuf;
 
 /**
  * Encoder of AMQP Double type values to a byte stream.
@@ -33,27 +32,27 @@ public class DoubleTypeEncoder implements PrimitiveTypeEncoder<Double> {
     }
 
     @Override
-    public void writeType(ByteBuf buffer, EncoderState state, Double value) {
+    public void writeType(ProtonBuffer buffer, EncoderState state, Double value) {
         buffer.writeByte(EncodingCodes.DOUBLE);
         buffer.writeDouble(value.doubleValue());
     }
 
-    public void writeType(ByteBuf buffer, EncoderState state, double value) {
+    public void writeType(ProtonBuffer buffer, EncoderState state, double value) {
         buffer.writeByte(EncodingCodes.DOUBLE);
         buffer.writeDouble(value);
     }
 
     @Override
-    public void writeValue(ByteBuf buffer, EncoderState state, Double value) {
+    public void writeValue(ProtonBuffer buffer, EncoderState state, Double value) {
         buffer.writeDouble(value.doubleValue());
     }
 
-    public void writeValue(ByteBuf buffer, EncoderState state, double value) {
+    public void writeValue(ProtonBuffer buffer, EncoderState state, double value) {
         buffer.writeDouble(value);
     }
 
     @Override
-    public void writeArray(ByteBuf buffer, EncoderState state, Double[] values) {
+    public void writeArray(ProtonBuffer buffer, EncoderState state, Double[] values) {
         buffer.writeByte(EncodingCodes.ARRAY32);
 
         // Array Size -> Total Bytes + Number of elements + Type Code
@@ -71,7 +70,7 @@ public class DoubleTypeEncoder implements PrimitiveTypeEncoder<Double> {
         }
     }
 
-    public void writeArray(ByteBuf buffer, EncoderState state, double[] values) {
+    public void writeArray(ProtonBuffer buffer, EncoderState state, double[] values) {
         buffer.writeByte(EncodingCodes.ARRAY32);
 
         // Array Size -> Total Bytes + Number of elements + Type Code

@@ -18,8 +18,7 @@ package org.apache.qpid.proton4j.codec;
 
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
-
-import io.netty.buffer.ByteBuf;
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 
 /**
  * Interface for all DescribedType decoder implementations
@@ -33,7 +32,7 @@ public interface DescribedTypeEncoder<V> extends TypeEncoder<V> {
     Symbol getDescriptorSymbol();
 
     @Override
-    default void writeType(ByteBuf buffer, EncoderState state, V value) {
+    default void writeType(ProtonBuffer buffer, EncoderState state, V value) {
         buffer.writeByte(EncodingCodes.DESCRIBED_TYPE_INDICATOR);
         state.getEncoder().writeUnsignedLong(buffer, state, getDescriptorCode());
 

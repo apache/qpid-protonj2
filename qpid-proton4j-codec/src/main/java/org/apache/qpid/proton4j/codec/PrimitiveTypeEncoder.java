@@ -16,7 +16,7 @@
  */
 package org.apache.qpid.proton4j.codec;
 
-import io.netty.buffer.ByteBuf;
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 
 /**
  * Encoder of Primitive types such as Integer or Boolean
@@ -43,6 +43,6 @@ public interface PrimitiveTypeEncoder<V> extends TypeEncoder<V> {
      * @param value
      *      The array of values that is to be written.
      */
-    void writeArray(ByteBuf buffer, EncoderState state, V[] value);
+    void writeArray(ProtonBuffer buffer, EncoderState state, V[] value);
 
 }

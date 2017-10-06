@@ -21,10 +21,9 @@ import org.apache.qpid.proton4j.amqp.UnsignedInteger;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.amqp.UnsignedShort;
 import org.apache.qpid.proton4j.amqp.transport.Open;
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.DescribedListTypeEncoder;
 import org.apache.qpid.proton4j.codec.EncoderState;
-
-import io.netty.buffer.ByteBuf;
 
 /**
  * Encoder of AMQP Open type values to a byte stream.
@@ -47,7 +46,7 @@ public class OpenTypeEncoder implements DescribedListTypeEncoder<Open> {
     }
 
     @Override
-    public void writeElement(Open open, int index, ByteBuf buffer, EncoderState state) {
+    public void writeElement(Open open, int index, ProtonBuffer buffer, EncoderState state) {
         switch (index) {
             case 0:
                 state.getEncoder().writeString(buffer, state, open.getContainerId());

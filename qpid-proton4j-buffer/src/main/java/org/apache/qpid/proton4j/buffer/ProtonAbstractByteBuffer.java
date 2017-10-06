@@ -51,7 +51,7 @@ public abstract class ProtonAbstractByteBuffer implements ProtonBuffer {
 
     @Override
     public int getWritableBytes() {
-        return maxCapacity() - writeIndex;
+        return capacity() - writeIndex;
     }
 
     @Override
@@ -261,7 +261,7 @@ public abstract class ProtonAbstractByteBuffer implements ProtonBuffer {
     //----- Write methods ----------------------------------------------------//
 
     @Override
-    public ProtonBuffer writeByte(byte value) {
+    public ProtonBuffer writeByte(int value) {
         internalEnsureWritable(1);
         return setByte(writeIndex++, value);
     }

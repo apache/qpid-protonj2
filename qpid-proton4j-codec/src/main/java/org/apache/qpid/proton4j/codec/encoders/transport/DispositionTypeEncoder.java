@@ -19,10 +19,9 @@ package org.apache.qpid.proton4j.codec.encoders.transport;
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.amqp.transport.Disposition;
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.DescribedListTypeEncoder;
 import org.apache.qpid.proton4j.codec.EncoderState;
-
-import io.netty.buffer.ByteBuf;
 
 /**
  * Encoder of AMQP Disposition type values to a byte stream
@@ -45,7 +44,7 @@ public class DispositionTypeEncoder implements DescribedListTypeEncoder<Disposit
     }
 
     @Override
-    public void writeElement(Disposition disposition, int index, ByteBuf buffer, EncoderState state) {
+    public void writeElement(Disposition disposition, int index, ProtonBuffer buffer, EncoderState state) {
         switch (index) {
             case 0:
                 state.getEncoder().writeBoolean(buffer, state, disposition.getRole().getValue());

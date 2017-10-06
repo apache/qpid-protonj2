@@ -18,11 +18,10 @@ package org.apache.qpid.proton4j.codec.encoders.primitives;
 
 import java.util.Date;
 
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.EncoderState;
 import org.apache.qpid.proton4j.codec.EncodingCodes;
 import org.apache.qpid.proton4j.codec.PrimitiveTypeEncoder;
-
-import io.netty.buffer.ByteBuf;
 
 /**
  * Encoder of AMQP Timestamp type values to a byte stream.
@@ -35,27 +34,27 @@ public class TimestampTypeEncoder implements PrimitiveTypeEncoder<Date> {
     }
 
     @Override
-    public void writeType(ByteBuf buffer, EncoderState state, Date value) {
+    public void writeType(ProtonBuffer buffer, EncoderState state, Date value) {
         buffer.writeByte(EncodingCodes.TIMESTAMP);
         buffer.writeLong(value.getTime());
     }
 
-    public void writeType(ByteBuf buffer, EncoderState state, long value) {
+    public void writeType(ProtonBuffer buffer, EncoderState state, long value) {
         buffer.writeByte(EncodingCodes.TIMESTAMP);
         buffer.writeLong(value);
     }
 
     @Override
-    public void writeValue(ByteBuf buffer, EncoderState state, Date value) {
+    public void writeValue(ProtonBuffer buffer, EncoderState state, Date value) {
         buffer.writeLong(value.getTime());
     }
 
-    public void writeValue(ByteBuf buffer, EncoderState state, long value) {
+    public void writeValue(ProtonBuffer buffer, EncoderState state, long value) {
         buffer.writeLong(value);
     }
 
     @Override
-    public void writeArray(ByteBuf buffer, EncoderState state, Date[] values) {
+    public void writeArray(ProtonBuffer buffer, EncoderState state, Date[] values) {
         buffer.writeByte(EncodingCodes.ARRAY32);
 
         // Array Size -> Total Bytes + Number of elements + Type Code

@@ -18,8 +18,6 @@ package org.apache.qpid.proton4j.buffer;
 
 import java.nio.ByteBuffer;
 
-import io.netty.buffer.ByteBuf;
-
 /**
  * Buffer type abstraction used to provide users of the proton4j library with
  * a means of using their own type of byte buffer types in combination with the
@@ -895,7 +893,7 @@ public interface ProtonBuffer {
      *
      * @throws IndexOutOfBoundsException if there is no room in the buffer for this write operation.
      */
-    ProtonBuffer writeByte(byte value);
+    ProtonBuffer writeByte(int value);
 
     /**
      * Writes the contents of the given byte array into the buffer and advances the write index by the

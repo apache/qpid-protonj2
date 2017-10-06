@@ -21,10 +21,9 @@ import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.amqp.transport.Attach;
 import org.apache.qpid.proton4j.amqp.transport.ReceiverSettleMode;
 import org.apache.qpid.proton4j.amqp.transport.SenderSettleMode;
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.DescribedListTypeEncoder;
 import org.apache.qpid.proton4j.codec.EncoderState;
-
-import io.netty.buffer.ByteBuf;
 
 /**
  * Encoder of AMQP Attach type values to a byte stream.
@@ -47,7 +46,7 @@ public class AttachTypeEncoder implements DescribedListTypeEncoder<Attach> {
     }
 
     @Override
-    public void writeElement(Attach attach, int index, ByteBuf buffer, EncoderState state) {
+    public void writeElement(Attach attach, int index, ProtonBuffer buffer, EncoderState state) {
         switch (index) {
             case 0:
                 state.getEncoder().writeString(buffer, state, attach.getName());

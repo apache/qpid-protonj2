@@ -16,11 +16,10 @@
  */
 package org.apache.qpid.proton4j.codec.encoders.primitives;
 
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.EncoderState;
 import org.apache.qpid.proton4j.codec.EncodingCodes;
 import org.apache.qpid.proton4j.codec.PrimitiveTypeEncoder;
-
-import io.netty.buffer.ByteBuf;
 
 /**
  * Encoder of AMQP Boolean True types to a byte stream.
@@ -33,27 +32,27 @@ public class BooleanTypeEncoder implements PrimitiveTypeEncoder<Boolean> {
     }
 
     @Override
-    public void writeType(ByteBuf buffer, EncoderState state, Boolean value) {
+    public void writeType(ProtonBuffer buffer, EncoderState state, Boolean value) {
         buffer.writeByte(EncodingCodes.BOOLEAN);
         buffer.writeByte(value.equals(Boolean.TRUE) ? 1 : 0);
     }
 
-    public void writeType(ByteBuf buffer, EncoderState state, boolean value) {
+    public void writeType(ProtonBuffer buffer, EncoderState state, boolean value) {
         buffer.writeByte(EncodingCodes.BOOLEAN);
         buffer.writeByte(value ? 1 : 0);
     }
 
     @Override
-    public void writeValue(ByteBuf buffer, EncoderState state, Boolean value) {
+    public void writeValue(ProtonBuffer buffer, EncoderState state, Boolean value) {
         buffer.writeByte(value.equals(Boolean.TRUE) ? 1 : 0);
     }
 
-    public void writeValue(ByteBuf buffer, EncoderState state, boolean value) {
+    public void writeValue(ProtonBuffer buffer, EncoderState state, boolean value) {
         buffer.writeByte(value ? 1 : 0);
     }
 
     @Override
-    public void writeArray(ByteBuf buffer, EncoderState state, Boolean[] value) {
+    public void writeArray(ProtonBuffer buffer, EncoderState state, Boolean[] value) {
         buffer.writeByte(EncodingCodes.ARRAY32);
 
         // Array Size -> Total Bytes + Number of elements + Type Code
@@ -67,7 +66,7 @@ public class BooleanTypeEncoder implements PrimitiveTypeEncoder<Boolean> {
         }
     }
 
-    public void writeArray(ByteBuf buffer, EncoderState state, boolean[] value) {
+    public void writeArray(ProtonBuffer buffer, EncoderState state, boolean[] value) {
         buffer.writeByte(EncodingCodes.ARRAY32);
 
         // Array Size -> Total Bytes + Number of elements + Type Code

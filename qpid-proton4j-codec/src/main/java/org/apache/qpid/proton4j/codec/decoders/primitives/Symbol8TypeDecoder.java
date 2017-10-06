@@ -16,9 +16,8 @@
  */
 package org.apache.qpid.proton4j.codec.decoders.primitives;
 
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.EncodingCodes;
-
-import io.netty.buffer.ByteBuf;
 
 /**
  * Decoder of AMQP Symbol values from a byte stream.
@@ -26,7 +25,7 @@ import io.netty.buffer.ByteBuf;
 public class Symbol8TypeDecoder extends AbstractSymbolTypeDecoder {
 
     @Override
-    protected int readSize(ByteBuf buffer) {
+    protected int readSize(ProtonBuffer buffer) {
         return buffer.readByte() & 0xff;
     }
 

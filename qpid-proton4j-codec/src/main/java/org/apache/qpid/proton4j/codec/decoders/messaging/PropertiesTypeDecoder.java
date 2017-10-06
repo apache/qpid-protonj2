@@ -22,12 +22,11 @@ import java.util.Date;
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.amqp.messaging.Properties;
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.DecoderState;
 import org.apache.qpid.proton4j.codec.DescribedTypeDecoder;
 import org.apache.qpid.proton4j.codec.TypeDecoder;
 import org.apache.qpid.proton4j.codec.decoders.primitives.ListTypeDecoder;
-
-import io.netty.buffer.ByteBuf;
 
 /**
  * Decoder of AMQP Properties type values from a byte stream
@@ -50,7 +49,7 @@ public class PropertiesTypeDecoder implements DescribedTypeDecoder<Properties>, 
     }
 
     @Override
-    public Properties readValue(ByteBuf buffer, DecoderState state) throws IOException {
+    public Properties readValue(ProtonBuffer buffer, DecoderState state) throws IOException {
         TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
         if (!(decoder instanceof ListTypeDecoder)) {
@@ -66,7 +65,7 @@ public class PropertiesTypeDecoder implements DescribedTypeDecoder<Properties>, 
     }
 
     @Override
-    public void onListEntry(int index, Properties properties, ByteBuf buffer, DecoderState state) throws IOException {
+    public void onListEntry(int index, Properties properties, ProtonBuffer buffer, DecoderState state) throws IOException {
         switch (index) {
             case 0:
                 properties.setMessageId(state.getDecoder().readObject(buffer, state));
@@ -115,7 +114,7 @@ public class PropertiesTypeDecoder implements DescribedTypeDecoder<Properties>, 
     }
 
     @Override
-    public void skipValue(ByteBuf buffer, DecoderState state) throws IOException {
+    public void skipValue(ProtonBuffer buffer, DecoderState state) throws IOException {
         TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
         if (!(decoder instanceof ListTypeDecoder)) {

@@ -19,10 +19,9 @@ package org.apache.qpid.proton4j.codec.encoders.transport;
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.amqp.transport.Detach;
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.DescribedListTypeEncoder;
 import org.apache.qpid.proton4j.codec.EncoderState;
-
-import io.netty.buffer.ByteBuf;
 
 /**
  * Encoder of AMQP Detach type values to a byte stream.
@@ -45,7 +44,7 @@ public class DetachTypeEncoder implements DescribedListTypeEncoder<Detach> {
     }
 
     @Override
-    public void writeElement(Detach detach, int index, ByteBuf buffer, EncoderState state) {
+    public void writeElement(Detach detach, int index, ProtonBuffer buffer, EncoderState state) {
         switch (index) {
             case 0:
                 state.getEncoder().writeUnsignedInteger(buffer, state, detach.getHandle());

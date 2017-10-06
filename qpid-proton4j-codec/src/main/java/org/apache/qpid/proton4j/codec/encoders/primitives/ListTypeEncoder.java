@@ -18,12 +18,11 @@ package org.apache.qpid.proton4j.codec.encoders.primitives;
 
 import java.util.List;
 
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.EncoderState;
 import org.apache.qpid.proton4j.codec.EncodingCodes;
 import org.apache.qpid.proton4j.codec.PrimitiveTypeEncoder;
 import org.apache.qpid.proton4j.codec.TypeEncoder;
-
-import io.netty.buffer.ByteBuf;
 
 /**
  * Encoder of AMQP List type values to a byte stream.
@@ -37,14 +36,14 @@ public class ListTypeEncoder implements PrimitiveTypeEncoder<List> {
     }
 
     @Override
-    public void writeType(ByteBuf buffer, EncoderState state, List value) {
+    public void writeType(ProtonBuffer buffer, EncoderState state, List value) {
         buffer.writeByte(EncodingCodes.LIST32);
         writeValue(buffer, state, value);
     }
 
     @Override
-    public void writeValue(ByteBuf buffer, EncoderState state, List value) {
-        int startIndex = buffer.writerIndex();
+    public void writeValue(ProtonBuffer buffer, EncoderState state, List value) {
+        int startIndex = buffer.getWriteIndex();
 
         // Reserve space for the size
         buffer.writeInt(0);
@@ -69,19 +68,19 @@ public class ListTypeEncoder implements PrimitiveTypeEncoder<List> {
         };
 
         // Move back and write the size
-        int endIndex = buffer.writerIndex();
+        int endIndex = buffer.getWriteIndex();
         buffer.setInt(startIndex, endIndex - startIndex - 4);
     }
 
     @Override
-    public void writeArray(ByteBuf buffer, EncoderState state, List[] values) {
+    public void writeArray(ProtonBuffer buffer, EncoderState state, List[] values) {
         buffer.writeByte(EncodingCodes.ARRAY32);
 
         // Array Size -> Total Bytes + Number of elements + Type Code
         //
         // List types are variable sized values so we write the payload
         // and then we write the size using the result.
-        int startIndex = buffer.writerIndex();
+        int startIndex = buffer.getWriteIndex();
 
         // Reserve space for the size
         buffer.writeInt(0);
@@ -93,7 +92,7 @@ public class ListTypeEncoder implements PrimitiveTypeEncoder<List> {
         }
 
         // Move back and write the size
-        int endIndex = buffer.writerIndex();
+        int endIndex = buffer.getWriteIndex();
 
         long size = endIndex - startIndex;
         if (size > Integer.MAX_VALUE) {

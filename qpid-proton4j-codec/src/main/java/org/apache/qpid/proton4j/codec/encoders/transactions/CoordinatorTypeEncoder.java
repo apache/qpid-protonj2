@@ -19,10 +19,9 @@ package org.apache.qpid.proton4j.codec.encoders.transactions;
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.amqp.transactions.Coordinator;
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.DescribedListTypeEncoder;
 import org.apache.qpid.proton4j.codec.EncoderState;
-
-import io.netty.buffer.ByteBuf;
 
 /**
  * Encoder of AMQP Coordinator type values to a byte stream.
@@ -45,7 +44,7 @@ public class CoordinatorTypeEncoder implements DescribedListTypeEncoder<Coordina
     }
 
     @Override
-    public void writeElement(Coordinator coordinator, int index, ByteBuf buffer, EncoderState state) {
+    public void writeElement(Coordinator coordinator, int index, ProtonBuffer buffer, EncoderState state) {
         switch (index) {
             case 0:
                 state.getEncoder().writeArray(buffer, state, coordinator.getCapabilities());

@@ -16,11 +16,10 @@
  */
 package org.apache.qpid.proton4j.codec.encoders.primitives;
 
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.EncoderState;
 import org.apache.qpid.proton4j.codec.EncodingCodes;
 import org.apache.qpid.proton4j.codec.PrimitiveTypeEncoder;
-
-import io.netty.buffer.ByteBuf;
 
 /**
  * Encoder of AMQP Float type values to a byte stream.
@@ -33,27 +32,27 @@ public class FloatTypeEncoder implements PrimitiveTypeEncoder<Float> {
     }
 
     @Override
-    public void writeType(ByteBuf buffer, EncoderState state, Float value) {
+    public void writeType(ProtonBuffer buffer, EncoderState state, Float value) {
         buffer.writeByte(EncodingCodes.FLOAT);
         buffer.writeFloat(value.floatValue());
     }
 
-    public void writeType(ByteBuf buffer, EncoderState state, float value) {
+    public void writeType(ProtonBuffer buffer, EncoderState state, float value) {
         buffer.writeByte(EncodingCodes.FLOAT);
         buffer.writeFloat(value);
     }
 
     @Override
-    public void writeValue(ByteBuf buffer, EncoderState state, Float value) {
+    public void writeValue(ProtonBuffer buffer, EncoderState state, Float value) {
         buffer.writeFloat(value.floatValue());
     }
 
-    public void writeValue(ByteBuf buffer, EncoderState state, float value) {
+    public void writeValue(ProtonBuffer buffer, EncoderState state, float value) {
         buffer.writeFloat(value);
     }
 
     @Override
-    public void writeArray(ByteBuf buffer, EncoderState state, Float[] values) {
+    public void writeArray(ProtonBuffer buffer, EncoderState state, Float[] values) {
         buffer.writeByte(EncodingCodes.ARRAY32);
 
         // Array Size -> Total Bytes + Number of elements + Type Code
@@ -71,7 +70,7 @@ public class FloatTypeEncoder implements PrimitiveTypeEncoder<Float> {
         }
     }
 
-    public void writeArray(ByteBuf buffer, EncoderState state, float[] values) {
+    public void writeArray(ProtonBuffer buffer, EncoderState state, float[] values) {
         buffer.writeByte(EncodingCodes.ARRAY32);
 
         // Array Size -> Total Bytes + Number of elements + Type Code

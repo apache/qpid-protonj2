@@ -17,11 +17,10 @@
 package org.apache.qpid.proton4j.codec.encoders.primitives;
 
 import org.apache.qpid.proton4j.amqp.Decimal128;
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.EncoderState;
 import org.apache.qpid.proton4j.codec.EncodingCodes;
 import org.apache.qpid.proton4j.codec.PrimitiveTypeEncoder;
-
-import io.netty.buffer.ByteBuf;
 
 /**
  * Encoder of AMQP Decimal128 type values to a byte stream
@@ -34,20 +33,20 @@ public class Decimal128TypeEncoder implements PrimitiveTypeEncoder<Decimal128> {
     }
 
     @Override
-    public void writeType(ByteBuf buffer, EncoderState state, Decimal128 value) {
+    public void writeType(ProtonBuffer buffer, EncoderState state, Decimal128 value) {
         buffer.writeByte(EncodingCodes.DECIMAL128);
         buffer.writeLong(value.getMostSignificantBits());
         buffer.writeLong(value.getLeastSignificantBits());
     }
 
     @Override
-    public void writeValue(ByteBuf buffer, EncoderState state, Decimal128 value) {
+    public void writeValue(ProtonBuffer buffer, EncoderState state, Decimal128 value) {
         buffer.writeLong(value.getMostSignificantBits());
         buffer.writeLong(value.getLeastSignificantBits());
     }
 
     @Override
-    public void writeArray(ByteBuf buffer, EncoderState state, Decimal128[] values) {
+    public void writeArray(ProtonBuffer buffer, EncoderState state, Decimal128[] values) {
         buffer.writeByte(EncodingCodes.ARRAY32);
 
         // Array Size -> Total Bytes + Number of elements + Type Code

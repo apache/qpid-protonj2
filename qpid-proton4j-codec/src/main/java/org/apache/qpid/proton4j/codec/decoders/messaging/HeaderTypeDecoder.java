@@ -21,12 +21,11 @@ import java.io.IOException;
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.amqp.messaging.Header;
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.DecoderState;
 import org.apache.qpid.proton4j.codec.DescribedTypeDecoder;
 import org.apache.qpid.proton4j.codec.TypeDecoder;
 import org.apache.qpid.proton4j.codec.decoders.primitives.ListTypeDecoder;
-
-import io.netty.buffer.ByteBuf;
 
 /**
  * Decoder of AMQP Header types from a byte stream
@@ -49,7 +48,7 @@ public class HeaderTypeDecoder implements DescribedTypeDecoder<Header>, ListType
     }
 
     @Override
-    public Header readValue(ByteBuf buffer, DecoderState state) throws IOException {
+    public Header readValue(ProtonBuffer buffer, DecoderState state) throws IOException {
         TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
         if (!(decoder instanceof ListTypeDecoder)) {
@@ -65,7 +64,7 @@ public class HeaderTypeDecoder implements DescribedTypeDecoder<Header>, ListType
     }
 
     @Override
-    public void onListEntry(int index, Header header, ByteBuf buffer, DecoderState state) throws IOException {
+    public void onListEntry(int index, Header header, ProtonBuffer buffer, DecoderState state) throws IOException {
         switch (index) {
             case 0:
                 header.setDurable(state.getDecoder().readBoolean(buffer, state));
@@ -88,7 +87,7 @@ public class HeaderTypeDecoder implements DescribedTypeDecoder<Header>, ListType
     }
 
     @Override
-    public void skipValue(ByteBuf buffer, DecoderState state) throws IOException {
+    public void skipValue(ProtonBuffer buffer, DecoderState state) throws IOException {
         TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
         if (!(decoder instanceof ListTypeDecoder)) {

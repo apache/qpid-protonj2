@@ -22,12 +22,11 @@ import org.apache.qpid.proton4j.amqp.Binary;
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.amqp.messaging.Data;
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.DecoderState;
 import org.apache.qpid.proton4j.codec.DescribedTypeDecoder;
 import org.apache.qpid.proton4j.codec.TypeDecoder;
 import org.apache.qpid.proton4j.codec.decoders.primitives.BinaryTypeDecoder;
-
-import io.netty.buffer.ByteBuf;
 
 /**
  * Decoder of AMQP Data type values from a byte stream.
@@ -50,7 +49,7 @@ public class DataTypeDecoder implements DescribedTypeDecoder<Data> {
     }
 
     @Override
-    public Data readValue(ByteBuf buffer, DecoderState state) throws IOException {
+    public Data readValue(ProtonBuffer buffer, DecoderState state) throws IOException {
         TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
         if (!(decoder instanceof BinaryTypeDecoder)) {
@@ -64,7 +63,7 @@ public class DataTypeDecoder implements DescribedTypeDecoder<Data> {
     }
 
     @Override
-    public void skipValue(ByteBuf buffer, DecoderState state) throws IOException {
+    public void skipValue(ProtonBuffer buffer, DecoderState state) throws IOException {
         TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
         if (!(decoder instanceof BinaryTypeDecoder)) {

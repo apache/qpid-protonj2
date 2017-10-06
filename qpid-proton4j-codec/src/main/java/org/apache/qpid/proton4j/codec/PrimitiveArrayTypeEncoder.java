@@ -16,7 +16,7 @@
  */
 package org.apache.qpid.proton4j.codec;
 
-import io.netty.buffer.ByteBuf;
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 
 public interface PrimitiveArrayTypeEncoder extends PrimitiveTypeEncoder<Object> {
 
@@ -31,6 +31,6 @@ public interface PrimitiveArrayTypeEncoder extends PrimitiveTypeEncoder<Object> 
     }
 
     @Override
-    void writeArray(ByteBuf buffer, EncoderState state, Object[] value);
+    void writeArray(ProtonBuffer buffer, EncoderState state, Object[] value);
 
 }

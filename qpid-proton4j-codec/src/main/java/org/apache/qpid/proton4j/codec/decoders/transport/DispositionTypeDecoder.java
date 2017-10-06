@@ -23,13 +23,12 @@ import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.amqp.transport.DeliveryState;
 import org.apache.qpid.proton4j.amqp.transport.Disposition;
 import org.apache.qpid.proton4j.amqp.transport.Role;
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.DecoderState;
 import org.apache.qpid.proton4j.codec.DescribedTypeDecoder;
 import org.apache.qpid.proton4j.codec.TypeDecoder;
 import org.apache.qpid.proton4j.codec.decoders.primitives.ListTypeDecoder;
 import org.apache.qpid.proton4j.codec.decoders.primitives.ListTypeDecoder.ListEntryHandler;
-
-import io.netty.buffer.ByteBuf;
 
 /**
  * Decoder of AMQP Disposition type values from a byte stream.
@@ -52,7 +51,7 @@ public class DispositionTypeDecoder implements DescribedTypeDecoder<Disposition>
     }
 
     @Override
-    public Disposition readValue(ByteBuf buffer, DecoderState state) throws IOException {
+    public Disposition readValue(ProtonBuffer buffer, DecoderState state) throws IOException {
         TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
         if (!(decoder instanceof ListTypeDecoder)) {
@@ -68,7 +67,7 @@ public class DispositionTypeDecoder implements DescribedTypeDecoder<Disposition>
     }
 
     @Override
-    public void onListEntry(int index, Disposition disposition, ByteBuf buffer, DecoderState state) throws IOException {
+    public void onListEntry(int index, Disposition disposition, ProtonBuffer buffer, DecoderState state) throws IOException {
         switch (index) {
             case 0:
                 disposition.setRole(Boolean.TRUE.equals(state.getDecoder().readBoolean(buffer, state)) ? Role.RECEIVER : Role.SENDER);
@@ -94,7 +93,7 @@ public class DispositionTypeDecoder implements DescribedTypeDecoder<Disposition>
     }
 
     @Override
-    public void skipValue(ByteBuf buffer, DecoderState state) throws IOException {
+    public void skipValue(ProtonBuffer buffer, DecoderState state) throws IOException {
         TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
         if (!(decoder instanceof ListTypeDecoder)) {

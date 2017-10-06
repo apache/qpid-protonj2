@@ -29,10 +29,9 @@ import java.util.UUID;
 import org.apache.qpid.proton4j.amqp.Binary;
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedInteger;
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.junit.Test;
-
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
 
 /**
  * Test for the Proton List encoder / decoder
@@ -64,7 +63,7 @@ public class ListTypeCodecTest extends CodecTestSupport {
 
     @SuppressWarnings("unchecked")
     private void doTestDecodeSymbolListSeries(int size) throws IOException {
-        ByteBuf buffer = Unpooled.buffer();
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
 
         List<Object> list = new ArrayList<>();
 
@@ -90,7 +89,7 @@ public class ListTypeCodecTest extends CodecTestSupport {
 
     @SuppressWarnings("unchecked")
     private void doTestDecodeListSeries(int size) throws IOException {
-        ByteBuf buffer = Unpooled.buffer();
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
 
         List<Object> list = new ArrayList<>();
 

@@ -25,10 +25,9 @@ import java.io.IOException;
 import org.apache.qpid.proton4j.amqp.UnsignedByte;
 import org.apache.qpid.proton4j.amqp.UnsignedInteger;
 import org.apache.qpid.proton4j.amqp.messaging.Header;
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.junit.Test;
-
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
 
 /**
  * Test for decoder of AMQP Header type.
@@ -54,7 +53,7 @@ public class HeaderTypeCodecTest extends CodecTestSupport {
     }
 
     private void doTestDecodeHeaderSeries(int size) throws IOException {
-        ByteBuf buffer = Unpooled.buffer();
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
 
         Header header = new Header();
 

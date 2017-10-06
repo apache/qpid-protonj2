@@ -19,9 +19,8 @@ package org.apache.qpid.proton4j.codec.decoders.primitives;
 import java.io.IOException;
 
 import org.apache.qpid.proton4j.amqp.Symbol;
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.DecoderState;
-
-import io.netty.buffer.ByteBuf;
 
 /**
  * Base class for the Symbol decoders used on AMQP Symbol types.
@@ -29,7 +28,7 @@ import io.netty.buffer.ByteBuf;
 public abstract class AbstractSymbolTypeDecoder implements SymbolTypeDecoder {
 
     @Override
-    public Symbol readValue(ByteBuf buffer, DecoderState state) throws IOException {
+    public Symbol readValue(ProtonBuffer buffer, DecoderState state) throws IOException {
         int length = readSize(buffer);
 
         byte[] bytes = new byte[length];
@@ -39,10 +38,10 @@ public abstract class AbstractSymbolTypeDecoder implements SymbolTypeDecoder {
     }
 
     @Override
-    public void skipValue(ByteBuf buffer, DecoderState state) throws IOException {
+    public void skipValue(ProtonBuffer buffer, DecoderState state) throws IOException {
         buffer.skipBytes(readSize(buffer));
     }
 
-    protected abstract int readSize(ByteBuf buffer);
+    protected abstract int readSize(ProtonBuffer buffer);
 
 }

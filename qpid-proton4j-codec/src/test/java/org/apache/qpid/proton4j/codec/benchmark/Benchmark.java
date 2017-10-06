@@ -35,20 +35,19 @@ import org.apache.qpid.proton4j.amqp.messaging.ApplicationProperties;
 import org.apache.qpid.proton4j.amqp.messaging.Header;
 import org.apache.qpid.proton4j.amqp.messaging.MessageAnnotations;
 import org.apache.qpid.proton4j.amqp.messaging.Properties;
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.codec.CodecFactory;
 import org.apache.qpid.proton4j.codec.Decoder;
 import org.apache.qpid.proton4j.codec.DecoderState;
 import org.apache.qpid.proton4j.codec.Encoder;
 import org.apache.qpid.proton4j.codec.EncoderState;
 
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
-
 public class Benchmark implements Runnable {
 
     private static final int ITERATIONS = 10 * 1024 * 1024;
 
-    private ByteBuf byteBuf = Unpooled.buffer(8192);
+    ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate(8192);
     private BenchmarkResult resultSet = new BenchmarkResult();
     private boolean warming = true;
 
@@ -101,15 +100,15 @@ public class Benchmark implements Runnable {
 
         resultSet.start();
         for (int i = 0; i < ITERATIONS; i++) {
-            byteBuf.clear();
-            encoder.writeList(byteBuf, encoderState, list);
+            buffer.clear();
+            encoder.writeList(buffer, encoderState, list);
         }
         resultSet.encodesComplete();
 
         resultSet.start();
         for (int i = 0; i < ITERATIONS; i++) {
-            byteBuf.readerIndex(0);
-            decoder.readList(byteBuf, decoderState);
+            buffer.setReadIndex(0);
+            decoder.readList(buffer, decoderState);
         }
         resultSet.decodesComplete();
 
@@ -121,15 +120,15 @@ public class Benchmark implements Runnable {
 
         resultSet.start();
         for (int i = 0; i < ITERATIONS; i++) {
-            byteBuf.clear();
-            encoder.writeUUID(byteBuf, encoderState, uuid);
+            buffer.clear();
+            encoder.writeUUID(buffer, encoderState, uuid);
         }
         resultSet.encodesComplete();
 
         resultSet.start();
         for (int i = 0; i < ITERATIONS; i++) {
-            byteBuf.readerIndex(0);
-            decoder.readUUID(byteBuf, decoderState);
+            buffer.setReadIndex(0);
+            decoder.readUUID(buffer, decoderState);
         }
         resultSet.decodesComplete();
 
@@ -143,15 +142,15 @@ public class Benchmark implements Runnable {
 
         resultSet.start();
         for (int i = 0; i < ITERATIONS; i++) {
-            byteBuf.clear();
-            encoder.writeObject(byteBuf, encoderState, header);
+            buffer.clear();
+            encoder.writeObject(buffer, encoderState, header);
         }
         resultSet.encodesComplete();
 
         resultSet.start();
         for (int i = 0; i < ITERATIONS; i++) {
-            byteBuf.readerIndex(0);
-            decoder.readObject(byteBuf, decoderState);
+            buffer.setReadIndex(0);
+            decoder.readObject(buffer, decoderState);
         }
         resultSet.decodesComplete();
 
@@ -164,15 +163,15 @@ public class Benchmark implements Runnable {
 
         resultSet.start();
         for (int i = 0; i < ITERATIONS; i++) {
-            byteBuf.clear();
-            encoder.writeObject(byteBuf, encoderState, properties);
+            buffer.clear();
+            encoder.writeObject(buffer, encoderState, properties);
         }
         resultSet.encodesComplete();
 
         resultSet.start();
         for (int i = 0; i < ITERATIONS; i++) {
-            byteBuf.readerIndex(0);
-            decoder.readObject(byteBuf, decoderState);
+            buffer.setReadIndex(0);
+            decoder.readObject(buffer, decoderState);
         }
         resultSet.decodesComplete();
 
@@ -187,15 +186,15 @@ public class Benchmark implements Runnable {
 
         resultSet.start();
         for (int i = 0; i < ITERATIONS; i++) {
-            byteBuf.clear();
-            encoder.writeObject(byteBuf, encoderState, annotations);
+            buffer.clear();
+            encoder.writeObject(buffer, encoderState, annotations);
         }
         resultSet.encodesComplete();
 
         resultSet.start();
         for (int i = 0; i < ITERATIONS; i++) {
-            byteBuf.readerIndex(0);
-            decoder.readObject(byteBuf, decoderState);
+            buffer.setReadIndex(0);
+            decoder.readObject(buffer, decoderState);
         }
         resultSet.decodesComplete();
 
@@ -210,15 +209,15 @@ public class Benchmark implements Runnable {
 
         resultSet.start();
         for (int i = 0; i < ITERATIONS; i++) {
-            byteBuf.clear();
-            encoder.writeObject(byteBuf, encoderState, properties);
+            buffer.clear();
+            encoder.writeObject(buffer, encoderState, properties);
         }
         resultSet.encodesComplete();
 
         resultSet.start();
         for (int i = 0; i < ITERATIONS; i++) {
-            byteBuf.readerIndex(0);
-            decoder.readObject(byteBuf, decoderState);
+            buffer.setReadIndex(0);
+            decoder.readObject(buffer, decoderState);
         }
         resultSet.decodesComplete();
 
@@ -232,19 +231,19 @@ public class Benchmark implements Runnable {
 
         resultSet.start();
         for (int i = 0; i < ITERATIONS; i++) {
-            byteBuf.clear();
-            encoder.writeSymbol(byteBuf, encoderState, symbol1);
-            encoder.writeSymbol(byteBuf, encoderState, symbol2);
-            encoder.writeSymbol(byteBuf, encoderState, symbol3);
+            buffer.clear();
+            encoder.writeSymbol(buffer, encoderState, symbol1);
+            encoder.writeSymbol(buffer, encoderState, symbol2);
+            encoder.writeSymbol(buffer, encoderState, symbol3);
         }
         resultSet.encodesComplete();
 
         resultSet.start();
         for (int i = 0; i < ITERATIONS; i++) {
-            byteBuf.readerIndex(0);
-            decoder.readSymbol(byteBuf, decoderState);
-            decoder.readSymbol(byteBuf, decoderState);
-            decoder.readSymbol(byteBuf, decoderState);
+            buffer.setReadIndex(0);
+            decoder.readSymbol(buffer, decoderState);
+            decoder.readSymbol(buffer, decoderState);
+            decoder.readSymbol(buffer, decoderState);
         }
         resultSet.decodesComplete();
 

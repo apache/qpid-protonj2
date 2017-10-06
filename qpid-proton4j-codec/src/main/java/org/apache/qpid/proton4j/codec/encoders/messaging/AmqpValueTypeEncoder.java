@@ -19,10 +19,9 @@ package org.apache.qpid.proton4j.codec.encoders.messaging;
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.amqp.messaging.AmqpValue;
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.DescribedTypeEncoder;
 import org.apache.qpid.proton4j.codec.EncoderState;
-
-import io.netty.buffer.ByteBuf;
 
 /**
  * Encoder of AMQP Value type values to a byte stream.
@@ -45,7 +44,7 @@ public class AmqpValueTypeEncoder implements DescribedTypeEncoder<AmqpValue> {
     }
 
     @Override
-    public void writeValue(ByteBuf buffer, EncoderState state, AmqpValue value) {
+    public void writeValue(ProtonBuffer buffer, EncoderState state, AmqpValue value) {
         state.getEncoder().writeObject(buffer, state, value.getValue());
     }
 }

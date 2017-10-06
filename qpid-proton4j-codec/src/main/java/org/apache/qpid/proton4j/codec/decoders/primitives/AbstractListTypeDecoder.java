@@ -20,12 +20,11 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.DecoderState;
 import org.apache.qpid.proton4j.codec.EncodingCodes;
 import org.apache.qpid.proton4j.codec.PrimitiveTypeDecoder;
 import org.apache.qpid.proton4j.codec.TypeDecoder;
-
-import io.netty.buffer.ByteBuf;
 
 /**
  * Base for the various List type decoders needed to read AMQP List values.
@@ -33,15 +32,15 @@ import io.netty.buffer.ByteBuf;
 public abstract class AbstractListTypeDecoder implements ListTypeDecoder {
 
     @Override
-    public List<Object> readValue(ByteBuf buffer, DecoderState state) throws IOException {
+    public List<Object> readValue(ProtonBuffer buffer, DecoderState state) throws IOException {
         int size = readSize(buffer);
         int count = readCount(buffer);
 
         // Ensure we do not allocate an array of size greater then the available data, otherwise there is a risk for an OOM error
-        if (count > buffer.readableBytes()) {
+        if (count > buffer.getReadableBytes()) {
             throw new IllegalArgumentException(String.format(
                     "List element size %d is specified to be greater than the amount " +
-                    "of data available (%d)", size, buffer.readableBytes()));
+                    "of data available (%d)", size, buffer.getReadableBytes()));
         }
 
         TypeDecoder<?> typeDecoder = null;
@@ -53,16 +52,16 @@ public abstract class AbstractListTypeDecoder implements ListTypeDecoder {
             if (typeDecoder == null) {
                 typeDecoder = state.getDecoder().readNextTypeDecoder(buffer, state);
             } else {
-                buffer.markReaderIndex();
+                buffer.markReadIndex();
 
                 byte encodingCode = buffer.readByte();
                 if (encodingCode == EncodingCodes.DESCRIBED_TYPE_INDICATOR || !(typeDecoder instanceof PrimitiveTypeDecoder<?>)) {
-                    buffer.resetReaderIndex();
+                    buffer.resetReadIndex();
                     typeDecoder = state.getDecoder().readNextTypeDecoder(buffer, state);
                 } else {
                     PrimitiveTypeDecoder<?> primitiveTypeDecoder = (PrimitiveTypeDecoder<?>) typeDecoder;
                     if (encodingCode != primitiveTypeDecoder.getTypeCode()) {
-                        buffer.resetReaderIndex();
+                        buffer.resetReadIndex();
                         typeDecoder = state.getDecoder().readNextTypeDecoder(buffer, state);
                     }
                 }
@@ -76,15 +75,15 @@ public abstract class AbstractListTypeDecoder implements ListTypeDecoder {
 
     @SuppressWarnings({ "unchecked", "rawtypes" })
     @Override
-    public void readValue(ByteBuf buffer, DecoderState state, ListEntryHandler handler, Object target) throws IOException {
+    public void readValue(ProtonBuffer buffer, DecoderState state, ListEntryHandler handler, Object target) throws IOException {
         int size = readSize(buffer);
         int count = readCount(buffer);
 
         // Ensure we do not allocate an array of size greater then the available data, otherwise there is a risk for an OOM error
-        if (count > buffer.readableBytes()) {
+        if (count > buffer.getReadableBytes()) {
             throw new IllegalArgumentException(String.format(
                     "List element size %d is specified to be greater than the amount " +
-                    "of data available (%d)", size, buffer.readableBytes()));
+                    "of data available (%d)", size, buffer.getReadableBytes()));
         }
 
         for (int i = 0; i < count; i++) {
@@ -93,12 +92,12 @@ public abstract class AbstractListTypeDecoder implements ListTypeDecoder {
     }
 
     @Override
-    public void skipValue(ByteBuf buffer, DecoderState state) throws IOException {
+    public void skipValue(ProtonBuffer buffer, DecoderState state) throws IOException {
         buffer.skipBytes(readSize(buffer));
     }
 
-    protected abstract int readSize(ByteBuf buffer);
+    protected abstract int readSize(ProtonBuffer buffer);
 
-    protected abstract int readCount(ByteBuf buffer);
+    protected abstract int readCount(ProtonBuffer buffer);
 
 }

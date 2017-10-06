@@ -16,9 +16,8 @@
  */
 package org.apache.qpid.proton4j.codec.decoders.primitives;
 
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.EncodingCodes;
-
-import io.netty.buffer.ByteBuf;
 
 /**
  * Decoder of AMQP Binary values with length less than 255 from a byte stream.
@@ -31,7 +30,7 @@ public class Binary8TypeDecoder extends AbstractBinaryTypeDecoder {
     }
 
     @Override
-    protected int readSize(ByteBuf buffer) {
+    protected int readSize(ProtonBuffer buffer) {
         return buffer.readByte() & 0xff;
     }
 }

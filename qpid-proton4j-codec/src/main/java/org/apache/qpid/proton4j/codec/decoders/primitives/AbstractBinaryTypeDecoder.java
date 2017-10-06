@@ -19,9 +19,8 @@ package org.apache.qpid.proton4j.codec.decoders.primitives;
 import java.io.IOException;
 
 import org.apache.qpid.proton4j.amqp.Binary;
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.DecoderState;
-
-import io.netty.buffer.ByteBuf;
 
 /**
  * Base class for the various Binary type decoders used to read AMQP Binary values.
@@ -29,13 +28,13 @@ import io.netty.buffer.ByteBuf;
 public abstract class AbstractBinaryTypeDecoder implements BinaryTypeDecoder {
 
     @Override
-    public Binary readValue(ByteBuf buffer, DecoderState state) {
+    public Binary readValue(ProtonBuffer buffer, DecoderState state) {
         int length = readSize(buffer);
 
-        if (length > buffer.readableBytes()) {
+        if (length > buffer.getReadableBytes()) {
             throw new IllegalArgumentException(
                 String.format("Binary data size %d is specified to be greater than the amount " +
-                              "of data available (%d)", length, buffer.readableBytes()));
+                              "of data available (%d)", length, buffer.getReadableBytes()));
         }
 
         // TODO - If we can plug in the memory allocator we could pool these bytes
@@ -46,18 +45,18 @@ public abstract class AbstractBinaryTypeDecoder implements BinaryTypeDecoder {
     }
 
     @Override
-    public void skipValue(ByteBuf buffer, DecoderState state) throws IOException {
+    public void skipValue(ProtonBuffer buffer, DecoderState state) throws IOException {
         int length = readSize(buffer);
 
-        if (length > buffer.readableBytes()) {
+        if (length > buffer.getReadableBytes()) {
             throw new IllegalArgumentException(
                 String.format("Binary data size %d is specified to be greater than the amount " +
-                              "of data available (%d)", length, buffer.readableBytes()));
+                              "of data available (%d)", length, buffer.getReadableBytes()));
         }
 
         buffer.skipBytes(length);
     }
 
-    protected abstract int readSize(ByteBuf buffer);
+    protected abstract int readSize(ProtonBuffer buffer);
 
 }

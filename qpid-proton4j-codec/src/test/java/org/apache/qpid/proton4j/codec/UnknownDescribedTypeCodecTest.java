@@ -23,11 +23,10 @@ import static org.junit.Assert.assertTrue;
 import java.io.IOException;
 
 import org.apache.qpid.proton4j.amqp.UnknownDescribedType;
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.codec.util.NoLocalType;
 import org.junit.Test;
-
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
 
 /**
  * Tests the handling of UnknownDescribedType instances.
@@ -39,7 +38,7 @@ public class UnknownDescribedTypeCodecTest extends CodecTestSupport {
 
     @Test
     public void testDecodeUnknownDescribedType() throws Exception {
-        ByteBuf buffer = Unpooled.buffer();
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
 
         encoder.writeObject(buffer, encoderState, NoLocalType.NO_LOCAL);
 
@@ -60,7 +59,7 @@ public class UnknownDescribedTypeCodecTest extends CodecTestSupport {
     }
 
     private void doTestDecodeUnknownDescribedTypeSeries(int size) throws IOException {
-        ByteBuf buffer = Unpooled.buffer();
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
 
         for (int i = 0; i < size; ++i) {
             encoder.writeObject(buffer, encoderState, NoLocalType.NO_LOCAL);

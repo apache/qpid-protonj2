@@ -18,7 +18,7 @@ package org.apache.qpid.proton4j.codec;
 
 import java.io.IOException;
 
-import io.netty.buffer.ByteBuf;
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 
 /**
  * Interface for an decoder of a specific AMQP Type.
@@ -44,7 +44,7 @@ public interface TypeDecoder<V> {
      *
      * @throws IOException if an error is encountered while reading the next value.
      */
-    V readValue(ByteBuf buffer, DecoderState state) throws IOException;
+    V readValue(ProtonBuffer buffer, DecoderState state) throws IOException;
 
     /**
      * Skips over the bytes that compose the type this descriptor decodes.
@@ -60,6 +60,6 @@ public interface TypeDecoder<V> {
      *
      * @throws IOException if an error occurs while skipping the value.
      */
-    void skipValue(ByteBuf buffer, DecoderState state) throws IOException;
+    void skipValue(ProtonBuffer buffer, DecoderState state) throws IOException;
 
 }

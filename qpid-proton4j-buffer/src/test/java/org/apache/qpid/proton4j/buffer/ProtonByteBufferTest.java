@@ -159,6 +159,8 @@ public class ProtonByteBufferTest {
         assertEquals(0, buffer.getArrayOffset());
     }
 
+    //----- Write Method Tests -----------------------------------------------//
+
     @Test
     public void testWriteByte() {
         ProtonBuffer buffer = new ProtonByteBuffer();
@@ -297,5 +299,40 @@ public class ProtonByteBufferTest {
         assertEquals(8, buffer.getReadIndex());
 
         assertEquals(0, buffer.getReadableBytes());
+    }
+
+    //----- Capacity Expansion Tests -----------------------------------------//
+
+    @Test
+    public void testCapacityIncreasesWhenWritesExceedCurrent() {
+        ProtonBuffer buffer = new ProtonByteBuffer(10);
+
+        assertTrue(buffer.hasArray());
+
+        assertEquals(10, buffer.capacity());
+        assertEquals(10, buffer.getArray().length);
+        assertEquals(Integer.MAX_VALUE, buffer.maxCapacity());
+
+        for (int i = 1; i <= 9; ++i) {
+            buffer.writeByte(i);
+        }
+
+        assertEquals(10, buffer.capacity());
+
+        buffer.writeByte(10);
+
+        assertEquals(10, buffer.capacity());
+        assertEquals(10, buffer.getArray().length);
+
+        buffer.writeByte(11);
+
+        assertTrue(buffer.capacity() > 10);
+        assertTrue(buffer.getArray().length > 10);
+
+        assertEquals(11, buffer.getReadableBytes());
+
+        for (int i = 1; i < 12; ++i) {
+            assertEquals(i, buffer.readByte());
+        }
     }
 }

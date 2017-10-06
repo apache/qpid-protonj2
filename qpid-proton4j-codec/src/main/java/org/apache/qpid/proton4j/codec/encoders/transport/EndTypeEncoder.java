@@ -19,11 +19,10 @@ package org.apache.qpid.proton4j.codec.encoders.transport;
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.amqp.transport.End;
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.DescribedListTypeEncoder;
 import org.apache.qpid.proton4j.codec.EncoderState;
 import org.apache.qpid.proton4j.codec.EncodingCodes;
-
-import io.netty.buffer.ByteBuf;
 
 /**
  * Encoder of AMQP End type values to a byte stream.
@@ -51,7 +50,7 @@ public class EndTypeEncoder implements DescribedListTypeEncoder<End> {
     }
 
     @Override
-    public void writeElement(End end, int index, ByteBuf buffer, EncoderState state) {
+    public void writeElement(End end, int index, ProtonBuffer buffer, EncoderState state) {
     }
 
     @Override

@@ -20,12 +20,11 @@ import java.io.IOException;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.DecoderState;
 import org.apache.qpid.proton4j.codec.EncodingCodes;
 import org.apache.qpid.proton4j.codec.PrimitiveTypeDecoder;
 import org.apache.qpid.proton4j.codec.TypeDecoder;
-
-import io.netty.buffer.ByteBuf;
 
 /**
  * Base for the various Map type decoders used to read AMQP Map values.
@@ -33,15 +32,15 @@ import io.netty.buffer.ByteBuf;
 public abstract class AbstractMapTypeDecoder implements MapTypeDecoder {
 
     @Override
-    public Map<Object, Object> readValue(ByteBuf buffer, DecoderState state) throws IOException {
+    public Map<Object, Object> readValue(ProtonBuffer buffer, DecoderState state) throws IOException {
         int size = readSize(buffer);
         int count = readCount(buffer);
 
         // Ensure we do not allocate an array of size greater then the available data, otherwise there is a risk for an OOM error
-        if (count > buffer.readableBytes()) {
+        if (count > buffer.getReadableBytes()) {
             throw new IllegalArgumentException(String.format(
                     "Map encoded size %d is specified to be greater than the amount " +
-                    "of data available (%d)", size, buffer.readableBytes()));
+                    "of data available (%d)", size, buffer.getReadableBytes()));
         }
 
         TypeDecoder<?> keyDecoder = null;
@@ -62,20 +61,20 @@ public abstract class AbstractMapTypeDecoder implements MapTypeDecoder {
         return map;
     }
 
-    private TypeDecoder<?> findNextDecoder(ByteBuf buffer, DecoderState state, TypeDecoder<?> prevoudDecoder) throws IOException {
+    private TypeDecoder<?> findNextDecoder(ProtonBuffer buffer, DecoderState state, TypeDecoder<?> prevoudDecoder) throws IOException {
         if (prevoudDecoder == null) {
             return state.getDecoder().readNextTypeDecoder(buffer, state);
         } else {
-            buffer.markReaderIndex();
+            buffer.markReadIndex();
 
             byte encodingCode = buffer.readByte();
             if (encodingCode == EncodingCodes.DESCRIBED_TYPE_INDICATOR || !(prevoudDecoder instanceof PrimitiveTypeDecoder<?>)) {
-                buffer.resetReaderIndex();
+                buffer.resetReadIndex();
                 return state.getDecoder().readNextTypeDecoder(buffer, state);
             } else {
                 PrimitiveTypeDecoder<?> primitiveTypeDecoder = (PrimitiveTypeDecoder<?>) prevoudDecoder;
                 if (encodingCode != primitiveTypeDecoder.getTypeCode()) {
-                    buffer.resetReaderIndex();
+                    buffer.resetReadIndex();
                     return state.getDecoder().readNextTypeDecoder(buffer, state);
                 }
             }
@@ -85,12 +84,12 @@ public abstract class AbstractMapTypeDecoder implements MapTypeDecoder {
     }
 
     @Override
-    public void skipValue(ByteBuf buffer, DecoderState state) throws IOException {
+    public void skipValue(ProtonBuffer buffer, DecoderState state) throws IOException {
         buffer.skipBytes(readSize(buffer));
     }
 
-    protected abstract int readSize(ByteBuf buffer);
+    protected abstract int readSize(ProtonBuffer buffer);
 
-    protected abstract int readCount(ByteBuf buffer);
+    protected abstract int readCount(ProtonBuffer buffer);
 
 }

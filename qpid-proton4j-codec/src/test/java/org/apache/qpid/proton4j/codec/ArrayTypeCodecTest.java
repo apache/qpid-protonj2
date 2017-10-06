@@ -28,10 +28,9 @@ import java.util.Map;
 import java.util.UUID;
 
 import org.apache.qpid.proton4j.amqp.Symbol;
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.junit.Test;
-
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
 
 /**
  * Test decoding of AMQP Array types
@@ -43,7 +42,7 @@ public class ArrayTypeCodecTest extends CodecTestSupport {
 
     @Test
     public void testArrayOfPrimitiveBooleanObjects() throws IOException {
-        ByteBuf buffer = Unpooled.buffer();
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
 
         final int size = 10;
 
@@ -69,7 +68,7 @@ public class ArrayTypeCodecTest extends CodecTestSupport {
 
     @Test
     public void testZeroSizedArrayOfPrimitiveBooleanObjects() throws IOException {
-        ByteBuf buffer = Unpooled.buffer();
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
 
         boolean[] source = new boolean[0];
 
@@ -86,7 +85,7 @@ public class ArrayTypeCodecTest extends CodecTestSupport {
 
     @Test
     public void testArrayOfBooleanObjects() throws IOException {
-        ByteBuf buffer = Unpooled.buffer();
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
 
         final int size = 10;
 
@@ -112,7 +111,7 @@ public class ArrayTypeCodecTest extends CodecTestSupport {
 
     @Test
     public void testZeroSizedArrayOfBooleanObjects() throws IOException {
-        ByteBuf buffer = Unpooled.buffer();
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
 
         Boolean[] source = new Boolean[0];
 
@@ -138,7 +137,7 @@ public class ArrayTypeCodecTest extends CodecTestSupport {
     }
 
     private void doTestDecodeBooleanArrayType(int size) throws IOException {
-        ByteBuf buffer = Unpooled.buffer();
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
 
         boolean[] source = new boolean[size];
         for (int i = 0; i < size; ++i) {
@@ -171,7 +170,7 @@ public class ArrayTypeCodecTest extends CodecTestSupport {
     }
 
     private void doTestDecodeSymbolArrayType(int size) throws IOException {
-        ByteBuf buffer = Unpooled.buffer();
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
 
         Symbol[] source = new Symbol[size];
         for (int i = 0; i < size; ++i) {
@@ -203,7 +202,7 @@ public class ArrayTypeCodecTest extends CodecTestSupport {
     }
 
     private void doTestDecodeUUDIArrayType(int size) throws IOException {
-        ByteBuf buffer = Unpooled.buffer();
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
 
         UUID[] source = new UUID[size];
         for (int i = 0; i < size; ++i) {
@@ -227,7 +226,7 @@ public class ArrayTypeCodecTest extends CodecTestSupport {
     @SuppressWarnings({ "rawtypes", "unchecked" })
     @Test
     public void testArrayOfListsOfUUIDs() throws IOException {
-        ByteBuf buffer = Unpooled.buffer();
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
 
         ArrayList<UUID>[] source = new ArrayList[2];
         for (int i = 0; i < source.length; ++i) {
@@ -254,7 +253,7 @@ public class ArrayTypeCodecTest extends CodecTestSupport {
     @SuppressWarnings({ "rawtypes", "unchecked" })
     @Test
     public void testArrayOfMApsOfStringToUUIDs() throws IOException {
-        ByteBuf buffer = Unpooled.buffer();
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
 
         Map<String, UUID>[] source = new LinkedHashMap[2];
         for (int i = 0; i < source.length; ++i) {

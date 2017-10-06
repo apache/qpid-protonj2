@@ -25,13 +25,12 @@ import org.apache.qpid.proton4j.amqp.messaging.Outcome;
 import org.apache.qpid.proton4j.amqp.messaging.Source;
 import org.apache.qpid.proton4j.amqp.messaging.TerminusDurability;
 import org.apache.qpid.proton4j.amqp.messaging.TerminusExpiryPolicy;
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.DecoderState;
 import org.apache.qpid.proton4j.codec.DescribedTypeDecoder;
 import org.apache.qpid.proton4j.codec.TypeDecoder;
 import org.apache.qpid.proton4j.codec.decoders.primitives.ListTypeDecoder;
 import org.apache.qpid.proton4j.codec.decoders.primitives.ListTypeDecoder.ListEntryHandler;
-
-import io.netty.buffer.ByteBuf;
 
 /**
  * Decoder of AMQP Source type values from a byte stream.
@@ -54,7 +53,7 @@ public class SourceTypeDecoder implements DescribedTypeDecoder<Source>, ListEntr
     }
 
     @Override
-    public Source readValue(ByteBuf buffer, DecoderState state) throws IOException {
+    public Source readValue(ProtonBuffer buffer, DecoderState state) throws IOException {
         TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
         if (!(decoder instanceof ListTypeDecoder)) {
@@ -70,7 +69,7 @@ public class SourceTypeDecoder implements DescribedTypeDecoder<Source>, ListEntr
     }
 
     @Override
-    public void onListEntry(int index, Source source, ByteBuf buffer, DecoderState state) throws IOException {
+    public void onListEntry(int index, Source source, ProtonBuffer buffer, DecoderState state) throws IOException {
         switch (index) {
             case 0:
                 source.setAddress(state.getDecoder().readString(buffer, state));
@@ -114,7 +113,7 @@ public class SourceTypeDecoder implements DescribedTypeDecoder<Source>, ListEntr
     }
 
     @Override
-    public void skipValue(ByteBuf buffer, DecoderState state) throws IOException {
+    public void skipValue(ProtonBuffer buffer, DecoderState state) throws IOException {
         TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
         if (!(decoder instanceof ListTypeDecoder)) {

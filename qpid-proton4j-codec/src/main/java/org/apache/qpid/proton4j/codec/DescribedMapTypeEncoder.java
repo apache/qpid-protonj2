@@ -19,7 +19,7 @@ package org.apache.qpid.proton4j.codec;
 import java.util.Map;
 import java.util.Set;
 
-import io.netty.buffer.ByteBuf;
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 
 /**
  * Base class used for all Described Type objects that are represented as a List
@@ -77,7 +77,7 @@ public interface DescribedMapTypeEncoder<K, V, M> extends DescribedTypeEncoder<M
     Set<Map.Entry<K, V>> getMapEntries(M value);
 
     @Override
-    default void writeValue(ByteBuf buffer, EncoderState state, M value) {
+    default void writeValue(ProtonBuffer buffer, EncoderState state, M value) {
         if (!hasMap(value)) {
             state.getEncoder().writeNull(buffer, state);
             return;
@@ -92,18 +92,16 @@ public interface DescribedMapTypeEncoder<K, V, M> extends DescribedTypeEncoder<M
             fieldWidth = 1;
             buffer.writeByte(EncodingCodes.MAP8);
         } else {
-            // TODO - Compute size needed to store the map and encode and then
-            //        choose the width needed for write size and element count
             fieldWidth = 4;
             buffer.writeByte(EncodingCodes.MAP32);
         }
 
-        int startIndex = buffer.writerIndex();
+        int startIndex = buffer.getWriteIndex();
 
         // Reserve space for the size and write the count of list elements.
         if (fieldWidth == 1) {
-            buffer.writeByte(0);
-            buffer.writeByte(count * 2);
+            buffer.writeByte((byte) 0);
+            buffer.writeByte((byte) (count * 2));
         } else {
             buffer.writeInt(0);
             buffer.writeInt(count * 2);
@@ -118,7 +116,7 @@ public interface DescribedMapTypeEncoder<K, V, M> extends DescribedTypeEncoder<M
         }
 
         // Move back and write the size
-        int endIndex = buffer.writerIndex();
+        int endIndex = buffer.getWriteIndex();
         int writeSize = endIndex - startIndex - fieldWidth;
 
         if (fieldWidth == 1) {

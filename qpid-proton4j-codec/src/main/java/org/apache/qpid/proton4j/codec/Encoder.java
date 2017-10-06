@@ -31,8 +31,7 @@ import org.apache.qpid.proton4j.amqp.UnsignedByte;
 import org.apache.qpid.proton4j.amqp.UnsignedInteger;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.amqp.UnsignedShort;
-
-import io.netty.buffer.ByteBuf;
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 
 /**
  * Encode AMQP types into binary streams
@@ -41,108 +40,108 @@ public interface Encoder {
 
     EncoderState newEncoderState();
 
-    void writeNull(ByteBuf buffer, EncoderState state);
+    void writeNull(ProtonBuffer buffer, EncoderState state);
 
-    void writeBoolean(ByteBuf buffer, EncoderState state, boolean value);
+    void writeBoolean(ProtonBuffer buffer, EncoderState state, boolean value);
 
-    void writeBoolean(ByteBuf buffer, EncoderState state, Boolean value);
+    void writeBoolean(ProtonBuffer buffer, EncoderState state, Boolean value);
 
-    void writeUnsignedByte(ByteBuf buffer, EncoderState state, UnsignedByte value);
+    void writeUnsignedByte(ProtonBuffer buffer, EncoderState state, UnsignedByte value);
 
-    void writeUnsignedShort(ByteBuf buffer, EncoderState state, UnsignedShort value);
+    void writeUnsignedShort(ProtonBuffer buffer, EncoderState state, UnsignedShort value);
 
-    void writeUnsignedInteger(ByteBuf buffer, EncoderState state, UnsignedInteger value);
+    void writeUnsignedInteger(ProtonBuffer buffer, EncoderState state, UnsignedInteger value);
 
-    void writeUnsignedLong(ByteBuf buffer, EncoderState state, UnsignedLong value);
+    void writeUnsignedLong(ProtonBuffer buffer, EncoderState state, UnsignedLong value);
 
-    void writeByte(ByteBuf buffer, EncoderState state, byte value);
+    void writeByte(ProtonBuffer buffer, EncoderState state, byte value);
 
-    void writeByte(ByteBuf buffer, EncoderState state, Byte value);
+    void writeByte(ProtonBuffer buffer, EncoderState state, Byte value);
 
-    void writeShort(ByteBuf buffer, EncoderState state, short value);
+    void writeShort(ProtonBuffer buffer, EncoderState state, short value);
 
-    void writeShort(ByteBuf buffer, EncoderState state, Short value);
+    void writeShort(ProtonBuffer buffer, EncoderState state, Short value);
 
-    void writeInteger(ByteBuf buffer, EncoderState state, int value);
+    void writeInteger(ProtonBuffer buffer, EncoderState state, int value);
 
-    void writeInteger(ByteBuf buffer, EncoderState state, Integer value);
+    void writeInteger(ProtonBuffer buffer, EncoderState state, Integer value);
 
-    void writeLong(ByteBuf buffer, EncoderState state, long value);
+    void writeLong(ProtonBuffer buffer, EncoderState state, long value);
 
-    void writeLong(ByteBuf buffer, EncoderState state, Long value);
+    void writeLong(ProtonBuffer buffer, EncoderState state, Long value);
 
-    void writeFloat(ByteBuf buffer, EncoderState state, float value);
+    void writeFloat(ProtonBuffer buffer, EncoderState state, float value);
 
-    void writeFloat(ByteBuf buffer, EncoderState state, Float value);
+    void writeFloat(ProtonBuffer buffer, EncoderState state, Float value);
 
-    void writeDouble(ByteBuf buffer, EncoderState state, double value);
+    void writeDouble(ProtonBuffer buffer, EncoderState state, double value);
 
-    void writeDouble(ByteBuf buffer, EncoderState state, Double value);
+    void writeDouble(ProtonBuffer buffer, EncoderState state, Double value);
 
-    void writeDecimal32(ByteBuf buffer, EncoderState state, Decimal32 value);
+    void writeDecimal32(ProtonBuffer buffer, EncoderState state, Decimal32 value);
 
-    void writeDecimal64(ByteBuf buffer, EncoderState state, Decimal64 value);
+    void writeDecimal64(ProtonBuffer buffer, EncoderState state, Decimal64 value);
 
-    void writeDecimal128(ByteBuf buffer, EncoderState state, Decimal128 value);
+    void writeDecimal128(ProtonBuffer buffer, EncoderState state, Decimal128 value);
 
-    void writeCharacter(ByteBuf buffer, EncoderState state, char value);
+    void writeCharacter(ProtonBuffer buffer, EncoderState state, char value);
 
-    void writeCharacter(ByteBuf buffer, EncoderState state, Character value);
+    void writeCharacter(ProtonBuffer buffer, EncoderState state, Character value);
 
-    void writeTimestamp(ByteBuf buffer, EncoderState state, long value);
-    void writeTimestamp(ByteBuf buffer, EncoderState state, Date value);
+    void writeTimestamp(ProtonBuffer buffer, EncoderState state, long value);
+    void writeTimestamp(ProtonBuffer buffer, EncoderState state, Date value);
 
-    void writeUUID(ByteBuf buffer, EncoderState state, UUID value);
+    void writeUUID(ProtonBuffer buffer, EncoderState state, UUID value);
 
-    void writeBinary(ByteBuf buffer, EncoderState state, Binary value);
+    void writeBinary(ProtonBuffer buffer, EncoderState state, Binary value);
 
-    void writeString(ByteBuf buffer, EncoderState state, String value);
+    void writeString(ProtonBuffer buffer, EncoderState state, String value);
 
-    void writeSymbol(ByteBuf buffer, EncoderState state, Symbol value);
+    void writeSymbol(ProtonBuffer buffer, EncoderState state, Symbol value);
 
-    <T> void writeList(ByteBuf buffer, EncoderState state, List<T> value);
+    <T> void writeList(ProtonBuffer buffer, EncoderState state, List<T> value);
 
-    <K, V> void writeMap(ByteBuf buffer, EncoderState state, Map<K, V> value);
+    <K, V> void writeMap(ProtonBuffer buffer, EncoderState state, Map<K, V> value);
 
-    void writeDescribedType(ByteBuf buffer, EncoderState state, DescribedType value);
+    void writeDescribedType(ProtonBuffer buffer, EncoderState state, DescribedType value);
 
-    void writeArray(ByteBuf buffer, EncoderState state, boolean[] value);
+    void writeArray(ProtonBuffer buffer, EncoderState state, boolean[] value);
 
-    void writeArray(ByteBuf buffer, EncoderState state, byte[] value);
+    void writeArray(ProtonBuffer buffer, EncoderState state, byte[] value);
 
-    void writeArray(ByteBuf buffer, EncoderState state, short[] value);
+    void writeArray(ProtonBuffer buffer, EncoderState state, short[] value);
 
-    void writeArray(ByteBuf buffer, EncoderState state, int[] value);
+    void writeArray(ProtonBuffer buffer, EncoderState state, int[] value);
 
-    void writeArray(ByteBuf buffer, EncoderState state, long[] value);
+    void writeArray(ProtonBuffer buffer, EncoderState state, long[] value);
 
-    void writeArray(ByteBuf buffer, EncoderState state, float[] value);
+    void writeArray(ProtonBuffer buffer, EncoderState state, float[] value);
 
-    void writeArray(ByteBuf buffer, EncoderState state, double[] value);
+    void writeArray(ProtonBuffer buffer, EncoderState state, double[] value);
 
-    void writeArray(ByteBuf buffer, EncoderState state, char[] value);
+    void writeArray(ProtonBuffer buffer, EncoderState state, char[] value);
 
-    void writeArray(ByteBuf buffer, EncoderState state, Object[] value);
+    void writeArray(ProtonBuffer buffer, EncoderState state, Object[] value);
 
-    void writeArray(ByteBuf buffer, EncoderState state, Decimal32[] value);
+    void writeArray(ProtonBuffer buffer, EncoderState state, Decimal32[] value);
 
-    void writeArray(ByteBuf buffer, EncoderState state, Decimal64[] value);
+    void writeArray(ProtonBuffer buffer, EncoderState state, Decimal64[] value);
 
-    void writeArray(ByteBuf buffer, EncoderState state, Decimal128[] value);
+    void writeArray(ProtonBuffer buffer, EncoderState state, Decimal128[] value);
 
-    void writeArray(ByteBuf buffer, EncoderState state, Symbol[] value);
+    void writeArray(ProtonBuffer buffer, EncoderState state, Symbol[] value);
 
-    void writeArray(ByteBuf buffer, EncoderState state, UnsignedByte[] value);
+    void writeArray(ProtonBuffer buffer, EncoderState state, UnsignedByte[] value);
 
-    void writeArray(ByteBuf buffer, EncoderState state, UnsignedShort[] value);
+    void writeArray(ProtonBuffer buffer, EncoderState state, UnsignedShort[] value);
 
-    void writeArray(ByteBuf buffer, EncoderState state, UnsignedInteger[] value);
+    void writeArray(ProtonBuffer buffer, EncoderState state, UnsignedInteger[] value);
 
-    void writeArray(ByteBuf buffer, EncoderState state, UnsignedLong[] value);
+    void writeArray(ProtonBuffer buffer, EncoderState state, UnsignedLong[] value);
 
-    void writeArray(ByteBuf buffer, EncoderState state, UUID[] value);
+    void writeArray(ProtonBuffer buffer, EncoderState state, UUID[] value);
 
-    void writeObject(ByteBuf buffer, EncoderState state, Object value);
+    void writeObject(ProtonBuffer buffer, EncoderState state, Object value);
 
     <V> Encoder registerTypeEncoder(TypeEncoder<V> encoder);
 

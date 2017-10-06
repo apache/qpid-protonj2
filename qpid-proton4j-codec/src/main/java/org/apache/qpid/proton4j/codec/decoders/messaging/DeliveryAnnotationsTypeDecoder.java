@@ -22,12 +22,11 @@ import java.util.Map;
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.amqp.messaging.DeliveryAnnotations;
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.DecoderState;
 import org.apache.qpid.proton4j.codec.DescribedTypeDecoder;
 import org.apache.qpid.proton4j.codec.TypeDecoder;
 import org.apache.qpid.proton4j.codec.decoders.primitives.MapTypeDecoder;
-
-import io.netty.buffer.ByteBuf;
 
 /**
  * Decoder of AMQP Delivery Annotations type values from a byte stream.
@@ -51,7 +50,7 @@ public class DeliveryAnnotationsTypeDecoder implements DescribedTypeDecoder<Deli
 
     @SuppressWarnings({ "rawtypes", "unchecked" })
     @Override
-    public DeliveryAnnotations readValue(ByteBuf buffer, DecoderState state) throws IOException {
+    public DeliveryAnnotations readValue(ProtonBuffer buffer, DecoderState state) throws IOException {
         TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
         if (!(decoder instanceof MapTypeDecoder)) {
@@ -65,7 +64,7 @@ public class DeliveryAnnotationsTypeDecoder implements DescribedTypeDecoder<Deli
     }
 
     @Override
-    public void skipValue(ByteBuf buffer, DecoderState state) throws IOException {
+    public void skipValue(ProtonBuffer buffer, DecoderState state) throws IOException {
         TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
         if (!(decoder instanceof MapTypeDecoder)) {

@@ -16,11 +16,10 @@
  */
 package org.apache.qpid.proton4j.codec.encoders.primitives;
 
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.EncoderState;
 import org.apache.qpid.proton4j.codec.EncodingCodes;
 import org.apache.qpid.proton4j.codec.PrimitiveTypeEncoder;
-
-import io.netty.buffer.ByteBuf;
 
 /**
  * Encoder of AMQP Character type values to a byte stream.
@@ -33,18 +32,18 @@ public class CharacterTypeEncoder implements PrimitiveTypeEncoder<Character> {
     }
 
     @Override
-    public void writeType(ByteBuf buffer, EncoderState state, Character value) {
+    public void writeType(ProtonBuffer buffer, EncoderState state, Character value) {
         buffer.writeByte(EncodingCodes.CHAR);
         buffer.writeInt(value.charValue() & 0xffff);
     }
 
     @Override
-    public void writeValue(ByteBuf buffer, EncoderState state, Character value) {
+    public void writeValue(ProtonBuffer buffer, EncoderState state, Character value) {
         buffer.writeInt(value.charValue() & 0xffff);
     }
 
     @Override
-    public void writeArray(ByteBuf buffer, EncoderState state, Character[] value) {
+    public void writeArray(ProtonBuffer buffer, EncoderState state, Character[] value) {
         buffer.writeByte(EncodingCodes.ARRAY32);
 
         // Array Size -> Total Bytes + Number of elements + Type Code
@@ -62,7 +61,7 @@ public class CharacterTypeEncoder implements PrimitiveTypeEncoder<Character> {
         }
     }
 
-    public void writeArray(ByteBuf buffer, EncoderState state, char[] value) {
+    public void writeArray(ProtonBuffer buffer, EncoderState state, char[] value) {
         buffer.writeByte(EncodingCodes.ARRAY32);
 
         // Array Size -> Total Bytes + Number of elements + Type Code

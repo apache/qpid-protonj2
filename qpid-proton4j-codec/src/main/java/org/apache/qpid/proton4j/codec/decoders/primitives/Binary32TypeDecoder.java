@@ -16,9 +16,8 @@
  */
 package org.apache.qpid.proton4j.codec.decoders.primitives;
 
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.EncodingCodes;
-
-import io.netty.buffer.ByteBuf;
 
 /**
  * Decoder of AMQP Binary values from a byte stream.
@@ -26,12 +25,12 @@ import io.netty.buffer.ByteBuf;
 public class Binary32TypeDecoder extends AbstractBinaryTypeDecoder {
 
     @Override
-    protected int readSize(ByteBuf buffer) {
-        return buffer.readInt();
+    public int getTypeCode() {
+        return EncodingCodes.VBIN32 & 0xff;
     }
 
     @Override
-    public int getTypeCode() {
-        return EncodingCodes.VBIN32 & 0xff;
+    protected int readSize(ProtonBuffer buffer) {
+        return buffer.readInt();
     }
 }

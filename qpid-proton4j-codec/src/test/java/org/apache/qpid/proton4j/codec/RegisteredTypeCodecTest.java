@@ -21,13 +21,12 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.codec.util.NoLocalType;
 import org.apache.qpid.proton4j.codec.util.NoLocalTypeDecoder;
 import org.apache.qpid.proton4j.codec.util.NoLocalTypeEncoder;
 import org.junit.Test;
-
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
 
 /**
  * Test for handling of type when the Decoder / Encoder is registered
@@ -36,7 +35,7 @@ public class RegisteredTypeCodecTest extends CodecTestSupport {
 
     @Test
     public void testEncodeDecodeRegistredType() throws IOException {
-        ByteBuf buffer = Unpooled.buffer();
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
 
         // Register the codec pair.
         encoder.registerTypeEncoder(new NoLocalTypeEncoder());

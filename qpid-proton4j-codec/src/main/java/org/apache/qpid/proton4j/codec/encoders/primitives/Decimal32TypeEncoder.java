@@ -17,11 +17,10 @@
 package org.apache.qpid.proton4j.codec.encoders.primitives;
 
 import org.apache.qpid.proton4j.amqp.Decimal32;
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.EncoderState;
 import org.apache.qpid.proton4j.codec.EncodingCodes;
 import org.apache.qpid.proton4j.codec.PrimitiveTypeEncoder;
-
-import io.netty.buffer.ByteBuf;
 
 /**
  * Encoder of AMQP Decimal32 type values to a byte stream
@@ -34,18 +33,18 @@ public class Decimal32TypeEncoder implements PrimitiveTypeEncoder<Decimal32> {
     }
 
     @Override
-    public void writeType(ByteBuf buffer, EncoderState state, Decimal32 value) {
+    public void writeType(ProtonBuffer buffer, EncoderState state, Decimal32 value) {
         buffer.writeByte(EncodingCodes.DECIMAL32);
         buffer.writeInt(value.getBits());
     }
 
     @Override
-    public void writeValue(ByteBuf buffer, EncoderState state, Decimal32 value) {
+    public void writeValue(ProtonBuffer buffer, EncoderState state, Decimal32 value) {
         buffer.writeInt(value.getBits());
     }
 
     @Override
-    public void writeArray(ByteBuf buffer, EncoderState state, Decimal32[] values) {
+    public void writeArray(ProtonBuffer buffer, EncoderState state, Decimal32[] values) {
         buffer.writeByte(EncodingCodes.ARRAY32);
 
         // Array Size -> Total Bytes + Number of elements + Type Code

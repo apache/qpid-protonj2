@@ -20,10 +20,9 @@ import java.io.IOException;
 
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.DecoderState;
 import org.apache.qpid.proton4j.codec.DescribedTypeDecoder;
-
-import io.netty.buffer.ByteBuf;
 
 public class NoLocalTypeDecoder implements DescribedTypeDecoder<NoLocalType> {
 
@@ -43,14 +42,14 @@ public class NoLocalTypeDecoder implements DescribedTypeDecoder<NoLocalType> {
     }
 
     @Override
-    public NoLocalType readValue(ByteBuf buffer, DecoderState state) throws IOException {
+    public NoLocalType readValue(ProtonBuffer buffer, DecoderState state) throws IOException {
         state.getDecoder().readString(buffer, state);
 
         return NoLocalType.NO_LOCAL;
     }
 
     @Override
-    public void skipValue(ByteBuf buffer, DecoderState state) throws IOException {
+    public void skipValue(ProtonBuffer buffer, DecoderState state) throws IOException {
         state.getDecoder().readNextTypeDecoder(buffer, state).skipValue(buffer, state);;
     }
 }

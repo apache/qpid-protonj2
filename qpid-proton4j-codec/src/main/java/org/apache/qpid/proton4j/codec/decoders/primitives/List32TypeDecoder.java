@@ -16,9 +16,8 @@
  */
 package org.apache.qpid.proton4j.codec.decoders.primitives;
 
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.EncodingCodes;
-
-import io.netty.buffer.ByteBuf;
 
 /**
  * Decoder of AMQP List values from a byte stream
@@ -26,7 +25,7 @@ import io.netty.buffer.ByteBuf;
 public class List32TypeDecoder extends AbstractListTypeDecoder {
 
     @Override
-    protected int readSize(ByteBuf buffer) {
+    protected int readSize(ProtonBuffer buffer) {
         return buffer.readInt();
     }
 
@@ -36,7 +35,7 @@ public class List32TypeDecoder extends AbstractListTypeDecoder {
     }
 
     @Override
-    protected int readCount(ByteBuf buffer) {
+    protected int readCount(ProtonBuffer buffer) {
         return buffer.readInt();
     }
 }

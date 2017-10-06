@@ -21,11 +21,10 @@ import java.io.IOException;
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.amqp.messaging.AmqpValue;
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.DecoderState;
 import org.apache.qpid.proton4j.codec.DescribedTypeDecoder;
 import org.apache.qpid.proton4j.codec.TypeDecoder;
-
-import io.netty.buffer.ByteBuf;
 
 /**
  * Decoder of AMQP Data type values from a byte stream.
@@ -48,13 +47,13 @@ public class AmqpValueTypeDecoder implements DescribedTypeDecoder<AmqpValue> {
     }
 
     @Override
-    public AmqpValue readValue(ByteBuf buffer, DecoderState state) throws IOException {
+    public AmqpValue readValue(ProtonBuffer buffer, DecoderState state) throws IOException {
         TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
         return new AmqpValue(decoder.readValue(buffer, state));
     }
 
     @Override
-    public void skipValue(ByteBuf buffer, DecoderState state) throws IOException {
+    public void skipValue(ProtonBuffer buffer, DecoderState state) throws IOException {
         TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
         decoder.skipValue(buffer, state);
     }

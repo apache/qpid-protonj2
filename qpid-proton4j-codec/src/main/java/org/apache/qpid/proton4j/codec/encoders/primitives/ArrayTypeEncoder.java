@@ -16,12 +16,11 @@
  */
 package org.apache.qpid.proton4j.codec.encoders.primitives;
 
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.EncoderState;
 import org.apache.qpid.proton4j.codec.PrimitiveArrayTypeEncoder;
 import org.apache.qpid.proton4j.codec.PrimitiveTypeEncoder;
 import org.apache.qpid.proton4j.codec.TypeEncoder;
-
-import io.netty.buffer.ByteBuf;
 
 /**
  * Encoder of AMQP Array types to a byte stream.
@@ -29,7 +28,7 @@ import io.netty.buffer.ByteBuf;
 public class ArrayTypeEncoder implements PrimitiveArrayTypeEncoder {
 
     @Override
-    public void writeType(ByteBuf buffer, EncoderState state, Object value) {
+    public void writeType(ProtonBuffer buffer, EncoderState state, Object value) {
         if (!value.getClass().isArray()) {
             throw new IllegalArgumentException("Expected Array type but got: " + value.getClass().getSimpleName());
         }
@@ -62,7 +61,7 @@ public class ArrayTypeEncoder implements PrimitiveArrayTypeEncoder {
     }
 
     @Override
-    public void writeValue(ByteBuf buffer, EncoderState state, Object value) {
+    public void writeValue(ProtonBuffer buffer, EncoderState state, Object value) {
         throw new UnsupportedOperationException("Intentionally not implemented");
     }
 
@@ -70,7 +69,7 @@ public class ArrayTypeEncoder implements PrimitiveArrayTypeEncoder {
 
     @SuppressWarnings({ "rawtypes", "unchecked" })
     @Override
-    public void writeArray(ByteBuf buffer, EncoderState state, Object[] value) {
+    public void writeArray(ProtonBuffer buffer, EncoderState state, Object[] value) {
 
         TypeEncoder<?> typeEncoder = state.getEncoder().getTypeEncoder(value.getClass().getComponentType());
         if (typeEncoder == null) {

@@ -25,10 +25,9 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 import org.apache.qpid.proton4j.amqp.Binary;
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.junit.Test;
-
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
 
 public class MapTypeCodecTest extends CodecTestSupport {
 
@@ -81,7 +80,7 @@ public class MapTypeCodecTest extends CodecTestSupport {
         map.put(myShortKey, myShort);
         map.put(myStringKey, myString);
 
-        ByteBuf buffer = Unpooled.buffer();
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
 
         for (int i = 0; i < size; ++i) {
             encoder.writeObject(buffer, encoderState, map);

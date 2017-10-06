@@ -21,11 +21,10 @@ import java.io.IOException;
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.amqp.messaging.DeleteOnNoMessages;
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.DecoderState;
 import org.apache.qpid.proton4j.codec.DescribedTypeDecoder;
 import org.apache.qpid.proton4j.codec.EncodingCodes;
-
-import io.netty.buffer.ByteBuf;
 
 /**
  * Decoder of AMQP DeleteOnNoLinks type values from a byte stream
@@ -48,7 +47,7 @@ public class DeleteOnNoMessagesTypeDecoder implements DescribedTypeDecoder<Delet
     }
 
     @Override
-    public DeleteOnNoMessages readValue(ByteBuf buffer, DecoderState state) throws IOException {
+    public DeleteOnNoMessages readValue(ProtonBuffer buffer, DecoderState state) throws IOException {
         byte code = buffer.readByte();
 
         if (code != EncodingCodes.LIST0) {
@@ -59,7 +58,7 @@ public class DeleteOnNoMessagesTypeDecoder implements DescribedTypeDecoder<Delet
     }
 
     @Override
-    public void skipValue(ByteBuf buffer, DecoderState state) throws IOException {
+    public void skipValue(ProtonBuffer buffer, DecoderState state) throws IOException {
         buffer.skipBytes(Byte.BYTES);
     }
 }

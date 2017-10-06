@@ -16,9 +16,8 @@
  */
 package org.apache.qpid.proton4j.codec.decoders.primitives;
 
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.EncodingCodes;
-
-import io.netty.buffer.ByteBuf;
 
 /**
  * Decoder of AMQP Map value from a byte stream
@@ -31,12 +30,12 @@ public class Map32TypeDecoder extends AbstractMapTypeDecoder {
     }
 
     @Override
-    protected int readSize(ByteBuf buffer) {
+    protected int readSize(ProtonBuffer buffer) {
         return buffer.readInt();
     }
 
     @Override
-    protected int readCount(ByteBuf buffer) {
+    protected int readCount(ProtonBuffer buffer) {
         return buffer.readInt();
     }
 }

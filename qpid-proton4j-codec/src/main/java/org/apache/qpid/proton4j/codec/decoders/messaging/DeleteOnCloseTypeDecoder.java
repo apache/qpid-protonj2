@@ -21,11 +21,10 @@ import java.io.IOException;
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.amqp.messaging.DeleteOnClose;
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.DecoderState;
 import org.apache.qpid.proton4j.codec.DescribedTypeDecoder;
 import org.apache.qpid.proton4j.codec.EncodingCodes;
-
-import io.netty.buffer.ByteBuf;
 
 /**
  * Decoder of AMQP DeleteOnClose type values from a byte stream
@@ -48,7 +47,7 @@ public class DeleteOnCloseTypeDecoder implements DescribedTypeDecoder<DeleteOnCl
     }
 
     @Override
-    public DeleteOnClose readValue(ByteBuf buffer, DecoderState state) throws IOException {
+    public DeleteOnClose readValue(ProtonBuffer buffer, DecoderState state) throws IOException {
         byte code = buffer.readByte();
 
         if (code != EncodingCodes.LIST0) {
@@ -59,7 +58,7 @@ public class DeleteOnCloseTypeDecoder implements DescribedTypeDecoder<DeleteOnCl
     }
 
     @Override
-    public void skipValue(ByteBuf buffer, DecoderState state) throws IOException {
+    public void skipValue(ProtonBuffer buffer, DecoderState state) throws IOException {
         buffer.skipBytes(Byte.BYTES);
     }
 }

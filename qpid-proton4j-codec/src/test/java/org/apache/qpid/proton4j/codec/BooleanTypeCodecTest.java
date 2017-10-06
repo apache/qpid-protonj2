@@ -23,10 +23,9 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.junit.Test;
-
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
 
 /**
  * Test the BooleanTypeDecoder for correctness
@@ -38,7 +37,7 @@ public class BooleanTypeCodecTest extends CodecTestSupport {
 
     @Test
     public void testDecodeBooleanTrue() throws Exception {
-        ByteBuf buffer = Unpooled.buffer();
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
 
         encoder.writeBoolean(buffer, encoderState, true);
 
@@ -49,7 +48,7 @@ public class BooleanTypeCodecTest extends CodecTestSupport {
 
     @Test
     public void testDecodeBooleanFalse() throws Exception {
-        ByteBuf buffer = Unpooled.buffer();
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
 
         encoder.writeBoolean(buffer, encoderState, false);
 
@@ -69,7 +68,7 @@ public class BooleanTypeCodecTest extends CodecTestSupport {
     }
 
     private void doTestDecodeBooleanSeries(int size) throws IOException {
-        ByteBuf buffer = Unpooled.buffer();
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
 
         for (int i = 0; i < size; ++i) {
             encoder.writeBoolean(buffer, encoderState, i % 2 == 0);

@@ -19,10 +19,9 @@ package org.apache.qpid.proton4j.codec.decoders.primitives;
 import java.io.IOException;
 
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.DecoderState;
 import org.apache.qpid.proton4j.codec.EncodingCodes;
-
-import io.netty.buffer.ByteBuf;
 
 /**
  * Decode AMQP Zero value Unsigned Long values from a byte stream
@@ -35,11 +34,11 @@ public class UnsignedLong0TypeDecoder extends UnsignedLong64TypeDecoder {
     }
 
     @Override
-    public UnsignedLong readValue(ByteBuf buffer, DecoderState state) {
+    public UnsignedLong readValue(ProtonBuffer buffer, DecoderState state) {
         return UnsignedLong.ZERO;
     }
 
     @Override
-    public void skipValue(ByteBuf buffer, DecoderState state) throws IOException {
+    public void skipValue(ProtonBuffer buffer, DecoderState state) throws IOException {
     }
 }

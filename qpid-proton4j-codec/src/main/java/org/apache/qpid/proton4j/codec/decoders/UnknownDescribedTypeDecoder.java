@@ -22,11 +22,10 @@ import org.apache.qpid.proton4j.amqp.DescribedType;
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnknownDescribedType;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.DecoderState;
 import org.apache.qpid.proton4j.codec.DescribedTypeDecoder;
 import org.apache.qpid.proton4j.codec.TypeDecoder;
-
-import io.netty.buffer.ByteBuf;
 
 /**
  * Decoder of AMQP Described type values from a byte stream.
@@ -51,7 +50,7 @@ public abstract class UnknownDescribedTypeDecoder implements DescribedTypeDecode
     }
 
     @Override
-    public DescribedType readValue(ByteBuf buffer, DecoderState state) throws IOException {
+    public DescribedType readValue(ProtonBuffer buffer, DecoderState state) throws IOException {
         TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
         Object described = decoder.readValue(buffer, state);
 
@@ -59,7 +58,7 @@ public abstract class UnknownDescribedTypeDecoder implements DescribedTypeDecode
     }
 
     @Override
-    public void skipValue(ByteBuf buffer, DecoderState state) throws IOException {
+    public void skipValue(ProtonBuffer buffer, DecoderState state) throws IOException {
         state.getDecoder().readNextTypeDecoder(buffer, state).skipValue(buffer, state);
     }
 }

@@ -19,11 +19,10 @@ package org.apache.qpid.proton4j.codec.decoders.primitives;
 import java.io.IOException;
 
 import org.apache.qpid.proton4j.amqp.Decimal128;
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.DecoderState;
 import org.apache.qpid.proton4j.codec.EncodingCodes;
 import org.apache.qpid.proton4j.codec.PrimitiveTypeDecoder;
-
-import io.netty.buffer.ByteBuf;
 
 /**
  * Decoder of AMQP Decimal128 values from a byte stream
@@ -36,7 +35,7 @@ public class Decimal128TypeDecoder implements PrimitiveTypeDecoder<Decimal128> {
     }
 
     @Override
-    public Decimal128 readValue(ByteBuf buffer, DecoderState state) {
+    public Decimal128 readValue(ProtonBuffer buffer, DecoderState state) {
         long msb = buffer.readLong();
         long lsb = buffer.readLong();
 
@@ -49,7 +48,7 @@ public class Decimal128TypeDecoder implements PrimitiveTypeDecoder<Decimal128> {
     }
 
     @Override
-    public void skipValue(ByteBuf buffer, DecoderState state) throws IOException {
+    public void skipValue(ProtonBuffer buffer, DecoderState state) throws IOException {
         buffer.skipBytes(Decimal128.BYTES);
     }
 }

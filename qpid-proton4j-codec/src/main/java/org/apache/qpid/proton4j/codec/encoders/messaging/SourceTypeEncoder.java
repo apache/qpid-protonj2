@@ -20,10 +20,9 @@ import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedInteger;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.amqp.messaging.Source;
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.DescribedListTypeEncoder;
 import org.apache.qpid.proton4j.codec.EncoderState;
-
-import io.netty.buffer.ByteBuf;
 
 /**
  * Encoder of AMQP Source type values to a byte stream.
@@ -46,7 +45,7 @@ public class SourceTypeEncoder implements DescribedListTypeEncoder<Source> {
     }
 
     @Override
-    public void writeElement(Source source, int index, ByteBuf buffer, EncoderState state) {
+    public void writeElement(Source source, int index, ProtonBuffer buffer, EncoderState state) {
         switch (index) {
             case 0:
                 state.getEncoder().writeString(buffer, state, source.getAddress());

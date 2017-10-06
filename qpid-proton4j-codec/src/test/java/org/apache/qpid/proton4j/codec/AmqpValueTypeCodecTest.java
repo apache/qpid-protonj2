@@ -24,10 +24,9 @@ import java.io.IOException;
 import java.util.UUID;
 
 import org.apache.qpid.proton4j.amqp.messaging.AmqpValue;
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.junit.Test;
-
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
 
 /**
  * Test for decoder of the AmqpValue type.
@@ -63,7 +62,7 @@ public class AmqpValueTypeCodecTest extends CodecTestSupport {
     }
 
     private void doTestDecodeAmqpValueSeries(int size, AmqpValue value) throws IOException {
-        ByteBuf buffer = Unpooled.buffer();
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
 
         for (int i = 0; i < size; ++i) {
             encoder.writeObject(buffer, encoderState, value);

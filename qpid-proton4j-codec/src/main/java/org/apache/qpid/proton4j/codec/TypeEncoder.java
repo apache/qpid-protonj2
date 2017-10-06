@@ -16,7 +16,7 @@
  */
 package org.apache.qpid.proton4j.codec;
 
-import io.netty.buffer.ByteBuf;
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 
 /**
  * Interface for an encoder of a specific AMQP Type.
@@ -43,7 +43,7 @@ public interface TypeEncoder<V> {
      * @param value
      * 		The value that is to be written.
      */
-    void writeType(ByteBuf buffer, EncoderState state, V value);
+    void writeType(ProtonBuffer buffer, EncoderState state, V value);
 
     /**
      * Write the raw value to the given byte buffer.
@@ -58,6 +58,6 @@ public interface TypeEncoder<V> {
      * @param value
      * 		The value that is to be written.
      */
-    void writeValue(ByteBuf buffer, EncoderState state, V value);
+    void writeValue(ProtonBuffer buffer, EncoderState state, V value);
 
 }

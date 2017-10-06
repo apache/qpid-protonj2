@@ -21,13 +21,12 @@ import java.io.IOException;
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.amqp.transactions.Discharge;
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.DecoderState;
 import org.apache.qpid.proton4j.codec.DescribedTypeDecoder;
 import org.apache.qpid.proton4j.codec.TypeDecoder;
 import org.apache.qpid.proton4j.codec.decoders.primitives.ListTypeDecoder;
 import org.apache.qpid.proton4j.codec.decoders.primitives.ListTypeDecoder.ListEntryHandler;
-
-import io.netty.buffer.ByteBuf;
 
 /**
  * Decoder of AMQP Discharge type values from a byte stream.
@@ -50,7 +49,7 @@ public class DischargeTypeDecoder implements DescribedTypeDecoder<Discharge>, Li
     }
 
     @Override
-    public Discharge readValue(ByteBuf buffer, DecoderState state) throws IOException {
+    public Discharge readValue(ProtonBuffer buffer, DecoderState state) throws IOException {
         TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
         if (!(decoder instanceof ListTypeDecoder)) {
@@ -66,7 +65,7 @@ public class DischargeTypeDecoder implements DescribedTypeDecoder<Discharge>, Li
     }
 
     @Override
-    public void onListEntry(int index, Discharge discharge, ByteBuf buffer, DecoderState state) throws IOException {
+    public void onListEntry(int index, Discharge discharge, ProtonBuffer buffer, DecoderState state) throws IOException {
         switch (index) {
             case 0:
                 discharge.setTxnId(state.getDecoder().readBinary(buffer, state));
@@ -80,7 +79,7 @@ public class DischargeTypeDecoder implements DescribedTypeDecoder<Discharge>, Li
     }
 
     @Override
-    public void skipValue(ByteBuf buffer, DecoderState state) throws IOException {
+    public void skipValue(ProtonBuffer buffer, DecoderState state) throws IOException {
         TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
         if (!(decoder instanceof ListTypeDecoder)) {

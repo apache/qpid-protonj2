@@ -29,10 +29,9 @@ import org.apache.qpid.proton4j.amqp.UnsignedByte;
 import org.apache.qpid.proton4j.amqp.UnsignedInteger;
 import org.apache.qpid.proton4j.amqp.UnsignedShort;
 import org.apache.qpid.proton4j.amqp.messaging.MessageAnnotations;
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.junit.Test;
-
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
 
 public class MessageAnnotationsTypeCodecTest extends CodecTestSupport {
 
@@ -65,7 +64,7 @@ public class MessageAnnotationsTypeCodecTest extends CodecTestSupport {
         annotations.getValue().put(SYMBOL_2, UnsignedShort.valueOf((short) 128));
         annotations.getValue().put(SYMBOL_3, UnsignedInteger.valueOf(128));
 
-        ByteBuf buffer = Unpooled.buffer();
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
 
         for (int i = 0; i < size; ++i) {
             encoder.writeObject(buffer, encoderState, annotations);

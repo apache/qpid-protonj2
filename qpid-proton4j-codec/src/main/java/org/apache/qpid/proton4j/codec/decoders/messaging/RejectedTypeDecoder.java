@@ -22,13 +22,12 @@ import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.amqp.messaging.Rejected;
 import org.apache.qpid.proton4j.amqp.transport.ErrorCondition;
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.DecoderState;
 import org.apache.qpid.proton4j.codec.DescribedTypeDecoder;
 import org.apache.qpid.proton4j.codec.TypeDecoder;
 import org.apache.qpid.proton4j.codec.decoders.primitives.ListTypeDecoder;
 import org.apache.qpid.proton4j.codec.decoders.primitives.ListTypeDecoder.ListEntryHandler;
-
-import io.netty.buffer.ByteBuf;
 
 /**
  * Decoder of AMQP Rejected type values from a byte stream.
@@ -51,7 +50,7 @@ public class RejectedTypeDecoder implements DescribedTypeDecoder<Rejected>, List
     }
 
     @Override
-    public Rejected readValue(ByteBuf buffer, DecoderState state) throws IOException {
+    public Rejected readValue(ProtonBuffer buffer, DecoderState state) throws IOException {
         TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
         if (!(decoder instanceof ListTypeDecoder)) {
@@ -67,7 +66,7 @@ public class RejectedTypeDecoder implements DescribedTypeDecoder<Rejected>, List
     }
 
     @Override
-    public void onListEntry(int index, Rejected rejected, ByteBuf buffer, DecoderState state) throws IOException {
+    public void onListEntry(int index, Rejected rejected, ProtonBuffer buffer, DecoderState state) throws IOException {
         switch (index) {
             case 0:
                 rejected.setError(state.getDecoder().readObject(buffer, state, ErrorCondition.class));
@@ -78,7 +77,7 @@ public class RejectedTypeDecoder implements DescribedTypeDecoder<Rejected>, List
     }
 
     @Override
-    public void skipValue(ByteBuf buffer, DecoderState state) throws IOException {
+    public void skipValue(ProtonBuffer buffer, DecoderState state) throws IOException {
         TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
         if (!(decoder instanceof ListTypeDecoder)) {

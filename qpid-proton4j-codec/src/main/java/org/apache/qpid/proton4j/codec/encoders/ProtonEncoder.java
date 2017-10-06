@@ -32,6 +32,7 @@ import org.apache.qpid.proton4j.amqp.UnsignedByte;
 import org.apache.qpid.proton4j.amqp.UnsignedInteger;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.amqp.UnsignedShort;
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.Encoder;
 import org.apache.qpid.proton4j.codec.EncoderState;
 import org.apache.qpid.proton4j.codec.PrimitiveArrayTypeEncoder;
@@ -60,8 +61,6 @@ import org.apache.qpid.proton4j.codec.encoders.primitives.UnsignedByteTypeEncode
 import org.apache.qpid.proton4j.codec.encoders.primitives.UnsignedIntegerTypeEncoder;
 import org.apache.qpid.proton4j.codec.encoders.primitives.UnsignedLongTypeEncoder;
 import org.apache.qpid.proton4j.codec.encoders.primitives.UnsignedShortTypeEncoder;
-
-import io.netty.buffer.ByteBuf;
 
 /**
  * The default AMQP Encoder implementation.
@@ -102,17 +101,17 @@ public class ProtonEncoder implements Encoder {
     }
 
     @Override
-    public void writeNull(ByteBuf buffer, EncoderState state) {
+    public void writeNull(ProtonBuffer buffer, EncoderState state) {
         nullEncoder.writeType(buffer, state, null);
     }
 
     @Override
-    public void writeBoolean(ByteBuf buffer, EncoderState state, boolean value) {
+    public void writeBoolean(ProtonBuffer buffer, EncoderState state, boolean value) {
         booleanEncoder.writeType(buffer, state, value);
     }
 
     @Override
-    public void writeBoolean(ByteBuf buffer, EncoderState state, Boolean value) {
+    public void writeBoolean(ProtonBuffer buffer, EncoderState state, Boolean value) {
         if (value == null) {
             nullEncoder.writeType(buffer, state, null);
         } else {
@@ -121,7 +120,7 @@ public class ProtonEncoder implements Encoder {
     }
 
     @Override
-    public void writeUnsignedByte(ByteBuf buffer, EncoderState state, UnsignedByte value) {
+    public void writeUnsignedByte(ProtonBuffer buffer, EncoderState state, UnsignedByte value) {
         if (value == null) {
             nullEncoder.writeType(buffer, state, null);
         } else {
@@ -130,7 +129,7 @@ public class ProtonEncoder implements Encoder {
     }
 
     @Override
-    public void writeUnsignedShort(ByteBuf buffer, EncoderState state, UnsignedShort value) {
+    public void writeUnsignedShort(ProtonBuffer buffer, EncoderState state, UnsignedShort value) {
         if (value == null) {
             nullEncoder.writeType(buffer, state, null);
         } else {
@@ -139,7 +138,7 @@ public class ProtonEncoder implements Encoder {
     }
 
     @Override
-    public void writeUnsignedInteger(ByteBuf buffer, EncoderState state, UnsignedInteger value) {
+    public void writeUnsignedInteger(ProtonBuffer buffer, EncoderState state, UnsignedInteger value) {
         if (value == null) {
             nullEncoder.writeType(buffer, state, null);
         } else {
@@ -148,7 +147,7 @@ public class ProtonEncoder implements Encoder {
     }
 
     @Override
-    public void writeUnsignedLong(ByteBuf buffer, EncoderState state, UnsignedLong value) {
+    public void writeUnsignedLong(ProtonBuffer buffer, EncoderState state, UnsignedLong value) {
         if (value == null) {
             nullEncoder.writeType(buffer, state, null);
         } else {
@@ -157,12 +156,12 @@ public class ProtonEncoder implements Encoder {
     }
 
     @Override
-    public void writeByte(ByteBuf buffer, EncoderState state, byte value) {
+    public void writeByte(ProtonBuffer buffer, EncoderState state, byte value) {
         byteEncoder.writeType(buffer, state, value);
     }
 
     @Override
-    public void writeByte(ByteBuf buffer, EncoderState state, Byte value) {
+    public void writeByte(ProtonBuffer buffer, EncoderState state, Byte value) {
         if (value == null) {
             nullEncoder.writeType(buffer, state, null);
         } else {
@@ -171,12 +170,12 @@ public class ProtonEncoder implements Encoder {
     }
 
     @Override
-    public void writeShort(ByteBuf buffer, EncoderState state, short value) {
+    public void writeShort(ProtonBuffer buffer, EncoderState state, short value) {
         shortEncoder.writeType(buffer, state, value);
     }
 
     @Override
-    public void writeShort(ByteBuf buffer, EncoderState state, Short value) {
+    public void writeShort(ProtonBuffer buffer, EncoderState state, Short value) {
         if (value == null) {
             nullEncoder.writeType(buffer, state, null);
         } else {
@@ -185,12 +184,12 @@ public class ProtonEncoder implements Encoder {
     }
 
     @Override
-    public void writeInteger(ByteBuf buffer, EncoderState state, int value) {
+    public void writeInteger(ProtonBuffer buffer, EncoderState state, int value) {
         integerEncoder.writeType(buffer, state, value);
     }
 
     @Override
-    public void writeInteger(ByteBuf buffer, EncoderState state, Integer value) {
+    public void writeInteger(ProtonBuffer buffer, EncoderState state, Integer value) {
         if (value == null) {
             nullEncoder.writeType(buffer, state, null);
         } else {
@@ -199,12 +198,12 @@ public class ProtonEncoder implements Encoder {
     }
 
     @Override
-    public void writeLong(ByteBuf buffer, EncoderState state, long value) {
+    public void writeLong(ProtonBuffer buffer, EncoderState state, long value) {
         longEncoder.writeType(buffer, state, value);
     }
 
     @Override
-    public void writeLong(ByteBuf buffer, EncoderState state, Long value) {
+    public void writeLong(ProtonBuffer buffer, EncoderState state, Long value) {
         if (value == null) {
             nullEncoder.writeType(buffer, state, null);
         } else {
@@ -213,12 +212,12 @@ public class ProtonEncoder implements Encoder {
     }
 
     @Override
-    public void writeFloat(ByteBuf buffer, EncoderState state, float value) {
+    public void writeFloat(ProtonBuffer buffer, EncoderState state, float value) {
         floatEncoder.writeType(buffer, state, value);
     }
 
     @Override
-    public void writeFloat(ByteBuf buffer, EncoderState state, Float value) {
+    public void writeFloat(ProtonBuffer buffer, EncoderState state, Float value) {
         if (value == null) {
             nullEncoder.writeType(buffer, state, null);
         } else {
@@ -227,12 +226,12 @@ public class ProtonEncoder implements Encoder {
     }
 
     @Override
-    public void writeDouble(ByteBuf buffer, EncoderState state, double value) {
+    public void writeDouble(ProtonBuffer buffer, EncoderState state, double value) {
         doubleEncoder.writeType(buffer, state, value);
     }
 
     @Override
-    public void writeDouble(ByteBuf buffer, EncoderState state, Double value) {
+    public void writeDouble(ProtonBuffer buffer, EncoderState state, Double value) {
         if (value == null) {
             nullEncoder.writeType(buffer, state, null);
         } else {
@@ -241,7 +240,7 @@ public class ProtonEncoder implements Encoder {
     }
 
     @Override
-    public void writeDecimal32(ByteBuf buffer, EncoderState state, Decimal32 value) {
+    public void writeDecimal32(ProtonBuffer buffer, EncoderState state, Decimal32 value) {
         if (value == null) {
             nullEncoder.writeType(buffer, state, null);
         } else {
@@ -250,7 +249,7 @@ public class ProtonEncoder implements Encoder {
     }
 
     @Override
-    public void writeDecimal64(ByteBuf buffer, EncoderState state, Decimal64 value) {
+    public void writeDecimal64(ProtonBuffer buffer, EncoderState state, Decimal64 value) {
         if (value == null) {
             nullEncoder.writeType(buffer, state, null);
         } else {
@@ -259,7 +258,7 @@ public class ProtonEncoder implements Encoder {
     }
 
     @Override
-    public void writeDecimal128(ByteBuf buffer, EncoderState state, Decimal128 value) {
+    public void writeDecimal128(ProtonBuffer buffer, EncoderState state, Decimal128 value) {
         if (value == null) {
             nullEncoder.writeType(buffer, state, null);
         } else {
@@ -268,12 +267,12 @@ public class ProtonEncoder implements Encoder {
     }
 
     @Override
-    public void writeCharacter(ByteBuf buffer, EncoderState state, char value) {
+    public void writeCharacter(ProtonBuffer buffer, EncoderState state, char value) {
         charEncoder.writeType(buffer, state, value);
     }
 
     @Override
-    public void writeCharacter(ByteBuf buffer, EncoderState state, Character value) {
+    public void writeCharacter(ProtonBuffer buffer, EncoderState state, Character value) {
         if (value == null) {
             nullEncoder.writeType(buffer, state, null);
         } else {
@@ -282,12 +281,12 @@ public class ProtonEncoder implements Encoder {
     }
 
     @Override
-    public void writeTimestamp(ByteBuf buffer, EncoderState state, long value) {
+    public void writeTimestamp(ProtonBuffer buffer, EncoderState state, long value) {
         timestampEncoder.writeType(buffer, state, value);
     }
 
     @Override
-    public void writeTimestamp(ByteBuf buffer, EncoderState state, Date value) {
+    public void writeTimestamp(ProtonBuffer buffer, EncoderState state, Date value) {
         if (value == null) {
             nullEncoder.writeType(buffer, state, null);
         } else {
@@ -296,7 +295,7 @@ public class ProtonEncoder implements Encoder {
     }
 
     @Override
-    public void writeUUID(ByteBuf buffer, EncoderState state, UUID value) {
+    public void writeUUID(ProtonBuffer buffer, EncoderState state, UUID value) {
         if (value == null) {
             nullEncoder.writeType(buffer, state, null);
         } else {
@@ -305,7 +304,7 @@ public class ProtonEncoder implements Encoder {
     }
 
     @Override
-    public void writeBinary(ByteBuf buffer, EncoderState state, Binary value) {
+    public void writeBinary(ProtonBuffer buffer, EncoderState state, Binary value) {
         if (value == null) {
             nullEncoder.writeType(buffer, state, null);
         } else {
@@ -314,7 +313,7 @@ public class ProtonEncoder implements Encoder {
     }
 
     @Override
-    public void writeString(ByteBuf buffer, EncoderState state, String value) {
+    public void writeString(ProtonBuffer buffer, EncoderState state, String value) {
         if (value == null) {
             nullEncoder.writeType(buffer, state, null);
         } else {
@@ -323,7 +322,7 @@ public class ProtonEncoder implements Encoder {
     }
 
     @Override
-    public void writeSymbol(ByteBuf buffer, EncoderState state, Symbol value) {
+    public void writeSymbol(ProtonBuffer buffer, EncoderState state, Symbol value) {
         if (value == null) {
             nullEncoder.writeType(buffer, state, null);
         } else {
@@ -332,7 +331,7 @@ public class ProtonEncoder implements Encoder {
     }
 
     @Override
-    public <T> void writeList(ByteBuf buffer, EncoderState state, List<T> value) {
+    public <T> void writeList(ProtonBuffer buffer, EncoderState state, List<T> value) {
         if (value == null) {
             nullEncoder.writeType(buffer, state, null);
         } else {
@@ -341,7 +340,7 @@ public class ProtonEncoder implements Encoder {
     }
 
     @Override
-    public <K, V> void writeMap(ByteBuf buffer, EncoderState state, Map<K, V> value) {
+    public <K, V> void writeMap(ProtonBuffer buffer, EncoderState state, Map<K, V> value) {
         if (value == null) {
             nullEncoder.writeType(buffer, state, null);
         } else {
@@ -350,7 +349,7 @@ public class ProtonEncoder implements Encoder {
     }
 
     @Override
-    public void writeDescribedType(ByteBuf buffer, EncoderState state, DescribedType value) {
+    public void writeDescribedType(ProtonBuffer buffer, EncoderState state, DescribedType value) {
         if (value == null) {
             writeNull(buffer, state);
         } else {
@@ -359,7 +358,7 @@ public class ProtonEncoder implements Encoder {
     }
 
     @Override
-    public void writeArray(ByteBuf buffer, EncoderState state, boolean[] value) {
+    public void writeArray(ProtonBuffer buffer, EncoderState state, boolean[] value) {
         if (value == null) {
             nullEncoder.writeType(buffer, state, null);
         } else {
@@ -368,7 +367,7 @@ public class ProtonEncoder implements Encoder {
     }
 
     @Override
-    public void writeArray(ByteBuf buffer, EncoderState state, byte[] value) {
+    public void writeArray(ProtonBuffer buffer, EncoderState state, byte[] value) {
         if (value == null) {
             nullEncoder.writeType(buffer, state, null);
         } else {
@@ -377,7 +376,7 @@ public class ProtonEncoder implements Encoder {
     }
 
     @Override
-    public void writeArray(ByteBuf buffer, EncoderState state, short[] value) {
+    public void writeArray(ProtonBuffer buffer, EncoderState state, short[] value) {
         if (value == null) {
             nullEncoder.writeType(buffer, state, null);
         } else {
@@ -386,7 +385,7 @@ public class ProtonEncoder implements Encoder {
     }
 
     @Override
-    public void writeArray(ByteBuf buffer, EncoderState state, int[] value) {
+    public void writeArray(ProtonBuffer buffer, EncoderState state, int[] value) {
         if (value == null) {
             nullEncoder.writeType(buffer, state, null);
         } else {
@@ -395,7 +394,7 @@ public class ProtonEncoder implements Encoder {
     }
 
     @Override
-    public void writeArray(ByteBuf buffer, EncoderState state, long[] value) {
+    public void writeArray(ProtonBuffer buffer, EncoderState state, long[] value) {
         if (value == null) {
             nullEncoder.writeType(buffer, state, null);
         } else {
@@ -404,7 +403,7 @@ public class ProtonEncoder implements Encoder {
     }
 
     @Override
-    public void writeArray(ByteBuf buffer, EncoderState state, float[] value) {
+    public void writeArray(ProtonBuffer buffer, EncoderState state, float[] value) {
         if (value == null) {
             nullEncoder.writeType(buffer, state, null);
         } else {
@@ -413,7 +412,7 @@ public class ProtonEncoder implements Encoder {
     }
 
     @Override
-    public void writeArray(ByteBuf buffer, EncoderState state, double[] value) {
+    public void writeArray(ProtonBuffer buffer, EncoderState state, double[] value) {
         if (value == null) {
             nullEncoder.writeType(buffer, state, null);
         } else {
@@ -422,7 +421,7 @@ public class ProtonEncoder implements Encoder {
     }
 
     @Override
-    public void writeArray(ByteBuf buffer, EncoderState state, char[] value) {
+    public void writeArray(ProtonBuffer buffer, EncoderState state, char[] value) {
         if (value == null) {
             nullEncoder.writeType(buffer, state, null);
         } else {
@@ -431,7 +430,7 @@ public class ProtonEncoder implements Encoder {
     }
 
     @Override
-    public void writeArray(ByteBuf buffer, EncoderState state, Object[] value) {
+    public void writeArray(ProtonBuffer buffer, EncoderState state, Object[] value) {
         if (value == null) {
             nullEncoder.writeType(buffer, state, null);
         } else {
@@ -440,7 +439,7 @@ public class ProtonEncoder implements Encoder {
     }
 
     @Override
-    public void writeArray(ByteBuf buffer, EncoderState state, Decimal32[] value) {
+    public void writeArray(ProtonBuffer buffer, EncoderState state, Decimal32[] value) {
         if (value == null) {
             nullEncoder.writeType(buffer, state, null);
         } else {
@@ -449,7 +448,7 @@ public class ProtonEncoder implements Encoder {
     }
 
     @Override
-    public void writeArray(ByteBuf buffer, EncoderState state, Decimal64[] value) {
+    public void writeArray(ProtonBuffer buffer, EncoderState state, Decimal64[] value) {
         if (value == null) {
             nullEncoder.writeType(buffer, state, null);
         } else {
@@ -458,7 +457,7 @@ public class ProtonEncoder implements Encoder {
     }
 
     @Override
-    public void writeArray(ByteBuf buffer, EncoderState state, Decimal128[] value) {
+    public void writeArray(ProtonBuffer buffer, EncoderState state, Decimal128[] value) {
         if (value == null) {
             nullEncoder.writeType(buffer, state, null);
         } else {
@@ -467,7 +466,7 @@ public class ProtonEncoder implements Encoder {
     }
 
     @Override
-    public void writeArray(ByteBuf buffer, EncoderState state, Symbol[] value) {
+    public void writeArray(ProtonBuffer buffer, EncoderState state, Symbol[] value) {
         if (value == null) {
             nullEncoder.writeType(buffer, state, null);
         } else {
@@ -476,7 +475,7 @@ public class ProtonEncoder implements Encoder {
     }
 
     @Override
-    public void writeArray(ByteBuf buffer, EncoderState state, UnsignedByte[] value) {
+    public void writeArray(ProtonBuffer buffer, EncoderState state, UnsignedByte[] value) {
         if (value == null) {
             nullEncoder.writeType(buffer, state, null);
         } else {
@@ -485,7 +484,7 @@ public class ProtonEncoder implements Encoder {
     }
 
     @Override
-    public void writeArray(ByteBuf buffer, EncoderState state, UnsignedShort[] value) {
+    public void writeArray(ProtonBuffer buffer, EncoderState state, UnsignedShort[] value) {
         if (value == null) {
             nullEncoder.writeType(buffer, state, null);
         } else {
@@ -494,7 +493,7 @@ public class ProtonEncoder implements Encoder {
     }
 
     @Override
-    public void writeArray(ByteBuf buffer, EncoderState state, UnsignedInteger[] value) {
+    public void writeArray(ProtonBuffer buffer, EncoderState state, UnsignedInteger[] value) {
         if (value == null) {
             nullEncoder.writeType(buffer, state, null);
         } else {
@@ -503,7 +502,7 @@ public class ProtonEncoder implements Encoder {
     }
 
     @Override
-    public void writeArray(ByteBuf buffer, EncoderState state, UnsignedLong[] value) {
+    public void writeArray(ProtonBuffer buffer, EncoderState state, UnsignedLong[] value) {
         if (value == null) {
             nullEncoder.writeType(buffer, state, null);
         } else {
@@ -512,7 +511,7 @@ public class ProtonEncoder implements Encoder {
     }
 
     @Override
-    public void writeArray(ByteBuf buffer, EncoderState state, UUID[] value) {
+    public void writeArray(ProtonBuffer buffer, EncoderState state, UUID[] value) {
         if (value == null) {
             nullEncoder.writeType(buffer, state, null);
         } else {
@@ -522,7 +521,7 @@ public class ProtonEncoder implements Encoder {
 
     @SuppressWarnings({ "rawtypes", "unchecked" })
     @Override
-    public void writeObject(ByteBuf buffer, EncoderState state, Object value) {
+    public void writeObject(ProtonBuffer buffer, EncoderState state, Object value) {
         if (value == null) {
             nullEncoder.writeType(buffer, state, null);
             return;
@@ -538,7 +537,7 @@ public class ProtonEncoder implements Encoder {
     }
 
     @SuppressWarnings("unchecked")
-    private void writeUnregisteredType(ByteBuf buffer, EncoderState state, Object value) {
+    private void writeUnregisteredType(ProtonBuffer buffer, EncoderState state, Object value) {
         if (value.getClass().isArray()) {
             Class<?> componentType = value.getClass().getComponentType();
             if (componentType.isPrimitive()) {

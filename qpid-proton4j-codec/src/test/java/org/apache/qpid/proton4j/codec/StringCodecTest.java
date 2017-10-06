@@ -23,10 +23,9 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.junit.Test;
-
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
 
 public class StringCodecTest extends CodecTestSupport {
 
@@ -65,7 +64,7 @@ public class StringCodecTest extends CodecTestSupport {
     }
 
     private void doTestEncodeDecode(String value) throws IOException {
-        ByteBuf buffer = Unpooled.buffer();
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
 
         encoder.writeObject(buffer, encoderState, value);
 
@@ -92,7 +91,7 @@ public class StringCodecTest extends CodecTestSupport {
     }
 
     private void doTestDecodeStringSeries(int size) throws IOException {
-        ByteBuf buffer = Unpooled.buffer();
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
 
         for (int i = 0; i < size; ++i) {
             encoder.writeString(buffer, encoderState, LARGE_STRING_VALUIE);

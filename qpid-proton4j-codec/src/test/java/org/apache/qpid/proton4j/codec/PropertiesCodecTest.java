@@ -27,10 +27,9 @@ import org.apache.qpid.proton4j.amqp.Binary;
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedInteger;
 import org.apache.qpid.proton4j.amqp.messaging.Properties;
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.junit.Test;
-
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
 
 /**
  * Test for decoder of AMQP Properties type.
@@ -51,7 +50,7 @@ public class PropertiesCodecTest extends CodecTestSupport {
     }
 
     private void doTestDecodePropertiesSeries(int size) throws IOException {
-        ByteBuf buffer = Unpooled.buffer();
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
 
         Properties properties = new Properties();
 

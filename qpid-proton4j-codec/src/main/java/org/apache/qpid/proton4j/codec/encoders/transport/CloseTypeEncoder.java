@@ -19,10 +19,9 @@ package org.apache.qpid.proton4j.codec.encoders.transport;
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.amqp.transport.Close;
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.DescribedListTypeEncoder;
 import org.apache.qpid.proton4j.codec.EncoderState;
-
-import io.netty.buffer.ByteBuf;
 
 /**
  * Encoder of AMQP Close type values to a byte stream/
@@ -45,7 +44,7 @@ public class CloseTypeEncoder implements DescribedListTypeEncoder<Close> {
     }
 
     @Override
-    public void writeElement(Close close, int index, ByteBuf buffer, EncoderState state) {
+    public void writeElement(Close close, int index, ProtonBuffer buffer, EncoderState state) {
         switch (index) {
             case 0:
                 state.getEncoder().writeObject(buffer, state, close.getError());

@@ -16,7 +16,7 @@
  */
 package org.apache.qpid.proton4j.codec;
 
-import io.netty.buffer.ByteBuf;
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 
 /**
  * Base class used for all Described Type objects that are represented as a List
@@ -26,7 +26,7 @@ import io.netty.buffer.ByteBuf;
 public interface DescribedListTypeEncoder<V> extends DescribedTypeEncoder<V> {
 
     @Override
-    default void writeValue(ByteBuf buffer, EncoderState state, V value) {
+    default void writeValue(ProtonBuffer buffer, EncoderState state, V value) {
         int count = getElementCount(value);
         int encodingCode = getLargestEncoding();
 
@@ -42,18 +42,16 @@ public interface DescribedListTypeEncoder<V> extends DescribedTypeEncoder<V> {
             fieldWidth = 1;
             buffer.writeByte(EncodingCodes.LIST8);
         } else {
-            // TODO - Compute size needed to store the list and encode and then
-            //        choose the width needed for write size and element count
             fieldWidth = 4;
             buffer.writeByte(EncodingCodes.LIST32);
         }
 
-        int startIndex = buffer.writerIndex();
+        int startIndex = buffer.getWriteIndex();
 
         // Reserve space for the size and write the count of list elements.
         if (fieldWidth == 1) {
-            buffer.writeByte(0);
-            buffer.writeByte(count);
+            buffer.writeByte((byte) 0);
+            buffer.writeByte((byte) count);
         } else {
             buffer.writeInt(0);
             buffer.writeInt(count);
@@ -65,7 +63,7 @@ public interface DescribedListTypeEncoder<V> extends DescribedTypeEncoder<V> {
         }
 
         // Move back and write the size
-        int endIndex = buffer.writerIndex();
+        int endIndex = buffer.getWriteIndex();
         int writeSize = endIndex - startIndex - fieldWidth;
 
         if (fieldWidth == 1) {
@@ -101,7 +99,7 @@ public interface DescribedListTypeEncoder<V> extends DescribedTypeEncoder<V> {
      * @param state
      *      the current EncoderState value to use.
      */
-    void writeElement(V source, int index, ByteBuf buffer, EncoderState state);
+    void writeElement(V source, int index, ProtonBuffer buffer, EncoderState state);
 
     /**
      * Gets the number of elements that will result when this type is encoded

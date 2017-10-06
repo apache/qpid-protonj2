@@ -19,11 +19,10 @@ package org.apache.qpid.proton4j.codec.encoders.messaging;
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.amqp.messaging.Received;
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.DescribedListTypeEncoder;
 import org.apache.qpid.proton4j.codec.EncoderState;
 import org.apache.qpid.proton4j.codec.EncodingCodes;
-
-import io.netty.buffer.ByteBuf;
 
 /**
  * Encoder of AMQP Received type values from a byte stream.
@@ -51,7 +50,7 @@ public class ReceivedTypeEncoder implements DescribedListTypeEncoder<Received> {
     }
 
     @Override
-    public void writeElement(Received source, int index, ByteBuf buffer, EncoderState state) {
+    public void writeElement(Received source, int index, ProtonBuffer buffer, EncoderState state) {
         switch (index) {
             case 0:
                 state.getEncoder().writeUnsignedInteger(buffer, state, source.getSectionNumber());

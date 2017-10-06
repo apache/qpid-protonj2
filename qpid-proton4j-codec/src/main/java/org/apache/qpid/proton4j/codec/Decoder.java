@@ -30,8 +30,7 @@ import org.apache.qpid.proton4j.amqp.UnsignedByte;
 import org.apache.qpid.proton4j.amqp.UnsignedInteger;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.amqp.UnsignedShort;
-
-import io.netty.buffer.ByteBuf;
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 
 /**
  * Decode AMQP types from a byte stream
@@ -43,59 +42,59 @@ public interface Decoder {
 
     DecoderState newDecoderState();
 
-    Boolean readBoolean(ByteBuf buffer, DecoderState state) throws IOException;
+    Boolean readBoolean(ProtonBuffer buffer, DecoderState state) throws IOException;
 
-    Byte readByte(ByteBuf buffer, DecoderState state) throws IOException;
+    Byte readByte(ProtonBuffer buffer, DecoderState state) throws IOException;
 
-    UnsignedByte readUnsignedByte(ByteBuf buffer, DecoderState state) throws IOException;
+    UnsignedByte readUnsignedByte(ProtonBuffer buffer, DecoderState state) throws IOException;
 
-    Character readCharacter(ByteBuf buffer, DecoderState state) throws IOException;
+    Character readCharacter(ProtonBuffer buffer, DecoderState state) throws IOException;
 
-    Decimal32 readDecimal32(ByteBuf buffer, DecoderState state) throws IOException;
+    Decimal32 readDecimal32(ProtonBuffer buffer, DecoderState state) throws IOException;
 
-    Decimal64 readDecimal64(ByteBuf buffer, DecoderState state) throws IOException;
+    Decimal64 readDecimal64(ProtonBuffer buffer, DecoderState state) throws IOException;
 
-    Decimal128 readDecimal128(ByteBuf buffer, DecoderState state) throws IOException;
+    Decimal128 readDecimal128(ProtonBuffer buffer, DecoderState state) throws IOException;
 
-    Short readShort(ByteBuf buffer, DecoderState state) throws IOException;
+    Short readShort(ProtonBuffer buffer, DecoderState state) throws IOException;
 
-    UnsignedShort readUnsignedShort(ByteBuf buffer, DecoderState state) throws IOException;
+    UnsignedShort readUnsignedShort(ProtonBuffer buffer, DecoderState state) throws IOException;
 
-    Integer readInteger(ByteBuf buffer, DecoderState state) throws IOException;
+    Integer readInteger(ProtonBuffer buffer, DecoderState state) throws IOException;
 
-    UnsignedInteger readUnsignedInteger(ByteBuf buffer, DecoderState state) throws IOException;
+    UnsignedInteger readUnsignedInteger(ProtonBuffer buffer, DecoderState state) throws IOException;
 
-    Long readLong(ByteBuf buffer, DecoderState state) throws IOException;
+    Long readLong(ProtonBuffer buffer, DecoderState state) throws IOException;
 
-    UnsignedLong readUnsignedLong(ByteBuf buffer, DecoderState state) throws IOException;
+    UnsignedLong readUnsignedLong(ProtonBuffer buffer, DecoderState state) throws IOException;
 
-    Float readFloat(ByteBuf buffer, DecoderState state) throws IOException;
+    Float readFloat(ProtonBuffer buffer, DecoderState state) throws IOException;
 
-    Double readDouble(ByteBuf buffer, DecoderState state) throws IOException;
+    Double readDouble(ProtonBuffer buffer, DecoderState state) throws IOException;
 
-    Binary readBinary(ByteBuf buffer, DecoderState state) throws IOException;
+    Binary readBinary(ProtonBuffer buffer, DecoderState state) throws IOException;
 
-    String readString(ByteBuf buffer, DecoderState state) throws IOException;
+    String readString(ProtonBuffer buffer, DecoderState state) throws IOException;
 
-    Symbol readSymbol(ByteBuf buffer, DecoderState state) throws IOException;
+    Symbol readSymbol(ProtonBuffer buffer, DecoderState state) throws IOException;
 
-    Long readTimestamp(ByteBuf buffer, DecoderState state) throws IOException;
+    Long readTimestamp(ProtonBuffer buffer, DecoderState state) throws IOException;
 
-    UUID readUUID(ByteBuf buffer, DecoderState state) throws IOException;
+    UUID readUUID(ProtonBuffer buffer, DecoderState state) throws IOException;
 
-    Object readObject(ByteBuf buffer, DecoderState state) throws IOException;
+    Object readObject(ProtonBuffer buffer, DecoderState state) throws IOException;
 
-    <T> T readObject(ByteBuf buffer, DecoderState state, final Class<T> clazz) throws IOException;
+    <T> T readObject(ProtonBuffer buffer, DecoderState state, final Class<T> clazz) throws IOException;
 
-    <T> T[] readMultiple(ByteBuf buffer, DecoderState state, final Class<T> clazz) throws IOException;
+    <T> T[] readMultiple(ProtonBuffer buffer, DecoderState state, final Class<T> clazz) throws IOException;
 
-    <K,V> Map<K, V> readMap(ByteBuf buffer, DecoderState state) throws IOException;
+    <K,V> Map<K, V> readMap(ProtonBuffer buffer, DecoderState state) throws IOException;
 
-    <V> List<V> readList(ByteBuf buffer, DecoderState state) throws IOException;
+    <V> List<V> readList(ProtonBuffer buffer, DecoderState state) throws IOException;
 
-    TypeDecoder<?> readNextTypeDecoder(ByteBuf buffer, DecoderState state) throws IOException;
+    TypeDecoder<?> readNextTypeDecoder(ProtonBuffer buffer, DecoderState state) throws IOException;
 
-    TypeDecoder<?> peekNextTypeDecoder(ByteBuf buffer, DecoderState state) throws IOException;
+    TypeDecoder<?> peekNextTypeDecoder(ProtonBuffer buffer, DecoderState state) throws IOException;
 
     <V> Decoder registerDescribedTypeDecoder(DescribedTypeDecoder<V> decoder);
     <V> Decoder registerPrimitiveTypeDecoder(PrimitiveTypeDecoder<V> decoder);

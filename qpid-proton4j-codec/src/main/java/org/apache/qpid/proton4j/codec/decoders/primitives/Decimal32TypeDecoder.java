@@ -19,11 +19,10 @@ package org.apache.qpid.proton4j.codec.decoders.primitives;
 import java.io.IOException;
 
 import org.apache.qpid.proton4j.amqp.Decimal32;
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.DecoderState;
 import org.apache.qpid.proton4j.codec.EncodingCodes;
 import org.apache.qpid.proton4j.codec.PrimitiveTypeDecoder;
-
-import io.netty.buffer.ByteBuf;
 
 /**
  * Decoder of AMQP Decimal32 values from a byte stream
@@ -36,7 +35,7 @@ public class Decimal32TypeDecoder implements PrimitiveTypeDecoder<Decimal32> {
     }
 
     @Override
-    public Decimal32 readValue(ByteBuf buffer, DecoderState state) {
+    public Decimal32 readValue(ProtonBuffer buffer, DecoderState state) {
         return new Decimal32(buffer.readInt());
     }
 
@@ -46,7 +45,7 @@ public class Decimal32TypeDecoder implements PrimitiveTypeDecoder<Decimal32> {
     }
 
     @Override
-    public void skipValue(ByteBuf buffer, DecoderState state) throws IOException {
+    public void skipValue(ProtonBuffer buffer, DecoderState state) throws IOException {
         buffer.skipBytes(Decimal32.BYTES);
     }
 }

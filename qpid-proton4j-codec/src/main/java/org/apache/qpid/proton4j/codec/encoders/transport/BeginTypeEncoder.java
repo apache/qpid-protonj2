@@ -20,10 +20,9 @@ import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedInteger;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.amqp.transport.Begin;
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.DescribedListTypeEncoder;
 import org.apache.qpid.proton4j.codec.EncoderState;
-
-import io.netty.buffer.ByteBuf;
 
 /**
  * Encoder of AMQP Begin type values to a byte stream.
@@ -46,7 +45,7 @@ public class BeginTypeEncoder implements DescribedListTypeEncoder<Begin> {
     }
 
     @Override
-    public void writeElement(Begin begin, int index, ByteBuf buffer, EncoderState state) {
+    public void writeElement(Begin begin, int index, ProtonBuffer buffer, EncoderState state) {
         switch (index) {
             case 0:
                 state.getEncoder().writeUnsignedShort(buffer, state, begin.getRemoteChannel());

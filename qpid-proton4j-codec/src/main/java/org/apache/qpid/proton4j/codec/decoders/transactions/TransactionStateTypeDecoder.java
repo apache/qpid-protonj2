@@ -22,13 +22,12 @@ import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.amqp.messaging.Outcome;
 import org.apache.qpid.proton4j.amqp.transactions.TransactionalState;
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.DecoderState;
 import org.apache.qpid.proton4j.codec.DescribedTypeDecoder;
 import org.apache.qpid.proton4j.codec.TypeDecoder;
 import org.apache.qpid.proton4j.codec.decoders.primitives.ListTypeDecoder;
 import org.apache.qpid.proton4j.codec.decoders.primitives.ListTypeDecoder.ListEntryHandler;
-
-import io.netty.buffer.ByteBuf;
 
 /**
  * Decoder of AMQP TransactionState types from a byte stream.
@@ -51,7 +50,7 @@ public class TransactionStateTypeDecoder implements DescribedTypeDecoder<Transac
     }
 
     @Override
-    public TransactionalState readValue(ByteBuf buffer, DecoderState state) throws IOException {
+    public TransactionalState readValue(ProtonBuffer buffer, DecoderState state) throws IOException {
 
         TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
@@ -68,7 +67,7 @@ public class TransactionStateTypeDecoder implements DescribedTypeDecoder<Transac
     }
 
     @Override
-    public void onListEntry(int index, TransactionalState transactionalState, ByteBuf buffer, DecoderState state) throws IOException {
+    public void onListEntry(int index, TransactionalState transactionalState, ProtonBuffer buffer, DecoderState state) throws IOException {
         switch (index) {
             case 0:
                 transactionalState.setTxnId(state.getDecoder().readBinary(buffer, state));
@@ -82,7 +81,7 @@ public class TransactionStateTypeDecoder implements DescribedTypeDecoder<Transac
     }
 
     @Override
-    public void skipValue(ByteBuf buffer, DecoderState state) throws IOException {
+    public void skipValue(ProtonBuffer buffer, DecoderState state) throws IOException {
         TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
         if (!(decoder instanceof ListTypeDecoder)) {

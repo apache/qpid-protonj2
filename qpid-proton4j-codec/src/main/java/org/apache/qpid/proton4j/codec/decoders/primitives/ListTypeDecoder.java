@@ -19,10 +19,9 @@ package org.apache.qpid.proton4j.codec.decoders.primitives;
 import java.io.IOException;
 import java.util.List;
 
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.DecoderState;
 import org.apache.qpid.proton4j.codec.PrimitiveTypeDecoder;
-
-import io.netty.buffer.ByteBuf;
 
 /**
  * Base class for List type decoders.
@@ -32,7 +31,7 @@ public interface ListTypeDecoder extends PrimitiveTypeDecoder<List> {
 
     public interface ListEntryHandler<T> {
 
-        void onListEntry(int index, T target, ByteBuf buffer, DecoderState state) throws IOException;
+        void onListEntry(int index, T target, ProtonBuffer buffer, DecoderState state) throws IOException;
 
     }
 
@@ -41,6 +40,6 @@ public interface ListTypeDecoder extends PrimitiveTypeDecoder<List> {
         return List.class;
     }
 
-    void readValue(ByteBuf buffer, DecoderState state, ListEntryHandler handler, Object target) throws IOException;
+    void readValue(ProtonBuffer buffer, DecoderState state, ListEntryHandler handler, Object target) throws IOException;
 
 }

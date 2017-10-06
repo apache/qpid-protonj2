@@ -20,10 +20,9 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.DecoderState;
 import org.apache.qpid.proton4j.codec.EncodingCodes;
-
-import io.netty.buffer.ByteBuf;
 
 /**
  * Decoder of Zero sized AMQP List values from a byte stream.
@@ -32,7 +31,7 @@ import io.netty.buffer.ByteBuf;
 public class List0TypeDecoder implements ListTypeDecoder {
 
     @Override
-    public List<Object> readValue(ByteBuf buffer, DecoderState state) {
+    public List<Object> readValue(ProtonBuffer buffer, DecoderState state) {
         return Collections.EMPTY_LIST;
     }
 
@@ -43,11 +42,11 @@ public class List0TypeDecoder implements ListTypeDecoder {
 
     @SuppressWarnings("rawtypes")
     @Override
-    public void readValue(ByteBuf buffer, DecoderState state, ListEntryHandler handler, Object target) throws IOException {
+    public void readValue(ProtonBuffer buffer, DecoderState state, ListEntryHandler handler, Object target) throws IOException {
         // Nothing to do here, no entries in the list.
     }
 
     @Override
-    public void skipValue(ByteBuf buffer, DecoderState state) throws IOException {
+    public void skipValue(ProtonBuffer buffer, DecoderState state) throws IOException {
     }
 }

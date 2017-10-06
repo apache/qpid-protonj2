@@ -18,11 +18,10 @@ package org.apache.qpid.proton4j.codec.encoders.primitives;
 
 import java.util.UUID;
 
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.EncoderState;
 import org.apache.qpid.proton4j.codec.EncodingCodes;
 import org.apache.qpid.proton4j.codec.PrimitiveTypeEncoder;
-
-import io.netty.buffer.ByteBuf;
 
 /**
  * Encoder of AMQP UUID type value to a byte stream.
@@ -35,20 +34,20 @@ public class UUIDTypeEncoder implements PrimitiveTypeEncoder<UUID> {
     }
 
     @Override
-    public void writeType(ByteBuf buffer, EncoderState state, UUID value) {
+    public void writeType(ProtonBuffer buffer, EncoderState state, UUID value) {
         buffer.writeByte(EncodingCodes.UUID);
         buffer.writeLong(value.getMostSignificantBits());
         buffer.writeLong(value.getLeastSignificantBits());
     }
 
     @Override
-    public void writeValue(ByteBuf buffer, EncoderState state, UUID value) {
+    public void writeValue(ProtonBuffer buffer, EncoderState state, UUID value) {
         buffer.writeLong(value.getMostSignificantBits());
         buffer.writeLong(value.getLeastSignificantBits());
     }
 
     @Override
-    public void writeArray(ByteBuf buffer, EncoderState state, UUID[] values) {
+    public void writeArray(ProtonBuffer buffer, EncoderState state, UUID[] values) {
         buffer.writeByte(EncodingCodes.ARRAY32);
 
         // Array Size -> Total Bytes + Number of elements + Type Code

@@ -18,11 +18,10 @@ package org.apache.qpid.proton4j.codec.decoders.primitives;
 
 import java.io.IOException;
 
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.DecoderState;
 import org.apache.qpid.proton4j.codec.EncodingCodes;
 import org.apache.qpid.proton4j.codec.PrimitiveTypeDecoder;
-
-import io.netty.buffer.ByteBuf;
 
 /**
  * Decoder of AMQP Bytes from a byte stream.
@@ -40,7 +39,7 @@ public class ByteTypeDecoder implements PrimitiveTypeDecoder<Byte> {
     }
 
     @Override
-    public Byte readValue(ByteBuf buffer, DecoderState state) {
+    public Byte readValue(ProtonBuffer buffer, DecoderState state) {
         return buffer.readByte();
     }
 
@@ -49,12 +48,12 @@ public class ByteTypeDecoder implements PrimitiveTypeDecoder<Byte> {
         return EncodingCodes.BYTE & 0xff;
     }
 
-    public byte readPrimitiveValue(ByteBuf buffer, DecoderState state) {
+    public byte readPrimitiveValue(ProtonBuffer buffer, DecoderState state) {
         return buffer.readByte();
     }
 
     @Override
-    public void skipValue(ByteBuf buffer, DecoderState state) throws IOException {
+    public void skipValue(ProtonBuffer buffer, DecoderState state) throws IOException {
         buffer.skipBytes(Byte.BYTES);
     }
 }

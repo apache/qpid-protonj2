@@ -24,10 +24,9 @@ import static org.junit.Assert.assertTrue;
 import java.io.IOException;
 
 import org.apache.qpid.proton4j.amqp.Symbol;
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.junit.Test;
-
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
 
 public class SymbolTypeCodecTest extends CodecTestSupport {
 
@@ -66,7 +65,7 @@ public class SymbolTypeCodecTest extends CodecTestSupport {
     }
 
     private void doTestEncodeDecode(Symbol value) throws IOException {
-        ByteBuf buffer = Unpooled.buffer();
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
 
         encoder.writeSymbol(buffer, encoderState, value);
 
@@ -93,7 +92,7 @@ public class SymbolTypeCodecTest extends CodecTestSupport {
     }
 
     private void doTestDecodeSymbolSeries(int size) throws IOException {
-        ByteBuf buffer = Unpooled.buffer();
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
 
         for (int i = 0; i < size; ++i) {
             encoder.writeSymbol(buffer, encoderState, Symbol.valueOf(LARGE_SYMBOL_VALUIE));

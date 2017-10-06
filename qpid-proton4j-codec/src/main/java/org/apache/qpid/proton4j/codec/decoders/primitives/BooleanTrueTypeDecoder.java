@@ -18,10 +18,9 @@ package org.apache.qpid.proton4j.codec.decoders.primitives;
 
 import java.io.IOException;
 
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.DecoderState;
 import org.apache.qpid.proton4j.codec.EncodingCodes;
-
-import io.netty.buffer.ByteBuf;
 
 /**
  * Decoder of AMQP Boolean True values from a byte stream.
@@ -29,7 +28,7 @@ import io.netty.buffer.ByteBuf;
 public class BooleanTrueTypeDecoder extends BooleanTypeDecoder {
 
     @Override
-    public Boolean readValue(ByteBuf buffer, DecoderState state) {
+    public Boolean readValue(ProtonBuffer buffer, DecoderState state) {
         return Boolean.TRUE;
     }
 
@@ -39,6 +38,6 @@ public class BooleanTrueTypeDecoder extends BooleanTypeDecoder {
     }
 
     @Override
-    public void skipValue(ByteBuf buffer, DecoderState state) throws IOException {
+    public void skipValue(ProtonBuffer buffer, DecoderState state) throws IOException {
     }
 }

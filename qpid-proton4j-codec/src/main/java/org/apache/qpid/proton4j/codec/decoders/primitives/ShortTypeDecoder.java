@@ -18,11 +18,10 @@ package org.apache.qpid.proton4j.codec.decoders.primitives;
 
 import java.io.IOException;
 
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.DecoderState;
 import org.apache.qpid.proton4j.codec.EncodingCodes;
 import org.apache.qpid.proton4j.codec.PrimitiveTypeDecoder;
-
-import io.netty.buffer.ByteBuf;
 
 /**
  * Decode AMQP Short values from a byte stream
@@ -45,16 +44,16 @@ public class ShortTypeDecoder implements PrimitiveTypeDecoder<Short> {
     }
 
     @Override
-    public Short readValue(ByteBuf buffer, DecoderState state) {
+    public Short readValue(ProtonBuffer buffer, DecoderState state) {
         return buffer.readShort();
     }
 
-    public short readPrimitiveValue(ByteBuf buffer, DecoderState state) {
+    public short readPrimitiveValue(ProtonBuffer buffer, DecoderState state) {
         return buffer.readShort();
     }
 
     @Override
-    public void skipValue(ByteBuf buffer, DecoderState state) throws IOException {
+    public void skipValue(ProtonBuffer buffer, DecoderState state) throws IOException {
         buffer.skipBytes(Short.BYTES);
     }
 }

@@ -16,11 +16,10 @@
  */
 package org.apache.qpid.proton4j.codec.encoders.primitives;
 
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.EncoderState;
 import org.apache.qpid.proton4j.codec.EncodingCodes;
 import org.apache.qpid.proton4j.codec.PrimitiveTypeEncoder;
-
-import io.netty.buffer.ByteBuf;
 
 /**
  * Encoder of AMQP Integer type values to a byte stream.
@@ -33,27 +32,27 @@ public class IntegerTypeEncoder implements PrimitiveTypeEncoder<Integer> {
     }
 
     @Override
-    public void writeType(ByteBuf buffer, EncoderState state, Integer value) {
+    public void writeType(ProtonBuffer buffer, EncoderState state, Integer value) {
         buffer.writeByte(EncodingCodes.INT);
         buffer.writeInt(value.intValue());
     }
 
-    public void writeType(ByteBuf buffer, EncoderState state, int value) {
+    public void writeType(ProtonBuffer buffer, EncoderState state, int value) {
         buffer.writeByte(EncodingCodes.INT);
         buffer.writeInt(value);
     }
 
     @Override
-    public void writeValue(ByteBuf buffer, EncoderState state, Integer value) {
+    public void writeValue(ProtonBuffer buffer, EncoderState state, Integer value) {
         buffer.writeInt(value.intValue());
     }
 
-    public void writeValue(ByteBuf buffer, EncoderState state, int value) {
+    public void writeValue(ProtonBuffer buffer, EncoderState state, int value) {
         buffer.writeInt(value);
     }
 
     @Override
-    public void writeArray(ByteBuf buffer, EncoderState state, Integer[] values) {
+    public void writeArray(ProtonBuffer buffer, EncoderState state, Integer[] values) {
         buffer.writeByte(EncodingCodes.ARRAY32);
 
         // Array Size -> Total Bytes + Number of elements + Type Code
@@ -71,7 +70,7 @@ public class IntegerTypeEncoder implements PrimitiveTypeEncoder<Integer> {
         }
     }
 
-    public void writeArray(ByteBuf buffer, EncoderState state, int[] values) {
+    public void writeArray(ProtonBuffer buffer, EncoderState state, int[] values) {
         buffer.writeByte(EncodingCodes.ARRAY32);
 
         // Array Size -> Total Bytes + Number of elements + Type Code

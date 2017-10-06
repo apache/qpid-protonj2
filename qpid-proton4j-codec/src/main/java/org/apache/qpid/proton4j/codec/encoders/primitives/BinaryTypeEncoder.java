@@ -17,11 +17,10 @@
 package org.apache.qpid.proton4j.codec.encoders.primitives;
 
 import org.apache.qpid.proton4j.amqp.Binary;
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.EncoderState;
 import org.apache.qpid.proton4j.codec.EncodingCodes;
 import org.apache.qpid.proton4j.codec.PrimitiveTypeEncoder;
-
-import io.netty.buffer.ByteBuf;
 
 /**
  * Encoder of AMQP Binary type values to a byte stream.
@@ -34,38 +33,38 @@ public class BinaryTypeEncoder implements PrimitiveTypeEncoder<Binary> {
     }
 
     @Override
-    public void writeType(ByteBuf buffer, EncoderState state, Binary value) {
+    public void writeType(ProtonBuffer buffer, EncoderState state, Binary value) {
         if (value.getLength() > 255) {
             buffer.writeByte(EncodingCodes.VBIN32);
             buffer.writeInt(value.getLength());
             buffer.writeBytes(value.getArray(), value.getArrayOffset(), value.getLength());
         } else {
             buffer.writeByte(EncodingCodes.VBIN8);
-            buffer.writeByte(value.getLength());
+            buffer.writeByte((byte) value.getLength());
             buffer.writeBytes(value.getArray(), value.getArrayOffset(), value.getLength());
         }
     }
 
     @Override
-    public void writeValue(ByteBuf buffer, EncoderState state, Binary value) {
+    public void writeValue(ProtonBuffer buffer, EncoderState state, Binary value) {
         if (value.getLength() > 255) {
             buffer.writeInt(value.getLength());
             buffer.writeBytes(value.getArray(), value.getArrayOffset(), value.getLength());
         } else {
-            buffer.writeByte(value.getLength());
+            buffer.writeByte((byte) value.getLength());
             buffer.writeBytes(value.getArray(), value.getArrayOffset(), value.getLength());
         }
     }
 
     @Override
-    public void writeArray(ByteBuf buffer, EncoderState state, Binary[] values) {
+    public void writeArray(ProtonBuffer buffer, EncoderState state, Binary[] values) {
         buffer.writeByte(EncodingCodes.ARRAY32);
 
         // Array Size -> Total Bytes + Number of elements + Type Code
         //
         // Binary types are variable sized values so we write the payload
         // and then we write the size using the result.
-        int startIndex = buffer.writerIndex();
+        int startIndex = buffer.getWriteIndex();
 
         // Reserve space for the size
         buffer.writeInt(0);
@@ -78,7 +77,7 @@ public class BinaryTypeEncoder implements PrimitiveTypeEncoder<Binary> {
         }
 
         // Move back and write the size
-        int endIndex = buffer.writerIndex();
+        int endIndex = buffer.getWriteIndex();
 
         long size = endIndex - startIndex;
         if (size > Integer.MAX_VALUE) {

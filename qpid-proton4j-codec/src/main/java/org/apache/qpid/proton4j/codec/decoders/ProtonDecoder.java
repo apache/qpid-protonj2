@@ -32,6 +32,7 @@ import org.apache.qpid.proton4j.amqp.UnsignedByte;
 import org.apache.qpid.proton4j.amqp.UnsignedInteger;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.amqp.UnsignedShort;
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.Decoder;
 import org.apache.qpid.proton4j.codec.DecoderState;
 import org.apache.qpid.proton4j.codec.DescribedTypeDecoder;
@@ -39,8 +40,6 @@ import org.apache.qpid.proton4j.codec.EncodingCodes;
 import org.apache.qpid.proton4j.codec.PrimitiveArrayTypeDecoder;
 import org.apache.qpid.proton4j.codec.PrimitiveTypeDecoder;
 import org.apache.qpid.proton4j.codec.TypeDecoder;
-
-import io.netty.buffer.ByteBuf;
 
 /**
  * The default AMQP Decoder implementation.
@@ -61,7 +60,7 @@ public class ProtonDecoder implements Decoder {
     }
 
     @Override
-    public Object readObject(ByteBuf buffer, DecoderState state) throws IOException {
+    public Object readObject(ProtonBuffer buffer, DecoderState state) throws IOException {
         TypeDecoder<?> decoder = readNextTypeDecoder(buffer, state);
 
         if (decoder == null) {
@@ -78,7 +77,7 @@ public class ProtonDecoder implements Decoder {
 
     @SuppressWarnings("unchecked")
     @Override
-    public <T> T readObject(ByteBuf buffer, DecoderState state, final Class<T> clazz) throws IOException {
+    public <T> T readObject(ProtonBuffer buffer, DecoderState state, final Class<T> clazz) throws IOException {
         Object result = readObject(buffer, state);
 
         if (result == null) {
@@ -92,7 +91,7 @@ public class ProtonDecoder implements Decoder {
 
     @Override
     @SuppressWarnings("unchecked")
-    public <T> T[] readMultiple(ByteBuf buffer, DecoderState state, final Class<T> clazz) throws IOException {
+    public <T> T[] readMultiple(ProtonBuffer buffer, DecoderState state, final Class<T> clazz) throws IOException {
         Object val = readObject(buffer, state);
 
         if (val == null) {
@@ -113,11 +112,11 @@ public class ProtonDecoder implements Decoder {
     }
 
     @Override
-    public TypeDecoder<?> readNextTypeDecoder(ByteBuf buffer, DecoderState state) throws IOException {
+    public TypeDecoder<?> readNextTypeDecoder(ProtonBuffer buffer, DecoderState state) throws IOException {
         int encodingCode = buffer.readByte() & 0xff;
 
         if (encodingCode == EncodingCodes.DESCRIBED_TYPE_INDICATOR) {
-            byte encoding = buffer.getByte(buffer.readerIndex());
+            byte encoding = buffer.getByte(buffer.getReadIndex());
 
             final Object descriptor;
 
@@ -145,12 +144,12 @@ public class ProtonDecoder implements Decoder {
     }
 
     @Override
-    public TypeDecoder<?> peekNextTypeDecoder(ByteBuf buffer, DecoderState state) throws IOException {
-        int readIndex = buffer.readerIndex();
+    public TypeDecoder<?> peekNextTypeDecoder(ProtonBuffer buffer, DecoderState state) throws IOException {
+        buffer.markReadIndex();
         try {
             return readNextTypeDecoder(buffer, state);
         } finally {
-            buffer.readerIndex(readIndex);
+            buffer.resetReadIndex();
         }
     }
 
@@ -173,7 +172,7 @@ public class ProtonDecoder implements Decoder {
     }
 
     @Override
-    public Boolean readBoolean(ByteBuf buffer, DecoderState state) throws IOException {
+    public Boolean readBoolean(ProtonBuffer buffer, DecoderState state) throws IOException {
         byte encodingCode = buffer.readByte();
 
         switch (encodingCode) {
@@ -191,7 +190,7 @@ public class ProtonDecoder implements Decoder {
     }
 
     @Override
-    public Byte readByte(ByteBuf buffer, DecoderState state) throws IOException {
+    public Byte readByte(ProtonBuffer buffer, DecoderState state) throws IOException {
         byte encodingCode = buffer.readByte();
 
         switch (encodingCode) {
@@ -205,7 +204,7 @@ public class ProtonDecoder implements Decoder {
     }
 
     @Override
-    public UnsignedByte readUnsignedByte(ByteBuf buffer, DecoderState state) throws IOException {
+    public UnsignedByte readUnsignedByte(ProtonBuffer buffer, DecoderState state) throws IOException {
         byte encodingCode = buffer.readByte();
 
         switch (encodingCode) {
@@ -219,7 +218,7 @@ public class ProtonDecoder implements Decoder {
     }
 
     @Override
-    public Character readCharacter(ByteBuf buffer, DecoderState state) throws IOException {
+    public Character readCharacter(ProtonBuffer buffer, DecoderState state) throws IOException {
         byte encodingCode = buffer.readByte();
 
         switch (encodingCode) {
@@ -233,7 +232,7 @@ public class ProtonDecoder implements Decoder {
     }
 
     @Override
-    public Decimal32 readDecimal32(ByteBuf buffer, DecoderState state) throws IOException {
+    public Decimal32 readDecimal32(ProtonBuffer buffer, DecoderState state) throws IOException {
         byte encodingCode = buffer.readByte();
 
         switch (encodingCode) {
@@ -247,7 +246,7 @@ public class ProtonDecoder implements Decoder {
     }
 
     @Override
-    public Decimal64 readDecimal64(ByteBuf buffer, DecoderState state) throws IOException {
+    public Decimal64 readDecimal64(ProtonBuffer buffer, DecoderState state) throws IOException {
         byte encodingCode = buffer.readByte();
 
         switch (encodingCode) {
@@ -261,7 +260,7 @@ public class ProtonDecoder implements Decoder {
     }
 
     @Override
-    public Decimal128 readDecimal128(ByteBuf buffer, DecoderState state) throws IOException {
+    public Decimal128 readDecimal128(ProtonBuffer buffer, DecoderState state) throws IOException {
         byte encodingCode = buffer.readByte();
 
         switch (encodingCode) {
@@ -275,7 +274,7 @@ public class ProtonDecoder implements Decoder {
     }
 
     @Override
-    public Short readShort(ByteBuf buffer, DecoderState state) throws IOException {
+    public Short readShort(ProtonBuffer buffer, DecoderState state) throws IOException {
         byte encodingCode = buffer.readByte();
 
         switch (encodingCode) {
@@ -289,7 +288,7 @@ public class ProtonDecoder implements Decoder {
     }
 
     @Override
-    public UnsignedShort readUnsignedShort(ByteBuf buffer, DecoderState state) throws IOException {
+    public UnsignedShort readUnsignedShort(ProtonBuffer buffer, DecoderState state) throws IOException {
         byte encodingCode = buffer.readByte();
 
         switch (encodingCode) {
@@ -303,7 +302,7 @@ public class ProtonDecoder implements Decoder {
     }
 
     @Override
-    public Integer readInteger(ByteBuf buffer, DecoderState state) throws IOException {
+    public Integer readInteger(ProtonBuffer buffer, DecoderState state) throws IOException {
         byte encodingCode = buffer.readByte();
 
         switch (encodingCode) {
@@ -319,7 +318,7 @@ public class ProtonDecoder implements Decoder {
     }
 
     @Override
-    public UnsignedInteger readUnsignedInteger(ByteBuf buffer, DecoderState state) throws IOException {
+    public UnsignedInteger readUnsignedInteger(ProtonBuffer buffer, DecoderState state) throws IOException {
         byte encodingCode = buffer.readByte();
 
         switch (encodingCode) {
@@ -337,7 +336,7 @@ public class ProtonDecoder implements Decoder {
     }
 
     @Override
-    public Long readLong(ByteBuf buffer, DecoderState state) throws IOException {
+    public Long readLong(ProtonBuffer buffer, DecoderState state) throws IOException {
         byte encodingCode = buffer.readByte();
 
         switch (encodingCode) {
@@ -353,7 +352,7 @@ public class ProtonDecoder implements Decoder {
     }
 
     @Override
-    public UnsignedLong readUnsignedLong(ByteBuf buffer, DecoderState state) throws IOException {
+    public UnsignedLong readUnsignedLong(ProtonBuffer buffer, DecoderState state) throws IOException {
         byte encodingCode = buffer.readByte();
 
         switch (encodingCode) {
@@ -371,7 +370,7 @@ public class ProtonDecoder implements Decoder {
     }
 
     @Override
-    public Float readFloat(ByteBuf buffer, DecoderState state) throws IOException {
+    public Float readFloat(ProtonBuffer buffer, DecoderState state) throws IOException {
         byte encodingCode = buffer.readByte();
 
         switch (encodingCode) {
@@ -385,7 +384,7 @@ public class ProtonDecoder implements Decoder {
     }
 
     @Override
-    public Double readDouble(ByteBuf buffer, DecoderState state) throws IOException {
+    public Double readDouble(ProtonBuffer buffer, DecoderState state) throws IOException {
         byte encodingCode = buffer.readByte();
 
         switch (encodingCode) {
@@ -399,7 +398,7 @@ public class ProtonDecoder implements Decoder {
     }
 
     @Override
-    public Binary readBinary(ByteBuf buffer, DecoderState state) throws IOException {
+    public Binary readBinary(ProtonBuffer buffer, DecoderState state) throws IOException {
         byte encodingCode = buffer.readByte();
 
         switch (encodingCode) {
@@ -415,7 +414,7 @@ public class ProtonDecoder implements Decoder {
     }
 
     @Override
-    public String readString(ByteBuf buffer, DecoderState state) throws IOException {
+    public String readString(ProtonBuffer buffer, DecoderState state) throws IOException {
         byte encodingCode = buffer.readByte();
 
         switch (encodingCode) {
@@ -431,7 +430,7 @@ public class ProtonDecoder implements Decoder {
     }
 
     @Override
-    public Symbol readSymbol(ByteBuf buffer, DecoderState state) throws IOException {
+    public Symbol readSymbol(ProtonBuffer buffer, DecoderState state) throws IOException {
         byte encodingCode = buffer.readByte();
 
         switch (encodingCode) {
@@ -447,7 +446,7 @@ public class ProtonDecoder implements Decoder {
     }
 
     @Override
-    public Long readTimestamp(ByteBuf buffer, DecoderState state) throws IOException {
+    public Long readTimestamp(ProtonBuffer buffer, DecoderState state) throws IOException {
         byte encodingCode = buffer.readByte();
 
         switch (encodingCode) {
@@ -461,7 +460,7 @@ public class ProtonDecoder implements Decoder {
     }
 
     @Override
-    public UUID readUUID(ByteBuf buffer, DecoderState state) throws IOException {
+    public UUID readUUID(ProtonBuffer buffer, DecoderState state) throws IOException {
         byte encodingCode = buffer.readByte();
 
         switch (encodingCode) {
@@ -476,7 +475,7 @@ public class ProtonDecoder implements Decoder {
 
     @SuppressWarnings("unchecked")
     @Override
-    public <K, V> Map<K, V> readMap(ByteBuf buffer, DecoderState state) throws IOException {
+    public <K, V> Map<K, V> readMap(ProtonBuffer buffer, DecoderState state) throws IOException {
         byte encodingCode = buffer.readByte();
 
         switch (encodingCode) {
@@ -493,7 +492,7 @@ public class ProtonDecoder implements Decoder {
 
     @SuppressWarnings("unchecked")
     @Override
-    public <V> List<V> readList(ByteBuf buffer, DecoderState state) throws IOException {
+    public <V> List<V> readList(ProtonBuffer buffer, DecoderState state) throws IOException {
         byte encodingCode = buffer.readByte();
 
         switch (encodingCode) {

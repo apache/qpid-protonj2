@@ -18,10 +18,9 @@ package org.apache.qpid.proton4j.codec.util;
 
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.DescribedTypeEncoder;
 import org.apache.qpid.proton4j.codec.EncoderState;
-
-import io.netty.buffer.ByteBuf;
 
 public class NoLocalTypeEncoder implements DescribedTypeEncoder<NoLocalType> {
 
@@ -41,7 +40,7 @@ public class NoLocalTypeEncoder implements DescribedTypeEncoder<NoLocalType> {
     }
 
     @Override
-    public void writeValue(ByteBuf buffer, EncoderState state, NoLocalType value) {
+    public void writeValue(ProtonBuffer buffer, EncoderState state, NoLocalType value) {
         state.getEncoder().writeString(buffer, state, value.getDescribed());
     }
 }

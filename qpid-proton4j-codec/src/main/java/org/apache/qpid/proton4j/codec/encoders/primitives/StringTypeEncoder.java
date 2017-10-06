@@ -16,11 +16,10 @@
  */
 package org.apache.qpid.proton4j.codec.encoders.primitives;
 
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.EncoderState;
 import org.apache.qpid.proton4j.codec.EncodingCodes;
 import org.apache.qpid.proton4j.codec.PrimitiveTypeEncoder;
-
-import io.netty.buffer.ByteBuf;
 
 /**
  * Encoder of AMQP String type values to a byte stream.
@@ -33,17 +32,17 @@ public class StringTypeEncoder implements PrimitiveTypeEncoder<String> {
     }
 
     @Override
-    public void writeType(ByteBuf buffer, EncoderState state, String value) {
+    public void writeType(ProtonBuffer buffer, EncoderState state, String value) {
         write(buffer, state, value, true);
     }
 
     @Override
-    public void writeValue(ByteBuf buffer, EncoderState state, String value) {
+    public void writeValue(ProtonBuffer buffer, EncoderState state, String value) {
         write(buffer, state, value, false);
     }
 
-    private void write(ByteBuf buffer, EncoderState state, String value, boolean writeEncoding) {
-        int startIndex = buffer.writerIndex() + 1;
+    private void write(ProtonBuffer buffer, EncoderState state, String value, boolean writeEncoding) {
+        int startIndex = buffer.getWriteIndex() + 1;
 
         int fieldWidth = 1;
 
@@ -78,7 +77,7 @@ public class StringTypeEncoder implements PrimitiveTypeEncoder<String> {
         writeString(buffer, state, value);
 
         // Move back and write the size
-        int endIndex = buffer.writerIndex();
+        int endIndex = buffer.getWriteIndex();
         if (fieldWidth == 1) {
             buffer.setByte(startIndex, endIndex - startIndex - fieldWidth);
         } else {
@@ -87,14 +86,14 @@ public class StringTypeEncoder implements PrimitiveTypeEncoder<String> {
     }
 
     @Override
-    public void writeArray(ByteBuf buffer, EncoderState state, String[] values) {
+    public void writeArray(ProtonBuffer buffer, EncoderState state, String[] values) {
         buffer.writeByte(EncodingCodes.ARRAY32);
 
         // Array Size -> Total Bytes + Number of elements + Type Code
         //
         // String types are variable sized values so we write the payload
         // and then we write the size using the result.
-        int startIndex = buffer.writerIndex();
+        int startIndex = buffer.getWriteIndex();
 
         // Reserve space for the size
         buffer.writeInt(0);
@@ -105,18 +104,18 @@ public class StringTypeEncoder implements PrimitiveTypeEncoder<String> {
             // Reserve space for the size
             buffer.writeInt(0);
 
-            int stringStart = buffer.writerIndex();
+            int stringStart = buffer.getWriteIndex();
 
             // Write the full string value
             writeString(buffer, state, value);
 
             // Move back and write the string size
-            int stringEnd = buffer.writerIndex();
+            int stringEnd = buffer.getWriteIndex();
             buffer.setInt(startIndex, stringEnd - stringStart);
         }
 
         // Move back and write the size
-        int endIndex = buffer.writerIndex();
+        int endIndex = buffer.getWriteIndex();
 
         long size = endIndex - startIndex;
         if (size > Integer.MAX_VALUE) {
@@ -155,7 +154,7 @@ public class StringTypeEncoder implements PrimitiveTypeEncoder<String> {
         return encodedSize;
     }
 
-    private void writeString(ByteBuf buffer, EncoderState state, String value) {
+    private void writeString(ProtonBuffer buffer, EncoderState state, String value) {
         final int length = value.length();
         int c;
 

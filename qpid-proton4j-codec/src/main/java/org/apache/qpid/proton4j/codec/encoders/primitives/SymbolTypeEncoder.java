@@ -17,11 +17,10 @@
 package org.apache.qpid.proton4j.codec.encoders.primitives;
 
 import org.apache.qpid.proton4j.amqp.Symbol;
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.EncoderState;
 import org.apache.qpid.proton4j.codec.EncodingCodes;
 import org.apache.qpid.proton4j.codec.PrimitiveTypeEncoder;
-
-import io.netty.buffer.ByteBuf;
 
 /**
  * Encoder of AMQP Symbol type values to a byte stream.
@@ -34,16 +33,16 @@ public class SymbolTypeEncoder implements PrimitiveTypeEncoder<Symbol> {
     }
 
     @Override
-    public void writeType(ByteBuf buffer, EncoderState state, Symbol value) {
+    public void writeType(ProtonBuffer buffer, EncoderState state, Symbol value) {
         write(buffer, state, value, true);
     }
 
     @Override
-    public void writeValue(ByteBuf buffer, EncoderState state, Symbol value) {
+    public void writeValue(ProtonBuffer buffer, EncoderState state, Symbol value) {
         write(buffer, state, value, false);
     }
 
-    protected void write(ByteBuf buffer, EncoderState state, Symbol value, boolean writeEncoding) {
+    protected void write(ProtonBuffer buffer, EncoderState state, Symbol value, boolean writeEncoding) {
         byte[] symbolBytes = value.getBytes();
 
         if (symbolBytes.length <= 255) {
@@ -62,14 +61,14 @@ public class SymbolTypeEncoder implements PrimitiveTypeEncoder<Symbol> {
     }
 
     @Override
-    public void writeArray(ByteBuf buffer, EncoderState state, Symbol[] values) {
+    public void writeArray(ProtonBuffer buffer, EncoderState state, Symbol[] values) {
         buffer.writeByte(EncodingCodes.ARRAY32);
 
         // Array Size -> Total Bytes + Number of elements + Type Code
         //
         // Symbol types are variable sized values so we write the payload
         // and then we write the size using the result.
-        int startIndex = buffer.writerIndex();
+        int startIndex = buffer.getWriteIndex();
 
         // Reserve space for the size
         buffer.writeInt(0);
@@ -83,7 +82,7 @@ public class SymbolTypeEncoder implements PrimitiveTypeEncoder<Symbol> {
         }
 
         // Move back and write the size
-        int endIndex = buffer.writerIndex();
+        int endIndex = buffer.getWriteIndex();
 
         long size = endIndex - startIndex;
         if (size > Integer.MAX_VALUE) {

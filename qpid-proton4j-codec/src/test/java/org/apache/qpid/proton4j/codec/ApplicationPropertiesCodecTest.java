@@ -25,10 +25,9 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 import org.apache.qpid.proton4j.amqp.messaging.ApplicationProperties;
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.junit.Test;
-
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
 
 public class ApplicationPropertiesCodecTest extends CodecTestSupport {
 
@@ -46,7 +45,7 @@ public class ApplicationPropertiesCodecTest extends CodecTestSupport {
     }
 
     private void doTestDecodeHeaderSeries(int size) throws IOException {
-        ByteBuf buffer = Unpooled.buffer();
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
 
         Map<String, Object> propertiesMap = new LinkedHashMap<>();
         ApplicationProperties properties = new ApplicationProperties(propertiesMap);

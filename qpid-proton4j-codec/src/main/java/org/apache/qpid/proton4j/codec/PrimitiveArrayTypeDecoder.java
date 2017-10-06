@@ -18,7 +18,7 @@ package org.apache.qpid.proton4j.codec;
 
 import java.io.IOException;
 
-import io.netty.buffer.ByteBuf;
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 
 public interface PrimitiveArrayTypeDecoder extends PrimitiveTypeDecoder<Object[]> {
 
@@ -33,7 +33,7 @@ public interface PrimitiveArrayTypeDecoder extends PrimitiveTypeDecoder<Object[]
     }
 
     @Override
-    default Object[] readValue(ByteBuf buffer, DecoderState state) throws IOException {
+    default Object[] readValue(ProtonBuffer buffer, DecoderState state) throws IOException {
         return readValueAsObjectArray(buffer, state);
     }
 
@@ -52,7 +52,7 @@ public interface PrimitiveArrayTypeDecoder extends PrimitiveTypeDecoder<Object[]
      *
      * @throws IOException if an error occurs during the decode.
      */
-    Object[] readValueAsObjectArray(ByteBuf buffer, DecoderState state) throws IOException;
+    Object[] readValueAsObjectArray(ProtonBuffer buffer, DecoderState state) throws IOException;
 
     /**
      * Reads the encoded Array and returns it as an opaque Object rather
@@ -68,6 +68,6 @@ public interface PrimitiveArrayTypeDecoder extends PrimitiveTypeDecoder<Object[]
      *
      * @throws IOException if an error occurs during the decode.
      */
-    Object readValueAsObject(ByteBuf buffer, DecoderState state) throws IOException;
+    Object readValueAsObject(ProtonBuffer buffer, DecoderState state) throws IOException;
 
 }

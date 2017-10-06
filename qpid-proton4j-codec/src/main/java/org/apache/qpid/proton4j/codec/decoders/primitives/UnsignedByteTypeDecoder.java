@@ -19,11 +19,10 @@ package org.apache.qpid.proton4j.codec.decoders.primitives;
 import java.io.IOException;
 
 import org.apache.qpid.proton4j.amqp.UnsignedByte;
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.DecoderState;
 import org.apache.qpid.proton4j.codec.EncodingCodes;
 import org.apache.qpid.proton4j.codec.PrimitiveTypeDecoder;
-
-import io.netty.buffer.ByteBuf;
 
 /**
  * Decode AMQP Unsigned Byte values from a byte stream
@@ -41,12 +40,12 @@ public class UnsignedByteTypeDecoder implements PrimitiveTypeDecoder<UnsignedByt
     }
 
     @Override
-    public UnsignedByte readValue(ByteBuf buffer, DecoderState state) {
+    public UnsignedByte readValue(ProtonBuffer buffer, DecoderState state) {
         return UnsignedByte.valueOf(buffer.readByte());
     }
 
     @Override
-    public void skipValue(ByteBuf buffer, DecoderState state) throws IOException {
+    public void skipValue(ProtonBuffer buffer, DecoderState state) throws IOException {
         buffer.skipBytes(Byte.BYTES);
     }
 }

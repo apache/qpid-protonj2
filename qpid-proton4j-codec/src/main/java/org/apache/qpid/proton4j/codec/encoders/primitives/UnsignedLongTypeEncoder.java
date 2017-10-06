@@ -17,11 +17,10 @@
 package org.apache.qpid.proton4j.codec.encoders.primitives;
 
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.EncoderState;
 import org.apache.qpid.proton4j.codec.EncodingCodes;
 import org.apache.qpid.proton4j.codec.PrimitiveTypeEncoder;
-
-import io.netty.buffer.ByteBuf;
 
 /**
  * Encoder of AMQP UnsignedShort type values to a byte stream.
@@ -34,16 +33,16 @@ public class UnsignedLongTypeEncoder implements PrimitiveTypeEncoder<UnsignedLon
     }
 
     @Override
-    public void writeType(ByteBuf buffer, EncoderState state, UnsignedLong value) {
+    public void writeType(ProtonBuffer buffer, EncoderState state, UnsignedLong value) {
         write(buffer, state, value, true, true);
     }
 
     @Override
-    public void writeValue(ByteBuf buffer, EncoderState state, UnsignedLong value) {
+    public void writeValue(ProtonBuffer buffer, EncoderState state, UnsignedLong value) {
         write(buffer, state, value, false, true);
     }
 
-    public void write(ByteBuf buffer, EncoderState state, UnsignedLong value, boolean writeType, boolean compact) {
+    public void write(ProtonBuffer buffer, EncoderState state, UnsignedLong value, boolean writeType, boolean compact) {
         if (!compact) {
             if (writeType) {
                 buffer.writeByte(EncodingCodes.ULONG);
@@ -69,7 +68,7 @@ public class UnsignedLongTypeEncoder implements PrimitiveTypeEncoder<UnsignedLon
     }
 
     @Override
-    public void writeArray(ByteBuf buffer, EncoderState state, UnsignedLong[] values) {
+    public void writeArray(ProtonBuffer buffer, EncoderState state, UnsignedLong[] values) {
         buffer.writeByte(EncodingCodes.ARRAY32);
 
         // Array Size -> Total Bytes + Number of elements + Type Code

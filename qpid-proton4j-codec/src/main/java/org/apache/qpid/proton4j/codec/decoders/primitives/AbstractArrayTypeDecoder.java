@@ -19,12 +19,11 @@ package org.apache.qpid.proton4j.codec.decoders.primitives;
 import java.io.IOException;
 import java.lang.reflect.Array;
 
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.DecoderState;
 import org.apache.qpid.proton4j.codec.EncodingCodes;
 import org.apache.qpid.proton4j.codec.PrimitiveArrayTypeDecoder;
 import org.apache.qpid.proton4j.codec.PrimitiveTypeDecoder;
-
-import io.netty.buffer.ByteBuf;
 
 /**
  * Base for the decoders of AMQP Array types.
@@ -32,7 +31,7 @@ import io.netty.buffer.ByteBuf;
 public abstract class AbstractArrayTypeDecoder implements PrimitiveArrayTypeDecoder {
 
     @Override
-    public Object[] readValueAsObjectArray(ByteBuf buffer, DecoderState state) throws IOException {
+    public Object[] readValueAsObjectArray(ProtonBuffer buffer, DecoderState state) throws IOException {
         int size = readSize(buffer);
         int count = readCount(buffer);
 
@@ -42,17 +41,17 @@ public abstract class AbstractArrayTypeDecoder implements PrimitiveArrayTypeDeco
             size -= 2; // 1 byte each for size and count;
         }
 
-        if (size > buffer.readableBytes()) {
+        if (size > buffer.getReadableBytes()) {
             throw new IllegalArgumentException(String.format(
                 "Array size indicated %d is greater than the amount of data available to decode (%d)",
-                size, buffer.readableBytes()));
+                size, buffer.getReadableBytes()));
         }
 
         return decodeAsArray(buffer, state, count);
     }
 
     @Override
-    public Object readValueAsObject(ByteBuf buffer, DecoderState state) throws IOException {
+    public Object readValueAsObject(ProtonBuffer buffer, DecoderState state) throws IOException {
         int size = readSize(buffer);
         int count = readCount(buffer);
 
@@ -62,35 +61,35 @@ public abstract class AbstractArrayTypeDecoder implements PrimitiveArrayTypeDeco
             size -= 2; // 1 byte each for size and count;
         }
 
-        if (size > buffer.readableBytes()) {
+        if (size > buffer.getReadableBytes()) {
             throw new IllegalArgumentException(String.format(
                 "Array size indicated %d is greater than the amount of data available to decode (%d)",
-                size, buffer.readableBytes()));
+                size, buffer.getReadableBytes()));
         }
 
         return decodeAsObject(buffer, state, count);
     }
 
     @Override
-    public void skipValue(ByteBuf buffer, DecoderState state) throws IOException {
+    public void skipValue(ProtonBuffer buffer, DecoderState state) throws IOException {
         buffer.skipBytes(readSize(buffer));
     }
 
-    protected abstract int readSize(ByteBuf buffer);
+    protected abstract int readSize(ProtonBuffer buffer);
 
-    protected abstract int readCount(ByteBuf buffer);
+    protected abstract int readCount(ProtonBuffer buffer);
 
-    private static Object[] decodeAsArray(ByteBuf buffer, DecoderState state, final int count) throws IOException {
+    private static Object[] decodeAsArray(ProtonBuffer buffer, DecoderState state, final int count) throws IOException {
         PrimitiveTypeDecoder<?> decoder = (PrimitiveTypeDecoder<?>) state.getDecoder().readNextTypeDecoder(buffer, state);
         return decodeNonPrimitiveArray(decoder, buffer, state, count);
     }
 
-    private static Object[] decodeNonPrimitiveArray(PrimitiveTypeDecoder<?> decoder, ByteBuf buffer, DecoderState state, int count) throws IOException {
+    private static Object[] decodeNonPrimitiveArray(PrimitiveTypeDecoder<?> decoder, ProtonBuffer buffer, DecoderState state, int count) throws IOException {
 
-        if (count > buffer.readableBytes()) {
+        if (count > buffer.getReadableBytes()) {
             throw new IllegalArgumentException(String.format(
                 "Array element count %d is specified to be greater than the amount of data available (%d)",
-                count, buffer.readableBytes()));
+                count, buffer.getReadableBytes()));
         }
 
         if (decoder.isArryTypeDecoder()) {
@@ -113,15 +112,15 @@ public abstract class AbstractArrayTypeDecoder implements PrimitiveArrayTypeDeco
         }
     }
 
-    private static Object decodeAsObject(ByteBuf buffer, DecoderState state, int count) throws IOException {
+    private static Object decodeAsObject(ProtonBuffer buffer, DecoderState state, int count) throws IOException {
 
         PrimitiveTypeDecoder<?> decoder = (PrimitiveTypeDecoder<?>) state.getDecoder().readNextTypeDecoder(buffer, state);
 
         if (decoder.isJavaPrimitive()) {
-            if (count > buffer.readableBytes()) {
+            if (count > buffer.getReadableBytes()) {
                 throw new IllegalArgumentException(String.format(
                     "Array element count %d is specified to be greater than the amount of data available (%d)",
-                    count, buffer.readableBytes()));
+                    count, buffer.getReadableBytes()));
             }
 
             Class<?> typeClass = decoder.getTypeClass();
@@ -148,7 +147,7 @@ public abstract class AbstractArrayTypeDecoder implements PrimitiveArrayTypeDeco
         }
     }
 
-    private static boolean[] decodePrimitiveTypeArray(BooleanTypeDecoder decoder, ByteBuf buffer, DecoderState state, int count) {
+    private static boolean[] decodePrimitiveTypeArray(BooleanTypeDecoder decoder, ProtonBuffer buffer, DecoderState state, int count) {
         boolean[] array = new boolean[count];
 
         for (int i = 0; i < count; i++) {
@@ -158,7 +157,7 @@ public abstract class AbstractArrayTypeDecoder implements PrimitiveArrayTypeDeco
         return array;
     }
 
-    private static byte[] decodePrimitiveTypeArray(ByteTypeDecoder decoder, ByteBuf buffer, DecoderState state, int count) {
+    private static byte[] decodePrimitiveTypeArray(ByteTypeDecoder decoder, ProtonBuffer buffer, DecoderState state, int count) {
         byte[] array = new byte[count];
 
         for (int i = 0; i < count; i++) {
@@ -168,7 +167,7 @@ public abstract class AbstractArrayTypeDecoder implements PrimitiveArrayTypeDeco
         return array;
     }
 
-    private static short[] decodePrimitiveTypeArray(ShortTypeDecoder decoder, ByteBuf buffer, DecoderState state, int count) {
+    private static short[] decodePrimitiveTypeArray(ShortTypeDecoder decoder, ProtonBuffer buffer, DecoderState state, int count) {
         short[] array = new short[count];
 
         for (int i = 0; i < count; i++) {
@@ -178,7 +177,7 @@ public abstract class AbstractArrayTypeDecoder implements PrimitiveArrayTypeDeco
         return array;
     }
 
-    private static int[] decodePrimitiveTypeArray(Integer32TypeDecoder decoder, ByteBuf buffer, DecoderState state, int count) {
+    private static int[] decodePrimitiveTypeArray(Integer32TypeDecoder decoder, ProtonBuffer buffer, DecoderState state, int count) {
         int[] array = new int[count];
 
         for (int i = 0; i < count; i++) {
@@ -188,7 +187,7 @@ public abstract class AbstractArrayTypeDecoder implements PrimitiveArrayTypeDeco
         return array;
     }
 
-    private static long[] decodePrimitiveTypeArray(LongTypeDecoder decoder, ByteBuf buffer, DecoderState state, int count) {
+    private static long[] decodePrimitiveTypeArray(LongTypeDecoder decoder, ProtonBuffer buffer, DecoderState state, int count) {
         long[] array = new long[count];
 
         for (int i = 0; i < count; i++) {
@@ -198,7 +197,7 @@ public abstract class AbstractArrayTypeDecoder implements PrimitiveArrayTypeDeco
         return array;
     }
 
-    private static float[] decodePrimitiveTypeArray(FloatTypeDecoder decoder, ByteBuf buffer, DecoderState state, int count) {
+    private static float[] decodePrimitiveTypeArray(FloatTypeDecoder decoder, ProtonBuffer buffer, DecoderState state, int count) {
         float[] array = new float[count];
 
         for (int i = 0; i < count; i++) {
@@ -208,7 +207,7 @@ public abstract class AbstractArrayTypeDecoder implements PrimitiveArrayTypeDeco
         return array;
     }
 
-    private static double[] decodePrimitiveTypeArray(DoubleTypeDecoder decoder, ByteBuf buffer, DecoderState state, int count) {
+    private static double[] decodePrimitiveTypeArray(DoubleTypeDecoder decoder, ProtonBuffer buffer, DecoderState state, int count) {
         double[] array = new double[count];
 
         for (int i = 0; i < count; i++) {
