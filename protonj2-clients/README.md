@@ -10,7 +10,7 @@ To use the AMQPerative library in your projects you can include the maven
 dependency in your project pom file:
 
     <dependency>
-      <groupId>org.messaginghub.jms</groupId>
+      <groupId>org.messaginghub</groupId>
       <artifactId>amqperative-client</artifactId>
       <version>${amqperative-version}</version>
     </dependency>

@@ -24,4 +24,11 @@ public class Connection {
         return new Connection();
     }
 
+    public Sender createSender(String address) throws Exception {
+        return new Sender();
+    }
+
+    public Receiver createReceiver(String address) throws Exception {
+        return new Receiver();
+    }
 }
