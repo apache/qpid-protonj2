@@ -1,18 +1,18 @@
-# PooledJMS
+# AMQPerative
 
-JMS Connection pool for messaging applications that provides pooling for JMS Connections, Sessions and MessageProducers.
+Imperative API for AMQP messaging applications
 
 Below are some quick pointers you might find useful.
 
-## Using the PooledJMS library
+## Using the AMQPerative library
 
-To use the PooledJMS library in your projects you can include the maven
+To use the AMQPerative library in your projects you can include the maven
 dependency in your project pom file:
 
     <dependency>
       <groupId>org.messaginghub.jms</groupId>
-      <artifactId>pooled-jms</artifactId>
-      <version>${pooled-jms-version}</version>
+      <artifactId>amqperative-client</artifactId>
+      <version>${amqperative-version}</version>
     </dependency>
 
 ## Building the code
@@ -41,10 +41,10 @@ Execute the tests and produce code coverage report:
 
 First build and install all the modules as detailed above (if running against
 a source checkout/release, rather than against released binaries) and then
-consult the README in the pooled-jms-examples module itself.
+consult the README in the AMQPerative-examples module itself.
 
 ## Documentation
 
-There is some basic documentation in the pooled-jms-docs module.
+There is some basic documentation in the amqperative-docs module.
 
 
