@@ -16,23 +16,26 @@
  */
 package org.messaginghub.amqperative;
 
+import static org.junit.Assert.assertNotNull;
+
 import java.net.URI;
 
-public class Connection {
+import org.junit.Test;
 
-    public static Connection createConnection(String remoteURI) throws Exception {
-        return new Connection();
+/**
+ * Test for the Connection class
+ */
+public class ConnectionTest {
+
+    @Test
+    public void testCreateConnectionString() throws Exception {
+        Connection connection = Connection.createConnection("amqp://localhost:5672");
+        assertNotNull(connection);
     }
 
-    public static Connection createConnection(URI remoteURI) throws Exception {
-        return new Connection();
-    }
-
-    public Sender createSender(String address) throws Exception {
-        return new Sender();
-    }
-
-    public Receiver createReceiver(String address) throws Exception {
-        return new Receiver();
+    @Test
+    public void testCreateConnectionURI() throws Exception {
+        Connection connection = Connection.createConnection(new URI("amqp://localhost:5672"));
+        assertNotNull(connection);
     }
 }
