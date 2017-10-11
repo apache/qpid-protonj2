@@ -37,11 +37,6 @@
       <groupId>org.messaginghub</groupId>
       <artifactId>amqperative-client</artifactId>
     </dependency>
-    <dependency>
-      <groupId>org.apache.qpid</groupId>
-      <artifactId>qpid-jms-client</artifactId>
-      <scope>runtime</scope>
-    </dependency>
 
     <!-- Provide a logging implementation to avoid
          notice from SLF4J that none was found -->

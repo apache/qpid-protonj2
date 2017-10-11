@@ -18,7 +18,7 @@
  * under the License.
  *
  */
-package org.messaginghub.jms.example;
+package org.messaginghub.amqperative.example;
 
 public class HelloWorld {
 
