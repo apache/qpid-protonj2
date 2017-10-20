@@ -66,11 +66,6 @@ public class ProtonByteBufferSupport {
         }
 
         @Override
-        public ProtonNIOByteBufferWrapper copy() {
-            return null;
-        }
-
-        @Override
         public ByteBuffer toByteBuffer() {
             return buffer;
         }
@@ -151,6 +146,11 @@ public class ProtonByteBufferSupport {
         @Override
         public ProtonNIOByteBufferWrapper setBytes(int index, ByteBuffer src) {
             // TODO Auto-generated method stub
+            return null;
+        }
+
+        @Override
+        public ProtonBuffer copy(int index, int length) {
             return null;
         }
     }

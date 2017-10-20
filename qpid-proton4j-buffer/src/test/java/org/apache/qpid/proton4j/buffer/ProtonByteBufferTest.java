@@ -146,19 +146,6 @@ public class ProtonByteBufferTest {
         assertNotSame(source, buffer.getArray());
     }
 
-    @Test
-    public void testCopyBuffer() {
-        ProtonBuffer buffer = new ProtonByteBuffer();
-
-        assertEquals(0, buffer.getReadableBytes());
-        assertTrue(buffer.hasArray());
-
-        ProtonBuffer duplicate = buffer.duplicate();
-
-        assertSame(buffer.getArray(), duplicate.getArray());
-        assertEquals(0, buffer.getArrayOffset());
-    }
-
     //----- Write Method Tests -----------------------------------------------//
 
     @Test
@@ -334,5 +321,58 @@ public class ProtonByteBufferTest {
         for (int i = 1; i < 12; ++i) {
             assertEquals(i, buffer.readByte());
         }
+    }
+
+    //----- Tests for Copy operations ----------------------------------------//
+
+    @Test
+    public void testCopyEmptyBuffer() {
+        ProtonBuffer buffer = new ProtonByteBuffer(10);
+        ProtonBuffer copy = buffer.copy();
+
+        assertEquals(buffer.getReadableBytes(), copy.getReadableBytes());
+
+        assertTrue(copy.hasArray());
+        assertNotNull(copy.getArray());
+
+        assertNotSame(buffer.getArray(), copy.getArray());
+    }
+
+    @Test
+    public void testCopyBuffer() {
+        ProtonBuffer buffer = new ProtonByteBuffer(10);
+
+        buffer.writeByte(1);
+        buffer.writeByte(2);
+        buffer.writeByte(3);
+        buffer.writeByte(4);
+        buffer.writeByte(5);
+
+        ProtonBuffer copy = buffer.copy();
+
+        assertEquals(buffer.getReadableBytes(), copy.getReadableBytes());
+
+        assertTrue(copy.hasArray());
+        assertNotNull(copy.getArray());
+
+        assertNotSame(buffer.getArray(), copy.getArray());
+
+        for(int i = 0; i < 5; ++i) {
+            assertEquals(buffer.getArray()[i], copy.getArray()[i]);
+        }
+    }
+
+    //----- Tests for Buffer duplication -------------------------------------//
+
+    @Test
+    public void testDuplicateEmptyBuffer() {
+        ProtonBuffer buffer = new ProtonByteBuffer(10);
+        ProtonBuffer duplicate = buffer.duplicate();
+
+        assertEquals(buffer.capacity(), duplicate.capacity());
+        assertEquals(buffer.getReadableBytes(), duplicate.getReadableBytes());
+
+        assertSame(buffer.getArray(), duplicate.getArray());
+        assertEquals(0, buffer.getArrayOffset());
     }
 }

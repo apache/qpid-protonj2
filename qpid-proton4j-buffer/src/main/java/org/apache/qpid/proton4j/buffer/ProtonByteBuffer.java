@@ -55,11 +55,15 @@ public class ProtonByteBuffer extends ProtonAbstractByteBuffer {
         this.array = new byte[initialCapacity];
     }
 
-    public ProtonByteBuffer(byte[] source) {
-        this(source, DEFAULT_MAXIMUM_CAPACITY);
+    public ProtonByteBuffer(byte[] array) {
+        this(array, DEFAULT_MAXIMUM_CAPACITY);
     }
 
     protected ProtonByteBuffer(byte[] array, int maximumCapacity) {
+        this(array, DEFAULT_MAXIMUM_CAPACITY, 0);
+    }
+
+    protected ProtonByteBuffer(byte[] array, int maximumCapacity, int writeIndex) {
         super(maximumCapacity);
 
         if (array == null) {
@@ -71,6 +75,8 @@ public class ProtonByteBuffer extends ProtonAbstractByteBuffer {
         }
 
         this.array = array;
+
+        setIndex(0, writeIndex);
     }
 
     @Override
@@ -112,10 +118,11 @@ public class ProtonByteBuffer extends ProtonAbstractByteBuffer {
     }
 
     @Override
-    public ProtonBuffer copy() {
-        byte[] copyOf = new byte[array.length];
-        System.arraycopy(array, 0, copyOf, 0, array.length);
-        return new ProtonByteBuffer(copyOf, maxCapacity());
+    public ProtonBuffer copy(int index, int length) {
+        checkIndex(index, length);
+        byte[] copyOf = new byte[length];
+        System.arraycopy(array, index, copyOf, 0, length);
+        return new ProtonByteBuffer(copyOf, maxCapacity(), length);
     }
 
     @Override

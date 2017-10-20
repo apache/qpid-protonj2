@@ -91,6 +91,21 @@ public interface ProtonBuffer {
     ProtonBuffer copy();
 
     /**
+     * Returns a copy of this buffer's sub-region.  Modifying the content of
+     * the returned buffer or this buffer does not affect each other at all.
+     * This method does not modify the value returned from {@link #getReadIndex()}
+     * or {@link #getWriteIndex()} of this buffer.
+     *
+     * @param index
+     *      The index in this buffer where the copy should begin
+     * @param length
+     *      The number of bytes to copy to the new buffer from this one.
+     *
+     * @return a new ProtonBuffer instance containing the copied bytes.
+     */
+    public ProtonBuffer copy(int index, int length);
+
+    /**
      * Reset the position markers of this buffer, this method is not required to reset
      * the data previously written to this buffer.
      *
