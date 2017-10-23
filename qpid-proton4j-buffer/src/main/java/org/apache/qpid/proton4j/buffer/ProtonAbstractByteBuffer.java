@@ -63,7 +63,7 @@ public abstract class ProtonAbstractByteBuffer implements ProtonBuffer {
     public ProtonBuffer setReadIndex(int value) {
         if (value < 0 || value > writeIndex) {
             throw new IndexOutOfBoundsException(String.format(
-                    "readIndex: %d (expected: 0 <= readIndex <= writIndex(%d))", value, writeIndex));
+                "readIndex: %d (expected: 0 <= readIndex <= writeIndex(%d))", value, writeIndex));
         }
         readIndex = value;
         return this;
@@ -78,8 +78,8 @@ public abstract class ProtonAbstractByteBuffer implements ProtonBuffer {
     public ProtonBuffer setWriteIndex(int value) {
         if (value < readIndex || value > capacity()) {
             throw new IndexOutOfBoundsException(String.format(
-                    "writeIndex: %d (expected: readIndex(%d) <= writIndex <= capacity(%d))",
-                    value, readIndex, capacity()));
+                "writeIndex: %d (expected: readIndex(%d) <= writeIndex <= capacity(%d))",
+                value, readIndex, capacity()));
         }
         writeIndex = value;
         return this;
@@ -89,8 +89,8 @@ public abstract class ProtonAbstractByteBuffer implements ProtonBuffer {
     public ProtonBuffer setIndex(int readIndex, int writeIndex) {
         if (readIndex < 0 || readIndex > writeIndex || writeIndex > capacity()) {
             throw new IndexOutOfBoundsException(String.format(
-                    "readIndex: %d, writeIndex: %d (expected: 0 <= readeIndex <= writeIndex <= capacity(%d))",
-                    readIndex, writeIndex, capacity()));
+                "readIndex: %d, writeIndex: %d (expected: 0 <= readeIndex <= writeIndex <= capacity(%d))",
+                readIndex, writeIndex, capacity()));
         }
         this.readIndex = readIndex;
         this.writeIndex = writeIndex;
