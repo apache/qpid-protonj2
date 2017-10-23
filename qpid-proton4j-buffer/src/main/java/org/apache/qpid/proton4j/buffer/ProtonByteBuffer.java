@@ -44,10 +44,6 @@ public class ProtonByteBuffer extends ProtonAbstractByteBuffer {
             throw new IllegalArgumentException("Initial capacity cannot be < 0");
         }
 
-        if (maximumCapacity < 0) {
-            throw new IllegalArgumentException("Maximum capacity cannot be < 0");
-        }
-
         if (initialCapacity > maximumCapacity) {
             throw new IllegalArgumentException("Initial capacity cannot exceed maximum capacity.");
         }
@@ -60,7 +56,7 @@ public class ProtonByteBuffer extends ProtonAbstractByteBuffer {
     }
 
     protected ProtonByteBuffer(byte[] array, int maximumCapacity) {
-        this(array, DEFAULT_MAXIMUM_CAPACITY, 0);
+        this(array, DEFAULT_MAXIMUM_CAPACITY, array.length);
     }
 
     protected ProtonByteBuffer(byte[] array, int maximumCapacity, int writeIndex) {
@@ -68,10 +64,6 @@ public class ProtonByteBuffer extends ProtonAbstractByteBuffer {
 
         if (array == null) {
             throw new IllegalArgumentException("Array to wrap cannot be null");
-        }
-
-        if (maximumCapacity < 0) {
-            throw new IllegalArgumentException("Maximum capacity cannot be < 0");
         }
 
         this.array = array;

@@ -23,12 +23,16 @@ import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import java.nio.ByteBuffer;
+
 import org.junit.Test;
 
 /**
  * Test behavior of the built in ProtonByteBuffer implementation.
  */
 public class ProtonByteBufferTest {
+
+    //----- Test Buffer creation ---------------------------------------------//
 
     @Test
     public void testDefaultConstructor() {
@@ -44,12 +48,13 @@ public class ProtonByteBufferTest {
     }
 
     @Test
-    public void testConstructorCapacity() {
-        ProtonBuffer buffer = new ProtonByteBuffer(ProtonByteBuffer.DEFAULT_CAPACITY + 10);
+    public void testConstructorCapacityAndMaxCapacity() {
+        int baseCapaity = ProtonByteBuffer.DEFAULT_CAPACITY + 10;
+        ProtonBuffer buffer = new ProtonByteBuffer(baseCapaity, baseCapaity + 100);
 
         assertEquals(0, buffer.getReadableBytes());
-        assertEquals(ProtonByteBuffer.DEFAULT_CAPACITY + 10, buffer.capacity());
-        assertEquals(ProtonByteBuffer.DEFAULT_MAXIMUM_CAPACITY, buffer.maxCapacity());
+        assertEquals(baseCapaity, buffer.capacity());
+        assertEquals(baseCapaity + 100, buffer.maxCapacity());
 
         assertTrue(buffer.hasArray());
         assertNotNull(buffer.getArray());
@@ -100,7 +105,7 @@ public class ProtonByteBufferTest {
 
         ProtonBuffer buffer = new ProtonByteBuffer(source);
 
-        assertEquals(0, buffer.getReadableBytes());
+        assertEquals(source.length, buffer.getReadableBytes());
         assertEquals(ProtonByteBuffer.DEFAULT_CAPACITY + 10, buffer.capacity());
         assertEquals(ProtonByteBuffer.DEFAULT_MAXIMUM_CAPACITY, buffer.maxCapacity());
 
@@ -108,6 +113,8 @@ public class ProtonByteBufferTest {
         assertSame(source, buffer.getArray());
         assertEquals(0, buffer.getArrayOffset());
     }
+
+    //----- Tests for altering buffer capacity -------------------------------//
 
     @Test
     public void testIncreaseCapacity() {
@@ -144,6 +151,85 @@ public class ProtonByteBufferTest {
         assertEquals(50, buffer.capacity());
         assertTrue(buffer.hasArray());
         assertNotSame(source, buffer.getArray());
+
+        // Buffer is truncated but we never read anything so read index stays at front.
+        assertEquals(0, buffer.getReadIndex());
+        assertEquals(50, buffer.getWriteIndex());
+    }
+
+    @Test
+    public void testDecreaseCapacityWithReadIndexIndexBeyondNewValue() {
+        byte[] source = new byte[100];
+
+        ProtonBuffer buffer = new ProtonByteBuffer(source);
+        assertEquals(100, buffer.capacity());
+        assertTrue(buffer.hasArray());
+        assertSame(source, buffer.getArray());
+
+        buffer.setReadIndex(60);
+
+        buffer.capacity(50);
+        assertEquals(50, buffer.capacity());
+        assertTrue(buffer.hasArray());
+        assertNotSame(source, buffer.getArray());
+
+        // Buffer should be truncated and read index moves back to end
+        assertEquals(50, buffer.getReadIndex());
+        assertEquals(50, buffer.getWriteIndex());
+    }
+
+    @Test
+    public void testDecreaseCapacityWithWriteIndexWithinNewValue() {
+        byte[] source = new byte[100];
+
+        ProtonBuffer buffer = new ProtonByteBuffer(source);
+        assertEquals(100, buffer.capacity());
+        assertTrue(buffer.hasArray());
+        assertSame(source, buffer.getArray());
+
+        buffer.setIndex(10, 30);
+
+        buffer.capacity(50);
+        assertEquals(50, buffer.capacity());
+        assertTrue(buffer.hasArray());
+        assertNotSame(source, buffer.getArray());
+
+        // Buffer should be truncated but index values remain unchanged
+        assertEquals(10, buffer.getReadIndex());
+        assertEquals(30, buffer.getWriteIndex());
+    }
+
+    @Test
+    public void testCapacityIncreasesWhenWritesExceedCurrent() {
+        ProtonBuffer buffer = new ProtonByteBuffer(10);
+
+        assertTrue(buffer.hasArray());
+
+        assertEquals(10, buffer.capacity());
+        assertEquals(10, buffer.getArray().length);
+        assertEquals(Integer.MAX_VALUE, buffer.maxCapacity());
+
+        for (int i = 1; i <= 9; ++i) {
+            buffer.writeByte(i);
+        }
+
+        assertEquals(10, buffer.capacity());
+
+        buffer.writeByte(10);
+
+        assertEquals(10, buffer.capacity());
+        assertEquals(10, buffer.getArray().length);
+
+        buffer.writeByte(11);
+
+        assertTrue(buffer.capacity() > 10);
+        assertTrue(buffer.getArray().length > 10);
+
+        assertEquals(11, buffer.getReadableBytes());
+
+        for (int i = 1; i < 12; ++i) {
+            assertEquals(i, buffer.readByte());
+        }
     }
 
     //----- Write Method Tests -----------------------------------------------//
@@ -288,41 +374,6 @@ public class ProtonByteBufferTest {
         assertEquals(0, buffer.getReadableBytes());
     }
 
-    //----- Capacity Expansion Tests -----------------------------------------//
-
-    @Test
-    public void testCapacityIncreasesWhenWritesExceedCurrent() {
-        ProtonBuffer buffer = new ProtonByteBuffer(10);
-
-        assertTrue(buffer.hasArray());
-
-        assertEquals(10, buffer.capacity());
-        assertEquals(10, buffer.getArray().length);
-        assertEquals(Integer.MAX_VALUE, buffer.maxCapacity());
-
-        for (int i = 1; i <= 9; ++i) {
-            buffer.writeByte(i);
-        }
-
-        assertEquals(10, buffer.capacity());
-
-        buffer.writeByte(10);
-
-        assertEquals(10, buffer.capacity());
-        assertEquals(10, buffer.getArray().length);
-
-        buffer.writeByte(11);
-
-        assertTrue(buffer.capacity() > 10);
-        assertTrue(buffer.getArray().length > 10);
-
-        assertEquals(11, buffer.getReadableBytes());
-
-        for (int i = 1; i < 12; ++i) {
-            assertEquals(i, buffer.readByte());
-        }
-    }
-
     //----- Tests for Copy operations ----------------------------------------//
 
     @Test
@@ -374,5 +425,39 @@ public class ProtonByteBufferTest {
 
         assertSame(buffer.getArray(), duplicate.getArray());
         assertEquals(0, buffer.getArrayOffset());
+    }
+
+    //----- Tests for conversion to ByteBuffer -------------------------------//
+
+    @Test
+    public void testToByteBufferWithDataPresent() {
+        ProtonBuffer buffer = new ProtonByteBuffer(10);
+
+        buffer.writeByte(1);
+        buffer.writeByte(2);
+        buffer.writeByte(3);
+        buffer.writeByte(4);
+        buffer.writeByte(5);
+
+        ByteBuffer byteBuffer = buffer.toByteBuffer();
+
+        assertEquals(buffer.getReadableBytes(), byteBuffer.limit());
+
+        assertTrue(byteBuffer.hasArray());
+        assertNotNull(byteBuffer.array());
+
+        assertSame(buffer.getArray(), byteBuffer.array());
+    }
+
+    @Test
+    public void testToByteBufferWhenNoData() {
+        ProtonBuffer buffer = new ProtonByteBuffer();
+        ByteBuffer byteBuffer = buffer.toByteBuffer();
+
+        assertEquals(buffer.getReadableBytes(), byteBuffer.limit());
+
+        assertTrue(byteBuffer.hasArray());
+        assertNotNull(byteBuffer.array());
+        assertSame(buffer.getArray(), byteBuffer.array());
     }
 }
