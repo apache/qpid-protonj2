@@ -189,6 +189,74 @@ public class ProtonByteBufferTest {
         } catch (IndexOutOfBoundsException e) {}
     }
 
+    @Test
+    public void testIsReadable() {
+        ProtonBuffer buffer = new ProtonByteBuffer();
+        assertFalse(buffer.isReadable());
+        buffer.writeBoolean(false);
+        assertTrue(buffer.isReadable());
+    }
+
+    @Test
+    public void testIsReadableWithAmount() {
+        ProtonBuffer buffer = new ProtonByteBuffer();
+        assertFalse(buffer.isReadable(1));
+        buffer.writeBoolean(false);
+        assertTrue(buffer.isReadable(1));
+        assertFalse(buffer.isReadable(2));
+    }
+
+    @Test
+    public void testIsWriteable() {
+        ProtonBuffer buffer = new ProtonByteBuffer();
+        assertTrue(buffer.isWritable());
+        buffer.setWriteIndex(buffer.capacity());
+        assertFalse(buffer.isWritable());
+    }
+
+    @Test
+    public void testIsWriteableWithAmount() {
+        ProtonBuffer buffer = new ProtonByteBuffer();
+        assertTrue(buffer.isWritable());
+        buffer.setWriteIndex(buffer.capacity() - 1);
+        assertTrue(buffer.isWritable(1));
+        assertFalse(buffer.isWritable(2));
+    }
+
+    @Test
+    public void testClear() {
+        ProtonBuffer buffer = new ProtonByteBuffer();
+        assertEquals(0, buffer.getReadIndex());
+        assertEquals(0, buffer.getWriteIndex());
+        buffer.setIndex(10, 20);
+        assertEquals(10, buffer.getReadIndex());
+        assertEquals(20, buffer.getWriteIndex());
+        buffer.clear();
+        assertEquals(0, buffer.getReadIndex());
+        assertEquals(0, buffer.getWriteIndex());
+    }
+
+    @Test
+    public void testSkipBytes() {
+        ProtonBuffer buffer = new ProtonByteBuffer();
+        buffer.setWriteIndex(buffer.capacity() / 2);
+        assertEquals(0, buffer.getReadIndex());
+        buffer.skipBytes(buffer.capacity() / 2);
+        assertEquals(buffer.capacity() / 2, buffer.getReadIndex());
+    }
+
+    @Test
+    public void testSkipBytesBeyondReable() {
+        ProtonBuffer buffer = new ProtonByteBuffer();
+        buffer.setWriteIndex(buffer.capacity() / 2);
+        assertEquals(0, buffer.getReadIndex());
+
+        try {
+            buffer.skipBytes(buffer.getReadableBytes() + 50);
+            fail("Should not be able to skip beyond write index");
+        } catch (IndexOutOfBoundsException e) {}
+    }
+
     //----- Tests for altering buffer capacity -------------------------------//
 
     @Test
