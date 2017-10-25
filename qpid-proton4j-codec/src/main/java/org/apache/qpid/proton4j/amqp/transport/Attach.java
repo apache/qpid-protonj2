@@ -26,7 +26,7 @@ import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.amqp.messaging.Source;
 import org.apache.qpid.proton4j.amqp.messaging.Target;
 
-public final class Attach {
+public final class Attach implements Performative {
 
     public static final UnsignedLong DESCRIPTOR_CODE = UnsignedLong.valueOf(0x0000000000000012L);
     public static final Symbol DESCRIPTOR_SYMBOL = Symbol.valueOf("amqp:attach:list");

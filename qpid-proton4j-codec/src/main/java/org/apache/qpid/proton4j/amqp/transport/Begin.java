@@ -24,7 +24,7 @@ import org.apache.qpid.proton4j.amqp.UnsignedInteger;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.amqp.UnsignedShort;
 
-public final class Begin {
+public final class Begin implements Performative {
 
     public static final UnsignedLong DESCRIPTOR_CODE = UnsignedLong.valueOf(0x0000000000000011L);
     public static final Symbol DESCRIPTOR_SYMBOL = Symbol.valueOf("amqp:begin:list");

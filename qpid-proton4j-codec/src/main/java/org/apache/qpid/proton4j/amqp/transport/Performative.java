@@ -16,26 +16,9 @@
  */
 package org.apache.qpid.proton4j.amqp.transport;
 
-import org.apache.qpid.proton4j.amqp.Symbol;
-import org.apache.qpid.proton4j.amqp.UnsignedLong;
+/**
+ * Marker interface for AMQP Performatives
+ */
+public interface Performative {
 
-public final class Close implements Performative {
-
-    public static final UnsignedLong DESCRIPTOR_CODE = UnsignedLong.valueOf(0x0000000000000018L);
-    public static final Symbol DESCRIPTOR_SYMBOL = Symbol.valueOf("amqp:close:list");
-
-    private ErrorCondition error;
-
-    public ErrorCondition getError() {
-        return error;
-    }
-
-    public void setError(ErrorCondition error) {
-        this.error = error;
-    }
-
-    @Override
-    public String toString() {
-        return "Close{" + "error=" + error + '}';
-    }
 }

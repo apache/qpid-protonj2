@@ -19,7 +19,7 @@ package org.apache.qpid.proton4j.amqp.transport;
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
 
-public final class End {
+public final class End implements Performative {
 
     public static final UnsignedLong DESCRIPTOR_CODE = UnsignedLong.valueOf(0x0000000000000017L);
     public static final Symbol DESCRIPTOR_SYMBOL = Symbol.valueOf("amqp:end:list");
