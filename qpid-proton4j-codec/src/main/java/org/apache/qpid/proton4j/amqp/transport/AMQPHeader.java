@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.qpid.proton4j.amqp;
+package org.apache.qpid.proton4j.amqp.transport;
 
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBuffer;
@@ -23,7 +23,7 @@ import org.apache.qpid.proton4j.buffer.ProtonByteBuffer;
  * Represents the AMQP protocol handshake packet that is sent during the
  * initial exchange with a remote peer.
  */
-public class AMQPHeader {
+public class AMQPHeader implements Performative {
 
     static final byte[] PREFIX = new byte[] { 'A', 'M', 'Q', 'P' };
 
