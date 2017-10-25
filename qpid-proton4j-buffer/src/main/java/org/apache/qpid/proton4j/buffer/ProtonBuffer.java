@@ -370,15 +370,14 @@ public interface ProtonBuffer {
      */
     double getDouble(int index);
 
-    // TODO - Update docs
     /**
      * Transfers this buffer's data to the specified destination starting at
      * the specified absolute {@code index} until the destination becomes
      * non-writable.  This method is basically same with
-     * {@link #getBytes(int, ByteBuf, int, int)}, except that this
+     * {@link #getBytes(int, ProtonBuffer, int, int)}, except that this
      * method increases the {@code writeIndex} of the destination by the
      * number of the transferred bytes while
-     * {@link #getBytes(int, ByteBuf, int, int)} does not.
+     * {@link #getBytes(int, ProtonBuffer, int, int)} does not.
      * This method does not modify {@code readIndex} or {@code writeIndex} of
      * the source buffer (i.e. {@code this}).
      *
@@ -389,14 +388,13 @@ public interface ProtonBuffer {
      */
     ProtonBuffer getBytes(int index, ProtonBuffer dst);
 
-    // TODO - Update docs
     /**
      * Transfers this buffer's data to the specified destination starting at
      * the specified absolute {@code index}.  This method is basically same
-     * with {@link #getBytes(int, ByteBuf, int, int)}, except that this
+     * with {@link #getBytes(int, ProtonBuffer, int, int)}, except that this
      * method increases the {@code writeIndex} of the destination by the
      * number of the transferred bytes while
-     * {@link #getBytes(int, ByteBuf, int, int)} does not.
+     * {@link #getBytes(int, ProtonBuffer, int, int)} does not.
      * This method does not modify {@code readIndex} or {@code writeIndex} of
      * the source buffer (i.e. {@code this}).
      *
@@ -410,7 +408,6 @@ public interface ProtonBuffer {
      */
     ProtonBuffer getBytes(int index, ProtonBuffer dst, int length);
 
-    // TODO - Update docs
     /**
      * Transfers this buffer's data to the specified destination starting at
      * the specified absolute {@code index}.
@@ -430,7 +427,6 @@ public interface ProtonBuffer {
      */
     ProtonBuffer getBytes(int index, ProtonBuffer dst, int dstIndex, int length);
 
-    // TODO - Update docs
     /**
      * Transfers this buffer's data to the specified destination starting at
      * the specified absolute {@code index}.
@@ -591,15 +587,14 @@ public interface ProtonBuffer {
      */
     ProtonBuffer setDouble(int index, double value);
 
-    // TODO - Update docs
     /**
      * Transfers the specified source buffer's data to this buffer starting at
      * the specified absolute {@code index} until the source buffer becomes
      * unreadable.  This method is basically same with
-     * {@link #setBytes(int, ByteBuf, int, int)}, except that this
+     * {@link #setBytes(int, ProtonBuffer, int, int)}, except that this
      * method increases the {@code readIndex} of the source buffer by
      * the number of the transferred bytes while
-     * {@link #setBytes(int, ByteBuf, int, int)} does not.
+     * {@link #setBytes(int, ProtonBuffer, int, int)} does not.
      * This method does not modify {@code readIndex} or {@code writeIndex} of
      * the source buffer (i.e. {@code this}).
      *
@@ -610,14 +605,13 @@ public interface ProtonBuffer {
      */
     ProtonBuffer setBytes(int index, ProtonBuffer source);
 
-    // TODO - Update docs
     /**
      * Transfers the specified source buffer's data to this buffer starting at
      * the specified absolute {@code index}.  This method is basically same
-     * with {@link #setBytes(int, ByteBuf, int, int)}, except that this
+     * with {@link #setBytes(int, ProtonBuffer, int, int)}, except that this
      * method increases the {@code readIndex} of the source buffer by
      * the number of the transferred bytes while
-     * {@link #setBytes(int, ByteBuf, int, int)} does not.
+     * {@link #setBytes(int, ProtonBuffer, int, int)} does not.
      * This method does not modify {@code readIndex} or {@code writeIndex} of
      * the source buffer (i.e. {@code this}).
      *
@@ -631,7 +625,6 @@ public interface ProtonBuffer {
      */
     ProtonBuffer setBytes(int index, ProtonBuffer source, int length);
 
-    // TODO - Update docs
     /**
      * Transfers the specified source buffer's data to this buffer starting at
      * the specified absolute {@code index}.
@@ -651,7 +644,6 @@ public interface ProtonBuffer {
      */
     ProtonBuffer setBytes(int index, ProtonBuffer source, int sourceIndex, int length);
 
-    // TODO - Update docs
     /**
      * Transfers the specified source array's data to this buffer starting at
      * the specified absolute {@code index}.
@@ -665,7 +657,6 @@ public interface ProtonBuffer {
      */
     ProtonBuffer setBytes(int index, byte[] source);
 
-    // TODO - Update docs
     /**
      * Transfers the specified source array's data to this buffer starting at
      * the specified absolute {@code index}.
@@ -681,7 +672,6 @@ public interface ProtonBuffer {
      */
     ProtonBuffer setBytes(int index, byte[] src, int srcIndex, int length);
 
-    // TODO - Update docs
     /**
      * Transfers the specified source buffer's data to this buffer starting at
      * the specified absolute {@code index} until the source buffer's position
@@ -961,9 +951,9 @@ public interface ProtonBuffer {
      * the current {@code writeIndex} until the source buffer becomes
      * unreadable, and increases the {@code writeIndex} by the number of
      * the transferred bytes.  This method is basically same with
-     * {@link #writeBytes(ByteBuf, int, int)}, except that this method
+     * {@link #writeBytes(ProtonBuffer, int, int)}, except that this method
      * increases the {@code readIndex} of the source buffer by the number of
-     * the transferred bytes while {@link #writeBytes(ByteBuf, int, int)}
+     * the transferred bytes while {@link #writeBytes(ProtonBuffer, int, int)}
      * does not.
      *
      * @throws IndexOutOfBoundsException
@@ -976,10 +966,10 @@ public interface ProtonBuffer {
      * Transfers the specified source buffer's data to this buffer starting at
      * the current {@code writeIndex} and increases the {@code writeIndex}
      * by the number of the transferred bytes (= {@code length}).  This method
-     * is basically same with {@link #writeBytes(ByteBuf, int, int)},
+     * is basically same with {@link #writeBytes(ProtonBuffer, int, int)},
      * except that this method increases the {@code readIndex} of the source
      * buffer by the number of the transferred bytes (= {@code length}) while
-     * {@link #writeBytes(ByteBuf, int, int)} does not.
+     * {@link #writeBytes(ProtonBuffer, int, int)} does not.
      *
      * @param length the number of bytes to transfer
      *

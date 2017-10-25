@@ -375,7 +375,205 @@ public class ProtonByteBufferTest {
         }
     }
 
-    //----- Write Method Tests -----------------------------------------------//
+    //----- Write Bytes Tests ------------------------------------------------//
+
+    @Test
+    public void testWriteBytes() {
+        byte[] payload = new byte[] { 0, 1, 2, 3, 4, 5 };
+
+        ProtonBuffer buffer = new ProtonByteBuffer();
+
+        assertEquals(0, buffer.getWriteIndex());
+        assertEquals(0, buffer.getReadIndex());
+
+        buffer.writeBytes(payload);
+
+        assertEquals(payload.length, buffer.getWriteIndex());
+        assertEquals(0, buffer.getReadIndex());
+
+        for (int i = 0; i < payload.length; ++i) {
+            assertEquals(payload[i], buffer.readByte());
+        }
+
+        assertEquals(payload.length, buffer.getReadIndex());
+    }
+
+    @Test
+    public void testWriteBytesWithEmptyArray() {
+        ProtonBuffer buffer = new ProtonByteBuffer();
+
+        assertEquals(0, buffer.getWriteIndex());
+        assertEquals(0, buffer.getReadIndex());
+
+        buffer.writeBytes(new byte[0]);
+
+        assertEquals(0, buffer.getWriteIndex());
+        assertEquals(0, buffer.getReadIndex());
+    }
+
+    @Test
+    public void testWriteBytesNPEWhenNullGiven() {
+        ProtonBuffer buffer = new ProtonByteBuffer();
+        try {
+            buffer.writeBytes((byte[]) null);
+            fail();
+        } catch (NullPointerException ex) {}
+
+        try {
+            buffer.writeBytes((byte[]) null, 0);
+            fail();
+        } catch (NullPointerException ex) {}
+
+        try {
+            buffer.writeBytes((byte[]) null, 0, 0);
+            fail();
+        } catch (NullPointerException ex) {}
+    }
+
+    @Test
+    public void testWriteBytesWithLength() {
+        byte[] payload = new byte[] { 0, 1, 2, 3, 4, 5 };
+
+        ProtonBuffer buffer = new ProtonByteBuffer();
+
+        assertEquals(0, buffer.getWriteIndex());
+        assertEquals(0, buffer.getReadIndex());
+
+        buffer.writeBytes(payload, payload.length);
+
+        assertEquals(payload.length, buffer.getWriteIndex());
+        assertEquals(0, buffer.getReadIndex());
+
+        for (int i = 0; i < payload.length; ++i) {
+            assertEquals(payload[i], buffer.readByte());
+        }
+
+        assertEquals(payload.length, buffer.getReadIndex());
+    }
+
+    @Test
+    public void testWriteBytesWithLengthToBig() {
+        byte[] payload = new byte[] { 0, 1, 2, 3, 4, 5 };
+
+        ProtonBuffer buffer = new ProtonByteBuffer();
+
+        assertEquals(0, buffer.getWriteIndex());
+        assertEquals(0, buffer.getReadIndex());
+
+        try {
+            buffer.writeBytes(payload, payload.length + 1);
+            fail("Should not write when length given is to large.");
+        } catch (IndexOutOfBoundsException ex) {}
+    }
+
+    @Test
+    public void testWriteBytesWithNegativeLength() {
+        byte[] payload = new byte[] { 0, 1, 2, 3, 4, 5 };
+
+        ProtonBuffer buffer = new ProtonByteBuffer();
+
+        assertEquals(0, buffer.getWriteIndex());
+        assertEquals(0, buffer.getReadIndex());
+
+        try {
+            buffer.writeBytes(payload, -1);
+            fail("Should not write when length given is negative.");
+        } catch (IllegalArgumentException ex) {}
+    }
+
+    @Test
+    public void testWriteBytesWithLengthAndOffset() {
+        byte[] payload = new byte[] { 0, 1, 2, 3, 4, 5 };
+
+        ProtonBuffer buffer = new ProtonByteBuffer();
+
+        assertEquals(0, buffer.getWriteIndex());
+        assertEquals(0, buffer.getReadIndex());
+
+        buffer.writeBytes(payload, 0, payload.length);
+
+        assertEquals(payload.length, buffer.getWriteIndex());
+        assertEquals(0, buffer.getReadIndex());
+
+        for (int i = 0; i < payload.length; ++i) {
+            assertEquals(payload[i], buffer.readByte());
+        }
+
+        assertEquals(payload.length, buffer.getReadIndex());
+    }
+
+    @Test
+    public void testWriteBytesWithLengthAndOffsetIncorrect() {
+        byte[] payload = new byte[] { 0, 1, 2, 3, 4, 5 };
+
+        ProtonBuffer buffer = new ProtonByteBuffer();
+
+        assertEquals(0, buffer.getWriteIndex());
+        assertEquals(0, buffer.getReadIndex());
+
+        try {
+            buffer.writeBytes(payload, 0, payload.length + 1);
+            fail("Should not write when length given is to large.");
+        } catch (IndexOutOfBoundsException ex) {}
+
+        try {
+            buffer.writeBytes(payload, -1, payload.length);
+            fail("Should not write when offset given is negative.");
+        } catch (IndexOutOfBoundsException ex) {}
+
+        try {
+            buffer.writeBytes(payload, 0, -1);
+            fail("Should not write when length given is negative.");
+        } catch (IllegalArgumentException ex) {}
+
+        try {
+            buffer.writeBytes(payload, payload.length + 1, 1);
+            fail("Should not write when offset given is to large.");
+        } catch (IndexOutOfBoundsException ex) {}
+    }
+
+    @Test
+    public void testWriteBytesFromProtonBufferWithLength() {
+        ProtonBuffer source = new ProtonByteBuffer(new byte[] { 0, 1, 2, 3, 4, 5 });
+        ProtonBuffer buffer = new ProtonByteBuffer();
+
+        assertEquals(0, buffer.getWriteIndex());
+        assertEquals(0, buffer.getReadIndex());
+
+        buffer.writeBytes(source, source.getReadableBytes());
+
+        assertEquals(0, source.getReadableBytes());
+        assertEquals(source.getWriteIndex(), buffer.getWriteIndex());
+        assertEquals(0, buffer.getReadIndex());
+
+        for (int i = 0; i < source.getReadableBytes(); ++i) {
+            assertEquals(source.getByte(i), buffer.readByte());
+        }
+
+        assertEquals(source.getReadableBytes(), buffer.getReadIndex());
+    }
+
+    @Test
+    public void testWriteBytesFromProtonBufferWithLengthAndOffset() {
+        ProtonBuffer source = new ProtonByteBuffer(new byte[] { 0, 1, 2, 3, 4, 5 });
+        ProtonBuffer buffer = new ProtonByteBuffer();
+
+        assertEquals(0, buffer.getWriteIndex());
+        assertEquals(0, buffer.getReadIndex());
+
+        buffer.writeBytes(source, 0, source.getReadableBytes());
+
+        assertEquals(source.getReadableBytes(), buffer.getWriteIndex());
+        assertEquals(0, buffer.getReadIndex());
+
+        for (int i = 0; i < source.getReadableBytes(); ++i) {
+            assertEquals(source.getByte(i), buffer.readByte());
+        }
+
+        assertEquals(source.getReadableBytes(), buffer.getReadIndex());
+    }
+
+    //----- Write Primitives Tests -------------------------------------------//
 
     @Test
     public void testWriteByte() {
