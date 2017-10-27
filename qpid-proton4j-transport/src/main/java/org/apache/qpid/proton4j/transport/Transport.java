@@ -81,4 +81,21 @@ public interface Transport {
      */
     ProtocolTracer getProtocolTracer();
 
+    /**
+     * Get the maximum frame size that the transport will accept before
+     * rejecting an incoming frame.
+     *
+     * @return the maximum frame size allowed for incoming frames.
+     */
+    int getMaxFrameSize();
+
+    /**
+     * Set the maximum frame size that the transport will accept before
+     * rejecting an incoming frame.
+     *
+     * @param size
+     *      the maximum frame size allowed for incoming frames.
+     */
+    void setMaxFrameSize(int size);
+
 }
