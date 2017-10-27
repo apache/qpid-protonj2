@@ -27,6 +27,7 @@ import java.util.HashMap;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
+import org.apache.qpid.proton4j.amqp.Binary;
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedByte;
 import org.apache.qpid.proton4j.amqp.UnsignedInteger;
@@ -35,6 +36,7 @@ import org.apache.qpid.proton4j.amqp.messaging.ApplicationProperties;
 import org.apache.qpid.proton4j.amqp.messaging.Header;
 import org.apache.qpid.proton4j.amqp.messaging.MessageAnnotations;
 import org.apache.qpid.proton4j.amqp.messaging.Properties;
+import org.apache.qpid.proton4j.amqp.transport.Transfer;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.codec.CodecFactory;
@@ -85,6 +87,7 @@ public class Benchmark implements Runnable {
         benchmarkListOfInts();
         benchmarkUUIDs();
         benchmarkHeader();
+        benchmarkTransfer();
         benchmarkProperties();
         benchmarkMessageAnnotations();
         benchmarkApplicationProperties();
@@ -133,6 +136,29 @@ public class Benchmark implements Runnable {
         resultSet.decodesComplete();
 
         time("UUID", resultSet);
+    }
+
+    private void benchmarkTransfer() throws IOException {
+        Transfer transfer = new Transfer();
+        transfer.setDeliveryTag(new Binary(new byte[] {1, 2, 3}));
+        transfer.setHandle(UnsignedInteger.valueOf(10));
+        transfer.setMessageFormat(UnsignedInteger.ZERO);
+
+        resultSet.start();
+        for (int i = 0; i < ITERATIONS; i++) {
+            buffer.clear();
+            encoder.writeObject(buffer, encoderState, transfer);
+        }
+        resultSet.encodesComplete();
+
+        resultSet.start();
+        for (int i = 0; i < ITERATIONS; i++) {
+            buffer.setReadIndex(0);
+            decoder.readObject(buffer, decoderState);
+        }
+        resultSet.decodesComplete();
+
+        time("Transfer", resultSet);
     }
 
     private void benchmarkHeader() throws IOException {
