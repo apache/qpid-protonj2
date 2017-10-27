@@ -39,6 +39,7 @@
     <junit-version>4.12</junit-version>
     <mockito-version>2.10.0</mockito-version>
     <proton-version>0.22.0</proton-version>
+    <slf4j-version>1.7.25</slf4j-version>
 
     <!-- Plugin versions -->
     <maven-bundle-plugin-version>3.2.0</maven-bundle-plugin-version>
@@ -92,6 +93,17 @@
         <groupId>org.apache.qpid</groupId>
         <artifactId>qpid-proton4j-engine</artifactId>
         <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.slf4j</groupId>
+        <artifactId>slf4j-api</artifactId>
+        <version>${slf4j-version}</version>
+      </dependency>
+      <!-- Logging impl dependency, e.g for the tests or examples -->
+      <dependency>
+        <groupId>org.slf4j</groupId>
+        <artifactId>slf4j-log4j12</artifactId>
+        <version>${slf4j-version}</version>
       </dependency>
       <!-- Test dependencies -->
       <dependency>
