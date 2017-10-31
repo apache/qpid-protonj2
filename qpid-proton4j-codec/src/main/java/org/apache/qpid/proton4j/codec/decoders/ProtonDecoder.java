@@ -120,12 +120,17 @@ public class ProtonDecoder implements Decoder {
 
             final Object descriptor;
 
-            if (EncodingCodes.SMALLULONG == encoding || EncodingCodes.ULONG == encoding) {
-                descriptor = readUnsignedLong(buffer, state);
-            } else if (EncodingCodes.SYM8 == encoding || EncodingCodes.SYM32 == encoding) {
-                descriptor = readSymbol(buffer, state);
-            } else {
-                descriptor = readObject(buffer, state);
+            switch (encoding) {
+                case EncodingCodes.SMALLULONG:
+                case EncodingCodes.ULONG:
+                    descriptor = readUnsignedLong(buffer, state);
+                    break;
+                case EncodingCodes.SYM8:
+                case EncodingCodes.SYM32:
+                    descriptor = readSymbol(buffer, state);
+                    break;
+                default:
+                    descriptor = readObject(buffer, state);
             }
 
             TypeDecoder<?> typeDecoder = describedTypeDecoders.get(descriptor);
