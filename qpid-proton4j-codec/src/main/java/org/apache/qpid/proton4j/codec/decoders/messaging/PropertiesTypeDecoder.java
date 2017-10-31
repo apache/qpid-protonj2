@@ -31,7 +31,7 @@ import org.apache.qpid.proton4j.codec.decoders.primitives.ListTypeDecoder;
 /**
  * Decoder of AMQP Properties type values from a byte stream
  */
-public class PropertiesTypeDecoder implements DescribedTypeDecoder<Properties>, ListTypeDecoder.ListEntryHandler<Properties> {
+public class PropertiesTypeDecoder implements DescribedTypeDecoder<Properties> {
 
     @Override
     public UnsignedLong getDescriptorCode() {
@@ -59,58 +59,59 @@ public class PropertiesTypeDecoder implements DescribedTypeDecoder<Properties>, 
         ListTypeDecoder listDecoder = (ListTypeDecoder) decoder;
         Properties properties = new Properties();
 
-        listDecoder.readValue(buffer, state, this, properties);
+        @SuppressWarnings("unused")
+        int size = listDecoder.readSize(buffer);
+        int count = listDecoder.readCount(buffer);
+
+        for (int index = 0; index < count; ++index) {
+            switch (index) {
+                case 0:
+                    properties.setMessageId(state.getDecoder().readObject(buffer, state));
+                    break;
+                case 1:
+                    properties.setUserId(state.getDecoder().readBinary(buffer, state));
+                    break;
+                case 2:
+                    properties.setTo(state.getDecoder().readString(buffer, state));
+                    break;
+                case 3:
+                    properties.setSubject(state.getDecoder().readString(buffer, state));
+                    break;
+                case 4:
+                    properties.setReplyTo(state.getDecoder().readString(buffer, state));
+                    break;
+                case 5:
+                    properties.setCorrelationId(state.getDecoder().readObject(buffer, state));
+                    break;
+                case 6:
+                    properties.setContentType(state.getDecoder().readSymbol(buffer, state));
+                    break;
+                case 7:
+                    properties.setContentEncoding(state.getDecoder().readSymbol(buffer, state));
+                    break;
+                case 8:
+                    Long expireyTime = state.getDecoder().readTimestamp(buffer, state);
+                    properties.setAbsoluteExpiryTime(expireyTime == null ? null : new Date(expireyTime));
+                    break;
+                case 9:
+                    Long createTime = state.getDecoder().readTimestamp(buffer, state);
+                    properties.setCreationTime(createTime == null ? null : new Date(createTime));
+                    break;
+                case 10:
+                    properties.setGroupId(state.getDecoder().readString(buffer, state));
+                    break;
+                case 11:
+                    properties.setGroupSequence(state.getDecoder().readUnsignedInteger(buffer, state));
+                    break;
+                case 12:
+                    properties.setReplyToGroupId(state.getDecoder().readString(buffer, state));
+                    break;
+                default:
+                    throw new IllegalStateException("To many entries in Properties encoding");
+            }
+        }
 
         return properties;
-    }
-
-    @Override
-    public void onListEntry(int index, Properties properties, ProtonBuffer buffer, DecoderState state) throws IOException {
-        switch (index) {
-            case 0:
-                properties.setMessageId(state.getDecoder().readObject(buffer, state));
-                break;
-            case 1:
-                properties.setUserId(state.getDecoder().readBinary(buffer, state));
-                break;
-            case 2:
-                properties.setTo(state.getDecoder().readString(buffer, state));
-                break;
-            case 3:
-                properties.setSubject(state.getDecoder().readString(buffer, state));
-                break;
-            case 4:
-                properties.setReplyTo(state.getDecoder().readString(buffer, state));
-                break;
-            case 5:
-                properties.setCorrelationId(state.getDecoder().readObject(buffer, state));
-                break;
-            case 6:
-                properties.setContentType(state.getDecoder().readSymbol(buffer, state));
-                break;
-            case 7:
-                properties.setContentEncoding(state.getDecoder().readSymbol(buffer, state));
-                break;
-            case 8:
-                Long expireyTime = state.getDecoder().readTimestamp(buffer, state);
-                properties.setAbsoluteExpiryTime(expireyTime == null ? null : new Date(expireyTime));
-                break;
-            case 9:
-                Long createTime = state.getDecoder().readTimestamp(buffer, state);
-                properties.setCreationTime(createTime == null ? null : new Date(createTime));
-                break;
-            case 10:
-                properties.setGroupId(state.getDecoder().readString(buffer, state));
-                break;
-            case 11:
-                properties.setGroupSequence(state.getDecoder().readUnsignedInteger(buffer, state));
-                break;
-            case 12:
-                properties.setReplyToGroupId(state.getDecoder().readString(buffer, state));
-                break;
-            default:
-                throw new IllegalStateException("To many entries in Properties encoding");
-        }
     }
 
     @Override

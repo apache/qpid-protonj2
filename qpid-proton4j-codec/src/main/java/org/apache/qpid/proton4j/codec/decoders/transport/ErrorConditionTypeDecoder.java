@@ -26,12 +26,11 @@ import org.apache.qpid.proton4j.codec.DecoderState;
 import org.apache.qpid.proton4j.codec.DescribedTypeDecoder;
 import org.apache.qpid.proton4j.codec.TypeDecoder;
 import org.apache.qpid.proton4j.codec.decoders.primitives.ListTypeDecoder;
-import org.apache.qpid.proton4j.codec.decoders.primitives.ListTypeDecoder.ListEntryHandler;
 
 /**
  * Decoder of AMQP ErrorCondition type values from a byte stream.
  */
-public class ErrorConditionTypeDecoder implements DescribedTypeDecoder<ErrorCondition>, ListEntryHandler<ErrorCondition> {
+public class ErrorConditionTypeDecoder implements DescribedTypeDecoder<ErrorCondition> {
 
     @Override
     public Class<ErrorCondition> getTypeClass() {
@@ -59,26 +58,27 @@ public class ErrorConditionTypeDecoder implements DescribedTypeDecoder<ErrorCond
         ListTypeDecoder listDecoder = (ListTypeDecoder) decoder;
         ErrorCondition errorCondition = new ErrorCondition();
 
-        listDecoder.readValue(buffer, state, this, errorCondition);
+        @SuppressWarnings("unused")
+        int size = listDecoder.readSize(buffer);
+        int count = listDecoder.readCount(buffer);
+
+        for (int index = 0; index < count; ++index) {
+            switch (index) {
+                case 0:
+                    errorCondition.setCondition(state.getDecoder().readSymbol(buffer, state));
+                    break;
+                case 1:
+                    errorCondition.setDescription(state.getDecoder().readString(buffer, state));
+                    break;
+                case 2:
+                    errorCondition.setInfo(state.getDecoder().readMap(buffer, state));
+                    break;
+                default:
+                    throw new IllegalStateException("To many entries in ErrorCondition encoding");
+            }
+        }
 
         return errorCondition;
-    }
-
-    @Override
-    public void onListEntry(int index, ErrorCondition errorCondition, ProtonBuffer buffer, DecoderState state) throws IOException {
-        switch (index) {
-            case 0:
-                errorCondition.setCondition(state.getDecoder().readSymbol(buffer, state));
-                break;
-            case 1:
-                errorCondition.setDescription(state.getDecoder().readString(buffer, state));
-                break;
-            case 2:
-                errorCondition.setInfo(state.getDecoder().readMap(buffer, state));
-                break;
-            default:
-                throw new IllegalStateException("To many entries in ErrorCondition encoding");
-        }
     }
 
     @Override

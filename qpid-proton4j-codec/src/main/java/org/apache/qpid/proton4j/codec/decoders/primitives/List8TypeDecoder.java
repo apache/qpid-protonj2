@@ -25,12 +25,12 @@ import org.apache.qpid.proton4j.codec.EncodingCodes;
 public class List8TypeDecoder extends AbstractListTypeDecoder {
 
     @Override
-    protected int readSize(ProtonBuffer buffer) {
+    public int readSize(ProtonBuffer buffer) {
         return buffer.readByte() & 0xff;
     }
 
     @Override
-    protected int readCount(ProtonBuffer buffer) {
+    public int readCount(ProtonBuffer buffer) {
         return buffer.readByte() & 0xff;
     }
 

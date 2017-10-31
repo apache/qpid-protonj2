@@ -27,12 +27,11 @@ import org.apache.qpid.proton4j.codec.DecoderState;
 import org.apache.qpid.proton4j.codec.DescribedTypeDecoder;
 import org.apache.qpid.proton4j.codec.TypeDecoder;
 import org.apache.qpid.proton4j.codec.decoders.primitives.ListTypeDecoder;
-import org.apache.qpid.proton4j.codec.decoders.primitives.ListTypeDecoder.ListEntryHandler;
 
 /**
  * Decoder of AMQP Close type values from a byte stream
  */
-public class CloseTypeDecoder implements DescribedTypeDecoder<Close>, ListEntryHandler<Close> {
+public class CloseTypeDecoder implements DescribedTypeDecoder<Close> {
 
     @Override
     public Class<Close> getTypeClass() {
@@ -60,20 +59,21 @@ public class CloseTypeDecoder implements DescribedTypeDecoder<Close>, ListEntryH
         ListTypeDecoder listDecoder = (ListTypeDecoder) decoder;
         Close close = new Close();
 
-        listDecoder.readValue(buffer, state, this, close);
+        @SuppressWarnings("unused")
+        int size = listDecoder.readSize(buffer);
+        int count = listDecoder.readCount(buffer);
+
+        for (int index = 0; index < count; ++index) {
+            switch (index) {
+                case 0:
+                    close.setError(state.getDecoder().readObject(buffer, state, ErrorCondition.class));
+                    break;
+                default:
+                    throw new IllegalStateException("To many entries in Close encoding");
+            }
+        }
 
         return close;
-    }
-
-    @Override
-    public void onListEntry(int index, Close close, ProtonBuffer buffer, DecoderState state) throws IOException {
-        switch (index) {
-            case 0:
-                close.setError(state.getDecoder().readObject(buffer, state, ErrorCondition.class));
-                break;
-            default:
-                throw new IllegalStateException("To many entries in Close encoding");
-        }
     }
 
     @Override

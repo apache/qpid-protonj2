@@ -27,12 +27,11 @@ import org.apache.qpid.proton4j.codec.DecoderState;
 import org.apache.qpid.proton4j.codec.DescribedTypeDecoder;
 import org.apache.qpid.proton4j.codec.TypeDecoder;
 import org.apache.qpid.proton4j.codec.decoders.primitives.ListTypeDecoder;
-import org.apache.qpid.proton4j.codec.decoders.primitives.ListTypeDecoder.ListEntryHandler;
 
 /**
  * Decoder of AMQP TransactionState types from a byte stream.
  */
-public class TransactionStateTypeDecoder implements DescribedTypeDecoder<TransactionalState>, ListEntryHandler<TransactionalState> {
+public class TransactionStateTypeDecoder implements DescribedTypeDecoder<TransactionalState> {
 
     @Override
     public Class<TransactionalState> getTypeClass() {
@@ -61,23 +60,24 @@ public class TransactionStateTypeDecoder implements DescribedTypeDecoder<Transac
         ListTypeDecoder listDecoder = (ListTypeDecoder) decoder;
         TransactionalState transactionalState = new TransactionalState();
 
-        listDecoder.readValue(buffer, state, this, transactionalState);
+        @SuppressWarnings("unused")
+        int size = listDecoder.readSize(buffer);
+        int count = listDecoder.readCount(buffer);
+
+        for (int index = 0; index < count; ++index) {
+            switch (index) {
+                case 0:
+                    transactionalState.setTxnId(state.getDecoder().readBinary(buffer, state));
+                    break;
+                case 1:
+                    transactionalState.setOutcome((Outcome) state.getDecoder().readObject(buffer, state));
+                    break;
+                default:
+                    throw new IllegalStateException("To many entries in TransactionalState encoding");
+            }
+        }
 
         return transactionalState;
-    }
-
-    @Override
-    public void onListEntry(int index, TransactionalState transactionalState, ProtonBuffer buffer, DecoderState state) throws IOException {
-        switch (index) {
-            case 0:
-                transactionalState.setTxnId(state.getDecoder().readBinary(buffer, state));
-                break;
-            case 1:
-                transactionalState.setOutcome((Outcome) state.getDecoder().readObject(buffer, state));
-                break;
-            default:
-                throw new IllegalStateException("To many entries in TransactionalState encoding");
-        }
     }
 
     @Override

@@ -27,12 +27,11 @@ import org.apache.qpid.proton4j.codec.DecoderState;
 import org.apache.qpid.proton4j.codec.DescribedTypeDecoder;
 import org.apache.qpid.proton4j.codec.TypeDecoder;
 import org.apache.qpid.proton4j.codec.decoders.primitives.ListTypeDecoder;
-import org.apache.qpid.proton4j.codec.decoders.primitives.ListTypeDecoder.ListEntryHandler;
 
 /**
  * Decoder of AMQP Rejected type values from a byte stream.
  */
-public class RejectedTypeDecoder implements DescribedTypeDecoder<Rejected>, ListEntryHandler<Rejected> {
+public class RejectedTypeDecoder implements DescribedTypeDecoder<Rejected> {
 
     @Override
     public Class<Rejected> getTypeClass() {
@@ -60,20 +59,21 @@ public class RejectedTypeDecoder implements DescribedTypeDecoder<Rejected>, List
         ListTypeDecoder listDecoder = (ListTypeDecoder) decoder;
         Rejected rejected = new Rejected();
 
-        listDecoder.readValue(buffer, state, this, rejected);
+        @SuppressWarnings("unused")
+        int size = listDecoder.readSize(buffer);
+        int count = listDecoder.readCount(buffer);
+
+        for (int index = 0; index < count; ++index) {
+            switch (index) {
+                case 0:
+                    rejected.setError(state.getDecoder().readObject(buffer, state, ErrorCondition.class));
+                    break;
+                default:
+                    throw new IllegalStateException("To many entries in Rejected encoding");
+            }
+        }
 
         return rejected;
-    }
-
-    @Override
-    public void onListEntry(int index, Rejected rejected, ProtonBuffer buffer, DecoderState state) throws IOException {
-        switch (index) {
-            case 0:
-                rejected.setError(state.getDecoder().readObject(buffer, state, ErrorCondition.class));
-                break;
-            default:
-                throw new IllegalStateException("To many entries in Rejected encoding");
-        }
     }
 
     @Override

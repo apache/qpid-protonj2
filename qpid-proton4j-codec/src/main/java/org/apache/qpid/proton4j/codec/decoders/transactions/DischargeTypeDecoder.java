@@ -26,12 +26,11 @@ import org.apache.qpid.proton4j.codec.DecoderState;
 import org.apache.qpid.proton4j.codec.DescribedTypeDecoder;
 import org.apache.qpid.proton4j.codec.TypeDecoder;
 import org.apache.qpid.proton4j.codec.decoders.primitives.ListTypeDecoder;
-import org.apache.qpid.proton4j.codec.decoders.primitives.ListTypeDecoder.ListEntryHandler;
 
 /**
  * Decoder of AMQP Discharge type values from a byte stream.
  */
-public class DischargeTypeDecoder implements DescribedTypeDecoder<Discharge>, ListEntryHandler<Discharge> {
+public class DischargeTypeDecoder implements DescribedTypeDecoder<Discharge> {
 
     @Override
     public Class<Discharge> getTypeClass() {
@@ -59,23 +58,24 @@ public class DischargeTypeDecoder implements DescribedTypeDecoder<Discharge>, Li
         ListTypeDecoder listDecoder = (ListTypeDecoder) decoder;
         Discharge discharge = new Discharge();
 
-        listDecoder.readValue(buffer, state, this, discharge);
+        @SuppressWarnings("unused")
+        int size = listDecoder.readSize(buffer);
+        int count = listDecoder.readCount(buffer);
+
+        for (int index = 0; index < count; ++index) {
+            switch (index) {
+                case 0:
+                    discharge.setTxnId(state.getDecoder().readBinary(buffer, state));
+                    break;
+                case 1:
+                    discharge.setFail(state.getDecoder().readBoolean(buffer, state));
+                    break;
+                default:
+                    throw new IllegalStateException("To many entries in Discharge encoding");
+            }
+        }
 
         return discharge;
-    }
-
-    @Override
-    public void onListEntry(int index, Discharge discharge, ProtonBuffer buffer, DecoderState state) throws IOException {
-        switch (index) {
-            case 0:
-                discharge.setTxnId(state.getDecoder().readBinary(buffer, state));
-                break;
-            case 1:
-                discharge.setFail(state.getDecoder().readBoolean(buffer, state));
-                break;
-            default:
-                throw new IllegalStateException("To many entries in Discharge encoding");
-        }
     }
 
     @Override

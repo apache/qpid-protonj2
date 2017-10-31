@@ -73,31 +73,8 @@ public abstract class AbstractListTypeDecoder implements ListTypeDecoder {
         return list;
     }
 
-    @SuppressWarnings({ "unchecked", "rawtypes" })
-    @Override
-    public void readValue(ProtonBuffer buffer, DecoderState state, ListEntryHandler handler, Object target) throws IOException {
-        int size = readSize(buffer);
-        int count = readCount(buffer);
-
-        // Ensure we do not allocate an array of size greater then the available data, otherwise there is a risk for an OOM error
-        if (count > buffer.getReadableBytes()) {
-            throw new IllegalArgumentException(String.format(
-                    "List element size %d is specified to be greater than the amount " +
-                    "of data available (%d)", size, buffer.getReadableBytes()));
-        }
-
-        for (int i = 0; i < count; i++) {
-            handler.onListEntry(i, target, buffer, state);
-        }
-    }
-
     @Override
     public void skipValue(ProtonBuffer buffer, DecoderState state) throws IOException {
         buffer.skipBytes(readSize(buffer));
     }
-
-    protected abstract int readSize(ProtonBuffer buffer);
-
-    protected abstract int readCount(ProtonBuffer buffer);
-
 }

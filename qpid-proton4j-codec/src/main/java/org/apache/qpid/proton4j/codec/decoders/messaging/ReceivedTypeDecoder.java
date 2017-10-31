@@ -26,12 +26,11 @@ import org.apache.qpid.proton4j.codec.DecoderState;
 import org.apache.qpid.proton4j.codec.DescribedTypeDecoder;
 import org.apache.qpid.proton4j.codec.TypeDecoder;
 import org.apache.qpid.proton4j.codec.decoders.primitives.ListTypeDecoder;
-import org.apache.qpid.proton4j.codec.decoders.primitives.ListTypeDecoder.ListEntryHandler;
 
 /**
  * Decoder of AMQP Received type value from a byte stream.
  */
-public class ReceivedTypeDecoder implements DescribedTypeDecoder<Received>, ListEntryHandler<Received> {
+public class ReceivedTypeDecoder implements DescribedTypeDecoder<Received> {
 
     @Override
     public Class<Received> getTypeClass() {
@@ -59,23 +58,24 @@ public class ReceivedTypeDecoder implements DescribedTypeDecoder<Received>, List
         ListTypeDecoder listDecoder = (ListTypeDecoder) decoder;
         Received received = new Received();
 
-        listDecoder.readValue(buffer, state, this, received);
+        @SuppressWarnings("unused")
+        int size = listDecoder.readSize(buffer);
+        int count = listDecoder.readCount(buffer);
+
+        for (int index = 0; index < count; ++index) {
+            switch (index) {
+                case 0:
+                    received.setSectionNumber(state.getDecoder().readUnsignedInteger(buffer, state));
+                    break;
+                case 1:
+                    received.setSectionOffset(state.getDecoder().readUnsignedLong(buffer, state));
+                    break;
+                default:
+                    throw new IllegalStateException("To many entries in Received encoding");
+            }
+        }
 
         return received;
-    }
-
-    @Override
-    public void onListEntry(int index, Received received, ProtonBuffer buffer, DecoderState state) throws IOException {
-        switch (index) {
-            case 0:
-                received.setSectionNumber(state.getDecoder().readUnsignedInteger(buffer, state));
-                break;
-            case 1:
-                received.setSectionOffset(state.getDecoder().readUnsignedLong(buffer, state));
-                break;
-            default:
-                throw new IllegalStateException("To many entries in Received encoding");
-        }
     }
 
     @Override

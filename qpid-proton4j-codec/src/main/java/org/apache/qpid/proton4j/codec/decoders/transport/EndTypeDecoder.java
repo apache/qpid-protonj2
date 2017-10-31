@@ -27,12 +27,11 @@ import org.apache.qpid.proton4j.codec.DecoderState;
 import org.apache.qpid.proton4j.codec.DescribedTypeDecoder;
 import org.apache.qpid.proton4j.codec.TypeDecoder;
 import org.apache.qpid.proton4j.codec.decoders.primitives.ListTypeDecoder;
-import org.apache.qpid.proton4j.codec.decoders.primitives.ListTypeDecoder.ListEntryHandler;
 
 /**
  * Decoder of AMQP End type values from a byte stream
  */
-public class EndTypeDecoder implements DescribedTypeDecoder<End>, ListEntryHandler<End> {
+public class EndTypeDecoder implements DescribedTypeDecoder<End> {
 
     @Override
     public Class<End> getTypeClass() {
@@ -60,20 +59,21 @@ public class EndTypeDecoder implements DescribedTypeDecoder<End>, ListEntryHandl
         ListTypeDecoder listDecoder = (ListTypeDecoder) decoder;
         End end = new End();
 
-        listDecoder.readValue(buffer, state, this, end);
+        @SuppressWarnings("unused")
+        int size = listDecoder.readSize(buffer);
+        int count = listDecoder.readCount(buffer);
+
+        for (int index = 0; index < count; ++index) {
+            switch (index) {
+                case 0:
+                    end.setError(state.getDecoder().readObject(buffer, state, ErrorCondition.class));
+                    break;
+                default:
+                    throw new IllegalStateException("To many entries in End encoding");
+            }
+        }
 
         return end;
-    }
-
-    @Override
-    public void onListEntry(int index, End end, ProtonBuffer buffer, DecoderState state) throws IOException {
-        switch (index) {
-            case 0:
-                end.setError(state.getDecoder().readObject(buffer, state, ErrorCondition.class));
-                break;
-            default:
-                throw new IllegalStateException("To many entries in End encoding");
-        }
     }
 
     @Override

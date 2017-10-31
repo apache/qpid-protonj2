@@ -27,12 +27,11 @@ import org.apache.qpid.proton4j.codec.DecoderState;
 import org.apache.qpid.proton4j.codec.DescribedTypeDecoder;
 import org.apache.qpid.proton4j.codec.TypeDecoder;
 import org.apache.qpid.proton4j.codec.decoders.primitives.ListTypeDecoder;
-import org.apache.qpid.proton4j.codec.decoders.primitives.ListTypeDecoder.ListEntryHandler;
 
 /**
  * Decoder of AMQP Declare type values from a byte stream
  */
-public class DeclareTypeDecoder implements DescribedTypeDecoder<Declare>, ListEntryHandler<Declare> {
+public class DeclareTypeDecoder implements DescribedTypeDecoder<Declare> {
 
     @Override
     public Class<Declare> getTypeClass() {
@@ -61,20 +60,21 @@ public class DeclareTypeDecoder implements DescribedTypeDecoder<Declare>, ListEn
         ListTypeDecoder listDecoder = (ListTypeDecoder) decoder;
         Declare declare = new Declare();
 
-        listDecoder.readValue(buffer, state, this, declare);
+        @SuppressWarnings("unused")
+        int size = listDecoder.readSize(buffer);
+        int count = listDecoder.readCount(buffer);
+
+        for (int index = 0; index < count; ++index) {
+            switch (index) {
+                case 0:
+                    declare.setGlobalId(state.getDecoder().readObject(buffer, state, GlobalTxId.class));
+                    break;
+                default:
+                    throw new IllegalStateException("To many entries in Declare encoding");
+            }
+        }
 
         return declare;
-    }
-
-    @Override
-    public void onListEntry(int index, Declare declare, ProtonBuffer buffer, DecoderState state) throws IOException {
-        switch (index) {
-            case 0:
-                declare.setGlobalId(state.getDecoder().readObject(buffer, state, GlobalTxId.class));
-                break;
-            default:
-                throw new IllegalStateException("To many entries in Declare encoding");
-        }
     }
 
     @Override

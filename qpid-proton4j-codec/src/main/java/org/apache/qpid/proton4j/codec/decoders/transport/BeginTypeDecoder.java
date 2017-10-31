@@ -27,12 +27,11 @@ import org.apache.qpid.proton4j.codec.DecoderState;
 import org.apache.qpid.proton4j.codec.DescribedTypeDecoder;
 import org.apache.qpid.proton4j.codec.TypeDecoder;
 import org.apache.qpid.proton4j.codec.decoders.primitives.ListTypeDecoder;
-import org.apache.qpid.proton4j.codec.decoders.primitives.ListTypeDecoder.ListEntryHandler;
 
 /**
  * Decoder of AMQP Begin type values from a byte stream
  */
-public class BeginTypeDecoder implements DescribedTypeDecoder<Begin>, ListEntryHandler<Begin> {
+public class BeginTypeDecoder implements DescribedTypeDecoder<Begin> {
 
     @Override
     public Class<Begin> getTypeClass() {
@@ -60,42 +59,43 @@ public class BeginTypeDecoder implements DescribedTypeDecoder<Begin>, ListEntryH
         ListTypeDecoder listDecoder = (ListTypeDecoder) decoder;
         Begin begin = new Begin();
 
-        listDecoder.readValue(buffer, state, this, begin);
+        @SuppressWarnings("unused")
+        int size = listDecoder.readSize(buffer);
+        int count = listDecoder.readCount(buffer);
+
+        for (int index = 0; index < count; ++index) {
+            switch (index) {
+                case 0:
+                    begin.setRemoteChannel(state.getDecoder().readUnsignedShort(buffer, state));
+                    break;
+                case 1:
+                    begin.setNextOutgoingId(state.getDecoder().readUnsignedInteger(buffer, state));
+                    break;
+                case 2:
+                    begin.setIncomingWindow(state.getDecoder().readUnsignedInteger(buffer, state));
+                    break;
+                case 3:
+                    begin.setOutgoingWindow(state.getDecoder().readUnsignedInteger(buffer, state));
+                    break;
+                case 4:
+                    UnsignedInteger handleMax = state.getDecoder().readUnsignedInteger(buffer, state);
+                    begin.setHandleMax(handleMax == null ? UnsignedInteger.MAX_VALUE : handleMax);
+                    break;
+                case 5:
+                    begin.setOfferedCapabilities(state.getDecoder().readMultiple(buffer, state, Symbol.class));
+                    break;
+                case 6:
+                    begin.setDesiredCapabilities(state.getDecoder().readMultiple(buffer, state, Symbol.class));
+                    break;
+                case 7:
+                    begin.setProperties(state.getDecoder().readMap(buffer, state));
+                    break;
+                default:
+                    throw new IllegalStateException("To many entries in Begin encoding");
+            }
+        }
 
         return begin;
-    }
-
-    @Override
-    public void onListEntry(int index, Begin begin, ProtonBuffer buffer, DecoderState state) throws IOException {
-        switch (index) {
-            case 0:
-                begin.setRemoteChannel(state.getDecoder().readUnsignedShort(buffer, state));
-                break;
-            case 1:
-                begin.setNextOutgoingId(state.getDecoder().readUnsignedInteger(buffer, state));
-                break;
-            case 2:
-                begin.setIncomingWindow(state.getDecoder().readUnsignedInteger(buffer, state));
-                break;
-            case 3:
-                begin.setOutgoingWindow(state.getDecoder().readUnsignedInteger(buffer, state));
-                break;
-            case 4:
-                UnsignedInteger handleMax = state.getDecoder().readUnsignedInteger(buffer, state);
-                begin.setHandleMax(handleMax == null ? UnsignedInteger.MAX_VALUE : handleMax);
-                break;
-            case 5:
-                begin.setOfferedCapabilities(state.getDecoder().readMultiple(buffer, state, Symbol.class));
-                break;
-            case 6:
-                begin.setDesiredCapabilities(state.getDecoder().readMultiple(buffer, state, Symbol.class));
-                break;
-            case 7:
-                begin.setProperties(state.getDecoder().readMap(buffer, state));
-                break;
-            default:
-                throw new IllegalStateException("To many entries in Begin encoding");
-        }
     }
 
     @Override

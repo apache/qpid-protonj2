@@ -125,7 +125,7 @@ public class ProtonDecoder implements Decoder {
             } else if (EncodingCodes.SYM8 == encoding || EncodingCodes.SYM32 == encoding) {
                 descriptor = readSymbol(buffer, state);
             } else {
-                throw new IllegalStateException("Invalid type found in descriptor location: " + encoding);
+                descriptor = readObject(buffer, state);
             }
 
             TypeDecoder<?> typeDecoder = describedTypeDecoders.get(descriptor);

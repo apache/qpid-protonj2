@@ -26,12 +26,11 @@ import org.apache.qpid.proton4j.codec.DecoderState;
 import org.apache.qpid.proton4j.codec.DescribedTypeDecoder;
 import org.apache.qpid.proton4j.codec.TypeDecoder;
 import org.apache.qpid.proton4j.codec.decoders.primitives.ListTypeDecoder;
-import org.apache.qpid.proton4j.codec.decoders.primitives.ListTypeDecoder.ListEntryHandler;
 
 /**
  * Decoder of AMQP Modified type values from a byte stream.
  */
-public class ModifiedTypeDecoder implements DescribedTypeDecoder<Modified>, ListEntryHandler<Modified> {
+public class ModifiedTypeDecoder implements DescribedTypeDecoder<Modified> {
 
     @Override
     public Class<Modified> getTypeClass() {
@@ -59,26 +58,27 @@ public class ModifiedTypeDecoder implements DescribedTypeDecoder<Modified>, List
         ListTypeDecoder listDecoder = (ListTypeDecoder) decoder;
         Modified modified = new Modified();
 
-        listDecoder.readValue(buffer, state, this, modified);
+        @SuppressWarnings("unused")
+        int size = listDecoder.readSize(buffer);
+        int count = listDecoder.readCount(buffer);
+
+        for (int index = 0; index < count; ++index) {
+            switch (index) {
+                case 0:
+                    modified.setDeliveryFailed(state.getDecoder().readBoolean(buffer, state));
+                    break;
+                case 1:
+                    modified.setUndeliverableHere(state.getDecoder().readBoolean(buffer, state));
+                    break;
+                case 2:
+                    modified.setMessageAnnotations(state.getDecoder().readMap(buffer, state));
+                    break;
+                default:
+                    throw new IllegalStateException("To many entries in Modified encoding");
+            }
+        }
 
         return modified;
-    }
-
-    @Override
-    public void onListEntry(int index, Modified modified, ProtonBuffer buffer, DecoderState state) throws IOException {
-        switch (index) {
-            case 0:
-                modified.setDeliveryFailed(state.getDecoder().readBoolean(buffer, state));
-                break;
-            case 1:
-                modified.setUndeliverableHere(state.getDecoder().readBoolean(buffer, state));
-                break;
-            case 2:
-                modified.setMessageAnnotations(state.getDecoder().readMap(buffer, state));
-                break;
-            default:
-                throw new IllegalStateException("To many entries in Modified encoding");
-        }
     }
 
     @Override

@@ -27,12 +27,11 @@ import org.apache.qpid.proton4j.codec.DecoderState;
 import org.apache.qpid.proton4j.codec.DescribedTypeDecoder;
 import org.apache.qpid.proton4j.codec.TypeDecoder;
 import org.apache.qpid.proton4j.codec.decoders.primitives.ListTypeDecoder;
-import org.apache.qpid.proton4j.codec.decoders.primitives.ListTypeDecoder.ListEntryHandler;
 
 /**
  * Decoder of AMQP Detach type values from a byte stream
  */
-public class DetachTypeDecoder implements DescribedTypeDecoder<Detach>, ListEntryHandler<Detach> {
+public class DetachTypeDecoder implements DescribedTypeDecoder<Detach> {
 
     @Override
     public Class<Detach> getTypeClass() {
@@ -60,26 +59,27 @@ public class DetachTypeDecoder implements DescribedTypeDecoder<Detach>, ListEntr
         ListTypeDecoder listDecoder = (ListTypeDecoder) decoder;
         Detach detach = new Detach();
 
-        listDecoder.readValue(buffer, state, this, detach);
+        @SuppressWarnings("unused")
+        int size = listDecoder.readSize(buffer);
+        int count = listDecoder.readCount(buffer);
+
+        for (int index = 0; index < count; ++index) {
+            switch (index) {
+                case 0:
+                    detach.setHandle(state.getDecoder().readUnsignedInteger(buffer, state));
+                    break;
+                case 1:
+                    detach.setClosed(Boolean.TRUE.equals(state.getDecoder().readBoolean(buffer, state)));
+                    break;
+                case 2:
+                    detach.setError(state.getDecoder().readObject(buffer, state, ErrorCondition.class));
+                    break;
+                default:
+                    throw new IllegalStateException("To many entries in Detach encoding");
+            }
+        }
 
         return detach;
-    }
-
-    @Override
-    public void onListEntry(int index, Detach detach, ProtonBuffer buffer, DecoderState state) throws IOException {
-        switch (index) {
-            case 0:
-                detach.setHandle(state.getDecoder().readUnsignedInteger(buffer, state));
-                break;
-            case 1:
-                detach.setClosed(Boolean.TRUE.equals(state.getDecoder().readBoolean(buffer, state)));
-                break;
-            case 2:
-                detach.setError(state.getDecoder().readObject(buffer, state, ErrorCondition.class));
-                break;
-            default:
-                throw new IllegalStateException("To many entries in Detach encoding");
-        }
     }
 
     @Override

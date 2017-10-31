@@ -26,12 +26,11 @@ import org.apache.qpid.proton4j.codec.DecoderState;
 import org.apache.qpid.proton4j.codec.DescribedTypeDecoder;
 import org.apache.qpid.proton4j.codec.TypeDecoder;
 import org.apache.qpid.proton4j.codec.decoders.primitives.ListTypeDecoder;
-import org.apache.qpid.proton4j.codec.decoders.primitives.ListTypeDecoder.ListEntryHandler;
 
 /**
  * Decoder of AMQP Coordinator type values from a byte stream.
  */
-public class CoordinatorTypeDecoder implements DescribedTypeDecoder<Coordinator>, ListEntryHandler<Coordinator> {
+public class CoordinatorTypeDecoder implements DescribedTypeDecoder<Coordinator> {
 
     @Override
     public Class<Coordinator> getTypeClass() {
@@ -59,20 +58,21 @@ public class CoordinatorTypeDecoder implements DescribedTypeDecoder<Coordinator>
         ListTypeDecoder listDecoder = (ListTypeDecoder) decoder;
         Coordinator coordinator = new Coordinator();
 
-        listDecoder.readValue(buffer, state, this, coordinator);
+        @SuppressWarnings("unused")
+        int size = listDecoder.readSize(buffer);
+        int count = listDecoder.readCount(buffer);
+
+        for (int index = 0; index < count; ++index) {
+            switch (index) {
+                case 0:
+                    coordinator.setCapabilities(state.getDecoder().readMultiple(buffer, state, Symbol.class));
+                    break;
+                default:
+                    throw new IllegalStateException("To many entries in Header encoding");
+            }
+        }
 
         return coordinator;
-    }
-
-    @Override
-    public void onListEntry(int index, Coordinator coordinator, ProtonBuffer buffer, DecoderState state) throws IOException {
-        switch (index) {
-            case 0:
-                coordinator.setCapabilities(state.getDecoder().readMultiple(buffer, state, Symbol.class));
-                break;
-            default:
-                throw new IllegalStateException("To many entries in Header encoding");
-        }
     }
 
     @Override

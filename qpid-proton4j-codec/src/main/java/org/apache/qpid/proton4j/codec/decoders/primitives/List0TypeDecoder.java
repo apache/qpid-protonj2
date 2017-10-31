@@ -40,13 +40,17 @@ public class List0TypeDecoder implements ListTypeDecoder {
         return EncodingCodes.LIST0 & 0xff;
     }
 
-    @SuppressWarnings("rawtypes")
     @Override
-    public void readValue(ProtonBuffer buffer, DecoderState state, ListEntryHandler handler, Object target) throws IOException {
-        // Nothing to do here, no entries in the list.
+    public void skipValue(ProtonBuffer buffer, DecoderState state) throws IOException {
     }
 
     @Override
-    public void skipValue(ProtonBuffer buffer, DecoderState state) throws IOException {
+    public int readSize(ProtonBuffer buffer) {
+        return 0;
+    }
+
+    @Override
+    public int readCount(ProtonBuffer buffer) {
+        return 0;
     }
 }

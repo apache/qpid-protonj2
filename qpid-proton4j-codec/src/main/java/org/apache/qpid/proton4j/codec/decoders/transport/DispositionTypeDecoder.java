@@ -28,12 +28,11 @@ import org.apache.qpid.proton4j.codec.DecoderState;
 import org.apache.qpid.proton4j.codec.DescribedTypeDecoder;
 import org.apache.qpid.proton4j.codec.TypeDecoder;
 import org.apache.qpid.proton4j.codec.decoders.primitives.ListTypeDecoder;
-import org.apache.qpid.proton4j.codec.decoders.primitives.ListTypeDecoder.ListEntryHandler;
 
 /**
  * Decoder of AMQP Disposition type values from a byte stream.
  */
-public class DispositionTypeDecoder implements DescribedTypeDecoder<Disposition>, ListEntryHandler<Disposition> {
+public class DispositionTypeDecoder implements DescribedTypeDecoder<Disposition> {
 
     @Override
     public Class<Disposition> getTypeClass() {
@@ -61,35 +60,36 @@ public class DispositionTypeDecoder implements DescribedTypeDecoder<Disposition>
         ListTypeDecoder listDecoder = (ListTypeDecoder) decoder;
         Disposition disposition = new Disposition();
 
-        listDecoder.readValue(buffer, state, this, disposition);
+        @SuppressWarnings("unused")
+        int size = listDecoder.readSize(buffer);
+        int count = listDecoder.readCount(buffer);
+
+        for (int index = 0; index < count; ++index) {
+            switch (index) {
+                case 0:
+                    disposition.setRole(Boolean.TRUE.equals(state.getDecoder().readBoolean(buffer, state)) ? Role.RECEIVER : Role.SENDER);
+                    break;
+                case 1:
+                    disposition.setFirst(state.getDecoder().readUnsignedInteger(buffer, state));
+                    break;
+                case 2:
+                    disposition.setLast(state.getDecoder().readUnsignedInteger(buffer, state));
+                    break;
+                case 3:
+                    disposition.setSettled(Boolean.TRUE.equals(state.getDecoder().readBoolean(buffer, state)));
+                    break;
+                case 4:
+                    disposition.setState(state.getDecoder().readObject(buffer, state, DeliveryState.class));
+                    break;
+                case 5:
+                    disposition.setBatchable(Boolean.TRUE.equals(state.getDecoder().readBoolean(buffer, state)));
+                    break;
+                default:
+                    throw new IllegalStateException("To many entries in Disposition encoding");
+            }
+        }
 
         return disposition;
-    }
-
-    @Override
-    public void onListEntry(int index, Disposition disposition, ProtonBuffer buffer, DecoderState state) throws IOException {
-        switch (index) {
-            case 0:
-                disposition.setRole(Boolean.TRUE.equals(state.getDecoder().readBoolean(buffer, state)) ? Role.RECEIVER : Role.SENDER);
-                break;
-            case 1:
-                disposition.setFirst(state.getDecoder().readUnsignedInteger(buffer, state));
-                break;
-            case 2:
-                disposition.setLast(state.getDecoder().readUnsignedInteger(buffer, state));
-                break;
-            case 3:
-                disposition.setSettled(Boolean.TRUE.equals(state.getDecoder().readBoolean(buffer, state)));
-                break;
-            case 4:
-                disposition.setState(state.getDecoder().readObject(buffer, state, DeliveryState.class));
-                break;
-            case 5:
-                disposition.setBatchable(Boolean.TRUE.equals(state.getDecoder().readBoolean(buffer, state)));
-                break;
-            default:
-                throw new IllegalStateException("To many entries in Disposition encoding");
-        }
     }
 
     @Override

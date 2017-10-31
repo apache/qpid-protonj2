@@ -26,12 +26,11 @@ import org.apache.qpid.proton4j.codec.DecoderState;
 import org.apache.qpid.proton4j.codec.DescribedTypeDecoder;
 import org.apache.qpid.proton4j.codec.TypeDecoder;
 import org.apache.qpid.proton4j.codec.decoders.primitives.ListTypeDecoder;
-import org.apache.qpid.proton4j.codec.decoders.primitives.ListTypeDecoder.ListEntryHandler;
 
 /**
  * Decoder of AMQP Flow type values from a byte stream.
  */
-public class FlowTypeDecoder implements DescribedTypeDecoder<Flow>, ListEntryHandler<Flow> {
+public class FlowTypeDecoder implements DescribedTypeDecoder<Flow> {
 
     @Override
     public Class<Flow> getTypeClass() {
@@ -59,50 +58,51 @@ public class FlowTypeDecoder implements DescribedTypeDecoder<Flow>, ListEntryHan
         ListTypeDecoder listDecoder = (ListTypeDecoder) decoder;
         Flow flow = new Flow();
 
-        listDecoder.readValue(buffer, state, this, flow);
+        @SuppressWarnings("unused")
+        int size = listDecoder.readSize(buffer);
+        int count = listDecoder.readCount(buffer);
+
+        for (int index = 0; index < count; ++index) {
+            switch (index) {
+                case 0:
+                    flow.setNextIncomingId(state.getDecoder().readUnsignedInteger(buffer, state));
+                    break;
+                case 1:
+                    flow.setIncomingWindow(state.getDecoder().readUnsignedInteger(buffer, state));
+                    break;
+                case 2:
+                    flow.setNextOutgoingId(state.getDecoder().readUnsignedInteger(buffer, state));
+                    break;
+                case 3:
+                    flow.setOutgoingWindow(state.getDecoder().readUnsignedInteger(buffer, state));
+                    break;
+                case 4:
+                    flow.setHandle(state.getDecoder().readUnsignedInteger(buffer, state));
+                    break;
+                case 5:
+                    flow.setDeliveryCount(state.getDecoder().readUnsignedInteger(buffer, state));
+                    break;
+                case 6:
+                    flow.setLinkCredit(state.getDecoder().readUnsignedInteger(buffer, state));
+                    break;
+                case 7:
+                    flow.setAvailable(state.getDecoder().readUnsignedInteger(buffer, state));
+                    break;
+                case 8:
+                    flow.setDrain(Boolean.TRUE.equals(state.getDecoder().readBoolean(buffer, state)));
+                    break;
+                case 9:
+                    flow.setEcho(Boolean.TRUE.equals(state.getDecoder().readBoolean(buffer, state)));
+                    break;
+                case 10:
+                    flow.setProperties(state.getDecoder().readMap(buffer, state));
+                    break;
+                default:
+                    throw new IllegalStateException("To many entries in Flow encoding");
+            }
+        }
 
         return flow;
-    }
-
-    @Override
-    public void onListEntry(int index, Flow flow, ProtonBuffer buffer, DecoderState state) throws IOException {
-        switch (index) {
-            case 0:
-                flow.setNextIncomingId(state.getDecoder().readUnsignedInteger(buffer, state));
-                break;
-            case 1:
-                flow.setIncomingWindow(state.getDecoder().readUnsignedInteger(buffer, state));
-                break;
-            case 2:
-                flow.setNextOutgoingId(state.getDecoder().readUnsignedInteger(buffer, state));
-                break;
-            case 3:
-                flow.setOutgoingWindow(state.getDecoder().readUnsignedInteger(buffer, state));
-                break;
-            case 4:
-                flow.setHandle(state.getDecoder().readUnsignedInteger(buffer, state));
-                break;
-            case 5:
-                flow.setDeliveryCount(state.getDecoder().readUnsignedInteger(buffer, state));
-                break;
-            case 6:
-                flow.setLinkCredit(state.getDecoder().readUnsignedInteger(buffer, state));
-                break;
-            case 7:
-                flow.setAvailable(state.getDecoder().readUnsignedInteger(buffer, state));
-                break;
-            case 8:
-                flow.setDrain(Boolean.TRUE.equals(state.getDecoder().readBoolean(buffer, state)));
-                break;
-            case 9:
-                flow.setEcho(Boolean.TRUE.equals(state.getDecoder().readBoolean(buffer, state)));
-                break;
-            case 10:
-                flow.setProperties(state.getDecoder().readMap(buffer, state));
-                break;
-            default:
-                throw new IllegalStateException("To many entries in Flow encoding");
-        }
     }
 
     @Override

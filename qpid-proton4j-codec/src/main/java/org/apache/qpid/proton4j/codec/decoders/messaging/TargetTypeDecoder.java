@@ -29,12 +29,11 @@ import org.apache.qpid.proton4j.codec.DecoderState;
 import org.apache.qpid.proton4j.codec.DescribedTypeDecoder;
 import org.apache.qpid.proton4j.codec.TypeDecoder;
 import org.apache.qpid.proton4j.codec.decoders.primitives.ListTypeDecoder;
-import org.apache.qpid.proton4j.codec.decoders.primitives.ListTypeDecoder.ListEntryHandler;
 
 /**
  * Decoder of AMQP Target type values from a byte stream
  */
-public class TargetTypeDecoder implements DescribedTypeDecoder<Target>, ListEntryHandler<Target> {
+public class TargetTypeDecoder implements DescribedTypeDecoder<Target> {
 
     @Override
     public Class<Target> getTypeClass() {
@@ -62,41 +61,42 @@ public class TargetTypeDecoder implements DescribedTypeDecoder<Target>, ListEntr
         ListTypeDecoder listDecoder = (ListTypeDecoder) decoder;
         Target target = new Target();
 
-        listDecoder.readValue(buffer, state, this, target);
+        @SuppressWarnings("unused")
+        int size = listDecoder.readSize(buffer);
+        int count = listDecoder.readCount(buffer);
+
+        for (int index = 0; index < count; ++index) {
+            switch (index) {
+                case 0:
+                    target.setAddress(state.getDecoder().readString(buffer, state));
+                    break;
+                case 1:
+                    UnsignedInteger durability = state.getDecoder().readUnsignedInteger(buffer, state);
+                    target.setDurable(durability == null ? TerminusDurability.NONE : TerminusDurability.get(durability));
+                    break;
+                case 2:
+                    Symbol expiryPolicy = state.getDecoder().readSymbol(buffer, state);
+                    target.setExpiryPolicy(expiryPolicy == null ? TerminusExpiryPolicy.SESSION_END : TerminusExpiryPolicy.valueOf(expiryPolicy));
+                    break;
+                case 3:
+                    UnsignedInteger timeout = state.getDecoder().readUnsignedInteger(buffer, state);
+                    target.setTimeout(timeout == null ? UnsignedInteger.ZERO : timeout);
+                    break;
+                case 4:
+                    target.setDynamic(Boolean.TRUE.equals(state.getDecoder().readBoolean(buffer, state)));
+                    break;
+                case 5:
+                    target.setDynamicNodeProperties(state.getDecoder().readMap(buffer, state));
+                    break;
+                case 6:
+                    target.setCapabilities(state.getDecoder().readMultiple(buffer, state, Symbol.class));
+                    break;
+                default:
+                    throw new IllegalStateException("To many entries in Target encoding");
+            }
+        }
 
         return target;
-    }
-
-    @Override
-    public void onListEntry(int index, Target target, ProtonBuffer buffer, DecoderState state) throws IOException {
-        switch (index) {
-            case 0:
-                target.setAddress(state.getDecoder().readString(buffer, state));
-                break;
-            case 1:
-                UnsignedInteger durability = state.getDecoder().readUnsignedInteger(buffer, state);
-                target.setDurable(durability == null ? TerminusDurability.NONE : TerminusDurability.get(durability));
-                break;
-            case 2:
-                Symbol expiryPolicy = state.getDecoder().readSymbol(buffer, state);
-                target.setExpiryPolicy(expiryPolicy == null ? TerminusExpiryPolicy.SESSION_END : TerminusExpiryPolicy.valueOf(expiryPolicy));
-                break;
-            case 3:
-                UnsignedInteger timeout = state.getDecoder().readUnsignedInteger(buffer, state);
-                target.setTimeout(timeout == null ? UnsignedInteger.ZERO : timeout);
-                break;
-            case 4:
-                target.setDynamic(Boolean.TRUE.equals(state.getDecoder().readBoolean(buffer, state)));
-                break;
-            case 5:
-                target.setDynamicNodeProperties(state.getDecoder().readMap(buffer, state));
-                break;
-            case 6:
-                target.setCapabilities(state.getDecoder().readMultiple(buffer, state, Symbol.class));
-                break;
-            default:
-                throw new IllegalStateException("To many entries in Target encoding");
-        }
     }
 
     @Override

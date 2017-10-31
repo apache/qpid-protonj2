@@ -29,12 +29,11 @@ import org.apache.qpid.proton4j.codec.DecoderState;
 import org.apache.qpid.proton4j.codec.DescribedTypeDecoder;
 import org.apache.qpid.proton4j.codec.TypeDecoder;
 import org.apache.qpid.proton4j.codec.decoders.primitives.ListTypeDecoder;
-import org.apache.qpid.proton4j.codec.decoders.primitives.ListTypeDecoder.ListEntryHandler;
 
 /**
  * Decoder of AMQP Transfer type values from a byte stream
  */
-public class TransferTypeDecoder implements DescribedTypeDecoder<Transfer>, ListEntryHandler<Transfer> {
+public class TransferTypeDecoder implements DescribedTypeDecoder<Transfer> {
 
     @Override
     public Class<Transfer> getTypeClass() {
@@ -62,51 +61,52 @@ public class TransferTypeDecoder implements DescribedTypeDecoder<Transfer>, List
         ListTypeDecoder listDecoder = (ListTypeDecoder) decoder;
         Transfer transfer = new Transfer();
 
-        listDecoder.readValue(buffer, state, this, transfer);
+        @SuppressWarnings("unused")
+        int size = listDecoder.readSize(buffer);
+        int count = listDecoder.readCount(buffer);
+
+        for (int index = 0; index < count; ++index) {
+            switch (index) {
+                case 0:
+                    transfer.setHandle(state.getDecoder().readUnsignedInteger(buffer, state));
+                    break;
+                case 1:
+                    transfer.setDeliveryId(state.getDecoder().readUnsignedInteger(buffer, state));
+                    break;
+                case 2:
+                    transfer.setDeliveryTag(state.getDecoder().readBinary(buffer, state));
+                    break;
+                case 3:
+                    transfer.setMessageFormat(state.getDecoder().readUnsignedInteger(buffer, state));
+                    break;
+                case 4:
+                    transfer.setSettled(state.getDecoder().readBoolean(buffer, state));
+                    break;
+                case 5:
+                    transfer.setMore(Boolean.TRUE.equals(state.getDecoder().readBoolean(buffer, state)));
+                    break;
+                case 6:
+                    UnsignedByte rcvSettleMode = state.getDecoder().readUnsignedByte(buffer, state);
+                    transfer.setRcvSettleMode(rcvSettleMode == null ? null : ReceiverSettleMode.values()[rcvSettleMode.intValue()]);
+                    break;
+                case 7:
+                    transfer.setState(state.getDecoder().readObject(buffer, state, DeliveryState.class));
+                    break;
+                case 8:
+                    transfer.setResume(Boolean.TRUE.equals(state.getDecoder().readBoolean(buffer, state)));
+                    break;
+                case 9:
+                    transfer.setMore(Boolean.TRUE.equals(state.getDecoder().readBoolean(buffer, state)));
+                    break;
+                case 10:
+                    transfer.setBatchable(Boolean.TRUE.equals(state.getDecoder().readBoolean(buffer, state)));
+                    break;
+                default:
+                    throw new IllegalStateException("To many entries in Transfer encoding");
+            }
+        }
 
         return transfer;
-    }
-
-    @Override
-    public void onListEntry(int index, Transfer transfer, ProtonBuffer buffer, DecoderState state) throws IOException {
-        switch (index) {
-            case 0:
-                transfer.setHandle(state.getDecoder().readUnsignedInteger(buffer, state));
-                break;
-            case 1:
-                transfer.setDeliveryId(state.getDecoder().readUnsignedInteger(buffer, state));
-                break;
-            case 2:
-                transfer.setDeliveryTag(state.getDecoder().readBinary(buffer, state));
-                break;
-            case 3:
-                transfer.setMessageFormat(state.getDecoder().readUnsignedInteger(buffer, state));
-                break;
-            case 4:
-                transfer.setSettled(state.getDecoder().readBoolean(buffer, state));
-                break;
-            case 5:
-                transfer.setMore(Boolean.TRUE.equals(state.getDecoder().readBoolean(buffer, state)));
-                break;
-            case 6:
-                UnsignedByte rcvSettleMode = state.getDecoder().readUnsignedByte(buffer, state);
-                transfer.setRcvSettleMode(rcvSettleMode == null ? null : ReceiverSettleMode.values()[rcvSettleMode.intValue()]);
-                break;
-            case 7:
-                transfer.setState(state.getDecoder().readObject(buffer, state, DeliveryState.class));
-                break;
-            case 8:
-                transfer.setResume(Boolean.TRUE.equals(state.getDecoder().readBoolean(buffer, state)));
-                break;
-            case 9:
-                transfer.setMore(Boolean.TRUE.equals(state.getDecoder().readBoolean(buffer, state)));
-                break;
-            case 10:
-                transfer.setBatchable(Boolean.TRUE.equals(state.getDecoder().readBoolean(buffer, state)));
-                break;
-            default:
-                throw new IllegalStateException("To many entries in Transfer encoding");
-        }
     }
 
     @Override
