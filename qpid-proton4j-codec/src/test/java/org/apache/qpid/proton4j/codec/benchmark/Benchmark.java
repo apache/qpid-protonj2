@@ -37,6 +37,7 @@ import org.apache.qpid.proton4j.amqp.messaging.ApplicationProperties;
 import org.apache.qpid.proton4j.amqp.messaging.Header;
 import org.apache.qpid.proton4j.amqp.messaging.MessageAnnotations;
 import org.apache.qpid.proton4j.amqp.messaging.Properties;
+import org.apache.qpid.proton4j.amqp.transport.Flow;
 import org.apache.qpid.proton4j.amqp.transport.Transfer;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
@@ -93,6 +94,7 @@ public class Benchmark implements Runnable {
         benchmarkApplicationProperties();
         benchmarkSymbols();
         benchmarkTransfer();
+        benchmarkFlow();
         warming = false;
     }
 
@@ -160,6 +162,33 @@ public class Benchmark implements Runnable {
         resultSet.decodesComplete();
 
         time("Transfer", resultSet);
+    }
+
+    private void benchmarkFlow() throws IOException {
+        Flow flow = new Flow();
+        flow.setNextIncomingId(UnsignedInteger.valueOf(1));
+        flow.setIncomingWindow(UnsignedInteger.valueOf(2047));
+        flow.setNextOutgoingId(UnsignedInteger.valueOf(1));
+        flow.setOutgoingWindow(UnsignedInteger.MAX_VALUE);
+        flow.setHandle(UnsignedInteger.ZERO);
+        flow.setDeliveryCount(UnsignedInteger.valueOf(10));
+        flow.setLinkCredit(UnsignedInteger.valueOf(1000));
+
+        resultSet.start();
+        for (int i = 0; i < ITERATIONS; i++) {
+            buffer.clear();
+            encoder.writeObject(buffer, encoderState, flow);
+        }
+        resultSet.encodesComplete();
+
+        resultSet.start();
+        for (int i = 0; i < ITERATIONS; i++) {
+            buffer.setReadIndex(0);
+            decoder.readObject(buffer, decoderState);
+        }
+        resultSet.decodesComplete();
+
+        time("Flow", resultSet);
     }
 
     private void benchmarkHeader() throws IOException {
