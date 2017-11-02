@@ -33,10 +33,12 @@ import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedByte;
 import org.apache.qpid.proton4j.amqp.UnsignedInteger;
 import org.apache.qpid.proton4j.amqp.UnsignedShort;
+import org.apache.qpid.proton4j.amqp.messaging.Accepted;
 import org.apache.qpid.proton4j.amqp.messaging.ApplicationProperties;
 import org.apache.qpid.proton4j.amqp.messaging.Header;
 import org.apache.qpid.proton4j.amqp.messaging.MessageAnnotations;
 import org.apache.qpid.proton4j.amqp.messaging.Properties;
+import org.apache.qpid.proton4j.amqp.transport.Disposition;
 import org.apache.qpid.proton4j.amqp.transport.Flow;
 import org.apache.qpid.proton4j.amqp.transport.Transfer;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
@@ -95,6 +97,7 @@ public class Benchmark implements Runnable {
         benchmarkSymbols();
         benchmarkTransfer();
         benchmarkFlow();
+        benchmarkDisposition();
         warming = false;
     }
 
@@ -306,6 +309,30 @@ public class Benchmark implements Runnable {
         resultSet.decodesComplete();
 
         time("Symbol", resultSet);
+    }
+
+    private void benchmarkDisposition() throws IOException {
+        Disposition disposition = new Disposition();
+        disposition.setSettled(true);
+        disposition.setState(Accepted.getInstance());
+        disposition.setFirst(UnsignedInteger.valueOf(2));
+        disposition.setLast(UnsignedInteger.valueOf(2));
+
+        resultSet.start();
+        for (int i = 0; i < ITERATIONS; i++) {
+            buffer.clear();
+            encoder.writeObject(buffer, encoderState, disposition);
+        }
+        resultSet.encodesComplete();
+
+        resultSet.start();
+        for (int i = 0; i < ITERATIONS; i++) {
+            buffer.setReadIndex(0);
+            decoder.readObject(buffer, decoderState);
+        }
+        resultSet.decodesComplete();
+
+        time("Disposition", resultSet);
     }
 
     private static class BenchmarkResult {
