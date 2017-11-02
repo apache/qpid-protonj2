@@ -40,6 +40,7 @@ import org.apache.qpid.proton4j.amqp.messaging.MessageAnnotations;
 import org.apache.qpid.proton4j.amqp.messaging.Properties;
 import org.apache.qpid.proton4j.amqp.transport.Disposition;
 import org.apache.qpid.proton4j.amqp.transport.Flow;
+import org.apache.qpid.proton4j.amqp.transport.Role;
 import org.apache.qpid.proton4j.amqp.transport.Transfer;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
@@ -313,6 +314,7 @@ public class Benchmark implements Runnable {
 
     private void benchmarkDisposition() throws IOException {
         Disposition disposition = new Disposition();
+        disposition.setRole(Role.RECEIVER);
         disposition.setSettled(true);
         disposition.setState(Accepted.getInstance());
         disposition.setFirst(UnsignedInteger.valueOf(2));
