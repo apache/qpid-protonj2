@@ -30,7 +30,7 @@ import org.apache.qpid.proton4j.codec.DecoderState;
  */
 public abstract class AbstractStringTypeDecoder implements StringTypeDecoder {
 
-    private static final CharsetDecoder STRING_DECODER = StandardCharsets.UTF_8.newDecoder();
+    private final CharsetDecoder STRING_DECODER = StandardCharsets.UTF_8.newDecoder();
 
     @Override
     public String readValue(ProtonBuffer buffer, DecoderState state) throws IOException {
@@ -39,10 +39,15 @@ public abstract class AbstractStringTypeDecoder implements StringTypeDecoder {
         byte[] bytes = new byte[length];
         buffer.readBytes(bytes, 0, length);
 
+        // TODO - In order for this to be thread safe the decoder should probably
+        //        live in the DecoderState instance.
+
         try {
             return STRING_DECODER.decode(ByteBuffer.wrap(bytes)).toString();
         } catch (CharacterCodingException e) {
             throw new IllegalArgumentException("Cannot parse String");
+        } finally {
+            STRING_DECODER.reset();
         }
     }
 
