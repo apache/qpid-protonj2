@@ -99,6 +99,7 @@ public class Benchmark implements Runnable {
         benchmarkTransfer();
         benchmarkFlow();
         benchmarkDisposition();
+        benchmarkString();
         warming = false;
     }
 
@@ -310,6 +311,32 @@ public class Benchmark implements Runnable {
         resultSet.decodesComplete();
 
         time("Symbol", resultSet);
+    }
+
+    private void benchmarkString() throws IOException {
+        String string1 = new String("String-1");
+        String string2 = new String("String-2");
+        String string3 = new String("String-3");
+
+        resultSet.start();
+        for (int i = 0; i < ITERATIONS; i++) {
+            buffer.clear();
+            encoder.writeString(buffer, encoderState, string1);
+            encoder.writeString(buffer, encoderState, string2);
+            encoder.writeString(buffer, encoderState, string3);
+        }
+        resultSet.encodesComplete();
+
+        resultSet.start();
+        for (int i = 0; i < ITERATIONS; i++) {
+            buffer.setReadIndex(0);
+            decoder.readString(buffer, decoderState);
+            decoder.readString(buffer, decoderState);
+            decoder.readString(buffer, decoderState);
+        }
+        resultSet.decodesComplete();
+
+        time("String", resultSet);
     }
 
     private void benchmarkDisposition() throws IOException {
