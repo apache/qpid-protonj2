@@ -153,5 +153,22 @@ public class ProtonByteBufferSupport {
         public ProtonBuffer copy(int index, int length) {
             return null;
         }
+
+        @Override
+        public int hashCode() {
+            return buffer.hashCode();
+        }
+
+        public boolean equals(ProtonNIOByteBufferWrapper other) {
+            if (this == other) {
+                return true;
+            }
+
+            return buffer.equals(other.buffer);
+        }
+
+        public int compareTo(ProtonNIOByteBufferWrapper other) {
+            return buffer.compareTo(other.buffer);
+        }
     }
 }

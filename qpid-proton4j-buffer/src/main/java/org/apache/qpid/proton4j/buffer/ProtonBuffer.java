@@ -23,7 +23,7 @@ import java.nio.ByteBuffer;
  * a means of using their own type of byte buffer types in combination with the
  * library tooling.
  */
-public interface ProtonBuffer {
+public interface ProtonBuffer extends Comparable<ProtonBuffer> {
 
     /**
      * @return true if this buffer has a backing byte array that can be accessed.

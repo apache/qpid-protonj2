@@ -480,6 +480,57 @@ public abstract class ProtonAbstractByteBuffer implements ProtonBuffer {
         return this;
     }
 
+    //----- Comparison and Equality implementations --------------------------//
+
+    @Override
+    public int hashCode() {
+        int hash = 1;
+        int index = getReadIndex();
+        for (int i = getReadableBytes() - 1; i >= index; i--) {
+            hash = 31 * hash + getByte(i);
+        }
+
+        return hash;
+    }
+
+    @Override
+    public boolean equals(Object other) {
+        if (this == other) {
+            return true;
+        }
+        if (!(other instanceof ProtonBuffer)) {
+            return false;
+        }
+
+        ProtonBuffer that = (ProtonBuffer) other;
+        if (this.getReadableBytes() != that.getReadableBytes()) {
+            return false;
+        }
+
+        int index = getReadIndex();
+        for (int i = getReadableBytes() - 1, j = that.getReadableBytes() - 1; i >= index; i--, j--) {
+            if (!(getByte(i) == that.getByte(j))) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    @Override
+    public int compareTo(ProtonBuffer other) {
+        int length = getReadIndex() + Math.min(getReadableBytes(), other.getReadableBytes());
+
+        for (int i = this.getReadIndex(), j = getReadIndex(); i < length; i++, j++) {
+            int cmp = Byte.compare(getByte(i), other.getByte(j));
+            if (cmp != 0) {
+                return cmp;
+            }
+        }
+
+        return getReadableBytes() - other.getReadableBytes();
+    }
+
     //----- Validation methods for buffer access -----------------------------//
 
     protected final void checkNewCapacity(int newCapacity) {
