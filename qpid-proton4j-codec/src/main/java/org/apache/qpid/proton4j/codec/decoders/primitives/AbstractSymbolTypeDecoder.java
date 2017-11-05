@@ -20,6 +20,7 @@ import java.io.IOException;
 
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.codec.DecoderState;
 
 /**
@@ -31,10 +32,15 @@ public abstract class AbstractSymbolTypeDecoder implements SymbolTypeDecoder {
     public Symbol readValue(ProtonBuffer buffer, DecoderState state) throws IOException {
         int length = readSize(buffer);
 
-        byte[] bytes = new byte[length];
-        buffer.readBytes(bytes, 0, length);
+        // TODO - While not optimal the symbol values are usually small in size but we
+        //        should investigate if having a buffer slice method which lets us create
+        //        a view of the buffer without copying it and then just skipping the bytes
+        //        would be faster since we should eventually not be creating a new symbol
+        //        from the bytes since we cache them internally in Symbol.
+        ProtonBuffer symbolBuffer = ProtonByteBufferAllocator.DEFAULT.allocate(length, length);
+        buffer.readBytes(symbolBuffer, length);
 
-        return state.getSymbol(bytes);
+        return Symbol.getSymbol(symbolBuffer);
     }
 
     @Override

@@ -16,67 +16,81 @@
  */
 package org.apache.qpid.proton4j.amqp;
 
-import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
+
 public final class Symbol implements Comparable<Symbol> {
 
-    private static final Map<String, Symbol> stringToSymbols = new ConcurrentHashMap<>(2048);
-    private static final Map<ByteBuffer, Symbol> bufferToSymbols = new ConcurrentHashMap<>(2048);
+    private static final Map<ProtonBuffer, Symbol> bufferToSymbols = new ConcurrentHashMap<>(2048);
 
-    private static final Symbol EMPTY_SYMBOL = new Symbol(new byte[0], "");
+    private static final Symbol EMPTY_SYMBOL = new Symbol();
 
-    private final byte[] underlying;
-    private final String view;
+    private final ProtonBuffer underlying;
+    private final int hashCode;
 
-    private Symbol(byte[] underlying, String view) {
+    private Symbol() {
+        this.underlying = ProtonByteBufferAllocator.DEFAULT.allocate(0, 0);
+        this.hashCode = 31;
+    }
+
+    private Symbol(ProtonBuffer underlying) {
         this.underlying = underlying;
-        this.view = view;
+        this.hashCode = underlying.hashCode();
+    }
+
+    public int getLength() {
+        return underlying.getReadableBytes();
     }
 
     @Override
-    public int compareTo(Symbol o) {
-        return view.compareTo(o.view);
+    public int compareTo(Symbol other) {
+        return underlying.compareTo(other.underlying);
     }
 
     @Override
     public String toString() {
-        return view;
+        return underlying.toString(StandardCharsets.US_ASCII);
     }
 
     @Override
     public int hashCode() {
-        return view.hashCode();
+        return hashCode;
     }
 
-    public byte[] getBytes() {
-        return underlying;
+    public void writeTo(ProtonBuffer target) {
+        target.writeBytes(underlying, 0, underlying.getReadableBytes());
     }
 
     public static Symbol valueOf(String symbolVal) {
         return getSymbol(symbolVal);
     }
 
-    public static Symbol getSymbol(byte[] symbolBytes) {
-        if (symbolBytes == null) {
+    public static Symbol getSymbol(ProtonBuffer symbolBytes) {
+        return getSymbol(symbolBytes, false);
+    }
+
+    public static Symbol getSymbol(ProtonBuffer symbolBuffer, boolean copyOnCreate) {
+        if (symbolBuffer == null) {
             return null;
-        } else if (symbolBytes.length == 0) {
+        } else if (symbolBuffer.getReadableBytes() == 0) {
             return EMPTY_SYMBOL;
         }
 
-        Symbol symbol = bufferToSymbols.get(ByteBuffer.wrap(symbolBytes));
-
+        Symbol symbol = bufferToSymbols.get(symbolBuffer);
         if (symbol == null) {
-            String symbolString = new String(symbolBytes, StandardCharsets.US_ASCII).intern();
-            symbol = new Symbol(symbolBytes, symbolString);
-            Symbol existing;
-            if ((existing = stringToSymbols.putIfAbsent(symbolString, symbol)) != null) {
-                symbol = existing;
+            if (copyOnCreate) {
+                symbolBuffer = symbolBuffer.copy();
             }
 
-            bufferToSymbols.putIfAbsent(ByteBuffer.wrap(symbolBytes), symbol);
+            symbol = new Symbol(symbolBuffer);
+            Symbol existing;
+            if ((existing = bufferToSymbols.putIfAbsent(symbolBuffer, symbol)) != null) {
+                symbol = existing;
+            }
         }
 
         return symbol;
@@ -89,20 +103,8 @@ public final class Symbol implements Comparable<Symbol> {
             return EMPTY_SYMBOL;
         }
 
-        Symbol symbol = stringToSymbols.get(symbolVal);
+        byte[] symbolBytes = symbolVal.getBytes(StandardCharsets.US_ASCII);
 
-        if (symbol == null) {
-            symbolVal = symbolVal.intern();
-            byte[] symbolBytes = symbolVal.getBytes(StandardCharsets.UTF_8);
-            symbol = new Symbol(symbolBytes, symbolVal);
-            Symbol existing;
-            if ((existing = stringToSymbols.putIfAbsent(symbolVal, symbol)) != null) {
-                symbol = existing;
-            }
-
-            bufferToSymbols.putIfAbsent(ByteBuffer.wrap(symbolBytes), symbol);
-        }
-
-        return symbol;
+        return getSymbol(ProtonByteBufferAllocator.DEFAULT.wrap(symbolBytes));
     }
 }

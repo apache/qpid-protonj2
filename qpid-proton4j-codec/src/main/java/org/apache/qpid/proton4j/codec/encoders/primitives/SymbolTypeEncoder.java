@@ -43,21 +43,21 @@ public class SymbolTypeEncoder implements PrimitiveTypeEncoder<Symbol> {
     }
 
     protected void write(ProtonBuffer buffer, EncoderState state, Symbol value, boolean writeEncoding) {
-        byte[] symbolBytes = value.getBytes();
+        int symbolBytes = value.getLength();
 
-        if (symbolBytes.length <= 255) {
+        if (symbolBytes <= 255) {
             if (writeEncoding) {
                 buffer.writeByte(EncodingCodes.SYM8);
             }
-            buffer.writeByte(symbolBytes.length);
-            buffer.writeBytes(symbolBytes);
+            buffer.writeByte(symbolBytes);
         } else {
             if (writeEncoding) {
                 buffer.writeByte(EncodingCodes.SYM32);
             }
-            buffer.writeInt(symbolBytes.length);
-            buffer.writeBytes(symbolBytes);
+            buffer.writeInt(symbolBytes);
         }
+
+        value.writeTo(buffer);
     }
 
     @Override
@@ -76,9 +76,9 @@ public class SymbolTypeEncoder implements PrimitiveTypeEncoder<Symbol> {
         buffer.writeInt(values.length);
         buffer.writeByte(EncodingCodes.SYM32);
         for (Symbol value : values) {
-            byte[] symbolByte = value.getBytes();
-            buffer.writeInt(symbolByte.length);
-            buffer.writeBytes(symbolByte);
+            int symbolBytes = value.getLength();
+            buffer.writeInt(symbolBytes);
+            value.writeTo(buffer);
         }
 
         // Move back and write the size

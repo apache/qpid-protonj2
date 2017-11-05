@@ -16,8 +16,6 @@
  */
 package org.apache.qpid.proton4j.codec;
 
-import org.apache.qpid.proton4j.amqp.Symbol;
-
 /**
  * Retains state of decode either between calls or across decode iterations
  */
@@ -27,17 +25,5 @@ public interface DecoderState {
      * @return the decoder that created this state object
      */
     Decoder getDecoder();
-
-    /**
-     * Returns a Symbol instance using the bytes that represent the
-     * encoded Symbol.  The Decoder can optimize this using caching or
-     * other techniques to reduce GC and String encode / decode overhead.
-     *
-     * @param symbolBytes
-     *      The ASCII bytes that make up the Symbol value.
-     *
-     * @return a Symbol instance that represents the given bytes
-     */
-    Symbol getSymbol(byte[] symbolBytes);
 
 }

@@ -16,7 +16,6 @@
  */
 package org.apache.qpid.proton4j.codec.encoders;
 
-import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.codec.EncoderState;
 
 /**
@@ -33,10 +32,5 @@ public class ProtonEncoderState implements EncoderState {
     @Override
     public ProtonEncoder getEncoder() {
         return this.encoder;
-    }
-
-    @Override
-    public byte[] getSymbolBytes(Symbol symbol) {
-        return symbol.getBytes();
     }
 }
