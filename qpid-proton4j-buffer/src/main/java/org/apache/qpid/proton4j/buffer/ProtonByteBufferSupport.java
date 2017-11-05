@@ -17,6 +17,7 @@
 package org.apache.qpid.proton4j.buffer;
 
 import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
 
 /**
  * Support for ProtonBuffer
@@ -169,6 +170,11 @@ public class ProtonByteBufferSupport {
 
         public int compareTo(ProtonNIOByteBufferWrapper other) {
             return buffer.compareTo(other.buffer);
+        }
+
+        @Override
+        public String toString(Charset charset) {
+            return null;  // TODO
         }
     }
 }

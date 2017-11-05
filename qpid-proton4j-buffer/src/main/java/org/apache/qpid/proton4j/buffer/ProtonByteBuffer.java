@@ -17,6 +17,7 @@
 package org.apache.qpid.proton4j.buffer;
 
 import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
 
 /**
  * Implementation of the ProtonBuffer interface that uses an array backing
@@ -135,6 +136,13 @@ public class ProtonByteBuffer extends ProtonAbstractByteBuffer {
     @Override
     public int getArrayOffset() {
         return 0;
+    }
+
+    @Override
+    public String toString(Charset charset) {
+        // TODO - This could go to an abstract base if we want to optimize and
+        //        also make it reusable for custom implementations.
+        return new String(array, getReadIndex(), getWriteIndex(), charset);
     }
 
     //----- Direct indexed get methods ---------------------------------------//

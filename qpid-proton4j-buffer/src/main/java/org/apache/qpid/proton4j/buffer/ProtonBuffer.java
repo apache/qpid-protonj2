@@ -17,6 +17,7 @@
 package org.apache.qpid.proton4j.buffer;
 
 import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
 
 /**
  * Buffer type abstraction used to provide users of the proton4j library with
@@ -123,6 +124,17 @@ public interface ProtonBuffer extends Comparable<ProtonBuffer> {
      * @return a ByteBuffer that represents the readable bytes of this buffer.
      */
     ByteBuffer toByteBuffer();
+
+    /**
+     * Returns a String created from the buffer's underlying bytes using the specified
+     * {@link java.nio.Charset} for the newly created String.
+     *
+     * @param charset
+     *      the {@link java.nio.Charset} to use to construct the new string.
+     *
+     * @return a string created from the buffer's underlying bytes using the given {@link java.nio.Charset}.
+     */
+    String toString(Charset charset);
 
     /**
      * @return the number of bytes available for reading from this buffer.
