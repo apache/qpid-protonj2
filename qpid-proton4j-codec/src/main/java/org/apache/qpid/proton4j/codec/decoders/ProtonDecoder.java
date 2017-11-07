@@ -487,7 +487,7 @@ public class ProtonDecoder implements Decoder {
             case EncodingCodes.MAP8:
                 return (Map<K, V>) primitiveDecoders[EncodingCodes.MAP8 & 0xff].readValue(buffer, state);
             case EncodingCodes.MAP32:
-                return (Map<K, V>) primitiveDecoders[EncodingCodes.MAP8 & 0xff].readValue(buffer, state);
+                return (Map<K, V>) primitiveDecoders[EncodingCodes.MAP32 & 0xff].readValue(buffer, state);
             case EncodingCodes.NULL:
                 return null;
             default:
