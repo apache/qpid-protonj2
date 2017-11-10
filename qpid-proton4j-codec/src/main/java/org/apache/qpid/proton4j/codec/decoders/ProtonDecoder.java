@@ -195,6 +195,24 @@ public class ProtonDecoder implements Decoder {
     }
 
     @Override
+    public boolean readBoolean(ProtonBuffer buffer, DecoderState state, boolean defaultValue) throws IOException {
+        byte encodingCode = buffer.readByte();
+
+        switch (encodingCode) {
+            case EncodingCodes.BOOLEAN_TRUE:
+                return (Boolean) primitiveDecoders[EncodingCodes.BOOLEAN_TRUE & 0xff].readValue(buffer, state);
+            case EncodingCodes.BOOLEAN_FALSE:
+                return (Boolean) primitiveDecoders[EncodingCodes.BOOLEAN_FALSE & 0xff].readValue(buffer, state);
+            case EncodingCodes.BOOLEAN:
+                return (Boolean) primitiveDecoders[EncodingCodes.BOOLEAN & 0xff].readValue(buffer, state);
+            case EncodingCodes.NULL:
+                return defaultValue;
+            default:
+                throw new IOException("Expected boolean type but found encoding: " + encodingCode);
+        }
+    }
+
+    @Override
     public Byte readByte(ProtonBuffer buffer, DecoderState state) throws IOException {
         byte encodingCode = buffer.readByte();
 

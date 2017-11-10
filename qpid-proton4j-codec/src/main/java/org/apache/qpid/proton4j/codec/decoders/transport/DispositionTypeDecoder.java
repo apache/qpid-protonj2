@@ -76,13 +76,13 @@ public class DispositionTypeDecoder implements DescribedTypeDecoder<Disposition>
                     disposition.setLast(state.getDecoder().readUnsignedInteger(buffer, state));
                     break;
                 case 3:
-                    disposition.setSettled(Boolean.TRUE.equals(state.getDecoder().readBoolean(buffer, state)));
+                    disposition.setSettled(state.getDecoder().readBoolean(buffer, state, false));
                     break;
                 case 4:
                     disposition.setState(state.getDecoder().readObject(buffer, state, DeliveryState.class));
                     break;
                 case 5:
-                    disposition.setBatchable(Boolean.TRUE.equals(state.getDecoder().readBoolean(buffer, state)));
+                    disposition.setBatchable(state.getDecoder().readBoolean(buffer, state, false));
                     break;
                 default:
                     throw new IllegalStateException("To many entries in Disposition encoding");

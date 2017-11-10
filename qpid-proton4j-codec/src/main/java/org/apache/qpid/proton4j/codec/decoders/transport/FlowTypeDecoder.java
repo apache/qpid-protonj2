@@ -89,10 +89,10 @@ public class FlowTypeDecoder implements DescribedTypeDecoder<Flow> {
                     flow.setAvailable(state.getDecoder().readUnsignedInteger(buffer, state));
                     break;
                 case 8:
-                    flow.setDrain(Boolean.TRUE.equals(state.getDecoder().readBoolean(buffer, state)));
+                    flow.setDrain(state.getDecoder().readBoolean(buffer, state, false));
                     break;
                 case 9:
-                    flow.setEcho(Boolean.TRUE.equals(state.getDecoder().readBoolean(buffer, state)));
+                    flow.setEcho(state.getDecoder().readBoolean(buffer, state, false));
                     break;
                 case 10:
                     flow.setProperties(state.getDecoder().readMap(buffer, state));

@@ -33,13 +33,17 @@ public class IntegerTypeEncoder implements PrimitiveTypeEncoder<Integer> {
 
     @Override
     public void writeType(ProtonBuffer buffer, EncoderState state, Integer value) {
-        buffer.writeByte(EncodingCodes.INT);
-        buffer.writeInt(value.intValue());
+        writeType(buffer, state, value.intValue());
     }
 
     public void writeType(ProtonBuffer buffer, EncoderState state, int value) {
-        buffer.writeByte(EncodingCodes.INT);
-        buffer.writeInt(value);
+        if (value >= -128 && value <= 127) {
+            buffer.writeByte(EncodingCodes.SMALLINT);
+            buffer.writeByte(value);
+        } else {
+            buffer.writeByte(EncodingCodes.INT);
+            buffer.writeInt(value);
+        }
     }
 
     @Override

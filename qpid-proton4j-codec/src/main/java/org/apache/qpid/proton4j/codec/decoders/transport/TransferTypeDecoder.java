@@ -83,7 +83,7 @@ public class TransferTypeDecoder implements DescribedTypeDecoder<Transfer> {
                     transfer.setSettled(state.getDecoder().readBoolean(buffer, state));
                     break;
                 case 5:
-                    transfer.setMore(Boolean.TRUE.equals(state.getDecoder().readBoolean(buffer, state)));
+                    transfer.setMore(state.getDecoder().readBoolean(buffer, state, false));
                     break;
                 case 6:
                     UnsignedByte rcvSettleMode = state.getDecoder().readUnsignedByte(buffer, state);
@@ -93,13 +93,13 @@ public class TransferTypeDecoder implements DescribedTypeDecoder<Transfer> {
                     transfer.setState(state.getDecoder().readObject(buffer, state, DeliveryState.class));
                     break;
                 case 8:
-                    transfer.setResume(Boolean.TRUE.equals(state.getDecoder().readBoolean(buffer, state)));
+                    transfer.setResume(state.getDecoder().readBoolean(buffer, state, false));
                     break;
                 case 9:
-                    transfer.setMore(Boolean.TRUE.equals(state.getDecoder().readBoolean(buffer, state)));
+                    transfer.setAborted(state.getDecoder().readBoolean(buffer, state, false));
                     break;
                 case 10:
-                    transfer.setBatchable(Boolean.TRUE.equals(state.getDecoder().readBoolean(buffer, state)));
+                    transfer.setBatchable(state.getDecoder().readBoolean(buffer, state, false));
                     break;
                 default:
                     throw new IllegalStateException("To many entries in Transfer encoding");

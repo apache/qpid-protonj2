@@ -34,8 +34,17 @@ public class UnsignedIntegerTypeEncoder implements PrimitiveTypeEncoder<Unsigned
 
     @Override
     public void writeType(ProtonBuffer buffer, EncoderState state, UnsignedInteger value) {
-        buffer.writeByte(EncodingCodes.UINT);
-        buffer.writeInt(value.intValue());
+        int intValue = value.intValue();
+
+        if (intValue == 0) {
+            buffer.writeByte(EncodingCodes.UINT0);
+        } else if (intValue > 0 && intValue <= 255) {
+            buffer.writeByte(EncodingCodes.SMALLUINT);
+            buffer.writeByte(intValue);
+        } else {
+            buffer.writeByte(EncodingCodes.UINT);
+            buffer.writeInt(intValue);
+        }
     }
 
     @Override

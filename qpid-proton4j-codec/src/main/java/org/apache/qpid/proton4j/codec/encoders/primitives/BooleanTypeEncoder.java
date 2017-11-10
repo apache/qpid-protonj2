@@ -33,13 +33,11 @@ public class BooleanTypeEncoder implements PrimitiveTypeEncoder<Boolean> {
 
     @Override
     public void writeType(ProtonBuffer buffer, EncoderState state, Boolean value) {
-        buffer.writeByte(EncodingCodes.BOOLEAN);
-        buffer.writeByte(value.equals(Boolean.TRUE) ? 1 : 0);
+        buffer.writeByte(value == Boolean.TRUE ? EncodingCodes.BOOLEAN_TRUE : EncodingCodes.BOOLEAN_FALSE);
     }
 
     public void writeType(ProtonBuffer buffer, EncoderState state, boolean value) {
-        buffer.writeByte(EncodingCodes.BOOLEAN);
-        buffer.writeByte(value ? 1 : 0);
+        buffer.writeByte(value == true ? EncodingCodes.BOOLEAN_TRUE : EncodingCodes.BOOLEAN_FALSE);
     }
 
     @Override

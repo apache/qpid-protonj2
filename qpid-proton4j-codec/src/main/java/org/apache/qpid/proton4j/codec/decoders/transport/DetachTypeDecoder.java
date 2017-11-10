@@ -69,7 +69,7 @@ public class DetachTypeDecoder implements DescribedTypeDecoder<Detach> {
                     detach.setHandle(state.getDecoder().readUnsignedInteger(buffer, state));
                     break;
                 case 1:
-                    detach.setClosed(Boolean.TRUE.equals(state.getDecoder().readBoolean(buffer, state)));
+                    detach.setClosed(state.getDecoder().readBoolean(buffer, state, false));
                     break;
                 case 2:
                     detach.setError(state.getDecoder().readObject(buffer, state, ErrorCondition.class));

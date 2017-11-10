@@ -44,6 +44,8 @@ public interface Decoder {
 
     Boolean readBoolean(ProtonBuffer buffer, DecoderState state) throws IOException;
 
+    boolean readBoolean(ProtonBuffer buffer, DecoderState state, boolean defaultValue) throws IOException;
+
     Byte readByte(ProtonBuffer buffer, DecoderState state) throws IOException;
 
     UnsignedByte readUnsignedByte(ProtonBuffer buffer, DecoderState state) throws IOException;

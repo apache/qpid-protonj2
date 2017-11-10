@@ -34,7 +34,17 @@ public class UnsignedLongTypeEncoder implements PrimitiveTypeEncoder<UnsignedLon
 
     @Override
     public void writeType(ProtonBuffer buffer, EncoderState state, UnsignedLong value) {
-        write(buffer, state, value, true, true);
+        long longValue = value.intValue();
+
+        if (longValue == 0) {
+            buffer.writeByte(EncodingCodes.ULONG0);
+        } else if (longValue > 0 && longValue <= 255) {
+            buffer.writeByte(EncodingCodes.SMALLULONG);
+            buffer.writeByte((int) longValue);
+        } else {
+            buffer.writeByte(EncodingCodes.ULONG0);
+            buffer.writeLong(longValue);
+        }
     }
 
     @Override
