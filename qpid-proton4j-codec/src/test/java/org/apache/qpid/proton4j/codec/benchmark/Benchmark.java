@@ -35,6 +35,7 @@ import org.apache.qpid.proton4j.amqp.UnsignedInteger;
 import org.apache.qpid.proton4j.amqp.UnsignedShort;
 import org.apache.qpid.proton4j.amqp.messaging.Accepted;
 import org.apache.qpid.proton4j.amqp.messaging.ApplicationProperties;
+import org.apache.qpid.proton4j.amqp.messaging.Data;
 import org.apache.qpid.proton4j.amqp.messaging.Header;
 import org.apache.qpid.proton4j.amqp.messaging.MessageAnnotations;
 import org.apache.qpid.proton4j.amqp.messaging.Properties;
@@ -100,6 +101,7 @@ public class Benchmark implements Runnable {
         benchmarkFlow();
         benchmarkDisposition();
         benchmarkString();
+        benchmarkData();
         warming = false;
     }
 
@@ -362,6 +364,32 @@ public class Benchmark implements Runnable {
         resultSet.decodesComplete();
 
         time("Disposition", resultSet);
+    }
+
+    private void benchmarkData() throws IOException {
+        Data data1 = new Data(new Binary(new byte[] {1, 2, 3}));
+        Data data2 = new Data(new Binary(new byte[] {4, 5, 6}));
+        Data data3 = new Data(new Binary(new byte[] {7, 8, 9}));
+
+        resultSet.start();
+        for (int i = 0; i < ITERATIONS; i++) {
+            buffer.clear();
+            encoder.writeObject(buffer, encoderState, data1);
+            encoder.writeObject(buffer, encoderState, data2);
+            encoder.writeObject(buffer, encoderState, data3);
+        }
+        resultSet.encodesComplete();
+
+        resultSet.start();
+        for (int i = 0; i < ITERATIONS; i++) {
+            buffer.setReadIndex(0);
+            decoder.readObject(buffer, decoderState);
+            decoder.readObject(buffer, decoderState);
+            decoder.readObject(buffer, decoderState);
+        }
+        resultSet.decodesComplete();
+
+        time("Data", resultSet);
     }
 
     private static class BenchmarkResult {
