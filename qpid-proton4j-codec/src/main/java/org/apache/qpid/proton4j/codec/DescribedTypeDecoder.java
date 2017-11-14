@@ -40,4 +40,7 @@ public interface DescribedTypeDecoder<V> extends TypeDecoder<V> {
      */
     Symbol getDescriptorSymbol();
 
+    default boolean isArrayTypeDecoder() {
+        return false;
+    }
 }

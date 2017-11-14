@@ -18,7 +18,7 @@ package org.apache.qpid.proton4j.codec;
 
 public interface PrimitiveTypeDecoder<V> extends TypeDecoder<V> {
 
-    default boolean isArryTypeDecoder() {
+    default boolean isArrayTypeDecoder() {
         return false;
     }
 

@@ -62,4 +62,9 @@ public interface TypeDecoder<V> {
      */
     void skipValue(ProtonBuffer buffer, DecoderState state) throws IOException;
 
+    /**
+     * @returns true if the underlying type that is decoded is an array type
+     */
+    boolean isArrayTypeDecoder();
+
 }

@@ -28,7 +28,7 @@ public interface PrimitiveArrayTypeDecoder extends PrimitiveTypeDecoder<Object[]
     }
 
     @Override
-    default boolean isArryTypeDecoder() {
+    default boolean isArrayTypeDecoder() {
         return true;
     }
 

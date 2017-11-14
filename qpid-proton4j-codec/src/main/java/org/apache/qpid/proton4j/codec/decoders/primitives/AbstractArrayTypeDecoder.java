@@ -92,7 +92,7 @@ public abstract class AbstractArrayTypeDecoder implements PrimitiveArrayTypeDeco
                 count, buffer.getReadableBytes()));
         }
 
-        if (decoder.isArryTypeDecoder()) {
+        if (decoder.isArrayTypeDecoder()) {
             PrimitiveArrayTypeDecoder arrayDecoder = (PrimitiveArrayTypeDecoder) decoder;
 
             Object[] array = new Object[count];
