@@ -43,8 +43,7 @@ public class MapTypeEncoder implements PrimitiveTypeEncoder<Map> {
         writeValue(buffer, state, value);
     }
 
-    @Override
-    public void writeValue(ProtonBuffer buffer, EncoderState state, Map value) {
+    private void writeValue(ProtonBuffer buffer, EncoderState state, Map value) {
         int startIndex = buffer.getWriteIndex();
 
         // Reserve space for the size

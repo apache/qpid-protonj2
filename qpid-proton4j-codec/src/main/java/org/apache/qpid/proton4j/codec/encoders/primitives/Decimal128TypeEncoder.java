@@ -40,12 +40,6 @@ public class Decimal128TypeEncoder implements PrimitiveTypeEncoder<Decimal128> {
     }
 
     @Override
-    public void writeValue(ProtonBuffer buffer, EncoderState state, Decimal128 value) {
-        buffer.writeLong(value.getMostSignificantBits());
-        buffer.writeLong(value.getLeastSignificantBits());
-    }
-
-    @Override
     public void writeArray(ProtonBuffer buffer, EncoderState state, Decimal128[] values) {
         buffer.writeByte(EncodingCodes.ARRAY32);
 

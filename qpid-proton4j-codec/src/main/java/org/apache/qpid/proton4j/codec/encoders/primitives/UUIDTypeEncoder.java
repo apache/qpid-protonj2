@@ -41,12 +41,6 @@ public class UUIDTypeEncoder implements PrimitiveTypeEncoder<UUID> {
     }
 
     @Override
-    public void writeValue(ProtonBuffer buffer, EncoderState state, UUID value) {
-        buffer.writeLong(value.getMostSignificantBits());
-        buffer.writeLong(value.getLeastSignificantBits());
-    }
-
-    @Override
     public void writeArray(ProtonBuffer buffer, EncoderState state, UUID[] values) {
         buffer.writeByte(EncodingCodes.ARRAY32);
 

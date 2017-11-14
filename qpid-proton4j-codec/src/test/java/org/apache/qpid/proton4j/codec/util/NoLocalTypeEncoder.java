@@ -21,6 +21,7 @@ import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.DescribedTypeEncoder;
 import org.apache.qpid.proton4j.codec.EncoderState;
+import org.apache.qpid.proton4j.codec.EncodingCodes;
 
 public class NoLocalTypeEncoder implements DescribedTypeEncoder<NoLocalType> {
 
@@ -40,7 +41,9 @@ public class NoLocalTypeEncoder implements DescribedTypeEncoder<NoLocalType> {
     }
 
     @Override
-    public void writeValue(ProtonBuffer buffer, EncoderState state, NoLocalType value) {
+    public void writeType(ProtonBuffer buffer, EncoderState state, NoLocalType value) {
+        buffer.writeByte(EncodingCodes.DESCRIBED_TYPE_INDICATOR);
+        state.getEncoder().writeUnsignedLong(buffer, state, getDescriptorCode());
         state.getEncoder().writeString(buffer, state, value.getDescribed());
     }
 }

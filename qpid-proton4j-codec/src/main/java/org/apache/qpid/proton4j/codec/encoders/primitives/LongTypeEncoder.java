@@ -33,22 +33,17 @@ public class LongTypeEncoder implements PrimitiveTypeEncoder<Long> {
 
     @Override
     public void writeType(ProtonBuffer buffer, EncoderState state, Long value) {
-        buffer.writeByte(EncodingCodes.LONG);
-        buffer.writeLong(value.longValue());
+        writeType(buffer, state, value.longValue());
     }
 
     public void writeType(ProtonBuffer buffer, EncoderState state, long value) {
-        buffer.writeByte(EncodingCodes.LONG);
-        buffer.writeLong(value);
-    }
-
-    @Override
-    public void writeValue(ProtonBuffer buffer, EncoderState state, Long value) {
-        buffer.writeLong(value.longValue());
-    }
-
-    public void writeValue(ProtonBuffer buffer, EncoderState state, long value) {
-        buffer.writeLong(value);
+        if (value >= -128 && value <= 127) {
+            buffer.writeByte(EncodingCodes.SMALLLONG);
+            buffer.writeByte((byte) value);
+        } else {
+            buffer.writeByte(EncodingCodes.LONG);
+            buffer.writeLong(value);
+        }
     }
 
     @Override

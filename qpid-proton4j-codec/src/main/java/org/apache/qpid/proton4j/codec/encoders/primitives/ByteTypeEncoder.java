@@ -43,15 +43,6 @@ public class ByteTypeEncoder implements PrimitiveTypeEncoder<Byte> {
     }
 
     @Override
-    public void writeValue(ProtonBuffer buffer, EncoderState state, Byte value) {
-        buffer.writeByte(value.byteValue());
-    }
-
-    public void writeValue(ProtonBuffer buffer, EncoderState state, byte value) {
-        buffer.writeByte(value);
-    }
-
-    @Override
     public void writeArray(ProtonBuffer buffer, EncoderState state, Byte[] values) {
         buffer.writeByte(EncodingCodes.ARRAY32);
 

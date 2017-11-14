@@ -48,11 +48,6 @@ public class UnsignedIntegerTypeEncoder implements PrimitiveTypeEncoder<Unsigned
     }
 
     @Override
-    public void writeValue(ProtonBuffer buffer, EncoderState state, UnsignedInteger value) {
-        buffer.writeInt(value.intValue());
-    }
-
-    @Override
     public void writeArray(ProtonBuffer buffer, EncoderState state, UnsignedInteger[] values) {
         buffer.writeByte(EncodingCodes.ARRAY32);
 

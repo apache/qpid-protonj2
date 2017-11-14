@@ -43,15 +43,6 @@ public class FloatTypeEncoder implements PrimitiveTypeEncoder<Float> {
     }
 
     @Override
-    public void writeValue(ProtonBuffer buffer, EncoderState state, Float value) {
-        buffer.writeFloat(value.floatValue());
-    }
-
-    public void writeValue(ProtonBuffer buffer, EncoderState state, float value) {
-        buffer.writeFloat(value);
-    }
-
-    @Override
     public void writeArray(ProtonBuffer buffer, EncoderState state, Float[] values) {
         buffer.writeByte(EncodingCodes.ARRAY32);
 

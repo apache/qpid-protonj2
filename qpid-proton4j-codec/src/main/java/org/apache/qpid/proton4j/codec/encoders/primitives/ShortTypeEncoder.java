@@ -43,15 +43,6 @@ public class ShortTypeEncoder implements PrimitiveTypeEncoder<Short> {
     }
 
     @Override
-    public void writeValue(ProtonBuffer buffer, EncoderState state, Short value) {
-        buffer.writeShort(value.shortValue());
-    }
-
-    public void writeValue(ProtonBuffer buffer, EncoderState state, short value) {
-        buffer.writeShort(value);
-    }
-
-    @Override
     public void writeArray(ProtonBuffer buffer, EncoderState state, Short[] values) {
         buffer.writeByte(EncodingCodes.ARRAY32);
 

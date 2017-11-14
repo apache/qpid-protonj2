@@ -43,15 +43,6 @@ public class DoubleTypeEncoder implements PrimitiveTypeEncoder<Double> {
     }
 
     @Override
-    public void writeValue(ProtonBuffer buffer, EncoderState state, Double value) {
-        buffer.writeDouble(value.doubleValue());
-    }
-
-    public void writeValue(ProtonBuffer buffer, EncoderState state, double value) {
-        buffer.writeDouble(value);
-    }
-
-    @Override
     public void writeArray(ProtonBuffer buffer, EncoderState state, Double[] values) {
         buffer.writeByte(EncodingCodes.ARRAY32);
 

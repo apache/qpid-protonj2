@@ -45,15 +45,6 @@ public class TimestampTypeEncoder implements PrimitiveTypeEncoder<Date> {
     }
 
     @Override
-    public void writeValue(ProtonBuffer buffer, EncoderState state, Date value) {
-        buffer.writeLong(value.getTime());
-    }
-
-    public void writeValue(ProtonBuffer buffer, EncoderState state, long value) {
-        buffer.writeLong(value);
-    }
-
-    @Override
     public void writeArray(ProtonBuffer buffer, EncoderState state, Date[] values) {
         buffer.writeByte(EncodingCodes.ARRAY32);
 

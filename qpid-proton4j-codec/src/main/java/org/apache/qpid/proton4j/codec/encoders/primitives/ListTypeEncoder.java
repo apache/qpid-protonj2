@@ -41,8 +41,7 @@ public class ListTypeEncoder implements PrimitiveTypeEncoder<List> {
         writeValue(buffer, state, value);
     }
 
-    @Override
-    public void writeValue(ProtonBuffer buffer, EncoderState state, List value) {
+    private void writeValue(ProtonBuffer buffer, EncoderState state, List value) {
         int startIndex = buffer.getWriteIndex();
 
         // Reserve space for the size

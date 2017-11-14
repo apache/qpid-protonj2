@@ -77,7 +77,10 @@ public interface DescribedMapTypeEncoder<K, V, M> extends DescribedTypeEncoder<M
     Set<Map.Entry<K, V>> getMapEntries(M value);
 
     @Override
-    default void writeValue(ProtonBuffer buffer, EncoderState state, M value) {
+    default void writeType(ProtonBuffer buffer, EncoderState state, M value) {
+        buffer.writeByte(EncodingCodes.DESCRIBED_TYPE_INDICATOR);
+        state.getEncoder().writeUnsignedLong(buffer, state, getDescriptorCode());
+
         if (!hasMap(value)) {
             state.getEncoder().writeNull(buffer, state);
             return;

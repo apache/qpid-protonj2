@@ -38,11 +38,6 @@ public class CharacterTypeEncoder implements PrimitiveTypeEncoder<Character> {
     }
 
     @Override
-    public void writeValue(ProtonBuffer buffer, EncoderState state, Character value) {
-        buffer.writeInt(value.charValue() & 0xffff);
-    }
-
-    @Override
     public void writeArray(ProtonBuffer buffer, EncoderState state, Character[] value) {
         buffer.writeByte(EncodingCodes.ARRAY32);
 

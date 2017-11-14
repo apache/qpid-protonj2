@@ -26,7 +26,10 @@ import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 public interface DescribedListTypeEncoder<V> extends DescribedTypeEncoder<V> {
 
     @Override
-    default void writeValue(ProtonBuffer buffer, EncoderState state, V value) {
+    default void writeType(ProtonBuffer buffer, EncoderState state, V value) {
+        buffer.writeByte(EncodingCodes.DESCRIBED_TYPE_INDICATOR);
+        state.getEncoder().writeUnsignedLong(buffer, state, getDescriptorCode());
+
         int count = getElementCount(value);
         int encodingCode = getLargestEncoding();
 

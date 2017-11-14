@@ -37,10 +37,6 @@ public class NullTypeEncoder implements PrimitiveTypeEncoder<Void> {
     }
 
     @Override
-    public void writeValue(ProtonBuffer buffer, EncoderState state, Void value) {
-    }
-
-    @Override
     public void writeArray(ProtonBuffer buffer, EncoderState state, Void[] value) {
     }
 }

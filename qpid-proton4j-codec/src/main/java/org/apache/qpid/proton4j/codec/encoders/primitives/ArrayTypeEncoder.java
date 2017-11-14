@@ -60,11 +60,6 @@ public class ArrayTypeEncoder implements PrimitiveArrayTypeEncoder {
         }
     }
 
-    @Override
-    public void writeValue(ProtonBuffer buffer, EncoderState state, Object value) {
-        throw new UnsupportedOperationException("Intentionally not implemented");
-    }
-
     //---- One Dimensional Optimized Array of Primitive Write methods --------//
 
     @SuppressWarnings({ "rawtypes", "unchecked" })

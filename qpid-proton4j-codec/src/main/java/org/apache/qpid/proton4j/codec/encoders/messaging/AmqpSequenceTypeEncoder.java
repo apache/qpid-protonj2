@@ -22,6 +22,7 @@ import org.apache.qpid.proton4j.amqp.messaging.AmqpSequence;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.DescribedTypeEncoder;
 import org.apache.qpid.proton4j.codec.EncoderState;
+import org.apache.qpid.proton4j.codec.EncodingCodes;
 
 /**
  * Encoder of AMQP AmqpSequence type values to a byte stream.
@@ -44,7 +45,9 @@ public class AmqpSequenceTypeEncoder implements DescribedTypeEncoder<AmqpSequenc
     }
 
     @Override
-    public void writeValue(ProtonBuffer buffer, EncoderState state, AmqpSequence value) {
+    public void writeType(ProtonBuffer buffer, EncoderState state, AmqpSequence value) {
+        buffer.writeByte(EncodingCodes.DESCRIBED_TYPE_INDICATOR);
+        state.getEncoder().writeUnsignedLong(buffer, state, getDescriptorCode());
         state.getEncoder().writeList(buffer, state, value.getValue());
     }
 }

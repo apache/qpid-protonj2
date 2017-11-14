@@ -33,15 +33,6 @@ public class StringTypeEncoder implements PrimitiveTypeEncoder<String> {
 
     @Override
     public void writeType(ProtonBuffer buffer, EncoderState state, String value) {
-        write(buffer, state, value, true);
-    }
-
-    @Override
-    public void writeValue(ProtonBuffer buffer, EncoderState state, String value) {
-        write(buffer, state, value, false);
-    }
-
-    private void write(ProtonBuffer buffer, EncoderState state, String value, boolean writeEncoding) {
         int startIndex = buffer.getWriteIndex() + 1;
 
         int fieldWidth = 1;
@@ -52,24 +43,12 @@ public class StringTypeEncoder implements PrimitiveTypeEncoder<String> {
             fieldWidth = 4;
         }
 
-        // TODO - We can have a profile where we actually do this but the
-        //        overall savings of bytes written doesn't seem worth it.
-        //
-        //          int encodedSize = calculateUTF8Length(value);
-        //          if (encodedSize > 255) {
-        //              fieldWidth = 4;
-        //          }
-
         // Reserve space for the size
         if (fieldWidth == 1) {
-            if (writeEncoding) {
-                buffer.writeByte(EncodingCodes.STR8);
-            }
+            buffer.writeByte(EncodingCodes.STR8);
             buffer.writeByte(0);
         } else {
-            if (writeEncoding) {
-                buffer.writeByte(EncodingCodes.STR32);
-            }
+            buffer.writeByte(EncodingCodes.STR32);
             buffer.writeInt(0);
         }
 

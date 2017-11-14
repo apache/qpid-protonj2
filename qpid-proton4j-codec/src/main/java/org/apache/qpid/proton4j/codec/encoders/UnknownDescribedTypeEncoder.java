@@ -38,9 +38,4 @@ public class UnknownDescribedTypeEncoder implements TypeEncoder<DescribedType> {
         state.getEncoder().writeObject(buffer, state, value.getDescriptor());
         state.getEncoder().writeObject(buffer, state, value.getDescribed());
     }
-
-    @Override
-    public void writeValue(ProtonBuffer buffer, EncoderState state, DescribedType value) {
-        state.getEncoder().writeObject(buffer, state, value.getDescribed());
-    }
 }

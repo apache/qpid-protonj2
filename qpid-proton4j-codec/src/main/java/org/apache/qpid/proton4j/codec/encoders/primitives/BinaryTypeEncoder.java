@@ -46,17 +46,6 @@ public class BinaryTypeEncoder implements PrimitiveTypeEncoder<Binary> {
     }
 
     @Override
-    public void writeValue(ProtonBuffer buffer, EncoderState state, Binary value) {
-        if (value.getLength() > 255) {
-            buffer.writeInt(value.getLength());
-            buffer.writeBytes(value.getArray(), value.getArrayOffset(), value.getLength());
-        } else {
-            buffer.writeByte((byte) value.getLength());
-            buffer.writeBytes(value.getArray(), value.getArrayOffset(), value.getLength());
-        }
-    }
-
-    @Override
     public void writeArray(ProtonBuffer buffer, EncoderState state, Binary[] values) {
         buffer.writeByte(EncodingCodes.ARRAY32);
 

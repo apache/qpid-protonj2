@@ -45,19 +45,4 @@ public interface TypeEncoder<V> {
      */
     void writeType(ProtonBuffer buffer, EncoderState state, V value);
 
-    /**
-     * Write the raw value to the given byte buffer.
-     * <p>
-     * This method does not write an AMQP type constructor ahead of the
-     * bytes that make up the value being written.
-     *
-     * @param buffer
-     * 		The buffer to write the AMQP type to
-     * @param state
-     * 		The current encoder state
-     * @param value
-     * 		The value that is to be written.
-     */
-    void writeValue(ProtonBuffer buffer, EncoderState state, V value);
-
 }

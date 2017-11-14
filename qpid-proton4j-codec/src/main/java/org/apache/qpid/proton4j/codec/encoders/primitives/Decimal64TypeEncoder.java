@@ -39,11 +39,6 @@ public class Decimal64TypeEncoder implements PrimitiveTypeEncoder<Decimal64> {
     }
 
     @Override
-    public void writeValue(ProtonBuffer buffer, EncoderState state, Decimal64 value) {
-        buffer.writeLong(value.getBits());
-    }
-
-    @Override
     public void writeArray(ProtonBuffer buffer, EncoderState state, Decimal64[] values) {
         buffer.writeByte(EncodingCodes.ARRAY32);
 

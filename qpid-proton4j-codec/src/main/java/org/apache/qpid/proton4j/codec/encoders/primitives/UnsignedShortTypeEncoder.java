@@ -39,11 +39,6 @@ public class UnsignedShortTypeEncoder implements PrimitiveTypeEncoder<UnsignedSh
     }
 
     @Override
-    public void writeValue(ProtonBuffer buffer, EncoderState state, UnsignedShort value) {
-        buffer.writeShort(value.shortValue());
-    }
-
-    @Override
     public void writeArray(ProtonBuffer buffer, EncoderState state, UnsignedShort[] values) {
         buffer.writeByte(EncodingCodes.ARRAY32);
 

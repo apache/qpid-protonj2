@@ -39,11 +39,6 @@ public class Decimal32TypeEncoder implements PrimitiveTypeEncoder<Decimal32> {
     }
 
     @Override
-    public void writeValue(ProtonBuffer buffer, EncoderState state, Decimal32 value) {
-        buffer.writeInt(value.getBits());
-    }
-
-    @Override
     public void writeArray(ProtonBuffer buffer, EncoderState state, Decimal32[] values) {
         buffer.writeByte(EncodingCodes.ARRAY32);
 
