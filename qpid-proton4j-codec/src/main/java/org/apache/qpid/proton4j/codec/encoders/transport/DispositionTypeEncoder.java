@@ -56,7 +56,7 @@ public class DispositionTypeEncoder implements DescribedListTypeEncoder<Disposit
                 state.getEncoder().writeUnsignedInteger(buffer, state, disposition.getFirst());
                 break;
             case 2:
-                state.getEncoder().writeObject(buffer, state, disposition.getLast());
+                state.getEncoder().writeUnsignedInteger(buffer, state, disposition.getLast());
                 break;
             case 3:
                 state.getEncoder().writeBoolean(buffer, state, disposition.getSettled());
