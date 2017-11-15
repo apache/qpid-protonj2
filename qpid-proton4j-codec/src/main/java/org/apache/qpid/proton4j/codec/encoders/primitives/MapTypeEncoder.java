@@ -52,32 +52,16 @@ public class MapTypeEncoder implements PrimitiveTypeEncoder<Map> {
         // Record the count of elements which include both key and value in the count.
         buffer.writeInt(value.size() * 2);
 
-        TypeEncoder keyEncoder = null;
-        TypeEncoder valueEncoder = null;
-
         // Write the list elements and then compute total size written.
         Set<Map.Entry> entries = value.entrySet();
         for (Entry entry : entries) {
             Object entryKey = entry.getKey();
             Object entryValue = entry.getValue();
 
-            if (keyEncoder == null || !keyEncoder.getTypeClass().equals(entryKey.getClass())) {
-                keyEncoder = state.getEncoder().getTypeEncoder(entryKey);
-                if (keyEncoder == null) {
-                    throw new IllegalArgumentException(
-                        "No TypeEncoder exists for requested key type: " + entryKey.getClass().getName());
-                }
-            }
-
-            if (valueEncoder == null || !valueEncoder.getTypeClass().equals(entryValue.getClass())) {
-                valueEncoder = state.getEncoder().getTypeEncoder(entryValue);
-                if (valueEncoder == null) {
-                    throw new IllegalArgumentException(
-                        "No TypeEncoder exists for requested value type: " + entryValue.getClass().getName());
-                }
-            }
-
+            TypeEncoder keyEncoder = state.getEncoder().getTypeEncoder(entryKey);
             keyEncoder.writeType(buffer, state, entryKey);
+
+            TypeEncoder valueEncoder = state.getEncoder().getTypeEncoder(entryValue);
             valueEncoder.writeType(buffer, state, entryValue);
         }
 
