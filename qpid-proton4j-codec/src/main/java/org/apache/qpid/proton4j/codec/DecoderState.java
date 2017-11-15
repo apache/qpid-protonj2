@@ -16,6 +16,8 @@
  */
 package org.apache.qpid.proton4j.codec;
 
+import java.nio.ByteBuffer;
+
 /**
  * Retains state of decode either between calls or across decode iterations
  */
@@ -25,5 +27,16 @@ public interface DecoderState {
      * @return the decoder that created this state object
      */
     Decoder getDecoder();
+
+    /**
+     * Given a set of UTF-8 encoded bytes decode and return the String that
+     * represents that UTF-8 value.
+     *
+     * @param utf8bytes
+     *      The UTF-8 encoded bytes to be decoded
+     *
+     * @return a String that represents the UTF-8 decoded bytes.
+     */
+    String decodeUTF8(ByteBuffer utf8bytes);
 
 }

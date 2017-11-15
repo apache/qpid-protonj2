@@ -18,9 +18,6 @@ package org.apache.qpid.proton4j.codec.decoders.primitives;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.charset.CharacterCodingException;
-import java.nio.charset.CharsetDecoder;
-import java.nio.charset.StandardCharsets;
 
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.DecoderState;
@@ -30,25 +27,17 @@ import org.apache.qpid.proton4j.codec.DecoderState;
  */
 public abstract class AbstractStringTypeDecoder implements StringTypeDecoder {
 
-    private final CharsetDecoder STRING_DECODER = StandardCharsets.UTF_8.newDecoder();
-
     @Override
     public String readValue(ProtonBuffer buffer, DecoderState state) throws IOException {
         int length = readSize(buffer);
 
+        // TODO - If we provide a slice and dice on the ProtonBuffer and then use the
+        //        toByteBuffer methods we could avoid an actual copy of these bytes
+        //        which might not but massively faster it would reduce GC overhead.
         byte[] bytes = new byte[length];
         buffer.readBytes(bytes, 0, length);
 
-        // TODO - In order for this to be thread safe the decoder should probably
-        //        live in the DecoderState instance.
-
-        try {
-            return STRING_DECODER.decode(ByteBuffer.wrap(bytes)).toString();
-        } catch (CharacterCodingException e) {
-            throw new IllegalArgumentException("Cannot parse String");
-        } finally {
-            STRING_DECODER.reset();
-        }
+        return state.decodeUTF8(ByteBuffer.wrap(bytes));
     }
 
     @Override
