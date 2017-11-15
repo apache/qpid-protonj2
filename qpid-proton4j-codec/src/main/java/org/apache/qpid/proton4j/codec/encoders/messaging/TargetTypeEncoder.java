@@ -23,6 +23,7 @@ import org.apache.qpid.proton4j.amqp.messaging.Target;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.DescribedListTypeEncoder;
 import org.apache.qpid.proton4j.codec.EncoderState;
+import org.apache.qpid.proton4j.codec.EncodingCodes;
 
 /**
  * Encoder of AMQP Target type values to a byte stream.
@@ -71,6 +72,11 @@ public class TargetTypeEncoder implements DescribedListTypeEncoder<Target> {
             default:
                 throw new IllegalArgumentException("Unknown Target value index: " + index);
         }
+    }
+
+    @Override
+    public int getListEncoding(Target value) {
+        return EncodingCodes.LIST32;
     }
 
     @Override

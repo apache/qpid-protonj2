@@ -22,6 +22,7 @@ import org.apache.qpid.proton4j.amqp.transport.Detach;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.DescribedListTypeEncoder;
 import org.apache.qpid.proton4j.codec.EncoderState;
+import org.apache.qpid.proton4j.codec.EncodingCodes;
 
 /**
  * Encoder of AMQP Detach type values to a byte stream.
@@ -58,6 +59,11 @@ public class DetachTypeEncoder implements DescribedListTypeEncoder<Detach> {
             default:
                 throw new IllegalArgumentException("Unknown Detach value index: " + index);
         }
+    }
+
+    @Override
+    public int getListEncoding(Detach value) {
+        return value.getError() == null ? EncodingCodes.LIST8 & 0xff : EncodingCodes.LIST32 & 0xff;
     }
 
     @Override

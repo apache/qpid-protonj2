@@ -22,6 +22,7 @@ import org.apache.qpid.proton4j.amqp.transactions.TransactionalState;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.DescribedListTypeEncoder;
 import org.apache.qpid.proton4j.codec.EncoderState;
+import org.apache.qpid.proton4j.codec.EncodingCodes;
 
 /**
  * Encoder of AMQP TransactionState type values to a byte stream.
@@ -55,6 +56,11 @@ public class TransactionStateTypeEncoder implements DescribedListTypeEncoder<Tra
             default:
                 throw new IllegalArgumentException("Unknown TransactionalState value index: " + index);
         }
+    }
+
+    @Override
+    public int getListEncoding(TransactionalState value) {
+        return EncodingCodes.LIST32;
     }
 
     @Override

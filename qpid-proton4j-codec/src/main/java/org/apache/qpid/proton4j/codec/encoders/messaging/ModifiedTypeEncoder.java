@@ -22,6 +22,7 @@ import org.apache.qpid.proton4j.amqp.messaging.Modified;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.DescribedListTypeEncoder;
 import org.apache.qpid.proton4j.codec.EncoderState;
+import org.apache.qpid.proton4j.codec.EncodingCodes;
 
 /**
  * Encoder of AMQP Modified type values to a byte stream.
@@ -57,6 +58,15 @@ public class ModifiedTypeEncoder implements DescribedListTypeEncoder<Modified> {
                 break;
             default:
                 throw new IllegalArgumentException("Unknown Modified value index: " + index);
+        }
+    }
+
+    @Override
+    public int getListEncoding(Modified value) {
+        if (value.getMessageAnnotations() != null) {
+            return EncodingCodes.LIST32;
+        } else {
+            return EncodingCodes.LIST8;
         }
     }
 

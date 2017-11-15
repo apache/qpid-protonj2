@@ -45,7 +45,7 @@ public class AcceptedTypeEncoder implements DescribedListTypeEncoder<Accepted> {
     }
 
     @Override
-    public int getLargestEncoding() {
+    public int getListEncoding(Accepted value) {
         return EncodingCodes.LIST0 & 0xff;
     }
 

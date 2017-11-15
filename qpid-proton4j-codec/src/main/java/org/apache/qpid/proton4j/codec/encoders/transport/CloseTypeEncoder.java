@@ -22,6 +22,7 @@ import org.apache.qpid.proton4j.amqp.transport.Close;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.DescribedListTypeEncoder;
 import org.apache.qpid.proton4j.codec.EncoderState;
+import org.apache.qpid.proton4j.codec.EncodingCodes;
 
 /**
  * Encoder of AMQP Close type values to a byte stream/
@@ -55,11 +56,12 @@ public class CloseTypeEncoder implements DescribedListTypeEncoder<Close> {
     }
 
     @Override
-    public int getElementCount(Close close) {
-        if (close.getError() != null) {
-            return 1;
-        } else {
-            return 0;
-        }
+    public int getListEncoding(Close value) {
+        return value.getError() == null ? EncodingCodes.LIST0 & 0xff : EncodingCodes.LIST32 & 0xff;
+    }
+
+    @Override
+    public int getElementCount(Close value) {
+        return value.getError() == null ? 0 : 1;
     }
 }

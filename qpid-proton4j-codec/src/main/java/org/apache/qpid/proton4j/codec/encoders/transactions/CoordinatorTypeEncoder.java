@@ -22,6 +22,7 @@ import org.apache.qpid.proton4j.amqp.transactions.Coordinator;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.DescribedListTypeEncoder;
 import org.apache.qpid.proton4j.codec.EncoderState;
+import org.apache.qpid.proton4j.codec.EncodingCodes;
 
 /**
  * Encoder of AMQP Coordinator type values to a byte stream.
@@ -51,6 +52,15 @@ public class CoordinatorTypeEncoder implements DescribedListTypeEncoder<Coordina
                 break;
             default:
                 throw new IllegalArgumentException("Unknown Coordinator value index: " + index);
+        }
+    }
+
+    @Override
+    public int getListEncoding(Coordinator value) {
+        if (value.getCapabilities() != null) {
+            return EncodingCodes.LIST32;
+        } else {
+            return EncodingCodes.LIST0;
         }
     }
 

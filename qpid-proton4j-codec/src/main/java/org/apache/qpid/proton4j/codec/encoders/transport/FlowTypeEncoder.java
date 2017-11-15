@@ -22,6 +22,7 @@ import org.apache.qpid.proton4j.amqp.transport.Flow;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.DescribedListTypeEncoder;
 import org.apache.qpid.proton4j.codec.EncoderState;
+import org.apache.qpid.proton4j.codec.EncodingCodes;
 
 /**
  * Encoder of AMQP Flow type values to a byte stream.
@@ -81,6 +82,15 @@ public class FlowTypeEncoder implements DescribedListTypeEncoder<Flow> {
                 break;
             default:
                 throw new IllegalArgumentException("Unknown Flow value index: " + index);
+        }
+    }
+
+    @Override
+    public int getListEncoding(Flow value) {
+        if (value.getProperties() == null) {
+            return EncodingCodes.LIST8;
+        } else {
+            return EncodingCodes.LIST32;
         }
     }
 

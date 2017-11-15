@@ -45,7 +45,7 @@ public class HeaderTypeEncoder implements DescribedListTypeEncoder<Header> {
     }
 
     @Override
-    public int getLargestEncoding() {
+    public int getListEncoding(Header value) {
         return EncodingCodes.LIST8;
     }
 

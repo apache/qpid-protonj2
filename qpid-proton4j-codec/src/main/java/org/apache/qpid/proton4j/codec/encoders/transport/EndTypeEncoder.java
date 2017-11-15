@@ -45,17 +45,23 @@ public class EndTypeEncoder implements DescribedListTypeEncoder<End> {
     }
 
     @Override
-    public int getLargestEncoding() {
-        return EncodingCodes.LIST0 & 0xff;
+    public void writeElement(End end, int index, ProtonBuffer buffer, EncoderState state) {
+        switch (index) {
+            case 0:
+                state.getEncoder().writeObject(buffer, state, end.getError());
+                break;
+            default:
+                throw new IllegalArgumentException("Unknown End value index: " + index);
+        }
     }
 
     @Override
-    public void writeElement(End end, int index, ProtonBuffer buffer, EncoderState state) {
+    public int getListEncoding(End value) {
+        return value.getError() == null ? EncodingCodes.LIST0 & 0xff : EncodingCodes.LIST32 & 0xff;
     }
 
     @Override
     public int getElementCount(End end) {
-        return 0;
+        return end.getError() == null ? 0 : 1;
     }
-
 }

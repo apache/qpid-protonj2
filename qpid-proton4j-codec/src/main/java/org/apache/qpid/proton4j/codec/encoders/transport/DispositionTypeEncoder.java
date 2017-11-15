@@ -18,10 +18,13 @@ package org.apache.qpid.proton4j.codec.encoders.transport;
 
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
+import org.apache.qpid.proton4j.amqp.messaging.Accepted;
+import org.apache.qpid.proton4j.amqp.messaging.Released;
 import org.apache.qpid.proton4j.amqp.transport.Disposition;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.DescribedListTypeEncoder;
 import org.apache.qpid.proton4j.codec.EncoderState;
+import org.apache.qpid.proton4j.codec.EncodingCodes;
 
 /**
  * Encoder of AMQP Disposition type values to a byte stream
@@ -66,6 +69,17 @@ public class DispositionTypeEncoder implements DescribedListTypeEncoder<Disposit
                 break;
             default:
                 throw new IllegalArgumentException("Unknown Disposition value index: " + index);
+        }
+    }
+
+    @Override
+    public int getListEncoding(Disposition value) {
+        if (value.getState() == null) {
+            return EncodingCodes.LIST8;
+        } else if (value.getState() == Accepted.getInstance() || value.getState() == Released.getInstance()) {
+            return EncodingCodes.LIST8;
+        } else {
+            return EncodingCodes.LIST32;
         }
     }
 

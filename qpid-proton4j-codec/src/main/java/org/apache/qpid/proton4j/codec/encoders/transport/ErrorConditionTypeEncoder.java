@@ -22,6 +22,7 @@ import org.apache.qpid.proton4j.amqp.transport.ErrorCondition;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.DescribedListTypeEncoder;
 import org.apache.qpid.proton4j.codec.EncoderState;
+import org.apache.qpid.proton4j.codec.EncodingCodes;
 
 /**
  * Encoder of AMQP ErrorCondition type values to a byte stream
@@ -58,6 +59,11 @@ public class ErrorConditionTypeEncoder implements DescribedListTypeEncoder<Error
             default:
                 throw new IllegalArgumentException("Unknown ErrorCondition value index: " + index);
         }
+    }
+
+    @Override
+    public int getListEncoding(ErrorCondition value) {
+        return EncodingCodes.LIST32;
     }
 
     @Override

@@ -22,6 +22,7 @@ import org.apache.qpid.proton4j.amqp.messaging.Rejected;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.DescribedListTypeEncoder;
 import org.apache.qpid.proton4j.codec.EncoderState;
+import org.apache.qpid.proton4j.codec.EncodingCodes;
 
 /**
  * Encoder of AMQP Rejected type values to a byte stream.
@@ -51,6 +52,15 @@ public class RejectedTypeEncoder implements DescribedListTypeEncoder<Rejected> {
                 break;
             default:
                 throw new IllegalArgumentException("Unknown Rejected value index: " + index);
+        }
+    }
+
+    @Override
+    public int getListEncoding(Rejected value) {
+        if (value.getError() != null) {
+            return EncodingCodes.LIST32;
+        } else {
+            return EncodingCodes.LIST8;
         }
     }
 

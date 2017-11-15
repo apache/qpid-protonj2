@@ -45,7 +45,7 @@ public class DeleteOnNoLinksOrMessagesTypeEncoder implements DescribedListTypeEn
     }
 
     @Override
-    public int getLargestEncoding() {
+    public int getListEncoding(DeleteOnNoLinksOrMessages value) {
         return EncodingCodes.LIST0 & 0xff;
     }
 

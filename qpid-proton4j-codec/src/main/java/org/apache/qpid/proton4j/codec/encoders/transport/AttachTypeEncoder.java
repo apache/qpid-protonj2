@@ -24,6 +24,7 @@ import org.apache.qpid.proton4j.amqp.transport.SenderSettleMode;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.DescribedListTypeEncoder;
 import org.apache.qpid.proton4j.codec.EncoderState;
+import org.apache.qpid.proton4j.codec.EncodingCodes;
 
 /**
  * Encoder of AMQP Attach type values to a byte stream.
@@ -93,6 +94,11 @@ public class AttachTypeEncoder implements DescribedListTypeEncoder<Attach> {
             default:
                 throw new IllegalArgumentException("Unknown Attach value index: " + index);
         }
+    }
+
+    @Override
+    public int getListEncoding(Attach value) {
+        return EncodingCodes.LIST32;
     }
 
     @Override

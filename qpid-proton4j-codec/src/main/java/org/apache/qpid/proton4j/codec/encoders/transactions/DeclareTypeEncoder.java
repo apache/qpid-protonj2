@@ -22,6 +22,7 @@ import org.apache.qpid.proton4j.amqp.transactions.Declare;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.DescribedListTypeEncoder;
 import org.apache.qpid.proton4j.codec.EncoderState;
+import org.apache.qpid.proton4j.codec.EncodingCodes;
 
 /**
  * Encoder of AMQP Declare type values to a byte stream.
@@ -51,6 +52,15 @@ public class DeclareTypeEncoder implements DescribedListTypeEncoder<Declare> {
                 break;
             default:
                 throw new IllegalArgumentException("Unknown Declare value index: " + index);
+        }
+    }
+
+    @Override
+    public int getListEncoding(Declare value) {
+        if (value.getGlobalId() != null) {
+            return EncodingCodes.LIST32;
+        } else {
+            return EncodingCodes.LIST0;
         }
     }
 

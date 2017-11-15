@@ -45,7 +45,7 @@ public class DeleteOnCloseTypeEncoder implements DescribedListTypeEncoder<Delete
     }
 
     @Override
-    public int getLargestEncoding() {
+    public int getListEncoding(DeleteOnClose value) {
         return EncodingCodes.LIST0 & 0xff;
     }
 

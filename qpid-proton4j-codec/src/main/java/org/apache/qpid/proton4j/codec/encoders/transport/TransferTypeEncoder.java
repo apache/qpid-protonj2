@@ -23,6 +23,7 @@ import org.apache.qpid.proton4j.amqp.transport.Transfer;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.DescribedListTypeEncoder;
 import org.apache.qpid.proton4j.codec.EncoderState;
+import org.apache.qpid.proton4j.codec.EncodingCodes;
 
 /**
  * Encoder of AMQP Transfer type values to a byte stream.
@@ -83,6 +84,17 @@ public class TransferTypeEncoder implements DescribedListTypeEncoder<Transfer> {
                 break;
             default:
                 throw new IllegalArgumentException("Unknown Transfer value index: " + index);
+        }
+    }
+
+    @Override
+    public int getListEncoding(Transfer value) {
+        if (value.getState() != null) {
+            return EncodingCodes.LIST32;
+        } else if (value.getDeliveryTag() != null && value.getDeliveryTag().getLength() > 200) {
+            return EncodingCodes.LIST32;
+        } else {
+            return EncodingCodes.LIST8;
         }
     }
 

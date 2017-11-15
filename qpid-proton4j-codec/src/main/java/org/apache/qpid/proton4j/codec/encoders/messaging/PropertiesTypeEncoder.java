@@ -22,6 +22,7 @@ import org.apache.qpid.proton4j.amqp.messaging.Properties;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.DescribedListTypeEncoder;
 import org.apache.qpid.proton4j.codec.EncoderState;
+import org.apache.qpid.proton4j.codec.EncodingCodes;
 
 /**
  * Encoder of AMQP Properties type value to a byte stream.
@@ -88,6 +89,11 @@ public class PropertiesTypeEncoder implements DescribedListTypeEncoder<Propertie
             default:
                 throw new IllegalArgumentException("Unknown Properties value index: " + index);
         }
+    }
+
+    @Override
+    public int getListEncoding(Properties value) {
+        return EncodingCodes.LIST32;
     }
 
     @Override

@@ -45,7 +45,7 @@ public class DeleteOnNoMessagesTypeEncoder implements DescribedListTypeEncoder<D
     }
 
     @Override
-    public int getLargestEncoding() {
+    public int getListEncoding(DeleteOnNoMessages value) {
         return EncodingCodes.LIST0 & 0xff;
     }
 

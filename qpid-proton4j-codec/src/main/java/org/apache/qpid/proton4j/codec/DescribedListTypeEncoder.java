@@ -31,7 +31,7 @@ public interface DescribedListTypeEncoder<V> extends DescribedTypeEncoder<V> {
         state.getEncoder().writeUnsignedLong(buffer, state, getDescriptorCode());
 
         int count = getElementCount(value);
-        int encodingCode = getLargestEncoding();
+        int encodingCode = getElementCount(value);
 
         // Optimized step, no other data to be written.
         if (count == 0 || encodingCode == EncodingCodes.LIST0) {
@@ -77,18 +77,20 @@ public interface DescribedListTypeEncoder<V> extends DescribedTypeEncoder<V> {
     }
 
     /**
-     * Returns the encoding code of the largest encoding this list type can be
-     * encoded to.
+     * Determine the list type the given value can be encoded to based on the number
+     * of bytes that would be needed to hold the encoded form of the resulting list
+     * entries.
      * <p>
-     * Most encoders will return LIST32 but for cases where the type is know to
+     * Most encoders will return LIST32 but for cases where the type is known to
      * be encoded to LIST8 or always encodes an empty list (LIST0) the encoder can
      * optimize the encode step and not compute sizes.
      *
-     * @return the encoding code of the largest list type needed for this object.
+     * @param value
+     *      The value that is to be encoded.
+     *
+     * @return the encoding code of the list type encoding needed for this object.
      */
-    default int getLargestEncoding() {
-        return EncodingCodes.LIST32 & 0xff;
-    }
+    int getListEncoding(V value);
 
     /**
      * Instructs the encoder to write the element identified with the given index

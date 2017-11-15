@@ -45,7 +45,7 @@ public class ReleasedTypeEncoder implements DescribedListTypeEncoder<Released> {
     }
 
     @Override
-    public int getLargestEncoding() {
+    public int getListEncoding(Released value) {
         return EncodingCodes.LIST0 & 0xff;
     }
 

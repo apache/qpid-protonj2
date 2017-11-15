@@ -45,7 +45,7 @@ public class ReceivedTypeEncoder implements DescribedListTypeEncoder<Received> {
     }
 
     @Override
-    public int getLargestEncoding() {
+    public int getListEncoding(Received value) {
         return EncodingCodes.LIST8 & 0xff;
     }
 

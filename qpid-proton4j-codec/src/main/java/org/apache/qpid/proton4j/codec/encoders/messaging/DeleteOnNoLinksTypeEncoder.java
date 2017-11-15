@@ -45,7 +45,7 @@ public class DeleteOnNoLinksTypeEncoder implements DescribedListTypeEncoder<Dele
     }
 
     @Override
-    public int getLargestEncoding() {
+    public int getListEncoding(DeleteOnNoLinks value) {
         return EncodingCodes.LIST0 & 0xff;
     }
 

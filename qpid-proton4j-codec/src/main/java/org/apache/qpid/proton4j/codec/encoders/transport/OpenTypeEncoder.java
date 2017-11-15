@@ -24,6 +24,7 @@ import org.apache.qpid.proton4j.amqp.transport.Open;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.DescribedListTypeEncoder;
 import org.apache.qpid.proton4j.codec.EncoderState;
+import org.apache.qpid.proton4j.codec.EncodingCodes;
 
 /**
  * Encoder of AMQP Open type values to a byte stream.
@@ -81,6 +82,11 @@ public class OpenTypeEncoder implements DescribedListTypeEncoder<Open> {
             default:
                 throw new IllegalArgumentException("Unknown Open value index: " + index);
         }
+    }
+
+    @Override
+    public int getListEncoding(Open value) {
+        return EncodingCodes.LIST32;
     }
 
     @Override

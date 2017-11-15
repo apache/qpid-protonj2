@@ -23,6 +23,7 @@ import org.apache.qpid.proton4j.amqp.transport.Begin;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.DescribedListTypeEncoder;
 import org.apache.qpid.proton4j.codec.EncoderState;
+import org.apache.qpid.proton4j.codec.EncodingCodes;
 
 /**
  * Encoder of AMQP Begin type values to a byte stream.
@@ -74,6 +75,11 @@ public class BeginTypeEncoder implements DescribedListTypeEncoder<Begin> {
             default:
                 throw new IllegalArgumentException("Unknown Begin value index: " + index);
         }
+    }
+
+    @Override
+    public int getListEncoding(Begin value) {
+        return EncodingCodes.LIST32;
     }
 
     @Override
