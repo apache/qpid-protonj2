@@ -17,7 +17,6 @@
 package org.apache.qpid.proton4j.codec.decoders.primitives;
 
 import java.io.IOException;
-import java.nio.ByteBuffer;
 
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.DecoderState;
@@ -31,13 +30,10 @@ public abstract class AbstractStringTypeDecoder implements StringTypeDecoder {
     public String readValue(ProtonBuffer buffer, DecoderState state) throws IOException {
         int length = readSize(buffer);
 
-        // TODO - If we provide a slice and dice on the ProtonBuffer and then use the
-        //        toByteBuffer methods we could avoid an actual copy of these bytes
-        //        which might not but massively faster it would reduce GC overhead.
-        byte[] bytes = new byte[length];
-        buffer.readBytes(bytes, 0, length);
+        ProtonBuffer duplicate = buffer.duplicate().setWriteIndex(buffer.getReadIndex() + length);
+        buffer.setReadIndex(buffer.getReadIndex() + length);
 
-        return state.decodeUTF8(ByteBuffer.wrap(bytes));
+        return state.decodeUTF8(duplicate.toByteBuffer());
     }
 
     @Override
