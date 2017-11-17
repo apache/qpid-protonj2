@@ -16,9 +16,6 @@
  */
 package org.apache.qpid.proton4j.codec;
 
-import java.util.Map;
-import java.util.Set;
-
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 
 /**
@@ -45,13 +42,13 @@ public interface DescribedMapTypeEncoder<K, V, M> extends DescribedTypeEncoder<M
     }
 
     /**
-     * Returns true when the value to be encoded has no Map body and can be
+     * Returns false when the value to be encoded has no Map body and can be
      * written as a Null body type instead of a Map type.
      *
      * @param value
      *		the value which be encoded as a map type.
      *
-     * @return true if the type to be encoded has no Map body.
+     * @return true if the type to be encoded has a Map body, false otherwise.
      */
     boolean hasMap(M value);
 
@@ -67,14 +64,16 @@ public interface DescribedMapTypeEncoder<K, V, M> extends DescribedTypeEncoder<M
     int getMapSize(M value);
 
     /**
-     * Gets the Map entries that comprise the Map that is to be encoded.
+     * Performs the write of the Map entries to the given buffer, the caller
+     * takes care of writing the Map preamble and tracking the final size of
+     * the written elements of the Map.
      *
      * @param value
      * 		the value which will be encoded as a map type.
      *
      * @return the Map entries that are to be encoded.
      */
-    Set<Map.Entry<K, V>> getMapEntries(M value);
+    void writeMapEntries(ProtonBuffer buffer, EncoderState state, M value);
 
     @Override
     default void writeType(ProtonBuffer buffer, EncoderState state, M value) {
@@ -110,13 +109,7 @@ public interface DescribedMapTypeEncoder<K, V, M> extends DescribedTypeEncoder<M
             buffer.writeInt(count * 2);
         }
 
-        Set<Map.Entry<K, V>> entrySet = getMapEntries(value);
-
-        // Write the Map elements and then compute total size written.
-        for (Map.Entry<K, V> entry : entrySet) {
-            state.getEncoder().writeObject(buffer, state, entry.getKey());
-            state.getEncoder().writeObject(buffer, state, entry.getValue());
-        }
+        writeMapEntries(buffer, state, value);
 
         // Move back and write the size
         int endIndex = buffer.getWriteIndex();

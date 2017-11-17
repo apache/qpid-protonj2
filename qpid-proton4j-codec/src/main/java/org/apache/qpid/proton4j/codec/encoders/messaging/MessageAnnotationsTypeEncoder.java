@@ -16,13 +16,14 @@
  */
 package org.apache.qpid.proton4j.codec.encoders.messaging;
 
-import java.util.Map.Entry;
-import java.util.Set;
+import java.util.Map;
 
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.amqp.messaging.MessageAnnotations;
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.DescribedMapTypeEncoder;
+import org.apache.qpid.proton4j.codec.EncoderState;
 
 /**
  * Encoder of AMQP MessageAnnotations type values to a byte stream.
@@ -59,12 +60,11 @@ public class MessageAnnotationsTypeEncoder implements DescribedMapTypeEncoder<Sy
     }
 
     @Override
-    public Set<Entry<Symbol, Object>> getMapEntries(MessageAnnotations value) {
-        if (value.getValue() != null) {
-            return value.getValue().entrySet();
-        } else {
-            return null;
+    public void writeMapEntries(ProtonBuffer buffer, EncoderState state, MessageAnnotations value) {
+        // Write the Map elements and then compute total size written.
+        for (Map.Entry<Symbol, Object> entry : value.getValue().entrySet()) {
+            state.getEncoder().writeSymbol(buffer, state, entry.getKey());
+            state.getEncoder().writeObject(buffer, state, entry.getValue());
         }
     }
-
 }
