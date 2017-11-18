@@ -26,7 +26,6 @@ import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.DecoderState;
 import org.apache.qpid.proton4j.codec.DescribedTypeDecoder;
 import org.apache.qpid.proton4j.codec.TypeDecoder;
-import org.apache.qpid.proton4j.codec.decoders.primitives.ListTypeDecoder;
 import org.apache.qpid.proton4j.codec.decoders.primitives.MapTypeDecoder;
 import org.apache.qpid.proton4j.codec.decoders.primitives.NullTypeDecoder;
 
@@ -78,7 +77,7 @@ public class ApplicationPropertiesTypeDecoder implements DescribedTypeDecoder<Ap
             return;
         }
 
-        if (!(decoder instanceof ListTypeDecoder)) {
+        if (!(decoder instanceof MapTypeDecoder)) {
             throw new IOException("Expected List type indicator but got decoder for type: " + decoder.getClass().getSimpleName());
         }
 
