@@ -36,7 +36,6 @@ public abstract class AbstractMapTypeDecoder implements MapTypeDecoder {
         int size = readSize(buffer);
         int count = readCount(buffer);
 
-        // Ensure we do not allocate an array of size greater then the available data, otherwise there is a risk for an OOM error
         if (count > buffer.getReadableBytes()) {
             throw new IllegalArgumentException(String.format(
                     "Map encoded size %d is specified to be greater than the amount " +
@@ -87,9 +86,4 @@ public abstract class AbstractMapTypeDecoder implements MapTypeDecoder {
     public void skipValue(ProtonBuffer buffer, DecoderState state) throws IOException {
         buffer.skipBytes(readSize(buffer));
     }
-
-    protected abstract int readSize(ProtonBuffer buffer);
-
-    protected abstract int readCount(ProtonBuffer buffer);
-
 }

@@ -30,12 +30,12 @@ public class Map8TypeDecoder extends AbstractMapTypeDecoder {
     }
 
     @Override
-    protected int readSize(ProtonBuffer buffer) {
+    public int readSize(ProtonBuffer buffer) {
         return buffer.readByte() & 0xff;
     }
 
     @Override
-    protected int readCount(ProtonBuffer buffer) {
+    public int readCount(ProtonBuffer buffer) {
         return buffer.readByte() & 0xff;
     }
 }

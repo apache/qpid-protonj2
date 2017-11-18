@@ -18,6 +18,7 @@ package org.apache.qpid.proton4j.codec.decoders.primitives;
 
 import java.util.Map;
 
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.PrimitiveTypeDecoder;
 
 /**
@@ -30,4 +31,28 @@ public interface MapTypeDecoder extends PrimitiveTypeDecoder<Map> {
     default Class<Map> getTypeClass() {
         return Map.class;
     }
+
+    /**
+     * Reads the encoded size of the underlying Map type.
+     *
+     * @param buffer
+     *      The buffer containing the encoded Map type.
+     *
+     * @return the size in bytes of the encoded Map.
+     */
+    int readSize(ProtonBuffer buffer);
+
+    /**
+     * Reads the count of entries in the encoded Map.
+     * <p>
+     * This value is the total count of all key values pairs, and should
+     * always be an even number as Map types cannot be unbalanced.
+     *
+     * @param buffer
+     *      The buffer containing the encoded Map type.
+     *
+     * @return the number of elements that we encoded from the original Map.
+     */
+    int readCount(ProtonBuffer buffer);
+
 }

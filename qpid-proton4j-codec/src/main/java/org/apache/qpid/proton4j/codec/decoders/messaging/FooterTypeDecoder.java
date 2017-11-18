@@ -17,6 +17,7 @@
 package org.apache.qpid.proton4j.codec.decoders.messaging;
 
 import java.io.IOException;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 import org.apache.qpid.proton4j.amqp.Symbol;
@@ -48,7 +49,6 @@ public class FooterTypeDecoder implements DescribedTypeDecoder<Footer> {
         return Footer.DESCRIPTOR_SYMBOL;
     }
 
-    @SuppressWarnings({ "unchecked" })
     @Override
     public Footer readValue(ProtonBuffer buffer, DecoderState state) throws IOException {
         TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
@@ -59,7 +59,24 @@ public class FooterTypeDecoder implements DescribedTypeDecoder<Footer> {
 
         MapTypeDecoder mapDecoder = (MapTypeDecoder) decoder;
 
-        Map<Object, Object> map = mapDecoder.readValue(buffer, state);
+        int size = mapDecoder.readSize(buffer);
+        int count = mapDecoder.readCount(buffer);
+
+        if (count > buffer.getReadableBytes()) {
+            throw new IllegalArgumentException(String.format(
+                    "Map encoded size %d is specified to be greater than the amount " +
+                    "of data available (%d)", size, buffer.getReadableBytes()));
+        }
+
+        // Count include both key and value so we must include that in the loop
+        Map<Object, Object> map = new LinkedHashMap<>(count);
+        for (int i = 0; i < count / 2; i++) {
+            Object key = state.getDecoder().readObject(buffer, state);
+            Object value = state.getDecoder().readObject(buffer, state);
+
+            map.put(key, value);
+        }
+
         return new Footer(map);
     }
 
