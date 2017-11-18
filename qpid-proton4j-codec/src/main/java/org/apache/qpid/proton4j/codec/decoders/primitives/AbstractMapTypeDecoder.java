@@ -22,9 +22,6 @@ import java.util.Map;
 
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.DecoderState;
-import org.apache.qpid.proton4j.codec.EncodingCodes;
-import org.apache.qpid.proton4j.codec.PrimitiveTypeDecoder;
-import org.apache.qpid.proton4j.codec.TypeDecoder;
 
 /**
  * Base for the various Map type decoders used to read AMQP Map values.
@@ -42,44 +39,16 @@ public abstract class AbstractMapTypeDecoder implements MapTypeDecoder {
                     "of data available (%d)", size, buffer.getReadableBytes()));
         }
 
-        TypeDecoder<?> keyDecoder = null;
-        TypeDecoder<?> valueDecoder = null;
-
         // Count include both key and value so we must include that in the loop
         Map<Object, Object> map = new LinkedHashMap<>(count);
         for (int i = 0; i < count / 2; i++) {
-            keyDecoder = findNextDecoder(buffer, state, keyDecoder);
-            Object key = keyDecoder.readValue(buffer, state);
-
-            valueDecoder = findNextDecoder(buffer, state, valueDecoder);
-            Object value = valueDecoder.readValue(buffer, state);
+            Object key = state.getDecoder().readObject(buffer, state);
+            Object value = state.getDecoder().readObject(buffer, state);
 
             map.put(key, value);
         }
 
         return map;
-    }
-
-    private TypeDecoder<?> findNextDecoder(ProtonBuffer buffer, DecoderState state, TypeDecoder<?> prevoudDecoder) throws IOException {
-        if (prevoudDecoder == null) {
-            return state.getDecoder().readNextTypeDecoder(buffer, state);
-        } else {
-            buffer.markReadIndex();
-
-            byte encodingCode = buffer.readByte();
-            if (encodingCode == EncodingCodes.DESCRIBED_TYPE_INDICATOR || !(prevoudDecoder instanceof PrimitiveTypeDecoder<?>)) {
-                buffer.resetReadIndex();
-                return state.getDecoder().readNextTypeDecoder(buffer, state);
-            } else {
-                PrimitiveTypeDecoder<?> primitiveTypeDecoder = (PrimitiveTypeDecoder<?>) prevoudDecoder;
-                if (encodingCode != primitiveTypeDecoder.getTypeCode()) {
-                    buffer.resetReadIndex();
-                    return state.getDecoder().readNextTypeDecoder(buffer, state);
-                }
-            }
-        }
-
-        return prevoudDecoder;
     }
 
     @Override
