@@ -61,6 +61,19 @@ public final class Symbol implements Comparable<Symbol> {
         return hashCode;
     }
 
+    @Override
+    public boolean equals(Object other) {
+        if (this == other) {
+            return true;
+        }
+
+        if (other instanceof Symbol) {
+            return underlying.equals(((Symbol) other).underlying);
+        }
+
+        return false;
+    }
+
     public void writeTo(ProtonBuffer target) {
         target.writeBytes(underlying, 0, underlying.getReadableBytes());
     }
