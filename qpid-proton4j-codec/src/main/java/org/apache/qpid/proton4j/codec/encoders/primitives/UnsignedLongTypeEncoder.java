@@ -42,33 +42,8 @@ public class UnsignedLongTypeEncoder implements PrimitiveTypeEncoder<UnsignedLon
             buffer.writeByte(EncodingCodes.SMALLULONG);
             buffer.writeByte((int) longValue);
         } else {
-            buffer.writeByte(EncodingCodes.ULONG0);
+            buffer.writeByte(EncodingCodes.ULONG);
             buffer.writeLong(longValue);
-        }
-    }
-
-    public void write(ProtonBuffer buffer, EncoderState state, UnsignedLong value, boolean writeType, boolean compact) {
-        if (!compact) {
-            if (writeType) {
-                buffer.writeByte(EncodingCodes.ULONG);
-            }
-            buffer.writeLong(value.longValue());
-        } else {
-            if (value.equals(UnsignedLong.ZERO)) {
-                if (writeType) {
-                    buffer.writeByte(EncodingCodes.ULONG0);
-                }
-            } else if (value.longValue() <= 255l) {
-                if (writeType) {
-                    buffer.writeByte(EncodingCodes.SMALLULONG);
-                }
-                buffer.writeByte(value.byteValue());
-            } else {
-                if (writeType) {
-                    buffer.writeByte(EncodingCodes.ULONG);
-                }
-                buffer.writeLong(value.longValue());
-            }
         }
     }
 

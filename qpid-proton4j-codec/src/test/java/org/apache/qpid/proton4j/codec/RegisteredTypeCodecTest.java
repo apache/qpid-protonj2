@@ -26,13 +26,11 @@ import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.codec.util.NoLocalType;
 import org.apache.qpid.proton4j.codec.util.NoLocalTypeDecoder;
 import org.apache.qpid.proton4j.codec.util.NoLocalTypeEncoder;
-import org.junit.Ignore;
 import org.junit.Test;
 
 /**
  * Test for handling of type when the Decoder / Encoder is registered
  */
-@Ignore("Not yet functional")
 public class RegisteredTypeCodecTest extends CodecTestSupport {
 
     @Test

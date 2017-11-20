@@ -26,13 +26,11 @@ import org.apache.qpid.proton4j.amqp.UnknownDescribedType;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.codec.util.NoLocalType;
-import org.junit.Ignore;
 import org.junit.Test;
 
 /**
  * Tests the handling of UnknownDescribedType instances.
  */
-@Ignore("Not yet functional")
 public class UnknownDescribedTypeCodecTest extends CodecTestSupport {
 
     private final int LARGE_SIZE = 1024 * 1024;
