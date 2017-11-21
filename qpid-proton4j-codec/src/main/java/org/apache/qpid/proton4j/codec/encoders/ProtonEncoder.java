@@ -588,12 +588,16 @@ public class ProtonEncoder implements Encoder {
         if (value == null) {
             return nullEncoder;
         } else {
-            return getTypeEncoder(value.getClass());
+            return getTypeEncoder(value.getClass(), value);
         }
     }
 
     @Override
     public TypeEncoder<?> getTypeEncoder(Class<?> typeClass) {
+        return getTypeEncoder(typeClass, null);
+    }
+
+    public TypeEncoder<?> getTypeEncoder(Class<?> typeClass, Object instance) {
         TypeEncoder<?> encoder = typeEncoders.get(typeClass);
 
         if (encoder == null) {
@@ -605,7 +609,14 @@ public class ProtonEncoder implements Encoder {
                 } else if (Map.class.isAssignableFrom(typeClass)) {
                     encoder = mapEncoder;
                 } else if (DescribedType.class.isAssignableFrom(typeClass)) {
-                    encoder = unknownTypeEncoder;
+                    // For instances of a specific DescribedType that we don't know about the
+                    // generic described type encoder will work.  We don't use that though for
+                    // class lookups as we don't want to allow arrays of  polymorphic types.
+                    if (encoder == null && instance != null) {
+                        if (encoder == null) {
+                            return unknownTypeEncoder;
+                        }
+                    }
                 }
             }
 

@@ -19,8 +19,13 @@ package org.apache.qpid.proton4j.codec;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import org.apache.qpid.proton4j.amqp.UnknownDescribedType;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
@@ -56,6 +61,77 @@ public class UnknownDescribedTypeCodecTest extends CodecTestSupport {
     @Test
     public void testDecodeLargeSeriesOfUnknownDescribedTypes() throws IOException {
         doTestDecodeUnknownDescribedTypeSeries(LARGE_SIZE);
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    public void testUnknownDescribedTypeInList() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        List<Object> listOfUnkowns = new ArrayList<>();
+
+        listOfUnkowns.add(NoLocalType.NO_LOCAL);
+
+        encoder.writeList(buffer, encoderState, listOfUnkowns);
+
+        final Object result = decoder.readObject(buffer, decoderState);
+
+        assertNotNull(result);
+        assertTrue(result instanceof List);
+
+        final List<Object> decodedList = (List<Object>) result;
+        assertEquals(1, decodedList.size());
+
+        final Object listEntry = decodedList.get(0);
+        assertTrue(listEntry instanceof UnknownDescribedType);
+
+        UnknownDescribedType resultTye = (UnknownDescribedType) listEntry;
+        assertEquals(NoLocalType.NO_LOCAL.getDescriptor(), resultTye.getDescriptor());
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    public void testUnknownDescribedTypeInMap() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        Map<Object, Object> mapOfUnknowns = new HashMap<>();
+
+        mapOfUnknowns.put(NoLocalType.NO_LOCAL.getDescriptor(), NoLocalType.NO_LOCAL);
+
+        encoder.writeMap(buffer, encoderState, mapOfUnknowns);
+
+        final Object result = decoder.readObject(buffer, decoderState);
+
+        assertNotNull(result);
+        assertTrue(result instanceof Map);
+
+        final Map<Object, Object> decodedMap = (Map<Object, Object>) result;
+        assertEquals(1, decodedMap.size());
+
+        final Object mapEntry = decodedMap.get(NoLocalType.NO_LOCAL.getDescriptor());
+        assertTrue(mapEntry instanceof UnknownDescribedType);
+
+        UnknownDescribedType resultTye = (UnknownDescribedType) mapEntry;
+        assertEquals(NoLocalType.NO_LOCAL.getDescriptor(), resultTye.getDescriptor());
+    }
+
+    @Test
+    public void testUnknownDescribedTypeInArray() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        NoLocalType[] arrayOfUnknown = new NoLocalType[1];
+
+        arrayOfUnknown[0] = NoLocalType.NO_LOCAL;
+
+        try {
+            encoder.writeArray(buffer, encoderState, arrayOfUnknown);
+            fail("Should not be able to write an array of unregistered described type");
+        } catch (IllegalArgumentException iae) {}
+
+        try {
+            encoder.writeObject(buffer, encoderState, arrayOfUnknown);
+            fail("Should not be able to write an array of unregistered described type");
+        } catch (IllegalArgumentException iae) {}
     }
 
     private void doTestDecodeUnknownDescribedTypeSeries(int size) throws IOException {
