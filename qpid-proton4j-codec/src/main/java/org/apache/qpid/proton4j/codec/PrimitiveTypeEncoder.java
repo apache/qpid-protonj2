@@ -16,33 +16,11 @@
  */
 package org.apache.qpid.proton4j.codec;
 
-import org.apache.qpid.proton4j.buffer.ProtonBuffer;
-
 /**
  * Encoder of Primitive types such as Integer or Boolean
  *
  * @param <V> the type that this encoder writes.
  */
 public interface PrimitiveTypeEncoder<V> extends TypeEncoder<V> {
-
-    default boolean isArryTypeEncoder() {
-        return false;
-    }
-
-    /**
-     * Write an array of values to the given byte buffer.
-     * <p>
-     * This method writes an single dimension array of values to the
-     * given byte buffer including the AMQP array type constructor that
-     * matches the encoded form of the array.
-     *
-     * @param buffer
-     *      The buffer to write the AMQP type to
-     * @param state
-     *      The current encoder state
-     * @param value
-     *      The array of values that is to be written.
-     */
-    void writeArray(ProtonBuffer buffer, EncoderState state, V[] value);
 
 }

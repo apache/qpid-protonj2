@@ -50,4 +50,8 @@ public class DataTypeEncoder implements DescribedTypeEncoder<Data> {
         state.getEncoder().writeUnsignedLong(buffer, state, getDescriptorCode());
         state.getEncoder().writeBinary(buffer, state, value.getValue());
     }
+
+    @Override
+    public void writeArray(ProtonBuffer buffer, EncoderState state, Data[] value) {
+    }
 }

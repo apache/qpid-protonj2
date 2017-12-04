@@ -28,16 +28,20 @@ import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 public interface DescribedMapTypeEncoder<K, V, M> extends DescribedTypeEncoder<M> {
 
     /**
-     * Returns the encoding code of the largest encoding this Map type can be
-     * encoded to.
+     * Determine the map type the given value can be encoded to based on the number
+     * of bytes that would be needed to hold the encoded form of the resulting list
+     * entries.
      * <p>
-     * Most encoders will return MAP32 but for cases where the type is know to
-     * be encoded to MAP8 the encode process can skip size computations which
-     * will increase encoder performance.
+     * Most encoders will return MAP32 but for cases where the type is known to
+     * be encoded to MAP8 the encoder can optimize the encode step and not compute
+     * sizes.
      *
-     * @return the encoding code of the largest map type needed for this object.
+     * @param value
+     *      The value that is to be encoded.
+     *
+     * @return the encoding code of the map type encoding needed for this object.
      */
-    default int getLargestEncoding() {
+    default int getMapEncoding(M value) {
         return EncodingCodes.MAP32 & 0xff;
     }
 
@@ -86,7 +90,7 @@ public interface DescribedMapTypeEncoder<K, V, M> extends DescribedTypeEncoder<M
         }
 
         int count = getMapSize(value);
-        int encodingCode = getLargestEncoding();
+        int encodingCode = getMapEncoding(value);
 
         final int fieldWidth;
 
@@ -120,5 +124,10 @@ public interface DescribedMapTypeEncoder<K, V, M> extends DescribedTypeEncoder<M
         } else {
             buffer.setInt(startIndex, writeSize);
         }
+    }
+
+    @Override
+    default void writeArray(ProtonBuffer buffer, EncoderState state, M[] value) {
+        // TODO
     }
 }

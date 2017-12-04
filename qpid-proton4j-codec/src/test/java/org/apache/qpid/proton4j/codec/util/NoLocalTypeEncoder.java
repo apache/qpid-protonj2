@@ -46,4 +46,9 @@ public class NoLocalTypeEncoder implements DescribedTypeEncoder<NoLocalType> {
         state.getEncoder().writeUnsignedLong(buffer, state, getDescriptorCode());
         state.getEncoder().writeString(buffer, state, value.getDescribed());
     }
+
+    @Override
+    public void writeArray(ProtonBuffer buffer, EncoderState state, NoLocalType[] value) {
+        // TODO
+    }
 }

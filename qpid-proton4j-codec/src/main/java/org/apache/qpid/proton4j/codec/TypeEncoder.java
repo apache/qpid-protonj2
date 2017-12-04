@@ -45,4 +45,19 @@ public interface TypeEncoder<V> {
      */
     void writeType(ProtonBuffer buffer, EncoderState state, V value);
 
+    /**
+     * Write an array of the AMQP type to the given byte buffer.
+     * <p>
+     * This can consist of writing both a type constructor value and
+     * the bytes that make up the value of the type being written.
+     *
+     * @param buffer
+     *      The buffer to write the AMQP array to
+     * @param state
+     *      The current encoder state
+     * @param value
+     *      The value that is to be written.
+     */
+    void writeArray(ProtonBuffer buffer, EncoderState state, V[] value);
+
 }

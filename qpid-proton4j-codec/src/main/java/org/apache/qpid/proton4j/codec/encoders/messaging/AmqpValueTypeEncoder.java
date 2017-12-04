@@ -50,4 +50,9 @@ public class AmqpValueTypeEncoder implements DescribedTypeEncoder<AmqpValue> {
         state.getEncoder().writeUnsignedLong(buffer, state, getDescriptorCode());
         state.getEncoder().writeObject(buffer, state, value.getValue());
     }
+
+    @Override
+    public void writeArray(ProtonBuffer buffer, EncoderState state, AmqpValue[] value) {
+        // TODO
+    }
 }

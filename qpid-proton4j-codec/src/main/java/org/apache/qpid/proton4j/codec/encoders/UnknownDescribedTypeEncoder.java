@@ -38,4 +38,10 @@ public class UnknownDescribedTypeEncoder implements TypeEncoder<DescribedType> {
         state.getEncoder().writeObject(buffer, state, value.getDescriptor());
         state.getEncoder().writeObject(buffer, state, value.getDescribed());
     }
+
+    @Override
+    public void writeArray(ProtonBuffer buffer, EncoderState state, DescribedType[] value) {
+        // TODO - Check each element to ensure they every described type is from the same class.
+        throw new UnsupportedOperationException("Cannot write array of unknown described types.");
+    }
 }

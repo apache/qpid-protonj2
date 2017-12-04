@@ -25,13 +25,56 @@ import org.apache.qpid.proton4j.buffer.ProtonBuffer;
  */
 public interface DescribedListTypeEncoder<V> extends DescribedTypeEncoder<V> {
 
+    /**
+     * Determine the list type the given value can be encoded to based on the number
+     * of bytes that would be needed to hold the encoded form of the resulting list
+     * entries.
+     * <p>
+     * Most encoders will return LIST32 but for cases where the type is known to
+     * be encoded to LIST8 or always encodes an empty list (LIST0) the encoder can
+     * optimize the encode step and not compute sizes.
+     *
+     * @param value
+     *      The value that is to be encoded.
+     *
+     * @return the encoding code of the list type encoding needed for this object.
+     */
+    default int getListEncoding(V value) {
+        return EncodingCodes.LIST32 & 0xff;
+    }
+
+    /**
+     * Instructs the encoder to write the element identified with the given index
+     *
+     * @param source
+     *      the source of the list elements to write
+     * @param index
+     *      the element index that needs to be written
+     * @param buffer
+     *      the buffer to write the element to
+     * @param state
+     *      the current EncoderState value to use.
+     */
+    void writeElement(V source, int index, ProtonBuffer buffer, EncoderState state);
+
+    /**
+     * Gets the number of elements that will result when this type is encoded
+     * into an AMQP List type.
+     *
+     * @param value
+     *      the value which will be encoded as a list type.
+     *
+     * @return the number of elements that should comprise the encoded list.
+     */
+    int getElementCount(V value);
+
     @Override
     default void writeType(ProtonBuffer buffer, EncoderState state, V value) {
         buffer.writeByte(EncodingCodes.DESCRIBED_TYPE_INDICATOR);
         state.getEncoder().writeUnsignedLong(buffer, state, getDescriptorCode());
 
         int count = getElementCount(value);
-        int encodingCode = getElementCount(value);
+        int encodingCode = getListEncoding(value);
 
         // Optimized step, no other data to be written.
         if (count == 0 || encodingCode == EncodingCodes.LIST0) {
@@ -76,45 +119,8 @@ public interface DescribedListTypeEncoder<V> extends DescribedTypeEncoder<V> {
         }
     }
 
-    /**
-     * Determine the list type the given value can be encoded to based on the number
-     * of bytes that would be needed to hold the encoded form of the resulting list
-     * entries.
-     * <p>
-     * Most encoders will return LIST32 but for cases where the type is known to
-     * be encoded to LIST8 or always encodes an empty list (LIST0) the encoder can
-     * optimize the encode step and not compute sizes.
-     *
-     * @param value
-     *      The value that is to be encoded.
-     *
-     * @return the encoding code of the list type encoding needed for this object.
-     */
-    int getListEncoding(V value);
-
-    /**
-     * Instructs the encoder to write the element identified with the given index
-     *
-     * @param source
-     *      the source of the list elements to write
-     * @param index
-     *      the element index that needs to be written
-     * @param buffer
-     *      the buffer to write the element to
-     * @param state
-     *      the current EncoderState value to use.
-     */
-    void writeElement(V source, int index, ProtonBuffer buffer, EncoderState state);
-
-    /**
-     * Gets the number of elements that will result when this type is encoded
-     * into an AMQP List type.
-     *
-     * @param value
-     * 		the value which will be encoded as a list type.
-     *
-     * @return the number of elements that should comprise the encoded list.
-     */
-    int getElementCount(V value);
-
+    @Override
+    default void writeArray(ProtonBuffer buffer, EncoderState state, V[] value) {
+        // TODO
+    }
 }
