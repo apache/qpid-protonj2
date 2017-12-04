@@ -18,6 +18,7 @@ package org.apache.qpid.proton4j.codec.decoders;
 
 import java.io.IOException;
 import java.lang.reflect.Array;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -182,9 +183,9 @@ public class ProtonDecoder implements Decoder {
 
         switch (encodingCode) {
             case EncodingCodes.BOOLEAN_TRUE:
-                return (Boolean) primitiveDecoders[EncodingCodes.BOOLEAN_TRUE & 0xff].readValue(buffer, state);
+                return Boolean.TRUE;
             case EncodingCodes.BOOLEAN_FALSE:
-                return (Boolean) primitiveDecoders[EncodingCodes.BOOLEAN_FALSE & 0xff].readValue(buffer, state);
+                return Boolean.FALSE;
             case EncodingCodes.BOOLEAN:
                 return (Boolean) primitiveDecoders[EncodingCodes.BOOLEAN & 0xff].readValue(buffer, state);
             case EncodingCodes.NULL:
@@ -200,9 +201,9 @@ public class ProtonDecoder implements Decoder {
 
         switch (encodingCode) {
             case EncodingCodes.BOOLEAN_TRUE:
-                return (Boolean) primitiveDecoders[EncodingCodes.BOOLEAN_TRUE & 0xff].readValue(buffer, state);
+                return true;
             case EncodingCodes.BOOLEAN_FALSE:
-                return (Boolean) primitiveDecoders[EncodingCodes.BOOLEAN_FALSE & 0xff].readValue(buffer, state);
+                return false;
             case EncodingCodes.BOOLEAN:
                 return (Boolean) primitiveDecoders[EncodingCodes.BOOLEAN & 0xff].readValue(buffer, state);
             case EncodingCodes.NULL:
@@ -346,7 +347,7 @@ public class ProtonDecoder implements Decoder {
 
         switch (encodingCode) {
             case EncodingCodes.UINT0:
-                return (UnsignedInteger) primitiveDecoders[EncodingCodes.UINT0 & 0xff].readValue(buffer, state);
+                return UnsignedInteger.ZERO;
             case EncodingCodes.SMALLUINT:
                 return (UnsignedInteger) primitiveDecoders[EncodingCodes.SMALLUINT & 0xff].readValue(buffer, state);
             case EncodingCodes.UINT:
@@ -380,7 +381,7 @@ public class ProtonDecoder implements Decoder {
 
         switch (encodingCode) {
             case EncodingCodes.ULONG0:
-                return (UnsignedLong) primitiveDecoders[EncodingCodes.ULONG0 & 0xff].readValue(buffer, state);
+                return UnsignedLong.ZERO;
             case EncodingCodes.SMALLULONG:
                 return (UnsignedLong) primitiveDecoders[EncodingCodes.SMALLULONG & 0xff].readValue(buffer, state);
             case EncodingCodes.ULONG:
@@ -520,7 +521,7 @@ public class ProtonDecoder implements Decoder {
 
         switch (encodingCode) {
             case EncodingCodes.LIST0:
-                return (List<V>) primitiveDecoders[EncodingCodes.LIST0 & 0xff].readValue(buffer, state);
+                return Collections.emptyList();
             case EncodingCodes.LIST8:
                 return (List<V>) primitiveDecoders[EncodingCodes.LIST8 & 0xff].readValue(buffer, state);
             case EncodingCodes.LIST32:
