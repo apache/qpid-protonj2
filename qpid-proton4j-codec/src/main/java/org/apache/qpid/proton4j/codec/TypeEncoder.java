@@ -31,6 +31,11 @@ public interface TypeEncoder<V> {
     Class<V> getTypeClass();
 
     /**
+     * @return true if the type handled by this encoded is an AMQP Array type.
+     */
+    boolean isArrayType();
+
+    /**
      * Write the full AMQP type data to the given byte buffer.
      * <p>
      * This can consist of writing both a type constructor value and
@@ -46,18 +51,18 @@ public interface TypeEncoder<V> {
     void writeType(ProtonBuffer buffer, EncoderState state, V value);
 
     /**
-     * Write an array of the AMQP type to the given byte buffer.
+     * Write an array elements of the AMQP type to the given byte buffer.
      * <p>
-     * This can consist of writing both a type constructor value and
-     * the bytes that make up the value of the type being written.
+     * This consists of writing both a type constructor value and
+     * the bytes that make up the values of the array being written.
      *
      * @param buffer
-     *      The buffer to write the AMQP array to
+     *      The buffer to write the AMQP array elements to
      * @param state
      *      The current encoder state
      * @param value
-     *      The value that is to be written.
+     *      The array of values that is to be written.
      */
-    void writeArray(ProtonBuffer buffer, EncoderState state, V[] value);
+    void writeArrayElements(ProtonBuffer buffer, EncoderState state, V[] value);
 
 }

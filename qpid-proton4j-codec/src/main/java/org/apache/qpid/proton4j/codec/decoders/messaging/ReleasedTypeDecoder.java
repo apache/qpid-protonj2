@@ -24,7 +24,8 @@ import org.apache.qpid.proton4j.amqp.messaging.Released;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.DecoderState;
 import org.apache.qpid.proton4j.codec.DescribedTypeDecoder;
-import org.apache.qpid.proton4j.codec.EncodingCodes;
+import org.apache.qpid.proton4j.codec.TypeDecoder;
+import org.apache.qpid.proton4j.codec.decoders.primitives.ListTypeDecoder;
 
 /**
  * Decoder of AMQP Released type values from a byte stream.
@@ -48,13 +49,32 @@ public class ReleasedTypeDecoder implements DescribedTypeDecoder<Released> {
 
     @Override
     public Released readValue(ProtonBuffer buffer, DecoderState state) throws IOException {
-        byte code = buffer.readByte();
+        TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
-        if (code != EncodingCodes.LIST0) {
-            throw new IOException("Expected List0 type indicator but got code for type: " + code);
+        if (!(decoder instanceof ListTypeDecoder)) {
+            throw new IOException("Expected List type indicator but got decoder for type: " + decoder.getTypeClass().getName());
         }
 
+        decoder.skipValue(buffer, state);
+
         return Released.getInstance();
+    }
+
+    @Override
+    public Released[] readArrayElements(ProtonBuffer buffer, DecoderState state, int count) throws IOException {
+        TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
+
+        if (!(decoder instanceof ListTypeDecoder)) {
+            throw new IOException("Expected List type indicator but got decoder for type: " + decoder.getTypeClass().getName());
+        }
+
+        Released[] result = new Released[count];
+        for (int i = 0; i < count; ++i) {
+            decoder.skipValue(buffer, state);
+            result[i] = Released.getInstance();
+        }
+
+        return result;
     }
 
     @Override

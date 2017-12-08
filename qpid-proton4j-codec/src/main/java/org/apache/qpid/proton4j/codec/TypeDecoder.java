@@ -33,6 +33,11 @@ public interface TypeDecoder<V> {
     Class<V> getTypeClass();
 
     /**
+     * @returns true if the underlying type that is going to be decoded is an array type
+     */
+    boolean isArrayType();
+
+    /**
      * Reads the next type from the given buffer and returns it.
      *
      * @param buffer
@@ -63,8 +68,22 @@ public interface TypeDecoder<V> {
     void skipValue(ProtonBuffer buffer, DecoderState state) throws IOException;
 
     /**
-     * @returns true if the underlying type that is decoded is an array type
+     * Reads a series of this type that have been encoded into the body of an Array type.
+     * <p>
+     * When encoded into an array the values are encoded in series following the identifier
+     * for the type, this method is given a count of the number of instances that are encoded
+     * and should read each in succession and returning them in a new array.
+     *
+     * @param buffer
+     *      the source of encoded data.
+     * @param state
+     *      the current state of the decoder.
+     * @param
+     *
+     * @return the next instance in the stream that this decoder handles.
+     *
+     * @throws IOException if an error is encountered while reading the next value.
      */
-    boolean isArrayTypeDecoder();
+    V[] readArrayElements(ProtonBuffer buffer, DecoderState state, int count) throws IOException;
 
 }

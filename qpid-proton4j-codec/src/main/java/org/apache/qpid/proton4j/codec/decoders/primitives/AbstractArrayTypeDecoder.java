@@ -17,18 +17,23 @@
 package org.apache.qpid.proton4j.codec.decoders.primitives;
 
 import java.io.IOException;
-import java.lang.reflect.Array;
 
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.DecoderState;
 import org.apache.qpid.proton4j.codec.EncodingCodes;
 import org.apache.qpid.proton4j.codec.PrimitiveArrayTypeDecoder;
 import org.apache.qpid.proton4j.codec.PrimitiveTypeDecoder;
+import org.apache.qpid.proton4j.codec.TypeDecoder;
 
 /**
  * Base for the decoders of AMQP Array types.
  */
 public abstract class AbstractArrayTypeDecoder implements PrimitiveArrayTypeDecoder {
+
+    @Override
+    public Object[] readValue(ProtonBuffer buffer, DecoderState state) throws IOException {
+        return readValueAsObjectArray(buffer, state);
+    }
 
     @Override
     public Object[] readValueAsObjectArray(ProtonBuffer buffer, DecoderState state) throws IOException {
@@ -84,7 +89,7 @@ public abstract class AbstractArrayTypeDecoder implements PrimitiveArrayTypeDeco
         return decodeNonPrimitiveArray(decoder, buffer, state, count);
     }
 
-    private static Object[] decodeNonPrimitiveArray(PrimitiveTypeDecoder<?> decoder, ProtonBuffer buffer, DecoderState state, int count) throws IOException {
+    private static Object[] decodeNonPrimitiveArray(TypeDecoder<?> decoder, ProtonBuffer buffer, DecoderState state, int count) throws IOException {
 
         if (count > buffer.getReadableBytes()) {
             throw new IllegalArgumentException(String.format(
@@ -92,7 +97,7 @@ public abstract class AbstractArrayTypeDecoder implements PrimitiveArrayTypeDeco
                 count, buffer.getReadableBytes()));
         }
 
-        if (decoder.isArrayTypeDecoder()) {
+        if (decoder.isArrayType()) {
             PrimitiveArrayTypeDecoder arrayDecoder = (PrimitiveArrayTypeDecoder) decoder;
 
             Object[] array = new Object[count];
@@ -102,49 +107,46 @@ public abstract class AbstractArrayTypeDecoder implements PrimitiveArrayTypeDeco
 
             return array;
         } else {
-            Object[] array = (Object[]) Array.newInstance(decoder.getTypeClass(), count);
-
-            for (int i = 0; i < count; i++) {
-                array[i] = decoder.readValue(buffer, state);
-            }
-
-            return array;
+            return decoder.readArrayElements(buffer, state, count);
         }
     }
 
     private static Object decodeAsObject(ProtonBuffer buffer, DecoderState state, int count) throws IOException {
 
-        PrimitiveTypeDecoder<?> decoder = (PrimitiveTypeDecoder<?>) state.getDecoder().readNextTypeDecoder(buffer, state);
+        TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
-        if (decoder.isJavaPrimitive()) {
-            if (count > buffer.getReadableBytes()) {
-                throw new IllegalArgumentException(String.format(
-                    "Array element count %d is specified to be greater than the amount of data available (%d)",
-                    count, buffer.getReadableBytes()));
+        if (decoder instanceof PrimitiveTypeDecoder) {
+            PrimitiveTypeDecoder<?> primitiveTypeDecoder = (PrimitiveTypeDecoder<?>) decoder;
+            if (primitiveTypeDecoder.isJavaPrimitive()) {
+                if (count > buffer.getReadableBytes()) {
+                    throw new IllegalArgumentException(String.format(
+                        "Array element count %d is specified to be greater than the amount of data available (%d)",
+                        count, buffer.getReadableBytes()));
+                }
+
+                Class<?> typeClass = decoder.getTypeClass();
+
+                if (Boolean.class.equals(typeClass)) {
+                    return decodePrimitiveTypeArray((BooleanTypeDecoder) decoder, buffer, state, count);
+                } else if (Byte.class.equals(typeClass)) {
+                    return decodePrimitiveTypeArray((ByteTypeDecoder) decoder, buffer, state, count);
+                } else if (Short.class.equals(typeClass)) {
+                    return decodePrimitiveTypeArray((ShortTypeDecoder) decoder, buffer, state, count);
+                } else if (Integer.class.equals(typeClass)) {
+                    return decodePrimitiveTypeArray((Integer32TypeDecoder) decoder, buffer, state, count);
+                } else if (Long.class.equals(typeClass)) {
+                    return decodePrimitiveTypeArray((LongTypeDecoder) decoder, buffer, state, count);
+                } else if (Double.class.equals(typeClass)) {
+                    return decodePrimitiveTypeArray((DoubleTypeDecoder) decoder, buffer, state, count);
+                } else if (Float.class.equals(typeClass)) {
+                    return decodePrimitiveTypeArray((FloatTypeDecoder) decoder, buffer, state, count);
+                } else {
+                    throw new ClassCastException("Unexpected class " + decoder.getClass().getName());
+                }
             }
-
-            Class<?> typeClass = decoder.getTypeClass();
-
-            if (Boolean.class.equals(typeClass)) {
-                return decodePrimitiveTypeArray((BooleanTypeDecoder) decoder, buffer, state, count);
-            } else if (Byte.class.equals(typeClass)) {
-                return decodePrimitiveTypeArray((ByteTypeDecoder) decoder, buffer, state, count);
-            } else if (Short.class.equals(typeClass)) {
-                return decodePrimitiveTypeArray((ShortTypeDecoder) decoder, buffer, state, count);
-            } else if (Integer.class.equals(typeClass)) {
-                return decodePrimitiveTypeArray((Integer32TypeDecoder) decoder, buffer, state, count);
-            } else if (Long.class.equals(typeClass)) {
-                return decodePrimitiveTypeArray((LongTypeDecoder) decoder, buffer, state, count);
-            } else if (Double.class.equals(typeClass)) {
-                return decodePrimitiveTypeArray((DoubleTypeDecoder) decoder, buffer, state, count);
-            } else if (Float.class.equals(typeClass)) {
-                return decodePrimitiveTypeArray((FloatTypeDecoder) decoder, buffer, state, count);
-            } else {
-                throw new ClassCastException("Unexpected class " + decoder.getClass().getName());
-            }
-        } else {
-            return decodeNonPrimitiveArray(decoder, buffer, state, count);
         }
+
+        return decodeNonPrimitiveArray(decoder, buffer, state, count);
     }
 
     private static boolean[] decodePrimitiveTypeArray(BooleanTypeDecoder decoder, ProtonBuffer buffer, DecoderState state, int count) {

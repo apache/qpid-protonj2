@@ -48,18 +48,7 @@ public class UnsignedIntegerTypeEncoder implements PrimitiveTypeEncoder<Unsigned
     }
 
     @Override
-    public void writeArray(ProtonBuffer buffer, EncoderState state, UnsignedInteger[] values) {
-        buffer.writeByte(EncodingCodes.ARRAY32);
-
-        // Array Size -> Total Bytes + Number of elements + Type Code
-        long size = (Integer.BYTES * values.length) + Integer.BYTES + Byte.BYTES;
-
-        if (size > Integer.MAX_VALUE) {
-            throw new IllegalArgumentException("Cannot encode given UnsignedInteger array, encoded size to large: " + size);
-        }
-
-        buffer.writeInt((int) size);
-        buffer.writeInt(values.length);
+    public void writeArrayElements(ProtonBuffer buffer, EncoderState state, UnsignedInteger[] values) {
         buffer.writeByte(EncodingCodes.UINT);
         for (UnsignedInteger value : values) {
             buffer.writeInt(value.intValue());

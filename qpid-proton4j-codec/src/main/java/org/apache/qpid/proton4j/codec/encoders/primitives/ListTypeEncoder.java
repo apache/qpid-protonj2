@@ -41,6 +41,14 @@ public class ListTypeEncoder implements PrimitiveTypeEncoder<List> {
         writeValue(buffer, state, value);
     }
 
+    @Override
+    public void writeArrayElements(ProtonBuffer buffer, EncoderState state, List[] values) {
+        buffer.writeByte(EncodingCodes.LIST32);
+        for (List value : values) {
+            writeValue(buffer, state, value);
+        }
+    }
+
     private void writeValue(ProtonBuffer buffer, EncoderState state, List value) {
         int startIndex = buffer.getWriteIndex();
 
@@ -69,35 +77,5 @@ public class ListTypeEncoder implements PrimitiveTypeEncoder<List> {
         // Move back and write the size
         int endIndex = buffer.getWriteIndex();
         buffer.setInt(startIndex, endIndex - startIndex - 4);
-    }
-
-    @Override
-    public void writeArray(ProtonBuffer buffer, EncoderState state, List[] values) {
-        buffer.writeByte(EncodingCodes.ARRAY32);
-
-        // Array Size -> Total Bytes + Number of elements + Type Code
-        //
-        // List types are variable sized values so we write the payload
-        // and then we write the size using the result.
-        int startIndex = buffer.getWriteIndex();
-
-        // Reserve space for the size
-        buffer.writeInt(0);
-
-        buffer.writeInt(values.length);
-        buffer.writeByte(EncodingCodes.LIST32);
-        for (List value : values) {
-            writeValue(buffer, state, value);
-        }
-
-        // Move back and write the size
-        int endIndex = buffer.getWriteIndex();
-
-        long size = endIndex - startIndex;
-        if (size > Integer.MAX_VALUE) {
-            throw new IllegalArgumentException("Cannot encode given List array, encoded size to large: " + size);
-        }
-
-        buffer.setInt(startIndex, (int) size);
     }
 }

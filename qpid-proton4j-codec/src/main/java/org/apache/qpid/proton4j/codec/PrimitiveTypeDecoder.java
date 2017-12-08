@@ -16,9 +16,15 @@
  */
 package org.apache.qpid.proton4j.codec;
 
+import java.io.IOException;
+import java.lang.reflect.Array;
+
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+
 public interface PrimitiveTypeDecoder<V> extends TypeDecoder<V> {
 
-    default boolean isArrayTypeDecoder() {
+    @Override
+    default boolean isArrayType() {
         return false;
     }
 
@@ -28,4 +34,14 @@ public interface PrimitiveTypeDecoder<V> extends TypeDecoder<V> {
 
     int getTypeCode();
 
+    @SuppressWarnings("unchecked")
+    @Override
+    default V[] readArrayElements(ProtonBuffer buffer, DecoderState state, int count) throws IOException {
+        V[] array = (V[]) Array.newInstance(getTypeClass(), count);
+        for (int i = 0; i < count; ++i) {
+            array[i] = readValue(buffer, state);
+        }
+
+        return array;
+    }
 }

@@ -16,6 +16,7 @@
  */
 package org.apache.qpid.proton4j.codec.encoders.messaging;
 
+import org.apache.qpid.proton4j.amqp.Binary;
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.amqp.messaging.Data;
@@ -23,6 +24,7 @@ import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.DescribedTypeEncoder;
 import org.apache.qpid.proton4j.codec.EncoderState;
 import org.apache.qpid.proton4j.codec.EncodingCodes;
+import org.apache.qpid.proton4j.codec.TypeEncoder;
 
 /**
  * Encoder of AMQP Data type values to a byte stream.
@@ -51,7 +53,22 @@ public class DataTypeEncoder implements DescribedTypeEncoder<Data> {
         state.getEncoder().writeBinary(buffer, state, value.getValue());
     }
 
+    @SuppressWarnings({ "rawtypes", "unchecked" })
     @Override
-    public void writeArray(ProtonBuffer buffer, EncoderState state, Data[] value) {
+    public void writeArrayElements(ProtonBuffer buffer, EncoderState state, Data[] value) {
+        buffer.writeByte(EncodingCodes.DESCRIBED_TYPE_INDICATOR);
+        state.getEncoder().writeUnsignedLong(buffer, state, getDescriptorCode());
+
+        Binary[] binaryArray = new Binary[value.length];
+        for (int i = 0; i < value.length; ++i) {
+            binaryArray[i] = value[i].getValue();
+        }
+
+        TypeEncoder encoder = state.getEncoder().getTypeEncoder(Binary.class);
+        if (encoder == null) {
+            throw new IllegalStateException("No TypeEncoder found for Binary elements");
+        }
+
+        encoder.writeArrayElements(buffer, state, binaryArray);
     }
 }

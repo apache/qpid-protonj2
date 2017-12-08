@@ -55,7 +55,37 @@ public class DischargeTypeDecoder implements DescribedTypeDecoder<Discharge> {
             throw new IOException("Expected List type indicator but got decoder for type: " + decoder.getTypeClass().getName());
         }
 
-        ListTypeDecoder listDecoder = (ListTypeDecoder) decoder;
+        return readDischarge(buffer, state, (ListTypeDecoder) decoder);
+    }
+
+    @Override
+    public Discharge[] readArrayElements(ProtonBuffer buffer, DecoderState state, int count) throws IOException {
+        TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
+
+        if (!(decoder instanceof ListTypeDecoder)) {
+            throw new IOException("Expected List type indicator but got decoder for type: " + decoder.getTypeClass().getName());
+        }
+
+        Discharge[] result = new Discharge[count];
+        for (int i = 0; i < count; ++i) {
+            result[i] = readDischarge(buffer, state, (ListTypeDecoder) decoder);
+        }
+
+        return result;
+    }
+
+    @Override
+    public void skipValue(ProtonBuffer buffer, DecoderState state) throws IOException {
+        TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
+
+        if (!(decoder instanceof ListTypeDecoder)) {
+            throw new IOException("Expected List type indicator but got decoder for type: " + decoder.getTypeClass().getName());
+        }
+
+        decoder.skipValue(buffer, state);
+    }
+
+    private Discharge readDischarge(ProtonBuffer buffer, DecoderState state, ListTypeDecoder listDecoder) throws IOException {
         Discharge discharge = new Discharge();
 
         @SuppressWarnings("unused")
@@ -76,16 +106,5 @@ public class DischargeTypeDecoder implements DescribedTypeDecoder<Discharge> {
         }
 
         return discharge;
-    }
-
-    @Override
-    public void skipValue(ProtonBuffer buffer, DecoderState state) throws IOException {
-        TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
-
-        if (!(decoder instanceof ListTypeDecoder)) {
-            throw new IOException("Expected List type indicator but got decoder for type: " + decoder.getTypeClass().getName());
-        }
-
-        decoder.skipValue(buffer, state);
     }
 }

@@ -45,18 +45,7 @@ public class TimestampTypeEncoder implements PrimitiveTypeEncoder<Date> {
     }
 
     @Override
-    public void writeArray(ProtonBuffer buffer, EncoderState state, Date[] values) {
-        buffer.writeByte(EncodingCodes.ARRAY32);
-
-        // Array Size -> Total Bytes + Number of elements + Type Code
-        long size = (Long.BYTES * values.length) + Integer.BYTES + Byte.BYTES;
-
-        if (size > Integer.MAX_VALUE) {
-            throw new IllegalArgumentException("Cannot encode given long array, encoded size to large: " + size);
-        }
-
-        buffer.writeInt((int) size);
-        buffer.writeInt(values.length);
+    public void writeArrayElements(ProtonBuffer buffer, EncoderState state, Date[] values) {
         buffer.writeByte(EncodingCodes.LONG);
         for (Date value : values) {
             buffer.writeLong(value.getTime());

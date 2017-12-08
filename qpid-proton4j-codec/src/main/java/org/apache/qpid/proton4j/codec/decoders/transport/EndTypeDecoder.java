@@ -56,7 +56,37 @@ public class EndTypeDecoder implements DescribedTypeDecoder<End> {
             throw new IOException("Expected List type indicator but got decoder for type: " + decoder.getTypeClass().getName());
         }
 
-        ListTypeDecoder listDecoder = (ListTypeDecoder) decoder;
+        return readEnd(buffer, state, (ListTypeDecoder) decoder);
+    }
+
+    @Override
+    public End[] readArrayElements(ProtonBuffer buffer, DecoderState state, int count) throws IOException {
+        TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
+
+        if (!(decoder instanceof ListTypeDecoder)) {
+            throw new IOException("Expected List type indicator but got decoder for type: " + decoder.getTypeClass().getName());
+        }
+
+        End[] result = new End[count];
+        for (int i = 0; i < count; ++i) {
+            result[i] = readEnd(buffer, state, (ListTypeDecoder) decoder);
+        }
+
+        return result;
+    }
+
+    @Override
+    public void skipValue(ProtonBuffer buffer, DecoderState state) throws IOException {
+        TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
+
+        if (!(decoder instanceof ListTypeDecoder)) {
+            throw new IOException("Expected List type indicator but got decoder for type: " + decoder.getTypeClass().getName());
+        }
+
+        decoder.skipValue(buffer, state);
+    }
+
+    private End readEnd(ProtonBuffer buffer, DecoderState state, ListTypeDecoder listDecoder) throws IOException {
         End end = new End();
 
         @SuppressWarnings("unused")
@@ -74,16 +104,5 @@ public class EndTypeDecoder implements DescribedTypeDecoder<End> {
         }
 
         return end;
-    }
-
-    @Override
-    public void skipValue(ProtonBuffer buffer, DecoderState state) throws IOException {
-        TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
-
-        if (!(decoder instanceof ListTypeDecoder)) {
-            throw new IOException("Expected List type indicator but got decoder for type: " + decoder.getTypeClass().getName());
-        }
-
-        decoder.skipValue(buffer, state);
     }
 }

@@ -24,7 +24,8 @@ import org.apache.qpid.proton4j.amqp.messaging.DeleteOnClose;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.DecoderState;
 import org.apache.qpid.proton4j.codec.DescribedTypeDecoder;
-import org.apache.qpid.proton4j.codec.EncodingCodes;
+import org.apache.qpid.proton4j.codec.TypeDecoder;
+import org.apache.qpid.proton4j.codec.decoders.primitives.ListTypeDecoder;
 
 /**
  * Decoder of AMQP DeleteOnClose type values from a byte stream
@@ -48,13 +49,31 @@ public class DeleteOnCloseTypeDecoder implements DescribedTypeDecoder<DeleteOnCl
 
     @Override
     public DeleteOnClose readValue(ProtonBuffer buffer, DecoderState state) throws IOException {
-        byte code = buffer.readByte();
+        TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
-        if (code != EncodingCodes.LIST0) {
-            throw new IOException("Expected List0 type indicator but got code for type: " + code);
+        if (!(decoder instanceof ListTypeDecoder)) {
+            throw new IOException("Expected List type indicator but got decoder for type: " + decoder.getTypeClass().getName());
         }
 
         return DeleteOnClose.getInstance();
+    }
+
+    @Override
+    public DeleteOnClose[] readArrayElements(ProtonBuffer buffer, DecoderState state, int count) throws IOException {
+        TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
+
+        if (!(decoder instanceof ListTypeDecoder)) {
+            throw new IOException("Expected List type indicator but got decoder for type: " + decoder.getTypeClass().getName());
+        }
+
+        DeleteOnClose[] result = new DeleteOnClose[count];
+
+        for (int i = 0; i < count; ++i) {
+            decoder.skipValue(buffer, state);
+            result[i] = DeleteOnClose.getInstance();
+        }
+
+        return result;
     }
 
     @Override

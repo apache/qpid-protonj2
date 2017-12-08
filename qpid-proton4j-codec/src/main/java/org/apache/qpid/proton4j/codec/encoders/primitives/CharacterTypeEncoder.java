@@ -38,36 +38,14 @@ public class CharacterTypeEncoder implements PrimitiveTypeEncoder<Character> {
     }
 
     @Override
-    public void writeArray(ProtonBuffer buffer, EncoderState state, Character[] value) {
-        buffer.writeByte(EncodingCodes.ARRAY32);
-
-        // Array Size -> Total Bytes + Number of elements + Type Code
-        long size = (Integer.BYTES * value.length) + Integer.BYTES + Byte.BYTES;
-
-        if (size > Integer.MAX_VALUE) {
-            throw new IllegalArgumentException("Cannot encode given char array, encoded size to large: " + size);
-        }
-
-        buffer.writeInt((int) size);
-        buffer.writeInt(value.length);
+    public void writeArrayElements(ProtonBuffer buffer, EncoderState state, Character[] value) {
         buffer.writeByte(EncodingCodes.CHAR);
         for (Character charValue : value) {
             buffer.writeInt(charValue.charValue() & 0xffff);
         }
     }
 
-    public void writeArray(ProtonBuffer buffer, EncoderState state, char[] value) {
-        buffer.writeByte(EncodingCodes.ARRAY32);
-
-        // Array Size -> Total Bytes + Number of elements + Type Code
-        long size = (Integer.BYTES * value.length) + Integer.BYTES + Byte.BYTES;
-
-        if (size > Integer.MAX_VALUE) {
-            throw new IllegalArgumentException("Cannot encode given char array, encoded size to large: " + size);
-        }
-
-        buffer.writeInt((int) size);
-        buffer.writeInt(value.length);
+    public void writeArrayElements(ProtonBuffer buffer, EncoderState state, char[] value) {
         buffer.writeByte(EncodingCodes.CHAR);
         for (char charValue : value) {
             buffer.writeInt(charValue & 0xffff);

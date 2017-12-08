@@ -33,6 +33,11 @@ public class UnknownDescribedTypeEncoder implements TypeEncoder<DescribedType> {
     }
 
     @Override
+    public boolean isArrayType() {
+        return false;
+    }
+
+    @Override
     public void writeType(ProtonBuffer buffer, EncoderState state, DescribedType value) {
         buffer.writeByte(EncodingCodes.DESCRIBED_TYPE_INDICATOR);
         state.getEncoder().writeObject(buffer, state, value.getDescriptor());
@@ -40,7 +45,7 @@ public class UnknownDescribedTypeEncoder implements TypeEncoder<DescribedType> {
     }
 
     @Override
-    public void writeArray(ProtonBuffer buffer, EncoderState state, DescribedType[] value) {
+    public void writeArrayElements(ProtonBuffer buffer, EncoderState state, DescribedType[] value) {
         // TODO - Check each element to ensure they every described type is from the same class.
         throw new UnsupportedOperationException("Cannot write array of unknown described types.");
     }

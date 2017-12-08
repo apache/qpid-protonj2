@@ -48,7 +48,7 @@ public class NoLocalTypeEncoder implements DescribedTypeEncoder<NoLocalType> {
     }
 
     @Override
-    public void writeArray(ProtonBuffer buffer, EncoderState state, NoLocalType[] value) {
+    public void writeArrayElements(ProtonBuffer buffer, EncoderState state, NoLocalType[] value) {
         // TODO
     }
 }

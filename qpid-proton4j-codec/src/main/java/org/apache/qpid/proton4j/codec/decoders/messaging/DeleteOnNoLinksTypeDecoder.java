@@ -24,7 +24,8 @@ import org.apache.qpid.proton4j.amqp.messaging.DeleteOnNoLinks;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.DecoderState;
 import org.apache.qpid.proton4j.codec.DescribedTypeDecoder;
-import org.apache.qpid.proton4j.codec.EncodingCodes;
+import org.apache.qpid.proton4j.codec.TypeDecoder;
+import org.apache.qpid.proton4j.codec.decoders.primitives.ListTypeDecoder;
 
 /**
  * Decoder of AMQP DeleteOnNoLinks type values from a byte stream
@@ -48,13 +49,31 @@ public class DeleteOnNoLinksTypeDecoder implements DescribedTypeDecoder<DeleteOn
 
     @Override
     public DeleteOnNoLinks readValue(ProtonBuffer buffer, DecoderState state) throws IOException {
-        byte code = buffer.readByte();
+        TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
-        if (code != EncodingCodes.LIST0) {
-            throw new IOException("Expected List0 type indicator but got code for type: " + code);
+        if (!(decoder instanceof ListTypeDecoder)) {
+            throw new IOException("Expected List type indicator but got decoder for type: " + decoder.getTypeClass().getName());
         }
 
         return DeleteOnNoLinks.getInstance();
+    }
+
+    @Override
+    public DeleteOnNoLinks[] readArrayElements(ProtonBuffer buffer, DecoderState state, int count) throws IOException {
+        TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
+
+        if (!(decoder instanceof ListTypeDecoder)) {
+            throw new IOException("Expected List type indicator but got decoder for type: " + decoder.getTypeClass().getName());
+        }
+
+        DeleteOnNoLinks[] result = new DeleteOnNoLinks[count];
+
+        for (int i = 0; i < count; ++i) {
+            decoder.skipValue(buffer, state);
+            result[i] = DeleteOnNoLinks.getInstance();
+        }
+
+        return result;
     }
 
     @Override

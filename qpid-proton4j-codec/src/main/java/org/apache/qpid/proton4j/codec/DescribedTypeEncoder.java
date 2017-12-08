@@ -30,4 +30,8 @@ public interface DescribedTypeEncoder<V> extends TypeEncoder<V> {
 
     Symbol getDescriptorSymbol();
 
+    @Override
+    default boolean isArrayType() {
+        return false;
+    }
 }

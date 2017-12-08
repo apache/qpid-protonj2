@@ -48,18 +48,7 @@ public class UnsignedLongTypeEncoder implements PrimitiveTypeEncoder<UnsignedLon
     }
 
     @Override
-    public void writeArray(ProtonBuffer buffer, EncoderState state, UnsignedLong[] values) {
-        buffer.writeByte(EncodingCodes.ARRAY32);
-
-        // Array Size -> Total Bytes + Number of elements + Type Code
-        long size = (Long.BYTES * values.length) + Integer.BYTES + Byte.BYTES;
-
-        if (size > Integer.MAX_VALUE) {
-            throw new IllegalArgumentException("Cannot encode given UnsignedLong array, encoded size to large: " + size);
-        }
-
-        buffer.writeInt((int) size);
-        buffer.writeInt(values.length);
+    public void writeArrayElements(ProtonBuffer buffer, EncoderState state, UnsignedLong[] values) {
         buffer.writeByte(EncodingCodes.ULONG);
         for (UnsignedLong value : values) {
             buffer.writeLong(value.longValue());

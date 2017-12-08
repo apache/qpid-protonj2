@@ -49,21 +49,15 @@ public abstract class AbstractListTypeDecoder implements ListTypeDecoder {
         for (int i = 0; i < count; i++) {
             // Whenever we can just reuse the previously used TypeDecoder instead
             // of spending time looking up the same one again.
-            if (typeDecoder == null) {
+            byte encodingCode = buffer.getByte(buffer.getReadIndex());
+            if (encodingCode == EncodingCodes.DESCRIBED_TYPE_INDICATOR || !(typeDecoder instanceof PrimitiveTypeDecoder<?>)) {
                 typeDecoder = state.getDecoder().readNextTypeDecoder(buffer, state);
             } else {
-                buffer.markReadIndex();
-
-                byte encodingCode = buffer.readByte();
-                if (encodingCode == EncodingCodes.DESCRIBED_TYPE_INDICATOR || !(typeDecoder instanceof PrimitiveTypeDecoder<?>)) {
-                    buffer.resetReadIndex();
+                PrimitiveTypeDecoder<?> primitiveTypeDecoder = (PrimitiveTypeDecoder<?>) typeDecoder;
+                if (encodingCode != primitiveTypeDecoder.getTypeCode()) {
                     typeDecoder = state.getDecoder().readNextTypeDecoder(buffer, state);
                 } else {
-                    PrimitiveTypeDecoder<?> primitiveTypeDecoder = (PrimitiveTypeDecoder<?>) typeDecoder;
-                    if (encodingCode != primitiveTypeDecoder.getTypeCode()) {
-                        buffer.resetReadIndex();
-                        typeDecoder = state.getDecoder().readNextTypeDecoder(buffer, state);
-                    }
+                    buffer.readByte();  // Reusing the previous decoder, consume the type code.
                 }
             }
 

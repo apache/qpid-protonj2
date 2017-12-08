@@ -120,7 +120,31 @@ public interface DescribedListTypeEncoder<V> extends DescribedTypeEncoder<V> {
     }
 
     @Override
-    default void writeArray(ProtonBuffer buffer, EncoderState state, V[] value) {
-        // TODO
+    default void writeArrayElements(ProtonBuffer buffer, EncoderState state, V[] value) {
+        buffer.writeByte(EncodingCodes.DESCRIBED_TYPE_INDICATOR);
+        state.getEncoder().writeUnsignedLong(buffer, state, getDescriptorCode());
+
+        buffer.writeByte(EncodingCodes.LIST32);
+
+        for (int i = 0; i < value.length; ++i) {
+            int count = getElementCount(value[i]);
+
+            int startIndex = buffer.getWriteIndex();
+
+            // Reserve space for the size and write the count of list elements.
+            buffer.writeInt(0);
+            buffer.writeInt(count);
+
+            // Write the list elements and then compute total size written.
+            for (int j = 0; j < count; ++j) {
+                writeElement(value[i], j, buffer, state);
+            }
+
+            // Move back and write the size
+            int endIndex = buffer.getWriteIndex();
+            int writeSize = endIndex - startIndex - Integer.BYTES;
+
+            buffer.setInt(startIndex, writeSize);
+        }
     }
 }

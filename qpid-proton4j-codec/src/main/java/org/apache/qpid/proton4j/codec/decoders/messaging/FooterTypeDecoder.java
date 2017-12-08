@@ -17,8 +17,6 @@
 package org.apache.qpid.proton4j.codec.decoders.messaging;
 
 import java.io.IOException;
-import java.util.LinkedHashMap;
-import java.util.Map;
 
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
@@ -28,6 +26,7 @@ import org.apache.qpid.proton4j.codec.DecoderState;
 import org.apache.qpid.proton4j.codec.DescribedTypeDecoder;
 import org.apache.qpid.proton4j.codec.TypeDecoder;
 import org.apache.qpid.proton4j.codec.decoders.primitives.MapTypeDecoder;
+import org.apache.qpid.proton4j.codec.decoders.primitives.NullTypeDecoder;
 
 /**
  * Decoder of AMQP Footer type values from a byte stream.
@@ -49,9 +48,15 @@ public class FooterTypeDecoder implements DescribedTypeDecoder<Footer> {
         return Footer.DESCRIPTOR_SYMBOL;
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public Footer readValue(ProtonBuffer buffer, DecoderState state) throws IOException {
         TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
+
+        if (decoder instanceof NullTypeDecoder) {
+            decoder.readValue(buffer, state);
+            return new Footer(null);
+        }
 
         if (!(decoder instanceof MapTypeDecoder)) {
             throw new IOException("Expected Map type indicator but got decoder for type: " + decoder.getClass().getSimpleName());
@@ -59,25 +64,36 @@ public class FooterTypeDecoder implements DescribedTypeDecoder<Footer> {
 
         MapTypeDecoder mapDecoder = (MapTypeDecoder) decoder;
 
-        int size = mapDecoder.readSize(buffer);
-        int count = mapDecoder.readCount(buffer);
+        return new Footer(mapDecoder.readValue(buffer, state));
+    }
 
-        if (count > buffer.getReadableBytes()) {
-            throw new IllegalArgumentException(String.format(
-                    "Map encoded size %d is specified to be greater than the amount " +
-                    "of data available (%d)", size, buffer.getReadableBytes()));
+    @SuppressWarnings("unchecked")
+    @Override
+    public Footer[] readArrayElements(ProtonBuffer buffer, DecoderState state, int count) throws IOException {
+        TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
+
+        Footer[] result = new Footer[count];
+
+        if (decoder instanceof NullTypeDecoder) {
+            for (int i = 0; i < count; ++i) {
+                decoder.readValue(buffer, state);
+                result[i] = new Footer(null);
+            }
+            return result;
         }
 
-        // Count include both key and value so we must include that in the loop
-        Map<Object, Object> map = new LinkedHashMap<>(count);
-        for (int i = 0; i < count / 2; i++) {
-            Object key = state.getDecoder().readObject(buffer, state);
-            Object value = state.getDecoder().readObject(buffer, state);
-
-            map.put(key, value);
+        if (!(decoder instanceof MapTypeDecoder)) {
+            throw new IOException("Expected Map type indicator but got decoder for type: " + decoder.getClass().getSimpleName());
         }
 
-        return new Footer(map);
+        MapTypeDecoder mapDecoder = (MapTypeDecoder) decoder;
+
+        for (int i = 0; i < count; ++i) {
+            decoder.readValue(buffer, state);
+            result[i] = new Footer(mapDecoder.readValue(buffer, state));
+        }
+
+        return result;
     }
 
     @Override

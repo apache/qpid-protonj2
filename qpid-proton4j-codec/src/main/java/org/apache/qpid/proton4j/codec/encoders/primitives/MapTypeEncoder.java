@@ -43,6 +43,14 @@ public class MapTypeEncoder implements PrimitiveTypeEncoder<Map> {
         writeValue(buffer, state, value);
     }
 
+    @Override
+    public void writeArrayElements(ProtonBuffer buffer, EncoderState state, Map[] values) {
+        buffer.writeByte(EncodingCodes.MAP32);
+        for (Map value : values) {
+            writeValue(buffer, state, value);
+        }
+    }
+
     private void writeValue(ProtonBuffer buffer, EncoderState state, Map value) {
         int startIndex = buffer.getWriteIndex();
 
@@ -68,35 +76,5 @@ public class MapTypeEncoder implements PrimitiveTypeEncoder<Map> {
         // Move back and write the size
         int endIndex = buffer.getWriteIndex();
         buffer.setInt(startIndex, endIndex - startIndex - 4);
-    }
-
-    @Override
-    public void writeArray(ProtonBuffer buffer, EncoderState state, Map[] values) {
-        buffer.writeByte(EncodingCodes.ARRAY32);
-
-        // Array Size -> Total Bytes + Number of elements + Type Code
-        //
-        // List types are variable sized values so we write the payload
-        // and then we write the size using the result.
-        int startIndex = buffer.getWriteIndex();
-
-        // Reserve space for the size
-        buffer.writeInt(0);
-
-        buffer.writeInt(values.length);
-        buffer.writeByte(EncodingCodes.MAP32);
-        for (Map value : values) {
-            writeValue(buffer, state, value);
-        }
-
-        // Move back and write the size
-        int endIndex = buffer.getWriteIndex();
-
-        long size = endIndex - startIndex;
-        if (size > Integer.MAX_VALUE) {
-            throw new IllegalArgumentException("Cannot encode given Map array, encoded size to large: " + size);
-        }
-
-        buffer.setInt(startIndex, (int) size);
     }
 }

@@ -43,28 +43,14 @@ public class ByteTypeEncoder implements PrimitiveTypeEncoder<Byte> {
     }
 
     @Override
-    public void writeArray(ProtonBuffer buffer, EncoderState state, Byte[] values) {
-        buffer.writeByte(EncodingCodes.ARRAY32);
-
-        // Array Size -> Total Bytes + Number of elements + Type Code
-        int size = (Byte.BYTES * values.length) + Integer.BYTES + Byte.BYTES;
-
-        buffer.writeInt(size);
-        buffer.writeInt(values.length);
+    public void writeArrayElements(ProtonBuffer buffer, EncoderState state, Byte[] values) {
         buffer.writeByte(EncodingCodes.BYTE);
         for (Byte byteVal : values) {
             buffer.writeByte(byteVal.byteValue());
         }
     }
 
-    public void writeArray(ProtonBuffer buffer, EncoderState state, byte[] values) {
-        buffer.writeByte(EncodingCodes.ARRAY32);
-
-        // Array Size -> Total Bytes + Number of elements + Type Code
-        int size = (Byte.BYTES * values.length) + Integer.BYTES + Byte.BYTES;
-
-        buffer.writeInt(size);
-        buffer.writeInt(values.length);
+    public void writeArrayElements(ProtonBuffer buffer, EncoderState state, byte[] values) {
         buffer.writeByte(EncodingCodes.BYTE);
         for (byte byteVal : values) {
             buffer.writeByte(byteVal);

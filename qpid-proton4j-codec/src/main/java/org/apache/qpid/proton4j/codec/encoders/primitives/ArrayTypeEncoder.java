@@ -18,8 +18,8 @@ package org.apache.qpid.proton4j.codec.encoders.primitives;
 
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.EncoderState;
+import org.apache.qpid.proton4j.codec.EncodingCodes;
 import org.apache.qpid.proton4j.codec.PrimitiveArrayTypeEncoder;
-import org.apache.qpid.proton4j.codec.PrimitiveTypeEncoder;
 import org.apache.qpid.proton4j.codec.TypeEncoder;
 
 /**
@@ -36,21 +36,21 @@ public class ArrayTypeEncoder implements PrimitiveArrayTypeEncoder {
         Class<?> componentType = value.getClass().getComponentType();
         if (componentType.isPrimitive()) {
             if (componentType == Boolean.TYPE) {
-                state.getEncoder().writeArray(buffer, state, (boolean[]) value);
+                writeType(buffer, state, (boolean[]) value);
             } else if (componentType == Byte.TYPE) {
-                state.getEncoder().writeArray(buffer, state, (byte[]) value);
+                writeType(buffer, state, (byte[]) value);
             } else if (componentType == Short.TYPE) {
-                state.getEncoder().writeArray(buffer, state, (short[]) value);
+                writeType(buffer, state, (short[]) value);
             } else if (componentType == Integer.TYPE) {
-                state.getEncoder().writeArray(buffer, state, (int[]) value);
+                writeType(buffer, state, (int[]) value);
             } else if (componentType == Long.TYPE) {
-                state.getEncoder().writeArray(buffer, state, (long[]) value);
+                writeType(buffer, state, (long[]) value);
             } else if (componentType == Float.TYPE) {
-                state.getEncoder().writeArray(buffer, state, (float[]) value);
+                writeType(buffer, state, (float[]) value);
             } else if (componentType == Double.TYPE) {
-                state.getEncoder().writeArray(buffer, state, (double[]) value);
+                writeType(buffer, state, (double[]) value);
             } else if (componentType == Character.TYPE) {
-                state.getEncoder().writeArray(buffer, state, (char[]) value);
+                writeType(buffer, state, (char[]) value);
             } else {
                 throw new IllegalArgumentException(
                     "Cannot write arrays of type " + componentType.getName());
@@ -60,13 +60,23 @@ public class ArrayTypeEncoder implements PrimitiveArrayTypeEncoder {
         }
     }
 
+    @Override
+    public void writeArrayElements(ProtonBuffer buffer, EncoderState state, Object[] value) {
+        throw new IllegalArgumentException(
+            "Do not know how to write Objects of class " + value.getClass().getName());
+
+        // TODO - Need to figure out how to check that for Object[] arrays there is only
+        //        one type of object in the array.  This could be just the encoder for the
+        //        first element in the array then applied to the full array which should
+        //        throw an error if the array contains mixed types.
+    }
+
     //---- One Dimensional Optimized Array of Primitive Write methods --------//
 
     @SuppressWarnings({ "rawtypes", "unchecked" })
-    @Override
-    public void writeArray(ProtonBuffer buffer, EncoderState state, Object[] value) {
+    private void writeArray(ProtonBuffer buffer, EncoderState state, Object[] value) {
 
-        TypeEncoder<?> typeEncoder = state.getEncoder().getTypeEncoder(value.getClass().getComponentType());
+        TypeEncoder typeEncoder = state.getEncoder().getTypeEncoder(value.getClass().getComponentType());
         if (typeEncoder == null) {
             throw new IllegalArgumentException(
                 "Do not know how to write Objects of class " + value.getClass().getName());
@@ -77,8 +87,235 @@ public class ArrayTypeEncoder implements PrimitiveArrayTypeEncoder {
         //        first element in the array then applied to the full array which should
         //        throw an error if the array contains mixed types.
 
-        PrimitiveTypeEncoder arrayEncoder = (PrimitiveTypeEncoder) typeEncoder;
+        // Write the Array Type encoding code, we don't optimize here.
+        buffer.writeByte(EncodingCodes.ARRAY32);
 
-        arrayEncoder.writeArray(buffer, state, value);
+        int startIndex = buffer.getWriteIndex();
+
+        // Reserve space for the size and write the count of list elements.
+        buffer.writeInt(0);
+        buffer.writeInt(value.length);
+
+        typeEncoder.writeArrayElements(buffer, state, value);
+
+        // Move back and write the size
+        int endIndex = buffer.getWriteIndex();
+        long writeSize = endIndex - startIndex - Integer.BYTES;
+
+        if (writeSize > Integer.MAX_VALUE) {
+            throw new IllegalArgumentException("Cannot encode given array, encoded size to large: " + writeSize);
+        }
+
+        buffer.setInt(startIndex, (int) writeSize);
+    }
+
+    //----- Write methods for primitive arrays -------------------------------//
+
+    public void writeType(ProtonBuffer buffer, EncoderState state, boolean[] value) {
+        final BooleanTypeEncoder typeEncoder = (BooleanTypeEncoder) state.getEncoder().getTypeEncoder(Boolean.class);
+
+        // Write the Array Type encoding code, we don't optimize here.
+        buffer.writeByte(EncodingCodes.ARRAY32);
+
+        int startIndex = buffer.getWriteIndex();
+
+        // Reserve space for the size and write the count of list elements.
+        buffer.writeInt(0);
+        buffer.writeInt(value.length);
+
+        // Write the array elements after writing the array length
+        typeEncoder.writeArrayElements(buffer, state, value);
+
+        // Move back and write the size
+        int endIndex = buffer.getWriteIndex();
+        long writeSize = endIndex - startIndex - Integer.BYTES;
+
+        if (writeSize > Integer.MAX_VALUE) {
+            throw new IllegalArgumentException("Cannot encode given array, encoded size to large: " + writeSize);
+        }
+
+        buffer.setInt(startIndex, (int) writeSize);
+    }
+
+    public void writeType(ProtonBuffer buffer, EncoderState state, byte[] value) {
+        final ByteTypeEncoder typeEncoder = (ByteTypeEncoder) state.getEncoder().getTypeEncoder(Boolean.class);
+
+        // Write the Array Type encoding code, we don't optimize here.
+        buffer.writeByte(EncodingCodes.ARRAY32);
+
+        int startIndex = buffer.getWriteIndex();
+
+        // Reserve space for the size and write the count of list elements.
+        buffer.writeInt(0);
+        buffer.writeInt(value.length);
+
+        // Write the array elements after writing the array length
+        typeEncoder.writeArrayElements(buffer, state, value);
+
+        // Move back and write the size
+        int endIndex = buffer.getWriteIndex();
+        long writeSize = endIndex - startIndex - Integer.BYTES;
+
+        if (writeSize > Integer.MAX_VALUE) {
+            throw new IllegalArgumentException("Cannot encode given array, encoded size to large: " + writeSize);
+        }
+
+        buffer.setInt(startIndex, (int) writeSize);
+    }
+
+    public void writeType(ProtonBuffer buffer, EncoderState state, short[] value) {
+        final ShortTypeEncoder typeEncoder = (ShortTypeEncoder) state.getEncoder().getTypeEncoder(Boolean.class);
+
+        // Write the Array Type encoding code, we don't optimize here.
+        buffer.writeByte(EncodingCodes.ARRAY32);
+
+        int startIndex = buffer.getWriteIndex();
+
+        // Reserve space for the size and write the count of list elements.
+        buffer.writeInt(0);
+        buffer.writeInt(value.length);
+
+        // Write the array elements after writing the array length
+        typeEncoder.writeArrayElements(buffer, state, value);
+
+        // Move back and write the size
+        int endIndex = buffer.getWriteIndex();
+        long writeSize = endIndex - startIndex - Integer.BYTES;
+
+        if (writeSize > Integer.MAX_VALUE) {
+            throw new IllegalArgumentException("Cannot encode given array, encoded size to large: " + writeSize);
+        }
+
+        buffer.setInt(startIndex, (int) writeSize);
+    }
+
+    public void writeType(ProtonBuffer buffer, EncoderState state, int[] value) {
+        final IntegerTypeEncoder typeEncoder = (IntegerTypeEncoder) state.getEncoder().getTypeEncoder(Boolean.class);
+
+        // Write the Array Type encoding code, we don't optimize here.
+        buffer.writeByte(EncodingCodes.ARRAY32);
+
+        int startIndex = buffer.getWriteIndex();
+
+        // Reserve space for the size and write the count of list elements.
+        buffer.writeInt(0);
+        buffer.writeInt(value.length);
+
+        // Write the array elements after writing the array length
+        typeEncoder.writeArrayElements(buffer, state, value);
+
+        // Move back and write the size
+        int endIndex = buffer.getWriteIndex();
+        long writeSize = endIndex - startIndex - Integer.BYTES;
+
+        if (writeSize > Integer.MAX_VALUE) {
+            throw new IllegalArgumentException("Cannot encode given array, encoded size to large: " + writeSize);
+        }
+
+        buffer.setInt(startIndex, (int) writeSize);
+    }
+
+    public void writeType(ProtonBuffer buffer, EncoderState state, long[] value) {
+        final LongTypeEncoder typeEncoder = (LongTypeEncoder) state.getEncoder().getTypeEncoder(Boolean.class);
+
+        // Write the Array Type encoding code, we don't optimize here.
+        buffer.writeByte(EncodingCodes.ARRAY32);
+
+        int startIndex = buffer.getWriteIndex();
+
+        // Reserve space for the size and write the count of list elements.
+        buffer.writeInt(0);
+        buffer.writeInt(value.length);
+
+        // Write the array elements after writing the array length
+        typeEncoder.writeArrayElements(buffer, state, value);
+
+        // Move back and write the size
+        int endIndex = buffer.getWriteIndex();
+        long writeSize = endIndex - startIndex - Integer.BYTES;
+
+        if (writeSize > Integer.MAX_VALUE) {
+            throw new IllegalArgumentException("Cannot encode given array, encoded size to large: " + writeSize);
+        }
+
+        buffer.setInt(startIndex, (int) writeSize);
+    }
+
+    public void writeType(ProtonBuffer buffer, EncoderState state, float[] value) {
+        final FloatTypeEncoder typeEncoder = (FloatTypeEncoder) state.getEncoder().getTypeEncoder(Boolean.class);
+
+        // Write the Array Type encoding code, we don't optimize here.
+        buffer.writeByte(EncodingCodes.ARRAY32);
+
+        int startIndex = buffer.getWriteIndex();
+
+        // Reserve space for the size and write the count of list elements.
+        buffer.writeInt(0);
+        buffer.writeInt(value.length);
+
+        // Write the array elements after writing the array length
+        typeEncoder.writeArrayElements(buffer, state, value);
+
+        // Move back and write the size
+        int endIndex = buffer.getWriteIndex();
+        long writeSize = endIndex - startIndex - Integer.BYTES;
+
+        if (writeSize > Integer.MAX_VALUE) {
+            throw new IllegalArgumentException("Cannot encode given array, encoded size to large: " + writeSize);
+        }
+
+        buffer.setInt(startIndex, (int) writeSize);
+    }
+
+    public void writeType(ProtonBuffer buffer, EncoderState state, double[] value) {
+        final DoubleTypeEncoder typeEncoder = (DoubleTypeEncoder) state.getEncoder().getTypeEncoder(Boolean.class);
+
+        // Write the Array Type encoding code, we don't optimize here.
+        buffer.writeByte(EncodingCodes.ARRAY32);
+
+        int startIndex = buffer.getWriteIndex();
+
+        // Reserve space for the size and write the count of list elements.
+        buffer.writeInt(0);
+        buffer.writeInt(value.length);
+
+        // Write the array elements after writing the array length
+        typeEncoder.writeArrayElements(buffer, state, value);
+
+        // Move back and write the size
+        int endIndex = buffer.getWriteIndex();
+        long writeSize = endIndex - startIndex - Integer.BYTES;
+
+        if (writeSize > Integer.MAX_VALUE) {
+            throw new IllegalArgumentException("Cannot encode given array, encoded size to large: " + writeSize);
+        }
+
+        buffer.setInt(startIndex, (int) writeSize);
+    }
+
+    public void writeType(ProtonBuffer buffer, EncoderState state, char[] value) {
+        final CharacterTypeEncoder typeEncoder = (CharacterTypeEncoder) state.getEncoder().getTypeEncoder(Boolean.class);
+
+        // Write the Array Type encoding code, we don't optimize here.
+        buffer.writeByte(EncodingCodes.ARRAY32);
+
+        int startIndex = buffer.getWriteIndex();
+
+        // Reserve space for the size and write the count of list elements.
+        buffer.writeInt(0);
+        buffer.writeInt(value.length);
+
+        // Write the array elements after writing the array length
+        typeEncoder.writeArrayElements(buffer, state, value);
+
+        // Move back and write the size
+        int endIndex = buffer.getWriteIndex();
+        long writeSize = endIndex - startIndex - Integer.BYTES;
+
+        if (writeSize > Integer.MAX_VALUE) {
+            throw new IllegalArgumentException("Cannot encode given array, encoded size to large: " + writeSize);
+        }
+
+        buffer.setInt(startIndex, (int) writeSize);
     }
 }

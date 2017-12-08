@@ -48,34 +48,12 @@ public class SymbolTypeEncoder implements PrimitiveTypeEncoder<Symbol> {
     }
 
     @Override
-    public void writeArray(ProtonBuffer buffer, EncoderState state, Symbol[] values) {
-        buffer.writeByte(EncodingCodes.ARRAY32);
-
-        // Array Size -> Total Bytes + Number of elements + Type Code
-        //
-        // Symbol types are variable sized values so we write the payload
-        // and then we write the size using the result.
-        int startIndex = buffer.getWriteIndex();
-
-        // Reserve space for the size
-        buffer.writeInt(0);
-
-        buffer.writeInt(values.length);
+    public void writeArrayElements(ProtonBuffer buffer, EncoderState state, Symbol[] values) {
         buffer.writeByte(EncodingCodes.SYM32);
         for (Symbol value : values) {
             int symbolBytes = value.getLength();
             buffer.writeInt(symbolBytes);
             value.writeTo(buffer);
         }
-
-        // Move back and write the size
-        int endIndex = buffer.getWriteIndex();
-
-        long size = endIndex - startIndex;
-        if (size > Integer.MAX_VALUE) {
-            throw new IllegalArgumentException("Cannot encode given Symbol array, encoded size to large: " + size);
-        }
-
-        buffer.setInt(startIndex, (int) size);
     }
 }

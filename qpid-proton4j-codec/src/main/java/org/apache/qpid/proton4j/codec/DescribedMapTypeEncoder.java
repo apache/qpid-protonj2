@@ -127,7 +127,27 @@ public interface DescribedMapTypeEncoder<K, V, M> extends DescribedTypeEncoder<M
     }
 
     @Override
-    default void writeArray(ProtonBuffer buffer, EncoderState state, M[] value) {
-        // TODO
+    default void writeArrayElements(ProtonBuffer buffer, EncoderState state, M[] value) {
+        buffer.writeByte(EncodingCodes.DESCRIBED_TYPE_INDICATOR);
+        state.getEncoder().writeUnsignedLong(buffer, state, getDescriptorCode());
+
+        buffer.writeByte(EncodingCodes.MAP32);
+
+        for (int i = 0; i < value.length; ++i) {
+            int count = getMapSize(value[i]);
+            int startIndex = buffer.getWriteIndex();
+
+            // Reserve space for the size and write the count of list elements.
+            buffer.writeInt(0);
+            buffer.writeInt(count * 2);
+
+            writeMapEntries(buffer, state, value[i]);
+
+            // Move back and write the size
+            int endIndex = buffer.getWriteIndex();
+            int writeSize = endIndex - startIndex - Integer.BYTES;
+
+            buffer.setInt(startIndex, writeSize);
+        }
     }
 }

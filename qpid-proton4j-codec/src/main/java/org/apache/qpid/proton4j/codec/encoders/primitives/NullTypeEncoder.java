@@ -33,10 +33,14 @@ public class NullTypeEncoder implements PrimitiveTypeEncoder<Void> {
 
     @Override
     public void writeType(ProtonBuffer buffer, EncoderState state, Void value) {
+        if (value != null) {
+            throw new IllegalArgumentException("Null Encoder given non-null value.");
+        }
+
         buffer.writeByte(EncodingCodes.NULL);
     }
 
     @Override
-    public void writeArray(ProtonBuffer buffer, EncoderState state, Void[] value) {
+    public void writeArrayElements(ProtonBuffer buffer, EncoderState state, Void[] value) {
     }
 }

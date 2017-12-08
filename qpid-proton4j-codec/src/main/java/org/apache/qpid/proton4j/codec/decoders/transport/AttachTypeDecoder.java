@@ -62,7 +62,37 @@ public class AttachTypeDecoder implements DescribedTypeDecoder<Attach> {
             throw new IOException("Expected List type indicator but got decoder for type: " + decoder.getTypeClass().getName());
         }
 
-        ListTypeDecoder listDecoder = (ListTypeDecoder) decoder;
+        return readAttach(buffer, state, (ListTypeDecoder) decoder);
+    }
+
+    @Override
+    public Attach[] readArrayElements(ProtonBuffer buffer, DecoderState state, int count) throws IOException {
+        TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
+
+        if (!(decoder instanceof ListTypeDecoder)) {
+            throw new IOException("Expected List type indicator but got decoder for type: " + decoder.getTypeClass().getName());
+        }
+
+        Attach[] result = new Attach[count];
+        for (int i = 0; i < count; ++i) {
+            result[i] = readAttach(buffer, state, (ListTypeDecoder) decoder);
+        }
+
+        return result;
+    }
+
+    @Override
+    public void skipValue(ProtonBuffer buffer, DecoderState state) throws IOException {
+        TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
+
+        if (!(decoder instanceof ListTypeDecoder)) {
+            throw new IOException("Expected List type indicator but got decoder for type: " + decoder.getTypeClass().getName());
+        }
+
+        decoder.skipValue(buffer, state);
+    }
+
+    private Attach readAttach(ProtonBuffer buffer, DecoderState state, ListTypeDecoder listDecoder) throws IOException {
         Attach attach = new Attach();
 
         @SuppressWarnings("unused")
@@ -99,7 +129,7 @@ public class AttachTypeDecoder implements DescribedTypeDecoder<Attach> {
                     attach.setUnsettled(state.getDecoder().readMap(buffer, state));
                     break;
                 case 8:
-                    attach.setIncompleteUnsettled(Boolean.TRUE.equals(state.getDecoder().readBoolean(buffer, state)));
+                    attach.setIncompleteUnsettled(state.getDecoder().readBoolean(buffer, state, true));
                     break;
                 case 9:
                     attach.setInitialDeliveryCount(state.getDecoder().readUnsignedInteger(buffer, state));
@@ -122,16 +152,5 @@ public class AttachTypeDecoder implements DescribedTypeDecoder<Attach> {
         }
 
         return attach;
-    }
-
-    @Override
-    public void skipValue(ProtonBuffer buffer, DecoderState state) throws IOException {
-        TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
-
-        if (!(decoder instanceof ListTypeDecoder)) {
-            throw new IOException("Expected List type indicator but got decoder for type: " + decoder.getTypeClass().getName());
-        }
-
-        decoder.skipValue(buffer, state);
     }
 }

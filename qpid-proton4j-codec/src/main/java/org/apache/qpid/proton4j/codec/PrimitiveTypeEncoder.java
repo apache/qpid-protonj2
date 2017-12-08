@@ -23,4 +23,8 @@ package org.apache.qpid.proton4j.codec;
  */
 public interface PrimitiveTypeEncoder<V> extends TypeEncoder<V> {
 
+    @Override
+    default boolean isArrayType() {
+        return false;
+    }
 }

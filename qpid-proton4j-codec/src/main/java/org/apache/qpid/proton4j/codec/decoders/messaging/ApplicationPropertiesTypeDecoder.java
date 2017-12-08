@@ -65,6 +65,53 @@ public class ApplicationPropertiesTypeDecoder implements DescribedTypeDecoder<Ap
 
         MapTypeDecoder mapDecoder = (MapTypeDecoder) decoder;
 
+        return new ApplicationProperties(readMap(buffer, state, mapDecoder));
+    }
+
+    @Override
+    public ApplicationProperties[] readArrayElements(ProtonBuffer buffer, DecoderState state, int count) throws IOException {
+        TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
+
+        ApplicationProperties[] result = new ApplicationProperties[count];
+
+        if (decoder instanceof NullTypeDecoder) {
+            for (int i = 0; i < count; ++i) {
+                decoder.readValue(buffer, state);
+                result[i] = new ApplicationProperties(null);
+            }
+            return result;
+        }
+
+        if (!(decoder instanceof MapTypeDecoder)) {
+            throw new IOException("Expected Map type indicator but got decoder for type: " + decoder.getClass().getSimpleName());
+        }
+
+        MapTypeDecoder mapDecoder = (MapTypeDecoder) decoder;
+
+        for (int i = 0; i < count; ++i) {
+            decoder.readValue(buffer, state);
+            result[i] = new ApplicationProperties(readMap(buffer, state, mapDecoder));
+        }
+
+        return result;
+    }
+
+    @Override
+    public void skipValue(ProtonBuffer buffer, DecoderState state) throws IOException {
+        TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
+
+        if (decoder instanceof NullTypeDecoder) {
+            return;
+        }
+
+        if (!(decoder instanceof MapTypeDecoder)) {
+            throw new IOException("Expected List type indicator but got decoder for type: " + decoder.getClass().getSimpleName());
+        }
+
+        decoder.skipValue(buffer, state);
+    }
+
+    private Map<String, Object> readMap(ProtonBuffer buffer, DecoderState state, MapTypeDecoder mapDecoder) throws IOException {
         int size = mapDecoder.readSize(buffer);
         int count = mapDecoder.readCount(buffer);
 
@@ -83,21 +130,6 @@ public class ApplicationPropertiesTypeDecoder implements DescribedTypeDecoder<Ap
             map.put(key, value);
         }
 
-        return new ApplicationProperties(map);
-    }
-
-    @Override
-    public void skipValue(ProtonBuffer buffer, DecoderState state) throws IOException {
-        TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
-
-        if (decoder instanceof NullTypeDecoder) {
-            return;
-        }
-
-        if (!(decoder instanceof MapTypeDecoder)) {
-            throw new IOException("Expected List type indicator but got decoder for type: " + decoder.getClass().getSimpleName());
-        }
-
-        decoder.skipValue(buffer, state);
+        return map;
     }
 }

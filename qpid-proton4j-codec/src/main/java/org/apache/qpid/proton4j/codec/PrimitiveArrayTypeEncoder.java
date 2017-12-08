@@ -21,11 +21,16 @@ import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 public interface PrimitiveArrayTypeEncoder extends PrimitiveTypeEncoder<Object> {
 
     @Override
+    default boolean isArrayType() {
+        return true;
+    }
+
+    @Override
     default Class<Object> getTypeClass() {
         return Object.class;
     }
 
     @Override
-    void writeArray(ProtonBuffer buffer, EncoderState state, Object[] value);
+    void writeArrayElements(ProtonBuffer buffer, EncoderState state, Object[] value);
 
 }

@@ -28,6 +28,7 @@ import org.apache.qpid.proton4j.codec.DecoderState;
 import org.apache.qpid.proton4j.codec.DescribedTypeDecoder;
 import org.apache.qpid.proton4j.codec.TypeDecoder;
 import org.apache.qpid.proton4j.codec.decoders.primitives.MapTypeDecoder;
+import org.apache.qpid.proton4j.codec.decoders.primitives.NullTypeDecoder;
 
 /**
  * Decoder of AMQP Delivery Annotations type values from a byte stream.
@@ -53,12 +54,60 @@ public class DeliveryAnnotationsTypeDecoder implements DescribedTypeDecoder<Deli
     public DeliveryAnnotations readValue(ProtonBuffer buffer, DecoderState state) throws IOException {
         TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
+        if (decoder instanceof NullTypeDecoder) {
+            decoder.readValue(buffer, state);
+            return new DeliveryAnnotations(null);
+        }
+
         if (!(decoder instanceof MapTypeDecoder)) {
             throw new IOException("Expected Map type indicator but got decoder for type: " + decoder.getClass().getSimpleName());
         }
 
         MapTypeDecoder mapDecoder = (MapTypeDecoder) decoder;
 
+        return new DeliveryAnnotations(readMap(buffer, state, mapDecoder));
+    }
+
+    @Override
+    public DeliveryAnnotations[] readArrayElements(ProtonBuffer buffer, DecoderState state, int count) throws IOException {
+        TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
+
+        DeliveryAnnotations[] result = new DeliveryAnnotations[count];
+
+        if (decoder instanceof NullTypeDecoder) {
+            for (int i = 0; i < count; ++i) {
+                decoder.readValue(buffer, state);
+                result[i] = new DeliveryAnnotations(null);
+            }
+            return result;
+        }
+
+        if (!(decoder instanceof MapTypeDecoder)) {
+            throw new IOException("Expected Map type indicator but got decoder for type: " + decoder.getClass().getSimpleName());
+        }
+
+        MapTypeDecoder mapDecoder = (MapTypeDecoder) decoder;
+
+        for (int i = 0; i < count; ++i) {
+            decoder.readValue(buffer, state);
+            result[i] = new DeliveryAnnotations(readMap(buffer, state, mapDecoder));
+        }
+
+        return result;
+    }
+
+    @Override
+    public void skipValue(ProtonBuffer buffer, DecoderState state) throws IOException {
+        TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
+
+        if (!(decoder instanceof MapTypeDecoder)) {
+            throw new IOException("Expected Map type indicator but got decoder for type: " + decoder.getClass().getSimpleName());
+        }
+
+        decoder.skipValue(buffer, state);
+    }
+
+    private Map<Symbol, Object> readMap(ProtonBuffer buffer, DecoderState state, MapTypeDecoder mapDecoder) throws IOException {
         int size = mapDecoder.readSize(buffer);
         int count = mapDecoder.readCount(buffer);
 
@@ -77,17 +126,6 @@ public class DeliveryAnnotationsTypeDecoder implements DescribedTypeDecoder<Deli
             map.put(key, value);
         }
 
-        return new DeliveryAnnotations(map);
-    }
-
-    @Override
-    public void skipValue(ProtonBuffer buffer, DecoderState state) throws IOException {
-        TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
-
-        if (!(decoder instanceof MapTypeDecoder)) {
-            throw new IOException("Expected Map type indicator but got decoder for type: " + decoder.getClass().getSimpleName());
-        }
-
-        decoder.skipValue(buffer, state);
+        return map;
     }
 }

@@ -22,19 +22,15 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 
-import org.apache.qpid.proton4j.amqp.UnsignedByte;
-import org.apache.qpid.proton4j.amqp.UnsignedInteger;
-import org.apache.qpid.proton4j.amqp.messaging.Header;
+import org.apache.qpid.proton4j.amqp.Binary;
+import org.apache.qpid.proton4j.amqp.messaging.Data;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.junit.Test;
 
-/**
- * Test for decoder of AMQP Header type.
- */
-public class HeaderTypeCodecTest extends CodecTestSupport {
+public class DataTypeCodecTest extends CodecTestSupport {
 
-    private final int LARGE_SIZE = 1024 * 1024;
+    private final int LARGE_SIZE = 1024;
     private final int SMALL_SIZE = 32;
 
     @Test
@@ -55,58 +51,47 @@ public class HeaderTypeCodecTest extends CodecTestSupport {
     private void doTestDecodeHeaderSeries(int size) throws IOException {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
 
-        Header header = new Header();
-
-        header.setDurable(Boolean.TRUE);
-        header.setPriority(UnsignedByte.valueOf((byte) 3));
-        header.setDeliveryCount(UnsignedInteger.valueOf(10));
-        header.setFirstAcquirer(Boolean.FALSE);
-        header.setTtl(UnsignedInteger.valueOf(500));
+        Data data = new Data(new Binary(new byte[] { 1, 2, 3}));
 
         for (int i = 0; i < size; ++i) {
-            encoder.writeObject(buffer, encoderState, header);
+            encoder.writeObject(buffer, encoderState, data);
         }
 
         for (int i = 0; i < size; ++i) {
             final Object result = decoder.readObject(buffer, decoderState);
 
             assertNotNull(result);
-            assertTrue(result instanceof Header);
+            assertTrue(result instanceof Data);
 
-            Header decoded = (Header) result;
+            Data decoded = (Data) result;
 
-            assertEquals(3, decoded.getPriority().intValue());
-            assertTrue(decoded.getDurable().booleanValue());
+            assertEquals(data.getValue(), decoded.getValue());
         }
     }
 
     @Test
-    public void testEncodeDecodeArrayOfHeaders() throws IOException {
+    public void testEncodeDecodeArrayOfDataSections() throws IOException {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
 
-        Header[] headerArray = new Header[3];
+        Data[] dataArray = new Data[3];
 
-        headerArray[0] = new Header();
-        headerArray[1] = new Header();
-        headerArray[2] = new Header();
+        dataArray[0] = new Data(new Binary(new byte[] { 1, 2, 3}));
+        dataArray[1] = new Data(new Binary(new byte[] { 4, 5, 6}));
+        dataArray[2] = new Data(new Binary(new byte[] { 7, 8, 9}));
 
-        headerArray[0].setDurable(true);
-        headerArray[1].setDurable(true);
-        headerArray[2].setDurable(true);
-
-        encoder.writeObject(buffer, encoderState, headerArray);
+        encoder.writeObject(buffer, encoderState, dataArray);
 
         final Object result = decoder.readObject(buffer, decoderState);
 
         assertTrue(result.getClass().isArray());
-        assertEquals(Header.class, result.getClass().getComponentType());
+        assertEquals(Data.class, result.getClass().getComponentType());
 
-        Header[] resultArray = (Header[]) result;
+        Data[] resultArray = (Data[]) result;
 
         for (int i = 0; i < resultArray.length; ++i) {
             assertNotNull(resultArray[i]);
-            assertTrue(resultArray[i] instanceof Header);
-            assertEquals(headerArray[i].getDurable(), resultArray[i].getDurable());
+            assertTrue(resultArray[i] instanceof Data);
+            assertEquals(dataArray[i].getValue(), resultArray[i].getValue());
         }
     }
 }

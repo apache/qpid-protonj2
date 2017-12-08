@@ -63,6 +63,25 @@ public class DataTypeDecoder implements DescribedTypeDecoder<Data> {
     }
 
     @Override
+    public Data[] readArrayElements(ProtonBuffer buffer, DecoderState state, int count) throws IOException {
+        TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
+
+        if (!(decoder instanceof BinaryTypeDecoder)) {
+            throw new IOException("Expected Binary type indicator but got decoder for type: " + decoder.getClass().getSimpleName());
+        }
+
+        BinaryTypeDecoder valueDecoder = (BinaryTypeDecoder) decoder;
+        Binary[] binaryArray = valueDecoder.readArrayElements(buffer, state, count);
+
+        Data[] dataArray = new Data[count];
+        for (int i = 0; i < count; ++i) {
+            dataArray[i] = new Data(binaryArray[i]);
+        }
+
+        return dataArray;
+    }
+
+    @Override
     public void skipValue(ProtonBuffer buffer, DecoderState state) throws IOException {
         TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 

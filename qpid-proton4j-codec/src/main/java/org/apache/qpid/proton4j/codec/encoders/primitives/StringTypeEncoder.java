@@ -65,19 +65,7 @@ public class StringTypeEncoder implements PrimitiveTypeEncoder<String> {
     }
 
     @Override
-    public void writeArray(ProtonBuffer buffer, EncoderState state, String[] values) {
-        buffer.writeByte(EncodingCodes.ARRAY32);
-
-        // Array Size -> Total Bytes + Number of elements + Type Code
-        //
-        // String types are variable sized values so we write the payload
-        // and then we write the size using the result.
-        int startIndex = buffer.getWriteIndex();
-
-        // Reserve space for the size
-        buffer.writeInt(0);
-
-        buffer.writeInt(values.length);
+    public void writeArrayElements(ProtonBuffer buffer, EncoderState state, String[] values) {
         buffer.writeByte(EncodingCodes.STR32);
         for (String value : values) {
             // Reserve space for the size
@@ -90,18 +78,8 @@ public class StringTypeEncoder implements PrimitiveTypeEncoder<String> {
 
             // Move back and write the string size
             int stringEnd = buffer.getWriteIndex();
-            buffer.setInt(startIndex, stringEnd - stringStart);
+            buffer.setInt(stringStart - Integer.BYTES, stringEnd - stringStart);
         }
-
-        // Move back and write the size
-        int endIndex = buffer.getWriteIndex();
-
-        long size = endIndex - startIndex;
-        if (size > Integer.MAX_VALUE) {
-            throw new IllegalArgumentException("Cannot encode given Symbol array, encoded size to large: " + size);
-        }
-
-        buffer.setInt(startIndex, (int) size);
     }
 
     // TODO - Can be used later if we have an optimized for space profile.

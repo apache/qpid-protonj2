@@ -58,6 +58,20 @@ public abstract class UnknownDescribedTypeDecoder implements DescribedTypeDecode
     }
 
     @Override
+    public DescribedType[] readArrayElements(ProtonBuffer buffer, DecoderState state, int count) throws IOException {
+        TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
+
+        UnknownDescribedType[] result = new UnknownDescribedType[count];
+
+        for (int i = 0; i < count; ++i) {
+            Object described = decoder.readValue(buffer, state);
+            result[i] = new UnknownDescribedType(getDescriptor(), described);
+        }
+
+        return result;
+    }
+
+    @Override
     public void skipValue(ProtonBuffer buffer, DecoderState state) throws IOException {
         state.getDecoder().readNextTypeDecoder(buffer, state).skipValue(buffer, state);
     }

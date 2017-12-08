@@ -49,6 +49,16 @@ public class NoLocalTypeDecoder implements DescribedTypeDecoder<NoLocalType> {
     }
 
     @Override
+    public NoLocalType[] readArrayElements(ProtonBuffer buffer, DecoderState state, int count) throws IOException {
+        NoLocalType[] array = new NoLocalType[count];
+        for (int i = 0; i < count; ++i) {
+            array[i] = readValue(buffer, state);
+        }
+
+        return array;
+    }
+
+    @Override
     public void skipValue(ProtonBuffer buffer, DecoderState state) throws IOException {
         state.getDecoder().readNextTypeDecoder(buffer, state).skipValue(buffer, state);;
     }

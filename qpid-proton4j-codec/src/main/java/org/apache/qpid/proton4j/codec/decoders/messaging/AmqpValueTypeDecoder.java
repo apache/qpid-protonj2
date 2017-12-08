@@ -53,6 +53,18 @@ public class AmqpValueTypeDecoder implements DescribedTypeDecoder<AmqpValue> {
     }
 
     @Override
+    public AmqpValue[] readArrayElements(ProtonBuffer buffer, DecoderState state, int count) throws IOException {
+        TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
+
+        AmqpValue[] array = new AmqpValue[count];
+        for (int i = 0; i < count; ++i) {
+            array[i] = new AmqpValue(decoder.readValue(buffer, state));
+        }
+
+        return array;
+    }
+
+    @Override
     public void skipValue(ProtonBuffer buffer, DecoderState state) throws IOException {
         TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
         decoder.skipValue(buffer, state);

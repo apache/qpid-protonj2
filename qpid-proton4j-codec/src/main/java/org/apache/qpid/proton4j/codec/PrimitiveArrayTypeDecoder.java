@@ -28,13 +28,8 @@ public interface PrimitiveArrayTypeDecoder extends PrimitiveTypeDecoder<Object[]
     }
 
     @Override
-    default boolean isArrayTypeDecoder() {
+    default boolean isArrayType() {
         return true;
-    }
-
-    @Override
-    default Object[] readValue(ProtonBuffer buffer, DecoderState state) throws IOException {
-        return readValueAsObjectArray(buffer, state);
     }
 
     /**
