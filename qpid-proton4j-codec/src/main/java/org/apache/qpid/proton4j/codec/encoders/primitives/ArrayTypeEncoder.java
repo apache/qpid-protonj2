@@ -76,7 +76,25 @@ public class ArrayTypeEncoder implements PrimitiveArrayTypeEncoder {
     @SuppressWarnings({ "rawtypes", "unchecked" })
     private void writeArray(ProtonBuffer buffer, EncoderState state, Object[] value) {
 
-        TypeEncoder typeEncoder = state.getEncoder().getTypeEncoder(value.getClass().getComponentType());
+        Class<?> componentType = value.getClass().getComponentType();
+
+        if (value.length == 0) {
+            if (componentType.equals((Object.class))) {
+                throw new IllegalArgumentException(
+                    "Cannot write a zero sized untyped array.");
+            }
+        }
+
+        if (componentType.equals(Object.class)) {
+            if (componentType.isArray()) {
+                componentType = value[0].getClass();
+            } else {
+                throw new IllegalArgumentException(
+                    "Cannot write a generic Object types to array entries.");
+            }
+        }
+
+        TypeEncoder typeEncoder = state.getEncoder().getTypeEncoder(componentType);
         if (typeEncoder == null) {
             throw new IllegalArgumentException(
                 "Do not know how to write Objects of class " + value.getClass().getName());

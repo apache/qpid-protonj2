@@ -81,6 +81,23 @@ public class HeaderTypeCodecTest extends CodecTestSupport {
     }
 
     @Test
+    public void testEncodeDecodeZeroSizedArrayOfHeaders() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        Header[] headerArray = new Header[0];
+
+        encoder.writeObject(buffer, encoderState, headerArray);
+
+        final Object result = decoder.readObject(buffer, decoderState);
+
+        assertTrue(result.getClass().isArray());
+        assertEquals(Header.class, result.getClass().getComponentType());
+
+        Header[] resultArray = (Header[]) result;
+        assertEquals(0, resultArray.length);
+    }
+
+    @Test
     public void testEncodeDecodeArrayOfHeaders() throws IOException {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
 

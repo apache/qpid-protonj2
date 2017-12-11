@@ -19,6 +19,7 @@ package org.apache.qpid.proton4j.codec;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -30,6 +31,7 @@ import java.util.UUID;
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
+import org.junit.Ignore;
 import org.junit.Test;
 
 /**
@@ -39,6 +41,37 @@ public class ArrayTypeCodecTest extends CodecTestSupport {
 
     private final int LARGE_ARRAY_SIZE = 2048;
     private final int SMALL_ARRAY_SIZE = 32;
+
+    @Test
+    public void testWriteOfZeroSizedGenericArrayFails() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        Object[] source = new Object[0];
+
+        try {
+            encoder.writeArray(buffer, encoderState, source);
+            fail("Should reject attempt to write zero sized array of unknown type.");
+        } catch (IllegalArgumentException iae) {
+            // Expected
+        }
+    }
+
+    @Test
+    public void testWriteOfGenericArrayOfObjectsFails() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        Object[] source = new Object[2];
+
+        source[0] = new Object();
+        source[1] = new Object();
+
+        try {
+            encoder.writeArray(buffer, encoderState, source);
+            fail("Should reject attempt to write array of unknown type.");
+        } catch (IllegalArgumentException iae) {
+            // Expected
+        }
+    }
 
     @Test
     public void testArrayOfPrimitiveBooleanObjects() throws IOException {
@@ -274,6 +307,30 @@ public class ArrayTypeCodecTest extends CodecTestSupport {
 
         for (int i = 0; i < map.length; ++i) {
             assertEquals(source[i], map[i]);
+        }
+    }
+
+    @Ignore("Can't currently handle generic arrays")
+    @Test
+    public void testObjectArrayContainingUUID() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        Object[] source = new Object[10];
+        for (int i = 0; i < 10; ++i) {
+            source[i] = UUID.randomUUID();
+        }
+
+        encoder.writeArray(buffer, encoderState, source);
+
+        Object result = decoder.readObject(buffer, decoderState);
+        assertNotNull(result);
+        assertTrue(result.getClass().isArray());
+
+        UUID[] array = (UUID[]) result;
+        assertEquals(10, array.length);
+
+        for (int i = 0; i < 10; ++i) {
+            assertEquals(source[i], array[i]);
         }
     }
 }
