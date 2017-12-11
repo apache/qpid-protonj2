@@ -100,6 +100,13 @@ public final class Symbol implements Comparable<Symbol> {
             }
 
             symbol = new Symbol(symbolBuffer);
+
+            // Don't cache overly large symbols to prevent holding large
+            // amount of memory in the symbol cache.
+            if (symbolBuffer.getReadableBytes() > 64) {
+                return symbol;
+            }
+
             Symbol existing;
             if ((existing = bufferToSymbols.putIfAbsent(symbolBuffer, symbol)) != null) {
                 symbol = existing;
