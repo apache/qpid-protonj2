@@ -256,6 +256,44 @@ public class ArrayTypeCodecTest extends CodecTestSupport {
         }
     }
 
+    @Test
+    public void testWriteUUIDArrayWithMixedNullAndNotNullValues() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        UUID[] source = new UUID[2];
+        source[0] = UUID.randomUUID();
+        source[1] = null;
+
+        try {
+            encoder.writeArray(buffer, encoderState, source);
+            fail("Should not be able to encode array with mixed null and non-null values");
+        } catch (Exception e) {}
+
+        source = new UUID[2];
+        source[0] = null;
+        source[1] = UUID.randomUUID();
+
+        try {
+            encoder.writeArray(buffer, encoderState, source);
+            fail("Should not be able to encode array with mixed null and non-null values");
+        } catch (Exception e) {}
+    }
+
+    @Test
+    public void testWriteUUIDArrayWithZeroSize() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        UUID[] source = new UUID[0];
+        encoder.writeArray(buffer, encoderState, source);
+
+        Object result = decoder.readObject(buffer, decoderState);
+        assertNotNull(result);
+        assertTrue(result.getClass().isArray());
+
+        UUID[] array = (UUID[]) result;
+        assertEquals(0, array.length);
+    }
+
     @SuppressWarnings({ "rawtypes", "unchecked" })
     @Test
     public void testArrayOfListsOfUUIDs() throws IOException {
@@ -332,5 +370,44 @@ public class ArrayTypeCodecTest extends CodecTestSupport {
         for (int i = 0; i < 10; ++i) {
             assertEquals(source[i], array[i]);
         }
+    }
+
+    @Ignore("Can't currently handle arrays of arrays")
+    @Test
+    public void testWriteArrayOfArraysStrings() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        String[][] stringArray = new String[2][1];
+
+        stringArray[0][0] = "short-string";
+        stringArray[1][0] = "long-string-entry:" + UUID.randomUUID().toString() + "," +
+                                                   UUID.randomUUID().toString() + "," +
+                                                   UUID.randomUUID().toString() + "," +
+                                                   UUID.randomUUID().toString() + "," +
+                                                   UUID.randomUUID().toString() + "," +
+                                                   UUID.randomUUID().toString() + "," +
+                                                   UUID.randomUUID().toString();
+
+        encoder.writeArray(buffer, encoderState, stringArray);
+
+        Object result = decoder.readObject(buffer, decoderState);
+
+        assertNotNull(result);
+        assertTrue(result.getClass().isArray());
+
+        Object[] array = (Object[]) result;
+        assertEquals(2, array.length);
+
+        assertTrue(array[0] instanceof String[]);
+        assertTrue(array[1] instanceof String[]);
+
+        String[] element1Array = (String[]) array[0];
+        String[] element2Array = (String[]) array[1];
+
+        assertEquals(1, element1Array.length);
+        assertEquals(1, element2Array.length);
+
+        assertEquals(stringArray[0][0], element1Array[0]);
+        assertEquals(stringArray[1][0], element2Array[0]);
     }
 }
