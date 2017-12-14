@@ -38,17 +38,62 @@ public class CharacterTypeEncoder implements PrimitiveTypeEncoder<Character> {
     }
 
     @Override
-    public void writeArrayElements(ProtonBuffer buffer, EncoderState state, Character[] value) {
+    public void writeArray(ProtonBuffer buffer, EncoderState state, Object[] values) {
+        // Write the Array Type encoding code, we don't optimize here.
+        buffer.writeByte(EncodingCodes.ARRAY32);
+
+        int startIndex = buffer.getWriteIndex();
+
+        // Reserve space for the size and write the count of list elements.
+        buffer.writeInt(0);
+        buffer.writeInt(values.length);
+
+        // Write the array elements after writing the array length
+        writeRawArray(buffer, state, values);
+
+        // Move back and write the size
+        int endIndex = buffer.getWriteIndex();
+        long writeSize = endIndex - startIndex - Integer.BYTES;
+
+        if (writeSize > Integer.MAX_VALUE) {
+            throw new IllegalArgumentException("Cannot encode given array, encoded size to large: " + writeSize);
+        }
+
+        buffer.setInt(startIndex, (int) writeSize);
+    }
+
+    @Override
+    public void writeRawArray(ProtonBuffer buffer, EncoderState state, Object[] values) {
         buffer.writeByte(EncodingCodes.CHAR);
-        for (Character charValue : value) {
-            buffer.writeInt(charValue.charValue() & 0xffff);
+        for (Object charValue : values) {
+            buffer.writeInt(((Character) charValue).charValue() & 0xffff);
         }
     }
 
-    public void writeArrayElements(ProtonBuffer buffer, EncoderState state, char[] value) {
+    public void writeArray(ProtonBuffer buffer, EncoderState state, char[] values) {
+        // Write the Array Type encoding code, we don't optimize here.
+        buffer.writeByte(EncodingCodes.ARRAY32);
+
+        int startIndex = buffer.getWriteIndex();
+
+        // Reserve space for the size and write the count of list elements.
+        buffer.writeInt(0);
+        buffer.writeInt(values.length);
+
+        // Write the array elements after writing the array length
         buffer.writeByte(EncodingCodes.CHAR);
-        for (char charValue : value) {
+        for (char charValue : values) {
             buffer.writeInt(charValue & 0xffff);
         }
+
+        // Move back and write the size
+        int endIndex = buffer.getWriteIndex();
+        long writeSize = endIndex - startIndex - Integer.BYTES;
+
+        if (writeSize > Integer.MAX_VALUE) {
+            throw new IllegalArgumentException("Cannot encode given array, encoded size to large: " + writeSize);
+        }
+
+        buffer.setInt(startIndex, (int) writeSize);
     }
 }

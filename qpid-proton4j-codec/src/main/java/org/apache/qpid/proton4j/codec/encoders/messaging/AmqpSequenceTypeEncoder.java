@@ -52,7 +52,12 @@ public class AmqpSequenceTypeEncoder implements DescribedTypeEncoder<AmqpSequenc
     }
 
     @Override
-    public void writeArrayElements(ProtonBuffer buffer, EncoderState state, AmqpSequence[] value) {
-        // TODO
+    public void writeArray(ProtonBuffer buffer, EncoderState state, Object[] value) {
+        // TODO Need a way to write the inner list of an AmqpSequence in the array body.
+    }
+
+    @Override
+    public void writeRawArray(ProtonBuffer buffer, EncoderState state, Object[] values) {
+        // TODO Need a way to write the inner list of an AmqpSequence in the array body.
     }
 }

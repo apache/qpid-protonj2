@@ -65,20 +65,44 @@ public class StringTypeEncoder implements PrimitiveTypeEncoder<String> {
     }
 
     @Override
-    public void writeArrayElements(ProtonBuffer buffer, EncoderState state, String[] values) {
+    public void writeArray(ProtonBuffer buffer, EncoderState state, Object[] values) {
+        // Write the Array Type encoding code, we don't optimize here.
+        buffer.writeByte(EncodingCodes.ARRAY32);
+
+        int startIndex = buffer.getWriteIndex();
+
+        // Reserve space for the size and write the count of list elements.
+        buffer.writeInt(0);
+        buffer.writeInt(values.length);
+
+        // Write the array elements after writing the array length
+        writeRawArray(buffer, state, values);
+
+        // Move back and write the size
+        int endIndex = buffer.getWriteIndex();
+        long writeSize = endIndex - startIndex - Integer.BYTES;
+
+        if (writeSize > Integer.MAX_VALUE) {
+            throw new IllegalArgumentException("Cannot encode given array, encoded size to large: " + writeSize);
+        }
+
+        buffer.setInt(startIndex, (int) writeSize);
+    }
+
+    @Override
+    public void writeRawArray(ProtonBuffer buffer, EncoderState state, Object[] values) {
         buffer.writeByte(EncodingCodes.STR32);
-        for (String value : values) {
+        for (Object value : values) {
             // Reserve space for the size
             buffer.writeInt(0);
 
             int stringStart = buffer.getWriteIndex();
 
             // Write the full string value
-            writeString(buffer, state, value);
+            writeString(buffer, state, (String) value);
 
             // Move back and write the string size
-            int stringEnd = buffer.getWriteIndex();
-            buffer.setInt(stringStart - Integer.BYTES, stringEnd - stringStart);
+            buffer.setInt(stringStart - Integer.BYTES, buffer.getWriteIndex() - stringStart);
         }
     }
 
@@ -145,4 +169,5 @@ public class StringTypeEncoder implements PrimitiveTypeEncoder<String> {
             }
         }
     }
+
 }

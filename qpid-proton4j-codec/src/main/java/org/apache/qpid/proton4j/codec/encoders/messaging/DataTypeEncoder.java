@@ -24,7 +24,6 @@ import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.DescribedTypeEncoder;
 import org.apache.qpid.proton4j.codec.EncoderState;
 import org.apache.qpid.proton4j.codec.EncodingCodes;
-import org.apache.qpid.proton4j.codec.TypeEncoder;
 
 /**
  * Encoder of AMQP Data type values to a byte stream.
@@ -53,22 +52,40 @@ public class DataTypeEncoder implements DescribedTypeEncoder<Data> {
         state.getEncoder().writeBinary(buffer, state, value.getValue());
     }
 
-    @SuppressWarnings({ "rawtypes", "unchecked" })
     @Override
-    public void writeArrayElements(ProtonBuffer buffer, EncoderState state, Data[] value) {
+    public void writeArray(ProtonBuffer buffer, EncoderState state, Object[] values) {
+        // Write the Array Type encoding code, we don't optimize here.
+        buffer.writeByte(EncodingCodes.ARRAY32);
+
+        int startIndex = buffer.getWriteIndex();
+
+        // Reserve space for the size and write the count of list elements.
+        buffer.writeInt(0);
+        buffer.writeInt(values.length);
+
+        writeRawArray(buffer, state, values);
+
+        // Move back and write the size
+        int endIndex = buffer.getWriteIndex();
+        long writeSize = endIndex - startIndex - Integer.BYTES;
+
+        if (writeSize > Integer.MAX_VALUE) {
+            throw new IllegalArgumentException("Cannot encode given array, encoded size to large: " + writeSize);
+        }
+
+        buffer.setInt(startIndex, (int) writeSize);
+    }
+
+    @Override
+    public void writeRawArray(ProtonBuffer buffer, EncoderState state, Object[] values) {
         buffer.writeByte(EncodingCodes.DESCRIBED_TYPE_INDICATOR);
         state.getEncoder().writeUnsignedLong(buffer, state, getDescriptorCode());
 
-        Binary[] binaryArray = new Binary[value.length];
-        for (int i = 0; i < value.length; ++i) {
-            binaryArray[i] = value[i].getValue();
+        buffer.writeByte(EncodingCodes.VBIN32);
+        for (Object value : values) {
+            Binary binary = ((Data) value).getValue();
+            buffer.writeInt(binary.getLength());
+            buffer.writeBytes(binary.getArray(), binary.getArrayOffset(), binary.getLength());
         }
-
-        TypeEncoder encoder = state.getEncoder().getTypeEncoder(Binary.class);
-        if (encoder == null) {
-            throw new IllegalStateException("No TypeEncoder found for Binary elements");
-        }
-
-        encoder.writeArrayElements(buffer, state, binaryArray);
     }
 }

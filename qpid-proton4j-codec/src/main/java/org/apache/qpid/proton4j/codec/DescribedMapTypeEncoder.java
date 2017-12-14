@@ -127,27 +127,53 @@ public interface DescribedMapTypeEncoder<K, V, M> extends DescribedTypeEncoder<M
     }
 
     @Override
-    default void writeArrayElements(ProtonBuffer buffer, EncoderState state, M[] value) {
+    default void writeArray(ProtonBuffer buffer, EncoderState state, Object[] values) {
+        // Write the Array Type encoding code, we don't optimize here.
+        buffer.writeByte(EncodingCodes.ARRAY32);
+
+        int startIndex = buffer.getWriteIndex();
+
+        // Reserve space for the size and write the count of list elements.
+        buffer.writeInt(0);
+        buffer.writeInt(values.length);
+
         buffer.writeByte(EncodingCodes.DESCRIBED_TYPE_INDICATOR);
         state.getEncoder().writeUnsignedLong(buffer, state, getDescriptorCode());
 
+        writeRawArray(buffer, state, values);
+
+        // Move back and write the size
+        int endIndex = buffer.getWriteIndex();
+        long writeSize = endIndex - startIndex - Integer.BYTES;
+
+        if (writeSize > Integer.MAX_VALUE) {
+            throw new IllegalArgumentException("Cannot encode given array, encoded size to large: " + writeSize);
+        }
+
+        buffer.setInt(startIndex, (int) writeSize);
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    default void writeRawArray(ProtonBuffer buffer, EncoderState state, Object[] values) {
         buffer.writeByte(EncodingCodes.MAP32);
 
-        for (int i = 0; i < value.length; ++i) {
-            int count = getMapSize(value[i]);
-            int startIndex = buffer.getWriteIndex();
+        for (int i = 0; i < values.length; ++i) {
+            M map = (M) values[i];
+
+            int count = getMapSize(map);
+            int mapStartIndex = buffer.getWriteIndex();
 
             // Reserve space for the size and write the count of list elements.
             buffer.writeInt(0);
             buffer.writeInt(count * 2);
 
-            writeMapEntries(buffer, state, value[i]);
+            writeMapEntries(buffer, state, map);
 
             // Move back and write the size
-            int endIndex = buffer.getWriteIndex();
-            int writeSize = endIndex - startIndex - Integer.BYTES;
+            int writeSize = buffer.getWriteIndex() - mapStartIndex - Integer.BYTES;
 
-            buffer.setInt(startIndex, writeSize);
+            buffer.setInt(mapStartIndex, writeSize);
         }
     }
 }

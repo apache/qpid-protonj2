@@ -16,8 +16,6 @@
  */
 package org.apache.qpid.proton4j.codec;
 
-import org.apache.qpid.proton4j.buffer.ProtonBuffer;
-
 public interface PrimitiveArrayTypeEncoder extends PrimitiveTypeEncoder<Object> {
 
     @Override
@@ -29,8 +27,4 @@ public interface PrimitiveArrayTypeEncoder extends PrimitiveTypeEncoder<Object> 
     default Class<Object> getTypeClass() {
         return Object.class;
     }
-
-    @Override
-    void writeArrayElements(ProtonBuffer buffer, EncoderState state, Object[] value);
-
 }

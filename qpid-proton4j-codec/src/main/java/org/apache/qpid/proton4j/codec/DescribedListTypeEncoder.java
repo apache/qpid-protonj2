@@ -120,16 +120,43 @@ public interface DescribedListTypeEncoder<V> extends DescribedTypeEncoder<V> {
     }
 
     @Override
-    default void writeArrayElements(ProtonBuffer buffer, EncoderState state, V[] value) {
+    default void writeArray(ProtonBuffer buffer, EncoderState state, Object[] values) {
+        // Write the Array Type encoding code, we don't optimize here.
+        buffer.writeByte(EncodingCodes.ARRAY32);
+
+        int startIndex = buffer.getWriteIndex();
+
+        // Reserve space for the size and write the count of list elements.
+        buffer.writeInt(0);
+        buffer.writeInt(values.length);
+
         buffer.writeByte(EncodingCodes.DESCRIBED_TYPE_INDICATOR);
         state.getEncoder().writeUnsignedLong(buffer, state, getDescriptorCode());
 
+        writeRawArray(buffer, state, values);
+
+        // Move back and write the size
+        int endIndex = buffer.getWriteIndex();
+        long writeSize = endIndex - startIndex - Integer.BYTES;
+
+        if (writeSize > Integer.MAX_VALUE) {
+            throw new IllegalArgumentException("Cannot encode given array, encoded size to large: " + writeSize);
+        }
+
+        buffer.setInt(startIndex, (int) writeSize);
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    default void writeRawArray(ProtonBuffer buffer, EncoderState state, Object[] values) {
         buffer.writeByte(EncodingCodes.LIST32);
 
-        for (int i = 0; i < value.length; ++i) {
-            int count = getElementCount(value[i]);
+        for (int i = 0; i < values.length; ++i) {
+            V listType = (V) values[i];
 
-            int startIndex = buffer.getWriteIndex();
+            int count = getElementCount(listType);
+
+            int elementStartIndex = buffer.getWriteIndex();
 
             // Reserve space for the size and write the count of list elements.
             buffer.writeInt(0);
@@ -137,14 +164,13 @@ public interface DescribedListTypeEncoder<V> extends DescribedTypeEncoder<V> {
 
             // Write the list elements and then compute total size written.
             for (int j = 0; j < count; ++j) {
-                writeElement(value[i], j, buffer, state);
+                writeElement(listType, j, buffer, state);
             }
 
             // Move back and write the size
-            int endIndex = buffer.getWriteIndex();
-            int writeSize = endIndex - startIndex - Integer.BYTES;
+            int listWriteSize = buffer.getWriteIndex() - elementStartIndex - Integer.BYTES;
 
-            buffer.setInt(startIndex, writeSize);
+            buffer.setInt(elementStartIndex, listWriteSize);
         }
     }
 }

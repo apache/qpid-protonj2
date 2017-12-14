@@ -53,16 +53,32 @@ public interface TypeEncoder<V> {
     /**
      * Write an array elements of the AMQP type to the given byte buffer.
      * <p>
-     * This consists of writing both a type constructor value and
-     * the bytes that make up the values of the array being written.
+     * This method writes the full Array type definition of an array of the
+     * type this encoder manages.
      *
      * @param buffer
      *      The buffer to write the AMQP array elements to
      * @param state
      *      The current encoder state
-     * @param value
+     * @param values
      *      The array of values that is to be written.
      */
-    void writeArrayElements(ProtonBuffer buffer, EncoderState state, V[] value);
+    void writeArray(ProtonBuffer buffer, EncoderState state, Object[] values);
+
+    /**
+     * Write an array elements of the AMQP type to the given byte buffer.
+     * <p>
+     * This method writes only the body portion of an AMQP array of this type, the
+     * array encoding, size and element count should be assumed to be managed by
+     * the caller.
+     *
+     * @param buffer
+     *      The buffer to write the AMQP array elements to
+     * @param state
+     *      The current encoder state
+     * @param values
+     *      The array of values that is to be written.
+     */
+    void writeRawArray(ProtonBuffer buffer, EncoderState state, Object[] values);
 
 }

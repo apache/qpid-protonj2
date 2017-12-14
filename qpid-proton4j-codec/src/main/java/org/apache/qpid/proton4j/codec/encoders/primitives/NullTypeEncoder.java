@@ -41,6 +41,12 @@ public class NullTypeEncoder implements PrimitiveTypeEncoder<Void> {
     }
 
     @Override
-    public void writeArrayElements(ProtonBuffer buffer, EncoderState state, Void[] value) {
+    public void writeArray(ProtonBuffer buffer, EncoderState state, Object[] value) {
+        throw new IllegalArgumentException("Cannot write an array of nulls");
+    }
+
+    @Override
+    public void writeRawArray(ProtonBuffer buffer, EncoderState state, Object[] values) {
+        throw new IllegalArgumentException("Cannot write an array of nulls");
     }
 }
