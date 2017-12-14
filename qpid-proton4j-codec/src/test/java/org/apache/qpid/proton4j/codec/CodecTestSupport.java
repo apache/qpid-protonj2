@@ -25,6 +25,12 @@ import org.junit.Before;
  */
 public class CodecTestSupport {
 
+    protected static final int LARGE_SIZE = 1024;
+    protected static final int SMALL_SIZE = 32;
+
+    protected static final int LARGE_ARRAY_SIZE = 1024;
+    protected static final int SMALL_ARRAY_SIZE = 32;
+
     protected DecoderState decoderState;
     protected EncoderState encoderState;
     protected Decoder decoder;

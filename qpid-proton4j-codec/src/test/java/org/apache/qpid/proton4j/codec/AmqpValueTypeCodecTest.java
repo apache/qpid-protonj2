@@ -33,9 +33,6 @@ import org.junit.Test;
  */
 public class AmqpValueTypeCodecTest extends CodecTestSupport {
 
-    private final int LARGE_SIZE = 1024;
-    private final int SMALL_SIZE = 32;
-
     @Test
     public void testDecodeAmqpValueString() throws IOException {
         doTestDecodeAmqpValueSeries(1, new AmqpValue("test"));

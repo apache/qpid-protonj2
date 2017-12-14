@@ -30,9 +30,6 @@ import org.junit.Test;
 
 public class SymbolTypeCodecTest extends CodecTestSupport {
 
-    private final int LARGE_SIZE = 2048;
-    private final int SMALL_SIZE = 32;
-
     private final String SMALL_SYMBOL_VALUIE = "Small String";
     private final String LARGE_SYMBOL_VALUIE = "Large String: " +
         "The quick brown fox jumps over the lazy dog. " +
@@ -104,6 +101,38 @@ public class SymbolTypeCodecTest extends CodecTestSupport {
             assertNotNull(result);
             assertTrue(result instanceof Symbol);
             assertEquals(LARGE_SYMBOL_VALUIE, result.toString());
+        }
+    }
+
+    @Test
+    public void testDecodeSmallSymbolArray() throws IOException {
+        doTestDecodeSymbolArrayType(SMALL_ARRAY_SIZE);
+    }
+
+    @Test
+    public void testDecodeLargeSymbolArray() throws IOException {
+        doTestDecodeSymbolArrayType(LARGE_ARRAY_SIZE);
+    }
+
+    private void doTestDecodeSymbolArrayType(int size) throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        Symbol[] source = new Symbol[size];
+        for (int i = 0; i < size; ++i) {
+            source[i] = Symbol.valueOf("test->" + i);
+        }
+
+        encoder.writeArray(buffer, encoderState, source);
+
+        Object result = decoder.readObject(buffer, decoderState);
+        assertNotNull(result);
+        assertTrue(result.getClass().isArray());
+
+        Symbol[] array = (Symbol[]) result;
+        assertEquals(size, array.length);
+
+        for (int i = 0; i < size; ++i) {
+            assertEquals(source[i], array[i]);
         }
     }
 }

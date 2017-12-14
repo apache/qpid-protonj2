@@ -23,6 +23,7 @@ import static org.junit.Assert.assertTrue;
 import java.io.IOException;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.UUID;
 
 import org.apache.qpid.proton4j.amqp.Binary;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
@@ -30,9 +31,6 @@ import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.junit.Test;
 
 public class MapTypeCodecTest extends CodecTestSupport {
-
-    private final int LARGE_SIZE = 1024 * 1024;
-    private final int SMALL_SIZE = 32;
 
     @Test
     public void testDecodeSmallSeriesOfMaps() throws IOException {
@@ -95,6 +93,33 @@ public class MapTypeCodecTest extends CodecTestSupport {
             Map<String, Object> resultMap = (Map<String, Object>) result;
 
             assertEquals(map.size(), resultMap.size());
+        }
+    }
+
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    @Test
+    public void testArrayOfMApsOfStringToUUIDs() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        Map<String, UUID>[] source = new LinkedHashMap[2];
+        for (int i = 0; i < source.length; ++i) {
+            source[i] = new LinkedHashMap<String, UUID>();
+            source[i].put("1", UUID.randomUUID());
+            source[i].put("2", UUID.randomUUID());
+            source[i].put("3", UUID.randomUUID());
+        }
+
+        encoder.writeArray(buffer, encoderState, source);
+
+        Object result = decoder.readObject(buffer, decoderState);
+        assertNotNull(result);
+        assertTrue(result.getClass().isArray());
+
+        Map[] map = (Map[]) result;
+        assertEquals(source.length, map.length);
+
+        for (int i = 0; i < map.length; ++i) {
+            assertEquals(source[i], map[i]);
         }
     }
 }

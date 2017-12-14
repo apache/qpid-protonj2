@@ -32,9 +32,6 @@ import org.junit.Test;
  */
 public class BooleanTypeCodecTest extends CodecTestSupport {
 
-    private final int LARGE_SIZE = 1024;
-    private final int SMALL_SIZE = 32;
-
     @Test
     public void testDecodeBooleanTrue() throws Exception {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
@@ -83,5 +80,124 @@ public class BooleanTypeCodecTest extends CodecTestSupport {
             Boolean boolValue = (Boolean) result;
             assertEquals(i % 2 == 0, boolValue.booleanValue());
         }
+    }
+
+    @Test
+    public void testArrayOfBooleanObjects() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        final int size = 10;
+
+        Boolean[] source = new Boolean[size];
+        for (int i = 0; i < size; ++i) {
+            source[i] = i % 2 == 0;
+        }
+
+        encoder.writeArray(buffer, encoderState, source);
+
+        Object result = decoder.readObject(buffer, decoderState);
+        assertNotNull(result);
+        assertTrue(result.getClass().isArray());
+        assertTrue(result.getClass().getComponentType().isPrimitive());
+
+        boolean[] array = (boolean[]) result;
+        assertEquals(size, array.length);
+
+        for (int i = 0; i < size; ++i) {
+            assertEquals(source[i], array[i]);
+        }
+    }
+
+    @Test
+    public void testZeroSizedArrayOfBooleanObjects() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        Boolean[] source = new Boolean[0];
+
+        encoder.writeArray(buffer, encoderState, source);
+
+        Object result = decoder.readObject(buffer, decoderState);
+        assertNotNull(result);
+        assertTrue(result.getClass().isArray());
+        assertTrue(result.getClass().getComponentType().isPrimitive());
+
+        boolean[] array = (boolean[]) result;
+        assertEquals(source.length, array.length);
+    }
+
+    @Test
+    public void testDecodeSmallBooleanArray() throws IOException {
+        doTestDecodeBooleanArrayType(SMALL_ARRAY_SIZE);
+    }
+
+    @Test
+    public void testDecodeLargeBooleanArray() throws IOException {
+        doTestDecodeBooleanArrayType(LARGE_ARRAY_SIZE);
+    }
+
+    private void doTestDecodeBooleanArrayType(int size) throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        boolean[] source = new boolean[size];
+        for (int i = 0; i < size; ++i) {
+            source[i] = i % 2 == 0;
+        }
+
+        encoder.writeArray(buffer, encoderState, source);
+
+        Object result = decoder.readObject(buffer, decoderState);
+        assertNotNull(result);
+        assertTrue(result.getClass().isArray());
+        assertTrue(result.getClass().getComponentType().isPrimitive());
+
+        boolean[] array = (boolean[]) result;
+        assertEquals(size, array.length);
+
+        for (int i = 0; i < size; ++i) {
+            assertEquals(source[i], array[i]);
+        }
+    }
+
+    @Test
+    public void testArrayOfPrimitiveBooleanObjects() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        final int size = 10;
+
+        boolean[] source = new boolean[size];
+        for (int i = 0; i < size; ++i) {
+            source[i] = i % 2 == 0;
+        }
+
+        encoder.writeArray(buffer, encoderState, source);
+
+        Object result = decoder.readObject(buffer, decoderState);
+        assertNotNull(result);
+        assertTrue(result.getClass().isArray());
+        assertTrue(result.getClass().getComponentType().isPrimitive());
+
+        boolean[] array = (boolean[]) result;
+        assertEquals(size, array.length);
+
+        for (int i = 0; i < size; ++i) {
+            assertEquals(source[i], array[i]);
+        }
+    }
+
+    @Test
+    public void testZeroSizedArrayOfPrimitiveBooleanObjects() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        boolean[] source = new boolean[0];
+
+        encoder.writeArray(buffer, encoderState, source);
+
+        Object result = decoder.readObject(buffer, decoderState);
+        assertNotNull(result);
+        assertTrue(result.getClass().isArray());
+        assertTrue(result.getClass().getComponentType().isPrimitive());
+
+        boolean[] array = (boolean[]) result;
+        assertEquals(source.length, array.length);
     }
 }

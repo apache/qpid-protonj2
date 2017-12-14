@@ -35,9 +35,6 @@ import org.junit.Test;
 
 public class MessageAnnotationsTypeCodecTest extends CodecTestSupport {
 
-    private final int LARGE_SIZE = 1024 * 1024;
-    private final int SMALL_SIZE = 32;
-
     @Test
     public void testDecodeSmallSeriesOfMessageAnnotations() throws IOException {
         doTestDecodeMessageAnnotationsSeries(SMALL_SIZE);

@@ -30,25 +30,22 @@ import org.junit.Test;
 
 public class DataTypeCodecTest extends CodecTestSupport {
 
-    private final int LARGE_SIZE = 1024;
-    private final int SMALL_SIZE = 32;
-
     @Test
-    public void testDecodeHeader() throws IOException {
-        doTestDecodeHeaderSeries(1);
+    public void testDecodeData() throws IOException {
+        doTestDecodeDataSeries(1);
     }
 
     @Test
-    public void testDecodeSmallSeriesOfHeaders() throws IOException {
-        doTestDecodeHeaderSeries(SMALL_SIZE);
+    public void testDecodeSmallSeriesOfDatas() throws IOException {
+        doTestDecodeDataSeries(SMALL_SIZE);
     }
 
     @Test
-    public void testDecodeLargeSeriesOfHeaders() throws IOException {
-        doTestDecodeHeaderSeries(LARGE_SIZE);
+    public void testDecodeLargeSeriesOfDatas() throws IOException {
+        doTestDecodeDataSeries(LARGE_SIZE);
     }
 
-    private void doTestDecodeHeaderSeries(int size) throws IOException {
+    private void doTestDecodeDataSeries(int size) throws IOException {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
 
         Data data = new Data(new Binary(new byte[] { 1, 2, 3}));

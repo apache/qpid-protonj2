@@ -38,9 +38,6 @@ import org.junit.Test;
  */
 public class ListTypeCodecTest extends CodecTestSupport {
 
-    private final int LARGE_SIZE = 1024;
-    private final int SMALL_SIZE = 32;
-
     @Test
     public void testDecodeSmallSeriesOfLists() throws IOException {
         doTestDecodeListSeries(SMALL_SIZE);
@@ -117,6 +114,33 @@ public class ListTypeCodecTest extends CodecTestSupport {
             List<Object> resultList = (List<Object>) result;
 
             assertEquals(list.size(), resultList.size());
+        }
+    }
+
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    @Test
+    public void testArrayOfListsOfUUIDs() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        ArrayList<UUID>[] source = new ArrayList[2];
+        for (int i = 0; i < source.length; ++i) {
+            source[i] = new ArrayList<UUID>(3);
+            source[i].add(UUID.randomUUID());
+            source[i].add(UUID.randomUUID());
+            source[i].add(UUID.randomUUID());
+        }
+
+        encoder.writeArray(buffer, encoderState, source);
+
+        Object result = decoder.readObject(buffer, decoderState);
+        assertNotNull(result);
+        assertTrue(result.getClass().isArray());
+
+        List[] list = (List[]) result;
+        assertEquals(source.length, list.length);
+
+        for (int i = 0; i < list.length; ++i) {
+            assertEquals(source[i], list[i]);
         }
     }
 }

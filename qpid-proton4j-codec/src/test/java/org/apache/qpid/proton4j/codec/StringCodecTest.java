@@ -29,9 +29,6 @@ import org.junit.Test;
 
 public class StringCodecTest extends CodecTestSupport {
 
-    private final int LARGE_SIZE = 2048;
-    private final int SMALL_SIZE = 32;
-
     private final String SMALL_STRING_VALUIE = "Small String";
     private final String LARGE_STRING_VALUIE = "Large String: " +
         "The quick brown fox jumps over the lazy dog. " +

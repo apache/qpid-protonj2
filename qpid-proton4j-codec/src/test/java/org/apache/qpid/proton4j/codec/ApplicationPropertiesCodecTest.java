@@ -31,9 +31,6 @@ import org.junit.Test;
 
 public class ApplicationPropertiesCodecTest extends CodecTestSupport {
 
-    private final int LARGE_SIZE = 1024;
-    private final int SMALL_SIZE = 32;
-
     @Test
     public void testDecodeSmallSeriesOfApplicationProperties() throws IOException {
         doTestDecodeHeaderSeries(SMALL_SIZE);
