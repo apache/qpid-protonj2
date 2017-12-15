@@ -22,7 +22,6 @@ import java.nio.Buffer;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBuffer;
 import org.apache.qpid.proton4j.transport.FrameParser;
-import org.apache.qpid.proton4j.transport.Transport;
 import org.apache.qpid.proton4j.transport.exceptions.IOExceptionSupport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,14 +37,15 @@ public class AmqpFrameParser implements FrameParser {
     private static final byte AMQP_FRAME_SIZE_BYTES = 4;
     private static final byte AMQP_HEADER_BYTES = 8;
 
-    private Transport transport;
+    private ProtonTransport transport;
     private FrameParser currentParser;
 
-    public AmqpFrameParser(final Transport transport) {
+    public AmqpFrameParser(final ProtonTransport transport) {
         this.transport = transport;
     }
 
-    public void parse(ProtonBuffer incoming) throws Exception {
+    @Override
+    public void parse(ProtonBuffer incoming) throws IOException {
 
         if (incoming == null || !incoming.isReadable()) {
             return;
@@ -59,6 +59,7 @@ public class AmqpFrameParser implements FrameParser {
         currentParser.parse(incoming);
     }
 
+    @Override
     public void reset() {
         currentParser = initializeHeaderParser();
     }

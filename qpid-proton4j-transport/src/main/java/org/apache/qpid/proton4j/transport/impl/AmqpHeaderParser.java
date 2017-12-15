@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.qpid.proton4j.transport.sasl;
+package org.apache.qpid.proton4j.transport.impl;
 
 import java.io.IOException;
 
@@ -22,9 +22,9 @@ import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.transport.FrameParser;
 
 /**
- * Parser of SASL Frames from the incoming data stream
+ * Used to parse incoming AMQP Headers from a data stream.
  */
-public class SaslFrameParser implements FrameParser {
+public class AmqpHeaderParser implements FrameParser {
 
     @Override
     public void reset() {
