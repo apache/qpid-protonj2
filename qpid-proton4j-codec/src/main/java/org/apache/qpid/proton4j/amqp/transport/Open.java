@@ -125,6 +125,11 @@ public final class Open implements Performative {
     }
 
     @Override
+    public PerformativeType getPerformativeType() {
+        return PerformativeType.Open;
+    }
+
+    @Override
     public String toString()
     {
         return "Open{" +

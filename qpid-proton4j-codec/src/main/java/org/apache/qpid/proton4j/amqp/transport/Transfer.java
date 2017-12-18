@@ -131,6 +131,11 @@ public final class Transfer implements Performative {
     }
 
     @Override
+    public PerformativeType getPerformativeType() {
+        return PerformativeType.Transfer;
+    }
+
+    @Override
     public String toString() {
         return "Transfer{" +
                "handle=" + handle +

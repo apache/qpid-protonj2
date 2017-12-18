@@ -41,6 +41,11 @@ public class AMQPHeader implements Performative {
         setBuffer(buffer, validate);
     }
 
+    @Override
+    public PerformativeType getPerformativeType() {
+        return PerformativeType.AMQPHeader;
+    }
+
     public int getProtocolId() {
         return buffer.getByte(4) & 0xFF;
     }

@@ -16,7 +16,15 @@
  */
 package org.apache.qpid.proton4j.amqp.transport;
 
-public final class EmptyFrame {
+public final class EmptyFrame implements Performative {
+
+    // TODO - Tagging as performative for now, could create a different event on the
+    //        transport like, onTick, onHeartbeat etc.
+
+    @Override
+    public PerformativeType getPerformativeType() {
+        return PerformativeType.EmptyFrame;
+    }
 
     @Override
     public String toString() {

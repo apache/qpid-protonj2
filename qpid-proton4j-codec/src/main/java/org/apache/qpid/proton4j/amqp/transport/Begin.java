@@ -38,6 +38,11 @@ public final class Begin implements Performative {
     private Symbol[] desiredCapabilities;
     private Map<Object, Object> properties;
 
+    @Override
+    public PerformativeType getPerformativeType() {
+        return PerformativeType.Begin;
+    }
+
     public UnsignedShort getRemoteChannel() {
         return remoteChannel;
     }

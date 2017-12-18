@@ -21,4 +21,20 @@ package org.apache.qpid.proton4j.amqp.transport;
  */
 public interface Performative {
 
+    enum PerformativeType {
+        AMQPHeader,
+        Attach,
+        Begin,
+        Close,
+        Detach,
+        Disposition,
+        EmptyFrame,
+        End,
+        Flow,
+        Open,
+        Transfer
+    }
+
+    PerformativeType getPerformativeType();
+
 }

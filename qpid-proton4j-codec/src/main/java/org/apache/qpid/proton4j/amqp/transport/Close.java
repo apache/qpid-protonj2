@@ -35,6 +35,11 @@ public final class Close implements Performative {
     }
 
     @Override
+    public PerformativeType getPerformativeType() {
+        return PerformativeType.Close;
+    }
+
+    @Override
     public String toString() {
         return "Close{" + "error=" + error + '}';
     }

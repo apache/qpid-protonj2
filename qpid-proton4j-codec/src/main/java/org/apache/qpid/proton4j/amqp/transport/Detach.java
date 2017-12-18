@@ -58,6 +58,11 @@ public final class Detach implements Performative {
     }
 
     @Override
+    public PerformativeType getPerformativeType() {
+        return PerformativeType.Detach;
+    }
+
+    @Override
     public String toString() {
         return "Detach{" +
                "handle=" + handle +

@@ -46,6 +46,11 @@ public final class Attach implements Performative {
     private Symbol[] desiredCapabilities;
     private Map<Object, Object> properties;
 
+    @Override
+    public PerformativeType getPerformativeType() {
+        return PerformativeType.Attach;
+    }
+
     public String getName() {
         return name;
     }

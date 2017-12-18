@@ -89,6 +89,11 @@ public final class Disposition implements Performative {
     }
 
     @Override
+    public PerformativeType getPerformativeType() {
+        return PerformativeType.Disposition;
+    }
+
+    @Override
     public String toString() {
         return "Disposition{" +
                "role=" + role +

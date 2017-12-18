@@ -140,6 +140,11 @@ public final class Flow implements Performative {
     }
 
     @Override
+    public PerformativeType getPerformativeType() {
+        return PerformativeType.Flow;
+    }
+
+    @Override
     public String toString() {
         return "Flow{" +
                "nextIncomingId=" + nextIncomingId +

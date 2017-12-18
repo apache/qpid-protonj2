@@ -35,6 +35,11 @@ public final class End implements Performative {
     }
 
     @Override
+    public PerformativeType getPerformativeType() {
+        return PerformativeType.End;
+    }
+
+    @Override
     public String toString() {
         return "End{" + "error=" + error + '}';
     }
