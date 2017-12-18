@@ -22,12 +22,12 @@ import java.util.UUID;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.DecoderState;
 import org.apache.qpid.proton4j.codec.EncodingCodes;
-import org.apache.qpid.proton4j.codec.decoders.PrimitiveTypeDecoder;
+import org.apache.qpid.proton4j.codec.decoders.AbstractPrimitiveTypeDecoder;
 
 /**
  * Decoder of AMQP UUID values from a byte stream
  */
-public class UUIDTypeDecoder implements PrimitiveTypeDecoder<UUID> {
+public class UUIDTypeDecoder extends AbstractPrimitiveTypeDecoder<UUID> {
 
     private static final int BYTES = Long.BYTES * 2;
 

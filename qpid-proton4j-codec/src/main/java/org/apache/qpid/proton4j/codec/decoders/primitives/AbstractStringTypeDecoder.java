@@ -20,11 +20,12 @@ import java.io.IOException;
 
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.DecoderState;
+import org.apache.qpid.proton4j.codec.decoders.AbstractPrimitiveTypeDecoder;
 
 /**
  * Base for the various String type Decoders used to read AMQP String values.
  */
-public abstract class AbstractStringTypeDecoder implements StringTypeDecoder {
+public abstract class AbstractStringTypeDecoder extends AbstractPrimitiveTypeDecoder<String> implements StringTypeDecoder {
 
     @Override
     public String readValue(ProtonBuffer buffer, DecoderState state) throws IOException {

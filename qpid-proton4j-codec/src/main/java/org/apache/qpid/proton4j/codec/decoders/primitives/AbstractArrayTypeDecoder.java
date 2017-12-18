@@ -22,13 +22,14 @@ import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.DecoderState;
 import org.apache.qpid.proton4j.codec.EncodingCodes;
 import org.apache.qpid.proton4j.codec.TypeDecoder;
+import org.apache.qpid.proton4j.codec.decoders.AbstractPrimitiveTypeDecoder;
 import org.apache.qpid.proton4j.codec.decoders.PrimitiveArrayTypeDecoder;
 import org.apache.qpid.proton4j.codec.decoders.PrimitiveTypeDecoder;
 
 /**
  * Base for the decoders of AMQP Array types.
  */
-public abstract class AbstractArrayTypeDecoder implements PrimitiveArrayTypeDecoder {
+public abstract class AbstractArrayTypeDecoder extends AbstractPrimitiveTypeDecoder<Object[]> implements PrimitiveArrayTypeDecoder {
 
     @Override
     public Class<Object[]> getTypeClass() {

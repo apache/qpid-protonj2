@@ -26,13 +26,13 @@ import org.apache.qpid.proton4j.amqp.transport.Role;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.DecoderState;
 import org.apache.qpid.proton4j.codec.TypeDecoder;
-import org.apache.qpid.proton4j.codec.decoders.DescribedTypeDecoder;
+import org.apache.qpid.proton4j.codec.decoders.AbstractDescribedTypeDecoder;
 import org.apache.qpid.proton4j.codec.decoders.primitives.ListTypeDecoder;
 
 /**
  * Decoder of AMQP Disposition type values from a byte stream.
  */
-public class DispositionTypeDecoder implements DescribedTypeDecoder<Disposition> {
+public class DispositionTypeDecoder extends AbstractDescribedTypeDecoder<Disposition> {
 
     @Override
     public Class<Disposition> getTypeClass() {

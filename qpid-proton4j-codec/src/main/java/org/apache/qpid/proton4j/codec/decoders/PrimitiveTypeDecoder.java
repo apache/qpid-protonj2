@@ -16,34 +16,23 @@
  */
 package org.apache.qpid.proton4j.codec.decoders;
 
-import java.io.IOException;
-import java.lang.reflect.Array;
-
-import org.apache.qpid.proton4j.buffer.ProtonBuffer;
-import org.apache.qpid.proton4j.codec.DecoderState;
 import org.apache.qpid.proton4j.codec.TypeDecoder;
 
+/**
+ * Interface for a TypeDecoder that manages decoding of AMQP primitive types.
+ *
+ * @param <V> the Type Class that this decoder manages.
+ */
 public interface PrimitiveTypeDecoder<V> extends TypeDecoder<V> {
 
-    @Override
-    default boolean isArrayType() {
-        return false;
-    }
+    /**
+     * @return true if the type managed by this decoder is assignable to a Java primitive type.
+     */
+    boolean isJavaPrimitive();
 
-    default boolean isJavaPrimitive() {
-        return false;
-    }
-
+    /**
+     * @return the AMQP Encoding Code that this primitive type decoder can read.
+     */
     int getTypeCode();
 
-    @SuppressWarnings("unchecked")
-    @Override
-    default V[] readArrayElements(ProtonBuffer buffer, DecoderState state, int count) throws IOException {
-        V[] array = (V[]) Array.newInstance(getTypeClass(), count);
-        for (int i = 0; i < count; ++i) {
-            array[i] = readValue(buffer, state);
-        }
-
-        return array;
-    }
 }

@@ -25,13 +25,13 @@ import org.apache.qpid.proton4j.amqp.transport.ErrorCondition;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.DecoderState;
 import org.apache.qpid.proton4j.codec.TypeDecoder;
-import org.apache.qpid.proton4j.codec.decoders.DescribedTypeDecoder;
+import org.apache.qpid.proton4j.codec.decoders.AbstractDescribedTypeDecoder;
 import org.apache.qpid.proton4j.codec.decoders.primitives.ListTypeDecoder;
 
 /**
  * Decoder of AMQP Close type values from a byte stream
  */
-public class CloseTypeDecoder implements DescribedTypeDecoder<Close> {
+public class CloseTypeDecoder extends AbstractDescribedTypeDecoder<Close> {
 
     @Override
     public Class<Close> getTypeClass() {

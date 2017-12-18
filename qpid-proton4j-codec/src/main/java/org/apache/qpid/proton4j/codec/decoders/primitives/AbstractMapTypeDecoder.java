@@ -22,11 +22,13 @@ import java.util.Map;
 
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.DecoderState;
+import org.apache.qpid.proton4j.codec.decoders.AbstractPrimitiveTypeDecoder;
 
 /**
  * Base for the various Map type decoders used to read AMQP Map values.
  */
-public abstract class AbstractMapTypeDecoder implements MapTypeDecoder {
+@SuppressWarnings("rawtypes")
+public abstract class AbstractMapTypeDecoder extends AbstractPrimitiveTypeDecoder<Map> implements MapTypeDecoder {
 
     @Override
     public Map<Object, Object> readValue(ProtonBuffer buffer, DecoderState state) throws IOException {

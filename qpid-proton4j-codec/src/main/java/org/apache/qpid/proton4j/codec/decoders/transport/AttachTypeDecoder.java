@@ -30,13 +30,13 @@ import org.apache.qpid.proton4j.amqp.transport.SenderSettleMode;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.DecoderState;
 import org.apache.qpid.proton4j.codec.TypeDecoder;
-import org.apache.qpid.proton4j.codec.decoders.DescribedTypeDecoder;
+import org.apache.qpid.proton4j.codec.decoders.AbstractDescribedTypeDecoder;
 import org.apache.qpid.proton4j.codec.decoders.primitives.ListTypeDecoder;
 
 /**
  * Decoder of AMQP Attach type values from a byte stream.
  */
-public class AttachTypeDecoder implements DescribedTypeDecoder<Attach> {
+public class AttachTypeDecoder extends AbstractDescribedTypeDecoder<Attach> {
 
     @Override
     public Class<Attach> getTypeClass() {

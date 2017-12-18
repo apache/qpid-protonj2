@@ -24,13 +24,13 @@ import org.apache.qpid.proton4j.amqp.messaging.Header;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.DecoderState;
 import org.apache.qpid.proton4j.codec.TypeDecoder;
-import org.apache.qpid.proton4j.codec.decoders.DescribedTypeDecoder;
+import org.apache.qpid.proton4j.codec.decoders.AbstractDescribedTypeDecoder;
 import org.apache.qpid.proton4j.codec.decoders.primitives.ListTypeDecoder;
 
 /**
  * Decoder of AMQP Header types from a byte stream
  */
-public class HeaderTypeDecoder implements DescribedTypeDecoder<Header> {
+public class HeaderTypeDecoder extends AbstractDescribedTypeDecoder<Header> {
 
     @Override
     public Class<Header> getTypeClass() {

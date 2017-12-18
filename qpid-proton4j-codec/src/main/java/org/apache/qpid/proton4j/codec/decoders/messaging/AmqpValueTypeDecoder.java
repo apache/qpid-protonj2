@@ -24,12 +24,12 @@ import org.apache.qpid.proton4j.amqp.messaging.AmqpValue;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.DecoderState;
 import org.apache.qpid.proton4j.codec.TypeDecoder;
-import org.apache.qpid.proton4j.codec.decoders.DescribedTypeDecoder;
+import org.apache.qpid.proton4j.codec.decoders.AbstractDescribedTypeDecoder;
 
 /**
  * Decoder of AMQP Data type values from a byte stream.
  */
-public class AmqpValueTypeDecoder implements DescribedTypeDecoder<AmqpValue> {
+public class AmqpValueTypeDecoder extends AbstractDescribedTypeDecoder<AmqpValue> {
 
     @Override
     public Class<AmqpValue> getTypeClass() {

@@ -14,33 +14,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.qpid.proton4j.codec.decoders.primitives;
-
-import org.apache.qpid.proton4j.buffer.ProtonBuffer;
-import org.apache.qpid.proton4j.codec.EncodingCodes;
+package org.apache.qpid.proton4j.codec.decoders;
 
 /**
- * Decoder of AMQP Arrays from a byte stream.
+ * Abstract base for all Described Type decoders which implements the generic methods
+ * common to all the implementations.
  */
-public class Array32TypeDecoder extends AbstractArrayTypeDecoder {
+public abstract class AbstractDescribedTypeDecoder<V> implements DescribedTypeDecoder<V> {
 
     @Override
-    protected int readSize(ProtonBuffer buffer) {
-        return buffer.readInt();
-    }
-
-    @Override
-    protected int readCount(ProtonBuffer buffer) {
-        return buffer.readInt();
-    }
-
-    @Override
-    public int getTypeCode() {
-        return EncodingCodes.ARRAY32 & 0xff;
-    }
-
-    @Override
-    public boolean isJavaPrimitive() {
+    public boolean isArrayType() {
         return false;
+    }
+
+    @Override
+    public String toString() {
+        return "DescribedTypeDecoder<" + getTypeClass().getSimpleName() + ">";
     }
 }

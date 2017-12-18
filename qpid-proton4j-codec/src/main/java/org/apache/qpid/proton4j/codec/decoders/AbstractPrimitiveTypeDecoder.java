@@ -14,46 +14,38 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.qpid.proton4j.codec.decoders.primitives;
+package org.apache.qpid.proton4j.codec.decoders;
 
 import java.io.IOException;
+import java.lang.reflect.Array;
 
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.DecoderState;
-import org.apache.qpid.proton4j.codec.EncodingCodes;
-import org.apache.qpid.proton4j.codec.decoders.AbstractPrimitiveTypeDecoder;
 
 /**
- * Decoder of AMQP Bytes from a byte stream.
+ * Abstract base for all Described Type decoders which implements the generic methods
+ * common to all the implementations.
  */
-public class ByteTypeDecoder extends AbstractPrimitiveTypeDecoder<Byte> {
+public abstract class AbstractPrimitiveTypeDecoder<V> implements PrimitiveTypeDecoder<V> {
+
+    @Override
+    public boolean isArrayType() {
+        return false;
+    }
 
     @Override
     public boolean isJavaPrimitive() {
-        return true;
+        return false;
     }
 
+    @SuppressWarnings("unchecked")
     @Override
-    public Class<Byte> getTypeClass() {
-        return Byte.class;
-    }
+    public V[] readArrayElements(ProtonBuffer buffer, DecoderState state, int count) throws IOException {
+        V[] array = (V[]) Array.newInstance(getTypeClass(), count);
+        for (int i = 0; i < count; ++i) {
+            array[i] = readValue(buffer, state);
+        }
 
-    @Override
-    public Byte readValue(ProtonBuffer buffer, DecoderState state) {
-        return buffer.readByte();
-    }
-
-    @Override
-    public int getTypeCode() {
-        return EncodingCodes.BYTE & 0xff;
-    }
-
-    public byte readPrimitiveValue(ProtonBuffer buffer, DecoderState state) {
-        return buffer.readByte();
-    }
-
-    @Override
-    public void skipValue(ProtonBuffer buffer, DecoderState state) throws IOException {
-        buffer.skipBytes(Byte.BYTES);
+        return array;
     }
 }

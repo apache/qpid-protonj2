@@ -41,8 +41,4 @@ public interface DescribedTypeDecoder<V> extends TypeDecoder<V> {
      */
     Symbol getDescriptorSymbol();
 
-    @Override
-    default boolean isArrayType() {
-        return false;
-    }
 }

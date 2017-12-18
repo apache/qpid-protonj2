@@ -22,11 +22,12 @@ import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.codec.DecoderState;
+import org.apache.qpid.proton4j.codec.decoders.AbstractPrimitiveTypeDecoder;
 
 /**
  * Base class for the Symbol decoders used on AMQP Symbol types.
  */
-public abstract class AbstractSymbolTypeDecoder implements SymbolTypeDecoder {
+public abstract class AbstractSymbolTypeDecoder extends AbstractPrimitiveTypeDecoder<Symbol> implements SymbolTypeDecoder {
 
     @Override
     public Symbol readValue(ProtonBuffer buffer, DecoderState state) throws IOException {

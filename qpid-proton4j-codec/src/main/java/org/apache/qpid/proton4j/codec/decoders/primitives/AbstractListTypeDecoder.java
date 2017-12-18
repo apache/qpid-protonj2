@@ -24,12 +24,14 @@ import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.DecoderState;
 import org.apache.qpid.proton4j.codec.EncodingCodes;
 import org.apache.qpid.proton4j.codec.TypeDecoder;
+import org.apache.qpid.proton4j.codec.decoders.AbstractPrimitiveTypeDecoder;
 import org.apache.qpid.proton4j.codec.decoders.PrimitiveTypeDecoder;
 
 /**
  * Base for the various List type decoders needed to read AMQP List values.
  */
-public abstract class AbstractListTypeDecoder implements ListTypeDecoder {
+@SuppressWarnings("rawtypes")
+public abstract class AbstractListTypeDecoder extends AbstractPrimitiveTypeDecoder<List> implements ListTypeDecoder {
 
     @Override
     public List<Object> readValue(ProtonBuffer buffer, DecoderState state) throws IOException {

@@ -22,12 +22,12 @@ import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.DecoderState;
 import org.apache.qpid.proton4j.codec.EncodingCodes;
-import org.apache.qpid.proton4j.codec.decoders.PrimitiveTypeDecoder;
+import org.apache.qpid.proton4j.codec.decoders.AbstractPrimitiveTypeDecoder;
 
 /**
  * Decode AMQP Unsigned Long values from a byte stream
  */
-public class UnsignedLong64TypeDecoder implements PrimitiveTypeDecoder<UnsignedLong> {
+public class UnsignedLong64TypeDecoder extends AbstractPrimitiveTypeDecoder<UnsignedLong> {
 
     @Override
     public Class<UnsignedLong> getTypeClass() {

@@ -25,13 +25,13 @@ import org.apache.qpid.proton4j.amqp.transactions.GlobalTxId;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.DecoderState;
 import org.apache.qpid.proton4j.codec.TypeDecoder;
-import org.apache.qpid.proton4j.codec.decoders.DescribedTypeDecoder;
+import org.apache.qpid.proton4j.codec.decoders.AbstractDescribedTypeDecoder;
 import org.apache.qpid.proton4j.codec.decoders.primitives.ListTypeDecoder;
 
 /**
  * Decoder of AMQP Declare type values from a byte stream
  */
-public class DeclareTypeDecoder implements DescribedTypeDecoder<Declare> {
+public class DeclareTypeDecoder extends AbstractDescribedTypeDecoder<Declare> {
 
     @Override
     public Class<Declare> getTypeClass() {

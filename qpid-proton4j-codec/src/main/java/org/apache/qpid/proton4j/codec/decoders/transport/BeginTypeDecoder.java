@@ -25,13 +25,13 @@ import org.apache.qpid.proton4j.amqp.transport.Begin;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.DecoderState;
 import org.apache.qpid.proton4j.codec.TypeDecoder;
-import org.apache.qpid.proton4j.codec.decoders.DescribedTypeDecoder;
+import org.apache.qpid.proton4j.codec.decoders.AbstractDescribedTypeDecoder;
 import org.apache.qpid.proton4j.codec.decoders.primitives.ListTypeDecoder;
 
 /**
  * Decoder of AMQP Begin type values from a byte stream
  */
-public class BeginTypeDecoder implements DescribedTypeDecoder<Begin> {
+public class BeginTypeDecoder extends AbstractDescribedTypeDecoder<Begin> {
 
     @Override
     public Class<Begin> getTypeClass() {
@@ -85,7 +85,7 @@ public class BeginTypeDecoder implements DescribedTypeDecoder<Begin> {
 
         decoder.skipValue(buffer, state);
     }
-    
+
     private Begin readBegin(ProtonBuffer buffer, DecoderState state, ListTypeDecoder listDecoder) throws IOException {
         Begin begin = new Begin();
 

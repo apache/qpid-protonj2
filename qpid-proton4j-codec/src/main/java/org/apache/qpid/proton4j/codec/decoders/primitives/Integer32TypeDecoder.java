@@ -21,12 +21,12 @@ import java.io.IOException;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.DecoderState;
 import org.apache.qpid.proton4j.codec.EncodingCodes;
-import org.apache.qpid.proton4j.codec.decoders.PrimitiveTypeDecoder;
+import org.apache.qpid.proton4j.codec.decoders.AbstractPrimitiveTypeDecoder;
 
 /**
  * Decode AMQP Integer values from a byte stream
  */
-public class Integer32TypeDecoder implements PrimitiveTypeDecoder<Integer> {
+public class Integer32TypeDecoder extends AbstractPrimitiveTypeDecoder<Integer> {
 
     @Override
     public boolean isJavaPrimitive() {

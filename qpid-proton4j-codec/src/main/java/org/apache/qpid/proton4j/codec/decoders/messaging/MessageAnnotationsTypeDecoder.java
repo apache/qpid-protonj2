@@ -26,14 +26,14 @@ import org.apache.qpid.proton4j.amqp.messaging.MessageAnnotations;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.DecoderState;
 import org.apache.qpid.proton4j.codec.TypeDecoder;
-import org.apache.qpid.proton4j.codec.decoders.DescribedTypeDecoder;
+import org.apache.qpid.proton4j.codec.decoders.AbstractDescribedTypeDecoder;
 import org.apache.qpid.proton4j.codec.decoders.primitives.MapTypeDecoder;
 import org.apache.qpid.proton4j.codec.decoders.primitives.NullTypeDecoder;
 
 /**
  * Decoder of AMQP Message Annotations type values from a byte stream.
  */
-public class MessageAnnotationsTypeDecoder implements DescribedTypeDecoder<MessageAnnotations> {
+public class MessageAnnotationsTypeDecoder extends AbstractDescribedTypeDecoder<MessageAnnotations> {
 
     @Override
     public Class<MessageAnnotations> getTypeClass() {

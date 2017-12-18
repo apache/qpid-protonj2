@@ -23,12 +23,13 @@ import java.util.List;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.DecoderState;
 import org.apache.qpid.proton4j.codec.EncodingCodes;
+import org.apache.qpid.proton4j.codec.decoders.AbstractPrimitiveTypeDecoder;
 
 /**
  * Decoder of Zero sized AMQP List values from a byte stream.
  */
-@SuppressWarnings( "unchecked" )
-public class List0TypeDecoder implements ListTypeDecoder {
+@SuppressWarnings( { "unchecked", "rawtypes" } )
+public class List0TypeDecoder extends AbstractPrimitiveTypeDecoder<List> implements ListTypeDecoder {
 
     @Override
     public List<Object> readValue(ProtonBuffer buffer, DecoderState state) {

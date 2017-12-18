@@ -22,9 +22,9 @@ import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.DecoderState;
-import org.apache.qpid.proton4j.codec.decoders.DescribedTypeDecoder;
+import org.apache.qpid.proton4j.codec.decoders.AbstractDescribedTypeDecoder;
 
-public class NoLocalTypeDecoder implements DescribedTypeDecoder<NoLocalType> {
+public class NoLocalTypeDecoder extends AbstractDescribedTypeDecoder<NoLocalType> {
 
     @Override
     public Class<NoLocalType> getTypeClass() {

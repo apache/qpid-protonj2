@@ -21,11 +21,12 @@ import java.io.IOException;
 import org.apache.qpid.proton4j.amqp.Binary;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.DecoderState;
+import org.apache.qpid.proton4j.codec.decoders.AbstractPrimitiveTypeDecoder;
 
 /**
  * Base class for the various Binary type decoders used to read AMQP Binary values.
  */
-public abstract class AbstractBinaryTypeDecoder implements BinaryTypeDecoder {
+public abstract class AbstractBinaryTypeDecoder extends AbstractPrimitiveTypeDecoder<Binary> implements BinaryTypeDecoder {
 
     @Override
     public Binary readValue(ProtonBuffer buffer, DecoderState state) {
