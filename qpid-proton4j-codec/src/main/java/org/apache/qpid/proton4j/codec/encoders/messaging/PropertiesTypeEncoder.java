@@ -22,12 +22,12 @@ import org.apache.qpid.proton4j.amqp.messaging.Properties;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.EncoderState;
 import org.apache.qpid.proton4j.codec.EncodingCodes;
-import org.apache.qpid.proton4j.codec.encoders.DescribedListTypeEncoder;
+import org.apache.qpid.proton4j.codec.encoders.AbstractDescribedListTypeEncoder;
 
 /**
  * Encoder of AMQP Properties type value to a byte stream.
  */
-public class PropertiesTypeEncoder implements DescribedListTypeEncoder<Properties> {
+public class PropertiesTypeEncoder extends AbstractDescribedListTypeEncoder<Properties> {
 
     @Override
     public UnsignedLong getDescriptorCode() {

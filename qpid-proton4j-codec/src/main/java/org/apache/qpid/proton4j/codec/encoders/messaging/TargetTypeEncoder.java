@@ -23,12 +23,12 @@ import org.apache.qpid.proton4j.amqp.messaging.Target;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.EncoderState;
 import org.apache.qpid.proton4j.codec.EncodingCodes;
-import org.apache.qpid.proton4j.codec.encoders.DescribedListTypeEncoder;
+import org.apache.qpid.proton4j.codec.encoders.AbstractDescribedListTypeEncoder;
 
 /**
  * Encoder of AMQP Target type values to a byte stream.
  */
-public class TargetTypeEncoder implements DescribedListTypeEncoder<Target> {
+public class TargetTypeEncoder extends AbstractDescribedListTypeEncoder<Target> {
 
     @Override
     public UnsignedLong getDescriptorCode() {

@@ -22,12 +22,12 @@ import org.apache.qpid.proton4j.amqp.transactions.TransactionalState;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.EncoderState;
 import org.apache.qpid.proton4j.codec.EncodingCodes;
-import org.apache.qpid.proton4j.codec.encoders.DescribedListTypeEncoder;
+import org.apache.qpid.proton4j.codec.encoders.AbstractDescribedListTypeEncoder;
 
 /**
  * Encoder of AMQP TransactionState type values to a byte stream.
  */
-public class TransactionStateTypeEncoder implements DescribedListTypeEncoder<TransactionalState> {
+public class TransactionStateTypeEncoder extends AbstractDescribedListTypeEncoder<TransactionalState> {
 
     @Override
     public UnsignedLong getDescriptorCode() {

@@ -20,12 +20,12 @@ import org.apache.qpid.proton4j.amqp.Decimal64;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.EncoderState;
 import org.apache.qpid.proton4j.codec.EncodingCodes;
-import org.apache.qpid.proton4j.codec.encoders.PrimitiveTypeEncoder;
+import org.apache.qpid.proton4j.codec.encoders.AbstractPrimitiveTypeEncoder;
 
 /**
  * Encoder of AMQP Decimal64 type values to a byte stream
  */
-public class Decimal64TypeEncoder implements PrimitiveTypeEncoder<Decimal64> {
+public class Decimal64TypeEncoder extends AbstractPrimitiveTypeEncoder<Decimal64> {
 
     @Override
     public Class<Decimal64> getTypeClass() {

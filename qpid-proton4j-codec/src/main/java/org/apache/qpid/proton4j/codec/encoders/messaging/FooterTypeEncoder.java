@@ -23,12 +23,12 @@ import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.amqp.messaging.Footer;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.EncoderState;
-import org.apache.qpid.proton4j.codec.encoders.DescribedMapTypeEncoder;
+import org.apache.qpid.proton4j.codec.encoders.AbstractDescribedMapTypeEncoder;
 
 /**
  * Encoder of AMQP Footer type values to a byte stream
  */
-public class FooterTypeEncoder implements DescribedMapTypeEncoder<Object, Object, Footer> {
+public class FooterTypeEncoder extends AbstractDescribedMapTypeEncoder<Object, Object, Footer> {
 
     @Override
     public Class<Footer> getTypeClass() {

@@ -14,43 +14,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.qpid.proton4j.codec.encoders.primitives;
+package org.apache.qpid.proton4j.codec.encoders;
 
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.EncoderState;
 import org.apache.qpid.proton4j.codec.EncodingCodes;
-import org.apache.qpid.proton4j.codec.encoders.AbstractPrimitiveTypeEncoder;
 
 /**
- * Encoder of AMQP Double type values to a byte stream.
+ * Abstract implementation of the PrimitiveTypeEncoder that implements the common methods
+ * that most of the primitive type
  */
-public class DoubleTypeEncoder extends AbstractPrimitiveTypeEncoder<Double> {
+public abstract class AbstractPrimitiveTypeEncoder<V> implements PrimitiveTypeEncoder<V> {
 
     @Override
-    public Class<Double> getTypeClass() {
-        return Double.class;
-    }
-
-    @Override
-    public void writeType(ProtonBuffer buffer, EncoderState state, Double value) {
-        buffer.writeByte(EncodingCodes.DOUBLE);
-        buffer.writeDouble(value.doubleValue());
-    }
-
-    public void writeType(ProtonBuffer buffer, EncoderState state, double value) {
-        buffer.writeByte(EncodingCodes.DOUBLE);
-        buffer.writeDouble(value);
+    public boolean isArrayType() {
+        return false;
     }
 
     @Override
-    public void writeRawArray(ProtonBuffer buffer, EncoderState state, Object[] values) {
-        buffer.writeByte(EncodingCodes.DOUBLE);
-        for (Object value : values) {
-            buffer.writeDouble(((Double) value).doubleValue());
-        }
-    }
-
-    public void writeArray(ProtonBuffer buffer, EncoderState state, double[] values) {
+    public void writeArray(ProtonBuffer buffer, EncoderState state, Object[] values) {
         // Write the Array Type encoding code, we don't optimize here.
         buffer.writeByte(EncodingCodes.ARRAY32);
 
@@ -61,14 +43,10 @@ public class DoubleTypeEncoder extends AbstractPrimitiveTypeEncoder<Double> {
         buffer.writeInt(values.length);
 
         // Write the array elements after writing the array length
-        buffer.writeByte(EncodingCodes.DOUBLE);
-        for (double value : values) {
-            buffer.writeDouble(value);
-        }
+        writeRawArray(buffer, state, values);
 
         // Move back and write the size
-        int endIndex = buffer.getWriteIndex();
-        long writeSize = endIndex - startIndex - Integer.BYTES;
+        long writeSize = buffer.getWriteIndex() - startIndex - Integer.BYTES;
 
         if (writeSize > Integer.MAX_VALUE) {
             throw new IllegalArgumentException("Cannot encode given array, encoded size to large: " + writeSize);

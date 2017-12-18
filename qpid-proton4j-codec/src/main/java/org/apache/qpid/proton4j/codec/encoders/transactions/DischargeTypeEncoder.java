@@ -22,12 +22,12 @@ import org.apache.qpid.proton4j.amqp.transactions.Discharge;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.EncoderState;
 import org.apache.qpid.proton4j.codec.EncodingCodes;
-import org.apache.qpid.proton4j.codec.encoders.DescribedListTypeEncoder;
+import org.apache.qpid.proton4j.codec.encoders.AbstractDescribedListTypeEncoder;
 
 /**
  * Encoder of AMQP Discharge type values to a byte stream.
  */
-public class DischargeTypeEncoder implements DescribedListTypeEncoder<Discharge> {
+public class DischargeTypeEncoder extends AbstractDescribedListTypeEncoder<Discharge> {
 
     @Override
     public UnsignedLong getDescriptorCode() {

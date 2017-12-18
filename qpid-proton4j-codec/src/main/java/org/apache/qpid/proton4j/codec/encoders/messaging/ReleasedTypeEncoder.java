@@ -22,12 +22,12 @@ import org.apache.qpid.proton4j.amqp.messaging.Released;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.EncoderState;
 import org.apache.qpid.proton4j.codec.EncodingCodes;
-import org.apache.qpid.proton4j.codec.encoders.DescribedListTypeEncoder;
+import org.apache.qpid.proton4j.codec.encoders.AbstractDescribedListTypeEncoder;
 
 /**
  * Encoder of AMQP Released type values to a byte stream
  */
-public class ReleasedTypeEncoder implements DescribedListTypeEncoder<Released> {
+public class ReleasedTypeEncoder extends AbstractDescribedListTypeEncoder<Released> {
 
     @Override
     public Class<Released> getTypeClass() {

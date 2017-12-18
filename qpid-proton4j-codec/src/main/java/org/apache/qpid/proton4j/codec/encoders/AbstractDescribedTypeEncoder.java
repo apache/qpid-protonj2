@@ -16,25 +16,13 @@
  */
 package org.apache.qpid.proton4j.codec.encoders;
 
-import org.apache.qpid.proton4j.amqp.Symbol;
-import org.apache.qpid.proton4j.amqp.UnsignedLong;
-import org.apache.qpid.proton4j.codec.TypeEncoder;
-
 /**
- * Interface for all DescribedType encoder implementations
- *
- * @param <V> The type this decoder handles
+ * Abstract DescribedType encoder implementation
  */
-public interface DescribedTypeEncoder<V> extends TypeEncoder<V> {
+public abstract class AbstractDescribedTypeEncoder<V> implements DescribedTypeEncoder<V> {
 
-    /**
-     * @return the UnsignedLong value to use as the Descriptor for this type.
-     */
-    UnsignedLong getDescriptorCode();
-
-    /**
-     * @return the Symbol value to use as the Descriptor for this type.
-     */
-    Symbol getDescriptorSymbol();
-
+    @Override
+    public boolean isArrayType() {
+        return false;
+    }
 }

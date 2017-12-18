@@ -22,12 +22,12 @@ import org.apache.qpid.proton4j.amqp.transport.Close;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.EncoderState;
 import org.apache.qpid.proton4j.codec.EncodingCodes;
-import org.apache.qpid.proton4j.codec.encoders.DescribedListTypeEncoder;
+import org.apache.qpid.proton4j.codec.encoders.AbstractDescribedListTypeEncoder;
 
 /**
  * Encoder of AMQP Close type values to a byte stream/
  */
-public class CloseTypeEncoder implements DescribedListTypeEncoder<Close> {
+public class CloseTypeEncoder extends AbstractDescribedListTypeEncoder<Close> {
 
     @Override
     public UnsignedLong getDescriptorCode() {

@@ -22,12 +22,12 @@ import org.apache.qpid.proton4j.amqp.messaging.DeleteOnClose;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.EncoderState;
 import org.apache.qpid.proton4j.codec.EncodingCodes;
-import org.apache.qpid.proton4j.codec.encoders.DescribedListTypeEncoder;
+import org.apache.qpid.proton4j.codec.encoders.AbstractDescribedListTypeEncoder;
 
 /**
  * Encoder of AMQP DeleteOnClose type values to a byte stream.
  */
-public class DeleteOnCloseTypeEncoder implements DescribedListTypeEncoder<DeleteOnClose> {
+public class DeleteOnCloseTypeEncoder extends AbstractDescribedListTypeEncoder<DeleteOnClose> {
 
     @Override
     public UnsignedLong getDescriptorCode() {

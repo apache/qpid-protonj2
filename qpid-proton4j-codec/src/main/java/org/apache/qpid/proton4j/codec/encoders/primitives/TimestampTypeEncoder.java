@@ -21,12 +21,12 @@ import java.util.Date;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.EncoderState;
 import org.apache.qpid.proton4j.codec.EncodingCodes;
-import org.apache.qpid.proton4j.codec.encoders.PrimitiveTypeEncoder;
+import org.apache.qpid.proton4j.codec.encoders.AbstractPrimitiveTypeEncoder;
 
 /**
  * Encoder of AMQP Timestamp type values to a byte stream.
  */
-public class TimestampTypeEncoder implements PrimitiveTypeEncoder<Date> {
+public class TimestampTypeEncoder extends AbstractPrimitiveTypeEncoder<Date> {
 
     @Override
     public Class<Date> getTypeClass() {

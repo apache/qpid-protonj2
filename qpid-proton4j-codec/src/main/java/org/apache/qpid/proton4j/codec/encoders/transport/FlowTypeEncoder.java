@@ -22,12 +22,12 @@ import org.apache.qpid.proton4j.amqp.transport.Flow;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.EncoderState;
 import org.apache.qpid.proton4j.codec.EncodingCodes;
-import org.apache.qpid.proton4j.codec.encoders.DescribedListTypeEncoder;
+import org.apache.qpid.proton4j.codec.encoders.AbstractDescribedListTypeEncoder;
 
 /**
  * Encoder of AMQP Flow type values to a byte stream.
  */
-public class FlowTypeEncoder implements DescribedListTypeEncoder<Flow> {
+public class FlowTypeEncoder extends AbstractDescribedListTypeEncoder<Flow> {
 
     @Override
     public UnsignedLong getDescriptorCode() {

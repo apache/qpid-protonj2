@@ -22,12 +22,12 @@ import org.apache.qpid.proton4j.amqp.transactions.Coordinator;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.EncoderState;
 import org.apache.qpid.proton4j.codec.EncodingCodes;
-import org.apache.qpid.proton4j.codec.encoders.DescribedListTypeEncoder;
+import org.apache.qpid.proton4j.codec.encoders.AbstractDescribedListTypeEncoder;
 
 /**
  * Encoder of AMQP Coordinator type values to a byte stream.
  */
-public class CoordinatorTypeEncoder implements DescribedListTypeEncoder<Coordinator> {
+public class CoordinatorTypeEncoder extends AbstractDescribedListTypeEncoder<Coordinator> {
 
     @Override
     public UnsignedLong getDescriptorCode() {

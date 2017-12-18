@@ -25,7 +25,7 @@ import org.apache.qpid.proton4j.codec.EncodingCodes;
  *
  * @param <V> the type that is being encoded
  */
-public interface DescribedListTypeEncoder<V> extends DescribedTypeEncoder<V> {
+public abstract class AbstractDescribedListTypeEncoder<V> extends AbstractDescribedTypeEncoder<V> {
 
     /**
      * Determine the list type the given value can be encoded to based on the number
@@ -41,7 +41,7 @@ public interface DescribedListTypeEncoder<V> extends DescribedTypeEncoder<V> {
      *
      * @return the encoding code of the list type encoding needed for this object.
      */
-    default int getListEncoding(V value) {
+    public int getListEncoding(V value) {
         return EncodingCodes.LIST32 & 0xff;
     }
 
@@ -57,7 +57,7 @@ public interface DescribedListTypeEncoder<V> extends DescribedTypeEncoder<V> {
      * @param state
      *      the current EncoderState value to use.
      */
-    void writeElement(V source, int index, ProtonBuffer buffer, EncoderState state);
+    public abstract void writeElement(V source, int index, ProtonBuffer buffer, EncoderState state);
 
     /**
      * Gets the number of elements that will result when this type is encoded
@@ -68,10 +68,10 @@ public interface DescribedListTypeEncoder<V> extends DescribedTypeEncoder<V> {
      *
      * @return the number of elements that should comprise the encoded list.
      */
-    int getElementCount(V value);
+    public abstract int getElementCount(V value);
 
     @Override
-    default void writeType(ProtonBuffer buffer, EncoderState state, V value) {
+    public void writeType(ProtonBuffer buffer, EncoderState state, V value) {
         buffer.writeByte(EncodingCodes.DESCRIBED_TYPE_INDICATOR);
         state.getEncoder().writeUnsignedLong(buffer, state, getDescriptorCode());
 
@@ -122,7 +122,7 @@ public interface DescribedListTypeEncoder<V> extends DescribedTypeEncoder<V> {
     }
 
     @Override
-    default void writeArray(ProtonBuffer buffer, EncoderState state, Object[] values) {
+    public void writeArray(ProtonBuffer buffer, EncoderState state, Object[] values) {
         // Write the Array Type encoding code, we don't optimize here.
         buffer.writeByte(EncodingCodes.ARRAY32);
 
@@ -149,7 +149,7 @@ public interface DescribedListTypeEncoder<V> extends DescribedTypeEncoder<V> {
 
     @SuppressWarnings("unchecked")
     @Override
-    default void writeRawArray(ProtonBuffer buffer, EncoderState state, Object[] values) {
+    public void writeRawArray(ProtonBuffer buffer, EncoderState state, Object[] values) {
         buffer.writeByte(EncodingCodes.LIST32);
 
         for (int i = 0; i < values.length; ++i) {

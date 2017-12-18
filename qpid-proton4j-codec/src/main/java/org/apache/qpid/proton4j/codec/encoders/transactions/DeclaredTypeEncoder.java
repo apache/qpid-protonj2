@@ -22,12 +22,12 @@ import org.apache.qpid.proton4j.amqp.transactions.Declared;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.EncoderState;
 import org.apache.qpid.proton4j.codec.EncodingCodes;
-import org.apache.qpid.proton4j.codec.encoders.DescribedListTypeEncoder;
+import org.apache.qpid.proton4j.codec.encoders.AbstractDescribedListTypeEncoder;
 
 /**
  * Encoder of AMQP Declared type values to a byte stream.
  */
-public class DeclaredTypeEncoder implements DescribedListTypeEncoder<Declared> {
+public class DeclaredTypeEncoder extends AbstractDescribedListTypeEncoder<Declared> {
 
     @Override
     public UnsignedLong getDescriptorCode() {

@@ -24,12 +24,12 @@ import org.apache.qpid.proton4j.amqp.transport.SenderSettleMode;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.EncoderState;
 import org.apache.qpid.proton4j.codec.EncodingCodes;
-import org.apache.qpid.proton4j.codec.encoders.DescribedListTypeEncoder;
+import org.apache.qpid.proton4j.codec.encoders.AbstractDescribedListTypeEncoder;
 
 /**
  * Encoder of AMQP Attach type values to a byte stream.
  */
-public class AttachTypeEncoder implements DescribedListTypeEncoder<Attach> {
+public class AttachTypeEncoder extends AbstractDescribedListTypeEncoder<Attach> {
 
     @Override
     public UnsignedLong getDescriptorCode() {

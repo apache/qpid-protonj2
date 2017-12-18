@@ -22,12 +22,12 @@ import org.apache.qpid.proton4j.amqp.transport.ErrorCondition;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.EncoderState;
 import org.apache.qpid.proton4j.codec.EncodingCodes;
-import org.apache.qpid.proton4j.codec.encoders.DescribedListTypeEncoder;
+import org.apache.qpid.proton4j.codec.encoders.AbstractDescribedListTypeEncoder;
 
 /**
  * Encoder of AMQP ErrorCondition type values to a byte stream
  */
-public class ErrorConditionTypeEncoder implements DescribedListTypeEncoder<ErrorCondition> {
+public class ErrorConditionTypeEncoder extends AbstractDescribedListTypeEncoder<ErrorCondition> {
 
     @Override
     public UnsignedLong getDescriptorCode() {

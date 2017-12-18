@@ -21,12 +21,12 @@ import java.util.UUID;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.EncoderState;
 import org.apache.qpid.proton4j.codec.EncodingCodes;
-import org.apache.qpid.proton4j.codec.encoders.PrimitiveTypeEncoder;
+import org.apache.qpid.proton4j.codec.encoders.AbstractPrimitiveTypeEncoder;
 
 /**
  * Encoder of AMQP UUID type value to a byte stream.
  */
-public class UUIDTypeEncoder implements PrimitiveTypeEncoder<UUID> {
+public class UUIDTypeEncoder extends AbstractPrimitiveTypeEncoder<UUID> {
 
     @Override
     public Class<UUID> getTypeClass() {

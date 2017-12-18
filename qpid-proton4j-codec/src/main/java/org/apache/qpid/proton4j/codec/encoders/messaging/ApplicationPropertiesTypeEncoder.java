@@ -23,12 +23,12 @@ import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.amqp.messaging.ApplicationProperties;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.EncoderState;
-import org.apache.qpid.proton4j.codec.encoders.DescribedMapTypeEncoder;
+import org.apache.qpid.proton4j.codec.encoders.AbstractDescribedMapTypeEncoder;
 
 /**
  * Encoder of AMQP ApplicationProperties type values to a byte stream.
  */
-public class ApplicationPropertiesTypeEncoder implements DescribedMapTypeEncoder<String, Object, ApplicationProperties> {
+public class ApplicationPropertiesTypeEncoder extends AbstractDescribedMapTypeEncoder<String, Object, ApplicationProperties> {
 
     @Override
     public Class<ApplicationProperties> getTypeClass() {

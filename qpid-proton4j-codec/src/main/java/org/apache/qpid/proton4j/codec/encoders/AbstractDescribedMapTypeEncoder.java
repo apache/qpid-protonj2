@@ -27,7 +27,7 @@ import org.apache.qpid.proton4j.codec.EncodingCodes;
  * @param <K> the key type used for the encoded map's keys.
  * @param <V> the value type used for the encoded map's values.
  */
-public interface DescribedMapTypeEncoder<K, V, M> extends DescribedTypeEncoder<M> {
+public abstract class AbstractDescribedMapTypeEncoder<K, V, M> extends AbstractDescribedTypeEncoder<M> {
 
     /**
      * Determine the map type the given value can be encoded to based on the number
@@ -43,7 +43,7 @@ public interface DescribedMapTypeEncoder<K, V, M> extends DescribedTypeEncoder<M
      *
      * @return the encoding code of the map type encoding needed for this object.
      */
-    default int getMapEncoding(M value) {
+    public int getMapEncoding(M value) {
         return EncodingCodes.MAP32 & 0xff;
     }
 
@@ -56,7 +56,7 @@ public interface DescribedMapTypeEncoder<K, V, M> extends DescribedTypeEncoder<M
      *
      * @return true if the type to be encoded has a Map body, false otherwise.
      */
-    boolean hasMap(M value);
+    public abstract boolean hasMap(M value);
 
     /**
      * Gets the number of elements that will result when this type is encoded
@@ -67,7 +67,7 @@ public interface DescribedMapTypeEncoder<K, V, M> extends DescribedTypeEncoder<M
      *
      * @return the number of elements that should comprise the encoded list.
      */
-    int getMapSize(M value);
+    public abstract int getMapSize(M value);
 
     /**
      * Performs the write of the Map entries to the given buffer, the caller
@@ -79,10 +79,10 @@ public interface DescribedMapTypeEncoder<K, V, M> extends DescribedTypeEncoder<M
      *
      * @return the Map entries that are to be encoded.
      */
-    void writeMapEntries(ProtonBuffer buffer, EncoderState state, M value);
+    public abstract void writeMapEntries(ProtonBuffer buffer, EncoderState state, M value);
 
     @Override
-    default void writeType(ProtonBuffer buffer, EncoderState state, M value) {
+    public void writeType(ProtonBuffer buffer, EncoderState state, M value) {
         buffer.writeByte(EncodingCodes.DESCRIBED_TYPE_INDICATOR);
         state.getEncoder().writeUnsignedLong(buffer, state, getDescriptorCode());
 
@@ -129,7 +129,7 @@ public interface DescribedMapTypeEncoder<K, V, M> extends DescribedTypeEncoder<M
     }
 
     @Override
-    default void writeArray(ProtonBuffer buffer, EncoderState state, Object[] values) {
+    public void writeArray(ProtonBuffer buffer, EncoderState state, Object[] values) {
         // Write the Array Type encoding code, we don't optimize here.
         buffer.writeByte(EncodingCodes.ARRAY32);
 
@@ -156,7 +156,7 @@ public interface DescribedMapTypeEncoder<K, V, M> extends DescribedTypeEncoder<M
 
     @SuppressWarnings("unchecked")
     @Override
-    default void writeRawArray(ProtonBuffer buffer, EncoderState state, Object[] values) {
+    public void writeRawArray(ProtonBuffer buffer, EncoderState state, Object[] values) {
         buffer.writeByte(EncodingCodes.MAP32);
 
         for (int i = 0; i < values.length; ++i) {

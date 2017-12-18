@@ -19,12 +19,12 @@ package org.apache.qpid.proton4j.codec.encoders.primitives;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.EncoderState;
 import org.apache.qpid.proton4j.codec.EncodingCodes;
-import org.apache.qpid.proton4j.codec.encoders.PrimitiveTypeEncoder;
+import org.apache.qpid.proton4j.codec.encoders.AbstractPrimitiveTypeEncoder;
 
 /**
  * Encoder of AMQP Short type values to a byte stream.
  */
-public class ShortTypeEncoder implements PrimitiveTypeEncoder<Short> {
+public class ShortTypeEncoder extends AbstractPrimitiveTypeEncoder<Short> {
 
     @Override
     public Class<Short> getTypeClass() {

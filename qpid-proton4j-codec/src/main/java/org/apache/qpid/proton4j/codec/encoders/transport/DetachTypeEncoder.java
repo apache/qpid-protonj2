@@ -22,12 +22,12 @@ import org.apache.qpid.proton4j.amqp.transport.Detach;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.EncoderState;
 import org.apache.qpid.proton4j.codec.EncodingCodes;
-import org.apache.qpid.proton4j.codec.encoders.DescribedListTypeEncoder;
+import org.apache.qpid.proton4j.codec.encoders.AbstractDescribedListTypeEncoder;
 
 /**
  * Encoder of AMQP Detach type values to a byte stream.
  */
-public class DetachTypeEncoder implements DescribedListTypeEncoder<Detach> {
+public class DetachTypeEncoder extends AbstractDescribedListTypeEncoder<Detach> {
 
     @Override
     public UnsignedLong getDescriptorCode() {

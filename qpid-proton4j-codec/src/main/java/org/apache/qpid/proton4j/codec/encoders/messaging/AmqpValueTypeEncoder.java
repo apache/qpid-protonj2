@@ -22,12 +22,12 @@ import org.apache.qpid.proton4j.amqp.messaging.AmqpValue;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.EncoderState;
 import org.apache.qpid.proton4j.codec.EncodingCodes;
-import org.apache.qpid.proton4j.codec.encoders.DescribedTypeEncoder;
+import org.apache.qpid.proton4j.codec.encoders.AbstractDescribedTypeEncoder;
 
 /**
  * Encoder of AMQP Value type values to a byte stream.
  */
-public class AmqpValueTypeEncoder implements DescribedTypeEncoder<AmqpValue> {
+public class AmqpValueTypeEncoder extends AbstractDescribedTypeEncoder<AmqpValue> {
 
     @Override
     public Class<AmqpValue> getTypeClass() {

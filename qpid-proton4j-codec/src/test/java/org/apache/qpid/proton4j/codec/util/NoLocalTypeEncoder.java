@@ -21,9 +21,9 @@ import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.EncoderState;
 import org.apache.qpid.proton4j.codec.EncodingCodes;
-import org.apache.qpid.proton4j.codec.encoders.DescribedTypeEncoder;
+import org.apache.qpid.proton4j.codec.encoders.AbstractDescribedTypeEncoder;
 
-public class NoLocalTypeEncoder implements DescribedTypeEncoder<NoLocalType> {
+public class NoLocalTypeEncoder extends AbstractDescribedTypeEncoder<NoLocalType> {
 
     @Override
     public Class<NoLocalType> getTypeClass() {

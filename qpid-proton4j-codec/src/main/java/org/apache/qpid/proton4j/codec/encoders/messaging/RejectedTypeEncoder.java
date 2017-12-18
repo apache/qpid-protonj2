@@ -22,12 +22,12 @@ import org.apache.qpid.proton4j.amqp.messaging.Rejected;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.EncoderState;
 import org.apache.qpid.proton4j.codec.EncodingCodes;
-import org.apache.qpid.proton4j.codec.encoders.DescribedListTypeEncoder;
+import org.apache.qpid.proton4j.codec.encoders.AbstractDescribedListTypeEncoder;
 
 /**
  * Encoder of AMQP Rejected type values to a byte stream.
  */
-public class RejectedTypeEncoder implements DescribedListTypeEncoder<Rejected> {
+public class RejectedTypeEncoder extends AbstractDescribedListTypeEncoder<Rejected> {
 
     @Override
     public UnsignedLong getDescriptorCode() {

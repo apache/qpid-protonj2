@@ -20,12 +20,12 @@ import org.apache.qpid.proton4j.amqp.UnsignedByte;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.EncoderState;
 import org.apache.qpid.proton4j.codec.EncodingCodes;
-import org.apache.qpid.proton4j.codec.encoders.PrimitiveTypeEncoder;
+import org.apache.qpid.proton4j.codec.encoders.AbstractPrimitiveTypeEncoder;
 
 /**
  * Encoder of AMQP UnsignedByte type values to a byte stream
  */
-public class UnsignedByteTypeEncoder implements PrimitiveTypeEncoder<UnsignedByte> {
+public class UnsignedByteTypeEncoder extends AbstractPrimitiveTypeEncoder<UnsignedByte> {
 
     @Override
     public Class<UnsignedByte> getTypeClass() {

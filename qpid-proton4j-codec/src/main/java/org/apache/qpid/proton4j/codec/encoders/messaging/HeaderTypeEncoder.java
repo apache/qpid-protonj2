@@ -22,12 +22,12 @@ import org.apache.qpid.proton4j.amqp.messaging.Header;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.EncoderState;
 import org.apache.qpid.proton4j.codec.EncodingCodes;
-import org.apache.qpid.proton4j.codec.encoders.DescribedListTypeEncoder;
+import org.apache.qpid.proton4j.codec.encoders.AbstractDescribedListTypeEncoder;
 
 /**
  * Encoder of AMQP Header type values to a byte stream
  */
-public class HeaderTypeEncoder implements DescribedListTypeEncoder<Header> {
+public class HeaderTypeEncoder extends AbstractDescribedListTypeEncoder<Header> {
 
     @Override
     public Class<Header> getTypeClass() {

@@ -20,12 +20,12 @@ import org.apache.qpid.proton4j.amqp.Decimal128;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.EncoderState;
 import org.apache.qpid.proton4j.codec.EncodingCodes;
-import org.apache.qpid.proton4j.codec.encoders.PrimitiveTypeEncoder;
+import org.apache.qpid.proton4j.codec.encoders.AbstractPrimitiveTypeEncoder;
 
 /**
  * Encoder of AMQP Decimal128 type values to a byte stream
  */
-public class Decimal128TypeEncoder implements PrimitiveTypeEncoder<Decimal128> {
+public class Decimal128TypeEncoder extends AbstractPrimitiveTypeEncoder<Decimal128> {
 
     @Override
     public Class<Decimal128> getTypeClass() {

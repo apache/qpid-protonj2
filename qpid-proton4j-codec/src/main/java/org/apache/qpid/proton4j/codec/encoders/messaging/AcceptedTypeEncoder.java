@@ -22,12 +22,12 @@ import org.apache.qpid.proton4j.amqp.messaging.Accepted;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.EncoderState;
 import org.apache.qpid.proton4j.codec.EncodingCodes;
-import org.apache.qpid.proton4j.codec.encoders.DescribedListTypeEncoder;
+import org.apache.qpid.proton4j.codec.encoders.AbstractDescribedListTypeEncoder;
 
 /**
  * Encoder of AMQP Accepted type values to a byte stream
  */
-public class AcceptedTypeEncoder implements DescribedListTypeEncoder<Accepted> {
+public class AcceptedTypeEncoder extends AbstractDescribedListTypeEncoder<Accepted> {
 
     @Override
     public Class<Accepted> getTypeClass() {

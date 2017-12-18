@@ -22,12 +22,12 @@ import org.apache.qpid.proton4j.amqp.transport.End;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.EncoderState;
 import org.apache.qpid.proton4j.codec.EncodingCodes;
-import org.apache.qpid.proton4j.codec.encoders.DescribedListTypeEncoder;
+import org.apache.qpid.proton4j.codec.encoders.AbstractDescribedListTypeEncoder;
 
 /**
  * Encoder of AMQP End type values to a byte stream.
  */
-public class EndTypeEncoder implements DescribedListTypeEncoder<End> {
+public class EndTypeEncoder extends AbstractDescribedListTypeEncoder<End> {
 
     @Override
     public UnsignedLong getDescriptorCode() {

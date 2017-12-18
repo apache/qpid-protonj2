@@ -24,12 +24,12 @@ import org.apache.qpid.proton4j.amqp.transport.Open;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.EncoderState;
 import org.apache.qpid.proton4j.codec.EncodingCodes;
-import org.apache.qpid.proton4j.codec.encoders.DescribedListTypeEncoder;
+import org.apache.qpid.proton4j.codec.encoders.AbstractDescribedListTypeEncoder;
 
 /**
  * Encoder of AMQP Open type values to a byte stream.
  */
-public class OpenTypeEncoder implements DescribedListTypeEncoder<Open> {
+public class OpenTypeEncoder extends AbstractDescribedListTypeEncoder<Open> {
 
     @Override
     public UnsignedLong getDescriptorCode() {

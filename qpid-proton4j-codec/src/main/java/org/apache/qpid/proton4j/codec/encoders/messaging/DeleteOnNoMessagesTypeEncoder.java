@@ -22,12 +22,12 @@ import org.apache.qpid.proton4j.amqp.messaging.DeleteOnNoMessages;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.EncoderState;
 import org.apache.qpid.proton4j.codec.EncodingCodes;
-import org.apache.qpid.proton4j.codec.encoders.DescribedListTypeEncoder;
+import org.apache.qpid.proton4j.codec.encoders.AbstractDescribedListTypeEncoder;
 
 /**
  * Encoder of AMQP DeleteOnNoMessages type values to a byte stream
  */
-public class DeleteOnNoMessagesTypeEncoder implements DescribedListTypeEncoder<DeleteOnNoMessages> {
+public class DeleteOnNoMessagesTypeEncoder extends AbstractDescribedListTypeEncoder<DeleteOnNoMessages> {
 
     @Override
     public UnsignedLong getDescriptorCode() {

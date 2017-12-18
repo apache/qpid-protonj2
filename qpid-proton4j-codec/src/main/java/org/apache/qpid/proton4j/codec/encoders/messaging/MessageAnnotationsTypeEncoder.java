@@ -23,12 +23,12 @@ import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.amqp.messaging.MessageAnnotations;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.EncoderState;
-import org.apache.qpid.proton4j.codec.encoders.DescribedMapTypeEncoder;
+import org.apache.qpid.proton4j.codec.encoders.AbstractDescribedMapTypeEncoder;
 
 /**
  * Encoder of AMQP MessageAnnotations type values to a byte stream.
  */
-public class MessageAnnotationsTypeEncoder implements DescribedMapTypeEncoder<Symbol, Object, MessageAnnotations> {
+public class MessageAnnotationsTypeEncoder extends AbstractDescribedMapTypeEncoder<Symbol, Object, MessageAnnotations> {
 
     @Override
     public Class<MessageAnnotations> getTypeClass() {
