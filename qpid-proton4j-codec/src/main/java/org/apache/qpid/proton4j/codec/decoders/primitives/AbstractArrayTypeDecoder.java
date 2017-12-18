@@ -40,7 +40,7 @@ public abstract class AbstractArrayTypeDecoder implements PrimitiveArrayTypeDeco
         int size = readSize(buffer);
         int count = readCount(buffer);
 
-        if (getTypeCode() == EncodingCodes.ARRAY32) {
+        if (getTypeCode() == (EncodingCodes.ARRAY32 & 0xff)) {
             size -= 8; // 4 bytes each for size and count;
         } else {
             size -= 2; // 1 byte each for size and count;

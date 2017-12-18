@@ -136,8 +136,7 @@ public interface DescribedListTypeEncoder<V> extends DescribedTypeEncoder<V> {
         writeRawArray(buffer, state, values);
 
         // Move back and write the size
-        int endIndex = buffer.getWriteIndex();
-        long writeSize = endIndex - startIndex - Integer.BYTES;
+        long writeSize = buffer.getWriteIndex() - startIndex - Integer.BYTES;
 
         if (writeSize > Integer.MAX_VALUE) {
             throw new IllegalArgumentException("Cannot encode given array, encoded size to large: " + writeSize);

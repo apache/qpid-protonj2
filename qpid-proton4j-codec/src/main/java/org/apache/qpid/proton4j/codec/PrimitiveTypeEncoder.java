@@ -16,6 +16,8 @@
  */
 package org.apache.qpid.proton4j.codec;
 
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+
 /**
  * Encoder of Primitive types such as Integer or Boolean
  *
@@ -26,5 +28,29 @@ public interface PrimitiveTypeEncoder<V> extends TypeEncoder<V> {
     @Override
     default boolean isArrayType() {
         return false;
+    }
+
+    @Override
+    default void writeArray(ProtonBuffer buffer, EncoderState state, Object[] values) {
+        // Write the Array Type encoding code, we don't optimize here.
+        buffer.writeByte(EncodingCodes.ARRAY32);
+
+        int startIndex = buffer.getWriteIndex();
+
+        // Reserve space for the size and write the count of list elements.
+        buffer.writeInt(0);
+        buffer.writeInt(values.length);
+
+        // Write the array elements after writing the array length
+        writeRawArray(buffer, state, values);
+
+        // Move back and write the size
+        long writeSize = buffer.getWriteIndex() - startIndex - Integer.BYTES;
+
+        if (writeSize > Integer.MAX_VALUE) {
+            throw new IllegalArgumentException("Cannot encode given array, encoded size to large: " + writeSize);
+        }
+
+        buffer.setInt(startIndex, (int) writeSize);
     }
 }

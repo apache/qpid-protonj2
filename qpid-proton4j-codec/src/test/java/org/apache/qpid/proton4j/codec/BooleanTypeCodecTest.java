@@ -16,6 +16,7 @@
  */
 package org.apache.qpid.proton4j.codec;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -25,6 +26,7 @@ import java.io.IOException;
 
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
+import org.junit.Ignore;
 import org.junit.Test;
 
 /**
@@ -199,5 +201,39 @@ public class BooleanTypeCodecTest extends CodecTestSupport {
 
         boolean[] array = (boolean[]) result;
         assertEquals(source.length, array.length);
+    }
+
+    @Ignore("Primitive type arrays not handled yet.")
+    @Test
+    public void testArrayOfArraysOfPrimitiveBooleanObjects() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        final int size = 10;
+
+        boolean[][] source = new boolean[2][size];
+        for (int i = 0; i < size; ++i) {
+            source[0][i] = i % 2 == 0;
+            source[1][i] = i % 2 == 0;
+        }
+
+        encoder.writeArray(buffer, encoderState, source);
+
+        Object result = decoder.readObject(buffer, decoderState);
+        assertNotNull(result);
+        assertTrue(result.getClass().isArray());
+
+        Object[] resultArray = (Object[]) result;
+
+        assertNotNull(resultArray);
+        assertEquals(2, resultArray.length);
+
+        assertTrue(resultArray[0].getClass().isArray());
+        assertTrue(resultArray[1].getClass().isArray());
+
+        for (int i = 0; i < resultArray.length; ++i) {
+            boolean[] nested = (boolean[]) resultArray[i];
+            assertEquals(source[i].length, nested.length);
+            assertArrayEquals(source[i], nested);
+        }
     }
 }

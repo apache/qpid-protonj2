@@ -65,6 +65,33 @@ public class ArrayTypeCodecTest extends CodecTestSupport {
         }
     }
 
+    @Test
+    public void testArrayOfArraysOfMixedTypes() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        final int size = 10;
+
+        Object[][] source = new Object[2][size];
+        for (int i = 0; i < size; ++i) {
+            source[0][i] = Short.valueOf((short) i);
+            source[1][i] = Integer.valueOf(i);
+        }
+
+        encoder.writeArray(buffer, encoderState, source);
+
+        Object result = decoder.readObject(buffer, decoderState);
+        assertNotNull(result);
+        assertTrue(result.getClass().isArray());
+
+        Object[] resultArray = (Object[]) result;
+
+        assertNotNull(resultArray);
+        assertEquals(2, resultArray.length);
+
+        assertTrue(resultArray[0].getClass().isArray());
+        assertTrue(resultArray[1].getClass().isArray());
+    }
+
     @Ignore("Can't currently handle arrays of arrays")
     @Test
     public void testWriteArrayOfArraysStrings() throws IOException {
