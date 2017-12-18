@@ -22,7 +22,7 @@ import org.apache.qpid.proton4j.amqp.Decimal64;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.DecoderState;
 import org.apache.qpid.proton4j.codec.EncodingCodes;
-import org.apache.qpid.proton4j.codec.PrimitiveTypeDecoder;
+import org.apache.qpid.proton4j.codec.decoders.PrimitiveTypeDecoder;
 
 /**
  * Decoder of AMQP Decimal64 values from a byte stream

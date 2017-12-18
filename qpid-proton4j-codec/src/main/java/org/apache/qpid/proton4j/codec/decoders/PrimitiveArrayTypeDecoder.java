@@ -14,26 +14,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.qpid.proton4j.codec;
+package org.apache.qpid.proton4j.codec.decoders;
 
 import java.io.IOException;
 
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import org.apache.qpid.proton4j.codec.DecoderState;
 
+/**
+ * Provides an interface for an Array type decoder that provides the Proton decoder
+ * with entry points to read arrays in a manner that support the desired Java array
+ * type to be returned.
+ */
 public interface PrimitiveArrayTypeDecoder extends PrimitiveTypeDecoder<Object[]> {
 
-    @Override
-    default Class<Object[]> getTypeClass() {
-        return Object[].class;
-    }
-
-    @Override
-    default boolean isArrayType() {
-        return true;
-    }
-
     /**
-     * Reads the encoded Array and returns it as an opoque Object[] meaning
+     * Reads the encoded Array and returns it as an opaque Object[] meaning
      * that any primitive language types (e.g. int, long, boolean, etc) are
      * return using an array of primitive type Objects (e.g. Integer, Long,
      * Boolean, etc).

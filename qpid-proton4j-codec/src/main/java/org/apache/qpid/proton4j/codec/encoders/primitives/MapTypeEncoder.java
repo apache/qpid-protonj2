@@ -23,8 +23,8 @@ import java.util.Set;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.EncoderState;
 import org.apache.qpid.proton4j.codec.EncodingCodes;
-import org.apache.qpid.proton4j.codec.PrimitiveTypeEncoder;
 import org.apache.qpid.proton4j.codec.TypeEncoder;
+import org.apache.qpid.proton4j.codec.encoders.PrimitiveTypeEncoder;
 
 /**
  * Encoder of AMQP Map type values to a byte stream.

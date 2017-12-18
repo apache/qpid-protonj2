@@ -14,9 +14,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.qpid.proton4j.codec;
+package org.apache.qpid.proton4j.codec.encoders;
 
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import org.apache.qpid.proton4j.codec.EncoderState;
+import org.apache.qpid.proton4j.codec.EncodingCodes;
+import org.apache.qpid.proton4j.codec.TypeEncoder;
 
 /**
  * Encoder of Primitive types such as Integer or Boolean

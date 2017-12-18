@@ -17,7 +17,7 @@
 package org.apache.qpid.proton4j.codec.decoders.primitives;
 
 import org.apache.qpid.proton4j.amqp.Symbol;
-import org.apache.qpid.proton4j.codec.PrimitiveTypeDecoder;
+import org.apache.qpid.proton4j.codec.decoders.PrimitiveTypeDecoder;
 
 /**
  * Base for all Symbol type decoders.

@@ -20,7 +20,7 @@ import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.EncoderState;
 import org.apache.qpid.proton4j.codec.EncodingCodes;
-import org.apache.qpid.proton4j.codec.PrimitiveTypeEncoder;
+import org.apache.qpid.proton4j.codec.encoders.PrimitiveTypeEncoder;
 
 /**
  * Encoder of AMQP Symbol type values to a byte stream.

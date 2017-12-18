@@ -21,7 +21,7 @@ import java.util.UUID;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.EncoderState;
 import org.apache.qpid.proton4j.codec.EncodingCodes;
-import org.apache.qpid.proton4j.codec.PrimitiveTypeEncoder;
+import org.apache.qpid.proton4j.codec.encoders.PrimitiveTypeEncoder;
 
 /**
  * Encoder of AMQP UUID type value to a byte stream.

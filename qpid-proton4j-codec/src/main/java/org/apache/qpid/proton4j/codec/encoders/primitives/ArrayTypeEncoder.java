@@ -19,13 +19,23 @@ package org.apache.qpid.proton4j.codec.encoders.primitives;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.EncoderState;
 import org.apache.qpid.proton4j.codec.EncodingCodes;
-import org.apache.qpid.proton4j.codec.PrimitiveArrayTypeEncoder;
 import org.apache.qpid.proton4j.codec.TypeEncoder;
+import org.apache.qpid.proton4j.codec.encoders.PrimitiveTypeEncoder;
 
 /**
  * Encoder of AMQP Array types to a byte stream.
  */
-public class ArrayTypeEncoder implements PrimitiveArrayTypeEncoder {
+public class ArrayTypeEncoder implements PrimitiveTypeEncoder<Object> {
+
+    @Override
+    public boolean isArrayType() {
+        return true;
+    }
+
+    @Override
+    public Class<Object> getTypeClass() {
+        return Object.class;
+    }
 
     @Override
     public void writeType(ProtonBuffer buffer, EncoderState state, Object value) {

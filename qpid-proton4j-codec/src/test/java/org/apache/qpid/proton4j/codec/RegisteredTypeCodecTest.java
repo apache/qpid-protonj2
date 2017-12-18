@@ -39,7 +39,7 @@ public class RegisteredTypeCodecTest extends CodecTestSupport {
 
         // Register the codec pair.
         encoder.registerTypeEncoder(new NoLocalTypeEncoder());
-        decoder.registerDescribedTypeDecoder(new NoLocalTypeDecoder());
+        decoder.registerTypeDecoder(new NoLocalTypeDecoder());
 
         encoder.writeObject(buffer, encoderState, NoLocalType.NO_LOCAL);
 

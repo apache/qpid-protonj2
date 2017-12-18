@@ -16,7 +16,7 @@
  */
 package org.apache.qpid.proton4j.codec.decoders.primitives;
 
-import org.apache.qpid.proton4j.codec.PrimitiveTypeDecoder;
+import org.apache.qpid.proton4j.codec.decoders.PrimitiveTypeDecoder;
 
 /**
  * Base for all String type decoders

@@ -14,33 +14,36 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.qpid.proton4j.codec;
+package org.apache.qpid.proton4j.codec.decoders;
 
-import org.apache.qpid.proton4j.amqp.Symbol;
-import org.apache.qpid.proton4j.amqp.UnsignedLong;
+import java.io.IOException;
+import java.lang.reflect.Array;
 
-/**
- * Interface for all DescribedType decoder implementations
- *
- * @param <V> The type this decoder handles
- */
-public interface DescribedTypeDecoder<V> extends TypeDecoder<V> {
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import org.apache.qpid.proton4j.codec.DecoderState;
+import org.apache.qpid.proton4j.codec.TypeDecoder;
 
-    /**
-     * Returns the AMQP descriptor code for the type this decoder reads.
-     *
-     * @return an unsigned long descriptor code value.
-     */
-    UnsignedLong getDescriptorCode();
+public interface PrimitiveTypeDecoder<V> extends TypeDecoder<V> {
 
-    /**
-     * Returns the AMQP descriptor symbol for the type this decoder reads.
-     *
-     * @return an symbol descriptor code value.
-     */
-    Symbol getDescriptorSymbol();
-
+    @Override
     default boolean isArrayType() {
         return false;
+    }
+
+    default boolean isJavaPrimitive() {
+        return false;
+    }
+
+    int getTypeCode();
+
+    @SuppressWarnings("unchecked")
+    @Override
+    default V[] readArrayElements(ProtonBuffer buffer, DecoderState state, int count) throws IOException {
+        V[] array = (V[]) Array.newInstance(getTypeClass(), count);
+        for (int i = 0; i < count; ++i) {
+            array[i] = readValue(buffer, state);
+        }
+
+        return array;
     }
 }

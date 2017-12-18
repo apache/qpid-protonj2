@@ -23,8 +23,8 @@ import java.util.List;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.DecoderState;
 import org.apache.qpid.proton4j.codec.EncodingCodes;
-import org.apache.qpid.proton4j.codec.PrimitiveTypeDecoder;
 import org.apache.qpid.proton4j.codec.TypeDecoder;
+import org.apache.qpid.proton4j.codec.decoders.PrimitiveTypeDecoder;
 
 /**
  * Base for the various List type decoders needed to read AMQP List values.

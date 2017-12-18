@@ -19,7 +19,7 @@ package org.apache.qpid.proton4j.codec.decoders.primitives;
 import java.util.Map;
 
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
-import org.apache.qpid.proton4j.codec.PrimitiveTypeDecoder;
+import org.apache.qpid.proton4j.codec.decoders.PrimitiveTypeDecoder;
 
 /**
  * Base interface for all AMQP Map type value decoders.

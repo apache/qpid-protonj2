@@ -98,8 +98,7 @@ public interface Decoder {
 
     TypeDecoder<?> peekNextTypeDecoder(ProtonBuffer buffer, DecoderState state) throws IOException;
 
-    <V> Decoder registerDescribedTypeDecoder(DescribedTypeDecoder<V> decoder);
-    <V> Decoder registerPrimitiveTypeDecoder(PrimitiveTypeDecoder<V> decoder);
+    <V> Decoder registerTypeDecoder(TypeDecoder<V> decoder);
 
     TypeDecoder<?> getTypeDecoder(Object instance);
 

@@ -22,8 +22,8 @@ import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.amqp.messaging.DeliveryAnnotations;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
-import org.apache.qpid.proton4j.codec.DescribedMapTypeEncoder;
 import org.apache.qpid.proton4j.codec.EncoderState;
+import org.apache.qpid.proton4j.codec.encoders.DescribedMapTypeEncoder;
 
 /**
  * Encoder of AMQP DeliveryAnnotations type values to a byte stream.

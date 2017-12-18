@@ -36,10 +36,7 @@ import org.apache.qpid.proton4j.amqp.UnsignedShort;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.Decoder;
 import org.apache.qpid.proton4j.codec.DecoderState;
-import org.apache.qpid.proton4j.codec.DescribedTypeDecoder;
 import org.apache.qpid.proton4j.codec.EncodingCodes;
-import org.apache.qpid.proton4j.codec.PrimitiveArrayTypeDecoder;
-import org.apache.qpid.proton4j.codec.PrimitiveTypeDecoder;
 import org.apache.qpid.proton4j.codec.TypeDecoder;
 
 /**
@@ -160,15 +157,18 @@ public class ProtonDecoder implements Decoder {
     }
 
     @Override
-    public <V> ProtonDecoder registerDescribedTypeDecoder(DescribedTypeDecoder<V> decoder) {
-        describedTypeDecoders.put(decoder.getDescriptorCode(), decoder);
-        describedTypeDecoders.put(decoder.getDescriptorSymbol(), decoder);
-        return this;
-    }
+    public <V> ProtonDecoder registerTypeDecoder(TypeDecoder<V> decoder) {
+        if (decoder instanceof PrimitiveTypeDecoder) {
+            PrimitiveTypeDecoder<?> primitiveTypeDecoder = (PrimitiveTypeDecoder<?>) decoder;
+            primitiveDecoders[primitiveTypeDecoder.getTypeCode()] = primitiveTypeDecoder;
+        } else if (decoder instanceof DescribedTypeDecoder) {
+            DescribedTypeDecoder<?> describedTypeDecoder = (DescribedTypeDecoder<?>) decoder;
+            describedTypeDecoders.put(describedTypeDecoder.getDescriptorCode(), describedTypeDecoder);
+            describedTypeDecoders.put(describedTypeDecoder.getDescriptorSymbol(), describedTypeDecoder);
+        } else {
+            throw new IllegalArgumentException("The given TypeDecoder implementation is not supported");
+        }
 
-    @Override
-    public <V> ProtonDecoder registerPrimitiveTypeDecoder(PrimitiveTypeDecoder<V> decoder) {
-        primitiveDecoders[decoder.getTypeCode()] = decoder;
         return this;
     }
 

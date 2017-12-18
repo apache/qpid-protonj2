@@ -19,9 +19,9 @@ package org.apache.qpid.proton4j.codec.util;
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
-import org.apache.qpid.proton4j.codec.DescribedTypeEncoder;
 import org.apache.qpid.proton4j.codec.EncoderState;
 import org.apache.qpid.proton4j.codec.EncodingCodes;
+import org.apache.qpid.proton4j.codec.encoders.DescribedTypeEncoder;
 
 public class NoLocalTypeEncoder implements DescribedTypeEncoder<NoLocalType> {
 

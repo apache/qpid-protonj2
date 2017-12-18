@@ -20,9 +20,9 @@ import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.amqp.messaging.DeleteOnNoMessages;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
-import org.apache.qpid.proton4j.codec.DescribedListTypeEncoder;
 import org.apache.qpid.proton4j.codec.EncoderState;
 import org.apache.qpid.proton4j.codec.EncodingCodes;
+import org.apache.qpid.proton4j.codec.encoders.DescribedListTypeEncoder;
 
 /**
  * Encoder of AMQP DeleteOnNoMessages type values to a byte stream
