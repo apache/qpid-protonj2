@@ -50,6 +50,13 @@ public class FloatTypeEncoder extends AbstractPrimitiveTypeEncoder<Float> {
         }
     }
 
+    public void writeRawArray(ProtonBuffer buffer, EncoderState state, float[] values) {
+        buffer.writeByte(EncodingCodes.FLOAT);
+        for (float value : values) {
+            buffer.writeFloat(value);
+        }
+    }
+
     public void writeArray(ProtonBuffer buffer, EncoderState state, float[] values) {
         // Write the Array Type encoding code, we don't optimize here.
         buffer.writeByte(EncodingCodes.ARRAY32);
@@ -61,10 +68,7 @@ public class FloatTypeEncoder extends AbstractPrimitiveTypeEncoder<Float> {
         buffer.writeInt(values.length);
 
         // Write the array elements after writing the array length
-        buffer.writeByte(EncodingCodes.FLOAT);
-        for (float value : values) {
-            buffer.writeFloat(value);
-        }
+        writeRawArray(buffer, state, values);
 
         // Move back and write the size
         int endIndex = buffer.getWriteIndex();

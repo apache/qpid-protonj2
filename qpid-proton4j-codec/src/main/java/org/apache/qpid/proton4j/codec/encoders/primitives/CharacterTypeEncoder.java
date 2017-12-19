@@ -45,6 +45,13 @@ public class CharacterTypeEncoder extends AbstractPrimitiveTypeEncoder<Character
         }
     }
 
+    public void writeRawArray(ProtonBuffer buffer, EncoderState state, char[] values) {
+        buffer.writeByte(EncodingCodes.CHAR);
+        for (char charValue : values) {
+            buffer.writeInt(charValue & 0xffff);
+        }
+    }
+
     public void writeArray(ProtonBuffer buffer, EncoderState state, char[] values) {
         // Write the Array Type encoding code, we don't optimize here.
         buffer.writeByte(EncodingCodes.ARRAY32);
@@ -56,10 +63,7 @@ public class CharacterTypeEncoder extends AbstractPrimitiveTypeEncoder<Character
         buffer.writeInt(values.length);
 
         // Write the array elements after writing the array length
-        buffer.writeByte(EncodingCodes.CHAR);
-        for (char charValue : values) {
-            buffer.writeInt(charValue & 0xffff);
-        }
+        writeRawArray(buffer, state, values);
 
         // Move back and write the size
         int endIndex = buffer.getWriteIndex();

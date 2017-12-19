@@ -50,6 +50,13 @@ public class ShortTypeEncoder extends AbstractPrimitiveTypeEncoder<Short> {
         }
     }
 
+    public void writeRawArray(ProtonBuffer buffer, EncoderState state, short[] values) {
+        buffer.writeByte(EncodingCodes.SHORT);
+        for (short value : values) {
+            buffer.writeShort(value);
+        }
+    }
+
     public void writeArray(ProtonBuffer buffer, EncoderState state, short[] values) {
         // Write the Array Type encoding code, we don't optimize here.
         buffer.writeByte(EncodingCodes.ARRAY32);
@@ -61,10 +68,7 @@ public class ShortTypeEncoder extends AbstractPrimitiveTypeEncoder<Short> {
         buffer.writeInt(values.length);
 
         // Write the array elements after writing the array length
-        buffer.writeByte(EncodingCodes.SHORT);
-        for (short value : values) {
-            buffer.writeShort(value);
-        }
+        writeRawArray(buffer, state, values);
 
         // Move back and write the size
         int endIndex = buffer.getWriteIndex();

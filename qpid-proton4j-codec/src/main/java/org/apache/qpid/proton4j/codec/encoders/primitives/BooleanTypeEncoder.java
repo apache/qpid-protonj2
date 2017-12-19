@@ -49,7 +49,15 @@ public class BooleanTypeEncoder extends AbstractPrimitiveTypeEncoder<Boolean> {
         }
     }
 
-    public void writeArray(ProtonBuffer buffer, EncoderState state, boolean[] value) {
+    public void writeRawArray(ProtonBuffer buffer, EncoderState state, boolean[] values) {
+        // Write the array elements after writing the array length
+        buffer.writeByte(EncodingCodes.BOOLEAN);
+        for (boolean bool : values) {
+            buffer.writeByte(bool ? 1 : 0);
+        }
+    }
+
+    public void writeArray(ProtonBuffer buffer, EncoderState state, boolean[] values) {
         // Write the Array Type encoding code, we don't optimize here.
         buffer.writeByte(EncodingCodes.ARRAY32);
 
@@ -57,13 +65,10 @@ public class BooleanTypeEncoder extends AbstractPrimitiveTypeEncoder<Boolean> {
 
         // Reserve space for the size and write the count of list elements.
         buffer.writeInt(0);
-        buffer.writeInt(value.length);
+        buffer.writeInt(values.length);
 
         // Write the array elements after writing the array length
-        buffer.writeByte(EncodingCodes.BOOLEAN);
-        for (boolean bool : value) {
-            buffer.writeByte(bool ? 1 : 0);
-        }
+        writeRawArray(buffer, state, values);
 
         // Move back and write the size
         int endIndex = buffer.getWriteIndex();

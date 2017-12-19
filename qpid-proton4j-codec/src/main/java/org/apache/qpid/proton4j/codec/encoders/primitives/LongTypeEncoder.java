@@ -54,6 +54,13 @@ public class LongTypeEncoder extends AbstractPrimitiveTypeEncoder<Long> {
         }
     }
 
+    public void writeRawArray(ProtonBuffer buffer, EncoderState state, long[] values) {
+        buffer.writeByte(EncodingCodes.LONG);
+        for (long value : values) {
+            buffer.writeLong(value);
+        }
+    }
+
     public void writeArray(ProtonBuffer buffer, EncoderState state, long[] values) {
         // Write the Array Type encoding code, we don't optimize here.
         buffer.writeByte(EncodingCodes.ARRAY32);
@@ -65,10 +72,7 @@ public class LongTypeEncoder extends AbstractPrimitiveTypeEncoder<Long> {
         buffer.writeInt(values.length);
 
         // Write the array elements after writing the array length
-        buffer.writeByte(EncodingCodes.LONG);
-        for (long value : values) {
-            buffer.writeLong(value);
-        }
+        writeRawArray(buffer, state, values);
 
         // Move back and write the size
         int endIndex = buffer.getWriteIndex();

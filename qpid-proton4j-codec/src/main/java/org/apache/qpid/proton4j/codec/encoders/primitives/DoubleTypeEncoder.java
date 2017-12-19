@@ -50,6 +50,13 @@ public class DoubleTypeEncoder extends AbstractPrimitiveTypeEncoder<Double> {
         }
     }
 
+    public void writeRawArray(ProtonBuffer buffer, EncoderState state, double[] values) {
+        buffer.writeByte(EncodingCodes.DOUBLE);
+        for (double value : values) {
+            buffer.writeDouble(value);
+        }
+    }
+
     public void writeArray(ProtonBuffer buffer, EncoderState state, double[] values) {
         // Write the Array Type encoding code, we don't optimize here.
         buffer.writeByte(EncodingCodes.ARRAY32);
@@ -61,10 +68,7 @@ public class DoubleTypeEncoder extends AbstractPrimitiveTypeEncoder<Double> {
         buffer.writeInt(values.length);
 
         // Write the array elements after writing the array length
-        buffer.writeByte(EncodingCodes.DOUBLE);
-        for (double value : values) {
-            buffer.writeDouble(value);
-        }
+        writeRawArray(buffer, state, values);
 
         // Move back and write the size
         int endIndex = buffer.getWriteIndex();
