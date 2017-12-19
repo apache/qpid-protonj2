@@ -18,7 +18,9 @@ package org.apache.qpid.proton4j.transport.impl;
 
 import java.io.IOException;
 
+import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.transport.FrameParser;
 import org.apache.qpid.proton4j.transport.exceptions.TransportException;
 
@@ -48,6 +50,7 @@ public class AmqpHeaderParser implements FrameParser {
 
     private State parsingState = State.HEADER0;
 
+    private ProtonBuffer headerBuffer;
     private ProtonTransport transport;
 
     public AmqpHeaderParser(final ProtonTransport transport) {
@@ -57,129 +60,139 @@ public class AmqpHeaderParser implements FrameParser {
     @Override
     public void reset() {
         parsingState = State.HEADER0;
+        headerBuffer = ProtonByteBufferAllocator.DEFAULT.allocate(HEADER.length, HEADER.length);
     }
 
     @Override
     public void parse(ProtonBuffer incoming) throws IOException {
-
-        // TODO - Buffer incoming Header if smaller than 8 bytes, otherwise parse and consume
+        // Buffer up what we can of the Header and parse right away to detect invalid
+        // header values immediately.
+        int length = Math.min(incoming.getReadableBytes(), headerBuffer.getWritableBytes());
+        incoming.readBytes(incoming, length);
 
         TransportException parsingError = null;
 
-        switch (parsingState) {
-            case HEADER0:
-                if (incoming.isReadable()) {
-                    byte c = incoming.readByte();
-                    if (c != HEADER[0]) {
-                        parsingError = new TransportException(String.format(
-                            "AMQP header mismatch value %x, expecting %x. In state: %s", c, HEADER[0], parsingState));
-                        parsingState = State.ERROR;
+        while (headerBuffer.isReadable() && parsingState != State.ERROR && parsingState != State.ERROR) {
+            switch (parsingState) {
+                case HEADER0:
+                    if (incoming.isReadable()) {
+                        byte c = incoming.readByte();
+                        if (c != HEADER[0]) {
+                            parsingError = new TransportException(String.format(
+                                "AMQP header mismatch value %x, expecting %x. In state: %s", c, HEADER[0], parsingState));
+                            parsingState = State.ERROR;
+                            break;
+                        }
+                        parsingState = State.HEADER1;
+                    } else {
                         break;
                     }
-                    parsingState = State.HEADER1;
-                } else {
-                    break;
-                }
-            case HEADER1:
-                if (incoming.isReadable()) {
-                    byte c = incoming.readByte();
-                    if (c != HEADER[1]) {
-                        parsingError = new TransportException(String.format(
-                            "AMQP header mismatch value %x, expecting %x. In state: %s", c, HEADER[1], parsingState));
-                        parsingState = State.ERROR;
+                case HEADER1:
+                    if (incoming.isReadable()) {
+                        byte c = incoming.readByte();
+                        if (c != HEADER[1]) {
+                            parsingError = new TransportException(String.format(
+                                "AMQP header mismatch value %x, expecting %x. In state: %s", c, HEADER[1], parsingState));
+                            parsingState = State.ERROR;
+                            break;
+                        }
+                        parsingState = State.HEADER2;
+                    } else {
                         break;
                     }
-                    parsingState = State.HEADER2;
-                } else {
-                    break;
-                }
-            case HEADER2:
-                if (incoming.isReadable()) {
-                    byte c = incoming.readByte();
-                    if (c != HEADER[2]) {
-                        parsingError = new TransportException(String.format(
-                            "AMQP header mismatch value %x, expecting %x. In state: %s", c, HEADER[2], parsingState));
-                        parsingState = State.ERROR;
+                case HEADER2:
+                    if (incoming.isReadable()) {
+                        byte c = incoming.readByte();
+                        if (c != HEADER[2]) {
+                            parsingError = new TransportException(String.format(
+                                "AMQP header mismatch value %x, expecting %x. In state: %s", c, HEADER[2], parsingState));
+                            parsingState = State.ERROR;
+                            break;
+                        }
+                        parsingState = State.HEADER3;
+                    } else {
                         break;
                     }
-                    parsingState = State.HEADER3;
-                } else {
-                    break;
-                }
-            case HEADER3:
-                if (incoming.isReadable()) {
-                    byte c = incoming.readByte();
-                    if (c != HEADER[3]) {
-                        parsingError = new TransportException(String.format(
-                            "AMQP header mismatch value %x, expecting %x. In state: %s", c, HEADER[3], parsingState));
-                        parsingState = State.ERROR;
+                case HEADER3:
+                    if (incoming.isReadable()) {
+                        byte c = incoming.readByte();
+                        if (c != HEADER[3]) {
+                            parsingError = new TransportException(String.format(
+                                "AMQP header mismatch value %x, expecting %x. In state: %s", c, HEADER[3], parsingState));
+                            parsingState = State.ERROR;
+                            break;
+                        }
+                        parsingState = State.HEADER4;
+                    } else {
                         break;
                     }
-                    parsingState = State.HEADER4;
-                } else {
-                    break;
-                }
-            case HEADER4:
-                if (incoming.isReadable()) {
-                    byte c = incoming.readByte();
-                    if (c != HEADER[4]) {
-                        parsingError = new TransportException(String.format(
-                            "AMQP header mismatch value %x, expecting %x. In state: %s", c, HEADER[4], parsingState));
-                        parsingState = State.ERROR;
+                case HEADER4:
+                    if (incoming.isReadable()) {
+                        byte c = incoming.readByte();
+                        if (c != HEADER[4] && c != SASL_HEADER[4]) {
+                            parsingError = new TransportException(String.format(
+                                "AMQP header mismatch value %x, expecting %x. In state: %s", c, HEADER[4], parsingState));
+                            parsingState = State.ERROR;
+                            break;
+                        }
+                        parsingState = State.HEADER5;
+                    } else {
                         break;
                     }
-                    parsingState = State.HEADER5;
-                } else {
-                    break;
-                }
-            case HEADER5:
-                if (incoming.isReadable()) {
-                    byte c = incoming.readByte();
-                    if (c != HEADER[5]) {
-                        parsingError = new TransportException(String.format(
-                            "AMQP header mismatch value %x, expecting %x. In state: %s", c, HEADER[5], parsingState));
-                        parsingState = State.ERROR;
+                case HEADER5:
+                    if (incoming.isReadable()) {
+                        byte c = incoming.readByte();
+                        if (c != HEADER[5]) {
+                            parsingError = new TransportException(String.format(
+                                "AMQP header mismatch value %x, expecting %x. In state: %s", c, HEADER[5], parsingState));
+                            parsingState = State.ERROR;
+                            break;
+                        }
+                        parsingState = State.HEADER6;
+                    } else {
                         break;
                     }
-                    parsingState = State.HEADER6;
-                } else {
-                    break;
-                }
-            case HEADER6:
-                if (incoming.isReadable()) {
-                    byte c = incoming.readByte();
-                    if (c != HEADER[6]) {
-                        parsingError = new TransportException(String.format(
-                            "AMQP header mismatch value %x, expecting %x. In state: %s", c, HEADER[6], parsingState));
-                        parsingState = State.ERROR;
+                case HEADER6:
+                    if (incoming.isReadable()) {
+                        byte c = incoming.readByte();
+                        if (c != HEADER[6]) {
+                            parsingError = new TransportException(String.format(
+                                "AMQP header mismatch value %x, expecting %x. In state: %s", c, HEADER[6], parsingState));
+                            parsingState = State.ERROR;
+                            break;
+                        }
+                        parsingState = State.HEADER7;
+                    } else {
                         break;
                     }
-                    parsingState = State.HEADER7;
-                } else {
-                    break;
-                }
-            case HEADER7:
-                if (incoming.isReadable()) {
-                    byte c = incoming.readByte();
-                    if (c != HEADER[7]) {
-                        parsingError = new TransportException(String.format(
-                            "AMQP header mismatch value %x, expecting %x. In state: %s", c, HEADER[7], parsingState));
-                        parsingState = State.ERROR;
+                case HEADER7:
+                    if (incoming.isReadable()) {
+                        byte c = incoming.readByte();
+                        if (c != HEADER[7]) {
+                            parsingError = new TransportException(String.format(
+                                "AMQP header mismatch value %x, expecting %x. In state: %s", c, HEADER[7], parsingState));
+                            parsingState = State.ERROR;
+                            break;
+                        } else {
+                            parsingState = State.DONE;
+                        }
+                    } else {
                         break;
                     }
-                } else {
+                default:
+                    parsingError = new TransportException("AMQP Header parse in invalid state.");
+                    parsingState = State.ERROR;
                     break;
-                }
-            default:
-                parsingError = new TransportException("AMQP Header parse in invalid state.");
-                parsingState = State.ERROR;
-                break;
+            }
         }
 
-        if (parsingError != null) {
-            // TODO - Signal Transport of error
-        } else {
-            // TODO - Check complete and signal transport if so
+        if (parsingState == State.DONE) {
+            AMQPHeader header = new AMQPHeader(headerBuffer);
+            headerBuffer = null;
+            transport.onAMQPHeader(header);
+        } else if (parsingState == State.ERROR) {
+            headerBuffer = null;
+            throw parsingError;
         }
     }
 }

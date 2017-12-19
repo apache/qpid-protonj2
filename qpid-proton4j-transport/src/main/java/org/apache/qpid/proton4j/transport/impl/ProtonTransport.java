@@ -21,7 +21,6 @@ import java.io.IOException;
 import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonBufferAllocator;
-import org.apache.qpid.proton4j.transport.FrameParser;
 import org.apache.qpid.proton4j.transport.ProtocolTracer;
 import org.apache.qpid.proton4j.transport.Transport;
 import org.apache.qpid.proton4j.transport.TransportListener;
@@ -31,44 +30,63 @@ import org.apache.qpid.proton4j.transport.TransportListener;
  */
 public class ProtonTransport implements Transport {
 
+    private int maxFrameSize;
+    private int initialMaxFrameSize;
+
+    private ProtonBufferAllocator bufferAllocator;
+    private TransportListener transportListener;
+    private ProtocolTracer tracer;
+
     @Override
     public void processIncoming(ProtonBuffer buffer) throws IOException {
     }
 
     @Override
     public void setBufferAllocator(ProtonBufferAllocator allocator) {
+        this.bufferAllocator = allocator;
     }
 
     @Override
     public ProtonBufferAllocator getBufferAllocator() {
-        return null;
+        return bufferAllocator;
     }
 
     @Override
     public void setTransportListener(TransportListener listener) {
+        transportListener = listener;
     }
 
     @Override
     public TransportListener getTransportListener() {
-        return null;
+        return transportListener;
     }
 
     @Override
     public void setProtocolTracer(ProtocolTracer tracer) {
+        this.tracer = tracer;
     }
 
     @Override
     public ProtocolTracer getProtocolTracer() {
-        return null;
+        return tracer;
     }
 
     @Override
     public int getMaxFrameSize() {
-        return 0;
+        return maxFrameSize;
     }
 
     @Override
-    public void setMaxFrameSize(int size) {
+    public void setMaxFrameSize(int maxFrameSize) {
+        this.maxFrameSize = maxFrameSize;
+    }
+
+    public int getInitialMaxFrameSize() {
+        return initialMaxFrameSize;
+    }
+
+    public void setInitialMaxFrameSize(int initialMaxFrameSize) {
+        this.initialMaxFrameSize = initialMaxFrameSize;
     }
 
     /**
@@ -76,16 +94,16 @@ public class ProtonTransport implements Transport {
      * <p>
      * The method is called on successful decode of an AMQP Header giving the
      * Transport instance a chance to alter its state to reflect the processing
-     * that should occur following the type of header read.  The caller provides
-     * the buffer where the header was read from so that any additional frames
-     * can be decoded using an appropriate {@link FrameParser} instance.
+     * that should occur following the type of header read.
      *
      * @param header
      *      The newly decoded AMQP Header instance from the data stream
-     * @param buffer
-     *      The incoming buffer where the header was read.
+     *
+     * @throws IOException if an error occurs while processing the incoming header.
      */
-    public void onAMQPHeader(AMQPHeader header, ProtonBuffer buffer) {
-
+    public void onAMQPHeader(AMQPHeader header) throws IOException {
+        if (transportListener != null) {
+            transportListener.onPerformative(header);
+        }
     }
 }

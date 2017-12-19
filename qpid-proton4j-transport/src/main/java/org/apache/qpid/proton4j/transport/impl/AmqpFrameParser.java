@@ -17,10 +17,8 @@
 package org.apache.qpid.proton4j.transport.impl;
 
 import java.io.IOException;
-import java.nio.Buffer;
 
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
-import org.apache.qpid.proton4j.buffer.ProtonByteBuffer;
 import org.apache.qpid.proton4j.transport.FrameParser;
 import org.apache.qpid.proton4j.transport.exceptions.IOExceptionSupport;
 import org.slf4j.Logger;
@@ -35,7 +33,6 @@ public class AmqpFrameParser implements FrameParser {
     private static final Logger LOG = LoggerFactory.getLogger(AmqpFrameParser.class);
 
     private static final byte AMQP_FRAME_SIZE_BYTES = 4;
-    private static final byte AMQP_HEADER_BYTES = 8;
 
     private ProtonTransport transport;
     private FrameParser currentParser;
@@ -52,7 +49,7 @@ public class AmqpFrameParser implements FrameParser {
         }
 
         if (currentParser == null) {
-            currentParser = initializeHeaderParser();
+            currentParser = initializeFrameLengthParser();
         }
 
         // Parser stack will run until current incoming data has all been consumed.
@@ -61,7 +58,7 @@ public class AmqpFrameParser implements FrameParser {
 
     @Override
     public void reset() {
-        currentParser = initializeHeaderParser();
+        currentParser = initializeFrameLengthParser();
     }
 
     private void validateFrameSize(int frameSize, int currentLimit) throws IOException {
@@ -71,11 +68,6 @@ public class AmqpFrameParser implements FrameParser {
     }
 
     //----- Prepare the current frame parser for use -------------------------//
-
-    private FrameParser initializeHeaderParser() {
-        headerReader.reset(AMQP_HEADER_BYTES);
-        return headerReader;
-    }
 
     private FrameParser initializeFrameLengthParser() {
         frameSizeReader.reset(AMQP_FRAME_SIZE_BYTES);
@@ -95,34 +87,6 @@ public class AmqpFrameParser implements FrameParser {
 
         void reset(int nextExpectedReadSize);
     }
-
-    private final FrameParser headerReader = new FrameParser() {
-
-        private final ProtonBuffer header = new ProtonByteBuffer(AMQP_HEADER_BYTES, AMQP_HEADER_BYTES);
-
-        @Override
-        public void parse(ProtonBuffer incoming) throws IOException {
-//            int length = Math.min(incoming.getReadableBytes(), header.length - header.offset);
-//
-//            incoming.get(header.data, header.offset, length);
-//            header.offset += length;
-//
-//            if (header.offset == AMQP_HEADER_BYTES) {
-//                header.reset();
-//                AmqpHeader amqpHeader = new AmqpHeader(header.deepCopy(), false);
-//                currentParser = initializeFrameLengthParser();
-//                frameSink.onFrame(amqpHeader);
-//                if (incoming.hasRemaining()) {
-//                    currentParser.parse(incoming);
-//                }
-//            }
-        }
-
-        @Override
-        public void reset(int nextExpectedReadSize) {
-            header.clear();
-        }
-    };
 
     private final FrameParser frameSizeReader = new FrameParser() {
 
@@ -156,7 +120,7 @@ public class AmqpFrameParser implements FrameParser {
 
     private final FrameParser contentReader = new FrameParser() {
 
-        private Buffer frame;
+        private ProtonBuffer frame;
 
         @Override
         public void parse(ProtonBuffer incoming) throws IOException {
