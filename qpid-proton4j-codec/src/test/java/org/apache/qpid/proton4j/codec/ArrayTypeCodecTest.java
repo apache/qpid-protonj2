@@ -26,7 +26,6 @@ import java.util.UUID;
 
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
-import org.junit.Ignore;
 import org.junit.Test;
 
 /**
@@ -92,7 +91,6 @@ public class ArrayTypeCodecTest extends CodecTestSupport {
         assertTrue(resultArray[1].getClass().isArray());
     }
 
-    @Ignore("Can't currently handle arrays of arrays")
     @Test
     public void testWriteArrayOfArraysStrings() throws IOException {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();

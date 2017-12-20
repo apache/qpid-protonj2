@@ -87,30 +87,8 @@ public class ArrayTypeEncoder implements PrimitiveTypeEncoder<Object> {
             buffer.writeInt(0);
             buffer.writeInt(values.length);
 
-            // These are the arrays inside this array.
-            {
-                // Write the Array Type encoding code, we don't optimize here.
-                buffer.writeByte(EncodingCodes.ARRAY32);
-
-                for (int i = 0; i < values.length; ++i) {
-                    int nestedStartIndex = buffer.getWriteIndex();
-
-                    // Reserve space for the size and write the count of list elements.
-                    buffer.writeInt(0);
-                    buffer.writeInt(((Object[]) values[0]).length);
-
-                    writeRawArray(buffer, state, (Object[]) values[i]);
-
-                    // Move back and write the size
-                    long nestedWriteSize = buffer.getWriteIndex() - nestedStartIndex - Integer.BYTES;
-
-                    if (nestedWriteSize > Integer.MAX_VALUE) {
-                        throw new IllegalArgumentException("Cannot encode given array, encoded size to large: " + nestedWriteSize);
-                    }
-
-                    buffer.setInt(nestedStartIndex, (int) nestedWriteSize);
-                }
-            }
+            // Write the arrays as a raw series of arrays accounting for nested arrays
+            writeRawArray(buffer, state, values);
 
             // Move back and write the size
             long writeSize = buffer.getWriteIndex() - startIndex - Integer.BYTES;
@@ -127,22 +105,52 @@ public class ArrayTypeEncoder implements PrimitiveTypeEncoder<Object> {
 
     @Override
     public void writeRawArray(ProtonBuffer buffer, EncoderState state, Object[] values) {
-        TypeEncoder<?> typeEncoder = findTypeEncoder(buffer, state, values);
+        TypeEncoder<?> typeEncoder = findTypeEncoder(buffer, state, values[0]);
 
-        if (typeEncoder.isArrayType()) {
-            // Write the Array Type encoding code, we don't optimize here.
-            buffer.writeByte(EncodingCodes.ARRAY32);
+        // Write the Array Type encoding code, we don't optimize here.
+        buffer.writeByte(EncodingCodes.ARRAY32);
 
+        for (int i = 0; i < values.length; ++i) {
             int startIndex = buffer.getWriteIndex();
 
             // Reserve space for the size and write the count of list elements.
             buffer.writeInt(0);
-            buffer.writeInt(values.length);
 
-            // We are writing the raw arrays of array type elements, however these could
-            // also be even more nested arrays of arrays.
-            for (int i = 0; i < values.length; ++i) {
-                writeRawArray(buffer, state, (Object[]) values[i]);
+            typeEncoder = findTypeEncoder(buffer, state, values[i]);
+            if (values[i].getClass().getComponentType().isPrimitive()) {
+                Class<?> componentType = values[i].getClass().getComponentType();
+
+                if (componentType == Boolean.TYPE) {
+                    buffer.writeInt(((boolean[]) values[i]).length);
+                    ((BooleanTypeEncoder) typeEncoder).writeRawArray(buffer, state, (boolean[]) values[i]);
+                } else if (componentType == Byte.TYPE) {
+                    buffer.writeInt(((byte[]) values[i]).length);
+                    ((ByteTypeEncoder) typeEncoder).writeRawArray(buffer, state, (byte[]) values[i]);
+                } else if (componentType == Short.TYPE) {
+                    buffer.writeInt(((short[]) values[i]).length);
+                    ((ShortTypeEncoder) typeEncoder).writeRawArray(buffer, state, (short[]) values[i]);
+                } else if (componentType == Integer.TYPE) {
+                    buffer.writeInt(((int[]) values[i]).length);
+                    ((IntegerTypeEncoder) typeEncoder).writeRawArray(buffer, state, (int[]) values[i]);
+                } else if (componentType == Long.TYPE) {
+                    buffer.writeInt(((long[]) values[i]).length);
+                    ((LongTypeEncoder) typeEncoder).writeRawArray(buffer, state, (long[]) values[i]);
+                } else if (componentType == Float.TYPE) {
+                    buffer.writeInt(((Object[]) values[i]).length);
+                    ((FloatTypeEncoder) typeEncoder).writeRawArray(buffer, state, (float[]) values[i]);
+                } else if (componentType == Double.TYPE) {
+                    buffer.writeInt(((double[]) values[i]).length);
+                    ((DoubleTypeEncoder) typeEncoder).writeRawArray(buffer, state, (double[]) values[i]);
+                } else if (componentType == Character.TYPE) {
+                    buffer.writeInt(((float[]) values[i]).length);
+                    ((CharacterTypeEncoder) typeEncoder).writeRawArray(buffer, state, (char[]) values[i]);
+                } else {
+                    throw new IllegalArgumentException(
+                        "Cannot write arrays of type " + componentType.getName());
+                }
+            } else {
+                buffer.writeInt(((Object[]) values[i]).length);
+                typeEncoder.writeRawArray(buffer, state, (Object[]) values[i]);
             }
 
             // Move back and write the size
@@ -153,8 +161,6 @@ public class ArrayTypeEncoder implements PrimitiveTypeEncoder<Object> {
             }
 
             buffer.setInt(startIndex, (int) writeSize);
-        } else {
-            typeEncoder.writeRawArray(buffer, state, values);
         }
     }
 
@@ -202,29 +208,60 @@ public class ArrayTypeEncoder implements PrimitiveTypeEncoder<Object> {
 
     //----- Internal support methods -----------------------------------------//
 
-    private TypeEncoder<?> findTypeEncoder(ProtonBuffer buffer, EncoderState state, Object[] value) {
+    private TypeEncoder<?> findTypeEncoder(ProtonBuffer buffer, EncoderState state, Object value) {
         // Scan the array until we either determine an appropriate TypeEncoder or find
         // that the array is such that encoding it would be invalid.
 
+        if (!value.getClass().isArray()) {
+            throw new IllegalArgumentException("Expected Array type but got: " + value.getClass().getSimpleName());
+        }
+
         TypeEncoder<?> typeEncoder = null;
 
-        if (value.length == 0) {
-            if (value.getClass().getComponentType().equals((Object.class))) {
-                throw new IllegalArgumentException(
-                    "Cannot write a zero sized untyped array.");
+        if (value.getClass().getComponentType().isPrimitive()) {
+            Class<?> componentType = value.getClass().getComponentType();
+
+            if (componentType == Boolean.TYPE) {
+                typeEncoder = state.getEncoder().getTypeEncoder(Boolean.class);
+            } else if (componentType == Byte.TYPE) {
+                typeEncoder = state.getEncoder().getTypeEncoder(Byte.class);
+            } else if (componentType == Short.TYPE) {
+                typeEncoder = state.getEncoder().getTypeEncoder(Short.class);
+            } else if (componentType == Integer.TYPE) {
+                typeEncoder = state.getEncoder().getTypeEncoder(Integer.class);
+            } else if (componentType == Long.TYPE) {
+                typeEncoder = state.getEncoder().getTypeEncoder(Long.class);
+            } else if (componentType == Float.TYPE) {
+                typeEncoder = state.getEncoder().getTypeEncoder(Float.class);
+            } else if (componentType == Double.TYPE) {
+                typeEncoder = state.getEncoder().getTypeEncoder(Double.class);
+            } else if (componentType == Character.TYPE) {
+                typeEncoder = state.getEncoder().getTypeEncoder(Character.class);
             } else {
-                typeEncoder = state.getEncoder().getTypeEncoder(value.getClass().getComponentType());
+                throw new IllegalArgumentException(
+                    "Cannot write arrays of type " + componentType.getName());
             }
         } else {
-            if (value[0].getClass().isArray()) {
-                typeEncoder = this;
-            } else {
-                if (value[0].getClass().equals((Object.class))) {
+            Object[] array = (Object[]) value;
+
+            if (array.length == 0) {
+                if (value.getClass().getComponentType().equals((Object.class))) {
                     throw new IllegalArgumentException(
                         "Cannot write a zero sized untyped array.");
+                } else {
+                    typeEncoder = state.getEncoder().getTypeEncoder(value.getClass().getComponentType());
                 }
+            } else {
+                if (array[0].getClass().isArray()) {
+                    typeEncoder = this;
+                } else {
+                    if (array[0].getClass().equals((Object.class))) {
+                        throw new IllegalArgumentException(
+                            "Cannot write a zero sized untyped array.");
+                    }
 
-                typeEncoder = state.getEncoder().getTypeEncoder(value[0].getClass());
+                    typeEncoder = state.getEncoder().getTypeEncoder(array[0].getClass());
+                }
             }
         }
 

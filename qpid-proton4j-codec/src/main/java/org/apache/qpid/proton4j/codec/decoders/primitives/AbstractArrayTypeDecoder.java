@@ -113,7 +113,7 @@ public abstract class AbstractArrayTypeDecoder extends AbstractPrimitiveTypeDeco
 
             Object[] array = new Object[count];
             for (int i = 0; i < count; i++) {
-                array[i] = arrayDecoder.readValueAsObjectArray(buffer, state);
+                array[i] = arrayDecoder.readValueAsObject(buffer, state);
             }
 
             return array;

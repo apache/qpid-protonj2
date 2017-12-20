@@ -26,7 +26,6 @@ import java.io.IOException;
 
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
-import org.junit.Ignore;
 import org.junit.Test;
 
 /**
@@ -203,7 +202,6 @@ public class BooleanTypeCodecTest extends CodecTestSupport {
         assertEquals(source.length, array.length);
     }
 
-    @Ignore("Primitive type arrays not handled yet.")
     @Test
     public void testArrayOfArraysOfPrimitiveBooleanObjects() throws IOException {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();

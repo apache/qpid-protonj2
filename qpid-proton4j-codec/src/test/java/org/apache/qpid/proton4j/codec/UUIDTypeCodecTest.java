@@ -28,7 +28,6 @@ import org.apache.qpid.proton4j.amqp.Binary;
 import org.apache.qpid.proton4j.amqp.messaging.Data;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
-import org.junit.Ignore;
 import org.junit.Test;
 
 public class UUIDTypeCodecTest extends CodecTestSupport {
@@ -139,7 +138,6 @@ public class UUIDTypeCodecTest extends CodecTestSupport {
         assertEquals(0, array.length);
     }
 
-    @Ignore("Can't currently handle generic arrays")
     @Test
     public void testObjectArrayContainingUUID() throws IOException {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
