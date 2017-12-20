@@ -160,4 +160,31 @@ public class UUIDTypeCodecTest extends CodecTestSupport {
             assertEquals(source[i], array[i]);
         }
     }
+
+    @Test
+    public void testWriteArrayOfUUIDArrayWithZeroSize() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        UUID[][] source = new UUID[2][0];
+        try {
+            encoder.writeArray(buffer, encoderState, source);
+        } catch (Exception e) {
+            fail("Should be able to encode array with no size");
+        }
+
+        Object result = decoder.readObject(buffer, decoderState);
+        assertNotNull(result);
+        assertTrue(result.getClass().isArray());
+
+        Object[] resultArray = (Object[]) result;
+
+        for (int i = 0; i < resultArray.length; ++i) {
+            Object nested = resultArray[i];
+            assertNotNull(result);
+            assertTrue(nested.getClass().isArray());
+
+            UUID[] uuids = (UUID[]) nested;
+            assertEquals(0, uuids.length);
+        }
+    }
 }
