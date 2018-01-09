@@ -75,6 +75,11 @@ import org.apache.qpid.proton4j.codec.decoders.primitives.UnsignedLong0TypeDecod
 import org.apache.qpid.proton4j.codec.decoders.primitives.UnsignedLong64TypeDecoder;
 import org.apache.qpid.proton4j.codec.decoders.primitives.UnsignedLong8TypeDecoder;
 import org.apache.qpid.proton4j.codec.decoders.primitives.UnsignedShortTypeDecoder;
+import org.apache.qpid.proton4j.codec.decoders.security.SaslChallengeTypeDecoder;
+import org.apache.qpid.proton4j.codec.decoders.security.SaslInitTypeDecoder;
+import org.apache.qpid.proton4j.codec.decoders.security.SaslMechanismsTypeDecoder;
+import org.apache.qpid.proton4j.codec.decoders.security.SaslOutcomeTypeDecoder;
+import org.apache.qpid.proton4j.codec.decoders.security.SaslResponseTypeDecoder;
 import org.apache.qpid.proton4j.codec.decoders.transactions.CoordinatorTypeDecoder;
 import org.apache.qpid.proton4j.codec.decoders.transactions.DeclareTypeDecoder;
 import org.apache.qpid.proton4j.codec.decoders.transactions.DeclaredTypeDecoder;
@@ -106,6 +111,15 @@ public class ProtonDecoderFactory {
         addMessagingTypeDecoders(decoder);
         addTransactionTypeDecoders(decoder);
         addTransportTypeDecoders(decoder);
+
+        return decoder;
+    }
+
+    public static ProtonDecoder createSasl() {
+        ProtonDecoder decoder = new ProtonDecoder();
+
+        addSaslTypeDecoders(decoder);
+        addPrimitiveDecoders(decoder);
 
         return decoder;
     }
@@ -194,5 +208,13 @@ public class ProtonDecoderFactory {
         decoder.registerTypeDecoder(new Map32TypeDecoder());
         decoder.registerTypeDecoder(new Array32TypeDecoder());
         decoder.registerTypeDecoder(new Array8TypeDecoder());
+    }
+
+    private static void addSaslTypeDecoders(ProtonDecoder decoder) {
+        decoder.registerTypeDecoder(new SaslChallengeTypeDecoder());
+        decoder.registerTypeDecoder(new SaslInitTypeDecoder());
+        decoder.registerTypeDecoder(new SaslMechanismsTypeDecoder());
+        decoder.registerTypeDecoder(new SaslOutcomeTypeDecoder());
+        decoder.registerTypeDecoder(new SaslResponseTypeDecoder());
     }
 }

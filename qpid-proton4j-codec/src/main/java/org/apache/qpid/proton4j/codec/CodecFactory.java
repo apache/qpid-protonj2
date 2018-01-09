@@ -61,11 +61,43 @@ public final class CodecFactory {
         throw new NoSuchElementException("No decoder registered with name: " + decoderName);
     }
 
+    public static Encoder getSaslEncoder(String encoderName) throws InstantiationException, IllegalAccessException {
+        if (BUILTIN_ENTRY.equalsIgnoreCase(encoderName)) {
+            return getDefaultSaslEncoder();
+        }
+
+        if (encoderRegistry.containsKey(encoderName)) {
+            return encoderRegistry.get(encoderName).newInstance();
+        }
+
+        throw new NoSuchElementException("No encoder registered with name: " + encoderName);
+    }
+
+    public static Decoder getSaslDecoder(String decoderName) throws InstantiationException, IllegalAccessException {
+        if (BUILTIN_ENTRY.equalsIgnoreCase(decoderName)) {
+            return getDefaultSaslDecoder();
+        }
+
+        if (decoderRegistry.containsKey(decoderName)) {
+            return decoderRegistry.get(decoderName).newInstance();
+        }
+
+        throw new NoSuchElementException("No decoder registered with name: " + decoderName);
+    }
+
     public static Encoder getDefaultEncoder() {
         return ProtonEncoderFactory.create();
     }
 
     public static Decoder getDefaultDecoder() {
         return ProtonDecoderFactory.create();
+    }
+
+    public static Encoder getDefaultSaslEncoder() {
+        return ProtonEncoderFactory.createSasl();
+    }
+
+    public static Decoder getDefaultSaslDecoder() {
+        return ProtonDecoderFactory.createSasl();
     }
 }

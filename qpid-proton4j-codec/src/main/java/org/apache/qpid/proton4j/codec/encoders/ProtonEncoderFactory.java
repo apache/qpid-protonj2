@@ -60,6 +60,11 @@ import org.apache.qpid.proton4j.codec.encoders.primitives.UnsignedByteTypeEncode
 import org.apache.qpid.proton4j.codec.encoders.primitives.UnsignedIntegerTypeEncoder;
 import org.apache.qpid.proton4j.codec.encoders.primitives.UnsignedLongTypeEncoder;
 import org.apache.qpid.proton4j.codec.encoders.primitives.UnsignedShortTypeEncoder;
+import org.apache.qpid.proton4j.codec.encoders.security.SaslChallengeTypeEncoder;
+import org.apache.qpid.proton4j.codec.encoders.security.SaslInitTypeEncoder;
+import org.apache.qpid.proton4j.codec.encoders.security.SaslMechanismsTypeEncoder;
+import org.apache.qpid.proton4j.codec.encoders.security.SaslOutcomeTypeEncoder;
+import org.apache.qpid.proton4j.codec.encoders.security.SaslResponseTypeEncoder;
 import org.apache.qpid.proton4j.codec.encoders.transactions.CoordinatorTypeEncoder;
 import org.apache.qpid.proton4j.codec.encoders.transactions.DeclareTypeEncoder;
 import org.apache.qpid.proton4j.codec.encoders.transactions.DeclaredTypeEncoder;
@@ -91,6 +96,15 @@ public class ProtonEncoderFactory {
         addMessagingTypeEncoders(encoder);
         addTransactionTypeEncoders(encoder);
         addTransportTypeEncoders(encoder);
+
+        return encoder;
+    }
+
+    public static ProtonEncoder createSasl() {
+        ProtonEncoder encoder = new ProtonEncoder();
+
+        addSaslTypeEncoders(encoder);
+        addPrimitiveTypeEncoders(encoder);
 
         return encoder;
     }
@@ -164,5 +178,13 @@ public class ProtonEncoderFactory {
         encoder.registerTypeEncoder(new UnsignedIntegerTypeEncoder());
         encoder.registerTypeEncoder(new UnsignedLongTypeEncoder());
         encoder.registerTypeEncoder(new UUIDTypeEncoder());
+    }
+
+    private static void addSaslTypeEncoders(ProtonEncoder encoder) {
+        encoder.registerTypeEncoder(new SaslChallengeTypeEncoder());
+        encoder.registerTypeEncoder(new SaslInitTypeEncoder());
+        encoder.registerTypeEncoder(new SaslMechanismsTypeEncoder());
+        encoder.registerTypeEncoder(new SaslOutcomeTypeEncoder());
+        encoder.registerTypeEncoder(new SaslResponseTypeEncoder());
     }
 }
