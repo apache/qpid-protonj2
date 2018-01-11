@@ -16,10 +16,6 @@
  */
 package org.apache.qpid.proton4j.codec;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.NoSuchElementException;
-
 import org.apache.qpid.proton4j.codec.decoders.ProtonDecoderFactory;
 import org.apache.qpid.proton4j.codec.encoders.ProtonEncoderFactory;
 
@@ -29,60 +25,60 @@ import org.apache.qpid.proton4j.codec.encoders.ProtonEncoderFactory;
  */
 public final class CodecFactory {
 
-    private static final String BUILTIN_ENTRY = "builtin";
-
-    private static final Map<String, Class<Encoder>> encoderRegistry = new HashMap<>();
-    private static final Map<String, Class<Decoder>> decoderRegistry = new HashMap<>();
+    private static Encoder amqpTypeEncoder;
+    private static Encoder saslTypeEncoder;
+    private static Decoder amqpTypeDecoder;
+    private static Decoder saslTypeDecoder;
 
     private CodecFactory() {
     }
 
-    public static Encoder getEncoder(String encoderName) throws InstantiationException, IllegalAccessException {
-        if (BUILTIN_ENTRY.equalsIgnoreCase(encoderName)) {
+    public static void setEncoder(Encoder encoder) {
+        amqpTypeEncoder = encoder;
+    }
+
+    public static void setSaslEncoder(Encoder encoder) {
+        saslTypeEncoder = encoder;
+    }
+
+    public static void setDecoder(Decoder decoder) {
+        amqpTypeDecoder = decoder;
+    }
+
+    public static void setSaslDecoder(Decoder decoder) {
+        saslTypeDecoder = decoder;
+    }
+
+    public static Encoder getEncoder() throws InstantiationException, IllegalAccessException {
+        if (amqpTypeEncoder == null) {
             return getDefaultEncoder();
         }
 
-        if (encoderRegistry.containsKey(encoderName)) {
-            return encoderRegistry.get(encoderName).newInstance();
-        }
-
-        throw new NoSuchElementException("No encoder registered with name: " + encoderName);
+        return amqpTypeEncoder;
     }
 
-    public static Decoder getDecoder(String decoderName) throws InstantiationException, IllegalAccessException {
-        if (BUILTIN_ENTRY.equalsIgnoreCase(decoderName)) {
+    public static Decoder getDecoder() throws InstantiationException, IllegalAccessException {
+        if (amqpTypeDecoder == null) {
             return getDefaultDecoder();
         }
 
-        if (decoderRegistry.containsKey(decoderName)) {
-            return decoderRegistry.get(decoderName).newInstance();
-        }
-
-        throw new NoSuchElementException("No decoder registered with name: " + decoderName);
+        return amqpTypeDecoder;
     }
 
-    public static Encoder getSaslEncoder(String encoderName) throws InstantiationException, IllegalAccessException {
-        if (BUILTIN_ENTRY.equalsIgnoreCase(encoderName)) {
+    public static Encoder getSaslEncoder() throws InstantiationException, IllegalAccessException {
+        if (saslTypeEncoder == null) {
             return getDefaultSaslEncoder();
         }
 
-        if (encoderRegistry.containsKey(encoderName)) {
-            return encoderRegistry.get(encoderName).newInstance();
-        }
-
-        throw new NoSuchElementException("No encoder registered with name: " + encoderName);
+        return saslTypeEncoder;
     }
 
-    public static Decoder getSaslDecoder(String decoderName) throws InstantiationException, IllegalAccessException {
-        if (BUILTIN_ENTRY.equalsIgnoreCase(decoderName)) {
+    public static Decoder getSaslDecoder() throws InstantiationException, IllegalAccessException {
+        if (saslTypeDecoder == null) {
             return getDefaultSaslDecoder();
         }
 
-        if (decoderRegistry.containsKey(decoderName)) {
-            return decoderRegistry.get(decoderName).newInstance();
-        }
-
-        throw new NoSuchElementException("No decoder registered with name: " + decoderName);
+        return saslTypeDecoder;
     }
 
     public static Encoder getDefaultEncoder() {

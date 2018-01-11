@@ -21,7 +21,9 @@ import java.io.IOException;
 import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonBufferAllocator;
+import org.apache.qpid.proton4j.transport.FrameParser;
 import org.apache.qpid.proton4j.transport.ProtocolTracer;
+import org.apache.qpid.proton4j.transport.SaslStrategy;
 import org.apache.qpid.proton4j.transport.Transport;
 import org.apache.qpid.proton4j.transport.TransportListener;
 
@@ -37,8 +39,12 @@ public class ProtonTransport implements Transport {
     private TransportListener transportListener;
     private ProtocolTracer tracer;
 
+    private SaslStrategy saslStrategy;
+    private FrameParser currentParser = new AmqpHeaderParser(this);;
+
     @Override
     public void processIncoming(ProtonBuffer buffer) throws IOException {
+        currentParser.parse(buffer);
     }
 
     @Override
@@ -102,6 +108,8 @@ public class ProtonTransport implements Transport {
      * @throws IOException if an error occurs while processing the incoming header.
      */
     public void onAMQPHeader(AMQPHeader header) throws IOException {
+        currentParser = new AmqpFrameParser(this);
+
         if (transportListener != null) {
             transportListener.onPerformative(header);
         }

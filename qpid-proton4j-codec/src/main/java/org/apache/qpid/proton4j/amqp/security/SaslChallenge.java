@@ -20,7 +20,7 @@ import org.apache.qpid.proton4j.amqp.Binary;
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
 
-public final class SaslChallenge {
+public final class SaslChallenge implements SaslPerformative {
 
     public static final UnsignedLong DESCRIPTOR_CODE = UnsignedLong.valueOf(0x0000000000000042L);
     public static final Symbol DESCRIPTOR_SYMBOL = Symbol.valueOf("amqp:sasl-challenge:list");
@@ -42,5 +42,10 @@ public final class SaslChallenge {
     @Override
     public String toString() {
         return "SaslChallenge{" + "challenge=" + challenge + '}';
+    }
+
+    @Override
+    public SaslPerformativeType getPerformativeType() {
+        return SaslPerformativeType.Challenge;
     }
 }

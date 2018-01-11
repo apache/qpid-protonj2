@@ -14,25 +14,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.qpid.proton4j.transport;
-
-import org.apache.qpid.proton4j.codec.Decoder;
-import org.apache.qpid.proton4j.codec.Encoder;
+package org.apache.qpid.proton4j.transport.sasl;
 
 /**
- * Interface for a strategy type which manages how the transport deals
- * with incoming SASL AMQP Headers and SASL based mechanisms
+ * SASL Strategy for transport that act as the Client side of an AMQP connection.
  */
-public interface SaslStrategy {
-
-    boolean isDone();
-
-    void setSaslListener(SaslListener listener);
-
-    SaslListener getSaslListener();
-
-    Encoder getSaslEndoer();
-
-    Decoder getSaslDecoder();
+public class ClientSaslStrategy extends AbstractSaslStrategy {
 
 }

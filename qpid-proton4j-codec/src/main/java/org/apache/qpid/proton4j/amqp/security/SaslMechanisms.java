@@ -21,7 +21,7 @@ import java.util.Arrays;
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
 
-public final class SaslMechanisms {
+public final class SaslMechanisms implements SaslPerformative {
 
     public static final UnsignedLong DESCRIPTOR_CODE = UnsignedLong.valueOf(0x0000000000000040L);
     public static final Symbol DESCRIPTOR_SYMBOL = Symbol.valueOf("amqp:sasl-mechanisms:list");
@@ -44,5 +44,10 @@ public final class SaslMechanisms {
     public String toString() {
         return "SaslMechanisms{" + "saslServerMechanisms=" +
                     (saslServerMechanisms == null ? null : Arrays.asList(saslServerMechanisms)) + '}';
+    }
+
+    @Override
+    public SaslPerformativeType getPerformativeType() {
+        return SaslPerformativeType.Mechanisms;
     }
 }

@@ -20,7 +20,7 @@ import org.apache.qpid.proton4j.amqp.Binary;
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
 
-public final class SaslInit {
+public final class SaslInit implements SaslPerformative {
 
     public static final UnsignedLong DESCRIPTOR_CODE = UnsignedLong.valueOf(0x0000000000000041L);
     public static final Symbol DESCRIPTOR_SYMBOL = Symbol.valueOf("amqp:sasl-init:list");
@@ -63,5 +63,10 @@ public final class SaslInit {
                "mechanism=" + mechanism +
                ", initialResponse=" + initialResponse +
                ", hostname='" + hostname + '\'' + '}';
+    }
+
+    @Override
+    public SaslPerformativeType getPerformativeType() {
+        return SaslPerformativeType.Init;
     }
 }

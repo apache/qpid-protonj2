@@ -20,7 +20,7 @@ import org.apache.qpid.proton4j.amqp.Binary;
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
 
-public final class SaslResponse {
+public final class SaslResponse implements SaslPerformative {
 
     public static final UnsignedLong DESCRIPTOR_CODE = UnsignedLong.valueOf(0x0000000000000043L);
     public static final Symbol DESCRIPTOR_SYMBOL = Symbol.valueOf("amqp:sasl-response:list");
@@ -42,5 +42,10 @@ public final class SaslResponse {
     @Override
     public String toString() {
         return "SaslResponse{" + "response=" + response + '}';
+    }
+
+    @Override
+    public SaslPerformativeType getPerformativeType() {
+        return SaslPerformativeType.Response;
     }
 }
