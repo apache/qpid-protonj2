@@ -22,6 +22,7 @@ import org.apache.qpid.proton4j.amqp.messaging.AmqpValue;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.EncoderState;
 import org.apache.qpid.proton4j.codec.EncodingCodes;
+import org.apache.qpid.proton4j.codec.TypeEncoder;
 import org.apache.qpid.proton4j.codec.encoders.AbstractDescribedTypeEncoder;
 
 /**
@@ -52,12 +53,45 @@ public class AmqpValueTypeEncoder extends AbstractDescribedTypeEncoder<AmqpValue
     }
 
     @Override
-    public void writeArray(ProtonBuffer buffer, EncoderState state, Object[] value) {
-        // TODO Need a way to write the inner value of an AMQPValue in the array body.
+    public void writeArray(ProtonBuffer buffer, EncoderState state, Object[] values) {
+        // Write the Array Type encoding code, we don't optimize here.
+        buffer.writeByte(EncodingCodes.ARRAY32);
+
+        int startIndex = buffer.getWriteIndex();
+
+        // Reserve space for the size and write the count of list elements.
+        buffer.writeInt(0);
+        buffer.writeInt(values.length);
+
+        writeRawArray(buffer, state, values);
+
+        // Move back and write the size
+        int endIndex = buffer.getWriteIndex();
+        long writeSize = endIndex - startIndex - Integer.BYTES;
+
+        if (writeSize > Integer.MAX_VALUE) {
+            throw new IllegalArgumentException("Cannot encode given array, encoded size to large: " + writeSize);
+        }
+
+        buffer.setInt(startIndex, (int) writeSize);
     }
 
     @Override
     public void writeRawArray(ProtonBuffer buffer, EncoderState state, Object[] values) {
-        // TODO Need a way to write the inner value of an AMQPValue in the array body.
+        buffer.writeByte(EncodingCodes.DESCRIBED_TYPE_INDICATOR);
+        state.getEncoder().writeUnsignedLong(buffer, state, getDescriptorCode());
+
+        Object[] elements = new Object[values.length];
+
+        for (int i = 0; i < values.length; ++i) {
+            AmqpValue sequence = (AmqpValue) values[i];
+            elements[i] = sequence.getValue();
+        }
+
+        TypeEncoder<?> entryEncoder = state.getEncoder().getTypeEncoder(elements[0].getClass());
+
+        // This should fail if the array of AmqpSequences do not all contain the same type
+        // in the value portion of the sequence.
+        entryEncoder.writeArray(buffer, state, elements);
     }
 }

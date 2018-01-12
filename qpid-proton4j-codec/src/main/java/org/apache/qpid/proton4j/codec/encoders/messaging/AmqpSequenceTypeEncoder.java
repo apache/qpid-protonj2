@@ -16,12 +16,15 @@
  */
 package org.apache.qpid.proton4j.codec.encoders.messaging;
 
+import java.util.List;
+
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.amqp.messaging.AmqpSequence;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.EncoderState;
 import org.apache.qpid.proton4j.codec.EncodingCodes;
+import org.apache.qpid.proton4j.codec.TypeEncoder;
 import org.apache.qpid.proton4j.codec.encoders.AbstractDescribedTypeEncoder;
 
 /**
@@ -52,12 +55,43 @@ public class AmqpSequenceTypeEncoder extends AbstractDescribedTypeEncoder<AmqpSe
     }
 
     @Override
-    public void writeArray(ProtonBuffer buffer, EncoderState state, Object[] value) {
-        // TODO Need a way to write the inner list of an AmqpSequence in the array body.
+    public void writeArray(ProtonBuffer buffer, EncoderState state, Object[] values) {
+        // Write the Array Type encoding code, we don't optimize here.
+        buffer.writeByte(EncodingCodes.ARRAY32);
+
+        int startIndex = buffer.getWriteIndex();
+
+        // Reserve space for the size and write the count of list elements.
+        buffer.writeInt(0);
+        buffer.writeInt(values.length);
+
+        writeRawArray(buffer, state, values);
+
+        // Move back and write the size
+        int endIndex = buffer.getWriteIndex();
+        long writeSize = endIndex - startIndex - Integer.BYTES;
+
+        if (writeSize > Integer.MAX_VALUE) {
+            throw new IllegalArgumentException("Cannot encode given array, encoded size to large: " + writeSize);
+        }
+
+        buffer.setInt(startIndex, (int) writeSize);
     }
 
+    @SuppressWarnings("rawtypes")
     @Override
     public void writeRawArray(ProtonBuffer buffer, EncoderState state, Object[] values) {
-        // TODO Need a way to write the inner list of an AmqpSequence in the array body.
+        buffer.writeByte(EncodingCodes.DESCRIBED_TYPE_INDICATOR);
+        state.getEncoder().writeUnsignedLong(buffer, state, getDescriptorCode());
+
+        List[] elements = new List[values.length];
+
+        for (int i = 0; i < values.length; ++i) {
+            AmqpSequence sequence = (AmqpSequence) values[i];
+            elements[i] = sequence.getValue();
+        }
+
+        TypeEncoder<?> entryEncoder = state.getEncoder().getTypeEncoder(List.class);
+        entryEncoder.writeArray(buffer, state, elements);
     }
 }
