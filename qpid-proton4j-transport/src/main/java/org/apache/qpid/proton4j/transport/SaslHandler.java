@@ -23,7 +23,7 @@ import org.apache.qpid.proton4j.codec.Encoder;
  * Interface for a strategy type which manages how the transport deals
  * with incoming SASL AMQP Headers and SASL based mechanisms
  */
-public interface SaslStrategy {
+public interface SaslHandler {
 
     boolean isDone();
 
@@ -33,6 +33,14 @@ public interface SaslStrategy {
 
     Encoder getSaslEndoer();
 
+    void setSaslEncoder(Encoder encoder);
+
     Decoder getSaslDecoder();
+
+    void setSaslDecoder(Decoder decoder);
+
+    void client();
+
+    void server();
 
 }

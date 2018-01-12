@@ -16,18 +16,19 @@
  */
 package org.apache.qpid.proton4j.transport.sasl;
 
+import org.apache.qpid.proton4j.codec.CodecFactory;
 import org.apache.qpid.proton4j.codec.Decoder;
 import org.apache.qpid.proton4j.codec.Encoder;
+import org.apache.qpid.proton4j.transport.SaslHandler;
 import org.apache.qpid.proton4j.transport.SaslListener;
-import org.apache.qpid.proton4j.transport.SaslStrategy;
 
 /**
  * Base class used for common portions of the SASL processing pipeline.
  */
-public abstract class AbstractSaslStrategy implements SaslStrategy {
+public class ProtonSaslHandler implements SaslHandler {
 
-    private Decoder saslDecoder;
-    private Encoder saslEncoder;
+    private Decoder saslDecoder = CodecFactory.getSaslDecoder();
+    private Encoder saslEncoder = CodecFactory.getSaslEncoder();
 
     private SaslListener saslListener;
     private boolean done;
@@ -48,12 +49,30 @@ public abstract class AbstractSaslStrategy implements SaslStrategy {
     }
 
     @Override
+    public void setSaslEncoder(Encoder encoder) {
+        this.saslEncoder = encoder;
+    }
+
+    @Override
     public Decoder getSaslDecoder() {
         return saslDecoder;
     }
 
     @Override
+    public void setSaslDecoder(Decoder decoder) {
+        this.saslDecoder = decoder;
+    }
+
+    @Override
     public boolean isDone() {
         return done;
+    }
+
+    @Override
+    public void client() {
+    }
+
+    @Override
+    public void server() {
     }
 }

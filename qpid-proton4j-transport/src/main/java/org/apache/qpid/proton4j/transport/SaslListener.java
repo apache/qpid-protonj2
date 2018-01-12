@@ -35,7 +35,7 @@ public interface SaslListener {
      * @param sasl the Sasl object
      * @param transport the related transport
      */
-    void onSaslMechanisms(SaslStrategy sasl, Transport transport);
+    void onSaslMechanisms(SaslHandler sasl, Transport transport);
 
     /**
      * Called when a sasl-init frame has arrived and its effect
@@ -45,7 +45,7 @@ public interface SaslListener {
      * @param sasl the Sasl object
      * @param transport the related transport
      */
-    void onSaslInit(SaslStrategy sasl, Transport transport);
+    void onSaslInit(SaslHandler sasl, Transport transport);
 
     /**
      * Called when a sasl-challenge frame has arrived and its effect
@@ -54,7 +54,7 @@ public interface SaslListener {
      * @param sasl the Sasl object
      * @param transport the related transport
      */
-    void onSaslChallenge(SaslStrategy sasl, Transport transport);
+    void onSaslChallenge(SaslHandler sasl, Transport transport);
 
     /**
      * Called when a sasl-response frame has arrived and its effect
@@ -63,7 +63,7 @@ public interface SaslListener {
      * @param sasl the Sasl object
      * @param transport the related transport
      */
-    void onSaslResponse(SaslStrategy sasl, Transport transport);
+    void onSaslResponse(SaslHandler sasl, Transport transport);
 
     /**
      * Called when a sasl-outcome frame has arrived and its effect
@@ -73,6 +73,6 @@ public interface SaslListener {
      * @param sasl the Sasl object
      * @param transport the related transport
      */
-    void onSaslOutcome(SaslStrategy sasl, Transport transport);
+    void onSaslOutcome(SaslHandler sasl, Transport transport);
 
 }

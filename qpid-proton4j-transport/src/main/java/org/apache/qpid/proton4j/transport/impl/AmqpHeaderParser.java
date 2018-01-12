@@ -20,7 +20,6 @@ import java.io.IOException;
 
 import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
-import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.transport.FrameParser;
 import org.apache.qpid.proton4j.transport.exceptions.TransportException;
 
@@ -28,12 +27,6 @@ import org.apache.qpid.proton4j.transport.exceptions.TransportException;
  * Used to parse incoming AMQP Headers from a data stream.
  */
 public class AmqpHeaderParser implements FrameParser {
-
-    public static final byte[] HEADER = new byte[]
-        { 'A', 'M', 'Q', 'P', 0, 1, 0, 0 };
-
-    public static final byte[] SASL_HEADER = new byte[]
-        { 'A', 'M', 'Q', 'P', 3, 1, 0, 0 };
 
     private enum State {
         HEADER0,
@@ -50,8 +43,8 @@ public class AmqpHeaderParser implements FrameParser {
 
     private State parsingState = State.HEADER0;
 
-    private ProtonBuffer headerBuffer;
     private ProtonTransport transport;
+    private AMQPHeader header = AMQPHeader.getSASLHeader();
 
     public AmqpHeaderParser(final ProtonTransport transport) {
         this.transport = transport;
@@ -60,26 +53,20 @@ public class AmqpHeaderParser implements FrameParser {
     @Override
     public void reset() {
         parsingState = State.HEADER0;
-        headerBuffer = ProtonByteBufferAllocator.DEFAULT.allocate(HEADER.length, HEADER.length);
     }
 
     @Override
     public void parse(ProtonBuffer incoming) throws IOException {
-        // Buffer up what we can of the Header and parse right away to detect invalid
-        // header values immediately.
-        int length = Math.min(incoming.getReadableBytes(), headerBuffer.getWritableBytes());
-        incoming.readBytes(incoming, length);
-
         TransportException parsingError = null;
 
-        while (headerBuffer.isReadable() && parsingState != State.ERROR && parsingState != State.ERROR) {
+        while (incoming.isReadable() && parsingState != State.ERROR && parsingState != State.ERROR) {
             switch (parsingState) {
                 case HEADER0:
                     if (incoming.isReadable()) {
                         byte c = incoming.readByte();
-                        if (c != HEADER[0]) {
+                        if (c != header.getByteAt(0)) {
                             parsingError = new TransportException(String.format(
-                                "AMQP header mismatch value %x, expecting %x. In state: %s", c, HEADER[0], parsingState));
+                                "AMQP header mismatch value %x, expecting %x. In state: %s", c, header.getByteAt(0), parsingState));
                             parsingState = State.ERROR;
                             break;
                         }
@@ -90,9 +77,9 @@ public class AmqpHeaderParser implements FrameParser {
                 case HEADER1:
                     if (incoming.isReadable()) {
                         byte c = incoming.readByte();
-                        if (c != HEADER[1]) {
+                        if (c != header.getByteAt(1)) {
                             parsingError = new TransportException(String.format(
-                                "AMQP header mismatch value %x, expecting %x. In state: %s", c, HEADER[1], parsingState));
+                                "AMQP header mismatch value %x, expecting %x. In state: %s", c, header.getByteAt(1), parsingState));
                             parsingState = State.ERROR;
                             break;
                         }
@@ -103,9 +90,9 @@ public class AmqpHeaderParser implements FrameParser {
                 case HEADER2:
                     if (incoming.isReadable()) {
                         byte c = incoming.readByte();
-                        if (c != HEADER[2]) {
+                        if (c != header.getByteAt(2)) {
                             parsingError = new TransportException(String.format(
-                                "AMQP header mismatch value %x, expecting %x. In state: %s", c, HEADER[2], parsingState));
+                                "AMQP header mismatch value %x, expecting %x. In state: %s", c, header.getByteAt(2), parsingState));
                             parsingState = State.ERROR;
                             break;
                         }
@@ -116,9 +103,9 @@ public class AmqpHeaderParser implements FrameParser {
                 case HEADER3:
                     if (incoming.isReadable()) {
                         byte c = incoming.readByte();
-                        if (c != HEADER[3]) {
+                        if (c != header.getByteAt(3)) {
                             parsingError = new TransportException(String.format(
-                                "AMQP header mismatch value %x, expecting %x. In state: %s", c, HEADER[3], parsingState));
+                                "AMQP header mismatch value %x, expecting %x. In state: %s", c, header.getByteAt(3), parsingState));
                             parsingState = State.ERROR;
                             break;
                         }
@@ -129,9 +116,9 @@ public class AmqpHeaderParser implements FrameParser {
                 case HEADER4:
                     if (incoming.isReadable()) {
                         byte c = incoming.readByte();
-                        if (c != HEADER[4] && c != SASL_HEADER[4]) {
+                        if (c != header.getByteAt(4)) {
                             parsingError = new TransportException(String.format(
-                                "AMQP header mismatch value %x, expecting %x. In state: %s", c, HEADER[4], parsingState));
+                                "AMQP header mismatch value %x, expecting %x. In state: %s", c, header.getByteAt(4), parsingState));
                             parsingState = State.ERROR;
                             break;
                         }
@@ -142,9 +129,9 @@ public class AmqpHeaderParser implements FrameParser {
                 case HEADER5:
                     if (incoming.isReadable()) {
                         byte c = incoming.readByte();
-                        if (c != HEADER[5]) {
+                        if (c != header.getByteAt(5)) {
                             parsingError = new TransportException(String.format(
-                                "AMQP header mismatch value %x, expecting %x. In state: %s", c, HEADER[5], parsingState));
+                                "AMQP header mismatch value %x, expecting %x. In state: %s", c, header.getByteAt(5), parsingState));
                             parsingState = State.ERROR;
                             break;
                         }
@@ -155,9 +142,9 @@ public class AmqpHeaderParser implements FrameParser {
                 case HEADER6:
                     if (incoming.isReadable()) {
                         byte c = incoming.readByte();
-                        if (c != HEADER[6]) {
+                        if (c != header.getByteAt(6)) {
                             parsingError = new TransportException(String.format(
-                                "AMQP header mismatch value %x, expecting %x. In state: %s", c, HEADER[6], parsingState));
+                                "AMQP header mismatch value %x, expecting %x. In state: %s", c, header.getByteAt(6), parsingState));
                             parsingState = State.ERROR;
                             break;
                         }
@@ -168,9 +155,9 @@ public class AmqpHeaderParser implements FrameParser {
                 case HEADER7:
                     if (incoming.isReadable()) {
                         byte c = incoming.readByte();
-                        if (c != HEADER[7]) {
+                        if (c != header.getByteAt(7)) {
                             parsingError = new TransportException(String.format(
-                                "AMQP header mismatch value %x, expecting %x. In state: %s", c, HEADER[7], parsingState));
+                                "AMQP header mismatch value %x, expecting %x. In state: %s", c, header.getByteAt(7), parsingState));
                             parsingState = State.ERROR;
                             break;
                         } else {
@@ -187,11 +174,8 @@ public class AmqpHeaderParser implements FrameParser {
         }
 
         if (parsingState == State.DONE) {
-            AMQPHeader header = new AMQPHeader(headerBuffer);
-            headerBuffer = null;
             transport.onAMQPHeader(header);
         } else if (parsingState == State.ERROR) {
-            headerBuffer = null;
             throw parsingError;
         }
     }

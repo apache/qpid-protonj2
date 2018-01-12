@@ -49,7 +49,7 @@ public final class CodecFactory {
         saslTypeDecoder = decoder;
     }
 
-    public static Encoder getEncoder() throws InstantiationException, IllegalAccessException {
+    public static Encoder getEncoder() {
         if (amqpTypeEncoder == null) {
             return getDefaultEncoder();
         }
@@ -57,7 +57,7 @@ public final class CodecFactory {
         return amqpTypeEncoder;
     }
 
-    public static Decoder getDecoder() throws InstantiationException, IllegalAccessException {
+    public static Decoder getDecoder() {
         if (amqpTypeDecoder == null) {
             return getDefaultDecoder();
         }
@@ -65,7 +65,7 @@ public final class CodecFactory {
         return amqpTypeDecoder;
     }
 
-    public static Encoder getSaslEncoder() throws InstantiationException, IllegalAccessException {
+    public static Encoder getSaslEncoder() {
         if (saslTypeEncoder == null) {
             return getDefaultSaslEncoder();
         }
@@ -73,7 +73,7 @@ public final class CodecFactory {
         return saslTypeEncoder;
     }
 
-    public static Decoder getSaslDecoder() throws InstantiationException, IllegalAccessException {
+    public static Decoder getSaslDecoder() {
         if (saslTypeDecoder == null) {
             return getDefaultSaslDecoder();
         }

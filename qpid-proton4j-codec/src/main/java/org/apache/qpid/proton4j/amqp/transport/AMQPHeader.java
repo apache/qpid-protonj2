@@ -27,18 +27,36 @@ public class AMQPHeader implements Performative {
 
     static final byte[] PREFIX = new byte[] { 'A', 'M', 'Q', 'P' };
 
+    private static final AMQPHeader AMQP_HEADER =
+        new AMQPHeader(new byte[] { 'A', 'M', 'Q', 'P', 0, 1, 0, 0 });
+
+    private static final AMQPHeader SASL_HEADER =
+        new AMQPHeader(new byte[] { 'A', 'M', 'Q', 'P', 3, 1, 0, 0 });
+
     private ProtonBuffer buffer;
 
     public AMQPHeader() {
         this(new ProtonByteBuffer(new byte[] { 'A', 'M', 'Q', 'P', 0, 1, 0, 0 }));
     }
 
+    public AMQPHeader(byte[] headerBytes) {
+        setBuffer(new ProtonByteBuffer(headerBytes), true);
+    }
+
     public AMQPHeader(ProtonBuffer buffer) {
-        this(buffer, true);
+        this(buffer.copy(), true);
     }
 
     public AMQPHeader(ProtonBuffer buffer, boolean validate) {
-        setBuffer(buffer, validate);
+        setBuffer(buffer.copy(), validate);
+    }
+
+    public static AMQPHeader getRawAMQPHeader() {
+        return AMQP_HEADER;
+    }
+
+    public static AMQPHeader getSASLHeader() {
+        return SASL_HEADER;
     }
 
     @Override
@@ -50,47 +68,24 @@ public class AMQPHeader implements Performative {
         return buffer.getByte(4) & 0xFF;
     }
 
-    public void setProtocolId(int value) {
-        buffer.setByte(4, (byte) value);
-    }
-
     public int getMajor() {
         return buffer.getByte(5) & 0xFF;
-    }
-
-    public void setMajor(int value) {
-        buffer.setByte(5, (byte) value);
     }
 
     public int getMinor() {
         return buffer.getByte(6) & 0xFF;
     }
 
-    public void setMinor(int value) {
-        buffer.setByte(6, (byte) value);
-    }
-
     public int getRevision() {
         return buffer.getByte(7) & 0xFF;
     }
 
-    public void setRevision(int value) {
-        buffer.setByte(7, (byte) value);
-    }
-
     public ProtonBuffer getBuffer() {
-        return buffer;
+        return buffer.copy();
     }
 
-    public void setBuffer(ProtonBuffer value) {
-        setBuffer(value, true);
-    }
-
-    public void setBuffer(ProtonBuffer value, boolean validate) {
-        if (validate && (value.getReadableBytes() != 8 || !startsWith(value, PREFIX))) {
-            throw new IllegalArgumentException("Not an AMQP header buffer");
-        }
-        buffer = value.duplicate();
+    public byte getByteAt(int i) {
+        return buffer.getByte(i);
     }
 
     public boolean hasValidPrefix() {
@@ -124,5 +119,13 @@ public class AMQPHeader implements Performative {
         }
 
         return true;
+    }
+
+    private void setBuffer(ProtonBuffer value, boolean validate) {
+        if (validate && (value.getReadableBytes() != 8 || !startsWith(value, PREFIX))) {
+            throw new IllegalArgumentException("Not an AMQP header buffer");
+        }
+
+        buffer = value.duplicate();
     }
 }
