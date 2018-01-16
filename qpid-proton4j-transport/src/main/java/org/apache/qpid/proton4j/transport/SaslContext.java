@@ -14,14 +14,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.qpid.proton4j.transport.sasl;
-
-import org.apache.qpid.proton4j.transport.SaslListener;
+package org.apache.qpid.proton4j.transport;
 
 /**
- * The State engine for a Sasl exchange.
+ * Context for a SASL exchange.
  */
-public class Sasl {
+public interface SaslContext {
 
     public enum SaslState {
         /** Pending configuration by application */
@@ -69,23 +67,4 @@ public class Sasl {
     public static SaslOutcome PN_SASL_TEMP = SaslOutcome.PN_SASL_TEMP;
     public static SaslOutcome PN_SASL_SKIPPED = SaslOutcome.PN_SASL_SKIPPED;
 
-    private ProtonSaslHandler saslHandler;
-    private SaslListener listener;
-    private boolean done;
-
-    public Sasl(ProtonSaslHandler handler) {
-        this.saslHandler = handler;
-    }
-
-    public boolean isDone() {
-        return done;
-    }
-
-    public SaslListener getSaslListener() {
-        return listener;
-    }
-
-    public void setSaslListener(SaslListener listener) {
-        this.listener = listener;
-    }
 }

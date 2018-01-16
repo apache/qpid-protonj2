@@ -23,8 +23,6 @@ package org.apache.qpid.proton4j.transport;
  * See the AMQP specification
  * <a href="http://docs.oasis-open.org/amqp/core/v1.0/os/amqp-core-security-v1.0-os.html#doc-idp51040">
  * SASL negotiation process</a> overview for related detail.
- *
- * TODO - Pass the strategy for now, maybe a different Sasl hander with state for one session later.
  */
 public interface SaslListener {
 
@@ -32,47 +30,42 @@ public interface SaslListener {
      * Called when a sasl-mechanisms frame has arrived and its effect
      * applied, indicating the offered mechanisms sent by the 'server' peer.
      *
-     * @param sasl the Sasl object
-     * @param transport the related transport
+     * @param sasl the SaslContext object
      */
-    void onSaslMechanisms(SaslHandler sasl, Transport transport);
+    void onSaslMechanisms(SaslContext context);
 
     /**
      * Called when a sasl-init frame has arrived and its effect
      * applied, indicating the selected mechanism and any hostname
      * and initial-response details from the 'client' peer.
      *
-     * @param sasl the Sasl object
-     * @param transport the related transport
+     * @param sasl the SaslContext object
      */
-    void onSaslInit(SaslHandler sasl, Transport transport);
+    void onSaslInit(SaslContext context);
 
     /**
      * Called when a sasl-challenge frame has arrived and its effect
      * applied, indicating the challenge sent by the 'server' peer.
      *
-     * @param sasl the Sasl object
-     * @param transport the related transport
+     * @param sasl the SaslContext object
      */
-    void onSaslChallenge(SaslHandler sasl, Transport transport);
+    void onSaslChallenge(SaslContext context);
 
     /**
      * Called when a sasl-response frame has arrived and its effect
      * applied, indicating the response sent by the 'client' peer.
      *
-     * @param sasl the Sasl object
-     * @param transport the related transport
+     * @param sasl the SaslContext object
      */
-    void onSaslResponse(SaslHandler sasl, Transport transport);
+    void onSaslResponse(SaslContext context);
 
     /**
      * Called when a sasl-outcome frame has arrived and its effect
      * applied, indicating the outcome and any success additional-data
      * sent by the 'server' peer.
      *
-     * @param sasl the Sasl object
-     * @param transport the related transport
+     * @param sasl the SaslContext object
      */
-    void onSaslOutcome(SaslHandler sasl, Transport transport);
+    void onSaslOutcome(SaslContext context);
 
 }
