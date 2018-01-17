@@ -23,6 +23,8 @@ package org.apache.qpid.proton4j.transport;
  * See the AMQP specification
  * <a href="http://docs.oasis-open.org/amqp/core/v1.0/os/amqp-core-security-v1.0-os.html#doc-idp51040">
  * SASL negotiation process</a> overview for related detail.
+ *
+ * TODO - Do we want client and server versions to make impls simpler (no default empty methods needed).
  */
 public interface SaslListener {
 

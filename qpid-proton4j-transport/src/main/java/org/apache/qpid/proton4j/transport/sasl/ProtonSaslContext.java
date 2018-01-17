@@ -16,30 +16,60 @@
  */
 package org.apache.qpid.proton4j.transport.sasl;
 
-import org.apache.qpid.proton4j.transport.SaslListener;
+import org.apache.qpid.proton4j.amqp.Binary;
+import org.apache.qpid.proton4j.amqp.Symbol;
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import org.apache.qpid.proton4j.transport.SaslContext.SaslOutcome;
+import org.apache.qpid.proton4j.transport.SaslContext.SaslState;
 
 /**
  * The State engine for a Sasl exchange.
+ *
+ * TODO - Should we have a client and server context ?
+ *
  */
 public class ProtonSaslContext {
 
-    private ProtonSaslHandler saslHandler;
-    private SaslListener listener;
-    private boolean done;
+    enum Role { CLIENT, SERVER };
 
-    public ProtonSaslContext(ProtonSaslHandler handler) {
+    private ProtonSaslHandler saslHandler;
+
+    private SaslOutcome outcome = SaslOutcome.PN_SASL_NONE;
+    private SaslState state = SaslState.PN_SASL_IDLE;
+    private String hostname;
+
+    private Symbol[] serverMechanisms;
+    private Symbol clientMechanism;
+
+    private boolean done;
+    private Symbol chosenMechanism;
+
+    private Role role;
+
+    private ProtonBuffer pending;
+
+    private boolean headerWritten;
+    private Binary challengeResponse;
+    private boolean initReceived;
+    private boolean mechanismsSent;
+    private boolean initSent;
+
+    public ProtonSaslContext(ProtonSaslHandler handler, Role role) {
         this.saslHandler = handler;
+        this.role = role;
     }
 
     public boolean isDone() {
         return done;
     }
 
-    public SaslListener getSaslListener() {
-        return listener;
-    }
-
-    public void setSaslListener(SaslListener listener) {
-        this.listener = listener;
+    /**
+     * Called from a client to indicate the chosen SASL mechanism for the exchange.
+     *
+     * @param mechanism
+     *      The SASL mechanism chosen from the server provided set.
+     */
+    public void setClientMechanism(Symbol mechanism) {
+        this.clientMechanism = mechanism;
     }
 }

@@ -24,6 +24,9 @@ import org.apache.qpid.proton4j.transport.SaslListener;
 
 /**
  * Base class used for common portions of the SASL processing pipeline.
+ *
+ * TODO - Do we want a client and server handler or just one with factory methods for
+ *        that create a handler in the correct state ?
  */
 public class ProtonSaslHandler implements SaslHandler {
 
@@ -32,6 +35,9 @@ public class ProtonSaslHandler implements SaslHandler {
 
     private SaslListener saslListener;
     private boolean done;
+
+    private ProtonSaslContext context;
+    private ProtonSaslFrameParser frameParser;
 
     @Override
     public void setSaslListener(SaslListener saslListener) {

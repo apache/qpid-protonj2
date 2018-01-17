@@ -30,7 +30,7 @@ import org.apache.qpid.proton4j.transport.exceptions.TransportException;
 /**
  * Parser of SASL Frames from the incoming data stream
  */
-public class SaslFrameParser implements FrameParser {
+public class ProtonSaslFrameParser implements FrameParser {
 
     public static final byte[] HEADER = new byte[]
         { 'A', 'M', 'Q', 'P', 3, 1, 0, 0 };
@@ -185,7 +185,11 @@ public class SaslFrameParser implements FrameParser {
                         } else {
                             // TODO - Send along a non-sasl header for processing
                             //        such that a server could allow both sasl and
-                            //        non-sasl connections.
+                            //        non-sasl connections.  Do we send both the sasl
+                            //        and the non-sasl header?
+
+                            // fireAmqpHeaderRead(HEADER);
+
                             parsingState = State.SIZE_0;
                         }
                     } else {
