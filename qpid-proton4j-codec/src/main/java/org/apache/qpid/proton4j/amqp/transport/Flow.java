@@ -18,6 +18,7 @@ package org.apache.qpid.proton4j.amqp.transport;
 
 import java.util.Map;
 
+import org.apache.qpid.proton4j.amqp.Binary;
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedInteger;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
@@ -142,6 +143,11 @@ public final class Flow implements Performative {
     @Override
     public PerformativeType getPerformativeType() {
         return PerformativeType.Flow;
+    }
+
+    @Override
+    public <E> void invoke(PerformativeHandler<E> handler, Binary payload, E context) {
+        handler.handleFlow(this, payload, context);
     }
 
     @Override

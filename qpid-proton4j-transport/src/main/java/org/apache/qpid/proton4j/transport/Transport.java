@@ -59,12 +59,12 @@ public interface Transport {
      * @param listener
      *      A TransportListener instance that will be notified of Transport events.
      */
-    void setTransportListener(TransportListener listener);
+    void setTransportListener(TransportHandler listener);
 
     /**
-     * @return the currently assigned {@link TransportListener}.
+     * @return the currently assigned {@link TransportHandler}.
      */
-    TransportListener getTransportListener();
+    TransportHandler getTransportListener();
 
     /**
      * Sets the ProtocolTracer used to log frames entering and leaving the Transport.

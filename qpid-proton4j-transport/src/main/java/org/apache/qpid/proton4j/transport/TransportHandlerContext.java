@@ -14,19 +14,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.qpid.proton4j.amqp.transport;
+package org.apache.qpid.proton4j.transport;
 
 /**
- * An empty frame which can be used to drive transport activity when idle.
+ *
  */
-public final class EmptyFrame extends Frame {
+public interface TransportHandlerContext {
 
-    public EmptyFrame() {
-        super(null, (byte) 0);
-    }
-
-    @Override
-    public String toString() {
-        return "Empty Frame";
-    }
 }

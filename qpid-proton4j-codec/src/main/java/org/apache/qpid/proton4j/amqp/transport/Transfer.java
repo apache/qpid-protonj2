@@ -136,6 +136,11 @@ public final class Transfer implements Performative {
     }
 
     @Override
+    public <E> void invoke(PerformativeHandler<E> handler, Binary payload, E context) {
+        handler.handleTransfer(this, payload, context);
+    }
+
+    @Override
     public String toString() {
         return "Transfer{" +
                "handle=" + handle +

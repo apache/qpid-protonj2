@@ -175,6 +175,11 @@ public final class Attach implements Performative {
     }
 
     @Override
+    public <E> void invoke(PerformativeHandler<E> handler, Binary payload, E context) {
+        handler.handleAttach(this, payload, context);
+    }
+
+    @Override
     public String toString() {
         return "Attach{" +
             "name='" + name + '\'' +

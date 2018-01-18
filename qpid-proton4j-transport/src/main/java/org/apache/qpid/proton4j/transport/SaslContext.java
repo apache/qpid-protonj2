@@ -21,6 +21,8 @@ package org.apache.qpid.proton4j.transport;
  */
 public interface SaslContext {
 
+    // TODO - PN_ is a C'ism, can we do away with that ?
+
     public enum SaslState {
         /** Pending configuration by application */
         PN_SASL_CONF,

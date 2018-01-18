@@ -24,7 +24,7 @@ import org.apache.qpid.proton4j.buffer.ProtonBufferAllocator;
 import org.apache.qpid.proton4j.transport.FrameParser;
 import org.apache.qpid.proton4j.transport.ProtocolTracer;
 import org.apache.qpid.proton4j.transport.Transport;
-import org.apache.qpid.proton4j.transport.TransportListener;
+import org.apache.qpid.proton4j.transport.TransportHandler;
 
 /**
  * The default Proton-J Transport implementation.
@@ -35,7 +35,7 @@ public class ProtonTransport implements Transport {
     private int initialMaxFrameSize;
 
     private ProtonBufferAllocator bufferAllocator;
-    private TransportListener transportListener;
+    private TransportHandler transportListener;
     private ProtocolTracer tracer;
 
     private FrameParser currentParser = new AmqpHeaderParser(this);;
@@ -56,12 +56,12 @@ public class ProtonTransport implements Transport {
     }
 
     @Override
-    public void setTransportListener(TransportListener listener) {
+    public void setTransportListener(TransportHandler listener) {
         transportListener = listener;
     }
 
     @Override
-    public TransportListener getTransportListener() {
+    public TransportHandler getTransportListener() {
         return transportListener;
     }
 
@@ -107,9 +107,5 @@ public class ProtonTransport implements Transport {
      */
     public void onAMQPHeader(AMQPHeader header) throws IOException {
         currentParser = new AmqpFrameParser(this);
-
-        if (transportListener != null) {
-            transportListener.onPerformative(header);
-        }
     }
 }

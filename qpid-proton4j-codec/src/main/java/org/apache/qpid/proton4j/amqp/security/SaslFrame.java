@@ -14,19 +14,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.qpid.proton4j.amqp.transport;
+package org.apache.qpid.proton4j.amqp.security;
 
 /**
- * An empty frame which can be used to drive transport activity when idle.
+ * Frame object containing a SASL performative
  */
-public final class EmptyFrame extends Frame {
+public class SaslFrame {
 
-    public EmptyFrame() {
-        super(null, (byte) 0);
+    private final SaslPerformative performative;
+
+    public SaslFrame(SaslPerformative performative) {
+        this.performative = performative;
     }
 
-    @Override
-    public String toString() {
-        return "Empty Frame";
+    public SaslPerformative getPerformative() {
+        return this.performative;
     }
 }

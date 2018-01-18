@@ -16,6 +16,7 @@
  */
 package org.apache.qpid.proton4j.amqp.transport;
 
+import org.apache.qpid.proton4j.amqp.Binary;
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedInteger;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
@@ -91,6 +92,11 @@ public final class Disposition implements Performative {
     @Override
     public PerformativeType getPerformativeType() {
         return PerformativeType.Disposition;
+    }
+
+    @Override
+    public <E> void invoke(PerformativeHandler<E> handler, Binary payload, E context) {
+        handler.handleDisposition(this, payload, context);
     }
 
     @Override

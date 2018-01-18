@@ -19,6 +19,7 @@ package org.apache.qpid.proton4j.amqp.transport;
 import java.util.Arrays;
 import java.util.Map;
 
+import org.apache.qpid.proton4j.amqp.Binary;
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedInteger;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
@@ -127,6 +128,11 @@ public final class Open implements Performative {
     @Override
     public PerformativeType getPerformativeType() {
         return PerformativeType.Open;
+    }
+
+    @Override
+    public <E> void invoke(PerformativeHandler<E> handler, Binary payload, E context) {
+        handler.handleOpen(this, payload, context);
     }
 
     @Override

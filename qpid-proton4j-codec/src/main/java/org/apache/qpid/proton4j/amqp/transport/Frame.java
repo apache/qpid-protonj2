@@ -17,16 +17,23 @@
 package org.apache.qpid.proton4j.amqp.transport;
 
 /**
- * An empty frame which can be used to drive transport activity when idle.
+ * Frame object that carries an AMQP Performative
  */
-public final class EmptyFrame extends Frame {
+public class Frame {
 
-    public EmptyFrame() {
-        super(null, (byte) 0);
+    private final Performative performative;
+    private final byte channel;
+
+    public Frame(Performative performative, byte channel) {
+        this.performative = performative;
+        this.channel = channel;
     }
 
-    @Override
-    public String toString() {
-        return "Empty Frame";
+    public Performative getPerformative() {
+        return performative;
+    }
+
+    public byte getChannel() {
+        return channel;
     }
 }

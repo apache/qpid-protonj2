@@ -57,4 +57,9 @@ public final class SaslOutcome implements SaslPerformative {
     public SaslPerformativeType getPerformativeType() {
         return SaslPerformativeType.Outcome;
     }
+
+    @Override
+    public <E> void invoke(SaslPerformativeHandler<E> handler, Binary payload, E context) {
+        handler.handleOutcome(this, payload, context);
+    }
 }

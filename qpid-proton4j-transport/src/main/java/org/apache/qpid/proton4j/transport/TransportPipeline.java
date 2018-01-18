@@ -16,17 +16,17 @@
  */
 package org.apache.qpid.proton4j.transport;
 
-import org.apache.qpid.proton4j.amqp.transport.Performative;
-
 /**
- * Listen for events generated from the Transport
+ * Pipeline of handlers for Transport work.
  */
-public interface TransportListener {
+public interface TransportPipeline {
 
-    void onPerformative(Performative performative);
+    TransportPipeline addFirst(String name, TransportHandler handler);
 
-    void onEncodingError(Throwable e);
+    TransportPipeline addLast(String name, TransportHandler handler);
 
-    void onDecodingError(Throwable e);
+    TransportHandler first();
+
+    TransportHandler last();
 
 }

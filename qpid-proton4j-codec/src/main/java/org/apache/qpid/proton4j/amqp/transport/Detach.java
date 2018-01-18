@@ -16,6 +16,7 @@
  */
 package org.apache.qpid.proton4j.amqp.transport;
 
+import org.apache.qpid.proton4j.amqp.Binary;
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedInteger;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
@@ -60,6 +61,11 @@ public final class Detach implements Performative {
     @Override
     public PerformativeType getPerformativeType() {
         return PerformativeType.Detach;
+    }
+
+    @Override
+    public <E> void invoke(PerformativeHandler<E> handler, Binary payload, E context) {
+        handler.handleDetach(this, payload, context);
     }
 
     @Override

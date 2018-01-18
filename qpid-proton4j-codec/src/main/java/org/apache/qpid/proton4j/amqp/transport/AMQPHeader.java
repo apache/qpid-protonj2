@@ -23,7 +23,7 @@ import org.apache.qpid.proton4j.buffer.ProtonByteBuffer;
  * Represents the AMQP protocol handshake packet that is sent during the
  * initial exchange with a remote peer.
  */
-public class AMQPHeader implements Performative {
+public class AMQPHeader {
 
     static final byte[] PREFIX = new byte[] { 'A', 'M', 'Q', 'P' };
 
@@ -57,11 +57,6 @@ public class AMQPHeader implements Performative {
 
     public static AMQPHeader getSASLHeader() {
         return SASL_HEADER;
-    }
-
-    @Override
-    public PerformativeType getPerformativeType() {
-        return PerformativeType.AMQPHeader;
     }
 
     public int getProtocolId() {
