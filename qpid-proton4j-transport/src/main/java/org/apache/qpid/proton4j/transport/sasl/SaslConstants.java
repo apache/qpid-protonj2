@@ -19,7 +19,7 @@ package org.apache.qpid.proton4j.transport.sasl;
 /**
  * Context for a SASL exchange.
  */
-public interface SaslContext {
+public interface SaslConstants {
 
     // TODO - PN_ is a C'ism, can we do away with that ?
 

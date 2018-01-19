@@ -18,23 +18,13 @@ package org.apache.qpid.proton4j.transport.sasl;
 
 /**
  * Listener for SASL frame arrival to facilitate relevant handling for the SASL
- * negotiation.
+ * negotiation of the server side of the SASL exchange.
  *
  * See the AMQP specification
  * <a href="http://docs.oasis-open.org/amqp/core/v1.0/os/amqp-core-security-v1.0-os.html#doc-idp51040">
  * SASL negotiation process</a> overview for related detail.
- *
- * TODO - Do we want client and server versions to make impls simpler (no default empty methods needed).
  */
-public interface SaslListener {
-
-    /**
-     * Called when a sasl-mechanisms frame has arrived and its effect
-     * applied, indicating the offered mechanisms sent by the 'server' peer.
-     *
-     * @param sasl the SaslContext object
-     */
-    void onSaslMechanisms(SaslContext context);
+public interface SaslServerListener {
 
     /**
      * Called when a sasl-init frame has arrived and its effect
@@ -43,15 +33,7 @@ public interface SaslListener {
      *
      * @param sasl the SaslContext object
      */
-    void onSaslInit(SaslContext context);
-
-    /**
-     * Called when a sasl-challenge frame has arrived and its effect
-     * applied, indicating the challenge sent by the 'server' peer.
-     *
-     * @param sasl the SaslContext object
-     */
-    void onSaslChallenge(SaslContext context);
+    void onSaslInit(SaslConstants context);
 
     /**
      * Called when a sasl-response frame has arrived and its effect
@@ -59,15 +41,6 @@ public interface SaslListener {
      *
      * @param sasl the SaslContext object
      */
-    void onSaslResponse(SaslContext context);
-
-    /**
-     * Called when a sasl-outcome frame has arrived and its effect
-     * applied, indicating the outcome and any success additional-data
-     * sent by the 'server' peer.
-     *
-     * @param sasl the SaslContext object
-     */
-    void onSaslOutcome(SaslContext context);
+    void onSaslResponse(SaslConstants context);
 
 }

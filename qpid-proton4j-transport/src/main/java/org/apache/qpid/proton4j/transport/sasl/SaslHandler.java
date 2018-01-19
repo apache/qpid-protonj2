@@ -16,31 +16,59 @@
  */
 package org.apache.qpid.proton4j.transport.sasl;
 
+import org.apache.qpid.proton4j.codec.CodecFactory;
 import org.apache.qpid.proton4j.codec.Decoder;
 import org.apache.qpid.proton4j.codec.Encoder;
 
 /**
- * Interface for a strategy type which manages how the transport deals
- * with incoming SASL AMQP Headers and SASL based mechanisms
+ * Base class used for common portions of the SASL processing pipeline.
  */
-public interface SaslHandler {
+public class SaslHandler {
 
-    boolean isDone();
+    private Decoder saslDecoder = CodecFactory.getSaslDecoder();
+    private Encoder saslEncoder = CodecFactory.getSaslEncoder();
 
-    void setSaslListener(SaslListener listener);
+    private boolean done;
 
-    SaslListener getSaslListener();
+    private AbstractSaslContext context;
+    private SaslFrameParser frameParser;
 
-    Encoder getSaslEndoer();
+    private SaslHandler() {
+    }
 
-    void setSaslEncoder(Encoder encoder);
+    public Encoder getSaslEndoer() {
+        return saslEncoder;
+    }
 
-    Decoder getSaslDecoder();
+    public void setSaslEncoder(Encoder encoder) {
+        this.saslEncoder = encoder;
+    }
 
-    void setSaslDecoder(Decoder decoder);
+    public Decoder getSaslDecoder() {
+        return saslDecoder;
+    }
 
-    void client();
+    public void setSaslDecoder(Decoder decoder) {
+        this.saslDecoder = decoder;
+    }
 
-    void server();
+    public boolean isDone() {
+        return done;
+    }
 
+    public static SaslHandler client(SaslClientListener listener) {
+        SaslHandler handler = new SaslHandler();
+        SaslClientContext context = new SaslClientContext(handler, listener);
+        handler.context = context;
+
+        return handler;
+    }
+
+    public static SaslHandler server(SaslServerListener listener) {
+        SaslHandler handler = new SaslHandler();
+        SaslServerContext context = new SaslServerContext(handler, listener);
+        handler.context = context;
+
+        return handler;
+    }
 }

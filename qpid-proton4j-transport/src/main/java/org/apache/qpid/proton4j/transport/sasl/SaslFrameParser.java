@@ -30,7 +30,7 @@ import org.apache.qpid.proton4j.transport.exceptions.TransportException;
 /**
  * Parser of SASL Frames from the incoming data stream
  */
-public class ProtonSaslFrameParser implements FrameParser {
+public class SaslFrameParser implements FrameParser {
 
     public static final byte[] HEADER = new byte[]
         { 'A', 'M', 'Q', 'P', 3, 1, 0, 0 };
@@ -59,7 +59,7 @@ public class ProtonSaslFrameParser implements FrameParser {
     private State state = State.SIZE_0;
     private int size;
 
-    private ProtonSaslHandler sasl;
+    private SaslHandler sasl;
     private ProtonBuffer buffer;
     private int frameSizeLimit;
     private Decoder decoder;
