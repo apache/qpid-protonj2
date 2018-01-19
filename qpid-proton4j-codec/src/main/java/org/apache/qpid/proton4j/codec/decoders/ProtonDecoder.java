@@ -53,7 +53,7 @@ public class ProtonDecoder implements Decoder {
     private Map<Object, DescribedTypeDecoder<?>> describedTypeDecoders = new HashMap<>();
 
     @Override
-    public DecoderState newDecoderState() {
+    public ProtonDecoderState newDecoderState() {
         return new ProtonDecoderState(this);
     }
 

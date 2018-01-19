@@ -96,7 +96,7 @@ public class ProtonEncoder implements Encoder {
     private final Map<Class<?>, TypeEncoder<?>> typeEncoders = new HashMap<>();
 
     @Override
-    public EncoderState newEncoderState() {
+    public ProtonEncoderState newEncoderState() {
         return new ProtonEncoderState(this);
     }
 

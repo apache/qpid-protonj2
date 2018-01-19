@@ -14,29 +14,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.qpid.proton4j.codec;
+package org.apache.qpid.proton4j.codec.decoders;
 
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 
 /**
- * Retains state of decode either between calls or across decode iterations
+ * Interface for an external UTF8 Decoder that can be supplied by a client
+ * which implements custom decoding logic optimized for the application using
+ * the Codec.
  */
-public interface DecoderState {
+public interface UTF8Decoder {
 
     /**
-     * @return the decoder that created this state object
-     */
-    Decoder getDecoder();
-
-    /**
-     * Given a set of UTF-8 encoded bytes decode and return the String that
-     * represents that UTF-8 value.
+     * Decodes a String from the given UTF8 Bytes.
      *
-     * @param duplicate
-     *      The UTF-8 encoded bytes to be decoded
+     * @param utf8bytes
+     *      A ProtonBuffer containing the UTF-8 encoded bytes.
      *
-     * @return a String that represents the UTF-8 decoded bytes.
+     * @return a new String that represents the decoded value.
      */
-    String decodeUTF8(ProtonBuffer duplicate);
+    String decodeUTF8(ProtonBuffer utf8bytes);
 
 }

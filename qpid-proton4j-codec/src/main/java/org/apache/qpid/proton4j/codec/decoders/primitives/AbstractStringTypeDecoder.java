@@ -34,7 +34,7 @@ public abstract class AbstractStringTypeDecoder extends AbstractPrimitiveTypeDec
         ProtonBuffer duplicate = buffer.duplicate().setWriteIndex(buffer.getReadIndex() + length);
         buffer.setReadIndex(buffer.getReadIndex() + length);
 
-        return state.decodeUTF8(duplicate.toByteBuffer());
+        return state.decodeUTF8(duplicate);
     }
 
     @Override

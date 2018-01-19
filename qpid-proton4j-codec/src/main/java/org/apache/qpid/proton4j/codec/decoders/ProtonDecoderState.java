@@ -16,11 +16,11 @@
  */
 package org.apache.qpid.proton4j.codec.decoders;
 
-import java.nio.ByteBuffer;
 import java.nio.charset.CharacterCodingException;
 import java.nio.charset.CharsetDecoder;
 import java.nio.charset.StandardCharsets;
 
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.DecoderState;
 
 /**
@@ -32,6 +32,8 @@ public class ProtonDecoderState implements DecoderState {
 
     private final ProtonDecoder decoder;
 
+    private UTF8Decoder stringDecoder;
+
     public ProtonDecoderState(ProtonDecoder decoder) {
         this.decoder = decoder;
     }
@@ -41,10 +43,22 @@ public class ProtonDecoderState implements DecoderState {
         return decoder;
     }
 
+    public UTF8Decoder getStringDecoder() {
+        return stringDecoder;
+    }
+
+    public void setStringDecoder(UTF8Decoder stringDecoder) {
+        this.stringDecoder = stringDecoder;
+    }
+
     @Override
-    public String decodeUTF8(ByteBuffer utf8bytes) {
+    public String decodeUTF8(ProtonBuffer utf8bytes) {
         try {
-            return STRING_DECODER.decode(utf8bytes).toString();
+            if (stringDecoder == null) {
+                return STRING_DECODER.decode(utf8bytes.toByteBuffer()).toString();
+            } else {
+                return stringDecoder.decodeUTF8(utf8bytes);
+            }
         } catch (CharacterCodingException e) {
             throw new IllegalArgumentException("Cannot parse encoded UTF8 String");
         } finally {
