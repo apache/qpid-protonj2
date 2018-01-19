@@ -14,19 +14,36 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.qpid.proton4j.amqp.transport;
+package org.apache.qpid.proton4j.transport;
+
+import org.apache.qpid.proton4j.amqp.transport.Performative;
 
 /**
- * An empty frame which can be used to drive transport activity when idle.
+ * Frame object that carries an AMQP Performative
  */
-public final class EmptyFrame extends Frame {
+public class ProtocolFrame implements Frame {
 
-    public EmptyFrame() {
-        super(null, (byte) 0);
+    private final Performative performative;
+    private final byte channel;
+    private final byte type;
+
+    public ProtocolFrame(Performative performative, byte channel, byte type) {
+        this.performative = performative;
+        this.channel = channel;
+        this.type = type;
+    }
+
+    public Performative getPerformative() {
+        return performative;
     }
 
     @Override
-    public String toString() {
-        return "Empty Frame";
+    public byte getChannel() {
+        return channel;
+    }
+
+    @Override
+    public byte getType() {
+        return type;
     }
 }

@@ -19,8 +19,8 @@ package org.apache.qpid.proton4j.transport.sasl;
 import org.apache.qpid.proton4j.amqp.Binary;
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
-import org.apache.qpid.proton4j.transport.SaslContext.SaslOutcome;
-import org.apache.qpid.proton4j.transport.SaslContext.SaslState;
+import org.apache.qpid.proton4j.transport.sasl.SaslContext.SaslOutcome;
+import org.apache.qpid.proton4j.transport.sasl.SaslContext.SaslState;
 
 /**
  * The State engine for a Sasl exchange.

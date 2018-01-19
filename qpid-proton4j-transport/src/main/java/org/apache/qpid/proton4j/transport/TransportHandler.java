@@ -16,9 +16,7 @@
  */
 package org.apache.qpid.proton4j.transport;
 
-import org.apache.qpid.proton4j.amqp.security.SaslPerformative;
 import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
-import org.apache.qpid.proton4j.amqp.transport.Performative;
 
 /**
  * Listen for events generated from the Transport
@@ -31,9 +29,11 @@ public interface TransportHandler {
 
     void handleAMQPHeader(TransportHandlerContext context, AMQPHeader header);
 
-    void handleSaslPerformative(TransportHandlerContext context, Performative performative);
+    void handleSaslPerformative(TransportHandlerContext context, SaslFrame frame);
 
-    void handlePerformative(TransportHandlerContext context, SaslPerformative performative);
+    void handleProtocolFrame(TransportHandlerContext context, ProtocolFrame frame);
+
+    void handlePartialFrame(TransportHandlerContext context, PartialFrame frame);
 
     void transportEncodingError(TransportHandlerContext context, Throwable e);
 

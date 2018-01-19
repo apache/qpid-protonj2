@@ -19,8 +19,6 @@ package org.apache.qpid.proton4j.transport.sasl;
 import org.apache.qpid.proton4j.codec.CodecFactory;
 import org.apache.qpid.proton4j.codec.Decoder;
 import org.apache.qpid.proton4j.codec.Encoder;
-import org.apache.qpid.proton4j.transport.SaslHandler;
-import org.apache.qpid.proton4j.transport.SaslListener;
 
 /**
  * Base class used for common portions of the SASL processing pipeline.

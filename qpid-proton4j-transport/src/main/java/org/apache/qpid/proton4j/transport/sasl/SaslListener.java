@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.qpid.proton4j.transport;
+package org.apache.qpid.proton4j.transport.sasl;
 
 /**
  * Listener for SASL frame arrival to facilitate relevant handling for the SASL

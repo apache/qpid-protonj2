@@ -16,31 +16,13 @@
  */
 package org.apache.qpid.proton4j.transport;
 
-import org.apache.qpid.proton4j.codec.Decoder;
-import org.apache.qpid.proton4j.codec.Encoder;
-
 /**
- * Interface for a strategy type which manages how the transport deals
- * with incoming SASL AMQP Headers and SASL based mechanisms
+ *
  */
-public interface SaslHandler {
+public interface Frame {
 
-    boolean isDone();
+    byte getChannel();
 
-    void setSaslListener(SaslListener listener);
-
-    SaslListener getSaslListener();
-
-    Encoder getSaslEndoer();
-
-    void setSaslEncoder(Encoder encoder);
-
-    Decoder getSaslDecoder();
-
-    void setSaslDecoder(Decoder decoder);
-
-    void client();
-
-    void server();
+    byte getType();
 
 }

@@ -14,29 +14,33 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.qpid.proton4j.transport;
+package org.apache.qpid.proton4j.transport.sasl;
+
+import org.apache.qpid.proton4j.codec.Decoder;
+import org.apache.qpid.proton4j.codec.Encoder;
 
 /**
- * Pipeline of handlers for Transport work.
+ * Interface for a strategy type which manages how the transport deals
+ * with incoming SASL AMQP Headers and SASL based mechanisms
  */
-public interface TransportPipeline {
+public interface SaslHandler {
 
-    TransportPipeline addFirst(String name, TransportHandler handler);
+    boolean isDone();
 
-    TransportPipeline addLast(String name, TransportHandler handler);
+    void setSaslListener(SaslListener listener);
 
-    TransportPipeline removeFirst();
+    SaslListener getSaslListener();
 
-    TransportPipeline removeLast();
+    Encoder getSaslEndoer();
 
-    TransportPipeline remove(String name);
+    void setSaslEncoder(Encoder encoder);
 
-    TransportHandler first();
+    Decoder getSaslDecoder();
 
-    TransportHandler last();
+    void setSaslDecoder(Decoder decoder);
 
-    TransportHandlerContext firstContext();
+    void client();
 
-    TransportHandlerContext lastContext();
+    void server();
 
 }

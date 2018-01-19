@@ -16,27 +16,20 @@
  */
 package org.apache.qpid.proton4j.transport;
 
+import org.apache.qpid.proton4j.amqp.security.SaslPerformative;
+
 /**
- * Pipeline of handlers for Transport work.
+ * Frame object containing a SASL performative
  */
-public interface TransportPipeline {
+public class SaslFrame {
 
-    TransportPipeline addFirst(String name, TransportHandler handler);
+    private final SaslPerformative performative;
 
-    TransportPipeline addLast(String name, TransportHandler handler);
+    public SaslFrame(SaslPerformative performative) {
+        this.performative = performative;
+    }
 
-    TransportPipeline removeFirst();
-
-    TransportPipeline removeLast();
-
-    TransportPipeline remove(String name);
-
-    TransportHandler first();
-
-    TransportHandler last();
-
-    TransportHandlerContext firstContext();
-
-    TransportHandlerContext lastContext();
-
+    public SaslPerformative getPerformative() {
+        return this.performative;
+    }
 }

@@ -14,26 +14,36 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.qpid.proton4j.amqp.transport;
+package org.apache.qpid.proton4j.transport;
+
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 
 /**
- * Frame object that carries an AMQP Performative
+ * Frame Containing only a portion of the full frame body bytes
  */
-public class Frame {
+public class PartialFrame implements Frame {
 
-    private final Performative performative;
+    private final ProtonBuffer payload;
     private final byte channel;
+    private final byte type;
 
-    public Frame(Performative performative, byte channel) {
-        this.performative = performative;
+    PartialFrame(ProtonBuffer payload, byte channel, byte type) {
+        this.payload = payload;
         this.channel = channel;
+        this.type = type;
     }
 
-    public Performative getPerformative() {
-        return performative;
-    }
-
+    @Override
     public byte getChannel() {
         return channel;
+    }
+
+    @Override
+    public byte getType() {
+        return type;
+    }
+
+    public ProtonBuffer getPayload() {
+        return payload;
     }
 }
