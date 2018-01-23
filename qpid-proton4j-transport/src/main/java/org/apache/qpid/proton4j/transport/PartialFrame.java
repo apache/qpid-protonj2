@@ -21,29 +21,9 @@ import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 /**
  * Frame Containing only a portion of the full frame body bytes
  */
-public class PartialFrame implements Frame {
+public class PartialFrame extends Frame<ProtonBuffer> {
 
-    private final ProtonBuffer payload;
-    private final byte channel;
-    private final byte type;
-
-    PartialFrame(ProtonBuffer payload, byte channel, byte type) {
-        this.payload = payload;
-        this.channel = channel;
-        this.type = type;
-    }
-
-    @Override
-    public byte getChannel() {
-        return channel;
-    }
-
-    @Override
-    public byte getType() {
-        return type;
-    }
-
-    public ProtonBuffer getPayload() {
-        return payload;
+    public PartialFrame(ProtonBuffer payload, byte channel, byte type) {
+        super(payload, channel, type);
     }
 }

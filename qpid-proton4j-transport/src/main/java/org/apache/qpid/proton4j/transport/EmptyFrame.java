@@ -22,7 +22,7 @@ package org.apache.qpid.proton4j.transport;
 public final class EmptyFrame extends ProtocolFrame {
 
     public EmptyFrame() {
-        super(null, (byte) 0, (byte) 0);
+        super(null, (byte) 0);
     }
 
     @Override

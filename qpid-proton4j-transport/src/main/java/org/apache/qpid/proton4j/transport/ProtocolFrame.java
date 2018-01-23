@@ -21,29 +21,9 @@ import org.apache.qpid.proton4j.amqp.transport.Performative;
 /**
  * Frame object that carries an AMQP Performative
  */
-public class ProtocolFrame implements Frame {
+public class ProtocolFrame extends Frame<Performative> {
 
-    private final Performative performative;
-    private final byte channel;
-    private final byte type;
-
-    public ProtocolFrame(Performative performative, byte channel, byte type) {
-        this.performative = performative;
-        this.channel = channel;
-        this.type = type;
-    }
-
-    public Performative getPerformative() {
-        return performative;
-    }
-
-    @Override
-    public byte getChannel() {
-        return channel;
-    }
-
-    @Override
-    public byte getType() {
-        return type;
+    public ProtocolFrame(Performative performative, byte channel) {
+        super(performative, channel, (byte) 0);
     }
 }

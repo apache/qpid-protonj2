@@ -21,15 +21,9 @@ import org.apache.qpid.proton4j.amqp.security.SaslPerformative;
 /**
  * Frame object containing a SASL performative
  */
-public class SaslFrame {
-
-    private final SaslPerformative performative;
+public class SaslFrame extends Frame<SaslPerformative>{
 
     public SaslFrame(SaslPerformative performative) {
-        this.performative = performative;
-    }
-
-    public SaslPerformative getPerformative() {
-        return this.performative;
+        super(performative, (byte) 0, (byte) 0);
     }
 }

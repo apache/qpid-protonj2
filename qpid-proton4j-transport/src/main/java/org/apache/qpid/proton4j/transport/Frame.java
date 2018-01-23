@@ -17,12 +17,29 @@
 package org.apache.qpid.proton4j.transport;
 
 /**
- *
+ * Base class for Frames that travel through the Transport
  */
-public interface Frame {
+public abstract class Frame<V> {
 
-    byte getChannel();
+    private final V body;
+    private final byte channel;
+    private final byte type;
 
-    byte getType();
+    public Frame(V body, byte channel, byte type) {
+        this.body = body;
+        this.channel = channel;
+        this.type = type;
+    }
 
+    public V getBody() {
+        return body;
+    }
+
+    public byte getChannel() {
+        return channel;
+    }
+
+    public byte getType() {
+        return type;
+    }
 }
