@@ -18,13 +18,13 @@ package org.apache.qpid.proton4j.transport.impl;
 
 import java.io.IOException;
 
-import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonBufferAllocator;
 import org.apache.qpid.proton4j.transport.FrameParser;
 import org.apache.qpid.proton4j.transport.ProtocolTracer;
 import org.apache.qpid.proton4j.transport.Transport;
 import org.apache.qpid.proton4j.transport.TransportHandler;
+import org.apache.qpid.proton4j.transport.TransportPipeline;
 
 /**
  * The default Proton-J Transport implementation.
@@ -38,11 +38,11 @@ public class ProtonTransport implements Transport {
     private TransportHandler transportListener;
     private ProtocolTracer tracer;
 
-    private FrameParser currentParser = new AmqpHeaderParser(this);;
+    private FrameParser currentParser = new AmqpHeaderParser();
 
     @Override
     public void processIncoming(ProtonBuffer buffer) throws IOException {
-        currentParser.parse(buffer);
+        currentParser.parse(null, buffer);  // TODO
     }
 
     @Override
@@ -93,19 +93,8 @@ public class ProtonTransport implements Transport {
         this.initialMaxFrameSize = initialMaxFrameSize;
     }
 
-    /**
-     * Handles receipt of an AMQP Header from the incoming data stream
-     * <p>
-     * The method is called on successful decode of an AMQP Header giving the
-     * Transport instance a chance to alter its state to reflect the processing
-     * that should occur following the type of header read.
-     *
-     * @param header
-     *      The newly decoded AMQP Header instance from the data stream
-     *
-     * @throws IOException if an error occurs while processing the incoming header.
-     */
-    public void onAMQPHeader(AMQPHeader header) throws IOException {
-        currentParser = new AmqpFrameParser(this);
+    @Override
+    public TransportPipeline getPipeline() {
+        return null;
     }
 }

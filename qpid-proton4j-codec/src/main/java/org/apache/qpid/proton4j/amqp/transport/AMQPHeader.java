@@ -27,6 +27,8 @@ public class AMQPHeader {
 
     static final byte[] PREFIX = new byte[] { 'A', 'M', 'Q', 'P' };
 
+    static final byte SASL_PROTOCOL_ID = 3;
+
     private static final AMQPHeader AMQP_HEADER =
         new AMQPHeader(new byte[] { 'A', 'M', 'Q', 'P', 0, 1, 0, 0 });
 
@@ -85,6 +87,10 @@ public class AMQPHeader {
 
     public boolean hasValidPrefix() {
         return startsWith(buffer, PREFIX);
+    }
+
+    public boolean isSaslHeader() {
+        return getProtocolId() == SASL_PROTOCOL_ID;
     }
 
     @Override

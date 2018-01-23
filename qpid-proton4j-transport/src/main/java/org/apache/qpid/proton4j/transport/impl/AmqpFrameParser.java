@@ -20,6 +20,7 @@ import java.io.IOException;
 
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.transport.FrameParser;
+import org.apache.qpid.proton4j.transport.TransportHandlerContext;
 import org.apache.qpid.proton4j.transport.exceptions.IOExceptionSupport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,7 +43,7 @@ public class AmqpFrameParser implements FrameParser {
     }
 
     @Override
-    public void parse(ProtonBuffer incoming) throws IOException {
+    public void parse(TransportHandlerContext context, ProtonBuffer incoming) throws IOException {
 
         if (incoming == null || !incoming.isReadable()) {
             return;

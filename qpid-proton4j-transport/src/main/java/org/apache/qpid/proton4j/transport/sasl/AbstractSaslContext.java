@@ -60,6 +60,23 @@ public abstract class AbstractSaslContext {
      */
     abstract Role getRole();
 
+    /**
+     * @return true if this is a SASL server context.
+     */
+    public boolean isServer() {
+        return getRole() == Role.SERVER;
+    }
+
+    /**
+     * @return true if this is a SASL client context.
+     */
+    public boolean isClient() {
+        return getRole() == Role.SERVER;
+    }
+
+    /**
+     * @return true if SASL authentication has completed
+     */
     public boolean isDone() {
         return done;
     }

@@ -16,23 +16,36 @@
  */
 package org.apache.qpid.proton4j.transport.sasl;
 
+import java.io.IOException;
+
+import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.CodecFactory;
 import org.apache.qpid.proton4j.codec.Decoder;
 import org.apache.qpid.proton4j.codec.Encoder;
+import org.apache.qpid.proton4j.transport.PartialFrame;
+import org.apache.qpid.proton4j.transport.ProtocolFrame;
+import org.apache.qpid.proton4j.transport.SaslFrame;
+import org.apache.qpid.proton4j.transport.TransportHandler;
+import org.apache.qpid.proton4j.transport.TransportHandlerContext;
 
 /**
  * Base class used for common portions of the SASL processing pipeline.
  */
-public class SaslHandler {
+public class SaslHandler implements TransportHandler {
 
     private Decoder saslDecoder = CodecFactory.getSaslDecoder();
     private Encoder saslEncoder = CodecFactory.getSaslEncoder();
 
+    private final SaslFrameParser frameParser = new SaslFrameParser();
+
+    private AbstractSaslContext saslContext;
     private boolean done;
 
-    private AbstractSaslContext context;
-    private SaslFrameParser frameParser;
-
+    /*
+     * The Handler must be create from the client or server methods to configure
+     * the state correctly.
+     */
     private SaslHandler() {
     }
 
@@ -59,7 +72,7 @@ public class SaslHandler {
     public static SaslHandler client(SaslClientListener listener) {
         SaslHandler handler = new SaslHandler();
         SaslClientContext context = new SaslClientContext(handler, listener);
-        handler.context = context;
+        handler.saslContext = context;
 
         return handler;
     }
@@ -67,8 +80,80 @@ public class SaslHandler {
     public static SaslHandler server(SaslServerListener listener) {
         SaslHandler handler = new SaslHandler();
         SaslServerContext context = new SaslServerContext(handler, listener);
-        handler.context = context;
+        handler.saslContext = context;
 
         return handler;
+    }
+
+    //----- TransportHandler implementation ----------------------------------//
+
+    @Override
+    public void handleRead(TransportHandlerContext context, ProtonBuffer buffer) {
+        if (isDone()) {
+            context.fireRead(buffer);
+        } else {
+            try {
+                frameParser.parse(context, buffer);
+            } catch (IOException e) {
+                // TODO - A more well defined exception API might allow for only
+                //        one error event method ?
+                context.fireDecodingError(e);
+            }
+        }
+    }
+
+    @Override
+    public void handleAMQPHeader(TransportHandlerContext context, AMQPHeader header) {
+        if (isDone()) {
+            context.fireAMQPHeader(header);
+        }
+
+        if (saslContext.isServer()) {
+            SaslServerContext server = (SaslServerContext) saslContext;
+        } else {
+            SaslClientContext client = (SaslClientContext) saslContext;
+        }
+    }
+
+    @Override
+    public void handleSaslFrame(TransportHandlerContext context, SaslFrame frame) {
+    }
+
+    @Override
+    public void handleProtocolFrame(TransportHandlerContext context, ProtocolFrame frame) {
+        if (isDone()) {
+            context.fireProtocolFrame(frame);
+        } else {
+            // TODO
+        }
+    }
+
+    @Override
+    public void handlePartialFrame(TransportHandlerContext context, PartialFrame frame) {
+        if (isDone()) {
+            context.firePartialFrame(frame);
+        } else {
+            // TODO
+        }
+    }
+
+    @Override
+    public void transportEncodingError(TransportHandlerContext context, Throwable e) {
+    }
+
+    @Override
+    public void transportDecodingError(TransportHandlerContext context, Throwable e) {
+    }
+
+    @Override
+    public void transportFailed(TransportHandlerContext context, Throwable e) {
+    }
+
+    @Override
+    public void transportReadable(TransportHandlerContext context) {
+    }
+
+    @Override
+    public void transportWritable(TransportHandlerContext context) {
     }
 }

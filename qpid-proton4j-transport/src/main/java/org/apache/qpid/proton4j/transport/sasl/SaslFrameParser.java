@@ -20,20 +20,19 @@ import java.io.IOException;
 
 import org.apache.qpid.proton4j.amqp.Binary;
 import org.apache.qpid.proton4j.amqp.security.SaslPerformative;
+import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.codec.Decoder;
 import org.apache.qpid.proton4j.codec.DecoderState;
 import org.apache.qpid.proton4j.transport.FrameParser;
+import org.apache.qpid.proton4j.transport.TransportHandlerContext;
 import org.apache.qpid.proton4j.transport.exceptions.TransportException;
 
 /**
  * Parser of SASL Frames from the incoming data stream
  */
 public class SaslFrameParser implements FrameParser {
-
-    public static final byte[] HEADER = new byte[]
-        { 'A', 'M', 'Q', 'P', 3, 1, 0, 0 };
 
     enum State {
         HEADER0,
@@ -64,15 +63,17 @@ public class SaslFrameParser implements FrameParser {
     private int frameSizeLimit;
     private Decoder decoder;
     private DecoderState decoderState;
+    private AMQPHeader header = AMQPHeader.getSASLHeader();
 
     @Override
     public void reset() {
+        header = AMQPHeader.getSASLHeader();
         state = State.SIZE_0;
         buffer = null;
     }
 
     @Override
-    public void parse(ProtonBuffer incoming) throws IOException {
+    public void parse(TransportHandlerContext context, ProtonBuffer incoming) throws IOException {
         TransportException parsingError = null;
         int size = this.size;
         State parsingState = this.state;
@@ -83,9 +84,9 @@ public class SaslFrameParser implements FrameParser {
                 case HEADER0:
                     if (incoming.isReadable()) {
                         byte c = incoming.readByte();
-                        if (c != HEADER[0]) {
+                        if (c != header.getByteAt(state.ordinal())) {
                             parsingError = new TransportException(String.format(
-                                "AMQP header mismatch value %x, expecting %x. In state: %s", c, HEADER[0], parsingState));
+                                "AMQP header mismatch value %x, expecting %x. In state: %s", c, header.getByteAt(state.ordinal()), parsingState));
                             parsingState = State.ERROR;
                             break;
                         }
@@ -96,9 +97,9 @@ public class SaslFrameParser implements FrameParser {
                 case HEADER1:
                     if (incoming.isReadable()) {
                         byte c = incoming.readByte();
-                        if (c != HEADER[1]) {
+                        if (c != header.getByteAt(1)) {
                             parsingError = new TransportException(String.format(
-                                "AMQP header mismatch value %x, expecting %x. In state: %s", c, HEADER[1], parsingState));
+                                "AMQP header mismatch value %x, expecting %x. In state: %s", c, header.getByteAt(state.ordinal()), parsingState));
                             parsingState = State.ERROR;
                             break;
                         }
@@ -109,9 +110,9 @@ public class SaslFrameParser implements FrameParser {
                 case HEADER2:
                     if (incoming.isReadable()) {
                         byte c = incoming.readByte();
-                        if (c != HEADER[2]) {
+                        if (c != header.getByteAt(state.ordinal())) {
                             parsingError = new TransportException(String.format(
-                                "AMQP header mismatch value %x, expecting %x. In state: %s", c, HEADER[2], parsingState));
+                                "AMQP header mismatch value %x, expecting %x. In state: %s", c, header.getByteAt(state.ordinal()), parsingState));
                             parsingState = State.ERROR;
                             break;
                         }
@@ -122,9 +123,9 @@ public class SaslFrameParser implements FrameParser {
                 case HEADER3:
                     if (incoming.isReadable()) {
                         byte c = incoming.readByte();
-                        if (c != HEADER[3]) {
+                        if (c != header.getByteAt(state.ordinal())) {
                             parsingError = new TransportException(String.format(
-                                "AMQP header mismatch value %x, expecting %x. In state: %s", c, HEADER[3], parsingState));
+                                "AMQP header mismatch value %x, expecting %x. In state: %s", c, header.getByteAt(state.ordinal()), parsingState));
                             parsingState = State.ERROR;
                             break;
                         }
@@ -135,14 +136,14 @@ public class SaslFrameParser implements FrameParser {
                 case HEADER4:
                     if (incoming.isReadable()) {
                         byte c = incoming.readByte();
-                        // TODO - If we assume that this pipeline will hand off the header
-                        //        to another layer than this is not an error yet and could just
-                        //        continue until full header read and send it onto next level
-                        if (c != HEADER[4]) {
-                            parsingError = new TransportException(String.format(
-                                "AMQP header mismatch value %x, expecting %x. In state: %s", c, HEADER[4], parsingState));
-                            parsingState = State.ERROR;
-                            break;
+                        if (c != header.getByteAt(state.ordinal())) {
+                            header = AMQPHeader.getRawAMQPHeader();
+                            if (c != header.getByteAt(state.ordinal())) {
+                                parsingError = new TransportException(String.format(
+                                    "AMQP header mismatch value %x, expecting %x. In state: %s", c, header.getByteAt(state.ordinal()), parsingState));
+                                parsingState = State.ERROR;
+                                break;
+                            }
                         }
                         parsingState = State.HEADER5;
                     } else {
@@ -151,9 +152,9 @@ public class SaslFrameParser implements FrameParser {
                 case HEADER5:
                     if (incoming.isReadable()) {
                         byte c = incoming.readByte();
-                        if (c != HEADER[5]) {
+                        if (c != header.getByteAt(state.ordinal())) {
                             parsingError = new TransportException(String.format(
-                                "AMQP header mismatch value %x, expecting %x. In state: %s", c, HEADER[5], parsingState));
+                                "AMQP header mismatch value %x, expecting %x. In state: %s", c, header.getByteAt(state.ordinal()), parsingState));
                             parsingState = State.ERROR;
                             break;
                         }
@@ -164,9 +165,9 @@ public class SaslFrameParser implements FrameParser {
                 case HEADER6:
                     if (incoming.isReadable()) {
                         byte c = incoming.readByte();
-                        if (c != HEADER[6]) {
+                        if (c != header.getByteAt(state.ordinal())) {
                             parsingError = new TransportException(String.format(
-                                "AMQP header mismatch value %x, expecting %x. In state: %s", c, HEADER[6], parsingState));
+                                "AMQP header mismatch value %x, expecting %x. In state: %s", c, header.getByteAt(state.ordinal()), parsingState));
                             parsingState = State.ERROR;
                             break;
                         }
@@ -177,19 +178,13 @@ public class SaslFrameParser implements FrameParser {
                 case HEADER7:
                     if (incoming.isReadable()) {
                         byte c = incoming.readByte();
-                        if (c != HEADER[7]) {
+                        if (c != header.getByteAt(state.ordinal())) {
                             parsingError = new TransportException(String.format(
-                                "AMQP header mismatch value %x, expecting %x. In state: %s", c, HEADER[7], parsingState));
+                                "AMQP header mismatch value %x, expecting %x. In state: %s", c, header.getByteAt(state.ordinal()), parsingState));
                             parsingState = State.ERROR;
                             break;
                         } else {
-                            // TODO - Send along a non-sasl header for processing
-                            //        such that a server could allow both sasl and
-                            //        non-sasl connections.  Do we send both the sasl
-                            //        and the non-sasl header?
-
-                            // fireAmqpHeaderRead(HEADER);
-
+                            sasl.handleAMQPHeader(context, header);
                             parsingState = State.SIZE_0;
                         }
                     } else {
@@ -298,7 +293,7 @@ public class SaslFrameParser implements FrameParser {
                         //        instead would get an exception.
                         Object val = decoder.readObject(input, decoderState);
 
-                        Binary payload;
+                        final Binary payload;
 
                         if (input.isReadable()) {
                             byte[] payloadBytes = new byte[input.getReadableBytes()];

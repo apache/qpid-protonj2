@@ -35,11 +35,13 @@ public interface FrameParser {
      * Parse the incoming data and provide events to the parent Transport
      * based on the contents of that data.
      *
+     * @param context
+     *      The TransportHandlerContext that applies to the current event
      * @param incoming
      *      The ProtonBuffer containing new data to be parsed.
      *
      * @throws IOException if an error occurs while parsing incoming data.
      */
-    void parse(ProtonBuffer incoming) throws IOException;
+    void parse(TransportHandlerContext context, ProtonBuffer incoming) throws IOException;
 
 }

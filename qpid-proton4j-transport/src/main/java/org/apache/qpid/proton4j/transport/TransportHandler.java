@@ -17,19 +17,25 @@
 package org.apache.qpid.proton4j.transport;
 
 import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 
 /**
  * Listen for events generated from the Transport
  */
 public interface TransportHandler {
 
+    // TODO Do we want separate inbound and outbound handlers for finer grained
+    //      control of the ordering of handers and their work ?
+
     // TODO Define events.  transportRead(Object), transportWrite(Object) ?
 
     // Some things that might flow through a transport pipeline
 
+    void handleRead(TransportHandlerContext context, ProtonBuffer buffer);
+
     void handleAMQPHeader(TransportHandlerContext context, AMQPHeader header);
 
-    void handleSaslPerformative(TransportHandlerContext context, SaslFrame frame);
+    void handleSaslFrame(TransportHandlerContext context, SaslFrame frame);
 
     void handleProtocolFrame(TransportHandlerContext context, ProtocolFrame frame);
 

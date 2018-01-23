@@ -20,6 +20,8 @@ public class SaslServerContext extends AbstractSaslContext {
 
     private final SaslServerListener listener;
 
+    private boolean allowNonSasl;
+
     public SaslServerContext(SaslHandler handler, SaslServerListener listener) {
         super(handler);
 
@@ -56,5 +58,22 @@ public class SaslServerContext extends AbstractSaslContext {
 
     public void setMechanisms(String[] mechanisms) {
 
+    }
+
+    /**
+     * @return whether this Server allows non-sasl connection attempts
+     */
+    public boolean isAllowNonSasl() {
+        return allowNonSasl;
+    }
+
+    /**
+     * Determines if the server allows non-SASL connection attempts.
+     *
+     * @param allowNonSasl
+     *      the configuration for allowing non-sasl connections
+     */
+    public void setAllowNonSasl(boolean allowNonSasl) {
+        this.allowNonSasl = allowNonSasl;
     }
 }

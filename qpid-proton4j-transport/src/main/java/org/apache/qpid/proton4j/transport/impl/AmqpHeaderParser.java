@@ -21,6 +21,7 @@ import java.io.IOException;
 import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.transport.FrameParser;
+import org.apache.qpid.proton4j.transport.TransportHandlerContext;
 import org.apache.qpid.proton4j.transport.exceptions.TransportException;
 
 /**
@@ -43,12 +44,7 @@ public class AmqpHeaderParser implements FrameParser {
 
     private State parsingState = State.HEADER0;
 
-    private ProtonTransport transport;
-    private AMQPHeader header = AMQPHeader.getSASLHeader();
-
-    public AmqpHeaderParser(final ProtonTransport transport) {
-        this.transport = transport;
-    }
+    private AMQPHeader header = AMQPHeader.getRawAMQPHeader();
 
     @Override
     public void reset() {
@@ -56,7 +52,7 @@ public class AmqpHeaderParser implements FrameParser {
     }
 
     @Override
-    public void parse(ProtonBuffer incoming) throws IOException {
+    public void parse(TransportHandlerContext context, ProtonBuffer incoming) throws IOException {
         TransportException parsingError = null;
 
         while (incoming.isReadable() && parsingState != State.ERROR && parsingState != State.ERROR) {
@@ -174,7 +170,7 @@ public class AmqpHeaderParser implements FrameParser {
         }
 
         if (parsingState == State.DONE) {
-            transport.onAMQPHeader(header);
+            context.fireAMQPHeader(header);
         } else if (parsingState == State.ERROR) {
             throw parsingError;
         }

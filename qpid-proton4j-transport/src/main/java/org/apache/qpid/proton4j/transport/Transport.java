@@ -98,4 +98,11 @@ public interface Transport {
      */
     void setMaxFrameSize(int size);
 
+    /**
+     * Gets the TransportPipeline for this Transport.
+     *
+     * @return the {@link TransportPipeline} for this {@link Transport}.
+     */
+    TransportPipeline getPipeline();
+
 }
