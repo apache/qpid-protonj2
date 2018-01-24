@@ -17,6 +17,8 @@
 package org.apache.qpid.proton4j.transport.sasl;
 
 import org.apache.qpid.proton4j.amqp.Symbol;
+import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
+import org.apache.qpid.proton4j.transport.TransportHandlerContext;
 
 public class SaslClientContext extends AbstractSaslContext {
 
@@ -66,5 +68,9 @@ public class SaslClientContext extends AbstractSaslContext {
 
     public void setMechanism(String mechanism) {
         this.chosenMechanism = Symbol.valueOf(mechanism);
+    }
+
+    @Override
+    public void handleAMQPHeader(TransportHandlerContext context, AMQPHeader header) {
     }
 }

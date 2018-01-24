@@ -109,13 +109,7 @@ public class SaslHandler implements TransportHandler {
             context.fireAMQPHeader(header);
         }
 
-        // TODO - Handler AMQP Headers based on SASL Role
-
-        if (saslContext.isServer()) {
-            SaslServerContext server = (SaslServerContext) saslContext;
-        } else {
-            SaslClientContext client = (SaslClientContext) saslContext;
-        }
+        saslContext.handleAMQPHeader(context, header);
     }
 
     @Override

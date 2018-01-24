@@ -24,6 +24,7 @@ import org.apache.qpid.proton4j.amqp.security.SaslMechanisms;
 import org.apache.qpid.proton4j.amqp.security.SaslOutcome;
 import org.apache.qpid.proton4j.amqp.security.SaslPerformative;
 import org.apache.qpid.proton4j.amqp.security.SaslResponse;
+import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.transport.TransportHandlerContext;
 import org.apache.qpid.proton4j.transport.sasl.SaslConstants.SaslOutcomes;
@@ -49,11 +50,16 @@ public abstract class AbstractSaslContext implements SaslPerformative.SaslPerfor
 
     protected ProtonBuffer pending;
 
-    protected boolean headerWritten;
-    protected Binary challengeResponse;
-    protected boolean initReceived;
     protected boolean mechanismsSent;
+    protected boolean mechanismsReceived;
+
+    protected boolean headerWritten;
+    protected boolean headerReceived;
+
+    protected boolean initReceived;
     protected boolean initSent;
+
+    protected Binary challengeResponse;
 
     public AbstractSaslContext(SaslHandler handler) {
         this.saslHandler = handler;
@@ -86,6 +92,10 @@ public abstract class AbstractSaslContext implements SaslPerformative.SaslPerfor
     public boolean isDone() {
         return done;
     }
+
+    //----- Handle AMQP Header input -----------------------------------------//
+
+    public abstract void handleAMQPHeader(TransportHandlerContext context, AMQPHeader header);
 
     //----- Entry point for Sasl Performative processing ---------------------//
 

@@ -17,6 +17,8 @@
 package org.apache.qpid.proton4j.transport.sasl;
 
 import org.apache.qpid.proton4j.amqp.Symbol;
+import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
+import org.apache.qpid.proton4j.transport.TransportHandlerContext;
 
 public class SaslServerContext extends AbstractSaslContext {
 
@@ -96,5 +98,21 @@ public class SaslServerContext extends AbstractSaslContext {
      */
     public void setAllowNonSasl(boolean allowNonSasl) {
         this.allowNonSasl = allowNonSasl;
+    }
+
+    @Override
+    public void handleAMQPHeader(TransportHandlerContext context, AMQPHeader header) {
+        if (header.isSaslHeader()) {
+            // TODO - Check state, then send mechanisms
+        } else {
+            // TODO - Check state and complete if allowing non-sasl connect
+            if (!headerReceived && isAllowNonSasl()) {
+                // Set proper outcome etc.
+                done = true;
+                context.fireAMQPHeader(header);
+            } else {
+                // Report the variety of errors that exist in this state.
+            }
+        }
     }
 }
