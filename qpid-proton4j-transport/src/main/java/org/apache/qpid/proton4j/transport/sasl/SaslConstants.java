@@ -23,7 +23,7 @@ public interface SaslConstants {
 
     // TODO - PN_ is a C'ism, can we do away with that ?
 
-    public enum SaslState {
+    public enum SaslStates {
         /** Pending configuration by application */
         PN_SASL_CONF,
         /** Pending SASL Init */
@@ -36,7 +36,7 @@ public interface SaslConstants {
         PN_SASL_FAIL
     }
 
-    public enum SaslOutcome {
+    public enum SaslOutcomes {
         /** negotiation not completed */
         PN_SASL_NONE((byte) -1),
         /** authentication succeeded */
@@ -52,7 +52,7 @@ public interface SaslConstants {
 
         /** failed due to transient error */
 
-        SaslOutcome(byte code) {
+        SaslOutcomes(byte code) {
             _code = code;
         }
 
@@ -61,12 +61,12 @@ public interface SaslConstants {
         }
     }
 
-    public static SaslOutcome PN_SASL_NONE = SaslOutcome.PN_SASL_NONE;
-    public static SaslOutcome PN_SASL_OK = SaslOutcome.PN_SASL_OK;
-    public static SaslOutcome PN_SASL_AUTH = SaslOutcome.PN_SASL_AUTH;
-    public static SaslOutcome PN_SASL_SYS = SaslOutcome.PN_SASL_SYS;
-    public static SaslOutcome PN_SASL_PERM = SaslOutcome.PN_SASL_PERM;
-    public static SaslOutcome PN_SASL_TEMP = SaslOutcome.PN_SASL_TEMP;
-    public static SaslOutcome PN_SASL_SKIPPED = SaslOutcome.PN_SASL_SKIPPED;
+    public static SaslOutcomes PN_SASL_NONE = SaslOutcomes.PN_SASL_NONE;
+    public static SaslOutcomes PN_SASL_OK = SaslOutcomes.PN_SASL_OK;
+    public static SaslOutcomes PN_SASL_AUTH = SaslOutcomes.PN_SASL_AUTH;
+    public static SaslOutcomes PN_SASL_SYS = SaslOutcomes.PN_SASL_SYS;
+    public static SaslOutcomes PN_SASL_PERM = SaslOutcomes.PN_SASL_PERM;
+    public static SaslOutcomes PN_SASL_TEMP = SaslOutcomes.PN_SASL_TEMP;
+    public static SaslOutcomes PN_SASL_SKIPPED = SaslOutcomes.PN_SASL_SKIPPED;
 
 }

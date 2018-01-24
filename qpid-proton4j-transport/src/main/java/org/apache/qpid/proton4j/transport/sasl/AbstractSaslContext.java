@@ -18,21 +18,28 @@ package org.apache.qpid.proton4j.transport.sasl;
 
 import org.apache.qpid.proton4j.amqp.Binary;
 import org.apache.qpid.proton4j.amqp.Symbol;
+import org.apache.qpid.proton4j.amqp.security.SaslChallenge;
+import org.apache.qpid.proton4j.amqp.security.SaslInit;
+import org.apache.qpid.proton4j.amqp.security.SaslMechanisms;
+import org.apache.qpid.proton4j.amqp.security.SaslOutcome;
+import org.apache.qpid.proton4j.amqp.security.SaslPerformative;
+import org.apache.qpid.proton4j.amqp.security.SaslResponse;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
-import org.apache.qpid.proton4j.transport.sasl.SaslConstants.SaslOutcome;
-import org.apache.qpid.proton4j.transport.sasl.SaslConstants.SaslState;
+import org.apache.qpid.proton4j.transport.TransportHandlerContext;
+import org.apache.qpid.proton4j.transport.sasl.SaslConstants.SaslOutcomes;
+import org.apache.qpid.proton4j.transport.sasl.SaslConstants.SaslStates;
 
 /**
  * The State engine for a Sasl exchange.
  */
-public abstract class AbstractSaslContext {
+public abstract class AbstractSaslContext implements SaslPerformative.SaslPerformativeHandler<TransportHandlerContext> {
 
     enum Role { CLIENT, SERVER };
 
     protected SaslHandler saslHandler;
 
-    protected SaslOutcome outcome = SaslOutcome.PN_SASL_NONE;
-    protected SaslState state = SaslState.PN_SASL_IDLE;
+    protected SaslOutcomes outcome = SaslOutcomes.PN_SASL_NONE;
+    protected SaslStates state = SaslStates.PN_SASL_IDLE;
     protected String hostname;
 
     protected Symbol[] serverMechanisms;
@@ -79,5 +86,32 @@ public abstract class AbstractSaslContext {
      */
     public boolean isDone() {
         return done;
+    }
+
+    //----- Entry point for Sasl Performative processing ---------------------//
+
+    @Override
+    public void handleMechanisms(SaslMechanisms saslMechanisms, Binary payload, TransportHandlerContext context) {
+        // TODO
+    }
+
+    @Override
+    public void handleInit(SaslInit saslInit, Binary payload, TransportHandlerContext context) {
+        // TODO
+    }
+
+    @Override
+    public void handleChallenge(SaslChallenge saslChallenge, Binary payload, TransportHandlerContext context) {
+        // TODO
+    }
+
+    @Override
+    public void handleResponse(SaslResponse saslResponse, Binary payload, TransportHandlerContext context) {
+        // TODO
+    }
+
+    @Override
+    public void handleOutcome(SaslOutcome saslOutcome, Binary payload, TransportHandlerContext context) {
+        // TODO
     }
 }

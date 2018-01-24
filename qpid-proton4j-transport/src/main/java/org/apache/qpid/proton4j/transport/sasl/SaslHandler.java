@@ -108,6 +108,8 @@ public class SaslHandler implements TransportHandler {
             context.fireAMQPHeader(header);
         }
 
+        // TODO - Handler AMQP Headers based on SASL Role
+
         if (saslContext.isServer()) {
             SaslServerContext server = (SaslServerContext) saslContext;
         } else {
@@ -117,6 +119,14 @@ public class SaslHandler implements TransportHandler {
 
     @Override
     public void handleSaslFrame(TransportHandlerContext context, SaslFrame frame) {
+        if (isDone()) {
+            // TODO specific error for this case.
+            context.fireFailed(new IllegalStateException(
+                "Unexpected SASL Frame: SASL processing has already completed"));
+        }
+
+        // TODO - Payload ?
+        frame.getBody().invoke(saslContext, null, context);
     }
 
     @Override
@@ -124,7 +134,7 @@ public class SaslHandler implements TransportHandler {
         if (isDone()) {
             context.fireProtocolFrame(frame);
         } else {
-            // TODO
+            // TODO - Pipelined Connect, hold frame for later
         }
     }
 
@@ -133,7 +143,7 @@ public class SaslHandler implements TransportHandler {
         if (isDone()) {
             context.firePartialFrame(frame);
         } else {
-            // TODO
+            // TODO - ?
         }
     }
 
