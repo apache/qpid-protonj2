@@ -24,6 +24,11 @@ import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 public interface DecoderState {
 
     /**
+     * Resets any intermediate state back to default values.
+     */
+    void reset();
+
+    /**
      * @return the decoder that created this state object
      */
     Decoder getDecoder();

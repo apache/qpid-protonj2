@@ -37,7 +37,7 @@ public class SaslHandler implements TransportHandler {
     private Decoder saslDecoder = CodecFactory.getSaslDecoder();
     private Encoder saslEncoder = CodecFactory.getSaslEncoder();
 
-    private final SaslFrameParser frameParser = new SaslFrameParser();
+    private final SaslFrameParser frameParser;
 
     private AbstractSaslContext saslContext;
     private boolean done;
@@ -47,6 +47,7 @@ public class SaslHandler implements TransportHandler {
      * the state correctly.
      */
     private SaslHandler() {
+        frameParser = new SaslFrameParser(saslDecoder);
     }
 
     public Encoder getSaslEndoer() {

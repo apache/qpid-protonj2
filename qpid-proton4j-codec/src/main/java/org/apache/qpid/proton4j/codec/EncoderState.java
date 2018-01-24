@@ -26,4 +26,9 @@ public interface EncoderState {
      */
     Encoder getEncoder();
 
+    /**
+     * Resets any intermediate state back to default values.
+     */
+    void reset();
+
 }

@@ -23,7 +23,7 @@ import org.apache.qpid.proton4j.buffer.ProtonBuffer;
  */
 public class PartialFrame extends Frame<ProtonBuffer> {
 
-    public PartialFrame(ProtonBuffer payload, byte channel, byte type) {
-        super(payload, channel, type);
+    public PartialFrame(ProtonBuffer payload, short channel, byte type) {
+        super(payload, channel, type, null);
     }
 }

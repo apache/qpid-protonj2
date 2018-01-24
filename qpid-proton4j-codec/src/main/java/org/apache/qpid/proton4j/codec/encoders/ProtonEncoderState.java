@@ -33,4 +33,9 @@ public class ProtonEncoderState implements EncoderState {
     public ProtonEncoder getEncoder() {
         return this.encoder;
     }
+
+    @Override
+    public void reset() {
+        // No intermediate state to reset
+    }
 }

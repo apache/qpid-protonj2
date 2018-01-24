@@ -26,6 +26,7 @@ import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.codec.Decoder;
 import org.apache.qpid.proton4j.codec.DecoderState;
 import org.apache.qpid.proton4j.transport.FrameParser;
+import org.apache.qpid.proton4j.transport.SaslFrame;
 import org.apache.qpid.proton4j.transport.TransportHandlerContext;
 import org.apache.qpid.proton4j.transport.exceptions.TransportException;
 
@@ -64,6 +65,11 @@ public class SaslFrameParser implements FrameParser {
     private Decoder decoder;
     private DecoderState decoderState;
     private AMQPHeader header = AMQPHeader.getSASLHeader();
+
+    public SaslFrameParser(Decoder decoder) {
+        this.decoder = decoder;
+        this.decoderState = decoder.newDecoderState();
+    }
 
     @Override
     public void reset() {
@@ -305,10 +311,8 @@ public class SaslFrameParser implements FrameParser {
 
                         if (val instanceof SaslPerformative) {
                             SaslPerformative performative = (SaslPerformative) val;
-
-                            // TODO - Hand off performative to the SaslStrategy for processing.
-
-                            reset();
+                            SaslFrame saslFrame = new SaslFrame(performative, payload);
+                            sasl.handleSaslFrame(context, saslFrame);
                             input = incoming;
                             parsingState = State.SIZE_0;
                         } else {

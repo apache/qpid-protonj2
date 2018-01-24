@@ -43,6 +43,11 @@ public class ProtonDecoderState implements DecoderState {
         return decoder;
     }
 
+    @Override
+    public void reset() {
+        // No intermediate state to reset
+    }
+
     public UTF8Decoder getStringDecoder() {
         return stringDecoder;
     }
