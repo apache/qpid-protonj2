@@ -37,6 +37,21 @@ public interface Transport {
     void processIncoming(ProtonBuffer buffer) throws IOException;
 
     /**
+     * Write the given protocol frame into the transport.
+     *
+     * @param frame
+     *      The protocol frame to write into the transport.
+     *
+     * @throws IOException if an error occurs processing the data.
+     */
+    void write(ProtocolFrame frame) throws IOException;
+
+    /**
+     * Flush the transport
+     */
+    void flush();
+
+    /**
      * Sets the ProtonBufferAllocator used by this Transport.
      * <p>
      * When copying data, encoding types or otherwise needing to allocate memory
