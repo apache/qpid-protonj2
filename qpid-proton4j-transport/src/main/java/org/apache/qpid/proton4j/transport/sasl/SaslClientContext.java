@@ -16,6 +16,8 @@
  */
 package org.apache.qpid.proton4j.transport.sasl;
 
+import org.apache.qpid.proton4j.amqp.Symbol;
+
 public class SaslClientContext extends AbstractSaslContext {
 
     private final SaslClientListener listener;
@@ -41,24 +43,28 @@ public class SaslClientContext extends AbstractSaslContext {
     // TODO - Server state
 
     public String[] getServerMechanisms() {
-        return null;
+        String[] mechanisms = new String[serverMechanisms.length];
+        for (int i = 0; i < serverMechanisms.length; i++) {
+            mechanisms[i] = serverMechanisms[i].toString();
+        }
+        return mechanisms;
     }
 
     // TODO - mutable state
 
     public String getHostname() {
-        return null;
+        return hostname;
     }
 
     public void setHostname(String hostname) {
-
+        this.hostname = hostname;
     }
 
     public String getMechanism() {
-        return null;
+        return chosenMechanism.toString();
     }
 
     public void setMechanism(String mechanism) {
-
+        this.chosenMechanism = Symbol.valueOf(mechanism);
     }
 }

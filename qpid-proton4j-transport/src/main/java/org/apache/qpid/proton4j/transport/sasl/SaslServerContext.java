@@ -16,6 +16,8 @@
  */
 package org.apache.qpid.proton4j.transport.sasl;
 
+import org.apache.qpid.proton4j.amqp.Symbol;
+
 public class SaslServerContext extends AbstractSaslContext {
 
     private final SaslServerListener listener;
@@ -43,21 +45,40 @@ public class SaslServerContext extends AbstractSaslContext {
     // TODO - Client state
 
     public String getClientMechanism() {
-        return null;
+        return chosenMechanism.toString();
     }
 
     public String getClientHostname() {
-        return null;
+        return hostname;
     }
 
     // TODO - Mutable state
 
     public String[] getMechanisms() {
-        return null;
+        String[] mechanisms = null;
+
+        if (serverMechanisms != null) {
+            mechanisms = new String[serverMechanisms.length];
+            for (int i = 0; i < serverMechanisms.length; i++) {
+                mechanisms[i] = serverMechanisms[i].toString();
+            }
+        }
+
+        return mechanisms;
     }
 
     public void setMechanisms(String[] mechanisms) {
+        if (!mechanismsSent) {
+            Symbol[] serverMechanisms = new Symbol[mechanisms.length];
+            for (int i = 0; i < mechanisms.length; i++) {
+                serverMechanisms[i] = Symbol.valueOf(mechanisms[i]);
+            }
 
+            this.serverMechanisms = serverMechanisms;
+        } else {
+            // TODO What is the right error here.
+            throw new IllegalStateException("Server Mechanisms arlready sent to remote");
+        }
     }
 
     /**

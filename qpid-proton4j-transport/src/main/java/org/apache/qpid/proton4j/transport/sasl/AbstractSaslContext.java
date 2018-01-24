@@ -40,13 +40,12 @@ public abstract class AbstractSaslContext implements SaslPerformative.SaslPerfor
 
     protected SaslOutcomes outcome = SaslOutcomes.PN_SASL_NONE;
     protected SaslStates state = SaslStates.PN_SASL_IDLE;
-    protected String hostname;
 
     protected Symbol[] serverMechanisms;
-    protected Symbol clientMechanism;
+    protected Symbol chosenMechanism;
+    protected String hostname;
 
     protected boolean done;
-    protected Symbol chosenMechanism;
 
     protected ProtonBuffer pending;
 
