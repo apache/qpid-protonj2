@@ -21,6 +21,7 @@ import java.io.IOException;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonBufferAllocator;
 import org.apache.qpid.proton4j.transport.FrameParser;
+import org.apache.qpid.proton4j.transport.ProtocolFrame;
 import org.apache.qpid.proton4j.transport.ProtocolTracer;
 import org.apache.qpid.proton4j.transport.Transport;
 import org.apache.qpid.proton4j.transport.TransportHandler;
@@ -96,5 +97,13 @@ public class ProtonTransport implements Transport {
     @Override
     public TransportPipeline getPipeline() {
         return null;
+    }
+
+    @Override
+    public void write(ProtocolFrame frame) throws IOException {
+    }
+
+    @Override
+    public void flush() {
     }
 }
