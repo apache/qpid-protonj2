@@ -20,6 +20,10 @@ import org.apache.qpid.proton4j.amqp.Binary;
 
 /**
  * Base class for Frames that travel through the Transport
+ *
+ * TODO - Creating a new frame instance for every incoming frame may
+ *        become expensive in GC terms, pooling could reduce GC pressure
+ *        but increase CPU time to get and return pooled frames
  */
 public abstract class Frame<V> {
 
@@ -49,5 +53,12 @@ public abstract class Frame<V> {
 
     public Binary getPayload() {
         return payload;
+    }
+
+    /**
+     * @return the body contained in the frame and release the frame.
+     */
+    public V unwrap() {
+        return body;
     }
 }
