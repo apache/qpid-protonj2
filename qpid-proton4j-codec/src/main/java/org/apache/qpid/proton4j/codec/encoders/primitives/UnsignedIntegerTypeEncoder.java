@@ -47,6 +47,24 @@ public class UnsignedIntegerTypeEncoder extends AbstractPrimitiveTypeEncoder<Uns
         }
     }
 
+    public void writeType(ProtonBuffer buffer, EncoderState state, long value) {
+        if (value < 0 || value > 0x0000FFFF) {
+            throw new IllegalArgumentException("Value given is out of range: " + value);
+        }
+
+        int intValue = (int) value;
+
+        if (intValue == 0) {
+            buffer.writeByte(EncodingCodes.UINT0);
+        } else if (intValue > 0 && intValue <= 255) {
+            buffer.writeByte(EncodingCodes.SMALLUINT);
+            buffer.writeByte(intValue);
+        } else {
+            buffer.writeByte(EncodingCodes.UINT);
+            buffer.writeInt(intValue);
+        }
+    }
+
     @Override
     public void writeRawArray(ProtonBuffer buffer, EncoderState state, Object[] values) {
         buffer.writeByte(EncodingCodes.UINT);

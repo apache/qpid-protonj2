@@ -48,10 +48,17 @@ public interface Encoder {
 
     void writeUnsignedByte(ProtonBuffer buffer, EncoderState state, UnsignedByte value);
 
+    void writeUnsignedByte(ProtonBuffer buffer, EncoderState state, byte value);
+
     void writeUnsignedShort(ProtonBuffer buffer, EncoderState state, UnsignedShort value);
+
+    void writeUnsignedShort(ProtonBuffer buffer, EncoderState state, int value);
 
     void writeUnsignedInteger(ProtonBuffer buffer, EncoderState state, UnsignedInteger value);
 
+    void writeUnsignedInteger(ProtonBuffer buffer, EncoderState state, long value);
+
+    // TODO - Do we want some alternative for UnsignedLong (long, BigInteger)
     void writeUnsignedLong(ProtonBuffer buffer, EncoderState state, UnsignedLong value);
 
     void writeByte(ProtonBuffer buffer, EncoderState state, byte value);
@@ -89,21 +96,28 @@ public interface Encoder {
     void writeCharacter(ProtonBuffer buffer, EncoderState state, Character value);
 
     void writeTimestamp(ProtonBuffer buffer, EncoderState state, long value);
+
     void writeTimestamp(ProtonBuffer buffer, EncoderState state, Date value);
 
     void writeUUID(ProtonBuffer buffer, EncoderState state, UUID value);
 
     void writeBinary(ProtonBuffer buffer, EncoderState state, Binary value);
 
+    void writeBinary(ProtonBuffer buffer, EncoderState state, byte[] value);
+
     void writeString(ProtonBuffer buffer, EncoderState state, String value);
 
     void writeSymbol(ProtonBuffer buffer, EncoderState state, Symbol value);
+
+    void writeSymbol(ProtonBuffer buffer, EncoderState state, String value);
 
     <T> void writeList(ProtonBuffer buffer, EncoderState state, List<T> value);
 
     <K, V> void writeMap(ProtonBuffer buffer, EncoderState state, Map<K, V> value);
 
     void writeDescribedType(ProtonBuffer buffer, EncoderState state, DescribedType value);
+
+    void writeObject(ProtonBuffer buffer, EncoderState state, Object value);
 
     void writeArray(ProtonBuffer buffer, EncoderState state, boolean[] value);
 
@@ -140,8 +154,6 @@ public interface Encoder {
     void writeArray(ProtonBuffer buffer, EncoderState state, UnsignedLong[] value);
 
     void writeArray(ProtonBuffer buffer, EncoderState state, UUID[] value);
-
-    void writeObject(ProtonBuffer buffer, EncoderState state, Object value);
 
     <V> Encoder registerTypeEncoder(TypeEncoder<V> encoder);
 

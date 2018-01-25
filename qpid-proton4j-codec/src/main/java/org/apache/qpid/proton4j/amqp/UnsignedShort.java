@@ -65,6 +65,7 @@ public final class UnsignedShort extends Number implements Comparable<UnsignedSh
         if (this == o) {
             return true;
         }
+
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
@@ -103,10 +104,12 @@ public final class UnsignedShort extends Number implements Comparable<UnsignedSh
 
     public static UnsignedShort valueOf(final String value) {
         int intVal = Integer.parseInt(value);
-        if (intVal < 0 || intVal >= (1 << 16)) {
-            throw new NumberFormatException("Value \"" + value + "\" lies outside the range [" + 0 + "-" + (1 << 16) + ").");
-        }
-        return valueOf((short) intVal);
 
+        if (intVal < 0 || intVal >= (1 << 16)) {
+            throw new NumberFormatException(
+                "Value \"" + value + "\" lies outside the range [" + 0 + "-" + (1 << 16) + ").");
+        }
+
+        return valueOf((short) intVal);
     }
 }

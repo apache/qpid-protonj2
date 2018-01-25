@@ -38,6 +38,11 @@ public class UnsignedByteTypeEncoder extends AbstractPrimitiveTypeEncoder<Unsign
         buffer.writeByte(value.byteValue());
     }
 
+    public void writeType(ProtonBuffer buffer, EncoderState state, byte value) {
+        buffer.writeByte(EncodingCodes.UBYTE);
+        buffer.writeByte(value);
+    }
+
     @Override
     public void writeRawArray(ProtonBuffer buffer, EncoderState state, Object[] values) {
         buffer.writeByte(EncodingCodes.UBYTE);

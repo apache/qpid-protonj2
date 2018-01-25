@@ -129,6 +129,11 @@ public class ProtonEncoder implements Encoder {
     }
 
     @Override
+    public void writeUnsignedByte(ProtonBuffer buffer, EncoderState state, byte value) {
+        ubyteEncoder.writeType(buffer, state, value);
+    }
+
+    @Override
     public void writeUnsignedShort(ProtonBuffer buffer, EncoderState state, UnsignedShort value) {
         if (value == null) {
             buffer.writeByte(EncodingCodes.NULL);
@@ -138,8 +143,26 @@ public class ProtonEncoder implements Encoder {
     }
 
     @Override
+    public void writeUnsignedShort(ProtonBuffer buffer, EncoderState state, int value) {
+        if (value < 0) {
+            buffer.writeByte(EncodingCodes.NULL);
+        } else {
+            ushortEncoder.writeType(buffer, state, value);
+        }
+    }
+
+    @Override
     public void writeUnsignedInteger(ProtonBuffer buffer, EncoderState state, UnsignedInteger value) {
         if (value == null) {
+            buffer.writeByte(EncodingCodes.NULL);
+        } else {
+            uintEncoder.writeType(buffer, state, value);
+        }
+    }
+
+    @Override
+    public void writeUnsignedInteger(ProtonBuffer buffer, EncoderState state, long value) {
+        if (value < 0) {
             buffer.writeByte(EncodingCodes.NULL);
         } else {
             uintEncoder.writeType(buffer, state, value);
@@ -313,6 +336,15 @@ public class ProtonEncoder implements Encoder {
     }
 
     @Override
+    public void writeBinary(ProtonBuffer buffer, EncoderState state, byte[] value) {
+        if (value == null) {
+            buffer.writeByte(EncodingCodes.NULL);
+        } else {
+            binaryEncoder.writeType(buffer, state, value);
+        }
+    }
+
+    @Override
     public void writeString(ProtonBuffer buffer, EncoderState state, String value) {
         if (value == null) {
             buffer.writeByte(EncodingCodes.NULL);
@@ -327,6 +359,15 @@ public class ProtonEncoder implements Encoder {
             buffer.writeByte(EncodingCodes.NULL);
         } else {
             symbolEncoder.writeType(buffer, state, value);
+        }
+    }
+
+    @Override
+    public void writeSymbol(ProtonBuffer buffer, EncoderState state, String value) {
+        if (value == null) {
+            buffer.writeByte(EncodingCodes.NULL);
+        } else {
+            symbolEncoder.writeType(buffer, state, Symbol.valueOf(value));
         }
     }
 
