@@ -55,4 +55,9 @@ public interface TransportHandler {
 
     void transportWritable(TransportHandlerContext context);
 
+    // TODO - Other variants like write(ProtonBuffer) etc ?
+    void write(ProtocolFrame frame);
+
+    void flush();
+
 }

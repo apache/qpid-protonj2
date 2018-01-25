@@ -21,6 +21,8 @@ package org.apache.qpid.proton4j.transport;
  */
 public interface TransportPipeline {
 
+    Transport getTransport();
+
     TransportPipeline addFirst(String name, TransportHandler handler);
 
     TransportPipeline addLast(String name, TransportHandler handler);

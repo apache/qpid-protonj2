@@ -40,4 +40,8 @@ public interface TransportHandlerContext {
 
     void fireFailed(Throwable e);
 
+    void fireWrite(ProtocolFrame frame);
+
+    void fireFlush();
+
 }
