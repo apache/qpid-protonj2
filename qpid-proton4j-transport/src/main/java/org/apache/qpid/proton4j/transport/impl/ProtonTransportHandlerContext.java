@@ -68,6 +68,14 @@ public class ProtonTransportHandlerContext implements TransportHandlerContext {
     }
 
     @Override
+    public void fireWrite(SaslFrame frame) {
+    }
+
+    @Override
+    public void fireWrite(ProtonBuffer buffer) {
+    }
+
+    @Override
     public void fireFlush() {
     }
 }

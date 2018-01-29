@@ -17,8 +17,11 @@
 package org.apache.qpid.proton4j.transport.sasl;
 
 import org.apache.qpid.proton4j.amqp.Symbol;
+import org.apache.qpid.proton4j.amqp.security.SaslMechanisms;
 import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
+import org.apache.qpid.proton4j.transport.SaslFrame;
 import org.apache.qpid.proton4j.transport.TransportHandlerContext;
+import org.apache.qpid.proton4j.transport.sasl.SaslConstants.SaslStates;
 
 public class SaslServerContext extends AbstractSaslContext {
 
@@ -103,16 +106,54 @@ public class SaslServerContext extends AbstractSaslContext {
     @Override
     public void handleAMQPHeader(TransportHandlerContext context, AMQPHeader header) {
         if (header.isSaslHeader()) {
-            // TODO - Check state, then send mechanisms
+            handleSaslHeader(context, header);
         } else {
-            // TODO - Check state and complete if allowing non-sasl connect
-            if (!headerReceived && isAllowNonSasl()) {
+            handleNonSaslHeader(context, header);
+        }
+    }
+
+    private void handleSaslHeader(TransportHandlerContext context, AMQPHeader header) {
+        if (!headerWritten) {
+            context.fireWrite(AMQPHeader.getSASLHeader().getBuffer());
+            headerWritten = true;
+        }
+
+        if (headerReceived) {
+            // TODO - Error out on receive of another SASL Header.
+            context.fireFailed(new IllegalStateException(
+                "Unexpected second SASL Header read before SASL Authentication completed."));
+        } else {
+            headerReceived = true;
+        }
+
+        // TODO - When to fail when no mechanisms set, now or on some earlier started / connected evnet ?
+
+        // TODO - Check state, then send mechanisms
+        SaslMechanisms mechanisms = new SaslMechanisms();
+        mechanisms.setSaslServerMechanisms(serverMechanisms);
+
+        // Send the server mechanisms now.
+        SaslFrame frame = new SaslFrame(mechanisms, null);
+        context.fireWrite(frame);
+        mechanismsSent = true;
+        state = SaslStates.PN_SASL_STEP;
+    }
+
+    private void handleNonSaslHeader(TransportHandlerContext context, AMQPHeader header) {
+        if (!headerReceived) {
+            if (isAllowNonSasl()) {
                 // Set proper outcome etc.
                 done = true;
                 context.fireAMQPHeader(header);
             } else {
-                // Report the variety of errors that exist in this state.
+                // TODO - Error type ?
+                context.fireFailed(new IllegalStateException(
+                    "Unexpected AMQP Header before SASL Authentication completed."));
             }
+        } else {
+            // Report the variety of errors that exist in this state such as the
+            // fact that we shouldn't get an AMQP header before sasl is done, and when
+            // it is done we are currently bypassing this call in the parent SaslHandler.
         }
     }
 }

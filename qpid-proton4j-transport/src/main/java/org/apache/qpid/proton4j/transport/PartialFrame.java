@@ -23,6 +23,10 @@ import org.apache.qpid.proton4j.buffer.ProtonBuffer;
  */
 public class PartialFrame extends Frame<ProtonBuffer> {
 
+    // TODO - This adds a fair bit of complexity in how we handle them
+    //        Do we want to allow for partial reads or delegate that to the
+    //        internal implementation of some handler in the chain ?
+
     public PartialFrame(ProtonBuffer payload, short channel, byte type) {
         super(payload, channel, type, null);
     }

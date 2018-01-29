@@ -55,8 +55,14 @@ public interface TransportHandler {
 
     void transportWritable(TransportHandlerContext context);
 
-    // TODO - Other variants like write(ProtonBuffer) etc ?
+    // TODO - Other variants like write(ProtonBuffer) etc how do we want to manage writes from
+    //        the transport, who drives them ?
+
     void write(ProtocolFrame frame);
+
+    void write(SaslFrame frame);
+
+    void write(ProtonBuffer buffer);
 
     void flush();
 

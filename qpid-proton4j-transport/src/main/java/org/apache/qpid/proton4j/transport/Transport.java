@@ -48,6 +48,8 @@ public interface Transport {
 
     /**
      * Flush the transport
+     *
+     * TODO - This implies that batching is possible, do we want that ?
      */
     void flush();
 

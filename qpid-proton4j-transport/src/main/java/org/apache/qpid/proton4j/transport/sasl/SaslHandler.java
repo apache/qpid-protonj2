@@ -40,7 +40,6 @@ public class SaslHandler implements TransportHandler {
     private final SaslFrameParser frameParser;
 
     private AbstractSaslContext saslContext;
-    private boolean done;
 
     /*
      * The Handler must be create from the client or server methods to configure
@@ -67,7 +66,7 @@ public class SaslHandler implements TransportHandler {
     }
 
     public boolean isDone() {
-        return done;
+        return saslContext.isDone();
     }
 
     public static SaslHandler client(SaslClientListener listener) {
@@ -164,6 +163,14 @@ public class SaslHandler implements TransportHandler {
 
     @Override
     public void write(ProtocolFrame frame) {
+    }
+
+    @Override
+    public void write(SaslFrame frame) {
+    }
+
+    @Override
+    public void write(ProtonBuffer buffer) {
     }
 
     @Override

@@ -42,6 +42,10 @@ public interface TransportHandlerContext {
 
     void fireWrite(ProtocolFrame frame);
 
+    void fireWrite(SaslFrame frame);
+
+    void fireWrite(ProtonBuffer buffer);
+
     void fireFlush();
 
 }
