@@ -16,8 +16,11 @@
  */
 package org.apache.qpid.proton4j.transport.sasl;
 
+import org.apache.qpid.proton4j.amqp.Binary;
 import org.apache.qpid.proton4j.amqp.Symbol;
+import org.apache.qpid.proton4j.amqp.security.SaslInit;
 import org.apache.qpid.proton4j.amqp.security.SaslMechanisms;
+import org.apache.qpid.proton4j.amqp.security.SaslResponse;
 import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
 import org.apache.qpid.proton4j.transport.SaslFrame;
 import org.apache.qpid.proton4j.transport.TransportHandlerContext;
@@ -47,7 +50,7 @@ public class SaslServerContext extends AbstractSaslContext {
         return listener;
     }
 
-    // TODO - Client state
+    //----- Remote Client state ----------------------------------------------//
 
     public String getClientMechanism() {
         return chosenMechanism.toString();
@@ -57,7 +60,7 @@ public class SaslServerContext extends AbstractSaslContext {
         return hostname;
     }
 
-    // TODO - Mutable state
+    //----- Context mutable state --------------------------------------------//
 
     public String[] getMechanisms() {
         String[] mechanisms = null;
@@ -102,6 +105,8 @@ public class SaslServerContext extends AbstractSaslContext {
     public void setAllowNonSasl(boolean allowNonSasl) {
         this.allowNonSasl = allowNonSasl;
     }
+
+    //----- Transport event handlers -----------------------------------------//
 
     @Override
     public void handleAMQPHeader(TransportHandlerContext context, AMQPHeader header) {
@@ -155,5 +160,35 @@ public class SaslServerContext extends AbstractSaslContext {
             // fact that we shouldn't get an AMQP header before sasl is done, and when
             // it is done we are currently bypassing this call in the parent SaslHandler.
         }
+    }
+
+    @Override
+    public void handleInit(SaslInit saslInit, Binary payload, TransportHandlerContext context) {
+        hostname = saslInit.getHostname();
+        chosenMechanism = saslInit.getMechanism();
+        initReceived = true;
+
+        if (saslInit.getInitialResponse() != null) {
+            // TODO - How to present the response data, perhaps pass as arg to listener
+            //        instead of storing pending bytes.
+            //setPending(saslInit.getInitialResponse().asByteBuffer());
+        }
+
+        listener.onSaslInit(this);
+
+        // TODO ? listener.onSaslInit(this, saslInit.getInitialResponse());
+    }
+
+    @Override
+    public void handleResponse(SaslResponse saslResponse, Binary payload, TransportHandlerContext context) {
+        if (saslResponse.getResponse() != null) {
+            // TODO - How to present the response data, perhaps pass as arg to listener
+            //        instead of storing pending bytes.
+            //setPending(saslResponse.getResponse().asByteBuffer());
+        }
+
+        listener.onSaslResponse(this);
+
+        // TODO ? listener.onSaslResponse(this, saslResponse.getResponse());
     }
 }

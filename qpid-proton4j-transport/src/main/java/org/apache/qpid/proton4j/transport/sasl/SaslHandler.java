@@ -119,7 +119,7 @@ public class SaslHandler implements TransportHandler {
                 "Unexpected SASL Frame: SASL processing has already completed"));
         }
 
-        // TODO - Payload ?
+        // TODO - Payload ? Is there ever a payload on a Sasl frame ?
         frame.getBody().invoke(saslContext, null, context);
     }
 

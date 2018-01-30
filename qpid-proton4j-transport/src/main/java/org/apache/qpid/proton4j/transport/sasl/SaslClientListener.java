@@ -30,25 +30,25 @@ public interface SaslClientListener {
      * Called when a sasl-mechanisms frame has arrived and its effect
      * applied, indicating the offered mechanisms sent by the 'server' peer.
      *
-     * @param sasl the SaslContext object
+     * @param context the SaslClientContext object
      */
-    void onSaslMechanisms(SaslConstants context, String[] mechanisms);
+    void onSaslMechanisms(SaslClientContext context, String[] mechanisms);
 
     /**
      * Called when a sasl-challenge frame has arrived and its effect
      * applied, indicating the challenge sent by the 'server' peer.
      *
-     * @param sasl the SaslContext object
+     * @param context the SaslClientContext object
      */
-    void onSaslChallenge(SaslConstants context);
+    void onSaslChallenge(SaslClientContext context);
 
     /**
      * Called when a sasl-outcome frame has arrived and its effect
      * applied, indicating the outcome and any success additional-data
      * sent by the 'server' peer.
      *
-     * @param sasl the SaslContext object
+     * @param context the SaslClientContext object
      */
-    void onSaslOutcome(SaslConstants context);
+    void onSaslOutcome(SaslClientContext context);
 
 }

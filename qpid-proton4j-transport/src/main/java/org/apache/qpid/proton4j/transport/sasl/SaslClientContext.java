@@ -16,9 +16,15 @@
  */
 package org.apache.qpid.proton4j.transport.sasl;
 
+import org.apache.qpid.proton4j.amqp.Binary;
 import org.apache.qpid.proton4j.amqp.Symbol;
+import org.apache.qpid.proton4j.amqp.security.SaslChallenge;
+import org.apache.qpid.proton4j.amqp.security.SaslMechanisms;
+import org.apache.qpid.proton4j.amqp.security.SaslOutcome;
 import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
 import org.apache.qpid.proton4j.transport.TransportHandlerContext;
+import org.apache.qpid.proton4j.transport.sasl.SaslConstants.SaslOutcomes;
+import org.apache.qpid.proton4j.transport.sasl.SaslConstants.SaslStates;
 
 public class SaslClientContext extends AbstractSaslContext {
 
@@ -42,7 +48,7 @@ public class SaslClientContext extends AbstractSaslContext {
         return listener;
     }
 
-    // TODO - Server state
+    //----- Remote Server state information ----------------------------------//
 
     public String[] getServerMechanisms() {
         String[] mechanisms = new String[serverMechanisms.length];
@@ -52,7 +58,7 @@ public class SaslClientContext extends AbstractSaslContext {
         return mechanisms;
     }
 
-    // TODO - mutable state
+    //----- Mutable state ----------------------------------------------------//
 
     public String getHostname() {
         return hostname;
@@ -70,7 +76,65 @@ public class SaslClientContext extends AbstractSaslContext {
         this.chosenMechanism = Symbol.valueOf(mechanism);
     }
 
+    //----- SASL Frame event handlers-----------------------------------------//
+
     @Override
     public void handleAMQPHeader(TransportHandlerContext context, AMQPHeader header) {
+        if (!header.isSaslHeader()) {
+            // TODO - Error on server not supporting SASL
+            context.fireFailed(new IllegalStateException(
+                "Remote does not support SASL authentication."));
+        }
+    }
+
+    @Override
+    public void handleMechanisms(SaslMechanisms saslMechanisms, Binary payload, TransportHandlerContext context) {
+        serverMechanisms = saslMechanisms.getSaslServerMechanisms();
+
+        listener.onSaslMechanisms(this, getServerMechanisms());
+
+        // TODO - How is the listener driving output, send methods ?
+        //        We probably want to support asynchronous triggering
+    }
+
+    @Override
+    public void handleChallenge(SaslChallenge saslChallenge, Binary payload, TransportHandlerContext context) {
+        if (saslChallenge.getChallenge() != null) {
+            // TODO - How to present the response data, perhaps pass as arg to listener
+            //        instead of storing pending bytes.
+            //setPending(saslChallenge.getChallenge().asByteBuffer());
+        }
+
+        listener.onSaslChallenge(this);
+
+        // TODO - How is the listener driving output, send methods ?
+        //        We probably want to support asynchronous triggering
+        // listener.onSaslChallenge(this, saslChallenge.getChallenge());
+    }
+
+    @Override
+    public void handleOutcome(SaslOutcome saslOutcome, Binary payload, TransportHandlerContext context) {
+        for (SaslOutcomes outcome : SaslOutcomes.values()) {
+            // TODO - How to present the response data, perhaps pass as arg to listener
+            //        instead of storing pending bytes.
+            //if (saslOutcome.getAdditionalData() != null) {
+            //    setPending(saslOutcome.getAdditionalData().asByteBuffer());
+            //}
+
+            if (outcome.getCode() == saslOutcome.getCode().ordinal()) {
+                this.outcome = outcome;
+                if (state != SaslStates.PN_SASL_IDLE) {
+                    state = classifyStateFromOutcome(outcome);
+                }
+                break;
+            }
+        }
+
+        done = true;
+
+        listener.onSaslOutcome(this);
+
+        // TODO - Also pass the Outcome Enum and possible additional data
+        // listener.onSaslOutcome(this, outcome, saslOutcome.getAdditionalData());
     }
 }

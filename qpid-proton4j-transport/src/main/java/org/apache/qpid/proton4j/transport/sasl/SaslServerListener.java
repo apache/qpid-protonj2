@@ -31,16 +31,16 @@ public interface SaslServerListener {
      * applied, indicating the selected mechanism and any hostname
      * and initial-response details from the 'client' peer.
      *
-     * @param sasl the SaslContext object
+     * @param context the SaslServerContext object
      */
-    void onSaslInit(SaslConstants context);
+    void onSaslInit(SaslServerContext context);
 
     /**
      * Called when a sasl-response frame has arrived and its effect
      * applied, indicating the response sent by the 'client' peer.
      *
-     * @param sasl the SaslContext object
+     * @param context the SaslServerContext object
      */
-    void onSaslResponse(SaslConstants context);
+    void onSaslResponse(SaslServerContext context);
 
 }

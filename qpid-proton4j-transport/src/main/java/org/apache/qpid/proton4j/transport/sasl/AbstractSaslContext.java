@@ -101,26 +101,40 @@ public abstract class AbstractSaslContext implements SaslPerformative.SaslPerfor
 
     @Override
     public void handleMechanisms(SaslMechanisms saslMechanisms, Binary payload, TransportHandlerContext context) {
-        // TODO
+        // TODO - Error type ?
+        context.fireFailed(new IllegalStateException(
+            "Unexpected SASL Mechanisms Frame received."));
     }
 
     @Override
     public void handleInit(SaslInit saslInit, Binary payload, TransportHandlerContext context) {
-        // TODO
+        // TODO - Error type ?
+        context.fireFailed(new IllegalStateException(
+            "Unexpected SASL Init Frame received."));
     }
 
     @Override
     public void handleChallenge(SaslChallenge saslChallenge, Binary payload, TransportHandlerContext context) {
-        // TODO
+        // TODO - Error type ?
+        context.fireFailed(new IllegalStateException(
+            "Unexpected SASL Challenge Frame received."));
     }
 
     @Override
     public void handleResponse(SaslResponse saslResponse, Binary payload, TransportHandlerContext context) {
-        // TODO
+        // TODO - Error type ?
+        context.fireFailed(new IllegalStateException(
+            "Unexpected SASL Response Frame received."));
     }
 
     @Override
     public void handleOutcome(SaslOutcome saslOutcome, Binary payload, TransportHandlerContext context) {
-        // TODO
+        // TODO - Error type ?
+        context.fireFailed(new IllegalStateException(
+            "Unexpected SASL Outcome Frame received."));
+    }
+
+    protected SaslStates classifyStateFromOutcome(SaslOutcomes outcome) {
+        return outcome == SaslOutcomes.PN_SASL_OK ? SaslStates.PN_SASL_PASS : SaslStates.PN_SASL_FAIL;
     }
 }
