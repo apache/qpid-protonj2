@@ -50,6 +50,11 @@ public interface Decoder {
 
     UnsignedByte readUnsignedByte(ProtonBuffer buffer, DecoderState state) throws IOException;
 
+    // TODO - How to convey if this allows for the value to be omitted ?  For primitive
+    //        read methods do we just say that it must be there ?
+    //        we could return short to allow negative to indicate non present but it seems odd.
+    // byte readUnsignedByte(ProtonBuffer buffer, DecoderState state, byte defaultValue) throws IOException;
+
     Character readCharacter(ProtonBuffer buffer, DecoderState state) throws IOException;
 
     Decimal32 readDecimal32(ProtonBuffer buffer, DecoderState state) throws IOException;
@@ -62,13 +67,28 @@ public interface Decoder {
 
     UnsignedShort readUnsignedShort(ProtonBuffer buffer, DecoderState state) throws IOException;
 
+    // TODO - How to convey if this allows for the value to be omitted ?  For primitive
+    //        read methods do we just say that it must be there ?
+    //        here a negative return value could indicate it was not present.
+    // int readUnsignedShort(ProtonBuffer buffer, DecoderState state, int defaultValue) throws IOException;
+
     Integer readInteger(ProtonBuffer buffer, DecoderState state) throws IOException;
 
     UnsignedInteger readUnsignedInteger(ProtonBuffer buffer, DecoderState state) throws IOException;
 
+    // TODO - How to convey if this allows for the value to be omitted ?  For primitive
+    //        read methods do we just say that it must be there ?
+    //        here a negative return value could indicate it was not present.
+    // long readUnsignedInteger(ProtonBuffer buffer, DecoderState state, long defaultValue) throws IOException;
+
     Long readLong(ProtonBuffer buffer, DecoderState state) throws IOException;
 
     UnsignedLong readUnsignedLong(ProtonBuffer buffer, DecoderState state) throws IOException;
+
+    // TODO - How to convey if this allows for the value to be omitted ?  For primitive
+    //        read methods do we just say that it must be there ?
+    //        This one is odd because we don't have a bigger value to return non-negative
+    // long readUnsignedLong(ProtonBuffer buffer, DecoderState state, long defaultValue) throws IOException;
 
     Float readFloat(ProtonBuffer buffer, DecoderState state) throws IOException;
 

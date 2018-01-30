@@ -174,7 +174,7 @@ public class ProtonDecoder implements Decoder {
 
     @Override
     public TypeDecoder<?> getTypeDecoder(Object instance) {
-        return null;
+        return null;  // TODO do we need this ?
     }
 
     @Override
@@ -240,6 +240,24 @@ public class ProtonDecoder implements Decoder {
                 throw new IOException("Expected unsigned byte type but found encoding: " + encodingCode);
         }
     }
+
+//    @Override
+//    public byte readUnsignedByte(ProtonBuffer buffer, DecoderState state, byte defaultValue) throws IOException {
+//        byte encodingCode = buffer.readByte();
+//
+//        TODO - We currently allow primitive type decoders to be registered by external clients
+//               which complicates this as we would have to cast here into a specific decoder impl
+//               to access a read method with correct return types.  Alternatively we could just
+//               implement the read here given how simple it is.
+//        switch (encodingCode) {
+//            case EncodingCodes.UBYTE:
+//                return (UnsignedByte) primitiveDecoders[EncodingCodes.UBYTE & 0xff].readValue(buffer, state);
+//            case EncodingCodes.NULL:
+//                return defaultValue;
+//            default:
+//                throw new IOException("Expected unsigned byte type but found encoding: " + encodingCode);
+//        }
+//    }
 
     @Override
     public Character readCharacter(ProtonBuffer buffer, DecoderState state) throws IOException {

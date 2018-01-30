@@ -92,6 +92,8 @@ public class FlowTypeDecoder extends AbstractDescribedTypeDecoder<Flow> {
         int size = listDecoder.readSize(buffer);
         int count = listDecoder.readCount(buffer);
 
+        // TODO - Validate that mandatory fields are present, what error ? Here or further up the chain
+
         for (int index = 0; index < count; ++index) {
             switch (index) {
                 case 0:

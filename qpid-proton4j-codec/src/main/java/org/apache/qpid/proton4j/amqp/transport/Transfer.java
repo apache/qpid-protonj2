@@ -26,11 +26,11 @@ public final class Transfer implements Performative {
     public static final UnsignedLong DESCRIPTOR_CODE = UnsignedLong.valueOf(0x0000000000000014L);
     public static final Symbol DESCRIPTOR_SYMBOL = Symbol.valueOf("amqp:transfer:list");
 
-    private UnsignedInteger handle;
-    private UnsignedInteger deliveryId;
+    private UnsignedInteger handle; // TODO - long
+    private UnsignedInteger deliveryId; // TODO - long where < 0 means not set
     private Binary deliveryTag;
-    private UnsignedInteger messageFormat;
-    private Boolean settled;
+    private UnsignedInteger messageFormat; // TODO - long
+    private Boolean settled;   // Does it matter if not present, can false not be default and use bool
     private boolean more;
     private ReceiverSettleMode rcvSettleMode;
     private DeliveryState state;
