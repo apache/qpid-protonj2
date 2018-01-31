@@ -187,7 +187,7 @@ public class ProtonDecoder implements Decoder {
             case EncodingCodes.BOOLEAN_FALSE:
                 return Boolean.FALSE;
             case EncodingCodes.BOOLEAN:
-                return (Boolean) primitiveDecoders[EncodingCodes.BOOLEAN & 0xff].readValue(buffer, state);
+                return buffer.readByte() == 0 ? Boolean.FALSE : Boolean.TRUE;
             case EncodingCodes.NULL:
                 return null;
             default:
@@ -205,7 +205,7 @@ public class ProtonDecoder implements Decoder {
             case EncodingCodes.BOOLEAN_FALSE:
                 return false;
             case EncodingCodes.BOOLEAN:
-                return (Boolean) primitiveDecoders[EncodingCodes.BOOLEAN & 0xff].readValue(buffer, state);
+                return buffer.readByte() == 0 ? false : true;
             case EncodingCodes.NULL:
                 return defaultValue;
             default:
@@ -219,7 +219,7 @@ public class ProtonDecoder implements Decoder {
 
         switch (encodingCode) {
             case EncodingCodes.BYTE:
-                return (Byte) primitiveDecoders[EncodingCodes.BYTE & 0xff].readValue(buffer, state);
+                return buffer.readByte();
             case EncodingCodes.NULL:
                 return null;
             default:
@@ -233,7 +233,7 @@ public class ProtonDecoder implements Decoder {
 
         switch (encodingCode) {
             case EncodingCodes.UBYTE:
-                return (UnsignedByte) primitiveDecoders[EncodingCodes.UBYTE & 0xff].readValue(buffer, state);
+                return UnsignedByte.valueOf(buffer.readByte());
             case EncodingCodes.NULL:
                 return null;
             default:
@@ -265,7 +265,7 @@ public class ProtonDecoder implements Decoder {
 
         switch (encodingCode) {
             case EncodingCodes.CHAR:
-                return (Character) primitiveDecoders[EncodingCodes.CHAR & 0xff].readValue(buffer, state);
+                return Character.valueOf((char) (buffer.readInt() & 0xffff));
             case EncodingCodes.NULL:
                 return null;
             default:
@@ -279,7 +279,7 @@ public class ProtonDecoder implements Decoder {
 
         switch (encodingCode) {
             case EncodingCodes.DECIMAL32:
-                return (Decimal32) primitiveDecoders[EncodingCodes.DECIMAL32 & 0xff].readValue(buffer, state);
+                return new Decimal32(buffer.readInt());
             case EncodingCodes.NULL:
                 return null;
             default:
@@ -293,7 +293,7 @@ public class ProtonDecoder implements Decoder {
 
         switch (encodingCode) {
             case EncodingCodes.DECIMAL64:
-                return (Decimal64) primitiveDecoders[EncodingCodes.DECIMAL64 & 0xff].readValue(buffer, state);
+                return new Decimal64(buffer.readLong());
             case EncodingCodes.NULL:
                 return null;
             default:
@@ -307,7 +307,7 @@ public class ProtonDecoder implements Decoder {
 
         switch (encodingCode) {
             case EncodingCodes.DECIMAL128:
-                return (Decimal128) primitiveDecoders[EncodingCodes.DECIMAL128 & 0xff].readValue(buffer, state);
+                return new Decimal128(buffer.readLong(), buffer.readLong());
             case EncodingCodes.NULL:
                 return null;
             default:
@@ -321,7 +321,7 @@ public class ProtonDecoder implements Decoder {
 
         switch (encodingCode) {
             case EncodingCodes.SHORT:
-                return (Short) primitiveDecoders[EncodingCodes.SHORT & 0xff].readValue(buffer, state);
+                return buffer.readShort();
             case EncodingCodes.NULL:
                 return null;
             default:
@@ -335,7 +335,7 @@ public class ProtonDecoder implements Decoder {
 
         switch (encodingCode) {
             case EncodingCodes.USHORT:
-                return (UnsignedShort) primitiveDecoders[EncodingCodes.USHORT & 0xff].readValue(buffer, state);
+                return UnsignedShort.valueOf(buffer.readShort());
             case EncodingCodes.NULL:
                 return null;
             default:
@@ -349,9 +349,9 @@ public class ProtonDecoder implements Decoder {
 
         switch (encodingCode) {
             case EncodingCodes.SMALLINT:
-                return (Integer) primitiveDecoders[EncodingCodes.SMALLINT & 0xff].readValue(buffer, state);
+                return buffer.readByte() & 0xff;
             case EncodingCodes.INT:
-                return (Integer) primitiveDecoders[EncodingCodes.INT & 0xff].readValue(buffer, state);
+                return buffer.readInt();
             case EncodingCodes.NULL:
                 return null;
             default:
@@ -367,9 +367,9 @@ public class ProtonDecoder implements Decoder {
             case EncodingCodes.UINT0:
                 return UnsignedInteger.ZERO;
             case EncodingCodes.SMALLUINT:
-                return (UnsignedInteger) primitiveDecoders[EncodingCodes.SMALLUINT & 0xff].readValue(buffer, state);
+                return UnsignedInteger.valueOf((buffer.readByte()) & 0xff);
             case EncodingCodes.UINT:
-                return (UnsignedInteger) primitiveDecoders[EncodingCodes.UINT & 0xff].readValue(buffer, state);
+                return UnsignedInteger.valueOf((buffer.readInt()));
             case EncodingCodes.NULL:
                 return null;
             default:
@@ -383,9 +383,9 @@ public class ProtonDecoder implements Decoder {
 
         switch (encodingCode) {
             case EncodingCodes.SMALLLONG:
-                return (Long) primitiveDecoders[EncodingCodes.SMALLLONG & 0xff].readValue(buffer, state);
+                return (long) buffer.readByte() & 0xff;
             case EncodingCodes.LONG:
-                return (Long) primitiveDecoders[EncodingCodes.LONG & 0xff].readValue(buffer, state);
+                return buffer.readLong();
             case EncodingCodes.NULL:
                 return null;
             default:
@@ -401,9 +401,9 @@ public class ProtonDecoder implements Decoder {
             case EncodingCodes.ULONG0:
                 return UnsignedLong.ZERO;
             case EncodingCodes.SMALLULONG:
-                return (UnsignedLong) primitiveDecoders[EncodingCodes.SMALLULONG & 0xff].readValue(buffer, state);
+                return UnsignedLong.valueOf((buffer.readByte() & 0xff));
             case EncodingCodes.ULONG:
-                return (UnsignedLong) primitiveDecoders[EncodingCodes.ULONG & 0xff].readValue(buffer, state);
+                return UnsignedLong.valueOf((buffer.readLong()));
             case EncodingCodes.NULL:
                 return null;
             default:
@@ -417,7 +417,7 @@ public class ProtonDecoder implements Decoder {
 
         switch (encodingCode) {
             case EncodingCodes.FLOAT:
-                return (Float) primitiveDecoders[EncodingCodes.FLOAT & 0xff].readValue(buffer, state);
+                return buffer.readFloat();
             case EncodingCodes.NULL:
                 return null;
             default:
@@ -431,7 +431,7 @@ public class ProtonDecoder implements Decoder {
 
         switch (encodingCode) {
             case EncodingCodes.DOUBLE:
-                return (Double) primitiveDecoders[EncodingCodes.DOUBLE & 0xff].readValue(buffer, state);
+                return buffer.readDouble();
             case EncodingCodes.NULL:
                 return null;
             default:
@@ -493,7 +493,7 @@ public class ProtonDecoder implements Decoder {
 
         switch (encodingCode) {
             case EncodingCodes.TIMESTAMP:
-                return (Long) primitiveDecoders[EncodingCodes.TIMESTAMP & 0xff].readValue(buffer, state);
+                return buffer.readLong();
             case EncodingCodes.NULL:
                 return null;
             default:
@@ -507,7 +507,7 @@ public class ProtonDecoder implements Decoder {
 
         switch (encodingCode) {
             case EncodingCodes.UUID:
-                return (UUID) primitiveDecoders[EncodingCodes.UUID & 0xff].readValue(buffer, state);
+                return new UUID(buffer.readLong(), buffer.readLong());
             case EncodingCodes.NULL:
                 return null;
             default:
