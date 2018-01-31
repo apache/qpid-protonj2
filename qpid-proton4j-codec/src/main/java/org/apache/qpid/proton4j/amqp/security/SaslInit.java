@@ -67,11 +67,11 @@ public final class SaslInit implements SaslPerformative {
 
     @Override
     public SaslPerformativeType getPerformativeType() {
-        return SaslPerformativeType.Init;
+        return SaslPerformativeType.INIT;
     }
 
     @Override
-    public <E> void invoke(SaslPerformativeHandler<E> handler, Binary payload, E context) {
-        handler.handleInit(this, payload, context);
+    public <E> void invoke(SaslPerformativeHandler<E> handler, E context) {
+        handler.handleInit(this, context);
     }
 }

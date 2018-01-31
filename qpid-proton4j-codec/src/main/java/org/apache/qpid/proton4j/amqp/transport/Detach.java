@@ -60,7 +60,7 @@ public final class Detach implements Performative {
 
     @Override
     public PerformativeType getPerformativeType() {
-        return PerformativeType.Detach;
+        return PerformativeType.DETACH;
     }
 
     @Override

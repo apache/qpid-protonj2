@@ -16,7 +16,6 @@
  */
 package org.apache.qpid.proton4j.transport;
 
-import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 
 /**
@@ -33,13 +32,11 @@ public interface TransportHandler {
 
     void handleRead(TransportHandlerContext context, ProtonBuffer buffer);
 
-    void handleAMQPHeader(TransportHandlerContext context, AMQPHeader header);
+    void handleHeaderFrame(TransportHandlerContext context, HeaderFrame header);
 
     void handleSaslFrame(TransportHandlerContext context, SaslFrame frame);
 
     void handleProtocolFrame(TransportHandlerContext context, ProtocolFrame frame);
-
-    void handlePartialFrame(TransportHandlerContext context, PartialFrame frame);
 
     void transportEncodingError(TransportHandlerContext context, Throwable e);
 
@@ -58,11 +55,7 @@ public interface TransportHandler {
     // TODO - Other variants like write(ProtonBuffer) etc how do we want to manage writes from
     //        the transport, who drives them ?
 
-    void write(ProtocolFrame frame);
-
-    void write(SaslFrame frame);
-
-    void write(ProtonBuffer buffer);
+    void write(Frame<?> frame);
 
     void flush();
 

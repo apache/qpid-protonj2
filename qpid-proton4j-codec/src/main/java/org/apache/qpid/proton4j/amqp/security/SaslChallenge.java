@@ -46,11 +46,11 @@ public final class SaslChallenge implements SaslPerformative {
 
     @Override
     public SaslPerformativeType getPerformativeType() {
-        return SaslPerformativeType.Challenge;
+        return SaslPerformativeType.CHALLENGE;
     }
 
     @Override
-    public <E> void invoke(SaslPerformativeHandler<E> handler, Binary payload, E context) {
-        handler.handleChallenge(this, payload, context);
+    public <E> void invoke(SaslPerformativeHandler<E> handler, E context) {
+        handler.handleChallenge(this, context);
     }
 }

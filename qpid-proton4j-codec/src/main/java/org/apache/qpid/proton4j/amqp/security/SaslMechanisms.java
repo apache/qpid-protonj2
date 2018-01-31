@@ -18,7 +18,6 @@ package org.apache.qpid.proton4j.amqp.security;
 
 import java.util.Arrays;
 
-import org.apache.qpid.proton4j.amqp.Binary;
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
 
@@ -49,11 +48,11 @@ public final class SaslMechanisms implements SaslPerformative {
 
     @Override
     public SaslPerformativeType getPerformativeType() {
-        return SaslPerformativeType.Mechanisms;
+        return SaslPerformativeType.MECHANISMS;
     }
 
     @Override
-    public <E> void invoke(SaslPerformativeHandler<E> handler, Binary payload, E context) {
-        handler.handleMechanisms(this, payload, context);
+    public <E> void invoke(SaslPerformativeHandler<E> handler, E context) {
+        handler.handleMechanisms(this, context);
     }
 }

@@ -16,32 +16,29 @@
  */
 package org.apache.qpid.proton4j.amqp.security;
 
-import org.apache.qpid.proton4j.amqp.Binary;
-
 /**
  * Marker interface for AMQP Performatives
  */
 public interface SaslPerformative {
 
     enum SaslPerformativeType {
-        Init,
-        Mechanisms,
-        Challenge,
-        Response,
-        Outcome
+        INIT,
+        MECHANISMS,
+        CHALLENGE,
+        RESPONSE,
+        OUTCOME
     }
 
     SaslPerformativeType getPerformativeType();
 
-    // TODO - Revisit
     interface SaslPerformativeHandler<E> {
-        void handleMechanisms(SaslMechanisms saslMechanisms, Binary payload, E context);
-        void handleInit(SaslInit saslInit, Binary payload, E context);
-        void handleChallenge(SaslChallenge saslChallenge, Binary payload, E context);
-        void handleResponse(SaslResponse saslResponse, Binary payload, E context);
-        void handleOutcome(SaslOutcome saslOutcome, Binary payload, E context);
+        void handleMechanisms(SaslMechanisms saslMechanisms, E context);
+        void handleInit(SaslInit saslInit, E context);
+        void handleChallenge(SaslChallenge saslChallenge, E context);
+        void handleResponse(SaslResponse saslResponse, E context);
+        void handleOutcome(SaslOutcome saslOutcome, E context);
     }
 
-    <E> void invoke(SaslPerformativeHandler<E> handler, Binary payload, E context);
+    <E> void invoke(SaslPerformativeHandler<E> handler, E context);
 
 }

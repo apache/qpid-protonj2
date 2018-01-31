@@ -18,12 +18,12 @@ package org.apache.qpid.proton4j.transport.sasl;
 
 import java.io.IOException;
 
-import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.CodecFactory;
 import org.apache.qpid.proton4j.codec.Decoder;
 import org.apache.qpid.proton4j.codec.Encoder;
-import org.apache.qpid.proton4j.transport.PartialFrame;
+import org.apache.qpid.proton4j.transport.Frame;
+import org.apache.qpid.proton4j.transport.HeaderFrame;
 import org.apache.qpid.proton4j.transport.ProtocolFrame;
 import org.apache.qpid.proton4j.transport.SaslFrame;
 import org.apache.qpid.proton4j.transport.TransportHandler;
@@ -103,12 +103,12 @@ public class SaslHandler implements TransportHandler {
     }
 
     @Override
-    public void handleAMQPHeader(TransportHandlerContext context, AMQPHeader header) {
+    public void handleHeaderFrame(TransportHandlerContext context, HeaderFrame header) {
         if (isDone()) {
-            context.fireAMQPHeader(header);
+            context.fireHeaderFrame(header);
         }
 
-        saslContext.handleAMQPHeader(context, header);
+        saslContext.handleHeaderFrame(context, header);
     }
 
     @Override
@@ -119,8 +119,7 @@ public class SaslHandler implements TransportHandler {
                 "Unexpected SASL Frame: SASL processing has already completed"));
         }
 
-        // TODO - Payload ? Is there ever a payload on a Sasl frame ?
-        frame.getBody().invoke(saslContext, null, context);
+        frame.getBody().invoke(saslContext, context);
     }
 
     @Override
@@ -129,15 +128,6 @@ public class SaslHandler implements TransportHandler {
             context.fireProtocolFrame(frame);
         } else {
             // TODO - Pipelined Connect, hold frame for later
-        }
-    }
-
-    @Override
-    public void handlePartialFrame(TransportHandlerContext context, PartialFrame frame) {
-        if (isDone()) {
-            context.firePartialFrame(frame);
-        } else {
-            // TODO - ?
         }
     }
 
@@ -162,15 +152,7 @@ public class SaslHandler implements TransportHandler {
     }
 
     @Override
-    public void write(ProtocolFrame frame) {
-    }
-
-    @Override
-    public void write(SaslFrame frame) {
-    }
-
-    @Override
-    public void write(ProtonBuffer buffer) {
+    public void write(Frame<?> frame) {
     }
 
     @Override

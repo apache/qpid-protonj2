@@ -41,7 +41,7 @@ public final class Begin implements Performative {
 
     @Override
     public PerformativeType getPerformativeType() {
-        return PerformativeType.Begin;
+        return PerformativeType.BEGIN;
     }
 
     public UnsignedShort getRemoteChannel() {

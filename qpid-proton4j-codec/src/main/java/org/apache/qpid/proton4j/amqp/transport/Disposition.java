@@ -91,7 +91,7 @@ public final class Disposition implements Performative {
 
     @Override
     public PerformativeType getPerformativeType() {
-        return PerformativeType.Disposition;
+        return PerformativeType.DISPOSITION;
     }
 
     @Override

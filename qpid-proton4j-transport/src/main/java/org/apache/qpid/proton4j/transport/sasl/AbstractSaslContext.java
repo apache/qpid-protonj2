@@ -24,8 +24,8 @@ import org.apache.qpid.proton4j.amqp.security.SaslMechanisms;
 import org.apache.qpid.proton4j.amqp.security.SaslOutcome;
 import org.apache.qpid.proton4j.amqp.security.SaslPerformative;
 import org.apache.qpid.proton4j.amqp.security.SaslResponse;
-import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import org.apache.qpid.proton4j.transport.HeaderFrame;
 import org.apache.qpid.proton4j.transport.TransportHandlerContext;
 import org.apache.qpid.proton4j.transport.sasl.SaslConstants.SaslOutcomes;
 import org.apache.qpid.proton4j.transport.sasl.SaslConstants.SaslStates;
@@ -95,40 +95,40 @@ public abstract class AbstractSaslContext implements SaslPerformative.SaslPerfor
 
     //----- Handle AMQP Header input -----------------------------------------//
 
-    public abstract void handleAMQPHeader(TransportHandlerContext context, AMQPHeader header);
+    public abstract void handleHeaderFrame(TransportHandlerContext context, HeaderFrame header);
 
     //----- Entry point for Sasl Performative processing ---------------------//
 
     @Override
-    public void handleMechanisms(SaslMechanisms saslMechanisms, Binary payload, TransportHandlerContext context) {
+    public void handleMechanisms(SaslMechanisms saslMechanisms, TransportHandlerContext context) {
         // TODO - Error type ?
         context.fireFailed(new IllegalStateException(
             "Unexpected SASL Mechanisms Frame received."));
     }
 
     @Override
-    public void handleInit(SaslInit saslInit, Binary payload, TransportHandlerContext context) {
+    public void handleInit(SaslInit saslInit, TransportHandlerContext context) {
         // TODO - Error type ?
         context.fireFailed(new IllegalStateException(
             "Unexpected SASL Init Frame received."));
     }
 
     @Override
-    public void handleChallenge(SaslChallenge saslChallenge, Binary payload, TransportHandlerContext context) {
+    public void handleChallenge(SaslChallenge saslChallenge, TransportHandlerContext context) {
         // TODO - Error type ?
         context.fireFailed(new IllegalStateException(
             "Unexpected SASL Challenge Frame received."));
     }
 
     @Override
-    public void handleResponse(SaslResponse saslResponse, Binary payload, TransportHandlerContext context) {
+    public void handleResponse(SaslResponse saslResponse, TransportHandlerContext context) {
         // TODO - Error type ?
         context.fireFailed(new IllegalStateException(
             "Unexpected SASL Response Frame received."));
     }
 
     @Override
-    public void handleOutcome(SaslOutcome saslOutcome, Binary payload, TransportHandlerContext context) {
+    public void handleOutcome(SaslOutcome saslOutcome, TransportHandlerContext context) {
         // TODO - Error type ?
         context.fireFailed(new IllegalStateException(
             "Unexpected SASL Outcome Frame received."));

@@ -16,18 +16,14 @@
  */
 package org.apache.qpid.proton4j.transport;
 
-import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
 
 /**
- * Frame Containing only a portion of the full frame body bytes
+ * Frame type that carries AMQPHeader instances
  */
-public class PartialFrame extends Frame<ProtonBuffer> {
+public class HeaderFrame extends Frame<AMQPHeader> {
 
-    // TODO - This adds a fair bit of complexity in how we handle them
-    //        Do we want to allow for partial reads or delegate that to the
-    //        internal implementation of some handler in the chain ?
-
-    public PartialFrame(ProtonBuffer payload, short channel, byte type) {
-        super(payload, channel, type, null);
+    public HeaderFrame(AMQPHeader body) {
+        super(body, (byte) 0, (byte) 0, null);
     }
 }

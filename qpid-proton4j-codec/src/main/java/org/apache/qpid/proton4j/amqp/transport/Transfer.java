@@ -132,7 +132,7 @@ public final class Transfer implements Performative {
 
     @Override
     public PerformativeType getPerformativeType() {
-        return PerformativeType.Transfer;
+        return PerformativeType.TRANSFER;
     }
 
     @Override

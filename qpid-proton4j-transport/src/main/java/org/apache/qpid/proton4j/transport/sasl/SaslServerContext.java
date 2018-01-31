@@ -16,12 +16,12 @@
  */
 package org.apache.qpid.proton4j.transport.sasl;
 
-import org.apache.qpid.proton4j.amqp.Binary;
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.security.SaslInit;
 import org.apache.qpid.proton4j.amqp.security.SaslMechanisms;
 import org.apache.qpid.proton4j.amqp.security.SaslResponse;
 import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
+import org.apache.qpid.proton4j.transport.HeaderFrame;
 import org.apache.qpid.proton4j.transport.SaslFrame;
 import org.apache.qpid.proton4j.transport.TransportHandlerContext;
 import org.apache.qpid.proton4j.transport.sasl.SaslConstants.SaslStates;
@@ -109,15 +109,15 @@ public class SaslServerContext extends AbstractSaslContext {
     //----- Transport event handlers -----------------------------------------//
 
     @Override
-    public void handleAMQPHeader(TransportHandlerContext context, AMQPHeader header) {
-        if (header.isSaslHeader()) {
+    public void handleHeaderFrame(TransportHandlerContext context, HeaderFrame header) {
+        if (header.getBody().isSaslHeader()) {
             handleSaslHeader(context, header);
         } else {
             handleNonSaslHeader(context, header);
         }
     }
 
-    private void handleSaslHeader(TransportHandlerContext context, AMQPHeader header) {
+    private void handleSaslHeader(TransportHandlerContext context, HeaderFrame header) {
         if (!headerWritten) {
             context.fireWrite(AMQPHeader.getSASLHeader().getBuffer());
             headerWritten = true;
@@ -144,12 +144,12 @@ public class SaslServerContext extends AbstractSaslContext {
         state = SaslStates.PN_SASL_STEP;
     }
 
-    private void handleNonSaslHeader(TransportHandlerContext context, AMQPHeader header) {
+    private void handleNonSaslHeader(TransportHandlerContext context, HeaderFrame header) {
         if (!headerReceived) {
             if (isAllowNonSasl()) {
                 // Set proper outcome etc.
                 done = true;
-                context.fireAMQPHeader(header);
+                context.fireHeaderFrame(header);
             } else {
                 // TODO - Error type ?
                 context.fireFailed(new IllegalStateException(
@@ -163,7 +163,7 @@ public class SaslServerContext extends AbstractSaslContext {
     }
 
     @Override
-    public void handleInit(SaslInit saslInit, Binary payload, TransportHandlerContext context) {
+    public void handleInit(SaslInit saslInit, TransportHandlerContext context) {
         hostname = saslInit.getHostname();
         chosenMechanism = saslInit.getMechanism();
         initReceived = true;
@@ -180,7 +180,7 @@ public class SaslServerContext extends AbstractSaslContext {
     }
 
     @Override
-    public void handleResponse(SaslResponse saslResponse, Binary payload, TransportHandlerContext context) {
+    public void handleResponse(SaslResponse saslResponse, TransportHandlerContext context) {
         if (saslResponse.getResponse() != null) {
             // TODO - How to present the response data, perhaps pass as arg to listener
             //        instead of storing pending bytes.

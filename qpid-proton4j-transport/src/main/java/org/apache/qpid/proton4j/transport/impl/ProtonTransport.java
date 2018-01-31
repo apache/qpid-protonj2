@@ -22,7 +22,6 @@ import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonBufferAllocator;
 import org.apache.qpid.proton4j.transport.FrameParser;
 import org.apache.qpid.proton4j.transport.ProtocolFrame;
-import org.apache.qpid.proton4j.transport.ProtocolTracer;
 import org.apache.qpid.proton4j.transport.Transport;
 import org.apache.qpid.proton4j.transport.TransportHandler;
 import org.apache.qpid.proton4j.transport.TransportPipeline;
@@ -37,7 +36,6 @@ public class ProtonTransport implements Transport {
 
     private ProtonBufferAllocator bufferAllocator;
     private TransportHandler transportListener;
-    private ProtocolTracer tracer;
 
     private FrameParser currentParser = new AmqpHeaderParser();
 
@@ -64,16 +62,6 @@ public class ProtonTransport implements Transport {
     @Override
     public TransportHandler getTransportListener() {
         return transportListener;
-    }
-
-    @Override
-    public void setProtocolTracer(ProtocolTracer tracer) {
-        this.tracer = tracer;
-    }
-
-    @Override
-    public ProtocolTracer getProtocolTracer() {
-        return tracer;
     }
 
     @Override

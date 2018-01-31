@@ -48,7 +48,7 @@ public final class Attach implements Performative {
 
     @Override
     public PerformativeType getPerformativeType() {
-        return PerformativeType.Attach;
+        return PerformativeType.ATTACH;
     }
 
     public String getName() {

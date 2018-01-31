@@ -26,6 +26,7 @@ import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.codec.Decoder;
 import org.apache.qpid.proton4j.codec.DecoderState;
 import org.apache.qpid.proton4j.transport.FrameParser;
+import org.apache.qpid.proton4j.transport.HeaderFrame;
 import org.apache.qpid.proton4j.transport.SaslFrame;
 import org.apache.qpid.proton4j.transport.TransportHandlerContext;
 import org.apache.qpid.proton4j.transport.exceptions.TransportException;
@@ -65,6 +66,7 @@ public class SaslFrameParser implements FrameParser {
     private Decoder decoder;
     private DecoderState decoderState;
     private AMQPHeader header = AMQPHeader.getSASLHeader();
+    private HeaderFrame headerFrame = new HeaderFrame(header);
 
     public SaslFrameParser(Decoder decoder) {
         this.decoder = decoder;
@@ -190,7 +192,7 @@ public class SaslFrameParser implements FrameParser {
                             parsingState = State.ERROR;
                             break;
                         } else {
-                            sasl.handleAMQPHeader(context, header);
+                            sasl.handleHeaderFrame(context, headerFrame);
                             parsingState = State.SIZE_0;
                         }
                     } else {

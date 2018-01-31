@@ -127,7 +127,7 @@ public final class Open implements Performative {
 
     @Override
     public PerformativeType getPerformativeType() {
-        return PerformativeType.Open;
+        return PerformativeType.OPEN;
     }
 
     @Override

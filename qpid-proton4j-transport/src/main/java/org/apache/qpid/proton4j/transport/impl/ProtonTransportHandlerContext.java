@@ -16,9 +16,8 @@
  */
 package org.apache.qpid.proton4j.transport.impl;
 
-import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
-import org.apache.qpid.proton4j.transport.PartialFrame;
+import org.apache.qpid.proton4j.transport.HeaderFrame;
 import org.apache.qpid.proton4j.transport.ProtocolFrame;
 import org.apache.qpid.proton4j.transport.SaslFrame;
 import org.apache.qpid.proton4j.transport.TransportHandlerContext;
@@ -36,7 +35,7 @@ public class ProtonTransportHandlerContext implements TransportHandlerContext {
     }
 
     @Override
-    public void fireAMQPHeader(AMQPHeader header) {
+    public void fireHeaderFrame(HeaderFrame header) {
     }
 
     @Override
@@ -45,10 +44,6 @@ public class ProtonTransportHandlerContext implements TransportHandlerContext {
 
     @Override
     public void fireProtocolFrame(ProtocolFrame frame) {
-    }
-
-    @Override
-    public void firePartialFrame(PartialFrame frame) {
     }
 
     @Override

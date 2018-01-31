@@ -16,12 +16,11 @@
  */
 package org.apache.qpid.proton4j.transport.sasl;
 
-import org.apache.qpid.proton4j.amqp.Binary;
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.security.SaslChallenge;
 import org.apache.qpid.proton4j.amqp.security.SaslMechanisms;
 import org.apache.qpid.proton4j.amqp.security.SaslOutcome;
-import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
+import org.apache.qpid.proton4j.transport.HeaderFrame;
 import org.apache.qpid.proton4j.transport.TransportHandlerContext;
 import org.apache.qpid.proton4j.transport.sasl.SaslConstants.SaslOutcomes;
 import org.apache.qpid.proton4j.transport.sasl.SaslConstants.SaslStates;
@@ -79,8 +78,8 @@ public class SaslClientContext extends AbstractSaslContext {
     //----- SASL Frame event handlers-----------------------------------------//
 
     @Override
-    public void handleAMQPHeader(TransportHandlerContext context, AMQPHeader header) {
-        if (!header.isSaslHeader()) {
+    public void handleHeaderFrame(TransportHandlerContext context, HeaderFrame header) {
+        if (!header.getBody().isSaslHeader()) {
             // TODO - Error on server not supporting SASL
             context.fireFailed(new IllegalStateException(
                 "Remote does not support SASL authentication."));
@@ -88,7 +87,7 @@ public class SaslClientContext extends AbstractSaslContext {
     }
 
     @Override
-    public void handleMechanisms(SaslMechanisms saslMechanisms, Binary payload, TransportHandlerContext context) {
+    public void handleMechanisms(SaslMechanisms saslMechanisms, TransportHandlerContext context) {
         serverMechanisms = saslMechanisms.getSaslServerMechanisms();
 
         listener.onSaslMechanisms(this, getServerMechanisms());
@@ -98,7 +97,7 @@ public class SaslClientContext extends AbstractSaslContext {
     }
 
     @Override
-    public void handleChallenge(SaslChallenge saslChallenge, Binary payload, TransportHandlerContext context) {
+    public void handleChallenge(SaslChallenge saslChallenge, TransportHandlerContext context) {
         if (saslChallenge.getChallenge() != null) {
             // TODO - How to present the response data, perhaps pass as arg to listener
             //        instead of storing pending bytes.
@@ -113,7 +112,7 @@ public class SaslClientContext extends AbstractSaslContext {
     }
 
     @Override
-    public void handleOutcome(SaslOutcome saslOutcome, Binary payload, TransportHandlerContext context) {
+    public void handleOutcome(SaslOutcome saslOutcome, TransportHandlerContext context) {
         for (SaslOutcomes outcome : SaslOutcomes.values()) {
             // TODO - How to present the response data, perhaps pass as arg to listener
             //        instead of storing pending bytes.

@@ -24,15 +24,15 @@ import org.apache.qpid.proton4j.amqp.Binary;
 public interface Performative {
 
     enum PerformativeType {
-        Attach,
-        Begin,
-        Close,
-        Detach,
-        Disposition,
-        End,
-        Flow,
-        Open,
-        Transfer
+        ATTACH,
+        BEGIN,
+        CLOSE,
+        DETACH,
+        DISPOSITION,
+        END,
+        FLOW,
+        OPEN,
+        TRANSFER
     }
 
     PerformativeType getPerformativeType();

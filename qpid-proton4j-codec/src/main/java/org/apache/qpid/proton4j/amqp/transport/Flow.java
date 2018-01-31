@@ -142,7 +142,7 @@ public final class Flow implements Performative {
 
     @Override
     public PerformativeType getPerformativeType() {
-        return PerformativeType.Flow;
+        return PerformativeType.FLOW;
     }
 
     @Override

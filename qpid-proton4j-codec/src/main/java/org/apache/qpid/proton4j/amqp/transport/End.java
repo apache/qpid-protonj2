@@ -37,7 +37,7 @@ public final class End implements Performative {
 
     @Override
     public PerformativeType getPerformativeType() {
-        return PerformativeType.End;
+        return PerformativeType.END;
     }
 
     @Override

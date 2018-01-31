@@ -84,21 +84,6 @@ public interface Transport {
     TransportHandler getTransportListener();
 
     /**
-     * Sets the ProtocolTracer used to log frames entering and leaving the Transport.
-     *
-     * @param tracer
-     *      The tracer instance to use, or null to disable any tracing.
-     */
-    void setProtocolTracer(ProtocolTracer tracer);
-
-    /**
-     * Returns the currently set ProtocolTracer, or null if none in use.
-     *
-     * @return the currently set ProtocolTracer, or null if none in use.
-     */
-    ProtocolTracer getProtocolTracer();
-
-    /**
      * Get the maximum frame size that the transport will accept before
      * rejecting an incoming frame.
      *

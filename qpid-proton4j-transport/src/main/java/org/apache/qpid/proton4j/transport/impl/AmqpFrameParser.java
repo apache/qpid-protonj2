@@ -27,6 +27,7 @@ import org.apache.qpid.proton4j.codec.Decoder;
 import org.apache.qpid.proton4j.codec.DecoderState;
 import org.apache.qpid.proton4j.transport.EmptyFrame;
 import org.apache.qpid.proton4j.transport.FrameParser;
+import org.apache.qpid.proton4j.transport.HeaderFrame;
 import org.apache.qpid.proton4j.transport.ProtocolFrame;
 import org.apache.qpid.proton4j.transport.TransportHandlerContext;
 import org.apache.qpid.proton4j.transport.exceptions.IOExceptionSupport;
@@ -64,6 +65,7 @@ public class AmqpFrameParser implements FrameParser {
 
     private final int localMaxFrameSize;
     private final AMQPHeader header = AMQPHeader.getRawAMQPHeader();
+    private final HeaderFrame headerFrame = new HeaderFrame(header);
 
     private State state = State.SIZE_0;
     private int size;
@@ -196,7 +198,7 @@ public class AmqpFrameParser implements FrameParser {
                             parsingState = State.ERROR;
                             break;
                         } else {
-                            sasl.handleAMQPHeader(context, header);
+                            sasl.handleHeaderFrame(context, headerFrame);
                             parsingState = State.SIZE_0;
                         }
                     } else {

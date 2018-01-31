@@ -37,7 +37,7 @@ public final class Close implements Performative {
 
     @Override
     public PerformativeType getPerformativeType() {
-        return PerformativeType.Close;
+        return PerformativeType.CLOSE;
     }
 
     @Override

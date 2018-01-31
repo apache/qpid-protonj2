@@ -16,7 +16,6 @@
  */
 package org.apache.qpid.proton4j.transport;
 
-import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 
 /**
@@ -26,13 +25,11 @@ public interface TransportHandlerContext {
 
     void fireRead(ProtonBuffer buffer);
 
-    void fireAMQPHeader(AMQPHeader header);
+    void fireHeaderFrame(HeaderFrame header);
 
     void fireSaslFrame(SaslFrame frame);
 
     void fireProtocolFrame(ProtocolFrame frame);
-
-    void firePartialFrame(PartialFrame frame);
 
     void fireEncodingError(Throwable e);
 

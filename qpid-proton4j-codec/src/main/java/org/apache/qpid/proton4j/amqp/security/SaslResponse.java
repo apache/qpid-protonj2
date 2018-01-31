@@ -46,11 +46,11 @@ public final class SaslResponse implements SaslPerformative {
 
     @Override
     public SaslPerformativeType getPerformativeType() {
-        return SaslPerformativeType.Response;
+        return SaslPerformativeType.RESPONSE;
     }
 
     @Override
-    public <E> void invoke(SaslPerformativeHandler<E> handler, Binary payload, E context) {
-        handler.handleResponse(this, payload, context);
+    public <E> void invoke(SaslPerformativeHandler<E> handler, E context) {
+        handler.handleResponse(this, context);
     }
 }
