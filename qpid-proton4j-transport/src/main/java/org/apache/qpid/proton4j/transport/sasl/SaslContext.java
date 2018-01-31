@@ -33,7 +33,7 @@ import org.apache.qpid.proton4j.transport.sasl.SaslConstants.SaslStates;
 /**
  * The State engine for a Sasl exchange.
  */
-public abstract class AbstractSaslContext implements SaslPerformative.SaslPerformativeHandler<TransportHandlerContext> {
+public abstract class SaslContext implements SaslPerformative.SaslPerformativeHandler<TransportHandlerContext> {
 
     enum Role { CLIENT, SERVER };
 
@@ -61,7 +61,7 @@ public abstract class AbstractSaslContext implements SaslPerformative.SaslPerfor
 
     protected Binary challengeResponse;
 
-    public AbstractSaslContext(SaslHandler handler) {
+    public SaslContext(SaslHandler handler) {
         this.saslHandler = handler;
     }
 

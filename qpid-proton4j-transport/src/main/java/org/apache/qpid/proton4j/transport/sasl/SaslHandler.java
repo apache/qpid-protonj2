@@ -39,7 +39,7 @@ public class SaslHandler implements TransportHandler {
 
     private final SaslFrameParser frameParser;
 
-    private AbstractSaslContext saslContext;
+    private SaslContext saslContext;
 
     /*
      * The Handler must be create from the client or server methods to configure

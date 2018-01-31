@@ -26,7 +26,7 @@ import org.apache.qpid.proton4j.transport.SaslFrame;
 import org.apache.qpid.proton4j.transport.TransportHandlerContext;
 import org.apache.qpid.proton4j.transport.sasl.SaslConstants.SaslStates;
 
-public class SaslServerContext extends AbstractSaslContext {
+public class SaslServerContext extends SaslContext {
 
     private final SaslServerListener listener;
 
