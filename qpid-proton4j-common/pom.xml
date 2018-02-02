@@ -23,36 +23,21 @@
   </parent>
   <modelVersion>4.0.0</modelVersion>
 
-  <artifactId>qpid-proton4j-transport</artifactId>
+  <artifactId>qpid-proton4j-common</artifactId>
   <packaging>bundle</packaging>
 
-  <name>Qpid Proton4J Transport</name>
+  <name>Qpid Proton4J Common</name>
 
   <dependencies>
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-api</artifactId>
+      <optional>true</optional>
     </dependency>
-    <dependency>
-      <groupId>org.apache.qpid</groupId>
-      <artifactId>qpid-proton4j-buffer</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.qpid</groupId>
-      <artifactId>qpid-proton4j-codec</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.qpid</groupId>
-      <artifactId>qpid-proton4j-common</artifactId>
-    </dependency>
+
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.slf4j</groupId>
-      <artifactId>slf4j-log4j12</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -61,22 +46,5 @@
       <scope>test</scope>
     </dependency>
   </dependencies>
-
-  <build>
-    <plugins>
-      <plugin>
-        <groupId>org.apache.felix</groupId>
-        <artifactId>maven-bundle-plugin</artifactId>
-        <version>${maven-bundle-plugin-version}</version>
-        <configuration>
-          <instructions>
-            <Import-Package>
-              javax.net.ssl*;resolution:=optional,*
-            </Import-Package>
-          </instructions>
-        </configuration>
-      </plugin>
-    </plugins>
-  </build>
 
 </project>
