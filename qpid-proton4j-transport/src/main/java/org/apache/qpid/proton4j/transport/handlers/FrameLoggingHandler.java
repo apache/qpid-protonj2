@@ -17,6 +17,8 @@
 package org.apache.qpid.proton4j.transport.handlers;
 
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import org.apache.qpid.proton4j.common.logging.ProtonLogger;
+import org.apache.qpid.proton4j.common.logging.ProtonLoggerFactory;
 import org.apache.qpid.proton4j.transport.Frame;
 import org.apache.qpid.proton4j.transport.HeaderFrame;
 import org.apache.qpid.proton4j.transport.ProtocolFrame;
@@ -29,48 +31,73 @@ import org.apache.qpid.proton4j.transport.TransportHandlerContext;
  */
 public class FrameLoggingHandler implements TransportHandler {
 
+    private static ProtonLogger LOG = ProtonLoggerFactory.getLogger(FrameLoggingHandler.class);
+
     @Override
     public void handleRead(TransportHandlerContext context, ProtonBuffer buffer) {
     }
 
     @Override
     public void handleHeaderFrame(TransportHandlerContext context, HeaderFrame header) {
+        LOG.trace("<- Header: {}", header);
+        context.fireHeaderFrame(header);
     }
 
     @Override
     public void handleSaslFrame(TransportHandlerContext context, SaslFrame frame) {
+        LOG.trace("<- SASL: {}", frame);
+        context.fireSaslFrame(frame);
     }
 
     @Override
     public void handleProtocolFrame(TransportHandlerContext context, ProtocolFrame frame) {
+        LOG.trace("<- AMQP: {}", frame);
+        context.fireProtocolFrame(frame);
     }
 
     @Override
     public void transportEncodingError(TransportHandlerContext context, Throwable e) {
+        // TODO
+        context.fireEncodingError(e);
     }
 
     @Override
     public void transportDecodingError(TransportHandlerContext context, Throwable e) {
+        // TODO
+        context.fireDecodingError(e);
     }
 
     @Override
     public void transportFailed(TransportHandlerContext context, Throwable e) {
+        // TODO
+        context.fireFailed(e);
     }
 
     @Override
     public void transportReadable(TransportHandlerContext context) {
+        // TODO
     }
 
     @Override
     public void transportWritable(TransportHandlerContext context) {
+        // TODO
     }
 
     @Override
-    public void write(Frame<?> frame) {
+    public void handleWrite(TransportHandlerContext context, Frame<?> frame) {
+        LOG.trace("-> Frame: {}", frame);
+        context.fireWrite(frame);
     }
 
     @Override
-    public void flush() {
+    public void handleWrite(TransportHandlerContext context, ProtonBuffer buffer) {
+        // TODO
+        context.fireWrite(buffer);
     }
 
+    @Override
+    public void handleFlush(TransportHandlerContext context) {
+        // TODO
+        context.fireFlush();
+    }
 }

@@ -17,6 +17,7 @@
 package org.apache.qpid.proton4j.transport.impl;
 
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import org.apache.qpid.proton4j.transport.Frame;
 import org.apache.qpid.proton4j.transport.HeaderFrame;
 import org.apache.qpid.proton4j.transport.ProtocolFrame;
 import org.apache.qpid.proton4j.transport.SaslFrame;
@@ -59,11 +60,7 @@ public class ProtonTransportHandlerContext implements TransportHandlerContext {
     }
 
     @Override
-    public void fireWrite(ProtocolFrame frame) {
-    }
-
-    @Override
-    public void fireWrite(SaslFrame frame) {
+    public void fireWrite(Frame<?> frame) {
     }
 
     @Override

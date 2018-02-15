@@ -55,8 +55,10 @@ public interface TransportHandler {
     // TODO - Other variants like write(ProtonBuffer) etc how do we want to manage writes from
     //        the transport, who drives them ?
 
-    void write(Frame<?> frame);
+    void handleWrite(TransportHandlerContext context, Frame<?> frame);
 
-    void flush();
+    void handleWrite(TransportHandlerContext context, ProtonBuffer buffer);
+
+    void handleFlush(TransportHandlerContext context);
 
 }

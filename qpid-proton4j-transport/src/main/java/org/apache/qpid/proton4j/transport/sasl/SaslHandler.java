@@ -152,10 +152,14 @@ public class SaslHandler implements TransportHandler {
     }
 
     @Override
-    public void write(Frame<?> frame) {
+    public void handleWrite(TransportHandlerContext context, Frame<?> frame) {
     }
 
     @Override
-    public void flush() {
+    public void handleWrite(TransportHandlerContext context, ProtonBuffer buffer) {
+    }
+
+    @Override
+    public void handleFlush(TransportHandlerContext context) {
     }
 }

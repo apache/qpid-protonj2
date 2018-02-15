@@ -37,9 +37,7 @@ public interface TransportHandlerContext {
 
     void fireFailed(Throwable e);
 
-    void fireWrite(ProtocolFrame frame);
-
-    void fireWrite(SaslFrame frame);
+    void fireWrite(Frame<?> frame);
 
     void fireWrite(ProtonBuffer buffer);
 
