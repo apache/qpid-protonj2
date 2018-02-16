@@ -17,13 +17,13 @@
 package org.apache.qpid.proton4j.codec.decoders.messaging;
 
 import java.io.IOException;
-import java.util.Date;
 
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.amqp.messaging.Properties;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.DecoderState;
+import org.apache.qpid.proton4j.codec.EncodingCodes;
 import org.apache.qpid.proton4j.codec.TypeDecoder;
 import org.apache.qpid.proton4j.codec.decoders.AbstractDescribedTypeDecoder;
 import org.apache.qpid.proton4j.codec.decoders.primitives.ListTypeDecoder;
@@ -32,6 +32,8 @@ import org.apache.qpid.proton4j.codec.decoders.primitives.ListTypeDecoder;
  * Decoder of AMQP Properties type values from a byte stream
  */
 public class PropertiesTypeDecoder extends AbstractDescribedTypeDecoder<Properties> {
+
+    private static int MAX_PROPERTIES_LIST_ENTRIES = 13;
 
     @Override
     public UnsignedLong getDescriptorCode() {
@@ -93,7 +95,21 @@ public class PropertiesTypeDecoder extends AbstractDescribedTypeDecoder<Properti
         int size = listDecoder.readSize(buffer);
         int count = listDecoder.readCount(buffer);
 
+        // Don't decode anything if things already look wrong.
+        if (count > MAX_PROPERTIES_LIST_ENTRIES) {
+            throw new IllegalStateException("To many entries in Properties list encoding: " + count);
+        }
+
         for (int index = 0; index < count; ++index) {
+            // Peek ahead and see if there is a null in the next slot, if so we don't call
+            // the setter for that entry to ensure the returned type reflects the encoded
+            // state in the modification entry.
+            boolean nullValue = buffer.getByte(buffer.getReadIndex()) == EncodingCodes.NULL;
+            if (nullValue) {
+                buffer.readByte();
+                continue;
+            }
+
             switch (index) {
                 case 0:
                     properties.setMessageId(state.getDecoder().readObject(buffer, state));
@@ -114,24 +130,22 @@ public class PropertiesTypeDecoder extends AbstractDescribedTypeDecoder<Properti
                     properties.setCorrelationId(state.getDecoder().readObject(buffer, state));
                     break;
                 case 6:
-                    properties.setContentType(state.getDecoder().readSymbol(buffer, state));
+                    properties.setContentType(state.getDecoder().readSymbol(buffer, state, null));
                     break;
                 case 7:
-                    properties.setContentEncoding(state.getDecoder().readSymbol(buffer, state));
+                    properties.setContentEncoding(state.getDecoder().readSymbol(buffer, state, null));
                     break;
                 case 8:
-                    Long expireyTime = state.getDecoder().readTimestamp(buffer, state);
-                    properties.setAbsoluteExpiryTime(expireyTime == null ? null : new Date(expireyTime));
+                    properties.setAbsoluteExpiryTime(state.getDecoder().readTimestamp(buffer, state, 0));
                     break;
                 case 9:
-                    Long createTime = state.getDecoder().readTimestamp(buffer, state);
-                    properties.setCreationTime(createTime == null ? null : new Date(createTime));
+                    properties.setCreationTime(state.getDecoder().readTimestamp(buffer, state, 0));
                     break;
                 case 10:
                     properties.setGroupId(state.getDecoder().readString(buffer, state));
                     break;
                 case 11:
-                    properties.setGroupSequence(state.getDecoder().readUnsignedInteger(buffer, state));
+                    properties.setGroupSequence(state.getDecoder().readUnsignedInteger(buffer, state, 0));
                     break;
                 case 12:
                     properties.setReplyToGroupId(state.getDecoder().readString(buffer, state));

@@ -38,6 +38,8 @@ import org.apache.qpid.proton4j.codec.Decoder;
 import org.apache.qpid.proton4j.codec.DecoderState;
 import org.apache.qpid.proton4j.codec.EncodingCodes;
 import org.apache.qpid.proton4j.codec.TypeDecoder;
+import org.apache.qpid.proton4j.codec.decoders.primitives.Symbol32TypeDecoder;
+import org.apache.qpid.proton4j.codec.decoders.primitives.Symbol8TypeDecoder;
 
 /**
  * The default AMQP Decoder implementation.
@@ -51,6 +53,10 @@ public class ProtonDecoder implements Decoder {
     // Registry of decoders for described types which can be updated with user defined
     // decoders as well as the default decoders.
     private Map<Object, DescribedTypeDecoder<?>> describedTypeDecoders = new HashMap<>();
+
+    // Internal Decoders used to prevent user to access Proton specific decoding methods
+    private static final Symbol8TypeDecoder symbol8TypeDecoder = new Symbol8TypeDecoder();
+    private static final Symbol32TypeDecoder symbol32TypeDecoder = new Symbol32TypeDecoder();
 
     @Override
     public ProtonDecoderState newDecoderState() {
@@ -174,7 +180,21 @@ public class ProtonDecoder implements Decoder {
 
     @Override
     public TypeDecoder<?> getTypeDecoder(Object instance) {
-        return null;  // TODO do we need this ?
+        TypeDecoder<?> decoder = null;
+        for (TypeDecoder<?> describedTypeDecoder : describedTypeDecoders.values()) {
+            if (describedTypeDecoder.getTypeClass().equals(instance.getClass())) {
+                decoder = describedTypeDecoder;
+            }
+        }
+
+        if (decoder == null) {
+            for (TypeDecoder<?> primitiveDecoder : primitiveDecoders) {
+                if (primitiveDecoder.getTypeClass().equals(instance.getClass())) {
+                    decoder = primitiveDecoder;
+                }
+            }
+        }
+        return decoder;
     }
 
     @Override
@@ -534,6 +554,22 @@ public class ProtonDecoder implements Decoder {
     }
 
     @Override
+    public String readSymbol(ProtonBuffer buffer, DecoderState state, String defaultValue) throws IOException {
+        byte encodingCode = buffer.readByte();
+
+        switch (encodingCode) {
+            case EncodingCodes.SYM8:
+                return symbol8TypeDecoder.readString(buffer, state);
+            case EncodingCodes.SYM32:
+                return symbol32TypeDecoder.readString(buffer, state);
+            case EncodingCodes.NULL:
+                return defaultValue;
+            default:
+                throw new IOException("Expected Symbol type but found encoding: " + encodingCode);
+        }
+    }
+
+    @Override
     public Long readTimestamp(ProtonBuffer buffer, DecoderState state) throws IOException {
         byte encodingCode = buffer.readByte();
 
@@ -542,6 +578,20 @@ public class ProtonDecoder implements Decoder {
                 return buffer.readLong();
             case EncodingCodes.NULL:
                 return null;
+            default:
+                throw new IOException("Expected Timestamp type but found encoding: " + encodingCode);
+        }
+    }
+
+    @Override
+    public long readTimestamp(ProtonBuffer buffer, DecoderState state, long defaultValue) throws IOException {
+        byte encodingCode = buffer.readByte();
+
+        switch (encodingCode) {
+            case EncodingCodes.TIMESTAMP:
+                return buffer.readLong();
+            case EncodingCodes.NULL:
+                return defaultValue;
             default:
                 throw new IOException("Expected Timestamp type but found encoding: " + encodingCode);
         }

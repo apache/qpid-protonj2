@@ -89,7 +89,11 @@ public interface Decoder {
 
     Symbol readSymbol(ProtonBuffer buffer, DecoderState state) throws IOException;
 
+    String readSymbol(ProtonBuffer buffer, DecoderState state, String defaultValue) throws IOException;
+
     Long readTimestamp(ProtonBuffer buffer, DecoderState state) throws IOException;
+
+    long readTimestamp(ProtonBuffer buffer, DecoderState state, long defaultValue) throws IOException;
 
     UUID readUUID(ProtonBuffer buffer, DecoderState state) throws IOException;
 

@@ -44,6 +44,20 @@ public abstract class AbstractSymbolTypeDecoder extends AbstractPrimitiveTypeDec
         return Symbol.getSymbol(symbolBuffer);
     }
 
+    public String readString(ProtonBuffer buffer, DecoderState state) throws IOException {
+        int length = readSize(buffer);
+
+        // TODO - While not optimal the symbol values are usually small in size but we
+        //        should investigate if having a buffer slice method which lets us create
+        //        a view of the buffer without copying it and then just skipping the bytes
+        //        would be faster since we should eventually not be creating a new symbol
+        //        from the bytes since we cache them internally in Symbol.
+        ProtonBuffer symbolBuffer = ProtonByteBufferAllocator.DEFAULT.allocate(length, length);
+        buffer.readBytes(symbolBuffer, length);
+
+        return Symbol.getSymbol(symbolBuffer).toString();
+    }
+
     @Override
     public void skipValue(ProtonBuffer buffer, DecoderState state) throws IOException {
         buffer.skipBytes(readSize(buffer));

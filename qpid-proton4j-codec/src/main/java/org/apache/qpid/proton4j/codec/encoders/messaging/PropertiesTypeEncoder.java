@@ -72,16 +72,28 @@ public class PropertiesTypeEncoder extends AbstractDescribedListTypeEncoder<Prop
                 state.getEncoder().writeSymbol(buffer, state, properties.getContentEncoding());
                 break;
             case 8:
-                state.getEncoder().writeTimestamp(buffer, state, properties.getAbsoluteExpiryTime());
+                if (properties.hasAbsoluteExpiryTime()) {
+                    state.getEncoder().writeTimestamp(buffer, state, properties.getAbsoluteExpiryTime());
+                } else {
+                    buffer.writeByte(EncodingCodes.NULL);
+                }
                 break;
             case 9:
-                state.getEncoder().writeTimestamp(buffer, state, properties.getCreationTime());
+                if (properties.hasCreationTime()) {
+                    state.getEncoder().writeTimestamp(buffer, state, properties.getCreationTime());
+                } else {
+                    buffer.writeByte(EncodingCodes.NULL);
+                }
                 break;
             case 10:
                 state.getEncoder().writeString(buffer, state, properties.getGroupId());
                 break;
             case 11:
-                state.getEncoder().writeUnsignedInteger(buffer, state, properties.getGroupSequence());
+                if (properties.hasGroupSequence()) {
+                    state.getEncoder().writeUnsignedInteger(buffer, state, properties.getGroupSequence());
+                } else {
+                    buffer.writeByte(EncodingCodes.NULL);
+                }
                 break;
             case 12:
                 state.getEncoder().writeString(buffer, state, properties.getReplyToGroupId());
@@ -98,34 +110,6 @@ public class PropertiesTypeEncoder extends AbstractDescribedListTypeEncoder<Prop
 
     @Override
     public int getElementCount(Properties properties) {
-        if (properties.getReplyToGroupId() != null) {
-            return 13;
-        } else if (properties.getGroupSequence() != null) {
-            return 12;
-        } else if (properties.getGroupId() != null) {
-            return 11;
-        } else if (properties.getCreationTime() != null) {
-            return 10;
-        } else if (properties.getAbsoluteExpiryTime() != null) {
-            return 9;
-        } else if (properties.getContentEncoding() != null) {
-            return 8;
-        } else if (properties.getContentType() != null) {
-            return 7;
-        } else if (properties.getCorrelationId() != null) {
-            return 6;
-        } else if (properties.getReplyTo() != null) {
-            return 5;
-        } else if (properties.getSubject() != null) {
-            return 4;
-        } else if (properties.getTo() != null) {
-            return 3;
-        } else if (properties.getUserId() != null) {
-            return 2;
-        } else if (properties.getMessageId() != null) {
-            return 1;
-        }
-
-        return 0;
+        return properties.getElementCount();
     }
 }

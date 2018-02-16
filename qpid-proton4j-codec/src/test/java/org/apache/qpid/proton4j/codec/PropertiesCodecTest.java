@@ -24,8 +24,6 @@ import java.io.IOException;
 import java.util.Date;
 
 import org.apache.qpid.proton4j.amqp.Binary;
-import org.apache.qpid.proton4j.amqp.Symbol;
-import org.apache.qpid.proton4j.amqp.UnsignedInteger;
 import org.apache.qpid.proton4j.amqp.messaging.Properties;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
@@ -58,13 +56,13 @@ public class PropertiesCodecTest extends CodecTestSupport {
         properties.setTo("queue:work");
         properties.setSubject("help");
         properties.setReplyTo("queue:temp:me");
-        properties.setContentEncoding(Symbol.valueOf("text/UTF-8"));
-        properties.setContentType(Symbol.valueOf("text"));
+        properties.setContentEncoding("text/UTF-8");
+        properties.setContentType("text");
         properties.setCorrelationId("correlation-id");
-        properties.setAbsoluteExpiryTime(timeNow);
-        properties.setCreationTime(timeNow);
+        properties.setAbsoluteExpiryTime(timeNow.getTime());
+        properties.setCreationTime(timeNow.getTime());
         properties.setGroupId("group-1");
-        properties.setGroupSequence(UnsignedInteger.valueOf(1));
+        properties.setGroupSequence(1);
         properties.setReplyToGroupId("group-1");
 
         for (int i = 0; i < size; ++i) {
@@ -80,13 +78,13 @@ public class PropertiesCodecTest extends CodecTestSupport {
             Properties decoded = (Properties) result;
 
             assertNotNull(decoded.getAbsoluteExpiryTime());
-            assertEquals(timeNow, decoded.getAbsoluteExpiryTime());
-            assertEquals(Symbol.valueOf("text/UTF-8"), decoded.getContentEncoding());
-            assertEquals(Symbol.valueOf("text"), decoded.getContentType());
+            assertEquals(timeNow.getTime(), decoded.getAbsoluteExpiryTime());
+            assertEquals("text/UTF-8", decoded.getContentEncoding());
+            assertEquals("text", decoded.getContentType());
             assertEquals("correlation-id", decoded.getCorrelationId());
-            assertEquals(timeNow, decoded.getCreationTime());
+            assertEquals(timeNow.getTime(), decoded.getCreationTime());
             assertEquals("group-1", decoded.getGroupId());
-            assertEquals(UnsignedInteger.valueOf(1), decoded.getGroupSequence());
+            assertEquals(1, decoded.getGroupSequence());
             assertEquals("ID:Message-1:1:1:0", decoded.getMessageId());
             assertEquals("queue:temp:me", decoded.getReplyTo());
             assertEquals("group-1", decoded.getReplyToGroupId());

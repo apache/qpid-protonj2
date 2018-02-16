@@ -25,16 +25,19 @@ import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 
 public final class Symbol implements Comparable<Symbol> {
 
+    // TODO - We should limit the number of buffered symbols
     private static final Map<ProtonBuffer, Symbol> bufferToSymbols = new ConcurrentHashMap<>(2048);
 
     private static final Symbol EMPTY_SYMBOL = new Symbol();
 
+    private String symbolString;
     private final ProtonBuffer underlying;
     private final int hashCode;
 
     private Symbol() {
         this.underlying = ProtonByteBufferAllocator.DEFAULT.allocate(0, 0);
         this.hashCode = 31;
+        this.symbolString = null;
     }
 
     private Symbol(ProtonBuffer underlying) {
@@ -53,7 +56,11 @@ public final class Symbol implements Comparable<Symbol> {
 
     @Override
     public String toString() {
-        return underlying.toString(StandardCharsets.US_ASCII);
+        if (symbolString == null && underlying.getReadableBytes() > 0) {
+            symbolString = underlying.toString(StandardCharsets.US_ASCII);
+        }
+
+        return symbolString;
     }
 
     @Override
