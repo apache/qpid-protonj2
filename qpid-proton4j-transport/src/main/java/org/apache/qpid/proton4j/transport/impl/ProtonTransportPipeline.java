@@ -16,6 +16,11 @@
  */
 package org.apache.qpid.proton4j.transport.impl;
 
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import org.apache.qpid.proton4j.transport.Frame;
+import org.apache.qpid.proton4j.transport.HeaderFrame;
+import org.apache.qpid.proton4j.transport.ProtocolFrame;
+import org.apache.qpid.proton4j.transport.SaslFrame;
 import org.apache.qpid.proton4j.transport.TransportHandler;
 import org.apache.qpid.proton4j.transport.TransportHandlerContext;
 import org.apache.qpid.proton4j.transport.TransportPipeline;
@@ -25,8 +30,8 @@ import org.apache.qpid.proton4j.transport.TransportPipeline;
  */
 public class ProtonTransportPipeline implements TransportPipeline {
 
-    TransportHandlerContext head;
-    TransportHandlerContext tail;
+    TransportHandlerContextBoundry head;
+    TransportHandlerContextBoundry tail;
 
     private final ProtonTransport transport;
 
@@ -36,6 +41,13 @@ public class ProtonTransportPipeline implements TransportPipeline {
         }
 
         this.transport = transport;
+
+        this.head = new TransportHandlerContextBoundry();
+        this.tail = new TransportHandlerContextBoundry();
+
+        // Ensure Pipeline starts out empty but initialized.
+        this.head.next = this.tail;
+        this.tail.previous = this.head;
     }
 
     @Override
@@ -86,5 +98,64 @@ public class ProtonTransportPipeline implements TransportPipeline {
     @Override
     public TransportHandlerContext lastContext() {
         return null;
+    }
+
+    //----- Synthetic handler context that bounds the pipeline ---------------//
+
+    private class TransportHandlerContextBoundry extends ProtonTransportHandlerContext {
+
+        public TransportHandlerContextBoundry() {
+            super(null);
+        }
+
+        @Override
+        public void fireRead(ProtonBuffer buffer) {
+            // TODO - Signal the Transport that no handler intercepted this and we should fail
+        }
+
+        @Override
+        public void fireHeaderFrame(HeaderFrame header) {
+            // TODO - Signal the Transport that no handler intercepted this and we should fail
+        }
+
+        @Override
+        public void fireSaslFrame(SaslFrame frame) {
+            // TODO - Signal the Transport that no handler intercepted this and we should fail
+        }
+
+        @Override
+        public void fireProtocolFrame(ProtocolFrame frame) {
+            // TODO - Signal the Transport that no handler intercepted this and we should fail
+        }
+
+        @Override
+        public void fireEncodingError(Throwable e) {
+            // TODO - Signal the Transport that no handler intercepted this and we should fail
+        }
+
+        @Override
+        public void fireDecodingError(Throwable e) {
+            // TODO - Signal the Transport that no handler intercepted this and we should fail
+        }
+
+        @Override
+        public void fireFailed(Throwable e) {
+            // TODO - Signal the Transport that no handler intercepted this and we should fail
+        }
+
+        @Override
+        public void fireWrite(Frame<?> frame) {
+            // TODO - Signal the Transport that no handler intercepted this and we should fail
+        }
+
+        @Override
+        public void fireWrite(ProtonBuffer buffer) {
+            // TODO - Signal the Transport that no handler intercepted this and we should fail
+        }
+
+        @Override
+        public void fireFlush() {
+            // TODO - Signal the Transport that no handler intercepted this and we should fail
+        }
     }
 }

@@ -21,6 +21,7 @@ import org.apache.qpid.proton4j.transport.Frame;
 import org.apache.qpid.proton4j.transport.HeaderFrame;
 import org.apache.qpid.proton4j.transport.ProtocolFrame;
 import org.apache.qpid.proton4j.transport.SaslFrame;
+import org.apache.qpid.proton4j.transport.TransportHandler;
 import org.apache.qpid.proton4j.transport.TransportHandlerContext;
 
 /**
@@ -31,43 +32,63 @@ public class ProtonTransportHandlerContext implements TransportHandlerContext {
     ProtonTransportHandlerContext previous;
     ProtonTransportHandlerContext next;
 
+    private final TransportHandler handler;
+
+    public ProtonTransportHandlerContext(TransportHandler handler) {
+        this.handler = handler;
+    }
+
+    TransportHandler getHandler() {
+        return handler;
+    }
+
     @Override
     public void fireRead(ProtonBuffer buffer) {
+        previous.getHandler().handleRead(previous, buffer);
     }
 
     @Override
     public void fireHeaderFrame(HeaderFrame header) {
+        previous.getHandler().handleHeaderFrame(previous, header);
     }
 
     @Override
     public void fireSaslFrame(SaslFrame frame) {
+        previous.getHandler().handleSaslFrame(previous, frame);
     }
 
     @Override
     public void fireProtocolFrame(ProtocolFrame frame) {
+        previous.getHandler().handleProtocolFrame(previous, frame);
     }
 
     @Override
     public void fireEncodingError(Throwable e) {
+        previous.getHandler().transportEncodingError(previous, e);
     }
 
     @Override
     public void fireDecodingError(Throwable e) {
+        previous.getHandler().transportDecodingError(previous, e);
     }
 
     @Override
     public void fireFailed(Throwable e) {
+        previous.getHandler().transportFailed(previous, e);
     }
 
     @Override
     public void fireWrite(Frame<?> frame) {
+        next.getHandler().handleWrite(next, frame);
     }
 
     @Override
     public void fireWrite(ProtonBuffer buffer) {
+        next.getHandler().handleWrite(next, buffer);
     }
 
     @Override
     public void fireFlush() {
+        next.getHandler().handleFlush(next);
     }
 }
