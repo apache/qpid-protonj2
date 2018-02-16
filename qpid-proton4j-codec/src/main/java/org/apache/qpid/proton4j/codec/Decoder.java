@@ -45,6 +45,8 @@ public interface Decoder {
 
     Byte readByte(ProtonBuffer buffer, DecoderState state) throws IOException;
 
+    byte readByte(ProtonBuffer buffer, DecoderState state, byte defaultValue) throws IOException;
+
     UnsignedByte readUnsignedByte(ProtonBuffer buffer, DecoderState state) throws IOException;
 
     byte readUnsignedByte(ProtonBuffer buffer, DecoderState state, byte defaultValue) throws IOException;
@@ -89,7 +91,11 @@ public interface Decoder {
 
     Float readFloat(ProtonBuffer buffer, DecoderState state) throws IOException;
 
+    float readFloat(ProtonBuffer buffer, DecoderState state, float defaultValue) throws IOException;
+
     Double readDouble(ProtonBuffer buffer, DecoderState state) throws IOException;
+
+    double readDouble(ProtonBuffer buffer, DecoderState state, double defaultValue) throws IOException;
 
     Binary readBinary(ProtonBuffer buffer, DecoderState state) throws IOException;
 

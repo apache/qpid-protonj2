@@ -248,6 +248,20 @@ public class ProtonDecoder implements Decoder {
     }
 
     @Override
+    public byte readByte(ProtonBuffer buffer, DecoderState state, byte defaultValue) throws IOException {
+        byte encodingCode = buffer.readByte();
+
+        switch (encodingCode) {
+            case EncodingCodes.BYTE:
+                return buffer.readByte();
+            case EncodingCodes.NULL:
+                return defaultValue;
+            default:
+                throw new IOException("Expected byte type but found encoding: " + encodingCode);
+        }
+    }
+
+    @Override
     public UnsignedByte readUnsignedByte(ProtonBuffer buffer, DecoderState state) throws IOException {
         byte encodingCode = buffer.readByte();
 
@@ -552,6 +566,20 @@ public class ProtonDecoder implements Decoder {
     }
 
     @Override
+    public float readFloat(ProtonBuffer buffer, DecoderState state, float defaultValue) throws IOException {
+        byte encodingCode = buffer.readByte();
+
+        switch (encodingCode) {
+            case EncodingCodes.FLOAT:
+                return buffer.readFloat();
+            case EncodingCodes.NULL:
+                return defaultValue;
+            default:
+                throw new IOException("Expected Float type but found encoding: " + encodingCode);
+        }
+    }
+
+    @Override
     public Double readDouble(ProtonBuffer buffer, DecoderState state) throws IOException {
         byte encodingCode = buffer.readByte();
 
@@ -560,6 +588,20 @@ public class ProtonDecoder implements Decoder {
                 return buffer.readDouble();
             case EncodingCodes.NULL:
                 return null;
+            default:
+                throw new IOException("Expected Double type but found encoding: " + encodingCode);
+        }
+    }
+
+    @Override
+    public double readDouble(ProtonBuffer buffer, DecoderState state, double defaultValue) throws IOException {
+        byte encodingCode = buffer.readByte();
+
+        switch (encodingCode) {
+            case EncodingCodes.DOUBLE:
+                return buffer.readDouble();
+            case EncodingCodes.NULL:
+                return defaultValue;
             default:
                 throw new IOException("Expected Double type but found encoding: " + encodingCode);
         }
