@@ -24,7 +24,11 @@ public final class Header implements Section {
     public static final UnsignedLong DESCRIPTOR_CODE = UnsignedLong.valueOf(0x0000000000000070L);
     public static final Symbol DESCRIPTOR_SYMBOL = Symbol.valueOf("amqp:header:list");
 
+    public static final boolean DEFAULT_DURABILITY = false;
     public static final byte DEFAULT_PRIORITY = 4;
+    public static final long DEFAULT_TIME_TO_LIVE = -1;
+    public static final boolean DEFAULT_FIRST_ACQUIRER = false;
+    public static final long DEFAULT_DELIVERY_COUNT = 0;
 
     private static final long UINT_MAX = 0xFFFFFFFFL;
 
@@ -36,11 +40,11 @@ public final class Header implements Section {
 
     private int modified = 0;
 
-    private boolean durable;
-    private byte priority;
-    private long timeToLive;
-    private boolean firstAcquirer;
-    private long deliveryCount;
+    private boolean durable = DEFAULT_DURABILITY;
+    private byte priority = DEFAULT_PRIORITY;
+    private long timeToLive = DEFAULT_TIME_TO_LIVE;
+    private boolean firstAcquirer = DEFAULT_FIRST_ACQUIRER;
+    private long deliveryCount = DEFAULT_DELIVERY_COUNT;
 
     public Header() {
     }
@@ -99,6 +103,11 @@ public final class Header implements Section {
         durable = value;
     }
 
+    public void clearDurable() {
+        modified &= ~DURABLE;
+        durable = DEFAULT_DURABILITY;
+    }
+
     public byte getPriority() {
         return priority;
     }
@@ -111,6 +120,11 @@ public final class Header implements Section {
         }
 
         priority = value;
+    }
+
+    public void clearPriority() {
+        modified &= ~PRIORITY;
+        priority = DEFAULT_PRIORITY;
     }
 
     public long getTimeToLive() {
@@ -127,6 +141,11 @@ public final class Header implements Section {
         timeToLive = value;
     }
 
+    public void clearTimeToLive() {
+        modified &= ~TIME_TO_LIVE;
+        timeToLive = DEFAULT_TIME_TO_LIVE;
+    }
+
     public boolean isFirstAcquirer() {
         return firstAcquirer;
     }
@@ -139,6 +158,11 @@ public final class Header implements Section {
         }
 
         firstAcquirer = value;
+    }
+
+    public void clearFirstAcquirer() {
+        modified &= ~FIRST_ACQUIRER;
+        firstAcquirer = DEFAULT_FIRST_ACQUIRER;
     }
 
     public long getDeliveryCount() {
@@ -155,6 +179,11 @@ public final class Header implements Section {
         }
 
         deliveryCount = value;
+    }
+
+    public void clearDeliveryCount() {
+        modified &= ~DELIVERY_COUNT;
+        deliveryCount = DEFAULT_DELIVERY_COUNT;
     }
 
     @Override
