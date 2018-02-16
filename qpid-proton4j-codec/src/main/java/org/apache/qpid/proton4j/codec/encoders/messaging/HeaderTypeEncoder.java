@@ -51,21 +51,44 @@ public class HeaderTypeEncoder extends AbstractDescribedListTypeEncoder<Header> 
 
     @Override
     public void writeElement(Header header, int index, ProtonBuffer buffer, EncoderState state) {
+        // When encoding ensure that values that were never set are omitted and a simple
+        // NULL entry is written in the slot instead (don't write defaults).
+
         switch (index) {
             case 0:
-                state.getEncoder().writeBoolean(buffer, state, header.getDurable());
+                if (header.hasDurable()) {
+                    state.getEncoder().writeBoolean(buffer, state, header.isDurable());
+                } else {
+                    buffer.writeByte(EncodingCodes.NULL);
+                }
                 break;
             case 1:
-                state.getEncoder().writeUnsignedByte(buffer, state, header.getPriority());
+                if (header.hasPriority()) {
+                    state.getEncoder().writeUnsignedByte(buffer, state, header.getPriority());
+                } else {
+                    buffer.writeByte(EncodingCodes.NULL);
+                }
                 break;
             case 2:
-                state.getEncoder().writeUnsignedInteger(buffer, state, header.getTtl());
+                if (header.hasTimeToLive()) {
+                    state.getEncoder().writeUnsignedInteger(buffer, state, header.getTimeToLive());
+                } else {
+                    buffer.writeByte(EncodingCodes.NULL);
+                }
                 break;
             case 3:
-                state.getEncoder().writeBoolean(buffer, state, header.getFirstAcquirer());
+                if (header.hasFirstAcquirer()) {
+                    state.getEncoder().writeBoolean(buffer, state, header.isFirstAcquirer());
+                } else {
+                    buffer.writeByte(EncodingCodes.NULL);
+                }
                 break;
             case 4:
-                state.getEncoder().writeUnsignedInteger(buffer, state, header.getDeliveryCount());
+                if (header.hasDeliveryCount()) {
+                    state.getEncoder().writeUnsignedInteger(buffer, state, header.getDeliveryCount());
+                } else {
+                    buffer.writeByte(EncodingCodes.NULL);
+                }
                 break;
             default:
                 throw new IllegalArgumentException("Unknown Header value index: " + index);
@@ -74,18 +97,6 @@ public class HeaderTypeEncoder extends AbstractDescribedListTypeEncoder<Header> 
 
     @Override
     public int getElementCount(Header header) {
-        if (header.getDeliveryCount() != null) {
-            return 5;
-        } else if (header.getFirstAcquirer() != null) {
-            return 4;
-        } else if (header.getTtl() != null) {
-            return 3;
-        } else if (header.getPriority() != null) {
-            return 2;
-        } else if (header.getDurable() != null) {
-            return 1;
-        } else {
-            return 0;
-        }
+        return header.getElementCount();
     }
 }

@@ -22,8 +22,6 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 
-import org.apache.qpid.proton4j.amqp.UnsignedByte;
-import org.apache.qpid.proton4j.amqp.UnsignedInteger;
 import org.apache.qpid.proton4j.amqp.messaging.Header;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
@@ -55,10 +53,10 @@ public class HeaderTypeCodecTest extends CodecTestSupport {
         Header header = new Header();
 
         header.setDurable(Boolean.TRUE);
-        header.setPriority(UnsignedByte.valueOf((byte) 3));
-        header.setDeliveryCount(UnsignedInteger.valueOf(10));
+        header.setPriority((byte) 3);
+        header.setDeliveryCount(10);
         header.setFirstAcquirer(Boolean.FALSE);
-        header.setTtl(UnsignedInteger.valueOf(500));
+        header.setTimeToLive(500);
 
         for (int i = 0; i < size; ++i) {
             encoder.writeObject(buffer, encoderState, header);
@@ -72,8 +70,8 @@ public class HeaderTypeCodecTest extends CodecTestSupport {
 
             Header decoded = (Header) result;
 
-            assertEquals(3, decoded.getPriority().intValue());
-            assertTrue(decoded.getDurable().booleanValue());
+            assertEquals(3, decoded.getPriority());
+            assertTrue(decoded.isDurable());
         }
     }
 
@@ -120,7 +118,7 @@ public class HeaderTypeCodecTest extends CodecTestSupport {
         for (int i = 0; i < resultArray.length; ++i) {
             assertNotNull(resultArray[i]);
             assertTrue(resultArray[i] instanceof Header);
-            assertEquals(headerArray[i].getDurable(), resultArray[i].getDurable());
+            assertEquals(headerArray[i].isDurable(), resultArray[i].isDurable());
         }
     }
 }

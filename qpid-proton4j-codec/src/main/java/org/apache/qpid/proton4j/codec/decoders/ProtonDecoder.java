@@ -241,23 +241,19 @@ public class ProtonDecoder implements Decoder {
         }
     }
 
-//    @Override
-//    public byte readUnsignedByte(ProtonBuffer buffer, DecoderState state, byte defaultValue) throws IOException {
-//        byte encodingCode = buffer.readByte();
-//
-//        TODO - We currently allow primitive type decoders to be registered by external clients
-//               which complicates this as we would have to cast here into a specific decoder impl
-//               to access a read method with correct return types.  Alternatively we could just
-//               implement the read here given how simple it is.
-//        switch (encodingCode) {
-//            case EncodingCodes.UBYTE:
-//                return (UnsignedByte) primitiveDecoders[EncodingCodes.UBYTE & 0xff].readValue(buffer, state);
-//            case EncodingCodes.NULL:
-//                return defaultValue;
-//            default:
-//                throw new IOException("Expected unsigned byte type but found encoding: " + encodingCode);
-//        }
-//    }
+    @Override
+    public byte readUnsignedByte(ProtonBuffer buffer, DecoderState state, byte defaultValue) throws IOException {
+        byte encodingCode = buffer.readByte();
+
+        switch (encodingCode) {
+            case EncodingCodes.UBYTE:
+                return buffer.readByte();
+            case EncodingCodes.NULL:
+                return defaultValue;
+            default:
+                throw new IOException("Expected unsigned byte type but found encoding: " + encodingCode);
+        }
+    }
 
     @Override
     public Character readCharacter(ProtonBuffer buffer, DecoderState state) throws IOException {
@@ -344,6 +340,20 @@ public class ProtonDecoder implements Decoder {
     }
 
     @Override
+    public int readUnsignedShort(ProtonBuffer buffer, DecoderState state, int defaultValue) throws IOException {
+        byte encodingCode = buffer.readByte();
+
+        switch (encodingCode) {
+            case EncodingCodes.USHORT:
+                return buffer.readShort();
+            case EncodingCodes.NULL:
+                return defaultValue;
+            default:
+                throw new IOException("Expected UnsignedShort type but found encoding: " + encodingCode);
+        }
+    }
+
+    @Override
     public Integer readInteger(ProtonBuffer buffer, DecoderState state) throws IOException {
         byte encodingCode = buffer.readByte();
 
@@ -378,6 +388,24 @@ public class ProtonDecoder implements Decoder {
     }
 
     @Override
+    public long readUnsignedInteger(ProtonBuffer buffer, DecoderState state, long defaultValue) throws IOException {
+        byte encodingCode = buffer.readByte();
+
+        switch (encodingCode) {
+            case EncodingCodes.UINT0:
+                return 0;
+            case EncodingCodes.SMALLUINT:
+                return buffer.readByte() & 0xff;
+            case EncodingCodes.UINT:
+                return buffer.readInt();
+            case EncodingCodes.NULL:
+                return defaultValue;
+            default:
+                throw new IOException("Expected UnsignedInteger type but found encoding: " + encodingCode);
+        }
+    }
+
+    @Override
     public Long readLong(ProtonBuffer buffer, DecoderState state) throws IOException {
         byte encodingCode = buffer.readByte();
 
@@ -406,6 +434,24 @@ public class ProtonDecoder implements Decoder {
                 return UnsignedLong.valueOf((buffer.readLong()));
             case EncodingCodes.NULL:
                 return null;
+            default:
+                throw new IOException("Expected Long type but found encoding: " + encodingCode);
+        }
+    }
+
+    @Override
+    public long readUnsignedLong(ProtonBuffer buffer, DecoderState state, long defaultValue) throws IOException {
+        byte encodingCode = buffer.readByte();
+
+        switch (encodingCode) {
+            case EncodingCodes.ULONG0:
+                return 0l;
+            case EncodingCodes.SMALLULONG:
+                return (buffer.readByte() & 0xff);
+            case EncodingCodes.ULONG:
+                return buffer.readLong();
+            case EncodingCodes.NULL:
+                return defaultValue;
             default:
                 throw new IOException("Expected Long type but found encoding: " + encodingCode);
         }

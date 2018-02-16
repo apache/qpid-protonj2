@@ -48,37 +48,81 @@ public class FlowTypeEncoder extends AbstractDescribedListTypeEncoder<Flow> {
     public void writeElement(Flow flow, int index, ProtonBuffer buffer, EncoderState state) {
         switch (index) {
             case 0:
-                state.getEncoder().writeUnsignedInteger(buffer, state, flow.getNextIncomingId());
+                if (flow.hasNextIncomingId()) {
+                    state.getEncoder().writeUnsignedInteger(buffer, state, flow.getNextIncomingId());
+                } else {
+                    buffer.writeByte(EncodingCodes.NULL);
+                }
                 break;
             case 1:
-                state.getEncoder().writeUnsignedInteger(buffer, state, flow.getIncomingWindow());
+                if (flow.hasIncomingWindow()) {
+                    state.getEncoder().writeUnsignedInteger(buffer, state, flow.getIncomingWindow());
+                } else {
+                    buffer.writeByte(EncodingCodes.NULL);
+                }
                 break;
             case 2:
-                state.getEncoder().writeUnsignedInteger(buffer, state, flow.getNextOutgoingId());
+                if (flow.hasNextOutgoingId()) {
+                    state.getEncoder().writeUnsignedInteger(buffer, state, flow.getNextOutgoingId());
+                } else {
+                    buffer.writeByte(EncodingCodes.NULL);
+                }
                 break;
             case 3:
-                state.getEncoder().writeUnsignedInteger(buffer, state, flow.getOutgoingWindow());
+                if (flow.hasOutgoingWindow()) {
+                    state.getEncoder().writeUnsignedInteger(buffer, state, flow.getOutgoingWindow());
+                } else {
+                    buffer.writeByte(EncodingCodes.NULL);
+                }
                 break;
             case 4:
-                state.getEncoder().writeUnsignedInteger(buffer, state, flow.getHandle());
+                if (flow.hasHandle()) {
+                    state.getEncoder().writeUnsignedInteger(buffer, state, flow.getHandle());
+                } else {
+                    buffer.writeByte(EncodingCodes.NULL);
+                }
                 break;
             case 5:
-                state.getEncoder().writeUnsignedInteger(buffer, state, flow.getDeliveryCount());
+                if (flow.hasDeliveryCount()) {
+                    state.getEncoder().writeUnsignedInteger(buffer, state, flow.getDeliveryCount());
+                } else {
+                    buffer.writeByte(EncodingCodes.NULL);
+                }
                 break;
             case 6:
-                state.getEncoder().writeUnsignedInteger(buffer, state, flow.getLinkCredit());
+                if (flow.hasLinkCredit()) {
+                    state.getEncoder().writeUnsignedInteger(buffer, state, flow.getLinkCredit());
+                } else {
+                    buffer.writeByte(EncodingCodes.NULL);
+                }
                 break;
             case 7:
-                state.getEncoder().writeUnsignedInteger(buffer, state, flow.getAvailable());
+                if (flow.hasAvailable()) {
+                    state.getEncoder().writeUnsignedInteger(buffer, state, flow.getAvailable());
+                } else {
+                    buffer.writeByte(EncodingCodes.NULL);
+                }
                 break;
             case 8:
-                state.getEncoder().writeBoolean(buffer, state, flow.getDrain());
+                if (flow.hasDrain()) {
+                    state.getEncoder().writeBoolean(buffer, state, flow.getDrain());
+                } else {
+                    buffer.writeByte(EncodingCodes.NULL);
+                }
                 break;
             case 9:
-                state.getEncoder().writeBoolean(buffer, state, flow.getEcho());
+                if (flow.hasEcho()) {
+                    state.getEncoder().writeBoolean(buffer, state, flow.getEcho());
+                } else {
+                    buffer.writeByte(EncodingCodes.NULL);
+                }
                 break;
             case 10:
-                state.getEncoder().writeMap(buffer, state, flow.getProperties());
+                if (flow.hasProperties()) {
+                    state.getEncoder().writeMap(buffer, state, flow.getProperties());
+                } else {
+                    buffer.writeByte(EncodingCodes.NULL);
+                }
                 break;
             default:
                 throw new IllegalArgumentException("Unknown Flow value index: " + index);
@@ -96,22 +140,6 @@ public class FlowTypeEncoder extends AbstractDescribedListTypeEncoder<Flow> {
 
     @Override
     public int getElementCount(Flow flow) {
-        if (flow.getProperties() != null) {
-            return 11;
-        } else if (flow.getEcho()) {
-            return 10;
-        } else if (flow.getDrain()) {
-            return 9;
-        } else if (flow.getAvailable() != null) {
-            return 8;
-        } else if (flow.getLinkCredit() != null) {
-            return 7;
-        } else if (flow.getDeliveryCount() != null) {
-            return 6;
-        } else if (flow.getHandle() != null) {
-            return 5;
-        } else {
-            return 4;
-        }
+        return flow.getElementCount();
     }
 }

@@ -49,22 +49,42 @@ public class TransferTypeEncoder extends AbstractDescribedListTypeEncoder<Transf
     public void writeElement(Transfer transfer, int index, ProtonBuffer buffer, EncoderState state) {
         switch (index) {
             case 0:
-                state.getEncoder().writeUnsignedInteger(buffer, state, transfer.getHandle());
+                if (transfer.hasHandle()) {
+                    state.getEncoder().writeUnsignedInteger(buffer, state, transfer.getHandle());
+                } else {
+                    buffer.writeByte(EncodingCodes.NULL);
+                }
                 break;
             case 1:
-                state.getEncoder().writeUnsignedInteger(buffer, state, transfer.getDeliveryId());
+                if (transfer.hasDeliveryId()) {
+                    state.getEncoder().writeUnsignedInteger(buffer, state, transfer.getDeliveryId());
+                } else {
+                    buffer.writeByte(EncodingCodes.NULL);
+                }
                 break;
             case 2:
                 state.getEncoder().writeBinary(buffer, state, transfer.getDeliveryTag());
                 break;
             case 3:
-                state.getEncoder().writeUnsignedInteger(buffer, state, transfer.getMessageFormat());
+                if (transfer.hasMessageFormat()) {
+                    state.getEncoder().writeUnsignedInteger(buffer, state, transfer.getMessageFormat());
+                } else {
+                    buffer.writeByte(EncodingCodes.NULL);
+                }
                 break;
             case 4:
-                state.getEncoder().writeBoolean(buffer, state, transfer.getSettled());
+                if (transfer.hasSettled()) {
+                    state.getEncoder().writeBoolean(buffer, state, transfer.getSettled());
+                } else {
+                    buffer.writeByte(EncodingCodes.NULL);
+                }
                 break;
             case 5:
-                state.getEncoder().writeBoolean(buffer, state, transfer.getMore());
+                if (transfer.hasMore()) {
+                    state.getEncoder().writeBoolean(buffer, state, transfer.getMore());
+                } else {
+                    buffer.writeByte(EncodingCodes.NULL);
+                }
                 break;
             case 6:
                 ReceiverSettleMode rcvSettleMode = transfer.getRcvSettleMode();
@@ -74,13 +94,25 @@ public class TransferTypeEncoder extends AbstractDescribedListTypeEncoder<Transf
                 state.getEncoder().writeObject(buffer, state, transfer.getState());
                 break;
             case 8:
-                state.getEncoder().writeBoolean(buffer, state, transfer.getResume());
+                if (transfer.hasResume()) {
+                    state.getEncoder().writeBoolean(buffer, state, transfer.getResume());
+                } else {
+                    buffer.writeByte(EncodingCodes.NULL);
+                }
                 break;
             case 9:
-                state.getEncoder().writeBoolean(buffer, state, transfer.getAborted());
+                if (transfer.hasAborted()) {
+                    state.getEncoder().writeBoolean(buffer, state, transfer.getAborted());
+                } else {
+                    buffer.writeByte(EncodingCodes.NULL);
+                }
                 break;
             case 10:
-                state.getEncoder().writeBoolean(buffer, state, transfer.getBatchable());
+                if (transfer.hasBatchable()) {
+                    state.getEncoder().writeBoolean(buffer, state, transfer.getBatchable());
+                } else {
+                    buffer.writeByte(EncodingCodes.NULL);
+                }
                 break;
             default:
                 throw new IllegalArgumentException("Unknown Transfer value index: " + index);
@@ -100,28 +132,6 @@ public class TransferTypeEncoder extends AbstractDescribedListTypeEncoder<Transf
 
     @Override
     public int getElementCount(Transfer transfer) {
-        if (transfer.getBatchable()) {
-            return 11;
-        } else if (transfer.getAborted()) {
-            return 10;
-        } else if (transfer.getResume()) {
-            return 9;
-        } else if (transfer.getState() != null) {
-            return 8;
-        } else if (transfer.getRcvSettleMode() != null) {
-            return 7;
-        } else if (transfer.getMore()) {
-            return 6;
-        } else if (transfer.getSettled() != null) {
-            return 5;
-        } else if (transfer.getMessageFormat() != null) {
-            return 4;
-        } else if (transfer.getDeliveryTag() != null) {
-            return 3;
-        } else if (transfer.getDeliveryId() != null) {
-            return 2;
-        } else {
-            return 1;
-        }
+        return transfer.getElementCount();
     }
 }

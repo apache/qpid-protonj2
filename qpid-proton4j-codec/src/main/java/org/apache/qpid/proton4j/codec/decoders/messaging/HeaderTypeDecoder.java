@@ -23,6 +23,7 @@ import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.amqp.messaging.Header;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.DecoderState;
+import org.apache.qpid.proton4j.codec.EncodingCodes;
 import org.apache.qpid.proton4j.codec.TypeDecoder;
 import org.apache.qpid.proton4j.codec.decoders.AbstractDescribedTypeDecoder;
 import org.apache.qpid.proton4j.codec.decoders.primitives.ListTypeDecoder;
@@ -31,6 +32,8 @@ import org.apache.qpid.proton4j.codec.decoders.primitives.ListTypeDecoder;
  * Decoder of AMQP Header types from a byte stream
  */
 public class HeaderTypeDecoder extends AbstractDescribedTypeDecoder<Header> {
+
+    private static int MAX_HEADER_LIST_ENTRIES = 5;
 
     @Override
     public Class<Header> getTypeClass() {
@@ -92,22 +95,36 @@ public class HeaderTypeDecoder extends AbstractDescribedTypeDecoder<Header> {
         int size = listDecoder.readSize(buffer);
         int count = listDecoder.readCount(buffer);
 
+        // Don't decode anything if things already look wrong.
+        if (count > MAX_HEADER_LIST_ENTRIES) {
+            throw new IllegalStateException("To many entries in Header list encoding: " + count);
+        }
+
         for (int index = 0; index < count; ++index) {
+            // Peek ahead and see if there is a null in the next slot, if so we don't call
+            // the setter for that entry to ensure the returned type reflects the encoded
+            // state in the modification entry.
+            boolean nullValue = buffer.getByte(buffer.getReadIndex()) == EncodingCodes.NULL;
+            if (nullValue) {
+                buffer.readByte();
+                continue;
+            }
+
             switch (index) {
                 case 0:
-                    header.setDurable(state.getDecoder().readBoolean(buffer, state));
+                    header.setDurable(state.getDecoder().readBoolean(buffer, state, false));
                     break;
                 case 1:
-                    header.setPriority(state.getDecoder().readUnsignedByte(buffer, state));
+                    header.setPriority(state.getDecoder().readUnsignedByte(buffer, state, Header.DEFAULT_PRIORITY));
                     break;
                 case 2:
-                    header.setTtl(state.getDecoder().readUnsignedInteger(buffer, state));
+                    header.setTimeToLive(state.getDecoder().readUnsignedInteger(buffer, state, 0));
                     break;
                 case 3:
-                    header.setFirstAcquirer(state.getDecoder().readBoolean(buffer, state));
+                    header.setFirstAcquirer(state.getDecoder().readBoolean(buffer, state, false));
                     break;
                 case 4:
-                    header.setDeliveryCount(state.getDecoder().readUnsignedInteger(buffer, state));
+                    header.setDeliveryCount(state.getDecoder().readUnsignedInteger(buffer, state, 0));
                     break;
                 default:
                     throw new IllegalStateException("To many entries in Header encoding");

@@ -151,8 +151,8 @@ public class Benchmark implements Runnable {
     private void benchmarkTransfer() throws IOException {
         Transfer transfer = new Transfer();
         transfer.setDeliveryTag(new Binary(new byte[] {1, 2, 3}));
-        transfer.setHandle(UnsignedInteger.valueOf(10));
-        transfer.setMessageFormat(UnsignedInteger.ZERO);
+        transfer.setHandle(1024);
+        transfer.setMessageFormat(0);
 
         resultSet.start();
         for (int i = 0; i < ITERATIONS; i++) {
@@ -173,13 +173,13 @@ public class Benchmark implements Runnable {
 
     private void benchmarkFlow() throws IOException {
         Flow flow = new Flow();
-        flow.setNextIncomingId(UnsignedInteger.valueOf(1));
-        flow.setIncomingWindow(UnsignedInteger.valueOf(2047));
-        flow.setNextOutgoingId(UnsignedInteger.valueOf(1));
-        flow.setOutgoingWindow(UnsignedInteger.MAX_VALUE);
-        flow.setHandle(UnsignedInteger.ZERO);
-        flow.setDeliveryCount(UnsignedInteger.valueOf(10));
-        flow.setLinkCredit(UnsignedInteger.valueOf(1000));
+        flow.setNextIncomingId(1);
+        flow.setIncomingWindow(2047);
+        flow.setNextOutgoingId(1);
+        flow.setOutgoingWindow(Integer.MAX_VALUE);
+        flow.setHandle(UnsignedInteger.ZERO.longValue());
+        flow.setDeliveryCount(10);
+        flow.setLinkCredit(1000);
 
         resultSet.start();
         for (int i = 0; i < ITERATIONS; i++) {

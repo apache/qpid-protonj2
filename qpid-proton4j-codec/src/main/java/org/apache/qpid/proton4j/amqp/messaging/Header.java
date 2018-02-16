@@ -17,8 +17,6 @@
 package org.apache.qpid.proton4j.amqp.messaging;
 
 import org.apache.qpid.proton4j.amqp.Symbol;
-import org.apache.qpid.proton4j.amqp.UnsignedByte;
-import org.apache.qpid.proton4j.amqp.UnsignedInteger;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
 
 public final class Header implements Section {
@@ -26,11 +24,23 @@ public final class Header implements Section {
     public static final UnsignedLong DESCRIPTOR_CODE = UnsignedLong.valueOf(0x0000000000000070L);
     public static final Symbol DESCRIPTOR_SYMBOL = Symbol.valueOf("amqp:header:list");
 
-    private Boolean durable;
-    private UnsignedByte priority;
-    private UnsignedInteger ttl;
-    private Boolean firstAcquirer;
-    private UnsignedInteger deliveryCount;
+    public static final byte DEFAULT_PRIORITY = 4;
+
+    private static final long UINT_MAX = 0xFFFFFFFFL;
+
+    private static int DURABLE = 1;
+    private static int PRIORITY = 2;
+    private static int TIME_TO_LIVE = 4;
+    private static int FIRST_ACQUIRER = 8;
+    private static int DELIVERY_COUNT = 16;
+
+    private int modified = 0;
+
+    private boolean durable;
+    private byte priority;
+    private long timeToLive;
+    private boolean firstAcquirer;
+    private long deliveryCount;
 
     public Header() {
     }
@@ -38,49 +48,113 @@ public final class Header implements Section {
     public Header(Header other) {
         this.durable = other.durable;
         this.priority = other.priority;
-        this.ttl = other.ttl;
+        this.timeToLive = other.timeToLive;
         this.firstAcquirer = other.firstAcquirer;
         this.deliveryCount = other.deliveryCount;
     }
 
-    public Boolean getDurable() {
+    //----- Query the state of the Header object -----------------------------//
+
+    public boolean isEmpty() {
+        return modified == 0;
+    }
+
+    public int getElementCount() {
+        return 32 - Integer.numberOfLeadingZeros(modified);
+    }
+
+    public boolean hasDurable() {
+        return (modified & DURABLE) == DURABLE;
+    }
+
+    public boolean hasPriority() {
+        return (modified & PRIORITY) == PRIORITY;
+    }
+
+    public boolean hasTimeToLive() {
+        return (modified & TIME_TO_LIVE) == TIME_TO_LIVE;
+    }
+
+    public boolean hasFirstAcquirer() {
+        return (modified & FIRST_ACQUIRER) == FIRST_ACQUIRER;
+    }
+
+    public boolean hasDeliveryCount() {
+        return (modified & DELIVERY_COUNT) == DELIVERY_COUNT;
+    }
+
+    //----- Access the AMQP Header object ------------------------------------//
+
+    public boolean isDurable() {
         return durable;
     }
 
-    public void setDurable(Boolean durable) {
-        this.durable = durable;
+    public void setDurable(boolean value) {
+        if (value) {
+            modified |= DURABLE;
+        } else {
+            modified &= ~DURABLE;
+        }
+
+        durable = value;
     }
 
-    public UnsignedByte getPriority() {
+    public byte getPriority() {
         return priority;
     }
 
-    public void setPriority(UnsignedByte priority) {
-        this.priority = priority;
+    public void setPriority(byte value) {
+        if (value == DEFAULT_PRIORITY) {
+            modified &= ~PRIORITY;
+        } else {
+            modified |= PRIORITY;
+        }
+
+        priority = value;
     }
 
-    public UnsignedInteger getTtl() {
-        return ttl;
+    public long getTimeToLive() {
+        return timeToLive;
     }
 
-    public void setTtl(UnsignedInteger ttl) {
-        this.ttl = ttl;
+    public void setTimeToLive(long value) {
+        if (value < 0 || value > UINT_MAX) {
+            throw new IllegalArgumentException("TTL value given is out of range: " + value);
+        } else {
+            modified |= TIME_TO_LIVE;
+        }
+
+        timeToLive = value;
     }
 
-    public Boolean getFirstAcquirer() {
+    public boolean isFirstAcquirer() {
         return firstAcquirer;
     }
 
-    public void setFirstAcquirer(Boolean firstAcquirer) {
-        this.firstAcquirer = firstAcquirer;
+    public void setFirstAcquirer(boolean value) {
+        if (value) {
+            modified |= FIRST_ACQUIRER;
+        } else {
+            modified &= ~FIRST_ACQUIRER;
+        }
+
+        firstAcquirer = value;
     }
 
-    public UnsignedInteger getDeliveryCount() {
+    public long getDeliveryCount() {
         return deliveryCount;
     }
 
-    public void setDeliveryCount(UnsignedInteger deliveryCount) {
-        this.deliveryCount = deliveryCount;
+    public void setDeliveryCount(long value) {
+        if (value < 0 || value > UINT_MAX) {
+            throw new IllegalArgumentException("Delivery Count value given is out of range: " + value);
+        } else if (value == 0) {
+            modified &= ~DELIVERY_COUNT;
+        } else {
+            modified |= DELIVERY_COUNT;
+        }
+
+        deliveryCount = value;
     }
 
     @Override
@@ -88,7 +162,7 @@ public final class Header implements Section {
         return "Header{ " +
                 "durable=" + durable +
                 ", priority=" + priority +
-                ", ttl=" + ttl +
+                ", ttl=" + timeToLive +
                 ", firstAcquirer=" + firstAcquirer +
                 ", deliveryCount=" + deliveryCount + " }";
     }

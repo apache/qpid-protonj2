@@ -18,7 +18,6 @@ package org.apache.qpid.proton4j.amqp.transport;
 
 import org.apache.qpid.proton4j.amqp.Binary;
 import org.apache.qpid.proton4j.amqp.Symbol;
-import org.apache.qpid.proton4j.amqp.UnsignedInteger;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
 
 public final class Transfer implements Performative {
@@ -26,11 +25,27 @@ public final class Transfer implements Performative {
     public static final UnsignedLong DESCRIPTOR_CODE = UnsignedLong.valueOf(0x0000000000000014L);
     public static final Symbol DESCRIPTOR_SYMBOL = Symbol.valueOf("amqp:transfer:list");
 
-    private UnsignedInteger handle; // TODO - long
-    private UnsignedInteger deliveryId; // TODO - long where < 0 means not set
+    private static final long UINT_MAX = 0xFFFFFFFFL;
+
+    private static int HANDLE = 1;
+    private static int DELIVERY_ID = 2;
+    private static int DELIVERY_TAG = 4;
+    private static int MESSAGE_FORMAT = 8;
+    private static int SETTLED = 16;
+    private static int MORE = 32;
+    private static int RCV_SETTLE_MODE = 64;
+    private static int STATE = 128;
+    private static int RESUME = 256;
+    private static int ABORTED = 512;
+    private static int BATCHABLE = 1024;
+
+    private int modified = 0;
+
+    private long handle;
+    private long deliveryId;
     private Binary deliveryTag;
-    private UnsignedInteger messageFormat; // TODO - long
-    private Boolean settled;   // Does it matter if not present, can false not be default and use bool
+    private long messageFormat;
+    private boolean settled;
     private boolean more;
     private ReceiverSettleMode rcvSettleMode;
     private DeliveryState state;
@@ -38,23 +53,91 @@ public final class Transfer implements Performative {
     private boolean aborted;
     private boolean batchable;
 
-    public UnsignedInteger getHandle() {
+    //----- Query the state of the Header object -----------------------------//
+
+    public boolean isEmpty() {
+        return modified == 0;
+    }
+
+    public int getElementCount() {
+        return 32 - Integer.numberOfLeadingZeros(modified);
+    }
+
+    public boolean hasHandle() {
+        return (modified & HANDLE) == HANDLE;
+    }
+
+    public boolean hasDeliveryId() {
+        return (modified & DELIVERY_ID) == DELIVERY_ID;
+    }
+
+    public boolean hasDeliveryTag() {
+        return (modified & DELIVERY_TAG) == DELIVERY_TAG;
+    }
+
+    public boolean hasMessageFormat() {
+        return (modified & MESSAGE_FORMAT) == MESSAGE_FORMAT;
+    }
+
+    public boolean hasSettled() {
+        return (modified & SETTLED) == SETTLED;
+    }
+
+    public boolean hasMore() {
+        return (modified & MORE) == MORE;
+    }
+
+    public boolean hasRcvSettleMode() {
+        return (modified & RCV_SETTLE_MODE) == RCV_SETTLE_MODE;
+    }
+
+    public boolean hasState() {
+        return (modified & STATE) == STATE;
+    }
+
+    public boolean hasResume() {
+        return (modified & RESUME) == RESUME;
+    }
+
+    public boolean hasAborted() {
+        return (modified & ABORTED) == ABORTED;
+    }
+
+    public boolean hasBatchable() {
+        return (modified & BATCHABLE) == BATCHABLE;
+    }
+
+    //----- Access the AMQP Transfer object ------------------------------------//
+
+    public long getHandle() {
         return handle;
     }
 
-    public void setHandle(UnsignedInteger handle) {
-        if (handle == null) {
-            throw new NullPointerException("the handle field is mandatory");
+    public void setHandle(long handle) {
+        if (handle < 0 || handle > UINT_MAX) {
+            throw new IllegalArgumentException("Handle value given is out of range: " + handle);
+        } else if (handle == 0) {
+            modified &= ~HANDLE;
+        } else {
+            modified |= HANDLE;
         }
 
         this.handle = handle;
     }
 
-    public UnsignedInteger getDeliveryId() {
+    public long getDeliveryId() {
         return deliveryId;
     }
 
-    public void setDeliveryId(UnsignedInteger deliveryId) {
+    public void setDeliveryId(long deliveryId) {
+        if (deliveryId < 0 || deliveryId > UINT_MAX) {
+            throw new IllegalArgumentException("Delivery ID value given is out of range: " + deliveryId);
+        } else if (deliveryId == 0) {
+            modified &= ~DELIVERY_ID;
+        } else {
+            modified |= DELIVERY_ID;
+        }
+
         this.deliveryId = deliveryId;
     }
 
@@ -63,22 +146,42 @@ public final class Transfer implements Performative {
     }
 
     public void setDeliveryTag(Binary deliveryTag) {
+        if (deliveryTag != null) {
+            modified |= DELIVERY_TAG;
+        } else {
+            modified &= ~DELIVERY_TAG;
+        }
+
         this.deliveryTag = deliveryTag;
     }
 
-    public UnsignedInteger getMessageFormat() {
+    public long getMessageFormat() {
         return messageFormat;
     }
 
-    public void setMessageFormat(UnsignedInteger messageFormat) {
+    public void setMessageFormat(long messageFormat) {
+        if (messageFormat < 0 || messageFormat > UINT_MAX) {
+            throw new IllegalArgumentException("Message Format value given is out of range: " + messageFormat);
+        } else if (messageFormat == 0) {
+            modified &= ~MESSAGE_FORMAT;
+        } else {
+            modified |= MESSAGE_FORMAT;
+        }
+
         this.messageFormat = messageFormat;
     }
 
-    public Boolean getSettled() {
+    public boolean getSettled() {
         return settled;
     }
 
     public void setSettled(Boolean settled) {
+        if (settled) {
+            modified |= SETTLED;
+        } else {
+            modified &= ~SETTLED;
+        }
+
         this.settled = settled;
     }
 
@@ -87,6 +190,12 @@ public final class Transfer implements Performative {
     }
 
     public void setMore(boolean more) {
+        if (more) {
+            modified |= MORE;
+        } else {
+            modified &= ~MORE;
+        }
+
         this.more = more;
     }
 
@@ -95,6 +204,12 @@ public final class Transfer implements Performative {
     }
 
     public void setRcvSettleMode(ReceiverSettleMode rcvSettleMode) {
+        if (rcvSettleMode != null) {
+            modified |= RCV_SETTLE_MODE;
+        } else {
+            modified &= ~RCV_SETTLE_MODE;
+        }
+
         this.rcvSettleMode = rcvSettleMode;
     }
 
@@ -103,6 +218,12 @@ public final class Transfer implements Performative {
     }
 
     public void setState(DeliveryState state) {
+        if (state != null) {
+            modified |= STATE;
+        } else {
+            modified &= ~STATE;
+        }
+
         this.state = state;
     }
 
@@ -111,6 +232,12 @@ public final class Transfer implements Performative {
     }
 
     public void setResume(boolean resume) {
+        if (resume) {
+            modified |= RESUME;
+        } else {
+            modified &= ~RESUME;
+        }
+
         this.resume = resume;
     }
 
@@ -119,6 +246,12 @@ public final class Transfer implements Performative {
     }
 
     public void setAborted(boolean aborted) {
+        if (aborted) {
+            modified |= ABORTED;
+        } else {
+            modified &= ~ABORTED;
+        }
+
         this.aborted = aborted;
     }
 
@@ -127,6 +260,12 @@ public final class Transfer implements Performative {
     }
 
     public void setBatchable(boolean batchable) {
+        if (batchable) {
+            modified |= BATCHABLE;
+        } else {
+            modified &= ~BATCHABLE;
+        }
+
         this.batchable = batchable;
     }
 

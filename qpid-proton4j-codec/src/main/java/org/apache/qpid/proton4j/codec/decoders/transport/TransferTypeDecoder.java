@@ -26,6 +26,7 @@ import org.apache.qpid.proton4j.amqp.transport.ReceiverSettleMode;
 import org.apache.qpid.proton4j.amqp.transport.Transfer;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.DecoderState;
+import org.apache.qpid.proton4j.codec.EncodingCodes;
 import org.apache.qpid.proton4j.codec.TypeDecoder;
 import org.apache.qpid.proton4j.codec.decoders.AbstractDescribedTypeDecoder;
 import org.apache.qpid.proton4j.codec.decoders.primitives.ListTypeDecoder;
@@ -34,6 +35,8 @@ import org.apache.qpid.proton4j.codec.decoders.primitives.ListTypeDecoder;
  * Decoder of AMQP Transfer type values from a byte stream
  */
 public class TransferTypeDecoder extends AbstractDescribedTypeDecoder<Transfer> {
+
+    private static int MAX_TRANSFER_LIST_ENTRIES = 11;
 
     @Override
     public Class<Transfer> getTypeClass() {
@@ -95,24 +98,36 @@ public class TransferTypeDecoder extends AbstractDescribedTypeDecoder<Transfer> 
         int size = listDecoder.readSize(buffer);
         int count = listDecoder.readCount(buffer);
 
-        // TODO - Validate that mandatory fields are present, what error ? Here or further up the chain
+        // Don't decode anything if things already look wrong.
+        if (count > MAX_TRANSFER_LIST_ENTRIES) {
+            throw new IllegalStateException("To many entries in Transfer list encoding: " + count);
+        }
 
         for (int index = 0; index < count; ++index) {
+            // Peek ahead and see if there is a null in the next slot, if so we don't call
+            // the setter for that entry to ensure the returned type reflects the encoded
+            // state in the modification entry.
+            boolean nullValue = buffer.getByte(buffer.getReadIndex()) == EncodingCodes.NULL;
+            if (nullValue) {
+                buffer.readByte();
+                continue;
+            }
+
             switch (index) {
                 case 0:
-                    transfer.setHandle(state.getDecoder().readUnsignedInteger(buffer, state));
+                    transfer.setHandle(state.getDecoder().readUnsignedInteger(buffer, state, 0));
                     break;
                 case 1:
-                    transfer.setDeliveryId(state.getDecoder().readUnsignedInteger(buffer, state));
+                    transfer.setDeliveryId(state.getDecoder().readUnsignedInteger(buffer, state, 0));
                     break;
                 case 2:
                     transfer.setDeliveryTag(state.getDecoder().readBinary(buffer, state));
                     break;
                 case 3:
-                    transfer.setMessageFormat(state.getDecoder().readUnsignedInteger(buffer, state));
+                    transfer.setMessageFormat(state.getDecoder().readUnsignedInteger(buffer, state, 0));
                     break;
                 case 4:
-                    transfer.setSettled(state.getDecoder().readBoolean(buffer, state));
+                    transfer.setSettled(state.getDecoder().readBoolean(buffer, state, false));
                     break;
                 case 5:
                     transfer.setMore(state.getDecoder().readBoolean(buffer, state, false));

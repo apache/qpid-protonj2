@@ -23,6 +23,7 @@ import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.amqp.transport.Flow;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.DecoderState;
+import org.apache.qpid.proton4j.codec.EncodingCodes;
 import org.apache.qpid.proton4j.codec.TypeDecoder;
 import org.apache.qpid.proton4j.codec.decoders.AbstractDescribedTypeDecoder;
 import org.apache.qpid.proton4j.codec.decoders.primitives.ListTypeDecoder;
@@ -31,6 +32,8 @@ import org.apache.qpid.proton4j.codec.decoders.primitives.ListTypeDecoder;
  * Decoder of AMQP Flow type values from a byte stream.
  */
 public class FlowTypeDecoder extends AbstractDescribedTypeDecoder<Flow> {
+
+    private static int MAX_FLOW_LIST_ENTRIES = 11;
 
     @Override
     public Class<Flow> getTypeClass() {
@@ -92,33 +95,45 @@ public class FlowTypeDecoder extends AbstractDescribedTypeDecoder<Flow> {
         int size = listDecoder.readSize(buffer);
         int count = listDecoder.readCount(buffer);
 
-        // TODO - Validate that mandatory fields are present, what error ? Here or further up the chain
+        // Don't decode anything if things already look wrong.
+        if (count > MAX_FLOW_LIST_ENTRIES) {
+            throw new IllegalStateException("To many entries in Flow list encoding: " + count);
+        }
 
         for (int index = 0; index < count; ++index) {
+            // Peek ahead and see if there is a null in the next slot, if so we don't call
+            // the setter for that entry to ensure the returned type reflects the encoded
+            // state in the modification entry.
+            boolean nullValue = buffer.getByte(buffer.getReadIndex()) == EncodingCodes.NULL;
+            if (nullValue) {
+                buffer.readByte();
+                continue;
+            }
+
             switch (index) {
                 case 0:
-                    flow.setNextIncomingId(state.getDecoder().readUnsignedInteger(buffer, state));
+                    flow.setNextIncomingId(state.getDecoder().readUnsignedInteger(buffer, state, 0));
                     break;
                 case 1:
-                    flow.setIncomingWindow(state.getDecoder().readUnsignedInteger(buffer, state));
+                    flow.setIncomingWindow(state.getDecoder().readUnsignedInteger(buffer, state, 0));
                     break;
                 case 2:
-                    flow.setNextOutgoingId(state.getDecoder().readUnsignedInteger(buffer, state));
+                    flow.setNextOutgoingId(state.getDecoder().readUnsignedInteger(buffer, state, 0));
                     break;
                 case 3:
-                    flow.setOutgoingWindow(state.getDecoder().readUnsignedInteger(buffer, state));
+                    flow.setOutgoingWindow(state.getDecoder().readUnsignedInteger(buffer, state, 0));
                     break;
                 case 4:
-                    flow.setHandle(state.getDecoder().readUnsignedInteger(buffer, state));
+                    flow.setHandle(state.getDecoder().readUnsignedInteger(buffer, state, 0));
                     break;
                 case 5:
-                    flow.setDeliveryCount(state.getDecoder().readUnsignedInteger(buffer, state));
+                    flow.setDeliveryCount(state.getDecoder().readUnsignedInteger(buffer, state, 0));
                     break;
                 case 6:
-                    flow.setLinkCredit(state.getDecoder().readUnsignedInteger(buffer, state));
+                    flow.setLinkCredit(state.getDecoder().readUnsignedInteger(buffer, state, 0));
                     break;
                 case 7:
-                    flow.setAvailable(state.getDecoder().readUnsignedInteger(buffer, state));
+                    flow.setAvailable(state.getDecoder().readUnsignedInteger(buffer, state, 0));
                     break;
                 case 8:
                     flow.setDrain(state.getDecoder().readBoolean(buffer, state, false));
