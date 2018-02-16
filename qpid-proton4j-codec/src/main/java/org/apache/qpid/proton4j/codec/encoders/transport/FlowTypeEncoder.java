@@ -118,11 +118,7 @@ public class FlowTypeEncoder extends AbstractDescribedListTypeEncoder<Flow> {
                 }
                 break;
             case 10:
-                if (flow.hasProperties()) {
-                    state.getEncoder().writeMap(buffer, state, flow.getProperties());
-                } else {
-                    buffer.writeByte(EncodingCodes.NULL);
-                }
+                state.getEncoder().writeMap(buffer, state, flow.getProperties());
                 break;
             default:
                 throw new IllegalArgumentException("Unknown Flow value index: " + index);
