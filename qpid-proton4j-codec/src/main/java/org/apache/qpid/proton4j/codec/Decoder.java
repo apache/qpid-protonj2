@@ -51,6 +51,8 @@ public interface Decoder {
 
     Character readCharacter(ProtonBuffer buffer, DecoderState state) throws IOException;
 
+    char readCharacter(ProtonBuffer buffer, DecoderState state, char defaultValue) throws IOException;
+
     Decimal32 readDecimal32(ProtonBuffer buffer, DecoderState state) throws IOException;
 
     Decimal64 readDecimal64(ProtonBuffer buffer, DecoderState state) throws IOException;
@@ -59,17 +61,23 @@ public interface Decoder {
 
     Short readShort(ProtonBuffer buffer, DecoderState state) throws IOException;
 
+    short readShort(ProtonBuffer buffer, DecoderState state, short defaultValue) throws IOException;
+
     UnsignedShort readUnsignedShort(ProtonBuffer buffer, DecoderState state) throws IOException;
 
     int readUnsignedShort(ProtonBuffer buffer, DecoderState state, int defaultValue) throws IOException;
 
     Integer readInteger(ProtonBuffer buffer, DecoderState state) throws IOException;
 
+    int readInteger(ProtonBuffer buffer, DecoderState state, int defaultValue) throws IOException;
+
     UnsignedInteger readUnsignedInteger(ProtonBuffer buffer, DecoderState state) throws IOException;
 
     long readUnsignedInteger(ProtonBuffer buffer, DecoderState state, long defaultValue) throws IOException;
 
     Long readLong(ProtonBuffer buffer, DecoderState state) throws IOException;
+
+    long readLong(ProtonBuffer buffer, DecoderState state, long defaultValue) throws IOException;
 
     UnsignedLong readUnsignedLong(ProtonBuffer buffer, DecoderState state) throws IOException;
 
