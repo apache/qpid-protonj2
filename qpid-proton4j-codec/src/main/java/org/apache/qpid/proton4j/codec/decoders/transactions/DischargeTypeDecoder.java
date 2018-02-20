@@ -98,7 +98,7 @@ public class DischargeTypeDecoder extends AbstractDescribedTypeDecoder<Discharge
                     discharge.setTxnId(state.getDecoder().readBinary(buffer, state));
                     break;
                 case 1:
-                    discharge.setFail(state.getDecoder().readBoolean(buffer, state));
+                    discharge.setFail(state.getDecoder().readBoolean(buffer, state, false));
                     break;
                 default:
                     throw new IllegalStateException("To many entries in Discharge encoding");

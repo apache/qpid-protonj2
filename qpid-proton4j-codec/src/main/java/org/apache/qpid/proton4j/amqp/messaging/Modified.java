@@ -27,23 +27,23 @@ public final class Modified implements DeliveryState, Outcome {
     public static final UnsignedLong DESCRIPTOR_CODE = UnsignedLong.valueOf(0x0000000000000027L);
     public static final Symbol DESCRIPTOR_SYMBOL = Symbol.valueOf("amqp:modified:list");
 
-    private Boolean deliveryFailed;
-    private Boolean undeliverableHere;
+    private boolean deliveryFailed;
+    private boolean undeliverableHere;
     private Map<Symbol, Object> messageAnnotations;
 
-    public Boolean getDeliveryFailed() {
+    public boolean getDeliveryFailed() {
         return deliveryFailed;
     }
 
-    public void setDeliveryFailed(Boolean deliveryFailed) {
+    public void setDeliveryFailed(boolean deliveryFailed) {
         this.deliveryFailed = deliveryFailed;
     }
 
-    public Boolean getUndeliverableHere() {
+    public boolean getUndeliverableHere() {
         return undeliverableHere;
     }
 
-    public void setUndeliverableHere(Boolean undeliverableHere) {
+    public void setUndeliverableHere(boolean undeliverableHere) {
         this.undeliverableHere = undeliverableHere;
     }
 

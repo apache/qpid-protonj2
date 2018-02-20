@@ -26,7 +26,7 @@ public final class Discharge {
     public static final Symbol DESCRIPTOR_SYMBOL = Symbol.valueOf("amqp:discharge:list");
 
     private Binary txnId;
-    private Boolean fail;
+    private boolean fail;
 
     public Binary getTxnId() {
         return txnId;
@@ -40,11 +40,11 @@ public final class Discharge {
         this.txnId = txnId;
     }
 
-    public Boolean getFail() {
+    public boolean getFail() {
         return fail;
     }
 
-    public void setFail(Boolean fail) {
+    public void setFail(boolean fail) {
         this.fail = fail;
     }
 

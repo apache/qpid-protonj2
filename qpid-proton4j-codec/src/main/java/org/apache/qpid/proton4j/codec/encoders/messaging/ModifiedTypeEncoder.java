@@ -74,9 +74,9 @@ public class ModifiedTypeEncoder extends AbstractDescribedListTypeEncoder<Modifi
     public int getElementCount(Modified value) {
         if (value.getMessageAnnotations() != null) {
             return 3;
-        } else if (value.getUndeliverableHere() != null) {
+        } else if (value.getUndeliverableHere()) {
             return 2;
-        } else if (value.getDeliveryFailed() != null) {
+        } else if (value.getDeliveryFailed()) {
             return 1;
         } else {
             return 0;

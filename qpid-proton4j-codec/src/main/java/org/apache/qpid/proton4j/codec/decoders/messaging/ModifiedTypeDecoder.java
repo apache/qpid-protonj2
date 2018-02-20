@@ -95,10 +95,10 @@ public class ModifiedTypeDecoder extends AbstractDescribedTypeDecoder<Modified> 
         for (int index = 0; index < count; ++index) {
             switch (index) {
                 case 0:
-                    modified.setDeliveryFailed(state.getDecoder().readBoolean(buffer, state));
+                    modified.setDeliveryFailed(state.getDecoder().readBoolean(buffer, state, false));
                     break;
                 case 1:
-                    modified.setUndeliverableHere(state.getDecoder().readBoolean(buffer, state));
+                    modified.setUndeliverableHere(state.getDecoder().readBoolean(buffer, state, false));
                     break;
                 case 2:
                     modified.setMessageAnnotations(state.getDecoder().readMap(buffer, state));

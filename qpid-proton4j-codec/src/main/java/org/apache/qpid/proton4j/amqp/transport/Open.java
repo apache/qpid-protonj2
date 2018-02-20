@@ -136,8 +136,7 @@ public final class Open implements Performative {
     }
 
     @Override
-    public String toString()
-    {
+    public String toString() {
         return "Open{" +
                " containerId='" + containerId + '\'' +
                ", hostname='" + hostname + '\'' +
