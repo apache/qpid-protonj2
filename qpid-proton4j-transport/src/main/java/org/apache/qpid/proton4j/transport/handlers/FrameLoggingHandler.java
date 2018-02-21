@@ -35,6 +35,8 @@ public class FrameLoggingHandler implements TransportHandler {
 
     @Override
     public void handleRead(TransportHandlerContext context, ProtonBuffer buffer) {
+        // TODO Could trace out bytes here, would need a pretty print helper.
+        context.fireRead(buffer);
     }
 
     @Override
@@ -57,19 +59,19 @@ public class FrameLoggingHandler implements TransportHandler {
 
     @Override
     public void transportEncodingError(TransportHandlerContext context, Throwable e) {
-        // TODO
+        LOG.warn("-> Error while encoding: {}", e);
         context.fireEncodingError(e);
     }
 
     @Override
     public void transportDecodingError(TransportHandlerContext context, Throwable e) {
-        // TODO
+        LOG.warn("-> Error while decoding: {}", e);
         context.fireDecodingError(e);
     }
 
     @Override
     public void transportFailed(TransportHandlerContext context, Throwable e) {
-        // TODO
+        LOG.error("-> Unrecoverable Transport error: {}", e);
         context.fireFailed(e);
     }
 
@@ -81,13 +83,13 @@ public class FrameLoggingHandler implements TransportHandler {
 
     @Override
     public void handleWrite(TransportHandlerContext context, ProtonBuffer buffer) {
-        // TODO
+        // TODO Could trace out bytes here, would need a pretty print helper.
         context.fireWrite(buffer);
     }
 
     @Override
     public void handleFlush(TransportHandlerContext context) {
-        // TODO
+        LOG.trace("-> Transport Flushed.");
         context.fireFlush();
     }
 }
