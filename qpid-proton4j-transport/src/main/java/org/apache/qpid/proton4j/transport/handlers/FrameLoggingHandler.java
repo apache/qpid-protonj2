@@ -74,16 +74,6 @@ public class FrameLoggingHandler implements TransportHandler {
     }
 
     @Override
-    public void transportReadable(TransportHandlerContext context) {
-        // TODO
-    }
-
-    @Override
-    public void transportWritable(TransportHandlerContext context) {
-        // TODO
-    }
-
-    @Override
     public void handleWrite(TransportHandlerContext context, Frame<?> frame) {
         LOG.trace("-> Frame: {}", frame);
         context.fireWrite(frame);

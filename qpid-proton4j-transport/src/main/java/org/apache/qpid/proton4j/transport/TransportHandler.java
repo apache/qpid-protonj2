@@ -44,14 +44,6 @@ public interface TransportHandler {
 
     void transportFailed(TransportHandlerContext context, Throwable e);
 
-    // Should we convey events to the outside that we aren't accepting more input ?
-
-    void transportReadable(TransportHandlerContext context);
-
-    // Should we convey events to the outside that we aren't allowing output ?
-
-    void transportWritable(TransportHandlerContext context);
-
     // TODO - Other variants like write(ProtonBuffer) etc how do we want to manage writes from
     //        the transport, who drives them ?
 

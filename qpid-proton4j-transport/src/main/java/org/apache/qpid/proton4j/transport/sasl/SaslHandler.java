@@ -144,14 +144,6 @@ public class SaslHandler implements TransportHandler {
     }
 
     @Override
-    public void transportReadable(TransportHandlerContext context) {
-    }
-
-    @Override
-    public void transportWritable(TransportHandlerContext context) {
-    }
-
-    @Override
     public void handleWrite(TransportHandlerContext context, Frame<?> frame) {
     }
 
