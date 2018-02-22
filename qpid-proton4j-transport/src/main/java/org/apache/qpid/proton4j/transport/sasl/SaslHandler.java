@@ -26,13 +26,13 @@ import org.apache.qpid.proton4j.transport.Frame;
 import org.apache.qpid.proton4j.transport.HeaderFrame;
 import org.apache.qpid.proton4j.transport.ProtocolFrame;
 import org.apache.qpid.proton4j.transport.SaslFrame;
-import org.apache.qpid.proton4j.transport.TransportHandler;
 import org.apache.qpid.proton4j.transport.TransportHandlerContext;
+import org.apache.qpid.proton4j.transport.TransportHandlerStub;
 
 /**
  * Base class used for common portions of the SASL processing pipeline.
  */
-public class SaslHandler implements TransportHandler {
+public class SaslHandler extends TransportHandlerStub {
 
     private Decoder saslDecoder = CodecFactory.getSaslDecoder();
     private Encoder saslEncoder = CodecFactory.getSaslEncoder();
