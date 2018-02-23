@@ -320,9 +320,7 @@ public class AmqpFrameParser implements FrameParser {
                         if (val instanceof Performative) {
                             Performative frameBody = (Performative) val;
                             LOG.trace("IN: {} CH[{}] : {} [{}]", channel, frameBody, payload);
-                            ProtocolFrame frame = new ProtocolFrame(frameBody, channel, payload);
-
-                            // TODO - Hand off frame to some handler
+                            context.fireProtocolFrame(new ProtocolFrame(frameBody, channel, payload));
                         } else {
                             throw new TransportException("Frameparser encountered a "
                                     + (val == null? "null" : val.getClass())

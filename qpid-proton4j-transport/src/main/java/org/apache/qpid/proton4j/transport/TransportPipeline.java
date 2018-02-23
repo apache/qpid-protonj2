@@ -16,12 +16,16 @@
  */
 package org.apache.qpid.proton4j.transport;
 
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+
 /**
  * Pipeline of handlers for Transport work.
  */
 public interface TransportPipeline {
 
     Transport getTransport();
+
+    //----- Pipeline management ----------------------------------------------//
 
     TransportPipeline addFirst(String name, TransportHandler handler);
 
@@ -40,5 +44,25 @@ public interface TransportPipeline {
     TransportHandlerContext firstContext();
 
     TransportHandlerContext lastContext();
+
+    //----- Event triggers ---------------------------------------------------//
+
+    TransportPipeline fireRead(ProtonBuffer input);
+
+    TransportPipeline fireHeaderFrame(HeaderFrame header);
+
+    TransportPipeline fireSaslFrame(SaslFrame frame);
+
+    TransportPipeline fireProtocolFrame(ProtocolFrame frame);
+
+    TransportPipeline fireWrite(Frame<?> frame);
+
+    TransportPipeline fireFlush();
+
+    TransportPipeline fireEncodingError(Throwable e);
+
+    TransportPipeline fireDecodingError(Throwable e);
+
+    TransportPipeline fireFailed(Throwable e);
 
 }

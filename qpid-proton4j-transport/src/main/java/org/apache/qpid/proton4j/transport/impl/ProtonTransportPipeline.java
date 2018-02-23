@@ -100,6 +100,62 @@ public class ProtonTransportPipeline implements TransportPipeline {
         return null;
     }
 
+    //----- Event injection methods ------------------------------------------//
+
+    @Override
+    public TransportPipeline fireRead(ProtonBuffer input) {
+        head.next.fireRead(input);
+        return this;
+    }
+
+    @Override
+    public TransportPipeline fireHeaderFrame(HeaderFrame header) {
+        head.next.fireHeaderFrame(header);
+        return this;
+    }
+
+    @Override
+    public TransportPipeline fireSaslFrame(SaslFrame frame) {
+        head.next.fireSaslFrame(frame);
+        return this;
+    }
+
+    @Override
+    public TransportPipeline fireProtocolFrame(ProtocolFrame frame) {
+        head.next.fireProtocolFrame(frame);
+        return this;
+    }
+
+    @Override
+    public TransportPipeline fireWrite(Frame<?> frame) {
+        tail.previous.fireWrite(frame);
+        return this;
+    }
+
+    @Override
+    public TransportPipeline fireFlush() {
+        tail.previous.fireFlush();
+        return this;
+    }
+
+    @Override
+    public TransportPipeline fireEncodingError(Throwable e) {
+        head.next.fireEncodingError(e);
+        return this;
+    }
+
+    @Override
+    public TransportPipeline fireDecodingError(Throwable e) {
+        head.next.fireDecodingError(e);
+        return this;
+    }
+
+    @Override
+    public TransportPipeline fireFailed(Throwable e) {
+        head.next.fireFailed(e);
+        return this;
+    }
+
     //----- Synthetic handler context that bounds the pipeline ---------------//
 
     private class TransportHandlerContextBoundry extends ProtonTransportHandlerContext {

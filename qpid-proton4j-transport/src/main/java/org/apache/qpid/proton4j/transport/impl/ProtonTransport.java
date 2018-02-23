@@ -20,10 +20,8 @@ import java.io.IOException;
 
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonBufferAllocator;
-import org.apache.qpid.proton4j.transport.FrameParser;
 import org.apache.qpid.proton4j.transport.ProtocolFrame;
 import org.apache.qpid.proton4j.transport.Transport;
-import org.apache.qpid.proton4j.transport.TransportHandler;
 import org.apache.qpid.proton4j.transport.TransportPipeline;
 
 /**
@@ -31,17 +29,20 @@ import org.apache.qpid.proton4j.transport.TransportPipeline;
  */
 public class ProtonTransport implements Transport {
 
-    private int maxFrameSize;
-    private int initialMaxFrameSize;
+    private int maxFrameSize = -1;
+    private int initialMaxFrameSize = 4096;
+
+    private final ProtonTransportPipeline pipeline;
 
     private ProtonBufferAllocator bufferAllocator;
-    private TransportHandler transportListener;
 
-    private FrameParser currentParser = new AmqpHeaderParser();
+    public ProtonTransport() {
+        this.pipeline = new ProtonTransportPipeline(this);
+    }
 
     @Override
     public void processIncoming(ProtonBuffer buffer) throws IOException {
-        currentParser.parse(null, buffer);  // TODO
+        pipeline.fireRead(buffer);
     }
 
     @Override
@@ -52,16 +53,6 @@ public class ProtonTransport implements Transport {
     @Override
     public ProtonBufferAllocator getBufferAllocator() {
         return bufferAllocator;
-    }
-
-    @Override
-    public void setTransportListener(TransportHandler listener) {
-        transportListener = listener;
-    }
-
-    @Override
-    public TransportHandler getTransportListener() {
-        return transportListener;
     }
 
     @Override
@@ -84,7 +75,7 @@ public class ProtonTransport implements Transport {
 
     @Override
     public TransportPipeline getPipeline() {
-        return null;
+        return pipeline;
     }
 
     @Override
