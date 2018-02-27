@@ -71,6 +71,21 @@ public interface Transport {
     ProtonBufferAllocator getBufferAllocator();
 
     /**
+     * Sets a TransportListener to be notified of events on this Transport
+     *
+     * @param listener
+     *      The TransportListener to notify
+     */
+    void setTransportListener(TransportListener listener);
+
+    /**
+     * Gets the currently configured TransportListener instance.
+     *
+     * @return the currently configured TransportListener.
+     */
+    TransportListener getTransportListener();
+
+    /**
      * Get the maximum frame size that the transport will accept before
      * rejecting an incoming frame.
      *

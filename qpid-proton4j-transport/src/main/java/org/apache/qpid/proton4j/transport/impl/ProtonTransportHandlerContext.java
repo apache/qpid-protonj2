@@ -21,6 +21,7 @@ import org.apache.qpid.proton4j.transport.Frame;
 import org.apache.qpid.proton4j.transport.HeaderFrame;
 import org.apache.qpid.proton4j.transport.ProtocolFrame;
 import org.apache.qpid.proton4j.transport.SaslFrame;
+import org.apache.qpid.proton4j.transport.Transport;
 import org.apache.qpid.proton4j.transport.TransportHandler;
 import org.apache.qpid.proton4j.transport.TransportHandlerContext;
 
@@ -32,14 +33,21 @@ public class ProtonTransportHandlerContext implements TransportHandlerContext {
     ProtonTransportHandlerContext previous;
     ProtonTransportHandlerContext next;
 
+    private final Transport transport;
     private final TransportHandler handler;
 
-    public ProtonTransportHandlerContext(TransportHandler handler) {
+    public ProtonTransportHandlerContext(Transport transport, TransportHandler handler) {
+        this.transport = transport;
         this.handler = handler;
     }
 
     TransportHandler getHandler() {
         return handler;
+    }
+
+    @Override
+    public Transport getTransport() {
+        return transport;
     }
 
     @Override

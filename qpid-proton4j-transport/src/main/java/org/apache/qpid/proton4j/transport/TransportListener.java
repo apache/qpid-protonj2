@@ -16,33 +16,20 @@
  */
 package org.apache.qpid.proton4j.transport;
 
-import org.apache.qpid.proton4j.buffer.ProtonBuffer;
-
 /**
- * Context provided to TransportHandler events to allow further event propagation
+ * Listener for events from a Proton Transport implementation.
  */
-public interface TransportHandlerContext {
+public interface TransportListener {
 
-    Transport getTransport();
-
-    void fireRead(ProtonBuffer buffer);
-
-    void fireHeaderFrame(HeaderFrame header);
-
-    void fireSaslFrame(SaslFrame frame);
-
-    void fireProtocolFrame(ProtocolFrame frame);
-
-    void fireEncodingError(Throwable e);
-
-    void fireDecodingError(Throwable e);
-
-    void fireFailed(Throwable e);
-
-    void fireWrite(Frame<?> frame);
-
-    void fireWrite(ProtonBuffer buffer);
-
-    void fireFlush();
+    /**
+     * Called when the Transport has encountered an unrecoverable error
+     * and is now in a failed (closed) state an cannot process any more work.
+     *
+     * @param transport
+     *      The Transport that has failed
+     * @param cause
+     *      The error that indicates the reason for the failure.
+     */
+    void onTransportFailed(Transport transport, Throwable cause);
 
 }

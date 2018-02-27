@@ -22,6 +22,7 @@ import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonBufferAllocator;
 import org.apache.qpid.proton4j.transport.ProtocolFrame;
 import org.apache.qpid.proton4j.transport.Transport;
+import org.apache.qpid.proton4j.transport.TransportListener;
 import org.apache.qpid.proton4j.transport.TransportPipeline;
 
 /**
@@ -35,6 +36,7 @@ public class ProtonTransport implements Transport {
     private final ProtonTransportPipeline pipeline;
 
     private ProtonBufferAllocator bufferAllocator;
+    private TransportListener listener;
 
     public ProtonTransport() {
         this.pipeline = new ProtonTransportPipeline(this);
@@ -80,9 +82,21 @@ public class ProtonTransport implements Transport {
 
     @Override
     public void write(ProtocolFrame frame) throws IOException {
+        pipeline.fireWrite(frame);
     }
 
     @Override
     public void flush() {
+        pipeline.fireFlush();
+    }
+
+    @Override
+    public void setTransportListener(TransportListener listener) {
+        this.listener = listener;
+    }
+
+    @Override
+    public TransportListener getTransportListener() {
+        return listener;
     }
 }

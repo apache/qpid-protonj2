@@ -22,7 +22,7 @@ import org.apache.qpid.proton4j.buffer.ProtonBuffer;
  * Simple abstract TransportHandler stub use by subclasses of {@link TransportHandler} that
  * forwards all calls not implemented in the subclass onto the next handler in the chain.
  */
-public abstract class TransportHandlerStub implements TransportHandler {
+public abstract class TransportHandlerAdapter implements TransportHandler {
 
     @Override
     public void handleRead(TransportHandlerContext context, ProtonBuffer buffer) {

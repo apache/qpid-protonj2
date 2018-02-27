@@ -16,6 +16,8 @@
  */
 package org.apache.qpid.proton4j.transport.impl;
 
+import java.io.IOException;
+
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.transport.Frame;
 import org.apache.qpid.proton4j.transport.HeaderFrame;
@@ -23,6 +25,7 @@ import org.apache.qpid.proton4j.transport.ProtocolFrame;
 import org.apache.qpid.proton4j.transport.SaslFrame;
 import org.apache.qpid.proton4j.transport.TransportHandler;
 import org.apache.qpid.proton4j.transport.TransportHandlerContext;
+import org.apache.qpid.proton4j.transport.TransportListener;
 import org.apache.qpid.proton4j.transport.TransportPipeline;
 
 /**
@@ -161,57 +164,106 @@ public class ProtonTransportPipeline implements TransportPipeline {
     private class TransportHandlerContextBoundry extends ProtonTransportHandlerContext {
 
         public TransportHandlerContextBoundry() {
-            super(null);
+            super(transport, null);
         }
 
         @Override
         public void fireRead(ProtonBuffer buffer) {
-            // TODO - Signal the Transport that no handler intercepted this and we should fail
+            // TODO Decide on the exact error to be fired, move Transport to failed state.
+            TransportListener listener = transport.getTransportListener();
+            if (listener != null) {
+                listener.onTransportFailed(transport,
+                    new IOException("No handler processed Transport read event."));
+            }
         }
 
         @Override
         public void fireHeaderFrame(HeaderFrame header) {
-            // TODO - Signal the Transport that no handler intercepted this and we should fail
+            // TODO Decide on the exact error to be fired, move Transport to failed state.
+            TransportListener listener = transport.getTransportListener();
+            if (listener != null) {
+                listener.onTransportFailed(transport,
+                    new IOException("No handler processed AMQP Header event."));
+            }
         }
 
         @Override
         public void fireSaslFrame(SaslFrame frame) {
-            // TODO - Signal the Transport that no handler intercepted this and we should fail
+            // TODO Decide on the exact error to be fired, move Transport to failed state.
+            TransportListener listener = transport.getTransportListener();
+            if (listener != null) {
+                listener.onTransportFailed(transport,
+                    new IOException("No handler processed SASL frame event."));
+            }
         }
 
         @Override
         public void fireProtocolFrame(ProtocolFrame frame) {
-            // TODO - Signal the Transport that no handler intercepted this and we should fail
+            // TODO Decide on the exact error to be fired, move Transport to failed state.
+            TransportListener listener = transport.getTransportListener();
+            if (listener != null) {
+                listener.onTransportFailed(transport,
+                    new IOException("No handler processed protocol frame event."));
+            }
         }
 
         @Override
         public void fireEncodingError(Throwable e) {
-            // TODO - Signal the Transport that no handler intercepted this and we should fail
+            // TODO Decide on the exact error to be fired, move Transport to failed state.
+            TransportListener listener = transport.getTransportListener();
+            if (listener != null) {
+                listener.onTransportFailed(transport,
+                    new IOException("No handler processed encoding error.", e));
+            }
         }
 
         @Override
         public void fireDecodingError(Throwable e) {
-            // TODO - Signal the Transport that no handler intercepted this and we should fail
+            // TODO Decide on the exact error to be fired, move Transport to failed state.
+            TransportListener listener = transport.getTransportListener();
+            if (listener != null) {
+                listener.onTransportFailed(transport,
+                    new IOException("No handler processed decoding error.", e));
+            }
         }
 
         @Override
         public void fireFailed(Throwable e) {
-            // TODO - Signal the Transport that no handler intercepted this and we should fail
+            // TODO Decide on the exact error to be fired, move Transport to failed state.
+            TransportListener listener = transport.getTransportListener();
+            if (listener != null) {
+                listener.onTransportFailed(transport, e);
+            }
         }
 
         @Override
         public void fireWrite(Frame<?> frame) {
-            // TODO - Signal the Transport that no handler intercepted this and we should fail
+            // TODO Decide on the exact error to be fired, move Transport to failed state.
+            TransportListener listener = transport.getTransportListener();
+            if (listener != null) {
+                listener.onTransportFailed(transport,
+                    new IOException("No handler processed write frame event."));
+            }
         }
 
         @Override
         public void fireWrite(ProtonBuffer buffer) {
-            // TODO - Signal the Transport that no handler intercepted this and we should fail
+            // TODO Decide on the exact error to be fired, move Transport to failed state.
+            TransportListener listener = transport.getTransportListener();
+            if (listener != null) {
+                listener.onTransportFailed(transport,
+                    new IOException("No handler processed write data event."));
+            }
         }
 
         @Override
         public void fireFlush() {
-            // TODO - Signal the Transport that no handler intercepted this and we should fail
+            // TODO Decide on the exact error to be fired, move Transport to failed state.
+            TransportListener listener = transport.getTransportListener();
+            if (listener != null) {
+                listener.onTransportFailed(transport,
+                    new IOException("No handler processed flush event."));
+            }
         }
     }
 }
