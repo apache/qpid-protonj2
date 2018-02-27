@@ -60,47 +60,97 @@ public class ProtonTransportPipeline implements TransportPipeline {
 
     @Override
     public TransportPipeline addFirst(String name, TransportHandler handler) {
-        return null;
+        if (handler == null) {
+            throw new IllegalArgumentException("Handler provided cannot be null");
+        }
+
+        ProtonTransportHandlerContext oldFirst = head.next;
+        ProtonTransportHandlerContext newFirst = createContext(name, handler);
+
+        newFirst.next = oldFirst;
+        newFirst.previous = head;
+
+        oldFirst.previous = newFirst;
+        head.next = newFirst;
+
+        return this;
     }
 
     @Override
     public TransportPipeline addLast(String name, TransportHandler handler) {
-        return null;
+        if (handler == null) {
+            throw new IllegalArgumentException("Handler provided cannot be null");
+        }
+
+        ProtonTransportHandlerContext oldLast = head.next;
+        ProtonTransportHandlerContext newLast = createContext(name, handler);
+
+        newLast.next = tail;
+        newLast.previous = oldLast;
+
+        oldLast.next = newLast;
+        tail.previous = newLast;
+
+        return this;
     }
 
     @Override
     public TransportPipeline removeFirst() {
-        return null;
+        if (head.next != tail) {
+            ProtonTransportHandlerContext oldFirst = head.next;
+
+            head.next = oldFirst.next;
+            head.next.previous = head;
+        }
+
+        return this;
     }
 
     @Override
     public TransportPipeline removeLast() {
-        return null;
+        if (tail.previous != head) {
+            ProtonTransportHandlerContext oldLast = tail.previous;
+
+            tail.previous = oldLast.previous;
+            tail.previous.next = tail;
+        }
+
+        return this;
     }
 
     @Override
     public TransportPipeline remove(String name) {
-        return null;
+        ProtonTransportHandlerContext current = head.next;
+        while (current != tail) {
+            if (current.getName().equals(name)) {
+                ProtonTransportHandlerContext newNext = current.next;
+
+                current.previous.next = newNext;
+                newNext.previous = current.previous;
+            }
+        }
+
+        return this;
     }
 
     @Override
     public TransportHandler first() {
-        return null;
+        return head.next.getHandler();
     }
 
     @Override
     public TransportHandler last() {
-        return null;
+        return tail.previous.getHandler();
     }
 
     @Override
     public TransportHandlerContext firstContext() {
-        return null;
+        return head.next == tail ? null : head.next;
     }
 
     @Override
     public TransportHandlerContext lastContext() {
-        return null;
+        return tail.previous == head ? null : tail.previous;
     }
 
     //----- Event injection methods ------------------------------------------//
@@ -159,12 +209,18 @@ public class ProtonTransportPipeline implements TransportPipeline {
         return this;
     }
 
+    //----- Internal implementation ------------------------------------------//
+
+    private ProtonTransportHandlerContext createContext(String name, TransportHandler handler) {
+        return new ProtonTransportHandlerContext(name, transport, handler);
+    }
+
     //----- Synthetic handler context that bounds the pipeline ---------------//
 
     private class TransportHandlerContextBoundry extends ProtonTransportHandlerContext {
 
         public TransportHandlerContextBoundry() {
-            super(transport, null);
+            super("Boundry", transport, null);
         }
 
         @Override

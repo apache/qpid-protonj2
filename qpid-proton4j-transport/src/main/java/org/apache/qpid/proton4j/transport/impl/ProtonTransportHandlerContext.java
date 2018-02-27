@@ -33,16 +33,24 @@ public class ProtonTransportHandlerContext implements TransportHandlerContext {
     ProtonTransportHandlerContext previous;
     ProtonTransportHandlerContext next;
 
+    private final String name;
     private final Transport transport;
     private final TransportHandler handler;
 
-    public ProtonTransportHandlerContext(Transport transport, TransportHandler handler) {
+    public ProtonTransportHandlerContext(String name, Transport transport, TransportHandler handler) {
+        this.name = name;
         this.transport = transport;
         this.handler = handler;
     }
 
-    TransportHandler getHandler() {
+    @Override
+    public TransportHandler getHandler() {
         return handler;
+    }
+
+    @Override
+    public String getName() {
+        return name;
     }
 
     @Override

@@ -42,10 +42,7 @@ public class ProtonTransport implements Transport {
         this.pipeline = new ProtonTransportPipeline(this);
     }
 
-    @Override
-    public void processIncoming(ProtonBuffer buffer) throws IOException {
-        pipeline.fireRead(buffer);
-    }
+    //----- Transport configuration ------------------------------------------//
 
     @Override
     public void setBufferAllocator(ProtonBufferAllocator allocator) {
@@ -81,16 +78,6 @@ public class ProtonTransport implements Transport {
     }
 
     @Override
-    public void write(ProtocolFrame frame) throws IOException {
-        pipeline.fireWrite(frame);
-    }
-
-    @Override
-    public void flush() {
-        pipeline.fireFlush();
-    }
-
-    @Override
     public void setTransportListener(TransportListener listener) {
         this.listener = listener;
     }
@@ -98,5 +85,22 @@ public class ProtonTransport implements Transport {
     @Override
     public TransportListener getTransportListener() {
         return listener;
+    }
+
+    //----- Transport interactions -------------------------------------------//
+
+    @Override
+    public void processIncoming(ProtonBuffer buffer) throws IOException {
+        pipeline.fireRead(buffer);
+    }
+
+    @Override
+    public void write(ProtocolFrame frame) throws IOException {
+        pipeline.fireWrite(frame);
+    }
+
+    @Override
+    public void flush() {
+        pipeline.fireFlush();
     }
 }

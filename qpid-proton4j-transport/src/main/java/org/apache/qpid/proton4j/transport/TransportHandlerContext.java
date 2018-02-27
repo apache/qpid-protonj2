@@ -23,7 +23,11 @@ import org.apache.qpid.proton4j.buffer.ProtonBuffer;
  */
 public interface TransportHandlerContext {
 
+    TransportHandler getHandler();
+
     Transport getTransport();
+
+    String getName();
 
     void fireRead(ProtonBuffer buffer);
 
