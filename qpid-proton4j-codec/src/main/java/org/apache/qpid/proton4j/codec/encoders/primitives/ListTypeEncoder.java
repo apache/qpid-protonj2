@@ -62,7 +62,9 @@ public class ListTypeEncoder extends AbstractPrimitiveTypeEncoder<List> {
 
         // Write the list elements and then compute total size written, try not to lookup
         // encoders when the types in the list all match.
-        for (Object entry : value) {
+        for (int i = 0; i < value.size(); ++i) {
+            Object entry = value.get(i);
+
             if (encoder == null || !encoder.getTypeClass().equals(entry.getClass())) {
                 encoder = state.getEncoder().getTypeEncoder(entry);
             }
