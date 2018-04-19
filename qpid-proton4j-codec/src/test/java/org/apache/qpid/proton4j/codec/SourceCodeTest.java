@@ -14,8 +14,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.apache.qpid.proton4j.codec;
+
+import static org.junit.Assert.assertEquals;
 
 import org.apache.qpid.proton4j.amqp.messaging.Source;
 import org.apache.qpid.proton4j.amqp.messaging.TerminusDurability;
@@ -23,20 +24,13 @@ import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.junit.Test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-
 /**
  * Test for handling Source serialization
  */
-
 public class SourceCodeTest extends CodecTestSupport {
 
    @Test
    public void testWriteSource() throws Exception {
-
       ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
 
       Source value = new Source();
@@ -49,6 +43,5 @@ public class SourceCodeTest extends CodecTestSupport {
 
       assertEquals("test", result.getAddress());
       assertEquals(TerminusDurability.UNSETTLED_STATE, result.getDurable());
-
    }
 }
