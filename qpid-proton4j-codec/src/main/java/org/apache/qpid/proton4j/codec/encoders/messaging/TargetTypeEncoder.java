@@ -52,10 +52,10 @@ public class TargetTypeEncoder extends AbstractDescribedListTypeEncoder<Target> 
                 state.getEncoder().writeString(buffer, state, target.getAddress());
                 break;
             case 1:
-                state.getEncoder().writeObject(buffer, state, target.getDurable());
+                state.getEncoder().writeUnsignedInteger(buffer, state, target.getDurable().getValue());
                 break;
             case 2:
-                state.getEncoder().writeObject(buffer, state, target.getExpiryPolicy());
+                state.getEncoder().writeObject(buffer, state, target.getExpiryPolicy().getPolicy());
                 break;
             case 3:
                 state.getEncoder().writeUnsignedInteger(buffer, state, target.getTimeout());
@@ -66,7 +66,7 @@ public class TargetTypeEncoder extends AbstractDescribedListTypeEncoder<Target> 
             case 5:
                 state.getEncoder().writeMap(buffer, state, target.getDynamicNodeProperties());
                 break;
-            case 7:
+            case 6:
                 state.getEncoder().writeArray(buffer, state, target.getCapabilities());
                 break;
             default:
