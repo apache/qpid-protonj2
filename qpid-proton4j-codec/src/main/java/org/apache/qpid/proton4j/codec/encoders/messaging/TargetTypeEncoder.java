@@ -55,7 +55,7 @@ public class TargetTypeEncoder extends AbstractDescribedListTypeEncoder<Target> 
                 state.getEncoder().writeUnsignedInteger(buffer, state, target.getDurable().getValue());
                 break;
             case 2:
-                state.getEncoder().writeObject(buffer, state, target.getExpiryPolicy().getPolicy());
+                state.getEncoder().writeSymbol(buffer, state, target.getExpiryPolicy().getPolicy());
                 break;
             case 3:
                 state.getEncoder().writeUnsignedInteger(buffer, state, target.getTimeout());

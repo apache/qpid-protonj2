@@ -55,7 +55,7 @@ public class SourceTypeEncoder extends AbstractDescribedListTypeEncoder<Source> 
                 state.getEncoder().writeUnsignedInteger(buffer, state, source.getDurable().getValue());
                 break;
             case 2:
-                state.getEncoder().writeObject(buffer, state, source.getExpiryPolicy().getPolicy());
+                state.getEncoder().writeSymbol(buffer, state, source.getExpiryPolicy().getPolicy());
                 break;
             case 3:
                 state.getEncoder().writeUnsignedInteger(buffer, state, source.getTimeout());
