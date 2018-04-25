@@ -31,6 +31,10 @@ public abstract class AbstractStringTypeDecoder extends AbstractPrimitiveTypeDec
     public String readValue(ProtonBuffer buffer, DecoderState state) throws IOException {
         int length = readSize(buffer);
 
+        if (length == 0) {
+            return "";
+        }
+
         ProtonBuffer duplicate = buffer.duplicate().setWriteIndex(buffer.getReadIndex() + length);
         buffer.setReadIndex(buffer.getReadIndex() + length);
 

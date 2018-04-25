@@ -135,4 +135,46 @@ public class SymbolTypeCodecTest extends CodecTestSupport {
             assertEquals(source[i], array[i]);
         }
     }
+
+    @Test
+    public void testEmptyShortSymbolEncode() throws IOException {
+        doTestEmptySymbolEncodeAsGivenType(EncodingCodes.SYM8);
+    }
+
+    @Test
+    public void testEmptyLargeSymbolEncode() throws IOException {
+        doTestEmptySymbolEncodeAsGivenType(EncodingCodes.SYM32);
+    }
+
+    public void doTestEmptySymbolEncodeAsGivenType(byte encodingCode) throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        buffer.writeByte(encodingCode);
+        buffer.writeInt(0);
+
+        Symbol result = decoder.readSymbol(buffer, decoderState);
+        assertNotNull(result);
+        assertEquals("", result.toString());
+    }
+
+    @Test
+    public void testEmptyShortSymbolEncodeAsString() throws IOException {
+        doTestEmptySymbolEncodeAsGivenTypeReadAsString(EncodingCodes.SYM8);
+    }
+
+    @Test
+    public void testEmptyLargeSymbolEncodeAsString() throws IOException {
+        doTestEmptySymbolEncodeAsGivenTypeReadAsString(EncodingCodes.SYM32);
+    }
+
+    public void doTestEmptySymbolEncodeAsGivenTypeReadAsString(byte encodingCode) throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        buffer.writeByte(encodingCode);
+        buffer.writeInt(0);
+
+        String result = decoder.readSymbol(buffer, decoderState, "");
+        assertNotNull(result);
+        assertEquals("", result);
+    }
 }

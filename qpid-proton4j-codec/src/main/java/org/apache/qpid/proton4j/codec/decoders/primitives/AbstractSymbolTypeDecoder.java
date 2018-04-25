@@ -33,6 +33,10 @@ public abstract class AbstractSymbolTypeDecoder extends AbstractPrimitiveTypeDec
     public Symbol readValue(ProtonBuffer buffer, DecoderState state) throws IOException {
         int length = readSize(buffer);
 
+        if (length == 0) {
+            return Symbol.valueOf("");
+        }
+
         // TODO - While not optimal the symbol values are usually small in size but we
         //        should investigate if having a buffer slice method which lets us create
         //        a view of the buffer without copying it and then just skipping the bytes
@@ -46,6 +50,10 @@ public abstract class AbstractSymbolTypeDecoder extends AbstractPrimitiveTypeDec
 
     public String readString(ProtonBuffer buffer, DecoderState state) throws IOException {
         int length = readSize(buffer);
+
+        if (length == 0) {
+            return "";
+        }
 
         // TODO - While not optimal the symbol values are usually small in size but we
         //        should investigate if having a buffer slice method which lets us create

@@ -37,7 +37,7 @@ public final class Symbol implements Comparable<Symbol> {
     private Symbol() {
         this.underlying = ProtonByteBufferAllocator.DEFAULT.allocate(0, 0);
         this.hashCode = 31;
-        this.symbolString = null;
+        this.symbolString = "";
     }
 
     private Symbol(ProtonBuffer underlying) {

@@ -102,4 +102,27 @@ public class StringCodecTest extends CodecTestSupport {
             assertEquals(LARGE_STRING_VALUIE, result);
         }
     }
+
+    @Test
+    public void testDecodeStringOfZeroLengthWithLargeEncoding() throws IOException {
+        doTestDecodeStringOfZeroLengthWithGivenEncoding(EncodingCodes.STR32);
+    }
+
+    @Test
+    public void testDecodeStringOfZeroLengthWithSmallEncoding() throws IOException {
+        doTestDecodeStringOfZeroLengthWithGivenEncoding(EncodingCodes.STR8);
+    }
+
+    private void doTestDecodeStringOfZeroLengthWithGivenEncoding(byte encodingCode) throws IOException {
+
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        // Manually encode the type we want.
+        buffer.writeByte(EncodingCodes.STR32);
+        buffer.writeInt(0);
+
+        String result = decoder.readString(buffer, decoderState);
+        assertNotNull(result);
+        assertEquals("", result);
+    }
 }
