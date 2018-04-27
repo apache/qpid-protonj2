@@ -19,8 +19,8 @@ package org.apache.qpid.proton4j.buffer;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
-import org.junit.Ignore;
 import org.junit.Test;
 
 /**
@@ -112,7 +112,6 @@ public class ProtonByteBufferSliceTest {
         assertEquals(2, sliceOfSlice.readByte());
     }
 
-    @Ignore
     @Test
     public void testCreateSliceByIndex() {
         ProtonBuffer buffer = new ProtonByteBuffer();
@@ -120,7 +119,6 @@ public class ProtonByteBufferSliceTest {
         buffer.writeBytes(new byte[] {0, 1, 2, 3, 4, 5});
 
         ProtonBuffer slice = buffer.slice(1, 4);
-        slice.readByte();
 
         assertEquals(4, slice.getReadableBytes());
         assertEquals(4, slice.capacity());
@@ -128,8 +126,35 @@ public class ProtonByteBufferSliceTest {
 
         assertTrue(slice.hasArray());
         assertNotNull(slice.getArray());
-        assertEquals(2, slice.getArrayOffset());
+        assertEquals(1, slice.getArrayOffset());
 
-        assertEquals(2, slice.readByte());
+        assertEquals(1, slice.readByte());
+    }
+
+    @Test
+    public void testCreateSliceByIndexBoundsChecks() {
+        ProtonBuffer buffer = new ProtonByteBuffer(6, 6);
+
+        buffer.writeBytes(new byte[] {0, 1, 2, 3, 4, 5});
+
+        try {
+            buffer.slice(1, 6);
+            fail("Should have thrown IndexOutOfBoundsException");
+        } catch (IndexOutOfBoundsException iobe) {}
+
+        try {
+            buffer.slice(-1, 5);
+            fail("Should have thrown IndexOutOfBoundsException");
+        } catch (IndexOutOfBoundsException iobe) {}
+
+        try {
+            buffer.slice(1, -5);
+            fail("Should have thrown IndexOutOfBoundsException");
+        } catch (IndexOutOfBoundsException iobe) {}
+
+        try {
+            buffer.slice(-1, -5);
+            fail("Should have thrown IndexOutOfBoundsException");
+        } catch (IndexOutOfBoundsException iobe) {}
     }
 }
