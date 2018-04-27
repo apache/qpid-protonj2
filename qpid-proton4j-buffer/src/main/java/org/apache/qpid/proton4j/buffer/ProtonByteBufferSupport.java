@@ -67,6 +67,11 @@ public class ProtonByteBufferSupport {
         }
 
         @Override
+        public ProtonNIOByteBufferWrapper slice() {
+            return new ProtonByteBufferSupport.ProtonNIOByteBufferWrapper(buffer.slice());
+        }
+
+        @Override
         public ByteBuffer toByteBuffer() {
             return buffer;
         }
@@ -151,6 +156,12 @@ public class ProtonByteBufferSupport {
         }
 
         @Override
+        public ProtonBuffer slice(int index, int length) {
+            return new ProtonNIOByteBufferWrapper(
+                ((ByteBuffer)(buffer.duplicate().position(index).limit(index + length))).slice());
+        }
+
+        @Override
         public ProtonBuffer copy(int index, int length) {
             return null;
         }
@@ -175,6 +186,11 @@ public class ProtonByteBufferSupport {
         @Override
         public String toString(Charset charset) {
             return null;  // TODO
+        }
+
+        @Override
+        public ByteBuffer toByteBuffer(int index, int length) {
+            return null;
         }
     }
 }

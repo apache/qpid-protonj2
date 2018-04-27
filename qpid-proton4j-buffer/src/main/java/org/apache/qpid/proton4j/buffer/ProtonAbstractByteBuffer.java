@@ -158,12 +158,28 @@ public abstract class ProtonAbstractByteBuffer implements ProtonBuffer {
     }
 
     @Override
+    public ProtonBuffer slice() {
+        return slice(readIndex, getReadableBytes());
+    }
+
+    @Override
+    public abstract ProtonBuffer slice(int index, int length);
+
+    @Override
     public ProtonBuffer copy() {
         return copy(readIndex, getReadableBytes());
     }
 
     @Override
     public abstract ProtonBuffer copy(int index, int length);
+
+    @Override
+    public ByteBuffer toByteBuffer() {
+        return toByteBuffer(readIndex, getReadableBytes());
+    }
+
+    @Override
+    public abstract ByteBuffer toByteBuffer(int index, int length);
 
     //----- Read methods -----------------------------------------------------//
 

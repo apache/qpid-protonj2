@@ -84,6 +84,35 @@ public interface ProtonBuffer extends Comparable<ProtonBuffer> {
     ProtonBuffer duplicate();
 
     /**
+     * Create a new ProtonBuffer whose contents are a subsequence of the contents of this
+     * {@link ProtonBuffer}.
+     * <p>
+     * The starting point of the new buffer starts at this buffer's current position, the
+     * marks and limits of the new buffer will be independent of this buffer however changes
+     * to the data backing the buffer will be visible in this buffer.
+     *
+     * @return a new {@link ProtonBuffer} whose contents are a subsequence of this buffer.
+     */
+    ProtonBuffer slice();
+
+    /**
+     * Create a new ProtonBuffer whose contents are a subsequence of the contents of this
+     * {@link ProtonBuffer}.
+     * <p>
+     * The starting point of the new buffer starts at given index into this buffer and spans
+     * the number of bytes given by the length.  Changes to the contents of this buffer or to
+     * the produced slice buffer are visible in the other.
+     *
+     * @param index
+     *      The index in this buffer where the slice should begin.
+     * @param length
+     *      The number of bytes to make visible to the new buffer from this one.
+     *
+     * @return a new {@link ProtonBuffer} whose contents are a subsequence of this buffer.
+     */
+    ProtonBuffer slice(int index, int length);
+
+    /**
      * Create a deep copy of the readable bytes of this ProtonBuffer, the returned buffer can
      * be modified without affecting the contents or position markers of this instance.
      *
@@ -124,6 +153,8 @@ public interface ProtonBuffer extends Comparable<ProtonBuffer> {
      * @return a ByteBuffer that represents the readable bytes of this buffer.
      */
     ByteBuffer toByteBuffer();
+
+    ByteBuffer toByteBuffer(int index, int length);
 
     /**
      * Returns a String created from the buffer's underlying bytes using the specified

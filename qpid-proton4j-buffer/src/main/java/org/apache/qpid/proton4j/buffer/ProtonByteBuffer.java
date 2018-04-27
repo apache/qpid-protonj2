@@ -111,6 +111,12 @@ public class ProtonByteBuffer extends ProtonAbstractByteBuffer {
     }
 
     @Override
+    public ProtonBuffer slice(int index, int length) {
+        checkIndex(index, length);
+        return new ProtonByteBufferSlice(this, index, length);
+    }
+
+    @Override
     public ProtonBuffer copy(int index, int length) {
         checkIndex(index, length);
         byte[] copyOf = new byte[length];
@@ -119,8 +125,8 @@ public class ProtonByteBuffer extends ProtonAbstractByteBuffer {
     }
 
     @Override
-    public ByteBuffer toByteBuffer() {
-        return ByteBuffer.wrap(array, readIndex, getReadableBytes()).slice();
+    public ByteBuffer toByteBuffer(int index, int length) {
+        return ByteBuffer.wrap(array, index, length).slice();
     }
 
     @Override
