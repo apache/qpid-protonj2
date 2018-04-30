@@ -37,11 +37,11 @@ public interface DecoderState {
      * Given a set of UTF-8 encoded bytes decode and return the String that
      * represents that UTF-8 value.
      *
-     * @param duplicate
-     *      The UTF-8 encoded bytes to be decoded
+     * @param buffer
+     *      The UTF-8 encoded bytes to be decoded.
      *
      * @return a String that represents the UTF-8 decoded bytes.
      */
-    String decodeUTF8(ProtonBuffer duplicate);
+    String decodeUTF8(ProtonBuffer buffer);
 
 }

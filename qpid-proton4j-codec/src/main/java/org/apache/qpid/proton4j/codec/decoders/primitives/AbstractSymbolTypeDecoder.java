@@ -20,7 +20,6 @@ import java.io.IOException;
 
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
-import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.codec.DecoderState;
 import org.apache.qpid.proton4j.codec.decoders.AbstractPrimitiveTypeDecoder;
 
@@ -37,17 +36,28 @@ public abstract class AbstractSymbolTypeDecoder extends AbstractPrimitiveTypeDec
             return Symbol.valueOf("");
         }
 
-        // TODO - While not optimal the symbol values are usually small in size but we
-        //        should investigate if having a buffer slice method which lets us create
-        //        a view of the buffer without copying it and then just skipping the bytes
-        //        would be faster since we should eventually not be creating a new symbol
-        //        from the bytes since we cache them internally in Symbol.
-        ProtonBuffer symbolBuffer = ProtonByteBufferAllocator.DEFAULT.allocate(length, length);
-        buffer.readBytes(symbolBuffer, length);
+        ProtonBuffer symbolBuffer = buffer.slice(buffer.getReadIndex(), length);
+        buffer.skipBytes(length);
 
-        return Symbol.getSymbol(symbolBuffer);
+        return Symbol.getSymbol(symbolBuffer, true);
     }
 
+    /**
+     * Reads a String view of an encoded Symbol value from the given buffer.
+     * <p>
+     * This method has the same result as calling the Symbol reading variant
+     * {@link #readValue(ProtonBuffer, DecoderState)} and then invoking the toString
+     * method on the resulting Symbol.
+     *
+     * @param buffer
+     *      The buffer to read the encoded symbol from.
+     * @param state
+     *      The encoder state that applied to this decode operation.
+     *
+     * @return a String view of the encoded Symbol value.
+     *
+     * @throws IOException if an error occurs decoding the Symbol from the given buffer.
+     */
     public String readString(ProtonBuffer buffer, DecoderState state) throws IOException {
         int length = readSize(buffer);
 
@@ -55,15 +65,10 @@ public abstract class AbstractSymbolTypeDecoder extends AbstractPrimitiveTypeDec
             return "";
         }
 
-        // TODO - While not optimal the symbol values are usually small in size but we
-        //        should investigate if having a buffer slice method which lets us create
-        //        a view of the buffer without copying it and then just skipping the bytes
-        //        would be faster since we should eventually not be creating a new symbol
-        //        from the bytes since we cache them internally in Symbol.
-        ProtonBuffer symbolBuffer = ProtonByteBufferAllocator.DEFAULT.allocate(length, length);
-        buffer.readBytes(symbolBuffer, length);
+        ProtonBuffer symbolBuffer = buffer.slice(buffer.getReadIndex(), length);
+        buffer.skipBytes(length);
 
-        return Symbol.getSymbol(symbolBuffer).toString();
+        return Symbol.getSymbol(symbolBuffer, true).toString();
     }
 
     @Override
@@ -71,6 +76,15 @@ public abstract class AbstractSymbolTypeDecoder extends AbstractPrimitiveTypeDec
         buffer.skipBytes(readSize(buffer));
     }
 
+    /**
+     * Subclasses must read the correct number of bytes from the buffer to determine the
+     * size of the encoded Symbol value.
+     *
+     * @param buffer
+     *      The buffer to read the size from.
+     *
+     * @return the number of bytes that make up the encoded Symbok value.
+     */
     protected abstract int readSize(ProtonBuffer buffer);
 
 }
