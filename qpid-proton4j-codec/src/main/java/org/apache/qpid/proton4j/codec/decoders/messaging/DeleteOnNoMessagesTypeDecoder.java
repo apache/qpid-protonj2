@@ -23,7 +23,6 @@ import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.amqp.messaging.DeleteOnNoMessages;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.DecoderState;
-import org.apache.qpid.proton4j.codec.EncodingCodes;
 import org.apache.qpid.proton4j.codec.TypeDecoder;
 import org.apache.qpid.proton4j.codec.decoders.AbstractDescribedTypeDecoder;
 import org.apache.qpid.proton4j.codec.decoders.primitives.ListTypeDecoder;
@@ -50,10 +49,10 @@ public class DeleteOnNoMessagesTypeDecoder extends AbstractDescribedTypeDecoder<
 
     @Override
     public DeleteOnNoMessages readValue(ProtonBuffer buffer, DecoderState state) throws IOException {
-        byte code = buffer.readByte();
+        TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
-        if (code != EncodingCodes.LIST0) {
-            throw new IOException("Expected List0 type indicator but got code for type: " + code);
+        if (!(decoder instanceof ListTypeDecoder)) {
+            throw new IOException("Expected List type indicator but got decoder for type: " + decoder.getTypeClass().getName());
         }
 
         return DeleteOnNoMessages.getInstance();

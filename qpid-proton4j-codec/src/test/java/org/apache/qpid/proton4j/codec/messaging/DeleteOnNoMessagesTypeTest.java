@@ -16,13 +16,12 @@
  */
 package org.apache.qpid.proton4j.codec.messaging;
 
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 
-import org.apache.qpid.proton4j.amqp.messaging.Accepted;
+import org.apache.qpid.proton4j.amqp.messaging.DeleteOnNoMessages;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.codec.CodecTestSupport;
@@ -30,71 +29,55 @@ import org.apache.qpid.proton4j.codec.EncodingCodes;
 import org.junit.Test;
 
 /**
- * Test codec handling of Accepted types.
+ * Test codec handling of DeleteOnNoMessages types.
  */
-public class AcceptedTypeTest  extends CodecTestSupport {
+public class DeleteOnNoMessagesTypeTest  extends CodecTestSupport {
 
     @Test
-    public void TestDecodeAccepted() throws IOException {
+    public void TestDecodeDeleteOnNoMessages() throws IOException {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
 
-        Accepted value = Accepted.getInstance();
+        DeleteOnNoMessages value = DeleteOnNoMessages.getInstance();
 
         encoder.writeObject(buffer, encoderState, value);
 
         final Object result = decoder.readObject(buffer, decoderState);
 
         assertNotNull(result);
-        assertTrue(result instanceof Accepted);
-
-        Accepted decoded = (Accepted) result;
-
-        assertEquals(value, decoded);
+        assertTrue(result instanceof DeleteOnNoMessages);
     }
 
     @Test
-    public void TestDecodeAcceptedWithList8() throws IOException {
+    public void TestDecodeDeleteOnNoMessagesWithList8() throws IOException {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
 
         buffer.writeByte((byte) 0); // Described Type Indicator
         buffer.writeByte(EncodingCodes.SMALLULONG);
-        buffer.writeByte(Accepted.DESCRIPTOR_CODE.byteValue());
+        buffer.writeByte(DeleteOnNoMessages.DESCRIPTOR_CODE.byteValue());
         buffer.writeByte(EncodingCodes.LIST8);
         buffer.writeByte((byte) 0);  // Size
         buffer.writeByte((byte) 0);  // Count
 
-        Accepted value = Accepted.getInstance();
-
         final Object result = decoder.readObject(buffer, decoderState);
 
         assertNotNull(result);
-        assertTrue(result instanceof Accepted);
-
-        Accepted decoded = (Accepted) result;
-
-        assertEquals(value, decoded);
+        assertTrue(result instanceof DeleteOnNoMessages);
     }
 
     @Test
-    public void TestDecodeAcceptedWithList32() throws IOException {
+    public void TestDecodeDeleteOnNoMessagesWithList32() throws IOException {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
 
         buffer.writeByte((byte) 0); // Described Type Indicator
         buffer.writeByte(EncodingCodes.SMALLULONG);
-        buffer.writeByte(Accepted.DESCRIPTOR_CODE.byteValue());
+        buffer.writeByte(DeleteOnNoMessages.DESCRIPTOR_CODE.byteValue());
         buffer.writeByte(EncodingCodes.LIST32);
         buffer.writeInt((byte) 0);  // Size
         buffer.writeInt((byte) 0);  // Count
 
-        Accepted value = Accepted.getInstance();
-
         final Object result = decoder.readObject(buffer, decoderState);
 
         assertNotNull(result);
-        assertTrue(result instanceof Accepted);
-
-        Accepted decoded = (Accepted) result;
-
-        assertEquals(value, decoded);
+        assertTrue(result instanceof DeleteOnNoMessages);
     }
 }
