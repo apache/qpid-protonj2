@@ -850,6 +850,106 @@ public class ProtonByteBufferTest {
         } catch (IndexOutOfBoundsException ex) {}
     }
 
+    //----- Tests for get operations -----------------------------------------//
+
+    @Test
+    public void testGetByte() {
+        byte[] source = new byte[] { 0, 1, 2, 3, 4, 5 };
+        ProtonBuffer buffer = new ProtonByteBuffer(source);
+
+        assertEquals(source.length, buffer.getReadableBytes());
+
+        for (int i = 0; i < source.length; ++i) {
+            assertEquals(source[i], buffer.getByte(i));
+        }
+
+        try {
+            buffer.readByte();
+        } catch (IndexOutOfBoundsException ex) {
+            fail("Should be able to read from the buffer");
+        }
+    }
+
+    @Test
+    public void testGetBoolean() {
+        byte[] source = new byte[] { 0, 1, 0, 1, 0, 1 };
+        ProtonBuffer buffer = new ProtonByteBuffer(source);
+
+        assertEquals(source.length, buffer.getReadableBytes());
+
+        for (int i = 0; i < source.length; ++i) {
+            if ((i % 2) == 0) {
+                assertFalse(buffer.getBoolean(i));
+            } else {
+                assertTrue(buffer.getBoolean(i));
+            }
+        }
+
+        try {
+            buffer.readBoolean();
+        } catch (IndexOutOfBoundsException ex) {
+            fail("Should be able to read from the buffer");
+        }
+    }
+
+    @Test
+    public void testGetShort() {
+        byte[] source = new byte[] { 0, 0, 0, 1, 0, 2, 0, 3, 0, 4 };
+        ProtonBuffer buffer = new ProtonByteBuffer(source);
+
+        assertEquals(source.length, buffer.getReadableBytes());
+
+        for (int i = 0; i < source.length; i += 2) {
+            assertEquals(source[i + 1], buffer.getShort(i));
+        }
+
+        try {
+            buffer.readShort();
+        } catch (IndexOutOfBoundsException ex) {
+            fail("Should be able to read from the buffer");
+        }
+    }
+
+    @Test
+    public void testGetInt() {
+        byte[] source = new byte[] { 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 2, 0, 0, 0, 3, 0, 0, 0, 4 };
+        ProtonBuffer buffer = new ProtonByteBuffer(source);
+
+        assertEquals(source.length, buffer.getReadableBytes());
+
+        for (int i = 0; i < source.length; i += 4) {
+            assertEquals(source[i + 3], buffer.getInt(i));
+        }
+
+        try {
+            buffer.readInt();
+        } catch (IndexOutOfBoundsException ex) {
+            fail("Should be able to read from the buffer");
+        }
+    }
+
+    @Test
+    public void testGetLong() {
+        byte[] source = new byte[] { 0, 0, 0, 0, 0, 0, 0, 0,
+                                     0, 0, 0, 0, 0, 0, 0, 1,
+                                     0, 0, 0, 0, 0, 0, 0, 2,
+                                     0, 0, 0, 0, 0, 0, 0, 3,
+                                     0, 0, 0, 0, 0, 0, 0, 4 };
+        ProtonBuffer buffer = new ProtonByteBuffer(source);
+
+        assertEquals(source.length, buffer.getReadableBytes());
+
+        for (int i = 0; i < source.length; i += 8) {
+            assertEquals(source[i + 7], buffer.getLong(i));
+        }
+
+        try {
+            buffer.readLong();
+        } catch (IndexOutOfBoundsException ex) {
+            fail("Should be able to read from the buffer");
+        }
+    }
+
     //----- Tests for Copy operations ----------------------------------------//
 
     @Test
@@ -940,7 +1040,7 @@ public class ProtonByteBufferTest {
     //----- Tests for equality and comparison  -------------------------------//
 
     @Test
-    public void testEqualsSekf() {
+    public void testEqualsSelf() {
         byte[] payload = new byte[] { 0, 1, 2, 3, 4 };
         ProtonBuffer buffer = new ProtonByteBuffer(payload);
         assertTrue(buffer.equals(buffer));
@@ -983,6 +1083,19 @@ public class ProtonByteBufferTest {
         byte[] payload2 = new byte[] { 0, 1, 2, 3, 4 };
         ProtonBuffer buffer1 = new ProtonByteBuffer(payload1);
         ProtonBuffer buffer2 = new ProtonByteBuffer(payload2);
+
+        assertFalse(buffer1.equals(buffer2));
+        assertFalse(buffer2.equals(buffer1));
+    }
+
+    @Test
+    public void testEqualsWithDifferingReadableBytes() {
+        byte[] payload1 = new byte[] { 0, 1, 2, 3, 4 };
+        byte[] payload2 = new byte[] { 0, 1, 2, 3, 4 };
+        ProtonBuffer buffer1 = new ProtonByteBuffer(payload1);
+        ProtonBuffer buffer2 = new ProtonByteBuffer(payload2);
+
+        buffer1.readByte();
 
         assertFalse(buffer1.equals(buffer2));
         assertFalse(buffer2.equals(buffer1));

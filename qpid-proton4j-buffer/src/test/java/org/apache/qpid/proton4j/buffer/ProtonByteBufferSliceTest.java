@@ -157,4 +157,25 @@ public class ProtonByteBufferSliceTest {
             fail("Should have thrown IndexOutOfBoundsException");
         } catch (IndexOutOfBoundsException iobe) {}
     }
+
+    //----- Test capacity alteration -----------------------------------------//
+
+    @Test
+    public void testCapacityUpdatesNotAllowed() {
+        ProtonBuffer buffer = new ProtonByteBuffer();
+
+        buffer.writeBytes(new byte[] {0, 1, 2, 3, 4, 5});
+
+        ProtonBuffer slice = buffer.slice();
+
+        try {
+            slice.capacity(65535);
+            fail("Should not be able to alter capacity");
+        } catch (UnsupportedOperationException uoe) {}
+
+        try {
+            slice.capacity(buffer.capacity());
+            fail("Should not be able to alter capacity");
+        } catch (UnsupportedOperationException uoe) {}
+    }
 }
