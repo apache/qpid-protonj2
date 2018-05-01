@@ -26,6 +26,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 
 import org.junit.Test;
 
@@ -1037,7 +1038,81 @@ public class ProtonByteBufferTest {
         assertSame(buffer.getArray(), byteBuffer.array());
     }
 
-    //----- Tests for equality and comparison  -------------------------------//
+    //----- Tests for string conversion --------------------------------------//
+
+    public void testToStringFromUTF8() throws Exception {
+        String sourceString = "Test-String-1";
+
+        ProtonByteBuffer buffer = ProtonByteBufferAllocator.DEFAULT.wrap(sourceString.getBytes(StandardCharsets.UTF_8));
+
+        String decoded = buffer.toString(StandardCharsets.UTF_8);
+
+        assertEquals(sourceString, decoded);
+    }
+
+    //----- Tests for index marking ------------------------------------------//
+
+    @Test
+    public void testMarkAndResetReadIndex() {
+        ProtonBuffer buffer = new ProtonByteBuffer();
+
+        buffer.writeByte(0).writeByte(1);
+        buffer.markReadIndex();
+
+        assertEquals(0, buffer.readByte());
+        assertEquals(1, buffer.readByte());
+
+        buffer.resetReadIndex();
+
+        assertEquals(0, buffer.readByte());
+        assertEquals(1, buffer.readByte());
+    }
+
+    @Test
+    public void testResetReadIndexWhenInvalid() {
+        ProtonBuffer buffer = new ProtonByteBuffer();
+
+        buffer.writeByte(0).writeByte(1);
+        buffer.readByte();
+        buffer.readByte();
+        buffer.markReadIndex();
+        buffer.setIndex(0, 1);
+
+        try {
+            buffer.resetReadIndex();
+            fail("Should not be able to reset to invalid mark");
+        } catch (IndexOutOfBoundsException iobe) {}
+    }
+
+    @Test
+    public void testMarkAndResetWriteIndex() {
+        ProtonBuffer buffer = new ProtonByteBuffer();
+
+        buffer.markWriteIndex();
+        buffer.writeByte(0).writeByte(1);
+        buffer.resetWriteIndex();
+        buffer.writeByte(2).writeByte(3);
+
+        assertEquals(2, buffer.readByte());
+        assertEquals(3, buffer.readByte());
+    }
+
+    @Test
+    public void testResetWriteIndexWhenInvalid() {
+        ProtonBuffer buffer = new ProtonByteBuffer();
+
+        buffer.markWriteIndex();
+        buffer.writeByte(0).writeByte(1);
+        buffer.readByte();
+        buffer.readByte();
+
+        try {
+            buffer.resetWriteIndex();
+            fail("Should not be able to reset to invalid mark");
+        } catch (IndexOutOfBoundsException iobe) {}
+    }
+
+    //----- Tests for equality and comparison --------------------------------//
 
     @Test
     public void testEqualsSelf() {
@@ -1130,5 +1205,205 @@ public class ProtonByteBufferTest {
 
         assertEquals(1, buffer1.compareTo(buffer2));
         assertEquals(-1, buffer2.compareTo(buffer1));
+    }
+
+    //----- Tests for readBytes variants -------------------------------------//
+
+    @Test
+    public void testReadBytesSingleArray() {
+        byte[] payload = new byte[] { 0, 1, 2, 3, 4 };
+        byte[] target = new byte[payload.length];
+
+        ProtonBuffer buffer = new ProtonByteBuffer(payload);
+
+        buffer.readBytes(target);
+
+        assertEquals(0, buffer.getReadableBytes());
+
+        for (int i = 0; i < payload.length; ++i) {
+            assertEquals(payload[i], buffer.getByte(i));
+        }
+
+        try {
+            buffer.readBytes(target);
+            fail("should have thrown IndexOutOfBoundsException");
+        } catch (IndexOutOfBoundsException iobe) {
+        }
+    }
+
+    @Test
+    public void testReadBytesArrayAndLength() {
+        byte[] payload = new byte[] { 0, 1, 2, 3, 4 };
+        byte[] target = new byte[payload.length];
+
+        ProtonBuffer buffer = new ProtonByteBuffer(payload);
+
+        try {
+            buffer.readBytes(target, -1);
+            fail("should have thrown IllegalArgumentException");
+        } catch (IllegalArgumentException iae) {
+        }
+
+        buffer.readBytes(target, target.length);
+
+        assertEquals(0, buffer.getReadableBytes());
+
+        for (int i = 0; i < payload.length; ++i) {
+            assertEquals(payload[i], buffer.getByte(i));
+        }
+
+        try {
+            buffer.readBytes(target);
+            fail("should have thrown IndexOutOfBoundsException");
+        } catch (IndexOutOfBoundsException iobe) {
+        }
+    }
+
+    @Test
+    public void testReadBytesArrayOffsetAndLength() {
+        byte[] payload = new byte[] { 0, 1, 2, 3, 4 };
+        byte[] target = new byte[payload.length];
+
+        ProtonBuffer buffer = new ProtonByteBuffer(payload);
+
+        try {
+            buffer.readBytes(target, 0, -1);
+            fail("should have thrown IllegalArgumentException");
+        } catch (IllegalArgumentException iae) {
+        }
+
+        buffer.readBytes(target, 0, target.length);
+
+        assertEquals(0, buffer.getReadableBytes());
+
+        for (int i = 0; i < payload.length; ++i) {
+            assertEquals(payload[i], buffer.getByte(i));
+        }
+
+        try {
+            buffer.readBytes(target);
+            fail("should have thrown IndexOutOfBoundsException");
+        } catch (IndexOutOfBoundsException iobe) {
+        }
+    }
+
+    @Test
+    public void testReadBytesSingleProtonBuffer() {
+        byte[] payload = new byte[] { 0, 1, 2, 3, 4 };
+
+        ProtonBuffer buffer = new ProtonByteBuffer(payload);
+        ProtonBuffer target = new ProtonByteBuffer(5, 5);
+
+        buffer.readBytes(target);
+
+        assertEquals(0, buffer.getReadableBytes());
+
+        for (int i = 0; i < payload.length; ++i) {
+            assertEquals(payload[i], buffer.getByte(i));
+        }
+
+        target.setWriteIndex(0);
+
+        try {
+            buffer.readBytes(target);
+            fail("should have thrown IndexOutOfBoundsException");
+        } catch (IndexOutOfBoundsException iobe) {
+        }
+    }
+
+    @Test
+    public void testReadBytesProtonBufferAndLength() {
+        byte[] payload = new byte[] { 0, 1, 2, 3, 4 };
+
+        ProtonBuffer buffer = new ProtonByteBuffer(payload);
+        ProtonBuffer target = new ProtonByteBuffer(5, 5);
+
+        try {
+            buffer.readBytes(target, -1);
+            fail("should have thrown IllegalArgumentException");
+        } catch (IllegalArgumentException iae) {
+        }
+
+        try {
+            buffer.readBytes(target, 1024);
+            fail("should have thrown IndexOutOfBoundsException");
+        } catch (IndexOutOfBoundsException iae) {
+        }
+
+        buffer.readBytes(target, payload.length);
+
+        assertEquals(0, buffer.getReadableBytes());
+
+        for (int i = 0; i < payload.length; ++i) {
+            assertEquals(payload[i], buffer.getByte(i));
+        }
+
+        target.setWriteIndex(0);
+
+        try {
+            buffer.readBytes(target);
+            fail("should have thrown IndexOutOfBoundsException");
+        } catch (IndexOutOfBoundsException iobe) {
+        }
+    }
+
+    @Test
+    public void testReadBytesProtonBufferOffsetAndLength() {
+        byte[] payload = new byte[] { 0, 1, 2, 3, 4 };
+
+        ProtonBuffer buffer = new ProtonByteBuffer(payload);
+        ProtonBuffer target = new ProtonByteBuffer(5, 5);
+
+        try {
+            buffer.readBytes(target, 0, -1);
+            fail("should have thrown IllegalArgumentException");
+        } catch (IllegalArgumentException iae) {
+        }
+
+        try {
+            buffer.readBytes(target, -1, -1);
+            fail("should have thrown IllegalArgumentException");
+        } catch (IllegalArgumentException iae) {
+        }
+
+        buffer.readBytes(target, 0, payload.length);
+
+        assertEquals(0, buffer.getReadableBytes());
+
+        for (int i = 0; i < payload.length; ++i) {
+            assertEquals(payload[i], buffer.getByte(i));
+        }
+
+        target.setWriteIndex(0);
+
+        try {
+            buffer.readBytes(target);
+            fail("should have thrown IndexOutOfBoundsException");
+        } catch (IndexOutOfBoundsException iobe) {
+        }
+    }
+
+    @Test
+    public void testReadBytesIntoByteBuffer() {
+        byte[] payload = new byte[] { 0, 1, 2, 3, 4 };
+
+        ProtonBuffer buffer = new ProtonByteBuffer(payload);
+        ByteBuffer target = ByteBuffer.allocate(5);
+
+        buffer.readBytes(target);
+
+        assertEquals(0, buffer.getReadableBytes());
+
+        for (int i = 0; i < payload.length; ++i) {
+            assertEquals(payload[i], buffer.getByte(i));
+        }
+
+        target.clear();
+
+        try {
+            buffer.readBytes(target);
+            fail("should have thrown IndexOutOfBoundsException");
+        } catch (IndexOutOfBoundsException iobe) {
+        }
     }
 }

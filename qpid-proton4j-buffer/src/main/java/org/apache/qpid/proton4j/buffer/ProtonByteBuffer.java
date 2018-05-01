@@ -57,7 +57,7 @@ public class ProtonByteBuffer extends ProtonAbstractByteBuffer {
     }
 
     protected ProtonByteBuffer(byte[] array, int maximumCapacity) {
-        this(array, DEFAULT_MAXIMUM_CAPACITY, array.length);
+        this(array, maximumCapacity, array.length);
     }
 
     protected ProtonByteBuffer(byte[] array, int maximumCapacity, int writeIndex) {

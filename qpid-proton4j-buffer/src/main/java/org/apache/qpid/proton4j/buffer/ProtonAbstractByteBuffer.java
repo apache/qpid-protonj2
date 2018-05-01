@@ -118,7 +118,7 @@ public abstract class ProtonAbstractByteBuffer implements ProtonBuffer {
 
     @Override
     public ProtonBuffer resetWriteIndex() {
-        this.writeIndex = markedWriteIndex;
+        setWriteIndex(markedWriteIndex);
         return this;
     }
 

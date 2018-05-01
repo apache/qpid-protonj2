@@ -26,23 +26,23 @@ public class ProtonByteBufferAllocator implements ProtonBufferAllocator {
     public static final ProtonByteBufferAllocator DEFAULT = new ProtonByteBufferAllocator();
 
     @Override
-    public ProtonBuffer allocate() {
+    public ProtonByteBuffer allocate() {
         return new ProtonByteBuffer();
     }
 
     @Override
-    public ProtonBuffer allocate(int initialCapacity) {
+    public ProtonByteBuffer allocate(int initialCapacity) {
         return new ProtonByteBuffer(initialCapacity);
     }
 
     @Override
-    public ProtonBuffer allocate(int initialCapacity, int maximumCapacity) {
+    public ProtonByteBuffer allocate(int initialCapacity, int maximumCapacity) {
         return new ProtonByteBuffer(initialCapacity, maximumCapacity);
     }
 
     @Override
-    public ProtonBuffer wrap(byte[] array) {
-        return new ProtonByteBuffer(array);
+    public ProtonByteBuffer wrap(byte[] array) {
+        return new ProtonByteBuffer(array, array.length);
     }
 
     @Override
