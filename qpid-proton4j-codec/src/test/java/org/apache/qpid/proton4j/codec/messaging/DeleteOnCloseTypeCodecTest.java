@@ -21,7 +21,7 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 
-import org.apache.qpid.proton4j.amqp.messaging.DeleteOnNoLinks;
+import org.apache.qpid.proton4j.amqp.messaging.DeleteOnClose;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.codec.CodecTestSupport;
@@ -29,31 +29,31 @@ import org.apache.qpid.proton4j.codec.EncodingCodes;
 import org.junit.Test;
 
 /**
- * Test codec handling of DeleteOnNoLinks types.
+ * Test codec handling of DeleteOnClose types.
  */
-public class DeleteOnNoLinksTypeTest  extends CodecTestSupport {
+public class DeleteOnCloseTypeCodecTest  extends CodecTestSupport {
 
     @Test
-    public void TestDecodeDeleteOnNoLinks() throws IOException {
+    public void TestDecodeDeleteOnClose() throws IOException {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
 
-        DeleteOnNoLinks value = DeleteOnNoLinks.getInstance();
+        DeleteOnClose value = DeleteOnClose.getInstance();
 
         encoder.writeObject(buffer, encoderState, value);
 
         final Object result = decoder.readObject(buffer, decoderState);
 
         assertNotNull(result);
-        assertTrue(result instanceof DeleteOnNoLinks);
+        assertTrue(result instanceof DeleteOnClose);
     }
 
     @Test
-    public void TestDecodeDeleteOnNoLinksWithList8() throws IOException {
+    public void TestDecodeDeleteOnCloseWithList8() throws IOException {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
 
         buffer.writeByte((byte) 0); // Described Type Indicator
         buffer.writeByte(EncodingCodes.SMALLULONG);
-        buffer.writeByte(DeleteOnNoLinks.DESCRIPTOR_CODE.byteValue());
+        buffer.writeByte(DeleteOnClose.DESCRIPTOR_CODE.byteValue());
         buffer.writeByte(EncodingCodes.LIST8);
         buffer.writeByte((byte) 0);  // Size
         buffer.writeByte((byte) 0);  // Count
@@ -61,16 +61,16 @@ public class DeleteOnNoLinksTypeTest  extends CodecTestSupport {
         final Object result = decoder.readObject(buffer, decoderState);
 
         assertNotNull(result);
-        assertTrue(result instanceof DeleteOnNoLinks);
+        assertTrue(result instanceof DeleteOnClose);
     }
 
     @Test
-    public void TestDecodeDeleteOnNoLinksWithList32() throws IOException {
+    public void TestDecodeDeleteOnCloseWithList32() throws IOException {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
 
         buffer.writeByte((byte) 0); // Described Type Indicator
         buffer.writeByte(EncodingCodes.SMALLULONG);
-        buffer.writeByte(DeleteOnNoLinks.DESCRIPTOR_CODE.byteValue());
+        buffer.writeByte(DeleteOnClose.DESCRIPTOR_CODE.byteValue());
         buffer.writeByte(EncodingCodes.LIST32);
         buffer.writeInt((byte) 0);  // Size
         buffer.writeInt((byte) 0);  // Count
@@ -78,6 +78,6 @@ public class DeleteOnNoLinksTypeTest  extends CodecTestSupport {
         final Object result = decoder.readObject(buffer, decoderState);
 
         assertNotNull(result);
-        assertTrue(result instanceof DeleteOnNoLinks);
+        assertTrue(result instanceof DeleteOnClose);
     }
 }

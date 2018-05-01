@@ -35,7 +35,7 @@ import org.junit.Test;
 /**
  * Test for handling Source serialization
  */
-public class TargetCodeTest extends CodecTestSupport {
+public class TargetTypeCodeTest extends CodecTestSupport {
 
    @Test
    public void testEncodeDecodeOfTarget() throws Exception {

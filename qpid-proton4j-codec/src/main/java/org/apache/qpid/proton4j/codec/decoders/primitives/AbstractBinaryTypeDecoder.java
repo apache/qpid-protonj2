@@ -38,7 +38,6 @@ public abstract class AbstractBinaryTypeDecoder extends AbstractPrimitiveTypeDec
                               "of data available (%d)", length, buffer.getReadableBytes()));
         }
 
-        // TODO - If we can plug in the memory allocator we could pool these bytes
         byte[] data = new byte[length];
         buffer.readBytes(data, 0, length);
 

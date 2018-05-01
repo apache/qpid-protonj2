@@ -21,7 +21,7 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 
-import org.apache.qpid.proton4j.amqp.messaging.Released;
+import org.apache.qpid.proton4j.amqp.messaging.DeleteOnNoLinks;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.codec.CodecTestSupport;
@@ -29,31 +29,31 @@ import org.apache.qpid.proton4j.codec.EncodingCodes;
 import org.junit.Test;
 
 /**
- * Test codec handling of Released types.
+ * Test codec handling of DeleteOnNoLinks types.
  */
-public class ReleasedTypeTest  extends CodecTestSupport {
+public class DeleteOnNoLinksTypeCodecTest  extends CodecTestSupport {
 
     @Test
-    public void TestDecodeReleased() throws IOException {
+    public void TestDecodeDeleteOnNoLinks() throws IOException {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
 
-        Released value = Released.getInstance();
+        DeleteOnNoLinks value = DeleteOnNoLinks.getInstance();
 
         encoder.writeObject(buffer, encoderState, value);
 
         final Object result = decoder.readObject(buffer, decoderState);
 
         assertNotNull(result);
-        assertTrue(result instanceof Released);
+        assertTrue(result instanceof DeleteOnNoLinks);
     }
 
     @Test
-    public void TestDecodeReleasedWithList8() throws IOException {
+    public void TestDecodeDeleteOnNoLinksWithList8() throws IOException {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
 
         buffer.writeByte((byte) 0); // Described Type Indicator
         buffer.writeByte(EncodingCodes.SMALLULONG);
-        buffer.writeByte(Released.DESCRIPTOR_CODE.byteValue());
+        buffer.writeByte(DeleteOnNoLinks.DESCRIPTOR_CODE.byteValue());
         buffer.writeByte(EncodingCodes.LIST8);
         buffer.writeByte((byte) 0);  // Size
         buffer.writeByte((byte) 0);  // Count
@@ -61,16 +61,16 @@ public class ReleasedTypeTest  extends CodecTestSupport {
         final Object result = decoder.readObject(buffer, decoderState);
 
         assertNotNull(result);
-        assertTrue(result instanceof Released);
+        assertTrue(result instanceof DeleteOnNoLinks);
     }
 
     @Test
-    public void TestDecodeReleasedWithList32() throws IOException {
+    public void TestDecodeDeleteOnNoLinksWithList32() throws IOException {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
 
         buffer.writeByte((byte) 0); // Described Type Indicator
         buffer.writeByte(EncodingCodes.SMALLULONG);
-        buffer.writeByte(Released.DESCRIPTOR_CODE.byteValue());
+        buffer.writeByte(DeleteOnNoLinks.DESCRIPTOR_CODE.byteValue());
         buffer.writeByte(EncodingCodes.LIST32);
         buffer.writeInt((byte) 0);  // Size
         buffer.writeInt((byte) 0);  // Count
@@ -78,6 +78,6 @@ public class ReleasedTypeTest  extends CodecTestSupport {
         final Object result = decoder.readObject(buffer, decoderState);
 
         assertNotNull(result);
-        assertTrue(result instanceof Released);
+        assertTrue(result instanceof DeleteOnNoLinks);
     }
 }

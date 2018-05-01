@@ -21,7 +21,7 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 
-import org.apache.qpid.proton4j.amqp.messaging.Modified;
+import org.apache.qpid.proton4j.amqp.messaging.DeleteOnNoMessages;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.codec.CodecTestSupport;
@@ -29,31 +29,31 @@ import org.apache.qpid.proton4j.codec.EncodingCodes;
 import org.junit.Test;
 
 /**
- * Test codec handling of Modified types.
+ * Test codec handling of DeleteOnNoMessages types.
  */
-public class ModifiedTypeTest  extends CodecTestSupport {
+public class DeleteOnNoMessagesTypeCodecTest  extends CodecTestSupport {
 
     @Test
-    public void TestDecodeModified() throws IOException {
+    public void TestDecodeDeleteOnNoMessages() throws IOException {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
 
-        Modified value = new Modified();
+        DeleteOnNoMessages value = DeleteOnNoMessages.getInstance();
 
         encoder.writeObject(buffer, encoderState, value);
 
         final Object result = decoder.readObject(buffer, decoderState);
 
         assertNotNull(result);
-        assertTrue(result instanceof Modified);
+        assertTrue(result instanceof DeleteOnNoMessages);
     }
 
     @Test
-    public void TestDecodeModifiedWithList8() throws IOException {
+    public void TestDecodeDeleteOnNoMessagesWithList8() throws IOException {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
 
         buffer.writeByte((byte) 0); // Described Type Indicator
         buffer.writeByte(EncodingCodes.SMALLULONG);
-        buffer.writeByte(Modified.DESCRIPTOR_CODE.byteValue());
+        buffer.writeByte(DeleteOnNoMessages.DESCRIPTOR_CODE.byteValue());
         buffer.writeByte(EncodingCodes.LIST8);
         buffer.writeByte((byte) 0);  // Size
         buffer.writeByte((byte) 0);  // Count
@@ -61,16 +61,16 @@ public class ModifiedTypeTest  extends CodecTestSupport {
         final Object result = decoder.readObject(buffer, decoderState);
 
         assertNotNull(result);
-        assertTrue(result instanceof Modified);
+        assertTrue(result instanceof DeleteOnNoMessages);
     }
 
     @Test
-    public void TestDecodeModifiedWithList32() throws IOException {
+    public void TestDecodeDeleteOnNoMessagesWithList32() throws IOException {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
 
         buffer.writeByte((byte) 0); // Described Type Indicator
         buffer.writeByte(EncodingCodes.SMALLULONG);
-        buffer.writeByte(Modified.DESCRIPTOR_CODE.byteValue());
+        buffer.writeByte(DeleteOnNoMessages.DESCRIPTOR_CODE.byteValue());
         buffer.writeByte(EncodingCodes.LIST32);
         buffer.writeInt((byte) 0);  // Size
         buffer.writeInt((byte) 0);  // Count
@@ -78,6 +78,6 @@ public class ModifiedTypeTest  extends CodecTestSupport {
         final Object result = decoder.readObject(buffer, decoderState);
 
         assertNotNull(result);
-        assertTrue(result instanceof Modified);
+        assertTrue(result instanceof DeleteOnNoMessages);
     }
 }

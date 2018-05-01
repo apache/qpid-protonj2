@@ -27,7 +27,7 @@ import java.nio.charset.StandardCharsets;
 import org.apache.qpid.proton4j.amqp.Binary;
 import org.junit.Test;
 
-public class PropertiesTest {
+public class PropertiesTypeCodecTest {
 
     @Test
     public void testCreate() {

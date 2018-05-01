@@ -30,7 +30,7 @@ import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.codec.CodecTestSupport;
 import org.junit.Test;
 
-public class ApplicationPropertiesCodecTest extends CodecTestSupport {
+public class ApplicationPropertiesTypeCodecTest extends CodecTestSupport {
 
     @Test
     public void testDecodeSmallSeriesOfApplicationProperties() throws IOException {

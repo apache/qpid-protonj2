@@ -33,7 +33,7 @@ import org.junit.Test;
 /**
  * Test for decoder of AMQP Properties type.
  */
-public class PropertiesCodecTest extends CodecTestSupport {
+public class PropertiesTypeCodecTest extends CodecTestSupport {
 
     @Test
     public void testDecodeSmallSeriesOfPropertiess() throws IOException {

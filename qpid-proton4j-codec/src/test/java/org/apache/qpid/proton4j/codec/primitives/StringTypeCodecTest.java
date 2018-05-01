@@ -29,7 +29,7 @@ import org.apache.qpid.proton4j.codec.CodecTestSupport;
 import org.apache.qpid.proton4j.codec.EncodingCodes;
 import org.junit.Test;
 
-public class StringCodecTest extends CodecTestSupport {
+public class StringTypeCodecTest extends CodecTestSupport {
 
     private final String SMALL_STRING_VALUIE = "Small String";
     private final String LARGE_STRING_VALUIE = "Large String: " +

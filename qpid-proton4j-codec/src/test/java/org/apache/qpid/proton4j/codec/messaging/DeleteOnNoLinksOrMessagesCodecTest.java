@@ -21,7 +21,7 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 
-import org.apache.qpid.proton4j.amqp.messaging.DeleteOnNoMessages;
+import org.apache.qpid.proton4j.amqp.messaging.DeleteOnNoLinksOrMessages;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.codec.CodecTestSupport;
@@ -29,31 +29,31 @@ import org.apache.qpid.proton4j.codec.EncodingCodes;
 import org.junit.Test;
 
 /**
- * Test codec handling of DeleteOnNoMessages types.
+ * Test codec handling of DeleteOnNoLinksOrMessages types.
  */
-public class DeleteOnNoMessagesTypeTest  extends CodecTestSupport {
+public class DeleteOnNoLinksOrMessagesCodecTest  extends CodecTestSupport {
 
     @Test
-    public void TestDecodeDeleteOnNoMessages() throws IOException {
+    public void TestDecodeDeleteOnNoLinksOrMessages() throws IOException {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
 
-        DeleteOnNoMessages value = DeleteOnNoMessages.getInstance();
+        DeleteOnNoLinksOrMessages value = DeleteOnNoLinksOrMessages.getInstance();
 
         encoder.writeObject(buffer, encoderState, value);
 
         final Object result = decoder.readObject(buffer, decoderState);
 
         assertNotNull(result);
-        assertTrue(result instanceof DeleteOnNoMessages);
+        assertTrue(result instanceof DeleteOnNoLinksOrMessages);
     }
 
     @Test
-    public void TestDecodeDeleteOnNoMessagesWithList8() throws IOException {
+    public void TestDecodeDeleteOnNoLinksOrMessagesWithList8() throws IOException {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
 
         buffer.writeByte((byte) 0); // Described Type Indicator
         buffer.writeByte(EncodingCodes.SMALLULONG);
-        buffer.writeByte(DeleteOnNoMessages.DESCRIPTOR_CODE.byteValue());
+        buffer.writeByte(DeleteOnNoLinksOrMessages.DESCRIPTOR_CODE.byteValue());
         buffer.writeByte(EncodingCodes.LIST8);
         buffer.writeByte((byte) 0);  // Size
         buffer.writeByte((byte) 0);  // Count
@@ -61,16 +61,16 @@ public class DeleteOnNoMessagesTypeTest  extends CodecTestSupport {
         final Object result = decoder.readObject(buffer, decoderState);
 
         assertNotNull(result);
-        assertTrue(result instanceof DeleteOnNoMessages);
+        assertTrue(result instanceof DeleteOnNoLinksOrMessages);
     }
 
     @Test
-    public void TestDecodeDeleteOnNoMessagesWithList32() throws IOException {
+    public void TestDecodeDeleteOnNoLinksOrMessagesWithList32() throws IOException {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
 
         buffer.writeByte((byte) 0); // Described Type Indicator
         buffer.writeByte(EncodingCodes.SMALLULONG);
-        buffer.writeByte(DeleteOnNoMessages.DESCRIPTOR_CODE.byteValue());
+        buffer.writeByte(DeleteOnNoLinksOrMessages.DESCRIPTOR_CODE.byteValue());
         buffer.writeByte(EncodingCodes.LIST32);
         buffer.writeInt((byte) 0);  // Size
         buffer.writeInt((byte) 0);  // Count
@@ -78,6 +78,6 @@ public class DeleteOnNoMessagesTypeTest  extends CodecTestSupport {
         final Object result = decoder.readObject(buffer, decoderState);
 
         assertNotNull(result);
-        assertTrue(result instanceof DeleteOnNoMessages);
+        assertTrue(result instanceof DeleteOnNoLinksOrMessages);
     }
 }
