@@ -27,13 +27,16 @@ public enum TerminusDurability {
     }
 
     public static TerminusDurability get(UnsignedInteger value) {
-        switch (value.intValue()) {
-            case 0:
-                return NONE;
-            case 1:
-                return CONFIGURATION;
-            case 2:
-                return UNSETTLED_STATE;
+        return TerminusDurability.get(value.intValue());
+    }
+
+    public static TerminusDurability get(long value) {
+        if (value == 0) {
+            return NONE;
+        } else if (value == 1) {
+            return CONFIGURATION;
+        } else if (value == 2) {
+            return UNSETTLED_STATE;
         }
 
         throw new IllegalArgumentException("Unknown TerminusDurablity: " + value);

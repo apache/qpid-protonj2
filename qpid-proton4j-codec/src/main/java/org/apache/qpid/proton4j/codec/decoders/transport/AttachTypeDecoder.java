@@ -19,7 +19,6 @@ package org.apache.qpid.proton4j.codec.decoders.transport;
 import java.io.IOException;
 
 import org.apache.qpid.proton4j.amqp.Symbol;
-import org.apache.qpid.proton4j.amqp.UnsignedByte;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.amqp.messaging.Source;
 import org.apache.qpid.proton4j.amqp.messaging.Target;
@@ -114,12 +113,12 @@ public class AttachTypeDecoder extends AbstractDescribedTypeDecoder<Attach> {
                     attach.setRole(Boolean.TRUE.equals(role) ? Role.RECEIVER : Role.SENDER);
                     break;
                 case 3:
-                    UnsignedByte sndSettleMode = state.getDecoder().readUnsignedByte(buffer, state);
-                    attach.setSndSettleMode(sndSettleMode == null ? SenderSettleMode.MIXED : SenderSettleMode.values()[sndSettleMode.intValue()]);
+                    byte sndSettleMode = state.getDecoder().readUnsignedByte(buffer, state, (byte) 2);
+                    attach.setSndSettleMode(SenderSettleMode.valueOf(sndSettleMode));
                     break;
                 case 4:
-                    UnsignedByte rcvSettleMode = state.getDecoder().readUnsignedByte(buffer, state);
-                    attach.setRcvSettleMode(rcvSettleMode == null ? ReceiverSettleMode.FIRST : ReceiverSettleMode.values()[rcvSettleMode.intValue()]);
+                    byte rcvSettleMode = state.getDecoder().readUnsignedByte(buffer, state, (byte) 0);
+                    attach.setRcvSettleMode(ReceiverSettleMode.valueOf(rcvSettleMode));
                     break;
                 case 5:
                     attach.setSource(state.getDecoder().readObject(buffer, state, Source.class));

@@ -29,7 +29,11 @@ public enum SenderSettleMode {
     }
 
     public static SenderSettleMode valueOf(UnsignedByte value) {
-        switch (value.intValue()) {
+        return SenderSettleMode.valueOf(value.byteValue());
+    }
+
+    public static SenderSettleMode valueOf(byte value) {
+        switch (value) {
             case 0:
                 return SenderSettleMode.UNSETTLED;
             case 1:

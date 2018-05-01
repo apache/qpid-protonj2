@@ -101,8 +101,8 @@ public class TargetTypeDecoder extends AbstractDescribedTypeDecoder<Target> {
                     target.setAddress(state.getDecoder().readString(buffer, state));
                     break;
                 case 1:
-                    UnsignedInteger durability = state.getDecoder().readUnsignedInteger(buffer, state);
-                    target.setDurable(durability == null ? TerminusDurability.NONE : TerminusDurability.get(durability));
+                    long durability = state.getDecoder().readUnsignedInteger(buffer, state, 0);
+                    target.setDurable(TerminusDurability.get(durability));
                     break;
                 case 2:
                     Symbol expiryPolicy = state.getDecoder().readSymbol(buffer, state);
@@ -113,7 +113,7 @@ public class TargetTypeDecoder extends AbstractDescribedTypeDecoder<Target> {
                     target.setTimeout(timeout == null ? UnsignedInteger.ZERO : timeout);
                     break;
                 case 4:
-                    target.setDynamic(Boolean.TRUE.equals(state.getDecoder().readBoolean(buffer, state)));
+                    target.setDynamic(state.getDecoder().readBoolean(buffer, state, false));
                     break;
                 case 5:
                     target.setDynamicNodeProperties(state.getDecoder().readMap(buffer, state));

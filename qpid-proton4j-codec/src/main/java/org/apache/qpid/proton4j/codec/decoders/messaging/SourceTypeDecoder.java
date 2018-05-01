@@ -102,8 +102,8 @@ public class SourceTypeDecoder extends AbstractDescribedTypeDecoder<Source> {
                     source.setAddress(state.getDecoder().readString(buffer, state));
                     break;
                 case 1:
-                    UnsignedInteger durability = state.getDecoder().readUnsignedInteger(buffer, state);
-                    source.setDurable(durability == null ? TerminusDurability.NONE : TerminusDurability.get(durability));
+                    long durability = state.getDecoder().readUnsignedInteger(buffer, state, 0);
+                    source.setDurable(TerminusDurability.get(durability));
                     break;
                 case 2:
                     Symbol expiryPolicy = state.getDecoder().readSymbol(buffer, state);
@@ -114,7 +114,7 @@ public class SourceTypeDecoder extends AbstractDescribedTypeDecoder<Source> {
                     source.setTimeout(timeout == null ? UnsignedInteger.ZERO : timeout);
                     break;
                 case 4:
-                    source.setDynamic(Boolean.TRUE.equals(state.getDecoder().readBoolean(buffer, state)));
+                    source.setDynamic(state.getDecoder().readBoolean(buffer, state, false));
                     break;
                 case 5:
                     source.setDynamicNodeProperties(state.getDecoder().readMap(buffer, state));
