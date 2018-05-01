@@ -84,13 +84,13 @@ public class AmqpValueTypeEncoder extends AbstractDescribedTypeEncoder<AmqpValue
         Object[] elements = new Object[values.length];
 
         for (int i = 0; i < values.length; ++i) {
-            AmqpValue sequence = (AmqpValue) values[i];
-            elements[i] = sequence.getValue();
+            AmqpValue value = (AmqpValue) values[i];
+            elements[i] = value.getValue();
         }
 
         TypeEncoder<?> entryEncoder = state.getEncoder().getTypeEncoder(elements[0].getClass());
 
-        // This should fail if the array of AmqpSequences do not all contain the same type
+        // This should fail if the array of AmqpValue do not all contain the same type
         // in the value portion of the sequence.
         entryEncoder.writeArray(buffer, state, elements);
     }
