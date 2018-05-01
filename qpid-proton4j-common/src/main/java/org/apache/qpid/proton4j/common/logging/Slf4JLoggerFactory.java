@@ -43,6 +43,6 @@ public class Slf4JLoggerFactory extends ProtonLoggerFactory {
 
     @Override
     protected ProtonLogger createLoggerWrapper(String name) {
-        return null; // TODO wrap LoggerFactory.getLogger(name);
+        return new Slf4JLoggerWrapper(LoggerFactory.getLogger(name));
     }
 }
