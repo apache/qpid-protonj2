@@ -21,6 +21,7 @@ import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.EncoderState;
 import org.apache.qpid.proton4j.codec.EncodingCodes;
+import org.apache.qpid.proton4j.codec.TypeEncoder;
 import org.apache.qpid.proton4j.codec.encoders.AbstractDescribedTypeEncoder;
 
 public class NoLocalTypeEncoder extends AbstractDescribedTypeEncoder<NoLocalType> {
@@ -76,12 +77,14 @@ public class NoLocalTypeEncoder extends AbstractDescribedTypeEncoder<NoLocalType
         buffer.writeByte(EncodingCodes.DESCRIBED_TYPE_INDICATOR);
         state.getEncoder().writeUnsignedLong(buffer, state, getDescriptorCode());
 
-        // TODO - This encodes incorrectly, should only be String type followed by the
-        //        encoded values
+        Object[] elements = new Object[values.length];
 
-        for (Object value : values) {
-            NoLocalType noLocal = ((NoLocalType) value);
-            state.getEncoder().writeString(buffer, state, noLocal.getDescribed());
+        for (int i = 0; i < values.length; ++i) {
+            NoLocalType value = (NoLocalType) values[i];
+            elements[i] = value.getDescribed();
         }
+
+        TypeEncoder<?> entryEncoder = state.getEncoder().getTypeEncoder(String.class);
+        entryEncoder.writeArray(buffer, state, elements);
     }
 }
