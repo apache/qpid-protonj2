@@ -19,7 +19,6 @@ package org.apache.qpid.proton4j.amqp;
 import java.nio.ByteBuffer;
 import java.util.Collection;
 
-// TODO - Refactor to wrap a ProtonBuffer
 public final class Binary {
 
     private final byte[] data;
