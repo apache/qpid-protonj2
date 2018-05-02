@@ -28,6 +28,7 @@ import static org.junit.Assert.fail;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 
+import org.apache.qpid.proton4j.buffer.util.ProtonTestByteBuffer;
 import org.junit.Test;
 
 /**
@@ -1040,10 +1041,25 @@ public class ProtonByteBufferTest {
 
     //----- Tests for string conversion --------------------------------------//
 
+    @Test
     public void testToStringFromUTF8() throws Exception {
         String sourceString = "Test-String-1";
 
         ProtonByteBuffer buffer = ProtonByteBufferAllocator.DEFAULT.wrap(sourceString.getBytes(StandardCharsets.UTF_8));
+
+        String decoded = buffer.toString(StandardCharsets.UTF_8);
+
+        assertEquals(sourceString, decoded);
+    }
+
+    @Test
+    public void testToStringFromUTF8WithNonArrayBackedBuffer() throws Exception {
+        String sourceString = "Test-String-1";
+
+        ProtonTestByteBuffer buffer = new ProtonTestByteBuffer(false);
+        buffer.writeBytes(sourceString.getBytes(StandardCharsets.UTF_8));
+
+        assertFalse(buffer.hasArray());
 
         String decoded = buffer.toString(StandardCharsets.UTF_8);
 

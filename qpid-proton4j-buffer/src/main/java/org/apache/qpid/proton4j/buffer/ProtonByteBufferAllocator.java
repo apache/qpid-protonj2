@@ -46,7 +46,12 @@ public class ProtonByteBufferAllocator implements ProtonBufferAllocator {
     }
 
     @Override
+    public ProtonBuffer wrap(byte[] array, int offset, int length) {
+        return new ProtonByteBuffer(array, array.length).slice(offset, length);
+    }
+
+    @Override
     public ProtonBuffer wrap(ByteBuffer buffer) {
-        return new ProtonByteBufferSupport.ProtonNIOByteBufferWrapper(buffer);
+        return new ProtonNioByteBuffer(buffer);
     }
 }

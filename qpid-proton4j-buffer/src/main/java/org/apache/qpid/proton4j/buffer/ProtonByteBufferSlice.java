@@ -17,7 +17,6 @@
 package org.apache.qpid.proton4j.buffer;
 
 import java.nio.ByteBuffer;
-import java.nio.charset.Charset;
 
 /**
  * Presents a sliced view of a ProtonByteBuffer
@@ -93,21 +92,6 @@ public class ProtonByteBufferSlice extends ProtonAbstractByteBuffer {
     @Override
     public ByteBuffer toByteBuffer(int index, int length) {
         return buffer.toByteBuffer(offset(index), length).slice();
-    }
-
-    @Override
-    public String toString(Charset charset) {
-        return null;
-    }
-
-    @Override
-    public ProtonBuffer setIndex(int readIndex, int writeIndex) {
-        return null;
-    }
-
-    @Override
-    public int compareTo(ProtonBuffer o) {
-        return 0;
     }
 
     //----- Overridden absolute get methods ----------------------------------//

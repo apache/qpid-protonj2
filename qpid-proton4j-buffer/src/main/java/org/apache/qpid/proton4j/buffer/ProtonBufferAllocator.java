@@ -70,6 +70,24 @@ public interface ProtonBufferAllocator {
     ProtonBuffer wrap(byte[] array);
 
     /**
+     * Create a new ProtonBuffer that wraps the given byte array using the provided
+     * offset and length values to confine the view of that array.
+     * <p>
+     * The capacity and maximum capacity for the resulting ProtonBuffer should equal
+     * to the length of the wrapped array and the returned array offset is zero.
+     *
+     * @param array
+     *      the byte array to wrap.
+     * @param offset
+     *      the offset into the array where the view begins.
+     * @param length
+     *      the number of bytes in the array to expose
+     *
+     * @return a new ProtonBuffer that wraps the given array.
+     */
+    ProtonBuffer wrap(byte[] array, int offset, int length);
+
+    /**
      * Create a new ProtonBuffer that wraps the given ByteBuffer.
      * <p>
      * The capacity and maximum capacity of the returned ProtonBuffer will be the

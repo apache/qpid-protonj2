@@ -17,6 +17,7 @@
 package org.apache.qpid.proton4j.buffer;
 
 import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
 
 /**
  * Base class used to hold the common implementation details for Proton buffer
@@ -545,6 +546,21 @@ public abstract class ProtonAbstractByteBuffer implements ProtonBuffer {
         }
 
         return getReadableBytes() - other.getReadableBytes();
+    }
+
+    @Override
+    public String toString(Charset charset) {
+        final String result;
+
+        if (hasArray()) {
+            result = new String(getArray(), getArrayOffset() + getReadIndex(), getReadableBytes(), charset);
+        } else {
+            byte[] copy = new byte[getReadableBytes()];
+            getBytes(getReadIndex(), copy);
+            result = new String(copy, 0, copy.length, charset);
+        }
+
+        return result;
     }
 
     //----- Validation methods for buffer access -----------------------------//
