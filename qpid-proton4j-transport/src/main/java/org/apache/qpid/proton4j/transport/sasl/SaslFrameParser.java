@@ -244,8 +244,10 @@ public class SaslFrameParser implements FrameParser {
                         break;
                     }
 
-                    if (input.getReadableBytes() < size - 4) {
-                        buffer = ProtonByteBufferAllocator.DEFAULT.allocate(size - 4, size - 4);
+                    int frameSize = size - 4;
+
+                    if (input.getReadableBytes() < frameSize) {
+                        buffer = ProtonByteBufferAllocator.DEFAULT.allocate(frameSize, frameSize);
                         buffer.writeBytes(input);
                         parsingState = State.BUFFERING;
                         break;
@@ -286,6 +288,12 @@ public class SaslFrameParser implements FrameParser {
                     input.readByte();
 
                     if (type != SASL_FRAME_TYPE) {
+                        // TODO - Here we may want to either throw some more specific exception
+                        //        or just mark and reset when a non-SASL frame arrives as that
+                        //        could be a pipelined open and we could just let the handler
+                        //        hold the buffer or if not doing temporal squashing just pass
+                        //        it onto the next handler as we should have either completed or
+                        //        failed the SASL exchange at this point.
                         parsingError = new TransportException(String.format("unknown frame type: %d", type));
                         parsingState = State.ERROR;
                         break;
@@ -296,9 +304,6 @@ public class SaslFrameParser implements FrameParser {
                     }
 
                     try {
-                        // TODO - Using a SASL only configured decoder we would not
-                        //        get an object unless it was a Sasl performative but
-                        //        instead would get an exception.
                         Object val = decoder.readObject(input, decoderState);
 
                         final Binary payload;

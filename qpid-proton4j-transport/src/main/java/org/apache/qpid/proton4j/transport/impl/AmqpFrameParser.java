@@ -250,8 +250,10 @@ public class AmqpFrameParser implements FrameParser {
                         break;
                     }
 
-                    if (input.getReadableBytes() < size - 4) {
-                        buffer = ProtonByteBufferAllocator.DEFAULT.allocate(size - 4, size - 4);
+                    int frameSize = size - 4;
+
+                    if (input.getReadableBytes() < frameSize) {
+                        buffer = ProtonByteBufferAllocator.DEFAULT.allocate(frameSize, frameSize);
                         buffer.writeBytes(input);
                         parsingState = State.BUFFERING;
                         break;
