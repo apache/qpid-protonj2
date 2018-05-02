@@ -536,12 +536,38 @@ public class ProtonByteBufferTest {
     }
 
     @Test
+    public void testWriteBytesFromProtonBuffer() {
+        ProtonBuffer source = new ProtonByteBuffer(new byte[] { 0, 1, 2, 3, 4, 5 });
+        ProtonBuffer buffer = new ProtonByteBuffer();
+
+        assertEquals(0, buffer.getWriteIndex());
+        assertEquals(0, buffer.getReadIndex());
+
+        buffer.writeBytes(source);
+
+        assertEquals(0, source.getReadableBytes());
+        assertEquals(source.getWriteIndex(), buffer.getWriteIndex());
+        assertEquals(0, buffer.getReadIndex());
+
+        for (int i = 0; i < source.getReadableBytes(); ++i) {
+            assertEquals(source.getByte(i), buffer.readByte());
+        }
+
+        assertEquals(source.getReadableBytes(), buffer.getReadIndex());
+    }
+
+    @Test
     public void testWriteBytesFromProtonBufferWithLength() {
         ProtonBuffer source = new ProtonByteBuffer(new byte[] { 0, 1, 2, 3, 4, 5 });
         ProtonBuffer buffer = new ProtonByteBuffer();
 
         assertEquals(0, buffer.getWriteIndex());
         assertEquals(0, buffer.getReadIndex());
+
+        try {
+            buffer.writeBytes(source, source.getReadableBytes() + 1);
+            fail("Should not write when length given is to large.");
+        } catch (IndexOutOfBoundsException ex) {}
 
         buffer.writeBytes(source, source.getReadableBytes());
 
@@ -574,6 +600,25 @@ public class ProtonByteBufferTest {
         }
 
         assertEquals(source.getReadableBytes(), buffer.getReadIndex());
+    }
+
+    @Test
+    public void testWriteBytesFromByteBuffer() {
+        ByteBuffer source = ByteBuffer.wrap(new byte[] { 0, 1, 2, 3, 4, 5 });
+        ProtonBuffer buffer = new ProtonByteBuffer();
+
+        assertEquals(0, buffer.getWriteIndex());
+        assertEquals(0, buffer.getReadIndex());
+
+        buffer.writeBytes(source);
+
+        assertEquals(0, source.remaining());
+        assertEquals(source.position(), buffer.getWriteIndex());
+        assertEquals(0, buffer.getReadIndex());
+
+        for (int i = 0; i < source.capacity(); ++i) {
+            assertEquals(source.get(i), buffer.readByte());
+        }
     }
 
     //----- Write Primitives Tests -------------------------------------------//
