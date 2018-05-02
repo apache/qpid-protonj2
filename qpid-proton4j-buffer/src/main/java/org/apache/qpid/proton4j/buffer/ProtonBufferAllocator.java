@@ -58,6 +58,9 @@ public interface ProtonBufferAllocator {
 
     /**
      * Create a new ProtonBuffer that wraps the given byte array.
+     * <p>
+     * The capacity and maximum capacity for the resulting ProtonBuffer should equal
+     * to the length of the wrapped array and the returned array offset is zero.
      *
      * @param array
      *      the byte array to wrap.
@@ -68,6 +71,11 @@ public interface ProtonBufferAllocator {
 
     /**
      * Create a new ProtonBuffer that wraps the given ByteBuffer.
+     * <p>
+     * The capacity and maximum capacity of the returned ProtonBuffer will be the
+     * same as that of the underlying ByteBuffer.  The ProtonBuffer will return true
+     * from the {@link ProtonBuffer#hasArray()} method only when the wrapped ByteBuffer
+     * reports that it is backed by an array.
      *
      * @param buffer
      *      the ByteBuffer to wrap.
