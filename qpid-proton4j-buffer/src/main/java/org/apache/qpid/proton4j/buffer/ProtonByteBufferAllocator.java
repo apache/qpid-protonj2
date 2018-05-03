@@ -52,6 +52,14 @@ public class ProtonByteBufferAllocator implements ProtonBufferAllocator {
 
     @Override
     public ProtonBuffer wrap(ByteBuffer buffer) {
-        return new ProtonNioByteBuffer(buffer);
+        if (buffer.isReadOnly() || buffer.isDirect()) {
+            throw new UnsupportedOperationException("Cannot wrap direct or read-only buffers");
+        }
+
+        if (buffer.hasArray()) {
+            return wrap(buffer.array(), buffer.arrayOffset() + buffer.position(), buffer.remaining());
+        } else {
+            throw new UnsupportedOperationException("Cannot wrap buffer that are not array backed");
+        }
     }
 }

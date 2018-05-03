@@ -20,15 +20,18 @@ import java.nio.ByteBuffer;
 
 /**
  * ProtonBuffer wrapper around a NIO ByteBuffer instance.
+ *
+ * TODO - Decide if we want to implement this, many limitations and issues
+ *        around this as buffer can be read-only etc.
  */
 public class ProtonNioByteBuffer extends ProtonAbstractByteBuffer {
 
     private final ByteBuffer buffer;
 
     protected ProtonNioByteBuffer(ByteBuffer buffer) {
-        super(buffer.capacity());
+        super(buffer.remaining());
 
-        this.buffer = buffer;
+        this.buffer = buffer.slice();
     }
 
     @Override
@@ -48,7 +51,7 @@ public class ProtonNioByteBuffer extends ProtonAbstractByteBuffer {
 
     @Override
     public int capacity() {
-        return buffer.remaining();  // TODO What is right here ?
+        return buffer.remaining();
     }
 
     @Override
