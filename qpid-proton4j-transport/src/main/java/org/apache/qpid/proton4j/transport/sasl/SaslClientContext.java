@@ -16,6 +16,7 @@
  */
 package org.apache.qpid.proton4j.transport.sasl;
 
+import org.apache.qpid.proton4j.amqp.Binary;
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.security.SaslChallenge;
 import org.apache.qpid.proton4j.amqp.security.SaslMechanisms;
@@ -59,6 +60,8 @@ public class SaslClientContext extends SaslContext {
 
     //----- Mutable state ----------------------------------------------------//
 
+    // TODO - Remove these now ?
+
     public String getHostname() {
         return hostname;
     }
@@ -75,7 +78,36 @@ public class SaslClientContext extends SaslContext {
         this.chosenMechanism = Symbol.valueOf(mechanism);
     }
 
-    //----- SASL Frame event handlers-----------------------------------------//
+    //----- Event response methods -------------------------------------------//
+
+    /**
+     * Sends a response to the SASL server indicating the chosen mechanism for this
+     * client and the host-name that this client is identifying itself as.
+     *
+     * @param mechanism
+     *      The chosen mechanism selected from the list the server provided.
+     * @param host
+     *      The host-name that the client is identified as.
+     */
+    public void sendChosenMechanism(String mechanism, String host) {
+        // TODO
+    }
+
+    /**
+     * Sends a response to a server side challenge that comprises the challenge / response
+     * exchange for the chosen SASL mechanism.
+     *
+     * @param response
+     *      The response bytes to be sent to the server for this cycle.
+     */
+    public void sendResponse(Binary response) {
+        // TODO - Should we make all these Binary SASL bits use ProtonBuffer instead
+        //        so the client can just wrap arrays or other buffer types ?
+
+        // TODO
+    }
+
+    //----- SASL Frame event handlers ----------------------------------------//
 
     @Override
     public void handleHeaderFrame(TransportHandlerContext context, HeaderFrame header) {
