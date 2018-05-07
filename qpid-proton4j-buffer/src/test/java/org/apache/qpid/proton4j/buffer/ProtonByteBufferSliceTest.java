@@ -178,4 +178,145 @@ public class ProtonByteBufferSliceTest {
             fail("Should not be able to alter capacity");
         } catch (UnsupportedOperationException uoe) {}
     }
+
+    //----- Read Primitives Tests -------------------------------------------//
+
+    @Test
+    public void testReadByte() {
+        ProtonBuffer buffer = new ProtonByteBuffer();
+
+        buffer.writeByte((byte) 0);
+        buffer.writeByte((byte) 56);
+
+        ProtonBuffer slice = buffer.slice(1, 1);
+
+        assertEquals(1, slice.getWriteIndex());
+        assertEquals(0, slice.getReadIndex());
+
+        assertEquals(56, slice.readByte());
+
+        assertEquals(1, slice.getWriteIndex());
+        assertEquals(1, slice.getReadIndex());
+
+        assertEquals(0, slice.getReadableBytes());
+    }
+
+    @Test
+    public void testReadBoolean() {
+        ProtonBuffer buffer = new ProtonByteBuffer();
+
+        buffer.writeBoolean(true);
+        buffer.writeBoolean(false);
+
+        ProtonBuffer slice = buffer.slice(1, 1);
+
+        assertEquals(1, slice.getWriteIndex());
+        assertEquals(0, slice.getReadIndex());
+
+        assertEquals(false, slice.readBoolean());
+
+        assertEquals(1, slice.getWriteIndex());
+        assertEquals(1, slice.getReadIndex());
+    }
+
+    @Test
+    public void testReadShort() {
+        ProtonBuffer buffer = new ProtonByteBuffer();
+
+        buffer.writeShort((short) 0);
+        buffer.writeShort((short) 42);
+
+        ProtonBuffer slice = buffer.slice(2, 2);
+
+        assertEquals(2, slice.getWriteIndex());
+        assertEquals(0, slice.getReadIndex());
+
+        assertEquals(42, slice.readShort());
+
+        assertEquals(2, slice.getWriteIndex());
+        assertEquals(2, slice.getReadIndex());
+
+        assertEquals(0, slice.getReadableBytes());
+    }
+
+    @Test
+    public void testWriteInt() {
+        ProtonBuffer buffer = new ProtonByteBuffer();
+
+        buffer.writeInt(0);
+        buffer.writeInt(72);
+
+        ProtonBuffer slice = buffer.slice(4, 4);
+
+        assertEquals(4, slice.getWriteIndex());
+        assertEquals(0, slice.getReadIndex());
+
+        assertEquals(72, slice.readInt());
+
+        assertEquals(4, slice.getWriteIndex());
+        assertEquals(4, slice.getReadIndex());
+
+        assertEquals(0, slice.getReadableBytes());
+    }
+
+    @Test
+    public void testReadLong() {
+        ProtonBuffer buffer = new ProtonByteBuffer();
+
+        buffer.writeLong(0l);
+        buffer.writeLong(500l);
+
+        ProtonBuffer slice = buffer.slice(8, 8);
+
+        assertEquals(8, slice.getWriteIndex());
+        assertEquals(0, slice.getReadIndex());
+
+        assertEquals(500l, slice.readLong());
+
+        assertEquals(8, slice.getWriteIndex());
+        assertEquals(8, slice.getReadIndex());
+
+        assertEquals(0, slice.getReadableBytes());
+    }
+
+    @Test
+    public void testReadFloat() {
+        ProtonBuffer buffer = new ProtonByteBuffer();
+
+        buffer.writeFloat(1.1f);
+        buffer.writeFloat(35.5f);
+
+        ProtonBuffer slice = buffer.slice(4, 4);
+
+        assertEquals(4, slice.getWriteIndex());
+        assertEquals(0, slice.getReadIndex());
+
+        assertEquals(35.5f, slice.readFloat(), 0.4f);
+
+        assertEquals(4, slice.getWriteIndex());
+        assertEquals(4, slice.getReadIndex());
+
+        assertEquals(0, slice.getReadableBytes());
+    }
+
+    @Test
+    public void testReadDouble() {
+        ProtonBuffer buffer = new ProtonByteBuffer();
+
+        buffer.writeDouble(2.68);
+        buffer.writeDouble(1.66);
+
+        ProtonBuffer slice = buffer.slice(8, 8);
+
+        assertEquals(8, slice.getWriteIndex());
+        assertEquals(0, slice.getReadIndex());
+
+        assertEquals(1.66, slice.readDouble(), 0.1);
+
+        assertEquals(8, slice.getWriteIndex());
+        assertEquals(8, slice.getReadIndex());
+
+        assertEquals(0, slice.getReadableBytes());
+    }
+
 }

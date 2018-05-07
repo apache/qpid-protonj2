@@ -91,7 +91,7 @@ public class ProtonByteBufferAllocatorTest {
     @Test
     public void testWrapByteArray() {
         byte[] source = new byte[] {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
-        ProtonByteBuffer buffer = ProtonByteBufferAllocator.DEFAULT.wrap(source);
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.wrap(source);
 
         assertNotNull(buffer);
         assertNotEquals(ProtonByteBuffer.DEFAULT_CAPACITY, buffer.capacity());
@@ -102,5 +102,37 @@ public class ProtonByteBufferAllocatorTest {
 
         assertSame(source, buffer.getArray());
         assertEquals(0, buffer.getArrayOffset());
+    }
+
+    @Test
+    public void testWrapByteArrayWithOffsetAndLength() {
+        byte[] source = new byte[] {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.wrap(source, 0, source.length);
+
+        assertNotNull(buffer);
+        assertNotEquals(ProtonByteBuffer.DEFAULT_CAPACITY, buffer.capacity());
+        assertNotEquals(ProtonByteBuffer.DEFAULT_MAXIMUM_CAPACITY, buffer.capacity());
+
+        assertEquals(source.length, buffer.capacity());
+        assertEquals(source.length, buffer.maxCapacity());
+
+        assertSame(source, buffer.getArray());
+        assertEquals(0, buffer.getArrayOffset());
+    }
+
+    @Test
+    public void testWrapByteArrayWithOffsetAndLengthSubset() {
+        byte[] source = new byte[] {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.wrap(source, 1, source.length - 2);
+
+        assertNotNull(buffer);
+        assertNotEquals(ProtonByteBuffer.DEFAULT_CAPACITY, buffer.capacity());
+        assertNotEquals(ProtonByteBuffer.DEFAULT_MAXIMUM_CAPACITY, buffer.capacity());
+
+        assertEquals(source.length - 2, buffer.capacity());
+        assertEquals(source.length - 2, buffer.maxCapacity());
+
+        assertSame(source, buffer.getArray());
+        assertEquals(1, buffer.getArrayOffset());
     }
 }

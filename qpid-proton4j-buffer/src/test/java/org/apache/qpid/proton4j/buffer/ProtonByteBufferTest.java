@@ -918,6 +918,24 @@ public class ProtonByteBufferTest {
     }
 
     @Test
+    public void testGetUnsignedByte() {
+        byte[] source = new byte[] { 0, 1, 2, 3, 4, 5 };
+        ProtonBuffer buffer = new ProtonByteBuffer(source);
+
+        assertEquals(source.length, buffer.getReadableBytes());
+
+        for (int i = 0; i < source.length; ++i) {
+            assertEquals(source[i], buffer.getUnsignedByte(i));
+        }
+
+        try {
+            buffer.readByte();
+        } catch (IndexOutOfBoundsException ex) {
+            fail("Should be able to read from the buffer");
+        }
+    }
+
+    @Test
     public void testGetBoolean() {
         byte[] source = new byte[] { 0, 1, 0, 1, 0, 1 };
         ProtonBuffer buffer = new ProtonByteBuffer(source);
@@ -958,6 +976,24 @@ public class ProtonByteBufferTest {
     }
 
     @Test
+    public void testGetUnsignedShort() {
+        byte[] source = new byte[] { 0, 0, 0, 1, 0, 2, 0, 3, 0, 4 };
+        ProtonBuffer buffer = new ProtonByteBuffer(source);
+
+        assertEquals(source.length, buffer.getReadableBytes());
+
+        for (int i = 0; i < source.length; i += 2) {
+            assertEquals(source[i + 1], buffer.getUnsignedShort(i));
+        }
+
+        try {
+            buffer.readShort();
+        } catch (IndexOutOfBoundsException ex) {
+            fail("Should be able to read from the buffer");
+        }
+    }
+
+    @Test
     public void testGetInt() {
         byte[] source = new byte[] { 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 2, 0, 0, 0, 3, 0, 0, 0, 4 };
         ProtonBuffer buffer = new ProtonByteBuffer(source);
@@ -966,6 +1002,24 @@ public class ProtonByteBufferTest {
 
         for (int i = 0; i < source.length; i += 4) {
             assertEquals(source[i + 3], buffer.getInt(i));
+        }
+
+        try {
+            buffer.readInt();
+        } catch (IndexOutOfBoundsException ex) {
+            fail("Should be able to read from the buffer");
+        }
+    }
+
+    @Test
+    public void testGetUnsignedInt() {
+        byte[] source = new byte[] { 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 2, 0, 0, 0, 3, 0, 0, 0, 4 };
+        ProtonBuffer buffer = new ProtonByteBuffer(source);
+
+        assertEquals(source.length, buffer.getReadableBytes());
+
+        for (int i = 0; i < source.length; i += 4) {
+            assertEquals(source[i + 3], buffer.getUnsignedInt(i));
         }
 
         try {
@@ -992,6 +1046,46 @@ public class ProtonByteBufferTest {
 
         try {
             buffer.readLong();
+        } catch (IndexOutOfBoundsException ex) {
+            fail("Should be able to read from the buffer");
+        }
+    }
+
+    @Test
+    public void testGetFloat() {
+        ProtonBuffer buffer = new ProtonByteBuffer();
+        buffer.writeInt(Float.floatToIntBits(1.1f));
+        buffer.writeInt(Float.floatToIntBits(2.2f));
+        buffer.writeInt(Float.floatToIntBits(42.3f));
+
+        assertEquals(Integer.BYTES * 3, buffer.getReadableBytes());
+
+        assertEquals(1.1f, buffer.getFloat(0), 0.1);
+        assertEquals(2.2f, buffer.getFloat(4), 0.1);
+        assertEquals(42.3f, buffer.getFloat(8), 0.1);
+
+        try {
+            buffer.readFloat();
+        } catch (IndexOutOfBoundsException ex) {
+            fail("Should be able to read from the buffer");
+        }
+    }
+
+    @Test
+    public void testGetDouble() {
+        ProtonBuffer buffer = new ProtonByteBuffer();
+        buffer.writeLong(Double.doubleToLongBits(1.1));
+        buffer.writeLong(Double.doubleToLongBits(2.2));
+        buffer.writeLong(Double.doubleToLongBits(42.3));
+
+        assertEquals(Long.BYTES * 3, buffer.getReadableBytes());
+
+        assertEquals(1.1, buffer.getDouble(0), 0.1);
+        assertEquals(2.2, buffer.getDouble(8), 0.1);
+        assertEquals(42.3, buffer.getDouble(16), 0.1);
+
+        try {
+            buffer.readDouble();
         } catch (IndexOutOfBoundsException ex) {
             fail("Should be able to read from the buffer");
         }
@@ -1090,7 +1184,7 @@ public class ProtonByteBufferTest {
     public void testToStringFromUTF8() throws Exception {
         String sourceString = "Test-String-1";
 
-        ProtonByteBuffer buffer = ProtonByteBufferAllocator.DEFAULT.wrap(sourceString.getBytes(StandardCharsets.UTF_8));
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.wrap(sourceString.getBytes(StandardCharsets.UTF_8));
 
         String decoded = buffer.toString(StandardCharsets.UTF_8);
 

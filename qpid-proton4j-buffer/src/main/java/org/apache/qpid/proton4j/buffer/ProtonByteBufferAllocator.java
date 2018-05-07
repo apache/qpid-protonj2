@@ -41,8 +41,8 @@ public class ProtonByteBufferAllocator implements ProtonBufferAllocator {
     }
 
     @Override
-    public ProtonByteBuffer wrap(byte[] array) {
-        return new ProtonByteBuffer(array, array.length);
+    public ProtonBuffer wrap(byte[] array) {
+        return new ProtonByteBuffer(array, array.length).slice();
     }
 
     @Override
