@@ -131,7 +131,13 @@ public class SaslServerContext extends SaslContext {
             headerReceived = true;
         }
 
+        // Give the callback handler a chance to configure this handler
+        listener.onSaslHeader(this);
+
         // TODO - When to fail when no mechanisms set, now or on some earlier started / connected evnet ?
+        if (serverMechanisms == null || serverMechanisms.length == 0) {
+            context.fireFailed(new IllegalStateException("SASL Server has no configured mechanisms"));
+        }
 
         // TODO - Check state, then send mechanisms
         SaslMechanisms mechanisms = new SaslMechanisms();
@@ -168,27 +174,13 @@ public class SaslServerContext extends SaslContext {
         chosenMechanism = saslInit.getMechanism();
         initReceived = true;
 
-        if (saslInit.getInitialResponse() != null) {
-            // TODO - How to present the response data, perhaps pass as arg to listener
-            //        instead of storing pending bytes.
-            //setPending(saslInit.getInitialResponse().asByteBuffer());
-        }
-
-        listener.onSaslInit(this);
-
-        // TODO ? listener.onSaslInit(this, saslInit.getInitialResponse());
+        // TODO - Should we use ProtonBuffer slices as response containers ?
+        listener.onSaslInit(this, saslInit.getInitialResponse());
     }
 
     @Override
     public void handleResponse(SaslResponse saslResponse, TransportHandlerContext context) {
-        if (saslResponse.getResponse() != null) {
-            // TODO - How to present the response data, perhaps pass as arg to listener
-            //        instead of storing pending bytes.
-            //setPending(saslResponse.getResponse().asByteBuffer());
-        }
-
-        listener.onSaslResponse(this);
-
-        // TODO ? listener.onSaslResponse(this, saslResponse.getResponse());
+        // TODO - Should we use ProtonBuffer slices as response containers ?
+        listener.onSaslResponse(this, saslResponse.getResponse());
     }
 }

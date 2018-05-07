@@ -16,6 +16,8 @@
  */
 package org.apache.qpid.proton4j.transport.sasl;
 
+import org.apache.qpid.proton4j.amqp.Binary;
+
 /**
  * Listener for SASL frame arrival to facilitate relevant handling for the SASL
  * negotiation of the server side of the SASL exchange.
@@ -27,13 +29,24 @@ package org.apache.qpid.proton4j.transport.sasl;
 public interface SaslServerListener {
 
     /**
+     * Called when the sasl header has been received and the server
+     * is now ready to send the configured sasl mechanisms.
+     * <p>
+     * The handler can use this callback to set the server's available
+     * sasl mechanisms which will then be sent to the client.
+     *
+     * @param context the SaslServerContext object
+     */
+    void onSaslHeader(SaslServerContext context);
+
+    /**
      * Called when a sasl-init frame has arrived and its effect
      * applied, indicating the selected mechanism and any hostname
      * and initial-response details from the 'client' peer.
      *
      * @param context the SaslServerContext object
      */
-    void onSaslInit(SaslServerContext context);
+    void onSaslInit(SaslServerContext context, Binary initResponse);
 
     /**
      * Called when a sasl-response frame has arrived and its effect
@@ -41,6 +54,6 @@ public interface SaslServerListener {
      *
      * @param context the SaslServerContext object
      */
-    void onSaslResponse(SaslServerContext context);
+    void onSaslResponse(SaslServerContext context, Binary response);
 
 }

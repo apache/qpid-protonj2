@@ -16,6 +16,8 @@
  */
 package org.apache.qpid.proton4j.transport.sasl;
 
+import org.apache.qpid.proton4j.amqp.Binary;
+
 /**
  * Listener for SASL frame arrival to facilitate relevant handling for the SASL
  * negotiation of the client side of the SASL exchange.
@@ -39,8 +41,9 @@ public interface SaslClientListener {
      * applied, indicating the challenge sent by the 'server' peer.
      *
      * @param context the SaslClientContext object
+     * @param binary the challenge bytes sent from the sasl server.
      */
-    void onSaslChallenge(SaslClientContext context);
+    void onSaslChallenge(SaslClientContext context, Binary binary);
 
     /**
      * Called when a sasl-outcome frame has arrived and its effect
@@ -48,7 +51,8 @@ public interface SaslClientListener {
      * sent by the 'server' peer.
      *
      * @param context the SaslClientContext object
+     * @param additional the additional data sent from the server, or null if none.
      */
-    void onSaslOutcome(SaslClientContext context);
+    void onSaslOutcome(SaslClientContext context, Binary additional);
 
 }

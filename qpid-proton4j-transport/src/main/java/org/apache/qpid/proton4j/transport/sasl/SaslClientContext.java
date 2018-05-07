@@ -90,6 +90,7 @@ public class SaslClientContext extends SaslContext {
     public void handleMechanisms(SaslMechanisms saslMechanisms, TransportHandlerContext context) {
         serverMechanisms = saslMechanisms.getSaslServerMechanisms();
 
+        // TODO - Should we use ProtonBuffer slices as response containers ?
         listener.onSaslMechanisms(this, getServerMechanisms());
 
         // TODO - How is the listener driving output, send methods ?
@@ -98,28 +99,16 @@ public class SaslClientContext extends SaslContext {
 
     @Override
     public void handleChallenge(SaslChallenge saslChallenge, TransportHandlerContext context) {
-        if (saslChallenge.getChallenge() != null) {
-            // TODO - How to present the response data, perhaps pass as arg to listener
-            //        instead of storing pending bytes.
-            //setPending(saslChallenge.getChallenge().asByteBuffer());
-        }
-
-        listener.onSaslChallenge(this);
+        // TODO - Should we use ProtonBuffer slices as response containers ?
+        listener.onSaslChallenge(this, saslChallenge.getChallenge());
 
         // TODO - How is the listener driving output, send methods ?
         //        We probably want to support asynchronous triggering
-        // listener.onSaslChallenge(this, saslChallenge.getChallenge());
     }
 
     @Override
     public void handleOutcome(SaslOutcome saslOutcome, TransportHandlerContext context) {
         for (SaslOutcomes outcome : SaslOutcomes.values()) {
-            // TODO - How to present the response data, perhaps pass as arg to listener
-            //        instead of storing pending bytes.
-            //if (saslOutcome.getAdditionalData() != null) {
-            //    setPending(saslOutcome.getAdditionalData().asByteBuffer());
-            //}
-
             if (outcome.getCode() == saslOutcome.getCode().ordinal()) {
                 this.outcome = outcome;
                 if (state != SaslStates.PN_SASL_IDLE) {
@@ -131,9 +120,6 @@ public class SaslClientContext extends SaslContext {
 
         done = true;
 
-        listener.onSaslOutcome(this);
-
-        // TODO - Also pass the Outcome Enum and possible additional data
-        // listener.onSaslOutcome(this, outcome, saslOutcome.getAdditionalData());
+        listener.onSaslOutcome(this, saslOutcome.getAdditionalData());
     }
 }
