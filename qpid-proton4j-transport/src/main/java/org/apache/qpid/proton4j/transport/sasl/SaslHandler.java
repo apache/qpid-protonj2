@@ -26,8 +26,8 @@ import org.apache.qpid.proton4j.transport.Frame;
 import org.apache.qpid.proton4j.transport.HeaderFrame;
 import org.apache.qpid.proton4j.transport.ProtocolFrame;
 import org.apache.qpid.proton4j.transport.SaslFrame;
-import org.apache.qpid.proton4j.transport.TransportHandlerContext;
 import org.apache.qpid.proton4j.transport.TransportHandlerAdapter;
+import org.apache.qpid.proton4j.transport.TransportHandlerContext;
 
 /**
  * Base class used for common portions of the SASL processing pipeline.
@@ -70,17 +70,31 @@ public class SaslHandler extends TransportHandlerAdapter {
     }
 
     public static SaslHandler client(SaslClientListener listener) {
+        if (listener == null) {
+            throw new IllegalArgumentException("SaslClientListener must not be null");
+        }
+
         SaslHandler handler = new SaslHandler();
         SaslClientContext context = new SaslClientContext(handler, listener);
         handler.saslContext = context;
+
+        // Allow the application a change to configure the client handler
+        listener.initialize(context);
 
         return handler;
     }
 
     public static SaslHandler server(SaslServerListener listener) {
+        if (listener == null) {
+            throw new IllegalArgumentException("SaslServerListener must not be null");
+        }
+
         SaslHandler handler = new SaslHandler();
         SaslServerContext context = new SaslServerContext(handler, listener);
         handler.saslContext = context;
+
+        // Allow the application a change to configure the server handler
+        listener.initialize(context);
 
         return handler;
     }

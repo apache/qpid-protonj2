@@ -29,6 +29,18 @@ import org.apache.qpid.proton4j.amqp.Binary;
 public interface SaslServerListener {
 
     /**
+     * Called to give the application code a clear point to initialize all
+     * the Server side expectations.
+     * <p>
+     * The application should use this event to configure the server mechanisms
+     * and other server authentication properties.
+     *
+     * @param context
+     *      the {@link SaslServerContext} used to authenticate the connection.
+     */
+    void initialize(SaslServerContext context);
+
+    /**
      * Called when the sasl header has been received and the server
      * is now ready to send the configured sasl mechanisms.
      * <p>
@@ -37,7 +49,7 @@ public interface SaslServerListener {
      *
      * @param context the SaslServerContext object
      */
-    void onSaslHeader(SaslServerContext context);
+    default void onSaslHeader(SaslServerContext context) {}
 
     /**
      * Called when a sasl-init frame has arrived and its effect

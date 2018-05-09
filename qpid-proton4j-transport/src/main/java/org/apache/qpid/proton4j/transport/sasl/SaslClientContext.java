@@ -60,7 +60,7 @@ public class SaslClientContext extends SaslContext {
 
     //----- Mutable state ----------------------------------------------------//
 
-    // TODO - Remove these now ?
+    // TODO - Remove these now ? or do something that checks these and does pipeline ?
 
     public String getHostname() {
         return hostname;
