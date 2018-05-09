@@ -63,7 +63,7 @@ public class ProtonByteBuffer extends ProtonAbstractByteBuffer {
         super(maximumCapacity);
 
         if (array == null) {
-            throw new IllegalArgumentException("Array to wrap cannot be null");
+            throw new NullPointerException("Array to wrap cannot be null");
         }
 
         this.array = array;

@@ -118,6 +118,24 @@ public class ProtonByteBufferTest {
         assertEquals(0, buffer.getArrayOffset());
     }
 
+    @Test
+    public void testConstructorByteArrayThrowsWhenNull() {
+        try {
+            new ProtonByteBuffer(null);
+            fail("Should throw NullPointerException");
+        } catch (NullPointerException npe) {}
+
+        try {
+            new ProtonTestByteBuffer(null, 1);
+            fail("Should throw NullPointerException");
+        } catch (NullPointerException npe) {}
+
+        try {
+            new ProtonTestByteBuffer(null, 1, 1);
+            fail("Should throw NullPointerException");
+        } catch (NullPointerException npe) {}
+    }
+
     //----- Tests for altering buffer properties -----------------------------//
 
     @Test
@@ -1560,5 +1578,193 @@ public class ProtonByteBufferTest {
             fail("should have thrown IndexOutOfBoundsException");
         } catch (IndexOutOfBoundsException iobe) {
         }
+    }
+
+    //----- Test for set by index --------------------------------------------//
+
+    @Test
+    public void testSetByteAtIndex() {
+        ProtonBuffer buffer = new ProtonByteBuffer(5, 5);
+
+        for (int i = 0; i < buffer.capacity(); ++i) {
+            buffer.setByte(i, i);
+        }
+
+        for (int i = 0; i < buffer.capacity(); ++i) {
+            assertEquals(i, buffer.getByte(i));
+        }
+
+        try {
+            buffer.setByte(-1, 0);
+            fail("should throw an IndexOutOfBoundsException");
+        } catch (IndexOutOfBoundsException ioe) {}
+
+        try {
+            buffer.setByte(buffer.capacity(), 0);
+            fail("should throw an IndexOutOfBoundsException");
+        } catch (IndexOutOfBoundsException ioe) {}
+    }
+
+    @Test
+    public void testSetBooleanAtIndex() {
+        ProtonBuffer buffer = new ProtonByteBuffer(5, 5);
+
+        for (int i = 0; i < buffer.capacity(); ++i) {
+            if ((i % 2) == 0) {
+                buffer.setBoolean(i, false);
+            } else {
+                buffer.setBoolean(i, true);
+            }
+        }
+
+        for (int i = 0; i < buffer.capacity(); ++i) {
+            if ((i % 2) == 0) {
+                assertFalse(buffer.getBoolean(i));
+            } else {
+                assertTrue(buffer.getBoolean(i));
+            }
+        }
+
+        try {
+            buffer.setBoolean(-1, true);
+            fail("should throw an IndexOutOfBoundsException");
+        } catch (IndexOutOfBoundsException ioe) {}
+
+        try {
+            buffer.setBoolean(buffer.capacity(), false);
+            fail("should throw an IndexOutOfBoundsException");
+        } catch (IndexOutOfBoundsException ioe) {}
+    }
+
+    @Test
+    public void testSetShortAtIndex() {
+        ProtonBuffer buffer = new ProtonByteBuffer(10, 10);
+
+        for (short i = 0; i < buffer.capacity() / 2; i += 2) {
+            buffer.setShort(i, i);
+        }
+
+        for (short i = 0; i < buffer.capacity() / 2; i += 2) {
+            assertEquals(i, buffer.getShort(i));
+        }
+
+        try {
+            buffer.setShort(-1, 0);
+            fail("should throw an IndexOutOfBoundsException");
+        } catch (IndexOutOfBoundsException ioe) {}
+
+        try {
+            buffer.setShort(buffer.capacity(), 0);
+            fail("should throw an IndexOutOfBoundsException");
+        } catch (IndexOutOfBoundsException ioe) {}
+    }
+
+    @Test
+    public void testSetIntAtIndex() {
+        ProtonBuffer buffer = new ProtonByteBuffer(20, 20);
+
+        for (int i = 0; i < buffer.capacity() / 4; i += 4) {
+            buffer.setInt(i, i);
+        }
+
+        for (int i = 0; i < buffer.capacity() / 4; i += 4) {
+            assertEquals(i, buffer.getInt(i));
+        }
+
+        try {
+            buffer.setInt(-1, 0);
+            fail("should throw an IndexOutOfBoundsException");
+        } catch (IndexOutOfBoundsException ioe) {}
+
+        try {
+            buffer.setInt(buffer.capacity(), 0);
+            fail("should throw an IndexOutOfBoundsException");
+        } catch (IndexOutOfBoundsException ioe) {}
+    }
+
+    @Test
+    public void testSetLongAtIndex() {
+        ProtonBuffer buffer = new ProtonByteBuffer(40, 40);
+
+        for (long i = 0; i < buffer.capacity() / 8; i += 8) {
+            buffer.setLong((int) i, i);
+        }
+
+        for (long i = 0; i < buffer.capacity() / 8; i += 8) {
+            assertEquals(i, buffer.getLong((int) i));
+        }
+
+        try {
+            buffer.setInt(-1, 0);
+            fail("should throw an IndexOutOfBoundsException");
+        } catch (IndexOutOfBoundsException ioe) {}
+
+        try {
+            buffer.setInt(buffer.capacity(), 0);
+            fail("should throw an IndexOutOfBoundsException");
+        } catch (IndexOutOfBoundsException ioe) {}
+    }
+
+    @Test
+    public void testSetFloatAtIndex() {
+        ProtonBuffer buffer = new ProtonByteBuffer(8, 8);
+
+        buffer.setFloat(0, 1.5f);
+        buffer.setFloat(4, 45.2f);
+
+        assertEquals(1.5f, buffer.getFloat(0), 0.1);
+        assertEquals(45.2f, buffer.getFloat(4), 0.1);
+
+        try {
+            buffer.setFloat(-1, 0);
+            fail("should throw an IndexOutOfBoundsException");
+        } catch (IndexOutOfBoundsException ioe) {}
+
+        try {
+            buffer.setFloat(buffer.capacity(), 0);
+            fail("should throw an IndexOutOfBoundsException");
+        } catch (IndexOutOfBoundsException ioe) {}
+    }
+
+    @Test
+    public void testSetDoubleAtIndex() {
+        ProtonBuffer buffer = new ProtonByteBuffer(16, 16);
+
+        buffer.setDouble(0, 1.5);
+        buffer.setDouble(8, 45.2);
+
+        assertEquals(1.5, buffer.getDouble(0), 0.1);
+        assertEquals(45.2, buffer.getDouble(8), 0.1);
+
+        try {
+            buffer.setDouble(-1, 0);
+            fail("should throw an IndexOutOfBoundsException");
+        } catch (IndexOutOfBoundsException ioe) {}
+
+        try {
+            buffer.setDouble(buffer.capacity(), 0);
+            fail("should throw an IndexOutOfBoundsException");
+        } catch (IndexOutOfBoundsException ioe) {}
+    }
+
+    @Test
+    public void testSetCharAtIndex() {
+        ProtonBuffer buffer = new ProtonByteBuffer(8, 8);
+
+        buffer.setChar(0, 65);
+        buffer.setChar(4, 66);
+
+        assertEquals('A', buffer.getChar(0));
+        assertEquals('B', buffer.getChar(4));
+
+        try {
+            buffer.setDouble(-1, 0);
+            fail("should throw an IndexOutOfBoundsException");
+        } catch (IndexOutOfBoundsException ioe) {}
+
+        try {
+            buffer.setDouble(buffer.capacity(), 0);
+            fail("should throw an IndexOutOfBoundsException");
+        } catch (IndexOutOfBoundsException ioe) {}
     }
 }
