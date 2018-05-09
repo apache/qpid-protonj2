@@ -157,7 +157,7 @@ public class ProtonByteBufferTest {
     }
 
     @Test
-    public void testSeIndexWithNegativeReadIndex() {
+    public void testSetIndexWithNegativeReadIndex() {
         ProtonBuffer buffer = new ProtonByteBuffer();
         try {
             buffer.setIndex(-1, 0);
@@ -166,7 +166,7 @@ public class ProtonByteBufferTest {
     }
 
     @Test
-    public void testSeIndexWithNegativeWriteIndex() {
+    public void testSetIndexWithNegativeWriteIndex() {
         ProtonBuffer buffer = new ProtonByteBuffer();
         try {
             buffer.setIndex(0, -1);
@@ -175,7 +175,7 @@ public class ProtonByteBufferTest {
     }
 
     @Test
-    public void testSeIndexWithReadIndexBiggerThanWrite() {
+    public void testSetIndexWithReadIndexBiggerThanWrite() {
         ProtonBuffer buffer = new ProtonByteBuffer();
         try {
             buffer.setIndex(50, 40);
@@ -184,7 +184,7 @@ public class ProtonByteBufferTest {
     }
 
     @Test
-    public void testSeIndexWithWriteIndexBiggerThanCapacity() {
+    public void testSetIndexWithWriteIndexBiggerThanCapacity() {
         ProtonBuffer buffer = new ProtonByteBuffer();
         try {
             buffer.setIndex(0, buffer.capacity() + 1);
