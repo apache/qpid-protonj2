@@ -33,7 +33,8 @@ import org.apache.qpid.proton4j.codec.decoders.primitives.ListTypeDecoder;
  */
 public class FlowTypeDecoder extends AbstractDescribedTypeDecoder<Flow> {
 
-    private static int MAX_FLOW_LIST_ENTRIES = 11;
+    private static final int MIN_FLOW_LIST_ENTRIES = 4;
+    private static final int MAX_FLOW_LIST_ENTRIES = 11;
 
     @Override
     public Class<Flow> getTypeClass() {
@@ -96,6 +97,9 @@ public class FlowTypeDecoder extends AbstractDescribedTypeDecoder<Flow> {
         int count = listDecoder.readCount(buffer);
 
         // Don't decode anything if things already look wrong.
+        if (count < MIN_FLOW_LIST_ENTRIES) {
+            throw new IllegalStateException("Not enough entries in Flow list encoding: " + count);
+        }
         if (count > MAX_FLOW_LIST_ENTRIES) {
             throw new IllegalStateException("To many entries in Flow list encoding: " + count);
         }

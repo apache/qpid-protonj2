@@ -55,6 +55,8 @@ public class AcceptedTypeDecoder extends AbstractDescribedTypeDecoder<Accepted> 
             throw new IOException("Expected List type indicator but got decoder for type: " + decoder.getTypeClass().getName());
         }
 
+        // TODO - Should we validate list size ?
+
         decoder.skipValue(buffer, state);;
 
         return Accepted.getInstance();

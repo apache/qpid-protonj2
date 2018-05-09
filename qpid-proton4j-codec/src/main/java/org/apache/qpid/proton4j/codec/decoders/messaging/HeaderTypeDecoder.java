@@ -33,7 +33,8 @@ import org.apache.qpid.proton4j.codec.decoders.primitives.ListTypeDecoder;
  */
 public class HeaderTypeDecoder extends AbstractDescribedTypeDecoder<Header> {
 
-    private static int MAX_HEADER_LIST_ENTRIES = 5;
+    private static final int MIN_HEADER_LIST_ENTRIES = 0;
+    private static final int MAX_HEADER_LIST_ENTRIES = 5;
 
     @Override
     public Class<Header> getTypeClass() {
@@ -96,6 +97,10 @@ public class HeaderTypeDecoder extends AbstractDescribedTypeDecoder<Header> {
         int count = listDecoder.readCount(buffer);
 
         // Don't decode anything if things already look wrong.
+        if (count < MIN_HEADER_LIST_ENTRIES) {
+            throw new IllegalStateException("Not enough entries in Header list encoding: " + count);
+        }
+
         if (count > MAX_HEADER_LIST_ENTRIES) {
             throw new IllegalStateException("To many entries in Header list encoding: " + count);
         }

@@ -34,6 +34,9 @@ import org.apache.qpid.proton4j.codec.decoders.primitives.ListTypeDecoder;
  */
 public class DispositionTypeDecoder extends AbstractDescribedTypeDecoder<Disposition> {
 
+    private static final int MIN_DISPOSITION_LIST_ENTRIES = 2;
+    private static final int MAX_DISPOSITION_LIST_ENTRIES = 6;
+
     @Override
     public Class<Disposition> getTypeClass() {
         return Disposition.class;
@@ -94,7 +97,14 @@ public class DispositionTypeDecoder extends AbstractDescribedTypeDecoder<Disposi
         int size = listDecoder.readSize(buffer);
         int count = listDecoder.readCount(buffer);
 
-        // TODO - Validate that mandatory fields are present, what error ?
+        // TODO - Validate that mandatory fields are present, what error ? Here or further up the chain
+        if (count < MIN_DISPOSITION_LIST_ENTRIES) {
+            throw new IllegalStateException("Not enough entries in Disposition list encoding: " + count);
+        }
+
+        if (count > MAX_DISPOSITION_LIST_ENTRIES) {
+            throw new IllegalStateException("To many entries in Disposition list encoding: " + count);
+        }
 
         for (int index = 0; index < count; ++index) {
             switch (index) {

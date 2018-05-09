@@ -33,6 +33,9 @@ import org.apache.qpid.proton4j.codec.decoders.primitives.ListTypeDecoder;
  */
 public class TransactionStateTypeDecoder extends AbstractDescribedTypeDecoder<TransactionalState> {
 
+    private static final int MIN_TRANSACTION_STATE_LIST_ENTRIES = 1;
+    private static final int MAX_TRANSACTION_STATE_LIST_ENTRIES = 2;
+
     @Override
     public Class<TransactionalState> getTypeClass() {
         return TransactionalState.class;
@@ -93,6 +96,17 @@ public class TransactionStateTypeDecoder extends AbstractDescribedTypeDecoder<Tr
         @SuppressWarnings("unused")
         int size = listDecoder.readSize(buffer);
         int count = listDecoder.readCount(buffer);
+
+        // TODO - Decoding correctness checks
+
+        // Don't decode anything if things already look wrong.
+        if (count < MIN_TRANSACTION_STATE_LIST_ENTRIES) {
+            throw new IllegalStateException("Not enough entries in TransactionalState list encoding: " + count);
+        }
+
+        if (count > MAX_TRANSACTION_STATE_LIST_ENTRIES) {
+            throw new IllegalStateException("To many entries in TransactionalState list encoding: " + count);
+        }
 
         for (int index = 0; index < count; ++index) {
             switch (index) {

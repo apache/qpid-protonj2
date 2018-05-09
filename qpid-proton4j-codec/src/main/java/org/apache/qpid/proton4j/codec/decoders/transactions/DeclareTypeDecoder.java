@@ -33,6 +33,9 @@ import org.apache.qpid.proton4j.codec.decoders.primitives.ListTypeDecoder;
  */
 public class DeclareTypeDecoder extends AbstractDescribedTypeDecoder<Declare> {
 
+    private static final int MIN_DECLARE_LIST_ENTRIES = 0;
+    private static final int MAX_DECLARE_LIST_ENTRIES = 1;
+
     @Override
     public Class<Declare> getTypeClass() {
         return Declare.class;
@@ -93,6 +96,17 @@ public class DeclareTypeDecoder extends AbstractDescribedTypeDecoder<Declare> {
         @SuppressWarnings("unused")
         int size = listDecoder.readSize(buffer);
         int count = listDecoder.readCount(buffer);
+
+        // TODO - Decoding correctness checks
+
+        // Don't decode anything if things already look wrong.
+        if (count < MIN_DECLARE_LIST_ENTRIES) {
+            throw new IllegalStateException("Not enough entries in Declare list encoding: " + count);
+        }
+
+        if (count > MAX_DECLARE_LIST_ENTRIES) {
+            throw new IllegalStateException("To many entries in Declare list encoding: " + count);
+        }
 
         for (int index = 0; index < count; ++index) {
             switch (index) {

@@ -33,6 +33,9 @@ import org.apache.qpid.proton4j.codec.decoders.primitives.ListTypeDecoder;
  */
 public class EndTypeDecoder extends AbstractDescribedTypeDecoder<End> {
 
+    private static final int MIN_END_LIST_ENTRIES = 0;
+    private static final int MAX_END_LIST_ENTRIES = 1;
+
     @Override
     public Class<End> getTypeClass() {
         return End.class;
@@ -92,6 +95,15 @@ public class EndTypeDecoder extends AbstractDescribedTypeDecoder<End> {
         @SuppressWarnings("unused")
         int size = listDecoder.readSize(buffer);
         int count = listDecoder.readCount(buffer);
+
+        // TODO - Validate that mandatory fields are present, what error ? Here or further up the chain
+        if (count < MIN_END_LIST_ENTRIES) {
+            throw new IllegalStateException("Not enough entries in End list encoding: " + count);
+        }
+
+        if (count > MAX_END_LIST_ENTRIES) {
+            throw new IllegalStateException("To many entries in End list encoding: " + count);
+        }
 
         for (int index = 0; index < count; ++index) {
             switch (index) {

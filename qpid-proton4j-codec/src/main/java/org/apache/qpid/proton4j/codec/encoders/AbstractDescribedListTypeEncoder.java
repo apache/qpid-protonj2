@@ -70,6 +70,16 @@ public abstract class AbstractDescribedListTypeEncoder<V> extends AbstractDescri
      */
     public abstract int getElementCount(V value);
 
+    // TODO - Possible correctness checking
+
+//    /**
+//     * Return the minimum number of elements that this AMQP type must provide
+//     * in order to be considered a valid type.
+//     *
+//     * @return the minimum number of elements this type must provide.
+//     */
+//    public abstract int getMinElementCount();
+
     @Override
     public void writeType(ProtonBuffer buffer, EncoderState state, V value) {
         buffer.writeByte(EncodingCodes.DESCRIBED_TYPE_INDICATOR);
@@ -77,6 +87,12 @@ public abstract class AbstractDescribedListTypeEncoder<V> extends AbstractDescri
 
         int count = getElementCount(value);
         int encodingCode = getListEncoding(value);
+
+        // TODO - Possible correctness checking
+
+//        if (count < getMinElementCount()) {
+//            throw new EncodingException("Incomplete Type cannot be encoded");
+//        }
 
         // Optimized step, no other data to be written.
         if (count == 0 || encodingCode == EncodingCodes.LIST0) {

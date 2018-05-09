@@ -33,6 +33,9 @@ import org.apache.qpid.proton4j.codec.decoders.primitives.ListTypeDecoder;
  */
 public class CloseTypeDecoder extends AbstractDescribedTypeDecoder<Close> {
 
+    private static final int MIN_CLOSE_LIST_ENTRIES = 0;
+    private static final int MAX_CLOSE_LIST_ENTRIES = 1;
+
     @Override
     public Class<Close> getTypeClass() {
         return Close.class;
@@ -92,6 +95,15 @@ public class CloseTypeDecoder extends AbstractDescribedTypeDecoder<Close> {
         @SuppressWarnings("unused")
         int size = listDecoder.readSize(buffer);
         int count = listDecoder.readCount(buffer);
+
+        // TODO - Validate that mandatory fields are present, what error ? Here or further up the chain
+        if (count < MIN_CLOSE_LIST_ENTRIES) {
+            throw new IllegalStateException("Not enough entries in Close list encoding: " + count);
+        }
+
+        if (count > MAX_CLOSE_LIST_ENTRIES) {
+            throw new IllegalStateException("To many entries in Close list encoding: " + count);
+        }
 
         for (int index = 0; index < count; ++index) {
             switch (index) {

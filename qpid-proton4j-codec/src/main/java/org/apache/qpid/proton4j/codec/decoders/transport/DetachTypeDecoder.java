@@ -33,6 +33,9 @@ import org.apache.qpid.proton4j.codec.decoders.primitives.ListTypeDecoder;
  */
 public class DetachTypeDecoder extends AbstractDescribedTypeDecoder<Detach> {
 
+    private static final int MIN_DETACH_LIST_ENTRIES = 1;
+    private static final int MAX_DETACH_LIST_ENTRIES = 3;
+
     @Override
     public Class<Detach> getTypeClass() {
         return Detach.class;
@@ -94,6 +97,13 @@ public class DetachTypeDecoder extends AbstractDescribedTypeDecoder<Detach> {
         int count = listDecoder.readCount(buffer);
 
         // TODO - Validate that mandatory fields are present, what error ? Here or further up the chain
+        if (count < MIN_DETACH_LIST_ENTRIES) {
+            throw new IllegalStateException("Not enough entries in Detach list encoding: " + count);
+        }
+
+        if (count > MAX_DETACH_LIST_ENTRIES) {
+            throw new IllegalStateException("To many entries in Detach list encoding: " + count);
+        }
 
         for (int index = 0; index < count; ++index) {
             switch (index) {

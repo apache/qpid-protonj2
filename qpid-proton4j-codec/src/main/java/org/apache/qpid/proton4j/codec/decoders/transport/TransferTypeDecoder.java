@@ -36,7 +36,8 @@ import org.apache.qpid.proton4j.codec.decoders.primitives.ListTypeDecoder;
  */
 public class TransferTypeDecoder extends AbstractDescribedTypeDecoder<Transfer> {
 
-    private static int MAX_TRANSFER_LIST_ENTRIES = 11;
+    private static final int MIN_TRANSFER_LIST_ENTRIES = 1;
+    private static final int MAX_TRANSFER_LIST_ENTRIES = 11;
 
     @Override
     public Class<Transfer> getTypeClass() {
@@ -98,7 +99,16 @@ public class TransferTypeDecoder extends AbstractDescribedTypeDecoder<Transfer> 
         int size = listDecoder.readSize(buffer);
         int count = listDecoder.readCount(buffer);
 
+        // TODO - Decoding correctness checks
+
+        // How much checking do we do, and do we provide a specific exception type for these
+        // decoding errors so the transport can tell if the error is fatal or not.
+
         // Don't decode anything if things already look wrong.
+        if (count < MIN_TRANSFER_LIST_ENTRIES) {
+            throw new IllegalStateException("Not enough entries in Transfer list encoding: " + count);
+        }
+
         if (count > MAX_TRANSFER_LIST_ENTRIES) {
             throw new IllegalStateException("To many entries in Transfer list encoding: " + count);
         }

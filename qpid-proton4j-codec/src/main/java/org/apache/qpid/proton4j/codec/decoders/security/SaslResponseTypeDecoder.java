@@ -32,6 +32,8 @@ import org.apache.qpid.proton4j.codec.decoders.primitives.ListTypeDecoder;
  */
 public class SaslResponseTypeDecoder extends AbstractDescribedTypeDecoder<SaslResponse> {
 
+    private static final int REQUIRED_LIST_ENTRIES = 1;
+
     @Override
     public UnsignedLong getDescriptorCode() {
         return SaslResponse.DESCRIPTOR_CODE;
@@ -91,6 +93,11 @@ public class SaslResponseTypeDecoder extends AbstractDescribedTypeDecoder<SaslRe
         @SuppressWarnings("unused")
         int size = listDecoder.readSize(buffer);
         int count = listDecoder.readCount(buffer);
+
+        // TODO - Decoding correctness checks
+        if (count != REQUIRED_LIST_ENTRIES) {
+            throw new IllegalStateException("SASL Response must contain a single response binary: " + count);
+        }
 
         for (int index = 0; index < count; ++index) {
             switch (index) {

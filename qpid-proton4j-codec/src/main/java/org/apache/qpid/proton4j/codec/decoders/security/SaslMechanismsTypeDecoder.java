@@ -32,6 +32,8 @@ import org.apache.qpid.proton4j.codec.decoders.primitives.ListTypeDecoder;
  */
 public class SaslMechanismsTypeDecoder extends AbstractDescribedTypeDecoder<SaslMechanisms> {
 
+    private static final int MIN_SASL_MECHANISMS_LIST_ENTRIES = 1;
+
     @Override
     public UnsignedLong getDescriptorCode() {
         return SaslMechanisms.DESCRIPTOR_CODE;
@@ -91,6 +93,11 @@ public class SaslMechanismsTypeDecoder extends AbstractDescribedTypeDecoder<Sasl
         @SuppressWarnings("unused")
         int size = listDecoder.readSize(buffer);
         int count = listDecoder.readCount(buffer);
+
+        // TODO - Decoding correctness checks
+        if (count < MIN_SASL_MECHANISMS_LIST_ENTRIES) {
+            throw new IllegalStateException("SASL Mechanisms must contain at least one mechanisms entry: " + count);
+        }
 
         for (int index = 0; index < count; ++index) {
             switch (index) {

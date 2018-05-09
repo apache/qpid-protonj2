@@ -32,6 +32,8 @@ import org.apache.qpid.proton4j.codec.decoders.primitives.ListTypeDecoder;
  */
 public class ReceivedTypeDecoder extends AbstractDescribedTypeDecoder<Received> {
 
+    private static final int REQUIRED_RECEIVED_LIST_ENTRIES = 2;
+
     @Override
     public Class<Received> getTypeClass() {
         return Received.class;
@@ -91,6 +93,11 @@ public class ReceivedTypeDecoder extends AbstractDescribedTypeDecoder<Received> 
         @SuppressWarnings("unused")
         int size = listDecoder.readSize(buffer);
         int count = listDecoder.readCount(buffer);
+
+        // Don't decode anything if things already look wrong.
+        if (count != REQUIRED_RECEIVED_LIST_ENTRIES) {
+            throw new IllegalStateException("Invalid number of entries in Received list encoding: " + count);
+        }
 
         for (int index = 0; index < count; ++index) {
             switch (index) {

@@ -32,6 +32,8 @@ import org.apache.qpid.proton4j.codec.decoders.primitives.ListTypeDecoder;
  */
 public class SaslChallengeTypeDecoder extends AbstractDescribedTypeDecoder<SaslChallenge> {
 
+    private static final int REQUIRED_LIST_ENTRIES = 1;
+
     @Override
     public UnsignedLong getDescriptorCode() {
         return SaslChallenge.DESCRIPTOR_CODE;
@@ -91,6 +93,11 @@ public class SaslChallengeTypeDecoder extends AbstractDescribedTypeDecoder<SaslC
         @SuppressWarnings("unused")
         int size = listDecoder.readSize(buffer);
         int count = listDecoder.readCount(buffer);
+
+        // TODO - Decoding correctness checks
+        if (count != REQUIRED_LIST_ENTRIES) {
+            throw new IllegalStateException("SASL Challenge must contain a single challenge binary: " + count);
+        }
 
         for (int index = 0; index < count; ++index) {
             switch (index) {

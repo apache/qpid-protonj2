@@ -34,6 +34,9 @@ import org.apache.qpid.proton4j.codec.decoders.primitives.ListTypeDecoder;
  */
 public class OpenTypeDecoder extends AbstractDescribedTypeDecoder<Open> {
 
+    private static final int MIN_OPEN_LIST_ENTRIES = 1;
+    private static final int MAX_OPEN_LIST_ENTRIES = 10;
+
     @Override
     public Class<Open> getTypeClass() {
         return Open.class;
@@ -95,6 +98,13 @@ public class OpenTypeDecoder extends AbstractDescribedTypeDecoder<Open> {
         int count = listDecoder.readCount(buffer);
 
         // TODO - Validate that mandatory fields are present, what error ? Here or further up the chain
+
+        if (count < MIN_OPEN_LIST_ENTRIES) {
+            throw new IllegalStateException("Not enough entries in Open list encoding: " + count);
+        }
+        if (count > MAX_OPEN_LIST_ENTRIES) {
+            throw new IllegalStateException("To many entries in Open list encoding: " + count);
+        }
 
         for (int index = 0; index < count; ++index) {
             switch (index) {

@@ -134,4 +134,11 @@ public class TransferTypeEncoder extends AbstractDescribedListTypeEncoder<Transf
     public int getElementCount(Transfer transfer) {
         return transfer.getElementCount();
     }
+
+    // TODO - Possible correctness checking
+
+//    @Override
+//    public int getMinElementCount() {
+//        return 1;  // Handle required
+//    }
 }

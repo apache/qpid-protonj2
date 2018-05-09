@@ -32,6 +32,9 @@ import org.apache.qpid.proton4j.codec.decoders.primitives.ListTypeDecoder;
  */
 public class CoordinatorTypeDecoder extends AbstractDescribedTypeDecoder<Coordinator> {
 
+    private static final int MIN_COORDINATOR_LIST_ENTRIES = 0;
+    private static final int MAX_COORDINATOR_LIST_ENTRIES = 1;
+
     @Override
     public Class<Coordinator> getTypeClass() {
         return Coordinator.class;
@@ -91,6 +94,17 @@ public class CoordinatorTypeDecoder extends AbstractDescribedTypeDecoder<Coordin
         @SuppressWarnings("unused")
         int size = listDecoder.readSize(buffer);
         int count = listDecoder.readCount(buffer);
+
+        // TODO - Decoding correctness checks
+
+        // Don't decode anything if things already look wrong.
+        if (count < MIN_COORDINATOR_LIST_ENTRIES) {
+            throw new IllegalStateException("Not enougn entries in Coordinator list encoding: " + count);
+        }
+
+        if (count > MAX_COORDINATOR_LIST_ENTRIES) {
+            throw new IllegalStateException("To many entries in Coordinator list encoding: " + count);
+        }
 
         for (int index = 0; index < count; ++index) {
             switch (index) {

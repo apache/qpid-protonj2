@@ -32,6 +32,9 @@ import org.apache.qpid.proton4j.codec.decoders.primitives.ListTypeDecoder;
  */
 public class SaslInitTypeDecoder extends AbstractDescribedTypeDecoder<SaslInit> {
 
+    private static final int MIN_SASL_INIT_LIST_ENTRIES = 0;
+    private static final int MAX_SASL_INIT_LIST_ENTRIES = 1;
+
     @Override
     public UnsignedLong getDescriptorCode() {
         return SaslInit.DESCRIPTOR_CODE;
@@ -91,6 +94,17 @@ public class SaslInitTypeDecoder extends AbstractDescribedTypeDecoder<SaslInit> 
         @SuppressWarnings("unused")
         int size = listDecoder.readSize(buffer);
         int count = listDecoder.readCount(buffer);
+
+        // TODO - Decoding correctness checks
+
+        // Don't decode anything if things already look wrong.
+        if (count < MIN_SASL_INIT_LIST_ENTRIES) {
+            throw new IllegalStateException("Not enougn entries in SaslInit list encoding: " + count);
+        }
+
+        if (count > MAX_SASL_INIT_LIST_ENTRIES) {
+            throw new IllegalStateException("To many entries in SaslInit list encoding: " + count);
+        }
 
         for (int index = 0; index < count; ++index) {
             switch (index) {

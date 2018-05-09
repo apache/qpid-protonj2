@@ -32,6 +32,9 @@ import org.apache.qpid.proton4j.codec.decoders.primitives.ListTypeDecoder;
  */
 public class DischargeTypeDecoder extends AbstractDescribedTypeDecoder<Discharge> {
 
+    private static final int MIN_DISCHARGE_LIST_ENTRIES = 1;
+    private static final int MAX_DISCHARGE_LIST_ENTRIES = 2;
+
     @Override
     public Class<Discharge> getTypeClass() {
         return Discharge.class;
@@ -91,6 +94,17 @@ public class DischargeTypeDecoder extends AbstractDescribedTypeDecoder<Discharge
         @SuppressWarnings("unused")
         int size = listDecoder.readSize(buffer);
         int count = listDecoder.readCount(buffer);
+
+        // TODO - Decoding correctness checks
+
+        // Don't decode anything if things already look wrong.
+        if (count < MIN_DISCHARGE_LIST_ENTRIES) {
+            throw new IllegalStateException("Not enough entries in Discharge list encoding: " + count);
+        }
+
+        if (count > MAX_DISCHARGE_LIST_ENTRIES) {
+            throw new IllegalStateException("To many entries in Discharge list encoding: " + count);
+        }
 
         for (int index = 0; index < count; ++index) {
             switch (index) {

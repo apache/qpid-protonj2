@@ -32,6 +32,9 @@ import org.apache.qpid.proton4j.codec.decoders.primitives.ListTypeDecoder;
  */
 public class ModifiedTypeDecoder extends AbstractDescribedTypeDecoder<Modified> {
 
+    private static final int MIN_MODIFIED_LIST_ENTRIES = 0;
+    private static final int MAX_MODIFIED_LIST_ENTRIES = 3;
+
     @Override
     public Class<Modified> getTypeClass() {
         return Modified.class;
@@ -91,6 +94,15 @@ public class ModifiedTypeDecoder extends AbstractDescribedTypeDecoder<Modified> 
         @SuppressWarnings("unused")
         int size = listDecoder.readSize(buffer);
         int count = listDecoder.readCount(buffer);
+
+        // Don't decode anything if things already look wrong.
+        if (count < MIN_MODIFIED_LIST_ENTRIES) {
+            throw new IllegalStateException("Not enough entries in Modified list encoding: " + count);
+        }
+
+        if (count > MAX_MODIFIED_LIST_ENTRIES) {
+            throw new IllegalStateException("To many entries in Modified list encoding: " + count);
+        }
 
         for (int index = 0; index < count; ++index) {
             switch (index) {

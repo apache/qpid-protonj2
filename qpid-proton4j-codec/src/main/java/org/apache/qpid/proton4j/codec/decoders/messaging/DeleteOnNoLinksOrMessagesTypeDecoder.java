@@ -55,6 +55,9 @@ public class DeleteOnNoLinksOrMessagesTypeDecoder extends AbstractDescribedTypeD
             throw new IOException("Expected List type indicator but got decoder for type: " + decoder.getTypeClass().getName());
         }
 
+        // TODO - Should we validate list size ?
+        decoder.skipValue(buffer, state);
+
         return DeleteOnNoLinksOrMessages.getInstance();
     }
 

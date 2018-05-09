@@ -33,7 +33,8 @@ import org.apache.qpid.proton4j.codec.decoders.primitives.ListTypeDecoder;
  */
 public class PropertiesTypeDecoder extends AbstractDescribedTypeDecoder<Properties> {
 
-    private static int MAX_PROPERTIES_LIST_ENTRIES = 13;
+    private static final int MIN_PROPERTIES_LIST_ENTRIES = 0;
+    private static final int MAX_PROPERTIES_LIST_ENTRIES = 13;
 
     @Override
     public UnsignedLong getDescriptorCode() {
@@ -96,6 +97,10 @@ public class PropertiesTypeDecoder extends AbstractDescribedTypeDecoder<Properti
         int count = listDecoder.readCount(buffer);
 
         // Don't decode anything if things already look wrong.
+        if (count < MIN_PROPERTIES_LIST_ENTRIES) {
+            throw new IllegalStateException("Not enough entries in Properties list encoding: " + count);
+        }
+
         if (count > MAX_PROPERTIES_LIST_ENTRIES) {
             throw new IllegalStateException("To many entries in Properties list encoding: " + count);
         }

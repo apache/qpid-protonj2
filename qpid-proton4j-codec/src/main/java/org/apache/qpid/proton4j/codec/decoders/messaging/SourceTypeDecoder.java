@@ -36,6 +36,9 @@ import org.apache.qpid.proton4j.codec.decoders.primitives.ListTypeDecoder;
  */
 public class SourceTypeDecoder extends AbstractDescribedTypeDecoder<Source> {
 
+    private static final int MIN_SOURCE_LIST_ENTRIES = 0;
+    private static final int MAX_SOURCE_LIST_ENTRIES = 11;
+
     @Override
     public Class<Source> getTypeClass() {
         return Source.class;
@@ -95,6 +98,14 @@ public class SourceTypeDecoder extends AbstractDescribedTypeDecoder<Source> {
         @SuppressWarnings("unused")
         int size = listDecoder.readSize(buffer);
         int count = listDecoder.readCount(buffer);
+
+        if (count < MIN_SOURCE_LIST_ENTRIES) {
+            throw new IllegalStateException("Not enough entries in Source list encoding: " + count);
+        }
+
+        if (count > MAX_SOURCE_LIST_ENTRIES) {
+            throw new IllegalStateException("To many entries in Source list encoding: " + count);
+        }
 
         for (int index = 0; index < count; ++index) {
             switch (index) {

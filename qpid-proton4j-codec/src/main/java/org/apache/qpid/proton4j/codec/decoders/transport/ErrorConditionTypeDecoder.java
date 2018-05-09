@@ -32,6 +32,9 @@ import org.apache.qpid.proton4j.codec.decoders.primitives.ListTypeDecoder;
  */
 public class ErrorConditionTypeDecoder extends AbstractDescribedTypeDecoder<ErrorCondition> {
 
+    private static final int MIN_ERROR_CONDITION_LIST_ENTRIES = 1;
+    private static final int MAX_ERROR_CONDITION_LIST_ENTRIES = 3;
+
     @Override
     public Class<ErrorCondition> getTypeClass() {
         return ErrorCondition.class;
@@ -91,6 +94,14 @@ public class ErrorConditionTypeDecoder extends AbstractDescribedTypeDecoder<Erro
         @SuppressWarnings("unused")
         int size = listDecoder.readSize(buffer);
         int count = listDecoder.readCount(buffer);
+
+        // Don't decode anything if things already look wrong.
+        if (count < MIN_ERROR_CONDITION_LIST_ENTRIES) {
+            throw new IllegalStateException("Not enough entries in ErrorCondition list encoding: " + count);
+        }
+        if (count > MAX_ERROR_CONDITION_LIST_ENTRIES) {
+            throw new IllegalStateException("To many entries in ErrorCondition list encoding: " + count);
+        }
 
         for (int index = 0; index < count; ++index) {
             switch (index) {

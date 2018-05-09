@@ -37,6 +37,9 @@ import org.apache.qpid.proton4j.codec.decoders.primitives.ListTypeDecoder;
  */
 public class AttachTypeDecoder extends AbstractDescribedTypeDecoder<Attach> {
 
+    private static final int MIN_ATTACH_LIST_ENTRIES = 3;
+    private static final int MAX_ATTACH_LIST_ENTRIES = 14;
+
     @Override
     public Class<Attach> getTypeClass() {
         return Attach.class;
@@ -99,6 +102,13 @@ public class AttachTypeDecoder extends AbstractDescribedTypeDecoder<Attach> {
         int count = listDecoder.readCount(buffer);
 
         // TODO - Validate that mandatory fields are present, what error ? Here or further up the chain
+
+        if (count < MIN_ATTACH_LIST_ENTRIES) {
+            throw new IllegalStateException("Not enough entries in Attach list encoding: " + count);
+        }
+        if (count > MAX_ATTACH_LIST_ENTRIES) {
+            throw new IllegalStateException("To many entries in Attach list encoding: " + count);
+        }
 
         for (int index = 0; index < count; ++index) {
             switch (index) {

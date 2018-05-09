@@ -33,6 +33,9 @@ import org.apache.qpid.proton4j.codec.decoders.primitives.ListTypeDecoder;
  */
 public class BeginTypeDecoder extends AbstractDescribedTypeDecoder<Begin> {
 
+    private static final int MIN_BEGIN_LIST_ENTRIES = 4;
+    private static final int MAX_BEGIN_LIST_ENTRIES = 8;
+
     @Override
     public Class<Begin> getTypeClass() {
         return Begin.class;
@@ -94,6 +97,13 @@ public class BeginTypeDecoder extends AbstractDescribedTypeDecoder<Begin> {
         int count = listDecoder.readCount(buffer);
 
         // TODO - Validate that mandatory fields are present, what error ? Here or further up the chain
+        if (count < MIN_BEGIN_LIST_ENTRIES) {
+            throw new IllegalStateException("Not enough entries in Begin list encoding: " + count);
+        }
+
+        if (count > MAX_BEGIN_LIST_ENTRIES) {
+            throw new IllegalStateException("To many entries in Begin list encoding: " + count);
+        }
 
         for (int index = 0; index < count; ++index) {
             switch (index) {
