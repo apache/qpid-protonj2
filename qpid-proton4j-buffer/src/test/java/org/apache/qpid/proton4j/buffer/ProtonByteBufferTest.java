@@ -1767,4 +1767,108 @@ public class ProtonByteBufferTest {
             fail("should throw an IndexOutOfBoundsException");
         } catch (IndexOutOfBoundsException ioe) {}
     }
+
+    //----- Test for setBytes methods ----------------------------------------//
+
+    @Test
+    public void testSetBytesUsingArray() {
+        ProtonBuffer buffer = new ProtonByteBuffer(8, 8);
+
+        byte[] other = new byte[] { 1, 2 };
+
+        buffer.setWriteIndex(buffer.capacity());
+        buffer.setBytes(0, other);
+
+        assertEquals(1, buffer.readByte());
+        assertEquals(2, buffer.readByte());
+    }
+
+    @Test
+    public void testSetBytesUsingBufferAtIndex() {
+        ProtonBuffer buffer = new ProtonByteBuffer(8, 8);
+        ProtonBuffer other = new ProtonByteBuffer(8, 8);
+
+        buffer.setWriteIndex(buffer.capacity());
+
+        other.writeByte(1);
+        other.writeByte(2);
+
+        buffer.setBytes(0, other);
+
+        assertEquals(1, buffer.readByte());
+        assertEquals(2, buffer.readByte());
+
+        assertTrue(other.getReadableBytes() == 0);
+        assertFalse(other.isReadable());
+    }
+
+    @Test
+    public void testSetBytesUsingBufferAtIndexWithLength() {
+        ProtonBuffer buffer = new ProtonByteBuffer(8, 8);
+        ProtonBuffer other = new ProtonByteBuffer(8, 8);
+
+        buffer.setWriteIndex(buffer.capacity());
+
+        other.writeByte(1);
+        other.writeByte(2);
+
+        buffer.setBytes(0, other, 2);
+
+        assertEquals(1, buffer.readByte());
+        assertEquals(2, buffer.readByte());
+
+        assertTrue(other.getReadableBytes() == 0);
+        assertFalse(other.isReadable());
+    }
+
+    @Test
+    public void testSetBytesUsingBufferAtIndexHandleBoundsError() {
+        ProtonBuffer buffer = new ProtonByteBuffer(8, 8);
+        ProtonBuffer other = new ProtonByteBuffer(8, 8);
+
+        buffer.setWriteIndex(buffer.capacity());
+
+        other.writeByte(0);
+        other.writeByte(1);
+
+        try {
+            buffer.setBytes(0, null, 0);
+            fail("Should thrown IndexOutOfBoundsException");
+        } catch (NullPointerException npe) {}
+
+        try {
+            buffer.setBytes(-1, other, 1);
+            fail("Should thrown IndexOutOfBoundsException");
+        } catch (IndexOutOfBoundsException iobe) {}
+
+        try {
+            buffer.setBytes(0, other, -1);
+            fail("Should thrown IndexOutOfBoundsException");
+        } catch (IndexOutOfBoundsException iobe) {}
+
+        try {
+            buffer.setBytes(-1, other, -1);
+            fail("Should thrown IndexOutOfBoundsException");
+        } catch (IndexOutOfBoundsException iobe) {}
+
+        try {
+            buffer.setBytes(10, other, 1);
+            fail("Should thrown IndexOutOfBoundsException");
+        } catch (IndexOutOfBoundsException iobe) {}
+
+        try {
+            buffer.setBytes(0, other, 10);
+            fail("Should thrown IndexOutOfBoundsException");
+        } catch (IndexOutOfBoundsException iobe) {}
+
+        try {
+            buffer.setBytes(0, other, 3);
+            fail("Should thrown IndexOutOfBoundsException");
+        } catch (IndexOutOfBoundsException iobe) {}
+
+        try {
+            buffer.setBytes(buffer.getWriteIndex() - 1, other, 2);
+            fail("Should thrown IndexOutOfBoundsException");
+        } catch (IndexOutOfBoundsException iobe) {}
+    }
 }
