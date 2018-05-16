@@ -136,6 +136,24 @@ public class ProtonByteBufferTest {
         } catch (NullPointerException npe) {}
     }
 
+    @Test
+    public void testBufferRespectsMaxCapacity() {
+        ProtonBuffer buffer = new ProtonByteBuffer(5, 10);
+
+        assertEquals(0, buffer.getReadableBytes());
+        assertEquals(5, buffer.capacity());
+        assertEquals(10, buffer.maxCapacity());
+
+        for (int i = 0; i < 10; ++i) {
+            buffer.writeByte(i);
+        }
+
+        try {
+            buffer.writeByte(10);
+            fail("Should not be able to write more than the max capacity bytes");
+        } catch (IndexOutOfBoundsException iobe) {}
+    }
+
     //----- Tests for altering buffer properties -----------------------------//
 
     @Test
@@ -319,6 +337,21 @@ public class ProtonByteBufferTest {
         // Buffer is truncated but we never read anything so read index stays at front.
         assertEquals(0, buffer.getReadIndex());
         assertEquals(50, buffer.getWriteIndex());
+    }
+
+    @Test
+    public void testDecreaseCapacityValidatesSize() {
+        byte[] source = new byte[100];
+
+        ProtonBuffer buffer = new ProtonByteBuffer(source);
+        assertEquals(100, buffer.capacity());
+        assertTrue(buffer.hasArray());
+        assertSame(source, buffer.getArray());
+
+        try {
+            buffer.capacity(-50);
+            fail("Should throw IllegalArgumentException");
+        } catch (IllegalArgumentException iae) {}
     }
 
     @Test
@@ -1833,7 +1866,7 @@ public class ProtonByteBufferTest {
 
         try {
             buffer.setBytes(0, null, 0);
-            fail("Should thrown IndexOutOfBoundsException");
+            fail("Should thrown NullPointerException");
         } catch (NullPointerException npe) {}
 
         try {
@@ -1870,5 +1903,108 @@ public class ProtonByteBufferTest {
             buffer.setBytes(buffer.getWriteIndex() - 1, other, 2);
             fail("Should thrown IndexOutOfBoundsException");
         } catch (IndexOutOfBoundsException iobe) {}
+    }
+
+    //----- Test for getBytes methods ----------------------------------------//
+
+    @Test
+    public void testGetBytesUsingBufferAtIndexHandleBoundsError() {
+        ProtonBuffer buffer = new ProtonByteBuffer(8, 8);
+        ProtonBuffer other = new ProtonByteBuffer(8, 8);
+
+        buffer.setWriteIndex(buffer.capacity());
+
+        other.writeByte(0);
+        other.writeByte(1);
+
+        try {
+            buffer.getBytes(0, null, 0);
+            fail("Should thrown NullPointerException");
+        } catch (NullPointerException npe) {}
+
+        try {
+            buffer.getBytes(-1, other, 1);
+            fail("Should thrown IndexOutOfBoundsException");
+        } catch (IndexOutOfBoundsException iobe) {}
+
+        try {
+            buffer.getBytes(0, other, -1);
+            fail("Should thrown IndexOutOfBoundsException");
+        } catch (IndexOutOfBoundsException iobe) {}
+
+        try {
+            buffer.getBytes(-1, other, -1);
+            fail("Should thrown IndexOutOfBoundsException");
+        } catch (IndexOutOfBoundsException iobe) {}
+
+        try {
+            buffer.getBytes(10, other, 1);
+            fail("Should thrown IndexOutOfBoundsException");
+        } catch (IndexOutOfBoundsException iobe) {}
+
+        try {
+            buffer.getBytes(0, other, 10);
+            fail("Should thrown IndexOutOfBoundsException");
+        } catch (IndexOutOfBoundsException iobe) {}
+
+        try {
+            buffer.getBytes(buffer.getWriteIndex() - 1, other, 2);
+            fail("Should thrown IndexOutOfBoundsException");
+        } catch (IndexOutOfBoundsException iobe) {}
+    }
+
+    @Test
+    public void testGetBytesUsingArray() {
+        ProtonBuffer buffer = new ProtonByteBuffer(8, 8);
+
+        byte[] data = new byte[] { 1, 2, 3, 4, 5, 6, 7, 8 };
+        byte[] target = new byte[data.length];
+
+        buffer.writeBytes(data);
+        buffer.getBytes(0, target);
+
+        for (int i = 0; i < data.length; ++i) {
+            assertEquals(buffer.getByte(i), target[i]);
+        }
+    }
+
+    @Test
+    public void testGetBytesUsingArrayOffsetAndLength() {
+        ProtonBuffer buffer = new ProtonByteBuffer(8, 8);
+
+        byte[] data = new byte[] { 1, 2, 3, 4, 5, 6, 7, 8 };
+        byte[] target = new byte[data.length];
+
+        buffer.writeBytes(data);
+        buffer.getBytes(0, target, 0, target.length);
+
+        for (int i = 0; i < data.length; ++i) {
+            assertEquals(buffer.getByte(i), target[i]);
+        }
+
+        byte[] target2 = new byte[data.length * 2];
+        buffer.getBytes(0, target2, target.length, target.length);
+
+        for (int i = 0; i < data.length; ++i) {
+            assertEquals(buffer.getByte(i), target2[i + target.length]);
+        }
+    }
+
+    @Test
+    public void testGetBytesUsingBuffer() {
+        ProtonBuffer buffer = new ProtonByteBuffer(8, 8);
+        ProtonBuffer target = new ProtonByteBuffer(8, 8);
+
+        byte[] data = new byte[] { 1, 2, 3, 4, 5, 6, 7, 8 };
+
+        buffer.writeBytes(data);
+        buffer.getBytes(0, target);
+
+        assertTrue(target.isReadable());
+        assertEquals(8, target.getReadableBytes());
+
+        for (int i = 0; i < data.length; ++i) {
+            assertEquals(buffer.getByte(i), target.getByte(i));
+        }
     }
 }
