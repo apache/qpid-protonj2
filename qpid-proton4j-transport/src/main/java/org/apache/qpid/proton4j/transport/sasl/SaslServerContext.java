@@ -132,7 +132,7 @@ public class SaslServerContext extends SaslContext {
         }
 
         // Give the callback handler a chance to configure this handler
-        listener.onSaslHeader(this);
+        listener.onSaslHeader(this, header.getBody());
 
         // TODO - When to fail when no mechanisms set, now or on some earlier started / connected evnet ?
         if (serverMechanisms == null || serverMechanisms.length == 0) {
