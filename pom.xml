@@ -36,13 +36,13 @@
 
     <!-- Test dependency versions -->
     <junit-version>4.12</junit-version>
-    <mockito-version>2.10.0</mockito-version>
-    <proton-version>0.22.0</proton-version>
+    <mockito-version>2.18.3</mockito-version>
+    <proton-version>0.27.1</proton-version>
     <slf4j-version>1.7.25</slf4j-version>
 
     <!-- Plugin versions -->
-    <maven-bundle-plugin-version>3.2.0</maven-bundle-plugin-version>
-    <jacoco-plugin-version>0.7.9</jacoco-plugin-version>
+    <maven-bundle-plugin-version>3.5.0</maven-bundle-plugin-version>
+    <jacoco-plugin-version>0.8.1</jacoco-plugin-version>
 
     <!-- surefire forked jvm arguments -->
     <argLine>-Xmx2g -enableassertions ${jacoco-config}</argLine>
