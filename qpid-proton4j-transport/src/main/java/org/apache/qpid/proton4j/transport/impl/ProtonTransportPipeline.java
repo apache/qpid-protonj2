@@ -45,12 +45,15 @@ public class ProtonTransportPipeline implements TransportPipeline {
 
         this.transport = transport;
 
-        this.head = new TransportHandlerContextBoundry();
-        this.tail = new TransportHandlerContextBoundry();
+        head = new TransportHandlerContextBoundry();
+        tail = new TransportHandlerContextBoundry();
 
         // Ensure Pipeline starts out empty but initialized.
-        this.head.next = this.tail;
-        this.tail.previous = this.head;
+        head.next = tail;
+        head.previous = head;
+
+        tail.previous = head;
+        tail.next = tail;
     }
 
     @Override
@@ -60,6 +63,10 @@ public class ProtonTransportPipeline implements TransportPipeline {
 
     @Override
     public TransportPipeline addFirst(String name, TransportHandler handler) {
+        if (name == null || name.isEmpty()) {
+            throw new IllegalArgumentException("Handler name cannot be null or empty");
+        }
+
         if (handler == null) {
             throw new IllegalArgumentException("Handler provided cannot be null");
         }
@@ -78,11 +85,15 @@ public class ProtonTransportPipeline implements TransportPipeline {
 
     @Override
     public TransportPipeline addLast(String name, TransportHandler handler) {
+        if (name == null || name.isEmpty()) {
+            throw new IllegalArgumentException("Handler name cannot be null or empty");
+        }
+
         if (handler == null) {
             throw new IllegalArgumentException("Handler provided cannot be null");
         }
 
-        ProtonTransportHandlerContext oldLast = head.next;
+        ProtonTransportHandlerContext oldLast = tail.previous;
         ProtonTransportHandlerContext newLast = createContext(name, handler);
 
         newLast.next = tail;
@@ -157,55 +168,55 @@ public class ProtonTransportPipeline implements TransportPipeline {
 
     @Override
     public TransportPipeline fireRead(ProtonBuffer input) {
-        head.next.fireRead(input);
+        tail.previous.fireRead(input);
         return this;
     }
 
     @Override
     public TransportPipeline fireHeaderFrame(HeaderFrame header) {
-        head.next.fireHeaderFrame(header);
+        tail.previous.fireHeaderFrame(header);
         return this;
     }
 
     @Override
     public TransportPipeline fireSaslFrame(SaslFrame frame) {
-        head.next.fireSaslFrame(frame);
+        tail.previous.fireSaslFrame(frame);
         return this;
     }
 
     @Override
     public TransportPipeline fireProtocolFrame(ProtocolFrame frame) {
-        head.next.fireProtocolFrame(frame);
+        tail.previous.fireProtocolFrame(frame);
         return this;
     }
 
     @Override
     public TransportPipeline fireWrite(Frame<?> frame) {
-        tail.previous.fireWrite(frame);
+        head.next.fireWrite(frame);
         return this;
     }
 
     @Override
     public TransportPipeline fireFlush() {
-        tail.previous.fireFlush();
+        head.next.fireFlush();
         return this;
     }
 
     @Override
     public TransportPipeline fireEncodingError(Throwable e) {
-        head.next.fireEncodingError(e);
+        tail.previous.fireEncodingError(e);
         return this;
     }
 
     @Override
     public TransportPipeline fireDecodingError(Throwable e) {
-        head.next.fireDecodingError(e);
+        tail.previous.fireDecodingError(e);
         return this;
     }
 
     @Override
     public TransportPipeline fireFailed(Throwable e) {
-        head.next.fireFailed(e);
+        tail.previous.fireFailed(e);
         return this;
     }
 
