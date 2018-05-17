@@ -131,13 +131,19 @@ public class ProtonTransportPipeline implements TransportPipeline {
 
     @Override
     public TransportPipeline remove(String name) {
-        ProtonTransportHandlerContext current = head.next;
-        while (current != tail) {
-            if (current.getName().equals(name)) {
-                ProtonTransportHandlerContext newNext = current.next;
+        if (name != null && !name.isEmpty()) {
+            ProtonTransportHandlerContext current = head.next;
+            while (current != tail) {
+                if (current.getName().equals(name)) {
+                    ProtonTransportHandlerContext newNext = current.next;
 
-                current.previous.next = newNext;
-                newNext.previous = current.previous;
+                    current.previous.next = newNext;
+                    newNext.previous = current.previous;
+
+                    break;
+                }
+
+                current = current.next;
             }
         }
 

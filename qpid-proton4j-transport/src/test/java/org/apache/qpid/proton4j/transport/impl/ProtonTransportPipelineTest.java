@@ -38,6 +38,10 @@ public class ProtonTransportPipelineTest {
         ProtonTransportPipeline pipeline = new ProtonTransportPipeline(transport);
 
         assertSame(pipeline.getTransport(), transport);
+        assertNull(pipeline.first());
+        assertNull(pipeline.last());
+        assertNull(pipeline.firstContext());
+        assertNull(pipeline.lastContext());
     }
 
     @Test
@@ -92,6 +96,8 @@ public class ProtonTransportPipelineTest {
 
         assertSame(handler, pipeline.first());
         assertSame(handler, pipeline.last());
+        assertNotNull(pipeline.firstContext());
+        assertSame(handler, pipeline.firstContext().getHandler());
     }
 
     @Test
@@ -108,6 +114,11 @@ public class ProtonTransportPipelineTest {
 
         assertSame(handler1, pipeline.first());
         assertSame(handler3, pipeline.last());
+
+        assertNotNull(pipeline.firstContext());
+        assertSame(handler1, pipeline.firstContext().getHandler());
+        assertNotNull(pipeline.lastContext());
+        assertSame(handler3, pipeline.lastContext().getHandler());
     }
 
     //----- Tests for addLast ------------------------------------------------//
@@ -154,6 +165,11 @@ public class ProtonTransportPipelineTest {
 
         assertSame(handler, pipeline.first());
         assertSame(handler, pipeline.last());
+
+        assertNotNull(pipeline.firstContext());
+        assertSame(handler, pipeline.firstContext().getHandler());
+        assertNotNull(pipeline.lastContext());
+        assertSame(handler, pipeline.lastContext().getHandler());
     }
 
     @Test
@@ -170,6 +186,11 @@ public class ProtonTransportPipelineTest {
 
         assertSame(handler1, pipeline.first());
         assertSame(handler3, pipeline.last());
+
+        assertNotNull(pipeline.firstContext());
+        assertSame(handler1, pipeline.firstContext().getHandler());
+        assertNotNull(pipeline.lastContext());
+        assertSame(handler3, pipeline.lastContext().getHandler());
     }
 
     //----- Tests for removeFirst --------------------------------------------//
@@ -247,6 +268,61 @@ public class ProtonTransportPipelineTest {
         assertSame(pipeline, pipeline.removeLast());
         // calling when empty should not throw.
         assertSame(pipeline, pipeline.removeLast());
+        assertNull(pipeline.last());
+    }
+
+    //----- Tests for removeLast ---------------------------------------------//
+
+    @Test
+    public void testRemoveWhenEmpty() {
+        ProtonTransportPipeline pipeline = new ProtonTransportPipeline(transport);
+
+        assertSame(pipeline, pipeline.remove("unknown"));
+        assertSame(pipeline, pipeline.remove(""));
+        assertSame(pipeline, pipeline.remove(null));
+    }
+
+    @Test
+    public void testRemoveWithOneHandler() {
+        TransportHandler handler = Mockito.mock(TransportHandler.class);
+
+        ProtonTransportPipeline pipeline = new ProtonTransportPipeline(transport);
+
+        pipeline.addFirst("one", handler);
+
+        assertSame(handler, pipeline.first());
+
+        assertSame(pipeline, pipeline.remove("unknown"));
+        assertSame(pipeline, pipeline.remove(""));
+        assertSame(pipeline, pipeline.remove(null));
+
+        assertSame(handler, pipeline.first());
+        assertSame(pipeline, pipeline.remove("one"));
+
+        assertNull(pipeline.first());
+        assertNull(pipeline.last());
+    }
+
+    @Test
+    public void testRemoveWithMoreThanOneHandler() {
+        TransportHandler handler1 = Mockito.mock(TransportHandler.class);
+        TransportHandler handler2 = Mockito.mock(TransportHandler.class);
+        TransportHandler handler3 = Mockito.mock(TransportHandler.class);
+
+        ProtonTransportPipeline pipeline = new ProtonTransportPipeline(transport);
+
+        pipeline.addFirst("three", handler3);
+        pipeline.addFirst("two", handler2);
+        pipeline.addFirst("one", handler1);
+
+        assertSame(handler1, pipeline.first());
+        assertSame(pipeline, pipeline.remove("one"));
+        assertSame(handler2, pipeline.first());
+        assertSame(pipeline, pipeline.remove("two"));
+        assertSame(handler3, pipeline.first());
+        assertSame(pipeline, pipeline.remove("three"));
+
+        assertNull(pipeline.first());
         assertNull(pipeline.last());
     }
 }
