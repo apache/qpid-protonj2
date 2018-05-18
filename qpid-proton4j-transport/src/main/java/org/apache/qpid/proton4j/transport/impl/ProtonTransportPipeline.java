@@ -33,8 +33,8 @@ import org.apache.qpid.proton4j.transport.TransportPipeline;
  */
 public class ProtonTransportPipeline implements TransportPipeline {
 
-    TransportHandlerContextBoundry head;
-    TransportHandlerContextBoundry tail;
+    TransportHandlerContextReadBoundry head;
+    TransportHandlerContextWriteBoundry tail;
 
     private final ProtonTransport transport;
 
@@ -45,8 +45,8 @@ public class ProtonTransportPipeline implements TransportPipeline {
 
         this.transport = transport;
 
-        head = new TransportHandlerContextBoundry();
-        tail = new TransportHandlerContextBoundry();
+        head = new TransportHandlerContextReadBoundry();
+        tail = new TransportHandlerContextWriteBoundry();
 
         // Ensure Pipeline starts out empty but initialized.
         head.next = tail;
@@ -152,12 +152,12 @@ public class ProtonTransportPipeline implements TransportPipeline {
 
     @Override
     public TransportHandler first() {
-        return head.next.getHandler();
+        return head.next == tail ? null : head.next.getHandler();
     }
 
     @Override
     public TransportHandler last() {
-        return tail.previous.getHandler();
+        return tail.previous == head ? null : tail.previous.getHandler();
     }
 
     @Override
@@ -174,55 +174,55 @@ public class ProtonTransportPipeline implements TransportPipeline {
 
     @Override
     public TransportPipeline fireRead(ProtonBuffer input) {
-        tail.previous.fireRead(input);
+        tail.fireRead(input);
         return this;
     }
 
     @Override
     public TransportPipeline fireHeaderFrame(HeaderFrame header) {
-        tail.previous.fireHeaderFrame(header);
+        tail.fireHeaderFrame(header);
         return this;
     }
 
     @Override
     public TransportPipeline fireSaslFrame(SaslFrame frame) {
-        tail.previous.fireSaslFrame(frame);
+        tail.fireSaslFrame(frame);
         return this;
     }
 
     @Override
     public TransportPipeline fireProtocolFrame(ProtocolFrame frame) {
-        tail.previous.fireProtocolFrame(frame);
+        tail.fireProtocolFrame(frame);
         return this;
     }
 
     @Override
     public TransportPipeline fireWrite(Frame<?> frame) {
-        head.next.fireWrite(frame);
+        head.fireWrite(frame);
         return this;
     }
 
     @Override
     public TransportPipeline fireFlush() {
-        head.next.fireFlush();
+        head.fireFlush();
         return this;
     }
 
     @Override
     public TransportPipeline fireEncodingError(Throwable e) {
-        tail.previous.fireEncodingError(e);
+        tail.fireEncodingError(e);
         return this;
     }
 
     @Override
     public TransportPipeline fireDecodingError(Throwable e) {
-        tail.previous.fireDecodingError(e);
+        tail.fireDecodingError(e);
         return this;
     }
 
     @Override
     public TransportPipeline fireFailed(Throwable e) {
-        tail.previous.fireFailed(e);
+        tail.fireFailed(e);
         return this;
     }
 
@@ -234,10 +234,10 @@ public class ProtonTransportPipeline implements TransportPipeline {
 
     //----- Synthetic handler context that bounds the pipeline ---------------//
 
-    private class TransportHandlerContextBoundry extends ProtonTransportHandlerContext {
+    private class TransportHandlerContextReadBoundry extends ProtonTransportHandlerContext {
 
-        public TransportHandlerContextBoundry() {
-            super("Boundry", transport, null);
+        public TransportHandlerContextReadBoundry() {
+            super("Read Boundry", transport, new BoundryTransportHandler());
         }
 
         @Override
@@ -308,6 +308,13 @@ public class ProtonTransportPipeline implements TransportPipeline {
                 listener.onTransportFailed(transport, e);
             }
         }
+    }
+
+    private class TransportHandlerContextWriteBoundry extends ProtonTransportHandlerContext {
+
+        public TransportHandlerContextWriteBoundry() {
+            super("Write Boundry", transport, new BoundryTransportHandler());
+        }
 
         @Override
         public void fireWrite(Frame<?> frame) {
@@ -331,6 +338,110 @@ public class ProtonTransportPipeline implements TransportPipeline {
 
         @Override
         public void fireFlush() {
+            // TODO Decide on the exact error to be fired, move Transport to failed state.
+            TransportListener listener = transport.getTransportListener();
+            if (listener != null) {
+                listener.onTransportFailed(transport,
+                    new IOException("No handler processed flush event."));
+            }
+        }
+    }
+
+    //----- Default TransportHandler Used at the pipeline boundry ------------//
+
+    private class BoundryTransportHandler implements TransportHandler {
+
+        @Override
+        public void handleRead(TransportHandlerContext context, ProtonBuffer buffer) {
+            // TODO Decide on the exact error to be fired, move Transport to failed state.
+            TransportListener listener = transport.getTransportListener();
+            if (listener != null) {
+                listener.onTransportFailed(transport,
+                    new IOException("No handler processed Transport read event."));
+            }
+        }
+
+        @Override
+        public void handleHeaderFrame(TransportHandlerContext context, HeaderFrame header) {
+            // TODO Decide on the exact error to be fired, move Transport to failed state.
+            TransportListener listener = transport.getTransportListener();
+            if (listener != null) {
+                listener.onTransportFailed(transport,
+                    new IOException("No handler processed AMQP Header event."));
+            }
+        }
+
+        @Override
+        public void handleSaslFrame(TransportHandlerContext context, SaslFrame frame) {
+            // TODO Decide on the exact error to be fired, move Transport to failed state.
+            TransportListener listener = transport.getTransportListener();
+            if (listener != null) {
+                listener.onTransportFailed(transport,
+                    new IOException("No handler processed SASL frame event."));
+            }
+        }
+
+        @Override
+        public void handleProtocolFrame(TransportHandlerContext context, ProtocolFrame frame) {
+            // TODO Decide on the exact error to be fired, move Transport to failed state.
+            TransportListener listener = transport.getTransportListener();
+            if (listener != null) {
+                listener.onTransportFailed(transport,
+                    new IOException("No handler processed protocol frame event."));
+            }
+        }
+
+        @Override
+        public void transportEncodingError(TransportHandlerContext context, Throwable e) {
+            // TODO Decide on the exact error to be fired, move Transport to failed state.
+            TransportListener listener = transport.getTransportListener();
+            if (listener != null) {
+                listener.onTransportFailed(transport,
+                    new IOException("No handler processed encoding error.", e));
+            }
+        }
+
+        @Override
+        public void transportDecodingError(TransportHandlerContext context, Throwable e) {
+            // TODO Decide on the exact error to be fired, move Transport to failed state.
+            TransportListener listener = transport.getTransportListener();
+            if (listener != null) {
+                listener.onTransportFailed(transport,
+                    new IOException("No handler processed decoding error.", e));
+            }
+        }
+
+        @Override
+        public void transportFailed(TransportHandlerContext context, Throwable e) {
+            // TODO Decide on the exact error to be fired, move Transport to failed state.
+            TransportListener listener = transport.getTransportListener();
+            if (listener != null) {
+                listener.onTransportFailed(transport, e);
+            }
+        }
+
+        @Override
+        public void handleWrite(TransportHandlerContext context, Frame<?> frame) {
+            // TODO Decide on the exact error to be fired, move Transport to failed state.
+            TransportListener listener = transport.getTransportListener();
+            if (listener != null) {
+                listener.onTransportFailed(transport,
+                    new IOException("No handler processed write frame event."));
+            }
+        }
+
+        @Override
+        public void handleWrite(TransportHandlerContext context, ProtonBuffer buffer) {
+            // TODO Decide on the exact error to be fired, move Transport to failed state.
+            TransportListener listener = transport.getTransportListener();
+            if (listener != null) {
+                listener.onTransportFailed(transport,
+                    new IOException("No handler processed write data event."));
+            }
+        }
+
+        @Override
+        public void handleFlush(TransportHandlerContext context) {
             // TODO Decide on the exact error to be fired, move Transport to failed state.
             TransportListener listener = transport.getTransportListener();
             if (listener != null) {
