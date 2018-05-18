@@ -35,6 +35,14 @@ public class TestSupportTransportHandler implements TransportHandler{
     public TestSupportTransportHandler() {
     }
 
+    public List<Frame<?>> getFramesWritten() {
+        return framesWritten;
+    }
+
+    public List<Frame<?>> getFramesRead() {
+        return framesRead;
+    }
+
     @Override
     public void handleRead(TransportHandlerContext context, ProtonBuffer buffer) {
         context.fireRead(buffer);

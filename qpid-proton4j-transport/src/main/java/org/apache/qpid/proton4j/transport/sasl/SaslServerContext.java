@@ -20,7 +20,6 @@ import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.security.SaslInit;
 import org.apache.qpid.proton4j.amqp.security.SaslMechanisms;
 import org.apache.qpid.proton4j.amqp.security.SaslResponse;
-import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
 import org.apache.qpid.proton4j.transport.HeaderFrame;
 import org.apache.qpid.proton4j.transport.SaslFrame;
 import org.apache.qpid.proton4j.transport.TransportHandlerContext;
@@ -75,7 +74,7 @@ public class SaslServerContext extends SaslContext {
         return mechanisms;
     }
 
-    public void setMechanisms(String[] mechanisms) {
+    public void setMechanisms(String... mechanisms) {
         if (!mechanismsSent) {
             Symbol[] serverMechanisms = new Symbol[mechanisms.length];
             for (int i = 0; i < mechanisms.length; i++) {
@@ -119,7 +118,7 @@ public class SaslServerContext extends SaslContext {
 
     private void handleSaslHeader(TransportHandlerContext context, HeaderFrame header) {
         if (!headerWritten) {
-            context.fireWrite(AMQPHeader.getSASLHeader().getBuffer());
+            context.fireWrite(HeaderFrame.SASL_HEADER_FRAME);
             headerWritten = true;
         }
 

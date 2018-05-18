@@ -24,7 +24,9 @@ import org.apache.qpid.proton4j.amqp.security.SaslPerformative;
  */
 public class SaslFrame extends Frame<SaslPerformative>{
 
+    public static final byte SASL_FRAME_TYPE = (byte) 1;
+
     public SaslFrame(SaslPerformative performative, Binary payload) {
-        super(performative, (short) 0, (byte) 0, payload);
+        super(performative, (byte) 0, SASL_FRAME_TYPE, payload);
     }
 }

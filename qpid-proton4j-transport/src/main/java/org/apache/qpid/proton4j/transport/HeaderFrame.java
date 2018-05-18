@@ -23,7 +23,13 @@ import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
  */
 public class HeaderFrame extends Frame<AMQPHeader> {
 
+    public static final byte HEADER_FRAME_TYPE = (byte) 1;
+
+    public static final HeaderFrame SASL_HEADER_FRAME = new HeaderFrame(AMQPHeader.getSASLHeader());
+
+    public static final HeaderFrame AMQP_HEADER_FRAME = new HeaderFrame(AMQPHeader.getRawAMQPHeader());
+
     public HeaderFrame(AMQPHeader body) {
-        super(body, (byte) 0, (byte) 0, null);
+        super(body, (byte) 0, HEADER_FRAME_TYPE, null);
     }
 }
