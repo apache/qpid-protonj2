@@ -17,12 +17,15 @@
 package org.apache.qpid.proton4j.transport.sasl;
 
 import org.apache.qpid.proton4j.amqp.Symbol;
+import org.apache.qpid.proton4j.amqp.security.SaslCode;
 import org.apache.qpid.proton4j.amqp.security.SaslInit;
 import org.apache.qpid.proton4j.amqp.security.SaslMechanisms;
+import org.apache.qpid.proton4j.amqp.security.SaslOutcome;
 import org.apache.qpid.proton4j.amqp.security.SaslResponse;
 import org.apache.qpid.proton4j.transport.HeaderFrame;
 import org.apache.qpid.proton4j.transport.SaslFrame;
 import org.apache.qpid.proton4j.transport.TransportHandlerContext;
+import org.apache.qpid.proton4j.transport.sasl.SaslConstants.SaslOutcomes;
 import org.apache.qpid.proton4j.transport.sasl.SaslConstants.SaslStates;
 
 public class SaslServerContext extends SaslContext {
@@ -105,6 +108,23 @@ public class SaslServerContext extends SaslContext {
         this.allowNonSasl = allowNonSasl;
     }
 
+    /**
+     * @return the currently set SASL outcome.
+     */
+    public SaslOutcomes getOutcome() {
+        return outcome;
+    }
+
+    /**
+     * Sets the SASL outcome to return to the remote.
+     *
+     * @param outcome
+     *      The SASL outcome that should be returned to the remote.
+     */
+    public void setOutcome(SaslOutcomes outcome) {
+        this.outcome = outcome;
+    }
+
     //----- Transport event handlers -----------------------------------------//
 
     @Override
@@ -133,7 +153,8 @@ public class SaslServerContext extends SaslContext {
         // Give the callback handler a chance to configure this handler
         listener.onSaslHeader(this, header.getBody());
 
-        // TODO - When to fail when no mechanisms set, now or on some earlier started / connected evnet ?
+        // TODO - When to fail when no mechanisms set, now or on some earlier started / connected event ?
+        //        Or allow it to be empty and await an async write of a SaslInit frame etc ?
         if (serverMechanisms == null || serverMechanisms.length == 0) {
             context.fireFailed(new IllegalStateException("SASL Server has no configured mechanisms"));
         }
@@ -157,6 +178,7 @@ public class SaslServerContext extends SaslContext {
                 context.fireHeaderFrame(header);
             } else {
                 // TODO - Error type ?
+                context.fireWrite(HeaderFrame.SASL_HEADER_FRAME);
                 context.fireFailed(new IllegalStateException(
                     "Unexpected AMQP Header before SASL Authentication completed."));
             }
@@ -164,17 +186,31 @@ public class SaslServerContext extends SaslContext {
             // Report the variety of errors that exist in this state such as the
             // fact that we shouldn't get an AMQP header before sasl is done, and when
             // it is done we are currently bypassing this call in the parent SaslHandler.
+            context.fireFailed(new IllegalStateException(
+                "Unexpected AMQP Header before SASL Authentication completed."));
         }
     }
 
     @Override
     public void handleInit(SaslInit saslInit, TransportHandlerContext context) {
+        // TODO - Handle SaslInit already read.
+
         hostname = saslInit.getHostname();
         chosenMechanism = saslInit.getMechanism();
         initReceived = true;
 
         // TODO - Should we use ProtonBuffer slices as response containers ?
         listener.onSaslInit(this, saslInit.getInitialResponse());
+
+        if (getOutcome() != SaslOutcomes.PN_SASL_NONE) {
+            SaslOutcome outcome = new SaslOutcome();
+            // TODO Clean up SaslCode mechanics
+            outcome.setCode(SaslCode.values()[getOutcome().getCode()]);
+            // TODO Additional Data
+            context.fireWrite(new SaslFrame(outcome, null));
+
+            done = true;
+        }
     }
 
     @Override
