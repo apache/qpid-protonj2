@@ -154,6 +154,21 @@ public interface ProtonBuffer extends Comparable<ProtonBuffer> {
      */
     ByteBuffer toByteBuffer();
 
+    /**
+     * Returns a ByteBuffer that represents the given span of bytes from the readable portion
+     * of this buffer.
+     * <p>
+     * This method should attempt to return a ByteBuffer that shares the backing data store
+     * with this buffer however if that is not possible it is permitted that the returned
+     * ByteBuffer contain a copy of the readable bytes of this ProtonBuffer.
+     *
+     * @param index
+     *      The starting index in this where the ByteBuffer view should begin.
+     * @param length
+     *      The number of bytes to include in the ByteBuffer view.
+     *
+     * @return a ByteBuffer that represents the given view of this buffers readable bytes.
+     */
     ByteBuffer toByteBuffer(int index, int length);
 
     /**
