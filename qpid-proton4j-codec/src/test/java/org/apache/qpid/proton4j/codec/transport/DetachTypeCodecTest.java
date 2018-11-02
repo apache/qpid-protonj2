@@ -35,40 +35,40 @@ public class DetachTypeCodecTest extends CodecTestSupport {
 
     @Test
     public void testEncodeDecodeTypeWithNoError() throws Exception {
-       ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
 
-       Detach input = new Detach();
-       input.setHandle(UnsignedInteger.valueOf(1));
-       input.setClosed(false);
+        Detach input = new Detach();
+        input.setHandle(UnsignedInteger.valueOf(1));
+        input.setClosed(false);
 
-       encoder.writeObject(buffer, encoderState, input);
+        encoder.writeObject(buffer, encoderState, input);
 
-       final Detach result = (Detach) decoder.readObject(buffer, decoderState);
+        final Detach result = (Detach) decoder.readObject(buffer, decoderState);
 
-       assertEquals(UnsignedInteger.valueOf(1), result.getHandle());
-       assertFalse(result.getClosed());
-       assertNull(result.getError());
+        assertEquals(UnsignedInteger.valueOf(1), result.getHandle());
+        assertFalse(result.getClosed());
+        assertNull(result.getError());
     }
 
     @Test
     public void testEncodeDecodeTypeWithError() throws Exception {
-       ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-       ErrorCondition error = new ErrorCondition();
-       error.setCondition(Symbol.valueOf("amqp-error"));
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        ErrorCondition error = new ErrorCondition();
+        error.setCondition(Symbol.valueOf("amqp-error"));
 
-       Detach input = new Detach();
-       input.setHandle(UnsignedInteger.valueOf(1));
-       input.setClosed(true);
-       input.setError(error);
+        Detach input = new Detach();
+        input.setHandle(UnsignedInteger.valueOf(1));
+        input.setClosed(true);
+        input.setError(error);
 
-       encoder.writeObject(buffer, encoderState, input);
+        encoder.writeObject(buffer, encoderState, input);
 
-       final Detach result = (Detach) decoder.readObject(buffer, decoderState);
+        final Detach result = (Detach) decoder.readObject(buffer, decoderState);
 
-       assertEquals(UnsignedInteger.valueOf(1), result.getHandle());
-       assertTrue(result.getClosed());
-       assertNotNull(result.getError());
-       assertNotNull(result.getError().getCondition());
-       assertNull(result.getError().getDescription());
+        assertEquals(UnsignedInteger.valueOf(1), result.getHandle());
+        assertTrue(result.getClosed());
+        assertNotNull(result.getError());
+        assertNotNull(result.getError().getCondition());
+        assertNull(result.getError().getDescription());
     }
 }

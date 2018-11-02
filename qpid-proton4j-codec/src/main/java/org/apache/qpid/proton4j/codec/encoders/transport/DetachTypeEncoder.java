@@ -63,7 +63,7 @@ public class DetachTypeEncoder extends AbstractDescribedListTypeEncoder<Detach> 
 
     @Override
     public int getListEncoding(Detach value) {
-        return value.getError() == null ? EncodingCodes.LIST8 & 0xff : EncodingCodes.LIST32 & 0xff;
+        return value.getError() == null ? EncodingCodes.LIST8 : EncodingCodes.LIST32;
     }
 
     @Override
