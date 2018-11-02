@@ -83,7 +83,7 @@ public abstract class AbstractDescribedListTypeEncoder<V> extends AbstractDescri
     @Override
     public void writeType(ProtonBuffer buffer, EncoderState state, V value) {
         buffer.writeByte(EncodingCodes.DESCRIBED_TYPE_INDICATOR);
-        state.getEncoder().writeUnsignedLong(buffer, state, getDescriptorCode());
+        state.getEncoder().writeUnsignedLong(buffer, state, getDescriptorCode().byteValue());
 
         int count = getElementCount(value);
         int encodingCode = getListEncoding(value);
@@ -94,9 +94,10 @@ public abstract class AbstractDescribedListTypeEncoder<V> extends AbstractDescri
 //            throw new EncodingException("Incomplete Type cannot be encoded");
 //        }
 
+        buffer.writeByte(encodingCode);
+
         // Optimized step, no other data to be written.
-        if (count == 0 || encodingCode == EncodingCodes.LIST0) {
-            buffer.writeByte(EncodingCodes.LIST0);
+        if (encodingCode == EncodingCodes.LIST0) {
             return;
         }
 
@@ -104,10 +105,8 @@ public abstract class AbstractDescribedListTypeEncoder<V> extends AbstractDescri
 
         if (encodingCode == EncodingCodes.LIST8) {
             fieldWidth = 1;
-            buffer.writeByte(EncodingCodes.LIST8);
         } else {
             fieldWidth = 4;
-            buffer.writeByte(EncodingCodes.LIST32);
         }
 
         int startIndex = buffer.getWriteIndex();

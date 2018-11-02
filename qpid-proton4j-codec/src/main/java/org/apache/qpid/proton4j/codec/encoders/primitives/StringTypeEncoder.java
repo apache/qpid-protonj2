@@ -110,24 +110,33 @@ public class StringTypeEncoder extends AbstractPrimitiveTypeEncoder<String> {
         return encodedSize;
     }
 
+    // TODO - We should probably have a string encoder in the state object and let the
+    //        implementations override this of have a String write method in the buffer class
     private void writeString(ProtonBuffer buffer, EncoderState state, String value) {
         final int length = value.length();
         int c;
+
+        int position = buffer.getWriteIndex();
+
+        // TODO - We should be able to ensure enough space is available in this
+        //        buffer to accommodate the string before starting this write.
+        //        this method truncates so we have to use caution
+        buffer.capacity(Math.max(buffer.capacity(), position + (value.length() * 4)));
 
         for (int i = 0; i < length; i++) {
             c = value.charAt(i);
             if ((c & 0xFF80) == 0) {
                 /* U+0000..U+007F */
-                buffer.writeByte((byte) c);
+                buffer.setByte(position++, (byte) c);
             } else if ((c & 0xF800) == 0) {
                 /* U+0080..U+07FF */
-                buffer.writeByte((byte)(0xC0 | ((c >> 6) & 0x1F)));
-                buffer.writeByte((byte)(0x80 | (c & 0x3F)));
+                buffer.setByte(position++, (byte)(0xC0 | ((c >> 6) & 0x1F)));
+                buffer.setByte(position++, (byte)(0x80 | (c & 0x3F)));
             } else if ((c & 0xD800) != 0xD800 || (c > 0xDBFF)) {
                 /* U+0800..U+FFFF - excluding surrogate pairs */
-                buffer.writeByte((byte)(0xE0 | ((c >> 12) & 0x0F)));
-                buffer.writeByte((byte)(0x80 | ((c >> 6) & 0x3F)));
-                buffer.writeByte((byte)(0x80 | (c & 0x3F)));
+                buffer.setByte(position++, (byte)(0xE0 | ((c >> 12) & 0x0F)));
+                buffer.setByte(position++, (byte)(0x80 | ((c >> 6) & 0x3F)));
+                buffer.setByte(position++, (byte)(0x80 | (c & 0x3F)));
             } else {
                 int low;
 
@@ -137,12 +146,13 @@ public class StringTypeEncoder extends AbstractPrimitiveTypeEncoder<String> {
 
                 c = 0x010000 + ((c & 0x03FF) << 10) + (low & 0x03FF);
 
-                buffer.writeByte((byte)(0xF0 | ((c >> 18) & 0x07)));
-                buffer.writeByte((byte)(0x80 | ((c >> 12) & 0x3F)));
-                buffer.writeByte((byte)(0x80 | ((c >> 6) & 0x3F)));
-                buffer.writeByte((byte)(0x80 | (c & 0x3F)));
+                buffer.setByte(position++, (byte)(0xF0 | ((c >> 18) & 0x07)));
+                buffer.setByte(position++, (byte)(0x80 | ((c >> 12) & 0x3F)));
+                buffer.setByte(position++, (byte)(0x80 | ((c >> 6) & 0x3F)));
+                buffer.setByte(position++, (byte)(0x80 | (c & 0x3F)));
             }
         }
-    }
 
+        buffer.setWriteIndex(position);
+    }
 }

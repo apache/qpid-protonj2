@@ -170,6 +170,12 @@ public class ProtonEncoder implements Encoder {
     }
 
     @Override
+    public void writeUnsignedLong(ProtonBuffer buffer, EncoderState state, byte value) {
+        buffer.writeByte(EncodingCodes.SMALLULONG);
+        buffer.writeByte(value);
+    }
+
+    @Override
     public void writeUnsignedLong(ProtonBuffer buffer, EncoderState state, UnsignedLong value) {
         if (value == null) {
             buffer.writeByte(EncodingCodes.NULL);

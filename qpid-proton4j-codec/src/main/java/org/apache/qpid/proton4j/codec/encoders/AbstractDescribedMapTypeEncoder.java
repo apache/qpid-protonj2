@@ -84,7 +84,7 @@ public abstract class AbstractDescribedMapTypeEncoder<K, V, M> extends AbstractD
     @Override
     public void writeType(ProtonBuffer buffer, EncoderState state, M value) {
         buffer.writeByte(EncodingCodes.DESCRIBED_TYPE_INDICATOR);
-        state.getEncoder().writeUnsignedLong(buffer, state, getDescriptorCode());
+        state.getEncoder().writeUnsignedLong(buffer, state, getDescriptorCode().byteValue());
 
         if (!hasMap(value)) {
             state.getEncoder().writeNull(buffer, state);
@@ -94,14 +94,14 @@ public abstract class AbstractDescribedMapTypeEncoder<K, V, M> extends AbstractD
         int count = getMapSize(value);
         int encodingCode = getMapEncoding(value);
 
+        buffer.writeByte(encodingCode);
+
         final int fieldWidth;
 
         if (encodingCode == EncodingCodes.MAP8) {
             fieldWidth = 1;
-            buffer.writeByte(EncodingCodes.MAP8);
         } else {
             fieldWidth = 4;
-            buffer.writeByte(EncodingCodes.MAP32);
         }
 
         int startIndex = buffer.getWriteIndex();

@@ -62,7 +62,14 @@ public class DispositionTypeEncoder extends AbstractDescribedListTypeEncoder<Dis
                 state.getEncoder().writeBoolean(buffer, state, disposition.getSettled());
                 break;
             case 4:
-                state.getEncoder().writeObject(buffer, state, disposition.getState());
+                if (Accepted.getInstance().equals(disposition.getState())) {
+                    buffer.writeByte(EncodingCodes.DESCRIBED_TYPE_INDICATOR);
+                    buffer.writeByte(EncodingCodes.SMALLULONG);
+                    buffer.writeByte(Accepted.DESCRIPTOR_CODE.byteValue());
+                    buffer.writeByte(EncodingCodes.LIST0);
+                } else {
+                    state.getEncoder().writeObject(buffer, state, disposition.getState());
+                }
                 break;
             case 5:
                 state.getEncoder().writeBoolean(buffer, state, disposition.getBatchable());
