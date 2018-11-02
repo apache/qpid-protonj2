@@ -221,8 +221,9 @@ public class Benchmark implements Runnable {
 
     private void benchmarkProperties() throws IOException {
         Properties properties = new Properties();
-        properties.setTo("queue:1");
-        properties.setMessageId("ID:Message:1");
+        properties.setTo("queue:1-1024");
+        properties.setReplyTo("queue:1-11024-reply");
+        properties.setMessageId("ID:255f1297-5a71-4df1-8147-b2cdf850a56f:1");
         properties.setCreationTime(System.currentTimeMillis());
 
         resultSet.start();
@@ -315,9 +316,9 @@ public class Benchmark implements Runnable {
     }
 
     private void benchmarkString() throws IOException {
-        String string1 = new String("String-1");
-        String string2 = new String("String-2");
-        String string3 = new String("String-3");
+        String string1 = new String("String-1-somewhat-long-test-to-validate-performance-improvements-to-the-proton-j-codec-@!%$");
+        String string2 = new String("String-2-somewhat-long-test-to-validate-performance-improvements-to-the-proton-j-codec-@!%$");
+        String string3 = new String("String-3-somewhat-long-test-to-validate-performance-improvements-to-the-proton-j-codec-@!%$");
 
         resultSet.start();
         for (int i = 0; i < ITERATIONS; i++) {
