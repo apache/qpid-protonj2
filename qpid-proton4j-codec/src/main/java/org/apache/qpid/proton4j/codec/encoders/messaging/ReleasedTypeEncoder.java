@@ -46,7 +46,15 @@ public class ReleasedTypeEncoder extends AbstractDescribedListTypeEncoder<Releas
 
     @Override
     public int getListEncoding(Released value) {
-        return EncodingCodes.LIST0 & 0xff;
+        return EncodingCodes.LIST0;
+    }
+
+    @Override
+    public void writeType(ProtonBuffer buffer, EncoderState state, Released value) {
+        buffer.writeByte(EncodingCodes.DESCRIBED_TYPE_INDICATOR);
+        buffer.writeByte(EncodingCodes.SMALLULONG);
+        buffer.writeByte(getDescriptorCode().byteValue());
+        buffer.writeByte(EncodingCodes.LIST0);
     }
 
     @Override

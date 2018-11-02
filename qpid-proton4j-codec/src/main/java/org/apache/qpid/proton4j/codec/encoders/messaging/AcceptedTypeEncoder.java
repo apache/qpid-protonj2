@@ -50,6 +50,14 @@ public class AcceptedTypeEncoder extends AbstractDescribedListTypeEncoder<Accept
     }
 
     @Override
+    public void writeType(ProtonBuffer buffer, EncoderState state, Accepted value) {
+        buffer.writeByte(EncodingCodes.DESCRIBED_TYPE_INDICATOR);
+        buffer.writeByte(EncodingCodes.SMALLULONG);
+        buffer.writeByte(getDescriptorCode().byteValue());
+        buffer.writeByte(EncodingCodes.LIST0);
+    }
+
+    @Override
     public void writeElement(Accepted source, int index, ProtonBuffer buffer, EncoderState state) {
     }
 
