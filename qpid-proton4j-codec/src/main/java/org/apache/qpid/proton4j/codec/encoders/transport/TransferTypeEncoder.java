@@ -88,7 +88,7 @@ public class TransferTypeEncoder extends AbstractDescribedListTypeEncoder<Transf
                 break;
             case 6:
                 ReceiverSettleMode rcvSettleMode = transfer.getRcvSettleMode();
-                state.getEncoder().writeObject(buffer, state, rcvSettleMode == null ? null : rcvSettleMode.getValue());
+                state.getEncoder().writeUnsignedByte(buffer, state, rcvSettleMode == null ? null : rcvSettleMode.byteValue());
                 break;
             case 7:
                 state.getEncoder().writeObject(buffer, state, transfer.getState());

@@ -43,7 +43,11 @@ public enum ReceiverSettleMode {
         }
     }
 
+    public byte byteValue() {
+        return value.byteValue();
+    }
+
     public UnsignedByte getValue() {
-        return this.value;
+        return value;
     }
 }

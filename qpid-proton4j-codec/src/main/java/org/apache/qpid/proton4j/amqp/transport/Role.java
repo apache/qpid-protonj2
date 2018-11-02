@@ -18,9 +18,15 @@ package org.apache.qpid.proton4j.amqp.transport;
 
 public enum Role {
 
-    SENDER, RECEIVER;
+    SENDER(false), RECEIVER(true);
+
+    private final boolean receiver;
+
+    private Role(boolean receiver) {
+        this.receiver = receiver;
+    }
 
     public boolean getValue() {
-        return this == RECEIVER;
+        return receiver;
     }
 }

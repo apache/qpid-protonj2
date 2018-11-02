@@ -59,10 +59,10 @@ public class AttachTypeEncoder extends AbstractDescribedListTypeEncoder<Attach> 
                 state.getEncoder().writeBoolean(buffer, state, attach.getRole().getValue());
                 break;
             case 3:
-                state.getEncoder().writeUnsignedByte(buffer, state, attach.getSndSettleMode().getValue());
+                state.getEncoder().writeUnsignedByte(buffer, state, attach.getSndSettleMode().byteValue());
                 break;
             case 4:
-                state.getEncoder().writeUnsignedByte(buffer, state, attach.getRcvSettleMode().getValue());
+                state.getEncoder().writeUnsignedByte(buffer, state, attach.getRcvSettleMode().byteValue());
                 break;
             case 5:
                 state.getEncoder().writeObject(buffer, state, attach.getSource());
