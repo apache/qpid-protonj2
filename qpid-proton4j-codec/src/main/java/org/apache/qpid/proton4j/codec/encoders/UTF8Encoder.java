@@ -14,24 +14,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.qpid.proton4j.codec;
+package org.apache.qpid.proton4j.codec.encoders;
 
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 
 /**
- * Retains Encoder state information either between calls or across encode iterations.
+ * Interface for an external UTF8 Encoder that can be supplied by a client
+ * which implements custom encoding logic optimized for the application using
+ * the Codec.
  */
-public interface EncoderState {
-
-    /**
-     * @return the Encoder instance that create this state object.
-     */
-    Encoder getEncoder();
-
-    /**
-     * Resets any intermediate state back to default values.
-     */
-    void reset();
+public interface UTF8Encoder {
 
     /**
      * Encodes the given sequence of characters in UTF8 to the given buffer.
