@@ -74,6 +74,22 @@ public interface ProtonBuffer extends Comparable<ProtonBuffer> {
     int maxCapacity();
 
     /**
+     * Ensures that the requested number of bytes is available for write operations
+     * in the current buffer, growing the buffer if needed to meet the requested
+     * writable capacity.
+     *
+     * @param amount
+     *      The number of bytes beyond the current write index needed.
+     *
+     * @return this buffer for using in call chaining.
+     *
+     * @throws IllegalArgumentException if the amount given is less than zero.
+     * @throws IndexOutOfBoundsException if the amount given would result in the buffer
+     *         exceeding the maximum capacity for this buffer.
+     */
+    ProtonBuffer ensureWritable(int amount) throws IndexOutOfBoundsException, IllegalArgumentException;
+
+    /**
      * Create a duplicate of this ProtonBuffer instance that shares the same backing
      * data store and but maintains separate position index values.  Changes to one buffer
      * are visible in any of its duplicates.  This method does not copy the read or write
@@ -755,7 +771,7 @@ public interface ProtonBuffer extends Comparable<ProtonBuffer> {
      * @throws IndexOutOfBoundsException
      *         if {@code length} is greater than {@code this.readableBytes}
      */
-    public abstract ProtonBuffer skipBytes(int length);
+    ProtonBuffer skipBytes(int length);
 
     /**
      * Reads one byte from the buffer and advances the read index by one.

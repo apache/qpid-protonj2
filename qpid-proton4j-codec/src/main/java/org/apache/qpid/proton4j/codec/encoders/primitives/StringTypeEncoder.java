@@ -111,17 +111,16 @@ public class StringTypeEncoder extends AbstractPrimitiveTypeEncoder<String> {
     }
 
     // TODO - We should probably have a string encoder in the state object and let the
-    //        implementations override this of have a String write method in the buffer class
+    //        implementations override this or have a String write method in the buffer class
     private void writeString(ProtonBuffer buffer, EncoderState state, String value) {
         final int length = value.length();
         int c;
 
         int position = buffer.getWriteIndex();
 
-        // TODO - We should be able to ensure enough space is available in this
-        //        buffer to accommodate the string before starting this write.
-        //        this method truncates so we have to use caution
-        buffer.capacity(Math.max(buffer.capacity(), position + (value.length() * 4)));
+        // We need to ensure that we have enough space for the largest encoding possible for this
+        // string value.  We could compute the UTF8 length.
+        buffer.ensureWritable(value.length() * 4);
 
         for (int i = 0; i < length; i++) {
             c = value.charAt(i);

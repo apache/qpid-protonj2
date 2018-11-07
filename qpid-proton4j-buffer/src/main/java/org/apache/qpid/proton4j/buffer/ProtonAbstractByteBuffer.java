@@ -182,6 +182,17 @@ public abstract class ProtonAbstractByteBuffer implements ProtonBuffer {
     @Override
     public abstract ByteBuffer toByteBuffer(int index, int length);
 
+    @Override
+    public ProtonBuffer ensureWritable(int minWritableBytes) {
+        if (minWritableBytes < 0) {
+            throw new IllegalArgumentException(String.format(
+                "minWritableBytes: %d (expected: >= 0)", minWritableBytes));
+        }
+
+        internalEnsureWritable(minWritableBytes);
+        return this;
+    }
+
     //----- Read methods -----------------------------------------------------//
 
     @Override
@@ -614,15 +625,6 @@ public abstract class ProtonAbstractByteBuffer implements ProtonBuffer {
                 "readIndex(%d) + length(%d) exceeds writeIndex(%d): %s",
                 readIndex, minimumReadableBytes, writeIndex, this));
         }
-    }
-
-    protected void ensureWritable(int minWritableBytes) {
-        if (minWritableBytes < 0) {
-            throw new IllegalArgumentException(String.format(
-                "minWritableBytes: %d (expected: >= 0)", minWritableBytes));
-        }
-
-        internalEnsureWritable(minWritableBytes);
     }
 
     private void internalEnsureWritable(int minWritableBytes) {
