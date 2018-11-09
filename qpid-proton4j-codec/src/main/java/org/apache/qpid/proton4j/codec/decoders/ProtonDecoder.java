@@ -117,24 +117,16 @@ public class ProtonDecoder implements Decoder {
 
     @Override
     public TypeDecoder<?> readNextTypeDecoder(ProtonBuffer buffer, DecoderState state) throws IOException {
-        int encodingCode = buffer.readByte() & 0xff;
+        int encodingCode = buffer.readByte() & 0xFF;
 
         if (encodingCode == EncodingCodes.DESCRIBED_TYPE_INDICATOR) {
-            byte encoding = buffer.getByte(buffer.getReadIndex());
-
-            final Object descriptor;
-
-            switch (encoding) {
-                case EncodingCodes.SMALLULONG:
-                case EncodingCodes.ULONG:
-                    descriptor = readUnsignedLong(buffer, state);
-                    break;
-                case EncodingCodes.SYM8:
-                case EncodingCodes.SYM32:
-                    descriptor = readSymbol(buffer, state);
-                    break;
-                default:
-                    descriptor = readObject(buffer, state);
+            Object descriptor;
+            try {
+                buffer.markReadIndex();
+                descriptor = readUnsignedLong(buffer, state);
+            } catch (Exception e) {
+                buffer.resetReadIndex();
+                descriptor = readObject(buffer, state);
             }
 
             TypeDecoder<?> typeDecoder = describedTypeDecoders.get(descriptor);

@@ -569,17 +569,16 @@ public class ProtonEncoder implements Encoder {
     @SuppressWarnings({ "rawtypes", "unchecked" })
     @Override
     public void writeObject(ProtonBuffer buffer, EncoderState state, Object value) {
-        if (value == null) {
-            buffer.writeByte(EncodingCodes.NULL);
-            return;
-        }
+        if (value != null) {
+            TypeEncoder encoder = typeEncoders.get(value.getClass());
 
-        TypeEncoder encoder = typeEncoders.get(value.getClass());
-
-        if (encoder == null) {
-            writeUnregisteredType(buffer, state, value);
+            if (encoder == null) {
+                writeUnregisteredType(buffer, state, value);
+            } else {
+                encoder.writeType(buffer, state, value);
+            }
         } else {
-            encoder.writeType(buffer, state, value);
+            buffer.writeByte(EncodingCodes.NULL);
         }
     }
 
@@ -647,27 +646,37 @@ public class ProtonEncoder implements Encoder {
         TypeEncoder<?> encoder = typeEncoders.get(typeClass);
 
         if (encoder == null) {
-            if (typeClass.isArray()) {
-                encoder = arrayEncoder;
-            } else {
-                if (List.class.isAssignableFrom(typeClass)) {
-                    encoder = listEncoder;
-                } else if (Map.class.isAssignableFrom(typeClass)) {
-                    encoder = mapEncoder;
-                } else if (DescribedType.class.isAssignableFrom(typeClass)) {
-                    // For instances of a specific DescribedType that we don't know about the
-                    // generic described type encoder will work.  We don't use that though for
-                    // class lookups as we don't want to allow arrays of  polymorphic types.
-                    if (encoder == null && instance != null) {
-                        if (encoder == null) {
-                            return unknownTypeEncoder;
-                        }
+            encoder = deduceTypeEncoder(typeClass, instance);
+        }
+
+        return encoder;
+    }
+
+    private TypeEncoder<?> deduceTypeEncoder(Class<?> typeClass, Object instance) {
+        TypeEncoder<?> encoder = typeEncoders.get(typeClass);
+
+        if (typeClass.isArray()) {
+            encoder = arrayEncoder;
+        } else {
+            if (List.class.isAssignableFrom(typeClass)) {
+                encoder = listEncoder;
+            } else if (Map.class.isAssignableFrom(typeClass)) {
+                encoder = mapEncoder;
+            } else if (DescribedType.class.isAssignableFrom(typeClass)) {
+                // For instances of a specific DescribedType that we don't know about the
+                // generic described type encoder will work.  We don't use that though for
+                // class lookups as we don't want to allow arrays of polymorphic types.
+                if (encoder == null && instance != null) {
+                    if (encoder == null) {
+                        return unknownTypeEncoder;
                     }
                 }
             }
-
-            typeEncoders.put(typeClass, encoder);
         }
+
+        // Ensure that next time we find the encoder immediately and don't need to
+        // go through this process again.
+        typeEncoders.put(typeClass, encoder);
 
         return encoder;
     }

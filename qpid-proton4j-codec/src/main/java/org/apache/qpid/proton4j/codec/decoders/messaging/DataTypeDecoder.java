@@ -24,6 +24,7 @@ import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.amqp.messaging.Data;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.DecoderState;
+import org.apache.qpid.proton4j.codec.EncodingCodes;
 import org.apache.qpid.proton4j.codec.TypeDecoder;
 import org.apache.qpid.proton4j.codec.decoders.AbstractDescribedTypeDecoder;
 import org.apache.qpid.proton4j.codec.decoders.primitives.BinaryTypeDecoder;
@@ -50,16 +51,34 @@ public class DataTypeDecoder extends AbstractDescribedTypeDecoder<Data> {
 
     @Override
     public Data readValue(ProtonBuffer buffer, DecoderState state) throws IOException {
-        TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
+        byte encodingCode = buffer.readByte();
 
-        if (!(decoder instanceof BinaryTypeDecoder)) {
-            throw new IOException("Expected Binary type indicator but got decoder for type: " + decoder.getClass().getSimpleName());
+        int size = 0;
+
+        switch (encodingCode) {
+            case EncodingCodes.VBIN8:
+                size = buffer.readByte();
+                break;
+            case EncodingCodes.VBIN32:
+                size = buffer.readInt();
+                break;
+            case EncodingCodes.NULL:
+                return new Data(null);
+            default:
+                throw new IOException("Expected Binary type but found encoding: " + encodingCode);
         }
 
-        BinaryTypeDecoder valueDecoder = (BinaryTypeDecoder) decoder;
-        Binary result = valueDecoder.readValue(buffer, state);
+        if (size > buffer.getReadableBytes()) {
+            throw new IllegalArgumentException("Binary data size " + size + " is specified to be greater than the " +
+                                               "amount of data available ("+ buffer.getReadableBytes()+")");
+        }
 
-        return new Data(result);
+        int position = buffer.getReadIndex();
+        byte[] data = new byte[size];
+        buffer.getBytes(position, data, 0, size);
+        buffer.setReadIndex(position + size);
+
+        return new Data(new Binary(data));
     }
 
     @Override
