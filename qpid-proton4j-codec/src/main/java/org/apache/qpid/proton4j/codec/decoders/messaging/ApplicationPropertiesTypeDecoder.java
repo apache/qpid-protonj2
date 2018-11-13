@@ -26,7 +26,6 @@ import org.apache.qpid.proton4j.amqp.messaging.ApplicationProperties;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.Decoder;
 import org.apache.qpid.proton4j.codec.DecoderState;
-import org.apache.qpid.proton4j.codec.EncodingCodes;
 import org.apache.qpid.proton4j.codec.TypeDecoder;
 import org.apache.qpid.proton4j.codec.decoders.AbstractDescribedTypeDecoder;
 import org.apache.qpid.proton4j.codec.decoders.primitives.MapTypeDecoder;
@@ -54,15 +53,40 @@ public class ApplicationPropertiesTypeDecoder extends AbstractDescribedTypeDecod
 
     @Override
     public ApplicationProperties readValue(ProtonBuffer buffer, DecoderState state) throws IOException {
-        return new ApplicationProperties(readMap(buffer, state));
+        TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
+
+        if (decoder instanceof NullTypeDecoder) {
+            return new ApplicationProperties(null);
+        }
+
+        if (!(decoder instanceof MapTypeDecoder)) {
+            throw new IOException("Expected Map type indicator but got decoder for type: " + decoder.getClass().getSimpleName());
+        }
+
+        return new ApplicationProperties(readMap(buffer, state, (MapTypeDecoder) decoder));
     }
 
     @Override
     public ApplicationProperties[] readArrayElements(ProtonBuffer buffer, DecoderState state, int count) throws IOException {
+        TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
+
         ApplicationProperties[] result = new ApplicationProperties[count];
 
+        if (decoder instanceof NullTypeDecoder) {
+            for (int i = 0; i < count; ++i) {
+                result[i] = new ApplicationProperties(null);
+            }
+            return result;
+        }
+
+        if (!(decoder instanceof MapTypeDecoder)) {
+            throw new IOException("Expected Map type indicator but got decoder for type: " + decoder.getClass().getSimpleName());
+        }
+
+        MapTypeDecoder mapDecoder = (MapTypeDecoder) decoder;
+
         for (int i = 0; i < count; ++i) {
-            result[i] = new ApplicationProperties(readMap(buffer, state));
+            result[i] = new ApplicationProperties(readMap(buffer, state, mapDecoder));
         }
 
         return result;
@@ -83,29 +107,12 @@ public class ApplicationPropertiesTypeDecoder extends AbstractDescribedTypeDecod
         decoder.skipValue(buffer, state);
     }
 
-    private Map<String, Object> readMap(ProtonBuffer buffer, DecoderState state) throws IOException {
-        final int size;
-        final int count;
+    private Map<String, Object> readMap(ProtonBuffer buffer, DecoderState state, MapTypeDecoder mapDecoder) throws IOException {
+        int size = mapDecoder.readSize(buffer);
+        int count = mapDecoder.readCount(buffer);
 
-        byte encodingCode = buffer.readByte();
-
-        switch (encodingCode) {
-            case EncodingCodes.MAP8:
-                size = buffer.readByte() - 1;
-                count = buffer.readByte();
-                break;
-            case EncodingCodes.MAP32:
-                size = buffer.readInt() - 4;
-                count = buffer.readInt();
-                break;
-            case EncodingCodes.NULL:
-                return null;
-            default:
-                throw new IOException("Expected Map type but found encoding: " + encodingCode);
-        }
-
-        if (size > buffer.getReadableBytes()) {
-            throw new IOException(String.format(
+        if (count > buffer.getReadableBytes()) {
+            throw new IllegalArgumentException(String.format(
                     "Map encoded size %d is specified to be greater than the amount " +
                     "of data available (%d)", size, buffer.getReadableBytes()));
         }
