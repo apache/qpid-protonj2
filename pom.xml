@@ -19,7 +19,7 @@
   <parent>
     <groupId>org.apache</groupId>
     <artifactId>apache</artifactId>
-    <version>18</version>
+    <version>19</version>
   </parent>
   <modelVersion>4.0.0</modelVersion>
 
@@ -69,6 +69,7 @@
     <module>qpid-proton4j-transport</module>
     <module>qpid-proton4j-engine</module>
     <module>qpid-proton4j-common</module>
+    <module>qpid-proton4j-performance-tests</module>
   </modules>
 
   <dependencyManagement>
