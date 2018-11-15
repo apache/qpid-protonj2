@@ -22,10 +22,7 @@ import java.util.List;
 
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.DecoderState;
-import org.apache.qpid.proton4j.codec.EncodingCodes;
-import org.apache.qpid.proton4j.codec.TypeDecoder;
 import org.apache.qpid.proton4j.codec.decoders.AbstractPrimitiveTypeDecoder;
-import org.apache.qpid.proton4j.codec.decoders.PrimitiveTypeDecoder;
 
 /**
  * Base for the various List type decoders needed to read AMQP List values.
@@ -36,34 +33,19 @@ public abstract class AbstractListTypeDecoder extends AbstractPrimitiveTypeDecod
     @Override
     public List<Object> readValue(ProtonBuffer buffer, DecoderState state) throws IOException {
         int size = readSize(buffer);
-        int count = readCount(buffer);
 
         // Ensure we do not allocate an array of size greater then the available data, otherwise there is a risk for an OOM error
-        if (count > buffer.getReadableBytes()) {
+        if (size > buffer.getReadableBytes()) {
             throw new IllegalArgumentException(String.format(
                     "List element size %d is specified to be greater than the amount " +
                     "of data available (%d)", size, buffer.getReadableBytes()));
         }
 
-        TypeDecoder<?> typeDecoder = null;
+        int count = readCount(buffer);
 
         List<Object> list = new ArrayList<>(count);
         for (int i = 0; i < count; i++) {
-            // Whenever we can just reuse the previously used TypeDecoder instead
-            // of spending time looking up the same one again.
-            int encodingCode = buffer.getByte(buffer.getReadIndex()) & 0xff;
-            if (encodingCode == EncodingCodes.DESCRIBED_TYPE_INDICATOR || !(typeDecoder instanceof PrimitiveTypeDecoder<?>)) {
-                typeDecoder = state.getDecoder().readNextTypeDecoder(buffer, state);
-            } else {
-                PrimitiveTypeDecoder<?> primitiveTypeDecoder = (PrimitiveTypeDecoder<?>) typeDecoder;
-                if (encodingCode != primitiveTypeDecoder.getTypeCode()) {
-                    typeDecoder = state.getDecoder().readNextTypeDecoder(buffer, state);
-                } else {
-                    buffer.readByte();  // Reusing the previous decoder, consume the type code.
-                }
-            }
-
-            list.add(typeDecoder.readValue(buffer, state));
+            list.add(state.getDecoder().readObject(buffer, state));
         }
 
         return list;

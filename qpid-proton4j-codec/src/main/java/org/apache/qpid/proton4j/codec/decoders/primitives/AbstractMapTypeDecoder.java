@@ -33,13 +33,14 @@ public abstract class AbstractMapTypeDecoder extends AbstractPrimitiveTypeDecode
     @Override
     public Map<Object, Object> readValue(ProtonBuffer buffer, DecoderState state) throws IOException {
         int size = readSize(buffer);
-        int count = readCount(buffer);
 
-        if (count > buffer.getReadableBytes()) {
+        if (size > buffer.getReadableBytes()) {
             throw new IllegalArgumentException(String.format(
                     "Map encoded size %d is specified to be greater than the amount " +
                     "of data available (%d)", size, buffer.getReadableBytes()));
         }
+
+        int count = readCount(buffer);
 
         // Count include both key and value so we must include that in the loop
         Map<Object, Object> map = new LinkedHashMap<>(count);
