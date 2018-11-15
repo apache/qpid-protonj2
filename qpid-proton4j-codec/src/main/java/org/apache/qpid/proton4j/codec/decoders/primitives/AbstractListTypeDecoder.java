@@ -51,7 +51,7 @@ public abstract class AbstractListTypeDecoder extends AbstractPrimitiveTypeDecod
         for (int i = 0; i < count; i++) {
             // Whenever we can just reuse the previously used TypeDecoder instead
             // of spending time looking up the same one again.
-            byte encodingCode = buffer.getByte(buffer.getReadIndex());
+            int encodingCode = buffer.getByte(buffer.getReadIndex()) & 0xff;
             if (encodingCode == EncodingCodes.DESCRIBED_TYPE_INDICATOR || !(typeDecoder instanceof PrimitiveTypeDecoder<?>)) {
                 typeDecoder = state.getDecoder().readNextTypeDecoder(buffer, state);
             } else {
