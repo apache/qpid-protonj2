@@ -399,7 +399,7 @@ public class ProtonDecoder implements Decoder {
 
         switch (encodingCode) {
             case EncodingCodes.USHORT:
-                return buffer.readShort();
+                return buffer.readShort() & 0xffff;
             case EncodingCodes.NULL:
                 return defaultValue;
             default:
@@ -467,7 +467,7 @@ public class ProtonDecoder implements Decoder {
             case EncodingCodes.SMALLUINT:
                 return buffer.readByte() & 0xff;
             case EncodingCodes.UINT:
-                return buffer.readInt();
+                return buffer.readInt() & 0xffffffffl;
             case EncodingCodes.NULL:
                 return defaultValue;
             default:

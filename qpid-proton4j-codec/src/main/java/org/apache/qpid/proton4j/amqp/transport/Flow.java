@@ -20,6 +20,7 @@ import java.util.Map;
 
 import org.apache.qpid.proton4j.amqp.Binary;
 import org.apache.qpid.proton4j.amqp.Symbol;
+import org.apache.qpid.proton4j.amqp.UnsignedInteger;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
 
 public final class Flow implements Performative {
@@ -116,7 +117,7 @@ public final class Flow implements Performative {
     }
 
     public void setNextIncomingId(long nextIncomingId) {
-        if (nextIncomingId < 0 || nextIncomingId > UINT_MAX) {
+        if (nextIncomingId < 0 || UnsignedInteger.MAX_VALUE.compareTo(nextOutgoingId) < 0) {
             throw new IllegalArgumentException("Next Incoming Id value given is out of range: " + nextIncomingId);
         } else if (nextIncomingId == 0) {
             modified &= ~NEXT_INCOMING_ID;

@@ -39,7 +39,6 @@ public class StringsBenchmark extends CodecBenchmarkBase {
     private String string2;
     private String string3;
 
-
     @Setup
     public void init(Blackhole blackhole) {
         this.blackhole = blackhole;
@@ -60,6 +59,13 @@ public class StringsBenchmark extends CodecBenchmarkBase {
         encoder.writeString(buffer, encoderState, string1);
         encoder.writeString(buffer, encoderState, string2);
         encoder.writeString(buffer, encoderState, string3);
+        return buffer;
+    }
+
+    @Benchmark
+    public ProtonBuffer encodeLargeString() {
+        buffer.clear();
+        encoder.writeString(buffer, encoderState, PAYLOAD);
         return buffer;
     }
 

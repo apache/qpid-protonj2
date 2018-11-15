@@ -75,6 +75,10 @@ public final class UnsignedInteger extends Number implements Comparable<Unsigned
         return true;
     }
 
+    public int compareTo(long o) {
+        return Long.signum(longValue() - o);
+    }
+
     @Override
     public int compareTo(UnsignedInteger o) {
         return Long.signum(longValue() - o.longValue());
