@@ -25,7 +25,7 @@ import org.openjdk.jmh.annotations.Setup;
 import org.openjdk.jmh.infra.Blackhole;
 import org.openjdk.jmh.runner.RunnerException;
 
-public class StringsBenchmark extends CodecBenchmarkBase {
+public class StringBenchmark extends CodecBenchmarkBase {
 
     private static final String PAYLOAD =
           "0123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789"
@@ -79,6 +79,6 @@ public class StringsBenchmark extends CodecBenchmarkBase {
     }
 
     public static void main(String[] args) throws RunnerException {
-        runBenchmark(StringsBenchmark.class);
+        runBenchmark(StringBenchmark.class);
     }
 }

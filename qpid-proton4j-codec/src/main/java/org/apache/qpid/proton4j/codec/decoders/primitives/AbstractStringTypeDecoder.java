@@ -31,14 +31,13 @@ public abstract class AbstractStringTypeDecoder extends AbstractPrimitiveTypeDec
     public String readValue(ProtonBuffer buffer, DecoderState state) throws IOException {
         int length = readSize(buffer);
 
-        if (length == 0) {
+        if (length != 0) {
+            ProtonBuffer slice = buffer.slice(buffer.getReadIndex(), length);
+            buffer.skipBytes(length);
+            return state.decodeUTF8(slice);
+        } else {
             return "";
         }
-
-        ProtonBuffer slice = buffer.slice(buffer.getReadIndex(), length);
-        buffer.skipBytes(length);
-
-        return state.decodeUTF8(slice);
     }
 
     @Override

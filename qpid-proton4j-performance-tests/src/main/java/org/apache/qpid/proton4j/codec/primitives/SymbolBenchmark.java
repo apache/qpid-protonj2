@@ -25,7 +25,7 @@ import org.openjdk.jmh.annotations.Setup;
 import org.openjdk.jmh.infra.Blackhole;
 import org.openjdk.jmh.runner.RunnerException;
 
-public class SymbolsBenchmark extends CodecBenchmarkBase {
+public class SymbolBenchmark extends CodecBenchmarkBase {
 
     private Symbol symbol1;
     private Symbol symbol2;
@@ -63,6 +63,6 @@ public class SymbolsBenchmark extends CodecBenchmarkBase {
     }
 
     public static void main(String[] args) throws RunnerException {
-        runBenchmark(SymbolsBenchmark.class);
+        runBenchmark(SymbolBenchmark.class);
     }
 }

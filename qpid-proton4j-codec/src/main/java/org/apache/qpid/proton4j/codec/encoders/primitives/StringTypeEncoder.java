@@ -33,35 +33,39 @@ public class StringTypeEncoder extends AbstractPrimitiveTypeEncoder<String> {
 
     @Override
     public void writeType(ProtonBuffer buffer, EncoderState state, String value) {
-        int startIndex = buffer.getWriteIndex() + 1;
-
-        int fieldWidth = 1;
-
         // We are pessimistic and assume larger strings will encode
         // at the max 4 bytes per character instead of calculating
         if (value.length() > 64) {
-            fieldWidth = 4;
-        }
-
-        // Reserve space for the size
-        if (fieldWidth == 1) {
-            buffer.writeByte(EncodingCodes.STR8);
-            buffer.writeByte(0);
+            writeString(buffer, state, value);
         } else {
-            buffer.writeByte(EncodingCodes.STR32);
-            buffer.writeInt(0);
+            writeSmallString(buffer, state, value);
         }
+    }
+
+    private static void writeSmallString(ProtonBuffer buffer, EncoderState state, String value) {
+        buffer.writeByte(EncodingCodes.STR8);
+        buffer.writeByte(0);
+
+        int startIndex = buffer.getWriteIndex();
 
         // Write the full string value
         state.encodeUTF8(buffer, value);
 
-        // Move back and write the size
-        int endIndex = buffer.getWriteIndex();
-        if (fieldWidth == 1) {
-            buffer.setByte(startIndex, endIndex - startIndex - fieldWidth);
-        } else {
-            buffer.setInt(startIndex, endIndex - startIndex - fieldWidth);
-        }
+        // Move back and write the size into the size slot
+        buffer.setByte(startIndex - Byte.BYTES, buffer.getWriteIndex() - startIndex);
+    }
+
+    private static void writeString(ProtonBuffer buffer, EncoderState state, String value) {
+        buffer.writeByte(EncodingCodes.STR32);
+        buffer.writeInt(0);
+
+        int startIndex = buffer.getWriteIndex();
+
+        // Write the full string value
+        state.encodeUTF8(buffer, value);
+
+        // Move back and write the size into the size slot
+        buffer.setInt(startIndex - Integer.BYTES, buffer.getWriteIndex() - startIndex);
     }
 
     @Override
@@ -79,34 +83,5 @@ public class StringTypeEncoder extends AbstractPrimitiveTypeEncoder<String> {
             // Move back and write the string size
             buffer.setInt(stringStart - Integer.BYTES, buffer.getWriteIndex() - stringStart);
         }
-    }
-
-    // TODO - Can be used later if we have an optimized for space profile.
-    @SuppressWarnings("unused")
-    private int calculateUTF8Length(final String s) {
-        int encodedSize = s.length();
-        final int length = encodedSize;
-
-        for (int i = 0; i < length; i++) {
-            int c = s.charAt(i);
-
-            // U+0080..
-            if ((c & 0xFF80) != 0) {
-                encodedSize++;
-
-                // U+0800..
-                if(((c & 0xF800) != 0)) {
-                    encodedSize++;
-
-                    // surrogate pairs should always combine to create a code point
-                    // with a 4 octet representation
-                    if ((c & 0xD800) == 0xD800 && c < 0xDC00) {
-                        i++;
-                    }
-                }
-            }
-        }
-
-        return encodedSize;
     }
 }

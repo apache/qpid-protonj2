@@ -25,7 +25,7 @@ import org.openjdk.jmh.annotations.Setup;
 import org.openjdk.jmh.infra.Blackhole;
 import org.openjdk.jmh.runner.RunnerException;
 
-public class ListOfIntsBenchmark extends CodecBenchmarkBase {
+public class ListOfIntBenchmark extends CodecBenchmarkBase {
 
     private static final int LIST_SIZE = 10;
     private ArrayList<Object> listOfInts;
@@ -59,7 +59,7 @@ public class ListOfIntsBenchmark extends CodecBenchmarkBase {
     }
 
     public static void main(String[] args) throws RunnerException {
-        runBenchmark(ListOfIntsBenchmark.class);
+        runBenchmark(ListOfIntBenchmark.class);
     }
 
 }

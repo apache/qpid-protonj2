@@ -68,9 +68,8 @@ public class ProtonEncoderState implements EncoderState {
         int index = 0;
         int ch = 0;
 
-        // We need to ensure that we have enough space for the largest encoding possible for this
-        // string value.  We could compute the UTF8 length if we wanted a precise sizing.
-        buffer.ensureWritable(length * 4);
+        // Assume ASCII and just reserve what we need for that case.
+        buffer.ensureWritable(length);
 
         // ASCII Optimized path U+0000..U+007F
         for (; index < length && (ch = sequence.charAt(index)) < 0x80; ++index) {
@@ -79,13 +78,18 @@ public class ProtonEncoderState implements EncoderState {
 
         if (index < length) {
             // Non-ASCII path
-            position = extendedEncodeUTF8Sequence(buffer, sequence, index, length, position);
+            position = extendedEncodeUTF8Sequence(buffer, sequence, index, position);
         }
 
         buffer.setWriteIndex(position);
     }
 
-    private static int extendedEncodeUTF8Sequence(ProtonBuffer buffer, CharSequence value, int index, int remaining, int position) {
+    private static int extendedEncodeUTF8Sequence(ProtonBuffer buffer, CharSequence value, int index, int position) {
+        // Size buffer to what we know we will need to complete this encode.
+        buffer.ensureWritable(calculateUTF8Length(index, value));
+
+        int remaining = value.length();
+
         for (int i = index; i < remaining; i++) {
             int c = value.charAt(i);
             if ((c & 0xFF80) == 0) {
@@ -117,5 +121,32 @@ public class ProtonEncoderState implements EncoderState {
         }
 
         return position;
+    }
+
+    private static int calculateUTF8Length(int startPos, final CharSequence sequence) {
+        int encodedSize = sequence.length();
+        final int length = encodedSize;
+
+        for (int i = 0; i < length; i++) {
+            int c = sequence.charAt(i);
+
+            // U+0080..
+            if ((c & 0xFF80) != 0) {
+                encodedSize++;
+
+                // U+0800..
+                if(((c & 0xF800) != 0)) {
+                    encodedSize++;
+
+                    // surrogate pairs should always combine to create a code point
+                    // with a 4 octet representation
+                    if ((c & 0xD800) == 0xD800 && c < 0xDC00) {
+                        i++;
+                    }
+                }
+            }
+        }
+
+        return encodedSize;
     }
 }
