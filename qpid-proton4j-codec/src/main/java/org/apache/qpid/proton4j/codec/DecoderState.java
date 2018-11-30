@@ -38,10 +38,12 @@ public interface DecoderState {
      * represents that UTF-8 value.
      *
      * @param buffer
-     *      The UTF-8 encoded bytes to be decoded.
+     *      A buffer containing the UTF-8 encoded bytes to be decoded.
+     * @param length
+     *      The number of bytes in the passed buffer that comprise the UTF-8 encoding.
      *
      * @return a String that represents the UTF-8 decoded bytes.
      */
-    String decodeUTF8(ProtonBuffer buffer);
+    String decodeUTF8(ProtonBuffer buffer, int length);
 
 }

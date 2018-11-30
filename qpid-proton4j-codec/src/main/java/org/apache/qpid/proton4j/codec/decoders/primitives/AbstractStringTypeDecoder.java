@@ -32,9 +32,7 @@ public abstract class AbstractStringTypeDecoder extends AbstractPrimitiveTypeDec
         int length = readSize(buffer);
 
         if (length != 0) {
-            ProtonBuffer slice = buffer.slice(buffer.getReadIndex(), length);
-            buffer.skipBytes(length);
-            return state.decodeUTF8(slice);
+            return state.decodeUTF8(buffer, length);
         } else {
             return "";
         }
