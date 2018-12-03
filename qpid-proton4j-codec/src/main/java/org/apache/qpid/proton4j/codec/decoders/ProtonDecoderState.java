@@ -31,12 +31,8 @@ import org.apache.qpid.proton4j.codec.DecoderState;
  */
 public class ProtonDecoderState implements DecoderState {
 
-    private static final int UTF8_MAX_CHARS_PER_BYTES = Math.round(StandardCharsets.UTF_8.newDecoder().maxCharsPerByte());
-    private static final int SCRATCH_BUFFER_SIZE = 256;
-
     private final CharsetDecoder STRING_DECODER = StandardCharsets.UTF_8.newDecoder();
     private final ProtonDecoder decoder;
-    private final char[] scratchBuffer = new char[SCRATCH_BUFFER_SIZE];
 
     private UTF8Decoder stringDecoder;
 
@@ -65,7 +61,7 @@ public class ProtonDecoderState implements DecoderState {
     @Override
     public String decodeUTF8(ProtonBuffer buffer, int length) {
         if (stringDecoder == null) {
-            return internalDecode(buffer, length, STRING_DECODER, scratchBuffer);
+            return internalDecode(buffer, length, STRING_DECODER);
         } else {
             // TODO - We could pass the buffer and length here as well and specify that the
             //        decoder must move the buffer position to consume them if we really trust
@@ -76,9 +72,8 @@ public class ProtonDecoderState implements DecoderState {
         }
     }
 
-    private static String internalDecode(ProtonBuffer buffer, final int length, CharsetDecoder decoder, char[] scratchBuffer) {
-        final int maxExpectedSize = UTF8_MAX_CHARS_PER_BYTES * length;
-        final char[] chars = maxExpectedSize <= scratchBuffer.length ? scratchBuffer : new char[maxExpectedSize];
+    private static String internalDecode(ProtonBuffer buffer, final int length, CharsetDecoder decoder) {
+        final char[] chars = new char[length];
         final int bufferInitialPosition = buffer.getReadIndex();
 
         int offset;
