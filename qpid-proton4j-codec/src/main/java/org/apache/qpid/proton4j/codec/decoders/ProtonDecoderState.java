@@ -98,7 +98,10 @@ public class ProtonDecoderState implements DecoderState {
         final CharBuffer out = CharBuffer.wrap(chars);
         out.position(offset);
 
+        // Create a buffer from the remaining portion of the buffer and then use the decoder to complete the work
+        // remember to move the main buffer position to consume the data processed.
         ProtonBuffer slice = buffer.slice(buffer.getReadIndex(), length - offset);
+        buffer.setReadIndex(buffer.getReadIndex() + slice.getReadableBytes());
         ByteBuffer byteBuffer = slice.toByteBuffer();
 
         try {
