@@ -24,7 +24,7 @@ import org.apache.qpid.proton4j.amqp.transport.Performative;
  */
 public class ProtocolFrame extends Frame<Performative> {
 
-    public static final byte AMQP_FRAME_TYPE = (byte) 1;
+    public static final byte AMQP_FRAME_TYPE = (byte) 0;
 
     public ProtocolFrame(Performative performative, short channel, Binary payload) {
         super(performative, channel, AMQP_FRAME_TYPE, payload);
