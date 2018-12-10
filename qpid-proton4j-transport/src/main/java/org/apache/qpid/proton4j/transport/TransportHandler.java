@@ -16,6 +16,9 @@
  */
 package org.apache.qpid.proton4j.transport;
 
+import org.apache.qpid.proton4j.amqp.security.SaslPerformative;
+import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
+import org.apache.qpid.proton4j.amqp.transport.Performative;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 
 /**
@@ -44,8 +47,13 @@ public interface TransportHandler {
 
     void transportFailed(TransportHandlerContext context, Throwable e);
 
-    // TODO - Other variants like write(ProtonBuffer) etc how do we want to manage writes from
-    //        the transport, who drives them ?
+    // Write methods
+
+    void handleWrite(TransportHandlerContext context, AMQPHeader header);
+
+    void handleWrite(TransportHandlerContext context, Performative performative, short channel, ProtonBuffer payload, Runnable payloadToLarge);
+
+    void handleWrite(TransportHandlerContext context, SaslPerformative performative);
 
     void handleWrite(TransportHandlerContext context, Frame<?> frame);
 

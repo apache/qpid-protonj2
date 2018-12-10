@@ -18,9 +18,11 @@ package org.apache.qpid.proton4j.transport.impl;
 
 import java.io.IOException;
 
+import org.apache.qpid.proton4j.amqp.security.SaslPerformative;
+import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
+import org.apache.qpid.proton4j.amqp.transport.Performative;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonBufferAllocator;
-import org.apache.qpid.proton4j.transport.ProtocolFrame;
 import org.apache.qpid.proton4j.transport.Transport;
 import org.apache.qpid.proton4j.transport.TransportListener;
 import org.apache.qpid.proton4j.transport.TransportPipeline;
@@ -95,12 +97,23 @@ public class ProtonTransport implements Transport {
     }
 
     @Override
-    public void write(ProtocolFrame frame) throws IOException {
-        pipeline.fireWrite(frame);
+    public void write(AMQPHeader header) throws IOException {
+        pipeline.fireWrite(header);
+    }
+
+    @Override
+    public void write(Performative performative, short channel, ProtonBuffer payload, Runnable payloadToLarge) throws IOException {
+        pipeline.fireWrite(performative, channel, payload, payloadToLarge);
+    }
+
+    @Override
+    public void write(SaslPerformative performative) throws IOException {
+        pipeline.fireWrite(performative);
     }
 
     @Override
     public void flush() {
         pipeline.fireFlush();
     }
+
 }

@@ -19,6 +19,9 @@ package org.apache.qpid.proton4j.transport.util;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.qpid.proton4j.amqp.security.SaslPerformative;
+import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
+import org.apache.qpid.proton4j.amqp.transport.Performative;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.transport.Frame;
 import org.apache.qpid.proton4j.transport.HeaderFrame;
@@ -85,6 +88,21 @@ public class TestSupportTransportHandler implements TransportHandler{
     public void handleWrite(TransportHandlerContext context, Frame<?> frame) {
         framesWritten.add(frame);
         context.fireWrite(frame);
+    }
+
+    @Override
+    public void handleWrite(TransportHandlerContext context, AMQPHeader header) {
+        context.fireWrite(header);
+    }
+
+    @Override
+    public void handleWrite(TransportHandlerContext context, Performative performative, short channel, ProtonBuffer payload, Runnable payloadToLarge) {
+        context.fireWrite(performative, channel, payload, payloadToLarge);
+    }
+
+    @Override
+    public void handleWrite(TransportHandlerContext context, SaslPerformative performative) {
+        context.fireWrite(performative);
     }
 
     @Override

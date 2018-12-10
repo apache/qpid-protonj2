@@ -16,6 +16,9 @@
  */
 package org.apache.qpid.proton4j.transport;
 
+import org.apache.qpid.proton4j.amqp.security.SaslPerformative;
+import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
+import org.apache.qpid.proton4j.amqp.transport.Performative;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 
 /**
@@ -55,7 +58,15 @@ public interface TransportPipeline {
 
     TransportPipeline fireProtocolFrame(ProtocolFrame frame);
 
+    TransportPipeline fireWrite(ProtonBuffer buffer);
+
     TransportPipeline fireWrite(Frame<?> frame);
+
+    TransportPipeline fireWrite(AMQPHeader header);
+
+    TransportPipeline fireWrite(Performative performative, short channel, ProtonBuffer payload, Runnable payloadToLarge);
+
+    TransportPipeline fireWrite(SaslPerformative performative);
 
     TransportPipeline fireFlush();
 

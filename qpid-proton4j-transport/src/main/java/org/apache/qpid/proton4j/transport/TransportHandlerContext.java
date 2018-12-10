@@ -16,6 +16,9 @@
  */
 package org.apache.qpid.proton4j.transport;
 
+import org.apache.qpid.proton4j.amqp.security.SaslPerformative;
+import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
+import org.apache.qpid.proton4j.amqp.transport.Performative;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 
 /**
@@ -42,6 +45,12 @@ public interface TransportHandlerContext {
     void fireDecodingError(Throwable e);
 
     void fireFailed(Throwable e);
+
+    void fireWrite(AMQPHeader header);
+
+    void fireWrite(Performative performative, short channel, ProtonBuffer payload, Runnable payloadToLarge);
+
+    void fireWrite(SaslPerformative performative);
 
     void fireWrite(Frame<?> frame);
 

@@ -18,6 +18,9 @@ package org.apache.qpid.proton4j.transport;
 
 import java.io.IOException;
 
+import org.apache.qpid.proton4j.amqp.security.SaslPerformative;
+import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
+import org.apache.qpid.proton4j.amqp.transport.Performative;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonBufferAllocator;
 
@@ -37,14 +40,40 @@ public interface Transport {
     void processIncoming(ProtonBuffer buffer) throws IOException;
 
     /**
-     * Write the given protocol frame into the transport.
+     * Write the given AMQP Header into the transport.
      *
-     * @param frame
-     *      The protocol frame to write into the transport.
+     * @param header
+     *      The header to write through this Transport.
      *
      * @throws IOException if an error occurs processing the data.
      */
-    void write(ProtocolFrame frame) throws IOException;
+    void write(AMQPHeader header) throws IOException;
+
+    /**
+     * Write the given AMQP performative into the transport.
+     *
+     * @param performative
+     *      The AMQP performative to write via this Transport
+     * @param channel
+     *      The channel that the perfromative is assigned to.
+     * @param payload
+     *      The binary payload to transmit with this performative
+     * @param payloadToLarge
+     *      runnable callback to inform when the frame generated will truncate the body.
+     *
+     * @throws IOException if an error occurs processing the data.
+     */
+    void write(Performative performative, short channel, ProtonBuffer body, Runnable payloadToLarge) throws IOException;
+
+    /**
+     * Write the given SASL performative into the transport.
+     *
+     * @param performative
+     *      The SASL performative to write via this Transport
+     *
+     * @throws IOException if an error occurs processing the data.
+     */
+    void write(SaslPerformative performative) throws IOException;
 
     /**
      * Flush the transport

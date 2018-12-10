@@ -16,6 +16,9 @@
  */
 package org.apache.qpid.proton4j.transport;
 
+import org.apache.qpid.proton4j.amqp.security.SaslPerformative;
+import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
+import org.apache.qpid.proton4j.amqp.transport.Performative;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 
 /**
@@ -60,6 +63,21 @@ public abstract class TransportHandlerAdapter implements TransportHandler {
     }
 
     @Override
+    public void handleWrite(TransportHandlerContext context, AMQPHeader header) {
+        context.fireWrite(header);
+    }
+
+    @Override
+    public void handleWrite(TransportHandlerContext context, Performative performative, short channel, ProtonBuffer payload, Runnable payloadToLarge) {
+        context.fireWrite(performative, channel, payload, payloadToLarge);
+    }
+
+    @Override
+    public void handleWrite(TransportHandlerContext context, SaslPerformative performative) {
+        context.fireWrite(performative);
+    }
+
+    @Override
     public void handleWrite(TransportHandlerContext context, Frame<?> frame) {
         context.fireWrite(frame);
     }
@@ -73,5 +91,4 @@ public abstract class TransportHandlerAdapter implements TransportHandler {
     public void handleFlush(TransportHandlerContext context) {
         context.fireFlush();
     }
-
 }

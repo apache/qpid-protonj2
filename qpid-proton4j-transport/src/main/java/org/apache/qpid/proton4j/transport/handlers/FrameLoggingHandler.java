@@ -16,6 +16,9 @@
  */
 package org.apache.qpid.proton4j.transport.handlers;
 
+import org.apache.qpid.proton4j.amqp.security.SaslPerformative;
+import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
+import org.apache.qpid.proton4j.amqp.transport.Performative;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.common.logging.ProtonLogger;
 import org.apache.qpid.proton4j.common.logging.ProtonLoggerFactory;
@@ -73,6 +76,24 @@ public class FrameLoggingHandler implements TransportHandler {
     public void transportFailed(TransportHandlerContext context, Throwable e) {
         LOG.error("-> Unrecoverable Transport error: {}", e);
         context.fireFailed(e);
+    }
+
+    @Override
+    public void handleWrite(TransportHandlerContext context, AMQPHeader header) {
+        LOG.trace("-> AMQP: {}", header);
+        context.fireWrite(header);
+    }
+
+    @Override
+    public void handleWrite(TransportHandlerContext context, Performative performative, short channel, ProtonBuffer payload, Runnable payloadToLarge) {
+        LOG.trace("-> AMQP: {}", performative);  // TODO - Payload ?
+        context.fireWrite(performative, channel, payload, payloadToLarge);
+    }
+
+    @Override
+    public void handleWrite(TransportHandlerContext context, SaslPerformative performative) {
+        LOG.trace("-> SASL: {}", performative);
+        context.fireWrite(performative);
     }
 
     @Override

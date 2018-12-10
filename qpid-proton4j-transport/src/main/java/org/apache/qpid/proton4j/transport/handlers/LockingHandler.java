@@ -18,6 +18,9 @@ package org.apache.qpid.proton4j.transport.handlers;
 
 import java.util.concurrent.locks.ReentrantLock;
 
+import org.apache.qpid.proton4j.amqp.security.SaslPerformative;
+import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
+import org.apache.qpid.proton4j.amqp.transport.Performative;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.transport.Frame;
 import org.apache.qpid.proton4j.transport.HeaderFrame;
@@ -98,6 +101,36 @@ public class LockingHandler implements TransportHandler {
         lock.lock();
         try {
             context.fireFailed(e);
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    @Override
+    public void handleWrite(TransportHandlerContext context, AMQPHeader header) {
+        lock.lock();
+        try {
+            context.fireWrite(header);
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    @Override
+    public void handleWrite(TransportHandlerContext context, Performative performative, short channel, ProtonBuffer payload, Runnable payloadToLarge) {
+        lock.lock();
+        try {
+            context.fireWrite(performative, channel, payload, payloadToLarge);
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    @Override
+    public void handleWrite(TransportHandlerContext context, SaslPerformative performative) {
+        lock.lock();
+        try {
+            context.fireWrite(performative);
         } finally {
             lock.unlock();
         }

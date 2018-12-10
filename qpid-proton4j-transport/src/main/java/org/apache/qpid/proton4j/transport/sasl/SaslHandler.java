@@ -18,6 +18,9 @@ package org.apache.qpid.proton4j.transport.sasl;
 
 import java.io.IOException;
 
+import org.apache.qpid.proton4j.amqp.security.SaslPerformative;
+import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
+import org.apache.qpid.proton4j.amqp.transport.Performative;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.CodecFactory;
 import org.apache.qpid.proton4j.codec.Decoder;
@@ -158,11 +161,23 @@ public class SaslHandler extends TransportHandlerAdapter {
     }
 
     @Override
-    public void handleWrite(TransportHandlerContext context, Frame<?> frame) {
+    public void handleWrite(TransportHandlerContext context, AMQPHeader header) {
+    }
+
+    @Override
+    public void handleWrite(TransportHandlerContext context, Performative performative, short channel, ProtonBuffer payload, Runnable payloadToLarge) {
+    }
+
+    @Override
+    public void handleWrite(TransportHandlerContext context, SaslPerformative performative) {
     }
 
     @Override
     public void handleWrite(TransportHandlerContext context, ProtonBuffer buffer) {
+    }
+
+    @Override
+    public void handleWrite(TransportHandlerContext context, Frame<?> frame) {
     }
 
     @Override
