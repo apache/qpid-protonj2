@@ -16,11 +16,11 @@
  */
 package org.apache.qpid.proton4j.transport.sasl;
 
-import org.apache.qpid.proton4j.amqp.Binary;
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.security.SaslChallenge;
 import org.apache.qpid.proton4j.amqp.security.SaslMechanisms;
 import org.apache.qpid.proton4j.amqp.security.SaslOutcome;
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.transport.HeaderFrame;
 import org.apache.qpid.proton4j.transport.TransportHandlerContext;
 import org.apache.qpid.proton4j.transport.sasl.SaslConstants.SaslOutcomes;
@@ -100,10 +100,7 @@ public class SaslClientContext extends SaslContext {
      * @param response
      *      The response bytes to be sent to the server for this cycle.
      */
-    public void sendResponse(Binary response) {
-        // TODO - Should we make all these Binary SASL bits use ProtonBuffer instead
-        //        so the client can just wrap arrays or other buffer types ?
-
+    public void sendResponse(ProtonBuffer response) {
         // TODO
     }
 

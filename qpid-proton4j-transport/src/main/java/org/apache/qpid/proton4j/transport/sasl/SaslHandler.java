@@ -144,7 +144,9 @@ public class SaslHandler extends TransportHandlerAdapter {
         if (isDone()) {
             context.fireProtocolFrame(frame);
         } else {
-            // TODO - Pipelined Connect, hold frame for later
+            // TODO - We shouldn't be receiving these here if not done as we should be
+            //        holding off on decoding the frames until after done and then passing
+            //        them along to the next layer.
         }
     }
 
