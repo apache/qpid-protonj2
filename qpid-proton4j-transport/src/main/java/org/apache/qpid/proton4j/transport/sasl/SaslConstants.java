@@ -21,6 +21,8 @@ package org.apache.qpid.proton4j.transport.sasl;
  */
 public interface SaslConstants {
 
+    public static int MAX_SASL_FRAME_SIZE = 512;
+
     // TODO - PN_ is a C'ism, can we do away with that ?
 
     public enum SaslStates {

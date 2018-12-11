@@ -62,7 +62,7 @@ public class SaslFrameParser implements FrameParser {
 
     private SaslHandler sasl;
     private ProtonBuffer buffer;
-    private int frameSizeLimit;
+    private int maxFrameSize = SaslConstants.MAX_SASL_FRAME_SIZE;
     private Decoder decoder;
     private DecoderState decoderState;
     private AMQPHeader header = AMQPHeader.getSASLHeader();
@@ -71,6 +71,14 @@ public class SaslFrameParser implements FrameParser {
     public SaslFrameParser(Decoder decoder) {
         this.decoder = decoder;
         this.decoderState = decoder.newDecoderState();
+    }
+
+    public void setMaxFrameSize(int maxFrameSize) {
+        this.maxFrameSize = maxFrameSize;
+    }
+
+    public int getMaxFrameSize() {
+        return maxFrameSize;
     }
 
     @Override
@@ -237,9 +245,9 @@ public class SaslFrameParser implements FrameParser {
                         break;
                     }
 
-                    if (size > frameSizeLimit) {
+                    if (size > maxFrameSize) {
                         parsingError = new TransportException(String.format(
-                            "specified frame size %d larger than maximum SASL frame size %d", size, frameSizeLimit));
+                            "specified frame size %d larger than maximum SASL frame size %d", size, maxFrameSize));
                         parsingState = State.ERROR;
                         break;
                     }

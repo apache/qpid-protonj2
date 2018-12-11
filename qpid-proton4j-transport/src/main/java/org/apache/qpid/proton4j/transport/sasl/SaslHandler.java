@@ -68,6 +68,14 @@ public class SaslHandler extends TransportHandlerAdapter {
         this.saslDecoder = decoder;
     }
 
+    public void setMaxSaslFrameSize(int maxFrameSize) {
+        frameParser.setMaxFrameSize(Math.max(SaslConstants.MAX_SASL_FRAME_SIZE, maxFrameSize));
+    }
+
+    public int getMaxSaslFrameSize() {
+        return frameParser.getMaxFrameSize();
+    }
+
     public boolean isDone() {
         return saslContext.isDone();
     }
@@ -149,6 +157,8 @@ public class SaslHandler extends TransportHandlerAdapter {
             //        them along to the next layer.
         }
     }
+
+    // TODO - Decide what to implement and what to allow as a pass through
 
     @Override
     public void transportEncodingError(TransportHandlerContext context, Throwable e) {
