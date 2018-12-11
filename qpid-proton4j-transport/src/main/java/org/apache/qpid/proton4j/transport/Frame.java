@@ -23,10 +23,10 @@ import org.apache.qpid.proton4j.amqp.Binary;
  */
 public abstract class Frame<V> {
 
-    private final V body;
-    private final short channel;
-    private final byte type;
-    private final Binary payload;
+    private V body;
+    private short channel;
+    private byte type;
+    private Binary payload;
 
     public Frame(V body, short channel, byte type, Binary payload) {
         this.body = body;
@@ -52,9 +52,17 @@ public abstract class Frame<V> {
     }
 
     /**
-     * @return the body contained in the frame and release the frame.
+     * Used to release a Frame that was taken from a Frame pool in order
+     * to make it available for the next input operations.  Once called the
+     * contents of the Frame are invalid and cannot be used again inside the
+     * same context.
      */
-    public V unwrap() {
-        return body;
+    public void release() {
+        body = null;
+        payload = null;
+        channel = -1;
+        type = -1;
+
+        // TODO
     }
 }
