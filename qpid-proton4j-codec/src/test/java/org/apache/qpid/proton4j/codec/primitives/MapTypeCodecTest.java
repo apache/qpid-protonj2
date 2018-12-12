@@ -19,8 +19,10 @@ package org.apache.qpid.proton4j.codec.primitives;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -29,6 +31,7 @@ import org.apache.qpid.proton4j.amqp.Binary;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.codec.CodecTestSupport;
+import org.apache.qpid.proton4j.codec.EncodingCodes;
 import org.junit.Test;
 
 public class MapTypeCodecTest extends CodecTestSupport {
@@ -122,5 +125,45 @@ public class MapTypeCodecTest extends CodecTestSupport {
         for (int i = 0; i < map.length; ++i) {
             assertEquals(source[i], map[i]);
         }
+    }
+
+    @Test
+    public void testSizeToLargeValidation() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        buffer.writeByte(EncodingCodes.MAP32);
+        buffer.writeInt(Integer.MAX_VALUE);
+        buffer.writeInt(2);
+        buffer.writeByte(EncodingCodes.STR8);
+        buffer.writeByte(4);
+        buffer.writeBytes("test".getBytes(StandardCharsets.UTF_8));
+        buffer.writeByte(EncodingCodes.STR8);
+        buffer.writeByte(5);
+        buffer.writeBytes("value".getBytes(StandardCharsets.UTF_8));
+
+        try {
+            decoder.readObject(buffer, decoderState);
+            fail("should throw an IllegalArgumentException");
+        } catch (IllegalArgumentException iae) {}
+    }
+
+    @Test
+    public void testOddElementCountDetected() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        buffer.writeByte(EncodingCodes.MAP32);
+        buffer.writeInt(17);
+        buffer.writeInt(1);
+        buffer.writeByte(EncodingCodes.STR8);
+        buffer.writeByte(4);
+        buffer.writeBytes("test".getBytes(StandardCharsets.UTF_8));
+        buffer.writeByte(EncodingCodes.STR8);
+        buffer.writeByte(5);
+        buffer.writeBytes("value".getBytes(StandardCharsets.UTF_8));
+
+        try {
+            decoder.readObject(buffer, decoderState);
+            fail("should throw an IllegalArgumentException");
+        } catch (IllegalArgumentException iae) {}
     }
 }
