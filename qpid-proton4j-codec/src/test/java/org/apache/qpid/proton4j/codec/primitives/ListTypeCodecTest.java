@@ -19,6 +19,7 @@ package org.apache.qpid.proton4j.codec.primitives;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -32,6 +33,7 @@ import org.apache.qpid.proton4j.amqp.UnsignedInteger;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.codec.CodecTestSupport;
+import org.apache.qpid.proton4j.codec.EncodingCodes;
 import org.junit.Test;
 
 /**
@@ -143,5 +145,19 @@ public class ListTypeCodecTest extends CodecTestSupport {
         for (int i = 0; i < list.length; ++i) {
             assertEquals(source[i], list[i]);
         }
+    }
+
+    @Test
+    public void testCountExceedsRemainingDetected() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        buffer.writeByte(EncodingCodes.LIST32);
+        buffer.writeInt(4);
+        buffer.writeInt(Integer.MAX_VALUE);
+
+        try {
+            decoder.readObject(buffer, decoderState);
+            fail("should throw an IllegalArgumentException");
+        } catch (IllegalArgumentException iae) {}
     }
 }

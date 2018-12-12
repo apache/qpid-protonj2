@@ -36,6 +36,12 @@ public abstract class AbstractSymbolTypeDecoder extends AbstractPrimitiveTypeDec
             return Symbol.valueOf("");
         }
 
+        if (length > buffer.getReadableBytes()) {
+            throw new IllegalArgumentException(String.format(
+                    "Symbol encoded size %d is specified to be greater than the amount " +
+                    "of data available (%d)", length, buffer.getReadableBytes()));
+        }
+
         ProtonBuffer symbolBuffer = buffer.slice(buffer.getReadIndex(), length);
         buffer.skipBytes(length);
 

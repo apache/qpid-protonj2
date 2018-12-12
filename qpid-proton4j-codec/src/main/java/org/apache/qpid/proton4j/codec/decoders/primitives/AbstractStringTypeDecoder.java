@@ -31,6 +31,12 @@ public abstract class AbstractStringTypeDecoder extends AbstractPrimitiveTypeDec
     public String readValue(ProtonBuffer buffer, DecoderState state) throws IOException {
         int length = readSize(buffer);
 
+        if (length > buffer.getReadableBytes()) {
+            throw new IllegalArgumentException(String.format(
+                    "String encoded size %d is specified to be greater than the amount " +
+                    "of data available (%d)", length, buffer.getReadableBytes()));
+        }
+
         if (length != 0) {
             return state.decodeUTF8(buffer, length);
         } else {

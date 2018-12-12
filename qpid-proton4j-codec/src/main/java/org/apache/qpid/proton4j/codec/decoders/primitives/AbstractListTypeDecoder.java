@@ -43,6 +43,12 @@ public abstract class AbstractListTypeDecoder extends AbstractPrimitiveTypeDecod
 
         int count = readCount(buffer);
 
+        if (count > buffer.getReadableBytes()) {
+            throw new IllegalArgumentException(String.format(
+                    "Symbol encoded element count %d is specified to be greater than the amount " +
+                    "of data available (%d)", count, buffer.getReadableBytes()));
+        }
+
         List<Object> list = new ArrayList<>(count);
         for (int i = 0; i < count; i++) {
             list.add(state.getDecoder().readObject(buffer, state));

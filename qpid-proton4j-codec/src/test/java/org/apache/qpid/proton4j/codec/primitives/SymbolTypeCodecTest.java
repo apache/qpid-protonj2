@@ -20,6 +20,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.io.IOException;
 
@@ -178,5 +179,18 @@ public class SymbolTypeCodecTest extends CodecTestSupport {
         String result = decoder.readSymbol(buffer, decoderState, "");
         assertNotNull(result);
         assertEquals("", result);
+    }
+
+    @Test
+    public void testEncodedSizeExceedsRemainingDetected() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        buffer.writeByte(EncodingCodes.SYM32);
+        buffer.writeInt(Integer.MAX_VALUE);
+
+        try {
+            decoder.readObject(buffer, decoderState);
+            fail("should throw an IllegalArgumentException");
+        } catch (IllegalArgumentException iae) {}
     }
 }
