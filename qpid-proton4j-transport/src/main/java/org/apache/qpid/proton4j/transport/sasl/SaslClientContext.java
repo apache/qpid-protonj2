@@ -16,12 +16,15 @@
  */
 package org.apache.qpid.proton4j.transport.sasl;
 
+import org.apache.qpid.proton4j.amqp.Binary;
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.security.SaslChallenge;
 import org.apache.qpid.proton4j.amqp.security.SaslMechanisms;
 import org.apache.qpid.proton4j.amqp.security.SaslOutcome;
+import org.apache.qpid.proton4j.amqp.security.SaslResponse;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.transport.HeaderFrame;
+import org.apache.qpid.proton4j.transport.SaslFrame;
 import org.apache.qpid.proton4j.transport.TransportHandlerContext;
 import org.apache.qpid.proton4j.transport.sasl.SaslConstants.SaslOutcomes;
 import org.apache.qpid.proton4j.transport.sasl.SaslConstants.SaslStates;
@@ -75,7 +78,15 @@ public class SaslClientContext extends SaslContext {
     }
 
     public void setMechanism(String mechanism) {
-        this.chosenMechanism = Symbol.valueOf(mechanism);
+        chosenMechanism = Symbol.valueOf(mechanism);
+    }
+
+    public Binary getResponse() {
+        return response;
+    }
+
+    public void setResponse(Binary response) {
+        this.response = response;
     }
 
     //----- Event response methods -------------------------------------------//
@@ -90,7 +101,7 @@ public class SaslClientContext extends SaslContext {
      *      The host-name that the client is identified as.
      */
     public void sendChosenMechanism(String mechanism, String host) {
-        // TODO
+        // TODO - Possible means of async trigger of mechanism send
     }
 
     /**
@@ -101,7 +112,7 @@ public class SaslClientContext extends SaslContext {
      *      The response bytes to be sent to the server for this cycle.
      */
     public void sendResponse(ProtonBuffer response) {
-        // TODO
+        // TODO - Possible means of async challenge response send
     }
 
     //----- SASL Frame event handlers ----------------------------------------//
@@ -131,8 +142,14 @@ public class SaslClientContext extends SaslContext {
         // TODO - Should we use ProtonBuffer slices as response containers ?
         listener.onSaslChallenge(this, saslChallenge.getChallenge());
 
-        // TODO - How is the listener driving output, send methods ?
-        //        We probably want to support asynchronous triggering
+        if (state == SaslStates.PN_SASL_STEP && getResponse() != null) {
+            SaslResponse response = new SaslResponse();
+            response.setResponse(getResponse());
+            setResponse(null);
+            context.fireWrite(new SaslFrame(response, null));
+        }
+
+        // TODO - We probably want to support asynchronous triggering
     }
 
     @Override

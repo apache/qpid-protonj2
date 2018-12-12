@@ -16,7 +16,9 @@
  */
 package org.apache.qpid.proton4j.transport.sasl;
 
+import org.apache.qpid.proton4j.amqp.Binary;
 import org.apache.qpid.proton4j.amqp.Symbol;
+import org.apache.qpid.proton4j.amqp.security.SaslChallenge;
 import org.apache.qpid.proton4j.amqp.security.SaslCode;
 import org.apache.qpid.proton4j.amqp.security.SaslInit;
 import org.apache.qpid.proton4j.amqp.security.SaslMechanisms;
@@ -91,6 +93,22 @@ public class SaslServerContext extends SaslContext {
         }
     }
 
+    public Binary getChallenge() {
+        return challenge;
+    }
+
+    public void setChallenge(Binary challenge) {
+        this.challenge = challenge;
+    }
+
+    public Binary getAdditionalData() {
+        return additionalData;
+    }
+
+    public void setAdditionalData(Binary additionalData) {
+        this.additionalData = additionalData;
+    }
+
     /**
      * @return whether this Server allows non-sasl connection attempts
      */
@@ -136,6 +154,27 @@ public class SaslServerContext extends SaslContext {
         }
     }
 
+    private void handleNonSaslHeader(TransportHandlerContext context, HeaderFrame header) {
+        if (!headerReceived) {
+            if (isAllowNonSasl()) {
+                // Set proper outcome etc.
+                done = true;
+                context.fireRead(header);
+            } else {
+                // TODO - Error type ?
+                context.fireWrite(HeaderFrame.SASL_HEADER_FRAME);
+                context.fireFailed(new IllegalStateException(
+                    "Unexpected AMQP Header before SASL Authentication completed."));
+            }
+        } else {
+            // Report the variety of errors that exist in this state such as the
+            // fact that we shouldn't get an AMQP header before sasl is done, and when
+            // it is done we are currently bypassing this call in the parent SaslHandler.
+            context.fireFailed(new IllegalStateException(
+                "Unexpected AMQP Header before SASL Authentication completed."));
+        }
+    }
+
     private void handleSaslHeader(TransportHandlerContext context, HeaderFrame header) {
         if (!headerWritten) {
             context.fireWrite(HeaderFrame.SASL_HEADER_FRAME);
@@ -170,30 +209,12 @@ public class SaslServerContext extends SaslContext {
         state = SaslStates.PN_SASL_STEP;
     }
 
-    private void handleNonSaslHeader(TransportHandlerContext context, HeaderFrame header) {
-        if (!headerReceived) {
-            if (isAllowNonSasl()) {
-                // Set proper outcome etc.
-                done = true;
-                context.fireRead(header);
-            } else {
-                // TODO - Error type ?
-                context.fireWrite(HeaderFrame.SASL_HEADER_FRAME);
-                context.fireFailed(new IllegalStateException(
-                    "Unexpected AMQP Header before SASL Authentication completed."));
-            }
-        } else {
-            // Report the variety of errors that exist in this state such as the
-            // fact that we shouldn't get an AMQP header before sasl is done, and when
-            // it is done we are currently bypassing this call in the parent SaslHandler.
-            context.fireFailed(new IllegalStateException(
-                "Unexpected AMQP Header before SASL Authentication completed."));
-        }
-    }
-
     @Override
     public void handleInit(SaslInit saslInit, TransportHandlerContext context) {
-        // TODO - Handle SaslInit already read.
+        if (initReceived) {
+            // TODO - Handle SaslInit already read with better error
+            context.fireFailed(new IllegalStateException("SASL Handler received second SASL Init"));
+        }
 
         hostname = saslInit.getHostname();
         chosenMechanism = saslInit.getMechanism();
@@ -202,20 +223,34 @@ public class SaslServerContext extends SaslContext {
         // TODO - Should we use ProtonBuffer slices as response containers ?
         listener.onSaslInit(this, saslInit.getInitialResponse());
 
-        if (getOutcome() != SaslOutcomes.PN_SASL_NONE) {
-            SaslOutcome outcome = new SaslOutcome();
-            // TODO Clean up SaslCode mechanics
-            outcome.setCode(SaslCode.values()[getOutcome().getCode()]);
-            // TODO Additional Data
-            context.fireWrite(new SaslFrame(outcome, null));
-
-            done = true;
-        }
+        pumpServerState(context);
     }
 
     @Override
     public void handleResponse(SaslResponse saslResponse, TransportHandlerContext context) {
         // TODO - Should we use ProtonBuffer slices as response containers ?
         listener.onSaslResponse(this, saslResponse.getResponse());
+
+        pumpServerState(context);
+    }
+
+    private void pumpServerState(TransportHandlerContext context) {
+        if (state == SaslStates.PN_SASL_STEP && getChallenge() != null) {
+            SaslChallenge challenge = new SaslChallenge();
+            challenge.setChallenge(getChallenge());
+            setChallenge(null);
+            context.fireWrite(new SaslFrame(challenge, null));
+        }
+
+        if (getOutcome() != SaslOutcomes.PN_SASL_NONE) {
+            SaslOutcome outcome = new SaslOutcome();
+            // TODO Clean up SaslCode mechanics
+            outcome.setCode(SaslCode.values()[getOutcome().getCode()]);
+            outcome.setAdditionalData(additionalData);
+            setAdditionalData(null);
+            context.fireWrite(new SaslFrame(outcome, null));
+
+            done = true;
+        }
     }
 }

@@ -59,7 +59,9 @@ public abstract class SaslContext implements SaslPerformative.SaslPerformativeHa
     protected boolean initReceived;
     protected boolean initSent;
 
-    protected Binary challengeResponse;
+    protected Binary challenge;
+    protected Binary response;
+    protected Binary additionalData;
 
     public SaslContext(SaslHandler handler) {
         this.saslHandler = handler;
