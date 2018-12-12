@@ -36,6 +36,13 @@ public final class Close implements Performative {
     }
 
     @Override
+    public Close copy() {
+        Close copy = new Close();
+        copy.setError(error == null ? null : error.copy());
+        return copy;
+    }
+
+    @Override
     public PerformativeType getPerformativeType() {
         return PerformativeType.CLOSE;
     }

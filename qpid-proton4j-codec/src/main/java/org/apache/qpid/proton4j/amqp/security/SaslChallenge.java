@@ -40,6 +40,13 @@ public final class SaslChallenge implements SaslPerformative {
     }
 
     @Override
+    public SaslChallenge copy() {
+        SaslChallenge copy = new SaslChallenge();
+        copy.setChallenge(challenge == null ? null : challenge.copy());
+        return copy;
+    }
+
+    @Override
     public String toString() {
         return "SaslChallenge{" + "challenge=" + challenge + '}';
     }

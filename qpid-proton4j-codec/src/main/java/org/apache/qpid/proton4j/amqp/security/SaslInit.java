@@ -58,6 +58,17 @@ public final class SaslInit implements SaslPerformative {
     }
 
     @Override
+    public SaslInit copy() {
+        SaslInit copy = new SaslInit();
+
+        copy.setHostname(hostname);
+        copy.setInitialResponse(initialResponse == null ? null : initialResponse.copy());
+        copy.setMechanism(mechanism);
+
+        return copy;
+    }
+
+    @Override
     public String toString() {
         return "SaslInit{" +
                "mechanism=" + mechanism +

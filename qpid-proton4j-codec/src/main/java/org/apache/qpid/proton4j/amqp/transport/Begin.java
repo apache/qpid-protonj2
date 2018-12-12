@@ -17,6 +17,7 @@
 package org.apache.qpid.proton4j.amqp.transport;
 
 import java.util.Arrays;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 import org.apache.qpid.proton4j.amqp.Binary;
@@ -42,6 +43,28 @@ public final class Begin implements Performative {
     @Override
     public PerformativeType getPerformativeType() {
         return PerformativeType.BEGIN;
+    }
+
+    @Override
+    public Begin copy() {
+        Begin copy = new Begin();
+
+        copy.setRemoteChannel(remoteChannel);
+        copy.setNextOutgoingId(nextOutgoingId);
+        copy.setIncomingWindow(incomingWindow);
+        copy.setOutgoingWindow(outgoingWindow);
+        copy.setHandleMax(handleMax);
+        if (offeredCapabilities != null) {
+            copy.setOfferedCapabilities(Arrays.copyOf(offeredCapabilities, offeredCapabilities.length));
+        }
+        if (desiredCapabilities != null) {
+            copy.setOfferedCapabilities(Arrays.copyOf(desiredCapabilities, desiredCapabilities.length));
+        }
+        if (properties != null) {
+            copy.setProperties(new LinkedHashMap<>(properties));
+        }
+
+        return copy;
     }
 
     public UnsignedShort getRemoteChannel() {

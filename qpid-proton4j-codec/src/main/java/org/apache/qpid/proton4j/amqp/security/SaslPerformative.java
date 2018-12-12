@@ -29,6 +29,8 @@ public interface SaslPerformative {
         OUTCOME
     }
 
+    SaslPerformative copy();
+
     SaslPerformativeType getPerformativeType();
 
     interface SaslPerformativeHandler<E> {

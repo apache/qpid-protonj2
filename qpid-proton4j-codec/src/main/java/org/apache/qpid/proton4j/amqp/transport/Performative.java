@@ -37,6 +37,8 @@ public interface Performative {
 
     PerformativeType getPerformativeType();
 
+    Performative copy();
+
     // TODO - Revisit
     interface PerformativeHandler<E>
     {

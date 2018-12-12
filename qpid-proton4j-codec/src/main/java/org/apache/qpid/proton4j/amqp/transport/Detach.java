@@ -59,6 +59,17 @@ public final class Detach implements Performative {
     }
 
     @Override
+    public Detach copy() {
+        Detach copy = new Detach();
+
+        copy.setHandle(handle);
+        copy.setClosed(closed);
+        copy.setError(error == null ? null : error.copy());
+
+        return copy;
+    }
+
+    @Override
     public PerformativeType getPerformativeType() {
         return PerformativeType.DETACH;
     }

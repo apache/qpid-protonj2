@@ -36,6 +36,12 @@ public final class Binary {
         this.length = length;
     }
 
+    public Binary copy() {
+        byte[] dataCopy = new byte[length];
+        System.arraycopy(data, offset, dataCopy, 0, length);
+        return new Binary(dataCopy, 0, length);
+    }
+
     public ByteBuffer asByteBuffer() {
         return ByteBuffer.wrap(data, offset, length);
     }

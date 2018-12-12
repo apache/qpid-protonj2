@@ -16,6 +16,7 @@
  */
 package org.apache.qpid.proton4j.amqp.transport;
 
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 import org.apache.qpid.proton4j.amqp.Binary;
@@ -280,6 +281,28 @@ public final class Flow implements Performative {
         }
 
         this.properties = properties;
+    }
+
+    @Override
+    public Flow copy() {
+        Flow copy = new Flow();
+
+        copy.nextIncomingId = nextIncomingId;
+        copy.incomingWindow = incomingWindow;
+        copy.nextOutgoingId = nextOutgoingId;
+        copy.outgoingWindow = outgoingWindow;
+        copy.handle = handle;
+        copy.deliveryCount = deliveryCount;
+        copy.linkCredit = linkCredit;
+        copy.available = available;
+        copy.drain = drain;
+        copy.echo = echo;
+        if (properties != null) {
+            copy.properties = new LinkedHashMap<>(properties);
+        }
+        copy.modified = modified;
+
+        return copy;
     }
 
     @Override

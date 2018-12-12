@@ -90,6 +90,20 @@ public final class Disposition implements Performative {
     }
 
     @Override
+    public Disposition copy() {
+        Disposition copy = new Disposition();
+
+        copy.setRole(role);
+        copy.setFirst(first);
+        copy.setLast(last);
+        copy.setSettled(settled);
+        copy.setState(state);
+        copy.setBatchable(batchable);
+
+        return copy;
+    }
+
+    @Override
     public PerformativeType getPerformativeType() {
         return PerformativeType.DISPOSITION;
     }

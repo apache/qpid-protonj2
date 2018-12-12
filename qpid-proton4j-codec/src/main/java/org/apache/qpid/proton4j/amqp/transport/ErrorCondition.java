@@ -16,6 +16,7 @@
  */
 package org.apache.qpid.proton4j.amqp.transport;
 
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 import org.apache.qpid.proton4j.amqp.Symbol;
@@ -72,10 +73,14 @@ public final class ErrorCondition {
         info = null;
     }
 
-    public void copyFrom(ErrorCondition condition) {
-        this.condition = condition.condition;
-        this.description = condition.description;
-        this.info = condition.info;
+    public ErrorCondition copy() {
+        ErrorCondition copy = new ErrorCondition();
+
+        copy.setCondition(condition);
+        copy.setDescription(description);
+        copy.setInfo(info == null ? null : new LinkedHashMap<>(info));
+
+        return copy;
     }
 
     @Override

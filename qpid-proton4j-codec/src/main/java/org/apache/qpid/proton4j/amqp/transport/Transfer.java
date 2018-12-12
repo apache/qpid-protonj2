@@ -270,6 +270,26 @@ public final class Transfer implements Performative {
     }
 
     @Override
+    public Transfer copy() {
+        Transfer copy = new Transfer();
+
+        copy.handle = handle;
+        copy.deliveryId = deliveryId;
+        copy.deliveryTag = deliveryTag == null ? null : deliveryTag.copy();
+        copy.messageFormat = messageFormat;
+        copy.settled = settled;
+        copy.more = more;
+        copy.rcvSettleMode = rcvSettleMode;
+        copy.state = state;
+        copy.resume = resume;
+        copy.aborted = aborted;
+        copy.batchable = batchable;
+        copy.modified = modified;
+
+        return copy;
+    }
+
+    @Override
     public PerformativeType getPerformativeType() {
         return PerformativeType.TRANSFER;
     }

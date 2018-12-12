@@ -17,6 +17,7 @@
 package org.apache.qpid.proton4j.amqp.transport;
 
 import java.util.Arrays;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 import org.apache.qpid.proton4j.amqp.Binary;
@@ -49,6 +50,36 @@ public final class Attach implements Performative {
     @Override
     public PerformativeType getPerformativeType() {
         return PerformativeType.ATTACH;
+    }
+
+    @Override
+    public Attach copy() {
+        Attach copy = new Attach();
+
+        copy.setName(name);
+        copy.setHandle(handle);
+        copy.setRole(role);
+        copy.setSndSettleMode(sndSettleMode);
+        copy.setRcvSettleMode(rcvSettleMode);
+        copy.setSource(source == null ? null : source.copy());
+        copy.setTarget(target == null ? null : target.copy());
+        if (unsettled != null) {
+            copy.setUnsettled(new LinkedHashMap<>(unsettled));
+        }
+        copy.setIncompleteUnsettled(incompleteUnsettled);
+        copy.setInitialDeliveryCount(initialDeliveryCount);
+        copy.setMaxMessageSize(maxMessageSize);
+        if (offeredCapabilities != null) {
+            copy.setOfferedCapabilities(Arrays.copyOf(offeredCapabilities, offeredCapabilities.length));
+        }
+        if (desiredCapabilities != null) {
+            copy.setOfferedCapabilities(Arrays.copyOf(desiredCapabilities, desiredCapabilities.length));
+        }
+        if (properties != null) {
+            copy.setProperties(new LinkedHashMap<>(properties));
+        }
+
+        return copy;
     }
 
     public String getName() {

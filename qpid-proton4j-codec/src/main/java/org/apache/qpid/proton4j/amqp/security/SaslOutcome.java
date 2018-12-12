@@ -49,6 +49,16 @@ public final class SaslOutcome implements SaslPerformative {
     }
 
     @Override
+    public SaslOutcome copy() {
+        SaslOutcome copy = new SaslOutcome();
+
+        copy.setCode(code);
+        copy.setAdditionalData(additionalData == null ? null : additionalData.copy());
+
+        return copy;
+    }
+
+    @Override
     public String toString() {
         return "SaslOutcome{" + "_code=" + code + ", _additionalData=" + additionalData + '}';
     }

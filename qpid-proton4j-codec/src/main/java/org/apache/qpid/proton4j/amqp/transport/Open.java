@@ -17,6 +17,7 @@
 package org.apache.qpid.proton4j.amqp.transport;
 
 import java.util.Arrays;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 import org.apache.qpid.proton4j.amqp.Binary;
@@ -40,6 +41,34 @@ public final class Open implements Performative {
     private Symbol[] offeredCapabilities;
     private Symbol[] desiredCapabilities;
     private Map<Object, Object> properties;
+
+    @Override
+    public Open copy() {
+        Open copy = new Open();
+
+        copy.setContainerId(containerId);
+        copy.setHostname(hostname);
+        copy.setMaxFrameSize(maxFrameSize);
+        copy.setChannelMax(channelMax);
+        copy.setIdleTimeOut(idleTimeOut);
+        if (outgoingLocales != null) {
+            copy.setOutgoingLocales(Arrays.copyOf(outgoingLocales, outgoingLocales.length));
+        }
+        if (incomingLocales != null) {
+            copy.setIncomingLocales(Arrays.copyOf(incomingLocales, incomingLocales.length));
+        }
+        if (offeredCapabilities != null) {
+            copy.setOfferedCapabilities(Arrays.copyOf(offeredCapabilities, offeredCapabilities.length));
+        }
+        if (desiredCapabilities != null) {
+            copy.setOfferedCapabilities(Arrays.copyOf(desiredCapabilities, desiredCapabilities.length));
+        }
+        if (properties != null) {
+            copy.setProperties(new LinkedHashMap<>(properties));
+        }
+
+        return copy;
+    }
 
     public String getContainerId() {
         return containerId;

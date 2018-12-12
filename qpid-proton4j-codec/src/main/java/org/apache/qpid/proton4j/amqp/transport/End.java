@@ -36,6 +36,13 @@ public final class End implements Performative {
     }
 
     @Override
+    public End copy() {
+        End copy = new End();
+        copy.setError(error == null ? null : error.copy());
+        return copy;
+    }
+
+    @Override
     public PerformativeType getPerformativeType() {
         return PerformativeType.END;
     }

@@ -41,6 +41,15 @@ public final class SaslMechanisms implements SaslPerformative {
     }
 
     @Override
+    public SaslMechanisms copy() {
+        SaslMechanisms copy = new SaslMechanisms();
+        if (saslServerMechanisms != null) {
+            copy.setSaslServerMechanisms(Arrays.copyOf(saslServerMechanisms, saslServerMechanisms.length));
+        }
+        return copy;
+    }
+
+    @Override
     public String toString() {
         return "SaslMechanisms{" + "saslServerMechanisms=" +
                     (saslServerMechanisms == null ? null : Arrays.asList(saslServerMechanisms)) + '}';
