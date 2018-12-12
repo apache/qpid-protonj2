@@ -43,21 +43,21 @@ public class FrameLoggingHandler implements TransportHandler {
     }
 
     @Override
-    public void handleHeaderFrame(TransportHandlerContext context, HeaderFrame header) {
+    public void handleRead(TransportHandlerContext context, HeaderFrame header) {
         LOG.trace("<- Header: {}", header);
-        context.fireHeaderFrame(header);
+        context.fireRead(header);
     }
 
     @Override
-    public void handleSaslFrame(TransportHandlerContext context, SaslFrame frame) {
+    public void handleRead(TransportHandlerContext context, SaslFrame frame) {
         LOG.trace("<- SASL: {}", frame);
-        context.fireSaslFrame(frame);
+        context.fireRead(frame);
     }
 
     @Override
-    public void handleProtocolFrame(TransportHandlerContext context, ProtocolFrame frame) {
+    public void handleRead(TransportHandlerContext context, ProtocolFrame frame) {
         LOG.trace("<- AMQP: {}", frame);
-        context.fireProtocolFrame(frame);
+        context.fireRead(frame);
     }
 
     @Override

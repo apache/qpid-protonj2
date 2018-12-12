@@ -67,18 +67,18 @@ public class ProtonTransportHandlerContext implements TransportHandlerContext {
     }
 
     @Override
-    public void fireHeaderFrame(HeaderFrame header) {
-        previous.getHandler().handleHeaderFrame(previous, header);
+    public void fireRead(HeaderFrame header) {
+        previous.getHandler().handleRead(previous, header);
     }
 
     @Override
-    public void fireSaslFrame(SaslFrame frame) {
-        previous.getHandler().handleSaslFrame(previous, frame);
+    public void fireRead(SaslFrame frame) {
+        previous.getHandler().handleRead(previous, frame);
     }
 
     @Override
-    public void fireProtocolFrame(ProtocolFrame frame) {
-        previous.getHandler().handleProtocolFrame(previous, frame);
+    public void fireRead(ProtocolFrame frame) {
+        previous.getHandler().handleRead(previous, frame);
     }
 
     @Override

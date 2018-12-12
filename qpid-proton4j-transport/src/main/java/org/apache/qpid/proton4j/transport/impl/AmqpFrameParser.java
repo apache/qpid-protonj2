@@ -198,7 +198,7 @@ public class AmqpFrameParser implements FrameParser {
                             parsingState = State.ERROR;
                             break;
                         } else {
-                            sasl.handleHeaderFrame(context, headerFrame);
+                            sasl.handleRead(context, headerFrame);
                             parsingState = State.SIZE_0;
                         }
                     } else {
@@ -322,7 +322,7 @@ public class AmqpFrameParser implements FrameParser {
                         if (val instanceof Performative) {
                             Performative frameBody = (Performative) val;
                             LOG.trace("IN: {} CH[{}] : {} [{}]", channel, frameBody, payload);
-                            context.fireProtocolFrame(new ProtocolFrame(frameBody, channel, payload));
+                            context.fireRead(new ProtocolFrame(frameBody, channel, payload));
                         } else {
                             throw new TransportException("Frameparser encountered a "
                                     + (val == null? "null" : val.getClass())

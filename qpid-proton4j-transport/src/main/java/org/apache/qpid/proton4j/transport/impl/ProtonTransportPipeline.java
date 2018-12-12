@@ -182,20 +182,20 @@ public class ProtonTransportPipeline implements TransportPipeline {
     }
 
     @Override
-    public TransportPipeline fireHeaderFrame(HeaderFrame header) {
-        tail.fireHeaderFrame(header);
+    public TransportPipeline fireRead(HeaderFrame header) {
+        tail.fireRead(header);
         return this;
     }
 
     @Override
-    public TransportPipeline fireSaslFrame(SaslFrame frame) {
-        tail.fireSaslFrame(frame);
+    public TransportPipeline fireRead(SaslFrame frame) {
+        tail.fireRead(frame);
         return this;
     }
 
     @Override
-    public TransportPipeline fireProtocolFrame(ProtocolFrame frame) {
-        tail.fireProtocolFrame(frame);
+    public TransportPipeline fireRead(ProtocolFrame frame) {
+        tail.fireRead(frame);
         return this;
     }
 
@@ -278,7 +278,7 @@ public class ProtonTransportPipeline implements TransportPipeline {
         }
 
         @Override
-        public void fireHeaderFrame(HeaderFrame header) {
+        public void fireRead(HeaderFrame header) {
             // TODO Decide on the exact error to be fired, move Transport to failed state.
             TransportListener listener = transport.getTransportListener();
             if (listener != null) {
@@ -288,7 +288,7 @@ public class ProtonTransportPipeline implements TransportPipeline {
         }
 
         @Override
-        public void fireSaslFrame(SaslFrame frame) {
+        public void fireRead(SaslFrame frame) {
             // TODO Decide on the exact error to be fired, move Transport to failed state.
             TransportListener listener = transport.getTransportListener();
             if (listener != null) {
@@ -298,7 +298,7 @@ public class ProtonTransportPipeline implements TransportPipeline {
         }
 
         @Override
-        public void fireProtocolFrame(ProtocolFrame frame) {
+        public void fireRead(ProtocolFrame frame) {
             // TODO Decide on the exact error to be fired, move Transport to failed state.
             TransportListener listener = transport.getTransportListener();
             if (listener != null) {
@@ -419,7 +419,7 @@ public class ProtonTransportPipeline implements TransportPipeline {
         }
 
         @Override
-        public void handleHeaderFrame(TransportHandlerContext context, HeaderFrame header) {
+        public void handleRead(TransportHandlerContext context, HeaderFrame header) {
             // TODO Decide on the exact error to be fired, move Transport to failed state.
             TransportListener listener = transport.getTransportListener();
             if (listener != null) {
@@ -429,7 +429,7 @@ public class ProtonTransportPipeline implements TransportPipeline {
         }
 
         @Override
-        public void handleSaslFrame(TransportHandlerContext context, SaslFrame frame) {
+        public void handleRead(TransportHandlerContext context, SaslFrame frame) {
             // TODO Decide on the exact error to be fired, move Transport to failed state.
             TransportListener listener = transport.getTransportListener();
             if (listener != null) {
@@ -439,7 +439,7 @@ public class ProtonTransportPipeline implements TransportPipeline {
         }
 
         @Override
-        public void handleProtocolFrame(TransportHandlerContext context, ProtocolFrame frame) {
+        public void handleRead(TransportHandlerContext context, ProtocolFrame frame) {
             // TODO Decide on the exact error to be fired, move Transport to failed state.
             TransportListener listener = transport.getTransportListener();
             if (listener != null) {

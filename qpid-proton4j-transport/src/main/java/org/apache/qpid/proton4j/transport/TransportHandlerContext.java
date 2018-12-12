@@ -34,17 +34,11 @@ public interface TransportHandlerContext {
 
     void fireRead(ProtonBuffer buffer);
 
-    void fireHeaderFrame(HeaderFrame header);
+    void fireRead(HeaderFrame header);
 
-    void fireSaslFrame(SaslFrame frame);
+    void fireRead(SaslFrame frame);
 
-    void fireProtocolFrame(ProtocolFrame frame);
-
-    void fireEncodingError(Throwable e);
-
-    void fireDecodingError(Throwable e);
-
-    void fireFailed(Throwable e);
+    void fireRead(ProtocolFrame frame);
 
     void fireWrite(AMQPHeader header);
 
@@ -57,5 +51,11 @@ public interface TransportHandlerContext {
     void fireWrite(ProtonBuffer buffer);
 
     void fireFlush();
+
+    void fireEncodingError(Throwable e);
+
+    void fireDecodingError(Throwable e);
+
+    void fireFailed(Throwable e);
 
 }

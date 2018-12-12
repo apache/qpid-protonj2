@@ -52,21 +52,21 @@ public class TestSupportTransportHandler implements TransportHandler{
     }
 
     @Override
-    public void handleHeaderFrame(TransportHandlerContext context, HeaderFrame header) {
+    public void handleRead(TransportHandlerContext context, HeaderFrame header) {
         framesRead.add(header);
-        context.fireHeaderFrame(header);
+        context.fireRead(header);
     }
 
     @Override
-    public void handleSaslFrame(TransportHandlerContext context, SaslFrame frame) {
+    public void handleRead(TransportHandlerContext context, SaslFrame frame) {
         framesRead.add(frame);
-        context.fireSaslFrame(frame);
+        context.fireRead(frame);
     }
 
     @Override
-    public void handleProtocolFrame(TransportHandlerContext context, ProtocolFrame frame) {
+    public void handleRead(TransportHandlerContext context, ProtocolFrame frame) {
         framesRead.add(frame);
-        context.fireProtocolFrame(frame);
+        context.fireRead(frame);
     }
 
     @Override

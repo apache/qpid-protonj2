@@ -175,7 +175,7 @@ public class SaslServerContext extends SaslContext {
             if (isAllowNonSasl()) {
                 // Set proper outcome etc.
                 done = true;
-                context.fireHeaderFrame(header);
+                context.fireRead(header);
             } else {
                 // TODO - Error type ?
                 context.fireWrite(HeaderFrame.SASL_HEADER_FRAME);

@@ -128,16 +128,16 @@ public class SaslHandler extends TransportHandlerAdapter {
     }
 
     @Override
-    public void handleHeaderFrame(TransportHandlerContext context, HeaderFrame header) {
+    public void handleRead(TransportHandlerContext context, HeaderFrame header) {
         if (isDone()) {
-            context.fireHeaderFrame(header);
+            context.fireRead(header);
         }
 
         saslContext.handleHeaderFrame(context, header);
     }
 
     @Override
-    public void handleSaslFrame(TransportHandlerContext context, SaslFrame frame) {
+    public void handleRead(TransportHandlerContext context, SaslFrame frame) {
         if (isDone()) {
             // TODO specific error for this case.
             context.fireFailed(new IllegalStateException(
@@ -148,9 +148,9 @@ public class SaslHandler extends TransportHandlerAdapter {
     }
 
     @Override
-    public void handleProtocolFrame(TransportHandlerContext context, ProtocolFrame frame) {
+    public void handleRead(TransportHandlerContext context, ProtocolFrame frame) {
         if (isDone()) {
-            context.fireProtocolFrame(frame);
+            context.fireRead(frame);
         } else {
             // TODO - We shouldn't be receiving these here if not done as we should be
             //        holding off on decoding the frames until after done and then passing

@@ -200,7 +200,7 @@ public class SaslFrameParser implements FrameParser {
                             parsingState = State.ERROR;
                             break;
                         } else {
-                            sasl.handleHeaderFrame(context, headerFrame);
+                            sasl.handleRead(context, headerFrame);
                             parsingState = State.SIZE_0;
                         }
                     } else {
@@ -327,7 +327,7 @@ public class SaslFrameParser implements FrameParser {
                         if (val instanceof SaslPerformative) {
                             SaslPerformative performative = (SaslPerformative) val;
                             SaslFrame saslFrame = new SaslFrame(performative, payload);
-                            sasl.handleSaslFrame(context, saslFrame);
+                            sasl.handleRead(context, saslFrame);
                             input = incoming;
                             parsingState = State.SIZE_0;
                         } else {

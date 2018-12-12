@@ -52,11 +52,11 @@ public interface TransportPipeline {
 
     TransportPipeline fireRead(ProtonBuffer input);
 
-    TransportPipeline fireHeaderFrame(HeaderFrame header);
+    TransportPipeline fireRead(HeaderFrame header);
 
-    TransportPipeline fireSaslFrame(SaslFrame frame);
+    TransportPipeline fireRead(SaslFrame frame);
 
-    TransportPipeline fireProtocolFrame(ProtocolFrame frame);
+    TransportPipeline fireRead(ProtocolFrame frame);
 
     TransportPipeline fireWrite(ProtonBuffer buffer);
 

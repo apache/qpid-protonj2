@@ -33,18 +33,18 @@ public abstract class TransportHandlerAdapter implements TransportHandler {
     }
 
     @Override
-    public void handleHeaderFrame(TransportHandlerContext context, HeaderFrame header) {
-        context.fireHeaderFrame(header);
+    public void handleRead(TransportHandlerContext context, HeaderFrame header) {
+        context.fireRead(header);
     }
 
     @Override
-    public void handleSaslFrame(TransportHandlerContext context, SaslFrame frame) {
-        context.fireSaslFrame(frame);
+    public void handleRead(TransportHandlerContext context, SaslFrame frame) {
+        context.fireRead(frame);
     }
 
     @Override
-    public void handleProtocolFrame(TransportHandlerContext context, ProtocolFrame frame) {
-        context.fireProtocolFrame(frame);
+    public void handleRead(TransportHandlerContext context, ProtocolFrame frame) {
+        context.fireRead(frame);
     }
 
     @Override

@@ -47,30 +47,30 @@ public class LockingHandler implements TransportHandler {
     }
 
     @Override
-    public void handleHeaderFrame(TransportHandlerContext context, HeaderFrame header) {
+    public void handleRead(TransportHandlerContext context, HeaderFrame header) {
         lock.lock();
         try {
-            context.fireHeaderFrame(header);
+            context.fireRead(header);
         } finally {
             lock.unlock();
         }
     }
 
     @Override
-    public void handleSaslFrame(TransportHandlerContext context, SaslFrame frame) {
+    public void handleRead(TransportHandlerContext context, SaslFrame frame) {
         lock.lock();
         try {
-            context.fireSaslFrame(frame);
+            context.fireRead(frame);
         } finally {
             lock.unlock();
         }
     }
 
     @Override
-    public void handleProtocolFrame(TransportHandlerContext context, ProtocolFrame frame) {
+    public void handleRead(TransportHandlerContext context, ProtocolFrame frame) {
         lock.lock();
         try {
-            context.fireProtocolFrame(frame);
+            context.fireRead(frame);
         } finally {
             lock.unlock();
         }

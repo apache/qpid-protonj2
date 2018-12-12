@@ -33,21 +33,17 @@ public interface TransportHandler {
 
     // Some things that might flow through a transport pipeline
 
+    // Read events
+
     void handleRead(TransportHandlerContext context, ProtonBuffer buffer);
 
-    void handleHeaderFrame(TransportHandlerContext context, HeaderFrame header);
+    void handleRead(TransportHandlerContext context, HeaderFrame header);
 
-    void handleSaslFrame(TransportHandlerContext context, SaslFrame frame);
+    void handleRead(TransportHandlerContext context, SaslFrame frame);
 
-    void handleProtocolFrame(TransportHandlerContext context, ProtocolFrame frame);
+    void handleRead(TransportHandlerContext context, ProtocolFrame frame);
 
-    void transportEncodingError(TransportHandlerContext context, Throwable e);
-
-    void transportDecodingError(TransportHandlerContext context, Throwable e);
-
-    void transportFailed(TransportHandlerContext context, Throwable e);
-
-    // Write methods
+    // Write events
 
     void handleWrite(TransportHandlerContext context, AMQPHeader header);
 
@@ -61,4 +57,11 @@ public interface TransportHandler {
 
     void handleFlush(TransportHandlerContext context);
 
+    // Error events
+
+    void transportEncodingError(TransportHandlerContext context, Throwable e);
+
+    void transportDecodingError(TransportHandlerContext context, Throwable e);
+
+    void transportFailed(TransportHandlerContext context, Throwable e);
 }
