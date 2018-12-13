@@ -24,7 +24,6 @@ import org.apache.qpid.proton4j.amqp.security.SaslOutcome;
 import org.apache.qpid.proton4j.amqp.security.SaslResponse;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.transport.HeaderFrame;
-import org.apache.qpid.proton4j.transport.SaslFrame;
 import org.apache.qpid.proton4j.transport.TransportHandlerContext;
 import org.apache.qpid.proton4j.transport.sasl.SaslConstants.SaslOutcomes;
 import org.apache.qpid.proton4j.transport.sasl.SaslConstants.SaslStates;
@@ -146,7 +145,7 @@ public class SaslClientContext extends SaslContext {
             SaslResponse response = new SaslResponse();
             response.setResponse(getResponse());
             setResponse(null);
-            context.fireWrite(new SaslFrame(response, null));
+            context.fireWrite(response);
         }
 
         // TODO - We probably want to support asynchronous triggering

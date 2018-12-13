@@ -22,7 +22,6 @@ import org.apache.qpid.proton4j.amqp.transport.Performative;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.common.logging.ProtonLogger;
 import org.apache.qpid.proton4j.common.logging.ProtonLoggerFactory;
-import org.apache.qpid.proton4j.transport.Frame;
 import org.apache.qpid.proton4j.transport.HeaderFrame;
 import org.apache.qpid.proton4j.transport.ProtocolFrame;
 import org.apache.qpid.proton4j.transport.SaslFrame;
@@ -37,8 +36,8 @@ public class FrameLoggingHandler implements TransportHandler {
     private static ProtonLogger LOG = ProtonLoggerFactory.getLogger(FrameLoggingHandler.class);
 
     // TODO - Possible that this should also have configuration for on / off and even looks at
-    //        env for PN_TRACE_FRM for legacy reasons.  
-    
+    //        env for PN_TRACE_FRM for legacy reasons.
+
     @Override
     public void handleRead(TransportHandlerContext context, ProtonBuffer buffer) {
         // TODO Could trace out bytes here, would need a pretty print helper.
@@ -97,12 +96,6 @@ public class FrameLoggingHandler implements TransportHandler {
     public void handleWrite(TransportHandlerContext context, SaslPerformative performative) {
         LOG.trace("-> SASL: {}", performative);
         context.fireWrite(performative);
-    }
-
-    @Override
-    public void handleWrite(TransportHandlerContext context, Frame<?> frame) {
-        LOG.trace("-> Frame: {}", frame);
-        context.fireWrite(frame);
     }
 
     @Override

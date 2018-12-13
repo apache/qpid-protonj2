@@ -20,7 +20,6 @@ import org.apache.qpid.proton4j.amqp.security.SaslPerformative;
 import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
 import org.apache.qpid.proton4j.amqp.transport.Performative;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
-import org.apache.qpid.proton4j.transport.Frame;
 import org.apache.qpid.proton4j.transport.HeaderFrame;
 import org.apache.qpid.proton4j.transport.ProtocolFrame;
 import org.apache.qpid.proton4j.transport.SaslFrame;
@@ -109,11 +108,6 @@ public class ProtonTransportHandlerContext implements TransportHandlerContext {
     @Override
     public void fireWrite(SaslPerformative performative) {
         next.getHandler().handleWrite(next, performative);
-    }
-
-    @Override
-    public void fireWrite(Frame<?> frame) {
-        next.getHandler().handleWrite(next, frame);
     }
 
     @Override

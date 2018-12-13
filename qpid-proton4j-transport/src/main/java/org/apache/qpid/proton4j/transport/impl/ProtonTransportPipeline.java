@@ -22,7 +22,6 @@ import org.apache.qpid.proton4j.amqp.security.SaslPerformative;
 import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
 import org.apache.qpid.proton4j.amqp.transport.Performative;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
-import org.apache.qpid.proton4j.transport.Frame;
 import org.apache.qpid.proton4j.transport.HeaderFrame;
 import org.apache.qpid.proton4j.transport.ProtocolFrame;
 import org.apache.qpid.proton4j.transport.SaslFrame;
@@ -218,12 +217,6 @@ public class ProtonTransportPipeline implements TransportPipeline {
     }
 
     @Override
-    public TransportPipeline fireWrite(Frame<?> frame) {
-        head.fireWrite(frame);
-        return this;
-    }
-
-    @Override
     public TransportPipeline fireWrite(ProtonBuffer buffer) {
         head.fireWrite(buffer);
         return this;
@@ -341,16 +334,6 @@ public class ProtonTransportPipeline implements TransportPipeline {
 
         public TransportHandlerContextWriteBoundry() {
             super("Write Boundry", transport, new BoundryTransportHandler());
-        }
-
-        @Override
-        public void fireWrite(Frame<?> frame) {
-            // TODO Decide on the exact error to be fired, move Transport to failed state.
-            TransportListener listener = transport.getTransportListener();
-            if (listener != null) {
-                listener.onTransportFailed(transport,
-                    new IOException("No handler processed write frame event."));
-            }
         }
 
         @Override
@@ -474,16 +457,6 @@ public class ProtonTransportPipeline implements TransportPipeline {
             TransportListener listener = transport.getTransportListener();
             if (listener != null) {
                 listener.onTransportFailed(transport, e);
-            }
-        }
-
-        @Override
-        public void handleWrite(TransportHandlerContext context, Frame<?> frame) {
-            // TODO Decide on the exact error to be fired, move Transport to failed state.
-            TransportListener listener = transport.getTransportListener();
-            if (listener != null) {
-                listener.onTransportFailed(transport,
-                    new IOException("No handler processed write frame event."));
             }
         }
 

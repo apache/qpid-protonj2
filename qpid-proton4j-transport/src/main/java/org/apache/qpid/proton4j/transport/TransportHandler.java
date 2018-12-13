@@ -51,8 +51,6 @@ public interface TransportHandler {
 
     void handleWrite(TransportHandlerContext context, SaslPerformative performative);
 
-    void handleWrite(TransportHandlerContext context, Frame<?> frame);
-
     void handleWrite(TransportHandlerContext context, ProtonBuffer buffer);
 
     void handleFlush(TransportHandlerContext context);

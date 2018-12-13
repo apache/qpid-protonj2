@@ -93,7 +93,7 @@ public class SaslHandlerTest {
                 case 0:
                     assertTrue(frame.getType() == HeaderFrame.HEADER_FRAME_TYPE);
                     HeaderFrame header = (HeaderFrame) frame;
-                    assertTrue(header.getBody().isSaslHeader());
+                    assertTrue("Should have written a SASL Header in response", header.getBody().isSaslHeader());
                     break;
                 default:
                     fail("Invalid Frame read during exchange: " + frame);

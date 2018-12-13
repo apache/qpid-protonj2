@@ -85,23 +85,20 @@ public class TestSupportTransportHandler implements TransportHandler{
     }
 
     @Override
-    public void handleWrite(TransportHandlerContext context, Frame<?> frame) {
-        framesWritten.add(frame);
-        context.fireWrite(frame);
-    }
-
-    @Override
     public void handleWrite(TransportHandlerContext context, AMQPHeader header) {
+        framesWritten.add(new HeaderFrame(header));
         context.fireWrite(header);
     }
 
     @Override
     public void handleWrite(TransportHandlerContext context, Performative performative, short channel, ProtonBuffer payload, Runnable payloadToLarge) {
+        framesWritten.add(new ProtocolFrame(performative, channel, null)); // TODO payload as ProtonBuffer ?
         context.fireWrite(performative, channel, payload, payloadToLarge);
     }
 
     @Override
     public void handleWrite(TransportHandlerContext context, SaslPerformative performative) {
+        framesWritten.add(new SaslFrame(performative, null));
         context.fireWrite(performative);
     }
 

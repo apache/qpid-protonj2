@@ -20,7 +20,6 @@ import org.apache.qpid.proton4j.amqp.security.SaslPerformative;
 import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
 import org.apache.qpid.proton4j.amqp.transport.Performative;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
-import org.apache.qpid.proton4j.transport.Frame;
 import org.apache.qpid.proton4j.transport.TransportHandlerAdapter;
 import org.apache.qpid.proton4j.transport.TransportHandlerContext;
 
@@ -50,9 +49,5 @@ public class FrameWritingHandler extends TransportHandlerAdapter {
 
     @Override
     public void handleWrite(TransportHandlerContext context, SaslPerformative performative) {
-    }
-
-    @Override
-    public void handleWrite(TransportHandlerContext context, Frame<?> frame) {
     }
 }

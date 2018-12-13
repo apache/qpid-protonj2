@@ -24,8 +24,8 @@ import org.apache.qpid.proton4j.amqp.security.SaslInit;
 import org.apache.qpid.proton4j.amqp.security.SaslMechanisms;
 import org.apache.qpid.proton4j.amqp.security.SaslOutcome;
 import org.apache.qpid.proton4j.amqp.security.SaslResponse;
+import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
 import org.apache.qpid.proton4j.transport.HeaderFrame;
-import org.apache.qpid.proton4j.transport.SaslFrame;
 import org.apache.qpid.proton4j.transport.TransportHandlerContext;
 import org.apache.qpid.proton4j.transport.sasl.SaslConstants.SaslOutcomes;
 import org.apache.qpid.proton4j.transport.sasl.SaslConstants.SaslStates;
@@ -158,11 +158,13 @@ public class SaslServerContext extends SaslContext {
         if (!headerReceived) {
             if (isAllowNonSasl()) {
                 // Set proper outcome etc.
+                classifyStateFromOutcome(SaslOutcomes.PN_SASL_OK);
                 done = true;
                 context.fireRead(header);
             } else {
                 // TODO - Error type ?
-                context.fireWrite(HeaderFrame.SASL_HEADER_FRAME);
+                classifyStateFromOutcome(SaslOutcomes.PN_SASL_SKIPPED);
+                context.fireWrite(AMQPHeader.getSASLHeader());
                 context.fireFailed(new IllegalStateException(
                     "Unexpected AMQP Header before SASL Authentication completed."));
             }
@@ -177,7 +179,7 @@ public class SaslServerContext extends SaslContext {
 
     private void handleSaslHeader(TransportHandlerContext context, HeaderFrame header) {
         if (!headerWritten) {
-            context.fireWrite(HeaderFrame.SASL_HEADER_FRAME);
+            context.fireWrite(header.getBody());
             headerWritten = true;
         }
 
@@ -203,10 +205,11 @@ public class SaslServerContext extends SaslContext {
         mechanisms.setSaslServerMechanisms(serverMechanisms);
 
         // Send the server mechanisms now.
-        SaslFrame frame = new SaslFrame(mechanisms, null);
-        context.fireWrite(frame);
+        context.fireWrite(mechanisms);
         mechanismsSent = true;
         state = SaslStates.PN_SASL_STEP;
+
+        header.release();
     }
 
     @Override
@@ -214,6 +217,7 @@ public class SaslServerContext extends SaslContext {
         if (initReceived) {
             // TODO - Handle SaslInit already read with better error
             context.fireFailed(new IllegalStateException("SASL Handler received second SASL Init"));
+            return;
         }
 
         hostname = saslInit.getHostname();
@@ -239,7 +243,7 @@ public class SaslServerContext extends SaslContext {
             SaslChallenge challenge = new SaslChallenge();
             challenge.setChallenge(getChallenge());
             setChallenge(null);
-            context.fireWrite(new SaslFrame(challenge, null));
+            context.fireWrite(challenge);
         }
 
         if (getOutcome() != SaslOutcomes.PN_SASL_NONE) {
@@ -248,7 +252,7 @@ public class SaslServerContext extends SaslContext {
             outcome.setCode(SaslCode.values()[getOutcome().getCode()]);
             outcome.setAdditionalData(additionalData);
             setAdditionalData(null);
-            context.fireWrite(new SaslFrame(outcome, null));
+            context.fireWrite(outcome);
 
             done = true;
         }

@@ -25,7 +25,6 @@ import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.CodecFactory;
 import org.apache.qpid.proton4j.codec.Decoder;
 import org.apache.qpid.proton4j.codec.Encoder;
-import org.apache.qpid.proton4j.transport.Frame;
 import org.apache.qpid.proton4j.transport.HeaderFrame;
 import org.apache.qpid.proton4j.transport.ProtocolFrame;
 import org.apache.qpid.proton4j.transport.SaslFrame;
@@ -186,10 +185,6 @@ public class SaslHandler extends TransportHandlerAdapter {
 
     @Override
     public void handleWrite(TransportHandlerContext context, ProtonBuffer buffer) {
-    }
-
-    @Override
-    public void handleWrite(TransportHandlerContext context, Frame<?> frame) {
     }
 
     @Override

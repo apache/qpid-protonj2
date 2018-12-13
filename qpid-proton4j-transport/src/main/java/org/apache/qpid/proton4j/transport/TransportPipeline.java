@@ -60,8 +60,6 @@ public interface TransportPipeline {
 
     TransportPipeline fireWrite(ProtonBuffer buffer);
 
-    TransportPipeline fireWrite(Frame<?> frame);
-
     TransportPipeline fireWrite(AMQPHeader header);
 
     TransportPipeline fireWrite(Performative performative, short channel, ProtonBuffer payload, Runnable payloadToLarge);
