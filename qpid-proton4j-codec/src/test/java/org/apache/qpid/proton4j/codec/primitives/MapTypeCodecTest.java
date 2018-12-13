@@ -128,12 +128,26 @@ public class MapTypeCodecTest extends CodecTestSupport {
     }
 
     @Test
-    public void testSizeToLargeValidation() throws IOException {
+    public void testSizeToLargeValidationMAP32() throws IOException {
+        dotestSizeToLargeValidation(EncodingCodes.MAP32);
+    }
+
+    @Test
+    public void testSizeToLargeValidationMAP8() throws IOException {
+        dotestSizeToLargeValidation(EncodingCodes.MAP8);
+    }
+
+    private void dotestSizeToLargeValidation(byte encodingCode) throws IOException {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
 
-        buffer.writeByte(EncodingCodes.MAP32);
-        buffer.writeInt(Integer.MAX_VALUE);
-        buffer.writeInt(2);
+        buffer.writeByte(encodingCode);
+        if (encodingCode == EncodingCodes.MAP32) {
+            buffer.writeInt(Integer.MAX_VALUE);
+            buffer.writeInt(2);
+        } else {
+            buffer.writeByte(Byte.MAX_VALUE);
+            buffer.writeByte(2);
+        }
         buffer.writeByte(EncodingCodes.STR8);
         buffer.writeByte(4);
         buffer.writeBytes("test".getBytes(StandardCharsets.UTF_8));
@@ -148,12 +162,27 @@ public class MapTypeCodecTest extends CodecTestSupport {
     }
 
     @Test
-    public void testOddElementCountDetected() throws IOException {
+    public void testOddElementCountDetectedMAP32() throws IOException {
+        doTestOddElementCountDetected(EncodingCodes.MAP32);
+    }
+
+    @Test
+    public void testOddElementCountDetectedMAP8() throws IOException {
+        doTestOddElementCountDetected(EncodingCodes.MAP8);
+    }
+
+    private void doTestOddElementCountDetected(byte encodingCode) throws IOException {
+
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
 
-        buffer.writeByte(EncodingCodes.MAP32);
-        buffer.writeInt(17);
-        buffer.writeInt(1);
+        buffer.writeByte(encodingCode);
+        if (encodingCode == EncodingCodes.MAP32) {
+            buffer.writeInt(17);
+            buffer.writeInt(1);
+        } else {
+            buffer.writeByte(17);
+            buffer.writeByte(1);
+        }
         buffer.writeByte(EncodingCodes.STR8);
         buffer.writeByte(4);
         buffer.writeBytes("test".getBytes(StandardCharsets.UTF_8));

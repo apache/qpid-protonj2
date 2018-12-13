@@ -182,11 +182,24 @@ public class SymbolTypeCodecTest extends CodecTestSupport {
     }
 
     @Test
-    public void testEncodedSizeExceedsRemainingDetected() throws IOException {
+    public void testEncodedSizeExceedsRemainingDetectedSym32() throws IOException {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
 
         buffer.writeByte(EncodingCodes.SYM32);
         buffer.writeInt(Integer.MAX_VALUE);
+
+        try {
+            decoder.readObject(buffer, decoderState);
+            fail("should throw an IllegalArgumentException");
+        } catch (IllegalArgumentException iae) {}
+    }
+
+    @Test
+    public void testEncodedSizeExceedsRemainingDetectedSym8() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        buffer.writeByte(EncodingCodes.SYM8);
+        buffer.writeByte(Byte.MAX_VALUE);
 
         try {
             decoder.readObject(buffer, decoderState);

@@ -148,12 +148,26 @@ public class ListTypeCodecTest extends CodecTestSupport {
     }
 
     @Test
-    public void testCountExceedsRemainingDetected() throws IOException {
+    public void testCountExceedsRemainingDetectedList32() throws IOException {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
 
         buffer.writeByte(EncodingCodes.LIST32);
-        buffer.writeInt(4);
+        buffer.writeInt(8);
         buffer.writeInt(Integer.MAX_VALUE);
+
+        try {
+            decoder.readObject(buffer, decoderState);
+            fail("should throw an IllegalArgumentException");
+        } catch (IllegalArgumentException iae) {}
+    }
+
+    @Test
+    public void testCountExceedsRemainingDetectedList8() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        buffer.writeByte(EncodingCodes.LIST8);
+        buffer.writeByte(4);
+        buffer.writeByte(Byte.MAX_VALUE);
 
         try {
             decoder.readObject(buffer, decoderState);

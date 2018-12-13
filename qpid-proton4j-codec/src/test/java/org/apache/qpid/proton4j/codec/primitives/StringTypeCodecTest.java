@@ -151,12 +151,26 @@ public class StringTypeCodecTest extends CodecTestSupport {
     }
 
     @Test
-    public void testEncodedSizeExceedsRemainingDetected() throws IOException {
+    public void testEncodedSizeExceedsRemainingDetectedStr32() throws IOException {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
 
         buffer.writeByte(EncodingCodes.STR32);
-        buffer.writeInt(4);
+        buffer.writeInt(8);
         buffer.writeInt(Integer.MAX_VALUE);
+
+        try {
+            decoder.readObject(buffer, decoderState);
+            fail("should throw an IllegalArgumentException");
+        } catch (IllegalArgumentException iae) {}
+    }
+
+    @Test
+    public void testEncodedSizeExceedsRemainingDetectedStr8() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        buffer.writeByte(EncodingCodes.STR8);
+        buffer.writeByte(4);
+        buffer.writeByte(Byte.MAX_VALUE);
 
         try {
             decoder.readObject(buffer, decoderState);
