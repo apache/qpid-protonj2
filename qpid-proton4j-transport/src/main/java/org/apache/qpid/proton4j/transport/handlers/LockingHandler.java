@@ -31,6 +31,9 @@ import org.apache.qpid.proton4j.transport.TransportHandlerContext;
 
 /**
  * Handler that prevents concurrent reads and writes
+ *
+ * TODO - Possible this can be more trouble than it is worth compared to just making it
+ *        known that read / write must be single threaded ?
  */
 public class LockingHandler implements TransportHandler {
 

@@ -37,6 +37,9 @@ public class FrameWritingHandler extends TransportHandlerAdapter {
     public FrameWritingHandler() {
     }
 
+    // TODO - Do we want to create an uber framer writer or just let the various bits do their
+    //        own like AMQP protocol does its thing, SASL then does its own etc.
+
     @Override
     public void handleWrite(TransportHandlerContext context, AMQPHeader header) {
     }

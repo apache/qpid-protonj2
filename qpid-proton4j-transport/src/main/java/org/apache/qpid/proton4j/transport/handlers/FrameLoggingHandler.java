@@ -36,6 +36,9 @@ public class FrameLoggingHandler implements TransportHandler {
 
     private static ProtonLogger LOG = ProtonLoggerFactory.getLogger(FrameLoggingHandler.class);
 
+    // TODO - Possible that this should also have configuration for on / off and even looks at
+    //        env for PN_TRACE_FRM for legacy reasons.  
+    
     @Override
     public void handleRead(TransportHandlerContext context, ProtonBuffer buffer) {
         // TODO Could trace out bytes here, would need a pretty print helper.
