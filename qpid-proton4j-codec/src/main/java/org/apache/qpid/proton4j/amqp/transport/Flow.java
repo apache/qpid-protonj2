@@ -49,6 +49,10 @@ public final class Flow implements Performative {
     private long incomingWindow;
     private long nextOutgoingId;
     private long outgoingWindow;
+
+    // TODO - Object handle would allow for easier Map lookup code
+    // private UnsignedInteger handle;
+
     private long handle;
     private long deliveryCount;
     private long linkCredit;

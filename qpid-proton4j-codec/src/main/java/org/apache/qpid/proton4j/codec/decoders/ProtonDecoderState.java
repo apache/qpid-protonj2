@@ -119,9 +119,7 @@ public class ProtonDecoderState implements DecoderState {
                 cr.throwException();
             }
 
-            out.flip();
-
-            return out.toString();
+            return out.flip().toString();
         } catch (CharacterCodingException e) {
             throw new IllegalArgumentException("Cannot parse encoded UTF8 String");
         } finally {

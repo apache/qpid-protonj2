@@ -32,7 +32,7 @@ public final class Source implements Terminus {
     private String address;
     private TerminusDurability durable = TerminusDurability.NONE;
     private TerminusExpiryPolicy expiryPolicy = TerminusExpiryPolicy.SESSION_END;
-    private UnsignedInteger timeout = UnsignedInteger.valueOf(0);
+    private UnsignedInteger timeout = UnsignedInteger.ZERO;
     private boolean dynamic;
     private Map<Symbol, Object> dynamicNodeProperties;
     private Symbol distributionMode;

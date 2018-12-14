@@ -41,6 +41,9 @@ public final class Transfer implements Performative {
 
     private int modified = 0;
 
+    // TODO - Object handle would allow for easier Map lookup code
+    // private UnsignedInteger handle;
+
     private long handle;
     private long deliveryId;
     private Binary deliveryTag;
