@@ -16,21 +16,19 @@
  */
 package org.apache.qpid.proton4j.engine;
 
-import org.apache.qpid.proton4j.transport.Transport;
-
 /**
  * AMQP Connection state container
  */
 public interface Connection {
 
     /**
-     * Bind the Connection instance to the given Transport instance.
-     *
-     * @param transport
-     *      The transport to bind this Connection to.
-     *
-     * @return the Transport that was bound for chaining.
+     * Open the connection
      */
-    public Transport bind(Transport transport);
+    public void Open();
+
+    /**
+     * Close the connection
+     */
+    public void Close();
 
 }

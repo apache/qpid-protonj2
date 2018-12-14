@@ -16,31 +16,81 @@
  */
 package org.apache.qpid.proton4j.engine.impl;
 
+import org.apache.qpid.proton4j.amqp.Binary;
+import org.apache.qpid.proton4j.amqp.transport.Attach;
+import org.apache.qpid.proton4j.amqp.transport.Begin;
+import org.apache.qpid.proton4j.amqp.transport.Close;
+import org.apache.qpid.proton4j.amqp.transport.Detach;
+import org.apache.qpid.proton4j.amqp.transport.Disposition;
+import org.apache.qpid.proton4j.amqp.transport.End;
+import org.apache.qpid.proton4j.amqp.transport.Flow;
+import org.apache.qpid.proton4j.amqp.transport.Open;
+import org.apache.qpid.proton4j.amqp.transport.Performative;
+import org.apache.qpid.proton4j.amqp.transport.Transfer;
 import org.apache.qpid.proton4j.engine.Connection;
 import org.apache.qpid.proton4j.transport.Transport;
 
 /**
  * Implements the proton4j Connection API
  */
-public class ProtonConnection implements Connection {
+public class ProtonConnection implements Connection, Performative.PerformativeHandler<Transport> {
 
-    private Transport transport;
+    private final Transport transport;
 
     /**
      * Create a new unbound Connection instance.
      */
-    public ProtonConnection() {
-        // TODO Auto-generated constructor stub
-    }
-
-    @Override
-    public Transport bind(Transport transport) {
+    public ProtonConnection(Transport transport) {
         this.transport = transport;
-
-        return transport;
     }
 
     public Transport geTransport() {
         return transport;
+    }
+
+    @Override
+    public void Open() {
+    }
+
+    @Override
+    public void Close() {
+    }
+
+    //----- Process all incoming events
+
+    @Override
+    public void handleOpen(Open open, Binary payload, Transport context) {
+    }
+
+    @Override
+    public void handleBegin(Begin begin, Binary payload, Transport context) {
+    }
+
+    @Override
+    public void handleAttach(Attach attach, Binary payload, Transport context) {
+    }
+
+    @Override
+    public void handleFlow(Flow flow, Binary payload, Transport context) {
+    }
+
+    @Override
+    public void handleTransfer(Transfer transfer, Binary payload, Transport context) {
+    }
+
+    @Override
+    public void handleDisposition(Disposition disposition, Binary payload, Transport context) {
+    }
+
+    @Override
+    public void handleDetach(Detach detach, Binary payload, Transport context) {
+    }
+
+    @Override
+    public void handleEnd(End end, Binary payload, Transport context) {
+    }
+
+    @Override
+    public void handleClose(Close close, Binary payload, Transport context) {
     }
 }

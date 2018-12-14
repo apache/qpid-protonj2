@@ -40,8 +40,7 @@ public interface Performative {
     Performative copy();
 
     // TODO - Revisit
-    interface PerformativeHandler<E>
-    {
+    interface PerformativeHandler<E> {
         void handleOpen(Open open, Binary payload, E context);
         void handleBegin(Begin begin, Binary payload, E context);
         void handleAttach(Attach attach, Binary payload, E context);
@@ -51,7 +50,6 @@ public interface Performative {
         void handleDetach(Detach detach, Binary payload, E context);
         void handleEnd(End end, Binary payload, E context);
         void handleClose(Close close, Binary payload, E context);
-
     }
 
     <E> void invoke(PerformativeHandler<E> handler, Binary payload, E context);
