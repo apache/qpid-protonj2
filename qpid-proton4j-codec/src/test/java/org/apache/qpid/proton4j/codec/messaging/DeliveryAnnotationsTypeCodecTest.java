@@ -28,36 +28,36 @@ import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedByte;
 import org.apache.qpid.proton4j.amqp.UnsignedInteger;
 import org.apache.qpid.proton4j.amqp.UnsignedShort;
-import org.apache.qpid.proton4j.amqp.messaging.MessageAnnotations;
+import org.apache.qpid.proton4j.amqp.messaging.DeliveryAnnotations;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.codec.CodecTestSupport;
 import org.junit.Test;
 
-public class MessageAnnotationsTypeCodecTest extends CodecTestSupport {
+public class DeliveryAnnotationsTypeCodecTest extends CodecTestSupport {
 
     @Test
-    public void testDecodeSmallSeriesOfMessageAnnotations() throws IOException {
-        doTestDecodeMessageAnnotationsSeries(SMALL_SIZE);
+    public void testDecodeSmallSeriesOfDeliveryAnnotations() throws IOException {
+        doTestDecodeDeliveryAnnotationsSeries(SMALL_SIZE);
     }
 
     @Test
-    public void testDecodeLargeSeriesOfMessageAnnotations() throws IOException {
-        doTestDecodeMessageAnnotationsSeries(LARGE_SIZE);
+    public void testDecodeLargeSeriesOfDeliveryAnnotations() throws IOException {
+        doTestDecodeDeliveryAnnotationsSeries(LARGE_SIZE);
     }
 
     @Test
-    public void testDecodeMessageAnnotations() throws IOException {
-        doTestDecodeMessageAnnotationsSeries(1);
+    public void testDecodeDeliveryAnnotations() throws IOException {
+        doTestDecodeDeliveryAnnotationsSeries(1);
     }
 
-    private void doTestDecodeMessageAnnotationsSeries(int size) throws IOException {
+    private void doTestDecodeDeliveryAnnotationsSeries(int size) throws IOException {
 
         final Symbol SYMBOL_1 = Symbol.valueOf("test1");
         final Symbol SYMBOL_2 = Symbol.valueOf("test2");
         final Symbol SYMBOL_3 = Symbol.valueOf("test3");
 
-        MessageAnnotations annotations = new MessageAnnotations(new HashMap<>());
+        DeliveryAnnotations annotations = new DeliveryAnnotations(new HashMap<>());
         annotations.getValue().put(SYMBOL_1, UnsignedByte.valueOf((byte) 128));
         annotations.getValue().put(SYMBOL_2, UnsignedShort.valueOf((short) 128));
         annotations.getValue().put(SYMBOL_3, UnsignedInteger.valueOf(128));
@@ -72,9 +72,9 @@ public class MessageAnnotationsTypeCodecTest extends CodecTestSupport {
             final Object result = decoder.readObject(buffer, decoderState);
 
             assertNotNull(result);
-            assertTrue(result instanceof MessageAnnotations);
+            assertTrue(result instanceof DeliveryAnnotations);
 
-            MessageAnnotations readAnnotations = (MessageAnnotations) result;
+            DeliveryAnnotations readAnnotations = (DeliveryAnnotations) result;
 
             Map<Symbol, Object> resultMap = readAnnotations.getValue();
 
@@ -86,14 +86,14 @@ public class MessageAnnotationsTypeCodecTest extends CodecTestSupport {
     }
 
     @Test
-    public void testEncodeDecodeMessageAnnotationsArray() throws IOException {
+    public void testEncodeDecodeDeliveryAnnotationsArray() throws IOException {
         final Symbol SYMBOL_1 = Symbol.valueOf("test1");
         final Symbol SYMBOL_2 = Symbol.valueOf("test2");
         final Symbol SYMBOL_3 = Symbol.valueOf("test3");
 
-        MessageAnnotations[] array = new MessageAnnotations[3];
+        DeliveryAnnotations[] array = new DeliveryAnnotations[3];
 
-        MessageAnnotations annotations = new MessageAnnotations(new HashMap<>());
+        DeliveryAnnotations annotations = new DeliveryAnnotations(new HashMap<>());
         annotations.getValue().put(SYMBOL_1, UnsignedByte.valueOf((byte) 128));
         annotations.getValue().put(SYMBOL_2, UnsignedShort.valueOf((short) 128));
         annotations.getValue().put(SYMBOL_3, UnsignedInteger.valueOf(128));
@@ -109,12 +109,12 @@ public class MessageAnnotationsTypeCodecTest extends CodecTestSupport {
         final Object result = decoder.readObject(buffer, decoderState);
 
         assertTrue(result.getClass().isArray());
-        assertEquals(MessageAnnotations.class, result.getClass().getComponentType());
+        assertEquals(DeliveryAnnotations.class, result.getClass().getComponentType());
 
-        MessageAnnotations[] resultArray = (MessageAnnotations[]) result;
+        DeliveryAnnotations[] resultArray = (DeliveryAnnotations[]) result;
 
         for (int i = 0; i < resultArray.length; ++i) {
-            MessageAnnotations readAnnotations = resultArray[i];
+            DeliveryAnnotations readAnnotations = resultArray[i];
 
             Map<Symbol, Object> resultMap = readAnnotations.getValue();
 

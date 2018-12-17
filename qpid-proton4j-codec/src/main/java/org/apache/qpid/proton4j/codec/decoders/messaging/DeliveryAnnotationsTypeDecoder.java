@@ -89,7 +89,6 @@ public class DeliveryAnnotationsTypeDecoder extends AbstractDescribedTypeDecoder
         MapTypeDecoder mapDecoder = (MapTypeDecoder) decoder;
 
         for (int i = 0; i < count; ++i) {
-            decoder.readValue(buffer, state);
             result[i] = new DeliveryAnnotations(readMap(buffer, state, mapDecoder));
         }
 

@@ -87,7 +87,6 @@ public class MessageAnnotationsTypeDecoder extends AbstractDescribedTypeDecoder<
         MapTypeDecoder mapDecoder = (MapTypeDecoder) decoder;
 
         for (int i = 0; i < count; ++i) {
-            decoder.readValue(buffer, state);
             result[i] = new MessageAnnotations(readMap(buffer, state, mapDecoder));
         }
 

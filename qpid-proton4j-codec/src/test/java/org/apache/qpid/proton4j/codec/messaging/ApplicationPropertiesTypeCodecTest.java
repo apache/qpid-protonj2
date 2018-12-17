@@ -21,6 +21,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -71,6 +72,53 @@ public class ApplicationPropertiesTypeCodecTest extends CodecTestSupport {
 
             assertEquals(8, decoded.getValue().size());
             assertTrue(decoded.getValue().equals(propertiesMap));
+        }
+    }
+
+    @Test
+    public void testEncodeDecodeZeroSizedArrayOfApplicationProperties() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        ApplicationProperties[] array = new ApplicationProperties[0];
+
+        encoder.writeObject(buffer, encoderState, array);
+
+        final Object result = decoder.readObject(buffer, decoderState);
+
+        assertTrue(result.getClass().isArray());
+        assertEquals(ApplicationProperties.class, result.getClass().getComponentType());
+
+        ApplicationProperties[] resultArray = (ApplicationProperties[]) result;
+        assertEquals(0, resultArray.length);
+    }
+
+    @Test
+    public void testEncodeDecodeArrayOfApplicationProperties() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        ApplicationProperties[] array = new ApplicationProperties[3];
+
+        array[0] = new ApplicationProperties(new HashMap<String, Object>());
+        array[1] = new ApplicationProperties(new HashMap<String, Object>());
+        array[2] = new ApplicationProperties(new HashMap<String, Object>());
+
+        array[0].getValue().put("key-1", "1");
+        array[1].getValue().put("key-1", "2");
+        array[2].getValue().put("key-1", "3");
+
+        encoder.writeObject(buffer, encoderState, array);
+
+        final Object result = decoder.readObject(buffer, decoderState);
+
+        assertTrue(result.getClass().isArray());
+        assertEquals(ApplicationProperties.class, result.getClass().getComponentType());
+
+        ApplicationProperties[] resultArray = (ApplicationProperties[]) result;
+
+        for (int i = 0; i < resultArray.length; ++i) {
+            assertNotNull(resultArray[i]);
+            assertTrue(resultArray[i] instanceof ApplicationProperties);
+            assertEquals(array[i].getValue(), resultArray[i].getValue());
         }
     }
 }
