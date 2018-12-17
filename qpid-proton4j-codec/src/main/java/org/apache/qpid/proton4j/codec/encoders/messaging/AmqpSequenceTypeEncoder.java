@@ -92,6 +92,6 @@ public class AmqpSequenceTypeEncoder extends AbstractDescribedTypeEncoder<AmqpSe
         }
 
         TypeEncoder<?> entryEncoder = state.getEncoder().getTypeEncoder(List.class);
-        entryEncoder.writeArray(buffer, state, elements);
+        entryEncoder.writeRawArray(buffer, state, elements);
     }
 }

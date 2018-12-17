@@ -56,9 +56,11 @@ public class AmqpValueTypeDecoder extends AbstractDescribedTypeDecoder<AmqpValue
     public AmqpValue[] readArrayElements(ProtonBuffer buffer, DecoderState state, int count) throws IOException {
         TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
+        Object[] elements = decoder.readArrayElements(buffer, state, count);
+
         AmqpValue[] array = new AmqpValue[count];
         for (int i = 0; i < count; ++i) {
-            array[i] = new AmqpValue(decoder.readValue(buffer, state));
+            array[i] = new AmqpValue(elements[i]);
         }
 
         return array;

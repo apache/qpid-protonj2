@@ -73,10 +73,11 @@ public class AmqpSequenceTypeDecoder extends AbstractDescribedTypeDecoder<AmqpSe
         }
 
         ListTypeDecoder valueDecoder = (ListTypeDecoder) decoder;
+        List<Object>[] elements = valueDecoder.readArrayElements(buffer, state, count);
 
         AmqpSequence[] array = new AmqpSequence[count];
         for (int i = 0; i < count; ++i) {
-            array[i] = new AmqpSequence(valueDecoder.readValue(buffer, state));
+            array[i] = new AmqpSequence(elements[i]);
         }
 
         return array;

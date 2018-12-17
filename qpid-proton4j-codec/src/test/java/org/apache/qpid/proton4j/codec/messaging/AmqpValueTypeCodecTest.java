@@ -77,4 +77,30 @@ public class AmqpValueTypeCodecTest extends CodecTestSupport {
             assertEquals(value.getValue(), decoded.getValue());
         }
     }
+
+    @Test
+    public void testEncodeDecodeArrayOfAmqpValue() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        AmqpValue[] array = new AmqpValue[3];
+
+        array[0] = new AmqpValue("1");
+        array[1] = new AmqpValue("2");
+        array[2] = new AmqpValue("3");
+
+        encoder.writeObject(buffer, encoderState, array);
+
+        final Object result = decoder.readObject(buffer, decoderState);
+
+        assertTrue(result.getClass().isArray());
+        assertEquals(AmqpValue.class, result.getClass().getComponentType());
+
+        AmqpValue[] resultArray = (AmqpValue[]) result;
+
+        for (int i = 0; i < resultArray.length; ++i) {
+            assertNotNull(resultArray[i]);
+            assertTrue(resultArray[i] instanceof AmqpValue);
+            assertEquals(array[i].getValue(), resultArray[i].getValue());
+        }
+    }
 }

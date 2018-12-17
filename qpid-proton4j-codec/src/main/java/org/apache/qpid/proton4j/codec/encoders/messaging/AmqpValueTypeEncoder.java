@@ -92,6 +92,6 @@ public class AmqpValueTypeEncoder extends AbstractDescribedTypeEncoder<AmqpValue
 
         // This should fail if the array of AmqpValue do not all contain the same type
         // in the value portion of the sequence.
-        entryEncoder.writeArray(buffer, state, elements);
+        entryEncoder.writeRawArray(buffer, state, elements);
     }
 }
