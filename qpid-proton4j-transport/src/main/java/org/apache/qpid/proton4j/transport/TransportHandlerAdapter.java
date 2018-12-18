@@ -78,6 +78,11 @@ public abstract class TransportHandlerAdapter implements TransportHandler {
     }
 
     @Override
+    public void handleWrite(TransportHandlerContext context, Frame<ProtonBuffer> frame) {
+        context.fireWrite(frame);
+    }
+
+    @Override
     public void handleWrite(TransportHandlerContext context, ProtonBuffer buffer) {
         context.fireWrite(buffer);
     }

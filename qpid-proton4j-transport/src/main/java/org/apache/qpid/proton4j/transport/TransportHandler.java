@@ -51,6 +51,11 @@ public interface TransportHandler {
 
     void handleWrite(TransportHandlerContext context, SaslPerformative performative);
 
+    // TODO - The Frame<?> type is a little confusing here in that it carries both the body and the payload
+    //        along with some channel and type info.  We could instead provide inbound and outbond frame types
+    //        to allow for distinct APIs on each.
+    void handleWrite(TransportHandlerContext context, Frame<ProtonBuffer> frame);
+
     void handleWrite(TransportHandlerContext context, ProtonBuffer buffer);
 
     void handleFlush(TransportHandlerContext context);

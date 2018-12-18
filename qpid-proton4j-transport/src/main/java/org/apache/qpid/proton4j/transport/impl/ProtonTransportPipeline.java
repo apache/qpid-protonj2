@@ -22,6 +22,7 @@ import org.apache.qpid.proton4j.amqp.security.SaslPerformative;
 import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
 import org.apache.qpid.proton4j.amqp.transport.Performative;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import org.apache.qpid.proton4j.transport.Frame;
 import org.apache.qpid.proton4j.transport.HeaderFrame;
 import org.apache.qpid.proton4j.transport.ProtocolFrame;
 import org.apache.qpid.proton4j.transport.SaslFrame;
@@ -461,16 +462,6 @@ public class ProtonTransportPipeline implements TransportPipeline {
         }
 
         @Override
-        public void handleWrite(TransportHandlerContext context, ProtonBuffer buffer) {
-            // TODO Decide on the exact error to be fired, move Transport to failed state.
-            TransportListener listener = transport.getTransportListener();
-            if (listener != null) {
-                listener.onTransportFailed(transport,
-                    new IOException("No handler processed write data event."));
-            }
-        }
-
-        @Override
         public void handleWrite(TransportHandlerContext context, AMQPHeader header) {
             // TODO Decide on the exact error to be fired, move Transport to failed state.
             TransportListener listener = transport.getTransportListener();
@@ -497,6 +488,26 @@ public class ProtonTransportPipeline implements TransportPipeline {
             if (listener != null) {
                 listener.onTransportFailed(transport,
                     new IOException("No handler processed write SASL performative event."));
+            }
+        }
+
+        @Override
+        public void handleWrite(TransportHandlerContext context, Frame<ProtonBuffer> frame) {
+            // TODO Decide on the exact error to be fired, move Transport to failed state.
+            TransportListener listener = transport.getTransportListener();
+            if (listener != null) {
+                listener.onTransportFailed(transport,
+                    new IOException("No handler processed write Frame event."));
+            }
+        }
+
+        @Override
+        public void handleWrite(TransportHandlerContext context, ProtonBuffer buffer) {
+            // TODO Decide on the exact error to be fired, move Transport to failed state.
+            TransportListener listener = transport.getTransportListener();
+            if (listener != null) {
+                listener.onTransportFailed(transport,
+                    new IOException("No handler processed write data event."));
             }
         }
 

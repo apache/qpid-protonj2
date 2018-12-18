@@ -22,6 +22,7 @@ import org.apache.qpid.proton4j.amqp.transport.Performative;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.common.logging.ProtonLogger;
 import org.apache.qpid.proton4j.common.logging.ProtonLoggerFactory;
+import org.apache.qpid.proton4j.transport.Frame;
 import org.apache.qpid.proton4j.transport.HeaderFrame;
 import org.apache.qpid.proton4j.transport.ProtocolFrame;
 import org.apache.qpid.proton4j.transport.SaslFrame;
@@ -96,6 +97,12 @@ public class FrameLoggingHandler implements TransportHandler {
     public void handleWrite(TransportHandlerContext context, SaslPerformative performative) {
         LOG.trace("-> SASL: {}", performative);
         context.fireWrite(performative);
+    }
+
+    @Override
+    public void handleWrite(TransportHandlerContext context, Frame<ProtonBuffer> frame) {
+        // TODO Tracing here could be redundant so decide if we do nothing or configure
+        context.fireWrite(frame);
     }
 
     @Override

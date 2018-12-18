@@ -22,6 +22,7 @@ import org.apache.qpid.proton4j.amqp.security.SaslPerformative;
 import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
 import org.apache.qpid.proton4j.amqp.transport.Performative;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import org.apache.qpid.proton4j.transport.Frame;
 import org.apache.qpid.proton4j.transport.HeaderFrame;
 import org.apache.qpid.proton4j.transport.ProtocolFrame;
 import org.apache.qpid.proton4j.transport.SaslFrame;
@@ -133,6 +134,16 @@ public class LockingHandler implements TransportHandler {
         lock.lock();
         try {
             context.fireWrite(performative);
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    @Override
+    public void handleWrite(TransportHandlerContext context, Frame<ProtonBuffer> frame) {
+        lock.lock();
+        try {
+            context.fireWrite(frame);
         } finally {
             lock.unlock();
         }

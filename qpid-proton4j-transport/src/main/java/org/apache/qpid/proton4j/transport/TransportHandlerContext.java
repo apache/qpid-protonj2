@@ -46,6 +46,8 @@ public interface TransportHandlerContext {
 
     void fireWrite(SaslPerformative performative);
 
+    void fireWrite(Frame<ProtonBuffer> frame);
+
     void fireWrite(ProtonBuffer buffer);
 
     void fireFlush();
