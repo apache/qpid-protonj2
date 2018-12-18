@@ -26,6 +26,9 @@ import org.apache.qpid.proton4j.buffer.ProtonBufferAllocator;
 
 /**
  * AMQP Transport interface.
+ *
+ * TODO Possible we just make this the "Engine" and merge into engine module as one things
+ *      that could be created and the engine to create events for client and server.
  */
 public interface Transport {
 

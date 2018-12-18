@@ -26,6 +26,17 @@ import java.nio.charset.Charset;
  */
 public interface ProtonBuffer extends Comparable<ProtonBuffer> {
 
+    // TODO Methods for pooled buffers
+
+    /**
+     * Release reference to an underlying pooled buffer, or does nothing if not pooled
+     * <p>
+     * For buffer implementations that provide pooled buffers this serves to release
+     * the reference that is held for that buffer and invalidates the underlying buffer
+     * for any future usage by this library.
+     */
+    // void release();
+
     /**
      * @return true if this buffer has a backing byte array that can be accessed.
      */

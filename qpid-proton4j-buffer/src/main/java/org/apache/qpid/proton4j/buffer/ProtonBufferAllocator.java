@@ -102,4 +102,19 @@ public interface ProtonBufferAllocator {
      */
     ProtonBuffer wrap(ByteBuffer buffer);
 
+    // TODO - Methods that could offer distinctions on what can or cannot be pulled
+
+    // Buffer used to house the delivery portion of an incoming transport which can be
+    // pooled if we have defined lifetime for these buffers.
+    // ProtonBuffer deliveryBuffer(int initialCapacity);
+
+    // Buffer used for outbound frame encoding, can be pooled if frame offers release point.
+    // ProtonBuffer frameBuffer(int initialCapacity);
+
+    // Buffer used in decoding operations for message sections which shouldn't be pooled
+    // ProtonBuffer unpooled(int initialCapacity);
+
+    // Buffer used in short term operations like buffering partial frames ?
+    // ProtonBuffer poolable(int initialCapacity);
+
 }
