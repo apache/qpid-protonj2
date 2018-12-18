@@ -115,23 +115,6 @@ public interface Transport {
     TransportListener getTransportListener();
 
     /**
-     * Get the maximum frame size that the transport will accept before
-     * rejecting an incoming frame.
-     *
-     * @return the maximum frame size allowed for incoming frames.
-     */
-    int getMaxFrameSize();
-
-    /**
-     * Set the maximum frame size that the transport will accept before
-     * rejecting an incoming frame.
-     *
-     * @param size
-     *      the maximum frame size allowed for incoming frames.
-     */
-    void setMaxFrameSize(int size);
-
-    /**
      * Gets the TransportPipeline for this Transport.
      *
      * @return the {@link TransportPipeline} for this {@link Transport}.

@@ -32,9 +32,6 @@ import org.apache.qpid.proton4j.transport.TransportPipeline;
  */
 public class ProtonTransport implements Transport {
 
-    private int maxFrameSize = -1;
-    private int initialMaxFrameSize = 4096;
-
     private final ProtonTransportPipeline pipeline;
 
     private ProtonBufferAllocator bufferAllocator;
@@ -54,24 +51,6 @@ public class ProtonTransport implements Transport {
     @Override
     public ProtonBufferAllocator getBufferAllocator() {
         return bufferAllocator;
-    }
-
-    @Override
-    public int getMaxFrameSize() {
-        return maxFrameSize;
-    }
-
-    @Override
-    public void setMaxFrameSize(int maxFrameSize) {
-        this.maxFrameSize = maxFrameSize;
-    }
-
-    public int getInitialMaxFrameSize() {
-        return initialMaxFrameSize;
-    }
-
-    public void setInitialMaxFrameSize(int initialMaxFrameSize) {
-        this.initialMaxFrameSize = initialMaxFrameSize;
     }
 
     @Override
