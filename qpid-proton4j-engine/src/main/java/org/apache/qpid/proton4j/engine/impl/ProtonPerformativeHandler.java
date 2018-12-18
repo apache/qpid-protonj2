@@ -16,6 +16,17 @@
  */
 package org.apache.qpid.proton4j.engine.impl;
 
+import org.apache.qpid.proton4j.amqp.Binary;
+import org.apache.qpid.proton4j.amqp.transport.Attach;
+import org.apache.qpid.proton4j.amqp.transport.Begin;
+import org.apache.qpid.proton4j.amqp.transport.Close;
+import org.apache.qpid.proton4j.amqp.transport.Detach;
+import org.apache.qpid.proton4j.amqp.transport.Disposition;
+import org.apache.qpid.proton4j.amqp.transport.End;
+import org.apache.qpid.proton4j.amqp.transport.Flow;
+import org.apache.qpid.proton4j.amqp.transport.Open;
+import org.apache.qpid.proton4j.amqp.transport.Performative;
+import org.apache.qpid.proton4j.amqp.transport.Transfer;
 import org.apache.qpid.proton4j.transport.ProtocolFrame;
 import org.apache.qpid.proton4j.transport.TransportHandlerAdapter;
 import org.apache.qpid.proton4j.transport.TransportHandlerContext;
@@ -24,7 +35,7 @@ import org.apache.qpid.proton4j.transport.TransportHandlerContext;
  * Transport Handler that forwards the incoming Performatives to the associated Connection
  * as well as any error encountered during the Transport processing.
  */
-public class ProtonPerformativeHandler extends TransportHandlerAdapter {
+public class ProtonPerformativeHandler extends TransportHandlerAdapter implements Performative.PerformativeHandler<ProtonConnection> {
 
     private final ProtonConnection connection;
 
@@ -39,7 +50,7 @@ public class ProtonPerformativeHandler extends TransportHandlerAdapter {
         // Would need to handle remote open when no local connection yet exists
 
         try {
-            frame.getBody().invoke(connection, frame.getPayload(), connection.geTransport());
+            frame.getBody().invoke(this, frame.getPayload(), connection);
         } finally {
             frame.release();
         }
@@ -58,5 +69,43 @@ public class ProtonPerformativeHandler extends TransportHandlerAdapter {
     @Override
     public void transportFailed(TransportHandlerContext context, Throwable e) {
         // TODO signal error to the connection
+    }
+
+    //----- Deal with the incoming AMQP performatives
+
+    @Override
+    public void handleOpen(Open open, Binary payload, ProtonConnection context) {
+    }
+
+    @Override
+    public void handleBegin(Begin begin, Binary payload, ProtonConnection context) {
+    }
+
+    @Override
+    public void handleAttach(Attach attach, Binary payload, ProtonConnection context) {
+    }
+
+    @Override
+    public void handleFlow(Flow flow, Binary payload, ProtonConnection context) {
+    }
+
+    @Override
+    public void handleTransfer(Transfer transfer, Binary payload, ProtonConnection context) {
+    }
+
+    @Override
+    public void handleDisposition(Disposition disposition, Binary payload, ProtonConnection context) {
+    }
+
+    @Override
+    public void handleDetach(Detach detach, Binary payload, ProtonConnection context) {
+    }
+
+    @Override
+    public void handleEnd(End end, Binary payload, ProtonConnection context) {
+    }
+
+    @Override
+    public void handleClose(Close close, Binary payload, ProtonConnection context) {
     }
 }

@@ -24,11 +24,11 @@ public interface Connection {
     /**
      * Open the connection
      */
-    public void Open();
+    public void open();
 
     /**
      * Close the connection
      */
-    public void Close();
+    public void close();
 
 }
