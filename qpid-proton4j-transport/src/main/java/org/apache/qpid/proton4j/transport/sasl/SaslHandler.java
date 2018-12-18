@@ -41,6 +41,7 @@ public class SaslHandler extends TransportHandlerAdapter {
 
     private final SaslFrameParser frameParser;
 
+    private TransportHandlerContext context;
     private SaslContext saslContext;
 
     /*
@@ -110,6 +111,16 @@ public class SaslHandler extends TransportHandlerAdapter {
     }
 
     //----- TransportHandler implementation ----------------------------------//
+
+    @Override
+    public void handlerAdded(TransportHandlerContext context) throws Exception {
+        this.context = context;
+    }
+
+    @Override
+    public void handlerRemoved(TransportHandlerContext context) throws Exception {
+        // TODO - Take action as needed on remove
+    }
 
     @Override
     public void handleRead(TransportHandlerContext context, ProtonBuffer buffer) {
