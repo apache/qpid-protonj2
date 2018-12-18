@@ -31,6 +31,12 @@ public interface TransportHandler {
 
     // TODO Define events.  transportRead(Object), transportWrite(Object) ?
 
+    // Life cycle events for a handler
+
+    void handlerAdded(TransportHandlerContext context) throws Exception;
+
+    void handlerRemoved(TransportHandlerContext context) throws Exception;
+
     // Some things that might flow through a transport pipeline
 
     // Read events

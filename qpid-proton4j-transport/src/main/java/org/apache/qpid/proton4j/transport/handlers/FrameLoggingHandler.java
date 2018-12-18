@@ -40,6 +40,14 @@ public class FrameLoggingHandler implements TransportHandler {
     //        env for PN_TRACE_FRM for legacy reasons.
 
     @Override
+    public void handlerAdded(TransportHandlerContext context) throws Exception {
+    }
+
+    @Override
+    public void handlerRemoved(TransportHandlerContext context) throws Exception {
+    }
+
+    @Override
     public void handleRead(TransportHandlerContext context, ProtonBuffer buffer) {
         // TODO Could trace out bytes here, would need a pretty print helper.
         context.fireRead(buffer);

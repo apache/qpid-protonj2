@@ -27,10 +27,10 @@ import org.apache.qpid.proton4j.transport.Frame;
 import org.apache.qpid.proton4j.transport.HeaderFrame;
 import org.apache.qpid.proton4j.transport.ProtocolFrame;
 import org.apache.qpid.proton4j.transport.SaslFrame;
-import org.apache.qpid.proton4j.transport.TransportHandler;
+import org.apache.qpid.proton4j.transport.TransportHandlerAdapter;
 import org.apache.qpid.proton4j.transport.TransportHandlerContext;
 
-public class TestSupportTransportHandler implements TransportHandler{
+public class TestSupportTransportHandler extends TransportHandlerAdapter {
 
     private List<Frame<?>> framesRead = new ArrayList<>();
     private List<Frame<?>> framesWritten = new ArrayList<>();
@@ -44,11 +44,6 @@ public class TestSupportTransportHandler implements TransportHandler{
 
     public List<Frame<?>> getFramesRead() {
         return framesRead;
-    }
-
-    @Override
-    public void handleRead(TransportHandlerContext context, ProtonBuffer buffer) {
-        context.fireRead(buffer);
     }
 
     @Override
@@ -70,21 +65,6 @@ public class TestSupportTransportHandler implements TransportHandler{
     }
 
     @Override
-    public void transportEncodingError(TransportHandlerContext context, Throwable e) {
-        context.fireEncodingError(e);
-    }
-
-    @Override
-    public void transportDecodingError(TransportHandlerContext context, Throwable e) {
-        context.fireDecodingError(e);
-    }
-
-    @Override
-    public void transportFailed(TransportHandlerContext context, Throwable e) {
-        context.fireFailed(e);
-    }
-
-    @Override
     public void handleWrite(TransportHandlerContext context, AMQPHeader header) {
         framesWritten.add(new HeaderFrame(header));
         context.fireWrite(header);
@@ -100,20 +80,5 @@ public class TestSupportTransportHandler implements TransportHandler{
     public void handleWrite(TransportHandlerContext context, SaslPerformative performative) {
         framesWritten.add(new SaslFrame(performative, null));
         context.fireWrite(performative);
-    }
-
-    @Override
-    public void handleWrite(TransportHandlerContext context, Frame<ProtonBuffer> frame) {
-        context.fireWrite(frame);
-    }
-
-    @Override
-    public void handleWrite(TransportHandlerContext context, ProtonBuffer buffer) {
-        context.fireWrite(buffer);
-    }
-
-    @Override
-    public void handleFlush(TransportHandlerContext context) {
-        context.fireFlush();
     }
 }

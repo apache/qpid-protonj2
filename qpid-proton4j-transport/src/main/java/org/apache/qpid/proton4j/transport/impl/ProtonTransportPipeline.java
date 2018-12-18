@@ -393,6 +393,14 @@ public class ProtonTransportPipeline implements TransportPipeline {
     private class BoundryTransportHandler implements TransportHandler {
 
         @Override
+        public void handlerAdded(TransportHandlerContext context) throws Exception {
+        }
+
+        @Override
+        public void handlerRemoved(TransportHandlerContext context) throws Exception {
+        }
+
+        @Override
         public void handleRead(TransportHandlerContext context, ProtonBuffer buffer) {
             // TODO Decide on the exact error to be fired, move Transport to failed state.
             TransportListener listener = transport.getTransportListener();

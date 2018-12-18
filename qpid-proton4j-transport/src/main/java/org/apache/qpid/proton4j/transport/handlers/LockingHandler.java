@@ -40,6 +40,14 @@ public class LockingHandler implements TransportHandler {
     private final ReentrantLock lock = new ReentrantLock();
 
     @Override
+    public void handlerAdded(TransportHandlerContext context) throws Exception {
+    }
+
+    @Override
+    public void handlerRemoved(TransportHandlerContext context) throws Exception {
+    }
+
+    @Override
     public void handleRead(TransportHandlerContext context, ProtonBuffer buffer) {
         lock.lock();
         try {

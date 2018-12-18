@@ -28,6 +28,14 @@ import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 public abstract class TransportHandlerAdapter implements TransportHandler {
 
     @Override
+    public void handlerAdded(TransportHandlerContext context) throws Exception {
+    }
+
+    @Override
+    public void handlerRemoved(TransportHandlerContext context) throws Exception {
+    }
+
+    @Override
     public void handleRead(TransportHandlerContext context, ProtonBuffer buffer) {
         context.fireRead(buffer);
     }
