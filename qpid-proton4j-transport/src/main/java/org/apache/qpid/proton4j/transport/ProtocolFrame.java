@@ -16,8 +16,8 @@
  */
 package org.apache.qpid.proton4j.transport;
 
-import org.apache.qpid.proton4j.amqp.Binary;
 import org.apache.qpid.proton4j.amqp.transport.Performative;
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 
 /**
  * Frame object that carries an AMQP Performative
@@ -26,7 +26,7 @@ public class ProtocolFrame extends Frame<Performative> {
 
     public static final byte AMQP_FRAME_TYPE = (byte) 0;
 
-    public ProtocolFrame(Performative performative, short channel, Binary payload) {
+    public ProtocolFrame(Performative performative, short channel, ProtonBuffer payload) {
         super(performative, channel, AMQP_FRAME_TYPE, payload);
     }
 }

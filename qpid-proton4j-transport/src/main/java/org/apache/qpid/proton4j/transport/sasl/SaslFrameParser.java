@@ -18,7 +18,6 @@ package org.apache.qpid.proton4j.transport.sasl;
 
 import java.io.IOException;
 
-import org.apache.qpid.proton4j.amqp.Binary;
 import org.apache.qpid.proton4j.amqp.security.SaslPerformative;
 import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
@@ -314,12 +313,12 @@ public class SaslFrameParser implements FrameParser {
                     try {
                         Object val = decoder.readObject(input, decoderState);
 
-                        final Binary payload;
+                        final ProtonBuffer payload;
 
                         if (input.isReadable()) {
-                            byte[] payloadBytes = new byte[input.getReadableBytes()];
-                            input.readBytes(payloadBytes);
-                            payload = new Binary(payloadBytes);
+                            int payloadSize = input.getReadableBytes();
+                            payload = ProtonByteBufferAllocator.DEFAULT.allocate(payloadSize, payloadSize);
+                            input.readBytes(payload);
                         } else {
                             payload = null;
                         }

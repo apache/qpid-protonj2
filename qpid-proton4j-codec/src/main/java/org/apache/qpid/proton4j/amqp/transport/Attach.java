@@ -26,6 +26,7 @@ import org.apache.qpid.proton4j.amqp.UnsignedInteger;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.amqp.messaging.Source;
 import org.apache.qpid.proton4j.amqp.messaging.Target;
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 
 public final class Attach implements Performative {
 
@@ -206,7 +207,7 @@ public final class Attach implements Performative {
     }
 
     @Override
-    public <E> void invoke(PerformativeHandler<E> handler, Binary payload, E context) {
+    public <E> void invoke(PerformativeHandler<E> handler, ProtonBuffer payload, E context) {
         handler.handleAttach(this, payload, context);
     }
 

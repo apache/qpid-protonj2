@@ -18,7 +18,6 @@ package org.apache.qpid.proton4j.transport.impl;
 
 import java.io.IOException;
 
-import org.apache.qpid.proton4j.amqp.Binary;
 import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
 import org.apache.qpid.proton4j.amqp.transport.Performative;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
@@ -302,16 +301,16 @@ public class AmqpFrameParser implements FrameParser {
                     final int frameBodySize = size - dataOffset;
 
                     try {
-                        Binary payload = null;
+                        ProtonBuffer payload = null;
                         Object val = null;
 
                         if (frameBodySize > 0) {
                             val = decoder.readObject(input, decoderState);
 
                             if (input.isReadable()) {
-                                byte[] payloadBytes = new byte[input.getReadableBytes()];
-                                input.readBytes(payloadBytes);
-                                payload = new Binary(payloadBytes);
+                                int payloadSize = input.getReadableBytes();
+                                payload = ProtonByteBufferAllocator.DEFAULT.allocate(payloadSize, payloadSize);
+                                input.readBytes(payload);
                             } else {
                                 payload = null;
                             }

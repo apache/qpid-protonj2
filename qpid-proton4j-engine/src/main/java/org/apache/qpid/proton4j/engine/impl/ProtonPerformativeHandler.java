@@ -16,7 +16,6 @@
  */
 package org.apache.qpid.proton4j.engine.impl;
 
-import org.apache.qpid.proton4j.amqp.Binary;
 import org.apache.qpid.proton4j.amqp.transport.Attach;
 import org.apache.qpid.proton4j.amqp.transport.Begin;
 import org.apache.qpid.proton4j.amqp.transport.Close;
@@ -27,6 +26,7 @@ import org.apache.qpid.proton4j.amqp.transport.Flow;
 import org.apache.qpid.proton4j.amqp.transport.Open;
 import org.apache.qpid.proton4j.amqp.transport.Performative;
 import org.apache.qpid.proton4j.amqp.transport.Transfer;
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.transport.ProtocolFrame;
 import org.apache.qpid.proton4j.transport.TransportHandlerAdapter;
 import org.apache.qpid.proton4j.transport.TransportHandlerContext;
@@ -74,38 +74,38 @@ public class ProtonPerformativeHandler extends TransportHandlerAdapter implement
     //----- Deal with the incoming AMQP performatives
 
     @Override
-    public void handleOpen(Open open, Binary payload, ProtonConnection context) {
+    public void handleOpen(Open open, ProtonBuffer payload, ProtonConnection context) {
     }
 
     @Override
-    public void handleBegin(Begin begin, Binary payload, ProtonConnection context) {
+    public void handleBegin(Begin begin, ProtonBuffer payload, ProtonConnection context) {
     }
 
     @Override
-    public void handleAttach(Attach attach, Binary payload, ProtonConnection context) {
+    public void handleAttach(Attach attach, ProtonBuffer payload, ProtonConnection context) {
     }
 
     @Override
-    public void handleFlow(Flow flow, Binary payload, ProtonConnection context) {
+    public void handleFlow(Flow flow, ProtonBuffer payload, ProtonConnection context) {
     }
 
     @Override
-    public void handleTransfer(Transfer transfer, Binary payload, ProtonConnection context) {
+    public void handleTransfer(Transfer transfer, ProtonBuffer payload, ProtonConnection context) {
     }
 
     @Override
-    public void handleDisposition(Disposition disposition, Binary payload, ProtonConnection context) {
+    public void handleDisposition(Disposition disposition, ProtonBuffer payload, ProtonConnection context) {
     }
 
     @Override
-    public void handleDetach(Detach detach, Binary payload, ProtonConnection context) {
+    public void handleDetach(Detach detach, ProtonBuffer payload, ProtonConnection context) {
     }
 
     @Override
-    public void handleEnd(End end, Binary payload, ProtonConnection context) {
+    public void handleEnd(End end, ProtonBuffer payload, ProtonConnection context) {
     }
 
     @Override
-    public void handleClose(Close close, Binary payload, ProtonConnection context) {
+    public void handleClose(Close close, ProtonBuffer payload, ProtonConnection context) {
     }
 }

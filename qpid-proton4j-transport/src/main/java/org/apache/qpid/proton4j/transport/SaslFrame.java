@@ -16,8 +16,8 @@
  */
 package org.apache.qpid.proton4j.transport;
 
-import org.apache.qpid.proton4j.amqp.Binary;
 import org.apache.qpid.proton4j.amqp.security.SaslPerformative;
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 
 /**
  * Frame object containing a SASL performative
@@ -26,7 +26,7 @@ public class SaslFrame extends Frame<SaslPerformative>{
 
     public static final byte SASL_FRAME_TYPE = (byte) 1;
 
-    public SaslFrame(SaslPerformative performative, Binary payload) {
+    public SaslFrame(SaslPerformative performative, ProtonBuffer payload) {
         super(performative, (byte) 0, SASL_FRAME_TYPE, payload);
     }
 }

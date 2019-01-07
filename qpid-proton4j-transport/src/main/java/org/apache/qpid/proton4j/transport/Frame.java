@@ -16,7 +16,7 @@
  */
 package org.apache.qpid.proton4j.transport;
 
-import org.apache.qpid.proton4j.amqp.Binary;
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 
 /**
  * Base class for Frames that travel through the Transport
@@ -26,9 +26,9 @@ public abstract class Frame<V> {
     private V body;
     private short channel;
     private byte type;
-    private Binary payload;
+    private ProtonBuffer payload;
 
-    public Frame(V body, short channel, byte type, Binary payload) {
+    public Frame(V body, short channel, byte type, ProtonBuffer payload) {
         this.body = body;
         this.channel = channel;
         this.type = type;
@@ -47,7 +47,7 @@ public abstract class Frame<V> {
         return type;
     }
 
-    public Binary getPayload() {
+    public ProtonBuffer getPayload() {
         return payload;
     }
 
