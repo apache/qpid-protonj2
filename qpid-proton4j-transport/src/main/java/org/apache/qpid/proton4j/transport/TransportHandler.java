@@ -26,11 +26,6 @@ import org.apache.qpid.proton4j.buffer.ProtonBuffer;
  */
 public interface TransportHandler {
 
-    // TODO Do we want separate inbound and outbound handlers for finer grained
-    //      control of the ordering of handers and their work ?
-
-    // TODO Define events.  transportRead(Object), transportWrite(Object) ?
-
     // Life cycle events for a handler
 
     void handlerAdded(TransportHandlerContext context) throws Exception;
@@ -59,7 +54,8 @@ public interface TransportHandler {
 
     // TODO - The Frame<?> type is a little confusing here in that it carries both the body and the payload
     //        along with some channel and type info.  We could instead provide inbound and outbond frame types
-    //        to allow for distinct APIs on each.
+    //        to allow for distinct APIs on each.  Or specify that the write of a ProtonBuffer is frame scoped
+    //        such that this variant isn't needed.
     void handleWrite(TransportHandlerContext context, Frame<ProtonBuffer> frame);
 
     void handleWrite(TransportHandlerContext context, ProtonBuffer buffer);
