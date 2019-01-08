@@ -23,15 +23,19 @@ import org.apache.qpid.proton4j.buffer.ProtonBuffer;
  */
 public abstract class Frame<V> {
 
+    private final byte type;
+
     private V body;
-    private short channel;
-    private byte type;
+    private int channel;
     private ProtonBuffer payload;
 
-    public Frame(V body, short channel, byte type, ProtonBuffer payload) {
+    protected Frame(byte type) {
+        this.type = type;
+    }
+
+    void initialize(V body, int channel, ProtonBuffer payload) {
         this.body = body;
         this.channel = channel;
-        this.type = type;
         this.payload = payload;
     }
 
@@ -39,7 +43,7 @@ public abstract class Frame<V> {
         return body;
     }
 
-    public short getChannel() {
+    public int getChannel() {
         return channel;
     }
 
@@ -49,20 +53,5 @@ public abstract class Frame<V> {
 
     public ProtonBuffer getPayload() {
         return payload;
-    }
-
-    /**
-     * Used to release a Frame that was taken from a Frame pool in order
-     * to make it available for the next input operations.  Once called the
-     * contents of the Frame are invalid and cannot be used again inside the
-     * same context.
-     */
-    public void release() {
-        body = null;
-        payload = null;
-        channel = -1;
-        type = -1;
-
-        // TODO
     }
 }

@@ -28,6 +28,7 @@ import org.apache.qpid.proton4j.transport.EmptyFrame;
 import org.apache.qpid.proton4j.transport.FrameParser;
 import org.apache.qpid.proton4j.transport.HeaderFrame;
 import org.apache.qpid.proton4j.transport.ProtocolFrame;
+import org.apache.qpid.proton4j.transport.ProtocolFramePool;
 import org.apache.qpid.proton4j.transport.TransportHandlerContext;
 import org.apache.qpid.proton4j.transport.exceptions.IOExceptionSupport;
 import org.apache.qpid.proton4j.transport.exceptions.TransportException;
@@ -65,6 +66,7 @@ public class AmqpFrameParser implements FrameParser {
     private final int localMaxFrameSize;
     private final AMQPHeader header = AMQPHeader.getRawAMQPHeader();
     private final HeaderFrame headerFrame = new HeaderFrame(header);
+    private final ProtocolFramePool framePool = ProtocolFramePool.DEFAULT;
 
     private State state = State.SIZE_0;
     private int size;
@@ -321,7 +323,8 @@ public class AmqpFrameParser implements FrameParser {
                         if (val instanceof Performative) {
                             Performative frameBody = (Performative) val;
                             LOG.trace("IN: {} CH[{}] : {} [{}]", channel, frameBody, payload);
-                            context.fireRead(new ProtocolFrame(frameBody, channel, payload));
+                            ProtocolFrame frame = framePool.take(frameBody, channel, payload);
+                            context.fireRead(frame);
                         } else {
                             throw new TransportException("Frameparser encountered a "
                                     + (val == null? "null" : val.getClass())

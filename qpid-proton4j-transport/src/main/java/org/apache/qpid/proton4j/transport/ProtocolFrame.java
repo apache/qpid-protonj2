@@ -17,7 +17,6 @@
 package org.apache.qpid.proton4j.transport;
 
 import org.apache.qpid.proton4j.amqp.transport.Performative;
-import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 
 /**
  * Frame object that carries an AMQP Performative
@@ -26,7 +25,29 @@ public class ProtocolFrame extends Frame<Performative> {
 
     public static final byte AMQP_FRAME_TYPE = (byte) 0;
 
-    public ProtocolFrame(Performative performative, short channel, ProtonBuffer payload) {
-        super(performative, channel, AMQP_FRAME_TYPE, payload);
+    private ProtocolFramePool pool;
+
+    ProtocolFrame() {
+        this(null);
+    }
+
+    ProtocolFrame(ProtocolFramePool pool) {
+        super(AMQP_FRAME_TYPE);
+
+        this.pool = pool;
+    }
+
+    /**
+     * Used to release a Frame that was taken from a Frame pool in order
+     * to make it available for the next input operations.  Once called the
+     * contents of the Frame are invalid and cannot be used again inside the
+     * same context.
+     */
+    public void release() {
+        initialize(null, (short) -1, null);
+
+        if (pool != null) {
+            pool.release(this);
+        }
     }
 }

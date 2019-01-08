@@ -30,6 +30,8 @@ public class HeaderFrame extends Frame<AMQPHeader> {
     public static final HeaderFrame AMQP_HEADER_FRAME = new HeaderFrame(AMQPHeader.getRawAMQPHeader());
 
     public HeaderFrame(AMQPHeader body) {
-        super(body, (byte) 0, HEADER_FRAME_TYPE, null);
+        super(HEADER_FRAME_TYPE);
+
+        initialize(body, 0, null);
     }
 }

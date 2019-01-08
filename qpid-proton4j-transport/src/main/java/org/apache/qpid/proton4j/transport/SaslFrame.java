@@ -27,6 +27,8 @@ public class SaslFrame extends Frame<SaslPerformative>{
     public static final byte SASL_FRAME_TYPE = (byte) 1;
 
     public SaslFrame(SaslPerformative performative, ProtonBuffer payload) {
-        super(performative, (byte) 0, SASL_FRAME_TYPE, payload);
+        super(SASL_FRAME_TYPE);
+
+        initialize(performative, 0, payload);
     }
 }

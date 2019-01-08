@@ -26,6 +26,7 @@ import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.transport.Frame;
 import org.apache.qpid.proton4j.transport.HeaderFrame;
 import org.apache.qpid.proton4j.transport.ProtocolFrame;
+import org.apache.qpid.proton4j.transport.ProtocolFramePool;
 import org.apache.qpid.proton4j.transport.SaslFrame;
 import org.apache.qpid.proton4j.transport.TransportHandlerAdapter;
 import org.apache.qpid.proton4j.transport.TransportHandlerContext;
@@ -72,7 +73,7 @@ public class TestSupportTransportHandler extends TransportHandlerAdapter {
 
     @Override
     public void handleWrite(TransportHandlerContext context, Performative performative, short channel, ProtonBuffer payload, Runnable payloadToLarge) {
-        framesWritten.add(new ProtocolFrame(performative, channel, null)); // TODO payload as ProtonBuffer ?
+        framesWritten.add(ProtocolFramePool.DEFAULT.take(performative, channel, payload));
         context.fireWrite(performative, channel, payload, payloadToLarge);
     }
 

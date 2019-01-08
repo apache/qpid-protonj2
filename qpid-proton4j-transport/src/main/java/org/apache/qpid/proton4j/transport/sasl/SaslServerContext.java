@@ -208,8 +208,6 @@ public class SaslServerContext extends SaslContext {
         context.fireWrite(mechanisms);
         mechanismsSent = true;
         state = SaslStates.PN_SASL_STEP;
-
-        header.release();
     }
 
     @Override
