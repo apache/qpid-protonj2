@@ -124,7 +124,7 @@ public class FrameParser {
         try {
             stage.parse(context, this, input);
         } catch (IOException ex) {
-            transitionToErrorStage(ex);
+            transitionToErrorStage(ex).fireError();
         }
     }
 
@@ -150,9 +150,12 @@ public class FrameParser {
         return stage = frameBodyParsingStage.reset(frameSize);
     }
 
-    private FrameParserStage transitionToErrorStage(IOException error) throws IOException {
-        stage = new ParsingErrorStage(error);
-        throw error;
+    private ParsingErrorStage transitionToErrorStage(IOException error) throws IOException {
+        if (!(stage instanceof ParsingErrorStage)) {
+            stage = new ParsingErrorStage(error);
+        }
+
+        return (ParsingErrorStage) stage;
     }
 
     //----- Frame Parsing Stage definition
@@ -206,23 +209,18 @@ public class FrameParser {
                 byte c = incoming.readByte();
 
                 if (c != header.getByteAt(headerByte)) {
-                    transitionToErrorStage(new TransportException(String.format(
-                        "AMQP header mismatch value %x, expecting %x. In header byte: %d", c, header.getByteAt(headerByte), headerByte)));
+                    throw new TransportException(String.format(
+                        "AMQP header mismatch value %x, expecting %x. In header byte: %d", c, header.getByteAt(headerByte), headerByte));
                 }
 
                 headerByte++;
             }
 
-            try {
-                // Transition to parsing the frames if any pipelined into this buffer.
-                parser.transitionToFrameSizeParsingStage();
+            // Transition to parsing the frames if any pipelined into this buffer.
+            parser.transitionToFrameSizeParsingStage();
 
-                // This probably isn't right as this fires to next not current.
-                handler.handleRead(context, headerFrame);
-            } catch (Throwable e) {
-                // TODO - Error mechanics here are not quite clear what does this throw?
-                parser.transitionToErrorStage(new IOException(e));
-            }
+            // This probably isn't right as this fires to next not current.
+            handler.handleRead(context, headerFrame);
         }
 
         @Override
@@ -242,7 +240,7 @@ public class FrameParser {
         @Override
         public void parse(TransportHandlerContext context, FrameParser parser, ProtonBuffer input) throws IOException {
             while (input.isReadable()) {
-                frameSize += ((input.readByte() & 0xFF) << --multiplier * Byte.SIZE);
+                frameSize |= ((input.readByte() & 0xFF) << --multiplier * Byte.SIZE);
                 if (multiplier == 0) {
                     break;
                 }
@@ -266,13 +264,13 @@ public class FrameParser {
 
         private void validateFrameSize(FrameParser parser) throws IOException {
             if (frameSize < 8) {
-               transitionToErrorStage(new TransportException(String.format(
-                    "specified frame size %d smaller than minimum frame header size 8", frameSize)));
+               throw new TransportException(String.format(
+                    "specified frame size %d smaller than minimum frame header size 8", frameSize));
             }
 
             if (frameSize > parser.getMaxFrameSize()) {
-                transitionToErrorStage(new TransportException(String.format(
-                    "specified frame size %d larger than maximum frame size %d", frameSize, frameSizeLimit)));
+                throw new TransportException(String.format(
+                    "specified frame size %d larger than maximum frame size %d", frameSize, frameSizeLimit));
             }
         }
 
@@ -296,7 +294,7 @@ public class FrameParser {
                 buffer.writeBytes(input, buffer.getWritableBytes());
 
                 // Now we can consume the buffer frame body.
-                stage = initializeFrameBodyParsingStage(buffer.getReadableBytes());
+                initializeFrameBodyParsingStage(buffer.getReadableBytes());
                 try {
                     stage.parse(context, parser, buffer);
                 } finally {
@@ -321,19 +319,19 @@ public class FrameParser {
             int dataOffset = (input.readByte() << 2) & 0x3FF;
 
             if (dataOffset < 8) {
-                transitionToErrorStage(new TransportException(String.format(
-                    "specified frame data offset %d smaller than minimum frame header size %d", dataOffset, 8)));
+                throw new TransportException(String.format(
+                    "specified frame data offset %d smaller than minimum frame header size %d", dataOffset, 8));
             }
             if (dataOffset > frameSize) {
-                transitionToErrorStage(new TransportException(String.format(
-                    "specified frame data offset %d larger than the frame size %d", dataOffset, frameSize)));
+                throw new TransportException(String.format(
+                    "specified frame data offset %d larger than the frame size %d", dataOffset, frameSize));
             }
 
             int type = input.readByte() & 0xFF;
             short channel = input.readShort();
 
             if (type != 0) {
-                transitionToErrorStage(new TransportException(String.format("unknown frame type: %d", type)));
+                throw new TransportException(String.format("unknown frame type: %d", type));
             }
 
             // note that this skips over the extended header if it's present
@@ -343,40 +341,35 @@ public class FrameParser {
 
             final int frameBodySize = frameSize - dataOffset;
 
-            try {
-                ProtonBuffer payload = null;
-                Object val = null;
+            ProtonBuffer payload = null;
+            Object val = null;
 
-                if (frameBodySize > 0) {
-                    val = decoder.readObject(input, decoderState);
+            if (frameBodySize > 0) {
+                val = decoder.readObject(input, decoderState);
 
-                    if (input.isReadable()) {
-                        int payloadSize = input.getReadableBytes();
-                        payload = ProtonByteBufferAllocator.DEFAULT.allocate(payloadSize, payloadSize);
-                        input.readBytes(payload);
-                    } else {
-                        payload = null;
-                    }
+                if (input.isReadable()) {
+                    int payloadSize = input.getReadableBytes();
+                    payload = ProtonByteBufferAllocator.DEFAULT.allocate(payloadSize, payloadSize);
+                    input.readBytes(payload);
                 } else {
-                    val = new EmptyFrame();
+                    payload = null;
                 }
+            } else {
+                val = new EmptyFrame();
+            }
 
-                if (val instanceof Performative) {
-                    Performative frameBody = (Performative) val;
-                    LOG.trace("IN: {} CH[{}] : {} [{}]", channel, frameBody, payload);
-                    ProtocolFrame frame = framePool.take(frameBody, channel, payload);
-                    // This probably isn't right as this fires to next not current.
-                    handler.handleRead(context, frame);
-                    // TODO - Error specification of this method is unclear right now
-                } else {
-                    throw new TransportException("Frameparser encountered a "
-                            + (val == null? "null" : val.getClass())
-                            + " which is not a " + Performative.class);
-                }
-
-                stage = transitionToFrameSizeParsingStage();
-            } catch (IOException ex) {
-                stage = transitionToErrorStage(ex);
+            if (val instanceof Performative) {
+                Performative frameBody = (Performative) val;
+                LOG.trace("IN: {} CH[{}] : {} [{}]", channel, frameBody, payload);
+                ProtocolFrame frame = framePool.take(frameBody, channel, payload);
+                // This probably isn't right as this fires to next not current.
+                transitionToFrameSizeParsingStage();
+                handler.handleRead(context, frame);
+                // TODO - Error specification of this method is unclear right now
+            } else {
+                throw new TransportException("Frameparser encountered a "
+                        + (val == null? "null" : val.getClass())
+                        + " which is not a " + Performative.class);
             }
         }
 
@@ -398,11 +391,11 @@ public class FrameParser {
             int dataOffset = (input.readByte() << 2) & 0x3FF;
 
             if (dataOffset < 8) {
-                transitionToErrorStage(new TransportException(String.format(
-                    "specified frame data offset %d smaller than minimum frame header size %d", dataOffset, 8)));
+                throw new TransportException(String.format(
+                    "specified frame data offset %d smaller than minimum frame header size %d", dataOffset, 8));
             } else if (dataOffset > frameSize) {
-                transitionToErrorStage(new TransportException(String.format(
-                    "specified frame data offset %d larger than the frame size %d", dataOffset, frameSize)));
+                throw new TransportException(String.format(
+                    "specified frame data offset %d larger than the frame size %d", dataOffset, frameSize));
             }
 
             int type = input.readByte() & 0xFF;
@@ -414,41 +407,36 @@ public class FrameParser {
             if (type != SASL_FRAME_TYPE) {
                 // The SASL handling code should not pass use data beyond the last SASL frame so we throw here
                 // to indicate that the pipeline of frames is incorrect.
-                transitionToErrorStage(new TransportException(String.format("unknown frame type: %d", type)));
+                throw new TransportException(String.format("unknown frame type: %d", type));
             }
 
             if (dataOffset != 8) {
                 input.setReadIndex(input.getReadIndex() + dataOffset - 8);
             }
 
-            try {
-                Object val = decoder.readObject(input, decoderState);
+            Object val = decoder.readObject(input, decoderState);
 
-                final ProtonBuffer payload;
+            final ProtonBuffer payload;
 
-                if (input.isReadable()) {
-                    int payloadSize = input.getReadableBytes();
-                    payload = ProtonByteBufferAllocator.DEFAULT.allocate(payloadSize, payloadSize);
-                    input.readBytes(payload);
-                } else {
-                    payload = null;
-                }
+            if (input.isReadable()) {
+                int payloadSize = input.getReadableBytes();
+                payload = ProtonByteBufferAllocator.DEFAULT.allocate(payloadSize, payloadSize);
+                input.readBytes(payload);
+            } else {
+                payload = null;
+            }
 
-                if (val instanceof SaslPerformative) {
-                    SaslPerformative performative = (SaslPerformative) val;
-                    SaslFrame saslFrame = new SaslFrame(performative, payload);
-                    // This probably isn't right as this fires to next not current.
-                    transitionToFrameSizeParsingStage();
-                    handler.handleRead(context, saslFrame);
-                    // TODO - Error specification of above fire call is unclear
-                } else {
-                    transitionToErrorStage(new TransportException(String.format(
-                        "Unexpected frame type encountered." + " Found a %s which does not implement %s",
-                        val == null ? "null" : val.getClass(), SaslPerformative.class)));
-                }
-            } catch (IOException ex) {
-                // TODO - handle above or allow dup handling ?
-                transitionToErrorStage(new TransportException(ex));
+            if (val instanceof SaslPerformative) {
+                SaslPerformative performative = (SaslPerformative) val;
+                SaslFrame saslFrame = new SaslFrame(performative, payload);
+                // This probably isn't right as this fires to next not current.
+                transitionToFrameSizeParsingStage();
+                handler.handleRead(context, saslFrame);
+                // TODO - Error specification of above fire call is unclear
+            } else {
+                throw new TransportException(String.format(
+                    "Unexpected frame type encountered." + " Found a %s which does not implement %s",
+                    val == null ? "null" : val.getClass(), SaslPerformative.class));
             }
         }
 
@@ -469,6 +457,10 @@ public class FrameParser {
 
         public ParsingErrorStage(IOException parsingError) {
             this.parsingError = parsingError;
+        }
+
+        public void fireError() throws IOException {
+            throw parsingError;
         }
 
         @Override
