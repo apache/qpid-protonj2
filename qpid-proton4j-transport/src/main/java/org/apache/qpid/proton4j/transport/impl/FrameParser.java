@@ -25,6 +25,8 @@ import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.codec.Decoder;
 import org.apache.qpid.proton4j.codec.DecoderState;
+import org.apache.qpid.proton4j.common.logging.ProtonLogger;
+import org.apache.qpid.proton4j.common.logging.ProtonLoggerFactory;
 import org.apache.qpid.proton4j.transport.EmptyFrame;
 import org.apache.qpid.proton4j.transport.HeaderFrame;
 import org.apache.qpid.proton4j.transport.ProtocolFrame;
@@ -33,13 +35,14 @@ import org.apache.qpid.proton4j.transport.SaslFrame;
 import org.apache.qpid.proton4j.transport.TransportHandler;
 import org.apache.qpid.proton4j.transport.TransportHandlerContext;
 import org.apache.qpid.proton4j.transport.exceptions.TransportException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+/**
+ * Parse and return a single Frame on each call unless insufficient data exists in the provided buffer in
+ * which case the parser will begin buffering data until a full frame has been received.
+ */
 public class FrameParser {
 
-    // TODO - Use our own logger ?
-    private static final Logger LOG = LoggerFactory.getLogger(AmqpFrameParser.class);
+    private static final ProtonLogger LOG = ProtonLoggerFactory.getLogger(FrameParser.class);
 
     private static final int AMQP_HEADER_BYTES = 8;
 
@@ -72,10 +75,34 @@ public class FrameParser {
 
     //----- Factory methods for SASL or non-SASL parser
 
+    /**
+     * Create a SASL based Frame parser that will accept only SASL frames and reject frames of any other type.
+     *
+     * @param handler
+     *      The transport handler that will be signaled when a frame is parsed.
+     * @param decoder
+     *      The Decoder instance that will be used to decode SASL performatives.
+     * @param frameSizeLimit
+     *      The maximum allow frame size limit before the parser should throw an error.
+     *
+     * @return a new SASL frame parser that is linked to the provided {@link TransportHandler}.
+     */
     public static FrameParser createSaslParser(TransportHandler handler, Decoder decoder, int frameSizeLimit) {
         return new FrameParser(handler, decoder, frameSizeLimit, AMQPHeader.getSASLHeader(), true);
     }
 
+    /**
+     * Create a AMQP based Frame parser that will accept only AMQP protocol frames and reject frames of any other type.
+     *
+     * @param handler
+     *      The transport handler that will be signaled when a frame is parsed.
+     * @param decoder
+     *      The Decoder instance that will be used to decode AMQP performatives.
+     * @param frameSizeLimit
+     *      The maximum allow frame size limit before the parser should throw an error.
+     *
+     * @return a new AMQP frame parser that is linked to the provided {@link TransportHandler}.
+     */
     public static FrameParser createNonSaslParser(TransportHandler handler, Decoder decoder, int frameSizeLimit) {
         return new FrameParser(handler, decoder, frameSizeLimit, AMQPHeader.getRawAMQPHeader(), false);
     }
@@ -175,35 +202,27 @@ public class FrameParser {
 
         @Override
         public void parse(TransportHandlerContext context, FrameParser parser, ProtonBuffer incoming) throws IOException {
-            IOException parsingError = null;
-
             while (incoming.isReadable() && headerByte <= AMQP_HEADER_BYTES) {
                 byte c = incoming.readByte();
 
                 if (c != header.getByteAt(headerByte)) {
-                    parsingError = new TransportException(String.format(
-                        "AMQP header mismatch value %x, expecting %x. In header byte: %d", c, header.getByteAt(headerByte), headerByte));
-                    break;
+                    transitionToErrorStage(new TransportException(String.format(
+                        "AMQP header mismatch value %x, expecting %x. In header byte: %d", c, header.getByteAt(headerByte), headerByte)));
                 }
 
                 headerByte++;
             }
 
-            if (parsingError != null) {
-                parser.transitionToErrorStage(parsingError);
-            } else {
-                try {
-                    // This probably isn't right as this fires to next not current.
-                    handler.handleRead(context, headerFrame);
-                    // Transition to parsing the frames if any pipelined into this buffer.
-                    parser.transitionToFrameSizeParsingStage();
-                } catch (Throwable e) {
-                    // TODO - Error mechanics here are not quite clear what does this throw?
-                    parser.transitionToErrorStage(new IOException(e));
-                }
-            }
+            try {
+                // Transition to parsing the frames if any pipelined into this buffer.
+                parser.transitionToFrameSizeParsingStage();
 
-            parser.parse(context, incoming);
+                // This probably isn't right as this fires to next not current.
+                handler.handleRead(context, headerFrame);
+            } catch (Throwable e) {
+                // TODO - Error mechanics here are not quite clear what does this throw?
+                parser.transitionToErrorStage(new IOException(e));
+            }
         }
 
         @Override
@@ -278,13 +297,11 @@ public class FrameParser {
 
                 // Now we can consume the buffer frame body.
                 stage = initializeFrameBodyParsingStage(buffer.getReadableBytes());
-                stage.parse(context, parser, buffer);
-
-                buffer = null; // Ensure we don't hold onto old buffers
-
-                // Reset to size parsing for the next frame
-                stage = transitionToFrameSizeParsingStage();
-                stage.parse(context, parser, input);
+                try {
+                    stage.parse(context, parser, buffer);
+                } finally {
+                    buffer = null;
+                }
             }
         }
 
@@ -306,7 +323,8 @@ public class FrameParser {
             if (dataOffset < 8) {
                 transitionToErrorStage(new TransportException(String.format(
                     "specified frame data offset %d smaller than minimum frame header size %d", dataOffset, 8)));
-            } else if (dataOffset > frameSize) {
+            }
+            if (dataOffset > frameSize) {
                 transitionToErrorStage(new TransportException(String.format(
                     "specified frame data offset %d larger than the frame size %d", dataOffset, frameSize)));
             }
@@ -360,8 +378,6 @@ public class FrameParser {
             } catch (IOException ex) {
                 stage = transitionToErrorStage(ex);
             }
-
-            stage.parse(context, parser, input);
         }
 
         @Override
@@ -396,12 +412,8 @@ public class FrameParser {
             input.readByte();
 
             if (type != SASL_FRAME_TYPE) {
-                // TODO - Here we may want to either throw some more specific exception
-                //        or just mark and reset when a non-SASL frame arrives as that
-                //        could be a pipelined open and we could just let the handler
-                //        hold the buffer or if not doing temporal squashing just pass
-                //        it onto the next handler as we should have either completed or
-                //        failed the SASL exchange at this point.
+                // The SASL handling code should not pass use data beyond the last SASL frame so we throw here
+                // to indicate that the pipeline of frames is incorrect.
                 transitionToErrorStage(new TransportException(String.format("unknown frame type: %d", type)));
             }
 
@@ -426,8 +438,8 @@ public class FrameParser {
                     SaslPerformative performative = (SaslPerformative) val;
                     SaslFrame saslFrame = new SaslFrame(performative, payload);
                     // This probably isn't right as this fires to next not current.
-                    handler.handleRead(context, saslFrame);
                     transitionToFrameSizeParsingStage();
+                    handler.handleRead(context, saslFrame);
                     // TODO - Error specification of above fire call is unclear
                 } else {
                     transitionToErrorStage(new TransportException(String.format(
@@ -438,8 +450,6 @@ public class FrameParser {
                 // TODO - handle above or allow dup handling ?
                 transitionToErrorStage(new TransportException(ex));
             }
-
-            stage.parse(context, parser, input);
         }
 
         @Override

@@ -30,6 +30,7 @@ import org.apache.qpid.proton4j.transport.ProtocolFrame;
 import org.apache.qpid.proton4j.transport.SaslFrame;
 import org.apache.qpid.proton4j.transport.TransportHandlerAdapter;
 import org.apache.qpid.proton4j.transport.TransportHandlerContext;
+import org.apache.qpid.proton4j.transport.impl.FrameParser;
 
 /**
  * Base class used for common portions of the SASL processing pipeline.
@@ -39,9 +40,7 @@ public class SaslHandler extends TransportHandlerAdapter {
     private Decoder saslDecoder = CodecFactory.getSaslDecoder();
     private Encoder saslEncoder = CodecFactory.getSaslEncoder();
 
-    private final SaslFrameParser frameParser;
-
-    private TransportHandlerContext context;
+    private FrameParser frameParser;
     private SaslContext saslContext;
 
     /*
@@ -49,7 +48,6 @@ public class SaslHandler extends TransportHandlerAdapter {
      * the state correctly.
      */
     private SaslHandler() {
-        frameParser = new SaslFrameParser(saslDecoder);
     }
 
     public Encoder getSaslEndoer() {
@@ -114,12 +112,12 @@ public class SaslHandler extends TransportHandlerAdapter {
 
     @Override
     public void handlerAdded(TransportHandlerContext context) throws Exception {
-        this.context = context;
+        frameParser = FrameParser.createSaslParser(this, saslDecoder, getMaxSaslFrameSize());
     }
 
     @Override
     public void handlerRemoved(TransportHandlerContext context) throws Exception {
-        // TODO - Take action as needed on remove
+        frameParser = null;
     }
 
     @Override
@@ -128,7 +126,13 @@ public class SaslHandler extends TransportHandlerAdapter {
             context.fireRead(buffer);
         } else {
             try {
-                frameParser.parse(context, buffer);
+                // Parse out each frame in the buffer until we reach an end state on SASL handling.
+                // TODO - Need a state to indicate that sasl is now in a state where we can't process
+                //        any more frames.  This would mean we are awaiting sasl outcome to move us to
+                //        a done state, all pending data beyond this point should be protocol level frames.
+                while (buffer.isReadable()) {
+                    frameParser.parse(context, buffer);
+                }
             } catch (IOException e) {
                 // TODO - A more well defined exception API might allow for only
                 //        one error event method ?
@@ -165,6 +169,10 @@ public class SaslHandler extends TransportHandlerAdapter {
             // TODO - We shouldn't be receiving these here if not done as we should be
             //        holding off on decoding the frames until after done and then passing
             //        them along to the next layer.
+
+            // TODO specific error for this case.
+            context.fireFailed(new IllegalStateException(
+                "Unexpected AMQP Frame: SASL processing not yet completed"));
         }
     }
 
