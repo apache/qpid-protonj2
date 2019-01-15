@@ -40,6 +40,8 @@ public class SaslHandler extends TransportHandlerAdapter {
     private Decoder saslDecoder = CodecFactory.getSaslDecoder();
     private Encoder saslEncoder = CodecFactory.getSaslEncoder();
 
+    private int maxFrameSizeLimit = SaslConstants.MAX_SASL_FRAME_SIZE;
+
     private FrameParser frameParser;
     private SaslContext saslContext;
 
@@ -67,11 +69,11 @@ public class SaslHandler extends TransportHandlerAdapter {
     }
 
     public void setMaxSaslFrameSize(int maxFrameSize) {
-        frameParser.setMaxFrameSize(Math.max(SaslConstants.MAX_SASL_FRAME_SIZE, maxFrameSize));
+        this.maxFrameSizeLimit = Math.max(SaslConstants.MAX_SASL_FRAME_SIZE, maxFrameSize);
     }
 
     public int getMaxSaslFrameSize() {
-        return frameParser.getMaxFrameSize();
+        return maxFrameSizeLimit;
     }
 
     public boolean isDone() {

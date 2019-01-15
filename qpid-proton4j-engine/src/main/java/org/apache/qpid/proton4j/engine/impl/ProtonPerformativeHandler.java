@@ -16,6 +16,8 @@
  */
 package org.apache.qpid.proton4j.engine.impl;
 
+import java.io.IOException;
+
 import org.apache.qpid.proton4j.amqp.transport.Attach;
 import org.apache.qpid.proton4j.amqp.transport.Begin;
 import org.apache.qpid.proton4j.amqp.transport.Close;
@@ -27,9 +29,14 @@ import org.apache.qpid.proton4j.amqp.transport.Open;
 import org.apache.qpid.proton4j.amqp.transport.Performative;
 import org.apache.qpid.proton4j.amqp.transport.Transfer;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import org.apache.qpid.proton4j.codec.CodecFactory;
+import org.apache.qpid.proton4j.codec.Decoder;
+import org.apache.qpid.proton4j.codec.Encoder;
 import org.apache.qpid.proton4j.transport.ProtocolFrame;
 import org.apache.qpid.proton4j.transport.TransportHandlerAdapter;
 import org.apache.qpid.proton4j.transport.TransportHandlerContext;
+import org.apache.qpid.proton4j.transport.impl.FrameParser;
+import org.apache.qpid.proton4j.transport.sasl.SaslConstants;
 
 /**
  * Transport Handler that forwards the incoming Performatives to the associated Connection
@@ -39,8 +46,66 @@ public class ProtonPerformativeHandler extends TransportHandlerAdapter implement
 
     private final ProtonConnection connection;
 
+    private Decoder decoder = CodecFactory.getDecoder();
+    private Encoder encoder = CodecFactory.getEncoder();
+
+    private int maxFrameSizeLimit = SaslConstants.MAX_SASL_FRAME_SIZE;
+
+    private FrameParser frameParser;
+
     public ProtonPerformativeHandler(ProtonConnection connection) {
         this.connection = connection;
+    }
+
+    public Encoder getEndoer() {
+        return encoder;
+    }
+
+    public void setEncoder(Encoder encoder) {
+        this.encoder = encoder;
+    }
+
+    public Decoder getDecoder() {
+        return decoder;
+    }
+
+    public void setDecoder(Decoder decoder) {
+        this.decoder = decoder;
+    }
+
+    public void setMaxFrameSize(int maxFrameSize) {
+        this.maxFrameSizeLimit = Math.max(512, maxFrameSize);  // TODO AMQP Constants
+    }
+
+    public int getMaxFrameSize() {
+        return maxFrameSizeLimit;
+    }
+
+    //----- Handle transport events
+
+    @Override
+    public void handlerAdded(TransportHandlerContext context) throws Exception {
+        frameParser = FrameParser.createNonSaslParser(this, decoder, getMaxFrameSize());
+    }
+
+    @Override
+    public void handlerRemoved(TransportHandlerContext context) throws Exception {
+        frameParser = null;
+    }
+
+    @Override
+    public void handleRead(TransportHandlerContext context, ProtonBuffer buffer) {
+        try {
+            // Parse out each frame in the buffer until we reach an end state on SASL handling.
+            // TODO - Should probably have a check here for transport state failed or not
+            while (buffer.isReadable()) {
+                frameParser.parse(context, buffer);
+            }
+        } catch (IOException e) {
+            // TODO - A more well defined exception API might allow for only
+            //        one error event method ?
+            context.fireDecodingError(e);
+        }
     }
 
     @Override
