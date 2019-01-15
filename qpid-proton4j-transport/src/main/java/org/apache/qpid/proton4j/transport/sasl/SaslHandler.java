@@ -207,8 +207,4 @@ public class SaslHandler extends TransportHandlerAdapter {
     @Override
     public void handleWrite(TransportHandlerContext context, ProtonBuffer buffer) {
     }
-
-    @Override
-    public void handleFlush(TransportHandlerContext context) {
-    }
 }

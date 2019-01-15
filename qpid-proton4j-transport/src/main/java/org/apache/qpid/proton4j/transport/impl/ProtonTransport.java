@@ -89,10 +89,4 @@ public class ProtonTransport implements Transport {
     public void write(SaslPerformative performative) throws IOException {
         pipeline.fireWrite(performative);
     }
-
-    @Override
-    public void flush() {
-        pipeline.fireFlush();
-    }
-
 }

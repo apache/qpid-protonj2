@@ -224,12 +224,6 @@ public class ProtonTransportPipeline implements TransportPipeline {
     }
 
     @Override
-    public TransportPipeline fireFlush() {
-        head.fireFlush();
-        return this;
-    }
-
-    @Override
     public TransportPipeline fireEncodingError(Throwable e) {
         tail.fireEncodingError(e);
         return this;
@@ -376,16 +370,6 @@ public class ProtonTransportPipeline implements TransportPipeline {
                     new IOException("No handler processed write data event."));
             }
         }
-
-        @Override
-        public void fireFlush() {
-            // TODO Decide on the exact error to be fired, move Transport to failed state.
-            TransportListener listener = transport.getTransportListener();
-            if (listener != null) {
-                listener.onTransportFailed(transport,
-                    new IOException("No handler processed flush event."));
-            }
-        }
     }
 
     //----- Default TransportHandler Used at the pipeline boundry ------------//
@@ -516,16 +500,6 @@ public class ProtonTransportPipeline implements TransportPipeline {
             if (listener != null) {
                 listener.onTransportFailed(transport,
                     new IOException("No handler processed write data event."));
-            }
-        }
-
-        @Override
-        public void handleFlush(TransportHandlerContext context) {
-            // TODO Decide on the exact error to be fired, move Transport to failed state.
-            TransportListener listener = transport.getTransportListener();
-            if (listener != null) {
-                listener.onTransportFailed(transport,
-                    new IOException("No handler processed flush event."));
             }
         }
     }

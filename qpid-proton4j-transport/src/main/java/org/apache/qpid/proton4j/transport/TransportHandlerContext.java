@@ -50,8 +50,6 @@ public interface TransportHandlerContext {
 
     void fireWrite(ProtonBuffer buffer);
 
-    void fireFlush();
-
     void fireEncodingError(Throwable e);
 
     void fireDecodingError(Throwable e);

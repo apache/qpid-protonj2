@@ -79,13 +79,6 @@ public interface Transport {
     void write(SaslPerformative performative) throws IOException;
 
     /**
-     * Flush the transport
-     *
-     * TODO - This implies that batching is possible, do we want that ?
-     */
-    void flush();
-
-    /**
      * Sets the ProtonBufferAllocator used by this Transport.
      * <p>
      * When copying data, encoding types or otherwise needing to allocate memory

@@ -118,10 +118,4 @@ public class FrameLoggingHandler implements TransportHandler {
         // TODO Could trace out bytes here, would need a pretty print helper.
         context.fireWrite(buffer);
     }
-
-    @Override
-    public void handleFlush(TransportHandlerContext context) {
-        LOG.trace("-> Transport Flushed.");
-        context.fireFlush();
-    }
 }

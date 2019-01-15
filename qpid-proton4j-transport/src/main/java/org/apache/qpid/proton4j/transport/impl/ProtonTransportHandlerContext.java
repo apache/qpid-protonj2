@@ -120,9 +120,4 @@ public class ProtonTransportHandlerContext implements TransportHandlerContext {
     public void fireWrite(ProtonBuffer buffer) {
         next.getHandler().handleWrite(next, buffer);
     }
-
-    @Override
-    public void fireFlush() {
-        next.getHandler().handleFlush(next);
-    }
 }

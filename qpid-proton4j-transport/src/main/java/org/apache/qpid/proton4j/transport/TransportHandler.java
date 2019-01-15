@@ -60,8 +60,6 @@ public interface TransportHandler {
 
     void handleWrite(TransportHandlerContext context, ProtonBuffer buffer);
 
-    void handleFlush(TransportHandlerContext context);
-
     // Error events
 
     void transportEncodingError(TransportHandlerContext context, Throwable e);

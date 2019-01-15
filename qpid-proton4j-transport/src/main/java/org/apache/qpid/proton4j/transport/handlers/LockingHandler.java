@@ -166,14 +166,4 @@ public class LockingHandler implements TransportHandler {
             lock.unlock();
         }
     }
-
-    @Override
-    public void handleFlush(TransportHandlerContext context) {
-        lock.lock();
-        try {
-            context.fireFlush();
-        } finally {
-            lock.unlock();
-        }
-    }
 }

@@ -94,9 +94,4 @@ public abstract class TransportHandlerAdapter implements TransportHandler {
     public void handleWrite(TransportHandlerContext context, ProtonBuffer buffer) {
         context.fireWrite(buffer);
     }
-
-    @Override
-    public void handleFlush(TransportHandlerContext context) {
-        context.fireFlush();
-    }
 }

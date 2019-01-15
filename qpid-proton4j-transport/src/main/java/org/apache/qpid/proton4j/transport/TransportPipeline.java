@@ -66,8 +66,6 @@ public interface TransportPipeline {
 
     TransportPipeline fireWrite(SaslPerformative performative);
 
-    TransportPipeline fireFlush();
-
     TransportPipeline fireEncodingError(Throwable e);
 
     TransportPipeline fireDecodingError(Throwable e);
