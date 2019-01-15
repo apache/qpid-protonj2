@@ -17,6 +17,7 @@
 package org.apache.qpid.proton4j.engine.impl;
 
 import org.apache.qpid.proton4j.engine.Connection;
+import org.apache.qpid.proton4j.engine.Session;
 import org.apache.qpid.proton4j.transport.Transport;
 
 /**
@@ -43,5 +44,45 @@ public class ProtonConnection implements Connection {
 
     @Override
     public void close() {
+    }
+
+    @Override
+    public String getContainerId() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public void setContainerId(String containerId) {
+        // TODO Auto-generated method stub
+    }
+
+    @Override
+    public void setHostname(String hostname) {
+        // TODO Auto-generated method stub
+    }
+
+    @Override
+    public String getHostname() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public Session session() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public String getRemoteContainerId() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public String getRemoteHostname() {
+        // TODO Auto-generated method stub
+        return null;
     }
 }
