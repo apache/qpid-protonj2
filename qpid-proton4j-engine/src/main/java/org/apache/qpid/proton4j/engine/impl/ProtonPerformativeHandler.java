@@ -113,6 +113,10 @@ public class ProtonPerformativeHandler extends TransportHandlerAdapter implement
         // TODO - Handle errors thrown here?  Some other context ?
 
         // Would need to handle remote open when no local connection yet exists
+        if (frame.getChannel() != 0) {
+            // TODO - Correct error type for this sort of viloation.
+            context.fireFailed(new IllegalArgumentException("Received Open sent to invalid channel: " + frame.getChannel()));
+        }
 
         try {
             frame.getBody().invoke(this, frame.getPayload(), connection);
