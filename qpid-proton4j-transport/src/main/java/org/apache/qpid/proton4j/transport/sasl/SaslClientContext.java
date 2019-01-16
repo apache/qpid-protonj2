@@ -120,7 +120,7 @@ public class SaslClientContext extends SaslContext {
     public void handleHeaderFrame(TransportHandlerContext context, HeaderFrame header) {
         if (!header.getBody().isSaslHeader()) {
             // TODO - Error on server not supporting SASL
-            context.fireFailed(new IllegalStateException(
+            saslHandler.transportFailed(context, new IllegalStateException(
                 "Remote does not support SASL authentication."));
         }
     }
@@ -145,7 +145,7 @@ public class SaslClientContext extends SaslContext {
             SaslResponse response = new SaslResponse();
             response.setResponse(getResponse());
             setResponse(null);
-            context.fireWrite(response);
+            saslHandler.handleWrite(context, response);
         }
 
         // TODO - We probably want to support asynchronous triggering
