@@ -194,17 +194,40 @@ public class SaslHandler extends TransportHandlerAdapter {
 
     @Override
     public void handleWrite(TransportHandlerContext context, AMQPHeader header) {
+        if (isDone()) {
+            // TODO We are done with sasl so this can be written to the transport as bytes
+        } else {
+            // TODO We are not done so this is not valid here and we should fail.
+        }
     }
 
     @Override
     public void handleWrite(TransportHandlerContext context, Performative performative, short channel, ProtonBuffer payload, Runnable payloadToLarge) {
+        if (isDone()) {
+            // TODO We are done with sasl so this can be written to the transport as bytes
+        } else {
+            // TODO We are not done so this is not valid here and we should fail.
+        }
     }
 
     @Override
     public void handleWrite(TransportHandlerContext context, SaslPerformative performative) {
+        // TODO - Currently context routes it's writes here, but that presents some issues.
+        //        Might be better if context does all the encoding and we decide on rules for
+        //        what happens if user manually writes a sasl performative.
+
+        if (isDone()) {
+            // TODO We are done so writing a performative would be invalid.
+        } else {
+            // TODO We are not done but the context should process any external sasl performatives ?
+            //      or is this always invalid and async sasl work should be done via the context ?
+        }
     }
 
     @Override
     public void handleWrite(TransportHandlerContext context, ProtonBuffer buffer) {
+        // TODO - in this case we don't know what is being written, if not done we should probably fail
+        //        since we are controlling SASL here and if someone is trying to circumvent this handler
+        //        that is not right.
     }
 }
