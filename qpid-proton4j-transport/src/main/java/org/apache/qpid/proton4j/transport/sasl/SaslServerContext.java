@@ -164,6 +164,7 @@ public class SaslServerContext extends SaslContext {
             } else {
                 // TODO - Error type ?
                 classifyStateFromOutcome(SaslOutcomes.PN_SASL_SKIPPED);
+                done = true;
                 saslHandler.handleWrite(context, AMQPHeader.getSASLHeader());
                 saslHandler.transportFailed(context, new IllegalStateException(
                     "Unexpected AMQP Header before SASL Authentication completed."));
