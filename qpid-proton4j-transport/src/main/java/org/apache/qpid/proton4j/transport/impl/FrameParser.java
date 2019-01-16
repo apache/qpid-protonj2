@@ -348,6 +348,7 @@ public class FrameParser {
                 val = decoder.readObject(input, decoderState);
 
                 if (input.isReadable()) {
+                    // TODO - Slice off the payload and assume that the buffer is consumed or released later ?
                     int payloadSize = input.getReadableBytes();
                     payload = ProtonByteBufferAllocator.DEFAULT.allocate(payloadSize, payloadSize);
                     input.readBytes(payload);
