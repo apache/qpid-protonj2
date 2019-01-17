@@ -16,6 +16,9 @@
  */
 package org.apache.qpid.proton4j.engine.impl;
 
+import java.util.Map;
+
+import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.engine.Connection;
 import org.apache.qpid.proton4j.engine.Session;
 import org.apache.qpid.proton4j.transport.Transport;
@@ -82,6 +85,60 @@ public class ProtonConnection implements Connection {
 
     @Override
     public String getRemoteHostname() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public void setOfferedCapabilities(Symbol[] capabilities) {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public Symbol[] getOfferedCapabilities() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public void setDesiredCapabilities(Symbol[] capabilities) {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public Symbol[] getDesiredCapabilities() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public void setProperties(Map<Symbol, Object> properties) {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public Map<Symbol, Object> getProperties() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public Symbol[] getRemoteOfferedCapabilities() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public Symbol[] getRemoteDesiredCapabilities() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public Map<Symbol, Object> getRemoteProperties() {
         // TODO Auto-generated method stub
         return null;
     }

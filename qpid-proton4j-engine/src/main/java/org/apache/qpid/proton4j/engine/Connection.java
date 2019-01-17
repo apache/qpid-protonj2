@@ -16,12 +16,30 @@
  */
 package org.apache.qpid.proton4j.engine;
 
+import java.util.Map;
+
+import org.apache.qpid.proton4j.amqp.Symbol;
+
 /**
  * AMQP Connection state container
  */
 public interface Connection extends Endpoint {
 
-    // Operations on local end of this Connection
+    // TODO - Context feature, do we want something more that just one element of context ?
+    //
+    // void setContext(Object context);
+    // Object getContext();
+    // void setContext(String key, Object value);
+    // Object getContext(String key);
+
+    //----- Operations on local end of this Connection
+
+    /**
+     * Creates a new Session linked to this Connection
+     */
+    Session session();
+
+    // TODO - Define exception thrown if already opened and a set is called.
 
     /**
      * @returns the Container ID assigned to this Connection
@@ -57,11 +75,49 @@ public interface Connection extends Endpoint {
     public String getHostname();
 
     /**
-     * Creates a new Session linked to this Connection
+     * Sets the capabilities to be offered on to the remote when this Connection is
+     * opened.
+     *
+     * @param capabilities
+     *      The capabilities to be offered to the remote when the Connection is opened.
      */
-    Session session();
+    void setOfferedCapabilities(Symbol[] capabilities);
 
-    //----- View state of local end of this Connection
+    /**
+     * @return the configured capabilities that are offered to the remote when the Connection is opened.
+     */
+    Symbol[] getOfferedCapabilities();
+
+    /**
+     * Sets the capabilities that are desired from the remote when this Connection is
+     * opened.
+     *
+     * @param capabilities
+     *      The capabilities desired from the remote when the Connection is opened.
+     */
+    void setDesiredCapabilities(Symbol[] capabilities);
+
+    /**
+     * @return the configured desired capabilities that are sent to the remote when the Connection is opened.
+     */
+    Symbol[] getDesiredCapabilities();
+
+    /**
+     * Sets the properties to be sent to the remote when this Connection is Opened.
+     *
+     * @param properties
+     *      The properties that will be sent to the remote when this Connection is opened.
+     */
+    void setProperties(Map<Symbol, Object> properties);
+
+    /**
+     * @return the configured properties sent to the remote when this Connection is opened.
+     */
+    Map<Symbol, Object> getProperties();
+
+    //----- View state of remote end of this Connection
+
+    // TODO - Define exception thrown if not yet remotely opened ?
 
     /**
      * @return the Container Id assigned to the remote end of the Connection.
@@ -72,5 +128,20 @@ public interface Connection extends Endpoint {
      * @return the host name assigned to the remote end of this Connection.
      */
     String getRemoteHostname();
+
+    /**
+     * @return the capabilities offered by the remote when it opened its end of the Connection.
+     */
+    Symbol[] getRemoteOfferedCapabilities();
+
+    /**
+     * @return the capabilities desired by the remote when it opened its end of the Connection.
+     */
+    Symbol[] getRemoteDesiredCapabilities();
+
+    /**
+     * @return the properties sent by the remote when it opened its end of the Connection.
+     */
+    Map<Symbol, Object> getRemoteProperties();
 
 }
