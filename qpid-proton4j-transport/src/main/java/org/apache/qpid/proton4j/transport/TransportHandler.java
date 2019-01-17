@@ -58,6 +58,14 @@ public interface TransportHandler {
     //        such that this variant isn't needed.
     void handleWrite(TransportHandlerContext context, Frame<ProtonBuffer> frame);
 
+    // TODO - Can replace above with variants for outbound versions of the inbound Frame types.
+    //        the handler that encodes can then handle writes of all and signal their handler on
+    //        frame to large conditions etc.
+
+    // void handleWrite(TransportHandlerContext context, OutboundHeaderFrame header);
+    // void handleWrite(TransportHandlerContext context, OutboundProtocolFrame frame);
+    // void handleWrite(TransportHandlerContext context, OutboundSaslFrame frame);
+
     void handleWrite(TransportHandlerContext context, ProtonBuffer buffer);
 
     // Error events

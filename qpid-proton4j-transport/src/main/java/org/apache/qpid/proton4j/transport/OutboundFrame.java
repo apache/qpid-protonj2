@@ -16,29 +16,35 @@
  */
 package org.apache.qpid.proton4j.transport;
 
+import java.util.function.Consumer;
+
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import org.apache.qpid.proton4j.transport.exceptions.TransportException;
 
 /**
- * Base class for Frames that travel through the Transport
- *
- * TODO - This becomes an inbound frame meant for consumption.
+ * A Frame that is composed of a body and a payload that is meant to be encoded and
+ * transmitted to the remote.
  */
-public abstract class Frame<V> {
+public abstract class OutboundFrame<V> {
 
     private final byte type;
 
     private V body;
     private int channel;
     private ProtonBuffer payload;
+    private int maxFrameSize;
+    private Consumer<V> frameSizeLimitExceededHandler;
 
-    protected Frame(byte type) {
+    protected OutboundFrame(byte type) {
         this.type = type;
     }
 
-    void initialize(V body, int channel, ProtonBuffer payload) {
+    void initialize(V body, int channel, ProtonBuffer payload, int maxFrameSize, Consumer<V> frameSizeLimitExceededHandler) {
         this.body = body;
         this.channel = channel;
         this.payload = payload;
+        this.maxFrameSize = maxFrameSize;
+        this.frameSizeLimitExceededHandler = frameSizeLimitExceededHandler;
     }
 
     public V getBody() {
@@ -55,5 +61,19 @@ public abstract class Frame<V> {
 
     public ProtonBuffer getPayload() {
         return payload;
+    }
+
+    public int getMaxFrameSize() {
+        return maxFrameSize;
+    }
+
+    // TODO - The idea is to either redo the encode using the most that we can fit into the frame
+    //        or throw to indicate we can't do anything because there was no handler to notice.
+    public void onFrameSizeLimitExceeded() throws TransportException {
+        if (frameSizeLimitExceededHandler != null) {
+            frameSizeLimitExceededHandler.accept(getBody());
+        } else {
+            throw new TransportException("Could not encode frame because encoded form exceeds configured max frame size");
+        }
     }
 }
