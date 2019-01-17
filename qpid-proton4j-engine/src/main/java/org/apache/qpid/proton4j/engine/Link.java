@@ -17,13 +17,13 @@
 package org.apache.qpid.proton4j.engine;
 
 /**
- * AMQP Sender API
+ * Base API for {@link Sender} and {@link Receiver} links.
  */
-public interface Sender extends Link {
+public interface Link extends Endpoint {
 
     /**
-     * @return the parent {@link Session} of the Sender.
+     * @return the link name that is assigned to this link.
      */
-    Session getSession();
+    String getName();
 
 }
