@@ -20,6 +20,9 @@ import org.apache.qpid.proton4j.amqp.security.SaslPerformative;
 import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
 import org.apache.qpid.proton4j.amqp.transport.Performative;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import org.apache.qpid.proton4j.codec.CodecFactory;
+import org.apache.qpid.proton4j.codec.Encoder;
+import org.apache.qpid.proton4j.codec.EncoderState;
 import org.apache.qpid.proton4j.transport.TransportHandlerAdapter;
 import org.apache.qpid.proton4j.transport.TransportHandlerContext;
 
@@ -28,26 +31,60 @@ import org.apache.qpid.proton4j.transport.TransportHandlerContext;
  */
 public class FrameWritingHandler extends TransportHandlerAdapter {
 
-    // TODO - in order to enforce max frame size we need to have that value here
-    //        but it can vary between the sasl and non-sasl layers.
+    private Encoder saslEncoder = CodecFactory.getSaslEncoder();
+    private Encoder encoder = CodecFactory.getEncoder();
 
-    // TODO - Need access to the appropriate encoder here
+    private EncoderState saslEncoderState;
+    private EncoderState encoderState;
 
-    public FrameWritingHandler() {
+    public Encoder getEndoer() {
+        return encoder;
     }
 
-    // TODO - Do we want to create an uber framer writer or just let the various bits do their
-    //        own like AMQP protocol does its thing, SASL then does its own etc.
+    public void setEncoder(Encoder encoder) {
+        this.encoder = encoder;
+    }
+
+    public Encoder getSaslEndoer() {
+        return saslEncoder;
+    }
+
+    public void setSaslEncoder(Encoder encoder) {
+        this.saslEncoder = encoder;
+    }
+
+    @Override
+    public void handlerAdded(TransportHandlerContext context) throws Exception {
+        saslEncoderState = getSaslEndoer().newEncoderState();
+        encoderState = getEndoer().newEncoderState();
+    }
+
+    @Override
+    public void handlerRemoved(TransportHandlerContext context) throws Exception {
+        saslEncoderState = null;
+        encoder = null;
+    }
 
     @Override
     public void handleWrite(TransportHandlerContext context, AMQPHeader header) {
+        context.fireWrite(header.getBuffer());
     }
 
     @Override
     public void handleWrite(TransportHandlerContext context, Performative performative, short channel, ProtonBuffer payload, Runnable payloadToLarge) {
+        try {
+            // TODO - An outbound frame type will contain all we need to encode
+        } finally {
+            encoderState.reset();
+        }
     }
 
     @Override
     public void handleWrite(TransportHandlerContext context, SaslPerformative performative) {
+        try {
+            // TODO - An outbound frame type will contain all we need to encode
+        } finally {
+            saslEncoderState.reset();
+        }
     }
 }

@@ -36,7 +36,6 @@ import org.apache.qpid.proton4j.transport.ProtocolFrame;
 import org.apache.qpid.proton4j.transport.TransportHandlerAdapter;
 import org.apache.qpid.proton4j.transport.TransportHandlerContext;
 import org.apache.qpid.proton4j.transport.impl.FrameParser;
-import org.apache.qpid.proton4j.transport.sasl.SaslConstants;
 
 /**
  * Transport Handler that forwards the incoming Performatives to the associated Connection
@@ -44,12 +43,14 @@ import org.apache.qpid.proton4j.transport.sasl.SaslConstants;
  */
 public class ProtonPerformativeHandler extends TransportHandlerAdapter implements Performative.PerformativeHandler<ProtonConnection> {
 
+    private static final int MIN_AMQP_FRAME_SIZE_DEFAULT = 512;
+
     private final ProtonConnection connection;
 
     private Decoder decoder = CodecFactory.getDecoder();
     private Encoder encoder = CodecFactory.getEncoder();
 
-    private int maxFrameSizeLimit = SaslConstants.MAX_SASL_FRAME_SIZE;
+    private int maxFrameSizeLimit = MIN_AMQP_FRAME_SIZE_DEFAULT;
 
     private FrameParser frameParser;
 
@@ -74,7 +75,7 @@ public class ProtonPerformativeHandler extends TransportHandlerAdapter implement
     }
 
     public void setMaxFrameSize(int maxFrameSize) {
-        this.maxFrameSizeLimit = Math.max(512, maxFrameSize);  // TODO AMQP Constants
+        this.maxFrameSizeLimit = Math.max(MIN_AMQP_FRAME_SIZE_DEFAULT, maxFrameSize);
     }
 
     public int getMaxFrameSize() {
