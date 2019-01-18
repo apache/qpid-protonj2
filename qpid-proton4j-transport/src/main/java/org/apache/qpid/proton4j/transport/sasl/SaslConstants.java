@@ -26,6 +26,7 @@ public interface SaslConstants {
     // TODO - PN_ is a C'ism, can we do away with that ?
 
     public enum SaslStates {
+
         /** Pending configuration by application */
         PN_SASL_CONF,
         /** Pending SASL Init */
@@ -39,6 +40,7 @@ public interface SaslConstants {
     }
 
     public enum SaslOutcomes {
+
         /** negotiation not completed */
         PN_SASL_NONE((byte) -1),
         /** authentication succeeded */
@@ -48,11 +50,13 @@ public interface SaslConstants {
         /** failed due to a system error */
         PN_SASL_SYS((byte) 2),
         /** failed due to unrecoverable error */
-        PN_SASL_PERM((byte) 3), PN_SASL_TEMP((byte) 4), PN_SASL_SKIPPED((byte) 5);
+        PN_SASL_PERM((byte) 3),
+        /** failed due to transient error */
+        PN_SASL_TEMP((byte) 4),
+        /** negotiation was skipped */
+        PN_SASL_SKIPPED((byte) 5);
 
         private final byte _code;
-
-        /** failed due to transient error */
 
         SaslOutcomes(byte code) {
             _code = code;
