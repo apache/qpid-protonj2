@@ -36,7 +36,7 @@ public interface TransportHandler {
 
     // Read events
 
-    void handleReadabilityChanged(TransportHandlerContext context);  // TODO how to communicate readable state ?
+    // void handleReadabilityChanged(TransportHandlerContext context);  // TODO how to communicate readable state ?
 
     void handleRead(TransportHandlerContext context, ProtonBuffer buffer);
 
@@ -48,7 +48,7 @@ public interface TransportHandler {
 
     // Write events
 
-    void handleWritabilityChanged(TransportHandlerContext context); // TODO how to communicate writable state ?
+    // void handleWritabilityChanged(TransportHandlerContext context); // TODO how to communicate writable state ?
 
     void handleWrite(TransportHandlerContext context, AMQPHeader header);
 
