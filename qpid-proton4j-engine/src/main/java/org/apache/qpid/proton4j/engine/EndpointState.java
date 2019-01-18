@@ -20,7 +20,8 @@ package org.apache.qpid.proton4j.engine;
  * Represents the state of an AMQP resource.
  */
 public enum EndpointState {
-    UNINITIALIZED,  // TODO - Better names ?
+    IDLE,
     ACTIVE,
+    DETACHED,
     CLOSED,
 }
