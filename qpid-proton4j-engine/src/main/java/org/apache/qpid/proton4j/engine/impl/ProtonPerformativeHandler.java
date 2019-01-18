@@ -43,14 +43,14 @@ import org.apache.qpid.proton4j.transport.impl.FrameParser;
  */
 public class ProtonPerformativeHandler extends TransportHandlerAdapter implements Performative.PerformativeHandler<ProtonConnection> {
 
-    private static final int MIN_AMQP_FRAME_SIZE_DEFAULT = 512;
+    private static final int MIN_MAX_AMQP_FRAME_SIZE = 512;
 
     private final ProtonConnection connection;
 
     private Decoder decoder = CodecFactory.getDecoder();
     private Encoder encoder = CodecFactory.getEncoder();
 
-    private int maxFrameSizeLimit = MIN_AMQP_FRAME_SIZE_DEFAULT;
+    private int maxFrameSizeLimit = MIN_MAX_AMQP_FRAME_SIZE;
 
     private FrameParser frameParser;
 
@@ -75,7 +75,7 @@ public class ProtonPerformativeHandler extends TransportHandlerAdapter implement
     }
 
     public void setMaxFrameSize(int maxFrameSize) {
-        this.maxFrameSizeLimit = Math.max(MIN_AMQP_FRAME_SIZE_DEFAULT, maxFrameSize);
+        this.maxFrameSizeLimit = Math.max(MIN_MAX_AMQP_FRAME_SIZE, maxFrameSize);
     }
 
     public int getMaxFrameSize() {
@@ -112,12 +112,6 @@ public class ProtonPerformativeHandler extends TransportHandlerAdapter implement
     @Override
     public void handleRead(TransportHandlerContext context, ProtocolFrame frame) {
         // TODO - Handle errors thrown here?  Some other context ?
-
-        // Would need to handle remote open when no local connection yet exists
-        if (frame.getChannel() != 0) {
-            // TODO - Correct error type for this sort of viloation.
-            context.fireFailed(new IllegalArgumentException("Received Open sent to invalid channel: " + frame.getChannel()));
-        }
 
         try {
             frame.getBody().invoke(this, frame.getPayload(), connection);
