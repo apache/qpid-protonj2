@@ -165,28 +165,28 @@ public class SaslServerContext extends SaslContext {
                 // TODO - Error type ?
                 classifyStateFromOutcome(SaslOutcomes.PN_SASL_SKIPPED);
                 done = true;
-                saslHandler.handleWrite(context, AMQPHeader.getSASLHeader());
-                saslHandler.transportFailed(context, new IllegalStateException(
+                context.fireWrite(AMQPHeader.getSASLHeader());
+                context.fireFailed(new IllegalStateException(
                     "Unexpected AMQP Header before SASL Authentication completed."));
             }
         } else {
             // Report the variety of errors that exist in this state such as the
             // fact that we shouldn't get an AMQP header before sasl is done, and when
             // it is done we are currently bypassing this call in the parent SaslHandler.
-            saslHandler.transportFailed(context, new IllegalStateException(
+            context.fireFailed(new IllegalStateException(
                 "Unexpected AMQP Header before SASL Authentication completed."));
         }
     }
 
     private void handleSaslHeader(EngineHandlerContext context, HeaderFrame header) {
         if (!headerWritten) {
-            saslHandler.handleWrite(context, header.getBody());
+            context.fireWrite(header.getBody());
             headerWritten = true;
         }
 
         if (headerReceived) {
             // TODO - Error out on receive of another SASL Header.
-            saslHandler.transportFailed(context, new IllegalStateException(
+            context.fireFailed(new IllegalStateException(
                 "Unexpected second SASL Header read before SASL Authentication completed."));
         } else {
             headerReceived = true;
@@ -198,7 +198,7 @@ public class SaslServerContext extends SaslContext {
         // TODO - When to fail when no mechanisms set, now or on some earlier started / connected event ?
         //        Or allow it to be empty and await an async write of a SaslInit frame etc ?
         if (serverMechanisms == null || serverMechanisms.length == 0) {
-            saslHandler.transportFailed(context, new IllegalStateException("SASL Server has no configured mechanisms"));
+            context.fireFailed(new IllegalStateException("SASL Server has no configured mechanisms"));
         }
 
         // TODO - Check state, then send mechanisms
@@ -206,7 +206,7 @@ public class SaslServerContext extends SaslContext {
         mechanisms.setSaslServerMechanisms(serverMechanisms);
 
         // Send the server mechanisms now.
-        saslHandler.handleWrite(context, mechanisms);
+        context.fireWrite(mechanisms);
         mechanismsSent = true;
         state = SaslStates.PN_SASL_STEP;
     }
@@ -215,7 +215,7 @@ public class SaslServerContext extends SaslContext {
     public void handleInit(SaslInit saslInit, EngineHandlerContext context) {
         if (initReceived) {
             // TODO - Handle SaslInit already read with better error
-            saslHandler.transportFailed(context, new IllegalStateException("SASL Handler received second SASL Init"));
+            context.fireFailed(new IllegalStateException("SASL Handler received second SASL Init"));
             return;
         }
 
@@ -242,7 +242,7 @@ public class SaslServerContext extends SaslContext {
             SaslChallenge challenge = new SaslChallenge();
             challenge.setChallenge(getChallenge());
             setChallenge(null);
-            saslHandler.handleWrite(context, challenge);
+            context.fireWrite(challenge);
         }
 
         if (getOutcome() != SaslOutcomes.PN_SASL_NONE) {
@@ -252,7 +252,7 @@ public class SaslServerContext extends SaslContext {
             outcome.setAdditionalData(additionalData);
             setAdditionalData(null);
             done = true;
-            saslHandler.handleWrite(context, outcome);
+            context.fireWrite(outcome);
         }
     }
 }
