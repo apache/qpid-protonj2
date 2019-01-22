@@ -20,24 +20,24 @@ import java.util.Map;
 
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.engine.Connection;
+import org.apache.qpid.proton4j.engine.Engine;
 import org.apache.qpid.proton4j.engine.Session;
-import org.apache.qpid.proton4j.transport.Transport;
 
 /**
  * Implements the proton4j Connection API
  */
 public class ProtonConnection implements Connection {
 
-    private final Transport transport;
+    private final Engine transport;
 
     /**
      * Create a new unbound Connection instance.
      */
-    public ProtonConnection(Transport transport) {
+    public ProtonConnection(Engine transport) {
         this.transport = transport;
     }
 
-    public Transport geTransport() {
+    public Engine geTransport() {
         return transport;
     }
 

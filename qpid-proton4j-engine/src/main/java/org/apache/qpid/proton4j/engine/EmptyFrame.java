@@ -14,35 +14,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.qpid.proton4j.amqp.security;
+package org.apache.qpid.proton4j.engine;
 
 /**
- * Marker interface for AMQP Performatives
+ * An empty frame which can be used to drive transport activity when idle.
  */
-public interface SaslPerformative {
+public final class EmptyFrame extends ProtocolFrame {
 
-    enum SaslPerformativeType {
-        INIT,
-        MECHANISMS,
-        CHALLENGE,
-        RESPONSE,
-        OUTCOME
+    public EmptyFrame() {
+        super();
     }
 
-    SaslPerformative copy();
-
-    SaslPerformativeType getPerformativeType();
-
-    interface SaslPerformativeHandler<E> {
-
-        default void handleMechanisms(SaslMechanisms saslMechanisms, E context) {}
-        default void handleInit(SaslInit saslInit, E context) {}
-        default void handleChallenge(SaslChallenge saslChallenge, E context) {}
-        default void handleResponse(SaslResponse saslResponse, E context) {}
-        default void handleOutcome(SaslOutcome saslOutcome, E context) {}
-
+    @Override
+    public String toString() {
+        return "Empty Frame";
     }
-
-    <E> void invoke(SaslPerformativeHandler<E> handler, E context);
-
 }

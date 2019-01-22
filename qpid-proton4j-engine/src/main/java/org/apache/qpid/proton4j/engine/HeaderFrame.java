@@ -14,35 +14,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.qpid.proton4j.amqp.security;
+package org.apache.qpid.proton4j.engine;
+
+import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
 
 /**
- * Marker interface for AMQP Performatives
+ * Frame type that carries AMQPHeader instances
  */
-public interface SaslPerformative {
+public class HeaderFrame extends Frame<AMQPHeader> {
 
-    enum SaslPerformativeType {
-        INIT,
-        MECHANISMS,
-        CHALLENGE,
-        RESPONSE,
-        OUTCOME
+    public static final byte HEADER_FRAME_TYPE = (byte) 1;
+
+    public static final HeaderFrame SASL_HEADER_FRAME = new HeaderFrame(AMQPHeader.getSASLHeader());
+
+    public static final HeaderFrame AMQP_HEADER_FRAME = new HeaderFrame(AMQPHeader.getRawAMQPHeader());
+
+    public HeaderFrame(AMQPHeader body) {
+        super(HEADER_FRAME_TYPE);
+
+        initialize(body, 0, null);
     }
-
-    SaslPerformative copy();
-
-    SaslPerformativeType getPerformativeType();
-
-    interface SaslPerformativeHandler<E> {
-
-        default void handleMechanisms(SaslMechanisms saslMechanisms, E context) {}
-        default void handleInit(SaslInit saslInit, E context) {}
-        default void handleChallenge(SaslChallenge saslChallenge, E context) {}
-        default void handleResponse(SaslResponse saslResponse, E context) {}
-        default void handleOutcome(SaslOutcome saslOutcome, E context) {}
-
-    }
-
-    <E> void invoke(SaslPerformativeHandler<E> handler, E context);
-
 }

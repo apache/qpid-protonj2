@@ -14,35 +14,44 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.qpid.proton4j.amqp.security;
+package org.apache.qpid.proton4j.engine;
+
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 
 /**
- * Marker interface for AMQP Performatives
+ * Base class for Frames that travel through the engine.
  */
-public interface SaslPerformative {
+public abstract class Frame<V> {
 
-    enum SaslPerformativeType {
-        INIT,
-        MECHANISMS,
-        CHALLENGE,
-        RESPONSE,
-        OUTCOME
+    private final byte type;
+
+    private V body;
+    private int channel;
+    private ProtonBuffer payload;
+
+    protected Frame(byte type) {
+        this.type = type;
     }
 
-    SaslPerformative copy();
-
-    SaslPerformativeType getPerformativeType();
-
-    interface SaslPerformativeHandler<E> {
-
-        default void handleMechanisms(SaslMechanisms saslMechanisms, E context) {}
-        default void handleInit(SaslInit saslInit, E context) {}
-        default void handleChallenge(SaslChallenge saslChallenge, E context) {}
-        default void handleResponse(SaslResponse saslResponse, E context) {}
-        default void handleOutcome(SaslOutcome saslOutcome, E context) {}
-
+    void initialize(V body, int channel, ProtonBuffer payload) {
+        this.body = body;
+        this.channel = channel;
+        this.payload = payload;
     }
 
-    <E> void invoke(SaslPerformativeHandler<E> handler, E context);
+    public V getBody() {
+        return body;
+    }
 
+    public int getChannel() {
+        return channel;
+    }
+
+    public byte getType() {
+        return type;
+    }
+
+    public ProtonBuffer getPayload() {
+        return payload;
+    }
 }

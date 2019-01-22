@@ -32,16 +32,15 @@ import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.CodecFactory;
 import org.apache.qpid.proton4j.codec.Decoder;
 import org.apache.qpid.proton4j.codec.Encoder;
-import org.apache.qpid.proton4j.transport.ProtocolFrame;
-import org.apache.qpid.proton4j.transport.TransportHandlerAdapter;
-import org.apache.qpid.proton4j.transport.TransportHandlerContext;
-import org.apache.qpid.proton4j.transport.impl.FrameParser;
+import org.apache.qpid.proton4j.engine.EngineHandlerAdapter;
+import org.apache.qpid.proton4j.engine.EngineHandlerContext;
+import org.apache.qpid.proton4j.engine.ProtocolFrame;
 
 /**
  * Transport Handler that forwards the incoming Performatives to the associated Connection
  * as well as any error encountered during the Transport processing.
  */
-public class ProtonPerformativeHandler extends TransportHandlerAdapter implements Performative.PerformativeHandler<ProtonConnection> {
+public class ProtonPerformativeHandler extends EngineHandlerAdapter implements Performative.PerformativeHandler<ProtonConnection> {
 
     private static final int MIN_MAX_AMQP_FRAME_SIZE = 512;
 
@@ -52,7 +51,7 @@ public class ProtonPerformativeHandler extends TransportHandlerAdapter implement
 
     private int maxFrameSizeLimit = MIN_MAX_AMQP_FRAME_SIZE;
 
-    private FrameParser frameParser;
+    private ProtonFrameParser frameParser;
 
     public ProtonPerformativeHandler(ProtonConnection connection) {
         this.connection = connection;
@@ -85,17 +84,17 @@ public class ProtonPerformativeHandler extends TransportHandlerAdapter implement
     //----- Handle transport events
 
     @Override
-    public void handlerAdded(TransportHandlerContext context) throws Exception {
-        frameParser = FrameParser.createNonSaslParser(this, decoder, getMaxFrameSize());
+    public void handlerAdded(EngineHandlerContext context) throws Exception {
+        frameParser = ProtonFrameParser.createNonSaslParser(this, decoder, getMaxFrameSize());
     }
 
     @Override
-    public void handlerRemoved(TransportHandlerContext context) throws Exception {
+    public void handlerRemoved(EngineHandlerContext context) throws Exception {
         frameParser = null;
     }
 
     @Override
-    public void handleRead(TransportHandlerContext context, ProtonBuffer buffer) {
+    public void handleRead(EngineHandlerContext context, ProtonBuffer buffer) {
         try {
             // Parse out each frame in the buffer until we reach an end state on SASL handling.
             // TODO - Should probably have a check here for transport state failed or not
@@ -110,7 +109,7 @@ public class ProtonPerformativeHandler extends TransportHandlerAdapter implement
     }
 
     @Override
-    public void handleRead(TransportHandlerContext context, ProtocolFrame frame) {
+    public void handleRead(EngineHandlerContext context, ProtocolFrame frame) {
         // TODO - Handle errors thrown here?  Some other context ?
 
         try {
@@ -121,17 +120,17 @@ public class ProtonPerformativeHandler extends TransportHandlerAdapter implement
     }
 
     @Override
-    public void transportEncodingError(TransportHandlerContext context, Throwable e) {
+    public void transportEncodingError(EngineHandlerContext context, Throwable e) {
         // TODO signal error to the connection
     }
 
     @Override
-    public void transportDecodingError(TransportHandlerContext context, Throwable e) {
+    public void transportDecodingError(EngineHandlerContext context, Throwable e) {
         // TODO signal error to the connection
     }
 
     @Override
-    public void transportFailed(TransportHandlerContext context, Throwable e) {
+    public void transportFailed(EngineHandlerContext context, Throwable e) {
         // TODO signal error to the connection
     }
 

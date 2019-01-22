@@ -39,17 +39,18 @@ public interface Performative {
 
     Performative copy();
 
-    // TODO - Revisit
     interface PerformativeHandler<E> {
-        void handleOpen(Open open, ProtonBuffer payload, E context);
-        void handleBegin(Begin begin, ProtonBuffer payload, E context);
-        void handleAttach(Attach attach, ProtonBuffer payload, E context);
-        void handleFlow(Flow flow, ProtonBuffer payload, E context);
-        void handleTransfer(Transfer transfer, ProtonBuffer payload, E context);
-        void handleDisposition(Disposition disposition, ProtonBuffer payload, E context);
-        void handleDetach(Detach detach, ProtonBuffer payload, E context);
-        void handleEnd(End end, ProtonBuffer payload, E context);
-        void handleClose(Close close, ProtonBuffer payload, E context);
+
+        default void handleOpen(Open open, ProtonBuffer payload, E context) {}
+        default void handleBegin(Begin begin, ProtonBuffer payload, E context) {}
+        default void handleAttach(Attach attach, ProtonBuffer payload, E context) {}
+        default void handleFlow(Flow flow, ProtonBuffer payload, E context) {}
+        default void handleTransfer(Transfer transfer, ProtonBuffer payload, E context) {}
+        default void handleDisposition(Disposition disposition, ProtonBuffer payload, E context) {}
+        default void handleDetach(Detach detach, ProtonBuffer payload, E context) {}
+        default void handleEnd(End end, ProtonBuffer payload, E context) {}
+        default void handleClose(Close close, ProtonBuffer payload, E context) {}
+
     }
 
     <E> void invoke(PerformativeHandler<E> handler, ProtonBuffer payload, E context);
