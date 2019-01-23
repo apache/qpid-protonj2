@@ -26,6 +26,42 @@ import java.nio.ByteBuffer;
 public interface ProtonBufferAllocator {
 
     /**
+     * Create a new output ProtonBuffer instance with the given initial capacity and the
+     * maximum capacity should be that of the underlying buffer implementations limit.
+     * <p>
+     * The returned buffer will be used for frame output from the Proton engine and
+     * can be a pooled buffer which the IO handler will then need to release once
+     * the buffer has been written.
+     *
+     * @param initialCapacity
+     *      The initial capacity to use when creating the new ProtonBuffer.
+     *
+     * @return a new ProtonBuffer instance with the given initial capacity.
+     */
+    ProtonBuffer outputBuffer(int initialCapacity);
+
+    /**
+     * Create a new output ProtonBuffer instance with the given initial capacity and the
+     * maximum capacity should that of the value specified by the caller.
+     * <p>
+     * The returned buffer will be used for frame output from the Proton engine and
+     * can be a pooled buffer which the IO handler will then need to release once
+     * the buffer has been written.
+     *
+     * @param initialCapacity
+     *      The initial capacity to use when creating the new ProtonBuffer.
+     * @param maximumCapacity
+     *      The largest amount of bytes the new ProtonBuffer is allowed to grow to.
+     *
+     * @return a new ProtonBuffer instance with the given initial capacity.
+     */
+    ProtonBuffer outputBuffer(int initialCapacity, int maximumCapacity);
+
+    // TODO - For these we should document if the assumption is that
+    //        these buffers are never allowed to be pooled since we
+    //        are not going to have defined release points.
+
+    /**
      * Create a new ProtonBuffer instance with default initial capacity.
      *
      * @return a new ProtonBuffer instance with default initial capacity.
@@ -45,7 +81,8 @@ public interface ProtonBufferAllocator {
     ProtonBuffer allocate(int initialCapacity);
 
     /**
-     * Create a new ProtonBuffer instance with the given initial capacity.
+     * Create a new ProtonBuffer instance with the given initial capacity and the
+     * maximum capacity should that of the value specified by the caller.
      *
      * @param initialCapacity
      *      The initial capacity to use when creating the new ProtonBuffer.

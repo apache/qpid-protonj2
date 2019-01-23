@@ -21,7 +21,7 @@ import java.nio.ByteBuffer;
 /**
  * Allocator for the default buffer type in Proton
  */
-public class ProtonByteBufferAllocator implements ProtonBufferAllocator {
+public final class ProtonByteBufferAllocator implements ProtonBufferAllocator {
 
     public static final ProtonByteBufferAllocator DEFAULT = new ProtonByteBufferAllocator();
 
@@ -38,6 +38,16 @@ public class ProtonByteBufferAllocator implements ProtonBufferAllocator {
     @Override
     public ProtonByteBuffer allocate(int initialCapacity, int maximumCapacity) {
         return new ProtonByteBuffer(initialCapacity, maximumCapacity);
+    }
+
+    @Override
+    public ProtonBuffer outputBuffer(int initialCapacity) {
+        return allocate(initialCapacity);
+    }
+
+    @Override
+    public ProtonBuffer outputBuffer(int initialCapacity, int maximumCapacity) {
+        return allocate(initialCapacity, maximumCapacity);
     }
 
     @Override
