@@ -345,15 +345,15 @@ public class ProtonFrameParser {
             Object val = null;
 
             if (frameBodySize > 0) {
+                // Slice to the known Frame body size and use that as the buffer for any payload once
+                // the actual Performative has been decoded.  The implies that the data comprising the
+                // performative will be held as long as the payload buffer is kept.
+                input = input.slice(input.getReadIndex(), frameBodySize);
+
                 val = decoder.readObject(input, decoderState);
 
                 if (input.isReadable()) {
-                    // TODO - Slice off the payload and assume that the buffer is consumed or released later ?
-                    int payloadSize = input.getReadableBytes();
-                    payload = ProtonByteBufferAllocator.DEFAULT.allocate(payloadSize, payloadSize);
-                    input.readBytes(payload);
-                } else {
-                    payload = null;
+                    payload = input;
                 }
             } else {
                 val = new EmptyFrame();
