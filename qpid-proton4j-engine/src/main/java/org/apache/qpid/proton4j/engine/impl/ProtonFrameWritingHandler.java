@@ -78,7 +78,7 @@ public class ProtonFrameWritingHandler extends EngineHandlerAdapter {
     public void handleRead(EngineHandlerContext context, ProtocolFrame frame) {
         // Spy on incoming frames to gather remote configuration
         // TODO - Or Engine always has a Connection and we ask it ?
-        frame.getBody().invoke(outboundSpy, frame.getPayload(), this);
+        frame.getBody().invoke(inboundSpy, frame.getPayload(), this);
 
         context.fireRead(frame);
     }
