@@ -29,12 +29,10 @@ public abstract class EngineHandlerAdapter implements EngineHandler {
 
     @Override
     public void handlerAdded(EngineHandlerContext context) throws Exception {
-        // TODO propagation
     }
 
     @Override
     public void handlerRemoved(EngineHandlerContext context) throws Exception {
-        // TODO propagation
     }
 
     @Override

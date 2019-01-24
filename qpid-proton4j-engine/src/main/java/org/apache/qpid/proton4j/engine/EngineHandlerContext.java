@@ -22,13 +22,13 @@ import org.apache.qpid.proton4j.amqp.transport.Performative;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 
 /**
- * Context provided to TransportHandler events to allow further event propagation
+ * Context provided to EngineHandler events to allow further event propagation
  */
 public interface EngineHandlerContext {
 
     EngineHandler getHandler();
 
-    Engine getTransport();
+    Engine getEngine();
 
     String getName();
 

@@ -49,6 +49,8 @@ class ProtonFrameWriter {
         //        default being an read-only EMPTY_BUFFER constant that has zero size.
 
         int outputBufferSize = AMQP_PERFORMATIVE_PAD + (frame.getPayload() != null ? frame.getPayload().getReadableBytes() : 0);
+
+        // TODO - Need to get access to the engine configuration for buffer allocator.
         ProtonBuffer output = ProtonByteBufferAllocator.DEFAULT.outputBuffer(AMQP_PERFORMATIVE_PAD + outputBufferSize);
 
         final int performativeSize = writePerformative(frame, maxFrameSize, output, onPayloadTooLarge);

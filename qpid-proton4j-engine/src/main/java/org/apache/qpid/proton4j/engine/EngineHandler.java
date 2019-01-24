@@ -22,7 +22,7 @@ import org.apache.qpid.proton4j.amqp.transport.Performative;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 
 /**
- * Listen for events generated from the Transport
+ * Listen for events generated from the Engine
  */
 public interface EngineHandler {
 
@@ -32,7 +32,7 @@ public interface EngineHandler {
 
     void handlerRemoved(EngineHandlerContext context) throws Exception;
 
-    // Some things that might flow through a transport pipeline
+    // Some things that might flow through an engine pipeline
 
     // Read events
 

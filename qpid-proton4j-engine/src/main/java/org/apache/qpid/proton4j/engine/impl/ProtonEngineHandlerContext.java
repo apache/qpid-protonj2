@@ -28,7 +28,7 @@ import org.apache.qpid.proton4j.engine.ProtocolFrame;
 import org.apache.qpid.proton4j.engine.SaslFrame;
 
 /**
- * Context for a registered TransportHandler
+ * Context for a registered EngineHandler
  */
 public class ProtonEngineHandlerContext implements EngineHandlerContext {
 
@@ -36,12 +36,12 @@ public class ProtonEngineHandlerContext implements EngineHandlerContext {
     ProtonEngineHandlerContext next;
 
     private final String name;
-    private final Engine transport;
+    private final Engine engine;
     private final EngineHandler handler;
 
-    public ProtonEngineHandlerContext(String name, Engine transport, EngineHandler handler) {
+    public ProtonEngineHandlerContext(String name, Engine engine, EngineHandler handler) {
         this.name = name;
-        this.transport = transport;
+        this.engine = engine;
         this.handler = handler;
     }
 
@@ -56,8 +56,8 @@ public class ProtonEngineHandlerContext implements EngineHandlerContext {
     }
 
     @Override
-    public Engine getTransport() {
-        return transport;
+    public Engine getEngine() {
+        return engine;
     }
 
     @Override

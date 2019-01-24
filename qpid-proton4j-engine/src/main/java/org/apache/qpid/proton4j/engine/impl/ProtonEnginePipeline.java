@@ -82,6 +82,12 @@ public class ProtonEnginePipeline implements EnginePipeline {
         oldFirst.previous = newFirst;
         head.next = newFirst;
 
+        try {
+            newFirst.getHandler().handlerAdded(newFirst);
+        } catch (Exception e) {
+            // TODO - Log the error and move on ?
+        };
+
         return this;
     }
 
@@ -104,6 +110,12 @@ public class ProtonEnginePipeline implements EnginePipeline {
         oldLast.next = newLast;
         tail.previous = newLast;
 
+        try {
+            newLast.getHandler().handlerAdded(newLast);
+        } catch (Exception e) {
+            // TODO - Log the error and move on ?
+        };
+
         return this;
     }
 
@@ -114,6 +126,12 @@ public class ProtonEnginePipeline implements EnginePipeline {
 
             head.next = oldFirst.next;
             head.next.previous = head;
+
+            try {
+                oldFirst.getHandler().handlerRemoved(oldFirst);
+            } catch (Exception e) {
+                // TODO - Log the error and move on ?
+            };
         }
 
         return this;
@@ -126,6 +144,12 @@ public class ProtonEnginePipeline implements EnginePipeline {
 
             tail.previous = oldLast.previous;
             tail.previous.next = tail;
+
+            try {
+                oldLast.getHandler().handlerRemoved(oldLast);
+            } catch (Exception e) {
+                // TODO - Log the error and move on ?
+            };
         }
 
         return this;
@@ -135,8 +159,11 @@ public class ProtonEnginePipeline implements EnginePipeline {
     public EnginePipeline remove(String name) {
         if (name != null && !name.isEmpty()) {
             ProtonEngineHandlerContext current = head.next;
+            ProtonEngineHandlerContext removed = null;
             while (current != tail) {
                 if (current.getName().equals(name)) {
+                    removed = current;
+
                     ProtonEngineHandlerContext newNext = current.next;
 
                     current.previous.next = newNext;
@@ -146,6 +173,14 @@ public class ProtonEnginePipeline implements EnginePipeline {
                 }
 
                 current = current.next;
+            }
+
+            if (removed != null) {
+                try {
+                    removed.getHandler().handlerRemoved(removed);
+                } catch (Exception e) {
+                    // TODO - Log the error and move on ?
+                };
             }
         }
 

@@ -46,6 +46,8 @@ public class ProtonFrameWritingHandler extends EngineHandlerAdapter {
     private long remoteMaxFrameSize = -1;
     private long outgoingMaxFrameSize;  // TODO
 
+    private ProtonEngine engine;
+
     public Encoder getEndoer() {
         return encoder;
     }
@@ -66,12 +68,15 @@ public class ProtonFrameWritingHandler extends EngineHandlerAdapter {
     public void handlerAdded(EngineHandlerContext context) throws Exception {
         saslEncoderState = getSaslEndoer().newEncoderState();
         encoderState = getEndoer().newEncoderState();
+        engine = (ProtonEngine) context.getEngine();
     }
 
     @Override
     public void handlerRemoved(EngineHandlerContext context) throws Exception {
         saslEncoderState = null;
+        encoderState = null;
         encoder = null;
+        engine = null;
     }
 
     @Override
