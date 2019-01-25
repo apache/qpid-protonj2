@@ -46,6 +46,9 @@ public class ProtonFrameParser {
 
     private static final int AMQP_HEADER_BYTES = 8;
 
+    public static final byte AMQP_FRAME_TYPE = (byte) 0;
+    public static final byte SASL_FRAME_TYPE = (byte) 1;
+
     private final ProtocolFramePool framePool = ProtocolFramePool.DEFAULT;
     private final EngineHandler handler;
     private final Decoder decoder;
@@ -122,7 +125,7 @@ public class ProtonFrameParser {
      */
     public void parse(EngineHandlerContext context, ProtonBuffer input) throws IOException {
         try {
-            stage.parse(context, this, input);
+            stage.parse(context, input);
         } catch (IOException ex) {
             transitionToErrorStage(ex).fireError();
         }
@@ -175,7 +178,7 @@ public class ProtonFrameParser {
          *
          * @throws IOException if an error occurs while parsing incoming data.
          */
-        void parse(EngineHandlerContext context, ProtonFrameParser parser, ProtonBuffer input) throws IOException;
+        void parse(EngineHandlerContext context, ProtonBuffer input) throws IOException;
 
         /**
          * Reset the stage to its defaults for a new cycle of parsing.
@@ -204,7 +207,7 @@ public class ProtonFrameParser {
         }
 
         @Override
-        public void parse(EngineHandlerContext context, ProtonFrameParser parser, ProtonBuffer incoming) throws IOException {
+        public void parse(EngineHandlerContext context, ProtonBuffer incoming) throws IOException {
             while (incoming.isReadable() && headerByte <= AMQP_HEADER_BYTES) {
                 byte c = incoming.readByte();
 
@@ -217,7 +220,7 @@ public class ProtonFrameParser {
             }
 
             // Transition to parsing the frames if any pipelined into this buffer.
-            parser.transitionToFrameSizeParsingStage();
+            transitionToFrameSizeParsingStage();
 
             // This probably isn't right as this fires to next not current.
             handler.handleRead(context, headerFrame);
@@ -238,7 +241,7 @@ public class ProtonFrameParser {
         private int multiplier = FRAME_SIZE_BTYES;
 
         @Override
-        public void parse(EngineHandlerContext context, ProtonFrameParser parser, ProtonBuffer input) throws IOException {
+        public void parse(EngineHandlerContext context, ProtonBuffer input) throws IOException {
             while (input.isReadable()) {
                 frameSize |= ((input.readByte() & 0xFF) << --multiplier * Byte.SIZE);
                 if (multiplier == 0) {
@@ -247,7 +250,7 @@ public class ProtonFrameParser {
             }
 
             if (multiplier == 0) {
-                validateFrameSize(parser);
+                validateFrameSize();
 
                 // Normalize the frame size to the reminder portion
                 frameSize -= FRAME_SIZE_BTYES;
@@ -258,17 +261,17 @@ public class ProtonFrameParser {
                     initializeFrameBodyParsingStage(frameSize);
                 }
 
-                stage.parse(context, parser, input);
+                stage.parse(context, input);
             }
         }
 
-        private void validateFrameSize(ProtonFrameParser parser) throws IOException {
+        private void validateFrameSize() throws IOException {
             if (frameSize < 8) {
                throw new ProtonException(String.format(
                     "specified frame size %d smaller than minimum frame header size 8", frameSize));
             }
 
-            if (frameSize > parser.getMaxFrameSize()) {
+            if (frameSize > getMaxFrameSize()) {
                 throw new ProtonException(String.format(
                     "specified frame size %d larger than maximum frame size %d", frameSize, frameSizeLimit));
             }
@@ -287,7 +290,7 @@ public class ProtonFrameParser {
         private ProtonBuffer buffer;
 
         @Override
-        public void parse(EngineHandlerContext context, ProtonFrameParser parser, ProtonBuffer input) throws IOException {
+        public void parse(EngineHandlerContext context, ProtonBuffer input) throws IOException {
             if (input.getReadableBytes() < buffer.getWritableBytes()) {
                 buffer.writeBytes(input);
             } else {
@@ -296,7 +299,7 @@ public class ProtonFrameParser {
                 // Now we can consume the buffer frame body.
                 initializeFrameBodyParsingStage(buffer.getReadableBytes());
                 try {
-                    stage.parse(context, parser, buffer);
+                    stage.parse(context, buffer);
                 } finally {
                     buffer = null;
                 }
@@ -315,7 +318,7 @@ public class ProtonFrameParser {
         private int frameSize;
 
         @Override
-        public void parse(EngineHandlerContext context, ProtonFrameParser parser, ProtonBuffer input) throws IOException {
+        public void parse(EngineHandlerContext context, ProtonBuffer input) throws IOException {
             int dataOffset = (input.readByte() << 2) & 0x3FF;
 
             if (dataOffset < 8) {
@@ -330,7 +333,7 @@ public class ProtonFrameParser {
             int type = input.readByte() & 0xFF;
             short channel = input.readShort();
 
-            if (type != 0) {
+            if (type != AMQP_FRAME_TYPE) {
                 throw new ProtonException(String.format("unknown frame type: %d", type));
             }
 
@@ -360,9 +363,9 @@ public class ProtonFrameParser {
             }
 
             if (val instanceof Performative) {
-                Performative frameBody = (Performative) val;
-                LOG.trace("IN: {} CH[{}] : {} [{}]", channel, frameBody, payload);
-                ProtocolFrame frame = framePool.take(frameBody, channel, payload);
+                Performative performative = (Performative) val;
+                LOG.trace("IN: CH[{}] : {} [{}]", channel, performative, payload);
+                ProtocolFrame frame = framePool.take(performative, channel, payload);
                 // This probably isn't right as this fires to next not current.
                 transitionToFrameSizeParsingStage();
                 handler.handleRead(context, frame);
@@ -383,12 +386,10 @@ public class ProtonFrameParser {
 
     private class SaslFrameBodyParsingStage implements FrameParserStage {
 
-        public static final byte SASL_FRAME_TYPE = (byte) 1;
-
         private int frameSize;
 
         @Override
-        public void parse(EngineHandlerContext context, ProtonFrameParser parser, ProtonBuffer input) throws IOException {
+        public void parse(EngineHandlerContext context,ProtonBuffer input) throws IOException {
             int dataOffset = (input.readByte() << 2) & 0x3FF;
 
             if (dataOffset < 8) {
@@ -429,6 +430,7 @@ public class ProtonFrameParser {
 
             if (val instanceof SaslPerformative) {
                 SaslPerformative performative = (SaslPerformative) val;
+                LOG.trace("IN: {} [{}]", performative, payload);
                 SaslFrame saslFrame = new SaslFrame(performative, payload);
                 // This probably isn't right as this fires to next not current.
                 transitionToFrameSizeParsingStage();
@@ -465,7 +467,7 @@ public class ProtonFrameParser {
         }
 
         @Override
-        public void parse(EngineHandlerContext context, ProtonFrameParser parser, ProtonBuffer input) throws IOException {
+        public void parse(EngineHandlerContext context, ProtonBuffer input) throws IOException {
             throw parsingError;
         }
 
