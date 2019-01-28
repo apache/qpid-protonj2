@@ -16,8 +16,6 @@
  */
 package org.apache.qpid.proton4j.engine;
 
-import org.apache.qpid.proton4j.buffer.ProtonBufferAllocator;
-
 /**
  * AMQP Engine interface.
  */
@@ -28,23 +26,6 @@ public interface Engine {
     Connection start();
 
     void shutdown();
-
-    /**
-     * Sets the ProtonBufferAllocator used by this Transport.
-     * <p>
-     * When copying data, encoding types or otherwise needing to allocate memory
-     * storage the Transport will use the assigned {@link ProtonBufferAllocator}.
-     * If no allocator is assigned the Transport will use the default allocator.
-     *
-     * @param allocator
-     *      The Allocator instance to use from this Transport.
-     */
-    void setBufferAllocator(ProtonBufferAllocator allocator);
-
-    /**
-     * @return the currently assigned {@link ProtonBufferAllocator}.
-     */
-    ProtonBufferAllocator getBufferAllocator();
 
     /**
      * Sets a TransportListener to be notified of events on this Transport

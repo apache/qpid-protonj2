@@ -16,7 +16,6 @@
  */
 package org.apache.qpid.proton4j.engine.impl;
 
-import org.apache.qpid.proton4j.buffer.ProtonBufferAllocator;
 import org.apache.qpid.proton4j.engine.Connection;
 import org.apache.qpid.proton4j.engine.Engine;
 import org.apache.qpid.proton4j.engine.EngineConfiguration;
@@ -30,7 +29,7 @@ public class ProtonEngine implements Engine {
 
     private final ProtonEnginePipeline pipeline;
 
-    private ProtonBufferAllocator bufferAllocator;
+    private ProtonEngineConfiguration configuration;
     private EngineListener listener;
 
     public ProtonEngine() {
@@ -51,16 +50,6 @@ public class ProtonEngine implements Engine {
     //----- Transport configuration ------------------------------------------//
 
     @Override
-    public void setBufferAllocator(ProtonBufferAllocator allocator) {
-        this.bufferAllocator = allocator;
-    }
-
-    @Override
-    public ProtonBufferAllocator getBufferAllocator() {
-        return bufferAllocator;
-    }
-
-    @Override
     public EnginePipeline getPipeline() {
         return pipeline;
     }
@@ -77,7 +66,6 @@ public class ProtonEngine implements Engine {
 
     @Override
     public EngineConfiguration getConfiguration() {
-        // TODO
-        return null;
+        return configuration;
     }
 }

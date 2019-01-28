@@ -18,74 +18,45 @@ package org.apache.qpid.proton4j.engine.impl;
 
 import org.apache.qpid.proton4j.amqp.security.SaslPerformative;
 import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
-import org.apache.qpid.proton4j.amqp.transport.Open;
 import org.apache.qpid.proton4j.amqp.transport.Performative;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import org.apache.qpid.proton4j.buffer.ProtonBufferAllocator;
 import org.apache.qpid.proton4j.codec.CodecFactory;
 import org.apache.qpid.proton4j.codec.Encoder;
 import org.apache.qpid.proton4j.codec.EncoderState;
 import org.apache.qpid.proton4j.engine.EngineHandlerAdapter;
 import org.apache.qpid.proton4j.engine.EngineHandlerContext;
-import org.apache.qpid.proton4j.engine.ProtocolFrame;
 
 /**
  * Handler that encodes performatives into properly formed frames for IO
  */
 public class ProtonFrameWritingHandler extends EngineHandlerAdapter {
 
-    private static final InboudPerformativeHandler inboundSpy = new InboudPerformativeHandler();
-    private static final OutboudPerformativeHandler outboundSpy = new OutboudPerformativeHandler();
+    public static final byte AMQP_FRAME_TYPE = (byte) 0;
+    public static final byte SASL_FRAME_TYPE = (byte) 1;
 
-    private Encoder saslEncoder = CodecFactory.getSaslEncoder();
-    private Encoder encoder = CodecFactory.getEncoder();
+    private static final int AMQP_PERFORMATIVE_PAD = 256;
+    private static final int FRAME_HEADER_SIZE = 8;
 
-    private EncoderState saslEncoderState;
-    private EncoderState encoderState;
+    private static final int FRAME_START_BYTE = 0;
+    private static final int FRAME_DOFF_BYTE = 4;
+    private static final int FRAME_DOFF_SIZE = 2;
+    private static final int FRAME_TYPE_BYTE = 5;
+    private static final int FRAME_CHANNEL_BYTE = 6;
 
-    private long localMaxFrameSize = -1;
-    private long remoteMaxFrameSize = -1;
-    private long outgoingMaxFrameSize;  // TODO
+    private final Encoder saslEncoder = CodecFactory.getSaslEncoder();
+    private final EncoderState saslEncoderState = saslEncoder.newEncoderState();
+    private final Encoder amqpEncoder = CodecFactory.getEncoder();
+    private final EncoderState amqpEncoderState = amqpEncoder.newEncoderState();
 
     private ProtonEngine engine;
-
-    public Encoder getEndoer() {
-        return encoder;
-    }
-
-    public void setEncoder(Encoder encoder) {
-        this.encoder = encoder;
-    }
-
-    public Encoder getSaslEndoer() {
-        return saslEncoder;
-    }
-
-    public void setSaslEncoder(Encoder encoder) {
-        this.saslEncoder = encoder;
-    }
+    private ProtonEngineConfiguration configuration;
+    private ProtonBufferAllocator allocator;
 
     @Override
     public void handlerAdded(EngineHandlerContext context) throws Exception {
-        saslEncoderState = getSaslEndoer().newEncoderState();
-        encoderState = getEndoer().newEncoderState();
         engine = (ProtonEngine) context.getEngine();
-    }
-
-    @Override
-    public void handlerRemoved(EngineHandlerContext context) throws Exception {
-        saslEncoderState = null;
-        encoderState = null;
-        encoder = null;
-        engine = null;
-    }
-
-    @Override
-    public void handleRead(EngineHandlerContext context, ProtocolFrame frame) {
-        // Spy on incoming frames to gather remote configuration
-        // TODO - Or Engine always has a Connection and we ask it ?
-        frame.getBody().invoke(inboundSpy, frame.getPayload(), this);
-
-        context.fireRead(frame);
+        configuration = (ProtonEngineConfiguration) engine.getConfiguration();
     }
 
     @Override
@@ -95,55 +66,59 @@ public class ProtonFrameWritingHandler extends EngineHandlerAdapter {
 
     @Override
     public void handleWrite(EngineHandlerContext context, Performative performative, short channel, ProtonBuffer payload, Runnable payloadToLarge) {
-        try {
-            performative.invoke(outboundSpy, payload, this);
-        } finally {
-            encoderState.reset();
-        }
+        context.fireWrite(writeFrame(amqpEncoder, amqpEncoderState, performative, payload, AMQP_FRAME_TYPE, channel, configuration.getOutboundMaxFrameSize(), payloadToLarge));
     }
 
     @Override
     public void handleWrite(EngineHandlerContext context, SaslPerformative performative) {
-        try {
-            // TODO
-        } finally {
-            saslEncoderState.reset();
+        context.fireWrite(writeFrame(saslEncoder, saslEncoderState, performative, null, SASL_FRAME_TYPE, (short) 0, configuration.getOutboundMaxFrameSize(), null));
+    }
+
+    private ProtonBuffer writeFrame(Encoder encoder, EncoderState encoderState, Object performative, ProtonBuffer payload, byte frameType, short channel, int maxFrameSize, Runnable onPayloadTooLarge) {
+        int outputBufferSize = AMQP_PERFORMATIVE_PAD + (payload != null ? payload.getReadableBytes() : 0);
+
+        ProtonBuffer output = allocator.outputBuffer(AMQP_PERFORMATIVE_PAD + outputBufferSize);
+
+        final int performativeSize = writePerformative(encoder, encoderState, performative, payload, maxFrameSize, output, onPayloadTooLarge);
+        final int capacity = maxFrameSize > 0 ? maxFrameSize - performativeSize : Integer.MAX_VALUE;
+        final int payloadSize = Math.min(payload == null ? 0 : payload.getReadableBytes(), capacity);
+
+        if (payloadSize > 0) {
+            output.writeBytes(payload, payloadSize);
         }
+
+        endFrame(output, frameType, channel);
+
+        return output;
     }
 
-    //----- Internal Frame Writer implementation
+    private int writePerformative(Encoder encoder, EncoderState encoderState, Object performative, ProtonBuffer payload, int maxFrameSize, ProtonBuffer output, Runnable onPayloadTooLarge) {
+        output.setWriteIndex(FRAME_HEADER_SIZE);
 
-    private void setLocalMaxFrameSize(long localMaxFrameSize) {
-        this.localMaxFrameSize = localMaxFrameSize;
-        computeMaxOutgoingFrameSize(localMaxFrameSize, remoteMaxFrameSize);
-    }
-
-    private void setRemoteMaxFrameSize(long remoteMaxFrameSize) {
-        this.remoteMaxFrameSize = remoteMaxFrameSize;
-        computeMaxOutgoingFrameSize(localMaxFrameSize, remoteMaxFrameSize);
-    }
-
-    private static void computeMaxOutgoingFrameSize(long localMaxFrameSize, long remoteMaxFrameSize) {
-        // TODO - decide on defaults when neither sets a max etc
-    }
-
-    private static class OutboudPerformativeHandler implements Performative.PerformativeHandler<ProtonFrameWritingHandler> {
-
-        @Override
-        public void handleOpen(Open open, ProtonBuffer payload, ProtonFrameWritingHandler context) {
-            if (open.getMaxFrameSize() != null) {
-                context.setLocalMaxFrameSize(open.getMaxFrameSize().longValue());
+        if (performative != null) {
+            try {
+                encoder.writeObject(output, encoderState, performative);
+            } finally {
+                encoderState.reset();
             }
         }
+
+        int performativeSize = output.getReadIndex();
+
+        if (onPayloadTooLarge != null && maxFrameSize > 0 && payload != null && (payload.getReadableBytes() + performativeSize) > maxFrameSize) {
+            // Next iteration will re-encode the frame body again with updates from the <payload-to-large>
+            // handler and then we can move onto the body portion.
+            onPayloadTooLarge.run();
+            performativeSize = writePerformative(encoder, encoderState, performative, payload, maxFrameSize, output, null);
+        }
+
+        return performativeSize;
     }
 
-    private static class InboudPerformativeHandler implements Performative.PerformativeHandler<ProtonFrameWritingHandler> {
-
-        @Override
-        public void handleOpen(Open open, ProtonBuffer payload, ProtonFrameWritingHandler context) {
-            if (open.getMaxFrameSize() != null) {
-                context.setRemoteMaxFrameSize(open.getMaxFrameSize().longValue());
-            }
-        }
+    private static void endFrame(ProtonBuffer output, byte frameType, int channel) {
+        output.setInt(FRAME_START_BYTE, output.getReadableBytes());
+        output.setByte(FRAME_DOFF_BYTE, FRAME_DOFF_SIZE);
+        output.setByte(FRAME_TYPE_BYTE, frameType);
+        output.setShort(FRAME_CHANNEL_BYTE, (short) channel);
     }
 }

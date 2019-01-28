@@ -16,6 +16,8 @@
  */
 package org.apache.qpid.proton4j.engine;
 
+import org.apache.qpid.proton4j.buffer.ProtonBufferAllocator;
+
 /**
  * Configuration options for the Engine
  */
@@ -30,5 +32,22 @@ public interface EngineConfiguration {
      * @return the maximum frame size that the Engine will accept.
      */
     int getMaxFrameSize();
+
+    /**
+     * Sets the ProtonBufferAllocator used by this Engine.
+     * <p>
+     * When copying data, encoding types or otherwise needing to allocate memory
+     * storage the Engine will use the assigned {@link ProtonBufferAllocator}.
+     * If no allocator is assigned the Engine will use the default allocator.
+     *
+     * @param allocator
+     *      The Allocator instance to use from this {@link Engine}.
+     */
+    void setBufferAllocator(ProtonBufferAllocator allocator);
+
+    /**
+     * @return the currently assigned {@link ProtonBufferAllocator}.
+     */
+    ProtonBufferAllocator getBufferAllocator();
 
 }
