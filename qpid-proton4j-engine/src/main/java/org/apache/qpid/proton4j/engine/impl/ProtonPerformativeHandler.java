@@ -31,7 +31,6 @@ import org.apache.qpid.proton4j.amqp.transport.Transfer;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.CodecFactory;
 import org.apache.qpid.proton4j.codec.Decoder;
-import org.apache.qpid.proton4j.codec.Encoder;
 import org.apache.qpid.proton4j.engine.EngineHandlerAdapter;
 import org.apache.qpid.proton4j.engine.EngineHandlerContext;
 import org.apache.qpid.proton4j.engine.ProtocolFrame;
@@ -47,7 +46,6 @@ public class ProtonPerformativeHandler extends EngineHandlerAdapter implements P
     private final ProtonConnection connection;
 
     private Decoder decoder = CodecFactory.getDecoder();
-    private Encoder encoder = CodecFactory.getEncoder();
 
     private int maxFrameSizeLimit = MIN_MAX_AMQP_FRAME_SIZE;
 
@@ -55,22 +53,6 @@ public class ProtonPerformativeHandler extends EngineHandlerAdapter implements P
 
     public ProtonPerformativeHandler(ProtonConnection connection) {
         this.connection = connection;
-    }
-
-    public Encoder getEndoer() {
-        return encoder;
-    }
-
-    public void setEncoder(Encoder encoder) {
-        this.encoder = encoder;
-    }
-
-    public Decoder getDecoder() {
-        return decoder;
-    }
-
-    public void setDecoder(Decoder decoder) {
-        this.decoder = decoder;
     }
 
     public void setMaxFrameSize(int maxFrameSize) {
@@ -98,6 +80,8 @@ public class ProtonPerformativeHandler extends EngineHandlerAdapter implements P
         try {
             // Parse out each frame in the buffer until we reach an end state on SASL handling.
             // TODO - Should probably have a check here for transport state failed or not
+            // TODO - Would be nice to move frame parsing out to some other handler and let
+            //        this one simply process frames.
             while (buffer.isReadable()) {
                 frameParser.parse(context, buffer);
             }
@@ -135,6 +119,9 @@ public class ProtonPerformativeHandler extends EngineHandlerAdapter implements P
     }
 
     //----- Deal with the incoming AMQP performatives
+
+    // Here we can spy on incoming performatives and update engine state relative to
+    // those prior to sending along notifications to other handlers or to the connection.
 
     @Override
     public void handleOpen(Open open, ProtonBuffer payload, ProtonConnection context) {

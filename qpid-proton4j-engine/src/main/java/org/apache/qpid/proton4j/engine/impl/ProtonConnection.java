@@ -20,6 +20,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.qpid.proton4j.amqp.Symbol;
+import org.apache.qpid.proton4j.amqp.transport.Performative;
 import org.apache.qpid.proton4j.engine.Connection;
 import org.apache.qpid.proton4j.engine.Engine;
 import org.apache.qpid.proton4j.engine.Session;
@@ -27,7 +28,7 @@ import org.apache.qpid.proton4j.engine.Session;
 /**
  * Implements the proton4j Connection API
  */
-public class ProtonConnection implements Connection {
+public class ProtonConnection implements Connection, Performative.PerformativeHandler<Integer> {
 
     private final Engine engine;
 
