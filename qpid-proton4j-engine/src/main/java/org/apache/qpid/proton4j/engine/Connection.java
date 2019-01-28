@@ -25,12 +25,37 @@ import org.apache.qpid.proton4j.amqp.Symbol;
  */
 public interface Connection extends Endpoint {
 
-    // TODO - Context feature, do we want something more that just one element of context ?
-    //
-    // void setContext(Object context);
-    // Object getContext();
-    // void setContext(String key, Object value);
-    // Object getContext(String key);
+    //----- Context associations for this Connection
+
+    /**
+     * Sets an application defined context value that will be carried with this {@link Connection} until
+     * cleared by the application.
+     *
+     * @param context
+     *      The context to associate with this connection.
+     */
+    void setContext(Object context);
+
+    /**
+     * @return the currently configured context that is associated with this {@link Connection}
+     */
+    Object getContext();
+
+    /**
+     * Sets or updates a named application defined context value that will be carried with this
+     * {@link Connection} until cleared by the application.
+     *
+     * @param key
+     *      The key used to identify the given context entry.
+     * @param value
+     *      The context value to assigned to the given key, or null to clear.
+     */
+    void setContextEntry(String key, Object value);
+
+    /**
+     * @return the context entry assigned to the given key or null of none assigned.
+     */
+    Object getContextEntry(String key);
 
     //----- Operations on local end of this Connection
 

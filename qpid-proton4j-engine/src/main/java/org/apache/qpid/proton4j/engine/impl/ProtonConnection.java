@@ -16,6 +16,7 @@
  */
 package org.apache.qpid.proton4j.engine.impl;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.qpid.proton4j.amqp.Symbol;
@@ -28,17 +29,40 @@ import org.apache.qpid.proton4j.engine.Session;
  */
 public class ProtonConnection implements Connection {
 
-    private final Engine transport;
+    private final Engine engine;
+
+    private Object context;
+    private Map<String, Object> contextEntries = new HashMap<>();
+
+    @Override
+    public void setContext(Object context) {
+        this.context = context;
+    }
+
+    @Override
+    public Object getContext() {
+        return context;
+    }
+
+    @Override
+    public void setContextEntry(String key, Object value) {
+        contextEntries.put(key, value);
+    }
+
+    @Override
+    public Object getContextEntry(String key) {
+        return contextEntries.get(key);
+    }
 
     /**
      * Create a new unbound Connection instance.
      */
-    public ProtonConnection(Engine transport) {
-        this.transport = transport;
+    public ProtonConnection(Engine engine) {
+        this.engine = engine;
     }
 
-    public Engine geTransport() {
-        return transport;
+    public Engine getEngine() {
+        return engine;
     }
 
     @Override
