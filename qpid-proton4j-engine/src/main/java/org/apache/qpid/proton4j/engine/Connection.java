@@ -25,38 +25,6 @@ import org.apache.qpid.proton4j.amqp.Symbol;
  */
 public interface Connection extends Endpoint {
 
-    //----- Context associations for this Connection
-
-    /**
-     * Sets an application defined context value that will be carried with this {@link Connection} until
-     * cleared by the application.
-     *
-     * @param context
-     *      The context to associate with this connection.
-     */
-    void setContext(Object context);
-
-    /**
-     * @return the currently configured context that is associated with this {@link Connection}
-     */
-    Object getContext();
-
-    /**
-     * Sets or updates a named application defined context value that will be carried with this
-     * {@link Connection} until cleared by the application.
-     *
-     * @param key
-     *      The key used to identify the given context entry.
-     * @param value
-     *      The context value to assigned to the given key, or null to clear.
-     */
-    void setContextEntry(String key, Object value);
-
-    /**
-     * @return the context entry assigned to the given key or null of none assigned.
-     */
-    Object getContextEntry(String key);
-
     //----- Operations on local end of this Connection
 
     /**
@@ -100,6 +68,32 @@ public interface Connection extends Endpoint {
     public String getHostname();
 
     /**
+     * Set the channel max value for this Connection.
+     *
+     * @param channelMax
+     *      The value to set for channel max when opening the connection.
+     */
+    public void setChannelMax(int channelMax);
+
+    /**
+     * @return the currently configured channel max for this {@link Connection}
+     */
+    public int getChannelMax();
+
+    /**
+     * Set the idle timeout value for this Connection.
+     *
+     * @param idleTimeout
+     *      The value to set for the idle timeout when opening the connection.
+     */
+    public void setIdleTimeout(int idleTimeout);
+
+    /**
+     * @return the currently configured idle timeout for this {@link Connection}
+     */
+    public int getIdleTimeout();
+
+    /**
      * Sets the capabilities to be offered on to the remote when this Connection is
      * opened.
      *
@@ -141,8 +135,6 @@ public interface Connection extends Endpoint {
     Map<Symbol, Object> getProperties();
 
     //----- View state of remote end of this Connection
-
-    // TODO - Define exception thrown if not yet remotely opened ?
 
     /**
      * @return the Container Id assigned to the remote end of the Connection.

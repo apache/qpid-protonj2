@@ -29,6 +29,8 @@ public class ProtonEngineConfiguration implements EngineConfiguration {
     private int maxFrameSize;
     private ProtonBufferAllocator allocator = ProtonByteBufferAllocator.DEFAULT;
 
+    private int remoteMaxFrameSize;
+
     @Override
     public int getSaslMaxFrameSize() {
         return saslMaxFrameSize;
@@ -45,6 +47,14 @@ public class ProtonEngineConfiguration implements EngineConfiguration {
 
     public void setMaxFrameSize(int maxFrameSize) {
         this.maxFrameSize = maxFrameSize;
+    }
+
+    public int getRemoteMaxFrameSize() {
+        return remoteMaxFrameSize;
+    }
+
+    public void setRemoteMaxFrameSize(int remoteMaxFrameSize) {
+        this.remoteMaxFrameSize = remoteMaxFrameSize;
     }
 
     public int getOutboundMaxFrameSize() {

@@ -40,7 +40,7 @@ public final class Open implements Performative {
     private Symbol[] incomingLocales;
     private Symbol[] offeredCapabilities;
     private Symbol[] desiredCapabilities;
-    private Map<Object, Object> properties;
+    private Map<Symbol, Object> properties;
 
     @Override
     public Open copy() {
@@ -146,11 +146,11 @@ public final class Open implements Performative {
         this.desiredCapabilities = desiredCapabilities;
     }
 
-    public Map<Object, Object> getProperties() {
+    public Map<Symbol, Object> getProperties() {
         return properties;
     }
 
-    public void setProperties(Map<Object, Object> properties) {
+    public void setProperties(Map<Symbol, Object> properties) {
         this.properties = properties;
     }
 

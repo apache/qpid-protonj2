@@ -31,4 +31,34 @@ public interface Endpoint {
      */
     public void close();
 
+    /**
+     * Sets an application defined context value that will be carried with this {@link Connection} until
+     * cleared by the application.
+     *
+     * @param context
+     *      The context to associate with this connection.
+     */
+    void setContext(Object context);
+
+    /**
+     * @return the currently configured context that is associated with this {@link Connection}
+     */
+    Object getContext();
+
+    /**
+     * Sets or updates a named application defined context value that will be carried with this
+     * {@link Connection} until cleared by the application.
+     *
+     * @param key
+     *      The key used to identify the given context entry.
+     * @param value
+     *      The context value to assigned to the given key, or null to clear.
+     */
+    void setContextEntry(String key, Object value);
+
+    /**
+     * @return the context entry assigned to the given key or null of none assigned.
+     */
+    Object getContextEntry(String key);
+
 }

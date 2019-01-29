@@ -18,7 +18,6 @@ package org.apache.qpid.proton4j.engine.impl;
 
 import org.apache.qpid.proton4j.engine.Connection;
 import org.apache.qpid.proton4j.engine.Engine;
-import org.apache.qpid.proton4j.engine.EngineConfiguration;
 import org.apache.qpid.proton4j.engine.EngineListener;
 import org.apache.qpid.proton4j.engine.EnginePipeline;
 
@@ -65,7 +64,7 @@ public class ProtonEngine implements Engine {
     }
 
     @Override
-    public EngineConfiguration getConfiguration() {
+    public ProtonEngineConfiguration getConfiguration() {
         return configuration;
     }
 }

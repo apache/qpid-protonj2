@@ -34,16 +34,19 @@ import org.apache.qpid.proton4j.codec.Decoder;
 import org.apache.qpid.proton4j.engine.EngineHandlerAdapter;
 import org.apache.qpid.proton4j.engine.EngineHandlerContext;
 import org.apache.qpid.proton4j.engine.ProtocolFrame;
+import org.apache.qpid.proton4j.engine.exceptions.ProtocolViolationException;
 
 /**
  * Transport Handler that forwards the incoming Performatives to the associated Connection
  * as well as any error encountered during the Transport processing.
  */
-public class ProtonPerformativeHandler extends EngineHandlerAdapter implements Performative.PerformativeHandler<ProtonConnection> {
+public class ProtonPerformativeHandler extends EngineHandlerAdapter implements Performative.PerformativeHandler<EngineHandlerContext> {
 
     private static final int MIN_MAX_AMQP_FRAME_SIZE = 512;
 
     private final ProtonConnection connection;
+    private final ProtonEngine engine;
+    private final ProtonEngineConfiguration configuration;
 
     private Decoder decoder = CodecFactory.getDecoder();
 
@@ -51,8 +54,10 @@ public class ProtonPerformativeHandler extends EngineHandlerAdapter implements P
 
     private ProtonFrameParser frameParser;
 
-    public ProtonPerformativeHandler(ProtonConnection connection) {
+    public ProtonPerformativeHandler(ProtonEngine engine, ProtonConnection connection) {
         this.connection = connection;
+        this.engine = engine;
+        this.configuration = engine.getConfiguration();
     }
 
     public void setMaxFrameSize(int maxFrameSize) {
@@ -94,10 +99,10 @@ public class ProtonPerformativeHandler extends EngineHandlerAdapter implements P
 
     @Override
     public void handleRead(EngineHandlerContext context, ProtocolFrame frame) {
-        // TODO - Handle errors thrown here?  Some other context ?
+        // TODO - If closed or failed we should reject incoming frames
 
         try {
-            frame.getBody().invoke(this, frame.getPayload(), frame.getChannel(), connection);
+            frame.getBody().invoke(this, frame.getPayload(), frame.getChannel(), context);
         } finally {
             frame.release();
         }
@@ -105,17 +110,17 @@ public class ProtonPerformativeHandler extends EngineHandlerAdapter implements P
 
     @Override
     public void transportEncodingError(EngineHandlerContext context, Throwable e) {
-        // TODO signal error to the connection
+        // TODO signal error to the connection, try and differentiate between fatal and non-fatal conditions ?
     }
 
     @Override
     public void transportDecodingError(EngineHandlerContext context, Throwable e) {
-        // TODO signal error to the connection
+        // TODO signal error to the connection, try and differentiate between fatal and non-fatal conditions ?
     }
 
     @Override
     public void transportFailed(EngineHandlerContext context, Throwable e) {
-        // TODO signal error to the connection
+        // TODO signal error to the connection and move transport state to failed.
     }
 
     //----- Deal with the incoming AMQP performatives
@@ -124,38 +129,56 @@ public class ProtonPerformativeHandler extends EngineHandlerAdapter implements P
     // those prior to sending along notifications to other handlers or to the connection.
 
     @Override
-    public void handleOpen(Open open, ProtonBuffer payload, int channel, ProtonConnection context) {
+    public void handleOpen(Open open, ProtonBuffer payload, int channel, EngineHandlerContext context) {
+        if (channel != 0) {
+            transportFailed(context, new ProtocolViolationException("Open not sent on channel zero"));
+        }
+
+        if (open.getMaxFrameSize() != null) {
+            configuration.setRemoteMaxFrameSize(open.getMaxFrameSize().intValue());
+        }
+
+        // TODO - Define the error from these methods, IOException other ?
+        connection.handleOpen(open, payload, channel, engine);
     }
 
     @Override
-    public void handleBegin(Begin begin, ProtonBuffer payload, int channel, ProtonConnection context) {
+    public void handleBegin(Begin begin, ProtonBuffer payload, int channel, EngineHandlerContext context) {
+        connection.handleBegin(begin, payload, channel, engine);
     }
 
     @Override
-    public void handleAttach(Attach attach, ProtonBuffer payload, int channel, ProtonConnection context) {
+    public void handleAttach(Attach attach, ProtonBuffer payload, int channel, EngineHandlerContext context) {
+        connection.handleAttach(attach, payload, channel, engine);
     }
 
     @Override
-    public void handleFlow(Flow flow, ProtonBuffer payload, int channel, ProtonConnection context) {
+    public void handleFlow(Flow flow, ProtonBuffer payload, int channel, EngineHandlerContext context) {
+        connection.handleFlow(flow, payload, channel, engine);
     }
 
     @Override
-    public void handleTransfer(Transfer transfer, ProtonBuffer payload, int channel, ProtonConnection context) {
+    public void handleTransfer(Transfer transfer, ProtonBuffer payload, int channel, EngineHandlerContext context) {
+        connection.handleTransfer(transfer, payload, channel, engine);
     }
 
     @Override
-    public void handleDisposition(Disposition disposition, ProtonBuffer payload, int channel, ProtonConnection context) {
+    public void handleDisposition(Disposition disposition, ProtonBuffer payload, int channel, EngineHandlerContext context) {
+        connection.handleDisposition(disposition, payload, channel, engine);
     }
 
     @Override
-    public void handleDetach(Detach detach, ProtonBuffer payload, int channel, ProtonConnection context) {
+    public void handleDetach(Detach detach, ProtonBuffer payload, int channel, EngineHandlerContext context) {
+        connection.handleDetach(detach, payload, channel, engine);
     }
 
     @Override
-    public void handleEnd(End end, ProtonBuffer payload, int channel, ProtonConnection context) {
+    public void handleEnd(End end, ProtonBuffer payload, int channel, EngineHandlerContext context) {
+        connection.handleEnd(end, payload, channel, engine);
     }
 
     @Override
-    public void handleClose(Close close, ProtonBuffer payload, int channel, ProtonConnection context) {
+    public void handleClose(Close close, ProtonBuffer payload, int channel, EngineHandlerContext context) {
+        connection.handleClose(close, payload, channel, engine);
     }
 }
