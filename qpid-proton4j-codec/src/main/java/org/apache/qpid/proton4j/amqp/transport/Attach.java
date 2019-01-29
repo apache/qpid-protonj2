@@ -207,8 +207,8 @@ public final class Attach implements Performative {
     }
 
     @Override
-    public <E> void invoke(PerformativeHandler<E> handler, ProtonBuffer payload, E context) {
-        handler.handleAttach(this, payload, context);
+    public <E> void invoke(PerformativeHandler<E> handler, ProtonBuffer payload, int channel, E context) {
+        handler.handleAttach(this, payload, channel, context);
     }
 
     @Override

@@ -109,8 +109,8 @@ public final class Disposition implements Performative {
     }
 
     @Override
-    public <E> void invoke(PerformativeHandler<E> handler, ProtonBuffer payload, E context) {
-        handler.handleDisposition(this, payload, context);
+    public <E> void invoke(PerformativeHandler<E> handler, ProtonBuffer payload, int channel, E context) {
+        handler.handleDisposition(this, payload, channel, context);
     }
 
     @Override

@@ -315,8 +315,8 @@ public final class Flow implements Performative {
     }
 
     @Override
-    public <E> void invoke(PerformativeHandler<E> handler, ProtonBuffer payload, E context) {
-        handler.handleFlow(this, payload, context);
+    public <E> void invoke(PerformativeHandler<E> handler, ProtonBuffer payload, int channel, E context) {
+        handler.handleFlow(this, payload, channel, context);
     }
 
     @Override

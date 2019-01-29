@@ -48,8 +48,8 @@ public final class End implements Performative {
     }
 
     @Override
-    public <E> void invoke(PerformativeHandler<E> handler, ProtonBuffer payload, E context) {
-        handler.handleEnd(this, payload, context);
+    public <E> void invoke(PerformativeHandler<E> handler, ProtonBuffer payload, int channel, E context) {
+        handler.handleEnd(this, payload, channel, context);
     }
 
     @Override

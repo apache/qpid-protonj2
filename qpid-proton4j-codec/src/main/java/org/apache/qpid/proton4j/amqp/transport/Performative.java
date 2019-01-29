@@ -41,18 +41,18 @@ public interface Performative {
 
     interface PerformativeHandler<E> {
 
-        default void handleOpen(Open open, ProtonBuffer payload, E context) {}
-        default void handleBegin(Begin begin, ProtonBuffer payload, E context) {}
-        default void handleAttach(Attach attach, ProtonBuffer payload, E context) {}
-        default void handleFlow(Flow flow, ProtonBuffer payload, E context) {}
-        default void handleTransfer(Transfer transfer, ProtonBuffer payload, E context) {}
-        default void handleDisposition(Disposition disposition, ProtonBuffer payload, E context) {}
-        default void handleDetach(Detach detach, ProtonBuffer payload, E context) {}
-        default void handleEnd(End end, ProtonBuffer payload, E context) {}
-        default void handleClose(Close close, ProtonBuffer payload, E context) {}
+        default void handleOpen(Open open, ProtonBuffer payload, int channel, E context) {}
+        default void handleBegin(Begin begin, ProtonBuffer payload, int channel, E context) {}
+        default void handleAttach(Attach attach, ProtonBuffer payload, int channel, E context) {}
+        default void handleFlow(Flow flow, ProtonBuffer payload, int channel, E context) {}
+        default void handleTransfer(Transfer transfer, ProtonBuffer payload, int channel, E context) {}
+        default void handleDisposition(Disposition disposition, ProtonBuffer payload, int channel, E context) {}
+        default void handleDetach(Detach detach, ProtonBuffer payload, int channel, E context) {}
+        default void handleEnd(End end, ProtonBuffer payload, int channel, E context) {}
+        default void handleClose(Close close, ProtonBuffer payload, int channel, E context) {}
 
     }
 
-    <E> void invoke(PerformativeHandler<E> handler, ProtonBuffer payload, E context);
+    <E> void invoke(PerformativeHandler<E> handler, ProtonBuffer payload, int channel, E context);
 
 }

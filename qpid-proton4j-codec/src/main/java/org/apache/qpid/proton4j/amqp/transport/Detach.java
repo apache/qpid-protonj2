@@ -75,8 +75,8 @@ public final class Detach implements Performative {
     }
 
     @Override
-    public <E> void invoke(PerformativeHandler<E> handler, ProtonBuffer payload, E context) {
-        handler.handleDetach(this, payload, context);
+    public <E> void invoke(PerformativeHandler<E> handler, ProtonBuffer payload, int channel, E context) {
+        handler.handleDetach(this, payload, channel, context);
     }
 
     @Override

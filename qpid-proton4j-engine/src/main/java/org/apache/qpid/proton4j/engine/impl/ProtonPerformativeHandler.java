@@ -97,7 +97,7 @@ public class ProtonPerformativeHandler extends EngineHandlerAdapter implements P
         // TODO - Handle errors thrown here?  Some other context ?
 
         try {
-            frame.getBody().invoke(this, frame.getPayload(), connection);
+            frame.getBody().invoke(this, frame.getPayload(), frame.getChannel(), connection);
         } finally {
             frame.release();
         }
@@ -124,38 +124,38 @@ public class ProtonPerformativeHandler extends EngineHandlerAdapter implements P
     // those prior to sending along notifications to other handlers or to the connection.
 
     @Override
-    public void handleOpen(Open open, ProtonBuffer payload, ProtonConnection context) {
+    public void handleOpen(Open open, ProtonBuffer payload, int channel, ProtonConnection context) {
     }
 
     @Override
-    public void handleBegin(Begin begin, ProtonBuffer payload, ProtonConnection context) {
+    public void handleBegin(Begin begin, ProtonBuffer payload, int channel, ProtonConnection context) {
     }
 
     @Override
-    public void handleAttach(Attach attach, ProtonBuffer payload, ProtonConnection context) {
+    public void handleAttach(Attach attach, ProtonBuffer payload, int channel, ProtonConnection context) {
     }
 
     @Override
-    public void handleFlow(Flow flow, ProtonBuffer payload, ProtonConnection context) {
+    public void handleFlow(Flow flow, ProtonBuffer payload, int channel, ProtonConnection context) {
     }
 
     @Override
-    public void handleTransfer(Transfer transfer, ProtonBuffer payload, ProtonConnection context) {
+    public void handleTransfer(Transfer transfer, ProtonBuffer payload, int channel, ProtonConnection context) {
     }
 
     @Override
-    public void handleDisposition(Disposition disposition, ProtonBuffer payload, ProtonConnection context) {
+    public void handleDisposition(Disposition disposition, ProtonBuffer payload, int channel, ProtonConnection context) {
     }
 
     @Override
-    public void handleDetach(Detach detach, ProtonBuffer payload, ProtonConnection context) {
+    public void handleDetach(Detach detach, ProtonBuffer payload, int channel, ProtonConnection context) {
     }
 
     @Override
-    public void handleEnd(End end, ProtonBuffer payload, ProtonConnection context) {
+    public void handleEnd(End end, ProtonBuffer payload, int channel, ProtonConnection context) {
     }
 
     @Override
-    public void handleClose(Close close, ProtonBuffer payload, ProtonConnection context) {
+    public void handleClose(Close close, ProtonBuffer payload, int channel, ProtonConnection context) {
     }
 }
