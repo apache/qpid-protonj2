@@ -16,6 +16,8 @@
  */
 package org.apache.qpid.proton4j.engine;
 
+import org.apache.qpid.proton4j.amqp.transport.ErrorCondition;
+
 /**
  * Represents one end of an AMQP Resource.
  */
@@ -60,5 +62,25 @@ public interface Endpoint {
      * @return the context entry assigned to the given key or null of none assigned.
      */
     Object getContextEntry(String key);
+
+    /**
+     * @return the local endpoint state
+     */
+    public EndpointState getLocalState();
+
+    /**
+     * @return the local endpoint error, or null if there is none
+     */
+    public ErrorCondition getLocalCondition();
+
+    /**
+     * @return the remote endpoint state (as last communicated)
+     */
+    public EndpointState getRemoteState();
+
+    /**
+     * @return the remote endpoint error, or null if there is none
+     */
+    public ErrorCondition getRemoteCondition();
 
 }

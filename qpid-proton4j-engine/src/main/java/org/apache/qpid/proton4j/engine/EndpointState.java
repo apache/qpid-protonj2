@@ -21,7 +21,9 @@ package org.apache.qpid.proton4j.engine;
  */
 public enum EndpointState {
     IDLE,
+    // PENDING_OPEN,  TODO - State for remote opened already ?
     ACTIVE,
+    // PENGING_CLOSED, TODO - State for remote closed already ?
     DETACHED,
     CLOSED,
 }

@@ -18,7 +18,6 @@ package org.apache.qpid.proton4j.engine.impl;
 
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -37,44 +36,17 @@ import org.apache.qpid.proton4j.amqp.transport.Performative;
 import org.apache.qpid.proton4j.amqp.transport.Transfer;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.engine.Connection;
-import org.apache.qpid.proton4j.engine.EndpointState;
 import org.apache.qpid.proton4j.engine.Session;
 
 /**
  * Implements the proton4j Connection API
  */
-public class ProtonConnection implements Connection, Performative.PerformativeHandler<ProtonEngine> {
+public class ProtonConnection extends ProtonEndpoint implements Connection, Performative.PerformativeHandler<ProtonEngine> {
 
     private final ProtonEngine engine;
 
     private final Open localOpen = new Open();
     private Open remoteOpen;
-
-    private Object context;
-    private Map<String, Object> contextEntries = new HashMap<>();
-
-    private EndpointState localState = EndpointState.IDLE;
-    private EndpointState remoteState = EndpointState.IDLE;
-
-    @Override
-    public void setContext(Object context) {
-        this.context = context;
-    }
-
-    @Override
-    public Object getContext() {
-        return context;
-    }
-
-    @Override
-    public void setContextEntry(String key, Object value) {
-        contextEntries.put(key, value);
-    }
-
-    @Override
-    public Object getContextEntry(String key) {
-        return contextEntries.get(key);
-    }
 
     /**
      * Create a new unbound Connection instance.
@@ -85,14 +57,6 @@ public class ProtonConnection implements Connection, Performative.PerformativeHa
 
     public ProtonEngine getEngine() {
         return engine;
-    }
-
-    @Override
-    public void open() {
-    }
-
-    @Override
-    public void close() {
     }
 
     @Override
@@ -230,6 +194,20 @@ public class ProtonConnection implements Connection, Performative.PerformativeHa
     public Session session() {
         // TODO Auto-generated method stub
         return null;
+    }
+
+    //----- Handle internal state changes
+
+    @Override
+    void initiateLocalOpen() {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    void initiateLocalClose() {
+        // TODO Auto-generated method stub
+
     }
 
     //----- Handle performatives sent from the remote to this Connection
