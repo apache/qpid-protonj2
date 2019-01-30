@@ -20,6 +20,7 @@ import org.apache.qpid.proton4j.engine.Connection;
 import org.apache.qpid.proton4j.engine.Engine;
 import org.apache.qpid.proton4j.engine.EngineListener;
 import org.apache.qpid.proton4j.engine.EnginePipeline;
+import org.apache.qpid.proton4j.engine.EngineSaslContext;
 
 /**
  * The default Proton-J Transport implementation.
@@ -54,17 +55,23 @@ public class ProtonEngine implements Engine {
     }
 
     @Override
-    public void setTransportListener(EngineListener listener) {
+    public void setEngineListener(EngineListener listener) {
         this.listener = listener;
     }
 
     @Override
-    public EngineListener getTransportListener() {
+    public EngineListener getEngineListener() {
         return listener;
     }
 
     @Override
     public ProtonEngineConfiguration getConfiguration() {
         return configuration;
+    }
+
+    @Override
+    public EngineSaslContext getSaslContext() {
+        // TODO
+        return null;
     }
 }

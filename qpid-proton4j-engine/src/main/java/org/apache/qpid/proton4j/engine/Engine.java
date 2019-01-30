@@ -28,22 +28,22 @@ public interface Engine {
     void shutdown();
 
     /**
-     * Sets a TransportListener to be notified of events on this Transport
+     * Sets a EngineListener to be notified of events on this Engine
      *
      * @param listener
-     *      The TransportListener to notify
+     *      The EngineListener to notify
      */
-    void setTransportListener(EngineListener listener);
+    void setEngineListener(EngineListener listener);
 
     /**
-     * Gets the currently configured TransportListener instance.
+     * Gets the currently configured EngineListener instance.
      *
-     * @return the currently configured TransportListener.
+     * @return the currently configured EngineListener.
      */
-    EngineListener getTransportListener();
+    EngineListener getEngineListener();
 
     /**
-     * Gets the TransportPipeline for this Transport.
+     * Gets the EnginePipeline for this Engine.
      *
      * @return the {@link EnginePipeline} for this {@link Engine}.
      */
@@ -55,5 +55,13 @@ public interface Engine {
      * @return the configuration object for this engine.
      */
     EngineConfiguration getConfiguration();
+
+    /**
+     * Gets the SASL context for this engine, if not SASL layer is configured then a
+     * defacult no-op context should be returned that indicates this.
+     *
+     * @return the SASL context for the engine.
+     */
+    EngineSaslContext getSaslContext();
 
 }
