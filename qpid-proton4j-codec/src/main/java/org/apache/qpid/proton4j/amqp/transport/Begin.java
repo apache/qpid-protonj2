@@ -38,7 +38,7 @@ public final class Begin implements Performative {
     private UnsignedInteger handleMax = UnsignedInteger.valueOf(0xffffffff);
     private Symbol[] offeredCapabilities;
     private Symbol[] desiredCapabilities;
-    private Map<Object, Object> properties;
+    private Map<Symbol, Object> properties;
 
     @Override
     public PerformativeType getPerformativeType() {
@@ -135,11 +135,11 @@ public final class Begin implements Performative {
         this.desiredCapabilities = desiredCapabilities;
     }
 
-    public Map<Object, Object> getProperties() {
+    public Map<Symbol, Object> getProperties() {
         return properties;
     }
 
-    public void setProperties(Map<Object, Object> properties) {
+    public void setProperties(Map<Symbol, Object> properties) {
         this.properties = properties;
     }
 

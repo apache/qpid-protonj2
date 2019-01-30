@@ -41,8 +41,8 @@ public class BeginTypeCodecTest extends CodecTestSupport {
 
        Symbol[] offeredCapabilities = new Symbol[] {Symbol.valueOf("Cap-1"), Symbol.valueOf("Cap-2")};
        Symbol[] desiredCapabilities = new Symbol[] {Symbol.valueOf("Cap-3"), Symbol.valueOf("Cap-4")};
-       Map<Object, Object> properties = new HashMap<>();
-       properties.put("property", "value");
+       Map<Symbol, Object> properties = new HashMap<>();
+       properties.put(Symbol.valueOf("property"), "value");
 
        Begin input = new Begin();
 
@@ -66,7 +66,7 @@ public class BeginTypeCodecTest extends CodecTestSupport {
        assertEquals(UnsignedInteger.valueOf(255), result.getHandleMax());
        assertNotNull(result.getProperties());
        assertEquals(1, properties.size());
-       assertTrue(properties.containsKey("property"));
+       assertTrue(properties.containsKey(Symbol.valueOf("property")));
        assertArrayEquals(offeredCapabilities, result.getOfferedCapabilities());
        assertArrayEquals(desiredCapabilities, result.getDesiredCapabilities());
     }
