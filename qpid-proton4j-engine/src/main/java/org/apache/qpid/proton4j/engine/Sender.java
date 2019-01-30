@@ -21,9 +21,4 @@ package org.apache.qpid.proton4j.engine;
  */
 public interface Sender extends Link {
 
-    /**
-     * @return the parent {@link Session} of the Sender.
-     */
-    Session getSession();
-
 }

@@ -24,7 +24,6 @@ import java.util.Map;
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.transport.Attach;
 import org.apache.qpid.proton4j.amqp.transport.Begin;
-import org.apache.qpid.proton4j.amqp.transport.Close;
 import org.apache.qpid.proton4j.amqp.transport.Detach;
 import org.apache.qpid.proton4j.amqp.transport.Disposition;
 import org.apache.qpid.proton4j.amqp.transport.End;
@@ -202,11 +201,6 @@ public class ProtonSession extends ProtonEndpoint implements Session, Performati
 
     @Override
     public void handleEnd(End end, ProtonBuffer payload, int channel, ProtonEngine context) {
-
-    }
-
-    @Override
-    public void handleClose(Close close, ProtonBuffer payload, int channel, ProtonEngine context) {
 
     }
 }
