@@ -16,20 +16,30 @@
  */
 package org.apache.qpid.proton4j.engine;
 
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+
 /**
- * Listener for events from a Proton Transport implementation.
+ * Listener for events from a Proton Engine implementation.
  */
 public interface EngineListener {
 
     /**
-     * Called when the Transport has encountered an unrecoverable error
+     * Called when the Engine has encountered an unrecoverable error
      * and is now in a failed (closed) state an cannot process any more work.
      *
-     * @param transport
-     *      The Transport that has failed
+     * @param engine
+     *      The Engine that has failed
      * @param cause
      *      The error that indicates the reason for the failure.
      */
-    void onTransportFailed(Engine transport, Throwable cause);
+    void engineFailed(Engine engine, Throwable cause);
+
+    /**
+     * Provides data from the engine to be written to some external source
+     *
+     * TODO - Do we want to have the engine inform of writes or require a handler from
+     *        the client to handle this always.
+     */
+    void handleEngineOutput(Engine engine, ProtonBuffer output);
 
 }

@@ -16,6 +16,7 @@
  */
 package org.apache.qpid.proton4j.engine.impl;
 
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.engine.Connection;
 import org.apache.qpid.proton4j.engine.Engine;
 import org.apache.qpid.proton4j.engine.EngineListener;
@@ -23,7 +24,7 @@ import org.apache.qpid.proton4j.engine.EnginePipeline;
 import org.apache.qpid.proton4j.engine.EngineSaslContext;
 
 /**
- * The default Proton-J Transport implementation.
+ * The default proton4j Engine implementation.
  */
 public class ProtonEngine implements Engine {
 
@@ -73,5 +74,11 @@ public class ProtonEngine implements Engine {
     public EngineSaslContext getSaslContext() {
         // TODO
         return null;
+    }
+
+    @Override
+    public void ingest(ProtonBuffer input) {
+        // TODO - Error handling ?
+        pipeline.fireRead(input);
     }
 }

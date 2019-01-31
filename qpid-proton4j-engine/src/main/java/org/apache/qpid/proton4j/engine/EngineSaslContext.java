@@ -16,6 +16,8 @@
  */
 package org.apache.qpid.proton4j.engine;
 
+import org.apache.qpid.proton4j.engine.sasl.SaslConstants.SaslOutcomes;
+
 /**
  * Context for the Engine that exposes SASL state and configuration.
  * <p>
@@ -68,6 +70,13 @@ public interface EngineSaslContext {
     SaslState getSaslState();
 
     // TODO - Provide some information on the authenticated result (user etc)
+
+    /**
+     * Provides a low level outcome value for the SASL authentication process.
+     *
+     * @return the SASL outcome code that results from authentication
+     */
+    SaslOutcomes getSaslOutcome();
 
     //----- Configuration
 

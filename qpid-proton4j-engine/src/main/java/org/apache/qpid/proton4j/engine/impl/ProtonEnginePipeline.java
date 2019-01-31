@@ -294,7 +294,7 @@ public class ProtonEnginePipeline implements EnginePipeline {
             // TODO Decide on the exact error to be fired, move Transport to failed state.
             EngineListener listener = transport.getEngineListener();
             if (listener != null) {
-                listener.onTransportFailed(transport,
+                listener.engineFailed(transport,
                     new IOException("No handler processed Transport read event."));
             }
         }
@@ -304,7 +304,7 @@ public class ProtonEnginePipeline implements EnginePipeline {
             // TODO Decide on the exact error to be fired, move Transport to failed state.
             EngineListener listener = transport.getEngineListener();
             if (listener != null) {
-                listener.onTransportFailed(transport,
+                listener.engineFailed(transport,
                     new IOException("No handler processed AMQP Header event."));
             }
         }
@@ -314,7 +314,7 @@ public class ProtonEnginePipeline implements EnginePipeline {
             // TODO Decide on the exact error to be fired, move Transport to failed state.
             EngineListener listener = transport.getEngineListener();
             if (listener != null) {
-                listener.onTransportFailed(transport,
+                listener.engineFailed(transport,
                     new IOException("No handler processed SASL frame event."));
             }
         }
@@ -324,7 +324,7 @@ public class ProtonEnginePipeline implements EnginePipeline {
             // TODO Decide on the exact error to be fired, move Transport to failed state.
             EngineListener listener = transport.getEngineListener();
             if (listener != null) {
-                listener.onTransportFailed(transport,
+                listener.engineFailed(transport,
                     new IOException("No handler processed protocol frame event."));
             }
         }
@@ -334,7 +334,7 @@ public class ProtonEnginePipeline implements EnginePipeline {
             // TODO Decide on the exact error to be fired, move Transport to failed state.
             EngineListener listener = transport.getEngineListener();
             if (listener != null) {
-                listener.onTransportFailed(transport,
+                listener.engineFailed(transport,
                     new IOException("No handler processed encoding error.", e));
             }
         }
@@ -344,7 +344,7 @@ public class ProtonEnginePipeline implements EnginePipeline {
             // TODO Decide on the exact error to be fired, move Transport to failed state.
             EngineListener listener = transport.getEngineListener();
             if (listener != null) {
-                listener.onTransportFailed(transport,
+                listener.engineFailed(transport,
                     new IOException("No handler processed decoding error.", e));
             }
         }
@@ -354,7 +354,7 @@ public class ProtonEnginePipeline implements EnginePipeline {
             // TODO Decide on the exact error to be fired, move Transport to failed state.
             EngineListener listener = transport.getEngineListener();
             if (listener != null) {
-                listener.onTransportFailed(transport, e);
+                listener.engineFailed(transport, e);
             }
         }
     }
@@ -370,7 +370,7 @@ public class ProtonEnginePipeline implements EnginePipeline {
             // TODO Decide on the exact error to be fired, move Transport to failed state.
             EngineListener listener = transport.getEngineListener();
             if (listener != null) {
-                listener.onTransportFailed(transport,
+                listener.engineFailed(transport,
                     new IOException("No handler processed write AMQP Header event."));
             }
         }
@@ -380,7 +380,7 @@ public class ProtonEnginePipeline implements EnginePipeline {
             // TODO Decide on the exact error to be fired, move Transport to failed state.
             EngineListener listener = transport.getEngineListener();
             if (listener != null) {
-                listener.onTransportFailed(transport,
+                listener.engineFailed(transport,
                     new IOException("No handler processed write AMQP performative event."));
             }
         }
@@ -390,7 +390,7 @@ public class ProtonEnginePipeline implements EnginePipeline {
             // TODO Decide on the exact error to be fired, move Transport to failed state.
             EngineListener listener = transport.getEngineListener();
             if (listener != null) {
-                listener.onTransportFailed(transport,
+                listener.engineFailed(transport,
                     new IOException("No handler processed write SASL performative event."));
             }
         }
@@ -400,7 +400,7 @@ public class ProtonEnginePipeline implements EnginePipeline {
             // TODO Decide on the exact error to be fired, move Transport to failed state.
             EngineListener listener = transport.getEngineListener();
             if (listener != null) {
-                listener.onTransportFailed(transport,
+                listener.engineFailed(transport,
                     new IOException("No handler processed write data event."));
             }
         }
@@ -423,7 +423,7 @@ public class ProtonEnginePipeline implements EnginePipeline {
             // TODO Decide on the exact error to be fired, move Transport to failed state.
             EngineListener listener = transport.getEngineListener();
             if (listener != null) {
-                listener.onTransportFailed(transport,
+                listener.engineFailed(transport,
                     new IOException("No handler processed Transport read event."));
             }
         }
@@ -433,7 +433,7 @@ public class ProtonEnginePipeline implements EnginePipeline {
             // TODO Decide on the exact error to be fired, move Transport to failed state.
             EngineListener listener = transport.getEngineListener();
             if (listener != null) {
-                listener.onTransportFailed(transport,
+                listener.engineFailed(transport,
                     new IOException("No handler processed AMQP Header event."));
             }
         }
@@ -443,7 +443,7 @@ public class ProtonEnginePipeline implements EnginePipeline {
             // TODO Decide on the exact error to be fired, move Transport to failed state.
             EngineListener listener = transport.getEngineListener();
             if (listener != null) {
-                listener.onTransportFailed(transport,
+                listener.engineFailed(transport,
                     new IOException("No handler processed SASL frame event."));
             }
         }
@@ -453,7 +453,7 @@ public class ProtonEnginePipeline implements EnginePipeline {
             // TODO Decide on the exact error to be fired, move Transport to failed state.
             EngineListener listener = transport.getEngineListener();
             if (listener != null) {
-                listener.onTransportFailed(transport,
+                listener.engineFailed(transport,
                     new IOException("No handler processed protocol frame event."));
             }
         }
@@ -463,7 +463,7 @@ public class ProtonEnginePipeline implements EnginePipeline {
             // TODO Decide on the exact error to be fired, move Transport to failed state.
             EngineListener listener = transport.getEngineListener();
             if (listener != null) {
-                listener.onTransportFailed(transport,
+                listener.engineFailed(transport,
                     new IOException("No handler processed encoding error.", e));
             }
         }
@@ -473,7 +473,7 @@ public class ProtonEnginePipeline implements EnginePipeline {
             // TODO Decide on the exact error to be fired, move Transport to failed state.
             EngineListener listener = transport.getEngineListener();
             if (listener != null) {
-                listener.onTransportFailed(transport,
+                listener.engineFailed(transport,
                     new IOException("No handler processed decoding error.", e));
             }
         }
@@ -483,7 +483,7 @@ public class ProtonEnginePipeline implements EnginePipeline {
             // TODO Decide on the exact error to be fired, move Transport to failed state.
             EngineListener listener = transport.getEngineListener();
             if (listener != null) {
-                listener.onTransportFailed(transport, e);
+                listener.engineFailed(transport, e);
             }
         }
 
@@ -492,7 +492,7 @@ public class ProtonEnginePipeline implements EnginePipeline {
             // TODO Decide on the exact error to be fired, move Transport to failed state.
             EngineListener listener = transport.getEngineListener();
             if (listener != null) {
-                listener.onTransportFailed(transport,
+                listener.engineFailed(transport,
                     new IOException("No handler processed write AMQP Header event."));
             }
         }
@@ -502,7 +502,7 @@ public class ProtonEnginePipeline implements EnginePipeline {
             // TODO Decide on the exact error to be fired, move Transport to failed state.
             EngineListener listener = transport.getEngineListener();
             if (listener != null) {
-                listener.onTransportFailed(transport,
+                listener.engineFailed(transport,
                     new IOException("No handler processed write AMQP performative event."));
             }
         }
@@ -512,7 +512,7 @@ public class ProtonEnginePipeline implements EnginePipeline {
             // TODO Decide on the exact error to be fired, move Transport to failed state.
             EngineListener listener = transport.getEngineListener();
             if (listener != null) {
-                listener.onTransportFailed(transport,
+                listener.engineFailed(transport,
                     new IOException("No handler processed write SASL performative event."));
             }
         }
@@ -522,7 +522,7 @@ public class ProtonEnginePipeline implements EnginePipeline {
             // TODO Decide on the exact error to be fired, move Transport to failed state.
             EngineListener listener = transport.getEngineListener();
             if (listener != null) {
-                listener.onTransportFailed(transport,
+                listener.engineFailed(transport,
                     new IOException("No handler processed write data event."));
             }
         }

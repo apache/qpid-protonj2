@@ -16,16 +16,46 @@
  */
 package org.apache.qpid.proton4j.engine;
 
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+
 /**
  * AMQP Engine interface.
  */
 public interface Engine {
 
-    // TODO
+    //----- Engine control APIs
 
+    /**
+     * Starts the engine and returns a Connection that is bound to this Engine.
+     *
+     * @return the Connection bound to this engine.
+     *
+     * TODO - How do we want to surface the Connection, here or via some factory that
+     *        create an engine and binds it to a Connection etc ?
+     */
     Connection start();
 
+    /**
+     * Orderly shutdown of the engine, any open connection and associated sessions and
+     * session linked enpoints will be closed.
+     */
     void shutdown();
+
+    /**
+     * Provide data input for this Engine from some external source.
+     * <p>
+     * The provided {@link ProtonBuffer} should be a non-pooled buffer which the Engine
+     * will take ownership of and should not be modified or reused by the caller.
+     *
+     * @param input
+     *      The data to feed into to Engine.
+     *
+     * TODO - Exception thrown here.
+     * TODO - Do we want a simple high level input or leave it to some handler etc ?
+     */
+    void ingest(ProtonBuffer input);
+
+    //----- Engine configuration and state
 
     /**
      * Sets a EngineListener to be notified of events on this Engine
