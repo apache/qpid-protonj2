@@ -43,10 +43,14 @@ import org.apache.qpid.proton4j.engine.Session;
  */
 public class ProtonConnection extends ProtonEndpoint implements Connection, Performative.PerformativeHandler<ProtonEngine> {
 
+    private static final int SESSION_ARRAY_CHUNK_SIZE = 16;
+
     private final ProtonEngine engine;
 
     private final Open localOpen = new Open();
     private Open remoteOpen;
+
+    private ProtonSession[] localSessions = new ProtonSession[SESSION_ARRAY_CHUNK_SIZE];
 
     /**
      * Create a new unbound Connection instance.
@@ -208,6 +212,26 @@ public class ProtonConnection extends ProtonEndpoint implements Connection, Perf
     void initiateLocalClose() {
         // TODO Auto-generated method stub
 
+    }
+
+    int findFreeLocalChannel() {
+        for (int i = 0; i < localSessions.length; ++i) {
+            if (localSessions[i] == null) {
+                return i;
+            }
+        }
+
+        // resize to accommodate more sessions, new channel will be old length
+        int channel = localSessions.length;
+        localSessions = Arrays.copyOf(localSessions, localSessions.length + SESSION_ARRAY_CHUNK_SIZE);
+        return channel;
+    }
+
+    void freeLocalChannel(int localChannel) {
+        if (localChannel > localSessions.length) {
+            throw new IllegalArgumentException("Specified local channel is out of range: " + localChannel);
+        }
+        localSessions[localChannel] = null;
     }
 
     //----- Handle performatives sent from the remote to this Connection

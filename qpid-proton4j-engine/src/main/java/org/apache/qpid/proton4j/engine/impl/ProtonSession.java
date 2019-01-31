@@ -44,15 +44,26 @@ public class ProtonSession extends ProtonEndpoint implements Session, Performati
     private final Begin localBegin = new Begin();
     private Begin remoteBegin;
 
+    private int localChannel;
+
     private final ProtonConnection connection;
 
-    public ProtonSession(ProtonConnection connection) {
+    public ProtonSession(ProtonConnection connection, int localChannel) {
         this.connection = connection;
+        this.localChannel = localChannel;
     }
 
     @Override
     public Connection getConnection() {
         return connection;
+    }
+
+    public int getLocalChannel() {
+        return localChannel;
+    }
+
+    public int getRemoteChannel() {
+        return remoteBegin != null ? remoteBegin.getRemoteChannel().intValue() : -1;
     }
 
     @Override
