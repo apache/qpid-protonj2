@@ -23,6 +23,25 @@ import org.apache.qpid.proton4j.buffer.ProtonBuffer;
  */
 public interface Engine {
 
+    //----- Engine state
+
+    /**
+     * Returns true if the engine is accepting more input.
+     * <p>
+     * When false any attempts to write more data into the engine will result in an
+     * error being returned from the write operation.
+     *
+     * TODO What is the best why to reflect the error, how do we trigger changes
+     *
+     * @return true if the engine is current accepting more input.
+     */
+    boolean isWritable();
+
+    /**
+     * @return the current state of the engine.
+     */
+    EngineState getState();
+
     //----- Engine control APIs
 
     /**

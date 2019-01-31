@@ -22,6 +22,7 @@ import org.apache.qpid.proton4j.engine.Engine;
 import org.apache.qpid.proton4j.engine.EngineListener;
 import org.apache.qpid.proton4j.engine.EnginePipeline;
 import org.apache.qpid.proton4j.engine.EngineSaslContext;
+import org.apache.qpid.proton4j.engine.EngineState;
 
 /**
  * The default proton4j Engine implementation.
@@ -33,19 +34,40 @@ public class ProtonEngine implements Engine {
     private ProtonEngineConfiguration configuration;
     private EngineListener listener;
 
+    private boolean writable;
+    private EngineState state = EngineState.IDLE;
+
     public ProtonEngine() {
         this.pipeline = new ProtonEnginePipeline(this);
     }
 
     @Override
+    public boolean isWritable() {
+        return writable;
+    }
+
+    @Override
+    public EngineState getState() {
+        return state;
+    }
+
+    @Override
     public Connection start() {
+        state = EngineState.STARTED;
         // TODO Auto-generated method stub
         return null;
     }
 
     @Override
     public void shutdown() {
+        state = EngineState.SHUTDOWN;
         // TODO Auto-generated method stub
+    }
+
+    @Override
+    public void ingest(ProtonBuffer input) {
+        // TODO - Error handling ?
+        pipeline.fireRead(input);
     }
 
     //----- Transport configuration ------------------------------------------//
@@ -74,11 +96,5 @@ public class ProtonEngine implements Engine {
     public EngineSaslContext getSaslContext() {
         // TODO
         return null;
-    }
-
-    @Override
-    public void ingest(ProtonBuffer input) {
-        // TODO - Error handling ?
-        pipeline.fireRead(input);
     }
 }
