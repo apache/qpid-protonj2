@@ -38,9 +38,6 @@ import org.apache.qpid.proton4j.engine.Frame;
 import org.apache.qpid.proton4j.engine.HeaderFrame;
 import org.apache.qpid.proton4j.engine.SaslFrame;
 import org.apache.qpid.proton4j.engine.impl.ProtonEngine;
-import org.apache.qpid.proton4j.engine.sasl.SaslHandler;
-import org.apache.qpid.proton4j.engine.sasl.SaslServerContext;
-import org.apache.qpid.proton4j.engine.sasl.SaslServerListener;
 import org.apache.qpid.proton4j.engine.sasl.SaslConstants.SaslOutcomes;
 import org.apache.qpid.proton4j.engine.util.TestSupportTransportHandler;
 import org.junit.Before;
@@ -82,7 +79,7 @@ public class SaslHandlerTest {
             }
         });
 
-        transport.getPipeline().fireRead(new HeaderFrame(AMQPHeader.getRawAMQPHeader()));
+        transport.getPipeline().fireRead(new HeaderFrame(AMQPHeader.getAMQPHeader()));
 
         assertFalse("Should not receive a Header", headerRead.get());
 

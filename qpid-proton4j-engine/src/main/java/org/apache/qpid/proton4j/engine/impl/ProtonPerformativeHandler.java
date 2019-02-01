@@ -16,8 +16,6 @@
  */
 package org.apache.qpid.proton4j.engine.impl;
 
-import java.io.IOException;
-
 import org.apache.qpid.proton4j.amqp.transport.Attach;
 import org.apache.qpid.proton4j.amqp.transport.Begin;
 import org.apache.qpid.proton4j.amqp.transport.Close;
@@ -29,8 +27,6 @@ import org.apache.qpid.proton4j.amqp.transport.Open;
 import org.apache.qpid.proton4j.amqp.transport.Performative;
 import org.apache.qpid.proton4j.amqp.transport.Transfer;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
-import org.apache.qpid.proton4j.codec.CodecFactory;
-import org.apache.qpid.proton4j.codec.Decoder;
 import org.apache.qpid.proton4j.engine.EngineHandlerAdapter;
 import org.apache.qpid.proton4j.engine.EngineHandlerContext;
 import org.apache.qpid.proton4j.engine.ProtocolFrame;
@@ -48,11 +44,7 @@ public class ProtonPerformativeHandler extends EngineHandlerAdapter implements P
     private final ProtonEngine engine;
     private final ProtonEngineConfiguration configuration;
 
-    private Decoder decoder = CodecFactory.getDecoder();
-
     private int maxFrameSizeLimit = MIN_MAX_AMQP_FRAME_SIZE;
-
-    private ProtonFrameParser frameParser;
 
     public ProtonPerformativeHandler(ProtonEngine engine, ProtonConnection connection) {
         this.connection = connection;
@@ -69,33 +61,6 @@ public class ProtonPerformativeHandler extends EngineHandlerAdapter implements P
     }
 
     //----- Handle transport events
-
-    @Override
-    public void handlerAdded(EngineHandlerContext context) throws Exception {
-        frameParser = ProtonFrameParser.createNonSaslParser(this, decoder, getMaxFrameSize());
-    }
-
-    @Override
-    public void handlerRemoved(EngineHandlerContext context) throws Exception {
-        frameParser = null;
-    }
-
-    @Override
-    public void handleRead(EngineHandlerContext context, ProtonBuffer buffer) {
-        try {
-            // Parse out each frame in the buffer until we reach an end state on SASL handling.
-            // TODO - Should probably have a check here for transport state failed or not
-            // TODO - Would be nice to move frame parsing out to some other handler and let
-            //        this one simply process frames.
-            while (buffer.isReadable()) {
-                frameParser.parse(context, buffer);
-            }
-        } catch (IOException e) {
-            // TODO - A more well defined exception API might allow for only
-            //        one error event method ?
-            context.fireDecodingError(e);
-        }
-    }
 
     @Override
     public void handleRead(EngineHandlerContext context, ProtocolFrame frame) {

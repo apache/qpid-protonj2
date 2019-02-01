@@ -56,7 +56,7 @@ public class ProtonFrameWritingHandler extends EngineHandlerAdapter {
     @Override
     public void handlerAdded(EngineHandlerContext context) throws Exception {
         engine = (ProtonEngine) context.getEngine();
-        configuration = (ProtonEngineConfiguration) engine.getConfiguration();
+        configuration = engine.getConfiguration();
     }
 
     @Override

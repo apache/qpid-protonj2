@@ -61,6 +61,10 @@ public class ProtonEngineConfiguration implements EngineConfiguration {
         return getMaxFrameSize(); // TODO
     }
 
+    public int getInboundMaxFrameSize() {
+        return getMaxFrameSize(); // TODO
+    }
+
     @Override
     public ProtonBufferAllocator getBufferAllocator() {
         return allocator;

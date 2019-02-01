@@ -27,7 +27,7 @@ public class HeaderFrame extends Frame<AMQPHeader> {
 
     public static final HeaderFrame SASL_HEADER_FRAME = new HeaderFrame(AMQPHeader.getSASLHeader());
 
-    public static final HeaderFrame AMQP_HEADER_FRAME = new HeaderFrame(AMQPHeader.getRawAMQPHeader());
+    public static final HeaderFrame AMQP_HEADER_FRAME = new HeaderFrame(AMQPHeader.getAMQPHeader());
 
     public HeaderFrame(AMQPHeader body) {
         super(HEADER_FRAME_TYPE);

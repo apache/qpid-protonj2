@@ -16,33 +16,23 @@
  */
 package org.apache.qpid.proton4j.engine.sasl;
 
-import java.io.IOException;
-
 import org.apache.qpid.proton4j.amqp.security.SaslPerformative;
 import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
 import org.apache.qpid.proton4j.amqp.transport.Performative;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
-import org.apache.qpid.proton4j.codec.CodecFactory;
-import org.apache.qpid.proton4j.codec.Decoder;
-import org.apache.qpid.proton4j.codec.Encoder;
 import org.apache.qpid.proton4j.engine.EngineHandlerAdapter;
 import org.apache.qpid.proton4j.engine.EngineHandlerContext;
 import org.apache.qpid.proton4j.engine.HeaderFrame;
 import org.apache.qpid.proton4j.engine.ProtocolFrame;
 import org.apache.qpid.proton4j.engine.SaslFrame;
-import org.apache.qpid.proton4j.engine.impl.ProtonFrameParser;
 
 /**
  * Base class used for common portions of the SASL processing pipeline.
  */
 public class SaslHandler extends EngineHandlerAdapter {
 
-    private Decoder saslDecoder = CodecFactory.getSaslDecoder();
-    private Encoder saslEncoder = CodecFactory.getSaslEncoder();
-
     private int maxFrameSizeLimit = SaslConstants.MAX_SASL_FRAME_SIZE;
 
-    private ProtonFrameParser frameParser;
     private SaslContext saslContext;
 
     /*
@@ -50,22 +40,6 @@ public class SaslHandler extends EngineHandlerAdapter {
      * the state correctly.
      */
     private SaslHandler() {
-    }
-
-    public Encoder getSaslEndoer() {
-        return saslEncoder;
-    }
-
-    public void setSaslEncoder(Encoder encoder) {
-        this.saslEncoder = encoder;
-    }
-
-    public Decoder getSaslDecoder() {
-        return saslDecoder;
-    }
-
-    public void setSaslDecoder(Decoder decoder) {
-        this.saslDecoder = decoder;
     }
 
     public void setMaxSaslFrameSize(int maxFrameSize) {
@@ -113,37 +87,6 @@ public class SaslHandler extends EngineHandlerAdapter {
     //----- TransportHandler implementation ----------------------------------//
 
     @Override
-    public void handlerAdded(EngineHandlerContext context) throws Exception {
-        frameParser = ProtonFrameParser.createSaslParser(this, saslDecoder, getMaxSaslFrameSize());
-    }
-
-    @Override
-    public void handlerRemoved(EngineHandlerContext context) throws Exception {
-        frameParser = null;
-    }
-
-    @Override
-    public void handleRead(EngineHandlerContext context, ProtonBuffer buffer) {
-        if (isDone()) {
-            context.fireRead(buffer);
-        } else {
-            try {
-                // Parse out each frame in the buffer until we reach an end state on SASL handling.
-                // TODO - Need a state to indicate that sasl is now in a state where we can't process
-                //        any more frames.  This would mean we are awaiting sasl outcome to move us to
-                //        a done state, all pending data beyond this point should be protocol level frames.
-                while (buffer.isReadable()) {
-                    frameParser.parse(context, buffer);
-                }
-            } catch (IOException e) {
-                // TODO - A more well defined exception API might allow for only
-                //        one error event method ?
-                context.fireDecodingError(e);
-            }
-        }
-    }
-
-    @Override
     public void handleRead(EngineHandlerContext context, HeaderFrame header) {
         if (isDone()) {
             context.fireRead(header);
@@ -179,18 +122,6 @@ public class SaslHandler extends EngineHandlerAdapter {
     }
 
     // TODO - Decide what to implement and what to allow as a pass through
-
-    @Override
-    public void transportEncodingError(EngineHandlerContext context, Throwable e) {
-    }
-
-    @Override
-    public void transportDecodingError(EngineHandlerContext context, Throwable e) {
-    }
-
-    @Override
-    public void transportFailed(EngineHandlerContext context, Throwable e) {
-    }
 
     @Override
     public void handleWrite(EngineHandlerContext context, AMQPHeader header) {

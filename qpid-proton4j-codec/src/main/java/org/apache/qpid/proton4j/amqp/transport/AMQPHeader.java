@@ -27,7 +27,15 @@ public class AMQPHeader {
 
     static final byte[] PREFIX = new byte[] { 'A', 'M', 'Q', 'P' };
 
-    static final byte SASL_PROTOCOL_ID = 3;
+    public static final int PROTOCOL_ID_INDEX = 4;
+    public static final int MAJOR_VERSION_INDEX = 5;
+    public static final int MINOR_VERSION_INDEX = 6;
+    public static final int REVISION_INDEX = 7;
+
+    public static final byte AMQP_PROTOCOL_ID = 0;
+    public static final byte SASL_PROTOCOL_ID = 3;
+
+    public static final int HEADER_SIZE_BYTES = 8;
 
     private static final AMQPHeader AMQP_HEADER =
         new AMQPHeader(new byte[] { 'A', 'M', 'Q', 'P', 0, 1, 0, 0 });
@@ -38,7 +46,7 @@ public class AMQPHeader {
     private ProtonBuffer buffer;
 
     public AMQPHeader() {
-        this(new ProtonByteBuffer(new byte[] { 'A', 'M', 'Q', 'P', 0, 1, 0, 0 }));
+        this(AMQP_HEADER.buffer);
     }
 
     public AMQPHeader(byte[] headerBytes) {
@@ -46,14 +54,14 @@ public class AMQPHeader {
     }
 
     public AMQPHeader(ProtonBuffer buffer) {
-        this(buffer.copy(), true);
+        setBuffer(new ProtonByteBuffer(HEADER_SIZE_BYTES).writeBytes(buffer), true);
     }
 
     public AMQPHeader(ProtonBuffer buffer, boolean validate) {
-        setBuffer(buffer.copy(), validate);
+        setBuffer(new ProtonByteBuffer(HEADER_SIZE_BYTES).writeBytes(buffer), validate);
     }
 
-    public static AMQPHeader getRawAMQPHeader() {
+    public static AMQPHeader getAMQPHeader() {
         return AMQP_HEADER;
     }
 
@@ -62,19 +70,19 @@ public class AMQPHeader {
     }
 
     public int getProtocolId() {
-        return buffer.getByte(4) & 0xFF;
+        return buffer.getByte(PROTOCOL_ID_INDEX) & 0xFF;
     }
 
     public int getMajor() {
-        return buffer.getByte(5) & 0xFF;
+        return buffer.getByte(MAJOR_VERSION_INDEX) & 0xFF;
     }
 
     public int getMinor() {
-        return buffer.getByte(6) & 0xFF;
+        return buffer.getByte(MINOR_VERSION_INDEX) & 0xFF;
     }
 
     public int getRevision() {
-        return buffer.getByte(7) & 0xFF;
+        return buffer.getByte(REVISION_INDEX) & 0xFF;
     }
 
     public ProtonBuffer getBuffer() {
@@ -123,10 +131,37 @@ public class AMQPHeader {
     }
 
     private void setBuffer(ProtonBuffer value, boolean validate) {
-        if (validate && (value.getReadableBytes() != 8 || !startsWith(value, PREFIX))) {
-            throw new IllegalArgumentException("Not an AMQP header buffer");
+        if (validate) {
+            if (value.getReadableBytes() != 8 || !startsWith(value, PREFIX)) {
+                throw new IllegalArgumentException("Not an AMQP header buffer");
+            }
+
+            byte current = value.getByte(PROTOCOL_ID_INDEX);
+            if (current != AMQP_PROTOCOL_ID && current != SASL_PROTOCOL_ID) {
+                throw new IllegalArgumentException(String.format(
+                    "Invalid protocol Id specified %d : expected one of %d or %d",
+                    current, AMQP_PROTOCOL_ID, SASL_PROTOCOL_ID));
+            }
+
+            current = value.getByte(MAJOR_VERSION_INDEX);
+            if (current != 1) {
+                throw new IllegalArgumentException(String.format(
+                    "Invalid Major version specified %d : expected %d", current, 1));
+            }
+
+            current = value.getByte(MINOR_VERSION_INDEX);
+            if (current != 0) {
+                throw new IllegalArgumentException(String.format(
+                    "Invalid Minor version specified %d : expected %d", current, 0));
+            }
+
+            current = value.getByte(REVISION_INDEX);
+            if (current != 0) {
+                throw new IllegalArgumentException(String.format(
+                    "Invalid revision specified %d : expected %d", current, 0));
+            }
         }
 
-        buffer = value.duplicate();
+        buffer = value;
     }
 }
