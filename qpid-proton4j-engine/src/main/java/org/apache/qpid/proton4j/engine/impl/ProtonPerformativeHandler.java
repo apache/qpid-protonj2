@@ -103,6 +103,9 @@ public class ProtonPerformativeHandler extends EngineHandlerAdapter implements P
             configuration.setRemoteMaxFrameSize(open.getMaxFrameSize().intValue());
         }
 
+        // Recompute max frame size now based on what remote told us.
+        configuration.recomputeEffectiveFrameSizeLimits(engine);
+
         // TODO - Define the error from these methods, IOException other ?
         connection.handleOpen(open, payload, channel, engine);
     }

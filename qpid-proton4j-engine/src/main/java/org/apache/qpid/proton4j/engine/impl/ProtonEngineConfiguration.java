@@ -57,14 +57,6 @@ public class ProtonEngineConfiguration implements EngineConfiguration {
         this.remoteMaxFrameSize = remoteMaxFrameSize;
     }
 
-    public int getOutboundMaxFrameSize() {
-        return getMaxFrameSize(); // TODO
-    }
-
-    public int getInboundMaxFrameSize() {
-        return getMaxFrameSize(); // TODO
-    }
-
     @Override
     public ProtonBufferAllocator getBufferAllocator() {
         return allocator;
@@ -73,5 +65,21 @@ public class ProtonEngineConfiguration implements EngineConfiguration {
     @Override
     public void setBufferAllocator(ProtonBufferAllocator allocator) {
         this.allocator = allocator;
+    }
+
+    //---- proton4j specific APIs
+
+    void recomputeEffectiveFrameSizeLimits(ProtonEngine engine) {
+        // Based on engine state compute what the max in and out frame size should
+        // be at this time.  Considerations to take into account are SASL state and
+        // remote values once set.
+    }
+
+    int getOutboundMaxFrameSize() {
+        return getMaxFrameSize(); // TODO
+    }
+
+    int getInboundMaxFrameSize() {
+        return getMaxFrameSize(); // TODO
     }
 }
