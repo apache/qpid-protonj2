@@ -22,7 +22,7 @@ import org.apache.qpid.proton4j.amqp.transport.Performative;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.common.logging.ProtonLogger;
 import org.apache.qpid.proton4j.common.logging.ProtonLoggerFactory;
-import org.apache.qpid.proton4j.engine.EngineHandler;
+import org.apache.qpid.proton4j.engine.EngineHandlerAdapter;
 import org.apache.qpid.proton4j.engine.EngineHandlerContext;
 import org.apache.qpid.proton4j.engine.HeaderFrame;
 import org.apache.qpid.proton4j.engine.ProtocolFrame;
@@ -31,7 +31,7 @@ import org.apache.qpid.proton4j.engine.SaslFrame;
 /**
  * Handler that will log incoming and outgoing Frames
  */
-public class ProtonFrameLoggingHandler implements EngineHandler {
+public class ProtonFrameLoggingHandler extends EngineHandlerAdapter {
 
     private static ProtonLogger LOG = ProtonLoggerFactory.getLogger(ProtonFrameLoggingHandler.class);
 
@@ -44,12 +44,6 @@ public class ProtonFrameLoggingHandler implements EngineHandler {
 
     @Override
     public void handlerRemoved(EngineHandlerContext context) throws Exception {
-    }
-
-    @Override
-    public void handleRead(EngineHandlerContext context, ProtonBuffer buffer) {
-        // TODO Could trace out bytes here, would need a pretty print helper.
-        context.fireRead(buffer);
     }
 
     @Override
@@ -71,24 +65,6 @@ public class ProtonFrameLoggingHandler implements EngineHandler {
     }
 
     @Override
-    public void transportEncodingError(EngineHandlerContext context, Throwable e) {
-        LOG.warn("-> Error while encoding: {}", e);
-        context.fireEncodingError(e);
-    }
-
-    @Override
-    public void transportDecodingError(EngineHandlerContext context, Throwable e) {
-        LOG.warn("-> Error while decoding: {}", e);
-        context.fireDecodingError(e);
-    }
-
-    @Override
-    public void transportFailed(EngineHandlerContext context, Throwable e) {
-        LOG.error("-> Unrecoverable Transport error: {}", e);
-        context.fireFailed(e);
-    }
-
-    @Override
     public void handleWrite(EngineHandlerContext context, AMQPHeader header) {
         LOG.trace("-> AMQP: {}", header);
         context.fireWrite(header);
@@ -104,11 +80,5 @@ public class ProtonFrameLoggingHandler implements EngineHandler {
     public void handleWrite(EngineHandlerContext context, SaslPerformative performative) {
         LOG.trace("-> SASL: {}", performative);
         context.fireWrite(performative);
-    }
-
-    @Override
-    public void handleWrite(EngineHandlerContext context, ProtonBuffer buffer) {
-        // TODO Could trace out bytes here, would need a pretty print helper.
-        context.fireWrite(buffer);
     }
 }
