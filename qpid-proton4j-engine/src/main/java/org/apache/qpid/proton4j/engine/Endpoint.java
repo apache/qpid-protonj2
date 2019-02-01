@@ -21,12 +21,12 @@ import org.apache.qpid.proton4j.amqp.transport.ErrorCondition;
 /**
  * Represents one end of an AMQP Resource.
  */
-public interface Endpoint {
+public interface Endpoint<T> {
 
     /**
      * Open the end point.
      */
-    public void open();
+    public void open(EventHandler<AsyncResult<T>> openHandler);
 
     /**
      * Close the end point

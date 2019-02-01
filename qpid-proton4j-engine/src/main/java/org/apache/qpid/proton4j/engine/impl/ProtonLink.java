@@ -28,7 +28,7 @@ import org.apache.qpid.proton4j.engine.Session;
 /**
  * Common base for Proton Senders and Receivers.
  */
-public abstract class ProtonLink extends ProtonEndpoint implements Link {
+public abstract class ProtonLink<T> extends ProtonEndpoint<T> implements Link<T> {
 
     @Override
     public Session getSession() {

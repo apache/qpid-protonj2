@@ -17,8 +17,14 @@
 package org.apache.qpid.proton4j.engine;
 
 /**
- * AMQP Receiver API
+ * Handler of events from the proton4j resources.
  */
-public interface Receiver extends Link<Receiver> {
+@FunctionalInterface
+public interface EventHandler<E> {
+
+    /**
+     * Handles the event linked to this EventHandler
+     */
+    void handle(E target);
 
 }

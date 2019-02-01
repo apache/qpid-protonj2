@@ -23,7 +23,7 @@ import org.apache.qpid.proton4j.amqp.Symbol;
 /**
  * AMQP Connection state container
  */
-public interface Connection extends Endpoint {
+public interface Connection extends Endpoint<Connection> {
 
     //----- Operations on local end of this Connection
 

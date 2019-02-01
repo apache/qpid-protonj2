@@ -28,7 +28,7 @@ import org.apache.qpid.proton4j.engine.Receiver;
 /**
  * Proton Receiver link implementation.
  */
-public class ProtonReceiver extends ProtonLink implements Receiver, Performative.PerformativeHandler<ProtonEngine> {
+public class ProtonReceiver extends ProtonLink<Receiver> implements Receiver, Performative.PerformativeHandler<ProtonEngine> {
 
     //----- Internal handler methods
 

@@ -28,7 +28,7 @@ import org.apache.qpid.proton4j.engine.Sender;
 /**
  * Proton Sender link implementation.
  */
-public class ProtonSender extends ProtonLink implements Sender, Performative.PerformativeHandler<ProtonEngine> {
+public class ProtonSender extends ProtonLink<Sender> implements Sender, Performative.PerformativeHandler<ProtonEngine> {
 
     //----- Internal handler methods
 

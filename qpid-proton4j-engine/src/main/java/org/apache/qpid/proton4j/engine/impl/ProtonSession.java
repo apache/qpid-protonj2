@@ -39,7 +39,7 @@ import org.apache.qpid.proton4j.engine.Session;
 /**
  * Proton API for a Session endpoint
  */
-public class ProtonSession extends ProtonEndpoint implements Session, Performative.PerformativeHandler<ProtonEngine> {
+public class ProtonSession extends ProtonEndpoint<Session> implements Session, Performative.PerformativeHandler<ProtonEngine> {
 
     private final Begin localBegin = new Begin();
     private Begin remoteBegin;

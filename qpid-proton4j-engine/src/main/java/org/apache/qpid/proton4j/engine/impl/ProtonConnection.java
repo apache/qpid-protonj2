@@ -41,7 +41,7 @@ import org.apache.qpid.proton4j.engine.Session;
 /**
  * Implements the proton4j Connection API
  */
-public class ProtonConnection extends ProtonEndpoint implements Connection, Performative.PerformativeHandler<ProtonEngine> {
+public class ProtonConnection extends ProtonEndpoint<Connection> implements Connection, Performative.PerformativeHandler<ProtonEngine> {
 
     private static final int SESSION_ARRAY_CHUNK_SIZE = 16;
 

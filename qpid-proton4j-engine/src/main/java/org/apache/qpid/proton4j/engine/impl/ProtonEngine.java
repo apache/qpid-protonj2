@@ -17,12 +17,15 @@
 package org.apache.qpid.proton4j.engine.impl;
 
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import org.apache.qpid.proton4j.engine.AsyncResult;
 import org.apache.qpid.proton4j.engine.Connection;
 import org.apache.qpid.proton4j.engine.Engine;
 import org.apache.qpid.proton4j.engine.EngineListener;
 import org.apache.qpid.proton4j.engine.EnginePipeline;
 import org.apache.qpid.proton4j.engine.EngineSaslContext;
 import org.apache.qpid.proton4j.engine.EngineState;
+import org.apache.qpid.proton4j.engine.EventHandler;
+import org.apache.qpid.proton4j.engine.exceptions.ProtonException;
 
 /**
  * The default proton4j Engine implementation.
@@ -68,6 +71,26 @@ public class ProtonEngine implements Engine {
     public void ingest(ProtonBuffer input) {
         // TODO - Error handling ?
         pipeline.fireRead(input);
+    }
+
+    // TODO - For consideration
+
+    @Override
+    public void start(EventHandler<AsyncResult<Connection>> handler) {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void outputHandler(EventHandler<ProtonBuffer> output) {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void errorHandler(EventHandler<ProtonException> engineFailure) {
+        // TODO Auto-generated method stub
+
     }
 
     //----- Transport configuration ------------------------------------------//

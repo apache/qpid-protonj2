@@ -20,13 +20,15 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.qpid.proton4j.amqp.transport.ErrorCondition;
+import org.apache.qpid.proton4j.engine.AsyncResult;
 import org.apache.qpid.proton4j.engine.Endpoint;
 import org.apache.qpid.proton4j.engine.EndpointState;
+import org.apache.qpid.proton4j.engine.EventHandler;
 
 /**
  * Basic functionality for each of the end point objects.
  */
-public abstract class ProtonEndpoint implements Endpoint {
+public abstract class ProtonEndpoint<T> implements Endpoint<T> {
 
     private Object context;
     private Map<String, Object> contextEntries = new HashMap<>();
@@ -94,7 +96,7 @@ public abstract class ProtonEndpoint implements Endpoint {
     }
 
     @Override
-    public void open() {
+    public void open(EventHandler<AsyncResult<T>> handler) {
         // TODO - This is to vague of a state it could already be closed
         if (getLocalState() != EndpointState.ACTIVE) {
             localState = EndpointState.ACTIVE;

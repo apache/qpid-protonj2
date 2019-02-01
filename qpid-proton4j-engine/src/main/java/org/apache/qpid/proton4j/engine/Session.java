@@ -23,7 +23,7 @@ import org.apache.qpid.proton4j.amqp.Symbol;
 /**
  * AMQP Session interface
  */
-public interface Session extends Endpoint {
+public interface Session extends Endpoint<Session> {
 
     /**
      * @return the parent {@link Connection} for this Session.

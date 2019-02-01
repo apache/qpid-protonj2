@@ -19,6 +19,6 @@ package org.apache.qpid.proton4j.engine;
 /**
  * AMQP Sender API
  */
-public interface Sender extends Link {
+public interface Sender extends Link<Sender> {
 
 }

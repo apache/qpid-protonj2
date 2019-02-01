@@ -17,6 +17,7 @@
 package org.apache.qpid.proton4j.engine;
 
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import org.apache.qpid.proton4j.engine.exceptions.ProtonException;
 
 /**
  * AMQP Engine interface.
@@ -53,6 +54,11 @@ public interface Engine {
      *        create an engine and binds it to a Connection etc ?
      */
     Connection start();
+
+    // TODO - Use a more functional API to manage events on the ?
+    void start(EventHandler<AsyncResult<Connection>> handler);
+    void outputHandler(EventHandler<ProtonBuffer> output);
+    void errorHandler(EventHandler<ProtonException> engineFailure);
 
     /**
      * Orderly shutdown of the engine, any open connection and associated sessions and

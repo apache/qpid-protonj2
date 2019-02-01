@@ -17,8 +17,18 @@
 package org.apache.qpid.proton4j.engine;
 
 /**
- * AMQP Receiver API
+ * Interface that manages the result of a potentially asynchronous operation.
+ *
+ * @param E the object that will result from successful completion
  */
-public interface Receiver extends Link<Receiver> {
+public interface AsyncResult<E> {
+
+    E get();
+
+    Throwable error();
+
+    boolean suceeded();
+
+    boolean failed();
 
 }
