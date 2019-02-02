@@ -81,13 +81,9 @@ public interface EngineSaslContext {
     //----- Configuration
 
     /**
-     * Controls if SASL authentication should be initiated immediately or be
-     * held until local processing (such as connection open) initiates it.
-     *
-     * @param authOnStart
-     *      when true the authentication process is attempted immediately.
+     * @return the currently configured max frame size allowed for SASL frames.
      */
-    void setAutnenticateOnStart(boolean authOnStart);
+    int getMaxFrameSize();
 
     /**
      * Set the maximum frame size the remote can send before an error is indicated.
@@ -96,5 +92,21 @@ public interface EngineSaslContext {
      *      The maximum allowed frame size from the remote sender.
      */
     void setMaxFrameSize(int maxFrameSize);
+
+    // TODO - These start state values aren't fully baked yet.
+
+    /**
+     * @return if the context is configured to begin authentication on engine start.
+     */
+    boolean isAuthenticateOnStart();
+
+    /**
+     * Controls if SASL authentication should be initiated immediately or be
+     * held until local processing (such as connection open) initiates it.
+     *
+     * @param authOnStart
+     *      when true the authentication process is attempted immediately.
+     */
+    void setAutnenticateOnStart(boolean authOnStart);
 
 }

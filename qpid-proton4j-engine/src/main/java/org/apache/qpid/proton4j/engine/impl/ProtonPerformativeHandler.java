@@ -29,6 +29,7 @@ import org.apache.qpid.proton4j.amqp.transport.Transfer;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.engine.EngineHandlerAdapter;
 import org.apache.qpid.proton4j.engine.EngineHandlerContext;
+import org.apache.qpid.proton4j.engine.HeaderFrame;
 import org.apache.qpid.proton4j.engine.ProtocolFrame;
 import org.apache.qpid.proton4j.engine.exceptions.ProtocolViolationException;
 
@@ -46,6 +47,8 @@ public class ProtonPerformativeHandler extends EngineHandlerAdapter implements P
 
     private int maxFrameSizeLimit = MIN_MAX_AMQP_FRAME_SIZE;
 
+    private boolean headerReceived;
+
     public ProtonPerformativeHandler(ProtonEngine engine, ProtonConnection connection) {
         this.connection = connection;
         this.engine = engine;
@@ -61,6 +64,17 @@ public class ProtonPerformativeHandler extends EngineHandlerAdapter implements P
     }
 
     //----- Handle transport events
+
+    @Override
+    public void handleRead(EngineHandlerContext context, HeaderFrame header) {
+        if (headerReceived) {
+            // TODO signal failure to the engine and adjust state
+        }
+
+        headerReceived = true;
+        // TODO Convey to the engine that we should check local Connection state and fire
+        //      the open if locally opened already.
+    }
 
     @Override
     public void handleRead(EngineHandlerContext context, ProtocolFrame frame) {

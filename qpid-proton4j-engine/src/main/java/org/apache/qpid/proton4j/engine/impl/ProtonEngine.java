@@ -34,6 +34,7 @@ public class ProtonEngine implements Engine {
 
     private final ProtonEnginePipeline pipeline;
 
+    private EngineSaslContext saslContext = new ProtonEngineNoOpSaslContext();
     private ProtonEngineConfiguration configuration;
     private EngineListener listener;
 
@@ -117,7 +118,6 @@ public class ProtonEngine implements Engine {
 
     @Override
     public EngineSaslContext getSaslContext() {
-        // TODO
-        return null;
+        return saslContext;
     }
 }
