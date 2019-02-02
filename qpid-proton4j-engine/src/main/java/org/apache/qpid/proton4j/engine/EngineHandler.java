@@ -34,6 +34,9 @@ public interface EngineHandler {
 
     // Some things that might flow through an engine pipeline
 
+    // Give handlers a chance to set initial state prior to start using fixed engine configuration
+    // void engineStarting(EngineSaslContext context) throws Exception;
+
     // Read events
 
     // void handleReadabilityChanged(TransportHandlerContext context);  // TODO how to communicate readable state ?

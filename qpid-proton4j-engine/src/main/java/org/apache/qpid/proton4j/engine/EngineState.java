@@ -27,9 +27,19 @@ public enum EngineState {
     IDLE,
 
     /**
+     * Indicates the engine is in the starting phase and configuration be safe to use now.
+     */
+    STARTING,
+
+    /**
      * The engine has been started and no changes to configuration are permissible.
      */
     STARTED,
+
+    /**
+     * Engine is shutting down and all pending work should be completed.
+     */
+    SHUTTING_DOWN,
 
     /**
      * The engine has been shutdown and can no longer be used.
