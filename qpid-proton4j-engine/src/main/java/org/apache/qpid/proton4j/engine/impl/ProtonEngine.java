@@ -42,8 +42,14 @@ public class ProtonEngine implements Engine {
     private EventHandler<ProtonBuffer> outputHandler;
     private EventHandler<ProtonException> errorHandler;
 
+    private final ProtonConnection connection = new ProtonConnection(this);
+
     public ProtonEngine() {
         this.pipeline = new ProtonEnginePipeline(this);
+    }
+
+    ProtonConnection getConnection() {
+        return connection;
     }
 
     @Override
@@ -70,11 +76,14 @@ public class ProtonEngine implements Engine {
 
     @Override
     public void ingest(ProtonBuffer input) {
-        // TODO - Error handling ?
-        pipeline.fireRead(input);
+        try {
+            pipeline.fireRead(input);
+        } catch (Throwable t) {
+            // TODO - Error handling ?
+        }
     }
 
-    //----- Transport configuration ------------------------------------------//
+    //----- Engine configuration ------------------------------------------//
 
     @Override
     public void outputHandler(EventHandler<ProtonBuffer> handler) {

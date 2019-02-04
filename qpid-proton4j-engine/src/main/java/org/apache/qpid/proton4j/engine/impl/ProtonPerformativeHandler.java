@@ -16,6 +16,7 @@
  */
 package org.apache.qpid.proton4j.engine.impl;
 
+import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
 import org.apache.qpid.proton4j.amqp.transport.Attach;
 import org.apache.qpid.proton4j.amqp.transport.Begin;
 import org.apache.qpid.proton4j.amqp.transport.Close;
@@ -44,6 +45,7 @@ public class ProtonPerformativeHandler implements EngineHandler ,Performative.Pe
     private final ProtonEngineConfiguration configuration;
 
     private boolean headerReceived;
+    private boolean headerSent;
 
     public ProtonPerformativeHandler(ProtonEngine engine, ProtonConnection connection) {
         this.connection = connection;
@@ -56,6 +58,11 @@ public class ProtonPerformativeHandler implements EngineHandler ,Performative.Pe
     @Override
     public void handleRead(EngineHandlerContext context, HeaderFrame header) {
         if (header.isSaslHeader()) {
+            if (!headerSent) {
+                headerSent = true;
+                context.fireWrite(AMQPHeader.getAMQPHeader());
+            }
+
             // TODO signal failure as we don't handle SASL at this level.
         }
 
@@ -64,6 +71,10 @@ public class ProtonPerformativeHandler implements EngineHandler ,Performative.Pe
         }
 
         headerReceived = true;
+        if (!headerSent) {
+            context.fireWrite(AMQPHeader.getAMQPHeader());
+        }
+
         // TODO Convey to the engine that we should check local Connection state and fire
         //      the open if locally opened already.
     }
