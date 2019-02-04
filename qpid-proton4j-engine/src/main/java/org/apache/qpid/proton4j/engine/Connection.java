@@ -32,8 +32,6 @@ public interface Connection extends Endpoint<Connection> {
      */
     Session session();
 
-    // TODO - Define exception thrown if already opened and a set is called.
-
     /**
      * @returns the Container ID assigned to this Connection
      */
@@ -44,6 +42,8 @@ public interface Connection extends Endpoint<Connection> {
      *
      * @param containerId
      *      The Container Id used for this end of the Connection.
+     *
+     * @throws IllegalStateException if the Connection has already been opened.
      */
     void setContainerId(String containerId);
 
@@ -57,6 +57,8 @@ public interface Connection extends Endpoint<Connection> {
      * address or include a port number.</b>
      *
      * @param hostname the RFC1035 compliant host name.
+     *
+     * @throws IllegalStateException if the Connection has already been opened.
      */
     public void setHostname(String hostname);
 
@@ -72,6 +74,8 @@ public interface Connection extends Endpoint<Connection> {
      *
      * @param channelMax
      *      The value to set for channel max when opening the connection.
+     *
+     * @throws IllegalStateException if the Connection has already been opened.
      */
     public void setChannelMax(int channelMax);
 
@@ -85,6 +89,8 @@ public interface Connection extends Endpoint<Connection> {
      *
      * @param idleTimeout
      *      The value to set for the idle timeout when opening the connection.
+     *
+     * @throws IllegalStateException if the Connection has already been opened.
      */
     public void setIdleTimeout(int idleTimeout);
 
@@ -99,6 +105,8 @@ public interface Connection extends Endpoint<Connection> {
      *
      * @param capabilities
      *      The capabilities to be offered to the remote when the Connection is opened.
+     *
+     * @throws IllegalStateException if the Connection has already been opened.
      */
     void setOfferedCapabilities(Symbol[] capabilities);
 
@@ -113,6 +121,8 @@ public interface Connection extends Endpoint<Connection> {
      *
      * @param capabilities
      *      The capabilities desired from the remote when the Connection is opened.
+     *
+     * @throws IllegalStateException if the Connection has already been opened.
      */
     void setDesiredCapabilities(Symbol[] capabilities);
 
@@ -126,6 +136,8 @@ public interface Connection extends Endpoint<Connection> {
      *
      * @param properties
      *      The properties that will be sent to the remote when this Connection is opened.
+     *
+     * @throws IllegalStateException if the Connection has already been opened.
      */
     void setProperties(Map<Symbol, Object> properties);
 
@@ -160,5 +172,70 @@ public interface Connection extends Endpoint<Connection> {
      * @return the properties sent by the remote when it opened its end of the Connection.
      */
     Map<Symbol, Object> getRemoteProperties();
+
+    //----- Remote events for AMQP Connection resources
+
+    /**
+     * Sets a EventHandler for when an AMQP Open frame is received from the remote peer.
+     *
+     * Used to process remotely initiated Connections. Locally initiated sessions have their own EventHandler
+     * invoked instead.  This method is typically used by servers to listen for the remote peer to open its
+     * connection.
+     *
+     * @param remoteOpenEventHandler
+     *          the EventHandler that will be signaled when the connection has been remotely opened
+     *
+     * @return this connection
+     */
+    Connection openEventHandler(EventHandler<Connection> remoteOpenEventHandler);
+
+    /**
+     * Sets a EventHandler for when an AMQP Close frame is received from the remote peer.
+     *
+     * @param remoteCloseEventHandler
+     *          the EventHandler that will be signaled when the connection is remotely closed.
+     *
+     * @return this connection
+     */
+    Connection closeEventHandler(EventHandler<Connection> remoteCloseEventHandler);
+
+    /**
+     * Sets a EventHandler for when an AMQP Begin frame is received from the remote peer.
+     *
+     * Used to process remotely initiated Sessions. Locally initiated sessions have their own EventHandler
+     * invoked instead.  This method is Typically used by servers to listen for remote Session creation.
+     *
+     * @param remoteSessionOpenEventHandler
+     *          the EventHandler that will be signaled when a session is remotely opened.
+     *
+     * @return this connection
+     */
+    Connection sessionOpenEventHandler(EventHandler<Session> remoteSessionOpenEventHandler);
+
+    /**
+     * Sets a EventHandler for when an AMQP Attach frame is received from the remote peer for a sending link.
+     *
+     * Used to process remotely initiated sending link.  Locally initiated links have their own EventHandler
+     * invoked instead.  This method is Typically used by servers to listen for remote Receiver creation.
+     *
+     * @param remoteSenderOpenEventHandler
+     *          the EventHandler that will be signaled when a sender link is remotely opened.
+     *
+     * @return this connection
+     */
+    Connection senderOpenEventHandler(EventHandler<Sender> remoteSenderOpenEventHandler);
+
+    /**
+     * Sets a EventHandler for when an AMQP Attach frame is received from the remote peer for a receiving link.
+     *
+     * Used to process remotely initiated receiving link.  Locally initiated links have their own EventHandler
+     * invoked instead.  This method is Typically used by servers to listen for remote Sender creation.
+     *
+     * @param remoteReceiverOpenEventHandler
+     *          the EventHandler that will be signaled when a receiver link is remotely opened.
+     *
+     * @return this connection
+     */
+    Connection receiverOpenEventHandler(EventHandler<Receiver> remoteReceiverOpenEventHandler);
 
 }

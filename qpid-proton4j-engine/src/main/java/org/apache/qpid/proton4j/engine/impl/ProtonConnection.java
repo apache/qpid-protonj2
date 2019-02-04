@@ -36,6 +36,9 @@ import org.apache.qpid.proton4j.amqp.transport.Performative;
 import org.apache.qpid.proton4j.amqp.transport.Transfer;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.engine.Connection;
+import org.apache.qpid.proton4j.engine.EventHandler;
+import org.apache.qpid.proton4j.engine.Receiver;
+import org.apache.qpid.proton4j.engine.Sender;
 import org.apache.qpid.proton4j.engine.Session;
 
 /**
@@ -284,5 +287,37 @@ public class ProtonConnection extends ProtonEndpoint<Connection> implements Conn
     @Override
     public void handleClose(Close close, ProtonBuffer payload, int channel, ProtonEngine context) {
 
+    }
+
+    //----- API for event handling of Connection related remote events
+
+    @Override
+    public Connection openEventHandler(EventHandler<Connection> remoteOpenEventHandler) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public Connection closeEventHandler(EventHandler<Connection> remoteCloseEventHandler) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public Connection sessionOpenEventHandler(EventHandler<Session> remoteSessionOpenEventHandler) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public Connection senderOpenEventHandler(EventHandler<Sender> remoteSenderOpenEventHandler) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public Connection receiverOpenEventHandler(EventHandler<Receiver> remoteReceiverOpenEventHandler) {
+        // TODO Auto-generated method stub
+        return null;
     }
 }

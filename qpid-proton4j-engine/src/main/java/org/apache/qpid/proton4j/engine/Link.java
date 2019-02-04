@@ -26,7 +26,7 @@ import org.apache.qpid.proton4j.amqp.messaging.Target;
 /**
  * Base API for {@link Sender} and {@link Receiver} links.
  */
-public interface Link<T> extends Endpoint<T> {
+public interface Link<T extends Endpoint<T>> extends Endpoint<T> {
 
     /**
      * @return the parent {@link Session} of the Receiver.
