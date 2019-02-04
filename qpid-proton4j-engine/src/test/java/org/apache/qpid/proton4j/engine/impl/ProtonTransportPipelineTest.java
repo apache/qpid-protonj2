@@ -39,7 +39,7 @@ public class ProtonTransportPipelineTest {
     public void testCreatePipeline() {
         ProtonEnginePipeline pipeline = new ProtonEnginePipeline(transport);
 
-        assertSame(pipeline.getTransport(), transport);
+        assertSame(pipeline.engine(), transport);
         assertNull(pipeline.first());
         assertNull(pipeline.last());
         assertNull(pipeline.firstContext());

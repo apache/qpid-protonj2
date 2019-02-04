@@ -28,9 +28,9 @@ public interface EngineHandler {
 
     // Life cycle events for a handler
 
-    void handlerAdded(EngineHandlerContext context) throws Exception;
+    default void handlerAdded(EngineHandlerContext context) throws Exception {}
 
-    void handlerRemoved(EngineHandlerContext context) throws Exception;
+    default void handlerRemoved(EngineHandlerContext context) throws Exception {}
 
     // Some things that might flow through an engine pipeline
 
@@ -41,31 +41,53 @@ public interface EngineHandler {
 
     // void handleReadabilityChanged(TransportHandlerContext context);  // TODO how to communicate readable state ?
 
-    void handleRead(EngineHandlerContext context, ProtonBuffer buffer);
+    default void handleRead(EngineHandlerContext context, ProtonBuffer buffer) {
+        context.fireRead(buffer);
+    }
 
-    void handleRead(EngineHandlerContext context, HeaderFrame header);
+    default void handleRead(EngineHandlerContext context, HeaderFrame header) {
+        context.fireRead(header);
+    }
 
-    void handleRead(EngineHandlerContext context, SaslFrame frame);
+    default void handleRead(EngineHandlerContext context, SaslFrame frame) {
+        context.fireRead(frame);
+    }
 
-    void handleRead(EngineHandlerContext context, ProtocolFrame frame);
+    default void handleRead(EngineHandlerContext context, ProtocolFrame frame) {
+        context.fireRead(frame);
+    }
 
     // Write events
 
     // void handleWritabilityChanged(TransportHandlerContext context); // TODO how to communicate writable state ?
 
-    void handleWrite(EngineHandlerContext context, AMQPHeader header);
+    default void handleWrite(EngineHandlerContext context, AMQPHeader header) {
+        context.fireWrite(header);
+    }
 
-    void handleWrite(EngineHandlerContext context, Performative performative, short channel, ProtonBuffer payload, Runnable payloadToLarge);
+    default void handleWrite(EngineHandlerContext context, Performative performative, short channel, ProtonBuffer payload, Runnable payloadToLarge) {
+        context.fireWrite(performative, channel, payload, payloadToLarge);
+    }
 
-    void handleWrite(EngineHandlerContext context, SaslPerformative performative);
+    default void handleWrite(EngineHandlerContext context, SaslPerformative performative) {
+        context.fireWrite(performative);
+    }
 
-    void handleWrite(EngineHandlerContext context, ProtonBuffer buffer);
+    default void handleWrite(EngineHandlerContext context, ProtonBuffer buffer) {
+        context.fireWrite(buffer);
+    }
 
     // Error events
 
-    void transportEncodingError(EngineHandlerContext context, Throwable e);
+    default void transportEncodingError(EngineHandlerContext context, Throwable e) {
+        context.fireEncodingError(e);
+    }
 
-    void transportDecodingError(EngineHandlerContext context, Throwable e);
+    default void transportDecodingError(EngineHandlerContext context, Throwable e) {
+        context.fireDecodingError(e);
+    }
 
-    void transportFailed(EngineHandlerContext context, Throwable e);
+    default void transportFailed(EngineHandlerContext context, Throwable e) {
+        context.fireFailed(e);
+    }
 }

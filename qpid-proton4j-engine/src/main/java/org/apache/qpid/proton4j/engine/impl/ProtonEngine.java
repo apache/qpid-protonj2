@@ -20,7 +20,6 @@ import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.engine.AsyncResult;
 import org.apache.qpid.proton4j.engine.Connection;
 import org.apache.qpid.proton4j.engine.Engine;
-import org.apache.qpid.proton4j.engine.EngineListener;
 import org.apache.qpid.proton4j.engine.EnginePipeline;
 import org.apache.qpid.proton4j.engine.EngineSaslContext;
 import org.apache.qpid.proton4j.engine.EngineState;
@@ -36,10 +35,12 @@ public class ProtonEngine implements Engine {
 
     private EngineSaslContext saslContext = new ProtonEngineNoOpSaslContext();
     private ProtonEngineConfiguration configuration;
-    private EngineListener listener;
 
     private boolean writable;
     private EngineState state = EngineState.IDLE;
+
+    private EventHandler<ProtonBuffer> outputHandler;
+    private EventHandler<ProtonException> errorHandler;
 
     public ProtonEngine() {
         this.pipeline = new ProtonEnginePipeline(this);
@@ -51,15 +52,14 @@ public class ProtonEngine implements Engine {
     }
 
     @Override
-    public EngineState getState() {
+    public EngineState state() {
         return state;
     }
 
     @Override
-    public Connection start() {
-        state = EngineState.STARTED;
+    public void start(EventHandler<AsyncResult<Connection>> handler) {
         // TODO Auto-generated method stub
-        return null;
+
     }
 
     @Override
@@ -74,50 +74,38 @@ public class ProtonEngine implements Engine {
         pipeline.fireRead(input);
     }
 
-    // TODO - For consideration
-
-    @Override
-    public void start(EventHandler<AsyncResult<Connection>> handler) {
-        // TODO Auto-generated method stub
-
-    }
-
-    @Override
-    public void outputHandler(EventHandler<ProtonBuffer> output) {
-        // TODO Auto-generated method stub
-
-    }
-
-    @Override
-    public void errorHandler(EventHandler<ProtonException> engineFailure) {
-        // TODO Auto-generated method stub
-
-    }
-
     //----- Transport configuration ------------------------------------------//
 
     @Override
-    public EnginePipeline getPipeline() {
+    public void outputHandler(EventHandler<ProtonBuffer> handler) {
+        this.outputHandler = handler;
+    }
+
+    EventHandler<ProtonBuffer> outputHandler() {
+        return outputHandler;
+    }
+
+    @Override
+    public void errorHandler(EventHandler<ProtonException> handler) {
+        this.errorHandler = handler;
+    }
+
+    EventHandler<ProtonException> errorHandler() {
+        return errorHandler;
+    }
+
+    @Override
+    public EnginePipeline pipeline() {
         return pipeline;
     }
 
     @Override
-    public void setEngineListener(EngineListener listener) {
-        this.listener = listener;
-    }
-
-    @Override
-    public EngineListener getEngineListener() {
-        return listener;
-    }
-
-    @Override
-    public ProtonEngineConfiguration getConfiguration() {
+    public ProtonEngineConfiguration configuration() {
         return configuration;
     }
 
     @Override
-    public EngineSaslContext getSaslContext() {
+    public EngineSaslContext saslContext() {
         return saslContext;
     }
 }

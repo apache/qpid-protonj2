@@ -79,7 +79,7 @@ public class SaslHandlerTest {
             }
         });
 
-        transport.getPipeline().fireRead(new HeaderFrame(AMQPHeader.getAMQPHeader()));
+        transport.pipeline().fireRead(new HeaderFrame(AMQPHeader.getAMQPHeader()));
 
         assertFalse("Should not receive a Header", headerRead.get());
 
@@ -129,7 +129,7 @@ public class SaslHandlerTest {
             }
         });
 
-        transport.getPipeline().fireRead(new HeaderFrame(AMQPHeader.getSASLHeader()));
+        transport.pipeline().fireRead(new HeaderFrame(AMQPHeader.getSASLHeader()));
 
         assertTrue("Did not receive a SASL Header", saslHeaderRead.get());
 
@@ -195,7 +195,7 @@ public class SaslHandlerTest {
         });
 
         // Check for Header processing
-        transport.getPipeline().fireRead(new HeaderFrame(AMQPHeader.getSASLHeader()));
+        transport.pipeline().fireRead(new HeaderFrame(AMQPHeader.getSASLHeader()));
 
         assertTrue("Did not receive a SASL Header", saslHeaderRead.get());
 
@@ -205,7 +205,7 @@ public class SaslHandlerTest {
         clientInit.setInitialResponse(new Binary(new byte[0]));
 
         // Check for Initial Response processing
-        transport.getPipeline().fireRead(new SaslFrame(clientInit, null));
+        transport.pipeline().fireRead(new SaslFrame(clientInit, null));
 
         assertEquals("HOST-NAME", clientHostname.get());
         assertEquals("ANONYMOUS", clientMechanism.get());
@@ -250,8 +250,8 @@ public class SaslHandlerTest {
         ProtonEngine transport = new ProtonEngine();
 
         // TODO - Add AMQP handling layer
-        transport.getPipeline().addLast("sasl", SaslHandler.server(listener));
-        transport.getPipeline().addLast("test", testHandler);
+        transport.pipeline().addLast("sasl", SaslHandler.server(listener));
+        transport.pipeline().addLast("test", testHandler);
 
         return transport;
     }

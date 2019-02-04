@@ -29,7 +29,7 @@ import org.apache.qpid.proton4j.codec.DecoderState;
 import org.apache.qpid.proton4j.common.logging.ProtonLogger;
 import org.apache.qpid.proton4j.common.logging.ProtonLoggerFactory;
 import org.apache.qpid.proton4j.engine.EmptyFrame;
-import org.apache.qpid.proton4j.engine.EngineHandlerAdapter;
+import org.apache.qpid.proton4j.engine.EngineHandler;
 import org.apache.qpid.proton4j.engine.EngineHandlerContext;
 import org.apache.qpid.proton4j.engine.HeaderFrame;
 import org.apache.qpid.proton4j.engine.ProtocolFrame;
@@ -41,7 +41,7 @@ import org.apache.qpid.proton4j.engine.exceptions.ProtonExceptionSupport;
 /**
  * Handler used to parse incoming frame data input into the engine
  */
-public class ProtonFrameParsingHandler extends EngineHandlerAdapter {
+public class ProtonFrameParsingHandler implements EngineHandler {
 
     private static final ProtonLogger LOG = ProtonLoggerFactory.getLogger(ProtonFrameParsingHandler.class);
 
@@ -66,7 +66,7 @@ public class ProtonFrameParsingHandler extends EngineHandlerAdapter {
     @Override
     public void handlerAdded(EngineHandlerContext context) throws Exception {
         engine = (ProtonEngine) context.getEngine();
-        configuration = engine.getConfiguration();
+        configuration = engine.configuration();
     }
 
     @Override

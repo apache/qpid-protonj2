@@ -22,7 +22,7 @@ import org.apache.qpid.proton4j.amqp.transport.Performative;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.common.logging.ProtonLogger;
 import org.apache.qpid.proton4j.common.logging.ProtonLoggerFactory;
-import org.apache.qpid.proton4j.engine.EngineHandlerAdapter;
+import org.apache.qpid.proton4j.engine.EngineHandler;
 import org.apache.qpid.proton4j.engine.EngineHandlerContext;
 import org.apache.qpid.proton4j.engine.HeaderFrame;
 import org.apache.qpid.proton4j.engine.ProtocolFrame;
@@ -31,7 +31,7 @@ import org.apache.qpid.proton4j.engine.SaslFrame;
 /**
  * Handler that will log incoming and outgoing Frames
  */
-public class ProtonFrameLoggingHandler extends EngineHandlerAdapter {
+public class ProtonFrameLoggingHandler implements EngineHandler {
 
     private static ProtonLogger LOG = ProtonLoggerFactory.getLogger(ProtonFrameLoggingHandler.class);
 

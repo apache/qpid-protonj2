@@ -41,28 +41,26 @@ public interface Engine {
     /**
      * @return the current state of the engine.
      */
-    EngineState getState();
+    EngineState state();
 
     //----- Engine control APIs
 
     /**
-     * Starts the engine and returns a Connection that is bound to this Engine.
+     * Starts the engine
+     * <p>
+     * Once started the engine will signal the provided handler that the engine is started and
+     * provide a new Connection instance.
      *
-     * @return the Connection bound to this engine.
-     *
-     * TODO - How do we want to surface the Connection, here or via some factory that
-     *        create an engine and binds it to a Connection etc ?
+     * @param handler
+     *      A handler that will be notified when the engine has started and has a valid Connection.
      */
-    Connection start();
-
-    // TODO - Use a more functional API to manage events on the ?
     void start(EventHandler<AsyncResult<Connection>> handler);
-    void outputHandler(EventHandler<ProtonBuffer> output);
-    void errorHandler(EventHandler<ProtonException> engineFailure);
 
     /**
      * Orderly shutdown of the engine, any open connection and associated sessions and
      * session linked enpoints will be closed.
+     *
+     * TODO - Errors
      */
     void shutdown();
 
@@ -83,40 +81,42 @@ public interface Engine {
     //----- Engine configuration and state
 
     /**
-     * Sets a EngineListener to be notified of events on this Engine
+     * Sets a handler instance that will be notified when data from the engine is ready to
+     * be written to some output sink (socket etc).
      *
-     * @param listener
-     *      The EngineListener to notify
+     * @param output
+     *      The {@link ProtonBuffer} handler instance that perform IO for the engine output.
      */
-    void setEngineListener(EngineListener listener);
+    void outputHandler(EventHandler<ProtonBuffer> output);
 
     /**
-     * Gets the currently configured EngineListener instance.
+     * Sets a handler instance that will be notified when the engine encounters a fatal error.
      *
-     * @return the currently configured EngineListener.
+     * @param engineFailure
+     *      The {@link ProtonException} handler instance that will be notified if the engine fails.
      */
-    EngineListener getEngineListener();
+    void errorHandler(EventHandler<ProtonException> engineFailure);
 
     /**
      * Gets the EnginePipeline for this Engine.
      *
      * @return the {@link EnginePipeline} for this {@link Engine}.
      */
-    EnginePipeline getPipeline();
+    EnginePipeline pipeline();
 
     /**
      * Gets the Configuration for this engine.
      *
      * @return the configuration object for this engine.
      */
-    EngineConfiguration getConfiguration();
+    EngineConfiguration configuration();
 
     /**
      * Gets the SASL context for this engine, if not SASL layer is configured then a
-     * defacult no-op context should be returned that indicates this.
+     * default no-op context should be returned that indicates this.
      *
      * @return the SASL context for the engine.
      */
-    EngineSaslContext getSaslContext();
+    EngineSaslContext saslContext();
 
 }

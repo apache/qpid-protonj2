@@ -20,7 +20,7 @@ import org.apache.qpid.proton4j.amqp.security.SaslPerformative;
 import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
 import org.apache.qpid.proton4j.amqp.transport.Performative;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
-import org.apache.qpid.proton4j.engine.EngineHandlerAdapter;
+import org.apache.qpid.proton4j.engine.EngineHandler;
 import org.apache.qpid.proton4j.engine.EngineHandlerContext;
 import org.apache.qpid.proton4j.engine.HeaderFrame;
 import org.apache.qpid.proton4j.engine.ProtocolFrame;
@@ -29,7 +29,7 @@ import org.apache.qpid.proton4j.engine.SaslFrame;
 /**
  * Base class used for common portions of the SASL processing pipeline.
  */
-public class SaslHandler extends EngineHandlerAdapter {
+public class SaslHandler implements EngineHandler {
 
     private int maxFrameSizeLimit = SaslConstants.MAX_SASL_FRAME_SIZE;
 

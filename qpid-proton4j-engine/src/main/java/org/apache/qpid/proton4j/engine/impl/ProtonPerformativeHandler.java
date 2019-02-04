@@ -27,7 +27,7 @@ import org.apache.qpid.proton4j.amqp.transport.Open;
 import org.apache.qpid.proton4j.amqp.transport.Performative;
 import org.apache.qpid.proton4j.amqp.transport.Transfer;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
-import org.apache.qpid.proton4j.engine.EngineHandlerAdapter;
+import org.apache.qpid.proton4j.engine.EngineHandler;
 import org.apache.qpid.proton4j.engine.EngineHandlerContext;
 import org.apache.qpid.proton4j.engine.HeaderFrame;
 import org.apache.qpid.proton4j.engine.ProtocolFrame;
@@ -37,7 +37,7 @@ import org.apache.qpid.proton4j.engine.exceptions.ProtocolViolationException;
  * Transport Handler that forwards the incoming Performatives to the associated Connection
  * as well as any error encountered during the Transport processing.
  */
-public class ProtonPerformativeHandler extends EngineHandlerAdapter implements Performative.PerformativeHandler<EngineHandlerContext> {
+public class ProtonPerformativeHandler implements EngineHandler ,Performative.PerformativeHandler<EngineHandlerContext> {
 
     private final ProtonConnection connection;
     private final ProtonEngine engine;
@@ -48,7 +48,7 @@ public class ProtonPerformativeHandler extends EngineHandlerAdapter implements P
     public ProtonPerformativeHandler(ProtonEngine engine, ProtonConnection connection) {
         this.connection = connection;
         this.engine = engine;
-        this.configuration = engine.getConfiguration();
+        this.configuration = engine.configuration();
     }
 
     //----- Handle transport events

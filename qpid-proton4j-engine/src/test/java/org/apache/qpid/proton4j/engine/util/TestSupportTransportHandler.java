@@ -23,7 +23,7 @@ import org.apache.qpid.proton4j.amqp.security.SaslPerformative;
 import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
 import org.apache.qpid.proton4j.amqp.transport.Performative;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
-import org.apache.qpid.proton4j.engine.EngineHandlerAdapter;
+import org.apache.qpid.proton4j.engine.EngineHandler;
 import org.apache.qpid.proton4j.engine.EngineHandlerContext;
 import org.apache.qpid.proton4j.engine.Frame;
 import org.apache.qpid.proton4j.engine.HeaderFrame;
@@ -31,7 +31,7 @@ import org.apache.qpid.proton4j.engine.ProtocolFrame;
 import org.apache.qpid.proton4j.engine.ProtocolFramePool;
 import org.apache.qpid.proton4j.engine.SaslFrame;
 
-public class TestSupportTransportHandler extends EngineHandlerAdapter {
+public class TestSupportTransportHandler implements EngineHandler {
 
     private List<Frame<?>> framesRead = new ArrayList<>();
     private List<Frame<?>> framesWritten = new ArrayList<>();

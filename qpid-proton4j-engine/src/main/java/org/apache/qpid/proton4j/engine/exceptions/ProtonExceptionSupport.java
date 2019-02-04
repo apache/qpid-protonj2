@@ -16,7 +16,6 @@
  */
 package org.apache.qpid.proton4j.engine.exceptions;
 
-import java.io.IOException;
 import java.math.BigInteger;
 
 public final class ProtonExceptionSupport {
@@ -24,32 +23,40 @@ public final class ProtonExceptionSupport {
     private ProtonExceptionSupport() {
     }
 
-    public static IOException create(String msg, Throwable cause) {
-        IOException exception = new IOException(msg);
+    public static ProtonException create(String msg, Throwable cause) {
+        ProtonException exception = new ProtonException(msg);
         exception.initCause(cause);
         return exception;
     }
 
-    public static IOException create(String msg, Exception cause) {
-        IOException exception = new IOException(msg);
+    public static ProtonException create(String msg, Exception cause) {
+        ProtonException exception = new ProtonException(msg);
         exception.initCause(cause);
         return exception;
     }
 
-    public static IOException create(Throwable cause) {
-        IOException exception = new IOException(cause.getMessage());
+    public static ProtonException create(Throwable cause) {
+        if (cause instanceof ProtonException) {
+            return (ProtonException) cause;
+        }
+
+        ProtonException exception = new ProtonException(cause.getMessage());
         exception.initCause(cause);
         return exception;
     }
 
-    public static IOException create(Exception cause) {
-        IOException exception = new IOException(cause.getMessage());
+    public static ProtonException create(Exception cause) {
+        if (cause instanceof ProtonException) {
+            return (ProtonException) cause;
+        }
+
+        ProtonException exception = new ProtonException(cause.getMessage());
         exception.initCause(cause);
         return exception;
     }
 
-    public static IOException createFrameSizeException(int size, long maxSize) {
-        return new IOException("Frame size of " + toHumanReadableSizeString(size) +
+    public static ProtonException createFrameSizeException(int size, long maxSize) {
+        return new ProtonException("Frame size of " + toHumanReadableSizeString(size) +
             " larger than max allowed " + toHumanReadableSizeString(maxSize));
     }
 

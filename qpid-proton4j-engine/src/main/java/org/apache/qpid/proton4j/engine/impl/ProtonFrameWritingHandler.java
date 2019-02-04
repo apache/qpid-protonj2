@@ -24,13 +24,13 @@ import org.apache.qpid.proton4j.buffer.ProtonBufferAllocator;
 import org.apache.qpid.proton4j.codec.CodecFactory;
 import org.apache.qpid.proton4j.codec.Encoder;
 import org.apache.qpid.proton4j.codec.EncoderState;
-import org.apache.qpid.proton4j.engine.EngineHandlerAdapter;
+import org.apache.qpid.proton4j.engine.EngineHandler;
 import org.apache.qpid.proton4j.engine.EngineHandlerContext;
 
 /**
  * Handler that encodes performatives into properly formed frames for IO
  */
-public class ProtonFrameWritingHandler extends EngineHandlerAdapter {
+public class ProtonFrameWritingHandler implements EngineHandler {
 
     public static final byte AMQP_FRAME_TYPE = (byte) 0;
     public static final byte SASL_FRAME_TYPE = (byte) 1;
@@ -56,7 +56,7 @@ public class ProtonFrameWritingHandler extends EngineHandlerAdapter {
     @Override
     public void handlerAdded(EngineHandlerContext context) throws Exception {
         engine = (ProtonEngine) context.getEngine();
-        configuration = engine.getConfiguration();
+        configuration = engine.configuration();
     }
 
     @Override

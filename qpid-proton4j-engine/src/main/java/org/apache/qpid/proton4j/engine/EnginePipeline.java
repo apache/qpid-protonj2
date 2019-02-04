@@ -26,7 +26,7 @@ import org.apache.qpid.proton4j.buffer.ProtonBuffer;
  */
 public interface EnginePipeline {
 
-    Engine getTransport();
+    Engine engine();
 
     //----- Pipeline management ----------------------------------------------//
 
