@@ -25,36 +25,19 @@ import org.apache.qpid.proton4j.engine.EngineConfiguration;
  */
 public class ProtonEngineConfiguration implements EngineConfiguration {
 
-    private int saslMaxFrameSize;
-    private int maxFrameSize;
+    private int maxFrameSize = ProtonConstants.MIN_MAX_AMQP_FRAME_SIZE;
     private ProtonBufferAllocator allocator = ProtonByteBufferAllocator.DEFAULT;
 
-    private int remoteMaxFrameSize;
+    private int remoteMaxFrameSize = ProtonConstants.MIN_MAX_AMQP_FRAME_SIZE;
 
     @Override
-    public int getSaslMaxFrameSize() {
-        return saslMaxFrameSize;
-    }
-
-    public void setSaslMaxFrameSize(int maxFrameSize) {
-        this.saslMaxFrameSize = maxFrameSize;
+    public void setMaxFrameSize(int maxFrameSize) {
+        this.maxFrameSize = Math.max(ProtonConstants.MIN_MAX_AMQP_FRAME_SIZE, maxFrameSize);
     }
 
     @Override
     public int getMaxFrameSize() {
         return maxFrameSize;
-    }
-
-    public void setMaxFrameSize(int maxFrameSize) {
-        this.maxFrameSize = maxFrameSize;
-    }
-
-    public int getRemoteMaxFrameSize() {
-        return remoteMaxFrameSize;
-    }
-
-    public void setRemoteMaxFrameSize(int remoteMaxFrameSize) {
-        this.remoteMaxFrameSize = remoteMaxFrameSize;
     }
 
     @Override
@@ -65,6 +48,14 @@ public class ProtonEngineConfiguration implements EngineConfiguration {
     @Override
     public void setBufferAllocator(ProtonBufferAllocator allocator) {
         this.allocator = allocator;
+    }
+
+    int getRemoteMaxFrameSize() {
+        return remoteMaxFrameSize;
+    }
+
+    void setRemoteMaxFrameSize(int remoteMaxFrameSize) {
+        this.remoteMaxFrameSize = remoteMaxFrameSize;
     }
 
     //---- proton4j specific APIs

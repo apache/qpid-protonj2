@@ -34,4 +34,24 @@ public class HeaderFrame extends Frame<AMQPHeader> {
 
         initialize(body, 0, null);
     }
+
+    public int getProtocolId() {
+        return getBody().getProtocolId();
+    }
+
+    public int getMajor() {
+        return getBody().getMajor();
+    }
+
+    public int getMinor() {
+        return getBody().getMinor();
+    }
+
+    public int getRevision() {
+        return getBody().getRevision();
+    }
+
+    public boolean isSaslHeader() {
+        return getBody().isSaslHeader();
+    }
 }

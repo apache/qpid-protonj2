@@ -24,9 +24,15 @@ import org.apache.qpid.proton4j.buffer.ProtonBufferAllocator;
 public interface EngineConfiguration {
 
     /**
-     * @return the maximum frame size that the Engine will accept for SASL frames.
+     * Sets the maximum frame size the engine will accept.
+     * <p>
+     * The configured value cannot be set lower than the AMQP default max frame size
+     * value of 512 bytes.
+     *
+     * @param maxFrameSize
+     *      The value to assign as the maximum frame size.
      */
-    int getSaslMaxFrameSize();
+    void setMaxFrameSize(int maxFrameSize);
 
     /**
      * @return the maximum frame size that the Engine will accept.

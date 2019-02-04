@@ -39,13 +39,9 @@ import org.apache.qpid.proton4j.engine.exceptions.ProtocolViolationException;
  */
 public class ProtonPerformativeHandler extends EngineHandlerAdapter implements Performative.PerformativeHandler<EngineHandlerContext> {
 
-    private static final int MIN_MAX_AMQP_FRAME_SIZE = 512;
-
     private final ProtonConnection connection;
     private final ProtonEngine engine;
     private final ProtonEngineConfiguration configuration;
-
-    private int maxFrameSizeLimit = MIN_MAX_AMQP_FRAME_SIZE;
 
     private boolean headerReceived;
 
@@ -55,18 +51,14 @@ public class ProtonPerformativeHandler extends EngineHandlerAdapter implements P
         this.configuration = engine.getConfiguration();
     }
 
-    public void setMaxFrameSize(int maxFrameSize) {
-        this.maxFrameSizeLimit = Math.max(MIN_MAX_AMQP_FRAME_SIZE, maxFrameSize);
-    }
-
-    public int getMaxFrameSize() {
-        return maxFrameSizeLimit;
-    }
-
     //----- Handle transport events
 
     @Override
     public void handleRead(EngineHandlerContext context, HeaderFrame header) {
+        if (header.isSaslHeader()) {
+            // TODO signal failure as we don't handle SASL at this level.
+        }
+
         if (headerReceived) {
             // TODO signal failure to the engine and adjust state
         }
