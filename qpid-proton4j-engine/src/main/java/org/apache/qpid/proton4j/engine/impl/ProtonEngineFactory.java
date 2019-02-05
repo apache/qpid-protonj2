@@ -16,6 +16,10 @@
  */
 package org.apache.qpid.proton4j.engine.impl;
 
+import org.apache.qpid.proton4j.engine.sasl.SaslClientListener;
+import org.apache.qpid.proton4j.engine.sasl.SaslHandler;
+import org.apache.qpid.proton4j.engine.sasl.SaslServerListener;
+
 /**
  * Factory class for proton4j Engine creation
  */
@@ -23,9 +27,7 @@ public final class ProtonEngineFactory {
 
     private ProtonEngineFactory() {}
 
-    // TODO - How do we distinguish client from server, or should we ?
-
-    public static ProtonEngine createClientEngine() {
+    public static ProtonEngine createEngine() {
         ProtonEngine engine = new ProtonEngine();
 
         ProtonEnginePipeline pipeline = engine.pipeline();
@@ -38,12 +40,31 @@ public final class ProtonEngineFactory {
         return engine;
     }
 
-    public static ProtonEngine createServierEngine() {
+    // TODO - Do we want to force client and server on SASL here, or move that to the EngineSaslContext
+    //        so that it can be decided later, or possible configured to auto decide based on configured
+    //        mechanisms. ?
+
+    public static ProtonEngine createSaslClientEngine(SaslClientListener listener) {
         ProtonEngine engine = new ProtonEngine();
 
         ProtonEnginePipeline pipeline = engine.pipeline();
 
         pipeline.addLast(ProtonConstants.AMQP_PERFORMATIVE_HANDLER_NAME, new ProtonPerformativeHandler());
+        pipeline.addLast(ProtonConstants.SASL_PERFORMATIVE_HANDLER_NAME, SaslHandler.client(listener));
+        pipeline.addLast(ProtonConstants.FRAME_LOGGING_HANDLER, new ProtonFrameLoggingHandler());
+        pipeline.addLast(ProtonConstants.FRAME_PARSING_HANDLER, new ProtonFrameParsingHandler());
+        pipeline.addLast(ProtonConstants.FRAME_WRITING_HANDLER, new ProtonFrameWritingHandler());
+
+        return engine;
+    }
+
+    public static ProtonEngine createSaslServerEngine(SaslServerListener listener) {
+        ProtonEngine engine = new ProtonEngine();
+
+        ProtonEnginePipeline pipeline = engine.pipeline();
+
+        pipeline.addLast(ProtonConstants.AMQP_PERFORMATIVE_HANDLER_NAME, new ProtonPerformativeHandler());
+        pipeline.addLast(ProtonConstants.SASL_PERFORMATIVE_HANDLER_NAME, SaslHandler.server(listener));
         pipeline.addLast(ProtonConstants.FRAME_LOGGING_HANDLER, new ProtonFrameLoggingHandler());
         pipeline.addLast(ProtonConstants.FRAME_PARSING_HANDLER, new ProtonFrameParsingHandler());
         pipeline.addLast(ProtonConstants.FRAME_WRITING_HANDLER, new ProtonFrameWritingHandler());
