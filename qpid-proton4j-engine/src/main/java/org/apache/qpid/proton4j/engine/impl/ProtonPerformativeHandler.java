@@ -75,6 +75,9 @@ public class ProtonPerformativeHandler implements EngineHandler ,Performative.Pe
             context.fireWrite(AMQPHeader.getAMQPHeader());
         }
 
+        // Recompute max frame size now based on engine max frame size in case sasl was enabled.
+        configuration.recomputeEffectiveFrameSizeLimits(engine);
+
         // TODO Convey to the engine that we should check local Connection state and fire
         //      the open if locally opened already.
     }
@@ -119,6 +122,11 @@ public class ProtonPerformativeHandler implements EngineHandler ,Performative.Pe
         if (open.getMaxFrameSize() != null) {
             configuration.setRemoteMaxFrameSize(open.getMaxFrameSize().intValue());
         }
+
+        // TODO - This isn't storing the truth of what remote said, so configuration reports
+        //        our trimmed view when asked externally.
+        configuration.setRemoteMaxFrameSize(
+            (int) Math.min(open.getMaxFrameSize().longValue(), Integer.MAX_VALUE));
 
         // Recompute max frame size now based on what remote told us.
         configuration.recomputeEffectiveFrameSizeLimits(engine);
