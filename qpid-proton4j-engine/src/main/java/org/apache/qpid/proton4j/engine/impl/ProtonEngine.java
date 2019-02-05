@@ -23,6 +23,7 @@ import org.apache.qpid.proton4j.engine.Engine;
 import org.apache.qpid.proton4j.engine.EngineSaslContext;
 import org.apache.qpid.proton4j.engine.EngineState;
 import org.apache.qpid.proton4j.engine.EventHandler;
+import org.apache.qpid.proton4j.engine.exceptions.EngineNotWritableException;
 import org.apache.qpid.proton4j.engine.exceptions.ProtonException;
 
 /**
@@ -69,7 +70,11 @@ public class ProtonEngine implements Engine {
     }
 
     @Override
-    public void ingest(ProtonBuffer input) {
+    public void ingest(ProtonBuffer input) throws EngineNotWritableException {
+        if (!isWritable()) {
+            throw new EngineNotWritableException("Engine is currently not accepting new input");
+        }
+
         try {
             pipeline.fireRead(input);
         } catch (Throwable t) {

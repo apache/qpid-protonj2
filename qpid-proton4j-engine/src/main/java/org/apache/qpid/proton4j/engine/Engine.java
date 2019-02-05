@@ -17,6 +17,7 @@
 package org.apache.qpid.proton4j.engine;
 
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import org.apache.qpid.proton4j.engine.exceptions.EngineNotWritableException;
 import org.apache.qpid.proton4j.engine.exceptions.ProtonException;
 
 /**
@@ -75,8 +76,10 @@ public interface Engine {
      *
      * TODO - Exception thrown here.
      * TODO - Do we want a simple high level input or leave it to some handler etc ?
+     *
+     * @throws EngineNotWritableException if the Engine is not accepting new input.
      */
-    void ingest(ProtonBuffer input);
+    void ingest(ProtonBuffer input) throws EngineNotWritableException;
 
     //----- Engine configuration and state
 
