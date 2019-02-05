@@ -31,22 +31,17 @@ import org.apache.qpid.proton4j.engine.exceptions.ProtonException;
  */
 public class ProtonEngine implements Engine {
 
-    private final ProtonEnginePipeline pipeline;
+    private final ProtonEnginePipeline pipeline =  new ProtonEnginePipeline(this);
+    private final ProtonConnection connection = new ProtonConnection(this);
+    private final ProtonEngineConfiguration configuration = new ProtonEngineConfiguration(this);
 
     private EngineSaslContext saslContext = new ProtonEngineNoOpSaslContext();
-    private ProtonEngineConfiguration configuration;
 
     private boolean writable;
     private EngineState state = EngineState.IDLE;
 
     private EventHandler<ProtonBuffer> outputHandler;
     private EventHandler<ProtonException> errorHandler;
-
-    private final ProtonConnection connection = new ProtonConnection(this);
-
-    public ProtonEngine() {
-        this.pipeline = new ProtonEnginePipeline(this);
-    }
 
     ProtonConnection getConnection() {
         return connection;

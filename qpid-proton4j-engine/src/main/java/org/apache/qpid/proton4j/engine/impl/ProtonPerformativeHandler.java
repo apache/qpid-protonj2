@@ -76,7 +76,7 @@ public class ProtonPerformativeHandler implements EngineHandler ,Performative.Pe
         }
 
         // Recompute max frame size now based on engine max frame size in case sasl was enabled.
-        configuration.recomputeEffectiveFrameSizeLimits(engine);
+        configuration.recomputeEffectiveFrameSizeLimits();
 
         // TODO Convey to the engine that we should check local Connection state and fire
         //      the open if locally opened already.
@@ -129,7 +129,7 @@ public class ProtonPerformativeHandler implements EngineHandler ,Performative.Pe
             (int) Math.min(open.getMaxFrameSize().longValue(), Integer.MAX_VALUE));
 
         // Recompute max frame size now based on what remote told us.
-        configuration.recomputeEffectiveFrameSizeLimits(engine);
+        configuration.recomputeEffectiveFrameSizeLimits();
 
         // TODO - Define the error from these methods, IOException other ?
         connection.handleOpen(open, payload, channel, engine);

@@ -26,6 +26,8 @@ import org.apache.qpid.proton4j.engine.EngineSaslContext.SaslState;
  */
 public class ProtonEngineConfiguration implements EngineConfiguration {
 
+    private final ProtonEngine engine;
+
     private int maxFrameSize = ProtonConstants.MIN_MAX_AMQP_FRAME_SIZE;
     private ProtonBufferAllocator allocator = ProtonByteBufferAllocator.DEFAULT;
 
@@ -33,6 +35,10 @@ public class ProtonEngineConfiguration implements EngineConfiguration {
 
     private int effectiveMaxInboundFrameSize = ProtonConstants.MIN_MAX_AMQP_FRAME_SIZE;
     private int effectiveMaxOutboundFrameSize = ProtonConstants.MIN_MAX_AMQP_FRAME_SIZE;
+
+    ProtonEngineConfiguration(ProtonEngine engine) {
+        this.engine = engine;
+    }
 
     @Override
     public void setMaxFrameSize(int maxFrameSize) {
@@ -64,7 +70,7 @@ public class ProtonEngineConfiguration implements EngineConfiguration {
 
     //---- proton4j specific APIs
 
-    void recomputeEffectiveFrameSizeLimits(ProtonEngine engine) {
+    void recomputeEffectiveFrameSizeLimits() {
         // Based on engine state compute what the max in and out frame size should
         // be at this time.  Considerations to take into account are SASL state and
         // remote values once set.
