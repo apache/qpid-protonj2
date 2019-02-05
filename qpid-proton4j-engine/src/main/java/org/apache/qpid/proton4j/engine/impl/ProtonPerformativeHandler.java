@@ -113,15 +113,15 @@ public class ProtonPerformativeHandler implements EngineHandler ,Performative.Pe
 
     // Here we can spy on incoming performatives and update engine state relative to
     // those prior to sending along notifications to other handlers or to the connection.
+    //
+    // We currently can't spy on outbound performatives but we could in future by splitting these
+    // into inner classes for inbound and outbound and handle the write to invole the outbound
+    // handlers.
 
     @Override
     public void handleOpen(Open open, ProtonBuffer payload, int channel, EngineHandlerContext context) {
         if (channel != 0) {
             transportFailed(context, new ProtocolViolationException("Open not sent on channel zero"));
-        }
-
-        if (open.getMaxFrameSize() != null) {
-            configuration.setRemoteMaxFrameSize(open.getMaxFrameSize().intValue());
         }
 
         // TODO - This isn't storing the truth of what remote said, so configuration reports

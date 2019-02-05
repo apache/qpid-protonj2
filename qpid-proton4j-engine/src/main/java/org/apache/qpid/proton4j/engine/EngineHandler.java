@@ -37,9 +37,11 @@ public interface EngineHandler {
     // Give handlers a chance to set initial state prior to start using fixed engine configuration
     // void engineStarting(EngineSaslContext context) throws Exception;
 
-    // Read events
-
     // void handleReadabilityChanged(TransportHandlerContext context);  // TODO how to communicate readable state ?
+
+    // void handleWritabilityChanged(TransportHandlerContext context); // TODO how to communicate writable state ?
+
+    // Read events
 
     default void handleRead(EngineHandlerContext context, ProtonBuffer buffer) {
         context.fireRead(buffer);
@@ -58,8 +60,6 @@ public interface EngineHandler {
     }
 
     // Write events
-
-    // void handleWritabilityChanged(TransportHandlerContext context); // TODO how to communicate writable state ?
 
     default void handleWrite(EngineHandlerContext context, AMQPHeader header) {
         context.fireWrite(header);
