@@ -27,7 +27,7 @@ public interface AsyncResult<E> {
 
     Throwable error();
 
-    boolean suceeded();
+    boolean succeeded();
 
     boolean failed();
 

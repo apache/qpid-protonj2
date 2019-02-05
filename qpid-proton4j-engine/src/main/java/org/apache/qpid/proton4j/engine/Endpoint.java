@@ -26,7 +26,7 @@ public interface Endpoint<T extends Endpoint<T>> {
     /**
      * Open the end point.
      */
-    public void open(EventHandler<AsyncResult<T>> openHandler);
+    public void open();
 
     /**
      * Close the end point
