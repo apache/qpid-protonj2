@@ -26,4 +26,31 @@ public final class ProtonConstants {
      */
     public static final int MIN_MAX_AMQP_FRAME_SIZE = 512;
 
+    //----- Proton engine handler names
+
+    /**
+     * Engine handler that acts on AMQP performatives
+     */
+    public static final String AMQP_PERFORMATIVE_HANDLER_NAME = "amqp";
+
+    /**
+     * Engine handler that acts on SASL performatives
+     */
+    public static final String SASL_PERFORMATIVE_HANDLER_NAME = "sasl";
+
+    /**
+     * Engine handler that encodes performatives and writes the resulting buffer
+     */
+    public static final String FRAME_WRITING_HANDLER = "frame-writer";
+
+    /**
+     * Engine handler that decodes performatives and forwards the frames
+     */
+    public static final String FRAME_PARSING_HANDLER = "frame-reader";
+
+    /**
+     * Engine handler that logs incoming and outgoing performatives and frames
+     */
+    public static final String FRAME_LOGGING_HANDLER = "frame-logger";
+
 }

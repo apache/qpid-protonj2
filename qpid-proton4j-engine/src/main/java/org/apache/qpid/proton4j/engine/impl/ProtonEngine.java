@@ -20,7 +20,6 @@ import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.engine.AsyncResult;
 import org.apache.qpid.proton4j.engine.Connection;
 import org.apache.qpid.proton4j.engine.Engine;
-import org.apache.qpid.proton4j.engine.EnginePipeline;
 import org.apache.qpid.proton4j.engine.EngineSaslContext;
 import org.apache.qpid.proton4j.engine.EngineState;
 import org.apache.qpid.proton4j.engine.EventHandler;
@@ -99,7 +98,7 @@ public class ProtonEngine implements Engine {
     }
 
     @Override
-    public EnginePipeline pipeline() {
+    public ProtonEnginePipeline pipeline() {
         return pipeline;
     }
 

@@ -38,6 +38,8 @@ public class ProtonFrameLoggingHandler implements EngineHandler {
     // TODO - Possible that this should also have configuration for on / off and even looks at
     //        env for PN_TRACE_FRM for legacy reasons.
 
+    // TODO - Implement the frame logging where now we are only stringifying the frames.
+
     @Override
     public void handlerAdded(EngineHandlerContext context) throws Exception {
     }

@@ -40,20 +40,21 @@ import org.apache.qpid.proton4j.engine.exceptions.ProtocolViolationException;
  */
 public class ProtonPerformativeHandler implements EngineHandler ,Performative.PerformativeHandler<EngineHandlerContext> {
 
-    private final ProtonConnection connection;
-    private final ProtonEngine engine;
-    private final ProtonEngineConfiguration configuration;
+    private ProtonEngine engine;
+    private ProtonConnection connection;
+    private ProtonEngineConfiguration configuration;
 
     private boolean headerReceived;
     private boolean headerSent;
 
-    public ProtonPerformativeHandler(ProtonEngine engine, ProtonConnection connection) {
-        this.connection = connection;
-        this.engine = engine;
-        this.configuration = engine.configuration();
-    }
-
     //----- Handle transport events
+
+    @Override
+    public void handlerAdded(EngineHandlerContext context) throws Exception {
+        engine = (ProtonEngine) context.getEngine();
+        configuration = engine.configuration();
+        configuration = engine.configuration();
+    }
 
     @Override
     public void handleRead(EngineHandlerContext context, HeaderFrame header) {

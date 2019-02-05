@@ -18,6 +18,7 @@ package org.apache.qpid.proton4j.engine.impl;
 
 import java.io.IOException;
 
+import org.apache.qpid.proton4j.amqp.security.SaslOutcome;
 import org.apache.qpid.proton4j.amqp.security.SaslPerformative;
 import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
 import org.apache.qpid.proton4j.amqp.transport.Performative;
@@ -40,8 +41,10 @@ import org.apache.qpid.proton4j.engine.exceptions.ProtonExceptionSupport;
 
 /**
  * Handler used to parse incoming frame data input into the engine
+ *
+ * TODO Maybe rename to frame decoding handler ?
  */
-public class ProtonFrameParsingHandler implements EngineHandler {
+public class ProtonFrameParsingHandler implements EngineHandler, SaslPerformative.SaslPerformativeHandler<EngineHandlerContext> {
 
     private static final ProtonLogger LOG = ProtonLoggerFactory.getLogger(ProtonFrameParsingHandler.class);
 
@@ -72,7 +75,7 @@ public class ProtonFrameParsingHandler implements EngineHandler {
     @Override
     public void handleRead(EngineHandlerContext context, ProtonBuffer buffer) {
         try {
-            // Parses inboud data and emit one complete frame before returning, caller should
+            // Parses in-incoming data and emit one complete frame before returning, caller should
             // ensure that the input buffer is drained into the engine or stop if the engine
             // has changed to a non-writable state.
             stage.parse(context, buffer);
@@ -84,18 +87,27 @@ public class ProtonFrameParsingHandler implements EngineHandler {
     }
 
     @Override
-    public void handleWrite(EngineHandlerContext context, AMQPHeader header) {
-        // Once a SASL header is written we reset to expect the AMQP 1.0 Header
-        // which should be the next thing to arrive in the buffer.
-        if (header.isSaslHeader()) {
-            this.stage = new HeaderParsingStage();
-        }
+    public void handleRead(EngineHandlerContext context, SaslFrame frame) {
+        frame.getBody().invoke(this, context);
+        context.fireRead(frame);
+    }
 
-        context.fireWrite(header);
+    @Override
+    public void handleWrite(EngineHandlerContext context, SaslPerformative performative) {
+        performative.invoke(this, context);
+        context.fireWrite(performative);
+    }
+
+    //----- Sasl Performative Handler to check for change to non-SASL state
+
+    @Override
+    public void handleOutcome(SaslOutcome saslOutcome, EngineHandlerContext context) {
+        // When we have read or written a SASL Outcome the next value to be read
+        // should be an AMQP Header to begin the next phase of the connection.
+        this.stage = new HeaderParsingStage();
     }
 
     //---- Methods to transition between stages
-
 
     private FrameParserStage transitionToFrameSizeParsingStage() {
         return stage = frameSizeParser.reset(0);
