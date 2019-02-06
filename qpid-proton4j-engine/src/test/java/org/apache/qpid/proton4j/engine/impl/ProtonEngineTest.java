@@ -35,6 +35,9 @@ import org.junit.Test;
  */
 public class ProtonEngineTest {
 
+    // TODO - The engine testing would benefit from a Qpid JMS style TestPeer that can expect and
+    //        emit frames to validate behaviors from the engine.
+
     private Connection connection;
     private ArrayList<ProtonBuffer> engineWrites = new ArrayList<>();
 
