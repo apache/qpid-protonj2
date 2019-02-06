@@ -44,13 +44,4 @@ public class ProtonEngineNoOpSaslContext implements EngineSaslContext {
     @Override
     public void setMaxFrameSize(int maxFrameSize) {
     }
-
-    @Override
-    public void setAutnenticateOnStart(boolean authOnStart) {
-    }
-
-    @Override
-    public boolean isAuthenticateOnStart() {
-        return false;
-    }
 }

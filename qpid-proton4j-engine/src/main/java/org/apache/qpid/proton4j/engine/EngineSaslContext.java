@@ -93,20 +93,4 @@ public interface EngineSaslContext {
      */
     void setMaxFrameSize(int maxFrameSize);
 
-    // TODO - These start state values aren't fully baked yet.
-
-    /**
-     * @return if the context is configured to begin authentication on engine start.
-     */
-    boolean isAuthenticateOnStart();
-
-    /**
-     * Controls if SASL authentication should be initiated immediately or be
-     * held until local processing (such as connection open) initiates it.
-     *
-     * @param authOnStart
-     *      when true the authentication process is attempted immediately.
-     */
-    void setAutnenticateOnStart(boolean authOnStart);
-
 }
