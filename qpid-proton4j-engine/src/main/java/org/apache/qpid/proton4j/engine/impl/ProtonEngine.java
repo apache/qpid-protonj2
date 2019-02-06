@@ -17,6 +17,8 @@
 package org.apache.qpid.proton4j.engine.impl;
 
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import org.apache.qpid.proton4j.common.logging.ProtonLogger;
+import org.apache.qpid.proton4j.common.logging.ProtonLoggerFactory;
 import org.apache.qpid.proton4j.engine.AsyncResult;
 import org.apache.qpid.proton4j.engine.Connection;
 import org.apache.qpid.proton4j.engine.Engine;
@@ -31,6 +33,8 @@ import org.apache.qpid.proton4j.engine.exceptions.ProtonException;
  */
 public class ProtonEngine implements Engine {
 
+    private static final ProtonLogger LOG = ProtonLoggerFactory.getLogger(ProtonEngine.class);
+
     private final ProtonEnginePipeline pipeline =  new ProtonEnginePipeline(this);
     private final ProtonConnection connection = new ProtonConnection(this);
     private final ProtonEngineConfiguration configuration = new ProtonEngineConfiguration(this);
@@ -44,6 +48,10 @@ public class ProtonEngine implements Engine {
     private EventHandler<ProtonException> errorHandler;
 
     private ProtonFuture<Connection> connectionFuture = new ProtonFuture<>();
+
+    private EventHandler<ProtonException> engineErrorHandler = (error) -> {
+        LOG.warn("Engine encounted error and will shutdown: ", error);
+    };
 
     ProtonConnection getConnection() {
         return connection;
@@ -100,7 +108,7 @@ public class ProtonEngine implements Engine {
         }
     }
 
-    //----- Engine configuration ------------------------------------------//
+    //----- Engine configuration
 
     @Override
     public void outputHandler(EventHandler<ProtonBuffer> handler) {
@@ -133,5 +141,13 @@ public class ProtonEngine implements Engine {
     @Override
     public EngineSaslContext saslContext() {
         return saslContext;
+    }
+
+    //----- Internal proton engine implementation
+
+    void engineFailed(ProtonException cause) {
+        state = EngineState.FAILED;
+        writable = false;
+        engineErrorHandler.handle(cause);
     }
 }

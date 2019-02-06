@@ -33,6 +33,7 @@ import org.apache.qpid.proton4j.engine.EngineHandlerContext;
 import org.apache.qpid.proton4j.engine.HeaderFrame;
 import org.apache.qpid.proton4j.engine.ProtocolFrame;
 import org.apache.qpid.proton4j.engine.exceptions.ProtocolViolationException;
+import org.apache.qpid.proton4j.engine.exceptions.ProtonExceptionSupport;
 
 /**
  * Transport Handler that forwards the incoming Performatives to the associated Connection
@@ -106,7 +107,7 @@ public class ProtonPerformativeHandler implements EngineHandler ,Performative.Pe
 
     @Override
     public void transportFailed(EngineHandlerContext context, Throwable e) {
-        // TODO signal error to the connection and move transport state to failed.
+        engine.engineFailed(ProtonExceptionSupport.create(e));
     }
 
     //----- Deal with the incoming AMQP performatives
@@ -115,7 +116,7 @@ public class ProtonPerformativeHandler implements EngineHandler ,Performative.Pe
     // those prior to sending along notifications to other handlers or to the connection.
     //
     // We currently can't spy on outbound performatives but we could in future by splitting these
-    // into inner classes for inbound and outbound and handle the write to invole the outbound
+    // into inner classes for inbound and outbound and handle the write to invoke the outbound
     // handlers.
 
     @Override
