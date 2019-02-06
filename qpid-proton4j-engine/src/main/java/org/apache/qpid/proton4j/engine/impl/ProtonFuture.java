@@ -72,9 +72,9 @@ public class ProtonFuture<E> implements AsyncResult<E>, EventHandler<AsyncResult
       return this;
     }
 
-    void onSuccess(E result) {
+    ProtonFuture<E> onSuccess(E result) {
         if (suceeded || failed) {
-            return;
+            return this;
         }
 
         this.result = result;
@@ -83,11 +83,13 @@ public class ProtonFuture<E> implements AsyncResult<E>, EventHandler<AsyncResult
         if (handler != null) {
             handler.handle(this);
         }
+
+        return this;
     }
 
-    void onFailure(Throwable error) {
+    ProtonFuture<E> onFailure(Throwable error) {
         if (suceeded || failed) {
-            return;
+            return this;
         }
 
         this.error = error;
@@ -96,5 +98,7 @@ public class ProtonFuture<E> implements AsyncResult<E>, EventHandler<AsyncResult
         if (handler != null) {
             handler.handle(this);
         }
+
+        return this;
     }
 }

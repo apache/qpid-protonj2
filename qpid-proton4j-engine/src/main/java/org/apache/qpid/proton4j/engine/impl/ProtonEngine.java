@@ -43,6 +43,8 @@ public class ProtonEngine implements Engine {
     private EventHandler<ProtonBuffer> outputHandler;
     private EventHandler<ProtonException> errorHandler;
 
+    private ProtonFuture<Connection> connectionFuture = new ProtonFuture<>();
+
     ProtonConnection getConnection() {
         return connection;
     }
@@ -58,19 +60,35 @@ public class ProtonEngine implements Engine {
     }
 
     @Override
-    public void start(EventHandler<AsyncResult<Connection>> handler) {
-        // TODO Auto-generated method stub
+    public void start(EventHandler<AsyncResult<Connection>> connectionReady) {
+        if (connectionReady == null) {
+            throw new NullPointerException("Start connection ready handler cannot be null");
+        }
 
+        state = EngineState.STARTING;
+        try {
+            pipeline().fireEngineStarting();
+            connectionReady.handle(connectionFuture.onSuccess(getConnection()));
+        } catch (Throwable error) {
+            // TODO - Error types ?
+            connectionReady.handle(connectionFuture.onFailure(error));
+            state = EngineState.FAILED;
+        }
+
+        state = EngineState.STARTED;
+        writable = true;
     }
 
     @Override
     public void shutdown() {
         state = EngineState.SHUTDOWN;
-        // TODO Auto-generated method stub
+        writable = false;
     }
 
     @Override
     public void ingest(ProtonBuffer input) throws EngineNotWritableException {
+        // TODO - Check other states like closed.
+
         if (!isWritable()) {
             throw new EngineNotWritableException("Engine is currently not accepting new input");
         }

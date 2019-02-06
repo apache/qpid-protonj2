@@ -416,6 +416,10 @@ public class ProtonEnginePipeline implements EnginePipeline {
         }
 
         @Override
+        public void engineStarting(EngineHandlerContext context) {
+        }
+
+        @Override
         public void handleRead(EngineHandlerContext context, ProtonBuffer buffer) {
             // TODO Decide on the exact error to be fired, move Transport to failed state.
             EventHandler<ProtonException> handler = engine.errorHandler();
