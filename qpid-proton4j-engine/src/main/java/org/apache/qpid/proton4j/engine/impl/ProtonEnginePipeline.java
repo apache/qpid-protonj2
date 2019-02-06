@@ -64,7 +64,7 @@ public class ProtonEnginePipeline implements EnginePipeline {
     }
 
     @Override
-    public EnginePipeline addFirst(String name, EngineHandler handler) {
+    public ProtonEnginePipeline addFirst(String name, EngineHandler handler) {
         if (name == null || name.isEmpty()) {
             throw new IllegalArgumentException("Handler name cannot be null or empty");
         }
@@ -92,7 +92,7 @@ public class ProtonEnginePipeline implements EnginePipeline {
     }
 
     @Override
-    public EnginePipeline addLast(String name, EngineHandler handler) {
+    public ProtonEnginePipeline addLast(String name, EngineHandler handler) {
         if (name == null || name.isEmpty()) {
             throw new IllegalArgumentException("Handler name cannot be null or empty");
         }
@@ -120,7 +120,7 @@ public class ProtonEnginePipeline implements EnginePipeline {
     }
 
     @Override
-    public EnginePipeline removeFirst() {
+    public ProtonEnginePipeline removeFirst() {
         if (head.next != tail) {
             ProtonEngineHandlerContext oldFirst = head.next;
 
@@ -138,7 +138,7 @@ public class ProtonEnginePipeline implements EnginePipeline {
     }
 
     @Override
-    public EnginePipeline removeLast() {
+    public ProtonEnginePipeline removeLast() {
         if (tail.previous != head) {
             ProtonEngineHandlerContext oldLast = tail.previous;
 
@@ -156,7 +156,7 @@ public class ProtonEnginePipeline implements EnginePipeline {
     }
 
     @Override
-    public EnginePipeline remove(String name) {
+    public ProtonEnginePipeline remove(String name) {
         if (name != null && !name.isEmpty()) {
             ProtonEngineHandlerContext current = head.next;
             ProtonEngineHandlerContext removed = null;
@@ -210,67 +210,73 @@ public class ProtonEnginePipeline implements EnginePipeline {
     //----- Event injection methods ------------------------------------------//
 
     @Override
-    public EnginePipeline fireRead(ProtonBuffer input) {
+    public ProtonEnginePipeline fireEngineStarting() {
+        head.fireEngineStarting();
+        return this;
+    }
+
+    @Override
+    public ProtonEnginePipeline fireRead(ProtonBuffer input) {
         tail.fireRead(input);
         return this;
     }
 
     @Override
-    public EnginePipeline fireRead(HeaderFrame header) {
+    public ProtonEnginePipeline fireRead(HeaderFrame header) {
         tail.fireRead(header);
         return this;
     }
 
     @Override
-    public EnginePipeline fireRead(SaslFrame frame) {
+    public ProtonEnginePipeline fireRead(SaslFrame frame) {
         tail.fireRead(frame);
         return this;
     }
 
     @Override
-    public EnginePipeline fireRead(ProtocolFrame frame) {
+    public ProtonEnginePipeline fireRead(ProtocolFrame frame) {
         tail.fireRead(frame);
         return this;
     }
 
     @Override
-    public EnginePipeline fireWrite(AMQPHeader header) {
+    public ProtonEnginePipeline fireWrite(AMQPHeader header) {
         head.fireWrite(header);
         return this;
     }
 
     @Override
-    public EnginePipeline fireWrite(Performative performative, short channel, ProtonBuffer payload, Runnable payloadToLarge) {
+    public ProtonEnginePipeline fireWrite(Performative performative, short channel, ProtonBuffer payload, Runnable payloadToLarge) {
         head.fireWrite(performative, channel, payload, payloadToLarge);
         return this;
     }
 
     @Override
-    public EnginePipeline fireWrite(SaslPerformative performative) {
+    public ProtonEnginePipeline fireWrite(SaslPerformative performative) {
         head.fireWrite(performative);
         return this;
     }
 
     @Override
-    public EnginePipeline fireWrite(ProtonBuffer buffer) {
+    public ProtonEnginePipeline fireWrite(ProtonBuffer buffer) {
         head.fireWrite(buffer);
         return this;
     }
 
     @Override
-    public EnginePipeline fireEncodingError(Throwable e) {
+    public ProtonEnginePipeline fireEncodingError(Throwable e) {
         tail.fireEncodingError(e);
         return this;
     }
 
     @Override
-    public EnginePipeline fireDecodingError(Throwable e) {
+    public ProtonEnginePipeline fireDecodingError(Throwable e) {
         tail.fireDecodingError(e);
         return this;
     }
 
     @Override
-    public EnginePipeline fireFailed(Throwable e) {
+    public ProtonEnginePipeline fireFailed(Throwable e) {
         tail.fireFailed(e);
         return this;
     }

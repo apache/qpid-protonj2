@@ -50,6 +50,8 @@ public interface EnginePipeline {
 
     //----- Event triggers ---------------------------------------------------//
 
+    EnginePipeline fireEngineStarting();
+
     EnginePipeline fireRead(ProtonBuffer input);
 
     EnginePipeline fireRead(HeaderFrame header);

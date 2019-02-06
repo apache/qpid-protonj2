@@ -26,20 +26,31 @@ import org.apache.qpid.proton4j.buffer.ProtonBuffer;
  */
 public interface EngineHandler {
 
-    // Life cycle events for a handler
-
     default void handlerAdded(EngineHandlerContext context) throws Exception {}
 
     default void handlerRemoved(EngineHandlerContext context) throws Exception {}
 
-    // Some things that might flow through an engine pipeline
+    /**
+     * Called when the engine is started to allow handlers to prepare for use based on
+     * the configuration state at start of the engine.
+     *
+     * Each handler that implements this method should forward the event on to the next
+     * handler unless there is an error that will stop the engine in which case the handler
+     * can short circuit starting any handlers following this one and singal that the engine
+     * is failed.
+     *
+     * @param context
+     *      The context for this handler which can be used to forward the event to the next handler
+     */
+    default void engineStarting(EngineHandlerContext context) {
+        context.fireEngineStarting();
+    }
 
-    // Give handlers a chance to set initial state prior to start using fixed engine configuration
-    // void engineStarting(EngineSaslContext context) throws Exception;
-
-    // void handleReadabilityChanged(TransportHandlerContext context);  // TODO how to communicate readable state ?
-
-    // void handleWritabilityChanged(TransportHandlerContext context); // TODO how to communicate writable state ?
+    // TODO -> this ?
+    // void handleEngineStateChanged(EngineHandlerContext context); // TODO To generic, to many cases where this might fire ?
+    // TODO - or this ?
+    // void handleReadabilityChanged(EngineHandlerContext context);  // TODO how to communicate readable state ?
+    // void handleWritabilityChanged(EngineHandlerContext context); // TODO how to communicate writable state ?
 
     // Read events
 

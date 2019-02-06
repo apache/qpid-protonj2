@@ -32,6 +32,8 @@ public interface EngineHandlerContext {
 
     String getName();
 
+    void fireEngineStarting();
+
     void fireRead(ProtonBuffer buffer);
 
     void fireRead(HeaderFrame header);
