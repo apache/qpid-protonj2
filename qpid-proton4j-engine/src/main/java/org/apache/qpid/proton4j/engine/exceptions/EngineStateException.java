@@ -17,25 +17,24 @@
 package org.apache.qpid.proton4j.engine.exceptions;
 
 /**
- * Exception indicating that the engine is not currently accepting input of data
+ * Root type for exceptions thrown from the engine due to state violations
  */
-public class EngineNotWritableException extends EngineStateException {
+public class EngineStateException extends ProtonException {
 
-    private static final long serialVersionUID = 4395349183049727897L;
+    private static final long serialVersionUID = 4191691747006604768L;
 
-    public EngineNotWritableException() {
-        super();
+    public EngineStateException() {
     }
 
-    public EngineNotWritableException(String message, Throwable cause) {
+    public EngineStateException(String message, Throwable cause) {
         super(message, cause);
     }
 
-    public EngineNotWritableException(String message) {
+    public EngineStateException(String message) {
         super(message);
     }
 
-    public EngineNotWritableException(Throwable cause) {
+    public EngineStateException(Throwable cause) {
         super(cause);
     }
 }

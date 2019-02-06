@@ -17,25 +17,24 @@
 package org.apache.qpid.proton4j.engine.exceptions;
 
 /**
- * Exception indicating that the engine is not currently accepting input of data
+ * Exception thrown when an option is performed on a closed engine.
  */
-public class EngineNotWritableException extends EngineStateException {
+public class EngineClosedException extends EngineStateException {
 
-    private static final long serialVersionUID = 4395349183049727897L;
+    private static final long serialVersionUID = 7020379252988873878L;
 
-    public EngineNotWritableException() {
-        super();
+    public EngineClosedException() {
     }
 
-    public EngineNotWritableException(String message, Throwable cause) {
+    public EngineClosedException(String message, Throwable cause) {
         super(message, cause);
     }
 
-    public EngineNotWritableException(String message) {
+    public EngineClosedException(String message) {
         super(message);
     }
 
-    public EngineNotWritableException(Throwable cause) {
+    public EngineClosedException(Throwable cause) {
         super(cause);
     }
 }
