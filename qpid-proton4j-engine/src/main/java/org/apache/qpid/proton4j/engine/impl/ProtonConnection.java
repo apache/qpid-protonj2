@@ -24,6 +24,7 @@ import java.util.Map;
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedInteger;
 import org.apache.qpid.proton4j.amqp.UnsignedShort;
+import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
 import org.apache.qpid.proton4j.amqp.transport.Attach;
 import org.apache.qpid.proton4j.amqp.transport.Begin;
 import org.apache.qpid.proton4j.amqp.transport.Close;
@@ -45,7 +46,7 @@ import org.apache.qpid.proton4j.engine.Session;
 /**
  * Implements the proton4j Connection API
  */
-public class ProtonConnection extends ProtonEndpoint<Connection> implements Connection, Performative.PerformativeHandler<ProtonEngine> {
+public class ProtonConnection extends ProtonEndpoint<Connection> implements Connection, AMQPHeader.HeaderHandler<ProtonEngine>, Performative.PerformativeHandler<ProtonEngine> {
 
     private static final int SESSION_ARRAY_CHUNK_SIZE = 16;
 
@@ -208,8 +209,8 @@ public class ProtonConnection extends ProtonEndpoint<Connection> implements Conn
 
     @Override
     void initiateLocalOpen() {
-        // TODO Auto-generated method stub
-
+        // TODO - Handler already having received a header
+        engine.pipeline().fireWrite(AMQPHeader.getAMQPHeader());
     }
 
     @Override
@@ -239,6 +240,17 @@ public class ProtonConnection extends ProtonEndpoint<Connection> implements Conn
     }
 
     //----- Handle performatives sent from the remote to this Connection
+
+    @Override
+    public void handleAMQPHeader(AMQPHeader header, ProtonEngine context) {
+        // Once an incoming header arrives we can emit our open if locally opened
+        // TODO
+    }
+
+    @Override
+    public void handleSASLHeader(AMQPHeader header, ProtonEngine context) {
+        // TODO This would be an error state
+    }
 
     @Override
     public void handleOpen(Open open, ProtonBuffer payload, int channel, ProtonEngine context) {

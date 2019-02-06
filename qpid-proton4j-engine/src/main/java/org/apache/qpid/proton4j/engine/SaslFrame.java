@@ -17,6 +17,7 @@
 package org.apache.qpid.proton4j.engine;
 
 import org.apache.qpid.proton4j.amqp.security.SaslPerformative;
+import org.apache.qpid.proton4j.amqp.security.SaslPerformative.SaslPerformativeHandler;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 
 /**
@@ -30,5 +31,9 @@ public class SaslFrame extends Frame<SaslPerformative>{
         super(SASL_FRAME_TYPE);
 
         initialize(performative, 0, payload);
+    }
+
+    public <E> void invoke(SaslPerformativeHandler<E> handler, E context) {
+        getBody().invoke(handler, context);
     }
 }

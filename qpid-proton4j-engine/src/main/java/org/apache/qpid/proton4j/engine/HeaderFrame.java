@@ -17,6 +17,7 @@
 package org.apache.qpid.proton4j.engine;
 
 import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
+import org.apache.qpid.proton4j.amqp.transport.AMQPHeader.HeaderHandler;
 
 /**
  * Frame type that carries AMQPHeader instances
@@ -53,5 +54,9 @@ public class HeaderFrame extends Frame<AMQPHeader> {
 
     public boolean isSaslHeader() {
         return getBody().isSaslHeader();
+    }
+
+    public <E> void invoke(HeaderHandler<E> handler, E context) {
+        getBody().invoke(handler, context);
     }
 }

@@ -17,6 +17,7 @@
 package org.apache.qpid.proton4j.engine;
 
 import org.apache.qpid.proton4j.amqp.transport.Performative;
+import org.apache.qpid.proton4j.amqp.transport.Performative.PerformativeHandler;
 
 /**
  * Frame object that carries an AMQP Performative
@@ -49,5 +50,9 @@ public class ProtocolFrame extends Frame<Performative> {
         if (pool != null) {
             pool.release(this);
         }
+    }
+
+    public <E> void invoke(PerformativeHandler<E> handler, E context) {
+        getBody().invoke(handler, getPayload(), getChannel(), context);
     }
 }

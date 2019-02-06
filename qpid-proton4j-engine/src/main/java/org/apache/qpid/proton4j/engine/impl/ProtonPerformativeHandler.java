@@ -39,7 +39,7 @@ import org.apache.qpid.proton4j.engine.exceptions.ProtonExceptionSupport;
  * Transport Handler that forwards the incoming Performatives to the associated Connection
  * as well as any error encountered during the Transport processing.
  */
-public class ProtonPerformativeHandler implements EngineHandler ,Performative.PerformativeHandler<EngineHandlerContext> {
+public class ProtonPerformativeHandler implements EngineHandler, AMQPHeader.HeaderHandler<EngineHandlerContext>, Performative.PerformativeHandler<EngineHandlerContext> {
 
     private ProtonEngine engine;
     private ProtonConnection connection;
@@ -59,29 +59,7 @@ public class ProtonPerformativeHandler implements EngineHandler ,Performative.Pe
 
     @Override
     public void handleRead(EngineHandlerContext context, HeaderFrame header) {
-        if (header.isSaslHeader()) {
-            if (!headerSent) {
-                headerSent = true;
-                context.fireWrite(AMQPHeader.getAMQPHeader());
-            }
 
-            // TODO signal failure as we don't handle SASL at this level.
-        }
-
-        if (headerReceived) {
-            // TODO signal failure to the engine and adjust state
-        }
-
-        headerReceived = true;
-        if (!headerSent) {
-            context.fireWrite(AMQPHeader.getAMQPHeader());
-        }
-
-        // Recompute max frame size now based on engine max frame size in case sasl was enabled.
-        configuration.recomputeEffectiveFrameSizeLimits();
-
-        // TODO Convey to the engine that we should check local Connection state and fire
-        //      the open if locally opened already.
     }
 
     @Override
@@ -89,7 +67,7 @@ public class ProtonPerformativeHandler implements EngineHandler ,Performative.Pe
         // TODO - If closed or failed we should reject incoming frames
 
         try {
-            frame.getBody().invoke(this, frame.getPayload(), frame.getChannel(), context);
+            frame.invoke(this, context);
         } finally {
             frame.release();
         }
@@ -118,6 +96,37 @@ public class ProtonPerformativeHandler implements EngineHandler ,Performative.Pe
     // We currently can't spy on outbound performatives but we could in future by splitting these
     // into inner classes for inbound and outbound and handle the write to invoke the outbound
     // handlers.
+
+    @Override
+    public void handleAMQPHeader(AMQPHeader header, EngineHandlerContext context) {
+        if (headerReceived) {
+            // TODO signal failure to the engine and adjust state
+        }
+
+        headerReceived = true;
+        if (!headerSent) {
+            context.fireWrite(AMQPHeader.getAMQPHeader());
+        }
+
+        // Recompute max frame size now based on engine max frame size in case sasl was enabled.
+        configuration.recomputeEffectiveFrameSizeLimits();
+
+        // Let the Connection know we have a header so it can emit any pending work.
+        header.invoke(connection, engine);
+    }
+
+    @Override
+    public void handleSASLHeader(AMQPHeader header, EngineHandlerContext context) {
+        if (header.isSaslHeader()) {
+            if (!headerSent) {
+                headerReceived = true;
+                headerSent = true;
+                context.fireWrite(AMQPHeader.getAMQPHeader());
+            }
+
+            // TODO signal failure as we don't handle SASL at this level.
+        }
+    }
 
     @Override
     public void handleOpen(Open open, ProtonBuffer payload, int channel, EngineHandlerContext context) {

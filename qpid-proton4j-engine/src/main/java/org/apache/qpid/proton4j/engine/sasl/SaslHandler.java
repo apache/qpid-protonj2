@@ -92,7 +92,7 @@ public class SaslHandler implements EngineHandler {
             context.fireRead(header);
         }
 
-        saslContext.handleHeaderFrame(context, header);
+        header.invoke(saslContext, context);
     }
 
     @Override
@@ -103,7 +103,7 @@ public class SaslHandler implements EngineHandler {
                 "Unexpected SASL Frame: SASL processing has already completed"));
         }
 
-        frame.getBody().invoke(saslContext, context);
+        frame.invoke(saslContext, context);
     }
 
     @Override

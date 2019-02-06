@@ -24,16 +24,16 @@ import org.apache.qpid.proton4j.amqp.security.SaslMechanisms;
 import org.apache.qpid.proton4j.amqp.security.SaslOutcome;
 import org.apache.qpid.proton4j.amqp.security.SaslPerformative;
 import org.apache.qpid.proton4j.amqp.security.SaslResponse;
+import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.engine.EngineHandlerContext;
-import org.apache.qpid.proton4j.engine.HeaderFrame;
 import org.apache.qpid.proton4j.engine.sasl.SaslConstants.SaslOutcomes;
 import org.apache.qpid.proton4j.engine.sasl.SaslConstants.SaslStates;
 
 /**
  * The State engine for a Sasl exchange.
  */
-public abstract class SaslContext implements SaslPerformative.SaslPerformativeHandler<EngineHandlerContext> {
+public abstract class SaslContext implements AMQPHeader.HeaderHandler<EngineHandlerContext>, SaslPerformative.SaslPerformativeHandler<EngineHandlerContext> {
 
     enum Role { CLIENT, SERVER };
 
@@ -97,7 +97,11 @@ public abstract class SaslContext implements SaslPerformative.SaslPerformativeHa
 
     //----- Handle AMQP Header input -----------------------------------------//
 
-    public abstract void handleHeaderFrame(EngineHandlerContext context, HeaderFrame header);
+    @Override
+    public abstract void handleAMQPHeader(AMQPHeader header, EngineHandlerContext context);
+
+    @Override
+    public abstract void handleSASLHeader(AMQPHeader header, EngineHandlerContext context);
 
     //----- Entry point for Sasl Performative processing ---------------------//
 

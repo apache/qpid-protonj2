@@ -164,4 +164,29 @@ public class AMQPHeader {
 
         buffer = value;
     }
+
+    /**
+     * Provide this AMQP Header with a handler that will process the given AMQP header
+     * depending on the protocol type the correct handler method is invoked.
+     *
+     * @param handler
+     *      The {@link HeaderHandler} instance to use to process the header.
+     * @param context
+     *      A context object to pass along with the header.
+     */
+    public <E> void invoke(HeaderHandler<E> handler, E context) {
+        if (isSaslHeader()) {
+            handler.handleSASLHeader(this, context);
+        } else {
+            handler.handleAMQPHeader(this, context);
+        }
+    }
+
+    public interface HeaderHandler<E> {
+
+        default void handleAMQPHeader(AMQPHeader header, E context) {}
+
+        default void handleSASLHeader(AMQPHeader header, E context) {}
+
+    }
 }

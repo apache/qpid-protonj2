@@ -146,21 +146,13 @@ public class SaslServerContext extends SaslContext {
     //----- Transport event handlers -----------------------------------------//
 
     @Override
-    public void handleHeaderFrame(EngineHandlerContext context, HeaderFrame header) {
-        if (header.getBody().isSaslHeader()) {
-            handleSaslHeader(context, header);
-        } else {
-            handleNonSaslHeader(context, header);
-        }
-    }
-
-    private void handleNonSaslHeader(EngineHandlerContext context, HeaderFrame header) {
+    public void handleAMQPHeader(AMQPHeader header, EngineHandlerContext context) {
         if (!headerReceived) {
             if (isAllowNonSasl()) {
                 // Set proper outcome etc.
                 classifyStateFromOutcome(SaslOutcomes.PN_SASL_OK);
                 done = true;
-                saslHandler.handleRead(context, header);
+                saslHandler.handleRead(context, HeaderFrame.AMQP_HEADER_FRAME);
             } else {
                 // TODO - Error type ?
                 classifyStateFromOutcome(SaslOutcomes.PN_SASL_SKIPPED);
@@ -178,9 +170,10 @@ public class SaslServerContext extends SaslContext {
         }
     }
 
-    private void handleSaslHeader(EngineHandlerContext context, HeaderFrame header) {
+    @Override
+    public void handleSASLHeader(AMQPHeader header, EngineHandlerContext context) {
         if (!headerWritten) {
-            context.fireWrite(header.getBody());
+            context.fireWrite(header);
             headerWritten = true;
         }
 
@@ -193,7 +186,7 @@ public class SaslServerContext extends SaslContext {
         }
 
         // Give the callback handler a chance to configure this handler
-        listener.onSaslHeader(this, header.getBody());
+        listener.onSaslHeader(this, header);
 
         // TODO - When to fail when no mechanisms set, now or on some earlier started / connected event ?
         //        Or allow it to be empty and await an async write of a SaslInit frame etc ?

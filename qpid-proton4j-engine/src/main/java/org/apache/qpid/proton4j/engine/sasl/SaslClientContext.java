@@ -22,9 +22,9 @@ import org.apache.qpid.proton4j.amqp.security.SaslChallenge;
 import org.apache.qpid.proton4j.amqp.security.SaslMechanisms;
 import org.apache.qpid.proton4j.amqp.security.SaslOutcome;
 import org.apache.qpid.proton4j.amqp.security.SaslResponse;
+import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.engine.EngineHandlerContext;
-import org.apache.qpid.proton4j.engine.HeaderFrame;
 import org.apache.qpid.proton4j.engine.sasl.SaslConstants.SaslOutcomes;
 import org.apache.qpid.proton4j.engine.sasl.SaslConstants.SaslStates;
 
@@ -117,12 +117,15 @@ public class SaslClientContext extends SaslContext {
     //----- SASL Frame event handlers ----------------------------------------//
 
     @Override
-    public void handleHeaderFrame(EngineHandlerContext context, HeaderFrame header) {
-        if (!header.getBody().isSaslHeader()) {
-            // TODO - Error on server not supporting SASL
-            saslHandler.transportFailed(context, new IllegalStateException(
-                "Remote does not support SASL authentication."));
-        }
+    public void handleAMQPHeader(AMQPHeader header, EngineHandlerContext context) {
+        // TODO - Error on server not supporting SASL
+        saslHandler.transportFailed(context, new IllegalStateException(
+            "Remote does not support SASL authentication."));
+    }
+
+    @Override
+    public void handleSASLHeader(AMQPHeader header, EngineHandlerContext context) {
+        // TODO Auto-generated method stub
     }
 
     @Override
