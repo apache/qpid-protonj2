@@ -16,11 +16,18 @@
  */
 package org.apache.qpid.proton4j.engine.impl;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import java.util.ArrayList;
+
+import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.engine.Connection;
+import org.junit.After;
+import org.junit.Ignore;
 import org.junit.Test;
 
 /**
@@ -29,6 +36,12 @@ import org.junit.Test;
 public class ProtonEngineTest {
 
     private Connection connection;
+    private ArrayList<ProtonBuffer> engineWrites = new ArrayList<>();
+
+    @After
+    public void tearDown() {
+        engineWrites.clear();
+    }
 
     @Test
     public void testEngineStart() {
@@ -46,5 +59,33 @@ public class ProtonEngineTest {
         // Default engine should start and return a connection immediately
         assertTrue(engine.isWritable());
         assertNotNull(connection);
+    }
+
+    @Ignore("Building out idea of how Engine behaves, when do we emit the header etc")
+    @Test
+    public void testEngineEmitsAMQPHeaderOnConnectionOpen() {
+        ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
+
+        engine.start(result -> {
+            connection = result.get();
+        });
+
+        // Default engine should start and return a connection immediately
+        assertNotNull(connection);
+
+        engine.outputHandler((buffer) -> {
+            engineWrites.add(buffer);
+        });
+
+        connection.open();
+
+        // Expect the engine to emit the AMQP header
+        assertEquals("Engine did not emit an AMQP Header on Open", 1, engineWrites.size());
+
+        ProtonBuffer outputBuffer = engineWrites.get(0);
+        assertEquals(AMQPHeader.HEADER_SIZE_BYTES, outputBuffer.getReadableBytes());
+        AMQPHeader outputHeader = new AMQPHeader(outputBuffer);
+
+        assertFalse(outputHeader.isSaslHeader());
     }
 }
