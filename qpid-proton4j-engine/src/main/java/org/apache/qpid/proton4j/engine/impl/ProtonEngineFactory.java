@@ -16,6 +16,8 @@
  */
 package org.apache.qpid.proton4j.engine.impl;
 
+import org.apache.qpid.proton4j.engine.Engine;
+import org.apache.qpid.proton4j.engine.EngineFactory;
 import org.apache.qpid.proton4j.engine.sasl.SaslClientListener;
 import org.apache.qpid.proton4j.engine.sasl.SaslHandler;
 import org.apache.qpid.proton4j.engine.sasl.SaslServerListener;
@@ -23,11 +25,19 @@ import org.apache.qpid.proton4j.engine.sasl.SaslServerListener;
 /**
  * Factory class for proton4j Engine creation
  */
-public final class ProtonEngineFactory {
+public final class ProtonEngineFactory implements EngineFactory {
 
-    private ProtonEngineFactory() {}
+    @Override
+    public Engine createEngine() {
+        return createDefaultEngine();
+    }
 
-    public static ProtonEngine createEngine() {
+    @Override
+    public Engine createSaslEngine() {
+        throw new UnsupportedOperationException();
+    }
+
+    public static ProtonEngine createDefaultEngine() {
         ProtonEngine engine = new ProtonEngine();
 
         ProtonEnginePipeline pipeline = engine.pipeline();
