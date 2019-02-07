@@ -46,16 +46,18 @@ public final class Detach implements Performative {
         return closed;
     }
 
-    public void setClosed(boolean closed) {
+    public Detach setClosed(boolean closed) {
         this.closed = closed;
+        return this;
     }
 
     public ErrorCondition getError() {
         return error;
     }
 
-    public void setError(ErrorCondition error) {
+    public Detach setError(ErrorCondition error) {
         this.error = error;
+        return this;
     }
 
     @Override

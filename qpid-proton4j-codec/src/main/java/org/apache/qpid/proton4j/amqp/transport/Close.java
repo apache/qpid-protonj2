@@ -31,8 +31,9 @@ public final class Close implements Performative {
         return error;
     }
 
-    public void setError(ErrorCondition error) {
+    public Close setError(ErrorCondition error) {
         this.error = error;
+        return this;
     }
 
     @Override
