@@ -51,6 +51,8 @@ public class ProtonFrameParsingHandler implements EngineHandler, SaslPerformativ
     public static final byte AMQP_FRAME_TYPE = (byte) 0;
     public static final byte SASL_FRAME_TYPE = (byte) 1;
 
+    public static final int FRAME_SIZE_BTYES = 4;
+
     private final ProtocolFramePool framePool = ProtocolFramePool.DEFAULT;
 
     private Decoder decoder;
@@ -201,8 +203,6 @@ public class ProtonFrameParsingHandler implements EngineHandler, SaslPerformativ
 
     private class FrameSizeParsingStage implements FrameParserStage {
 
-        private static final int FRAME_SIZE_BTYES = 4;
-
         private int frameSize;
         private int multiplier = FRAME_SIZE_BTYES;
 
@@ -304,7 +304,7 @@ public class ProtonFrameParsingHandler implements EngineHandler, SaslPerformativ
                 input.setReadIndex(input.getReadIndex() + dataOffset - 8);
             }
 
-            final int frameBodySize = frameSize - dataOffset;
+            final int frameBodySize = frameSize - (dataOffset - FRAME_SIZE_BTYES);
 
             ProtonBuffer payload = null;
             Object val = null;

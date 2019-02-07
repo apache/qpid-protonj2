@@ -16,6 +16,8 @@
  */
 package org.apache.qpid.proton4j.engine.impl;
 
+import static org.apache.qpid.proton4j.engine.impl.ProtonSupport.result;
+
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -36,6 +38,8 @@ import org.apache.qpid.proton4j.amqp.transport.Open;
 import org.apache.qpid.proton4j.amqp.transport.Performative;
 import org.apache.qpid.proton4j.amqp.transport.Transfer;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import org.apache.qpid.proton4j.common.logging.ProtonLogger;
+import org.apache.qpid.proton4j.common.logging.ProtonLoggerFactory;
 import org.apache.qpid.proton4j.engine.AsyncResult;
 import org.apache.qpid.proton4j.engine.Connection;
 import org.apache.qpid.proton4j.engine.EndpointState;
@@ -50,6 +54,8 @@ import org.apache.qpid.proton4j.engine.exceptions.ProtonException;
  */
 public class ProtonConnection extends ProtonEndpoint<Connection> implements Connection, AMQPHeader.HeaderHandler<ProtonEngine>, Performative.PerformativeHandler<ProtonEngine> {
 
+    private static final ProtonLogger LOG = ProtonLoggerFactory.getLogger(ProtonConnection.class);
+
     private static final int SESSION_ARRAY_CHUNK_SIZE = 16;
 
     private final ProtonEngine engine;
@@ -58,6 +64,10 @@ public class ProtonConnection extends ProtonEndpoint<Connection> implements Conn
     private Open remoteOpen;
 
     private ProtonSession[] localSessions = new ProtonSession[SESSION_ARRAY_CHUNK_SIZE];
+
+    private EventHandler<AsyncResult<Connection>> remoteOpenHandler = (result) -> {
+        LOG.trace("Remote open arrived at default handler.");
+    };
 
     /**
      * Create a new unbound Connection instance.
@@ -218,7 +228,6 @@ public class ProtonConnection extends ProtonEndpoint<Connection> implements Conn
     @Override
     void initiateLocalClose() {
         // TODO Auto-generated method stub
-
     }
 
     int findFreeLocalChannel() {
@@ -271,8 +280,9 @@ public class ProtonConnection extends ProtonEndpoint<Connection> implements Conn
             // TODO - Throw error indicating invalid state remote open already received.
         }
 
+        remoteOpenWasReceived();
         remoteOpen = open;
-        // TODO
+        remoteOpenHandler.handle(result(this, null));
     }
 
     @Override
@@ -319,31 +329,31 @@ public class ProtonConnection extends ProtonEndpoint<Connection> implements Conn
 
     @Override
     public Connection openEventHandler(EventHandler<AsyncResult<Connection>> remoteOpenEventHandler) {
-        // TODO Auto-generated method stub
-        return null;
+        this.remoteOpenHandler = remoteOpenEventHandler;
+        return this;
     }
 
     @Override
     public Connection closeEventHandler(EventHandler<AsyncResult<Connection>> remoteCloseEventHandler) {
         // TODO Auto-generated method stub
-        return null;
+        return this;
     }
 
     @Override
     public Connection sessionOpenEventHandler(EventHandler<Session> remoteSessionOpenEventHandler) {
         // TODO Auto-generated method stub
-        return null;
+        return this;
     }
 
     @Override
     public Connection senderOpenEventHandler(EventHandler<Sender> remoteSenderOpenEventHandler) {
         // TODO Auto-generated method stub
-        return null;
+        return this;
     }
 
     @Override
     public Connection receiverOpenEventHandler(EventHandler<Receiver> remoteReceiverOpenEventHandler) {
         // TODO Auto-generated method stub
-        return null;
+        return this;
     }
 }

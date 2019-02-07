@@ -130,6 +130,14 @@ public abstract class ProtonEndpoint<T extends Endpoint<T>> implements Endpoint<
         localCloseSent = true;
     }
 
+    void remoteOpenWasReceived() {
+        remoteState = EndpointState.ACTIVE;
+    }
+
+    void remoteClosedWasReceived() {
+        remoteState = EndpointState.CLOSED;
+    }
+
     abstract void initiateLocalOpen();
 
     abstract void initiateLocalClose();

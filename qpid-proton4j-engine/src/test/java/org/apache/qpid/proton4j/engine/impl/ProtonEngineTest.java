@@ -23,14 +23,19 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
 import org.apache.qpid.proton4j.amqp.transport.Open;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.codec.CodecFactory;
 import org.apache.qpid.proton4j.codec.Decoder;
 import org.apache.qpid.proton4j.codec.DecoderState;
+import org.apache.qpid.proton4j.codec.Encoder;
+import org.apache.qpid.proton4j.codec.EncoderState;
 import org.apache.qpid.proton4j.engine.Connection;
+import org.apache.qpid.proton4j.engine.exceptions.EngineStateException;
 import org.junit.After;
 import org.junit.Test;
 
@@ -45,13 +50,17 @@ public class ProtonEngineTest {
     private Connection connection;
     private ArrayList<ProtonBuffer> engineWrites = new ArrayList<>();
 
-    private Decoder decoder = CodecFactory.getDefaultDecoder();
-    private DecoderState decoderState = decoder.newDecoderState();
+    private final Decoder decoder = CodecFactory.getDefaultDecoder();
+    private final DecoderState decoderState = decoder.newDecoderState();
+
+    private final Encoder encoder = CodecFactory.getDefaultEncoder();
+    private final EncoderState encoderState = encoder.newEncoderState();
 
     @After
     public void tearDown() {
         engineWrites.clear();
         decoderState.reset();
+        encoderState.reset();
     }
 
     @Test
@@ -131,6 +140,66 @@ public class ProtonEngineTest {
         assertNotNull(unwrapFrame(outputBuffer, Open.class));
     }
 
+    @Test
+    public void testConnectionRemoteOpenTriggeredWhenRemoteOpenArrives() throws EngineStateException {
+        ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
+
+        final AtomicBoolean remoteOpened = new AtomicBoolean();
+
+        engine.start(result -> {
+            connection = result.get();
+        });
+
+        // Default engine should start and return a connection immediately
+        assertNotNull(connection);
+
+        connection.openEventHandler((result) -> {
+            remoteOpened.set(true);
+        });
+
+        engine.outputHandler((buffer) -> {
+            engineWrites.add(buffer);
+        });
+
+        // Expect the engine to have remained idle
+        assertEquals("Engine should not have emitted any frames yet", 0, engineWrites.size());
+
+        engine.ingest(AMQPHeader.getAMQPHeader().getBuffer());
+        engine.ingest(wrapInFrame(new Open(), 0));
+
+        // Expect the engine to emit the AMQP header
+        assertEquals("Engine did not emit an AMQP Header on Open", 1, engineWrites.size());
+
+        assertTrue("Connection remote opened event did not fire", remoteOpened.get());
+    }
+
+    // TODO - Test support for this as it will be common operation.
+
+    private ProtonBuffer wrapInFrame(Object input, int channel) {
+        final int FRAME_START_BYTE = 0;
+        final int FRAME_DOFF_BYTE = 4;
+        final int FRAME_DOFF_SIZE = 2;
+        final int FRAME_TYPE_BYTE = 5;
+        final int FRAME_CHANNEL_BYTE = 6;
+
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate(512);
+
+        buffer.writeLong(0); // Reserve header space
+
+        try {
+            encoder.writeObject(buffer, encoderState, input);
+        } finally {
+            encoderState.reset();
+        }
+
+        buffer.setInt(FRAME_START_BYTE, buffer.getReadableBytes());
+        buffer.setByte(FRAME_DOFF_BYTE, FRAME_DOFF_SIZE);
+        buffer.setByte(FRAME_TYPE_BYTE, 0);
+        buffer.setShort(FRAME_CHANNEL_BYTE, channel);
+
+        return buffer;
+    }
+
     @SuppressWarnings({ "unchecked", "unused" })
     private <E> E unwrapFrame(ProtonBuffer buffer, Class<E> typeClass) throws IOException {
         int frameSize = buffer.readInt();
@@ -147,7 +216,11 @@ public class ProtonEngineTest {
         Object val = null;
 
         if (frameBodySize > 0) {
-            val = decoder.readObject(buffer, decoderState);
+            try {
+                val = decoder.readObject(buffer, decoderState);
+            } finally {
+                decoderState.reset();
+            }
         } else {
             val = null;
         }
