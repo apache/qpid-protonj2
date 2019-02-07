@@ -117,15 +117,13 @@ public class ProtonPerformativeHandler implements EngineHandler, AMQPHeader.Head
 
     @Override
     public void handleSASLHeader(AMQPHeader header, EngineHandlerContext context) {
-        if (header.isSaslHeader()) {
-            if (!headerSent) {
-                headerReceived = true;
-                headerSent = true;
-                context.fireWrite(AMQPHeader.getAMQPHeader());
-            }
-
-            // TODO signal failure as we don't handle SASL at this level.
+        if (!headerSent) {
+            headerReceived = true;
+            headerSent = true;
+            context.fireWrite(AMQPHeader.getAMQPHeader());
         }
+
+        // TODO signal failure as we don't handle SASL at this level.
     }
 
     @Override
