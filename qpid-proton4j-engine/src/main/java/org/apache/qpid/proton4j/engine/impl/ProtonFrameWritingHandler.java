@@ -20,7 +20,6 @@ import org.apache.qpid.proton4j.amqp.security.SaslPerformative;
 import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
 import org.apache.qpid.proton4j.amqp.transport.Performative;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
-import org.apache.qpid.proton4j.buffer.ProtonBufferAllocator;
 import org.apache.qpid.proton4j.codec.CodecFactory;
 import org.apache.qpid.proton4j.codec.Encoder;
 import org.apache.qpid.proton4j.codec.EncoderState;
@@ -53,7 +52,6 @@ public class ProtonFrameWritingHandler implements EngineHandler {
 
     private ProtonEngine engine;
     private ProtonEngineConfiguration configuration;
-    private ProtonBufferAllocator allocator;
 
     @Override
     public void handlerAdded(EngineHandlerContext context) throws Exception {
@@ -79,7 +77,7 @@ public class ProtonFrameWritingHandler implements EngineHandler {
     private ProtonBuffer writeFrame(Encoder encoder, EncoderState encoderState, Object performative, ProtonBuffer payload, byte frameType, short channel, int maxFrameSize, Runnable onPayloadTooLarge) {
         int outputBufferSize = AMQP_PERFORMATIVE_PAD + (payload != null ? payload.getReadableBytes() : 0);
 
-        ProtonBuffer output = allocator.outputBuffer(AMQP_PERFORMATIVE_PAD + outputBufferSize);
+        ProtonBuffer output = configuration.getBufferAllocator().outputBuffer(AMQP_PERFORMATIVE_PAD + outputBufferSize);
 
         final int performativeSize = writePerformative(encoder, encoderState, performative, payload, maxFrameSize, output, onPayloadTooLarge);
         final int capacity = maxFrameSize > 0 ? maxFrameSize - performativeSize : Integer.MAX_VALUE;

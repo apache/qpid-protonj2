@@ -38,10 +38,12 @@ import org.apache.qpid.proton4j.amqp.transport.Transfer;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.engine.AsyncResult;
 import org.apache.qpid.proton4j.engine.Connection;
+import org.apache.qpid.proton4j.engine.EndpointState;
 import org.apache.qpid.proton4j.engine.EventHandler;
 import org.apache.qpid.proton4j.engine.Receiver;
 import org.apache.qpid.proton4j.engine.Sender;
 import org.apache.qpid.proton4j.engine.Session;
+import org.apache.qpid.proton4j.engine.exceptions.ProtonException;
 
 /**
  * Implements the proton4j Connection API
@@ -243,13 +245,24 @@ public class ProtonConnection extends ProtonEndpoint<Connection> implements Conn
 
     @Override
     public void handleAMQPHeader(AMQPHeader header, ProtonEngine context) {
-        // Once an incoming header arrives we can emit our open if locally opened
-        // TODO
+        // Once an incoming header arrives we can emit our open if locally opened and also send close if
+        // that is what our state is already.
+        if (getLocalState() != EndpointState.IDLE) {
+            if (!wasLocalOpenSent()) {
+                localCloseWasSent();
+                context.pipeline().fireWrite(localOpen, (short) 0, null, null);
+            }
+
+            if (getLocalState().ordinal() > EndpointState.ACTIVE.ordinal() && !wasLocalCloseSent()) {
+                localCloseWasSent();
+                context.pipeline().fireWrite(new Close().setError(getLocalCondition()), (short) 0, null, null);
+            }
+        }
     }
 
     @Override
     public void handleSASLHeader(AMQPHeader header, ProtonEngine context) {
-        // TODO This would be an error state
+        context.engineFailed(new ProtonException("Receivded unexpected SASL Header"));
     }
 
     @Override

@@ -53,13 +53,13 @@ public class ProtonPerformativeHandler implements EngineHandler, AMQPHeader.Head
     @Override
     public void handlerAdded(EngineHandlerContext context) throws Exception {
         engine = (ProtonEngine) context.getEngine();
-        configuration = engine.configuration();
+        connection = engine.getConnection();
         configuration = engine.configuration();
     }
 
     @Override
     public void handleRead(EngineHandlerContext context, HeaderFrame header) {
-
+        header.invoke(this, context);
     }
 
     @Override
@@ -86,6 +86,14 @@ public class ProtonPerformativeHandler implements EngineHandler, AMQPHeader.Head
     @Override
     public void transportFailed(EngineHandlerContext context, Throwable e) {
         engine.engineFailed(ProtonExceptionSupport.create(e));
+    }
+
+    @Override
+    public void handleWrite(EngineHandlerContext context, AMQPHeader header) {
+        if (!headerSent) {
+            headerSent = true;
+            context.fireWrite(header);
+        }
     }
 
     //----- Deal with the incoming AMQP performatives

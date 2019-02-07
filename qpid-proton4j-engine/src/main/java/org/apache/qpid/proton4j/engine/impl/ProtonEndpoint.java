@@ -37,6 +37,9 @@ public abstract class ProtonEndpoint<T extends Endpoint<T>> implements Endpoint<
     private ErrorCondition localError = new ErrorCondition();
     private ErrorCondition remoteError = new ErrorCondition();
 
+    private boolean localOpenSent;
+    private boolean localCloseSent;
+
     @Override
     public void setContext(Object context) {
         this.context = context;
@@ -109,6 +112,22 @@ public abstract class ProtonEndpoint<T extends Endpoint<T>> implements Endpoint<
             localState = EndpointState.CLOSED;
             initiateLocalClose();
         }
+    }
+
+    boolean wasLocalOpenSent() {
+        return localOpenSent;
+    }
+
+    boolean wasLocalCloseSent() {
+        return localCloseSent;
+    }
+
+    void localOpenWasSent() {
+        localOpenSent = true;
+    }
+
+    void localCloseWasSent() {
+        localCloseSent = true;
     }
 
     abstract void initiateLocalOpen();

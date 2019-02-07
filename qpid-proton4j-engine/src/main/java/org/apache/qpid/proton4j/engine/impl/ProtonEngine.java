@@ -95,7 +95,7 @@ public class ProtonEngine implements Engine {
     }
 
     @Override
-    public void ingest(ProtonBuffer input) throws EngineNotWritableException {
+    public void ingest(ProtonBuffer input) throws EngineStateException {
         // TODO - Check other states like closed.
 
         if (!isWritable()) {

@@ -31,7 +31,7 @@ public final class Open implements Performative {
     public static final UnsignedLong DESCRIPTOR_CODE = UnsignedLong.valueOf(0x0000000000000010L);
     public static final Symbol DESCRIPTOR_SYMBOL = Symbol.valueOf("amqp:open:list");
 
-    private String containerId;
+    private String containerId = "";
     private String hostname;
     private UnsignedInteger maxFrameSize = UnsignedInteger.valueOf(0xffffffff);
     private UnsignedShort channelMax = UnsignedShort.valueOf((short) 65535);
