@@ -27,7 +27,6 @@ import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.engine.Connection;
 import org.junit.After;
-import org.junit.Ignore;
 import org.junit.Test;
 
 /**
@@ -64,7 +63,6 @@ public class ProtonEngineTest {
         assertNotNull(connection);
     }
 
-    @Ignore("Building out idea of how Engine behaves, when do we emit the header etc")
     @Test
     public void testEngineEmitsAMQPHeaderOnConnectionOpen() {
         ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();

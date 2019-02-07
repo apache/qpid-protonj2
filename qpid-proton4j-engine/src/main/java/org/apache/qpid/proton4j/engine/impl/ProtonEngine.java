@@ -26,6 +26,7 @@ import org.apache.qpid.proton4j.engine.EngineSaslContext;
 import org.apache.qpid.proton4j.engine.EngineState;
 import org.apache.qpid.proton4j.engine.EventHandler;
 import org.apache.qpid.proton4j.engine.exceptions.EngineNotWritableException;
+import org.apache.qpid.proton4j.engine.exceptions.EngineStateException;
 import org.apache.qpid.proton4j.engine.exceptions.ProtonException;
 
 /**
@@ -144,6 +145,14 @@ public class ProtonEngine implements Engine {
     }
 
     //----- Internal proton engine implementation
+
+    void dispatchWriteToEventHandler(ProtonBuffer buffer) {
+        if (outputHandler != null) {
+            outputHandler.handle(buffer);
+        } else {
+            engineFailed(new EngineStateException("No output handler configured"));
+        }
+    }
 
     void engineFailed(ProtonException cause) {
         state = EngineState.FAILED;

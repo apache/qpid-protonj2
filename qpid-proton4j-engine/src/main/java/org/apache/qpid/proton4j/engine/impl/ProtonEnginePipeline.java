@@ -394,26 +394,17 @@ public class ProtonEnginePipeline implements EnginePipeline {
 
         @Override
         public void fireWrite(ProtonBuffer buffer) {
-            // TODO Decide on the exact error to be fired, move Transport to failed state.
-            // TODO With recent API additions this should fire output to engine output sync
-            EventHandler<ProtonException> handler = engine.errorHandler();
-            if (handler != null) {
-                handler.handle(new ProtonException("No handler processed write data event."));
-            }
+            // When not handled in the handler chain the buffer write propagates to the
+            // engine to be handed to any registered output handler.  The engine is then
+            // responsible for error handling if nothing is registered there to handle the
+            // output of frame data.
+            engine.dispatchWriteToEventHandler(buffer);
         }
     }
 
     //----- Default TransportHandler Used at the pipeline boundry ------------//
 
     private class BoundryTransportHandler implements EngineHandler {
-
-        @Override
-        public void handlerAdded(EngineHandlerContext context) throws Exception {
-        }
-
-        @Override
-        public void handlerRemoved(EngineHandlerContext context) throws Exception {
-        }
 
         @Override
         public void engineStarting(EngineHandlerContext context) {
@@ -506,16 +497,6 @@ public class ProtonEnginePipeline implements EnginePipeline {
             EventHandler<ProtonException> handler = engine.errorHandler();
             if (handler != null) {
                 handler.handle(new ProtonException("No handler processed write SASL performative event."));
-            }
-        }
-
-        @Override
-        public void handleWrite(EngineHandlerContext context, ProtonBuffer buffer) {
-            // TODO Decide on the exact error to be fired, move Transport to failed state.
-            // TODO at the write boundary we now want to fire the write to the engine output handler.
-            EventHandler<ProtonException> handler = engine.errorHandler();
-            if (handler != null) {
-                handler.handle(new ProtonException("No handler processed write data event."));
             }
         }
     }
