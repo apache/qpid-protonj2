@@ -41,6 +41,13 @@ public interface Engine {
      */
     boolean isWritable();
 
+    // TODO decide on terminology for state, shutdown, closed, etc
+
+    /**
+     * @return true if the Engine has been shutdown and is no longer usable.
+     */
+    boolean isShutdown();
+
     /**
      * @return the current state of the engine.
      */

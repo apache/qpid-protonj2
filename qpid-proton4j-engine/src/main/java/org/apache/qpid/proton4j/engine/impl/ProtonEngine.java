@@ -25,9 +25,11 @@ import org.apache.qpid.proton4j.engine.Engine;
 import org.apache.qpid.proton4j.engine.EngineSaslContext;
 import org.apache.qpid.proton4j.engine.EngineState;
 import org.apache.qpid.proton4j.engine.EventHandler;
+import org.apache.qpid.proton4j.engine.exceptions.EngineClosedException;
 import org.apache.qpid.proton4j.engine.exceptions.EngineNotWritableException;
 import org.apache.qpid.proton4j.engine.exceptions.EngineStateException;
 import org.apache.qpid.proton4j.engine.exceptions.ProtonException;
+import org.apache.qpid.proton4j.engine.exceptions.ProtonExceptionSupport;
 
 /**
  * The default proton4j Engine implementation.
@@ -64,6 +66,11 @@ public class ProtonEngine implements Engine {
     }
 
     @Override
+    public boolean isShutdown() {
+        return state == EngineState.SHUTDOWN;
+    }
+
+    @Override
     public EngineState state() {
         return state;
     }
@@ -97,6 +104,9 @@ public class ProtonEngine implements Engine {
     @Override
     public void ingest(ProtonBuffer input) throws EngineStateException {
         // TODO - Check other states like closed.
+        if (isShutdown()) {
+            throw new EngineClosedException("The engine has already shut down.");
+        }
 
         if (!isWritable()) {
             throw new EngineNotWritableException("Engine is currently not accepting new input");
@@ -105,7 +115,9 @@ public class ProtonEngine implements Engine {
         try {
             pipeline.fireRead(input);
         } catch (Throwable t) {
-            // TODO - Error handling ?
+            // TODO define what the pipeline does here as far as throwing vs signaling etc.
+            engineFailed(ProtonExceptionSupport.create(t));
+            throw t;
         }
     }
 
@@ -142,6 +154,23 @@ public class ProtonEngine implements Engine {
     @Override
     public EngineSaslContext saslContext() {
         return saslContext;
+    }
+
+    /**
+     * Allows for registration of a custom {@link EngineSaslContext} that will convey
+     * SASL state and configuration for this engine.
+     *
+     * @param saslContext
+     *      The {@link EngineSaslContext} that this engine will use.
+     *
+     * @throws EngineStateException if the engine state doesn't allow for changes
+     */
+    public void registerSaslContext(EngineSaslContext saslContext) throws EngineStateException {
+        if (state.ordinal() > EngineState.STARTING.ordinal()) {
+            throw new EngineStateException("Cannot alter SASL context after engine has been started.");
+        }
+
+        this.saslContext = saslContext;
     }
 
     //----- Internal proton engine implementation
