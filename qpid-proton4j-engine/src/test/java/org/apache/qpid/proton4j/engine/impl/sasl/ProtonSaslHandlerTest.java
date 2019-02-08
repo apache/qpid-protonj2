@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.qpid.proton4j.engine.sasl;
+package org.apache.qpid.proton4j.engine.impl.sasl;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -38,6 +38,8 @@ import org.apache.qpid.proton4j.engine.Frame;
 import org.apache.qpid.proton4j.engine.HeaderFrame;
 import org.apache.qpid.proton4j.engine.SaslFrame;
 import org.apache.qpid.proton4j.engine.impl.ProtonEngine;
+import org.apache.qpid.proton4j.engine.impl.sasl.ProtonSaslHandler;
+import org.apache.qpid.proton4j.engine.impl.sasl.ProtonSaslServerContext;
 import org.apache.qpid.proton4j.engine.sasl.SaslConstants.SaslOutcomes;
 import org.apache.qpid.proton4j.engine.util.TestSupportTransportHandler;
 import org.junit.Before;
@@ -46,7 +48,7 @@ import org.junit.Test;
 /**
  * Tests SASL Handling by the SaslHandler TransportHandler class.
  */
-public class SaslHandlerTest {
+public class ProtonSaslHandlerTest {
 
     private TestSupportTransportHandler testHandler;
 
@@ -62,20 +64,20 @@ public class SaslHandlerTest {
         Engine transport = createSaslServerTransport(new SaslServerListener() {
 
             @Override
-            public void onSaslResponse(SaslServerContext context, Binary response) {
+            public void onSaslResponse(ProtonSaslServerContext context, Binary response) {
             }
 
             @Override
-            public void onSaslInit(SaslServerContext context, Binary initResponse) {
+            public void onSaslInit(ProtonSaslServerContext context, Binary initResponse) {
             }
 
             @Override
-            public void onSaslHeader(SaslServerContext context, AMQPHeader header) {
+            public void onSaslHeader(ProtonSaslServerContext context, AMQPHeader header) {
                 headerRead.set(true);
             }
 
             @Override
-            public void initialize(SaslServerContext context) {
+            public void initialize(ProtonSaslServerContext context) {
             }
         });
 
@@ -108,22 +110,22 @@ public class SaslHandlerTest {
         Engine transport = createSaslServerTransport(new SaslServerListener() {
 
             @Override
-            public void onSaslResponse(SaslServerContext context, Binary response) {
+            public void onSaslResponse(ProtonSaslServerContext context, Binary response) {
             }
 
             @Override
-            public void onSaslInit(SaslServerContext context, Binary initResponse) {
+            public void onSaslInit(ProtonSaslServerContext context, Binary initResponse) {
             }
 
             @Override
-            public void onSaslHeader(SaslServerContext context, AMQPHeader header) {
+            public void onSaslHeader(ProtonSaslServerContext context, AMQPHeader header) {
                 if (header.isSaslHeader()) {
                     saslHeaderRead.set(true);
                 }
             }
 
             @Override
-            public void initialize(SaslServerContext context) {
+            public void initialize(ProtonSaslServerContext context) {
                 // Server must advertise currently configured mechanisms
                 context.setMechanisms("ANONYMOUS");
             }
@@ -166,11 +168,11 @@ public class SaslHandlerTest {
         Engine transport = createSaslServerTransport(new SaslServerListener() {
 
             @Override
-            public void onSaslResponse(SaslServerContext context, Binary response) {
+            public void onSaslResponse(ProtonSaslServerContext context, Binary response) {
             }
 
             @Override
-            public void onSaslInit(SaslServerContext context, Binary initResponse) {
+            public void onSaslInit(ProtonSaslServerContext context, Binary initResponse) {
                 clientHostname.set(context.getClientHostname());
                 clientMechanism.set(context.getClientMechanism());
                 if (initResponse.getLength() == 0) {
@@ -181,14 +183,14 @@ public class SaslHandlerTest {
             }
 
             @Override
-            public void onSaslHeader(SaslServerContext context, AMQPHeader header) {
+            public void onSaslHeader(ProtonSaslServerContext context, AMQPHeader header) {
                 if (header.isSaslHeader()) {
                     saslHeaderRead.set(true);
                 }
             }
 
             @Override
-            public void initialize(SaslServerContext context) {
+            public void initialize(ProtonSaslServerContext context) {
                 // Server must advertise currently configured mechanisms
                 context.setMechanisms("ANONYMOUS");
             }
@@ -250,7 +252,7 @@ public class SaslHandlerTest {
         ProtonEngine transport = new ProtonEngine();
 
         // TODO - Add AMQP handling layer
-        transport.pipeline().addLast("sasl", SaslHandler.server(listener));
+        transport.pipeline().addLast("sasl", ProtonSaslHandler.server(listener));
         transport.pipeline().addLast("test", testHandler);
 
         return transport;

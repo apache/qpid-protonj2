@@ -18,9 +18,9 @@ package org.apache.qpid.proton4j.engine.impl;
 
 import org.apache.qpid.proton4j.engine.Engine;
 import org.apache.qpid.proton4j.engine.EngineFactory;
-import org.apache.qpid.proton4j.engine.sasl.SaslClientListener;
-import org.apache.qpid.proton4j.engine.sasl.SaslHandler;
-import org.apache.qpid.proton4j.engine.sasl.SaslServerListener;
+import org.apache.qpid.proton4j.engine.impl.sasl.ProtonSaslHandler;
+import org.apache.qpid.proton4j.engine.impl.sasl.SaslClientListener;
+import org.apache.qpid.proton4j.engine.impl.sasl.SaslServerListener;
 
 /**
  * Factory class for proton4j Engine creation
@@ -60,7 +60,7 @@ public final class ProtonEngineFactory implements EngineFactory {
         ProtonEnginePipeline pipeline = engine.pipeline();
 
         pipeline.addLast(ProtonConstants.AMQP_PERFORMATIVE_HANDLER_NAME, new ProtonPerformativeHandler());
-        pipeline.addLast(ProtonConstants.SASL_PERFORMATIVE_HANDLER_NAME, SaslHandler.client(listener));
+        pipeline.addLast(ProtonConstants.SASL_PERFORMATIVE_HANDLER_NAME, ProtonSaslHandler.client(listener));
         pipeline.addLast(ProtonConstants.FRAME_LOGGING_HANDLER, new ProtonFrameLoggingHandler());
         pipeline.addLast(ProtonConstants.FRAME_PARSING_HANDLER, new ProtonFrameParsingHandler());
         pipeline.addLast(ProtonConstants.FRAME_WRITING_HANDLER, new ProtonFrameWritingHandler());
@@ -74,7 +74,7 @@ public final class ProtonEngineFactory implements EngineFactory {
         ProtonEnginePipeline pipeline = engine.pipeline();
 
         pipeline.addLast(ProtonConstants.AMQP_PERFORMATIVE_HANDLER_NAME, new ProtonPerformativeHandler());
-        pipeline.addLast(ProtonConstants.SASL_PERFORMATIVE_HANDLER_NAME, SaslHandler.server(listener));
+        pipeline.addLast(ProtonConstants.SASL_PERFORMATIVE_HANDLER_NAME, ProtonSaslHandler.server(listener));
         pipeline.addLast(ProtonConstants.FRAME_LOGGING_HANDLER, new ProtonFrameLoggingHandler());
         pipeline.addLast(ProtonConstants.FRAME_PARSING_HANDLER, new ProtonFrameParsingHandler());
         pipeline.addLast(ProtonConstants.FRAME_WRITING_HANDLER, new ProtonFrameWritingHandler());

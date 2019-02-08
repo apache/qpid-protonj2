@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.qpid.proton4j.engine.sasl;
+package org.apache.qpid.proton4j.engine.impl.sasl;
 
 import org.apache.qpid.proton4j.amqp.Binary;
 import org.apache.qpid.proton4j.amqp.Symbol;
@@ -30,13 +30,13 @@ import org.apache.qpid.proton4j.engine.HeaderFrame;
 import org.apache.qpid.proton4j.engine.sasl.SaslConstants.SaslOutcomes;
 import org.apache.qpid.proton4j.engine.sasl.SaslConstants.SaslStates;
 
-public class SaslServerContext extends SaslContext {
+public class ProtonSaslServerContext extends ProtonSaslContext {
 
     private final SaslServerListener listener;
 
     private boolean allowNonSasl;
 
-    public SaslServerContext(SaslHandler handler, SaslServerListener listener) {
+    public ProtonSaslServerContext(ProtonSaslHandler handler, SaslServerListener listener) {
         super(handler);
 
         this.listener = listener;

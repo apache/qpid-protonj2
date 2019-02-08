@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.qpid.proton4j.engine.sasl;
+package org.apache.qpid.proton4j.engine.impl.sasl;
 
 import org.apache.qpid.proton4j.amqp.Binary;
 import org.apache.qpid.proton4j.amqp.Symbol;
@@ -33,11 +33,11 @@ import org.apache.qpid.proton4j.engine.sasl.SaslConstants.SaslStates;
 /**
  * The State engine for a Sasl exchange.
  */
-public abstract class SaslContext implements AMQPHeader.HeaderHandler<EngineHandlerContext>, SaslPerformative.SaslPerformativeHandler<EngineHandlerContext> {
+public abstract class ProtonSaslContext implements AMQPHeader.HeaderHandler<EngineHandlerContext>, SaslPerformative.SaslPerformativeHandler<EngineHandlerContext> {
 
     enum Role { CLIENT, SERVER };
 
-    protected SaslHandler saslHandler;
+    protected ProtonSaslHandler saslHandler;
 
     protected SaslOutcomes outcome = SaslOutcomes.PN_SASL_NONE;
     protected SaslStates state = SaslStates.PN_SASL_IDLE;
@@ -63,7 +63,7 @@ public abstract class SaslContext implements AMQPHeader.HeaderHandler<EngineHand
     protected Binary response;
     protected Binary additionalData;
 
-    public SaslContext(SaslHandler handler) {
+    public ProtonSaslContext(ProtonSaslHandler handler) {
         this.saslHandler = handler;
     }
 

@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.qpid.proton4j.engine.sasl;
+package org.apache.qpid.proton4j.engine.impl.sasl;
 
 import org.apache.qpid.proton4j.amqp.Binary;
 
@@ -36,9 +36,9 @@ public interface SaslClientListener {
      * SASL handler.
      *
      * @param context
-     *      the {@link SaslClientContext} used to authenticate the connection.
+     *      the {@link ProtonSaslClientContext} used to authenticate the connection.
      */
-    void initialize(SaslClientContext context);
+    void initialize(ProtonSaslClientContext context);
 
     /**
      * Called when a sasl-mechanisms frame has arrived and its effect
@@ -46,7 +46,7 @@ public interface SaslClientListener {
      *
      * @param context the SaslClientContext object
      */
-    void onSaslMechanisms(SaslClientContext context, String[] mechanisms);
+    void onSaslMechanisms(ProtonSaslClientContext context, String[] mechanisms);
 
     /**
      * Called when a sasl-challenge frame has arrived and its effect
@@ -55,7 +55,7 @@ public interface SaslClientListener {
      * @param context the SaslClientContext object
      * @param binary the challenge bytes sent from the sasl server.
      */
-    void onSaslChallenge(SaslClientContext context, Binary binary);
+    void onSaslChallenge(ProtonSaslClientContext context, Binary binary);
 
     /**
      * Called when a sasl-outcome frame has arrived and its effect
@@ -65,6 +65,6 @@ public interface SaslClientListener {
      * @param context the SaslClientContext object
      * @param additional the additional data sent from the server, or null if none.
      */
-    void onSaslOutcome(SaslClientContext context, Binary additional);
+    void onSaslOutcome(ProtonSaslClientContext context, Binary additional);
 
 }

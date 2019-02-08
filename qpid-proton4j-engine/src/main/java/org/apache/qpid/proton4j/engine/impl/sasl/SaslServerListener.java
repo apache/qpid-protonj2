@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.qpid.proton4j.engine.sasl;
+package org.apache.qpid.proton4j.engine.impl.sasl;
 
 import org.apache.qpid.proton4j.amqp.Binary;
 import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
@@ -37,9 +37,9 @@ public interface SaslServerListener {
      * and other server authentication properties.
      *
      * @param context
-     *      the {@link SaslServerContext} used to authenticate the connection.
+     *      the {@link ProtonSaslServerContext} used to authenticate the connection.
      */
-    void initialize(SaslServerContext context);
+    void initialize(ProtonSaslServerContext context);
 
     /**
      * Called when the sasl header has been received and the server
@@ -51,7 +51,7 @@ public interface SaslServerListener {
      * @param context the SaslServerContext object
      * @param header the AMQP Header that was read.
      */
-    default void onSaslHeader(SaslServerContext context, AMQPHeader header) {}
+    default void onSaslHeader(ProtonSaslServerContext context, AMQPHeader header) {}
 
     /**
      * Called when a sasl-init frame has arrived and its effect
@@ -61,7 +61,7 @@ public interface SaslServerListener {
      * @param context the SaslServerContext object
      * @param the Binary payload of the initial response if any.
      */
-    void onSaslInit(SaslServerContext context, Binary initResponse);
+    void onSaslInit(ProtonSaslServerContext context, Binary initResponse);
 
     /**
      * Called when a sasl-response frame has arrived and its effect
@@ -70,6 +70,6 @@ public interface SaslServerListener {
      * @param context the SaslServerContext object
      * @param the Binary payload of the challenge response if any.
      */
-    void onSaslResponse(SaslServerContext context, Binary response);
+    void onSaslResponse(ProtonSaslServerContext context, Binary response);
 
 }

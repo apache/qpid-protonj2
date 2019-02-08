@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.qpid.proton4j.engine.sasl;
+package org.apache.qpid.proton4j.engine.impl.sasl;
 
 import org.apache.qpid.proton4j.amqp.security.SaslPerformative;
 import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
@@ -25,21 +25,22 @@ import org.apache.qpid.proton4j.engine.EngineHandlerContext;
 import org.apache.qpid.proton4j.engine.HeaderFrame;
 import org.apache.qpid.proton4j.engine.ProtocolFrame;
 import org.apache.qpid.proton4j.engine.SaslFrame;
+import org.apache.qpid.proton4j.engine.sasl.SaslConstants;
 
 /**
  * Base class used for common portions of the SASL processing pipeline.
  */
-public class SaslHandler implements EngineHandler {
+public class ProtonSaslHandler implements EngineHandler {
 
     private int maxFrameSizeLimit = SaslConstants.MAX_SASL_FRAME_SIZE;
 
-    private SaslContext saslContext;
+    private ProtonSaslContext saslContext;
 
     /*
      * The Handler must be create from the client or server methods to configure
      * the state correctly.
      */
-    private SaslHandler() {
+    private ProtonSaslHandler() {
     }
 
     public void setMaxSaslFrameSize(int maxFrameSize) {
@@ -54,13 +55,13 @@ public class SaslHandler implements EngineHandler {
         return saslContext.isDone();
     }
 
-    public static SaslHandler client(SaslClientListener listener) {
+    public static ProtonSaslHandler client(SaslClientListener listener) {
         if (listener == null) {
             throw new IllegalArgumentException("SaslClientListener must not be null");
         }
 
-        SaslHandler handler = new SaslHandler();
-        SaslClientContext context = new SaslClientContext(handler, listener);
+        ProtonSaslHandler handler = new ProtonSaslHandler();
+        ProtonSaslClientContext context = new ProtonSaslClientContext(handler, listener);
         handler.saslContext = context;
 
         // Allow the application a change to configure the client handler
@@ -69,13 +70,13 @@ public class SaslHandler implements EngineHandler {
         return handler;
     }
 
-    public static SaslHandler server(SaslServerListener listener) {
+    public static ProtonSaslHandler server(SaslServerListener listener) {
         if (listener == null) {
             throw new IllegalArgumentException("SaslServerListener must not be null");
         }
 
-        SaslHandler handler = new SaslHandler();
-        SaslServerContext context = new SaslServerContext(handler, listener);
+        ProtonSaslHandler handler = new ProtonSaslHandler();
+        ProtonSaslServerContext context = new ProtonSaslServerContext(handler, listener);
         handler.saslContext = context;
 
         // Allow the application a change to configure the server handler
