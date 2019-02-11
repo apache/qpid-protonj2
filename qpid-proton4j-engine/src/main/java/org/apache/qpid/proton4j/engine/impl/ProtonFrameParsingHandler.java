@@ -326,12 +326,14 @@ public class ProtonFrameParsingHandler implements EngineHandler, SaslPerformativ
 
             if (type == AMQP_FRAME_TYPE) {
                 Performative performative = (Performative) val;
+                // TODO Remove me
                 LOG.trace("IN: CH[{}] : {} [{}]", channel, performative, payload);
                 ProtocolFrame frame = framePool.take(performative, channel, payload);
                 transitionToFrameSizeParsingStage();
                 context.fireRead(frame);
             } else if (type == SASL_FRAME_TYPE) {
                 SaslPerformative performative = (SaslPerformative) val;
+                //TODO remove me
                 LOG.trace("IN: {} [{}]", performative, payload);
                 SaslFrame saslFrame = new SaslFrame(performative, payload);
                 transitionToFrameSizeParsingStage();
