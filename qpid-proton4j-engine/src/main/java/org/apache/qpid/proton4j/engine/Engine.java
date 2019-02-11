@@ -91,6 +91,9 @@ public interface Engine {
      */
     void ingest(ProtonBuffer input) throws EngineStateException;
 
+    // TODO
+    long tick(long currentTime);
+
     //----- Engine configuration and state
 
     /**
