@@ -36,13 +36,6 @@ public class ProtonSaslHandler implements EngineHandler {
 
     private ProtonSaslContext saslContext;
 
-    /*
-     * The Handler must be create from the client or server methods to configure
-     * the state correctly.
-     */
-    private ProtonSaslHandler() {
-    }
-
     public void setMaxSaslFrameSize(int maxFrameSize) {
         this.maxFrameSizeLimit = Math.max(SaslConstants.MAX_SASL_FRAME_SIZE, maxFrameSize);
     }
@@ -54,6 +47,8 @@ public class ProtonSaslHandler implements EngineHandler {
     public boolean isDone() {
         return saslContext.isDone();
     }
+
+    // TODO Remove these factory methods and create directly
 
     public static ProtonSaslHandler client(SaslClientListener listener) {
         if (listener == null) {
@@ -69,6 +64,8 @@ public class ProtonSaslHandler implements EngineHandler {
 
         return handler;
     }
+
+    // TODO Remove these factory methods
 
     public static ProtonSaslHandler server(SaslServerListener listener) {
         if (listener == null) {
