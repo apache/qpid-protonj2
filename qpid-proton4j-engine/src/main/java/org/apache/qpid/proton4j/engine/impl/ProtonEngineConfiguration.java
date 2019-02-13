@@ -16,6 +16,8 @@
  */
 package org.apache.qpid.proton4j.engine.impl;
 
+import java.util.concurrent.ScheduledExecutorService;
+
 import org.apache.qpid.proton4j.buffer.ProtonBufferAllocator;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.engine.EngineConfiguration;
@@ -66,6 +68,11 @@ public class ProtonEngineConfiguration implements EngineConfiguration {
 
     void setRemoteMaxFrameSize(int remoteMaxFrameSize) {
         this.remoteMaxFrameSize = remoteMaxFrameSize;
+    }
+
+    @Override
+    public EngineConfiguration setSchedulerService(ScheduledExecutorService scheduler) {
+        return null;
     }
 
     //---- proton4j specific APIs

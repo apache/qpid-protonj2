@@ -102,6 +102,11 @@ public class ProtonEngine implements Engine {
     }
 
     @Override
+    public long tick(long currentTime) {
+        return 0;
+    }
+
+    @Override
     public void ingest(ProtonBuffer input) throws EngineStateException {
         // TODO - Check other states like closed.
         if (isShutdown()) {
