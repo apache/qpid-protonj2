@@ -40,7 +40,7 @@ import org.apache.qpid.proton4j.amqp.transport.Transfer;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.common.logging.ProtonLogger;
 import org.apache.qpid.proton4j.common.logging.ProtonLoggerFactory;
-import org.apache.qpid.proton4j.engine.AsyncResult;
+import org.apache.qpid.proton4j.engine.AsyncEvent;
 import org.apache.qpid.proton4j.engine.Connection;
 import org.apache.qpid.proton4j.engine.EndpointState;
 import org.apache.qpid.proton4j.engine.EventHandler;
@@ -65,7 +65,7 @@ public class ProtonConnection extends ProtonEndpoint<Connection> implements Conn
 
     private ProtonSession[] localSessions = new ProtonSession[SESSION_ARRAY_CHUNK_SIZE];
 
-    private EventHandler<AsyncResult<Connection>> remoteOpenHandler = (result) -> {
+    private EventHandler<AsyncEvent<Connection>> remoteOpenHandler = (result) -> {
         LOG.trace("Remote open arrived at default handler.");
     };
 
@@ -328,13 +328,13 @@ public class ProtonConnection extends ProtonEndpoint<Connection> implements Conn
     //----- API for event handling of Connection related remote events
 
     @Override
-    public Connection openEventHandler(EventHandler<AsyncResult<Connection>> remoteOpenEventHandler) {
+    public Connection openEventHandler(EventHandler<AsyncEvent<Connection>> remoteOpenEventHandler) {
         this.remoteOpenHandler = remoteOpenEventHandler;
         return this;
     }
 
     @Override
-    public Connection closeEventHandler(EventHandler<AsyncResult<Connection>> remoteCloseEventHandler) {
+    public Connection closeEventHandler(EventHandler<AsyncEvent<Connection>> remoteCloseEventHandler) {
         // TODO Auto-generated method stub
         return this;
     }

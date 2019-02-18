@@ -46,11 +46,17 @@ public interface EngineHandler {
         context.fireEngineStarting();
     }
 
-    // TODO -> this ?
-    // void handleEngineStateChanged(EngineHandlerContext context); // TODO To generic, to many cases where this might fire ?
-    // TODO - or this ?
-    // void handleReadabilityChanged(EngineHandlerContext context);  // TODO how to communicate readable state ?
-    // void handleWritabilityChanged(EngineHandlerContext context); // TODO how to communicate writable state ?
+    /**
+     * Called when the engine state has changed and handlers may need to update their internal state
+     * to respond to the change or prompt some new work based on the change, e.g state changes from
+     * not writable to writable.
+     *
+     * @param context
+     *      The context for this handler which can be used to forward the event to the next handler
+     */
+    default void handleEngineStateChanged(EngineHandlerContext context) {
+        context.fireEngineStateChanged();
+    }
 
     // Read events
 

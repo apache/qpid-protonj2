@@ -17,7 +17,7 @@
 package org.apache.qpid.proton4j.engine.impl;
 
 import org.apache.qpid.proton4j.amqp.transport.ErrorCondition;
-import org.apache.qpid.proton4j.engine.AsyncResult;
+import org.apache.qpid.proton4j.engine.AsyncEvent;
 import org.apache.qpid.proton4j.engine.exceptions.ProtonException;
 import org.apache.qpid.proton4j.engine.util.FailedResult;
 import org.apache.qpid.proton4j.engine.util.SucceededResult;
@@ -30,7 +30,7 @@ public final class ProtonSupport {
     private ProtonSupport() {
     }
 
-    static <T> AsyncResult<T> result(T value, ErrorCondition error) {
+    static <T> AsyncEvent<T> result(T value, ErrorCondition error) {
         if (error != null && error.getCondition() != null) {
             return new FailedResult<>(new ProtonException(error.toString()));
         } else {

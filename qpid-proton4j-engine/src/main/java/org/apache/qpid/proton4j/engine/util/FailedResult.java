@@ -16,12 +16,12 @@
  */
 package org.apache.qpid.proton4j.engine.util;
 
-import org.apache.qpid.proton4j.engine.AsyncResult;
+import org.apache.qpid.proton4j.engine.AsyncEvent;
 
 /**
  * Utility AsyncResult used for failure results that are created in-place
  */
-public class FailedResult<E> implements AsyncResult<E> {
+public class FailedResult<E> implements AsyncEvent<E> {
 
     private final Throwable cause;
 

@@ -43,8 +43,9 @@ public class ProtonEngineConfiguration implements EngineConfiguration {
     }
 
     @Override
-    public void setMaxFrameSize(int maxFrameSize) {
+    public EngineConfiguration setMaxFrameSize(int maxFrameSize) {
         this.maxFrameSize = Math.max(ProtonConstants.MIN_MAX_AMQP_FRAME_SIZE, maxFrameSize);
+        return this;
     }
 
     @Override
@@ -58,8 +59,9 @@ public class ProtonEngineConfiguration implements EngineConfiguration {
     }
 
     @Override
-    public void setBufferAllocator(ProtonBufferAllocator allocator) {
+    public EngineConfiguration setBufferAllocator(ProtonBufferAllocator allocator) {
         this.allocator = allocator;
+        return this;
     }
 
     int getRemoteMaxFrameSize() {
@@ -72,7 +74,7 @@ public class ProtonEngineConfiguration implements EngineConfiguration {
 
     @Override
     public EngineConfiguration setSchedulerService(ScheduledExecutorService scheduler) {
-        return null;
+        return this;
     }
 
     //---- proton4j specific APIs

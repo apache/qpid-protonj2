@@ -52,6 +52,8 @@ public interface EnginePipeline {
 
     EnginePipeline fireEngineStarting();
 
+    EnginePipeline fireEngineStateChanged();
+
     EnginePipeline fireRead(ProtonBuffer input);
 
     EnginePipeline fireRead(HeaderFrame header);

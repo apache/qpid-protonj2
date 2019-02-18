@@ -16,12 +16,12 @@
  */
 package org.apache.qpid.proton4j.engine.util;
 
-import org.apache.qpid.proton4j.engine.AsyncResult;
+import org.apache.qpid.proton4j.engine.AsyncEvent;
 
 /**
  * Utility AsyncResult used for successful results that are created in-place
  */
-public class SucceededResult<E> implements AsyncResult<E> {
+public class SucceededResult<E> implements AsyncEvent<E> {
 
     private final E result;
 

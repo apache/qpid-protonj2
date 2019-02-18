@@ -16,19 +16,19 @@
  */
 package org.apache.qpid.proton4j.engine.impl;
 
-import org.apache.qpid.proton4j.engine.AsyncResult;
+import org.apache.qpid.proton4j.engine.AsyncEvent;
 import org.apache.qpid.proton4j.engine.EventHandler;
 
 /**
  * Implementation of AsyncResult used by the proton4j engine for asynchronous
  * operations like Connection open etc.
  */
-public class ProtonFuture<E> implements AsyncResult<E>, EventHandler<AsyncResult<E>> {
+public class ProtonFuture<E> implements AsyncEvent<E>, EventHandler<AsyncEvent<E>> {
 
     private E result;
     private Throwable error;
 
-    private EventHandler<AsyncResult<E>> handler;
+    private EventHandler<AsyncEvent<E>> handler;
 
     private boolean suceeded;
     private boolean failed;
@@ -54,7 +54,7 @@ public class ProtonFuture<E> implements AsyncResult<E>, EventHandler<AsyncResult
     }
 
     @Override
-    public void handle(AsyncResult<E> target) {
+    public void handle(AsyncEvent<E> target) {
         if (target.succeeded()) {
             onSuccess(target.get());
         } else {
@@ -62,7 +62,7 @@ public class ProtonFuture<E> implements AsyncResult<E>, EventHandler<AsyncResult
         }
     }
 
-    ProtonFuture<E> setHandler(EventHandler<AsyncResult<E>> handler) {
+    ProtonFuture<E> setHandler(EventHandler<AsyncEvent<E>> handler) {
       if (suceeded || failed) {
           handler.handle(this);
       } else {

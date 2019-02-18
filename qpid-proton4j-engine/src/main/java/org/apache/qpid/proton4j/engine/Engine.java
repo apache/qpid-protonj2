@@ -64,7 +64,7 @@ public interface Engine {
      * @param handler
      *      A handler that will be notified when the engine has started and has a valid Connection.
      */
-    void start(EventHandler<AsyncResult<Connection>> handler);
+    void start(EventHandler<AsyncEvent<Connection>> handler);
 
     /**
      * Orderly shutdown of the engine, any open connection and associated sessions and
@@ -82,9 +82,6 @@ public interface Engine {
      *
      * @param input
      *      The data to feed into to Engine.
-     *
-     * TODO - Exception thrown here.
-     * TODO - Do we want a simple high level input or leave it to some handler etc ?
      *
      * @throws EngineNotWritableException if the Engine is not accepting new input.
      * @throws EngineClosedException if the Engine has been shutdown or has failed.

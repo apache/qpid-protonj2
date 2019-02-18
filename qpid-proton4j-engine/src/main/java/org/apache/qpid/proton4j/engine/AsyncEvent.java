@@ -21,7 +21,7 @@ package org.apache.qpid.proton4j.engine;
  *
  * @param E the object that will result from successful completion
  */
-public interface AsyncResult<E> {
+public interface AsyncEvent<E> {
 
     E get();
 

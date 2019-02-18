@@ -187,7 +187,7 @@ public interface Connection extends Endpoint<Connection> {
      *
      * @return this connection
      */
-    Connection openEventHandler(EventHandler<AsyncResult<Connection>> remoteOpenEventHandler);
+    Connection openEventHandler(EventHandler<AsyncEvent<Connection>> remoteOpenEventHandler);
 
     /**
      * Sets a EventHandler for when an AMQP Close frame is received from the remote peer.
@@ -197,7 +197,7 @@ public interface Connection extends Endpoint<Connection> {
      *
      * @return this connection
      */
-    Connection closeEventHandler(EventHandler<AsyncResult<Connection>> remoteCloseEventHandler);
+    Connection closeEventHandler(EventHandler<AsyncEvent<Connection>> remoteCloseEventHandler);
 
     /**
      * Sets a EventHandler for when an AMQP Begin frame is received from the remote peer.

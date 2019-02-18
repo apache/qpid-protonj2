@@ -34,6 +34,8 @@ public interface EngineHandlerContext {
 
     void fireEngineStarting();
 
+    void fireEngineStateChanged();
+
     void fireRead(ProtonBuffer buffer);
 
     void fireRead(HeaderFrame header);

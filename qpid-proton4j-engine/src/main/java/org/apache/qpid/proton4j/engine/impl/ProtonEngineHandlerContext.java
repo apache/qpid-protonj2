@@ -66,6 +66,11 @@ public class ProtonEngineHandlerContext implements EngineHandlerContext {
     }
 
     @Override
+    public void fireEngineStateChanged() {
+        next.getHandler().handleEngineStateChanged(next);
+    }
+
+    @Override
     public void fireRead(ProtonBuffer buffer) {
         previous.getHandler().handleRead(previous, buffer);
     }

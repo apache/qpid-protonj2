@@ -216,6 +216,12 @@ public class ProtonEnginePipeline implements EnginePipeline {
     }
 
     @Override
+    public ProtonEnginePipeline fireEngineStateChanged() {
+        head.fireEngineStateChanged();
+        return this;
+    }
+
+    @Override
     public ProtonEnginePipeline fireRead(ProtonBuffer input) {
         tail.fireRead(input);
         return this;

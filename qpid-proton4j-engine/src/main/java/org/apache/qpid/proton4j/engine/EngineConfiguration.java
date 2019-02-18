@@ -33,8 +33,10 @@ public interface EngineConfiguration {
      *
      * @param maxFrameSize
      *      The value to assign as the maximum frame size.
+     *
+     * @return this {@link EngineConfiguration} for chaining.
      */
-    void setMaxFrameSize(int maxFrameSize);
+    EngineConfiguration setMaxFrameSize(int maxFrameSize);
 
     /**
      * @return the maximum frame size that the Engine will accept.
@@ -50,8 +52,10 @@ public interface EngineConfiguration {
      *
      * @param allocator
      *      The Allocator instance to use from this {@link Engine}.
+     *
+     * @return this {@link EngineConfiguration} for chaining.
      */
-    void setBufferAllocator(ProtonBufferAllocator allocator);
+    EngineConfiguration setBufferAllocator(ProtonBufferAllocator allocator);
 
     /**
      * @return the currently assigned {@link ProtonBufferAllocator}.
@@ -59,13 +63,15 @@ public interface EngineConfiguration {
     ProtonBufferAllocator getBufferAllocator();
 
     /**
-     * Performs idle handling internally if provided, otherwise user must call
-     * the tick() on the engine based on the idle time of the connection.
-     *
-     * TODO Revise documentation
+     * Performs idle handling internally if provided, otherwise user must call the
+     * {@link Engine#tick(long)} method on the engine based on the idle time of the
+     * connection in order to prompt idle frame generation and close of connections
+     * that have violated the idle timeout value.
      *
      * @param scheduler
-     * @return
+     *      A {@link ScheduledExecutorService} that the engine can use to schedule an idle hander
+     *
+     * @return this {@link EngineConfiguration} for chaining.
      */
     EngineConfiguration setSchedulerService(ScheduledExecutorService scheduler);
 

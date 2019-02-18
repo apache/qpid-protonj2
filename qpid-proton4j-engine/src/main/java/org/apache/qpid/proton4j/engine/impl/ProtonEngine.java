@@ -19,7 +19,7 @@ package org.apache.qpid.proton4j.engine.impl;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.common.logging.ProtonLogger;
 import org.apache.qpid.proton4j.common.logging.ProtonLoggerFactory;
-import org.apache.qpid.proton4j.engine.AsyncResult;
+import org.apache.qpid.proton4j.engine.AsyncEvent;
 import org.apache.qpid.proton4j.engine.Connection;
 import org.apache.qpid.proton4j.engine.Engine;
 import org.apache.qpid.proton4j.engine.EngineSaslContext;
@@ -76,7 +76,7 @@ public class ProtonEngine implements Engine {
     }
 
     @Override
-    public void start(EventHandler<AsyncResult<Connection>> connectionReady) {
+    public void start(EventHandler<AsyncEvent<Connection>> connectionReady) {
         if (connectionReady == null) {
             throw new NullPointerException("Start connection ready handler cannot be null");
         }
