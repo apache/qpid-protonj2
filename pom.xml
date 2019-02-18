@@ -70,6 +70,7 @@
     <module>qpid-proton4j-engine</module>
     <module>qpid-proton4j-common</module>
     <module>qpid-proton4j-performance-tests</module>
+    <module>qpid-proton4j-test-support</module>
   </modules>
 
   <dependencyManagement>
