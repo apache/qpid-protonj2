@@ -31,7 +31,7 @@ import org.apache.qpid.proton4j.engine.EngineHandlerContext;
  *
  * TODO - Maybe rename to frame encoding handler
  */
-public class ProtonFrameWritingHandler implements EngineHandler {
+public class ProtonFrameEncodingHandler implements EngineHandler {
 
     public static final byte AMQP_FRAME_TYPE = (byte) 0;
     public static final byte SASL_FRAME_TYPE = (byte) 1;

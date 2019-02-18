@@ -44,9 +44,9 @@ import org.apache.qpid.proton4j.engine.exceptions.ProtonExceptionSupport;
  *
  * TODO Maybe rename to frame decoding handler ?
  */
-public class ProtonFrameParsingHandler implements EngineHandler, SaslPerformative.SaslPerformativeHandler<EngineHandlerContext> {
+public class ProtonFrameDecodingHandler implements EngineHandler, SaslPerformative.SaslPerformativeHandler<EngineHandlerContext> {
 
-    private static final ProtonLogger LOG = ProtonLoggerFactory.getLogger(ProtonFrameParsingHandler.class);
+    private static final ProtonLogger LOG = ProtonLoggerFactory.getLogger(ProtonFrameDecodingHandler.class);
 
     public static final byte AMQP_FRAME_TYPE = (byte) 0;
     public static final byte SASL_FRAME_TYPE = (byte) 1;

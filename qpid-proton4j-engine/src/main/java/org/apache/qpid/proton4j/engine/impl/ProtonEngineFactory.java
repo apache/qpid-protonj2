@@ -42,10 +42,10 @@ public final class ProtonEngineFactory implements EngineFactory {
 
         ProtonEnginePipeline pipeline = engine.pipeline();
 
-        pipeline.addLast(ProtonConstants.AMQP_PERFORMATIVE_HANDLER_NAME, new ProtonPerformativeHandler());
+        pipeline.addLast(ProtonConstants.AMQP_PERFORMATIVE_HANDLER, new ProtonPerformativeHandler());
         pipeline.addLast(ProtonConstants.FRAME_LOGGING_HANDLER, new ProtonFrameLoggingHandler());
-        pipeline.addLast(ProtonConstants.FRAME_PARSING_HANDLER, new ProtonFrameParsingHandler());
-        pipeline.addLast(ProtonConstants.FRAME_WRITING_HANDLER, new ProtonFrameWritingHandler());
+        pipeline.addLast(ProtonConstants.FRAME_DECODING_HANDLER, new ProtonFrameDecodingHandler());
+        pipeline.addLast(ProtonConstants.FRAME_ENCODING_HANDLER, new ProtonFrameEncodingHandler());
 
         return engine;
     }
@@ -59,11 +59,11 @@ public final class ProtonEngineFactory implements EngineFactory {
 
         ProtonEnginePipeline pipeline = engine.pipeline();
 
-        pipeline.addLast(ProtonConstants.AMQP_PERFORMATIVE_HANDLER_NAME, new ProtonPerformativeHandler());
-        pipeline.addLast(ProtonConstants.SASL_PERFORMATIVE_HANDLER_NAME, ProtonSaslHandler.client(listener));
+        pipeline.addLast(ProtonConstants.AMQP_PERFORMATIVE_HANDLER, new ProtonPerformativeHandler());
+        pipeline.addLast(ProtonConstants.SASL_PERFORMATIVE_HANDLER, ProtonSaslHandler.client(listener));
         pipeline.addLast(ProtonConstants.FRAME_LOGGING_HANDLER, new ProtonFrameLoggingHandler());
-        pipeline.addLast(ProtonConstants.FRAME_PARSING_HANDLER, new ProtonFrameParsingHandler());
-        pipeline.addLast(ProtonConstants.FRAME_WRITING_HANDLER, new ProtonFrameWritingHandler());
+        pipeline.addLast(ProtonConstants.FRAME_DECODING_HANDLER, new ProtonFrameDecodingHandler());
+        pipeline.addLast(ProtonConstants.FRAME_ENCODING_HANDLER, new ProtonFrameEncodingHandler());
 
         return engine;
     }
@@ -73,11 +73,11 @@ public final class ProtonEngineFactory implements EngineFactory {
 
         ProtonEnginePipeline pipeline = engine.pipeline();
 
-        pipeline.addLast(ProtonConstants.AMQP_PERFORMATIVE_HANDLER_NAME, new ProtonPerformativeHandler());
-        pipeline.addLast(ProtonConstants.SASL_PERFORMATIVE_HANDLER_NAME, ProtonSaslHandler.server(listener));
+        pipeline.addLast(ProtonConstants.AMQP_PERFORMATIVE_HANDLER, new ProtonPerformativeHandler());
+        pipeline.addLast(ProtonConstants.SASL_PERFORMATIVE_HANDLER, ProtonSaslHandler.server(listener));
         pipeline.addLast(ProtonConstants.FRAME_LOGGING_HANDLER, new ProtonFrameLoggingHandler());
-        pipeline.addLast(ProtonConstants.FRAME_PARSING_HANDLER, new ProtonFrameParsingHandler());
-        pipeline.addLast(ProtonConstants.FRAME_WRITING_HANDLER, new ProtonFrameWritingHandler());
+        pipeline.addLast(ProtonConstants.FRAME_DECODING_HANDLER, new ProtonFrameDecodingHandler());
+        pipeline.addLast(ProtonConstants.FRAME_ENCODING_HANDLER, new ProtonFrameEncodingHandler());
 
         return engine;
     }

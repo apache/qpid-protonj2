@@ -31,22 +31,22 @@ public final class ProtonConstants {
     /**
      * Engine handler that acts on AMQP performatives
      */
-    public static final String AMQP_PERFORMATIVE_HANDLER_NAME = "amqp";
+    public static final String AMQP_PERFORMATIVE_HANDLER = "amqp";
 
     /**
      * Engine handler that acts on SASL performatives
      */
-    public static final String SASL_PERFORMATIVE_HANDLER_NAME = "sasl";
+    public static final String SASL_PERFORMATIVE_HANDLER = "sasl";
 
     /**
      * Engine handler that encodes performatives and writes the resulting buffer
      */
-    public static final String FRAME_WRITING_HANDLER = "frame-writer";
+    public static final String FRAME_ENCODING_HANDLER = "frame-encoder";
 
     /**
      * Engine handler that decodes performatives and forwards the frames
      */
-    public static final String FRAME_PARSING_HANDLER = "frame-reader";
+    public static final String FRAME_DECODING_HANDLER = "frame-decoder";
 
     /**
      * Engine handler that logs incoming and outgoing performatives and frames
