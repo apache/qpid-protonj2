@@ -25,8 +25,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.qpid.proton4j.amqp.Symbol;
-import org.apache.qpid.proton4j.amqp.UnsignedInteger;
-import org.apache.qpid.proton4j.amqp.UnsignedShort;
 import org.apache.qpid.proton4j.amqp.transport.Begin;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
@@ -46,11 +44,11 @@ public class BeginTypeCodecTest extends CodecTestSupport {
 
        Begin input = new Begin();
 
-       input.setRemoteChannel(UnsignedShort.valueOf((short) 16));
-       input.setNextOutgoingId(UnsignedInteger.valueOf(24));
-       input.setIncomingWindow(UnsignedInteger.valueOf(32));
-       input.setOutgoingWindow(UnsignedInteger.valueOf(12));
-       input.setHandleMax(UnsignedInteger.valueOf(255));
+       input.setRemoteChannel(16);
+       input.setNextOutgoingId(24);
+       input.setIncomingWindow(32);
+       input.setOutgoingWindow(12);
+       input.setHandleMax(255);
        input.setOfferedCapabilities(offeredCapabilities);
        input.setDesiredCapabilities(desiredCapabilities);
        input.setProperties(properties);
@@ -59,11 +57,11 @@ public class BeginTypeCodecTest extends CodecTestSupport {
 
        final Begin result = (Begin) decoder.readObject(buffer, decoderState);
 
-       assertEquals(UnsignedShort.valueOf((short) 16), result.getRemoteChannel());
-       assertEquals(UnsignedInteger.valueOf(24), result.getNextOutgoingId());
-       assertEquals(UnsignedInteger.valueOf(32), result.getIncomingWindow());
-       assertEquals(UnsignedInteger.valueOf(12), result.getOutgoingWindow());
-       assertEquals(UnsignedInteger.valueOf(255), result.getHandleMax());
+       assertEquals(16, result.getRemoteChannel());
+       assertEquals(24, result.getNextOutgoingId());
+       assertEquals(32, result.getIncomingWindow());
+       assertEquals(12, result.getOutgoingWindow());
+       assertEquals(255, result.getHandleMax());
        assertNotNull(result.getProperties());
        assertEquals(1, properties.size());
        assertTrue(properties.containsKey(Symbol.valueOf("property")));

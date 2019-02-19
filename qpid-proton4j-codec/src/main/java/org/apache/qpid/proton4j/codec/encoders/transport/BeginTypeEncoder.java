@@ -17,7 +17,6 @@
 package org.apache.qpid.proton4j.codec.encoders.transport;
 
 import org.apache.qpid.proton4j.amqp.Symbol;
-import org.apache.qpid.proton4j.amqp.UnsignedInteger;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.amqp.transport.Begin;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
@@ -49,28 +48,60 @@ public class BeginTypeEncoder extends AbstractDescribedListTypeEncoder<Begin> {
     public void writeElement(Begin begin, int index, ProtonBuffer buffer, EncoderState state) {
         switch (index) {
             case 0:
-                state.getEncoder().writeUnsignedShort(buffer, state, begin.getRemoteChannel());
+                if (begin.hasRemoteChannel()) {
+                    state.getEncoder().writeUnsignedShort(buffer, state, begin.getRemoteChannel());
+                } else {
+                    buffer.writeByte(EncodingCodes.NULL);
+                }
                 break;
             case 1:
-                state.getEncoder().writeUnsignedInteger(buffer, state, begin.getNextOutgoingId());
+                if (begin.hasNextOutgoingId()) {
+                    state.getEncoder().writeUnsignedInteger(buffer, state, begin.getNextOutgoingId());
+                } else {
+                    buffer.writeByte(EncodingCodes.NULL);
+                }
                 break;
             case 2:
-                state.getEncoder().writeUnsignedInteger(buffer, state, begin.getIncomingWindow());
+                if (begin.hasIncomingWindow()) {
+                    state.getEncoder().writeUnsignedInteger(buffer, state, begin.getIncomingWindow());
+                } else {
+                    buffer.writeByte(EncodingCodes.NULL);
+                }
                 break;
             case 3:
-                state.getEncoder().writeUnsignedInteger(buffer, state, begin.getOutgoingWindow());
+                if (begin.hasOutgoingWindow()) {
+                    state.getEncoder().writeUnsignedInteger(buffer, state, begin.getOutgoingWindow());
+                } else {
+                    buffer.writeByte(EncodingCodes.NULL);
+                }
                 break;
             case 4:
-                state.getEncoder().writeUnsignedInteger(buffer, state, begin.getHandleMax());
+                if (begin.hasHandleMax()) {
+                    state.getEncoder().writeUnsignedInteger(buffer, state, begin.getHandleMax());
+                } else {
+                    buffer.writeByte(EncodingCodes.NULL);
+                }
                 break;
             case 5:
-                state.getEncoder().writeArray(buffer, state, begin.getOfferedCapabilities());
+                if (begin.hasOfferedCapabilites()) {
+                    state.getEncoder().writeArray(buffer, state, begin.getOfferedCapabilities());
+                } else {
+                    buffer.writeByte(EncodingCodes.NULL);
+                }
                 break;
             case 6:
-                state.getEncoder().writeArray(buffer, state, begin.getDesiredCapabilities());
+                if (begin.hasDesiredCapabilites()) {
+                    state.getEncoder().writeArray(buffer, state, begin.getDesiredCapabilities());
+                } else {
+                    buffer.writeByte(EncodingCodes.NULL);
+                }
                 break;
             case 7:
-                state.getEncoder().writeMap(buffer, state, begin.getProperties());
+                if (begin.hasProperties()) {
+                    state.getEncoder().writeMap(buffer, state, begin.getProperties());
+                } else {
+                    buffer.writeByte(EncodingCodes.NULL);
+                }
                 break;
             default:
                 throw new IllegalArgumentException("Unknown Begin value index: " + index);
@@ -84,16 +115,6 @@ public class BeginTypeEncoder extends AbstractDescribedListTypeEncoder<Begin> {
 
     @Override
     public int getElementCount(Begin begin) {
-        if (begin.getProperties() != null) {
-            return 8;
-        } else if (begin.getDesiredCapabilities() != null) {
-            return 7;
-        } else if (begin.getOfferedCapabilities() != null) {
-            return 6;
-        } else if (begin.getHandleMax() != null && !begin.getHandleMax().equals(UnsignedInteger.MAX_VALUE)) {
-            return 5;
-        } else {
-            return 4;
-        }
+        return begin.getElementCount();
     }
 }

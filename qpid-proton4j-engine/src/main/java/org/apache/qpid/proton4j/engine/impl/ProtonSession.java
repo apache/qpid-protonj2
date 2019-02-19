@@ -64,7 +64,7 @@ public class ProtonSession extends ProtonEndpoint<Session> implements Session, P
     }
 
     public int getRemoteChannel() {
-        return remoteBegin != null ? remoteBegin.getRemoteChannel().intValue() : -1;
+        return remoteBegin != null ? remoteBegin.getRemoteChannel() : -1;
     }
 
     @Override

@@ -49,10 +49,6 @@ public final class Flow implements Performative {
     private long incomingWindow;
     private long nextOutgoingId;
     private long outgoingWindow;
-
-    // TODO - Object handle would allow for easier Map lookup code
-    // private UnsignedInteger handle;
-
     private long handle;
     private long deliveryCount;
     private long linkCredit;
@@ -61,7 +57,7 @@ public final class Flow implements Performative {
     private boolean echo;
     private Map<Object, Object> properties;
 
-    //----- Query the state of the Header object -----------------------------//
+    //----- Query the state of the Flow object -----------------------------//
 
     public boolean isEmpty() {
         return modified == 0;
@@ -115,7 +111,7 @@ public final class Flow implements Performative {
         return (modified & PROPERTIES) == PROPERTIES;
     }
 
-    //----- Access the AMQP Transfer object ------------------------------------//
+    //----- Access the AMQP Flow object ------------------------------------//
 
     public long getNextIncomingId() {
         return nextIncomingId;
