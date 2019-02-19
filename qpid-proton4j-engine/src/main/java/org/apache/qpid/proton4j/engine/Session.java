@@ -135,4 +135,36 @@ public interface Session extends Endpoint<Session> {
      */
     Map<Symbol, Object> getRemoteProperties();
 
+    //----- Remote events for AMQP Session resources
+
+    /**
+     * Sets a EventHandler for when an AMQP Attach frame is received from the remote peer for a sending link.
+     *
+     * Used to process remotely initiated sending link.  Locally initiated links have their own EventHandler
+     * invoked instead.  This method is Typically used by servers to listen for remote Receiver creation.
+     * If an event handler for remote sender open is registered on the Session that the link is owned by then
+     * that handler will be invoked instead of this one.
+     *
+     * @param remoteSenderOpenEventHandler
+     *          the EventHandler that will be signaled when a sender link is remotely opened.
+     *
+     * @return this session for chaining
+     */
+    Session senderOpenEventHandler(EventHandler<Sender> remoteSenderOpenEventHandler);
+
+    /**
+     * Sets a EventHandler for when an AMQP Attach frame is received from the remote peer for a receiving link.
+     *
+     * Used to process remotely initiated receiving link.  Locally initiated links have their own EventHandler
+     * invoked instead.  This method is Typically used by servers to listen for remote Sender creation.
+     * If an event handler for remote receiver open is registered on the Session that the link is owned by then
+     * that handler will be invoked instead of this one.
+     *
+     * @param remoteReceiverOpenEventHandler
+     *          the EventHandler that will be signaled when a receiver link is remotely opened.
+     *
+     * @return this session for chaining
+     */
+    Session receiverOpenEventHandler(EventHandler<Receiver> remoteReceiverOpenEventHandler);
+
 }

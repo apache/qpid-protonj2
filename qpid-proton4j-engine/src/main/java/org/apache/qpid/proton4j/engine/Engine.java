@@ -88,7 +88,8 @@ public interface Engine {
      */
     void ingest(ProtonBuffer input) throws EngineStateException;
 
-    // TODO
+    // TODO - Do we need to accept time here or can we just use a time value of our own choosing
+    //        as this isn't C so we have the same clock values available as a caller would.
     long tick(long currentTime);
 
     //----- Engine configuration and state

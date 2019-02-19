@@ -32,6 +32,7 @@ import org.apache.qpid.proton4j.amqp.transport.Performative;
 import org.apache.qpid.proton4j.amqp.transport.Transfer;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.engine.Connection;
+import org.apache.qpid.proton4j.engine.EventHandler;
 import org.apache.qpid.proton4j.engine.Receiver;
 import org.apache.qpid.proton4j.engine.Sender;
 import org.apache.qpid.proton4j.engine.Session;
@@ -213,5 +214,19 @@ public class ProtonSession extends ProtonEndpoint<Session> implements Session, P
     @Override
     public void handleEnd(End end, ProtonBuffer payload, int channel, ProtonEngine context) {
 
+    }
+
+    //----- Event handler registration for this Session
+
+    @Override
+    public ProtonSession senderOpenEventHandler(EventHandler<Sender> remoteSenderOpenEventHandler) {
+        // TODO Auto-generated method stub
+        return this;
+    }
+
+    @Override
+    public ProtonSession receiverOpenEventHandler(EventHandler<Receiver> remoteReceiverOpenEventHandler) {
+        // TODO Auto-generated method stub
+        return this;
     }
 }
