@@ -200,12 +200,12 @@ public interface ProtonBuffer extends Comparable<ProtonBuffer> {
 
     /**
      * Returns a String created from the buffer's underlying bytes using the specified
-     * {@link java.nio.Charset} for the newly created String.
+     * {@link java.nio.charset.Charset} for the newly created String.
      *
      * @param charset
-     *      the {@link java.nio.Charset} to use to construct the new string.
+     *      the {@link java.nio.charset.Charset} to use to construct the new string.
      *
-     * @return a string created from the buffer's underlying bytes using the given {@link java.nio.Charset}.
+     * @return a string created from the buffer's underlying bytes using the given {@link java.nio.charset.Charset}.
      */
     String toString(Charset charset);
 

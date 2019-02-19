@@ -65,7 +65,7 @@ public interface Connection extends Endpoint<Connection> {
     /**
      * @return returns the host name assigned to this Connection.
      *
-     * @see setHostname
+     * @see #setHostname
      */
     public String getHostname();
 

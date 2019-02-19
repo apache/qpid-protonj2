@@ -29,7 +29,7 @@ public class StringUtils {
     /**
      * Converts the Binary to a quoted string.
      *
-     * @param bin
+     * @param buffer
      *        the {@link Binary} to convert into String format.
      * @param stringLength
      *        the maximum length of stringified content (excluding the quotes, and truncated indicator)
@@ -51,7 +51,7 @@ public class StringUtils {
     /**
      * Converts the ProtonBuffer to a quoted string.
      *
-     * @param bin
+     * @param buffer
      *        the {@link ProtonBuffer} to convert into String format.
      * @param stringLength
      *        the maximum length of stringified content (excluding the quotes, and truncated indicator)

@@ -19,7 +19,7 @@ package org.apache.qpid.proton4j.engine;
 /**
  * Interface that manages the result of a potentially asynchronous operation.
  *
- * @param E the object that will result from successful completion
+ * @param <E> the object that will result from successful completion
  */
 public interface AsyncEvent<E> {
 

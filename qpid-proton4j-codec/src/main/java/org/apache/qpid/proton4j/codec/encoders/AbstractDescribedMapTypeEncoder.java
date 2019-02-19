@@ -76,8 +76,6 @@ public abstract class AbstractDescribedMapTypeEncoder<K, V, M> extends AbstractD
      *
      * @param value
      * 		the value which will be encoded as a map type.
-     *
-     * @return the Map entries that are to be encoded.
      */
     public abstract void writeMapEntries(ProtonBuffer buffer, EncoderState state, M value);
 
