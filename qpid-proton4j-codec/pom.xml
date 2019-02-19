@@ -53,6 +53,10 @@
         <version>${maven-bundle-plugin-version}</version>
         <configuration>
           <instructions>
+            <Export-Package>
+              org.apache.qpid.proton4j.amqp.*,
+              org.apache.qpid.proton4j.codec.*
+            </Export-Package>
             <Import-Package>
               javax.net.ssl*;resolution:=optional,*
             </Import-Package>
