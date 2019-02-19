@@ -67,7 +67,7 @@
         <configuration>
           <instructions>
             <Import-Package>
-              javax.net.ssl*;resolution:=optional,*
+              *
             </Import-Package>
           </instructions>
         </configuration>

@@ -58,7 +58,7 @@
               org.apache.qpid.proton4j.codec.*
             </Export-Package>
             <Import-Package>
-              javax.net.ssl*;resolution:=optional,*
+              *
             </Import-Package>
           </instructions>
         </configuration>
