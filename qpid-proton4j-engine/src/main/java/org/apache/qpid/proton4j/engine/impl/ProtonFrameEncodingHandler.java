@@ -28,8 +28,6 @@ import org.apache.qpid.proton4j.engine.EngineHandlerContext;
 
 /**
  * Handler that encodes performatives into properly formed frames for IO
- *
- * TODO - Maybe rename to frame encoding handler
  */
 public class ProtonFrameEncodingHandler implements EngineHandler {
 
