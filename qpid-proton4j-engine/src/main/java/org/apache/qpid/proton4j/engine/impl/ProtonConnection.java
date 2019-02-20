@@ -71,8 +71,20 @@ public class ProtonConnection extends ProtonEndpoint<Connection> implements Conn
         LOG.trace("Remote open arrived at default handler.");
     };
 
+    private EventHandler<AsyncEvent<Connection>> remoteCloseHandler = (result) -> {
+        LOG.trace("Remote close arrived at default handler.");
+    };
+
     private EventHandler<Session> remoteSessionOpenEventHandler = (result) -> {
         LOG.trace("Remote session open arrived at default handler.");
+    };
+
+    private EventHandler<Sender> remoteSenderOpenEventHandler = (result) -> {
+        LOG.trace("Remote sender open arrived at default handler.");
+    };
+
+    private EventHandler<Receiver> remoteReceiverOpenEventHandler = (result) -> {
+        LOG.trace("Remote receiver open arrived at default handler.");
     };
 
     /**
@@ -368,7 +380,7 @@ public class ProtonConnection extends ProtonEndpoint<Connection> implements Conn
 
     @Override
     public Connection closeEventHandler(EventHandler<AsyncEvent<Connection>> remoteCloseEventHandler) {
-        // TODO Auto-generated method stub
+        this.remoteCloseHandler = remoteCloseEventHandler;
         return this;
     }
 
@@ -380,13 +392,13 @@ public class ProtonConnection extends ProtonEndpoint<Connection> implements Conn
 
     @Override
     public Connection senderOpenEventHandler(EventHandler<Sender> remoteSenderOpenEventHandler) {
-        // TODO Auto-generated method stub
+        this.remoteSenderOpenEventHandler = remoteSenderOpenEventHandler;
         return this;
     }
 
     @Override
     public Connection receiverOpenEventHandler(EventHandler<Receiver> remoteReceiverOpenEventHandler) {
-        // TODO Auto-generated method stub
+        this.remoteReceiverOpenEventHandler = remoteReceiverOpenEventHandler;
         return this;
     }
 
