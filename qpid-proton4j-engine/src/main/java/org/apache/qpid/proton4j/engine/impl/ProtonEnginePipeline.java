@@ -252,7 +252,7 @@ public class ProtonEnginePipeline implements EnginePipeline {
     }
 
     @Override
-    public ProtonEnginePipeline fireWrite(Performative performative, short channel, ProtonBuffer payload, Runnable payloadToLarge) {
+    public ProtonEnginePipeline fireWrite(Performative performative, int channel, ProtonBuffer payload, Runnable payloadToLarge) {
         head.fireWrite(performative, channel, payload, payloadToLarge);
         return this;
     }
@@ -381,7 +381,7 @@ public class ProtonEnginePipeline implements EnginePipeline {
         }
 
         @Override
-        public void fireWrite(Performative performative, short channel, ProtonBuffer payload, Runnable payloadToLarge) {
+        public void fireWrite(Performative performative, int channel, ProtonBuffer payload, Runnable payloadToLarge) {
             // TODO Decide on the exact error to be fired, move Transport to failed state.
             EventHandler<ProtonException> handler = engine.errorHandler();
             if (handler != null) {
@@ -489,7 +489,7 @@ public class ProtonEnginePipeline implements EnginePipeline {
         }
 
         @Override
-        public void handleWrite(EngineHandlerContext context, Performative performative, short channel, ProtonBuffer payload, Runnable payloadToLarge) {
+        public void handleWrite(EngineHandlerContext context, Performative performative, int channel, ProtonBuffer payload, Runnable payloadToLarge) {
             // TODO Decide on the exact error to be fired, move Transport to failed state.
             EventHandler<ProtonException> handler = engine.errorHandler();
             if (handler != null) {

@@ -111,7 +111,7 @@ public class ProtonEngineHandlerContext implements EngineHandlerContext {
     }
 
     @Override
-    public void fireWrite(Performative performative, short channel, ProtonBuffer payload, Runnable payloadToLarge) {
+    public void fireWrite(Performative performative, int channel, ProtonBuffer payload, Runnable payloadToLarge) {
         next.getHandler().handleWrite(next, performative, channel, payload, payloadToLarge);
     }
 

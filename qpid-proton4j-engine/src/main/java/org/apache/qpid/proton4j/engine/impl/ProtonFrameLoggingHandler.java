@@ -73,7 +73,7 @@ public class ProtonFrameLoggingHandler implements EngineHandler {
     }
 
     @Override
-    public void handleWrite(EngineHandlerContext context, Performative performative, short channel, ProtonBuffer payload, Runnable payloadToLarge) {
+    public void handleWrite(EngineHandlerContext context, Performative performative, int channel, ProtonBuffer payload, Runnable payloadToLarge) {
         LOG.trace("-> AMQP: {}", performative);  // TODO - Payload ?
         context.fireWrite(performative, channel, payload, payloadToLarge);
     }

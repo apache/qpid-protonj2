@@ -131,7 +131,7 @@ public class ProtonSaslHandler implements EngineHandler {
     }
 
     @Override
-    public void handleWrite(EngineHandlerContext context, Performative performative, short channel, ProtonBuffer payload, Runnable payloadToLarge) {
+    public void handleWrite(EngineHandlerContext context, Performative performative, int channel, ProtonBuffer payload, Runnable payloadToLarge) {
         if (isDone()) {
             // TODO We are done with sasl so this can be written to the transport as bytes
         } else {

@@ -46,7 +46,7 @@ public interface EngineHandlerContext {
 
     void fireWrite(AMQPHeader header);
 
-    void fireWrite(Performative performative, short channel, ProtonBuffer payload, Runnable payloadToLarge);
+    void fireWrite(Performative performative, int channel, ProtonBuffer payload, Runnable payloadToLarge);
 
     void fireWrite(SaslPerformative performative);
 

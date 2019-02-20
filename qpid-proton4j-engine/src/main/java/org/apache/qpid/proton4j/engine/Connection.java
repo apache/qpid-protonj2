@@ -180,7 +180,8 @@ public interface Connection extends Endpoint<Connection> {
      *
      * Used to process remotely initiated Connections. Locally initiated sessions have their own EventHandler
      * invoked instead.  This method is typically used by servers to listen for the remote peer to open its
-     * connection.
+     * connection, while a client would listen for the server to open its end of the connection once a local open
+     * has been performed.
      *
      * @param remoteOpenEventHandler
      *          the EventHandler that will be signaled when the connection has been remotely opened

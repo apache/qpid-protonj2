@@ -19,6 +19,7 @@ package org.apache.qpid.proton4j.engine;
 import java.util.Map;
 
 import org.apache.qpid.proton4j.amqp.Symbol;
+import org.apache.qpid.proton4j.engine.impl.ProtonConnection;
 
 /**
  * AMQP Session interface
@@ -138,12 +139,36 @@ public interface Session extends Endpoint<Session> {
     //----- Remote events for AMQP Session resources
 
     /**
+     * Sets a {@link EventHandler} for when an AMQP Begin frame is received from the remote peer for this
+     * {@link Session} which would have been locally opened previously.
+     *
+     * Typically used by clients, servers rely on {@link ProtonConnection#sessionOpenHandler(Handler)}.
+     *
+     * @param remoteOpenHandler
+     *      The {@link EventHandler} to notify when this session is remotely opened.
+     *
+     * @return the session for chaining.
+     */
+    Session openHandler(EventHandler<AsyncEvent<Session>> remoteOpenHandler);
+
+    /**
+     * Sets a {@link EventHandler} for when an AMQP End frame is received from the remote peer for this
+     * {@link Session} which would have been locally opened previously.
+     *
+     * @param remoteCloseHandler
+     *      The {@link EventHandler} to notify when this session is remotely closed.
+     *
+     * @return the session for chaining.
+     */
+    Session closeHandler(EventHandler<AsyncEvent<Session>> remoteCloseHandler);
+
+    /**
      * Sets a EventHandler for when an AMQP Attach frame is received from the remote peer for a sending link.
      *
      * Used to process remotely initiated sending link.  Locally initiated links have their own EventHandler
      * invoked instead.  This method is Typically used by servers to listen for remote Receiver creation.
-     * If an event handler for remote sender open is registered on the Session that the link is owned by then
-     * that handler will be invoked instead of this one.
+     * If an event handler for remote sender open is registered on this Session for a link scoped to it then
+     * this handler will be invoked instead of the variant in the Connection API.
      *
      * @param remoteSenderOpenEventHandler
      *          the EventHandler that will be signaled when a sender link is remotely opened.
@@ -157,8 +182,8 @@ public interface Session extends Endpoint<Session> {
      *
      * Used to process remotely initiated receiving link.  Locally initiated links have their own EventHandler
      * invoked instead.  This method is Typically used by servers to listen for remote Sender creation.
-     * If an event handler for remote receiver open is registered on the Session that the link is owned by then
-     * that handler will be invoked instead of this one.
+     * If an event handler for remote sender open is registered on this Session for a link scoped to it then
+     * this handler will be invoked instead of the variant in the Connection API.
      *
      * @param remoteReceiverOpenEventHandler
      *          the EventHandler that will be signaled when a receiver link is remotely opened.

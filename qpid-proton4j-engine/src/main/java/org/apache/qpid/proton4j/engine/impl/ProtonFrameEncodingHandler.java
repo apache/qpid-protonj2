@@ -63,7 +63,7 @@ public class ProtonFrameEncodingHandler implements EngineHandler {
     }
 
     @Override
-    public void handleWrite(EngineHandlerContext context, Performative performative, short channel, ProtonBuffer payload, Runnable payloadToLarge) {
+    public void handleWrite(EngineHandlerContext context, Performative performative, int channel, ProtonBuffer payload, Runnable payloadToLarge) {
         context.fireWrite(writeFrame(amqpEncoder, amqpEncoderState, performative, payload, AMQP_FRAME_TYPE, channel, configuration.getOutboundMaxFrameSize(), payloadToLarge));
     }
 
@@ -72,7 +72,7 @@ public class ProtonFrameEncodingHandler implements EngineHandler {
         context.fireWrite(writeFrame(saslEncoder, saslEncoderState, performative, null, SASL_FRAME_TYPE, (short) 0, configuration.getOutboundMaxFrameSize(), null));
     }
 
-    private ProtonBuffer writeFrame(Encoder encoder, EncoderState encoderState, Object performative, ProtonBuffer payload, byte frameType, short channel, int maxFrameSize, Runnable onPayloadTooLarge) {
+    private ProtonBuffer writeFrame(Encoder encoder, EncoderState encoderState, Object performative, ProtonBuffer payload, byte frameType, int channel, int maxFrameSize, Runnable onPayloadTooLarge) {
         int outputBufferSize = AMQP_PERFORMATIVE_PAD + (payload != null ? payload.getReadableBytes() : 0);
 
         ProtonBuffer output = configuration.getBufferAllocator().outputBuffer(AMQP_PERFORMATIVE_PAD + outputBufferSize);

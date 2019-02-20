@@ -22,46 +22,24 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
 import org.apache.qpid.proton4j.amqp.transport.Open;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
-import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
-import org.apache.qpid.proton4j.codec.CodecFactory;
-import org.apache.qpid.proton4j.codec.Decoder;
-import org.apache.qpid.proton4j.codec.DecoderState;
-import org.apache.qpid.proton4j.codec.Encoder;
-import org.apache.qpid.proton4j.codec.EncoderState;
 import org.apache.qpid.proton4j.engine.Connection;
 import org.apache.qpid.proton4j.engine.exceptions.EngineStateException;
-import org.junit.After;
 import org.junit.Test;
 
 /**
  * Test for basic functionality of the ProtonEngine implementation.
  */
-public class ProtonEngineTest {
+public class ProtonEngineTest extends ProtonEngineTestSupport {
 
     // TODO - The engine testing would benefit from a Qpid JMS style TestPeer that can expect and
     //        emit frames to validate behaviors from the engine.
 
     private Connection connection;
-    private ArrayList<ProtonBuffer> engineWrites = new ArrayList<>();
-
-    private final Decoder decoder = CodecFactory.getDefaultDecoder();
-    private final DecoderState decoderState = decoder.newDecoderState();
-
-    private final Encoder encoder = CodecFactory.getDefaultEncoder();
-    private final EncoderState encoderState = encoder.newEncoderState();
-
-    @After
-    public void tearDown() {
-        engineWrites.clear();
-        decoderState.reset();
-        encoderState.reset();
-    }
 
     @Test
     public void testEngineStart() {
@@ -171,60 +149,5 @@ public class ProtonEngineTest {
         assertEquals("Engine did not emit an AMQP Header on Open", 1, engineWrites.size());
 
         assertTrue("Connection remote opened event did not fire", remoteOpened.get());
-    }
-
-    // TODO - Test support for this as it will be common operation.
-
-    private ProtonBuffer wrapInFrame(Object input, int channel) {
-        final int FRAME_START_BYTE = 0;
-        final int FRAME_DOFF_BYTE = 4;
-        final int FRAME_DOFF_SIZE = 2;
-        final int FRAME_TYPE_BYTE = 5;
-        final int FRAME_CHANNEL_BYTE = 6;
-
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate(512);
-
-        buffer.writeLong(0); // Reserve header space
-
-        try {
-            encoder.writeObject(buffer, encoderState, input);
-        } finally {
-            encoderState.reset();
-        }
-
-        buffer.setInt(FRAME_START_BYTE, buffer.getReadableBytes());
-        buffer.setByte(FRAME_DOFF_BYTE, FRAME_DOFF_SIZE);
-        buffer.setByte(FRAME_TYPE_BYTE, 0);
-        buffer.setShort(FRAME_CHANNEL_BYTE, channel);
-
-        return buffer;
-    }
-
-    @SuppressWarnings({ "unchecked", "unused" })
-    private <E> E unwrapFrame(ProtonBuffer buffer, Class<E> typeClass) throws IOException {
-        int frameSize = buffer.readInt();
-        int dataOffset = (buffer.readByte() << 2) & 0x3FF;
-        int type = buffer.readByte() & 0xFF;
-        short channel = buffer.readShort();
-        if (dataOffset != 8) {
-            buffer.setReadIndex(buffer.getReadIndex() + dataOffset - 8);
-        }
-
-        final int frameBodySize = frameSize - dataOffset;
-
-        ProtonBuffer payload = null;
-        Object val = null;
-
-        if (frameBodySize > 0) {
-            try {
-                val = decoder.readObject(buffer, decoderState);
-            } finally {
-                decoderState.reset();
-            }
-        } else {
-            val = null;
-        }
-
-        return (E) val;
     }
 }

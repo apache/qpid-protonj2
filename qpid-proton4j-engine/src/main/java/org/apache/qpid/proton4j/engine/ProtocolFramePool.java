@@ -47,7 +47,7 @@ public class ProtocolFramePool {
         return maxPoolSize;
     }
 
-    public ProtocolFrame take(Performative body, short channel, ProtonBuffer payload) {
+    public ProtocolFrame take(Performative body, int channel, ProtonBuffer payload) {
         ProtocolFrame element = pool.poll();
 
         if (element == null) {

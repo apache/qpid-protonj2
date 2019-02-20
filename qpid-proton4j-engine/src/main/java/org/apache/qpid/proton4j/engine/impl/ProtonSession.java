@@ -16,6 +16,8 @@
  */
 package org.apache.qpid.proton4j.engine.impl;
 
+import static org.apache.qpid.proton4j.engine.impl.ProtonSupport.result;
+
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -31,7 +33,11 @@ import org.apache.qpid.proton4j.amqp.transport.Flow;
 import org.apache.qpid.proton4j.amqp.transport.Performative;
 import org.apache.qpid.proton4j.amqp.transport.Transfer;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import org.apache.qpid.proton4j.common.logging.ProtonLogger;
+import org.apache.qpid.proton4j.common.logging.ProtonLoggerFactory;
+import org.apache.qpid.proton4j.engine.AsyncEvent;
 import org.apache.qpid.proton4j.engine.Connection;
+import org.apache.qpid.proton4j.engine.EndpointState;
 import org.apache.qpid.proton4j.engine.EventHandler;
 import org.apache.qpid.proton4j.engine.Receiver;
 import org.apache.qpid.proton4j.engine.Sender;
@@ -42,16 +48,39 @@ import org.apache.qpid.proton4j.engine.Session;
  */
 public class ProtonSession extends ProtonEndpoint<Session> implements Session, Performative.PerformativeHandler<ProtonEngine> {
 
+    private static final ProtonLogger LOG = ProtonLoggerFactory.getLogger(ProtonSession.class);
+
     private final Begin localBegin = new Begin();
     private Begin remoteBegin;
 
     private int localChannel;
 
+    private long nextIncomingId;
+    private long nextOutgoingId = 1;
+    private long incomingWindow;
+    private long outgoingWindow;
+
     private final ProtonConnection connection;
+
+    private EventHandler<AsyncEvent<Session>> remoteOpenHandler = (result) -> {
+        LOG.trace("Remote session open arrived at default handler.");
+    };
+    private EventHandler<AsyncEvent<Session>> remoteCloseHandler = (result) -> {
+        LOG.trace("Remote session close arrived at default handler.");
+    };
+
+    // No default for these handlers, Connection will process these if not set here.
+    private EventHandler<Sender> remoteSenderOpenHandler = null;
+    private EventHandler<Receiver> remoteReceiverOpenHandler = null;
 
     public ProtonSession(ProtonConnection connection, int localChannel) {
         this.connection = connection;
         this.localChannel = localChannel;
+
+        // Set initial state for Begin
+        localBegin.setNextOutgoingId(nextOutgoingId);
+        localBegin.setIncomingWindow(incomingWindow);
+        localBegin.setOutgoingWindow(outgoingWindow);
     }
 
     @Override
@@ -69,6 +98,8 @@ public class ProtonSession extends ProtonEndpoint<Session> implements Session, P
 
     @Override
     public void setProperties(Map<Symbol, Object> properties) {
+        checkNotOpened("Cannot set Properties on already opened Session");
+
         if (properties != null) {
             localBegin.setProperties(new LinkedHashMap<>(properties));
         } else {
@@ -87,6 +118,8 @@ public class ProtonSession extends ProtonEndpoint<Session> implements Session, P
 
     @Override
     public void setOfferedCapabilities(Symbol[] capabilities) {
+        checkNotOpened("Cannot set Offered Capabilities on already opened Session");
+
         if (capabilities != null) {
             localBegin.setOfferedCapabilities(Arrays.copyOf(capabilities, capabilities.length));
         } else {
@@ -105,6 +138,8 @@ public class ProtonSession extends ProtonEndpoint<Session> implements Session, P
 
     @Override
     public void setDesiredCapabilities(Symbol[] capabilities) {
+        checkNotOpened("Cannot set Desired Capabilities on already opened Session");
+
         if (capabilities != null) {
             localBegin.setDesiredCapabilities(Arrays.copyOf(capabilities, capabilities.length));
         } else {
@@ -162,28 +197,66 @@ public class ProtonSession extends ProtonEndpoint<Session> implements Session, P
         return null;
     }
 
-    //----- Internal state handling methods
+    //----- Internal state methods
 
     @Override
     void initiateLocalOpen() {
-        // TODO Auto-generated method stub
+        connection.getEngine().pipeline().fireWrite(localBegin, localChannel, null, null);
     }
 
     @Override
     void initiateLocalClose() {
-        // TODO Auto-generated method stub
+        connection.getEngine().pipeline().fireWrite(new End().setError(getLocalCondition()), localChannel, null, null);
+    }
+
+    //----- Event handler registration for this Session
+
+    @Override
+    public ProtonSession openHandler(EventHandler<AsyncEvent<Session>> remoteOpenEventHandler) {
+        this.remoteOpenHandler = remoteOpenEventHandler;
+        return this;
+    }
+
+    @Override
+    public ProtonSession closeHandler(EventHandler<AsyncEvent<Session>> remoteCloseEventHandler) {
+        this.remoteCloseHandler = remoteCloseEventHandler;
+        return this;
+    }
+
+    @Override
+    public ProtonSession senderOpenEventHandler(EventHandler<Sender> remoteSenderOpenEventHandler) {
+        this.remoteSenderOpenHandler = remoteSenderOpenEventHandler;
+        return this;
+    }
+
+    @Override
+    public ProtonSession receiverOpenEventHandler(EventHandler<Receiver> remoteReceiverOpenEventHandler) {
+        this.remoteReceiverOpenHandler = remoteReceiverOpenEventHandler;
+        return this;
     }
 
     //----- Handle incoming performatives
 
     @Override
     public void handleBegin(Begin begin, ProtonBuffer payload, int channel, ProtonEngine context) {
-        if (remoteBegin != null) {
-            // TODO - Error on second Begin
-        }
-
         remoteBegin = begin;
-        // TODO
+        localBegin.setRemoteChannel(channel);
+        remoteOpenWasReceived();
+        nextIncomingId = begin.getNextOutgoingId();
+
+        if (getLocalState() == EndpointState.ACTIVE) {
+            remoteOpenHandler.handle(result(this, null));
+        }
+    }
+
+    @Override
+    public void handleEnd(End end, ProtonBuffer payload, int channel, ProtonEngine context) {
+        // TODO - Fully implement handling for remote End
+
+        setRemoteCondition(end.getError());
+        remoteClosedWasReceived();
+
+        remoteCloseHandler.handle(result(this, getRemoteCondition()));
     }
 
     @Override
@@ -209,24 +282,5 @@ public class ProtonSession extends ProtonEndpoint<Session> implements Session, P
     @Override
     public void handleDetach(Detach detach, ProtonBuffer payload, int channel, ProtonEngine context) {
 
-    }
-
-    @Override
-    public void handleEnd(End end, ProtonBuffer payload, int channel, ProtonEngine context) {
-
-    }
-
-    //----- Event handler registration for this Session
-
-    @Override
-    public ProtonSession senderOpenEventHandler(EventHandler<Sender> remoteSenderOpenEventHandler) {
-        // TODO Auto-generated method stub
-        return this;
-    }
-
-    @Override
-    public ProtonSession receiverOpenEventHandler(EventHandler<Receiver> remoteReceiverOpenEventHandler) {
-        // TODO Auto-generated method stub
-        return this;
     }
 }

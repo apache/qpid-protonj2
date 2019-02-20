@@ -82,7 +82,7 @@ public interface EngineHandler {
         context.fireWrite(header);
     }
 
-    default void handleWrite(EngineHandlerContext context, Performative performative, short channel, ProtonBuffer payload, Runnable payloadToLarge) {
+    default void handleWrite(EngineHandlerContext context, Performative performative, int channel, ProtonBuffer payload, Runnable payloadToLarge) {
         context.fireWrite(performative, channel, payload, payloadToLarge);
     }
 

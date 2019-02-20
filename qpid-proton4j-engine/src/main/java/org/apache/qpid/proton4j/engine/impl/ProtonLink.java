@@ -30,10 +30,21 @@ import org.apache.qpid.proton4j.engine.Session;
  */
 public abstract class ProtonLink<T extends Link<T>> extends ProtonEndpoint<T> implements Link<T> {
 
+    protected final ProtonSession session;
+
+    /**
+     * Create a new link instance with the given parent session.
+     *
+     * @param session
+     *      The {@link Session} that this link resides within.
+     */
+    public ProtonLink(ProtonSession session) {
+        this.session = session;
+    }
+
     @Override
     public Session getSession() {
-        // TODO Auto-generated method stub
-        return null;
+        return session;
     }
 
     @Override

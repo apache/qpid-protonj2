@@ -64,7 +64,7 @@ public interface EnginePipeline {
 
     EnginePipeline fireWrite(AMQPHeader header);
 
-    EnginePipeline fireWrite(Performative performative, short channel, ProtonBuffer payload, Runnable payloadToLarge);
+    EnginePipeline fireWrite(Performative performative, int channel, ProtonBuffer payload, Runnable payloadToLarge);
 
     EnginePipeline fireWrite(SaslPerformative performative);
 

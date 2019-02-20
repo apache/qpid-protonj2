@@ -47,6 +47,7 @@ import org.apache.qpid.proton4j.engine.EventHandler;
 import org.apache.qpid.proton4j.engine.Receiver;
 import org.apache.qpid.proton4j.engine.Sender;
 import org.apache.qpid.proton4j.engine.Session;
+import org.apache.qpid.proton4j.engine.exceptions.ProtocolViolationException;
 import org.apache.qpid.proton4j.engine.exceptions.ProtonException;
 
 /**
@@ -64,9 +65,14 @@ public class ProtonConnection extends ProtonEndpoint<Connection> implements Conn
     private Open remoteOpen;
 
     private ProtonSession[] localSessions = new ProtonSession[SESSION_ARRAY_CHUNK_SIZE];
+    private ProtonSession[] remoteSessions = new ProtonSession[SESSION_ARRAY_CHUNK_SIZE];
 
     private EventHandler<AsyncEvent<Connection>> remoteOpenHandler = (result) -> {
         LOG.trace("Remote open arrived at default handler.");
+    };
+
+    private EventHandler<Session> remoteSessionOpenEventHandler = (result) -> {
+        LOG.trace("Remote session open arrived at default handler.");
     };
 
     /**
@@ -81,17 +87,19 @@ public class ProtonConnection extends ProtonEndpoint<Connection> implements Conn
     }
 
     @Override
+    public void setContainerId(String containerId) {
+        checkNotOpened("Cannot set Container Id on already opened Connection");
+        localOpen.setContainerId(containerId);
+    }
+
+    @Override
     public String getContainerId() {
         return localOpen.getContainerId();
     }
 
     @Override
-    public void setContainerId(String containerId) {
-        localOpen.setContainerId(containerId);
-    }
-
-    @Override
     public void setHostname(String hostname) {
+        checkNotOpened("Cannot set Hostname on already opened Connection");
         localOpen.setHostname(hostname);
     }
 
@@ -102,6 +110,7 @@ public class ProtonConnection extends ProtonEndpoint<Connection> implements Conn
 
     @Override
     public void setChannelMax(int channelMax) {
+        checkNotOpened("Cannot set Channel Max on already opened Connection");
         localOpen.setChannelMax(UnsignedShort.valueOf((short) channelMax));
     }
 
@@ -112,6 +121,7 @@ public class ProtonConnection extends ProtonEndpoint<Connection> implements Conn
 
     @Override
     public void setIdleTimeout(int idleTimeout) {
+        checkNotOpened("Cannot set Idle Timeout on already opened Connection");
         localOpen.setIdleTimeOut(UnsignedInteger.valueOf(idleTimeout));
     }
 
@@ -122,6 +132,8 @@ public class ProtonConnection extends ProtonEndpoint<Connection> implements Conn
 
     @Override
     public void setOfferedCapabilities(Symbol[] capabilities) {
+        checkNotOpened("Cannot set Offered Capabilities on already opened Connection");
+
         if (capabilities != null) {
             localOpen.setOfferedCapabilities(Arrays.copyOf(capabilities, capabilities.length));
         } else {
@@ -140,6 +152,8 @@ public class ProtonConnection extends ProtonEndpoint<Connection> implements Conn
 
     @Override
     public void setDesiredCapabilities(Symbol[] capabilities) {
+        checkNotOpened("Cannot set Desired Capabilities on already opened Connection");
+
         if (capabilities != null) {
             localOpen.setDesiredCapabilities(Arrays.copyOf(capabilities, capabilities.length));
         } else {
@@ -158,6 +172,8 @@ public class ProtonConnection extends ProtonEndpoint<Connection> implements Conn
 
     @Override
     public void setProperties(Map<Symbol, Object> properties) {
+        checkNotOpened("Cannot set Properties on already opened Connection");
+
         if (properties != null) {
             localOpen.setProperties(new LinkedHashMap<>(properties));
         } else {
@@ -190,7 +206,7 @@ public class ProtonConnection extends ProtonEndpoint<Connection> implements Conn
             return Arrays.copyOf(remoteOpen.getOfferedCapabilities(), remoteOpen.getOfferedCapabilities().length);
         }
 
-        return null;  // TODO Empty Array instead ?
+        return null;
     }
 
     @Override
@@ -199,7 +215,7 @@ public class ProtonConnection extends ProtonEndpoint<Connection> implements Conn
             return Arrays.copyOf(remoteOpen.getDesiredCapabilities(), remoteOpen.getDesiredCapabilities().length);
         }
 
-        return null;  // TODO Empty Array instead ?
+        return null;
     }
 
     @Override
@@ -208,13 +224,16 @@ public class ProtonConnection extends ProtonEndpoint<Connection> implements Conn
             return Collections.unmodifiableMap(remoteOpen.getProperties());
         }
 
-        return null;  // TODO Empty Map instead ?
+        return null;
     }
 
     @Override
     public ProtonSession session() {
-        // TODO Auto-generated method stub
-        return null;
+        int localChannel = findFreeLocalChannel();
+        ProtonSession newSession = new ProtonSession(this, localChannel);
+        localSessions[localChannel] = newSession;
+
+        return newSession;
     }
 
     //----- Handle internal state changes
@@ -228,26 +247,6 @@ public class ProtonConnection extends ProtonEndpoint<Connection> implements Conn
     @Override
     void initiateLocalClose() {
         // TODO Auto-generated method stub
-    }
-
-    int findFreeLocalChannel() {
-        for (int i = 0; i < localSessions.length; ++i) {
-            if (localSessions[i] == null) {
-                return i;
-            }
-        }
-
-        // resize to accommodate more sessions, new channel will be old length
-        int channel = localSessions.length;
-        localSessions = Arrays.copyOf(localSessions, localSessions.length + SESSION_ARRAY_CHUNK_SIZE);
-        return channel;
-    }
-
-    void freeLocalChannel(int localChannel) {
-        if (localChannel > localSessions.length) {
-            throw new IllegalArgumentException("Specified local channel is out of range: " + localChannel);
-        }
-        localSessions[localChannel] = null;
     }
 
     //----- Handle performatives sent from the remote to this Connection
@@ -287,7 +286,41 @@ public class ProtonConnection extends ProtonEndpoint<Connection> implements Conn
 
     @Override
     public void handleBegin(Begin begin, ProtonBuffer payload, int channel, ProtonEngine context) {
+        ProtonSession session = null;
 
+        if (channel > localOpen.getChannelMax().intValue()) {
+            // TODO Channel Max violation error handling
+        }
+
+        if (remoteSessions.length > channel && remoteSessions[channel] != null) {
+            context.engineFailed(new ProtocolViolationException("Received second begin for Session from remote"));
+        } else {
+            // If there is a remote channel then this is an answer to a local open of a session, otherwise
+            // the remote is requesting a new session and we need to create one and signal that a remote
+            // session was opened.
+            if (begin.hasRemoteChannel()) {
+                int remoteChannel = begin.getRemoteChannel();
+                session = localSessions.length > remoteChannel ? localSessions[begin.getRemoteChannel()] : null;
+                if (session == null) {
+                    // TODO What should be the correct response to this particular wrinkle
+                    engine.engineFailed(new ProtocolViolationException("Received uncorrelated channel from remote: " + remoteChannel));
+                    return;
+                }
+            } else {
+                session = session();
+            }
+
+            storeRemoteSession(session, channel);
+
+            // Let the session handle the remote Begin now.
+            begin.invoke(session, payload, channel, context);
+
+            // If the session was initiated remotely then we signal the creation to the any registered
+            // remote session event handler
+            if (session.getLocalState() == EndpointState.IDLE) {
+                remoteSessionOpenEventHandler.handle(session);
+            }
+        }
     }
 
     @Override
@@ -341,7 +374,7 @@ public class ProtonConnection extends ProtonEndpoint<Connection> implements Conn
 
     @Override
     public Connection sessionOpenEventHandler(EventHandler<Session> remoteSessionOpenEventHandler) {
-        // TODO Auto-generated method stub
+        this.remoteSessionOpenEventHandler = remoteSessionOpenEventHandler;
         return this;
     }
 
@@ -355,5 +388,43 @@ public class ProtonConnection extends ProtonEndpoint<Connection> implements Conn
     public Connection receiverOpenEventHandler(EventHandler<Receiver> remoteReceiverOpenEventHandler) {
         // TODO Auto-generated method stub
         return this;
+    }
+
+    //----- Internal implementation
+
+    private int findFreeLocalChannel() {
+        // We could eventually replace this with some more space efficient data structure like
+        // a sparse array or possibly pull in a primitive map implementation.
+
+        for (int i = 0; i < localSessions.length; ++i) {
+            if (localSessions[i] == null) {
+                return i;
+            }
+        }
+
+        // resize to accommodate more sessions, new channel will be old length
+        int channel = localSessions.length;
+        localSessions = Arrays.copyOf(localSessions, localSessions.length + SESSION_ARRAY_CHUNK_SIZE);
+        return channel;
+    }
+
+    private void freeLocalChannel(int localChannel) {
+        if (localChannel > localSessions.length) {
+            throw new IllegalArgumentException("Specified local channel is out of range: " + localChannel);
+        }
+
+        localSessions[localChannel] = null;
+    }
+
+    private void storeRemoteSession(ProtonSession session, int remoteChannel) {
+        // We could eventually replace this with some more space efficient data structure like
+        // a sparse array or possibly pull in a primitive map implementation.
+
+        if (remoteSessions.length <= remoteChannel) {
+            // resize to accommodate more sessions, new channel will be old length
+            remoteSessions = Arrays.copyOf(remoteSessions, remoteSessions.length + SESSION_ARRAY_CHUNK_SIZE);
+        } else
+
+        remoteSessions[remoteChannel] = session;
     }
 }

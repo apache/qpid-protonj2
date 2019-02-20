@@ -24,11 +24,22 @@ import org.apache.qpid.proton4j.amqp.transport.Performative;
 import org.apache.qpid.proton4j.amqp.transport.Transfer;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.engine.Receiver;
+import org.apache.qpid.proton4j.engine.Session;
 
 /**
  * Proton Receiver link implementation.
  */
 public class ProtonReceiver extends ProtonLink<Receiver> implements Receiver, Performative.PerformativeHandler<ProtonEngine> {
+
+    /**
+     * Create a new {@link Receiver} instance with the given {@link Session} parent.
+     *
+     *  @param session
+     *      The Session that is linked to this receiver instance.
+     */
+    public ProtonReceiver(ProtonSession session) {
+        super(session);
+    }
 
     //----- Internal handler methods
 

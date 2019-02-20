@@ -142,4 +142,9 @@ public abstract class ProtonEndpoint<T extends Endpoint<T>> implements Endpoint<
 
     abstract void initiateLocalClose();
 
+    protected void checkNotOpened(String errorMessage) {
+        if (localState.ordinal() > EndpointState.IDLE.ordinal()) {
+            throw new IllegalStateException(errorMessage);
+        }
+    }
 }
