@@ -19,11 +19,11 @@ package org.apache.qpid.proton4j.codec.decoders.transport;
 import java.io.IOException;
 
 import org.apache.qpid.proton4j.amqp.Symbol;
-import org.apache.qpid.proton4j.amqp.UnsignedInteger;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.amqp.transport.Begin;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.DecoderState;
+import org.apache.qpid.proton4j.codec.EncodingCodes;
 import org.apache.qpid.proton4j.codec.TypeDecoder;
 import org.apache.qpid.proton4j.codec.decoders.AbstractDescribedTypeDecoder;
 import org.apache.qpid.proton4j.codec.decoders.primitives.ListTypeDecoder;
@@ -106,6 +106,15 @@ public class BeginTypeDecoder extends AbstractDescribedTypeDecoder<Begin> {
         }
 
         for (int index = 0; index < count; ++index) {
+            // Peek ahead and see if there is a null in the next slot, if so we don't call
+            // the setter for that entry to ensure the returned type reflects the encoded
+            // state in the modification entry.
+            boolean nullValue = buffer.getByte(buffer.getReadIndex()) == EncodingCodes.NULL;
+            if (nullValue) {
+                buffer.readByte();
+                continue;
+            }
+
             switch (index) {
                 case 0:
                     begin.setRemoteChannel(state.getDecoder().readUnsignedShort(buffer, state, 0));
@@ -120,8 +129,7 @@ public class BeginTypeDecoder extends AbstractDescribedTypeDecoder<Begin> {
                     begin.setOutgoingWindow(state.getDecoder().readUnsignedInteger(buffer, state, 0));
                     break;
                 case 4:
-                    UnsignedInteger handleMax = state.getDecoder().readUnsignedInteger(buffer, state);
-                    begin.setHandleMax(handleMax == null ? UnsignedInteger.MAX_VALUE.longValue() : handleMax.longValue());
+                    begin.setHandleMax(state.getDecoder().readUnsignedInteger(buffer, state, 0));
                     break;
                 case 5:
                     begin.setOfferedCapabilities(state.getDecoder().readMultiple(buffer, state, Symbol.class));

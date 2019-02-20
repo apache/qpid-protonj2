@@ -31,8 +31,9 @@ public final class End implements Performative {
         return error;
     }
 
-    public void setError(ErrorCondition error) {
+    public End setError(ErrorCondition error) {
         this.error = error;
+        return this;
     }
 
     @Override
