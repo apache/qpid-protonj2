@@ -288,7 +288,7 @@ public class ProtonConnection extends ProtonEndpoint<Connection> implements Conn
     @Override
     public void handleOpen(Open open, ProtonBuffer payload, int channel, ProtonEngine context) {
         if (remoteOpen != null) {
-            // TODO - Throw error indicating invalid state remote open already received.
+            context.engineFailed(new ProtocolViolationException("Received second Open for Connection from remote"));
         }
 
         remoteOpenWasReceived();
@@ -367,7 +367,8 @@ public class ProtonConnection extends ProtonEndpoint<Connection> implements Conn
 
     @Override
     public void handleClose(Close close, ProtonBuffer payload, int channel, ProtonEngine context) {
-
+        // TODO - handle close
+        remoteCloseHandler.handle(result(this, close.getError()));
     }
 
     //----- API for event handling of Connection related remote events
