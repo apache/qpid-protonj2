@@ -258,7 +258,8 @@ public class ProtonConnection extends ProtonEndpoint<Connection> implements Conn
 
     @Override
     void initiateLocalClose() {
-        // TODO Auto-generated method stub
+        // TODO - Handle close called but no remote header read yet.
+        engine.pipeline().fireWrite(new Close().setError(getLocalCondition()), 0, null, null);
     }
 
     //----- Handle performatives sent from the remote to this Connection
@@ -269,13 +270,13 @@ public class ProtonConnection extends ProtonEndpoint<Connection> implements Conn
         // that is what our state is already.
         if (getLocalState() != EndpointState.IDLE) {
             if (!wasLocalOpenSent()) {
-                localCloseWasSent();
-                context.pipeline().fireWrite(localOpen, (short) 0, null, null);
+                localOpenWasSent();
+                context.pipeline().fireWrite(localOpen, 0, null, null);
             }
 
-            if (getLocalState().ordinal() > EndpointState.ACTIVE.ordinal() && !wasLocalCloseSent()) {
+            if (getLocalState() == EndpointState.CLOSED && !wasLocalCloseSent()) {
                 localCloseWasSent();
-                context.pipeline().fireWrite(new Close().setError(getLocalCondition()), (short) 0, null, null);
+                context.pipeline().fireWrite(new Close().setError(getLocalCondition()), 0, null, null);
             }
         }
     }

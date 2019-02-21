@@ -98,8 +98,7 @@ public abstract class ProtonEndpoint<T extends Endpoint<T>> implements Endpoint<
 
     @Override
     public void open() {
-        // TODO - This is to vague of a state it could already be closed
-        if (getLocalState() != EndpointState.ACTIVE) {
+        if (getLocalState() == EndpointState.IDLE) {
             localState = EndpointState.ACTIVE;
             initiateLocalOpen();
         }
@@ -107,8 +106,7 @@ public abstract class ProtonEndpoint<T extends Endpoint<T>> implements Endpoint<
 
     @Override
     public void close() {
-        // TODO - This is to vague of a state it might have never been opened.
-        if (getLocalState() != EndpointState.CLOSED) {
+        if (getLocalState() == EndpointState.ACTIVE) {
             localState = EndpointState.CLOSED;
             initiateLocalClose();
         }
