@@ -84,6 +84,9 @@ public class ProtonEngine implements Engine {
         state = EngineState.STARTING;
         try {
             pipeline().fireEngineStarting();
+            // TODO - Should start fire the AMQP header and await that completion before returning a
+            //        connection as ready ? I doesn't allow the Open to be pipelined behind the header
+            //        but it would reduce complication of other bits of the state handling.
             connectionReady.handle(connectionFuture.onSuccess(getConnection()));
         } catch (Throwable error) {
             // TODO - Error types ?

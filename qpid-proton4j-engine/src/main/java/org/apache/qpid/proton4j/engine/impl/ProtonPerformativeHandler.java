@@ -33,6 +33,7 @@ import org.apache.qpid.proton4j.engine.EngineHandlerContext;
 import org.apache.qpid.proton4j.engine.HeaderFrame;
 import org.apache.qpid.proton4j.engine.ProtocolFrame;
 import org.apache.qpid.proton4j.engine.exceptions.ProtocolViolationException;
+import org.apache.qpid.proton4j.engine.exceptions.ProtonException;
 import org.apache.qpid.proton4j.engine.exceptions.ProtonExceptionSupport;
 
 /**
@@ -44,9 +45,6 @@ public class ProtonPerformativeHandler implements EngineHandler, AMQPHeader.Head
     private ProtonEngine engine;
     private ProtonConnection connection;
     private ProtonEngineConfiguration configuration;
-
-    private boolean headerReceived;
-    private boolean headerSent;
 
     //----- Handle transport events
 
@@ -88,14 +86,6 @@ public class ProtonPerformativeHandler implements EngineHandler, AMQPHeader.Head
         engine.engineFailed(ProtonExceptionSupport.create(e));
     }
 
-    @Override
-    public void handleWrite(EngineHandlerContext context, AMQPHeader header) {
-        if (!headerSent) {
-            headerSent = true;
-            context.fireWrite(header);
-        }
-    }
-
     //----- Deal with the incoming AMQP performatives
 
     // Here we can spy on incoming performatives and update engine state relative to
@@ -107,15 +97,6 @@ public class ProtonPerformativeHandler implements EngineHandler, AMQPHeader.Head
 
     @Override
     public void handleAMQPHeader(AMQPHeader header, EngineHandlerContext context) {
-        if (headerReceived) {
-            // TODO signal failure to the engine and adjust state
-        }
-
-        headerReceived = true;
-        if (!headerSent) {
-            context.fireWrite(AMQPHeader.getAMQPHeader());
-        }
-
         // Recompute max frame size now based on engine max frame size in case sasl was enabled.
         configuration.recomputeEffectiveFrameSizeLimits();
 
@@ -125,13 +106,10 @@ public class ProtonPerformativeHandler implements EngineHandler, AMQPHeader.Head
 
     @Override
     public void handleSASLHeader(AMQPHeader header, EngineHandlerContext context) {
-        if (!headerSent) {
-            headerReceived = true;
-            headerSent = true;
-            context.fireWrite(AMQPHeader.getAMQPHeader());
-        }
+        // Respond with Raw AMQP Header and then fail the engine.
+        context.fireWrite(AMQPHeader.getAMQPHeader());
 
-        // TODO signal failure as we don't handle SASL at this level.
+        engine.engineFailed(new ProtonException("Received SASL Header but no SASL support configured"));
     }
 
     @Override

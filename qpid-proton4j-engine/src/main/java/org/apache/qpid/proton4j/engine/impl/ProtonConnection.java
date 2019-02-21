@@ -67,6 +67,9 @@ public class ProtonConnection extends ProtonEndpoint<Connection> implements Conn
     private ProtonSession[] localSessions = new ProtonSession[SESSION_ARRAY_CHUNK_SIZE];
     private ProtonSession[] remoteSessions = new ProtonSession[SESSION_ARRAY_CHUNK_SIZE];
 
+    private boolean headerReceived;
+    private boolean headerSent;
+
     private EventHandler<AsyncEvent<Connection>> remoteOpenHandler = (result) -> {
         LOG.trace("Remote open arrived at default handler.");
     };
@@ -252,33 +255,20 @@ public class ProtonConnection extends ProtonEndpoint<Connection> implements Conn
 
     @Override
     void initiateLocalOpen() {
-        // TODO - Handler already having received a header
-        engine.pipeline().fireWrite(AMQPHeader.getAMQPHeader());
+        processStateChangeAndRespond();
     }
 
     @Override
     void initiateLocalClose() {
-        // TODO - Handle close called but no remote header read yet.
-        engine.pipeline().fireWrite(new Close().setError(getLocalCondition()), 0, null, null);
+        processStateChangeAndRespond();
     }
 
     //----- Handle performatives sent from the remote to this Connection
 
     @Override
     public void handleAMQPHeader(AMQPHeader header, ProtonEngine context) {
-        // Once an incoming header arrives we can emit our open if locally opened and also send close if
-        // that is what our state is already.
-        if (getLocalState() != EndpointState.IDLE) {
-            if (!wasLocalOpenSent()) {
-                localOpenWasSent();
-                context.pipeline().fireWrite(localOpen, 0, null, null);
-            }
-
-            if (getLocalState() == EndpointState.CLOSED && !wasLocalCloseSent()) {
-                localCloseWasSent();
-                context.pipeline().fireWrite(new Close().setError(getLocalCondition()), 0, null, null);
-            }
-        }
+        headerReceived = true;
+        processStateChangeAndRespond();
     }
 
     @Override
@@ -294,7 +284,22 @@ public class ProtonConnection extends ProtonEndpoint<Connection> implements Conn
 
         remoteOpenWasReceived();
         remoteOpen = open;
+
+        // TODO - Inform all Sessions that the remote has opened ?
+        // foreach session -> open.invoke(session, payload, channel, context);
+
         remoteOpenHandler.handle(result(this, null));
+    }
+
+    @Override
+    public void handleClose(Close close, ProtonBuffer payload, int channel, ProtonEngine context) {
+        remoteClosedWasReceived();
+        setRemoteCondition(close.getError());
+
+        // TODO - Inform all Sessions that the remote has closed ?
+        // foreach session -> close.invoke(session, payload, channel, context);
+
+        remoteCloseHandler.handle(result(this, close.getError()));
     }
 
     @Override
@@ -316,7 +321,7 @@ public class ProtonConnection extends ProtonEndpoint<Connection> implements Conn
                 session = localSessions.length > remoteChannel ? localSessions[begin.getRemoteChannel()] : null;
                 if (session == null) {
                     // TODO What should be the correct response to this particular wrinkle
-                    engine.engineFailed(new ProtocolViolationException("Received uncorrelated channel from remote: " + remoteChannel));
+                    engine.engineFailed(new ProtocolViolationException("Received uncorrelated channel on Begin from remote: " + remoteChannel));
                     return;
                 }
             } else {
@@ -337,39 +342,69 @@ public class ProtonConnection extends ProtonEndpoint<Connection> implements Conn
     }
 
     @Override
+    public void handleEnd(End end, ProtonBuffer payload, int channel, ProtonEngine context) {
+        if (remoteSessions.length > channel && remoteSessions[channel] == null) {
+            engine.engineFailed(new ProtocolViolationException("Received uncorrelated channel on End from remote: " + channel));
+        }
+
+        ProtonSession session = remoteSessions[channel];
+        remoteSessions[channel] = null;
+        end.invoke(session, payload, channel, context);
+    }
+
+    @Override
     public void handleAttach(Attach attach, ProtonBuffer payload, int channel, ProtonEngine context) {
+        if (remoteSessions.length > channel && remoteSessions[channel] == null) {
+            engine.engineFailed(new ProtocolViolationException("Received uncorrelated channel on Attach from remote: " + channel));
+        }
 
-    }
-
-    @Override
-    public void handleFlow(Flow flow, ProtonBuffer payload, int channel, ProtonEngine context) {
-
-    }
-
-    @Override
-    public void handleTransfer(Transfer transfer, ProtonBuffer payload, int channel, ProtonEngine context) {
-
-    }
-
-    @Override
-    public void handleDisposition(Disposition disposition, ProtonBuffer payload, int channel, ProtonEngine context) {
-
+        ProtonSession session = remoteSessions[channel];
+        remoteSessions[channel] = null;
+        attach.invoke(session, payload, channel, context);
     }
 
     @Override
     public void handleDetach(Detach detach, ProtonBuffer payload, int channel, ProtonEngine context) {
+        if (remoteSessions.length > channel && remoteSessions[channel] == null) {
+            engine.engineFailed(new ProtocolViolationException("Received uncorrelated channel on Detach from remote: " + channel));
+        }
 
+        ProtonSession session = remoteSessions[channel];
+        remoteSessions[channel] = null;
+        detach.invoke(session, payload, channel, context);
     }
 
     @Override
-    public void handleEnd(End end, ProtonBuffer payload, int channel, ProtonEngine context) {
+    public void handleFlow(Flow flow, ProtonBuffer payload, int channel, ProtonEngine context) {
+        if (remoteSessions.length > channel && remoteSessions[channel] == null) {
+            engine.engineFailed(new ProtocolViolationException("Received uncorrelated channel on Flow from remote: " + channel));
+        }
 
+        ProtonSession session = remoteSessions[channel];
+        remoteSessions[channel] = null;
+        flow.invoke(session, payload, channel, context);
     }
 
     @Override
-    public void handleClose(Close close, ProtonBuffer payload, int channel, ProtonEngine context) {
-        // TODO - handle close
-        remoteCloseHandler.handle(result(this, close.getError()));
+    public void handleTransfer(Transfer transfer, ProtonBuffer payload, int channel, ProtonEngine context) {
+        if (remoteSessions.length > channel && remoteSessions[channel] == null) {
+            engine.engineFailed(new ProtocolViolationException("Received uncorrelated channel on Transfer from remote: " + channel));
+        }
+
+        ProtonSession session = remoteSessions[channel];
+        remoteSessions[channel] = null;
+        transfer.invoke(session, payload, channel, context);
+    }
+
+    @Override
+    public void handleDisposition(Disposition disposition, ProtonBuffer payload, int channel, ProtonEngine context) {
+        if (remoteSessions.length > channel && remoteSessions[channel] == null) {
+            engine.engineFailed(new ProtocolViolationException("Received uncorrelated channel on Disposition from remote: " + channel));
+        }
+
+        ProtonSession session = remoteSessions[channel];
+        remoteSessions[channel] = null;
+        disposition.invoke(session, payload, channel, context);
     }
 
     //----- API for event handling of Connection related remote events
@@ -405,6 +440,29 @@ public class ProtonConnection extends ProtonEndpoint<Connection> implements Conn
     }
 
     //----- Internal implementation
+
+    private void processStateChangeAndRespond() {
+        // When the engine state changes or we have read an incoming AMQP header etc we need to check
+        // if we have pending work to send and do so
+        if (headerSent) {
+            // Once an incoming header arrives we can emit our open if locally opened and also send close if
+            // that is what our state is already.
+            if (getLocalState() != EndpointState.IDLE) {
+                if (!wasLocalOpenSent()) {
+                    localOpenWasSent();
+                    engine.pipeline().fireWrite(localOpen, 0, null, null);
+                }
+
+                if (getLocalState() == EndpointState.CLOSED && !wasLocalCloseSent()) {
+                    localCloseWasSent();
+                    engine.pipeline().fireWrite(new Close().setError(getLocalCondition()), 0, null, null);
+                }
+            }
+        } else {
+            headerSent = true;
+            engine.pipeline().fireWrite(AMQPHeader.getAMQPHeader());
+        }
+    }
 
     private int findFreeLocalChannel() {
         // We could eventually replace this with some more space efficient data structure like
