@@ -16,12 +16,17 @@
  */
 package org.apache.qpid.proton4j.engine.impl;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.amqp.messaging.Source;
 import org.apache.qpid.proton4j.amqp.messaging.Target;
+import org.apache.qpid.proton4j.amqp.transport.Attach;
+import org.apache.qpid.proton4j.amqp.transport.End;
 import org.apache.qpid.proton4j.engine.Link;
 import org.apache.qpid.proton4j.engine.Session;
 
@@ -32,14 +37,20 @@ public abstract class ProtonLink<T extends Link<T>> extends ProtonEndpoint<T> im
 
     protected final ProtonSession session;
 
+    protected final Attach localAttach = new Attach();
+    protected Attach remoteAttach;
+
     /**
      * Create a new link instance with the given parent session.
      *
      * @param session
      *      The {@link Session} that this link resides within.
+     * @param name
+     *      The name assigned to this {@link Link}
      */
-    public ProtonLink(ProtonSession session) {
+    public ProtonLink(ProtonSession session, String name) {
         this.session = session;
+        this.localAttach.setName(name);
     }
 
     @Override
@@ -49,99 +60,165 @@ public abstract class ProtonLink<T extends Link<T>> extends ProtonEndpoint<T> im
 
     @Override
     public String getName() {
-        // TODO Auto-generated method stub
-        return null;
+        return localAttach.getName();
+    }
+
+    @Override
+    public void setSource(Source source) {
+        checkNotOpened("Cannot set Source on already opened Link");
+        localAttach.setSource(source);
     }
 
     @Override
     public Source getSource() {
-        // TODO Auto-generated method stub
-        return null;
+        return localAttach.getSource();
+    }
+
+    @Override
+    public void setTarget(Target target) {
+        checkNotOpened("Cannot set Target on already opened Link");
+        localAttach.setTarget(target);
     }
 
     @Override
     public Target getTarget() {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public Map<Symbol, Object> getProperties() {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public void setOfferedCapabilities(Symbol[] offeredCapabilities) {
-        // TODO Auto-generated method stub
-    }
-
-    @Override
-    public Symbol[] getOfferedCapabilities() {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public void setDesiredCapabilities(Symbol[] desiredCapabilities) {
-        // TODO Auto-generated method stub
-    }
-
-    @Override
-    public Symbol[] getDesiredCapabilities() {
-        // TODO Auto-generated method stub
-        return null;
+        return localAttach.getTarget();
     }
 
     @Override
     public void setProperties(Map<Symbol, Object> properties) {
-        // TODO Auto-generated method stub
+        checkNotOpened("Cannot set Properties on already opened Link");
+
+        if (properties != null) {
+            localAttach.setProperties(new LinkedHashMap<>(properties));
+        } else {
+            localAttach.setProperties(properties);
+        }
     }
 
     @Override
-    public void setMaxMessageSize(UnsignedLong maxMessageSize) {
-        // TODO Auto-generated method stub
-    }
+    public Map<Symbol, Object> getProperties() {
+        if (localAttach.getProperties() != null) {
+            return Collections.unmodifiableMap(localAttach.getProperties());
+        }
 
-    @Override
-    public UnsignedLong getMaxMessageSize() {
-        // TODO Auto-generated method stub
         return null;
     }
 
     @Override
+    public void setOfferedCapabilities(Symbol[] capabilities) {
+        checkNotOpened("Cannot set Offered Capabilities on already opened Link");
+
+        if (capabilities != null) {
+            localAttach.setOfferedCapabilities(Arrays.copyOf(capabilities, capabilities.length));
+        } else {
+            localAttach.setOfferedCapabilities(capabilities);
+        }
+    }
+
+    @Override
+    public Symbol[] getOfferedCapabilities() {
+        if (localAttach.getOfferedCapabilities() != null) {
+            return Arrays.copyOf(localAttach.getOfferedCapabilities(), localAttach.getOfferedCapabilities().length);
+        }
+
+        return null;
+    }
+
+    @Override
+    public void setDesiredCapabilities(Symbol[] capabilities) {
+        checkNotOpened("Cannot set Desired Capabilities on already opened Link");
+
+        if (capabilities != null) {
+            localAttach.setDesiredCapabilities(Arrays.copyOf(capabilities, capabilities.length));
+        } else {
+            localAttach.setDesiredCapabilities(capabilities);
+        }
+    }
+
+    @Override
+    public Symbol[] getDesiredCapabilities() {
+        if (localAttach.getDesiredCapabilities() != null) {
+            return Arrays.copyOf(localAttach.getDesiredCapabilities(), localAttach.getDesiredCapabilities().length);
+        }
+
+        return null;
+    }
+
+    @Override
+    public void setMaxMessageSize(UnsignedLong maxMessageSize) {
+        checkNotOpened("Cannot set Max Message Size on already opened Link");
+        localAttach.setMaxMessageSize(maxMessageSize);
+    }
+
+    @Override
+    public UnsignedLong getMaxMessageSize() {
+        return localAttach.getMaxMessageSize();
+    }
+
+    @Override
     public Source getRemoteSource() {
-        // TODO Auto-generated method stub
+        if (remoteAttach != null && remoteAttach.getSource() != null) {
+            return remoteAttach.getSource().copy();
+        }
+
         return null;
     }
 
     @Override
     public Target getRemoteTarget() {
-        // TODO Auto-generated method stub
+        if (remoteAttach != null && remoteAttach.getTarget() != null) {
+            return remoteAttach.getTarget().copy();
+        }
+
         return null;
     }
 
     @Override
     public Symbol[] getRemoteOfferedCapabilities() {
-        // TODO Auto-generated method stub
+        if (remoteAttach != null && remoteAttach.getOfferedCapabilities() != null) {
+            return Arrays.copyOf(remoteAttach.getOfferedCapabilities(), remoteAttach.getOfferedCapabilities().length);
+        }
+
         return null;
     }
 
     @Override
     public Symbol[] getRemoteDesiredCapabilities() {
-        // TODO Auto-generated method stub
+        if (remoteAttach != null && remoteAttach.getDesiredCapabilities() != null) {
+            return Arrays.copyOf(remoteAttach.getDesiredCapabilities(), remoteAttach.getDesiredCapabilities().length);
+        }
+
         return null;
     }
 
     @Override
     public Map<Symbol, Object> getRemoteProperties() {
-        // TODO Auto-generated method stub
+        if (remoteAttach != null && remoteAttach.getProperties() != null) {
+            return Collections.unmodifiableMap(remoteAttach.getProperties());
+        }
+
         return null;
     }
 
     @Override
     public UnsignedLong getRemoteMaxMessageSize() {
-        // TODO Auto-generated method stub
+        if (remoteAttach != null && remoteAttach.getMaxMessageSize() != null) {
+            return remoteAttach.getMaxMessageSize();
+        }
+
         return null;
+    }
+
+    //----- Internal handler methods
+
+    @Override
+    void initiateLocalOpen() {
+        session.getEngine().pipeline().fireWrite(localAttach, session.getLocalChannel(), null, null);
+    }
+
+    @Override
+    void initiateLocalClose() {
+        session.getEngine().pipeline().fireWrite(new End().setError(getLocalCondition()), session.getLocalChannel(), null, null);
     }
 }

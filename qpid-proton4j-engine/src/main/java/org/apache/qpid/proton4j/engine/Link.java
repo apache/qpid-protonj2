@@ -39,9 +39,25 @@ public interface Link<T extends Endpoint<T>> extends Endpoint<T> {
     String getName();
 
     /**
+     * Sets the {@link Source} to assign to the local end of this {@link Link}.
+     *
+     * @param source
+     *      The {@link Source} that will be set on the local end of this link.
+     */
+    void setSource(Source source);
+
+    /**
      * @return the {@link Source} for the local end of this link.
      */
     Source getSource();
+
+    /**
+     * Sets the {@link Target} to assign to the local end of this {@link Link}.
+     *
+     * @param source
+     *      The {@link Target} that will be set on the local end of this link.
+     */
+    void setTarget(Target target);
 
     /**
      * @return the {@link Target} for the local end of this link.
@@ -54,6 +70,17 @@ public interface Link<T extends Endpoint<T>> extends Endpoint<T> {
      * @see #setProperties(Map)
      */
     Map<Symbol, Object> getProperties();
+
+    /**
+     * Sets the local {@link Link} properties, to be conveyed to the peer via the Attach frame when
+     * opening the local end of the link.
+     *
+     * Must be called during link setup, i.e. before calling the {@link #open()} method.
+     *
+     * @param properties
+     *          the properties map to send, or null for none.
+     */
+    void setProperties(Map<Symbol, Object> properties);
 
     /**
      * Sets the local link offered capabilities, to be conveyed to the peer via the Attach frame
@@ -94,14 +121,6 @@ public interface Link<T extends Endpoint<T>> extends Endpoint<T> {
      * @see #setDesiredCapabilities(Symbol[])
      */
     Symbol[] getDesiredCapabilities();
-
-    /**
-     * Sets the local link properties, to be conveyed to the peer via the Attach frame when
-     * attaching the link to the session.
-     *
-     * Must be called during link setup, i.e. before calling the {@link #open()} method.
-     */
-    void setProperties(Map<Symbol, Object> properties);
 
     /**
      * Sets the local link max message size, to be conveyed to the peer via the Attach frame

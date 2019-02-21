@@ -36,27 +36,22 @@ public class ProtonReceiver extends ProtonLink<Receiver> implements Receiver, Pe
      *
      *  @param session
      *      The Session that is linked to this receiver instance.
+     *  @param name
+     *      The name assigned to this {@link Receiver} link.
      */
-    public ProtonReceiver(ProtonSession session) {
-        super(session);
-    }
-
-    //----- Internal handler methods
-
-    @Override
-    void initiateLocalOpen() {
-        // TODO Auto-generated method stub
-    }
-
-    @Override
-    void initiateLocalClose() {
-        // TODO Auto-generated method stub
+    public ProtonReceiver(ProtonSession session, String name) {
+        super(session, name);
     }
 
     //----- Handle incoming performatives
 
     @Override
     public void handleAttach(Attach attach, ProtonBuffer payload, int channel, ProtonEngine context) {
+
+    }
+
+    @Override
+    public void handleDetach(Detach detach, ProtonBuffer payload, int channel, ProtonEngine context) {
 
     }
 
@@ -72,11 +67,6 @@ public class ProtonReceiver extends ProtonLink<Receiver> implements Receiver, Pe
 
     @Override
     public void handleDisposition(Disposition disposition, ProtonBuffer payload, int channel, ProtonEngine context) {
-
-    }
-
-    @Override
-    public void handleDetach(Detach detach, ProtonBuffer payload, int channel, ProtonEngine context) {
 
     }
 }

@@ -36,21 +36,11 @@ public class ProtonSender extends ProtonLink<Sender> implements Sender, Performa
      *
      *  @param session
      *      The Session that is linked to this sender instance.
+     *  @param name
+     *      The name assigned to this {@link Sender} link.
      */
-    public ProtonSender(ProtonSession session) {
-        super(session);
-    }
-
-    //----- Internal handler methods
-
-    @Override
-    void initiateLocalOpen() {
-        // TODO Auto-generated method stub
-    }
-
-    @Override
-    void initiateLocalClose() {
-        // TODO Auto-generated method stub
+    public ProtonSender(ProtonSession session, String name) {
+        super(session, name);
     }
 
     //----- Handle incoming performatives

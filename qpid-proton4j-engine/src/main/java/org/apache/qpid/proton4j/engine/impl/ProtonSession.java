@@ -88,6 +88,10 @@ public class ProtonSession extends ProtonEndpoint<Session> implements Session, P
         return connection;
     }
 
+    public ProtonEngine getEngine() {
+        return connection.getEngine();
+    }
+
     public int getLocalChannel() {
         return localChannel;
     }
