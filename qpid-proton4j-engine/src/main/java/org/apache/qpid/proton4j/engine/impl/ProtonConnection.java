@@ -358,9 +358,7 @@ public class ProtonConnection extends ProtonEndpoint<Connection> implements Conn
             engine.engineFailed(new ProtocolViolationException("Received uncorrelated channel on Attach from remote: " + channel));
         }
 
-        ProtonSession session = remoteSessions[channel];
-        remoteSessions[channel] = null;
-        attach.invoke(session, payload, channel, context);
+        attach.invoke(remoteSessions[channel], payload, channel, context);
     }
 
     @Override
@@ -369,9 +367,7 @@ public class ProtonConnection extends ProtonEndpoint<Connection> implements Conn
             engine.engineFailed(new ProtocolViolationException("Received uncorrelated channel on Detach from remote: " + channel));
         }
 
-        ProtonSession session = remoteSessions[channel];
-        remoteSessions[channel] = null;
-        detach.invoke(session, payload, channel, context);
+        detach.invoke(remoteSessions[channel], payload, channel, context);
     }
 
     @Override
@@ -380,9 +376,7 @@ public class ProtonConnection extends ProtonEndpoint<Connection> implements Conn
             engine.engineFailed(new ProtocolViolationException("Received uncorrelated channel on Flow from remote: " + channel));
         }
 
-        ProtonSession session = remoteSessions[channel];
-        remoteSessions[channel] = null;
-        flow.invoke(session, payload, channel, context);
+        flow.invoke(remoteSessions[channel], payload, channel, context);
     }
 
     @Override
@@ -391,9 +385,7 @@ public class ProtonConnection extends ProtonEndpoint<Connection> implements Conn
             engine.engineFailed(new ProtocolViolationException("Received uncorrelated channel on Transfer from remote: " + channel));
         }
 
-        ProtonSession session = remoteSessions[channel];
-        remoteSessions[channel] = null;
-        transfer.invoke(session, payload, channel, context);
+        transfer.invoke(remoteSessions[channel], payload, channel, context);
     }
 
     @Override
@@ -402,9 +394,7 @@ public class ProtonConnection extends ProtonEndpoint<Connection> implements Conn
             engine.engineFailed(new ProtocolViolationException("Received uncorrelated channel on Disposition from remote: " + channel));
         }
 
-        ProtonSession session = remoteSessions[channel];
-        remoteSessions[channel] = null;
-        disposition.invoke(session, payload, channel, context);
+        disposition.invoke(remoteSessions[channel], payload, channel, context);
     }
 
     //----- API for event handling of Connection related remote events
