@@ -17,4 +17,22 @@
 package org.apache.qpid.proton4j.amqp.messaging;
 
 public interface Section {
+
+    enum SectionType {
+        AmqpSequence,
+        AmqpValue,
+        ApplicationProperties,
+        Data,
+        DeliveryAnnotations,
+        Footer,
+        Header,
+        MessageAnnotations,
+        Properties
+    }
+
+    /**
+     * @return the {@link SectionType} that describes this instance.
+     */
+    SectionType getType();
+
 }

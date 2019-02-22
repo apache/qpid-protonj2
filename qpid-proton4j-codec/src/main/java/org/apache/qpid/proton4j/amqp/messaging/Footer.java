@@ -40,4 +40,9 @@ public final class Footer implements Section {
     public String toString() {
         return "Footer{ " + value + " }";
     }
+
+    @Override
+    public SectionType getType() {
+        return SectionType.Footer;
+    }
 }

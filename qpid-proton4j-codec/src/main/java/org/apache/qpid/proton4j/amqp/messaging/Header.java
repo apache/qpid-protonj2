@@ -195,4 +195,9 @@ public final class Header implements Section {
                 ", firstAcquirer=" + firstAcquirer +
                 ", deliveryCount=" + deliveryCount + " }";
     }
+
+    @Override
+    public SectionType getType() {
+        return SectionType.Header;
+    }
 }

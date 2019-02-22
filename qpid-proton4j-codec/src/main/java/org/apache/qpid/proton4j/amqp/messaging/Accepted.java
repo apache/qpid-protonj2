@@ -38,4 +38,9 @@ public final class Accepted implements DeliveryState, Outcome {
     public static Accepted getInstance() {
         return INSTANCE;
     }
+
+    @Override
+    public DeliveryStateType getType() {
+        return DeliveryStateType.Accepted;
+    }
 }

@@ -38,4 +38,9 @@ public final class Released implements DeliveryState, Outcome {
     public static Released getInstance() {
         return INSTANCE;
     }
+
+    @Override
+    public DeliveryStateType getType() {
+        return DeliveryStateType.Released;
+    }
 }

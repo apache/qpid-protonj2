@@ -343,4 +343,9 @@ public final class Properties implements Section {
                 ", groupSequence=" + groupSequence +
                 ", replyToGroupId='" + replyToGroupId + '\'' + " }";
     }
+
+    @Override
+    public SectionType getType() {
+        return SectionType.Properties;
+    }
 }

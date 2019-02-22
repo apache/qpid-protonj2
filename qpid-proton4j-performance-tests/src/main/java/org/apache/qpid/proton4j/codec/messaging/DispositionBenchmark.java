@@ -18,7 +18,6 @@ package org.apache.qpid.proton4j.codec.messaging;
 
 import java.io.IOException;
 
-import org.apache.qpid.proton4j.amqp.UnsignedInteger;
 import org.apache.qpid.proton4j.amqp.messaging.Accepted;
 import org.apache.qpid.proton4j.amqp.transport.Disposition;
 import org.apache.qpid.proton4j.amqp.transport.Role;
@@ -45,8 +44,8 @@ public class DispositionBenchmark extends CodecBenchmarkBase {
         disposition.setRole(Role.RECEIVER);
         disposition.setSettled(true);
         disposition.setState(Accepted.getInstance());
-        disposition.setFirst(UnsignedInteger.valueOf(2));
-        disposition.setLast(UnsignedInteger.valueOf(2));
+        disposition.setFirst(2);
+        disposition.setLast(2);
     }
 
     @Benchmark

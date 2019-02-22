@@ -45,4 +45,9 @@ public final class Declared implements DeliveryState, Outcome {
     public String toString() {
         return "Declared{" + "txnId=" + txnId + '}';
     }
+
+    @Override
+    public DeliveryStateType getType() {
+        return DeliveryStateType.Declared;
+    }
 }

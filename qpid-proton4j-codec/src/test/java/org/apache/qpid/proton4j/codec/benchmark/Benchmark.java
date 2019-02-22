@@ -346,8 +346,8 @@ public class Benchmark implements Runnable {
         disposition.setRole(Role.RECEIVER);
         disposition.setSettled(true);
         disposition.setState(Accepted.getInstance());
-        disposition.setFirst(UnsignedInteger.valueOf(2));
-        disposition.setLast(UnsignedInteger.valueOf(2));
+        disposition.setFirst(2);
+        disposition.setLast(2);
 
         resultSet.start();
         for (int i = 0; i < ITERATIONS; i++) {

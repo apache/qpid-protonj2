@@ -41,4 +41,9 @@ public final class Rejected implements DeliveryState, Outcome {
         return "Rejected{" +
                "error=" + error + "}";
     }
+
+    @Override
+    public DeliveryStateType getType() {
+        return DeliveryStateType.Rejected;
+    }
 }

@@ -63,4 +63,9 @@ public final class Modified implements DeliveryState, Outcome {
                ", messageAnnotations=" + messageAnnotations +
                '}';
     }
+
+    @Override
+    public DeliveryStateType getType() {
+        return DeliveryStateType.Modified;
+    }
 }

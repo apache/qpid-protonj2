@@ -40,4 +40,9 @@ public final class AmqpSequence implements Section {
     public String toString() {
         return "AmqpSequence{ " + value + " }";
     }
+
+    @Override
+    public SectionType getType() {
+        return SectionType.AmqpSequence;
+    }
 }

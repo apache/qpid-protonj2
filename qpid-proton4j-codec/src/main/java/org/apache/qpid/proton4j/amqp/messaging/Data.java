@@ -39,4 +39,9 @@ public final class Data implements Section {
     public String toString() {
         return "Data{ " + value + " }";
     }
+
+    @Override
+    public SectionType getType() {
+        return SectionType.Data;
+    }
 }

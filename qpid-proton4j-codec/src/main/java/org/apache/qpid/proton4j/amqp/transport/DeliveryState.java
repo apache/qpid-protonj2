@@ -23,4 +23,20 @@ package org.apache.qpid.proton4j.amqp.transport;
  * The receiver merely influences the state.
  */
 public interface DeliveryState {
+
+    enum DeliveryStateType {
+        Accepted,
+        Declared,
+        Modified,
+        Received,
+        Rejected,
+        Released,
+        Transactional
+    }
+
+    /**
+     * @return the {@link DeliveryStateType} that this instance represents.
+     */
+    DeliveryStateType getType();
+
 }

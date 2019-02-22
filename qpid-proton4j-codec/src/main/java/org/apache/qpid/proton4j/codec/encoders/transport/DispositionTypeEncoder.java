@@ -50,29 +50,54 @@ public class DispositionTypeEncoder extends AbstractDescribedListTypeEncoder<Dis
     public void writeElement(Disposition disposition, int index, ProtonBuffer buffer, EncoderState state) {
         switch (index) {
             case 0:
-                state.getEncoder().writeBoolean(buffer, state, disposition.getRole().getValue());
-                break;
-            case 1:
-                state.getEncoder().writeUnsignedInteger(buffer, state, disposition.getFirst());
-                break;
-            case 2:
-                state.getEncoder().writeUnsignedInteger(buffer, state, disposition.getLast());
-                break;
-            case 3:
-                state.getEncoder().writeBoolean(buffer, state, disposition.getSettled());
-                break;
-            case 4:
-                if (Accepted.getInstance().equals(disposition.getState())) {
-                    buffer.writeByte(EncodingCodes.DESCRIBED_TYPE_INDICATOR);
-                    buffer.writeByte(EncodingCodes.SMALLULONG);
-                    buffer.writeByte(Accepted.DESCRIPTOR_CODE.byteValue());
-                    buffer.writeByte(EncodingCodes.LIST0);
+                if (disposition.hasRole()) {
+                    state.getEncoder().writeBoolean(buffer, state, disposition.getRole().getValue());
                 } else {
-                    state.getEncoder().writeObject(buffer, state, disposition.getState());
+                    buffer.writeByte(EncodingCodes.NULL);
                 }
                 break;
+            case 1:
+                if (disposition.hasFirst()) {
+                    state.getEncoder().writeUnsignedInteger(buffer, state, disposition.getFirst());
+                } else {
+                    buffer.writeByte(EncodingCodes.NULL);
+                }
+                break;
+            case 2:
+                if (disposition.hasLast()) {
+                    state.getEncoder().writeUnsignedInteger(buffer, state, disposition.getLast());
+                } else {
+                    buffer.writeByte(EncodingCodes.NULL);
+                }
+                break;
+            case 3:
+                if (disposition.hasSettled()) {
+                    state.getEncoder().writeBoolean(buffer, state, disposition.getSettled());
+                } else {
+                    buffer.writeByte(EncodingCodes.NULL);
+                }
+                break;
+            case 4:
+                if (disposition.hasState()) {
+                    if (disposition.getState() == Accepted.getInstance()) {
+                        buffer.writeByte(EncodingCodes.DESCRIBED_TYPE_INDICATOR);
+                        buffer.writeByte(EncodingCodes.SMALLULONG);
+                        buffer.writeByte(Accepted.DESCRIPTOR_CODE.byteValue());
+                        buffer.writeByte(EncodingCodes.LIST0);
+                    } else {
+                        state.getEncoder().writeObject(buffer, state, disposition.getState());
+                    }
+                } else {
+                    buffer.writeByte(EncodingCodes.NULL);
+                }
+
+                break;
             case 5:
-                state.getEncoder().writeBoolean(buffer, state, disposition.getBatchable());
+                if (disposition.hasBatchable()) {
+                    state.getEncoder().writeBoolean(buffer, state, disposition.getBatchable());
+                } else {
+                    buffer.writeByte(EncodingCodes.NULL);
+                }
                 break;
             default:
                 throw new IllegalArgumentException("Unknown Disposition value index: " + index);
@@ -92,16 +117,6 @@ public class DispositionTypeEncoder extends AbstractDescribedListTypeEncoder<Dis
 
     @Override
     public int getElementCount(Disposition disposition) {
-        if (disposition.getBatchable()) {
-            return 6;
-        } else if (disposition.getState() != null) {
-            return 5;
-        } else if (disposition.getSettled()) {
-            return 4;
-        } else if (disposition.getLast() != null) {
-            return 3;
-        } else {
-            return 2;
-        }
+        return disposition.getElementCount();
     }
 }

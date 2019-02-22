@@ -40,4 +40,9 @@ public final class DeliveryAnnotations implements Section {
     public String toString() {
         return "DeliveryAnnotations{ " + value + " }";
     }
+
+    @Override
+    public SectionType getType() {
+        return SectionType.DeliveryAnnotations;
+    }
 }

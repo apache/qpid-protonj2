@@ -38,4 +38,9 @@ public final class AmqpValue implements Section {
     public String toString() {
         return "AmqpValue{ " + value + " }";
     }
+
+    @Override
+    public SectionType getType() {
+        return SectionType.AmqpValue;
+    }
 }

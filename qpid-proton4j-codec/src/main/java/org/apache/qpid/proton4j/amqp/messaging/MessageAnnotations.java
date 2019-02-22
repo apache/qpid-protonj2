@@ -40,4 +40,9 @@ public final class MessageAnnotations implements Section {
     public String toString() {
         return "MessageAnnotations{ " + value + " }";
     }
+
+    @Override
+    public SectionType getType() {
+        return SectionType.MessageAnnotations;
+    }
 }

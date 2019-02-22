@@ -52,4 +52,9 @@ public final class Received implements DeliveryState {
                ", sectionOffset=" + sectionOffset +
                '}';
     }
+
+    @Override
+    public DeliveryStateType getType() {
+        return DeliveryStateType.Received;
+    }
 }

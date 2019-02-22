@@ -25,6 +25,7 @@ import org.apache.qpid.proton4j.amqp.transport.Disposition;
 import org.apache.qpid.proton4j.amqp.transport.Role;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.DecoderState;
+import org.apache.qpid.proton4j.codec.EncodingCodes;
 import org.apache.qpid.proton4j.codec.TypeDecoder;
 import org.apache.qpid.proton4j.codec.decoders.AbstractDescribedTypeDecoder;
 import org.apache.qpid.proton4j.codec.decoders.primitives.ListTypeDecoder;
@@ -107,15 +108,24 @@ public class DispositionTypeDecoder extends AbstractDescribedTypeDecoder<Disposi
         }
 
         for (int index = 0; index < count; ++index) {
+            // Peek ahead and see if there is a null in the next slot, if so we don't call
+            // the setter for that entry to ensure the returned type reflects the encoded
+            // state in the modification entry.
+            boolean nullValue = buffer.getByte(buffer.getReadIndex()) == EncodingCodes.NULL;
+            if (nullValue) {
+                buffer.readByte();
+                continue;
+            }
+
             switch (index) {
                 case 0:
                     disposition.setRole(Boolean.TRUE.equals(state.getDecoder().readBoolean(buffer, state)) ? Role.RECEIVER : Role.SENDER);
                     break;
                 case 1:
-                    disposition.setFirst(state.getDecoder().readUnsignedInteger(buffer, state));
+                    disposition.setFirst(state.getDecoder().readUnsignedInteger(buffer, state, 0));
                     break;
                 case 2:
-                    disposition.setLast(state.getDecoder().readUnsignedInteger(buffer, state));
+                    disposition.setLast(state.getDecoder().readUnsignedInteger(buffer, state, 0));
                     break;
                 case 3:
                     disposition.setSettled(state.getDecoder().readBoolean(buffer, state, false));

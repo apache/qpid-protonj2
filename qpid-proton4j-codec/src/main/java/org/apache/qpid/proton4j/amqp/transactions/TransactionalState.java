@@ -54,4 +54,9 @@ public final class TransactionalState implements DeliveryState {
     public String toString() {
         return "TransactionalState{" + "txnId=" + txnId + ", outcome=" + outcome + '}';
     }
+
+    @Override
+    public DeliveryStateType getType() {
+        return DeliveryStateType.Transactional;
+    }
 }

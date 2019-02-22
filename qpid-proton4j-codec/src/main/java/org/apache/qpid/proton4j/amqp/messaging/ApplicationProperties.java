@@ -40,4 +40,9 @@ public final class ApplicationProperties implements Section {
     public String toString() {
         return "ApplicationProperties{ " + value + " }";
     }
+
+    @Override
+    public SectionType getType() {
+        return SectionType.ApplicationProperties;
+    }
 }
