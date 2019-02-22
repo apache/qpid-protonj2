@@ -23,7 +23,6 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import org.apache.qpid.proton4j.amqp.Symbol;
-import org.apache.qpid.proton4j.amqp.UnsignedInteger;
 import org.apache.qpid.proton4j.amqp.transport.Detach;
 import org.apache.qpid.proton4j.amqp.transport.ErrorCondition;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
@@ -38,14 +37,14 @@ public class DetachTypeCodecTest extends CodecTestSupport {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
 
         Detach input = new Detach();
-        input.setHandle(UnsignedInteger.valueOf(1));
+        input.setHandle(1);
         input.setClosed(false);
 
         encoder.writeObject(buffer, encoderState, input);
 
         final Detach result = (Detach) decoder.readObject(buffer, decoderState);
 
-        assertEquals(UnsignedInteger.valueOf(1), result.getHandle());
+        assertEquals(1, result.getHandle());
         assertFalse(result.getClosed());
         assertNull(result.getError());
     }
@@ -57,7 +56,7 @@ public class DetachTypeCodecTest extends CodecTestSupport {
         error.setCondition(Symbol.valueOf("amqp-error"));
 
         Detach input = new Detach();
-        input.setHandle(UnsignedInteger.valueOf(1));
+        input.setHandle(1);
         input.setClosed(true);
         input.setError(error);
 
@@ -65,7 +64,7 @@ public class DetachTypeCodecTest extends CodecTestSupport {
 
         final Detach result = (Detach) decoder.readObject(buffer, decoderState);
 
-        assertEquals(UnsignedInteger.valueOf(1), result.getHandle());
+        assertEquals(1, result.getHandle());
         assertTrue(result.getClosed());
         assertNotNull(result.getError());
         assertNotNull(result.getError().getCondition());

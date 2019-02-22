@@ -17,7 +17,6 @@
 package org.apache.qpid.proton4j.amqp.transport;
 
 import org.apache.qpid.proton4j.amqp.Symbol;
-import org.apache.qpid.proton4j.amqp.UnsignedInteger;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 
@@ -26,20 +25,55 @@ public final class Detach implements Performative {
     public static final UnsignedLong DESCRIPTOR_CODE = UnsignedLong.valueOf(0x0000000000000016L);
     public static final Symbol DESCRIPTOR_SYMBOL = Symbol.valueOf("amqp:detach:list");
 
-    private UnsignedInteger handle;
+    private static final long UINT_MAX = 0xFFFFFFFFL;
+
+    private static int HANDLE = 1;
+    private static int CLOSED = 2;
+    private static int ERROR = 4;
+
+    private int modified = 0;
+
+    private long handle;
     private boolean closed;
     private ErrorCondition error;
 
-    public UnsignedInteger getHandle() {
+    //----- Query the state of the Header object -----------------------------//
+
+    public boolean isEmpty() {
+        return modified == 0;
+    }
+
+    public int getElementCount() {
+        return 32 - Integer.numberOfLeadingZeros(modified);
+    }
+
+    public boolean hasHandle() {
+        return (modified & HANDLE) == HANDLE;
+    }
+
+    public boolean hasClosed() {
+        return (modified & CLOSED) == CLOSED;
+    }
+
+    public boolean hasError() {
+        return (modified & ERROR) == ERROR;
+    }
+
+    //----- Access to the member data with state checks
+
+    public long getHandle() {
         return handle;
     }
 
-    public void setHandle(UnsignedInteger handle) {
-        if (handle == null) {
-            throw new NullPointerException("the handle field is mandatory");
+    public Detach setHandle(long handle) {
+        if (handle < 0 || handle > UINT_MAX) {
+            throw new IllegalArgumentException("The Handle value given is out of range: " + handle);
+        } else {
+            modified |= HANDLE;
         }
 
         this.handle = handle;
+        return this;
     }
 
     public boolean getClosed() {
@@ -47,6 +81,7 @@ public final class Detach implements Performative {
     }
 
     public Detach setClosed(boolean closed) {
+        this.modified |= CLOSED;
         this.closed = closed;
         return this;
     }
@@ -56,6 +91,11 @@ public final class Detach implements Performative {
     }
 
     public Detach setError(ErrorCondition error) {
+        if (error != null) {
+            modified |= ERROR;
+        } else {
+            modified &= ~ERROR;
+        }
         this.error = error;
         return this;
     }
@@ -64,9 +104,10 @@ public final class Detach implements Performative {
     public Detach copy() {
         Detach copy = new Detach();
 
-        copy.setHandle(handle);
-        copy.setClosed(closed);
-        copy.setError(error == null ? null : error.copy());
+        copy.handle = handle;
+        copy.closed = closed;
+        copy.error = error == null ? null : error.copy();
+        copy.modified = modified;
 
         return copy;
     }

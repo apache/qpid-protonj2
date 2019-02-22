@@ -48,13 +48,25 @@ public class DetachTypeEncoder extends AbstractDescribedListTypeEncoder<Detach> 
     public void writeElement(Detach detach, int index, ProtonBuffer buffer, EncoderState state) {
         switch (index) {
             case 0:
-                state.getEncoder().writeUnsignedInteger(buffer, state, detach.getHandle());
+                if (detach.hasHandle()) {
+                    state.getEncoder().writeUnsignedInteger(buffer, state, detach.getHandle());
+                } else {
+                    buffer.writeByte(EncodingCodes.NULL);
+                }
                 break;
             case 1:
-                state.getEncoder().writeBoolean(buffer, state, detach.getClosed());
+                if (detach.hasClosed()) {
+                    state.getEncoder().writeBoolean(buffer, state, detach.getClosed());
+                } else {
+                    buffer.writeByte(EncodingCodes.NULL);
+                }
                 break;
             case 2:
-                state.getEncoder().writeObject(buffer, state, detach.getError());
+                if (detach.hasError()) {
+                    state.getEncoder().writeObject(buffer, state, detach.getError());
+                } else {
+                    buffer.writeByte(EncodingCodes.NULL);
+                }
                 break;
             default:
                 throw new IllegalArgumentException("Unknown Detach value index: " + index);
