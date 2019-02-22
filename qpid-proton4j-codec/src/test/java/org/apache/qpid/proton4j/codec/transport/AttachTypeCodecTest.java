@@ -23,7 +23,6 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 
 import org.apache.qpid.proton4j.amqp.Symbol;
-import org.apache.qpid.proton4j.amqp.UnsignedInteger;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.amqp.messaging.Source;
 import org.apache.qpid.proton4j.amqp.messaging.Target;
@@ -50,14 +49,14 @@ public class AttachTypeCodecTest extends CodecTestSupport {
        input.setName("name");
        input.setOfferedCapabilities(offeredCapabilities);
        input.setDesiredCapabilities(desiredCapabilities);
-       input.setHandle(UnsignedInteger.valueOf(64));
+       input.setHandle(64);
        input.setRole(Role.RECEIVER);
        input.setSndSettleMode(SenderSettleMode.UNSETTLED);
        input.setRcvSettleMode(ReceiverSettleMode.SECOND);
        input.setSource(new Source());
        input.setTarget(new Target());
        input.setIncompleteUnsettled(false);
-       input.setInitialDeliveryCount(UnsignedInteger.valueOf(10));
+       input.setInitialDeliveryCount(10);
        input.setMaxMessageSize(UnsignedLong.valueOf(1024));
 
        encoder.writeObject(buffer, encoderState, input);
@@ -65,11 +64,11 @@ public class AttachTypeCodecTest extends CodecTestSupport {
        final Attach result = (Attach) decoder.readObject(buffer, decoderState);
 
        assertEquals("name", result.getName());
-       assertEquals(UnsignedInteger.valueOf(64), result.getHandle());
+       assertEquals(64, result.getHandle());
        assertEquals(Role.RECEIVER, result.getRole());
        assertEquals(SenderSettleMode.UNSETTLED, result.getSndSettleMode());
        assertEquals(ReceiverSettleMode.SECOND, result.getRcvSettleMode());
-       assertEquals(UnsignedInteger.valueOf(10), result.getInitialDeliveryCount());
+       assertEquals(10, result.getInitialDeliveryCount());
        assertEquals(UnsignedLong.valueOf(1024), result.getMaxMessageSize());
        assertNotNull(result.getSource());
        assertNotNull(result.getTarget());

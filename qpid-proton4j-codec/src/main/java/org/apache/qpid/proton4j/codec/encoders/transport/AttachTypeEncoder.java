@@ -19,8 +19,6 @@ package org.apache.qpid.proton4j.codec.encoders.transport;
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.amqp.transport.Attach;
-import org.apache.qpid.proton4j.amqp.transport.ReceiverSettleMode;
-import org.apache.qpid.proton4j.amqp.transport.SenderSettleMode;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.EncoderState;
 import org.apache.qpid.proton4j.codec.EncodingCodes;
@@ -50,46 +48,102 @@ public class AttachTypeEncoder extends AbstractDescribedListTypeEncoder<Attach> 
     public void writeElement(Attach attach, int index, ProtonBuffer buffer, EncoderState state) {
         switch (index) {
             case 0:
-                state.getEncoder().writeString(buffer, state, attach.getName());
+                if (attach.hasName()) {
+                    state.getEncoder().writeString(buffer, state, attach.getName());
+                } else {
+                    buffer.writeByte(EncodingCodes.NULL);
+                }
                 break;
             case 1:
-                state.getEncoder().writeUnsignedInteger(buffer, state, attach.getHandle());
+                if (attach.hasHandle()) {
+                    state.getEncoder().writeUnsignedInteger(buffer, state, attach.getHandle());
+                } else {
+                    buffer.writeByte(EncodingCodes.NULL);
+                }
                 break;
             case 2:
-                state.getEncoder().writeBoolean(buffer, state, attach.getRole().getValue());
+                if (attach.hasRole()) {
+                    state.getEncoder().writeBoolean(buffer, state, attach.getRole().getValue());
+                } else {
+                    buffer.writeByte(EncodingCodes.NULL);
+                }
                 break;
             case 3:
-                state.getEncoder().writeUnsignedByte(buffer, state, attach.getSndSettleMode().byteValue());
+                if (attach.hasSenderSettleMode()) {
+                    state.getEncoder().writeUnsignedByte(buffer, state, attach.getSndSettleMode().byteValue());
+                } else {
+                    buffer.writeByte(EncodingCodes.NULL);
+                }
                 break;
             case 4:
-                state.getEncoder().writeUnsignedByte(buffer, state, attach.getRcvSettleMode().byteValue());
+                if (attach.hasReceiverSettleMode()) {
+                    state.getEncoder().writeUnsignedByte(buffer, state, attach.getRcvSettleMode().byteValue());
+                } else {
+                    buffer.writeByte(EncodingCodes.NULL);
+                }
                 break;
             case 5:
-                state.getEncoder().writeObject(buffer, state, attach.getSource());
+                if (attach.hasSource()) {
+                    state.getEncoder().writeObject(buffer, state, attach.getSource());
+                } else {
+                    buffer.writeByte(EncodingCodes.NULL);
+                }
                 break;
             case 6:
-                state.getEncoder().writeObject(buffer, state, attach.getTarget());
+                if (attach.hasTarget()) {
+                    state.getEncoder().writeObject(buffer, state, attach.getTarget());
+                } else {
+                    buffer.writeByte(EncodingCodes.NULL);
+                }
                 break;
             case 7:
-                state.getEncoder().writeMap(buffer, state, attach.getUnsettled());
+                if (attach.hasUnsettled()) {
+                    state.getEncoder().writeMap(buffer, state, attach.getUnsettled());
+                } else {
+                    buffer.writeByte(EncodingCodes.NULL);
+                }
                 break;
             case 8:
-                state.getEncoder().writeBoolean(buffer, state, attach.getIncompleteUnsettled());
+                if (attach.hasIncompleteUnsettled()) {
+                    state.getEncoder().writeBoolean(buffer, state, attach.getIncompleteUnsettled());
+                } else {
+                    buffer.writeByte(EncodingCodes.NULL);
+                }
                 break;
             case 9:
-                state.getEncoder().writeUnsignedInteger(buffer, state, attach.getInitialDeliveryCount());
+                if (attach.hasInitialDeliveryCount()) {
+                    state.getEncoder().writeUnsignedInteger(buffer, state, attach.getInitialDeliveryCount());
+                } else {
+                    buffer.writeByte(EncodingCodes.NULL);
+                }
                 break;
             case 10:
-                state.getEncoder().writeUnsignedLong(buffer, state, attach.getMaxMessageSize());
+                if (attach.hasMaxMessageSize()) {
+                    state.getEncoder().writeUnsignedLong(buffer, state, attach.getMaxMessageSize());
+                } else {
+                    buffer.writeByte(EncodingCodes.NULL);
+                }
                 break;
             case 11:
-                state.getEncoder().writeArray(buffer, state, attach.getOfferedCapabilities());
+                if (attach.hasOfferedCapabilites()) {
+                    state.getEncoder().writeArray(buffer, state, attach.getOfferedCapabilities());
+                } else {
+                    buffer.writeByte(EncodingCodes.NULL);
+                }
                 break;
             case 12:
-                state.getEncoder().writeArray(buffer, state, attach.getDesiredCapabilities());
+                if (attach.hasDesiredCapabilites()) {
+                    state.getEncoder().writeArray(buffer, state, attach.getDesiredCapabilities());
+                } else {
+                    buffer.writeByte(EncodingCodes.NULL);
+                }
                 break;
             case 13:
-                state.getEncoder().writeMap(buffer, state, attach.getProperties());
+                if (attach.hasProperties()) {
+                    state.getEncoder().writeMap(buffer, state, attach.getProperties());
+                } else {
+                    buffer.writeByte(EncodingCodes.NULL);
+                }
                 break;
             default:
                 throw new IllegalArgumentException("Unknown Attach value index: " + index);
@@ -103,30 +157,6 @@ public class AttachTypeEncoder extends AbstractDescribedListTypeEncoder<Attach> 
 
     @Override
     public int getElementCount(Attach attach) {
-        if (attach.getProperties() != null) {
-            return 14;
-        } else if (attach.getDesiredCapabilities() != null) {
-            return 13;
-        } else if (attach.getOfferedCapabilities() != null) {
-            return 12;
-        } else if (attach.getMaxMessageSize() != null) {
-            return 11;
-        } else if (attach.getInitialDeliveryCount() != null) {
-            return 10;
-        } else if (attach.getIncompleteUnsettled()) {
-            return 9;
-        } else if (attach.getUnsettled() != null) {
-            return 8;
-        } else if (attach.getTarget() != null) {
-            return 7;
-        } else if (attach.getSource() != null) {
-            return 6;
-        } else if (attach.getRcvSettleMode() != null && !attach.getRcvSettleMode().equals(ReceiverSettleMode.FIRST)) {
-            return 5;
-        } else if (attach.getSndSettleMode() != null && !attach.getSndSettleMode().equals(SenderSettleMode.MIXED)) {
-            return 4;
-        } else {
-            return 3;
-        }
+        return attach.getElementCount();
     }
 }

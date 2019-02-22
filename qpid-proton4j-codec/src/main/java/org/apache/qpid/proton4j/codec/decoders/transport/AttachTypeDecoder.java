@@ -28,6 +28,7 @@ import org.apache.qpid.proton4j.amqp.transport.Role;
 import org.apache.qpid.proton4j.amqp.transport.SenderSettleMode;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.DecoderState;
+import org.apache.qpid.proton4j.codec.EncodingCodes;
 import org.apache.qpid.proton4j.codec.TypeDecoder;
 import org.apache.qpid.proton4j.codec.decoders.AbstractDescribedTypeDecoder;
 import org.apache.qpid.proton4j.codec.decoders.primitives.ListTypeDecoder;
@@ -111,12 +112,21 @@ public class AttachTypeDecoder extends AbstractDescribedTypeDecoder<Attach> {
         }
 
         for (int index = 0; index < count; ++index) {
+            // Peek ahead and see if there is a null in the next slot, if so we don't call
+            // the setter for that entry to ensure the returned type reflects the encoded
+            // state in the modification entry.
+            boolean nullValue = buffer.getByte(buffer.getReadIndex()) == EncodingCodes.NULL;
+            if (nullValue) {
+                buffer.readByte();
+                continue;
+            }
+
             switch (index) {
                 case 0:
                     attach.setName(state.getDecoder().readString(buffer, state));
                     break;
                 case 1:
-                    attach.setHandle(state.getDecoder().readUnsignedInteger(buffer, state));
+                    attach.setHandle(state.getDecoder().readUnsignedInteger(buffer, state, 0));
                     break;
                 case 2:
                     Boolean role = state.getDecoder().readBoolean(buffer, state);
@@ -143,7 +153,7 @@ public class AttachTypeDecoder extends AbstractDescribedTypeDecoder<Attach> {
                     attach.setIncompleteUnsettled(state.getDecoder().readBoolean(buffer, state, true));
                     break;
                 case 9:
-                    attach.setInitialDeliveryCount(state.getDecoder().readUnsignedInteger(buffer, state));
+                    attach.setInitialDeliveryCount(state.getDecoder().readUnsignedInteger(buffer, state, 0));
                     break;
                 case 10:
                     attach.setMaxMessageSize(state.getDecoder().readUnsignedLong(buffer, state));

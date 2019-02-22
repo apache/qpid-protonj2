@@ -22,7 +22,6 @@ import java.util.Map;
 
 import org.apache.qpid.proton4j.amqp.Binary;
 import org.apache.qpid.proton4j.amqp.Symbol;
-import org.apache.qpid.proton4j.amqp.UnsignedInteger;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.amqp.messaging.Source;
 import org.apache.qpid.proton4j.amqp.messaging.Target;
@@ -33,8 +32,27 @@ public final class Attach implements Performative {
     public static final UnsignedLong DESCRIPTOR_CODE = UnsignedLong.valueOf(0x0000000000000012L);
     public static final Symbol DESCRIPTOR_SYMBOL = Symbol.valueOf("amqp:attach:list");
 
+    private static final long UINT_MAX = 0xFFFFFFFFL;
+
+    private static int NAME = 1;
+    private static int HANDLE = 2;
+    private static int ROLE = 4;
+    private static int SENDER_SETTLE_MODE = 8;
+    private static int RECEIVER_SETTLE_MODE = 16;
+    private static int SOURCE = 32;
+    private static int TARGET = 64;
+    private static int UNSETTLED = 128;
+    private static int INCOMPLETE_UNSETTLED = 256;
+    private static int INITIAL_DELIVERY_COUNT = 512;
+    private static int MAX_MESSAGE_SIZE = 1024;
+    private static int OFFERED_CAPABILITIES = 2048;
+    private static int DESIRED_CAPABILITIES = 4096;
+    private static int PROPERTIES = 8192;
+
+    private int modified = 0;
+
     private String name;
-    private UnsignedInteger handle;
+    private long handle;
     private Role role = Role.SENDER;
     private SenderSettleMode sndSettleMode = SenderSettleMode.MIXED;
     private ReceiverSettleMode rcvSettleMode = ReceiverSettleMode.FIRST;
@@ -42,7 +60,7 @@ public final class Attach implements Performative {
     private Target target;
     private Map<Binary, DeliveryState> unsettled;
     private boolean incompleteUnsettled;
-    private UnsignedInteger initialDeliveryCount;
+    private long initialDeliveryCount;
     private UnsignedLong maxMessageSize;
     private Symbol[] offeredCapabilities;
     private Symbol[] desiredCapabilities;
@@ -57,31 +75,101 @@ public final class Attach implements Performative {
     public Attach copy() {
         Attach copy = new Attach();
 
-        copy.setName(name);
-        copy.setHandle(handle);
-        copy.setRole(role);
-        copy.setSndSettleMode(sndSettleMode);
-        copy.setRcvSettleMode(rcvSettleMode);
-        copy.setSource(source == null ? null : source.copy());
-        copy.setTarget(target == null ? null : target.copy());
+        copy.name = name;
+        copy.handle = handle;
+        copy.role = role;
+        copy.sndSettleMode = sndSettleMode;
+        copy.rcvSettleMode = rcvSettleMode;
+        copy.source = source;
+        copy.target = target;
         if (unsettled != null) {
-            copy.setUnsettled(new LinkedHashMap<>(unsettled));
+            copy.unsettled = new LinkedHashMap<>(unsettled);
         }
-        copy.setIncompleteUnsettled(incompleteUnsettled);
-        copy.setInitialDeliveryCount(initialDeliveryCount);
-        copy.setMaxMessageSize(maxMessageSize);
+        copy.incompleteUnsettled = incompleteUnsettled;
+        copy.initialDeliveryCount = initialDeliveryCount;
+        copy.maxMessageSize = maxMessageSize;
         if (offeredCapabilities != null) {
-            copy.setOfferedCapabilities(Arrays.copyOf(offeredCapabilities, offeredCapabilities.length));
+            copy.offeredCapabilities = Arrays.copyOf(offeredCapabilities, offeredCapabilities.length);
         }
         if (desiredCapabilities != null) {
-            copy.setOfferedCapabilities(Arrays.copyOf(desiredCapabilities, desiredCapabilities.length));
+            copy.desiredCapabilities = Arrays.copyOf(desiredCapabilities, desiredCapabilities.length);
         }
         if (properties != null) {
-            copy.setProperties(new LinkedHashMap<>(properties));
+            copy.properties = new LinkedHashMap<>(properties);
         }
+
+        copy.modified = modified;
 
         return copy;
     }
+
+    //----- Query the state of the Header object -----------------------------//
+
+    public boolean isEmpty() {
+        return modified == 0;
+    }
+
+    public int getElementCount() {
+        return 32 - Integer.numberOfLeadingZeros(modified);
+    }
+
+    public boolean hasName() {
+        return (modified & NAME) == NAME;
+    }
+
+    public boolean hasHandle() {
+        return (modified & HANDLE) == HANDLE;
+    }
+
+    public boolean hasRole() {
+        return (modified & ROLE) == ROLE;
+    }
+
+    public boolean hasSenderSettleMode() {
+        return (modified & SENDER_SETTLE_MODE) == SENDER_SETTLE_MODE;
+    }
+
+    public boolean hasReceiverSettleMode() {
+        return (modified & RECEIVER_SETTLE_MODE) == RECEIVER_SETTLE_MODE;
+    }
+
+    public boolean hasSource() {
+        return (modified & SOURCE) == SOURCE;
+    }
+
+    public boolean hasTarget() {
+        return (modified & TARGET) == TARGET;
+    }
+
+    public boolean hasUnsettled() {
+        return (modified & UNSETTLED) == UNSETTLED;
+    }
+
+    public boolean hasIncompleteUnsettled() {
+        return (modified & INCOMPLETE_UNSETTLED) == INCOMPLETE_UNSETTLED;
+    }
+
+    public boolean hasInitialDeliveryCount() {
+        return (modified & INITIAL_DELIVERY_COUNT) == INITIAL_DELIVERY_COUNT;
+    }
+
+    public boolean hasMaxMessageSize() {
+        return (modified & MAX_MESSAGE_SIZE) == MAX_MESSAGE_SIZE;
+    }
+
+    public boolean hasOfferedCapabilites() {
+        return (modified & OFFERED_CAPABILITIES) == OFFERED_CAPABILITIES;
+    }
+
+    public boolean hasDesiredCapabilites() {
+        return (modified & DESIRED_CAPABILITIES) == DESIRED_CAPABILITIES;
+    }
+
+    public boolean hasProperties() {
+        return (modified & PROPERTIES) == PROPERTIES;
+    }
+
+    //----- Access to the member data with state checks
 
     public String getName() {
         return name;
@@ -92,16 +180,20 @@ public final class Attach implements Performative {
             throw new NullPointerException("the name field is mandatory");
         }
 
+        modified |= NAME;
+
         this.name = name;
     }
 
-    public UnsignedInteger getHandle() {
+    public long getHandle() {
         return handle;
     }
 
-    public void setHandle(UnsignedInteger handle) {
-        if (handle == null) {
-            throw new NullPointerException("the handle field is mandatory");
+    public void setHandle(long handle) {
+        if (handle < 0 || handle > UINT_MAX) {
+            throw new IllegalArgumentException("The Handle value given is out of range: " + handle);
+        } else {
+            modified |= HANDLE;
         }
 
         this.handle = handle;
@@ -115,6 +207,9 @@ public final class Attach implements Performative {
         if (role == null) {
             throw new NullPointerException("Role cannot be null");
         }
+
+        modified |= ROLE;
+
         this.role = role;
     }
 
@@ -123,6 +218,12 @@ public final class Attach implements Performative {
     }
 
     public void setSndSettleMode(SenderSettleMode sndSettleMode) {
+        if (sndSettleMode != null) {
+            modified |= SENDER_SETTLE_MODE;
+        } else {
+            modified &= ~SENDER_SETTLE_MODE;
+        }
+
         this.sndSettleMode = sndSettleMode == null ? SenderSettleMode.MIXED : sndSettleMode;
     }
 
@@ -131,6 +232,12 @@ public final class Attach implements Performative {
     }
 
     public void setRcvSettleMode(ReceiverSettleMode rcvSettleMode) {
+        if (rcvSettleMode != null) {
+            modified |= RECEIVER_SETTLE_MODE;
+        } else {
+            modified &= ~RECEIVER_SETTLE_MODE;
+        }
+
         this.rcvSettleMode = rcvSettleMode == null ? ReceiverSettleMode.FIRST : rcvSettleMode;
     }
 
@@ -139,6 +246,12 @@ public final class Attach implements Performative {
     }
 
     public void setSource(Source source) {
+        if (source != null) {
+            modified |= SOURCE;
+        } else {
+            modified &= ~SOURCE;
+        }
+
         this.source = source;
     }
 
@@ -147,6 +260,12 @@ public final class Attach implements Performative {
     }
 
     public void setTarget(Target target) {
+        if (target != null) {
+            modified |= TARGET;
+        } else {
+            modified &= ~TARGET;
+        }
+
         this.target = target;
     }
 
@@ -155,6 +274,12 @@ public final class Attach implements Performative {
     }
 
     public void setUnsettled(Map<Binary, DeliveryState> unsettled) {
+        if (unsettled != null) {
+            modified |= UNSETTLED;
+        } else {
+            modified &= ~UNSETTLED;
+        }
+
         this.unsettled = unsettled;
     }
 
@@ -163,14 +288,22 @@ public final class Attach implements Performative {
     }
 
     public void setIncompleteUnsettled(boolean incompleteUnsettled) {
+        modified |= INCOMPLETE_UNSETTLED;
+
         this.incompleteUnsettled = incompleteUnsettled;
     }
 
-    public UnsignedInteger getInitialDeliveryCount() {
+    public long getInitialDeliveryCount() {
         return initialDeliveryCount;
     }
 
-    public void setInitialDeliveryCount(UnsignedInteger initialDeliveryCount) {
+    public void setInitialDeliveryCount(long initialDeliveryCount) {
+        if (handle < 0 || handle > UINT_MAX) {
+            throw new IllegalArgumentException("The initial delivery count value given is out of range: " + handle);
+        } else {
+            modified |= INITIAL_DELIVERY_COUNT;
+        }
+
         this.initialDeliveryCount = initialDeliveryCount;
     }
 
@@ -179,6 +312,12 @@ public final class Attach implements Performative {
     }
 
     public void setMaxMessageSize(UnsignedLong maxMessageSize) {
+        if (offeredCapabilities != null) {
+            modified |= MAX_MESSAGE_SIZE;
+        } else {
+            modified &= ~MAX_MESSAGE_SIZE;
+        }
+
         this.maxMessageSize = maxMessageSize;
     }
 
@@ -187,6 +326,12 @@ public final class Attach implements Performative {
     }
 
     public void setOfferedCapabilities(Symbol... offeredCapabilities) {
+        if (offeredCapabilities != null) {
+            modified |= OFFERED_CAPABILITIES;
+        } else {
+            modified &= ~OFFERED_CAPABILITIES;
+        }
+
         this.offeredCapabilities = offeredCapabilities;
     }
 
@@ -195,6 +340,12 @@ public final class Attach implements Performative {
     }
 
     public void setDesiredCapabilities(Symbol... desiredCapabilities) {
+        if (desiredCapabilities != null) {
+            modified |= DESIRED_CAPABILITIES;
+        } else {
+            modified &= ~DESIRED_CAPABILITIES;
+        }
+
         this.desiredCapabilities = desiredCapabilities;
     }
 
@@ -203,6 +354,12 @@ public final class Attach implements Performative {
     }
 
     public void setProperties(Map<Symbol, Object> properties) {
+        if (properties != null) {
+            modified |= PROPERTIES;
+        } else {
+            modified &= ~PROPERTIES;
+        }
+
         this.properties = properties;
     }
 
