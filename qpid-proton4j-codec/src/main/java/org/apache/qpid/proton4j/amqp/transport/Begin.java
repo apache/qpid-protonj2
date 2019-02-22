@@ -129,7 +129,7 @@ public final class Begin implements Performative {
         return remoteChannel;
     }
 
-    public void setRemoteChannel(int remoteChannel) {
+    public Begin setRemoteChannel(int remoteChannel) {
         if (remoteChannel < 0 || remoteChannel > UnsignedShort.MAX_VALUE.intValue()) {
             throw new IllegalArgumentException("Remote channel value given is out of range: " + remoteChannel);
         } else {
@@ -137,13 +137,14 @@ public final class Begin implements Performative {
         }
 
         this.remoteChannel = remoteChannel;
+        return this;
     }
 
     public long getNextOutgoingId() {
         return nextOutgoingId;
     }
 
-    public void setNextOutgoingId(long nextOutgoingId) {
+    public Begin setNextOutgoingId(long nextOutgoingId) {
         if (nextOutgoingId < 0 || nextOutgoingId > UINT_MAX) {
             throw new IllegalArgumentException("Next Outgoing Id value given is out of range: " + nextOutgoingId);
         } else {
@@ -151,13 +152,14 @@ public final class Begin implements Performative {
         }
 
         this.nextOutgoingId = nextOutgoingId;
+        return this;
     }
 
     public long getIncomingWindow() {
         return incomingWindow;
     }
 
-    public void setIncomingWindow(long incomingWindow) {
+    public Begin setIncomingWindow(long incomingWindow) {
         if (incomingWindow < 0 || incomingWindow > UINT_MAX) {
             throw new IllegalArgumentException("Incoming Window value given is out of range: " + incomingWindow);
         } else {
@@ -165,13 +167,14 @@ public final class Begin implements Performative {
         }
 
         this.incomingWindow = incomingWindow;
+        return this;
     }
 
     public long getOutgoingWindow() {
         return outgoingWindow;
     }
 
-    public void setOutgoingWindow(long outgoingWindow) {
+    public Begin setOutgoingWindow(long outgoingWindow) {
         if (outgoingWindow < 0 || outgoingWindow > UINT_MAX) {
             throw new IllegalArgumentException("Incoming Window value given is out of range: " + outgoingWindow);
         } else {
@@ -179,13 +182,14 @@ public final class Begin implements Performative {
         }
 
         this.outgoingWindow = outgoingWindow;
+        return this;
     }
 
     public long getHandleMax() {
         return handleMax;
     }
 
-    public void setHandleMax(long handleMax) {
+    public Begin setHandleMax(long handleMax) {
         if (handleMax < 0 || handleMax > UINT_MAX) {
             throw new IllegalArgumentException("Handle Max value given is out of range: " + handleMax);
         } else if (handleMax == 0) {
@@ -195,13 +199,14 @@ public final class Begin implements Performative {
         }
 
         this.handleMax = handleMax;
+        return this;
     }
 
     public Symbol[] getOfferedCapabilities() {
         return offeredCapabilities;
     }
 
-    public void setOfferedCapabilities(Symbol... offeredCapabilities) {
+    public Begin setOfferedCapabilities(Symbol... offeredCapabilities) {
         if (offeredCapabilities != null) {
             modified |= OFFERED_CAPABILITIES;
         } else {
@@ -209,13 +214,14 @@ public final class Begin implements Performative {
         }
 
         this.offeredCapabilities = offeredCapabilities;
+        return this;
     }
 
     public Symbol[] getDesiredCapabilities() {
         return desiredCapabilities;
     }
 
-    public void setDesiredCapabilities(Symbol... desiredCapabilities) {
+    public Begin setDesiredCapabilities(Symbol... desiredCapabilities) {
         if (desiredCapabilities != null) {
             modified |= DESIRED_CAPABILITIES;
         } else {
@@ -223,13 +229,14 @@ public final class Begin implements Performative {
         }
 
         this.desiredCapabilities = desiredCapabilities;
+        return this;
     }
 
     public Map<Symbol, Object> getProperties() {
         return properties;
     }
 
-    public void setProperties(Map<Symbol, Object> properties) {
+    public Begin setProperties(Map<Symbol, Object> properties) {
         if (properties != null) {
             modified |= PROPERTIES;
         } else {
@@ -237,6 +244,7 @@ public final class Begin implements Performative {
         }
 
         this.properties = properties;
+        return this;
     }
 
     @Override

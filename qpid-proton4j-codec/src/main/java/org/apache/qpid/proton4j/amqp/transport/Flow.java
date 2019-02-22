@@ -117,7 +117,7 @@ public final class Flow implements Performative {
         return nextIncomingId;
     }
 
-    public void setNextIncomingId(long nextIncomingId) {
+    public Flow setNextIncomingId(long nextIncomingId) {
         if (nextIncomingId < 0 || UnsignedInteger.MAX_VALUE.compareTo(nextOutgoingId) < 0) {
             throw new IllegalArgumentException("Next Incoming Id value given is out of range: " + nextIncomingId);
         } else if (nextIncomingId == 0) {
@@ -127,13 +127,14 @@ public final class Flow implements Performative {
         }
 
         this.nextIncomingId = nextIncomingId;
+        return this;
     }
 
     public long getIncomingWindow() {
         return incomingWindow;
     }
 
-    public void setIncomingWindow(long incomingWindow) {
+    public Flow setIncomingWindow(long incomingWindow) {
         if (incomingWindow < 0 || incomingWindow > UINT_MAX) {
             throw new IllegalArgumentException("Incoming Window value given is out of range: " + incomingWindow);
         } else if (incomingWindow == 0) {
@@ -143,13 +144,14 @@ public final class Flow implements Performative {
         }
 
         this.incomingWindow = incomingWindow;
+        return this;
     }
 
     public long getNextOutgoingId() {
         return nextOutgoingId;
     }
 
-    public void setNextOutgoingId(long nextOutgoingId) {
+    public Flow setNextOutgoingId(long nextOutgoingId) {
         if (nextOutgoingId < 0 || nextOutgoingId > UINT_MAX) {
             throw new IllegalArgumentException("Next Outgoing Id value given is out of range: " + nextOutgoingId);
         } else if (nextOutgoingId == 0) {
@@ -159,13 +161,14 @@ public final class Flow implements Performative {
         }
 
         this.nextOutgoingId = nextOutgoingId;
+        return this;
     }
 
     public long getOutgoingWindow() {
         return outgoingWindow;
     }
 
-    public void setOutgoingWindow(long outgoingWindow) {
+    public Flow setOutgoingWindow(long outgoingWindow) {
         if (outgoingWindow < 0 || outgoingWindow > UINT_MAX) {
             throw new IllegalArgumentException("Outgoing Window value given is out of range: " + outgoingWindow);
         } else if (outgoingWindow == 0) {
@@ -175,13 +178,14 @@ public final class Flow implements Performative {
         }
 
         this.outgoingWindow = outgoingWindow;
+        return this;
     }
 
     public long getHandle() {
         return handle;
     }
 
-    public void setHandle(long handle) {
+    public Flow setHandle(long handle) {
         if (handle < 0 || handle > UINT_MAX) {
             throw new IllegalArgumentException("Handle value given is out of range: " + handle);
         } else if (handle == 0) {
@@ -191,13 +195,14 @@ public final class Flow implements Performative {
         }
 
         this.handle = handle;
+        return this;
     }
 
     public long getDeliveryCount() {
         return deliveryCount;
     }
 
-    public void setDeliveryCount(long deliveryCount) {
+    public Flow setDeliveryCount(long deliveryCount) {
         if (deliveryCount < 0 || deliveryCount > UINT_MAX) {
             throw new IllegalArgumentException("Delivery Count value given is out of range: " + deliveryCount);
         } else if (deliveryCount == 0) {
@@ -207,13 +212,14 @@ public final class Flow implements Performative {
         }
 
         this.deliveryCount = deliveryCount;
+        return this;
     }
 
     public long getLinkCredit() {
         return linkCredit;
     }
 
-    public void setLinkCredit(long linkCredit) {
+    public Flow setLinkCredit(long linkCredit) {
         if (linkCredit < 0 || linkCredit > UINT_MAX) {
             throw new IllegalArgumentException("Link Credit value given is out of range: " + linkCredit);
         } else if (linkCredit == 0) {
@@ -223,13 +229,14 @@ public final class Flow implements Performative {
         }
 
         this.linkCredit = linkCredit;
+        return this;
     }
 
     public long getAvailable() {
         return available;
     }
 
-    public void setAvailable(long available) {
+    public Flow setAvailable(long available) {
         if (available < 0 || available > UINT_MAX) {
             throw new IllegalArgumentException("Available value given is out of range: " + available);
         } else if (available == 0) {
@@ -239,13 +246,14 @@ public final class Flow implements Performative {
         }
 
         this.available = available;
+        return this;
     }
 
     public boolean getDrain() {
         return drain;
     }
 
-    public void setDrain(boolean drain) {
+    public Flow setDrain(boolean drain) {
         if (drain) {
             modified |= DRAIN;
         } else {
@@ -253,13 +261,14 @@ public final class Flow implements Performative {
         }
 
         this.drain = drain;
+        return this;
     }
 
     public boolean getEcho() {
         return echo;
     }
 
-    public void setEcho(boolean echo) {
+    public Flow setEcho(boolean echo) {
         if (echo) {
             modified |= ECHO;
         } else {
@@ -267,13 +276,14 @@ public final class Flow implements Performative {
         }
 
         this.echo = echo;
+        return this;
     }
 
     public Map<Object, Object> getProperties() {
         return properties;
     }
 
-    public void setProperties(Map<Object, Object> properties) {
+    public Flow setProperties(Map<Object, Object> properties) {
         if (properties != null) {
             modified |= PROPERTIES;
         } else {
@@ -281,6 +291,7 @@ public final class Flow implements Performative {
         }
 
         this.properties = properties;
+        return this;
     }
 
     @Override

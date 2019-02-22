@@ -175,7 +175,7 @@ public final class Attach implements Performative {
         return name;
     }
 
-    public void setName(String name) {
+    public Attach setName(String name) {
         if (name == null) {
             throw new NullPointerException("the name field is mandatory");
         }
@@ -183,13 +183,14 @@ public final class Attach implements Performative {
         modified |= NAME;
 
         this.name = name;
+        return this;
     }
 
     public long getHandle() {
         return handle;
     }
 
-    public void setHandle(long handle) {
+    public Attach setHandle(long handle) {
         if (handle < 0 || handle > UINT_MAX) {
             throw new IllegalArgumentException("The Handle value given is out of range: " + handle);
         } else {
@@ -197,13 +198,14 @@ public final class Attach implements Performative {
         }
 
         this.handle = handle;
+        return this;
     }
 
     public Role getRole() {
         return role;
     }
 
-    public void setRole(Role role) {
+    public Attach setRole(Role role) {
         if (role == null) {
             throw new NullPointerException("Role cannot be null");
         }
@@ -211,13 +213,14 @@ public final class Attach implements Performative {
         modified |= ROLE;
 
         this.role = role;
+        return this;
     }
 
     public SenderSettleMode getSndSettleMode() {
         return sndSettleMode;
     }
 
-    public void setSndSettleMode(SenderSettleMode sndSettleMode) {
+    public Attach setSndSettleMode(SenderSettleMode sndSettleMode) {
         if (sndSettleMode != null) {
             modified |= SENDER_SETTLE_MODE;
         } else {
@@ -225,13 +228,14 @@ public final class Attach implements Performative {
         }
 
         this.sndSettleMode = sndSettleMode == null ? SenderSettleMode.MIXED : sndSettleMode;
+        return this;
     }
 
     public ReceiverSettleMode getRcvSettleMode() {
         return rcvSettleMode;
     }
 
-    public void setRcvSettleMode(ReceiverSettleMode rcvSettleMode) {
+    public Attach setRcvSettleMode(ReceiverSettleMode rcvSettleMode) {
         if (rcvSettleMode != null) {
             modified |= RECEIVER_SETTLE_MODE;
         } else {
@@ -239,13 +243,14 @@ public final class Attach implements Performative {
         }
 
         this.rcvSettleMode = rcvSettleMode == null ? ReceiverSettleMode.FIRST : rcvSettleMode;
+        return this;
     }
 
     public Source getSource() {
         return source;
     }
 
-    public void setSource(Source source) {
+    public Attach setSource(Source source) {
         if (source != null) {
             modified |= SOURCE;
         } else {
@@ -253,13 +258,14 @@ public final class Attach implements Performative {
         }
 
         this.source = source;
+        return this;
     }
 
     public Target getTarget() {
         return target;
     }
 
-    public void setTarget(Target target) {
+    public Attach setTarget(Target target) {
         if (target != null) {
             modified |= TARGET;
         } else {
@@ -267,13 +273,14 @@ public final class Attach implements Performative {
         }
 
         this.target = target;
+        return this;
     }
 
     public Map<Binary, DeliveryState> getUnsettled() {
         return unsettled;
     }
 
-    public void setUnsettled(Map<Binary, DeliveryState> unsettled) {
+    public Attach setUnsettled(Map<Binary, DeliveryState> unsettled) {
         if (unsettled != null) {
             modified |= UNSETTLED;
         } else {
@@ -281,23 +288,24 @@ public final class Attach implements Performative {
         }
 
         this.unsettled = unsettled;
+        return this;
     }
 
     public boolean getIncompleteUnsettled() {
         return incompleteUnsettled;
     }
 
-    public void setIncompleteUnsettled(boolean incompleteUnsettled) {
-        modified |= INCOMPLETE_UNSETTLED;
-
+    public Attach setIncompleteUnsettled(boolean incompleteUnsettled) {
+        this.modified |= INCOMPLETE_UNSETTLED;
         this.incompleteUnsettled = incompleteUnsettled;
+        return this;
     }
 
     public long getInitialDeliveryCount() {
         return initialDeliveryCount;
     }
 
-    public void setInitialDeliveryCount(long initialDeliveryCount) {
+    public Attach setInitialDeliveryCount(long initialDeliveryCount) {
         if (handle < 0 || handle > UINT_MAX) {
             throw new IllegalArgumentException("The initial delivery count value given is out of range: " + handle);
         } else {
@@ -305,13 +313,14 @@ public final class Attach implements Performative {
         }
 
         this.initialDeliveryCount = initialDeliveryCount;
+        return this;
     }
 
     public UnsignedLong getMaxMessageSize() {
         return maxMessageSize;
     }
 
-    public void setMaxMessageSize(UnsignedLong maxMessageSize) {
+    public Attach setMaxMessageSize(UnsignedLong maxMessageSize) {
         if (offeredCapabilities != null) {
             modified |= MAX_MESSAGE_SIZE;
         } else {
@@ -319,13 +328,14 @@ public final class Attach implements Performative {
         }
 
         this.maxMessageSize = maxMessageSize;
+        return this;
     }
 
     public Symbol[] getOfferedCapabilities() {
         return offeredCapabilities;
     }
 
-    public void setOfferedCapabilities(Symbol... offeredCapabilities) {
+    public Attach setOfferedCapabilities(Symbol... offeredCapabilities) {
         if (offeredCapabilities != null) {
             modified |= OFFERED_CAPABILITIES;
         } else {
@@ -333,13 +343,14 @@ public final class Attach implements Performative {
         }
 
         this.offeredCapabilities = offeredCapabilities;
+        return this;
     }
 
     public Symbol[] getDesiredCapabilities() {
         return desiredCapabilities;
     }
 
-    public void setDesiredCapabilities(Symbol... desiredCapabilities) {
+    public Attach setDesiredCapabilities(Symbol... desiredCapabilities) {
         if (desiredCapabilities != null) {
             modified |= DESIRED_CAPABILITIES;
         } else {
@@ -347,13 +358,14 @@ public final class Attach implements Performative {
         }
 
         this.desiredCapabilities = desiredCapabilities;
+        return this;
     }
 
     public Map<Symbol, Object> getProperties() {
         return properties;
     }
 
-    public void setProperties(Map<Symbol, Object> properties) {
+    public Attach setProperties(Map<Symbol, Object> properties) {
         if (properties != null) {
             modified |= PROPERTIES;
         } else {
@@ -361,6 +373,7 @@ public final class Attach implements Performative {
         }
 
         this.properties = properties;
+        return this;
     }
 
     @Override

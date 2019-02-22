@@ -117,7 +117,7 @@ public final class Transfer implements Performative {
         return handle;
     }
 
-    public void setHandle(long handle) {
+    public Transfer setHandle(long handle) {
         if (handle < 0 || handle > UINT_MAX) {
             throw new IllegalArgumentException("Handle value given is out of range: " + handle);
         } else if (handle == 0) {
@@ -127,13 +127,14 @@ public final class Transfer implements Performative {
         }
 
         this.handle = handle;
+        return this;
     }
 
     public long getDeliveryId() {
         return deliveryId;
     }
 
-    public void setDeliveryId(long deliveryId) {
+    public Transfer setDeliveryId(long deliveryId) {
         if (deliveryId < 0 || deliveryId > UINT_MAX) {
             throw new IllegalArgumentException("Delivery ID value given is out of range: " + deliveryId);
         } else if (deliveryId == 0) {
@@ -143,13 +144,14 @@ public final class Transfer implements Performative {
         }
 
         this.deliveryId = deliveryId;
+        return this;
     }
 
     public Binary getDeliveryTag() {
         return deliveryTag;
     }
 
-    public void setDeliveryTag(Binary deliveryTag) {
+    public Transfer setDeliveryTag(Binary deliveryTag) {
         if (deliveryTag != null) {
             modified |= DELIVERY_TAG;
         } else {
@@ -157,13 +159,14 @@ public final class Transfer implements Performative {
         }
 
         this.deliveryTag = deliveryTag;
+        return this;
     }
 
     public long getMessageFormat() {
         return messageFormat;
     }
 
-    public void setMessageFormat(long messageFormat) {
+    public Transfer setMessageFormat(long messageFormat) {
         if (messageFormat < 0 || messageFormat > UINT_MAX) {
             throw new IllegalArgumentException("Message Format value given is out of range: " + messageFormat);
         } else if (messageFormat == 0) {
@@ -173,13 +176,14 @@ public final class Transfer implements Performative {
         }
 
         this.messageFormat = messageFormat;
+        return this;
     }
 
     public boolean getSettled() {
         return settled;
     }
 
-    public void setSettled(Boolean settled) {
+    public Transfer setSettled(Boolean settled) {
         if (settled) {
             modified |= SETTLED;
         } else {
@@ -187,13 +191,14 @@ public final class Transfer implements Performative {
         }
 
         this.settled = settled;
+        return this;
     }
 
     public boolean getMore() {
         return more;
     }
 
-    public void setMore(boolean more) {
+    public Transfer setMore(boolean more) {
         if (more) {
             modified |= MORE;
         } else {
@@ -201,13 +206,14 @@ public final class Transfer implements Performative {
         }
 
         this.more = more;
+        return this;
     }
 
     public ReceiverSettleMode getRcvSettleMode() {
         return rcvSettleMode;
     }
 
-    public void setRcvSettleMode(ReceiverSettleMode rcvSettleMode) {
+    public Transfer setRcvSettleMode(ReceiverSettleMode rcvSettleMode) {
         if (rcvSettleMode != null) {
             modified |= RCV_SETTLE_MODE;
         } else {
@@ -215,13 +221,14 @@ public final class Transfer implements Performative {
         }
 
         this.rcvSettleMode = rcvSettleMode;
+        return this;
     }
 
     public DeliveryState getState() {
         return state;
     }
 
-    public void setState(DeliveryState state) {
+    public Transfer setState(DeliveryState state) {
         if (state != null) {
             modified |= STATE;
         } else {
@@ -229,13 +236,14 @@ public final class Transfer implements Performative {
         }
 
         this.state = state;
+        return this;
     }
 
     public boolean getResume() {
         return resume;
     }
 
-    public void setResume(boolean resume) {
+    public Transfer setResume(boolean resume) {
         if (resume) {
             modified |= RESUME;
         } else {
@@ -243,13 +251,14 @@ public final class Transfer implements Performative {
         }
 
         this.resume = resume;
+        return this;
     }
 
     public boolean getAborted() {
         return aborted;
     }
 
-    public void setAborted(boolean aborted) {
+    public Transfer setAborted(boolean aborted) {
         if (aborted) {
             modified |= ABORTED;
         } else {
@@ -257,13 +266,14 @@ public final class Transfer implements Performative {
         }
 
         this.aborted = aborted;
+        return this;
     }
 
     public boolean getBatchable() {
         return batchable;
     }
 
-    public void setBatchable(boolean batchable) {
+    public Transfer setBatchable(boolean batchable) {
         if (batchable) {
             modified |= BATCHABLE;
         } else {
@@ -271,6 +281,7 @@ public final class Transfer implements Performative {
         }
 
         this.batchable = batchable;
+        return this;
     }
 
     @Override

@@ -74,84 +74,94 @@ public final class Open implements Performative {
         return containerId;
     }
 
-    public void setContainerId(String containerId) {
+    public Open setContainerId(String containerId) {
         if (containerId == null) {
             throw new NullPointerException("the container-id field is mandatory");
         }
 
         this.containerId = containerId;
+        return this;
     }
 
     public String getHostname() {
         return hostname;
     }
 
-    public void setHostname(String hostname) {
+    public Open setHostname(String hostname) {
         this.hostname = hostname;
+        return this;
     }
 
     public UnsignedInteger getMaxFrameSize() {
         return maxFrameSize;
     }
 
-    public void setMaxFrameSize(UnsignedInteger maxFrameSize) {
+    public Open setMaxFrameSize(UnsignedInteger maxFrameSize) {
         this.maxFrameSize = maxFrameSize;
+        return this;
     }
 
     public UnsignedShort getChannelMax() {
         return channelMax;
     }
 
-    public void setChannelMax(UnsignedShort channelMax) {
+    public Open setChannelMax(UnsignedShort channelMax) {
         this.channelMax = channelMax;
+        return this;
     }
 
     public UnsignedInteger getIdleTimeOut() {
         return idleTimeOut;
     }
 
-    public void setIdleTimeOut(UnsignedInteger idleTimeOut) {
+    public Open setIdleTimeOut(UnsignedInteger idleTimeOut) {
         this.idleTimeOut = idleTimeOut;
+        return this;
     }
 
     public Symbol[] getOutgoingLocales() {
         return outgoingLocales;
     }
 
-    public void setOutgoingLocales(Symbol... outgoingLocales) {
+    public Open setOutgoingLocales(Symbol... outgoingLocales) {
         this.outgoingLocales = outgoingLocales;
+        return this;
     }
 
     public Symbol[] getIncomingLocales() {
         return incomingLocales;
     }
 
-    public void setIncomingLocales(Symbol... incomingLocales) {
+    public Open setIncomingLocales(Symbol... incomingLocales) {
         this.incomingLocales = incomingLocales;
+        return this;
     }
 
     public Symbol[] getOfferedCapabilities() {
         return offeredCapabilities;
     }
 
-    public void setOfferedCapabilities(Symbol... offeredCapabilities) {
+    public Open setOfferedCapabilities(Symbol... offeredCapabilities) {
         this.offeredCapabilities = offeredCapabilities;
+        return this;
     }
 
     public Symbol[] getDesiredCapabilities() {
         return desiredCapabilities;
     }
 
-    public void setDesiredCapabilities(Symbol... desiredCapabilities) {
+    public Open setDesiredCapabilities(Symbol... desiredCapabilities) {
         this.desiredCapabilities = desiredCapabilities;
+        return this;
     }
 
     public Map<Symbol, Object> getProperties() {
         return properties;
     }
 
-    public void setProperties(Map<Symbol, Object> properties) {
+    public Open setProperties(Map<Symbol, Object> properties) {
         this.properties = properties;
+        return this;
     }
 
     @Override

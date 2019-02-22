@@ -37,56 +37,62 @@ public final class Disposition implements Performative {
         return role;
     }
 
-    public void setRole(Role role) {
+    public Disposition setRole(Role role) {
         if (role == null) {
             throw new NullPointerException("Role cannot be null");
         }
 
         this.role = role;
+        return this;
     }
 
     public UnsignedInteger getFirst() {
         return first;
     }
 
-    public void setFirst(UnsignedInteger first) {
+    public Disposition setFirst(UnsignedInteger first) {
         if (first == null) {
             throw new NullPointerException("the first field is mandatory");
         }
 
         this.first = first;
+        return this;
     }
 
     public UnsignedInteger getLast() {
         return last;
     }
 
-    public void setLast(UnsignedInteger last) {
+    public Disposition setLast(UnsignedInteger last) {
         this.last = last;
+        return this;
     }
 
     public boolean getSettled() {
         return settled;
     }
 
-    public void setSettled(boolean settled) {
+    public Disposition setSettled(boolean settled) {
         this.settled = settled;
+        return this;
     }
 
     public DeliveryState getState() {
         return state;
     }
 
-    public void setState(DeliveryState state) {
+    public Disposition setState(DeliveryState state) {
         this.state = state;
+        return this;
     }
 
     public boolean getBatchable() {
         return batchable;
     }
 
-    public void setBatchable(boolean batchable) {
+    public Disposition setBatchable(boolean batchable) {
         this.batchable = batchable;
+        return this;
     }
 
     @Override
