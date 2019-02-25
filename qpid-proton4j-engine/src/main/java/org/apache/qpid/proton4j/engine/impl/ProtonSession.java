@@ -20,17 +20,21 @@ import static org.apache.qpid.proton4j.engine.impl.ProtonSupport.result;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.transport.Attach;
 import org.apache.qpid.proton4j.amqp.transport.Begin;
+import org.apache.qpid.proton4j.amqp.transport.ConnectionError;
 import org.apache.qpid.proton4j.amqp.transport.Detach;
 import org.apache.qpid.proton4j.amqp.transport.Disposition;
 import org.apache.qpid.proton4j.amqp.transport.End;
+import org.apache.qpid.proton4j.amqp.transport.ErrorCondition;
 import org.apache.qpid.proton4j.amqp.transport.Flow;
 import org.apache.qpid.proton4j.amqp.transport.Performative;
+import org.apache.qpid.proton4j.amqp.transport.Role;
 import org.apache.qpid.proton4j.amqp.transport.Transfer;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.common.logging.ProtonLogger;
@@ -46,9 +50,12 @@ import org.apache.qpid.proton4j.engine.Session;
 /**
  * Proton API for a Session endpoint
  */
-public class ProtonSession extends ProtonEndpoint<Session> implements Session, Performative.PerformativeHandler<ProtonEngine> {
+public class ProtonSession extends ProtonEndpoint implements Session, Performative.PerformativeHandler<ProtonEngine> {
 
     private static final ProtonLogger LOG = ProtonLoggerFactory.getLogger(ProtonSession.class);
+
+    private static final int HANDLE_MAX = 65535;  // TODO Honor handle max
+    private static final int LINK_ARRAY_CHUNK_SIZE = 16;
 
     private final Begin localBegin = new Begin();
     private Begin remoteBegin;
@@ -59,6 +66,13 @@ public class ProtonSession extends ProtonEndpoint<Session> implements Session, P
     private long nextOutgoingId = 1;
     private long incomingWindow;
     private long outgoingWindow;
+
+    private final Map<String, ProtonSender> senderByNameMap = new HashMap<>();
+    private final Map<String, ProtonReceiver> receiverByNameMap = new HashMap<>();
+
+    // TODO - Space efficient primitive storage
+    private ProtonLink<?>[] localLinks = new ProtonLink<?>[HANDLE_MAX];
+    private ProtonLink<?>[] remoteLinks = new ProtonLink<?>[HANDLE_MAX];
 
     private final ProtonConnection connection;
 
@@ -190,15 +204,29 @@ public class ProtonSession extends ProtonEndpoint<Session> implements Session, P
     //----- Session factory methods
 
     @Override
-    public Sender sender(String name) {
-        // TODO Auto-generated method stub
-        return null;
+    public ProtonSender sender(String name) {
+        if (senderByNameMap.containsKey(name)) {
+            // TODO Something sane with link stealing
+            throw new IllegalArgumentException("Sender with the given name already exists.");
+        }
+
+        ProtonSender sender = new ProtonSender(this, name);
+        senderByNameMap.put(name, sender);
+
+        return sender;
     }
 
     @Override
-    public Receiver receiver(String name) {
-        // TODO Auto-generated method stub
-        return null;
+    public ProtonReceiver receiver(String name) {
+        if (receiverByNameMap.containsKey(name)) {
+            // TODO Something sane with link stealing
+            throw new IllegalArgumentException("Receiver with the given name already exists.");
+        }
+
+        ProtonReceiver receiver = new ProtonReceiver(this, name);
+        receiverByNameMap.put(name, receiver);
+
+        return receiver;
     }
 
     //----- Internal state methods
@@ -265,7 +293,22 @@ public class ProtonSession extends ProtonEndpoint<Session> implements Session, P
 
     @Override
     public void handleAttach(Attach attach, ProtonBuffer payload, int channel, ProtonEngine context) {
+        if (validateHandleMaxCompliance(attach)) {
+            // TODO - Space efficient primitive data structure
+            if (remoteLinks.length > attach.getHandle() || remoteLinks[(int) attach.getHandle()] != null) {
+                // TODO fail because link already in use.
+                return;
+            }
 
+            ProtonLink<?> localLink = findMatchingPendingLinkOpen(attach);
+            if (localLink == null) {
+                localLink = (attach.getRole() == Role.RECEIVER) ? sender(attach.getName()) : receiver(attach.getName());
+            }
+
+            storeRemoteLink(localLink, (int) attach.getHandle());  // TODO Loss of handle fidelity
+
+            attach.invoke(localLink, payload, channel, context);
+        }
     }
 
     @Override
@@ -286,5 +329,85 @@ public class ProtonSession extends ProtonEndpoint<Session> implements Session, P
     @Override
     public void handleDetach(Detach detach, ProtonBuffer payload, int channel, ProtonEngine context) {
 
+    }
+
+    //----- Internal implementation
+
+    private ProtonLink<?> findMatchingPendingLinkOpen(Attach remoteAttach) {
+        for (ProtonLink<?> link : senderByNameMap.values()) {
+            if (link.getName().equals(remoteAttach.getName()) &&
+                link.getRemoteState() == EndpointState.IDLE &&
+                link.getRole() != remoteAttach.getRole()) {
+
+                return link;
+            }
+        }
+
+        for (ProtonLink<?> link : receiverByNameMap.values()) {
+            if (link.getName().equals(remoteAttach.getName()) &&
+                link.getRemoteState() == EndpointState.IDLE &&
+                link.getRole() != remoteAttach.getRole()) {
+
+                return link;
+            }
+        }
+
+        return null;
+    }
+
+    private boolean validateHandleMaxCompliance(Attach remoteAttach) {
+        final long remoteHandle = remoteAttach.getHandle();
+        if (localBegin.getHandleMax() < remoteHandle) {
+            // The handle-max value is the highest handle value that can be used on the session. A peer MUST
+            // NOT attempt to attach a link using a handle value outside the range that its partner can handle.
+            // A peer that receives a handle outside the supported range MUST close the connection with the
+            // framing-error error-code.
+            ErrorCondition condition = new ErrorCondition(ConnectionError.FRAMING_ERROR, "Session handle-max exceeded");
+
+            // TODO - Provide way to close the connection from this end in error.
+            connection.setLocalCondition(condition);
+
+            return false;
+        }
+
+        return true;
+    }
+
+    int findFreeLocalHandle() {
+        // We could eventually replace this with some more space efficient data structure like
+        // a sparse array or possibly pull in a primitive map implementation.
+
+        for (int i = 0; i < localLinks.length; ++i) {
+            if (localLinks[i] == null) {
+                return i;
+            }
+        }
+
+        // TODO - Handle Max processing
+
+        // resize to accommodate more links, new handle will be old length
+        int handle = localLinks.length;
+        localLinks = Arrays.copyOf(localLinks, localLinks.length + LINK_ARRAY_CHUNK_SIZE);
+        return handle;
+    }
+
+    void freeLocalHandle(long localHandle) {
+        if (localHandle > localLinks.length) {
+            throw new IllegalArgumentException("Specified local handle is out of range: " + localHandle);
+        }
+
+        localLinks[localChannel] = null;
+    }
+
+    private void storeRemoteLink(ProtonLink<?> link, int remoteHandle) {
+        // We could eventually replace this with some more space efficient data structure like
+        // a sparse array or possibly pull in a primitive map implementation.
+
+        if (remoteLinks.length <= remoteHandle) {
+            // resize to accommodate more sessions, new channel will be old length
+            remoteLinks = Arrays.copyOf(remoteLinks, remoteLinks.length + LINK_ARRAY_CHUNK_SIZE);
+        }
+
+        remoteLinks[remoteHandle] = link;
     }
 }

@@ -16,11 +16,9 @@
  */
 package org.apache.qpid.proton4j.engine.impl;
 
-import org.apache.qpid.proton4j.amqp.transport.Attach;
-import org.apache.qpid.proton4j.amqp.transport.Detach;
 import org.apache.qpid.proton4j.amqp.transport.Disposition;
 import org.apache.qpid.proton4j.amqp.transport.Flow;
-import org.apache.qpid.proton4j.amqp.transport.Performative;
+import org.apache.qpid.proton4j.amqp.transport.Role;
 import org.apache.qpid.proton4j.amqp.transport.Transfer;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.engine.Sender;
@@ -29,7 +27,7 @@ import org.apache.qpid.proton4j.engine.Session;
 /**
  * Proton Sender link implementation.
  */
-public class ProtonSender extends ProtonLink<Sender> implements Sender, Performative.PerformativeHandler<ProtonEngine> {
+public class ProtonSender extends ProtonLink<Sender> implements Sender {
 
     /**
      * Create a new {@link Sender} instance with the given {@link Session} parent.
@@ -41,14 +39,22 @@ public class ProtonSender extends ProtonLink<Sender> implements Sender, Performa
      */
     public ProtonSender(ProtonSession session, String name) {
         super(session, name);
+
+        // Sender specific initialization
+        this.localAttach.setInitialDeliveryCount(0);
+    }
+
+    @Override
+    Role getRole() {
+        return Role.SENDER;
+    }
+
+    @Override
+    protected ProtonSender self() {
+        return this;
     }
 
     //----- Handle incoming performatives
-
-    @Override
-    public void handleAttach(Attach attach, ProtonBuffer payload, int channel, ProtonEngine context) {
-
-    }
 
     @Override
     public void handleFlow(Flow flow, ProtonBuffer payload, int channel, ProtonEngine context) {
@@ -62,11 +68,6 @@ public class ProtonSender extends ProtonLink<Sender> implements Sender, Performa
 
     @Override
     public void handleDisposition(Disposition disposition, ProtonBuffer payload, int channel, ProtonEngine context) {
-
-    }
-
-    @Override
-    public void handleDetach(Detach detach, ProtonBuffer payload, int channel, ProtonEngine context) {
 
     }
 }

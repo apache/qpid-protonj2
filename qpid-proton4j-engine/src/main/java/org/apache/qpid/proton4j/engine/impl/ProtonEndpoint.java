@@ -26,7 +26,7 @@ import org.apache.qpid.proton4j.engine.EndpointState;
 /**
  * Basic functionality for each of the end point objects.
  */
-public abstract class ProtonEndpoint<T extends Endpoint<T>> implements Endpoint<T> {
+public abstract class ProtonEndpoint implements Endpoint {
 
     private Object context;
     private Map<String, Object> contextEntries = new HashMap<>();

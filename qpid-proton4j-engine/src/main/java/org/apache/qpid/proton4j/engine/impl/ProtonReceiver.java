@@ -16,11 +16,9 @@
  */
 package org.apache.qpid.proton4j.engine.impl;
 
-import org.apache.qpid.proton4j.amqp.transport.Attach;
-import org.apache.qpid.proton4j.amqp.transport.Detach;
 import org.apache.qpid.proton4j.amqp.transport.Disposition;
 import org.apache.qpid.proton4j.amqp.transport.Flow;
-import org.apache.qpid.proton4j.amqp.transport.Performative;
+import org.apache.qpid.proton4j.amqp.transport.Role;
 import org.apache.qpid.proton4j.amqp.transport.Transfer;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.engine.Receiver;
@@ -29,7 +27,7 @@ import org.apache.qpid.proton4j.engine.Session;
 /**
  * Proton Receiver link implementation.
  */
-public class ProtonReceiver extends ProtonLink<Receiver> implements Receiver, Performative.PerformativeHandler<ProtonEngine> {
+public class ProtonReceiver extends ProtonLink<Receiver> implements Receiver {
 
     /**
      * Create a new {@link Receiver} instance with the given {@link Session} parent.
@@ -43,17 +41,17 @@ public class ProtonReceiver extends ProtonLink<Receiver> implements Receiver, Pe
         super(session, name);
     }
 
+    @Override
+    Role getRole() {
+        return Role.RECEIVER;
+    }
+
+    @Override
+    protected ProtonReceiver self() {
+        return this;
+    }
+
     //----- Handle incoming performatives
-
-    @Override
-    public void handleAttach(Attach attach, ProtonBuffer payload, int channel, ProtonEngine context) {
-
-    }
-
-    @Override
-    public void handleDetach(Detach detach, ProtonBuffer payload, int channel, ProtonEngine context) {
-
-    }
 
     @Override
     public void handleFlow(Flow flow, ProtonBuffer payload, int channel, ProtonEngine context) {

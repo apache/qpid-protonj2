@@ -16,6 +16,8 @@
  */
 package org.apache.qpid.proton4j.engine.impl;
 
+import static org.apache.qpid.proton4j.engine.impl.ProtonSupport.result;
+
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -26,19 +28,41 @@ import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.amqp.messaging.Source;
 import org.apache.qpid.proton4j.amqp.messaging.Target;
 import org.apache.qpid.proton4j.amqp.transport.Attach;
+import org.apache.qpid.proton4j.amqp.transport.Begin;
+import org.apache.qpid.proton4j.amqp.transport.Detach;
 import org.apache.qpid.proton4j.amqp.transport.End;
+import org.apache.qpid.proton4j.amqp.transport.Performative;
+import org.apache.qpid.proton4j.amqp.transport.Role;
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import org.apache.qpid.proton4j.common.logging.ProtonLogger;
+import org.apache.qpid.proton4j.common.logging.ProtonLoggerFactory;
+import org.apache.qpid.proton4j.engine.AsyncEvent;
+import org.apache.qpid.proton4j.engine.EndpointState;
+import org.apache.qpid.proton4j.engine.EventHandler;
 import org.apache.qpid.proton4j.engine.Link;
 import org.apache.qpid.proton4j.engine.Session;
 
 /**
  * Common base for Proton Senders and Receivers.
  */
-public abstract class ProtonLink<T extends Link<T>> extends ProtonEndpoint<T> implements Link<T> {
+public abstract class ProtonLink<T extends Link<T>> extends ProtonEndpoint implements Link<T>, Performative.PerformativeHandler<ProtonEngine> {
+
+    private static final ProtonLogger LOG = ProtonLoggerFactory.getLogger(ProtonLink.class);
 
     protected final ProtonSession session;
 
     protected final Attach localAttach = new Attach();
     protected Attach remoteAttach;
+
+    private EventHandler<AsyncEvent<T>> remoteOpenHandler = (result) -> {
+        LOG.trace("Remote link open arrived at default handler.");
+    };
+    private EventHandler<AsyncEvent<T>> remoteDetachHandler = (result) -> {
+        LOG.trace("Remote link detach arrived at default handler.");
+    };
+    private EventHandler<AsyncEvent<T>> remoteCloseHandler = (result) -> {
+        LOG.trace("Remote link close arrived at default handler.");
+    };
 
     /**
      * Create a new link instance with the given parent session.
@@ -51,6 +75,7 @@ public abstract class ProtonLink<T extends Link<T>> extends ProtonEndpoint<T> im
     public ProtonLink(ProtonSession session, String name) {
         this.session = session;
         this.localAttach.setName(name);
+        this.localAttach.setRole(getRole());
     }
 
     @Override
@@ -62,6 +87,10 @@ public abstract class ProtonLink<T extends Link<T>> extends ProtonEndpoint<T> im
     public String getName() {
         return localAttach.getName();
     }
+
+    abstract Role getRole();
+
+    protected abstract T self();
 
     @Override
     public void setSource(Source source) {
@@ -210,15 +239,63 @@ public abstract class ProtonLink<T extends Link<T>> extends ProtonEndpoint<T> im
         return null;
     }
 
+    @Override
+    public T openHandler(EventHandler<AsyncEvent<T>> remoteOpenHandler) {
+        this.remoteOpenHandler = remoteOpenHandler;
+        return self();
+    }
+
+    @Override
+    public T detachHandler(EventHandler<AsyncEvent<T>> remoteDetachHandler) {
+        this.remoteDetachHandler = remoteDetachHandler;
+        return self();
+    }
+
+    @Override
+    public T closeHandler(EventHandler<AsyncEvent<T>> remoteCloseHandler) {
+        this.remoteCloseHandler = remoteCloseHandler;
+        return self();
+    }
+
+    //----- Handle incoming performatives
+
+    @Override
+    public void handleBegin(Begin begin, ProtonBuffer payload, int channel, ProtonEngine context) {
+        // TODO - Possible that we handle begin and send frames based on session state and state of this link
+    }
+
+    @Override
+    public void handleAttach(Attach attach, ProtonBuffer payload, int channel, ProtonEngine context) {
+        remoteAttach = attach;
+        remoteOpenWasReceived();
+
+        if (getLocalState() == EndpointState.ACTIVE) {
+            remoteOpenHandler.handle(result(self(), null));
+        }
+    }
+
+    @Override
+    public void handleDetach(Detach detach, ProtonBuffer payload, int channel, ProtonEngine context) {
+        remoteClosedWasReceived();
+        if (detach.getClosed()) {
+            remoteCloseHandler.handle(result(self(), getRemoteCondition()));
+        } else {
+            remoteDetachHandler.handle(result(self(), getRemoteCondition()));
+        }
+    }
+
     //----- Internal handler methods
 
     @Override
     void initiateLocalOpen() {
+        long localHandle = session.findFreeLocalHandle();
+        localAttach.setHandle(localHandle);
         session.getEngine().pipeline().fireWrite(localAttach, session.getLocalChannel(), null, null);
     }
 
     @Override
     void initiateLocalClose() {
         session.getEngine().pipeline().fireWrite(new End().setError(getLocalCondition()), session.getLocalChannel(), null, null);
+        session.freeLocalHandle(localAttach.getHandle());
     }
 }

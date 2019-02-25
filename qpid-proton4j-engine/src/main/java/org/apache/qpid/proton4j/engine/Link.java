@@ -22,11 +22,12 @@ import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.amqp.messaging.Source;
 import org.apache.qpid.proton4j.amqp.messaging.Target;
+import org.apache.qpid.proton4j.engine.impl.ProtonSession;
 
 /**
  * Base API for {@link Sender} and {@link Receiver} links.
  */
-public interface Link<T extends Endpoint<T>> extends Endpoint<T> {
+public interface Link<T extends Endpoint> extends Endpoint {
 
     /**
      * @return the parent {@link Session} of the Receiver.
@@ -185,5 +186,45 @@ public interface Link<T extends Endpoint<T>> extends Endpoint<T> {
      * @return the remote max message size conveyed by the peer, or null if none was set. 0 also means no limit.
      */
     UnsignedLong getRemoteMaxMessageSize();
+
+    //----- Remote events for AMQP Link resources
+
+    /**
+     * Sets a {@link EventHandler} for when an AMQP Begin frame is received from the remote peer for this
+     * {@link Link} which would have been locally opened previously.
+     *
+     * Typically used by clients, servers rely on {@link ProtonSession#senderOpenEventHandler(EventHandler)} and
+     * {@link ProtonSession#receiverOpenEventHandler(EventHandler)}.
+     *
+     * @param remoteOpenHandler
+     *      The {@link EventHandler} to notify when this link is remotely opened.
+     *
+     * @return the link for chaining.
+     */
+    T openHandler(EventHandler<AsyncEvent<T>> remoteOpenHandler);
+
+    /**
+     * Sets a {@link EventHandler} for when an AMQP Detach frame is received from the remote peer for this
+     * {@link Link} which would have been locally opened previously, the Detach from would have been marked
+     * as not having been closed.
+     *
+     * @param remoteDetachHandler
+     *      The {@link EventHandler} to notify when this link is remotely closed.
+     *
+     * @return the link for chaining.
+     */
+    T detachHandler(EventHandler<AsyncEvent<T>> remoteDetachHandler);
+
+    /**
+     * Sets a {@link EventHandler} for when an AMQP Detach frame is received from the remote peer for this
+     * {@link Link} which would have been locally opened previously, the detach would have been marked as
+     * having been closed.
+     *
+     * @param remoteCloseHandler
+     *      The {@link EventHandler} to notify when this link is remotely closed.
+     *
+     * @return the link for chaining.
+     */
+    T closeHandler(EventHandler<AsyncEvent<T>> remoteCloseHandler);
 
 }

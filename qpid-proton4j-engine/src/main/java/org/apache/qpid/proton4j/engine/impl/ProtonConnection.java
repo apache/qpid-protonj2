@@ -53,7 +53,7 @@ import org.apache.qpid.proton4j.engine.exceptions.ProtonException;
 /**
  * Implements the proton4j Connection API
  */
-public class ProtonConnection extends ProtonEndpoint<Connection> implements Connection, AMQPHeader.HeaderHandler<ProtonEngine>, Performative.PerformativeHandler<ProtonEngine> {
+public class ProtonConnection extends ProtonEndpoint implements Connection, AMQPHeader.HeaderHandler<ProtonEngine>, Performative.PerformativeHandler<ProtonEngine> {
 
     private static final ProtonLogger LOG = ProtonLoggerFactory.getLogger(ProtonConnection.class);
 
@@ -485,7 +485,7 @@ public class ProtonConnection extends ProtonEndpoint<Connection> implements Conn
         if (remoteSessions.length <= remoteChannel) {
             // resize to accommodate more sessions, new channel will be old length
             remoteSessions = Arrays.copyOf(remoteSessions, remoteSessions.length + SESSION_ARRAY_CHUNK_SIZE);
-        } else
+        }
 
         remoteSessions[remoteChannel] = session;
     }

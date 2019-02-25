@@ -21,7 +21,7 @@ import org.apache.qpid.proton4j.amqp.transport.ErrorCondition;
 /**
  * Represents one end of an AMQP Resource.
  */
-public interface Endpoint<T extends Endpoint<T>> {
+public interface Endpoint {
 
     /**
      * Open the end point.
