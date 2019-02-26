@@ -20,6 +20,7 @@ import static org.apache.qpid.proton4j.engine.impl.ProtonSupport.result;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -57,15 +58,15 @@ public class ProtonConnection extends ProtonEndpoint implements Connection, AMQP
 
     private static final ProtonLogger LOG = ProtonLoggerFactory.getLogger(ProtonConnection.class);
 
-    private static final int SESSION_ARRAY_CHUNK_SIZE = 16;
+    private static final int CHANNEL_MAX = 65535;
 
     private final ProtonEngine engine;
 
     private final Open localOpen = new Open();
     private Open remoteOpen;
 
-    private ProtonSession[] localSessions = new ProtonSession[SESSION_ARRAY_CHUNK_SIZE];
-    private ProtonSession[] remoteSessions = new ProtonSession[SESSION_ARRAY_CHUNK_SIZE];
+    private Map<Integer, ProtonSession> localSessions = new HashMap<Integer, ProtonSession>();
+    private Map<Integer, ProtonSession> remoteSessions = new HashMap<Integer, ProtonSession>();
 
     private boolean headerReceived;
     private boolean headerSent;
@@ -246,7 +247,7 @@ public class ProtonConnection extends ProtonEndpoint implements Connection, AMQP
     public ProtonSession session() {
         int localChannel = findFreeLocalChannel();
         ProtonSession newSession = new ProtonSession(this, localChannel);
-        localSessions[localChannel] = newSession;
+        localSessions.put(localChannel, newSession);
 
         return newSession;
     }
@@ -310,7 +311,7 @@ public class ProtonConnection extends ProtonEndpoint implements Connection, AMQP
             // TODO Channel Max violation error handling
         }
 
-        if (remoteSessions.length > channel && remoteSessions[channel] != null) {
+        if (remoteSessions.containsKey(channel)) {
             context.engineFailed(new ProtocolViolationException("Received second begin for Session from remote"));
         } else {
             // If there is a remote channel then this is an answer to a local open of a session, otherwise
@@ -318,7 +319,7 @@ public class ProtonConnection extends ProtonEndpoint implements Connection, AMQP
             // session was opened.
             if (begin.hasRemoteChannel()) {
                 int remoteChannel = begin.getRemoteChannel();
-                session = localSessions.length > remoteChannel ? localSessions[begin.getRemoteChannel()] : null;
+                session = localSessions.get(begin.getRemoteChannel());
                 if (session == null) {
                     // TODO What should be the correct response to this particular wrinkle
                     engine.engineFailed(new ProtocolViolationException("Received uncorrelated channel on Begin from remote: " + remoteChannel));
@@ -328,7 +329,7 @@ public class ProtonConnection extends ProtonEndpoint implements Connection, AMQP
                 session = session();
             }
 
-            storeRemoteSession(session, channel);
+            remoteSessions.put(channel, session);
 
             // Let the session handle the remote Begin now.
             begin.invoke(session, payload, channel, context);
@@ -343,58 +344,62 @@ public class ProtonConnection extends ProtonEndpoint implements Connection, AMQP
 
     @Override
     public void handleEnd(End end, ProtonBuffer payload, int channel, ProtonEngine context) {
-        if (remoteSessions.length > channel && remoteSessions[channel] == null) {
+        final ProtonSession session = remoteSessions.remove(channel);
+        if (session == null) {
             engine.engineFailed(new ProtocolViolationException("Received uncorrelated channel on End from remote: " + channel));
         }
 
-        ProtonSession session = remoteSessions[channel];
-        remoteSessions[channel] = null;
         end.invoke(session, payload, channel, context);
     }
 
     @Override
     public void handleAttach(Attach attach, ProtonBuffer payload, int channel, ProtonEngine context) {
-        if (remoteSessions.length > channel && remoteSessions[channel] == null) {
+        final ProtonSession session = remoteSessions.get(channel);
+        if (session == null) {
             engine.engineFailed(new ProtocolViolationException("Received uncorrelated channel on Attach from remote: " + channel));
         }
 
-        attach.invoke(remoteSessions[channel], payload, channel, context);
+        attach.invoke(session, payload, channel, context);
     }
 
     @Override
     public void handleDetach(Detach detach, ProtonBuffer payload, int channel, ProtonEngine context) {
-        if (remoteSessions.length > channel && remoteSessions[channel] == null) {
+        final ProtonSession session = remoteSessions.get(channel);
+        if (session == null) {
             engine.engineFailed(new ProtocolViolationException("Received uncorrelated channel on Detach from remote: " + channel));
         }
 
-        detach.invoke(remoteSessions[channel], payload, channel, context);
+        detach.invoke(session, payload, channel, context);
     }
 
     @Override
     public void handleFlow(Flow flow, ProtonBuffer payload, int channel, ProtonEngine context) {
-        if (remoteSessions.length > channel && remoteSessions[channel] == null) {
+        final ProtonSession session = remoteSessions.get(channel);
+        if (session == null) {
             engine.engineFailed(new ProtocolViolationException("Received uncorrelated channel on Flow from remote: " + channel));
         }
 
-        flow.invoke(remoteSessions[channel], payload, channel, context);
+        flow.invoke(session, payload, channel, context);
     }
 
     @Override
     public void handleTransfer(Transfer transfer, ProtonBuffer payload, int channel, ProtonEngine context) {
-        if (remoteSessions.length > channel && remoteSessions[channel] == null) {
+        final ProtonSession session = remoteSessions.get(channel);
+        if (session == null) {
             engine.engineFailed(new ProtocolViolationException("Received uncorrelated channel on Transfer from remote: " + channel));
         }
 
-        transfer.invoke(remoteSessions[channel], payload, channel, context);
+        transfer.invoke(session, payload, channel, context);
     }
 
     @Override
     public void handleDisposition(Disposition disposition, ProtonBuffer payload, int channel, ProtonEngine context) {
-        if (remoteSessions.length > channel && remoteSessions[channel] == null) {
+        final ProtonSession session = remoteSessions.get(channel);
+        if (session == null) {
             engine.engineFailed(new ProtocolViolationException("Received uncorrelated channel on Disposition from remote: " + channel));
         }
 
-        disposition.invoke(remoteSessions[channel], payload, channel, context);
+        disposition.invoke(session, payload, channel, context);
     }
 
     //----- API for event handling of Connection related remote events
@@ -455,38 +460,20 @@ public class ProtonConnection extends ProtonEndpoint implements Connection, AMQP
     }
 
     private int findFreeLocalChannel() {
-        // We could eventually replace this with some more space efficient data structure like
-        // a sparse array or possibly pull in a primitive map implementation.
-
-        for (int i = 0; i < localSessions.length; ++i) {
-            if (localSessions[i] == null) {
+        for (int i = 0; i < CHANNEL_MAX; ++i) {
+            if (!localSessions.containsKey(i)) {
                 return i;
             }
         }
 
-        // resize to accommodate more sessions, new channel will be old length
-        int channel = localSessions.length;
-        localSessions = Arrays.copyOf(localSessions, localSessions.length + SESSION_ARRAY_CHUNK_SIZE);
-        return channel;
+        throw new IllegalStateException("no local handle available for allocation");
     }
 
     private void freeLocalChannel(int localChannel) {
-        if (localChannel > localSessions.length) {
+        if (localChannel > CHANNEL_MAX) {
             throw new IllegalArgumentException("Specified local channel is out of range: " + localChannel);
         }
 
-        localSessions[localChannel] = null;
-    }
-
-    private void storeRemoteSession(ProtonSession session, int remoteChannel) {
-        // We could eventually replace this with some more space efficient data structure like
-        // a sparse array or possibly pull in a primitive map implementation.
-
-        if (remoteSessions.length <= remoteChannel) {
-            // resize to accommodate more sessions, new channel will be old length
-            remoteSessions = Arrays.copyOf(remoteSessions, remoteSessions.length + SESSION_ARRAY_CHUNK_SIZE);
-        }
-
-        remoteSessions[remoteChannel] = session;
+        localSessions.remove(localChannel);
     }
 }
