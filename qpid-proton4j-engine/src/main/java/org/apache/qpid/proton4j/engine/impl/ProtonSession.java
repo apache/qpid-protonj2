@@ -88,8 +88,7 @@ public class ProtonSession implements Session, Performative.PerformativeHandler<
     private EventHandler<Sender> remoteSenderOpenHandler = null;
     private EventHandler<Receiver> remoteReceiverOpenHandler = null;
 
-    private Object context;
-    private Map<String, Object> contextEntries = new HashMap<>();
+    private final ProtonContext context = new ProtonContext();
 
     private SessionState localState = SessionState.IDLE;
     private SessionState remoteState = SessionState.IDLE;
@@ -128,23 +127,8 @@ public class ProtonSession implements Session, Performative.PerformativeHandler<
     }
 
     @Override
-    public void setContext(Object context) {
-        this.context = context;
-    }
-
-    @Override
-    public Object getContext() {
+    public ProtonContext getContext() {
         return context;
-    }
-
-    @Override
-    public void setContextEntry(String key, Object value) {
-        contextEntries.put(key, value);
-    }
-
-    @Override
-    public Object getContextEntry(String key) {
-        return contextEntries.get(key);
     }
 
     @Override

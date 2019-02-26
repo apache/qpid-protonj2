@@ -70,8 +70,7 @@ public class ProtonConnection implements Connection, AMQPHeader.HeaderHandler<Pr
     private Map<Integer, ProtonSession> localSessions = new HashMap<Integer, ProtonSession>();
     private Map<Integer, ProtonSession> remoteSessions = new HashMap<Integer, ProtonSession>();
 
-    private Object context;
-    private Map<String, Object> contextEntries = new HashMap<>();
+    private final ProtonContext context = new ProtonContext();
 
     private ConnectionState localState = ConnectionState.IDLE;
     private ConnectionState remoteState = ConnectionState.IDLE;
@@ -116,23 +115,8 @@ public class ProtonConnection implements Connection, AMQPHeader.HeaderHandler<Pr
     }
 
     @Override
-    public void setContext(Object context) {
-        this.context = context;
-    }
-
-    @Override
-    public Object getContext() {
+    public ProtonContext getContext() {
         return context;
-    }
-
-    @Override
-    public void setContextEntry(String key, Object value) {
-        contextEntries.put(key, value);
-    }
-
-    @Override
-    public Object getContextEntry(String key) {
-        return contextEntries.get(key);
     }
 
     @Override

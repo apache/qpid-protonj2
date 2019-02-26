@@ -20,7 +20,6 @@ import static org.apache.qpid.proton4j.engine.impl.ProtonSupport.result;
 
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -55,8 +54,7 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T>, Performa
     protected final Attach localAttach = new Attach();
     protected Attach remoteAttach;
 
-    private Object context;
-    private Map<String, Object> contextEntries = new HashMap<>();
+    private final ProtonContext context = new ProtonContext();
 
     private LinkState localState = LinkState.IDLE;
     private LinkState remoteState = LinkState.IDLE;
@@ -104,23 +102,8 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T>, Performa
     protected abstract T self();
 
     @Override
-    public void setContext(Object context) {
-        this.context = context;
-    }
-
-    @Override
-    public Object getContext() {
+    public ProtonContext getContext() {
         return context;
-    }
-
-    @Override
-    public void setContextEntry(String key, Object value) {
-        contextEntries.put(key, value);
-    }
-
-    @Override
-    public Object getContextEntry(String key) {
-        return contextEntries.get(key);
     }
 
     @Override
