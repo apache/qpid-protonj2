@@ -312,6 +312,11 @@ public class ProtonSession extends ProtonEndpoint implements Session, Performati
     }
 
     @Override
+    public void handleDetach(Detach detach, ProtonBuffer payload, int channel, ProtonEngine context) {
+
+    }
+
+    @Override
     public void handleFlow(Flow flow, ProtonBuffer payload, int channel, ProtonEngine context) {
 
     }
@@ -323,11 +328,6 @@ public class ProtonSession extends ProtonEndpoint implements Session, Performati
 
     @Override
     public void handleDisposition(Disposition disposition, ProtonBuffer payload, int channel, ProtonEngine context) {
-
-    }
-
-    @Override
-    public void handleDetach(Detach detach, ProtonBuffer payload, int channel, ProtonEngine context) {
 
     }
 

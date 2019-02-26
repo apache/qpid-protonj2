@@ -30,7 +30,6 @@ import org.apache.qpid.proton4j.amqp.messaging.Target;
 import org.apache.qpid.proton4j.amqp.transport.Attach;
 import org.apache.qpid.proton4j.amqp.transport.Begin;
 import org.apache.qpid.proton4j.amqp.transport.Detach;
-import org.apache.qpid.proton4j.amqp.transport.End;
 import org.apache.qpid.proton4j.amqp.transport.Performative;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.common.logging.ProtonLogger;
@@ -292,7 +291,13 @@ public abstract class ProtonLink<T extends Link<T>> extends ProtonEndpoint imple
 
     @Override
     void initiateLocalClose() {
-        session.getEngine().pipeline().fireWrite(new End().setError(getLocalCondition()), session.getLocalChannel(), null, null);
+        // TODO - Additional processing.
+        Detach detach = new Detach();
+        detach.setHandle(localAttach.getHandle());
+        detach.setClosed(true); // TODO State for closed vs detached
+        detach.setError(getLocalCondition());
+
+        session.getEngine().pipeline().fireWrite(detach, session.getLocalChannel(), null, null);
         session.freeLocalHandle(localAttach.getHandle());
     }
 }
