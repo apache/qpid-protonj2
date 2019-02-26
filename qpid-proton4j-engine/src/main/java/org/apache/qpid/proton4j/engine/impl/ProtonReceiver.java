@@ -42,7 +42,7 @@ public class ProtonReceiver extends ProtonLink<Receiver> implements Receiver {
     }
 
     @Override
-    Role getRole() {
+    public Role getRole() {
         return Role.RECEIVER;
     }
 

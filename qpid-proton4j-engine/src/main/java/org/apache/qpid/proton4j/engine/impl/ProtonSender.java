@@ -45,7 +45,7 @@ public class ProtonSender extends ProtonLink<Sender> implements Sender {
     }
 
     @Override
-    Role getRole() {
+    public Role getRole() {
         return Role.SENDER;
     }
 

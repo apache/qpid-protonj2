@@ -22,12 +22,18 @@ import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.amqp.messaging.Source;
 import org.apache.qpid.proton4j.amqp.messaging.Target;
+import org.apache.qpid.proton4j.amqp.transport.Role;
 import org.apache.qpid.proton4j.engine.impl.ProtonSession;
 
 /**
  * Base API for {@link Sender} and {@link Receiver} links.
  */
 public interface Link<T extends Endpoint> extends Endpoint {
+
+    /**
+     * @return the {@link Role} that this end of the link is performing.
+     */
+    Role getRole();
 
     /**
      * @return the parent {@link Session} of the Receiver.

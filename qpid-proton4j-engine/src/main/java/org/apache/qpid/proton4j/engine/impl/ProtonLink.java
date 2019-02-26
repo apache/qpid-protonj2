@@ -32,7 +32,6 @@ import org.apache.qpid.proton4j.amqp.transport.Begin;
 import org.apache.qpid.proton4j.amqp.transport.Detach;
 import org.apache.qpid.proton4j.amqp.transport.End;
 import org.apache.qpid.proton4j.amqp.transport.Performative;
-import org.apache.qpid.proton4j.amqp.transport.Role;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.common.logging.ProtonLogger;
 import org.apache.qpid.proton4j.common.logging.ProtonLoggerFactory;
@@ -87,8 +86,6 @@ public abstract class ProtonLink<T extends Link<T>> extends ProtonEndpoint imple
     public String getName() {
         return localAttach.getName();
     }
-
-    abstract Role getRole();
 
     protected abstract T self();
 
