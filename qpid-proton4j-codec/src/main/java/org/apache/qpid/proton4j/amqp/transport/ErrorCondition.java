@@ -43,34 +43,44 @@ public final class ErrorCondition {
         return condition;
     }
 
-    public void setCondition(Symbol condition) {
+    public ErrorCondition setCondition(Symbol condition) {
         if (condition == null) {
             throw new NullPointerException("the condition field is mandatory");
         }
 
         this.condition = condition;
+
+        return this;
     }
 
     public String getDescription() {
         return description;
     }
 
-    public void setDescription(String description) {
+    public ErrorCondition setDescription(String description) {
         this.description = description;
+        return this;
     }
 
     public Map<Object, Object> getInfo() {
         return info;
     }
 
-    public void setInfo(Map<Object, Object> info) {
+    public ErrorCondition setInfo(Map<Object, Object> info) {
         this.info = info;
+        return this;
     }
 
-    public void clear() {
+    public ErrorCondition clear() {
         condition = null;
         description = null;
         info = null;
+
+        return this;
+    }
+
+    public boolean isEmpty() {
+        return condition == null;
     }
 
     public ErrorCondition copy() {

@@ -19,12 +19,71 @@ package org.apache.qpid.proton4j.engine;
 import java.util.Map;
 
 import org.apache.qpid.proton4j.amqp.Symbol;
+import org.apache.qpid.proton4j.amqp.transport.ErrorCondition;
 import org.apache.qpid.proton4j.engine.impl.ProtonConnection;
 
 /**
  * AMQP Session interface
  */
-public interface Session extends Endpoint {
+public interface Session {
+
+    /**
+     * Open the end point.
+     */
+    public void open();
+
+    /**
+     * Close the end point
+     */
+    public void close();
+
+    /**
+     * Sets an application defined context value that will be carried with this {@link Connection} until
+     * cleared by the application.
+     *
+     * @param context
+     *      The context to associate with this connection.
+     */
+    void setContext(Object context);
+
+    /**
+     * @return the currently configured context that is associated with this {@link Connection}
+     */
+    Object getContext();
+
+    /**
+     * Sets or updates a named application defined context value that will be carried with this
+     * {@link Connection} until cleared by the application.
+     *
+     * @param key
+     *      The key used to identify the given context entry.
+     * @param value
+     *      The context value to assigned to the given key, or null to clear.
+     */
+    void setContextEntry(String key, Object value);
+
+    /**
+     * @return the context entry assigned to the given key or null of none assigned.
+     */
+    Object getContextEntry(String key);
+
+    /**
+     * @return the local session state
+     */
+    public SessionState getLocalState();
+
+    /**
+     * @return the local endpoint error, or null if there is none
+     */
+    public ErrorCondition getLocalCondition();
+
+    /**
+     * Sets the local {@link ErrorCondition} to be applied to a {@link Session} close.
+     *
+     * @param condition
+     *      The error condition to convey to the remote peer on session close.
+     */
+    public void setLocalCondition(ErrorCondition condition);
 
     /**
      * @return the parent {@link Connection} for this Session.
@@ -135,6 +194,16 @@ public interface Session extends Endpoint {
      * @return the properties Map conveyed by the peer, or null if there was none.
      */
     Map<Symbol, Object> getRemoteProperties();
+
+    /**
+     * @return the remote session state (as last communicated)
+     */
+    public SessionState getRemoteState();
+
+    /**
+     * @return the remote endpoint error, or null if there is none
+     */
+    public ErrorCondition getRemoteCondition();
 
     //----- Remote events for AMQP Session resources
 

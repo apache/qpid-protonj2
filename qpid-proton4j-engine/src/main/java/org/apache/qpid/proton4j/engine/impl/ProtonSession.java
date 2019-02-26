@@ -41,16 +41,17 @@ import org.apache.qpid.proton4j.common.logging.ProtonLogger;
 import org.apache.qpid.proton4j.common.logging.ProtonLoggerFactory;
 import org.apache.qpid.proton4j.engine.AsyncEvent;
 import org.apache.qpid.proton4j.engine.Connection;
-import org.apache.qpid.proton4j.engine.EndpointState;
 import org.apache.qpid.proton4j.engine.EventHandler;
+import org.apache.qpid.proton4j.engine.LinkState;
 import org.apache.qpid.proton4j.engine.Receiver;
 import org.apache.qpid.proton4j.engine.Sender;
 import org.apache.qpid.proton4j.engine.Session;
+import org.apache.qpid.proton4j.engine.SessionState;
 
 /**
  * Proton API for a Session endpoint
  */
-public class ProtonSession extends ProtonEndpoint implements Session, Performative.PerformativeHandler<ProtonEngine> {
+public class ProtonSession implements Session, Performative.PerformativeHandler<ProtonEngine> {
 
     private static final ProtonLogger LOG = ProtonLoggerFactory.getLogger(ProtonSession.class);
 
@@ -87,6 +88,18 @@ public class ProtonSession extends ProtonEndpoint implements Session, Performati
     private EventHandler<Sender> remoteSenderOpenHandler = null;
     private EventHandler<Receiver> remoteReceiverOpenHandler = null;
 
+    private Object context;
+    private Map<String, Object> contextEntries = new HashMap<>();
+
+    private SessionState localState = SessionState.IDLE;
+    private SessionState remoteState = SessionState.IDLE;
+
+    private ErrorCondition localError = new ErrorCondition();
+    private ErrorCondition remoteError = new ErrorCondition();
+
+    private boolean localBeginSent;
+    private boolean localEndSent;
+
     public ProtonSession(ProtonConnection connection, int localChannel) {
         this.connection = connection;
         this.localChannel = localChannel;
@@ -112,6 +125,79 @@ public class ProtonSession extends ProtonEndpoint implements Session, Performati
 
     public int getRemoteChannel() {
         return remoteBegin != null ? remoteBegin.getRemoteChannel() : -1;
+    }
+
+    @Override
+    public void setContext(Object context) {
+        this.context = context;
+    }
+
+    @Override
+    public Object getContext() {
+        return context;
+    }
+
+    @Override
+    public void setContextEntry(String key, Object value) {
+        contextEntries.put(key, value);
+    }
+
+    @Override
+    public Object getContextEntry(String key) {
+        return contextEntries.get(key);
+    }
+
+    @Override
+    public SessionState getLocalState() {
+        return localState;
+    }
+
+    @Override
+    public ErrorCondition getLocalCondition() {
+        return localError.isEmpty() ? null : localError;
+    }
+
+    @Override
+    public void setLocalCondition(ErrorCondition condition) {
+        if (condition != null) {
+            localError = condition.copy();
+        } else {
+            localError.clear();
+        }
+    }
+
+    @Override
+    public SessionState getRemoteState() {
+        return remoteState;
+    }
+
+    @Override
+    public ErrorCondition getRemoteCondition() {
+        return remoteError;
+    }
+
+    private void setRemoteCondition(ErrorCondition condition) {
+        if (condition != null) {
+            localError = condition.copy();
+        } else {
+            localError.clear();
+        }
+    }
+
+    @Override
+    public void open() {
+        if (getLocalState() == SessionState.IDLE) {
+            localState = SessionState.ACTIVE;
+            connection.getEngine().pipeline().fireWrite(localBegin, localChannel, null, null);
+        }
+    }
+
+    @Override
+    public void close() {
+        if (getLocalState() == SessionState.ACTIVE) {
+            localState = SessionState.CLOSED;
+            connection.getEngine().pipeline().fireWrite(new End().setError(getLocalCondition()), localChannel, null, null);
+        }
     }
 
     @Override
@@ -229,18 +315,6 @@ public class ProtonSession extends ProtonEndpoint implements Session, Performati
         return receiver;
     }
 
-    //----- Internal state methods
-
-    @Override
-    void initiateLocalOpen() {
-        connection.getEngine().pipeline().fireWrite(localBegin, localChannel, null, null);
-    }
-
-    @Override
-    void initiateLocalClose() {
-        connection.getEngine().pipeline().fireWrite(new End().setError(getLocalCondition()), localChannel, null, null);
-    }
-
     //----- Event handler registration for this Session
 
     @Override
@@ -273,10 +347,10 @@ public class ProtonSession extends ProtonEndpoint implements Session, Performati
     public void handleBegin(Begin begin, ProtonBuffer payload, int channel, ProtonEngine context) {
         remoteBegin = begin;
         localBegin.setRemoteChannel(channel);
-        remoteOpenWasReceived();
+        remoteState = SessionState.ACTIVE;
         nextIncomingId = begin.getNextOutgoingId();
 
-        if (getLocalState() == EndpointState.ACTIVE) {
+        if (getLocalState() == SessionState.ACTIVE) {
             remoteOpenHandler.handle(result(this, null));
         }
     }
@@ -286,7 +360,7 @@ public class ProtonSession extends ProtonEndpoint implements Session, Performati
         // TODO - Fully implement handling for remote End
 
         setRemoteCondition(end.getError());
-        remoteClosedWasReceived();
+        remoteState = SessionState.CLOSED;
 
         remoteCloseHandler.handle(result(this, getRemoteCondition()));
     }
@@ -333,10 +407,16 @@ public class ProtonSession extends ProtonEndpoint implements Session, Performati
 
     //----- Internal implementation
 
+    private void checkNotOpened(String errorMessage) {
+        if (localState.ordinal() > SessionState.IDLE.ordinal()) {
+            throw new IllegalStateException(errorMessage);
+        }
+    }
+
     private ProtonLink<?> findMatchingPendingLinkOpen(Attach remoteAttach) {
         for (ProtonLink<?> link : senderByNameMap.values()) {
             if (link.getName().equals(remoteAttach.getName()) &&
-                link.getRemoteState() == EndpointState.IDLE &&
+                link.getRemoteState() == LinkState.IDLE &&
                 link.getRole() != remoteAttach.getRole()) {
 
                 return link;
@@ -345,7 +425,7 @@ public class ProtonSession extends ProtonEndpoint implements Session, Performati
 
         for (ProtonLink<?> link : receiverByNameMap.values()) {
             if (link.getName().equals(remoteAttach.getName()) &&
-                link.getRemoteState() == EndpointState.IDLE &&
+                link.getRemoteState() == LinkState.IDLE &&
                 link.getRole() != remoteAttach.getRole()) {
 
                 return link;

@@ -22,13 +22,77 @@ import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.amqp.messaging.Source;
 import org.apache.qpid.proton4j.amqp.messaging.Target;
+import org.apache.qpid.proton4j.amqp.transport.ErrorCondition;
 import org.apache.qpid.proton4j.amqp.transport.Role;
 import org.apache.qpid.proton4j.engine.impl.ProtonSession;
 
 /**
  * Base API for {@link Sender} and {@link Receiver} links.
  */
-public interface Link<T extends Endpoint> extends Endpoint {
+public interface Link<T extends Link<T>> {
+
+    /**
+     * Open this end of the link
+     */
+    public void open();
+
+    /**
+     * Close this end of the link
+     */
+    public void close();
+
+    /**
+     * Detach this end of the link.
+     */
+    public void detach();
+
+    /**
+     * Sets an application defined context value that will be carried with this {@link Connection} until
+     * cleared by the application.
+     *
+     * @param context
+     *      The context to associate with this connection.
+     */
+    void setContext(Object context);
+
+    /**
+     * @return the currently configured context that is associated with this {@link Connection}
+     */
+    Object getContext();
+
+    /**
+     * Sets or updates a named application defined context value that will be carried with this
+     * {@link Connection} until cleared by the application.
+     *
+     * @param key
+     *      The key used to identify the given context entry.
+     * @param value
+     *      The context value to assigned to the given key, or null to clear.
+     */
+    void setContextEntry(String key, Object value);
+
+    /**
+     * @return the context entry assigned to the given key or null of none assigned.
+     */
+    Object getContextEntry(String key);
+
+    /**
+     * @return the local link state
+     */
+    public LinkState getLocalState();
+
+    /**
+     * @return the local endpoint error, or null if there is none
+     */
+    public ErrorCondition getLocalCondition();
+
+    /**
+     * Sets the local {@link ErrorCondition} to be applied to a {@link Link} close.
+     *
+     * @param condition
+     *      The error condition to convey to the remote peer on link close or detach.
+     */
+    public void setLocalCondition(ErrorCondition condition);
 
     /**
      * @return the {@link Role} that this end of the link is performing.
@@ -192,6 +256,16 @@ public interface Link<T extends Endpoint> extends Endpoint {
      * @return the remote max message size conveyed by the peer, or null if none was set. 0 also means no limit.
      */
     UnsignedLong getRemoteMaxMessageSize();
+
+    /**
+     * @return the remote link state (as last communicated)
+     */
+    public LinkState getRemoteState();
+
+    /**
+     * @return the remote endpoint error, or null if there is none
+     */
+    public ErrorCondition getRemoteCondition();
 
     //----- Remote events for AMQP Link resources
 

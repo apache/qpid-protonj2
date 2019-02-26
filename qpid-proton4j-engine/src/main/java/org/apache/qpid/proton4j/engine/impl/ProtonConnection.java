@@ -34,6 +34,7 @@ import org.apache.qpid.proton4j.amqp.transport.Close;
 import org.apache.qpid.proton4j.amqp.transport.Detach;
 import org.apache.qpid.proton4j.amqp.transport.Disposition;
 import org.apache.qpid.proton4j.amqp.transport.End;
+import org.apache.qpid.proton4j.amqp.transport.ErrorCondition;
 import org.apache.qpid.proton4j.amqp.transport.Flow;
 import org.apache.qpid.proton4j.amqp.transport.Open;
 import org.apache.qpid.proton4j.amqp.transport.Performative;
@@ -43,18 +44,19 @@ import org.apache.qpid.proton4j.common.logging.ProtonLogger;
 import org.apache.qpid.proton4j.common.logging.ProtonLoggerFactory;
 import org.apache.qpid.proton4j.engine.AsyncEvent;
 import org.apache.qpid.proton4j.engine.Connection;
-import org.apache.qpid.proton4j.engine.EndpointState;
+import org.apache.qpid.proton4j.engine.ConnectionState;
 import org.apache.qpid.proton4j.engine.EventHandler;
 import org.apache.qpid.proton4j.engine.Receiver;
 import org.apache.qpid.proton4j.engine.Sender;
 import org.apache.qpid.proton4j.engine.Session;
+import org.apache.qpid.proton4j.engine.SessionState;
 import org.apache.qpid.proton4j.engine.exceptions.ProtocolViolationException;
 import org.apache.qpid.proton4j.engine.exceptions.ProtonException;
 
 /**
  * Implements the proton4j Connection API
  */
-public class ProtonConnection extends ProtonEndpoint implements Connection, AMQPHeader.HeaderHandler<ProtonEngine>, Performative.PerformativeHandler<ProtonEngine> {
+public class ProtonConnection implements Connection, AMQPHeader.HeaderHandler<ProtonEngine>, Performative.PerformativeHandler<ProtonEngine> {
 
     private static final ProtonLogger LOG = ProtonLoggerFactory.getLogger(ProtonConnection.class);
 
@@ -68,8 +70,19 @@ public class ProtonConnection extends ProtonEndpoint implements Connection, AMQP
     private Map<Integer, ProtonSession> localSessions = new HashMap<Integer, ProtonSession>();
     private Map<Integer, ProtonSession> remoteSessions = new HashMap<Integer, ProtonSession>();
 
+    private Object context;
+    private Map<String, Object> contextEntries = new HashMap<>();
+
+    private ConnectionState localState = ConnectionState.IDLE;
+    private ConnectionState remoteState = ConnectionState.IDLE;
+
+    private ErrorCondition localError = new ErrorCondition();
+    private ErrorCondition remoteError = new ErrorCondition();
+
     private boolean headerReceived;
     private boolean headerSent;
+    private boolean localOpenSent;
+    private boolean localCloseSent;
 
     private EventHandler<AsyncEvent<Connection>> remoteOpenHandler = (result) -> {
         LOG.trace("Remote open arrived at default handler.");
@@ -100,6 +113,61 @@ public class ProtonConnection extends ProtonEndpoint implements Connection, AMQP
 
     public ProtonEngine getEngine() {
         return engine;
+    }
+
+    @Override
+    public void setContext(Object context) {
+        this.context = context;
+    }
+
+    @Override
+    public Object getContext() {
+        return context;
+    }
+
+    @Override
+    public void setContextEntry(String key, Object value) {
+        contextEntries.put(key, value);
+    }
+
+    @Override
+    public Object getContextEntry(String key) {
+        return contextEntries.get(key);
+    }
+
+    @Override
+    public ConnectionState getLocalState() {
+        return localState;
+    }
+
+    @Override
+    public ErrorCondition getLocalCondition() {
+        return localError.isEmpty() ? null : localError;
+    }
+
+    @Override
+    public void setLocalCondition(ErrorCondition condition) {
+        if (condition != null) {
+            localError = condition.copy();
+        } else {
+            localError.clear();
+        }
+    }
+
+    @Override
+    public void open() {
+        if (getLocalState() == ConnectionState.IDLE) {
+            localState = ConnectionState.ACTIVE;
+            processStateChangeAndRespond();
+        }
+    }
+
+    @Override
+    public void close() {
+        if (getLocalState() == ConnectionState.ACTIVE) {
+            localState = ConnectionState.CLOSED;
+            processStateChangeAndRespond();
+        }
     }
 
     @Override
@@ -244,24 +312,30 @@ public class ProtonConnection extends ProtonEndpoint implements Connection, AMQP
     }
 
     @Override
+    public ConnectionState getRemoteState() {
+        return remoteState;
+    }
+
+    @Override
+    public ErrorCondition getRemoteCondition() {
+        return remoteError;
+    }
+
+    private void setRemoteCondition(ErrorCondition condition) {
+        if (condition != null) {
+            remoteError = condition.copy();
+        } else {
+            remoteError.clear();
+        }
+    }
+
+    @Override
     public ProtonSession session() {
         int localChannel = findFreeLocalChannel();
         ProtonSession newSession = new ProtonSession(this, localChannel);
         localSessions.put(localChannel, newSession);
 
         return newSession;
-    }
-
-    //----- Handle internal state changes
-
-    @Override
-    void initiateLocalOpen() {
-        processStateChangeAndRespond();
-    }
-
-    @Override
-    void initiateLocalClose() {
-        processStateChangeAndRespond();
     }
 
     //----- Handle performatives sent from the remote to this Connection
@@ -283,7 +357,7 @@ public class ProtonConnection extends ProtonEndpoint implements Connection, AMQP
             context.engineFailed(new ProtocolViolationException("Received second Open for Connection from remote"));
         }
 
-        remoteOpenWasReceived();
+        remoteState = ConnectionState.ACTIVE;
         remoteOpen = open;
 
         // TODO - Inform all Sessions that the remote has opened ?
@@ -294,7 +368,7 @@ public class ProtonConnection extends ProtonEndpoint implements Connection, AMQP
 
     @Override
     public void handleClose(Close close, ProtonBuffer payload, int channel, ProtonEngine context) {
-        remoteClosedWasReceived();
+        remoteState = ConnectionState.CLOSED;
         setRemoteCondition(close.getError());
 
         // TODO - Inform all Sessions that the remote has closed ?
@@ -336,7 +410,7 @@ public class ProtonConnection extends ProtonEndpoint implements Connection, AMQP
 
             // If the session was initiated remotely then we signal the creation to the any registered
             // remote session event handler
-            if (session.getLocalState() == EndpointState.IDLE) {
+            if (session.getLocalState() == SessionState.IDLE) {
                 remoteSessionOpenEventHandler.handle(session);
             }
         }
@@ -436,20 +510,26 @@ public class ProtonConnection extends ProtonEndpoint implements Connection, AMQP
 
     //----- Internal implementation
 
+    private void checkNotOpened(String errorMessage) {
+        if (localState.ordinal() > ConnectionState.IDLE.ordinal()) {
+            throw new IllegalStateException(errorMessage);
+        }
+    }
+
     private void processStateChangeAndRespond() {
         // When the engine state changes or we have read an incoming AMQP header etc we need to check
         // if we have pending work to send and do so
         if (headerSent) {
             // Once an incoming header arrives we can emit our open if locally opened and also send close if
             // that is what our state is already.
-            if (getLocalState() != EndpointState.IDLE) {
-                if (!wasLocalOpenSent()) {
-                    localOpenWasSent();
+            if (getLocalState() != ConnectionState.IDLE) {
+                if (!localOpenSent) {
+                    localOpenSent = true;
                     engine.pipeline().fireWrite(localOpen, 0, null, null);
                 }
 
-                if (getLocalState() == EndpointState.CLOSED && !wasLocalCloseSent()) {
-                    localCloseWasSent();
+                if (getLocalState() == ConnectionState.CLOSED && !localCloseSent) {
+                    localCloseSent = true;
                     engine.pipeline().fireWrite(new Close().setError(getLocalCondition()), 0, null, null);
                 }
             }
