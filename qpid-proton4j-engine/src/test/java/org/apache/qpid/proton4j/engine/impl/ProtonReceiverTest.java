@@ -20,18 +20,18 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-import java.io.IOException;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
 import org.apache.qpid.proton4j.amqp.transport.Attach;
 import org.apache.qpid.proton4j.amqp.transport.Begin;
 import org.apache.qpid.proton4j.amqp.transport.Detach;
 import org.apache.qpid.proton4j.amqp.transport.Open;
+import org.apache.qpid.proton4j.amqp.transport.Role;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.engine.Connection;
 import org.apache.qpid.proton4j.engine.Receiver;
-import org.apache.qpid.proton4j.engine.Session;
 import org.junit.Test;
 
 /**
@@ -42,9 +42,151 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
     protected Connection connection;
 
     @Test
-    public void testEngineEmitsAttachAfterLocalReceiverOpened() throws IOException {
+    public void testEngineEmitsAttachAfterLocalReceiverOpened() throws Exception {
         ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
+        ProtonSession session = setupEngineAndOpenSession(engine);
 
+        Receiver receiver = session.receiver("test");
+        receiver.open();
+
+        // Expect the engine to emit the Attach performative
+        assertEquals("Engine did not emit an Attach performative after receiver was locally opened.", 4, engineWrites.size());
+        ProtonBuffer outputBuffer = engineWrites.get(3);
+        assertNotNull(unwrapFrame(outputBuffer, Attach.class));
+
+        receiver.close();
+
+        // Expect the engine to emit the Detach performative
+        assertEquals("Engine did not emit an Detach performative after receiver was locally closed.", 5, engineWrites.size());
+        outputBuffer = engineWrites.get(4);
+        assertNotNull(unwrapFrame(outputBuffer, Detach.class));
+    }
+
+    @Test
+    public void testReceiverFireOpenedEventAfterRemoteAttachArrives() throws Exception {
+        ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
+        ProtonSession session = setupEngineAndOpenSession(engine);
+
+        final AtomicBoolean receiverRemotelyOpened = new AtomicBoolean();
+
+        Receiver receiver = session.receiver("test");
+        receiver.openHandler(result -> {
+            receiverRemotelyOpened.set(true);
+        });
+        receiver.open();
+
+        // Expect the engine to emit the Attach performative
+        assertEquals("Engine did not emit an Attach performative after receiver was locally opened.", 4, engineWrites.size());
+        ProtonBuffer outputBuffer = engineWrites.get(3);
+        assertNotNull(unwrapFrame(outputBuffer, Attach.class));
+
+        // Emit a remote Attach for this receiver and expect the opened event to fire
+        Attach remoteAttach = new Attach();
+        remoteAttach.setName("test");
+        remoteAttach.setHandle(1);
+        remoteAttach.setRole(Role.SENDER);
+        remoteAttach.setInitialDeliveryCount(0);
+        engine.ingest(wrapInFrame(remoteAttach, 1));
+
+        assertTrue("Receiver remote opened event did not fire", receiverRemotelyOpened.get());
+
+        receiver.close();
+
+        // Expect the engine to emit the Detach performative
+        assertEquals("Engine did not emit an Detach performative after sender was locally closed.", 5, engineWrites.size());
+        outputBuffer = engineWrites.get(4);
+        assertNotNull(unwrapFrame(outputBuffer, Detach.class));
+    }
+
+    @Test
+    public void testReceiverFireClosedEventAfterRemoteDetachArrives() throws Exception {
+        ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
+        ProtonSession session = setupEngineAndOpenSession(engine);
+
+        final AtomicBoolean receiverRemotelyOpened = new AtomicBoolean();
+        final AtomicBoolean receiverRemotelyClosed = new AtomicBoolean();
+
+        Receiver receiver = session.receiver("test");
+        receiver.openHandler(result -> {
+            receiverRemotelyOpened.set(true);
+        });
+        receiver.closeHandler(result -> {
+            receiverRemotelyClosed.set(true);
+        });
+        receiver.open();
+
+        // Expect the engine to emit the Attach performative
+        assertEquals("Engine did not emit an Attach performative after receiver was locally opened.", 4, engineWrites.size());
+        ProtonBuffer outputBuffer = engineWrites.get(3);
+        assertNotNull(unwrapFrame(outputBuffer, Attach.class));
+
+        // Emit a remote Attach for this receiver and expect the opened event to fire
+        Attach remoteAttach = new Attach();
+        remoteAttach.setName("test");
+        remoteAttach.setHandle(1);
+        remoteAttach.setRole(Role.SENDER);
+        remoteAttach.setInitialDeliveryCount(0);
+        engine.ingest(wrapInFrame(remoteAttach, 1));
+
+        assertTrue("Receiver remote opened event did not fire", receiverRemotelyOpened.get());
+
+        receiver.close();
+
+        // Expect the engine to emit the Detach performative
+        assertEquals("Engine did not emit an Detach performative after sender was locally closed.", 5, engineWrites.size());
+        outputBuffer = engineWrites.get(4);
+        assertNotNull(unwrapFrame(outputBuffer, Detach.class));
+
+        // Emit a remote Detach for this receiver and expect the opened event to fire
+        Detach remoteDetach = new Detach();
+        remoteDetach.setClosed(true);
+        remoteDetach.setHandle(1);
+        engine.ingest(wrapInFrame(remoteDetach, 1));
+
+        assertTrue("Receiver remote closed event did not fire", receiverRemotelyClosed.get());
+    }
+
+    @Test
+    public void testConnectionSignalsRemoteReceiverOpen() throws Exception {
+        ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
+        ProtonSession session = setupEngineAndOpenSession(engine);
+
+        assertNotNull(session);
+
+        final AtomicBoolean receiverRemotelyOpened = new AtomicBoolean();
+        final AtomicReference<Receiver> receiver = new AtomicReference<>();
+
+        connection.receiverOpenEventHandler(result -> {
+            receiverRemotelyOpened.set(true);
+            receiver.set(result);
+        });
+
+        // Emit a remote Attach for this link and expect the opened event to fire
+        Attach remoteAttach = new Attach();
+        remoteAttach.setName("test");
+        remoteAttach.setHandle(1);
+        remoteAttach.setRole(Role.SENDER);
+        remoteAttach.setInitialDeliveryCount(0);
+        engine.ingest(wrapInFrame(remoteAttach, 1));
+
+        assertTrue("Receiver remote opened event did not fire", receiverRemotelyOpened.get());
+
+        receiver.get().open();
+
+        // Expect the engine to emit the Attach performative
+        assertEquals("Engine did not emit an Attach performative after Receiver was locally opened.", 4, engineWrites.size());
+        ProtonBuffer outputBuffer = engineWrites.get(3);
+        assertNotNull(unwrapFrame(outputBuffer, Attach.class));
+
+        receiver.get().close();
+
+        // Expect the engine to emit the Detach performative
+        assertEquals("Engine did not emit an Detach performative after Receiver was locally closed.", 5, engineWrites.size());
+        outputBuffer = engineWrites.get(4);
+        assertNotNull(unwrapFrame(outputBuffer, Detach.class));
+    }
+
+    private ProtonSession setupEngineAndOpenSession(ProtonEngine engine) throws Exception {
         final AtomicBoolean remoteOpened = new AtomicBoolean();
 
         engine.start(result -> {
@@ -81,7 +223,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
 
         assertTrue("Connection remote opened event did not fire", remoteOpened.get());
 
-        Session session = connection.session();
+        ProtonSession session = (ProtonSession) connection.session();
         session.open();
 
         // Expect the engine to emit the Begin performative
@@ -89,19 +231,14 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         outputBuffer = engineWrites.get(2);
         assertNotNull(unwrapFrame(outputBuffer, Begin.class));
 
-        Receiver receiver = session.receiver("test");
-        receiver.open();
+        // Emit a remote Begin for this session
+        Begin remoteBegin = new Begin();
+        remoteBegin.setRemoteChannel(session.getLocalChannel());
+        remoteBegin.setNextOutgoingId(1);
+        remoteBegin.setIncomingWindow(0);
+        remoteBegin.setOutgoingWindow(0);
+        engine.ingest(wrapInFrame(remoteBegin, 1));
 
-        // Expect the engine to emit the Attach performative
-        assertEquals("Engine did not emit an Attach performative after receiver was locally opened.", 4, engineWrites.size());
-        outputBuffer = engineWrites.get(3);
-        assertNotNull(unwrapFrame(outputBuffer, Attach.class));
-
-        receiver.close();
-
-        // Expect the engine to emit the Detach performative
-        assertEquals("Engine did not emit an Detach performative after receiver was locally closed.", 5, engineWrites.size());
-        outputBuffer = engineWrites.get(4);
-        assertNotNull(unwrapFrame(outputBuffer, Detach.class));
+        return session;
     }
 }
