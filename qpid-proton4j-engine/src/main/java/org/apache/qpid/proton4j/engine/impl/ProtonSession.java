@@ -55,8 +55,6 @@ public class ProtonSession implements Session, Performative.PerformativeHandler<
 
     private static final ProtonLogger LOG = ProtonLoggerFactory.getLogger(ProtonSession.class);
 
-    private static final int HANDLE_MAX = 65535;  // TODO Honor handle max
-
     private final Begin localBegin = new Begin();
     private Begin remoteBegin;
 
@@ -457,7 +455,7 @@ public class ProtonSession implements Session, Performative.PerformativeHandler<
     }
 
     long findFreeLocalHandle() {
-        for (long i = 0; i < HANDLE_MAX; ++i) {
+        for (long i = 0; i < ProtonConstants.HANDLE_MAX; ++i) {
             if (!localLinks.containsKey(i)) {
                 return i;
             }
@@ -467,7 +465,7 @@ public class ProtonSession implements Session, Performative.PerformativeHandler<
     }
 
     void freeLocalHandle(long localHandle) {
-        if (localHandle > HANDLE_MAX) {
+        if (localHandle > ProtonConstants.HANDLE_MAX) {
             throw new IllegalArgumentException("Specified local handle is out of range: " + localHandle);
         }
 

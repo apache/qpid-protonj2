@@ -60,8 +60,6 @@ public class ProtonConnection implements Connection, AMQPHeader.HeaderHandler<Pr
 
     private static final ProtonLogger LOG = ProtonLoggerFactory.getLogger(ProtonConnection.class);
 
-    private static final int CHANNEL_MAX = 65535;
-
     private final ProtonEngine engine;
 
     private final Open localOpen = new Open();
@@ -530,7 +528,7 @@ public class ProtonConnection implements Connection, AMQPHeader.HeaderHandler<Pr
     }
 
     private int findFreeLocalChannel() {
-        for (int i = 0; i < CHANNEL_MAX; ++i) {
+        for (int i = 0; i < ProtonConstants.CHANNEL_MAX; ++i) {
             if (!localSessions.containsKey(i)) {
                 return i;
             }
@@ -541,7 +539,7 @@ public class ProtonConnection implements Connection, AMQPHeader.HeaderHandler<Pr
 
     // TODO - Session not yet freeing its channel
     void freeLocalChannel(int localChannel) {
-        if (localChannel > CHANNEL_MAX) {
+        if (localChannel > ProtonConstants.CHANNEL_MAX) {
             throw new IllegalArgumentException("Specified local channel is out of range: " + localChannel);
         }
 

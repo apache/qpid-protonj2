@@ -26,6 +26,16 @@ public final class ProtonConstants {
      */
     public static final int MIN_MAX_AMQP_FRAME_SIZE = 512;
 
+    /**
+     * The maximum value for AMQP channels as defined by the specification.
+     */
+    public static final int CHANNEL_MAX = 65535;
+
+    /**
+     * The maximum value for AMQP handles as defined by the specification.
+     */
+    public static final long HANDLE_MAX = 0xFFFFFFFFL;
+
     //----- Proton engine handler names
 
     /**
