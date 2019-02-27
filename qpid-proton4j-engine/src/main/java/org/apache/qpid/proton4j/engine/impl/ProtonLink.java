@@ -66,9 +66,8 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T>, Performa
     private ErrorCondition localError = new ErrorCondition();
     private ErrorCondition remoteError = new ErrorCondition();
 
-    private EventHandler<AsyncEvent<T>> remoteOpenHandler = (result) -> {
-        LOG.trace("Remote link open arrived at default handler.");
-    };
+    private EventHandler<AsyncEvent<T>> remoteOpenHandler;
+
     private EventHandler<AsyncEvent<T>> remoteDetachHandler = (result) -> {
         LOG.trace("Remote link detach arrived at default handler.");
     };
