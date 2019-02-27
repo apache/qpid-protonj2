@@ -174,6 +174,7 @@ public class ProtonSession implements Session, Performative.PerformativeHandler<
     public void close() {
         if (getLocalState() == SessionState.ACTIVE) {
             localState = SessionState.CLOSED;
+            connection.freeLocalChannel(localChannel);
             connection.getEngine().pipeline().fireWrite(new End().setError(getLocalCondition()), localChannel, null, null);
         }
     }

@@ -537,7 +537,6 @@ public class ProtonConnection implements Connection, AMQPHeader.HeaderHandler<Pr
         throw new IllegalStateException("no local channel available for allocation");
     }
 
-    // TODO - Session not yet freeing its channel
     void freeLocalChannel(int localChannel) {
         if (localChannel > ProtonConstants.CHANNEL_MAX) {
             throw new IllegalArgumentException("Specified local channel is out of range: " + localChannel);
