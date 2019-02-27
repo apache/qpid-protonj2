@@ -26,6 +26,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
 import org.apache.qpid.proton4j.amqp.transport.Attach;
 import org.apache.qpid.proton4j.amqp.transport.Begin;
+import org.apache.qpid.proton4j.amqp.transport.Detach;
 import org.apache.qpid.proton4j.amqp.transport.Open;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.engine.Connection;
@@ -92,8 +93,15 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         sender.open();
 
         // Expect the engine to emit the Attach performative
-        assertEquals("Engine did not emit an Begin performative after session was locally opened.", 4, engineWrites.size());
+        assertEquals("Engine did not emit an Attach performative after sender was locally opened.", 4, engineWrites.size());
         outputBuffer = engineWrites.get(3);
         assertNotNull(unwrapFrame(outputBuffer, Attach.class));
+
+        sender.close();
+
+        // Expect the engine to emit the Detach performative
+        assertEquals("Engine did not emit an Detach performative after sender was locally closed.", 5, engineWrites.size());
+        outputBuffer = engineWrites.get(4);
+        assertNotNull(unwrapFrame(outputBuffer, Detach.class));
     }
 }
