@@ -40,30 +40,30 @@ import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.common.logging.ProtonLogger;
 import org.apache.qpid.proton4j.common.logging.ProtonLoggerFactory;
 import org.apache.qpid.proton4j.engine.AsyncEvent;
-import org.apache.qpid.proton4j.engine.Connection;
 import org.apache.qpid.proton4j.engine.EventHandler;
 import org.apache.qpid.proton4j.engine.LinkState;
 import org.apache.qpid.proton4j.engine.Receiver;
 import org.apache.qpid.proton4j.engine.Sender;
 import org.apache.qpid.proton4j.engine.Session;
 import org.apache.qpid.proton4j.engine.SessionState;
+import org.apache.qpid.proton4j.engine.exceptions.ProtocolViolationException;
 
 /**
- * Proton API for a Session endpoint
+ * Proton API for Session type.
  */
 public class ProtonSession implements Session, Performative.PerformativeHandler<ProtonEngine> {
 
     private static final ProtonLogger LOG = ProtonLoggerFactory.getLogger(ProtonSession.class);
 
     private static final int HANDLE_MAX = 65535;  // TODO Honor handle max
-    private static final int LINK_ARRAY_CHUNK_SIZE = 16;
 
     private final Begin localBegin = new Begin();
     private Begin remoteBegin;
 
     private int localChannel;
 
-    private long nextIncomingId;
+    @SuppressWarnings("unused")
+    private long nextIncomingId;  // TODO
     private long nextOutgoingId = 1;
     private long incomingWindow;
     private long outgoingWindow;
@@ -72,10 +72,17 @@ public class ProtonSession implements Session, Performative.PerformativeHandler<
     private final Map<String, ProtonReceiver> receiverByNameMap = new HashMap<>();
 
     // TODO - Space efficient primitive storage
-    private ProtonLink<?>[] localLinks = new ProtonLink<?>[HANDLE_MAX];
-    private ProtonLink<?>[] remoteLinks = new ProtonLink<?>[HANDLE_MAX];
+    private Map<Long, ProtonLink<?>> localLinks = new HashMap<>();
+    private Map<Long, ProtonLink<?>> remoteLinks = new HashMap<>();
 
     private final ProtonConnection connection;
+    private final ProtonContext context = new ProtonContext();
+
+    private SessionState localState = SessionState.IDLE;
+    private SessionState remoteState = SessionState.IDLE;
+
+    private ErrorCondition localError = new ErrorCondition();
+    private ErrorCondition remoteError = new ErrorCondition();
 
     private EventHandler<AsyncEvent<Session>> remoteOpenHandler = (result) -> {
         LOG.trace("Remote session open arrived at default handler.");
@@ -85,19 +92,8 @@ public class ProtonSession implements Session, Performative.PerformativeHandler<
     };
 
     // No default for these handlers, Connection will process these if not set here.
-    private EventHandler<Sender> remoteSenderOpenHandler = null;
-    private EventHandler<Receiver> remoteReceiverOpenHandler = null;
-
-    private final ProtonContext context = new ProtonContext();
-
-    private SessionState localState = SessionState.IDLE;
-    private SessionState remoteState = SessionState.IDLE;
-
-    private ErrorCondition localError = new ErrorCondition();
-    private ErrorCondition remoteError = new ErrorCondition();
-
-    private boolean localBeginSent;
-    private boolean localEndSent;
+    private EventHandler<Sender> remoteSenderOpenEventHandler = null;
+    private EventHandler<Receiver> remoteReceiverOpenEventHandler = null;
 
     public ProtonSession(ProtonConnection connection, int localChannel) {
         this.connection = connection;
@@ -110,7 +106,7 @@ public class ProtonSession implements Session, Performative.PerformativeHandler<
     }
 
     @Override
-    public Connection getConnection() {
+    public ProtonConnection getConnection() {
         return connection;
     }
 
@@ -315,14 +311,22 @@ public class ProtonSession implements Session, Performative.PerformativeHandler<
 
     @Override
     public ProtonSession senderOpenEventHandler(EventHandler<Sender> remoteSenderOpenEventHandler) {
-        this.remoteSenderOpenHandler = remoteSenderOpenEventHandler;
+        this.remoteSenderOpenEventHandler = remoteSenderOpenEventHandler;
         return this;
+    }
+
+    EventHandler<Sender> senderOpenEventHandler() {
+        return remoteSenderOpenEventHandler;
     }
 
     @Override
     public ProtonSession receiverOpenEventHandler(EventHandler<Receiver> remoteReceiverOpenEventHandler) {
-        this.remoteReceiverOpenHandler = remoteReceiverOpenEventHandler;
+        this.remoteReceiverOpenEventHandler = remoteReceiverOpenEventHandler;
         return this;
+    }
+
+    EventHandler<Receiver> receiverOpenEventHandler() {
+        return remoteReceiverOpenEventHandler;
     }
 
     //----- Handle incoming performatives
@@ -353,40 +357,55 @@ public class ProtonSession implements Session, Performative.PerformativeHandler<
     public void handleAttach(Attach attach, ProtonBuffer payload, int channel, ProtonEngine context) {
         if (validateHandleMaxCompliance(attach)) {
             // TODO - Space efficient primitive data structure
-            if (remoteLinks.length > attach.getHandle() || remoteLinks[(int) attach.getHandle()] != null) {
+            if (remoteLinks.containsKey(attach.getHandle())) {
                 // TODO fail because link already in use.
                 return;
             }
 
-            ProtonLink<?> localLink = findMatchingPendingLinkOpen(attach);
-            if (localLink == null) {
-                localLink = (attach.getRole() == Role.RECEIVER) ? sender(attach.getName()) : receiver(attach.getName());
+            ProtonLink<?> link = findMatchingPendingLinkOpen(attach);
+            if (link == null) {
+                link = (attach.getRole() == Role.RECEIVER) ? sender(attach.getName()) : receiver(attach.getName());
             }
 
-            storeRemoteLink(localLink, (int) attach.getHandle());  // TODO Loss of handle fidelity
+            remoteLinks.put(attach.getHandle(), link);
 
-            attach.invoke(localLink, payload, channel, context);
+            attach.invoke(link, payload, channel, context);
         }
     }
 
     @Override
     public void handleDetach(Detach detach, ProtonBuffer payload, int channel, ProtonEngine context) {
+        final ProtonLink<?> link = remoteLinks.get(detach.getHandle());
+        if (link == null) {
+            getEngine().engineFailed(new ProtocolViolationException("Received uncorrelated handle on Detach from remote: " + channel));
+        }
 
+        detach.invoke(link, payload, channel, context);
     }
 
     @Override
     public void handleFlow(Flow flow, ProtonBuffer payload, int channel, ProtonEngine context) {
+        final ProtonLink<?> link = remoteLinks.get(flow.getHandle());
+        if (link == null) {
+            getEngine().engineFailed(new ProtocolViolationException("Received uncorrelated handle on Flow from remote: " + channel));
+        }
 
+        flow.invoke(link, payload, channel, context);
     }
 
     @Override
     public void handleTransfer(Transfer transfer, ProtonBuffer payload, int channel, ProtonEngine context) {
+        final ProtonLink<?> link = remoteLinks.get(transfer.getHandle());
+        if (link == null) {
+            getEngine().engineFailed(new ProtocolViolationException("Received uncorrelated handle on Transfer from remote: " + channel));
+        }
 
+        transfer.invoke(link, payload, channel, context);
     }
 
     @Override
     public void handleDisposition(Disposition disposition, ProtonBuffer payload, int channel, ProtonEngine context) {
-
+        // TODO
     }
 
     //----- Internal implementation
@@ -437,41 +456,21 @@ public class ProtonSession implements Session, Performative.PerformativeHandler<
         return true;
     }
 
-    int findFreeLocalHandle() {
-        // We could eventually replace this with some more space efficient data structure like
-        // a sparse array or possibly pull in a primitive map implementation.
-
-        for (int i = 0; i < localLinks.length; ++i) {
-            if (localLinks[i] == null) {
+    long findFreeLocalHandle() {
+        for (long i = 0; i < HANDLE_MAX; ++i) {
+            if (!localLinks.containsKey(i)) {
                 return i;
             }
         }
 
-        // TODO - Handle Max processing
-
-        // resize to accommodate more links, new handle will be old length
-        int handle = localLinks.length;
-        localLinks = Arrays.copyOf(localLinks, localLinks.length + LINK_ARRAY_CHUNK_SIZE);
-        return handle;
+        throw new IllegalStateException("no local handle available for allocation");
     }
 
     void freeLocalHandle(long localHandle) {
-        if (localHandle > localLinks.length) {
+        if (localHandle > HANDLE_MAX) {
             throw new IllegalArgumentException("Specified local handle is out of range: " + localHandle);
         }
 
-        localLinks[localChannel] = null;
-    }
-
-    private void storeRemoteLink(ProtonLink<?> link, int remoteHandle) {
-        // We could eventually replace this with some more space efficient data structure like
-        // a sparse array or possibly pull in a primitive map implementation.
-
-        if (remoteLinks.length <= remoteHandle) {
-            // resize to accommodate more sessions, new channel will be old length
-            remoteLinks = Arrays.copyOf(remoteLinks, remoteLinks.length + LINK_ARRAY_CHUNK_SIZE);
-        }
-
-        remoteLinks[remoteHandle] = link;
+        localLinks.remove(localHandle);
     }
 }

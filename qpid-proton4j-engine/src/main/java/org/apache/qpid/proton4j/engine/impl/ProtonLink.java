@@ -32,6 +32,7 @@ import org.apache.qpid.proton4j.amqp.transport.Begin;
 import org.apache.qpid.proton4j.amqp.transport.Detach;
 import org.apache.qpid.proton4j.amqp.transport.ErrorCondition;
 import org.apache.qpid.proton4j.amqp.transport.Performative;
+import org.apache.qpid.proton4j.amqp.transport.Role;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.common.logging.ProtonLogger;
 import org.apache.qpid.proton4j.common.logging.ProtonLoggerFactory;
@@ -40,6 +41,8 @@ import org.apache.qpid.proton4j.engine.ConnectionState;
 import org.apache.qpid.proton4j.engine.EventHandler;
 import org.apache.qpid.proton4j.engine.Link;
 import org.apache.qpid.proton4j.engine.LinkState;
+import org.apache.qpid.proton4j.engine.Receiver;
+import org.apache.qpid.proton4j.engine.Sender;
 import org.apache.qpid.proton4j.engine.Session;
 
 /**
@@ -49,6 +52,7 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T>, Performa
 
     private static final ProtonLogger LOG = ProtonLoggerFactory.getLogger(ProtonLink.class);
 
+    protected final ProtonConnection connection;
     protected final ProtonSession session;
 
     protected final Attach localAttach = new Attach();
@@ -61,9 +65,6 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T>, Performa
 
     private ErrorCondition localError = new ErrorCondition();
     private ErrorCondition remoteError = new ErrorCondition();
-
-    private boolean localAttachSent;
-    private boolean localDetachSent;
 
     private EventHandler<AsyncEvent<T>> remoteOpenHandler = (result) -> {
         LOG.trace("Remote link open arrived at default handler.");
@@ -85,6 +86,7 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T>, Performa
      */
     public ProtonLink(ProtonSession session, String name) {
         this.session = session;
+        this.connection = session.getConnection();
         this.localAttach.setName(name);
         this.localAttach.setRole(getRole());
     }
@@ -163,7 +165,6 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T>, Performa
             detach.setClosed(false);
             detach.setError(getLocalCondition());
 
-            localAttachSent = true;
             session.getEngine().pipeline().fireWrite(detach, session.getLocalChannel(), null, null);
             session.freeLocalHandle(localAttach.getHandle());
         }
@@ -179,7 +180,6 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T>, Performa
             detach.setClosed(true);
             detach.setError(getLocalCondition());
 
-            localDetachSent = true;
             session.getEngine().pipeline().fireWrite(detach, session.getLocalChannel(), null, null);
             session.freeLocalHandle(localAttach.getHandle());
         }
@@ -362,8 +362,26 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T>, Performa
         remoteAttach = attach;
         remoteState = LinkState.ACTIVE;
 
-        if (getLocalState() == LinkState.ACTIVE) {
+        if (remoteOpenHandler != null) {
             remoteOpenHandler.handle(result(self(), null));
+        } else {
+            if (getRole() == Role.RECEIVER) {
+                if (session.receiverOpenEventHandler() != null) {
+                    session.receiverOpenEventHandler().handle((Receiver) this);
+                } else if (connection.receiverOpenEventHandler() != null) {
+                    connection.receiverOpenEventHandler().handle((Receiver) this);
+                } else {
+                    LOG.info("Receiver opened but no event handler registered to inform: {}", this);
+                }
+            } else {
+                if (session.senderOpenEventHandler() != null) {
+                    session.senderOpenEventHandler().handle((Sender) this);
+                } else if (connection.senderOpenEventHandler() != null) {
+                    connection.senderOpenEventHandler().handle((Sender) this);
+                } else {
+                    LOG.info("Sender opened but no event handler registered to inform: {}", this);
+                }
+            }
         }
     }
 

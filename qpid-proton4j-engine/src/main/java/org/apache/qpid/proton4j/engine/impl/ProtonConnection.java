@@ -484,10 +484,18 @@ public class ProtonConnection implements Connection, AMQPHeader.HeaderHandler<Pr
         return this;
     }
 
+    EventHandler<Sender> senderOpenEventHandler() {
+        return remoteSenderOpenEventHandler;
+    }
+
     @Override
     public Connection receiverOpenEventHandler(EventHandler<Receiver> remoteReceiverOpenEventHandler) {
         this.remoteReceiverOpenEventHandler = remoteReceiverOpenEventHandler;
         return this;
+    }
+
+    EventHandler<Receiver> receiverOpenEventHandler() {
+        return remoteReceiverOpenEventHandler;
     }
 
     //----- Internal implementation
@@ -528,10 +536,11 @@ public class ProtonConnection implements Connection, AMQPHeader.HeaderHandler<Pr
             }
         }
 
-        throw new IllegalStateException("no local handle available for allocation");
+        throw new IllegalStateException("no local channel available for allocation");
     }
 
-    private void freeLocalChannel(int localChannel) {
+    // TODO - Session not yet freeing its channel
+    void freeLocalChannel(int localChannel) {
         if (localChannel > CHANNEL_MAX) {
             throw new IllegalArgumentException("Specified local channel is out of range: " + localChannel);
         }
