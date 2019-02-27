@@ -78,7 +78,6 @@ public class ProtonConnection implements Connection, AMQPHeader.HeaderHandler<Pr
     private ErrorCondition localError = new ErrorCondition();
     private ErrorCondition remoteError = new ErrorCondition();
 
-    private boolean headerReceived;
     private boolean headerSent;
     private boolean localOpenSent;
     private boolean localCloseSent;
@@ -326,7 +325,6 @@ public class ProtonConnection implements Connection, AMQPHeader.HeaderHandler<Pr
 
     @Override
     public void handleAMQPHeader(AMQPHeader header, ProtonEngine context) {
-        headerReceived = true;
         processStateChangeAndRespond();
     }
 
