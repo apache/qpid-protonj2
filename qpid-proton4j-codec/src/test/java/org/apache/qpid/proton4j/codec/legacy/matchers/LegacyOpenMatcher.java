@@ -29,6 +29,9 @@ public class LegacyOpenMatcher extends TypeSafeMatcher<Open> {
 
     /**
      * Create a new OpenMatcher
+     *
+     * @param legacyOpen
+     *      The legacy Open type to be matched against
      */
     public LegacyOpenMatcher(org.apache.qpid.proton.amqp.transport.Open legacyOpen) {
         this.legacyOpen = legacyOpen;

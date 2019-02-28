@@ -16,25 +16,19 @@
  */
 package org.apache.qpid.proton4j.codec.legacy;
 
-import org.hamcrest.TypeSafeMatcher;
+import org.apache.qpid.proton.amqp.transport.Open;
 
 /**
- * Base for Type Adapters from the legacy proton-j AMQP types to new types
+ * Factory for {@link LegacyTypeAdapter} instances
  */
-public abstract class LegacyTypeAdapter<T> {
+public abstract class LegacyTypeAdapterFactory {
 
-    protected final T legacyType;
+    public static LegacyTypeAdapter<?, ?> createTypeAdapter(Object legacyType) {
 
-    public LegacyTypeAdapter(T legacyType) {
-        this.legacyType = legacyType;
+        if (legacyType instanceof Open) {
+            return new LegacyOpenTypeAdapter((Open) legacyType);
+        }
+
+        throw new IllegalArgumentException("No type adapter available for given type");
     }
-
-    /**
-     * Create a {@link TypeSafeMatcher} for the legacy type to use when testing if new
-     * AMQP types match legacy versions.
-     *
-     * @return a {@link TypeSafeMatcher} for the wrapped legacy proton-j type.
-     */
-    public abstract TypeSafeMatcher<T> createMatcher();
-
 }

@@ -16,24 +16,28 @@
  */
 package org.apache.qpid.proton4j.codec.legacy;
 
-import org.apache.qpid.proton.codec.AMQPDefinedTypes;
-import org.apache.qpid.proton.codec.DecoderImpl;
-import org.apache.qpid.proton.codec.EncoderImpl;
+import org.hamcrest.TypeSafeMatcher;
 
 /**
- * Adapter to allow using the legacy proton-j codec in tests for new proton library.
+ * Base for Type Adapters from the legacy proton-j AMQP types to new types
+ *
+ * @param <L> The legacy type being adapted to
+ * @param <N> The new type being adapted from
  */
-public class LegacyCodecAdapter {
+public abstract class LegacyTypeAdapter<L, N> {
 
-    private final DecoderImpl decoder = new DecoderImpl();
-    private final EncoderImpl encoder = new EncoderImpl(decoder);
+    protected final L legacyType;
 
-    /**
-     * Create a codec adapter instance.
-     */
-    public LegacyCodecAdapter() {
-        AMQPDefinedTypes.registerAllTypes(decoder, encoder);
+    public LegacyTypeAdapter(L legacyType) {
+        this.legacyType = legacyType;
     }
 
-    
+    /**
+     * Create a {@link TypeSafeMatcher} for the legacy type to use when testing if new
+     * AMQP types match legacy versions.
+     *
+     * @return a {@link TypeSafeMatcher} for the wrapped legacy proton-j type.
+     */
+    public abstract TypeSafeMatcher<N> createMatcher();
+
 }
