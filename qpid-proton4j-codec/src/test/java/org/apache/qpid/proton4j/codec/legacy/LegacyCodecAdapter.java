@@ -17,10 +17,17 @@
 package org.apache.qpid.proton4j.codec.legacy;
 
 import java.nio.ByteBuffer;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Map.Entry;
 
+import org.apache.qpid.proton.amqp.UnsignedInteger;
+import org.apache.qpid.proton.amqp.UnsignedShort;
 import org.apache.qpid.proton.codec.AMQPDefinedTypes;
 import org.apache.qpid.proton.codec.DecoderImpl;
 import org.apache.qpid.proton.codec.EncoderImpl;
+import org.apache.qpid.proton4j.amqp.Symbol;
+import org.apache.qpid.proton4j.amqp.transport.Open;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 
@@ -90,5 +97,82 @@ public final class LegacyCodecAdapter {
         }
 
         return LegacyTypeAdapterFactory.createTypeAdapter(result);
+    }
+
+    /**
+     * Transcribe a new Codec type to a legacy type for encoding or other operation that requires a legacy type.
+     *
+     * @param open
+     *      The new codec type to be converted to the legacy codec version
+     *
+     * @return the legacy version of the new type.
+     */
+    public org.apache.qpid.proton.amqp.transport.Open transcribeToLegacyType(Open open) {
+        org.apache.qpid.proton.amqp.transport.Open legacyOpen = new org.apache.qpid.proton.amqp.transport.Open();
+
+        legacyOpen.setContainerId(open.getContainerId());
+        legacyOpen.setHostname(open.getHostname());
+        if (open.getMaxFrameSize() != null) {
+            legacyOpen.setMaxFrameSize(UnsignedInteger.valueOf(open.getMaxFrameSize().intValue()));
+        }
+        if (open.getChannelMax() != null) {
+            legacyOpen.setChannelMax(UnsignedShort.valueOf(open.getChannelMax().shortValue()));
+        }
+        if (open.getIdleTimeOut() != null) {
+            legacyOpen.setIdleTimeOut(UnsignedInteger.valueOf(open.getIdleTimeOut().intValue()));
+        }
+        if (open.getOutgoingLocales() != null) {
+            legacyOpen.setOutgoingLocales(transcribeToLegacyType(open.getOutgoingLocales()));
+        }
+        if (open.getIncomingLocales() != null) {
+            legacyOpen.setIncomingLocales(transcribeToLegacyType(open.getIncomingLocales()));
+        }
+        if (open.getOfferedCapabilities() != null) {
+            legacyOpen.setOfferedCapabilities(transcribeToLegacyType(open.getOfferedCapabilities()));
+        }
+        if (open.getDesiredCapabilities() != null) {
+            legacyOpen.setDesiredCapabilities(transcribeToLegacyType(open.getDesiredCapabilities()));
+        }
+        if (open.getProperties() != null) {
+            legacyOpen.setProperties(transcribeToLegacyType(open.getProperties()));
+        }
+
+        return legacyOpen;
+    }
+
+    /**
+     * Transcribe a new Codec type to a legacy type for encoding or other operation that requires a legacy type.
+     *
+     * @param properties
+     *      The new codec type to be converted to the legacy codec version
+     *
+     * @return the legacy version of the new type.
+     */
+    public Map<org.apache.qpid.proton.amqp.Symbol, Object> transcribeToLegacyType(Map<Symbol, Object> properties) {
+        Map<org.apache.qpid.proton.amqp.Symbol, Object> legacyProperties = new LinkedHashMap<>();
+
+        for (Entry<Symbol, Object> entry : properties.entrySet()) {
+            legacyProperties.put(org.apache.qpid.proton.amqp.Symbol.valueOf(entry.getKey().toString()), entry.getValue());
+        }
+
+        return legacyProperties;
+    }
+
+    /**
+     * Transcribe a new Codec type to a legacy type for encoding or other operation that requires a legacy type.
+     *
+     * @param symbols
+     *      The new codec type to be converted to the legacy codec version
+     *
+     * @return the legacy version of the new type.
+     */
+    public org.apache.qpid.proton.amqp.Symbol[] transcribeToLegacyType(Symbol[] symbols) {
+        org.apache.qpid.proton.amqp.Symbol[] legacySymbols = new org.apache.qpid.proton.amqp.Symbol[symbols.length];
+
+        for (int i = 0; i < symbols.length; ++i) {
+            legacySymbols[i] = org.apache.qpid.proton.amqp.Symbol.valueOf(symbols[i].toString());
+        }
+
+        return legacySymbols;
     }
 }

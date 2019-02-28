@@ -16,8 +16,6 @@
  */
 package org.apache.qpid.proton4j.codec.legacy;
 
-import org.hamcrest.TypeSafeMatcher;
-
 /**
  * Base for Type Adapters from the legacy proton-j AMQP types to new types
  *
@@ -31,13 +29,4 @@ public abstract class LegacyTypeAdapter<L, N> {
     public LegacyTypeAdapter(L legacyType) {
         this.legacyType = legacyType;
     }
-
-    /**
-     * Create a {@link TypeSafeMatcher} for the legacy type to use when testing if new
-     * AMQP types match legacy versions.
-     *
-     * @return a {@link TypeSafeMatcher} for the wrapped legacy proton-j type.
-     */
-    public abstract TypeSafeMatcher<N> createMatcher();
-
 }

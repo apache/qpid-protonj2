@@ -18,6 +18,7 @@ package org.apache.qpid.proton4j.codec;
 
 import org.apache.qpid.proton4j.codec.decoders.ProtonDecoderFactory;
 import org.apache.qpid.proton4j.codec.encoders.ProtonEncoderFactory;
+import org.apache.qpid.proton4j.codec.legacy.LegacyCodecAdapter;
 import org.junit.Before;
 
 /**
@@ -35,6 +36,8 @@ public class CodecTestSupport {
     protected EncoderState encoderState;
     protected Decoder decoder;
     protected Encoder encoder;
+
+    protected final LegacyCodecAdapter legacyCodec = new LegacyCodecAdapter();
 
     @Before
     public void setUp() {
