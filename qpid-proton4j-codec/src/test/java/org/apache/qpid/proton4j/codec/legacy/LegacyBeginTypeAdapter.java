@@ -17,21 +17,30 @@
 package org.apache.qpid.proton4j.codec.legacy;
 
 import org.apache.qpid.proton.amqp.transport.Begin;
-import org.apache.qpid.proton.amqp.transport.Open;
 
 /**
- * Factory for {@link LegacyTypeAdapter} instances
+ * Adapt from the new proton4j Begin to the legacy proton-j Begin
  */
-public abstract class LegacyTypeAdapterFactory {
+public class LegacyBeginTypeAdapter extends LegacyTypeAdapter<Begin, org.apache.qpid.proton4j.amqp.transport.Begin> {
 
-    public static LegacyTypeAdapter<?, ?> createTypeAdapter(Object legacyType) {
+    public LegacyBeginTypeAdapter(Begin legacyType) {
+        super(legacyType);
+    }
 
-        if (legacyType instanceof Open) {
-            return new LegacyOpenTypeAdapter((Open) legacyType);
-        } else if (legacyType instanceof Begin) {
-            return new LegacyBeginTypeAdapter((Begin) legacyType);
+    @Override
+    public boolean equals(Object value) {
+        if (this == value) {
+            return true;
+        } else if (value == null) {
+            return false;
         }
 
-        throw new IllegalArgumentException("No type adapter available for given type");
+        if (value instanceof org.apache.qpid.proton4j.amqp.transport.Begin) {
+            return LegacyCodecSupport.areEqual(legacyType, (org.apache.qpid.proton4j.amqp.transport.Begin) value);
+        } else if (value instanceof Begin) {
+            return LegacyCodecSupport.areEqual(legacyType, (Begin) value);
+        }
+
+        return false;
     }
 }

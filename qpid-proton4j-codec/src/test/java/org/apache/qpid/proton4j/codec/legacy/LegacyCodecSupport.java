@@ -17,8 +17,12 @@
 package org.apache.qpid.proton4j.codec.legacy;
 
 import java.util.Arrays;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Map.Entry;
 
 import org.apache.qpid.proton.amqp.Symbol;
+import org.apache.qpid.proton.amqp.transport.Begin;
 import org.apache.qpid.proton.amqp.transport.Open;
 
 /**
@@ -131,6 +135,7 @@ public abstract class LegacyCodecSupport {
      *
      * @return true if the legacy and new types are equal.
      */
+    @SuppressWarnings("unchecked")
     public static boolean areEqual(Open legacyOpen, org.apache.qpid.proton4j.amqp.transport.Open newOpen) {
         if (legacyOpen == null && newOpen == null) {
             return true;
@@ -178,14 +183,9 @@ public abstract class LegacyCodecSupport {
             return false;
         }
 
-        if (legacyOpen.getProperties() == null) {
-            if (newOpen.getProperties() != null) {
-                return false;
-            }
-        } else if (!legacyOpen.getProperties().equals(newOpen.getProperties())) {
+        if (!LegacyCodecSupport.areEqual(legacyOpen.getProperties(), newOpen.getProperties())) {
             return false;
         }
-
         if (!LegacyCodecSupport.areEqual(legacyOpen.getDesiredCapabilities(), newOpen.getDesiredCapabilities())) {
             return false;
         }
@@ -197,6 +197,194 @@ public abstract class LegacyCodecSupport {
         }
         if (!LegacyCodecSupport.areEqual(legacyOpen.getOutgoingLocales(), newOpen.getOutgoingLocales())) {
             return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Compare a legacy Begin to another legacy Begin instance.
+     *
+     * @param legacyType1
+     *      Array of {@link Begin} instances or null
+     * @param legacyType2
+     *      Array of {@link Begin} instances or null.
+     *
+     * @return true if the legacy types are equal.
+     */
+    public static boolean areEqual(Begin legacyType1, Begin legacyType2) {
+        if (legacyType1 == null && legacyType2 == null) {
+            return true;
+        } else if (legacyType1 == null || legacyType2 == null) {
+            return false;
+        }
+
+        if (legacyType1.getHandleMax() == null) {
+            if (legacyType2.getHandleMax() != null) {
+                return false;
+            }
+        } else if (!legacyType1.getHandleMax().equals(legacyType2.getHandleMax())) {
+            return false;
+        }
+        if (legacyType1.getIncomingWindow() == null) {
+            if (legacyType2.getIncomingWindow() != null) {
+                return false;
+            }
+        } else if (!legacyType1.getIncomingWindow().equals(legacyType2.getIncomingWindow())) {
+            return false;
+        }
+        if (legacyType1.getNextOutgoingId() == null) {
+            if (legacyType2.getNextOutgoingId() != null) {
+                return false;
+            }
+        } else if (!legacyType1.getNextOutgoingId().equals(legacyType2.getNextOutgoingId())) {
+            return false;
+        }
+        if (legacyType1.getOutgoingWindow() == null) {
+            if (legacyType2.getOutgoingWindow() != null) {
+                return false;
+            }
+        } else if (!legacyType1.getOutgoingWindow().equals(legacyType2.getOutgoingWindow())) {
+            return false;
+        }
+        if (legacyType1.getRemoteChannel() == null) {
+            if (legacyType2.getNextOutgoingId() != null) {
+                return false;
+            }
+        } else if (!legacyType1.getRemoteChannel().equals(legacyType2.getRemoteChannel())) {
+            return false;
+        }
+        if (legacyType1.getProperties() == null) {
+            if (legacyType2.getProperties() != null) {
+                return false;
+            }
+        } else if (!legacyType1.getProperties().equals(legacyType2.getProperties())) {
+            return false;
+        }
+        if (!Arrays.equals(legacyType1.getDesiredCapabilities(), legacyType2.getDesiredCapabilities())) {
+            return false;
+        }
+        if (!Arrays.equals(legacyType1.getOfferedCapabilities(), legacyType2.getOfferedCapabilities())) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Compare a legacy Begin to an Begin instance using the proton4j Begin type
+     *
+     * @param newBegin
+     *      Array of {@link org.apache.qpid.proton4j.amqp.transport.Begin} instances or null
+     * @param legacyBegin
+     *      Array of {@link Begin} instances or null.
+     *
+     * @return true if the legacy and new types are equal.
+     */
+    public static boolean areEqual(org.apache.qpid.proton4j.amqp.transport.Begin newBegin, Begin legacyBegin) {
+        return areEqual(legacyBegin, newBegin);
+    }
+
+    /**
+     * Compare a legacy Begin to an Begin instance using the proton4j Begin type
+     *
+     * @param legacyBegin
+     *      Array of {@link Begin} instances or null.
+     * @param newBegin
+     *      Array of {@link org.apache.qpid.proton4j.amqp.transport.Begin} instances or null
+     *
+     * @return true if the legacy and new types are equal.
+     */
+    @SuppressWarnings("unchecked")
+    public static boolean areEqual(Begin legacyBegin, org.apache.qpid.proton4j.amqp.transport.Begin newBegin) {
+        if (legacyBegin == null && newBegin == null) {
+            return true;
+        } else if (legacyBegin == null || newBegin == null) {
+            return false;
+        }
+
+        if (legacyBegin.getHandleMax() == null) {
+            if (!newBegin.hasHandleMax()) {
+                return false;
+            }
+        } else if (legacyBegin.getHandleMax().longValue() != newBegin.getHandleMax()) {
+            return false;
+        }
+        if (legacyBegin.getIncomingWindow() == null) {
+            if (!newBegin.hasIncomingWindow()) {
+                return false;
+            }
+        } else if (legacyBegin.getIncomingWindow().longValue() != newBegin.getIncomingWindow()) {
+            return false;
+        }
+        if (legacyBegin.getNextOutgoingId() == null) {
+            if (!newBegin.hasNextOutgoingId()) {
+                return false;
+            }
+        } else if (legacyBegin.getNextOutgoingId().longValue() != newBegin.getNextOutgoingId()) {
+            return false;
+        }
+        if (legacyBegin.getOutgoingWindow() == null) {
+            if (!newBegin.hasOutgoingWindow()) {
+                return false;
+            }
+        } else if (legacyBegin.getOutgoingWindow().longValue() != newBegin.getOutgoingWindow()) {
+            return false;
+        }
+        if (legacyBegin.getRemoteChannel() == null) {
+            if (!newBegin.hasRemoteChannel()) {
+                return false;
+            }
+        } else if (legacyBegin.getRemoteChannel().longValue() != newBegin.getRemoteChannel()) {
+            return false;
+        }
+        if (!LegacyCodecSupport.areEqual(legacyBegin.getProperties(), newBegin.getProperties())) {
+            return false;
+        }
+        if (!LegacyCodecSupport.areEqual(legacyBegin.getDesiredCapabilities(), newBegin.getDesiredCapabilities())) {
+            return false;
+        }
+        if (!LegacyCodecSupport.areEqual(legacyBegin.getOfferedCapabilities(), newBegin.getOfferedCapabilities())) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Compare a legacy Properties Map to an new Properties Map using the proton4j Symbol type keys
+     *
+     * @param legacy
+     *      Array of {@link Map} instances or null.
+     * @param properties
+     *      Array of {@link Map} instances or null
+     *
+     * @return true if the arrays contain matching underlying Map values in the same order.
+     */
+    public static boolean areEqual(Map<Symbol, Object> legacy, Map<org.apache.qpid.proton4j.amqp.Symbol, Object> properties) {
+        if (legacy == null && properties == null) {
+            return true;
+        } else if (legacy == null || properties == null) {
+            return false;
+        }
+
+        if (properties.size() != legacy.size()) {
+            return false;
+        }
+
+        Iterator<Entry<Symbol, Object>> legacyEntries = legacy.entrySet().iterator();
+        Iterator<Entry<org.apache.qpid.proton4j.amqp.Symbol, Object>> propertiesEntries = properties.entrySet().iterator();
+
+        while (legacyEntries.hasNext()) {
+            Entry<Symbol, Object> legacyEntry = legacyEntries.next();
+            Entry<org.apache.qpid.proton4j.amqp.Symbol, Object> propertyEntry = propertiesEntries.next();
+
+            if (!legacyEntry.getKey().toString().equals(propertyEntry.getKey().toString())) {
+                return false;
+            }
+            if (!legacyEntry.getValue().equals(propertyEntry.getValue())) {
+                return false;
+            }
         }
 
         return true;

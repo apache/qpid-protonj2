@@ -27,6 +27,7 @@ import org.apache.qpid.proton.codec.AMQPDefinedTypes;
 import org.apache.qpid.proton.codec.DecoderImpl;
 import org.apache.qpid.proton.codec.EncoderImpl;
 import org.apache.qpid.proton4j.amqp.Symbol;
+import org.apache.qpid.proton4j.amqp.transport.Begin;
 import org.apache.qpid.proton4j.amqp.transport.Open;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
@@ -138,6 +139,45 @@ public final class LegacyCodecAdapter {
         }
 
         return legacyOpen;
+    }
+
+    /**
+     * Transcribe a new Codec type to a legacy type for encoding or other operation that requires a legacy type.
+     *
+     * @param begin
+     *      The new codec type to be converted to the legacy codec version
+     *
+     * @return the legacy version of the new type.
+     */
+    public org.apache.qpid.proton.amqp.transport.Begin transcribeToLegacyType(Begin begin) {
+        org.apache.qpid.proton.amqp.transport.Begin legacyBegin = new org.apache.qpid.proton.amqp.transport.Begin();
+
+        if (begin.hasHandleMax()) {
+            legacyBegin.setHandleMax(UnsignedInteger.valueOf(begin.getHandleMax()));
+        }
+        if (begin.hasIncomingWindow()) {
+            legacyBegin.setIncomingWindow(UnsignedInteger.valueOf(begin.getIncomingWindow()));
+        }
+        if (begin.hasNextOutgoingId()) {
+            legacyBegin.setNextOutgoingId(UnsignedInteger.valueOf(begin.getNextOutgoingId()));
+        }
+        if (begin.hasOutgoingWindow()) {
+            legacyBegin.setOutgoingWindow(UnsignedInteger.valueOf(begin.getOutgoingWindow()));
+        }
+        if (begin.hasRemoteChannel()) {
+            legacyBegin.setRemoteChannel(UnsignedShort.valueOf((short) begin.getRemoteChannel()));
+        }
+        if (begin.hasOfferedCapabilites()) {
+            legacyBegin.setOfferedCapabilities(transcribeToLegacyType(begin.getOfferedCapabilities()));
+        }
+        if (begin.hasDesiredCapabilites()) {
+            legacyBegin.setDesiredCapabilities(transcribeToLegacyType(begin.getDesiredCapabilities()));
+        }
+        if (begin.hasProperties()) {
+            legacyBegin.setProperties(transcribeToLegacyType(begin.getProperties()));
+        }
+
+        return legacyBegin;
     }
 
     /**

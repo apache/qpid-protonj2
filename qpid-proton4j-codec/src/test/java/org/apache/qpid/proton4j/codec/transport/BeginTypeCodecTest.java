@@ -29,6 +29,8 @@ import org.apache.qpid.proton4j.amqp.transport.Begin;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.codec.CodecTestSupport;
+import org.apache.qpid.proton4j.codec.legacy.LegacyCodecSupport;
+import org.apache.qpid.proton4j.codec.legacy.LegacyTypeAdapter;
 import org.junit.Test;
 
 public class BeginTypeCodecTest extends CodecTestSupport {
@@ -67,5 +69,62 @@ public class BeginTypeCodecTest extends CodecTestSupport {
        assertTrue(properties.containsKey(Symbol.valueOf("property")));
        assertArrayEquals(offeredCapabilities, result.getOfferedCapabilities());
        assertArrayEquals(desiredCapabilities, result.getDesiredCapabilities());
+    }
+
+    @Test
+    public void testEncodeUsingNewCodecAndDecodeWithLegacyCodec() throws Exception {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        Symbol[] offeredCapabilities = new Symbol[] {Symbol.valueOf("Cap-1"), Symbol.valueOf("Cap-2")};
+        Symbol[] desiredCapabilities = new Symbol[] {Symbol.valueOf("Cap-3"), Symbol.valueOf("Cap-4")};
+        Map<Symbol, Object> properties = new HashMap<>();
+        properties.put(Symbol.valueOf("property"), "value");
+
+        Begin input = new Begin();
+
+        input.setRemoteChannel(16);
+        input.setNextOutgoingId(24);
+        input.setIncomingWindow(32);
+        input.setOutgoingWindow(12);
+        input.setHandleMax(255);
+        input.setOfferedCapabilities(offeredCapabilities);
+        input.setDesiredCapabilities(desiredCapabilities);
+        input.setProperties(properties);
+
+        encoder.writeObject(buffer, encoderState, input);
+        LegacyTypeAdapter<?, ?> result = legacyCodec.decodeLegacyType(buffer);
+
+        assertNotNull(result);
+        assertEquals(result, input);
+    }
+
+    @Test
+    public void testEncodeUsingLegacyCodecAndDecodeWithNewCodec() throws Exception {
+        Symbol[] offeredCapabilities = new Symbol[] {Symbol.valueOf("Cap-1"), Symbol.valueOf("Cap-2")};
+        Symbol[] desiredCapabilities = new Symbol[] {Symbol.valueOf("Cap-3"), Symbol.valueOf("Cap-4")};
+        Map<Symbol, Object> properties = new HashMap<>();
+        properties.put(Symbol.valueOf("property"), "value");
+
+        Begin input = new Begin();
+
+        input.setRemoteChannel(16);
+        input.setNextOutgoingId(24);
+        input.setIncomingWindow(32);
+        input.setOutgoingWindow(12);
+        input.setHandleMax(255);
+        input.setOfferedCapabilities(offeredCapabilities);
+        input.setDesiredCapabilities(desiredCapabilities);
+        input.setProperties(properties);
+
+        org.apache.qpid.proton.amqp.transport.Begin legacyBegin = legacyCodec.transcribeToLegacyType( input);
+
+        ProtonBuffer buffer = legacyCodec.encodeUsingLegacyEncoder(legacyBegin);
+        assertNotNull(buffer);
+
+        final Begin result = (Begin) decoder.readObject(buffer, decoderState);
+        assertNotNull(result);
+
+        assertTrue(LegacyCodecSupport.areEqual(legacyBegin, input));
+        assertTrue(LegacyCodecSupport.areEqual(legacyBegin, result));
     }
 }
