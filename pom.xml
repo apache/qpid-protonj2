@@ -122,6 +122,7 @@
         <groupId>org.apache.qpid</groupId>
         <artifactId>proton-j</artifactId>
         <version>${proton-version}</version>
+        <scope>test</scope>
       </dependency>
       <dependency>
         <groupId>org.apache.qpid</groupId>
