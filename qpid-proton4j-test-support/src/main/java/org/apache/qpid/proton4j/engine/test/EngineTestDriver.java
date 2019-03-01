@@ -16,14 +16,12 @@
  */
 package org.apache.qpid.proton4j.engine.test;
 
-import org.apache.qpid.proton.engine.Engine;
+import org.apache.qpid.proton4j.amqp.Binary;
 
 /**
  * Test driver object used to drive inputs and inspect outputs of an Engine.
  */
 public class EngineTestDriver {
-
-    private final Engine engine;
 
     /**
      * Create a test driver instance connected to the given Engine instance.
@@ -31,14 +29,35 @@ public class EngineTestDriver {
      * @param engine
      *      the engine to be tested.
      */
-    public EngineTestDriver(Engine engine) {
-        this.engine = engine;
+    public EngineTestDriver() {
     }
 
     /**
-     * @return the Engine being tested.
+     * @param error
+     *      The error that describes why the assertion failed.
      */
-    public Engine getEngine() {
-        return engine;
+    public void assertionFailed(AssertionError error) {
+        // TODO ?
+    }
+
+    /**
+     * @param _type
+     * @param _channel
+     * @param _frameDescribedType
+     * @param _framePayload
+     * @param _deferWrite
+     * @param _sendDelay
+     */
+    public void sendFrame(FrameType _type, int _channel, ListDescribedType _frameDescribedType, Binary _framePayload, boolean _deferWrite, long _sendDelay) {
+        // TODO Auto-generated method stub
+
+    }
+
+    /**
+     * @param _response
+     */
+    public void sendHeader(byte[] _response) {
+        // TODO Auto-generated method stub
+
     }
 }

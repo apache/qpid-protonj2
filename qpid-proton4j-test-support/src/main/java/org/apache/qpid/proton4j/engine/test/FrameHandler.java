@@ -16,20 +16,11 @@
  */
 package org.apache.qpid.proton4j.engine.test;
 
-/**
- * Factory for creating Proton Engine test driver instances.
- */
-public abstract class EngineTestDriverFactory {
+import org.apache.qpid.proton4j.amqp.Binary;
+import org.apache.qpid.proton4j.amqp.DescribedType;
 
-    /**
-     * Create an EngineTestDriver linked to the given Engine and configure it for use in tests.
-     *
-     * @param engine
-     *      The engine implementation to test.
-     *
-     * @return an engine test driver to use when testing the engine implementation.
-     */
-    public static EngineTestDriver createDriver() {
-        return new EngineTestDriver();
-    }
+interface FrameHandler extends Handler {
+
+    void frame(int type, int channel, int frameBodySize, DescribedType describedType, Binary payload, EngineTestDriver peer);
+
 }

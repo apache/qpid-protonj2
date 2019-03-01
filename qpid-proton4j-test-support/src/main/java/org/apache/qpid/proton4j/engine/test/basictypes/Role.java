@@ -14,22 +14,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.qpid.proton4j.engine.test;
+package org.apache.qpid.proton4j.engine.test.basictypes;
 
-/**
- * Factory for creating Proton Engine test driver instances.
- */
-public abstract class EngineTestDriverFactory {
+public class Role {
 
-    /**
-     * Create an EngineTestDriver linked to the given Engine and configure it for use in tests.
-     *
-     * @param engine
-     *      The engine implementation to test.
-     *
-     * @return an engine test driver to use when testing the engine implementation.
-     */
-    public static EngineTestDriver createDriver() {
-        return new EngineTestDriver();
+    public static final boolean SENDER = false;
+    public static final boolean RECEIVER = true;
+
+    private Role() {
+        // No instances
     }
 }

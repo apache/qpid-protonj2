@@ -14,22 +14,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.qpid.proton4j.engine.test;
+package org.apache.qpid.proton4j.engine.test.basictypes;
 
-/**
- * Factory for creating Proton Engine test driver instances.
- */
-public abstract class EngineTestDriverFactory {
+import org.apache.qpid.proton4j.amqp.Symbol;
 
-    /**
-     * Create an EngineTestDriver linked to the given Engine and configure it for use in tests.
-     *
-     * @param engine
-     *      The engine implementation to test.
-     *
-     * @return an engine test driver to use when testing the engine implementation.
-     */
-    public static EngineTestDriver createDriver() {
-        return new EngineTestDriver();
+public class LinkError {
+
+    public static final Symbol DETACH_FORCED = Symbol.valueOf("amqp:link:detach-forced");
+    public static final Symbol TRANSFER_LIMIT_EXCEEDED = Symbol.valueOf("amqp:link:transfer-limit-exceeded");
+    public static final Symbol MESSAGE_SIZE_EXCEEDED = Symbol.valueOf("amqp:link:message-size-exceeded");
+    public static final Symbol REDIRECT = Symbol.valueOf("amqp:link:redirect");
+    public static final Symbol STOLEN = Symbol.valueOf("amqp:link:stolen");
+
+    private LinkError() {
+        // No instances
     }
 }

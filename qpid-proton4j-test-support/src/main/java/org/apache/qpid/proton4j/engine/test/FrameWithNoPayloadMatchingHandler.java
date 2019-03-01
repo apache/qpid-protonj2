@@ -16,20 +16,21 @@
  */
 package org.apache.qpid.proton4j.engine.test;
 
-/**
- * Factory for creating Proton Engine test driver instances.
- */
-public abstract class EngineTestDriverFactory {
+import org.apache.qpid.proton4j.amqp.Binary;
+import org.apache.qpid.proton4j.amqp.Symbol;
+import org.apache.qpid.proton4j.amqp.UnsignedLong;
 
-    /**
-     * Create an EngineTestDriver linked to the given Engine and configure it for use in tests.
-     *
-     * @param engine
-     *      The engine implementation to test.
-     *
-     * @return an engine test driver to use when testing the engine implementation.
-     */
-    public static EngineTestDriver createDriver() {
-        return new EngineTestDriver();
+public class FrameWithNoPayloadMatchingHandler extends AbstractFrameFieldAndPayloadMatchingHandler {
+
+    protected FrameWithNoPayloadMatchingHandler(FrameType frameType, int channel, UnsignedLong numericDescriptor, Symbol symbolicDescriptor) {
+        super(frameType, channel, 0, numericDescriptor, symbolicDescriptor);
+    }
+
+    @Override
+    protected final void verifyPayload(Binary payload) {
+        logger.debug("About to check that there is no payload");
+        if (payload != null && payload.getLength() > 0) {
+            throw new AssertionError("Expected no payload but received payload of length: " + payload.getLength());
+        }
     }
 }

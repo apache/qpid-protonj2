@@ -14,22 +14,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.qpid.proton4j.engine.test;
+package org.apache.qpid.proton4j.engine.test.basictypes;
 
-/**
- * Factory for creating Proton Engine test driver instances.
- */
-public abstract class EngineTestDriverFactory {
+import org.apache.qpid.proton4j.amqp.Symbol;
 
-    /**
-     * Create an EngineTestDriver linked to the given Engine and configure it for use in tests.
-     *
-     * @param engine
-     *      The engine implementation to test.
-     *
-     * @return an engine test driver to use when testing the engine implementation.
-     */
-    public static EngineTestDriver createDriver() {
-        return new EngineTestDriver();
+public class SessionError {
+
+    public static final Symbol WINDOW_VIOLATION = Symbol.valueOf("amqp:session:window-violation");
+    public static final Symbol ERRANT_LINK = Symbol.valueOf("amqp:session:errant-link");
+    public static final Symbol HANDLE_IN_USE = Symbol.valueOf("amqp:session:handle-in-use");
+    public static final Symbol UNATTACHED_HANDLE = Symbol.valueOf("amqp:session:unattached-handle");
+
+    private SessionError() {
+        // No instances
     }
 }

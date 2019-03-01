@@ -14,22 +14,33 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.qpid.proton4j.engine.test;
+package org.apache.qpid.proton4j.engine.test.describedtypes.sections;
 
-/**
- * Factory for creating Proton Engine test driver instances.
- */
-public abstract class EngineTestDriverFactory {
+import org.apache.qpid.proton4j.amqp.Binary;
+import org.apache.qpid.proton4j.amqp.DescribedType;
+import org.apache.qpid.proton4j.amqp.Symbol;
 
-    /**
-     * Create an EngineTestDriver linked to the given Engine and configure it for use in tests.
-     *
-     * @param engine
-     *      The engine implementation to test.
-     *
-     * @return an engine test driver to use when testing the engine implementation.
-     */
-    public static EngineTestDriver createDriver() {
-        return new EngineTestDriver();
+public class DataDescribedType implements DescribedType {
+
+    private static final Symbol DESCIPTOR_SYMBOL = Symbol.valueOf("amqp:data:binary");
+
+    private Binary described;
+
+    public DataDescribedType(Binary described) {
+        if (described == null) {
+            throw new IllegalArgumentException("provided Binary must not be null");
+        }
+
+        this.described = described;
+    }
+
+    @Override
+    public Object getDescriptor() {
+        return DESCIPTOR_SYMBOL;
+    }
+
+    @Override
+    public Object getDescribed() {
+        return described;
     }
 }

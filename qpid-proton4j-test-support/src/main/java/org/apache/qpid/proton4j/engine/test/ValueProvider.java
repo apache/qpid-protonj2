@@ -17,19 +17,11 @@
 package org.apache.qpid.proton4j.engine.test;
 
 /**
- * Factory for creating Proton Engine test driver instances.
+ * Typically used by {@link FrameSender} to dynamically set values on the
+ * outgoing frame, based on the values of the incoming one.
  */
-public abstract class EngineTestDriverFactory {
+public interface ValueProvider {
 
-    /**
-     * Create an EngineTestDriver linked to the given Engine and configure it for use in tests.
-     *
-     * @param engine
-     *      The engine implementation to test.
-     *
-     * @return an engine test driver to use when testing the engine implementation.
-     */
-    public static EngineTestDriver createDriver() {
-        return new EngineTestDriver();
-    }
+    void setValues();
+
 }

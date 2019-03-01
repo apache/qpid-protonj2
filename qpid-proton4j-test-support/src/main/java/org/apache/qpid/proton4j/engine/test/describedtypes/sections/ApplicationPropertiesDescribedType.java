@@ -14,22 +14,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.qpid.proton4j.engine.test;
+package org.apache.qpid.proton4j.engine.test.describedtypes.sections;
 
-/**
- * Factory for creating Proton Engine test driver instances.
- */
-public abstract class EngineTestDriverFactory {
+import org.apache.qpid.proton4j.amqp.Symbol;
+import org.apache.qpid.proton4j.engine.test.MapDescribedType;
 
-    /**
-     * Create an EngineTestDriver linked to the given Engine and configure it for use in tests.
-     *
-     * @param engine
-     *      The engine implementation to test.
-     *
-     * @return an engine test driver to use when testing the engine implementation.
-     */
-    public static EngineTestDriver createDriver() {
-        return new EngineTestDriver();
+public class ApplicationPropertiesDescribedType extends MapDescribedType {
+
+    private static final Symbol DESCIPTOR_SYMBOL = Symbol.valueOf("amqp:application-properties:map");
+
+    @Override
+    public Object getDescriptor() {
+        return DESCIPTOR_SYMBOL;
+    }
+
+    public void setApplicationProperty(String name, Object value) {
+        if (name == null) {
+            throw new RuntimeException("ApplicationProperties maps must use non-null String keys");
+        }
+
+        getDescribed().put(name, value);
     }
 }

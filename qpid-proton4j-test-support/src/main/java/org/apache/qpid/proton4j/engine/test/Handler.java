@@ -17,19 +17,13 @@
 package org.apache.qpid.proton4j.engine.test;
 
 /**
- * Factory for creating Proton Engine test driver instances.
+ * Handles incoming AMQP data, usually asserting that it matches expectations
+ * and potentially generating a response.
  */
-public abstract class EngineTestDriverFactory {
+interface Handler {
 
-    /**
-     * Create an EngineTestDriver linked to the given Engine and configure it for use in tests.
-     *
-     * @param engine
-     *      The engine implementation to test.
-     *
-     * @return an engine test driver to use when testing the engine implementation.
-     */
-    public static EngineTestDriver createDriver() {
-        return new EngineTestDriver();
-    }
+    Runnable getOnCompletionAction();
+
+    Handler onCompletion(Runnable onCompletion);
+
 }

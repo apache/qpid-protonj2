@@ -14,22 +14,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.qpid.proton4j.engine.test;
+package org.apache.qpid.proton4j.engine.test.describedtypes;
 
-/**
- * Factory for creating Proton Engine test driver instances.
- */
-public abstract class EngineTestDriverFactory {
+import org.apache.qpid.proton4j.amqp.Symbol;
+import org.apache.qpid.proton4j.amqp.UnsignedLong;
+import org.apache.qpid.proton4j.engine.test.ListDescribedType;
 
-    /**
-     * Create an EngineTestDriver linked to the given Engine and configure it for use in tests.
-     *
-     * @param engine
-     *      The engine implementation to test.
-     *
-     * @return an engine test driver to use when testing the engine implementation.
-     */
-    public static EngineTestDriver createDriver() {
-        return new EngineTestDriver();
+public class DeleteOnClose extends ListDescribedType {
+
+    public static final Symbol DESCRIPTOR_SYMBOL = Symbol.valueOf("amqp:delete-on-close:list");
+    public static final UnsignedLong DESCRIPTOR_CODE = UnsignedLong.valueOf(0x000000000000002bL);
+
+    public DeleteOnClose(Object... fields) {
+        super(0);
+        int i = 0;
+        for (Object field : fields) {
+            getFields()[i++] = field;
+        }
+    }
+
+    @Override
+    public Symbol getDescriptor() {
+        return DESCRIPTOR_SYMBOL;
     }
 }
