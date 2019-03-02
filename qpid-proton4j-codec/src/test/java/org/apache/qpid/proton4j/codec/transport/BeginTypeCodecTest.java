@@ -29,6 +29,7 @@ import org.apache.qpid.proton4j.amqp.transport.Begin;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.codec.CodecTestSupport;
+import org.apache.qpid.proton4j.codec.legacy.LegacyCodecAdapter;
 import org.apache.qpid.proton4j.codec.legacy.LegacyCodecSupport;
 import org.apache.qpid.proton4j.codec.legacy.LegacyTypeAdapter;
 import org.junit.Test;
@@ -116,7 +117,7 @@ public class BeginTypeCodecTest extends CodecTestSupport {
         input.setDesiredCapabilities(desiredCapabilities);
         input.setProperties(properties);
 
-        org.apache.qpid.proton.amqp.transport.Begin legacyBegin = legacyCodec.transcribeToLegacyType( input);
+        org.apache.qpid.proton.amqp.transport.Begin legacyBegin = LegacyCodecAdapter.transcribeToLegacyType(input);
 
         ProtonBuffer buffer = legacyCodec.encodeUsingLegacyEncoder(legacyBegin);
         assertNotNull(buffer);

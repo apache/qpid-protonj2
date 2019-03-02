@@ -29,6 +29,7 @@ import org.apache.qpid.proton4j.amqp.transport.Open;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.codec.CodecTestSupport;
+import org.apache.qpid.proton4j.codec.legacy.LegacyCodecAdapter;
 import org.apache.qpid.proton4j.codec.legacy.LegacyCodecSupport;
 import org.apache.qpid.proton4j.codec.legacy.LegacyTypeAdapter;
 import org.junit.Test;
@@ -100,7 +101,7 @@ public class OpenTypeCodecTest extends CodecTestSupport {
         input.setOfferedCapabilities(offeredCapabilities);
         input.setDesiredCapabilities(desiredCapabilities);
 
-        org.apache.qpid.proton.amqp.transport.Open legacyOpen = legacyCodec.transcribeToLegacyType( input);
+        org.apache.qpid.proton.amqp.transport.Open legacyOpen = LegacyCodecAdapter.transcribeToLegacyType(input);
 
         ProtonBuffer buffer = legacyCodec.encodeUsingLegacyEncoder(legacyOpen);
         assertNotNull(buffer);

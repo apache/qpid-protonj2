@@ -18,23 +18,30 @@ package org.apache.qpid.proton4j.codec.legacy;
 
 import org.apache.qpid.proton.amqp.transport.Attach;
 import org.apache.qpid.proton.amqp.transport.Begin;
-import org.apache.qpid.proton.amqp.transport.Open;
 
 /**
- * Factory for {@link LegacyTypeAdapter} instances
+ * Adapt from the new proton4j Attach to the legacy proton-j Attach
  */
-public abstract class LegacyTypeAdapterFactory {
+public class LegacyAttachTypeAdapter extends LegacyTypeAdapter<Attach, org.apache.qpid.proton4j.amqp.transport.Attach> {
 
-    public static LegacyTypeAdapter<?, ?> createTypeAdapter(Object legacyType) {
+    public LegacyAttachTypeAdapter(Attach legacyType) {
+        super(legacyType);
+    }
 
-        if (legacyType instanceof Open) {
-            return new LegacyOpenTypeAdapter((Open) legacyType);
-        } else if (legacyType instanceof Begin) {
-            return new LegacyBeginTypeAdapter((Begin) legacyType);
-        } else if (legacyType instanceof Attach) {
-            return new LegacyBeginTypeAdapter((Begin) legacyType);
+    @Override
+    public boolean equals(Object value) {
+        if (this == value) {
+            return true;
+        } else if (value == null) {
+            return false;
         }
 
-        throw new IllegalArgumentException("No type adapter available for given type");
+        if (value instanceof org.apache.qpid.proton4j.amqp.transport.Attach) {
+            return LegacyCodecSupport.areEqual(legacyType, (org.apache.qpid.proton4j.amqp.transport.Attach) value);
+        } else if (value instanceof Begin) {
+            return LegacyCodecSupport.areEqual(legacyType, (Attach) value);
+        }
+
+        return false;
     }
 }
