@@ -18,6 +18,7 @@ package org.apache.qpid.proton4j.codec.transport;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
@@ -25,13 +26,11 @@ import java.io.IOException;
 
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedInteger;
+import org.apache.qpid.proton4j.amqp.UnsignedShort;
 import org.apache.qpid.proton4j.amqp.transport.Open;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.codec.CodecTestSupport;
-import org.apache.qpid.proton4j.codec.legacy.LegacyCodecAdapter;
-import org.apache.qpid.proton4j.codec.legacy.LegacyCodecSupport;
-import org.apache.qpid.proton4j.codec.legacy.LegacyTypeAdapter;
 import org.junit.Test;
 
 public class OpenTypeCodecTest extends CodecTestSupport {
@@ -81,10 +80,15 @@ public class OpenTypeCodecTest extends CodecTestSupport {
         input.setDesiredCapabilities(desiredCapabilities);
 
         encoder.writeObject(buffer, encoderState, input);
-        LegacyTypeAdapter<?, ?> result = legacyCodec.decodeLegacyType(buffer);
+        Object decoded = legacyCodec.decodeLegacyType(buffer);
+        assertTrue(decoded instanceof Open);
+        final Open result = (Open) decoded;
 
         assertNotNull(result);
-        assertEquals(result, input);
+        assertTrue(areEqual(input, result));
+
+        input.setChannelMax(UnsignedShort.valueOf((short) 32767));
+        assertFalse(areEqual(input, result));
     }
 
     @Test
@@ -101,15 +105,12 @@ public class OpenTypeCodecTest extends CodecTestSupport {
         input.setOfferedCapabilities(offeredCapabilities);
         input.setDesiredCapabilities(desiredCapabilities);
 
-        org.apache.qpid.proton.amqp.transport.Open legacyOpen = LegacyCodecAdapter.transcribeToLegacyType(input);
-
-        ProtonBuffer buffer = legacyCodec.encodeUsingLegacyEncoder(legacyOpen);
+        ProtonBuffer buffer = legacyCodec.encodeUsingLegacyEncoder(input);
         assertNotNull(buffer);
 
         final Open result = (Open) decoder.readObject(buffer, decoderState);
         assertNotNull(result);
 
-        assertTrue(LegacyCodecSupport.areEqual(legacyOpen, input));
-        assertTrue(LegacyCodecSupport.areEqual(legacyOpen, result));
+        assertTrue(areEqual(input, result));
     }
 }

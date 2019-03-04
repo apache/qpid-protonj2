@@ -22,6 +22,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 import org.apache.qpid.proton4j.amqp.Symbol;
@@ -29,9 +30,6 @@ import org.apache.qpid.proton4j.amqp.transport.Begin;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.codec.CodecTestSupport;
-import org.apache.qpid.proton4j.codec.legacy.LegacyCodecAdapter;
-import org.apache.qpid.proton4j.codec.legacy.LegacyCodecSupport;
-import org.apache.qpid.proton4j.codec.legacy.LegacyTypeAdapter;
 import org.junit.Test;
 
 public class BeginTypeCodecTest extends CodecTestSupport {
@@ -78,7 +76,7 @@ public class BeginTypeCodecTest extends CodecTestSupport {
 
         Symbol[] offeredCapabilities = new Symbol[] {Symbol.valueOf("Cap-1"), Symbol.valueOf("Cap-2")};
         Symbol[] desiredCapabilities = new Symbol[] {Symbol.valueOf("Cap-3"), Symbol.valueOf("Cap-4")};
-        Map<Symbol, Object> properties = new HashMap<>();
+        Map<Symbol, Object> properties = new LinkedHashMap<>();
         properties.put(Symbol.valueOf("property"), "value");
 
         Begin input = new Begin();
@@ -93,10 +91,12 @@ public class BeginTypeCodecTest extends CodecTestSupport {
         input.setProperties(properties);
 
         encoder.writeObject(buffer, encoderState, input);
-        LegacyTypeAdapter<?, ?> result = legacyCodec.decodeLegacyType(buffer);
+        Object decoded = legacyCodec.decodeLegacyType(buffer);
+        assertTrue(decoded instanceof Begin);
+        final Begin result = (Begin) decoded;
 
         assertNotNull(result);
-        assertEquals(result, input);
+        assertTrue(areEqual(input, result));
     }
 
     @Test
@@ -117,15 +117,12 @@ public class BeginTypeCodecTest extends CodecTestSupport {
         input.setDesiredCapabilities(desiredCapabilities);
         input.setProperties(properties);
 
-        org.apache.qpid.proton.amqp.transport.Begin legacyBegin = LegacyCodecAdapter.transcribeToLegacyType(input);
-
-        ProtonBuffer buffer = legacyCodec.encodeUsingLegacyEncoder(legacyBegin);
+        ProtonBuffer buffer = legacyCodec.encodeUsingLegacyEncoder(input);
         assertNotNull(buffer);
 
         final Begin result = (Begin) decoder.readObject(buffer, decoderState);
         assertNotNull(result);
 
-        assertTrue(LegacyCodecSupport.areEqual(legacyBegin, input));
-        assertTrue(LegacyCodecSupport.areEqual(legacyBegin, result));
+        assertTrue(areEqual(input, result));
     }
 }
