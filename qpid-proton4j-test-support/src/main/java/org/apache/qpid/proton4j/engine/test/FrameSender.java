@@ -26,11 +26,9 @@ public class FrameSender implements Runnable {
     private final Binary framePayload;
     private ValueProvider valueProvider;
     private int channel;
-    private boolean deferWrite = false;
-    private long sendDelay = 0;
 
-    FrameSender(EngineTestDriver testAmqpPeer, FrameType type, int channel, ListDescribedType frameDescribedType, Binary framePayload) {
-        this.testAmqpPeer = testAmqpPeer;
+    FrameSender(EngineTestDriver testDriver, FrameType type, int channel, ListDescribedType frameDescribedType, Binary framePayload) {
+        this.testAmqpPeer = testDriver;
         this.type = type;
         this.channel = channel;
         this.frameDescribedType = frameDescribedType;
@@ -43,7 +41,7 @@ public class FrameSender implements Runnable {
             valueProvider.setValues();
         }
 
-        testAmqpPeer.sendFrame(type, channel, frameDescribedType, framePayload, deferWrite, sendDelay);
+        testAmqpPeer.sendFrame(type, channel, frameDescribedType, framePayload);
     }
 
     public FrameSender setValueProvider(ValueProvider valueProvider) {
@@ -54,14 +52,5 @@ public class FrameSender implements Runnable {
     public FrameSender setChannel(int channel) {
         this.channel = channel;
         return this;
-    }
-
-    public FrameSender setDeferWrite(boolean deferWrite) {
-        this.deferWrite = deferWrite;
-        return this;
-    }
-
-    public void setSendDelay(long _sendDelay) {
-        this.sendDelay = _sendDelay;
     }
 }
