@@ -17,6 +17,8 @@
 package org.apache.qpid.proton4j.engine.test;
 
 import java.io.IOException;
+import java.util.ArrayDeque;
+import java.util.Queue;
 import java.util.function.Consumer;
 
 import org.apache.qpid.proton4j.amqp.Binary;
@@ -51,6 +53,11 @@ public class EngineTestDriver {
     private long lastInitiatedCoordinatorLinkHandle = -1;
     private int advertisedIdleTimeout = 0;
     private volatile int emptyFrameCount;
+
+    /**
+     *  Holds the expectations for processing of data from the peer under test.
+     */
+    private final Queue<Handler> handlers = new ArrayDeque<>();
 
     /**
      * Create a test driver instance connected to the given Engine instance.
@@ -154,5 +161,23 @@ public class EngineTestDriver {
     public void signalFailureToEngine(IOException ex) {
         // TODO Auto-generated method stub
 
+    }
+
+    //----- Expectations
+
+    public void expectHeader(AMQPHeader header) {
+        expectHeader(header, null);
+    }
+
+    public void expectHeader(byte[] headerBytes) {
+        expectHeader(headerBytes, null);
+    }
+
+    public void expectHeader(AMQPHeader header, AMQPHeader response) {
+        // TODO
+    }
+
+    public void expectHeader(byte[] headerBytes, byte[] responseBytes) {
+        expectHeader(new AMQPHeader(headerBytes), new AMQPHeader(responseBytes));
     }
 }
