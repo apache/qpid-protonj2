@@ -48,7 +48,10 @@ import org.apache.qpid.proton4j.amqp.transactions.Declared;
 import org.apache.qpid.proton4j.amqp.transactions.TransactionalState;
 import org.apache.qpid.proton4j.amqp.transport.Attach;
 import org.apache.qpid.proton4j.amqp.transport.Begin;
+import org.apache.qpid.proton4j.amqp.transport.Close;
 import org.apache.qpid.proton4j.amqp.transport.DeliveryState;
+import org.apache.qpid.proton4j.amqp.transport.Detach;
+import org.apache.qpid.proton4j.amqp.transport.End;
 import org.apache.qpid.proton4j.amqp.transport.ErrorCondition;
 import org.apache.qpid.proton4j.amqp.transport.Open;
 import org.apache.qpid.proton4j.amqp.transport.ReceiverSettleMode;
@@ -127,10 +130,16 @@ public abstract class LegacyToCodecType {
         // Transport Types
         if (legacyType instanceof org.apache.qpid.proton.amqp.transport.Open) {
             return convertToCodecType((org.apache.qpid.proton.amqp.transport.Open) legacyType);
+        } else if (legacyType instanceof org.apache.qpid.proton.amqp.transport.Close) {
+            return convertToCodecType((org.apache.qpid.proton.amqp.transport.Close) legacyType);
         } else if (legacyType instanceof org.apache.qpid.proton.amqp.transport.Begin) {
             return convertToCodecType((org.apache.qpid.proton.amqp.transport.Begin) legacyType);
+        } else if (legacyType instanceof org.apache.qpid.proton.amqp.transport.End) {
+            return convertToCodecType((org.apache.qpid.proton.amqp.transport.End) legacyType);
         } else if (legacyType instanceof org.apache.qpid.proton.amqp.transport.Attach) {
             return convertToCodecType((org.apache.qpid.proton.amqp.transport.Attach) legacyType);
+        } else if (legacyType instanceof org.apache.qpid.proton.amqp.transport.Detach) {
+            return convertToCodecType((org.apache.qpid.proton.amqp.transport.Detach) legacyType);
         } else if (legacyType instanceof org.apache.qpid.proton.amqp.transport.ErrorCondition) {
             return convertToCodecType((org.apache.qpid.proton.amqp.transport.ErrorCondition) legacyType);
         } else if (legacyType instanceof org.apache.qpid.proton.amqp.transport.DeliveryState) {
@@ -191,6 +200,24 @@ public abstract class LegacyToCodecType {
     /**
      * convert a legacy type to a new codec type for encoding or other operation that requires a new type.
      *
+     * @param legacyClose
+     *      The legacy type to be converted into a new codec equivalent type.
+     *
+     * @return the new codec version of the legacy type.
+     */
+    public static Close convertToCodecType(org.apache.qpid.proton.amqp.transport.Close legacyClose) {
+        Close close = new Close();
+
+        if (legacyClose.getError() != null) {
+            close.setError(convertToCodecType(legacyClose.getError()));
+        }
+
+        return close;
+    }
+
+    /**
+     * convert a legacy type to a new codec type for encoding or other operation that requires a new type.
+     *
      * @param legacyBegin
      *      The legacy type to be converted into a new codec equivalent type.
      *
@@ -226,6 +253,24 @@ public abstract class LegacyToCodecType {
         }
 
         return begin;
+    }
+
+    /**
+     * convert a legacy type to a new codec type for encoding or other operation that requires a new type.
+     *
+     * @param legacyEnd
+     *      The legacy type to be converted into a new codec equivalent type.
+     *
+     * @return the new codec version of the legacy type.
+     */
+    public static End convertToCodecType(org.apache.qpid.proton.amqp.transport.End legacyEnd) {
+        End end = new End();
+
+        if (legacyEnd.getError() != null) {
+            end.setError(convertToCodecType(legacyEnd.getError()));
+        }
+
+        return end;
     }
 
     /**
@@ -271,7 +316,6 @@ public abstract class LegacyToCodecType {
         if (legacyAttach.getMaxMessageSize() != null) {
             attach.setMaxMessageSize(convertToCodecType(legacyAttach.getMaxMessageSize()));
         }
-
         if (legacyAttach.getSource() != null) {
             attach.setSource(convertToCodecType(legacyAttach.getSource()));
         }
@@ -283,6 +327,28 @@ public abstract class LegacyToCodecType {
         }
 
         return attach;
+    }
+
+    /**
+     * convert a legacy type to a new codec type for encoding or other operation that requires a new type.
+     *
+     * @param legacyDetach
+     *      The legacy type to be converted into a new codec equivalent type.
+     *
+     * @return the new codec version of the legacy type.
+     */
+    public static Detach convertToCodecType(org.apache.qpid.proton.amqp.transport.Detach legacyDetach) {
+        Detach close = new Detach();
+
+        close.setClosed(legacyDetach.getClosed());
+        if (legacyDetach.getError() != null) {
+            close.setError(convertToCodecType(legacyDetach.getError()));
+        }
+        if (legacyDetach.getHandle() != null) {
+            close.setHandle(legacyDetach.getHandle().longValue());
+        }
+
+        return close;
     }
 
     /**

@@ -48,7 +48,10 @@ import org.apache.qpid.proton4j.amqp.transactions.Declared;
 import org.apache.qpid.proton4j.amqp.transactions.TransactionalState;
 import org.apache.qpid.proton4j.amqp.transport.Attach;
 import org.apache.qpid.proton4j.amqp.transport.Begin;
+import org.apache.qpid.proton4j.amqp.transport.Close;
 import org.apache.qpid.proton4j.amqp.transport.DeliveryState;
+import org.apache.qpid.proton4j.amqp.transport.Detach;
+import org.apache.qpid.proton4j.amqp.transport.End;
 import org.apache.qpid.proton4j.amqp.transport.ErrorCondition;
 import org.apache.qpid.proton4j.amqp.transport.Open;
 import org.apache.qpid.proton4j.amqp.transport.ReceiverSettleMode;
@@ -121,10 +124,16 @@ public abstract class CodecToLegacyType {
         // Transport Types
         if (newType instanceof Open) {
             return convertToLegacyType((Open) newType);
+        } else if (newType instanceof Close) {
+            return convertToLegacyType((Close) newType);
         } else if (newType instanceof Begin) {
             return convertToLegacyType((Begin) newType);
+        } else if (newType instanceof End) {
+            return convertToLegacyType((End) newType);
         } else if (newType instanceof Attach) {
             return convertToLegacyType((Attach) newType);
+        } else if (newType instanceof Detach) {
+            return convertToLegacyType((Detach) newType);
         } else if (newType instanceof ErrorCondition) {
             return convertToLegacyType((ErrorCondition) newType);
         }
@@ -178,6 +187,24 @@ public abstract class CodecToLegacyType {
     /**
      * convert a new Codec type to a legacy type for encoding or other operation that requires a legacy type.
      *
+     * @param close
+     *      The new codec type to be converted to the legacy codec version
+     *
+     * @return the legacy version of the new type.
+     */
+    public static org.apache.qpid.proton.amqp.transport.Close convertToLegacyType(Close close) {
+        org.apache.qpid.proton.amqp.transport.Close legacyClose = new org.apache.qpid.proton.amqp.transport.Close();
+
+        if (close.getError() != null) {
+            legacyClose.setError(convertToLegacyType(close.getError()));
+        }
+
+        return legacyClose;
+    }
+
+    /**
+     * convert a new Codec type to a legacy type for encoding or other operation that requires a legacy type.
+     *
      * @param begin
      *      The new codec type to be converted to the legacy codec version
      *
@@ -212,6 +239,24 @@ public abstract class CodecToLegacyType {
         }
 
         return legacyBegin;
+    }
+
+    /**
+     * convert a new Codec type to a legacy type for encoding or other operation that requires a legacy type.
+     *
+     * @param end
+     *      The new codec type to be converted to the legacy codec version
+     *
+     * @return the legacy version of the new type.
+     */
+    public static org.apache.qpid.proton.amqp.transport.End convertToLegacyType(End end) {
+        org.apache.qpid.proton.amqp.transport.End legacyEnd = new org.apache.qpid.proton.amqp.transport.End();
+
+        if (end.getError() != null) {
+            legacyEnd.setError(convertToLegacyType(end.getError()));
+        }
+
+        return legacyEnd;
     }
 
     /**
@@ -269,6 +314,30 @@ public abstract class CodecToLegacyType {
         }
 
         return legacyAttach;
+    }
+
+    /**
+     * convert a new Codec type to a legacy type for encoding or other operation that requires a legacy type.
+     *
+     * @param detach
+     *      The new codec type to be converted to the legacy codec version
+     *
+     * @return the legacy version of the new type.
+     */
+    public static org.apache.qpid.proton.amqp.transport.Detach convertToLegacyType(Detach detach) {
+        org.apache.qpid.proton.amqp.transport.Detach legacyDetach = new org.apache.qpid.proton.amqp.transport.Detach();
+
+        if (detach.hasError()) {
+            legacyDetach.setError(convertToLegacyType(detach.getError()));
+        }
+        if (detach.hasClosed()) {
+            legacyDetach.setClosed(detach.getClosed());
+        }
+        if (detach.hasHandle()) {
+            legacyDetach.setHandle(org.apache.qpid.proton.amqp.UnsignedInteger.valueOf(detach.getHandle()));
+        }
+
+        return legacyDetach;
     }
 
     /**
