@@ -29,10 +29,22 @@ import org.apache.qpid.proton4j.amqp.UnsignedByte;
 import org.apache.qpid.proton4j.amqp.UnsignedInteger;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.amqp.UnsignedShort;
+import org.apache.qpid.proton4j.amqp.messaging.Accepted;
+import org.apache.qpid.proton4j.amqp.messaging.Modified;
+import org.apache.qpid.proton4j.amqp.messaging.Outcome;
+import org.apache.qpid.proton4j.amqp.messaging.Received;
+import org.apache.qpid.proton4j.amqp.messaging.Rejected;
+import org.apache.qpid.proton4j.amqp.messaging.Released;
+import org.apache.qpid.proton4j.amqp.messaging.Source;
+import org.apache.qpid.proton4j.amqp.messaging.Target;
 import org.apache.qpid.proton4j.amqp.messaging.TerminusDurability;
 import org.apache.qpid.proton4j.amqp.messaging.TerminusExpiryPolicy;
+import org.apache.qpid.proton4j.amqp.transactions.Declared;
+import org.apache.qpid.proton4j.amqp.transactions.TransactionalState;
 import org.apache.qpid.proton4j.amqp.transport.Attach;
 import org.apache.qpid.proton4j.amqp.transport.Begin;
+import org.apache.qpid.proton4j.amqp.transport.DeliveryState;
+import org.apache.qpid.proton4j.amqp.transport.ErrorCondition;
 import org.apache.qpid.proton4j.amqp.transport.Open;
 import org.apache.qpid.proton4j.amqp.transport.ReceiverSettleMode;
 import org.apache.qpid.proton4j.amqp.transport.Role;
@@ -86,6 +98,16 @@ public abstract class CodecToLegacyType {
         }
 
         // Messaging Types
+        if (newType instanceof Outcome) {
+            return convertToLegacyType((Outcome) newType);
+        } else if (newType instanceof DeliveryState) {
+            return convertToLegacyType((DeliveryState) newType);
+        } else if (newType instanceof Source) {
+            return convertToLegacyType((Source) newType);
+        } else if (newType instanceof Target) {
+            return convertToLegacyType((Target) newType);
+        }
+        // TODO
 
         // Transaction Types
 
@@ -96,6 +118,8 @@ public abstract class CodecToLegacyType {
             return convertToLegacyType((Begin) newType);
         } else if (newType instanceof Attach) {
             return convertToLegacyType((Attach) newType);
+        } else if (newType instanceof ErrorCondition) {
+            return convertToLegacyType((ErrorCondition) newType);
         }
 
         // Security Types
@@ -227,12 +251,97 @@ public abstract class CodecToLegacyType {
         if (attach.hasMaxMessageSize()) {
             legacyAttach.setMaxMessageSize(convertToLegacyType(attach.getMaxMessageSize()));
         }
-
-        // TODO private Source source;
-        // TODO private Target target;
-        // TODO private Map<Binary, DeliveryState> unsettled;
+        if (attach.hasSource()) {
+            legacyAttach.setSource(convertToLegacyType(attach.getSource()));
+        }
+        if (attach.hasTarget()) {
+            legacyAttach.setTarget(convertToLegacyType(attach.getTarget()));
+        }
+        if (attach.hasUnsettled()) {
+            legacyAttach.setUnsettled(convertToLegacyType(attach.getUnsettled()));
+        }
 
         return legacyAttach;
+    }
+
+    /**
+     * convert a new Codec type to a legacy type for encoding or other operation that requires a legacy type.
+     *
+     * @param source
+     *      The new codec type to be converted to the legacy codec version
+     *
+     * @return the legacy version of the new type.
+     */
+    public static org.apache.qpid.proton.amqp.transport.Source convertToLegacyType(Source source) {
+        org.apache.qpid.proton.amqp.messaging.Source legacySource = new org.apache.qpid.proton.amqp.messaging.Source();
+
+        if (source.getAddress() != null) {
+            legacySource.setAddress(source.getAddress());
+        }
+        if (source.getDurable() != null) {
+            legacySource.setDurable(convertToLegacyType(source.getDurable()));
+        }
+        if (source.getExpiryPolicy() != null) {
+            legacySource.setExpiryPolicy(convertToLegacyType(source.getExpiryPolicy()));
+        }
+        if (source.getTimeout() != null) {
+            legacySource.setTimeout(convertToLegacyType(source.getTimeout()));
+        }
+        legacySource.setDynamic(source.getDynamic());
+        if (source.getDynamicNodeProperties() != null) {
+            legacySource.setDynamicNodeProperties(convertToLegacyType(source.getDynamicNodeProperties()));
+        }
+        if (source.getDistributionMode() != null) {
+            legacySource.setDistributionMode(convertToLegacyType(source.getDistributionMode()));
+        }
+        if (source.getFilter() != null) {
+            legacySource.setFilter(convertToLegacyType(source.getFilter()));
+        }
+        if (source.getDefaultOutcome() != null) {
+            legacySource.setDefaultOutcome(convertToLegacyType(source.getDefaultOutcome()));
+        }
+        if (source.getOutcomes() != null) {
+            legacySource.setOutcomes(convertToLegacyType(source.getOutcomes()));
+        }
+        if (source.getCapabilities() != null) {
+            legacySource.setCapabilities(convertToLegacyType(source.getCapabilities()));
+        }
+
+        return legacySource;
+    }
+
+    /**
+     * convert a new Codec type to a legacy type for encoding or other operation that requires a legacy type.
+     *
+     * @param target
+     *      The new codec type to be converted to the legacy codec version
+     *
+     * @return the legacy version of the new type.
+     */
+    public static org.apache.qpid.proton.amqp.messaging.Target convertToLegacyType(Target target) {
+        org.apache.qpid.proton.amqp.messaging.Target legacyTarget = new org.apache.qpid.proton.amqp.messaging.Target();
+
+        if (target.getAddress() != null) {
+            legacyTarget.setAddress(target.getAddress());
+        }
+        if (target.getDurable() != null) {
+            legacyTarget.setDurable(convertToLegacyType(target.getDurable()));
+        }
+        if (target.getExpiryPolicy() != null) {
+            legacyTarget.setExpiryPolicy(convertToLegacyType(target.getExpiryPolicy()));
+        }
+        if (target.getTimeout() != null) {
+            legacyTarget.setTimeout(convertToLegacyType(target.getTimeout()));
+        }
+        target.setDynamic(target.getDynamic());
+        if (target.getDynamicNodeProperties() != null) {
+            legacyTarget.setDynamicNodeProperties(convertToLegacyType(target.getDynamicNodeProperties()));
+        }
+        if (target.getCapabilities() != null) {
+            legacyTarget.setCapabilities(convertToLegacyType(target.getCapabilities()));
+        }
+
+        return legacyTarget;
     }
 
     /**
@@ -439,5 +548,99 @@ public abstract class CodecToLegacyType {
      */
     public static org.apache.qpid.proton.amqp.transport.ReceiverSettleMode convertToLegacyType(ReceiverSettleMode receiverSettleMode) {
         return org.apache.qpid.proton.amqp.transport.ReceiverSettleMode.valueOf(receiverSettleMode.name());
+    }
+
+    /**
+     * convert a new Codec type to a legacy type for encoding or other operation that requires a legacy type.
+     *
+     * @param errorCondition
+     *      The new codec type to be converted to the legacy codec version
+     *
+     * @return the legacy version of the new type.
+     */
+    public static org.apache.qpid.proton.amqp.transport.ErrorCondition convertToLegacyType(ErrorCondition errorCondition) {
+        org.apache.qpid.proton.amqp.transport.ErrorCondition legacyCondition = new org.apache.qpid.proton.amqp.transport.ErrorCondition();
+
+        if (errorCondition.getCondition() != null) {
+            legacyCondition.setCondition(convertToLegacyType(errorCondition.getCondition()));
+        }
+        if (errorCondition.getDescription() != null) {
+            legacyCondition.setDescription(errorCondition.getDescription());
+        }
+        if (errorCondition.getInfo() != null) {
+            legacyCondition.setInfo(convertToLegacyType(errorCondition.getInfo()));
+        }
+
+        return legacyCondition;
+    }
+
+    /**
+     * convert a new Codec type to a legacy type for encoding or other operation that requires a legacy type.
+     *
+     * @param state
+     *      The new codec type to be converted to the legacy codec version
+     *
+     * @return the legacy version of the new type.
+     */
+    public static org.apache.qpid.proton.amqp.transport.DeliveryState convertToLegacyType(DeliveryState state) {
+        if (state instanceof Accepted) {
+            return org.apache.qpid.proton.amqp.messaging.Accepted.getInstance();
+        } else if (state instanceof Rejected) {
+            org.apache.qpid.proton.amqp.messaging.Rejected rejected = new org.apache.qpid.proton.amqp.messaging.Rejected();
+            rejected.setError(convertToLegacyType(((Rejected) state).getError()));
+            return rejected;
+        } else if (state instanceof Released) {
+            return org.apache.qpid.proton.amqp.messaging.Released.getInstance();
+        } else if (state instanceof Modified) {
+            org.apache.qpid.proton.amqp.messaging.Modified modified = new org.apache.qpid.proton.amqp.messaging.Modified();
+            modified.setDeliveryFailed(((Modified) state).getDeliveryFailed());
+            modified.setMessageAnnotations(convertToLegacyType(((Modified) state).getMessageAnnotations()));
+            modified.setUndeliverableHere(((Modified) state).getUndeliverableHere());
+            return modified;
+        } else if (state instanceof Received) {
+            org.apache.qpid.proton.amqp.messaging.Received received = new org.apache.qpid.proton.amqp.messaging.Received();
+            received.setSectionOffset(convertToLegacyType(((Received) state).getSectionOffset()));
+            received.setSectionNumber(convertToLegacyType(((Received) state).getSectionNumber()));
+            return received;
+        } else if (state instanceof Declared) {
+            org.apache.qpid.proton.amqp.transaction.Declared declared = new org.apache.qpid.proton.amqp.transaction.Declared();
+            declared.setTxnId(convertToLegacyType(((Declared) state).getTxnId()));
+            return declared;
+        } else if (state instanceof TransactionalState) {
+            org.apache.qpid.proton.amqp.transaction.TransactionalState txState = new org.apache.qpid.proton.amqp.transaction.TransactionalState();
+            txState.setOutcome(convertToLegacyType(((TransactionalState) state).getOutcome()));
+            txState.setTxnId(convertToLegacyType(((TransactionalState) state).getTxnId()));
+            return txState;
+        }
+
+        return null;
+    }
+
+    /**
+     * convert a new Codec type to a legacy type for encoding or other operation that requires a legacy type.
+     *
+     * @param outcome
+     *      The new codec type to be converted to the legacy codec version
+     *
+     * @return the legacy version of the new type.
+     */
+    public static org.apache.qpid.proton.amqp.messaging.Outcome convertToLegacyType(Outcome outcome) {
+        if (outcome instanceof Accepted) {
+            return org.apache.qpid.proton.amqp.messaging.Accepted.getInstance();
+        } else if (outcome instanceof Rejected) {
+            org.apache.qpid.proton.amqp.messaging.Rejected rejected = new org.apache.qpid.proton.amqp.messaging.Rejected();
+            rejected.setError(convertToLegacyType(((Rejected) outcome).getError()));
+            return rejected;
+        } else if (outcome instanceof Released) {
+            return org.apache.qpid.proton.amqp.messaging.Released.getInstance();
+        } else if (outcome instanceof Modified) {
+            org.apache.qpid.proton.amqp.messaging.Modified modified = new org.apache.qpid.proton.amqp.messaging.Modified();
+            modified.setDeliveryFailed(((Modified) outcome).getDeliveryFailed());
+            modified.setMessageAnnotations(convertToLegacyType(((Modified) outcome).getMessageAnnotations()));
+            modified.setUndeliverableHere(((Modified) outcome).getUndeliverableHere());
+            return modified;
+        }
+
+        return null;
     }
 }

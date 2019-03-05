@@ -17,12 +17,13 @@
 package org.apache.qpid.proton4j.codec;
 
 import java.nio.ByteBuffer;
-import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 
 import org.apache.qpid.proton4j.amqp.Binary;
+import org.apache.qpid.proton4j.amqp.messaging.Source;
+import org.apache.qpid.proton4j.amqp.messaging.Target;
 import org.apache.qpid.proton4j.amqp.transport.Attach;
 import org.apache.qpid.proton4j.amqp.transport.Begin;
 import org.apache.qpid.proton4j.amqp.transport.DeliveryState;
@@ -30,6 +31,7 @@ import org.apache.qpid.proton4j.amqp.transport.Open;
 import org.apache.qpid.proton4j.codec.decoders.ProtonDecoderFactory;
 import org.apache.qpid.proton4j.codec.encoders.ProtonEncoderFactory;
 import org.apache.qpid.proton4j.codec.legacy.LegacyCodecAdapter;
+import org.junit.Assert;
 import org.junit.Before;
 
 /**
@@ -69,77 +71,26 @@ public class CodecTestSupport {
      * @param open2
      *      An {@link Open} instances or null.
      *
-     * @return true if the types are equal.
+     * @throws AssertionError
+     *      If the two types are not equal to one another.
      */
-    public static boolean areEqual(Open open1, Open open2) {
+    public static void assertTypesEqual(Open open1, Open open2) throws AssertionError {
         if (open1 == null && open2 == null) {
-            return true;
+            return;
         } else if (open1 == null || open2 == null) {
-            return false;
+            Assert.assertEquals(open1, open2);
         }
 
-        if (open1.getChannelMax() == null) {
-            if (open2.getChannelMax() != null) {
-                return false;
-            }
-        } else if (!open1.getChannelMax().equals(open2.getChannelMax())) {
-            return false;
-        }
-
-        if (open1.getContainerId() == null) {
-            if (open2.getContainerId() != null) {
-                return false;
-            }
-        } else if (!open1.getContainerId().equals(open2.getContainerId())) {
-            return false;
-        }
-
-        if (open1.getHostname() == null) {
-            if (open2.getHostname() != null) {
-                return false;
-            }
-        } else if (!open1.getHostname().equals(open2.getHostname())) {
-            return false;
-        }
-
-        if (open1.getIdleTimeOut() == null) {
-            if (open2.getIdleTimeOut() != null) {
-                return false;
-            }
-        } else if (!open1.getIdleTimeOut().equals(open2.getIdleTimeOut())) {
-            return false;
-        }
-
-        if (open1.getMaxFrameSize() == null) {
-            if (open2.getMaxFrameSize() != null) {
-                return false;
-            }
-        } else if (!open1.getMaxFrameSize().equals(open2.getMaxFrameSize())) {
-            return false;
-        }
-
-        if (open1.getProperties() == null) {
-            if (open2.getProperties() != null) {
-                return false;
-            }
-        } else if (!open1.getProperties().equals(open2.getProperties())) {
-            return false;
-        }
-
-        if (!Arrays.equals(open1.getDesiredCapabilities(), open2.getDesiredCapabilities())) {
-            return false;
-        }
-        if (!Arrays.equals(open1.getOfferedCapabilities(), open2.getOfferedCapabilities())) {
-            return false;
-        }
-        if (!Arrays.equals(open1.getIncomingLocales(), open2.getIncomingLocales())) {
-            return false;
-        }
-        if (!Arrays.equals(open1.getOutgoingLocales(), open2.getOutgoingLocales())) {
-            return false;
-        }
-
-        return true;
+        Assert.assertEquals("Channel max values not equal", open1.getChannelMax(), open2.getChannelMax());
+        Assert.assertEquals("Container Id values not equal", open1.getContainerId(), open2.getContainerId());
+        Assert.assertEquals("Hostname values not equal", open1.getHostname(), open2.getHostname());
+        Assert.assertEquals("Idle timeout values not equal", open1.getIdleTimeOut(), open2.getIdleTimeOut());
+        Assert.assertEquals("Max Frame Size values not equal", open1.getMaxFrameSize(), open2.getMaxFrameSize());
+        Assert.assertEquals("Properties Map values not equal", open1.getProperties(), open2.getProperties());
+        Assert.assertArrayEquals("Desired Capabilities are not equal", open1.getDesiredCapabilities(), open2.getDesiredCapabilities());
+        Assert.assertArrayEquals("Offered Capabilities are not equal", open1.getOfferedCapabilities(), open2.getOfferedCapabilities());
+        Assert.assertArrayEquals("Incoming Locales are not equal", open1.getIncomingLocales(), open2.getIncomingLocales());
+        Assert.assertArrayEquals("Outgoing Locales are not equal", open1.getOutgoingLocales(), open2.getOutgoingLocales());
     }
 
     /**
@@ -150,59 +101,37 @@ public class CodecTestSupport {
      * @param begin2
      *      A {@link Begin} instances or null.
      *
-     * @return true if the types are equal.
+     * @throws AssertionError
+     *      If the two types are not equal to one another.
      */
-    public static boolean areEqual(Begin begin1, Begin begin2) {
+    public static void assertTypesEqual(Begin begin1, Begin begin2) throws AssertionError {
         if (begin1 == null && begin2 == null) {
-            return true;
+            return;
         } else if (begin1 == null || begin2 == null) {
-            return false;
+            Assert.assertEquals(begin1, begin2);
         }
 
-        if (!begin1.hasHandleMax() && begin2.hasHandleMax() ||
-            !begin2.hasHandleMax() && begin1.hasHandleMax()) {
-            return false;
-        } else if (begin1.getHandleMax() != begin2.getHandleMax()) {
-            return false;
-        }
-        if (!begin1.hasIncomingWindow() && begin2.hasIncomingWindow() ||
-            !begin2.hasIncomingWindow() && begin1.hasIncomingWindow()) {
-            return false;
-        } else if (begin1.getIncomingWindow() != begin2.getIncomingWindow()) {
-            return false;
-        }
-        if (!begin1.hasNextOutgoingId() && begin2.hasNextOutgoingId() ||
-            !begin2.hasNextOutgoingId() && begin1.hasNextOutgoingId()) {
-            return false;
-        } else if (begin1.getNextOutgoingId() != begin2.getNextOutgoingId()) {
-            return false;
-        }
-        if (!begin1.hasOutgoingWindow() && begin2.hasOutgoingWindow() ||
-            !begin2.hasOutgoingWindow() && begin1.hasOutgoingWindow()) {
-            return false;
-        } else if (begin1.getOutgoingWindow() != begin2.getOutgoingWindow()) {
-            return false;
-        }
-        if (!begin1.hasRemoteChannel() && begin2.hasRemoteChannel() ||
-            !begin2.hasRemoteChannel() && begin1.hasRemoteChannel()) {
-            return false;
-        } else if (begin1.getRemoteChannel() != begin2.getRemoteChannel()) {
-            return false;
-        }
-        if (!begin1.hasProperties() && begin2.hasProperties() ||
-            !begin2.hasProperties() && begin1.hasProperties()) {
-            return false;
-        } if (begin1.hasProperties() && !begin1.getProperties().equals(begin2.getProperties())) {
-            return false;
-        }
-        if (!Arrays.equals(begin1.getDesiredCapabilities(), begin2.getDesiredCapabilities())) {
-            return false;
-        }
-        if (!Arrays.equals(begin1.getOfferedCapabilities(), begin2.getOfferedCapabilities())) {
-            return false;
-        }
+        Assert.assertSame("Expected Begin with matching has handle max values", begin1.hasHandleMax(), begin2.hasHandleMax());
+        Assert.assertEquals("Handle max values not equal", begin1.getHandleMax(), begin2.getHandleMax());
 
-        return true;
+        Assert.assertSame("Expected Begin with matching has Incoming window values", begin1.hasIncomingWindow(), begin2.hasIncomingWindow());
+        Assert.assertEquals("Incoming Window values not equal", begin1.getIncomingWindow(), begin2.getIncomingWindow());
+
+        Assert.assertSame("Expected Begin with matching has Outgoing Id values", begin1.hasNextOutgoingId(), begin2.hasNextOutgoingId());
+        Assert.assertEquals("Outgoing Id values not equal", begin1.getNextOutgoingId(), begin2.getNextOutgoingId());
+
+        Assert.assertSame("Expected Begin with matching has Outgoing window values", begin1.hasOutgoingWindow(), begin2.hasOutgoingWindow());
+        Assert.assertEquals("Outgoing Window values not equal", begin1.getOutgoingWindow(), begin2.getOutgoingWindow());
+
+        Assert.assertSame("Expected Begin with matching has Remote Channel values", begin1.hasRemoteChannel(), begin2.hasRemoteChannel());
+        Assert.assertEquals("Remote Channel values not equal", begin1.getRemoteChannel(), begin2.getRemoteChannel());
+
+        Assert.assertSame("Expected Attach with matching has properties values", begin1.hasProperties(), begin2.hasProperties());
+        Assert.assertEquals("Properties Map values not equal", begin1.getProperties(), begin2.getProperties());
+        Assert.assertSame("Expected Attach with matching has desired capabilities values", begin1.hasDesiredCapabilites(), begin2.hasDesiredCapabilites());
+        Assert.assertArrayEquals("Desired Capabilities are not equal", begin1.getDesiredCapabilities(), begin2.getDesiredCapabilities());
+        Assert.assertSame("Expected Attach with matching has offered capabilities values", begin2.hasOfferedCapabilites(), begin2.hasOfferedCapabilites());
+        Assert.assertArrayEquals("Offered Capabilities are not equal", begin1.getOfferedCapabilities(), begin2.getOfferedCapabilities());
     }
 
     /**
@@ -213,109 +142,137 @@ public class CodecTestSupport {
      * @param attach2
      *      A {@link Attach} instances or null.
      *
-     * @return true if the types are equal.
+     * @throws AssertionError
+     *      If the two types are not equal to one another.
      */
-    public static boolean areEqual(Attach attach1, Attach attach2) {
+    public static void assertTypesEqual(Attach attach1, Attach attach2) throws AssertionError {
         if (attach1 == attach2) {
-            return true;
+            return;
         } else if (attach1 == null || attach2 == null) {
-            return false;
+            Assert.assertEquals(attach1, attach2);
         }
 
-        if (!attach1.hasHandle() && attach2.hasHandle() ||
-            !attach2.hasHandle() && attach1.hasHandle()) {
-            return false;
-        } else if (attach1.getHandle() != attach2.getHandle()) {
-            return false;
-        }
-        if (!attach1.hasInitialDeliveryCount() && attach2.hasInitialDeliveryCount() ||
-            !attach2.hasInitialDeliveryCount() && attach1.hasInitialDeliveryCount()) {
-            return false;
-        } else if (attach1.getInitialDeliveryCount() != attach2.getInitialDeliveryCount()) {
-            return false;
-        }
-        if (!attach1.hasMaxMessageSize() && attach2.hasMaxMessageSize() ||
-            !attach2.hasMaxMessageSize() && attach1.hasMaxMessageSize()) {
-            return false;
-        } else if (attach1.getMaxMessageSize() != attach2.getMaxMessageSize()) {
-            return false;
-        }
-        if (!attach1.hasName() && attach2.hasName() ||
-            !attach2.hasName() && attach1.hasName()) {
-            return false;
-        } else if (!attach1.getName().equals(attach2.getName())) {
-            return false;
-        }
-        if (!attach1.hasSource() && attach2.hasSource() ||
-            !attach2.hasSource() && attach1.hasSource()) {
-            return false;
-        } else if (!attach1.getSource().equals(attach2.getSource())) {
-            return false;
-        }
-        if (!attach1.hasTarget() && attach2.hasTarget() ||
-            !attach2.hasTarget() && attach1.hasTarget()) {
-            return false;
-        } else if (!attach1.getTarget().equals(attach2.getTarget())) {
-            return false;
-        }
-        if (!attach1.hasUnsettled() && attach2.hasUnsettled() ||
-            !attach2.hasUnsettled() && attach1.hasUnsettled()) {
-            return false;
-        } else if (areUnsettledMapsEqual(attach1.getUnsettled(), attach2.getUnsettled())) {
-            return false;
-        }
-        if (attach1.getRcvSettleMode() != attach2.getRcvSettleMode()) {
-            return false;
-        }
-        if (attach1.getSndSettleMode() != attach2.getSndSettleMode()) {
-            return false;
-        }
-        if (attach1.getRole() != attach2.getRole()) {
-            return false;
-        }
-        if (attach1.getIncompleteUnsettled() != attach2.getIncompleteUnsettled()) {
-            return false;
-        }
-        if (!attach1.hasProperties() && attach2.hasProperties() ||
-            !attach2.hasProperties() && attach1.hasProperties()) {
-            return false;
-        } else if (attach1.getProperties() != null && !attach1.getProperties().equals(attach2.getProperties())) {
-            return false;
-        }
-        if (!Arrays.equals(attach1.getDesiredCapabilities(), attach2.getDesiredCapabilities())) {
-            return false;
-        }
-        if (!Arrays.equals(attach1.getOfferedCapabilities(), attach2.getOfferedCapabilities())) {
-            return false;
+        Assert.assertSame("Expected Attach with matching has handle values", attach1.hasHandle(), attach2.hasHandle());
+        Assert.assertEquals("Handle values not equal", attach1.getHandle(), attach2.getHandle());
+
+        Assert.assertSame("Expected Attach with matching has initial delivery count values", attach1.hasInitialDeliveryCount(), attach2.hasInitialDeliveryCount());
+        Assert.assertEquals("Initial delivery count values not equal", attach1.getInitialDeliveryCount(), attach2.getInitialDeliveryCount());
+
+        Assert.assertSame("Expected Attach with matching has max message size values", attach1.hasMaxMessageSize(), attach2.hasMaxMessageSize());
+        Assert.assertEquals("Max MessageSize values not equal", attach1.getMaxMessageSize(), attach2.getMaxMessageSize());
+
+        Assert.assertSame("Expected Attach with matching has name values", attach1.hasName(), attach2.hasName());
+        Assert.assertEquals("Link Name values not equal", attach1.getName(), attach2.getName());
+
+        Assert.assertSame("Expected Attach with matching has Source values", attach1.hasSource(), attach2.hasSource());
+        assertTypesEqual(attach1.getSource(), attach2.getSource());
+        Assert.assertSame("Expected Attach with matching has Target values", attach1.hasTarget(), attach2.hasTarget());
+        assertTypesEqual(attach1.getTarget(), attach2.getTarget());
+
+        Assert.assertSame("Expected Attach with matching has handle values", attach1.hasUnsettled(), attach2.hasUnsettled());
+        assertTypeEquals(attach1.getUnsettled(), attach2.getUnsettled());
+
+        Assert.assertSame("Expected Attach with matching has receiver settle mode values", attach1.hasReceiverSettleMode(), attach2.hasReceiverSettleMode());
+        Assert.assertEquals("Receiver settle mode values not equal", attach1.getRcvSettleMode(), attach2.getRcvSettleMode());
+
+        Assert.assertSame("Expected Attach with matching has sender settle mode values", attach1.hasSenderSettleMode(), attach2.hasSenderSettleMode());
+        Assert.assertEquals("Sender settle mode values not equal", attach1.getSndSettleMode(), attach2.getSndSettleMode());
+
+        Assert.assertSame("Expected Attach with matching has Role values", attach1.hasRole(), attach2.hasRole());
+        Assert.assertEquals("Role values not equal", attach1.getRole(), attach2.getRole());
+
+        Assert.assertSame("Expected Attach with matching has incomplete unsettled values", attach1.hasIncompleteUnsettled(), attach2.hasIncompleteUnsettled());
+        Assert.assertEquals("Handle values not equal", attach1.getIncompleteUnsettled(), attach2.getIncompleteUnsettled());
+
+        Assert.assertSame("Expected Attach with matching has properties values", attach1.hasProperties(), attach2.hasProperties());
+        Assert.assertEquals("Properties Map values not equal", attach1.getProperties(), attach2.getProperties());
+        Assert.assertSame("Expected Attach with matching has desired capabilities values", attach1.hasDesiredCapabilites(), attach2.hasDesiredCapabilites());
+        Assert.assertArrayEquals("Desired Capabilities are not equal", attach1.getDesiredCapabilities(), attach2.getDesiredCapabilities());
+        Assert.assertSame("Expected Attach with matching has offered capabilities values", attach1.hasOfferedCapabilites(), attach2.hasOfferedCapabilites());
+        Assert.assertArrayEquals("Offered Capabilities are not equal", attach1.getOfferedCapabilities(), attach2.getOfferedCapabilities());
+    }
+
+    /**
+     * Compare a Target to another Target instance.
+     *
+     * @param target1
+     *      A {@link Target} instances or null
+     * @param target2
+     *      A {@link Target} instances or null.
+     *
+     * @throws AssertionError
+     *      If the two types are not equal to one another.
+     */
+    public static void assertTypesEqual(Target target1, Target target2) throws AssertionError {
+        if (target1 == target2) {
+            return;
+        } else if (target1 == null || target2 == null) {
+            Assert.assertEquals(target1, target2);
         }
 
-        return true;
+        Assert.assertEquals("Addrress values not equal", target1.getAddress(), target2.getAddress());
+        Assert.assertEquals("TerminusDurability values not equal", target1.getDurable(), target2.getDurable());
+        Assert.assertEquals("TerminusExpiryPolicy values not equal", target1.getExpiryPolicy(), target2.getExpiryPolicy());
+        Assert.assertEquals("Timeout values not equal", target1.getTimeout(), target2.getTimeout());
+        Assert.assertEquals("Dynamic values not equal", target1.getDynamic(), target2.getDynamic());
+        Assert.assertEquals("Dynamic Node Properties values not equal", target1.getDynamicNodeProperties(), target2.getDynamicNodeProperties());
+        Assert.assertArrayEquals("Capabilities values not equal", target1.getCapabilities(), target2.getCapabilities());
+    }
+
+    /**
+     * Compare a Source to another Source instance.
+     *
+     * @param source1
+     *      A {@link Source} instances or null
+     * @param source2
+     *      A {@link Source} instances or null.
+     *
+     * @throws AssertionError
+     *      If the two types are not equal to one another.
+     */
+    public static void assertTypesEqual(Source source1, Source source2) throws AssertionError {
+        if (source1 == source2) {
+            return;
+        } else if (source1 == null || source2 == null) {
+            Assert.assertEquals(source1, source2);
+        }
+
+        Assert.assertEquals("Addrress values not equal", source1.getAddress(), source2.getAddress());
+        Assert.assertEquals("TerminusDurability values not equal", source1.getDurable(), source2.getDurable());
+        Assert.assertEquals("TerminusExpiryPolicy values not equal", source1.getExpiryPolicy(), source2.getExpiryPolicy());
+        Assert.assertEquals("Timeout values not equal", source1.getTimeout(), source2.getTimeout());
+        Assert.assertEquals("Dynamic values not equal", source1.getDynamic(), source2.getDynamic());
+        Assert.assertEquals("Dynamic Node Properties values not equal", source1.getDynamicNodeProperties(), source2.getDynamicNodeProperties());
+        Assert.assertEquals("Distribution Mode values not equal", source1.getDistributionMode(), source2.getDistributionMode());
+        Assert.assertEquals("Filter values not equal", source1.getDefaultOutcome(), source2.getDefaultOutcome());
+        Assert.assertEquals("Default outcome values not equal", source1.getFilter(), source2.getFilter());
+        Assert.assertArrayEquals("Outcomes values not equal", source1.getOutcomes(), source2.getOutcomes());
+        Assert.assertArrayEquals("Capabilities values not equal", source1.getCapabilities(), source2.getCapabilities());
     }
 
     /**
      * Compare a Unsettled Map to another Unsettled Map using the proton4j Binary type keys
      * and DeliveryState values
      *
-     * @param legacy
+     * @param unsettled1
      *      A {@link Map} instances or null.
-     * @param unsettled
+     * @param unsettled2
      *      A {@link Map} instances or null
      *
-     * @return true if the Map contain matching underlying Map values in the same order.
+     * @throws AssertionError
+     *      If the two types are not equal to one another.
      */
-    public static boolean areUnsettledMapsEqual(Map<Binary, DeliveryState> legacy, Map<Binary, DeliveryState> unsettled) {
-        if (legacy == null && unsettled == null) {
-            return true;
-        } else if (legacy == null || unsettled == null) {
-            return false;
+    public static void assertTypeEquals(Map<Binary, DeliveryState> unsettled1, Map<Binary, DeliveryState> unsettled2) throws AssertionError {
+        if (unsettled1 == null && unsettled2 == null) {
+            return;
+        } else if (unsettled1 == null || unsettled2 == null) {
+            Assert.assertEquals(unsettled1, unsettled2);
         }
 
-        if (unsettled.size() != legacy.size()) {
-            return false;
-        }
+        Assert.assertEquals("Unsettled Map size values are not the same", unsettled1.size(), unsettled2.size());
 
-        Iterator<Entry<Binary, DeliveryState>> legacyEntries = legacy.entrySet().iterator();
-        Iterator<Entry<Binary, DeliveryState>> unsettledEntries = unsettled.entrySet().iterator();
+        Iterator<Entry<Binary, DeliveryState>> legacyEntries = unsettled1.entrySet().iterator();
+        Iterator<Entry<Binary, DeliveryState>> unsettledEntries = unsettled2.entrySet().iterator();
 
         while (legacyEntries.hasNext()) {
             Entry<Binary, DeliveryState> legacyEntry = legacyEntries.next();
@@ -324,14 +281,8 @@ public class CodecTestSupport {
             ByteBuffer legacyBuffer = legacyEntry.getKey().asByteBuffer();
             ByteBuffer unsettledBuffer = unsettledEntry.getKey().asByteBuffer();
 
-            if (!legacyBuffer.equals(unsettledBuffer)) {
-                return false;
-            }
-            if (legacyEntry.getValue().getType().ordinal() != unsettledEntry.getValue().getType().ordinal()) {
-                return false;
-            }
+            Assert.assertEquals("Delivery Tags do not match", legacyBuffer, unsettledBuffer);
+            Assert.assertEquals("Delivery States do not match", legacyEntry.getValue().getType(), unsettledEntry.getValue().getType());
         }
-
-        return true;
     }
 }

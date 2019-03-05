@@ -21,6 +21,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
@@ -77,5 +78,63 @@ public class AttachTypeCodecTest extends CodecTestSupport {
        assertNull(result.getProperties());
        assertArrayEquals(offeredCapabilities, result.getOfferedCapabilities());
        assertArrayEquals(desiredCapabilities, result.getDesiredCapabilities());
+    }
+
+    @Test
+    public void testEncodeUsingNewCodecAndDecodeWithLegacyCodec() throws Exception {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        Symbol[] offeredCapabilities = new Symbol[] {Symbol.valueOf("Cap-1"), Symbol.valueOf("Cap-2")};
+        Symbol[] desiredCapabilities = new Symbol[] {Symbol.valueOf("Cap-3"), Symbol.valueOf("Cap-4")};
+
+        Attach input = new Attach();
+
+        input.setName("name");
+        input.setOfferedCapabilities(offeredCapabilities);
+        input.setDesiredCapabilities(desiredCapabilities);
+        input.setHandle(64);
+        input.setRole(Role.RECEIVER);
+        input.setSndSettleMode(SenderSettleMode.UNSETTLED);
+        input.setRcvSettleMode(ReceiverSettleMode.SECOND);
+        input.setSource(new Source());
+        input.setTarget(new Target());
+        input.setIncompleteUnsettled(false);
+        input.setInitialDeliveryCount(10);
+        input.setMaxMessageSize(UnsignedLong.valueOf(1024));
+
+        encoder.writeObject(buffer, encoderState, input);
+        Object decoded = legacyCodec.decodeLegacyType(buffer);
+        assertTrue(decoded instanceof Attach);
+        final Attach result = (Attach) decoded;
+        assertNotNull(result);
+        assertTypesEqual(input, result);
+    }
+
+    @Test
+    public void testEncodeUsingLegacyCodecAndDecodeWithNewCodec() throws Exception {
+        Symbol[] offeredCapabilities = new Symbol[] {Symbol.valueOf("Cap-1"), Symbol.valueOf("Cap-2")};
+        Symbol[] desiredCapabilities = new Symbol[] {Symbol.valueOf("Cap-3"), Symbol.valueOf("Cap-4")};
+
+        Attach input = new Attach();
+
+        input.setName("name");
+        input.setOfferedCapabilities(offeredCapabilities);
+        input.setDesiredCapabilities(desiredCapabilities);
+        input.setHandle(64);
+        input.setRole(Role.RECEIVER);
+        input.setSndSettleMode(SenderSettleMode.UNSETTLED);
+        input.setRcvSettleMode(ReceiverSettleMode.SECOND);
+        input.setSource(new Source());
+        input.setTarget(new Target());
+        input.setIncompleteUnsettled(false);
+        input.setInitialDeliveryCount(10);
+        input.setMaxMessageSize(UnsignedLong.valueOf(1024));
+
+        ProtonBuffer buffer = legacyCodec.encodeUsingLegacyEncoder(input);
+        assertNotNull(buffer);
+
+        final Attach result = (Attach) decoder.readObject(buffer, decoderState);
+        assertNotNull(result);
+        assertTypesEqual(input, result);
     }
 }

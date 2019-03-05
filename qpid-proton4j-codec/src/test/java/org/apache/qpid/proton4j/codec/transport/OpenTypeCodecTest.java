@@ -18,7 +18,6 @@ package org.apache.qpid.proton4j.codec.transport;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
@@ -26,7 +25,6 @@ import java.io.IOException;
 
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedInteger;
-import org.apache.qpid.proton4j.amqp.UnsignedShort;
 import org.apache.qpid.proton4j.amqp.transport.Open;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
@@ -85,10 +83,7 @@ public class OpenTypeCodecTest extends CodecTestSupport {
         final Open result = (Open) decoded;
 
         assertNotNull(result);
-        assertTrue(areEqual(input, result));
-
-        input.setChannelMax(UnsignedShort.valueOf((short) 32767));
-        assertFalse(areEqual(input, result));
+        assertTypesEqual(input, result);
     }
 
     @Test
@@ -111,6 +106,6 @@ public class OpenTypeCodecTest extends CodecTestSupport {
         final Open result = (Open) decoder.readObject(buffer, decoderState);
         assertNotNull(result);
 
-        assertTrue(areEqual(input, result));
+        assertTypesEqual(input, result);
     }
 }

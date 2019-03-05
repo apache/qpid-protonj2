@@ -96,7 +96,7 @@ public class BeginTypeCodecTest extends CodecTestSupport {
         final Begin result = (Begin) decoded;
 
         assertNotNull(result);
-        assertTrue(areEqual(input, result));
+        assertTypesEqual(input, result);
     }
 
     @Test
@@ -123,6 +123,6 @@ public class BeginTypeCodecTest extends CodecTestSupport {
         final Begin result = (Begin) decoder.readObject(buffer, decoderState);
         assertNotNull(result);
 
-        assertTrue(areEqual(input, result));
+        assertTypesEqual(input, result);
     }
 }

@@ -321,7 +321,7 @@ public final class Attach implements Performative {
     }
 
     public Attach setMaxMessageSize(UnsignedLong maxMessageSize) {
-        if (offeredCapabilities != null) {
+        if (maxMessageSize != null) {
             modified |= MAX_MESSAGE_SIZE;
         } else {
             modified &= ~MAX_MESSAGE_SIZE;
