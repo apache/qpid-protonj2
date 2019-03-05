@@ -30,6 +30,11 @@ import org.apache.qpid.proton4j.amqp.UnsignedInteger;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.amqp.UnsignedShort;
 import org.apache.qpid.proton4j.amqp.messaging.Accepted;
+import org.apache.qpid.proton4j.amqp.messaging.DeleteOnClose;
+import org.apache.qpid.proton4j.amqp.messaging.DeleteOnNoLinks;
+import org.apache.qpid.proton4j.amqp.messaging.DeleteOnNoLinksOrMessages;
+import org.apache.qpid.proton4j.amqp.messaging.DeleteOnNoMessages;
+import org.apache.qpid.proton4j.amqp.messaging.LifetimePolicy;
 import org.apache.qpid.proton4j.amqp.messaging.Modified;
 import org.apache.qpid.proton4j.amqp.messaging.Outcome;
 import org.apache.qpid.proton4j.amqp.messaging.Received;
@@ -106,6 +111,8 @@ public abstract class CodecToLegacyType {
             return convertToLegacyType((Source) newType);
         } else if (newType instanceof Target) {
             return convertToLegacyType((Target) newType);
+        } else if (newType instanceof LifetimePolicy) {
+            return convertToLegacyType((LifetimePolicy) newType);
         }
         // TODO
 
@@ -642,5 +649,29 @@ public abstract class CodecToLegacyType {
         }
 
         return null;
+    }
+
+    /**
+     * convert a new Codec type to a legacy type for encoding or other operation that requires a legacy type.
+     *
+     * @param policy
+     *      The new codec type to be converted to the legacy codec version
+     *
+     * @return the legacy version of the new type.
+     */
+    public static org.apache.qpid.proton.amqp.messaging.LifetimePolicy convertToLegacyType(LifetimePolicy policy) {
+        org.apache.qpid.proton.amqp.messaging.LifetimePolicy legacyPolicy = null;
+
+        if (policy instanceof DeleteOnClose) {
+            legacyPolicy = org.apache.qpid.proton.amqp.messaging.DeleteOnClose.getInstance();
+        } else if (policy instanceof DeleteOnNoLinks) {
+            legacyPolicy = org.apache.qpid.proton.amqp.messaging.DeleteOnNoLinks.getInstance();
+        } else if (policy instanceof DeleteOnNoLinksOrMessages) {
+            legacyPolicy = org.apache.qpid.proton.amqp.messaging.DeleteOnNoLinksOrMessages.getInstance();
+        } else if (policy instanceof DeleteOnNoMessages) {
+            legacyPolicy = org.apache.qpid.proton.amqp.messaging.DeleteOnNoMessages.getInstance();
+        }
+
+        return legacyPolicy;
     }
 }
