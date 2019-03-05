@@ -141,8 +141,6 @@ public class ProtonFrameDecodingHandler implements EngineHandler, SaslPerformati
          *
          * @param context
          *      The TransportHandlerContext that applies to the current event
-         * @param parser
-         *      The parser that initiated this parse call.
          * @param input
          *      The ProtonBuffer containing new data to be parsed.
          *
