@@ -16,6 +16,8 @@
  */
 package org.apache.qpid.proton4j.engine;
 
+import java.util.function.Consumer;
+
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.engine.exceptions.EngineClosedException;
 import org.apache.qpid.proton4j.engine.exceptions.EngineNotWritableException;
@@ -25,7 +27,7 @@ import org.apache.qpid.proton4j.engine.exceptions.ProtonException;
 /**
  * AMQP Engine interface.
  */
-public interface Engine {
+public interface Engine extends Consumer<ProtonBuffer> {
 
     //----- Engine state
 
@@ -83,10 +85,22 @@ public interface Engine {
      * @param input
      *      The data to feed into to Engine.
      *
+     * @throws EngineStateException if the Engine state precludes accepting new input.
      * @throws EngineNotWritableException if the Engine is not accepting new input.
      * @throws EngineClosedException if the Engine has been shutdown or has failed.
      */
     void ingest(ProtonBuffer input) throws EngineStateException;
+
+    // TODO - Allow the Engine to be handed off to more generic input methods that take functional
+    //        style parameters, in this case a consumer.
+    @Override
+    default void accept(ProtonBuffer input) {
+        try {
+            ingest(input);
+        } catch (EngineStateException e) {
+            // TODO What would we throw EngineStateRuntimeException ?
+        }
+    }
 
     // TODO - Do we need to accept time here or can we just use a time value of our own choosing
     //        as this isn't C so we have the same clock values available as a caller would.
@@ -102,6 +116,21 @@ public interface Engine {
      *      The {@link ProtonBuffer} handler instance that perform IO for the engine output.
      */
     void outputHandler(EventHandler<ProtonBuffer> output);
+
+    /**
+     * Sets a {@link Consumer} instance that will be notified when data from the engine is ready to
+     * be written to some output sink (socket etc).
+     *
+     * @param consumer
+     *      The {@link ProtonBuffer} consumer instance that perform IO for the engine output.
+     */
+    default void outputConsumer(Consumer<ProtonBuffer> consumer) {
+        // TODO this allows for consumers to be registered vs the external user having to
+        //      use our EventHandler type
+        outputHandler((output) -> {
+            consumer.accept(output);
+        });
+    }
 
     /**
      * Sets a handler instance that will be notified when the engine encounters a fatal error.

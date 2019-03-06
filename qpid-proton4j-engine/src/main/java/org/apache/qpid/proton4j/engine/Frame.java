@@ -20,6 +20,8 @@ import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 
 /**
  * Base class for Frames that travel through the engine.
+ *
+ * @param <V> The type of frame body that this {@link Frame} will carry.
  */
 public abstract class Frame<V> {
 

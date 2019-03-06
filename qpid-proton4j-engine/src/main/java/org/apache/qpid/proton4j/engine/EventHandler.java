@@ -18,12 +18,17 @@ package org.apache.qpid.proton4j.engine;
 
 /**
  * Handler of events from the proton4j resources.
+ *
+ * @param <E> The type that this handler will provide to the handle method.
  */
 @FunctionalInterface
 public interface EventHandler<E> {
 
     /**
      * Handles the event linked to this EventHandler
+     *
+     * @param target
+     *      The value to be handled.
      */
     void handle(E target);
 

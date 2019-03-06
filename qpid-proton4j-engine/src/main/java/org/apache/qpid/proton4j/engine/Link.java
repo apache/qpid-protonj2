@@ -28,6 +28,8 @@ import org.apache.qpid.proton4j.engine.impl.ProtonSession;
 
 /**
  * Base API for {@link Sender} and {@link Receiver} links.
+ *
+ * @param <T> The link type that this {@link Link} represents, {@link Sender} or {@link Receiver}
  */
 public interface Link<T extends Link<T>> {
 
@@ -100,7 +102,7 @@ public interface Link<T extends Link<T>> {
     /**
      * Sets the {@link Target} to assign to the local end of this {@link Link}.
      *
-     * @param source
+     * @param target
      *      The {@link Target} that will be set on the local end of this link.
      */
     void setTarget(Target target);
@@ -112,6 +114,8 @@ public interface Link<T extends Link<T>> {
 
     /**
      * Gets the local link properties.
+     *
+     * @return a {@link Map} containing the properties currently set on this link.
      *
      * @see #setProperties(Map)
      */
