@@ -18,6 +18,7 @@ package org.apache.qpid.proton4j.codec.transport;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.transport.Close;
@@ -59,5 +60,70 @@ public class CloseTypeCodecTest extends CodecTestSupport {
        assertNotNull(result.getError());
        assertNotNull(result.getError().getCondition());
        assertNull(result.getError().getDescription());
+    }
+
+    @Test
+    public void testEncodeUsingNewCodecAndDecodeWithLegacyCodec() throws Exception {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        ErrorCondition error = new ErrorCondition();
+        error.setCondition(Symbol.valueOf("amqp-error"));
+
+        Close input = new Close();
+
+        input.setError(error);
+
+        encoder.writeObject(buffer, encoderState, input);
+        Object decoded = legacyCodec.decodeLegacyType(buffer);
+        assertTrue(decoded instanceof Close);
+        final Close result = (Close) decoded;
+
+        assertNotNull(result);
+        assertTypesEqual(input, result);
+    }
+
+    @Test
+    public void testEncodeEmptyUsingNewCodecAndDecodeWithLegacyCodec() throws Exception {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        Close input = new Close();
+
+        encoder.writeObject(buffer, encoderState, input);
+        Object decoded = legacyCodec.decodeLegacyType(buffer);
+        assertTrue(decoded instanceof Close);
+        final Close result = (Close) decoded;
+
+        assertNotNull(result);
+        assertTypesEqual(input, result);
+    }
+
+    @Test
+    public void testEncodeUsingLegacyCodecAndDecodeWithNewCodec() throws Exception {
+        ErrorCondition error = new ErrorCondition();
+        error.setCondition(Symbol.valueOf("amqp-error"));
+
+        Close input = new Close();
+
+        input.setError(error);
+
+        ProtonBuffer buffer = legacyCodec.encodeUsingLegacyEncoder(input);
+        assertNotNull(buffer);
+
+        final Close result = (Close) decoder.readObject(buffer, decoderState);
+        assertNotNull(result);
+
+        assertTypesEqual(input, result);
+    }
+
+    @Test
+    public void testEncodeEmptyUsingLegacyCodecAndDecodeWithNewCodec() throws Exception {
+        Close input = new Close();
+
+        ProtonBuffer buffer = legacyCodec.encodeUsingLegacyEncoder(input);
+        assertNotNull(buffer);
+
+        final Close result = (Close) decoder.readObject(buffer, decoderState);
+        assertNotNull(result);
+
+        assertTypesEqual(input, result);
     }
 }

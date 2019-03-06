@@ -26,7 +26,9 @@ import org.apache.qpid.proton4j.amqp.messaging.Source;
 import org.apache.qpid.proton4j.amqp.messaging.Target;
 import org.apache.qpid.proton4j.amqp.transport.Attach;
 import org.apache.qpid.proton4j.amqp.transport.Begin;
+import org.apache.qpid.proton4j.amqp.transport.Close;
 import org.apache.qpid.proton4j.amqp.transport.DeliveryState;
+import org.apache.qpid.proton4j.amqp.transport.ErrorCondition;
 import org.apache.qpid.proton4j.amqp.transport.Open;
 import org.apache.qpid.proton4j.codec.decoders.ProtonDecoderFactory;
 import org.apache.qpid.proton4j.codec.encoders.ProtonEncoderFactory;
@@ -61,8 +63,6 @@ public class CodecTestSupport {
         encoderState = encoder.newEncoderState();
     }
 
-    // TODO Create proper assert methods that assert with reasonable messages.
-
     /**
      * Compare a Open to another Open instance.
      *
@@ -91,6 +91,27 @@ public class CodecTestSupport {
         Assert.assertArrayEquals("Offered Capabilities are not equal", open1.getOfferedCapabilities(), open2.getOfferedCapabilities());
         Assert.assertArrayEquals("Incoming Locales are not equal", open1.getIncomingLocales(), open2.getIncomingLocales());
         Assert.assertArrayEquals("Outgoing Locales are not equal", open1.getOutgoingLocales(), open2.getOutgoingLocales());
+    }
+
+    /**
+     * Compare a Close to another Close instance.
+     *
+     * @param close1
+     *      An {@link Close} instances or null
+     * @param close2
+     *      An {@link Close} instances or null.
+     *
+     * @throws AssertionError
+     *      If the two types are not equal to one another.
+     */
+    public static void assertTypesEqual(Close close1, Close close2) throws AssertionError {
+        if (close1 == null && close2 == null) {
+            return;
+        } else if (close1 == null || close2 == null) {
+            Assert.assertEquals(close1, close2);
+        }
+
+        assertTypesEqual(close1.getError(), close2.getError());
     }
 
     /**
@@ -170,7 +191,7 @@ public class CodecTestSupport {
         assertTypesEqual(attach1.getTarget(), attach2.getTarget());
 
         Assert.assertSame("Expected Attach with matching has handle values", attach1.hasUnsettled(), attach2.hasUnsettled());
-        assertTypeEquals(attach1.getUnsettled(), attach2.getUnsettled());
+        assertTypesEqual(attach1.getUnsettled(), attach2.getUnsettled());
 
         Assert.assertSame("Expected Attach with matching has receiver settle mode values", attach1.hasReceiverSettleMode(), attach2.hasReceiverSettleMode());
         Assert.assertEquals("Receiver settle mode values not equal", attach1.getRcvSettleMode(), attach2.getRcvSettleMode());
@@ -251,6 +272,29 @@ public class CodecTestSupport {
     }
 
     /**
+     * Compare a ErrorCondition to another ErrorCondition instance.
+     *
+     * @param condition1
+     *      A {@link ErrorCondition} instances or null
+     * @param condition2
+     *      A {@link ErrorCondition} instances or null.
+     *
+     * @throws AssertionError
+     *      If the two types are not equal to one another.
+     */
+    public static void assertTypesEqual(ErrorCondition condition1, ErrorCondition condition2) throws AssertionError {
+        if (condition1 == condition2) {
+            return;
+        } else if (condition1 == null || condition2 == null) {
+            Assert.assertEquals(condition1, condition2);
+        }
+
+        Assert.assertEquals("Error Descriptions should match", condition1.getDescription(), condition2.getDescription());
+        Assert.assertEquals("Error Condition should match", condition1.getCondition(), condition2.getCondition());
+        Assert.assertEquals("Error Info should match", condition1.getInfo(), condition2.getInfo());
+    }
+
+    /**
      * Compare a Unsettled Map to another Unsettled Map using the proton4j Binary type keys
      * and DeliveryState values
      *
@@ -262,7 +306,7 @@ public class CodecTestSupport {
      * @throws AssertionError
      *      If the two types are not equal to one another.
      */
-    public static void assertTypeEquals(Map<Binary, DeliveryState> unsettled1, Map<Binary, DeliveryState> unsettled2) throws AssertionError {
+    public static void assertTypesEqual(Map<Binary, DeliveryState> unsettled1, Map<Binary, DeliveryState> unsettled2) throws AssertionError {
         if (unsettled1 == null && unsettled2 == null) {
             return;
         } else if (unsettled1 == null || unsettled2 == null) {
