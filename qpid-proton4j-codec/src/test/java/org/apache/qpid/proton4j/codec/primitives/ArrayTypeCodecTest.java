@@ -16,6 +16,7 @@
  */
 package org.apache.qpid.proton4j.codec.primitives;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -171,5 +172,35 @@ public class ArrayTypeCodecTest extends CodecTestSupport {
 
         assertEquals(stringArray[0][0], element1Array[0]);
         assertEquals(stringArray[1][0], element2Array[0]);
+    }
+
+    @Test
+    public void testEncodeStringArrayWithNewCodecAndDecodeWithOldCodec() throws Exception {
+        String[] input = new String[] { "test", "legacy", "codec" };
+
+        ProtonBuffer buffer = legacyCodec.encodeUsingLegacyEncoder(input);
+        assertNotNull(buffer);
+
+        Object decoded = decoder.readObject(buffer, decoderState);
+        assertNotNull(decoded);
+        assertTrue(decoded.getClass().isArray());
+        assertEquals(String.class, decoded.getClass().getComponentType());
+        String[] result = (String[]) decoded;
+        assertArrayEquals(input, result);
+    }
+
+    @Test
+    public void testEncodeStringArrayUsingNewCodecAndDecodeWithLegacyCodec() throws Exception {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        String[] input = new String[] { "test", "legacy", "codec" };
+
+        encoder.writeObject(buffer, encoderState, input);
+        Object decoded = legacyCodec.decodeLegacyType(buffer);
+
+        assertNotNull(decoded);
+        assertTrue(decoded.getClass().isArray());
+        assertEquals(String.class, decoded.getClass().getComponentType());
+        String[] result = (String[]) decoded;
+        assertArrayEquals(input, result);
     }
 }
