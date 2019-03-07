@@ -30,11 +30,13 @@ import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.common.logging.ProtonLogger;
 import org.apache.qpid.proton4j.common.logging.ProtonLoggerFactory;
+import org.apache.qpid.proton4j.engine.test.peer.FrameType;
+import org.apache.qpid.proton4j.engine.test.peer.ListDescribedType;
 
 /**
  * Test driver object used to drive inputs and inspect outputs of an Engine.
  */
-public class EngineTestDriver {
+public class EngineTestDriver implements Consumer<ProtonBuffer> {
 
     private static final ProtonLogger LOG = ProtonLoggerFactory.getLogger(EngineTestDriver.class);
 
@@ -42,11 +44,11 @@ public class EngineTestDriver {
     private static final Symbol EXTERNAL = Symbol.valueOf("EXTERNAL");
     private static final Symbol PLAIN = Symbol.valueOf("PLAIN");
 
-    private final TestFrameParser testFrameParser;
+    private final FrameParser frameParser;
 
     private final Consumer<ProtonBuffer> frameConsumer;
 
-    private AssertionError failureCause;
+    private IOException failureCause;
 
     private int lastInitiatedChannel = -1;
     private long lastInitiatedLinkHandle = -1;
@@ -57,7 +59,7 @@ public class EngineTestDriver {
     /**
      *  Holds the expectations for processing of data from the peer under test.
      */
-    private final Queue<Handler> handlers = new ArrayDeque<>();
+    private final Queue<ScriptedElement> script = new ArrayDeque<>();
 
     /**
      * Create a test driver instance connected to the given Engine instance.
@@ -69,7 +71,7 @@ public class EngineTestDriver {
         this.frameConsumer = frameConsumer;
 
         // Configure test driver resources
-        this.testFrameParser = new TestFrameParser(this);
+        this.frameParser = new FrameParser(this);
     }
 
     //----- View the test driver state
@@ -93,22 +95,64 @@ public class EngineTestDriver {
         return Integer.MAX_VALUE;
     }
 
+    //----- Accepts encoded AMQP frames for processing
+
+    @Override
+    public void accept(ProtonBuffer buffer) {
+        try {
+            // Process off all encoded frames from this buffer one at a time.
+            while (buffer.isReadable() && failureCause == null) {
+                frameParser.ingest(buffer);
+            }
+        } catch (IOException e) {
+            try {
+                signalFailure(e);
+            } catch (IOException e1) {
+                // TODO - send error via a RuntimeException
+            }
+        }
+    }
+
     //----- Test driver handling of decoded AMQP frames
 
-    void handleHeader(AMQPHeader header) {
+    void handleHeader(AMQPHeader header) throws IOException {
+        ScriptedElement scriptEntry = script.poll();
+        if (scriptEntry == null) {
+            signalFailure(new IOException("Receibed header when not expecting any input."));
+        }
 
+        header.invoke(scriptEntry, this);
+        while (scriptEntry.performAfterwards() != null) {
+            scriptEntry.performAfterwards().perform(this, frameConsumer);
+        }
     }
 
-    void handleSaslPerformative(SaslPerformative sasl, int channel, ProtonBuffer payload) {
+    void handleSaslPerformative(SaslPerformative sasl, int channel, ProtonBuffer payload) throws IOException {
+        ScriptedElement scriptEntry = script.poll();
+        if (scriptEntry == null) {
+            signalFailure(new IOException("Receibed header when not expecting any input."));
+        }
 
+        sasl.invoke(scriptEntry, this);
+        while (scriptEntry.performAfterwards() != null) {
+            scriptEntry.performAfterwards().perform(this, frameConsumer);
+        }
     }
 
-    void handlePerformative(Performative amqp, int channel, ProtonBuffer payload) {
+    void handlePerformative(Performative amqp, int channel, ProtonBuffer payload) throws IOException {
+        ScriptedElement scriptEntry = script.poll();
+        if (scriptEntry == null) {
+            signalFailure(new IOException("Receibed header when not expecting any input."));
+        }
 
+        amqp.invoke(scriptEntry, payload, channel, this);
+        while (scriptEntry.performAfterwards() != null) {
+            scriptEntry.performAfterwards().perform(this, frameConsumer);
+        }
     }
 
     void handleHeartbeat() {
-
+        emptyFrameCount++;
     }
 
     //----- Test driver actions
@@ -119,7 +163,7 @@ public class EngineTestDriver {
      */
     public void assertionFailed(AssertionError error) {
         if (failureCause != null) {
-            failureCause = error;
+            failureCause = new IOException("Assertion caused failure in driver.", error);
         }
     }
 
@@ -156,11 +200,27 @@ public class EngineTestDriver {
     }
 
     /**
+     * Throw an exception from processing incoming data which should be handled by the peer under test.
+     *
      * @param ex
+     *      The exception that triggered this call.
+     *
+     * @throws IOException that indicates the first error that failed for this driver.
      */
-    public void signalFailureToEngine(IOException ex) {
-        // TODO Auto-generated method stub
+    public void signalFailure(IOException ex) throws IOException {
+        throw ex; // TODO
+    }
 
+    /**
+     * Throw an exception from processing incoming data which should be handled by the peer under test.
+     *
+     * @param message
+     *      The error message that describes what triggered this call.
+     *
+     * @throws IOException that indicates the first error that failed for this driver.
+     */
+    public void signalFailure(String message) throws IOException {
+        throw new IOException(message);
     }
 
     //----- Expectations

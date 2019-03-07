@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.qpid.proton4j.engine.test;
+package org.apache.qpid.proton4j.engine.test.peer;
 
 import java.util.List;
 
@@ -22,6 +22,7 @@ import org.apache.qpid.proton4j.amqp.Binary;
 import org.apache.qpid.proton4j.amqp.DescribedType;
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
+import org.apache.qpid.proton4j.engine.test.EngineTestDriver;
 import org.apache.qpid.proton4j.engine.test.describedtypes.FrameDescriptorMapping;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

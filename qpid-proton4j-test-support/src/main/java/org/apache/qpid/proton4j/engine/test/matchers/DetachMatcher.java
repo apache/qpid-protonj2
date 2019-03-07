@@ -18,8 +18,8 @@ package org.apache.qpid.proton4j.engine.test.matchers;
 
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
-import org.apache.qpid.proton4j.engine.test.FrameType;
-import org.apache.qpid.proton4j.engine.test.FrameWithNoPayloadMatchingHandler;
+import org.apache.qpid.proton4j.engine.test.peer.FrameType;
+import org.apache.qpid.proton4j.engine.test.peer.FrameWithNoPayloadMatchingHandler;
 import org.hamcrest.Matcher;
 
 public class DetachMatcher extends FrameWithNoPayloadMatchingHandler {

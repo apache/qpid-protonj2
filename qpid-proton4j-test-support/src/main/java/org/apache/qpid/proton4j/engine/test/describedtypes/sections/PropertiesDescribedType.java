@@ -18,7 +18,7 @@ package org.apache.qpid.proton4j.engine.test.describedtypes.sections;
 
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
-import org.apache.qpid.proton4j.engine.test.ListDescribedType;
+import org.apache.qpid.proton4j.engine.test.peer.ListDescribedType;
 
 public class PropertiesDescribedType extends ListDescribedType {
 

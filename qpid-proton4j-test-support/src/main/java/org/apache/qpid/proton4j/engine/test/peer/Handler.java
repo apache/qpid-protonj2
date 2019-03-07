@@ -14,7 +14,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.qpid.proton4j.engine.test;
+package org.apache.qpid.proton4j.engine.test.peer;
 
-/** The frame type used in frame headers. The ordinal numbers are used to get the numeric value */
-public enum FrameType { AMQP, SASL }
+/**
+ * Handles incoming AMQP data, usually asserting that it matches expectations
+ * and potentially generating a response.
+ */
+interface Handler {
+
+    Runnable getOnCompletionAction();
+
+    Handler onCompletion(Runnable onCompletion);
+
+}

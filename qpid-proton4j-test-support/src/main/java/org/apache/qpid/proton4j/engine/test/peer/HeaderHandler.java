@@ -14,16 +14,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.qpid.proton4j.engine.test;
+package org.apache.qpid.proton4j.engine.test.peer;
 
-/**
- * Handles incoming AMQP data, usually asserting that it matches expectations
- * and potentially generating a response.
- */
-interface Handler {
+import org.apache.qpid.proton4j.engine.test.EngineTestDriver;
 
-    Runnable getOnCompletionAction();
+interface HeaderHandler extends Handler {
 
-    Handler onCompletion(Runnable onCompletion);
+    void header(byte[] header, EngineTestDriver peer);
 
 }

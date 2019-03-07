@@ -14,10 +14,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.qpid.proton4j.engine.test;
+package org.apache.qpid.proton4j.engine.test.peer;
 
-interface HeaderHandler extends Handler {
+/**
+ * Typically used by {@link FrameSender} to dynamically set values on the
+ * outgoing frame, based on the values of the incoming one.
+ */
+public interface ValueProvider {
 
-    void header(byte[] header, EngineTestDriver peer);
+    void setValues();
 
 }

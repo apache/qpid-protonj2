@@ -14,25 +14,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.qpid.proton4j.engine.test.describedtypes.sections;
+package org.apache.qpid.proton4j.engine.test;
 
-import org.apache.qpid.proton4j.amqp.Symbol;
-import org.apache.qpid.proton4j.engine.test.peer.MapDescribedType;
-
-public class ApplicationPropertiesDescribedType extends MapDescribedType {
-
-    private static final Symbol DESCIPTOR_SYMBOL = Symbol.valueOf("amqp:application-properties:map");
+/**
+ * Entry in the test script that defines an expected output from the AMQP source being
+ * tested.
+ */
+public interface ScriptedExpectation extends ScriptedElement {
 
     @Override
-    public Object getDescriptor() {
-        return DESCIPTOR_SYMBOL;
+    default ScriptEntryType getType() {
+        return ScriptEntryType.EXPECTATION;
     }
 
-    public void setApplicationProperty(String name, Object value) {
-        if (name == null) {
-            throw new RuntimeException("ApplicationProperties maps must use non-null String keys");
-        }
+    /**
+     * @return a {@link ScriptedAction} to perform after the expectation is successfully met.
+     */
+    ScriptedAction performAfterwards();
 
-        getDescribed().put(name, value);
-    }
 }

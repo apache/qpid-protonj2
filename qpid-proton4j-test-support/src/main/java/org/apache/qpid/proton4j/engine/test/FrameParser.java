@@ -29,9 +29,9 @@ import org.apache.qpid.proton4j.codec.DecoderState;
 import org.apache.qpid.proton4j.common.logging.ProtonLogger;
 import org.apache.qpid.proton4j.common.logging.ProtonLoggerFactory;
 
-class TestFrameParser {
+class FrameParser {
 
-    private static final ProtonLogger LOG = ProtonLoggerFactory.getLogger(TestFrameParser.class);
+    private static final ProtonLogger LOG = ProtonLoggerFactory.getLogger(FrameParser.class);
 
     public static final byte AMQP_FRAME_TYPE = (byte) 0;
     public static final byte SASL_FRAME_TYPE = (byte) 1;
@@ -48,7 +48,7 @@ class TestFrameParser {
     private final FrameBufferingStage frameBufferingStage = new FrameBufferingStage();
     private final FrameParserStage frameBodyParsingStage = new FrameBodyParsingStage();
 
-    public TestFrameParser(EngineTestDriver driver) {
+    public FrameParser(EngineTestDriver driver) {
         this.driver = driver;
     }
 

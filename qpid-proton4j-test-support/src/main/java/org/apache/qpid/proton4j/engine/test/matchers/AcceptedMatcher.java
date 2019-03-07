@@ -24,7 +24,7 @@ import java.util.List;
 import org.apache.qpid.proton4j.amqp.DescribedType;
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
-import org.apache.qpid.proton4j.engine.test.AbstractFieldAndDescriptorMatcher;
+import org.apache.qpid.proton4j.engine.test.peer.AbstractFieldAndDescriptorMatcher;
 import org.hamcrest.Description;
 import org.hamcrest.TypeSafeMatcher;
 
