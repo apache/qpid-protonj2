@@ -19,6 +19,7 @@ package org.apache.qpid.proton4j.engine.test.peer;
 import org.apache.qpid.proton4j.amqp.Binary;
 import org.apache.qpid.proton4j.engine.test.EngineTestDriver;
 
+@SuppressWarnings("unused")
 public class FrameSender implements Runnable {
 
     private final EngineTestDriver testAmqpPeer;
@@ -42,7 +43,7 @@ public class FrameSender implements Runnable {
             valueProvider.setValues();
         }
 
-        testAmqpPeer.sendFrame(type, channel, frameDescribedType, framePayload);
+        //testAmqpPeer.sendFrame(type, channel, frameDescribedType, framePayload);
     }
 
     public FrameSender setValueProvider(ValueProvider valueProvider) {

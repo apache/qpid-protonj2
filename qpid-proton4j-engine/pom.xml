@@ -42,6 +42,11 @@
       <artifactId>qpid-proton4j-codec</artifactId>
     </dependency>
     <dependency>
+      <groupId>org.apache.qpid</groupId>
+      <artifactId>qpid-proton4j-test-support</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
       <scope>test</scope>

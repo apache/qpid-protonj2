@@ -20,6 +20,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 
 import org.apache.qpid.proton4j.amqp.Binary;
+import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
 import org.apache.qpid.proton4j.engine.test.EngineTestDriver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,14 +51,14 @@ class HeaderHandlerImpl implements HeaderHandler {
             assertThat("Header should match", header, equalTo(expectedHeader));
         } catch (AssertionError ae) {
             LOGGER.error("Failure when verifying header", ae);
-            peer.assertionFailed(ae);
+            peer.signalFailure(ae);
         }
 
         if (response == null || response.length == 0) {
             LOGGER.debug("Skipping header response as none was instructed");
         } else {
             LOGGER.debug("Sending header response: " + new Binary(response));
-            peer.sendHeader(response);
+            peer.sendHeader(new AMQPHeader(response));
         }
 
         if (onCompletion != null) {

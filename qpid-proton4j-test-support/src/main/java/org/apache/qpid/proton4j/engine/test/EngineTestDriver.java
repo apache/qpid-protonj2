@@ -21,8 +21,6 @@ import java.util.ArrayDeque;
 import java.util.Queue;
 import java.util.function.Consumer;
 
-import org.apache.qpid.proton4j.amqp.Binary;
-import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.security.SaslPerformative;
 import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
 import org.apache.qpid.proton4j.amqp.transport.Performative;
@@ -30,8 +28,6 @@ import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.common.logging.ProtonLogger;
 import org.apache.qpid.proton4j.common.logging.ProtonLoggerFactory;
-import org.apache.qpid.proton4j.engine.test.peer.FrameType;
-import org.apache.qpid.proton4j.engine.test.peer.ListDescribedType;
 
 /**
  * Test driver object used to drive inputs and inspect outputs of an Engine.
@@ -40,15 +36,11 @@ public class EngineTestDriver implements Consumer<ProtonBuffer> {
 
     private static final ProtonLogger LOG = ProtonLoggerFactory.getLogger(EngineTestDriver.class);
 
-    private static final Symbol ANONYMOUS = Symbol.valueOf("ANONYMOUS");
-    private static final Symbol EXTERNAL = Symbol.valueOf("EXTERNAL");
-    private static final Symbol PLAIN = Symbol.valueOf("PLAIN");
-
     private final FrameParser frameParser;
 
     private final Consumer<ProtonBuffer> frameConsumer;
 
-    private IOException failureCause;
+    private AssertionError failureCause;
 
     private int lastInitiatedChannel = -1;
     private long lastInitiatedLinkHandle = -1;
@@ -99,17 +91,15 @@ public class EngineTestDriver implements Consumer<ProtonBuffer> {
 
     @Override
     public void accept(ProtonBuffer buffer) {
+        LOG.trace("Driver processing new inbound buffer of size: {}", buffer.getReadableBytes());
+
         try {
             // Process off all encoded frames from this buffer one at a time.
             while (buffer.isReadable() && failureCause == null) {
                 frameParser.ingest(buffer);
             }
         } catch (IOException e) {
-            try {
-                signalFailure(e);
-            } catch (IOException e1) {
-                // TODO - send error via a RuntimeException
-            }
+            signalFailure(e);
         }
     }
 
@@ -118,37 +108,31 @@ public class EngineTestDriver implements Consumer<ProtonBuffer> {
     void handleHeader(AMQPHeader header) throws IOException {
         ScriptedElement scriptEntry = script.poll();
         if (scriptEntry == null) {
-            signalFailure(new IOException("Receibed header when not expecting any input."));
+            signalFailure(new AssertionError("Receibed header when not expecting any input."));
         }
 
         header.invoke(scriptEntry, this);
-        while (scriptEntry.performAfterwards() != null) {
-            scriptEntry.performAfterwards().perform(this, frameConsumer);
-        }
+        prcessScript(scriptEntry);
     }
 
     void handleSaslPerformative(SaslPerformative sasl, int channel, ProtonBuffer payload) throws IOException {
         ScriptedElement scriptEntry = script.poll();
         if (scriptEntry == null) {
-            signalFailure(new IOException("Receibed header when not expecting any input."));
+            signalFailure(new AssertionError("Receibed header when not expecting any input."));
         }
 
         sasl.invoke(scriptEntry, this);
-        while (scriptEntry.performAfterwards() != null) {
-            scriptEntry.performAfterwards().perform(this, frameConsumer);
-        }
+        prcessScript(scriptEntry);
     }
 
     void handlePerformative(Performative amqp, int channel, ProtonBuffer payload) throws IOException {
         ScriptedElement scriptEntry = script.poll();
         if (scriptEntry == null) {
-            signalFailure(new IOException("Receibed header when not expecting any input."));
+            signalFailure(new AssertionError("Receibed header when not expecting any input."));
         }
 
         amqp.invoke(scriptEntry, payload, channel, this);
-        while (scriptEntry.performAfterwards() != null) {
-            scriptEntry.performAfterwards().perform(this, frameConsumer);
-        }
+        prcessScript(scriptEntry);
     }
 
     void handleHeartbeat() {
@@ -158,44 +142,73 @@ public class EngineTestDriver implements Consumer<ProtonBuffer> {
     //----- Test driver actions
 
     /**
-     * @param error
-     *      The error that describes why the assertion failed.
+     * @throws AssertionError if the scripted events are not all completed when called.
      */
-    public void assertionFailed(AssertionError error) {
-        if (failureCause != null) {
-            failureCause = new IOException("Assertion caused failure in driver.", error);
+    public void assertScriptComplete() throws AssertionError {
+        checkFailed();
+        if (!script.isEmpty()) {
+            // TODO - Dump all elements that were not executed in the script.
+            throw new AssertionError("Not all expected actions were completed");
+        }
+    }
+
+    public void addScriptedElement(ScriptedElement element) {
+        checkFailed();
+        script.offer(element);
+    }
+
+    public void performImmediately(ScriptedAction action) {
+        checkFailed();
+        action.perform(this, frameConsumer);
+        while (action.performAfterwards() != null && failureCause == null) {
+            action.performAfterwards().perform(this, frameConsumer);
         }
     }
 
     /**
      * Encodes the given frame data into a ProtonBuffer and injects it into the configured consumer.
      *
-     * @param type
      * @param channel
-     * @param frameDescribedType
-     * @param framePayload
+     * @param performative
+     * @param payload
      */
-    public void sendFrame(FrameType type, int channel, ListDescribedType frameDescribedType, Binary framePayload) {
+    public void sendAMQPFrame(int channel, Performative performative, ProtonBuffer payload) {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
 
         try {
             frameConsumer.accept(buffer);
         } catch (Throwable t) {
-            assertionFailed(new AssertionError("Frame was not consumed due to error.", t));
+            signalFailure(new AssertionError("Frame was not consumed due to error.", t));
+        }
+    }
+
+    /**
+     * Encodes the given frame data into a ProtonBuffer and injects it into the configured consumer.
+     *
+     * @param channel
+     * @param performative
+     */
+    public void sendSaslFrame(int channel, Performative performative) {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        try {
+            frameConsumer.accept(buffer);
+        } catch (Throwable t) {
+            signalFailure(new AssertionError("Frame was not consumed due to error.", t));
         }
     }
 
     /**
      * Send the specific header bytes to the remote frame consumer.
 
-     * @param response
+     * @param header
      *      The byte array to send as the AMQP Header.
      */
-    public void sendHeader(byte[] response) {
+    public void sendHeader(AMQPHeader header) {
         try {
-            frameConsumer.accept(ProtonByteBufferAllocator.DEFAULT.wrap(response));
+            frameConsumer.accept(header.getBuffer());
         } catch (Throwable t) {
-            assertionFailed(new AssertionError("Frame was not consumed due to error.", t));
+            signalFailure(new AssertionError("Frame was not consumed due to error.", t));
         }
     }
 
@@ -205,10 +218,18 @@ public class EngineTestDriver implements Consumer<ProtonBuffer> {
      * @param ex
      *      The exception that triggered this call.
      *
-     * @throws IOException that indicates the first error that failed for this driver.
+     * @throws RuntimeException indicating the first error that cause the driver to report test failure.
      */
-    public void signalFailure(IOException ex) throws IOException {
-        throw ex; // TODO
+    public void signalFailure(Throwable ex) throws RuntimeException {
+        if (this.failureCause != null) {
+            if (ex instanceof AssertionError) {
+                this.failureCause = (AssertionError) ex;
+            } else {
+                this.failureCause = new AssertionError(ex);
+            }
+        }
+
+        throw failureCause;
     }
 
     /**
@@ -217,27 +238,33 @@ public class EngineTestDriver implements Consumer<ProtonBuffer> {
      * @param message
      *      The error message that describes what triggered this call.
      *
-     * @throws IOException that indicates the first error that failed for this driver.
+     * @throws RuntimeException that indicates the first error that failed for this driver.
      */
-    public void signalFailure(String message) throws IOException {
-        throw new IOException(message);
+    public void signalFailure(String message) throws RuntimeException {
+        signalFailure(new IOException(message));
     }
 
-    //----- Expectations
+    //----- Internal implementation
 
-    public void expectHeader(AMQPHeader header) {
-        expectHeader(header, null);
+    private void prcessScript(ScriptedElement current) {
+        while (current.performAfterwards() != null && failureCause == null) {
+            current.performAfterwards().perform(this, frameConsumer);
+        }
+
+        ScriptedElement peekNext = script.peek();
+        do {
+            if (peekNext instanceof ScriptedAction) {
+                script.poll();
+                ((ScriptedAction) peekNext).perform(this, frameConsumer);
+            }
+
+            peekNext = script.peek();
+        } while (peekNext != null);
     }
 
-    public void expectHeader(byte[] headerBytes) {
-        expectHeader(headerBytes, null);
-    }
-
-    public void expectHeader(AMQPHeader header, AMQPHeader response) {
-        // TODO
-    }
-
-    public void expectHeader(byte[] headerBytes, byte[] responseBytes) {
-        expectHeader(new AMQPHeader(headerBytes), new AMQPHeader(responseBytes));
+    private void checkFailed() {
+        if (failureCause != null) {
+            throw failureCause;
+        }
     }
 }

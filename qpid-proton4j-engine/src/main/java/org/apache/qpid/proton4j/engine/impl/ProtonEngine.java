@@ -84,15 +84,15 @@ public class ProtonEngine implements Engine {
         state = EngineState.STARTING;
         try {
             pipeline().fireEngineStarting();
+            state = EngineState.STARTED;
+            writable = true;
             connectionReady.handle(connectionFuture.onSuccess(getConnection()));
         } catch (Throwable error) {
             // TODO - Error types ?
             connectionReady.handle(connectionFuture.onFailure(error));
             state = EngineState.FAILED;
+            writable = false;
         }
-
-        state = EngineState.STARTED;
-        writable = true;
     }
 
     @Override

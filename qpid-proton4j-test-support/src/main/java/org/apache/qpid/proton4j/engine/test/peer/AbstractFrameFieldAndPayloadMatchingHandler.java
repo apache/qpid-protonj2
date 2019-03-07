@@ -64,14 +64,14 @@ public abstract class AbstractFrameFieldAndPayloadMatchingHandler extends Abstra
                 verifyFields((List<Object>) dt.getDescribed());
             } catch (AssertionError ae) {
                 LOGGER.error("Failure when verifying frame fields", ae);
-                peer.assertionFailed(ae);
+                peer.signalFailure(ae);
             }
 
             try {
                 verifyPayload(payload);
             } catch (AssertionError ae) {
                 LOGGER.error("Failure when verifying frame payload", ae);
-                peer.assertionFailed(ae);
+                peer.signalFailure(ae);
             }
 
             if (expectedFrameSize != 0 && expectedFrameSize != frameSize) {
