@@ -23,7 +23,6 @@ import org.apache.qpid.proton4j.amqp.DescribedType;
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.engine.test.EngineTestDriver;
-import org.apache.qpid.proton4j.engine.test.describedtypes.FrameDescriptorMapping;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

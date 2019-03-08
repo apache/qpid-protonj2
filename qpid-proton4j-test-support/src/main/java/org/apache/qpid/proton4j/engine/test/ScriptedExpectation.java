@@ -28,12 +28,6 @@ public interface ScriptedExpectation extends ScriptedElement {
     }
 
     /**
-     * @return a {@link ScriptedAction} to perform after the expectation is successfully met.
-     */
-    @Override
-    ScriptedAction performAfterwards();
-
-    /**
      * Builder that is used to build up an expectation(s) to be added to a driver instance.
      */
     interface ExpectationBuilder {
