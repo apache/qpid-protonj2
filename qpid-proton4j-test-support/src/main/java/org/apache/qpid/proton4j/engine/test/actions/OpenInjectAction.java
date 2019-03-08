@@ -14,31 +14,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.qpid.proton4j.engine.impl;
+package org.apache.qpid.proton4j.engine.test.actions;
 
+import java.util.function.Consumer;
+
+import org.apache.qpid.proton4j.amqp.transport.Open;
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.engine.test.EngineTestDriver;
-import org.apache.qpid.proton4j.engine.test.types.AMQPHeaderType;
-import org.junit.Test;
+import org.apache.qpid.proton4j.engine.test.ScriptedAction;
 
 /**
- * Test Proton Engine with the test driver
+ * AMQP Open injection action which can be added to a driver for write at a specific time or
+ * following on from some other action in the test script.
  */
-public class ProtonEngineTestWithDriver extends ProtonEngineTestSupport {
+public class OpenInjectAction implements ScriptedAction {
 
-    @Test
-    public void testEngineEmitsAMQPHeaderOnConnectionOpen() {
-        ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
+    private final Open open;
+    private final int channel;
 
-        // Create the test driver and link it to the engine for output handling.
-        EngineTestDriver driver = new EngineTestDriver(engine);
-        engine.outputConsumer(driver);
+    public OpenInjectAction(Open open, int channel) {
+        this.open = open;
+        this.channel = channel;
+    }
 
-        AMQPHeaderType.raw().expect(driver).withRawHeader().respond(driver);
-
-        engine.start(result -> {
-            result.get().open();
-        });
-
-        driver.assertScriptComplete();
+    @Override
+    public void perform(EngineTestDriver driver, Consumer<ProtonBuffer> consumer) {
+        driver.sendAMQPFrame(channel, open, null);
     }
 }

@@ -25,7 +25,6 @@ import org.apache.qpid.proton4j.amqp.security.SaslPerformative;
 import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
 import org.apache.qpid.proton4j.amqp.transport.Performative;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
-import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.common.logging.ProtonLogger;
 import org.apache.qpid.proton4j.common.logging.ProtonLoggerFactory;
 
@@ -36,7 +35,8 @@ public class EngineTestDriver implements Consumer<ProtonBuffer> {
 
     private static final ProtonLogger LOG = ProtonLoggerFactory.getLogger(EngineTestDriver.class);
 
-    private final FrameParser frameParser;
+    private final FrameDecoder frameParser;
+    private final FrameEncoder frameEncoder;
 
     private final Consumer<ProtonBuffer> frameConsumer;
 
@@ -47,6 +47,9 @@ public class EngineTestDriver implements Consumer<ProtonBuffer> {
     private long lastInitiatedCoordinatorLinkHandle = -1;
     private int advertisedIdleTimeout = 0;
     private volatile int emptyFrameCount;
+
+    private int inboundMaxFrameSize = Integer.MAX_VALUE;
+    private int outboundMaxFrameSize = Integer.MAX_VALUE;
 
     /**
      *  Holds the expectations for processing of data from the peer under test.
@@ -63,7 +66,8 @@ public class EngineTestDriver implements Consumer<ProtonBuffer> {
         this.frameConsumer = frameConsumer;
 
         // Configure test driver resources
-        this.frameParser = new FrameParser(this);
+        this.frameParser = new FrameDecoder(this);
+        this.frameEncoder = new FrameEncoder(this);
     }
 
     //----- View the test driver state
@@ -83,8 +87,23 @@ public class EngineTestDriver implements Consumer<ProtonBuffer> {
     /**
      * @return the maximum allowed inbound frame size.
      */
-    public int getMaxInboundFrameSize() {
-        return Integer.MAX_VALUE;
+    public int getInboundMaxFrameSize() {
+        return inboundMaxFrameSize;
+    }
+
+    public void setInboundMaxFrameSize(int maxSize) {
+        this.inboundMaxFrameSize = maxSize;
+    }
+
+    /**
+     * @return the maximum allowed outbound frame size.
+     */
+    public int getOutboundMaxFrameSize() {
+        return outboundMaxFrameSize;
+    }
+
+    public void setOutboundMaxFrameSize(int maxSize) {
+        this.outboundMaxFrameSize = maxSize;
     }
 
     //----- Accepts encoded AMQP frames for processing
@@ -173,7 +192,8 @@ public class EngineTestDriver implements Consumer<ProtonBuffer> {
      * @param payload
      */
     public void sendAMQPFrame(int channel, Performative performative, ProtonBuffer payload) {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        // TODO - handle split frames when frame size requires it
+        ProtonBuffer buffer = frameEncoder.handleWrite(performative, channel, payload, null);
 
         try {
             frameConsumer.accept(buffer);
@@ -188,8 +208,8 @@ public class EngineTestDriver implements Consumer<ProtonBuffer> {
      * @param channel
      * @param performative
      */
-    public void sendSaslFrame(int channel, Performative performative) {
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+    public void sendSaslFrame(int channel, SaslPerformative performative) {
+        ProtonBuffer buffer = frameEncoder.handleWrite(performative, channel);
 
         try {
             frameConsumer.accept(buffer);

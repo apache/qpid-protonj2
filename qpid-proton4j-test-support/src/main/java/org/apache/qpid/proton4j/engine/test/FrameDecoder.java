@@ -29,9 +29,9 @@ import org.apache.qpid.proton4j.codec.DecoderState;
 import org.apache.qpid.proton4j.common.logging.ProtonLogger;
 import org.apache.qpid.proton4j.common.logging.ProtonLoggerFactory;
 
-class FrameParser {
+class FrameDecoder {
 
-    private static final ProtonLogger LOG = ProtonLoggerFactory.getLogger(FrameParser.class);
+    private static final ProtonLogger LOG = ProtonLoggerFactory.getLogger(FrameDecoder.class);
 
     public static final byte AMQP_FRAME_TYPE = (byte) 0;
     public static final byte SASL_FRAME_TYPE = (byte) 1;
@@ -48,7 +48,7 @@ class FrameParser {
     private final FrameBufferingStage frameBufferingStage = new FrameBufferingStage();
     private final FrameParserStage frameBodyParsingStage = new FrameBodyParsingStage();
 
-    public FrameParser(EngineTestDriver driver) {
+    public FrameDecoder(EngineTestDriver driver) {
         this.driver = driver;
     }
 
@@ -199,9 +199,9 @@ class FrameParser {
                     "specified frame size %d smaller than minimum frame header size 8", frameSize));
             }
 
-            if (frameSize > driver.getMaxInboundFrameSize()) {
+            if (frameSize > driver.getInboundMaxFrameSize()) {
                 throw new IOException(String.format(
-                    "specified frame size %d larger than maximum frame size %d", frameSize, driver.getMaxInboundFrameSize()));
+                    "specified frame size %d larger than maximum frame size %d", frameSize, driver.getInboundMaxFrameSize()));
             }
         }
 

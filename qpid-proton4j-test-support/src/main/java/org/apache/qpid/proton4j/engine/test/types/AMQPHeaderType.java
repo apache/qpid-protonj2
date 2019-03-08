@@ -40,7 +40,7 @@ public class AMQPHeaderType {
         return new AMQPHeaderExpectationBuilder(new AMQPHeaderExpectation(AMQPHeader.getSASLHeader()));
     }
 
-    public static void scriptInject(EngineTestDriver driver, AMQPHeader header) {
+    public static void injectLater(EngineTestDriver driver, AMQPHeader header) {
         driver.addScriptedElement(new AMQPHeaderInjectAction(header));
     }
 
@@ -54,12 +54,12 @@ public class AMQPHeaderType {
 
         private AMQPHeader response;
 
-        public AMQPHeaderResponseBuilder raw() {
+        public AMQPHeaderResponseBuilder withRawHeader() {
             response = AMQPHeader.getAMQPHeader();
             return this;
         }
 
-        public AMQPHeaderResponseBuilder sasl() {
+        public AMQPHeaderResponseBuilder withSaslHeader() {
             response = AMQPHeader.getSASLHeader();
             return this;
         }
