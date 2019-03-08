@@ -290,14 +290,13 @@ class FrameDecoder {
 
             if (type == AMQP_FRAME_TYPE) {
                 Performative performative = (Performative) val;
-                // TODO Remove me
-                LOG.trace("IN: CH[{}] : {} [{}]", channel, performative, payload);
+                LOG.trace("Driver Read: CH[{}] : {} [{}]", channel, performative, payload);
                 transitionToFrameSizeParsingStage();
                 driver.handlePerformative(performative, channel, payload);
             } else if (type == SASL_FRAME_TYPE) {
                 SaslPerformative performative = (SaslPerformative) val;
                 // TODO remove me
-                LOG.trace("IN: {} [{}]", performative, payload);
+                LOG.trace("Driver Read: {} [{}]", performative, payload);
                 transitionToFrameSizeParsingStage();
                 driver.handleSaslPerformative(performative, channel, payload);
             } else {

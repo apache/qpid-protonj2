@@ -45,6 +45,11 @@
     <maven-bundle-plugin-version>3.5.1</maven-bundle-plugin-version>
     <jacoco-plugin-version>0.8.1</jacoco-plugin-version>
 
+    <!-- Test properties -->
+    <maven.test.redirectTestOutputToFile>true</maven.test.redirectTestOutputToFile>
+    <surefire.runOrder>filesystem</surefire.runOrder>
+    <proton.trace.frames>false</proton.trace.frames>
+
     <!-- surefire forked jvm arguments -->
     <argLine>-Xmx2g -enableassertions ${jacoco-config}</argLine>
   </properties>
@@ -204,6 +209,23 @@
     </plugins>
     <pluginManagement>
       <plugins>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-surefire-plugin</artifactId>
+          <configuration>
+            <runOrder>${surefire.runOrder}</runOrder>
+            <redirectTestOutputToFile>${maven.test.redirectTestOutputToFile}</redirectTestOutputToFile>
+            <forkCount>1</forkCount>
+            <reuseForks>true</reuseForks>
+            <systemPropertyVariables>
+                <java.awt.headless>true</java.awt.headless>
+            </systemPropertyVariables>
+            <failIfNoTests>false</failIfNoTests>
+            <environmentVariables>
+              <PN_TRACE_FRM>${proton.trace.frames}</PN_TRACE_FRM>
+            </environmentVariables>
+          </configuration>
+        </plugin>
         <!--This plugin's configuration is used to store Eclipse m2e settings only. It has no influence on the Maven build itself.-->
         <plugin>
           <groupId>org.eclipse.m2e</groupId>

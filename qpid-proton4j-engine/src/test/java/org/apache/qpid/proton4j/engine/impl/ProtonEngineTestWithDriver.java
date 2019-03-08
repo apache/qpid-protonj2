@@ -18,6 +18,7 @@ package org.apache.qpid.proton4j.engine.impl;
 
 import org.apache.qpid.proton4j.engine.test.EngineTestDriver;
 import org.apache.qpid.proton4j.engine.test.types.AMQPHeaderType;
+import org.apache.qpid.proton4j.engine.test.types.OpenType;
 import org.junit.Test;
 
 /**
@@ -34,6 +35,24 @@ public class ProtonEngineTestWithDriver extends ProtonEngineTestSupport {
         engine.outputConsumer(driver);
 
         AMQPHeaderType.raw().expect(driver).withRawHeader().respond(driver);
+
+        engine.start(result -> {
+            result.get().open();
+        });
+
+        driver.assertScriptComplete();
+    }
+
+    @Test
+    public void testEngineEmitsOpenPerformative() {
+        ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
+
+        // Create the test driver and link it to the engine for output handling.
+        EngineTestDriver driver = new EngineTestDriver(engine);
+        engine.outputConsumer(driver);
+
+        AMQPHeaderType.raw().expect(driver).withRawHeader().respond(driver);
+        OpenType.open().withContainerId("test").expect(driver).withContainerId("driver").respond(driver);
 
         engine.start(result -> {
             result.get().open();
