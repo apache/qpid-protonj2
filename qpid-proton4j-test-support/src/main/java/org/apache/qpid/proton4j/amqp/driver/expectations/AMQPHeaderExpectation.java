@@ -20,7 +20,6 @@ import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
-import org.apache.qpid.proton4j.amqp.driver.ScriptedAction;
 import org.apache.qpid.proton4j.amqp.driver.ScriptedExpectation;
 import org.apache.qpid.proton4j.amqp.driver.actions.AMQPHeaderInjectAction;
 import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
@@ -30,16 +29,18 @@ import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
  */
 public class AMQPHeaderExpectation implements ScriptedExpectation {
 
-    private AMQPHeader expected;
-    private AMQPHeader response;
+    private final AMQPHeader expected;
+    private final AMQPTestDriver driver;
 
-    public AMQPHeaderExpectation(AMQPHeader expected) {
+    public AMQPHeaderExpectation(AMQPHeader expected, AMQPTestDriver driver) {
         this.expected = expected;
+        this.driver = driver;
     }
 
-    @Override
-    public ScriptedAction performAfterwards() {
-        return response != null ? new AMQPHeaderInjectAction(response) : null;
+    public AMQPHeaderInjectAction respondWithAMQPHeader() {
+        AMQPHeaderInjectAction response = new AMQPHeaderInjectAction(AMQPHeader.getAMQPHeader());
+        driver.addScriptedElement(response);
+        return response;
     }
 
     @Override

@@ -26,38 +26,4 @@ public interface ScriptedExpectation extends ScriptedElement {
     default ScriptEntryType getType() {
         return ScriptEntryType.EXPECTATION;
     }
-
-    /**
-     * Builder that is used to build up an expectation(s) to be added to a driver instance.
-     */
-    interface ExpectationBuilder {
-
-        /**
-         * Instructs the given driver instance that it should add this expectation to the script
-         * of items expected during the test.
-         *
-         * @param driver
-         *      The driver that the expectation should be added to.
-         *
-         * @return a response builder that can be used to create a scripted response for this expectation.
-         */
-        ResponseBuilder expect(AMQPTestDriver driver);
-
-    }
-
-    /**
-     * Builder that is used to build up an expectation(s) to be added to a driver instance.
-     */
-    interface ResponseBuilder {
-
-        /**
-         * Instructs the given driver instance that it should add this expectation to the script
-         * of items expected during the test.
-         *
-         * @param driver
-         *      The driver that the expectation should be added to.
-         */
-        void respond(AMQPTestDriver driver);
-
-    }
 }

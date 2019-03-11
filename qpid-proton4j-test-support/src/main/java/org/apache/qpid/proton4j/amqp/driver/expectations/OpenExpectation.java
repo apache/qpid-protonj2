@@ -16,6 +16,15 @@
  */
 package org.apache.qpid.proton4j.amqp.driver.expectations;
 
+import static org.hamcrest.CoreMatchers.equalTo;
+
+import java.util.Map;
+
+import org.apache.qpid.proton4j.amqp.Symbol;
+import org.apache.qpid.proton4j.amqp.UnsignedInteger;
+import org.apache.qpid.proton4j.amqp.UnsignedShort;
+import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
+import org.apache.qpid.proton4j.amqp.driver.actions.OpenInjectAction;
 import org.apache.qpid.proton4j.amqp.transport.Open;
 import org.hamcrest.Matcher;
 
@@ -40,9 +49,62 @@ public class OpenExpectation extends AbstractExceptation<Open> {
         PROPERTIES,
     }
 
-    public OpenExpectation() {
+    private final AMQPTestDriver driver;
+
+    public OpenExpectation(AMQPTestDriver driver) {
         this.expectedChannel = 0;  // Open must used channel zero.
+        this.driver = driver;
     }
+
+    public OpenInjectAction respond() {
+        OpenInjectAction response = new OpenInjectAction(new Open(), 0);
+        driver.addScriptedElement(response);
+        return response;
+    }
+
+    //----- Type specific with methods that perform simple equals checks
+
+    public OpenExpectation withContainerId(String container) {
+        return withContainerId(equalTo(container));
+    }
+
+    public OpenExpectation withHostname(String hostname) {
+        return withHostname(equalTo(hostname));
+    }
+
+    public OpenExpectation withMaxFrameSize(UnsignedInteger maxFrameSize) {
+        return withHostname(equalTo(maxFrameSize));
+    }
+
+    public OpenExpectation withChannelMax(UnsignedShort channelMax) {
+        return withHostname(equalTo(channelMax));
+    }
+
+    public OpenExpectation withIdleTimeOut(UnsignedInteger idleTimeout) {
+        return withHostname(equalTo(idleTimeout));
+    }
+
+    public OpenExpectation withOutgoingLocales(Symbol... outgoingLocales) {
+        return withHostname(equalTo(outgoingLocales));
+    }
+
+    public OpenExpectation withIncomingLocales(Symbol... incomingLocales) {
+        return withHostname(equalTo(incomingLocales));
+    }
+
+    public OpenExpectation withOfferedCapabilities(Symbol... offeredCapabilities) {
+        return withHostname(equalTo(offeredCapabilities));
+    }
+
+    public OpenExpectation withDesiredCapabilities(Symbol... desiredCapabilities) {
+        return withHostname(equalTo(desiredCapabilities));
+    }
+
+    public OpenExpectation withProperties(Map<Symbol, Object> properties) {
+        return withHostname(equalTo(properties));
+    }
+
+    //----- Matcher based with methods for more complex validation
 
     public OpenExpectation withContainerId(Matcher<?> m) {
         getMatchers().put(Field.CONTAINER_ID, m);

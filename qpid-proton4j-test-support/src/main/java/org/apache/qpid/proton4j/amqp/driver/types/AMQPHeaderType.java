@@ -17,8 +17,6 @@
 package org.apache.qpid.proton4j.amqp.driver.types;
 
 import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
-import org.apache.qpid.proton4j.amqp.driver.ScriptedExpectation.ExpectationBuilder;
-import org.apache.qpid.proton4j.amqp.driver.ScriptedExpectation.ResponseBuilder;
 import org.apache.qpid.proton4j.amqp.driver.actions.AMQPHeaderInjectAction;
 import org.apache.qpid.proton4j.amqp.driver.expectations.AMQPHeaderExpectation;
 import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
@@ -32,12 +30,16 @@ public class AMQPHeaderType {
 
     //----- Static methods for easier scripting
 
-    public static AMQPHeaderExpectationBuilder raw() {
-        return new AMQPHeaderExpectationBuilder(new AMQPHeaderExpectation(AMQPHeader.getAMQPHeader()));
+    public static AMQPHeaderExpectation expectAMQPHeader(AMQPTestDriver driver) {
+        AMQPHeaderExpectation expecting = new AMQPHeaderExpectation(AMQPHeader.getAMQPHeader(), driver);
+        driver.addScriptedElement(expecting);
+        return expecting;
     }
 
-    public static AMQPHeaderExpectationBuilder sasl() {
-        return new AMQPHeaderExpectationBuilder(new AMQPHeaderExpectation(AMQPHeader.getSASLHeader()));
+    public static AMQPHeaderExpectation expectSASLHeader(AMQPTestDriver driver) {
+        AMQPHeaderExpectation expecting = new AMQPHeaderExpectation(AMQPHeader.getSASLHeader(), driver);
+        driver.addScriptedElement(expecting);
+        return expecting;
     }
 
     public static void injectLater(AMQPTestDriver driver, AMQPHeader header) {
@@ -46,43 +48,5 @@ public class AMQPHeaderType {
 
     public static void injectNow(AMQPTestDriver driver, AMQPHeader header) {
         driver.sendHeader(header);
-    }
-
-    //----- Builder for this expectation
-
-    public static class AMQPHeaderResponseBuilder implements ResponseBuilder {
-
-        private AMQPHeader response;
-
-        public AMQPHeaderResponseBuilder withRawHeader() {
-            response = AMQPHeader.getAMQPHeader();
-            return this;
-        }
-
-        public AMQPHeaderResponseBuilder withSaslHeader() {
-            response = AMQPHeader.getSASLHeader();
-            return this;
-        }
-
-        @Override
-        public void respond(AMQPTestDriver driver) {
-            driver.addScriptedElement(new AMQPHeaderInjectAction(response));
-        }
-    }
-
-    public static class AMQPHeaderExpectationBuilder implements ExpectationBuilder {
-
-        private final AMQPHeaderExpectation expected;
-
-        public AMQPHeaderExpectationBuilder(AMQPHeaderExpectation expected) {
-            this.expected = expected;
-        }
-
-        @Override
-        public AMQPHeaderResponseBuilder expect(AMQPTestDriver driver) {
-            driver.addScriptedElement(expected);
-
-            return new AMQPHeaderResponseBuilder();
-        }
     }
 }

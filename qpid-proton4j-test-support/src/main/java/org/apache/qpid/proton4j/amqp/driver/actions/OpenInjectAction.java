@@ -16,8 +16,12 @@
  */
 package org.apache.qpid.proton4j.amqp.driver.actions;
 
+import java.util.Map;
 import java.util.function.Consumer;
 
+import org.apache.qpid.proton4j.amqp.Symbol;
+import org.apache.qpid.proton4j.amqp.UnsignedInteger;
+import org.apache.qpid.proton4j.amqp.UnsignedShort;
 import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
 import org.apache.qpid.proton4j.amqp.driver.ScriptedAction;
 import org.apache.qpid.proton4j.amqp.transport.Open;
@@ -30,11 +34,66 @@ import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 public class OpenInjectAction implements ScriptedAction {
 
     private final Open open;
-    private final int channel;
+    private int channel;
 
     public OpenInjectAction(Open open, int channel) {
         this.open = open;
         this.channel = channel;
+    }
+
+    public OpenInjectAction onChannel(int channel) {
+        this.channel = channel;
+        return this;
+    }
+
+    public OpenInjectAction withContainerId(String containerId) {
+        open.setContainerId(containerId);
+        return this;
+    }
+
+    public OpenInjectAction withHostname(String hostname) {
+        open.setHostname(hostname);
+        return this;
+    }
+
+    public OpenInjectAction withMaxFrameSize(UnsignedInteger maxFrameSize) {
+        open.setMaxFrameSize(maxFrameSize);
+        return this;
+    }
+
+    public OpenInjectAction withChannelMax(UnsignedShort channelMax) {
+        open.setChannelMax(channelMax);
+        return this;
+    }
+
+    public OpenInjectAction withIdleTimeOut(UnsignedInteger idleTimeout) {
+        open.setIdleTimeOut(idleTimeout);
+        return this;
+    }
+
+    public OpenInjectAction withOutgoingLocales(Symbol... outgoingLocales) {
+        open.setOutgoingLocales(outgoingLocales);
+        return this;
+    }
+
+    public OpenInjectAction withIncomingLocales(Symbol... incomingLocales) {
+        open.setIncomingLocales(incomingLocales);
+        return this;
+    }
+
+    public OpenInjectAction withOfferedCapabilities(Symbol... offeredCapabilities) {
+        open.setOfferedCapabilities(offeredCapabilities);
+        return this;
+    }
+
+    public OpenInjectAction withDesiredCapabilities(Symbol... desiredCapabilities) {
+        open.setDesiredCapabilities(desiredCapabilities);
+        return this;
+    }
+
+    public OpenInjectAction withProperties(Map<Symbol, Object> properties) {
+        open.setProperties(properties);
+        return this;
     }
 
     @Override

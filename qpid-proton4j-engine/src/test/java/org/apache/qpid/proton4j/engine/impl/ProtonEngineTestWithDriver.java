@@ -42,8 +42,8 @@ public class ProtonEngineTestWithDriver extends ProtonEngineTestSupport {
         AMQPTestDriver driver = new AMQPTestDriver(engine);
         engine.outputConsumer(driver);
 
-        AMQPHeaderType.raw().expect(driver).withRawHeader().respond(driver);
-        OpenType.open().expect(driver);
+        AMQPHeaderType.expectAMQPHeader(driver).respondWithAMQPHeader();
+        OpenType.expectOpen(driver).respond().withContainerId("driver");
 
         engine.start(result -> {
             result.get().open();
@@ -63,11 +63,11 @@ public class ProtonEngineTestWithDriver extends ProtonEngineTestSupport {
         AMQPTestDriver driver = new AMQPTestDriver(engine);
         engine.outputConsumer(driver);
 
-        AMQPHeaderType.raw().expect(driver).withRawHeader().respond(driver);
-        OpenType.open().withContainerId("test").expect(driver).withContainerId("driver").respond(driver);
+        AMQPHeaderType.expectAMQPHeader(driver).respondWithAMQPHeader();
+        OpenType.expectOpen(driver).withContainerId("test").respond().withContainerId("driver");
 
         engine.start(result -> {
-            connection = (ProtonConnection) result;
+            connection = (ProtonConnection) result.get();
             connection.setContainerId("test");
             connection.open();
         });
