@@ -19,10 +19,10 @@ package org.apache.qpid.proton4j.engine.impl;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 
+import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
+import org.apache.qpid.proton4j.amqp.driver.types.AMQPHeaderType;
+import org.apache.qpid.proton4j.amqp.driver.types.OpenType;
 import org.apache.qpid.proton4j.engine.ConnectionState;
-import org.apache.qpid.proton4j.engine.test.EngineTestDriver;
-import org.apache.qpid.proton4j.engine.test.types.AMQPHeaderType;
-import org.apache.qpid.proton4j.engine.test.types.OpenType;
 import org.junit.Test;
 
 /**
@@ -39,7 +39,7 @@ public class ProtonEngineTestWithDriver extends ProtonEngineTestSupport {
         engine.errorHandler(result -> failure = result);
 
         // Create the test driver and link it to the engine for output handling.
-        EngineTestDriver driver = new EngineTestDriver(engine);
+        AMQPTestDriver driver = new AMQPTestDriver(engine);
         engine.outputConsumer(driver);
 
         AMQPHeaderType.raw().expect(driver).withRawHeader().respond(driver);
@@ -60,7 +60,7 @@ public class ProtonEngineTestWithDriver extends ProtonEngineTestSupport {
         engine.errorHandler(result -> failure = result);
 
         // Create the test driver and link it to the engine for output handling.
-        EngineTestDriver driver = new EngineTestDriver(engine);
+        AMQPTestDriver driver = new AMQPTestDriver(engine);
         engine.outputConsumer(driver);
 
         AMQPHeaderType.raw().expect(driver).withRawHeader().respond(driver);
