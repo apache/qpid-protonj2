@@ -276,6 +276,8 @@ public class AMQPTestDriver implements Consumer<ProtonBuffer> {
             if (peekNext instanceof ScriptedAction) {
                 script.poll();
                 ((ScriptedAction) peekNext).perform(this, frameConsumer);
+            } else {
+                return;
             }
 
             peekNext = script.peek();

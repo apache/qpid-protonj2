@@ -77,6 +77,13 @@ public class ProtonEngineTestWithDriver extends ProtonEngineTestSupport {
         assertEquals(ConnectionState.ACTIVE, connection.getLocalState());
         assertEquals(ConnectionState.ACTIVE, connection.getRemoteState());
 
+        // TODO - seems to be a bug following write of the open from the connection.
+        //        driver enters buffering of a frame for some reason.
+//        CloseType.expectClose(driver).respond();
+//        connection.close();
+//
+//        driver.assertScriptComplete();
+
         assertNull(failure);
     }
 }

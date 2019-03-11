@@ -57,6 +57,20 @@ public abstract class AbstractExceptation<T> implements ScriptedExpectation {
 
     protected int expectedChannel = ANY_CHANNEL;
     protected final Map<Enum<?>, Matcher<?>> fieldMatchers = new LinkedHashMap<>();
+    protected final AMQPTestDriver driver;
+
+    public AbstractExceptation(AMQPTestDriver driver) {
+        this.driver = driver;
+    }
+
+    //----- Configure base expectations
+
+    public AbstractExceptation<T> onChannel(int channel) {
+        this.expectedChannel = channel;
+        return this;
+    }
+
+    //------ Abstract classes use these methods to control validation
 
     /**
      * Verifies the fields of the performative against any matchers registered.

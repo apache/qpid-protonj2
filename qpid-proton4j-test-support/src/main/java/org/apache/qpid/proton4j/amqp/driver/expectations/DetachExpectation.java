@@ -16,6 +16,7 @@
  */
 package org.apache.qpid.proton4j.amqp.driver.expectations;
 
+import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
 import org.apache.qpid.proton4j.amqp.transport.Detach;
 import org.hamcrest.Matcher;
 
@@ -31,6 +32,10 @@ public class DetachExpectation extends AbstractExceptation<Detach> {
         HANDLE,
         CLOSED,
         ERROR
+    }
+
+    public DetachExpectation(AMQPTestDriver driver) {
+        super(driver);
     }
 
     public DetachExpectation withHandle(Matcher<?> m) {

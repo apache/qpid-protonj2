@@ -16,7 +16,12 @@
  */
 package org.apache.qpid.proton4j.amqp.driver.expectations;
 
+import static org.hamcrest.CoreMatchers.equalTo;
+
+import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
+import org.apache.qpid.proton4j.amqp.driver.actions.CloseInjectAction;
 import org.apache.qpid.proton4j.amqp.transport.Close;
+import org.apache.qpid.proton4j.amqp.transport.ErrorCondition;
 import org.hamcrest.Matcher;
 
 /**
@@ -30,6 +35,24 @@ public class CloseExpectation extends AbstractExceptation<Close> {
     public enum Field {
         ERROR
     }
+
+    public CloseExpectation(AMQPTestDriver driver) {
+        super(driver);
+    }
+
+    public CloseInjectAction respond() {
+        CloseInjectAction response = new CloseInjectAction(new Close(), 0);
+        driver.addScriptedElement(response);
+        return response;
+    }
+
+    //----- Type specific with methods that perform simple equals checks
+
+    public CloseExpectation withError(ErrorCondition error) {
+        return withError(equalTo(error));
+    }
+
+    //----- Matcher based with methods for more complex validation
 
     public CloseExpectation withError(Matcher<?> m) {
         getMatchers().put(Field.ERROR, m);

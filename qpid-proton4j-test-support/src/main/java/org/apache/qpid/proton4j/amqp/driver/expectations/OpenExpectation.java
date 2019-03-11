@@ -49,11 +49,10 @@ public class OpenExpectation extends AbstractExceptation<Open> {
         PROPERTIES,
     }
 
-    private final AMQPTestDriver driver;
-
     public OpenExpectation(AMQPTestDriver driver) {
-        this.expectedChannel = 0;  // Open must used channel zero.
-        this.driver = driver;
+        super(driver);
+
+        onChannel(0);  // Open must used channel zero.
     }
 
     public OpenInjectAction respond() {
@@ -73,35 +72,35 @@ public class OpenExpectation extends AbstractExceptation<Open> {
     }
 
     public OpenExpectation withMaxFrameSize(UnsignedInteger maxFrameSize) {
-        return withHostname(equalTo(maxFrameSize));
+        return withMaxFrameSize(equalTo(maxFrameSize));
     }
 
     public OpenExpectation withChannelMax(UnsignedShort channelMax) {
-        return withHostname(equalTo(channelMax));
+        return withChannelMax(equalTo(channelMax));
     }
 
     public OpenExpectation withIdleTimeOut(UnsignedInteger idleTimeout) {
-        return withHostname(equalTo(idleTimeout));
+        return withIdleTimeOut(equalTo(idleTimeout));
     }
 
     public OpenExpectation withOutgoingLocales(Symbol... outgoingLocales) {
-        return withHostname(equalTo(outgoingLocales));
+        return withOutgoingLocales(equalTo(outgoingLocales));
     }
 
     public OpenExpectation withIncomingLocales(Symbol... incomingLocales) {
-        return withHostname(equalTo(incomingLocales));
+        return withIncomingLocales(equalTo(incomingLocales));
     }
 
     public OpenExpectation withOfferedCapabilities(Symbol... offeredCapabilities) {
-        return withHostname(equalTo(offeredCapabilities));
+        return withOfferedCapabilities(equalTo(offeredCapabilities));
     }
 
     public OpenExpectation withDesiredCapabilities(Symbol... desiredCapabilities) {
-        return withHostname(equalTo(desiredCapabilities));
+        return withDesiredCapabilities(equalTo(desiredCapabilities));
     }
 
     public OpenExpectation withProperties(Map<Symbol, Object> properties) {
-        return withHostname(equalTo(properties));
+        return withProperties(equalTo(properties));
     }
 
     //----- Matcher based with methods for more complex validation

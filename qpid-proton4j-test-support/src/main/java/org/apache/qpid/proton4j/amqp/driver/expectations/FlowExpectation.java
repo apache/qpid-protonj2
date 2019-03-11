@@ -16,6 +16,7 @@
  */
 package org.apache.qpid.proton4j.amqp.driver.expectations;
 
+import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
 import org.apache.qpid.proton4j.amqp.transport.Flow;
 import org.hamcrest.Matcher;
 
@@ -39,6 +40,10 @@ public class FlowExpectation extends AbstractExceptation<Flow> {
         DRAIN,
         ECHO,
         PROPERTIES,
+    }
+
+    public FlowExpectation(AMQPTestDriver driver) {
+        super(driver);
     }
 
     public FlowExpectation withNextIncomingId(Matcher<?> m) {

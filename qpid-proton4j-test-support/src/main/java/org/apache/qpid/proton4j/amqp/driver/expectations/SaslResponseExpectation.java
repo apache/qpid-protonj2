@@ -16,6 +16,7 @@
  */
 package org.apache.qpid.proton4j.amqp.driver.expectations;
 
+import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
 import org.apache.qpid.proton4j.amqp.security.SaslResponse;
 import org.hamcrest.Matcher;
 
@@ -29,6 +30,10 @@ public class SaslResponseExpectation extends AbstractExceptation<SaslResponse> {
      */
     public enum Field {
         RESPONSE
+    }
+
+    public SaslResponseExpectation(AMQPTestDriver driver) {
+        super(driver);
     }
 
     public SaslResponseExpectation withResponse(Matcher<?> m) {

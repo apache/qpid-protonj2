@@ -16,6 +16,7 @@
  */
 package org.apache.qpid.proton4j.amqp.driver.expectations;
 
+import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
 import org.apache.qpid.proton4j.amqp.security.SaslMechanisms;
 import org.hamcrest.Matcher;
 
@@ -29,6 +30,10 @@ public class SaslMechanismsExpectation extends AbstractExceptation<SaslMechanism
      */
     public enum Field {
         SASL_SERVER_MECHANISMS
+    }
+
+    public SaslMechanismsExpectation(AMQPTestDriver driver) {
+        super(driver);
     }
 
     public SaslMechanismsExpectation withSaslServerMechanisms(Matcher<?> m) {

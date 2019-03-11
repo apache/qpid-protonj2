@@ -16,6 +16,7 @@
  */
 package org.apache.qpid.proton4j.amqp.driver.expectations;
 
+import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
 import org.apache.qpid.proton4j.amqp.transport.Disposition;
 import org.hamcrest.Matcher;
 
@@ -34,6 +35,10 @@ public class DispositionExpectation extends AbstractExceptation<Disposition> {
         SETTLED,
         STATE,
         BATCHABLE
+    }
+
+    public DispositionExpectation(AMQPTestDriver driver) {
+        super(driver);
     }
 
     public DispositionExpectation withRole(Matcher<?> m) {

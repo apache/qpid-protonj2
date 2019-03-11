@@ -16,6 +16,7 @@
  */
 package org.apache.qpid.proton4j.amqp.driver.expectations;
 
+import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
 import org.apache.qpid.proton4j.amqp.transport.Transfer;
 import org.hamcrest.Matcher;
 
@@ -39,6 +40,10 @@ public class TransferExpectation extends AbstractExceptation<Transfer> {
         RESUME,
         ABORTED,
         BATCHABLE
+    }
+
+    public TransferExpectation(AMQPTestDriver driver) {
+        super(driver);
     }
 
     public TransferExpectation withHandle(Matcher<?> m) {

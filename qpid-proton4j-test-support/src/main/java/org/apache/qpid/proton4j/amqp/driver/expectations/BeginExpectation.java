@@ -16,6 +16,12 @@
  */
 package org.apache.qpid.proton4j.amqp.driver.expectations;
 
+import static org.hamcrest.CoreMatchers.equalTo;
+
+import java.util.Map;
+
+import org.apache.qpid.proton4j.amqp.Symbol;
+import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
 import org.apache.qpid.proton4j.amqp.transport.Begin;
 import org.hamcrest.Matcher;
 
@@ -37,6 +43,46 @@ public class BeginExpectation extends AbstractExceptation<Begin> {
         DESIRED_CAPABILITIES,
         PROPERTIES,
     }
+
+    public BeginExpectation(AMQPTestDriver driver) {
+        super(driver);
+    }
+
+    //----- Type specific with methods that perform simple equals checks
+
+    public BeginExpectation withRemoteChannel(int remoteChannel) {
+        return withRemoteChannel(equalTo(remoteChannel));
+    }
+
+    public BeginExpectation withNextOutgoingId(long nextOutgoingId) {
+        return withNextOutgoingId(equalTo(nextOutgoingId));
+    }
+
+    public BeginExpectation withIncomingWindow(long incomingWindow) {
+        return withIncomingWindow(equalTo(incomingWindow));
+    }
+
+    public BeginExpectation withOutgoingWindow(long outgoingWindow) {
+        return withOutgoingWindow(equalTo(outgoingWindow));
+    }
+
+    public BeginExpectation withHandleMax(long handleMax) {
+        return withHandleMax(equalTo(handleMax));
+    }
+
+    public BeginExpectation withOfferedCapabilities(Symbol... offeredCapabilities) {
+        return withOfferedCapabilities(equalTo(offeredCapabilities));
+    }
+
+    public BeginExpectation withDesiredCapabilities(Symbol... desiredCapabilities) {
+        return withDesiredCapabilities(equalTo(desiredCapabilities));
+    }
+
+    public BeginExpectation withProperties(Map<Symbol, Object> properties) {
+        return withProperties(equalTo(properties));
+    }
+
+    //----- Matcher based with methods for more complex validation
 
     public BeginExpectation withRemoteChannel(Matcher<?> m) {
         getMatchers().put(Field.REMOTE_CHANNEL, m);

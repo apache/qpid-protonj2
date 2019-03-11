@@ -16,6 +16,7 @@
  */
 package org.apache.qpid.proton4j.amqp.driver.expectations;
 
+import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
 import org.apache.qpid.proton4j.amqp.transport.End;
 import org.hamcrest.Matcher;
 
@@ -29,6 +30,10 @@ public class EndExpectation extends AbstractExceptation<End> {
      */
     public enum Field {
         ERROR
+    }
+
+    public EndExpectation(AMQPTestDriver driver) {
+        super(driver);
     }
 
     public EndExpectation withError(Matcher<?> m) {

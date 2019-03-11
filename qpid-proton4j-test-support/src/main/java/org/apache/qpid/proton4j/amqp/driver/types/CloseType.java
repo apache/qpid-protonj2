@@ -17,44 +17,44 @@
 package org.apache.qpid.proton4j.amqp.driver.types;
 
 import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
-import org.apache.qpid.proton4j.amqp.driver.actions.OpenInjectAction;
-import org.apache.qpid.proton4j.amqp.driver.expectations.OpenExpectation;
-import org.apache.qpid.proton4j.amqp.transport.Open;
+import org.apache.qpid.proton4j.amqp.driver.actions.CloseInjectAction;
+import org.apache.qpid.proton4j.amqp.driver.expectations.CloseExpectation;
+import org.apache.qpid.proton4j.amqp.transport.Close;
 
 /**
- * AMQP Open Type
+ * AMQP Close type
  */
-public class OpenType {
+public class CloseType {
 
-    private OpenType() {}
+    private CloseType() {}
 
     //----- Static methods for easier scripting
 
-    public static OpenExpectation expectOpen(AMQPTestDriver driver) {
-        OpenExpectation expecting = new OpenExpectation(driver);
+    public static CloseExpectation expectClose(AMQPTestDriver driver) {
+        CloseExpectation expecting = new CloseExpectation(driver);
         driver.addScriptedElement(expecting);
         return expecting;
     }
 
-    public static OpenInjectAction injectLater(AMQPTestDriver driver) {
-        return injectLater(driver, new Open(), 0);
+    public static CloseInjectAction injectLater(AMQPTestDriver driver) {
+        return injectLater(driver, new Close(), 0);
     }
 
-    public static OpenInjectAction injectLater(AMQPTestDriver driver, Open open) {
-        return injectLater(driver, open, 0);
+    public static CloseInjectAction injectLater(AMQPTestDriver driver, Close close) {
+        return injectLater(driver, close, 0);
     }
 
-    public static OpenInjectAction injectLater(AMQPTestDriver driver, Open open, int channel) {
-        OpenInjectAction inject = new OpenInjectAction(open, channel);
+    public static CloseInjectAction injectLater(AMQPTestDriver driver, Close close, int channel) {
+        CloseInjectAction inject = new CloseInjectAction(close, channel);
         driver.addScriptedElement(inject);
         return inject;
     }
 
-    public static void injectNow(AMQPTestDriver driver, Open open) {
-        driver.sendAMQPFrame(0, open, null);
+    public static void injectNow(AMQPTestDriver driver, Close close) {
+        driver.sendAMQPFrame(0, close, null);
     }
 
-    public static void injectNow(AMQPTestDriver driver, Open open, int channel) {
-        driver.sendAMQPFrame(channel, open, null);
+    public static void injectNow(AMQPTestDriver driver, Close close, int channel) {
+        driver.sendAMQPFrame(channel, close, null);
     }
 }

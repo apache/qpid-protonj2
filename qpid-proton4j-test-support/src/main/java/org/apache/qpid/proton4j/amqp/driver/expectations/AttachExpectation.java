@@ -16,6 +16,7 @@
  */
 package org.apache.qpid.proton4j.amqp.driver.expectations;
 
+import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
 import org.apache.qpid.proton4j.amqp.transport.Attach;
 import org.hamcrest.Matcher;
 
@@ -42,6 +43,10 @@ public class AttachExpectation extends AbstractExceptation<Attach> {
         OFFERED_CAPABILITIES,
         DESIRED_CAPABILITIES,
         PROPERTIES
+    }
+
+    public AttachExpectation(AMQPTestDriver driver) {
+        super(driver);
     }
 
     public AttachExpectation withName(Matcher<?> m) {

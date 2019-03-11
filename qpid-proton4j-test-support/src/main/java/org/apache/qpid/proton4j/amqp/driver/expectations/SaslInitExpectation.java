@@ -16,6 +16,7 @@
  */
 package org.apache.qpid.proton4j.amqp.driver.expectations;
 
+import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
 import org.apache.qpid.proton4j.amqp.security.SaslInit;
 import org.hamcrest.Matcher;
 
@@ -31,6 +32,10 @@ public class SaslInitExpectation extends AbstractExceptation<SaslInit> {
         MECHANISM,
         INITIAL_RESPONSE,
         HOSTNAME,
+    }
+
+    public SaslInitExpectation(AMQPTestDriver driver) {
+        super(driver);
     }
 
     public SaslInitExpectation withMechanism(Matcher<?> m) {
