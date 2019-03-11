@@ -16,8 +16,10 @@
  */
 package org.apache.qpid.proton4j.engine.impl;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 
+import org.apache.qpid.proton4j.engine.ConnectionState;
 import org.apache.qpid.proton4j.engine.test.EngineTestDriver;
 import org.apache.qpid.proton4j.engine.test.types.AMQPHeaderType;
 import org.apache.qpid.proton4j.engine.test.types.OpenType;
@@ -29,6 +31,7 @@ import org.junit.Test;
 public class ProtonEngineTestWithDriver extends ProtonEngineTestSupport {
 
     private Exception failure;
+    private ProtonConnection connection;
 
     @Test
     public void testEngineEmitsAMQPHeaderOnConnectionOpen() {
@@ -40,6 +43,7 @@ public class ProtonEngineTestWithDriver extends ProtonEngineTestSupport {
         engine.outputConsumer(driver);
 
         AMQPHeaderType.raw().expect(driver).withRawHeader().respond(driver);
+        OpenType.open().expect(driver);
 
         engine.start(result -> {
             result.get().open();
@@ -63,11 +67,15 @@ public class ProtonEngineTestWithDriver extends ProtonEngineTestSupport {
         OpenType.open().withContainerId("test").expect(driver).withContainerId("driver").respond(driver);
 
         engine.start(result -> {
-            result.get().setContainerId("test");
-            result.get().open();
+            connection = (ProtonConnection) result;
+            connection.setContainerId("test");
+            connection.open();
         });
 
         driver.assertScriptComplete();
+
+        assertEquals(ConnectionState.ACTIVE, connection.getLocalState());
+        assertEquals(ConnectionState.ACTIVE, connection.getRemoteState());
 
         assertNull(failure);
     }
