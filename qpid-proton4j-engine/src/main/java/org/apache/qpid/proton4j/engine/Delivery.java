@@ -26,21 +26,21 @@ public interface Delivery {
     /**
      * @return the Delivery tag assigned to this Delivery.
      */
-    public byte[] getTag();
+    byte[] getTag();
 
     /**
      * @return the {@link DeliveryState} at the local side of this Delivery.
      */
-    public DeliveryState getLocalState();
+    DeliveryState getLocalState();
 
     /**
      * @return the {@link DeliveryState} at the remote side of this Delivery.
      */
-    public DeliveryState getRemoteState();
+    DeliveryState getRemoteState();
 
     /**
      * @return the message-format for this Delivery.
      */
-    public int getMessageFormat();
+    int getMessageFormat();
 
 }

@@ -47,6 +47,8 @@ import org.apache.qpid.proton4j.engine.Session;
 
 /**
  * Common base for Proton Senders and Receivers.
+ *
+ * @param <T> the type of link, {@link Sender} or {@link Receiver}.
  */
 public abstract class ProtonLink<T extends Link<T>> implements Link<T>, Performative.PerformativeHandler<ProtonEngine> {
 
@@ -83,7 +85,7 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T>, Performa
      * @param name
      *      The name assigned to this {@link Link}
      */
-    public ProtonLink(ProtonSession session, String name) {
+    ProtonLink(ProtonSession session, String name) {
         this.session = session;
         this.connection = session.getConnection();
         this.localAttach.setName(name);
@@ -118,12 +120,14 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T>, Performa
     }
 
     @Override
-    public void setLocalCondition(ErrorCondition condition) {
+    public ProtonLink<T> setLocalCondition(ErrorCondition condition) {
         if (condition != null) {
             localError = condition.copy();
         } else {
             localError.clear();
         }
+
+        return this;
     }
 
     @Override
@@ -145,17 +149,19 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T>, Performa
     }
 
     @Override
-    public void open() {
+    public ProtonLink<T> open() {
         if (getLocalState() == LinkState.IDLE) {
             localState = LinkState.ACTIVE;
             long localHandle = session.findFreeLocalHandle();
             localAttach.setHandle(localHandle);
             session.getEngine().pipeline().fireWrite(localAttach, session.getLocalChannel(), null, null);
         }
+
+        return this;
     }
 
     @Override
-    public void detach() {
+    public ProtonLink<T> detach() {
         if (getLocalState() == LinkState.ACTIVE) {
             localState = LinkState.DETACHED;
             // TODO - Additional processing.
@@ -167,10 +173,12 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T>, Performa
             session.getEngine().pipeline().fireWrite(detach, session.getLocalChannel(), null, null);
             session.freeLocalHandle(localAttach.getHandle());
         }
+
+        return this;
     }
 
     @Override
-    public void close() {
+    public ProtonLink<T> close() {
         if (getLocalState() == LinkState.ACTIVE) {
             localState = LinkState.CLOSED;
             // TODO - Additional processing.
@@ -182,12 +190,15 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T>, Performa
             session.getEngine().pipeline().fireWrite(detach, session.getLocalChannel(), null, null);
             session.freeLocalHandle(localAttach.getHandle());
         }
+
+        return this;
     }
 
     @Override
-    public void setSource(Source source) {
+    public ProtonLink<T> setSource(Source source) {
         checkNotOpened("Cannot set Source on already opened Link");
         localAttach.setSource(source);
+        return this;
     }
 
     @Override
@@ -196,9 +207,10 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T>, Performa
     }
 
     @Override
-    public void setTarget(Target target) {
+    public ProtonLink<T> setTarget(Target target) {
         checkNotOpened("Cannot set Target on already opened Link");
         localAttach.setTarget(target);
+        return this;
     }
 
     @Override
@@ -207,7 +219,7 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T>, Performa
     }
 
     @Override
-    public void setProperties(Map<Symbol, Object> properties) {
+    public ProtonLink<T> setProperties(Map<Symbol, Object> properties) {
         checkNotOpened("Cannot set Properties on already opened Link");
 
         if (properties != null) {
@@ -215,6 +227,8 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T>, Performa
         } else {
             localAttach.setProperties(properties);
         }
+
+        return this;
     }
 
     @Override
@@ -227,7 +241,7 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T>, Performa
     }
 
     @Override
-    public void setOfferedCapabilities(Symbol[] capabilities) {
+    public ProtonLink<T> setOfferedCapabilities(Symbol[] capabilities) {
         checkNotOpened("Cannot set Offered Capabilities on already opened Link");
 
         if (capabilities != null) {
@@ -235,6 +249,8 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T>, Performa
         } else {
             localAttach.setOfferedCapabilities(capabilities);
         }
+
+        return this;
     }
 
     @Override
@@ -247,7 +263,7 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T>, Performa
     }
 
     @Override
-    public void setDesiredCapabilities(Symbol[] capabilities) {
+    public ProtonLink<T> setDesiredCapabilities(Symbol[] capabilities) {
         checkNotOpened("Cannot set Desired Capabilities on already opened Link");
 
         if (capabilities != null) {
@@ -255,6 +271,8 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T>, Performa
         } else {
             localAttach.setDesiredCapabilities(capabilities);
         }
+
+        return this;
     }
 
     @Override
@@ -267,9 +285,10 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T>, Performa
     }
 
     @Override
-    public void setMaxMessageSize(UnsignedLong maxMessageSize) {
+    public ProtonLink<T> setMaxMessageSize(UnsignedLong maxMessageSize) {
         checkNotOpened("Cannot set Max Message Size on already opened Link");
         localAttach.setMaxMessageSize(maxMessageSize);
+        return this;
     }
 
     @Override

@@ -76,7 +76,7 @@ public class ProtonEngine implements Engine {
     }
 
     @Override
-    public void start(EventHandler<AsyncEvent<Connection>> connectionReady) {
+    public ProtonEngine start(EventHandler<AsyncEvent<Connection>> connectionReady) {
         if (connectionReady == null) {
             throw new NullPointerException("Start connection ready handler cannot be null");
         }
@@ -93,12 +93,15 @@ public class ProtonEngine implements Engine {
             state = EngineState.FAILED;
             writable = false;
         }
+
+        return this;
     }
 
     @Override
-    public void shutdown() {
+    public ProtonEngine shutdown() {
         state = EngineState.SHUTDOWN;
         writable = false;
+        return this;
     }
 
     @Override
@@ -107,7 +110,7 @@ public class ProtonEngine implements Engine {
     }
 
     @Override
-    public void ingest(ProtonBuffer input) throws EngineStateException {
+    public ProtonEngine ingest(ProtonBuffer input) throws EngineStateException {
         if (isShutdown()) {
             throw new EngineClosedException("The engine has already shut down.");
         }
@@ -123,13 +126,16 @@ public class ProtonEngine implements Engine {
             engineFailed(ProtonExceptionSupport.create(t));
             throw t;
         }
+
+        return this;
     }
 
     //----- Engine configuration
 
     @Override
-    public void outputHandler(EventHandler<ProtonBuffer> handler) {
+    public ProtonEngine outputHandler(EventHandler<ProtonBuffer> handler) {
         this.outputHandler = handler;
+        return this;
     }
 
     EventHandler<ProtonBuffer> outputHandler() {
@@ -137,8 +143,9 @@ public class ProtonEngine implements Engine {
     }
 
     @Override
-    public void errorHandler(EventHandler<ProtonException> handler) {
+    public ProtonEngine errorHandler(EventHandler<ProtonException> handler) {
         this.errorHandler = handler;
+        return this;
     }
 
     EventHandler<ProtonException> errorHandler() {

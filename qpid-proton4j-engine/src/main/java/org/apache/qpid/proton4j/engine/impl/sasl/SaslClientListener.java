@@ -44,7 +44,10 @@ public interface SaslClientListener {
      * Called when a sasl-mechanisms frame has arrived and its effect
      * applied, indicating the offered mechanisms sent by the 'server' peer.
      *
-     * @param context the SaslClientContext object
+     * @param context
+     *      the SaslClientContext object
+     * @param mechanisms
+     *      the mechanisms that the remote supports.
      */
     void onSaslMechanisms(ProtonSaslClientContext context, String[] mechanisms);
 
@@ -52,8 +55,10 @@ public interface SaslClientListener {
      * Called when a sasl-challenge frame has arrived and its effect
      * applied, indicating the challenge sent by the 'server' peer.
      *
-     * @param context the SaslClientContext object
-     * @param binary the challenge bytes sent from the sasl server.
+     * @param context
+     *      the SaslClientContext object
+     * @param binary
+     *      the challenge bytes sent from the SASL server.
      */
     void onSaslChallenge(ProtonSaslClientContext context, Binary binary);
 
@@ -62,8 +67,10 @@ public interface SaslClientListener {
      * applied, indicating the outcome and any success additional-data
      * sent by the 'server' peer.
      *
-     * @param context the SaslClientContext object
-     * @param additional the additional data sent from the server, or null if none.
+     * @param context
+     *      the SaslClientContext object
+     * @param additional
+     *      the additional data sent from the server, or null if none.
      */
     void onSaslOutcome(ProtonSaslClientContext context, Binary additional);
 

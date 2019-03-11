@@ -65,16 +65,20 @@ public interface Engine extends Consumer<ProtonBuffer> {
      *
      * @param handler
      *      A handler that will be notified when the engine has started and has a valid Connection.
+     *
+     * @return this Engine
      */
-    void start(EventHandler<AsyncEvent<Connection>> handler);
+    Engine start(EventHandler<AsyncEvent<Connection>> handler);
 
     /**
      * Orderly shutdown of the engine, any open connection and associated sessions and
      * session linked enpoints will be closed.
      *
      * TODO - Errors
+     *
+     * @return this Engine
      */
-    void shutdown();
+    Engine shutdown();
 
     /**
      * Provide data input for this Engine from some external source.
@@ -85,11 +89,13 @@ public interface Engine extends Consumer<ProtonBuffer> {
      * @param input
      *      The data to feed into to Engine.
      *
+     * @return this Engine
+     *
      * @throws EngineStateException if the Engine state precludes accepting new input.
      * @throws EngineNotWritableException if the Engine is not accepting new input.
      * @throws EngineClosedException if the Engine has been shutdown or has failed.
      */
-    void ingest(ProtonBuffer input) throws EngineStateException;
+    Engine ingest(ProtonBuffer input) throws EngineStateException;
 
     // TODO - Allow the Engine to be handed off to more generic input methods that take functional
     //        style parameters, in this case a consumer.
@@ -114,8 +120,10 @@ public interface Engine extends Consumer<ProtonBuffer> {
      *
      * @param output
      *      The {@link ProtonBuffer} handler instance that perform IO for the engine output.
+     *
+     * @return this Engine
      */
-    void outputHandler(EventHandler<ProtonBuffer> output);
+    Engine outputHandler(EventHandler<ProtonBuffer> output);
 
     /**
      * Sets a {@link Consumer} instance that will be notified when data from the engine is ready to
@@ -123,13 +131,17 @@ public interface Engine extends Consumer<ProtonBuffer> {
      *
      * @param consumer
      *      The {@link ProtonBuffer} consumer instance that perform IO for the engine output.
+     *
+     * @return this Engine
      */
-    default void outputConsumer(Consumer<ProtonBuffer> consumer) {
+    default Engine outputConsumer(Consumer<ProtonBuffer> consumer) {
         // TODO this allows for consumers to be registered vs the external user having to
         //      use our EventHandler type
         outputHandler((output) -> {
             consumer.accept(output);
         });
+
+        return this;
     }
 
     /**
@@ -137,8 +149,10 @@ public interface Engine extends Consumer<ProtonBuffer> {
      *
      * @param engineFailure
      *      The {@link ProtonException} handler instance that will be notified if the engine fails.
+     *
+     * @return this Engine
      */
-    void errorHandler(EventHandler<ProtonException> engineFailure);
+    Engine errorHandler(EventHandler<ProtonException> engineFailure);
 
     /**
      * Gets the EnginePipeline for this Engine.

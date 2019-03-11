@@ -35,18 +35,24 @@ public interface Link<T extends Link<T>> {
 
     /**
      * Open this end of the link
+     *
+     * @return this Link.
      */
-    public void open();
+    Link<T> open();
 
     /**
      * Close this end of the link
+     *
+     * @return this Link.
      */
-    public void close();
+    Link<T> close();
 
     /**
      * Detach this end of the link.
+     *
+     * @return this Link.
      */
-    public void detach();
+    Link<T> detach();
 
     /**
      * @return the {@link Context} instance that is associated with this {@link Connection}
@@ -56,20 +62,22 @@ public interface Link<T extends Link<T>> {
     /**
      * @return the local link state
      */
-    public LinkState getLocalState();
+    LinkState getLocalState();
 
     /**
      * @return the local endpoint error, or null if there is none
      */
-    public ErrorCondition getLocalCondition();
+    ErrorCondition getLocalCondition();
 
     /**
      * Sets the local {@link ErrorCondition} to be applied to a {@link Link} close.
      *
      * @param condition
      *      The error condition to convey to the remote peer on link close or detach.
+     *
+     * @return this Link.
      */
-    public void setLocalCondition(ErrorCondition condition);
+    Link<T> setLocalCondition(ErrorCondition condition);
 
     /**
      * @return the {@link Role} that this end of the link is performing.
@@ -91,8 +99,10 @@ public interface Link<T extends Link<T>> {
      *
      * @param source
      *      The {@link Source} that will be set on the local end of this link.
+     *
+     * @return this Link.
      */
-    void setSource(Source source);
+    Link<T> setSource(Source source);
 
     /**
      * @return the {@link Source} for the local end of this link.
@@ -104,8 +114,10 @@ public interface Link<T extends Link<T>> {
      *
      * @param target
      *      The {@link Target} that will be set on the local end of this link.
+     *
+     * @return this Link.
      */
-    void setTarget(Target target);
+    Link<T> setTarget(Target target);
 
     /**
      * @return the {@link Target} for the local end of this link.
@@ -129,8 +141,10 @@ public interface Link<T extends Link<T>> {
      *
      * @param properties
      *          the properties map to send, or null for none.
+     *
+     * @return this Link.
      */
-    void setProperties(Map<Symbol, Object> properties);
+    Link<T> setProperties(Map<Symbol, Object> properties);
 
     /**
      * Sets the local link offered capabilities, to be conveyed to the peer via the Attach frame
@@ -140,8 +154,10 @@ public interface Link<T extends Link<T>> {
      *
      * @param offeredCapabilities
      *          the offered capabilities array to send, or null for none.
+     *
+     * @return this Link.
      */
-    public void setOfferedCapabilities(Symbol[] offeredCapabilities);
+    Link<T> setOfferedCapabilities(Symbol[] offeredCapabilities);
 
     /**
      * Gets the local link offered capabilities.
@@ -160,8 +176,10 @@ public interface Link<T extends Link<T>> {
      *
      * @param desiredCapabilities
      *          the desired capabilities array to send, or null for none.
+     *
+     * @return this Link.
      */
-    public void setDesiredCapabilities(Symbol[] desiredCapabilities);
+    Link<T> setDesiredCapabilities(Symbol[] desiredCapabilities);
 
     /**
      * Gets the local link desired capabilities.
@@ -180,8 +198,10 @@ public interface Link<T extends Link<T>> {
      *
      * @param maxMessageSize
      *            the local max message size value, or null to clear. 0 also means no limit.
+     *
+     * @return this Link.
      */
-    void setMaxMessageSize(UnsignedLong maxMessageSize);
+    Link<T> setMaxMessageSize(UnsignedLong maxMessageSize);
 
     /**
      * Gets the local link max message size.
@@ -239,12 +259,12 @@ public interface Link<T extends Link<T>> {
     /**
      * @return the remote link state (as last communicated)
      */
-    public LinkState getRemoteState();
+    LinkState getRemoteState();
 
     /**
      * @return the remote endpoint error, or null if there is none
      */
-    public ErrorCondition getRemoteCondition();
+    ErrorCondition getRemoteCondition();
 
     //----- Remote events for AMQP Link resources
 

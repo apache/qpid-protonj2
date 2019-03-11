@@ -30,13 +30,17 @@ public interface Connection {
 
     /**
      * Open the end point.
+     *
+     * @return this connection.
      */
-    public void open();
+    Connection open();
 
     /**
      * Close the end point
+     *
+     * @return this connection.
      */
-    public void close();
+    Connection close();
 
     /**
      * @return the {@link Context} instance that is associated with this {@link Connection}
@@ -46,20 +50,22 @@ public interface Connection {
     /**
      * @return the local endpoint state
      */
-    public ConnectionState getLocalState();
+    ConnectionState getLocalState();
 
     /**
      * @return the local endpoint error, or null if there is none
      */
-    public ErrorCondition getLocalCondition();
+    ErrorCondition getLocalCondition();
 
     /**
      * Sets the local {@link ErrorCondition} to be applied to a {@link Connection} close.
      *
      * @param condition
      *      The error condition to convey to the remote peer on connection close.
+     *
+     * @return this connection.
      */
-    public void setLocalCondition(ErrorCondition condition);
+    Connection setLocalCondition(ErrorCondition condition);
 
     //----- Operations on local end of this Connection
 
@@ -81,9 +87,11 @@ public interface Connection {
      * @param containerId
      *      The Container Id used for this end of the Connection.
      *
+     * @return this connection.
+     *
      * @throws IllegalStateException if the Connection has already been opened.
      */
-    void setContainerId(String containerId);
+    Connection setContainerId(String containerId);
 
     /**
      * Set the name of the host (either fully qualified or relative) to which
@@ -96,16 +104,18 @@ public interface Connection {
      *
      * @param hostname the RFC1035 compliant host name.
      *
+     * @return this connection.
+     *
      * @throws IllegalStateException if the Connection has already been opened.
      */
-    public void setHostname(String hostname);
+    Connection setHostname(String hostname);
 
     /**
      * @return returns the host name assigned to this Connection.
      *
      * @see #setHostname
      */
-    public String getHostname();
+    String getHostname();
 
     /**
      * Set the channel max value for this Connection.
@@ -113,14 +123,16 @@ public interface Connection {
      * @param channelMax
      *      The value to set for channel max when opening the connection.
      *
+     * @return this connection.
+     *
      * @throws IllegalStateException if the Connection has already been opened.
      */
-    public void setChannelMax(int channelMax);
+    Connection setChannelMax(int channelMax);
 
     /**
      * @return the currently configured channel max for this {@link Connection}
      */
-    public int getChannelMax();
+    int getChannelMax();
 
     /**
      * Set the idle timeout value for this Connection.
@@ -128,14 +140,16 @@ public interface Connection {
      * @param idleTimeout
      *      The value to set for the idle timeout when opening the connection.
      *
+     * @return this connection.
+     *
      * @throws IllegalStateException if the Connection has already been opened.
      */
-    public void setIdleTimeout(int idleTimeout);
+    Connection setIdleTimeout(int idleTimeout);
 
     /**
      * @return the currently configured idle timeout for this {@link Connection}
      */
-    public int getIdleTimeout();
+    int getIdleTimeout();
 
     /**
      * Sets the capabilities to be offered on to the remote when this Connection is
@@ -144,9 +158,11 @@ public interface Connection {
      * @param capabilities
      *      The capabilities to be offered to the remote when the Connection is opened.
      *
+     * @return this connection.
+     *
      * @throws IllegalStateException if the Connection has already been opened.
      */
-    void setOfferedCapabilities(Symbol[] capabilities);
+    Connection setOfferedCapabilities(Symbol[] capabilities);
 
     /**
      * @return the configured capabilities that are offered to the remote when the Connection is opened.
@@ -160,9 +176,11 @@ public interface Connection {
      * @param capabilities
      *      The capabilities desired from the remote when the Connection is opened.
      *
+     * @return this connection.
+     *
      * @throws IllegalStateException if the Connection has already been opened.
      */
-    void setDesiredCapabilities(Symbol[] capabilities);
+    Connection setDesiredCapabilities(Symbol[] capabilities);
 
     /**
      * @return the configured desired capabilities that are sent to the remote when the Connection is opened.
@@ -175,9 +193,11 @@ public interface Connection {
      * @param properties
      *      The properties that will be sent to the remote when this Connection is opened.
      *
+     * @return this connection.
+     *
      * @throws IllegalStateException if the Connection has already been opened.
      */
-    void setProperties(Map<Symbol, Object> properties);
+    Connection setProperties(Map<Symbol, Object> properties);
 
     /**
      * @return the configured properties sent to the remote when this Connection is opened.
@@ -214,12 +234,12 @@ public interface Connection {
     /**
      * @return the remote state (as last communicated)
      */
-    public ConnectionState getRemoteState();
+    ConnectionState getRemoteState();
 
     /**
      * @return the remote error, or null if there is none
      */
-    public ErrorCondition getRemoteCondition();
+    ErrorCondition getRemoteCondition();
 
     //----- Remote events for AMQP Connection resources
 

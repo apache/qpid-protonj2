@@ -136,12 +136,14 @@ public class ProtonSession implements Session, Performative.PerformativeHandler<
     }
 
     @Override
-    public void setLocalCondition(ErrorCondition condition) {
+    public ProtonSession setLocalCondition(ErrorCondition condition) {
         if (condition != null) {
             localError = condition.copy();
         } else {
             localError.clear();
         }
+
+        return this;
     }
 
     @Override
@@ -163,24 +165,28 @@ public class ProtonSession implements Session, Performative.PerformativeHandler<
     }
 
     @Override
-    public void open() {
+    public ProtonSession open() {
         if (getLocalState() == SessionState.IDLE) {
             localState = SessionState.ACTIVE;
             connection.getEngine().pipeline().fireWrite(localBegin, localChannel, null, null);
         }
+
+        return this;
     }
 
     @Override
-    public void close() {
+    public ProtonSession close() {
         if (getLocalState() == SessionState.ACTIVE) {
             localState = SessionState.CLOSED;
             connection.freeLocalChannel(localChannel);
             connection.getEngine().pipeline().fireWrite(new End().setError(getLocalCondition()), localChannel, null, null);
         }
+
+        return this;
     }
 
     @Override
-    public void setProperties(Map<Symbol, Object> properties) {
+    public ProtonSession setProperties(Map<Symbol, Object> properties) {
         checkNotOpened("Cannot set Properties on already opened Session");
 
         if (properties != null) {
@@ -188,6 +194,8 @@ public class ProtonSession implements Session, Performative.PerformativeHandler<
         } else {
             localBegin.setProperties(properties);
         }
+
+        return this;
     }
 
     @Override
@@ -200,7 +208,7 @@ public class ProtonSession implements Session, Performative.PerformativeHandler<
     }
 
     @Override
-    public void setOfferedCapabilities(Symbol[] capabilities) {
+    public ProtonSession setOfferedCapabilities(Symbol[] capabilities) {
         checkNotOpened("Cannot set Offered Capabilities on already opened Session");
 
         if (capabilities != null) {
@@ -208,6 +216,8 @@ public class ProtonSession implements Session, Performative.PerformativeHandler<
         } else {
             localBegin.setOfferedCapabilities(capabilities);
         }
+
+        return this;
     }
 
     @Override
@@ -220,7 +230,7 @@ public class ProtonSession implements Session, Performative.PerformativeHandler<
     }
 
     @Override
-    public void setDesiredCapabilities(Symbol[] capabilities) {
+    public ProtonSession setDesiredCapabilities(Symbol[] capabilities) {
         checkNotOpened("Cannot set Desired Capabilities on already opened Session");
 
         if (capabilities != null) {
@@ -228,6 +238,8 @@ public class ProtonSession implements Session, Performative.PerformativeHandler<
         } else {
             localBegin.setDesiredCapabilities(capabilities);
         }
+
+        return this;
     }
 
     @Override

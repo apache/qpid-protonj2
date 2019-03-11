@@ -29,13 +29,17 @@ public interface Session {
 
     /**
      * Open the end point.
+     *
+     * @return this Session
      */
-    public void open();
+    Session open();
 
     /**
      * Close the end point
+     *
+     * @return this Session
      */
-    public void close();
+    Session close();
 
     /**
      * @return the {@link Context} instance that is associated with this {@link Connection}
@@ -45,20 +49,22 @@ public interface Session {
     /**
      * @return the local session state
      */
-    public SessionState getLocalState();
+    SessionState getLocalState();
 
     /**
      * @return the local endpoint error, or null if there is none
      */
-    public ErrorCondition getLocalCondition();
+    ErrorCondition getLocalCondition();
 
     /**
      * Sets the local {@link ErrorCondition} to be applied to a {@link Session} close.
      *
      * @param condition
      *      The error condition to convey to the remote peer on session close.
+     *
+     * @return this Session
      */
-    public void setLocalCondition(ErrorCondition condition);
+    Session setLocalCondition(ErrorCondition condition);
 
     /**
      * @return the parent {@link Connection} for this Session.
@@ -92,8 +98,10 @@ public interface Session {
      *
      * @param properties
      *          the properties map to send, or null for none.
+     *
+     * @return this Session
      */
-    void setProperties(Map<Symbol, Object> properties);
+    Session setProperties(Map<Symbol, Object> properties);
 
     /**
      * Gets the local session properties.
@@ -112,8 +120,10 @@ public interface Session {
      *
      * @param offeredCapabilities
      *          the offered capabilities array to send, or null for none.
+     *
+     * @return this Session
      */
-    public void setOfferedCapabilities(Symbol[] offeredCapabilities);
+    Session setOfferedCapabilities(Symbol[] offeredCapabilities);
 
     /**
      * Gets the local session offered capabilities.
@@ -132,8 +142,10 @@ public interface Session {
      *
      * @param desiredCapabilities
      *          the desired capabilities array to send, or null for none.
+     *
+     * @return this Session
      */
-    public void setDesiredCapabilities(Symbol[] desiredCapabilities);
+    Session setDesiredCapabilities(Symbol[] desiredCapabilities);
 
     /**
      * Gets the local session desired capabilities.
@@ -173,12 +185,12 @@ public interface Session {
     /**
      * @return the remote session state (as last communicated)
      */
-    public SessionState getRemoteState();
+    SessionState getRemoteState();
 
     /**
      * @return the remote endpoint error, or null if there is none
      */
-    public ErrorCondition getRemoteCondition();
+    ErrorCondition getRemoteCondition();
 
     //----- Remote events for AMQP Session resources
 

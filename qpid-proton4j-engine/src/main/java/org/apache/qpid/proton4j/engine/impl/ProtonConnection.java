@@ -102,8 +102,10 @@ public class ProtonConnection implements Connection, AMQPHeader.HeaderHandler<Pr
 
     /**
      * Create a new unbound Connection instance.
+     *
+     * @param engine
      */
-    public ProtonConnection(ProtonEngine engine) {
+    ProtonConnection(ProtonEngine engine) {
         this.engine = engine;
     }
 
@@ -127,34 +129,41 @@ public class ProtonConnection implements Connection, AMQPHeader.HeaderHandler<Pr
     }
 
     @Override
-    public void setLocalCondition(ErrorCondition condition) {
+    public ProtonConnection setLocalCondition(ErrorCondition condition) {
         if (condition != null) {
             localError = condition.copy();
         } else {
             localError.clear();
         }
+
+        return this;
     }
 
     @Override
-    public void open() {
+    public ProtonConnection open() {
         if (getLocalState() == ConnectionState.IDLE) {
             localState = ConnectionState.ACTIVE;
             processStateChangeAndRespond();
         }
+
+        return this;
     }
 
     @Override
-    public void close() {
+    public ProtonConnection close() {
         if (getLocalState() == ConnectionState.ACTIVE) {
             localState = ConnectionState.CLOSED;
             processStateChangeAndRespond();
         }
+
+        return this;
     }
 
     @Override
-    public void setContainerId(String containerId) {
+    public ProtonConnection setContainerId(String containerId) {
         checkNotOpened("Cannot set Container Id on already opened Connection");
         localOpen.setContainerId(containerId);
+        return this;
     }
 
     @Override
@@ -163,9 +172,10 @@ public class ProtonConnection implements Connection, AMQPHeader.HeaderHandler<Pr
     }
 
     @Override
-    public void setHostname(String hostname) {
+    public ProtonConnection setHostname(String hostname) {
         checkNotOpened("Cannot set Hostname on already opened Connection");
         localOpen.setHostname(hostname);
+        return this;
     }
 
     @Override
@@ -174,9 +184,10 @@ public class ProtonConnection implements Connection, AMQPHeader.HeaderHandler<Pr
     }
 
     @Override
-    public void setChannelMax(int channelMax) {
+    public ProtonConnection setChannelMax(int channelMax) {
         checkNotOpened("Cannot set Channel Max on already opened Connection");
         localOpen.setChannelMax(UnsignedShort.valueOf((short) channelMax));
+        return this;
     }
 
     @Override
@@ -185,9 +196,10 @@ public class ProtonConnection implements Connection, AMQPHeader.HeaderHandler<Pr
     }
 
     @Override
-    public void setIdleTimeout(int idleTimeout) {
+    public ProtonConnection setIdleTimeout(int idleTimeout) {
         checkNotOpened("Cannot set Idle Timeout on already opened Connection");
         localOpen.setIdleTimeOut(UnsignedInteger.valueOf(idleTimeout));
+        return this;
     }
 
     @Override
@@ -196,7 +208,7 @@ public class ProtonConnection implements Connection, AMQPHeader.HeaderHandler<Pr
     }
 
     @Override
-    public void setOfferedCapabilities(Symbol[] capabilities) {
+    public ProtonConnection setOfferedCapabilities(Symbol[] capabilities) {
         checkNotOpened("Cannot set Offered Capabilities on already opened Connection");
 
         if (capabilities != null) {
@@ -204,6 +216,8 @@ public class ProtonConnection implements Connection, AMQPHeader.HeaderHandler<Pr
         } else {
             localOpen.setOfferedCapabilities(capabilities);
         }
+
+        return this;
     }
 
     @Override
@@ -216,7 +230,7 @@ public class ProtonConnection implements Connection, AMQPHeader.HeaderHandler<Pr
     }
 
     @Override
-    public void setDesiredCapabilities(Symbol[] capabilities) {
+    public ProtonConnection setDesiredCapabilities(Symbol[] capabilities) {
         checkNotOpened("Cannot set Desired Capabilities on already opened Connection");
 
         if (capabilities != null) {
@@ -224,6 +238,8 @@ public class ProtonConnection implements Connection, AMQPHeader.HeaderHandler<Pr
         } else {
             localOpen.setDesiredCapabilities(capabilities);
         }
+
+        return this;
     }
 
     @Override
@@ -236,7 +252,7 @@ public class ProtonConnection implements Connection, AMQPHeader.HeaderHandler<Pr
     }
 
     @Override
-    public void setProperties(Map<Symbol, Object> properties) {
+    public ProtonConnection setProperties(Map<Symbol, Object> properties) {
         checkNotOpened("Cannot set Properties on already opened Connection");
 
         if (properties != null) {
@@ -244,6 +260,8 @@ public class ProtonConnection implements Connection, AMQPHeader.HeaderHandler<Pr
         } else {
             localOpen.setProperties(properties);
         }
+
+        return this;
     }
 
     @Override

@@ -22,6 +22,8 @@ import org.apache.qpid.proton4j.engine.EventHandler;
 /**
  * Implementation of AsyncResult used by the proton4j engine for asynchronous
  * operations like Connection open etc.
+ *
+ * @param <E> The type that is returned from the future.
  */
 public class ProtonFuture<E> implements AsyncEvent<E>, EventHandler<AsyncEvent<E>> {
 
