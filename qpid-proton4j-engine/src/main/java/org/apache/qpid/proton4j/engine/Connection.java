@@ -65,11 +65,13 @@ public interface Connection {
 
     /**
      * Creates a new Session linked to this Connection
+     *
+     * @return a newly created {@link Session} linked to this {@link Connection}.
      */
     Session session();
 
     /**
-     * @returns the Container ID assigned to this Connection
+     * @return the Container ID assigned to this Connection
      */
     String getContainerId();
 
