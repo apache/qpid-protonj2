@@ -137,7 +137,7 @@ public class EngineTestDriver implements Consumer<ProtonBuffer> {
     void handleSaslPerformative(SaslPerformative sasl, int channel, ProtonBuffer payload) throws IOException {
         ScriptedElement scriptEntry = script.poll();
         if (scriptEntry == null) {
-            signalFailure(new AssertionError("Receibed header when not expecting any input."));
+            signalFailure(new AssertionError("Receibed performative[" + sasl + "] when not expecting any input."));
         }
 
         sasl.invoke(scriptEntry, this);
@@ -147,7 +147,7 @@ public class EngineTestDriver implements Consumer<ProtonBuffer> {
     void handlePerformative(Performative amqp, int channel, ProtonBuffer payload) throws IOException {
         ScriptedElement scriptEntry = script.poll();
         if (scriptEntry == null) {
-            signalFailure(new AssertionError("Receibed header when not expecting any input."));
+            signalFailure(new AssertionError("Receibed performative[" + amqp + "] when not expecting any input."));
         }
 
         amqp.invoke(scriptEntry, payload, channel, this);
@@ -241,7 +241,7 @@ public class EngineTestDriver implements Consumer<ProtonBuffer> {
      * @throws RuntimeException indicating the first error that cause the driver to report test failure.
      */
     public void signalFailure(Throwable ex) throws RuntimeException {
-        if (this.failureCause != null) {
+        if (this.failureCause == null) {
             if (ex instanceof AssertionError) {
                 this.failureCause = (AssertionError) ex;
             } else {
