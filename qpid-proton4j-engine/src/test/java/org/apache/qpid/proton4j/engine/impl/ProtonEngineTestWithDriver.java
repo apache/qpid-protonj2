@@ -16,6 +16,8 @@
  */
 package org.apache.qpid.proton4j.engine.impl;
 
+import static org.junit.Assert.assertNull;
+
 import org.apache.qpid.proton4j.engine.test.EngineTestDriver;
 import org.apache.qpid.proton4j.engine.test.types.AMQPHeaderType;
 import org.apache.qpid.proton4j.engine.test.types.OpenType;
@@ -26,9 +28,12 @@ import org.junit.Test;
  */
 public class ProtonEngineTestWithDriver extends ProtonEngineTestSupport {
 
+    private Exception failure;
+
     @Test
     public void testEngineEmitsAMQPHeaderOnConnectionOpen() {
         ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
+        engine.errorHandler(result -> failure = result);
 
         // Create the test driver and link it to the engine for output handling.
         EngineTestDriver driver = new EngineTestDriver(engine);
@@ -41,11 +46,14 @@ public class ProtonEngineTestWithDriver extends ProtonEngineTestSupport {
         });
 
         driver.assertScriptComplete();
+
+        assertNull(failure);
     }
 
     @Test
     public void testEngineEmitsOpenPerformative() {
         ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
+        engine.errorHandler(result -> failure = result);
 
         // Create the test driver and link it to the engine for output handling.
         EngineTestDriver driver = new EngineTestDriver(engine);
@@ -55,9 +63,12 @@ public class ProtonEngineTestWithDriver extends ProtonEngineTestSupport {
         OpenType.open().withContainerId("test").expect(driver).withContainerId("driver").respond(driver);
 
         engine.start(result -> {
+            result.get().setContainerId("test");
             result.get().open();
         });
 
         driver.assertScriptComplete();
+
+        assertNull(failure);
     }
 }

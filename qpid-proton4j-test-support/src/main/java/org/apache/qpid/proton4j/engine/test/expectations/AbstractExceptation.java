@@ -77,6 +77,18 @@ public abstract class AbstractExceptation<T> implements ScriptedExpectation {
         }
     }
 
+    protected final void verifyNoPayload(ProtonBuffer payload) {
+        if (payload != null) {
+            throw new AssertionError("Performative should not have been sent with a paylod: ");
+        }
+    }
+
+    protected final void verifyChannel(int channel) {
+        if (expectedChannel != ANY_CHANNEL && expectedChannel != channel) {
+            throw new AssertionError("Expected send on channel + " + expectedChannel + ": but was on channel:" + channel);
+        }
+    }
+
     /**
      * @return the Map of matchers used to validate fields of the received performative.
      */
@@ -94,85 +106,95 @@ public abstract class AbstractExceptation<T> implements ScriptedExpectation {
 
     @Override
     public void handleOpen(Open open, ProtonBuffer payload, int channel, EngineTestDriver context) {
-        reportTypeExpectationError(open, getExpectedTypeClass());
+        doVerification(open, payload, channel, context);
     }
 
     @Override
     public void handleBegin(Begin begin, ProtonBuffer payload, int channel, EngineTestDriver context) {
-        reportTypeExpectationError(begin, getExpectedTypeClass());
+        doVerification(begin, payload, channel, context);
     }
 
     @Override
     public void handleAttach(Attach attach, ProtonBuffer payload, int channel, EngineTestDriver context) {
-        reportTypeExpectationError(attach, getExpectedTypeClass());
+        doVerification(attach, payload, channel, context);
     }
 
     @Override
     public void handleFlow(Flow flow, ProtonBuffer payload, int channel, EngineTestDriver context) {
-        reportTypeExpectationError(flow, getExpectedTypeClass());
+        doVerification(flow, payload, channel, context);
     }
 
     @Override
     public void handleTransfer(Transfer transfer, ProtonBuffer payload, int channel,EngineTestDriver context) {
-        reportTypeExpectationError(transfer, getExpectedTypeClass());
+        doVerification(transfer, payload, channel, context);
     }
 
     @Override
     public void handleDisposition(Disposition disposition, ProtonBuffer payload, int channel, EngineTestDriver context) {
-        reportTypeExpectationError(disposition, getExpectedTypeClass());
+        doVerification(disposition, payload, channel, context);
     }
 
     @Override
     public void handleDetach(Detach detach, ProtonBuffer payload, int channel, EngineTestDriver context) {
-        reportTypeExpectationError(detach, getExpectedTypeClass());
+        doVerification(detach, payload, channel, context);
     }
 
     @Override
     public void handleEnd(End end, ProtonBuffer payload, int channel, EngineTestDriver context) {
-        reportTypeExpectationError(end, getExpectedTypeClass());
+        doVerification(end, payload, channel, context);
     }
 
     @Override
     public void handleClose(Close close, ProtonBuffer payload, int channel, EngineTestDriver context) {
-        reportTypeExpectationError(close, getExpectedTypeClass());
+        doVerification(close, payload, channel, context);
     }
 
     @Override
     public void handleMechanisms(SaslMechanisms saslMechanisms, EngineTestDriver context) {
-        reportTypeExpectationError(saslMechanisms, getExpectedTypeClass());
+        doVerification(saslMechanisms, null, 0, context);
     }
 
     @Override
     public void handleInit(SaslInit saslInit, EngineTestDriver context) {
-        reportTypeExpectationError(saslInit, getExpectedTypeClass());
+        doVerification(saslInit, null, 0, context);
     }
 
     @Override
     public void handleChallenge(SaslChallenge saslChallenge, EngineTestDriver context) {
-        reportTypeExpectationError(saslChallenge, getExpectedTypeClass());
+        doVerification(saslChallenge, null, 0, context);
     }
 
     @Override
     public void handleResponse(SaslResponse saslResponse, EngineTestDriver context) {
-        reportTypeExpectationError(saslResponse, getExpectedTypeClass());
+        doVerification(saslResponse, null, 0, context);
     }
 
     @Override
     public void handleOutcome(SaslOutcome saslOutcome, EngineTestDriver context) {
-        reportTypeExpectationError(saslOutcome, getExpectedTypeClass());
+        doVerification(saslOutcome, null, 0, context);
     }
 
     @Override
     public void handleAMQPHeader(AMQPHeader header, EngineTestDriver context) {
-        reportTypeExpectationError(header, getExpectedTypeClass());
+        doVerification(header, null, 0, context);
     }
 
     @Override
     public void handleSASLHeader(AMQPHeader header, EngineTestDriver context) {
-        reportTypeExpectationError(header, getExpectedTypeClass());
+        doVerification(header, null, 0, context);
     }
 
     //----- Internal implementation
+
+    private void doVerification(Object performative, ProtonBuffer payload, int channel, EngineTestDriver driver) {
+        if (getExpectedTypeClass().equals(performative.getClass())) {
+            verifyNoPayload(payload);
+            verifyChannel(channel);
+            verifyPerformative(getExpectedTypeClass().cast(performative));
+        } else {
+            reportTypeExpectationError(performative, getExpectedTypeClass());
+        }
+    }
 
     private void reportTypeExpectationError(Object received, Class<T> expected) {
         throw new AssertionError("Expeceted type: " + expected + " but received value: " + received);

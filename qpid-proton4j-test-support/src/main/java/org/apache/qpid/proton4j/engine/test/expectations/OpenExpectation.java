@@ -40,6 +40,10 @@ public class OpenExpectation extends AbstractExceptation<Open> {
         PROPERTIES,
     }
 
+    public OpenExpectation() {
+        this.expectedChannel = 0;  // Open must used channel zero.
+    }
+
     public OpenExpectation withContainerId(Matcher<?> m) {
         getMatchers().put(Field.CONTAINER_ID, m);
         return this;
