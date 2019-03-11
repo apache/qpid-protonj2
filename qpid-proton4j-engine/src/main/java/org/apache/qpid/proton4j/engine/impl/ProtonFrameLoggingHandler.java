@@ -50,19 +50,19 @@ public class ProtonFrameLoggingHandler implements EngineHandler {
 
     @Override
     public void handleRead(EngineHandlerContext context, HeaderFrame header) {
-        LOG.trace("<- Header: {}", header);
+        LOG.trace("<- AMQP: {}", header.getBody());
         context.fireRead(header);
     }
 
     @Override
     public void handleRead(EngineHandlerContext context, SaslFrame frame) {
-        LOG.trace("<- SASL: {}", frame);
+        LOG.trace("<- SASL: {}", frame.getBody());
         context.fireRead(frame);
     }
 
     @Override
     public void handleRead(EngineHandlerContext context, ProtocolFrame frame) {
-        LOG.trace("<- AMQP: {}", frame);
+        LOG.trace("<- AMQP: {}", frame.getBody());
         context.fireRead(frame);
     }
 
