@@ -18,14 +18,16 @@ package org.apache.qpid.proton4j.engine.impl;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertNull;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
-import org.apache.qpid.proton4j.amqp.transport.Close;
-import org.apache.qpid.proton4j.amqp.transport.Open;
+import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
+import org.apache.qpid.proton4j.amqp.driver.types.AMQPHeaderType;
+import org.apache.qpid.proton4j.amqp.driver.types.CloseType;
+import org.apache.qpid.proton4j.amqp.driver.types.OpenType;
 import org.apache.qpid.proton4j.engine.Connection;
+import org.apache.qpid.proton4j.engine.ConnectionState;
 import org.apache.qpid.proton4j.engine.exceptions.EngineStateException;
 import org.junit.Test;
 
@@ -39,6 +41,14 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
     @Test
     public void testConnectionRemoteOpenTriggeredWhenRemoteOpenArrives() throws EngineStateException {
         ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
+        engine.errorHandler(result -> failure = result);
+
+        // Create the test driver and link it to the engine for output handling.
+        AMQPTestDriver driver = new AMQPTestDriver(engine);
+        engine.outputConsumer(driver);
+
+        AMQPHeaderType.expectAMQPHeader(driver).respondWithAMQPHeader();
+        OpenType.expectOpen(driver).respond().withContainerId("driver");
 
         final AtomicBoolean remoteOpened = new AtomicBoolean();
 
@@ -53,25 +63,25 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
             remoteOpened.set(true);
         });
 
-        engine.outputHandler((buffer) -> {
-            engineWrites.add(buffer);
-        });
+        connection.open();
 
-        // Expect the engine to have remained idle
-        assertEquals("Engine should not have emitted any frames yet", 0, engineWrites.size());
+        driver.assertScriptComplete();
 
-        engine.ingest(AMQPHeader.getAMQPHeader().getBuffer());
-        engine.ingest(wrapInFrame(new Open(), 0));
-
-        // Expect the engine to emit the AMQP header
-        assertEquals("Engine did not emit an AMQP Header on Open", 1, engineWrites.size());
-
-        assertTrue("Connection remote opened event did not fire", remoteOpened.get());
+        assertNull(failure);
     }
 
     @Test
     public void testConnectionRemoteCloseTriggeredWhenRemoteCloseArrives() throws EngineStateException {
         ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
+        engine.errorHandler(result -> failure = result);
+
+        // Create the test driver and link it to the engine for output handling.
+        AMQPTestDriver driver = new AMQPTestDriver(engine);
+        engine.outputConsumer(driver);
+
+        AMQPHeaderType.expectAMQPHeader(driver).respondWithAMQPHeader();
+        OpenType.expectOpen(driver).respond().withContainerId("driver");
+        CloseType.expectClose(driver).respond();
 
         final AtomicBoolean connectionOpenedSignaled = new AtomicBoolean();
         final AtomicBoolean connectionClosedSignaled = new AtomicBoolean();
@@ -90,21 +100,18 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
             connectionClosedSignaled.set(true);
         });
 
-        engine.outputHandler((buffer) -> {
-            engineWrites.add(buffer);
-        });
+        connection.open();
 
-        // Expect the engine to have remained idle
-        assertEquals("Engine should not have emitted any frames yet", 0, engineWrites.size());
+        assertEquals(ConnectionState.ACTIVE, connection.getLocalState());
+        assertEquals(ConnectionState.ACTIVE, connection.getRemoteState());
 
-        engine.ingest(AMQPHeader.getAMQPHeader().getBuffer());
-        engine.ingest(wrapInFrame(new Open(), 0));
-        engine.ingest(wrapInFrame(new Close(), 0));
+        connection.close();
 
-        // Expect the engine to emit the AMQP header
-        assertEquals("Engine did not emit an AMQP Header on Open", 1, engineWrites.size());
+        driver.assertScriptComplete();
 
-        assertTrue("Connection remote opened event did not fire", connectionOpenedSignaled.get());
-        assertTrue("Connection remote closed event did not fire", connectionClosedSignaled.get());
+        assertEquals(ConnectionState.CLOSED, connection.getLocalState());
+        assertEquals(ConnectionState.CLOSED, connection.getRemoteState());
+
+        assertNull(failure);
     }
 }

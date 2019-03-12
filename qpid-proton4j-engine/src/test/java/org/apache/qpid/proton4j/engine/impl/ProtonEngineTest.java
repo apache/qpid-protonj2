@@ -19,14 +19,13 @@ package org.apache.qpid.proton4j.engine.impl;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
-import java.io.IOException;
-
-import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
-import org.apache.qpid.proton4j.amqp.transport.Open;
-import org.apache.qpid.proton4j.buffer.ProtonBuffer;
-import org.apache.qpid.proton4j.engine.Connection;
+import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
+import org.apache.qpid.proton4j.amqp.driver.types.AMQPHeaderType;
+import org.apache.qpid.proton4j.amqp.driver.types.OpenType;
+import org.apache.qpid.proton4j.engine.ConnectionState;
 import org.junit.Test;
 
 /**
@@ -34,14 +33,10 @@ import org.junit.Test;
  */
 public class ProtonEngineTest extends ProtonEngineTestSupport {
 
-    // TODO - The engine testing would benefit from a Qpid JMS style TestPeer that can expect and
-    //        emit frames to validate behaviors from the engine.
-
-    private Connection connection;
-
     @Test
     public void testEngineStart() {
         ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
+        engine.errorHandler(result -> failure = result);
 
         // Engine cannot accept input bytes until started.
         assertFalse(engine.isWritable());
@@ -55,11 +50,17 @@ public class ProtonEngineTest extends ProtonEngineTestSupport {
         // Default engine should start and return a connection immediately
         assertTrue(engine.isWritable());
         assertNotNull(connection);
+        assertNull(failure);
     }
 
     @Test
     public void testEngineEmitsAMQPHeaderOnConnectionOpen() {
         ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
+        engine.errorHandler(result -> failure = result);
+
+        // Create the test driver and link it to the engine for output handling.
+        AMQPTestDriver driver = new AMQPTestDriver(engine);
+        engine.outputConsumer(driver);
 
         engine.start(result -> {
             connection = result.get();
@@ -68,51 +69,17 @@ public class ProtonEngineTest extends ProtonEngineTestSupport {
         // Default engine should start and return a connection immediately
         assertNotNull(connection);
 
-        engine.outputHandler((buffer) -> {
-            engineWrites.add(buffer);
-        });
+        AMQPHeaderType.expectAMQPHeader(driver).respondWithAMQPHeader();
+        OpenType.expectOpen(driver).withContainerId("test").respond().withContainerId("driver");
 
+        connection.setContainerId("test");
         connection.open();
 
-        // Expect the engine to emit the AMQP header
-        assertEquals("Engine did not emit an AMQP Header on Open", 1, engineWrites.size());
+        driver.assertScriptComplete();
 
-        ProtonBuffer outputBuffer = engineWrites.get(0);
-        assertEquals(AMQPHeader.HEADER_SIZE_BYTES, outputBuffer.getReadableBytes());
-        AMQPHeader outputHeader = new AMQPHeader(outputBuffer);
+        assertEquals(ConnectionState.ACTIVE, connection.getLocalState());
+        assertEquals(ConnectionState.ACTIVE, connection.getRemoteState());
 
-        assertFalse(outputHeader.isSaslHeader());
-    }
-
-    @Test
-    public void testEngineEmitsOnConnectionOpenAfterHeaderReceived() throws IOException {
-        ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
-
-        engine.start(result -> {
-            connection = result.get();
-        });
-
-        // Default engine should start and return a connection immediately
-        assertNotNull(connection);
-
-        engine.outputHandler((buffer) -> {
-            engineWrites.add(buffer);
-        });
-
-        connection.open();
-
-        // Expect the engine to emit the AMQP header
-        assertEquals("Engine did not emit an AMQP Header on Open", 1, engineWrites.size());
-
-        ProtonBuffer outputBuffer = engineWrites.get(0);
-        assertEquals(AMQPHeader.HEADER_SIZE_BYTES, outputBuffer.getReadableBytes());
-        AMQPHeader outputHeader = new AMQPHeader(outputBuffer);
-
-        engine.ingest(outputHeader.getBuffer());
-
-        // Expect the engine to emit the Open performative
-        assertEquals("Engine did not emit an Open performative after receiving header response", 2, engineWrites.size());
-        outputBuffer = engineWrites.get(1);
-        assertNotNull(unwrapFrame(outputBuffer, Open.class));
+        assertNull(failure);
     }
 }

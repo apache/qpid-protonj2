@@ -18,12 +18,17 @@ package org.apache.qpid.proton4j.engine.impl;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
+import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
+import org.apache.qpid.proton4j.amqp.driver.types.AMQPHeaderType;
+import org.apache.qpid.proton4j.amqp.driver.types.BeginType;
+import org.apache.qpid.proton4j.amqp.driver.types.OpenType;
 import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
 import org.apache.qpid.proton4j.amqp.transport.Begin;
 import org.apache.qpid.proton4j.amqp.transport.Open;
@@ -42,6 +47,18 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
     @Test
     public void testEngineEmitsBeginAfterLocalSessionOpened() throws IOException {
         ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
+        engine.errorHandler(result -> failure = result);
+
+        // Create the test driver and link it to the engine for output handling.
+        AMQPTestDriver driver = new AMQPTestDriver(engine);
+        engine.outputConsumer(driver);
+
+        AMQPHeaderType.expectAMQPHeader(driver).respondWithAMQPHeader();
+        OpenType.expectOpen(driver).respond().withContainerId("driver");
+        BeginType.expectBegin(driver).respond().onChannel(1).withRemoteChannel(0).
+                                                             withOutgoingWindow(0).
+                                                             withIncomingWindow(0).
+                                                             withNextOutgoingId(1);  // TODO make default response smarter
 
         final AtomicBoolean remoteOpened = new AtomicBoolean();
 
@@ -52,40 +69,17 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
         // Default engine should start and return a connection immediately
         assertNotNull(connection);
 
-        engine.outputHandler((buffer) -> {
-            engineWrites.add(buffer);
-        });
-
         connection.open();
         connection.openEventHandler((result) -> {
             remoteOpened.set(true);
         });
 
-        // Expect the engine to emit the AMQP header
-        assertEquals("Engine did not emit an AMQP Header on Open", 1, engineWrites.size());
-
-        ProtonBuffer outputBuffer = engineWrites.get(0);
-        assertEquals(AMQPHeader.HEADER_SIZE_BYTES, outputBuffer.getReadableBytes());
-        AMQPHeader outputHeader = new AMQPHeader(outputBuffer);
-
-        engine.ingest(outputHeader.getBuffer());
-
-        // Expect the engine to emit the Open performative
-        assertEquals("Engine did not emit an Open performative after receiving header response", 2, engineWrites.size());
-        outputBuffer = engineWrites.get(1);
-        assertNotNull(unwrapFrame(outputBuffer, Open.class));
-
-        engine.ingest(wrapInFrame(new Open(), 0));
-
-        assertTrue("Connection remote opened event did not fire", remoteOpened.get());
-
         Session session = connection.session();
         session.open();
 
-        // Expect the engine to emit the Open performative
-        assertEquals("Engine did not emit an Begin performative after session was locally opened.", 3, engineWrites.size());
-        outputBuffer = engineWrites.get(2);
-        assertNotNull(unwrapFrame(outputBuffer, Begin.class));
+        driver.assertScriptComplete();
+
+        assertNull(failure);
     }
 
     @Test
