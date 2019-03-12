@@ -16,8 +16,13 @@
  */
 package org.apache.qpid.proton4j.amqp.driver.expectations;
 
+import static org.hamcrest.CoreMatchers.equalTo;
+
+import org.apache.qpid.proton4j.amqp.Binary;
 import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
+import org.apache.qpid.proton4j.amqp.driver.actions.SaslResponseInjectAction;
 import org.apache.qpid.proton4j.amqp.security.SaslChallenge;
+import org.apache.qpid.proton4j.amqp.security.SaslResponse;
 import org.hamcrest.Matcher;
 
 /**
@@ -35,6 +40,20 @@ public class SaslChallengeExpectation extends AbstractExceptation<SaslChallenge>
     public SaslChallengeExpectation(AMQPTestDriver driver) {
         super(driver);
     }
+
+    public SaslResponseInjectAction respond() {
+        SaslResponseInjectAction response = new SaslResponseInjectAction(new SaslResponse(), 0);
+        driver.addScriptedElement(response);
+        return response;
+    }
+
+    //----- Type specific with methods that perform simple equals checks
+
+    public SaslChallengeExpectation withChallenge(Binary challenge) {
+        return withChallenge(equalTo(challenge));
+    }
+
+    //----- Matcher based with methods for more complex validation
 
     public SaslChallengeExpectation withChallenge(Matcher<?> m) {
         getMatchers().put(Field.CHALLENGE, m);

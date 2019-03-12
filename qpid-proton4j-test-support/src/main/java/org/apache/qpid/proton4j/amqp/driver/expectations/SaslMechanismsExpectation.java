@@ -16,6 +16,9 @@
  */
 package org.apache.qpid.proton4j.amqp.driver.expectations;
 
+import static org.hamcrest.CoreMatchers.equalTo;
+
+import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
 import org.apache.qpid.proton4j.amqp.security.SaslMechanisms;
 import org.hamcrest.Matcher;
@@ -35,6 +38,14 @@ public class SaslMechanismsExpectation extends AbstractExceptation<SaslMechanism
     public SaslMechanismsExpectation(AMQPTestDriver driver) {
         super(driver);
     }
+
+    //----- Type specific with methods that perform simple equals checks
+
+    public SaslMechanismsExpectation withSaslServerMechanisms(Symbol... mechanisms) {
+        return withSaslServerMechanisms(equalTo(mechanisms));
+    }
+
+    //----- Matcher based with methods for more complex validation
 
     public SaslMechanismsExpectation withSaslServerMechanisms(Matcher<?> m) {
         getMatchers().put(Field.SASL_SERVER_MECHANISMS, m);

@@ -72,73 +72,59 @@ public class AttachExpectation extends AbstractExceptation<Attach> {
     //----- Type specific with methods that perform simple equals checks
 
     public AttachExpectation withName(String name) {
-        withName(equalTo(name));
-        return this;
+        return withName(equalTo(name));
     }
 
     public AttachExpectation withHandle(long handle) {
-        withHandle(equalTo(handle));
-        return this;
+        return withHandle(equalTo(handle));
     }
 
     public AttachExpectation withRole(Role role) {
-        withRole(equalTo(role));
-        return this;
+        return withRole(equalTo(role));
     }
 
     public AttachExpectation withSndSettleMode(SenderSettleMode sndSettleMode) {
-        withSndSettleMode(equalTo(sndSettleMode));
-        return this;
+        return withSndSettleMode(equalTo(sndSettleMode));
     }
 
     public AttachExpectation withRcvSettleMode(ReceiverSettleMode rcvSettleMode) {
-        withRcvSettleMode(equalTo(rcvSettleMode));
-        return this;
+        return withRcvSettleMode(equalTo(rcvSettleMode));
     }
 
     public AttachExpectation withSource(Source source) {
-        withSource(equalTo(source));
-        return this;
+        return withSource(equalTo(source));
     }
 
     public AttachExpectation withTarget(Target target) {
-        withTarget(equalTo(target));
-        return this;
+        return withTarget(equalTo(target));
     }
 
     public AttachExpectation withUnsettled(Map<Binary, DeliveryState> unsettled) {
-        withUnsettled(equalTo(unsettled));
-        return this;
+        return withUnsettled(equalTo(unsettled));
     }
 
     public AttachExpectation withIncompleteUnsettled(boolean incomplete) {
-        withIncompleteUnsettled(equalTo(incomplete));
-        return this;
+        return withIncompleteUnsettled(equalTo(incomplete));
     }
 
     public AttachExpectation withInitialDeliveryCount(long initialDeliveryCount) {
-        withInitialDeliveryCount(equalTo(initialDeliveryCount));
-        return this;
+        return withInitialDeliveryCount(equalTo(initialDeliveryCount));
     }
 
     public AttachExpectation withMaxMessageSize(UnsignedLong maxMessageSize) {
-        withMaxMessageSize(equalTo(maxMessageSize));
-        return this;
+        return withMaxMessageSize(equalTo(maxMessageSize));
     }
 
     public AttachExpectation withOfferedCapabilities(Symbol... offeredCapabilities) {
-        withOfferedCapabilities(equalTo(offeredCapabilities));
-        return this;
+        return withOfferedCapabilities(equalTo(offeredCapabilities));
     }
 
     public AttachExpectation withDesiredCapabilities(Symbol... desiredCapabilities) {
-        withDesiredCapabilities(equalTo(desiredCapabilities));
-        return this;
+        return withDesiredCapabilities(equalTo(desiredCapabilities));
     }
 
     public AttachExpectation withProperties(Map<Symbol, Object> properties) {
-        withProperties(equalTo(properties));
-        return this;
+        return withProperties(equalTo(properties));
     }
 
     //----- Matcher based with methods for more complex validation

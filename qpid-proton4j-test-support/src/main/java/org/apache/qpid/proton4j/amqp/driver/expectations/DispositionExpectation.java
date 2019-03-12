@@ -16,8 +16,13 @@
  */
 package org.apache.qpid.proton4j.amqp.driver.expectations;
 
+import static org.hamcrest.CoreMatchers.equalTo;
+
 import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
+import org.apache.qpid.proton4j.amqp.driver.actions.DispositionInjectAction;
+import org.apache.qpid.proton4j.amqp.transport.DeliveryState;
 import org.apache.qpid.proton4j.amqp.transport.Disposition;
+import org.apache.qpid.proton4j.amqp.transport.Role;
 import org.hamcrest.Matcher;
 
 /**
@@ -40,6 +45,46 @@ public class DispositionExpectation extends AbstractExceptation<Disposition> {
     public DispositionExpectation(AMQPTestDriver driver) {
         super(driver);
     }
+
+    public DispositionInjectAction respond() {
+        DispositionInjectAction response = new DispositionInjectAction(new Disposition(), 0);
+        driver.addScriptedElement(response);
+        return response;
+    }
+
+    //----- Type specific with methods that perform simple equals checks
+
+    public DispositionExpectation withRole(Role role) {
+        withRole(equalTo(role));
+        return this;
+    }
+
+    public DispositionExpectation withFirst(long first) {
+        withFirst(equalTo(first));
+        return this;
+    }
+
+    public DispositionExpectation withLast(long last) {
+        withLast(equalTo(last));
+        return this;
+    }
+
+    public DispositionExpectation withSettled(boolean settled) {
+        withSettled(equalTo(settled));
+        return this;
+    }
+
+    public DispositionExpectation withState(DeliveryState state) {
+        withState(equalTo(state));
+        return this;
+    }
+
+    public DispositionExpectation withBatchable(boolean batchable) {
+        withBatchable(equalTo(batchable));
+        return this;
+    }
+
+    //----- Matcher based with methods for more complex validation
 
     public DispositionExpectation withRole(Matcher<?> m) {
         getMatchers().put(Field.ROLE, m);

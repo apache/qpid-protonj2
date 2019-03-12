@@ -16,7 +16,13 @@
  */
 package org.apache.qpid.proton4j.amqp.driver.expectations;
 
+import static org.hamcrest.CoreMatchers.equalTo;
+
+import java.util.Map;
+
+import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
+import org.apache.qpid.proton4j.amqp.driver.actions.FlowInjectAction;
 import org.apache.qpid.proton4j.amqp.transport.Flow;
 import org.hamcrest.Matcher;
 
@@ -45,6 +51,60 @@ public class FlowExpectation extends AbstractExceptation<Flow> {
     public FlowExpectation(AMQPTestDriver driver) {
         super(driver);
     }
+
+    public FlowInjectAction respond() {
+        FlowInjectAction response = new FlowInjectAction(new Flow(), 0);
+        driver.addScriptedElement(response);
+        return response;
+    }
+
+    //----- Type specific with methods that perform simple equals checks
+
+    public FlowExpectation withNextIncomingId(long nextIncomingId) {
+        return withNextIncomingId(equalTo(nextIncomingId));
+    }
+
+    public FlowExpectation withIncomingWindow(long incomingWindow) {
+        return withIncomingWindow(equalTo(incomingWindow));
+    }
+
+    public FlowExpectation withNextOutgoingId(long nextOutgoingId) {
+        return withNextOutgoingId(equalTo(nextOutgoingId));
+    }
+
+    public FlowExpectation withOutgoingWindow(long outgoingWindow) {
+        return withOutgoingWindow(equalTo(outgoingWindow));
+    }
+
+    public FlowExpectation withHandle(long handle) {
+        return withHandle(equalTo(handle));
+    }
+
+    public FlowExpectation withDeliveryCount(long deliveryCount) {
+        return withDeliveryCount(equalTo(deliveryCount));
+    }
+
+    public FlowExpectation withLinkCredit(long linkCredit) {
+        return withLinkCredit(equalTo(linkCredit));
+    }
+
+    public FlowExpectation withAvailable(long available) {
+        return withAvailable(equalTo(available));
+    }
+
+    public FlowExpectation withDrain(boolean drain) {
+        return withDrain(equalTo(drain));
+    }
+
+    public FlowExpectation withEcho(boolean echo) {
+        return withEcho(equalTo(echo));
+    }
+
+    public FlowExpectation withProperties(Map<Symbol, Object> properties) {
+        return withProperties(equalTo(properties));
+    }
+
+    //----- Matcher based with methods for more complex validation
 
     public FlowExpectation withNextIncomingId(Matcher<?> m) {
         getMatchers().put(Field.NEXT_INCOMING_ID, m);

@@ -55,7 +55,7 @@ public final class Flow implements Performative {
     private long available;
     private boolean drain;
     private boolean echo;
-    private Map<Object, Object> properties;
+    private Map<Symbol, Object> properties;
 
     //----- Query the state of the Flow object -----------------------------//
 
@@ -279,11 +279,11 @@ public final class Flow implements Performative {
         return this;
     }
 
-    public Map<Object, Object> getProperties() {
+    public Map<Symbol, Object> getProperties() {
         return properties;
     }
 
-    public Flow setProperties(Map<Object, Object> properties) {
+    public Flow setProperties(Map<Symbol, Object> properties) {
         if (properties != null) {
             modified |= PROPERTIES;
         } else {

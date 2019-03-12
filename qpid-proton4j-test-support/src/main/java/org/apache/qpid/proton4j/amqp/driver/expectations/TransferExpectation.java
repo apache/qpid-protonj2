@@ -16,7 +16,12 @@
  */
 package org.apache.qpid.proton4j.amqp.driver.expectations;
 
+import static org.hamcrest.CoreMatchers.equalTo;
+
+import org.apache.qpid.proton4j.amqp.Binary;
 import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
+import org.apache.qpid.proton4j.amqp.transport.DeliveryState;
+import org.apache.qpid.proton4j.amqp.transport.ReceiverSettleMode;
 import org.apache.qpid.proton4j.amqp.transport.Transfer;
 import org.hamcrest.Matcher;
 
@@ -45,6 +50,54 @@ public class TransferExpectation extends AbstractExceptation<Transfer> {
     public TransferExpectation(AMQPTestDriver driver) {
         super(driver);
     }
+
+    //----- Type specific with methods that perform simple equals checks
+
+    public TransferExpectation withHandle(long handle) {
+        return withHandle(equalTo(handle));
+    }
+
+    public TransferExpectation withDeliveryId(long deliveryId) {
+        return withDeliveryId(equalTo(deliveryId));
+    }
+
+    public TransferExpectation withDeliveryTag(Binary deliveryTag) {
+        return withDeliveryTag(equalTo(deliveryTag));
+    }
+
+    public TransferExpectation withMessageFormat(long messageFormat) {
+        return withMessageFormat(equalTo(messageFormat));
+    }
+
+    public TransferExpectation withSettled(boolean settled) {
+        return withSettled(equalTo(settled));
+    }
+
+    public TransferExpectation withMore(boolean more) {
+        return withMore(equalTo(more));
+    }
+
+    public TransferExpectation withRcvSettleMode(ReceiverSettleMode rcvSettleMode) {
+        return withRcvSettleMode(equalTo(rcvSettleMode));
+    }
+
+    public TransferExpectation withState(DeliveryState state) {
+        return withState(equalTo(state));
+    }
+
+    public TransferExpectation withResume(boolean resume) {
+        return withResume(equalTo(resume));
+    }
+
+    public TransferExpectation withAborted(boolean aborted) {
+        return withAborted(equalTo(aborted));
+    }
+
+    public TransferExpectation withBatchable(boolean batchable) {
+        return withBatchable(equalTo(batchable));
+    }
+
+    //----- Matcher based with methods for more complex validation
 
     public TransferExpectation withHandle(Matcher<?> m) {
         getMatchers().put(Field.HANDLE, m);

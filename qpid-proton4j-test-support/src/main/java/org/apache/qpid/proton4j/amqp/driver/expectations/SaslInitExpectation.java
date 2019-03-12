@@ -16,6 +16,10 @@
  */
 package org.apache.qpid.proton4j.amqp.driver.expectations;
 
+import static org.hamcrest.CoreMatchers.equalTo;
+
+import org.apache.qpid.proton4j.amqp.Binary;
+import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
 import org.apache.qpid.proton4j.amqp.security.SaslInit;
 import org.hamcrest.Matcher;
@@ -37,6 +41,22 @@ public class SaslInitExpectation extends AbstractExceptation<SaslInit> {
     public SaslInitExpectation(AMQPTestDriver driver) {
         super(driver);
     }
+
+    //----- Type specific with methods that perform simple equals checks
+
+    public SaslInitExpectation withMechanism(Symbol mechanism) {
+        return withMechanism(equalTo(mechanism));
+    }
+
+    public SaslInitExpectation withInitialResponse(Binary initialResponse) {
+        return withInitialResponse(equalTo(initialResponse));
+    }
+
+    public SaslInitExpectation withHostname(String hostname) {
+        return withHostname(equalTo(hostname));
+    }
+
+    //----- Matcher based with methods for more complex validation
 
     public SaslInitExpectation withMechanism(Matcher<?> m) {
         getMatchers().put(Field.MECHANISM, m);
