@@ -16,8 +16,22 @@
  */
 package org.apache.qpid.proton4j.amqp.driver.expectations;
 
+import static org.hamcrest.CoreMatchers.equalTo;
+
+import java.util.Map;
+
+import org.apache.qpid.proton4j.amqp.Binary;
+import org.apache.qpid.proton4j.amqp.Symbol;
+import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
+import org.apache.qpid.proton4j.amqp.driver.actions.AttachInjectAction;
+import org.apache.qpid.proton4j.amqp.messaging.Source;
+import org.apache.qpid.proton4j.amqp.messaging.Target;
 import org.apache.qpid.proton4j.amqp.transport.Attach;
+import org.apache.qpid.proton4j.amqp.transport.DeliveryState;
+import org.apache.qpid.proton4j.amqp.transport.ReceiverSettleMode;
+import org.apache.qpid.proton4j.amqp.transport.Role;
+import org.apache.qpid.proton4j.amqp.transport.SenderSettleMode;
 import org.hamcrest.Matcher;
 
 /**
@@ -48,6 +62,86 @@ public class AttachExpectation extends AbstractExceptation<Attach> {
     public AttachExpectation(AMQPTestDriver driver) {
         super(driver);
     }
+
+    public AttachInjectAction respond() {
+        AttachInjectAction response = new AttachInjectAction(new Attach(), 0);
+        driver.addScriptedElement(response);
+        return response;
+    }
+
+    //----- Type specific with methods that perform simple equals checks
+
+    public AttachExpectation withName(String name) {
+        withName(equalTo(name));
+        return this;
+    }
+
+    public AttachExpectation withHandle(long handle) {
+        withHandle(equalTo(handle));
+        return this;
+    }
+
+    public AttachExpectation withRole(Role role) {
+        withRole(equalTo(role));
+        return this;
+    }
+
+    public AttachExpectation withSndSettleMode(SenderSettleMode sndSettleMode) {
+        withSndSettleMode(equalTo(sndSettleMode));
+        return this;
+    }
+
+    public AttachExpectation withRcvSettleMode(ReceiverSettleMode rcvSettleMode) {
+        withRcvSettleMode(equalTo(rcvSettleMode));
+        return this;
+    }
+
+    public AttachExpectation withSource(Source source) {
+        withSource(equalTo(source));
+        return this;
+    }
+
+    public AttachExpectation withTarget(Target target) {
+        withTarget(equalTo(target));
+        return this;
+    }
+
+    public AttachExpectation withUnsettled(Map<Binary, DeliveryState> unsettled) {
+        withUnsettled(equalTo(unsettled));
+        return this;
+    }
+
+    public AttachExpectation withIncompleteUnsettled(boolean incomplete) {
+        withIncompleteUnsettled(equalTo(incomplete));
+        return this;
+    }
+
+    public AttachExpectation withInitialDeliveryCount(long initialDeliveryCount) {
+        withInitialDeliveryCount(equalTo(initialDeliveryCount));
+        return this;
+    }
+
+    public AttachExpectation withMaxMessageSize(UnsignedLong maxMessageSize) {
+        withMaxMessageSize(equalTo(maxMessageSize));
+        return this;
+    }
+
+    public AttachExpectation withOfferedCapabilities(Symbol... offeredCapabilities) {
+        withOfferedCapabilities(equalTo(offeredCapabilities));
+        return this;
+    }
+
+    public AttachExpectation withDesiredCapabilities(Symbol... desiredCapabilities) {
+        withDesiredCapabilities(equalTo(desiredCapabilities));
+        return this;
+    }
+
+    public AttachExpectation withProperties(Map<Symbol, Object> properties) {
+        withProperties(equalTo(properties));
+        return this;
+    }
+
+    //----- Matcher based with methods for more complex validation
 
     public AttachExpectation withName(Matcher<?> m) {
         getMatchers().put(Field.NAME, m);
@@ -118,6 +212,7 @@ public class AttachExpectation extends AbstractExceptation<Attach> {
         getMatchers().put(Field.PROPERTIES, m);
         return this;
     }
+
     @Override
     protected Object getFieldValue(Attach attach, Enum<?> performativeField) {
         Object result = null;

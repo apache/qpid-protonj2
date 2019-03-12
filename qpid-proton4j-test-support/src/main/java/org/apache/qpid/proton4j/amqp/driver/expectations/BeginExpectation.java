@@ -22,6 +22,7 @@ import java.util.Map;
 
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
+import org.apache.qpid.proton4j.amqp.driver.actions.BeginInjectAction;
 import org.apache.qpid.proton4j.amqp.transport.Begin;
 import org.hamcrest.Matcher;
 
@@ -46,6 +47,12 @@ public class BeginExpectation extends AbstractExceptation<Begin> {
 
     public BeginExpectation(AMQPTestDriver driver) {
         super(driver);
+    }
+
+    public BeginInjectAction respond() {
+        BeginInjectAction response = new BeginInjectAction(new Begin(), 0);
+        driver.addScriptedElement(response);
+        return response;
     }
 
     //----- Type specific with methods that perform simple equals checks
