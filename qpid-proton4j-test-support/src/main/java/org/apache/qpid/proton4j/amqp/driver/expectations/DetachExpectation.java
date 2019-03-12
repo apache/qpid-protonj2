@@ -16,8 +16,12 @@
  */
 package org.apache.qpid.proton4j.amqp.driver.expectations;
 
+import static org.hamcrest.CoreMatchers.equalTo;
+
 import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
+import org.apache.qpid.proton4j.amqp.driver.actions.DetachInjectAction;
 import org.apache.qpid.proton4j.amqp.transport.Detach;
+import org.apache.qpid.proton4j.amqp.transport.ErrorCondition;
 import org.hamcrest.Matcher;
 
 /**
@@ -37,6 +41,28 @@ public class DetachExpectation extends AbstractExceptation<Detach> {
     public DetachExpectation(AMQPTestDriver driver) {
         super(driver);
     }
+
+    public DetachInjectAction respond() {
+        DetachInjectAction response = new DetachInjectAction(new Detach(), 0);
+        driver.addScriptedElement(response);
+        return response;
+    }
+
+    //----- Type specific with methods that perform simple equals checks
+
+    public DetachExpectation withClosed(long handle) {
+        return withHandle(equalTo(handle));
+    }
+
+    public DetachExpectation withClosed(boolean closed) {
+        return withClosed(equalTo(closed));
+    }
+
+    public DetachExpectation withError(ErrorCondition error) {
+        return withError(equalTo(error));
+    }
+
+    //----- Matcher based with methods for more complex validation
 
     public DetachExpectation withHandle(Matcher<?> m) {
         getMatchers().put(Field.HANDLE, m);

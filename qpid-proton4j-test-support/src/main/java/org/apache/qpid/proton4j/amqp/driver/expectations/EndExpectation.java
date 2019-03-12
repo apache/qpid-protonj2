@@ -16,8 +16,12 @@
  */
 package org.apache.qpid.proton4j.amqp.driver.expectations;
 
+import static org.hamcrest.CoreMatchers.equalTo;
+
 import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
+import org.apache.qpid.proton4j.amqp.driver.actions.EndInjectAction;
 import org.apache.qpid.proton4j.amqp.transport.End;
+import org.apache.qpid.proton4j.amqp.transport.ErrorCondition;
 import org.hamcrest.Matcher;
 
 /**
@@ -35,6 +39,20 @@ public class EndExpectation extends AbstractExceptation<End> {
     public EndExpectation(AMQPTestDriver driver) {
         super(driver);
     }
+
+    public EndInjectAction respond() {
+        EndInjectAction response = new EndInjectAction(new End(), 0);
+        driver.addScriptedElement(response);
+        return response;
+    }
+
+    //----- Type specific with methods that perform simple equals checks
+
+    public EndExpectation withError(ErrorCondition error) {
+        return withError(equalTo(error));
+    }
+
+    //----- Matcher based with methods for more complex validation
 
     public EndExpectation withError(Matcher<?> m) {
         getMatchers().put(Field.ERROR, m);
