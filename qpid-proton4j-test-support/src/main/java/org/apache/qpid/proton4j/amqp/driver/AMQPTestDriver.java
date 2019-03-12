@@ -115,7 +115,9 @@ public class AMQPTestDriver implements Consumer<ProtonBuffer> {
         try {
             // Process off all encoded frames from this buffer one at a time.
             while (buffer.isReadable() && failureCause == null) {
+                LOG.trace("Driver ingesting {} bytes.", buffer.getReadableBytes());
                 frameParser.ingest(buffer);
+                LOG.trace("Driver ingestion completed cycle, remaining bytes in buffer: {}", buffer.getReadableBytes());
             }
         } catch (IOException e) {
             signalFailure(e);

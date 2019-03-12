@@ -272,15 +272,14 @@ class FrameDecoder {
             Object val = null;
 
             if (frameBodySize > 0) {
+                val = decoder.readObject(input, decoderState);
+
                 // Slice to the known Frame body size and use that as the buffer for any payload once
                 // the actual Performative has been decoded.  The implies that the data comprising the
                 // performative will be held as long as the payload buffer is kept.
-                input = input.slice(input.getReadIndex(), frameBodySize);
-
-                val = decoder.readObject(input, decoderState);
-
                 if (input.isReadable()) {
-                    payload = input;
+                    payload = input.slice(input.getReadIndex(), frameBodySize);
+                    input.skipBytes(payload.getReadableBytes());
                 }
             } else {
                 transitionToFrameSizeParsingStage();
