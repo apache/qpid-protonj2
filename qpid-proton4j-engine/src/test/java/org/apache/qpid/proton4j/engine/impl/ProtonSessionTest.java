@@ -33,7 +33,6 @@ import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
 import org.apache.qpid.proton4j.amqp.transport.Begin;
 import org.apache.qpid.proton4j.amqp.transport.Open;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
-import org.apache.qpid.proton4j.engine.Connection;
 import org.apache.qpid.proton4j.engine.Session;
 import org.junit.Test;
 
@@ -41,8 +40,6 @@ import org.junit.Test;
  * Test behaviors of the ProtonSession implementation.
  */
 public class ProtonSessionTest extends ProtonEngineTestSupport {
-
-    protected Connection connection;
 
     @Test
     public void testEngineEmitsBeginAfterLocalSessionOpened() throws IOException {

@@ -26,7 +26,6 @@ import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
 import org.apache.qpid.proton4j.amqp.driver.types.AMQPHeaderType;
 import org.apache.qpid.proton4j.amqp.driver.types.CloseType;
 import org.apache.qpid.proton4j.amqp.driver.types.OpenType;
-import org.apache.qpid.proton4j.engine.Connection;
 import org.apache.qpid.proton4j.engine.ConnectionState;
 import org.apache.qpid.proton4j.engine.exceptions.EngineStateException;
 import org.junit.Test;
@@ -35,8 +34,6 @@ import org.junit.Test;
  * Tests for behaviors of the ProtonConnection class
  */
 public class ProtonConnectionTest extends ProtonEngineTestSupport {
-
-    private Connection connection;
 
     @Test
     public void testConnectionRemoteOpenTriggeredWhenRemoteOpenArrives() throws EngineStateException {

@@ -30,7 +30,6 @@ import org.apache.qpid.proton4j.amqp.transport.Detach;
 import org.apache.qpid.proton4j.amqp.transport.Open;
 import org.apache.qpid.proton4j.amqp.transport.Role;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
-import org.apache.qpid.proton4j.engine.Connection;
 import org.apache.qpid.proton4j.engine.Sender;
 import org.junit.Test;
 
@@ -38,8 +37,6 @@ import org.junit.Test;
  * Test the {@link ProtonSender}
  */
 public class ProtonSenderTest extends ProtonEngineTestSupport {
-
-    protected Connection connection;
 
     @Test
     public void testEngineEmitsAttachAfterLocalSenderOpened() throws Exception {
