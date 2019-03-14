@@ -20,6 +20,8 @@ import org.apache.qpid.proton4j.engine.AsyncEvent;
 
 /**
  * Utility AsyncResult used for successful results that are created in-place
+ *
+ * @param <E> The type of the result value for this {@link AsyncEvent}
  */
 public class SucceededResult<E> implements AsyncEvent<E> {
 
