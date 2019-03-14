@@ -16,8 +16,6 @@
  */
 package org.apache.qpid.proton4j.amqp.driver;
 
-import java.io.IOException;
-
 import org.apache.qpid.proton4j.amqp.security.SaslPerformative;
 import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
 import org.apache.qpid.proton4j.amqp.transport.Performative;
@@ -52,17 +50,17 @@ class FrameDecoder {
         this.driver = driver;
     }
 
-    public void ingest(ProtonBuffer buffer) throws IOException {
+    public void ingest(ProtonBuffer buffer) throws AssertionError {
         try {
             // Parses in-incoming data and emit one complete frame before returning, caller should
             // ensure that the input buffer is drained into the engine or stop if the engine
             // has changed to a non-writable state.
             stage.parse(buffer);
-        } catch (IOException ex) {
+        } catch (AssertionError ex) {
             transitionToErrorStage(ex);
             throw ex;
         } catch (Throwable throwable) {
-            IOException error = new IOException("Frame decode failed.", throwable);
+            AssertionError error = new AssertionError("Frame decode failed.", throwable);
             transitionToErrorStage(error);
             throw error;
         }
@@ -89,7 +87,7 @@ class FrameDecoder {
         return stage = frameBodyParsingStage.reset(frameSize);
     }
 
-    private ParsingErrorStage transitionToErrorStage(IOException error) {
+    private ParsingErrorStage transitionToErrorStage(AssertionError error) {
         if (!(stage instanceof ParsingErrorStage)) {
             stage = new ParsingErrorStage(error);
         }
@@ -108,9 +106,9 @@ class FrameDecoder {
          * @param input
          *      The ProtonBuffer containing new data to be parsed.
          *
-         * @throws IOException if an error occurs while parsing incoming data.
+         * @throws AssertionError if an error occurs while parsing incoming data.
          */
-        void parse(ProtonBuffer input) throws IOException;
+        void parse(ProtonBuffer input) throws AssertionError;
 
         /**
          * Reset the stage to its defaults for a new cycle of parsing.
@@ -133,7 +131,7 @@ class FrameDecoder {
         private int headerByte;
 
         @Override
-        public void parse(ProtonBuffer incoming) throws IOException {
+        public void parse(ProtonBuffer incoming) throws AssertionError {
             while (incoming.isReadable() && headerByte <= AMQPHeader.HEADER_SIZE_BYTES) {
                 headerBytes[headerByte++] = incoming.readByte();
             }
@@ -169,7 +167,7 @@ class FrameDecoder {
         private int multiplier = FRAME_SIZE_BTYES;
 
         @Override
-        public void parse(ProtonBuffer input) throws IOException {
+        public void parse(ProtonBuffer input) throws AssertionError {
             while (input.isReadable()) {
                 frameSize |= ((input.readByte() & 0xFF) << --multiplier * Byte.SIZE);
                 if (multiplier == 0) {
@@ -193,14 +191,14 @@ class FrameDecoder {
             }
         }
 
-        private void validateFrameSize() throws IOException {
+        private void validateFrameSize() throws AssertionError {
             if (frameSize < 8) {
-               throw new IOException(String.format(
+               throw new AssertionError(String.format(
                     "specified frame size %d smaller than minimum frame header size 8", frameSize));
             }
 
             if (frameSize > driver.getInboundMaxFrameSize()) {
-                throw new IOException(String.format(
+                throw new AssertionError(String.format(
                     "specified frame size %d larger than maximum frame size %d", frameSize, driver.getInboundMaxFrameSize()));
             }
         }
@@ -218,7 +216,7 @@ class FrameDecoder {
         private ProtonBuffer buffer;
 
         @Override
-        public void parse(ProtonBuffer input) throws IOException {
+        public void parse(ProtonBuffer input) throws AssertionError {
             if (input.getReadableBytes() < buffer.getWritableBytes()) {
                 buffer.writeBytes(input);
             } else {
@@ -246,15 +244,15 @@ class FrameDecoder {
         private int frameSize;
 
         @Override
-        public void parse(ProtonBuffer input) throws IOException {
+        public void parse(ProtonBuffer input) throws AssertionError {
             int dataOffset = (input.readByte() << 2) & 0x3FF;
 
             if (dataOffset < 8) {
-                throw new IOException(String.format(
+                throw new AssertionError(String.format(
                     "specified frame data offset %d smaller than minimum frame header size %d", dataOffset, 8));
             }
             if (dataOffset > frameSize) {
-                throw new IOException(String.format(
+                throw new AssertionError(String.format(
                     "specified frame data offset %d larger than the frame size %d", dataOffset, frameSize));
             }
 
@@ -272,7 +270,11 @@ class FrameDecoder {
             Object val = null;
 
             if (frameBodySize > 0) {
-                val = decoder.readObject(input, decoderState);
+                try {
+                    val = decoder.readObject(input, decoderState);
+                } catch (Exception e) {
+                    throw new AssertionError("Decoder failed reading remote input:", e);
+                }
 
                 // Slice to the known Frame body size and use that as the buffer for any payload once
                 // the actual Performative has been decoded.  The implies that the data comprising the
@@ -299,7 +301,7 @@ class FrameDecoder {
                 transitionToFrameSizeParsingStage();
                 driver.handleSaslPerformative(performative, channel, payload);
             } else {
-                throw new IOException(String.format("unknown frame type: %d", type));
+                throw new AssertionError(String.format("unknown frame type: %d", type));
             }
         }
 
@@ -316,14 +318,14 @@ class FrameDecoder {
      */
     private class ParsingErrorStage implements FrameParserStage {
 
-        private final IOException parsingError;
+        private final AssertionError parsingError;
 
-        public ParsingErrorStage(IOException parsingError) {
+        public ParsingErrorStage(AssertionError parsingError) {
             this.parsingError = parsingError;
         }
 
         @Override
-        public void parse(ProtonBuffer input) throws IOException {
+        public void parse(ProtonBuffer input) throws AssertionError {
             throw parsingError;
         }
 

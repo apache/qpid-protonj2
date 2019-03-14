@@ -21,11 +21,14 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
 import org.apache.qpid.proton4j.amqp.driver.types.AMQPHeaderType;
+import org.apache.qpid.proton4j.amqp.driver.types.AttachType;
 import org.apache.qpid.proton4j.amqp.driver.types.OpenType;
 import org.apache.qpid.proton4j.engine.ConnectionState;
+import org.apache.qpid.proton4j.engine.Session;
 import org.junit.Test;
 
 /**
@@ -81,5 +84,42 @@ public class ProtonEngineTest extends ProtonEngineTestSupport {
         assertEquals(ConnectionState.ACTIVE, connection.getRemoteState());
 
         assertNull(failure);
+    }
+
+    @Test
+    public void testExceptionThrownFromOpenWhenRemoteSignalsFailure() {
+        ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
+        engine.errorHandler(result -> failure = result);
+
+        // Create the test driver and link it to the engine for output handling.
+        AMQPTestDriver driver = new AMQPTestDriver(engine);
+        engine.outputConsumer(driver);
+
+        engine.start(result -> {
+            connection = result.get();
+        });
+
+        // Default engine should start and return a connection immediately
+        assertNotNull(connection);
+
+        AMQPHeaderType.expectAMQPHeader(driver).respondWithAMQPHeader();
+        OpenType.expect(driver).withContainerId("test").respond().withContainerId("driver");
+        AttachType.expect(driver);
+
+        connection.setContainerId("test");
+        connection.open();
+
+        Session session = connection.session();
+        try {
+            session.open();
+            fail("Should have thrown an exception");
+        } catch (Throwable other) {
+            // Error was expected - TODO - Refine API to indicate what error is going to appear.
+        }
+
+        driver.assertScriptCompleteIngoreErrors();
+
+        // TODO - Should we also fire error here.
+        //assertNotNull(failure);
     }
 }

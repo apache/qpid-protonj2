@@ -16,7 +16,6 @@
  */
 package org.apache.qpid.proton4j.amqp.driver;
 
-import java.io.IOException;
 import java.util.ArrayDeque;
 import java.util.Queue;
 import java.util.function.Consumer;
@@ -119,14 +118,14 @@ public class AMQPTestDriver implements Consumer<ProtonBuffer> {
                 frameParser.ingest(buffer);
                 LOG.trace("Driver ingestion completed cycle, remaining bytes in buffer: {}", buffer.getReadableBytes());
             }
-        } catch (IOException e) {
+        } catch (AssertionError e) {
             signalFailure(e);
         }
     }
 
     //----- Test driver handling of decoded AMQP frames
 
-    void handleHeader(AMQPHeader header) throws IOException {
+    void handleHeader(AMQPHeader header) throws AssertionError {
         ScriptedElement scriptEntry = script.poll();
         if (scriptEntry == null) {
             signalFailure(new AssertionError("Receibed header when not expecting any input."));
@@ -136,7 +135,7 @@ public class AMQPTestDriver implements Consumer<ProtonBuffer> {
         prcessScript(scriptEntry);
     }
 
-    void handleSaslPerformative(SaslPerformative sasl, int channel, ProtonBuffer payload) throws IOException {
+    void handleSaslPerformative(SaslPerformative sasl, int channel, ProtonBuffer payload) throws AssertionError {
         ScriptedElement scriptEntry = script.poll();
         if (scriptEntry == null) {
             signalFailure(new AssertionError("Receibed performative[" + sasl + "] when not expecting any input."));
@@ -146,7 +145,7 @@ public class AMQPTestDriver implements Consumer<ProtonBuffer> {
         prcessScript(scriptEntry);
     }
 
-    void handlePerformative(Performative amqp, int channel, ProtonBuffer payload) throws IOException {
+    void handlePerformative(Performative amqp, int channel, ProtonBuffer payload) throws AssertionError {
         ScriptedElement scriptEntry = script.poll();
         if (scriptEntry == null) {
             signalFailure(new AssertionError("Receibed performative[" + amqp + "] when not expecting any input."));
@@ -163,10 +162,26 @@ public class AMQPTestDriver implements Consumer<ProtonBuffer> {
     //----- Test driver actions
 
     /**
+     * Checks that the test script was fully consumed and that the driver is not
+     * in an error state.
+     *
      * @throws AssertionError if the scripted events are not all completed when called.
      */
     public void assertScriptComplete() throws AssertionError {
         checkFailed();
+        if (!script.isEmpty()) {
+            // TODO - Dump all elements that were not executed in the script.
+            throw new AssertionError("Not all expected actions were completed");
+        }
+    }
+
+    /**
+     * Checks that the test script was fully consumed but ignores any failure
+     * state as that may have been expected.
+     *
+     * @throws AssertionError if the scripted events are not all completed when called.
+     */
+    public void assertScriptCompleteIngoreErrors() throws AssertionError {
         if (!script.isEmpty()) {
             // TODO - Dump all elements that were not executed in the script.
             throw new AssertionError("Not all expected actions were completed");
@@ -240,9 +255,9 @@ public class AMQPTestDriver implements Consumer<ProtonBuffer> {
      * @param ex
      *      The exception that triggered this call.
      *
-     * @throws RuntimeException indicating the first error that cause the driver to report test failure.
+     * @throws AssertionError indicating the first error that cause the driver to report test failure.
      */
-    public void signalFailure(Throwable ex) throws RuntimeException {
+    public void signalFailure(Throwable ex) throws AssertionError {
         if (this.failureCause == null) {
             if (ex instanceof AssertionError) {
                 this.failureCause = (AssertionError) ex;
@@ -260,10 +275,10 @@ public class AMQPTestDriver implements Consumer<ProtonBuffer> {
      * @param message
      *      The error message that describes what triggered this call.
      *
-     * @throws RuntimeException that indicates the first error that failed for this driver.
+     * @throws AssertionError that indicates the first error that failed for this driver.
      */
-    public void signalFailure(String message) throws RuntimeException {
-        signalFailure(new IOException(message));
+    public void signalFailure(String message) throws AssertionError {
+        signalFailure(new AssertionError(message));
     }
 
     //----- Internal implementation
