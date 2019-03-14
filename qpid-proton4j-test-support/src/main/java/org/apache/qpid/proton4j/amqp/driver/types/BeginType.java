@@ -30,7 +30,7 @@ public class BeginType {
 
     //----- Static methods for easier scripting
 
-    public static BeginExpectation expectBegin(AMQPTestDriver driver) {
+    public static BeginExpectation expect(AMQPTestDriver driver) {
         BeginExpectation expecting = new BeginExpectation(driver);
         driver.addScriptedElement(expecting);
         return expecting;

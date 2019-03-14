@@ -30,7 +30,7 @@ public class DetachType {
 
     //----- Static methods for easier scripting
 
-    public static DetachExpectation expectEnd(AMQPTestDriver driver) {
+    public static DetachExpectation expect(AMQPTestDriver driver) {
         DetachExpectation expecting = new DetachExpectation(driver);
         driver.addScriptedElement(expecting);
         return expecting;

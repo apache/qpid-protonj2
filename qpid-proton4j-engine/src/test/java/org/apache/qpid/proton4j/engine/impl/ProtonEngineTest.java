@@ -70,7 +70,7 @@ public class ProtonEngineTest extends ProtonEngineTestSupport {
         assertNotNull(connection);
 
         AMQPHeaderType.expectAMQPHeader(driver).respondWithAMQPHeader();
-        OpenType.expectOpen(driver).withContainerId("test").respond().withContainerId("driver");
+        OpenType.expect(driver).withContainerId("test").respond().withContainerId("driver");
 
         connection.setContainerId("test");
         connection.open();

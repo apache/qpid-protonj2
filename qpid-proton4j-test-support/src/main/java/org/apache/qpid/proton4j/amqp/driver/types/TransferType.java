@@ -30,7 +30,7 @@ public class TransferType {
 
     //----- Static methods for easier scripting
 
-    public static TransferExpectation expectEnd(AMQPTestDriver driver) {
+    public static TransferExpectation expect(AMQPTestDriver driver) {
         TransferExpectation expecting = new TransferExpectation(driver);
         driver.addScriptedElement(expecting);
         return expecting;

@@ -30,7 +30,7 @@ public class EndType {
 
     //----- Static methods for easier scripting
 
-    public static EndExpectation expectEnd(AMQPTestDriver driver) {
+    public static EndExpectation expect(AMQPTestDriver driver) {
         EndExpectation expecting = new EndExpectation(driver);
         driver.addScriptedElement(expecting);
         return expecting;

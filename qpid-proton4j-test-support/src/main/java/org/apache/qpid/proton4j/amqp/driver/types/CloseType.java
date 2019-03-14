@@ -30,7 +30,7 @@ public class CloseType {
 
     //----- Static methods for easier scripting
 
-    public static CloseExpectation expectClose(AMQPTestDriver driver) {
+    public static CloseExpectation expect(AMQPTestDriver driver) {
         CloseExpectation expecting = new CloseExpectation(driver);
         driver.addScriptedElement(expecting);
         return expecting;

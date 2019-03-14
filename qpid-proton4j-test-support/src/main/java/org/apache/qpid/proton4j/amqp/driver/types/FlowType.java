@@ -30,7 +30,7 @@ public class FlowType {
 
     //----- Static methods for easier scripting
 
-    public static FlowExpectation expectEnd(AMQPTestDriver driver) {
+    public static FlowExpectation expect(AMQPTestDriver driver) {
         FlowExpectation expecting = new FlowExpectation(driver);
         driver.addScriptedElement(expecting);
         return expecting;

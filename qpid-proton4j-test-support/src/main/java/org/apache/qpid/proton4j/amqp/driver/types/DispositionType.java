@@ -30,7 +30,7 @@ public class DispositionType {
 
     //----- Static methods for easier scripting
 
-    public static DispositionExpectation expectEnd(AMQPTestDriver driver) {
+    public static DispositionExpectation expect(AMQPTestDriver driver) {
         DispositionExpectation expecting = new DispositionExpectation(driver);
         driver.addScriptedElement(expecting);
         return expecting;

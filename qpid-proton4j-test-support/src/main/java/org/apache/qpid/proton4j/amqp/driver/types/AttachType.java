@@ -30,7 +30,7 @@ public class AttachType {
 
     //----- Static methods for easier scripting
 
-    public static AttachExpectation expectBegin(AMQPTestDriver driver) {
+    public static AttachExpectation expect(AMQPTestDriver driver) {
         AttachExpectation expecting = new AttachExpectation(driver);
         driver.addScriptedElement(expecting);
         return expecting;

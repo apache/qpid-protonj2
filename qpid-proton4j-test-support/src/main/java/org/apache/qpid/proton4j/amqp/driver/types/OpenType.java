@@ -30,7 +30,7 @@ public class OpenType {
 
     //----- Static methods for easier scripting
 
-    public static OpenExpectation expectOpen(AMQPTestDriver driver) {
+    public static OpenExpectation expect(AMQPTestDriver driver) {
         OpenExpectation expecting = new OpenExpectation(driver);
         driver.addScriptedElement(expecting);
         return expecting;

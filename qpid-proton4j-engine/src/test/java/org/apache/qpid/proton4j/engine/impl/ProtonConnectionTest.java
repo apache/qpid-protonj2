@@ -45,7 +45,7 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
         engine.outputConsumer(driver);
 
         AMQPHeaderType.expectAMQPHeader(driver).respondWithAMQPHeader();
-        OpenType.expectOpen(driver).respond().withContainerId("driver");
+        OpenType.expect(driver).respond().withContainerId("driver");
 
         final AtomicBoolean remoteOpened = new AtomicBoolean();
 
@@ -77,8 +77,8 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
         engine.outputConsumer(driver);
 
         AMQPHeaderType.expectAMQPHeader(driver).respondWithAMQPHeader();
-        OpenType.expectOpen(driver).respond().withContainerId("driver");
-        CloseType.expectClose(driver).respond();
+        OpenType.expect(driver).respond().withContainerId("driver");
+        CloseType.expect(driver).respond();
 
         final AtomicBoolean connectionOpenedSignaled = new AtomicBoolean();
         final AtomicBoolean connectionClosedSignaled = new AtomicBoolean();

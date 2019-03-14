@@ -51,11 +51,11 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
         engine.outputConsumer(driver);
 
         AMQPHeaderType.expectAMQPHeader(driver).respondWithAMQPHeader();
-        OpenType.expectOpen(driver).respond().withContainerId("driver");
-        BeginType.expectBegin(driver).respond().onChannel(1).withRemoteChannel(0).
-                                                             withOutgoingWindow(0).
-                                                             withIncomingWindow(0).
-                                                             withNextOutgoingId(1);  // TODO make default response smarter
+        OpenType.expect(driver).respond().withContainerId("driver");
+        BeginType.expect(driver).respond().onChannel(1).withRemoteChannel(0).
+                                                        withOutgoingWindow(0).
+                                                        withIncomingWindow(0).
+                                                        withNextOutgoingId(1);  // TODO make default response smarter
 
         final AtomicBoolean remoteOpened = new AtomicBoolean();
 
