@@ -409,10 +409,14 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T>, Performa
 
         if (detach.getClosed()) {
             remoteState = LinkState.CLOSED;
-            remoteCloseHandler.handle(result(self(), getRemoteCondition()));
+            if (remoteCloseHandler != null) {
+                remoteCloseHandler.handle(result(self(), getRemoteCondition()));
+            }
         } else {
             remoteState = LinkState.DETACHED;
-            remoteDetachHandler.handle(result(self(), getRemoteCondition()));
+            if (remoteDetachHandler != null) {
+                remoteDetachHandler.handle(result(self(), getRemoteCondition()));
+            }
         }
     }
 

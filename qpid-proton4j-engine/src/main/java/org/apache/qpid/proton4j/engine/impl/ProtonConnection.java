@@ -361,7 +361,9 @@ public class ProtonConnection implements Connection, AMQPHeader.HeaderHandler<Pr
         // TODO - Inform all Sessions that the remote has opened ?
         // foreach session -> open.invoke(session, payload, channel, context);
 
-        remoteOpenHandler.handle(result(this, null));
+        if (remoteOpenHandler != null) {
+            remoteOpenHandler.handle(result(this, null));
+        }
     }
 
     @Override
@@ -372,7 +374,9 @@ public class ProtonConnection implements Connection, AMQPHeader.HeaderHandler<Pr
         // TODO - Inform all Sessions that the remote has closed ?
         // foreach session -> close.invoke(session, payload, channel, context);
 
-        remoteCloseHandler.handle(result(this, close.getError()));
+        if (remoteCloseHandler != null) {
+            remoteCloseHandler.handle(result(this, close.getError()));
+        }
     }
 
     @Override
@@ -408,7 +412,7 @@ public class ProtonConnection implements Connection, AMQPHeader.HeaderHandler<Pr
 
             // If the session was initiated remotely then we signal the creation to the any registered
             // remote session event handler
-            if (session.getLocalState() == SessionState.IDLE) {
+            if (session.getLocalState() == SessionState.IDLE && remoteSessionOpenEventHandler != null) {
                 remoteSessionOpenEventHandler.handle(session);
             }
         }

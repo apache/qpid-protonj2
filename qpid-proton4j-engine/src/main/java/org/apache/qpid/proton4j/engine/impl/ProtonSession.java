@@ -349,7 +349,7 @@ public class ProtonSession implements Session, Performative.PerformativeHandler<
         remoteState = SessionState.ACTIVE;
         nextIncomingId = begin.getNextOutgoingId();
 
-        if (getLocalState() == SessionState.ACTIVE) {
+        if (getLocalState() == SessionState.ACTIVE && remoteOpenHandler != null) {
             remoteOpenHandler.handle(result(this, null));
         }
     }
@@ -361,7 +361,9 @@ public class ProtonSession implements Session, Performative.PerformativeHandler<
         setRemoteCondition(end.getError());
         remoteState = SessionState.CLOSED;
 
-        remoteCloseHandler.handle(result(this, getRemoteCondition()));
+        if (remoteCloseHandler != null) {
+            remoteCloseHandler.handle(result(this, getRemoteCondition()));
+        }
     }
 
     @Override
