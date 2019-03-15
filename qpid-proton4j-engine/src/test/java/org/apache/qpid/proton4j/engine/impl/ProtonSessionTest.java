@@ -33,6 +33,7 @@ import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
 import org.apache.qpid.proton4j.amqp.transport.Begin;
 import org.apache.qpid.proton4j.amqp.transport.Open;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import org.apache.qpid.proton4j.engine.Connection;
 import org.apache.qpid.proton4j.engine.Session;
 import org.junit.Test;
 
@@ -59,9 +60,7 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
 
         final AtomicBoolean remoteOpened = new AtomicBoolean();
 
-        engine.start(result -> {
-            connection = result.get();
-        });
+        Connection connection = engine.start();
 
         // Default engine should start and return a connection immediately
         assertNotNull(connection);
@@ -86,9 +85,7 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
         final AtomicBoolean connectionRemotelyOpened = new AtomicBoolean();
         final AtomicBoolean sessionRemotelyOpened = new AtomicBoolean();
 
-        engine.start(result -> {
-            connection = result.get();
-        });
+        ProtonConnection connection = engine.start();
 
         // Default engine should start and return a connection immediately
         assertNotNull(connection);
@@ -120,7 +117,7 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
 
         assertTrue("Connection remote opened event did not fire", connectionRemotelyOpened.get());
 
-        ProtonSession session = (ProtonSession) connection.session();
+        ProtonSession session = connection.session();
         session.openHandler(result -> {
             sessionRemotelyOpened.set(true);
         });
@@ -151,9 +148,7 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
 
         final AtomicReference<Session> remoteSession = new AtomicReference<>();
 
-        engine.start(result -> {
-            connection = result.get();
-        });
+        Connection connection = engine.start();
 
         // Default engine should start and return a connection immediately
         assertNotNull(connection);

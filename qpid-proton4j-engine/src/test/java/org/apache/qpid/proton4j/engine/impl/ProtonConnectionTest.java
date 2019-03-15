@@ -26,6 +26,7 @@ import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
 import org.apache.qpid.proton4j.amqp.driver.types.AMQPHeaderType;
 import org.apache.qpid.proton4j.amqp.driver.types.CloseType;
 import org.apache.qpid.proton4j.amqp.driver.types.OpenType;
+import org.apache.qpid.proton4j.engine.Connection;
 import org.apache.qpid.proton4j.engine.ConnectionState;
 import org.apache.qpid.proton4j.engine.exceptions.EngineStateException;
 import org.junit.Test;
@@ -49,9 +50,7 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
 
         final AtomicBoolean remoteOpened = new AtomicBoolean();
 
-        engine.start(result -> {
-            connection = result.get();
-        });
+        Connection connection = engine.start();
 
         // Default engine should start and return a connection immediately
         assertNotNull(connection);
@@ -83,9 +82,7 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
         final AtomicBoolean connectionOpenedSignaled = new AtomicBoolean();
         final AtomicBoolean connectionClosedSignaled = new AtomicBoolean();
 
-        engine.start(result -> {
-            connection = result.get();
-        });
+        Connection connection = engine.start();
 
         // Default engine should start and return a connection immediately
         assertNotNull(connection);

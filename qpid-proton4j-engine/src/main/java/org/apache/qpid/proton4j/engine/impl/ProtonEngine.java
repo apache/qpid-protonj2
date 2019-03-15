@@ -19,8 +19,6 @@ package org.apache.qpid.proton4j.engine.impl;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.common.logging.ProtonLogger;
 import org.apache.qpid.proton4j.common.logging.ProtonLoggerFactory;
-import org.apache.qpid.proton4j.engine.AsyncEvent;
-import org.apache.qpid.proton4j.engine.Connection;
 import org.apache.qpid.proton4j.engine.Engine;
 import org.apache.qpid.proton4j.engine.EngineSaslContext;
 import org.apache.qpid.proton4j.engine.EngineState;
@@ -50,13 +48,12 @@ public class ProtonEngine implements Engine {
     private EventHandler<ProtonBuffer> outputHandler;
     private EventHandler<ProtonException> errorHandler;
 
-    private ProtonFuture<Connection> connectionFuture = new ProtonFuture<>();
-
     private EventHandler<ProtonException> engineErrorHandler = (error) -> {
         LOG.warn("Engine encounted error and will shutdown: ", error);
     };
 
-    ProtonConnection getConnection() {
+    @Override
+    public ProtonConnection getConnection() {
         return connection;
     }
 
@@ -76,25 +73,21 @@ public class ProtonEngine implements Engine {
     }
 
     @Override
-    public ProtonEngine start(EventHandler<AsyncEvent<Connection>> connectionReady) {
-        if (connectionReady == null) {
-            throw new NullPointerException("Start connection ready handler cannot be null");
-        }
-
+    public ProtonConnection start() {
         state = EngineState.STARTING;
         try {
             pipeline().fireEngineStarting();
             state = EngineState.STARTED;
             writable = true;
-            connectionReady.handle(connectionFuture.onSuccess(getConnection()));
         } catch (Throwable error) {
             // TODO - Error types ?
-            connectionReady.handle(connectionFuture.onFailure(error));
             state = EngineState.FAILED;
             writable = false;
+
+            throw error;
         }
 
-        return this;
+        return connection;
     }
 
     @Override
@@ -102,6 +95,11 @@ public class ProtonEngine implements Engine {
         state = EngineState.SHUTDOWN;
         writable = false;
         return this;
+    }
+
+    @Override
+    public long tick() {
+        return tick(System.nanoTime());
     }
 
     @Override

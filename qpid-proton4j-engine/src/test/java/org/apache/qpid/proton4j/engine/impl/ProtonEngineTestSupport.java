@@ -26,7 +26,6 @@ import org.apache.qpid.proton4j.codec.Decoder;
 import org.apache.qpid.proton4j.codec.DecoderState;
 import org.apache.qpid.proton4j.codec.Encoder;
 import org.apache.qpid.proton4j.codec.EncoderState;
-import org.apache.qpid.proton4j.engine.Connection;
 import org.junit.After;
 
 /**
@@ -42,7 +41,6 @@ public abstract class ProtonEngineTestSupport {
     protected final Encoder encoder = CodecFactory.getDefaultEncoder();
     protected final EncoderState encoderState = encoder.newEncoderState();
 
-    protected Connection connection;
     protected Exception failure;
 
     @After
@@ -51,7 +49,6 @@ public abstract class ProtonEngineTestSupport {
         decoderState.reset();
         encoderState.reset();
 
-        connection = null;
         failure = null;
     }
 

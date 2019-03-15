@@ -55,6 +55,11 @@ public interface Engine extends Consumer<ProtonBuffer> {
      */
     EngineState state();
 
+    /**
+     * @return the {@link Connection} that is linked to this engine instance.
+     */
+    Connection getConnection();
+
     //----- Engine control APIs
 
     /**
@@ -63,16 +68,13 @@ public interface Engine extends Consumer<ProtonBuffer> {
      * Once started the engine will signal the provided handler that the engine is started and
      * provide a new Connection instance.
      *
-     * @param handler
-     *      A handler that will be notified when the engine has started and has a valid Connection.
-     *
-     * @return this Engine
+     * @return the Connection instance that is linked to this {@link Engine}
      */
-    Engine start(EventHandler<AsyncEvent<Connection>> handler);
+    Connection start();
 
     /**
      * Orderly shutdown of the engine, any open connection and associated sessions and
-     * session linked enpoints will be closed.
+     * session linked end points will be closed.
      *
      * TODO - Errors
      *
@@ -108,8 +110,39 @@ public interface Engine extends Consumer<ProtonBuffer> {
         }
     }
 
-    // TODO - Do we need to accept time here or can we just use a time value of our own choosing
-    //        as this isn't C so we have the same clock values available as a caller would.
+    /**
+     * Prompt the transport to perform idle-timeout/heartbeat handling, and return an absolute
+     * deadline in milliseconds that tick must again be called by/at, based on the provided
+     * current time in milliseconds, to ensure the periodic work is carried out as necessary.
+     *
+     * A returned deadline of 0 indicates there is no periodic work necessitating tick be called, e.g.
+     * because neither peer has defined an idle-timeout value.
+     *
+     * This method will use a monotonic clock to determine current time
+     *
+     * @return the absolute deadline in milliseconds to next call tick by/at, or 0 if there is none.
+     */
+    long tick();
+
+    /**
+     * Prompt the transport to perform idle-timeout/heartbeat handling, and return an absolute
+     * deadline in milliseconds that tick must again be called by/at, based on the provided
+     * current time in milliseconds, to ensure the periodic work is carried out as necessary.
+     *
+     * A returned deadline of 0 indicates there is no periodic work necessitating tick be called, e.g.
+     * because neither peer has defined an idle-timeout value.
+     *
+     * The provided milliseconds time values can be from {@link System#currentTimeMillis()} or derived
+     * from {@link System#nanoTime()}, noting that for the later in particular that the returned
+     * deadline could be a different sign than the given time, and (if non-zero) the returned
+     * deadline should have the current time originally provided subtracted from it in order to
+     * establish a relative time delay to the next deadline.
+     *
+     * @param currentTime
+     *      the current time of this tick call.
+     *
+     * @return the absolute deadline in milliseconds to next call tick by/at, or 0 if there is none.
+     */
     long tick(long currentTime);
 
     //----- Engine configuration and state

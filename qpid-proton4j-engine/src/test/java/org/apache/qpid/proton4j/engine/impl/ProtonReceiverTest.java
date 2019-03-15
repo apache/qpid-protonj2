@@ -31,12 +31,20 @@ import org.apache.qpid.proton4j.amqp.transport.Open;
 import org.apache.qpid.proton4j.amqp.transport.Role;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.engine.Receiver;
+import org.junit.Before;
 import org.junit.Test;
 
 /**
  * Test the {@link ProtonReceiver}
  */
 public class ProtonReceiverTest extends ProtonEngineTestSupport {
+
+    private ProtonConnection connection;
+
+    @Before
+    public void setUp() {
+        connection = null;
+    }
 
     @Test
     public void testEngineEmitsAttachAfterLocalReceiverOpened() throws Exception {
@@ -186,9 +194,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
     private ProtonSession setupEngineAndOpenSession(ProtonEngine engine) throws Exception {
         final AtomicBoolean remoteOpened = new AtomicBoolean();
 
-        engine.start(result -> {
-            connection = result.get();
-        });
+        connection = engine.start();
 
         // Default engine should start and return a connection immediately
         assertNotNull(connection);
@@ -220,7 +226,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
 
         assertTrue("Connection remote opened event did not fire", remoteOpened.get());
 
-        ProtonSession session = (ProtonSession) connection.session();
+        ProtonSession session = connection.session();
         session.open();
 
         // Expect the engine to emit the Begin performative

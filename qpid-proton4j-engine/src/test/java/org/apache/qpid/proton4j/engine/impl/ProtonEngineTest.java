@@ -27,6 +27,7 @@ import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
 import org.apache.qpid.proton4j.amqp.driver.types.AMQPHeaderType;
 import org.apache.qpid.proton4j.amqp.driver.types.AttachType;
 import org.apache.qpid.proton4j.amqp.driver.types.OpenType;
+import org.apache.qpid.proton4j.engine.Connection;
 import org.apache.qpid.proton4j.engine.ConnectionState;
 import org.apache.qpid.proton4j.engine.Session;
 import org.junit.Test;
@@ -44,11 +45,8 @@ public class ProtonEngineTest extends ProtonEngineTestSupport {
         // Engine cannot accept input bytes until started.
         assertFalse(engine.isWritable());
 
-        engine.start(result -> {
-            assertTrue(result.succeeded());
-            connection = result.get();
-            assertNotNull(connection);
-        });
+        Connection connection = engine.start();
+        assertNotNull(connection);
 
         // Default engine should start and return a connection immediately
         assertTrue(engine.isWritable());
@@ -65,9 +63,8 @@ public class ProtonEngineTest extends ProtonEngineTestSupport {
         AMQPTestDriver driver = new AMQPTestDriver(engine);
         engine.outputConsumer(driver);
 
-        engine.start(result -> {
-            connection = result.get();
-        });
+        Connection connection = engine.start();
+        assertNotNull(connection);
 
         // Default engine should start and return a connection immediately
         assertNotNull(connection);
@@ -95,9 +92,8 @@ public class ProtonEngineTest extends ProtonEngineTestSupport {
         AMQPTestDriver driver = new AMQPTestDriver(engine);
         engine.outputConsumer(driver);
 
-        engine.start(result -> {
-            connection = result.get();
-        });
+        Connection connection = engine.start();
+        assertNotNull(connection);
 
         // Default engine should start and return a connection immediately
         assertNotNull(connection);
