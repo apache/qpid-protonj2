@@ -69,6 +69,16 @@ public class AMQPTestDriver implements Consumer<ProtonBuffer> {
         this.frameEncoder = new FrameEncoder(this);
     }
 
+    /**
+     * Creates and returns a new script writer for use in building the expectations
+     * and actions that will comprise an AMQP test.
+     *
+     * @return a new {@link ScriptWriter} linked to this driver.
+     */
+    public ScriptWriter createScriptWriter() {
+        return new ScriptWriter(this);
+    }
+
     //----- View the test driver state
 
     public int getAdvertisedIdleTimeout() {

@@ -24,9 +24,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
-import org.apache.qpid.proton4j.amqp.driver.types.AMQPHeaderType;
-import org.apache.qpid.proton4j.amqp.driver.types.AttachType;
-import org.apache.qpid.proton4j.amqp.driver.types.OpenType;
+import org.apache.qpid.proton4j.amqp.driver.ScriptWriter;
 import org.apache.qpid.proton4j.engine.Connection;
 import org.apache.qpid.proton4j.engine.ConnectionState;
 import org.apache.qpid.proton4j.engine.Session;
@@ -63,14 +61,16 @@ public class ProtonEngineTest extends ProtonEngineTestSupport {
         AMQPTestDriver driver = new AMQPTestDriver(engine);
         engine.outputConsumer(driver);
 
+        ScriptWriter script = driver.createScriptWriter();
+
         Connection connection = engine.start();
         assertNotNull(connection);
 
         // Default engine should start and return a connection immediately
         assertNotNull(connection);
 
-        AMQPHeaderType.expectAMQPHeader(driver).respondWithAMQPHeader();
-        OpenType.expect(driver).withContainerId("test").respond().withContainerId("driver");
+        script.expectAMQPHeader().respondWithAMQPHeader();
+        script.expectOpen().respond().withContainerId("driver");
 
         connection.setContainerId("test");
         connection.open();
@@ -92,15 +92,17 @@ public class ProtonEngineTest extends ProtonEngineTestSupport {
         AMQPTestDriver driver = new AMQPTestDriver(engine);
         engine.outputConsumer(driver);
 
+        ScriptWriter script = driver.createScriptWriter();
+
         Connection connection = engine.start();
         assertNotNull(connection);
 
         // Default engine should start and return a connection immediately
         assertNotNull(connection);
 
-        AMQPHeaderType.expectAMQPHeader(driver).respondWithAMQPHeader();
-        OpenType.expect(driver).withContainerId("test").respond().withContainerId("driver");
-        AttachType.expect(driver);
+        script.expectAMQPHeader().respondWithAMQPHeader();
+        script.expectOpen().respond().withContainerId("driver");
+        script.expectAttach();  // TODO Script error back to source
 
         connection.setContainerId("test");
         connection.open();

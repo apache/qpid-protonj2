@@ -23,9 +23,7 @@ import static org.junit.Assert.assertNull;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
-import org.apache.qpid.proton4j.amqp.driver.types.AMQPHeaderType;
-import org.apache.qpid.proton4j.amqp.driver.types.CloseType;
-import org.apache.qpid.proton4j.amqp.driver.types.OpenType;
+import org.apache.qpid.proton4j.amqp.driver.ScriptWriter;
 import org.apache.qpid.proton4j.engine.Connection;
 import org.apache.qpid.proton4j.engine.ConnectionState;
 import org.apache.qpid.proton4j.engine.exceptions.EngineStateException;
@@ -45,8 +43,10 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
         AMQPTestDriver driver = new AMQPTestDriver(engine);
         engine.outputConsumer(driver);
 
-        AMQPHeaderType.expectAMQPHeader(driver).respondWithAMQPHeader();
-        OpenType.expect(driver).respond().withContainerId("driver");
+        ScriptWriter script = driver.createScriptWriter();
+
+        script.expectAMQPHeader().respondWithAMQPHeader();
+        script.expectOpen().respond().withContainerId("driver");
 
         final AtomicBoolean remoteOpened = new AtomicBoolean();
 
@@ -75,9 +75,11 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
         AMQPTestDriver driver = new AMQPTestDriver(engine);
         engine.outputConsumer(driver);
 
-        AMQPHeaderType.expectAMQPHeader(driver).respondWithAMQPHeader();
-        OpenType.expect(driver).respond().withContainerId("driver");
-        CloseType.expect(driver).respond();
+        ScriptWriter script = driver.createScriptWriter();
+
+        script.expectAMQPHeader().respondWithAMQPHeader();
+        script.expectOpen().respond().withContainerId("driver");
+        script.expectClose().respond();
 
         final AtomicBoolean connectionOpenedSignaled = new AtomicBoolean();
         final AtomicBoolean connectionClosedSignaled = new AtomicBoolean();

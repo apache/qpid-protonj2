@@ -26,9 +26,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
-import org.apache.qpid.proton4j.amqp.driver.types.AMQPHeaderType;
-import org.apache.qpid.proton4j.amqp.driver.types.BeginType;
-import org.apache.qpid.proton4j.amqp.driver.types.OpenType;
+import org.apache.qpid.proton4j.amqp.driver.ScriptWriter;
 import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
 import org.apache.qpid.proton4j.amqp.transport.Begin;
 import org.apache.qpid.proton4j.amqp.transport.Open;
@@ -51,12 +49,14 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
         AMQPTestDriver driver = new AMQPTestDriver(engine);
         engine.outputConsumer(driver);
 
-        AMQPHeaderType.expectAMQPHeader(driver).respondWithAMQPHeader();
-        OpenType.expect(driver).respond().withContainerId("driver");
-        BeginType.expect(driver).respond().onChannel(1).withRemoteChannel(0).
-                                                        withOutgoingWindow(0).
-                                                        withIncomingWindow(0).
-                                                        withNextOutgoingId(1);  // TODO make default response smarter
+        ScriptWriter script = driver.createScriptWriter();
+
+        script.expectAMQPHeader().respondWithAMQPHeader();
+        script.expectOpen().respond().withContainerId("driver");
+        script.expectBegin().respond().onChannel(1).withRemoteChannel(0).
+                                                    withOutgoingWindow(0).
+                                                    withIncomingWindow(0).
+                                                    withNextOutgoingId(1);  // TODO make default response smarter
 
         final AtomicBoolean remoteOpened = new AtomicBoolean();
 
