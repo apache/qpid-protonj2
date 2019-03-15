@@ -31,7 +31,7 @@ import org.hamcrest.Matcher;
 /**
  * Scripted expectation for the AMQP Open performative
  */
-public class OpenExpectation extends AbstractExceptation<Open> {
+public class OpenExpectation extends AbstractExpectation<Open> {
 
     /**
      * Enumeration which maps to fields in the Open Performative

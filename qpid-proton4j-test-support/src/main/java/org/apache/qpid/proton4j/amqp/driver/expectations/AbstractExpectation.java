@@ -49,9 +49,9 @@ import org.hamcrest.Matcher;
  *
  * @param <T> The type being validated
  */
-public abstract class AbstractExceptation<T> implements ScriptedExpectation {
+public abstract class AbstractExpectation<T> implements ScriptedExpectation {
 
-    private static final ProtonLogger LOG = ProtonLoggerFactory.getLogger(AbstractExceptation.class);
+    private static final ProtonLogger LOG = ProtonLoggerFactory.getLogger(AbstractExpectation.class);
 
     public static int ANY_CHANNEL = -1;
 
@@ -59,13 +59,13 @@ public abstract class AbstractExceptation<T> implements ScriptedExpectation {
     protected final Map<Enum<?>, Matcher<?>> fieldMatchers = new LinkedHashMap<>();
     protected final AMQPTestDriver driver;
 
-    public AbstractExceptation(AMQPTestDriver driver) {
+    public AbstractExpectation(AMQPTestDriver driver) {
         this.driver = driver;
     }
 
     //----- Configure base expectations
 
-    public AbstractExceptation<T> onChannel(int channel) {
+    public AbstractExpectation<T> onChannel(int channel) {
         this.expectedChannel = channel;
         return this;
     }

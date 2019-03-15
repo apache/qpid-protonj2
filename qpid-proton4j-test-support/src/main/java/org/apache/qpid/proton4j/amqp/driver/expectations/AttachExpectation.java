@@ -37,7 +37,7 @@ import org.hamcrest.Matcher;
 /**
  * Scripted expectation for the AMQP Attach performative
  */
-public class AttachExpectation extends AbstractExceptation<Attach> {
+public class AttachExpectation extends AbstractExpectation<Attach> {
 
     /**
      * Enumeration which maps to fields in the Attach Performative

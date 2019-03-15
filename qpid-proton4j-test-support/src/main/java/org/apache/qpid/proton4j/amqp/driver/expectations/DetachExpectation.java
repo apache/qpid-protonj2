@@ -27,7 +27,7 @@ import org.hamcrest.Matcher;
 /**
  * Scripted expectation for the AMQP Detach performative
  */
-public class DetachExpectation extends AbstractExceptation<Detach> {
+public class DetachExpectation extends AbstractExpectation<Detach> {
 
     /**
      * Enumeration which maps to fields in the Detach Performative

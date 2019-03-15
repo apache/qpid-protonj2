@@ -29,7 +29,7 @@ import org.hamcrest.Matcher;
 /**
  * Scripted expectation for the AMQP Flow performative
  */
-public class FlowExpectation extends AbstractExceptation<Flow> {
+public class FlowExpectation extends AbstractExpectation<Flow> {
 
     /**
      * Enumeration which maps to fields in the Flow Performative

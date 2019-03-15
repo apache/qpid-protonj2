@@ -27,7 +27,7 @@ import org.hamcrest.Matcher;
 /**
  * Scripted expectation for the AMQP End performative
  */
-public class EndExpectation extends AbstractExceptation<End> {
+public class EndExpectation extends AbstractExpectation<End> {
 
     /**
      * Enumeration which maps to fields in the End Performative

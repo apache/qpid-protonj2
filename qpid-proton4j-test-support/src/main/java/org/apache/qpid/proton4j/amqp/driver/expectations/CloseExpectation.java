@@ -27,7 +27,7 @@ import org.hamcrest.Matcher;
 /**
  * Scripted expectation for the AMQP Close performative
  */
-public class CloseExpectation extends AbstractExceptation<Close> {
+public class CloseExpectation extends AbstractExpectation<Close> {
 
     /**
      * Enumeration which maps to fields in the Close Performative

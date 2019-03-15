@@ -28,7 +28,7 @@ import org.hamcrest.Matcher;
 /**
  * Scripted expectation for the AMQP Transfer performative
  */
-public class TransferExpectation extends AbstractExceptation<Transfer> {
+public class TransferExpectation extends AbstractExpectation<Transfer> {
 
     /**
      * Enumeration which maps to fields in the Transfer Performative

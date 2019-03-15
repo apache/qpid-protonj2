@@ -28,7 +28,7 @@ import org.hamcrest.Matcher;
 /**
  * Scripted expectation for the AMQP SaslChallenge performative
  */
-public class SaslChallengeExpectation extends AbstractExceptation<SaslChallenge> {
+public class SaslChallengeExpectation extends AbstractExpectation<SaslChallenge> {
 
     /**
      * Enumeration which maps to fields in the SaslChallenge Performative

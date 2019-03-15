@@ -28,7 +28,7 @@ import org.hamcrest.Matcher;
 /**
  * Scripted expectation for the AMQP Disposition performative
  */
-public class DispositionExpectation extends AbstractExceptation<Disposition> {
+public class DispositionExpectation extends AbstractExpectation<Disposition> {
 
     /**
      * Enumeration which maps to fields in the Disposition Performative

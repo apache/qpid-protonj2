@@ -29,7 +29,7 @@ import org.hamcrest.Matcher;
 /**
  * Scripted expectation for the AMQP Begin performative
  */
-public class BeginExpectation extends AbstractExceptation<Begin> {
+public class BeginExpectation extends AbstractExpectation<Begin> {
 
     /**
      * Enumeration which maps to fields in the Begin Performative
