@@ -91,7 +91,7 @@ public abstract class AbstractExpectation<T> implements ScriptedExpectation {
         }
     }
 
-    protected final void verifyNoPayload(ProtonBuffer payload) {
+    protected final void verifyPayload(ProtonBuffer payload) {
         if (payload != null) {
             throw new AssertionError("Performative should not have been sent with a paylod: ");
         }
@@ -202,7 +202,7 @@ public abstract class AbstractExpectation<T> implements ScriptedExpectation {
 
     private void doVerification(Object performative, ProtonBuffer payload, int channel, AMQPTestDriver driver) {
         if (getExpectedTypeClass().equals(performative.getClass())) {
-            verifyNoPayload(payload);
+            verifyPayload(payload);
             verifyChannel(channel);
             verifyPerformative(getExpectedTypeClass().cast(performative));
         } else {

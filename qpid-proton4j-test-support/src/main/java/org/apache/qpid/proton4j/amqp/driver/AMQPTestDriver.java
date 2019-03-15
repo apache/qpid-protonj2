@@ -128,7 +128,7 @@ public class AMQPTestDriver implements Consumer<ProtonBuffer> {
     void handleHeader(AMQPHeader header) throws AssertionError {
         ScriptedElement scriptEntry = script.poll();
         if (scriptEntry == null) {
-            signalFailure(new AssertionError("Receibed header when not expecting any input."));
+            signalFailure(new AssertionError("Received header when not expecting any input."));
         }
 
         header.invoke(scriptEntry, this);
@@ -138,7 +138,7 @@ public class AMQPTestDriver implements Consumer<ProtonBuffer> {
     void handleSaslPerformative(SaslPerformative sasl, int channel, ProtonBuffer payload) throws AssertionError {
         ScriptedElement scriptEntry = script.poll();
         if (scriptEntry == null) {
-            signalFailure(new AssertionError("Receibed performative[" + sasl + "] when not expecting any input."));
+            signalFailure(new AssertionError("Received performative[" + sasl + "] when not expecting any input."));
         }
 
         sasl.invoke(scriptEntry, this);
@@ -148,7 +148,7 @@ public class AMQPTestDriver implements Consumer<ProtonBuffer> {
     void handlePerformative(Performative amqp, int channel, ProtonBuffer payload) throws AssertionError {
         ScriptedElement scriptEntry = script.poll();
         if (scriptEntry == null) {
-            signalFailure(new AssertionError("Receibed performative[" + amqp + "] when not expecting any input."));
+            signalFailure(new AssertionError("Received performative[" + amqp + "] when not expecting any input."));
         }
 
         amqp.invoke(scriptEntry, payload, channel, this);
@@ -298,7 +298,7 @@ public class AMQPTestDriver implements Consumer<ProtonBuffer> {
             }
 
             peekNext = script.peek();
-        } while (peekNext != null);
+        } while (peekNext != null && failureCause != null);
     }
 
     private void checkFailed() {

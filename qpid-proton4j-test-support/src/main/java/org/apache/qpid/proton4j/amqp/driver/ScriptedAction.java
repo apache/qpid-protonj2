@@ -62,7 +62,7 @@ public interface ScriptedAction extends ScriptedElement {
 
     @Override
     default void handleAMQPHeader(AMQPHeader header, AMQPTestDriver context) {
-        throw new AssertionError("AMQP Header arrived when expecting to perform some action");
+        throw new AssertionError("AMQP Header arrived when expecting to perform an action");
     }
 
     @Override
