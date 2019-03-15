@@ -50,7 +50,7 @@ public class ProtonFrameLoggingHandler implements EngineHandler {
 
     @Override
     public void handleRead(EngineHandlerContext context, HeaderFrame header) {
-        LOG.trace("<- AMQP: {}", header.getBody());
+        LOG.trace("<- {}", header.getBody());
         context.fireRead(header);
     }
 
