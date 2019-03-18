@@ -673,19 +673,21 @@ public abstract class LegacyToCodecType {
      */
     @SuppressWarnings("unchecked")
     public static ErrorCondition convertToCodecType(org.apache.qpid.proton.amqp.transport.ErrorCondition errorCondition) {
-        ErrorCondition condition = new ErrorCondition();
+        Symbol condition = null;
+        String description = null;
+        Map<Object, Object> info = null;
 
         if (errorCondition.getCondition() != null) {
-            condition.setCondition(convertToCodecType(errorCondition.getCondition()));
+            condition = convertToCodecType(errorCondition.getCondition());
         }
         if (errorCondition.getDescription() != null) {
-            condition.setDescription(errorCondition.getDescription());
+            description = errorCondition.getDescription();
         }
         if (errorCondition.getInfo() != null) {
-            condition.setInfo((Map<Object, Object>) convertToCodecType(errorCondition.getInfo()));
+            info = (Map<Object, Object>) convertToCodecType(errorCondition.getInfo());
         }
 
-        return condition;
+        return new ErrorCondition(condition, description, info);
     }
 
     /**

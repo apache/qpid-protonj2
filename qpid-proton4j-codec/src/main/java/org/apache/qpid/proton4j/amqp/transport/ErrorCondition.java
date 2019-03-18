@@ -16,7 +16,7 @@
  */
 package org.apache.qpid.proton4j.amqp.transport;
 
-import java.util.LinkedHashMap;
+import java.util.Collections;
 import java.util.Map;
 
 import org.apache.qpid.proton4j.amqp.Symbol;
@@ -27,70 +27,34 @@ public final class ErrorCondition {
     public static final UnsignedLong DESCRIPTOR_CODE = UnsignedLong.valueOf(0x000000000000001dL);
     public static final Symbol DESCRIPTOR_SYMBOL = Symbol.valueOf("amqp:error:list");
 
-    private Symbol condition;
-    private String description;
-    private Map<Object, Object> info;
-
-    public ErrorCondition() {
-    }
+    private final Symbol condition;
+    private final String description;
+    private final Map<Object, Object> info;
 
     public ErrorCondition(Symbol condition, String description) {
+        this(condition, description, null);
+    }
+
+    public ErrorCondition(Symbol condition, String description, Map<Object, Object> info) {
         this.condition = condition;
         this.description = description;
+        this.info = info != null ? Collections.unmodifiableMap(info) : null;
     }
 
     public Symbol getCondition() {
         return condition;
     }
 
-    public ErrorCondition setCondition(Symbol condition) {
-        if (condition == null) {
-            throw new NullPointerException("the condition field is mandatory");
-        }
-
-        this.condition = condition;
-
-        return this;
-    }
-
     public String getDescription() {
         return description;
-    }
-
-    public ErrorCondition setDescription(String description) {
-        this.description = description;
-        return this;
     }
 
     public Map<Object, Object> getInfo() {
         return info;
     }
 
-    public ErrorCondition setInfo(Map<Object, Object> info) {
-        this.info = info;
-        return this;
-    }
-
-    public ErrorCondition clear() {
-        condition = null;
-        description = null;
-        info = null;
-
-        return this;
-    }
-
-    public boolean isEmpty() {
-        return condition == null;
-    }
-
     public ErrorCondition copy() {
-        ErrorCondition copy = new ErrorCondition();
-
-        copy.setCondition(condition);
-        copy.setDescription(description);
-        copy.setInfo(info == null ? null : new LinkedHashMap<>(info));
-
-        return copy;
+        return new ErrorCondition(condition, description, info);
     }
 
     @Override

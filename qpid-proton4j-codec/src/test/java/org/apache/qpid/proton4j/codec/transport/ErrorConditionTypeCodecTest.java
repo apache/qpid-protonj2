@@ -39,15 +39,11 @@ public class ErrorConditionTypeCodecTest extends CodecTestSupport {
     public void testEncodeDecodeType() throws Exception {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
 
-        ErrorCondition error = new ErrorCondition();
-        error.setCondition(Symbol.valueOf("amqp-error"));
-        error.setDescription("Something bad");
-
         Map<Object, Object> infoMap = new LinkedHashMap<>();
         infoMap.put("1", true);
         infoMap.put("2", "string");
 
-        error.setInfo(infoMap);
+        ErrorCondition error = new ErrorCondition(Symbol.valueOf("amqp-error"), "Something bad", infoMap);
 
         encoder.writeObject(buffer, encoderState, error);
 
@@ -65,14 +61,14 @@ public class ErrorConditionTypeCodecTest extends CodecTestSupport {
 
     @Test
     public void testEqualityOfNewlyConstructed() {
-        ErrorCondition new1 = new ErrorCondition();
-        ErrorCondition new2 = new ErrorCondition();
+        ErrorCondition new1 = new ErrorCondition(null, null, null);
+        ErrorCondition new2 = new ErrorCondition(null, null, null);
         assertErrorConditionsEqual(new1, new2);
     }
 
     @Test
     public void testSameObject() {
-        ErrorCondition error = new ErrorCondition();
+        ErrorCondition error = new ErrorCondition(null, null, null);
         assertErrorConditionsEqual(error, error);
     }
 
@@ -80,16 +76,12 @@ public class ErrorConditionTypeCodecTest extends CodecTestSupport {
     public void testConditionEquality() {
         String symbolValue = "symbol";
 
-        ErrorCondition same1 = new ErrorCondition();
-        same1.setCondition(Symbol.getSymbol(new String(symbolValue)));
-
-        ErrorCondition same2 = new ErrorCondition();
-        same2.setCondition(Symbol.getSymbol(new String(symbolValue)));
+        ErrorCondition same1 = new ErrorCondition(Symbol.valueOf(symbolValue), null);
+        ErrorCondition same2 = new ErrorCondition(Symbol.valueOf(symbolValue), null);
 
         assertErrorConditionsEqual(same1, same2);
 
-        ErrorCondition different = new ErrorCondition();
-        different.setCondition(Symbol.getSymbol("other"));
+        ErrorCondition different = new ErrorCondition(Symbol.getSymbol("other"), null);
 
         assertErrorConditionsNotEqual(same1, different);
     }
@@ -99,19 +91,12 @@ public class ErrorConditionTypeCodecTest extends CodecTestSupport {
         String symbolValue = "symbol";
         String descriptionValue = "description";
 
-        ErrorCondition same1 = new ErrorCondition();
-        same1.setCondition(Symbol.getSymbol(new String(symbolValue)));
-        same1.setDescription(new String(descriptionValue));
-
-        ErrorCondition same2 = new ErrorCondition();
-        same2.setCondition(Symbol.getSymbol(new String(symbolValue)));
-        same2.setDescription(new String(descriptionValue));
+        ErrorCondition same1 = new ErrorCondition(Symbol.getSymbol(new String(symbolValue)), new String(descriptionValue));
+        ErrorCondition same2 = new ErrorCondition(Symbol.getSymbol(new String(symbolValue)), new String(descriptionValue));
 
         assertErrorConditionsEqual(same1, same2);
 
-        ErrorCondition different = new ErrorCondition();
-        different.setCondition(Symbol.getSymbol(symbolValue));
-        different.setDescription("other");
+        ErrorCondition different = new ErrorCondition(Symbol.getSymbol(symbolValue), "other");
 
         assertErrorConditionsNotEqual(same1, different);
     }
@@ -121,22 +106,15 @@ public class ErrorConditionTypeCodecTest extends CodecTestSupport {
         String symbolValue = "symbol";
         String descriptionValue = "description";
 
-        ErrorCondition same1 = new ErrorCondition();
-        same1.setCondition(Symbol.getSymbol(new String(symbolValue)));
-        same1.setDescription(new String(descriptionValue));
-        same1.setInfo(Collections.singletonMap(Symbol.getSymbol("key"), "value"));
-
-        ErrorCondition same2 = new ErrorCondition();
-        same2.setCondition(Symbol.getSymbol(new String(symbolValue)));
-        same2.setDescription(new String(descriptionValue));
-        same2.setInfo(Collections.singletonMap(Symbol.getSymbol("key"), "value"));
+        ErrorCondition same1 = new ErrorCondition(
+            Symbol.getSymbol(new String(symbolValue)), new String(descriptionValue), Collections.singletonMap(Symbol.getSymbol("key"), "value"));
+        ErrorCondition same2 = new ErrorCondition(
+            Symbol.getSymbol(new String(symbolValue)), new String(descriptionValue), Collections.singletonMap(Symbol.getSymbol("key"), "value"));
 
         assertErrorConditionsEqual(same1, same2);
 
-        ErrorCondition different = new ErrorCondition();
-        different.setCondition(Symbol.getSymbol(symbolValue));
-        different.setDescription(new String(descriptionValue));
-        different.setInfo(Collections.singletonMap(Symbol.getSymbol("other"), "value"));
+        ErrorCondition different = new ErrorCondition(
+            Symbol.getSymbol(symbolValue), new String(descriptionValue), Collections.singletonMap(Symbol.getSymbol("other"), "value"));
 
         assertErrorConditionsNotEqual(same1, different);
     }

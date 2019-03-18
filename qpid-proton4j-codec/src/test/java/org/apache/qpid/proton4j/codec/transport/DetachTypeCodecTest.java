@@ -52,8 +52,7 @@ public class DetachTypeCodecTest extends CodecTestSupport {
     @Test
     public void testEncodeDecodeTypeWithError() throws Exception {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-        ErrorCondition error = new ErrorCondition();
-        error.setCondition(Symbol.valueOf("amqp-error"));
+        ErrorCondition error = new ErrorCondition(Symbol.valueOf("amqp-error"), null);
 
         Detach input = new Detach();
         input.setHandle(1);

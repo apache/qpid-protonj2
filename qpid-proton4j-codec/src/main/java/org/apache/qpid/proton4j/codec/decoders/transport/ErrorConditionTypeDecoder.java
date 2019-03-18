@@ -17,6 +17,7 @@
 package org.apache.qpid.proton4j.codec.decoders.transport;
 
 import java.io.IOException;
+import java.util.Map;
 
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
@@ -89,8 +90,6 @@ public class ErrorConditionTypeDecoder extends AbstractDescribedTypeDecoder<Erro
     }
 
     private ErrorCondition readErrorCondition(ProtonBuffer buffer, DecoderState state, ListTypeDecoder listDecoder) throws IOException {
-        ErrorCondition errorCondition = new ErrorCondition();
-
         @SuppressWarnings("unused")
         int size = listDecoder.readSize(buffer);
         int count = listDecoder.readCount(buffer);
@@ -103,22 +102,26 @@ public class ErrorConditionTypeDecoder extends AbstractDescribedTypeDecoder<Erro
             throw new IllegalStateException("To many entries in ErrorCondition list encoding: " + count);
         }
 
+        Symbol condition = null;
+        String description = null;
+        Map<Object, Object> info = null;
+
         for (int index = 0; index < count; ++index) {
             switch (index) {
                 case 0:
-                    errorCondition.setCondition(state.getDecoder().readSymbol(buffer, state));
+                    condition = state.getDecoder().readSymbol(buffer, state);
                     break;
                 case 1:
-                    errorCondition.setDescription(state.getDecoder().readString(buffer, state));
+                    description = state.getDecoder().readString(buffer, state);
                     break;
                 case 2:
-                    errorCondition.setInfo(state.getDecoder().readMap(buffer, state));
+                    info = state.getDecoder().readMap(buffer, state);
                     break;
                 default:
                     throw new IllegalStateException("To many entries in ErrorCondition encoding");
             }
         }
 
-        return errorCondition;
+        return new ErrorCondition(condition, description, info);
     }
 }

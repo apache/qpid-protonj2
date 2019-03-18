@@ -79,8 +79,8 @@ public class ProtonSession implements Session, Performative.PerformativeHandler<
     private SessionState localState = SessionState.IDLE;
     private SessionState remoteState = SessionState.IDLE;
 
-    private ErrorCondition localError = new ErrorCondition();
-    private ErrorCondition remoteError = new ErrorCondition();
+    private ErrorCondition localError;
+    private ErrorCondition remoteError;
 
     private EventHandler<AsyncEvent<Session>> remoteOpenHandler = (result) -> {
         LOG.trace("Remote session open arrived at default handler.");
@@ -132,17 +132,12 @@ public class ProtonSession implements Session, Performative.PerformativeHandler<
 
     @Override
     public ErrorCondition getLocalCondition() {
-        return localError.isEmpty() ? null : localError;
+        return localError;
     }
 
     @Override
     public ProtonSession setLocalCondition(ErrorCondition condition) {
-        if (condition != null) {
-            localError = condition.copy();
-        } else {
-            localError.clear();
-        }
-
+        localError = condition == null ? null : condition.copy();
         return this;
     }
 
@@ -157,11 +152,7 @@ public class ProtonSession implements Session, Performative.PerformativeHandler<
     }
 
     private void setRemoteCondition(ErrorCondition condition) {
-        if (condition != null) {
-            localError = condition.copy();
-        } else {
-            localError.clear();
-        }
+        remoteError = condition == null ? null : condition.copy();
     }
 
     @Override

@@ -73,8 +73,8 @@ public class ProtonConnection implements Connection, AMQPHeader.HeaderHandler<Pr
     private ConnectionState localState = ConnectionState.IDLE;
     private ConnectionState remoteState = ConnectionState.IDLE;
 
-    private ErrorCondition localError = new ErrorCondition();
-    private ErrorCondition remoteError = new ErrorCondition();
+    private ErrorCondition localError;
+    private ErrorCondition remoteError;
 
     private boolean headerSent;
     private boolean localOpenSent;
@@ -125,17 +125,12 @@ public class ProtonConnection implements Connection, AMQPHeader.HeaderHandler<Pr
 
     @Override
     public ErrorCondition getLocalCondition() {
-        return localError.isEmpty() ? null : localError;
+        return localError;
     }
 
     @Override
     public ProtonConnection setLocalCondition(ErrorCondition condition) {
-        if (condition != null) {
-            localError = condition.copy();
-        } else {
-            localError.clear();
-        }
-
+        localError = condition == null ? null : condition.copy();
         return this;
     }
 
@@ -321,11 +316,7 @@ public class ProtonConnection implements Connection, AMQPHeader.HeaderHandler<Pr
     }
 
     private void setRemoteCondition(ErrorCondition condition) {
-        if (condition != null) {
-            remoteError = condition.copy();
-        } else {
-            remoteError.clear();
-        }
+        remoteError = condition == null ? null : condition.copy();
     }
 
     @Override

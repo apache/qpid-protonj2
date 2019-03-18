@@ -46,8 +46,7 @@ public class CloseTypeCodecTest extends CodecTestSupport {
     @Test
     public void testEncodeDecodeTypeWithError() throws Exception {
        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-       ErrorCondition error = new ErrorCondition();
-       error.setCondition(Symbol.valueOf("amqp-error"));
+       ErrorCondition error = new ErrorCondition(Symbol.valueOf("amqp-error"), null);
 
        Close input = new Close();
 
@@ -66,8 +65,7 @@ public class CloseTypeCodecTest extends CodecTestSupport {
     public void testEncodeUsingNewCodecAndDecodeWithLegacyCodec() throws Exception {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
 
-        ErrorCondition error = new ErrorCondition();
-        error.setCondition(Symbol.valueOf("amqp-error"));
+        ErrorCondition error = new ErrorCondition(Symbol.valueOf("amqp-error"), "error message");
 
         Close input = new Close();
 
@@ -98,8 +96,7 @@ public class CloseTypeCodecTest extends CodecTestSupport {
 
     @Test
     public void testEncodeUsingLegacyCodecAndDecodeWithNewCodec() throws Exception {
-        ErrorCondition error = new ErrorCondition();
-        error.setCondition(Symbol.valueOf("amqp-error"));
+        ErrorCondition error = new ErrorCondition(Symbol.valueOf("amqp-error"), "error message");
 
         Close input = new Close();
 
