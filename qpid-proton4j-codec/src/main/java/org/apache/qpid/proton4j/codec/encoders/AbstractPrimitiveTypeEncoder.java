@@ -23,6 +23,8 @@ import org.apache.qpid.proton4j.codec.EncodingCodes;
 /**
  * Abstract implementation of the PrimitiveTypeEncoder that implements the common methods
  * that most of the primitive type
+ *
+ * @param <V> The type that this primitive encoder handles
  */
 public abstract class AbstractPrimitiveTypeEncoder<V> implements PrimitiveTypeEncoder<V> {
 

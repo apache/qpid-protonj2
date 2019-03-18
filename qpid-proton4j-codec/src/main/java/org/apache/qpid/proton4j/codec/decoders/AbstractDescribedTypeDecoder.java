@@ -19,6 +19,8 @@ package org.apache.qpid.proton4j.codec.decoders;
 /**
  * Abstract base for all Described Type decoders which implements the generic methods
  * common to all the implementations.
+ *
+ * @param <V> The type that this decoder handles.
  */
 public abstract class AbstractDescribedTypeDecoder<V> implements DescribedTypeDecoder<V> {
 

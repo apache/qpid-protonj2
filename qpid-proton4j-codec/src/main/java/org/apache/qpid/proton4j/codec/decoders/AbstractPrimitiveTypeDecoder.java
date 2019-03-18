@@ -25,6 +25,8 @@ import org.apache.qpid.proton4j.codec.DecoderState;
 /**
  * Abstract base for all Described Type decoders which implements the generic methods
  * common to all the implementations.
+ *
+ * @param <V> The type that this primitive decoder handles.
  */
 public abstract class AbstractPrimitiveTypeDecoder<V> implements PrimitiveTypeDecoder<V> {
 

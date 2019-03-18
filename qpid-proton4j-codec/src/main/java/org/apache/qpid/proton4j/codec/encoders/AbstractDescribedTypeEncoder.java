@@ -18,6 +18,8 @@ package org.apache.qpid.proton4j.codec.encoders;
 
 /**
  * Abstract DescribedType encoder implementation
+ *
+ * @param <V> The type that this encoder handles
  */
 public abstract class AbstractDescribedTypeEncoder<V> implements DescribedTypeEncoder<V> {
 

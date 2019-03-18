@@ -33,7 +33,7 @@ public interface TypeDecoder<V> {
     Class<V> getTypeClass();
 
     /**
-     * @returns true if the underlying type that is going to be decoded is an array type
+     * @return true if the underlying type that is going to be decoded is an array type
      */
     boolean isArrayType();
 
@@ -78,7 +78,8 @@ public interface TypeDecoder<V> {
      *      the source of encoded data.
      * @param state
      *      the current state of the decoder.
-     * @param
+     * @param count
+     *      the number of array elements encoded in the buffer.
      *
      * @return the next instance in the stream that this decoder handles.
      *

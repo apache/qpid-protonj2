@@ -74,6 +74,10 @@ public abstract class AbstractDescribedMapTypeEncoder<K, V, M> extends AbstractD
      * takes care of writing the Map preamble and tracking the final size of
      * the written elements of the Map.
      *
+     * @param buffer
+     *      the buffer where the type should be encoded to.
+     * @param state
+     *      the current encoder state.
      * @param value
      * 		the value which will be encoded as a map type.
      */
