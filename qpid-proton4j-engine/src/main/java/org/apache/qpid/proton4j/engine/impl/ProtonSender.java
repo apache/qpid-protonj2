@@ -22,7 +22,7 @@ import org.apache.qpid.proton4j.amqp.transport.Role;
 import org.apache.qpid.proton4j.amqp.transport.Transfer;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.engine.EventHandler;
-import org.apache.qpid.proton4j.engine.IncomingDelivery;
+import org.apache.qpid.proton4j.engine.OutgoingDelivery;
 import org.apache.qpid.proton4j.engine.Receiver;
 import org.apache.qpid.proton4j.engine.Sender;
 import org.apache.qpid.proton4j.engine.Session;
@@ -77,7 +77,7 @@ public class ProtonSender extends ProtonLink<Sender> implements Sender {
     //----- Sender event handlers
 
     @Override
-    public Receiver deliveryUpdatedEventHandler(EventHandler<IncomingDelivery> handler) {
+    public Receiver deliveryUpdatedEventHandler(EventHandler<OutgoingDelivery> handler) {
         // TODO Auto-generated method stub
         return null;
     }

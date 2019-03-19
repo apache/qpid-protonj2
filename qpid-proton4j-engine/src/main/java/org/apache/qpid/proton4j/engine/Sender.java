@@ -32,6 +32,6 @@ public interface Sender extends Link<Sender> {
      *
      * @return this receiver
      */
-    Receiver deliveryUpdatedEventHandler(EventHandler<IncomingDelivery> handler);
+    Receiver deliveryUpdatedEventHandler(EventHandler<OutgoingDelivery> handler);
 
 }
