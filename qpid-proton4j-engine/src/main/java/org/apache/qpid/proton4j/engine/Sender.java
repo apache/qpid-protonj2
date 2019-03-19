@@ -21,4 +21,17 @@ package org.apache.qpid.proton4j.engine;
  */
 public interface Sender extends Link<Sender> {
 
+    /**
+     * Handler for updates for deliveries that have previously been sent.
+     *
+     * Updates can happen when the remote settles or otherwise modifies the delivery and the
+     * user needs to act on those changes.
+     *
+     * @param handler
+     *      The handler that will be invoked when a new update delivery arrives on this link.
+     *
+     * @return this receiver
+     */
+    Receiver deliveryUpdatedEventHandler(EventHandler<IncomingDelivery> handler);
+
 }

@@ -21,6 +21,8 @@ import org.apache.qpid.proton4j.amqp.transport.Flow;
 import org.apache.qpid.proton4j.amqp.transport.Role;
 import org.apache.qpid.proton4j.amqp.transport.Transfer;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import org.apache.qpid.proton4j.engine.EventHandler;
+import org.apache.qpid.proton4j.engine.IncomingDelivery;
 import org.apache.qpid.proton4j.engine.Receiver;
 import org.apache.qpid.proton4j.engine.Session;
 
@@ -66,5 +68,19 @@ public class ProtonReceiver extends ProtonLink<Receiver> implements Receiver {
     @Override
     public void handleDisposition(Disposition disposition, ProtonBuffer payload, int channel, ProtonEngine context) {
 
+    }
+
+    //----- Receiver event handlers
+
+    @Override
+    public Receiver deliveryReceivedEventHandler(EventHandler<IncomingDelivery> handler) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public Receiver deliveryUpdatedEventHandler(EventHandler<IncomingDelivery> handler) {
+        // TODO Auto-generated method stub
+        return null;
     }
 }
