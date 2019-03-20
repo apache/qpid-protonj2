@@ -31,8 +31,10 @@ import org.apache.qpid.proton4j.buffer.ProtonBuffer;
  */
 public class BeginInjectAction implements ScriptedAction {
 
+    public static final int CHANNEL_UNSET = -1;
+
     private final Begin begin;
-    private int channel;
+    private int channel = CHANNEL_UNSET;
 
     public BeginInjectAction(Begin begin, int channel) {
         this.begin = begin;
@@ -42,6 +44,14 @@ public class BeginInjectAction implements ScriptedAction {
     public BeginInjectAction onChannel(int channel) {
         this.channel = channel;
         return this;
+    }
+
+    public int onChannel() {
+        return this.channel;
+    }
+
+    public Begin getBegin() {
+        return begin;
     }
 
     public BeginInjectAction withRemoteChannel(int remoteChannel) {

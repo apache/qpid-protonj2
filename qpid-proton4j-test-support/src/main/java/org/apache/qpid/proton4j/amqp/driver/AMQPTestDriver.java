@@ -41,9 +41,6 @@ public class AMQPTestDriver implements Consumer<ProtonBuffer> {
 
     private AssertionError failureCause;
 
-    private int lastInitiatedChannel = -1;
-    private long lastInitiatedLinkHandle = -1;
-    private long lastInitiatedCoordinatorLinkHandle = -1;
     private int advertisedIdleTimeout = 0;
     private volatile int emptyFrameCount;
 

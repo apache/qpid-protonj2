@@ -24,6 +24,7 @@ import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
 import org.apache.qpid.proton4j.amqp.driver.actions.BeginInjectAction;
 import org.apache.qpid.proton4j.amqp.transport.Begin;
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.hamcrest.Matcher;
 
 /**
@@ -45,6 +46,8 @@ public class BeginExpectation extends AbstractExpectation<Begin> {
         PROPERTIES,
     }
 
+    private BeginInjectAction response;
+
     public BeginExpectation(AMQPTestDriver driver) {
         super(driver);
     }
@@ -55,9 +58,33 @@ public class BeginExpectation extends AbstractExpectation<Begin> {
         defaultResponse.setIncomingWindow(0);
         defaultResponse.setOutgoingWindow(0);
 
-        BeginInjectAction response = new BeginInjectAction(defaultResponse, 0);
+        response = new BeginInjectAction(defaultResponse, 0);
         driver.addScriptedElement(response);
         return response;
+    }
+
+    @Override
+    public void handleBegin(Begin begin, ProtonBuffer payload, int channel, AMQPTestDriver context) {
+        super.handleBegin(begin, payload, channel, context);
+
+        if (response == null) {
+            return;
+        }
+
+        // Input was validated now populate response with auto values where not configured
+        // to say otherwise by the test.
+        if (response.onChannel() == BeginInjectAction.CHANNEL_UNSET) {
+            // TODO - We could track session in the driver and therefore allocate
+            //        free channels based on activity during the test.  For now we
+            //        are simply mirroring the channels back.
+            response.onChannel(begin.getRemoteChannel());
+        }
+
+        // Populate the remote channel with that of the incoming begin unless scripted to send
+        // otherwise which can indicate error handling test.
+        if (!response.getBegin().hasRemoteChannel()) {
+            response.getBegin().setRemoteChannel(response.onChannel());
+        }
     }
 
     //----- Type specific with methods that perform simple equals checks
