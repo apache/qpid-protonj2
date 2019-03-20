@@ -50,7 +50,12 @@ public class BeginExpectation extends AbstractExpectation<Begin> {
     }
 
     public BeginInjectAction respond() {
-        BeginInjectAction response = new BeginInjectAction(new Begin(), 0);
+        Begin defaultResponse = new Begin();
+        defaultResponse.setNextOutgoingId(1);
+        defaultResponse.setIncomingWindow(0);
+        defaultResponse.setOutgoingWindow(0);
+
+        BeginInjectAction response = new BeginInjectAction(defaultResponse, 0);
         driver.addScriptedElement(response);
         return response;
     }

@@ -308,7 +308,7 @@ public class AMQPTestDriver implements Consumer<ProtonBuffer> {
             }
 
             peekNext = script.peek();
-        } while (peekNext != null && failureCause != null);
+        } while (peekNext != null && failureCause == null);
     }
 
     private void checkFailed() {
