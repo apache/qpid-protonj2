@@ -17,31 +17,25 @@
 package org.apache.qpid.proton4j.amqp.driver.actions;
 
 import java.util.Map;
-import java.util.function.Consumer;
 
 import org.apache.qpid.proton4j.amqp.Symbol;
-import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
-import org.apache.qpid.proton4j.amqp.driver.ScriptedAction;
 import org.apache.qpid.proton4j.amqp.transport.Flow;
-import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 
 /**
  * AMQP Flow injection action which can be added to a driver for write at a specific time or
  * following on from some other action in the test script.
  */
-public class FlowInjectAction implements ScriptedAction {
+public class FlowInjectAction extends AbstractPerformativeInjectAction<Flow> {
 
     private final Flow flow;
-    private int channel;
 
-    public FlowInjectAction(Flow flow, int channel) {
+    public FlowInjectAction(Flow flow) {
         this.flow = flow;
-        this.channel = channel;
     }
 
-    public FlowInjectAction onChannel(int channel) {
-        this.channel = channel;
-        return this;
+    @Override
+    public Flow getPerformative() {
+        return flow;
     }
 
     public FlowInjectAction withNextIncomingId(long nextIncomingId) {
@@ -97,10 +91,5 @@ public class FlowInjectAction implements ScriptedAction {
     public FlowInjectAction withProperties(Map<Symbol, Object> properties) {
         flow.setProperties(properties);
         return this;
-    }
-
-    @Override
-    public void perform(AMQPTestDriver driver, Consumer<ProtonBuffer> consumer) {
-        driver.sendAMQPFrame(channel, flow, null);
     }
 }

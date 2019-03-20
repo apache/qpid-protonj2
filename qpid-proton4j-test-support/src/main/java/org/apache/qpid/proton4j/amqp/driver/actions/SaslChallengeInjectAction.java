@@ -16,31 +16,19 @@
  */
 package org.apache.qpid.proton4j.amqp.driver.actions;
 
-import java.util.function.Consumer;
-
 import org.apache.qpid.proton4j.amqp.Binary;
-import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
-import org.apache.qpid.proton4j.amqp.driver.ScriptedAction;
 import org.apache.qpid.proton4j.amqp.security.SaslChallenge;
-import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 
 /**
  * AMQP SaslChallenge injection action which can be added to a driver for write at a specific time or
  * following on from some other action in the test script.
  */
-public class SaslChallengeInjectAction implements ScriptedAction {
+public class SaslChallengeInjectAction extends AbstractSaslPerformativeInjectAction<SaslChallenge> {
 
     private final SaslChallenge saslChallenge;
-    private int channel;
 
-    public SaslChallengeInjectAction(SaslChallenge challenge, int channel) {
+    public SaslChallengeInjectAction(SaslChallenge challenge) {
         this.saslChallenge = challenge;
-        this.channel = channel;
-    }
-
-    public SaslChallengeInjectAction onChannel(int channel) {
-        this.channel = channel;
-        return this;
     }
 
     public SaslChallengeInjectAction withChallenge(Binary challenge) {
@@ -49,7 +37,7 @@ public class SaslChallengeInjectAction implements ScriptedAction {
     }
 
     @Override
-    public void perform(AMQPTestDriver driver, Consumer<ProtonBuffer> consumer) {
-        driver.sendSaslFrame(channel, saslChallenge);
+    public SaslChallenge getPerformative() {
+        return saslChallenge;
     }
 }

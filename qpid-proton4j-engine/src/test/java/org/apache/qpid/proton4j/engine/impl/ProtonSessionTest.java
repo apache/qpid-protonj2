@@ -125,9 +125,9 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
         script.expectAMQPHeader().respondWithAMQPHeader();
         script.expectOpen().respond().withContainerId("driver");
         // TODO - better name for inject or chain on open response and use proper defaults
-        script.injectLater(new Begin()).onChannel(1).withNextOutgoingId(1)
-                                                    .withIncomingWindow(0)
-                                                    .withOutgoingWindow(0);
+        script.injectLater(new Begin()).withNextOutgoingId(1)
+                                       .withIncomingWindow(0)
+                                       .withOutgoingWindow(0).onChannel(1);
 
         final AtomicBoolean connectionRemotelyOpened = new AtomicBoolean();
         final AtomicBoolean sessionRemotelyOpened = new AtomicBoolean();

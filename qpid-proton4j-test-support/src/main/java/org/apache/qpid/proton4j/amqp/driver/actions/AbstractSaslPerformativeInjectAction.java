@@ -16,28 +16,34 @@
  */
 package org.apache.qpid.proton4j.amqp.driver.actions;
 
-import org.apache.qpid.proton4j.amqp.Binary;
-import org.apache.qpid.proton4j.amqp.security.SaslResponse;
+import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
+import org.apache.qpid.proton4j.amqp.driver.ScriptedAction;
+import org.apache.qpid.proton4j.amqp.security.SaslPerformative;
 
 /**
- * AMQP SaslResponse injection action which can be added to a driver for write at a specific time or
- * following on from some other action in the test script.
+ * Abstract base used by inject actions of SASL Performatives
+ *
+ * @param <P> the SASL performative being sent.
  */
-public class SaslResponseInjectAction extends AbstractSaslPerformativeInjectAction<SaslResponse> {
+public abstract class AbstractSaslPerformativeInjectAction<P extends SaslPerformative> implements ScriptedAction {
 
-    private final SaslResponse saslResponse;
+    public static final int CHANNEL_UNSET = -1;
 
-    public SaslResponseInjectAction(SaslResponse saslResponse) {
-        this.saslResponse = saslResponse;
+    private int channel = CHANNEL_UNSET;
+
+    public int onChannel() {
+        return this.channel;
     }
 
-    public SaslResponseInjectAction withResponse(Binary response) {
-        saslResponse.setResponse(response);
+    public AbstractSaslPerformativeInjectAction<?> onChannel(int channel) {
+        this.channel = channel;
         return this;
     }
 
+    public abstract P getPerformative();
+
     @Override
-    public SaslResponse getPerformative() {
-        return saslResponse;
+    public void perform(AMQPTestDriver driver) {
+        driver.sendSaslFrame(onChannel(), getPerformative());
     }
 }

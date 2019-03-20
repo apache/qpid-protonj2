@@ -24,8 +24,10 @@ import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedInteger;
 import org.apache.qpid.proton4j.amqp.UnsignedShort;
 import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
+import org.apache.qpid.proton4j.amqp.driver.actions.BeginInjectAction;
 import org.apache.qpid.proton4j.amqp.driver.actions.OpenInjectAction;
 import org.apache.qpid.proton4j.amqp.transport.Open;
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.hamcrest.Matcher;
 
 /**
@@ -49,6 +51,8 @@ public class OpenExpectation extends AbstractExpectation<Open> {
         PROPERTIES,
     }
 
+    private OpenInjectAction response;
+
     public OpenExpectation(AMQPTestDriver driver) {
         super(driver);
 
@@ -56,9 +60,29 @@ public class OpenExpectation extends AbstractExpectation<Open> {
     }
 
     public OpenInjectAction respond() {
-        OpenInjectAction response = new OpenInjectAction(new Open(), 0);
+        response = new OpenInjectAction(new Open());
         driver.addScriptedElement(response);
         return response;
+    }
+
+    //----- Handle the performative and configure response is told to respond
+
+    @Override
+    public void handleOpen(Open open, ProtonBuffer payload, int channel, AMQPTestDriver context) {
+        super.handleOpen(open, payload, channel, context);
+
+        if (response == null) {
+            return;
+        }
+
+        // Input was validated now populate response with auto values where not configured
+        // to say otherwise by the test.
+        if (response.onChannel() == BeginInjectAction.CHANNEL_UNSET) {
+            // TODO - We could track session in the driver and therefore allocate
+            //        free channels based on activity during the test.  For now we
+            //        are simply mirroring the channels back.
+            response.onChannel(channel);
+        }
     }
 
     //----- Type specific with methods that perform simple equals checks

@@ -42,7 +42,7 @@ public class SaslChallengeExpectation extends AbstractExpectation<SaslChallenge>
     }
 
     public SaslResponseInjectAction respond() {
-        SaslResponseInjectAction response = new SaslResponseInjectAction(new SaslResponse(), 0);
+        SaslResponseInjectAction response = new SaslResponseInjectAction(new SaslResponse());
         driver.addScriptedElement(response);
         return response;
     }

@@ -19,7 +19,6 @@ package org.apache.qpid.proton4j.amqp.driver.expectations;
 import static org.hamcrest.CoreMatchers.equalTo;
 
 import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
-import org.apache.qpid.proton4j.amqp.driver.actions.DispositionInjectAction;
 import org.apache.qpid.proton4j.amqp.transport.DeliveryState;
 import org.apache.qpid.proton4j.amqp.transport.Disposition;
 import org.apache.qpid.proton4j.amqp.transport.Role;
@@ -44,12 +43,6 @@ public class DispositionExpectation extends AbstractExpectation<Disposition> {
 
     public DispositionExpectation(AMQPTestDriver driver) {
         super(driver);
-    }
-
-    public DispositionInjectAction respond() {
-        DispositionInjectAction response = new DispositionInjectAction(new Disposition(), 0);
-        driver.addScriptedElement(response);
-        return response;
     }
 
     //----- Type specific with methods that perform simple equals checks

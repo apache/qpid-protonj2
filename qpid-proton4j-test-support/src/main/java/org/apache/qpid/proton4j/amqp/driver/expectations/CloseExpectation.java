@@ -19,9 +19,11 @@ package org.apache.qpid.proton4j.amqp.driver.expectations;
 import static org.hamcrest.CoreMatchers.equalTo;
 
 import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
+import org.apache.qpid.proton4j.amqp.driver.actions.BeginInjectAction;
 import org.apache.qpid.proton4j.amqp.driver.actions.CloseInjectAction;
 import org.apache.qpid.proton4j.amqp.transport.Close;
 import org.apache.qpid.proton4j.amqp.transport.ErrorCondition;
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.hamcrest.Matcher;
 
 /**
@@ -36,14 +38,33 @@ public class CloseExpectation extends AbstractExpectation<Close> {
         ERROR
     }
 
+    private CloseInjectAction response;
+
     public CloseExpectation(AMQPTestDriver driver) {
         super(driver);
     }
 
     public CloseInjectAction respond() {
-        CloseInjectAction response = new CloseInjectAction(new Close(), 0);
+        response = new CloseInjectAction(new Close());
         driver.addScriptedElement(response);
         return response;
+    }
+
+    //----- Handle the performative and configure response is told to respond
+
+    @Override
+    public void handleClose(Close close, ProtonBuffer payload, int channel, AMQPTestDriver context) {
+        super.handleClose(close, payload, channel, context);
+
+        if (response == null) {
+            return;
+        }
+
+        // Input was validated now populate response with auto values where not configured
+        // to say otherwise by the test.
+        if (response.onChannel() == BeginInjectAction.CHANNEL_UNSET) {
+            response.onChannel(channel);
+        }
     }
 
     //----- Type specific with methods that perform simple equals checks

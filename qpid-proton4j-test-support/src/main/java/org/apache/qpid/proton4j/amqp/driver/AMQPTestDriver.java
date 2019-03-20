@@ -202,9 +202,9 @@ public class AMQPTestDriver implements Consumer<ProtonBuffer> {
 
     public void performImmediately(ScriptedAction action) {
         checkFailed();
-        action.perform(this, frameConsumer);
+        action.perform(this);
         while (action.performAfterwards() != null && failureCause == null) {
-            action.performAfterwards().perform(this, frameConsumer);
+            action.performAfterwards().perform(this);
         }
     }
 
@@ -292,14 +292,14 @@ public class AMQPTestDriver implements Consumer<ProtonBuffer> {
 
     private void prcessScript(ScriptedElement current) {
         while (current.performAfterwards() != null && failureCause == null) {
-            current.performAfterwards().perform(this, frameConsumer);
+            current.performAfterwards().perform(this);
         }
 
         ScriptedElement peekNext = script.peek();
         do {
             if (peekNext instanceof ScriptedAction) {
                 script.poll();
-                ((ScriptedAction) peekNext).perform(this, frameConsumer);
+                ((ScriptedAction) peekNext).perform(this);
             } else {
                 return;
             }

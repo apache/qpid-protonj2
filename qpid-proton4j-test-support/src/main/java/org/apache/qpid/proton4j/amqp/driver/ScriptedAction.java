@@ -51,10 +51,8 @@ public interface ScriptedAction extends ScriptedElement {
      *
      * @param driver
      *      The test driver that is managing the test
-     * @param consumer
-     *      The {@link Consumer} that will process the action.
      */
-    void perform(AMQPTestDriver driver, Consumer<ProtonBuffer> consumer);
+    void perform(AMQPTestDriver driver);
 
     // By default the Action type is not expecting to be triggered by an incoming
     // AMQP frame so in all these cases we fail because the script was wrong or the

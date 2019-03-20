@@ -16,32 +16,25 @@
  */
 package org.apache.qpid.proton4j.amqp.driver.actions;
 
-import java.util.function.Consumer;
-
-import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
-import org.apache.qpid.proton4j.amqp.driver.ScriptedAction;
 import org.apache.qpid.proton4j.amqp.transport.DeliveryState;
 import org.apache.qpid.proton4j.amqp.transport.Disposition;
 import org.apache.qpid.proton4j.amqp.transport.Role;
-import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 
 /**
  * AMQP Disposition injection action which can be added to a driver for write at a specific time or
  * following on from some other action in the test script.
  */
-public class DispositionInjectAction implements ScriptedAction {
+public class DispositionInjectAction extends AbstractPerformativeInjectAction<Disposition> {
 
     private final Disposition disposition;
-    private int channel;
 
-    public DispositionInjectAction(Disposition disposition, int channel) {
+    public DispositionInjectAction(Disposition disposition) {
         this.disposition = disposition;
-        this.channel = channel;
     }
 
-    public DispositionInjectAction onChannel(int channel) {
-        this.channel = channel;
-        return this;
+    @Override
+    public Disposition getPerformative() {
+        return disposition;
     }
 
     public DispositionInjectAction withRole(Role role) {
@@ -72,10 +65,5 @@ public class DispositionInjectAction implements ScriptedAction {
     public DispositionInjectAction withBatchable(boolean batchable) {
         disposition.setBatchable(batchable);
         return this;
-    }
-
-    @Override
-    public void perform(AMQPTestDriver driver, Consumer<ProtonBuffer> consumer) {
-        driver.sendAMQPFrame(channel, disposition, null);
     }
 }

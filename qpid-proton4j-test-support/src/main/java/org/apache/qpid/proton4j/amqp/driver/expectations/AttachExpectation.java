@@ -25,6 +25,7 @@ import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
 import org.apache.qpid.proton4j.amqp.driver.actions.AttachInjectAction;
+import org.apache.qpid.proton4j.amqp.driver.actions.BeginInjectAction;
 import org.apache.qpid.proton4j.amqp.messaging.Source;
 import org.apache.qpid.proton4j.amqp.messaging.Target;
 import org.apache.qpid.proton4j.amqp.transport.Attach;
@@ -32,6 +33,7 @@ import org.apache.qpid.proton4j.amqp.transport.DeliveryState;
 import org.apache.qpid.proton4j.amqp.transport.ReceiverSettleMode;
 import org.apache.qpid.proton4j.amqp.transport.Role;
 import org.apache.qpid.proton4j.amqp.transport.SenderSettleMode;
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.hamcrest.Matcher;
 
 /**
@@ -59,14 +61,61 @@ public class AttachExpectation extends AbstractExpectation<Attach> {
         PROPERTIES
     }
 
+    private AttachInjectAction response;
+
     public AttachExpectation(AMQPTestDriver driver) {
         super(driver);
     }
 
     public AttachInjectAction respond() {
-        AttachInjectAction response = new AttachInjectAction(new Attach(), 0);
+        response = new AttachInjectAction(new Attach());
         driver.addScriptedElement(response);
         return response;
+    }
+
+    //----- Handle the performative and configure response is told to respond
+
+    @Override
+    public void handleAttach(Attach attach, ProtonBuffer payload, int channel, AMQPTestDriver context) {
+        super.handleAttach(attach, payload, channel, context);
+
+        if (response == null) {
+            return;
+        }
+
+        // Input was validated now populate response with auto values where not configured
+        // to say otherwise by the test.
+        if (response.onChannel() == BeginInjectAction.CHANNEL_UNSET) {
+            // TODO - We could track attach in the driver and therefore allocate
+            //        free channels based on activity during the test.  For now we
+            //        are simply mirroring the channels back.
+            response.onChannel(channel);
+        }
+
+        // Populate the fields of the response with defaults if non set by the test script
+        if (!response.getPerformative().hasHandle()) {
+            response.getPerformative().setHandle(attach.getHandle());
+        }
+        if (!response.getPerformative().hasName()) {
+            response.getPerformative().setName(attach.getName());
+        }
+        if (!response.getPerformative().hasRole()) {
+            response.getPerformative().setRole(attach.getRole() == Role.SENDER ? Role.RECEIVER : Role.SENDER);
+        }
+        if (!response.getPerformative().hasSenderSettleMode()) {
+            response.getPerformative().setSndSettleMode(attach.getSndSettleMode());
+        }
+        if (!response.getPerformative().hasReceiverSettleMode()) {
+            response.getPerformative().setRcvSettleMode(attach.getRcvSettleMode());
+        }
+        if (!response.getPerformative().hasSource()) {
+            response.getPerformative().setSource(attach.getSource());
+        }
+        if (!response.getPerformative().hasTarget()) {
+            response.getPerformative().setTarget(attach.getTarget());
+        }
+
+        // Other fields are left not set for now unless test script configured
     }
 
     //----- Type specific with methods that perform simple equals checks

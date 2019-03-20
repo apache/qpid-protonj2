@@ -93,11 +93,7 @@ public class ScriptWriter {
     }
 
     public OpenInjectAction injectLater(Open open) {
-        return injectLater(open, 0);
-    }
-
-    public OpenInjectAction injectLater(Open open, int channel) {
-        OpenInjectAction inject = new OpenInjectAction(open, channel);
+        OpenInjectAction inject = new OpenInjectAction(open);
         driver.addScriptedElement(inject);
         return inject;
     }
@@ -119,11 +115,7 @@ public class ScriptWriter {
     }
 
     public CloseInjectAction injectLater(Close close) {
-        return injectLater(close, 0);
-    }
-
-    public CloseInjectAction injectLater(Close close, int channel) {
-        CloseInjectAction inject = new CloseInjectAction(close, channel);
+        CloseInjectAction inject = new CloseInjectAction(close);
         driver.addScriptedElement(inject);
         return inject;
     }
@@ -145,11 +137,7 @@ public class ScriptWriter {
     }
 
     public BeginInjectAction injectLater(Begin begin) {
-        return injectLater(begin, 0);
-    }
-
-    public BeginInjectAction injectLater(Begin begin, int channel) {
-        BeginInjectAction inject = new BeginInjectAction(begin, channel);
+        BeginInjectAction inject = new BeginInjectAction(begin);
         driver.addScriptedElement(inject);
         return inject;
     }
@@ -171,11 +159,7 @@ public class ScriptWriter {
     }
 
     public EndInjectAction injectLater(End end) {
-        return injectLater(end, 0);
-    }
-
-    public EndInjectAction injectLater(End end, int channel) {
-        EndInjectAction inject = new EndInjectAction(end, channel);
+        EndInjectAction inject = new EndInjectAction(end);
         driver.addScriptedElement(inject);
         return inject;
     }
@@ -196,12 +180,8 @@ public class ScriptWriter {
         return expecting;
     }
 
-    public AttachInjectAction injectLater( Attach attach) {
-        return injectLater(attach, 0);
-    }
-
-    public AttachInjectAction injectLater(Attach attach, int channel) {
-        AttachInjectAction inject = new AttachInjectAction(attach, channel);
+    public AttachInjectAction injectLater(Attach attach) {
+        AttachInjectAction inject = new AttachInjectAction(attach);
         driver.addScriptedElement(inject);
         return inject;
     }
@@ -223,11 +203,7 @@ public class ScriptWriter {
     }
 
     public DetachInjectAction injectLater(Detach detach) {
-        return injectLater(detach, 0);
-    }
-
-    public DetachInjectAction injectLater(Detach detach, int channel) {
-        DetachInjectAction inject = new DetachInjectAction(detach, channel);
+        DetachInjectAction inject = new DetachInjectAction(detach);
         driver.addScriptedElement(inject);
         return inject;
     }
@@ -249,11 +225,7 @@ public class ScriptWriter {
     }
 
     public FlowInjectAction injectLater(Flow flow) {
-        return injectLater(flow, 0);
-    }
-
-    public FlowInjectAction injectLater(Flow flow, int channel) {
-        FlowInjectAction inject = new FlowInjectAction(flow, channel);
+        FlowInjectAction inject = new FlowInjectAction(flow);
         driver.addScriptedElement(inject);
         return inject;
     }
@@ -275,11 +247,7 @@ public class ScriptWriter {
     }
 
     public TransferInjectAction injectLater(Transfer transfer) {
-        return injectLater(transfer, 0);
-    }
-
-    public TransferInjectAction injectLater(Transfer transfer, int channel) {
-        TransferInjectAction inject = new TransferInjectAction(transfer, channel);
+        TransferInjectAction inject = new TransferInjectAction(transfer);
         driver.addScriptedElement(inject);
         return inject;
     }
@@ -301,11 +269,7 @@ public class ScriptWriter {
     }
 
     public DispositionInjectAction injectLater(Disposition disposition) {
-        return injectLater(disposition, 0);
-    }
-
-    public DispositionInjectAction injectLater(Disposition disposition, int channel) {
-        DispositionInjectAction inject = new DispositionInjectAction(disposition, channel);
+        DispositionInjectAction inject = new DispositionInjectAction(disposition);
         driver.addScriptedElement(inject);
         return inject;
     }

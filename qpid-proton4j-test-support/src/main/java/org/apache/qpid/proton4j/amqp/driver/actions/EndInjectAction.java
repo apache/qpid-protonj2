@@ -16,40 +16,28 @@
  */
 package org.apache.qpid.proton4j.amqp.driver.actions;
 
-import java.util.function.Consumer;
-
-import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
-import org.apache.qpid.proton4j.amqp.driver.ScriptedAction;
 import org.apache.qpid.proton4j.amqp.transport.End;
 import org.apache.qpid.proton4j.amqp.transport.ErrorCondition;
-import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 
 /**
  * AMQP End injection action which can be added to a driver for write at a specific time or
  * following on from some other action in the test script.
  */
-public class EndInjectAction implements ScriptedAction {
+public class EndInjectAction extends AbstractPerformativeInjectAction<End> {
 
     private final End end;
-    private int channel;
 
-    public EndInjectAction(End end, int channel) {
+    public EndInjectAction(End end) {
         this.end = end;
-        this.channel = channel;
     }
 
-    public EndInjectAction onChannel(int channel) {
-        this.channel = channel;
-        return this;
+    @Override
+    public End getPerformative() {
+        return end;
     }
 
     public EndInjectAction withErrorCondition(ErrorCondition error) {
         end.setError(error);
         return this;
-    }
-
-    @Override
-    public void perform(AMQPTestDriver driver, Consumer<ProtonBuffer> consumer) {
-        driver.sendAMQPFrame(channel, end, null);
     }
 }

@@ -16,31 +16,24 @@
  */
 package org.apache.qpid.proton4j.amqp.driver.actions;
 
-import java.util.function.Consumer;
-
-import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
-import org.apache.qpid.proton4j.amqp.driver.ScriptedAction;
 import org.apache.qpid.proton4j.amqp.transport.Detach;
 import org.apache.qpid.proton4j.amqp.transport.ErrorCondition;
-import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 
 /**
  * AMQP Detach injection action which can be added to a driver for write at a specific time or
  * following on from some other action in the test script.
  */
-public class DetachInjectAction implements ScriptedAction {
+public class DetachInjectAction extends AbstractPerformativeInjectAction<Detach> {
 
     private final Detach detach;
-    private int channel;
 
-    public DetachInjectAction(Detach detach, int channel) {
+    public DetachInjectAction(Detach detach) {
         this.detach = detach;
-        this.channel = channel;
     }
 
-    public DetachInjectAction onChannel(int channel) {
-        this.channel = channel;
-        return this;
+    @Override
+    public Detach getPerformative() {
+        return detach;
     }
 
     public DetachInjectAction withClosed(long handle) {
@@ -56,10 +49,5 @@ public class DetachInjectAction implements ScriptedAction {
     public DetachInjectAction withErrorCondition(ErrorCondition error) {
         detach.setError(error);
         return this;
-    }
-
-    @Override
-    public void perform(AMQPTestDriver driver, Consumer<ProtonBuffer> consumer) {
-        driver.sendAMQPFrame(channel, detach, null);
     }
 }

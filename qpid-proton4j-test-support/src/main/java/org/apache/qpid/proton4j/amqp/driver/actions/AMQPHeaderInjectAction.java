@@ -16,12 +16,9 @@
  */
 package org.apache.qpid.proton4j.amqp.driver.actions;
 
-import java.util.function.Consumer;
-
 import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
 import org.apache.qpid.proton4j.amqp.driver.ScriptedAction;
 import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
-import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 
 /**
  * AMQP Header injection action which can be added to a driver for write at a specific time or
@@ -36,7 +33,7 @@ public class AMQPHeaderInjectAction implements ScriptedAction {
     }
 
     @Override
-    public void perform(AMQPTestDriver driver, Consumer<ProtonBuffer> consumer) {
+    public void perform(AMQPTestDriver driver) {
         driver.sendHeader(header);
     }
 }

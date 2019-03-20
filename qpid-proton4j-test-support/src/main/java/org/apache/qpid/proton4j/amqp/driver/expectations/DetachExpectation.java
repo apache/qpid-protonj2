@@ -19,9 +19,11 @@ package org.apache.qpid.proton4j.amqp.driver.expectations;
 import static org.hamcrest.CoreMatchers.equalTo;
 
 import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
+import org.apache.qpid.proton4j.amqp.driver.actions.BeginInjectAction;
 import org.apache.qpid.proton4j.amqp.driver.actions.DetachInjectAction;
 import org.apache.qpid.proton4j.amqp.transport.Detach;
 import org.apache.qpid.proton4j.amqp.transport.ErrorCondition;
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.hamcrest.Matcher;
 
 /**
@@ -38,14 +40,37 @@ public class DetachExpectation extends AbstractExpectation<Detach> {
         ERROR
     }
 
+    DetachInjectAction response;
+
     public DetachExpectation(AMQPTestDriver driver) {
         super(driver);
     }
 
     public DetachInjectAction respond() {
-        DetachInjectAction response = new DetachInjectAction(new Detach(), 0);
+        response = new DetachInjectAction(new Detach());
         driver.addScriptedElement(response);
         return response;
+    }
+
+    //----- Handle the performative and configure response is told to respond
+
+    @Override
+    public void handleDetach(Detach detach, ProtonBuffer payload, int channel, AMQPTestDriver context) {
+        super.handleDetach(detach, payload, channel, context);
+
+        if (response == null) {
+            return;
+        }
+
+        // Input was validated now populate response with auto values where not configured
+        // to say otherwise by the test.
+        if (response.onChannel() == BeginInjectAction.CHANNEL_UNSET) {
+            response.onChannel(channel);
+        }
+
+        if (!response.getPerformative().hasHandle()) {
+            response.getPerformative().setHandle(detach.getHandle());
+        }
     }
 
     //----- Type specific with methods that perform simple equals checks

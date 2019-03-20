@@ -53,15 +53,12 @@ public class BeginExpectation extends AbstractExpectation<Begin> {
     }
 
     public BeginInjectAction respond() {
-        Begin defaultResponse = new Begin();
-        defaultResponse.setNextOutgoingId(1);
-        defaultResponse.setIncomingWindow(0);
-        defaultResponse.setOutgoingWindow(0);
-
-        response = new BeginInjectAction(defaultResponse, 0);
+        response = new BeginInjectAction(new Begin());
         driver.addScriptedElement(response);
         return response;
     }
+
+    //----- Handle the performative and configure response is told to respond
 
     @Override
     public void handleBegin(Begin begin, ProtonBuffer payload, int channel, AMQPTestDriver context) {
@@ -77,14 +74,29 @@ public class BeginExpectation extends AbstractExpectation<Begin> {
             // TODO - We could track session in the driver and therefore allocate
             //        free channels based on activity during the test.  For now we
             //        are simply mirroring the channels back.
-            response.onChannel(begin.getRemoteChannel());
+            response.onChannel(channel);
         }
 
         // Populate the remote channel with that of the incoming begin unless scripted to send
         // otherwise which can indicate error handling test.
-        if (!response.getBegin().hasRemoteChannel()) {
-            response.getBegin().setRemoteChannel(response.onChannel());
+        if (!response.getPerformative().hasRemoteChannel()) {
+            response.getPerformative().setRemoteChannel(channel);
         }
+
+        if (!response.getPerformative().hasNextOutgoingId()) {
+            response.getPerformative().setNextOutgoingId(begin.getNextOutgoingId());
+        }
+        if (!response.getPerformative().hasIncomingWindow()) {
+            response.getPerformative().setIncomingWindow(begin.getIncomingWindow());
+        }
+        if (!response.getPerformative().hasOutgoingWindow()) {
+            response.getPerformative().setOutgoingWindow(begin.getOutgoingWindow());
+        }
+        if (!response.getPerformative().hasHandleMax()) {
+            response.getPerformative().setHandleMax(begin.getHandleMax());
+        }
+
+        // The remainder of the values are left not set unless set in the test script
     }
 
     //----- Type specific with methods that perform simple equals checks

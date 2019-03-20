@@ -16,31 +16,19 @@
  */
 package org.apache.qpid.proton4j.amqp.driver.actions;
 
-import java.util.function.Consumer;
-
 import org.apache.qpid.proton4j.amqp.Symbol;
-import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
-import org.apache.qpid.proton4j.amqp.driver.ScriptedAction;
 import org.apache.qpid.proton4j.amqp.security.SaslMechanisms;
-import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 
 /**
  * AMQP SaslMechanisms injection action which can be added to a driver for write at a specific time or
  * following on from some other action in the test script.
  */
-public class SaslMechanismsInjectAction implements ScriptedAction {
+public class SaslMechanismsInjectAction extends AbstractSaslPerformativeInjectAction<SaslMechanisms> {
 
     private final SaslMechanisms saslMechanisms;
-    private int channel;
 
-    public SaslMechanismsInjectAction(SaslMechanisms saslMechanisms, int channel) {
+    public SaslMechanismsInjectAction(SaslMechanisms saslMechanisms) {
         this.saslMechanisms = saslMechanisms;
-        this.channel = channel;
-    }
-
-    public SaslMechanismsInjectAction onChannel(int channel) {
-        this.channel = channel;
-        return this;
     }
 
     public SaslMechanismsInjectAction withMechanisms(Symbol... saslServerMechanisms) {
@@ -49,7 +37,7 @@ public class SaslMechanismsInjectAction implements ScriptedAction {
     }
 
     @Override
-    public void perform(AMQPTestDriver driver, Consumer<ProtonBuffer> consumer) {
-        driver.sendSaslFrame(channel, saslMechanisms);
+    public SaslMechanisms getPerformative() {
+        return saslMechanisms;
     }
 }

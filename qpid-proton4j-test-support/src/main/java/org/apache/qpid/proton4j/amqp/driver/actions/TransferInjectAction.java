@@ -16,33 +16,26 @@
  */
 package org.apache.qpid.proton4j.amqp.driver.actions;
 
-import java.util.function.Consumer;
-
 import org.apache.qpid.proton4j.amqp.Binary;
-import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
-import org.apache.qpid.proton4j.amqp.driver.ScriptedAction;
 import org.apache.qpid.proton4j.amqp.transport.DeliveryState;
 import org.apache.qpid.proton4j.amqp.transport.ReceiverSettleMode;
 import org.apache.qpid.proton4j.amqp.transport.Transfer;
-import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 
 /**
  * AMQP Close injection action which can be added to a driver for write at a specific time or
  * following on from some other action in the test script.
  */
-public class TransferInjectAction implements ScriptedAction {
+public class TransferInjectAction extends AbstractPerformativeInjectAction<Transfer> {
 
     private final Transfer transfer;
-    private int channel;
 
-    public TransferInjectAction(Transfer transfer, int channel) {
+    public TransferInjectAction(Transfer transfer) {
         this.transfer = transfer;
-        this.channel = channel;
     }
 
-    public TransferInjectAction onChannel(int channel) {
-        this.channel = channel;
-        return this;
+    @Override
+    public Transfer getPerformative() {
+        return transfer;
     }
 
     public TransferInjectAction withHandle(long handle) {
@@ -98,10 +91,5 @@ public class TransferInjectAction implements ScriptedAction {
     public TransferInjectAction withBatchable(boolean batchable) {
         transfer.setBatchable(batchable);
         return this;
-    }
-
-    @Override
-    public void perform(AMQPTestDriver driver, Consumer<ProtonBuffer> consumer) {
-        driver.sendAMQPFrame(channel, transfer, null);
     }
 }

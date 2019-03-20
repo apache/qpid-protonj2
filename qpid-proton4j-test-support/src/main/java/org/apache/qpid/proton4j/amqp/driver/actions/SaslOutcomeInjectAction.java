@@ -16,32 +16,20 @@
  */
 package org.apache.qpid.proton4j.amqp.driver.actions;
 
-import java.util.function.Consumer;
-
 import org.apache.qpid.proton4j.amqp.Binary;
-import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
-import org.apache.qpid.proton4j.amqp.driver.ScriptedAction;
 import org.apache.qpid.proton4j.amqp.security.SaslCode;
 import org.apache.qpid.proton4j.amqp.security.SaslOutcome;
-import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 
 /**
  * AMQP SaslOutcome injection action which can be added to a driver for write at a specific time or
  * following on from some other action in the test script.
  */
-public class SaslOutcomeInjectAction implements ScriptedAction {
+public class SaslOutcomeInjectAction extends AbstractSaslPerformativeInjectAction<SaslOutcome> {
 
     private final SaslOutcome saslOutcome;
-    private int channel;
 
-    public SaslOutcomeInjectAction(SaslOutcome saslOutcome, int channel) {
+    public SaslOutcomeInjectAction(SaslOutcome saslOutcome) {
         this.saslOutcome = saslOutcome;
-        this.channel = channel;
-    }
-
-    public SaslOutcomeInjectAction onChannel(int channel) {
-        this.channel = channel;
-        return this;
     }
 
     public SaslOutcomeInjectAction withCode(SaslCode code) {
@@ -55,7 +43,7 @@ public class SaslOutcomeInjectAction implements ScriptedAction {
     }
 
     @Override
-    public void perform(AMQPTestDriver driver, Consumer<ProtonBuffer> consumer) {
-        driver.sendSaslFrame(channel, saslOutcome);
+    public SaslOutcome getPerformative() {
+        return saslOutcome;
     }
 }

@@ -17,40 +17,24 @@
 package org.apache.qpid.proton4j.amqp.driver.actions;
 
 import java.util.Map;
-import java.util.function.Consumer;
 
 import org.apache.qpid.proton4j.amqp.Symbol;
-import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
-import org.apache.qpid.proton4j.amqp.driver.ScriptedAction;
 import org.apache.qpid.proton4j.amqp.transport.Begin;
-import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 
 /**
  * AMQP Begin injection action which can be added to a driver for write at a specific time or
  * following on from some other action in the test script.
  */
-public class BeginInjectAction implements ScriptedAction {
-
-    public static final int CHANNEL_UNSET = -1;
+public class BeginInjectAction extends AbstractPerformativeInjectAction<Begin> {
 
     private final Begin begin;
-    private int channel = CHANNEL_UNSET;
 
-    public BeginInjectAction(Begin begin, int channel) {
+    public BeginInjectAction(Begin begin) {
         this.begin = begin;
-        this.channel = channel;
     }
 
-    public BeginInjectAction onChannel(int channel) {
-        this.channel = channel;
-        return this;
-    }
-
-    public int onChannel() {
-        return this.channel;
-    }
-
-    public Begin getBegin() {
+    @Override
+    public Begin getPerformative() {
         return begin;
     }
 
@@ -92,10 +76,5 @@ public class BeginInjectAction implements ScriptedAction {
     public BeginInjectAction withProperties(Map<Symbol, Object> properties) {
         begin.setProperties(properties);
         return this;
-    }
-
-    @Override
-    public void perform(AMQPTestDriver driver, Consumer<ProtonBuffer> consumer) {
-        driver.sendAMQPFrame(channel, begin, null);
     }
 }

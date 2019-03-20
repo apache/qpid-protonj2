@@ -17,33 +17,27 @@
 package org.apache.qpid.proton4j.amqp.driver.actions;
 
 import java.util.Map;
-import java.util.function.Consumer;
 
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedInteger;
 import org.apache.qpid.proton4j.amqp.UnsignedShort;
-import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
-import org.apache.qpid.proton4j.amqp.driver.ScriptedAction;
 import org.apache.qpid.proton4j.amqp.transport.Open;
-import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 
 /**
  * AMQP Open injection action which can be added to a driver for write at a specific time or
  * following on from some other action in the test script.
  */
-public class OpenInjectAction implements ScriptedAction {
+public class OpenInjectAction extends AbstractPerformativeInjectAction<Open> {
 
     private final Open open;
-    private int channel;
 
-    public OpenInjectAction(Open open, int channel) {
+    public OpenInjectAction(Open open) {
         this.open = open;
-        this.channel = channel;
     }
 
-    public OpenInjectAction onChannel(int channel) {
-        this.channel = channel;
-        return this;
+    @Override
+    public Open getPerformative() {
+        return open;
     }
 
     public OpenInjectAction withContainerId(String containerId) {
@@ -94,10 +88,5 @@ public class OpenInjectAction implements ScriptedAction {
     public OpenInjectAction withProperties(Map<Symbol, Object> properties) {
         open.setProperties(properties);
         return this;
-    }
-
-    @Override
-    public void perform(AMQPTestDriver driver, Consumer<ProtonBuffer> consumer) {
-        driver.sendAMQPFrame(channel, open, null);
     }
 }

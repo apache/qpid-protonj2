@@ -17,13 +17,10 @@
 package org.apache.qpid.proton4j.amqp.driver.actions;
 
 import java.util.Map;
-import java.util.function.Consumer;
 
 import org.apache.qpid.proton4j.amqp.Binary;
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
-import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
-import org.apache.qpid.proton4j.amqp.driver.ScriptedAction;
 import org.apache.qpid.proton4j.amqp.messaging.Source;
 import org.apache.qpid.proton4j.amqp.messaging.Target;
 import org.apache.qpid.proton4j.amqp.transport.Attach;
@@ -31,25 +28,22 @@ import org.apache.qpid.proton4j.amqp.transport.DeliveryState;
 import org.apache.qpid.proton4j.amqp.transport.ReceiverSettleMode;
 import org.apache.qpid.proton4j.amqp.transport.Role;
 import org.apache.qpid.proton4j.amqp.transport.SenderSettleMode;
-import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 
 /**
  * AMQP Attach injection action which can be added to a driver for write at a specific time or
  * following on from some other action in the test script.
  */
-public class AttachInjectAction implements ScriptedAction {
+public class AttachInjectAction extends AbstractPerformativeInjectAction<Attach> {
 
     private final Attach attach;
-    private int channel;
 
-    public AttachInjectAction(Attach attach, int channel) {
+    public AttachInjectAction(Attach attach) {
         this.attach = attach;
-        this.channel = channel;
     }
 
-    public AttachInjectAction onChannel(int channel) {
-        this.channel = channel;
-        return this;
+    @Override
+    public Attach getPerformative() {
+        return attach;
     }
 
     public AttachInjectAction withName(String name) {
@@ -120,10 +114,5 @@ public class AttachInjectAction implements ScriptedAction {
     public AttachInjectAction withProperties(Map<Symbol, Object> properties) {
         attach.setProperties(properties);
         return this;
-    }
-
-    @Override
-    public void perform(AMQPTestDriver driver, Consumer<ProtonBuffer> consumer) {
-        driver.sendAMQPFrame(channel, attach, null);
     }
 }

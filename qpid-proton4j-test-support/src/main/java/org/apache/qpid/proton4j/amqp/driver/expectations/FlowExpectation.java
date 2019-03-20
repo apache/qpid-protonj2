@@ -22,7 +22,6 @@ import java.util.Map;
 
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
-import org.apache.qpid.proton4j.amqp.driver.actions.FlowInjectAction;
 import org.apache.qpid.proton4j.amqp.transport.Flow;
 import org.hamcrest.Matcher;
 
@@ -50,12 +49,6 @@ public class FlowExpectation extends AbstractExpectation<Flow> {
 
     public FlowExpectation(AMQPTestDriver driver) {
         super(driver);
-    }
-
-    public FlowInjectAction respond() {
-        FlowInjectAction response = new FlowInjectAction(new Flow(), 0);
-        driver.addScriptedElement(response);
-        return response;
     }
 
     //----- Type specific with methods that perform simple equals checks
