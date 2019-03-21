@@ -172,7 +172,7 @@ public class ScriptWriter {
         driver.sendAMQPFrame(channel, end, null);
     }
 
-    //------ AMQP End scripting methods
+    //------ AMQP Attach scripting methods
 
     public AttachExpectation expectAttach() {
         AttachExpectation expecting = new AttachExpectation(driver);
@@ -194,7 +194,7 @@ public class ScriptWriter {
         driver.sendAMQPFrame(channel, attach, null);
     }
 
-    //------ AMQP End scripting methods
+    //------ AMQP Detach scripting methods
 
     public DetachExpectation expectDetach() {
         DetachExpectation expecting = new DetachExpectation(driver);
