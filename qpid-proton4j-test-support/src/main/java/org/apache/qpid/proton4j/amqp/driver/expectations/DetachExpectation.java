@@ -71,6 +71,10 @@ public class DetachExpectation extends AbstractExpectation<Detach> {
         if (!response.getPerformative().hasHandle()) {
             response.getPerformative().setHandle(detach.getHandle());
         }
+
+        if (!response.getPerformative().hasClosed()) {
+            response.getPerformative().setClosed(detach.getClosed());
+        }
     }
 
     //----- Type specific with methods that perform simple equals checks
