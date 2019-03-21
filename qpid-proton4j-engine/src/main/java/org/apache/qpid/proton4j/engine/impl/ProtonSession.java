@@ -60,11 +60,7 @@ public class ProtonSession implements Session, Performative.PerformativeHandler<
 
     private int localChannel;
 
-    @SuppressWarnings("unused")
-    private long nextIncomingId;  // TODO
-    private long nextOutgoingId = 1;
-    private long incomingWindow;
-    private long outgoingWindow;
+    private final ProtonSessionWindow sessionWindow = new ProtonSessionWindow();
 
     private final Map<String, ProtonSender> senderByNameMap = new HashMap<>();
     private final Map<String, ProtonReceiver> receiverByNameMap = new HashMap<>();
@@ -96,11 +92,6 @@ public class ProtonSession implements Session, Performative.PerformativeHandler<
     public ProtonSession(ProtonConnection connection, int localChannel) {
         this.connection = connection;
         this.localChannel = localChannel;
-
-        // Set initial state for Begin
-        localBegin.setNextOutgoingId(nextOutgoingId);
-        localBegin.setIncomingWindow(incomingWindow);
-        localBegin.setOutgoingWindow(outgoingWindow);
     }
 
     @Override
@@ -159,7 +150,7 @@ public class ProtonSession implements Session, Performative.PerformativeHandler<
     public ProtonSession open() {
         if (getLocalState() == SessionState.IDLE) {
             localState = SessionState.ACTIVE;
-            connection.getEngine().pipeline().fireWrite(localBegin, localChannel, null, null);
+            connection.getEngine().pipeline().fireWrite(sessionWindow.configureOutbound(localBegin), localChannel, null, null);
         }
 
         return this;
@@ -338,7 +329,7 @@ public class ProtonSession implements Session, Performative.PerformativeHandler<
         remoteBegin = begin;
         localBegin.setRemoteChannel(channel);
         remoteState = SessionState.ACTIVE;
-        nextIncomingId = begin.getNextOutgoingId();
+        sessionWindow.processInbound(begin);
 
         if (getLocalState() == SessionState.ACTIVE && remoteOpenHandler != null) {
             remoteOpenHandler.handle(result(this, null));
@@ -373,7 +364,7 @@ public class ProtonSession implements Session, Performative.PerformativeHandler<
 
             remoteLinks.put(attach.getHandle(), link);
 
-            attach.invoke(link, payload, channel, context);
+            link.handleAttach(attach, payload, channel, context);
         }
     }
 
@@ -384,7 +375,7 @@ public class ProtonSession implements Session, Performative.PerformativeHandler<
             getEngine().engineFailed(new ProtocolViolationException("Received uncorrelated handle on Detach from remote: " + channel));
         }
 
-        detach.invoke(link, payload, channel, context);
+        link.handleDetach(detach, payload, channel, context);
     }
 
     @Override
@@ -394,7 +385,9 @@ public class ProtonSession implements Session, Performative.PerformativeHandler<
             getEngine().engineFailed(new ProtocolViolationException("Received uncorrelated handle on Flow from remote: " + channel));
         }
 
-        flow.invoke(link, payload, channel, context);
+        sessionWindow.processFlow(flow);
+
+        link.handleFlow(flow, payload, channel, context);
     }
 
     @Override
@@ -404,7 +397,7 @@ public class ProtonSession implements Session, Performative.PerformativeHandler<
             getEngine().engineFailed(new ProtocolViolationException("Received uncorrelated handle on Transfer from remote: " + channel));
         }
 
-        transfer.invoke(link, payload, channel, context);
+        link.handleTransfer(transfer, payload, channel, context);
     }
 
     @Override
@@ -458,6 +451,10 @@ public class ProtonSession implements Session, Performative.PerformativeHandler<
         }
 
         return true;
+    }
+
+    ProtonSessionWindow getSessionWindow() {
+        return sessionWindow;
     }
 
     long findFreeLocalHandle() {

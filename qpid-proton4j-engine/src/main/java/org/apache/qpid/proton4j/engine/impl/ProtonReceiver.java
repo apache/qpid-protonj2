@@ -31,6 +31,9 @@ import org.apache.qpid.proton4j.engine.Session;
  */
 public class ProtonReceiver extends ProtonLink<Receiver> implements Receiver {
 
+    @SuppressWarnings("unused")
+    private final ProtonSessionWindow sessionWindow;
+
     /**
      * Create a new {@link Receiver} instance with the given {@link Session} parent.
      *
@@ -41,6 +44,8 @@ public class ProtonReceiver extends ProtonLink<Receiver> implements Receiver {
      */
     public ProtonReceiver(ProtonSession session, String name) {
         super(session, name);
+
+        this.sessionWindow = session.getSessionWindow();
     }
 
     @Override
@@ -57,7 +62,7 @@ public class ProtonReceiver extends ProtonLink<Receiver> implements Receiver {
 
     @Override
     public void handleFlow(Flow flow, ProtonBuffer payload, int channel, ProtonEngine context) {
-
+        super.handleFlow(flow, payload, channel, context);
     }
 
     @Override

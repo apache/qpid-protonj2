@@ -32,6 +32,9 @@ import org.apache.qpid.proton4j.engine.Session;
  */
 public class ProtonSender extends ProtonLink<Sender> implements Sender {
 
+    @SuppressWarnings("unused")
+    private final ProtonSessionWindow sessionWindow;
+
     /**
      * Create a new {@link Sender} instance with the given {@link Session} parent.
      *
@@ -43,6 +46,7 @@ public class ProtonSender extends ProtonLink<Sender> implements Sender {
     public ProtonSender(ProtonSession session, String name) {
         super(session, name);
 
+        this.sessionWindow = session.getSessionWindow();
         // Sender specific initialization
         this.localAttach.setInitialDeliveryCount(0);
     }
@@ -61,7 +65,7 @@ public class ProtonSender extends ProtonLink<Sender> implements Sender {
 
     @Override
     public void handleFlow(Flow flow, ProtonBuffer payload, int channel, ProtonEngine context) {
-
+        super.handleFlow(flow, payload, channel, context);
     }
 
     @Override

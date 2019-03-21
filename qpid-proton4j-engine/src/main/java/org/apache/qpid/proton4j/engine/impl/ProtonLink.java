@@ -31,6 +31,7 @@ import org.apache.qpid.proton4j.amqp.transport.Attach;
 import org.apache.qpid.proton4j.amqp.transport.Begin;
 import org.apache.qpid.proton4j.amqp.transport.Detach;
 import org.apache.qpid.proton4j.amqp.transport.ErrorCondition;
+import org.apache.qpid.proton4j.amqp.transport.Flow;
 import org.apache.qpid.proton4j.amqp.transport.Performative;
 import org.apache.qpid.proton4j.amqp.transport.Role;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
@@ -67,6 +68,9 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T>, Performa
 
     private ErrorCondition localError;
     private ErrorCondition remoteError;
+
+    private long remoteDeliveryCount;
+    private long remoteLinkCredit;
 
     private EventHandler<AsyncEvent<T>> remoteOpenHandler;
 
@@ -371,6 +375,7 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T>, Performa
     public void handleAttach(Attach attach, ProtonBuffer payload, int channel, ProtonEngine context) {
         remoteAttach = attach;
         remoteState = LinkState.ACTIVE;
+        remoteDeliveryCount = attach.getInitialDeliveryCount();
 
         if (remoteOpenHandler != null) {
             remoteOpenHandler.handle(result(self(), null));
@@ -412,7 +417,21 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T>, Performa
         }
     }
 
+    @Override
+    public void handleFlow(Flow flow, ProtonBuffer payload, int channel, ProtonEngine context) {
+        remoteDeliveryCount = flow.getDeliveryCount();
+        remoteLinkCredit = flow.getLinkCredit();
+    }
+
     //----- Internal handler methods
+
+    long getRemoteDeliveryCount() {
+        return remoteDeliveryCount;
+    }
+
+    long getRemoteLinkCredit() {
+        return remoteLinkCredit;
+    }
 
     private void checkNotOpened(String errorMessage) {
         if (localState.ordinal() > ConnectionState.IDLE.ordinal()) {
