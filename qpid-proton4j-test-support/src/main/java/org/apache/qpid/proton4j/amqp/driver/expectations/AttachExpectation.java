@@ -67,6 +67,12 @@ public class AttachExpectation extends AbstractExpectation<Attach> {
         super(driver);
     }
 
+    @Override
+    public AttachExpectation onChannel(int channel) {
+        super.onChannel(channel);
+        return this;
+    }
+
     public AttachInjectAction respond() {
         response = new AttachInjectAction(new Attach());
         driver.addScriptedElement(response);

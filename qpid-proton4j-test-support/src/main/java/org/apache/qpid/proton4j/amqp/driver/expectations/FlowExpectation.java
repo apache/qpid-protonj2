@@ -51,6 +51,12 @@ public class FlowExpectation extends AbstractExpectation<Flow> {
         super(driver);
     }
 
+    @Override
+    public FlowExpectation onChannel(int channel) {
+        super.onChannel(channel);
+        return this;
+    }
+
     //----- Type specific with methods that perform simple equals checks
 
     public FlowExpectation withNextIncomingId(long nextIncomingId) {

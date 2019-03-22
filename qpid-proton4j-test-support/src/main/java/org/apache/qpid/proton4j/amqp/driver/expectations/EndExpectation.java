@@ -44,6 +44,12 @@ public class EndExpectation extends AbstractExpectation<End> {
         super(driver);
     }
 
+    @Override
+    public EndExpectation onChannel(int channel) {
+        super.onChannel(channel);
+        return this;
+    }
+
     public EndInjectAction respond() {
         response = new EndInjectAction(new End());
         driver.addScriptedElement(response);

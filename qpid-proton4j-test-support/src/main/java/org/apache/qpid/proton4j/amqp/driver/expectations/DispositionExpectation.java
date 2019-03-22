@@ -45,6 +45,12 @@ public class DispositionExpectation extends AbstractExpectation<Disposition> {
         super(driver);
     }
 
+    @Override
+    public DispositionExpectation onChannel(int channel) {
+        super.onChannel(channel);
+        return this;
+    }
+
     //----- Type specific with methods that perform simple equals checks
 
     public DispositionExpectation withRole(Role role) {

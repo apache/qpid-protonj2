@@ -112,6 +112,43 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
     }
 
     @Test
+    public void testOpenAndCloseMultipleSessions() throws IOException {
+        ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
+        engine.errorHandler(result -> failure = result);
+
+        // Create the test driver and link it to the engine for output handling.
+        AMQPTestDriver driver = new AMQPTestDriver(engine);
+        engine.outputConsumer(driver);
+
+        ScriptWriter script = driver.createScriptWriter();
+
+        script.expectAMQPHeader().respondWithAMQPHeader();
+        script.expectOpen().respond().withContainerId("driver");
+        script.expectBegin().onChannel(0).respond();
+        script.expectBegin().onChannel(1).respond();
+        script.expectEnd().onChannel(1).respond();
+        script.expectEnd().onChannel(0).respond();
+        script.expectClose();
+
+        ProtonConnection connection = engine.start();
+        connection.open();
+
+        ProtonSession session1 = connection.session();
+        session1.open();
+        ProtonSession session2 = connection.session();
+        session2.open();
+
+        session2.close();
+        session1.close();
+
+        connection.close();
+
+        driver.assertScriptComplete();
+
+        assertNull(failure);
+    }
+
+    @Test
     public void testEngineFireRemotelyOpenedSessionEventWhenRemoteBeginArrives() throws IOException {
         ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
         engine.errorHandler(result -> failure = result);

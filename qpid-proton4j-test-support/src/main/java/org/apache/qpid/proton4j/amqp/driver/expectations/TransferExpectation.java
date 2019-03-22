@@ -51,6 +51,12 @@ public class TransferExpectation extends AbstractExpectation<Transfer> {
         super(driver);
     }
 
+    @Override
+    public TransferExpectation onChannel(int channel) {
+        super.onChannel(channel);
+        return this;
+    }
+
     //----- Type specific with methods that perform simple equals checks
 
     public TransferExpectation withHandle(long handle) {
