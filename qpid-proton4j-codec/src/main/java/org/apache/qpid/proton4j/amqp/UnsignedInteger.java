@@ -75,6 +75,10 @@ public final class UnsignedInteger extends Number implements Comparable<Unsigned
         return true;
     }
 
+    public int compreTo(int value) {
+        return Integer.compareUnsigned(underlying, value);
+    }
+
     public int compareTo(long o) {
         return Long.signum(longValue() - o);
     }
@@ -82,6 +86,14 @@ public final class UnsignedInteger extends Number implements Comparable<Unsigned
     @Override
     public int compareTo(UnsignedInteger o) {
         return Long.signum(longValue() - o.longValue());
+    }
+
+    public static int compare(int left, int right) {
+        return Integer.compareUnsigned(left, right);
+    }
+
+    public static int compare(long left, long right) {
+        return Long.compareUnsigned(left, right);
     }
 
     @Override

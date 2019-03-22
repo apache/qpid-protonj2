@@ -42,12 +42,12 @@ public final class UnsignedShort extends Number implements Comparable<UnsignedSh
 
     @Override
     public int intValue() {
-        return underlying & 0xFFFF;
+        return Short.toUnsignedInt(underlying);
     }
 
     @Override
     public long longValue() {
-        return (underlying) & 0xFFFFl;
+        return Short.toUnsignedLong(underlying);
     }
 
     @Override
@@ -79,9 +79,17 @@ public final class UnsignedShort extends Number implements Comparable<UnsignedSh
         return true;
     }
 
+    public int compareTo(short value) {
+        return Integer.signum(intValue() - Short.toUnsignedInt(value));
+    }
+
     @Override
     public int compareTo(UnsignedShort o) {
         return Integer.signum(intValue() - o.intValue());
+    }
+
+    public static int compare(short left, short right) {
+        return Integer.compareUnsigned(Short.toUnsignedInt(left), Short.toUnsignedInt(right));
     }
 
     @Override

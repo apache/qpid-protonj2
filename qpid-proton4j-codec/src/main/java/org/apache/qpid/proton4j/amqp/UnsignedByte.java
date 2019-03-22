@@ -81,9 +81,13 @@ public final class UnsignedByte extends Number implements Comparable<UnsignedByt
         return true;
     }
 
+    public int compareTo(byte value) {
+        return Byte.compare(underlying, value);
+    }
+
     @Override
     public int compareTo(UnsignedByte o) {
-        return Integer.signum(intValue() - o.intValue());
+        return Byte.compare(underlying, o.underlying);
     }
 
     @Override

@@ -87,9 +87,17 @@ public final class UnsignedLong extends Number implements Comparable<UnsignedLon
         return true;
     }
 
+    public int compareTo(long value) {
+        return Long.compareUnsigned(underlying, value);
+    }
+
     @Override
     public int compareTo(UnsignedLong o) {
         return bigIntegerValue().compareTo(o.bigIntegerValue());
+    }
+
+    public static int compare(long left, long right) {
+        return Long.compareUnsigned(left, right);
     }
 
     @Override
