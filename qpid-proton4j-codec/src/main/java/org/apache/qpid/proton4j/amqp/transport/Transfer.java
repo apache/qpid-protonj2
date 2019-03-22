@@ -42,8 +42,10 @@ public final class Transfer implements Performative {
 
     private int modified = 0;
 
-    // TODO - Object handle would allow for easier Map lookup code
-    // private UnsignedInteger handle;
+    // TODO - Consider using the matching signed types instead of next largest
+    //        for these values as in most cases we don't actually care about sign.
+    //        In the cases we do care we could just do the math and make these
+    //        interfaces simpler and not check all over the place for overflow.
 
     private long handle;
     private long deliveryId;

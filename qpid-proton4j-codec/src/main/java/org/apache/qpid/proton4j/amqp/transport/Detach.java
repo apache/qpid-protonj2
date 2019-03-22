@@ -33,6 +33,11 @@ public final class Detach implements Performative {
 
     private int modified = 0;
 
+    // TODO - Consider using the matching signed types instead of next largest
+    //        for these values as in most cases we don't actually care about sign.
+    //        In the cases we do care we could just do the math and make these
+    //        interfaces simpler and not check all over the place for overflow.
+
     private long handle;
     private boolean closed;
     private ErrorCondition error;
