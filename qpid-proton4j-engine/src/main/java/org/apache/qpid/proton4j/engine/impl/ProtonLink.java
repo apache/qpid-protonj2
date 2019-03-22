@@ -63,14 +63,13 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T>, Performa
 
     private final ProtonContext context = new ProtonContext();
 
+    protected final ProtonLinkCreditState creditState;
+
     private LinkState localState = LinkState.IDLE;
     private LinkState remoteState = LinkState.IDLE;
 
     private ErrorCondition localError;
     private ErrorCondition remoteError;
-
-    private long remoteDeliveryCount;
-    private long remoteLinkCredit;
 
     private EventHandler<AsyncEvent<T>> remoteOpenHandler;
 
@@ -89,7 +88,8 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T>, Performa
      * @param name
      *      The name assigned to this {@link Link}
      */
-    ProtonLink(ProtonSession session, String name) {
+    protected ProtonLink(ProtonSession session, ProtonLinkCreditState creditState, String name) {
+        this.creditState = creditState;
         this.session = session;
         this.connection = session.getConnection();
         this.localAttach.setName(name);
@@ -150,7 +150,8 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T>, Performa
             localState = LinkState.ACTIVE;
             long localHandle = session.findFreeLocalHandle();
             localAttach.setHandle(localHandle);
-            session.getEngine().pipeline().fireWrite(localAttach, session.getLocalChannel(), null, null);
+            session.getEngine().pipeline().fireWrite(
+                creditState.configureOutbound(localAttach), session.getLocalChannel(), null, null);
         }
 
         return this;
@@ -375,7 +376,7 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T>, Performa
     public void handleAttach(Attach attach, ProtonBuffer payload, int channel, ProtonEngine context) {
         remoteAttach = attach;
         remoteState = LinkState.ACTIVE;
-        remoteDeliveryCount = attach.getInitialDeliveryCount();
+        creditState.processInboud(attach);
 
         if (remoteOpenHandler != null) {
             remoteOpenHandler.handle(result(self(), null));
@@ -419,19 +420,10 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T>, Performa
 
     @Override
     public void handleFlow(Flow flow, ProtonBuffer payload, int channel, ProtonEngine context) {
-        remoteDeliveryCount = flow.getDeliveryCount();
-        remoteLinkCredit = flow.getLinkCredit();
+        creditState.handleFlow(flow);
     }
 
     //----- Internal handler methods
-
-    long getRemoteDeliveryCount() {
-        return remoteDeliveryCount;
-    }
-
-    long getRemoteLinkCredit() {
-        return remoteLinkCredit;
-    }
 
     private void checkNotOpened(String errorMessage) {
         if (localState.ordinal() > ConnectionState.IDLE.ordinal()) {

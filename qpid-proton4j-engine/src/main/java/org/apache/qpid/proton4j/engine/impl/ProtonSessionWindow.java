@@ -78,7 +78,7 @@ public class ProtonSessionWindow {
      * @param flow
      *      the incoming {@link Flow} performative to process.
      */
-    void processFlow(Flow flow) {
+    Flow processFlow(Flow flow) {
         if (flow.hasNextIncomingId()) {
             remoteNextIncomingId = flow.getNextIncomingId();
             remoteIncomingWindow = (flow.getNextIncomingId() + flow.getIncomingWindow()) - nextOutgoingId;
@@ -88,5 +88,7 @@ public class ProtonSessionWindow {
 
         remoteNextOutgoingId = flow.getNextOutgoingId();
         remoteOutgoingWindow = flow.getOutgoingWindow();
+
+        return flow;
     }
 }

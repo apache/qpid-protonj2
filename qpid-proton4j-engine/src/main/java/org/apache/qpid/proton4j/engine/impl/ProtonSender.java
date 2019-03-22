@@ -17,7 +17,6 @@
 package org.apache.qpid.proton4j.engine.impl;
 
 import org.apache.qpid.proton4j.amqp.transport.Disposition;
-import org.apache.qpid.proton4j.amqp.transport.Flow;
 import org.apache.qpid.proton4j.amqp.transport.Role;
 import org.apache.qpid.proton4j.amqp.transport.Transfer;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
@@ -32,9 +31,6 @@ import org.apache.qpid.proton4j.engine.Session;
  */
 public class ProtonSender extends ProtonLink<Sender> implements Sender {
 
-    @SuppressWarnings("unused")
-    private final ProtonSessionWindow sessionWindow;
-
     /**
      * Create a new {@link Sender} instance with the given {@link Session} parent.
      *
@@ -44,11 +40,7 @@ public class ProtonSender extends ProtonLink<Sender> implements Sender {
      *      The name assigned to this {@link Sender} link.
      */
     public ProtonSender(ProtonSession session, String name) {
-        super(session, name);
-
-        this.sessionWindow = session.getSessionWindow();
-        // Sender specific initialization
-        this.localAttach.setInitialDeliveryCount(0);
+        super(session, new ProtonSenderCreditState(session.getSessionWindow()), name);
     }
 
     @Override
@@ -62,11 +54,6 @@ public class ProtonSender extends ProtonLink<Sender> implements Sender {
     }
 
     //----- Handle incoming performatives
-
-    @Override
-    public void handleFlow(Flow flow, ProtonBuffer payload, int channel, ProtonEngine context) {
-        super.handleFlow(flow, payload, channel, context);
-    }
 
     @Override
     public void handleTransfer(Transfer transfer, ProtonBuffer payload, int channel, ProtonEngine context) {

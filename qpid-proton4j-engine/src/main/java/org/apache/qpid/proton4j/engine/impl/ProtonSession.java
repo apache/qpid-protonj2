@@ -385,9 +385,7 @@ public class ProtonSession implements Session, Performative.PerformativeHandler<
             getEngine().engineFailed(new ProtocolViolationException("Received uncorrelated handle on Flow from remote: " + channel));
         }
 
-        sessionWindow.processFlow(flow);
-
-        link.handleFlow(flow, payload, channel, context);
+        link.handleFlow(sessionWindow.processFlow(flow), payload, channel, context);
     }
 
     @Override
