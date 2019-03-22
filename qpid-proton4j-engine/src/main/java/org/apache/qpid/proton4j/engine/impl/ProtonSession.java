@@ -455,9 +455,10 @@ public class ProtonSession implements Session, Performative.PerformativeHandler<
         return sessionWindow;
     }
 
-    long findFreeLocalHandle() {
+    long findFreeLocalHandle(ProtonLink<?> link) {
         for (long i = 0; i < ProtonConstants.HANDLE_MAX; ++i) {
             if (!localLinks.containsKey(i)) {
+                localLinks.put(i, link);
                 return i;
             }
         }

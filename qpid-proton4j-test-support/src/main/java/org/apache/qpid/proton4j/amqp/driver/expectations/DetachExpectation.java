@@ -79,7 +79,7 @@ public class DetachExpectation extends AbstractExpectation<Detach> {
 
     //----- Type specific with methods that perform simple equals checks
 
-    public DetachExpectation withClosed(long handle) {
+    public DetachExpectation withHandle(long handle) {
         return withHandle(equalTo(handle));
     }
 

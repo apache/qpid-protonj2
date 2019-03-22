@@ -148,7 +148,7 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T>, Performa
     public ProtonLink<T> open() {
         if (getLocalState() == LinkState.IDLE) {
             localState = LinkState.ACTIVE;
-            long localHandle = session.findFreeLocalHandle();
+            long localHandle = session.findFreeLocalHandle(this);
             localAttach.setHandle(localHandle);
             session.getEngine().pipeline().fireWrite(
                 creditState.configureOutbound(localAttach), session.getLocalChannel(), null, null);

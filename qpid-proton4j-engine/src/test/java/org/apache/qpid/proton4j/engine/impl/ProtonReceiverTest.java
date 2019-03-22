@@ -156,6 +156,43 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
     }
 
     @Test
+    public void testOpenAndCloseMultipleReceivers() throws Exception {
+        ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
+        engine.errorHandler(result -> failure = result);
+        // Create the test driver and link it to the engine for output handling.
+        AMQPTestDriver driver = new AMQPTestDriver(engine);
+        engine.outputConsumer(driver);
+        ScriptWriter script = driver.createScriptWriter();
+
+        script.expectAMQPHeader().respondWithAMQPHeader();
+        script.expectOpen().respond().withContainerId("driver");
+        script.expectBegin().respond();
+        script.expectAttach().withHandle(0).respond();
+        script.expectAttach().withHandle(1).respond();
+        script.expectDetach().withHandle(1).respond();
+        script.expectDetach().withHandle(0).respond();
+
+        Connection connection = engine.start();
+
+        connection.open();
+        Session session = connection.session();
+        session.open();
+
+        Receiver receiver1 = session.receiver("receiver-1");
+        receiver1.open();
+        Receiver receiver2 = session.receiver("receiver-2");
+        receiver2.open();
+
+        // Close in reverse order
+        receiver2.close();
+        receiver1.close();
+
+        driver.assertScriptComplete();
+
+        assertNull(failure);
+    }
+
+    @Test
     public void testConnectionSignalsRemoteReceiverOpen() throws Exception {
         ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
         engine.errorHandler(result -> failure = result);

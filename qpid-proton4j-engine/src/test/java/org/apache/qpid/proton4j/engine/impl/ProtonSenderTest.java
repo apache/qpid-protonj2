@@ -110,6 +110,43 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
     }
 
     @Test
+    public void testOpenAndCloseMultipleSenders() throws Exception {
+        ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
+        engine.errorHandler(result -> failure = result);
+        // Create the test driver and link it to the engine for output handling.
+        AMQPTestDriver driver = new AMQPTestDriver(engine);
+        engine.outputConsumer(driver);
+        ScriptWriter script = driver.createScriptWriter();
+
+        script.expectAMQPHeader().respondWithAMQPHeader();
+        script.expectOpen().respond().withContainerId("driver");
+        script.expectBegin().respond();
+        script.expectAttach().withHandle(0).respond();
+        script.expectAttach().withHandle(1).respond();
+        script.expectDetach().withHandle(1).respond();
+        script.expectDetach().withHandle(0).respond();
+
+        Connection connection = engine.start();
+
+        connection.open();
+        Session session = connection.session();
+        session.open();
+
+        Sender sender1 = session.sender("sender-1");
+        sender1.open();
+        Sender sender2 = session.sender("sender-2");
+        sender2.open();
+
+        // Close in reverse order
+        sender2.close();
+        sender1.close();
+
+        driver.assertScriptComplete();
+
+        assertNull(failure);
+    }
+
+    @Test
     public void testSenderFireClosedEventAfterRemoteDetachArrives() throws Exception {
         ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
         engine.errorHandler(result -> failure = result);
