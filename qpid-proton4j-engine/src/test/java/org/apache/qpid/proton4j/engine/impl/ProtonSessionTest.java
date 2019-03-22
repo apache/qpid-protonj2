@@ -26,7 +26,6 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
 import org.apache.qpid.proton4j.amqp.driver.ScriptWriter;
-import org.apache.qpid.proton4j.amqp.transport.Begin;
 import org.apache.qpid.proton4j.engine.Connection;
 import org.apache.qpid.proton4j.engine.Session;
 import org.junit.Test;
@@ -161,10 +160,9 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
 
         script.expectAMQPHeader().respondWithAMQPHeader();
         script.expectOpen().respond().withContainerId("driver");
-        // TODO - better name for inject or chain on open response and use proper defaults
-        script.injectLater(new Begin()).withNextOutgoingId(1)
-                                       .withIncomingWindow(0)
-                                       .withOutgoingWindow(0).onChannel(1);
+        script.remoteBegin().withNextOutgoingId(1)
+                            .withIncomingWindow(0)
+                            .withOutgoingWindow(0).onChannel(1);
 
         final AtomicBoolean connectionRemotelyOpened = new AtomicBoolean();
         final AtomicBoolean sessionRemotelyOpened = new AtomicBoolean();

@@ -25,7 +25,6 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
 import org.apache.qpid.proton4j.amqp.driver.ScriptWriter;
-import org.apache.qpid.proton4j.amqp.transport.Attach;
 import org.apache.qpid.proton4j.amqp.transport.Role;
 import org.apache.qpid.proton4j.engine.Connection;
 import org.apache.qpid.proton4j.engine.Receiver;
@@ -204,12 +203,11 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         script.expectAMQPHeader().respondWithAMQPHeader();
         script.expectOpen().respond().withContainerId("driver");
         script.expectBegin().respond();
-        // TODO - better name for inject or chain on begin response and use proper defaults for target sender / receiver
-        script.injectLater(new Attach()).withName("sender")
-                                        .withHandle(0)
-                                        .withRole(Role.SENDER)
-                                        .withInitialDeliveryCount(0)
-                                        .onChannel(0);
+        script.remoteAttach().withName("sender")
+                             .withHandle(0)
+                             .withRole(Role.SENDER)
+                             .withInitialDeliveryCount(0)
+                             .onChannel(0);
         script.expectAttach();
         script.expectDetach().respond();
 
