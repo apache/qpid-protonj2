@@ -122,10 +122,10 @@ public class DispositionTypeDecoder extends AbstractDescribedTypeDecoder<Disposi
                     disposition.setRole(Boolean.TRUE.equals(state.getDecoder().readBoolean(buffer, state)) ? Role.RECEIVER : Role.SENDER);
                     break;
                 case 1:
-                    disposition.setFirst(state.getDecoder().readUnsignedInteger(buffer, state, 0));
+                    disposition.setFirst(state.getDecoder().readUnsignedInteger(buffer, state, 0l));
                     break;
                 case 2:
-                    disposition.setLast(state.getDecoder().readUnsignedInteger(buffer, state, 0));
+                    disposition.setLast(state.getDecoder().readUnsignedInteger(buffer, state, 0l));
                     break;
                 case 3:
                     disposition.setSettled(state.getDecoder().readBoolean(buffer, state, false));

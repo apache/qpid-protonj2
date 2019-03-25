@@ -120,16 +120,16 @@ public class BeginTypeDecoder extends AbstractDescribedTypeDecoder<Begin> {
                     begin.setRemoteChannel(state.getDecoder().readUnsignedShort(buffer, state, 0));
                     break;
                 case 1:
-                    begin.setNextOutgoingId(state.getDecoder().readUnsignedInteger(buffer, state, 0));
+                    begin.setNextOutgoingId(state.getDecoder().readUnsignedInteger(buffer, state, 0l));
                     break;
                 case 2:
-                    begin.setIncomingWindow(state.getDecoder().readUnsignedInteger(buffer, state, 0));
+                    begin.setIncomingWindow(state.getDecoder().readUnsignedInteger(buffer, state, 0l));
                     break;
                 case 3:
-                    begin.setOutgoingWindow(state.getDecoder().readUnsignedInteger(buffer, state, 0));
+                    begin.setOutgoingWindow(state.getDecoder().readUnsignedInteger(buffer, state, 0l));
                     break;
                 case 4:
-                    begin.setHandleMax(state.getDecoder().readUnsignedInteger(buffer, state, 0));
+                    begin.setHandleMax(state.getDecoder().readUnsignedInteger(buffer, state, 0l));
                     break;
                 case 5:
                     begin.setOfferedCapabilities(state.getDecoder().readMultiple(buffer, state, Symbol.class));

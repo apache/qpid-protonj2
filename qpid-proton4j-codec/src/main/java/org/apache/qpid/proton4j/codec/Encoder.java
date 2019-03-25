@@ -52,16 +52,23 @@ public interface Encoder {
 
     void writeUnsignedShort(ProtonBuffer buffer, EncoderState state, UnsignedShort value);
 
+    void writeUnsignedShort(ProtonBuffer buffer, EncoderState state, short value);
+
     void writeUnsignedShort(ProtonBuffer buffer, EncoderState state, int value);
 
     void writeUnsignedInteger(ProtonBuffer buffer, EncoderState state, UnsignedInteger value);
 
+    void writeUnsignedInteger(ProtonBuffer buffer, EncoderState state, byte value);
+
+    void writeUnsignedInteger(ProtonBuffer buffer, EncoderState state, int value);
+
     void writeUnsignedInteger(ProtonBuffer buffer, EncoderState state, long value);
 
-    // TODO - Do we want some alternative for UnsignedLong (long, BigInteger)
     void writeUnsignedLong(ProtonBuffer buffer, EncoderState state, UnsignedLong value);
 
     void writeUnsignedLong(ProtonBuffer buffer, EncoderState state, byte value);
+
+    void writeUnsignedLong(ProtonBuffer buffer, EncoderState state, long value);
 
     void writeByte(ProtonBuffer buffer, EncoderState state, byte value);
 

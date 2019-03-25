@@ -38,13 +38,17 @@ public class UnsignedShortTypeEncoder extends AbstractPrimitiveTypeEncoder<Unsig
         buffer.writeShort(value.shortValue());
     }
 
+    public void writeType(ProtonBuffer buffer, EncoderState state, short value) {
+        buffer.writeByte(EncodingCodes.USHORT);
+        buffer.writeShort(value);
+    }
+
     public void writeType(ProtonBuffer buffer, EncoderState state, int value) {
         if (value < 0 || value > 65535) {
             throw new IllegalArgumentException("Value given is out of range: " + value);
         }
 
-        buffer.writeByte(EncodingCodes.USHORT);
-        buffer.writeShort((short) value);
+        writeType(buffer, state, (short) value);
     }
 
     @Override

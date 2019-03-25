@@ -118,7 +118,7 @@ public class DetachTypeDecoder extends AbstractDescribedTypeDecoder<Detach> {
 
             switch (index) {
                 case 0:
-                    detach.setHandle(state.getDecoder().readUnsignedInteger(buffer, state, 0));
+                    detach.setHandle(state.getDecoder().readUnsignedInteger(buffer, state, 0l));
                     break;
                 case 1:
                     detach.setClosed(state.getDecoder().readBoolean(buffer, state, false));

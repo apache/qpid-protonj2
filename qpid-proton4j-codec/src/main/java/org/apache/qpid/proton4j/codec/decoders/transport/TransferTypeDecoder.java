@@ -125,16 +125,16 @@ public class TransferTypeDecoder extends AbstractDescribedTypeDecoder<Transfer> 
 
             switch (index) {
                 case 0:
-                    transfer.setHandle(state.getDecoder().readUnsignedInteger(buffer, state, 0));
+                    transfer.setHandle(state.getDecoder().readUnsignedInteger(buffer, state, 0l));
                     break;
                 case 1:
-                    transfer.setDeliveryId(state.getDecoder().readUnsignedInteger(buffer, state, 0));
+                    transfer.setDeliveryId(state.getDecoder().readUnsignedInteger(buffer, state, 0l));
                     break;
                 case 2:
                     transfer.setDeliveryTag(state.getDecoder().readBinary(buffer, state));
                     break;
                 case 3:
-                    transfer.setMessageFormat(state.getDecoder().readUnsignedInteger(buffer, state, 0));
+                    transfer.setMessageFormat(state.getDecoder().readUnsignedInteger(buffer, state, 0l));
                     break;
                 case 4:
                     transfer.setSettled(state.getDecoder().readBoolean(buffer, state, false));

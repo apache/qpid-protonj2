@@ -126,7 +126,7 @@ public class AttachTypeDecoder extends AbstractDescribedTypeDecoder<Attach> {
                     attach.setName(state.getDecoder().readString(buffer, state));
                     break;
                 case 1:
-                    attach.setHandle(state.getDecoder().readUnsignedInteger(buffer, state, 0));
+                    attach.setHandle(state.getDecoder().readUnsignedInteger(buffer, state, 0l));
                     break;
                 case 2:
                     Boolean role = state.getDecoder().readBoolean(buffer, state);
@@ -153,7 +153,7 @@ public class AttachTypeDecoder extends AbstractDescribedTypeDecoder<Attach> {
                     attach.setIncompleteUnsettled(state.getDecoder().readBoolean(buffer, state, true));
                     break;
                 case 9:
-                    attach.setInitialDeliveryCount(state.getDecoder().readUnsignedInteger(buffer, state, 0));
+                    attach.setInitialDeliveryCount(state.getDecoder().readUnsignedInteger(buffer, state, 0l));
                     break;
                 case 10:
                     attach.setMaxMessageSize(state.getDecoder().readUnsignedLong(buffer, state));

@@ -394,6 +394,20 @@ public class ProtonDecoder implements Decoder {
     }
 
     @Override
+    public short readUnsignedShort(ProtonBuffer buffer, DecoderState state, short defaultValue) throws IOException {
+        byte encodingCode = buffer.readByte();
+
+        switch (encodingCode) {
+            case EncodingCodes.USHORT:
+                return buffer.readShort();
+            case EncodingCodes.NULL:
+                return defaultValue;
+            default:
+                throw new IOException("Expected UnsignedShort type but found encoding: " + encodingCode);
+        }
+    }
+
+    @Override
     public int readUnsignedShort(ProtonBuffer buffer, DecoderState state, int defaultValue) throws IOException {
         byte encodingCode = buffer.readByte();
 
@@ -452,6 +466,24 @@ public class ProtonDecoder implements Decoder {
                 return UnsignedInteger.valueOf((buffer.readInt()));
             case EncodingCodes.NULL:
                 return null;
+            default:
+                throw new IOException("Expected UnsignedInteger type but found encoding: " + encodingCode);
+        }
+    }
+
+    @Override
+    public int readUnsignedInteger(ProtonBuffer buffer, DecoderState state, int defaultValue) throws IOException {
+        byte encodingCode = buffer.readByte();
+
+        switch (encodingCode) {
+            case EncodingCodes.UINT0:
+                return 0;
+            case EncodingCodes.SMALLUINT:
+                return buffer.readByte() & 0xff;
+            case EncodingCodes.UINT:
+                return buffer.readInt();
+            case EncodingCodes.NULL:
+                return defaultValue;
             default:
                 throw new IOException("Expected UnsignedInteger type but found encoding: " + encodingCode);
         }

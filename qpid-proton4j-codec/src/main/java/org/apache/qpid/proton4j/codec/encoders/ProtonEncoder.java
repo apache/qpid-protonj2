@@ -143,6 +143,11 @@ public class ProtonEncoder implements Encoder {
     }
 
     @Override
+    public void writeUnsignedShort(ProtonBuffer buffer, EncoderState state, short value) {
+        ushortEncoder.writeType(buffer, state, value);
+    }
+
+    @Override
     public void writeUnsignedShort(ProtonBuffer buffer, EncoderState state, int value) {
         if (value < 0) {
             buffer.writeByte(EncodingCodes.NULL);
@@ -161,6 +166,16 @@ public class ProtonEncoder implements Encoder {
     }
 
     @Override
+    public void writeUnsignedInteger(ProtonBuffer buffer, EncoderState state, byte value) {
+        uintEncoder.writeType(buffer, state, value);
+    }
+
+    @Override
+    public void writeUnsignedInteger(ProtonBuffer buffer, EncoderState state, int value) {
+        uintEncoder.writeType(buffer, state, value);
+    }
+
+    @Override
     public void writeUnsignedInteger(ProtonBuffer buffer, EncoderState state, long value) {
         if (value < 0) {
             buffer.writeByte(EncodingCodes.NULL);
@@ -171,8 +186,12 @@ public class ProtonEncoder implements Encoder {
 
     @Override
     public void writeUnsignedLong(ProtonBuffer buffer, EncoderState state, byte value) {
-        buffer.writeByte(EncodingCodes.SMALLULONG);
-        buffer.writeByte(value);
+        ulongEncoder.writeType(buffer, state, value);
+    }
+
+    @Override
+    public void writeUnsignedLong(ProtonBuffer buffer, EncoderState state, long value) {
+        ulongEncoder.writeType(buffer, state, value);
     }
 
     @Override

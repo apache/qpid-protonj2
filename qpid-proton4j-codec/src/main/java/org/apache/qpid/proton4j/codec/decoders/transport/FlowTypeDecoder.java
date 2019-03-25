@@ -116,28 +116,28 @@ public class FlowTypeDecoder extends AbstractDescribedTypeDecoder<Flow> {
 
             switch (index) {
                 case 0:
-                    flow.setNextIncomingId(state.getDecoder().readUnsignedInteger(buffer, state, 0));
+                    flow.setNextIncomingId(state.getDecoder().readUnsignedInteger(buffer, state, 0l));
                     break;
                 case 1:
-                    flow.setIncomingWindow(state.getDecoder().readUnsignedInteger(buffer, state, 0));
+                    flow.setIncomingWindow(state.getDecoder().readUnsignedInteger(buffer, state, 0l));
                     break;
                 case 2:
-                    flow.setNextOutgoingId(state.getDecoder().readUnsignedInteger(buffer, state, 0));
+                    flow.setNextOutgoingId(state.getDecoder().readUnsignedInteger(buffer, state, 0l));
                     break;
                 case 3:
-                    flow.setOutgoingWindow(state.getDecoder().readUnsignedInteger(buffer, state, 0));
+                    flow.setOutgoingWindow(state.getDecoder().readUnsignedInteger(buffer, state, 0l));
                     break;
                 case 4:
-                    flow.setHandle(state.getDecoder().readUnsignedInteger(buffer, state, 0));
+                    flow.setHandle(state.getDecoder().readUnsignedInteger(buffer, state, 0l));
                     break;
                 case 5:
-                    flow.setDeliveryCount(state.getDecoder().readUnsignedInteger(buffer, state, 0));
+                    flow.setDeliveryCount(state.getDecoder().readUnsignedInteger(buffer, state, 0l));
                     break;
                 case 6:
-                    flow.setLinkCredit(state.getDecoder().readUnsignedInteger(buffer, state, 0));
+                    flow.setLinkCredit(state.getDecoder().readUnsignedInteger(buffer, state, 0l));
                     break;
                 case 7:
-                    flow.setAvailable(state.getDecoder().readUnsignedInteger(buffer, state, 0));
+                    flow.setAvailable(state.getDecoder().readUnsignedInteger(buffer, state, 0l));
                     break;
                 case 8:
                     flow.setDrain(state.getDecoder().readBoolean(buffer, state, false));

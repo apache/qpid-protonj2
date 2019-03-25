@@ -67,6 +67,8 @@ public interface Decoder {
 
     UnsignedShort readUnsignedShort(ProtonBuffer buffer, DecoderState state) throws IOException;
 
+    short readUnsignedShort(ProtonBuffer buffer, DecoderState state, short defaultValue) throws IOException;
+
     int readUnsignedShort(ProtonBuffer buffer, DecoderState state, int defaultValue) throws IOException;
 
     Integer readInteger(ProtonBuffer buffer, DecoderState state) throws IOException;
@@ -74,6 +76,8 @@ public interface Decoder {
     int readInteger(ProtonBuffer buffer, DecoderState state, int defaultValue) throws IOException;
 
     UnsignedInteger readUnsignedInteger(ProtonBuffer buffer, DecoderState state) throws IOException;
+
+    int readUnsignedInteger(ProtonBuffer buffer, DecoderState state, int defaultValue) throws IOException;
 
     long readUnsignedInteger(ProtonBuffer buffer, DecoderState state, long defaultValue) throws IOException;
 
@@ -83,10 +87,6 @@ public interface Decoder {
 
     UnsignedLong readUnsignedLong(ProtonBuffer buffer, DecoderState state) throws IOException;
 
-    // TODO - What do we do if the value is negative because it was to big?
-    //        * Just force the user to deal with it
-    //        * Omit this and require UnsignedLong
-    //        * Some other option
     long readUnsignedLong(ProtonBuffer buffer, DecoderState state, long defaultValue) throws IOException;
 
     Float readFloat(ProtonBuffer buffer, DecoderState state) throws IOException;

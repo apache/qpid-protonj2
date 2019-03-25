@@ -34,16 +34,27 @@ public class UnsignedLongTypeEncoder extends AbstractPrimitiveTypeEncoder<Unsign
 
     @Override
     public void writeType(ProtonBuffer buffer, EncoderState state, UnsignedLong value) {
-        long longValue = value.longValue();
+        writeType(buffer, state, value.longValue());
+    }
 
-        if (longValue == 0) {
+    public void writeType(ProtonBuffer buffer, EncoderState state, long value) {
+        if (value == 0) {
             buffer.writeByte(EncodingCodes.ULONG0);
-        } else if (longValue > 0 && longValue <= 255) {
+        } else if (value > 0 && value <= 255) {
             buffer.writeByte(EncodingCodes.SMALLULONG);
-            buffer.writeByte((int) longValue);
+            buffer.writeByte((int) value);
         } else {
             buffer.writeByte(EncodingCodes.ULONG);
-            buffer.writeLong(longValue);
+            buffer.writeLong(value);
+        }
+    }
+
+    public void writeType(ProtonBuffer buffer, EncoderState state, byte value) {
+        if (value == 0) {
+            buffer.writeByte(EncodingCodes.ULONG0);
+        } else {
+            buffer.writeByte(EncodingCodes.SMALLULONG);
+            buffer.writeByte(value);
         }
     }
 

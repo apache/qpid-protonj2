@@ -47,6 +47,27 @@ public class UnsignedIntegerTypeEncoder extends AbstractPrimitiveTypeEncoder<Uns
         }
     }
 
+    public void writeType(ProtonBuffer buffer, EncoderState state, byte value) {
+        if (value == 0) {
+            buffer.writeByte(EncodingCodes.UINT0);
+        } else {
+            buffer.writeByte(EncodingCodes.SMALLUINT);
+            buffer.writeByte(value);
+        }
+    }
+
+    public void writeType(ProtonBuffer buffer, EncoderState state, int value) {
+        if (value == 0) {
+            buffer.writeByte(EncodingCodes.UINT0);
+        } else if (value > 0 && value <= 255) {
+            buffer.writeByte(EncodingCodes.SMALLUINT);
+            buffer.writeByte(value);
+        } else {
+            buffer.writeByte(EncodingCodes.UINT);
+            buffer.writeInt(value);
+        }
+    }
+
     public void writeType(ProtonBuffer buffer, EncoderState state, long value) {
         if (value < 0L || value >= (1L << 32)) {
             throw new IllegalArgumentException("Value \"" + value + "\" lies outside the range [" + 0L + "-" + (1L << 32) + ").");
