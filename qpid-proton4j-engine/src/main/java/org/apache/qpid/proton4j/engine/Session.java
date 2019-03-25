@@ -91,6 +91,21 @@ public interface Session {
     //----- Configure the local end of the Session
 
     /**
+     * Sets the maximum number of bytes this session can be sent from the remote.
+     *
+     * @param incomingCapacity
+     *      maximum number of incoming bytes this session will allow
+     *
+     * @return this Session
+     */
+    Session getIncomingCapacity(int incomingCapacity);
+
+    /**
+     * @return the current incoming capacity of this session.
+     */
+    int getIncomingCapacity();
+
+    /**
      * Sets the local session properties, to be conveyed to the peer via the Begin frame when
      * attaching the session to the session.
      *

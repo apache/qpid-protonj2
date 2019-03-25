@@ -60,7 +60,7 @@ public class ProtonSession implements Session, Performative.PerformativeHandler<
 
     private int localChannel;
 
-    private final ProtonSessionWindow sessionWindow = new ProtonSessionWindow();
+    private final ProtonSessionWindow sessionWindow = new ProtonSessionWindow(this);
 
     private final Map<String, ProtonSender> senderByNameMap = new HashMap<>();
     private final Map<String, ProtonReceiver> receiverByNameMap = new HashMap<>();
@@ -167,6 +167,19 @@ public class ProtonSession implements Session, Performative.PerformativeHandler<
         return this;
     }
 
+    //----- View and configure this end of the session endpoint
+
+    @Override
+    public Session getIncomingCapacity(int incomingCapacity) {
+        sessionWindow.setIncomingCapaity(incomingCapacity);
+        return this;
+    }
+
+    @Override
+    public int getIncomingCapacity() {
+        return sessionWindow.getIncomingCapacity();
+    }
+
     @Override
     public ProtonSession setProperties(Map<Symbol, Object> properties) {
         checkNotOpened("Cannot set Properties on already opened Session");
@@ -232,6 +245,8 @@ public class ProtonSession implements Session, Performative.PerformativeHandler<
 
         return null;
     }
+
+    //----- View of the remote end of this endpoint
 
     @Override
     public Symbol[] getRemoteOfferedCapabilities() {

@@ -25,15 +25,20 @@ import org.apache.qpid.proton4j.amqp.transport.Flow;
 @SuppressWarnings("unused")
 public class ProtonSessionWindow {
 
-    private static final long DEFAULT_WINDOW_SIZE = 2147483647; // biggest legal value
+    private static final long DEFAULT_WINDOW_SIZE = Integer.MAX_VALUE; // biggest legal value
+
+    private final ProtonSession session;
 
     // This is used for the delivery-id actually stamped in each transfer frame of a given message delivery.
     private long outgoingDeliveryId = 0;
 
+    // User configured incoming capacity for the session used to compute the incoming window
+    private int incomingCapacity = 0;
+
     // These are used for the session windows communicated via Begin/Flow frames
     // and the conceptual transfer-id relating to updating them.
     private long incomingWindow = 0;
-    private long outgoingWindow = 0;
+    private long outgoingWindow = DEFAULT_WINDOW_SIZE;
     private long nextOutgoingId = 1;
     private long nextIncomingId = -1;
 
@@ -42,6 +47,25 @@ public class ProtonSessionWindow {
     private long remoteOutgoingWindow;
     private long remoteNextIncomingId = nextOutgoingId;
     private long remoteNextOutgoingId;
+
+    private int incomingBytes;
+    private int outgoingBytes;
+
+    // Obtained from the connection after the session is opened as that point in time
+    // marks when this value is set in stone.
+    private int maxFrameSize;
+
+    public ProtonSessionWindow(ProtonSession session) {
+        this.session = session;
+    }
+
+    public void setIncomingCapaity(int incomingCapacity) {
+        this.incomingCapacity = incomingCapacity;
+    }
+
+    public int getIncomingCapacity() {
+        return incomingCapacity;
+    }
 
     /**
      * Initialize the session level window values on the outbound Begin
@@ -52,8 +76,10 @@ public class ProtonSessionWindow {
      * @return the configured performative
      */
     Begin configureOutbound(Begin begin) {
+        long maxFrameSize = session.getConnection().getMaxFrameSize();
+
         begin.setNextOutgoingId(nextOutgoingId);
-        begin.setIncomingWindow(incomingWindow);
+        begin.setIncomingWindow(updateIncomingWindow());
         begin.setOutgoingWindow(outgoingWindow);
 
         return begin;
@@ -90,5 +116,18 @@ public class ProtonSessionWindow {
         remoteOutgoingWindow = flow.getOutgoingWindow();
 
         return flow;
+    }
+
+    long updateIncomingWindow() {
+        // TODO - long vs int types for these unsigned value
+        long maxFrameSize = session.getConnection().getMaxFrameSize();
+        if (incomingCapacity <= 0 || maxFrameSize <= 0) {
+            incomingWindow = DEFAULT_WINDOW_SIZE;
+        } else {
+            // TODO - incomingWindow = Integer.divideUnsigned(incomingCapacity - incomingBytes, maxFrameSize);
+            incomingWindow = (incomingCapacity - incomingBytes) / maxFrameSize;
+        }
+
+        return incomingWindow;
     }
 }

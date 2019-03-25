@@ -65,8 +65,8 @@ public class ProtonConnection implements Connection, AMQPHeader.HeaderHandler<Pr
     private final Open localOpen = new Open();
     private Open remoteOpen;
 
-    private Map<Integer, ProtonSession> localSessions = new HashMap<Integer, ProtonSession>();
-    private Map<Integer, ProtonSession> remoteSessions = new HashMap<Integer, ProtonSession>();
+    private Map<Integer, ProtonSession> localSessions = new HashMap<>();
+    private Map<Integer, ProtonSession> remoteSessions = new HashMap<>();
 
     private final ProtonContext context = new ProtonContext();
 
@@ -176,6 +176,19 @@ public class ProtonConnection implements Connection, AMQPHeader.HeaderHandler<Pr
     @Override
     public String getHostname() {
         return localOpen.getHostname();
+    }
+
+
+    @Override
+    public Connection setMaxFrameSize(long maxFrameSize) {
+        checkNotOpened("Cannot set Hostname on already opened Connection");
+        localOpen.setMaxFrameSize(UnsignedInteger.valueOf(maxFrameSize));
+        return this;
+    }
+
+    @Override
+    public long getMaxFrameSize() {
+        return localOpen.getMaxFrameSize().longValue();
     }
 
     @Override

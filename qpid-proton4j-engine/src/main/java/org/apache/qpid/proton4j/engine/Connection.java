@@ -135,6 +135,27 @@ public interface Connection {
     int getChannelMax();
 
     /**
+     * Sets the maximum frame size allowed for this connection, which is the largest single frame
+     * that the remote can send to this {@link Connection} before it will close the connection with
+     * an error condition indicating the violation.
+     *
+     * The legal range for this value is defined as (512 - 2^32-1) bytes.
+     *
+     * @param maxFrameSize
+     *      The maximum number of bytes allowed for a single
+     *
+     * @return this connection.
+     *
+     * @throws IllegalStateException if the Connection has already been opened.
+     */
+    Connection setMaxFrameSize(long maxFrameSize);
+
+    /**
+     * @return the currently configured max frame size this connection will accept.
+     */
+    long getMaxFrameSize();
+
+    /**
      * Set the idle timeout value for this Connection.
      *
      * @param idleTimeout
