@@ -19,6 +19,8 @@ package org.apache.qpid.proton4j.engine.impl;
 import org.apache.qpid.proton4j.amqp.transport.Attach;
 import org.apache.qpid.proton4j.amqp.transport.Flow;
 import org.apache.qpid.proton4j.amqp.transport.Role;
+import org.apache.qpid.proton4j.amqp.transport.Transfer;
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.engine.LinkCreditState;
 import org.apache.qpid.proton4j.engine.Session;
 
@@ -91,8 +93,29 @@ public abstract class ProtonLinkCreditState implements LinkCreditState {
      * @return the passed object for chaining.
      */
     Flow handleFlow(Flow flow) {
+        // Let session have first crack at it
+        sessionWindow.handleFlow(flow);
+
+        // Now perform any link level updates
         remoteDeliveryCount = flow.getDeliveryCount();
         remoteLinkCredit = flow.getLinkCredit();
         return flow;
+    }
+
+    /**
+     * Handle incoming {@link Transfer} performatives and update link credit accordingly.
+     *
+     * @param transfer
+     *      The {@link Transfer} instance to be processed.
+     * @param payload
+     *      The buffer containing the payload of the incoming {@link Transfer}
+     *
+     * @return the passed object for chaining.
+     */
+    Transfer handleTransfer(Transfer transfer, ProtonBuffer payload) {
+        // Let session have a crack at it now.
+        sessionWindow.handleTransfer(transfer, payload);
+
+        return transfer;
     }
 }

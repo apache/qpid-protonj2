@@ -35,6 +35,6 @@ public class ProtonSenderCreditState extends ProtonLinkCreditState {
 
     @Override
     ProtonReceiverCreditState snapshot() {
-        return null;
+        return null;  // TODO
     }
 }

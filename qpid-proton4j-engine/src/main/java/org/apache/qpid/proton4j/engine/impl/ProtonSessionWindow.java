@@ -18,6 +18,8 @@ package org.apache.qpid.proton4j.engine.impl;
 
 import org.apache.qpid.proton4j.amqp.transport.Begin;
 import org.apache.qpid.proton4j.amqp.transport.Flow;
+import org.apache.qpid.proton4j.amqp.transport.Transfer;
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 
 /**
  * Holds Session level credit window information.
@@ -104,7 +106,7 @@ public class ProtonSessionWindow {
      * @param flow
      *      the incoming {@link Flow} performative to process.
      */
-    Flow processFlow(Flow flow) {
+    Flow handleFlow(Flow flow) {
         if (flow.hasNextIncomingId()) {
             remoteNextIncomingId = flow.getNextIncomingId();
             remoteIncomingWindow = (flow.getNextIncomingId() + flow.getIncomingWindow()) - nextOutgoingId;
@@ -116,6 +118,22 @@ public class ProtonSessionWindow {
         remoteOutgoingWindow = flow.getOutgoingWindow();
 
         return flow;
+    }
+
+    /**
+     * Update the session window state based on an incoming {@link Transfer} performative
+     *
+     * @param transfer
+     *      the incoming {@link Transfer} performative to process.
+     */
+    Transfer handleTransfer(Transfer transfer, ProtonBuffer payload) {
+        if (payload != null && !transfer.getAborted()) {
+            incomingBytes += payload.getReadableBytes();
+        }
+
+        incomingWindow--;
+
+        return transfer;
     }
 
     long updateIncomingWindow() {
