@@ -43,4 +43,9 @@ public interface Delivery {
      */
     int getMessageFormat();
 
+    /**
+     * @return true if the delivery has been aborted.
+     */
+    boolean isAborted();
+
 }

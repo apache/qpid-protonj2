@@ -21,4 +21,11 @@ package org.apache.qpid.proton4j.engine;
  */
 public interface OutgoingDelivery extends Delivery {
 
+    /**
+     * Aborts the outgoing delivery if not already settled.
+     *
+     * @return this delivery.
+     */
+    OutgoingDelivery abort();
+
 }
