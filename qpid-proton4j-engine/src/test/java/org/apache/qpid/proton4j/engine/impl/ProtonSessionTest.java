@@ -220,13 +220,9 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
         AMQPTestDriver driver = new AMQPTestDriver(engine);
         engine.outputConsumer(driver);
 
-        ScriptWriter script = driver.createScriptWriter();
-
-        script.expectAMQPHeader().respondWithAMQPHeader();
+        int expectedMaxFrameSize = UnsignedInteger.MAX_VALUE.intValue();
         if (setMaxFrameSize) {
-            script.expectOpen().withMaxFrameSize(MAX_FRAME_SIZE).respond().withContainerId("driver");
-        } else {
-            script.expectOpen().withMaxFrameSize(UnsignedInteger.MAX_VALUE).respond().withContainerId("driver");
+            expectedMaxFrameSize = MAX_FRAME_SIZE;
         }
 
         int expectedIncomingWindow = Integer.MAX_VALUE;
@@ -234,6 +230,10 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
             expectedIncomingWindow = SESSION_INCOMING_CAPACITY / MAX_FRAME_SIZE;
         }
 
+        ScriptWriter script = driver.createScriptWriter();
+
+        script.expectAMQPHeader().respondWithAMQPHeader();
+        script.expectOpen().withMaxFrameSize(expectedMaxFrameSize).respond().withContainerId("driver");
         script.expectBegin().withHandleMax(nullValue())
                             .withNextOutgoingId(1)
                             .withIncomingWindow(expectedIncomingWindow)
