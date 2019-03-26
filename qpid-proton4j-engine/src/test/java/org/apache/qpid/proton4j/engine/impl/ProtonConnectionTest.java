@@ -116,46 +116,62 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
     }
 
     @Test
+    public void testConnectionOpenCarriesAllSetValues() throws IOException {
+        doTestConnectionOpenPopulatesOpenCorrectly(true, true, true, true, true);
+    }
+
+    @Test
     public void testConnectionOpenCarriesDefaultMaxFrameSize() throws IOException {
-        doTestConnectionOpenPopulatesOpenCorrectly(false, false, false, false);
+        doTestConnectionOpenPopulatesOpenCorrectly(false, false, false, false, false);
     }
 
     @Test
     public void testConnectionOpenCarriesSetMaxFrameSize() throws IOException {
-        doTestConnectionOpenPopulatesOpenCorrectly(true, false, false, false);
+        doTestConnectionOpenPopulatesOpenCorrectly(true, false, false, false, false);
     }
 
     @Test
     public void testConnectionOpenCarriesDefaultContainerId() throws IOException {
-        doTestConnectionOpenPopulatesOpenCorrectly(false, false, false, false);
+        doTestConnectionOpenPopulatesOpenCorrectly(false, false, false, false, false);
     }
 
     @Test
     public void testConnectionOpenCarriesSetContainerId() throws IOException {
-        doTestConnectionOpenPopulatesOpenCorrectly(false, true, false, false);
+        doTestConnectionOpenPopulatesOpenCorrectly(false, true, false, false, false);
     }
 
     @Test
     public void testConnectionOpenCarriesDefaultChannelMax() throws IOException {
-        doTestConnectionOpenPopulatesOpenCorrectly(false, false, false, false);
+        doTestConnectionOpenPopulatesOpenCorrectly(false, false, false, false, false);
     }
 
     @Test
     public void testConnectionOpenCarriesSetChannelMax() throws IOException {
-        doTestConnectionOpenPopulatesOpenCorrectly(false, false, true, false);
+        doTestConnectionOpenPopulatesOpenCorrectly(false, false, true, false, false);
     }
 
     @Test
     public void testConnectionOpenCarriesNoHostname() throws IOException {
-        doTestConnectionOpenPopulatesOpenCorrectly(false, false, false, false);
+        doTestConnectionOpenPopulatesOpenCorrectly(false, false, false, false, false);
     }
 
     @Test
     public void testConnectionOpenCarriesSetHostname() throws IOException {
-        doTestConnectionOpenPopulatesOpenCorrectly(false, false, false, true);
+        doTestConnectionOpenPopulatesOpenCorrectly(false, false, false, true, false);
     }
 
-    private void doTestConnectionOpenPopulatesOpenCorrectly(boolean setMaxFrameSize, boolean setContainerId, boolean setChannelMax, boolean setHostname) {
+    @Test
+    public void testConnectionOpenCarriesNoidleTimeout() throws IOException {
+        doTestConnectionOpenPopulatesOpenCorrectly(false, false, false, false, false);
+    }
+
+    @Test
+    public void testConnectionOpenCarriesSetIdleTimeout() throws IOException {
+        doTestConnectionOpenPopulatesOpenCorrectly(false, false, false, false, true);
+    }
+
+    private void doTestConnectionOpenPopulatesOpenCorrectly(boolean setMaxFrameSize, boolean setContainerId, boolean setChannelMax,
+                                                            boolean setHostname, boolean setIdleTimeout) {
         final int MAX_FRAME_SIZE = 32767;
 
         int expectedMaxFrameSize = UnsignedInteger.MAX_VALUE.intValue();
@@ -174,6 +190,10 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
         if (setHostname) {
             expectedHostname = "localhost";
         }
+        UnsignedInteger expectedIdleTimeout = null;
+        if (setIdleTimeout) {
+            expectedIdleTimeout = UnsignedInteger.valueOf(60000);
+        }
 
         ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
         engine.errorHandler(result -> failure = result);
@@ -189,7 +209,7 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
                            .withChannelMax(expectedChannelMax)
                            .withContainerId(expectedContainerId)
                            .withHostname(expectedHostname)
-                           .withIdleTimeOut(nullValue())
+                           .withIdleTimeOut(expectedIdleTimeout)
                            .withIncomingLocales(nullValue())
                            .withOutgoingLocales(nullValue())
                            .withDesiredCapabilities(nullValue())
@@ -211,6 +231,9 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
         }
         if (setHostname) {
             connection.setHostname(expectedHostname);
+        }
+        if (setIdleTimeout) {
+            connection.setIdleTimeout(expectedIdleTimeout.intValue());
         }
 
         connection.open();
