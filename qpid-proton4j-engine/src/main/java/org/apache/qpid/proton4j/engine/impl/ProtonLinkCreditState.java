@@ -31,6 +31,8 @@ public abstract class ProtonLinkCreditState implements LinkCreditState {
 
     protected final ProtonSessionWindow sessionWindow;
 
+    private int linkCredit;
+
     protected long remoteDeliveryCount;
     protected long remoteLinkCredit;
 
@@ -44,7 +46,7 @@ public abstract class ProtonLinkCreditState implements LinkCreditState {
 
     @Override
     public int getCredit() {
-        return 0;
+        return linkCredit;
     }
 
     /**

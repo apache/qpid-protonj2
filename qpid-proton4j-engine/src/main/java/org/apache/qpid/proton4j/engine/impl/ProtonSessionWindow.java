@@ -148,4 +148,46 @@ public class ProtonSessionWindow {
 
         return incomingWindow;
     }
+
+    //----- Access to internal state useful for tests
+
+    public long getIncomingBytes() {
+        return incomingBytes;
+    }
+
+    public long getOutgoingBytes() {
+        return outgoingBytes;
+    }
+
+    public long getNextIncomingId() {
+        return nextIncomingId;
+    }
+
+    public long getNextOutgoingId() {
+        return nextOutgoingId;
+    }
+
+    public long getIncomingWindow() {
+        return incomingWindow;
+    }
+
+    public long getOutgoingWindow() {
+        return outgoingWindow;
+    }
+
+    public long getRemoteNextIncomingId() {
+        return remoteNextIncomingId;
+    }
+
+    public long getRemoteNextOutgoingId() {
+        return remoteNextOutgoingId;
+    }
+
+    public long getRemoteIncomingWindow() {
+        return remoteIncomingWindow;
+    }
+
+    public long getRemoteOutgoingWindow() {
+        return remoteOutgoingWindow;
+    }
 }
