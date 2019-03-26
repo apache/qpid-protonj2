@@ -25,6 +25,7 @@ import java.io.IOException;
 
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedInteger;
+import org.apache.qpid.proton4j.amqp.UnsignedShort;
 import org.apache.qpid.proton4j.amqp.transport.Open;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
@@ -44,6 +45,7 @@ public class OpenTypeCodecTest extends CodecTestSupport {
 
         input.setContainerId("test");
         input.setHostname("localhost");
+        input.setChannelMax(UnsignedShort.valueOf((short) 512));
         input.setMaxFrameSize(UnsignedInteger.ONE);
         input.setIdleTimeOut(UnsignedInteger.ZERO);
         input.setOfferedCapabilities(offeredCapabilities);
@@ -55,6 +57,7 @@ public class OpenTypeCodecTest extends CodecTestSupport {
 
         assertEquals("test", result.getContainerId());
         assertEquals("localhost", result.getHostname());
+        assertEquals(UnsignedShort.valueOf((short) 512), result.getChannelMax());
         assertEquals(UnsignedInteger.ONE, result.getMaxFrameSize());
         assertEquals(UnsignedInteger.ZERO, result.getIdleTimeOut());
         assertArrayEquals(offeredCapabilities, result.getOfferedCapabilities());

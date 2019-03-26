@@ -152,8 +152,8 @@ public class ProtonByteBuffer extends ProtonAbstractByteBuffer {
 
     @Override
     public short getShort(int index) {
-        return (short) (array[index + 0] & 0xFF << 8 |
-                        array[index + 1] & 0xFF << 0);
+        return (short) ((array[index + 0] & 0xFF) << 8 |
+                        (array[index + 1] & 0xFF) << 0);
     }
 
     @Override

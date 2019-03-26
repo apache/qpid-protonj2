@@ -31,7 +31,6 @@ import org.apache.qpid.proton4j.amqp.driver.ScriptWriter;
 import org.apache.qpid.proton4j.engine.Connection;
 import org.apache.qpid.proton4j.engine.ConnectionState;
 import org.apache.qpid.proton4j.engine.exceptions.EngineStateException;
-import org.junit.Ignore;
 import org.junit.Test;
 
 /**
@@ -141,8 +140,6 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
         doTestConnectionOpenPopulatesOpenCorrectly(false, false, false, false);
     }
 
-    // TODO - Fix test
-    @Ignore("Something odd going on and value arrives as zero")
     @Test
     public void testConnectionOpenCarriesSetChannelMax() throws IOException {
         doTestConnectionOpenPopulatesOpenCorrectly(false, false, true, false);
