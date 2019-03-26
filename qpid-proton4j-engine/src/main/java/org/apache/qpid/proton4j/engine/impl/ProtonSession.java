@@ -170,7 +170,7 @@ public class ProtonSession implements Session, Performative.PerformativeHandler<
     //----- View and configure this end of the session endpoint
 
     @Override
-    public Session getIncomingCapacity(int incomingCapacity) {
+    public Session setIncomingCapacity(int incomingCapacity) {
         sessionWindow.setIncomingCapaity(incomingCapacity);
         return this;
     }

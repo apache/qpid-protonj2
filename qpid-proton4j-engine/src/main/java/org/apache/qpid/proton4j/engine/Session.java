@@ -71,7 +71,11 @@ public interface Session {
      */
     Connection getConnection();
 
+    //----- Session sender and receiver factory methods
+
     /**
+     * Create a new {@link Sender} link using the provided name.
+     *
      * @param name
      *      The name to assign to the created {@link Sender}
      *
@@ -80,6 +84,7 @@ public interface Session {
     Sender sender(String name);
 
     /**
+     * Create a new {@link Receiver} link using the provided name
      *
      * @param name
      *      The name to assign to the created {@link Receiver}
@@ -98,7 +103,7 @@ public interface Session {
      *
      * @return this Session
      */
-    Session getIncomingCapacity(int incomingCapacity);
+    Session setIncomingCapacity(int incomingCapacity);
 
     /**
      * @return the current incoming capacity of this session.

@@ -16,6 +16,7 @@
  */
 package org.apache.qpid.proton4j.engine.impl;
 
+import static org.hamcrest.CoreMatchers.nullValue;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -24,6 +25,7 @@ import java.io.IOException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
+import org.apache.qpid.proton4j.amqp.UnsignedInteger;
 import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
 import org.apache.qpid.proton4j.amqp.driver.ScriptWriter;
 import org.apache.qpid.proton4j.engine.Connection;
@@ -186,6 +188,75 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
         assertTrue("Connection remote opened event did not fire", connectionRemotelyOpened.get());
         assertTrue("Session remote opened event did not fire", sessionRemotelyOpened.get());
         assertNotNull("Connection did not create a local session for remote open", remoteSession.get());
+
+        driver.assertScriptComplete();
+
+        assertNull(failure);
+    }
+
+    @Test
+    public void testSessionPopulatesBeginUsingDefaults() throws IOException {
+        doTestSessionOpenPopulatesBegin(false, false);
+    }
+
+    @Test
+    public void testSessionPopulatesBeginWithConfiguredMaxFrameSizeButNoIncomingCapacity() throws IOException {
+        doTestSessionOpenPopulatesBegin(true, false);
+    }
+
+    @Test
+    public void testSessionPopulatesBeginWithConfiguredMaxFrameSizeAndIncomingCapacity() throws IOException {
+        doTestSessionOpenPopulatesBegin(true, true);
+    }
+
+    private void doTestSessionOpenPopulatesBegin(boolean setMaxFrameSize, boolean setIncomingCapacity) {
+        final int MAX_FRAME_SIZE = 32767;
+        final int SESSION_INCOMING_CAPACITY = Integer.MAX_VALUE;
+
+        ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
+        engine.errorHandler(result -> failure = result);
+
+        // Create the test driver and link it to the engine for output handling.
+        AMQPTestDriver driver = new AMQPTestDriver(engine);
+        engine.outputConsumer(driver);
+
+        ScriptWriter script = driver.createScriptWriter();
+
+        script.expectAMQPHeader().respondWithAMQPHeader();
+        if (setMaxFrameSize) {
+            script.expectOpen().withMaxFrameSize(MAX_FRAME_SIZE).respond().withContainerId("driver");
+        } else {
+            script.expectOpen().withMaxFrameSize(UnsignedInteger.MAX_VALUE).respond().withContainerId("driver");
+        }
+
+        int expectedIncomingWindow = Integer.MAX_VALUE;
+        if (setIncomingCapacity) {
+            expectedIncomingWindow = SESSION_INCOMING_CAPACITY / MAX_FRAME_SIZE;
+        }
+
+        script.expectBegin().withHandleMax(nullValue())
+                            .withNextOutgoingId(1)
+                            .withIncomingWindow(expectedIncomingWindow)
+                            .withOutgoingWindow(Integer.MAX_VALUE)
+                            .withHandleMax(nullValue())
+                            .withOfferedCapabilities(nullValue())
+                            .withDesiredCapabilities(nullValue())
+                            .withProperties(nullValue())
+                            .respond();
+        script.expectEnd().respond();
+
+        ProtonConnection connection = engine.start();
+        if (setMaxFrameSize) {
+            connection.setMaxFrameSize(MAX_FRAME_SIZE);
+        }
+        connection.open();
+
+        ProtonSession session = connection.session();
+        if (setIncomingCapacity) {
+            session.setIncomingCapacity(SESSION_INCOMING_CAPACITY);
+        }
+        session.open();
+        session.close();
 
         driver.assertScriptComplete();
 

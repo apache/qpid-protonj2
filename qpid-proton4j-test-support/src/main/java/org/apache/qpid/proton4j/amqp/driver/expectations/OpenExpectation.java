@@ -95,12 +95,24 @@ public class OpenExpectation extends AbstractExpectation<Open> {
         return withHostname(equalTo(hostname));
     }
 
+    public OpenExpectation withMaxFrameSize(int maxFrameSize) {
+        return withMaxFrameSize(equalTo(UnsignedInteger.valueOf(maxFrameSize)));
+    }
+
     public OpenExpectation withMaxFrameSize(UnsignedInteger maxFrameSize) {
         return withMaxFrameSize(equalTo(maxFrameSize));
     }
 
+    public OpenExpectation withChannelMax(short channelMax) {
+        return withChannelMax(equalTo(UnsignedShort.valueOf(channelMax)));
+    }
+
     public OpenExpectation withChannelMax(UnsignedShort channelMax) {
         return withChannelMax(equalTo(channelMax));
+    }
+
+    public OpenExpectation withIdleTimeOut(int idleTimeout) {
+        return withIdleTimeOut(equalTo(UnsignedInteger.valueOf(idleTimeout)));
     }
 
     public OpenExpectation withIdleTimeOut(UnsignedInteger idleTimeout) {
