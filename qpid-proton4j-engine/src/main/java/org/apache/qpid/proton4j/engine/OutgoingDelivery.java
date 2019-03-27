@@ -22,6 +22,33 @@ package org.apache.qpid.proton4j.engine;
 public interface OutgoingDelivery extends Delivery {
 
     /**
+     * @return the link that this {@link Delivery} is bound to.
+     */
+    @Override
+    Sender getLink();
+
+    /**
+     * Sets the message-format for this Delivery, representing the 32bit value using an int.
+     *
+     * The default value is 0 as per the message format defined in the core AMQP 1.0 specification.<p>
+     *
+     * See the following for more details:<br>
+     * <a href="http://docs.oasis-open.org/amqp/core/v1.0/os/amqp-core-transport-v1.0-os.html#type-transfer">
+     *          http://docs.oasis-open.org/amqp/core/v1.0/os/amqp-core-transport-v1.0-os.html#type-transfer</a><br>
+     * <a href="http://docs.oasis-open.org/amqp/core/v1.0/os/amqp-core-transport-v1.0-os.html#type-message-format">
+     *          http://docs.oasis-open.org/amqp/core/v1.0/os/amqp-core-transport-v1.0-os.html#type-message-format</a><br>
+     * <a href="http://docs.oasis-open.org/amqp/core/v1.0/os/amqp-core-messaging-v1.0-os.html#section-message-format">
+     *          http://docs.oasis-open.org/amqp/core/v1.0/os/amqp-core-messaging-v1.0-os.html#section-message-format</a><br>
+     * <a href="http://docs.oasis-open.org/amqp/core/v1.0/os/amqp-core-messaging-v1.0-os.html#definition-MESSAGE-FORMAT">
+     *          http://docs.oasis-open.org/amqp/core/v1.0/os/amqp-core-messaging-v1.0-os.html#definition-MESSAGE-FORMAT</a><br>
+     *
+     * @param messageFormat the message format
+     *
+     * @return this outgoing delivery instance.
+     */
+    public OutgoingDelivery setMessageFormat(int messageFormat);
+
+    /**
      * Aborts the outgoing delivery if not already settled.
      *
      * @return this delivery.

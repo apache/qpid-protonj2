@@ -16,9 +16,43 @@
  */
 package org.apache.qpid.proton4j.engine;
 
+import org.apache.qpid.proton4j.amqp.transport.DeliveryState;
+
 /**
  * API for an incoming Delivery.
  */
 public interface IncomingDelivery extends Delivery {
+
+    /**
+     * @return the link that this {@link Delivery} is bound to.
+     */
+    @Override
+    Receiver getLink();
+
+    /**
+     * Returns the number of bytes currently available for reading form this delivery, which may not be complete yet.
+     *
+     * Note that this value will change as bytes are received, and is in general not equal to the total length of
+     * a delivery, except the point where {@link #isPartial()} returns false and no content has yet been received by
+     * the application.
+     *
+     * @return the number of bytes currently available to read from this delivery.
+     */
+    int available();
+
+    /**
+     * Configures a default DeliveryState to be used if a received delivery is settled/freed
+     * without any disposition state having been previously applied.
+     *
+     * @param state the default delivery state
+     *
+     * @return this delivery instance.
+     */
+    public IncomingDelivery setDefaultDeliveryState(DeliveryState state);
+
+    /**
+     * @return the default delivery state for this delivery
+     */
+    public DeliveryState getDefaultDeliveryState();
 
 }
