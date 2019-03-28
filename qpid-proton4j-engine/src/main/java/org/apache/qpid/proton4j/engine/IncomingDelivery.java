@@ -16,7 +16,10 @@
  */
 package org.apache.qpid.proton4j.engine;
 
+import java.nio.ByteBuffer;
+
 import org.apache.qpid.proton4j.amqp.transport.DeliveryState;
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 
 /**
  * API for an incoming Delivery.
@@ -39,6 +42,16 @@ public interface IncomingDelivery extends Delivery {
      * @return the number of bytes currently available to read from this delivery.
      */
     int available();
+
+    // TODO - Pick names for these, receive, readBytes, take etc the old recv names weren't the greatest
+
+    ProtonBuffer readAll();
+
+    IncomingDelivery readBytes(ProtonBuffer buffer);
+
+    IncomingDelivery readBytes(ByteBuffer buffer);
+
+    IncomingDelivery readBytes(byte[] array, int offset, int length);
 
     /**
      * Configures a default DeliveryState to be used if a received delivery is settled/freed

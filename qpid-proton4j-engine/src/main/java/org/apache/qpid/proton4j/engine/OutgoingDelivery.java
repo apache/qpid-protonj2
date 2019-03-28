@@ -16,6 +16,10 @@
  */
 package org.apache.qpid.proton4j.engine;
 
+import java.nio.ByteBuffer;
+
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+
 /**
  * API for an outgoing Delivery.
  */
@@ -26,6 +30,36 @@ public interface OutgoingDelivery extends Delivery {
      */
     @Override
     Sender getLink();
+
+    // TODO - names of these send methods, send, sendBytes, write, writeBytes ?
+
+    /**
+     * @param buffer
+     *      The buffer whose contents should be sent.
+     *
+     * @throws {@link IllegalStateException} if the current credit prohibits sending the requested amount of bytes
+     */
+    void writeBytes(ProtonBuffer buffer);
+
+    /**
+     * @param buffer
+     *      The buffer whose contents should be sent.
+     *
+     * @throws {@link IllegalStateException} if the current credit prohibits sending the requested amount of bytes
+     */
+    void writeBytes(ByteBuffer buffer);
+
+    /**
+     * @param array
+     *      The array whose contents should be sent
+     * @param offset
+     *      The offset into the array to start sending from
+     * @param length
+     *      The number of bytes in the array that should be sent
+     *
+     * @throws {@link IllegalStateException} if the current credit prohibits sending the requested amount of bytes
+     */
+    void writeBytes(byte[] array, int offset, int length);
 
     /**
      * Sets the message-format for this Delivery, representing the 32bit value using an int.
