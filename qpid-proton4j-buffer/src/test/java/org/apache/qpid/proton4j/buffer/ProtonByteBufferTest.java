@@ -865,10 +865,22 @@ public class ProtonByteBufferTest {
         buffer.writeShort((short) 2);
         buffer.writeShort((short) 20);
         buffer.writeShort((short) 200);
+        buffer.writeShort((short) 256);
+        buffer.writeShort((short) 512);
+        buffer.writeShort((short) 1025);
+        buffer.writeShort((short) 32767);
+        buffer.writeShort((short) -1);
+        buffer.writeShort((short) -8757);
 
         assertEquals(2, buffer.readShort());
         assertEquals(20, buffer.readShort());
         assertEquals(200, buffer.readShort());
+        assertEquals(256, buffer.readShort());
+        assertEquals(512, buffer.readShort());
+        assertEquals(1025, buffer.readShort());
+        assertEquals(32767, buffer.readShort());
+        assertEquals(-1, buffer.readShort());
+        assertEquals(-8757, buffer.readShort());
 
         try {
             buffer.readShort();
@@ -880,13 +892,25 @@ public class ProtonByteBufferTest {
     public void testReadInt() {
         ProtonBuffer buffer = new ProtonByteBuffer();
 
-        buffer.writeInt(2);
-        buffer.writeInt(20);
-        buffer.writeInt(200);
+        buffer.writeInt((short) 2);
+        buffer.writeInt((short) 20);
+        buffer.writeInt((short) 200);
+        buffer.writeInt((short) 256);
+        buffer.writeInt((short) 512);
+        buffer.writeInt((short) 1025);
+        buffer.writeInt((short) 32767);
+        buffer.writeInt((short) -1);
+        buffer.writeInt((short) -8757);
 
         assertEquals(2, buffer.readInt());
         assertEquals(20, buffer.readInt());
         assertEquals(200, buffer.readInt());
+        assertEquals(256, buffer.readInt());
+        assertEquals(512, buffer.readInt());
+        assertEquals(1025, buffer.readInt());
+        assertEquals(32767, buffer.readInt());
+        assertEquals(-1, buffer.readInt());
+        assertEquals(-8757, buffer.readInt());
 
         try {
             buffer.readInt();
@@ -898,13 +922,25 @@ public class ProtonByteBufferTest {
     public void testReadLong() {
         ProtonBuffer buffer = new ProtonByteBuffer();
 
-        buffer.writeLong(2l);
-        buffer.writeLong(20l);
-        buffer.writeLong(200l);
+        buffer.writeLong((short) 2);
+        buffer.writeLong((short) 20);
+        buffer.writeLong((short) 200);
+        buffer.writeLong((short) 256);
+        buffer.writeLong((short) 512);
+        buffer.writeLong((short) 1025);
+        buffer.writeLong((short) 32767);
+        buffer.writeLong((short) -1);
+        buffer.writeLong((short) -8757);
 
-        assertEquals(2l, buffer.readLong());
-        assertEquals(20l, buffer.readLong());
-        assertEquals(200l, buffer.readLong());
+        assertEquals(2, buffer.readLong());
+        assertEquals(20, buffer.readLong());
+        assertEquals(200, buffer.readLong());
+        assertEquals(256, buffer.readLong());
+        assertEquals(512, buffer.readLong());
+        assertEquals(1025, buffer.readLong());
+        assertEquals(32767, buffer.readLong());
+        assertEquals(-1, buffer.readLong());
+        assertEquals(-8757, buffer.readLong());
 
         try {
             buffer.readLong();
