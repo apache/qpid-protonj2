@@ -21,6 +21,18 @@ package org.apache.qpid.proton4j.engine;
  */
 public interface Receiver extends Link<Receiver> {
 
+    // TODO How to manage credit
+    //
+    // Receiver flow(int credits);
+    // Receiver addCredit(int amount);
+    // Receiver reduceCredit(int amount);
+    // Receiver setCredit(int amount);
+
+    // Receiver drain(EventHandler<Receiver> handler);
+    // Receiver drain(int credits, EventHandler<Receiver> handler);
+
+    //----- Event handlers for the Receiver
+
     /**
      * Handler for incoming deliveries
      *

@@ -21,6 +21,18 @@ package org.apache.qpid.proton4j.engine;
  */
 public interface Sender extends Link<Sender> {
 
+    // OutgoingDelivery createDelivery();
+
+    // boolean isSendable();
+
+    // Sender drained(LinkCreditState state);
+
+    //----- Event handlers for the Sender
+
+    // Receiver sendableEventHandler(EventHandler<Sender> sender);
+
+    // Receiver drainRequestedEventHandler(EventHandler<LinkCreditState> handler);
+
     /**
      * Handler for updates for deliveries that have previously been sent.
      *
