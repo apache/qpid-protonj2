@@ -198,7 +198,6 @@ public class DataImpl implements Data {
     @Override
     public void putNull() {
         putElement(new NullElement(parent, current));
-
     }
 
     @Override
@@ -209,7 +208,6 @@ public class DataImpl implements Data {
     @Override
     public void putUnsignedByte(UnsignedByte ub) {
         putElement(new UnsignedByteElement(parent, current, ub));
-
     }
 
     @Override
@@ -462,7 +460,6 @@ public class DataImpl implements Data {
 
     @Override
     public UnsignedByte getUnsignedByte() {
-
         if (current instanceof UnsignedByteElement) {
             return ((UnsignedByteElement) current).getValue();
         }
