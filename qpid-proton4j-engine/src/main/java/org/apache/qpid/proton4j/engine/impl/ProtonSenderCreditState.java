@@ -60,6 +60,9 @@ public class ProtonSenderCreditState extends ProtonLinkCreditState {
 
     @Override
     ProtonSenderCreditState snapshot() {
-        return new ProtonSenderCreditState(parent, sessionWindow);  // TODO
+        ProtonSenderCreditState snapshot = new ProtonSenderCreditState(parent, sessionWindow);
+        snapshot.draining = draining;
+        copyInto(snapshot);
+        return snapshot;
     }
 }

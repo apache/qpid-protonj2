@@ -54,6 +54,8 @@ public class ProtonReceiverCreditState extends ProtonLinkCreditState {
 
     @Override
     ProtonReceiverCreditState snapshot() {
-        return new ProtonReceiverCreditState(parent, sessionWindow);  // TODO
+        ProtonReceiverCreditState snapshot = new ProtonReceiverCreditState(parent, sessionWindow);
+        copyInto(snapshot);
+        return snapshot;
     }
 }

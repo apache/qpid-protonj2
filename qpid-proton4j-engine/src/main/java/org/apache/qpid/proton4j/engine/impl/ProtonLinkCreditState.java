@@ -56,6 +56,17 @@ public abstract class ProtonLinkCreditState implements LinkCreditState {
     abstract ProtonLinkCreditState snapshot();
 
     /**
+     * Performs the superclass copy for any derived link credit state instances.
+     *
+     * @param newCopy
+     *      The new instance to copy this values data to.
+     */
+    protected void copyInto(ProtonLinkCreditState newCopy) {
+        newCopy.credit = credit;
+        newCopy.deliveryCount = deliveryCount;
+    }
+
+    /**
      * Initialize link state on an outbound Attach for this link
      *
      * @param attach
