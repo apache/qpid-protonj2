@@ -31,10 +31,8 @@ public abstract class ProtonLinkCreditState implements LinkCreditState {
 
     protected final ProtonSessionWindow sessionWindow;
 
-    private int linkCredit;
-
-    protected long remoteDeliveryCount;
-    protected long remoteLinkCredit;
+    protected int credit;
+    protected int deliveryCount;
 
     /**
      * @param sessionWindow
@@ -46,7 +44,7 @@ public abstract class ProtonLinkCreditState implements LinkCreditState {
 
     @Override
     public int getCredit() {
-        return linkCredit;
+        return credit;
     }
 
     /**
@@ -78,11 +76,9 @@ public abstract class ProtonLinkCreditState implements LinkCreditState {
      *
      * @param attach
      *
-     *
      * @return the attach for chaining.
      */
     Attach processInboud(Attach attach) {
-        remoteDeliveryCount = attach.getInitialDeliveryCount();
         return attach;
     }
 
@@ -94,15 +90,7 @@ public abstract class ProtonLinkCreditState implements LinkCreditState {
      *
      * @return the passed object for chaining.
      */
-    Flow handleFlow(Flow flow) {
-        // Let session have first crack at it
-        sessionWindow.handleFlow(flow);
-
-        // Now perform any link level updates
-        remoteDeliveryCount = flow.getDeliveryCount();
-        remoteLinkCredit = flow.getLinkCredit();
-        return flow;
-    }
+    abstract Flow handleFlow(Flow flow);
 
     /**
      * Handle incoming {@link Transfer} performatives and update link credit accordingly.
@@ -114,10 +102,6 @@ public abstract class ProtonLinkCreditState implements LinkCreditState {
      *
      * @return the passed object for chaining.
      */
-    Transfer handleTransfer(Transfer transfer, ProtonBuffer payload) {
-        // Let session have a crack at it now.
-        sessionWindow.handleTransfer(transfer, payload);
+    abstract Transfer handleTransfer(Transfer transfer, ProtonBuffer payload);
 
-        return transfer;
-    }
 }

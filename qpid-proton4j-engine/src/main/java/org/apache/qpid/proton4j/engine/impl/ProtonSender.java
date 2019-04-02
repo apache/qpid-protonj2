@@ -31,6 +31,8 @@ import org.apache.qpid.proton4j.engine.Session;
  */
 public class ProtonSender extends ProtonLink<Sender> implements Sender {
 
+    private final ProtonSenderCreditState creditState;
+
     /**
      * Create a new {@link Sender} instance with the given {@link Session} parent.
      *
@@ -40,7 +42,8 @@ public class ProtonSender extends ProtonLink<Sender> implements Sender {
      *      The name assigned to this {@link Sender} link.
      */
     public ProtonSender(ProtonSession session, String name) {
-        super(session, new ProtonSenderCreditState(session.getSessionWindow()), name);
+        super(session, name);
+        this.creditState = new ProtonSenderCreditState(this, session.getSessionWindow());
     }
 
     @Override
@@ -51,6 +54,11 @@ public class ProtonSender extends ProtonLink<Sender> implements Sender {
     @Override
     protected ProtonSender self() {
         return this;
+    }
+
+    @Override
+    protected ProtonSenderCreditState getCreditState() {
+        return creditState;
     }
 
     //----- Handle incoming performatives

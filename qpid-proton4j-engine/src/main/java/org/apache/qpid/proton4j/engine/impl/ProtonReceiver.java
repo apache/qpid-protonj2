@@ -30,6 +30,8 @@ import org.apache.qpid.proton4j.engine.Session;
  */
 public class ProtonReceiver extends ProtonLink<Receiver> implements Receiver {
 
+    private final ProtonReceiverCreditState creditState;
+
     /**
      * Create a new {@link Receiver} instance with the given {@link Session} parent.
      *
@@ -39,7 +41,8 @@ public class ProtonReceiver extends ProtonLink<Receiver> implements Receiver {
      *      The name assigned to this {@link Receiver} link.
      */
     public ProtonReceiver(ProtonSession session, String name) {
-        super(session, new ProtonSenderCreditState(session.getSessionWindow()), name);
+        super(session, name);
+        this.creditState = new ProtonReceiverCreditState(this, session.getSessionWindow());
     }
 
     @Override
@@ -50,6 +53,11 @@ public class ProtonReceiver extends ProtonLink<Receiver> implements Receiver {
     @Override
     protected ProtonReceiver self() {
         return this;
+    }
+
+    @Override
+    protected ProtonReceiverCreditState getCreditState() {
+        return creditState;
     }
 
     //----- Handle incoming performatives

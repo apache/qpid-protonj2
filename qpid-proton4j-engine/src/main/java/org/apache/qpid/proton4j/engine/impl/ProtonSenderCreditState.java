@@ -17,6 +17,9 @@
 package org.apache.qpid.proton4j.engine.impl;
 
 import org.apache.qpid.proton4j.amqp.transport.Flow;
+import org.apache.qpid.proton4j.amqp.transport.Transfer;
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import org.apache.qpid.proton4j.engine.LinkState;
 import org.apache.qpid.proton4j.engine.Sender;
 
 /**
@@ -24,17 +27,39 @@ import org.apache.qpid.proton4j.engine.Sender;
  */
 public class ProtonSenderCreditState extends ProtonLinkCreditState {
 
-    public ProtonSenderCreditState(ProtonSessionWindow sessionWindow) {
+    private final ProtonSender parent;
+
+    private boolean draining;
+
+    public ProtonSenderCreditState(ProtonSender parent, ProtonSessionWindow sessionWindow) {
         super(sessionWindow);
+
+        this.parent = parent;
+    }
+
+    public boolean isDraining() {
+        return draining;
     }
 
     @Override
     Flow handleFlow(Flow flow) {
-        return super.handleFlow(flow);
+        credit = (int) (flow.getDeliveryCount() + flow.getLinkCredit() - deliveryCount);
+        draining = flow.getDrain();
+
+        if (parent.getLocalState() == LinkState.ACTIVE) {
+            // TODO - Signal for sendable, draining etc
+        }
+
+        return flow;
     }
 
     @Override
-    ProtonReceiverCreditState snapshot() {
-        return null;  // TODO
+    Transfer handleTransfer(Transfer transfer, ProtonBuffer payload) {
+        throw new IllegalStateException("Cannot receive a Transfer at the Sender end.");
+    }
+
+    @Override
+    ProtonSenderCreditState snapshot() {
+        return new ProtonSenderCreditState(parent, sessionWindow);  // TODO
     }
 }

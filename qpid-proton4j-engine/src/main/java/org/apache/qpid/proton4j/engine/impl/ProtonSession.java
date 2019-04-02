@@ -401,11 +401,16 @@ public class ProtonSession implements Session, Performative.PerformativeHandler<
                 getEngine().engineFailed(new ProtocolViolationException("Received uncorrelated handle on Flow from remote: " + channel));
             }
 
+            // Session level flow processing.
+            sessionWindow.handleFlow(flow);
+
             // Link will update session window during its flow processing.
             link.handleFlow(flow, payload, channel, context);
         } else {
             // Session level flow processing.
             sessionWindow.handleFlow(flow);
+
+            // TODO - Echo
         }
     }
 
@@ -415,6 +420,8 @@ public class ProtonSession implements Session, Performative.PerformativeHandler<
         if (link == null) {
             getEngine().engineFailed(new ProtocolViolationException("Received uncorrelated handle on Transfer from remote: " + channel));
         }
+
+        sessionWindow.handleTransfer(transfer, payload);
 
         link.handleTransfer(transfer, payload, channel, context);
     }

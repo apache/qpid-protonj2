@@ -17,23 +17,43 @@
 package org.apache.qpid.proton4j.engine.impl;
 
 import org.apache.qpid.proton4j.amqp.transport.Flow;
+import org.apache.qpid.proton4j.amqp.transport.Transfer;
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 
 /**
  * Credit state handler for {@link Receiver} links.
  */
 public class ProtonReceiverCreditState extends ProtonLinkCreditState {
 
-    public ProtonReceiverCreditState(ProtonSessionWindow sessionWindow) {
+    private final ProtonReceiver parent;
+
+    public ProtonReceiverCreditState(ProtonReceiver parent, ProtonSessionWindow sessionWindow) {
         super(sessionWindow);
+
+        this.parent = parent;
     }
 
     @Override
     Flow handleFlow(Flow flow) {
-        return super.handleFlow(flow);
+        if (flow.getDrain()) {
+            deliveryCount = (int) flow.getDeliveryCount();
+            credit = (int) flow.getLinkCredit();
+            if (credit != 0) {
+                throw new IllegalArgumentException("Receiver read flow with drain set but credit was not zero");
+            }
+
+            // TODO - Fire event to registered listener that link was drained.
+        }
+        return flow;
+    }
+
+    @Override
+    Transfer handleTransfer(Transfer transfer, ProtonBuffer payload) {
+        return null;
     }
 
     @Override
     ProtonReceiverCreditState snapshot() {
-        return null;  // TODO
+        return new ProtonReceiverCreditState(parent, sessionWindow);  // TODO
     }
 }
