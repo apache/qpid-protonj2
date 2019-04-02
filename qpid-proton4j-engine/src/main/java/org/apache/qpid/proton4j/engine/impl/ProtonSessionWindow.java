@@ -149,6 +149,21 @@ public class ProtonSessionWindow {
         return incomingWindow;
     }
 
+    void writeFlow(ProtonLink<?> link) {
+        Flow flow = new Flow();
+
+        flow.setNextIncomingId(nextIncomingId);
+        flow.setNextOutgoingId(nextOutgoingId);
+        flow.setIncomingWindow(incomingWindow);
+        flow.setOutgoingWindow(outgoingWindow);
+
+        if (link != null) {
+            flow.setLinkCredit(link.getCreditState().getCredit());
+            flow.setHandle(link.getHandle());
+            flow.setDeliveryCount(link.getCreditState().getDeliveryCount());
+        }
+    }
+
     //----- Access to internal state useful for tests
 
     public long getIncomingBytes() {

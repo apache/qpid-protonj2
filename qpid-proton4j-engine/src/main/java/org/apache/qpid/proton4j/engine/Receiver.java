@@ -23,7 +23,20 @@ public interface Receiver extends Link<Receiver> {
 
     // TODO How to manage credit
     //
-    // Receiver flow(int credits);
+
+    /**
+     * Sets the credit for the {@link Receiver} to the given amount.
+     *
+     * @param credit
+     *      the new credit amount to set.
+     *
+     * @return this {@link Receiver}
+     *
+     * @throw {@link IllegalArgumentException} if the credit amount is negative.
+     * @throw {@link IllegalStateException} if the Receiver is not open.
+     */
+    Receiver setCredit(int credit);
+
     // Receiver addCredit(int amount);
     // Receiver reduceCredit(int amount);
     // Receiver setCredit(int amount);

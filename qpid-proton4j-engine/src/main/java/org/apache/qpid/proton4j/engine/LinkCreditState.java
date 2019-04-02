@@ -28,4 +28,11 @@ public interface LinkCreditState {
      */
     int getCredit();
 
+    /**
+     * The current delivery count value for this link
+     *
+     * @return the current delivery count value for the link.
+     */
+    int getDeliveryCount();
+
 }

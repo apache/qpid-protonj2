@@ -38,7 +38,6 @@ import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.common.logging.ProtonLogger;
 import org.apache.qpid.proton4j.common.logging.ProtonLoggerFactory;
 import org.apache.qpid.proton4j.engine.AsyncEvent;
-import org.apache.qpid.proton4j.engine.ConnectionState;
 import org.apache.qpid.proton4j.engine.EventHandler;
 import org.apache.qpid.proton4j.engine.Link;
 import org.apache.qpid.proton4j.engine.LinkState;
@@ -106,6 +105,10 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T>, Performa
     protected abstract T self();
 
     protected abstract ProtonLinkCreditState getCreditState();
+
+    long getHandle() {
+        return localAttach.getHandle();
+    }
 
     @Override
     public ProtonContext getContext() {
@@ -424,8 +427,14 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T>, Performa
 
     //----- Internal handler methods
 
-    private void checkNotOpened(String errorMessage) {
-        if (localState.ordinal() > ConnectionState.IDLE.ordinal()) {
+    protected void checkNotOpened(String errorMessage) {
+        if (localState.ordinal() > LinkState.IDLE.ordinal()) {
+            throw new IllegalStateException(errorMessage);
+        }
+    }
+
+    protected void checkNotClosed(String errorMessage) {
+        if (localState.ordinal() > LinkState.ACTIVE.ordinal()) {
             throw new IllegalStateException(errorMessage);
         }
     }

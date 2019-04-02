@@ -47,6 +47,11 @@ public abstract class ProtonLinkCreditState implements LinkCreditState {
         return credit;
     }
 
+    @Override
+    public int getDeliveryCount() {
+        return deliveryCount;
+    }
+
     /**
      * Creates a snapshot of the current credit state, a subclass should implement this
      * method and provide an appropriately populated snapshot of the current state.

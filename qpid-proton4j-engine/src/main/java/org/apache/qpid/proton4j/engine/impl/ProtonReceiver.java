@@ -60,6 +60,18 @@ public class ProtonReceiver extends ProtonLink<Receiver> implements Receiver {
         return creditState;
     }
 
+    @Override
+    public ProtonReceiver setCredit(int credit) {
+        checkNotClosed("Cannot set credit on a closed Receiver");
+        if (credit < 0) {
+            throw new IllegalArgumentException("Set credit cannot be zero");
+        }
+
+        creditState.setCredit(credit);
+
+        return this;
+    }
+
     //----- Handle incoming performatives
 
     @Override

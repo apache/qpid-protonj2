@@ -33,6 +33,13 @@ public class ProtonReceiverCreditState extends ProtonLinkCreditState {
         this.parent = parent;
     }
 
+    public void setCredit(int credit) {
+        if (this.credit != credit) {
+            this.credit = credit;
+            // TODO write new flow with updated credit
+        }
+    }
+
     @Override
     Flow handleFlow(Flow flow) {
         if (flow.getDrain()) {
@@ -41,6 +48,8 @@ public class ProtonReceiverCreditState extends ProtonLinkCreditState {
             if (credit != 0) {
                 throw new IllegalArgumentException("Receiver read flow with drain set but credit was not zero");
             }
+
+            // TODO - Echo if requested
 
             // TODO - Fire event to registered listener that link was drained.
         }
