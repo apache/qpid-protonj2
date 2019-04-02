@@ -82,6 +82,12 @@ public interface EngineHandler {
         context.fireWrite(header);
     }
 
+    // TODO - To track exactly what is written here we may want to return the bytes written for each frame
+    //        this would allow for somewhat easier tracking of bytes written for idle timeout handling.
+    // TODO - In order to better control output from session level flow control we may want to pass the max
+    //        frame size for these frame level writes and let it either be the "Max Frame Size" or the
+    //        "Max you are allowed to write" value.
+
     default void handleWrite(EngineHandlerContext context, Performative performative, int channel, ProtonBuffer payload, Runnable payloadToLarge) {
         context.fireWrite(performative, channel, payload, payloadToLarge);
     }
