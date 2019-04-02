@@ -33,7 +33,7 @@ public class HeaderFrame extends Frame<AMQPHeader> {
     public HeaderFrame(AMQPHeader body) {
         super(HEADER_FRAME_TYPE);
 
-        initialize(body, 0, null);
+        initialize(body, 0, AMQPHeader.HEADER_SIZE_BYTES, null);
     }
 
     public int getProtocolId() {

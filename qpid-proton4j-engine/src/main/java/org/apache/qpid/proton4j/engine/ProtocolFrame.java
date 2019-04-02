@@ -45,7 +45,7 @@ public class ProtocolFrame extends Frame<Performative> {
      * same context.
      */
     public void release() {
-        initialize(null, (short) -1, null);
+        initialize(null, -1, -1, null);
 
         if (pool != null) {
             pool.release(this);

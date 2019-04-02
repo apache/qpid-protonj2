@@ -47,14 +47,14 @@ public class ProtocolFramePool {
         return maxPoolSize;
     }
 
-    public ProtocolFrame take(Performative body, int channel, ProtonBuffer payload) {
+    public ProtocolFrame take(Performative body, int channel, int frameSize, ProtonBuffer payload) {
         ProtocolFrame element = pool.poll();
 
         if (element == null) {
             element = createNewFrame(this);
         }
 
-        element.initialize(body, channel, payload);
+        element.initialize(body, channel, frameSize, payload);
 
         return element;
     }

@@ -38,8 +38,6 @@ import org.apache.qpid.proton4j.engine.Frame;
 import org.apache.qpid.proton4j.engine.HeaderFrame;
 import org.apache.qpid.proton4j.engine.SaslFrame;
 import org.apache.qpid.proton4j.engine.impl.ProtonEngine;
-import org.apache.qpid.proton4j.engine.impl.sasl.ProtonSaslHandler;
-import org.apache.qpid.proton4j.engine.impl.sasl.ProtonSaslServerContext;
 import org.apache.qpid.proton4j.engine.sasl.SaslConstants.SaslOutcomes;
 import org.apache.qpid.proton4j.engine.util.TestSupportTransportHandler;
 import org.junit.Before;
@@ -161,8 +159,8 @@ public class ProtonSaslHandlerTest {
     public void testSaslAnonymousExchange() {
         final AtomicBoolean saslHeaderRead = new AtomicBoolean();
 
-        final AtomicReference<String> clientHostname = new AtomicReference<String>();
-        final AtomicReference<String> clientMechanism = new AtomicReference<String>();
+        final AtomicReference<String> clientHostname = new AtomicReference<>();
+        final AtomicReference<String> clientMechanism = new AtomicReference<>();
         final AtomicBoolean emptyResponse = new AtomicBoolean();
 
         Engine transport = createSaslServerTransport(new SaslServerListener() {
@@ -207,7 +205,7 @@ public class ProtonSaslHandlerTest {
         clientInit.setInitialResponse(new Binary(new byte[0]));
 
         // Check for Initial Response processing
-        transport.pipeline().fireRead(new SaslFrame(clientInit, null));
+        transport.pipeline().fireRead(new SaslFrame(clientInit, 1, null));
 
         assertEquals("HOST-NAME", clientHostname.get());
         assertEquals("ANONYMOUS", clientMechanism.get());

@@ -73,13 +73,13 @@ public class TestSupportTransportHandler implements EngineHandler {
 
     @Override
     public void handleWrite(EngineHandlerContext context, Performative performative, int channel, ProtonBuffer payload, Runnable payloadToLarge) {
-        framesWritten.add(ProtocolFramePool.DEFAULT.take(performative, channel, payload));
+        framesWritten.add(ProtocolFramePool.DEFAULT.take(performative, channel, 1, payload));
         context.fireWrite(performative, channel, payload, payloadToLarge);
     }
 
     @Override
     public void handleWrite(EngineHandlerContext context, SaslPerformative performative) {
-        framesWritten.add(new SaslFrame(performative, null));
+        framesWritten.add(new SaslFrame(performative, 1, null));
         context.fireWrite(performative);
     }
 }

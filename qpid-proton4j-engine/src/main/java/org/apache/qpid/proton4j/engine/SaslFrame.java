@@ -27,10 +27,10 @@ public class SaslFrame extends Frame<SaslPerformative>{
 
     public static final byte SASL_FRAME_TYPE = (byte) 1;
 
-    public SaslFrame(SaslPerformative performative, ProtonBuffer payload) {
+    public SaslFrame(SaslPerformative performative, int frameSize, ProtonBuffer payload) {
         super(SASL_FRAME_TYPE);
 
-        initialize(performative, 0, payload);
+        initialize(performative, 0, frameSize, payload);
     }
 
     public <E> void invoke(SaslPerformativeHandler<E> handler, E context) {
