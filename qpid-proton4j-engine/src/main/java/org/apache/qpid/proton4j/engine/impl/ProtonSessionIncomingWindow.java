@@ -24,7 +24,6 @@ import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 /**
  * Tracks the incoming window and provides management of that window in relation to receiver links
  */
-@SuppressWarnings("unused")
 public class ProtonSessionIncomingWindow {
 
     private static final long DEFAULT_WINDOW_SIZE = Integer.MAX_VALUE; // biggest legal value
@@ -37,9 +36,8 @@ public class ProtonSessionIncomingWindow {
     // These are used for the session windows communicated via Begin/Flow frames
     // and the conceptual transfer-id relating to updating them.
     private long incomingWindow = 0;
-    private long nextIncomingId = -1;
+    private long nextIncomingId = 0;
 
-    private long incomingDeliveryId = -1;
     private long remoteOutgoingWindow;
     private long remoteNextOutgoingId;
 
@@ -127,18 +125,7 @@ public class ProtonSessionIncomingWindow {
     }
 
     void writeFlow(ProtonLink<?> link) {
-        final Flow flow = new Flow();
-
-        flow.setNextIncomingId(nextIncomingId);
-        flow.setNextOutgoingId(session.getOutgoingWindow().getNextOutgoingId());
-        flow.setIncomingWindow(incomingWindow);
-        flow.setOutgoingWindow(session.getOutgoingWindow().getOutgoingWindow());
-
-        if (link != null) {
-            flow.setLinkCredit(link.getCreditState().getCredit());
-            flow.setHandle(link.getHandle());
-            flow.setDeliveryCount(link.getCreditState().getDeliveryCount());
-        }
+        session.writeFlow(link);
     }
 
     //----- Access to internal state useful for tests

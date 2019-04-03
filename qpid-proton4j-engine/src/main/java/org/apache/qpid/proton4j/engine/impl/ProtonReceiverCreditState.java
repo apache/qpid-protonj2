@@ -50,14 +50,16 @@ public class ProtonReceiverCreditState implements ProtonLinkCreditState {
     public void setCredit(int credit) {
         if (this.credit != credit) {
             this.credit = credit;
-            // TODO write new flow with updated credit
+            if (parent.isRemotelyOpened()) {
+                incomingWindow.writeFlow(parent);
+            }
         }
     }
 
     @Override
     public Attach handleAttach(Attach attach) {
         if (credit > 0) {
-            // TODO - Issue flow with granted credit
+            incomingWindow.writeFlow(parent);
         }
 
         return attach;

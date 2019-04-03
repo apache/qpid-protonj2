@@ -425,7 +425,15 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T>, Performa
         getCreditState().handleFlow(flow);
     }
 
-    //----- Internal handler methods
+    //----- Internal methods
+
+    boolean isLocallyOpened() {
+        return getLocalState() == LinkState.ACTIVE;
+    }
+
+    boolean isRemotelyOpened() {
+        return getRemoteState() == LinkState.ACTIVE;
+    }
 
     protected void checkNotOpened(String errorMessage) {
         if (localState.ordinal() > LinkState.IDLE.ordinal()) {

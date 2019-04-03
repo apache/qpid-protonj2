@@ -508,4 +508,21 @@ public class ProtonSession implements Session, Performative.PerformativeHandler<
 
         localLinks.remove(localHandle);
     }
+
+    void writeFlow(ProtonLink<?> link) {
+        final Flow flow = new Flow();
+
+        flow.setNextIncomingId(getIncomingWindow().getNextIncomingId());
+        flow.setNextOutgoingId(getOutgoingWindow().getNextOutgoingId());
+        flow.setIncomingWindow(getIncomingWindow().getIncomingWindow());
+        flow.setOutgoingWindow(getOutgoingWindow().getOutgoingWindow());
+
+        if (link != null) {
+            flow.setLinkCredit(link.getCreditState().getCredit());
+            flow.setHandle(link.getHandle());
+            flow.setDeliveryCount(link.getCreditState().getDeliveryCount());
+        }
+
+        getEngine().pipeline().fireWrite(flow, localChannel, null, null);
+    }
 }
