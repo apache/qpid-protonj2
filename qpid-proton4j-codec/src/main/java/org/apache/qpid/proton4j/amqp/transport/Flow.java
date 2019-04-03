@@ -125,8 +125,6 @@ public final class Flow implements Performative {
     public Flow setNextIncomingId(long nextIncomingId) {
         if (nextIncomingId < 0 || UnsignedInteger.MAX_VALUE.compareTo(nextOutgoingId) < 0) {
             throw new IllegalArgumentException("Next Incoming Id value given is out of range: " + nextIncomingId);
-        } else if (nextIncomingId == 0) {
-            modified &= ~NEXT_INCOMING_ID;
         } else {
             modified |= NEXT_INCOMING_ID;
         }
@@ -142,8 +140,6 @@ public final class Flow implements Performative {
     public Flow setIncomingWindow(long incomingWindow) {
         if (incomingWindow < 0 || incomingWindow > UINT_MAX) {
             throw new IllegalArgumentException("Incoming Window value given is out of range: " + incomingWindow);
-        } else if (incomingWindow == 0) {
-            modified &= ~INCOMING_WINDOW;
         } else {
             modified |= INCOMING_WINDOW;
         }
@@ -159,8 +155,6 @@ public final class Flow implements Performative {
     public Flow setNextOutgoingId(long nextOutgoingId) {
         if (nextOutgoingId < 0 || nextOutgoingId > UINT_MAX) {
             throw new IllegalArgumentException("Next Outgoing Id value given is out of range: " + nextOutgoingId);
-        } else if (nextOutgoingId == 0) {
-            modified &= ~NEXT_OUTGOING_ID;
         } else {
             modified |= NEXT_OUTGOING_ID;
         }
@@ -176,8 +170,6 @@ public final class Flow implements Performative {
     public Flow setOutgoingWindow(long outgoingWindow) {
         if (outgoingWindow < 0 || outgoingWindow > UINT_MAX) {
             throw new IllegalArgumentException("Outgoing Window value given is out of range: " + outgoingWindow);
-        } else if (outgoingWindow == 0) {
-            modified &= ~OUTGOING_WINDOW;
         } else {
             modified |= OUTGOING_WINDOW;
         }
@@ -193,8 +185,6 @@ public final class Flow implements Performative {
     public Flow setHandle(long handle) {
         if (handle < 0 || handle > UINT_MAX) {
             throw new IllegalArgumentException("Handle value given is out of range: " + handle);
-        } else if (handle == 0) {
-            modified &= ~HANDLE;
         } else {
             modified |= HANDLE;
         }
@@ -210,8 +200,6 @@ public final class Flow implements Performative {
     public Flow setDeliveryCount(long deliveryCount) {
         if (deliveryCount < 0 || deliveryCount > UINT_MAX) {
             throw new IllegalArgumentException("Delivery Count value given is out of range: " + deliveryCount);
-        } else if (deliveryCount == 0) {
-            modified &= ~DELIVERY_COUNT;
         } else {
             modified |= DELIVERY_COUNT;
         }
@@ -227,8 +215,6 @@ public final class Flow implements Performative {
     public Flow setLinkCredit(long linkCredit) {
         if (linkCredit < 0 || linkCredit > UINT_MAX) {
             throw new IllegalArgumentException("Link Credit value given is out of range: " + linkCredit);
-        } else if (linkCredit == 0) {
-            modified &= ~LINK_CREDIT;
         } else {
             modified |= LINK_CREDIT;
         }
@@ -244,8 +230,6 @@ public final class Flow implements Performative {
     public Flow setAvailable(long available) {
         if (available < 0 || available > UINT_MAX) {
             throw new IllegalArgumentException("Available value given is out of range: " + available);
-        } else if (available == 0) {
-            modified &= ~AVAILABLE;
         } else {
             modified |= AVAILABLE;
         }
