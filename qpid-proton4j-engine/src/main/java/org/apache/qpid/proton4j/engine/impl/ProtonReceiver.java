@@ -76,7 +76,7 @@ public class ProtonReceiver extends ProtonLink<Receiver> implements Receiver {
 
     @Override
     public void handleTransfer(Transfer transfer, ProtonBuffer payload, int channel, ProtonEngine context) {
-
+        creditState.handleTransfer(transfer, payload);
     }
 
     @Override
@@ -89,12 +89,18 @@ public class ProtonReceiver extends ProtonLink<Receiver> implements Receiver {
     @Override
     public Receiver deliveryReceivedEventHandler(EventHandler<IncomingDelivery> handler) {
         // TODO Auto-generated method stub
-        return null;
+        return this;
     }
 
     @Override
     public Receiver deliveryUpdatedEventHandler(EventHandler<IncomingDelivery> handler) {
         // TODO Auto-generated method stub
-        return null;
+        return this;
+    }
+
+    @Override
+    public Receiver receiverDrainedEventHandler(EventHandler<Receiver> handler) {
+        // TODO Auto-generated method stub
+        return this;
     }
 }

@@ -29,9 +29,30 @@ public interface Sender extends Link<Sender> {
 
     //----- Event handlers for the Sender
 
-    // Receiver sendableEventHandler(EventHandler<Sender> sender);
+    /**
+     * Handler for updates on this {@link Sender} that indicates that an event has occurred that has
+     * placed this sender in a state where a send is possible.
+     *
+     * @param handler
+     *      An event handler that will be signaled when the link state changes to allow sends.
+     *
+     * @return this sender
+     */
+    Sender sendableEventHandler(EventHandler<Sender> handler);
 
-    // Receiver drainRequestedEventHandler(EventHandler<LinkCreditState> handler);
+    /**
+     * Called when the {@link Receiver} end of the link has requested a drain of the outstanding
+     * credit for this {@link Sender}.
+     *
+     * The drain request is accompanied by the current credit state for this link which the application
+     * must hand back to the {@link Sender} when it has completed the drain request.
+     *
+     * @param handler
+     *      handler that will act on the drain request.
+     *
+     * @return this sender
+     */
+    Sender drainRequestedEventHandler(EventHandler<LinkCreditState> handler);
 
     /**
      * Handler for updates for deliveries that have previously been sent.
@@ -42,8 +63,8 @@ public interface Sender extends Link<Sender> {
      * @param handler
      *      The handler that will be invoked when a new update delivery arrives on this link.
      *
-     * @return this receiver
+     * @return this sender
      */
-    Receiver deliveryUpdatedEventHandler(EventHandler<OutgoingDelivery> handler);
+    Sender deliveryUpdatedEventHandler(EventHandler<OutgoingDelivery> handler);
 
 }

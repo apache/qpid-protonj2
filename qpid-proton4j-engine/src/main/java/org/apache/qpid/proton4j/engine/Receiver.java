@@ -21,9 +21,6 @@ package org.apache.qpid.proton4j.engine;
  */
 public interface Receiver extends Link<Receiver> {
 
-    // TODO How to manage credit
-    //
-
     /**
      * Sets the credit for the {@link Receiver} to the given amount.
      *
@@ -45,6 +42,17 @@ public interface Receiver extends Link<Receiver> {
     // Receiver drain(int credits, EventHandler<Receiver> handler);
 
     //----- Event handlers for the Receiver
+
+    /**
+     * When a drain is requested for this receiver an event handler will be signaled to indicate that
+     * the drain was successful.
+     *
+     * @param handler
+     *      The handler that will be invoked when receiver credit has been drained by the remote sender.
+     *
+     * @return this receiver
+     */
+    Receiver receiverDrainedEventHandler(EventHandler<Receiver> handler);
 
     /**
      * Handler for incoming deliveries
