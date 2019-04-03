@@ -378,7 +378,7 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T>, Performa
     public void handleAttach(Attach attach, ProtonBuffer payload, int channel, ProtonEngine context) {
         remoteAttach = attach;
         remoteState = LinkState.ACTIVE;
-        getCreditState().processInboud(attach);
+        getCreditState().handleAttach(attach);
 
         if (remoteOpenHandler != null) {
             remoteOpenHandler.handle(result(self(), null));

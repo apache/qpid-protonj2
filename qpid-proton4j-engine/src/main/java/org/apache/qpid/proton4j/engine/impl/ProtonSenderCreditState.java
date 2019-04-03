@@ -16,6 +16,7 @@
  */
 package org.apache.qpid.proton4j.engine.impl;
 
+import org.apache.qpid.proton4j.amqp.transport.Attach;
 import org.apache.qpid.proton4j.amqp.transport.Flow;
 import org.apache.qpid.proton4j.amqp.transport.Transfer;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
@@ -25,15 +26,17 @@ import org.apache.qpid.proton4j.engine.Sender;
 /**
  * Credit state handler for {@link Sender} links.
  */
-public class ProtonSenderCreditState extends ProtonLinkCreditState {
+public class ProtonSenderCreditState implements ProtonLinkCreditState {
 
     private final ProtonSender parent;
+    private final ProtonSessionWindow sessionWindow;
 
+    private int credit;
+    private int deliveryCount;
     private boolean draining;
 
     public ProtonSenderCreditState(ProtonSender parent, ProtonSessionWindow sessionWindow) {
-        super(sessionWindow);
-
+        this.sessionWindow = sessionWindow;
         this.parent = parent;
     }
 
@@ -42,7 +45,22 @@ public class ProtonSenderCreditState extends ProtonLinkCreditState {
     }
 
     @Override
-    Flow handleFlow(Flow flow) {
+    public int getCredit() {
+        return credit;
+    }
+
+    @Override
+    public int getDeliveryCount() {
+        return deliveryCount;
+    }
+
+    @Override
+    public Attach configureOutbound(Attach attach) {
+        return attach.setInitialDeliveryCount(0);
+    }
+
+    @Override
+    public Flow handleFlow(Flow flow) {
         credit = (int) (flow.getDeliveryCount() + flow.getLinkCredit() - deliveryCount);
         draining = flow.getDrain();
 
@@ -54,15 +72,16 @@ public class ProtonSenderCreditState extends ProtonLinkCreditState {
     }
 
     @Override
-    Transfer handleTransfer(Transfer transfer, ProtonBuffer payload) {
+    public Transfer handleTransfer(Transfer transfer, ProtonBuffer payload) {
         throw new IllegalStateException("Cannot receive a Transfer at the Sender end.");
     }
 
     @Override
-    ProtonSenderCreditState snapshot() {
+    public ProtonSenderCreditState snapshot() {
         ProtonSenderCreditState snapshot = new ProtonSenderCreditState(parent, sessionWindow);
         snapshot.draining = draining;
-        copyInto(snapshot);
+        snapshot.credit = credit;
+        snapshot.deliveryCount = deliveryCount;
         return snapshot;
     }
 }

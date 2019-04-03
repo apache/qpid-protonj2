@@ -18,39 +18,14 @@ package org.apache.qpid.proton4j.engine.impl;
 
 import org.apache.qpid.proton4j.amqp.transport.Attach;
 import org.apache.qpid.proton4j.amqp.transport.Flow;
-import org.apache.qpid.proton4j.amqp.transport.Role;
 import org.apache.qpid.proton4j.amqp.transport.Transfer;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.engine.LinkCreditState;
-import org.apache.qpid.proton4j.engine.Session;
 
 /**
- * Base for link credit state classes.
+ * Proton LinkCreditState base used to define common API amongst the implementations.
  */
-public abstract class ProtonLinkCreditState implements LinkCreditState {
-
-    protected final ProtonSessionWindow sessionWindow;
-
-    protected int credit;
-    protected int deliveryCount;
-
-    /**
-     * @param sessionWindow
-     *    The credit window of the parent {@link Session}
-     */
-    public ProtonLinkCreditState(ProtonSessionWindow sessionWindow) {
-        this.sessionWindow = sessionWindow;
-    }
-
-    @Override
-    public int getCredit() {
-        return credit;
-    }
-
-    @Override
-    public int getDeliveryCount() {
-        return deliveryCount;
-    }
+public interface ProtonLinkCreditState extends LinkCreditState {
 
     /**
      * Creates a snapshot of the current credit state, a subclass should implement this
@@ -58,18 +33,7 @@ public abstract class ProtonLinkCreditState implements LinkCreditState {
      *
      * @return a snapshot of the current credit state.
      */
-    abstract ProtonLinkCreditState snapshot();
-
-    /**
-     * Performs the superclass copy for any derived link credit state instances.
-     *
-     * @param newCopy
-     *      The new instance to copy this values data to.
-     */
-    protected void copyInto(ProtonLinkCreditState newCopy) {
-        newCopy.credit = credit;
-        newCopy.deliveryCount = deliveryCount;
-    }
+    ProtonLinkCreditState snapshot();
 
     /**
      * Initialize link state on an outbound Attach for this link
@@ -79,10 +43,7 @@ public abstract class ProtonLinkCreditState implements LinkCreditState {
      *
      * @return the attach object for chaining
      */
-    Attach configureOutbound(Attach attach) {
-        if (attach.getRole() == Role.SENDER) {
-            attach.setInitialDeliveryCount(0);
-        }
+    default Attach configureOutbound(Attach attach) {
         return attach;
     }
 
@@ -94,7 +55,7 @@ public abstract class ProtonLinkCreditState implements LinkCreditState {
      *
      * @return the attach for chaining.
      */
-    Attach processInboud(Attach attach) {
+    default Attach handleAttach(Attach attach) {
         return attach;
     }
 

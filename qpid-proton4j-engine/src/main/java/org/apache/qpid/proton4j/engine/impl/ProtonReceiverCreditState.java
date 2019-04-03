@@ -16,6 +16,7 @@
  */
 package org.apache.qpid.proton4j.engine.impl;
 
+import org.apache.qpid.proton4j.amqp.transport.Attach;
 import org.apache.qpid.proton4j.amqp.transport.Flow;
 import org.apache.qpid.proton4j.amqp.transport.Transfer;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
@@ -23,14 +24,27 @@ import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 /**
  * Credit state handler for {@link Receiver} links.
  */
-public class ProtonReceiverCreditState extends ProtonLinkCreditState {
+public class ProtonReceiverCreditState implements ProtonLinkCreditState {
 
     private final ProtonReceiver parent;
+    private final ProtonSessionWindow sessionWindow;
+
+    private int credit;
+    private int deliveryCount;
 
     public ProtonReceiverCreditState(ProtonReceiver parent, ProtonSessionWindow sessionWindow) {
-        super(sessionWindow);
-
+        this.sessionWindow = sessionWindow;
         this.parent = parent;
+    }
+
+    @Override
+    public int getCredit() {
+        return credit;
+    }
+
+    @Override
+    public int getDeliveryCount() {
+        return deliveryCount;
     }
 
     public void setCredit(int credit) {
@@ -41,7 +55,16 @@ public class ProtonReceiverCreditState extends ProtonLinkCreditState {
     }
 
     @Override
-    Flow handleFlow(Flow flow) {
+    public Attach handleAttach(Attach attach) {
+        if (credit > 0) {
+            // TODO - Issue flow with granted credit
+        }
+
+        return attach;
+    }
+
+    @Override
+    public Flow handleFlow(Flow flow) {
         if (flow.getDrain()) {
             deliveryCount = (int) flow.getDeliveryCount();
             credit = (int) flow.getLinkCredit();
@@ -57,14 +80,15 @@ public class ProtonReceiverCreditState extends ProtonLinkCreditState {
     }
 
     @Override
-    Transfer handleTransfer(Transfer transfer, ProtonBuffer payload) {
+    public Transfer handleTransfer(Transfer transfer, ProtonBuffer payload) {
         return null;
     }
 
     @Override
-    ProtonReceiverCreditState snapshot() {
+    public ProtonReceiverCreditState snapshot() {
         ProtonReceiverCreditState snapshot = new ProtonReceiverCreditState(parent, sessionWindow);
-        copyInto(snapshot);
+        snapshot.credit = credit;
+        snapshot.deliveryCount = deliveryCount;
         return snapshot;
     }
 }
