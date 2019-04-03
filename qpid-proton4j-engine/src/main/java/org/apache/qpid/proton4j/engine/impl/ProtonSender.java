@@ -43,7 +43,7 @@ public class ProtonSender extends ProtonLink<Sender> implements Sender {
      */
     public ProtonSender(ProtonSession session, String name) {
         super(session, name);
-        this.creditState = new ProtonSenderCreditState(this, session.getSessionWindow());
+        this.creditState = new ProtonSenderCreditState(this, session.getOutgoingWindow());
     }
 
     @Override

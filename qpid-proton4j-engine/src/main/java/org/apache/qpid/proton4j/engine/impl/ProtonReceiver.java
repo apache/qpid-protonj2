@@ -42,7 +42,7 @@ public class ProtonReceiver extends ProtonLink<Receiver> implements Receiver {
      */
     public ProtonReceiver(ProtonSession session, String name) {
         super(session, name);
-        this.creditState = new ProtonReceiverCreditState(this, session.getSessionWindow());
+        this.creditState = new ProtonReceiverCreditState(this, session.getIncomingWindow());
     }
 
     @Override

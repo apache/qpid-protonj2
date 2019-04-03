@@ -60,7 +60,8 @@ public class ProtonSession implements Session, Performative.PerformativeHandler<
 
     private int localChannel;
 
-    private final ProtonSessionWindow sessionWindow = new ProtonSessionWindow(this);
+    private final ProtonSessionOutgoingWindow outgoingWindow = new ProtonSessionOutgoingWindow(this);
+    private final ProtonSessionIncomingWindow incomingWindow = new ProtonSessionIncomingWindow(this);
 
     private final Map<String, ProtonSender> senderByNameMap = new HashMap<>();
     private final Map<String, ProtonReceiver> receiverByNameMap = new HashMap<>();
@@ -150,7 +151,9 @@ public class ProtonSession implements Session, Performative.PerformativeHandler<
     public ProtonSession open() {
         if (getLocalState() == SessionState.IDLE) {
             localState = SessionState.ACTIVE;
-            connection.getEngine().pipeline().fireWrite(sessionWindow.configureOutbound(localBegin), localChannel, null, null);
+            incomingWindow.configureOutbound(localBegin);
+            outgoingWindow.configureOutbound(localBegin);
+            connection.getEngine().pipeline().fireWrite(localBegin, localChannel, null, null);
         }
 
         return this;
@@ -171,13 +174,13 @@ public class ProtonSession implements Session, Performative.PerformativeHandler<
 
     @Override
     public Session setIncomingCapacity(int incomingCapacity) {
-        sessionWindow.setIncomingCapaity(incomingCapacity);
+        incomingWindow.setIncomingCapaity(incomingCapacity);
         return this;
     }
 
     @Override
     public int getIncomingCapacity() {
-        return sessionWindow.getIncomingCapacity();
+        return incomingWindow.getIncomingCapacity();
     }
 
     @Override
@@ -344,7 +347,8 @@ public class ProtonSession implements Session, Performative.PerformativeHandler<
         remoteBegin = begin;
         localBegin.setRemoteChannel(channel);
         remoteState = SessionState.ACTIVE;
-        sessionWindow.processInbound(begin);
+        incomingWindow.processInbound(begin);
+        outgoingWindow.processInbound(begin);
 
         if (getLocalState() == SessionState.ACTIVE && remoteOpenHandler != null) {
             remoteOpenHandler.handle(result(this, null));
@@ -395,20 +399,19 @@ public class ProtonSession implements Session, Performative.PerformativeHandler<
 
     @Override
     public void handleFlow(Flow flow, ProtonBuffer payload, int channel, ProtonEngine context) {
+        // Session level flow processing.
+        incomingWindow.handleFlow(flow);
+        outgoingWindow.handleFlow(flow);
+
         if (flow.hasHandle()) {
             final ProtonLink<?> link = remoteLinks.get(flow.getHandle());
             if (link == null) {
                 getEngine().engineFailed(new ProtocolViolationException("Received uncorrelated handle on Flow from remote: " + channel));
             }
 
-            // Session level flow processing.
-            sessionWindow.handleFlow(flow);
-
             // Link will update session window during its flow processing.
             link.handleFlow(flow, payload, channel, context);
         } else {
-            // Session level flow processing.
-            sessionWindow.handleFlow(flow);
 
             // TODO - Echo
         }
@@ -421,7 +424,7 @@ public class ProtonSession implements Session, Performative.PerformativeHandler<
             getEngine().engineFailed(new ProtocolViolationException("Received uncorrelated handle on Transfer from remote: " + channel));
         }
 
-        sessionWindow.handleTransfer(transfer, payload);
+        incomingWindow.handleTransfer(transfer, payload);
 
         link.handleTransfer(transfer, payload, channel, context);
     }
@@ -479,8 +482,12 @@ public class ProtonSession implements Session, Performative.PerformativeHandler<
         return true;
     }
 
-    ProtonSessionWindow getSessionWindow() {
-        return sessionWindow;
+    ProtonSessionOutgoingWindow getOutgoingWindow() {
+        return outgoingWindow;
+    }
+
+    ProtonSessionIncomingWindow getIncomingWindow() {
+        return incomingWindow;
     }
 
     long findFreeLocalHandle(ProtonLink<?> link) {

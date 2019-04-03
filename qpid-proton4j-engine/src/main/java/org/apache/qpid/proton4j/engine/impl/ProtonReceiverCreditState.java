@@ -27,13 +27,13 @@ import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 public class ProtonReceiverCreditState implements ProtonLinkCreditState {
 
     private final ProtonReceiver parent;
-    private final ProtonSessionWindow sessionWindow;
+    private final ProtonSessionIncomingWindow incomingWindow;
 
     private int credit;
     private int deliveryCount;
 
-    public ProtonReceiverCreditState(ProtonReceiver parent, ProtonSessionWindow sessionWindow) {
-        this.sessionWindow = sessionWindow;
+    public ProtonReceiverCreditState(ProtonReceiver parent, ProtonSessionIncomingWindow sessionWindow) {
+        this.incomingWindow = sessionWindow;
         this.parent = parent;
     }
 
@@ -86,7 +86,7 @@ public class ProtonReceiverCreditState implements ProtonLinkCreditState {
 
     @Override
     public ProtonReceiverCreditState snapshot() {
-        ProtonReceiverCreditState snapshot = new ProtonReceiverCreditState(parent, sessionWindow);
+        ProtonReceiverCreditState snapshot = new ProtonReceiverCreditState(parent, incomingWindow);
         snapshot.credit = credit;
         snapshot.deliveryCount = deliveryCount;
         return snapshot;

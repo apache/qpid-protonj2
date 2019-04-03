@@ -29,13 +29,13 @@ import org.apache.qpid.proton4j.engine.Sender;
 public class ProtonSenderCreditState implements ProtonLinkCreditState {
 
     private final ProtonSender parent;
-    private final ProtonSessionWindow sessionWindow;
+    private final ProtonSessionOutgoingWindow sessionWindow;
 
     private int credit;
     private int deliveryCount;
     private boolean draining;
 
-    public ProtonSenderCreditState(ProtonSender parent, ProtonSessionWindow sessionWindow) {
+    public ProtonSenderCreditState(ProtonSender parent, ProtonSessionOutgoingWindow sessionWindow) {
         this.sessionWindow = sessionWindow;
         this.parent = parent;
     }
