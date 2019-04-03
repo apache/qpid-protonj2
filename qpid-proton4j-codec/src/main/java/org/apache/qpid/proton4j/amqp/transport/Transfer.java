@@ -122,8 +122,6 @@ public final class Transfer implements Performative {
     public Transfer setHandle(long handle) {
         if (handle < 0 || handle > UINT_MAX) {
             throw new IllegalArgumentException("Handle value given is out of range: " + handle);
-        } else if (handle == 0) {
-            modified &= ~HANDLE;
         } else {
             modified |= HANDLE;
         }
@@ -139,8 +137,6 @@ public final class Transfer implements Performative {
     public Transfer setDeliveryId(long deliveryId) {
         if (deliveryId < 0 || deliveryId > UINT_MAX) {
             throw new IllegalArgumentException("Delivery ID value given is out of range: " + deliveryId);
-        } else if (deliveryId == 0) {
-            modified &= ~DELIVERY_ID;
         } else {
             modified |= DELIVERY_ID;
         }
@@ -171,8 +167,6 @@ public final class Transfer implements Performative {
     public Transfer setMessageFormat(long messageFormat) {
         if (messageFormat < 0 || messageFormat > UINT_MAX) {
             throw new IllegalArgumentException("Message Format value given is out of range: " + messageFormat);
-        } else if (messageFormat == 0) {
-            modified &= ~MESSAGE_FORMAT;
         } else {
             modified |= MESSAGE_FORMAT;
         }
@@ -186,12 +180,7 @@ public final class Transfer implements Performative {
     }
 
     public Transfer setSettled(Boolean settled) {
-        if (settled) {
-            modified |= SETTLED;
-        } else {
-            modified &= ~SETTLED;
-        }
-
+        this.modified |= SETTLED;
         this.settled = settled;
         return this;
     }
