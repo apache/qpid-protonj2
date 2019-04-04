@@ -28,16 +28,17 @@ import org.apache.qpid.proton4j.engine.Sender;
  */
 public class ProtonSenderCreditState implements ProtonLinkCreditState {
 
-    private final ProtonSender parent;
+    private final ProtonSender sender;
     private final ProtonSessionOutgoingWindow sessionWindow;
 
     private int credit;
     private int deliveryCount;
     private boolean draining;
+    private boolean drained;
 
-    public ProtonSenderCreditState(ProtonSender parent, ProtonSessionOutgoingWindow sessionWindow) {
+    public ProtonSenderCreditState(ProtonSender sender, ProtonSessionOutgoingWindow sessionWindow) {
         this.sessionWindow = sessionWindow;
-        this.parent = parent;
+        this.sender = sender;
     }
 
     public boolean isDraining() {
@@ -63,9 +64,14 @@ public class ProtonSenderCreditState implements ProtonLinkCreditState {
     public Flow handleFlow(Flow flow) {
         credit = (int) (flow.getDeliveryCount() + flow.getLinkCredit() - deliveryCount);
         draining = flow.getDrain();
+        drained = credit > 0;
 
-        if (parent.getLocalState() == LinkState.ACTIVE) {
+        if (sender.getLocalState() == LinkState.ACTIVE) {
             // TODO - Signal for sendable, draining etc
+
+            if (draining && !drained) {
+                sender.signalDrainRequested();
+            }
         }
 
         return flow;
@@ -78,7 +84,7 @@ public class ProtonSenderCreditState implements ProtonLinkCreditState {
 
     @Override
     public ProtonSenderCreditState snapshot() {
-        ProtonSenderCreditState snapshot = new ProtonSenderCreditState(parent, sessionWindow);
+        ProtonSenderCreditState snapshot = new ProtonSenderCreditState(sender, sessionWindow);
         snapshot.draining = draining;
         snapshot.credit = credit;
         snapshot.deliveryCount = deliveryCount;

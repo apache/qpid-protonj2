@@ -33,6 +33,12 @@ public class ProtonSender extends ProtonLink<Sender> implements Sender {
 
     private final ProtonSenderCreditState creditState;
 
+    private EventHandler<OutgoingDelivery> deliveryUpdatedEventHandler = null;
+    private EventHandler<Sender> sendableEventHandler = null;
+    private EventHandler<LinkCreditState> drainRequestedEventHandler = null;
+
+    // TODO - On open validate that required handlers are not null
+
     /**
      * Create a new {@link Sender} instance with the given {@link Session} parent.
      *
@@ -81,21 +87,47 @@ public class ProtonSender extends ProtonLink<Sender> implements Sender {
 
     //----- Sender event handlers
 
+    // TODO - Don't let valid handlers be nulled unless closed
+
     @Override
     public Sender deliveryUpdatedEventHandler(EventHandler<OutgoingDelivery> handler) {
-        // TODO Auto-generated method stub
+        this.deliveryUpdatedEventHandler = handler;
+        return this;
+    }
+
+    Sender signalDeliveryUpdated(OutgoingDelivery delivery) {
+        if (deliveryUpdatedEventHandler != null) {
+            deliveryUpdatedEventHandler.handle(delivery);
+        }
         return this;
     }
 
     @Override
     public Sender sendableEventHandler(EventHandler<Sender> handler) {
-        // TODO Auto-generated method stub
+        this.sendableEventHandler = handler;
+        return this;
+    }
+
+    Sender signalSendable() {
+        if (sendableEventHandler != null) {
+            sendableEventHandler.handle(this);
+        }
         return this;
     }
 
     @Override
     public Sender drainRequestedEventHandler(EventHandler<LinkCreditState> handler) {
-        // TODO Auto-generated method stub
+        this.drainRequestedEventHandler = handler;
+        return this;
+    }
+
+    Sender signalDrainRequested() {
+        // TODO - The intention is to snapshot credit state here so that on drained we can properly
+        //        reduce link credit in case the remote has updated the credit since the event was
+        //        triggered.
+        if (drainRequestedEventHandler != null) {
+            drainRequestedEventHandler.handle(getCreditState().snapshot());
+        }
         return this;
     }
 }

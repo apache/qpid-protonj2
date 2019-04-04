@@ -32,6 +32,12 @@ public class ProtonReceiver extends ProtonLink<Receiver> implements Receiver {
 
     private final ProtonReceiverCreditState creditState;
 
+    private EventHandler<IncomingDelivery> deliveryReceivedEventHandler = null;
+    private EventHandler<IncomingDelivery> deliveryUpdatedEventHandler = null;
+    private EventHandler<Receiver> receiverDrainedEventHandler = null;
+
+    // TODO - On open validate that required handlers are not null
+
     /**
      * Create a new {@link Receiver} instance with the given {@link Session} parent.
      *
@@ -92,21 +98,44 @@ public class ProtonReceiver extends ProtonLink<Receiver> implements Receiver {
 
     //----- Receiver event handlers
 
+    // TODO - Don't let valid handlers be nulled unless closed
+
     @Override
     public Receiver deliveryReceivedEventHandler(EventHandler<IncomingDelivery> handler) {
-        // TODO Auto-generated method stub
+        this.deliveryReceivedEventHandler = handler;
+        return this;
+    }
+
+    Receiver signalDeliveryReceived(IncomingDelivery delivery) {
+        if (deliveryReceivedEventHandler != null) {
+            deliveryReceivedEventHandler.handle(delivery);
+        }
         return this;
     }
 
     @Override
     public Receiver deliveryUpdatedEventHandler(EventHandler<IncomingDelivery> handler) {
-        // TODO Auto-generated method stub
+        this.deliveryUpdatedEventHandler = handler;
+        return this;
+    }
+
+    Receiver signalDeliveryUpdated(IncomingDelivery delivery) {
+        if (deliveryUpdatedEventHandler != null) {
+            deliveryUpdatedEventHandler.handle(delivery);
+        }
         return this;
     }
 
     @Override
     public Receiver receiverDrainedEventHandler(EventHandler<Receiver> handler) {
-        // TODO Auto-generated method stub
+        this.receiverDrainedEventHandler = handler;
+        return this;
+    }
+
+    Receiver signalReceiverDrained() {
+        if (receiverDrainedEventHandler != null) {
+            receiverDrainedEventHandler.handle(this);
+        }
         return this;
     }
 }

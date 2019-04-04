@@ -75,8 +75,9 @@ public class ProtonReceiverCreditState implements ProtonLinkCreditState {
             }
 
             // TODO - Echo if requested
+            // TODO - Error on credit being non-zero for drain response ?
 
-            // TODO - Fire event to registered listener that link was drained.
+            parent.signalReceiverDrained();
         }
         return flow;
     }
