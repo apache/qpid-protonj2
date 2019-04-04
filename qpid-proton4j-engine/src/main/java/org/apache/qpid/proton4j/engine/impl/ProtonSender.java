@@ -16,10 +16,7 @@
  */
 package org.apache.qpid.proton4j.engine.impl;
 
-import org.apache.qpid.proton4j.amqp.transport.Disposition;
 import org.apache.qpid.proton4j.amqp.transport.Role;
-import org.apache.qpid.proton4j.amqp.transport.Transfer;
-import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.engine.EventHandler;
 import org.apache.qpid.proton4j.engine.LinkCreditState;
 import org.apache.qpid.proton4j.engine.OutgoingDelivery;
@@ -71,18 +68,6 @@ public class ProtonSender extends ProtonLink<Sender> implements Sender {
     @Override
     protected ProtonSenderCreditState getCreditState() {
         return creditState;
-    }
-
-    //----- Handle incoming performatives
-
-    @Override
-    public void handleTransfer(Transfer transfer, ProtonBuffer payload, int channel, ProtonEngine context) {
-
-    }
-
-    @Override
-    public void handleDisposition(Disposition disposition, ProtonBuffer payload, int channel, ProtonEngine context) {
-
     }
 
     //----- Sender event handlers

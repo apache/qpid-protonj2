@@ -101,6 +101,8 @@ public class ProtonSessionIncomingWindow {
      *
      * @param transfer
      *      the incoming {@link Transfer} performative to process.
+     * @param payload
+     *      the payload that was transmitted with the incoming {@link Transfer}
      */
     Transfer handleTransfer(Transfer transfer, ProtonBuffer payload) {
         if (payload != null && !transfer.getAborted()) {

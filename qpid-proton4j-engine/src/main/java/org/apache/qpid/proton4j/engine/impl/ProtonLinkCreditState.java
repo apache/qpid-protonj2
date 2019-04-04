@@ -17,6 +17,7 @@
 package org.apache.qpid.proton4j.engine.impl;
 
 import org.apache.qpid.proton4j.amqp.transport.Attach;
+import org.apache.qpid.proton4j.amqp.transport.Disposition;
 import org.apache.qpid.proton4j.amqp.transport.Flow;
 import org.apache.qpid.proton4j.amqp.transport.Transfer;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
@@ -80,5 +81,15 @@ public interface ProtonLinkCreditState extends LinkCreditState {
      * @return the passed object for chaining.
      */
     abstract Transfer handleTransfer(Transfer transfer, ProtonBuffer payload);
+
+    /**
+     * Handle incoming {@link Disposition} performatives and update link accordingly.
+     *
+     * @param disposition
+     *      The {@link Disposition} instance to be processed.
+     *
+     * @return the passed object for chaining.
+     */
+    abstract Disposition handleDisposition(Disposition disposition);
 
 }

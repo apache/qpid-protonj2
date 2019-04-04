@@ -16,10 +16,7 @@
  */
 package org.apache.qpid.proton4j.engine.impl;
 
-import org.apache.qpid.proton4j.amqp.transport.Disposition;
 import org.apache.qpid.proton4j.amqp.transport.Role;
-import org.apache.qpid.proton4j.amqp.transport.Transfer;
-import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.engine.EventHandler;
 import org.apache.qpid.proton4j.engine.IncomingDelivery;
 import org.apache.qpid.proton4j.engine.Receiver;
@@ -82,18 +79,6 @@ public class ProtonReceiver extends ProtonLink<Receiver> implements Receiver {
         creditState.setCredit(credit);
 
         return this;
-    }
-
-    //----- Handle incoming performatives
-
-    @Override
-    public void handleTransfer(Transfer transfer, ProtonBuffer payload, int channel, ProtonEngine context) {
-        creditState.handleTransfer(transfer, payload);
-    }
-
-    @Override
-    public void handleDisposition(Disposition disposition, ProtonBuffer payload, int channel, ProtonEngine context) {
-
     }
 
     //----- Receiver event handlers

@@ -403,17 +403,21 @@ public class ProtonSession implements Session, Performative.PerformativeHandler<
         incomingWindow.handleFlow(flow);
         outgoingWindow.handleFlow(flow);
 
+        final ProtonLink<?> link;
+
         if (flow.hasHandle()) {
-            final ProtonLink<?> link = remoteLinks.get(flow.getHandle());
+            link = remoteLinks.get(flow.getHandle());
             if (link == null) {
                 getEngine().engineFailed(new ProtocolViolationException("Received uncorrelated handle on Flow from remote: " + channel));
             }
 
-            // Link will update session window during its flow processing.
             link.handleFlow(flow, payload, channel, context);
         } else {
+            link = null;
+        }
 
-            // TODO - Echo
+        if (flow.getEcho()) {
+            writeFlow(link);
         }
     }
 

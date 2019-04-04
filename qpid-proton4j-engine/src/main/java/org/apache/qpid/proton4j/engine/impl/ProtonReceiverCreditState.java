@@ -17,6 +17,7 @@
 package org.apache.qpid.proton4j.engine.impl;
 
 import org.apache.qpid.proton4j.amqp.transport.Attach;
+import org.apache.qpid.proton4j.amqp.transport.Disposition;
 import org.apache.qpid.proton4j.amqp.transport.Flow;
 import org.apache.qpid.proton4j.amqp.transport.Transfer;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
@@ -84,7 +85,12 @@ public class ProtonReceiverCreditState implements ProtonLinkCreditState {
 
     @Override
     public Transfer handleTransfer(Transfer transfer, ProtonBuffer payload) {
-        return null;
+        return transfer;
+    }
+
+    @Override
+    public Disposition handleDisposition(Disposition disposition) {
+        return disposition;
     }
 
     @Override

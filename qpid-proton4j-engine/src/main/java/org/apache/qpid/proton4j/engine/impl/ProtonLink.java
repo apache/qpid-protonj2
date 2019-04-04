@@ -28,12 +28,13 @@ import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.amqp.messaging.Source;
 import org.apache.qpid.proton4j.amqp.messaging.Target;
 import org.apache.qpid.proton4j.amqp.transport.Attach;
-import org.apache.qpid.proton4j.amqp.transport.Begin;
 import org.apache.qpid.proton4j.amqp.transport.Detach;
+import org.apache.qpid.proton4j.amqp.transport.Disposition;
 import org.apache.qpid.proton4j.amqp.transport.ErrorCondition;
 import org.apache.qpid.proton4j.amqp.transport.Flow;
 import org.apache.qpid.proton4j.amqp.transport.Performative;
 import org.apache.qpid.proton4j.amqp.transport.Role;
+import org.apache.qpid.proton4j.amqp.transport.Transfer;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.common.logging.ProtonLogger;
 import org.apache.qpid.proton4j.common.logging.ProtonLoggerFactory;
@@ -370,11 +371,6 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T>, Performa
     //----- Handle incoming performatives
 
     @Override
-    public void handleBegin(Begin begin, ProtonBuffer payload, int channel, ProtonEngine context) {
-        // TODO - Possible that we handle begin and send frames based on session state and state of this link
-    }
-
-    @Override
     public void handleAttach(Attach attach, ProtonBuffer payload, int channel, ProtonEngine context) {
         remoteAttach = attach;
         remoteState = LinkState.ACTIVE;
@@ -418,6 +414,16 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T>, Performa
                 remoteDetachHandler.handle(result(self(), getRemoteCondition()));
             }
         }
+    }
+
+    @Override
+    public void handleTransfer(Transfer transfer, ProtonBuffer payload, int channel, ProtonEngine context) {
+        getCreditState().handleTransfer(transfer, payload);
+    }
+
+    @Override
+    public void handleDisposition(Disposition disposition, ProtonBuffer payload, int channel, ProtonEngine context) {
+        getCreditState().handleDisposition(disposition);
     }
 
     @Override
