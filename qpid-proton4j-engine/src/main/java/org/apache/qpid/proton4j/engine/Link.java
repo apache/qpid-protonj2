@@ -80,6 +80,13 @@ public interface Link<T extends Link<T>> {
     Link<T> setLocalCondition(ErrorCondition condition);
 
     /**
+     * Get the credit that is currently available or assigned to this link.
+     *
+     * @return the current link credit.
+     */
+    int getCredit();
+
+    /**
      * @return the {@link Role} that this end of the link is performing.
      */
     Role getRole();

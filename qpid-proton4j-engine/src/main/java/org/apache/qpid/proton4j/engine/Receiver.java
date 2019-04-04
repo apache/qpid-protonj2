@@ -36,7 +36,6 @@ public interface Receiver extends Link<Receiver> {
 
     // Receiver addCredit(int amount);
     // Receiver reduceCredit(int amount);
-    // Receiver setCredit(int amount);
 
     // Receiver drain(EventHandler<Receiver> handler);
     // Receiver drain(int credits, EventHandler<Receiver> handler);

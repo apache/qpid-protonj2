@@ -25,6 +25,12 @@ public interface Sender extends Link<Sender> {
 
     // boolean isSendable();
 
+    // int available();
+
+    // boolean isDraining();
+
+    // boolean isDrained();
+
     // Sender drained(LinkCreditState state);
 
     //----- Event handlers for the Sender

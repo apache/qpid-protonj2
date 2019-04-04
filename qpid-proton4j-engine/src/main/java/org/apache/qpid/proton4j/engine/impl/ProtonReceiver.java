@@ -61,6 +61,12 @@ public class ProtonReceiver extends ProtonLink<Receiver> implements Receiver {
     }
 
     @Override
+    public int getCredit() {
+        checkNotClosed("Cannot get credit on a closed Receiver");
+        return creditState.getCredit();
+    }
+
+    @Override
     public ProtonReceiver setCredit(int credit) {
         checkNotClosed("Cannot set credit on a closed Receiver");
         if (credit < 0) {

@@ -31,6 +31,12 @@ public interface OutgoingDelivery extends Delivery {
     @Override
     Sender getLink();
 
+    // TODO - How to complete or send partial delivery
+
+    // OutgoingDelivery flush();  write what was written for partial send
+
+    // OutgoingDelivery complete();  write what was written as complete transfer
+
     // TODO - names of these send methods, send, sendBytes, write, writeBytes ?
 
     /**
