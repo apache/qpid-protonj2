@@ -87,6 +87,7 @@ public class ProtonSenderCreditState implements ProtonLinkCreditState {
         ProtonSenderCreditState snapshot = new ProtonSenderCreditState(sender, sessionWindow);
         snapshot.draining = draining;
         snapshot.credit = credit;
+        snapshot.drained = drained;
         snapshot.deliveryCount = deliveryCount;
         return snapshot;
     }
