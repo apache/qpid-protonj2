@@ -19,6 +19,7 @@ package org.apache.qpid.proton4j.amqp.driver.actions;
 import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
 import org.apache.qpid.proton4j.amqp.driver.ScriptedAction;
 import org.apache.qpid.proton4j.amqp.transport.Performative;
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 
 /**
  * Abstract base used by inject actions of AMQP Performatives
@@ -40,10 +41,20 @@ public abstract class AbstractPerformativeInjectAction<P extends Performative> i
         return this;
     }
 
+    /**
+     * @return the AMQP Performative that is to be sent as a result of this action.
+     */
     public abstract P getPerformative();
+
+    /**
+     * @return the buffer containing the payload that should be sent as part of this action.
+     */
+    public ProtonBuffer getPayload() {
+        return null;
+    }
 
     @Override
     public void perform(AMQPTestDriver driver) {
-        driver.sendAMQPFrame(onChannel(), getPerformative(), null);
+        driver.sendAMQPFrame(onChannel(), getPerformative(), getPayload());
     }
 }
