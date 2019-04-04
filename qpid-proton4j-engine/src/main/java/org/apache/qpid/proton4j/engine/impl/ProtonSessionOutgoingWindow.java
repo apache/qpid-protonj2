@@ -17,6 +17,7 @@
 package org.apache.qpid.proton4j.engine.impl;
 
 import org.apache.qpid.proton4j.amqp.transport.Begin;
+import org.apache.qpid.proton4j.amqp.transport.Disposition;
 import org.apache.qpid.proton4j.amqp.transport.Flow;
 import org.apache.qpid.proton4j.amqp.transport.Transfer;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
@@ -107,6 +108,19 @@ public class ProtonSessionOutgoingWindow {
      */
     Transfer handleTransfer(Transfer transfer, ProtonBuffer payload) {
         return transfer;
+    }
+
+    /**
+     * Update the state of any sent Transfers that are indicated in the disposition
+     * with the state information conveyed therein.
+     *
+     * @param disposition
+     *      The {@link Disposition} performative to process
+     *
+     * @return the {@link Disposition}
+     */
+    Disposition handleDisposition(Disposition disposition) {
+        return disposition;
     }
 
     void writeFlow(ProtonLink<?> link) {

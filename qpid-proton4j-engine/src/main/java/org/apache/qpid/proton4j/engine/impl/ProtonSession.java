@@ -431,7 +431,11 @@ public class ProtonSession implements Session, Performative.PerformativeHandler<
 
     @Override
     public void handleDisposition(Disposition disposition, ProtonBuffer payload, int channel, ProtonEngine context) {
-        // TODO
+        if (disposition.getRole() == Role.RECEIVER) {
+            outgoingWindow.handleDisposition(disposition);
+        } else {
+            incomingWindow.handleDisposition(disposition);
+        }
     }
 
     //----- Internal implementation
