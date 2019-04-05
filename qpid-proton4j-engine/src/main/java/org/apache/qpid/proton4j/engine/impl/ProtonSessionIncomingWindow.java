@@ -34,10 +34,16 @@ public class ProtonSessionIncomingWindow {
     // User configured incoming capacity for the session used to compute the incoming window
     private int incomingCapacity = 0;
 
-    // These are used for the session windows communicated via Begin/Flow frames
-    // and the conceptual transfer-id relating to updating them.
     private long incomingWindow = 0;
+
+    /**
+     * Tracks the next expected incoming transfer ID from the remote
+     */
     private long nextIncomingId = 0;
+
+    /**
+     * Tracks the next expected incoming delivery ID for any given link within the session
+     */
     private long nextDeliveryid = 0;
 
     private long remoteOutgoingWindow;
@@ -111,6 +117,7 @@ public class ProtonSessionIncomingWindow {
         }
 
         incomingWindow--;
+        nextIncomingId++;
 
         return transfer;
     }
