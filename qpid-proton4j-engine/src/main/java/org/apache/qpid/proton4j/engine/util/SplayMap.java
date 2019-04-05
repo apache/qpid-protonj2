@@ -73,7 +73,7 @@ public class SplayMap<E> implements Map<UnsignedInteger, E> {
                 root.value = value;
             } else {
                 Node<E> node = new Node<>(key, value);
-                if (key < root.key) {
+                if (compare(key, root.key) < 0) {
                     node.right = root;
                     node.left = root.left;
                     if (node.left != null) {
@@ -254,16 +254,16 @@ public class SplayMap<E> implements Map<UnsignedInteger, E> {
             return root;
         }
 
-        if (root.key > key) {
+        if (compare(root.key, key) > 0) {
             if (root.left == null) {
                 return root;
             }
 
-            if (root.left.key > key) {
+            if (compare(root.left.key, key) > 0) {
                 root.left.left = splay(root.left.left, key);
 
                 root = rightRotate(root);
-            } else if (root.left.key < key) {
+            } else if (compare(root.left.key, key) > 0) {
                 root.left.right = splay(root.left.right, key);
 
                 if (root.left.right != null) {
@@ -277,13 +277,14 @@ public class SplayMap<E> implements Map<UnsignedInteger, E> {
                 return root;
             }
 
-            if (root.right.key > key) {
+
+            if (compare(root.right.key, key) > 0) {
                 root.right.left = splay(root.right.left, key);
 
                 if (root.right.left != null) {
                     root.right = leftRotate(root.right);
                 }
-            } else if (root.right.key < key) {
+            } else if (compare(root.right.key, key) < 0) {
                 root.right.right = splay(root.right.right, key);
                 root = leftRotate(root);
             }
@@ -380,6 +381,10 @@ public class SplayMap<E> implements Map<UnsignedInteger, E> {
 
             return parent;
         }
+    }
+
+    private static int compare(int lhs, int rhs) {
+        return Integer.compareUnsigned(lhs, rhs);
     }
 
     //----- Map Iterator implementation for EntrySet, KeySet and Values collections
