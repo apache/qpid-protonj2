@@ -18,6 +18,7 @@ package org.apache.qpid.proton4j.engine.impl;
 
 import java.nio.ByteBuffer;
 
+import org.apache.qpid.proton4j.amqp.Binary;
 import org.apache.qpid.proton4j.amqp.transport.DeliveryState;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.engine.Delivery;
@@ -28,7 +29,7 @@ import org.apache.qpid.proton4j.engine.IncomingDelivery;
  */
 public class ProtonIncomingDelivery implements IncomingDelivery {
 
-    private final byte[] deliveryTag;
+    private final Binary deliveryTag;
     private final ProtonReceiver link;
 
     private boolean complete;
@@ -51,7 +52,7 @@ public class ProtonIncomingDelivery implements IncomingDelivery {
      * @param deliveryTag
      *      The delivery tag assigned to this delivery
      */
-    public ProtonIncomingDelivery(ProtonReceiver link, byte[] deliveryTag) {
+    public ProtonIncomingDelivery(ProtonReceiver link, Binary deliveryTag) {
         this.deliveryTag = deliveryTag;
         this.link = link;
     }
@@ -63,7 +64,7 @@ public class ProtonIncomingDelivery implements IncomingDelivery {
 
     @Override
     public byte[] getTag() {
-        return deliveryTag;
+        return deliveryTag.getArray();
     }
 
     @Override
@@ -76,9 +77,19 @@ public class ProtonIncomingDelivery implements IncomingDelivery {
         return remoteState;
     }
 
+    ProtonIncomingDelivery setRemoteState(DeliveryState state) {
+        this.remoteState = state;
+        return this;
+    }
+
     @Override
     public int getMessageFormat() {
         return messageFormat;
+    }
+
+    ProtonIncomingDelivery setMessageFormat(int messageFormat) {
+        this.messageFormat = messageFormat;
+        return this;
     }
 
     @Override
@@ -102,7 +113,7 @@ public class ProtonIncomingDelivery implements IncomingDelivery {
     }
 
     @Override
-    public IncomingDelivery setDefaultDeliveryState(DeliveryState state) {
+    public ProtonIncomingDelivery setDefaultDeliveryState(DeliveryState state) {
         this.defaultDeliveryState = state;
         return this;
     }
@@ -111,6 +122,8 @@ public class ProtonIncomingDelivery implements IncomingDelivery {
     public DeliveryState getDefaultDeliveryState() {
         return defaultDeliveryState;
     }
+
+    //----- TODO -- Move these to the Receiver so the delivery is acted upon consistently via its parent ?
 
     @Override
     public void disposition(DeliveryState state) {
@@ -123,12 +136,14 @@ public class ProtonIncomingDelivery implements IncomingDelivery {
     }
 
     @Override
-    public IncomingDelivery settle(DeliveryState state) {
+    public ProtonIncomingDelivery settle(DeliveryState state) {
         this.locallySettled = true;
         this.localState = state;
 
         return this;
     }
+
+    //----- Payload access
 
     @Override
     public int available() {
@@ -143,7 +158,7 @@ public class ProtonIncomingDelivery implements IncomingDelivery {
     }
 
     @Override
-    public IncomingDelivery readBytes(ProtonBuffer buffer) {
+    public ProtonIncomingDelivery readBytes(ProtonBuffer buffer) {
         if (payload != null) {
             payload.readBytes(buffer);
         }
@@ -151,7 +166,7 @@ public class ProtonIncomingDelivery implements IncomingDelivery {
     }
 
     @Override
-    public IncomingDelivery readBytes(ByteBuffer buffer) {
+    public ProtonIncomingDelivery readBytes(ByteBuffer buffer) {
         if (payload != null) {
             payload.readBytes(buffer);
         }
@@ -159,10 +174,38 @@ public class ProtonIncomingDelivery implements IncomingDelivery {
     }
 
     @Override
-    public IncomingDelivery readBytes(byte[] array, int offset, int length) {
+    public ProtonIncomingDelivery readBytes(byte[] array, int offset, int length) {
         if (payload != null) {
             payload.readBytes(array, offset, length);
         }
+        return this;
+    }
+
+    //----- Internal methods to manage the Delivery
+
+    ProtonIncomingDelivery aborted() {
+        this.aborted = true;
+        return this;
+    }
+
+    ProtonIncomingDelivery completed() {
+        this.complete = true;
+        return this;
+    }
+
+    ProtonIncomingDelivery remotelySettled() {
+        this.remotelySettled = true;
+        return this;
+    }
+
+    ProtonIncomingDelivery appendToPayload(ProtonBuffer buffer) {
+        if (payload == null) {
+            payload = buffer;
+        } else {
+            // TODO - CompositeBuffer to aggregate transfer payloads
+            payload.writeBytes(buffer);
+        }
+
         return this;
     }
 }

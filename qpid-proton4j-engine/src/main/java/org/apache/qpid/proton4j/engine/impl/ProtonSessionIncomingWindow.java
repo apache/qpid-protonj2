@@ -38,6 +38,7 @@ public class ProtonSessionIncomingWindow {
     // and the conceptual transfer-id relating to updating them.
     private long incomingWindow = 0;
     private long nextIncomingId = 0;
+    private long nextDeliveryid = 0;
 
     private long remoteOutgoingWindow;
     private long remoteNextOutgoingId;
@@ -152,6 +153,14 @@ public class ProtonSessionIncomingWindow {
 
     public long getNextIncomingId() {
         return nextIncomingId;
+    }
+
+    public long getNextDeliveryId() {
+        return nextDeliveryid;
+    }
+
+    public long incrementNextDeliveryId() {
+        return nextDeliveryid++;
     }
 
     public long getIncomingWindow() {

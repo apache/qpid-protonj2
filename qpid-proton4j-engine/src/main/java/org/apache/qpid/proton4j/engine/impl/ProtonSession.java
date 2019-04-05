@@ -428,6 +428,10 @@ public class ProtonSession implements Session, Performative.PerformativeHandler<
             getEngine().engineFailed(new ProtocolViolationException("Received uncorrelated handle on Transfer from remote: " + channel));
         }
 
+        if (!link.isRemotelyOpened()) {
+            getEngine().engineFailed(new ProtocolViolationException("Received Transfer for detached Receiver: " + link));
+        }
+
         incomingWindow.handleTransfer(transfer, payload);
 
         link.handleTransfer(transfer, payload, channel, context);

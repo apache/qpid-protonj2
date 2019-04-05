@@ -93,6 +93,10 @@ public class SequenceNumber extends Number implements Comparable<SequenceNumber>
         return false;
     }
 
+    public boolean equals(int other) {
+        return Integer.compareUnsigned(sequence, other) == 0;
+    }
+
     @Override
     public int hashCode() {
         return Integer.hashCode(sequence);

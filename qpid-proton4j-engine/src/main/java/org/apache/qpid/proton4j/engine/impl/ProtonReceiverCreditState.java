@@ -24,7 +24,8 @@ import org.apache.qpid.proton4j.amqp.transport.Disposition;
 import org.apache.qpid.proton4j.amqp.transport.Flow;
 import org.apache.qpid.proton4j.amqp.transport.Transfer;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
-import org.apache.qpid.proton4j.engine.IncomingDelivery;
+import org.apache.qpid.proton4j.engine.exceptions.ProtocolViolationException;
+import org.apache.qpid.proton4j.engine.util.SequenceNumber;
 
 /**
  * Credit state handler for {@link Receiver} links.
@@ -37,7 +38,10 @@ public class ProtonReceiverCreditState implements ProtonLinkCreditState {
     private int credit;
     private int deliveryCount;
 
-    private Map<Integer, IncomingDelivery> deliveries = new LinkedHashMap<>();
+    private SequenceNumber currentDeliveryId;
+
+    // TODO - Primitive aware storage collection
+    private Map<Integer, ProtonIncomingDelivery> deliveries = new LinkedHashMap<>();
 
     public ProtonReceiverCreditState(ProtonReceiver parent, ProtonSessionIncomingWindow sessionWindow) {
         this.incomingWindow = sessionWindow;
@@ -81,7 +85,6 @@ public class ProtonReceiverCreditState implements ProtonLinkCreditState {
                 throw new IllegalArgumentException("Receiver read flow with drain set but credit was not zero");
             }
 
-            // TODO - Echo if requested
             // TODO - Error on credit being non-zero for drain response ?
 
             parent.signalReceiverDrained();
@@ -91,18 +94,75 @@ public class ProtonReceiverCreditState implements ProtonLinkCreditState {
 
     @Override
     public Transfer handleTransfer(Transfer transfer, ProtonBuffer payload) {
+        final ProtonIncomingDelivery delivery;
 
-        // TODO - Full incoming delivery validation and handling
+        if (currentDeliveryId != null && !transfer.hasDeliveryId() || currentDeliveryId.equals((int) transfer.getDeliveryId())) {
+            delivery = deliveries.get(currentDeliveryId.intValue());
+        } else {
+            verifyNewDeliveryIdSequence(transfer, currentDeliveryId);
+
+            delivery = new ProtonIncomingDelivery(parent, transfer.getDeliveryTag());
+            delivery.setMessageFormat((int) transfer.getMessageFormat());
+
+            deliveries.put((int) transfer.getDeliveryId(), delivery);
+        }
+
+        if (transfer.hasState()) {
+            delivery.setRemoteState(transfer.getState());
+        }
+
+        if (transfer.getSettled() || transfer.getAborted()) {
+            delivery.remotelySettled();
+        }
+
+        delivery.appendToPayload(payload);
 
         boolean done = transfer.getAborted() || !transfer.getMore();
         if (done) {
+            if (transfer.getAborted()) {
+                delivery.aborted();
+            } else {
+                delivery.completed();
+            }
+
             credit = Math.min(credit - 1, 0);
             deliveryCount++;
         }
 
-        // TODO - Fire incoming delivery event
+        if (currentDeliveryId == null) {
+            parent.signalDeliveryReceived(delivery);
+        } else {
+            parent.signalDeliveryUpdated(delivery);
+        }
+
+        if (!done) {
+            currentDeliveryId = new SequenceNumber((int) transfer.getDeliveryId());
+        }
 
         return transfer;
+    }
+
+    private void verifyNewDeliveryIdSequence(Transfer transfer, SequenceNumber currentDeliveryId) {
+        // TODO - Fail engine, session, or link ?
+
+        if (!transfer.hasDeliveryId()) {
+            parent.getSession().getConnection().getEngine().engineFailed(
+                 new ProtocolViolationException("No delivery-id specified on first Transfer of new delivery"));
+        }
+
+        // Doing a primitive comparison, uses intValue() since its a uint sequence
+        // and we need the primitive values to wrap appropriately during comparison.
+        if (incomingWindow.incrementNextDeliveryId() != transfer.getDeliveryId()) {
+            parent.getSession().getConnection().getEngine().engineFailed(
+                new ProtocolViolationException("Expected delivery-id " + incomingWindow.getNextDeliveryId() +
+                                               ", got " + transfer.getDeliveryId()));
+        }
+
+        if (currentDeliveryId != null) {
+            parent.getSession().getConnection().getEngine().engineFailed(
+                new ProtocolViolationException("Illegal multiplex of deliveries on same link with delivery-id " +
+                                               currentDeliveryId + " and " + transfer.getDeliveryId()));
+        }
     }
 
     @Override

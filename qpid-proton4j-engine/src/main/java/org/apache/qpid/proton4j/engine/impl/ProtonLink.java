@@ -94,7 +94,7 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T>, Performa
     }
 
     @Override
-    public Session getSession() {
+    public ProtonSession getSession() {
         return session;
     }
 
