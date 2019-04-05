@@ -87,7 +87,6 @@ public class DataImpl implements Data {
     @Override
     public boolean enter() {
         if (current != null && current.canEnter()) {
-
             parent = current;
             current = null;
             return true;
@@ -98,8 +97,8 @@ public class DataImpl implements Data {
     @Override
     public boolean exit() {
         if (parent != null) {
-            Element<?> parent = this.parent;
-            current = parent;
+            Element<?> oldParent = this.parent;
+            current = oldParent;
             parent = current.parent();
             return true;
 
