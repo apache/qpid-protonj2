@@ -16,11 +16,15 @@
  */
 package org.apache.qpid.proton4j.engine.impl;
 
+import java.util.LinkedHashMap;
+import java.util.Map;
+
 import org.apache.qpid.proton4j.amqp.transport.Attach;
 import org.apache.qpid.proton4j.amqp.transport.Disposition;
 import org.apache.qpid.proton4j.amqp.transport.Flow;
 import org.apache.qpid.proton4j.amqp.transport.Transfer;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import org.apache.qpid.proton4j.engine.IncomingDelivery;
 
 /**
  * Credit state handler for {@link Receiver} links.
@@ -32,6 +36,8 @@ public class ProtonReceiverCreditState implements ProtonLinkCreditState {
 
     private int credit;
     private int deliveryCount;
+
+    private Map<Integer, IncomingDelivery> deliveries = new LinkedHashMap<>();
 
     public ProtonReceiverCreditState(ProtonReceiver parent, ProtonSessionIncomingWindow sessionWindow) {
         this.incomingWindow = sessionWindow;
@@ -85,6 +91,17 @@ public class ProtonReceiverCreditState implements ProtonLinkCreditState {
 
     @Override
     public Transfer handleTransfer(Transfer transfer, ProtonBuffer payload) {
+
+        // TODO - Full incoming delivery validation and handling
+
+        boolean done = transfer.getAborted() || !transfer.getMore();
+        if (done) {
+            credit = Math.min(credit - 1, 0);
+            deliveryCount++;
+        }
+
+        // TODO - Fire incoming delivery event
+
         return transfer;
     }
 
