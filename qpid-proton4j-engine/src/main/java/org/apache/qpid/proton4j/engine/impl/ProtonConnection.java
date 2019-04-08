@@ -181,7 +181,7 @@ public class ProtonConnection implements Connection, AMQPHeader.HeaderHandler<Pr
 
     @Override
     public Connection setMaxFrameSize(long maxFrameSize) {
-        checkNotOpened("Cannot set Hostname on already opened Connection");
+        checkNotOpened("Cannot set Max Frame Size on already opened Connection");
         localOpen.setMaxFrameSize(UnsignedInteger.valueOf(maxFrameSize));
         return this;
     }
