@@ -16,6 +16,7 @@
  */
 package org.apache.qpid.proton4j.engine.impl;
 
+import org.apache.qpid.proton4j.amqp.transport.DeliveryState;
 import org.apache.qpid.proton4j.amqp.transport.Role;
 import org.apache.qpid.proton4j.engine.EventHandler;
 import org.apache.qpid.proton4j.engine.IncomingDelivery;
@@ -33,6 +34,8 @@ public class ProtonReceiver extends ProtonLink<Receiver> implements Receiver {
     private EventHandler<IncomingDelivery> deliveryUpdatedEventHandler = null;
     private EventHandler<Receiver> receiverDrainedEventHandler = null;
 
+    private DeliveryState defaultDeliveryState;
+
     // TODO - On open validate that required handlers are not null
 
     /**
@@ -46,6 +49,17 @@ public class ProtonReceiver extends ProtonLink<Receiver> implements Receiver {
     public ProtonReceiver(ProtonSession session, String name) {
         super(session, name);
         this.creditState = new ProtonReceiverCreditState(this, session.getIncomingWindow());
+    }
+
+    @Override
+    public ProtonReceiver setDefaultDeliveryState(DeliveryState state) {
+        this.defaultDeliveryState = state;
+        return this;
+    }
+
+    @Override
+    public DeliveryState getDefaultDeliveryState() {
+        return defaultDeliveryState;
     }
 
     @Override

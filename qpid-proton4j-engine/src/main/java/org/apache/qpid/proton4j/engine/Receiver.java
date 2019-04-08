@@ -16,6 +16,8 @@
  */
 package org.apache.qpid.proton4j.engine;
 
+import org.apache.qpid.proton4j.amqp.transport.DeliveryState;
+
 /**
  * AMQP Receiver API
  */
@@ -39,6 +41,21 @@ public interface Receiver extends Link<Receiver> {
 
     // Receiver drain(EventHandler<Receiver> handler);
     // Receiver drain(int credits, EventHandler<Receiver> handler);
+
+    /**
+     * Configures a default DeliveryState to be used if a received delivery is settled/freed
+     * without any disposition state having been previously applied.
+     *
+     * @param state the default delivery state
+     *
+     * @return this {@link Receiver}
+     */
+    public Receiver setDefaultDeliveryState(DeliveryState state);
+
+    /**
+     * @return the default delivery state for this delivery
+     */
+    public DeliveryState getDefaultDeliveryState();
 
     //----- Event handlers for the Receiver
 
