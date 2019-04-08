@@ -356,7 +356,7 @@ public final class TransferInjectAction extends AbstractPerformativeInjectAction
 
     public final class ApplicationPropertiesBuilder extends SectionBuilder {
 
-        ApplicationPropertiesBuilder withAnnotation(String key, Object value) {
+        ApplicationPropertiesBuilder withApplicationProperty(String key, Object value) {
             getOrCreateApplicationProperties().getValue().put(key, value);
             return this;
         }
@@ -384,7 +384,7 @@ public final class TransferInjectAction extends AbstractPerformativeInjectAction
 
     public final class FooterBuilder extends SectionBuilder {
 
-        FooterBuilder withAnnotation(Object key, Object value) {
+        FooterBuilder withFooter(Object key, Object value) {
             getOrCreateFooter().getValue().put(key, value);
             return this;
         }
