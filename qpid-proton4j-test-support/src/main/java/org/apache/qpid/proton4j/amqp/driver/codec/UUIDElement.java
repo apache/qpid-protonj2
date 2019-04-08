@@ -16,8 +16,9 @@
  */
 package org.apache.qpid.proton4j.amqp.driver.codec;
 
-import java.nio.ByteBuffer;
 import java.util.UUID;
+
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 
 class UUIDElement extends AtomicElement<UUID> {
 
@@ -44,14 +45,14 @@ class UUIDElement extends AtomicElement<UUID> {
     }
 
     @Override
-    public int encode(ByteBuffer b) {
+    public int encode(ProtonBuffer buffer) {
         int size = size();
-        if (b.remaining() >= size) {
+        if (buffer.getWritableBytes() >= size) {
             if (size == 17) {
-                b.put((byte) 0x98);
+                buffer.writeByte((byte) 0x98);
             }
-            b.putLong(value.getMostSignificantBits());
-            b.putLong(value.getLeastSignificantBits());
+            buffer.writeLong(value.getMostSignificantBits());
+            buffer.writeLong(value.getLeastSignificantBits());
             return size;
         } else {
             return 0;

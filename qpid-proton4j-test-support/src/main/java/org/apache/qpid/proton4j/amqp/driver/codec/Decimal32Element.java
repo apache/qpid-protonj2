@@ -16,9 +16,8 @@
  */
 package org.apache.qpid.proton4j.amqp.driver.codec;
 
-import java.nio.ByteBuffer;
-
 import org.apache.qpid.proton4j.amqp.Decimal32;
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 
 class Decimal32Element extends AtomicElement<Decimal32> {
 
@@ -45,13 +44,13 @@ class Decimal32Element extends AtomicElement<Decimal32> {
     }
 
     @Override
-    public int encode(ByteBuffer b) {
+    public int encode(ProtonBuffer buffer) {
         int size = size();
-        if (b.remaining() >= size) {
+        if (buffer.getWritableBytes() >= size) {
             if (size == 5) {
-                b.put((byte) 0x74);
+                buffer.writeByte((byte) 0x74);
             }
-            b.putInt(value.getBits());
+            buffer.writeInt(value.getBits());
             return size;
         } else {
             return 0;

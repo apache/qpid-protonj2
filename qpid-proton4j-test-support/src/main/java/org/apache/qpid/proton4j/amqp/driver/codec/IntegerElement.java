@@ -16,7 +16,7 @@
  */
 package org.apache.qpid.proton4j.amqp.driver.codec;
 
-import java.nio.ByteBuffer;
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 
 class IntegerElement extends AtomicElement<Integer> {
 
@@ -57,20 +57,20 @@ class IntegerElement extends AtomicElement<Integer> {
     }
 
     @Override
-    public int encode(ByteBuffer b) {
+    public int encode(ProtonBuffer buffer) {
         int size = size();
-        if (size <= b.remaining()) {
+        if (size <= buffer.getWritableBytes()) {
             switch (size) {
                 case 2:
-                    b.put((byte) 0x54);
+                    buffer.writeByte((byte) 0x54);
                 case 1:
-                    b.put((byte) value);
+                    buffer.writeByte((byte) value);
                     break;
 
                 case 5:
-                    b.put((byte) 0x71);
+                    buffer.writeByte((byte) 0x71);
                 case 4:
-                    b.putInt(value);
+                    buffer.writeInt(value);
 
             }
 

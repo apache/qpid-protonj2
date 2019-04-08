@@ -32,6 +32,7 @@ import org.apache.qpid.proton4j.amqp.UnsignedByte;
 import org.apache.qpid.proton4j.amqp.UnsignedInteger;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.amqp.UnsignedShort;
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 
 public interface Data {
 
@@ -90,7 +91,7 @@ public interface Data {
 
     long encodedSize();
 
-    long encode(ByteBuffer buf);
+    long encode(ProtonBuffer buffer);
 
     long decode(ByteBuffer buf);
 

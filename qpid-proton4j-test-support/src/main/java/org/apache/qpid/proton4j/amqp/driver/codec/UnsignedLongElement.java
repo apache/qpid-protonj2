@@ -16,9 +16,8 @@
  */
 package org.apache.qpid.proton4j.amqp.driver.codec;
 
-import java.nio.ByteBuffer;
-
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 
 class UnsignedLongElement extends AtomicElement<UnsignedLong> {
 
@@ -68,27 +67,27 @@ class UnsignedLongElement extends AtomicElement<UnsignedLong> {
     }
 
     @Override
-    public int encode(ByteBuffer b) {
+    public int encode(ProtonBuffer buffer) {
         int size = size();
-        if (size > b.remaining()) {
+        if (size > buffer.getWritableBytes()) {
             return 0;
         }
         switch (size) {
             case 1:
                 if (isElementOfArray()) {
-                    b.put((byte) value.longValue());
+                    buffer.writeByte((byte) value.longValue());
                 } else {
-                    b.put((byte) 0x44);
+                    buffer.writeByte((byte) 0x44);
                 }
                 break;
             case 2:
-                b.put((byte) 0x53);
-                b.put((byte) value.longValue());
+                buffer.writeByte((byte) 0x53);
+                buffer.writeByte((byte) value.longValue());
                 break;
             case 9:
-                b.put((byte) 0x80);
+                buffer.writeByte((byte) 0x80);
             case 8:
-                b.putLong(value.longValue());
+                buffer.writeLong(value.longValue());
 
         }
 

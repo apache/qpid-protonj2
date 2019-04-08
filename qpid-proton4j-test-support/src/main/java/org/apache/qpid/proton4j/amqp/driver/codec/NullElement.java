@@ -16,7 +16,7 @@
  */
 package org.apache.qpid.proton4j.amqp.driver.codec;
 
-import java.nio.ByteBuffer;
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 
 class NullElement extends AtomicElement<Void> {
 
@@ -40,9 +40,9 @@ class NullElement extends AtomicElement<Void> {
     }
 
     @Override
-    public int encode(ByteBuffer b) {
-        if (b.hasRemaining() && !isElementOfArray()) {
-            b.put((byte) 0x40);
+    public int encode(ProtonBuffer buffer) {
+        if (buffer.isWritable() && !isElementOfArray()) {
+            buffer.writeByte((byte) 0x40);
             return 1;
         }
         return 0;

@@ -16,9 +16,8 @@
  */
 package org.apache.qpid.proton4j.amqp.driver.codec;
 
-import java.nio.ByteBuffer;
-
 import org.apache.qpid.proton4j.amqp.Decimal128;
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 
 class Decimal128Element extends AtomicElement<Decimal128> {
 
@@ -45,14 +44,14 @@ class Decimal128Element extends AtomicElement<Decimal128> {
     }
 
     @Override
-    public int encode(ByteBuffer b) {
+    public int encode(ProtonBuffer buffer) {
         int size = size();
-        if (b.remaining() >= size) {
+        if (buffer.getWritableBytes() >= size) {
             if (size == 17) {
-                b.put((byte) 0x94);
+                buffer.writeByte((byte) 0x94);
             }
-            b.putLong(value.getMostSignificantBits());
-            b.putLong(value.getLeastSignificantBits());
+            buffer.writeLong(value.getMostSignificantBits());
+            buffer.writeLong(value.getLeastSignificantBits());
             return size;
         } else {
             return 0;

@@ -16,10 +16,11 @@
  */
 package org.apache.qpid.proton4j.amqp.driver.codec;
 
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 
 class ListElement extends AbstractElement<List<Object>> {
 
@@ -82,7 +83,7 @@ class ListElement extends AbstractElement<List<Object>> {
 
     @Override
     public List<Object> getValue() {
-        List<Object> list = new ArrayList<Object>();
+        List<Object> list = new ArrayList<>();
         Element<?> elt = first;
         while (elt != null) {
             list.add(elt.getValue());
@@ -98,7 +99,7 @@ class ListElement extends AbstractElement<List<Object>> {
     }
 
     @Override
-    public int encode(ByteBuffer b) {
+    public int encode(ProtonBuffer buffer) {
         int encodedSize = size();
 
         int count = 0;
@@ -110,7 +111,7 @@ class ListElement extends AbstractElement<List<Object>> {
             elt = elt.next();
         }
 
-        if (encodedSize > b.remaining()) {
+        if (encodedSize > buffer.getWritableBytes()) {
             return 0;
         } else {
             if (isElementOfArray()) {
@@ -118,31 +119,31 @@ class ListElement extends AbstractElement<List<Object>> {
                     case TINY:
                         break;
                     case SMALL:
-                        b.put((byte) (size + 1));
-                        b.put((byte) count);
+                        buffer.writeByte((byte) (size + 1));
+                        buffer.writeByte((byte) count);
                         break;
                     case LARGE:
-                        b.putInt((size + 4));
-                        b.putInt(count);
+                        buffer.writeInt((size + 4));
+                        buffer.writeInt(count);
                 }
             } else {
                 if (count == 0) {
-                    b.put((byte) 0x45);
+                    buffer.writeByte((byte) 0x45);
                 } else if (size <= 254 && count <= 255) {
-                    b.put((byte) 0xc0);
-                    b.put((byte) (size + 1));
-                    b.put((byte) count);
+                    buffer.writeByte((byte) 0xc0);
+                    buffer.writeByte((byte) (size + 1));
+                    buffer.writeByte((byte) count);
                 } else {
-                    b.put((byte) 0xd0);
-                    b.putInt((size + 4));
-                    b.putInt(count);
+                    buffer.writeByte((byte) 0xd0);
+                    buffer.writeInt((size + 4));
+                    buffer.writeInt(count);
                 }
 
             }
 
             elt = first;
             while (elt != null) {
-                elt.encode(b);
+                elt.encode(buffer);
                 elt = elt.next();
             }
 

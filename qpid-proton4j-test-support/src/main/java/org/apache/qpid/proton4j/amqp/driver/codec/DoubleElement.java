@@ -16,7 +16,7 @@
  */
 package org.apache.qpid.proton4j.amqp.driver.codec;
 
-import java.nio.ByteBuffer;
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 
 class DoubleElement extends AtomicElement<Double> {
 
@@ -43,13 +43,13 @@ class DoubleElement extends AtomicElement<Double> {
     }
 
     @Override
-    public int encode(ByteBuffer b) {
+    public int encode(ProtonBuffer buffer) {
         int size = size();
-        if (b.remaining() >= size) {
+        if (buffer.getWritableBytes() >= size) {
             if (size == 9) {
-                b.put((byte) 0x82);
+                buffer.writeByte((byte) 0x82);
             }
-            b.putDouble(value);
+            buffer.writeDouble(value);
             return size;
         } else {
             return 0;

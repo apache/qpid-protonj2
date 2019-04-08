@@ -16,7 +16,7 @@
  */
 package org.apache.qpid.proton4j.amqp.driver.codec;
 
-import java.nio.ByteBuffer;
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 
 interface Element<T> {
 
@@ -26,7 +26,7 @@ interface Element<T> {
 
     Data.DataType getDataType();
 
-    int encode(ByteBuffer b);
+    int encode(ProtonBuffer buffer);
 
     Element<?> next();
 

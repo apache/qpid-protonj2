@@ -16,7 +16,7 @@
  */
 package org.apache.qpid.proton4j.amqp.driver.codec;
 
-import java.nio.ByteBuffer;
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 
 class BooleanElement extends AtomicElement<Boolean> {
 
@@ -46,12 +46,12 @@ class BooleanElement extends AtomicElement<Boolean> {
     }
 
     @Override
-    public int encode(ByteBuffer b) {
-        if (b.hasRemaining()) {
+    public int encode(ProtonBuffer buffer) {
+        if (buffer.isWritable()) {
             if (isElementOfArray()) {
-                b.put(value ? (byte) 1 : (byte) 0);
+                buffer.writeByte(value ? (byte) 1 : (byte) 0);
             } else {
-                b.put(value ? (byte) 0x41 : (byte) 0x42);
+                buffer.writeByte(value ? (byte) 0x41 : (byte) 0x42);
             }
             return 1;
         }

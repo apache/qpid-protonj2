@@ -16,8 +16,9 @@
  */
 package org.apache.qpid.proton4j.amqp.driver.codec;
 
-import java.nio.ByteBuffer;
 import java.util.Date;
+
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 
 class TimestampElement extends AtomicElement<Date> {
 
@@ -44,15 +45,15 @@ class TimestampElement extends AtomicElement<Date> {
     }
 
     @Override
-    public int encode(ByteBuffer b) {
+    public int encode(ProtonBuffer buffer) {
         int size = size();
-        if (size > b.remaining()) {
+        if (size > buffer.getWritableBytes()) {
             return 0;
         }
         if (size == 9) {
-            b.put((byte) 0x83);
+            buffer.writeByte((byte) 0x83);
         }
-        b.putLong(value.getTime());
+        buffer.writeLong(value.getTime());
 
         return size;
     }

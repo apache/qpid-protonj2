@@ -16,8 +16,9 @@
  */
 package org.apache.qpid.proton4j.amqp.driver.codec;
 
-import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
+
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 
 class StringElement extends AtomicElement<String> {
 
@@ -70,30 +71,30 @@ class StringElement extends AtomicElement<String> {
     }
 
     @Override
-    public int encode(ByteBuffer b) {
+    public int encode(ProtonBuffer buffer) {
         final byte[] bytes = value.getBytes(UTF_8);
         final int length = bytes.length;
 
         int size = size(length);
-        if (b.remaining() < size) {
+        if (buffer.getWritableBytes() < size) {
             return 0;
         }
         if (isElementOfArray()) {
             final ArrayElement parent = (ArrayElement) parent();
 
             if (parent.constructorType() == ArrayElement.SMALL) {
-                b.put((byte) length);
+                buffer.writeByte((byte) length);
             } else {
-                b.putInt(length);
+                buffer.writeInt(length);
             }
         } else if (length <= 255) {
-            b.put((byte) 0xa1);
-            b.put((byte) length);
+            buffer.writeByte((byte) 0xa1);
+            buffer.writeByte((byte) length);
         } else {
-            b.put((byte) 0xb1);
-            b.putInt(length);
+            buffer.writeByte((byte) 0xb1);
+            buffer.writeInt(length);
         }
-        b.put(bytes);
+        buffer.writeBytes(bytes);
         return size;
     }
 }

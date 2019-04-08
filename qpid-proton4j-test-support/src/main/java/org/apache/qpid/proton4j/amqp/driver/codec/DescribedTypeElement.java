@@ -16,9 +16,8 @@
  */
 package org.apache.qpid.proton4j.amqp.driver.codec;
 
-import java.nio.ByteBuffer;
-
 import org.apache.qpid.proton4j.amqp.DescribedType;
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 
 class DescribedTypeElement extends AbstractElement<DescribedType> {
 
@@ -68,22 +67,22 @@ class DescribedTypeElement extends AbstractElement<DescribedType> {
     }
 
     @Override
-    public int encode(ByteBuffer b) {
+    public int encode(ProtonBuffer buffer) {
         int encodedSize = size();
 
-        if (encodedSize > b.remaining()) {
+        if (encodedSize > buffer.getWritableBytes()) {
             return 0;
         } else {
-            b.put((byte) 0);
+            buffer.writeByte((byte) 0);
             if (first == null) {
-                b.put((byte) 0x40);
-                b.put((byte) 0x40);
+                buffer.writeByte((byte) 0x40);
+                buffer.writeByte((byte) 0x40);
             } else {
-                first.encode(b);
+                first.encode(buffer);
                 if (first.next() == null) {
-                    b.put((byte) 0x40);
+                    buffer.writeByte((byte) 0x40);
                 } else {
-                    first.next().encode(b);
+                    first.next().encode(buffer);
                 }
             }
         }

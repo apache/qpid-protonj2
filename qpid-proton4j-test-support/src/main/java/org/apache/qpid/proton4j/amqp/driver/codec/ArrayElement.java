@@ -16,10 +16,9 @@
  */
 package org.apache.qpid.proton4j.amqp.driver.codec;
 
-import java.nio.ByteBuffer;
-
 import org.apache.qpid.proton4j.amqp.DescribedType;
 import org.apache.qpid.proton4j.amqp.Symbol;
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 
 class ArrayElement extends AbstractElement<Object[]> {
 
@@ -151,134 +150,134 @@ class ArrayElement extends AbstractElement<Object[]> {
     }
 
     @Override
-    public int encode(ByteBuffer b) {
+    public int encode(ProtonBuffer buffer) {
         int size = size();
 
         final int count = (int) count();
 
-        if (b.remaining() >= size) {
+        if (buffer.getWritableBytes() >= size) {
             if (!isElementOfArray()) {
                 if (size > 257 || count > 255) {
-                    b.put((byte) 0xf0);
-                    b.putInt(size - 5);
-                    b.putInt(count);
+                    buffer.writeByte((byte) 0xf0);
+                    buffer.writeInt(size - 5);
+                    buffer.writeInt(count);
                 } else {
-                    b.put((byte) 0xe0);
-                    b.put((byte) (size - 2));
-                    b.put((byte) count);
+                    buffer.writeByte((byte) 0xe0);
+                    buffer.writeByte((byte) (size - 2));
+                    buffer.writeByte((byte) count);
                 }
             } else {
                 ArrayElement parent = (ArrayElement) parent();
                 if (parent.constructorType() == SMALL) {
-                    b.put((byte) (size - 1));
-                    b.put((byte) count);
+                    buffer.writeByte((byte) (size - 1));
+                    buffer.writeByte((byte) count);
                 } else {
-                    b.putInt(size - 4);
-                    b.putInt(count);
+                    buffer.writeInt(size - 4);
+                    buffer.writeInt(count);
                 }
             }
             Element<?> element = first;
             if (isDescribed()) {
-                b.put((byte) 0);
+                buffer.writeByte((byte) 0);
                 if (element == null) {
-                    b.put((byte) 0x40);
+                    buffer.writeByte((byte) 0x40);
                 } else {
-                    element.encode(b);
+                    element.encode(buffer);
                     element = element.next();
                 }
             }
             switch (arrayType) {
                 case NULL:
-                    b.put((byte) 0x40);
+                    buffer.writeByte((byte) 0x40);
                     break;
                 case BOOL:
-                    b.put((byte) 0x56);
+                    buffer.writeByte((byte) 0x56);
                     break;
                 case UBYTE:
-                    b.put((byte) 0x50);
+                    buffer.writeByte((byte) 0x50);
                     break;
                 case BYTE:
-                    b.put((byte) 0x51);
+                    buffer.writeByte((byte) 0x51);
                     break;
                 case USHORT:
-                    b.put((byte) 0x60);
+                    buffer.writeByte((byte) 0x60);
                     break;
                 case SHORT:
-                    b.put((byte) 0x61);
+                    buffer.writeByte((byte) 0x61);
                     break;
                 case UINT:
                     switch (constructorType()) {
                         case TINY:
-                            b.put((byte) 0x43);
+                            buffer.writeByte((byte) 0x43);
                             break;
                         case SMALL:
-                            b.put((byte) 0x52);
+                            buffer.writeByte((byte) 0x52);
                             break;
                         case LARGE:
-                            b.put((byte) 0x70);
+                            buffer.writeByte((byte) 0x70);
                             break;
                     }
                     break;
                 case INT:
-                    b.put(constructorType == SMALL ? (byte) 0x54 : (byte) 0x71);
+                    buffer.writeByte(constructorType == SMALL ? (byte) 0x54 : (byte) 0x71);
                     break;
                 case CHAR:
-                    b.put((byte) 0x73);
+                    buffer.writeByte((byte) 0x73);
                     break;
                 case ULONG:
                     switch (constructorType()) {
                         case TINY:
-                            b.put((byte) 0x44);
+                            buffer.writeByte((byte) 0x44);
                             break;
                         case SMALL:
-                            b.put((byte) 0x53);
+                            buffer.writeByte((byte) 0x53);
                             break;
                         case LARGE:
-                            b.put((byte) 0x80);
+                            buffer.writeByte((byte) 0x80);
                             break;
                     }
                     break;
                 case LONG:
-                    b.put(constructorType == SMALL ? (byte) 0x55 : (byte) 0x81);
+                    buffer.writeByte(constructorType == SMALL ? (byte) 0x55 : (byte) 0x81);
                     break;
                 case TIMESTAMP:
-                    b.put((byte) 0x83);
+                    buffer.writeByte((byte) 0x83);
                     break;
                 case FLOAT:
-                    b.put((byte) 0x72);
+                    buffer.writeByte((byte) 0x72);
                     break;
                 case DOUBLE:
-                    b.put((byte) 0x82);
+                    buffer.writeByte((byte) 0x82);
                     break;
                 case DECIMAL32:
-                    b.put((byte) 0x74);
+                    buffer.writeByte((byte) 0x74);
                     break;
                 case DECIMAL64:
-                    b.put((byte) 0x84);
+                    buffer.writeByte((byte) 0x84);
                     break;
                 case DECIMAL128:
-                    b.put((byte) 0x94);
+                    buffer.writeByte((byte) 0x94);
                     break;
                 case UUID:
-                    b.put((byte) 0x98);
+                    buffer.writeByte((byte) 0x98);
                     break;
                 case BINARY:
-                    b.put(constructorType == SMALL ? (byte) 0xa0 : (byte) 0xb0);
+                    buffer.writeByte(constructorType == SMALL ? (byte) 0xa0 : (byte) 0xb0);
                     break;
                 case STRING:
-                    b.put(constructorType == SMALL ? (byte) 0xa1 : (byte) 0xb1);
+                    buffer.writeByte(constructorType == SMALL ? (byte) 0xa1 : (byte) 0xb1);
                     break;
                 case SYMBOL:
-                    b.put(constructorType == SMALL ? (byte) 0xa3 : (byte) 0xb3);
+                    buffer.writeByte(constructorType == SMALL ? (byte) 0xa3 : (byte) 0xb3);
                     break;
                 case ARRAY:
-                    b.put(constructorType == SMALL ? (byte) 0xe0 : (byte) 0xf0);
+                    buffer.writeByte(constructorType == SMALL ? (byte) 0xe0 : (byte) 0xf0);
                     break;
                 case LIST:
-                    b.put(constructorType == TINY ? (byte) 0x45 : constructorType == SMALL ? (byte) 0xc0 : (byte) 0xd0);
+                    buffer.writeByte(constructorType == TINY ? (byte) 0x45 : constructorType == SMALL ? (byte) 0xc0 : (byte) 0xd0);
                     break;
                 case MAP:
-                    b.put(constructorType == SMALL ? (byte) 0xc1 : (byte) 0xd1);
+                    buffer.writeByte(constructorType == SMALL ? (byte) 0xc1 : (byte) 0xd1);
                     break;
                 case DESCRIBED:
                     break;
@@ -286,7 +285,7 @@ class ArrayElement extends AbstractElement<Object[]> {
                     break;
             }
             while (element != null) {
-                element.encode(b);
+                element.encode(buffer);
                 element = element.next();
             }
             return size;

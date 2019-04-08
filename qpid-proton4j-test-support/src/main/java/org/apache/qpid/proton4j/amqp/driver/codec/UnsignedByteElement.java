@@ -16,9 +16,8 @@
  */
 package org.apache.qpid.proton4j.amqp.driver.codec;
 
-import java.nio.ByteBuffer;
-
 import org.apache.qpid.proton4j.amqp.UnsignedByte;
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 
 class UnsignedByteElement extends AtomicElement<UnsignedByte> {
 
@@ -45,16 +44,16 @@ class UnsignedByteElement extends AtomicElement<UnsignedByte> {
     }
 
     @Override
-    public int encode(ByteBuffer b) {
+    public int encode(ProtonBuffer buffer) {
         if (isElementOfArray()) {
-            if (b.hasRemaining()) {
-                b.put(value.byteValue());
+            if (buffer.isWritable()) {
+                buffer.writeByte(value.byteValue());
                 return 1;
             }
         } else {
-            if (b.remaining() >= 2) {
-                b.put((byte) 0x50);
-                b.put(value.byteValue());
+            if (buffer.getWritableBytes() >= 2) {
+                buffer.writeByte((byte) 0x50);
+                buffer.writeByte(value.byteValue());
                 return 2;
             }
         }

@@ -16,7 +16,7 @@
  */
 package org.apache.qpid.proton4j.amqp.driver.codec;
 
-import java.nio.ByteBuffer;
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 
 class FloatElement extends AtomicElement<Float> {
 
@@ -43,13 +43,13 @@ class FloatElement extends AtomicElement<Float> {
     }
 
     @Override
-    public int encode(ByteBuffer b) {
+    public int encode(ProtonBuffer buffer) {
         int size = size();
-        if (b.remaining() >= size) {
+        if (buffer.getWritableBytes() >= size) {
             if (size == 5) {
-                b.put((byte) 0x72);
+                buffer.writeByte((byte) 0x72);
             }
-            b.putFloat(value);
+            buffer.writeFloat(value);
             return size;
         } else {
             return 0;

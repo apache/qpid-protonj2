@@ -16,7 +16,7 @@
  */
 package org.apache.qpid.proton4j.amqp.driver.codec;
 
-import java.nio.ByteBuffer;
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 
 class LongElement extends AtomicElement<Long> {
 
@@ -59,21 +59,21 @@ class LongElement extends AtomicElement<Long> {
     }
 
     @Override
-    public int encode(ByteBuffer b) {
+    public int encode(ProtonBuffer buffer) {
         int size = size();
-        if (size > b.remaining()) {
+        if (size > buffer.getWritableBytes()) {
             return 0;
         }
         switch (size) {
             case 2:
-                b.put((byte) 0x55);
+                buffer.writeByte((byte) 0x55);
             case 1:
-                b.put((byte) value);
+                buffer.writeByte((byte) value);
                 break;
             case 9:
-                b.put((byte) 0x81);
+                buffer.writeByte((byte) 0x81);
             case 8:
-                b.putLong(value);
+                buffer.writeLong(value);
 
         }
         return size;

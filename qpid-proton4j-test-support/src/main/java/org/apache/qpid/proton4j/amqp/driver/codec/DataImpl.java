@@ -32,6 +32,7 @@ import org.apache.qpid.proton4j.amqp.UnsignedByte;
 import org.apache.qpid.proton4j.amqp.UnsignedInteger;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.amqp.UnsignedShort;
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 
 public class DataImpl implements Data {
 
@@ -123,13 +124,13 @@ public class DataImpl implements Data {
     }
 
     @Override
-    public long encode(ByteBuffer buf) {
+    public long encode(ProtonBuffer buffer) {
         Element<?> elt = first;
         int size = 0;
         while (elt != null) {
             final int eltSize = elt.size();
-            if (eltSize <= buf.remaining()) {
-                size += elt.encode(buf);
+            if (eltSize <= buffer.getWritableBytes()) {
+                size += elt.encode(buffer);
             } else {
                 size += eltSize;
             }

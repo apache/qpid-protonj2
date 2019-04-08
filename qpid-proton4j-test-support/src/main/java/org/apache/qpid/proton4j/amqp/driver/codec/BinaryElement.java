@@ -16,9 +16,8 @@
  */
 package org.apache.qpid.proton4j.amqp.driver.codec;
 
-import java.nio.ByteBuffer;
-
 import org.apache.qpid.proton4j.amqp.Binary;
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 
 class BinaryElement extends AtomicElement<Binary> {
 
@@ -68,27 +67,27 @@ class BinaryElement extends AtomicElement<Binary> {
     }
 
     @Override
-    public int encode(ByteBuffer b) {
+    public int encode(ProtonBuffer buffer) {
         int size = size();
-        if (b.remaining() < size) {
+        if (buffer.getWritableBytes() < size) {
             return 0;
         }
         if (isElementOfArray()) {
             final ArrayElement parent = (ArrayElement) parent();
 
             if (parent.constructorType() == ArrayElement.SMALL) {
-                b.put((byte) value.getLength());
+                buffer.writeByte((byte) value.getLength());
             } else {
-                b.putInt(value.getLength());
+                buffer.writeInt(value.getLength());
             }
         } else if (value.getLength() <= 255) {
-            b.put((byte) 0xa0);
-            b.put((byte) value.getLength());
+            buffer.writeByte((byte) 0xa0);
+            buffer.writeByte((byte) value.getLength());
         } else {
-            b.put((byte) 0xb0);
-            b.putInt(value.getLength());
+            buffer.writeByte((byte) 0xb0);
+            buffer.writeInt(value.getLength());
         }
-        b.put(value.getArray(), value.getArrayOffset(), value.getLength());
+        buffer.writeBytes(value.getArray(), value.getArrayOffset(), value.getLength());
         return size;
     }
 }

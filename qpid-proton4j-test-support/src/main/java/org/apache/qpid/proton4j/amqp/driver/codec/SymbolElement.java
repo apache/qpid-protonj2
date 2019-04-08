@@ -16,10 +16,10 @@
  */
 package org.apache.qpid.proton4j.amqp.driver.codec;
 
-import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 
 import org.apache.qpid.proton4j.amqp.Symbol;
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 
 class SymbolElement extends AtomicElement<Symbol> {
 
@@ -68,27 +68,27 @@ class SymbolElement extends AtomicElement<Symbol> {
     }
 
     @Override
-    public int encode(ByteBuffer b) {
+    public int encode(ProtonBuffer buffer) {
         int size = size();
-        if (b.remaining() < size) {
+        if (buffer.getWritableBytes() < size) {
             return 0;
         }
         if (isElementOfArray()) {
             final ArrayElement parent = (ArrayElement) parent();
 
             if (parent.constructorType() == ArrayElement.SMALL) {
-                b.put((byte) value.getLength());
+                buffer.writeByte((byte) value.getLength());
             } else {
-                b.putInt(value.getLength());
+                buffer.writeInt(value.getLength());
             }
         } else if (value.getLength() <= 255) {
-            b.put((byte) 0xa3);
-            b.put((byte) value.getLength());
+            buffer.writeByte((byte) 0xa3);
+            buffer.writeByte((byte) value.getLength());
         } else {
-            b.put((byte) 0xb3);
-            b.put((byte) value.getLength());
+            buffer.writeByte((byte) 0xb3);
+            buffer.writeByte((byte) value.getLength());
         }
-        b.put(value.toString().getBytes(ASCII));
+        buffer.writeBytes(value.toString().getBytes(ASCII));
         return size;
     }
 }
