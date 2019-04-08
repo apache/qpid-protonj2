@@ -28,6 +28,11 @@ public interface Delivery {
      */
     Link<?> getLink();
 
+    /**
+     * @return the {@link Context} instance that is associated with this {@link Delivery}
+     */
+    Context getContext();
+
     //----- Delivery state
 
     /**

@@ -16,8 +16,6 @@
  */
 package org.apache.qpid.proton4j.engine.impl;
 
-import java.nio.ByteBuffer;
-
 import org.apache.qpid.proton4j.amqp.Binary;
 import org.apache.qpid.proton4j.amqp.transport.DeliveryState;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
@@ -29,6 +27,7 @@ import org.apache.qpid.proton4j.engine.IncomingDelivery;
  */
 public class ProtonIncomingDelivery implements IncomingDelivery {
 
+    private final ProtonContext context = new ProtonContext();
     private final Binary deliveryTag;
     private final ProtonReceiver link;
 
@@ -60,6 +59,11 @@ public class ProtonIncomingDelivery implements IncomingDelivery {
     @Override
     public ProtonReceiver getLink() {
         return link;
+    }
+
+    @Override
+    public ProtonContext getContext() {
+        return context;
     }
 
     @Override
@@ -159,14 +163,6 @@ public class ProtonIncomingDelivery implements IncomingDelivery {
 
     @Override
     public ProtonIncomingDelivery readBytes(ProtonBuffer buffer) {
-        if (payload != null) {
-            payload.readBytes(buffer);
-        }
-        return this;
-    }
-
-    @Override
-    public ProtonIncomingDelivery readBytes(ByteBuffer buffer) {
         if (payload != null) {
             payload.readBytes(buffer);
         }

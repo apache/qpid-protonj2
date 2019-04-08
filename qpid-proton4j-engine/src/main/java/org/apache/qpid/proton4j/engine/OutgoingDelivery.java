@@ -16,8 +16,6 @@
  */
 package org.apache.qpid.proton4j.engine;
 
-import java.nio.ByteBuffer;
-
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 
 /**
@@ -46,14 +44,6 @@ public interface OutgoingDelivery extends Delivery {
      * @throws {@link IllegalStateException} if the current credit prohibits sending the requested amount of bytes
      */
     void writeBytes(ProtonBuffer buffer);
-
-    /**
-     * @param buffer
-     *      The buffer whose contents should be sent.
-     *
-     * @throws {@link IllegalStateException} if the current credit prohibits sending the requested amount of bytes
-     */
-    void writeBytes(ByteBuffer buffer);
 
     /**
      * @param array

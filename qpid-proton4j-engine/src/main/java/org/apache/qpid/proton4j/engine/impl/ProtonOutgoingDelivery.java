@@ -16,8 +16,6 @@
  */
 package org.apache.qpid.proton4j.engine.impl;
 
-import java.nio.ByteBuffer;
-
 import org.apache.qpid.proton4j.amqp.transport.DeliveryState;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
@@ -30,6 +28,7 @@ import org.apache.qpid.proton4j.engine.Sender;
  */
 public class ProtonOutgoingDelivery implements OutgoingDelivery {
 
+    private final ProtonContext context = new ProtonContext();
     private final ProtonSender link;
 
     private byte[] deliveryTag;
@@ -56,6 +55,11 @@ public class ProtonOutgoingDelivery implements OutgoingDelivery {
     @Override
     public Sender getLink() {
         return link;
+    }
+
+    @Override
+    public ProtonContext getContext() {
+        return context;
     }
 
     @Override
@@ -123,11 +127,6 @@ public class ProtonOutgoingDelivery implements OutgoingDelivery {
 
     @Override
     public void writeBytes(ProtonBuffer buffer) {
-        payload.writeBytes(buffer);
-    }
-
-    @Override
-    public void writeBytes(ByteBuffer buffer) {
         payload.writeBytes(buffer);
     }
 

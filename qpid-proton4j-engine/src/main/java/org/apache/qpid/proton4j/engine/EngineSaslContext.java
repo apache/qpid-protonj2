@@ -69,8 +69,6 @@ public interface EngineSaslContext {
      */
     SaslState getSaslState();
 
-    // TODO - Provide some information on the authenticated result (user etc)
-
     /**
      * Provides a low level outcome value for the SASL authentication process.
      *
@@ -92,5 +90,12 @@ public interface EngineSaslContext {
      *      The maximum allowed frame size from the remote sender.
      */
     void setMaxFrameSize(int maxFrameSize);
+
+    // TODO - User configures if they want client or server where not configured defaults based
+    //        on events and likely fails due to not being configured in the first place
+
+    // SaslClientContext client();
+
+    // SaslServerContext server();
 
 }

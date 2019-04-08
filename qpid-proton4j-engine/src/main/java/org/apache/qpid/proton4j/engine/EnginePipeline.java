@@ -68,7 +68,6 @@ public interface EnginePipeline {
 
     EnginePipeline fireWrite(SaslPerformative performative);
 
-    // TODO - Make this Frame<ProtonBuffer> so that the performance and payload buffers can be split to avoid copy ?
     EnginePipeline fireWrite(ProtonBuffer buffer);
 
     EnginePipeline fireEncodingError(Throwable e);

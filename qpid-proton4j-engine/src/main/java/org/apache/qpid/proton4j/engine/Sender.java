@@ -22,6 +22,9 @@ package org.apache.qpid.proton4j.engine;
 public interface Sender extends Link<Sender> {
 
     // OutgoingDelivery createDelivery();
+    // - or -
+    // Gets ore create a new delivery for use, current until completed.
+    // OutgoingDelivery currentDelivery();
 
     // boolean isSendable();
 

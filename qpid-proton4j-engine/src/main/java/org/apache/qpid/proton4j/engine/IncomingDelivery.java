@@ -16,8 +16,6 @@
  */
 package org.apache.qpid.proton4j.engine;
 
-import java.nio.ByteBuffer;
-
 import org.apache.qpid.proton4j.amqp.transport.DeliveryState;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 
@@ -47,9 +45,9 @@ public interface IncomingDelivery extends Delivery {
 
     ProtonBuffer readAll();
 
-    IncomingDelivery readBytes(ProtonBuffer buffer);
+    // TODO - Allow partial consumption or only support readAll (take) of buffer.
 
-    IncomingDelivery readBytes(ByteBuffer buffer);
+    IncomingDelivery readBytes(ProtonBuffer buffer);
 
     IncomingDelivery readBytes(byte[] array, int offset, int length);
 

@@ -168,8 +168,6 @@ public interface Engine extends Consumer<ProtonBuffer> {
      * @return this Engine
      */
     default Engine outputConsumer(Consumer<ProtonBuffer> consumer) {
-        // TODO this allows for consumers to be registered vs the external user having to
-        //      use our EventHandler type
         outputHandler((output) -> {
             consumer.accept(output);
         });

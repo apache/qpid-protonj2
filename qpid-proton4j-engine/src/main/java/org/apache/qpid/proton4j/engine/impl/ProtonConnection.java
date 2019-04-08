@@ -375,8 +375,10 @@ public class ProtonConnection implements Connection, AMQPHeader.HeaderHandler<Pr
         remoteState = ConnectionState.CLOSED;
         setRemoteCondition(close.getError());
 
-        // TODO - Inform all Sessions that the remote has closed ?
-        // foreach session -> close.invoke(session, payload, channel, context);
+        // Inform the local sessions that remote has closed this connection.
+        for (ProtonSession session : localSessions.values()) {
+            session.handleClose(close, payload, channel, context);
+        }
 
         if (remoteCloseHandler != null) {
             remoteCloseHandler.handle(result(this, close.getError()));
