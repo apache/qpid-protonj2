@@ -154,7 +154,7 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T>, Performa
             long localHandle = session.findFreeLocalHandle(this);
             localAttach.setHandle(localHandle);
             session.getEngine().pipeline().fireWrite(
-                getCreditState().configureOutbound(localAttach), session.getLocalChannel(), null, null);
+                getCreditState().configureAttach(localAttach), session.getLocalChannel(), null, null);
         }
 
         return this;

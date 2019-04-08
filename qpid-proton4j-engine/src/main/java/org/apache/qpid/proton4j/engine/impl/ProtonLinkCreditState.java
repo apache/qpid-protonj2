@@ -44,7 +44,7 @@ public interface ProtonLinkCreditState extends LinkCreditState {
      *
      * @return the attach object for chaining
      */
-    default Attach configureOutbound(Attach attach) {
+    default Attach configureAttach(Attach attach) {
         return attach;
     }
 

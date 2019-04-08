@@ -57,7 +57,7 @@ public class ProtonSenderCreditState implements ProtonLinkCreditState {
     }
 
     @Override
-    public Attach configureOutbound(Attach attach) {
+    public Attach configureAttach(Attach attach) {
         return attach.setInitialDeliveryCount(0);
     }
 
