@@ -21,8 +21,8 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
 
-import org.apache.qpid.proton4j.amqp.Binary;
 import org.apache.qpid.proton4j.amqp.DescribedType;
 import org.apache.qpid.proton4j.amqp.driver.codec.Data;
 import org.apache.qpid.proton4j.amqp.transport.Open;
@@ -75,8 +75,10 @@ public class DataImplTest {
         Data codec = Data.Factory.create();
 
         codec.putDescribedType(open);
-        Binary binary = codec.encode();
-        ProtonBuffer encoded = ProtonByteBufferAllocator.DEFAULT.wrap(binary.getArray(), binary.getArrayOffset(), binary.getLength());
+        ByteBuffer buffer = ByteBuffer.allocate((int) codec.encodedSize());
+        codec.encode(buffer);
+        buffer.flip();
+        ProtonBuffer encoded = ProtonByteBufferAllocator.DEFAULT.wrap(buffer);
 
         Performative decoded = decodeProtonPerformative(encoded);
         assertNotNull(decoded);

@@ -88,8 +88,6 @@ public interface Data {
 
     DataType type();
 
-    Binary encode();
-
     long encodedSize();
 
     long encode(ByteBuffer buf);

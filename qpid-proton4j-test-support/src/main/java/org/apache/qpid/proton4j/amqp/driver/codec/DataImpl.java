@@ -123,15 +123,6 @@ public class DataImpl implements Data {
     }
 
     @Override
-    public Binary encode() {
-        byte[] data = new byte[(int) encodedSize()];
-        ByteBuffer buf = ByteBuffer.wrap(data);
-        encode(buf);
-
-        return new Binary(data);
-    }
-
-    @Override
     public long encode(ByteBuffer buf) {
         Element<?> elt = first;
         int size = 0;
