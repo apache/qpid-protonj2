@@ -58,7 +58,7 @@ class DescribedTypeElement extends AbstractElement<DescribedType> {
         final Object descriptor = first == null ? null : first.getValue();
         Element<?> second = first == null ? null : first.next();
         final Object described = second == null ? null : second.getValue();
-        return new DescribedTypeImpl(descriptor, described);
+        return DescribedTypeRegistry.lookupDescribedType(descriptor, described);
     }
 
     @Override

@@ -16,46 +16,81 @@
  */
 package org.apache.qpid.proton4j.amqp.driver.codec;
 
+import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.LinkedList;
 import java.util.List;
 
 import org.apache.qpid.proton4j.amqp.DescribedType;
 
 public abstract class ListDescribedType implements DescribedType {
 
-    private final Object[] fields;
+    private final ArrayList<Object> fields;
 
     public ListDescribedType(int numberOfFields) {
-        fields = new Object[numberOfFields];
+        fields = new ArrayList<>(numberOfFields);
+
+        for (int i = 0; i < numberOfFields; ++i) {
+            fields.add(null);
+        }
+    }
+
+    public ListDescribedType(int numberOfFields, List<Object> described) {
+        if (described.size() > numberOfFields) {
+            throw new IllegalArgumentException("List encoded exceeds expected number of elements for this type");
+        }
+
+        fields = new ArrayList<>(numberOfFields);
+
+        for (int i = 0; i < numberOfFields; ++i) {
+            if (i < described.size()) {
+                fields.add(described.get(i));
+            } else {
+                fields.add(null);
+            }
+        }
     }
 
     @Override
-    public Object getDescribed() {
+    public List<Object> getDescribed() {
         // Return a List containing only the 'used fields' (i.e up to the
         // highest field used)
         int numUsedFields = 0;
-        for (int i = 0; i < fields.length; i++) {
-            if (fields[i] != null) {
-                numUsedFields = i + 1;
+        for (Object element : fields) {
+            if (element != null) {
+                numUsedFields++;
             }
         }
 
         // Create a list with the fields in the correct positions.
-        List<Object> list = new LinkedList<>();
+        List<Object> list = new ArrayList<>();
         for (int j = 0; j < numUsedFields; j++) {
-            list.add(fields[j]);
+            list.add(fields.get(j));
         }
 
         return list;
     }
 
-    protected Object[] getFields() {
+    protected int getHighestSetFieldId() {
+        int numUsedFields = 0;
+        for (Object element : fields) {
+            if (element != null) {
+                numUsedFields++;
+            }
+        }
+
+        return numUsedFields;
+    }
+
+    protected ArrayList<Object> getList() {
         return fields;
+    }
+
+    protected Object[] getFields() {
+        return fields.toArray();
     }
 
     @Override
     public String toString() {
-        return "ListDescribedType [descriptor=" + getDescriptor() + " fields=" + Arrays.toString(fields) + "]";
+        return "ListDescribedType [descriptor=" + getDescriptor() + " fields=" + Arrays.toString(getFields()) + "]";
     }
 }

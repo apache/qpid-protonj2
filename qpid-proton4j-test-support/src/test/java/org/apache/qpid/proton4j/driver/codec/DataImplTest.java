@@ -22,8 +22,10 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 
-import org.apache.qpid.proton4j.amqp.DescribedType;
+import org.apache.qpid.proton4j.amqp.UnsignedInteger;
+import org.apache.qpid.proton4j.amqp.UnsignedShort;
 import org.apache.qpid.proton4j.amqp.driver.codec.Data;
+import org.apache.qpid.proton4j.amqp.transport.Begin;
 import org.apache.qpid.proton4j.amqp.transport.Open;
 import org.apache.qpid.proton4j.amqp.transport.Performative;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
@@ -59,9 +61,13 @@ public class DataImplTest {
 
         assertEquals(expectedRead, codec.decode(encoded));
 
-        DescribedType described = codec.getDescribedType();
+        org.apache.qpid.proton4j.amqp.driver.codec.types.Open described =
+            (org.apache.qpid.proton4j.amqp.driver.codec.types.Open) codec.getDescribedType();
         assertNotNull(described);
         assertEquals(Open.DESCRIPTOR_CODE, described.getDescriptor());
+
+        assertEquals(open.getContainerId(), described.getContainerId());
+        assertEquals(open.getHostname(), described.getHostname());
     }
 
     @Test
@@ -80,6 +86,57 @@ public class DataImplTest {
         Performative decoded = decodeProtonPerformative(encoded);
         assertNotNull(decoded);
         assertTrue(decoded instanceof Open);
+
+        Open performative = (Open) decoded;
+        assertEquals(open.getContainerId(), performative.getContainerId());
+        assertEquals(open.getHostname(), performative.getHostname());
+    }
+
+    @Test
+    public void testDecodeBegin() {
+        Begin begin = new Begin();
+        begin.setHandleMax(512);
+        begin.setRemoteChannel(1);
+
+        ProtonBuffer encoded = encodeProtonPerformative(begin);
+        int expectedRead = encoded.getReadableBytes();
+
+        Data codec = Data.Factory.create();
+
+        assertEquals(expectedRead, codec.decode(encoded));
+
+        org.apache.qpid.proton4j.amqp.driver.codec.types.Begin described =
+            (org.apache.qpid.proton4j.amqp.driver.codec.types.Begin) codec.getDescribedType();
+        assertNotNull(described);
+        assertEquals(Begin.DESCRIPTOR_CODE, described.getDescriptor());
+
+        assertEquals(described.getHandleMax(), UnsignedInteger.valueOf(512));
+        assertEquals(described.getRemoteChannel(), UnsignedShort.valueOf((short) 1));
+    }
+
+    @Test
+    public void testEncodeBegin() throws IOException {
+        org.apache.qpid.proton4j.amqp.driver.codec.types.Begin begin =
+            new org.apache.qpid.proton4j.amqp.driver.codec.types.Begin();
+        begin.setHandleMax(UnsignedInteger.valueOf(512));
+        begin.setRemoteChannel(UnsignedShort.valueOf((short) 1));
+        begin.setIncomingWindow(UnsignedInteger.valueOf(2));
+        begin.setNextOutgoingId(UnsignedInteger.valueOf(2));
+        begin.setOutgoingWindow(UnsignedInteger.valueOf(3));
+
+        Data codec = Data.Factory.create();
+
+        codec.putDescribedType(begin);
+        ProtonBuffer encoded = ProtonByteBufferAllocator.DEFAULT.allocate((int) codec.encodedSize());
+        codec.encode(encoded);
+
+        Performative decoded = decodeProtonPerformative(encoded);
+        assertNotNull(decoded);
+        assertTrue(decoded instanceof Begin);
+
+        Begin performative = (Begin) decoded;
+        assertEquals(performative.getHandleMax(), 512);
+        assertEquals(performative.getRemoteChannel(), 1);
     }
 
     private Performative decodeProtonPerformative(ProtonBuffer buffer) throws IOException {

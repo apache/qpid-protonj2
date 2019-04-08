@@ -20,7 +20,7 @@ import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.amqp.driver.codec.ListDescribedType;
 
-public class Error extends ListDescribedType {
+public class ErrorCondition extends ListDescribedType {
 
     public static final Symbol DESCRIPTOR_SYMBOL = Symbol.valueOf("amqp:error:list");
     public static final UnsignedLong DESCRIPTOR_CODE = UnsignedLong.valueOf(0x000000000000001dL);
@@ -29,7 +29,7 @@ public class Error extends ListDescribedType {
     private static final int FIELD_DESCRIPTION = 1;
     private static final int FIELD_INFO = 2;
 
-    public Error(Object... fields) {
+    public ErrorCondition(Object... fields) {
         super(3);
         int i = 0;
         for (Object field : fields) {
@@ -42,17 +42,17 @@ public class Error extends ListDescribedType {
         return DESCRIPTOR_SYMBOL;
     }
 
-    public Error setCondition(Object o) {
+    public ErrorCondition setCondition(Object o) {
         getFields()[FIELD_CONDITION] = o;
         return this;
     }
 
-    public Error setDescription(Object o) {
+    public ErrorCondition setDescription(Object o) {
         getFields()[FIELD_DESCRIPTION] = o;
         return this;
     }
 
-    public Error setInfo(Object o) {
+    public ErrorCondition setInfo(Object o) {
         getFields()[FIELD_INFO] = o;
         return this;
     }

@@ -26,19 +26,19 @@ import org.apache.qpid.proton4j.amqp.DescribedType;
  */
 public abstract class MapDescribedType implements DescribedType {
 
-    private final Map<Object, Object> _fields;
+    private final Map<Object, Object> fields;
 
     public MapDescribedType() {
-        _fields = new HashMap<>();
+        fields = new HashMap<>();
     }
 
     @Override
     public Map<Object, Object> getDescribed() {
-        return _fields;
+        return fields;
     }
 
     @Override
     public String toString() {
-        return "MapDescribedType [descriptor=" + getDescriptor() + " fields=" + _fields + "]";
+        return "MapDescribedType [descriptor=" + getDescriptor() + " fields=" + fields + "]";
     }
 }
