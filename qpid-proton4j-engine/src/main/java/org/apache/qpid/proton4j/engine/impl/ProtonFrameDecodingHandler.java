@@ -41,8 +41,6 @@ import org.apache.qpid.proton4j.engine.exceptions.ProtonExceptionSupport;
 
 /**
  * Handler used to parse incoming frame data input into the engine
- *
- * TODO Maybe rename to frame decoding handler ?
  */
 public class ProtonFrameDecodingHandler implements EngineHandler, SaslPerformative.SaslPerformativeHandler<EngineHandlerContext> {
 
@@ -324,15 +322,11 @@ public class ProtonFrameDecodingHandler implements EngineHandler, SaslPerformati
 
             if (type == AMQP_FRAME_TYPE) {
                 Performative performative = (Performative) val;
-                // TODO Remove me
-                LOG.trace("IN: CH[{}] : {} [{}]", channel, performative, payload);
                 ProtocolFrame frame = framePool.take(performative, channel, frameSize, payload);
                 transitionToFrameSizeParsingStage();
                 context.fireRead(frame);
             } else if (type == SASL_FRAME_TYPE) {
                 SaslPerformative performative = (SaslPerformative) val;
-                //TODO remove me
-                LOG.trace("IN: {} [{}]", performative, payload);
                 SaslFrame saslFrame = new SaslFrame(performative, frameSize, payload);
                 transitionToFrameSizeParsingStage();
                 context.fireRead(saslFrame);
