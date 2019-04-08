@@ -20,6 +20,7 @@ import java.util.LinkedHashMap;
 
 import org.apache.qpid.proton4j.amqp.Binary;
 import org.apache.qpid.proton4j.amqp.Symbol;
+import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
 import org.apache.qpid.proton4j.amqp.messaging.AmqpValue;
 import org.apache.qpid.proton4j.amqp.messaging.ApplicationProperties;
 import org.apache.qpid.proton4j.amqp.messaging.Data;
@@ -71,6 +72,14 @@ public final class TransferInjectAction extends AbstractPerformativeInjectAction
             payload = encodePayload();
         }
         return payload;
+    }
+
+    @Override
+    public void perform(AMQPTestDriver driver) {
+        // Here we could check if the delivery Id is set and if not grab a valid
+        // next Id from the driver as well as checking for a session and using last
+        // created one if none set.
+        driver.sendAMQPFrame(onChannel(), getPerformative(), getPayload());
     }
 
     public TransferInjectAction withHandle(long handle) {
