@@ -61,7 +61,6 @@ public class ProtonSender extends ProtonLink<Sender> implements Sender {
 
     @Override
     public int getCredit() {
-        checkNotClosed("Cannot get credit on a closed Sender");
         return creditState.getCredit();
     }
 
