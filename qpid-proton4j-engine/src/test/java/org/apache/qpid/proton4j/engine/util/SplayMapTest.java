@@ -199,7 +199,32 @@ public class SplayMapTest {
         }
 
         // Check that we really did iterate.
-        assertEquals(4, counter);
+        assertEquals(intValues.length, counter);
+    }
+
+    @Test
+    public void testValuesIterationFollowUnsignedOrderingExpectations() {
+        SplayMap<String> map = new SplayMap<>();
+
+        final int[] inputValues = {3, 0, -1, 1, -2, 2};
+        final int[] expectedOrder = {0, 1, 2, 3, -2, -1};
+
+        for (int entry : inputValues) {
+            map.put(entry, "" + entry);
+        }
+
+        Collection<String> values = map.values();
+        Iterator<String> iterator = values.iterator();
+        assertNotNull(iterator);
+        assertTrue(iterator.hasNext());
+
+        int counter = 0;
+        while (iterator.hasNext()) {
+            assertEquals("" + expectedOrder[counter++], iterator.next());
+        }
+
+        // Check that we really did iterate.
+        assertEquals(inputValues.length, counter);
     }
 
     @Test
@@ -252,7 +277,32 @@ public class SplayMapTest {
         }
 
         // Check that we really did iterate.
-        assertEquals(4, counter);
+        assertEquals(intValues.length, counter);
+    }
+
+    @Test
+    public void testKeysIterationFollowsUnsignedOrderingExpectations() {
+        SplayMap<String> map = new SplayMap<>();
+
+        final int[] inputValues = {3, 0, -1, 1, -2, 2};
+        final int[] expectedOrder = {0, 1, 2, 3, -2, -1};
+
+        for (int entry : inputValues) {
+            map.put(entry, "" + entry);
+        }
+
+        Collection<UnsignedInteger> keys = map.keySet();
+        Iterator<UnsignedInteger> iterator = keys.iterator();
+        assertNotNull(iterator);
+        assertTrue(iterator.hasNext());
+
+        int counter = 0;
+        while (iterator.hasNext()) {
+            assertEquals(UnsignedInteger.valueOf(expectedOrder[counter++]), iterator.next());
+        }
+
+        // Check that we really did iterate.
+        assertEquals(inputValues.length, counter);
     }
 
     @Test
@@ -308,7 +358,35 @@ public class SplayMapTest {
         }
 
         // Check that we really did iterate.
-        assertEquals(4, counter);
+        assertEquals(intValues.length, counter);
+    }
+
+    @Test
+    public void testEntryIterationFollowsUnsignedOrderingExpectations() {
+        SplayMap<String> map = new SplayMap<>();
+
+        final int[] inputValues = {3, 0, -1, 1, -2, 2};
+        final int[] expectedOrder = {0, 1, 2, 3, -2, -1};
+
+        for (int entry : inputValues) {
+            map.put(entry, "" + entry);
+        }
+
+        Set<Entry<UnsignedInteger, String>> entries= map.entrySet();
+        Iterator<Entry<UnsignedInteger, String>> iterator = entries.iterator();
+        assertNotNull(iterator);
+        assertTrue(iterator.hasNext());
+
+        int counter = 0;
+        while (iterator.hasNext()) {
+            Entry<UnsignedInteger, String> entry = iterator.next();
+            assertNotNull(entry);
+            assertEquals(UnsignedInteger.valueOf(expectedOrder[counter]), entry.getKey());
+            assertEquals("" + expectedOrder[counter++], entry.getValue());
+        }
+
+        // Check that we really did iterate.
+        assertEquals(inputValues.length, counter);
     }
 
     @Test
