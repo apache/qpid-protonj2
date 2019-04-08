@@ -57,7 +57,7 @@ public class DataImplTest {
 
         Data codec = Data.Factory.create();
 
-        assertEquals(expectedRead, codec.decode(encoded.toByteBuffer()));
+        assertEquals(expectedRead, codec.decode(encoded));
 
         DescribedType described = codec.getDescribedType();
         assertNotNull(described);

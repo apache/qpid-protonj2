@@ -16,7 +16,6 @@
  */
 package org.apache.qpid.proton4j.amqp.driver.codec;
 
-import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.util.Date;
 import java.util.UUID;
@@ -29,6 +28,7 @@ import org.apache.qpid.proton4j.amqp.UnsignedByte;
 import org.apache.qpid.proton4j.amqp.UnsignedInteger;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.amqp.UnsignedShort;
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 
 class DataDecoder {
 
@@ -95,29 +95,29 @@ class DataDecoder {
 
         Data.DataType getType();
 
-        int size(ByteBuffer b);
+        int size(ProtonBuffer buffer);
 
-        void parse(ByteBuffer b, Data data);
+        void parse(ProtonBuffer buffer, Data data);
     }
 
-    static int decode(ByteBuffer b, Data data) {
-        if (b.hasRemaining()) {
-            int position = b.position();
-            TypeConstructor c = readConstructor(b);
-            final int size = c.size(b);
-            if (b.remaining() >= size) {
-                c.parse(b, data);
+    static int decode(ProtonBuffer buffer, Data data) {
+        if (buffer.isReadable()) {
+            int position = buffer.getReadIndex();
+            TypeConstructor c = readConstructor(buffer);
+            final int size = c.size(buffer);
+            if (buffer.getReadableBytes() >= size) {
+                c.parse(buffer, data);
                 return 1 + size;
             } else {
-                b.position(position);
+                buffer.setReadIndex(position);
                 return -4;
             }
         }
         return 0;
     }
 
-    private static TypeConstructor readConstructor(ByteBuffer b) {
-        int index = b.get() & 0xff;
+    private static TypeConstructor readConstructor(ProtonBuffer buffer) {
+        int index = buffer.readByte() & 0xff;
         TypeConstructor tc = constructors[index];
         if (tc == null) {
             throw new IllegalArgumentException("No constructor for type " + index);
@@ -133,12 +133,12 @@ class DataDecoder {
         }
 
         @Override
-        public int size(ByteBuffer b) {
+        public int size(ProtonBuffer buffer) {
             return 0;
         }
 
         @Override
-        public void parse(ByteBuffer b, Data data) {
+        public void parse(ProtonBuffer buffer, Data data) {
             data.putNull();
         }
     }
@@ -151,12 +151,12 @@ class DataDecoder {
         }
 
         @Override
-        public int size(ByteBuffer b) {
+        public int size(ProtonBuffer buffer) {
             return 0;
         }
 
         @Override
-        public void parse(ByteBuffer b, Data data) {
+        public void parse(ProtonBuffer buffer, Data data) {
             data.putBoolean(true);
         }
     }
@@ -169,12 +169,12 @@ class DataDecoder {
         }
 
         @Override
-        public int size(ByteBuffer b) {
+        public int size(ProtonBuffer buffer) {
             return 0;
         }
 
         @Override
-        public void parse(ByteBuffer b, Data data) {
+        public void parse(ProtonBuffer buffer, Data data) {
             data.putBoolean(false);
         }
     }
@@ -187,12 +187,12 @@ class DataDecoder {
         }
 
         @Override
-        public int size(ByteBuffer b) {
+        public int size(ProtonBuffer buffer) {
             return 0;
         }
 
         @Override
-        public void parse(ByteBuffer b, Data data) {
+        public void parse(ProtonBuffer buffer, Data data) {
             data.putUnsignedInteger(UnsignedInteger.ZERO);
         }
     }
@@ -205,12 +205,12 @@ class DataDecoder {
         }
 
         @Override
-        public int size(ByteBuffer b) {
+        public int size(ProtonBuffer buffer) {
             return 0;
         }
 
         @Override
-        public void parse(ByteBuffer b, Data data) {
+        public void parse(ProtonBuffer buffer, Data data) {
             data.putUnsignedLong(UnsignedLong.ZERO);
         }
     }
@@ -223,12 +223,12 @@ class DataDecoder {
         }
 
         @Override
-        public int size(ByteBuffer b) {
+        public int size(ProtonBuffer buffer) {
             return 0;
         }
 
         @Override
-        public void parse(ByteBuffer b, Data data) {
+        public void parse(ProtonBuffer buffer, Data data) {
             data.putList();
         }
     }
@@ -237,7 +237,7 @@ class DataDecoder {
     private static abstract class Fixed0SizeConstructor implements TypeConstructor {
 
         @Override
-        public final int size(ByteBuffer b) {
+        public final int size(ProtonBuffer buffer) {
             return 0;
         }
     }
@@ -245,7 +245,7 @@ class DataDecoder {
     private static abstract class Fixed1SizeConstructor implements TypeConstructor {
 
         @Override
-        public int size(ByteBuffer b) {
+        public int size(ProtonBuffer buffer) {
             return 1;
         }
     }
@@ -253,7 +253,7 @@ class DataDecoder {
     private static abstract class Fixed2SizeConstructor implements TypeConstructor {
 
         @Override
-        public int size(ByteBuffer b) {
+        public int size(ProtonBuffer buffer) {
             return 2;
         }
     }
@@ -261,7 +261,7 @@ class DataDecoder {
     private static abstract class Fixed4SizeConstructor implements TypeConstructor {
 
         @Override
-        public int size(ByteBuffer b) {
+        public int size(ProtonBuffer buffer) {
             return 4;
         }
     }
@@ -269,7 +269,7 @@ class DataDecoder {
     private static abstract class Fixed8SizeConstructor implements TypeConstructor {
 
         @Override
-        public int size(ByteBuffer b) {
+        public int size(ProtonBuffer buffer) {
             return 8;
         }
     }
@@ -277,7 +277,7 @@ class DataDecoder {
     private static abstract class Fixed16SizeConstructor implements TypeConstructor {
 
         @Override
-        public int size(ByteBuffer b) {
+        public int size(ProtonBuffer buffer) {
             return 16;
         }
     }
@@ -290,8 +290,8 @@ class DataDecoder {
         }
 
         @Override
-        public void parse(ByteBuffer b, Data data) {
-            data.putUnsignedByte(UnsignedByte.valueOf(b.get()));
+        public void parse(ProtonBuffer buffer, Data data) {
+            data.putUnsignedByte(UnsignedByte.valueOf(buffer.readByte()));
         }
     }
 
@@ -303,8 +303,8 @@ class DataDecoder {
         }
 
         @Override
-        public void parse(ByteBuffer b, Data data) {
-            data.putByte(b.get());
+        public void parse(ProtonBuffer buffer, Data data) {
+            data.putByte(buffer.readByte());
         }
     }
 
@@ -316,8 +316,8 @@ class DataDecoder {
         }
 
         @Override
-        public void parse(ByteBuffer b, Data data) {
-            data.putUnsignedInteger(UnsignedInteger.valueOf((b.get()) & 0xff));
+        public void parse(ProtonBuffer buffer, Data data) {
+            data.putUnsignedInteger(UnsignedInteger.valueOf((buffer.readByte()) & 0xff));
         }
     }
 
@@ -329,8 +329,8 @@ class DataDecoder {
         }
 
         @Override
-        public void parse(ByteBuffer b, Data data) {
-            data.putInt(b.get());
+        public void parse(ProtonBuffer buffer, Data data) {
+            data.putInt(buffer.readByte());
         }
     }
 
@@ -342,8 +342,8 @@ class DataDecoder {
         }
 
         @Override
-        public void parse(ByteBuffer b, Data data) {
-            data.putUnsignedLong(UnsignedLong.valueOf((b.get()) & 0xff));
+        public void parse(ProtonBuffer buffer, Data data) {
+            data.putUnsignedLong(UnsignedLong.valueOf((buffer.readByte()) & 0xff));
         }
     }
 
@@ -355,8 +355,8 @@ class DataDecoder {
         }
 
         @Override
-        public void parse(ByteBuffer b, Data data) {
-            data.putLong(b.get());
+        public void parse(ProtonBuffer buffer, Data data) {
+            data.putLong(buffer.readByte());
         }
     }
 
@@ -368,8 +368,8 @@ class DataDecoder {
         }
 
         @Override
-        public void parse(ByteBuffer b, Data data) {
-            int i = b.get();
+        public void parse(ProtonBuffer buffer, Data data) {
+            int i = buffer.readByte();
             if (i != 0 && i != 1) {
                 throw new IllegalArgumentException("Illegal value " + i + " for boolean");
             }
@@ -385,8 +385,8 @@ class DataDecoder {
         }
 
         @Override
-        public void parse(ByteBuffer b, Data data) {
-            data.putUnsignedShort(UnsignedShort.valueOf(b.getShort()));
+        public void parse(ProtonBuffer buffer, Data data) {
+            data.putUnsignedShort(UnsignedShort.valueOf(buffer.readShort()));
         }
     }
 
@@ -398,8 +398,8 @@ class DataDecoder {
         }
 
         @Override
-        public void parse(ByteBuffer b, Data data) {
-            data.putShort(b.getShort());
+        public void parse(ProtonBuffer buffer, Data data) {
+            data.putShort(buffer.readShort());
         }
     }
 
@@ -411,8 +411,8 @@ class DataDecoder {
         }
 
         @Override
-        public void parse(ByteBuffer b, Data data) {
-            data.putUnsignedInteger(UnsignedInteger.valueOf(b.getInt()));
+        public void parse(ProtonBuffer buffer, Data data) {
+            data.putUnsignedInteger(UnsignedInteger.valueOf(buffer.readInt()));
         }
     }
 
@@ -424,8 +424,8 @@ class DataDecoder {
         }
 
         @Override
-        public void parse(ByteBuffer b, Data data) {
-            data.putInt(b.getInt());
+        public void parse(ProtonBuffer buffer, Data data) {
+            data.putInt(buffer.readInt());
         }
     }
 
@@ -437,8 +437,8 @@ class DataDecoder {
         }
 
         @Override
-        public void parse(ByteBuffer b, Data data) {
-            data.putFloat(b.getFloat());
+        public void parse(ProtonBuffer buffer, Data data) {
+            data.putFloat(buffer.readFloat());
         }
     }
 
@@ -450,8 +450,8 @@ class DataDecoder {
         }
 
         @Override
-        public void parse(ByteBuffer b, Data data) {
-            data.putChar(b.getInt());
+        public void parse(ProtonBuffer buffer, Data data) {
+            data.putChar(buffer.readInt());
         }
     }
 
@@ -463,8 +463,8 @@ class DataDecoder {
         }
 
         @Override
-        public void parse(ByteBuffer b, Data data) {
-            data.putDecimal32(new Decimal32(b.getInt()));
+        public void parse(ProtonBuffer buffer, Data data) {
+            data.putDecimal32(new Decimal32(buffer.readInt()));
         }
     }
 
@@ -476,8 +476,8 @@ class DataDecoder {
         }
 
         @Override
-        public void parse(ByteBuffer b, Data data) {
-            data.putUnsignedLong(UnsignedLong.valueOf(b.getLong()));
+        public void parse(ProtonBuffer buffer, Data data) {
+            data.putUnsignedLong(UnsignedLong.valueOf(buffer.readLong()));
         }
     }
 
@@ -489,8 +489,8 @@ class DataDecoder {
         }
 
         @Override
-        public void parse(ByteBuffer b, Data data) {
-            data.putLong(b.getLong());
+        public void parse(ProtonBuffer buffer, Data data) {
+            data.putLong(buffer.readLong());
         }
     }
 
@@ -502,8 +502,8 @@ class DataDecoder {
         }
 
         @Override
-        public void parse(ByteBuffer b, Data data) {
-            data.putDouble(b.getDouble());
+        public void parse(ProtonBuffer buffer, Data data) {
+            data.putDouble(buffer.readDouble());
         }
     }
 
@@ -515,8 +515,8 @@ class DataDecoder {
         }
 
         @Override
-        public void parse(ByteBuffer b, Data data) {
-            data.putTimestamp(new Date(b.getLong()));
+        public void parse(ProtonBuffer buffer, Data data) {
+            data.putTimestamp(new Date(buffer.readLong()));
         }
     }
 
@@ -528,8 +528,8 @@ class DataDecoder {
         }
 
         @Override
-        public void parse(ByteBuffer b, Data data) {
-            data.putDecimal64(new Decimal64(b.getLong()));
+        public void parse(ProtonBuffer buffer, Data data) {
+            data.putDecimal64(new Decimal64(buffer.readLong()));
         }
     }
 
@@ -541,8 +541,8 @@ class DataDecoder {
         }
 
         @Override
-        public void parse(ByteBuffer b, Data data) {
-            data.putDecimal128(new Decimal128(b.getLong(), b.getLong()));
+        public void parse(ProtonBuffer buffer, Data data) {
+            data.putDecimal128(new Decimal128(buffer.readLong(), buffer.readLong()));
         }
     }
 
@@ -554,19 +554,19 @@ class DataDecoder {
         }
 
         @Override
-        public void parse(ByteBuffer b, Data data) {
-            data.putUUID(new UUID(b.getLong(), b.getLong()));
+        public void parse(ProtonBuffer buffer, Data data) {
+            data.putUUID(new UUID(buffer.readLong(), buffer.readLong()));
         }
     }
 
     private static abstract class SmallVariableConstructor implements TypeConstructor {
 
         @Override
-        public int size(ByteBuffer b) {
-            int position = b.position();
-            if (b.hasRemaining()) {
-                int size = b.get() & 0xff;
-                b.position(position);
+        public int size(ProtonBuffer buffer) {
+            int position = buffer.getReadIndex();
+            if (buffer.isReadable()) {
+                int size = buffer.readByte() & 0xff;
+                buffer.setReadIndex(position);
 
                 return size + 1;
             } else {
@@ -579,11 +579,11 @@ class DataDecoder {
     private static abstract class VariableConstructor implements TypeConstructor {
 
         @Override
-        public int size(ByteBuffer b) {
-            int position = b.position();
-            if (b.remaining() >= 4) {
-                int size = b.getInt();
-                b.position(position);
+        public int size(ProtonBuffer buffer) {
+            int position = buffer.getReadIndex();
+            if (buffer.getReadableBytes() >= 4) {
+                int size = buffer.readInt();
+                buffer.setReadIndex(position);
 
                 return size + 4;
             } else {
@@ -601,10 +601,10 @@ class DataDecoder {
         }
 
         @Override
-        public void parse(ByteBuffer b, Data data) {
-            int size = b.get() & 0xff;
+        public void parse(ProtonBuffer buffer, Data data) {
+            int size = buffer.readByte() & 0xff;
             byte[] bytes = new byte[size];
-            b.get(bytes);
+            buffer.readBytes(bytes);
             data.putBinary(bytes);
         }
     }
@@ -617,10 +617,10 @@ class DataDecoder {
         }
 
         @Override
-        public void parse(ByteBuffer b, Data data) {
-            int size = b.get() & 0xff;
+        public void parse(ProtonBuffer buffer, Data data) {
+            int size = buffer.readByte() & 0xff;
             byte[] bytes = new byte[size];
-            b.get(bytes);
+            buffer.readBytes(bytes);
             data.putSymbol(Symbol.valueOf(new String(bytes, ASCII)));
         }
     }
@@ -633,10 +633,10 @@ class DataDecoder {
         }
 
         @Override
-        public void parse(ByteBuffer b, Data data) {
-            int size = b.get() & 0xff;
+        public void parse(ProtonBuffer buffer, Data data) {
+            int size = buffer.readByte() & 0xff;
             byte[] bytes = new byte[size];
-            b.get(bytes);
+            buffer.readBytes(bytes);
             data.putString(new String(bytes, UTF_8));
         }
     }
@@ -649,10 +649,10 @@ class DataDecoder {
         }
 
         @Override
-        public void parse(ByteBuffer b, Data data) {
-            int size = b.getInt();
+        public void parse(ProtonBuffer buffer, Data data) {
+            int size = buffer.readInt();
             byte[] bytes = new byte[size];
-            b.get(bytes);
+            buffer.readBytes(bytes);
             data.putBinary(bytes);
         }
     }
@@ -665,10 +665,10 @@ class DataDecoder {
         }
 
         @Override
-        public void parse(ByteBuffer b, Data data) {
-            int size = b.getInt();
+        public void parse(ProtonBuffer buffer, Data data) {
+            int size = buffer.readInt();
             byte[] bytes = new byte[size];
-            b.get(bytes);
+            buffer.readBytes(bytes);
             data.putSymbol(Symbol.valueOf(new String(bytes, ASCII)));
         }
     }
@@ -681,10 +681,10 @@ class DataDecoder {
         }
 
         @Override
-        public void parse(ByteBuffer b, Data data) {
-            int size = b.getInt();
+        public void parse(ProtonBuffer buffer, Data data) {
+            int size = buffer.readInt();
             byte[] bytes = new byte[size];
-            b.get(bytes);
+            buffer.readBytes(bytes);
             data.putString(new String(bytes, UTF_8));
         }
     }
@@ -697,12 +697,11 @@ class DataDecoder {
         }
 
         @Override
-        public void parse(ByteBuffer b, Data data) {
-            int size = b.get() & 0xff;
-            ByteBuffer buf = b.slice();
-            buf.limit(size);
-            b.position(b.position() + size);
-            int count = buf.get() & 0xff;
+        public void parse(ProtonBuffer buffer, Data data) {
+            int size = buffer.readByte() & 0xff;
+            ProtonBuffer buf = buffer.slice(buffer.getReadIndex(), size);
+            buffer.skipBytes(size);
+            int count = buf.readByte() & 0xff;
             data.putList();
             parseChildren(data, buf, count);
         }
@@ -716,12 +715,11 @@ class DataDecoder {
         }
 
         @Override
-        public void parse(ByteBuffer b, Data data) {
-            int size = b.get() & 0xff;
-            ByteBuffer buf = b.slice();
-            buf.limit(size);
-            b.position(b.position() + size);
-            int count = buf.get() & 0xff;
+        public void parse(ProtonBuffer buffer, Data data) {
+            int size = buffer.readByte() & 0xff;
+            ProtonBuffer buf = buffer.slice(buffer.getReadIndex(), size);
+            buffer.skipBytes(size);
+            int count = buf.readByte() & 0xff;
             data.putMap();
             parseChildren(data, buf, count);
         }
@@ -735,12 +733,11 @@ class DataDecoder {
         }
 
         @Override
-        public void parse(ByteBuffer b, Data data) {
-            int size = b.getInt();
-            ByteBuffer buf = b.slice();
-            buf.limit(size);
-            b.position(b.position() + size);
-            int count = buf.getInt();
+        public void parse(ProtonBuffer buffer, Data data) {
+            int size = buffer.readInt();
+            ProtonBuffer buf = buffer.slice(buffer.getReadIndex(), size);
+            buffer.skipBytes(size);
+            int count = buf.readInt();
             data.putList();
             parseChildren(data, buf, count);
         }
@@ -754,24 +751,23 @@ class DataDecoder {
         }
 
         @Override
-        public void parse(ByteBuffer b, Data data) {
-            int size = b.getInt();
-            ByteBuffer buf = b.slice();
-            buf.limit(size);
-            b.position(b.position() + size);
-            int count = buf.getInt();
+        public void parse(ProtonBuffer buffer, Data data) {
+            int size = buffer.readInt();
+            ProtonBuffer buf = buffer.slice(buffer.getReadIndex(), size);
+            buffer.skipBytes(size);
+            int count = buf.readInt();
             data.putMap();
             parseChildren(data, buf, count);
         }
     }
 
-    private static void parseChildren(Data data, ByteBuffer buf, int count) {
+    private static void parseChildren(Data data, ProtonBuffer buf, int count) {
         data.enter();
         for (int i = 0; i < count; i++) {
             TypeConstructor c = readConstructor(buf);
             final int size = c.size(buf);
-            final int remaining = buf.remaining();
-            if (size <= remaining) {
+            final int getReadableBytes = buf.getReadableBytes();
+            if (size <= getReadableBytes) {
                 c.parse(buf, data);
             } else {
                 throw new IllegalArgumentException("Malformed data");
@@ -789,13 +785,13 @@ class DataDecoder {
         }
 
         @Override
-        public int size(ByteBuffer b) {
-            ByteBuffer buf = b.slice();
-            if (buf.hasRemaining()) {
+        public int size(ProtonBuffer buffer) {
+            ProtonBuffer buf = buffer.slice();
+            if (buf.isReadable()) {
                 TypeConstructor c = readConstructor(buf);
                 int size = c.size(buf);
-                if (buf.remaining() > size) {
-                    buf.position(size + 1);
+                if (buf.getReadableBytes() > size) {
+                    buf.setReadIndex(size + 1);
                     c = readConstructor(buf);
                     return size + 2 + c.size(buf);
                 } else {
@@ -804,17 +800,16 @@ class DataDecoder {
             } else {
                 return 1;
             }
-
         }
 
         @Override
-        public void parse(ByteBuffer b, Data data) {
+        public void parse(ProtonBuffer buffer, Data data) {
             data.putDescribed();
             data.enter();
-            TypeConstructor c = readConstructor(b);
-            c.parse(b, data);
-            c = readConstructor(b);
-            c.parse(b, data);
+            TypeConstructor c = readConstructor(buffer);
+            c.parse(buffer, data);
+            c = readConstructor(buffer);
+            c.parse(buffer, data);
             data.exit();
         }
     }
@@ -827,16 +822,14 @@ class DataDecoder {
         }
 
         @Override
-        public void parse(ByteBuffer b, Data data) {
+        public void parse(ProtonBuffer buffer, Data data) {
 
-            int size = b.get() & 0xff;
-            ByteBuffer buf = b.slice();
-            buf.limit(size);
-            b.position(b.position() + size);
-            int count = buf.get() & 0xff;
+            int size = buffer.readByte() & 0xff;
+            ProtonBuffer buf = buffer.slice(buffer.getReadIndex(), size);
+            buffer.skipBytes(size);
+            int count = buf.readByte() & 0xff;
             parseArray(data, buf, count);
         }
-
     }
 
     private static class ArrayConstructor extends VariableConstructor {
@@ -847,25 +840,24 @@ class DataDecoder {
         }
 
         @Override
-        public void parse(ByteBuffer b, Data data) {
+        public void parse(ProtonBuffer buffer, Data data) {
 
-            int size = b.getInt();
-            ByteBuffer buf = b.slice();
-            buf.limit(size);
-            b.position(b.position() + size);
-            int count = buf.getInt();
+            int size = buffer.readInt();
+            ProtonBuffer buf = buffer.slice(buffer.getReadIndex(), size);
+            buffer.skipBytes(size);
+            int count = buf.readInt();
             parseArray(data, buf, count);
         }
     }
 
-    private static void parseArray(Data data, ByteBuffer buf, int count) {
-        byte type = buf.get();
+    private static void parseArray(Data data, ProtonBuffer buffer, int count) {
+        byte type = buffer.readByte();
         boolean isDescribed = type == (byte) 0x00;
-        int descriptorPosition = buf.position();
+        int descriptorPosition = buffer.getReadIndex();
         if (isDescribed) {
-            TypeConstructor descriptorTc = readConstructor(buf);
-            buf.position(buf.position() + descriptorTc.size(buf));
-            type = buf.get();
+            TypeConstructor descriptorTc = readConstructor(buffer);
+            buffer.skipBytes(descriptorTc.size(buffer));
+            type = buffer.readByte();
             if (type == (byte) 0x00) {
                 throw new IllegalArgumentException("Malformed array data");
             }
@@ -876,14 +868,14 @@ class DataDecoder {
         data.putArray(isDescribed, tc.getType());
         data.enter();
         if (isDescribed) {
-            int position = buf.position();
-            buf.position(descriptorPosition);
-            TypeConstructor descriptorTc = readConstructor(buf);
-            descriptorTc.parse(buf, data);
-            buf.position(position);
+            int position = buffer.getReadIndex();
+            buffer.setReadIndex(descriptorPosition);
+            TypeConstructor descriptorTc = readConstructor(buffer);
+            descriptorTc.parse(buffer, data);
+            buffer.setReadIndex(position);
         }
         for (int i = 0; i < count; i++) {
-            tc.parse(buf, data);
+            tc.parse(buffer, data);
         }
 
         data.exit();

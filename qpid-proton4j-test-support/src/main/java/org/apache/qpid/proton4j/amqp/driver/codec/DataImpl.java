@@ -16,7 +16,6 @@
  */
 package org.apache.qpid.proton4j.amqp.driver.codec;
 
-import java.nio.ByteBuffer;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -140,8 +139,8 @@ public class DataImpl implements Data {
     }
 
     @Override
-    public long decode(ByteBuffer buf) {
-        return DataDecoder.decode(buf, this);
+    public long decode(ProtonBuffer buffer) {
+        return DataDecoder.decode(buffer, this);
     }
 
     private void putElement(Element<?> element) {

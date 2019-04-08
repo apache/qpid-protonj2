@@ -16,7 +16,6 @@
  */
 package org.apache.qpid.proton4j.amqp.driver.codec;
 
-import java.nio.ByteBuffer;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -93,7 +92,7 @@ public interface Data {
 
     long encode(ProtonBuffer buffer);
 
-    long decode(ByteBuffer buf);
+    long decode(ProtonBuffer buffer);
 
     void putList();
 
