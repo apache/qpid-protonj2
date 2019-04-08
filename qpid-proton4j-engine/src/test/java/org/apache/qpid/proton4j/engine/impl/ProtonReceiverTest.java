@@ -16,6 +16,7 @@
  */
 package org.apache.qpid.proton4j.engine.impl;
 
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -299,6 +300,50 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         Receiver receiver = session.receiver("test");
         receiver.setCredit(100);
         receiver.open();
+        receiver.close();
+
+        driver.assertScriptComplete();
+
+        assertNull(failure);
+    }
+
+    // TODO - Build out this test and check for more expected state
+    //        Test currently passes even though internally errors are thrown.
+    @Test
+    public void testReceiverDispatchesIncomingDelivery() throws Exception {
+        ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
+        engine.errorHandler(result -> failure = result);
+        // Create the test driver and link it to the engine for output handling.
+        AMQPTestDriver driver = new AMQPTestDriver(engine);
+        engine.outputConsumer(driver);
+        ScriptWriter script = driver.createScriptWriter();
+
+        script.expectAMQPHeader().respondWithAMQPHeader();
+        script.expectOpen().respond().withContainerId("driver");
+        script.expectBegin().respond();
+        script.expectAttach().respond();
+        script.expectFlow().withLinkCredit(100);  // TODO validate mandatory fields are set and they have correct values
+        script.remoteTransfer().withDeliveryId(0)
+                               .withHandle(0)
+                               .withMore(false)
+                               .withMessageFormat(0).onChannel(0); // TODO - Improve this to allow for auto direct
+                                                                   //        to last opened receiver on last session
+        script.expectDetach().respond();
+
+        Connection connection = engine.start();
+
+        // Default engine should start and return a connection immediately
+        assertNotNull(connection);
+
+        connection.open();
+        Session session = connection.session();
+        session.open();
+        Receiver receiver = session.receiver("test");
+        receiver.deliveryReceivedEventHandler(delivery -> {
+            assertFalse(delivery.isPartial());
+        });
+        receiver.open();
+        receiver.setCredit(100);
         receiver.close();
 
         driver.assertScriptComplete();
