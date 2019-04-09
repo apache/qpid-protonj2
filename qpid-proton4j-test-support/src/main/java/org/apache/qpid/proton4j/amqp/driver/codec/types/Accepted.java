@@ -16,6 +16,8 @@
  */
 package org.apache.qpid.proton4j.amqp.driver.codec.types;
 
+import java.util.List;
+
 import org.apache.qpid.proton4j.amqp.DescribedType;
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
@@ -29,12 +31,17 @@ public class Accepted extends ListDescribedType {
     public static final Symbol DESCRIPTOR_SYMBOL = Symbol.valueOf("amqp:accepted:list");
     public static final UnsignedLong DESCRIPTOR_CODE = UnsignedLong.valueOf(0x0000000000000024L);
 
-    public Accepted(Object... fields) {
+    public Accepted() {
         super(0);
-        int i = 0;
-        for (Object field : fields) {
-            getFields()[i++] = field;
-        }
+    }
+
+    @SuppressWarnings("unchecked")
+    public Accepted(Object described) {
+        super(0, (List<Object>) described);
+    }
+
+    public Accepted(List<Object> described) {
+        super(0, described);
     }
 
     @Override

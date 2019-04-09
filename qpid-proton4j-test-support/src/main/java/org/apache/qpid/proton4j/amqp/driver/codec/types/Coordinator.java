@@ -16,6 +16,8 @@
  */
 package org.apache.qpid.proton4j.amqp.driver.codec.types;
 
+import java.util.List;
+
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.amqp.driver.codec.ListDescribedType;
@@ -25,14 +27,24 @@ public class Coordinator extends ListDescribedType {
     public static final Symbol DESCRIPTOR_SYMBOL = Symbol.valueOf("amqp:coordinator:list");
     public static final UnsignedLong DESCRIPTOR_CODE = UnsignedLong.valueOf(0x0000000000000030L);
 
-    private static final int FIELD_CAPABILITIES = 0;
+    /**
+     * Enumeration which maps to fields in the Coordinator Performative
+     */
+    public enum Field {
+        CAPABILITIES
+    }
 
-    public Coordinator(Object... fields) {
-        super(1);
-        int i = 0;
-        for (Object field : fields) {
-            getFields()[i++] = field;
-        }
+    public Coordinator() {
+        super(Field.values().length);
+    }
+
+    @SuppressWarnings("unchecked")
+    public Coordinator(Object described) {
+        super(Field.values().length, (List<Object>) described);
+    }
+
+    public Coordinator(List<Object> described) {
+        super(Field.values().length, described);
     }
 
     @Override
@@ -41,7 +53,11 @@ public class Coordinator extends ListDescribedType {
     }
 
     public Coordinator setCapabilities(Object o) {
-        getFields()[FIELD_CAPABILITIES] = o;
+        getList().set(Field.CAPABILITIES.ordinal(), o);
         return this;
+    }
+
+    public Object getCapabilities() {
+        return getList().get(Field.CAPABILITIES.ordinal());
     }
 }

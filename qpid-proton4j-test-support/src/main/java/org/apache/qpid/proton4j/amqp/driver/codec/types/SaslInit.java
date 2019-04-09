@@ -16,6 +16,8 @@
  */
 package org.apache.qpid.proton4j.amqp.driver.codec.types;
 
+import java.util.List;
+
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.amqp.driver.codec.ListDescribedType;
@@ -25,16 +27,26 @@ public class SaslInit extends ListDescribedType {
     public static final Symbol DESCRIPTOR_SYMBOL = Symbol.valueOf("amqp:sasl-init:list");
     public static final UnsignedLong DESCRIPTOR_CODE = UnsignedLong.valueOf(0x0000000000000041L);
 
-    private static final int FIELD_MECHANISM = 0;
-    private static final int FIELD_INITIAL_RESPONSE = 1;
-    private static final int FIELD_HOSTNAME = 2;
+    /**
+     * Enumeration which maps to fields in the SaslInit Performative
+     */
+    public enum Field {
+        MECHANISM,
+        INITIAL_RESPONSE,
+        HOSTNAME
+    }
 
-    public SaslInit(Object... fields) {
-        super(3);
-        int i = 0;
-        for (Object field : fields) {
-            getFields()[i++] = field;
-        }
+    public SaslInit() {
+        super(Field.values().length);
+    }
+
+    @SuppressWarnings("unchecked")
+    public SaslInit(Object described) {
+        super(Field.values().length, (List<Object>) described);
+    }
+
+    public SaslInit(List<Object> described) {
+        super(Field.values().length, described);
     }
 
     @Override
@@ -43,17 +55,29 @@ public class SaslInit extends ListDescribedType {
     }
 
     public SaslInit setMechanism(Object o) {
-        getFields()[FIELD_MECHANISM] = o;
+        getList().set(Field.MECHANISM.ordinal(), o);
         return this;
+    }
+
+    public Object getMechanism() {
+        return getList().get(Field.MECHANISM.ordinal());
     }
 
     public SaslInit setInitialResponse(Object o) {
-        getFields()[FIELD_INITIAL_RESPONSE] = o;
+        getList().set(Field.INITIAL_RESPONSE.ordinal(), o);
         return this;
     }
 
+    public Object getInitialResponse() {
+        return getList().get(Field.INITIAL_RESPONSE.ordinal());
+    }
+
     public SaslInit setHostname(Object o) {
-        getFields()[FIELD_HOSTNAME] = o;
+        getList().set(Field.HOSTNAME.ordinal(), o);
         return this;
+    }
+
+    public Object getHostname() {
+        return getList().get(Field.HOSTNAME.ordinal());
     }
 }

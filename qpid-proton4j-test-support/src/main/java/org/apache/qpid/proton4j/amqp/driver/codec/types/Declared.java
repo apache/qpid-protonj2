@@ -16,6 +16,8 @@
  */
 package org.apache.qpid.proton4j.amqp.driver.codec.types;
 
+import java.util.List;
+
 import org.apache.qpid.proton4j.amqp.DescribedType;
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
@@ -26,14 +28,24 @@ public class Declared extends ListDescribedType {
     public static final Symbol DESCRIPTOR_SYMBOL = Symbol.valueOf("amqp:declared:list");
     public static final UnsignedLong DESCRIPTOR_CODE = UnsignedLong.valueOf(0x0000000000000033L);
 
-    private static final int FIELD_TXN_ID = 0;
+    /**
+     * Enumeration which maps to fields in the Declared Performative
+     */
+    public enum Field {
+        TXN_ID
+    }
 
-    public Declared(Object... fields) {
-        super(1);
-        int i = 0;
-        for (Object field : fields) {
-            getFields()[i++] = field;
-        }
+    public Declared() {
+        super(Field.values().length);
+    }
+
+    @SuppressWarnings("unchecked")
+    public Declared(Object described) {
+        super(Field.values().length, (List<Object>) described);
+    }
+
+    public Declared(List<Object> described) {
+        super(Field.values().length, described);
     }
 
     @Override
@@ -42,8 +54,12 @@ public class Declared extends ListDescribedType {
     }
 
     public Declared setTxnId(Object o) {
-        getFields()[FIELD_TXN_ID] = o;
+        getList().set(Field.TXN_ID.ordinal(), o);
         return this;
+    }
+
+    public Object getTxnId() {
+        return getList().get(Field.TXN_ID.ordinal());
     }
 
     @Override

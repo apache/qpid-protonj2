@@ -16,6 +16,8 @@
  */
 package org.apache.qpid.proton4j.amqp.driver.codec.types;
 
+import java.util.List;
+
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.amqp.driver.codec.ListDescribedType;
@@ -25,27 +27,37 @@ public class Attach extends ListDescribedType {
     public static final Symbol DESCRIPTOR_SYMBOL = Symbol.valueOf("amqp:attach:list");
     public static final UnsignedLong DESCRIPTOR_CODE = UnsignedLong.valueOf(0x0000000000000012L);
 
-    private static final int FIELD_NAME = 0;
-    private static final int FIELD_HANDLE = 1;
-    private static final int FIELD_ROLE = 2;
-    private static final int FIELD_SND_SETTLE_MODE = 3;
-    private static final int FIELD_RCV_SETTLE_MODE = 4;
-    private static final int FIELD_SOURCE = 5;
-    private static final int FIELD_TARGET = 6;
-    private static final int FIELD_UNSETTLED = 7;
-    private static final int FIELD_INCOMPLETE_UNSETTLED = 8;
-    private static final int FIELD_INITIAL_DELIVERY_COUNT = 9;
-    private static final int FIELD_MAX_MESSAGE_SIZE = 10;
-    private static final int FIELD_OFFERED_CAPABILITIES = 11;
-    private static final int FIELD_DESIRED_CAPABILITIES = 12;
-    private static final int FIELD_PROPERTIES = 13;
+    /**
+     * Enumeration which maps to fields in the Attach Performative
+     */
+    public enum Field {
+        NAME,
+        HANDLE,
+        ROLE,
+        SND_SETTLE_MODE,
+        RCV_SETTLE_MODE,
+        SOURCE,
+        TARGET,
+        UNSETTLED,
+        INCOMPLETE_UNSETTLED,
+        INITIAL_DELIVERY_COUNT,
+        MAX_MESSAGE_SIZE,
+        OFFERED_CAPABILITIES,
+        DESIRED_CAPABILITIES,
+        PROPERTIES
+    }
 
-    public Attach(Object... fields) {
-        super(14);
-        int i = 0;
-        for (Object field : fields) {
-            getFields()[i++] = field;
-        }
+    public Attach() {
+        super(Field.values().length);
+    }
+
+    @SuppressWarnings("unchecked")
+    public Attach(Object described) {
+        super(Field.values().length, (List<Object>) described);
+    }
+
+    public Attach(List<Object> described) {
+        super(Field.values().length, described);
     }
 
     @Override
@@ -54,72 +66,128 @@ public class Attach extends ListDescribedType {
     }
 
     public Attach setName(Object o) {
-        getFields()[FIELD_NAME] = o;
+        getList().set(Field.NAME.ordinal(), o);
         return this;
+    }
+
+    public Object getName() {
+        return getList().get(Field.NAME.ordinal());
     }
 
     public Attach setHandle(Object o) {
-        getFields()[FIELD_HANDLE] = o;
+        getList().set(Field.HANDLE.ordinal(), o);
         return this;
+    }
+
+    public Object getHandle() {
+        return getList().get(Field.HANDLE.ordinal());
     }
 
     public Attach setRole(Object o) {
-        getFields()[FIELD_ROLE] = o;
+        getList().set(Field.ROLE.ordinal(), o);
         return this;
+    }
+
+    public Object getRole() {
+        return getList().get(Field.ROLE.ordinal());
     }
 
     public Attach setSndSettleMode(Object o) {
-        getFields()[FIELD_SND_SETTLE_MODE] = o;
+        getList().set(Field.SND_SETTLE_MODE.ordinal(), o);
         return this;
+    }
+
+    public Object getSndSettleMode() {
+        return getList().get(Field.SND_SETTLE_MODE.ordinal());
     }
 
     public Attach setRcvSettleMode(Object o) {
-        getFields()[FIELD_RCV_SETTLE_MODE] = o;
+        getList().set(Field.RCV_SETTLE_MODE.ordinal(), o);
         return this;
+    }
+
+    public Object getRcvSettleMode() {
+        return getList().get(Field.RCV_SETTLE_MODE.ordinal());
     }
 
     public Attach setSource(Object o) {
-        getFields()[FIELD_SOURCE] = o;
+        getList().set(Field.SOURCE.ordinal(), o);
         return this;
+    }
+
+    public Object getSource() {
+        return getList().get(Field.SOURCE.ordinal());
     }
 
     public Attach setTarget(Object o) {
-        getFields()[FIELD_TARGET] = o;
+        getList().set(Field.TARGET.ordinal(), o);
         return this;
+    }
+
+    public Object getTarget() {
+        return getList().get(Field.TARGET.ordinal());
     }
 
     public Attach setUnsettled(Object o) {
-        getFields()[FIELD_UNSETTLED] = o;
+        getList().set(Field.UNSETTLED.ordinal(), o);
         return this;
+    }
+
+    public Object getUnsettled() {
+        return getList().get(Field.UNSETTLED.ordinal());
     }
 
     public Attach setIncompleteUnsettled(Object o) {
-        getFields()[FIELD_INCOMPLETE_UNSETTLED] = o;
+        getList().set(Field.INCOMPLETE_UNSETTLED.ordinal(), o);
         return this;
+    }
+
+    public Object getIncompleteUnsettled() {
+        return getList().get(Field.INCOMPLETE_UNSETTLED.ordinal());
     }
 
     public Attach setInitialDeliveryCount(Object o) {
-        getFields()[FIELD_INITIAL_DELIVERY_COUNT] = o;
+        getList().set(Field.INITIAL_DELIVERY_COUNT.ordinal(), o);
         return this;
+    }
+
+    public Object getInitialDeliveryCount() {
+        return getList().get(Field.INITIAL_DELIVERY_COUNT.ordinal());
     }
 
     public Attach setMaxMessageSize(Object o) {
-        getFields()[FIELD_MAX_MESSAGE_SIZE] = o;
+        getList().set(Field.MAX_MESSAGE_SIZE.ordinal(), o);
         return this;
+    }
+
+    public Object getMaxMessageSize() {
+        return getList().get(Field.MAX_MESSAGE_SIZE.ordinal());
     }
 
     public Attach setOfferedCapabilities(Object o) {
-        getFields()[FIELD_OFFERED_CAPABILITIES] = o;
+        getList().set(Field.OFFERED_CAPABILITIES.ordinal(), o);
         return this;
+    }
+
+    public Object getOfferedCapabilities() {
+        return getList().get(Field.OFFERED_CAPABILITIES.ordinal());
     }
 
     public Attach setDesiredCapabilities(Object o) {
-        getFields()[FIELD_DESIRED_CAPABILITIES] = o;
+        getList().set(Field.DESIRED_CAPABILITIES.ordinal(), o);
         return this;
     }
 
+    public Object getDesiredCapabilities() {
+        return getList().get(Field.DESIRED_CAPABILITIES.ordinal());
+    }
+
     public Attach setProperties(Object o) {
-        getFields()[FIELD_PROPERTIES] = o;
+        getList().set(Field.PROPERTIES.ordinal(), o);
         return this;
+    }
+
+    public Object getProperties() {
+        return getList().get(Field.PROPERTIES.ordinal());
     }
 }

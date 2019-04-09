@@ -16,6 +16,8 @@
  */
 package org.apache.qpid.proton4j.amqp.driver.codec.types;
 
+import java.util.List;
+
 import org.apache.qpid.proton4j.amqp.DescribedType;
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
@@ -26,15 +28,25 @@ public class Discharge extends ListDescribedType {
     public static final Symbol DESCRIPTOR_SYMBOL = Symbol.valueOf("amqp:discharge:list");
     public static final UnsignedLong DESCRIPTOR_CODE = UnsignedLong.valueOf(0x0000000000000032L);
 
-    private static final int FIELD_TXN_ID = 0;
-    private static final int FIELD_FAIL = 1;
+    /**
+     * Enumeration which maps to fields in the Discharge Performative
+     */
+    public enum Field {
+        TXN_ID,
+        FAIL
+    }
 
-    public Discharge(Object... fields) {
-        super(2);
-        int i = 0;
-        for (Object field : fields) {
-            getFields()[i++] = field;
-        }
+    public Discharge() {
+        super(Field.values().length);
+    }
+
+    @SuppressWarnings("unchecked")
+    public Discharge(Object described) {
+        super(Field.values().length, (List<Object>) described);
+    }
+
+    public Discharge(List<Object> described) {
+        super(Field.values().length, described);
     }
 
     @Override
@@ -43,13 +55,21 @@ public class Discharge extends ListDescribedType {
     }
 
     public Discharge setTxnId(Object o) {
-        getFields()[FIELD_TXN_ID] = o;
+        getList().set(Field.TXN_ID.ordinal(), o);
         return this;
     }
 
+    public Object getTxnId() {
+        return getList().get(Field.TXN_ID.ordinal());
+    }
+
     public Discharge setFail(Object o) {
-        getFields()[FIELD_FAIL] = o;
+        getList().set(Field.FAIL.ordinal(), o);
         return this;
+    }
+
+    public Object getFail() {
+        return getList().get(Field.FAIL.ordinal());
     }
 
     @Override

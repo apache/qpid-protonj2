@@ -16,6 +16,8 @@
  */
 package org.apache.qpid.proton4j.amqp.driver.codec.types;
 
+import java.util.List;
+
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.amqp.driver.codec.ListDescribedType;
@@ -25,15 +27,25 @@ public class TransactionalState extends ListDescribedType {
     public static final Symbol DESCRIPTOR_SYMBOL = Symbol.valueOf("amqp:transactional-state:list");
     public static final UnsignedLong DESCRIPTOR_CODE = UnsignedLong.valueOf(0x0000000000000034L);
 
-    private static final int FIELD_TXN_ID = 0;
-    private static final int FIELD_OUTCOME = 1;
+    /**
+     * Enumeration which maps to fields in the TransactionalState Performative
+     */
+    public enum Field {
+        TXN_ID,
+        OUTCOME
+    }
 
-    public TransactionalState(Object... fields) {
-        super(2);
-        int i = 0;
-        for (Object field : fields) {
-            getFields()[i++] = field;
-        }
+    public TransactionalState() {
+        super(Field.values().length);
+    }
+
+    @SuppressWarnings("unchecked")
+    public TransactionalState(Object described) {
+        super(Field.values().length, (List<Object>) described);
+    }
+
+    public TransactionalState(List<Object> described) {
+        super(Field.values().length, described);
     }
 
     @Override
@@ -42,12 +54,20 @@ public class TransactionalState extends ListDescribedType {
     }
 
     public TransactionalState setTxnId(Object o) {
-        getFields()[FIELD_TXN_ID] = o;
+        getList().set(Field.TXN_ID.ordinal(), o);
         return this;
     }
 
+    public Object getTxnId() {
+        return getList().get(Field.TXN_ID.ordinal());
+    }
+
     public TransactionalState setOutcome(Object o) {
-        getFields()[FIELD_OUTCOME] = o;
+        getList().set(Field.OUTCOME.ordinal(), o);
         return this;
+    }
+
+    public Object getOutcome() {
+        return getList().get(Field.OUTCOME.ordinal());
     }
 }

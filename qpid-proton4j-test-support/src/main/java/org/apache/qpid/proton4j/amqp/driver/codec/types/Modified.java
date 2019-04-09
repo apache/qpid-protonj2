@@ -16,6 +16,8 @@
  */
 package org.apache.qpid.proton4j.amqp.driver.codec.types;
 
+import java.util.List;
+
 import org.apache.qpid.proton4j.amqp.DescribedType;
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
@@ -26,16 +28,26 @@ public class Modified extends ListDescribedType {
     public static final Symbol DESCRIPTOR_SYMBOL = Symbol.valueOf("amqp:modified:list");
     public static final UnsignedLong DESCRIPTOR_CODE = UnsignedLong.valueOf(0x0000000000000027L);
 
-    private static final int FIELD_DELIVERY_FAILED = 0;
-    private static final int FIELD_UNDELIVERABLE_HERE = 1;
-    private static final int FIELD_MESSAGE_ANNOTATIONS = 2;
+    /**
+     * Enumeration which maps to fields in the Modified Performative
+     */
+    public enum Field {
+        DELIVERY_FAILED,
+        UNDELIVERABLE_HERE,
+        MESSAGE_ANNOTATIONS
+    }
 
-    public Modified(Object... fields) {
-        super(3);
-        int i = 0;
-        for (Object field : fields) {
-            getFields()[i++] = field;
-        }
+    public Modified() {
+        super(Field.values().length);
+    }
+
+    @SuppressWarnings("unchecked")
+    public Modified(Object described) {
+        super(Field.values().length, (List<Object>) described);
+    }
+
+    public Modified(List<Object> described) {
+        super(Field.values().length, described);
     }
 
     @Override
@@ -44,18 +56,30 @@ public class Modified extends ListDescribedType {
     }
 
     public Modified setDeliveryFailed(Object o) {
-        getFields()[FIELD_DELIVERY_FAILED] = o;
+        getList().set(Field.DELIVERY_FAILED.ordinal(), o);
         return this;
+    }
+
+    public Object getDeliveryFailed() {
+        return getList().get(Field.DELIVERY_FAILED.ordinal());
     }
 
     public Modified setUndeliverableHere(Object o) {
-        getFields()[FIELD_UNDELIVERABLE_HERE] = o;
+        getList().set(Field.UNDELIVERABLE_HERE.ordinal(), o);
         return this;
     }
 
+    public Object getUndeliverableHere() {
+        return getList().get(Field.UNDELIVERABLE_HERE.ordinal());
+    }
+
     public Modified setMessageAnnotations(Object o) {
-        getFields()[FIELD_MESSAGE_ANNOTATIONS] = o;
+        getList().set(Field.MESSAGE_ANNOTATIONS.ordinal(), o);
         return this;
+    }
+
+    public Object getMessageAnnotations() {
+        return getList().get(Field.MESSAGE_ANNOTATIONS.ordinal());
     }
 
     @Override

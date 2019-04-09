@@ -26,7 +26,7 @@ public class ApplicationProperties extends MapDescribedType {
     public static final Symbol DESCRIPTOR_SYMBOL = Symbol.valueOf("amqp:application-properties:map");
 
     @Override
-    public Object getDescriptor() {
+    public Symbol getDescriptor() {
         return DESCRIPTOR_SYMBOL;
     }
 

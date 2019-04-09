@@ -16,6 +16,8 @@
  */
 package org.apache.qpid.proton4j.amqp.driver.codec.types;
 
+import java.util.List;
+
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.amqp.driver.codec.ListDescribedType;
@@ -25,14 +27,24 @@ public class SaslMechanisms extends ListDescribedType {
     public static final Symbol DESCRIPTOR_SYMBOL = Symbol.valueOf("amqp:sasl-mechanisms:list");
     public static final UnsignedLong DESCRIPTOR_CODE = UnsignedLong.valueOf(0x0000000000000040L);
 
-    private static final int FIELD_SASL_SERVER_MECHANISMS = 0;
+    /**
+     * Enumeration which maps to fields in the SaslMechanisms Performative
+     */
+    public enum Field {
+        SASL_SERVER_MECHANISMS,
+    }
 
-    public SaslMechanisms(Object... fields) {
-        super(1);
-        int i = 0;
-        for (Object field : fields) {
-            getFields()[i++] = field;
-        }
+    public SaslMechanisms() {
+        super(Field.values().length);
+    }
+
+    @SuppressWarnings("unchecked")
+    public SaslMechanisms(Object described) {
+        super(Field.values().length, (List<Object>) described);
+    }
+
+    public SaslMechanisms(List<Object> described) {
+        super(Field.values().length, described);
     }
 
     @Override
@@ -41,7 +53,11 @@ public class SaslMechanisms extends ListDescribedType {
     }
 
     public SaslMechanisms setSaslServerMechanisms(Object o) {
-        getFields()[FIELD_SASL_SERVER_MECHANISMS] = o;
+        getList().set(Field.SASL_SERVER_MECHANISMS.ordinal(), o);
         return this;
+    }
+
+    public Object getError() {
+        return getList().get(Field.SASL_SERVER_MECHANISMS.ordinal());
     }
 }

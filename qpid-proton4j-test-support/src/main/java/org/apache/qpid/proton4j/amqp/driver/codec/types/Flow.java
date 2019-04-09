@@ -16,6 +16,8 @@
  */
 package org.apache.qpid.proton4j.amqp.driver.codec.types;
 
+import java.util.List;
+
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.amqp.driver.codec.ListDescribedType;
@@ -25,24 +27,34 @@ public class Flow extends ListDescribedType {
     public static final Symbol DESCRIPTOR_SYMBOL = Symbol.valueOf("amqp:flow:list");
     public static final UnsignedLong DESCRIPTOR_CODE = UnsignedLong.valueOf(0x0000000000000013L);
 
-    private static final int FIELD_NEXT_INCOMING_ID = 0;
-    private static final int FIELD_INCOMING_WINDOW = 1;
-    private static final int FIELD_NEXT_OUTGOING_ID = 2;
-    private static final int FIELD_OUTGOING_WINDOW = 3;
-    private static final int FIELD_HANDLE = 4;
-    private static final int FIELD_DELIVERY_COUNT = 5;
-    private static final int FIELD_LINK_CREDIT = 6;
-    private static final int FIELD_AVAILABLE = 7;
-    private static final int FIELD_DRAIN = 8;
-    private static final int FIELD_ECHO = 9;
-    private static final int FIELD_PROPERTIES = 10;
+    /**
+     * Enumeration which maps to fields in the Flow Performative
+     */
+    public enum Field {
+        NEXT_INCOMING_ID,
+        INCOMING_WINDOW,
+        NEXT_OUTGOING_ID,
+        OUTGOING_WINDOW,
+        HANDLE,
+        DELIVERY_COUNT,
+        LINK_CREDIT,
+        AVAILABLE,
+        DRAIN,
+        ECHO,
+        PROPERTIES,
+    }
 
-    public Flow(Object... fields) {
-        super(11);
-        int i = 0;
-        for (Object field : fields) {
-            getFields()[i++] = field;
-        }
+    public Flow() {
+        super(Field.values().length);
+    }
+
+    @SuppressWarnings("unchecked")
+    public Flow(Object described) {
+        super(Field.values().length, (List<Object>) described);
+    }
+
+    public Flow(List<Object> described) {
+        super(Field.values().length, described);
     }
 
     @Override
@@ -51,57 +63,101 @@ public class Flow extends ListDescribedType {
     }
 
     public Flow setNextIncomingId(Object o) {
-        getFields()[FIELD_NEXT_INCOMING_ID] = o;
+        getList().set(Field.NEXT_INCOMING_ID.ordinal(), o);
         return this;
+    }
+
+    public Object getNextIncomingId() {
+        return getList().get(Field.NEXT_INCOMING_ID.ordinal());
     }
 
     public Flow setIncomingWindow(Object o) {
-        getFields()[FIELD_INCOMING_WINDOW] = o;
+        getList().set(Field.INCOMING_WINDOW.ordinal(), o);
         return this;
+    }
+
+    public Object getIncomingWindow() {
+        return getList().get(Field.INCOMING_WINDOW.ordinal());
     }
 
     public Flow setNextOutgoingId(Object o) {
-        getFields()[FIELD_NEXT_OUTGOING_ID] = o;
+        getList().set(Field.NEXT_OUTGOING_ID.ordinal(), o);
         return this;
+    }
+
+    public Object getNextOutgoingId() {
+        return getList().get(Field.NEXT_OUTGOING_ID.ordinal());
     }
 
     public Flow setOutgoingWindow(Object o) {
-        getFields()[FIELD_OUTGOING_WINDOW] = o;
+        getList().set(Field.OUTGOING_WINDOW.ordinal(), o);
         return this;
+    }
+
+    public Object getOutgoingWindow() {
+        return getList().get(Field.OUTGOING_WINDOW.ordinal());
     }
 
     public Flow setHandle(Object o) {
-        getFields()[FIELD_HANDLE] = o;
+        getList().set(Field.HANDLE.ordinal(), o);
         return this;
+    }
+
+    public Object getHandle() {
+        return getList().get(Field.HANDLE.ordinal());
     }
 
     public Flow setDeliveryCount(Object o) {
-        getFields()[FIELD_DELIVERY_COUNT] = o;
+        getList().set(Field.DELIVERY_COUNT.ordinal(), o);
         return this;
+    }
+
+    public Object getDeliveryCount() {
+        return getList().get(Field.DELIVERY_COUNT.ordinal());
     }
 
     public Flow setLinkCredit(Object o) {
-        getFields()[FIELD_LINK_CREDIT] = o;
+        getList().set(Field.LINK_CREDIT.ordinal(), o);
         return this;
+    }
+
+    public Object getLinkCredit() {
+        return getList().get(Field.LINK_CREDIT.ordinal());
     }
 
     public Flow setAvailable(Object o) {
-        getFields()[FIELD_AVAILABLE] = o;
+        getList().set(Field.AVAILABLE.ordinal(), o);
         return this;
+    }
+
+    public Object getAvailable() {
+        return getList().get(Field.AVAILABLE.ordinal());
     }
 
     public Flow setDrain(Object o) {
-        getFields()[FIELD_DRAIN] = o;
+        getList().set(Field.DRAIN.ordinal(), o);
         return this;
+    }
+
+    public Object getDrain() {
+        return getList().get(Field.DRAIN.ordinal());
     }
 
     public Flow setEcho(Object o) {
-        getFields()[FIELD_ECHO] = o;
+        getList().set(Field.ECHO.ordinal(), o);
         return this;
     }
 
+    public Object getEcho() {
+        return getList().get(Field.ECHO.ordinal());
+    }
+
     public Flow setProperties(Object o) {
-        getFields()[FIELD_PROPERTIES] = o;
+        getList().set(Field.PROPERTIES.ordinal(), o);
         return this;
+    }
+
+    public Object getProperties() {
+        return getList().get(Field.PROPERTIES.ordinal());
     }
 }

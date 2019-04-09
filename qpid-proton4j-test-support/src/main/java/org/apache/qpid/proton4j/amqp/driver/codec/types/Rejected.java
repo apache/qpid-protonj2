@@ -16,6 +16,8 @@
  */
 package org.apache.qpid.proton4j.amqp.driver.codec.types;
 
+import java.util.List;
+
 import org.apache.qpid.proton4j.amqp.DescribedType;
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
@@ -26,24 +28,38 @@ public class Rejected extends ListDescribedType {
     public static final Symbol DESCRIPTOR_SYMBOL = Symbol.valueOf("amqp:rejected:list");
     public static final UnsignedLong DESCRIPTOR_CODE = UnsignedLong.valueOf(0x0000000000000025L);
 
-    private static final int FIELD_ERROR = 0;
+    /**
+     * Enumeration which maps to fields in the Rejected Performative
+     */
+    public enum Field {
+        ERROR,
+    }
 
-    public Rejected(Object... fields) {
-        super(1);
-        int i = 0;
-        for (Object field : fields) {
-            getFields()[i++] = field;
-        }
+    public Rejected() {
+        super(Field.values().length);
+    }
+
+    @SuppressWarnings("unchecked")
+    public Rejected(Object described) {
+        super(Field.values().length, (List<Object>) described);
+    }
+
+    public Rejected(List<Object> described) {
+        super(Field.values().length, described);
     }
 
     @Override
-    public Symbol getDescriptor() {
-        return DESCRIPTOR_SYMBOL;
+    public UnsignedLong getDescriptor() {
+        return DESCRIPTOR_CODE;
     }
 
     public Rejected setError(Object o) {
-        getFields()[FIELD_ERROR] = o;
+        getList().set(Field.ERROR.ordinal(), o);
         return this;
+    }
+
+    public Object getError() {
+        return getList().get(Field.ERROR.ordinal());
     }
 
     @Override

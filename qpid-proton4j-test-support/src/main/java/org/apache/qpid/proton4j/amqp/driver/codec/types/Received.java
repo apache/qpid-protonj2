@@ -16,6 +16,8 @@
  */
 package org.apache.qpid.proton4j.amqp.driver.codec.types;
 
+import java.util.List;
+
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.amqp.driver.codec.ListDescribedType;
@@ -25,15 +27,25 @@ public class Received extends ListDescribedType {
     public static final Symbol DESCRIPTOR_SYMBOL = Symbol.valueOf("amqp:received:list");
     public static final UnsignedLong DESCRIPTOR_CODE = UnsignedLong.valueOf(0x0000000000000023L);
 
-    private static final int FIELD_SECTION_NUMBER = 0;
-    private static final int FIELD_SECTION_OFFSET = 1;
+    /**
+     * Enumeration which maps to fields in the Received Performative
+     */
+    public enum Field {
+        SECTION_NUMBER,
+        SECTION_OFFSET,
+    }
 
-    public Received(Object... fields) {
-        super(2);
-        int i = 0;
-        for (Object field : fields) {
-            getFields()[i++] = field;
-        }
+    public Received() {
+        super(Field.values().length);
+    }
+
+    @SuppressWarnings("unchecked")
+    public Received(Object described) {
+        super(Field.values().length, (List<Object>) described);
+    }
+
+    public Received(List<Object> described) {
+        super(Field.values().length, described);
     }
 
     @Override
@@ -42,12 +54,20 @@ public class Received extends ListDescribedType {
     }
 
     public Received setSectionNumber(Object o) {
-        getFields()[FIELD_SECTION_NUMBER] = o;
+        getList().set(Field.SECTION_NUMBER.ordinal(), o);
         return this;
     }
 
+    public Object getSectionNumber() {
+        return getList().get(Field.SECTION_NUMBER.ordinal());
+    }
+
     public Received setSectionOffset(Object o) {
-        getFields()[FIELD_SECTION_OFFSET] = o;
+        getList().set(Field.SECTION_OFFSET.ordinal(), o);
         return this;
+    }
+
+    public Object getSectionOffset() {
+        return getList().get(Field.SECTION_OFFSET.ordinal());
     }
 }

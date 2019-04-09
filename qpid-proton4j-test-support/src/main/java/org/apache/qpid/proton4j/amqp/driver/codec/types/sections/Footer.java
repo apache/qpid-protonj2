@@ -26,7 +26,7 @@ public class Footer extends MapDescribedType {
     public static final Symbol DESCRIPTOR_SYMBOL = Symbol.valueOf("amqp:footer:map");
 
     @Override
-    public Object getDescriptor() {
+    public Symbol getDescriptor() {
         return DESCRIPTOR_SYMBOL;
     }
 

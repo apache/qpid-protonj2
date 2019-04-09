@@ -16,6 +16,8 @@
  */
 package org.apache.qpid.proton4j.amqp.driver.codec.types;
 
+import java.util.List;
+
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.amqp.driver.codec.ListDescribedType;
@@ -25,20 +27,30 @@ public class Target extends ListDescribedType {
     public static final Symbol DESCRIPTOR_SYMBOL = Symbol.valueOf("amqp:target:list");
     public static final UnsignedLong DESCRIPTOR_CODE = UnsignedLong.valueOf(0x0000000000000029L);
 
-    private static final int FIELD_ADDRESS = 0;
-    private static final int FIELD_DURABLE = 1;
-    private static final int FIELD_EXPIRY_POLICY = 2;
-    private static final int FIELD_TIMEOUT = 3;
-    private static final int FIELD_DYNAMIC = 4;
-    private static final int FIELD_DYNAMIC_NODE_PROPERTIES = 5;
-    private static final int FIELD_CAPABILITIES = 6;
+    /**
+     * Enumeration which maps to fields in the Target Performative
+     */
+    public enum Field {
+        ADDRESS,
+        DURABLE,
+        EXPIRY_POLICY,
+        TIMEOUT,
+        DYNAMIC,
+        DYNAMIC_NODE_PROPERTIES,
+        CAPABILITIES,
+    }
 
-    public Target(Object... fields) {
-        super(7);
-        int i = 0;
-        for (Object field : fields) {
-            getFields()[i++] = field;
-        }
+    public Target() {
+        super(Field.values().length);
+    }
+
+    @SuppressWarnings("unchecked")
+    public Target(Object described) {
+        super(Field.values().length, (List<Object>) described);
+    }
+
+    public Target(List<Object> described) {
+        super(Field.values().length, described);
     }
 
     @Override
@@ -47,37 +59,65 @@ public class Target extends ListDescribedType {
     }
 
     public Target setAddress(Object o) {
-        getFields()[FIELD_ADDRESS] = o;
+        getList().set(Field.ADDRESS.ordinal(), o);
         return this;
+    }
+
+    public Object getAddress() {
+        return getList().get(Field.ADDRESS.ordinal());
     }
 
     public Target setDurable(Object o) {
-        getFields()[FIELD_DURABLE] = o;
+        getList().set(Field.DURABLE.ordinal(), o);
         return this;
+    }
+
+    public Object getDurable() {
+        return getList().get(Field.DURABLE.ordinal());
     }
 
     public Target setExpiryPolicy(Object o) {
-        getFields()[FIELD_EXPIRY_POLICY] = o;
+        getList().set(Field.EXPIRY_POLICY.ordinal(), o);
         return this;
+    }
+
+    public Object getExpiryPolicy() {
+        return getList().get(Field.EXPIRY_POLICY.ordinal());
     }
 
     public Target setTimeout(Object o) {
-        getFields()[FIELD_TIMEOUT] = o;
+        getList().set(Field.TIMEOUT.ordinal(), o);
         return this;
+    }
+
+    public Object getTimeout() {
+        return getList().get(Field.TIMEOUT.ordinal());
     }
 
     public Target setDynamic(Object o) {
-        getFields()[FIELD_DYNAMIC] = o;
+        getList().set(Field.DYNAMIC.ordinal(), o);
         return this;
+    }
+
+    public Object getDynamic() {
+        return getList().get(Field.DYNAMIC.ordinal());
     }
 
     public Target setDynamicNodeProperties(Object o) {
-        getFields()[FIELD_DYNAMIC_NODE_PROPERTIES] = o;
+        getList().set(Field.DYNAMIC_NODE_PROPERTIES.ordinal(), o);
         return this;
     }
 
+    public Object getDynamicNodeProperties() {
+        return getList().get(Field.DYNAMIC_NODE_PROPERTIES.ordinal());
+    }
+
     public Target setCapabilities(Object o) {
-        getFields()[FIELD_CAPABILITIES] = o;
+        getList().set(Field.CAPABILITIES.ordinal(), o);
         return this;
+    }
+
+    public Object getCapabilities() {
+        return getList().get(Field.CAPABILITIES.ordinal());
     }
 }

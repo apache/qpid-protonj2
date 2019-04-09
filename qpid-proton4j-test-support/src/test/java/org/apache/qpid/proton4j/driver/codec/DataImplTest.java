@@ -64,7 +64,7 @@ public class DataImplTest {
         org.apache.qpid.proton4j.amqp.driver.codec.types.Open described =
             (org.apache.qpid.proton4j.amqp.driver.codec.types.Open) codec.getDescribedType();
         assertNotNull(described);
-        assertEquals(Open.DESCRIPTOR_CODE, described.getDescriptor());
+        assertEquals(Open.DESCRIPTOR_SYMBOL, described.getDescriptor());
 
         assertEquals(open.getContainerId(), described.getContainerId());
         assertEquals(open.getHostname(), described.getHostname());
@@ -108,7 +108,7 @@ public class DataImplTest {
         org.apache.qpid.proton4j.amqp.driver.codec.types.Begin described =
             (org.apache.qpid.proton4j.amqp.driver.codec.types.Begin) codec.getDescribedType();
         assertNotNull(described);
-        assertEquals(Begin.DESCRIPTOR_CODE, described.getDescriptor());
+        assertEquals(Begin.DESCRIPTOR_SYMBOL, described.getDescriptor());
 
         assertEquals(described.getHandleMax(), UnsignedInteger.valueOf(512));
         assertEquals(described.getRemoteChannel(), UnsignedShort.valueOf((short) 1));

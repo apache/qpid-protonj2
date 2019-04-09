@@ -16,6 +16,8 @@
  */
 package org.apache.qpid.proton4j.amqp.driver.codec.types.sections;
 
+import java.util.List;
+
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.amqp.driver.codec.ListDescribedType;
@@ -25,18 +27,28 @@ public class Header extends ListDescribedType {
     public static final UnsignedLong DESCRIPTOR_CODE = UnsignedLong.valueOf(0x0000000000000070L);
     public static final Symbol DESCRIPTOR_SYMBOL = Symbol.valueOf("amqp:header:list");
 
-    private static final int FIELD_DURABLE = 0;
-    private static final int FIELD_PRIORITY = 1;
-    private static final int FIELD_TTL = 2;
-    private static final int FIELD_FIRST_ACQUIRER = 3;
-    private static final int FIELD_DELIVERY_COUNT = 4;
+    /**
+     * Enumeration which maps to fields in the Header Performative
+     */
+    public enum Field {
+        DURABLE,
+        PRIORITY,
+        TTL,
+        FIRST_ACQUIRER,
+        DELIVERY_COUNT,
+    }
 
-    public Header(Object... fields) {
-        super(5);
-        int i = 0;
-        for (Object field : fields) {
-            getFields()[i++] = field;
-        }
+    public Header() {
+        super(Field.values().length);
+    }
+
+    @SuppressWarnings("unchecked")
+    public Header(Object described) {
+        super(Field.values().length, (List<Object>) described);
+    }
+
+    public Header(List<Object> described) {
+        super(Field.values().length, described);
     }
 
     @Override
@@ -45,27 +57,47 @@ public class Header extends ListDescribedType {
     }
 
     public Header setDurable(Object o) {
-        getFields()[FIELD_DURABLE] = o;
+        getList().set(Field.DURABLE.ordinal(), o);
         return this;
+    }
+
+    public Object getDurable() {
+        return getList().get(Field.DURABLE.ordinal());
     }
 
     public Header setPriority(Object o) {
-        getFields()[FIELD_PRIORITY] = o;
+        getList().set(Field.PRIORITY.ordinal(), o);
         return this;
+    }
+
+    public Object getPriority() {
+        return getList().get(Field.PRIORITY.ordinal());
     }
 
     public Header setTtl(Object o) {
-        getFields()[FIELD_TTL] = o;
+        getList().set(Field.TTL.ordinal(), o);
         return this;
+    }
+
+    public Object getTtl() {
+        return getList().get(Field.TTL.ordinal());
     }
 
     public Header setFirstAcquirer(Object o) {
-        getFields()[FIELD_FIRST_ACQUIRER] = o;
+        getList().set(Field.FIRST_ACQUIRER.ordinal(), o);
         return this;
     }
 
+    public Object getFirstAcquirer() {
+        return getList().get(Field.FIRST_ACQUIRER.ordinal());
+    }
+
     public Header setDeliveryCount(Object o) {
-        getFields()[FIELD_DELIVERY_COUNT] = o;
+        getList().set(Field.DELIVERY_COUNT.ordinal(), o);
         return this;
+    }
+
+    public Object getDeliveryCount() {
+        return getList().get(Field.DELIVERY_COUNT.ordinal());
     }
 }

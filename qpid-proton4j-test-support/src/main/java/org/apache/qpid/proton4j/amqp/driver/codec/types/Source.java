@@ -16,6 +16,8 @@
  */
 package org.apache.qpid.proton4j.amqp.driver.codec.types;
 
+import java.util.List;
+
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.amqp.driver.codec.ListDescribedType;
@@ -25,24 +27,34 @@ public class Source extends ListDescribedType {
     public static final Symbol DESCRIPTOR_SYMBOL = Symbol.valueOf("amqp:source:list");
     public static final UnsignedLong DESCRIPTOR_CODE = UnsignedLong.valueOf(0x0000000000000028L);
 
-    private static final int FIELD_ADDRESS = 0;
-    private static final int FIELD_DURABLE = 1;
-    private static final int FIELD_EXPIRY_POLICY = 2;
-    private static final int FIELD_TIMEOUT = 3;
-    private static final int FIELD_DYNAMIC = 4;
-    private static final int FIELD_DYNAMIC_NODE_PROPERTIES = 5;
-    private static final int FIELD_DISTRIBUTION_MODE = 6;
-    private static final int FIELD_FILTER = 7;
-    private static final int FIELD_DEFAULT_OUTCOME = 8;
-    private static final int FIELD_OUTCOMES = 9;
-    private static final int FIELD_CAPABILITIES = 10;
+    /**
+     * Enumeration which maps to fields in the Source Performative
+     */
+    public enum Field {
+        ADDRESS,
+        DURABLE,
+        EXPIRY_POLICY,
+        TIMEOUT,
+        DYNAMIC,
+        DYNAMIC_NODE_PROPERTIES,
+        DISTRIBUTION_MODE,
+        FILTER,
+        DEFAULT_OUTCOME,
+        OUTCOMES,
+        CAPABILITIES,
+    }
 
-    public Source(Object... fields) {
-        super(11);
-        int i = 0;
-        for (Object field : fields) {
-            getFields()[i++] = field;
-        }
+    public Source() {
+        super(Field.values().length);
+    }
+
+    @SuppressWarnings("unchecked")
+    public Source(Object described) {
+        super(Field.values().length, (List<Object>) described);
+    }
+
+    public Source(List<Object> described) {
+        super(Field.values().length, described);
     }
 
     @Override
@@ -51,57 +63,101 @@ public class Source extends ListDescribedType {
     }
 
     public Source setAddress(Object o) {
-        getFields()[FIELD_ADDRESS] = o;
+        getList().set(Field.ADDRESS.ordinal(), o);
         return this;
+    }
+
+    public Object getAddress() {
+        return getList().get(Field.ADDRESS.ordinal());
     }
 
     public Source setDurable(Object o) {
-        getFields()[FIELD_DURABLE] = o;
+        getList().set(Field.DURABLE.ordinal(), o);
         return this;
+    }
+
+    public Object getDurable() {
+        return getList().get(Field.DURABLE.ordinal());
     }
 
     public Source setExpiryPolicy(Object o) {
-        getFields()[FIELD_EXPIRY_POLICY] = o;
+        getList().set(Field.EXPIRY_POLICY.ordinal(), o);
         return this;
+    }
+
+    public Object getExpiryPolicy() {
+        return getList().get(Field.EXPIRY_POLICY.ordinal());
     }
 
     public Source setTimeout(Object o) {
-        getFields()[FIELD_TIMEOUT] = o;
+        getList().set(Field.TIMEOUT.ordinal(), o);
         return this;
+    }
+
+    public Object getTimeout() {
+        return getList().get(Field.TIMEOUT.ordinal());
     }
 
     public Source setDynamic(Object o) {
-        getFields()[FIELD_DYNAMIC] = o;
+        getList().set(Field.DYNAMIC.ordinal(), o);
         return this;
+    }
+
+    public Object getDynamic() {
+        return getList().get(Field.DYNAMIC.ordinal());
     }
 
     public Source setDynamicNodeProperties(Object o) {
-        getFields()[FIELD_DYNAMIC_NODE_PROPERTIES] = o;
+        getList().set(Field.DYNAMIC_NODE_PROPERTIES.ordinal(), o);
         return this;
+    }
+
+    public Object getDynamicNodeProperties() {
+        return getList().get(Field.DYNAMIC_NODE_PROPERTIES.ordinal());
     }
 
     public Source setDistributionMode(Object o) {
-        getFields()[FIELD_DISTRIBUTION_MODE] = o;
+        getList().set(Field.DISTRIBUTION_MODE.ordinal(), o);
         return this;
+    }
+
+    public Object getDistributionMode() {
+        return getList().get(Field.DISTRIBUTION_MODE.ordinal());
     }
 
     public Source setFilter(Object o) {
-        getFields()[FIELD_FILTER] = o;
+        getList().set(Field.FILTER.ordinal(), o);
         return this;
+    }
+
+    public Object getFilter() {
+        return getList().get(Field.FILTER.ordinal());
     }
 
     public Source setDefaultOutcome(Object o) {
-        getFields()[FIELD_DEFAULT_OUTCOME] = o;
+        getList().set(Field.DEFAULT_OUTCOME.ordinal(), o);
         return this;
+    }
+
+    public Object getDefaultOutcome() {
+        return getList().get(Field.DEFAULT_OUTCOME.ordinal());
     }
 
     public Source setOutcomes(Object o) {
-        getFields()[FIELD_OUTCOMES] = o;
+        getList().set(Field.OUTCOMES.ordinal(), o);
         return this;
     }
 
+    public Object getOutcomes() {
+        return getList().get(Field.OUTCOMES.ordinal());
+    }
+
     public Source setCapabilities(Object o) {
-        getFields()[FIELD_CAPABILITIES] = o;
+        getList().set(Field.CAPABILITIES.ordinal(), o);
         return this;
+    }
+
+    public Object getCapabilities() {
+        return getList().get(Field.CAPABILITIES.ordinal());
     }
 }

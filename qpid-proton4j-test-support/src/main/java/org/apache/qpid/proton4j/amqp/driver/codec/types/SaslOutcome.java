@@ -16,6 +16,8 @@
  */
 package org.apache.qpid.proton4j.amqp.driver.codec.types;
 
+import java.util.List;
+
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.amqp.driver.codec.ListDescribedType;
@@ -25,29 +27,47 @@ public class SaslOutcome extends ListDescribedType {
     public static final Symbol DESCRIPTOR_SYMBOL = Symbol.valueOf("amqp:sasl-outcome:list");
     public static final UnsignedLong DESCRIPTOR_CODE = UnsignedLong.valueOf(0x0000000000000044L);
 
-    private static final int FIELD_CODE = 0;
-    private static final int FIELD_ADDITIONAL_DATA = 1;
+    /**
+     * Enumeration which maps to fields in the Rejected Performative
+     */
+    public enum Field {
+        CODE,
+        ADDITIONAL_DATA
+    }
 
-    public SaslOutcome(Object... fields) {
-        super(2);
-        int i = 0;
-        for (Object field : fields) {
-            getFields()[i++] = field;
-        }
+    public SaslOutcome() {
+        super(Field.values().length);
+    }
+
+    @SuppressWarnings("unchecked")
+    public SaslOutcome(Object described) {
+        super(Field.values().length, (List<Object>) described);
+    }
+
+    public SaslOutcome(List<Object> described) {
+        super(Field.values().length, described);
     }
 
     @Override
-    public Symbol getDescriptor() {
-        return DESCRIPTOR_SYMBOL;
+    public UnsignedLong getDescriptor() {
+        return DESCRIPTOR_CODE;
     }
 
     public SaslOutcome setCode(Object o) {
-        getFields()[FIELD_CODE] = o;
+        getList().set(Field.CODE.ordinal(), o);
         return this;
     }
 
+    public Object getCode() {
+        return getList().get(Field.CODE.ordinal());
+    }
+
     public SaslOutcome setAdditionalData(Object o) {
-        getFields()[FIELD_ADDITIONAL_DATA] = o;
+        getList().set(Field.ADDITIONAL_DATA.ordinal(), o);
         return this;
+    }
+
+    public Object getAdditionalData() {
+        return getList().get(Field.ADDITIONAL_DATA.ordinal());
     }
 }

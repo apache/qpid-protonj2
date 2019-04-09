@@ -16,6 +16,8 @@
  */
 package org.apache.qpid.proton4j.amqp.driver.codec.types;
 
+import java.util.List;
+
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.amqp.driver.codec.ListDescribedType;
@@ -25,19 +27,29 @@ public class Disposition extends ListDescribedType {
     public static final Symbol DESCRIPTOR_SYMBOL = Symbol.valueOf("amqp:disposition:list");
     public static final UnsignedLong DESCRIPTOR_CODE = UnsignedLong.valueOf(0x0000000000000015L);
 
-    private static final int FIELD_ROLE = 0;
-    private static final int FIELD_FIRST = 1;
-    private static final int FIELD_LAST = 2;
-    private static final int FIELD_SETTLED = 3;
-    private static final int FIELD_STATE = 4;
-    private static final int FIELD_BATCHABLE = 5;
+    /**
+     * Enumeration which maps to fields in the Disposition Performative
+     */
+    public enum Field {
+        ROLE,
+        FIRST,
+        LAST,
+        SETTLED,
+        STATE,
+        BATCHABLE
+    }
 
-    public Disposition(Object... fields) {
-        super(6);
-        int i = 0;
-        for (Object field : fields) {
-            getFields()[i++] = field;
-        }
+    public Disposition() {
+        super(Field.values().length);
+    }
+
+    @SuppressWarnings("unchecked")
+    public Disposition(Object described) {
+        super(Field.values().length, (List<Object>) described);
+    }
+
+    public Disposition(List<Object> described) {
+        super(Field.values().length, described);
     }
 
     @Override
@@ -46,32 +58,56 @@ public class Disposition extends ListDescribedType {
     }
 
     public Disposition setRole(Object o) {
-        getFields()[FIELD_ROLE] = o;
+        getList().set(Field.ROLE.ordinal(), o);
         return this;
+    }
+
+    public Object getRole() {
+        return getList().get(Field.ROLE.ordinal());
     }
 
     public Disposition setFirst(Object o) {
-        getFields()[FIELD_FIRST] = o;
+        getList().set(Field.FIRST.ordinal(), o);
         return this;
+    }
+
+    public Object getFirst() {
+        return getList().get(Field.FIRST.ordinal());
     }
 
     public Disposition setLast(Object o) {
-        getFields()[FIELD_LAST] = o;
+        getList().set(Field.LAST.ordinal(), o);
         return this;
+    }
+
+    public Object getLast() {
+        return getList().get(Field.LAST.ordinal());
     }
 
     public Disposition setSettled(Object o) {
-        getFields()[FIELD_SETTLED] = o;
+        getList().set(Field.SETTLED.ordinal(), o);
         return this;
+    }
+
+    public Object getSettled() {
+        return getList().get(Field.SETTLED.ordinal());
     }
 
     public Disposition setState(Object o) {
-        getFields()[FIELD_STATE] = o;
+        getList().set(Field.STATE.ordinal(), o);
         return this;
     }
 
+    public Object getState() {
+        return getList().get(Field.STATE.ordinal());
+    }
+
     public Disposition setBatchable(Object o) {
-        getFields()[FIELD_BATCHABLE] = o;
+        getList().set(Field.BATCHABLE.ordinal(), o);
         return this;
+    }
+
+    public Object getBatchable() {
+        return getList().get(Field.BATCHABLE.ordinal());
     }
 }

@@ -16,6 +16,8 @@
  */
 package org.apache.qpid.proton4j.amqp.driver.codec.types;
 
+import java.util.List;
+
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.amqp.driver.codec.ListDescribedType;
@@ -25,14 +27,24 @@ public class Close extends ListDescribedType {
     public static final Symbol DESCRIPTOR_SYMBOL = Symbol.valueOf("amqp:close:list");
     public static final UnsignedLong DESCRIPTOR_CODE = UnsignedLong.valueOf(0x0000000000000018L);
 
-    private static final int FIELD_ERROR = 0;
+    /**
+     * Enumeration which maps to fields in the Close Performative
+     */
+    public enum Field {
+        ERROR
+    }
 
-    public Close(Object... fields) {
-        super(1);
-        int i = 0;
-        for (Object field : fields) {
-            getFields()[i++] = field;
-        }
+    public Close() {
+        super(Field.values().length);
+    }
+
+    @SuppressWarnings("unchecked")
+    public Close(Object described) {
+        super(Field.values().length, (List<Object>) described);
+    }
+
+    public Close(List<Object> described) {
+        super(Field.values().length, described);
     }
 
     @Override
@@ -41,7 +53,11 @@ public class Close extends ListDescribedType {
     }
 
     public Close setError(Object o) {
-        getFields()[FIELD_ERROR] = o;
+        getList().set(Field.ERROR.ordinal(), o);
         return this;
+    }
+
+    public Object getError() {
+        return getList().get(Field.ERROR.ordinal());
     }
 }

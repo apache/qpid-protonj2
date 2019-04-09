@@ -16,6 +16,8 @@
  */
 package org.apache.qpid.proton4j.amqp.driver.codec.types;
 
+import java.util.List;
+
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.amqp.driver.codec.ListDescribedType;
@@ -25,16 +27,26 @@ public class ErrorCondition extends ListDescribedType {
     public static final Symbol DESCRIPTOR_SYMBOL = Symbol.valueOf("amqp:error:list");
     public static final UnsignedLong DESCRIPTOR_CODE = UnsignedLong.valueOf(0x000000000000001dL);
 
-    private static final int FIELD_CONDITION = 0;
-    private static final int FIELD_DESCRIPTION = 1;
-    private static final int FIELD_INFO = 2;
+    /**
+     * Enumeration which maps to fields in the ErrorCondition Performative
+     */
+    public enum Field {
+        CONDITION,
+        DESCRIPTION,
+        INFO
+    }
 
-    public ErrorCondition(Object... fields) {
-        super(3);
-        int i = 0;
-        for (Object field : fields) {
-            getFields()[i++] = field;
-        }
+    public ErrorCondition() {
+        super(Field.values().length);
+    }
+
+    @SuppressWarnings("unchecked")
+    public ErrorCondition(Object described) {
+        super(Field.values().length, (List<Object>) described);
+    }
+
+    public ErrorCondition(List<Object> described) {
+        super(Field.values().length, described);
     }
 
     @Override
@@ -43,17 +55,29 @@ public class ErrorCondition extends ListDescribedType {
     }
 
     public ErrorCondition setCondition(Object o) {
-        getFields()[FIELD_CONDITION] = o;
+        getList().set(Field.CONDITION.ordinal(), o);
         return this;
+    }
+
+    public Object getCondition() {
+        return getList().get(Field.CONDITION.ordinal());
     }
 
     public ErrorCondition setDescription(Object o) {
-        getFields()[FIELD_DESCRIPTION] = o;
+        getList().set(Field.DESCRIPTION.ordinal(), o);
         return this;
     }
 
+    public Object getDescription() {
+        return getList().get(Field.DESCRIPTION.ordinal());
+    }
+
     public ErrorCondition setInfo(Object o) {
-        getFields()[FIELD_INFO] = o;
+        getList().set(Field.INFO.ordinal(), o);
         return this;
+    }
+
+    public Object getInfo() {
+        return getList().get(Field.INFO.ordinal());
     }
 }

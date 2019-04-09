@@ -16,6 +16,8 @@
  */
 package org.apache.qpid.proton4j.amqp.driver.codec.types;
 
+import java.util.List;
+
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.amqp.driver.codec.ListDescribedType;
@@ -25,14 +27,24 @@ public class SaslChallenge extends ListDescribedType {
     public static final Symbol DESCRIPTOR_SYMBOL = Symbol.valueOf("amqp:sasl-challenge:list");
     public static final UnsignedLong DESCRIPTOR_CODE = UnsignedLong.valueOf(0x0000000000000042L);
 
-    private static final int FIELD_CHALLENGE = 0;
+    /**
+     * Enumeration which maps to fields in the SaslChallenge Performative
+     */
+    public enum Field {
+        CHALLENGE,
+    }
 
-    public SaslChallenge(Object... fields) {
-        super(1);
-        int i = 0;
-        for (Object field : fields) {
-            getFields()[i++] = field;
-        }
+    public SaslChallenge() {
+        super(Field.values().length);
+    }
+
+    @SuppressWarnings("unchecked")
+    public SaslChallenge(Object described) {
+        super(Field.values().length, (List<Object>) described);
+    }
+
+    public SaslChallenge(List<Object> described) {
+        super(Field.values().length, described);
     }
 
     @Override
@@ -41,7 +53,11 @@ public class SaslChallenge extends ListDescribedType {
     }
 
     public SaslChallenge setChallenge(Object o) {
-        getFields()[FIELD_CHALLENGE] = o;
+        getList().set(Field.CHALLENGE.ordinal(), o);
         return this;
+    }
+
+    public Object getChallenge() {
+        return getList().get(Field.CHALLENGE.ordinal());
     }
 }

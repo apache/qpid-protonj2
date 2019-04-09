@@ -37,7 +37,7 @@ public class Data implements DescribedType {
     }
 
     @Override
-    public Object getDescriptor() {
+    public Symbol getDescriptor() {
         return DESCRIPTOR_SYMBOL;
     }
 

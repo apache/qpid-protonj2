@@ -16,6 +16,8 @@
  */
 package org.apache.qpid.proton4j.amqp.driver.codec.types;
 
+import java.util.List;
+
 import org.apache.qpid.proton4j.amqp.DescribedType;
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
@@ -26,14 +28,24 @@ public class Declare extends ListDescribedType {
     public static final Symbol DESCRIPTOR_SYMBOL = Symbol.valueOf("amqp:declare:list");
     public static final UnsignedLong DESCRIPTOR_CODE = UnsignedLong.valueOf(0x0000000000000031L);
 
-    private static final int FIELD_GLOBAL_ID = 0;
+    /**
+     * Enumeration which maps to fields in the Declare Performative
+     */
+    public enum Field {
+        GLOBAL_ID
+    }
 
-    public Declare(Object... fields) {
-        super(1);
-        int i = 0;
-        for (Object field : fields) {
-            getFields()[i++] = field;
-        }
+    public Declare() {
+        super(Field.values().length);
+    }
+
+    @SuppressWarnings("unchecked")
+    public Declare(Object described) {
+        super(Field.values().length, (List<Object>) described);
+    }
+
+    public Declare(List<Object> described) {
+        super(Field.values().length, described);
     }
 
     @Override
@@ -42,8 +54,12 @@ public class Declare extends ListDescribedType {
     }
 
     public Declare setGlobalId(Object o) {
-        getFields()[FIELD_GLOBAL_ID] = o;
+        getList().set(Field.GLOBAL_ID.ordinal(), o);
         return this;
+    }
+
+    public Object getGlobalId() {
+        return getList().get(Field.GLOBAL_ID.ordinal());
     }
 
     @Override

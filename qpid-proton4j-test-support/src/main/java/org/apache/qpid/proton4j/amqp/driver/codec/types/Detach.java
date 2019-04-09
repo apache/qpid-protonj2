@@ -16,6 +16,8 @@
  */
 package org.apache.qpid.proton4j.amqp.driver.codec.types;
 
+import java.util.List;
+
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.amqp.driver.codec.ListDescribedType;
@@ -25,35 +27,57 @@ public class Detach extends ListDescribedType {
     public static final Symbol DESCRIPTOR_SYMBOL = Symbol.valueOf("amqp:detach:list");
     public static final UnsignedLong DESCRIPTOR_CODE = UnsignedLong.valueOf(0x0000000000000016L);
 
-    private static final int FIELD_HANDLE = 0;
-    private static final int FIELD_CLOSED = 1;
-    private static final int FIELD_ERROR = 2;
+    /**
+     * Enumeration which maps to fields in the Detach Performative
+     */
+    public enum Field {
+        HANDLE,
+        CLOSED,
+        ERROR
+    }
 
-    public Detach(Object... fields) {
-        super(3);
-        int i = 0;
-        for (Object field : fields) {
-            getFields()[i++] = field;
-        }
+    public Detach() {
+        super(Field.values().length);
+    }
+
+    @SuppressWarnings("unchecked")
+    public Detach(Object described) {
+        super(Field.values().length, (List<Object>) described);
+    }
+
+    public Detach(List<Object> described) {
+        super(Field.values().length, described);
     }
 
     @Override
-    public Symbol getDescriptor() {
-        return DESCRIPTOR_SYMBOL;
+    public UnsignedLong getDescriptor() {
+        return DESCRIPTOR_CODE;
     }
 
     public Detach setHandle(Object o) {
-        getFields()[FIELD_HANDLE] = o;
+        getList().set(Field.HANDLE.ordinal(), o);
         return this;
+    }
+
+    public Object getHandle() {
+        return getList().get(Field.HANDLE.ordinal());
     }
 
     public Detach setClosed(Object o) {
-        getFields()[FIELD_CLOSED] = o;
+        getList().set(Field.CLOSED.ordinal(), o);
         return this;
     }
 
+    public Object getClosed() {
+        return getList().get(Field.CLOSED.ordinal());
+    }
+
     public Detach setError(Object o) {
-        getFields()[FIELD_ERROR] = o;
+        getList().set(Field.ERROR.ordinal(), o);
         return this;
+    }
+
+    public Object getError() {
+        return getList().get(Field.ERROR.ordinal());
     }
 }

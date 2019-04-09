@@ -16,22 +16,30 @@
  */
 package org.apache.qpid.proton4j.amqp.driver.codec.types;
 
+import java.util.List;
+
 import org.apache.qpid.proton4j.amqp.DescribedType;
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.amqp.driver.codec.ListDescribedType;
+import org.apache.qpid.proton4j.amqp.driver.codec.types.Modified.Field;
 
 public class Released extends ListDescribedType {
 
     public static final Symbol DESCRIPTOR_SYMBOL = Symbol.valueOf("amqp:released:list");
     public static final UnsignedLong DESCRIPTOR_CODE = UnsignedLong.valueOf(0x0000000000000026L);
 
-    public Released(Object... fields) {
-        super(0);
-        int i = 0;
-        for (Object field : fields) {
-            getFields()[i++] = field;
-        }
+    public Released() {
+        super(Field.values().length);
+    }
+
+    @SuppressWarnings("unchecked")
+    public Released(Object described) {
+        super(Field.values().length, (List<Object>) described);
+    }
+
+    public Released(List<Object> described) {
+        super(Field.values().length, described);
     }
 
     @Override

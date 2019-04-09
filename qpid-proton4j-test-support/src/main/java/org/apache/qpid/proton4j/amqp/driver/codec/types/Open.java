@@ -57,8 +57,8 @@ public class Open extends ListDescribedType {
     }
 
     @Override
-    public UnsignedLong getDescriptor() {
-        return DESCRIPTOR_CODE;
+    public Symbol getDescriptor() {
+        return DESCRIPTOR_SYMBOL;
     }
 
     public Open setContainerId(Object o) {

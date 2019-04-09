@@ -16,6 +16,8 @@
  */
 package org.apache.qpid.proton4j.amqp.driver.codec.types;
 
+import java.util.List;
+
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.amqp.driver.codec.ListDescribedType;
@@ -25,12 +27,17 @@ public class DeleteOnNoLinksOrMessages extends ListDescribedType {
     public static final Symbol DESCRIPTOR_SYMBOL = Symbol.valueOf("amqp:delete-on-no-links-or-messages:list");
     public static final UnsignedLong DESCRIPTOR_CODE = UnsignedLong.valueOf(0x000000000000002eL);
 
-    public DeleteOnNoLinksOrMessages(Object... fields) {
+    public DeleteOnNoLinksOrMessages() {
         super(0);
-        int i = 0;
-        for (Object field : fields) {
-            getFields()[i++] = field;
-        }
+    }
+
+    @SuppressWarnings("unchecked")
+    public DeleteOnNoLinksOrMessages(Object described) {
+        super(0, (List<Object>) described);
+    }
+
+    public DeleteOnNoLinksOrMessages(List<Object> described) {
+        super(0, described);
     }
 
     @Override
