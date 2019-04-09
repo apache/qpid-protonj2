@@ -96,7 +96,7 @@ public class ProtonReceiverCreditState implements ProtonLinkCreditState {
     public Transfer handleTransfer(Transfer transfer, ProtonBuffer payload) {
         final ProtonIncomingDelivery delivery;
 
-        if (currentDeliveryId != null && !transfer.hasDeliveryId() || currentDeliveryId.equals((int) transfer.getDeliveryId())) {
+        if (currentDeliveryId != null && (!transfer.hasDeliveryId() || currentDeliveryId.equals((int) transfer.getDeliveryId()))) {
             delivery = deliveries.get(currentDeliveryId.intValue());
         } else {
             verifyNewDeliveryIdSequence(transfer, currentDeliveryId);
