@@ -25,9 +25,15 @@ import java.io.IOException;
 import org.apache.qpid.proton4j.amqp.UnsignedInteger;
 import org.apache.qpid.proton4j.amqp.UnsignedShort;
 import org.apache.qpid.proton4j.amqp.driver.codec.Data;
+import org.apache.qpid.proton4j.amqp.messaging.Source;
+import org.apache.qpid.proton4j.amqp.messaging.Target;
+import org.apache.qpid.proton4j.amqp.transport.Attach;
 import org.apache.qpid.proton4j.amqp.transport.Begin;
 import org.apache.qpid.proton4j.amqp.transport.Open;
 import org.apache.qpid.proton4j.amqp.transport.Performative;
+import org.apache.qpid.proton4j.amqp.transport.ReceiverSettleMode;
+import org.apache.qpid.proton4j.amqp.transport.Role;
+import org.apache.qpid.proton4j.amqp.transport.SenderSettleMode;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.codec.CodecFactory;
@@ -137,6 +143,60 @@ public class DataImplTest {
         Begin performative = (Begin) decoded;
         assertEquals(performative.getHandleMax(), 512);
         assertEquals(performative.getRemoteChannel(), 1);
+    }
+
+    @Test
+    public void testDecodeAttach() {
+        Attach attach = new Attach();
+        attach.setName("test");
+        attach.setHandle(1);
+        attach.setRole(Role.SENDER);
+        attach.setSndSettleMode(SenderSettleMode.MIXED);
+        attach.setRcvSettleMode(ReceiverSettleMode.FIRST);
+        attach.setSource(new Source());
+        attach.setTarget(new Target());
+
+        ProtonBuffer encoded = encodeProtonPerformative(attach);
+        int expectedRead = encoded.getReadableBytes();
+
+        Data codec = Data.Factory.create();
+
+        assertEquals(expectedRead, codec.decode(encoded));
+
+        org.apache.qpid.proton4j.amqp.driver.codec.types.Attach described =
+            (org.apache.qpid.proton4j.amqp.driver.codec.types.Attach) codec.getDescribedType();
+        assertNotNull(described);
+        assertEquals(Attach.DESCRIPTOR_SYMBOL, described.getDescriptor());
+
+        assertEquals(described.getHandle(), UnsignedInteger.valueOf(1));
+        assertEquals(described.getName(), "test");
+    }
+
+    @Test
+    public void testEncodeAttach() throws IOException {
+        org.apache.qpid.proton4j.amqp.driver.codec.types.Attach attach =
+            new org.apache.qpid.proton4j.amqp.driver.codec.types.Attach();
+        attach.setName("test");
+        attach.setHandle(UnsignedInteger.valueOf(1));
+        attach.setRole(Role.SENDER.getValue());
+        attach.setSndSettleMode(SenderSettleMode.MIXED.getValue());
+        attach.setRcvSettleMode(ReceiverSettleMode.FIRST.getValue());
+        attach.setSource(new org.apache.qpid.proton4j.amqp.driver.codec.types.Source());
+        attach.setTarget(new org.apache.qpid.proton4j.amqp.driver.codec.types.Target());
+
+        Data codec = Data.Factory.create();
+
+        codec.putDescribedType(attach);
+        ProtonBuffer encoded = ProtonByteBufferAllocator.DEFAULT.allocate((int) codec.encodedSize());
+        codec.encode(encoded);
+
+        Performative decoded = decodeProtonPerformative(encoded);
+        assertNotNull(decoded);
+        assertTrue(decoded instanceof Attach);
+
+        Attach performative = (Attach) decoded;
+        assertEquals(performative.getHandle(), 1);
+        assertEquals(performative.getName(), "test");
     }
 
     private Performative decodeProtonPerformative(ProtonBuffer buffer) throws IOException {
