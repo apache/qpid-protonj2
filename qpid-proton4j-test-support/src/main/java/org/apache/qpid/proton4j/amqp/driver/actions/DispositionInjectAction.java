@@ -26,11 +26,7 @@ import org.apache.qpid.proton4j.amqp.transport.Role;
  */
 public class DispositionInjectAction extends AbstractPerformativeInjectAction<Disposition> {
 
-    private final Disposition disposition;
-
-    public DispositionInjectAction(Disposition disposition) {
-        this.disposition = disposition;
-    }
+    private final Disposition disposition = new Disposition();
 
     @Override
     public Disposition getPerformative() {

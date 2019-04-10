@@ -51,7 +51,7 @@ public class EndExpectation extends AbstractExpectation<End> {
     }
 
     public EndInjectAction respond() {
-        response = new EndInjectAction(new End());
+        response = new EndInjectAction();
         driver.addScriptedElement(response);
         return response;
     }

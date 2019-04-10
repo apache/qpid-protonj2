@@ -22,7 +22,6 @@ import org.apache.qpid.proton4j.amqp.Binary;
 import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
 import org.apache.qpid.proton4j.amqp.driver.actions.SaslResponseInjectAction;
 import org.apache.qpid.proton4j.amqp.security.SaslChallenge;
-import org.apache.qpid.proton4j.amqp.security.SaslResponse;
 import org.hamcrest.Matcher;
 
 /**
@@ -42,7 +41,7 @@ public class SaslChallengeExpectation extends AbstractExpectation<SaslChallenge>
     }
 
     public SaslResponseInjectAction respond() {
-        SaslResponseInjectAction response = new SaslResponseInjectAction(new SaslResponse());
+        SaslResponseInjectAction response = new SaslResponseInjectAction();
         driver.addScriptedElement(response);
         return response;
     }

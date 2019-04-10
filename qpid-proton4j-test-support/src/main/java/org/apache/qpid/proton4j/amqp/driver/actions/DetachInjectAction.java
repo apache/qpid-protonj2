@@ -25,11 +25,7 @@ import org.apache.qpid.proton4j.amqp.transport.ErrorCondition;
  */
 public class DetachInjectAction extends AbstractPerformativeInjectAction<Detach> {
 
-    private final Detach detach;
-
-    public DetachInjectAction(Detach detach) {
-        this.detach = detach;
-    }
+    private final Detach detach = new Detach();
 
     @Override
     public Detach getPerformative() {

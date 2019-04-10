@@ -25,11 +25,7 @@ import org.apache.qpid.proton4j.amqp.security.SaslMechanisms;
  */
 public class SaslMechanismsInjectAction extends AbstractSaslPerformativeInjectAction<SaslMechanisms> {
 
-    private final SaslMechanisms saslMechanisms;
-
-    public SaslMechanismsInjectAction(SaslMechanisms saslMechanisms) {
-        this.saslMechanisms = saslMechanisms;
-    }
+    private final SaslMechanisms saslMechanisms = new SaslMechanisms();
 
     public SaslMechanismsInjectAction withMechanisms(Symbol... saslServerMechanisms) {
         saslMechanisms.setSaslServerMechanisms(saslServerMechanisms);

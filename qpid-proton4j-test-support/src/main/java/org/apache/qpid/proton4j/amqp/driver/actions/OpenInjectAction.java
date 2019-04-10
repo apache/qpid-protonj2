@@ -29,11 +29,7 @@ import org.apache.qpid.proton4j.amqp.transport.Open;
  */
 public class OpenInjectAction extends AbstractPerformativeInjectAction<Open> {
 
-    private final Open open;
-
-    public OpenInjectAction(Open open) {
-        this.open = open;
-    }
+    private final Open open = new Open();
 
     @Override
     public Open getPerformative() {

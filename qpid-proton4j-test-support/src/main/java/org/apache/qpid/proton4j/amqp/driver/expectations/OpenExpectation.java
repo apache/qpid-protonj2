@@ -60,7 +60,7 @@ public class OpenExpectation extends AbstractExpectation<Open> {
     }
 
     public OpenInjectAction respond() {
-        response = new OpenInjectAction(new Open());
+        response = new OpenInjectAction();
         driver.addScriptedElement(response);
         return response;
     }

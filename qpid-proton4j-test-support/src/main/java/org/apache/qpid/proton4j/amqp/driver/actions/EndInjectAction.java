@@ -25,11 +25,7 @@ import org.apache.qpid.proton4j.amqp.transport.ErrorCondition;
  */
 public class EndInjectAction extends AbstractPerformativeInjectAction<End> {
 
-    private final End end;
-
-    public EndInjectAction(End end) {
-        this.end = end;
-    }
+    private final End end = new End();
 
     @Override
     public End getPerformative() {

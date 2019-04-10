@@ -25,11 +25,7 @@ import org.apache.qpid.proton4j.amqp.transport.ErrorCondition;
  */
 public class CloseInjectAction extends AbstractPerformativeInjectAction<Close> {
 
-    private final Close close;
-
-    public CloseInjectAction(Close close) {
-        this.close = close;
-    }
+    private final Close close = new Close();
 
     @Override
     public Close getPerformative() {

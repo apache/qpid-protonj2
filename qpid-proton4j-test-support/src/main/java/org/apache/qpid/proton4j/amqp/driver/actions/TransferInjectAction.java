@@ -45,7 +45,7 @@ import org.apache.qpid.proton4j.codec.EncoderState;
  */
 public final class TransferInjectAction extends AbstractPerformativeInjectAction<Transfer> {
 
-    private final Transfer transfer;
+    private final Transfer transfer = new Transfer();
 
     private ProtonBuffer payload;
 
@@ -56,10 +56,6 @@ public final class TransferInjectAction extends AbstractPerformativeInjectAction
     private ApplicationProperties applicationProperties;
     private Section body;
     private Footer footer;
-
-    public TransferInjectAction(Transfer transfer) {
-        this.transfer = transfer;
-    }
 
     @Override
     public Transfer getPerformative() {

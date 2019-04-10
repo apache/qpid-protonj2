@@ -45,7 +45,7 @@ public class CloseExpectation extends AbstractExpectation<Close> {
     }
 
     public CloseInjectAction respond() {
-        response = new CloseInjectAction(new Close());
+        response = new CloseInjectAction();
         driver.addScriptedElement(response);
         return response;
     }

@@ -27,11 +27,7 @@ import org.apache.qpid.proton4j.amqp.transport.Begin;
  */
 public class BeginInjectAction extends AbstractPerformativeInjectAction<Begin> {
 
-    private final Begin begin;
-
-    public BeginInjectAction(Begin begin) {
-        this.begin = begin;
-    }
+    private final Begin begin = new Begin();
 
     @Override
     public Begin getPerformative() {

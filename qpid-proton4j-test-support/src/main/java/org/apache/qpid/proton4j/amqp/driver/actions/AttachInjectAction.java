@@ -35,11 +35,7 @@ import org.apache.qpid.proton4j.amqp.transport.SenderSettleMode;
  */
 public class AttachInjectAction extends AbstractPerformativeInjectAction<Attach> {
 
-    private final Attach attach;
-
-    public AttachInjectAction(Attach attach) {
-        this.attach = attach;
-    }
+    private final Attach attach = new Attach();
 
     @Override
     public Attach getPerformative() {

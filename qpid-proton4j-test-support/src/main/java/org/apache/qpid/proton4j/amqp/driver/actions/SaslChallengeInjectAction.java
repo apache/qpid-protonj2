@@ -25,11 +25,7 @@ import org.apache.qpid.proton4j.amqp.security.SaslChallenge;
  */
 public class SaslChallengeInjectAction extends AbstractSaslPerformativeInjectAction<SaslChallenge> {
 
-    private final SaslChallenge saslChallenge;
-
-    public SaslChallengeInjectAction(SaslChallenge challenge) {
-        this.saslChallenge = challenge;
-    }
+    private final SaslChallenge saslChallenge = new SaslChallenge();
 
     public SaslChallengeInjectAction withChallenge(Binary challenge) {
         saslChallenge.setChallenge(challenge);

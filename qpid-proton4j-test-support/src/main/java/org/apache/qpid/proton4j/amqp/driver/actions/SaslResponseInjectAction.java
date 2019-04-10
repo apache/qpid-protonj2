@@ -25,11 +25,7 @@ import org.apache.qpid.proton4j.amqp.security.SaslResponse;
  */
 public class SaslResponseInjectAction extends AbstractSaslPerformativeInjectAction<SaslResponse> {
 
-    private final SaslResponse saslResponse;
-
-    public SaslResponseInjectAction(SaslResponse saslResponse) {
-        this.saslResponse = saslResponse;
-    }
+    private final SaslResponse saslResponse = new SaslResponse();
 
     public SaslResponseInjectAction withResponse(Binary response) {
         saslResponse.setResponse(response);

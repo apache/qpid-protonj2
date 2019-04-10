@@ -26,11 +26,7 @@ import org.apache.qpid.proton4j.amqp.security.SaslOutcome;
  */
 public class SaslOutcomeInjectAction extends AbstractSaslPerformativeInjectAction<SaslOutcome> {
 
-    private final SaslOutcome saslOutcome;
-
-    public SaslOutcomeInjectAction(SaslOutcome saslOutcome) {
-        this.saslOutcome = saslOutcome;
-    }
+    private final SaslOutcome saslOutcome = new SaslOutcome();
 
     public SaslOutcomeInjectAction withCode(SaslCode code) {
         saslOutcome.setCode(code);

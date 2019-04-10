@@ -74,7 +74,7 @@ public class AttachExpectation extends AbstractExpectation<Attach> {
     }
 
     public AttachInjectAction respond() {
-        response = new AttachInjectAction(new Attach());
+        response = new AttachInjectAction();
         driver.addScriptedElement(response);
         return response;
     }

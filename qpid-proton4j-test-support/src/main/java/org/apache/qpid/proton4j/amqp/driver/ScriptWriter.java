@@ -38,16 +38,7 @@ import org.apache.qpid.proton4j.amqp.driver.expectations.OpenExpectation;
 import org.apache.qpid.proton4j.amqp.driver.expectations.TransferExpectation;
 import org.apache.qpid.proton4j.amqp.security.SaslPerformative;
 import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
-import org.apache.qpid.proton4j.amqp.transport.Attach;
-import org.apache.qpid.proton4j.amqp.transport.Begin;
-import org.apache.qpid.proton4j.amqp.transport.Close;
-import org.apache.qpid.proton4j.amqp.transport.Detach;
-import org.apache.qpid.proton4j.amqp.transport.Disposition;
-import org.apache.qpid.proton4j.amqp.transport.End;
-import org.apache.qpid.proton4j.amqp.transport.Flow;
-import org.apache.qpid.proton4j.amqp.transport.Open;
 import org.apache.qpid.proton4j.amqp.transport.Performative;
-import org.apache.qpid.proton4j.amqp.transport.Transfer;
 
 /**
  * Class used to create test scripts using the {@link AMQPTestDriver}
@@ -137,55 +128,55 @@ public class ScriptWriter {
     }
 
     public OpenInjectAction remoteOpen() {
-        OpenInjectAction inject = new OpenInjectAction(new Open());
+        OpenInjectAction inject = new OpenInjectAction();
         driver.addScriptedElement(inject);
         return inject;
     }
 
     public CloseInjectAction remoteClose() {
-        CloseInjectAction inject = new CloseInjectAction(new Close());
+        CloseInjectAction inject = new CloseInjectAction();
         driver.addScriptedElement(inject);
         return inject;
     }
 
     public BeginInjectAction remoteBegin() {
-        BeginInjectAction inject = new BeginInjectAction(new Begin());
+        BeginInjectAction inject = new BeginInjectAction();
         driver.addScriptedElement(inject);
         return inject;
     }
 
     public EndInjectAction remoteEnd() {
-        EndInjectAction inject = new EndInjectAction(new End());
+        EndInjectAction inject = new EndInjectAction();
         driver.addScriptedElement(inject);
         return inject;
     }
 
     public AttachInjectAction remoteAttach() {
-        AttachInjectAction inject = new AttachInjectAction(new Attach());
+        AttachInjectAction inject = new AttachInjectAction();
         driver.addScriptedElement(inject);
         return inject;
     }
 
     public DetachInjectAction remoteDetach() {
-        DetachInjectAction inject = new DetachInjectAction(new Detach());
+        DetachInjectAction inject = new DetachInjectAction();
         driver.addScriptedElement(inject);
         return inject;
     }
 
     public FlowInjectAction remoteFlow() {
-        FlowInjectAction inject = new FlowInjectAction(new Flow());
+        FlowInjectAction inject = new FlowInjectAction();
         driver.addScriptedElement(inject);
         return inject;
     }
 
     public TransferInjectAction remoteTransfer() {
-        TransferInjectAction inject = new TransferInjectAction(new Transfer());
+        TransferInjectAction inject = new TransferInjectAction();
         driver.addScriptedElement(inject);
         return inject;
     }
 
     public DispositionInjectAction remoteDisposition() {
-        DispositionInjectAction inject = new DispositionInjectAction(new Disposition());
+        DispositionInjectAction inject = new DispositionInjectAction();
         driver.addScriptedElement(inject);
         return inject;
     }

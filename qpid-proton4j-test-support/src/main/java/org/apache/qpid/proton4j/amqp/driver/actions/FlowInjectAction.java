@@ -27,11 +27,7 @@ import org.apache.qpid.proton4j.amqp.transport.Flow;
  */
 public class FlowInjectAction extends AbstractPerformativeInjectAction<Flow> {
 
-    private final Flow flow;
-
-    public FlowInjectAction(Flow flow) {
-        this.flow = flow;
-    }
+    private final Flow flow = new Flow();
 
     @Override
     public Flow getPerformative() {
