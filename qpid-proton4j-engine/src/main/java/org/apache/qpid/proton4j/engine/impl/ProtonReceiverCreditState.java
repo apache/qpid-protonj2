@@ -25,7 +25,7 @@ import org.apache.qpid.proton4j.amqp.transport.Flow;
 import org.apache.qpid.proton4j.amqp.transport.Transfer;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.engine.exceptions.ProtocolViolationException;
-import org.apache.qpid.proton4j.engine.util.SequenceNumber;
+import org.apache.qpid.proton4j.engine.util.DeliveryIdTracker;
 
 /**
  * Credit state handler for {@link Receiver} links.
@@ -38,7 +38,7 @@ public class ProtonReceiverCreditState implements ProtonLinkCreditState {
     private int credit;
     private int deliveryCount;
 
-    private SequenceNumber currentDeliveryId;
+    private final DeliveryIdTracker currentDeliveryId = new DeliveryIdTracker();
 
     // TODO - Primitive aware storage collection
     private Map<Integer, ProtonIncomingDelivery> deliveries = new LinkedHashMap<>();
@@ -96,7 +96,7 @@ public class ProtonReceiverCreditState implements ProtonLinkCreditState {
     public Transfer handleTransfer(Transfer transfer, ProtonBuffer payload) {
         final ProtonIncomingDelivery delivery;
 
-        if (currentDeliveryId != null && (!transfer.hasDeliveryId() || currentDeliveryId.equals((int) transfer.getDeliveryId()))) {
+        if (!currentDeliveryId.isEmpty() && (!transfer.hasDeliveryId() || currentDeliveryId.equals((int) transfer.getDeliveryId()))) {
             delivery = deliveries.get(currentDeliveryId.intValue());
         } else {
             verifyNewDeliveryIdSequence(transfer, currentDeliveryId);
@@ -127,6 +127,9 @@ public class ProtonReceiverCreditState implements ProtonLinkCreditState {
 
             credit = Math.min(credit - 1, 0);
             deliveryCount++;
+            currentDeliveryId.reset();
+        } else {
+            currentDeliveryId.set((int) transfer.getDeliveryId());
         }
 
         if (currentDeliveryId == null) {
@@ -135,15 +138,12 @@ public class ProtonReceiverCreditState implements ProtonLinkCreditState {
             parent.signalDeliveryUpdated(delivery);
         }
 
-        if (!done) {
-            currentDeliveryId = new SequenceNumber((int) transfer.getDeliveryId());
-        }
-
         return transfer;
     }
 
-    private void verifyNewDeliveryIdSequence(Transfer transfer, SequenceNumber currentDeliveryId) {
+    private void verifyNewDeliveryIdSequence(Transfer transfer, DeliveryIdTracker currentDeliveryId) {
         // TODO - Fail engine, session, or link ?
+        // TODO - Move to session window once fully worked out
 
         if (!transfer.hasDeliveryId()) {
             parent.getSession().getConnection().getEngine().engineFailed(
