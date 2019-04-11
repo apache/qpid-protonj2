@@ -21,9 +21,8 @@ import java.util.List;
 import org.apache.qpid.proton4j.amqp.Binary;
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
-import org.apache.qpid.proton4j.amqp.driver.codec.ListDescribedType;
 
-public class SaslChallenge extends ListDescribedType {
+public class SaslChallenge extends SaslDescribedType {
 
     public static final Symbol DESCRIPTOR_SYMBOL = Symbol.valueOf("amqp:sasl-challenge:list");
     public static final UnsignedLong DESCRIPTOR_CODE = UnsignedLong.valueOf(0x0000000000000042L);
