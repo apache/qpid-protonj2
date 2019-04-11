@@ -18,7 +18,7 @@ package org.apache.qpid.proton4j.amqp.driver.actions;
 
 import org.apache.qpid.proton4j.amqp.Binary;
 import org.apache.qpid.proton4j.amqp.Symbol;
-import org.apache.qpid.proton4j.amqp.driver.codec.types.SaslInit;
+import org.apache.qpid.proton4j.amqp.driver.codec.security.SaslInit;
 
 /**
  * AMQP SaslInit injection action which can be added to a driver for write at a specific time or

@@ -20,7 +20,7 @@ import java.util.Map;
 
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedInteger;
-import org.apache.qpid.proton4j.amqp.driver.codec.types.Flow;
+import org.apache.qpid.proton4j.amqp.driver.codec.transport.Flow;
 
 /**
  * AMQP Flow injection action which can be added to a driver for write at a specific time or

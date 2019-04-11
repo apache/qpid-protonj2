@@ -17,7 +17,7 @@
 package org.apache.qpid.proton4j.amqp.driver.actions;
 
 import org.apache.qpid.proton4j.amqp.Binary;
-import org.apache.qpid.proton4j.amqp.driver.codec.types.SaslChallenge;
+import org.apache.qpid.proton4j.amqp.driver.codec.security.SaslChallenge;
 
 /**
  * AMQP SaslChallenge injection action which can be added to a driver for write at a specific time or

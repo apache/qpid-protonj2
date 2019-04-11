@@ -14,26 +14,34 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.qpid.proton4j.amqp.driver.actions;
+package org.apache.qpid.proton4j.amqp.driver.codec.messaging;
+
+import java.util.List;
 
 import org.apache.qpid.proton4j.amqp.Symbol;
-import org.apache.qpid.proton4j.amqp.driver.codec.security.SaslMechanisms;
+import org.apache.qpid.proton4j.amqp.UnsignedLong;
+import org.apache.qpid.proton4j.amqp.driver.codec.ListDescribedType;
 
-/**
- * AMQP SaslMechanisms injection action which can be added to a driver for write at a specific time or
- * following on from some other action in the test script.
- */
-public class SaslMechanismsInjectAction extends AbstractSaslPerformativeInjectAction<SaslMechanisms> {
+public class DeleteOnNoLinks extends ListDescribedType {
 
-    private final SaslMechanisms saslMechanisms = new SaslMechanisms();
+    public static final Symbol DESCRIPTOR_SYMBOL = Symbol.valueOf("amqp:delete-on-no-links:list");
+    public static final UnsignedLong DESCRIPTOR_CODE = UnsignedLong.valueOf(0x000000000000002cL);
 
-    public SaslMechanismsInjectAction withMechanisms(Symbol... saslServerMechanisms) {
-        saslMechanisms.setSaslServerMechanisms(saslServerMechanisms);
-        return this;
+    public DeleteOnNoLinks() {
+        super(0);
+    }
+
+    @SuppressWarnings("unchecked")
+    public DeleteOnNoLinks(Object described) {
+        super(0, (List<Object>) described);
+    }
+
+    public DeleteOnNoLinks(List<Object> described) {
+        super(0, described);
     }
 
     @Override
-    public SaslMechanisms getPerformative() {
-        return saslMechanisms;
+    public Symbol getDescriptor() {
+        return DESCRIPTOR_SYMBOL;
     }
 }

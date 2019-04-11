@@ -14,26 +14,35 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.qpid.proton4j.amqp.driver.actions;
+package org.apache.qpid.proton4j.amqp.driver.codec.messaging;
 
 import org.apache.qpid.proton4j.amqp.Binary;
-import org.apache.qpid.proton4j.amqp.driver.codec.security.SaslResponse;
+import org.apache.qpid.proton4j.amqp.DescribedType;
+import org.apache.qpid.proton4j.amqp.Symbol;
+import org.apache.qpid.proton4j.amqp.UnsignedLong;
 
-/**
- * AMQP SaslResponse injection action which can be added to a driver for write at a specific time or
- * following on from some other action in the test script.
- */
-public class SaslResponseInjectAction extends AbstractSaslPerformativeInjectAction<SaslResponse> {
+public class Data implements DescribedType {
 
-    private final SaslResponse saslResponse = new SaslResponse();
+    public static final UnsignedLong DESCRIPTOR_CODE = UnsignedLong.valueOf(0x0000000000000075L);
+    public static final Symbol DESCRIPTOR_SYMBOL = Symbol.valueOf("amqp:data:binary");
 
-    public SaslResponseInjectAction withResponse(Binary response) {
-        saslResponse.setResponse(response);
-        return this;
+    private Binary described;
+
+    public Data(Binary described) {
+        if (described == null) {
+            throw new IllegalArgumentException("provided Binary must not be null");
+        }
+
+        this.described = described;
     }
 
     @Override
-    public SaslResponse getPerformative() {
-        return saslResponse;
+    public Symbol getDescriptor() {
+        return DESCRIPTOR_SYMBOL;
+    }
+
+    @Override
+    public Binary getDescribed() {
+        return described;
     }
 }

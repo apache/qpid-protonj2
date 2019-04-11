@@ -14,26 +14,34 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.qpid.proton4j.amqp.driver.actions;
+package org.apache.qpid.proton4j.amqp.driver.codec.messaging;
 
-import org.apache.qpid.proton4j.amqp.Binary;
-import org.apache.qpid.proton4j.amqp.driver.codec.security.SaslResponse;
+import java.util.List;
 
-/**
- * AMQP SaslResponse injection action which can be added to a driver for write at a specific time or
- * following on from some other action in the test script.
- */
-public class SaslResponseInjectAction extends AbstractSaslPerformativeInjectAction<SaslResponse> {
+import org.apache.qpid.proton4j.amqp.Symbol;
+import org.apache.qpid.proton4j.amqp.UnsignedLong;
+import org.apache.qpid.proton4j.amqp.driver.codec.ListDescribedType;
 
-    private final SaslResponse saslResponse = new SaslResponse();
+public class DeleteOnClose extends ListDescribedType {
 
-    public SaslResponseInjectAction withResponse(Binary response) {
-        saslResponse.setResponse(response);
-        return this;
+    public static final Symbol DESCRIPTOR_SYMBOL = Symbol.valueOf("amqp:delete-on-close:list");
+    public static final UnsignedLong DESCRIPTOR_CODE = UnsignedLong.valueOf(0x000000000000002bL);
+
+    public DeleteOnClose() {
+        super(0);
+    }
+
+    @SuppressWarnings("unchecked")
+    public DeleteOnClose(Object described) {
+        super(0, (List<Object>) described);
+    }
+
+    public DeleteOnClose(List<Object> described) {
+        super(0, described);
     }
 
     @Override
-    public SaslResponse getPerformative() {
-        return saslResponse;
+    public Symbol getDescriptor() {
+        return DESCRIPTOR_SYMBOL;
     }
 }

@@ -14,26 +14,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.qpid.proton4j.amqp.driver.actions;
+package org.apache.qpid.proton4j.amqp.driver.codec.messaging;
 
-import org.apache.qpid.proton4j.amqp.Binary;
-import org.apache.qpid.proton4j.amqp.driver.codec.security.SaslResponse;
+import org.apache.qpid.proton4j.amqp.Symbol;
+import org.apache.qpid.proton4j.amqp.UnsignedLong;
+import org.apache.qpid.proton4j.amqp.driver.codec.MapDescribedType;
 
-/**
- * AMQP SaslResponse injection action which can be added to a driver for write at a specific time or
- * following on from some other action in the test script.
- */
-public class SaslResponseInjectAction extends AbstractSaslPerformativeInjectAction<SaslResponse> {
+public class ApplicationProperties extends MapDescribedType {
 
-    private final SaslResponse saslResponse = new SaslResponse();
-
-    public SaslResponseInjectAction withResponse(Binary response) {
-        saslResponse.setResponse(response);
-        return this;
-    }
+    public static final UnsignedLong DESCRIPTOR_CODE = UnsignedLong.valueOf(0x0000000000000074L);
+    public static final Symbol DESCRIPTOR_SYMBOL = Symbol.valueOf("amqp:application-properties:map");
 
     @Override
-    public SaslResponse getPerformative() {
-        return saslResponse;
+    public Symbol getDescriptor() {
+        return DESCRIPTOR_SYMBOL;
+    }
+
+    public void setApplicationProperty(String name, Object value) {
+        if (name == null) {
+            throw new RuntimeException("ApplicationProperties maps must use non-null String keys");
+        }
+
+        getDescribed().put(name, value);
     }
 }

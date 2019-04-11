@@ -17,13 +17,13 @@
 package org.apache.qpid.proton4j.amqp.driver.codec.util;
 
 import org.apache.qpid.proton4j.amqp.DescribedType;
-import org.apache.qpid.proton4j.amqp.driver.codec.types.Accepted;
-import org.apache.qpid.proton4j.amqp.driver.codec.types.Declared;
-import org.apache.qpid.proton4j.amqp.driver.codec.types.ErrorCondition;
-import org.apache.qpid.proton4j.amqp.driver.codec.types.Modified;
-import org.apache.qpid.proton4j.amqp.driver.codec.types.Rejected;
-import org.apache.qpid.proton4j.amqp.driver.codec.types.Released;
-import org.apache.qpid.proton4j.amqp.driver.codec.types.TransactionalState;
+import org.apache.qpid.proton4j.amqp.driver.codec.messaging.Accepted;
+import org.apache.qpid.proton4j.amqp.driver.codec.messaging.Modified;
+import org.apache.qpid.proton4j.amqp.driver.codec.messaging.Rejected;
+import org.apache.qpid.proton4j.amqp.driver.codec.messaging.Released;
+import org.apache.qpid.proton4j.amqp.driver.codec.transactions.Declared;
+import org.apache.qpid.proton4j.amqp.driver.codec.transactions.TransactionalState;
+import org.apache.qpid.proton4j.amqp.driver.codec.transport.ErrorCondition;
 import org.apache.qpid.proton4j.amqp.messaging.Outcome;
 import org.apache.qpid.proton4j.amqp.transport.DeliveryState;
 

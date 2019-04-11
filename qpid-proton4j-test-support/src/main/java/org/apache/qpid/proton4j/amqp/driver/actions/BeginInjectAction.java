@@ -21,7 +21,7 @@ import java.util.Map;
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedInteger;
 import org.apache.qpid.proton4j.amqp.UnsignedShort;
-import org.apache.qpid.proton4j.amqp.driver.codec.types.Begin;
+import org.apache.qpid.proton4j.amqp.driver.codec.transport.Begin;
 
 /**
  * AMQP Begin injection action which can be added to a driver for write at a specific time or
