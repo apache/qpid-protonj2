@@ -38,8 +38,8 @@ class CharElement extends AtomicElement<Integer> {
     }
 
     @Override
-    public Data.DataType getDataType() {
-        return Data.DataType.CHAR;
+    public Codec.DataType getDataType() {
+        return Codec.DataType.CHAR;
     }
 
     @Override

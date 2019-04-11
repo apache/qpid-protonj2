@@ -95,8 +95,8 @@ class MapElement extends AbstractElement<Map<Object, Object>> {
     }
 
     @Override
-    public Data.DataType getDataType() {
-        return Data.DataType.MAP;
+    public Codec.DataType getDataType() {
+        return Codec.DataType.MAP;
     }
 
     @Override

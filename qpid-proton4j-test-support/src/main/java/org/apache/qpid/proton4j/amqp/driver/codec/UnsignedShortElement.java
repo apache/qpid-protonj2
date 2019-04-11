@@ -39,8 +39,8 @@ class UnsignedShortElement extends AtomicElement<UnsignedShort> {
     }
 
     @Override
-    public Data.DataType getDataType() {
-        return Data.DataType.USHORT;
+    public Codec.DataType getDataType() {
+        return Codec.DataType.USHORT;
     }
 
     @Override

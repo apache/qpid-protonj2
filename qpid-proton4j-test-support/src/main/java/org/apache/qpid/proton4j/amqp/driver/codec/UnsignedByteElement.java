@@ -39,8 +39,8 @@ class UnsignedByteElement extends AtomicElement<UnsignedByte> {
     }
 
     @Override
-    public Data.DataType getDataType() {
-        return Data.DataType.UBYTE;
+    public Codec.DataType getDataType() {
+        return Codec.DataType.UBYTE;
     }
 
     @Override

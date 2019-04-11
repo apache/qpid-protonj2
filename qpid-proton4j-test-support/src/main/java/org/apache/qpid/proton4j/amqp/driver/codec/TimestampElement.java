@@ -40,8 +40,8 @@ class TimestampElement extends AtomicElement<Date> {
     }
 
     @Override
-    public Data.DataType getDataType() {
-        return Data.DataType.TIMESTAMP;
+    public Codec.DataType getDataType() {
+        return Codec.DataType.TIMESTAMP;
     }
 
     @Override

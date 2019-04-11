@@ -30,7 +30,7 @@ import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.amqp.UnsignedShort;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 
-class DataDecoder {
+class TypeDecoder {
 
     private static final Charset ASCII = Charset.forName("US-ASCII");
     private static final Charset UTF_8 = Charset.forName("UTF-8");
@@ -93,14 +93,14 @@ class DataDecoder {
 
     private interface TypeConstructor {
 
-        Data.DataType getType();
+        Codec.DataType getType();
 
         int size(ProtonBuffer buffer);
 
-        void parse(ProtonBuffer buffer, Data data);
+        void parse(ProtonBuffer buffer, Codec data);
     }
 
-    static int decode(ProtonBuffer buffer, Data data) {
+    static int decode(ProtonBuffer buffer, Codec data) {
         if (buffer.isReadable()) {
             int position = buffer.getReadIndex();
             TypeConstructor c = readConstructor(buffer);
@@ -128,8 +128,8 @@ class DataDecoder {
     private static class NullConstructor implements TypeConstructor {
 
         @Override
-        public Data.DataType getType() {
-            return Data.DataType.NULL;
+        public Codec.DataType getType() {
+            return Codec.DataType.NULL;
         }
 
         @Override
@@ -138,7 +138,7 @@ class DataDecoder {
         }
 
         @Override
-        public void parse(ProtonBuffer buffer, Data data) {
+        public void parse(ProtonBuffer buffer, Codec data) {
             data.putNull();
         }
     }
@@ -146,8 +146,8 @@ class DataDecoder {
     private static class TrueConstructor implements TypeConstructor {
 
         @Override
-        public Data.DataType getType() {
-            return Data.DataType.BOOL;
+        public Codec.DataType getType() {
+            return Codec.DataType.BOOL;
         }
 
         @Override
@@ -156,7 +156,7 @@ class DataDecoder {
         }
 
         @Override
-        public void parse(ProtonBuffer buffer, Data data) {
+        public void parse(ProtonBuffer buffer, Codec data) {
             data.putBoolean(true);
         }
     }
@@ -164,8 +164,8 @@ class DataDecoder {
     private static class FalseConstructor implements TypeConstructor {
 
         @Override
-        public Data.DataType getType() {
-            return Data.DataType.BOOL;
+        public Codec.DataType getType() {
+            return Codec.DataType.BOOL;
         }
 
         @Override
@@ -174,7 +174,7 @@ class DataDecoder {
         }
 
         @Override
-        public void parse(ProtonBuffer buffer, Data data) {
+        public void parse(ProtonBuffer buffer, Codec data) {
             data.putBoolean(false);
         }
     }
@@ -182,8 +182,8 @@ class DataDecoder {
     private static class UInt0Constructor implements TypeConstructor {
 
         @Override
-        public Data.DataType getType() {
-            return Data.DataType.UINT;
+        public Codec.DataType getType() {
+            return Codec.DataType.UINT;
         }
 
         @Override
@@ -192,7 +192,7 @@ class DataDecoder {
         }
 
         @Override
-        public void parse(ProtonBuffer buffer, Data data) {
+        public void parse(ProtonBuffer buffer, Codec data) {
             data.putUnsignedInteger(UnsignedInteger.ZERO);
         }
     }
@@ -200,8 +200,8 @@ class DataDecoder {
     private static class ULong0Constructor implements TypeConstructor {
 
         @Override
-        public Data.DataType getType() {
-            return Data.DataType.ULONG;
+        public Codec.DataType getType() {
+            return Codec.DataType.ULONG;
         }
 
         @Override
@@ -210,7 +210,7 @@ class DataDecoder {
         }
 
         @Override
-        public void parse(ProtonBuffer buffer, Data data) {
+        public void parse(ProtonBuffer buffer, Codec data) {
             data.putUnsignedLong(UnsignedLong.ZERO);
         }
     }
@@ -218,8 +218,8 @@ class DataDecoder {
     private static class EmptyListConstructor implements TypeConstructor {
 
         @Override
-        public Data.DataType getType() {
-            return Data.DataType.LIST;
+        public Codec.DataType getType() {
+            return Codec.DataType.LIST;
         }
 
         @Override
@@ -228,7 +228,7 @@ class DataDecoder {
         }
 
         @Override
-        public void parse(ProtonBuffer buffer, Data data) {
+        public void parse(ProtonBuffer buffer, Codec data) {
             data.putList();
         }
     }
@@ -285,12 +285,12 @@ class DataDecoder {
     private static class UByteConstructor extends Fixed1SizeConstructor {
 
         @Override
-        public Data.DataType getType() {
-            return Data.DataType.UBYTE;
+        public Codec.DataType getType() {
+            return Codec.DataType.UBYTE;
         }
 
         @Override
-        public void parse(ProtonBuffer buffer, Data data) {
+        public void parse(ProtonBuffer buffer, Codec data) {
             data.putUnsignedByte(UnsignedByte.valueOf(buffer.readByte()));
         }
     }
@@ -298,12 +298,12 @@ class DataDecoder {
     private static class ByteConstructor extends Fixed1SizeConstructor {
 
         @Override
-        public Data.DataType getType() {
-            return Data.DataType.BYTE;
+        public Codec.DataType getType() {
+            return Codec.DataType.BYTE;
         }
 
         @Override
-        public void parse(ProtonBuffer buffer, Data data) {
+        public void parse(ProtonBuffer buffer, Codec data) {
             data.putByte(buffer.readByte());
         }
     }
@@ -311,12 +311,12 @@ class DataDecoder {
     private static class SmallUIntConstructor extends Fixed1SizeConstructor {
 
         @Override
-        public Data.DataType getType() {
-            return Data.DataType.UINT;
+        public Codec.DataType getType() {
+            return Codec.DataType.UINT;
         }
 
         @Override
-        public void parse(ProtonBuffer buffer, Data data) {
+        public void parse(ProtonBuffer buffer, Codec data) {
             data.putUnsignedInteger(UnsignedInteger.valueOf((buffer.readByte()) & 0xff));
         }
     }
@@ -324,12 +324,12 @@ class DataDecoder {
     private static class SmallIntConstructor extends Fixed1SizeConstructor {
 
         @Override
-        public Data.DataType getType() {
-            return Data.DataType.INT;
+        public Codec.DataType getType() {
+            return Codec.DataType.INT;
         }
 
         @Override
-        public void parse(ProtonBuffer buffer, Data data) {
+        public void parse(ProtonBuffer buffer, Codec data) {
             data.putInt(buffer.readByte());
         }
     }
@@ -337,12 +337,12 @@ class DataDecoder {
     private static class SmallULongConstructor extends Fixed1SizeConstructor {
 
         @Override
-        public Data.DataType getType() {
-            return Data.DataType.ULONG;
+        public Codec.DataType getType() {
+            return Codec.DataType.ULONG;
         }
 
         @Override
-        public void parse(ProtonBuffer buffer, Data data) {
+        public void parse(ProtonBuffer buffer, Codec data) {
             data.putUnsignedLong(UnsignedLong.valueOf((buffer.readByte()) & 0xff));
         }
     }
@@ -350,12 +350,12 @@ class DataDecoder {
     private static class SmallLongConstructor extends Fixed1SizeConstructor {
 
         @Override
-        public Data.DataType getType() {
-            return Data.DataType.LONG;
+        public Codec.DataType getType() {
+            return Codec.DataType.LONG;
         }
 
         @Override
-        public void parse(ProtonBuffer buffer, Data data) {
+        public void parse(ProtonBuffer buffer, Codec data) {
             data.putLong(buffer.readByte());
         }
     }
@@ -363,12 +363,12 @@ class DataDecoder {
     private static class BooleanConstructor extends Fixed1SizeConstructor {
 
         @Override
-        public Data.DataType getType() {
-            return Data.DataType.BOOL;
+        public Codec.DataType getType() {
+            return Codec.DataType.BOOL;
         }
 
         @Override
-        public void parse(ProtonBuffer buffer, Data data) {
+        public void parse(ProtonBuffer buffer, Codec data) {
             int i = buffer.readByte();
             if (i != 0 && i != 1) {
                 throw new IllegalArgumentException("Illegal value " + i + " for boolean");
@@ -380,12 +380,12 @@ class DataDecoder {
     private static class UShortConstructor extends Fixed2SizeConstructor {
 
         @Override
-        public Data.DataType getType() {
-            return Data.DataType.USHORT;
+        public Codec.DataType getType() {
+            return Codec.DataType.USHORT;
         }
 
         @Override
-        public void parse(ProtonBuffer buffer, Data data) {
+        public void parse(ProtonBuffer buffer, Codec data) {
             data.putUnsignedShort(UnsignedShort.valueOf(buffer.readShort()));
         }
     }
@@ -393,12 +393,12 @@ class DataDecoder {
     private static class ShortConstructor extends Fixed2SizeConstructor {
 
         @Override
-        public Data.DataType getType() {
-            return Data.DataType.SHORT;
+        public Codec.DataType getType() {
+            return Codec.DataType.SHORT;
         }
 
         @Override
-        public void parse(ProtonBuffer buffer, Data data) {
+        public void parse(ProtonBuffer buffer, Codec data) {
             data.putShort(buffer.readShort());
         }
     }
@@ -406,12 +406,12 @@ class DataDecoder {
     private static class UIntConstructor extends Fixed4SizeConstructor {
 
         @Override
-        public Data.DataType getType() {
-            return Data.DataType.UINT;
+        public Codec.DataType getType() {
+            return Codec.DataType.UINT;
         }
 
         @Override
-        public void parse(ProtonBuffer buffer, Data data) {
+        public void parse(ProtonBuffer buffer, Codec data) {
             data.putUnsignedInteger(UnsignedInteger.valueOf(buffer.readInt()));
         }
     }
@@ -419,12 +419,12 @@ class DataDecoder {
     private static class IntConstructor extends Fixed4SizeConstructor {
 
         @Override
-        public Data.DataType getType() {
-            return Data.DataType.INT;
+        public Codec.DataType getType() {
+            return Codec.DataType.INT;
         }
 
         @Override
-        public void parse(ProtonBuffer buffer, Data data) {
+        public void parse(ProtonBuffer buffer, Codec data) {
             data.putInt(buffer.readInt());
         }
     }
@@ -432,12 +432,12 @@ class DataDecoder {
     private static class FloatConstructor extends Fixed4SizeConstructor {
 
         @Override
-        public Data.DataType getType() {
-            return Data.DataType.FLOAT;
+        public Codec.DataType getType() {
+            return Codec.DataType.FLOAT;
         }
 
         @Override
-        public void parse(ProtonBuffer buffer, Data data) {
+        public void parse(ProtonBuffer buffer, Codec data) {
             data.putFloat(buffer.readFloat());
         }
     }
@@ -445,12 +445,12 @@ class DataDecoder {
     private static class CharConstructor extends Fixed4SizeConstructor {
 
         @Override
-        public Data.DataType getType() {
-            return Data.DataType.CHAR;
+        public Codec.DataType getType() {
+            return Codec.DataType.CHAR;
         }
 
         @Override
-        public void parse(ProtonBuffer buffer, Data data) {
+        public void parse(ProtonBuffer buffer, Codec data) {
             data.putChar(buffer.readInt());
         }
     }
@@ -458,12 +458,12 @@ class DataDecoder {
     private static class Decimal32Constructor extends Fixed4SizeConstructor {
 
         @Override
-        public Data.DataType getType() {
-            return Data.DataType.DECIMAL32;
+        public Codec.DataType getType() {
+            return Codec.DataType.DECIMAL32;
         }
 
         @Override
-        public void parse(ProtonBuffer buffer, Data data) {
+        public void parse(ProtonBuffer buffer, Codec data) {
             data.putDecimal32(new Decimal32(buffer.readInt()));
         }
     }
@@ -471,12 +471,12 @@ class DataDecoder {
     private static class ULongConstructor extends Fixed8SizeConstructor {
 
         @Override
-        public Data.DataType getType() {
-            return Data.DataType.ULONG;
+        public Codec.DataType getType() {
+            return Codec.DataType.ULONG;
         }
 
         @Override
-        public void parse(ProtonBuffer buffer, Data data) {
+        public void parse(ProtonBuffer buffer, Codec data) {
             data.putUnsignedLong(UnsignedLong.valueOf(buffer.readLong()));
         }
     }
@@ -484,12 +484,12 @@ class DataDecoder {
     private static class LongConstructor extends Fixed8SizeConstructor {
 
         @Override
-        public Data.DataType getType() {
-            return Data.DataType.LONG;
+        public Codec.DataType getType() {
+            return Codec.DataType.LONG;
         }
 
         @Override
-        public void parse(ProtonBuffer buffer, Data data) {
+        public void parse(ProtonBuffer buffer, Codec data) {
             data.putLong(buffer.readLong());
         }
     }
@@ -497,12 +497,12 @@ class DataDecoder {
     private static class DoubleConstructor extends Fixed8SizeConstructor {
 
         @Override
-        public Data.DataType getType() {
-            return Data.DataType.DOUBLE;
+        public Codec.DataType getType() {
+            return Codec.DataType.DOUBLE;
         }
 
         @Override
-        public void parse(ProtonBuffer buffer, Data data) {
+        public void parse(ProtonBuffer buffer, Codec data) {
             data.putDouble(buffer.readDouble());
         }
     }
@@ -510,12 +510,12 @@ class DataDecoder {
     private static class TimestampConstructor extends Fixed8SizeConstructor {
 
         @Override
-        public Data.DataType getType() {
-            return Data.DataType.TIMESTAMP;
+        public Codec.DataType getType() {
+            return Codec.DataType.TIMESTAMP;
         }
 
         @Override
-        public void parse(ProtonBuffer buffer, Data data) {
+        public void parse(ProtonBuffer buffer, Codec data) {
             data.putTimestamp(new Date(buffer.readLong()));
         }
     }
@@ -523,12 +523,12 @@ class DataDecoder {
     private static class Decimal64Constructor extends Fixed8SizeConstructor {
 
         @Override
-        public Data.DataType getType() {
-            return Data.DataType.DECIMAL64;
+        public Codec.DataType getType() {
+            return Codec.DataType.DECIMAL64;
         }
 
         @Override
-        public void parse(ProtonBuffer buffer, Data data) {
+        public void parse(ProtonBuffer buffer, Codec data) {
             data.putDecimal64(new Decimal64(buffer.readLong()));
         }
     }
@@ -536,12 +536,12 @@ class DataDecoder {
     private static class Decimal128Constructor extends Fixed16SizeConstructor {
 
         @Override
-        public Data.DataType getType() {
-            return Data.DataType.DECIMAL128;
+        public Codec.DataType getType() {
+            return Codec.DataType.DECIMAL128;
         }
 
         @Override
-        public void parse(ProtonBuffer buffer, Data data) {
+        public void parse(ProtonBuffer buffer, Codec data) {
             data.putDecimal128(new Decimal128(buffer.readLong(), buffer.readLong()));
         }
     }
@@ -549,12 +549,12 @@ class DataDecoder {
     private static class UUIDConstructor extends Fixed16SizeConstructor {
 
         @Override
-        public Data.DataType getType() {
-            return Data.DataType.UUID;
+        public Codec.DataType getType() {
+            return Codec.DataType.UUID;
         }
 
         @Override
-        public void parse(ProtonBuffer buffer, Data data) {
+        public void parse(ProtonBuffer buffer, Codec data) {
             data.putUUID(new UUID(buffer.readLong(), buffer.readLong()));
         }
     }
@@ -596,12 +596,12 @@ class DataDecoder {
     private static class SmallBinaryConstructor extends SmallVariableConstructor {
 
         @Override
-        public Data.DataType getType() {
-            return Data.DataType.BINARY;
+        public Codec.DataType getType() {
+            return Codec.DataType.BINARY;
         }
 
         @Override
-        public void parse(ProtonBuffer buffer, Data data) {
+        public void parse(ProtonBuffer buffer, Codec data) {
             int size = buffer.readByte() & 0xff;
             byte[] bytes = new byte[size];
             buffer.readBytes(bytes);
@@ -612,12 +612,12 @@ class DataDecoder {
     private static class SmallSymbolConstructor extends SmallVariableConstructor {
 
         @Override
-        public Data.DataType getType() {
-            return Data.DataType.SYMBOL;
+        public Codec.DataType getType() {
+            return Codec.DataType.SYMBOL;
         }
 
         @Override
-        public void parse(ProtonBuffer buffer, Data data) {
+        public void parse(ProtonBuffer buffer, Codec data) {
             int size = buffer.readByte() & 0xff;
             byte[] bytes = new byte[size];
             buffer.readBytes(bytes);
@@ -628,12 +628,12 @@ class DataDecoder {
     private static class SmallStringConstructor extends SmallVariableConstructor {
 
         @Override
-        public Data.DataType getType() {
-            return Data.DataType.STRING;
+        public Codec.DataType getType() {
+            return Codec.DataType.STRING;
         }
 
         @Override
-        public void parse(ProtonBuffer buffer, Data data) {
+        public void parse(ProtonBuffer buffer, Codec data) {
             int size = buffer.readByte() & 0xff;
             byte[] bytes = new byte[size];
             buffer.readBytes(bytes);
@@ -644,12 +644,12 @@ class DataDecoder {
     private static class BinaryConstructor extends VariableConstructor {
 
         @Override
-        public Data.DataType getType() {
-            return Data.DataType.BINARY;
+        public Codec.DataType getType() {
+            return Codec.DataType.BINARY;
         }
 
         @Override
-        public void parse(ProtonBuffer buffer, Data data) {
+        public void parse(ProtonBuffer buffer, Codec data) {
             int size = buffer.readInt();
             byte[] bytes = new byte[size];
             buffer.readBytes(bytes);
@@ -660,12 +660,12 @@ class DataDecoder {
     private static class SymbolConstructor extends VariableConstructor {
 
         @Override
-        public Data.DataType getType() {
-            return Data.DataType.SYMBOL;
+        public Codec.DataType getType() {
+            return Codec.DataType.SYMBOL;
         }
 
         @Override
-        public void parse(ProtonBuffer buffer, Data data) {
+        public void parse(ProtonBuffer buffer, Codec data) {
             int size = buffer.readInt();
             byte[] bytes = new byte[size];
             buffer.readBytes(bytes);
@@ -676,12 +676,12 @@ class DataDecoder {
     private static class StringConstructor extends VariableConstructor {
 
         @Override
-        public Data.DataType getType() {
-            return Data.DataType.STRING;
+        public Codec.DataType getType() {
+            return Codec.DataType.STRING;
         }
 
         @Override
-        public void parse(ProtonBuffer buffer, Data data) {
+        public void parse(ProtonBuffer buffer, Codec data) {
             int size = buffer.readInt();
             byte[] bytes = new byte[size];
             buffer.readBytes(bytes);
@@ -692,12 +692,12 @@ class DataDecoder {
     private static class SmallListConstructor extends SmallVariableConstructor {
 
         @Override
-        public Data.DataType getType() {
-            return Data.DataType.LIST;
+        public Codec.DataType getType() {
+            return Codec.DataType.LIST;
         }
 
         @Override
-        public void parse(ProtonBuffer buffer, Data data) {
+        public void parse(ProtonBuffer buffer, Codec data) {
             int size = buffer.readByte() & 0xff;
             ProtonBuffer buf = buffer.slice(buffer.getReadIndex(), size);
             buffer.skipBytes(size);
@@ -710,12 +710,12 @@ class DataDecoder {
     private static class SmallMapConstructor extends SmallVariableConstructor {
 
         @Override
-        public Data.DataType getType() {
-            return Data.DataType.MAP;
+        public Codec.DataType getType() {
+            return Codec.DataType.MAP;
         }
 
         @Override
-        public void parse(ProtonBuffer buffer, Data data) {
+        public void parse(ProtonBuffer buffer, Codec data) {
             int size = buffer.readByte() & 0xff;
             ProtonBuffer buf = buffer.slice(buffer.getReadIndex(), size);
             buffer.skipBytes(size);
@@ -728,12 +728,12 @@ class DataDecoder {
     private static class ListConstructor extends VariableConstructor {
 
         @Override
-        public Data.DataType getType() {
-            return Data.DataType.LIST;
+        public Codec.DataType getType() {
+            return Codec.DataType.LIST;
         }
 
         @Override
-        public void parse(ProtonBuffer buffer, Data data) {
+        public void parse(ProtonBuffer buffer, Codec data) {
             int size = buffer.readInt();
             ProtonBuffer buf = buffer.slice(buffer.getReadIndex(), size);
             buffer.skipBytes(size);
@@ -746,12 +746,12 @@ class DataDecoder {
     private static class MapConstructor extends VariableConstructor {
 
         @Override
-        public Data.DataType getType() {
-            return Data.DataType.MAP;
+        public Codec.DataType getType() {
+            return Codec.DataType.MAP;
         }
 
         @Override
-        public void parse(ProtonBuffer buffer, Data data) {
+        public void parse(ProtonBuffer buffer, Codec data) {
             int size = buffer.readInt();
             ProtonBuffer buf = buffer.slice(buffer.getReadIndex(), size);
             buffer.skipBytes(size);
@@ -761,7 +761,7 @@ class DataDecoder {
         }
     }
 
-    private static void parseChildren(Data data, ProtonBuffer buf, int count) {
+    private static void parseChildren(Codec data, ProtonBuffer buf, int count) {
         data.enter();
         for (int i = 0; i < count; i++) {
             TypeConstructor c = readConstructor(buf);
@@ -780,8 +780,8 @@ class DataDecoder {
     private static class DescribedTypeConstructor implements TypeConstructor {
 
         @Override
-        public Data.DataType getType() {
-            return Data.DataType.DESCRIBED;
+        public Codec.DataType getType() {
+            return Codec.DataType.DESCRIBED;
         }
 
         @Override
@@ -803,7 +803,7 @@ class DataDecoder {
         }
 
         @Override
-        public void parse(ProtonBuffer buffer, Data data) {
+        public void parse(ProtonBuffer buffer, Codec data) {
             data.putDescribed();
             data.enter();
             TypeConstructor c = readConstructor(buffer);
@@ -817,12 +817,12 @@ class DataDecoder {
     private static class SmallArrayConstructor extends SmallVariableConstructor {
 
         @Override
-        public Data.DataType getType() {
-            return Data.DataType.ARRAY;
+        public Codec.DataType getType() {
+            return Codec.DataType.ARRAY;
         }
 
         @Override
-        public void parse(ProtonBuffer buffer, Data data) {
+        public void parse(ProtonBuffer buffer, Codec data) {
 
             int size = buffer.readByte() & 0xff;
             ProtonBuffer buf = buffer.slice(buffer.getReadIndex(), size);
@@ -835,12 +835,12 @@ class DataDecoder {
     private static class ArrayConstructor extends VariableConstructor {
 
         @Override
-        public Data.DataType getType() {
-            return Data.DataType.ARRAY;
+        public Codec.DataType getType() {
+            return Codec.DataType.ARRAY;
         }
 
         @Override
-        public void parse(ProtonBuffer buffer, Data data) {
+        public void parse(ProtonBuffer buffer, Codec data) {
 
             int size = buffer.readInt();
             ProtonBuffer buf = buffer.slice(buffer.getReadIndex(), size);
@@ -850,7 +850,7 @@ class DataDecoder {
         }
     }
 
-    private static void parseArray(Data data, ProtonBuffer buffer, int count) {
+    private static void parseArray(Codec data, ProtonBuffer buffer, int count) {
         byte type = buffer.readByte();
         boolean isDescribed = type == (byte) 0x00;
         int descriptorPosition = buffer.getReadIndex();

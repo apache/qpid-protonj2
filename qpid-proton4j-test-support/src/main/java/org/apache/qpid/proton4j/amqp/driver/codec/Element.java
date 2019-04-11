@@ -24,7 +24,7 @@ interface Element<T> {
 
     T getValue();
 
-    Data.DataType getDataType();
+    Codec.DataType getDataType();
 
     int encode(ProtonBuffer buffer);
 

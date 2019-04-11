@@ -62,8 +62,8 @@ class DescribedTypeElement extends AbstractElement<DescribedType> {
     }
 
     @Override
-    public Data.DataType getDataType() {
-        return Data.DataType.DESCRIBED;
+    public Codec.DataType getDataType() {
+        return Codec.DataType.DESCRIBED;
     }
 
     @Override

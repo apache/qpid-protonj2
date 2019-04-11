@@ -17,7 +17,7 @@
 package org.apache.qpid.proton4j.amqp.driver;
 
 import org.apache.qpid.proton4j.amqp.DescribedType;
-import org.apache.qpid.proton4j.amqp.driver.codec.Data;
+import org.apache.qpid.proton4j.amqp.driver.codec.Codec;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 
@@ -40,7 +40,7 @@ public class FrameEncoder {
 
     private final AMQPTestDriver driver;
 
-    private final Data codec = Data.Factory.create();
+    private final Codec codec = Codec.Factory.create();
 
     public FrameEncoder(AMQPTestDriver driver) {
         this.driver = driver;

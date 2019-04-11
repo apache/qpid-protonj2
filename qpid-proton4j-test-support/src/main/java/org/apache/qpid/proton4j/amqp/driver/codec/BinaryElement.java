@@ -62,8 +62,8 @@ class BinaryElement extends AtomicElement<Binary> {
     }
 
     @Override
-    public Data.DataType getDataType() {
-        return Data.DataType.BINARY;
+    public Codec.DataType getDataType() {
+        return Codec.DataType.BINARY;
     }
 
     @Override

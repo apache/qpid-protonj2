@@ -33,13 +33,13 @@ import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.amqp.UnsignedShort;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 
-public class DataImpl implements Data {
+public class CodecImpl implements Codec {
 
     private Element<?> first;
     private Element<?> current;
     private Element<?> parent;
 
-    public DataImpl() {
+    public CodecImpl() {
     }
 
     @Override
@@ -140,7 +140,7 @@ public class DataImpl implements Data {
 
     @Override
     public long decode(ProtonBuffer buffer) {
-        return DataDecoder.decode(buffer, this);
+        return TypeDecoder.decode(buffer, this);
     }
 
     private void putElement(Element<?> element) {
@@ -343,7 +343,7 @@ public class DataImpl implements Data {
         } else if (o instanceof DescribedType) {
             putDescribedType((DescribedType) o);
         } else if (o instanceof Symbol[]) {
-            putArray(false, Data.DataType.SYMBOL);
+            putArray(false, Codec.DataType.SYMBOL);
             enter();
             for (Symbol s : (Symbol[]) o) {
                 putSymbol(s);

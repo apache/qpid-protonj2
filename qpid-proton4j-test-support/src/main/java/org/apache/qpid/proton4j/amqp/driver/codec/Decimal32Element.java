@@ -39,8 +39,8 @@ class Decimal32Element extends AtomicElement<Decimal32> {
     }
 
     @Override
-    public Data.DataType getDataType() {
-        return Data.DataType.DECIMAL32;
+    public Codec.DataType getDataType() {
+        return Codec.DataType.DECIMAL32;
     }
 
     @Override

@@ -38,8 +38,8 @@ class DoubleElement extends AtomicElement<Double> {
     }
 
     @Override
-    public Data.DataType getDataType() {
-        return Data.DataType.DOUBLE;
+    public Codec.DataType getDataType() {
+        return Codec.DataType.DOUBLE;
     }
 
     @Override

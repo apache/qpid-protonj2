@@ -24,7 +24,7 @@ import java.io.IOException;
 
 import org.apache.qpid.proton4j.amqp.UnsignedInteger;
 import org.apache.qpid.proton4j.amqp.UnsignedShort;
-import org.apache.qpid.proton4j.amqp.driver.codec.Data;
+import org.apache.qpid.proton4j.amqp.driver.codec.Codec;
 import org.apache.qpid.proton4j.amqp.messaging.Source;
 import org.apache.qpid.proton4j.amqp.messaging.Target;
 import org.apache.qpid.proton4j.amqp.transport.Attach;
@@ -63,7 +63,7 @@ public class DataImplTest {
         ProtonBuffer encoded = encodeProtonPerformative(open);
         int expectedRead = encoded.getReadableBytes();
 
-        Data codec = Data.Factory.create();
+        Codec codec = Codec.Factory.create();
 
         assertEquals(expectedRead, codec.decode(encoded));
 
@@ -83,7 +83,7 @@ public class DataImplTest {
         open.setContainerId("test");
         open.setHostname("localhost");
 
-        Data codec = Data.Factory.create();
+        Codec codec = Codec.Factory.create();
 
         codec.putDescribedType(open);
         ProtonBuffer encoded = ProtonByteBufferAllocator.DEFAULT.allocate((int) codec.encodedSize());
@@ -107,7 +107,7 @@ public class DataImplTest {
         ProtonBuffer encoded = encodeProtonPerformative(begin);
         int expectedRead = encoded.getReadableBytes();
 
-        Data codec = Data.Factory.create();
+        Codec codec = Codec.Factory.create();
 
         assertEquals(expectedRead, codec.decode(encoded));
 
@@ -130,7 +130,7 @@ public class DataImplTest {
         begin.setNextOutgoingId(UnsignedInteger.valueOf(2));
         begin.setOutgoingWindow(UnsignedInteger.valueOf(3));
 
-        Data codec = Data.Factory.create();
+        Codec codec = Codec.Factory.create();
 
         codec.putDescribedType(begin);
         ProtonBuffer encoded = ProtonByteBufferAllocator.DEFAULT.allocate((int) codec.encodedSize());
@@ -159,7 +159,7 @@ public class DataImplTest {
         ProtonBuffer encoded = encodeProtonPerformative(attach);
         int expectedRead = encoded.getReadableBytes();
 
-        Data codec = Data.Factory.create();
+        Codec codec = Codec.Factory.create();
 
         assertEquals(expectedRead, codec.decode(encoded));
 
@@ -184,7 +184,7 @@ public class DataImplTest {
         attach.setSource(new org.apache.qpid.proton4j.amqp.driver.codec.types.Source());
         attach.setTarget(new org.apache.qpid.proton4j.amqp.driver.codec.types.Target());
 
-        Data codec = Data.Factory.create();
+        Codec codec = Codec.Factory.create();
 
         codec.putDescribedType(attach);
         ProtonBuffer encoded = ProtonByteBufferAllocator.DEFAULT.allocate((int) codec.encodedSize());

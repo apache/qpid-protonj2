@@ -39,8 +39,8 @@ class Decimal64Element extends AtomicElement<Decimal64> {
     }
 
     @Override
-    public Data.DataType getDataType() {
-        return Data.DataType.DECIMAL64;
+    public Codec.DataType getDataType() {
+        return Codec.DataType.DECIMAL64;
     }
 
     @Override

@@ -52,8 +52,8 @@ class IntegerElement extends AtomicElement<Integer> {
     }
 
     @Override
-    public Data.DataType getDataType() {
-        return Data.DataType.INT;
+    public Codec.DataType getDataType() {
+        return Codec.DataType.INT;
     }
 
     @Override

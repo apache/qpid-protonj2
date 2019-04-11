@@ -54,8 +54,8 @@ class LongElement extends AtomicElement<Long> {
     }
 
     @Override
-    public Data.DataType getDataType() {
-        return Data.DataType.LONG;
+    public Codec.DataType getDataType() {
+        return Codec.DataType.LONG;
     }
 
     @Override

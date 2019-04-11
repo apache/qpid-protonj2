@@ -38,8 +38,8 @@ class ByteElement extends AtomicElement<Byte> {
     }
 
     @Override
-    public Data.DataType getDataType() {
-        return Data.DataType.BYTE;
+    public Codec.DataType getDataType() {
+        return Codec.DataType.BYTE;
     }
 
     @Override

@@ -62,8 +62,8 @@ class UnsignedIntegerElement extends AtomicElement<UnsignedInteger> {
     }
 
     @Override
-    public Data.DataType getDataType() {
-        return Data.DataType.UINT;
+    public Codec.DataType getDataType() {
+        return Codec.DataType.UINT;
     }
 
     @Override

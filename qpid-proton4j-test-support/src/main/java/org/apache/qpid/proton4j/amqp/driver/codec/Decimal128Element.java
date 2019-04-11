@@ -39,8 +39,8 @@ class Decimal128Element extends AtomicElement<Decimal128> {
     }
 
     @Override
-    public Data.DataType getDataType() {
-        return Data.DataType.DECIMAL128;
+    public Codec.DataType getDataType() {
+        return Codec.DataType.DECIMAL128;
     }
 
     @Override

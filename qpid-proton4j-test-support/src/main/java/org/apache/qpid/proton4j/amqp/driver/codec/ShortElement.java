@@ -38,8 +38,8 @@ class ShortElement extends AtomicElement<Short> {
     }
 
     @Override
-    public Data.DataType getDataType() {
-        return Data.DataType.SHORT;
+    public Codec.DataType getDataType() {
+        return Codec.DataType.SHORT;
     }
 
     @Override

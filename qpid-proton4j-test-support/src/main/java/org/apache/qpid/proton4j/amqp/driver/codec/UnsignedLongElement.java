@@ -62,8 +62,8 @@ class UnsignedLongElement extends AtomicElement<UnsignedLong> {
     }
 
     @Override
-    public Data.DataType getDataType() {
-        return Data.DataType.ULONG;
+    public Codec.DataType getDataType() {
+        return Codec.DataType.ULONG;
     }
 
     @Override

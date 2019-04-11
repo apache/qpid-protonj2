@@ -66,8 +66,8 @@ class StringElement extends AtomicElement<String> {
     }
 
     @Override
-    public Data.DataType getDataType() {
-        return Data.DataType.STRING;
+    public Codec.DataType getDataType() {
+        return Codec.DataType.STRING;
     }
 
     @Override

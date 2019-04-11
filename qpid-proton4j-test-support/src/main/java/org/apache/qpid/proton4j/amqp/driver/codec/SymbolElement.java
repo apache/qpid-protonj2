@@ -63,8 +63,8 @@ class SymbolElement extends AtomicElement<Symbol> {
     }
 
     @Override
-    public Data.DataType getDataType() {
-        return Data.DataType.SYMBOL;
+    public Codec.DataType getDataType() {
+        return Codec.DataType.SYMBOL;
     }
 
     @Override

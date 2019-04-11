@@ -41,8 +41,8 @@ class BooleanElement extends AtomicElement<Boolean> {
     }
 
     @Override
-    public Data.DataType getDataType() {
-        return Data.DataType.BOOL;
+    public Codec.DataType getDataType() {
+        return Codec.DataType.BOOL;
     }
 
     @Override

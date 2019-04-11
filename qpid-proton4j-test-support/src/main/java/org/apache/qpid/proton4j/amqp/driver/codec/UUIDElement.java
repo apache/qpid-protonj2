@@ -40,8 +40,8 @@ class UUIDElement extends AtomicElement<UUID> {
     }
 
     @Override
-    public Data.DataType getDataType() {
-        return Data.DataType.UUID;
+    public Codec.DataType getDataType() {
+        return Codec.DataType.UUID;
     }
 
     @Override

@@ -35,8 +35,8 @@ class NullElement extends AtomicElement<Void> {
     }
 
     @Override
-    public Data.DataType getDataType() {
-        return Data.DataType.NULL;
+    public Codec.DataType getDataType() {
+        return Codec.DataType.NULL;
     }
 
     @Override

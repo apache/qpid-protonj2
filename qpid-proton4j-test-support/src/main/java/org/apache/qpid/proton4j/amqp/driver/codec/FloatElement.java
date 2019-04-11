@@ -38,8 +38,8 @@ class FloatElement extends AtomicElement<Float> {
     }
 
     @Override
-    public Data.DataType getDataType() {
-        return Data.DataType.FLOAT;
+    public Codec.DataType getDataType() {
+        return Codec.DataType.FLOAT;
     }
 
     @Override

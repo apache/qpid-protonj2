@@ -94,8 +94,8 @@ class ListElement extends AbstractElement<List<Object>> {
     }
 
     @Override
-    public Data.DataType getDataType() {
-        return Data.DataType.LIST;
+    public Codec.DataType getDataType() {
+        return Codec.DataType.LIST;
     }
 
     @Override

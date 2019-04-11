@@ -23,7 +23,7 @@ import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 class ArrayElement extends AbstractElement<Object[]> {
 
     private final boolean described;
-    private final Data.DataType arrayType;
+    private final Codec.DataType arrayType;
     private ConstructorType constructorType;
     private Element<?> first;
 
@@ -35,13 +35,13 @@ class ArrayElement extends AbstractElement<Object[]> {
     static ConstructorType SMALL = ConstructorType.SMALL;
     static ConstructorType LARGE = ConstructorType.LARGE;
 
-    ArrayElement(Element<?> parent, Element<?> prev, boolean described, Data.DataType type) {
+    ArrayElement(Element<?> parent, Element<?> prev, boolean described, Codec.DataType type) {
         super(parent, prev);
         this.described = described;
         this.arrayType = type;
         if (arrayType == null) {
             throw new NullPointerException("Array type cannot be null");
-        } else if (arrayType == Data.DataType.DESCRIBED) {
+        } else if (arrayType == Codec.DataType.DESCRIBED) {
             throw new IllegalArgumentException("Array type cannot be DESCRIBED");
         }
         switch (arrayType) {
@@ -123,7 +123,7 @@ class ArrayElement extends AbstractElement<Object[]> {
                 element = element.next();
             }
             return rVal;
-        } else if (arrayType == Data.DataType.SYMBOL) {
+        } else if (arrayType == Codec.DataType.SYMBOL) {
             Symbol[] rVal = new Symbol[(int) count()];
             SymbolElement element = (SymbolElement) first;
             int i = 0;
@@ -145,8 +145,8 @@ class ArrayElement extends AbstractElement<Object[]> {
     }
 
     @Override
-    public Data.DataType getDataType() {
-        return Data.DataType.ARRAY;
+    public Codec.DataType getDataType() {
+        return Codec.DataType.ARRAY;
     }
 
     @Override
@@ -439,7 +439,7 @@ class ArrayElement extends AbstractElement<Object[]> {
         return described;
     }
 
-    public Data.DataType getArrayDataType() {
+    public Codec.DataType getArrayDataType() {
         return arrayType;
     }
 

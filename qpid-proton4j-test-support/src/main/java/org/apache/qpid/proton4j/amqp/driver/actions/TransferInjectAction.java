@@ -213,8 +213,8 @@ public final class TransferInjectAction extends AbstractPerformativeInjectAction
     }
 
     private ProtonBuffer encodePayload() {
-        org.apache.qpid.proton4j.amqp.driver.codec.Data codec =
-            org.apache.qpid.proton4j.amqp.driver.codec.Data.Factory.create();
+        org.apache.qpid.proton4j.amqp.driver.codec.Codec codec =
+            org.apache.qpid.proton4j.amqp.driver.codec.Codec.Factory.create();
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
 
         if (header != null) {

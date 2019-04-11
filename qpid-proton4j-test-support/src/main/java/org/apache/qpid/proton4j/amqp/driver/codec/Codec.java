@@ -33,12 +33,12 @@ import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.amqp.UnsignedShort;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 
-public interface Data {
+public interface Codec {
 
     public static final class Factory {
 
-        public static Data create() {
-            return new DataImpl();
+        public static Codec create() {
+            return new CodecImpl();
         }
     }
 
