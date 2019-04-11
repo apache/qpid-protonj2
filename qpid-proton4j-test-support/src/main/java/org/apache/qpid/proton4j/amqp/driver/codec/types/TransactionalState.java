@@ -18,6 +18,8 @@ package org.apache.qpid.proton4j.amqp.driver.codec.types;
 
 import java.util.List;
 
+import org.apache.qpid.proton4j.amqp.Binary;
+import org.apache.qpid.proton4j.amqp.DescribedType;
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.amqp.driver.codec.ListDescribedType;
@@ -53,21 +55,21 @@ public class TransactionalState extends ListDescribedType {
         return DESCRIPTOR_SYMBOL;
     }
 
-    public TransactionalState setTxnId(Object o) {
+    public TransactionalState setTxnId(Binary o) {
         getList().set(Field.TXN_ID.ordinal(), o);
         return this;
     }
 
-    public Object getTxnId() {
-        return getList().get(Field.TXN_ID.ordinal());
+    public Binary getTxnId() {
+        return (Binary) getList().get(Field.TXN_ID.ordinal());
     }
 
-    public TransactionalState setOutcome(Object o) {
+    public TransactionalState setOutcome(DescribedType o) {
         getList().set(Field.OUTCOME.ordinal(), o);
         return this;
     }
 
-    public Object getOutcome() {
-        return getList().get(Field.OUTCOME.ordinal());
+    public DescribedType getOutcome() {
+        return (DescribedType) getList().get(Field.OUTCOME.ordinal());
     }
 }

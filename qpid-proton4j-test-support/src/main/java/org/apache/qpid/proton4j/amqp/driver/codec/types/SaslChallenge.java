@@ -18,6 +18,7 @@ package org.apache.qpid.proton4j.amqp.driver.codec.types;
 
 import java.util.List;
 
+import org.apache.qpid.proton4j.amqp.Binary;
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.amqp.driver.codec.ListDescribedType;
@@ -52,12 +53,12 @@ public class SaslChallenge extends ListDescribedType {
         return DESCRIPTOR_SYMBOL;
     }
 
-    public SaslChallenge setChallenge(Object o) {
+    public SaslChallenge setChallenge(Binary o) {
         getList().set(Field.CHALLENGE.ordinal(), o);
         return this;
     }
 
-    public Object getChallenge() {
-        return getList().get(Field.CHALLENGE.ordinal());
+    public Binary getChallenge() {
+        return (Binary) getList().get(Field.CHALLENGE.ordinal());
     }
 }

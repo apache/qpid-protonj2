@@ -54,16 +54,16 @@ public abstract class ListDescribedType implements DescribedType {
     public List<Object> getDescribed() {
         // Return a List containing only the 'used fields' (i.e up to the
         // highest field used)
-        int numUsedFields = 0;
-        for (Object element : fields) {
-            if (element != null) {
-                numUsedFields++;
+        int highestSetFeild = 0;
+        for (int i = 0; i < fields.size(); ++i) {
+            if (fields.get(i) != null) {
+                highestSetFeild = i;
             }
         }
 
         // Create a list with the fields in the correct positions.
         List<Object> list = new ArrayList<>();
-        for (int j = 0; j < numUsedFields; j++) {
+        for (int j = 0; j <= highestSetFeild; j++) {
             list.add(fields.get(j));
         }
 

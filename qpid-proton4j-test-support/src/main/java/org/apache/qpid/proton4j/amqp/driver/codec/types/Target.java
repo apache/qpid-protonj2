@@ -17,8 +17,10 @@
 package org.apache.qpid.proton4j.amqp.driver.codec.types;
 
 import java.util.List;
+import java.util.Map;
 
 import org.apache.qpid.proton4j.amqp.Symbol;
+import org.apache.qpid.proton4j.amqp.UnsignedInteger;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.amqp.driver.codec.ListDescribedType;
 
@@ -58,66 +60,67 @@ public class Target extends ListDescribedType {
         return DESCRIPTOR_SYMBOL;
     }
 
-    public Target setAddress(Object o) {
+    public Target setAddress(String o) {
         getList().set(Field.ADDRESS.ordinal(), o);
         return this;
     }
 
-    public Object getAddress() {
-        return getList().get(Field.ADDRESS.ordinal());
+    public String getAddress() {
+        return (String) getList().get(Field.ADDRESS.ordinal());
     }
 
-    public Target setDurable(Object o) {
+    public Target setDurable(UnsignedInteger o) {
         getList().set(Field.DURABLE.ordinal(), o);
         return this;
     }
 
-    public Object getDurable() {
-        return getList().get(Field.DURABLE.ordinal());
+    public UnsignedInteger getDurable() {
+        return (UnsignedInteger) getList().get(Field.DURABLE.ordinal());
     }
 
-    public Target setExpiryPolicy(Object o) {
+    public Target setExpiryPolicy(Symbol o) {
         getList().set(Field.EXPIRY_POLICY.ordinal(), o);
         return this;
     }
 
-    public Object getExpiryPolicy() {
-        return getList().get(Field.EXPIRY_POLICY.ordinal());
+    public Symbol getExpiryPolicy() {
+        return (Symbol) getList().get(Field.EXPIRY_POLICY.ordinal());
     }
 
-    public Target setTimeout(Object o) {
+    public Target setTimeout(UnsignedInteger o) {
         getList().set(Field.TIMEOUT.ordinal(), o);
         return this;
     }
 
-    public Object getTimeout() {
-        return getList().get(Field.TIMEOUT.ordinal());
+    public UnsignedInteger getTimeout() {
+        return (UnsignedInteger) getList().get(Field.TIMEOUT.ordinal());
     }
 
-    public Target setDynamic(Object o) {
+    public Target setDynamic(Boolean o) {
         getList().set(Field.DYNAMIC.ordinal(), o);
         return this;
     }
 
-    public Object getDynamic() {
-        return getList().get(Field.DYNAMIC.ordinal());
+    public Boolean getDynamic() {
+        return (Boolean) getList().get(Field.DYNAMIC.ordinal());
     }
 
-    public Target setDynamicNodeProperties(Object o) {
+    public Target setDynamicNodeProperties(Map<Symbol, Object> o) {
         getList().set(Field.DYNAMIC_NODE_PROPERTIES.ordinal(), o);
         return this;
     }
 
-    public Object getDynamicNodeProperties() {
-        return getList().get(Field.DYNAMIC_NODE_PROPERTIES.ordinal());
+    @SuppressWarnings("unchecked")
+    public Map<Symbol, Object> getDynamicNodeProperties() {
+        return (Map<Symbol, Object>) getList().get(Field.DYNAMIC_NODE_PROPERTIES.ordinal());
     }
 
-    public Target setCapabilities(Object o) {
+    public Target setCapabilities(Symbol[] o) {
         getList().set(Field.CAPABILITIES.ordinal(), o);
         return this;
     }
 
-    public Object getCapabilities() {
-        return getList().get(Field.CAPABILITIES.ordinal());
+    public Symbol[] getCapabilities() {
+        return (Symbol[]) getList().get(Field.CAPABILITIES.ordinal());
     }
 }

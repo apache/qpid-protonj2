@@ -19,7 +19,8 @@ package org.apache.qpid.proton4j.amqp.driver.actions;
 import java.util.Map;
 
 import org.apache.qpid.proton4j.amqp.Symbol;
-import org.apache.qpid.proton4j.amqp.transport.Flow;
+import org.apache.qpid.proton4j.amqp.UnsignedInteger;
+import org.apache.qpid.proton4j.amqp.driver.codec.types.Flow;
 
 /**
  * AMQP Flow injection action which can be added to a driver for write at a specific time or
@@ -35,42 +36,42 @@ public class FlowInjectAction extends AbstractPerformativeInjectAction<Flow> {
     }
 
     public FlowInjectAction withNextIncomingId(long nextIncomingId) {
-        flow.setNextIncomingId(nextIncomingId);
+        flow.setNextIncomingId(UnsignedInteger.valueOf(nextIncomingId));
         return this;
     }
 
     public FlowInjectAction withIncomingWindow(long incomingWindow) {
-        flow.setIncomingWindow(incomingWindow);
+        flow.setIncomingWindow(UnsignedInteger.valueOf(incomingWindow));
         return this;
     }
 
     public FlowInjectAction withNextOutgoingId(long nextOutgoingId) {
-        flow.setNextOutgoingId(nextOutgoingId);
+        flow.setNextOutgoingId(UnsignedInteger.valueOf(nextOutgoingId));
         return this;
     }
 
     public FlowInjectAction withOutgoingWindow(long outgoingWindow) {
-        flow.setOutgoingWindow(outgoingWindow);
+        flow.setOutgoingWindow(UnsignedInteger.valueOf(outgoingWindow));
         return this;
     }
 
     public FlowInjectAction withHandle(long handle) {
-        flow.setHandle(handle);
+        flow.setHandle(UnsignedInteger.valueOf(handle));
         return this;
     }
 
     public FlowInjectAction withDeliveryCount(long deliveryCount) {
-        flow.setDeliveryCount(deliveryCount);
+        flow.setDeliveryCount(UnsignedInteger.valueOf(deliveryCount));
         return this;
     }
 
     public FlowInjectAction withLinkCredit(long linkCredit) {
-        flow.setLinkCredit(linkCredit);
+        flow.setLinkCredit(UnsignedInteger.valueOf(linkCredit));
         return this;
     }
 
     public FlowInjectAction withAvailable(long available) {
-        flow.setAvailable(available);
+        flow.setAvailable(UnsignedInteger.valueOf(available));
         return this;
     }
 

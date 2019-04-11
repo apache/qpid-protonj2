@@ -16,6 +16,7 @@
  */
 package org.apache.qpid.proton4j.amqp.driver;
 
+import org.apache.qpid.proton4j.amqp.DescribedType;
 import org.apache.qpid.proton4j.amqp.driver.actions.AMQPHeaderInjectAction;
 import org.apache.qpid.proton4j.amqp.driver.actions.AttachInjectAction;
 import org.apache.qpid.proton4j.amqp.driver.actions.BeginInjectAction;
@@ -36,9 +37,7 @@ import org.apache.qpid.proton4j.amqp.driver.expectations.EndExpectation;
 import org.apache.qpid.proton4j.amqp.driver.expectations.FlowExpectation;
 import org.apache.qpid.proton4j.amqp.driver.expectations.OpenExpectation;
 import org.apache.qpid.proton4j.amqp.driver.expectations.TransferExpectation;
-import org.apache.qpid.proton4j.amqp.security.SaslPerformative;
 import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
-import org.apache.qpid.proton4j.amqp.transport.Performative;
 
 /**
  * Class used to create test scripts using the {@link AMQPTestDriver}
@@ -187,11 +186,11 @@ public class ScriptWriter {
         driver.sendHeader(header);
     }
 
-    public void fire(Performative performative) {
+    public void fireAMQP(DescribedType performative) {
         driver.sendAMQPFrame(0, performative, null);
     }
 
-    public void fire(SaslPerformative performative) {
+    public void fireSASL(DescribedType performative) {
         driver.sendSaslFrame(0, performative);
     }
 }

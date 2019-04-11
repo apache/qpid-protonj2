@@ -52,12 +52,12 @@ public class SaslMechanisms extends ListDescribedType {
         return DESCRIPTOR_SYMBOL;
     }
 
-    public SaslMechanisms setSaslServerMechanisms(Object o) {
+    public SaslMechanisms setSaslServerMechanisms(Symbol... o) {
         getList().set(Field.SASL_SERVER_MECHANISMS.ordinal(), o);
         return this;
     }
 
-    public Object getError() {
-        return getList().get(Field.SASL_SERVER_MECHANISMS.ordinal());
+    public Symbol[] getSaslServerMechanisms() {
+        return (Symbol[]) getList().get(Field.SASL_SERVER_MECHANISMS.ordinal());
     }
 }

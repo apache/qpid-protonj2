@@ -99,26 +99,26 @@ public class AttachExpectation extends AbstractExpectation<Attach> {
         }
 
         // Populate the fields of the response with defaults if non set by the test script
-        if (!response.getPerformative().hasHandle()) {
-            response.getPerformative().setHandle(attach.getHandle());
+        if (response.getPerformative().getHandle() == null) {
+            response.withHandle(attach.getHandle());
         }
-        if (!response.getPerformative().hasName()) {
-            response.getPerformative().setName(attach.getName());
+        if (response.getPerformative().getName() == null) {
+            response.withName(attach.getName());
         }
-        if (!response.getPerformative().hasRole()) {
-            response.getPerformative().setRole(attach.getRole() == Role.SENDER ? Role.RECEIVER : Role.SENDER);
+        if (response.getPerformative().getRole() == null) {
+            response.withRole(attach.getRole() == Role.SENDER ? Role.RECEIVER : Role.SENDER);
         }
-        if (!response.getPerformative().hasSenderSettleMode()) {
-            response.getPerformative().setSndSettleMode(attach.getSndSettleMode());
+        if (response.getPerformative().getSndSettleMode() == null) {
+            response.withSndSettleMode(attach.getSndSettleMode());
         }
-        if (!response.getPerformative().hasReceiverSettleMode()) {
-            response.getPerformative().setRcvSettleMode(attach.getRcvSettleMode());
+        if (response.getPerformative().getRcvSettleMode() == null) {
+            response.withRcvSettleMode(attach.getRcvSettleMode());
         }
-        if (!response.getPerformative().hasSource()) {
-            response.getPerformative().setSource(attach.getSource());
+        if (response.getPerformative().getSource() == null) {
+            response.withSource(attach.getSource());
         }
-        if (!response.getPerformative().hasTarget()) {
-            response.getPerformative().setTarget(attach.getTarget());
+        if (response.getPerformative().getTarget() == null) {
+            response.withTarget(attach.getTarget());
         }
 
         // Other fields are left not set for now unless test script configured

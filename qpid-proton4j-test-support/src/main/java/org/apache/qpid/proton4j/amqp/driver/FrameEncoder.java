@@ -16,13 +16,10 @@
  */
 package org.apache.qpid.proton4j.amqp.driver;
 
-import org.apache.qpid.proton4j.amqp.security.SaslPerformative;
-import org.apache.qpid.proton4j.amqp.transport.Performative;
+import org.apache.qpid.proton4j.amqp.DescribedType;
+import org.apache.qpid.proton4j.amqp.driver.codec.Data;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
-import org.apache.qpid.proton4j.codec.CodecFactory;
-import org.apache.qpid.proton4j.codec.Encoder;
-import org.apache.qpid.proton4j.codec.EncoderState;
 
 /**
  * Encodes AMQP performatives into frames for transmission
@@ -43,29 +40,26 @@ public class FrameEncoder {
 
     private final AMQPTestDriver driver;
 
-    private final Encoder saslEncoder = CodecFactory.getSaslEncoder();
-    private final EncoderState saslEncoderState = saslEncoder.newEncoderState();
-    private final Encoder amqpEncoder = CodecFactory.getEncoder();
-    private final EncoderState amqpEncoderState = amqpEncoder.newEncoderState();
+    private final Data codec = Data.Factory.create();
 
     public FrameEncoder(AMQPTestDriver driver) {
         this.driver = driver;
     }
 
-    public ProtonBuffer handleWrite(Performative performative, int channel, ProtonBuffer payload, Runnable payloadToLarge) {
-        return writeFrame(amqpEncoder, amqpEncoderState, performative, payload, AMQP_FRAME_TYPE, channel, driver.getOutboundMaxFrameSize(), payloadToLarge);
+    public ProtonBuffer handleWrite(DescribedType performative, int channel, ProtonBuffer payload, Runnable payloadToLarge) {
+        return writeFrame(performative, payload, AMQP_FRAME_TYPE, channel, driver.getOutboundMaxFrameSize(), payloadToLarge);
     }
 
-    public ProtonBuffer handleWrite(SaslPerformative performative, int channel) {
-        return writeFrame(saslEncoder, saslEncoderState, performative, null, SASL_FRAME_TYPE, (short) 0, driver.getOutboundMaxFrameSize(), null);
+    public ProtonBuffer handleWrite(DescribedType performative, int channel) {
+        return writeFrame(performative, null, SASL_FRAME_TYPE, (short) 0, driver.getOutboundMaxFrameSize(), null);
     }
 
-    private ProtonBuffer writeFrame(Encoder encoder, EncoderState encoderState, Object performative, ProtonBuffer payload, byte frameType, int channel, int maxFrameSize, Runnable onPayloadTooLarge) {
+    private ProtonBuffer writeFrame(DescribedType performative, ProtonBuffer payload, byte frameType, int channel, int maxFrameSize, Runnable onPayloadTooLarge) {
         int outputBufferSize = AMQP_PERFORMATIVE_PAD + (payload != null ? payload.getReadableBytes() : 0);
 
         ProtonBuffer output = ProtonByteBufferAllocator.DEFAULT.outputBuffer(AMQP_PERFORMATIVE_PAD + outputBufferSize);
 
-        final int performativeSize = writePerformative(encoder, encoderState, performative, payload, maxFrameSize, output, onPayloadTooLarge);
+        final int performativeSize = writePerformative(performative, payload, maxFrameSize, output, onPayloadTooLarge);
         final int capacity = maxFrameSize > 0 ? maxFrameSize - performativeSize : Integer.MAX_VALUE;
         final int payloadSize = Math.min(payload == null ? 0 : payload.getReadableBytes(), capacity);
 
@@ -78,14 +72,15 @@ public class FrameEncoder {
         return output;
     }
 
-    private int writePerformative(Encoder encoder, EncoderState encoderState, Object performative, ProtonBuffer payload, int maxFrameSize, ProtonBuffer output, Runnable onPayloadTooLarge) {
+    private int writePerformative(DescribedType performative, ProtonBuffer payload, int maxFrameSize, ProtonBuffer output, Runnable onPayloadTooLarge) {
         output.setWriteIndex(FRAME_HEADER_SIZE);
 
         if (performative != null) {
             try {
-                encoder.writeObject(output, encoderState, performative);
+                codec.putDescribedType(performative);
+                codec.encode(output);
             } finally {
-                encoderState.reset();
+                codec.clear();
             }
         }
 
@@ -95,7 +90,7 @@ public class FrameEncoder {
             // Next iteration will re-encode the frame body again with updates from the <payload-to-large>
             // handler and then we can move onto the body portion.
             onPayloadTooLarge.run();
-            performativeSize = writePerformative(encoder, encoderState, performative, payload, maxFrameSize, output, null);
+            performativeSize = writePerformative(performative, payload, maxFrameSize, output, null);
         }
 
         return performativeSize;

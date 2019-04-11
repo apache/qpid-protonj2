@@ -17,9 +17,12 @@
 package org.apache.qpid.proton4j.amqp.driver.codec.types;
 
 import java.util.List;
+import java.util.Map;
 
 import org.apache.qpid.proton4j.amqp.Symbol;
+import org.apache.qpid.proton4j.amqp.UnsignedInteger;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
+import org.apache.qpid.proton4j.amqp.UnsignedShort;
 import org.apache.qpid.proton4j.amqp.driver.codec.ListDescribedType;
 
 public class Begin extends ListDescribedType {
@@ -59,75 +62,76 @@ public class Begin extends ListDescribedType {
         return DESCRIPTOR_SYMBOL;
     }
 
-    public Begin setRemoteChannel(Object o) {
+    public Begin setRemoteChannel(UnsignedShort o) {
         getList().set(Field.REMOTE_CHANNEL.ordinal(), o);
         return this;
     }
 
-    public Object getRemoteChannel() {
-        return getList().get(Field.REMOTE_CHANNEL.ordinal());
+    public UnsignedShort getRemoteChannel() {
+        return (UnsignedShort) getList().get(Field.REMOTE_CHANNEL.ordinal());
     }
 
-    public Begin setNextOutgoingId(Object o) {
+    public Begin setNextOutgoingId(UnsignedInteger o) {
         getList().set(Field.NEXT_OUTGOING_ID.ordinal(), o);
         return this;
     }
 
-    public Object getNextOutgoingId() {
-        return getList().get(Field.NEXT_OUTGOING_ID.ordinal());
+    public UnsignedInteger getNextOutgoingId() {
+        return (UnsignedInteger) getList().get(Field.NEXT_OUTGOING_ID.ordinal());
     }
 
-    public Begin setIncomingWindow(Object o) {
+    public Begin setIncomingWindow(UnsignedInteger o) {
         getList().set(Field.INCOMING_WINDOW.ordinal(), o);
         return this;
     }
 
-    public Object getIncomingWindow() {
-        return getList().get(Field.INCOMING_WINDOW.ordinal());
+    public UnsignedInteger getIncomingWindow() {
+        return (UnsignedInteger) getList().get(Field.INCOMING_WINDOW.ordinal());
     }
 
-    public Begin setOutgoingWindow(Object o) {
+    public Begin setOutgoingWindow(UnsignedInteger o) {
         getList().set(Field.OUTGOING_WINDOW.ordinal(), o);
         return this;
     }
 
-    public Object getOutgoingWindow() {
-        return getList().get(Field.OUTGOING_WINDOW.ordinal());
+    public UnsignedInteger getOutgoingWindow() {
+        return (UnsignedInteger) getList().get(Field.OUTGOING_WINDOW.ordinal());
     }
 
-    public Begin setHandleMax(Object o) {
+    public Begin setHandleMax(UnsignedInteger o) {
         getList().set(Field.HANDLE_MAX.ordinal(), o);
         return this;
     }
 
-    public Object getHandleMax() {
-        return getList().get(Field.HANDLE_MAX.ordinal());
+    public UnsignedInteger getHandleMax() {
+        return (UnsignedInteger) getList().get(Field.HANDLE_MAX.ordinal());
     }
 
-    public Begin setOfferedCapabilities(Object o) {
+    public Begin setOfferedCapabilities(Symbol[] o) {
         getList().set(Field.OFFERED_CAPABILITIES.ordinal(), o);
         return this;
     }
 
-    public Object getOfferedCapabilities() {
-        return getList().get(Field.OFFERED_CAPABILITIES.ordinal());
+    public Symbol[] getOfferedCapabilities() {
+        return (Symbol[]) getList().get(Field.OFFERED_CAPABILITIES.ordinal());
     }
 
-    public Begin setDesiredCapabilities(Object o) {
+    public Begin setDesiredCapabilities(Symbol[] o) {
         getList().set(Field.DESIRED_CAPABILITIES.ordinal(), o);
         return this;
     }
 
-    public Object getDesiredCapabilities() {
-        return getList().get(Field.DESIRED_CAPABILITIES.ordinal());
+    public Symbol[] getDesiredCapabilities() {
+        return (Symbol[]) getList().get(Field.DESIRED_CAPABILITIES.ordinal());
     }
 
-    public Begin setProperties(Object o) {
+    public Begin setProperties(Map<Symbol, Object> o) {
         getList().set(Field.PROPERTIES.ordinal(), o);
         return this;
     }
 
-    public Object getProperties() {
-        return getList().get(Field.PROPERTIES.ordinal());
+    @SuppressWarnings("unchecked")
+    public Map<Symbol, Object> getProperties() {
+        return (Map<Symbol, Object>) getList().get(Field.PROPERTIES.ordinal());
     }
 }

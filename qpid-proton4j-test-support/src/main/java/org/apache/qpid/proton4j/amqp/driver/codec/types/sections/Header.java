@@ -19,6 +19,8 @@ package org.apache.qpid.proton4j.amqp.driver.codec.types.sections;
 import java.util.List;
 
 import org.apache.qpid.proton4j.amqp.Symbol;
+import org.apache.qpid.proton4j.amqp.UnsignedByte;
+import org.apache.qpid.proton4j.amqp.UnsignedInteger;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.amqp.driver.codec.ListDescribedType;
 
@@ -56,48 +58,48 @@ public class Header extends ListDescribedType {
         return DESCRIPTOR_SYMBOL;
     }
 
-    public Header setDurable(Object o) {
+    public Header setDurable(Boolean o) {
         getList().set(Field.DURABLE.ordinal(), o);
         return this;
     }
 
-    public Object getDurable() {
-        return getList().get(Field.DURABLE.ordinal());
+    public Boolean getDurable() {
+        return (Boolean) getList().get(Field.DURABLE.ordinal());
     }
 
-    public Header setPriority(Object o) {
+    public Header setPriority(UnsignedByte o) {
         getList().set(Field.PRIORITY.ordinal(), o);
         return this;
     }
 
-    public Object getPriority() {
-        return getList().get(Field.PRIORITY.ordinal());
+    public UnsignedByte getPriority() {
+        return (UnsignedByte) getList().get(Field.PRIORITY.ordinal());
     }
 
-    public Header setTtl(Object o) {
+    public Header setTtl(UnsignedInteger o) {
         getList().set(Field.TTL.ordinal(), o);
         return this;
     }
 
-    public Object getTtl() {
-        return getList().get(Field.TTL.ordinal());
+    public UnsignedInteger getTtl() {
+        return (UnsignedInteger) getList().get(Field.TTL.ordinal());
     }
 
-    public Header setFirstAcquirer(Object o) {
+    public Header setFirstAcquirer(Boolean o) {
         getList().set(Field.FIRST_ACQUIRER.ordinal(), o);
         return this;
     }
 
-    public Object getFirstAcquirer() {
-        return getList().get(Field.FIRST_ACQUIRER.ordinal());
+    public Boolean getFirstAcquirer() {
+        return (Boolean) getList().get(Field.FIRST_ACQUIRER.ordinal());
     }
 
-    public Header setDeliveryCount(Object o) {
+    public Header setDeliveryCount(UnsignedInteger o) {
         getList().set(Field.DELIVERY_COUNT.ordinal(), o);
         return this;
     }
 
-    public Object getDeliveryCount() {
-        return getList().get(Field.DELIVERY_COUNT.ordinal());
+    public UnsignedInteger getDeliveryCount() {
+        return (UnsignedInteger) getList().get(Field.DELIVERY_COUNT.ordinal());
     }
 }

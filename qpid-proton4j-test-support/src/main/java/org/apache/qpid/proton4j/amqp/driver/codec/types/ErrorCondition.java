@@ -17,6 +17,7 @@
 package org.apache.qpid.proton4j.amqp.driver.codec.types;
 
 import java.util.List;
+import java.util.Map;
 
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
@@ -54,30 +55,31 @@ public class ErrorCondition extends ListDescribedType {
         return DESCRIPTOR_SYMBOL;
     }
 
-    public ErrorCondition setCondition(Object o) {
+    public ErrorCondition setCondition(Symbol o) {
         getList().set(Field.CONDITION.ordinal(), o);
         return this;
     }
 
-    public Object getCondition() {
-        return getList().get(Field.CONDITION.ordinal());
+    public Symbol getCondition() {
+        return (Symbol) getList().get(Field.CONDITION.ordinal());
     }
 
-    public ErrorCondition setDescription(Object o) {
+    public ErrorCondition setDescription(String o) {
         getList().set(Field.DESCRIPTION.ordinal(), o);
         return this;
     }
 
-    public Object getDescription() {
-        return getList().get(Field.DESCRIPTION.ordinal());
+    public String getDescription() {
+        return (String) getList().get(Field.DESCRIPTION.ordinal());
     }
 
-    public ErrorCondition setInfo(Object o) {
+    public ErrorCondition setInfo(Map<Object, Object> o) {
         getList().set(Field.INFO.ordinal(), o);
         return this;
     }
 
-    public Object getInfo() {
-        return getList().get(Field.INFO.ordinal());
+    @SuppressWarnings("unchecked")
+    public Map<Object, Object> getInfo() {
+        return (Map<Object, Object>) getList().get(Field.INFO.ordinal());
     }
 }

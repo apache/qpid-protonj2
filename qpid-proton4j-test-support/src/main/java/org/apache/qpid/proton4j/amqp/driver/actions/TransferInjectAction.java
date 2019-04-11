@@ -16,28 +16,30 @@
  */
 package org.apache.qpid.proton4j.amqp.driver.actions;
 
-import java.util.LinkedHashMap;
+import java.util.Date;
+import java.util.List;
 
 import org.apache.qpid.proton4j.amqp.Binary;
+import org.apache.qpid.proton4j.amqp.DescribedType;
 import org.apache.qpid.proton4j.amqp.Symbol;
+import org.apache.qpid.proton4j.amqp.UnsignedByte;
+import org.apache.qpid.proton4j.amqp.UnsignedInteger;
 import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
-import org.apache.qpid.proton4j.amqp.messaging.AmqpValue;
-import org.apache.qpid.proton4j.amqp.messaging.ApplicationProperties;
-import org.apache.qpid.proton4j.amqp.messaging.Data;
-import org.apache.qpid.proton4j.amqp.messaging.DeliveryAnnotations;
-import org.apache.qpid.proton4j.amqp.messaging.Footer;
-import org.apache.qpid.proton4j.amqp.messaging.Header;
-import org.apache.qpid.proton4j.amqp.messaging.MessageAnnotations;
-import org.apache.qpid.proton4j.amqp.messaging.Properties;
-import org.apache.qpid.proton4j.amqp.messaging.Section;
+import org.apache.qpid.proton4j.amqp.driver.codec.types.Transfer;
+import org.apache.qpid.proton4j.amqp.driver.codec.types.sections.AmqpSequence;
+import org.apache.qpid.proton4j.amqp.driver.codec.types.sections.AmqpValue;
+import org.apache.qpid.proton4j.amqp.driver.codec.types.sections.ApplicationProperties;
+import org.apache.qpid.proton4j.amqp.driver.codec.types.sections.Data;
+import org.apache.qpid.proton4j.amqp.driver.codec.types.sections.DeliveryAnnotations;
+import org.apache.qpid.proton4j.amqp.driver.codec.types.sections.Footer;
+import org.apache.qpid.proton4j.amqp.driver.codec.types.sections.Header;
+import org.apache.qpid.proton4j.amqp.driver.codec.types.sections.MessageAnnotations;
+import org.apache.qpid.proton4j.amqp.driver.codec.types.sections.Properties;
+import org.apache.qpid.proton4j.amqp.driver.codec.util.TypeMapper;
 import org.apache.qpid.proton4j.amqp.transport.DeliveryState;
 import org.apache.qpid.proton4j.amqp.transport.ReceiverSettleMode;
-import org.apache.qpid.proton4j.amqp.transport.Transfer;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
-import org.apache.qpid.proton4j.codec.CodecFactory;
-import org.apache.qpid.proton4j.codec.Encoder;
-import org.apache.qpid.proton4j.codec.EncoderState;
 
 /**
  * AMQP Close injection action which can be added to a driver for write at a specific time or
@@ -54,7 +56,7 @@ public final class TransferInjectAction extends AbstractPerformativeInjectAction
     private MessageAnnotations messageAnnotations;
     private Properties properties;
     private ApplicationProperties applicationProperties;
-    private Section body;
+    private DescribedType body;
     private Footer footer;
 
     @Override
@@ -79,12 +81,12 @@ public final class TransferInjectAction extends AbstractPerformativeInjectAction
     }
 
     public TransferInjectAction withHandle(long handle) {
-        transfer.setHandle(handle);
+        transfer.setHandle(UnsignedInteger.valueOf(handle));
         return this;
     }
 
     public TransferInjectAction withDeliveryId(long deliveryId) {
-        transfer.setDeliveryId(deliveryId);
+        transfer.setDeliveryId(UnsignedInteger.valueOf(deliveryId));
         return this;
     }
 
@@ -94,7 +96,7 @@ public final class TransferInjectAction extends AbstractPerformativeInjectAction
     }
 
     public TransferInjectAction withMessageFormat(long messageFormat) {
-        transfer.setMessageFormat(messageFormat);
+        transfer.setMessageFormat(UnsignedInteger.valueOf(messageFormat));
         return this;
     }
 
@@ -109,12 +111,12 @@ public final class TransferInjectAction extends AbstractPerformativeInjectAction
     }
 
     public TransferInjectAction withRcvSettleMode(ReceiverSettleMode rcvSettleMode) {
-        transfer.setRcvSettleMode(rcvSettleMode);
+        transfer.setRcvSettleMode(rcvSettleMode.getValue());
         return this;
     }
 
     public TransferInjectAction withState(DeliveryState state) {
-        transfer.setState(state);
+        transfer.setState(TypeMapper.mapFromProtonType(state));
         return this;
     }
 
@@ -177,14 +179,14 @@ public final class TransferInjectAction extends AbstractPerformativeInjectAction
 
     private DeliveryAnnotations getOrCreateDeliveryAnnotations() {
         if (deliveryAnnotations == null) {
-            deliveryAnnotations = new DeliveryAnnotations(new LinkedHashMap<>());
+            deliveryAnnotations = new DeliveryAnnotations();
         }
         return deliveryAnnotations;
     }
 
     private MessageAnnotations getOrCreateMessageAnnotations() {
         if (messageAnnotations == null) {
-            messageAnnotations = new MessageAnnotations(new LinkedHashMap<>());
+            messageAnnotations = new MessageAnnotations();
         }
         return messageAnnotations;
     }
@@ -198,44 +200,46 @@ public final class TransferInjectAction extends AbstractPerformativeInjectAction
 
     private ApplicationProperties getOrCreateApplicationProperties() {
         if (applicationProperties == null) {
-            applicationProperties = new ApplicationProperties(new LinkedHashMap<>());
+            applicationProperties = new ApplicationProperties();
         }
         return applicationProperties;
     }
 
     private Footer getOrCreateFooter() {
         if (footer == null) {
-            footer = new Footer(new LinkedHashMap<>());
+            footer = new Footer();
         }
         return footer;
     }
 
     private ProtonBuffer encodePayload() {
-        Encoder encoder = CodecFactory.getDefaultEncoder();
-        EncoderState encoderState = encoder.newEncoderState();
+        org.apache.qpid.proton4j.amqp.driver.codec.Data codec =
+            org.apache.qpid.proton4j.amqp.driver.codec.Data.Factory.create();
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
 
         if (header != null) {
-            encoder.writeObject(buffer, encoderState, header);
+            codec.putDescribedType(header);
         }
         if (deliveryAnnotations != null) {
-            encoder.writeObject(buffer, encoderState, deliveryAnnotations);
+            codec.putDescribedType(deliveryAnnotations);
         }
         if (messageAnnotations != null) {
-            encoder.writeObject(buffer, encoderState, messageAnnotations);
+            codec.putDescribedType(messageAnnotations);
         }
         if (properties != null) {
-            encoder.writeObject(buffer, encoderState, properties);
+            codec.putDescribedType(properties);
         }
         if (applicationProperties != null) {
-            encoder.writeObject(buffer, encoderState, applicationProperties);
+            codec.putDescribedType(applicationProperties);
         }
         if (body != null) {
-            encoder.writeObject(buffer, encoderState, body);
+            codec.putDescribedType(body);
         }
         if (footer != null) {
-            encoder.writeObject(buffer, encoderState, footer);
+            codec.putDescribedType(footer);
         }
+
+        codec.encode(buffer);
 
         return buffer;
     }
@@ -255,12 +259,12 @@ public final class TransferInjectAction extends AbstractPerformativeInjectAction
         }
 
         public HeaderBuilder withPriority(byte priority) {
-            getOrCreateHeader().setPriority(priority);
+            getOrCreateHeader().setPriority(UnsignedByte.valueOf(priority));
             return this;
         }
 
         public HeaderBuilder withTimeToLive(long ttl) {
-            getOrCreateHeader().setTimeToLive(ttl);
+            getOrCreateHeader().setTtl(UnsignedInteger.valueOf(ttl));
             return this;
         }
 
@@ -270,23 +274,33 @@ public final class TransferInjectAction extends AbstractPerformativeInjectAction
         }
 
         public HeaderBuilder withDeliveryCount(long count) {
-            getOrCreateHeader().setDeliveryCount(count);
+            getOrCreateHeader().setDeliveryCount(UnsignedInteger.valueOf(count));
             return this;
         }
     }
 
     public final class DeliveryAnnotationsBuilder extends SectionBuilder {
 
+        DeliveryAnnotationsBuilder withAnnotation(String key, Object value) {
+            getOrCreateDeliveryAnnotations().setSymbolKeyedAnnotation(key, value);
+            return this;
+        }
+
         DeliveryAnnotationsBuilder withAnnotation(Symbol key, Object value) {
-            getOrCreateDeliveryAnnotations().getValue().put(key, value);
+            getOrCreateDeliveryAnnotations().setSymbolKeyedAnnotation(key, value);
             return this;
         }
     }
 
     public final class MessageAnnotationsBuilder extends SectionBuilder {
 
+        MessageAnnotationsBuilder withAnnotation(String key, Object value) {
+            getOrCreateMessageAnnotations().setSymbolKeyedAnnotation(key, value);
+            return this;
+        }
+
         MessageAnnotationsBuilder withAnnotation(Symbol key, Object value) {
-            getOrCreateMessageAnnotations().getValue().put(key, value);
+            getOrCreateMessageAnnotations().setSymbolKeyedAnnotation(key, value);
             return this;
         }
     }
@@ -324,22 +338,22 @@ public final class TransferInjectAction extends AbstractPerformativeInjectAction
         }
 
         PropertiesBuilder withContentType(String value) {
-            getOrCreateProperties().setContentType(value);
+            getOrCreateProperties().setContentType(Symbol.valueOf(value));
             return this;
         }
 
         PropertiesBuilder withContentEncoding(String value) {
-            getOrCreateProperties().setContentEncoding(value);
+            getOrCreateProperties().setContentEncoding(Symbol.valueOf(value));
             return this;
         }
 
         PropertiesBuilder withAbsoluteExpiryTime(long value) {
-            getOrCreateProperties().setAbsoluteExpiryTime(value);
+            getOrCreateProperties().setAbsoluteExpiryTime(new Date(value));
             return this;
         }
 
         PropertiesBuilder withCreationTime(long value) {
-            getOrCreateProperties().setCreationTime(value);
+            getOrCreateProperties().setCreationTime(new Date(value));
             return this;
         }
 
@@ -349,7 +363,7 @@ public final class TransferInjectAction extends AbstractPerformativeInjectAction
         }
 
         PropertiesBuilder withGroupSequence(long value) {
-            getOrCreateProperties().setGroupSequence(value);
+            getOrCreateProperties().setGroupSequence(UnsignedInteger.valueOf(value));
             return this;
         }
 
@@ -362,14 +376,12 @@ public final class TransferInjectAction extends AbstractPerformativeInjectAction
     public final class ApplicationPropertiesBuilder extends SectionBuilder {
 
         ApplicationPropertiesBuilder withApplicationProperty(String key, Object value) {
-            getOrCreateApplicationProperties().getValue().put(key, value);
+            getOrCreateApplicationProperties().setApplicationProperty(key, value);
             return this;
         }
     }
 
     public final class BodySectionBuilder extends SectionBuilder {
-
-        // Other methods can be added to expand on the types that can go into the body
 
         public BodySectionBuilder withString(String body) {
             TransferInjectAction.this.body = new AmqpValue(body);
@@ -381,8 +393,8 @@ public final class TransferInjectAction extends AbstractPerformativeInjectAction
             return this;
         }
 
-        public BodySectionBuilder withSection(Section body) {
-            TransferInjectAction.this.body = body;
+        public BodySectionBuilder withSequence(List<Object> sequence) {
+            TransferInjectAction.this.body = new AmqpSequence(sequence);
             return this;
         }
     }
@@ -390,7 +402,7 @@ public final class TransferInjectAction extends AbstractPerformativeInjectAction
     public final class FooterBuilder extends SectionBuilder {
 
         FooterBuilder withFooter(Object key, Object value) {
-            getOrCreateFooter().getValue().put(key, value);
+            getOrCreateFooter().setFooterProperty(key, value);
             return this;
         }
     }

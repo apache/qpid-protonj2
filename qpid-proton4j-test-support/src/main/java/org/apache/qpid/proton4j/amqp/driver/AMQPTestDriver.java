@@ -20,6 +20,7 @@ import java.util.ArrayDeque;
 import java.util.Queue;
 import java.util.function.Consumer;
 
+import org.apache.qpid.proton4j.amqp.DescribedType;
 import org.apache.qpid.proton4j.amqp.security.SaslPerformative;
 import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
 import org.apache.qpid.proton4j.amqp.transport.Performative;
@@ -215,7 +216,7 @@ public class AMQPTestDriver implements Consumer<ProtonBuffer> {
      * @param performative
      * @param payload
      */
-    public void sendAMQPFrame(int channel, Performative performative, ProtonBuffer payload) {
+    public void sendAMQPFrame(int channel, DescribedType performative, ProtonBuffer payload) {
         // TODO - handle split frames when frame size requires it
         ProtonBuffer buffer = frameEncoder.handleWrite(performative, channel, payload, null);
 
@@ -232,7 +233,7 @@ public class AMQPTestDriver implements Consumer<ProtonBuffer> {
      * @param channel
      * @param performative
      */
-    public void sendSaslFrame(int channel, SaslPerformative performative) {
+    public void sendSaslFrame(int channel, DescribedType performative) {
         ProtonBuffer buffer = frameEncoder.handleWrite(performative, channel);
 
         try {

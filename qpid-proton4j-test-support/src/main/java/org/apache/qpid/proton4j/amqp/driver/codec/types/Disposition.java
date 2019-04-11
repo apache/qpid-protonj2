@@ -18,7 +18,9 @@ package org.apache.qpid.proton4j.amqp.driver.codec.types;
 
 import java.util.List;
 
+import org.apache.qpid.proton4j.amqp.DescribedType;
 import org.apache.qpid.proton4j.amqp.Symbol;
+import org.apache.qpid.proton4j.amqp.UnsignedInteger;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.amqp.driver.codec.ListDescribedType;
 
@@ -57,57 +59,57 @@ public class Disposition extends ListDescribedType {
         return DESCRIPTOR_SYMBOL;
     }
 
-    public Disposition setRole(Object o) {
+    public Disposition setRole(Boolean o) {
         getList().set(Field.ROLE.ordinal(), o);
         return this;
     }
 
-    public Object getRole() {
-        return getList().get(Field.ROLE.ordinal());
+    public Boolean getRole() {
+        return (Boolean) getList().get(Field.ROLE.ordinal());
     }
 
-    public Disposition setFirst(Object o) {
+    public Disposition setFirst(UnsignedInteger o) {
         getList().set(Field.FIRST.ordinal(), o);
         return this;
     }
 
-    public Object getFirst() {
-        return getList().get(Field.FIRST.ordinal());
+    public UnsignedInteger getFirst() {
+        return (UnsignedInteger) getList().get(Field.FIRST.ordinal());
     }
 
-    public Disposition setLast(Object o) {
+    public Disposition setLast(UnsignedInteger o) {
         getList().set(Field.LAST.ordinal(), o);
         return this;
     }
 
-    public Object getLast() {
-        return getList().get(Field.LAST.ordinal());
+    public UnsignedInteger getLast() {
+        return (UnsignedInteger) getList().get(Field.LAST.ordinal());
     }
 
-    public Disposition setSettled(Object o) {
+    public Disposition setSettled(Boolean o) {
         getList().set(Field.SETTLED.ordinal(), o);
         return this;
     }
 
-    public Object getSettled() {
-        return getList().get(Field.SETTLED.ordinal());
+    public Boolean getSettled() {
+        return (Boolean) getList().get(Field.SETTLED.ordinal());
     }
 
-    public Disposition setState(Object o) {
+    public Disposition setState(DescribedType o) {
         getList().set(Field.STATE.ordinal(), o);
         return this;
     }
 
-    public Object getState() {
-        return getList().get(Field.STATE.ordinal());
+    public DescribedType getState() {
+        return (DescribedType) getList().get(Field.STATE.ordinal());
     }
 
-    public Disposition setBatchable(Object o) {
+    public Disposition setBatchable(Boolean o) {
         getList().set(Field.BATCHABLE.ordinal(), o);
         return this;
     }
 
-    public Object getBatchable() {
-        return getList().get(Field.BATCHABLE.ordinal());
+    public Boolean getBatchable() {
+        return (Boolean) getList().get(Field.BATCHABLE.ordinal());
     }
 }

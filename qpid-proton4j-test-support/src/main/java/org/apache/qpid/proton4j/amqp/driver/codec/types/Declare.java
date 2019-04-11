@@ -18,6 +18,7 @@ package org.apache.qpid.proton4j.amqp.driver.codec.types;
 
 import java.util.List;
 
+import org.apache.qpid.proton4j.amqp.Binary;
 import org.apache.qpid.proton4j.amqp.DescribedType;
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
@@ -53,13 +54,13 @@ public class Declare extends ListDescribedType {
         return DESCRIPTOR_SYMBOL;
     }
 
-    public Declare setGlobalId(Object o) {
+    public Declare setGlobalId(Binary o) {
         getList().set(Field.GLOBAL_ID.ordinal(), o);
         return this;
     }
 
-    public Object getGlobalId() {
-        return getList().get(Field.GLOBAL_ID.ordinal());
+    public Binary getGlobalId() {
+        return (Binary) getList().get(Field.GLOBAL_ID.ordinal());
     }
 
     @Override

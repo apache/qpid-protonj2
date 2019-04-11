@@ -16,9 +16,9 @@
  */
 package org.apache.qpid.proton4j.amqp.driver.actions;
 
+import org.apache.qpid.proton4j.amqp.DescribedType;
 import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
 import org.apache.qpid.proton4j.amqp.driver.ScriptedAction;
-import org.apache.qpid.proton4j.amqp.transport.Performative;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 
 /**
@@ -26,7 +26,7 @@ import org.apache.qpid.proton4j.buffer.ProtonBuffer;
  *
  * @param <P> the AMQP performative being sent.
  */
-public abstract class AbstractPerformativeInjectAction<P extends Performative> implements ScriptedAction {
+public abstract class AbstractPerformativeInjectAction<P extends DescribedType> implements ScriptedAction {
 
     public static final int CHANNEL_UNSET = -1;
 

@@ -18,6 +18,7 @@ package org.apache.qpid.proton4j.amqp.driver.codec.types;
 
 import java.util.List;
 
+import org.apache.qpid.proton4j.amqp.Binary;
 import org.apache.qpid.proton4j.amqp.DescribedType;
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
@@ -53,13 +54,13 @@ public class Declared extends ListDescribedType {
         return DESCRIPTOR_SYMBOL;
     }
 
-    public Declared setTxnId(Object o) {
+    public Declared setTxnId(Binary o) {
         getList().set(Field.TXN_ID.ordinal(), o);
         return this;
     }
 
-    public Object getTxnId() {
-        return getList().get(Field.TXN_ID.ordinal());
+    public Binary getTxnId() {
+        return (Binary) getList().get(Field.TXN_ID.ordinal());
     }
 
     @Override

@@ -53,13 +53,13 @@ public class Rejected extends ListDescribedType {
         return DESCRIPTOR_CODE;
     }
 
-    public Rejected setError(Object o) {
+    public Rejected setError(ErrorCondition o) {
         getList().set(Field.ERROR.ordinal(), o);
         return this;
     }
 
-    public Object getError() {
-        return getList().get(Field.ERROR.ordinal());
+    public ErrorCondition getError() {
+        return (ErrorCondition) getList().get(Field.ERROR.ordinal());
     }
 
     @Override

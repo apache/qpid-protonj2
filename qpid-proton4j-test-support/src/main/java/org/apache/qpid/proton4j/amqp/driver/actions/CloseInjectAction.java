@@ -16,7 +16,8 @@
  */
 package org.apache.qpid.proton4j.amqp.driver.actions;
 
-import org.apache.qpid.proton4j.amqp.transport.Close;
+import org.apache.qpid.proton4j.amqp.driver.codec.types.Close;
+import org.apache.qpid.proton4j.amqp.driver.codec.util.TypeMapper;
 import org.apache.qpid.proton4j.amqp.transport.ErrorCondition;
 
 /**
@@ -33,7 +34,7 @@ public class CloseInjectAction extends AbstractPerformativeInjectAction<Close> {
     }
 
     public CloseInjectAction withErrorCondition(ErrorCondition error) {
-        close.setError(error);
+        close.setError(TypeMapper.mapFromProtonType(error));
         return this;
     }
 }

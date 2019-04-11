@@ -16,14 +16,19 @@
  */
 package org.apache.qpid.proton4j.amqp.driver.actions;
 
+import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import org.apache.qpid.proton4j.amqp.Binary;
+import org.apache.qpid.proton4j.amqp.DescribedType;
 import org.apache.qpid.proton4j.amqp.Symbol;
+import org.apache.qpid.proton4j.amqp.UnsignedInteger;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
+import org.apache.qpid.proton4j.amqp.driver.codec.types.Attach;
+import org.apache.qpid.proton4j.amqp.driver.codec.util.TypeMapper;
 import org.apache.qpid.proton4j.amqp.messaging.Source;
 import org.apache.qpid.proton4j.amqp.messaging.Target;
-import org.apache.qpid.proton4j.amqp.transport.Attach;
 import org.apache.qpid.proton4j.amqp.transport.DeliveryState;
 import org.apache.qpid.proton4j.amqp.transport.ReceiverSettleMode;
 import org.apache.qpid.proton4j.amqp.transport.Role;
@@ -48,37 +53,46 @@ public class AttachInjectAction extends AbstractPerformativeInjectAction<Attach>
     }
 
     public AttachInjectAction withHandle(long handle) {
-        attach.setHandle(handle);
+        attach.setHandle(UnsignedInteger.valueOf(handle));
         return this;
     }
 
     public AttachInjectAction withRole(Role role) {
-        attach.setRole(role);
+        attach.setRole(role.getValue());
         return this;
     }
 
     public AttachInjectAction withSndSettleMode(SenderSettleMode sndSettleMode) {
-        attach.setSndSettleMode(sndSettleMode);
+        attach.setSndSettleMode(sndSettleMode.getValue());
         return this;
     }
 
     public AttachInjectAction withRcvSettleMode(ReceiverSettleMode rcvSettleMode) {
-        attach.setRcvSettleMode(rcvSettleMode);
+        attach.setRcvSettleMode(rcvSettleMode.getValue());
         return this;
     }
 
+    // TODO - Source builder
     public AttachInjectAction withSource(Source source) {
-        attach.setSource(source);
+        //attach.setSource(source);
         return this;
     }
 
+    // TODO - Target builder
     public AttachInjectAction withTarget(Target target) {
-        attach.setTarget(target);
+        //attach.setTarget(target);
         return this;
     }
 
     public AttachInjectAction withUnsettled(Map<Binary, DeliveryState> unsettled) {
-        attach.setUnsettled(unsettled);
+        if (unsettled != null) {
+            Map<Binary, DescribedType> converted = new LinkedHashMap<>();
+            for (Entry<Binary, DeliveryState> entry : unsettled.entrySet()) {
+                converted.put(entry.getKey(), TypeMapper.mapFromProtonType(entry.getValue()));
+            }
+
+            attach.setUnsettled(converted);
+        }
         return this;
     }
 
@@ -88,7 +102,7 @@ public class AttachInjectAction extends AbstractPerformativeInjectAction<Attach>
     }
 
     public AttachInjectAction withInitialDeliveryCount(long initialDeliveryCount) {
-        attach.setInitialDeliveryCount(initialDeliveryCount);
+        attach.setInitialDeliveryCount(UnsignedInteger.valueOf(initialDeliveryCount));
         return this;
     }
 

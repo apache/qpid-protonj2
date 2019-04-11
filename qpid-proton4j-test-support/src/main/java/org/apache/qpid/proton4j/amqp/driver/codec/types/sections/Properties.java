@@ -16,9 +16,12 @@
  */
 package org.apache.qpid.proton4j.amqp.driver.codec.types.sections;
 
+import java.util.Date;
 import java.util.List;
 
+import org.apache.qpid.proton4j.amqp.Binary;
 import org.apache.qpid.proton4j.amqp.Symbol;
+import org.apache.qpid.proton4j.amqp.UnsignedInteger;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.amqp.driver.codec.ListDescribedType;
 
@@ -73,40 +76,40 @@ public class Properties extends ListDescribedType {
         return getList().get(Field.MESSAGE_ID.ordinal());
     }
 
-    public Properties setUserId(Object o) {
+    public Properties setUserId(Binary o) {
         getList().set(Field.USER_ID.ordinal(), o);
         return this;
     }
 
-    public Object getUserId() {
-        return getList().get(Field.USER_ID.ordinal());
+    public Binary getUserId() {
+        return (Binary) getList().get(Field.USER_ID.ordinal());
     }
 
-    public Properties setTo(Object o) {
+    public Properties setTo(String o) {
         getList().set(Field.TO.ordinal(), o);
         return this;
     }
 
-    public Object getTo() {
-        return getList().get(Field.TO.ordinal());
+    public String getTo() {
+        return (String) getList().get(Field.TO.ordinal());
     }
 
-    public Properties setSubject(Object o) {
+    public Properties setSubject(String o) {
         getList().set(Field.SUBJECT.ordinal(), o);
         return this;
     }
 
-    public Object getSubject() {
-        return getList().get(Field.SUBJECT.ordinal());
+    public String getSubject() {
+        return (String) getList().get(Field.SUBJECT.ordinal());
     }
 
-    public Properties setReplyTo(Object o) {
+    public Properties setReplyTo(String o) {
         getList().set(Field.REPLY_TO.ordinal(), o);
         return this;
     }
 
-    public Object getReplyTo() {
-        return getList().get(Field.REPLY_TO.ordinal());
+    public String getReplyTo() {
+        return (String) getList().get(Field.REPLY_TO.ordinal());
     }
 
     public Properties setCorrelationId(Object o) {
@@ -118,66 +121,66 @@ public class Properties extends ListDescribedType {
         return getList().get(Field.CORRELATION_ID.ordinal());
     }
 
-    public Properties setContentType(Object o) {
+    public Properties setContentType(Symbol o) {
         getList().set(Field.CONTENT_TYPE.ordinal(), o);
         return this;
     }
 
-    public Object getContentType() {
-        return getList().get(Field.CONTENT_TYPE.ordinal());
+    public Symbol getContentType() {
+        return (Symbol) getList().get(Field.CONTENT_TYPE.ordinal());
     }
 
-    public Properties setContentEncoding(Object o) {
+    public Properties setContentEncoding(Symbol o) {
         getList().set(Field.CONTENT_ENCODING.ordinal(), o);
         return this;
     }
 
-    public Object getContentEncoding() {
-        return getList().get(Field.CONTENT_ENCODING.ordinal());
+    public Symbol getContentEncoding() {
+        return (Symbol) getList().get(Field.CONTENT_ENCODING.ordinal());
     }
 
-    public Properties setAbsoluteExpiryTime(Object o) {
+    public Properties setAbsoluteExpiryTime(Date o) {
         getList().set(Field.ABSOLUTE_EXPIRY_TIME.ordinal(), o);
         return this;
     }
 
-    public Object getAbsoluteExpiryTime() {
-        return getList().get(Field.ABSOLUTE_EXPIRY_TIME.ordinal());
+    public Date getAbsoluteExpiryTime() {
+        return (Date) getList().get(Field.ABSOLUTE_EXPIRY_TIME.ordinal());
     }
 
-    public Properties setCreationTime(Object o) {
+    public Properties setCreationTime(Date o) {
         getList().set(Field.CREATION_TIME.ordinal(), o);
         return this;
     }
 
-    public Object getCreationTime() {
-        return getList().get(Field.CREATION_TIME.ordinal());
+    public Date getCreationTime() {
+        return (Date) getList().get(Field.CREATION_TIME.ordinal());
     }
 
-    public Properties setGroupId(Object o) {
+    public Properties setGroupId(String o) {
         getList().set(Field.GROUP_ID.ordinal(), o);
         return this;
     }
 
-    public Object getGroupId() {
-        return getList().get(Field.GROUP_ID.ordinal());
+    public String getGroupId() {
+        return (String) getList().get(Field.GROUP_ID.ordinal());
     }
 
-    public Properties setGroupSequence(Object o) {
+    public Properties setGroupSequence(UnsignedInteger o) {
         getList().set(Field.GROUP_SEQUENCE.ordinal(), o);
         return this;
     }
 
-    public Object getGroupSequence() {
-        return getList().get(Field.GROUP_SEQUENCE.ordinal());
+    public UnsignedInteger getGroupSequence() {
+        return (UnsignedInteger) getList().get(Field.GROUP_SEQUENCE.ordinal());
     }
 
-    public Properties setReplyToGroupId(Object o) {
+    public Properties setReplyToGroupId(String o) {
         getList().set(Field.REPLY_TO_GROUP_ID.ordinal(), o);
         return this;
     }
 
-    public Object getReplyToGroupId() {
-        return getList().get(Field.REPLY_TO_GROUP_ID.ordinal());
+    public String getReplyToGroupId() {
+        return (String) getList().get(Field.REPLY_TO_GROUP_ID.ordinal());
     }
 }

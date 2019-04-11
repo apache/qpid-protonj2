@@ -52,12 +52,12 @@ public class Close extends ListDescribedType {
         return DESCRIPTOR_SYMBOL;
     }
 
-    public Close setError(Object o) {
+    public Close setError(ErrorCondition o) {
         getList().set(Field.ERROR.ordinal(), o);
         return this;
     }
 
-    public Object getError() {
-        return getList().get(Field.ERROR.ordinal());
+    public ErrorCondition getError() {
+        return (ErrorCondition) getList().get(Field.ERROR.ordinal());
     }
 }

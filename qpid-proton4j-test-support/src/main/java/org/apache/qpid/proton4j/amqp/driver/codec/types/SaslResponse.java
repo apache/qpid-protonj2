@@ -18,6 +18,7 @@ package org.apache.qpid.proton4j.amqp.driver.codec.types;
 
 import java.util.List;
 
+import org.apache.qpid.proton4j.amqp.Binary;
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.amqp.driver.codec.ListDescribedType;
@@ -52,12 +53,12 @@ public class SaslResponse extends ListDescribedType {
         return DESCRIPTOR_SYMBOL;
     }
 
-    public SaslResponse setResponse(Object o) {
+    public SaslResponse setResponse(Binary o) {
         getList().set(Field.RESPONSE.ordinal(), o);
         return this;
     }
 
-    public Object getError() {
-        return getList().get(Field.RESPONSE.ordinal());
+    public Binary getResponse() {
+        return (Binary) getList().get(Field.RESPONSE.ordinal());
     }
 }

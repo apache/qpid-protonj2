@@ -74,12 +74,12 @@ public class DetachExpectation extends AbstractExpectation<Detach> {
             response.onChannel(channel);
         }
 
-        if (!response.getPerformative().hasHandle()) {
-            response.getPerformative().setHandle(detach.getHandle());
+        if (response.getPerformative().getHandle() == null) {
+            response.withHandle(detach.getHandle());
         }
 
-        if (!response.getPerformative().hasClosed()) {
-            response.getPerformative().setClosed(detach.getClosed());
+        if (response.getPerformative().getClosed() == null) {
+            response.withClosed(detach.getClosed());
         }
     }
 

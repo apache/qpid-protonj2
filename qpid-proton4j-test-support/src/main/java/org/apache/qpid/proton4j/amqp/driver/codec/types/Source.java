@@ -17,8 +17,11 @@
 package org.apache.qpid.proton4j.amqp.driver.codec.types;
 
 import java.util.List;
+import java.util.Map;
 
+import org.apache.qpid.proton4j.amqp.DescribedType;
 import org.apache.qpid.proton4j.amqp.Symbol;
+import org.apache.qpid.proton4j.amqp.UnsignedInteger;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.amqp.driver.codec.ListDescribedType;
 
@@ -62,102 +65,104 @@ public class Source extends ListDescribedType {
         return DESCRIPTOR_SYMBOL;
     }
 
-    public Source setAddress(Object o) {
+    public Source setAddress(String o) {
         getList().set(Field.ADDRESS.ordinal(), o);
         return this;
     }
 
-    public Object getAddress() {
-        return getList().get(Field.ADDRESS.ordinal());
+    public String getAddress() {
+        return (String) getList().get(Field.ADDRESS.ordinal());
     }
 
-    public Source setDurable(Object o) {
+    public Source setDurable(UnsignedInteger o) {
         getList().set(Field.DURABLE.ordinal(), o);
         return this;
     }
 
-    public Object getDurable() {
-        return getList().get(Field.DURABLE.ordinal());
+    public UnsignedInteger getDurable() {
+        return (UnsignedInteger) getList().get(Field.DURABLE.ordinal());
     }
 
-    public Source setExpiryPolicy(Object o) {
+    public Source setExpiryPolicy(Symbol o) {
         getList().set(Field.EXPIRY_POLICY.ordinal(), o);
         return this;
     }
 
-    public Object getExpiryPolicy() {
-        return getList().get(Field.EXPIRY_POLICY.ordinal());
+    public Symbol getExpiryPolicy() {
+        return (Symbol) getList().get(Field.EXPIRY_POLICY.ordinal());
     }
 
-    public Source setTimeout(Object o) {
+    public Source setTimeout(UnsignedInteger o) {
         getList().set(Field.TIMEOUT.ordinal(), o);
         return this;
     }
 
-    public Object getTimeout() {
-        return getList().get(Field.TIMEOUT.ordinal());
+    public UnsignedInteger getTimeout() {
+        return (UnsignedInteger) getList().get(Field.TIMEOUT.ordinal());
     }
 
-    public Source setDynamic(Object o) {
+    public Source setDynamic(Boolean o) {
         getList().set(Field.DYNAMIC.ordinal(), o);
         return this;
     }
 
-    public Object getDynamic() {
-        return getList().get(Field.DYNAMIC.ordinal());
+    public Boolean getDynamic() {
+        return (Boolean) getList().get(Field.DYNAMIC.ordinal());
     }
 
-    public Source setDynamicNodeProperties(Object o) {
+    public Source setDynamicNodeProperties(Map<Symbol, Object> o) {
         getList().set(Field.DYNAMIC_NODE_PROPERTIES.ordinal(), o);
         return this;
     }
 
-    public Object getDynamicNodeProperties() {
-        return getList().get(Field.DYNAMIC_NODE_PROPERTIES.ordinal());
+    @SuppressWarnings("unchecked")
+    public Map<Symbol, Object> getDynamicNodeProperties() {
+        return (Map<Symbol, Object>) getList().get(Field.DYNAMIC_NODE_PROPERTIES.ordinal());
     }
 
-    public Source setDistributionMode(Object o) {
+    public Source setDistributionMode(Symbol o) {
         getList().set(Field.DISTRIBUTION_MODE.ordinal(), o);
         return this;
     }
 
-    public Object getDistributionMode() {
-        return getList().get(Field.DISTRIBUTION_MODE.ordinal());
+    public Symbol getDistributionMode() {
+        return (Symbol) getList().get(Field.DISTRIBUTION_MODE.ordinal());
     }
 
-    public Source setFilter(Object o) {
+    public Source setFilter(Map<Symbol, Object> o) {
         getList().set(Field.FILTER.ordinal(), o);
         return this;
     }
 
-    public Object getFilter() {
-        return getList().get(Field.FILTER.ordinal());
+    @SuppressWarnings("unchecked")
+    public Map<Symbol, Object> getFilter() {
+        return (Map<Symbol, Object>) getList().get(Field.FILTER.ordinal());
     }
 
-    public Source setDefaultOutcome(Object o) {
+    public Source setDefaultOutcome(DescribedType o) {
         getList().set(Field.DEFAULT_OUTCOME.ordinal(), o);
         return this;
     }
 
-    public Object getDefaultOutcome() {
-        return getList().get(Field.DEFAULT_OUTCOME.ordinal());
+    public DescribedType getDefaultOutcome() {
+        return (DescribedType) getList().get(Field.DEFAULT_OUTCOME.ordinal());
     }
 
-    public Source setOutcomes(Object o) {
+    public Source setOutcomes(Symbol[] o) {
         getList().set(Field.OUTCOMES.ordinal(), o);
         return this;
     }
 
-    public Object getOutcomes() {
-        return getList().get(Field.OUTCOMES.ordinal());
+    public Symbol[] getOutcomes() {
+        return (Symbol[]) getList().get(Field.OUTCOMES.ordinal());
     }
 
-    public Source setCapabilities(Object o) {
+    public Source setCapabilities(Symbol[] o) {
         getList().set(Field.CAPABILITIES.ordinal(), o);
         return this;
     }
 
-    public Object getCapabilities() {
-        return getList().get(Field.CAPABILITIES.ordinal());
+    public Symbol[] getCapabilities() {
+        return (Symbol[]) getList().get(Field.CAPABILITIES.ordinal());
     }
 }

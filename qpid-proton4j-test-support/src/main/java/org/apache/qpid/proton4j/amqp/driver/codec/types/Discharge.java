@@ -18,6 +18,7 @@ package org.apache.qpid.proton4j.amqp.driver.codec.types;
 
 import java.util.List;
 
+import org.apache.qpid.proton4j.amqp.Binary;
 import org.apache.qpid.proton4j.amqp.DescribedType;
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
@@ -54,22 +55,22 @@ public class Discharge extends ListDescribedType {
         return DESCRIPTOR_SYMBOL;
     }
 
-    public Discharge setTxnId(Object o) {
+    public Discharge setTxnId(Binary o) {
         getList().set(Field.TXN_ID.ordinal(), o);
         return this;
     }
 
-    public Object getTxnId() {
-        return getList().get(Field.TXN_ID.ordinal());
+    public Binary getTxnId() {
+        return (Binary) getList().get(Field.TXN_ID.ordinal());
     }
 
-    public Discharge setFail(Object o) {
+    public Discharge setFail(Boolean o) {
         getList().set(Field.FAIL.ordinal(), o);
         return this;
     }
 
-    public Object getFail() {
-        return getList().get(Field.FAIL.ordinal());
+    public Boolean getFail() {
+        return (Boolean) getList().get(Field.FAIL.ordinal());
     }
 
     @Override

@@ -16,7 +16,9 @@
  */
 package org.apache.qpid.proton4j.amqp.driver.actions;
 
-import org.apache.qpid.proton4j.amqp.transport.Detach;
+import org.apache.qpid.proton4j.amqp.UnsignedInteger;
+import org.apache.qpid.proton4j.amqp.driver.codec.types.Detach;
+import org.apache.qpid.proton4j.amqp.driver.codec.util.TypeMapper;
 import org.apache.qpid.proton4j.amqp.transport.ErrorCondition;
 
 /**
@@ -32,8 +34,8 @@ public class DetachInjectAction extends AbstractPerformativeInjectAction<Detach>
         return detach;
     }
 
-    public DetachInjectAction withClosed(long handle) {
-        detach.setHandle(handle);
+    public DetachInjectAction withHandle(long handle) {
+        detach.setHandle(UnsignedInteger.valueOf(handle));
         return this;
     }
 
@@ -43,7 +45,7 @@ public class DetachInjectAction extends AbstractPerformativeInjectAction<Detach>
     }
 
     public DetachInjectAction withErrorCondition(ErrorCondition error) {
-        detach.setError(error);
+        detach.setError(TypeMapper.mapFromProtonType(error));
         return this;
     }
 }

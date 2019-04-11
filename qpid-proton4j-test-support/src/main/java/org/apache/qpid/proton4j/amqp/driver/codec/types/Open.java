@@ -17,9 +17,12 @@
 package org.apache.qpid.proton4j.amqp.driver.codec.types;
 
 import java.util.List;
+import java.util.Map;
 
 import org.apache.qpid.proton4j.amqp.Symbol;
+import org.apache.qpid.proton4j.amqp.UnsignedInteger;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
+import org.apache.qpid.proton4j.amqp.UnsignedShort;
 import org.apache.qpid.proton4j.amqp.driver.codec.ListDescribedType;
 
 public class Open extends ListDescribedType {
@@ -61,93 +64,94 @@ public class Open extends ListDescribedType {
         return DESCRIPTOR_SYMBOL;
     }
 
-    public Open setContainerId(Object o) {
+    public Open setContainerId(String o) {
         getList().set(Field.CONTAINER_ID.ordinal(), o);
         return this;
     }
 
-    public Object getContainerId() {
-        return getList().get(Field.CONTAINER_ID.ordinal());
+    public String getContainerId() {
+        return (String) getList().get(Field.CONTAINER_ID.ordinal());
     }
 
-    public Open setHostname(Object o) {
+    public Open setHostname(String o) {
         getList().set(Field.HOSTNAME.ordinal(), o);
         return this;
     }
 
-    public Object getHostname() {
-        return getList().get(Field.HOSTNAME.ordinal());
+    public String getHostname() {
+        return (String) getList().get(Field.HOSTNAME.ordinal());
     }
 
-    public Open setMaxFrameSize(Object o) {
+    public Open setMaxFrameSize(UnsignedInteger o) {
         getList().set(Field.MAX_FRAME_SIZE.ordinal(), o);
         return this;
     }
 
-    public Object getMaxFrameSize() {
-        return getList().get(Field.MAX_FRAME_SIZE.ordinal());
+    public UnsignedInteger getMaxFrameSize() {
+        return (UnsignedInteger) getList().get(Field.MAX_FRAME_SIZE.ordinal());
     }
 
-    public Open setChannelMax(Object o) {
+    public Open setChannelMax(UnsignedShort o) {
         getList().set(Field.CHANNEL_MAX.ordinal(), o);
         return this;
     }
 
-    public Object getChannelMax() {
-        return getList().get(Field.CHANNEL_MAX.ordinal());
+    public UnsignedShort getChannelMax() {
+        return (UnsignedShort) getList().get(Field.CHANNEL_MAX.ordinal());
     }
 
-    public Open setIdleTimeOut(Object o) {
+    public Open setIdleTimeOut(UnsignedInteger o) {
         getList().set(Field.IDLE_TIME_OUT.ordinal(), o);
         return this;
     }
 
-    public Object getIdleTimeOut() {
-        return getList().get(Field.IDLE_TIME_OUT.ordinal());
+    public UnsignedInteger getIdleTimeOut() {
+        return (UnsignedInteger) getList().get(Field.IDLE_TIME_OUT.ordinal());
     }
 
-    public Open setOutgoingLocales(Object o) {
+    public Open setOutgoingLocales(Symbol[] o) {
         getList().set(Field.OUTGOING_LOCALES.ordinal(), o);
         return this;
     }
 
-    public Object getOutgoingLocales() {
-        return getList().get(Field.OUTGOING_LOCALES.ordinal());
+    public Symbol[] getOutgoingLocales() {
+        return (Symbol[]) getList().get(Field.OUTGOING_LOCALES.ordinal());
     }
 
-    public Open setIncomingLocales(Object o) {
+    public Open setIncomingLocales(Symbol[] o) {
         getList().set(Field.INCOMING_LOCALES.ordinal(), o);
         return this;
     }
 
-    public Object getIncomingLocales() {
-        return getList().get(Field.INCOMING_LOCALES.ordinal());
+    public Symbol[] getIncomingLocales() {
+        return (Symbol[]) getList().get(Field.INCOMING_LOCALES.ordinal());
     }
 
-    public Open setOfferedCapabilities(Object o) {
+    public Open setOfferedCapabilities(Symbol[] o) {
         getList().set(Field.OFFERED_CAPABILITIES.ordinal(), o);
         return this;
     }
 
-    public Object getOfferedCapabilities() {
-        return getList().get(Field.OFFERED_CAPABILITIES.ordinal());
+    public Symbol[] getOfferedCapabilities() {
+        return (Symbol[]) getList().get(Field.OFFERED_CAPABILITIES.ordinal());
     }
 
-    public Open setDesiredCapabilities(Object o) {
+    public Open setDesiredCapabilities(Symbol[] o) {
         getList().set(Field.DESIRED_CAPABILITIES.ordinal(), o);
         return this;
     }
 
-    public Object getDesiredCapabilities() {
-        return getList().get(Field.DESIRED_CAPABILITIES.ordinal());
+    public Symbol[] getDesiredCapabilities() {
+        return (Symbol[]) getList().get(Field.DESIRED_CAPABILITIES.ordinal());
     }
 
-    public Open setProperties(Object o) {
+    public Open setProperties(Map<Symbol, Object> o) {
         getList().set(Field.PROPERTIES.ordinal(), o);
         return this;
     }
 
-    public Object getProperties() {
-        return getList().get(Field.PROPERTIES.ordinal());
+    @SuppressWarnings("unchecked")
+    public Map<Symbol, Object> getProperties() {
+        return (Map<Symbol, Object>) getList().get(Field.PROPERTIES.ordinal());
     }
 }

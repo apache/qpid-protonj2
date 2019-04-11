@@ -16,16 +16,16 @@
  */
 package org.apache.qpid.proton4j.amqp.driver.actions;
 
+import org.apache.qpid.proton4j.amqp.DescribedType;
 import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
 import org.apache.qpid.proton4j.amqp.driver.ScriptedAction;
-import org.apache.qpid.proton4j.amqp.security.SaslPerformative;
 
 /**
  * Abstract base used by inject actions of SASL Performatives
  *
  * @param <P> the SASL performative being sent.
  */
-public abstract class AbstractSaslPerformativeInjectAction<P extends SaslPerformative> implements ScriptedAction {
+public abstract class AbstractSaslPerformativeInjectAction<P extends DescribedType> implements ScriptedAction {
 
     public static final int CHANNEL_UNSET = -1;
 

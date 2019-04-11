@@ -52,12 +52,12 @@ public class Coordinator extends ListDescribedType {
         return DESCRIPTOR_SYMBOL;
     }
 
-    public Coordinator setCapabilities(Object o) {
+    public Coordinator setCapabilities(Symbol... o) {
         getList().set(Field.CAPABILITIES.ordinal(), o);
         return this;
     }
 
-    public Object getCapabilities() {
-        return getList().get(Field.CAPABILITIES.ordinal());
+    public Symbol[] getCapabilities() {
+        return (Symbol[]) getList().get(Field.CAPABILITIES.ordinal());
     }
 }

@@ -18,7 +18,9 @@ package org.apache.qpid.proton4j.amqp.driver.codec.types;
 
 import java.util.List;
 
+import org.apache.qpid.proton4j.amqp.Binary;
 import org.apache.qpid.proton4j.amqp.Symbol;
+import org.apache.qpid.proton4j.amqp.UnsignedByte;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.amqp.driver.codec.ListDescribedType;
 
@@ -53,21 +55,21 @@ public class SaslOutcome extends ListDescribedType {
         return DESCRIPTOR_CODE;
     }
 
-    public SaslOutcome setCode(Object o) {
+    public SaslOutcome setCode(UnsignedByte o) {
         getList().set(Field.CODE.ordinal(), o);
         return this;
     }
 
-    public Object getCode() {
-        return getList().get(Field.CODE.ordinal());
+    public UnsignedByte getCode() {
+        return (UnsignedByte) getList().get(Field.CODE.ordinal());
     }
 
-    public SaslOutcome setAdditionalData(Object o) {
+    public SaslOutcome setAdditionalData(Binary o) {
         getList().set(Field.ADDITIONAL_DATA.ordinal(), o);
         return this;
     }
 
-    public Object getAdditionalData() {
-        return getList().get(Field.ADDITIONAL_DATA.ordinal());
+    public Binary getAdditionalData() {
+        return (Binary) getList().get(Field.ADDITIONAL_DATA.ordinal());
     }
 }

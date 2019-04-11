@@ -18,7 +18,11 @@ package org.apache.qpid.proton4j.amqp.driver.codec.types;
 
 import java.util.List;
 
+import org.apache.qpid.proton4j.amqp.Binary;
+import org.apache.qpid.proton4j.amqp.DescribedType;
 import org.apache.qpid.proton4j.amqp.Symbol;
+import org.apache.qpid.proton4j.amqp.UnsignedByte;
+import org.apache.qpid.proton4j.amqp.UnsignedInteger;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.amqp.driver.codec.ListDescribedType;
 
@@ -62,102 +66,102 @@ public class Transfer extends ListDescribedType {
         return DESCRIPTOR_SYMBOL;
     }
 
-    public Transfer setHandle(Object o) {
+    public Transfer setHandle(UnsignedInteger o) {
         getList().set(Field.HANDLE.ordinal(), o);
         return this;
     }
 
-    public Object getHandle() {
-        return getList().get(Field.HANDLE.ordinal());
+    public UnsignedInteger getHandle() {
+        return (UnsignedInteger) getList().get(Field.HANDLE.ordinal());
     }
 
-    public Transfer setDeliveryId(Object o) {
+    public Transfer setDeliveryId(UnsignedInteger o) {
         getList().set(Field.DELIVERY_ID.ordinal(), o);
         return this;
     }
 
-    public Object getDeliveryId() {
-        return getList().get(Field.DELIVERY_ID.ordinal());
+    public UnsignedInteger getDeliveryId() {
+        return (UnsignedInteger) getList().get(Field.DELIVERY_ID.ordinal());
     }
 
-    public Transfer setDeliveryTag(Object o) {
+    public Transfer setDeliveryTag(Binary o) {
         getList().set(Field.DELIVERY_TAG.ordinal(), o);
         return this;
     }
 
-    public Object getDeliveryTag() {
-        return getList().get(Field.DELIVERY_TAG.ordinal());
+    public Binary getDeliveryTag() {
+        return (Binary) getList().get(Field.DELIVERY_TAG.ordinal());
     }
 
-    public Transfer setMessageFormat(Object o) {
+    public Transfer setMessageFormat(UnsignedInteger o) {
         getList().set(Field.MESSAGE_FORMAT.ordinal(), o);
         return this;
     }
 
-    public Object getMessageFormat() {
-        return getList().get(Field.MESSAGE_FORMAT.ordinal());
+    public UnsignedInteger getMessageFormat() {
+        return (UnsignedInteger) getList().get(Field.MESSAGE_FORMAT.ordinal());
     }
 
-    public Transfer setSettled(Object o) {
+    public Transfer setSettled(Boolean o) {
         getList().set(Field.SETTLED.ordinal(), o);
         return this;
     }
 
-    public Object getSettled() {
-        return getList().get(Field.SETTLED.ordinal());
+    public Boolean getSettled() {
+        return (Boolean) getList().get(Field.SETTLED.ordinal());
     }
 
-    public Transfer setMore(Object o) {
+    public Transfer setMore(Boolean o) {
         getList().set(Field.MORE.ordinal(), o);
         return this;
     }
 
-    public Object getMore() {
-        return getList().get(Field.MORE.ordinal());
+    public Boolean getMore() {
+        return (Boolean) getList().get(Field.MORE.ordinal());
     }
 
-    public Transfer setRcvSettleMode(Object o) {
+    public Transfer setRcvSettleMode(UnsignedByte o) {
         getList().set(Field.RCV_SETTLE_MODE.ordinal(), o);
         return this;
     }
 
-    public Object getRcvSettleMode() {
-        return getList().get(Field.RCV_SETTLE_MODE.ordinal());
+    public UnsignedByte getRcvSettleMode() {
+        return (UnsignedByte) getList().get(Field.RCV_SETTLE_MODE.ordinal());
     }
 
-    public Transfer setState(Object o) {
+    public Transfer setState(DescribedType o) {
         getList().set(Field.STATE.ordinal(), o);
         return this;
     }
 
-    public Object getState() {
-        return getList().get(Field.STATE.ordinal());
+    public DescribedType getState() {
+        return (DescribedType) getList().get(Field.STATE.ordinal());
     }
 
-    public Transfer setResume(Object o) {
+    public Transfer setResume(Boolean o) {
         getList().set(Field.RESUME.ordinal(), o);
         return this;
     }
 
-    public Object getResume() {
-        return getList().get(Field.RESUME.ordinal());
+    public Boolean getResume() {
+        return (Boolean) getList().get(Field.RESUME.ordinal());
     }
 
-    public Transfer setAborted(Object o) {
+    public Transfer setAborted(Boolean o) {
         getList().set(Field.ABORTED.ordinal(), o);
         return this;
     }
 
-    public Object getAborted() {
-        return getList().get(Field.ABORTED.ordinal());
+    public Boolean getAborted() {
+        return (Boolean) getList().get(Field.ABORTED.ordinal());
     }
 
-    public Transfer setBatchable(Object o) {
+    public Transfer setBatchable(Boolean o) {
         getList().set(Field.BATCHABLE.ordinal(), o);
         return this;
     }
 
-    public Object getBatchable() {
-        return getList().get(Field.BATCHABLE.ordinal());
+    public Boolean getBatchable() {
+        return (Boolean) getList().get(Field.BATCHABLE.ordinal());
     }
 }

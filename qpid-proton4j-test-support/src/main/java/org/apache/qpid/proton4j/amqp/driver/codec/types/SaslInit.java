@@ -18,6 +18,7 @@ package org.apache.qpid.proton4j.amqp.driver.codec.types;
 
 import java.util.List;
 
+import org.apache.qpid.proton4j.amqp.Binary;
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.amqp.driver.codec.ListDescribedType;
@@ -54,30 +55,30 @@ public class SaslInit extends ListDescribedType {
         return DESCRIPTOR_SYMBOL;
     }
 
-    public SaslInit setMechanism(Object o) {
+    public SaslInit setMechanism(Symbol o) {
         getList().set(Field.MECHANISM.ordinal(), o);
         return this;
     }
 
-    public Object getMechanism() {
-        return getList().get(Field.MECHANISM.ordinal());
+    public Symbol getMechanism() {
+        return (Symbol) getList().get(Field.MECHANISM.ordinal());
     }
 
-    public SaslInit setInitialResponse(Object o) {
+    public SaslInit setInitialResponse(Binary o) {
         getList().set(Field.INITIAL_RESPONSE.ordinal(), o);
         return this;
     }
 
-    public Object getInitialResponse() {
-        return getList().get(Field.INITIAL_RESPONSE.ordinal());
+    public Binary getInitialResponse() {
+        return (Binary) getList().get(Field.INITIAL_RESPONSE.ordinal());
     }
 
-    public SaslInit setHostname(Object o) {
+    public SaslInit setHostname(String o) {
         getList().set(Field.HOSTNAME.ordinal(), o);
         return this;
     }
 
-    public Object getHostname() {
-        return getList().get(Field.HOSTNAME.ordinal());
+    public String getHostname() {
+        return (String) getList().get(Field.HOSTNAME.ordinal());
     }
 }

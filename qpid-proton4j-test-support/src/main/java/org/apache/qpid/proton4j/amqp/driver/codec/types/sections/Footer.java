@@ -30,7 +30,7 @@ public class Footer extends MapDescribedType {
         return DESCRIPTOR_SYMBOL;
     }
 
-    public void setApplicationProperty(Object key, Object value) {
+    public void setFooterProperty(Object key, Object value) {
         if (key == null) {
             throw new RuntimeException("Footer maps must use non-null keys");
         }

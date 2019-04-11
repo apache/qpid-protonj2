@@ -85,21 +85,21 @@ public class BeginExpectation extends AbstractExpectation<Begin> {
 
         // Populate the remote channel with that of the incoming begin unless scripted to send
         // otherwise which can indicate error handling test.
-        if (!response.getPerformative().hasRemoteChannel()) {
-            response.getPerformative().setRemoteChannel(channel);
+        if (response.getPerformative().getRemoteChannel() == null) {
+            response.withRemoteChannel(channel);
         }
 
-        if (!response.getPerformative().hasNextOutgoingId()) {
-            response.getPerformative().setNextOutgoingId(begin.getNextOutgoingId());
+        if (response.getPerformative().getNextOutgoingId() == null) {
+            response.withNextOutgoingId(begin.getNextOutgoingId());
         }
-        if (!response.getPerformative().hasIncomingWindow()) {
-            response.getPerformative().setIncomingWindow(begin.getIncomingWindow());
+        if (response.getPerformative().getIncomingWindow() == null) {
+            response.withIncomingWindow(begin.getIncomingWindow());
         }
-        if (!response.getPerformative().hasOutgoingWindow()) {
-            response.getPerformative().setOutgoingWindow(begin.getOutgoingWindow());
+        if (response.getPerformative().getOutgoingWindow() == null) {
+            response.withOutgoingWindow(begin.getOutgoingWindow());
         }
-        if (!response.getPerformative().hasHandleMax()) {
-            response.getPerformative().setHandleMax(begin.getHandleMax());
+        if (response.getPerformative().getHandleMax() == null) {
+            response.withHandleMax(begin.getHandleMax());
         }
 
         // The remainder of the values are left not set unless set in the test script

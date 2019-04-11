@@ -17,8 +17,10 @@
 package org.apache.qpid.proton4j.amqp.driver.codec.types;
 
 import java.util.List;
+import java.util.Map;
 
 import org.apache.qpid.proton4j.amqp.Symbol;
+import org.apache.qpid.proton4j.amqp.UnsignedInteger;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.amqp.driver.codec.ListDescribedType;
 
@@ -62,102 +64,103 @@ public class Flow extends ListDescribedType {
         return DESCRIPTOR_SYMBOL;
     }
 
-    public Flow setNextIncomingId(Object o) {
+    public Flow setNextIncomingId(UnsignedInteger o) {
         getList().set(Field.NEXT_INCOMING_ID.ordinal(), o);
         return this;
     }
 
-    public Object getNextIncomingId() {
-        return getList().get(Field.NEXT_INCOMING_ID.ordinal());
+    public UnsignedInteger getNextIncomingId() {
+        return (UnsignedInteger) getList().get(Field.NEXT_INCOMING_ID.ordinal());
     }
 
-    public Flow setIncomingWindow(Object o) {
+    public Flow setIncomingWindow(UnsignedInteger o) {
         getList().set(Field.INCOMING_WINDOW.ordinal(), o);
         return this;
     }
 
-    public Object getIncomingWindow() {
-        return getList().get(Field.INCOMING_WINDOW.ordinal());
+    public UnsignedInteger getIncomingWindow() {
+        return (UnsignedInteger) getList().get(Field.INCOMING_WINDOW.ordinal());
     }
 
-    public Flow setNextOutgoingId(Object o) {
+    public Flow setNextOutgoingId(UnsignedInteger o) {
         getList().set(Field.NEXT_OUTGOING_ID.ordinal(), o);
         return this;
     }
 
-    public Object getNextOutgoingId() {
-        return getList().get(Field.NEXT_OUTGOING_ID.ordinal());
+    public UnsignedInteger getNextOutgoingId() {
+        return (UnsignedInteger) getList().get(Field.NEXT_OUTGOING_ID.ordinal());
     }
 
-    public Flow setOutgoingWindow(Object o) {
+    public Flow setOutgoingWindow(UnsignedInteger o) {
         getList().set(Field.OUTGOING_WINDOW.ordinal(), o);
         return this;
     }
 
-    public Object getOutgoingWindow() {
-        return getList().get(Field.OUTGOING_WINDOW.ordinal());
+    public UnsignedInteger getOutgoingWindow() {
+        return (UnsignedInteger) getList().get(Field.OUTGOING_WINDOW.ordinal());
     }
 
-    public Flow setHandle(Object o) {
+    public Flow setHandle(UnsignedInteger o) {
         getList().set(Field.HANDLE.ordinal(), o);
         return this;
     }
 
-    public Object getHandle() {
-        return getList().get(Field.HANDLE.ordinal());
+    public UnsignedInteger getHandle() {
+        return (UnsignedInteger) getList().get(Field.HANDLE.ordinal());
     }
 
-    public Flow setDeliveryCount(Object o) {
+    public Flow setDeliveryCount(UnsignedInteger o) {
         getList().set(Field.DELIVERY_COUNT.ordinal(), o);
         return this;
     }
 
-    public Object getDeliveryCount() {
-        return getList().get(Field.DELIVERY_COUNT.ordinal());
+    public UnsignedInteger getDeliveryCount() {
+        return (UnsignedInteger) getList().get(Field.DELIVERY_COUNT.ordinal());
     }
 
-    public Flow setLinkCredit(Object o) {
+    public Flow setLinkCredit(UnsignedInteger o) {
         getList().set(Field.LINK_CREDIT.ordinal(), o);
         return this;
     }
 
-    public Object getLinkCredit() {
-        return getList().get(Field.LINK_CREDIT.ordinal());
+    public UnsignedInteger getLinkCredit() {
+        return (UnsignedInteger) getList().get(Field.LINK_CREDIT.ordinal());
     }
 
-    public Flow setAvailable(Object o) {
+    public Flow setAvailable(UnsignedInteger o) {
         getList().set(Field.AVAILABLE.ordinal(), o);
         return this;
     }
 
-    public Object getAvailable() {
-        return getList().get(Field.AVAILABLE.ordinal());
+    public UnsignedInteger getAvailable() {
+        return (UnsignedInteger) getList().get(Field.AVAILABLE.ordinal());
     }
 
-    public Flow setDrain(Object o) {
+    public Flow setDrain(Boolean o) {
         getList().set(Field.DRAIN.ordinal(), o);
         return this;
     }
 
-    public Object getDrain() {
-        return getList().get(Field.DRAIN.ordinal());
+    public Boolean getDrain() {
+        return (Boolean) getList().get(Field.DRAIN.ordinal());
     }
 
-    public Flow setEcho(Object o) {
+    public Flow setEcho(Boolean o) {
         getList().set(Field.ECHO.ordinal(), o);
         return this;
     }
 
-    public Object getEcho() {
-        return getList().get(Field.ECHO.ordinal());
+    public Boolean getEcho() {
+        return (Boolean) getList().get(Field.ECHO.ordinal());
     }
 
-    public Flow setProperties(Object o) {
+    public Flow setProperties(Map<Symbol, Object> o) {
         getList().set(Field.PROPERTIES.ordinal(), o);
         return this;
     }
 
-    public Object getProperties() {
-        return getList().get(Field.PROPERTIES.ordinal());
+    @SuppressWarnings("unchecked")
+    public Map<Symbol, Object> getProperties() {
+        return (Map<Symbol, Object>) getList().get(Field.PROPERTIES.ordinal());
     }
 }

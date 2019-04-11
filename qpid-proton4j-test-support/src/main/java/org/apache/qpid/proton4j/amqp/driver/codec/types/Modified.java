@@ -17,6 +17,7 @@
 package org.apache.qpid.proton4j.amqp.driver.codec.types;
 
 import java.util.List;
+import java.util.Map;
 
 import org.apache.qpid.proton4j.amqp.DescribedType;
 import org.apache.qpid.proton4j.amqp.Symbol;
@@ -55,31 +56,32 @@ public class Modified extends ListDescribedType {
         return DESCRIPTOR_SYMBOL;
     }
 
-    public Modified setDeliveryFailed(Object o) {
+    public Modified setDeliveryFailed(Boolean o) {
         getList().set(Field.DELIVERY_FAILED.ordinal(), o);
         return this;
     }
 
-    public Object getDeliveryFailed() {
-        return getList().get(Field.DELIVERY_FAILED.ordinal());
+    public Boolean getDeliveryFailed() {
+        return (Boolean) getList().get(Field.DELIVERY_FAILED.ordinal());
     }
 
-    public Modified setUndeliverableHere(Object o) {
+    public Modified setUndeliverableHere(Boolean o) {
         getList().set(Field.UNDELIVERABLE_HERE.ordinal(), o);
         return this;
     }
 
-    public Object getUndeliverableHere() {
-        return getList().get(Field.UNDELIVERABLE_HERE.ordinal());
+    public Boolean getUndeliverableHere() {
+        return (Boolean) getList().get(Field.UNDELIVERABLE_HERE.ordinal());
     }
 
-    public Modified setMessageAnnotations(Object o) {
+    public Modified setMessageAnnotations(Map<Symbol, Object> o) {
         getList().set(Field.MESSAGE_ANNOTATIONS.ordinal(), o);
         return this;
     }
 
-    public Object getMessageAnnotations() {
-        return getList().get(Field.MESSAGE_ANNOTATIONS.ordinal());
+    @SuppressWarnings("unchecked")
+    public Map<Symbol, Object> getMessageAnnotations() {
+        return (Map<Symbol, Object>) getList().get(Field.MESSAGE_ANNOTATIONS.ordinal());
     }
 
     @Override

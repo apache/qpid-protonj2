@@ -34,6 +34,10 @@ public class MessageAnnotations extends MapDescribedType {
         getDescribed().put(Symbol.valueOf(name), value);
     }
 
+    public void setSymbolKeyedAnnotation(Symbol name, Object value) {
+        getDescribed().put(name, value);
+    }
+
     public void setUnsignedLongKeyedAnnotation(UnsignedLong name, Object value) {
         throw new UnsupportedOperationException("UnsignedLong keys are currently reserved");
     }

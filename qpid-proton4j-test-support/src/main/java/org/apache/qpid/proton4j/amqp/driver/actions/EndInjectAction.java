@@ -16,7 +16,8 @@
  */
 package org.apache.qpid.proton4j.amqp.driver.actions;
 
-import org.apache.qpid.proton4j.amqp.transport.End;
+import org.apache.qpid.proton4j.amqp.driver.codec.types.End;
+import org.apache.qpid.proton4j.amqp.driver.codec.util.TypeMapper;
 import org.apache.qpid.proton4j.amqp.transport.ErrorCondition;
 
 /**
@@ -33,7 +34,7 @@ public class EndInjectAction extends AbstractPerformativeInjectAction<End> {
     }
 
     public EndInjectAction withErrorCondition(ErrorCondition error) {
-        end.setError(error);
+        end.setError(TypeMapper.mapFromProtonType(error));
         return this;
     }
 }

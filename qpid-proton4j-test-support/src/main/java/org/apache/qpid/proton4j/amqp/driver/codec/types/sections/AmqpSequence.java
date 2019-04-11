@@ -16,6 +16,8 @@
  */
 package org.apache.qpid.proton4j.amqp.driver.codec.types.sections;
 
+import java.util.List;
+
 import org.apache.qpid.proton4j.amqp.DescribedType;
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
@@ -25,9 +27,9 @@ public class AmqpSequence implements DescribedType {
     public static final UnsignedLong DESCRIPTOR_CODE = UnsignedLong.valueOf(0x0000000000000076L);
     public static final Symbol DESCRIPTOR_SYMBOL = Symbol.valueOf("amqp:amqp-sequence:list");
 
-    private Object described;
+    private List<?> described;
 
-    public AmqpSequence(Object described) {
+    public AmqpSequence(List<?> described) {
         this.described = described;
     }
 

@@ -19,6 +19,7 @@ package org.apache.qpid.proton4j.amqp.driver.codec.types;
 import java.util.List;
 
 import org.apache.qpid.proton4j.amqp.Symbol;
+import org.apache.qpid.proton4j.amqp.UnsignedInteger;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.amqp.driver.codec.ListDescribedType;
 
@@ -54,25 +55,25 @@ public class Detach extends ListDescribedType {
         return DESCRIPTOR_CODE;
     }
 
-    public Detach setHandle(Object o) {
+    public Detach setHandle(UnsignedInteger o) {
         getList().set(Field.HANDLE.ordinal(), o);
         return this;
     }
 
-    public Object getHandle() {
-        return getList().get(Field.HANDLE.ordinal());
+    public UnsignedInteger getHandle() {
+        return (UnsignedInteger) getList().get(Field.HANDLE.ordinal());
     }
 
-    public Detach setClosed(Object o) {
+    public Detach setClosed(Boolean o) {
         getList().set(Field.CLOSED.ordinal(), o);
         return this;
     }
 
-    public Object getClosed() {
-        return getList().get(Field.CLOSED.ordinal());
+    public Boolean getClosed() {
+        return (Boolean) getList().get(Field.CLOSED.ordinal());
     }
 
-    public Detach setError(Object o) {
+    public Detach setError(ErrorCondition o) {
         getList().set(Field.ERROR.ordinal(), o);
         return this;
     }

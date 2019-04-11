@@ -19,7 +19,9 @@ package org.apache.qpid.proton4j.amqp.driver.actions;
 import java.util.Map;
 
 import org.apache.qpid.proton4j.amqp.Symbol;
-import org.apache.qpid.proton4j.amqp.transport.Begin;
+import org.apache.qpid.proton4j.amqp.UnsignedInteger;
+import org.apache.qpid.proton4j.amqp.UnsignedShort;
+import org.apache.qpid.proton4j.amqp.driver.codec.types.Begin;
 
 /**
  * AMQP Begin injection action which can be added to a driver for write at a specific time or
@@ -35,27 +37,27 @@ public class BeginInjectAction extends AbstractPerformativeInjectAction<Begin> {
     }
 
     public BeginInjectAction withRemoteChannel(int remoteChannel) {
-        begin.setRemoteChannel(remoteChannel);
+        begin.setRemoteChannel(UnsignedShort.valueOf((short) remoteChannel));
         return this;
     }
 
     public BeginInjectAction withNextOutgoingId(long nextOutgoingId) {
-        begin.setNextOutgoingId(nextOutgoingId);
+        begin.setNextOutgoingId(UnsignedInteger.valueOf(nextOutgoingId));
         return this;
     }
 
     public BeginInjectAction withIncomingWindow(long incomingWindow) {
-        begin.setIncomingWindow(incomingWindow);
+        begin.setIncomingWindow(UnsignedInteger.valueOf(incomingWindow));
         return this;
     }
 
     public BeginInjectAction withOutgoingWindow(long outgoingWindow) {
-        begin.setOutgoingWindow(outgoingWindow);
+        begin.setOutgoingWindow(UnsignedInteger.valueOf(outgoingWindow));
         return this;
     }
 
     public BeginInjectAction withHandleMax(long handleMax) {
-        begin.setHandleMax(handleMax);
+        begin.setHandleMax(UnsignedInteger.valueOf(handleMax));
         return this;
     }
 

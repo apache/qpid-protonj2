@@ -16,8 +16,10 @@
  */
 package org.apache.qpid.proton4j.amqp.driver.actions;
 
+import org.apache.qpid.proton4j.amqp.UnsignedInteger;
+import org.apache.qpid.proton4j.amqp.driver.codec.types.Disposition;
+import org.apache.qpid.proton4j.amqp.driver.codec.util.TypeMapper;
 import org.apache.qpid.proton4j.amqp.transport.DeliveryState;
-import org.apache.qpid.proton4j.amqp.transport.Disposition;
 import org.apache.qpid.proton4j.amqp.transport.Role;
 
 /**
@@ -34,17 +36,17 @@ public class DispositionInjectAction extends AbstractPerformativeInjectAction<Di
     }
 
     public DispositionInjectAction withRole(Role role) {
-        disposition.setRole(role);
+        disposition.setRole(role.getValue());
         return this;
     }
 
     public DispositionInjectAction withFirst(long first) {
-        disposition.setFirst(first);
+        disposition.setFirst(UnsignedInteger.valueOf(first));
         return this;
     }
 
     public DispositionInjectAction withLast(long last) {
-        disposition.setLast(last);
+        disposition.setLast(UnsignedInteger.valueOf(last));
         return this;
     }
 
@@ -54,7 +56,7 @@ public class DispositionInjectAction extends AbstractPerformativeInjectAction<Di
     }
 
     public DispositionInjectAction withState(DeliveryState state) {
-        disposition.setState(state);
+        disposition.setState(TypeMapper.mapFromProtonType(state));
         return this;
     }
 

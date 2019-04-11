@@ -42,7 +42,7 @@ public class Data implements DescribedType {
     }
 
     @Override
-    public Object getDescribed() {
+    public Binary getDescribed() {
         return described;
     }
 }
