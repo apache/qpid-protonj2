@@ -29,4 +29,20 @@ public enum Role {
     public boolean getValue() {
         return receiver;
     }
+
+    public static Role valueOf(boolean role) {
+        if (role) {
+            return RECEIVER;
+        } else {
+            return SENDER;
+        }
+    }
+
+    public static Role valueOf(Boolean role) {
+        if (Boolean.TRUE.equals(role)) {
+            return RECEIVER;
+        } else {
+            return SENDER;
+        }
+    }
 }
