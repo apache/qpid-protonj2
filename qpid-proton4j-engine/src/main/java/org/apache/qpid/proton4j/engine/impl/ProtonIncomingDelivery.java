@@ -39,6 +39,7 @@ public class ProtonIncomingDelivery implements IncomingDelivery {
 
     private DeliveryState localState;
     private boolean locallySettled;
+    // private boolean localSettleSent; // Track if settle was sent and is permanent.
 
     private DeliveryState remoteState;
     private boolean remotelySettled;
@@ -127,23 +128,22 @@ public class ProtonIncomingDelivery implements IncomingDelivery {
         return defaultDeliveryState;
     }
 
-    //----- TODO -- Move these to the Receiver so the delivery is acted upon consistently via its parent ?
+    @Override
+    public IncomingDelivery disposition(DeliveryState state) {
+        this.localState = state;
+        return this;
+    }
 
     @Override
-    public void disposition(DeliveryState state) {
+    public IncomingDelivery disposition(DeliveryState state, boolean settle) {
+        this.locallySettled = settle;
         this.localState = state;
+        return this;
     }
 
     @Override
     public Delivery settle() {
-        return settle(null);
-    }
-
-    @Override
-    public ProtonIncomingDelivery settle(DeliveryState state) {
         this.locallySettled = true;
-        this.localState = state;
-
         return this;
     }
 

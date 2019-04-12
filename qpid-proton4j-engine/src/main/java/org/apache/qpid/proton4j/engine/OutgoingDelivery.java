@@ -35,8 +35,6 @@ public interface OutgoingDelivery extends Delivery {
 
     // OutgoingDelivery complete();  write what was written as complete transfer
 
-    // TODO - names of these send methods, send, sendBytes, write, writeBytes ?
-
     /**
      * @param buffer
      *      The buffer whose contents should be sent.
@@ -46,6 +44,9 @@ public interface OutgoingDelivery extends Delivery {
     void writeBytes(ProtonBuffer buffer);
 
     /**
+     * Writes the given bytes into this delivery appending them to any previously written but not
+     * sent bytes in this delivery.
+     *
      * @param array
      *      The array whose contents should be sent
      * @param offset

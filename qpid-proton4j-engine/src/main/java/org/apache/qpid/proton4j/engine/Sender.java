@@ -36,6 +36,10 @@ public interface Sender extends Link<Sender> {
 
     // Sender drained(LinkCreditState state);
 
+    // Sender disposition(OutgoingDelivery... deliveries, boolean settle);
+
+    // Sender settle(OoutgoingDelivery... deliveries);
+
     //----- Event handlers for the Sender
 
     /**

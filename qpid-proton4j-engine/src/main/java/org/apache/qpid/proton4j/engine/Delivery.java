@@ -108,8 +108,25 @@ public interface Delivery {
      * updates the state of the delivery
      *
      * @param state the new delivery state
+     *
+     * @return this delivery instance.
      */
-    public void disposition(DeliveryState state);
+    public Delivery disposition(DeliveryState state);
+
+    /**
+     * Update the delivery with the given disposition if not locally settled
+     * and optionally settles the delivery if not already settled.
+     *
+     * TODO - Fully document the result of this call.
+     *
+     * @param state
+     *      the new delivery state
+     * @param settle
+     *       if true the delivery is settled.
+     *
+     * @return this delivery instance.
+     */
+    public Delivery disposition(DeliveryState state, boolean settle);
 
     /**
      * Settles this delivery.
@@ -119,16 +136,5 @@ public interface Delivery {
      * @return this delivery instance.
      */
     public Delivery settle();
-
-    /**
-     * Settles this delivery with the given disposition.
-     *
-     * TODO - Fully document the result of this call.
-     *
-     * @param state the new delivery state
-     *
-     * @return this delivery instance.
-     */
-    public Delivery settle(DeliveryState state);
 
 }
