@@ -21,9 +21,9 @@ import java.util.Queue;
 import java.util.function.Consumer;
 
 import org.apache.qpid.proton4j.amqp.DescribedType;
-import org.apache.qpid.proton4j.amqp.security.SaslPerformative;
+import org.apache.qpid.proton4j.amqp.driver.codec.security.SaslDescribedType;
+import org.apache.qpid.proton4j.amqp.driver.codec.transport.PerformativeDescribedType;
 import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
-import org.apache.qpid.proton4j.amqp.transport.Performative;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.common.logging.ProtonLogger;
 import org.apache.qpid.proton4j.common.logging.ProtonLoggerFactory;
@@ -143,7 +143,7 @@ public class AMQPTestDriver implements Consumer<ProtonBuffer> {
         prcessScript(scriptEntry);
     }
 
-    void handleSaslPerformative(SaslPerformative sasl, int channel, ProtonBuffer payload) throws AssertionError {
+    void handleSaslPerformative(SaslDescribedType sasl, int channel, ProtonBuffer payload) throws AssertionError {
         ScriptedElement scriptEntry = script.poll();
         if (scriptEntry == null) {
             signalFailure(new AssertionError("Received performative[" + sasl + "] when not expecting any input."));
@@ -153,7 +153,7 @@ public class AMQPTestDriver implements Consumer<ProtonBuffer> {
         prcessScript(scriptEntry);
     }
 
-    void handlePerformative(Performative amqp, int channel, ProtonBuffer payload) throws AssertionError {
+    void handlePerformative(PerformativeDescribedType amqp, int channel, ProtonBuffer payload) throws AssertionError {
         ScriptedElement scriptEntry = script.poll();
         if (scriptEntry == null) {
             signalFailure(new AssertionError("Received performative[" + amqp + "] when not expecting any input."));

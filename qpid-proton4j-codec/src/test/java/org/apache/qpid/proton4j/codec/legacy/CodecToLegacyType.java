@@ -156,14 +156,14 @@ public abstract class CodecToLegacyType {
 
         legacyOpen.setContainerId(open.getContainerId());
         legacyOpen.setHostname(open.getHostname());
-        if (open.getMaxFrameSize() != null) {
-            legacyOpen.setMaxFrameSize(org.apache.qpid.proton.amqp.UnsignedInteger.valueOf(open.getMaxFrameSize().intValue()));
+        if (open.hasMaxFrameSize()) {
+            legacyOpen.setMaxFrameSize(org.apache.qpid.proton.amqp.UnsignedInteger.valueOf(open.getMaxFrameSize()));
         }
-        if (open.getChannelMax() != null) {
-            legacyOpen.setChannelMax(org.apache.qpid.proton.amqp.UnsignedShort.valueOf(open.getChannelMax().shortValue()));
+        if (open.hasChannelMax()) {
+            legacyOpen.setChannelMax(org.apache.qpid.proton.amqp.UnsignedShort.valueOf((short) open.getChannelMax()));
         }
-        if (open.getIdleTimeOut() != null) {
-            legacyOpen.setIdleTimeOut(convertToLegacyType(open.getIdleTimeOut()));
+        if (open.hasIdleTimeout()) {
+            legacyOpen.setIdleTimeOut(org.apache.qpid.proton.amqp.UnsignedInteger.valueOf(open.getIdleTimeOut()));
         }
         if (open.getOutgoingLocales() != null) {
             legacyOpen.setOutgoingLocales(convertToLegacyType(open.getOutgoingLocales()));

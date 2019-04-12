@@ -20,20 +20,13 @@ import static org.hamcrest.CoreMatchers.equalTo;
 
 import org.apache.qpid.proton4j.amqp.Binary;
 import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
-import org.apache.qpid.proton4j.amqp.security.SaslResponse;
+import org.apache.qpid.proton4j.amqp.driver.codec.security.SaslResponse;
 import org.hamcrest.Matcher;
 
 /**
  * Scripted expectation for the AMQP SaslResponse performative
  */
 public class SaslResponseExpectation extends AbstractExpectation<SaslResponse> {
-
-    /**
-     * Enumeration which maps to fields in the SaslResponse Performative
-     */
-    public enum Field {
-        RESPONSE
-    }
 
     public SaslResponseExpectation(AMQPTestDriver driver) {
         super(driver);
@@ -48,26 +41,18 @@ public class SaslResponseExpectation extends AbstractExpectation<SaslResponse> {
     //----- Matcher based with methods for more complex validation
 
     public SaslResponseExpectation withResponse(Matcher<?> m) {
-        getMatchers().put(Field.RESPONSE, m);
+        getMatchers().put(SaslResponse.Field.RESPONSE, m);
         return this;
     }
 
     @Override
     protected Object getFieldValue(SaslResponse saslResponse, Enum<?> performativeField) {
-        Object result = null;
-
-        if (performativeField == Field.RESPONSE) {
-            result = saslResponse.getResponse();
-        } else {
-            throw new AssertionError("Request for unknown field in type SaslResponse");
-        }
-
-        return result;
+        return saslResponse.getFieldValue(performativeField.ordinal());
     }
 
     @Override
     protected Enum<?> getFieldEnum(int fieldIndex) {
-        return Field.values()[fieldIndex];
+        return SaslResponse.Field.values()[fieldIndex];
     }
 
     @Override

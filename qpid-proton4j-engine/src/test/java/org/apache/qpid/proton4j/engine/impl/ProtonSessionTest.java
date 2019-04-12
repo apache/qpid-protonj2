@@ -16,6 +16,7 @@
  */
 package org.apache.qpid.proton4j.engine.impl;
 
+import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -30,6 +31,7 @@ import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
 import org.apache.qpid.proton4j.amqp.driver.ScriptWriter;
 import org.apache.qpid.proton4j.engine.Connection;
 import org.apache.qpid.proton4j.engine.Session;
+import org.hamcrest.Matcher;
 import org.junit.Test;
 
 /**
@@ -220,9 +222,9 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
         AMQPTestDriver driver = new AMQPTestDriver(engine);
         engine.outputConsumer(driver);
 
-        int expectedMaxFrameSize = UnsignedInteger.MAX_VALUE.intValue();
+        Matcher<?> expectedMaxFrameSize = nullValue();
         if (setMaxFrameSize) {
-            expectedMaxFrameSize = MAX_FRAME_SIZE;
+            expectedMaxFrameSize = equalTo(UnsignedInteger.valueOf(MAX_FRAME_SIZE));
         }
 
         int expectedIncomingWindow = Integer.MAX_VALUE;
@@ -238,7 +240,6 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
                             .withNextOutgoingId(1)
                             .withIncomingWindow(expectedIncomingWindow)
                             .withOutgoingWindow(Integer.MAX_VALUE)
-                            .withHandleMax(nullValue())
                             .withOfferedCapabilities(nullValue())
                             .withDesiredCapabilities(nullValue())
                             .withProperties(nullValue())

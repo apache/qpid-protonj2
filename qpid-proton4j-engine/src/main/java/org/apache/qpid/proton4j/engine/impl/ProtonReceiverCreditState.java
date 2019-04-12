@@ -158,7 +158,7 @@ public class ProtonReceiverCreditState implements ProtonLinkCreditState {
                                                ", got " + transfer.getDeliveryId()));
         }
 
-        if (currentDeliveryId != null) {
+        if (!currentDeliveryId.isEmpty()) {
             parent.getSession().getConnection().getEngine().engineFailed(
                 new ProtocolViolationException("Illegal multiplex of deliveries on same link with delivery-id " +
                                                currentDeliveryId + " and " + transfer.getDeliveryId()));

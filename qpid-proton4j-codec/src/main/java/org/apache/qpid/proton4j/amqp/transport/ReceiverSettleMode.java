@@ -29,7 +29,7 @@ public enum ReceiverSettleMode {
     }
 
     public static ReceiverSettleMode valueOf(UnsignedByte value) {
-        return ReceiverSettleMode.valueOf(value.byteValue());
+        return value == null ? FIRST : ReceiverSettleMode.valueOf(value.byteValue());
     }
 
     public static ReceiverSettleMode valueOf(byte value) {

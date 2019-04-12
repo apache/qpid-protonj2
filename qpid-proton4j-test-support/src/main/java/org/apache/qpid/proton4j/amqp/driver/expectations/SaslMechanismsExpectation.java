@@ -20,20 +20,13 @@ import static org.hamcrest.CoreMatchers.equalTo;
 
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
-import org.apache.qpid.proton4j.amqp.security.SaslMechanisms;
+import org.apache.qpid.proton4j.amqp.driver.codec.security.SaslMechanisms;
 import org.hamcrest.Matcher;
 
 /**
  * Scripted expectation for the AMQP SaslMechanisms performative
  */
 public class SaslMechanismsExpectation extends AbstractExpectation<SaslMechanisms> {
-
-    /**
-     * Enumeration which maps to fields in the SaslMechanisms Performative
-     */
-    public enum Field {
-        SASL_SERVER_MECHANISMS
-    }
 
     public SaslMechanismsExpectation(AMQPTestDriver driver) {
         super(driver);
@@ -48,26 +41,18 @@ public class SaslMechanismsExpectation extends AbstractExpectation<SaslMechanism
     //----- Matcher based with methods for more complex validation
 
     public SaslMechanismsExpectation withSaslServerMechanisms(Matcher<?> m) {
-        getMatchers().put(Field.SASL_SERVER_MECHANISMS, m);
+        getMatchers().put(SaslMechanisms.Field.SASL_SERVER_MECHANISMS, m);
         return this;
     }
 
     @Override
     protected Object getFieldValue(SaslMechanisms saslMechanisms, Enum<?> performativeField) {
-        Object result = null;
-
-        if (performativeField == Field.SASL_SERVER_MECHANISMS) {
-            result = saslMechanisms.getSaslServerMechanisms();
-        } else {
-            throw new AssertionError("Request for unknown field in type SaslMechanisms");
-        }
-
-        return result;
+        return saslMechanisms.getFieldValue(performativeField.ordinal());
     }
 
     @Override
     protected Enum<?> getFieldEnum(int fieldIndex) {
-        return Field.values()[fieldIndex];
+        return SaslMechanisms.Field.values()[fieldIndex];
     }
 
     @Override

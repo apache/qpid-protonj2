@@ -121,7 +121,7 @@ public class ProtonPerformativeHandler implements EngineHandler, AMQPHeader.Head
         // TODO - This isn't storing the truth of what remote said, so configuration reports
         //        our trimmed view when asked externally.
         configuration.setRemoteMaxFrameSize(
-            (int) Math.min(open.getMaxFrameSize().longValue(), Integer.MAX_VALUE));
+            (int) Math.min(open.getMaxFrameSize(), Integer.MAX_VALUE));
 
         // Recompute max frame size now based on what remote told us.
         configuration.recomputeEffectiveFrameSizeLimits();

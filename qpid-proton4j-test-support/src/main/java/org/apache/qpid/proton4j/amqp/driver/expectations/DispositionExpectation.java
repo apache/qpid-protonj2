@@ -18,9 +18,11 @@ package org.apache.qpid.proton4j.amqp.driver.expectations;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 
+import org.apache.qpid.proton4j.amqp.UnsignedInteger;
 import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
+import org.apache.qpid.proton4j.amqp.driver.codec.transport.Disposition;
+import org.apache.qpid.proton4j.amqp.driver.codec.util.TypeMapper;
 import org.apache.qpid.proton4j.amqp.transport.DeliveryState;
-import org.apache.qpid.proton4j.amqp.transport.Disposition;
 import org.apache.qpid.proton4j.amqp.transport.Role;
 import org.hamcrest.Matcher;
 
@@ -28,18 +30,6 @@ import org.hamcrest.Matcher;
  * Scripted expectation for the AMQP Disposition performative
  */
 public class DispositionExpectation extends AbstractExpectation<Disposition> {
-
-    /**
-     * Enumeration which maps to fields in the Disposition Performative
-     */
-    public enum Field {
-        ROLE,
-        FIRST,
-        LAST,
-        SETTLED,
-        STATE,
-        BATCHABLE
-    }
 
     public DispositionExpectation(AMQPTestDriver driver) {
         super(driver);
@@ -54,93 +44,87 @@ public class DispositionExpectation extends AbstractExpectation<Disposition> {
     //----- Type specific with methods that perform simple equals checks
 
     public DispositionExpectation withRole(Role role) {
-        withRole(equalTo(role));
+        withRole(equalTo(role.getValue()));
         return this;
+    }
+
+    public DispositionExpectation withFirst(int first) {
+        return withFirst(equalTo(UnsignedInteger.valueOf(first)));
     }
 
     public DispositionExpectation withFirst(long first) {
-        withFirst(equalTo(first));
-        return this;
+        return withFirst(equalTo(UnsignedInteger.valueOf(first)));
+    }
+
+    public DispositionExpectation withFirst(UnsignedInteger first) {
+        return withFirst(equalTo(first));
+    }
+
+    public DispositionExpectation withLast(int last) {
+        return withLast(equalTo(UnsignedInteger.valueOf(last)));
     }
 
     public DispositionExpectation withLast(long last) {
-        withLast(equalTo(last));
-        return this;
+        return withLast(equalTo(UnsignedInteger.valueOf(last)));
+    }
+
+    public DispositionExpectation withLast(UnsignedInteger last) {
+        return withLast(equalTo(last));
     }
 
     public DispositionExpectation withSettled(boolean settled) {
-        withSettled(equalTo(settled));
-        return this;
+        return withSettled(equalTo(settled));
     }
 
     public DispositionExpectation withState(DeliveryState state) {
-        withState(equalTo(state));
-        return this;
+        // TODO - Might want a more generic DescribedTypeMatcher for these.
+        return withState(equalTo(TypeMapper.mapFromProtonType(state)));
     }
 
     public DispositionExpectation withBatchable(boolean batchable) {
-        withBatchable(equalTo(batchable));
-        return this;
+        return withBatchable(equalTo(batchable));
     }
 
     //----- Matcher based with methods for more complex validation
 
     public DispositionExpectation withRole(Matcher<?> m) {
-        getMatchers().put(Field.ROLE, m);
+        getMatchers().put(Disposition.Field.ROLE, m);
         return this;
     }
 
     public DispositionExpectation withFirst(Matcher<?> m) {
-        getMatchers().put(Field.FIRST, m);
+        getMatchers().put(Disposition.Field.FIRST, m);
         return this;
     }
 
     public DispositionExpectation withLast(Matcher<?> m) {
-        getMatchers().put(Field.LAST, m);
+        getMatchers().put(Disposition.Field.LAST, m);
         return this;
     }
 
     public DispositionExpectation withSettled(Matcher<?> m) {
-        getMatchers().put(Field.SETTLED, m);
+        getMatchers().put(Disposition.Field.SETTLED, m);
         return this;
     }
 
     public DispositionExpectation withState(Matcher<?> m) {
-        getMatchers().put(Field.STATE, m);
+        getMatchers().put(Disposition.Field.STATE, m);
         return this;
     }
 
     public DispositionExpectation withBatchable(Matcher<?> m) {
-        getMatchers().put(Field.BATCHABLE, m);
+        getMatchers().put(Disposition.Field.BATCHABLE, m);
         return this;
     }
 
     @Override
     protected Object getFieldValue(Disposition disposition, Enum<?> performativeField) {
-        Object result = null;
-
-        if (performativeField == Field.ROLE) {
-            result = disposition.hasRole() ? disposition.getRole() : null;
-        } else if (performativeField == Field.FIRST) {
-            result = disposition.hasFirst() ? disposition.getFirst() : null;
-        } else if (performativeField == Field.LAST) {
-            result = disposition.hasLast() ? disposition.getLast() : null;
-        } else if (performativeField == Field.SETTLED) {
-            result = disposition.hasSettled() ? disposition.getSettled() : null;
-        } else if (performativeField == Field.STATE) {
-            result = disposition.hasState() ? disposition.getState() : null;
-        } else if (performativeField == Field.BATCHABLE) {
-            result = disposition.hasBatchable() ? disposition.getBatchable() : null;
-        } else {
-            throw new AssertionError("Request for unknown field in type Disposition");
-        }
-
-        return result;
+        return disposition.getFieldValue(performativeField.ordinal());
     }
 
     @Override
     protected Enum<?> getFieldEnum(int fieldIndex) {
-        return Field.values()[fieldIndex];
+        return Disposition.Field.values()[fieldIndex];
     }
 
     @Override

@@ -31,11 +31,31 @@ public final class Open implements Performative {
     public static final UnsignedLong DESCRIPTOR_CODE = UnsignedLong.valueOf(0x0000000000000010L);
     public static final Symbol DESCRIPTOR_SYMBOL = Symbol.valueOf("amqp:open:list");
 
+    private static final long UINT_MAX = 0xFFFFFFFFL;
+
+    private static int CONTAINER_ID = 1;
+    private static int HOSTNAME = 2;
+    private static int MAX_FRAME_SIZE = 4;
+    private static int CHANNEL_MAX = 8;
+    private static int IDLE_TIMEOUT = 16;
+    private static int OUTGOING_LOCALES = 32;
+    private static int INCOMING_LOCALES = 64;
+    private static int OFFERED_CAPABILITIES = 128;
+    private static int DESIRED_CAPABILITIES = 256;
+    private static int PROPERTIES = 512;
+
+    private int modified = CONTAINER_ID;
+
+    // TODO - Consider using the matching signed types instead of next largest
+    //        for these values as in most cases we don't actually care about sign.
+    //        In the cases we do care we could just do the math and make these
+    //        interfaces simpler and not check all over the place for overflow.
+
     private String containerId = "";
     private String hostname;
-    private UnsignedInteger maxFrameSize = UnsignedInteger.valueOf(0xffffffff);
-    private UnsignedShort channelMax = UnsignedShort.valueOf((short) 65535);
-    private UnsignedInteger idleTimeOut;
+    private long maxFrameSize = UnsignedInteger.MAX_VALUE.longValue();
+    private int channelMax = UnsignedShort.MAX_VALUE.intValue();
+    private long idleTimeOut;
     private Symbol[] outgoingLocales;
     private Symbol[] incomingLocales;
     private Symbol[] offeredCapabilities;
@@ -70,6 +90,58 @@ public final class Open implements Performative {
         return copy;
     }
 
+    //----- Query the state of the Header object -----------------------------//
+
+    public boolean isEmpty() {
+        return modified == 0;
+    }
+
+    public int getElementCount() {
+        return 32 - Integer.numberOfLeadingZeros(modified);
+    }
+
+    public boolean hasContainerId() {
+        return (modified & CONTAINER_ID) == CONTAINER_ID;
+    }
+
+    public boolean hasHostname() {
+        return (modified & HOSTNAME) == HOSTNAME;
+    }
+
+    public boolean hasMaxFrameSize() {
+        return (modified & MAX_FRAME_SIZE) == MAX_FRAME_SIZE;
+    }
+
+    public boolean hasChannelMax() {
+        return (modified & CHANNEL_MAX) == CHANNEL_MAX;
+    }
+
+    public boolean hasIdleTimeout() {
+        return (modified & IDLE_TIMEOUT) == IDLE_TIMEOUT;
+    }
+
+    public boolean hasOutgoingLocales() {
+        return (modified & OUTGOING_LOCALES) == OUTGOING_LOCALES;
+    }
+
+    public boolean hasIncomingLocales() {
+        return (modified & INCOMING_LOCALES) == INCOMING_LOCALES;
+    }
+
+    public boolean hasOfferedCapabilites() {
+        return (modified & OFFERED_CAPABILITIES) == OFFERED_CAPABILITIES;
+    }
+
+    public boolean hasDesiredCapabilites() {
+        return (modified & DESIRED_CAPABILITIES) == DESIRED_CAPABILITIES;
+    }
+
+    public boolean hasProperties() {
+        return (modified & PROPERTIES) == PROPERTIES;
+    }
+
+    //----- Access to the member data with state checks
+
     public String getContainerId() {
         return containerId;
     }
@@ -78,6 +150,8 @@ public final class Open implements Performative {
         if (containerId == null) {
             throw new NullPointerException("the container-id field is mandatory");
         }
+
+        modified |= CONTAINER_ID;
 
         this.containerId = containerId;
         return this;
@@ -88,33 +162,61 @@ public final class Open implements Performative {
     }
 
     public Open setHostname(String hostname) {
+        if (hostname == null) {
+            modified &= ~HOSTNAME;
+        } else {
+            modified |= HOSTNAME;
+        }
+
         this.hostname = hostname;
         return this;
     }
 
-    public UnsignedInteger getMaxFrameSize() {
+    public long getMaxFrameSize() {
         return maxFrameSize;
     }
 
-    public Open setMaxFrameSize(UnsignedInteger maxFrameSize) {
+    public Open setMaxFrameSize(long maxFrameSize) {
+        if (maxFrameSize < 0 || maxFrameSize > UINT_MAX) {
+            throw new IllegalArgumentException("The Max Frame size value given is out of range: " + maxFrameSize);
+        } else if (UnsignedInteger.MAX_VALUE.compareTo(maxFrameSize) == 0) {
+            modified &= ~MAX_FRAME_SIZE;
+        } else {
+            modified |= MAX_FRAME_SIZE;
+        }
+
         this.maxFrameSize = maxFrameSize;
         return this;
     }
 
-    public UnsignedShort getChannelMax() {
+    public int getChannelMax() {
         return channelMax;
     }
 
-    public Open setChannelMax(UnsignedShort channelMax) {
+    public Open setChannelMax(int channelMax) {
+        if (maxFrameSize < 0 || maxFrameSize > UINT_MAX) {
+            throw new IllegalArgumentException("The Channel Max value given is out of range: " + channelMax);
+        } else if (UnsignedShort.MAX_VALUE.compareTo((short) channelMax) == 0) {
+            modified &= ~CHANNEL_MAX;
+        } else {
+            modified |= CHANNEL_MAX;
+        }
+
         this.channelMax = channelMax;
         return this;
     }
 
-    public UnsignedInteger getIdleTimeOut() {
+    public long getIdleTimeOut() {
         return idleTimeOut;
     }
 
-    public Open setIdleTimeOut(UnsignedInteger idleTimeOut) {
+    public Open setIdleTimeOut(long idleTimeOut) {
+        if (idleTimeOut < 0 || idleTimeOut > UnsignedShort.MAX_VALUE.intValue()) {
+            throw new IllegalArgumentException("The Idle Timeout value given is out of range: " + idleTimeOut);
+        } else {
+            modified |= IDLE_TIMEOUT;
+        }
+
         this.idleTimeOut = idleTimeOut;
         return this;
     }
@@ -124,6 +226,12 @@ public final class Open implements Performative {
     }
 
     public Open setOutgoingLocales(Symbol... outgoingLocales) {
+        if (outgoingLocales != null) {
+            modified |= OUTGOING_LOCALES;
+        } else {
+            modified &= ~OUTGOING_LOCALES;
+        }
+
         this.outgoingLocales = outgoingLocales;
         return this;
     }
@@ -133,6 +241,12 @@ public final class Open implements Performative {
     }
 
     public Open setIncomingLocales(Symbol... incomingLocales) {
+        if (incomingLocales != null) {
+            modified |= INCOMING_LOCALES;
+        } else {
+            modified &= ~INCOMING_LOCALES;
+        }
+
         this.incomingLocales = incomingLocales;
         return this;
     }
@@ -142,6 +256,12 @@ public final class Open implements Performative {
     }
 
     public Open setOfferedCapabilities(Symbol... offeredCapabilities) {
+        if (offeredCapabilities != null) {
+            modified |= OFFERED_CAPABILITIES;
+        } else {
+            modified &= ~OFFERED_CAPABILITIES;
+        }
+
         this.offeredCapabilities = offeredCapabilities;
         return this;
     }
@@ -151,6 +271,12 @@ public final class Open implements Performative {
     }
 
     public Open setDesiredCapabilities(Symbol... desiredCapabilities) {
+        if (desiredCapabilities != null) {
+            modified |= DESIRED_CAPABILITIES;
+        } else {
+            modified &= ~DESIRED_CAPABILITIES;
+        }
+
         this.desiredCapabilities = desiredCapabilities;
         return this;
     }
@@ -160,6 +286,12 @@ public final class Open implements Performative {
     }
 
     public Open setProperties(Map<Symbol, Object> properties) {
+        if (properties != null) {
+            modified |= PROPERTIES;
+        } else {
+            modified &= ~PROPERTIES;
+        }
+
         this.properties = properties;
         return this;
     }

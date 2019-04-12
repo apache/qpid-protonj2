@@ -173,4 +173,23 @@ public class Flow extends PerformativeDescribedType {
     public <E> void invoke(PerformativeHandler<E> handler, ProtonBuffer payload, int channel, E context) {
         handler.handleFlow(this, payload, channel, context);
     }
+
+    @Override
+    public Object getFieldValueOrSpecDefault(int index) {
+        Object result = getFieldValue(index);
+        if (result == null) {
+            Field field = Field.values()[index];
+            switch (field) {
+                case DRAIN:
+                    result = Boolean.FALSE;
+                    break;
+                case ECHO:
+                    result = Boolean.FALSE;
+                    break;
+                default:
+                    break;
+            }
+        }
+        return result;
+    }
 }

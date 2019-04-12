@@ -170,13 +170,13 @@ public abstract class LegacyToCodecType {
         newOpen.setContainerId(legacyOpen.getContainerId());
         newOpen.setHostname(legacyOpen.getHostname());
         if (legacyOpen.getMaxFrameSize() != null) {
-            newOpen.setMaxFrameSize(convertToCodecType(legacyOpen.getMaxFrameSize()));
+            newOpen.setMaxFrameSize(legacyOpen.getMaxFrameSize().longValue());
         }
         if (legacyOpen.getChannelMax() != null) {
-            newOpen.setChannelMax(convertToCodecType(legacyOpen.getChannelMax()));
+            newOpen.setChannelMax(legacyOpen.getChannelMax().intValue());
         }
         if (legacyOpen.getIdleTimeOut() != null) {
-            newOpen.setIdleTimeOut(convertToCodecType(legacyOpen.getIdleTimeOut()));
+            newOpen.setIdleTimeOut(legacyOpen.getIdleTimeOut().longValue());
         }
         if (legacyOpen.getOutgoingLocales() != null) {
             newOpen.setOutgoingLocales(convertToCodecType(legacyOpen.getOutgoingLocales()));

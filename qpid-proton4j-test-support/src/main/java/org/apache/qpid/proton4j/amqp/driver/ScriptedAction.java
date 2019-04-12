@@ -18,21 +18,21 @@ package org.apache.qpid.proton4j.amqp.driver;
 
 import java.util.function.Consumer;
 
-import org.apache.qpid.proton4j.amqp.security.SaslChallenge;
-import org.apache.qpid.proton4j.amqp.security.SaslInit;
-import org.apache.qpid.proton4j.amqp.security.SaslMechanisms;
-import org.apache.qpid.proton4j.amqp.security.SaslOutcome;
-import org.apache.qpid.proton4j.amqp.security.SaslResponse;
+import org.apache.qpid.proton4j.amqp.driver.codec.security.SaslChallenge;
+import org.apache.qpid.proton4j.amqp.driver.codec.security.SaslInit;
+import org.apache.qpid.proton4j.amqp.driver.codec.security.SaslMechanisms;
+import org.apache.qpid.proton4j.amqp.driver.codec.security.SaslOutcome;
+import org.apache.qpid.proton4j.amqp.driver.codec.security.SaslResponse;
+import org.apache.qpid.proton4j.amqp.driver.codec.transport.Attach;
+import org.apache.qpid.proton4j.amqp.driver.codec.transport.Begin;
+import org.apache.qpid.proton4j.amqp.driver.codec.transport.Close;
+import org.apache.qpid.proton4j.amqp.driver.codec.transport.Detach;
+import org.apache.qpid.proton4j.amqp.driver.codec.transport.Disposition;
+import org.apache.qpid.proton4j.amqp.driver.codec.transport.End;
+import org.apache.qpid.proton4j.amqp.driver.codec.transport.Flow;
+import org.apache.qpid.proton4j.amqp.driver.codec.transport.Open;
+import org.apache.qpid.proton4j.amqp.driver.codec.transport.Transfer;
 import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
-import org.apache.qpid.proton4j.amqp.transport.Attach;
-import org.apache.qpid.proton4j.amqp.transport.Begin;
-import org.apache.qpid.proton4j.amqp.transport.Close;
-import org.apache.qpid.proton4j.amqp.transport.Detach;
-import org.apache.qpid.proton4j.amqp.transport.Disposition;
-import org.apache.qpid.proton4j.amqp.transport.End;
-import org.apache.qpid.proton4j.amqp.transport.Flow;
-import org.apache.qpid.proton4j.amqp.transport.Open;
-import org.apache.qpid.proton4j.amqp.transport.Transfer;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 
 /**

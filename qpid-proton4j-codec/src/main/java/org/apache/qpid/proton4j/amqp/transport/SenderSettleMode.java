@@ -29,7 +29,7 @@ public enum SenderSettleMode {
     }
 
     public static SenderSettleMode valueOf(UnsignedByte value) {
-        return SenderSettleMode.valueOf(value.byteValue());
+        return value == null ? MIXED : SenderSettleMode.valueOf(value.byteValue());
     }
 
     public static SenderSettleMode valueOf(byte value) {

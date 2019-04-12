@@ -21,9 +21,11 @@ import static org.hamcrest.CoreMatchers.equalTo;
 import java.util.Map;
 
 import org.apache.qpid.proton4j.amqp.Symbol;
+import org.apache.qpid.proton4j.amqp.UnsignedInteger;
+import org.apache.qpid.proton4j.amqp.UnsignedShort;
 import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
 import org.apache.qpid.proton4j.amqp.driver.actions.BeginInjectAction;
-import org.apache.qpid.proton4j.amqp.transport.Begin;
+import org.apache.qpid.proton4j.amqp.driver.codec.transport.Begin;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.hamcrest.Matcher;
 
@@ -31,20 +33,6 @@ import org.hamcrest.Matcher;
  * Scripted expectation for the AMQP Begin performative
  */
 public class BeginExpectation extends AbstractExpectation<Begin> {
-
-    /**
-     * Enumeration which maps to fields in the Begin Performative
-     */
-    public enum Field {
-        REMOTE_CHANNEL,
-        NEXT_OUTGOING_ID,
-        INCOMING_WINDOW,
-        OUTGOING_WINDOW,
-        HANDLE_MAX,
-        OFFERED_CAPABILITIES,
-        DESIRED_CAPABILITIES,
-        PROPERTIES,
-    }
 
     private BeginInjectAction response;
 
@@ -108,22 +96,58 @@ public class BeginExpectation extends AbstractExpectation<Begin> {
     //----- Type specific with methods that perform simple equals checks
 
     public BeginExpectation withRemoteChannel(int remoteChannel) {
+        return withRemoteChannel(equalTo(UnsignedShort.valueOf((short) remoteChannel)));
+    }
+
+    public BeginExpectation withRemoteChannel(UnsignedShort remoteChannel) {
         return withRemoteChannel(equalTo(remoteChannel));
     }
 
+    public BeginExpectation withNextOutgoingId(int nextOutgoingId) {
+        return withNextOutgoingId(equalTo(UnsignedInteger.valueOf(nextOutgoingId)));
+    }
+
     public BeginExpectation withNextOutgoingId(long nextOutgoingId) {
+        return withNextOutgoingId(equalTo(UnsignedInteger.valueOf(nextOutgoingId)));
+    }
+
+    public BeginExpectation withNextOutgoingId(UnsignedInteger nextOutgoingId) {
         return withNextOutgoingId(equalTo(nextOutgoingId));
     }
 
+    public BeginExpectation withIncomingWindow(int incomingWindow) {
+        return withIncomingWindow(equalTo(UnsignedInteger.valueOf(incomingWindow)));
+    }
+
     public BeginExpectation withIncomingWindow(long incomingWindow) {
+        return withIncomingWindow(equalTo(UnsignedInteger.valueOf(incomingWindow)));
+    }
+
+    public BeginExpectation withIncomingWindow(UnsignedInteger incomingWindow) {
         return withIncomingWindow(equalTo(incomingWindow));
     }
 
+    public BeginExpectation withOutgoingWindow(int outgoingWindow) {
+        return withOutgoingWindow(equalTo(UnsignedInteger.valueOf(outgoingWindow)));
+    }
+
     public BeginExpectation withOutgoingWindow(long outgoingWindow) {
+        return withOutgoingWindow(equalTo(UnsignedInteger.valueOf(outgoingWindow)));
+    }
+
+    public BeginExpectation withOutgoingWindow(UnsignedInteger outgoingWindow) {
         return withOutgoingWindow(equalTo(outgoingWindow));
     }
 
+    public BeginExpectation withHandleMax(int handleMax) {
+        return withHandleMax(equalTo(UnsignedInteger.valueOf(handleMax)));
+    }
+
     public BeginExpectation withHandleMax(long handleMax) {
+        return withHandleMax(equalTo(UnsignedInteger.valueOf(handleMax)));
+    }
+
+    public BeginExpectation withHandleMax(UnsignedInteger handleMax) {
         return withHandleMax(equalTo(handleMax));
     }
 
@@ -142,75 +166,53 @@ public class BeginExpectation extends AbstractExpectation<Begin> {
     //----- Matcher based with methods for more complex validation
 
     public BeginExpectation withRemoteChannel(Matcher<?> m) {
-        getMatchers().put(Field.REMOTE_CHANNEL, m);
+        getMatchers().put(Begin.Field.REMOTE_CHANNEL, m);
         return this;
     }
 
     public BeginExpectation withNextOutgoingId(Matcher<?> m) {
-        getMatchers().put(Field.NEXT_OUTGOING_ID, m);
+        getMatchers().put(Begin.Field.NEXT_OUTGOING_ID, m);
         return this;
     }
 
     public BeginExpectation withIncomingWindow(Matcher<?> m) {
-        getMatchers().put(Field.INCOMING_WINDOW, m);
+        getMatchers().put(Begin.Field.INCOMING_WINDOW, m);
         return this;
     }
 
     public BeginExpectation withOutgoingWindow(Matcher<?> m) {
-        getMatchers().put(Field.OUTGOING_WINDOW, m);
+        getMatchers().put(Begin.Field.OUTGOING_WINDOW, m);
         return this;
     }
 
     public BeginExpectation withHandleMax(Matcher<?> m) {
-        getMatchers().put(Field.HANDLE_MAX, m);
+        getMatchers().put(Begin.Field.HANDLE_MAX, m);
         return this;
     }
 
     public BeginExpectation withOfferedCapabilities(Matcher<?> m) {
-        getMatchers().put(Field.OFFERED_CAPABILITIES, m);
+        getMatchers().put(Begin.Field.OFFERED_CAPABILITIES, m);
         return this;
     }
 
     public BeginExpectation withDesiredCapabilities(Matcher<?> m) {
-        getMatchers().put(Field.DESIRED_CAPABILITIES, m);
+        getMatchers().put(Begin.Field.DESIRED_CAPABILITIES, m);
         return this;
     }
 
     public BeginExpectation withProperties(Matcher<?> m) {
-        getMatchers().put(Field.PROPERTIES, m);
+        getMatchers().put(Begin.Field.PROPERTIES, m);
         return this;
     }
 
     @Override
     protected Object getFieldValue(Begin begin, Enum<?> performativeField) {
-        Object result = null;
-
-        if (performativeField == Field.REMOTE_CHANNEL) {
-            result = begin.hasRemoteChannel() ? begin.getRemoteChannel() : null;
-        } else if (performativeField == Field.NEXT_OUTGOING_ID) {
-            result = begin.hasNextOutgoingId() ? begin.getNextOutgoingId() : null;
-        } else if (performativeField == Field.INCOMING_WINDOW) {
-            result = begin.hasIncomingWindow() ? begin.getIncomingWindow() : null;
-        } else if (performativeField == Field.OUTGOING_WINDOW) {
-            result = begin.hasOutgoingWindow() ? begin.getOutgoingWindow() : null;
-        } else if (performativeField == Field.HANDLE_MAX) {
-            result = begin.hasHandleMax() ? begin.getHandleMax() : null;
-        } else if (performativeField == Field.OFFERED_CAPABILITIES) {
-            result = begin.hasOfferedCapabilites() ? begin.getOfferedCapabilities() : null;
-        } else if (performativeField == Field.DESIRED_CAPABILITIES) {
-            result = begin.hasDesiredCapabilites() ? begin.getDesiredCapabilities() : null;
-        } else if (performativeField == Field.PROPERTIES) {
-            result = begin.hasProperties() ? begin.getProperties() : null;
-        } else {
-            throw new AssertionError("Request for unknown field in type Begin");
-        }
-
-        return result;
+        return begin.getFieldValue(performativeField.ordinal());
     }
 
     @Override
     protected Enum<?> getFieldEnum(int fieldIndex) {
-        return Field.values()[fieldIndex];
+        return Begin.Field.values()[fieldIndex];
     }
 
     @Override

@@ -144,4 +144,20 @@ public class Begin extends PerformativeDescribedType {
     public <E> void invoke(PerformativeHandler<E> handler, ProtonBuffer payload, int channel, E context) {
         handler.handleBegin(this, payload, channel, context);
     }
+
+    @Override
+    public Object getFieldValueOrSpecDefault(int index) {
+        Object result = getFieldValue(index);
+        if (result == null) {
+            Field field = Field.values()[index];
+            switch (field) {
+                case HANDLE_MAX:
+                    result = UnsignedInteger.MAX_VALUE;
+                    break;
+                default:
+                    break;
+            }
+        }
+        return result;
+    }
 }

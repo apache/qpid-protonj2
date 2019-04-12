@@ -20,22 +20,14 @@ import static org.hamcrest.CoreMatchers.equalTo;
 
 import org.apache.qpid.proton4j.amqp.Binary;
 import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
+import org.apache.qpid.proton4j.amqp.driver.codec.security.SaslOutcome;
 import org.apache.qpid.proton4j.amqp.security.SaslCode;
-import org.apache.qpid.proton4j.amqp.security.SaslOutcome;
 import org.hamcrest.Matcher;
 
 /**
  * Scripted expectation for the AMQP SaslOutcome performative
  */
 public class SaslOutcomeExpectation extends AbstractExpectation<SaslOutcome> {
-
-    /**
-     * Enumeration which maps to fields in the SaslOutcome Performative
-     */
-    public enum Field {
-        CODE,
-        ADDITIONAL_DATA
-    }
 
     public SaslOutcomeExpectation(AMQPTestDriver driver) {
         super(driver);
@@ -54,33 +46,23 @@ public class SaslOutcomeExpectation extends AbstractExpectation<SaslOutcome> {
     //----- Matcher based with methods for more complex validation
 
     public SaslOutcomeExpectation withCode(Matcher<?> m) {
-        getMatchers().put(Field.CODE, m);
+        getMatchers().put(SaslOutcome.Field.CODE, m);
         return this;
     }
 
     public SaslOutcomeExpectation withAdditionalData(Matcher<?> m) {
-        getMatchers().put(Field.ADDITIONAL_DATA, m);
+        getMatchers().put(SaslOutcome.Field.ADDITIONAL_DATA, m);
         return this;
     }
 
     @Override
     protected Object getFieldValue(SaslOutcome saslOutcome, Enum<?> performativeField) {
-        Object result = null;
-
-        if (performativeField == Field.CODE) {
-            result = saslOutcome.getCode();
-        } else if (performativeField == Field.ADDITIONAL_DATA) {
-            result = saslOutcome.getAdditionalData();
-        } else {
-            throw new AssertionError("Request for unknown field in type SaslOutcome");
-        }
-
-        return result;
+        return saslOutcome.getFieldValue(performativeField.ordinal());
     }
 
     @Override
     protected Enum<?> getFieldEnum(int fieldIndex) {
-        return Field.values()[fieldIndex];
+        return SaslOutcome.Field.values()[fieldIndex];
     }
 
     @Override

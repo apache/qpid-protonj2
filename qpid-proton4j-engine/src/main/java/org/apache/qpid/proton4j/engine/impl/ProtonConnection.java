@@ -25,8 +25,6 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 import org.apache.qpid.proton4j.amqp.Symbol;
-import org.apache.qpid.proton4j.amqp.UnsignedInteger;
-import org.apache.qpid.proton4j.amqp.UnsignedShort;
 import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
 import org.apache.qpid.proton4j.amqp.transport.Attach;
 import org.apache.qpid.proton4j.amqp.transport.Begin;
@@ -182,37 +180,37 @@ public class ProtonConnection implements Connection, AMQPHeader.HeaderHandler<Pr
     @Override
     public Connection setMaxFrameSize(long maxFrameSize) {
         checkNotOpened("Cannot set Max Frame Size on already opened Connection");
-        localOpen.setMaxFrameSize(UnsignedInteger.valueOf(maxFrameSize));
+        localOpen.setMaxFrameSize(maxFrameSize);
         return this;
     }
 
     @Override
     public long getMaxFrameSize() {
-        return localOpen.getMaxFrameSize().longValue();
+        return localOpen.getMaxFrameSize();
     }
 
     @Override
     public ProtonConnection setChannelMax(int channelMax) {
         checkNotOpened("Cannot set Channel Max on already opened Connection");
-        localOpen.setChannelMax(UnsignedShort.valueOf((short) channelMax));
+        localOpen.setChannelMax(channelMax);
         return this;
     }
 
     @Override
     public int getChannelMax() {
-        return localOpen.getChannelMax().intValue();
+        return localOpen.getChannelMax();
     }
 
     @Override
     public ProtonConnection setIdleTimeout(int idleTimeout) {
         checkNotOpened("Cannot set Idle Timeout on already opened Connection");
-        localOpen.setIdleTimeOut(UnsignedInteger.valueOf(idleTimeout));
+        localOpen.setIdleTimeOut(idleTimeout);
         return this;
     }
 
     @Override
     public int getIdleTimeout() {
-        return localOpen.getIdleTimeOut().intValue();
+        return (int) localOpen.getIdleTimeOut();
     }
 
     @Override
@@ -389,7 +387,7 @@ public class ProtonConnection implements Connection, AMQPHeader.HeaderHandler<Pr
     public void handleBegin(Begin begin, ProtonBuffer payload, int channel, ProtonEngine context) {
         ProtonSession session = null;
 
-        if (channel > localOpen.getChannelMax().intValue()) {
+        if (channel > localOpen.getChannelMax()) {
             // TODO Channel Max violation error handling
         }
 

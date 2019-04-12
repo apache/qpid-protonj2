@@ -19,12 +19,11 @@ package org.apache.qpid.proton4j.codec.decoders.transport;
 import java.io.IOException;
 
 import org.apache.qpid.proton4j.amqp.Symbol;
-import org.apache.qpid.proton4j.amqp.UnsignedInteger;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
-import org.apache.qpid.proton4j.amqp.UnsignedShort;
 import org.apache.qpid.proton4j.amqp.transport.Open;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.DecoderState;
+import org.apache.qpid.proton4j.codec.EncodingCodes;
 import org.apache.qpid.proton4j.codec.TypeDecoder;
 import org.apache.qpid.proton4j.codec.decoders.AbstractDescribedTypeDecoder;
 import org.apache.qpid.proton4j.codec.decoders.primitives.ListTypeDecoder;
@@ -107,6 +106,15 @@ public class OpenTypeDecoder extends AbstractDescribedTypeDecoder<Open> {
         }
 
         for (int index = 0; index < count; ++index) {
+            // Peek ahead and see if there is a null in the next slot, if so we don't call
+            // the setter for that entry to ensure the returned type reflects the encoded
+            // state in the modification entry.
+            boolean nullValue = buffer.getByte(buffer.getReadIndex()) == EncodingCodes.NULL;
+            if (nullValue) {
+                buffer.readByte();
+                continue;
+            }
+
             switch (index) {
                 case 0:
                     open.setContainerId(state.getDecoder().readString(buffer, state));
@@ -115,15 +123,13 @@ public class OpenTypeDecoder extends AbstractDescribedTypeDecoder<Open> {
                     open.setHostname(state.getDecoder().readString(buffer, state));
                     break;
                 case 2:
-                    UnsignedInteger maxFrameSize = state.getDecoder().readUnsignedInteger(buffer, state);
-                    open.setMaxFrameSize(maxFrameSize == null ? UnsignedInteger.MAX_VALUE : maxFrameSize);
+                    open.setMaxFrameSize(state.getDecoder().readUnsignedInteger(buffer, state, 0));
                     break;
                 case 3:
-                    UnsignedShort channelMax = state.getDecoder().readUnsignedShort(buffer, state);
-                    open.setChannelMax(channelMax == null ? UnsignedShort.MAX_VALUE : channelMax);
+                    open.setChannelMax(state.getDecoder().readUnsignedShort(buffer, state, 0));
                     break;
                 case 4:
-                    open.setIdleTimeOut(state.getDecoder().readUnsignedInteger(buffer, state));
+                    open.setIdleTimeOut(state.getDecoder().readUnsignedInteger(buffer, state, 0));
                     break;
                 case 5:
                     open.setOutgoingLocales(state.getDecoder().readMultiple(buffer, state, Symbol.class));

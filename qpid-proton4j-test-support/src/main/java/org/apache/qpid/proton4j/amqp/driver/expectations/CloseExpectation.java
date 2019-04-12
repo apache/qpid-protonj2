@@ -21,7 +21,8 @@ import static org.hamcrest.CoreMatchers.equalTo;
 import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
 import org.apache.qpid.proton4j.amqp.driver.actions.BeginInjectAction;
 import org.apache.qpid.proton4j.amqp.driver.actions.CloseInjectAction;
-import org.apache.qpid.proton4j.amqp.transport.Close;
+import org.apache.qpid.proton4j.amqp.driver.codec.transport.Close;
+import org.apache.qpid.proton4j.amqp.driver.codec.util.TypeMapper;
 import org.apache.qpid.proton4j.amqp.transport.ErrorCondition;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.hamcrest.Matcher;
@@ -30,13 +31,6 @@ import org.hamcrest.Matcher;
  * Scripted expectation for the AMQP Close performative
  */
 public class CloseExpectation extends AbstractExpectation<Close> {
-
-    /**
-     * Enumeration which maps to fields in the Close Performative
-     */
-    public enum Field {
-        ERROR
-    }
 
     private CloseInjectAction response;
 
@@ -70,32 +64,24 @@ public class CloseExpectation extends AbstractExpectation<Close> {
     //----- Type specific with methods that perform simple equals checks
 
     public CloseExpectation withError(ErrorCondition error) {
-        return withError(equalTo(error));
+        return withError(equalTo(TypeMapper.mapFromProtonType(error)));
     }
 
     //----- Matcher based with methods for more complex validation
 
     public CloseExpectation withError(Matcher<?> m) {
-        getMatchers().put(Field.ERROR, m);
+        getMatchers().put(Close.Field.ERROR, m);
         return this;
     }
 
     @Override
     protected Object getFieldValue(Close close, Enum<?> performativeField) {
-        Object result = null;
-
-        if (performativeField == Field.ERROR) {
-            result = close.getError();
-        } else {
-            throw new AssertionError("Request for unknown field in type Close");
-        }
-
-        return result;
+        return close.getFieldValue(performativeField.ordinal());
     }
 
     @Override
     protected Enum<?> getFieldEnum(int fieldIndex) {
-        return Field.values()[fieldIndex];
+        return Close.Field.values()[fieldIndex];
     }
 
     @Override

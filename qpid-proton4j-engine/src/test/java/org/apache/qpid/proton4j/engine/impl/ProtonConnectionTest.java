@@ -16,6 +16,7 @@
  */
 package org.apache.qpid.proton4j.engine.impl;
 
+import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -31,6 +32,7 @@ import org.apache.qpid.proton4j.amqp.driver.ScriptWriter;
 import org.apache.qpid.proton4j.engine.Connection;
 import org.apache.qpid.proton4j.engine.ConnectionState;
 import org.apache.qpid.proton4j.engine.exceptions.EngineStateException;
+import org.hamcrest.Matcher;
 import org.junit.Test;
 
 /**
@@ -172,19 +174,19 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
 
     private void doTestConnectionOpenPopulatesOpenCorrectly(boolean setMaxFrameSize, boolean setContainerId, boolean setChannelMax,
                                                             boolean setHostname, boolean setIdleTimeout) {
-        final int MAX_FRAME_SIZE = 32767;
-
-        int expectedMaxFrameSize = UnsignedInteger.MAX_VALUE.intValue();
+        int expectedMaxFrameSize = 32767;
+        Matcher<?> expectedMaxFrameSizeMatcher = nullValue();
         if (setMaxFrameSize) {
-            expectedMaxFrameSize = MAX_FRAME_SIZE;
+            expectedMaxFrameSizeMatcher = equalTo(UnsignedInteger.valueOf(expectedMaxFrameSize));
         }
         String expectedContainerId = "";
         if (setContainerId) {
             expectedContainerId = "test";
         }
-        short expectedChannelMax = UnsignedShort.MAX_VALUE.shortValue();
+        short expectedChannelMax = 512;
+        Matcher<?> expectedChannelMaxMatcher = nullValue();
         if (setChannelMax) {
-            expectedChannelMax = 512;
+            expectedChannelMaxMatcher = equalTo(UnsignedShort.valueOf(expectedChannelMax));
         }
         String expectedHostname = null;
         if (setHostname) {
@@ -205,8 +207,8 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
         ScriptWriter script = driver.createScriptWriter();
 
         script.expectAMQPHeader().respondWithAMQPHeader();
-        script.expectOpen().withMaxFrameSize(expectedMaxFrameSize)
-                           .withChannelMax(expectedChannelMax)
+        script.expectOpen().withMaxFrameSize(expectedMaxFrameSizeMatcher)
+                           .withChannelMax(expectedChannelMaxMatcher)
                            .withContainerId(expectedContainerId)
                            .withHostname(expectedHostname)
                            .withIdleTimeOut(expectedIdleTimeout)

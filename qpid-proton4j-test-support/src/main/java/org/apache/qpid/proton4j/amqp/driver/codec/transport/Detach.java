@@ -91,4 +91,20 @@ public class Detach extends PerformativeDescribedType {
     public <E> void invoke(PerformativeHandler<E> handler, ProtonBuffer payload, int channel, E context) {
         handler.handleDetach(this, payload, channel, context);
     }
+
+    @Override
+    public Object getFieldValueOrSpecDefault(int index) {
+        Object result = getFieldValue(index);
+        if (result == null) {
+            Field field = Field.values()[index];
+            switch (field) {
+                case CLOSED:
+                    result = Boolean.FALSE;
+                    break;
+                default:
+                    break;
+            }
+        }
+        return result;
+    }
 }

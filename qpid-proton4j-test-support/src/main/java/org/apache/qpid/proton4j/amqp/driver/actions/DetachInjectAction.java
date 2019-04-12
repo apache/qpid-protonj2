@@ -34,8 +34,18 @@ public class DetachInjectAction extends AbstractPerformativeInjectAction<Detach>
         return detach;
     }
 
+    public DetachInjectAction withHandle(int handle) {
+        detach.setHandle(UnsignedInteger.valueOf(handle));
+        return this;
+    }
+
     public DetachInjectAction withHandle(long handle) {
         detach.setHandle(UnsignedInteger.valueOf(handle));
+        return this;
+    }
+
+    public DetachInjectAction withHandle(UnsignedInteger handle) {
+        detach.setHandle(handle);
         return this;
     }
 

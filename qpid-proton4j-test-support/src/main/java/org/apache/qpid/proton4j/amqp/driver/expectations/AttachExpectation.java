@@ -22,13 +22,14 @@ import java.util.Map;
 
 import org.apache.qpid.proton4j.amqp.Binary;
 import org.apache.qpid.proton4j.amqp.Symbol;
+import org.apache.qpid.proton4j.amqp.UnsignedInteger;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
 import org.apache.qpid.proton4j.amqp.driver.actions.AttachInjectAction;
 import org.apache.qpid.proton4j.amqp.driver.actions.BeginInjectAction;
+import org.apache.qpid.proton4j.amqp.driver.codec.transport.Attach;
 import org.apache.qpid.proton4j.amqp.messaging.Source;
 import org.apache.qpid.proton4j.amqp.messaging.Target;
-import org.apache.qpid.proton4j.amqp.transport.Attach;
 import org.apache.qpid.proton4j.amqp.transport.DeliveryState;
 import org.apache.qpid.proton4j.amqp.transport.ReceiverSettleMode;
 import org.apache.qpid.proton4j.amqp.transport.Role;
@@ -40,26 +41,6 @@ import org.hamcrest.Matcher;
  * Scripted expectation for the AMQP Attach performative
  */
 public class AttachExpectation extends AbstractExpectation<Attach> {
-
-    /**
-     * Enumeration which maps to fields in the Attach Performative
-     */
-    public enum Field {
-        NAME,
-        HANDLE,
-        ROLE,
-        SND_SETTLE_MODE,
-        RCV_SETTLE_MODE,
-        SOURCE,
-        TARGET,
-        UNSETTLED,
-        INCOMPLETE_UNSETTLED,
-        INITIAL_DELIVERY_COUNT,
-        MAX_MESSAGE_SIZE,
-        OFFERED_CAPABILITIES,
-        DESIRED_CAPABILITIES,
-        PROPERTIES
-    }
 
     private AttachInjectAction response;
 
@@ -106,19 +87,19 @@ public class AttachExpectation extends AbstractExpectation<Attach> {
             response.withName(attach.getName());
         }
         if (response.getPerformative().getRole() == null) {
-            response.withRole(attach.getRole() == Role.SENDER ? Role.RECEIVER : Role.SENDER);
+            response.withRole(Boolean.TRUE.equals(attach.getRole()) ? Role.SENDER : Role.RECEIVER);
         }
         if (response.getPerformative().getSndSettleMode() == null) {
-            response.withSndSettleMode(attach.getSndSettleMode());
+            response.withSndSettleMode(SenderSettleMode.valueOf(attach.getSndSettleMode()));
         }
         if (response.getPerformative().getRcvSettleMode() == null) {
-            response.withRcvSettleMode(attach.getRcvSettleMode());
+            response.withRcvSettleMode(ReceiverSettleMode.valueOf(attach.getRcvSettleMode()));
         }
         if (response.getPerformative().getSource() == null) {
-            response.withSource(attach.getSource());
+            // TODO response.withSource(attach.getSource());
         }
         if (response.getPerformative().getTarget() == null) {
-            response.withTarget(attach.getTarget());
+            // TODO response.withTarget(attach.getTarget());
         }
 
         // Other fields are left not set for now unless test script configured
@@ -130,26 +111,36 @@ public class AttachExpectation extends AbstractExpectation<Attach> {
         return withName(equalTo(name));
     }
 
+    public AttachExpectation withHandle(int handle) {
+        return withHandle(equalTo(UnsignedInteger.valueOf(handle)));
+    }
+
     public AttachExpectation withHandle(long handle) {
+        return withHandle(equalTo(UnsignedInteger.valueOf(handle)));
+    }
+
+    public AttachExpectation withHandle(UnsignedInteger handle) {
         return withHandle(equalTo(handle));
     }
 
     public AttachExpectation withRole(Role role) {
-        return withRole(equalTo(role));
+        return withRole(equalTo(role.getValue()));
     }
 
     public AttachExpectation withSndSettleMode(SenderSettleMode sndSettleMode) {
-        return withSndSettleMode(equalTo(sndSettleMode));
+        return withSndSettleMode(equalTo(sndSettleMode.getValue()));
     }
 
     public AttachExpectation withRcvSettleMode(ReceiverSettleMode rcvSettleMode) {
-        return withRcvSettleMode(equalTo(rcvSettleMode));
+        return withRcvSettleMode(equalTo(rcvSettleMode.getValue()));
     }
 
+    // TODO - Source and Target mapped to proper type and matcher added
     public AttachExpectation withSource(Source source) {
         return withSource(equalTo(source));
     }
 
+    // TODO - Source and Target mapped to proper type and matcher added
     public AttachExpectation withTarget(Target target) {
         return withTarget(equalTo(target));
     }
@@ -162,8 +153,20 @@ public class AttachExpectation extends AbstractExpectation<Attach> {
         return withIncompleteUnsettled(equalTo(incomplete));
     }
 
+    public AttachExpectation withInitialDeliveryCount(int initialDeliveryCount) {
+        return withInitialDeliveryCount(equalTo(UnsignedInteger.valueOf(initialDeliveryCount)));
+    }
+
     public AttachExpectation withInitialDeliveryCount(long initialDeliveryCount) {
+        return withInitialDeliveryCount(equalTo(UnsignedInteger.valueOf(initialDeliveryCount)));
+    }
+
+    public AttachExpectation withInitialDeliveryCount(UnsignedInteger initialDeliveryCount) {
         return withInitialDeliveryCount(equalTo(initialDeliveryCount));
+    }
+
+    public AttachExpectation withMaxMessageSize(long maxMessageSize) {
+        return withMaxMessageSize(equalTo(UnsignedLong.valueOf(maxMessageSize)));
     }
 
     public AttachExpectation withMaxMessageSize(UnsignedLong maxMessageSize) {
@@ -185,117 +188,83 @@ public class AttachExpectation extends AbstractExpectation<Attach> {
     //----- Matcher based with methods for more complex validation
 
     public AttachExpectation withName(Matcher<?> m) {
-        getMatchers().put(Field.NAME, m);
+        getMatchers().put(Attach.Field.NAME, m);
         return this;
     }
 
     public AttachExpectation withHandle(Matcher<?> m) {
-        getMatchers().put(Field.HANDLE, m);
+        getMatchers().put(Attach.Field.HANDLE, m);
         return this;
     }
 
     public AttachExpectation withRole(Matcher<?> m) {
-        getMatchers().put(Field.ROLE, m);
+        getMatchers().put(Attach.Field.ROLE, m);
         return this;
     }
 
     public AttachExpectation withSndSettleMode(Matcher<?> m) {
-        getMatchers().put(Field.SND_SETTLE_MODE, m);
+        getMatchers().put(Attach.Field.SND_SETTLE_MODE, m);
         return this;
     }
 
     public AttachExpectation withRcvSettleMode(Matcher<?> m) {
-        getMatchers().put(Field.RCV_SETTLE_MODE, m);
+        getMatchers().put(Attach.Field.RCV_SETTLE_MODE, m);
         return this;
     }
 
     public AttachExpectation withSource(Matcher<?> m) {
-        getMatchers().put(Field.SOURCE, m);
+        getMatchers().put(Attach.Field.SOURCE, m);
         return this;
     }
 
     public AttachExpectation withTarget(Matcher<?> m) {
-        getMatchers().put(Field.TARGET, m);
+        getMatchers().put(Attach.Field.TARGET, m);
         return this;
     }
 
     public AttachExpectation withUnsettled(Matcher<?> m) {
-        getMatchers().put(Field.UNSETTLED, m);
+        getMatchers().put(Attach.Field.UNSETTLED, m);
         return this;
     }
 
     public AttachExpectation withIncompleteUnsettled(Matcher<?> m) {
-        getMatchers().put(Field.INCOMPLETE_UNSETTLED, m);
+        getMatchers().put(Attach.Field.INCOMPLETE_UNSETTLED, m);
         return this;
     }
 
     public AttachExpectation withInitialDeliveryCount(Matcher<?> m) {
-        getMatchers().put(Field.INITIAL_DELIVERY_COUNT, m);
+        getMatchers().put(Attach.Field.INITIAL_DELIVERY_COUNT, m);
         return this;
     }
 
     public AttachExpectation withMaxMessageSize(Matcher<?> m) {
-        getMatchers().put(Field.MAX_MESSAGE_SIZE, m);
+        getMatchers().put(Attach.Field.MAX_MESSAGE_SIZE, m);
         return this;
     }
 
     public AttachExpectation withOfferedCapabilities(Matcher<?> m) {
-        getMatchers().put(Field.OFFERED_CAPABILITIES, m);
+        getMatchers().put(Attach.Field.OFFERED_CAPABILITIES, m);
         return this;
     }
 
     public AttachExpectation withDesiredCapabilities(Matcher<?> m) {
-        getMatchers().put(Field.DESIRED_CAPABILITIES, m);
+        getMatchers().put(Attach.Field.DESIRED_CAPABILITIES, m);
         return this;
     }
 
     public AttachExpectation withProperties(Matcher<?> m) {
-        getMatchers().put(Field.PROPERTIES, m);
+        getMatchers().put(Attach.Field.PROPERTIES, m);
         return this;
     }
 
     @Override
     protected Object getFieldValue(Attach attach, Enum<?> performativeField) {
-        Object result = null;
-
-        if (performativeField == Field.NAME) {
-            result = attach.hasName() ? attach.getName() : null;
-        } else if (performativeField == Field.HANDLE) {
-            result = attach.hasHandle() ? attach.getHandle() : null;
-        } else if (performativeField == Field.ROLE) {
-            result = attach.hasRole() ? attach.getRole() : null;
-        } else if (performativeField == Field.SND_SETTLE_MODE) {
-            result = attach.hasSenderSettleMode() ? attach.getSndSettleMode(): null;
-        } else if (performativeField == Field.RCV_SETTLE_MODE) {
-            result = attach.hasReceiverSettleMode() ? attach.getRcvSettleMode() : null;
-        } else if (performativeField == Field.SOURCE) {
-            result = attach.hasSource() ? attach.getSource() : null;
-        } else if (performativeField == Field.TARGET) {
-            result = attach.hasTarget() ? attach.getTarget() : null;
-        } else if (performativeField == Field.UNSETTLED) {
-            result = attach.hasUnsettled() ? attach.getUnsettled() : null;
-        } else if (performativeField == Field.INCOMPLETE_UNSETTLED) {
-            result = attach.hasIncompleteUnsettled() ? attach.getIncompleteUnsettled() : null;
-        } else if (performativeField == Field.INITIAL_DELIVERY_COUNT) {
-            result = attach.hasInitialDeliveryCount() ? attach.getInitialDeliveryCount() : null;
-        } else if (performativeField == Field.MAX_MESSAGE_SIZE) {
-            result = attach.hasMaxMessageSize() ? attach.getMaxMessageSize() : null;
-        } else if (performativeField == Field.OFFERED_CAPABILITIES) {
-            result = attach.hasOfferedCapabilites() ? attach.getOfferedCapabilities() : null;
-        } else if (performativeField == Field.DESIRED_CAPABILITIES) {
-            result = attach.hasDesiredCapabilites() ? attach.getDesiredCapabilities() : null;
-        } else if (performativeField == Field.PROPERTIES) {
-            result = attach.hasProperties() ? attach.getProperties() : null;
-        } else {
-            throw new AssertionError("Request for unknown field in type Attach");
-        }
-
-        return result;
+        return attach.getFieldValue(performativeField.ordinal());
     }
 
     @Override
     protected Enum<?> getFieldEnum(int fieldIndex) {
-        return Field.values()[fieldIndex];
+        return Attach.Field.values()[fieldIndex];
     }
 
     @Override

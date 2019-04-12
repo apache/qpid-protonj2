@@ -21,22 +21,13 @@ import static org.hamcrest.CoreMatchers.equalTo;
 import org.apache.qpid.proton4j.amqp.Binary;
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
-import org.apache.qpid.proton4j.amqp.security.SaslInit;
+import org.apache.qpid.proton4j.amqp.driver.codec.security.SaslInit;
 import org.hamcrest.Matcher;
 
 /**
  * Scripted expectation for the AMQP SaslInit performative
  */
 public class SaslInitExpectation extends AbstractExpectation<SaslInit> {
-
-    /**
-     * Enumeration which maps to fields in the SaslInit Performative
-     */
-    public enum Field {
-        MECHANISM,
-        INITIAL_RESPONSE,
-        HOSTNAME,
-    }
 
     public SaslInitExpectation(AMQPTestDriver driver) {
         super(driver);
@@ -59,40 +50,28 @@ public class SaslInitExpectation extends AbstractExpectation<SaslInit> {
     //----- Matcher based with methods for more complex validation
 
     public SaslInitExpectation withMechanism(Matcher<?> m) {
-        getMatchers().put(Field.MECHANISM, m);
+        getMatchers().put(SaslInit.Field.MECHANISM, m);
         return this;
     }
 
     public SaslInitExpectation withInitialResponse(Matcher<?> m) {
-        getMatchers().put(Field.INITIAL_RESPONSE, m);
+        getMatchers().put(SaslInit.Field.INITIAL_RESPONSE, m);
         return this;
     }
 
     public SaslInitExpectation withHostname(Matcher<?> m) {
-        getMatchers().put(Field.HOSTNAME, m);
+        getMatchers().put(SaslInit.Field.HOSTNAME, m);
         return this;
     }
 
     @Override
     protected Object getFieldValue(SaslInit saslInit, Enum<?> performativeField) {
-        Object result = null;
-
-        if (performativeField == Field.MECHANISM) {
-            result = saslInit.getMechanism();
-        } else if (performativeField == Field.INITIAL_RESPONSE) {
-            result = saslInit.getInitialResponse();
-        } else if (performativeField == Field.HOSTNAME) {
-            result = saslInit.getHostname();
-        } else {
-            throw new AssertionError("Request for unknown field in type SaslInit");
-        }
-
-        return result;
+        return saslInit.getFieldValue(performativeField.ordinal());
     }
 
     @Override
     protected Enum<?> getFieldEnum(int fieldIndex) {
-        return Field.values()[fieldIndex];
+        return SaslInit.Field.values()[fieldIndex];
     }
 
     @Override

@@ -17,9 +17,7 @@
 package org.apache.qpid.proton4j.codec.encoders.transport;
 
 import org.apache.qpid.proton4j.amqp.Symbol;
-import org.apache.qpid.proton4j.amqp.UnsignedInteger;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
-import org.apache.qpid.proton4j.amqp.UnsignedShort;
 import org.apache.qpid.proton4j.amqp.transport.Open;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.EncoderState;
@@ -50,34 +48,74 @@ public class OpenTypeEncoder extends AbstractDescribedListTypeEncoder<Open> {
     public void writeElement(Open open, int index, ProtonBuffer buffer, EncoderState state) {
         switch (index) {
             case 0:
-                state.getEncoder().writeString(buffer, state, open.getContainerId());
+                if (open.hasContainerId()) {
+                    state.getEncoder().writeString(buffer, state, open.getContainerId());
+                } else {
+                    state.getEncoder().writeNull(buffer, state);
+                }
                 break;
             case 1:
-                state.getEncoder().writeString(buffer, state, open.getHostname());
+                if (open.hasHostname()) {
+                    state.getEncoder().writeString(buffer, state, open.getHostname());
+                } else {
+                    state.getEncoder().writeNull(buffer, state);
+                }
                 break;
             case 2:
-                state.getEncoder().writeUnsignedInteger(buffer, state, open.getMaxFrameSize());
+                if (open.hasMaxFrameSize()) {
+                    state.getEncoder().writeUnsignedInteger(buffer, state, open.getMaxFrameSize());
+                } else {
+                    state.getEncoder().writeNull(buffer, state);
+                }
                 break;
             case 3:
-                state.getEncoder().writeUnsignedShort(buffer, state, open.getChannelMax());
+                if (open.hasChannelMax()) {
+                    state.getEncoder().writeUnsignedShort(buffer, state, open.getChannelMax());
+                } else {
+                    state.getEncoder().writeNull(buffer, state);
+                }
                 break;
             case 4:
-                state.getEncoder().writeUnsignedInteger(buffer, state, open.getIdleTimeOut());
+                if (open.hasIdleTimeout()) {
+                    state.getEncoder().writeUnsignedInteger(buffer, state, open.getIdleTimeOut());
+                } else {
+                    state.getEncoder().writeNull(buffer, state);
+                }
                 break;
             case 5:
-                state.getEncoder().writeArray(buffer, state, open.getOutgoingLocales());
+                if (open.hasOutgoingLocales()) {
+                    state.getEncoder().writeArray(buffer, state, open.getOutgoingLocales());
+                } else {
+                    state.getEncoder().writeNull(buffer, state);
+                }
                 break;
             case 6:
-                state.getEncoder().writeArray(buffer, state, open.getIncomingLocales());
+                if (open.hasIncomingLocales()) {
+                    state.getEncoder().writeArray(buffer, state, open.getIncomingLocales());
+                } else {
+                    state.getEncoder().writeNull(buffer, state);
+                }
                 break;
             case 7:
-                state.getEncoder().writeArray(buffer, state, open.getOfferedCapabilities());
+                if (open.hasOfferedCapabilites()) {
+                    state.getEncoder().writeArray(buffer, state, open.getOfferedCapabilities());
+                } else {
+                    state.getEncoder().writeNull(buffer, state);
+                }
                 break;
             case 8:
-                state.getEncoder().writeArray(buffer, state, open.getDesiredCapabilities());
+                if (open.hasDesiredCapabilites()) {
+                    state.getEncoder().writeArray(buffer, state, open.getDesiredCapabilities());
+                } else {
+                    state.getEncoder().writeNull(buffer, state);
+                }
                 break;
             case 9:
-                state.getEncoder().writeMap(buffer, state, open.getProperties());
+                if (open.hasProperties()) {
+                    state.getEncoder().writeMap(buffer, state, open.getProperties());
+                } else {
+                    state.getEncoder().writeNull(buffer, state);
+                }
                 break;
             default:
                 throw new IllegalArgumentException("Unknown Open value index: " + index);
@@ -91,26 +129,6 @@ public class OpenTypeEncoder extends AbstractDescribedListTypeEncoder<Open> {
 
     @Override
     public int getElementCount(Open open) {
-        if (open.getProperties() != null) {
-            return 10;
-        } else if (open.getDesiredCapabilities() != null) {
-            return 9;
-        } else if (open.getOfferedCapabilities() != null) {
-            return 8;
-        } else if (open.getIncomingLocales() != null) {
-            return 7;
-        } else if (open.getOutgoingLocales() != null) {
-            return 6;
-        } else if (open.getIdleTimeOut() != null) {
-            return 5;
-        } else if (open.getChannelMax() != null && !open.getChannelMax().equals(UnsignedShort.MAX_VALUE)) {
-            return 4;
-        } else if (open.getMaxFrameSize() != null && !open.getMaxFrameSize().equals(UnsignedInteger.MAX_VALUE)) {
-            return 3;
-        } else if (open.getHostname() != null) {
-            return 2;
-        } else {
-            return 1;
-        }
+        return open.getElementCount();
     }
 }

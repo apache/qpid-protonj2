@@ -16,16 +16,16 @@
  */
 package org.apache.qpid.proton4j.amqp.driver;
 
-import org.apache.qpid.proton4j.amqp.security.SaslPerformative;
+import org.apache.qpid.proton4j.amqp.driver.codec.security.SaslDescribedType;
+import org.apache.qpid.proton4j.amqp.driver.codec.transport.PerformativeDescribedType;
 import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
-import org.apache.qpid.proton4j.amqp.transport.Performative;
 
 /**
  * Root of scripted entries in the test driver script.
  */
 public interface ScriptedElement extends AMQPHeader.HeaderHandler<AMQPTestDriver>,
-                                         Performative.PerformativeHandler<AMQPTestDriver>,
-                                         SaslPerformative.SaslPerformativeHandler<AMQPTestDriver> {
+                                         PerformativeDescribedType.PerformativeHandler<AMQPTestDriver>,
+                                         SaslDescribedType.SaslPerformativeHandler<AMQPTestDriver> {
 
     enum ScriptEntryType {
         EXPECTATION,

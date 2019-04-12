@@ -174,4 +174,29 @@ public class Transfer extends PerformativeDescribedType {
     public <E> void invoke(PerformativeHandler<E> handler, ProtonBuffer payload, int channel, E context) {
         handler.handleTransfer(this, payload, channel, context);
     }
+
+    @Override
+    public Object getFieldValueOrSpecDefault(int index) {
+        Object result = getFieldValue(index);
+        if (result == null) {
+            Field field = Field.values()[index];
+            switch (field) {
+                case MORE:
+                    result = Boolean.FALSE;
+                    break;
+                case RESUME:
+                    result = Boolean.FALSE;
+                    break;
+                case ABORTED:
+                    result = Boolean.FALSE;
+                    break;
+                case BATCHABLE:
+                    result = Boolean.FALSE;
+                    break;
+                default:
+                    break;
+            }
+        }
+        return result;
+    }
 }

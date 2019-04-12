@@ -21,20 +21,13 @@ import static org.hamcrest.CoreMatchers.equalTo;
 import org.apache.qpid.proton4j.amqp.Binary;
 import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
 import org.apache.qpid.proton4j.amqp.driver.actions.SaslResponseInjectAction;
-import org.apache.qpid.proton4j.amqp.security.SaslChallenge;
+import org.apache.qpid.proton4j.amqp.driver.codec.security.SaslChallenge;
 import org.hamcrest.Matcher;
 
 /**
  * Scripted expectation for the AMQP SaslChallenge performative
  */
 public class SaslChallengeExpectation extends AbstractExpectation<SaslChallenge> {
-
-    /**
-     * Enumeration which maps to fields in the SaslChallenge Performative
-     */
-    public enum Field {
-        CHALLENGE
-    }
 
     public SaslChallengeExpectation(AMQPTestDriver driver) {
         super(driver);
@@ -55,26 +48,18 @@ public class SaslChallengeExpectation extends AbstractExpectation<SaslChallenge>
     //----- Matcher based with methods for more complex validation
 
     public SaslChallengeExpectation withChallenge(Matcher<?> m) {
-        getMatchers().put(Field.CHALLENGE, m);
+        getMatchers().put(SaslChallenge.Field.CHALLENGE, m);
         return this;
     }
 
     @Override
     protected Object getFieldValue(SaslChallenge saslChallenge, Enum<?> performativeField) {
-        Object result = null;
-
-        if (performativeField == Field.CHALLENGE) {
-            result = saslChallenge.getChallenge();
-        } else {
-            throw new AssertionError("Request for unknown field in type SaslChallenge");
-        }
-
-        return result;
+        return saslChallenge.getFieldValue(performativeField.ordinal());
     }
 
     @Override
     protected Enum<?> getFieldEnum(int fieldIndex) {
-        return Field.values()[fieldIndex];
+        return SaslChallenge.Field.values()[fieldIndex];
     }
 
     @Override

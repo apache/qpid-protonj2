@@ -25,7 +25,7 @@ import org.apache.qpid.proton4j.amqp.driver.codec.ListDescribedType;
  */
 public abstract class SaslDescribedType extends ListDescribedType {
 
-    enum SaslPerformativeType {
+    public enum SaslPerformativeType {
         INIT,
         MECHANISMS,
         CHALLENGE,
@@ -43,7 +43,7 @@ public abstract class SaslDescribedType extends ListDescribedType {
 
     public abstract SaslPerformativeType getPerformativeType();
 
-    interface SaslPerformativeHandler<E> {
+    public interface SaslPerformativeHandler<E> {
 
         default void handleMechanisms(SaslMechanisms saslMechanisms, E context) {}
         default void handleInit(SaslInit saslInit, E context) {}

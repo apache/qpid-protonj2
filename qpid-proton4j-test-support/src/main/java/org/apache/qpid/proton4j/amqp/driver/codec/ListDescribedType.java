@@ -70,6 +70,14 @@ public abstract class ListDescribedType implements DescribedType {
         return list;
     }
 
+    public Object getFieldValue(int index) {
+        if (index < fields.size()) {
+            return fields.get(index);
+        } else {
+            throw new AssertionError("Request for unknown field in type: " + this);
+        }
+    }
+
     protected int getHighestSetFieldId() {
         int numUsedFields = 0;
         for (Object element : fields) {

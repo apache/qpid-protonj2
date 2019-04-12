@@ -21,31 +21,15 @@ import static org.hamcrest.CoreMatchers.equalTo;
 import java.util.Map;
 
 import org.apache.qpid.proton4j.amqp.Symbol;
+import org.apache.qpid.proton4j.amqp.UnsignedInteger;
 import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
-import org.apache.qpid.proton4j.amqp.transport.Flow;
+import org.apache.qpid.proton4j.amqp.driver.codec.transport.Flow;
 import org.hamcrest.Matcher;
 
 /**
  * Scripted expectation for the AMQP Flow performative
  */
 public class FlowExpectation extends AbstractExpectation<Flow> {
-
-    /**
-     * Enumeration which maps to fields in the Flow Performative
-     */
-    public enum Field {
-        NEXT_INCOMING_ID,
-        INCOMING_WINDOW,
-        NEXT_OUTGOING_ID,
-        OUTGOING_WINDOW,
-        HANDLE,
-        DELIVERY_COUNT,
-        LINK_CREDIT,
-        AVAILABLE,
-        DRAIN,
-        ECHO,
-        PROPERTIES,
-    }
 
     public FlowExpectation(AMQPTestDriver driver) {
         super(driver);
@@ -59,35 +43,99 @@ public class FlowExpectation extends AbstractExpectation<Flow> {
 
     //----- Type specific with methods that perform simple equals checks
 
+    public FlowExpectation withNextIncomingId(int nextIncomingId) {
+        return withNextIncomingId(equalTo(UnsignedInteger.valueOf(nextIncomingId)));
+    }
+
     public FlowExpectation withNextIncomingId(long nextIncomingId) {
+        return withNextIncomingId(equalTo(UnsignedInteger.valueOf(nextIncomingId)));
+    }
+
+    public FlowExpectation withNextIncomingId(UnsignedInteger nextIncomingId) {
         return withNextIncomingId(equalTo(nextIncomingId));
     }
 
+    public FlowExpectation withIncomingWindow(int incomingWindow) {
+        return withIncomingWindow(equalTo(UnsignedInteger.valueOf(incomingWindow)));
+    }
+
     public FlowExpectation withIncomingWindow(long incomingWindow) {
+        return withIncomingWindow(equalTo(UnsignedInteger.valueOf(incomingWindow)));
+    }
+
+    public FlowExpectation withIncomingWindow(UnsignedInteger incomingWindow) {
         return withIncomingWindow(equalTo(incomingWindow));
     }
 
+    public FlowExpectation withNextOutgoingId(int nextOutgoingId) {
+        return withNextOutgoingId(equalTo(UnsignedInteger.valueOf(nextOutgoingId)));
+    }
+
     public FlowExpectation withNextOutgoingId(long nextOutgoingId) {
+        return withNextOutgoingId(equalTo(UnsignedInteger.valueOf(nextOutgoingId)));
+    }
+
+    public FlowExpectation withNextOutgoingId(UnsignedInteger nextOutgoingId) {
         return withNextOutgoingId(equalTo(nextOutgoingId));
     }
 
+    public FlowExpectation withOutgoingWindow(int outgoingWindow) {
+        return withOutgoingWindow(equalTo(UnsignedInteger.valueOf(outgoingWindow)));
+    }
+
     public FlowExpectation withOutgoingWindow(long outgoingWindow) {
+        return withOutgoingWindow(equalTo(UnsignedInteger.valueOf(outgoingWindow)));
+    }
+
+    public FlowExpectation withOutgoingWindow(UnsignedInteger outgoingWindow) {
         return withOutgoingWindow(equalTo(outgoingWindow));
     }
 
+    public FlowExpectation withHandle(int handle) {
+        return withHandle(equalTo(UnsignedInteger.valueOf(handle)));
+    }
+
     public FlowExpectation withHandle(long handle) {
+        return withHandle(equalTo(UnsignedInteger.valueOf(handle)));
+    }
+
+    public FlowExpectation withHandle(UnsignedInteger handle) {
         return withHandle(equalTo(handle));
     }
 
+    public FlowExpectation withDeliveryCount(int deliveryCount) {
+        return withDeliveryCount(equalTo(UnsignedInteger.valueOf(deliveryCount)));
+    }
+
     public FlowExpectation withDeliveryCount(long deliveryCount) {
+        return withDeliveryCount(equalTo(UnsignedInteger.valueOf(deliveryCount)));
+    }
+
+    public FlowExpectation withDeliveryCount(UnsignedInteger deliveryCount) {
         return withDeliveryCount(equalTo(deliveryCount));
     }
 
+    public FlowExpectation withLinkCredit(int linkCredit) {
+        return withLinkCredit(equalTo(UnsignedInteger.valueOf(linkCredit)));
+    }
+
     public FlowExpectation withLinkCredit(long linkCredit) {
+        return withLinkCredit(equalTo(UnsignedInteger.valueOf(linkCredit)));
+    }
+
+    public FlowExpectation withLinkCredit(UnsignedInteger linkCredit) {
         return withLinkCredit(equalTo(linkCredit));
     }
 
+    public FlowExpectation withAvailable(int available) {
+        return withAvailable(equalTo(UnsignedInteger.valueOf(available)));
+    }
+
     public FlowExpectation withAvailable(long available) {
+        return withAvailable(equalTo(UnsignedInteger.valueOf(available)));
+    }
+
+    public FlowExpectation withAvailable(UnsignedInteger available) {
         return withAvailable(equalTo(available));
     }
 
@@ -106,96 +154,68 @@ public class FlowExpectation extends AbstractExpectation<Flow> {
     //----- Matcher based with methods for more complex validation
 
     public FlowExpectation withNextIncomingId(Matcher<?> m) {
-        getMatchers().put(Field.NEXT_INCOMING_ID, m);
+        getMatchers().put(Flow.Field.NEXT_INCOMING_ID, m);
         return this;
     }
 
     public FlowExpectation withIncomingWindow(Matcher<?> m) {
-        getMatchers().put(Field.INCOMING_WINDOW, m);
+        getMatchers().put(Flow.Field.INCOMING_WINDOW, m);
         return this;
     }
 
     public FlowExpectation withNextOutgoingId(Matcher<?> m) {
-        getMatchers().put(Field.NEXT_OUTGOING_ID, m);
+        getMatchers().put(Flow.Field.NEXT_OUTGOING_ID, m);
         return this;
     }
 
     public FlowExpectation withOutgoingWindow(Matcher<?> m) {
-        getMatchers().put(Field.OUTGOING_WINDOW, m);
+        getMatchers().put(Flow.Field.OUTGOING_WINDOW, m);
         return this;
     }
 
     public FlowExpectation withHandle(Matcher<?> m) {
-        getMatchers().put(Field.HANDLE, m);
+        getMatchers().put(Flow.Field.HANDLE, m);
         return this;
     }
 
     public FlowExpectation withDeliveryCount(Matcher<?> m) {
-        getMatchers().put(Field.DELIVERY_COUNT, m);
+        getMatchers().put(Flow.Field.DELIVERY_COUNT, m);
         return this;
     }
 
     public FlowExpectation withLinkCredit(Matcher<?> m) {
-        getMatchers().put(Field.LINK_CREDIT, m);
+        getMatchers().put(Flow.Field.LINK_CREDIT, m);
         return this;
     }
 
     public FlowExpectation withAvailable(Matcher<?> m) {
-        getMatchers().put(Field.AVAILABLE, m);
+        getMatchers().put(Flow.Field.AVAILABLE, m);
         return this;
     }
 
     public FlowExpectation withDrain(Matcher<?> m) {
-        getMatchers().put(Field.DRAIN, m);
+        getMatchers().put(Flow.Field.DRAIN, m);
         return this;
     }
 
     public FlowExpectation withEcho(Matcher<?> m) {
-        getMatchers().put(Field.ECHO, m);
+        getMatchers().put(Flow.Field.ECHO, m);
         return this;
     }
 
     public FlowExpectation withProperties(Matcher<?> m) {
-        getMatchers().put(Field.PROPERTIES, m);
+        getMatchers().put(Flow.Field.PROPERTIES, m);
         return this;
     }
 
     @Override
     protected Object getFieldValue(Flow flow, Enum<?> performativeField) {
-        Object result = null;
-
-        if (performativeField == Field.NEXT_INCOMING_ID) {
-            result = flow.hasNextIncomingId() ? flow.getNextIncomingId() : null;
-        } else if (performativeField == Field.INCOMING_WINDOW) {
-            result = flow.hasIncomingWindow() ? flow.getIncomingWindow() : null;
-        } else if (performativeField == Field.NEXT_OUTGOING_ID) {
-            result = flow.hasNextOutgoingId() ? flow.getNextOutgoingId() : null;
-        } else if (performativeField == Field.OUTGOING_WINDOW) {
-            result = flow.hasOutgoingWindow() ? flow.getOutgoingWindow() : null;
-        } else if (performativeField == Field.HANDLE) {
-            result = flow.hasHandle() ? flow.getHandle() : null;
-        } else if (performativeField == Field.DELIVERY_COUNT) {
-            result = flow.hasDeliveryCount() ? flow.getDeliveryCount() : null;
-        } else if (performativeField == Field.LINK_CREDIT) {
-            result = flow.hasLinkCredit() ? flow.getLinkCredit() : null;
-        } else if (performativeField == Field.AVAILABLE) {
-            result = flow.hasAvailable() ? flow.getAvailable() : null;
-        } else if (performativeField == Field.DRAIN) {
-            result = flow.hasDrain() ? flow.getDrain() : null;
-        } else if (performativeField == Field.ECHO) {
-            result = flow.hasEcho() ? flow.getEcho() : null;
-        } else if (performativeField == Field.PROPERTIES) {
-            result = flow.hasProperties() ? flow.getProperties() : null;
-        } else {
-            throw new AssertionError("Request for unknown field in type Flow");
-        }
-
-        return result;
+        return flow.getFieldValue(performativeField.ordinal());
     }
 
     @Override
     protected Enum<?> getFieldEnum(int fieldIndex) {
-        return Field.values()[fieldIndex];
+        return Flow.Field.values()[fieldIndex];
     }
 
     @Override

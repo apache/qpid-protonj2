@@ -21,7 +21,8 @@ import static org.hamcrest.CoreMatchers.equalTo;
 import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
 import org.apache.qpid.proton4j.amqp.driver.actions.BeginInjectAction;
 import org.apache.qpid.proton4j.amqp.driver.actions.EndInjectAction;
-import org.apache.qpid.proton4j.amqp.transport.End;
+import org.apache.qpid.proton4j.amqp.driver.codec.transport.End;
+import org.apache.qpid.proton4j.amqp.driver.codec.util.TypeMapper;
 import org.apache.qpid.proton4j.amqp.transport.ErrorCondition;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.hamcrest.Matcher;
@@ -30,13 +31,6 @@ import org.hamcrest.Matcher;
  * Scripted expectation for the AMQP End performative
  */
 public class EndExpectation extends AbstractExpectation<End> {
-
-    /**
-     * Enumeration which maps to fields in the End Performative
-     */
-    public enum Field {
-        ERROR
-    }
 
     private EndInjectAction response;
 
@@ -76,32 +70,24 @@ public class EndExpectation extends AbstractExpectation<End> {
     //----- Type specific with methods that perform simple equals checks
 
     public EndExpectation withError(ErrorCondition error) {
-        return withError(equalTo(error));
+        return withError(equalTo(TypeMapper.mapFromProtonType(error)));
     }
 
     //----- Matcher based with methods for more complex validation
 
     public EndExpectation withError(Matcher<?> m) {
-        getMatchers().put(Field.ERROR, m);
+        getMatchers().put(End.Field.ERROR, m);
         return this;
     }
 
     @Override
     protected Object getFieldValue(End end, Enum<?> performativeField) {
-        Object result = null;
-
-        if (performativeField == Field.ERROR) {
-            result = end.getError();
-        } else {
-            throw new AssertionError("Request for unknown field in type End");
-        }
-
-        return result;
+        return end.getFieldValue(performativeField.ordinal());
     }
 
     @Override
     protected Enum<?> getFieldEnum(int fieldIndex) {
-        return Field.values()[fieldIndex];
+        return End.Field.values()[fieldIndex];
     }
 
     @Override

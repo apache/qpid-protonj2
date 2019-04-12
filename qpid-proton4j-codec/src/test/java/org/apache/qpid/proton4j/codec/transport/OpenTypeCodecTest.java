@@ -45,9 +45,9 @@ public class OpenTypeCodecTest extends CodecTestSupport {
 
         input.setContainerId("test");
         input.setHostname("localhost");
-        input.setChannelMax(UnsignedShort.valueOf((short) 512));
-        input.setMaxFrameSize(UnsignedInteger.ONE);
-        input.setIdleTimeOut(UnsignedInteger.ZERO);
+        input.setChannelMax(UnsignedShort.valueOf(512).intValue());
+        input.setMaxFrameSize(UnsignedInteger.ONE.longValue());
+        input.setIdleTimeOut(UnsignedInteger.ZERO.longValue());
         input.setOfferedCapabilities(offeredCapabilities);
         input.setDesiredCapabilities(desiredCapabilities);
 
@@ -57,9 +57,9 @@ public class OpenTypeCodecTest extends CodecTestSupport {
 
         assertEquals("test", result.getContainerId());
         assertEquals("localhost", result.getHostname());
-        assertEquals(UnsignedShort.valueOf((short) 512), result.getChannelMax());
-        assertEquals(UnsignedInteger.ONE, result.getMaxFrameSize());
-        assertEquals(UnsignedInteger.ZERO, result.getIdleTimeOut());
+        assertEquals(UnsignedShort.valueOf(512).intValue(), result.getChannelMax());
+        assertEquals(UnsignedInteger.ONE.longValue(), result.getMaxFrameSize());
+        assertEquals(UnsignedInteger.ZERO.longValue(), result.getIdleTimeOut());
         assertArrayEquals(offeredCapabilities, result.getOfferedCapabilities());
         assertArrayEquals(desiredCapabilities, result.getDesiredCapabilities());
     }
@@ -75,8 +75,8 @@ public class OpenTypeCodecTest extends CodecTestSupport {
 
         input.setContainerId("test");
         input.setHostname("localhost");
-        input.setMaxFrameSize(UnsignedInteger.ONE);
-        input.setIdleTimeOut(UnsignedInteger.ZERO);
+        input.setMaxFrameSize(UnsignedInteger.ONE.longValue());
+        input.setIdleTimeOut(UnsignedInteger.ZERO.longValue());
         input.setOfferedCapabilities(offeredCapabilities);
         input.setDesiredCapabilities(desiredCapabilities);
 
@@ -98,8 +98,8 @@ public class OpenTypeCodecTest extends CodecTestSupport {
 
         input.setContainerId("test");
         input.setHostname("localhost");
-        input.setMaxFrameSize(UnsignedInteger.ONE);
-        input.setIdleTimeOut(UnsignedInteger.ZERO);
+        input.setMaxFrameSize(UnsignedInteger.ONE.longValue());
+        input.setIdleTimeOut(UnsignedInteger.ZERO.longValue());
         input.setOfferedCapabilities(offeredCapabilities);
         input.setDesiredCapabilities(desiredCapabilities);
 

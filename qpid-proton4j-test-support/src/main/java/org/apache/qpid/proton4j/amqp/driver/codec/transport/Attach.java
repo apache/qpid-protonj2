@@ -27,6 +27,8 @@ import org.apache.qpid.proton4j.amqp.UnsignedInteger;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.amqp.driver.codec.messaging.Source;
 import org.apache.qpid.proton4j.amqp.driver.codec.messaging.Target;
+import org.apache.qpid.proton4j.amqp.transport.ReceiverSettleMode;
+import org.apache.qpid.proton4j.amqp.transport.SenderSettleMode;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 
 public class Attach extends PerformativeDescribedType {
@@ -208,5 +210,26 @@ public class Attach extends PerformativeDescribedType {
     @Override
     public <E> void invoke(PerformativeHandler<E> handler, ProtonBuffer payload, int channel, E context) {
         handler.handleAttach(this, payload, channel, context);
+    }
+
+    @Override
+    public Object getFieldValueOrSpecDefault(int index) {
+        Object result = getFieldValue(index);
+        if (result == null) {
+            Field field = Field.values()[index];
+            switch (field) {
+                case SND_SETTLE_MODE:
+                    result = SenderSettleMode.MIXED;
+                    break;
+                case RCV_SETTLE_MODE:
+                    result = ReceiverSettleMode.FIRST;
+                    break;
+                case INCOMPLETE_UNSETTLED:
+                    result = Boolean.FALSE;
+                default:
+                    break;
+            }
+        }
+        return result;
     }
 }

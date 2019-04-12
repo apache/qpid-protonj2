@@ -26,7 +26,7 @@ import org.apache.qpid.proton4j.buffer.ProtonBuffer;
  */
 public abstract class PerformativeDescribedType extends ListDescribedType {
 
-    enum PerformativeType {
+    public enum PerformativeType {
         ATTACH,
         BEGIN,
         CLOSE,
@@ -48,7 +48,7 @@ public abstract class PerformativeDescribedType extends ListDescribedType {
 
     public abstract PerformativeType getPerformativeType();
 
-    interface PerformativeHandler<E> {
+    public interface PerformativeHandler<E> {
 
         default void handleOpen(Open open, ProtonBuffer payload, int channel, E context) {}
         default void handleBegin(Begin begin, ProtonBuffer payload, int channel, E context) {}
@@ -60,6 +60,10 @@ public abstract class PerformativeDescribedType extends ListDescribedType {
         default void handleEnd(End end, ProtonBuffer payload, int channel, E context) {}
         default void handleClose(Close close, ProtonBuffer payload, int channel, E context) {}
 
+    }
+
+    public Object getFieldValueOrSpecDefault(int index) {
+        return getFieldValue(index);
     }
 
     public abstract <E> void invoke(PerformativeHandler<E> handler, ProtonBuffer payload, int channel, E context);

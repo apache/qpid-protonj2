@@ -18,10 +18,11 @@ package org.apache.qpid.proton4j.amqp.driver.expectations;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 
+import org.apache.qpid.proton4j.amqp.UnsignedInteger;
 import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
 import org.apache.qpid.proton4j.amqp.driver.actions.BeginInjectAction;
 import org.apache.qpid.proton4j.amqp.driver.actions.DetachInjectAction;
-import org.apache.qpid.proton4j.amqp.transport.Detach;
+import org.apache.qpid.proton4j.amqp.driver.codec.transport.Detach;
 import org.apache.qpid.proton4j.amqp.transport.ErrorCondition;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.hamcrest.Matcher;
@@ -30,15 +31,6 @@ import org.hamcrest.Matcher;
  * Scripted expectation for the AMQP Detach performative
  */
 public class DetachExpectation extends AbstractExpectation<Detach> {
-
-    /**
-     * Enumeration which maps to fields in the Detach Performative
-     */
-    public enum Field {
-        HANDLE,
-        CLOSED,
-        ERROR
-    }
 
     DetachInjectAction response;
 
@@ -85,7 +77,15 @@ public class DetachExpectation extends AbstractExpectation<Detach> {
 
     //----- Type specific with methods that perform simple equals checks
 
+    public DetachExpectation withHandle(int handle) {
+        return withHandle(equalTo(UnsignedInteger.valueOf(handle)));
+    }
+
     public DetachExpectation withHandle(long handle) {
+        return withHandle(equalTo(UnsignedInteger.valueOf(handle)));
+    }
+
+    public DetachExpectation withHandle(UnsignedInteger handle) {
         return withHandle(equalTo(handle));
     }
 
@@ -100,40 +100,28 @@ public class DetachExpectation extends AbstractExpectation<Detach> {
     //----- Matcher based with methods for more complex validation
 
     public DetachExpectation withHandle(Matcher<?> m) {
-        getMatchers().put(Field.HANDLE, m);
+        getMatchers().put(Detach.Field.HANDLE, m);
         return this;
     }
 
     public DetachExpectation withClosed(Matcher<?> m) {
-        getMatchers().put(Field.CLOSED, m);
+        getMatchers().put(Detach.Field.CLOSED, m);
         return this;
     }
 
     public DetachExpectation withError(Matcher<?> m) {
-        getMatchers().put(Field.ERROR, m);
+        getMatchers().put(Detach.Field.ERROR, m);
         return this;
     }
 
     @Override
-    protected Object getFieldValue(Detach end, Enum<?> performativeField) {
-        Object result = null;
-
-        if (performativeField == Field.HANDLE) {
-            result = end.hasHandle() ? end.getHandle() : null;
-        } else if (performativeField == Field.CLOSED) {
-            result = end.hasClosed() ? end.getClosed() : null;
-        } else if (performativeField == Field.ERROR) {
-            result = end.hasError() ? end.getError() : null;
-        } else {
-            throw new AssertionError("Request for unknown field in type Detach");
-        }
-
-        return result;
+    protected Object getFieldValue(Detach detach, Enum<?> performativeField) {
+        return detach.getFieldValue(performativeField.ordinal());
     }
 
     @Override
     protected Enum<?> getFieldEnum(int fieldIndex) {
-        return Field.values()[fieldIndex];
+        return Detach.Field.values()[fieldIndex];
     }
 
     @Override

@@ -41,8 +41,28 @@ public class BeginInjectAction extends AbstractPerformativeInjectAction<Begin> {
         return this;
     }
 
+    public BeginInjectAction withRemoteChannel(UnsignedShort remoteChannel) {
+        begin.setRemoteChannel(remoteChannel);
+        return this;
+    }
+
+    public BeginInjectAction withNextOutgoingId(int nextOutgoingId) {
+        begin.setNextOutgoingId(UnsignedInteger.valueOf(nextOutgoingId));
+        return this;
+    }
+
     public BeginInjectAction withNextOutgoingId(long nextOutgoingId) {
         begin.setNextOutgoingId(UnsignedInteger.valueOf(nextOutgoingId));
+        return this;
+    }
+
+    public BeginInjectAction withNextOutgoingId(UnsignedInteger nextOutgoingId) {
+        begin.setNextOutgoingId(nextOutgoingId);
+        return this;
+    }
+
+    public BeginInjectAction withIncomingWindow(int incomingWindow) {
+        begin.setIncomingWindow(UnsignedInteger.valueOf(incomingWindow));
         return this;
     }
 
@@ -51,13 +71,38 @@ public class BeginInjectAction extends AbstractPerformativeInjectAction<Begin> {
         return this;
     }
 
+    public BeginInjectAction withIncomingWindow(UnsignedInteger incomingWindow) {
+        begin.setIncomingWindow(incomingWindow);
+        return this;
+    }
+
+    public BeginInjectAction withOutgoingWindow(int outgoingWindow) {
+        begin.setOutgoingWindow(UnsignedInteger.valueOf(outgoingWindow));
+        return this;
+    }
+
     public BeginInjectAction withOutgoingWindow(long outgoingWindow) {
         begin.setOutgoingWindow(UnsignedInteger.valueOf(outgoingWindow));
         return this;
     }
 
+    public BeginInjectAction withOutgoingWindow(UnsignedInteger outgoingWindow) {
+        begin.setOutgoingWindow(outgoingWindow);
+        return this;
+    }
+
+    public BeginInjectAction withHandleMax(int handleMax) {
+        begin.setHandleMax(UnsignedInteger.valueOf(handleMax));
+        return this;
+    }
+
     public BeginInjectAction withHandleMax(long handleMax) {
         begin.setHandleMax(UnsignedInteger.valueOf(handleMax));
+        return this;
+    }
+
+    public BeginInjectAction withHandleMax(UnsignedInteger handleMax) {
+        begin.setHandleMax(handleMax);
         return this;
     }
 

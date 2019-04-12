@@ -57,6 +57,11 @@ public class AttachInjectAction extends AbstractPerformativeInjectAction<Attach>
         return this;
     }
 
+    public AttachInjectAction withHandle(UnsignedInteger handle) {
+        attach.setHandle(handle);
+        return this;
+    }
+
     public AttachInjectAction withRole(Role role) {
         attach.setRole(role.getValue());
         return this;

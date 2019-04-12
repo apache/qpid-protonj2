@@ -16,14 +16,12 @@
  */
 package org.apache.qpid.proton4j.amqp.driver;
 
-import org.apache.qpid.proton4j.amqp.security.SaslPerformative;
+import org.apache.qpid.proton4j.amqp.driver.codec.Codec;
+import org.apache.qpid.proton4j.amqp.driver.codec.security.SaslDescribedType;
+import org.apache.qpid.proton4j.amqp.driver.codec.transport.PerformativeDescribedType;
 import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
-import org.apache.qpid.proton4j.amqp.transport.Performative;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
-import org.apache.qpid.proton4j.codec.CodecFactory;
-import org.apache.qpid.proton4j.codec.Decoder;
-import org.apache.qpid.proton4j.codec.DecoderState;
 import org.apache.qpid.proton4j.common.logging.ProtonLogger;
 import org.apache.qpid.proton4j.common.logging.ProtonLoggerFactory;
 
@@ -37,8 +35,7 @@ class FrameDecoder {
     public static final int FRAME_SIZE_BTYES = 4;
 
     private final AMQPTestDriver driver;
-    private Decoder decoder;
-    private DecoderState decoderState;
+    private final Codec codec = Codec.Factory.create();
     private FrameParserStage stage = new HeaderParsingStage();
 
     // Parser stages used during the parsing process
@@ -142,14 +139,9 @@ class FrameDecoder {
             // Transition to parsing the frames if any pipelined into this buffer.
             transitionToFrameSizeParsingStage();
 
-            // This probably isn't right as this fires to next not current.
             if (header.isSaslHeader()) {
-                decoder = CodecFactory.getSaslDecoder();
-                decoderState = decoder.newDecoderState();
                 driver.handleHeader(AMQPHeader.getSASLHeader());
             } else {
-                decoder = CodecFactory.getDecoder();
-                decoderState = decoder.newDecoderState();
                 driver.handleHeader(AMQPHeader.getAMQPHeader());
             }
         }
@@ -271,10 +263,21 @@ class FrameDecoder {
 
             if (frameBodySize > 0) {
                 try {
-                    val = decoder.readObject(input, decoderState);
+                    codec.decode(input);
                 } catch (Exception e) {
                     throw new AssertionError("Decoder failed reading remote input:", e);
                 }
+
+                Codec.DataType dataType = codec.type();
+                if (dataType != Codec.DataType.DESCRIBED) {
+                    throw new IllegalArgumentException(
+                        "Frame body type expected to be " + Codec.DataType.DESCRIBED + " but was: " + dataType);
+                }
+
+                val = codec.getDescribedType();
+
+                // Reset for next frame.
+                codec.clear();
 
                 // Slice to the known Frame body size and use that as the buffer for any payload once
                 // the actual Performative has been decoded.  The implies that the data comprising the
@@ -290,13 +293,12 @@ class FrameDecoder {
             }
 
             if (type == AMQP_FRAME_TYPE) {
-                Performative performative = (Performative) val;
+                PerformativeDescribedType performative = (PerformativeDescribedType) val;
                 LOG.trace("Driver Read: CH[{}] : {} [{}]", channel, performative, payload);
                 transitionToFrameSizeParsingStage();
                 driver.handlePerformative(performative, channel, payload);
             } else if (type == SASL_FRAME_TYPE) {
-                SaslPerformative performative = (SaslPerformative) val;
-                // TODO remove me
+                SaslDescribedType performative = (SaslDescribedType) val;
                 LOG.trace("Driver Read: {} [{}]", performative, payload);
                 transitionToFrameSizeParsingStage();
                 driver.handleSaslPerformative(performative, channel, payload);
