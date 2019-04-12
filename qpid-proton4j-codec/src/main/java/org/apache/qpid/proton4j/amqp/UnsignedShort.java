@@ -102,12 +102,19 @@ public final class UnsignedShort extends Number implements Comparable<UnsignedSh
         return String.valueOf(longValue());
     }
 
-    public static UnsignedShort valueOf(short underlying) {
+    public static UnsignedShort valueOf(final short underlying) {
         if ((underlying & 0xFF00) == 0) {
             return cachedValues[underlying];
         } else {
             return new UnsignedShort(underlying);
         }
+    }
+
+    public static UnsignedShort valueOf(final int intValue) {
+        if (intValue < 0L || intValue >= (1L << 16)) {
+            throw new NumberFormatException("Value \"" + intValue + "\" lies outside the range [" + 0L + "-" + (1L << 16) + ").");
+        }
+        return valueOf((short) intValue);
     }
 
     public static UnsignedShort valueOf(final String value) {
