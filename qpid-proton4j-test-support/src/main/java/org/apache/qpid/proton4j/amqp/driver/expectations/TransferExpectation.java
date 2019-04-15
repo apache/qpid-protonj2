@@ -21,6 +21,7 @@ import static org.hamcrest.CoreMatchers.equalTo;
 import org.apache.qpid.proton4j.amqp.Binary;
 import org.apache.qpid.proton4j.amqp.UnsignedInteger;
 import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
+import org.apache.qpid.proton4j.amqp.driver.codec.ListDescribedType;
 import org.apache.qpid.proton4j.amqp.driver.codec.security.SaslResponse;
 import org.apache.qpid.proton4j.amqp.driver.codec.transport.Transfer;
 import org.apache.qpid.proton4j.amqp.driver.codec.util.TypeMapper;
@@ -171,6 +172,11 @@ public class TransferExpectation extends AbstractExpectation<Transfer> {
     public TransferExpectation withBatchable(Matcher<?> m) {
         matcher.addFieldMatcher(Transfer.Field.BATCHABLE, m);
         return this;
+    }
+
+    @Override
+    protected Matcher<ListDescribedType> getExpectationMatcher() {
+        return matcher;
     }
 
     @Override

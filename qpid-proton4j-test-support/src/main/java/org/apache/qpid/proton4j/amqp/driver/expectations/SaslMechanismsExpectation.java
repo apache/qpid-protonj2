@@ -20,6 +20,7 @@ import static org.hamcrest.CoreMatchers.equalTo;
 
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
+import org.apache.qpid.proton4j.amqp.driver.codec.ListDescribedType;
 import org.apache.qpid.proton4j.amqp.driver.codec.security.SaslMechanisms;
 import org.apache.qpid.proton4j.amqp.driver.matchers.security.SaslMechanismsMatcher;
 import org.hamcrest.Matcher;
@@ -46,6 +47,11 @@ public class SaslMechanismsExpectation extends AbstractExpectation<SaslMechanism
     public SaslMechanismsExpectation withSaslServerMechanisms(Matcher<?> m) {
         matcher.addFieldMatcher(SaslMechanisms.Field.SASL_SERVER_MECHANISMS, m);
         return this;
+    }
+
+    @Override
+    protected Matcher<ListDescribedType> getExpectationMatcher() {
+        return matcher;
     }
 
     @Override

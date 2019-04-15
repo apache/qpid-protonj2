@@ -25,6 +25,7 @@ import org.apache.qpid.proton4j.amqp.UnsignedInteger;
 import org.apache.qpid.proton4j.amqp.UnsignedShort;
 import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
 import org.apache.qpid.proton4j.amqp.driver.actions.BeginInjectAction;
+import org.apache.qpid.proton4j.amqp.driver.codec.ListDescribedType;
 import org.apache.qpid.proton4j.amqp.driver.codec.transport.Begin;
 import org.apache.qpid.proton4j.amqp.driver.matchers.transport.BeginMatcher;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
@@ -206,6 +207,11 @@ public class BeginExpectation extends AbstractExpectation<Begin> {
     public BeginExpectation withProperties(Matcher<?> m) {
         matcher.addFieldMatcher(Begin.Field.PROPERTIES, m);
         return this;
+    }
+
+    @Override
+    protected Matcher<ListDescribedType> getExpectationMatcher() {
+        return matcher;
     }
 
     @Override

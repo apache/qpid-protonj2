@@ -21,6 +21,7 @@ import static org.hamcrest.CoreMatchers.equalTo;
 import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
 import org.apache.qpid.proton4j.amqp.driver.actions.BeginInjectAction;
 import org.apache.qpid.proton4j.amqp.driver.actions.CloseInjectAction;
+import org.apache.qpid.proton4j.amqp.driver.codec.ListDescribedType;
 import org.apache.qpid.proton4j.amqp.driver.codec.transport.Close;
 import org.apache.qpid.proton4j.amqp.driver.codec.util.TypeMapper;
 import org.apache.qpid.proton4j.amqp.driver.matchers.transport.CloseMatcher;
@@ -75,6 +76,11 @@ public class CloseExpectation extends AbstractExpectation<Close> {
     public CloseExpectation withError(Matcher<?> m) {
         matcher.addFieldMatcher(Close.Field.ERROR, m);
         return this;
+    }
+
+    @Override
+    protected Matcher<ListDescribedType> getExpectationMatcher() {
+        return matcher;
     }
 
     @Override

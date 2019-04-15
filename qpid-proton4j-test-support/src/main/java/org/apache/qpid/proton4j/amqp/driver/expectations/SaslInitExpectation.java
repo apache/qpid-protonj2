@@ -21,6 +21,7 @@ import static org.hamcrest.CoreMatchers.equalTo;
 import org.apache.qpid.proton4j.amqp.Binary;
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
+import org.apache.qpid.proton4j.amqp.driver.codec.ListDescribedType;
 import org.apache.qpid.proton4j.amqp.driver.codec.security.SaslInit;
 import org.apache.qpid.proton4j.amqp.driver.matchers.security.SaslInitMatcher;
 import org.hamcrest.Matcher;
@@ -65,6 +66,11 @@ public class SaslInitExpectation extends AbstractExpectation<SaslInit> {
     public SaslInitExpectation withHostname(Matcher<?> m) {
         matcher.addFieldMatcher(SaslInit.Field.HOSTNAME, m);
         return this;
+    }
+
+    @Override
+    protected Matcher<ListDescribedType> getExpectationMatcher() {
+        return matcher;
     }
 
     @Override

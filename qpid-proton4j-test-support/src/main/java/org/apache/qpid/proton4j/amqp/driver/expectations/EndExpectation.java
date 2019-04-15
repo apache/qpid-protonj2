@@ -21,6 +21,7 @@ import static org.hamcrest.CoreMatchers.equalTo;
 import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
 import org.apache.qpid.proton4j.amqp.driver.actions.BeginInjectAction;
 import org.apache.qpid.proton4j.amqp.driver.actions.EndInjectAction;
+import org.apache.qpid.proton4j.amqp.driver.codec.ListDescribedType;
 import org.apache.qpid.proton4j.amqp.driver.codec.transport.End;
 import org.apache.qpid.proton4j.amqp.driver.codec.util.TypeMapper;
 import org.apache.qpid.proton4j.amqp.driver.matchers.transport.EndMatcher;
@@ -81,6 +82,11 @@ public class EndExpectation extends AbstractExpectation<End> {
     public EndExpectation withError(Matcher<?> m) {
         matcher.addFieldMatcher(End.Field.ERROR, m);
         return this;
+    }
+
+    @Override
+    protected Matcher<ListDescribedType> getExpectationMatcher() {
+        return matcher;
     }
 
     @Override

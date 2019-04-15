@@ -85,15 +85,7 @@ public abstract class AbstractExpectation<T extends ListDescribedType> implement
         LOG.debug("About to check the fields of the performative." +
                   "\n  Received:" + performative + "\n  Expectations: " + fieldMatchers);
 
-        if (getExpectationMatcher() != null) {
-            assertThat("Performative does not match expectation", performative, getExpectationMatcher());
-        } else {
-            for (Map.Entry<Enum<?>, Matcher<?>> entry : fieldMatchers.entrySet()) {
-                @SuppressWarnings("unchecked")
-                Matcher<Object> matcher = (Matcher<Object>) entry.getValue();
-                assertThat("Field " + entry.getKey() + " value should match", getFieldValue(performative, entry.getKey()), matcher);
-            }
-        }
+        assertThat("Performative does not match expectation", performative, getExpectationMatcher());
     }
 
     protected final void verifyPayload(ProtonBuffer payload) {
@@ -115,9 +107,7 @@ public abstract class AbstractExpectation<T extends ListDescribedType> implement
         return fieldMatchers;
     }
 
-    protected Matcher<ListDescribedType> getExpectationMatcher() {
-        return null;
-    }
+    protected abstract Matcher<ListDescribedType> getExpectationMatcher();
 
     protected abstract Object getFieldValue(T received, Enum<?> performativeField);
 

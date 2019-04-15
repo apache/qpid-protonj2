@@ -20,6 +20,7 @@ import static org.hamcrest.CoreMatchers.equalTo;
 
 import org.apache.qpid.proton4j.amqp.Binary;
 import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
+import org.apache.qpid.proton4j.amqp.driver.codec.ListDescribedType;
 import org.apache.qpid.proton4j.amqp.driver.codec.security.SaslResponse;
 import org.apache.qpid.proton4j.amqp.driver.matchers.security.SaslResponseMatcher;
 import org.hamcrest.Matcher;
@@ -46,6 +47,11 @@ public class SaslResponseExpectation extends AbstractExpectation<SaslResponse> {
     public SaslResponseExpectation withResponse(Matcher<?> m) {
         matcher.addFieldMatcher(SaslResponse.Field.RESPONSE, m);
         return this;
+    }
+
+    @Override
+    protected Matcher<ListDescribedType> getExpectationMatcher() {
+        return matcher;
     }
 
     @Override

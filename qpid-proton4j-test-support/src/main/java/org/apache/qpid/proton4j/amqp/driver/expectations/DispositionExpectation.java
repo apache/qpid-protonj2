@@ -20,6 +20,7 @@ import static org.hamcrest.CoreMatchers.equalTo;
 
 import org.apache.qpid.proton4j.amqp.UnsignedInteger;
 import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
+import org.apache.qpid.proton4j.amqp.driver.codec.ListDescribedType;
 import org.apache.qpid.proton4j.amqp.driver.codec.transport.Disposition;
 import org.apache.qpid.proton4j.amqp.driver.codec.util.TypeMapper;
 import org.apache.qpid.proton4j.amqp.driver.matchers.transport.DispositionMatcher;
@@ -118,6 +119,11 @@ public class DispositionExpectation extends AbstractExpectation<Disposition> {
     public DispositionExpectation withBatchable(Matcher<?> m) {
         matcher.addFieldMatcher(Disposition.Field.BATCHABLE, m);
         return this;
+    }
+
+    @Override
+    protected Matcher<ListDescribedType> getExpectationMatcher() {
+        return matcher;
     }
 
     @Override

@@ -37,7 +37,7 @@ import org.hamcrest.Matcher;
  */
 public class OpenExpectation extends AbstractExpectation<Open> {
 
-    private final OpenMatcher openMatcher = new OpenMatcher();
+    private final OpenMatcher matcher = new OpenMatcher();
 
     private OpenInjectAction response;
 
@@ -142,58 +142,58 @@ public class OpenExpectation extends AbstractExpectation<Open> {
     //----- Matcher based with methods for more complex validation
 
     public OpenExpectation withContainerId(Matcher<?> m) {
-        openMatcher.addFieldMatcher(Open.Field.CONTAINER_ID, m);
+        matcher.addFieldMatcher(Open.Field.CONTAINER_ID, m);
         return this;
     }
 
     public OpenExpectation withHostname(Matcher<?> m) {
-        openMatcher.addFieldMatcher(Open.Field.HOSTNAME, m);
+        matcher.addFieldMatcher(Open.Field.HOSTNAME, m);
         return this;
     }
 
     public OpenExpectation withMaxFrameSize(Matcher<?> m) {
-        openMatcher.addFieldMatcher(Open.Field.MAX_FRAME_SIZE, m);
+        matcher.addFieldMatcher(Open.Field.MAX_FRAME_SIZE, m);
         return this;
     }
 
     public OpenExpectation withChannelMax(Matcher<?> m) {
-        openMatcher.addFieldMatcher(Open.Field.CHANNEL_MAX, m);
+        matcher.addFieldMatcher(Open.Field.CHANNEL_MAX, m);
         return this;
     }
 
     public OpenExpectation withIdleTimeOut(Matcher<?> m) {
-        openMatcher.addFieldMatcher(Open.Field.IDLE_TIME_OUT, m);
+        matcher.addFieldMatcher(Open.Field.IDLE_TIME_OUT, m);
         return this;
     }
 
     public OpenExpectation withOutgoingLocales(Matcher<?> m) {
-        openMatcher.addFieldMatcher(Open.Field.OUTGOING_LOCALES, m);
+        matcher.addFieldMatcher(Open.Field.OUTGOING_LOCALES, m);
         return this;
     }
 
     public OpenExpectation withIncomingLocales(Matcher<?> m) {
-        openMatcher.addFieldMatcher(Open.Field.INCOMING_LOCALES, m);
+        matcher.addFieldMatcher(Open.Field.INCOMING_LOCALES, m);
         return this;
     }
 
     public OpenExpectation withOfferedCapabilities(Matcher<?> m) {
-        openMatcher.addFieldMatcher(Open.Field.OFFERED_CAPABILITIES, m);
+        matcher.addFieldMatcher(Open.Field.OFFERED_CAPABILITIES, m);
         return this;
     }
 
     public OpenExpectation withDesiredCapabilities(Matcher<?> m) {
-        openMatcher.addFieldMatcher(Open.Field.DESIRED_CAPABILITIES, m);
+        matcher.addFieldMatcher(Open.Field.DESIRED_CAPABILITIES, m);
         return this;
     }
 
     public OpenExpectation withProperties(Matcher<?> m) {
-        openMatcher.addFieldMatcher(Open.Field.PROPERTIES, m);
+        matcher.addFieldMatcher(Open.Field.PROPERTIES, m);
         return this;
     }
 
     @Override
     protected Matcher<ListDescribedType> getExpectationMatcher() {
-        return openMatcher;
+        return matcher;
     }
 
     @Override

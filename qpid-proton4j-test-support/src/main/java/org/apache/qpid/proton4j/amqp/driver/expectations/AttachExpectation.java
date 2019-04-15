@@ -27,6 +27,7 @@ import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
 import org.apache.qpid.proton4j.amqp.driver.actions.AttachInjectAction;
 import org.apache.qpid.proton4j.amqp.driver.actions.BeginInjectAction;
+import org.apache.qpid.proton4j.amqp.driver.codec.ListDescribedType;
 import org.apache.qpid.proton4j.amqp.driver.codec.transport.Attach;
 import org.apache.qpid.proton4j.amqp.driver.matchers.transport.AttachMatcher;
 import org.apache.qpid.proton4j.amqp.messaging.Source;
@@ -258,6 +259,11 @@ public class AttachExpectation extends AbstractExpectation<Attach> {
     public AttachExpectation withProperties(Matcher<?> m) {
         matcher.addFieldMatcher(Attach.Field.PROPERTIES, m);
         return this;
+    }
+
+    @Override
+    protected Matcher<ListDescribedType> getExpectationMatcher() {
+        return matcher;
     }
 
     @Override

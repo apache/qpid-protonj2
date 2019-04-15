@@ -23,6 +23,7 @@ import java.util.Map;
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedInteger;
 import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
+import org.apache.qpid.proton4j.amqp.driver.codec.ListDescribedType;
 import org.apache.qpid.proton4j.amqp.driver.codec.transport.Flow;
 import org.apache.qpid.proton4j.amqp.driver.matchers.transport.FlowMatcher;
 import org.hamcrest.Matcher;
@@ -209,6 +210,11 @@ public class FlowExpectation extends AbstractExpectation<Flow> {
     public FlowExpectation withProperties(Matcher<?> m) {
         matcher.addFieldMatcher(Flow.Field.PROPERTIES, m);
         return this;
+    }
+
+    @Override
+    protected Matcher<ListDescribedType> getExpectationMatcher() {
+        return matcher;
     }
 
     @Override
