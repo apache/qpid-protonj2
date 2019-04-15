@@ -21,12 +21,15 @@ import static org.hamcrest.CoreMatchers.equalTo;
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
 import org.apache.qpid.proton4j.amqp.driver.codec.security.SaslMechanisms;
+import org.apache.qpid.proton4j.amqp.driver.matchers.security.SaslMechanismsMatcher;
 import org.hamcrest.Matcher;
 
 /**
  * Scripted expectation for the AMQP SaslMechanisms performative
  */
 public class SaslMechanismsExpectation extends AbstractExpectation<SaslMechanisms> {
+
+    private final SaslMechanismsMatcher matcher = new SaslMechanismsMatcher();
 
     public SaslMechanismsExpectation(AMQPTestDriver driver) {
         super(driver);
@@ -41,7 +44,7 @@ public class SaslMechanismsExpectation extends AbstractExpectation<SaslMechanism
     //----- Matcher based with methods for more complex validation
 
     public SaslMechanismsExpectation withSaslServerMechanisms(Matcher<?> m) {
-        getMatchers().put(SaslMechanisms.Field.SASL_SERVER_MECHANISMS, m);
+        matcher.addFieldMatcher(SaslMechanisms.Field.SASL_SERVER_MECHANISMS, m);
         return this;
     }
 

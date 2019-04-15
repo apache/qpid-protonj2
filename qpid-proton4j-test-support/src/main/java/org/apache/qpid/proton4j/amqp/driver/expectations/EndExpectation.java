@@ -23,6 +23,7 @@ import org.apache.qpid.proton4j.amqp.driver.actions.BeginInjectAction;
 import org.apache.qpid.proton4j.amqp.driver.actions.EndInjectAction;
 import org.apache.qpid.proton4j.amqp.driver.codec.transport.End;
 import org.apache.qpid.proton4j.amqp.driver.codec.util.TypeMapper;
+import org.apache.qpid.proton4j.amqp.driver.matchers.transport.EndMatcher;
 import org.apache.qpid.proton4j.amqp.transport.ErrorCondition;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.hamcrest.Matcher;
@@ -31,6 +32,8 @@ import org.hamcrest.Matcher;
  * Scripted expectation for the AMQP End performative
  */
 public class EndExpectation extends AbstractExpectation<End> {
+
+    private final EndMatcher matcher = new EndMatcher();
 
     private EndInjectAction response;
 
@@ -76,7 +79,7 @@ public class EndExpectation extends AbstractExpectation<End> {
     //----- Matcher based with methods for more complex validation
 
     public EndExpectation withError(Matcher<?> m) {
-        getMatchers().put(End.Field.ERROR, m);
+        matcher.addFieldMatcher(End.Field.ERROR, m);
         return this;
     }
 

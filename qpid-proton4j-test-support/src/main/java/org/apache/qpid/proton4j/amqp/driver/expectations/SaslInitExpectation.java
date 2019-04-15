@@ -22,12 +22,15 @@ import org.apache.qpid.proton4j.amqp.Binary;
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
 import org.apache.qpid.proton4j.amqp.driver.codec.security.SaslInit;
+import org.apache.qpid.proton4j.amqp.driver.matchers.security.SaslInitMatcher;
 import org.hamcrest.Matcher;
 
 /**
  * Scripted expectation for the AMQP SaslInit performative
  */
 public class SaslInitExpectation extends AbstractExpectation<SaslInit> {
+
+    private final SaslInitMatcher matcher = new SaslInitMatcher();
 
     public SaslInitExpectation(AMQPTestDriver driver) {
         super(driver);
@@ -50,17 +53,17 @@ public class SaslInitExpectation extends AbstractExpectation<SaslInit> {
     //----- Matcher based with methods for more complex validation
 
     public SaslInitExpectation withMechanism(Matcher<?> m) {
-        getMatchers().put(SaslInit.Field.MECHANISM, m);
+        matcher.addFieldMatcher(SaslInit.Field.MECHANISM, m);
         return this;
     }
 
     public SaslInitExpectation withInitialResponse(Matcher<?> m) {
-        getMatchers().put(SaslInit.Field.INITIAL_RESPONSE, m);
+        matcher.addFieldMatcher(SaslInit.Field.INITIAL_RESPONSE, m);
         return this;
     }
 
     public SaslInitExpectation withHostname(Matcher<?> m) {
-        getMatchers().put(SaslInit.Field.HOSTNAME, m);
+        matcher.addFieldMatcher(SaslInit.Field.HOSTNAME, m);
         return this;
     }
 

@@ -26,7 +26,9 @@ import org.apache.qpid.proton4j.amqp.UnsignedShort;
 import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
 import org.apache.qpid.proton4j.amqp.driver.actions.BeginInjectAction;
 import org.apache.qpid.proton4j.amqp.driver.actions.OpenInjectAction;
+import org.apache.qpid.proton4j.amqp.driver.codec.ListDescribedType;
 import org.apache.qpid.proton4j.amqp.driver.codec.transport.Open;
+import org.apache.qpid.proton4j.amqp.driver.matchers.messaging.OpenMatcher;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.hamcrest.Matcher;
 
@@ -34,6 +36,8 @@ import org.hamcrest.Matcher;
  * Scripted expectation for the AMQP Open performative
  */
 public class OpenExpectation extends AbstractExpectation<Open> {
+
+    private final OpenMatcher openMatcher = new OpenMatcher();
 
     private OpenInjectAction response;
 
@@ -138,53 +142,58 @@ public class OpenExpectation extends AbstractExpectation<Open> {
     //----- Matcher based with methods for more complex validation
 
     public OpenExpectation withContainerId(Matcher<?> m) {
-        getMatchers().put(Open.Field.CONTAINER_ID, m);
+        openMatcher.addFieldMatcher(Open.Field.CONTAINER_ID, m);
         return this;
     }
 
     public OpenExpectation withHostname(Matcher<?> m) {
-        getMatchers().put(Open.Field.HOSTNAME, m);
+        openMatcher.addFieldMatcher(Open.Field.HOSTNAME, m);
         return this;
     }
 
     public OpenExpectation withMaxFrameSize(Matcher<?> m) {
-        getMatchers().put(Open.Field.MAX_FRAME_SIZE, m);
+        openMatcher.addFieldMatcher(Open.Field.MAX_FRAME_SIZE, m);
         return this;
     }
 
     public OpenExpectation withChannelMax(Matcher<?> m) {
-        getMatchers().put(Open.Field.CHANNEL_MAX, m);
+        openMatcher.addFieldMatcher(Open.Field.CHANNEL_MAX, m);
         return this;
     }
 
     public OpenExpectation withIdleTimeOut(Matcher<?> m) {
-        getMatchers().put(Open.Field.IDLE_TIME_OUT, m);
+        openMatcher.addFieldMatcher(Open.Field.IDLE_TIME_OUT, m);
         return this;
     }
 
     public OpenExpectation withOutgoingLocales(Matcher<?> m) {
-        getMatchers().put(Open.Field.OUTGOING_LOCALES, m);
+        openMatcher.addFieldMatcher(Open.Field.OUTGOING_LOCALES, m);
         return this;
     }
 
     public OpenExpectation withIncomingLocales(Matcher<?> m) {
-        getMatchers().put(Open.Field.INCOMING_LOCALES, m);
+        openMatcher.addFieldMatcher(Open.Field.INCOMING_LOCALES, m);
         return this;
     }
 
     public OpenExpectation withOfferedCapabilities(Matcher<?> m) {
-        getMatchers().put(Open.Field.OFFERED_CAPABILITIES, m);
+        openMatcher.addFieldMatcher(Open.Field.OFFERED_CAPABILITIES, m);
         return this;
     }
 
     public OpenExpectation withDesiredCapabilities(Matcher<?> m) {
-        getMatchers().put(Open.Field.DESIRED_CAPABILITIES, m);
+        openMatcher.addFieldMatcher(Open.Field.DESIRED_CAPABILITIES, m);
         return this;
     }
 
     public OpenExpectation withProperties(Matcher<?> m) {
-        getMatchers().put(Open.Field.PROPERTIES, m);
+        openMatcher.addFieldMatcher(Open.Field.PROPERTIES, m);
         return this;
+    }
+
+    @Override
+    protected Matcher<ListDescribedType> getExpectationMatcher() {
+        return openMatcher;
     }
 
     @Override

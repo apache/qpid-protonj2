@@ -28,6 +28,7 @@ import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
 import org.apache.qpid.proton4j.amqp.driver.actions.AttachInjectAction;
 import org.apache.qpid.proton4j.amqp.driver.actions.BeginInjectAction;
 import org.apache.qpid.proton4j.amqp.driver.codec.transport.Attach;
+import org.apache.qpid.proton4j.amqp.driver.matchers.transport.AttachMatcher;
 import org.apache.qpid.proton4j.amqp.messaging.Source;
 import org.apache.qpid.proton4j.amqp.messaging.Target;
 import org.apache.qpid.proton4j.amqp.transport.DeliveryState;
@@ -41,6 +42,8 @@ import org.hamcrest.Matcher;
  * Scripted expectation for the AMQP Attach performative
  */
 public class AttachExpectation extends AbstractExpectation<Attach> {
+
+    private final AttachMatcher matcher = new AttachMatcher();
 
     private AttachInjectAction response;
 
@@ -188,72 +191,72 @@ public class AttachExpectation extends AbstractExpectation<Attach> {
     //----- Matcher based with methods for more complex validation
 
     public AttachExpectation withName(Matcher<?> m) {
-        getMatchers().put(Attach.Field.NAME, m);
+        matcher.addFieldMatcher(Attach.Field.NAME, m);
         return this;
     }
 
     public AttachExpectation withHandle(Matcher<?> m) {
-        getMatchers().put(Attach.Field.HANDLE, m);
+        matcher.addFieldMatcher(Attach.Field.HANDLE, m);
         return this;
     }
 
     public AttachExpectation withRole(Matcher<?> m) {
-        getMatchers().put(Attach.Field.ROLE, m);
+        matcher.addFieldMatcher(Attach.Field.ROLE, m);
         return this;
     }
 
     public AttachExpectation withSndSettleMode(Matcher<?> m) {
-        getMatchers().put(Attach.Field.SND_SETTLE_MODE, m);
+        matcher.addFieldMatcher(Attach.Field.SND_SETTLE_MODE, m);
         return this;
     }
 
     public AttachExpectation withRcvSettleMode(Matcher<?> m) {
-        getMatchers().put(Attach.Field.RCV_SETTLE_MODE, m);
+        matcher.addFieldMatcher(Attach.Field.RCV_SETTLE_MODE, m);
         return this;
     }
 
     public AttachExpectation withSource(Matcher<?> m) {
-        getMatchers().put(Attach.Field.SOURCE, m);
+        matcher.addFieldMatcher(Attach.Field.SOURCE, m);
         return this;
     }
 
     public AttachExpectation withTarget(Matcher<?> m) {
-        getMatchers().put(Attach.Field.TARGET, m);
+        matcher.addFieldMatcher(Attach.Field.TARGET, m);
         return this;
     }
 
     public AttachExpectation withUnsettled(Matcher<?> m) {
-        getMatchers().put(Attach.Field.UNSETTLED, m);
+        matcher.addFieldMatcher(Attach.Field.UNSETTLED, m);
         return this;
     }
 
     public AttachExpectation withIncompleteUnsettled(Matcher<?> m) {
-        getMatchers().put(Attach.Field.INCOMPLETE_UNSETTLED, m);
+        matcher.addFieldMatcher(Attach.Field.INCOMPLETE_UNSETTLED, m);
         return this;
     }
 
     public AttachExpectation withInitialDeliveryCount(Matcher<?> m) {
-        getMatchers().put(Attach.Field.INITIAL_DELIVERY_COUNT, m);
+        matcher.addFieldMatcher(Attach.Field.INITIAL_DELIVERY_COUNT, m);
         return this;
     }
 
     public AttachExpectation withMaxMessageSize(Matcher<?> m) {
-        getMatchers().put(Attach.Field.MAX_MESSAGE_SIZE, m);
+        matcher.addFieldMatcher(Attach.Field.MAX_MESSAGE_SIZE, m);
         return this;
     }
 
     public AttachExpectation withOfferedCapabilities(Matcher<?> m) {
-        getMatchers().put(Attach.Field.OFFERED_CAPABILITIES, m);
+        matcher.addFieldMatcher(Attach.Field.OFFERED_CAPABILITIES, m);
         return this;
     }
 
     public AttachExpectation withDesiredCapabilities(Matcher<?> m) {
-        getMatchers().put(Attach.Field.DESIRED_CAPABILITIES, m);
+        matcher.addFieldMatcher(Attach.Field.DESIRED_CAPABILITIES, m);
         return this;
     }
 
     public AttachExpectation withProperties(Matcher<?> m) {
-        getMatchers().put(Attach.Field.PROPERTIES, m);
+        matcher.addFieldMatcher(Attach.Field.PROPERTIES, m);
         return this;
     }
 

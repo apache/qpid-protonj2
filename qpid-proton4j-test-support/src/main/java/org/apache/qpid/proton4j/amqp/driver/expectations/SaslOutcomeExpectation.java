@@ -21,6 +21,7 @@ import static org.hamcrest.CoreMatchers.equalTo;
 import org.apache.qpid.proton4j.amqp.Binary;
 import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
 import org.apache.qpid.proton4j.amqp.driver.codec.security.SaslOutcome;
+import org.apache.qpid.proton4j.amqp.driver.matchers.security.SaslOutcomeMatcher;
 import org.apache.qpid.proton4j.amqp.security.SaslCode;
 import org.hamcrest.Matcher;
 
@@ -28,6 +29,8 @@ import org.hamcrest.Matcher;
  * Scripted expectation for the AMQP SaslOutcome performative
  */
 public class SaslOutcomeExpectation extends AbstractExpectation<SaslOutcome> {
+
+    private final SaslOutcomeMatcher matcher = new SaslOutcomeMatcher();
 
     public SaslOutcomeExpectation(AMQPTestDriver driver) {
         super(driver);
@@ -46,12 +49,12 @@ public class SaslOutcomeExpectation extends AbstractExpectation<SaslOutcome> {
     //----- Matcher based with methods for more complex validation
 
     public SaslOutcomeExpectation withCode(Matcher<?> m) {
-        getMatchers().put(SaslOutcome.Field.CODE, m);
+        matcher.addFieldMatcher(SaslOutcome.Field.CODE, m);
         return this;
     }
 
     public SaslOutcomeExpectation withAdditionalData(Matcher<?> m) {
-        getMatchers().put(SaslOutcome.Field.ADDITIONAL_DATA, m);
+        matcher.addFieldMatcher(SaslOutcome.Field.ADDITIONAL_DATA, m);
         return this;
     }
 

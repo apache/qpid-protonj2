@@ -22,6 +22,7 @@ import org.apache.qpid.proton4j.amqp.UnsignedInteger;
 import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
 import org.apache.qpid.proton4j.amqp.driver.codec.transport.Disposition;
 import org.apache.qpid.proton4j.amqp.driver.codec.util.TypeMapper;
+import org.apache.qpid.proton4j.amqp.driver.matchers.transport.DispositionMatcher;
 import org.apache.qpid.proton4j.amqp.transport.DeliveryState;
 import org.apache.qpid.proton4j.amqp.transport.Role;
 import org.hamcrest.Matcher;
@@ -30,6 +31,8 @@ import org.hamcrest.Matcher;
  * Scripted expectation for the AMQP Disposition performative
  */
 public class DispositionExpectation extends AbstractExpectation<Disposition> {
+
+    private final DispositionMatcher matcher = new DispositionMatcher();
 
     public DispositionExpectation(AMQPTestDriver driver) {
         super(driver);
@@ -88,32 +91,32 @@ public class DispositionExpectation extends AbstractExpectation<Disposition> {
     //----- Matcher based with methods for more complex validation
 
     public DispositionExpectation withRole(Matcher<?> m) {
-        getMatchers().put(Disposition.Field.ROLE, m);
+        matcher.addFieldMatcher(Disposition.Field.ROLE, m);
         return this;
     }
 
     public DispositionExpectation withFirst(Matcher<?> m) {
-        getMatchers().put(Disposition.Field.FIRST, m);
+        matcher.addFieldMatcher(Disposition.Field.FIRST, m);
         return this;
     }
 
     public DispositionExpectation withLast(Matcher<?> m) {
-        getMatchers().put(Disposition.Field.LAST, m);
+        matcher.addFieldMatcher(Disposition.Field.LAST, m);
         return this;
     }
 
     public DispositionExpectation withSettled(Matcher<?> m) {
-        getMatchers().put(Disposition.Field.SETTLED, m);
+        matcher.addFieldMatcher(Disposition.Field.SETTLED, m);
         return this;
     }
 
     public DispositionExpectation withState(Matcher<?> m) {
-        getMatchers().put(Disposition.Field.STATE, m);
+        matcher.addFieldMatcher(Disposition.Field.STATE, m);
         return this;
     }
 
     public DispositionExpectation withBatchable(Matcher<?> m) {
-        getMatchers().put(Disposition.Field.BATCHABLE, m);
+        matcher.addFieldMatcher(Disposition.Field.BATCHABLE, m);
         return this;
     }
 

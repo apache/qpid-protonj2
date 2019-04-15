@@ -23,6 +23,7 @@ import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
 import org.apache.qpid.proton4j.amqp.driver.actions.BeginInjectAction;
 import org.apache.qpid.proton4j.amqp.driver.actions.DetachInjectAction;
 import org.apache.qpid.proton4j.amqp.driver.codec.transport.Detach;
+import org.apache.qpid.proton4j.amqp.driver.matchers.transport.DetachMatcher;
 import org.apache.qpid.proton4j.amqp.transport.ErrorCondition;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.hamcrest.Matcher;
@@ -32,7 +33,9 @@ import org.hamcrest.Matcher;
  */
 public class DetachExpectation extends AbstractExpectation<Detach> {
 
-    DetachInjectAction response;
+    private final DetachMatcher matcher = new DetachMatcher();
+
+    private DetachInjectAction response;
 
     public DetachExpectation(AMQPTestDriver driver) {
         super(driver);
@@ -100,17 +103,17 @@ public class DetachExpectation extends AbstractExpectation<Detach> {
     //----- Matcher based with methods for more complex validation
 
     public DetachExpectation withHandle(Matcher<?> m) {
-        getMatchers().put(Detach.Field.HANDLE, m);
+        matcher.addFieldMatcher(Detach.Field.HANDLE, m);
         return this;
     }
 
     public DetachExpectation withClosed(Matcher<?> m) {
-        getMatchers().put(Detach.Field.CLOSED, m);
+        matcher.addFieldMatcher(Detach.Field.CLOSED, m);
         return this;
     }
 
     public DetachExpectation withError(Matcher<?> m) {
-        getMatchers().put(Detach.Field.ERROR, m);
+        matcher.addFieldMatcher(Detach.Field.ERROR, m);
         return this;
     }
 

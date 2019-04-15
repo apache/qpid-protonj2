@@ -23,6 +23,7 @@ import java.util.Map;
 
 import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
 import org.apache.qpid.proton4j.amqp.driver.ScriptedExpectation;
+import org.apache.qpid.proton4j.amqp.driver.codec.ListDescribedType;
 import org.apache.qpid.proton4j.amqp.driver.codec.security.SaslChallenge;
 import org.apache.qpid.proton4j.amqp.driver.codec.security.SaslInit;
 import org.apache.qpid.proton4j.amqp.driver.codec.security.SaslMechanisms;
@@ -49,7 +50,7 @@ import org.hamcrest.Matcher;
  *
  * @param <T> The type being validated
  */
-public abstract class AbstractExpectation<T> implements ScriptedExpectation {
+public abstract class AbstractExpectation<T extends ListDescribedType> implements ScriptedExpectation {
 
     private static final ProtonLogger LOG = ProtonLoggerFactory.getLogger(AbstractExpectation.class);
 
@@ -84,10 +85,14 @@ public abstract class AbstractExpectation<T> implements ScriptedExpectation {
         LOG.debug("About to check the fields of the performative." +
                   "\n  Received:" + performative + "\n  Expectations: " + fieldMatchers);
 
-        for (Map.Entry<Enum<?>, Matcher<?>> entry : fieldMatchers.entrySet()) {
-            @SuppressWarnings("unchecked")
-            Matcher<Object> matcher = (Matcher<Object>) entry.getValue();
-            assertThat("Field " + entry.getKey() + " value should match", getFieldValue(performative, entry.getKey()), matcher);
+        if (getExpectationMatcher() != null) {
+            assertThat("Performative does not match expectation", performative, getExpectationMatcher());
+        } else {
+            for (Map.Entry<Enum<?>, Matcher<?>> entry : fieldMatchers.entrySet()) {
+                @SuppressWarnings("unchecked")
+                Matcher<Object> matcher = (Matcher<Object>) entry.getValue();
+                assertThat("Field " + entry.getKey() + " value should match", getFieldValue(performative, entry.getKey()), matcher);
+            }
         }
     }
 
@@ -108,6 +113,10 @@ public abstract class AbstractExpectation<T> implements ScriptedExpectation {
      */
     protected Map<Enum<?>, Matcher<?>> getMatchers() {
         return fieldMatchers;
+    }
+
+    protected Matcher<ListDescribedType> getExpectationMatcher() {
+        return null;
     }
 
     protected abstract Object getFieldValue(T received, Enum<?> performativeField);

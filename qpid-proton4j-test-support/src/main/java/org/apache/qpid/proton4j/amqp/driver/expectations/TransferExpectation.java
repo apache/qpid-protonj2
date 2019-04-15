@@ -24,6 +24,7 @@ import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
 import org.apache.qpid.proton4j.amqp.driver.codec.security.SaslResponse;
 import org.apache.qpid.proton4j.amqp.driver.codec.transport.Transfer;
 import org.apache.qpid.proton4j.amqp.driver.codec.util.TypeMapper;
+import org.apache.qpid.proton4j.amqp.driver.matchers.transport.TransferMatcher;
 import org.apache.qpid.proton4j.amqp.transport.DeliveryState;
 import org.apache.qpid.proton4j.amqp.transport.ReceiverSettleMode;
 import org.hamcrest.Matcher;
@@ -32,6 +33,8 @@ import org.hamcrest.Matcher;
  * Scripted expectation for the AMQP Transfer performative
  */
 public class TransferExpectation extends AbstractExpectation<Transfer> {
+
+    private final TransferMatcher matcher = new TransferMatcher();
 
     public TransferExpectation(AMQPTestDriver driver) {
         super(driver);
@@ -116,57 +119,57 @@ public class TransferExpectation extends AbstractExpectation<Transfer> {
     //----- Matcher based with methods for more complex validation
 
     public TransferExpectation withHandle(Matcher<?> m) {
-        getMatchers().put(Transfer.Field.HANDLE, m);
+        matcher.addFieldMatcher(Transfer.Field.HANDLE, m);
         return this;
     }
 
     public TransferExpectation withDeliveryId(Matcher<?> m) {
-        getMatchers().put(Transfer.Field.DELIVERY_ID, m);
+        matcher.addFieldMatcher(Transfer.Field.DELIVERY_ID, m);
         return this;
     }
 
     public TransferExpectation withDeliveryTag(Matcher<?> m) {
-        getMatchers().put(Transfer.Field.DELIVERY_TAG, m);
+        matcher.addFieldMatcher(Transfer.Field.DELIVERY_TAG, m);
         return this;
     }
 
     public TransferExpectation withMessageFormat(Matcher<?> m) {
-        getMatchers().put(Transfer.Field.MESSAGE_FORMAT, m);
+        matcher.addFieldMatcher(Transfer.Field.MESSAGE_FORMAT, m);
         return this;
     }
 
     public TransferExpectation withSettled(Matcher<?> m) {
-        getMatchers().put(Transfer.Field.SETTLED, m);
+        matcher.addFieldMatcher(Transfer.Field.SETTLED, m);
         return this;
     }
 
     public TransferExpectation withMore(Matcher<?> m) {
-        getMatchers().put(Transfer.Field.MORE, m);
+        matcher.addFieldMatcher(Transfer.Field.MORE, m);
         return this;
     }
 
     public TransferExpectation withRcvSettleMode(Matcher<?> m) {
-        getMatchers().put(Transfer.Field.RCV_SETTLE_MODE, m);
+        matcher.addFieldMatcher(Transfer.Field.RCV_SETTLE_MODE, m);
         return this;
     }
 
     public TransferExpectation withState(Matcher<?> m) {
-        getMatchers().put(Transfer.Field.STATE, m);
+        matcher.addFieldMatcher(Transfer.Field.STATE, m);
         return this;
     }
 
     public TransferExpectation withResume(Matcher<?> m) {
-        getMatchers().put(Transfer.Field.RESUME, m);
+        matcher.addFieldMatcher(Transfer.Field.RESUME, m);
         return this;
     }
 
     public TransferExpectation withAborted(Matcher<?> m) {
-        getMatchers().put(Transfer.Field.ABORTED, m);
+        matcher.addFieldMatcher(Transfer.Field.ABORTED, m);
         return this;
     }
 
     public TransferExpectation withBatchable(Matcher<?> m) {
-        getMatchers().put(Transfer.Field.BATCHABLE, m);
+        matcher.addFieldMatcher(Transfer.Field.BATCHABLE, m);
         return this;
     }
 

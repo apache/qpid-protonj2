@@ -26,6 +26,7 @@ import org.apache.qpid.proton4j.amqp.UnsignedShort;
 import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
 import org.apache.qpid.proton4j.amqp.driver.actions.BeginInjectAction;
 import org.apache.qpid.proton4j.amqp.driver.codec.transport.Begin;
+import org.apache.qpid.proton4j.amqp.driver.matchers.transport.BeginMatcher;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.hamcrest.Matcher;
 
@@ -33,6 +34,8 @@ import org.hamcrest.Matcher;
  * Scripted expectation for the AMQP Begin performative
  */
 public class BeginExpectation extends AbstractExpectation<Begin> {
+
+    private final BeginMatcher matcher = new BeginMatcher();
 
     private BeginInjectAction response;
 
@@ -166,42 +169,42 @@ public class BeginExpectation extends AbstractExpectation<Begin> {
     //----- Matcher based with methods for more complex validation
 
     public BeginExpectation withRemoteChannel(Matcher<?> m) {
-        getMatchers().put(Begin.Field.REMOTE_CHANNEL, m);
+        matcher.addFieldMatcher(Begin.Field.REMOTE_CHANNEL, m);
         return this;
     }
 
     public BeginExpectation withNextOutgoingId(Matcher<?> m) {
-        getMatchers().put(Begin.Field.NEXT_OUTGOING_ID, m);
+        matcher.addFieldMatcher(Begin.Field.NEXT_OUTGOING_ID, m);
         return this;
     }
 
     public BeginExpectation withIncomingWindow(Matcher<?> m) {
-        getMatchers().put(Begin.Field.INCOMING_WINDOW, m);
+        matcher.addFieldMatcher(Begin.Field.INCOMING_WINDOW, m);
         return this;
     }
 
     public BeginExpectation withOutgoingWindow(Matcher<?> m) {
-        getMatchers().put(Begin.Field.OUTGOING_WINDOW, m);
+        matcher.addFieldMatcher(Begin.Field.OUTGOING_WINDOW, m);
         return this;
     }
 
     public BeginExpectation withHandleMax(Matcher<?> m) {
-        getMatchers().put(Begin.Field.HANDLE_MAX, m);
+        matcher.addFieldMatcher(Begin.Field.HANDLE_MAX, m);
         return this;
     }
 
     public BeginExpectation withOfferedCapabilities(Matcher<?> m) {
-        getMatchers().put(Begin.Field.OFFERED_CAPABILITIES, m);
+        matcher.addFieldMatcher(Begin.Field.OFFERED_CAPABILITIES, m);
         return this;
     }
 
     public BeginExpectation withDesiredCapabilities(Matcher<?> m) {
-        getMatchers().put(Begin.Field.DESIRED_CAPABILITIES, m);
+        matcher.addFieldMatcher(Begin.Field.DESIRED_CAPABILITIES, m);
         return this;
     }
 
     public BeginExpectation withProperties(Matcher<?> m) {
-        getMatchers().put(Begin.Field.PROPERTIES, m);
+        matcher.addFieldMatcher(Begin.Field.PROPERTIES, m);
         return this;
     }
 

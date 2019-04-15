@@ -24,12 +24,15 @@ import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedInteger;
 import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
 import org.apache.qpid.proton4j.amqp.driver.codec.transport.Flow;
+import org.apache.qpid.proton4j.amqp.driver.matchers.transport.FlowMatcher;
 import org.hamcrest.Matcher;
 
 /**
  * Scripted expectation for the AMQP Flow performative
  */
 public class FlowExpectation extends AbstractExpectation<Flow> {
+
+    private final FlowMatcher matcher = new FlowMatcher();
 
     public FlowExpectation(AMQPTestDriver driver) {
         super(driver);
@@ -154,57 +157,57 @@ public class FlowExpectation extends AbstractExpectation<Flow> {
     //----- Matcher based with methods for more complex validation
 
     public FlowExpectation withNextIncomingId(Matcher<?> m) {
-        getMatchers().put(Flow.Field.NEXT_INCOMING_ID, m);
+        matcher.addFieldMatcher(Flow.Field.NEXT_INCOMING_ID, m);
         return this;
     }
 
     public FlowExpectation withIncomingWindow(Matcher<?> m) {
-        getMatchers().put(Flow.Field.INCOMING_WINDOW, m);
+        matcher.addFieldMatcher(Flow.Field.INCOMING_WINDOW, m);
         return this;
     }
 
     public FlowExpectation withNextOutgoingId(Matcher<?> m) {
-        getMatchers().put(Flow.Field.NEXT_OUTGOING_ID, m);
+        matcher.addFieldMatcher(Flow.Field.NEXT_OUTGOING_ID, m);
         return this;
     }
 
     public FlowExpectation withOutgoingWindow(Matcher<?> m) {
-        getMatchers().put(Flow.Field.OUTGOING_WINDOW, m);
+        matcher.addFieldMatcher(Flow.Field.OUTGOING_WINDOW, m);
         return this;
     }
 
     public FlowExpectation withHandle(Matcher<?> m) {
-        getMatchers().put(Flow.Field.HANDLE, m);
+        matcher.addFieldMatcher(Flow.Field.HANDLE, m);
         return this;
     }
 
     public FlowExpectation withDeliveryCount(Matcher<?> m) {
-        getMatchers().put(Flow.Field.DELIVERY_COUNT, m);
+        matcher.addFieldMatcher(Flow.Field.DELIVERY_COUNT, m);
         return this;
     }
 
     public FlowExpectation withLinkCredit(Matcher<?> m) {
-        getMatchers().put(Flow.Field.LINK_CREDIT, m);
+        matcher.addFieldMatcher(Flow.Field.LINK_CREDIT, m);
         return this;
     }
 
     public FlowExpectation withAvailable(Matcher<?> m) {
-        getMatchers().put(Flow.Field.AVAILABLE, m);
+        matcher.addFieldMatcher(Flow.Field.AVAILABLE, m);
         return this;
     }
 
     public FlowExpectation withDrain(Matcher<?> m) {
-        getMatchers().put(Flow.Field.DRAIN, m);
+        matcher.addFieldMatcher(Flow.Field.DRAIN, m);
         return this;
     }
 
     public FlowExpectation withEcho(Matcher<?> m) {
-        getMatchers().put(Flow.Field.ECHO, m);
+        matcher.addFieldMatcher(Flow.Field.ECHO, m);
         return this;
     }
 
     public FlowExpectation withProperties(Matcher<?> m) {
-        getMatchers().put(Flow.Field.PROPERTIES, m);
+        matcher.addFieldMatcher(Flow.Field.PROPERTIES, m);
         return this;
     }
 

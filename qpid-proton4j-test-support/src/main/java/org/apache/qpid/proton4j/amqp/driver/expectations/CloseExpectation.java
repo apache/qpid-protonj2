@@ -23,6 +23,7 @@ import org.apache.qpid.proton4j.amqp.driver.actions.BeginInjectAction;
 import org.apache.qpid.proton4j.amqp.driver.actions.CloseInjectAction;
 import org.apache.qpid.proton4j.amqp.driver.codec.transport.Close;
 import org.apache.qpid.proton4j.amqp.driver.codec.util.TypeMapper;
+import org.apache.qpid.proton4j.amqp.driver.matchers.transport.CloseMatcher;
 import org.apache.qpid.proton4j.amqp.transport.ErrorCondition;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.hamcrest.Matcher;
@@ -31,6 +32,8 @@ import org.hamcrest.Matcher;
  * Scripted expectation for the AMQP Close performative
  */
 public class CloseExpectation extends AbstractExpectation<Close> {
+
+    private final CloseMatcher matcher = new CloseMatcher();
 
     private CloseInjectAction response;
 
@@ -70,7 +73,7 @@ public class CloseExpectation extends AbstractExpectation<Close> {
     //----- Matcher based with methods for more complex validation
 
     public CloseExpectation withError(Matcher<?> m) {
-        getMatchers().put(Close.Field.ERROR, m);
+        matcher.addFieldMatcher(Close.Field.ERROR, m);
         return this;
     }
 

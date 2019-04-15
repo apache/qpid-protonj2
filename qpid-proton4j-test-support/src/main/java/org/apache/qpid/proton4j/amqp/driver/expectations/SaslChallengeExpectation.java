@@ -22,12 +22,15 @@ import org.apache.qpid.proton4j.amqp.Binary;
 import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
 import org.apache.qpid.proton4j.amqp.driver.actions.SaslResponseInjectAction;
 import org.apache.qpid.proton4j.amqp.driver.codec.security.SaslChallenge;
+import org.apache.qpid.proton4j.amqp.driver.matchers.security.SaslChallengeMatcher;
 import org.hamcrest.Matcher;
 
 /**
  * Scripted expectation for the AMQP SaslChallenge performative
  */
 public class SaslChallengeExpectation extends AbstractExpectation<SaslChallenge> {
+
+    private final SaslChallengeMatcher matcher = new SaslChallengeMatcher();
 
     public SaslChallengeExpectation(AMQPTestDriver driver) {
         super(driver);
@@ -48,7 +51,7 @@ public class SaslChallengeExpectation extends AbstractExpectation<SaslChallenge>
     //----- Matcher based with methods for more complex validation
 
     public SaslChallengeExpectation withChallenge(Matcher<?> m) {
-        getMatchers().put(SaslChallenge.Field.CHALLENGE, m);
+        matcher.addFieldMatcher(SaslChallenge.Field.CHALLENGE, m);
         return this;
     }
 
