@@ -34,6 +34,8 @@ public class ProtonSender extends ProtonLink<Sender> implements Sender {
     private EventHandler<Sender> sendableEventHandler = null;
     private EventHandler<LinkCreditState> drainRequestedEventHandler = null;
 
+    private OutgoingDelivery current;
+
     // TODO - On open validate that required handlers are not null
 
     /**
@@ -67,6 +69,20 @@ public class ProtonSender extends ProtonLink<Sender> implements Sender {
     @Override
     protected ProtonSenderCreditState getCreditState() {
         return creditState;
+    }
+
+    @Override
+    public boolean isSendable() {
+        return creditState.isSendable();
+    }
+
+    @Override
+    public OutgoingDelivery delivery() {
+        if (current == null || current.isSettled()) {
+            current = new ProtonOutgoingDelivery(this);
+        }
+
+        return current;
     }
 
     //----- Sender event handlers

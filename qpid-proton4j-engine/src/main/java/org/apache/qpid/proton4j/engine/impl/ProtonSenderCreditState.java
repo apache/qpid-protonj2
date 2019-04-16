@@ -42,6 +42,10 @@ public class ProtonSenderCreditState implements ProtonLinkCreditState {
         this.sender = sender;
     }
 
+    public boolean isSendable() {
+        return credit > 0; // TODO - Session window has outbound capacity ?
+    }
+
     public boolean isDraining() {
         return draining;
     }

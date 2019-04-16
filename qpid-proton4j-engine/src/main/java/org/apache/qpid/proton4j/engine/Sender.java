@@ -21,13 +21,6 @@ package org.apache.qpid.proton4j.engine;
  */
 public interface Sender extends Link<Sender> {
 
-    // OutgoingDelivery createDelivery();
-    // - or -
-    // Gets ore create a new delivery for use, current until completed.
-    // OutgoingDelivery currentDelivery();
-
-    // boolean isSendable();
-
     // int available();
 
     // boolean isDraining();
@@ -39,6 +32,22 @@ public interface Sender extends Link<Sender> {
     // Sender disposition(OutgoingDelivery... deliveries, boolean settle);
 
     // Sender settle(OoutgoingDelivery... deliveries);
+
+    /**
+     * Checks if the sender has credit and the session window allows for any bytes to be written currently.
+     *
+     * @return true if the link has credit and the session window allows for any bytes to be written.
+     */
+    boolean isSendable();
+
+    /**
+     * Gets the current incomplete {@link OutgoingDelivery} or creates a new instance for use by the
+     * sender.  An {@link OutgoingDelivery} must be marked completed before a new instance will be returned
+     * from this method.
+     *
+     * @return the current active outgoing delivery or a new instance ready for sending.
+     */
+    OutgoingDelivery delivery();
 
     //----- Event handlers for the Sender
 
