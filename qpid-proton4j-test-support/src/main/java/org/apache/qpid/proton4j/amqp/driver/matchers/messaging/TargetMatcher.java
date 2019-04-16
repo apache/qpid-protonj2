@@ -16,6 +16,9 @@
  */
 package org.apache.qpid.proton4j.amqp.driver.matchers.messaging;
 
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.nullValue;
+
 import org.apache.qpid.proton4j.amqp.driver.codec.messaging.Target;
 import org.apache.qpid.proton4j.amqp.driver.matchers.ListDescribedTypeMatcher;
 
@@ -25,8 +28,54 @@ public class TargetMatcher extends ListDescribedTypeMatcher {
         super(Target.Field.values().length, Target.DESCRIPTOR_CODE, Target.DESCRIPTOR_SYMBOL);
     }
 
+    public TargetMatcher(org.apache.qpid.proton4j.amqp.messaging.Target target) {
+        super(Target.Field.values().length, Target.DESCRIPTOR_CODE, Target.DESCRIPTOR_SYMBOL);
+
+        addSourceMatchers(target);
+    }
+
     @Override
     protected Class<?> getDescribedTypeClass() {
         return Target.class;
+    }
+
+    private void addSourceMatchers(org.apache.qpid.proton4j.amqp.messaging.Target target) {
+        if (target.getAddress() != null) {
+            addFieldMatcher(Target.Field.ADDRESS, equalTo(target.getAddress()));
+        } else {
+            addFieldMatcher(Target.Field.ADDRESS, nullValue());
+        }
+
+        if (target.getDurable() != null) {
+            addFieldMatcher(Target.Field.DURABLE, equalTo(target.getDurable().getValue()));
+        } else {
+            addFieldMatcher(Target.Field.DURABLE, nullValue());
+        }
+
+        if (target.getExpiryPolicy() != null) {
+            addFieldMatcher(Target.Field.EXPIRY_POLICY, equalTo(target.getExpiryPolicy().getPolicy()));
+        } else {
+            addFieldMatcher(Target.Field.EXPIRY_POLICY, nullValue());
+        }
+
+        if (target.getTimeout() != null) {
+            addFieldMatcher(Target.Field.TIMEOUT, equalTo(target.getTimeout()));
+        } else {
+            addFieldMatcher(Target.Field.TIMEOUT, nullValue());
+        }
+
+        addFieldMatcher(Target.Field.DYNAMIC, equalTo(target.getDynamic()));
+
+        if (target.getDynamicNodeProperties() != null) {
+            addFieldMatcher(Target.Field.DYNAMIC_NODE_PROPERTIES, equalTo(target.getDynamicNodeProperties()));
+        } else {
+            addFieldMatcher(Target.Field.DYNAMIC_NODE_PROPERTIES, nullValue());
+        }
+
+        if (target.getCapabilities() != null) {
+            addFieldMatcher(Target.Field.CAPABILITIES, equalTo(target.getCapabilities()));
+        } else {
+            addFieldMatcher(Target.Field.CAPABILITIES, nullValue());
+        }
     }
 }

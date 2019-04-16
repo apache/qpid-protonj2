@@ -17,6 +17,7 @@
 package org.apache.qpid.proton4j.amqp.driver.expectations;
 
 import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.nullValue;
 
 import java.util.Map;
 
@@ -29,6 +30,8 @@ import org.apache.qpid.proton4j.amqp.driver.actions.AttachInjectAction;
 import org.apache.qpid.proton4j.amqp.driver.actions.BeginInjectAction;
 import org.apache.qpid.proton4j.amqp.driver.codec.ListDescribedType;
 import org.apache.qpid.proton4j.amqp.driver.codec.transport.Attach;
+import org.apache.qpid.proton4j.amqp.driver.matchers.messaging.SourceMatcher;
+import org.apache.qpid.proton4j.amqp.driver.matchers.messaging.TargetMatcher;
 import org.apache.qpid.proton4j.amqp.driver.matchers.transport.AttachMatcher;
 import org.apache.qpid.proton4j.amqp.messaging.Source;
 import org.apache.qpid.proton4j.amqp.messaging.Target;
@@ -45,6 +48,9 @@ import org.hamcrest.Matcher;
 public class AttachExpectation extends AbstractExpectation<Attach> {
 
     private final AttachMatcher matcher = new AttachMatcher();
+
+    private SourceMatcher sourceMatcher;
+    private TargetMatcher targetMatcher;
 
     private AttachInjectAction response;
 
@@ -139,17 +145,26 @@ public class AttachExpectation extends AbstractExpectation<Attach> {
         return withRcvSettleMode(equalTo(rcvSettleMode.getValue()));
     }
 
-    // TODO - Source and Target mapped to proper type and matcher added
     public AttachExpectation withSource(Source source) {
-        return withSource(equalTo(source));
+        if (source != null) {
+            SourceMatcher matcher = new SourceMatcher(source);
+            return withSource(matcher);
+        } else {
+            return withSource(nullValue());
+        }
     }
 
-    // TODO - Source and Target mapped to proper type and matcher added
     public AttachExpectation withTarget(Target target) {
-        return withTarget(equalTo(target));
+        if (target != null) {
+            TargetMatcher matcher = new TargetMatcher(target);
+            return withTarget(matcher);
+        } else {
+            return withTarget(nullValue());
+        }
     }
 
     public AttachExpectation withUnsettled(Map<Binary, DeliveryState> unsettled) {
+        // TODO - Need to match on the driver types for DeliveryState
         return withUnsettled(equalTo(unsettled));
     }
 
