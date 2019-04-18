@@ -16,6 +16,9 @@
  */
 package org.apache.qpid.proton4j.engine.impl;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.apache.qpid.proton4j.amqp.transport.Begin;
 import org.apache.qpid.proton4j.amqp.transport.Disposition;
 import org.apache.qpid.proton4j.amqp.transport.Flow;
@@ -48,6 +51,9 @@ public class ProtonSessionOutgoingWindow {
     // Obtained from the connection after the session is opened as that point in time
     // marks when this value is set in stone.
     private long maxFrameSize;
+
+    // TODO - Better if this is a primitive keyed data structure
+    private Map<Long, ProtonIncomingDelivery> unsettled = new HashMap<>();
 
     public ProtonSessionOutgoingWindow(ProtonSession session) {
         this.session = session;

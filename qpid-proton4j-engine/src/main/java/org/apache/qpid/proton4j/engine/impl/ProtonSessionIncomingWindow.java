@@ -16,6 +16,9 @@
  */
 package org.apache.qpid.proton4j.engine.impl;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.apache.qpid.proton4j.amqp.transport.Begin;
 import org.apache.qpid.proton4j.amqp.transport.Disposition;
 import org.apache.qpid.proton4j.amqp.transport.Flow;
@@ -50,6 +53,9 @@ public class ProtonSessionIncomingWindow {
     private long remoteNextOutgoingId;
 
     private int incomingBytes;
+
+    // TODO - Better if this is a primitive keyed data structure
+    private Map<Long, ProtonIncomingDelivery> unsettled = new HashMap<>();
 
     public ProtonSessionIncomingWindow(ProtonSession session) {
         this.session = session;
@@ -132,6 +138,12 @@ public class ProtonSessionIncomingWindow {
      * @return the {@link Disposition}
      */
     Disposition handleDisposition(Disposition disposition) {
+
+        if (disposition.getSettled()) {
+            // TODO - process first to last and remove all settled deliveries
+            unsettled.remove(disposition.getFirst());
+        }
+
         return disposition;
     }
 
