@@ -29,11 +29,30 @@ public interface OutgoingDelivery extends Delivery {
     @Override
     Sender getLink();
 
-    // TODO - How to complete or send partial delivery
+    // TODO - Work out how to manage send of data and pending changes, we need to allow for
+    //        push of current written bytes without sending a transfer with the more flag
+    //        set to false as that precludes streaming more bytes later.
 
-    // OutgoingDelivery flush();  write what was written for partial send
+    /**
+     * Flush all pending changes to the Delivery but leave the delivery as the active
+     * delivery on the link so that additional bytes can be written into this delivery.
+     *
+     * Flushing a message that was marked as settled has the same affect as calling
+     * complete on the message.
+     *
+     * @return this outgoing delivery instance.
+     */
+    OutgoingDelivery flush();
 
-    // OutgoingDelivery complete();  write what was written as complete transfer
+    /**
+     * Flushes all pending changes for this delivery and notifies the link that a new
+     * delivery can now started.  Once marked as complete a delivery will not accept any
+     * new bytes written to it however if left unsettled the delivery can be later marked
+     * settled and or have its dissipation updated.
+     *
+     * @return this outgoing delivery instance.
+     */
+    OutgoingDelivery complete();
 
     /**
      * @param buffer

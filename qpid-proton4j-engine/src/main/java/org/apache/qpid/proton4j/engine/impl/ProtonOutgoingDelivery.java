@@ -143,4 +143,16 @@ public class ProtonOutgoingDelivery implements OutgoingDelivery {
         this.aborted = true;
         return this;
     }
+
+    @Override
+    public ProtonOutgoingDelivery flush() {
+        // TODO Auto-generated method stub
+        return this;
+    }
+
+    @Override
+    public ProtonOutgoingDelivery complete() {
+        // TODO Auto-generated method stub
+        return this;
+    }
 }
