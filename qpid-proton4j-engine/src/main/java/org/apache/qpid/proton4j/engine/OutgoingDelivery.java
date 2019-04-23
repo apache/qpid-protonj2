@@ -34,27 +34,8 @@ public interface OutgoingDelivery extends Delivery {
     //        set to false as that precludes streaming more bytes later.
 
     /**
-     * Flush all pending changes to the Delivery but leave the delivery as the active
-     * delivery on the link so that additional bytes can be written into this delivery.
+     * Write the given bytes as the payload of this delivery, no additional writes can occur on this delivery,
      *
-     * Flushing a message that was marked as settled has the same affect as calling
-     * complete on the message.
-     *
-     * @return this outgoing delivery instance.
-     */
-    OutgoingDelivery flush();
-
-    /**
-     * Flushes all pending changes for this delivery and notifies the link that a new
-     * delivery can now started.  Once marked as complete a delivery will not accept any
-     * new bytes written to it however if left unsettled the delivery can be later marked
-     * settled and or have its dissipation updated.
-     *
-     * @return this outgoing delivery instance.
-     */
-    OutgoingDelivery complete();
-
-    /**
      * @param buffer
      *      The buffer whose contents should be sent.
      *
@@ -63,19 +44,32 @@ public interface OutgoingDelivery extends Delivery {
     void writeBytes(ProtonBuffer buffer);
 
     /**
-     * Writes the given bytes into this delivery appending them to any previously written but not
-     * sent bytes in this delivery.
+     * Write the given bytes as a portion of the payload of this delivery, additional bytes can be streamed until
+     * the stream complete flag is set to true on a call to {@link #streamBytes(ProtonBuffer, boolean)} or a call
+     * to {@link #writeBytes(ProtonBuffer)} is made.
      *
-     * @param array
-     *      The array whose contents should be sent
-     * @param offset
-     *      The offset into the array to start sending from
-     * @param length
-     *      The number of bytes in the array that should be sent
+     * This method is the same as calling {@link #streamBytes(ProtonBuffer, boolean)} with the complete value set
+     * to false.
+     *
+     * @param buffer
+     *      The buffer whose contents should be sent.
      *
      * @throws {@link IllegalStateException} if the current credit prohibits sending the requested amount of bytes
      */
-    void writeBytes(byte[] array, int offset, int length);
+    void streamBytes(ProtonBuffer buffer);
+
+    /**
+     * Write the given bytes as a portion of the payload of this delivery, additional bytes can be streamed until
+     * the stream complete flag is set to true on a call to {@link #streamBytes(ProtonBuffer, boolean)}
+     *
+     * @param buffer
+     *      The buffer whose contents should be sent.
+     * @param complete
+     *      When true the delivery is marked complete and no further bytes can be written.
+     *
+     * @throws {@link IllegalStateException} if the current credit prohibits sending the requested amount of bytes
+     */
+    void streamBytes(ProtonBuffer buffer, boolean complete);
 
     /**
      * Sets the message-format for this Delivery, representing the 32bit value using an int.

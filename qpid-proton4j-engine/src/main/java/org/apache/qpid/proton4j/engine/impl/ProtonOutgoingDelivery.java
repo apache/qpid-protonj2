@@ -91,7 +91,7 @@ public class ProtonOutgoingDelivery implements OutgoingDelivery {
 
     @Override
     public boolean isPartial() {
-        return !complete;
+        return !complete && !aborted;
     }
 
     @Override
@@ -130,29 +130,35 @@ public class ProtonOutgoingDelivery implements OutgoingDelivery {
 
     @Override
     public void writeBytes(ProtonBuffer buffer) {
+        checkCompleteOrAborted();
         payload.writeBytes(buffer);
+        complete = true;
     }
 
     @Override
-    public void writeBytes(byte[] array, int offset, int length) {
-        payload.writeBytes(array, offset, length);
+    public void streamBytes(ProtonBuffer buffer) {
+        streamBytes(buffer, false);
+    }
+
+    @Override
+    public void streamBytes(ProtonBuffer buffer, boolean complete) {
+        checkCompleteOrAborted();
+        payload.writeBytes(buffer);
+        this.complete = complete;
     }
 
     @Override
     public OutgoingDelivery abort() {
-        this.aborted = true;
+        if (!aborted && !complete) {
+            aborted = true;
+            // TODO - Write transfer with aborted flag set
+        }
         return this;
     }
 
-    @Override
-    public ProtonOutgoingDelivery flush() {
-        // TODO Auto-generated method stub
-        return this;
-    }
-
-    @Override
-    public ProtonOutgoingDelivery complete() {
-        // TODO Auto-generated method stub
-        return this;
+    private void checkCompleteOrAborted() {
+        if (complete || aborted) {
+            throw new IllegalArgumentException("Cannot write to a delivery already marked as complete or has been aborted.");
+        }
     }
 }
