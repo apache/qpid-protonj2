@@ -32,7 +32,6 @@ import org.apache.qpid.proton4j.amqp.transport.Detach;
 import org.apache.qpid.proton4j.amqp.transport.Disposition;
 import org.apache.qpid.proton4j.amqp.transport.ErrorCondition;
 import org.apache.qpid.proton4j.amqp.transport.Flow;
-import org.apache.qpid.proton4j.amqp.transport.Performative;
 import org.apache.qpid.proton4j.amqp.transport.Role;
 import org.apache.qpid.proton4j.amqp.transport.Transfer;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
@@ -51,7 +50,7 @@ import org.apache.qpid.proton4j.engine.Session;
  *
  * @param <T> the type of link, {@link Sender} or {@link Receiver}.
  */
-public abstract class ProtonLink<T extends Link<T>> implements Link<T>, Performative.PerformativeHandler<ProtonEngine> {
+public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
 
     private static final ProtonLogger LOG = ProtonLoggerFactory.getLogger(ProtonLink.class);
 
@@ -370,8 +369,7 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T>, Performa
 
     //----- Handle incoming performatives
 
-    @Override
-    public void handleAttach(Attach attach, ProtonBuffer payload, int channel, ProtonEngine context) {
+    void handleAttach(Attach attach) {
         remoteAttach = attach;
         remoteState = LinkState.ACTIVE;
         getCreditState().handleAttach(attach);
@@ -399,8 +397,7 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T>, Performa
         }
     }
 
-    @Override
-    public void handleDetach(Detach detach, ProtonBuffer payload, int channel, ProtonEngine context) {
+    void handleDetach(Detach detach) {
         setRemoteCondition(detach.getError());
 
         if (detach.getClosed()) {
@@ -416,18 +413,15 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T>, Performa
         }
     }
 
-    @Override
-    public void handleTransfer(Transfer transfer, ProtonBuffer payload, int channel, ProtonEngine context) {
+    void handleTransfer(Transfer transfer, ProtonBuffer payload) {
         getCreditState().handleTransfer(transfer, payload);
     }
 
-    @Override
-    public void handleDisposition(Disposition disposition, ProtonBuffer payload, int channel, ProtonEngine context) {
+    void handleDisposition(Disposition disposition) {
         getCreditState().handleDisposition(disposition);
     }
 
-    @Override
-    public void handleFlow(Flow flow, ProtonBuffer payload, int channel, ProtonEngine context) {
+    void handleFlow(Flow flow) {
         getCreditState().handleFlow(flow);
     }
 

@@ -375,7 +375,7 @@ public class ProtonConnection implements Connection, AMQPHeader.HeaderHandler<Pr
 
         // Inform the local sessions that remote has closed this connection.
         for (ProtonSession session : localSessions.values()) {
-            session.handleClose(close, payload, channel, context);
+            session.handleClose(close, channel);
         }
 
         if (remoteCloseHandler != null) {
@@ -412,7 +412,7 @@ public class ProtonConnection implements Connection, AMQPHeader.HeaderHandler<Pr
             remoteSessions.put(channel, session);
 
             // Let the session handle the remote Begin now.
-            begin.invoke(session, payload, channel, context);
+            session.handleBegin(begin, channel);
 
             // If the session was initiated remotely then we signal the creation to the any registered
             // remote session event handler
@@ -429,7 +429,7 @@ public class ProtonConnection implements Connection, AMQPHeader.HeaderHandler<Pr
             engine.engineFailed(new ProtocolViolationException("Received uncorrelated channel on End from remote: " + channel));
         }
 
-        end.invoke(session, payload, channel, context);
+        session.handleEnd(end, channel);
     }
 
     @Override
@@ -439,7 +439,7 @@ public class ProtonConnection implements Connection, AMQPHeader.HeaderHandler<Pr
             engine.engineFailed(new ProtocolViolationException("Received uncorrelated channel on Attach from remote: " + channel));
         }
 
-        attach.invoke(session, payload, channel, context);
+        session.handleAttach(attach, channel);
     }
 
     @Override
@@ -449,7 +449,7 @@ public class ProtonConnection implements Connection, AMQPHeader.HeaderHandler<Pr
             engine.engineFailed(new ProtocolViolationException("Received uncorrelated channel on Detach from remote: " + channel));
         }
 
-        detach.invoke(session, payload, channel, context);
+        session.handleDetach(detach, channel);
     }
 
     @Override
@@ -459,7 +459,7 @@ public class ProtonConnection implements Connection, AMQPHeader.HeaderHandler<Pr
             engine.engineFailed(new ProtocolViolationException("Received uncorrelated channel on Flow from remote: " + channel));
         }
 
-        flow.invoke(session, payload, channel, context);
+        session.handleFlow(flow, channel);
     }
 
     @Override
@@ -469,7 +469,7 @@ public class ProtonConnection implements Connection, AMQPHeader.HeaderHandler<Pr
             engine.engineFailed(new ProtocolViolationException("Received uncorrelated channel on Transfer from remote: " + channel));
         }
 
-        transfer.invoke(session, payload, channel, context);
+        session.handleTransfer(transfer, payload, channel);
     }
 
     @Override
@@ -479,7 +479,7 @@ public class ProtonConnection implements Connection, AMQPHeader.HeaderHandler<Pr
             engine.engineFailed(new ProtocolViolationException("Received uncorrelated channel on Disposition from remote: " + channel));
         }
 
-        disposition.invoke(session, payload, channel, context);
+        session.handleDisposition(disposition, channel);
     }
 
     //----- API for event handling of Connection related remote events

@@ -27,13 +27,13 @@ import java.util.Map;
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.transport.Attach;
 import org.apache.qpid.proton4j.amqp.transport.Begin;
+import org.apache.qpid.proton4j.amqp.transport.Close;
 import org.apache.qpid.proton4j.amqp.transport.ConnectionError;
 import org.apache.qpid.proton4j.amqp.transport.Detach;
 import org.apache.qpid.proton4j.amqp.transport.Disposition;
 import org.apache.qpid.proton4j.amqp.transport.End;
 import org.apache.qpid.proton4j.amqp.transport.ErrorCondition;
 import org.apache.qpid.proton4j.amqp.transport.Flow;
-import org.apache.qpid.proton4j.amqp.transport.Performative;
 import org.apache.qpid.proton4j.amqp.transport.Role;
 import org.apache.qpid.proton4j.amqp.transport.Transfer;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
@@ -51,7 +51,7 @@ import org.apache.qpid.proton4j.engine.exceptions.ProtocolViolationException;
 /**
  * Proton API for Session type.
  */
-public class ProtonSession implements Session, Performative.PerformativeHandler<ProtonEngine> {
+public class ProtonSession implements Session {
 
     private static final ProtonLogger LOG = ProtonLoggerFactory.getLogger(ProtonSession.class);
 
@@ -342,8 +342,11 @@ public class ProtonSession implements Session, Performative.PerformativeHandler<
 
     //----- Handle incoming performatives
 
-    @Override
-    public void handleBegin(Begin begin, ProtonBuffer payload, int channel, ProtonEngine context) {
+    void handleClose(Close close, int channel) {
+        // TODO - Respond to connection being remotely closed
+    }
+
+    void handleBegin(Begin begin, int channel) {
         remoteBegin = begin;
         localBegin.setRemoteChannel(channel);
         remoteState = SessionState.ACTIVE;
@@ -355,8 +358,7 @@ public class ProtonSession implements Session, Performative.PerformativeHandler<
         }
     }
 
-    @Override
-    public void handleEnd(End end, ProtonBuffer payload, int channel, ProtonEngine context) {
+    void handleEnd(End end, int channel) {
         // TODO - Fully implement handling for remote End
 
         setRemoteCondition(end.getError());
@@ -367,8 +369,7 @@ public class ProtonSession implements Session, Performative.PerformativeHandler<
         }
     }
 
-    @Override
-    public void handleAttach(Attach attach, ProtonBuffer payload, int channel, ProtonEngine context) {
+    void handleAttach(Attach attach, int channel) {
         if (validateHandleMaxCompliance(attach)) {
             // TODO - Space efficient primitive data structure
             if (remoteLinks.containsKey(attach.getHandle())) {
@@ -383,22 +384,21 @@ public class ProtonSession implements Session, Performative.PerformativeHandler<
 
             remoteLinks.put(attach.getHandle(), link);
 
-            link.handleAttach(attach, payload, channel, context);
+            link.handleAttach(attach);
         }
     }
 
-    @Override
-    public void handleDetach(Detach detach, ProtonBuffer payload, int channel, ProtonEngine context) {
+    void handleDetach(Detach detach, int channel) {
         final ProtonLink<?> link = remoteLinks.get(detach.getHandle());
         if (link == null) {
-            getEngine().engineFailed(new ProtocolViolationException("Received uncorrelated handle on Detach from remote: " + channel));
+            getEngine().engineFailed(new ProtocolViolationException(
+                "Received uncorrelated handle on Detach from remote: " + channel));
         }
 
-        link.handleDetach(detach, payload, channel, context);
+        link.handleDetach(detach);
     }
 
-    @Override
-    public void handleFlow(Flow flow, ProtonBuffer payload, int channel, ProtonEngine context) {
+    void handleFlow(Flow flow, int channel) {
         // Session level flow processing.
         incomingWindow.handleFlow(flow);
         outgoingWindow.handleFlow(flow);
@@ -408,10 +408,11 @@ public class ProtonSession implements Session, Performative.PerformativeHandler<
         if (flow.hasHandle()) {
             link = remoteLinks.get(flow.getHandle());
             if (link == null) {
-                getEngine().engineFailed(new ProtocolViolationException("Received uncorrelated handle on Flow from remote: " + channel));
+                getEngine().engineFailed(new ProtocolViolationException(
+                    "Received uncorrelated handle on Flow from remote: " + channel));
             }
 
-            link.handleFlow(flow, payload, channel, context);
+            link.handleFlow(flow);
         } else {
             link = null;
         }
@@ -421,24 +422,21 @@ public class ProtonSession implements Session, Performative.PerformativeHandler<
         }
     }
 
-    @Override
-    public void handleTransfer(Transfer transfer, ProtonBuffer payload, int channel, ProtonEngine context) {
+    void handleTransfer(Transfer transfer, ProtonBuffer payload, int channel) {
         final ProtonLink<?> link = remoteLinks.get(transfer.getHandle());
         if (link == null) {
-            getEngine().engineFailed(new ProtocolViolationException("Received uncorrelated handle on Transfer from remote: " + channel));
+            getEngine().engineFailed(new ProtocolViolationException(
+                "Received uncorrelated handle on Transfer from remote: " + channel));
         }
 
         if (!link.isRemotelyOpened()) {
             getEngine().engineFailed(new ProtocolViolationException("Received Transfer for detached Receiver: " + link));
         }
 
-        incomingWindow.handleTransfer(transfer, payload);
-
-        link.handleTransfer(transfer, payload, channel, context);
+        incomingWindow.handleTransfer(link, transfer, payload);
     }
 
-    @Override
-    public void handleDisposition(Disposition disposition, ProtonBuffer payload, int channel, ProtonEngine context) {
+    void handleDisposition(Disposition disposition, int channel) {
         if (disposition.getRole() == Role.RECEIVER) {
             outgoingWindow.handleDisposition(disposition);
         } else {

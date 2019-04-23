@@ -117,13 +117,15 @@ public class ProtonSessionIncomingWindow {
      * @param payload
      *      the payload that was transmitted with the incoming {@link Transfer}
      */
-    Transfer handleTransfer(Transfer transfer, ProtonBuffer payload) {
+    Transfer handleTransfer(ProtonLink<?> link, Transfer transfer, ProtonBuffer payload) {
         if (payload != null && !transfer.getAborted()) {
             incomingBytes += payload.getReadableBytes();
         }
 
         incomingWindow--;
         nextIncomingId++;
+
+        link.handleTransfer(transfer, payload);
 
         return transfer;
     }
