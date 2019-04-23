@@ -350,8 +350,8 @@ public class ProtonSession implements Session {
         remoteBegin = begin;
         localBegin.setRemoteChannel(channel);
         remoteState = SessionState.ACTIVE;
-        incomingWindow.processInbound(begin);
-        outgoingWindow.processInbound(begin);
+        incomingWindow.handleBegin(begin);
+        outgoingWindow.handleBegin(begin);
 
         if (getLocalState() == SessionState.ACTIVE && remoteOpenHandler != null) {
             remoteOpenHandler.handle(result(this, null));

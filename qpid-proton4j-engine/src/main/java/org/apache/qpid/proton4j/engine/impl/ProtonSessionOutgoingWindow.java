@@ -84,7 +84,7 @@ public class ProtonSessionOutgoingWindow {
      *
      * @return the given performative for chaining
      */
-    Begin processInbound(Begin begin) {
+    Begin handleBegin(Begin begin) {
         remoteIncomingWindow = begin.getIncomingWindow();
         return begin;
     }

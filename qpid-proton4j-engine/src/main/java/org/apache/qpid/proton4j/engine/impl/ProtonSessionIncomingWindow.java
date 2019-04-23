@@ -89,7 +89,7 @@ public class ProtonSessionIncomingWindow {
      *
      * @return the given performative for chaining
      */
-    Begin processInbound(Begin begin) {
+    Begin handleBegin(Begin begin) {
         this.remoteNextOutgoingId = begin.getNextOutgoingId();
         this.remoteOutgoingWindow = begin.getOutgoingWindow();
 
@@ -140,7 +140,6 @@ public class ProtonSessionIncomingWindow {
      * @return the {@link Disposition}
      */
     Disposition handleDisposition(Disposition disposition) {
-
         if (disposition.getSettled()) {
             // TODO - process first to last and remove all settled deliveries
             unsettled.remove(disposition.getFirst());
