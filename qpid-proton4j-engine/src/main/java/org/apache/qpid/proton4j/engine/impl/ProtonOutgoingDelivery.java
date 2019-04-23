@@ -22,6 +22,7 @@ import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.engine.Link;
 import org.apache.qpid.proton4j.engine.OutgoingDelivery;
 import org.apache.qpid.proton4j.engine.Sender;
+import org.apache.qpid.proton4j.engine.util.DeliveryIdTracker;
 
 /**
  * Proton outgoing delivery implementation
@@ -31,6 +32,8 @@ public class ProtonOutgoingDelivery implements OutgoingDelivery {
     private final ProtonContext context = new ProtonContext();
     private final ProtonSender link;
 
+    private DeliveryIdTracker deliveryId;
+
     private byte[] deliveryTag;
     private boolean complete;
     private int messageFormat;
@@ -38,7 +41,6 @@ public class ProtonOutgoingDelivery implements OutgoingDelivery {
 
     private DeliveryState localState;
     private boolean locallySettled;
-    // private boolean localSettleSent; // Track if settle was sent and is permanent.
 
     private DeliveryState remoteState;
     private boolean remotelySettled;
@@ -111,12 +113,16 @@ public class ProtonOutgoingDelivery implements OutgoingDelivery {
 
     @Override
     public OutgoingDelivery disposition(DeliveryState state) {
-        this.localState = state;
-        return this;
+        return disposition(state, false);
     }
 
     @Override
     public OutgoingDelivery disposition(DeliveryState state, boolean settle) {
+        // TODO - Allow pre-setting disposition and settled before any data has been written ?
+        if (deliveryId == null) {
+            throw new IllegalStateException("Cannot assign disposition to inactive delivery");
+        }
+
         this.locallySettled = settle;
         this.localState = state;
         return this;
