@@ -16,13 +16,13 @@
  */
 package org.apache.qpid.proton4j.engine.impl;
 
+import org.apache.qpid.proton4j.amqp.UnsignedInteger;
 import org.apache.qpid.proton4j.amqp.transport.DeliveryState;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.engine.Link;
 import org.apache.qpid.proton4j.engine.OutgoingDelivery;
 import org.apache.qpid.proton4j.engine.Sender;
-import org.apache.qpid.proton4j.engine.util.DeliveryIdTracker;
 
 /**
  * Proton outgoing delivery implementation
@@ -32,7 +32,7 @@ public class ProtonOutgoingDelivery implements OutgoingDelivery {
     private final ProtonContext context = new ProtonContext();
     private final ProtonSender link;
 
-    private DeliveryIdTracker deliveryId;
+    private UnsignedInteger deliveryId;
 
     private byte[] deliveryTag;
     private boolean complete;
@@ -123,22 +123,35 @@ public class ProtonOutgoingDelivery implements OutgoingDelivery {
             throw new IllegalStateException("Cannot assign disposition to inactive delivery");
         }
 
+        // TODO - Refine
+        if (locallySettled) {
+            throw new IllegalStateException("Cannot update disposition or settle and already settled Delivery");
+        }
+
         this.locallySettled = settle;
         this.localState = state;
+
+        link.disposition(this, deliveryId);
+
         return this;
     }
 
     @Override
     public OutgoingDelivery settle() {
-        this.locallySettled = true;
+        if (!locallySettled) {
+            locallySettled = true;
+            link.disposition(this, deliveryId);
+        }
+
         return this;
     }
 
     @Override
     public void writeBytes(ProtonBuffer buffer) {
         checkCompleteOrAborted();
-        payload.writeBytes(buffer);
+        payload.writeBytes(buffer);  // TODO don't copy if we can
         complete = true;
+        deliveryId = link.sendBytes(this, buffer);
     }
 
     @Override
@@ -149,16 +162,22 @@ public class ProtonOutgoingDelivery implements OutgoingDelivery {
     @Override
     public void streamBytes(ProtonBuffer buffer, boolean complete) {
         checkCompleteOrAborted();
-        payload.writeBytes(buffer);
+        payload.writeBytes(buffer);  // TODO don't copy if we can
         this.complete = complete;
+        deliveryId = link.sendBytes(this, buffer);
     }
 
     @Override
     public OutgoingDelivery abort() {
-        if (!aborted && !complete) {
+        checkCompleteOrAborted();
+
+        // Cannot abort when nothing has been sent so far.
+        if (deliveryId != null) {
             aborted = true;
-            // TODO - Write transfer with aborted flag set
+            link.abort(this, deliveryId);
+            deliveryId = null;
         }
+
         return this;
     }
 

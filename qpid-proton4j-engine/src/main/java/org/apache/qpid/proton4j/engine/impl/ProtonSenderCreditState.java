@@ -16,9 +16,12 @@
  */
 package org.apache.qpid.proton4j.engine.impl;
 
+import org.apache.qpid.proton4j.amqp.Binary;
+import org.apache.qpid.proton4j.amqp.UnsignedInteger;
 import org.apache.qpid.proton4j.amqp.transport.Attach;
 import org.apache.qpid.proton4j.amqp.transport.Disposition;
 import org.apache.qpid.proton4j.amqp.transport.Flow;
+import org.apache.qpid.proton4j.amqp.transport.Role;
 import org.apache.qpid.proton4j.amqp.transport.Transfer;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.engine.LinkState;
@@ -30,6 +33,7 @@ import org.apache.qpid.proton4j.engine.Sender;
 public class ProtonSenderCreditState implements ProtonLinkCreditState {
 
     private final ProtonSender sender;
+    private final ProtonEngine engine;
     private final ProtonSessionOutgoingWindow sessionWindow;
 
     private int credit;
@@ -40,6 +44,7 @@ public class ProtonSenderCreditState implements ProtonLinkCreditState {
     public ProtonSenderCreditState(ProtonSender sender, ProtonSessionOutgoingWindow sessionWindow) {
         this.sessionWindow = sessionWindow;
         this.sender = sender;
+        this.engine = sender.getSession().getConnection().getEngine();
     }
 
     public boolean isSendable() {
@@ -66,6 +71,18 @@ public class ProtonSenderCreditState implements ProtonLinkCreditState {
     }
 
     @Override
+    public ProtonSenderCreditState snapshot() {
+        ProtonSenderCreditState snapshot = new ProtonSenderCreditState(sender, sessionWindow);
+        snapshot.draining = draining;
+        snapshot.credit = credit;
+        snapshot.drained = drained;
+        snapshot.deliveryCount = deliveryCount;
+        return snapshot;
+    }
+
+    //----- Handlers for processing incoming events
+
+    @Override
     public Flow handleFlow(Flow flow) {
         credit = (int) (flow.getDeliveryCount() + flow.getLinkCredit() - deliveryCount);
         draining = flow.getDrain();
@@ -89,16 +106,58 @@ public class ProtonSenderCreditState implements ProtonLinkCreditState {
 
     @Override
     public Transfer handleTransfer(Transfer transfer, ProtonBuffer payload) {
-        throw new IllegalStateException("Cannot receive a Transfer at the Sender end.");
+        throw new IllegalStateException("Cannot receive a Transfer at the Sender end of a link");
     }
 
-    @Override
-    public ProtonSenderCreditState snapshot() {
-        ProtonSenderCreditState snapshot = new ProtonSenderCreditState(sender, sessionWindow);
-        snapshot.draining = draining;
-        snapshot.credit = credit;
-        snapshot.drained = drained;
-        snapshot.deliveryCount = deliveryCount;
-        return snapshot;
+    //----- Actions invoked from Delivery instances
+
+    UnsignedInteger sendBytes(ProtonOutgoingDelivery delivery, ProtonBuffer buffer) {
+        // TODO - Can we cache or pool these to not generate garbage on each send ?
+        Transfer transfer = new Transfer();
+
+        transfer.setDeliveryId(1); // TODO
+        transfer.setDeliveryTag(new Binary(delivery.getTag()));
+        transfer.setMore(delivery.isPartial());
+        transfer.setResume(false);
+        transfer.setAborted(false);
+        transfer.setBatchable(false);
+        transfer.setRcvSettleMode(null);
+        transfer.setHandle(sender.getHandle());
+
+        // TODO - When will the last transfer get written with more off if the payload is to large for a
+        //        single frame write ?
+        engine.pipeline().fireWrite(transfer, sender.getSession().getLocalChannel(), buffer, () -> transfer.setMore(true));
+
+        return null;
+    }
+
+    void abort(ProtonOutgoingDelivery delivery, UnsignedInteger deliveryId) {
+        // TODO - Can we cache or pool these to not generate garbage on each send ?
+        Transfer transfer = new Transfer();
+
+        transfer.setDeliveryId(1); // TODO
+        transfer.setDeliveryTag(new Binary(delivery.getTag()));
+        transfer.setMore(delivery.isPartial());
+        transfer.setResume(false);
+        transfer.setAborted(false);
+        transfer.setBatchable(false);
+        transfer.setRcvSettleMode(null);
+        transfer.setHandle(sender.getHandle());
+
+        engine.pipeline().fireWrite(transfer, sender.getSession().getLocalChannel(), null, null);
+    }
+
+    void disposition(ProtonOutgoingDelivery delivery, UnsignedInteger deliveryId) {
+        // TODO - Can we cache or pool these to not generate garbage on each send ?
+        Disposition disposition = new Disposition();
+
+        disposition.setFirst(deliveryId.longValue());
+        disposition.setLast(deliveryId.longValue());
+        disposition.setRole(Role.SENDER);
+        disposition.setSettled(delivery.isSettled());
+        disposition.setBatchable(false);
+        disposition.setState(delivery.getLocalState());
+
+        engine.pipeline().fireWrite(disposition, sender.getSession().getLocalChannel(), null, null);
     }
 }

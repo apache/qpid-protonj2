@@ -16,6 +16,8 @@
  */
 package org.apache.qpid.proton4j.engine.util;
 
+import org.apache.qpid.proton4j.amqp.UnsignedInteger;
+
 /**
  * Tracker of Delivery ID values, implements a sequence number and provides ability to
  * keep an not set state for use when allowing for set / not set tracking.
@@ -127,6 +129,10 @@ public class DeliveryIdTracker extends Number implements Comparable<DeliveryIdTr
     @Override
     public int hashCode() {
         return Integer.hashCode(deliveryId);
+    }
+
+    public UnsignedInteger toUnsignedInteger() {
+        return empty ? null : UnsignedInteger.valueOf(deliveryId);
     }
 
     @Override
