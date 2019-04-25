@@ -16,11 +16,9 @@
  */
 package org.apache.qpid.proton4j.engine.impl;
 
-import org.apache.qpid.proton4j.amqp.UnsignedInteger;
 import org.apache.qpid.proton4j.amqp.transport.DeliveryState;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
-import org.apache.qpid.proton4j.engine.Link;
 import org.apache.qpid.proton4j.engine.OutgoingDelivery;
 import org.apache.qpid.proton4j.engine.Sender;
 
@@ -29,10 +27,13 @@ import org.apache.qpid.proton4j.engine.Sender;
  */
 public class ProtonOutgoingDelivery implements OutgoingDelivery {
 
+    private static final long DELIVERY_INACTIVE = -1;
+    private static final long DELIVERY_ABORTED = -2;
+
     private final ProtonContext context = new ProtonContext();
     private final ProtonSender link;
 
-    private UnsignedInteger deliveryId;
+    private long deliveryId = DELIVERY_INACTIVE;
 
     private byte[] deliveryTag;
     private boolean complete;
@@ -47,12 +48,12 @@ public class ProtonOutgoingDelivery implements OutgoingDelivery {
 
     private final ProtonBuffer payload = ProtonByteBufferAllocator.DEFAULT.allocate();
 
-    /**
-     * @param link
-     *      The {@link Link} that is associated with this {@link OutgoingDelivery}
-     */
     public ProtonOutgoingDelivery(ProtonSender link) {
         this.link = link;
+    }
+
+    long getDeliveryId() {
+        return deliveryId;
     }
 
     @Override
@@ -118,12 +119,6 @@ public class ProtonOutgoingDelivery implements OutgoingDelivery {
 
     @Override
     public OutgoingDelivery disposition(DeliveryState state, boolean settle) {
-        // TODO - Allow pre-setting disposition and settled before any data has been written ?
-        if (deliveryId == null) {
-            throw new IllegalStateException("Cannot assign disposition to inactive delivery");
-        }
-
-        // TODO - Refine
         if (locallySettled) {
             throw new IllegalStateException("Cannot update disposition or settle and already settled Delivery");
         }
@@ -131,19 +126,17 @@ public class ProtonOutgoingDelivery implements OutgoingDelivery {
         this.locallySettled = settle;
         this.localState = state;
 
-        link.disposition(this, deliveryId);
+        // If no transfers initiated yet we just store the state and transmit in the first transfer
+        if (deliveryId > DELIVERY_INACTIVE) {
+            link.disposition(this);
+        }
 
         return this;
     }
 
     @Override
     public OutgoingDelivery settle() {
-        if (!locallySettled) {
-            locallySettled = true;
-            link.disposition(this, deliveryId);
-        }
-
-        return this;
+        return disposition(localState, true);
     }
 
     @Override
@@ -151,7 +144,7 @@ public class ProtonOutgoingDelivery implements OutgoingDelivery {
         checkCompleteOrAborted();
         payload.writeBytes(buffer);  // TODO don't copy if we can
         complete = true;
-        deliveryId = link.sendBytes(this, buffer);
+        deliveryId = link.send(this, buffer);
     }
 
     @Override
@@ -164,7 +157,7 @@ public class ProtonOutgoingDelivery implements OutgoingDelivery {
         checkCompleteOrAborted();
         payload.writeBytes(buffer);  // TODO don't copy if we can
         this.complete = complete;
-        deliveryId = link.sendBytes(this, buffer);
+        deliveryId = link.send(this, buffer);
     }
 
     @Override
@@ -172,10 +165,10 @@ public class ProtonOutgoingDelivery implements OutgoingDelivery {
         checkCompleteOrAborted();
 
         // Cannot abort when nothing has been sent so far.
-        if (deliveryId != null) {
+        if (deliveryId > DELIVERY_INACTIVE) {
             aborted = true;
-            link.abort(this, deliveryId);
-            deliveryId = null;
+            link.abort(this);
+            deliveryId = DELIVERY_ABORTED;
         }
 
         return this;

@@ -60,8 +60,8 @@ public class ProtonSession implements Session {
 
     private int localChannel;
 
-    private final ProtonSessionOutgoingWindow outgoingWindow = new ProtonSessionOutgoingWindow(this);
-    private final ProtonSessionIncomingWindow incomingWindow = new ProtonSessionIncomingWindow(this);
+    private final ProtonSessionOutgoingWindow outgoingWindow;
+    private final ProtonSessionIncomingWindow incomingWindow;
 
     private final Map<String, ProtonSender> senderByNameMap = new HashMap<>();
     private final Map<String, ProtonReceiver> receiverByNameMap = new HashMap<>();
@@ -93,6 +93,9 @@ public class ProtonSession implements Session {
     public ProtonSession(ProtonConnection connection, int localChannel) {
         this.connection = connection;
         this.localChannel = localChannel;
+
+        this.outgoingWindow = new ProtonSessionOutgoingWindow(this);
+        this.incomingWindow = new ProtonSessionIncomingWindow(this);
     }
 
     @Override

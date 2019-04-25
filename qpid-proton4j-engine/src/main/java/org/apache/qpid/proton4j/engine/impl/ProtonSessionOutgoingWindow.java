@@ -34,6 +34,7 @@ public class ProtonSessionOutgoingWindow {
     private static final long DEFAULT_WINDOW_SIZE = Integer.MAX_VALUE; // biggest legal value
 
     private final ProtonSession session;
+    private final ProtonEngine engine;
 
     // This is used for the delivery-id actually stamped in each transfer frame of a given message delivery.
     private long outgoingDeliveryId = 0;
@@ -41,10 +42,10 @@ public class ProtonSessionOutgoingWindow {
     // These are used for the session windows communicated via Begin/Flow frames
     // and the conceptual transfer-id relating to updating them.
     private long outgoingWindow = DEFAULT_WINDOW_SIZE;
-    private long nextOutgoingId = 1;
+    private int nextOutgoingId = 0;
 
     private long remoteIncomingWindow;
-    private long remoteNextIncomingId = nextOutgoingId;
+    private int remoteNextIncomingId = nextOutgoingId;
 
     private int outgoingBytes;
 
@@ -57,6 +58,7 @@ public class ProtonSessionOutgoingWindow {
 
     public ProtonSessionOutgoingWindow(ProtonSession session) {
         this.session = session;
+        this.engine = session.getConnection().getEngine();
     }
 
     /**
@@ -97,7 +99,7 @@ public class ProtonSessionOutgoingWindow {
      */
     Flow handleFlow(Flow flow) {
         if (flow.hasNextIncomingId()) {
-            remoteNextIncomingId = flow.getNextIncomingId();
+            remoteNextIncomingId = (int) flow.getNextIncomingId();
             remoteIncomingWindow = (flow.getNextIncomingId() + flow.getIncomingWindow()) - nextOutgoingId;
         } else {
             remoteIncomingWindow = flow.getIncomingWindow();
@@ -133,13 +135,35 @@ public class ProtonSessionOutgoingWindow {
         session.writeFlow(link);
     }
 
+    //----- Handle sender link actions in the session window context
+
+    void proccessTramsfer(Transfer transfer, ProtonBuffer payload) {
+        // TODO - Write up to session window limits or until done.
+        // TODO - Track unsettled deliveries in the session
+        engine.pipeline().fireWrite(transfer, session.getLocalChannel(), payload, () -> transfer.setMore(true));
+    }
+
+    void processDisposition(Disposition disposition) {
+        // TODO - Stop tracking settled deliveries in the session
+        engine.pipeline().fireWrite(disposition, session.getLocalChannel(), null, null);
+    }
+
+    void processAbort(Transfer transfer) {
+        // TODO - Stop tracking the delivery in the session
+        engine.pipeline().fireWrite(transfer, session.getLocalChannel(), null, null);
+    }
+
     //----- Access to internal state useful for tests
+
+    int getAndIncrementNextOutgoingId() {
+        return nextOutgoingId++;
+    }
 
     public long getOutgoingBytes() {
         return outgoingBytes;
     }
 
-    public long getNextOutgoingId() {
+    public int getNextOutgoingId() {
         return nextOutgoingId;
     }
 
@@ -147,7 +171,7 @@ public class ProtonSessionOutgoingWindow {
         return outgoingWindow;
     }
 
-    public long getRemoteNextIncomingId() {
+    public int getRemoteNextIncomingId() {
         return remoteNextIncomingId;
     }
 

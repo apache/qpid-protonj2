@@ -16,7 +16,6 @@
  */
 package org.apache.qpid.proton4j.engine.impl;
 
-import org.apache.qpid.proton4j.amqp.UnsignedInteger;
 import org.apache.qpid.proton4j.amqp.transport.Role;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.engine.EventHandler;
@@ -89,19 +88,19 @@ public class ProtonSender extends ProtonLink<Sender> implements Sender {
 
     //----- Delivery output related access points
 
-    UnsignedInteger sendBytes(ProtonOutgoingDelivery delivery, ProtonBuffer buffer) {
+    long send(ProtonOutgoingDelivery delivery, ProtonBuffer buffer) {
         // TODO - Enforce not closed etc
-        return creditState.sendBytes(delivery, buffer);
+        return creditState.send(delivery, buffer);
     }
 
-    void abort(ProtonOutgoingDelivery delivery, UnsignedInteger deliveryId) {
+    void disposition(ProtonOutgoingDelivery delivery) {
         // TODO - Enforce not closed etc
-        creditState.abort(delivery, deliveryId);
+        creditState.disposition(delivery);
     }
 
-    void disposition(ProtonOutgoingDelivery delivery, UnsignedInteger deliveryId) {
+    void abort(ProtonOutgoingDelivery delivery) {
         // TODO - Enforce not closed etc
-        creditState.disposition(delivery, deliveryId);
+        creditState.abort(delivery);
     }
 
     //----- Sender event handlers
