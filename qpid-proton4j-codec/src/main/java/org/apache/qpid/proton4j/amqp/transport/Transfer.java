@@ -179,7 +179,7 @@ public final class Transfer implements Performative {
         return settled;
     }
 
-    public Transfer setSettled(Boolean settled) {
+    public Transfer setSettled(boolean settled) {
         this.modified |= SETTLED;
         this.settled = settled;
         return this;
