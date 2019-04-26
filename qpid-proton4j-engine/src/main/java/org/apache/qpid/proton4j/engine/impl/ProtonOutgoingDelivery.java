@@ -35,7 +35,11 @@ public class ProtonOutgoingDelivery implements OutgoingDelivery {
 
     private long deliveryId = DELIVERY_INACTIVE;
 
+    // TODO - Creating an internal system for generating pooled tags so
+    //        that the user doesn't need to manage them would be nice
+    // private DeliveryTag deliveryTag;
     private byte[] deliveryTag;
+
     private boolean complete;
     private int messageFormat;
     private boolean aborted;
@@ -65,6 +69,12 @@ public class ProtonOutgoingDelivery implements OutgoingDelivery {
     @Override
     public byte[] getTag() {
         return deliveryTag;
+    }
+
+    @Override
+    public OutgoingDelivery setTag(byte[] deliveryTag) {
+        this.deliveryTag = deliveryTag;
+        return this;
     }
 
     @Override
@@ -136,24 +146,26 @@ public class ProtonOutgoingDelivery implements OutgoingDelivery {
     }
 
     @Override
-    public void writeBytes(ProtonBuffer buffer) {
+    public OutgoingDelivery writeBytes(ProtonBuffer buffer) {
         checkCompleteOrAborted();
         payload.writeBytes(buffer);  // TODO don't copy if we can
         complete = true;
         link.send(this, buffer);
+        return this;
     }
 
     @Override
-    public void streamBytes(ProtonBuffer buffer) {
-        streamBytes(buffer, false);
+    public OutgoingDelivery streamBytes(ProtonBuffer buffer) {
+        return streamBytes(buffer, false);
     }
 
     @Override
-    public void streamBytes(ProtonBuffer buffer, boolean complete) {
+    public OutgoingDelivery streamBytes(ProtonBuffer buffer, boolean complete) {
         checkCompleteOrAborted();
         payload.writeBytes(buffer);  // TODO don't copy if we can
         this.complete = complete;
         link.send(this, buffer);
+        return this;
     }
 
     @Override

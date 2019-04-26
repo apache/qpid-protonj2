@@ -35,6 +35,7 @@ public class ProtonSenderCreditState implements ProtonLinkCreditState {
 
     private final DeliveryIdTracker currentDelivery = new DeliveryIdTracker();
 
+    private boolean sendable;
     private int credit;
     private int deliveryCount;
     private boolean draining;
@@ -46,7 +47,7 @@ public class ProtonSenderCreditState implements ProtonLinkCreditState {
     }
 
     public boolean isSendable() {
-        return credit > 0; // TODO - Session window has outbound capacity ?
+        return sendable; // TODO - Session window has outbound capacity ?
     }
 
     public boolean isDraining() {
@@ -89,6 +90,11 @@ public class ProtonSenderCreditState implements ProtonLinkCreditState {
         if (sender.getLocalState() == LinkState.ACTIVE) {
             // TODO - Signal for sendable, draining etc
 
+            if (credit > 0 && !sendable) {
+                sendable = true;
+                sender.signalSendable();
+            }
+
             if (draining && !drained) {
                 sender.signalDrainRequested();
             }
@@ -130,6 +136,10 @@ public class ProtonSenderCreditState implements ProtonLinkCreditState {
             currentDelivery.reset();
             deliveryCount++;
             credit--;
+
+            if (credit == 0) {
+                sendable = false;
+            }
         }
     }
 

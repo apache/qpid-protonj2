@@ -33,15 +33,29 @@ public interface OutgoingDelivery extends Delivery {
     //        push of current written bytes without sending a transfer with the more flag
     //        set to false as that precludes streaming more bytes later.
 
+
+    /**
+     * Sets the delivery tag to assign to this outgoing delivery.
+     *
+     * @param deliveryTag
+     *      a byte array containing the delivery tag to assign to this {@link OutgoingDelivery}
+     *
+     * @return this outgoing delivery instance.
+     */
+    OutgoingDelivery setTag(byte[] deliveryTag);
+
     /**
      * Write the given bytes as the payload of this delivery, no additional writes can occur on this delivery,
      *
      * @param buffer
      *      The buffer whose contents should be sent.
      *
+     * @return this outgoing delivery instance.
+     *
+     * TODO - Decide how we handle not being able to write some or all of the bytes
      * @throws {@link IllegalStateException} if the current credit prohibits sending the requested amount of bytes
      */
-    void writeBytes(ProtonBuffer buffer);
+    OutgoingDelivery writeBytes(ProtonBuffer buffer);
 
     /**
      * Write the given bytes as a portion of the payload of this delivery, additional bytes can be streamed until
@@ -54,9 +68,12 @@ public interface OutgoingDelivery extends Delivery {
      * @param buffer
      *      The buffer whose contents should be sent.
      *
+     * @return this outgoing delivery instance.
+     *
+     * TODO - Decide how we handle not being able to write some or all of the bytes
      * @throws {@link IllegalStateException} if the current credit prohibits sending the requested amount of bytes
      */
-    void streamBytes(ProtonBuffer buffer);
+    OutgoingDelivery streamBytes(ProtonBuffer buffer);
 
     /**
      * Write the given bytes as a portion of the payload of this delivery, additional bytes can be streamed until
@@ -67,9 +84,12 @@ public interface OutgoingDelivery extends Delivery {
      * @param complete
      *      When true the delivery is marked complete and no further bytes can be written.
      *
+     * @return this outgoing delivery instance.
+     *
+     * TODO - Decide how we handle not being able to write some or all of the bytes
      * @throws {@link IllegalStateException} if the current credit prohibits sending the requested amount of bytes
      */
-    void streamBytes(ProtonBuffer buffer, boolean complete);
+    OutgoingDelivery streamBytes(ProtonBuffer buffer, boolean complete);
 
     /**
      * Sets the message-format for this Delivery, representing the 32bit value using an int.
@@ -90,7 +110,7 @@ public interface OutgoingDelivery extends Delivery {
      *
      * @return this outgoing delivery instance.
      */
-    public OutgoingDelivery setMessageFormat(int messageFormat);
+    OutgoingDelivery setMessageFormat(int messageFormat);
 
     /**
      * Aborts the outgoing delivery if not already settled.

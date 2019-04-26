@@ -74,11 +74,13 @@ public class ProtonPerformativeHandler implements EngineHandler, AMQPHeader.Head
     @Override
     public void transportEncodingError(EngineHandlerContext context, Throwable e) {
         // TODO signal error to the connection, try and differentiate between fatal and non-fatal conditions ?
+        engine.engineFailed(ProtonExceptionSupport.create(e));
     }
 
     @Override
     public void transportDecodingError(EngineHandlerContext context, Throwable e) {
         // TODO signal error to the connection, try and differentiate between fatal and non-fatal conditions ?
+        engine.engineFailed(ProtonExceptionSupport.create(e));
     }
 
     @Override

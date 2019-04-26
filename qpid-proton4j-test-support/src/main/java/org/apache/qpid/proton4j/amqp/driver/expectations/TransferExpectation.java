@@ -73,6 +73,10 @@ public class TransferExpectation extends AbstractExpectation<Transfer> {
         return withDeliveryId(equalTo(deliveryId));
     }
 
+    public TransferExpectation withDeliveryTag(byte[] tag) {
+        return withDeliveryTag(new Binary(tag));
+    }
+
     public TransferExpectation withDeliveryTag(Binary deliveryTag) {
         return withDeliveryTag(equalTo(deliveryTag));
     }
