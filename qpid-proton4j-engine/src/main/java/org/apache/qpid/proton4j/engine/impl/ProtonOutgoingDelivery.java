@@ -52,10 +52,6 @@ public class ProtonOutgoingDelivery implements OutgoingDelivery {
         this.link = link;
     }
 
-    long getDeliveryId() {
-        return deliveryId;
-    }
-
     @Override
     public Sender getLink() {
         return link;
@@ -144,7 +140,7 @@ public class ProtonOutgoingDelivery implements OutgoingDelivery {
         checkCompleteOrAborted();
         payload.writeBytes(buffer);  // TODO don't copy if we can
         complete = true;
-        deliveryId = link.send(this, buffer);
+        link.send(this, buffer);
     }
 
     @Override
@@ -157,7 +153,7 @@ public class ProtonOutgoingDelivery implements OutgoingDelivery {
         checkCompleteOrAborted();
         payload.writeBytes(buffer);  // TODO don't copy if we can
         this.complete = complete;
-        deliveryId = link.send(this, buffer);
+        link.send(this, buffer);
     }
 
     @Override
@@ -173,6 +169,23 @@ public class ProtonOutgoingDelivery implements OutgoingDelivery {
 
         return this;
     }
+
+    //----- Internal methods meant only for use by Proton resources
+
+    long getDeliveryId() {
+        return deliveryId;
+    }
+
+    void setDeliveryId(byte deliveryId) {
+        this.deliveryId = deliveryId;
+    }
+
+    void afterTransferWritten() {
+        // TODO - Perform any cleanup needed like reclaiming buffer space if there
+        //        is a composite or other complex buffer type in use.
+    }
+
+    //----- Private helper methods
 
     private void checkCompleteOrAborted() {
         if (complete || aborted) {

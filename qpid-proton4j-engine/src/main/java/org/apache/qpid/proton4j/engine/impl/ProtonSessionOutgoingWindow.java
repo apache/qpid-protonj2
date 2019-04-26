@@ -16,14 +16,14 @@
  */
 package org.apache.qpid.proton4j.engine.impl;
 
-import java.util.HashMap;
-import java.util.Map;
-
+import org.apache.qpid.proton4j.amqp.Binary;
 import org.apache.qpid.proton4j.amqp.transport.Begin;
 import org.apache.qpid.proton4j.amqp.transport.Disposition;
 import org.apache.qpid.proton4j.amqp.transport.Flow;
+import org.apache.qpid.proton4j.amqp.transport.Role;
 import org.apache.qpid.proton4j.amqp.transport.Transfer;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import org.apache.qpid.proton4j.engine.util.SplayMap;
 
 /**
  * Holds Session level credit window information.
@@ -31,13 +31,13 @@ import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 @SuppressWarnings("unused")
 public class ProtonSessionOutgoingWindow {
 
-    private static final long DEFAULT_WINDOW_SIZE = Integer.MAX_VALUE; // biggest legal value
+    private static final int DEFAULT_WINDOW_SIZE = Integer.MAX_VALUE; // biggest legal value
 
     private final ProtonSession session;
     private final ProtonEngine engine;
 
     // This is used for the delivery-id actually stamped in each transfer frame of a given message delivery.
-    private long outgoingDeliveryId = 0;
+    private int outgoingDeliveryId = 0;
 
     // These are used for the session windows communicated via Begin/Flow frames
     // and the conceptual transfer-id relating to updating them.
@@ -54,7 +54,7 @@ public class ProtonSessionOutgoingWindow {
     private long maxFrameSize;
 
     // TODO - Better if this is a primitive keyed data structure
-    private Map<Long, ProtonIncomingDelivery> unsettled = new HashMap<>();
+    private final SplayMap<ProtonOutgoingDelivery> unsetted = new SplayMap<>();
 
     public ProtonSessionOutgoingWindow(ProtonSession session) {
         this.session = session;
@@ -77,6 +77,12 @@ public class ProtonSessionOutgoingWindow {
 
         return begin;
     }
+
+    int getAndIncrementNextDeliveryId() {
+        return outgoingDeliveryId++;
+    }
+
+    //----- Handle incoming performatives relevant to the session.
 
     /**
      * Update the session level window values based on remote information.
@@ -137,45 +143,104 @@ public class ProtonSessionOutgoingWindow {
 
     //----- Handle sender link actions in the session window context
 
-    void proccessTramsfer(Transfer transfer, ProtonBuffer payload) {
-        // TODO - Write up to session window limits or until done.
-        // TODO - Track unsettled deliveries in the session
-        engine.pipeline().fireWrite(transfer, session.getLocalChannel(), payload, () -> transfer.setMore(true));
+    void processSend(ProtonSender sender, ProtonOutgoingDelivery delivery, ProtonBuffer payload) {
+        // For a transfer that hasn't completed but has no bytes in the final transfer write we want
+        // to allow a transfer to go out with the more flag as false.
+
+        boolean wasThereMore = delivery.isPartial();
+
+        if (!delivery.isSettled()) {
+            // TODO - Casting is ugly
+            unsetted.put((int) delivery.getDeliveryId(), delivery);
+        }
+
+        do {
+            // TODO - Can we cache or pool these to not generate garbage on each send ?
+            Transfer transfer = new Transfer();
+
+            transfer.setDeliveryId(delivery.getDeliveryId());
+            // TODO - Delivery Tag improvements, have our own DeliveryTag type perhaps that pools etc.
+            // TODO - If we track number of transfers for a larger delivery we could omit this on continuations
+            transfer.setDeliveryTag(new Binary(delivery.getTag()));
+            transfer.setMore(wasThereMore);
+            transfer.setResume(false);
+            transfer.setAborted(false);
+            transfer.setBatchable(false);
+            transfer.setRcvSettleMode(null);
+            transfer.setHandle(sender.getHandle());
+            transfer.setSettled(delivery.isSettled());
+            transfer.setState(delivery.getLocalState());
+
+            // TODO - Write up to session window limits or until done.
+            try {
+                engine.pipeline().fireWrite(transfer, session.getLocalChannel(), payload, () -> transfer.setMore(true));
+            } finally {
+                delivery.afterTransferWritten();
+            }
+
+            // Update session window tracking
+            nextOutgoingId++;
+            remoteIncomingWindow--;
+        } while (payload.isReadable());
     }
 
-    void processDisposition(Disposition disposition) {
-        // TODO - Stop tracking settled deliveries in the session
+    void processDisposition(ProtonSender sender, ProtonOutgoingDelivery delivery) {
+        // TODO - Can we cache or pool these to not generate garbage on each send ?
+        Disposition disposition = new Disposition();
+
+        disposition.setFirst(delivery.getDeliveryId());
+        disposition.setLast(delivery.getDeliveryId());
+        disposition.setRole(Role.SENDER);
+        disposition.setSettled(delivery.isSettled());
+        disposition.setBatchable(false);
+        disposition.setState(delivery.getLocalState());
+
+        // TODO - Casting is ugly
+        unsetted.remove((int) delivery.getDeliveryId());
+
         engine.pipeline().fireWrite(disposition, session.getLocalChannel(), null, null);
     }
 
-    void processAbort(Transfer transfer) {
-        // TODO - Stop tracking the delivery in the session
+    void processAbort(ProtonSender sender, ProtonOutgoingDelivery delivery) {
+        // TODO - Can we cache or pool these to not generate garbage on each send ?
+        Transfer transfer = new Transfer();
+
+        transfer.setDeliveryId(delivery.getDeliveryId());
+        transfer.setDeliveryTag(new Binary(delivery.getTag()));
+        transfer.setMore(delivery.isPartial());
+        transfer.setState(null);
+        transfer.setSettled(false);
+        transfer.setResume(false);
+        transfer.setAborted(false);
+        transfer.setBatchable(false);
+        transfer.setRcvSettleMode(null);
+        transfer.setHandle(sender.getHandle());
+
+        // Ensure we don't track the aborted delivery any longer.
+        unsetted.remove((int) delivery.getDeliveryId());
+
         engine.pipeline().fireWrite(transfer, session.getLocalChannel(), null, null);
     }
 
     //----- Access to internal state useful for tests
 
-    int getAndIncrementNextOutgoingId() {
-        return nextOutgoingId++;
-    }
-
-    public long getOutgoingBytes() {
+    long getOutgoingBytes() {
         return outgoingBytes;
     }
 
-    public int getNextOutgoingId() {
+    int getNextOutgoingId() {
         return nextOutgoingId;
     }
 
-    public long getOutgoingWindow() {
+    long getOutgoingWindow() {
         return outgoingWindow;
     }
 
-    public int getRemoteNextIncomingId() {
+    int getRemoteNextIncomingId() {
         return remoteNextIncomingId;
     }
 
-    public long getRemoteIncomingWindow() {
+    long getRemoteIncomingWindow() {
         return remoteIncomingWindow;
     }
 }

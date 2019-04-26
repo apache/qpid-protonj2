@@ -88,9 +88,9 @@ public class ProtonSender extends ProtonLink<Sender> implements Sender {
 
     //----- Delivery output related access points
 
-    long send(ProtonOutgoingDelivery delivery, ProtonBuffer buffer) {
+    void send(ProtonOutgoingDelivery delivery, ProtonBuffer buffer) {
         // TODO - Enforce not closed etc
-        return creditState.send(delivery, buffer);
+        creditState.send(delivery, buffer);
     }
 
     void disposition(ProtonOutgoingDelivery delivery) {

@@ -16,11 +16,9 @@
  */
 package org.apache.qpid.proton4j.engine.impl;
 
-import org.apache.qpid.proton4j.amqp.Binary;
 import org.apache.qpid.proton4j.amqp.transport.Attach;
 import org.apache.qpid.proton4j.amqp.transport.Disposition;
 import org.apache.qpid.proton4j.amqp.transport.Flow;
-import org.apache.qpid.proton4j.amqp.transport.Role;
 import org.apache.qpid.proton4j.amqp.transport.Transfer;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.engine.LinkState;
@@ -111,77 +109,37 @@ public class ProtonSenderCreditState implements ProtonLinkCreditState {
 
     //----- Actions invoked from Delivery instances
 
-    long send(ProtonOutgoingDelivery delivery, ProtonBuffer payload) {
+    void send(ProtonOutgoingDelivery delivery, ProtonBuffer payload) {
         if (!isSendable()) {
             // TODO - Should we check here on each write or check someplace else that
             //        the user can actually send anything.  We aren't buffering anything.
         }
 
         if (currentDelivery.isEmpty()) {
-            currentDelivery.set(sessionWindow.getAndIncrementNextOutgoingId());
+            currentDelivery.set(sessionWindow.getAndIncrementNextDeliveryId());
+
+            delivery.setDeliveryId(currentDelivery.byteValue());
         }
-
-        // TODO - Can we cache or pool these to not generate garbage on each send ?
-        Transfer transfer = new Transfer();
-
-        transfer.setDeliveryId(currentDelivery.longValue());
-        // TODO - Delivery Tag improvements, have our own DeliveryTag type perhaps that pools etc.
-        transfer.setDeliveryTag(new Binary(delivery.getTag()));
-        transfer.setMore(delivery.isPartial());
-        transfer.setResume(false);
-        transfer.setAborted(false);
-        transfer.setBatchable(false);
-        transfer.setRcvSettleMode(null);
-        transfer.setHandle(sender.getHandle());
-        transfer.setSettled(delivery.isSettled());
-        transfer.setState(delivery.getLocalState());
 
         // TODO - If not settled we should track within the link the list of unsettled deliveries
         //        for later retrieval by a client.
 
-        sessionWindow.proccessTramsfer(transfer, payload);
+        sessionWindow.processSend(sender, delivery, payload);
 
-        if (!transfer.getMore()) {
+        if (!delivery.isPartial()) {
             currentDelivery.reset();
+            deliveryCount++;
             credit--;
         }
-
-        return transfer.getDeliveryId();
     }
 
     void disposition(ProtonOutgoingDelivery delivery) {
-        // TODO - Can we cache or pool these to not generate garbage on each send ?
-        Disposition disposition = new Disposition();
-
-        disposition.setFirst(delivery.getDeliveryId());
-        disposition.setLast(delivery.getDeliveryId());
-        disposition.setRole(Role.SENDER);
-        disposition.setSettled(delivery.isSettled());
-        disposition.setBatchable(false);
-        disposition.setState(delivery.getLocalState());
-
         // TODO - if settled then we can remove from the links tracked deliveries list
-
-        sessionWindow.processDisposition(disposition);
+        sessionWindow.processDisposition(sender, delivery);
     }
 
     void abort(ProtonOutgoingDelivery delivery) {
-        // TODO - Can we cache or pool these to not generate garbage on each send ?
-        Transfer transfer = new Transfer();
-
-        transfer.setDeliveryId(delivery.getDeliveryId());
-        transfer.setDeliveryTag(new Binary(delivery.getTag()));
-        transfer.setMore(delivery.isPartial());
-        transfer.setState(null);
-        transfer.setSettled(false);
-        transfer.setResume(false);
-        transfer.setAborted(false);
-        transfer.setBatchable(false);
-        transfer.setRcvSettleMode(null);
-        transfer.setHandle(sender.getHandle());
-
         // TODO - if settled then we can remove from the links tracked deliveries list
-
-        sessionWindow.processAbort(transfer);
+        sessionWindow.processAbort(sender, delivery);
     }
 }
