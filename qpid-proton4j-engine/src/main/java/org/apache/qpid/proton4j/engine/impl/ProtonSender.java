@@ -89,7 +89,9 @@ public class ProtonSender extends ProtonLink<Sender> implements Sender {
     //----- Delivery output related access points
 
     void send(ProtonOutgoingDelivery delivery, ProtonBuffer buffer) {
-        // TODO - Enforce not closed etc
+        if (!isSendable()) {
+            throw new IllegalStateException("Cannot send when sender is not sendable");
+        }
         creditState.send(delivery, buffer);
     }
 
