@@ -54,7 +54,7 @@ public class ProtonSessionOutgoingWindow {
     private long maxFrameSize;
 
     // TODO - Better if this is a primitive keyed data structure
-    private final SplayMap<ProtonOutgoingDelivery> unsetted = new SplayMap<>();
+    private final SplayMap<ProtonOutgoingDelivery> unsettled = new SplayMap<>();
 
     public ProtonSessionOutgoingWindow(ProtonSession session) {
         this.session = session;
@@ -151,7 +151,7 @@ public class ProtonSessionOutgoingWindow {
 
         if (!delivery.isSettled()) {
             // TODO - Casting is ugly
-            unsetted.put((int) delivery.getDeliveryId(), delivery);
+            unsettled.put((int) delivery.getDeliveryId(), delivery);
         }
 
         do {
@@ -195,8 +195,8 @@ public class ProtonSessionOutgoingWindow {
         disposition.setBatchable(false);
         disposition.setState(delivery.getLocalState());
 
-        // TODO - Casting is ugly
-        unsetted.remove((int) delivery.getDeliveryId());
+        // TODO - Casting is ugly but our ID values are longs
+        unsettled.remove((int) delivery.getDeliveryId());
 
         engine.pipeline().fireWrite(disposition, session.getLocalChannel(), null, null);
     }
@@ -217,7 +217,7 @@ public class ProtonSessionOutgoingWindow {
         transfer.setHandle(sender.getHandle());
 
         // Ensure we don't track the aborted delivery any longer.
-        unsetted.remove((int) delivery.getDeliveryId());
+        unsettled.remove((int) delivery.getDeliveryId());
 
         engine.pipeline().fireWrite(transfer, session.getLocalChannel(), null, null);
     }

@@ -16,9 +16,6 @@
  */
 package org.apache.qpid.proton4j.engine.impl;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
-
 import org.apache.qpid.proton4j.amqp.transport.Attach;
 import org.apache.qpid.proton4j.amqp.transport.Disposition;
 import org.apache.qpid.proton4j.amqp.transport.Flow;
@@ -26,6 +23,7 @@ import org.apache.qpid.proton4j.amqp.transport.Transfer;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.engine.exceptions.ProtocolViolationException;
 import org.apache.qpid.proton4j.engine.util.DeliveryIdTracker;
+import org.apache.qpid.proton4j.engine.util.SplayMap;
 
 /**
  * Credit state handler for {@link Receiver} links.
@@ -40,8 +38,8 @@ public class ProtonReceiverCreditState implements ProtonLinkCreditState {
 
     private final DeliveryIdTracker currentDeliveryId = new DeliveryIdTracker();
 
-    // TODO - Primitive aware storage collection
-    private Map<Integer, ProtonIncomingDelivery> deliveries = new LinkedHashMap<>();
+    // TODO - Better if this is a primitive keyed data structure
+    private final SplayMap<ProtonIncomingDelivery> unsettled = new SplayMap<>();
 
     public ProtonReceiverCreditState(ProtonReceiver parent, ProtonSessionIncomingWindow sessionWindow) {
         this.incomingWindow = sessionWindow;
@@ -97,14 +95,16 @@ public class ProtonReceiverCreditState implements ProtonLinkCreditState {
         final ProtonIncomingDelivery delivery;
 
         if (!currentDeliveryId.isEmpty() && (!transfer.hasDeliveryId() || currentDeliveryId.equals((int) transfer.getDeliveryId()))) {
-            delivery = deliveries.get(currentDeliveryId.intValue());
+            // TODO - Casting is ugly but our ID values are longs
+            delivery = unsettled.get(currentDeliveryId.intValue());
         } else {
             verifyNewDeliveryIdSequence(transfer, currentDeliveryId);
 
             delivery = new ProtonIncomingDelivery(parent, transfer.getDeliveryTag());
             delivery.setMessageFormat((int) transfer.getMessageFormat());
 
-            deliveries.put((int) transfer.getDeliveryId(), delivery);
+            // TODO - Casting is ugly but our ID values are longs
+            unsettled.put((int) transfer.getDeliveryId(), delivery);
         }
 
         if (transfer.hasState()) {

@@ -24,6 +24,7 @@ import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.engine.LinkState;
 import org.apache.qpid.proton4j.engine.Sender;
 import org.apache.qpid.proton4j.engine.util.DeliveryIdTracker;
+import org.apache.qpid.proton4j.engine.util.SplayMap;
 
 /**
  * Credit state handler for {@link Sender} links.
@@ -40,6 +41,9 @@ public class ProtonSenderCreditState implements ProtonLinkCreditState {
     private int deliveryCount;
     private boolean draining;
     private boolean drained;
+
+    // TODO - Better if this is a primitive keyed data structure
+    private final SplayMap<ProtonOutgoingDelivery> unsettled = new SplayMap<>();
 
     public ProtonSenderCreditState(ProtonSender sender, ProtonSessionOutgoingWindow sessionWindow) {
         this.sessionWindow = sessionWindow;
@@ -130,6 +134,11 @@ public class ProtonSenderCreditState implements ProtonLinkCreditState {
         // TODO - If not settled we should track within the link the list of unsettled deliveries
         //        for later retrieval by a client.
 
+        if (!delivery.isSettled()) {
+            // TODO - Casting is ugly but right now our unsigned integers are longs
+            unsettled.put((int) delivery.getDeliveryId(), delivery);
+        }
+
         sessionWindow.processSend(sender, delivery, payload);
 
         if (!delivery.isPartial()) {
@@ -144,12 +153,18 @@ public class ProtonSenderCreditState implements ProtonLinkCreditState {
     }
 
     void disposition(ProtonOutgoingDelivery delivery) {
-        // TODO - if settled then we can remove from the links tracked deliveries list
+        if (delivery.isSettled()) {
+            // TODO - Casting is ugly but right now our unsigned integers are longs
+            unsettled.remove((int) delivery.getDeliveryId());
+        }
+
         sessionWindow.processDisposition(sender, delivery);
     }
 
     void abort(ProtonOutgoingDelivery delivery) {
-        // TODO - if settled then we can remove from the links tracked deliveries list
+        // TODO - Casting is ugly but right now our unsigned integers are longs
+        unsettled.remove((int) delivery.getDeliveryId());
+
         sessionWindow.processAbort(sender, delivery);
     }
 }
