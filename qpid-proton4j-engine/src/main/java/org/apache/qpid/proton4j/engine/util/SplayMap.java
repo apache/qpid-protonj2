@@ -19,11 +19,15 @@ package org.apache.qpid.proton4j.engine.util;
 import java.util.AbstractCollection;
 import java.util.AbstractSet;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.ConcurrentModificationException;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.NavigableMap;
+import java.util.NavigableSet;
 import java.util.NoSuchElementException;
 import java.util.Set;
+import java.util.SortedMap;
 
 import org.apache.qpid.proton4j.amqp.UnsignedInteger;
 
@@ -33,11 +37,13 @@ import org.apache.qpid.proton4j.amqp.UnsignedInteger;
  *
  * @param <E> The type stored in the map entries
  */
-public class SplayMap<E> implements Map<UnsignedInteger, E> {
+public class SplayMap<E> implements NavigableMap<UnsignedInteger, E> {
+
+    private static final UnsignedComparator COMPARATOR = new UnsignedComparator();
 
     private int size;
 
-    private Node<E> root;
+    private SplayedEntry<E> root;
 
     public int modCount;
 
@@ -65,14 +71,14 @@ public class SplayMap<E> implements Map<UnsignedInteger, E> {
         E oldValue = null;
 
         if (root == null) {
-            root = new Node<>(key, value);
+            root = new SplayedEntry<>(key, value);
         } else {
             root = splay(root, key);
             if (root.key == key) {
                 oldValue = root.value;
                 root.value = value;
             } else {
-                Node<E> node = new Node<>(key, value);
+                SplayedEntry<E> node = new SplayedEntry<>(key, value);
                 if (compare(key, root.key) < 0) {
                     node.right = root;
                     node.left = root.left;
@@ -175,7 +181,7 @@ public class SplayMap<E> implements Map<UnsignedInteger, E> {
 
     @Override
     public boolean containsValue(Object value) {
-        for (Node<E> entry = firstEntry(root); entry != null; entry = successor(entry)) {
+        for (SplayedEntry<E> entry = firstEntry(root); entry != null; entry = successor(entry)) {
             if (entry.valueEquals(value)) {
                 return true;
             }
@@ -219,8 +225,8 @@ public class SplayMap<E> implements Map<UnsignedInteger, E> {
 
     //----- Internal Implementation
 
-    private Node<E> rightRotate(Node<E> node) {
-        Node<E> rotated = node.left;
+    private SplayedEntry<E> rightRotate(SplayedEntry<E> node) {
+        SplayedEntry<E> rotated = node.left;
         node.left = rotated.right;
         rotated.right = node;
 
@@ -234,8 +240,8 @@ public class SplayMap<E> implements Map<UnsignedInteger, E> {
         return rotated;
     }
 
-    private Node<E> leftRotate(Node<E> node) {
-        Node<E> rotated = node.right;
+    private SplayedEntry<E> leftRotate(SplayedEntry<E> node) {
+        SplayedEntry<E> rotated = node.right;
         node.right = rotated.left;
         rotated.left = node;
 
@@ -249,7 +255,7 @@ public class SplayMap<E> implements Map<UnsignedInteger, E> {
         return rotated;
     }
 
-    private Node<E> splay(Node<E> root, int key) {
+    private SplayedEntry<E> splay(SplayedEntry<E> root, int key) {
         if (root == null || root.key == key) {
             return root;
         }
@@ -293,28 +299,37 @@ public class SplayMap<E> implements Map<UnsignedInteger, E> {
         }
     }
 
-    private void delete(Node<E> node) {
-        if (root.left == null) {
-            root = root.right;
-            if (root != null) {
-                root.parent = root;
+    private void delete(SplayedEntry<E> node) {
+        SplayedEntry<E> grandparent = node.parent;
+        SplayedEntry<E> replacement = null;
+
+        if (node.left == null) {
+            replacement = node.right;
+        } else {
+            replacement = splay(node.left, node.key);
+            replacement.right = node.right;
+        }
+
+        if (replacement != null) {
+            replacement.parent = grandparent;
+        }
+
+        if (grandparent != null) {
+            if (grandparent.left == node) {
+                grandparent.left = replacement;
+            } else {
+                grandparent.right = replacement;
             }
         } else {
-            Node<E> temp = root.right;
-            root = splay(root.left, node.key);
-            root.parent = null;
-            root.right = temp;
-            if (root.right != null) {
-                root.right.parent = root;
-            }
+            root = replacement;
         }
 
         size--;
         modCount++;
     }
 
-    private Node<E> firstEntry(Node<E> node) {
-        Node<E> firstEntry = node;
+    private SplayedEntry<E> firstEntry(SplayedEntry<E> node) {
+        SplayedEntry<E> firstEntry = node;
         if (firstEntry != null) {
             while (firstEntry.left != null) {
                 firstEntry = firstEntry.left;
@@ -324,10 +339,8 @@ public class SplayMap<E> implements Map<UnsignedInteger, E> {
         return firstEntry;
     }
 
-    // Unused as of now but can be used for a NavigableMap
-    @SuppressWarnings("unused")
-    private Node<E> lastEntry(Node<E> node) {
-        Node<E> lastEntry = node;
+    private SplayedEntry<E> lastEntry(SplayedEntry<E> node) {
+        SplayedEntry<E> lastEntry = node;
         if (lastEntry != null) {
             while (lastEntry.right != null) {
                 lastEntry = lastEntry.right;
@@ -337,20 +350,20 @@ public class SplayMap<E> implements Map<UnsignedInteger, E> {
         return lastEntry;
     }
 
-    private Node<E> successor(Node<E> node) {
+    private SplayedEntry<E> successor(SplayedEntry<E> node) {
         if (node == null) {
             return null;
         } else if (node.right != null) {
             // Walk to bottom of tree from this node's right child.
-            Node<E> result = node.right;
+            SplayedEntry<E> result = node.right;
             while (result.left != null) {
                 result = result.left;
             }
 
             return result;
         } else {
-            Node<E> parent = node.parent;
-            Node<E> child = node;
+            SplayedEntry<E> parent = node.parent;
+            SplayedEntry<E> child = node;
             while (parent != null && child == parent.right) {
                 child = parent;
                 parent = parent.parent;
@@ -360,20 +373,20 @@ public class SplayMap<E> implements Map<UnsignedInteger, E> {
         }
     }
 
-    private Node<E> predecessor(Node<E> node) {
+    private SplayedEntry<E> predecessor(SplayedEntry<E> node) {
         if (node == null) {
             return null;
         } else if (node.left != null) {
             // Walk to bottom of tree from this node's left child.
-            Node<E> result = node.left;
+            SplayedEntry<E> result = node.left;
             while (result.right != null) {
                 result = result.right;
             }
 
             return result;
         } else {
-            Node<E> parent = node.parent;
-            Node<E> child = node;
+            SplayedEntry<E> parent = node.parent;
+            SplayedEntry<E> child = node;
             while (parent != null && child == parent.left) {
                 child = parent;
                 parent = parent.parent;
@@ -392,12 +405,12 @@ public class SplayMap<E> implements Map<UnsignedInteger, E> {
     // Base class iterator that can be used for the collections returned from the Map
     private abstract class SplayMapIterator<T> implements Iterator<T> {
 
-        private Node<E> nextNode;
-        private Node<E> lastReturned;
+        private SplayedEntry<E> nextNode;
+        private SplayedEntry<E> lastReturned;
 
         private int expectedModCount;
 
-        public SplayMapIterator(Node<E> startAt) {
+        public SplayMapIterator(SplayedEntry<E> startAt) {
             this.nextNode = startAt;
             this.expectedModCount = SplayMap.this.modCount;
         }
@@ -407,8 +420,8 @@ public class SplayMap<E> implements Map<UnsignedInteger, E> {
             return nextNode != null;
         }
 
-        protected Node<E> nextNode() {
-            Node<E> entry = nextNode;
+        protected SplayedEntry<E> nextNode() {
+            SplayedEntry<E> entry = nextNode;
             if (nextNode == null) {
                 throw new NoSuchElementException();
             }
@@ -424,8 +437,8 @@ public class SplayMap<E> implements Map<UnsignedInteger, E> {
 
         // Unused as of now but can be used for NavigableMap amongst other things
         @SuppressWarnings("unused")
-        protected Node<E> previousNode() {
-            Node<E> entry = nextNode;
+        protected SplayedEntry<E> previousNode() {
+            SplayedEntry<E> entry = nextNode;
             if (nextNode == null) {
                 throw new NoSuchElementException();
             }
@@ -457,7 +470,7 @@ public class SplayMap<E> implements Map<UnsignedInteger, E> {
 
     private class SplayMapEntryIterator extends SplayMapIterator<Entry<UnsignedInteger, E>> {
 
-        public SplayMapEntryIterator(Node<E> startAt) {
+        public SplayMapEntryIterator(SplayedEntry<E> startAt) {
             super(startAt);
         }
 
@@ -469,7 +482,7 @@ public class SplayMap<E> implements Map<UnsignedInteger, E> {
 
     private class SplayMapKeyIterator extends SplayMapIterator<UnsignedInteger> {
 
-        public SplayMapKeyIterator(Node<E> startAt) {
+        public SplayMapKeyIterator(SplayedEntry<E> startAt) {
             super(startAt);
         }
 
@@ -481,7 +494,7 @@ public class SplayMap<E> implements Map<UnsignedInteger, E> {
 
     private class SplayMapValueIterator extends SplayMapIterator<E> {
 
-        public SplayMapValueIterator(Node<E> startAt) {
+        public SplayMapValueIterator(SplayedEntry<E> startAt) {
             super(startAt);
         }
 
@@ -512,7 +525,7 @@ public class SplayMap<E> implements Map<UnsignedInteger, E> {
 
         @Override
         public boolean remove(Object target) {
-            for (Node<E> e = firstEntry(root); e != null; e = successor(e)) {
+            for (SplayedEntry<E> e = firstEntry(root); e != null; e = successor(e)) {
                 if (e.valueEquals(target)) {
                     delete(e);
                     return true;
@@ -546,7 +559,7 @@ public class SplayMap<E> implements Map<UnsignedInteger, E> {
 
         @Override
         public boolean remove(Object target) {
-            for (Node<E> e = firstEntry(root); e != null; e = successor(e)) {
+            for (SplayedEntry<E> e = firstEntry(root); e != null; e = successor(e)) {
                 if (e.keyEquals(target)) {
                     delete(e);
                     return true;
@@ -584,7 +597,7 @@ public class SplayMap<E> implements Map<UnsignedInteger, E> {
                 throw new IllegalArgumentException("value provided is not an Entry type.");
             }
 
-            for (Node<E> e = firstEntry(root); e != null; e = successor(e)) {
+            for (SplayedEntry<E> e = firstEntry(root); e != null; e = successor(e)) {
                 if (e.equals(target)) {
                     delete(e);
                     return true;
@@ -601,16 +614,16 @@ public class SplayMap<E> implements Map<UnsignedInteger, E> {
 
     //----- Map Entry node for the Splay Map
 
-    private static final class Node<E> implements Map.Entry<UnsignedInteger, E>{
+    private static final class SplayedEntry<E> implements Map.Entry<UnsignedInteger, E>{
 
-        Node<E> left;
-        Node<E> right;
-        Node<E> parent;
+        SplayedEntry<E> left;
+        SplayedEntry<E> right;
+        SplayedEntry<E> parent;
 
         int key;
         E value;
 
-        public Node(int key, E value) {
+        public SplayedEntry(int key, E value) {
             this.key = key;
             this.value = value;
         }
@@ -669,5 +682,194 @@ public class SplayMap<E> implements Map<UnsignedInteger, E> {
         boolean valueEquals(Object other) {
             return value != null ? value.equals(other) : other == null;
         }
+    }
+
+    public class ImmutableSplayMapEntry implements Map.Entry<UnsignedInteger, E> {
+
+        private final SplayedEntry<E> entry;
+
+        public ImmutableSplayMapEntry(SplayedEntry<E> entry) {
+            this.entry = entry;
+        }
+
+        @Override
+        public UnsignedInteger getKey() {
+            return entry.getKey();
+        }
+
+        public int getPrimitiveKey() {
+            return entry.getIntKey();
+        }
+
+        @Override
+        public E getValue() {
+            return entry.getValue();
+        }
+
+        @Override
+        public E setValue(E value) {
+            throw new UnsupportedOperationException();
+        }
+    }
+
+    private ImmutableSplayMapEntry export(SplayedEntry<E> entry) {
+        return entry == null ? null : new ImmutableSplayMapEntry(entry);
+    }
+
+    //----- Unsigned Integer comparator for Navigable Maps
+
+    private static final class UnsignedComparator implements Comparator<UnsignedInteger> {
+
+        @Override
+        public int compare(UnsignedInteger uint1, UnsignedInteger uint2) {
+            return uint1.compareTo(uint2);
+        }
+    }
+
+    //----- Navigable and Sorted Map implementation methods
+
+    @Override
+    public Comparator<? super UnsignedInteger> comparator() {
+        return COMPARATOR;
+    }
+
+    @Override
+    public UnsignedInteger firstKey() {
+        return isEmpty() ? null : firstEntry(root).getKey();
+    }
+
+    @Override
+    public UnsignedInteger lastKey() {
+        return isEmpty() ? null : lastEntry(root).getKey();
+    }
+
+    @Override
+    public ImmutableSplayMapEntry firstEntry() {
+        return export(firstEntry(root));
+    }
+
+    @Override
+    public ImmutableSplayMapEntry lastEntry() {
+        return export(lastEntry(root));
+    }
+
+    @Override
+    public ImmutableSplayMapEntry pollFirstEntry() {
+        SplayedEntry<E> firstEntry = firstEntry(root);
+        if (firstEntry != null) {
+            delete(firstEntry);
+        }
+        return export(firstEntry);
+    }
+
+    @Override
+    public ImmutableSplayMapEntry pollLastEntry() {
+        SplayedEntry<E> lastEntry = lastEntry(root);
+        if (lastEntry != null) {
+            delete(lastEntry);
+        }
+        return export(lastEntry);
+    }
+
+    @Override
+    public ImmutableSplayMapEntry lowerEntry(UnsignedInteger key) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public UnsignedInteger lowerKey(UnsignedInteger key) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public ImmutableSplayMapEntry floorEntry(UnsignedInteger key) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public UnsignedInteger floorKey(UnsignedInteger key) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public ImmutableSplayMapEntry ceilingEntry(UnsignedInteger key) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public UnsignedInteger ceilingKey(UnsignedInteger key) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public ImmutableSplayMapEntry higherEntry(UnsignedInteger key) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public UnsignedInteger higherKey(UnsignedInteger key) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public NavigableMap<UnsignedInteger, E> descendingMap() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public NavigableSet<UnsignedInteger> navigableKeySet() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public NavigableSet<UnsignedInteger> descendingKeySet() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public NavigableMap<UnsignedInteger, E> subMap(UnsignedInteger fromKey, boolean fromInclusive, UnsignedInteger toKey, boolean toInclusive) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public NavigableMap<UnsignedInteger, E> headMap(UnsignedInteger toKey, boolean inclusive) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public NavigableMap<UnsignedInteger, E> tailMap(UnsignedInteger fromKey, boolean inclusive) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public SortedMap<UnsignedInteger, E> subMap(UnsignedInteger fromKey, UnsignedInteger toKey) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public SortedMap<UnsignedInteger, E> headMap(UnsignedInteger toKey) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public SortedMap<UnsignedInteger, E> tailMap(UnsignedInteger fromKey) {
+        // TODO Auto-generated method stub
+        return null;
     }
 }

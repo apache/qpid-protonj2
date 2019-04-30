@@ -402,4 +402,116 @@ public class SplayMapTest {
         } catch (NoSuchElementException nse) {
         }
     }
+
+    @Test
+    public void testFirstKey() {
+        SplayMap<String> map = new SplayMap<>();
+
+        final int[] inputValues = {3, 0, -1, 1, -2, 2};
+        final int[] expectedOrder = {0, 1, 2, 3, -2, -1};
+
+        for (int entry : inputValues) {
+            map.put(entry, "" + entry);
+        }
+
+        for (int expected : expectedOrder) {
+            assertEquals(expected, map.firstKey().intValue());
+            map.remove(expected);
+        }
+
+        assertNull(map.firstKey());
+    }
+
+    @Test
+    public void testFirstEntry() {
+        SplayMap<String> map = new SplayMap<>();
+
+        final int[] inputValues = {3, 0, -1, 1, -2, 2};
+        final int[] expectedOrder = {0, 1, 2, 3, -2, -1};
+
+        for (int entry : inputValues) {
+            map.put(entry, "" + entry);
+        }
+
+        for (int expected : expectedOrder) {
+            assertEquals(expected, map.firstEntry().getPrimitiveKey());
+            map.remove(expected);
+        }
+
+        assertNull(map.firstKey());
+    }
+
+    @Test
+    public void testPollFirstEntry() {
+        SplayMap<String> map = new SplayMap<>();
+
+        final int[] inputValues = {3, 0, -1, 1, -2, 2};
+        final int[] expectedOrder = {0, 1, 2, 3, -2, -1};
+
+        for (int entry : inputValues) {
+            map.put(entry, "" + entry);
+        }
+
+        for (int expected : expectedOrder) {
+            assertEquals(expected, map.pollFirstEntry().getPrimitiveKey());
+        }
+
+        assertNull(map.firstKey());
+    }
+
+    @Test
+    public void testLastKey() {
+        SplayMap<String> map = new SplayMap<>();
+
+        final int[] inputValues = {3, 0, -1, 1, -2, 2};
+        final int[] expectedOrder = {-1, -2, 3, 2, 1, 0};
+
+        for (int entry : inputValues) {
+            map.put(entry, "" + entry);
+        }
+
+        for (int expected : expectedOrder) {
+            assertEquals(expected, map.lastKey().intValue());
+            map.remove(expected);
+        }
+
+        assertNull(map.lastKey());
+    }
+
+    @Test
+    public void testLastEntry() {
+        SplayMap<String> map = new SplayMap<>();
+
+        final int[] inputValues = {3, 0, -1, 1, -2, 2};
+        final int[] expectedOrder = {-1, -2, 3, 2, 1, 0};
+
+        for (int entry : inputValues) {
+            map.put(entry, "" + entry);
+        }
+
+        for (int expected : expectedOrder) {
+            assertEquals(expected, map.lastEntry().getPrimitiveKey());
+            map.remove(expected);
+        }
+
+        assertNull(map.lastKey());
+    }
+
+    @Test
+    public void testPollLastEntry() {
+        SplayMap<String> map = new SplayMap<>();
+
+        final int[] inputValues = {3, 0, -1, 1, -2, 2};
+        final int[] expectedOrder = {-1, -2, 3, 2, 1, 0};
+
+        for (int entry : inputValues) {
+            map.put(entry, "" + entry);
+        }
+
+        for (int expected : expectedOrder) {
+            assertEquals(expected, map.pollLastEntry().getPrimitiveKey());
+        }
+
+        assertNull(map.lastKey());
+    }
 }
