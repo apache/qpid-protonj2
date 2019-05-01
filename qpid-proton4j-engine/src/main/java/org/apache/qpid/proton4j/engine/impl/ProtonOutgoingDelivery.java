@@ -20,7 +20,6 @@ import org.apache.qpid.proton4j.amqp.transport.DeliveryState;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.engine.OutgoingDelivery;
-import org.apache.qpid.proton4j.engine.Sender;
 
 /**
  * Proton outgoing delivery implementation
@@ -57,7 +56,7 @@ public class ProtonOutgoingDelivery implements OutgoingDelivery {
     }
 
     @Override
-    public Sender getLink() {
+    public ProtonSender getLink() {
         return link;
     }
 
