@@ -29,7 +29,7 @@ import org.apache.qpid.proton4j.engine.util.SplayMap;
 /**
  * Credit state handler for {@link Sender} links.
  */
-public class ProtonSenderCreditState implements ProtonLinkCreditState {
+public class ProtonSenderCreditState implements ProtonLinkCreditState<ProtonOutgoingDelivery> {
 
     private final ProtonSender sender;
     private final ProtonSessionOutgoingWindow sessionWindow;
@@ -108,7 +108,25 @@ public class ProtonSenderCreditState implements ProtonLinkCreditState {
     }
 
     @Override
-    public Disposition handleDisposition(Disposition disposition) {
+    public Disposition handleDisposition(Disposition disposition, ProtonOutgoingDelivery delivery) {
+        boolean updated = false;
+
+        if (disposition.getState() != null && !disposition.getState().equals(delivery.getRemoteState())) {
+            updated = true;
+            delivery.remoteState(disposition.getState());
+        }
+
+        if (disposition.getSettled() && !delivery.isRemotelySettled()) {
+            updated = true;
+            // TODO - Casting is ugly but right now our unsigned integers are longs
+            unsettled.remove((int) delivery.getDeliveryId());
+            delivery.remotelySettled();
+        }
+
+        if (updated) {
+            delivery.getLink().signalDeliveryUpdated(delivery);
+        }
+
         return disposition;
     }
 

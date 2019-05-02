@@ -147,7 +147,7 @@ public class ProtonSessionIncomingWindow {
         final long last = disposition.hasLast() ? disposition.getLast() : first;
 
         if (last < first) {
-            session.getConnection().getEngine().engineFailed(new ProtocolViolationException(
+            engine.engineFailed(new ProtocolViolationException(
                 "Received Disposition with mismatched first and last delivery Ids: [" + first + ", " + last + "]"));
         }
 
@@ -162,14 +162,11 @@ public class ProtonSessionIncomingWindow {
             //        each index between for its presence.
             ProtonIncomingDelivery delivery = unsettled.get(index);
             if (delivery != null) {
-                ProtonReceiver receiver = delivery.getLink();
-
-                // TODO - Add delivery as argument
-                receiver.handleDisposition(disposition);
-
                 if (disposition.getSettled()) {
                     unsettled.remove(index);
                 }
+
+                delivery.getLink().handleDisposition(disposition, delivery);
             }
         } while (index++ <= last);
 

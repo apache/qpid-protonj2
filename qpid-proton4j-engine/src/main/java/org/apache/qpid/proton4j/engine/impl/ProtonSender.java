@@ -16,6 +16,7 @@
  */
 package org.apache.qpid.proton4j.engine.impl;
 
+import org.apache.qpid.proton4j.amqp.transport.Disposition;
 import org.apache.qpid.proton4j.amqp.transport.Role;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.engine.EventHandler;
@@ -84,6 +85,10 @@ public class ProtonSender extends ProtonLink<Sender> implements Sender {
         }
 
         return current;
+    }
+
+    void handleDisposition(Disposition disposition, ProtonOutgoingDelivery delivery) {
+        getCreditState().handleDisposition(disposition, delivery);
     }
 
     //----- Delivery output related access points

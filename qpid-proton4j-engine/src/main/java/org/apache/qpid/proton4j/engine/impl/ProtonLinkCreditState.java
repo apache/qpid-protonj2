@@ -21,12 +21,15 @@ import org.apache.qpid.proton4j.amqp.transport.Disposition;
 import org.apache.qpid.proton4j.amqp.transport.Flow;
 import org.apache.qpid.proton4j.amqp.transport.Transfer;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import org.apache.qpid.proton4j.engine.Delivery;
 import org.apache.qpid.proton4j.engine.LinkCreditState;
 
 /**
  * Proton LinkCreditState base used to define common API amongst the implementations.
+ *
+ * @param <DeliveryType>
  */
-public interface ProtonLinkCreditState extends LinkCreditState {
+public interface ProtonLinkCreditState<DeliveryType extends Delivery> extends LinkCreditState {
 
     /**
      * Creates a snapshot of the current credit state, a subclass should implement this
@@ -34,7 +37,7 @@ public interface ProtonLinkCreditState extends LinkCreditState {
      *
      * @return a snapshot of the current credit state.
      */
-    ProtonLinkCreditState snapshot();
+    ProtonLinkCreditState<?> snapshot();
 
     /**
      * Initialize link state on an outbound Attach for this link
@@ -87,9 +90,11 @@ public interface ProtonLinkCreditState extends LinkCreditState {
      *
      * @param disposition
      *      The {@link Disposition} instance to be processed.
+     * @param delivery
+     *      The {@link Delivery} that is the target of this disposition.
      *
      * @return the passed object for chaining.
      */
-    abstract Disposition handleDisposition(Disposition disposition);
+    abstract Disposition handleDisposition(Disposition disposition, DeliveryType delivery);
 
 }

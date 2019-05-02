@@ -28,7 +28,7 @@ import org.apache.qpid.proton4j.engine.util.SplayMap;
 /**
  * Credit state handler for {@link Receiver} links.
  */
-public class ProtonReceiverCreditState implements ProtonLinkCreditState {
+public class ProtonReceiverCreditState implements ProtonLinkCreditState<ProtonIncomingDelivery> {
 
     private final ProtonReceiver parent;
     private final ProtonSessionIncomingWindow incomingWindow;
@@ -100,7 +100,7 @@ public class ProtonReceiverCreditState implements ProtonLinkCreditState {
         } else {
             verifyNewDeliveryIdSequence(transfer, currentDeliveryId);
 
-            delivery = new ProtonIncomingDelivery(parent, transfer.getDeliveryTag());
+            delivery = new ProtonIncomingDelivery(parent, transfer.getDeliveryId(), transfer.getDeliveryTag());
             delivery.setMessageFormat((int) transfer.getMessageFormat());
 
             // TODO - Casting is ugly but our ID values are longs
@@ -108,7 +108,7 @@ public class ProtonReceiverCreditState implements ProtonLinkCreditState {
         }
 
         if (transfer.hasState()) {
-            delivery.setRemoteState(transfer.getState());
+            delivery.remoteState(transfer.getState());
         }
 
         if (transfer.getSettled() || transfer.getAborted()) {
@@ -166,7 +166,25 @@ public class ProtonReceiverCreditState implements ProtonLinkCreditState {
     }
 
     @Override
-    public Disposition handleDisposition(Disposition disposition) {
+    public Disposition handleDisposition(Disposition disposition, ProtonIncomingDelivery delivery) {
+        boolean updated = false;
+
+        if (disposition.getState() != null && !disposition.getState().equals(delivery.getRemoteState())) {
+            updated = true;
+            delivery.remoteState(disposition.getState());
+        }
+
+        if (disposition.getSettled() && !delivery.isRemotelySettled()) {
+            updated = true;
+            // TODO - Casting is ugly but right now our unsigned integers are longs
+            unsettled.remove((int) delivery.getDeliveryId());
+            delivery.remotelySettled();
+        }
+
+        if (updated) {
+            delivery.getLink().signalDeliveryUpdated(delivery);
+        }
+
         return disposition;
     }
 

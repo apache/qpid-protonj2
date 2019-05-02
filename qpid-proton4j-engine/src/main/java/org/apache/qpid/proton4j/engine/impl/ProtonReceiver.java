@@ -17,6 +17,7 @@
 package org.apache.qpid.proton4j.engine.impl;
 
 import org.apache.qpid.proton4j.amqp.transport.DeliveryState;
+import org.apache.qpid.proton4j.amqp.transport.Disposition;
 import org.apache.qpid.proton4j.amqp.transport.Role;
 import org.apache.qpid.proton4j.engine.EventHandler;
 import org.apache.qpid.proton4j.engine.IncomingDelivery;
@@ -93,6 +94,12 @@ public class ProtonReceiver extends ProtonLink<Receiver> implements Receiver {
         creditState.setCredit(credit);
 
         return this;
+    }
+
+    //----- Internal support methods
+
+    void handleDisposition(Disposition disposition, ProtonIncomingDelivery delivery) {
+        getCreditState().handleDisposition(disposition, delivery);
     }
 
     //----- Receiver event handlers

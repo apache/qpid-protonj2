@@ -30,6 +30,7 @@ public class ProtonIncomingDelivery implements IncomingDelivery {
     private final ProtonContext context = new ProtonContext();
     private final Binary deliveryTag;
     private final ProtonReceiver link;
+    private final long deliveryId;
 
     private boolean complete;
     private int messageFormat;
@@ -49,10 +50,13 @@ public class ProtonIncomingDelivery implements IncomingDelivery {
     /**
      * @param link
      *      The link that this delivery is associated with
+     * @param deliveryId
+     *      The Delivery Id that is assigned to this delivery.
      * @param deliveryTag
      *      The delivery tag assigned to this delivery
      */
-    public ProtonIncomingDelivery(ProtonReceiver link, Binary deliveryTag) {
+    public ProtonIncomingDelivery(ProtonReceiver link, long deliveryId, Binary deliveryTag) {
+        this.deliveryId = deliveryId;
         this.deliveryTag = deliveryTag;
         this.link = link;
     }
@@ -80,11 +84,6 @@ public class ProtonIncomingDelivery implements IncomingDelivery {
     @Override
     public DeliveryState getRemoteState() {
         return remoteState;
-    }
-
-    ProtonIncomingDelivery setRemoteState(DeliveryState state) {
-        this.remoteState = state;
-        return this;
     }
 
     @Override
@@ -179,6 +178,10 @@ public class ProtonIncomingDelivery implements IncomingDelivery {
 
     //----- Internal methods to manage the Delivery
 
+    long getDeliveryId() {
+        return deliveryId;
+    }
+
     ProtonIncomingDelivery aborted() {
         this.aborted = true;
         return this;
@@ -191,6 +194,11 @@ public class ProtonIncomingDelivery implements IncomingDelivery {
 
     ProtonIncomingDelivery remotelySettled() {
         this.remotelySettled = true;
+        return this;
+    }
+
+    ProtonIncomingDelivery remoteState(DeliveryState remoteState) {
+        this.remoteState = remoteState;
         return this;
     }
 

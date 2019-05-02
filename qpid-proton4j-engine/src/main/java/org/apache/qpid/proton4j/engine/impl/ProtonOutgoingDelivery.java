@@ -196,6 +196,16 @@ public class ProtonOutgoingDelivery implements OutgoingDelivery {
         //        is a composite or other complex buffer type in use.
     }
 
+    ProtonOutgoingDelivery remotelySettled() {
+        this.remotelySettled = true;
+        return this;
+    }
+
+    ProtonOutgoingDelivery remoteState(DeliveryState remoteState) {
+        this.remoteState = remoteState;
+        return this;
+    }
+
     //----- Private helper methods
 
     private void checkCompleteOrAborted() {

@@ -155,14 +155,11 @@ public class ProtonSessionOutgoingWindow {
             // TODO - The casting required due to long to integer indexing is messy
             ProtonOutgoingDelivery delivery = unsettled.get((int) index);
             if (delivery != null) {
-                ProtonSender sender = delivery.getLink();
-
-                // TODO - Add delivery as argument
-                sender.handleDisposition(disposition);
-
                 if (disposition.getSettled()) {
                     unsettled.remove((int) index);
                 }
+
+                delivery.getLink().handleDisposition(disposition, delivery);
             }
         } while (index++ <= last);
 

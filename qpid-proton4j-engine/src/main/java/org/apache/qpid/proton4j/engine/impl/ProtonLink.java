@@ -29,7 +29,6 @@ import org.apache.qpid.proton4j.amqp.messaging.Source;
 import org.apache.qpid.proton4j.amqp.messaging.Target;
 import org.apache.qpid.proton4j.amqp.transport.Attach;
 import org.apache.qpid.proton4j.amqp.transport.Detach;
-import org.apache.qpid.proton4j.amqp.transport.Disposition;
 import org.apache.qpid.proton4j.amqp.transport.ErrorCondition;
 import org.apache.qpid.proton4j.amqp.transport.Flow;
 import org.apache.qpid.proton4j.amqp.transport.Role;
@@ -104,7 +103,7 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
 
     protected abstract T self();
 
-    protected abstract ProtonLinkCreditState getCreditState();
+    protected abstract ProtonLinkCreditState<?> getCreditState();
 
     long getHandle() {
         return localAttach.getHandle();
@@ -415,10 +414,6 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
 
     void handleTransfer(Transfer transfer, ProtonBuffer payload) {
         getCreditState().handleTransfer(transfer, payload);
-    }
-
-    void handleDisposition(Disposition disposition) {
-        getCreditState().handleDisposition(disposition);
     }
 
     void handleFlow(Flow flow) {
