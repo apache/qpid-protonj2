@@ -301,11 +301,9 @@ public class SplayMap<E> implements NavigableMap<UnsignedInteger, E> {
 
     private void delete(SplayedEntry<E> node) {
         SplayedEntry<E> grandparent = node.parent;
-        SplayedEntry<E> replacement = null;
+        SplayedEntry<E> replacement = node.right;
 
-        if (node.left == null) {
-            replacement = node.right;
-        } else {
+        if (node.left != null) {
             replacement = splay(node.left, node.key);
             replacement.right = node.right;
         }
