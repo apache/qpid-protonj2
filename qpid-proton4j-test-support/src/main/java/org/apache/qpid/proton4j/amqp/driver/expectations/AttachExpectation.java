@@ -26,6 +26,7 @@ import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedInteger;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
+import org.apache.qpid.proton4j.amqp.driver.LinkTracker;
 import org.apache.qpid.proton4j.amqp.driver.actions.AttachInjectAction;
 import org.apache.qpid.proton4j.amqp.driver.actions.BeginInjectAction;
 import org.apache.qpid.proton4j.amqp.driver.codec.ListDescribedType;
@@ -76,6 +77,8 @@ public class AttachExpectation extends AbstractExpectation<Attach> {
     public void handleAttach(Attach attach, ProtonBuffer payload, int channel, AMQPTestDriver context) {
         super.handleAttach(attach, payload, channel, context);
 
+        LinkTracker link = driver.getSessions().handleAttach(attach, channel);
+
         if (response == null) {
             return;
         }
@@ -83,10 +86,7 @@ public class AttachExpectation extends AbstractExpectation<Attach> {
         // Input was validated now populate response with auto values where not configured
         // to say otherwise by the test.
         if (response.onChannel() == BeginInjectAction.CHANNEL_UNSET) {
-            // TODO - We could track attach in the driver and therefore allocate
-            //        free channels based on activity during the test.  For now we
-            //        are simply mirroring the channels back.
-            response.onChannel(channel);
+            response.onChannel(link.getSession().getLocalChannel());
         }
 
         // Populate the fields of the response with defaults if non set by the test script

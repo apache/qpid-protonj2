@@ -17,6 +17,7 @@
 package org.apache.qpid.proton4j.amqp.driver.actions;
 
 import org.apache.qpid.proton4j.amqp.DescribedType;
+import org.apache.qpid.proton4j.amqp.UnsignedShort;
 import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
 import org.apache.qpid.proton4j.amqp.driver.ScriptedAction;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
@@ -38,6 +39,11 @@ public abstract class AbstractPerformativeInjectAction<P extends DescribedType> 
 
     public AbstractPerformativeInjectAction<?> onChannel(int channel) {
         this.channel = channel;
+        return this;
+    }
+
+    public AbstractPerformativeInjectAction<?> onChannel(UnsignedShort channel) {
+        this.channel = channel.intValue();
         return this;
     }
 

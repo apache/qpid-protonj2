@@ -19,6 +19,7 @@ package org.apache.qpid.proton4j.amqp.driver.expectations;
 import static org.hamcrest.CoreMatchers.equalTo;
 
 import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
+import org.apache.qpid.proton4j.amqp.driver.SessionTracker;
 import org.apache.qpid.proton4j.amqp.driver.actions.BeginInjectAction;
 import org.apache.qpid.proton4j.amqp.driver.actions.EndInjectAction;
 import org.apache.qpid.proton4j.amqp.driver.codec.ListDescribedType;
@@ -60,6 +61,8 @@ public class EndExpectation extends AbstractExpectation<End> {
     public void handleEnd(End end, ProtonBuffer payload, int channel, AMQPTestDriver context) {
         super.handleEnd(end, payload, channel, context);
 
+        SessionTracker session = context.getSessions().handleEnd(end, channel);
+
         if (response == null) {
             return;
         }
@@ -67,7 +70,7 @@ public class EndExpectation extends AbstractExpectation<End> {
         // Input was validated now populate response with auto values where not configured
         // to say otherwise by the test.
         if (response.onChannel() == BeginInjectAction.CHANNEL_UNSET) {
-            response.onChannel(channel);
+            response.onChannel(session.getLocalChannel());
         }
     }
 

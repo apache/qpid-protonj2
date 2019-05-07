@@ -24,6 +24,7 @@ import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedInteger;
 import org.apache.qpid.proton4j.amqp.UnsignedShort;
 import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
+import org.apache.qpid.proton4j.amqp.driver.SessionTracker;
 import org.apache.qpid.proton4j.amqp.driver.actions.BeginInjectAction;
 import org.apache.qpid.proton4j.amqp.driver.codec.ListDescribedType;
 import org.apache.qpid.proton4j.amqp.driver.codec.transport.Begin;
@@ -62,6 +63,8 @@ public class BeginExpectation extends AbstractExpectation<Begin> {
     public void handleBegin(Begin begin, ProtonBuffer payload, int channel, AMQPTestDriver context) {
         super.handleBegin(begin, payload, channel, context);
 
+        SessionTracker session = context.getSessions().handleBegin(begin, channel);
+
         if (response == null) {
             return;
         }
@@ -69,10 +72,7 @@ public class BeginExpectation extends AbstractExpectation<Begin> {
         // Input was validated now populate response with auto values where not configured
         // to say otherwise by the test.
         if (response.onChannel() == BeginInjectAction.CHANNEL_UNSET) {
-            // TODO - We could track session in the driver and therefore allocate
-            //        free channels based on activity during the test.  For now we
-            //        are simply mirroring the channels back.
-            response.onChannel(channel);
+            response.onChannel(session.getLocalChannel());
         }
 
         // Populate the remote channel with that of the incoming begin unless scripted to send

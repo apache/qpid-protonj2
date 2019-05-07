@@ -20,6 +20,7 @@ import static org.hamcrest.CoreMatchers.equalTo;
 
 import org.apache.qpid.proton4j.amqp.UnsignedInteger;
 import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
+import org.apache.qpid.proton4j.amqp.driver.LinkTracker;
 import org.apache.qpid.proton4j.amqp.driver.actions.BeginInjectAction;
 import org.apache.qpid.proton4j.amqp.driver.actions.DetachInjectAction;
 import org.apache.qpid.proton4j.amqp.driver.codec.ListDescribedType;
@@ -60,6 +61,8 @@ public class DetachExpectation extends AbstractExpectation<Detach> {
     public void handleDetach(Detach detach, ProtonBuffer payload, int channel, AMQPTestDriver context) {
         super.handleDetach(detach, payload, channel, context);
 
+        LinkTracker link = driver.getSessions().handleDetach(detach, channel);
+
         if (response == null) {
             return;
         }
@@ -67,7 +70,7 @@ public class DetachExpectation extends AbstractExpectation<Detach> {
         // Input was validated now populate response with auto values where not configured
         // to say otherwise by the test.
         if (response.onChannel() == BeginInjectAction.CHANNEL_UNSET) {
-            response.onChannel(channel);
+            response.onChannel(link.getSession().getLocalChannel());
         }
 
         if (response.getPerformative().getHandle() == null) {

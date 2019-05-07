@@ -38,6 +38,8 @@ public class AMQPTestDriver implements Consumer<ProtonBuffer> {
     private final FrameDecoder frameParser;
     private final FrameEncoder frameEncoder;
 
+    private final DriverSessions sessions = new DriverSessions(this);
+
     private final Consumer<ProtonBuffer> frameConsumer;
 
     private AssertionError failureCause;
@@ -75,6 +77,13 @@ public class AMQPTestDriver implements Consumer<ProtonBuffer> {
      */
     public ScriptWriter createScriptWriter() {
         return new ScriptWriter(this);
+    }
+
+    /**
+     * @return the Sessions tracking manager for this driver.
+     */
+    public DriverSessions getSessions() {
+        return sessions;
     }
 
     //----- View the test driver state
