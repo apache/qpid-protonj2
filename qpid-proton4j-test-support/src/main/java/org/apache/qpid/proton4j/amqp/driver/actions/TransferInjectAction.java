@@ -90,6 +90,11 @@ public final class TransferInjectAction extends AbstractPerformativeInjectAction
         return this;
     }
 
+    public TransferInjectAction withDeliveryTag(byte[] deliveryTag) {
+        transfer.setDeliveryTag(new Binary(deliveryTag));
+        return this;
+    }
+
     public TransferInjectAction withDeliveryTag(Binary deliveryTag) {
         transfer.setDeliveryTag(deliveryTag);
         return this;

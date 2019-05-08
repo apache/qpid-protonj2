@@ -28,6 +28,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
 import org.apache.qpid.proton4j.amqp.driver.ScriptWriter;
+import org.apache.qpid.proton4j.amqp.messaging.Accepted;
 import org.apache.qpid.proton4j.amqp.transport.DeliveryState;
 import org.apache.qpid.proton4j.amqp.transport.Role;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
@@ -376,6 +377,75 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         });
 
         sender.open();
+        sender.close();
+
+        driver.assertScriptComplete();
+
+        assertNull(failure);
+    }
+
+    @Test
+    public void testSenderSignalsDeliveryUpdatedOnSettled() throws Exception {
+        ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
+        engine.errorHandler(result -> failure = result);
+        // Create the test driver and link it to the engine for output handling.
+        AMQPTestDriver driver = new AMQPTestDriver(engine);
+        engine.outputConsumer(driver);
+        ScriptWriter script = driver.createScriptWriter();
+
+        script.expectAMQPHeader().respondWithAMQPHeader();
+        script.expectOpen().respond().withContainerId("driver");
+        script.expectBegin().respond();
+        script.expectAttach().withHandle(0).withRole(Role.SENDER).respond();
+        script.remoteFlow().withDeliveryCount(0)  // TODO - Would be nice to automate filling in these
+                           .withHandle(0)         //        these bits using last session opened values
+                           .withLinkCredit(10)    //        plus some defaults or generated values.
+                           .withIncomingWindow(1024)
+                           .withOutgoingWindow(10)
+                           .withNextIncomingId(0)
+                           .withNextOutgoingId(1).onChannel(0);  // TODO - Track sessions and use last opened by default
+        script.expectTransfer().withHandle(0)
+                               .withSettled(false)
+                               .withState((DeliveryState) null)
+                               .withDeliveryId(0)
+                               .withDeliveryTag(new byte[] {0});
+        script.remoteDisposition().withSettled(true)
+                                  .withRole(Role.RECEIVER)
+                                  .withState(Accepted.getInstance())
+                                  .withFirst(0).onChannel(0);
+        script.expectDetach().withHandle(0).respond();
+
+        Connection connection = engine.start();
+
+        connection.open();
+        Session session = connection.session();
+        session.open();
+
+        ProtonBuffer payload = ProtonByteBufferAllocator.DEFAULT.wrap(new byte[] {0, 1, 2, 3, 4});
+
+        Sender sender = session.sender("sender-1");
+
+        final AtomicBoolean deliveryUpdatedAndSettled = new AtomicBoolean();
+        final AtomicReference<OutgoingDelivery> updatedDelivery = new AtomicReference<>();
+        sender.deliveryUpdatedEventHandler(delivery -> {
+            if (delivery.isRemotelySettled()) {
+                deliveryUpdatedAndSettled.set(true);
+            }
+
+            updatedDelivery.set(delivery);
+        });
+
+        assertFalse(sender.isSendable());
+
+        sender.sendableEventHandler(handler -> {
+            handler.delivery().setTag(new byte[] {0}).writeBytes(payload);
+        });
+
+        sender.open();
+
+        assertTrue("Delivery should have been updated and state settled", deliveryUpdatedAndSettled.get());
+        assertEquals(Accepted.getInstance(), updatedDelivery.get().getRemoteState());
+
         sender.close();
 
         driver.assertScriptComplete();
