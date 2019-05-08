@@ -42,6 +42,10 @@ public interface Receiver extends Link<Receiver> {
     // Receiver drain(EventHandler<Receiver> handler);
     // Receiver drain(int credits, EventHandler<Receiver> handler);
 
+    // Sender disposition(OutgoingDelivery... deliveries, boolean settle);
+
+    // Sender settle(OoutgoingDelivery... deliveries);
+
     /**
      * Configures a default DeliveryState to be used if a received delivery is settled/freed
      * without any disposition state having been previously applied.
