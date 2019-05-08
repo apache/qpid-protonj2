@@ -82,16 +82,24 @@ public class BeginExpectation extends AbstractExpectation<Begin> {
         }
 
         if (response.getPerformative().getNextOutgoingId() == null) {
-            response.withNextOutgoingId(begin.getNextOutgoingId());
+            response.withNextOutgoingId(session.getNextOutgoingId());
+        } else {
+            session.setNextOutgoingId(response.getPerformative().getNextOutgoingId());
         }
         if (response.getPerformative().getIncomingWindow() == null) {
-            response.withIncomingWindow(begin.getIncomingWindow());
+            response.withIncomingWindow(session.getIncomingWindow());
+        } else {
+            session.setIncomingWindow(response.getPerformative().getIncomingWindow());
         }
         if (response.getPerformative().getOutgoingWindow() == null) {
             response.withOutgoingWindow(begin.getOutgoingWindow());
+        } else {
+            session.setOutgoingWindow(response.getPerformative().getOutgoingWindow());
         }
         if (response.getPerformative().getHandleMax() == null) {
-            response.withHandleMax(begin.getHandleMax());
+            response.withHandleMax(session.getHandleMax());
+        } else {
+            session.setHandleMax(response.getPerformative().getHandleMax());
         }
 
         // The remainder of the values are left not set unless set in the test script

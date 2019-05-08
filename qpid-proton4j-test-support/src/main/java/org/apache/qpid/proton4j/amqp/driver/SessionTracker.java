@@ -43,6 +43,11 @@ public class SessionTracker {
     private final UnsignedShort localChannel;
     private final UnsignedShort remoteChannel;
 
+    private UnsignedInteger nextOutgoingId = UnsignedInteger.ONE;
+    private UnsignedInteger incomingWindow = UnsignedInteger.ZERO;
+    private UnsignedInteger outgoingWindow = UnsignedInteger.ZERO;
+    private UnsignedInteger handleMax;
+
     private final AMQPTestDriver driver;
 
     public SessionTracker(AMQPTestDriver driver, Begin begin, UnsignedShort localChannel, UnsignedShort remoteChannel) {
@@ -76,6 +81,42 @@ public class SessionTracker {
 
     public UnsignedShort getLocalChannel() {
         return localChannel;
+    }
+
+    public UnsignedInteger getNextOutgoingId() {
+        return nextOutgoingId;
+    }
+
+    public UnsignedInteger setNextOutgoingId(UnsignedInteger nextOutgoingId) {
+        this.nextOutgoingId = nextOutgoingId;
+        return nextOutgoingId;
+    }
+
+    public UnsignedInteger getIncomingWindow() {
+        return incomingWindow;
+    }
+
+    public UnsignedInteger setIncomingWindow(UnsignedInteger incomingWindow) {
+        this.incomingWindow = incomingWindow;
+        return incomingWindow;
+    }
+
+    public UnsignedInteger getOutgoingWindow() {
+        return outgoingWindow;
+    }
+
+    public UnsignedInteger setOutgoingWindow(UnsignedInteger outgoingWindow) {
+        this.outgoingWindow = outgoingWindow;
+        return outgoingWindow;
+    }
+
+    public UnsignedInteger getHandleMax() {
+        return handleMax;
+    }
+
+    public UnsignedInteger setHandleMax(UnsignedInteger handleMax) {
+        this.handleMax = handleMax;
+        return handleMax;
     }
 
     //----- Handle performatives and update session state
