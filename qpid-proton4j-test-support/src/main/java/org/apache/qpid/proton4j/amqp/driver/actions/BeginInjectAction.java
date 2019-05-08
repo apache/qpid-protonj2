@@ -31,6 +31,15 @@ public class BeginInjectAction extends AbstractPerformativeInjectAction<Begin> {
 
     private final Begin begin = new Begin();
 
+    /**
+     * Set defaults for the required fields of the performative
+     */
+    public BeginInjectAction() {
+        begin.setNextOutgoingId(UnsignedInteger.ONE);
+        begin.setIncomingWindow(UnsignedInteger.ZERO);
+        begin.setOutgoingWindow(UnsignedInteger.ZERO);
+    }
+
     @Override
     public Begin getPerformative() {
         return begin;

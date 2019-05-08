@@ -18,6 +18,7 @@ package org.apache.qpid.proton4j.engine.impl;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.nullValue;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -32,6 +33,7 @@ import org.apache.qpid.proton4j.amqp.driver.ScriptWriter;
 import org.apache.qpid.proton4j.engine.Connection;
 import org.apache.qpid.proton4j.engine.Session;
 import org.hamcrest.Matcher;
+import org.junit.Ignore;
 import org.junit.Test;
 
 /**
@@ -164,9 +166,9 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
 
         script.expectAMQPHeader().respondWithAMQPHeader();
         script.expectOpen().respond().withContainerId("driver");
-        script.remoteBegin().withNextOutgoingId(1)
-                            .withIncomingWindow(0)
-                            .withOutgoingWindow(0).onChannel(1);
+        script.remoteBegin().onChannel(1);   // TODO - Select the next available channel
+                                             //        from the driver and track the new
+                                             //        session that was remotely opened.
 
         final AtomicBoolean connectionRemotelyOpened = new AtomicBoolean();
         final AtomicBoolean sessionRemotelyOpened = new AtomicBoolean();
@@ -262,5 +264,45 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
         driver.assertScriptComplete();
 
         assertNull(failure);
+    }
+
+    @Ignore("Handle invalid begin either by connection close or end of remotely opened resource.")
+    @Test
+    public void testHandleRemoteBeginWithInvalidRemoteChannelSet() throws IOException {
+        ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
+        engine.errorHandler(result -> failure = result);
+
+        // Create the test driver and link it to the engine for output handling.
+        AMQPTestDriver driver = new AMQPTestDriver(engine);
+        engine.outputConsumer(driver);
+
+        ScriptWriter script = driver.createScriptWriter();
+
+        script.expectAMQPHeader().respondWithAMQPHeader();
+        script.expectOpen().respond().withContainerId("driver");
+        script.remoteBegin().withRemoteChannel(3).onChannel(1); // TODO - Select the next available channel
+                                                                //        from the driver and track the new
+                                                                //        session that was remotely opened.
+        final AtomicBoolean remoteOpened = new AtomicBoolean();
+        final AtomicBoolean remoteSession = new AtomicBoolean();
+
+        Connection connection = engine.start();
+
+        // Default engine should start and return a connection immediately
+        assertNotNull(connection);
+
+        connection.open();
+        connection.openEventHandler((result) -> {
+            remoteOpened.set(true);
+        });
+
+        connection.sessionOpenEventHandler(session -> {
+            remoteSession.set(true);
+        });
+
+        driver.assertScriptComplete();
+
+        assertFalse("Should not have seen a remote session open.", remoteSession.get());
+        assertNotNull(failure);
     }
 }
