@@ -30,8 +30,8 @@ import org.apache.qpid.proton4j.engine.util.SplayMap;
  */
 public class ProtonReceiverCreditState implements ProtonLinkCreditState<ProtonIncomingDelivery> {
 
-    private final ProtonReceiver parent;
-    private final ProtonSessionIncomingWindow incomingWindow;
+    private final ProtonReceiver receiver;
+    private final ProtonSessionIncomingWindow sessionWindow;
 
     private int credit;
     private int deliveryCount;
@@ -42,8 +42,8 @@ public class ProtonReceiverCreditState implements ProtonLinkCreditState<ProtonIn
     private final SplayMap<ProtonIncomingDelivery> unsettled = new SplayMap<>();
 
     public ProtonReceiverCreditState(ProtonReceiver parent, ProtonSessionIncomingWindow sessionWindow) {
-        this.incomingWindow = sessionWindow;
-        this.parent = parent;
+        this.sessionWindow = sessionWindow;
+        this.receiver = parent;
     }
 
     @Override
@@ -59,8 +59,8 @@ public class ProtonReceiverCreditState implements ProtonLinkCreditState<ProtonIn
     public void setCredit(int credit) {
         if (this.credit != credit) {
             this.credit = credit;
-            if (parent.isRemotelyOpened()) {
-                incomingWindow.writeFlow(parent);
+            if (receiver.isRemotelyOpened()) {
+                sessionWindow.writeFlow(receiver);
             }
         }
     }
@@ -68,7 +68,7 @@ public class ProtonReceiverCreditState implements ProtonLinkCreditState<ProtonIn
     @Override
     public Attach handleAttach(Attach attach) {
         if (credit > 0) {
-            incomingWindow.writeFlow(parent);
+            sessionWindow.writeFlow(receiver);
         }
 
         return attach;
@@ -85,7 +85,7 @@ public class ProtonReceiverCreditState implements ProtonLinkCreditState<ProtonIn
 
             // TODO - Error on credit being non-zero for drain response ?
 
-            parent.signalReceiverDrained();
+            receiver.signalReceiverDrained();
         }
         return flow;
     }
@@ -94,13 +94,16 @@ public class ProtonReceiverCreditState implements ProtonLinkCreditState<ProtonIn
     public Transfer handleTransfer(Transfer transfer, ProtonBuffer payload) {
         final ProtonIncomingDelivery delivery;
 
+        boolean isFirstTransfer = true;
+
         if (!currentDeliveryId.isEmpty() && (!transfer.hasDeliveryId() || currentDeliveryId.equals((int) transfer.getDeliveryId()))) {
             // TODO - Casting is ugly but our ID values are longs
             delivery = unsettled.get(currentDeliveryId.intValue());
+            isFirstTransfer = false;
         } else {
             verifyNewDeliveryIdSequence(transfer, currentDeliveryId);
 
-            delivery = new ProtonIncomingDelivery(parent, transfer.getDeliveryId(), transfer.getDeliveryTag());
+            delivery = new ProtonIncomingDelivery(receiver, transfer.getDeliveryId(), transfer.getDeliveryTag());
             delivery.setMessageFormat((int) transfer.getMessageFormat());
 
             // TODO - Casting is ugly but our ID values are longs
@@ -132,10 +135,10 @@ public class ProtonReceiverCreditState implements ProtonLinkCreditState<ProtonIn
             currentDeliveryId.set((int) transfer.getDeliveryId());
         }
 
-        if (currentDeliveryId == null) {
-            parent.signalDeliveryReceived(delivery);
+        if (isFirstTransfer) {
+            receiver.signalDeliveryReceived(delivery);
         } else {
-            parent.signalDeliveryUpdated(delivery);
+            receiver.signalDeliveryUpdated(delivery);
         }
 
         return transfer;
@@ -146,20 +149,20 @@ public class ProtonReceiverCreditState implements ProtonLinkCreditState<ProtonIn
         // TODO - Move to session window once fully worked out
 
         if (!transfer.hasDeliveryId()) {
-            parent.getSession().getConnection().getEngine().engineFailed(
+            receiver.getSession().getConnection().getEngine().engineFailed(
                  new ProtocolViolationException("No delivery-id specified on first Transfer of new delivery"));
         }
 
         // Doing a primitive comparison, uses intValue() since its a uint sequence
         // and we need the primitive values to wrap appropriately during comparison.
-        if (incomingWindow.incrementNextDeliveryId() != transfer.getDeliveryId()) {
-            parent.getSession().getConnection().getEngine().engineFailed(
-                new ProtocolViolationException("Expected delivery-id " + incomingWindow.getNextDeliveryId() +
+        if (sessionWindow.incrementNextDeliveryId() != transfer.getDeliveryId()) {
+            receiver.getSession().getConnection().getEngine().engineFailed(
+                new ProtocolViolationException("Expected delivery-id " + sessionWindow.getNextDeliveryId() +
                                                ", got " + transfer.getDeliveryId()));
         }
 
         if (!currentDeliveryId.isEmpty()) {
-            parent.getSession().getConnection().getEngine().engineFailed(
+            receiver.getSession().getConnection().getEngine().engineFailed(
                 new ProtocolViolationException("Illegal multiplex of deliveries on same link with delivery-id " +
                                                currentDeliveryId + " and " + transfer.getDeliveryId()));
         }
@@ -190,9 +193,20 @@ public class ProtonReceiverCreditState implements ProtonLinkCreditState<ProtonIn
 
     @Override
     public ProtonReceiverCreditState snapshot() {
-        ProtonReceiverCreditState snapshot = new ProtonReceiverCreditState(parent, incomingWindow);
+        ProtonReceiverCreditState snapshot = new ProtonReceiverCreditState(receiver, sessionWindow);
         snapshot.credit = credit;
         snapshot.deliveryCount = deliveryCount;
         return snapshot;
+    }
+
+    //----- Actions invoked from Delivery instances
+
+    void disposition(ProtonIncomingDelivery delivery) {
+        if (delivery.isSettled()) {
+            // TODO - Casting is ugly but right now our unsigned integers are longs
+            unsettled.remove((int) delivery.getDeliveryId());
+        }
+
+        sessionWindow.processDisposition(receiver, delivery);
     }
 }

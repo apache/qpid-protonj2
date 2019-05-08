@@ -16,15 +16,14 @@
  */
 package org.apache.qpid.proton4j.engine.impl;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import org.apache.qpid.proton4j.amqp.transport.Begin;
 import org.apache.qpid.proton4j.amqp.transport.Disposition;
 import org.apache.qpid.proton4j.amqp.transport.Flow;
+import org.apache.qpid.proton4j.amqp.transport.Role;
 import org.apache.qpid.proton4j.amqp.transport.Transfer;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.engine.exceptions.ProtocolViolationException;
+import org.apache.qpid.proton4j.engine.util.SplayMap;
 
 /**
  * Tracks the incoming window and provides management of that window in relation to receiver links
@@ -56,8 +55,7 @@ public class ProtonSessionIncomingWindow {
 
     private int incomingBytes;
 
-    // TODO - Better if this is a primitive keyed data structure
-    private Map<Long, ProtonIncomingDelivery> unsettled = new HashMap<>();
+    private SplayMap<ProtonIncomingDelivery> unsettled = new SplayMap<>();
 
     public ProtonSessionIncomingWindow(ProtonSession session) {
         this.session = session;
@@ -218,5 +216,24 @@ public class ProtonSessionIncomingWindow {
 
     public long getRemoteOutgoingWindow() {
         return remoteOutgoingWindow;
+    }
+
+    //----- Handle sender link actions in the session window context
+
+    void processDisposition(ProtonReceiver receiver, ProtonIncomingDelivery delivery) {
+        // TODO - Can we cache or pool these to not generate garbage on each send ?
+        Disposition disposition = new Disposition();
+
+        disposition.setFirst(delivery.getDeliveryId());
+        disposition.setLast(delivery.getDeliveryId());
+        disposition.setRole(Role.RECEIVER);
+        disposition.setSettled(delivery.isSettled());
+        disposition.setBatchable(false);
+        disposition.setState(delivery.getLocalState());
+
+        // TODO - Casting is ugly but our ID values are longs
+        unsettled.remove((int) delivery.getDeliveryId());
+
+        engine.pipeline().fireWrite(disposition, session.getLocalChannel(), null, null);
     }
 }

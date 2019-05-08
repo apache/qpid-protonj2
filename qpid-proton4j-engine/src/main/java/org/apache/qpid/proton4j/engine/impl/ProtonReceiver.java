@@ -102,6 +102,13 @@ public class ProtonReceiver extends ProtonLink<Receiver> implements Receiver {
         getCreditState().handleDisposition(disposition, delivery);
     }
 
+    //----- Delivery output related access points
+
+    void disposition(ProtonIncomingDelivery delivery) {
+        // TODO - Enforce not closed etc
+        creditState.disposition(delivery);
+    }
+
     //----- Receiver event handlers
 
     // TODO - Don't let valid handlers be nulled unless closed

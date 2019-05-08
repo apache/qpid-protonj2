@@ -26,8 +26,10 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
 import org.apache.qpid.proton4j.amqp.driver.ScriptWriter;
+import org.apache.qpid.proton4j.amqp.messaging.Accepted;
 import org.apache.qpid.proton4j.amqp.transport.Role;
 import org.apache.qpid.proton4j.engine.Connection;
+import org.apache.qpid.proton4j.engine.IncomingDelivery;
 import org.apache.qpid.proton4j.engine.Receiver;
 import org.apache.qpid.proton4j.engine.Session;
 import org.junit.Test;
@@ -307,8 +309,6 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    // TODO - Build out this test and check for more expected state
-    //        Test currently passes even though internally errors are thrown.
     @Test
     public void testReceiverDispatchesIncomingDelivery() throws Exception {
         ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
@@ -325,6 +325,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         script.expectFlow().withLinkCredit(100);  // TODO validate mandatory fields are set and they have correct values
         script.remoteTransfer().withDeliveryId(0)
                                .withHandle(0)
+                               .withDeliveryTag(new byte[] {0})
                                .withMore(false)
                                .withMessageFormat(0).onChannel(0); // TODO - Improve this to allow for auto direct
                                                                    //        to last opened receiver on last session
@@ -339,12 +340,141 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         Session session = connection.session();
         session.open();
         Receiver receiver = session.receiver("test");
+
+        final AtomicBoolean deliveryArrived = new AtomicBoolean();
+        final AtomicReference<IncomingDelivery> receivedDelivery = new AtomicReference<>();
         receiver.deliveryReceivedEventHandler(delivery -> {
-            assertFalse(delivery.isPartial());
+            deliveryArrived.set(true);
+            receivedDelivery.set(delivery);
         });
         receiver.open();
         receiver.setCredit(100);
         receiver.close();
+
+        assertTrue("Delivery did not arrive at the receiver", deliveryArrived.get());
+        assertFalse("Deliver should not be partial", receivedDelivery.get().isPartial());
+
+        driver.assertScriptComplete();
+
+        assertNull(failure);
+    }
+
+    @Test
+    public void testReceiverSendsDispostionForTransfer() throws Exception {
+        ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
+        engine.errorHandler(result -> failure = result);
+        // Create the test driver and link it to the engine for output handling.
+        AMQPTestDriver driver = new AMQPTestDriver(engine);
+        engine.outputConsumer(driver);
+        ScriptWriter script = driver.createScriptWriter();
+
+        script.expectAMQPHeader().respondWithAMQPHeader();
+        script.expectOpen().respond().withContainerId("driver");
+        script.expectBegin().respond();
+        script.expectAttach().respond();
+        script.expectFlow().withLinkCredit(100);  // TODO validate mandatory fields are set and they have correct values
+        script.remoteTransfer().withDeliveryId(0)
+                               .withHandle(0)
+                               .withDeliveryTag(new byte[] {0})
+                               .withMore(false)
+                               .withMessageFormat(0).onChannel(0); // TODO - Improve this to allow for auto direct
+                                                                   //        to last opened receiver on last session
+        script.expectDisposition().withFirst(0)
+                                  .withSettled(true)
+                                  .withRole(Role.RECEIVER)
+                                  .withState(Accepted.getInstance()).onChannel(0);
+        script.expectDetach().respond();
+
+        Connection connection = engine.start();
+
+        // Default engine should start and return a connection immediately
+        assertNotNull(connection);
+
+        connection.open();
+        Session session = connection.session();
+        session.open();
+        Receiver receiver = session.receiver("test");
+
+        final AtomicBoolean deliveryArrived = new AtomicBoolean();
+        final AtomicReference<IncomingDelivery> receivedDelivery = new AtomicReference<>();
+        receiver.deliveryReceivedEventHandler(delivery -> {
+            deliveryArrived.set(true);
+            receivedDelivery.set(delivery);
+
+            delivery.disposition(Accepted.getInstance(), true);
+        });
+        receiver.open();
+        receiver.setCredit(100);
+
+        assertTrue("Delivery did not arrive at the receiver", deliveryArrived.get());
+        assertFalse("Deliver should not be partial", receivedDelivery.get().isPartial());
+
+        receiver.close();
+
+        driver.assertScriptComplete();
+
+        assertNull(failure);
+    }
+
+    @Test
+    public void testReceiverReportsDeliveryUpdatedOnDisposition() throws Exception {
+        ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
+        engine.errorHandler(result -> failure = result);
+        // Create the test driver and link it to the engine for output handling.
+        AMQPTestDriver driver = new AMQPTestDriver(engine);
+        engine.outputConsumer(driver);
+        ScriptWriter script = driver.createScriptWriter();
+
+        script.expectAMQPHeader().respondWithAMQPHeader();
+        script.expectOpen().respond().withContainerId("driver");
+        script.expectBegin().respond();
+        script.expectAttach().respond();
+        script.expectFlow().withLinkCredit(100);  // TODO validate mandatory fields are set and they have correct values
+        script.remoteTransfer().withDeliveryId(0)
+                               .withHandle(0)
+                               .withDeliveryTag(new byte[] {0})
+                               .withMore(false)
+                               .withMessageFormat(0).onChannel(0); // TODO - Improve this to allow for auto direct
+                                                                   //        to last opened receiver on last session
+        script.remoteDisposition().withSettled(true)
+                                  .withRole(Role.SENDER)
+                                  .withState(Accepted.getInstance())
+                                  .withFirst(0).onChannel(0);
+        script.expectDetach().respond();
+
+        Connection connection = engine.start();
+
+        // Default engine should start and return a connection immediately
+        assertNotNull(connection);
+
+        connection.open();
+        Session session = connection.session();
+        session.open();
+        Receiver receiver = session.receiver("test");
+
+        final AtomicBoolean deliveryArrived = new AtomicBoolean();
+        final AtomicReference<IncomingDelivery> receivedDelivery = new AtomicReference<>();
+        receiver.deliveryReceivedEventHandler(delivery -> {
+            deliveryArrived.set(true);
+            receivedDelivery.set(delivery);
+        });
+
+        final AtomicBoolean deliveryUpdatedAndSettled = new AtomicBoolean();
+        final AtomicReference<IncomingDelivery> updatedDelivery = new AtomicReference<>();
+        receiver.deliveryUpdatedEventHandler(delivery -> {
+            if (delivery.isRemotelySettled()) {
+                deliveryUpdatedAndSettled.set(true);
+            }
+
+            updatedDelivery.set(delivery);
+        });
+
+        receiver.open();
+        receiver.setCredit(100);
+        receiver.close();
+
+        assertTrue("Delivery did not arrive at the receiver", deliveryArrived.get());
+        assertFalse("Deliver should not be partial", receivedDelivery.get().isPartial());
 
         driver.assertScriptComplete();
 

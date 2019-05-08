@@ -19,7 +19,6 @@ package org.apache.qpid.proton4j.engine.impl;
 import org.apache.qpid.proton4j.amqp.Binary;
 import org.apache.qpid.proton4j.amqp.transport.DeliveryState;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
-import org.apache.qpid.proton4j.engine.Delivery;
 import org.apache.qpid.proton4j.engine.IncomingDelivery;
 
 /**
@@ -129,21 +128,28 @@ public class ProtonIncomingDelivery implements IncomingDelivery {
 
     @Override
     public IncomingDelivery disposition(DeliveryState state) {
-        this.localState = state;
-        return this;
+        return disposition(state, false);
     }
 
     @Override
     public IncomingDelivery disposition(DeliveryState state, boolean settle) {
+        if (locallySettled) {
+            throw new IllegalStateException("Cannot update disposition or settle and already settled Delivery");
+        }
+
         this.locallySettled = settle;
         this.localState = state;
+
+        if (!remotelySettled) {
+            link.disposition(this);
+        }
+
         return this;
     }
 
     @Override
-    public Delivery settle() {
-        this.locallySettled = true;
-        return this;
+    public IncomingDelivery settle() {
+        return disposition(localState, true);
     }
 
     //----- Payload access
