@@ -42,7 +42,6 @@ public class ProtonSenderCreditState implements ProtonLinkCreditState<ProtonOutg
     private boolean draining;
     private boolean drained;
 
-    // TODO - Better if this is a primitive keyed data structure
     private final SplayMap<ProtonOutgoingDelivery> unsettled = new SplayMap<>();
 
     public ProtonSenderCreditState(ProtonSender sender, ProtonSessionOutgoingWindow sessionWindow) {

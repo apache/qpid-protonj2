@@ -37,8 +37,6 @@ public class ProtonReceiverCreditState implements ProtonLinkCreditState<ProtonIn
     private int deliveryCount;
 
     private final DeliveryIdTracker currentDeliveryId = new DeliveryIdTracker();
-
-    // TODO - Better if this is a primitive keyed data structure
     private final SplayMap<ProtonIncomingDelivery> unsettled = new SplayMap<>();
 
     public ProtonReceiverCreditState(ProtonReceiver parent, ProtonSessionIncomingWindow sessionWindow) {

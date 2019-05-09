@@ -47,6 +47,7 @@ import org.apache.qpid.proton4j.engine.Sender;
 import org.apache.qpid.proton4j.engine.Session;
 import org.apache.qpid.proton4j.engine.SessionState;
 import org.apache.qpid.proton4j.engine.exceptions.ProtocolViolationException;
+import org.apache.qpid.proton4j.engine.util.SplayMap;
 
 /**
  * Proton API for Session type.
@@ -66,9 +67,8 @@ public class ProtonSession implements Session {
     private final Map<String, ProtonSender> senderByNameMap = new HashMap<>();
     private final Map<String, ProtonReceiver> receiverByNameMap = new HashMap<>();
 
-    // TODO - Space efficient primitive storage
-    private Map<Long, ProtonLink<?>> localLinks = new HashMap<>();
-    private Map<Long, ProtonLink<?>> remoteLinks = new HashMap<>();
+    private SplayMap<ProtonLink<?>> localLinks = new SplayMap<>();
+    private SplayMap<ProtonLink<?>> remoteLinks = new SplayMap<>();
 
     private final ProtonConnection connection;
     private final ProtonContext context = new ProtonContext();
@@ -375,7 +375,7 @@ public class ProtonSession implements Session {
     void handleAttach(Attach attach, int channel) {
         if (validateHandleMaxCompliance(attach)) {
             // TODO - Space efficient primitive data structure
-            if (remoteLinks.containsKey(attach.getHandle())) {
+            if (remoteLinks.containsKey((int) attach.getHandle())) {
                 // TODO fail because link already in use.
                 return;
             }
@@ -385,14 +385,14 @@ public class ProtonSession implements Session {
                 link = (attach.getRole() == Role.RECEIVER) ? sender(attach.getName()) : receiver(attach.getName());
             }
 
-            remoteLinks.put(attach.getHandle(), link);
+            remoteLinks.put((int) attach.getHandle(), link);
 
             link.handleAttach(attach);
         }
     }
 
     void handleDetach(Detach detach, int channel) {
-        final ProtonLink<?> link = remoteLinks.get(detach.getHandle());
+        final ProtonLink<?> link = remoteLinks.get((int) detach.getHandle());
         if (link == null) {
             getEngine().engineFailed(new ProtocolViolationException(
                 "Received uncorrelated handle on Detach from remote: " + channel));
@@ -409,7 +409,7 @@ public class ProtonSession implements Session {
         final ProtonLink<?> link;
 
         if (flow.hasHandle()) {
-            link = remoteLinks.get(flow.getHandle());
+            link = remoteLinks.get((int) flow.getHandle());
             if (link == null) {
                 getEngine().engineFailed(new ProtocolViolationException(
                     "Received uncorrelated handle on Flow from remote: " + channel));
@@ -426,7 +426,7 @@ public class ProtonSession implements Session {
     }
 
     void handleTransfer(Transfer transfer, ProtonBuffer payload, int channel) {
-        final ProtonLink<?> link = remoteLinks.get(transfer.getHandle());
+        final ProtonLink<?> link = remoteLinks.get((int) transfer.getHandle());
         if (link == null) {
             getEngine().engineFailed(new ProtocolViolationException(
                 "Received uncorrelated handle on Transfer from remote: " + channel));
@@ -504,7 +504,7 @@ public class ProtonSession implements Session {
     }
 
     long findFreeLocalHandle(ProtonLink<?> link) {
-        for (long i = 0; i < ProtonConstants.HANDLE_MAX; ++i) {
+        for (int i = 0; i < ProtonConstants.HANDLE_MAX; ++i) {
             if (!localLinks.containsKey(i)) {
                 localLinks.put(i, link);
                 return i;
@@ -519,7 +519,7 @@ public class ProtonSession implements Session {
             throw new IllegalArgumentException("Specified local handle is out of range: " + localHandle);
         }
 
-        localLinks.remove(localHandle);
+        localLinks.remove((int) localHandle);
     }
 
     void writeFlow(ProtonLink<?> link) {

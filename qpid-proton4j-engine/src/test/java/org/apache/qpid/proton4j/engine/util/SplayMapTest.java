@@ -119,6 +119,14 @@ public class SplayMapTest {
     }
 
     @Test
+    public void testContainsKeyOnEmptyMap() {
+        SplayMap<String> map = new SplayMap<>();
+
+        assertFalse(map.containsKey(0));
+        assertFalse(map.containsKey(UnsignedInteger.ZERO));
+    }
+
+    @Test
     public void testContainsKey() {
         SplayMap<String> map = new SplayMap<>();
 
@@ -144,6 +152,13 @@ public class SplayMapTest {
         assertFalse(map.containsValue("four"));
 
         assertEquals(3, map.size());
+    }
+
+    @Test
+    public void testContainsValueOnEmptyMap() {
+        SplayMap<String> map = new SplayMap<>();
+
+        assertFalse(map.containsValue("0"));
     }
 
     @Test

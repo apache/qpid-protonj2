@@ -54,7 +54,6 @@ public class ProtonSessionOutgoingWindow {
     // marks when this value is set in stone.
     private long maxFrameSize;
 
-    // TODO - Better if this is a primitive keyed data structure
     private final SplayMap<ProtonOutgoingDelivery> unsettled = new SplayMap<>();
 
     public ProtonSessionOutgoingWindow(ProtonSession session) {

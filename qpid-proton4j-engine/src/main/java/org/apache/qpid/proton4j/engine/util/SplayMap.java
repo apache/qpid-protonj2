@@ -135,7 +135,7 @@ public class SplayMap<E> implements NavigableMap<UnsignedInteger, E> {
 
     public boolean containsKey(int key) {
         root = splay(root, key);
-        if (root.key == key) {
+        if (root != null && root.key == key) {
             return true;
         }
 
