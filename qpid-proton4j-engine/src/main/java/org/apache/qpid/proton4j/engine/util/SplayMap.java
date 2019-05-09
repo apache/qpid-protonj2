@@ -58,6 +58,10 @@ public class SplayMap<E> implements NavigableMap<UnsignedInteger, E> {
     }
 
     public E get(int key) {
+        if (root == null) {
+            return null;
+        }
+
         root = splay(root, key);
 
         if (root.key == key) {
@@ -134,8 +138,12 @@ public class SplayMap<E> implements NavigableMap<UnsignedInteger, E> {
     }
 
     public boolean containsKey(int key) {
+        if (root == null) {
+            return false;
+        }
+
         root = splay(root, key);
-        if (root != null && root.key == key) {
+        if (root.key == key) {
             return true;
         }
 
@@ -157,7 +165,7 @@ public class SplayMap<E> implements NavigableMap<UnsignedInteger, E> {
 
     @Override
     public E remove(Object key) {
-        return remove(key);
+        return remove(Number.class.cast(key));
     }
 
     @Override

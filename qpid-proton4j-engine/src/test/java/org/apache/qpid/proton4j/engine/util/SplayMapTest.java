@@ -20,6 +20,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -36,6 +37,14 @@ import org.junit.Test;
  * Test SplayMap type
  */
 public class SplayMapTest {
+
+    @Test
+    public void testComparator() {
+        SplayMap<String> map = new SplayMap<>();
+
+        assertNotNull(map.comparator());
+        assertSame(map.comparator(), map.comparator());
+    }
 
     @Test
     public void testClear() {
@@ -107,6 +116,22 @@ public class SplayMapTest {
     }
 
     @Test
+    public void testInsertUnsignedInteger() {
+        SplayMap<String> map = new SplayMap<>();
+
+        map.put(UnsignedInteger.valueOf(0), "zero");
+        map.put(UnsignedInteger.valueOf(1), "one");
+        map.put(UnsignedInteger.valueOf(2), "two");
+        map.put(UnsignedInteger.valueOf(3), "three");
+        map.put(UnsignedInteger.valueOf(5), "five");
+        map.put(UnsignedInteger.valueOf(9), "nine");
+        map.put(UnsignedInteger.valueOf(7), "seven");
+        map.put(UnsignedInteger.valueOf(-1), "minus one");
+
+        assertEquals(8, map.size());
+    }
+
+    @Test
     public void testInsertAndReplace() {
         SplayMap<String> map = new SplayMap<>();
 
@@ -114,6 +139,47 @@ public class SplayMapTest {
         map.put(1, "one");
         map.put(2, "foo");
         assertEquals("foo", map.put(2, "two"));
+
+        assertEquals(3, map.size());
+    }
+
+    @Test
+    public void testGetWhenEmpty() {
+        SplayMap<String> map = new SplayMap<>();
+
+        assertNull(map.get(0));
+    }
+
+    @Test
+    public void testGet() {
+        SplayMap<String> map = new SplayMap<>();
+
+        map.put(0, "zero");
+        map.put(1, "one");
+        map.put(-3, "-three");
+
+        assertEquals("zero", map.get(0));
+        assertEquals("one", map.get(1));
+        assertEquals("-three", map.get(-3));
+
+        assertNull(map.get(3));
+
+        assertEquals(3, map.size());
+    }
+
+    @Test
+    public void testGetUnsignedInteger() {
+        SplayMap<String> map = new SplayMap<>();
+
+        map.put(0, "zero");
+        map.put(1, "one");
+        map.put(-3, "-three");
+
+        assertEquals("zero", map.get(UnsignedInteger.valueOf(0)));
+        assertEquals("one", map.get(UnsignedInteger.valueOf(1)));
+        assertEquals("-three", map.get(UnsignedInteger.valueOf(-3)));
+
+        assertNull(map.get(3));
 
         assertEquals(3, map.size());
     }
@@ -133,6 +199,20 @@ public class SplayMapTest {
         map.put(0, "zero");
         map.put(1, "one");
         map.put(-3, "-three");
+
+        assertTrue(map.containsKey(0));
+        assertFalse(map.containsKey(3));
+
+        assertEquals(3, map.size());
+    }
+
+    @Test
+    public void testContainsKeyUnsignedInteger() {
+        SplayMap<String> map = new SplayMap<>();
+
+        map.put(UnsignedInteger.valueOf(0), "zero");
+        map.put(UnsignedInteger.valueOf(1), "one");
+        map.put(UnsignedInteger.valueOf(-3), "-three");
 
         assertTrue(map.containsKey(0));
         assertFalse(map.containsKey(3));
@@ -179,6 +259,35 @@ public class SplayMapTest {
     }
 
     @Test
+    public void testRemoveWithInvalidType() {
+        SplayMap<String> map = new SplayMap<>();
+
+        map.put(0, "zero");
+
+        try {
+            map.remove("foo");
+            fail("Should not accept incompatible types");
+        } catch (ClassCastException ccex) {}
+    }
+
+    @Test
+    public void testRemoveUnsignedInteger() {
+        SplayMap<String> map = new SplayMap<>();
+
+        map.put(0, "zero");
+        map.put(1, "one");
+        map.put(UnsignedInteger.valueOf(9), "nine");
+        map.put(7, "seven");
+        map.put(UnsignedInteger.valueOf(-1), "minus one");
+
+        assertEquals(5, map.size());
+        assertNull(map.remove(UnsignedInteger.valueOf(5)));
+        assertEquals(5, map.size());
+        assertEquals("nine", map.remove(UnsignedInteger.valueOf(9)));
+        assertEquals(4, map.size());
+    }
+
+    @Test
     public void testValuesCollection() {
         SplayMap<String> map = new SplayMap<>();
 
@@ -191,6 +300,7 @@ public class SplayMapTest {
         assertNotNull(values);
         assertEquals(4, values.size());
         assertFalse(values.isEmpty());
+        assertSame(values, map.values());
     }
 
     @Test
@@ -269,6 +379,7 @@ public class SplayMapTest {
         assertNotNull(keys);
         assertEquals(4, keys.size());
         assertFalse(keys.isEmpty());
+        assertSame(keys, map.keySet());
     }
 
     @Test
@@ -347,6 +458,7 @@ public class SplayMapTest {
         assertNotNull(entries);
         assertEquals(4, entries.size());
         assertFalse(entries.isEmpty());
+        assertSame(entries, map.entrySet());
     }
 
     @Test
