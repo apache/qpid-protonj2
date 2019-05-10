@@ -25,7 +25,9 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.NoSuchElementException;
 import java.util.Set;
@@ -141,6 +143,35 @@ public class SplayMapTest {
         assertEquals("foo", map.put(2, "two"));
 
         assertEquals(3, map.size());
+    }
+
+    @Test
+    public void testPutAll() {
+        SplayMap<String> map = new SplayMap<>();
+
+        Map<UnsignedInteger, String> hashmap = new HashMap<>();
+
+        hashmap.put(UnsignedInteger.valueOf(0), "zero");
+        hashmap.put(UnsignedInteger.valueOf(1), "one");
+        hashmap.put(UnsignedInteger.valueOf(2), "two");
+        hashmap.put(UnsignedInteger.valueOf(3), "three");
+        hashmap.put(UnsignedInteger.valueOf(5), "five");
+        hashmap.put(UnsignedInteger.valueOf(9), "nine");
+        hashmap.put(UnsignedInteger.valueOf(7), "seven");
+        hashmap.put(UnsignedInteger.valueOf(-1), "minus one");
+
+        map.putAll(hashmap);
+
+        assertEquals(8, map.size());
+
+        assertEquals("zero", map.get(0));
+        assertEquals("one", map.get(1));
+        assertEquals("two", map.get(2));
+        assertEquals("three", map.get(3));
+        assertEquals("five", map.get(5));
+        assertEquals("nine", map.get(9));
+        assertEquals("seven", map.get(7));
+        assertEquals("minus one", map.get(-1));
     }
 
     @Test

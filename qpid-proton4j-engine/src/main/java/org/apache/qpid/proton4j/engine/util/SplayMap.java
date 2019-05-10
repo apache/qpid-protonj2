@@ -291,12 +291,11 @@ public class SplayMap<E> implements NavigableMap<UnsignedInteger, E> {
                 return root;
             }
 
-
             if (compare(root.right.key, key) > 0) {
                 root.right.left = splay(root.right.left, key);
 
                 if (root.right.left != null) {
-                    root.right = leftRotate(root.right);
+                    root.right = rightRotate(root.right);
                 }
             } else if (compare(root.right.key, key) < 0) {
                 root.right.right = splay(root.right.right, key);
