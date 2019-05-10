@@ -25,6 +25,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.util.Collection;
+import java.util.ConcurrentModificationException;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -384,6 +385,29 @@ public class SplayMapTest {
     }
 
     @Test
+    public void testValuesIterationFailsWhenConcurrentlyModified() {
+        SplayMap<String> map = new SplayMap<>();
+
+        final int[] inputValues = {3, 0, -1, 1, -2, 2};
+
+        for (int entry : inputValues) {
+            map.put(entry, "" + entry);
+        }
+
+        Collection<String> values = map.values();
+        Iterator<String> iterator = values.iterator();
+        assertNotNull(iterator);
+        assertTrue(iterator.hasNext());
+
+        map.remove(3);
+
+        try {
+            iterator.next();
+            fail("Should not iterate when modified outside of iterator");
+        } catch (ConcurrentModificationException cme) {}
+    }
+
+    @Test
     public void testValuesIterationOnEmptyTree() {
         SplayMap<String> map = new SplayMap<>();
         Collection<String> values = map.values();
@@ -460,6 +484,29 @@ public class SplayMapTest {
 
         // Check that we really did iterate.
         assertEquals(inputValues.length, counter);
+    }
+
+    @Test
+    public void testKeysIterationFailsWhenConcurrentlyModified() {
+        SplayMap<String> map = new SplayMap<>();
+
+        final int[] inputValues = {3, 0, -1, 1, -2, 2};
+
+        for (int entry : inputValues) {
+            map.put(entry, "" + entry);
+        }
+
+        Collection<UnsignedInteger> keys = map.keySet();
+        Iterator<UnsignedInteger> iterator = keys.iterator();
+        assertNotNull(iterator);
+        assertTrue(iterator.hasNext());
+
+        map.remove(3);
+
+        try {
+            iterator.next();
+            fail("Should not iterate when modified outside of iterator");
+        } catch (ConcurrentModificationException cme) {}
     }
 
     @Test
@@ -548,6 +595,29 @@ public class SplayMapTest {
     }
 
     @Test
+    public void testEntryIterationFailsWhenConcurrentlyModified() {
+        SplayMap<String> map = new SplayMap<>();
+
+        final int[] inputValues = {3, 0, -1, 1, -2, 2};
+
+        for (int entry : inputValues) {
+            map.put(entry, "" + entry);
+        }
+
+        Set<Entry<UnsignedInteger, String>> entries= map.entrySet();
+        Iterator<Entry<UnsignedInteger, String>> iterator = entries.iterator();
+        assertNotNull(iterator);
+        assertTrue(iterator.hasNext());
+
+        map.remove(3);
+
+        try {
+            iterator.next();
+            fail("Should not iterate when modified outside of iterator");
+        } catch (ConcurrentModificationException cme) {}
+    }
+
+    @Test
     public void testEntrySetIterationOnEmptyTree() {
         SplayMap<String> map = new SplayMap<>();
         Set<Entry<UnsignedInteger, String>> entries= map.entrySet();
@@ -559,6 +629,12 @@ public class SplayMapTest {
             fail("Should have thrown a NoSuchElementException");
         } catch (NoSuchElementException nse) {
         }
+    }
+
+    @Test
+    public void testFirstKeyOnEmptyMap() {
+        SplayMap<String> map = new SplayMap<>();
+        assertNull(map.firstKey());
     }
 
     @Test
@@ -581,6 +657,12 @@ public class SplayMapTest {
     }
 
     @Test
+    public void testFirstEntryOnEmptyMap() {
+        SplayMap<String> map = new SplayMap<>();
+        assertNull(map.firstEntry());
+    }
+
+    @Test
     public void testFirstEntry() {
         SplayMap<String> map = new SplayMap<>();
 
@@ -600,6 +682,12 @@ public class SplayMapTest {
     }
 
     @Test
+    public void testPollFirstEntryEmptyMap() {
+        SplayMap<String> map = new SplayMap<>();
+        assertNull(map.pollFirstEntry());
+    }
+
+    @Test
     public void testPollFirstEntry() {
         SplayMap<String> map = new SplayMap<>();
 
@@ -615,6 +703,12 @@ public class SplayMapTest {
         }
 
         assertNull(map.firstKey());
+    }
+
+    @Test
+    public void testLastKeyOnEmptyMap() {
+        SplayMap<String> map = new SplayMap<>();
+        assertNull(map.lastKey());
     }
 
     @Test
@@ -637,6 +731,12 @@ public class SplayMapTest {
     }
 
     @Test
+    public void testLastEntryOnEmptyMap() {
+        SplayMap<String> map = new SplayMap<>();
+        assertNull(map.lastEntry());
+    }
+
+    @Test
     public void testLastEntry() {
         SplayMap<String> map = new SplayMap<>();
 
@@ -652,7 +752,13 @@ public class SplayMapTest {
             map.remove(expected);
         }
 
-        assertNull(map.lastKey());
+        assertNull(map.lastEntry());
+    }
+
+    @Test
+    public void testPollLastEntryEmptyMap() {
+        SplayMap<String> map = new SplayMap<>();
+        assertNull(map.pollLastEntry());
     }
 
     @Test
@@ -670,6 +776,6 @@ public class SplayMapTest {
             assertEquals(expected, map.pollLastEntry().getPrimitiveKey());
         }
 
-        assertNull(map.lastKey());
+        assertNull(map.lastEntry());
     }
 }
