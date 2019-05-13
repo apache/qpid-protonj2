@@ -65,6 +65,9 @@ public class OpenExpectation extends AbstractExpectation<Open> {
 
         // Input was validated now populate response with auto values where not configured
         // to say otherwise by the test.
+        if (response.getPerformative().getContainerId() == null) {
+            response.getPerformative().setContainerId("driver");
+        }
         if (response.onChannel() == BeginInjectAction.CHANNEL_UNSET) {
             // TODO - We could track session in the driver and therefore allocate
             //        free channels based on activity during the test.  For now we

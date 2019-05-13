@@ -18,6 +18,7 @@ package org.apache.qpid.proton4j.engine.impl;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.nullValue;
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -27,6 +28,7 @@ import java.io.IOException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
+import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedInteger;
 import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
 import org.apache.qpid.proton4j.amqp.driver.ScriptWriter;
@@ -53,7 +55,7 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
         ScriptWriter script = driver.createScriptWriter();
 
         script.expectAMQPHeader().respondWithAMQPHeader();
-        script.expectOpen().respond().withContainerId("driver");
+        script.expectOpen().respond();
         script.expectBegin().respond();
 
         final AtomicBoolean remoteOpened = new AtomicBoolean();
@@ -304,5 +306,64 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
 
         assertFalse("Should not have seen a remote session open.", remoteSession.get());
         assertNotNull(failure);
+    }
+
+    @Test
+    public void testCapabilitiesArePopulatedAndAccessible() throws Exception {
+        final Symbol clientOfferedSymbol = Symbol.valueOf("clientOfferedCapability");
+        final Symbol clientDesiredSymbol = Symbol.valueOf("clientDesiredCapability");
+        final Symbol serverOfferedSymbol = Symbol.valueOf("serverOfferedCapability");
+        final Symbol serverDesiredSymbol = Symbol.valueOf("serverDesiredCapability");
+
+        Symbol[] clientOfferedCapabilities = new Symbol[] { clientOfferedSymbol };
+        Symbol[] clientDesiredCapabilities = new Symbol[] { clientDesiredSymbol };
+
+        Symbol[] serverOfferedCapabilities = new Symbol[] { serverOfferedSymbol };
+        Symbol[] serverDesiredCapabilities = new Symbol[] { serverDesiredSymbol };
+
+        final AtomicBoolean sessionRemotelyOpened = new AtomicBoolean();
+
+        ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
+        engine.errorHandler(result -> failure = result);
+
+        // Create the test driver and link it to the engine for output handling.
+        AMQPTestDriver driver = new AMQPTestDriver(engine);
+        engine.outputConsumer(driver);
+
+        ScriptWriter script = driver.createScriptWriter();
+
+        script.expectAMQPHeader().respondWithAMQPHeader();
+        script.expectOpen().respond();
+        script.expectBegin().withOfferedCapabilities(clientOfferedCapabilities)
+                            .withDesiredCapabilities(clientDesiredCapabilities)
+                            .respond()
+                            .withDesiredCapabilities(serverDesiredCapabilities)
+                            .withOfferedCapabilities(serverOfferedCapabilities);
+        script.expectEnd().respond();
+
+        ProtonConnection connection = engine.start();
+        connection.open();
+
+        ProtonSession session = connection.session();
+
+        session.setDesiredCapabilities(clientDesiredCapabilities);
+        session.setOfferedCapabilities(clientOfferedCapabilities);
+        session.openHandler(result -> {
+            sessionRemotelyOpened.set(true);
+        });
+        session.open();
+
+        assertTrue("Session remote opened event did not fire", sessionRemotelyOpened.get());
+
+        assertArrayEquals(clientOfferedCapabilities, session.getOfferedCapabilities());
+        assertArrayEquals(clientDesiredCapabilities, session.getDesiredCapabilities());
+        assertArrayEquals(serverOfferedCapabilities, session.getRemoteOfferedCapabilities());
+        assertArrayEquals(serverDesiredCapabilities, session.getRemoteDesiredCapabilities());
+
+        session.close();
+
+        driver.assertScriptComplete();
+
+        assertNull(failure);
     }
 }

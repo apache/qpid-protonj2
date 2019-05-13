@@ -61,10 +61,32 @@ public class DriverSessions {
         return remoteSessions.get(remoteChannel);
     }
 
+    //----- Process Session started from the driver end
+
+    public SessionTracker processBegin(Begin begin, int localChannel) {
+        final UnsignedShort localChannelValue;
+        if (localChannel < 0) {
+            localChannelValue = getNextChannelId();
+        } else {
+            localChannelValue = UnsignedShort.valueOf(localChannel);
+        }
+
+        SessionTracker tracker = new SessionTracker(driver, begin, localChannelValue, null);
+
+        localSessions.put(tracker.getLocalChannel(), tracker);
+
+        return tracker;
+    }
+
     //----- Process Session begin and end performatives
 
     public SessionTracker handleBegin(Begin begin, int channel) {
-        SessionTracker tracker = new SessionTracker(driver, begin, getNextChannelId(), UnsignedShort.valueOf(channel));
+        final SessionTracker tracker;
+        if (begin.getRemoteChannel() != null) {
+            tracker = localSessions.get(begin.getRemoteChannel());
+        } else {
+            tracker = new SessionTracker(driver, begin, getNextChannelId(), UnsignedShort.valueOf(channel));
+        }
 
         localSessions.put(tracker.getLocalChannel(), tracker);
         remoteSessions.put(tracker.getRemoteChannel(), tracker);
