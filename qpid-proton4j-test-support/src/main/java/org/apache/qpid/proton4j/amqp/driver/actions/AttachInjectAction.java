@@ -79,13 +79,13 @@ public class AttachInjectAction extends AbstractPerformativeInjectAction<Attach>
 
     // TODO - Source builder
     public AttachInjectAction withSource(Source source) {
-        //attach.setSource(source);
+        attach.setSource(TypeMapper.mapFromProtonType(source));
         return this;
     }
 
     // TODO - Target builder
     public AttachInjectAction withTarget(Target target) {
-        //attach.setTarget(target);
+        attach.setTarget(TypeMapper.mapFromProtonType(target));
         return this;
     }
 

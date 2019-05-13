@@ -21,10 +21,14 @@ import org.apache.qpid.proton4j.amqp.driver.codec.messaging.Accepted;
 import org.apache.qpid.proton4j.amqp.driver.codec.messaging.Modified;
 import org.apache.qpid.proton4j.amqp.driver.codec.messaging.Rejected;
 import org.apache.qpid.proton4j.amqp.driver.codec.messaging.Released;
+import org.apache.qpid.proton4j.amqp.driver.codec.messaging.Source;
+import org.apache.qpid.proton4j.amqp.driver.codec.messaging.Target;
 import org.apache.qpid.proton4j.amqp.driver.codec.transactions.Declared;
 import org.apache.qpid.proton4j.amqp.driver.codec.transactions.TransactionalState;
 import org.apache.qpid.proton4j.amqp.driver.codec.transport.ErrorCondition;
 import org.apache.qpid.proton4j.amqp.messaging.Outcome;
+import org.apache.qpid.proton4j.amqp.messaging.TerminusDurability;
+import org.apache.qpid.proton4j.amqp.messaging.TerminusExpiryPolicy;
 import org.apache.qpid.proton4j.amqp.transport.DeliveryState;
 
 public abstract class TypeMapper {
@@ -126,6 +130,88 @@ public abstract class TypeMapper {
         if (error != null) {
             return new org.apache.qpid.proton4j.amqp.transport.ErrorCondition(
                 error.getCondition(), error.getDescription(), error.getInfo());
+        } else {
+            return null;
+        }
+    }
+
+    public static Source mapFromProtonType(org.apache.qpid.proton4j.amqp.messaging.Source source) {
+        if (source != null) {
+            Source mapped = new Source();
+
+            mapped.setAddress(source.getAddress());
+            mapped.setDurable(source.getDurable().getValue());
+            mapped.setExpiryPolicy(source.getExpiryPolicy().getPolicy());
+            mapped.setTimeout(source.getTimeout());
+            mapped.setDynamic(source.getDynamic());
+            mapped.setDynamicNodeProperties(source.getDynamicNodeProperties());
+            mapped.setDistributionMode(source.getDistributionMode());
+            mapped.setFilter(source.getFilter());
+            mapped.setDefaultOutcome(mapFromProtonType((DeliveryState) source.getDefaultOutcome()));
+            mapped.setOutcomes(source.getOutcomes());
+            mapped.setCapabilities(source.getCapabilities());
+
+            return mapped;
+        } else {
+            return null;
+        }
+    }
+
+    public static org.apache.qpid.proton4j.amqp.messaging.Source mapToProtonType(Source source) {
+        if (source != null) {
+            org.apache.qpid.proton4j.amqp.messaging.Source mapped =
+                new org.apache.qpid.proton4j.amqp.messaging.Source();
+
+            mapped.setAddress(source.getAddress());
+            mapped.setDurable(TerminusDurability.get(source.getDurable()));
+            mapped.setExpiryPolicy(TerminusExpiryPolicy.valueOf(source.getExpiryPolicy()));
+            mapped.setTimeout(source.getTimeout());
+            mapped.setDynamic(source.getDynamic());
+            mapped.setDynamicNodeProperties(source.getDynamicNodeProperties());
+            mapped.setDistributionMode(source.getDistributionMode());
+            mapped.setFilter(source.getFilter());
+            mapped.setDefaultOutcome((Outcome) mapToProtonType(source.getDefaultOutcome()));
+            mapped.setOutcomes(source.getOutcomes());
+            mapped.setCapabilities(source.getCapabilities());
+
+            return mapped;
+        } else {
+            return null;
+        }
+    }
+
+    public static Target mapFromProtonType(org.apache.qpid.proton4j.amqp.messaging.Target target) {
+        if (target != null) {
+            Target mapped = new Target();
+
+            mapped.setAddress(target.getAddress());
+            mapped.setDurable(target.getDurable().getValue());
+            mapped.setExpiryPolicy(target.getExpiryPolicy().getPolicy());
+            mapped.setTimeout(target.getTimeout());
+            mapped.setDynamic(target.getDynamic());
+            mapped.setDynamicNodeProperties(target.getDynamicNodeProperties());
+            mapped.setCapabilities(target.getCapabilities());
+
+            return mapped;
+        } else {
+            return null;
+        }
+    }
+
+    public static org.apache.qpid.proton4j.amqp.messaging.Target mapToProtonType(Target target) {
+        if (target != null) {
+            org.apache.qpid.proton4j.amqp.messaging.Target mapped =
+                new org.apache.qpid.proton4j.amqp.messaging.Target();
+
+            mapped.setAddress(target.getAddress());
+            mapped.setDurable(TerminusDurability.get(target.getDurable()));
+            mapped.setExpiryPolicy(TerminusExpiryPolicy.valueOf(target.getExpiryPolicy()));
+            mapped.setTimeout(target.getTimeout());
+            mapped.setDynamic(target.getDynamic());
+            mapped.setDynamicNodeProperties(target.getDynamicNodeProperties());
+            mapped.setCapabilities(target.getCapabilities());
+
+            return mapped;
         } else {
             return null;
         }
