@@ -19,6 +19,7 @@ package org.apache.qpid.proton4j.engine.impl;
 import org.apache.qpid.proton4j.amqp.Binary;
 import org.apache.qpid.proton4j.amqp.transport.DeliveryState;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.engine.IncomingDelivery;
 
 /**
@@ -212,8 +213,13 @@ public class ProtonIncomingDelivery implements IncomingDelivery {
         if (payload == null) {
             payload = buffer;
         } else {
-            // TODO - CompositeBuffer to aggregate transfer payloads
+            final ProtonBuffer previous = payload;
+            final int capacity = payload.getReadableBytes() + buffer.getReadableBytes();
+
+            // TODO - CompositeBuffer would reduce copy of buffer contents.
+            payload = ProtonByteBufferAllocator.DEFAULT.allocate(capacity, capacity);
             payload.writeBytes(buffer);
+            payload.writeBytes(previous);
         }
 
         return this;
