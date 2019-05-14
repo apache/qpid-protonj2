@@ -21,6 +21,7 @@ import java.util.Map;
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedInteger;
 import org.apache.qpid.proton4j.amqp.UnsignedShort;
+import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
 import org.apache.qpid.proton4j.amqp.driver.codec.transport.Open;
 
 /**
@@ -34,6 +35,17 @@ public class OpenInjectAction extends AbstractPerformativeInjectAction<Open> {
     @Override
     public Open getPerformative() {
         return open;
+    }
+
+    @Override
+    protected void beforeActionPerformed(AMQPTestDriver driver) {
+        if (getPerformative().getContainerId() == null) {
+            getPerformative().setContainerId("driver");
+        }
+
+        if (onChannel() == CHANNEL_UNSET) {
+            onChannel(0);
+        }
     }
 
     public OpenInjectAction withContainerId(String containerId) {

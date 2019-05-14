@@ -19,12 +19,15 @@ package org.apache.qpid.proton4j.engine.impl;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -359,6 +362,63 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
         assertArrayEquals(clientDesiredCapabilities, session.getDesiredCapabilities());
         assertArrayEquals(serverOfferedCapabilities, session.getRemoteOfferedCapabilities());
         assertArrayEquals(serverDesiredCapabilities, session.getRemoteDesiredCapabilities());
+
+        session.close();
+
+        driver.assertScriptComplete();
+
+        assertNull(failure);
+    }
+
+    @Test
+    public void testPropertiesArePopulatedAndAccessible() throws Exception {
+        final Symbol clientPropertyName = Symbol.valueOf("ClientPropertyName");
+        final Integer clientPropertyValue = 1234;
+        final Symbol serverPropertyName = Symbol.valueOf("ServerPropertyName");
+        final Integer serverPropertyValue = 5678;
+
+        Map<Symbol, Object> clientProperties = new HashMap<>();
+        clientProperties.put(clientPropertyName, clientPropertyValue);
+
+        Map<Symbol, Object> serverProperties = new HashMap<>();
+        serverProperties.put(serverPropertyName, serverPropertyValue);
+
+        final AtomicBoolean sessionRemotelyOpened = new AtomicBoolean();
+
+        ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
+        engine.errorHandler(result -> failure = result);
+
+        // Create the test driver and link it to the engine for output handling.
+        AMQPTestDriver driver = new AMQPTestDriver(engine);
+        engine.outputConsumer(driver);
+
+        ScriptWriter script = driver.createScriptWriter();
+
+        script.expectAMQPHeader().respondWithAMQPHeader();
+        script.expectOpen().respond();
+        script.expectBegin().withProperties(clientProperties)
+                            .respond()
+                            .withProperties(serverProperties);
+        script.expectEnd().respond();
+
+        ProtonConnection connection = engine.start();
+        connection.open();
+
+        ProtonSession session = connection.session();
+
+        session.setProperties(clientProperties);
+        session.openHandler(result -> {
+            sessionRemotelyOpened.set(true);
+        });
+        session.open();
+
+        assertTrue("Session remote opened event did not fire", sessionRemotelyOpened.get());
+
+        assertNotNull(session.getProperties());
+        assertNotNull(session.getRemoteProperties());
+
+        assertEquals(clientPropertyValue, session.getProperties().get(clientPropertyName));
+        assertEquals(serverPropertyValue, session.getRemoteProperties().get(serverPropertyName));
 
         session.close();
 

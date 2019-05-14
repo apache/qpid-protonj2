@@ -61,6 +61,13 @@ public abstract class AbstractPerformativeInjectAction<P extends DescribedType> 
 
     @Override
     public void perform(AMQPTestDriver driver) {
+        // Give actors a chance to prepare.
+        beforeActionPerformed(driver);
+
         driver.sendAMQPFrame(onChannel(), getPerformative(), getPayload());
+    }
+
+    protected void beforeActionPerformed(AMQPTestDriver driver) {
+        // Subclass can override to modify driver of update performative state.
     }
 }

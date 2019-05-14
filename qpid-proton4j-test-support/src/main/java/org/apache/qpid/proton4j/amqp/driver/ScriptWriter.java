@@ -23,6 +23,7 @@ import org.apache.qpid.proton4j.amqp.driver.actions.BeginInjectAction;
 import org.apache.qpid.proton4j.amqp.driver.actions.CloseInjectAction;
 import org.apache.qpid.proton4j.amqp.driver.actions.DetachInjectAction;
 import org.apache.qpid.proton4j.amqp.driver.actions.DispositionInjectAction;
+import org.apache.qpid.proton4j.amqp.driver.actions.EmptyFrameInjectAction;
 import org.apache.qpid.proton4j.amqp.driver.actions.EndInjectAction;
 import org.apache.qpid.proton4j.amqp.driver.actions.FlowInjectAction;
 import org.apache.qpid.proton4j.amqp.driver.actions.OpenInjectAction;
@@ -176,6 +177,12 @@ public class ScriptWriter {
 
     public DispositionInjectAction remoteDisposition() {
         DispositionInjectAction inject = new DispositionInjectAction();
+        driver.addScriptedElement(inject);
+        return inject;
+    }
+
+    public EmptyFrameInjectAction remoteEmptyFrame() {
+        EmptyFrameInjectAction inject = new EmptyFrameInjectAction();
         driver.addScriptedElement(inject);
         return inject;
     }

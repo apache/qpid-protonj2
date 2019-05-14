@@ -288,7 +288,7 @@ public class ProtonFrameDecodingHandler implements EngineHandler, SaslPerformati
                 throw new ProtonException(String.format(
                     "specified frame data offset %d smaller than minimum frame header size %d", dataOffset, 8));
             }
-            if (dataOffset > frameSize) {
+            if (dataOffset > frameSize + FRAME_SIZE_BTYES) {
                 throw new ProtonException(String.format(
                     "specified frame data offset %d larger than the frame size %d", dataOffset, frameSize));
             }
@@ -317,7 +317,9 @@ public class ProtonFrameDecodingHandler implements EngineHandler, SaslPerformati
                     input.skipBytes(payload.getReadableBytes());
                 }
             } else {
-                val = new EmptyFrame();
+                transitionToFrameSizeParsingStage();
+                context.fireRead(EmptyFrame.INSTANCE);
+                return;
             }
 
             if (type == AMQP_FRAME_TYPE) {

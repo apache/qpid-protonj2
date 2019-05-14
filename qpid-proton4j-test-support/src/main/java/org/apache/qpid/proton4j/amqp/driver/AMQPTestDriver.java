@@ -267,6 +267,22 @@ public class AMQPTestDriver implements Consumer<ProtonBuffer> {
     }
 
     /**
+     * Send an Empty Frame on the given channel to the remote consumer.
+     *
+     * @param channel
+     *      the channel on which to send the empty frame.
+     */
+    public void sendEmptyFrame(int channel) {
+        ProtonBuffer buffer = frameEncoder.handleWrite(null, channel, null, null);
+
+        try {
+            frameConsumer.accept(buffer);
+        } catch (Throwable t) {
+            signalFailure(new AssertionError("Frame was not consumed due to error.", t));
+        }
+    }
+
+    /**
      * Throw an exception from processing incoming data which should be handled by the peer under test.
      *
      * @param ex

@@ -18,17 +18,24 @@ package org.apache.qpid.proton4j.engine.impl;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.nullValue;
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedInteger;
 import org.apache.qpid.proton4j.amqp.UnsignedShort;
 import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
 import org.apache.qpid.proton4j.amqp.driver.ScriptWriter;
+import org.apache.qpid.proton4j.amqp.transport.ErrorCondition;
 import org.apache.qpid.proton4j.engine.Connection;
 import org.apache.qpid.proton4j.engine.ConnectionState;
 import org.apache.qpid.proton4j.engine.exceptions.EngineStateException;
@@ -240,6 +247,204 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
 
         connection.open();
         connection.close();
+
+        driver.assertScriptComplete();
+
+        assertNull(failure);
+    }
+
+    @Test
+    public void testCapabilitiesArePopulatedAndAccessible() throws Exception {
+        final Symbol clientOfferedSymbol = Symbol.valueOf("clientOfferedCapability");
+        final Symbol clientDesiredSymbol = Symbol.valueOf("clientDesiredCapability");
+        final Symbol serverOfferedSymbol = Symbol.valueOf("serverOfferedCapability");
+        final Symbol serverDesiredSymbol = Symbol.valueOf("serverDesiredCapability");
+
+        Symbol[] clientOfferedCapabilities = new Symbol[] { clientOfferedSymbol };
+        Symbol[] clientDesiredCapabilities = new Symbol[] { clientDesiredSymbol };
+
+        Symbol[] serverOfferedCapabilities = new Symbol[] { serverOfferedSymbol };
+        Symbol[] serverDesiredCapabilities = new Symbol[] { serverDesiredSymbol };
+
+        final AtomicBoolean remotelyOpened = new AtomicBoolean();
+
+        ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
+        engine.errorHandler(result -> failure = result);
+
+        // Create the test driver and link it to the engine for output handling.
+        AMQPTestDriver driver = new AMQPTestDriver(engine);
+        engine.outputConsumer(driver);
+
+        ScriptWriter script = driver.createScriptWriter();
+
+        script.expectAMQPHeader().respondWithAMQPHeader();
+        script.expectOpen().withOfferedCapabilities(clientOfferedCapabilities)
+                           .withDesiredCapabilities(clientDesiredCapabilities)
+                           .respond()
+                           .withDesiredCapabilities(serverDesiredCapabilities)
+                           .withOfferedCapabilities(serverOfferedCapabilities);
+        script.expectClose().respond();
+
+        ProtonConnection connection = engine.start();
+
+        connection.setDesiredCapabilities(clientDesiredCapabilities);
+        connection.setOfferedCapabilities(clientOfferedCapabilities);
+        connection.openEventHandler(result -> {
+            remotelyOpened.set(true);
+        });
+        connection.open();
+
+        assertTrue("Connection remote opened event did not fire", remotelyOpened.get());
+
+        assertArrayEquals(clientOfferedCapabilities, connection.getOfferedCapabilities());
+        assertArrayEquals(clientDesiredCapabilities, connection.getDesiredCapabilities());
+        assertArrayEquals(serverOfferedCapabilities, connection.getRemoteOfferedCapabilities());
+        assertArrayEquals(serverDesiredCapabilities, connection.getRemoteDesiredCapabilities());
+
+        connection.close();
+
+        driver.assertScriptComplete();
+
+        assertNull(failure);
+    }
+
+    @Test
+    public void testPropertiesArePopulatedAndAccessible() throws Exception {
+        final Symbol clientPropertyName = Symbol.valueOf("ClientPropertyName");
+        final Integer clientPropertyValue = 1234;
+        final Symbol serverPropertyName = Symbol.valueOf("ServerPropertyName");
+        final Integer serverPropertyValue = 5678;
+
+        Map<Symbol, Object> clientProperties = new HashMap<>();
+        clientProperties.put(clientPropertyName, clientPropertyValue);
+
+        Map<Symbol, Object> serverProperties = new HashMap<>();
+        serverProperties.put(serverPropertyName, serverPropertyValue);
+
+        final AtomicBoolean remotelyOpened = new AtomicBoolean();
+
+        ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
+        engine.errorHandler(result -> failure = result);
+
+        // Create the test driver and link it to the engine for output handling.
+        AMQPTestDriver driver = new AMQPTestDriver(engine);
+        engine.outputConsumer(driver);
+
+        ScriptWriter script = driver.createScriptWriter();
+
+        script.expectAMQPHeader().respondWithAMQPHeader();
+        script.expectOpen().withProperties(clientProperties)
+                           .respond()
+                           .withProperties(serverProperties);
+        script.expectClose().respond();
+
+        ProtonConnection connection = engine.start();
+
+        connection.setProperties(clientProperties);
+        connection.openEventHandler(result -> {
+            remotelyOpened.set(true);
+        });
+        connection.open();
+
+        assertTrue("Connection remote opened event did not fire", remotelyOpened.get());
+
+        assertNotNull(connection.getProperties());
+        assertNotNull(connection.getRemoteProperties());
+
+        assertEquals(clientPropertyValue, connection.getProperties().get(clientPropertyName));
+        assertEquals(serverPropertyValue, connection.getRemoteProperties().get(serverPropertyName));
+
+        connection.close();
+
+        driver.assertScriptComplete();
+
+        assertNull(failure);
+    }
+
+    @Test
+    public void testOpenedCarriesRemoteErrorCondition() throws Exception {
+        Map<Object, Object> errorInfo = new HashMap<>();
+        errorInfo.put(Symbol.getSymbol("error"), "value");
+        errorInfo.put(Symbol.getSymbol("error-list"), Arrays.asList("entry-1", "entry-2", "entry-3"));
+        ErrorCondition remoteCondition = new ErrorCondition(Symbol.getSymbol("myerror"), "mydescription", errorInfo);
+
+        final AtomicBoolean remotelyOpened = new AtomicBoolean();
+        final AtomicBoolean remotelyClosed = new AtomicBoolean();
+
+        ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
+        engine.errorHandler(result -> failure = result);
+
+        // Create the test driver and link it to the engine for output handling.
+        AMQPTestDriver driver = new AMQPTestDriver(engine);
+        engine.outputConsumer(driver);
+
+        ScriptWriter script = driver.createScriptWriter();
+
+        script.expectAMQPHeader().respondWithAMQPHeader();
+        script.expectOpen().respond();
+        script.remoteClose().withErrorCondition(remoteCondition);
+        script.expectClose();
+
+        ProtonConnection connection = engine.start();
+
+        connection.openEventHandler(result -> {
+            remotelyOpened.set(true);
+        });
+        connection.closeEventHandler(result -> {
+            remotelyClosed.set(true);
+        });
+        connection.open();
+
+        assertTrue("Connection remote opened event did not fire", remotelyOpened.get());
+        assertTrue("Connection remote closed event did not fire", remotelyClosed.get());
+
+        assertNull(connection.getLocalCondition());
+        assertNotNull(connection.getRemoteCondition());
+
+        assertEquals(remoteCondition, connection.getRemoteCondition());
+
+        connection.close();
+
+        driver.assertScriptComplete();
+
+        assertNull(failure);
+    }
+
+    @Test
+    public void testEmptyFrameBeforeOpenDoesNotCauseError() throws Exception {
+        final AtomicBoolean remotelyOpened = new AtomicBoolean();
+        final AtomicBoolean remotelyClosed = new AtomicBoolean();
+
+        ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
+        engine.errorHandler(result -> failure = result);
+
+        // Create the test driver and link it to the engine for output handling.
+        AMQPTestDriver driver = new AMQPTestDriver(engine);
+        engine.outputConsumer(driver);
+
+        ScriptWriter script = driver.createScriptWriter();
+
+        script.expectAMQPHeader().respondWithAMQPHeader();
+        script.expectOpen();
+        script.remoteEmptyFrame();
+        script.remoteOpen();
+        script.expectClose().respond();
+
+        ProtonConnection connection = engine.start();
+
+        connection.openEventHandler(result -> {
+            remotelyOpened.set(true);
+        });
+        connection.closeEventHandler(result -> {
+            remotelyClosed.set(true);
+        });
+        connection.open();
+
+        assertTrue("Connection remote opened event did not fire", remotelyOpened.get());
+
+        connection.close();
+
+        assertTrue("Connection remote closed event did not fire", remotelyClosed.get());
 
         driver.assertScriptComplete();
 

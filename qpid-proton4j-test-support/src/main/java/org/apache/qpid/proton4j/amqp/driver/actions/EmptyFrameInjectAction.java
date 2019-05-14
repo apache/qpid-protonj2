@@ -14,28 +14,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.qpid.proton4j.engine;
+package org.apache.qpid.proton4j.amqp.driver.actions;
 
-import org.apache.qpid.proton4j.amqp.transport.Performative.PerformativeHandler;
+import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
+import org.apache.qpid.proton4j.amqp.driver.ScriptedAction;
 
 /**
- * An empty frame which can be used to drive transport activity when idle.
+ * AMQP Empty Frame injection action which can be added to a driver for write at a specific time or
+ * following on from some other action in the test script.
  */
-public final class EmptyFrame extends ProtocolFrame {
+public class EmptyFrameInjectAction implements ScriptedAction {
 
-    public static final EmptyFrame INSTANCE = new EmptyFrame();
+    public static final int CHANNEL_UNSET = -1;
 
-    public EmptyFrame() {
-        super();
+    private int channel = CHANNEL_UNSET;
+
+    public EmptyFrameInjectAction() {
+    }
+
+    public int onChannel() {
+        return this.channel;
     }
 
     @Override
-    public String toString() {
-        return "Empty Frame";
-    }
-
-    @Override
-    public <E> void invoke(PerformativeHandler<E> handler, E context) {
-        // Nothing to do for empty frame.
+    public void perform(AMQPTestDriver driver) {
+        driver.sendEmptyFrame(this.channel == CHANNEL_UNSET ? 0 : this.channel);
     }
 }
