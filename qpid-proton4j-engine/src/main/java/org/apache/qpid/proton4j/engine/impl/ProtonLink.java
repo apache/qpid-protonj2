@@ -43,6 +43,7 @@ import org.apache.qpid.proton4j.engine.LinkState;
 import org.apache.qpid.proton4j.engine.Receiver;
 import org.apache.qpid.proton4j.engine.Sender;
 import org.apache.qpid.proton4j.engine.Session;
+import org.apache.qpid.proton4j.engine.SessionState;
 
 /**
  * Common base for Proton Senders and Receivers.
@@ -147,6 +148,7 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
 
     @Override
     public ProtonLink<T> open() {
+        checkSessionNotClosed();
         if (getLocalState() == LinkState.IDLE) {
             localState = LinkState.ACTIVE;
             long localHandle = session.findFreeLocalHandle(this);
@@ -439,6 +441,12 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
     protected void checkNotClosed(String errorMessage) {
         if (localState.ordinal() > LinkState.ACTIVE.ordinal()) {
             throw new IllegalStateException(errorMessage);
+        }
+    }
+
+    private void checkSessionNotClosed() {
+        if (session.getLocalState() == SessionState.CLOSED || session.getRemoteState() == SessionState.CLOSED) {
+            throw new IllegalStateException("Cannot open link for session that has already been closed.");
         }
     }
 }

@@ -22,6 +22,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
@@ -48,7 +49,6 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
     public void testEngineEmitsAttachAfterLocalSenderOpened() throws Exception {
         ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
         engine.errorHandler(result -> failure = result);
-        // Create the test driver and link it to the engine for output handling.
         AMQPTestDriver driver = new AMQPTestDriver(engine);
         engine.outputConsumer(driver);
         ScriptWriter script = driver.createScriptWriter();
@@ -80,7 +80,6 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
     public void testSenderFireOpenedEventAfterRemoteAttachArrives() throws Exception {
         ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
         engine.errorHandler(result -> failure = result);
-        // Create the test driver and link it to the engine for output handling.
         AMQPTestDriver driver = new AMQPTestDriver(engine);
         engine.outputConsumer(driver);
         ScriptWriter script = driver.createScriptWriter();
@@ -120,7 +119,6 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
     public void testOpenAndCloseMultipleSenders() throws Exception {
         ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
         engine.errorHandler(result -> failure = result);
-        // Create the test driver and link it to the engine for output handling.
         AMQPTestDriver driver = new AMQPTestDriver(engine);
         engine.outputConsumer(driver);
         ScriptWriter script = driver.createScriptWriter();
@@ -157,7 +155,6 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
     public void testSenderFireClosedEventAfterRemoteDetachArrives() throws Exception {
         ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
         engine.errorHandler(result -> failure = result);
-        // Create the test driver and link it to the engine for output handling.
         AMQPTestDriver driver = new AMQPTestDriver(engine);
         engine.outputConsumer(driver);
         ScriptWriter script = driver.createScriptWriter();
@@ -203,7 +200,6 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
     public void testConnectionSignalsRemoteSenderOpen() throws Exception {
         ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
         engine.errorHandler(result -> failure = result);
-        // Create the test driver and link it to the engine for output handling.
         AMQPTestDriver driver = new AMQPTestDriver(engine);
         engine.outputConsumer(driver);
         ScriptWriter script = driver.createScriptWriter();
@@ -247,10 +243,83 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
     }
 
     @Test
+    public void testCannotOpenSenderAfterSessionClosed() throws Exception {
+        ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
+        engine.errorHandler(result -> failure = result);
+        AMQPTestDriver driver = new AMQPTestDriver(engine);
+        engine.outputConsumer(driver);
+        ScriptWriter script = driver.createScriptWriter();
+
+        script.expectAMQPHeader().respondWithAMQPHeader();
+        script.expectOpen().respond().withContainerId("driver");
+        script.expectBegin().respond();
+        script.expectEnd().respond();
+
+        Connection connection = engine.start();
+
+        // Default engine should start and return a connection immediately
+        assertNotNull(connection);
+
+        connection.open();
+        Session session = connection.session();
+        session.open();
+
+        Sender sender = session.sender("test");
+
+        session.close();
+
+        try {
+            sender.open();
+            fail("Should not be able to open a link from a closed session.");
+        } catch (IllegalStateException ise) {}
+
+        sender.close();
+
+        driver.assertScriptComplete();
+
+        assertNull(failure);
+    }
+
+    @Test
+    public void testCannotOpenSenderAfterSessionRemotelyClosed() throws Exception {
+        ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
+        engine.errorHandler(result -> failure = result);
+        AMQPTestDriver driver = new AMQPTestDriver(engine);
+        engine.outputConsumer(driver);
+        ScriptWriter script = driver.createScriptWriter();
+
+        script.expectAMQPHeader().respondWithAMQPHeader();
+        script.expectOpen().respond().withContainerId("driver");
+        script.expectBegin().respond();
+        script.remoteEnd().onChannel(0); // TODO - Last opened session as default target
+
+        Connection connection = engine.start();
+
+        // Default engine should start and return a connection immediately
+        assertNotNull(connection);
+
+        connection.open();
+        Session session = connection.session();
+        session.open();
+
+        Sender sender = session.sender("test");
+
+        try {
+            sender.open();
+            fail("Should not be able to open a link from a remotely closed session.");
+        } catch (IllegalStateException ise) {}
+
+        sender.close();
+
+        driver.assertScriptComplete();
+
+        assertNull(failure);
+    }
+
+    @Test
     public void testGetCurrentDeliveryFromSender() throws Exception {
         ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
         engine.errorHandler(result -> failure = result);
-        // Create the test driver and link it to the engine for output handling.
         AMQPTestDriver driver = new AMQPTestDriver(engine);
         engine.outputConsumer(driver);
         ScriptWriter script = driver.createScriptWriter();
@@ -293,7 +362,6 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
     public void testSenderGetsCreditOnIncomingFlow() throws Exception {
         ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
         engine.errorHandler(result -> failure = result);
-        // Create the test driver and link it to the engine for output handling.
         AMQPTestDriver driver = new AMQPTestDriver(engine);
         engine.outputConsumer(driver);
         ScriptWriter script = driver.createScriptWriter();
@@ -337,7 +405,6 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
     public void testSendSmallPayloadWhenCreditAvailable() throws Exception {
         ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
         engine.errorHandler(result -> failure = result);
-        // Create the test driver and link it to the engine for output handling.
         AMQPTestDriver driver = new AMQPTestDriver(engine);
         engine.outputConsumer(driver);
         ScriptWriter script = driver.createScriptWriter();
@@ -388,7 +455,6 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
     public void testSenderSignalsDeliveryUpdatedOnSettled() throws Exception {
         ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
         engine.errorHandler(result -> failure = result);
-        // Create the test driver and link it to the engine for output handling.
         AMQPTestDriver driver = new AMQPTestDriver(engine);
         engine.outputConsumer(driver);
         ScriptWriter script = driver.createScriptWriter();
