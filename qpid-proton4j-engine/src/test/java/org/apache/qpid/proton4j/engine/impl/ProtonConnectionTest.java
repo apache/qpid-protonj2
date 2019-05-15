@@ -23,6 +23,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -445,6 +446,88 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
         connection.close();
 
         assertTrue("Connection remote closed event did not fire", remotelyClosed.get());
+
+        driver.assertScriptComplete();
+
+        assertNull(failure);
+    }
+
+    @Test
+    public void testChannelMaxDefaultsToMax() throws Exception {
+        final AtomicBoolean remotelyOpened = new AtomicBoolean();
+
+        ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
+        engine.errorHandler(result -> failure = result);
+
+        // Create the test driver and link it to the engine for output handling.
+        AMQPTestDriver driver = new AMQPTestDriver(engine);
+        engine.outputConsumer(driver);
+
+        ScriptWriter script = driver.createScriptWriter();
+
+        script.expectAMQPHeader().respondWithAMQPHeader();
+        script.expectOpen().withChannelMax(nullValue()).respond();
+        script.expectClose().respond();
+
+        ProtonConnection connection = engine.start();
+
+        connection.openEventHandler(result -> {
+            remotelyOpened.set(true);
+        });
+        connection.open();
+
+        assertTrue("Connection remote opened event did not fire", remotelyOpened.get());
+
+        assertEquals(65535, connection.getChannelMax());
+
+        connection.close();
+
+        driver.assertScriptComplete();
+
+        assertNull(failure);
+    }
+
+    @Test
+    public void testChannelMaxRangeEnforced() throws Exception {
+        final AtomicBoolean remotelyOpened = new AtomicBoolean();
+
+        ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
+        engine.errorHandler(result -> failure = result);
+
+        // Create the test driver and link it to the engine for output handling.
+        AMQPTestDriver driver = new AMQPTestDriver(engine);
+        engine.outputConsumer(driver);
+
+        ScriptWriter script = driver.createScriptWriter();
+
+        final short eventualChannelMax = 255;
+
+        script.expectAMQPHeader().respondWithAMQPHeader();
+        script.expectOpen().withChannelMax(eventualChannelMax).respond();
+        script.expectClose().respond();
+
+        ProtonConnection connection = engine.start();
+
+        connection.openEventHandler(result -> {
+            remotelyOpened.set(true);
+        });
+
+        try {
+            connection.setChannelMax(-1);
+            fail("Should not be able to set an invalid negative channel max");
+        } catch (IllegalArgumentException iae) {}
+        try {
+            connection.setChannelMax(65536);
+            fail("Should not be able to set an invalid to large channel max");
+        } catch (IllegalArgumentException iae) {}
+
+        connection.setChannelMax(eventualChannelMax);
+        connection.open();
+
+        assertTrue("Connection remote opened event did not fire", remotelyOpened.get());
+        assertEquals(eventualChannelMax, connection.getChannelMax());
+
+        connection.close();
 
         driver.assertScriptComplete();
 

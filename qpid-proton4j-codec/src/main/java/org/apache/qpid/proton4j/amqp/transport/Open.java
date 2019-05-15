@@ -194,7 +194,7 @@ public final class Open implements Performative {
     }
 
     public Open setChannelMax(int channelMax) {
-        if (maxFrameSize < 0 || maxFrameSize > UINT_MAX) {
+        if (channelMax < 0 || channelMax > UnsignedShort.MAX_VALUE.intValue()) {
             throw new IllegalArgumentException("The Channel Max value given is out of range: " + channelMax);
         } else if (UnsignedShort.MAX_VALUE.compareTo((short) channelMax) == 0) {
             modified &= ~CHANNEL_MAX;
@@ -211,7 +211,7 @@ public final class Open implements Performative {
     }
 
     public Open setIdleTimeOut(long idleTimeOut) {
-        if (idleTimeOut < 0 || idleTimeOut > UnsignedShort.MAX_VALUE.intValue()) {
+        if (idleTimeOut < 0 || idleTimeOut > UINT_MAX) {
             throw new IllegalArgumentException("The Idle Timeout value given is out of range: " + idleTimeOut);
         } else {
             modified |= IDLE_TIMEOUT;
