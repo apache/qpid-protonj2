@@ -16,6 +16,7 @@
  */
 package org.apache.qpid.proton4j.engine.impl;
 
+import org.apache.qpid.proton4j.amqp.UnsignedInteger;
 import org.apache.qpid.proton4j.amqp.transport.Begin;
 import org.apache.qpid.proton4j.amqp.transport.Disposition;
 import org.apache.qpid.proton4j.amqp.transport.Flow;
@@ -161,7 +162,7 @@ public class ProtonSessionIncomingWindow {
             ProtonIncomingDelivery delivery = unsettled.get(index);
             if (delivery != null) {
                 if (disposition.getSettled()) {
-                    unsettled.remove(index);
+                    unsettled.remove((int) index);
                 }
 
                 delivery.getLink().handleDisposition(disposition, delivery);
@@ -174,7 +175,8 @@ public class ProtonSessionIncomingWindow {
     long updateIncomingWindow() {
         // TODO - long vs int types for these unsigned value
         long maxFrameSize = session.getConnection().getMaxFrameSize();
-        if (incomingCapacity <= 0 || maxFrameSize <= 0) {
+        // TODO - need to revisit this logic and decide on sane cutoff for capacity restriction.
+        if (incomingCapacity <= 0 || maxFrameSize == UnsignedInteger.MAX_VALUE.longValue()) {
             incomingWindow = DEFAULT_WINDOW_SIZE;
         } else {
             // TODO - incomingWindow = Integer.divideUnsigned(incomingCapacity - incomingBytes, maxFrameSize);

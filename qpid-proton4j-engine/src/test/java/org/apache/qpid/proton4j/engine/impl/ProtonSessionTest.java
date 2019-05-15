@@ -30,6 +30,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.apache.qpid.proton4j.amqp.Symbol;
@@ -37,6 +38,7 @@ import org.apache.qpid.proton4j.amqp.UnsignedInteger;
 import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
 import org.apache.qpid.proton4j.amqp.driver.ScriptWriter;
 import org.apache.qpid.proton4j.engine.Connection;
+import org.apache.qpid.proton4j.engine.Receiver;
 import org.apache.qpid.proton4j.engine.Session;
 import org.apache.qpid.proton4j.engine.exceptions.EngineStateException;
 import org.hamcrest.Matcher;
@@ -52,11 +54,8 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
     public void testEngineEmitsBeginAfterLocalSessionOpened() throws IOException {
         ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
         engine.errorHandler(result -> failure = result);
-
-        // Create the test driver and link it to the engine for output handling.
         AMQPTestDriver driver = new AMQPTestDriver(engine);
         engine.outputConsumer(driver);
-
         ScriptWriter script = driver.createScriptWriter();
 
         script.expectAMQPHeader().respondWithAMQPHeader();
@@ -87,11 +86,8 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
     public void testSessionFiresOpenedEventAfterRemoteOpensLocallyOpenedSession() throws IOException {
         ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
         engine.errorHandler(result -> failure = result);
-
-        // Create the test driver and link it to the engine for output handling.
         AMQPTestDriver driver = new AMQPTestDriver(engine);
         engine.outputConsumer(driver);
-
         ScriptWriter script = driver.createScriptWriter();
 
         script.expectAMQPHeader().respondWithAMQPHeader();
@@ -127,11 +123,8 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
     public void testOpenAndCloseMultipleSessions() throws IOException {
         ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
         engine.errorHandler(result -> failure = result);
-
-        // Create the test driver and link it to the engine for output handling.
         AMQPTestDriver driver = new AMQPTestDriver(engine);
         engine.outputConsumer(driver);
-
         ScriptWriter script = driver.createScriptWriter();
 
         script.expectAMQPHeader().respondWithAMQPHeader();
@@ -164,11 +157,8 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
     public void testEngineFireRemotelyOpenedSessionEventWhenRemoteBeginArrives() throws IOException {
         ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
         engine.errorHandler(result -> failure = result);
-
-        // Create the test driver and link it to the engine for output handling.
         AMQPTestDriver driver = new AMQPTestDriver(engine);
         engine.outputConsumer(driver);
-
         ScriptWriter script = driver.createScriptWriter();
 
         script.expectAMQPHeader().respondWithAMQPHeader();
@@ -226,10 +216,9 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
 
         ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
         engine.errorHandler(result -> failure = result);
-
-        // Create the test driver and link it to the engine for output handling.
         AMQPTestDriver driver = new AMQPTestDriver(engine);
         engine.outputConsumer(driver);
+        ScriptWriter script = driver.createScriptWriter();
 
         Matcher<?> expectedMaxFrameSize = nullValue();
         if (setMaxFrameSize) {
@@ -240,8 +229,6 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
         if (setIncomingCapacity) {
             expectedIncomingWindow = SESSION_INCOMING_CAPACITY / MAX_FRAME_SIZE;
         }
-
-        ScriptWriter script = driver.createScriptWriter();
 
         script.expectAMQPHeader().respondWithAMQPHeader();
         script.expectOpen().withMaxFrameSize(expectedMaxFrameSize).respond().withContainerId("driver");
@@ -365,11 +352,8 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
     public void testHandleRemoteBeginWithInvalidRemoteChannelSet() throws IOException {
         ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
         engine.errorHandler(result -> failure = result);
-
-        // Create the test driver and link it to the engine for output handling.
         AMQPTestDriver driver = new AMQPTestDriver(engine);
         engine.outputConsumer(driver);
-
         ScriptWriter script = driver.createScriptWriter();
 
         script.expectAMQPHeader().respondWithAMQPHeader();
@@ -417,11 +401,8 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
 
         ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
         engine.errorHandler(result -> failure = result);
-
-        // Create the test driver and link it to the engine for output handling.
         AMQPTestDriver driver = new AMQPTestDriver(engine);
         engine.outputConsumer(driver);
-
         ScriptWriter script = driver.createScriptWriter();
 
         script.expectAMQPHeader().respondWithAMQPHeader();
@@ -476,11 +457,8 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
 
         ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
         engine.errorHandler(result -> failure = result);
-
-        // Create the test driver and link it to the engine for output handling.
         AMQPTestDriver driver = new AMQPTestDriver(engine);
         engine.outputConsumer(driver);
-
         ScriptWriter script = driver.createScriptWriter();
 
         script.expectAMQPHeader().respondWithAMQPHeader();
@@ -513,6 +491,91 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
 
         driver.assertScriptComplete();
 
+        assertNull(failure);
+    }
+
+    @Test
+    public void testEmittedSessionIncomingWindowOnFirstFlow() {
+        doSessionIncomingWindowTestImpl(false, false);
+        doSessionIncomingWindowTestImpl(true, false);
+        doSessionIncomingWindowTestImpl(false, true);
+        doSessionIncomingWindowTestImpl(true, true);
+    }
+
+    private void doSessionIncomingWindowTestImpl(boolean setFrameSize, boolean setSessionCapacity) {
+        final int TEST_MAX_FRAME_SIZE = 5 * 1024;
+        final int TEST_SESSION_CAPACITY = 100 * 1024;
+
+        ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
+        engine.errorHandler(result -> failure = result);
+        AMQPTestDriver driver = new AMQPTestDriver(engine);
+        engine.outputConsumer(driver);
+        ScriptWriter script = driver.createScriptWriter();
+
+        Matcher<?> expectedMaxFrameSize = nullValue();
+        if (setFrameSize) {
+            expectedMaxFrameSize = equalTo(UnsignedInteger.valueOf(TEST_MAX_FRAME_SIZE));
+        }
+
+        long expectedWindowSize = 2147483647;
+        if (setSessionCapacity && setFrameSize) {
+            expectedWindowSize = TEST_SESSION_CAPACITY / TEST_MAX_FRAME_SIZE;
+        }
+
+        script.expectAMQPHeader().respondWithAMQPHeader();
+        script.expectOpen().withMaxFrameSize(expectedMaxFrameSize).respond();
+        script.expectBegin().withIncomingWindow(expectedWindowSize).respond();
+        script.expectAttach().respond();
+
+        ProtonConnection connection = engine.start();
+        if (setFrameSize) {
+            connection.setMaxFrameSize(TEST_MAX_FRAME_SIZE);
+        }
+        connection.open();
+
+        Session session = connection.session();
+        int sessionCapacity = 0;
+        if (setSessionCapacity) {
+            sessionCapacity = TEST_SESSION_CAPACITY;
+            session.setIncomingCapacity(sessionCapacity);
+        }
+
+        // Open session and verify emitted incoming window
+        session.open();
+
+        assertEquals("Unexpected session capacity", sessionCapacity, session.getIncomingCapacity());
+
+        // Use a receiver to force more session window observations.
+        Receiver receiver = session.receiver("receiver");
+        receiver.open();
+
+        // Expect that a flow will be emitted and the window should match either default window
+        // size or computed value if max frame size and capacity are set
+        script.expectFlow().withLinkCredit(1)
+                           .withIncomingWindow(expectedWindowSize);
+        script.remoteTransfer().withDeliveryId(0)
+                               .withHandle(0)
+                               .withDeliveryTag(new byte[] {0})
+                               .withMore(false)
+                               .withMessageFormat(0).onChannel(0); // TODO - Improve this to allow for auto direct
+                                                                   //        to last opened receiver on last session
+
+        receiver.setCredit(1);
+
+        final AtomicInteger deliveryArrived = new AtomicInteger();
+        receiver.deliveryReceivedEventHandler(delivery -> {
+            deliveryArrived.incrementAndGet();
+        });
+
+        assertEquals("Unexpected delivery count", 1, deliveryArrived.incrementAndGet());
+
+        script.expectDetach().respond();
+        script.expectEnd().respond();
+
+        receiver.close();
+        session.close();
+
+        driver.assertScriptComplete();
         assertNull(failure);
     }
 }
