@@ -24,6 +24,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -37,6 +38,7 @@ import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
 import org.apache.qpid.proton4j.amqp.driver.ScriptWriter;
 import org.apache.qpid.proton4j.engine.Connection;
 import org.apache.qpid.proton4j.engine.Session;
+import org.apache.qpid.proton4j.engine.exceptions.EngineStateException;
 import org.hamcrest.Matcher;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -265,6 +267,93 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
         }
         session.open();
         session.close();
+
+        driver.assertScriptComplete();
+
+        assertNull(failure);
+    }
+
+    @Test
+    public void testSessionOpenFailsWhenConnectionClosed() throws EngineStateException {
+        ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
+        engine.errorHandler(result -> failure = result);
+        AMQPTestDriver driver = new AMQPTestDriver(engine);
+        engine.outputConsumer(driver);
+        ScriptWriter script = driver.createScriptWriter();
+
+        script.expectAMQPHeader().respondWithAMQPHeader();
+        script.expectOpen().respond().withContainerId("driver");
+        script.expectClose().respond();
+
+        final AtomicBoolean connectionOpenedSignaled = new AtomicBoolean();
+        final AtomicBoolean connectionClosedSignaled = new AtomicBoolean();
+
+        Connection connection = engine.start();
+
+        // Default engine should start and return a connection immediately
+        assertNotNull(connection);
+
+        connection.openEventHandler(result -> {
+            connectionOpenedSignaled.set(true);
+        });
+        connection.closeEventHandler(result -> {
+            connectionClosedSignaled.set(true);
+        });
+
+        Session session = connection.session();
+        connection.open();
+        connection.close();
+
+        assertTrue("Connection remote opened event did not fire", connectionOpenedSignaled.get());
+        assertTrue("Connection remote closed event did not fire", connectionClosedSignaled.get());
+
+        try {
+            session.open();
+            fail("Should not be able to open a session when its Connection was already closed");
+        } catch (IllegalStateException ise) {}
+
+        driver.assertScriptComplete();
+
+        assertNull(failure);
+    }
+
+    @Test
+    public void testSessionOpenFailsWhenConnectionRemotelyClosed() throws EngineStateException {
+        ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
+        engine.errorHandler(result -> failure = result);
+        AMQPTestDriver driver = new AMQPTestDriver(engine);
+        engine.outputConsumer(driver);
+        ScriptWriter script = driver.createScriptWriter();
+
+        script.expectAMQPHeader().respondWithAMQPHeader();
+        script.expectOpen().respond().withContainerId("driver");
+        script.remoteClose();
+
+        final AtomicBoolean connectionOpenedSignaled = new AtomicBoolean();
+        final AtomicBoolean connectionClosedSignaled = new AtomicBoolean();
+
+        Connection connection = engine.start();
+
+        // Default engine should start and return a connection immediately
+        assertNotNull(connection);
+
+        connection.openEventHandler(result -> {
+            connectionOpenedSignaled.set(true);
+        });
+        connection.closeEventHandler(result -> {
+            connectionClosedSignaled.set(true);
+        });
+
+        Session session = connection.session();
+        connection.open();
+
+        assertTrue("Connection remote opened event did not fire", connectionOpenedSignaled.get());
+        assertTrue("Connection remote closed event did not fire", connectionClosedSignaled.get());
+
+        try {
+            session.open();
+            fail("Should not be able to open a session when its Connection was already closed");
+        } catch (IllegalStateException ise) {}
 
         driver.assertScriptComplete();
 

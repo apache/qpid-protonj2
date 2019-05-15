@@ -40,6 +40,7 @@ import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.common.logging.ProtonLogger;
 import org.apache.qpid.proton4j.common.logging.ProtonLoggerFactory;
 import org.apache.qpid.proton4j.engine.AsyncEvent;
+import org.apache.qpid.proton4j.engine.ConnectionState;
 import org.apache.qpid.proton4j.engine.EventHandler;
 import org.apache.qpid.proton4j.engine.LinkState;
 import org.apache.qpid.proton4j.engine.Receiver;
@@ -152,6 +153,7 @@ public class ProtonSession implements Session {
 
     @Override
     public ProtonSession open() {
+        checkConnectionClosed();
         if (getLocalState() == SessionState.IDLE) {
             localState = SessionState.ACTIVE;
             incomingWindow.configureOutbound(localBegin);
@@ -452,6 +454,12 @@ public class ProtonSession implements Session {
     private void checkNotOpened(String errorMessage) {
         if (localState.ordinal() > SessionState.IDLE.ordinal()) {
             throw new IllegalStateException(errorMessage);
+        }
+    }
+
+    private void checkConnectionClosed() {
+        if (connection.getLocalState() == ConnectionState.CLOSED || connection.getRemoteState() == ConnectionState.CLOSED) {
+             throw new IllegalStateException("Cannot open a Session from a Connection that is already closed");
         }
     }
 
