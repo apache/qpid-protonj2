@@ -291,7 +291,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         script.expectAMQPHeader().respondWithAMQPHeader();
         script.expectOpen().respond().withContainerId("driver");
         script.expectBegin().respond();
-        script.remoteEnd().onChannel(0); // TODO - Last opened session as default target
+        script.remoteEnd(); // TODO This would be more fluent if there was a thenEnd() on the expect
 
         Connection connection = engine.start();
 
@@ -397,13 +397,12 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         script.expectOpen().respond().withContainerId("driver");
         script.expectBegin().respond();
         script.expectAttach().respond();
-        script.expectFlow().withLinkCredit(100);  // TODO validate mandatory fields are set and they have correct values
+        script.expectFlow().withLinkCredit(100);
         script.remoteTransfer().withDeliveryId(0)
                                .withHandle(0)
                                .withDeliveryTag(new byte[] {0})
                                .withMore(false)
-                               .withMessageFormat(0).onChannel(0); // TODO - Improve this to allow for auto direct
-                                                                   //        to last opened receiver on last session
+                               .withMessageFormat(0);
         script.expectDetach().respond();
 
         Connection connection = engine.start();
@@ -447,13 +446,12 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         script.expectOpen().respond().withContainerId("driver");
         script.expectBegin().respond();
         script.expectAttach().respond();
-        script.expectFlow().withLinkCredit(100);  // TODO validate mandatory fields are set and they have correct values
+        script.expectFlow().withLinkCredit(100);
         script.remoteTransfer().withDeliveryId(0)
                                .withHandle(0)
                                .withDeliveryTag(new byte[] {0})
                                .withMore(false)
-                               .withMessageFormat(0).onChannel(0); // TODO - Improve this to allow for auto direct
-                                                                   //        to last opened receiver on last session
+                               .withMessageFormat(0);
         script.expectDisposition().withFirst(0)
                                   .withSettled(true)
                                   .withRole(Role.RECEIVER)
@@ -504,13 +502,12 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         script.expectOpen().respond().withContainerId("driver");
         script.expectBegin().respond();
         script.expectAttach().respond();
-        script.expectFlow().withLinkCredit(100);  // TODO validate mandatory fields are set and they have correct values
+        script.expectFlow().withLinkCredit(100);
         script.remoteTransfer().withDeliveryId(0)
                                .withHandle(0)
                                .withDeliveryTag(new byte[] {0})
                                .withMore(false)
-                               .withMessageFormat(0).onChannel(0); // TODO - Improve this to allow for auto direct
-                                                                   //        to last opened receiver on last session
+                               .withMessageFormat(0);
         script.remoteDisposition().withSettled(true)
                                   .withRole(Role.SENDER)
                                   .withState(Accepted.getInstance())

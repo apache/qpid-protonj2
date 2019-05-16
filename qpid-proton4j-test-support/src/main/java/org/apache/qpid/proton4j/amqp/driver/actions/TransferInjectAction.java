@@ -74,6 +74,12 @@ public final class TransferInjectAction extends AbstractPerformativeInjectAction
 
     @Override
     public void perform(AMQPTestDriver driver) {
+        // We fill in a channel using the next available channel id if one isn't set, then
+        // report the outbound begin to the session so it can track this new session.
+        if (onChannel() == CHANNEL_UNSET) {
+            onChannel(driver.getSessions().getLastOpenedSession().getLocalChannel().intValue());
+        }
+
         // Here we could check if the delivery Id is set and if not grab a valid
         // next Id from the driver as well as checking for a session and using last
         // created one if none set.

@@ -36,13 +36,18 @@ public class DriverSessions {
     private final AMQPTestDriver driver;
 
     private short nextChannelId = 0;
+    private int lastOpenedSession = -1;
 
     public DriverSessions(AMQPTestDriver driver) {
         this.driver = driver;
     }
 
     public SessionTracker getLastOpenedSession() {
-        return null; // TODO
+        SessionTracker tracker = null;
+        if (lastOpenedSession >= 0) {
+            tracker = localSessions.get(UnsignedShort.valueOf(lastOpenedSession));
+        }
+        return tracker;
     }
 
     public AMQPTestDriver getDriver() {
@@ -74,6 +79,7 @@ public class DriverSessions {
         SessionTracker tracker = new SessionTracker(driver, begin, localChannelValue, null);
 
         localSessions.put(tracker.getLocalChannel(), tracker);
+        lastOpenedSession = localChannel;
 
         return tracker;
     }
@@ -90,6 +96,7 @@ public class DriverSessions {
 
         localSessions.put(tracker.getLocalChannel(), tracker);
         remoteSessions.put(tracker.getRemoteChannel(), tracker);
+        lastOpenedSession = tracker.getLocalChannel().intValue();
 
         return tracker;
     }

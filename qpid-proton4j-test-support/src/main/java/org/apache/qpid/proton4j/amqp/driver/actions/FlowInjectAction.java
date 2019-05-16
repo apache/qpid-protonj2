@@ -20,6 +20,7 @@ import java.util.Map;
 
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedInteger;
+import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
 import org.apache.qpid.proton4j.amqp.driver.codec.transport.Flow;
 
 /**
@@ -88,5 +89,16 @@ public class FlowInjectAction extends AbstractPerformativeInjectAction<Flow> {
     public FlowInjectAction withProperties(Map<Symbol, Object> properties) {
         flow.setProperties(properties);
         return this;
+    }
+
+    @Override
+    protected void beforeActionPerformed(AMQPTestDriver driver) {
+        // We fill in a channel using the next available channel id if one isn't set, then
+        // report the outbound begin to the session so it can track this new session.
+        if (onChannel() == CHANNEL_UNSET) {
+            onChannel(driver.getSessions().getLastOpenedSession().getLocalChannel().intValue());
+        }
+
+        // TODO - Process flow in the local side of the link when needed for added validation
     }
 }

@@ -21,6 +21,7 @@ import java.util.Map;
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedInteger;
 import org.apache.qpid.proton4j.amqp.UnsignedShort;
+import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
 import org.apache.qpid.proton4j.amqp.driver.codec.transport.Begin;
 
 /**
@@ -128,5 +129,16 @@ public class BeginInjectAction extends AbstractPerformativeInjectAction<Begin> {
     public BeginInjectAction withProperties(Map<Symbol, Object> properties) {
         begin.setProperties(properties);
         return this;
+    }
+
+    @Override
+    protected void beforeActionPerformed(AMQPTestDriver driver) {
+        // We fill in a channel using the next available channel id if one isn't set, then
+        // report the outbound begin to the session so it can track this new session.
+        if (onChannel() == CHANNEL_UNSET) {
+            onChannel(driver.getSessions().getNextChannelId());
+        }
+
+        driver.getSessions().processBegin(begin, onChannel());
     }
 }

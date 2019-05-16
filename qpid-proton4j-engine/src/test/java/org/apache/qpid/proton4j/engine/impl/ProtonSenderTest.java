@@ -291,7 +291,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         script.expectAMQPHeader().respondWithAMQPHeader();
         script.expectOpen().respond().withContainerId("driver");
         script.expectBegin().respond();
-        script.remoteEnd().onChannel(0); // TODO - Last opened session as default target
+        script.remoteEnd(); // TODO - Last opened is used here, but a thenEnd() on the expect begin would be more clear
 
         Connection connection = engine.start();
 
@@ -376,7 +376,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
                            .withIncomingWindow(1024)
                            .withOutgoingWindow(10)
                            .withNextIncomingId(0)
-                           .withNextOutgoingId(1).onChannel(0);  // TODO - Track sessions and use last opened by default
+                           .withNextOutgoingId(1);
         script.expectDetach().withHandle(0).respond();
 
         Connection connection = engine.start();
@@ -419,7 +419,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
                            .withIncomingWindow(1024)
                            .withOutgoingWindow(10)
                            .withNextIncomingId(0)
-                           .withNextOutgoingId(1).onChannel(0);  // TODO - Track sessions and use last opened by default
+                           .withNextOutgoingId(1);
         script.expectTransfer().withHandle(0)
                                .withSettled(false)
                                .withState((DeliveryState) null)
@@ -469,7 +469,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
                            .withIncomingWindow(1024)
                            .withOutgoingWindow(10)
                            .withNextIncomingId(0)
-                           .withNextOutgoingId(1).onChannel(0);  // TODO - Track sessions and use last opened by default
+                           .withNextOutgoingId(1);
         script.expectTransfer().withHandle(0)
                                .withSettled(false)
                                .withState((DeliveryState) null)

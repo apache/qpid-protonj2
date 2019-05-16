@@ -164,9 +164,7 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
 
         script.expectAMQPHeader().respondWithAMQPHeader();
         script.expectOpen().respond().withContainerId("driver");
-        script.remoteBegin().onChannel(1);   // TODO - Select the next available channel
-                                             //        from the driver and track the new
-                                             //        session that was remotely opened.
+        script.remoteBegin();
 
         final AtomicBoolean connectionRemotelyOpened = new AtomicBoolean();
         final AtomicBoolean sessionRemotelyOpened = new AtomicBoolean();
@@ -359,9 +357,7 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
 
         script.expectAMQPHeader().respondWithAMQPHeader();
         script.expectOpen().respond().withContainerId("driver");
-        script.remoteBegin().withRemoteChannel(3).onChannel(1); // TODO - Select the next available channel
-                                                                //        from the driver and track the new
-                                                                //        session that was remotely opened.
+        script.remoteBegin().withRemoteChannel(3);
         final AtomicBoolean remoteOpened = new AtomicBoolean();
         final AtomicBoolean remoteSession = new AtomicBoolean();
 
