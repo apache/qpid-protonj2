@@ -187,6 +187,7 @@ public class ProtonSessionIncomingWindow {
     }
 
     void writeFlow(ProtonLink<?> link) {
+        updateIncomingWindow();
         session.writeFlow(link);
     }
 

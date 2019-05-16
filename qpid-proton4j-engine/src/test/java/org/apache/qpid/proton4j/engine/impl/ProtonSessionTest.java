@@ -557,8 +557,10 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
                                .withHandle(0)
                                .withDeliveryTag(new byte[] {0})
                                .withMore(false)
-                               .withMessageFormat(0).onChannel(0); // TODO - Improve this to allow for auto direct
-                                                                   //        to last opened receiver on last session
+                               .withMessageFormat(0)
+                               .withBody().withString("test-message").also()
+                               .onChannel(0); // TODO - Improve this to allow for auto direct
+                                              //        to last opened receiver on last session
 
         receiver.setCredit(1);
 
@@ -568,6 +570,16 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
         });
 
         assertEquals("Unexpected delivery count", 1, deliveryArrived.incrementAndGet());
+
+        // Flow more credit after receiving a message but not consuming it should result in a decrease in
+        // the incoming window if the capacity and max frame size are configured.
+        if (setSessionCapacity && setFrameSize) {
+            expectedWindowSize = expectedWindowSize -1;
+        }
+        script.expectFlow().withLinkCredit(1)
+                           .withIncomingWindow(expectedWindowSize);
+
+        receiver.setCredit(1);
 
         script.expectDetach().respond();
         script.expectEnd().respond();

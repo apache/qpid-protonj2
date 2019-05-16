@@ -307,14 +307,18 @@ public class ProtonFrameDecodingHandler implements EngineHandler, SaslPerformati
             Object val = null;
 
             if (frameBodySize > 0) {
+                int startReadIndex = input.getReadIndex();
                 val = decoder.readObject(input, decoderState);
 
-                // Slice to the known Frame body size and use that as the buffer for any payload once
+                // Slice to the known payload size and use that as the buffer for any payload once
                 // the actual Performative has been decoded.  The implies that the data comprising the
-                // performative will be held as long as the payload buffer is kept.
+                // performative will be held as long as the payload buffer is kept.  If a large buffer
+                // is read that contains many frames we might want to opt to copy each payload buffer
+                // to avoid holding large chunks of memory if client doesn't settle quickly.
                 if (input.isReadable()) {
-                    payload = input.slice(input.getReadIndex(), frameBodySize);
-                    input.skipBytes(payload.getReadableBytes());
+                    int payloadSize = frameBodySize - (input.getReadIndex() - startReadIndex);
+                    payload = input.slice(input.getReadIndex(), payloadSize);
+                    input.skipBytes(payloadSize);
                 }
             } else {
                 transitionToFrameSizeParsingStage();

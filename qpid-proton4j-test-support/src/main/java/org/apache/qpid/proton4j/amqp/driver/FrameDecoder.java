@@ -262,6 +262,8 @@ class FrameDecoder {
             Object val = null;
 
             if (frameBodySize > 0) {
+                int frameBodyStartIndex = input.getReadIndex();
+
                 try {
                     codec.decode(input);
                 } catch (Exception e) {
@@ -283,8 +285,9 @@ class FrameDecoder {
                 // the actual Performative has been decoded.  The implies that the data comprising the
                 // performative will be held as long as the payload buffer is kept.
                 if (input.isReadable()) {
-                    payload = input.slice(input.getReadIndex(), frameBodySize);
-                    input.skipBytes(payload.getReadableBytes());
+                    int payloadSize = frameBodySize - (input.getReadIndex() - frameBodyStartIndex);
+                    payload = input.slice(input.getReadIndex(), payloadSize);
+                    input.skipBytes(payloadSize);
                 }
             } else {
                 transitionToFrameSizeParsingStage();

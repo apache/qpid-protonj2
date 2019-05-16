@@ -75,7 +75,7 @@ public class ProtonFrameEncodingHandler implements EngineHandler {
     private ProtonBuffer writeFrame(Encoder encoder, EncoderState encoderState, Object performative, ProtonBuffer payload, byte frameType, int channel, int maxFrameSize, Runnable onPayloadTooLarge) {
         int outputBufferSize = AMQP_PERFORMATIVE_PAD + (payload != null ? payload.getReadableBytes() : 0);
 
-        ProtonBuffer output = configuration.getBufferAllocator().outputBuffer(AMQP_PERFORMATIVE_PAD + outputBufferSize);
+        ProtonBuffer output = configuration.getBufferAllocator().outputBuffer(outputBufferSize);
 
         final int performativeSize = writePerformative(encoder, encoderState, performative, payload, maxFrameSize, output, onPayloadTooLarge);
         final int capacity = maxFrameSize > 0 ? maxFrameSize - performativeSize : Integer.MAX_VALUE;
@@ -101,7 +101,7 @@ public class ProtonFrameEncodingHandler implements EngineHandler {
             }
         }
 
-        int performativeSize = output.getReadIndex();
+        int performativeSize = output.getWriteIndex();
 
         if (onPayloadTooLarge != null && maxFrameSize > 0 && payload != null && (payload.getReadableBytes() + performativeSize) > maxFrameSize) {
             // Next iteration will re-encode the frame body again with updates from the <payload-to-large>
