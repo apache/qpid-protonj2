@@ -54,7 +54,7 @@ public class ProtonSessionIncomingWindow {
     private long remoteOutgoingWindow;
     private long remoteNextOutgoingId;
 
-    private int incomingBytes;
+    private long incomingBytes;
 
     private SplayMap<ProtonIncomingDelivery> unsettled = new SplayMap<>();
 
@@ -238,5 +238,9 @@ public class ProtonSessionIncomingWindow {
         unsettled.remove((int) delivery.getDeliveryId());
 
         engine.pipeline().fireWrite(disposition, session.getLocalChannel(), null, null);
+    }
+
+    public void deliveryRead(ProtonIncomingDelivery delivery, int bytesRead) {
+        this.incomingBytes -= bytesRead;
     }
 }

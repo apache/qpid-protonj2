@@ -207,4 +207,8 @@ public class ProtonReceiverCreditState implements ProtonLinkCreditState<ProtonIn
 
         sessionWindow.processDisposition(receiver, delivery);
     }
+
+    void deliveryRead(ProtonIncomingDelivery delivery, int bytesRead) {
+        sessionWindow.deliveryRead(delivery, bytesRead);
+    }
 }

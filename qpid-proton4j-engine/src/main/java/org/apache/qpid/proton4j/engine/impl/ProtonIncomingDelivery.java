@@ -40,7 +40,6 @@ public class ProtonIncomingDelivery implements IncomingDelivery {
 
     private DeliveryState localState;
     private boolean locallySettled;
-    // private boolean localSettleSent; // Track if settle was sent and is permanent.
 
     private DeliveryState remoteState;
     private boolean remotelySettled;
@@ -162,8 +161,14 @@ public class ProtonIncomingDelivery implements IncomingDelivery {
 
     @Override
     public ProtonBuffer readAll() {
-        ProtonBuffer result = payload;
-        payload = null;
+        ProtonBuffer result = null;
+        if (payload != null) {
+            int bytesRead = payload.getReadableBytes();
+            result = payload;
+            payload = null;
+            link.deliveryRead(this, bytesRead);
+        }
+
         return result;
     }
 
@@ -171,6 +176,7 @@ public class ProtonIncomingDelivery implements IncomingDelivery {
     public ProtonIncomingDelivery readBytes(ProtonBuffer buffer) {
         if (payload != null) {
             payload.readBytes(buffer);
+            // TODO - If keeping this method we need to report the read to the session
         }
         return this;
     }
@@ -179,6 +185,7 @@ public class ProtonIncomingDelivery implements IncomingDelivery {
     public ProtonIncomingDelivery readBytes(byte[] array, int offset, int length) {
         if (payload != null) {
             payload.readBytes(array, offset, length);
+            // TODO - If keeping this method we need to report the read to the session
         }
         return this;
     }

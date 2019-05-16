@@ -38,6 +38,7 @@ import org.apache.qpid.proton4j.amqp.UnsignedInteger;
 import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
 import org.apache.qpid.proton4j.amqp.driver.ScriptWriter;
 import org.apache.qpid.proton4j.engine.Connection;
+import org.apache.qpid.proton4j.engine.IncomingDelivery;
 import org.apache.qpid.proton4j.engine.Receiver;
 import org.apache.qpid.proton4j.engine.Session;
 import org.apache.qpid.proton4j.engine.exceptions.EngineStateException;
@@ -549,6 +550,13 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
         Receiver receiver = session.receiver("receiver");
         receiver.open();
 
+        final AtomicInteger deliveryArrived = new AtomicInteger();
+        final AtomicReference<IncomingDelivery> delivered = new AtomicReference<>();
+        receiver.deliveryReceivedEventHandler(delivery -> {
+            deliveryArrived.incrementAndGet();
+            delivered.set(delivery);
+        });
+
         // Expect that a flow will be emitted and the window should match either default window
         // size or computed value if max frame size and capacity are set
         script.expectFlow().withLinkCredit(1)
@@ -564,22 +572,31 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
 
         receiver.setCredit(1);
 
-        final AtomicInteger deliveryArrived = new AtomicInteger();
-        receiver.deliveryReceivedEventHandler(delivery -> {
-            deliveryArrived.incrementAndGet();
-        });
-
-        assertEquals("Unexpected delivery count", 1, deliveryArrived.incrementAndGet());
+        assertEquals("Unexpected delivery count", 1, deliveryArrived.get());
+        assertNotNull(delivered.get());
 
         // Flow more credit after receiving a message but not consuming it should result in a decrease in
         // the incoming window if the capacity and max frame size are configured.
         if (setSessionCapacity && setFrameSize) {
-            expectedWindowSize = expectedWindowSize -1;
+            expectedWindowSize = expectedWindowSize - 1;
         }
         script.expectFlow().withLinkCredit(1)
                            .withIncomingWindow(expectedWindowSize);
 
         receiver.setCredit(1);
+
+        // Settle the transfer then flow more credit, verify the emitted incoming window
+        // (it should increase 1 if capacity and frame size set) otherwise remains unchanged.
+        if (setSessionCapacity && setFrameSize) {
+            expectedWindowSize = expectedWindowSize + 1;
+        }
+        script.expectFlow().withLinkCredit(2)
+                           .withIncomingWindow(expectedWindowSize);
+
+        // This will consume the bytes and free them from the session window tracking.
+        assertNotNull(delivered.get().readAll());
+
+        receiver.setCredit(2);
 
         script.expectDetach().respond();
         script.expectEnd().respond();
