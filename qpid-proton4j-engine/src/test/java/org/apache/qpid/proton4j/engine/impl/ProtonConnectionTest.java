@@ -39,6 +39,7 @@ import org.apache.qpid.proton4j.amqp.driver.ScriptWriter;
 import org.apache.qpid.proton4j.amqp.transport.ErrorCondition;
 import org.apache.qpid.proton4j.engine.Connection;
 import org.apache.qpid.proton4j.engine.ConnectionState;
+import org.apache.qpid.proton4j.engine.Session;
 import org.apache.qpid.proton4j.engine.exceptions.EngineStateException;
 import org.hamcrest.Matcher;
 import org.junit.Test;
@@ -52,11 +53,8 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
     public void testConnectionRemoteOpenTriggeredWhenRemoteOpenArrives() throws EngineStateException {
         ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
         engine.errorHandler(result -> failure = result);
-
-        // Create the test driver and link it to the engine for output handling.
         AMQPTestDriver driver = new AMQPTestDriver(engine);
         engine.outputConsumer(driver);
-
         ScriptWriter script = driver.createScriptWriter();
 
         script.expectAMQPHeader().respondWithAMQPHeader();
@@ -84,11 +82,8 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
     public void testConnectionRemoteCloseTriggeredWhenRemoteCloseArrives() throws EngineStateException {
         ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
         engine.errorHandler(result -> failure = result);
-
-        // Create the test driver and link it to the engine for output handling.
         AMQPTestDriver driver = new AMQPTestDriver(engine);
         engine.outputConsumer(driver);
-
         ScriptWriter script = driver.createScriptWriter();
 
         script.expectAMQPHeader().respondWithAMQPHeader();
@@ -207,11 +202,8 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
 
         ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
         engine.errorHandler(result -> failure = result);
-
-        // Create the test driver and link it to the engine for output handling.
         AMQPTestDriver driver = new AMQPTestDriver(engine);
         engine.outputConsumer(driver);
-
         ScriptWriter script = driver.createScriptWriter();
 
         script.expectAMQPHeader().respondWithAMQPHeader();
@@ -271,11 +263,8 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
 
         ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
         engine.errorHandler(result -> failure = result);
-
-        // Create the test driver and link it to the engine for output handling.
         AMQPTestDriver driver = new AMQPTestDriver(engine);
         engine.outputConsumer(driver);
-
         ScriptWriter script = driver.createScriptWriter();
 
         script.expectAMQPHeader().respondWithAMQPHeader();
@@ -326,11 +315,8 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
 
         ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
         engine.errorHandler(result -> failure = result);
-
-        // Create the test driver and link it to the engine for output handling.
         AMQPTestDriver driver = new AMQPTestDriver(engine);
         engine.outputConsumer(driver);
-
         ScriptWriter script = driver.createScriptWriter();
 
         script.expectAMQPHeader().respondWithAMQPHeader();
@@ -374,11 +360,8 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
 
         ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
         engine.errorHandler(result -> failure = result);
-
-        // Create the test driver and link it to the engine for output handling.
         AMQPTestDriver driver = new AMQPTestDriver(engine);
         engine.outputConsumer(driver);
-
         ScriptWriter script = driver.createScriptWriter();
 
         script.expectAMQPHeader().respondWithAMQPHeader();
@@ -418,11 +401,8 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
 
         ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
         engine.errorHandler(result -> failure = result);
-
-        // Create the test driver and link it to the engine for output handling.
         AMQPTestDriver driver = new AMQPTestDriver(engine);
         engine.outputConsumer(driver);
-
         ScriptWriter script = driver.createScriptWriter();
 
         script.expectAMQPHeader().respondWithAMQPHeader();
@@ -458,11 +438,8 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
 
         ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
         engine.errorHandler(result -> failure = result);
-
-        // Create the test driver and link it to the engine for output handling.
         AMQPTestDriver driver = new AMQPTestDriver(engine);
         engine.outputConsumer(driver);
-
         ScriptWriter script = driver.createScriptWriter();
 
         script.expectAMQPHeader().respondWithAMQPHeader();
@@ -493,11 +470,8 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
 
         ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
         engine.errorHandler(result -> failure = result);
-
-        // Create the test driver and link it to the engine for output handling.
         AMQPTestDriver driver = new AMQPTestDriver(engine);
         engine.outputConsumer(driver);
-
         ScriptWriter script = driver.createScriptWriter();
 
         final short eventualChannelMax = 255;
@@ -531,6 +505,30 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
 
         driver.assertScriptComplete();
 
+        assertNull(failure);
+    }
+
+    @Test
+    public void testOpenSessionBeforeOpenConnection() {
+        ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
+        engine.errorHandler(result -> failure = result);
+        AMQPTestDriver driver = new AMQPTestDriver(engine);
+        engine.outputConsumer(driver);
+        ScriptWriter script = driver.createScriptWriter();
+
+        // An opened session shouldn't write its begin until the parent connection
+        // is opened and once it is the begin should be automatically written.
+        ProtonConnection connection = engine.start();
+        Session session = connection.session();
+        session.open();
+
+        script.expectAMQPHeader().respondWithAMQPHeader();
+        script.expectOpen();
+        script.expectBegin();
+
+        connection.open();
+
+        driver.assertScriptComplete();
         assertNull(failure);
     }
 }

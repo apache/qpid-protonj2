@@ -34,6 +34,7 @@ import org.apache.qpid.proton4j.amqp.transport.Disposition;
 import org.apache.qpid.proton4j.amqp.transport.End;
 import org.apache.qpid.proton4j.amqp.transport.ErrorCondition;
 import org.apache.qpid.proton4j.amqp.transport.Flow;
+import org.apache.qpid.proton4j.amqp.transport.Open;
 import org.apache.qpid.proton4j.amqp.transport.Role;
 import org.apache.qpid.proton4j.amqp.transport.Transfer;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
@@ -158,7 +159,11 @@ public class ProtonSession implements Session {
             localState = SessionState.ACTIVE;
             incomingWindow.configureOutbound(localBegin);
             outgoingWindow.configureOutbound(localBegin);
-            connection.getEngine().pipeline().fireWrite(localBegin, localChannel, null, null);
+            // TODO - The connection can be active but not have sent its Open yet if header
+            //        exchange hasn't completed so we can still write this when not ready.
+            if (connection.getLocalState() == ConnectionState.ACTIVE) {
+                connection.getEngine().pipeline().fireWrite(localBegin, localChannel, null, null);
+            }
         }
 
         return this;
@@ -169,7 +174,9 @@ public class ProtonSession implements Session {
         if (getLocalState() == SessionState.ACTIVE) {
             localState = SessionState.CLOSED;
             connection.freeLocalChannel(localChannel);
-            connection.getEngine().pipeline().fireWrite(new End().setError(getLocalCondition()), localChannel, null, null);
+            if (connection.getLocalState() == ConnectionState.ACTIVE) {
+                connection.getEngine().pipeline().fireWrite(new End().setError(getLocalCondition()), localChannel, null, null);
+            }
         }
 
         return this;
@@ -345,7 +352,19 @@ public class ProtonSession implements Session {
         return remoteReceiverOpenEventHandler;
     }
 
+    //----- Respond to local Connection changes
+
+    void localOpen(Open open, int channel) {
+        if (getLocalState() == SessionState.ACTIVE) {
+            connection.getEngine().pipeline().fireWrite(localBegin, localChannel, null, null);
+        }
+    }
+
     //----- Handle incoming performatives
+
+    void handleOpen(Open open, int channel) {
+        // TODO - Respond to connection being remotely opened
+    }
 
     void handleClose(Close close, int channel) {
         // TODO - Respond to connection being remotely closed

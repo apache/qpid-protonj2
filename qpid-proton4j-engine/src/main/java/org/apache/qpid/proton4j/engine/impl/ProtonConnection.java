@@ -545,6 +545,13 @@ public class ProtonConnection implements Connection, AMQPHeader.HeaderHandler<Pr
                 if (getLocalState() == ConnectionState.CLOSED && !localCloseSent) {
                     localCloseSent = true;
                     engine.pipeline().fireWrite(new Close().setError(getLocalCondition()), 0, null, null);
+                } else {
+                    // Inform all sessions that the connection has now written its local open
+                    // TODO - This isn't entirely correct as the session can still send it's
+                    //        open if we've opened the connection but the header exchange isn't done
+                    localSessions.forEach((localChannel, session) -> {
+                        session.localOpen(localOpen, 0);
+                    });
                 }
             }
         } else {
