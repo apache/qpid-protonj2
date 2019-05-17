@@ -64,16 +64,14 @@ public class ProtonReceiverCreditState implements ProtonLinkCreditState<ProtonIn
     }
 
     @Override
-    public Attach handleAttach(Attach attach) {
+    public void handleAttach(Attach attach) {
         if (credit > 0) {
             sessionWindow.writeFlow(receiver);
         }
-
-        return attach;
     }
 
     @Override
-    public Flow handleFlow(Flow flow) {
+    public void handleFlow(Flow flow) {
         if (flow.getDrain()) {
             deliveryCount = (int) flow.getDeliveryCount();
             credit = (int) flow.getLinkCredit();
@@ -85,11 +83,10 @@ public class ProtonReceiverCreditState implements ProtonLinkCreditState<ProtonIn
 
             receiver.signalReceiverDrained();
         }
-        return flow;
     }
 
     @Override
-    public Transfer handleTransfer(Transfer transfer, ProtonBuffer payload) {
+    public ProtonIncomingDelivery handleTransfer(Transfer transfer, ProtonBuffer payload) {
         final ProtonIncomingDelivery delivery;
 
         boolean isFirstTransfer = true;
@@ -139,7 +136,7 @@ public class ProtonReceiverCreditState implements ProtonLinkCreditState<ProtonIn
             receiver.signalDeliveryUpdated(delivery);
         }
 
-        return transfer;
+        return delivery;
     }
 
     private void verifyNewDeliveryIdSequence(Transfer transfer, DeliveryIdTracker currentDeliveryId) {
@@ -167,7 +164,7 @@ public class ProtonReceiverCreditState implements ProtonLinkCreditState<ProtonIn
     }
 
     @Override
-    public Disposition handleDisposition(Disposition disposition, ProtonIncomingDelivery delivery) {
+    public void handleDisposition(Disposition disposition, ProtonIncomingDelivery delivery) {
         boolean updated = false;
 
         if (disposition.getState() != null && !disposition.getState().equals(delivery.getRemoteState())) {
@@ -185,8 +182,6 @@ public class ProtonReceiverCreditState implements ProtonLinkCreditState<ProtonIn
         if (updated) {
             delivery.getLink().signalDeliveryUpdated(delivery);
         }
-
-        return disposition;
     }
 
     @Override

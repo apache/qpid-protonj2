@@ -56,22 +56,16 @@ public interface ProtonLinkCreditState<DeliveryType extends Delivery> extends Li
      * sent from the remote
      *
      * @param attach
-     *
-     * @return the attach for chaining.
      */
-    default Attach handleAttach(Attach attach) {
-        return attach;
-    }
+    abstract void handleAttach(Attach attach);
 
     /**
      * Handle incoming {@link Flow} performatives and update link credit accordingly.
      *
      * @param flow
      *      The {@link Flow} instance to be processed.
-     *
-     * @return the passed object for chaining.
      */
-    abstract Flow handleFlow(Flow flow);
+    abstract void handleFlow(Flow flow);
 
     /**
      * Handle incoming {@link Transfer} performatives and update link credit accordingly.
@@ -81,9 +75,9 @@ public interface ProtonLinkCreditState<DeliveryType extends Delivery> extends Li
      * @param payload
      *      The buffer containing the payload of the incoming {@link Transfer}
      *
-     * @return the passed object for chaining.
+     * @return the incoming delivery associated with this transfer
      */
-    abstract Transfer handleTransfer(Transfer transfer, ProtonBuffer payload);
+    abstract ProtonIncomingDelivery handleTransfer(Transfer transfer, ProtonBuffer payload);
 
     /**
      * Handle incoming {@link Disposition} performatives and update link accordingly.
@@ -92,9 +86,7 @@ public interface ProtonLinkCreditState<DeliveryType extends Delivery> extends Li
      *      The {@link Disposition} instance to be processed.
      * @param delivery
      *      The {@link Delivery} that is the target of this disposition.
-     *
-     * @return the passed object for chaining.
      */
-    abstract Disposition handleDisposition(Disposition disposition, DeliveryType delivery);
+    abstract void handleDisposition(Disposition disposition, DeliveryType delivery);
 
 }

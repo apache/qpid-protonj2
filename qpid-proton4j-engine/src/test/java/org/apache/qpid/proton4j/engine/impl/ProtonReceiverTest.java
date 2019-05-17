@@ -217,8 +217,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         script.remoteAttach().withName("sender")
                              .withHandle(0)
                              .withRole(Role.SENDER)
-                             .withInitialDeliveryCount(0)
-                             .onChannel(0);
+                             .withInitialDeliveryCount(0);
         script.expectAttach();
         script.expectDetach().respond();
 
@@ -406,7 +405,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         script.expectAttach().respond();
         script.expectFlow().withLinkCredit(100);
         script.remoteTransfer().withDeliveryId(0)
-                               .withHandle(0)
+                               .withHandle(0) // TODO - Select last opened receiver link if not set
                                .withDeliveryTag(new byte[] {0})
                                .withMore(false)
                                .withMessageFormat(0);
@@ -455,14 +454,14 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         script.expectAttach().respond();
         script.expectFlow().withLinkCredit(100);
         script.remoteTransfer().withDeliveryId(0)
-                               .withHandle(0)
+                               .withHandle(0) // TODO - Select last opened receiver link if not set
                                .withDeliveryTag(new byte[] {0})
                                .withMore(false)
                                .withMessageFormat(0);
         script.expectDisposition().withFirst(0)
                                   .withSettled(true)
                                   .withRole(Role.RECEIVER)
-                                  .withState(Accepted.getInstance()).onChannel(0);
+                                  .withState(Accepted.getInstance());
         script.expectDetach().respond();
 
         Connection connection = engine.start();
@@ -511,7 +510,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         script.expectAttach().respond();
         script.expectFlow().withLinkCredit(100);
         script.remoteTransfer().withDeliveryId(0)
-                               .withHandle(0)
+                               .withHandle(0) // TODO - Select last opened receiver link if not set
                                .withDeliveryTag(new byte[] {0})
                                .withMore(false)
                                .withMessageFormat(0);
@@ -555,6 +554,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         assertTrue("Delivery did not arrive at the receiver", deliveryArrived.get());
         assertFalse("Delivery should not be partial", receivedDelivery.get().isPartial());
         assertFalse("Delivery should not be partial", updatedDelivery.get().isPartial());
+        assertTrue("Delivery should have been updated to settled", deliveryUpdatedAndSettled.get());
         assertSame("Delivery should be same object as first received", receivedDelivery.get(), updatedDelivery.get());
 
         driver.assertScriptComplete();
@@ -583,13 +583,13 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         script.expectAttach().respond();
         script.expectFlow().withLinkCredit(2);
         script.remoteTransfer().withDeliveryId(0)
-                               .withHandle(0)
+                               .withHandle(0)  // TODO - Select last opened receiver link if not set
                                .withDeliveryTag(new byte[] {0})
                                .withMore(true)
                                .withMessageFormat(0)
                                .withBody().withData(first);
         script.remoteTransfer().withDeliveryId(0)
-                               .withHandle(0)
+                               .withHandle(0)  // TODO - Select last opened receiver link if not set
                                .withDeliveryTag(new byte[] {0})
                                .withMore(false)
                                .withMessageFormat(0)

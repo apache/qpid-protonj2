@@ -398,7 +398,7 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
         }
     }
 
-    void handleDetach(Detach detach) {
+    ProtonLink<?> handleDetach(Detach detach) {
         setRemoteCondition(detach.getError());
 
         if (detach.getClosed()) {
@@ -412,14 +412,17 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
                 remoteDetachHandler.handle(result(self(), getRemoteCondition()));
             }
         }
+
+        return this;
     }
 
-    void handleTransfer(Transfer transfer, ProtonBuffer payload) {
-        getCreditState().handleTransfer(transfer, payload);
+    ProtonIncomingDelivery handleTransfer(Transfer transfer, ProtonBuffer payload) {
+        return getCreditState().handleTransfer(transfer, payload);
     }
 
-    void handleFlow(Flow flow) {
+    ProtonLink<?> handleFlow(Flow flow) {
         getCreditState().handleFlow(flow);
+        return this;
     }
 
     //----- Internal methods
