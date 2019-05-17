@@ -17,6 +17,7 @@
 package org.apache.qpid.proton4j.amqp.driver.actions;
 
 import org.apache.qpid.proton4j.amqp.UnsignedInteger;
+import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
 import org.apache.qpid.proton4j.amqp.driver.codec.transport.Detach;
 import org.apache.qpid.proton4j.amqp.driver.codec.util.TypeMapper;
 import org.apache.qpid.proton4j.amqp.transport.ErrorCondition;
@@ -57,5 +58,16 @@ public class DetachInjectAction extends AbstractPerformativeInjectAction<Detach>
     public DetachInjectAction withErrorCondition(ErrorCondition error) {
         detach.setError(TypeMapper.mapFromProtonType(error));
         return this;
+    }
+
+    @Override
+    protected void beforeActionPerformed(AMQPTestDriver driver) {
+        // We fill in a channel using the next available channel id if one isn't set, then
+        // report the outbound begin to the session so it can track this new session.
+        if (onChannel() == CHANNEL_UNSET) {
+            onChannel(driver.getSessions().getLastOpenedSession().getLocalChannel().intValue());
+        }
+
+        // TODO - Process detach in the local side of the link when needed for added validation
     }
 }

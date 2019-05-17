@@ -17,6 +17,7 @@
 package org.apache.qpid.proton4j.amqp.driver.actions;
 
 import org.apache.qpid.proton4j.amqp.UnsignedInteger;
+import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
 import org.apache.qpid.proton4j.amqp.driver.codec.transport.Disposition;
 import org.apache.qpid.proton4j.amqp.driver.codec.util.TypeMapper;
 import org.apache.qpid.proton4j.amqp.transport.DeliveryState;
@@ -63,5 +64,16 @@ public class DispositionInjectAction extends AbstractPerformativeInjectAction<Di
     public DispositionInjectAction withBatchable(boolean batchable) {
         disposition.setBatchable(batchable);
         return this;
+    }
+
+    @Override
+    protected void beforeActionPerformed(AMQPTestDriver driver) {
+        // We fill in a channel using the next available channel id if one isn't set, then
+        // report the outbound begin to the session so it can track this new session.
+        if (onChannel() == CHANNEL_UNSET) {
+            onChannel(driver.getSessions().getLastOpenedSession().getLocalChannel().intValue());
+        }
+
+        // TODO - Process disposition in the local side of the link when needed for added validation
     }
 }

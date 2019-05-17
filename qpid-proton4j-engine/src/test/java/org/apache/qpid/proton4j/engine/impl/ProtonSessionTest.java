@@ -558,13 +558,11 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
         script.expectFlow().withLinkCredit(1)
                            .withIncomingWindow(expectedWindowSize);
         script.remoteTransfer().withDeliveryId(0)
-                               .withHandle(0)
+                               .withHandle(0)  // TODO - Auto select last opened receiver link.
                                .withDeliveryTag(new byte[] {0})
                                .withMore(false)
                                .withMessageFormat(0)
-                               .withBody().withString("test-message").also()
-                               .onChannel(0); // TODO - Improve this to allow for auto direct
-                                              //        to last opened receiver on last session
+                               .withBody().withString("test-message");
 
         receiver.setCredit(1);
 
