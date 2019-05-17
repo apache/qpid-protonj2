@@ -77,6 +77,36 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
     }
 
     @Test
+    public void testOpenBeginAttachBeforeRemoteResponds() throws Exception {
+        ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
+        engine.errorHandler(result -> failure = result);
+        // Create the test driver and link it to the engine for output handling.
+        AMQPTestDriver driver = new AMQPTestDriver(engine);
+        engine.outputConsumer(driver);
+        ScriptWriter script = driver.createScriptWriter();
+
+        script.expectAMQPHeader().respondWithAMQPHeader();
+        script.expectOpen();
+        script.expectBegin();
+        script.expectAttach();
+
+        Connection connection = engine.start();
+
+        // Default engine should start and return a connection immediately
+        assertNotNull(connection);
+
+        connection.open();
+        Session session = connection.session();
+        session.open();
+        Sender sender = session.sender("test");
+        sender.open();
+
+        driver.assertScriptComplete();
+
+        assertNull(failure);
+    }
+
+    @Test
     public void testSenderFireOpenedEventAfterRemoteAttachArrives() throws Exception {
         ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
         engine.errorHandler(result -> failure = result);
