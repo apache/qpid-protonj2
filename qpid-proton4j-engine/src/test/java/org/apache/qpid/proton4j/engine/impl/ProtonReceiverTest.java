@@ -16,19 +16,26 @@
  */
 package org.apache.qpid.proton4j.engine.impl;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import java.nio.charset.StandardCharsets;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
+import org.apache.qpid.proton4j.amqp.Binary;
 import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
 import org.apache.qpid.proton4j.amqp.driver.ScriptWriter;
 import org.apache.qpid.proton4j.amqp.messaging.Accepted;
+import org.apache.qpid.proton4j.amqp.messaging.Data;
 import org.apache.qpid.proton4j.amqp.transport.Role;
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.engine.Connection;
 import org.apache.qpid.proton4j.engine.IncomingDelivery;
 import org.apache.qpid.proton4j.engine.Receiver;
@@ -546,7 +553,98 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         receiver.close();
 
         assertTrue("Delivery did not arrive at the receiver", deliveryArrived.get());
-        assertFalse("Deliver should not be partial", receivedDelivery.get().isPartial());
+        assertFalse("Delivery should not be partial", receivedDelivery.get().isPartial());
+        assertFalse("Delivery should not be partial", updatedDelivery.get().isPartial());
+        assertSame("Delivery should be same object as first received", receivedDelivery.get(), updatedDelivery.get());
+
+        driver.assertScriptComplete();
+
+        assertNull(failure);
+    }
+
+    @Test
+    public void testReceiverReportsDeliveryUpdatedNextFrameForMultiFrameTransfer() throws Exception {
+        ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
+        engine.errorHandler(result -> failure = result);
+        // Create the test driver and link it to the engine for output handling.
+        AMQPTestDriver driver = new AMQPTestDriver(engine);
+        engine.outputConsumer(driver);
+        ScriptWriter script = driver.createScriptWriter();
+
+        String text = "test-string-for-split-frame-delivery";
+        byte[] encoded = text.getBytes(StandardCharsets.UTF_8);
+
+        Binary first = new Binary(encoded, 0, encoded.length / 2);
+        Binary second = new Binary(encoded, encoded.length / 2, encoded.length - (encoded.length / 2));
+
+        script.expectAMQPHeader().respondWithAMQPHeader();
+        script.expectOpen().respond().withContainerId("driver");
+        script.expectBegin().respond();
+        script.expectAttach().respond();
+        script.expectFlow().withLinkCredit(2);
+        script.remoteTransfer().withDeliveryId(0)
+                               .withHandle(0)
+                               .withDeliveryTag(new byte[] {0})
+                               .withMore(true)
+                               .withMessageFormat(0)
+                               .withBody().withData(first);
+        script.remoteTransfer().withDeliveryId(0)
+                               .withHandle(0)
+                               .withDeliveryTag(new byte[] {0})
+                               .withMore(false)
+                               .withMessageFormat(0)
+                               .withBody().withData(second);
+        script.expectDetach().respond();
+
+        Connection connection = engine.start();
+
+        // Default engine should start and return a connection immediately
+        assertNotNull(connection);
+
+        connection.open();
+        Session session = connection.session();
+        session.open();
+        Receiver receiver = session.receiver("test");
+
+        final AtomicBoolean deliveryArrived = new AtomicBoolean();
+        final AtomicReference<IncomingDelivery> receivedDelivery = new AtomicReference<>();
+        receiver.deliveryReceivedEventHandler(delivery -> {
+            deliveryArrived.set(true);
+            receivedDelivery.set(delivery);
+        });
+
+        final AtomicReference<IncomingDelivery> updatedDelivery = new AtomicReference<>();
+        receiver.deliveryUpdatedEventHandler(delivery -> {
+            updatedDelivery.set(delivery);
+        });
+
+        receiver.open();
+        receiver.setCredit(2);
+
+        assertTrue("Delivery did not arrive at the receiver", deliveryArrived.get());
+        assertFalse("Delivery should not be partial", receivedDelivery.get().isPartial());
+        assertFalse("Delivery should not be partial", updatedDelivery.get().isPartial());
+        assertSame("Delivery should be same object as first received", receivedDelivery.get(), updatedDelivery.get());
+
+        ProtonBuffer payload = updatedDelivery.get().readAll();
+
+        assertNotNull(payload);
+
+        // We are cheating a bit here as this ins't how the encoding would normally work.
+        Data section1 = decoder.readObject(payload, decoderState, Data.class);
+        Data section2 = decoder.readObject(payload, decoderState, Data.class);
+
+        Binary data1 = section1.getValue();
+        Binary data2 = section2.getValue();
+
+        ProtonBuffer combined = ProtonByteBufferAllocator.DEFAULT.allocate(encoded.length);
+
+        combined.writeBytes(data1.asByteBuffer());
+        combined.writeBytes(data2.asByteBuffer());
+
+        assertEquals("Encoded and Decoded strings don't match", text, combined.toString(StandardCharsets.UTF_8));
+
+        receiver.close();
 
         driver.assertScriptComplete();
 

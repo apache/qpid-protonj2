@@ -225,8 +225,8 @@ public class ProtonIncomingDelivery implements IncomingDelivery {
 
             // TODO - CompositeBuffer would reduce copy of buffer contents.
             payload = ProtonByteBufferAllocator.DEFAULT.allocate(capacity, capacity);
-            payload.writeBytes(buffer);
             payload.writeBytes(previous);
+            payload.writeBytes(buffer);
         }
 
         return this;
