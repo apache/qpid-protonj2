@@ -25,7 +25,9 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.apache.qpid.proton4j.amqp.Binary;
@@ -517,7 +519,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         script.remoteDisposition().withSettled(true)
                                   .withRole(Role.SENDER)
                                   .withState(Accepted.getInstance())
-                                  .withFirst(0).onChannel(0);
+                                  .withFirst(0);
         script.expectDetach().respond();
 
         Connection connection = engine.start();
@@ -556,6 +558,82 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         assertFalse("Delivery should not be partial", updatedDelivery.get().isPartial());
         assertTrue("Delivery should have been updated to settled", deliveryUpdatedAndSettled.get());
         assertSame("Delivery should be same object as first received", receivedDelivery.get(), updatedDelivery.get());
+
+        driver.assertScriptComplete();
+
+        assertNull(failure);
+    }
+
+    @Test
+    public void testReceiverReportsDeliveryUpdatedOnDispositionForMultipleTransfers() throws Exception {
+        ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
+        engine.errorHandler(result -> failure = result);
+        // Create the test driver and link it to the engine for output handling.
+        AMQPTestDriver driver = new AMQPTestDriver(engine);
+        engine.outputConsumer(driver);
+        ScriptWriter script = driver.createScriptWriter();
+
+        script.expectAMQPHeader().respondWithAMQPHeader();
+        script.expectOpen().respond().withContainerId("driver");
+        script.expectBegin().respond();
+        script.expectAttach().respond();
+        script.expectFlow().withLinkCredit(2);
+        script.remoteTransfer().withDeliveryId(0)
+                               .withHandle(0) // TODO - Select last opened receiver link if not set
+                               .withDeliveryTag(new byte[] {0})
+                               .withMore(false)
+                               .withMessageFormat(0);
+        script.remoteTransfer().withDeliveryId(1)
+                               .withHandle(0) // TODO - Select last opened receiver link if not set
+                               .withDeliveryTag(new byte[] {1})
+                               .withMore(false)
+                               .withMessageFormat(0);
+        script.remoteDisposition().withSettled(true)
+                                  .withRole(Role.SENDER)
+                                  .withState(Accepted.getInstance())
+                                  .withFirst(0)
+                                  .withLast(1);
+        script.expectDetach().respond();
+
+        Connection connection = engine.start();
+
+        // Default engine should start and return a connection immediately
+        assertNotNull(connection);
+
+        connection.open();
+        Session session = connection.session();
+        session.open();
+        Receiver receiver = session.receiver("test");
+
+        final AtomicInteger deliveryCounter = new AtomicInteger();
+        final AtomicInteger dispositionCounter = new AtomicInteger();
+
+        final ArrayList<IncomingDelivery> deliveries = new ArrayList<>();
+
+        receiver.deliveryReceivedEventHandler(delivery -> {
+            deliveryCounter.incrementAndGet();
+        });
+
+        receiver.deliveryUpdatedEventHandler(delivery -> {
+            if (delivery.isRemotelySettled()) {
+                dispositionCounter.incrementAndGet();
+                deliveries.add(delivery);
+            }
+        });
+
+        receiver.open();
+        receiver.setCredit(2);
+        receiver.close();
+
+        assertEquals("Not all deliveries arrived", 2, deliveryCounter.get());
+        assertEquals("Not all deliveries received dispositions", 2, deliveries.size());
+
+        byte deliveryTag = 0;
+
+        for (IncomingDelivery delivery : deliveries) {
+            assertEquals("Delivery not updated in correct order", deliveryTag++, delivery.getTag()[0]);
+            assertTrue("Delivery should be marked as remotely setted", delivery.isRemotelySettled());
+        }
 
         driver.assertScriptComplete();
 
