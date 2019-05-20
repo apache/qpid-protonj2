@@ -172,7 +172,9 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
             detach.setClosed(false);
             detach.setError(getLocalCondition());
 
-            session.getEngine().pipeline().fireWrite(detach, session.getLocalChannel(), null, null);
+            if (session.getLocalState() == SessionState.ACTIVE) {
+                session.getEngine().pipeline().fireWrite(detach, session.getLocalChannel(), null, null);
+            }
             session.freeLocalHandle(localAttach.getHandle());
         }
 
@@ -189,7 +191,9 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
             detach.setClosed(true);
             detach.setError(getLocalCondition());
 
-            session.getEngine().pipeline().fireWrite(detach, session.getLocalChannel(), null, null);
+            if (session.getLocalState() == SessionState.ACTIVE) {
+                session.getEngine().pipeline().fireWrite(detach, session.getLocalChannel(), null, null);
+            }
             session.freeLocalHandle(localAttach.getHandle());
         }
 

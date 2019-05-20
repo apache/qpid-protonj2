@@ -385,6 +385,86 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
     }
 
     @Test
+    public void testOpenReceiverBeforeOpenSession() {
+        ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
+        engine.errorHandler(result -> failure = result);
+        AMQPTestDriver driver = new AMQPTestDriver(engine);
+        engine.outputConsumer(driver);
+        ScriptWriter script = driver.createScriptWriter();
+
+        script.expectAMQPHeader().respondWithAMQPHeader();
+        script.expectOpen().respond();
+
+        // Create the connection and open it, then create a session and a receiver
+        // and observe that the receiver doesn't send its attach until the session
+        // is opened.
+        Connection connection = engine.start();
+        connection.open();
+        Session session = connection.session();
+        Receiver receiver = session.receiver("receiver");
+        receiver.open();
+
+        script.expectBegin().respond();
+        script.expectAttach().withHandle(0).withName("receiver").withRole(Role.RECEIVER).respond();
+
+        // Now open the session, expect the Begin, and Attach frames
+        session.open();
+
+        driver.assertScriptComplete();
+
+        assertNull(failure);
+    }
+
+    @Test
+    public void testReceiverDetachAfterEndSent() {
+        doTestReceiverCloseOrDetachAfterEndSent(false);
+    }
+
+    @Test
+    public void testReceiverCloseAfterEndSent() {
+        doTestReceiverCloseOrDetachAfterEndSent(true);
+    }
+
+    public void doTestReceiverCloseOrDetachAfterEndSent(boolean close) {
+        ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
+        engine.errorHandler(result -> failure = result);
+        AMQPTestDriver driver = new AMQPTestDriver(engine);
+        engine.outputConsumer(driver);
+        ScriptWriter script = driver.createScriptWriter();
+
+        script.expectAMQPHeader().respondWithAMQPHeader();
+        script.expectOpen().respond();
+        script.expectBegin().respond();
+        script.expectAttach().withHandle(0).withName("receiver").withRole(Role.RECEIVER).respond();
+        script.expectEnd().respond();
+
+        // Create the connection and open it, then create a session and a receiver
+        // and observe that the receiver doesn't send its detach if the session has
+        // already been closed.
+        Connection connection = engine.start();
+        connection.open();
+        Session session = connection.session();
+        session.open();
+        Receiver receiver = session.receiver("receiver");
+        receiver.open();
+
+        // Cause an End frame to be sent
+        session.close();
+
+        // The sender should not emit an end as the session was closed which implicitly
+        // detached the link.
+        if (close) {
+            receiver.close();
+        } else {
+            receiver.detach();
+        }
+
+        driver.assertScriptComplete();
+
+        assertNull(failure);
+    }
+
+    @Test
     public void testReceiverSendsFlowWhenCreditSet() throws Exception {
         ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
         engine.errorHandler(result -> failure = result);
