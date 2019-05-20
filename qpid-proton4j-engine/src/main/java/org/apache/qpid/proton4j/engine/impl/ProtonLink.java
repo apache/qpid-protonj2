@@ -28,6 +28,7 @@ import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.amqp.messaging.Source;
 import org.apache.qpid.proton4j.amqp.messaging.Target;
 import org.apache.qpid.proton4j.amqp.transport.Attach;
+import org.apache.qpid.proton4j.amqp.transport.Begin;
 import org.apache.qpid.proton4j.amqp.transport.Detach;
 import org.apache.qpid.proton4j.amqp.transport.ErrorCondition;
 import org.apache.qpid.proton4j.amqp.transport.Flow;
@@ -153,8 +154,9 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
             localState = LinkState.ACTIVE;
             long localHandle = session.findFreeLocalHandle(this);
             localAttach.setHandle(localHandle);
-            session.getEngine().pipeline().fireWrite(
-                getCreditState().configureAttach(localAttach), session.getLocalChannel(), null, null);
+            if (session.isLocallyOpened() && session.wasLocalBeginSent()) {
+                fireLocalAttach();
+            }
         }
 
         return this;
@@ -368,6 +370,14 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
         return self();
     }
 
+    //----- Process local events from the parent session
+
+    void localBegin(Begin begin, int channel) {
+        if (isLocallyOpened()) {
+            fireLocalAttach();
+        }
+    }
+
     //----- Handle incoming performatives
 
     void handleAttach(Attach attach) {
@@ -433,6 +443,11 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
 
     boolean isRemotelyOpened() {
         return getRemoteState() == LinkState.ACTIVE;
+    }
+
+    private void fireLocalAttach() {
+        session.getEngine().pipeline().fireWrite(
+            getCreditState().configureAttach(localAttach), session.getLocalChannel(), null, null);
     }
 
     protected void checkNotOpened(String errorMessage) {

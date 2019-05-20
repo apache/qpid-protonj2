@@ -577,4 +577,16 @@ public class ProtonConnection implements Connection, AMQPHeader.HeaderHandler<Pr
 
         localSessions.remove(localChannel);
     }
+
+    boolean wasHeaderSent() {
+        return this.headerSent;
+    }
+
+    boolean wasLocalOpenSent() {
+        return this.localOpenSent;
+    }
+
+    boolean wasLocalCloseSent() {
+        return this.localCloseSent;
+    }
 }

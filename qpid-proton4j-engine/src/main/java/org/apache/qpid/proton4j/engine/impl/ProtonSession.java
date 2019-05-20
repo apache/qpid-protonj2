@@ -81,6 +81,9 @@ public class ProtonSession implements Session {
     private ErrorCondition localError;
     private ErrorCondition remoteError;
 
+    private boolean localBeginSent;
+    private boolean localEndSent;
+
     private EventHandler<AsyncEvent<Session>> remoteOpenHandler = (result) -> {
         LOG.trace("Remote session open arrived at default handler.");
     };
@@ -159,10 +162,10 @@ public class ProtonSession implements Session {
             localState = SessionState.ACTIVE;
             incomingWindow.configureOutbound(localBegin);
             outgoingWindow.configureOutbound(localBegin);
-            // TODO - The connection can be active but not have sent its Open yet if header
-            //        exchange hasn't completed so we can still write this when not ready.
-            if (connection.getLocalState() == ConnectionState.ACTIVE) {
-                connection.getEngine().pipeline().fireWrite(localBegin, localChannel, null, null);
+            // The connection could be open but not have written the Open due to SASL or other pre-processing
+            // which means we must wait until signaled that the connection actually is ready for the begin.
+            if (connection.getLocalState() == ConnectionState.ACTIVE && connection.wasLocalOpenSent()) {
+                fireSessionOpen();
             }
         }
 
@@ -175,6 +178,7 @@ public class ProtonSession implements Session {
             localState = SessionState.CLOSED;
             connection.freeLocalChannel(localChannel);
             if (connection.getLocalState() == ConnectionState.ACTIVE) {
+                localEndSent = true;
                 connection.getEngine().pipeline().fireWrite(new End().setError(getLocalCondition()), localChannel, null, null);
             }
         }
@@ -355,8 +359,8 @@ public class ProtonSession implements Session {
     //----- Respond to local Connection changes
 
     void localOpen(Open open, int channel) {
-        if (getLocalState() == SessionState.ACTIVE) {
-            connection.getEngine().pipeline().fireWrite(localBegin, localChannel, null, null);
+        if (isLocallyOpened()) {
+            fireSessionOpen();
         }
     }
 
@@ -528,6 +532,32 @@ public class ProtonSession implements Session {
 
     ProtonSessionIncomingWindow getIncomingWindow() {
         return incomingWindow;
+    }
+
+    boolean isLocallyOpened() {
+        return getLocalState() == SessionState.ACTIVE;
+    }
+
+    boolean isRemotelyOpened() {
+        return getRemoteState() == SessionState.ACTIVE;
+    }
+
+    boolean wasLocalBeginSent() {
+        return localBeginSent;
+    }
+
+    boolean wasLocalEndSent() {
+        return localEndSent;
+    }
+
+    void fireSessionOpen() {
+        localBeginSent = true;
+        connection.getEngine().pipeline().fireWrite(localBegin, localChannel, null, null);
+
+        // TODO - Implementing an efficient foreach on the MRU cache would be a nice to have.
+        for (ProtonLink<?> link : localLinks.values()) {
+            link.localBegin(localBegin, localChannel);
+        }
     }
 
     long findFreeLocalHandle(ProtonLink<?> link) {

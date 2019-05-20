@@ -319,7 +319,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
     }
 
     @Test
-    public void testCannotOpenSenderAfterSessionRemotelyClosed() throws Exception {
+    public void testCannotOpenReceiverAfterSessionRemotelyClosed() throws Exception {
         ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
         engine.errorHandler(result -> failure = result);
         AMQPTestDriver driver = new AMQPTestDriver(engine);
@@ -348,6 +348,36 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         } catch (IllegalStateException ise) {}
 
         receiver.close();
+
+        driver.assertScriptComplete();
+
+        assertNull(failure);
+    }
+
+    @Test
+    public void testOpenReceiverBeforeOpenConnection() {
+        ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
+        engine.errorHandler(result -> failure = result);
+        AMQPTestDriver driver = new AMQPTestDriver(engine);
+        engine.outputConsumer(driver);
+        ScriptWriter script = driver.createScriptWriter();
+
+        // Create the connection but don't open, then open a session and a receiver and
+        // the session begin and receiver attach shouldn't go out until the connection
+        // is opened locally.
+        Connection connection = engine.start();
+        Session session = connection.session();
+        session.open();
+        Receiver receiver = session.receiver("receiver");
+        receiver.open();
+
+        script.expectAMQPHeader().respondWithAMQPHeader();
+        script.expectOpen().respond();
+        script.expectBegin().respond();
+        script.expectAttach().withHandle(0).withName("receiver").withRole(Role.RECEIVER).respond();
+
+        // Now open the connection, expect the Open, Begin, and Attach frames
+        connection.open();
 
         driver.assertScriptComplete();
 

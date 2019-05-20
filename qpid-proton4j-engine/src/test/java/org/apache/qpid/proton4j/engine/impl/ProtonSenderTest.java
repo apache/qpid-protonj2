@@ -548,4 +548,34 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
 
         assertNull(failure);
     }
+
+    @Test
+    public void testOpenSenderBeforeOpenConnection() {
+        ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
+        engine.errorHandler(result -> failure = result);
+        AMQPTestDriver driver = new AMQPTestDriver(engine);
+        engine.outputConsumer(driver);
+        ScriptWriter script = driver.createScriptWriter();
+
+        // Create the connection but don't open, then open a session and a sender and
+        // the session begin and sender attach shouldn't go out until the connection
+        // is opened locally.
+        Connection connection = engine.start();
+        Session session = connection.session();
+        session.open();
+        Sender sender = session.sender("sender");
+        sender.open();
+
+        script.expectAMQPHeader().respondWithAMQPHeader();
+        script.expectOpen().respond();
+        script.expectBegin().respond();
+        script.expectAttach().withHandle(0).withName("sender").withRole(Role.SENDER).respond();
+
+        // Now open the connection, expect the Open, Begin, and Attach frames
+        connection.open();
+
+        driver.assertScriptComplete();
+
+        assertNull(failure);
+    }
 }
