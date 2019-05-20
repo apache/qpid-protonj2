@@ -346,6 +346,85 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
+    @Test
+    public void testSessionCloseDoesNothingWhenConnectionClosed() throws EngineStateException {
+        ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
+        engine.errorHandler(result -> failure = result);
+        AMQPTestDriver driver = new AMQPTestDriver(engine);
+        engine.outputConsumer(driver);
+        ScriptWriter script = driver.createScriptWriter();
+
+        script.expectAMQPHeader().respondWithAMQPHeader();
+        script.expectOpen().respond();
+        script.expectBegin().respond();
+        script.expectClose();
+
+        Connection connection = engine.start();
+        Session session = connection.session();
+        connection.open();
+        session.open();
+        connection.close();
+
+        // Now when calling close the operation should cause a frame to be emitted.
+        session.close();
+
+        driver.assertScriptComplete();
+
+        assertNull(failure);
+    }
+
+    @Test
+    public void testSessionOpenNotSentUntilConnectionOpened() throws EngineStateException {
+        ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
+        engine.errorHandler(result -> failure = result);
+        AMQPTestDriver driver = new AMQPTestDriver(engine);
+        engine.outputConsumer(driver);
+        ScriptWriter script = driver.createScriptWriter();
+
+        Connection connection = engine.start();
+        Session session = connection.session();
+        session.open();
+
+        script.expectAMQPHeader().respondWithAMQPHeader();
+        script.expectOpen().respond();
+        script.expectBegin().respond();
+        script.expectClose();
+
+        connection.open();
+        connection.close();
+
+        driver.assertScriptComplete();
+
+        assertNull(failure);
+    }
+
+    @Test
+    public void testSessionCloseNotSentUntilConnectionOpened() throws EngineStateException {
+        ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
+        engine.errorHandler(result -> failure = result);
+        AMQPTestDriver driver = new AMQPTestDriver(engine);
+        engine.outputConsumer(driver);
+        ScriptWriter script = driver.createScriptWriter();
+
+        Connection connection = engine.start();
+        Session session = connection.session();
+        session.open();
+        session.close();
+
+        script.expectAMQPHeader().respondWithAMQPHeader();
+        script.expectOpen().respond();
+        script.expectBegin().respond();
+        script.expectEnd().respond();
+        script.expectClose();
+
+        connection.open();
+        connection.close();
+
+        driver.assertScriptComplete();
+
+        assertNull(failure);
+    }
+
     @Ignore("Handle invalid begin either by connection close or end of remotely opened resource.")
     @Test
     public void testHandleRemoteBeginWithInvalidRemoteChannelSet() throws IOException {

@@ -165,7 +165,7 @@ public class ProtonSession implements Session {
             // The connection could be open but not have written the Open due to SASL or other pre-processing
             // which means we must wait until signaled that the connection actually is ready for the begin.
             if (connection.getLocalState() == ConnectionState.ACTIVE && connection.wasLocalOpenSent()) {
-                fireSessionOpen();
+                fireSessionBegin();
             }
         }
 
@@ -176,10 +176,8 @@ public class ProtonSession implements Session {
     public ProtonSession close() {
         if (getLocalState() == SessionState.ACTIVE) {
             localState = SessionState.CLOSED;
-            connection.freeLocalChannel(localChannel);
             if (connection.getLocalState() == ConnectionState.ACTIVE) {
-                localEndSent = true;
-                connection.getEngine().pipeline().fireWrite(new End().setError(getLocalCondition()), localChannel, null, null);
+                fireSessionEnd();
             }
         }
 
@@ -358,9 +356,13 @@ public class ProtonSession implements Session {
 
     //----- Respond to local Connection changes
 
-    void localOpen(Open open, int channel) {
-        if (isLocallyOpened()) {
-            fireSessionOpen();
+    void localOpen(Open open) {
+        if (localState.ordinal() >= SessionState.ACTIVE.ordinal()) {
+            fireSessionBegin();
+
+            if (isLocallyClosed()) {
+                fireSessionEnd();
+            }
         }
     }
 
@@ -542,6 +544,14 @@ public class ProtonSession implements Session {
         return getRemoteState() == SessionState.ACTIVE;
     }
 
+    boolean isLocallyClosed() {
+        return getLocalState() == SessionState.CLOSED;
+    }
+
+    boolean isRemotelyClosed() {
+        return getRemoteState() == SessionState.CLOSED;
+    }
+
     boolean wasLocalBeginSent() {
         return localBeginSent;
     }
@@ -550,7 +560,7 @@ public class ProtonSession implements Session {
         return localEndSent;
     }
 
-    void fireSessionOpen() {
+    void fireSessionBegin() {
         localBeginSent = true;
         connection.getEngine().pipeline().fireWrite(localBegin, localChannel, null, null);
 
@@ -558,6 +568,12 @@ public class ProtonSession implements Session {
         for (ProtonLink<?> link : localLinks.values()) {
             link.localBegin(localBegin, localChannel);
         }
+    }
+
+    void fireSessionEnd() {
+        localEndSent = true;
+        connection.freeLocalChannel(localChannel);
+        connection.getEngine().pipeline().fireWrite(new End().setError(getLocalCondition()), localChannel, null, null);
     }
 
     long findFreeLocalHandle(ProtonLink<?> link) {
