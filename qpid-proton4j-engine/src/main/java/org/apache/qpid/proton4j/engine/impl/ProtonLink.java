@@ -166,14 +166,8 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
     public ProtonLink<T> detach() {
         if (getLocalState() == LinkState.ACTIVE) {
             localState = LinkState.DETACHED;
-            // TODO - Additional processing.
-            Detach detach = new Detach();
-            detach.setHandle(localAttach.getHandle());
-            detach.setClosed(false);
-            detach.setError(getLocalCondition());
-
-            if (session.getLocalState() == SessionState.ACTIVE) {
-                session.getEngine().pipeline().fireWrite(detach, session.getLocalChannel(), null, null);
+            if (session.getLocalState() == SessionState.ACTIVE && session.wasLocalBeginSent()) {
+                fireLocalDetach(false);
             }
             session.freeLocalHandle(localAttach.getHandle());
         }
@@ -185,14 +179,8 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
     public ProtonLink<T> close() {
         if (getLocalState() == LinkState.ACTIVE) {
             localState = LinkState.CLOSED;
-            // TODO - Additional processing.
-            Detach detach = new Detach();
-            detach.setHandle(localAttach.getHandle());
-            detach.setClosed(true);
-            detach.setError(getLocalCondition());
-
-            if (session.getLocalState() == SessionState.ACTIVE) {
-                session.getEngine().pipeline().fireWrite(detach, session.getLocalChannel(), null, null);
+            if (session.getLocalState() == SessionState.ACTIVE && session.wasLocalBeginSent()) {
+                fireLocalDetach(true);
             }
             session.freeLocalHandle(localAttach.getHandle());
         }
@@ -377,8 +365,16 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
     //----- Process local events from the parent session
 
     void localBegin(Begin begin, int channel) {
-        if (isLocallyOpened()) {
+        // Fire held attach if link already marked as active.
+        if (getLocalState().ordinal() >= LinkState.ACTIVE.ordinal()) {
             fireLocalAttach();
+        }
+
+        // If already closed or detached this is the time to send that along as well.
+        if (getLocalState() == LinkState.DETACHED) {
+            fireLocalDetach(false);
+        } else if (getLocalState() == LinkState.CLOSED) {
+            fireLocalDetach(true);
         }
     }
 
@@ -449,9 +445,34 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
         return getRemoteState() == LinkState.ACTIVE;
     }
 
+    boolean isLocallyClosed() {
+        return getLocalState() == LinkState.CLOSED;
+    }
+
+    boolean isRemotelyClosed() {
+        return getRemoteState() == LinkState.CLOSED;
+    }
+
+    boolean isLocallyDetached() {
+        return getLocalState() == LinkState.DETACHED;
+    }
+
+    boolean isRemotelyDetached() {
+        return getRemoteState() == LinkState.DETACHED;
+    }
+
     private void fireLocalAttach() {
         session.getEngine().pipeline().fireWrite(
             getCreditState().configureAttach(localAttach), session.getLocalChannel(), null, null);
+    }
+
+    private void fireLocalDetach(boolean closed) {
+        Detach detach = new Detach();
+        detach.setHandle(localAttach.getHandle());
+        detach.setClosed(closed);
+        detach.setError(getLocalCondition());
+
+        session.getEngine().pipeline().fireWrite(detach, session.getLocalChannel(), null, null);
     }
 
     protected void checkNotOpened(String errorMessage) {
