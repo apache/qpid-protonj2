@@ -129,7 +129,7 @@ class FrameDecoder {
 
         @Override
         public void parse(ProtonBuffer incoming) throws AssertionError {
-            while (incoming.isReadable() && headerByte <= AMQPHeader.HEADER_SIZE_BYTES) {
+            while (incoming.isReadable() && headerByte < AMQPHeader.HEADER_SIZE_BYTES) {
                 headerBytes[headerByte++] = incoming.readByte();
             }
 
