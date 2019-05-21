@@ -89,6 +89,8 @@ public class ProtonReceiver extends ProtonLink<Receiver> implements Receiver {
         checkNotClosed("Cannot set credit on a closed Receiver");
 
         // TODO - Better way to check all this state on each operation.
+        //        One possible way of doing this is by having a Consumer<> type and
+        //        swap the method when closed to one that always throws.
         if (session.isLocallyClosed() || connection.isLocallyClosed() ||
             session.isRemotelyClosed() || connection.isRemotelyClosed()) {
             throw new IllegalStateException("Cannot set credit when session or connection already closed");
@@ -111,11 +113,22 @@ public class ProtonReceiver extends ProtonLink<Receiver> implements Receiver {
     //----- Delivery related access points
 
     void disposition(ProtonIncomingDelivery delivery) {
+        checkNotClosed("Cannot get credit on a closed Receiver");
+
+        // TODO - Better way to check all this state on each operation.
+        if (session.isLocallyClosed() || connection.isLocallyClosed() ||
+            session.isRemotelyClosed() || connection.isRemotelyClosed()) {
+            throw new IllegalStateException("Cannot set credit when session or connection already closed");
+        }
+
         // TODO - Enforce not closed etc
         creditState.disposition(delivery);
     }
 
     void deliveryRead(ProtonIncomingDelivery delivery, int bytesRead) {
+        // TODO - When any resource is closed we could still allow read of inbound data but the user
+        //        can't operate on the delivery so do we want that ?
+
         creditState.deliveryRead(delivery, bytesRead);
     }
 

@@ -49,6 +49,38 @@ import org.junit.Test;
 public class ProtonConnectionTest extends ProtonEngineTestSupport {
 
     @Test
+    public void testConnectionOpenAndCloseAreIdempotent() throws Exception {
+        ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
+        engine.errorHandler(result -> failure = result);
+        AMQPTestDriver driver = new AMQPTestDriver(engine);
+        engine.outputConsumer(driver);
+        ScriptWriter script = driver.createScriptWriter();
+
+        script.expectAMQPHeader().respondWithAMQPHeader();
+        script.expectOpen().respond().withContainerId("driver");
+        script.expectClose().respond();
+
+        Connection connection = engine.start();
+
+        // Default engine should start and return a connection immediately
+        assertNotNull(connection);
+
+        connection.open();
+
+        // Should not emit another open frame
+        connection.open();
+
+        connection.close();
+
+        // Should not emit another close frame
+        connection.close();
+
+        driver.assertScriptComplete();
+
+        assertNull(failure);
+    }
+
+    @Test
     public void testConnectionRemoteOpenTriggeredWhenRemoteOpenArrives() throws EngineStateException {
         ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
         engine.errorHandler(result -> failure = result);

@@ -46,6 +46,44 @@ import org.junit.Test;
 public class ProtonSenderTest extends ProtonEngineTestSupport {
 
     @Test
+    public void testSenderOpenAndCloseAreIdempotent() throws Exception {
+        ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
+        engine.errorHandler(result -> failure = result);
+        AMQPTestDriver driver = new AMQPTestDriver(engine);
+        engine.outputConsumer(driver);
+        ScriptWriter script = driver.createScriptWriter();
+
+        script.expectAMQPHeader().respondWithAMQPHeader();
+        script.expectOpen().respond().withContainerId("driver");
+        script.expectBegin().respond();
+        script.expectAttach().respond();
+        script.expectDetach().respond();
+
+        Connection connection = engine.start();
+
+        // Default engine should start and return a connection immediately
+        assertNotNull(connection);
+
+        connection.open();
+        Session session = connection.session();
+        session.open();
+        Sender sender = session.sender("test");
+        sender.open();
+
+        // Should not emit another attach frame
+        sender.open();
+
+        sender.close();
+
+        // Should not emit another detach frame
+        sender.close();
+
+        driver.assertScriptComplete();
+
+        assertNull(failure);
+    }
+
+    @Test
     public void testEngineEmitsAttachAfterLocalSenderOpened() throws Exception {
         ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
         engine.errorHandler(result -> failure = result);

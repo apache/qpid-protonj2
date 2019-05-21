@@ -35,6 +35,7 @@ import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
 import org.apache.qpid.proton4j.amqp.driver.ScriptWriter;
 import org.apache.qpid.proton4j.amqp.messaging.Accepted;
 import org.apache.qpid.proton4j.amqp.messaging.Data;
+import org.apache.qpid.proton4j.amqp.messaging.Released;
 import org.apache.qpid.proton4j.amqp.transport.Role;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
@@ -48,6 +49,45 @@ import org.junit.Test;
  * Test the {@link ProtonReceiver}
  */
 public class ProtonReceiverTest extends ProtonEngineTestSupport {
+
+    @Test
+    public void testReceiverOpenAndCloseAreIdempotent() throws Exception {
+        ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
+        engine.errorHandler(result -> failure = result);
+        // Create the test driver and link it to the engine for output handling.
+        AMQPTestDriver driver = new AMQPTestDriver(engine);
+        engine.outputConsumer(driver);
+        ScriptWriter script = driver.createScriptWriter();
+
+        script.expectAMQPHeader().respondWithAMQPHeader();
+        script.expectOpen().respond().withContainerId("driver");
+        script.expectBegin().respond();
+        script.expectAttach().respond();
+        script.expectDetach().respond();
+
+        Connection connection = engine.start();
+
+        // Default engine should start and return a connection immediately
+        assertNotNull(connection);
+
+        connection.open();
+        Session session = connection.session();
+        session.open();
+        Receiver receiver = session.receiver("test");
+        receiver.open();
+
+        // Should not emit another attach frame
+        receiver.open();
+
+        receiver.close();
+
+        // Should not emit another detach frame
+        receiver.close();
+
+        driver.assertScriptComplete();
+
+        assertNull(failure);
+    }
 
     @Test
     public void testEngineEmitsAttachAfterLocalReceiverOpened() throws Exception {
@@ -791,6 +831,76 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         assertFalse("Deliver should not be partial", receivedDelivery.get().isPartial());
 
         receiver.close();
+
+        driver.assertScriptComplete();
+
+        assertNull(failure);
+    }
+
+    /**
+     * Verify that no Disposition frame is emitted by the Transport should a Delivery
+     * have disposition applied after the Close frame was sent.
+     */
+    @Test
+    public void testDispositionNoAllowedAfterCloseSent() {
+        ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
+        engine.errorHandler(result -> failure = result);
+        // Create the test driver and link it to the engine for output handling.
+        AMQPTestDriver driver = new AMQPTestDriver(engine);
+        engine.outputConsumer(driver);
+        ScriptWriter script = driver.createScriptWriter();
+
+        script.expectAMQPHeader().respondWithAMQPHeader();
+        script.expectOpen().respond().withContainerId("driver");
+        script.expectBegin().respond();
+        script.expectAttach().respond();
+        script.expectFlow().withLinkCredit(1);
+        script.remoteTransfer().withDeliveryId(0)
+                               .withHandle(0) // TODO - Select last opened receiver link if not set
+                               .withDeliveryTag(new byte[] {0})
+                               .withMore(false)
+                               .withMessageFormat(0);
+        script.expectClose();
+
+        Connection connection = engine.start();
+
+        // Default engine should start and return a connection immediately
+        assertNotNull(connection);
+
+        connection.open();
+        Session session = connection.session();
+        session.open();
+        Receiver receiver = session.receiver("test");
+
+        final AtomicBoolean deliveryArrived = new AtomicBoolean();
+        final AtomicReference<IncomingDelivery> receivedDelivery = new AtomicReference<>();
+        receiver.deliveryReceivedEventHandler(delivery -> {
+            deliveryArrived.set(true);
+            receivedDelivery.set(delivery);
+        });
+
+        receiver.open();
+        receiver.setCredit(1);
+
+        assertTrue("Delivery did not arrive at the receiver", deliveryArrived.get());
+        assertFalse("Deliver should not be partial", receivedDelivery.get().isPartial());
+
+        connection.close();
+
+        try {
+            receivedDelivery.get().disposition(Released.getInstance());
+            fail("Should not be able to set a disposition after the connection was closed");
+        } catch (IllegalStateException ise) {}
+
+        try {
+            receivedDelivery.get().disposition(Released.getInstance(), true);
+            fail("Should not be able to set a disposition after the connection was closed");
+        } catch (IllegalStateException ise) {}
+
+        try {
+            receivedDelivery.get().settle();
+            fail("Should not be able to settle after the connection was closed");
+        } catch (IllegalStateException ise) {}
 
         driver.assertScriptComplete();
 
