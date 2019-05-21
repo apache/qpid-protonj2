@@ -154,9 +154,7 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
             localState = LinkState.ACTIVE;
             long localHandle = session.findFreeLocalHandle(this);
             localAttach.setHandle(localHandle);
-            if (session.isLocallyOpened() && session.wasLocalBeginSent()) {
-                fireLocalAttach();
-            }
+            trySendLocalAttach();
         }
 
         return this;
@@ -166,10 +164,7 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
     public ProtonLink<T> detach() {
         if (getLocalState() == LinkState.ACTIVE) {
             localState = LinkState.DETACHED;
-            if (session.getLocalState() == SessionState.ACTIVE && session.wasLocalBeginSent()) {
-                fireLocalDetach(false);
-            }
-            session.freeLocalHandle(localAttach.getHandle());
+            trySendLocalDetach(false);
         }
 
         return this;
@@ -179,10 +174,7 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
     public ProtonLink<T> close() {
         if (getLocalState() == LinkState.ACTIVE) {
             localState = LinkState.CLOSED;
-            if (session.getLocalState() == SessionState.ACTIVE && session.wasLocalBeginSent()) {
-                fireLocalDetach(true);
-            }
-            session.freeLocalHandle(localAttach.getHandle());
+            trySendLocalDetach(true);
         }
 
         return this;
@@ -367,14 +359,14 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
     void localBegin(Begin begin, int channel) {
         // Fire held attach if link already marked as active.
         if (getLocalState().ordinal() >= LinkState.ACTIVE.ordinal()) {
-            fireLocalAttach();
+            trySendLocalAttach();
         }
 
         // If already closed or detached this is the time to send that along as well.
-        if (getLocalState() == LinkState.DETACHED) {
-            fireLocalDetach(false);
-        } else if (getLocalState() == LinkState.CLOSED) {
-            fireLocalDetach(true);
+        if (isLocallyDetached()) {
+            trySendLocalDetach(false);
+        } else if (isLocallyClosed()) {
+            trySendLocalDetach(true);
         }
     }
 
@@ -461,18 +453,29 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
         return getRemoteState() == LinkState.DETACHED;
     }
 
-    private void fireLocalAttach() {
-        session.getEngine().pipeline().fireWrite(
-            getCreditState().configureAttach(localAttach), session.getLocalChannel(), null, null);
+    private void trySendLocalAttach() {
+        if ((session.isLocallyOpened() && session.wasLocalBeginSent()) &&
+            (connection.isLocallyOpened() && connection.wasLocalOpenSent())) {
+
+            // TODO - Still need to check for transport being writable at this time.
+            session.getEngine().pipeline().fireWrite(
+                getCreditState().configureAttach(localAttach), session.getLocalChannel(), null, null);
+        }
     }
 
-    private void fireLocalDetach(boolean closed) {
-        Detach detach = new Detach();
-        detach.setHandle(localAttach.getHandle());
-        detach.setClosed(closed);
-        detach.setError(getLocalCondition());
+    private void trySendLocalDetach(boolean closed) {
+        if ((session.isLocallyOpened() && session.wasLocalBeginSent()) &&
+            (connection.isLocallyOpened() && connection.wasLocalOpenSent())) {
 
-        session.getEngine().pipeline().fireWrite(detach, session.getLocalChannel(), null, null);
+            // TODO - Still need to check that transport is writable
+            Detach detach = new Detach();
+            detach.setHandle(localAttach.getHandle());
+            detach.setClosed(closed);
+            detach.setError(getLocalCondition());
+
+            session.freeLocalHandle(localAttach.getHandle());
+            session.getEngine().pipeline().fireWrite(detach, session.getLocalChannel(), null, null);
+        }
     }
 
     protected void checkNotOpened(String errorMessage) {

@@ -643,10 +643,59 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         Sender sender = session.sender("sender");
         sender.open();
 
-        // Cause an End frame to be sent
+        // Causes the End frame to be sent
         session.close();
 
         // The sender should not emit an end as the session was closed which implicitly
+        // detached the link.
+        if (close) {
+            sender.close();
+        } else {
+            sender.detach();
+        }
+
+        driver.assertScriptComplete();
+
+        assertNull(failure);
+    }
+
+    @Test
+    public void testSenderDetachAfterCloseSent() {
+        doTestSenderClosedOrDetachedAfterCloseSent(false);
+    }
+
+    @Test
+    public void testSenderCloseAfterCloseSent() {
+        doTestSenderClosedOrDetachedAfterCloseSent(true);
+    }
+
+    public void doTestSenderClosedOrDetachedAfterCloseSent(boolean close) {
+        ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
+        engine.errorHandler(result -> failure = result);
+        AMQPTestDriver driver = new AMQPTestDriver(engine);
+        engine.outputConsumer(driver);
+        ScriptWriter script = driver.createScriptWriter();
+
+        script.expectAMQPHeader().respondWithAMQPHeader();
+        script.expectOpen().respond();
+        script.expectBegin().respond();
+        script.expectAttach().withHandle(0).withName("sender").withRole(Role.SENDER).respond();
+        script.expectClose().respond();
+
+        // Create the connection and open it, then create a session and a sender
+        // and observe that the sender doesn't send its detach if the connection has
+        // already been closed.
+        Connection connection = engine.start();
+        connection.open();
+        Session session = connection.session();
+        session.open();
+        Sender sender = session.sender("sender");
+        sender.open();
+
+        // Cause an Close frame to be sent
+        connection.close();
+
+        // The sender should not emit an detach as the connection was closed which implicitly
         // detached the link.
         if (close) {
             sender.close();

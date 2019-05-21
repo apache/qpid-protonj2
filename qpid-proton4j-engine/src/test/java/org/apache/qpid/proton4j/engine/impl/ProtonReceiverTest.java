@@ -465,6 +465,55 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
     }
 
     @Test
+    public void testReceiverDetachAfterCloseSent() {
+        doTestReceiverClosedOrDetachedAfterCloseSent(false);
+    }
+
+    @Test
+    public void testReceiverCloseAfterCloseSent() {
+        doTestReceiverClosedOrDetachedAfterCloseSent(true);
+    }
+
+    public void doTestReceiverClosedOrDetachedAfterCloseSent(boolean close) {
+        ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
+        engine.errorHandler(result -> failure = result);
+        AMQPTestDriver driver = new AMQPTestDriver(engine);
+        engine.outputConsumer(driver);
+        ScriptWriter script = driver.createScriptWriter();
+
+        script.expectAMQPHeader().respondWithAMQPHeader();
+        script.expectOpen().respond();
+        script.expectBegin().respond();
+        script.expectAttach().withHandle(0).withName("receiver").withRole(Role.RECEIVER).respond();
+        script.expectClose().respond();
+
+        // Create the connection and open it, then create a session and a receiver
+        // and observe that the receiver doesn't send its detach if the connection has
+        // already been closed.
+        Connection connection = engine.start();
+        connection.open();
+        Session session = connection.session();
+        session.open();
+        Receiver receiver = session.receiver("receiver");
+        receiver.open();
+
+        // Cause an Close frame to be sent
+        connection.close();
+
+        // The receiver should not emit an detach as the connection was closed which implicitly
+        // detached the link.
+        if (close) {
+            receiver.close();
+        } else {
+            receiver.detach();
+        }
+
+        driver.assertScriptComplete();
+
+        assertNull(failure);
+    }
+
+    @Test
     public void testReceiverSendsFlowWhenCreditSet() throws Exception {
         ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
         engine.errorHandler(result -> failure = result);
