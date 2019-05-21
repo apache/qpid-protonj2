@@ -617,6 +617,82 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
     }
 
     @Test
+    public void testReceiverFailsOnFlowAfterConnectionClosed() throws Exception {
+        ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
+        engine.errorHandler(result -> failure = result);
+        // Create the test driver and link it to the engine for output handling.
+        AMQPTestDriver driver = new AMQPTestDriver(engine);
+        engine.outputConsumer(driver);
+        ScriptWriter script = driver.createScriptWriter();
+
+        script.expectAMQPHeader().respondWithAMQPHeader();
+        script.expectOpen().respond().withContainerId("driver");
+        script.expectBegin().respond();
+        script.expectAttach().respond();
+        script.expectClose().respond();
+
+        Connection connection = engine.start();
+
+        // Default engine should start and return a connection immediately
+        assertNotNull(connection);
+
+        connection.open();
+        Session session = connection.session();
+        session.open();
+        Receiver receiver = session.receiver("test");
+        receiver.open();
+        connection.close();
+
+        try {
+            receiver.setCredit(100);
+            fail("Should not be able to flow credit after connection was closed");
+        } catch (IllegalStateException ise) {
+        }
+
+        driver.assertScriptComplete();
+
+        assertNull(failure);
+    }
+
+    @Test
+    public void testReceiverFailsOnFlowAfterSessionClosed() throws Exception {
+        ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
+        engine.errorHandler(result -> failure = result);
+        // Create the test driver and link it to the engine for output handling.
+        AMQPTestDriver driver = new AMQPTestDriver(engine);
+        engine.outputConsumer(driver);
+        ScriptWriter script = driver.createScriptWriter();
+
+        script.expectAMQPHeader().respondWithAMQPHeader();
+        script.expectOpen().respond().withContainerId("driver");
+        script.expectBegin().respond();
+        script.expectAttach().respond();
+        script.expectEnd().respond();
+
+        Connection connection = engine.start();
+
+        // Default engine should start and return a connection immediately
+        assertNotNull(connection);
+
+        connection.open();
+        Session session = connection.session();
+        session.open();
+        Receiver receiver = session.receiver("test");
+        receiver.open();
+        session.close();
+
+        try {
+            receiver.setCredit(100);
+            fail("Should not be able to flow credit after connection was closed");
+        } catch (IllegalStateException ise) {
+        }
+
+        driver.assertScriptComplete();
+
+        assertNull(failure);
+    }
+
+    @Test
     public void testReceiverDispatchesIncomingDelivery() throws Exception {
         ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
         engine.errorHandler(result -> failure = result);

@@ -87,6 +87,12 @@ public class ProtonReceiver extends ProtonLink<Receiver> implements Receiver {
     @Override
     public ProtonReceiver setCredit(int credit) {
         checkNotClosed("Cannot set credit on a closed Receiver");
+
+        // TODO - Better way to check all this state on each operation.
+        if (session.isLocallyClosed() || connection.isLocallyClosed() ||
+            session.isRemotelyClosed() || connection.isRemotelyClosed()) {
+            throw new IllegalStateException("Cannot set credit when session or connection already closed");
+        }
         if (credit < 0) {
             throw new IllegalArgumentException("Set credit cannot be zero");
         }

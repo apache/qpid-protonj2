@@ -580,11 +580,19 @@ public class ProtonConnection implements Connection, AMQPHeader.HeaderHandler<Pr
     }
 
     boolean isLocallyOpened() {
-        return localState == ConnectionState.ACTIVE;
+        return getLocalState() == ConnectionState.ACTIVE;
+    }
+
+    boolean isRemotelyOpened() {
+        return getRemoteState() == ConnectionState.ACTIVE;
     }
 
     boolean isLocallyClosed() {
-        return localState == ConnectionState.CLOSED;
+        return getLocalState() == ConnectionState.CLOSED;
+    }
+
+    boolean isRemotelyClosed() {
+        return getRemoteState() == ConnectionState.CLOSED;
     }
 
     boolean wasHeaderSent() {
