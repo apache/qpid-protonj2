@@ -399,6 +399,11 @@ public final class TransferInjectAction extends AbstractPerformativeInjectAction
             return this;
         }
 
+        public BodySectionBuilder withData(byte[] body) {
+            TransferInjectAction.this.body = new Data(new Binary(body));
+            return this;
+        }
+
         public BodySectionBuilder withData(Binary body) {
             TransferInjectAction.this.body = new Data(body);
             return this;
