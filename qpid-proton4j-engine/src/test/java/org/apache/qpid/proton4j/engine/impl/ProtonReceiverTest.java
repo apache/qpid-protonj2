@@ -20,6 +20,7 @@ import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
@@ -55,7 +56,6 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
     public void testReceiverOpenAndCloseAreIdempotent() throws Exception {
         ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
         engine.errorHandler(result -> failure = result);
-        // Create the test driver and link it to the engine for output handling.
         AMQPTestDriver driver = new AMQPTestDriver(engine);
         engine.outputConsumer(driver);
         ScriptWriter script = driver.createScriptWriter();
@@ -94,7 +94,6 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
     public void testEngineEmitsAttachAfterLocalReceiverOpened() throws Exception {
         ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
         engine.errorHandler(result -> failure = result);
-        // Create the test driver and link it to the engine for output handling.
         AMQPTestDriver driver = new AMQPTestDriver(engine);
         engine.outputConsumer(driver);
         ScriptWriter script = driver.createScriptWriter();
@@ -126,7 +125,6 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
     public void testOpenBeginAttachBeforeRemoteResponds() throws Exception {
         ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
         engine.errorHandler(result -> failure = result);
-        // Create the test driver and link it to the engine for output handling.
         AMQPTestDriver driver = new AMQPTestDriver(engine);
         engine.outputConsumer(driver);
         ScriptWriter script = driver.createScriptWriter();
@@ -156,7 +154,6 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
     public void testReceiverFireOpenedEventAfterRemoteAttachArrives() throws Exception {
         ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
         engine.errorHandler(result -> failure = result);
-        // Create the test driver and link it to the engine for output handling.
         AMQPTestDriver driver = new AMQPTestDriver(engine);
         engine.outputConsumer(driver);
         ScriptWriter script = driver.createScriptWriter();
@@ -196,7 +193,6 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
     public void testReceiverFireClosedEventAfterRemoteDetachArrives() throws Exception {
         ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
         engine.errorHandler(result -> failure = result);
-        // Create the test driver and link it to the engine for output handling.
         AMQPTestDriver driver = new AMQPTestDriver(engine);
         engine.outputConsumer(driver);
         ScriptWriter script = driver.createScriptWriter();
@@ -242,7 +238,6 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
     public void testOpenAndCloseMultipleReceivers() throws Exception {
         ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
         engine.errorHandler(result -> failure = result);
-        // Create the test driver and link it to the engine for output handling.
         AMQPTestDriver driver = new AMQPTestDriver(engine);
         engine.outputConsumer(driver);
         ScriptWriter script = driver.createScriptWriter();
@@ -279,7 +274,6 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
     public void testConnectionSignalsRemoteReceiverOpen() throws Exception {
         ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
         engine.errorHandler(result -> failure = result);
-        // Create the test driver and link it to the engine for output handling.
         AMQPTestDriver driver = new AMQPTestDriver(engine);
         engine.outputConsumer(driver);
         ScriptWriter script = driver.createScriptWriter();
@@ -558,7 +552,6 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
     public void testReceiverSendsFlowWhenCreditSet() throws Exception {
         ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
         engine.errorHandler(result -> failure = result);
-        // Create the test driver and link it to the engine for output handling.
         AMQPTestDriver driver = new AMQPTestDriver(engine);
         engine.outputConsumer(driver);
         ScriptWriter script = driver.createScriptWriter();
@@ -592,7 +585,6 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
     public void testReceiverSendsFlowAfterOpenedWhenCreditSetBeforeOpened() throws Exception {
         ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
         engine.errorHandler(result -> failure = result);
-        // Create the test driver and link it to the engine for output handling.
         AMQPTestDriver driver = new AMQPTestDriver(engine);
         engine.outputConsumer(driver);
         ScriptWriter script = driver.createScriptWriter();
@@ -626,7 +618,6 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
     public void testReceiverSendsFlowAfterConnectionOpenFinallySent() throws Exception {
         ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
         engine.errorHandler(result -> failure = result);
-        // Create the test driver and link it to the engine for output handling.
         AMQPTestDriver driver = new AMQPTestDriver(engine);
         engine.outputConsumer(driver);
         ScriptWriter script = driver.createScriptWriter();
@@ -661,7 +652,6 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
     public void testReceiverFailsOnFlowAfterConnectionClosed() throws Exception {
         ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
         engine.errorHandler(result -> failure = result);
-        // Create the test driver and link it to the engine for output handling.
         AMQPTestDriver driver = new AMQPTestDriver(engine);
         engine.outputConsumer(driver);
         ScriptWriter script = driver.createScriptWriter();
@@ -699,7 +689,6 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
     public void testReceiverFailsOnFlowAfterSessionClosed() throws Exception {
         ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
         engine.errorHandler(result -> failure = result);
-        // Create the test driver and link it to the engine for output handling.
         AMQPTestDriver driver = new AMQPTestDriver(engine);
         engine.outputConsumer(driver);
         ScriptWriter script = driver.createScriptWriter();
@@ -737,7 +726,6 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
     public void testReceiverDispatchesIncomingDelivery() throws Exception {
         ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
         engine.errorHandler(result -> failure = result);
-        // Create the test driver and link it to the engine for output handling.
         AMQPTestDriver driver = new AMQPTestDriver(engine);
         engine.outputConsumer(driver);
         ScriptWriter script = driver.createScriptWriter();
@@ -786,7 +774,6 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
     public void testReceiverSendsDispostionForTransfer() throws Exception {
         ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
         engine.errorHandler(result -> failure = result);
-        // Create the test driver and link it to the engine for output handling.
         AMQPTestDriver driver = new AMQPTestDriver(engine);
         engine.outputConsumer(driver);
         ScriptWriter script = driver.createScriptWriter();
@@ -846,7 +833,6 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
     public void testDispositionNoAllowedAfterCloseSent() {
         ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
         engine.errorHandler(result -> failure = result);
-        // Create the test driver and link it to the engine for output handling.
         AMQPTestDriver driver = new AMQPTestDriver(engine);
         engine.outputConsumer(driver);
         ScriptWriter script = driver.createScriptWriter();
@@ -912,7 +898,6 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
     public void testReceiverReportsDeliveryUpdatedOnDisposition() throws Exception {
         ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
         engine.errorHandler(result -> failure = result);
-        // Create the test driver and link it to the engine for output handling.
         AMQPTestDriver driver = new AMQPTestDriver(engine);
         engine.outputConsumer(driver);
         ScriptWriter script = driver.createScriptWriter();
@@ -979,7 +964,6 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
     public void testReceiverReportsDeliveryUpdatedOnDispositionForMultipleTransfers() throws Exception {
         ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
         engine.errorHandler(result -> failure = result);
-        // Create the test driver and link it to the engine for output handling.
         AMQPTestDriver driver = new AMQPTestDriver(engine);
         engine.outputConsumer(driver);
         ScriptWriter script = driver.createScriptWriter();
@@ -1055,7 +1039,6 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
     public void testReceiverReportsDeliveryUpdatedNextFrameForMultiFrameTransfer() throws Exception {
         ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
         engine.errorHandler(result -> failure = result);
-        // Create the test driver and link it to the engine for output handling.
         AMQPTestDriver driver = new AMQPTestDriver(engine);
         engine.outputConsumer(driver);
         ScriptWriter script = driver.createScriptWriter();
@@ -1153,7 +1136,6 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
     private void doMultiplexMultiFrameDeliveryOnSingleSessionIncomingTestImpl(boolean bothDeliveriesMultiFrame) throws Exception {
         ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
         engine.errorHandler(result -> failure = result);
-        // Create the test driver and link it to the engine for output handling.
         AMQPTestDriver driver = new AMQPTestDriver(engine);
         engine.outputConsumer(driver);
         ScriptWriter script = driver.createScriptWriter();
@@ -1272,6 +1254,267 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
 
         receivedDelivery2.get().disposition(Accepted.getInstance(), true);
         receivedDelivery1.get().disposition(Accepted.getInstance(), true);
+
+        // Check post conditions and done.
+        driver.assertScriptComplete();
+        assertNull(failure);
+    }
+
+    @Test
+    public void testReceiverDeliveryIdTrackingHandlesAbortedDelivery() {
+        ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
+        engine.errorHandler(result -> failure = result);
+        AMQPTestDriver driver = new AMQPTestDriver(engine);
+        engine.outputConsumer(driver);
+        ScriptWriter script = driver.createScriptWriter();
+
+        script.expectAMQPHeader().respondWithAMQPHeader();
+        script.expectOpen().respond().withContainerId("driver");
+        script.expectBegin().respond();
+        script.expectAttach().respond();
+        script.expectFlow().withLinkCredit(5);
+
+        Connection connection = engine.start();
+        connection.open();
+        Session session = connection.session();
+        session.open();
+
+        Receiver receiver = session.receiver("receiver");
+        receiver.setCredit(5);
+
+        final AtomicReference<IncomingDelivery> receivedDelivery = new AtomicReference<>();
+        final AtomicInteger deliveryCounter = new AtomicInteger();
+        final AtomicBoolean deliveryUpdated = new AtomicBoolean();
+        final byte[] payload = new byte[] { 1 };
+
+        // Receiver 1 handlers for delivery processing.
+        receiver.deliveryReceivedEventHandler(delivery -> {
+            deliveryCounter.incrementAndGet();
+            receivedDelivery.set(delivery);
+        });
+        receiver.deliveryUpdatedEventHandler(delivery -> {
+            deliveryUpdated.set(true);
+        });
+
+        receiver.open();
+
+        assertNull("Should not have any delivery data yet on receiver 1", receivedDelivery.get());
+        assertEquals("Should not have any delivery data yet on receiver 1", 0, deliveryCounter.get());
+        assertFalse("Should not have any delivery data yet on receiver 1", deliveryUpdated.get());
+
+        // First chunk indicates more to come.
+        script.remoteTransfer().withDeliveryId(0)
+                               .withDeliveryTag(new byte[] {1})
+                               .withMore(true)
+                               .withMessageFormat(0)
+                               .withPayload(payload).now();
+
+        assertNotNull("Should have delivery data on receiver", receivedDelivery.get());
+        assertEquals("Should have delivery data on receiver", 1, deliveryCounter.get());
+        assertFalse("Should not have any delivery updates yet on receiver", deliveryUpdated.get());
+
+        // Second chunk indicates more to come as a twist but also signals aborted.
+        script.remoteTransfer().withDeliveryId(0)
+                               .withMore(true)
+                               .withAborted(true)
+                               .withMessageFormat(0)
+                               .withPayload(payload).now();
+
+        assertNotNull("Should have delivery data on receiver", receivedDelivery.get());
+        assertEquals("Should have delivery data on receiver", 1, deliveryCounter.get());
+        assertTrue("Should have a delivery updates on receiver", deliveryUpdated.get());
+        assertTrue("Should now show that delivery is aborted", receivedDelivery.get().isAborted());
+
+        // TODO - At this point any bytes sent in the aborted delivery should be discarded and
+        //        session window should no longer track them
+        // assertNull(receivedDelivery.get().readAll());
+
+        // Another delivery now which should arrive just fine, no further frames on this one.
+        script.remoteTransfer().withDeliveryId(1)
+                               .withDeliveryTag(new byte[] {2})
+                               .withMore(false)
+                               .withMessageFormat(0)
+                               .withPayload(payload).now();
+
+        assertNotNull("Should have delivery data on receiver", receivedDelivery.get());
+        assertEquals("Should have delivery data on receiver", 2, deliveryCounter.get());
+        assertTrue("Should have a delivery updates on receiver", deliveryUpdated.get());
+        assertFalse("Should now show that delivery is not aborted", receivedDelivery.get().isAborted());
+        assertEquals("Should have delivery tagged as two", 2, receivedDelivery.get().getTag()[0]);
+
+        script.expectDetach().respond();
+        script.expectEnd().respond();
+        script.expectClose().respond();
+
+        receiver.close();
+        session.close();
+        connection.close();
+
+        // Check post conditions and done.
+        driver.assertScriptComplete();
+        assertNull(failure);
+    }
+
+    @Test
+    public void testDeliveryWithIdOmittedOnContinuationTransfers() {
+        ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
+        engine.errorHandler(result -> failure = result);
+        AMQPTestDriver driver = new AMQPTestDriver(engine);
+        engine.outputConsumer(driver);
+        ScriptWriter script = driver.createScriptWriter();
+
+        script.expectAMQPHeader().respondWithAMQPHeader();
+        script.expectOpen().respond().withContainerId("driver");
+        script.expectBegin().respond();
+        script.expectAttach().withHandle(0).withName("receiver-1").respond();
+        script.expectAttach().withHandle(1).withName("receiver-2").respond();
+        script.expectFlow().withHandle(0).withLinkCredit(5);
+        script.expectFlow().withHandle(1).withLinkCredit(5);
+
+        Connection connection = engine.start();
+        connection.open();
+        Session session = connection.session();
+        session.open();
+
+        Receiver receiver1 = session.receiver("receiver-1");
+        Receiver receiver2 = session.receiver("receiver-2");
+
+        final AtomicReference<IncomingDelivery> receivedDelivery1 = new AtomicReference<>();
+        final AtomicReference<IncomingDelivery> receivedDelivery2 = new AtomicReference<>();
+
+        final AtomicInteger receiver1Transfers = new AtomicInteger();
+        final AtomicInteger receiver2Transfers = new AtomicInteger();
+
+        final AtomicBoolean delivery1Updated = new AtomicBoolean();
+        final AtomicBoolean delivery2Updated = new AtomicBoolean();
+
+        final String deliveryTag1 = "tag1";
+        final String deliveryTag2 = "tag2";
+
+        // Receiver 1 handlers for delivery processing.
+        receiver1.deliveryReceivedEventHandler(delivery -> {
+            receivedDelivery1.set(delivery);
+            receiver1Transfers.incrementAndGet();
+        });
+        receiver1.deliveryUpdatedEventHandler(delivery -> {
+            delivery1Updated.set(true);
+            receiver1Transfers.incrementAndGet();
+        });
+
+        // Receiver 2 handlers for delivery processing.
+        receiver2.deliveryReceivedEventHandler(delivery -> {
+            receivedDelivery2.set(delivery);
+            receiver2Transfers.incrementAndGet();
+        });
+        receiver2.deliveryUpdatedEventHandler(delivery -> {
+            delivery2Updated.set(true);
+            receiver2Transfers.incrementAndGet();
+        });
+
+        receiver1.open();
+        receiver2.open();
+
+        receiver1.setCredit(5);
+        receiver2.setCredit(5);
+
+        assertNull("Should not have any delivery data yet on receiver 1", receivedDelivery1.get());
+        assertNull("Should not have any delivery date yet on receiver 2", receivedDelivery2.get());
+        assertEquals("Receiver 1 should not have any transfers yet", 0, receiver1Transfers.get());
+        assertEquals("Receiver 2 should not have any transfers yet", 0, receiver2Transfers.get());
+
+        script.remoteTransfer().withDeliveryId(0)
+                               .withHandle(0)
+                               .withDeliveryTag(deliveryTag1.getBytes(StandardCharsets.UTF_8))
+                               .withMore(true)
+                               .withMessageFormat(0)
+                               .withPayload(new byte[] {1}).now();
+        script.remoteTransfer().withDeliveryId(1)
+                               .withHandle(1)
+                               .withDeliveryTag(deliveryTag2.getBytes(StandardCharsets.UTF_8))
+                               .withMore(true)
+                               .withMessageFormat(0)
+                               .withPayload(new byte[] {10}).now();
+
+        assertNotNull("Should have a delivery event on receiver 1", receivedDelivery1.get());
+        assertNotNull("Should have a delivery event on receiver 2", receivedDelivery2.get());
+        assertEquals("Receiver 1 should have 1 transfers", 1, receiver1Transfers.get());
+        assertEquals("Receiver 2 should have 1 transfers", 1, receiver2Transfers.get());
+        assertNotSame(receivedDelivery1.get(), receivedDelivery2.get());
+
+        script.remoteTransfer().withHandle(1)
+                               .withDeliveryTag(deliveryTag2.getBytes(StandardCharsets.UTF_8))
+                               .withMore(true)
+                               .withMessageFormat(0)
+                               .withPayload(new byte[] {11}).now();
+        script.remoteTransfer().withHandle(0)
+                               .withDeliveryTag(deliveryTag1.getBytes(StandardCharsets.UTF_8))
+                               .withMore(true)
+                               .withMessageFormat(0)
+                               .withPayload(new byte[] {2}).now();
+
+        assertNotNull("Should have a delivery event on receiver 1", receivedDelivery1.get());
+        assertNotNull("Should have a delivery event on receiver 2", receivedDelivery2.get());
+        assertEquals("Receiver 1 should have 2 transfers", 2, receiver1Transfers.get());
+        assertEquals("Receiver 2 should have 2 transfers", 2, receiver2Transfers.get());
+        assertNotSame(receivedDelivery1.get(), receivedDelivery2.get());
+
+        script.remoteTransfer().withHandle(0)
+                               .withDeliveryTag(deliveryTag1.getBytes(StandardCharsets.UTF_8))
+                               .withMore(false)
+                               .withMessageFormat(0)
+                               .withPayload(new byte[] {3}).now();
+        script.remoteTransfer().withHandle(1)
+                               .withDeliveryTag(deliveryTag2.getBytes(StandardCharsets.UTF_8))
+                               .withMore(true)
+                               .withMessageFormat(0)
+                               .withPayload(new byte[] {12}).now();
+
+        assertNotNull("Should have a delivery event on receiver 1", receivedDelivery1.get());
+        assertNotNull("Should have a delivery event on receiver 2", receivedDelivery2.get());
+        assertEquals("Receiver 1 should have 3 transfers", 3, receiver1Transfers.get());
+        assertEquals("Receiver 2 should have 3 transfers", 3, receiver2Transfers.get());
+        assertNotSame(receivedDelivery1.get(), receivedDelivery2.get());
+
+        script.remoteTransfer().withHandle(1)
+                               .withDeliveryTag(deliveryTag2.getBytes(StandardCharsets.UTF_8))
+                               .withMore(false)
+                               .withMessageFormat(0)
+                               .withPayload(new byte[] {13}).now();
+
+        assertNotNull("Should have a delivery event on receiver 1", receivedDelivery1.get());
+        assertNotNull("Should have a delivery event on receiver 2", receivedDelivery2.get());
+        assertEquals("Receiver 1 should have 3 transfers", 3, receiver1Transfers.get());
+        assertEquals("Receiver 2 should have 4 transfers", 4, receiver2Transfers.get());
+        assertNotSame(receivedDelivery1.get(), receivedDelivery2.get());
+        assertFalse("Delivery on Receiver 1 Should be complete", receivedDelivery1.get().isPartial());
+        assertFalse("Delivery on Receiver 2 Should be complete", receivedDelivery2.get().isPartial());
+
+        assertArrayEquals(deliveryTag1.getBytes(StandardCharsets.UTF_8), receivedDelivery1.get().getTag());
+        assertArrayEquals(deliveryTag2.getBytes(StandardCharsets.UTF_8), receivedDelivery2.get().getTag());
+
+        ProtonBuffer delivery1Buffer = receivedDelivery1.get().readAll();
+        ProtonBuffer delivery2Buffer = receivedDelivery2.get().readAll();
+
+        for (int i = 1; i < 4; ++i) {
+            assertEquals(i, delivery1Buffer.readByte());
+        }
+
+        for (int i = 10; i < 14; ++i) {
+            assertEquals(i, delivery2Buffer.readByte());
+        }
+
+        assertNull(receivedDelivery1.get().readAll());
+        assertNull(receivedDelivery2.get().readAll());
+
+        script.expectDetach().withHandle(0).respond();
+        script.expectDetach().withHandle(1).respond();
+        script.expectEnd().respond();
+        script.expectClose().respond();
+
+        receiver1.close();
+        receiver2.close();
+        session.close();
+        connection.close();
 
         // Check post conditions and done.
         driver.assertScriptComplete();

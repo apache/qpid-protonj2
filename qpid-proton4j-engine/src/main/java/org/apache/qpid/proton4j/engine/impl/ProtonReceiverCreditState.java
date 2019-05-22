@@ -103,6 +103,7 @@ public class ProtonReceiverCreditState implements ProtonLinkCreditState<ProtonIn
 
             // TODO - Casting is ugly but our ID values are longs
             unsettled.put((int) transfer.getDeliveryId(), delivery);
+            currentDeliveryId.set((int) transfer.getDeliveryId());
         }
 
         if (transfer.hasState()) {
@@ -126,8 +127,6 @@ public class ProtonReceiverCreditState implements ProtonLinkCreditState<ProtonIn
             credit = Math.min(credit - 1, 0);
             deliveryCount++;
             currentDeliveryId.reset();
-        } else {
-            currentDeliveryId.set((int) transfer.getDeliveryId());
         }
 
         if (isFirstTransfer) {
