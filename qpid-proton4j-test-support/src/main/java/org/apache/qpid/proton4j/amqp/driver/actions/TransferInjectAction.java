@@ -95,6 +95,11 @@ public final class TransferInjectAction extends AbstractPerformativeInjectAction
         return this;
     }
 
+    public TransferInjectAction withDeliveryId(int deliveryId) {
+        transfer.setDeliveryId(UnsignedInteger.valueOf(deliveryId));
+        return this;
+    }
+
     public TransferInjectAction withDeliveryId(long deliveryId) {
         transfer.setDeliveryId(UnsignedInteger.valueOf(deliveryId));
         return this;

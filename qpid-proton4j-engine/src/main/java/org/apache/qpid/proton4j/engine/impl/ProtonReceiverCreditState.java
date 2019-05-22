@@ -140,20 +140,13 @@ public class ProtonReceiverCreditState implements ProtonLinkCreditState<ProtonIn
 
     private void verifyNewDeliveryIdSequence(Transfer transfer, DeliveryIdTracker currentDeliveryId) {
         // TODO - Fail engine, session, or link ?
-        // TODO - Move to session window once fully worked out
 
         if (!transfer.hasDeliveryId()) {
             receiver.getSession().getConnection().getEngine().engineFailed(
                  new ProtocolViolationException("No delivery-id specified on first Transfer of new delivery"));
         }
 
-        // Doing a primitive comparison, uses intValue() since its a uint sequence
-        // and we need the primitive values to wrap appropriately during comparison.
-        if (sessionWindow.incrementNextDeliveryId() != transfer.getDeliveryId()) {
-            receiver.getSession().getConnection().getEngine().engineFailed(
-                new ProtocolViolationException("Expected delivery-id " + sessionWindow.getNextDeliveryId() +
-                                               ", got " + transfer.getDeliveryId()));
-        }
+        sessionWindow.validateNextDeliveryId(transfer.getDeliveryId());
 
         if (!currentDeliveryId.isEmpty()) {
             receiver.getSession().getConnection().getEngine().engineFailed(

@@ -24,6 +24,7 @@ import org.apache.qpid.proton4j.amqp.transport.Role;
 import org.apache.qpid.proton4j.amqp.transport.Transfer;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.engine.exceptions.ProtocolViolationException;
+import org.apache.qpid.proton4j.engine.util.SequenceNumber;
 import org.apache.qpid.proton4j.engine.util.SplayMap;
 
 /**
@@ -47,9 +48,9 @@ public class ProtonSessionIncomingWindow {
     private long nextIncomingId = 0;
 
     /**
-     * Tracks the next expected incoming delivery ID for any given link within the session
+     * Tracks the most recent delivery Id for validation against the next incoming delivery
      */
-    private long nextDeliveryid = 0;
+    private SequenceNumber lastDeliveryid;
 
     private long remoteOutgoingWindow;
     private long remoteNextOutgoingId;
@@ -207,14 +208,6 @@ public class ProtonSessionIncomingWindow {
         return nextIncomingId;
     }
 
-    public long getNextDeliveryId() {
-        return nextDeliveryid;
-    }
-
-    public long incrementNextDeliveryId() {
-        return nextDeliveryid++;
-    }
-
     public long getIncomingWindow() {
         return incomingWindow;
     }
@@ -246,7 +239,19 @@ public class ProtonSessionIncomingWindow {
         engine.pipeline().fireWrite(disposition, session.getLocalChannel(), null, null);
     }
 
-    public void deliveryRead(ProtonIncomingDelivery delivery, int bytesRead) {
+    void deliveryRead(ProtonIncomingDelivery delivery, int bytesRead) {
         this.incomingBytes -= bytesRead;
+    }
+
+    void validateNextDeliveryId(long deliveryId) {
+        if (lastDeliveryid == null) {
+            lastDeliveryid = new SequenceNumber((int) deliveryId);
+        } else {
+            int previousId = lastDeliveryid.intValue();
+            if (lastDeliveryid.increment().compareTo((int) deliveryId) != 0) {
+                session.getConnection().getEngine().engineFailed(
+                    new ProtocolViolationException("Expected delivery-id " + previousId + ", got " + deliveryId));
+            }
+        }
     }
 }

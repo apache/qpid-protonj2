@@ -33,6 +33,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.apache.qpid.proton4j.amqp.Binary;
+import org.apache.qpid.proton4j.amqp.UnsignedInteger;
 import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
 import org.apache.qpid.proton4j.amqp.driver.ScriptWriter;
 import org.apache.qpid.proton4j.amqp.messaging.Accepted;
@@ -1513,6 +1514,140 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
 
         receiver1.close();
         receiver2.close();
+        session.close();
+        connection.close();
+
+        // Check post conditions and done.
+        driver.assertScriptComplete();
+        assertNull(failure);
+    }
+
+    @Test
+    public void testDeliveryIdThresholdsAndWraps() {
+        // Check start from 0
+        doDeliveryIdThresholdsWrapsTestImpl(UnsignedInteger.ZERO, UnsignedInteger.ONE, UnsignedInteger.valueOf(2));
+        // Check run up to max-int (interesting boundary for underlying impl)
+        doDeliveryIdThresholdsWrapsTestImpl(UnsignedInteger.valueOf(Integer.MAX_VALUE - 2), UnsignedInteger.valueOf(Integer.MAX_VALUE -1), UnsignedInteger.valueOf(Integer.MAX_VALUE));
+        // Check crossing from signed range value into unsigned range value (interesting boundary for underlying impl)
+        long maxIntAsLong = Integer.MAX_VALUE;
+        doDeliveryIdThresholdsWrapsTestImpl(UnsignedInteger.valueOf(maxIntAsLong), UnsignedInteger.valueOf(maxIntAsLong + 1L), UnsignedInteger.valueOf(maxIntAsLong + 2L));
+        // Check run up to max-uint
+        doDeliveryIdThresholdsWrapsTestImpl(UnsignedInteger.valueOf(0xFFFFFFFFL - 2), UnsignedInteger.valueOf(0xFFFFFFFFL - 1), UnsignedInteger.MAX_VALUE);
+        // Check wrapping from max unsigned value back to min(/0).
+        doDeliveryIdThresholdsWrapsTestImpl(UnsignedInteger.MAX_VALUE, UnsignedInteger.ZERO, UnsignedInteger.ONE);
+    }
+
+    private void doDeliveryIdThresholdsWrapsTestImpl(UnsignedInteger deliveryId1, UnsignedInteger deliveryId2, UnsignedInteger deliveryId3) {
+        ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
+        engine.errorHandler(result -> failure = result);
+        AMQPTestDriver driver = new AMQPTestDriver(engine);
+        engine.outputConsumer(driver);
+        ScriptWriter script = driver.createScriptWriter();
+
+        script.expectAMQPHeader().respondWithAMQPHeader();
+        script.expectOpen().respond();
+        script.expectBegin().respond().withNextOutgoingId(deliveryId1.intValue());
+        script.expectAttach().respond();
+        script.expectFlow().withLinkCredit(5);
+
+        Connection connection = engine.start();
+        connection.open();
+        Session session = connection.session();
+        session.open();
+
+        Receiver receiver = session.receiver("receiver");
+
+        final AtomicReference<IncomingDelivery> receivedDelivery1 = new AtomicReference<>();
+        final AtomicReference<IncomingDelivery> receivedDelivery2 = new AtomicReference<>();
+        final AtomicReference<IncomingDelivery> receivedDelivery3 = new AtomicReference<>();
+
+        final AtomicInteger deliveryCounter = new AtomicInteger();
+
+        final String deliveryTag1 = "tag1";
+        final String deliveryTag2 = "tag2";
+        final String deliveryTag3 = "tag3";
+
+        // Receiver handlers for delivery processing.
+        receiver.deliveryReceivedEventHandler(delivery -> {
+            switch (deliveryCounter.get()) {
+                case 0:
+                    receivedDelivery1.set(delivery);
+                    break;
+                case 1:
+                    receivedDelivery2.set(delivery);
+                    break;
+                case 2:
+                    receivedDelivery3.set(delivery);
+                    break;
+                default:
+                    break;
+            }
+            deliveryCounter.incrementAndGet();
+        });
+        receiver.deliveryUpdatedEventHandler(delivery -> {
+            deliveryCounter.incrementAndGet();
+        });
+
+        receiver.open();
+        receiver.setCredit(5);
+
+        assertNull("Should not have received delivery 1", receivedDelivery1.get());
+        assertNull("Should not have received delivery 2", receivedDelivery2.get());
+        assertNull("Should not have received delivery 3", receivedDelivery3.get());
+        assertEquals("Receiver should not have any deliveries yet", 0, deliveryCounter.get());
+
+        script.remoteTransfer().withDeliveryId(deliveryId1.intValue())
+                               .withDeliveryTag(deliveryTag1.getBytes(StandardCharsets.UTF_8))
+                               .withMessageFormat(0)
+                               .withPayload(new byte[] {1}).now();
+
+        assertNotNull("Should have received delivery 1", receivedDelivery1.get());
+        assertNull("Should not have received delivery 2", receivedDelivery2.get());
+        assertNull("Should not have received delivery 3", receivedDelivery3.get());
+        assertEquals("Receiver should not have any deliveries yet", 1, deliveryCounter.get());
+
+        script.remoteTransfer().withDeliveryId(deliveryId2.intValue())
+                               .withDeliveryTag(deliveryTag2.getBytes(StandardCharsets.UTF_8))
+                               .withMessageFormat(0)
+                               .withPayload(new byte[] {2}).now();
+
+        assertNotNull("Should have received delivery 1", receivedDelivery1.get());
+        assertNotNull("Should have received delivery 2", receivedDelivery2.get());
+        assertNull("Should not have received delivery 3", receivedDelivery3.get());
+        assertEquals("Receiver should not have any deliveries yet", 2, deliveryCounter.get());
+
+        script.remoteTransfer().withDeliveryId(deliveryId3.intValue())
+                               .withDeliveryTag(deliveryTag3.getBytes(StandardCharsets.UTF_8))
+                               .withMessageFormat(0)
+                               .withPayload(new byte[] {3}).now();
+
+        assertNotNull("Should have received delivery 1", receivedDelivery1.get());
+        assertNotNull("Should have received delivery 2", receivedDelivery2.get());
+        assertNotNull("Should have received delivery 3", receivedDelivery3.get());
+        assertEquals("Receiver should not have any deliveries yet", 3, deliveryCounter.get());
+
+        assertNotSame("delivery duplicate detected", receivedDelivery1.get(), receivedDelivery2.get());
+        assertNotSame("delivery duplicate detected", receivedDelivery2.get(), receivedDelivery3.get());
+        assertNotSame("delivery duplicate detected", receivedDelivery1.get(), receivedDelivery3.get());
+
+        // Verify deliveries arrived with expected payload
+        assertArrayEquals(deliveryTag1.getBytes(StandardCharsets.UTF_8), receivedDelivery1.get().getTag());
+        assertArrayEquals(deliveryTag2.getBytes(StandardCharsets.UTF_8), receivedDelivery2.get().getTag());
+        assertArrayEquals(deliveryTag3.getBytes(StandardCharsets.UTF_8), receivedDelivery3.get().getTag());
+
+        ProtonBuffer delivery1Buffer = receivedDelivery1.get().readAll();
+        ProtonBuffer delivery2Buffer = receivedDelivery2.get().readAll();
+        ProtonBuffer delivery3Buffer = receivedDelivery3.get().readAll();
+
+        assertEquals("Delivery 1 payload not as expected", 1, delivery1Buffer.readByte());
+        assertEquals("Delivery 2 payload not as expected", 2, delivery2Buffer.readByte());
+        assertEquals("Delivery 3 payload not as expected", 3, delivery3Buffer.readByte());
+
+        script.expectDetach().respond();
+        script.expectEnd().respond();
+        script.expectClose().respond();
+
+        receiver.close();
         session.close();
         connection.close();
 
