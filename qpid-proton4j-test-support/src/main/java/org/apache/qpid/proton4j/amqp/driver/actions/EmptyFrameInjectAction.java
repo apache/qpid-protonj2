@@ -29,7 +29,10 @@ public class EmptyFrameInjectAction implements ScriptedAction {
 
     private int channel = CHANNEL_UNSET;
 
-    public EmptyFrameInjectAction() {
+    private final AMQPTestDriver driver;
+
+    public EmptyFrameInjectAction(AMQPTestDriver driver) {
+        this.driver = driver;
     }
 
     public int onChannel() {
@@ -39,5 +42,15 @@ public class EmptyFrameInjectAction implements ScriptedAction {
     @Override
     public void perform(AMQPTestDriver driver) {
         driver.sendEmptyFrame(this.channel == CHANNEL_UNSET ? 0 : this.channel);
+    }
+
+    @Override
+    public void now() {
+        perform(driver);
+    }
+
+    @Override
+    public void queue() {
+        driver.addScriptedElement(this);
     }
 }

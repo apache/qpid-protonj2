@@ -43,6 +43,10 @@ public class AttachInjectAction extends AbstractPerformativeInjectAction<Attach>
 
     private final Attach attach = new Attach();
 
+    public AttachInjectAction(AMQPTestDriver driver) {
+        super(driver);
+    }
+
     @Override
     public Attach getPerformative() {
         return attach;

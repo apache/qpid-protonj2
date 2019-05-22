@@ -26,14 +26,26 @@ import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
  */
 public class AMQPHeaderInjectAction implements ScriptedAction {
 
+    private final AMQPTestDriver driver;
     private final AMQPHeader header;
 
-    public AMQPHeaderInjectAction(AMQPHeader header) {
+    public AMQPHeaderInjectAction(AMQPTestDriver driver, AMQPHeader header) {
         this.header = header;
+        this.driver = driver;
     }
 
     @Override
     public void perform(AMQPTestDriver driver) {
         driver.sendHeader(header);
+    }
+
+    @Override
+    public void now() {
+        perform(driver);
+    }
+
+    @Override
+    public void queue() {
+        driver.addScriptedElement(this);
     }
 }

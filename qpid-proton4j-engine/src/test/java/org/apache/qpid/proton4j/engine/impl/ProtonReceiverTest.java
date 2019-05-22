@@ -16,6 +16,7 @@
  */
 package org.apache.qpid.proton4j.engine.impl;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -289,7 +290,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         script.remoteAttach().withName("sender")
                              .withHandle(0)
                              .withRole(Role.SENDER)
-                             .withInitialDeliveryCount(0);
+                             .withInitialDeliveryCount(0).queue();
         script.expectAttach();
         script.expectDetach().respond();
 
@@ -369,7 +370,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         script.expectAMQPHeader().respondWithAMQPHeader();
         script.expectOpen().respond().withContainerId("driver");
         script.expectBegin().respond();
-        script.remoteEnd(); // TODO This would be more fluent if there was a thenEnd() on the expect
+        script.remoteEnd().queue(); // TODO This would be more fluent if there was a thenEnd() on the expect
 
         Connection connection = engine.start();
 
@@ -750,7 +751,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
                                .withHandle(0) // TODO - Select last opened receiver link if not set
                                .withDeliveryTag(new byte[] {0})
                                .withMore(false)
-                               .withMessageFormat(0);
+                               .withMessageFormat(0).queue();
         script.expectDetach().respond();
 
         Connection connection = engine.start();
@@ -799,7 +800,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
                                .withHandle(0) // TODO - Select last opened receiver link if not set
                                .withDeliveryTag(new byte[] {0})
                                .withMore(false)
-                               .withMessageFormat(0);
+                               .withMessageFormat(0).queue();
         script.expectDisposition().withFirst(0)
                                   .withSettled(true)
                                   .withRole(Role.RECEIVER)
@@ -859,7 +860,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
                                .withHandle(0) // TODO - Select last opened receiver link if not set
                                .withDeliveryTag(new byte[] {0})
                                .withMore(false)
-                               .withMessageFormat(0);
+                               .withMessageFormat(0).queue();
         script.expectClose();
 
         Connection connection = engine.start();
@@ -925,11 +926,11 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
                                .withHandle(0) // TODO - Select last opened receiver link if not set
                                .withDeliveryTag(new byte[] {0})
                                .withMore(false)
-                               .withMessageFormat(0);
+                               .withMessageFormat(0).queue();
         script.remoteDisposition().withSettled(true)
                                   .withRole(Role.SENDER)
                                   .withState(Accepted.getInstance())
-                                  .withFirst(0);
+                                  .withFirst(0).queue();
         script.expectDetach().respond();
 
         Connection connection = engine.start();
@@ -992,17 +993,17 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
                                .withHandle(0) // TODO - Select last opened receiver link if not set
                                .withDeliveryTag(new byte[] {0})
                                .withMore(false)
-                               .withMessageFormat(0);
+                               .withMessageFormat(0).queue();
         script.remoteTransfer().withDeliveryId(1)
                                .withHandle(0) // TODO - Select last opened receiver link if not set
                                .withDeliveryTag(new byte[] {1})
                                .withMore(false)
-                               .withMessageFormat(0);
+                               .withMessageFormat(0).queue();
         script.remoteDisposition().withSettled(true)
                                   .withRole(Role.SENDER)
                                   .withState(Accepted.getInstance())
                                   .withFirst(0)
-                                  .withLast(1);
+                                  .withLast(1).queue();
         script.expectDetach().respond();
 
         Connection connection = engine.start();
@@ -1075,13 +1076,13 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
                                .withDeliveryTag(new byte[] {0})
                                .withMore(true)
                                .withMessageFormat(0)
-                               .withBody().withData(first);
+                               .withBody().withData(first).also().queue();
         script.remoteTransfer().withDeliveryId(0)
                                .withHandle(0)  // TODO - Select last opened receiver link if not set
                                .withDeliveryTag(new byte[] {0})
                                .withMore(false)
                                .withMessageFormat(0)
-                               .withBody().withData(second);
+                               .withBody().withData(second).also().queue();
         script.expectDetach().respond();
 
         Connection connection = engine.start();
@@ -1136,6 +1137,144 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
 
         driver.assertScriptComplete();
 
+        assertNull(failure);
+    }
+
+    @Test
+    public void testMultiplexMultiFrameDeliveriesOnSingleSessionIncoming() throws Exception {
+        doMultiplexMultiFrameDeliveryOnSingleSessionIncomingTestImpl(true);
+    }
+
+    @Test
+    public void testMultiplexMultiFrameDeliveryOnSingleSessionIncoming() throws Exception {
+        doMultiplexMultiFrameDeliveryOnSingleSessionIncomingTestImpl(false);
+    }
+
+    private void doMultiplexMultiFrameDeliveryOnSingleSessionIncomingTestImpl(boolean bothDeliveriesMultiFrame) throws Exception {
+        ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
+        engine.errorHandler(result -> failure = result);
+        // Create the test driver and link it to the engine for output handling.
+        AMQPTestDriver driver = new AMQPTestDriver(engine);
+        engine.outputConsumer(driver);
+        ScriptWriter script = driver.createScriptWriter();
+
+        script.expectAMQPHeader().respondWithAMQPHeader();
+        script.expectOpen().respond().withContainerId("driver");
+        script.expectBegin().respond();
+        script.expectAttach().withHandle(0).withName("receiver-1").respond();
+        script.expectAttach().withHandle(1).withName("receiver-2").respond();
+        script.expectFlow().withHandle(0).withLinkCredit(5);
+        script.expectFlow().withHandle(1).withLinkCredit(5);
+
+        Connection connection = engine.start();
+        connection.open();
+        Session session = connection.session();
+        session.open();
+
+        Receiver receiver1 = session.receiver("receiver-1");
+        Receiver receiver2 = session.receiver("receiver-2");
+
+        final AtomicReference<IncomingDelivery> receivedDelivery1 = new AtomicReference<>();
+        final AtomicReference<IncomingDelivery> receivedDelivery2 = new AtomicReference<>();
+
+        final AtomicBoolean delivery1Updated = new AtomicBoolean();
+        final AtomicBoolean delivery2Updated = new AtomicBoolean();
+
+        final String deliveryTag1 = "tag1";
+        final String deliveryTag2 = "tag2";
+
+        final byte[] payload1 = new byte[] { 1, 1 };
+        final byte[] payload2 = new byte[] { 2, 2 };
+
+        // Receiver 1 handlers for delivery processing.
+        receiver1.deliveryReceivedEventHandler(delivery -> {
+            receivedDelivery1.set(delivery);
+        });
+        receiver1.deliveryUpdatedEventHandler(delivery -> {
+            delivery1Updated.set(true);
+        });
+
+        // Receiver 2 handlers for delivery processing.
+        receiver2.deliveryReceivedEventHandler(delivery -> {
+            receivedDelivery2.set(delivery);
+        });
+        receiver2.deliveryUpdatedEventHandler(delivery -> {
+            delivery2Updated.set(true);
+        });
+
+        receiver1.open();
+        receiver2.open();
+
+        receiver1.setCredit(5);
+        receiver2.setCredit(5);
+
+        assertNull("Should not have any delivery data yet on receiver 1", receivedDelivery1.get());
+        assertNull("Should not have any delivery date yet on receiver 2", receivedDelivery2.get());
+
+        script.remoteTransfer().withDeliveryId(0)
+                               .withHandle(0)
+                               .withDeliveryTag(deliveryTag1.getBytes(StandardCharsets.UTF_8))
+                               .withMore(true)
+                               .withMessageFormat(0)
+                               .withPayload(payload1).now();
+        script.remoteTransfer().withDeliveryId(1)
+                               .withHandle(1)
+                               .withDeliveryTag(deliveryTag2.getBytes(StandardCharsets.UTF_8))
+                               .withMore(bothDeliveriesMultiFrame)
+                               .withMessageFormat(0)
+                               .withPayload(payload2).now();
+
+        assertNotNull("Should have a delivery event on receiver 1", receivedDelivery1.get());
+        assertNotNull("Should have a delivery event on receiver 2", receivedDelivery2.get());
+
+        assertTrue("Delivery on Receiver 1 Should not be complete", receivedDelivery1.get().isPartial());
+        if (bothDeliveriesMultiFrame) {
+            assertTrue("Delivery on Receiver 2 Should be complete", receivedDelivery2.get().isPartial());
+        } else {
+            assertFalse("Delivery on Receiver 2 Should not be complete", receivedDelivery2.get().isPartial());
+        }
+
+        script.remoteTransfer().withDeliveryId(0)
+                               .withHandle(0)
+                               .withDeliveryTag(deliveryTag1.getBytes(StandardCharsets.UTF_8))
+                               .withMore(false)
+                               .withMessageFormat(0)
+                               .withPayload(payload1).now();
+        if (bothDeliveriesMultiFrame) {
+            script.remoteTransfer().withDeliveryId(1)
+                                   .withHandle(1)
+                                   .withDeliveryTag(deliveryTag2.getBytes(StandardCharsets.UTF_8))
+                                   .withMore(false)
+                                   .withMessageFormat(0)
+                                   .withPayload(payload2).now();
+        }
+
+        assertFalse("Delivery on Receiver 1 Should be complete", receivedDelivery1.get().isPartial());
+        assertFalse("Delivery on Receiver 2 Should be complete", receivedDelivery2.get().isPartial());
+
+        script.expectDisposition().withFirst(1)
+                                  .withSettled(true)
+                                  .withRole(Role.RECEIVER)
+                                  .withState(Accepted.getInstance());
+        script.expectDisposition().withFirst(0)
+                                  .withSettled(true)
+                                  .withRole(Role.RECEIVER)
+                                  .withState(Accepted.getInstance());
+
+        assertArrayEquals(deliveryTag1.getBytes(StandardCharsets.UTF_8), receivedDelivery1.get().getTag());
+        assertArrayEquals(deliveryTag2.getBytes(StandardCharsets.UTF_8), receivedDelivery2.get().getTag());
+
+        ProtonBuffer payloadBuffer1 = receivedDelivery1.get().readAll();
+        ProtonBuffer payloadBuffer2 = receivedDelivery2.get().readAll();
+
+        assertEquals("Received 1 payload size is wrong", payload1.length * 2, payloadBuffer1.getReadableBytes());
+        assertEquals("Received 2 payload size is wrong", payload2.length * (bothDeliveriesMultiFrame ? 2 : 1), payloadBuffer2.getReadableBytes());
+
+        receivedDelivery2.get().disposition(Accepted.getInstance(), true);
+        receivedDelivery1.get().disposition(Accepted.getInstance(), true);
+
+        // Check post conditions and done.
+        driver.assertScriptComplete();
         assertNull(failure);
     }
 }

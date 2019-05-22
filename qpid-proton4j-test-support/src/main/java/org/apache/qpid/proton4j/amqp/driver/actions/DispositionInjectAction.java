@@ -31,6 +31,10 @@ public class DispositionInjectAction extends AbstractPerformativeInjectAction<Di
 
     private final Disposition disposition = new Disposition();
 
+    public DispositionInjectAction(AMQPTestDriver driver) {
+        super(driver);
+    }
+
     @Override
     public Disposition getPerformative() {
         return disposition;

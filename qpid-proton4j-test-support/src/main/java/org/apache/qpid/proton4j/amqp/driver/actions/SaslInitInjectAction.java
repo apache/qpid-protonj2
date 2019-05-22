@@ -18,6 +18,7 @@ package org.apache.qpid.proton4j.amqp.driver.actions;
 
 import org.apache.qpid.proton4j.amqp.Binary;
 import org.apache.qpid.proton4j.amqp.Symbol;
+import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
 import org.apache.qpid.proton4j.amqp.driver.codec.security.SaslInit;
 
 /**
@@ -27,6 +28,10 @@ import org.apache.qpid.proton4j.amqp.driver.codec.security.SaslInit;
 public class SaslInitInjectAction extends AbstractSaslPerformativeInjectAction<SaslInit> {
 
     private final SaslInit saslInit = new SaslInit();
+
+    public SaslInitInjectAction(AMQPTestDriver driver) {
+        super(driver);
+    }
 
     public SaslInitInjectAction withMechanism(Symbol mechanism) {
         saslInit.setMechanism(mechanism);

@@ -47,6 +47,18 @@ public interface ScriptedAction extends ScriptedElement {
     }
 
     /**
+     * Runs the scripted action on its associated test driver immediately
+     * regardless of any queued tasks or expected inputs.
+     */
+    void now();
+
+    /**
+     * Queues the scripted action for later run after any preceding scripted
+     * elements are performed.
+     */
+    void queue();
+
+    /**
      * Triggers the action to be performed on the given {@link Consumer}.
      *
      * @param driver

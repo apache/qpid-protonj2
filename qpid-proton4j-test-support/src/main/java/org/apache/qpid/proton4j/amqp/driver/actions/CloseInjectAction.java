@@ -29,6 +29,10 @@ public class CloseInjectAction extends AbstractPerformativeInjectAction<Close> {
 
     private final Close close = new Close();
 
+    public CloseInjectAction(AMQPTestDriver driver) {
+        super(driver);
+    }
+
     @Override
     public Close getPerformative() {
         return close;

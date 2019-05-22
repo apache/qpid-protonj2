@@ -17,6 +17,7 @@
 package org.apache.qpid.proton4j.amqp.driver.actions;
 
 import org.apache.qpid.proton4j.amqp.Binary;
+import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
 import org.apache.qpid.proton4j.amqp.driver.codec.security.SaslResponse;
 
 /**
@@ -26,6 +27,10 @@ import org.apache.qpid.proton4j.amqp.driver.codec.security.SaslResponse;
 public class SaslResponseInjectAction extends AbstractSaslPerformativeInjectAction<SaslResponse> {
 
     private final SaslResponse saslResponse = new SaslResponse();
+
+    public SaslResponseInjectAction(AMQPTestDriver driver) {
+        super(driver);
+    }
 
     public SaslResponseInjectAction withResponse(Binary response) {
         saslResponse.setResponse(response);

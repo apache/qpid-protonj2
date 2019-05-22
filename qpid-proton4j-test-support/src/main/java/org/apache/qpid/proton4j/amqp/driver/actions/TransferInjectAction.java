@@ -59,6 +59,10 @@ public final class TransferInjectAction extends AbstractPerformativeInjectAction
     private DescribedType body;
     private Footer footer;
 
+    public TransferInjectAction(AMQPTestDriver driver) {
+        super(driver);
+    }
+
     @Override
     public Transfer getPerformative() {
         return transfer;
@@ -143,6 +147,11 @@ public final class TransferInjectAction extends AbstractPerformativeInjectAction
 
     public TransferInjectAction withBatchable(boolean batchable) {
         transfer.setBatchable(batchable);
+        return this;
+    }
+
+    public TransferInjectAction withPayload(byte[] payload) {
+        this.payload = ProtonByteBufferAllocator.DEFAULT.wrap(payload);
         return this;
     }
 

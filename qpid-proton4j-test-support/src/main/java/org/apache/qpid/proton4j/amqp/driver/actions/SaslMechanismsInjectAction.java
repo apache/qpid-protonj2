@@ -17,6 +17,7 @@
 package org.apache.qpid.proton4j.amqp.driver.actions;
 
 import org.apache.qpid.proton4j.amqp.Symbol;
+import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
 import org.apache.qpid.proton4j.amqp.driver.codec.security.SaslMechanisms;
 
 /**
@@ -26,6 +27,10 @@ import org.apache.qpid.proton4j.amqp.driver.codec.security.SaslMechanisms;
 public class SaslMechanismsInjectAction extends AbstractSaslPerformativeInjectAction<SaslMechanisms> {
 
     private final SaslMechanisms saslMechanisms = new SaslMechanisms();
+
+    public SaslMechanismsInjectAction(AMQPTestDriver driver) {
+        super(driver);
+    }
 
     public SaslMechanismsInjectAction withMechanisms(Symbol... saslServerMechanisms) {
         saslMechanisms.setSaslServerMechanisms(saslServerMechanisms);

@@ -50,7 +50,7 @@ public class DetachExpectation extends AbstractExpectation<Detach> {
     }
 
     public DetachInjectAction respond() {
-        response = new DetachInjectAction();
+        response = new DetachInjectAction(driver);
         driver.addScriptedElement(response);
         return response;
     }

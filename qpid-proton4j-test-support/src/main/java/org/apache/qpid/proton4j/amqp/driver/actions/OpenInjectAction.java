@@ -32,6 +32,10 @@ public class OpenInjectAction extends AbstractPerformativeInjectAction<Open> {
 
     private final Open open = new Open();
 
+    public OpenInjectAction(AMQPTestDriver driver) {
+        super(driver);
+    }
+
     @Override
     public Open getPerformative() {
         return open;

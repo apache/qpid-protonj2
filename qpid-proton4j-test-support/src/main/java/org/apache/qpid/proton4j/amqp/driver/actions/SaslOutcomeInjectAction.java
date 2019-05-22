@@ -17,6 +17,7 @@
 package org.apache.qpid.proton4j.amqp.driver.actions;
 
 import org.apache.qpid.proton4j.amqp.Binary;
+import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
 import org.apache.qpid.proton4j.amqp.driver.codec.security.SaslOutcome;
 import org.apache.qpid.proton4j.amqp.security.SaslCode;
 
@@ -27,6 +28,10 @@ import org.apache.qpid.proton4j.amqp.security.SaslCode;
 public class SaslOutcomeInjectAction extends AbstractSaslPerformativeInjectAction<SaslOutcome> {
 
     private final SaslOutcome saslOutcome = new SaslOutcome();
+
+    public SaslOutcomeInjectAction(AMQPTestDriver driver) {
+        super(driver);
+    }
 
     public SaslOutcomeInjectAction withCode(SaslCode code) {
         saslOutcome.setCode(code.getValue());

@@ -52,7 +52,7 @@ public class BeginExpectation extends AbstractExpectation<Begin> {
     }
 
     public BeginInjectAction respond() {
-        response = new BeginInjectAction();
+        response = new BeginInjectAction(driver);
         driver.addScriptedElement(response);
         return response;
     }

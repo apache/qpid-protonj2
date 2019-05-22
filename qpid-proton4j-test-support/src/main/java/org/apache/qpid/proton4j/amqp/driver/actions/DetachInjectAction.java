@@ -30,6 +30,10 @@ public class DetachInjectAction extends AbstractPerformativeInjectAction<Detach>
 
     private final Detach detach = new Detach();
 
+    public DetachInjectAction(AMQPTestDriver driver) {
+        super(driver);
+    }
+
     @Override
     public Detach getPerformative() {
         return detach;

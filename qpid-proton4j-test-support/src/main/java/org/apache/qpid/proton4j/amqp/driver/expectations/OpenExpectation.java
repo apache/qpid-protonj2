@@ -48,7 +48,7 @@ public class OpenExpectation extends AbstractExpectation<Open> {
     }
 
     public OpenInjectAction respond() {
-        response = new OpenInjectAction();
+        response = new OpenInjectAction(driver);
         driver.addScriptedElement(response);
         return response;
     }

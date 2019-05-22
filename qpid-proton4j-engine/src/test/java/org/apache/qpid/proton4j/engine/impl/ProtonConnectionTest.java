@@ -397,7 +397,7 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
 
         script.expectAMQPHeader().respondWithAMQPHeader();
         script.expectOpen().respond();
-        script.remoteClose().withErrorCondition(remoteCondition);
+        script.remoteClose().withErrorCondition(remoteCondition).queue();
         script.expectClose();
 
         ProtonConnection connection = engine.start();
@@ -438,8 +438,8 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
 
         script.expectAMQPHeader().respondWithAMQPHeader();
         script.expectOpen();
-        script.remoteEmptyFrame();
-        script.remoteOpen();
+        script.remoteEmptyFrame().queue();
+        script.remoteOpen().queue();
         script.expectClose().respond();
 
         ProtonConnection connection = engine.start();

@@ -279,7 +279,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
                              .withHandle(0)
                              .withRole(Role.RECEIVER)
                              .withInitialDeliveryCount(0)
-                             .onChannel(0);
+                             .onChannel(0).queue();
         script.expectAttach();
         script.expectDetach().respond();
 
@@ -359,7 +359,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         script.expectAMQPHeader().respondWithAMQPHeader();
         script.expectOpen().respond().withContainerId("driver");
         script.expectBegin().respond();
-        script.remoteEnd(); // TODO - Last opened is used here, but a thenEnd() on the expect begin would be more clear
+        script.remoteEnd().queue(); // TODO - Last opened is used here, but a thenEnd() on the expect begin would be more clear
 
         Connection connection = engine.start();
 
@@ -444,7 +444,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
                            .withIncomingWindow(1024)
                            .withOutgoingWindow(10)
                            .withNextIncomingId(0)
-                           .withNextOutgoingId(1);
+                           .withNextOutgoingId(1).queue();
         script.expectDetach().withHandle(0).respond();
 
         Connection connection = engine.start();
@@ -487,7 +487,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
                            .withIncomingWindow(1024)
                            .withOutgoingWindow(10)
                            .withNextIncomingId(0)
-                           .withNextOutgoingId(1);
+                           .withNextOutgoingId(1).queue();
         script.expectTransfer().withHandle(0)
                                .withSettled(false)
                                .withState((DeliveryState) null)
@@ -537,7 +537,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
                            .withIncomingWindow(1024)
                            .withOutgoingWindow(10)
                            .withNextIncomingId(0)
-                           .withNextOutgoingId(1);
+                           .withNextOutgoingId(1).queue();
         script.expectTransfer().withHandle(0)
                                .withSettled(false)
                                .withState((DeliveryState) null)
@@ -546,7 +546,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         script.remoteDisposition().withSettled(true)
                                   .withRole(Role.RECEIVER)
                                   .withState(Accepted.getInstance())
-                                  .withFirst(0).onChannel(0);
+                                  .withFirst(0).onChannel(0).queue(); // TODO - Auto Channel
         script.expectDetach().withHandle(0).respond();
 
         Connection connection = engine.start();

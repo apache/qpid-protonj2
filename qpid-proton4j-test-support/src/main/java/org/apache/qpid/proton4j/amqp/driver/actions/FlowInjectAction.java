@@ -31,6 +31,10 @@ public class FlowInjectAction extends AbstractPerformativeInjectAction<Flow> {
 
     private final Flow flow = new Flow();
 
+    public FlowInjectAction(AMQPTestDriver driver) {
+        super(driver);
+    }
+
     @Override
     public Flow getPerformative() {
         return flow;

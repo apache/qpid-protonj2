@@ -31,7 +31,23 @@ public abstract class AbstractPerformativeInjectAction<P extends DescribedType> 
 
     public static final int CHANNEL_UNSET = -1;
 
+    private final AMQPTestDriver driver;
+
     private int channel = CHANNEL_UNSET;
+
+    public AbstractPerformativeInjectAction(AMQPTestDriver driver) {
+        this.driver = driver;
+    }
+
+    @Override
+    public void now() {
+        perform(driver);
+    }
+
+    @Override
+    public void queue() {
+        driver.addScriptedElement(this);
+    }
 
     public int onChannel() {
         return this.channel;

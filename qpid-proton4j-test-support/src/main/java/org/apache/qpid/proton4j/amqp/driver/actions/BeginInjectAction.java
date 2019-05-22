@@ -34,8 +34,13 @@ public class BeginInjectAction extends AbstractPerformativeInjectAction<Begin> {
 
     /**
      * Set defaults for the required fields of the performative
+     *
+     * @param driver
+     *      The test driver that will run this action.
      */
-    public BeginInjectAction() {
+    public BeginInjectAction(AMQPTestDriver driver) {
+        super(driver);
+
         begin.setNextOutgoingId(UnsignedInteger.ONE);
         begin.setIncomingWindow(UnsignedInteger.ZERO);
         begin.setOutgoingWindow(UnsignedInteger.ZERO);

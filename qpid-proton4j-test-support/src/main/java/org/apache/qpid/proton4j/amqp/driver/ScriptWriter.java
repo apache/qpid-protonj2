@@ -124,67 +124,47 @@ public class ScriptWriter {
     //----- Remote operations that happen while running the test script
 
     public void remoteHeader(AMQPHeader header) {
-        driver.addScriptedElement(new AMQPHeaderInjectAction(header));
+        driver.addScriptedElement(new AMQPHeaderInjectAction(driver, header));
     }
 
     public OpenInjectAction remoteOpen() {
-        OpenInjectAction inject = new OpenInjectAction();
-        driver.addScriptedElement(inject);
-        return inject;
+        return new OpenInjectAction(driver);
     }
 
     public CloseInjectAction remoteClose() {
-        CloseInjectAction inject = new CloseInjectAction();
-        driver.addScriptedElement(inject);
-        return inject;
+        return new CloseInjectAction(driver);
     }
 
     public BeginInjectAction remoteBegin() {
-        BeginInjectAction inject = new BeginInjectAction();
-        driver.addScriptedElement(inject);
-        return inject;
+        return new BeginInjectAction(driver);
     }
 
     public EndInjectAction remoteEnd() {
-        EndInjectAction inject = new EndInjectAction();
-        driver.addScriptedElement(inject);
-        return inject;
+        return new EndInjectAction(driver);
     }
 
     public AttachInjectAction remoteAttach() {
-        AttachInjectAction inject = new AttachInjectAction();
-        driver.addScriptedElement(inject);
-        return inject;
+        return new AttachInjectAction(driver);
     }
 
     public DetachInjectAction remoteDetach() {
-        DetachInjectAction inject = new DetachInjectAction();
-        driver.addScriptedElement(inject);
-        return inject;
+        return new DetachInjectAction(driver);
     }
 
     public FlowInjectAction remoteFlow() {
-        FlowInjectAction inject = new FlowInjectAction();
-        driver.addScriptedElement(inject);
-        return inject;
+        return new FlowInjectAction(driver);
     }
 
     public TransferInjectAction remoteTransfer() {
-        TransferInjectAction inject = new TransferInjectAction();
-        driver.addScriptedElement(inject);
-        return inject;
+        return new TransferInjectAction(driver);
     }
 
     public DispositionInjectAction remoteDisposition() {
-        DispositionInjectAction inject = new DispositionInjectAction();
-        driver.addScriptedElement(inject);
-        return inject;
+        return new DispositionInjectAction(driver);
     }
 
     public EmptyFrameInjectAction remoteEmptyFrame() {
-        EmptyFrameInjectAction inject = new EmptyFrameInjectAction();
-        driver.addScriptedElement(inject);
-        return inject;
+        return new EmptyFrameInjectAction(driver);
     }
 
     //----- Immediate operations performed outside the test script

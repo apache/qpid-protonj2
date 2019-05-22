@@ -29,6 +29,10 @@ public class EndInjectAction extends AbstractPerformativeInjectAction<End> {
 
     private final End end = new End();
 
+    public EndInjectAction(AMQPTestDriver driver) {
+        super(driver);
+    }
+
     @Override
     public End getPerformative() {
         return end;

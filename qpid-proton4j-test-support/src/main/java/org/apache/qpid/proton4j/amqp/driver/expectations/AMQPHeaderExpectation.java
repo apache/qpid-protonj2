@@ -38,7 +38,7 @@ public class AMQPHeaderExpectation implements ScriptedExpectation {
     }
 
     public AMQPHeaderInjectAction respondWithAMQPHeader() {
-        AMQPHeaderInjectAction response = new AMQPHeaderInjectAction(AMQPHeader.getAMQPHeader());
+        AMQPHeaderInjectAction response = new AMQPHeaderInjectAction(driver, AMQPHeader.getAMQPHeader());
         driver.addScriptedElement(response);
         return response;
     }

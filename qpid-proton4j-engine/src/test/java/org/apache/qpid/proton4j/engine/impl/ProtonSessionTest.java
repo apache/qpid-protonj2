@@ -223,7 +223,7 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
 
         script.expectAMQPHeader().respondWithAMQPHeader();
         script.expectOpen().respond().withContainerId("driver");
-        script.remoteBegin();
+        script.remoteBegin().queue();
 
         final AtomicBoolean connectionRemotelyOpened = new AtomicBoolean();
         final AtomicBoolean sessionRemotelyOpened = new AtomicBoolean();
@@ -372,7 +372,7 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
 
         script.expectAMQPHeader().respondWithAMQPHeader();
         script.expectOpen().respond().withContainerId("driver");
-        script.remoteClose();
+        script.remoteClose().queue();
 
         final AtomicBoolean connectionOpenedSignaled = new AtomicBoolean();
         final AtomicBoolean connectionClosedSignaled = new AtomicBoolean();
@@ -673,7 +673,7 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
                                .withDeliveryTag(new byte[] {0})
                                .withMore(false)
                                .withMessageFormat(0)
-                               .withBody().withString("test-message");
+                               .withBody().withString("test-message").also().queue();
 
         receiver.setCredit(1);
 

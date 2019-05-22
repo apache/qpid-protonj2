@@ -17,6 +17,7 @@
 package org.apache.qpid.proton4j.amqp.driver.actions;
 
 import org.apache.qpid.proton4j.amqp.Binary;
+import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
 import org.apache.qpid.proton4j.amqp.driver.codec.security.SaslChallenge;
 
 /**
@@ -26,6 +27,10 @@ import org.apache.qpid.proton4j.amqp.driver.codec.security.SaslChallenge;
 public class SaslChallengeInjectAction extends AbstractSaslPerformativeInjectAction<SaslChallenge> {
 
     private final SaslChallenge saslChallenge = new SaslChallenge();
+
+    public SaslChallengeInjectAction(AMQPTestDriver driver) {
+        super(driver);
+    }
 
     public SaslChallengeInjectAction withChallenge(Binary challenge) {
         saslChallenge.setChallenge(challenge);
