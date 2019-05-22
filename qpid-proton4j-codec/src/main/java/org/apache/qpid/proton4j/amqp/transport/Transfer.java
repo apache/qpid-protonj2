@@ -308,17 +308,17 @@ public final class Transfer implements Performative {
     @Override
     public String toString() {
         return "Transfer{" +
-               "handle=" + handle +
-               ", deliveryId=" + deliveryId +
-               ", deliveryTag=" + deliveryTag +
-               ", messageFormat=" + messageFormat +
-               ", settled=" + settled +
-               ", more=" + more +
-               ", rcvSettleMode=" + rcvSettleMode +
-               ", state=" + state +
-               ", resume=" + resume +
-               ", aborted=" + aborted +
-               ", batchable=" + batchable +
+               "handle=" + (hasHandle() ? handle : "null") +
+               ", deliveryId=" + (hasDeliveryId() ? deliveryId : "null") +
+               ", deliveryTag=" + (hasDeliveryTag() ? deliveryTag : "null") +
+               ", messageFormat=" + (hasMessageFormat() ? messageFormat : "null") +
+               ", settled=" + (hasSettled() ? settled : "null") +
+               ", more=" + (hasMore() ? more : "null") +
+               ", rcvSettleMode=" + (hasRcvSettleMode() ? rcvSettleMode : "null") +
+               ", state=" + (hasState() ? state : "null") +
+               ", resume=" + (hasResume() ? resume : "null") +
+               ", aborted=" + (hasAborted() ? aborted : "null") +
+               ", batchable=" + (hasBatchable() ? batchable : "null") +
                '}';
     }
 }
