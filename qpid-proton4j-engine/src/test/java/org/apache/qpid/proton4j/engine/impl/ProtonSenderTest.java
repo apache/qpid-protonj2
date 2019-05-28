@@ -546,7 +546,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         script.remoteDisposition().withSettled(true)
                                   .withRole(Role.RECEIVER)
                                   .withState(Accepted.getInstance())
-                                  .withFirst(0).onChannel(0).queue(); // TODO - Auto Channel
+                                  .withFirst(0).queue();
         script.expectDetach().withHandle(0).respond();
 
         Connection connection = engine.start();

@@ -76,10 +76,36 @@ public class DriverSessions {
             localChannelValue = UnsignedShort.valueOf(localChannel);
         }
 
-        SessionTracker tracker = new SessionTracker(driver, begin, localChannelValue, null);
+        SessionTracker tracker = localSessions.get(localChannelValue);
+        if (tracker == null) {
+            tracker = new SessionTracker(driver, begin, localChannelValue, null);
+            localSessions.put(tracker.getLocalChannel(), tracker);
+            lastOpenedSession = localChannel;
+        } else {
+            // TODO - End the session with an error as we already saw this
+            //        session begin and it wasn't ended yet.  End processing
+            //        must be complete before doing this though.
+        }
 
-        localSessions.put(tracker.getLocalChannel(), tracker);
-        lastOpenedSession = localChannel;
+        return tracker;
+    }
+
+    public SessionTracker processLocalBegin(Begin begin, int localChannel) {
+        final UnsignedShort localChannelValue;
+        if (localChannel < 0) {
+            localChannelValue = getNextChannelId();
+        } else {
+            localChannelValue = UnsignedShort.valueOf(localChannel);
+        }
+
+        // This could be a response to an inbound begin so check before
+        // creating a duplicate session tracker.
+        SessionTracker tracker = localSessions.get(localChannelValue);
+        if (tracker == null) {
+            tracker = new SessionTracker(driver, begin, localChannelValue, null);
+            localSessions.put(tracker.getLocalChannel(), tracker);
+            lastOpenedSession = localChannel;
+        }
 
         return tracker;
     }

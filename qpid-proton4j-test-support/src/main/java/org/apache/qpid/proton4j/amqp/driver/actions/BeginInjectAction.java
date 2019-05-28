@@ -144,6 +144,6 @@ public class BeginInjectAction extends AbstractPerformativeInjectAction<Begin> {
             onChannel(driver.getSessions().getNextChannelId());
         }
 
-        driver.getSessions().processBegin(begin, onChannel());
+        driver.getSessions().processLocalBegin(begin, onChannel());
     }
 }

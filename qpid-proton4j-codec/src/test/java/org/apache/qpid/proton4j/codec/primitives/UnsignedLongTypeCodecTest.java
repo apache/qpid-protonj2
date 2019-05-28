@@ -42,18 +42,16 @@ public class UnsignedLongTypeCodecTest extends CodecTestSupport {
         assertEquals(640, ((UnsignedLong) result).intValue());
     }
 
-// TODO
-//
-//    @Test
-//    public void testEncodeDecodeInteger() throws Exception {
-//        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
-//
-//        encoder.writeUnsignedLong(buffer, encoderState, 640l);
-//
-//        Object result = decoder.readObject(buffer, decoderState);
-//        assertTrue(result instanceof UnsignedLong);
-//        assertEquals(640, ((UnsignedLong) result).intValue());
-//    }
+    @Test
+    public void testEncodeDecodePrimitive() throws Exception {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        encoder.writeUnsignedLong(buffer, encoderState, 640l);
+
+        Object result = decoder.readObject(buffer, decoderState);
+        assertTrue(result instanceof UnsignedLong);
+        assertEquals(640, ((UnsignedLong) result).intValue());
+    }
 
     @Test
     public void testDecodeSmallSeriesOfUnsignedLongs() throws IOException {

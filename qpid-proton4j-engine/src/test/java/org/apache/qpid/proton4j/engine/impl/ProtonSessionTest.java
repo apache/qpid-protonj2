@@ -669,7 +669,6 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
         script.expectFlow().withLinkCredit(1)
                            .withIncomingWindow(expectedWindowSize);
         script.remoteTransfer().withDeliveryId(0)
-                               .withHandle(0)  // TODO - Auto select last opened receiver link.
                                .withDeliveryTag(new byte[] {0})
                                .withMore(false)
                                .withMessageFormat(0)

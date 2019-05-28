@@ -84,6 +84,12 @@ public final class TransferInjectAction extends AbstractPerformativeInjectAction
             onChannel(driver.getSessions().getLastOpenedSession().getLocalChannel().intValue());
         }
 
+        // Auto select last opened receiver on last opened session.  Later an option could
+        // be added to allow forcing the handle to be null for testing specification requirements.
+        if (transfer.getHandle() == null) {
+            transfer.setHandle(driver.getSessions().getLastOpenedSession().getLastOpenedReceiver().getHandle());
+        }
+
         // Here we could check if the delivery Id is set and if not grab a valid
         // next Id from the driver as well as checking for a session and using last
         // created one if none set.

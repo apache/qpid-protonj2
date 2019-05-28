@@ -47,6 +47,7 @@ public class SessionTracker {
     private UnsignedInteger incomingWindow = UnsignedInteger.ZERO;
     private UnsignedInteger outgoingWindow = UnsignedInteger.ZERO;
     private UnsignedInteger handleMax;
+    private End end;
 
     private final AMQPTestDriver driver;
 
@@ -67,6 +68,10 @@ public class SessionTracker {
 
     public LinkTracker getLastOpenedReceiver() {
         return receivers.getLast();
+    }
+
+    public End getEnd() {
+        return end;
     }
 
     //----- Session specific access which can provide details for expectations
@@ -122,7 +127,7 @@ public class SessionTracker {
     //----- Handle performatives and update session state
 
     public SessionTracker handleEnd(End end) {
-        // TODO
+        this.end = end;
         return this;
     }
 

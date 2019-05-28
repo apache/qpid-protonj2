@@ -561,7 +561,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         script.expectOpen().respond().withContainerId("driver");
         script.expectBegin().respond();
         script.expectAttach().respond();
-        script.expectFlow().withLinkCredit(100);  // TODO validate mandatory fields are set and they have correct values
+        script.expectFlow().withLinkCredit(100);
         script.expectDetach().respond();
 
         Connection connection = engine.start();
@@ -594,7 +594,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         script.expectOpen().respond().withContainerId("driver");
         script.expectBegin().respond();
         script.expectAttach().respond();
-        script.expectFlow().withLinkCredit(100);  // TODO validate mandatory fields are set and they have correct values
+        script.expectFlow().withLinkCredit(100);
         script.expectDetach().respond();
 
         Connection connection = engine.start();
@@ -737,7 +737,6 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         script.expectAttach().respond();
         script.expectFlow().withLinkCredit(100);
         script.remoteTransfer().withDeliveryId(0)
-                               .withHandle(0) // TODO - Select last opened receiver link if not set
                                .withDeliveryTag(new byte[] {0})
                                .withMore(false)
                                .withMessageFormat(0).queue();
@@ -785,7 +784,6 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         script.expectAttach().respond();
         script.expectFlow().withLinkCredit(100);
         script.remoteTransfer().withDeliveryId(0)
-                               .withHandle(0) // TODO - Select last opened receiver link if not set
                                .withDeliveryTag(new byte[] {0})
                                .withMore(false)
                                .withMessageFormat(0).queue();
@@ -844,7 +842,6 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         script.expectAttach().respond();
         script.expectFlow().withLinkCredit(1);
         script.remoteTransfer().withDeliveryId(0)
-                               .withHandle(0) // TODO - Select last opened receiver link if not set
                                .withDeliveryTag(new byte[] {0})
                                .withMore(false)
                                .withMessageFormat(0).queue();
@@ -909,7 +906,6 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         script.expectAttach().respond();
         script.expectFlow().withLinkCredit(100);
         script.remoteTransfer().withDeliveryId(0)
-                               .withHandle(0) // TODO - Select last opened receiver link if not set
                                .withDeliveryTag(new byte[] {0})
                                .withMore(false)
                                .withMessageFormat(0).queue();
@@ -975,12 +971,10 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         script.expectAttach().respond();
         script.expectFlow().withLinkCredit(2);
         script.remoteTransfer().withDeliveryId(0)
-                               .withHandle(0) // TODO - Select last opened receiver link if not set
                                .withDeliveryTag(new byte[] {0})
                                .withMore(false)
                                .withMessageFormat(0).queue();
         script.remoteTransfer().withDeliveryId(1)
-                               .withHandle(0) // TODO - Select last opened receiver link if not set
                                .withDeliveryTag(new byte[] {1})
                                .withMore(false)
                                .withMessageFormat(0).queue();
@@ -1056,13 +1050,11 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         script.expectAttach().respond();
         script.expectFlow().withLinkCredit(2);
         script.remoteTransfer().withDeliveryId(0)
-                               .withHandle(0)  // TODO - Select last opened receiver link if not set
                                .withDeliveryTag(new byte[] {0})
                                .withMore(true)
                                .withMessageFormat(0)
                                .withBody().withData(first).also().queue();
         script.remoteTransfer().withDeliveryId(0)
-                               .withHandle(0)  // TODO - Select last opened receiver link if not set
                                .withDeliveryTag(new byte[] {0})
                                .withMore(false)
                                .withMessageFormat(0)
