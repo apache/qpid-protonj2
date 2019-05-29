@@ -172,37 +172,37 @@ public class ArrayTypeEncoder implements PrimitiveTypeEncoder<Object> {
     }
 
     public void writeType(ProtonBuffer buffer, EncoderState state, byte[] value) {
-        final ByteTypeEncoder typeEncoder = (ByteTypeEncoder) state.getEncoder().getTypeEncoder(Boolean.class);
+        final ByteTypeEncoder typeEncoder = (ByteTypeEncoder) state.getEncoder().getTypeEncoder(Byte.class);
         typeEncoder.writeArray(buffer, state, value);
     }
 
     public void writeType(ProtonBuffer buffer, EncoderState state, short[] value) {
-        final ShortTypeEncoder typeEncoder = (ShortTypeEncoder) state.getEncoder().getTypeEncoder(Boolean.class);
+        final ShortTypeEncoder typeEncoder = (ShortTypeEncoder) state.getEncoder().getTypeEncoder(Short.class);
         typeEncoder.writeArray(buffer, state, value);
     }
 
     public void writeType(ProtonBuffer buffer, EncoderState state, int[] value) {
-        final IntegerTypeEncoder typeEncoder = (IntegerTypeEncoder) state.getEncoder().getTypeEncoder(Boolean.class);
+        final IntegerTypeEncoder typeEncoder = (IntegerTypeEncoder) state.getEncoder().getTypeEncoder(Integer.class);
         typeEncoder.writeArray(buffer, state, value);
     }
 
     public void writeType(ProtonBuffer buffer, EncoderState state, long[] value) {
-        final LongTypeEncoder typeEncoder = (LongTypeEncoder) state.getEncoder().getTypeEncoder(Boolean.class);
+        final LongTypeEncoder typeEncoder = (LongTypeEncoder) state.getEncoder().getTypeEncoder(Long.class);
         typeEncoder.writeArray(buffer, state, value);
     }
 
     public void writeType(ProtonBuffer buffer, EncoderState state, float[] value) {
-        final FloatTypeEncoder typeEncoder = (FloatTypeEncoder) state.getEncoder().getTypeEncoder(Boolean.class);
+        final FloatTypeEncoder typeEncoder = (FloatTypeEncoder) state.getEncoder().getTypeEncoder(Float.class);
         typeEncoder.writeArray(buffer, state, value);
     }
 
     public void writeType(ProtonBuffer buffer, EncoderState state, double[] value) {
-        final DoubleTypeEncoder typeEncoder = (DoubleTypeEncoder) state.getEncoder().getTypeEncoder(Boolean.class);
+        final DoubleTypeEncoder typeEncoder = (DoubleTypeEncoder) state.getEncoder().getTypeEncoder(Double.class);
         typeEncoder.writeArray(buffer, state, value);
     }
 
     public void writeType(ProtonBuffer buffer, EncoderState state, char[] value) {
-        final CharacterTypeEncoder typeEncoder = (CharacterTypeEncoder) state.getEncoder().getTypeEncoder(Boolean.class);
+        final CharacterTypeEncoder typeEncoder = (CharacterTypeEncoder) state.getEncoder().getTypeEncoder(Character.class);
         typeEncoder.writeArray(buffer, state, value);
     }
 
