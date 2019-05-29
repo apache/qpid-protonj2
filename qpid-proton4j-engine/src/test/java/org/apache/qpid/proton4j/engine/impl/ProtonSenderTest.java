@@ -437,9 +437,8 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         script.expectAMQPHeader().respondWithAMQPHeader();
         script.expectOpen().respond().withContainerId("driver");
         script.expectBegin().respond();
-        script.expectAttach().withHandle(0).withRole(Role.SENDER).respond();
+        script.expectAttach().withRole(Role.SENDER).respond();
         script.remoteFlow().withDeliveryCount(0)
-                           .withHandle(0)
                            .withLinkCredit(10)
                            .withIncomingWindow(1024)
                            .withOutgoingWindow(10)
@@ -480,11 +479,10 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         script.expectAMQPHeader().respondWithAMQPHeader();
         script.expectOpen().respond().withContainerId("driver");
         script.expectBegin().respond();
-        script.expectAttach().withHandle(0).withRole(Role.SENDER).respond();
-        script.remoteFlow().withDeliveryCount(0)  // TODO - Would be nice to automate filling in these
-                           .withHandle(0)         //        these bits using last session opened values
-                           .withLinkCredit(10)    //        plus some defaults or generated values.
-                           .withIncomingWindow(1024)
+        script.expectAttach().withRole(Role.SENDER).respond();
+        script.remoteFlow().withDeliveryCount(0)     // TODO - Would be nice to automate filling in these
+                           .withLinkCredit(10)       //        these bits using last session opened values
+                           .withIncomingWindow(1024) //        plus some defaults or generated values.
                            .withOutgoingWindow(10)
                            .withNextIncomingId(0)
                            .withNextOutgoingId(1).queue();
@@ -530,10 +528,9 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         script.expectAMQPHeader().respondWithAMQPHeader();
         script.expectOpen().respond().withContainerId("driver");
         script.expectBegin().respond();
-        script.expectAttach().withHandle(0).withRole(Role.SENDER).respond();
-        script.remoteFlow().withDeliveryCount(0)  // TODO - Would be nice to automate filling in these
-                           .withHandle(0)         //        these bits using last session opened values
-                           .withLinkCredit(10)    //        plus some defaults or generated values.
+        script.expectAttach().withRole(Role.SENDER).respond();
+        script.remoteFlow().withDeliveryCount(0)
+                           .withLinkCredit(10)
                            .withIncomingWindow(1024)
                            .withOutgoingWindow(10)
                            .withNextIncomingId(0)
