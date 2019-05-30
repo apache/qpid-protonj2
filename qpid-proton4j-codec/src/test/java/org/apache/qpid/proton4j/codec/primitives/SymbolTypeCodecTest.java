@@ -16,13 +16,17 @@
  */
 package org.apache.qpid.proton4j.codec.primitives;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.Random;
 
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
@@ -205,5 +209,92 @@ public class SymbolTypeCodecTest extends CodecTestSupport {
             decoder.readObject(buffer, decoderState);
             fail("should throw an IllegalArgumentException");
         } catch (IllegalArgumentException iae) {}
+    }
+
+    @Test
+    public void testEncodeDecodeSmallSymbolArray50() throws Throwable {
+        doEncodeDecodeSmallSymbolArrayTestImpl(50);
+    }
+
+    @Test
+    public void testEncodeDecodeSmallSymbolArray100() throws Throwable {
+        doEncodeDecodeSmallSymbolArrayTestImpl(100);
+    }
+
+    @Test
+    public void testEncodeDecodeSmallSymbolArray384() throws Throwable {
+        doEncodeDecodeSmallSymbolArrayTestImpl(384);
+    }
+
+    private void doEncodeDecodeSmallSymbolArrayTestImpl(int count) throws Throwable {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        Symbol[] source = createPayloadArraySmallSymbols(count);
+
+        try {
+            assertEquals("Unexpected source array length", count, source.length);
+
+            int encodingWidth = 4;
+            int arrayPayloadSize = encodingWidth + 1 + (count * 5); // variable width for element count + byte type descriptor + (number of elements * size[=length+content-char])
+            int expectedEncodedArraySize = 1 + encodingWidth + arrayPayloadSize; // array type code + variable width for array size + other encoded payload
+            byte[] expectedEncoding = new byte[expectedEncodedArraySize];
+            ProtonBuffer expectedEncodingWrapper = ProtonByteBufferAllocator.DEFAULT.wrap(expectedEncoding);
+            expectedEncodingWrapper.setWriteIndex(0);
+
+            // Write the array encoding code, array size, and element count
+            expectedEncodingWrapper.writeByte((byte) 0xF0); // 'array32' type descriptor code
+            expectedEncodingWrapper.writeInt(arrayPayloadSize);
+            expectedEncodingWrapper.writeInt(count);
+
+            // Write the type descriptor
+            expectedEncodingWrapper.writeByte((byte) 0xb3); // 'sym32' type descriptor code
+
+            // Write the elements
+            for (int i = 0; i < count; i++) {
+                Symbol symbol = source[i];
+                assertEquals("Unexpected length", 1, symbol.getLength());
+
+                expectedEncodingWrapper.writeInt(1); // Length
+                expectedEncodingWrapper.writeByte(symbol.toString().charAt(0)); // Content
+            }
+
+            assertFalse("Should have filled expected encoding array", expectedEncodingWrapper.isWritable());
+
+            // Now verify against the actual encoding of the array
+            assertEquals("Unexpected buffer position", 0, buffer.getReadIndex());
+            encoder.writeArray(buffer, encoderState, source);
+            assertEquals("Unexpected encoded payload length", expectedEncodedArraySize, buffer.getReadableBytes());
+
+            byte[] actualEncoding = new byte[expectedEncodedArraySize];
+            buffer.markReadIndex();
+            buffer.readBytes(actualEncoding);
+            assertFalse("Should have drained the encoder buffer contents", buffer.isReadable());
+
+            assertArrayEquals("Unexpected actual array encoding", expectedEncoding, actualEncoding);
+
+            // Now verify against the decoding
+            buffer.resetReadIndex();
+            Object decoded = decoder.readObject(buffer, decoderState);
+            assertNotNull(decoded);
+            assertTrue(decoded.getClass().isArray());
+            assertEquals(Symbol.class, decoded.getClass().getComponentType());
+
+            assertArrayEquals("Unexpected decoding", source, (Symbol[]) decoded);
+        }
+        catch (Throwable t) {
+            System.err.println("Error during test, source array: " + Arrays.toString(source));
+            throw t;
+        }
+    }
+
+    // Creates 1 char Symbols with chars of 0-9, for encoding as sym8
+    private static Symbol[] createPayloadArraySmallSymbols(int length) {
+        Random rand = new Random(System.currentTimeMillis());
+
+        Symbol[] payload = new Symbol[length];
+        for (int i = 0; i < length; i++) {
+            payload[i] = Symbol.valueOf(String.valueOf(rand.nextInt(9)));
+        }
+
+        return payload;
     }
 }

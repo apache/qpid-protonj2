@@ -151,6 +151,8 @@ public abstract class AbstractArrayTypeDecoder extends AbstractPrimitiveTypeDeco
                     return decodePrimitiveTypeArray((DoubleTypeDecoder) decoder, buffer, state, count);
                 } else if (Float.class.equals(typeClass)) {
                     return decodePrimitiveTypeArray((FloatTypeDecoder) decoder, buffer, state, count);
+                } else if (Character.class.equals(typeClass)) {
+                    return decodePrimitiveTypeArray((CharacterTypeDecoder) decoder, buffer, state, count);
                 } else {
                     throw new ClassCastException("Unexpected class " + decoder.getClass().getName());
                 }
@@ -172,6 +174,16 @@ public abstract class AbstractArrayTypeDecoder extends AbstractPrimitiveTypeDeco
 
     private static byte[] decodePrimitiveTypeArray(ByteTypeDecoder decoder, ProtonBuffer buffer, DecoderState state, int count) {
         byte[] array = new byte[count];
+
+        for (int i = 0; i < count; i++) {
+            array[i] = decoder.readPrimitiveValue(buffer, state);
+        }
+
+        return array;
+    }
+
+    private static char[] decodePrimitiveTypeArray(CharacterTypeDecoder decoder, ProtonBuffer buffer, DecoderState state, int count) {
+        char[] array = new char[count];
 
         for (int i = 0; i < count; i++) {
             array[i] = decoder.readPrimitiveValue(buffer, state);

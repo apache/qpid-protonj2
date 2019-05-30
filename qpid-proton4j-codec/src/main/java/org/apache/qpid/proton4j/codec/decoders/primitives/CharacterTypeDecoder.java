@@ -43,6 +43,10 @@ public class CharacterTypeDecoder extends AbstractPrimitiveTypeDecoder<Character
         return Character.valueOf((char) (buffer.readInt() & 0xffff));
     }
 
+    public Character readPrimitiveValue(ProtonBuffer buffer, DecoderState state) {
+        return (char) (buffer.readInt() & 0xffff);
+    }
+
     @Override
     public int getTypeCode() {
         return EncodingCodes.CHAR & 0xff;
