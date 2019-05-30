@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.qpid.proton4j.codec.transport;
+package org.apache.qpid.proton4j.amqp.transport;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
@@ -24,6 +24,14 @@ import org.apache.qpid.proton4j.amqp.transport.SenderSettleMode;
 import org.junit.Test;
 
 public class SenderSettleModeTest {
+
+    @Test
+    public void testValueOf() {
+        assertEquals(SenderSettleMode.MIXED, SenderSettleMode.valueOf((UnsignedByte) null));
+        assertEquals(SenderSettleMode.UNSETTLED, SenderSettleMode.valueOf(UnsignedByte.valueOf((byte) 0)));
+        assertEquals(SenderSettleMode.SETTLED, SenderSettleMode.valueOf(UnsignedByte.valueOf((byte) 1)));
+        assertEquals(SenderSettleMode.MIXED, SenderSettleMode.valueOf(UnsignedByte.valueOf((byte) 2)));
+    }
 
     @Test
     public void testEquality() {
