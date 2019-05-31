@@ -361,8 +361,10 @@ public class ProtonConnection implements Connection, AMQPHeader.HeaderHandler<Pr
         remoteState = ConnectionState.ACTIVE;
         remoteOpen = open;
 
-        // TODO - Inform all Sessions that the remote has opened ?
-        // foreach session -> open.invoke(session, payload, channel, context);
+        // Inform the local sessions that remote has opened this connection.
+        for (ProtonSession localSession : localSessions.values()) {
+            localSession.handleOpen(open, channel);
+        }
 
         if (remoteOpenHandler != null) {
             remoteOpenHandler.handle(result(this, null));
