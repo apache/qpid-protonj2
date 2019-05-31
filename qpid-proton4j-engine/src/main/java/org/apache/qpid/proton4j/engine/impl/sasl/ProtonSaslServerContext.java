@@ -150,12 +150,12 @@ public class ProtonSaslServerContext extends ProtonSaslContext {
         if (!headerReceived) {
             if (isAllowNonSasl()) {
                 // Set proper outcome etc.
-                classifyStateFromOutcome(SaslOutcomes.PN_SASL_OK);
+                classifyStateFromOutcome(SaslOutcomes.SASL_OK);
                 done = true;
                 saslHandler.handleRead(context, HeaderFrame.AMQP_HEADER_FRAME);
             } else {
                 // TODO - Error type ?
-                classifyStateFromOutcome(SaslOutcomes.PN_SASL_SKIPPED);
+                classifyStateFromOutcome(SaslOutcomes.SASL_SKIPPED);
                 done = true;
                 context.fireWrite(AMQPHeader.getSASLHeader());
                 context.fireFailed(new IllegalStateException(
@@ -201,7 +201,7 @@ public class ProtonSaslServerContext extends ProtonSaslContext {
         // Send the server mechanisms now.
         context.fireWrite(mechanisms);
         mechanismsSent = true;
-        state = SaslStates.PN_SASL_STEP;
+        state = SaslStates.SASL_STEP;
     }
 
     @Override
@@ -231,14 +231,14 @@ public class ProtonSaslServerContext extends ProtonSaslContext {
     }
 
     private void pumpServerState(EngineHandlerContext context) {
-        if (state == SaslStates.PN_SASL_STEP && getChallenge() != null) {
+        if (state == SaslStates.SASL_STEP && getChallenge() != null) {
             SaslChallenge challenge = new SaslChallenge();
             challenge.setChallenge(getChallenge());
             setChallenge(null);
             context.fireWrite(challenge);
         }
 
-        if (getOutcome() != SaslOutcomes.PN_SASL_NONE) {
+        if (getOutcome() != SaslOutcomes.SASL_NONE) {
             SaslOutcome outcome = new SaslOutcome();
             // TODO Clean up SaslCode mechanics
             outcome.setCode(SaslCode.values()[getOutcome().getCode()]);

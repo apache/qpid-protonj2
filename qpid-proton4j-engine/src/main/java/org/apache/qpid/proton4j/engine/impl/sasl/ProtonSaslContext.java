@@ -39,8 +39,8 @@ public abstract class ProtonSaslContext implements AMQPHeader.HeaderHandler<Engi
 
     protected ProtonSaslHandler saslHandler;
 
-    protected SaslOutcomes outcome = SaslOutcomes.PN_SASL_NONE;
-    protected SaslStates state = SaslStates.PN_SASL_IDLE;
+    protected SaslOutcomes outcome = SaslOutcomes.SASL_NONE;
+    protected SaslStates state = SaslStates.SASL_IDLE;
 
     protected Symbol[] serverMechanisms;
     protected Symbol chosenMechanism;
@@ -141,6 +141,6 @@ public abstract class ProtonSaslContext implements AMQPHeader.HeaderHandler<Engi
     }
 
     protected SaslStates classifyStateFromOutcome(SaslOutcomes outcome) {
-        return outcome == SaslOutcomes.PN_SASL_OK ? SaslStates.PN_SASL_PASS : SaslStates.PN_SASL_FAIL;
+        return outcome == SaslOutcomes.SASL_OK ? SaslStates.SASL_PASS : SaslStates.SASL_FAIL;
     }
 }

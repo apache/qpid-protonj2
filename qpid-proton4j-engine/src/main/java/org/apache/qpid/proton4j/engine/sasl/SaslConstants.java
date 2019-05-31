@@ -21,58 +21,72 @@ package org.apache.qpid.proton4j.engine.sasl;
  */
 public interface SaslConstants {
 
-    public static int MAX_SASL_FRAME_SIZE = 512;
-
-    // TODO - PN_ is a C'ism, can we do away with that ?
+    public static int MIN_MAX_SASL_FRAME_SIZE = 512;
 
     public enum SaslStates {
 
         /** Pending configuration by application */
-        PN_SASL_CONF,
+        SASL_CONF,
         /** Pending SASL Init */
-        PN_SASL_IDLE,
+        SASL_IDLE,
         /** negotiation in progress */
-        PN_SASL_STEP,
+        SASL_STEP,
         /** negotiation completed successfully */
-        PN_SASL_PASS,
+        SASL_PASS,
         /** negotiation failed */
-        PN_SASL_FAIL
+        SASL_FAIL
     }
 
     public enum SaslOutcomes {
 
         /** negotiation not completed */
-        PN_SASL_NONE((byte) -1),
+        SASL_NONE((byte) -1),
         /** authentication succeeded */
-        PN_SASL_OK((byte) 0),
+        SASL_OK((byte) 0),
         /** failed due to bad credentials */
-        PN_SASL_AUTH((byte) 1),
+        SASL_AUTH((byte) 1),
         /** failed due to a system error */
-        PN_SASL_SYS((byte) 2),
+        SASL_SYS((byte) 2),
         /** failed due to unrecoverable error */
-        PN_SASL_PERM((byte) 3),
+        SASL_PERM((byte) 3),
         /** failed due to transient error */
-        PN_SASL_TEMP((byte) 4),
+        SASL_TEMP((byte) 4),
         /** negotiation was skipped */
-        PN_SASL_SKIPPED((byte) 5);
+        SASL_SKIPPED((byte) 5);
 
-        private final byte _code;
+        private final byte code;
 
         SaslOutcomes(byte code) {
-            _code = code;
+            this.code = code;
         }
 
         public byte getCode() {
-            return _code;
+            return code;
+        }
+
+        public static SaslOutcomes valueOf(byte saslCode) {
+            return valueOf(saslCode);
+        }
+
+        public static SaslOutcomes valueOf(int saslCode) {
+            switch (saslCode) {
+                case -1:
+                    return SASL_NONE;
+                case 0:
+                    return SASL_OK;
+                case 1:
+                    return SASL_AUTH;
+                case 2:
+                    return SASL_SYS;
+                case 3:
+                    return SASL_PERM;
+                case 4:
+                    return SASL_TEMP;
+                case 5:
+                    return SASL_SKIPPED;
+                default:
+                    throw new IllegalArgumentException("Unknown SASL Outcome code given: " + saslCode);
+            }
         }
     }
-
-    public static SaslOutcomes PN_SASL_NONE = SaslOutcomes.PN_SASL_NONE;
-    public static SaslOutcomes PN_SASL_OK = SaslOutcomes.PN_SASL_OK;
-    public static SaslOutcomes PN_SASL_AUTH = SaslOutcomes.PN_SASL_AUTH;
-    public static SaslOutcomes PN_SASL_SYS = SaslOutcomes.PN_SASL_SYS;
-    public static SaslOutcomes PN_SASL_PERM = SaslOutcomes.PN_SASL_PERM;
-    public static SaslOutcomes PN_SASL_TEMP = SaslOutcomes.PN_SASL_TEMP;
-    public static SaslOutcomes PN_SASL_SKIPPED = SaslOutcomes.PN_SASL_SKIPPED;
-
 }

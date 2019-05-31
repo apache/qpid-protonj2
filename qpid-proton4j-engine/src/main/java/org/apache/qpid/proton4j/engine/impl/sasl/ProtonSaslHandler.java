@@ -32,12 +32,12 @@ import org.apache.qpid.proton4j.engine.sasl.SaslConstants;
  */
 public class ProtonSaslHandler implements EngineHandler {
 
-    private int maxFrameSizeLimit = SaslConstants.MAX_SASL_FRAME_SIZE;
+    private int maxFrameSizeLimit = SaslConstants.MIN_MAX_SASL_FRAME_SIZE;
 
     private ProtonSaslContext saslContext;
 
     public void setMaxSaslFrameSize(int maxFrameSize) {
-        this.maxFrameSizeLimit = Math.max(SaslConstants.MAX_SASL_FRAME_SIZE, maxFrameSize);
+        this.maxFrameSizeLimit = Math.max(SaslConstants.MIN_MAX_SASL_FRAME_SIZE, maxFrameSize);
     }
 
     public int getMaxSaslFrameSize() {

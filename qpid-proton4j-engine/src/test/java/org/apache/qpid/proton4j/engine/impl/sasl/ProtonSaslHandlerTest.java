@@ -177,7 +177,7 @@ public class ProtonSaslHandlerTest {
                     emptyResponse.set(true);
                 }
 
-                context.setOutcome(SaslOutcomes.PN_SASL_OK);
+                context.setOutcome(SaslOutcomes.SASL_OK);
             }
 
             @Override

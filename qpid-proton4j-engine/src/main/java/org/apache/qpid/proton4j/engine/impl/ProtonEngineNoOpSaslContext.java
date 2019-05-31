@@ -33,12 +33,12 @@ public class ProtonEngineNoOpSaslContext implements EngineSaslContext {
 
     @Override
     public SaslOutcomes getSaslOutcome() {
-        return SaslOutcomes.PN_SASL_SKIPPED;
+        return SaslOutcomes.SASL_SKIPPED;
     }
 
     @Override
     public int getMaxFrameSize() {
-        return SaslConstants.MAX_SASL_FRAME_SIZE;
+        return SaslConstants.MIN_MAX_SASL_FRAME_SIZE;
     }
 
     @Override

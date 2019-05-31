@@ -144,7 +144,7 @@ public class ProtonSaslClientContext extends ProtonSaslContext {
         // TODO - Should we use ProtonBuffer slices as response containers ?
         listener.onSaslChallenge(this, saslChallenge.getChallenge());
 
-        if (state == SaslStates.PN_SASL_STEP && getResponse() != null) {
+        if (state == SaslStates.SASL_STEP && getResponse() != null) {
             SaslResponse response = new SaslResponse();
             response.setResponse(getResponse());
             setResponse(null);
@@ -156,14 +156,9 @@ public class ProtonSaslClientContext extends ProtonSaslContext {
 
     @Override
     public void handleOutcome(SaslOutcome saslOutcome, EngineHandlerContext context) {
-        for (SaslOutcomes outcome : SaslOutcomes.values()) {
-            if (outcome.getCode() == saslOutcome.getCode().ordinal()) {
-                this.outcome = outcome;
-                if (state != SaslStates.PN_SASL_IDLE) {
-                    state = classifyStateFromOutcome(outcome);
-                }
-                break;
-            }
+        this.outcome = SaslOutcomes.valueOf(outcome.getCode());
+        if (state != SaslStates.SASL_IDLE) {
+            state = classifyStateFromOutcome(outcome);
         }
 
         done = true;
