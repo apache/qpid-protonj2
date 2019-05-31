@@ -46,7 +46,7 @@ public class AMQPHeader {
     private ProtonBuffer buffer;
 
     public AMQPHeader() {
-        this(AMQP_HEADER.buffer);
+        this(AMQP_HEADER.buffer.duplicate());
     }
 
     public AMQPHeader(byte[] headerBytes) {
@@ -54,11 +54,11 @@ public class AMQPHeader {
     }
 
     public AMQPHeader(ProtonBuffer buffer) {
-        setBuffer(new ProtonByteBuffer(HEADER_SIZE_BYTES).writeBytes(buffer), true);
+        setBuffer(new ProtonByteBuffer(HEADER_SIZE_BYTES, HEADER_SIZE_BYTES).writeBytes(buffer), true);
     }
 
     public AMQPHeader(ProtonBuffer buffer, boolean validate) {
-        setBuffer(new ProtonByteBuffer(HEADER_SIZE_BYTES).writeBytes(buffer), validate);
+        setBuffer(new ProtonByteBuffer(HEADER_SIZE_BYTES, HEADER_SIZE_BYTES).writeBytes(buffer), validate);
     }
 
     public static AMQPHeader getAMQPHeader() {
@@ -99,6 +99,38 @@ public class AMQPHeader {
 
     public boolean isSaslHeader() {
         return getProtocolId() == SASL_PROTOCOL_ID;
+    }
+
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + ((buffer == null) ? 0 : buffer.hashCode());
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+
+        AMQPHeader other = (AMQPHeader) obj;
+        if (buffer == null) {
+            if (other.buffer != null) {
+                return false;
+            }
+        } else if (!buffer.equals(other.buffer)) {
+            return false;
+        }
+
+        return true;
     }
 
     @Override
