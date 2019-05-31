@@ -1378,6 +1378,26 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
 
     @Test
     public void testReceiverDeliveryIdTrackingHandlesAbortedDelivery() {
+        // Check aborted=true, more=false, settled=true.
+        doTestReceiverDeliveryIdTrackingHandlesAbortedDelivery(false, true);
+        // Check aborted=true, more=false, settled=unset(false)
+        // Aborted overrides settled not being set.
+        doTestReceiverDeliveryIdTrackingHandlesAbortedDelivery(false, null);
+        // Check aborted=true, more=false, settled=false
+        // Aborted overrides settled being explicitly false.
+        doTestReceiverDeliveryIdTrackingHandlesAbortedDelivery(false, false);
+        // Check aborted=true, more=true, settled=true
+        // Aborted overrides the more=true.
+        doTestReceiverDeliveryIdTrackingHandlesAbortedDelivery(true, true);
+        // Check aborted=true, more=true, settled=unset(false)
+        // Aborted overrides the more=true, and settled being unset.
+        doTestReceiverDeliveryIdTrackingHandlesAbortedDelivery(true, null);
+        // Check aborted=true, more=true, settled=false
+        // Aborted overrides the more=true, and settled explicitly false.
+        doTestReceiverDeliveryIdTrackingHandlesAbortedDelivery(true, false);
+    }
+
+    private void doTestReceiverDeliveryIdTrackingHandlesAbortedDelivery(boolean setMoreOnAbortedTransfer, Boolean setSettledOnAbortedTransfer) {
         ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
         engine.errorHandler(result -> failure = result);
         AMQPTestDriver driver = new AMQPTestDriver(engine);
@@ -1431,7 +1451,8 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
 
         // Second chunk indicates more to come as a twist but also signals aborted.
         script.remoteTransfer().withDeliveryId(0)
-                               .withMore(true)
+                               .withSettled(setSettledOnAbortedTransfer)
+                               .withMore(setMoreOnAbortedTransfer)
                                .withAborted(true)
                                .withMessageFormat(0)
                                .withPayload(payload).now();

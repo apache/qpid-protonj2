@@ -126,6 +126,11 @@ public final class TransferInjectAction extends AbstractPerformativeInjectAction
         return this;
     }
 
+    public TransferInjectAction withSettled(Boolean settled) {
+        transfer.setSettled(settled);
+        return this;
+    }
+
     public TransferInjectAction withSettled(boolean settled) {
         transfer.setSettled(settled);
         return this;
