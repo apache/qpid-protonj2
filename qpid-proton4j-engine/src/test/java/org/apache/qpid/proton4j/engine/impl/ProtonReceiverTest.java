@@ -1408,7 +1408,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         script.expectOpen().respond().withContainerId("driver");
         script.expectBegin().respond();
         script.expectAttach().respond();
-        script.expectFlow().withLinkCredit(5);
+        script.expectFlow().withLinkCredit(2);
 
         Connection connection = engine.start();
         connection.open();
@@ -1416,7 +1416,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         session.open();
 
         Receiver receiver = session.receiver("receiver");
-        receiver.setCredit(5);
+        receiver.setCredit(2);
 
         final AtomicReference<IncomingDelivery> receivedDelivery = new AtomicReference<>();
         final AtomicInteger deliveryCounter = new AtomicInteger();
@@ -1479,6 +1479,11 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         assertTrue("Should have a delivery updates on receiver", deliveryUpdated.get());
         assertFalse("Should now show that delivery is not aborted", receivedDelivery.get().isAborted());
         assertEquals("Should have delivery tagged as two", 2, receivedDelivery.get().getTag()[0]);
+
+        // Test that delivery count updates correctly on next flow
+        script.expectFlow().withLinkCredit(10).withDeliveryCount(2);
+
+        receiver.setCredit(10);
 
         script.expectDetach().respond();
         script.expectEnd().respond();
