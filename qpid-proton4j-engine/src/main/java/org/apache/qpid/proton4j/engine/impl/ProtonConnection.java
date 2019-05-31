@@ -547,10 +547,15 @@ public class ProtonConnection implements Connection, AMQPHeader.HeaderHandler<Pr
 
                 if (getLocalState() == ConnectionState.CLOSED && !localCloseSent) {
                     localCloseSent = true;
-                    engine.pipeline().fireWrite(new Close().setError(getLocalCondition()), 0, null, null);
+                    Close localClose = new Close().setError(getLocalCondition());
+                    // Inform all sessions that the connection has now written its local close
+                    ArrayList<ProtonSession> sessions = new ArrayList<>(localSessions.values());
+                    sessions.forEach(session -> {
+                        session.localClose(localClose);
+                    });
+                    engine.pipeline().fireWrite(localClose, 0, null, null);
                 } else {
                     // Inform all sessions that the connection has now written its local open
-                    // copy in case a session was opened and then closed.
                     ArrayList<ProtonSession> sessions = new ArrayList<>(localSessions.values());
                     sessions.forEach(session -> {
                         session.localOpen(localOpen);

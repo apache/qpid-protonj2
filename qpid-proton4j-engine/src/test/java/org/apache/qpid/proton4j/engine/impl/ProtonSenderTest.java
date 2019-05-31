@@ -40,6 +40,7 @@ import org.apache.qpid.proton4j.engine.Connection;
 import org.apache.qpid.proton4j.engine.OutgoingDelivery;
 import org.apache.qpid.proton4j.engine.Sender;
 import org.apache.qpid.proton4j.engine.Session;
+import org.junit.Ignore;
 import org.junit.Test;
 
 /**
@@ -802,6 +803,60 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         delivery2.disposition(Released.getInstance(), true);
 
         sender.close();
+
+        driver.assertScriptComplete();
+
+        assertNull(failure);
+    }
+
+    @Ignore("Fails for now since we don't full propagate close to all resources.")
+    @Test
+    public void testSenderCannotSendAfterConnectionClosed() throws Exception {
+        ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
+        engine.errorHandler(result -> failure = result);
+        AMQPTestDriver driver = new AMQPTestDriver(engine);
+        engine.outputConsumer(driver);
+        ScriptWriter script = driver.createScriptWriter();
+
+        script.expectAMQPHeader().respondWithAMQPHeader();
+        script.expectOpen().respond().withContainerId("driver");
+        script.expectBegin().respond();
+        script.expectAttach().withRole(Role.SENDER).respond();
+        script.remoteFlow().withDeliveryCount(0)
+                           .withLinkCredit(10)
+                           .withIncomingWindow(1024)
+                           .withOutgoingWindow(10)
+                           .withNextIncomingId(0)
+                           .withNextOutgoingId(1).queue();
+        script.expectClose().respond();
+
+        Connection connection = engine.start();
+
+        connection.open();
+        Session session = connection.session();
+        session.open();
+
+        Sender sender = session.sender("sender-1");
+
+        assertFalse(sender.isSendable());
+
+        OutgoingDelivery delivery = sender.delivery();
+        assertNotNull(delivery);
+
+        sender.open();
+
+        assertEquals(10, sender.getCredit());
+        assertTrue(sender.isSendable());
+
+        connection.close();
+
+        assertFalse(sender.isSendable());
+        try {
+            delivery.writeBytes(ProtonByteBufferAllocator.DEFAULT.wrap(new byte[] { 1 }));
+            fail("Should not be able to write to delivery after connection closed.");
+        } catch (IllegalStateException ise) {
+            // Should not allow writes on past delivery instances after connection closed
+        }
 
         driver.assertScriptComplete();
 

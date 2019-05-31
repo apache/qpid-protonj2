@@ -366,6 +366,20 @@ public class ProtonSession implements Session {
         }
     }
 
+    public void localClose(Close localClose) {
+        // If we weren't already closed we should report that as of now given our connection
+        // was just locally closed.
+        if (!isLocallyClosed()) {
+            localEndSent = true;
+            localState = SessionState.CLOSED;
+
+            // TODO - let all links know that the session is now closed.
+            for (ProtonLink<?> link : localLinks.values()) {
+                // TODO - Need a method, do we need local and remote events?
+            }
+        }
+    }
+
     //----- Handle incoming performatives
 
     void handleOpen(Open open, int channel) {
