@@ -824,6 +824,129 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
+    @Test
+    public void testReceiverSendsDispostionOnlyOnceForTransfer() throws Exception {
+        ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
+        engine.errorHandler(result -> failure = result);
+        AMQPTestDriver driver = new AMQPTestDriver(engine);
+        engine.outputConsumer(driver);
+        ScriptWriter script = driver.createScriptWriter();
+
+        script.expectAMQPHeader().respondWithAMQPHeader();
+        script.expectOpen().respond().withContainerId("driver");
+        script.expectBegin().respond();
+        script.expectAttach().respond();
+        script.expectFlow().withLinkCredit(100);
+        script.remoteTransfer().withDeliveryId(0)
+                               .withDeliveryTag(new byte[] {0})
+                               .withMore(false)
+                               .withMessageFormat(0).queue();
+        script.expectDisposition().withFirst(0)
+                                  .withSettled(true)
+                                  .withRole(Role.RECEIVER)
+                                  .withState(Accepted.getInstance());
+        script.expectDetach().respond();
+
+        Connection connection = engine.start();
+
+        // Default engine should start and return a connection immediately
+        assertNotNull(connection);
+
+        connection.open();
+        Session session = connection.session();
+        session.open();
+        Receiver receiver = session.receiver("test");
+
+        final AtomicBoolean deliveryArrived = new AtomicBoolean();
+        final AtomicReference<IncomingDelivery> receivedDelivery = new AtomicReference<>();
+        receiver.deliveryReceivedEventHandler(delivery -> {
+            deliveryArrived.set(true);
+            receivedDelivery.set(delivery);
+
+            delivery.disposition(Accepted.getInstance(), true);
+        });
+        receiver.open();
+        receiver.setCredit(100);
+
+        assertTrue("Delivery did not arrive at the receiver", deliveryArrived.get());
+        assertFalse("Deliver should not be partial", receivedDelivery.get().isPartial());
+
+        // Already settled so this should trigger error
+        try {
+            receivedDelivery.get().disposition(Released.getInstance(), true);
+            fail("Should not be able to set a second disposition");
+        } catch (IllegalStateException ise) {
+            // Expected that we can't settle twice.
+        }
+
+        receiver.close();
+
+        driver.assertScriptComplete();
+
+        assertNull(failure);
+    }
+
+    @Test
+    public void testReceiverSendsUpdatedDispostionsForTransferBeforeSettlement() throws Exception {
+        ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
+        engine.errorHandler(result -> failure = result);
+        AMQPTestDriver driver = new AMQPTestDriver(engine);
+        engine.outputConsumer(driver);
+        ScriptWriter script = driver.createScriptWriter();
+
+        script.expectAMQPHeader().respondWithAMQPHeader();
+        script.expectOpen().respond().withContainerId("driver");
+        script.expectBegin().respond();
+        script.expectAttach().respond();
+        script.expectFlow().withLinkCredit(100);
+        script.remoteTransfer().withDeliveryId(0)
+                               .withDeliveryTag(new byte[] {0})
+                               .withMore(false)
+                               .withMessageFormat(0).queue();
+        script.expectDisposition().withFirst(0)
+                                  .withSettled(false)
+                                  .withRole(Role.RECEIVER)
+                                  .withState(Accepted.getInstance());
+        script.expectDisposition().withFirst(0)
+                                  .withSettled(true)
+                                  .withRole(Role.RECEIVER)
+                                  .withState(Released.getInstance());
+        script.expectDetach().respond();
+
+        Connection connection = engine.start();
+
+        // Default engine should start and return a connection immediately
+        assertNotNull(connection);
+
+        connection.open();
+        Session session = connection.session();
+        session.open();
+        Receiver receiver = session.receiver("test");
+
+        final AtomicBoolean deliveryArrived = new AtomicBoolean();
+        final AtomicReference<IncomingDelivery> receivedDelivery = new AtomicReference<>();
+        receiver.deliveryReceivedEventHandler(delivery -> {
+            deliveryArrived.set(true);
+            receivedDelivery.set(delivery);
+
+            delivery.disposition(Accepted.getInstance(), false);
+        });
+        receiver.open();
+        receiver.setCredit(100);
+
+        assertTrue("Delivery did not arrive at the receiver", deliveryArrived.get());
+        assertFalse("Deliver should not be partial", receivedDelivery.get().isPartial());
+
+        // Second disposition should be sent as we didn't settle previously.
+        receivedDelivery.get().disposition(Released.getInstance(), true);
+
+        receiver.close();
+
+        driver.assertScriptComplete();
+
+        assertNull(failure);
+    }
+
     /**
      * Verify that no Disposition frame is emitted by the Transport should a Delivery
      * have disposition applied after the Close frame was sent.

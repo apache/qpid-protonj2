@@ -19,6 +19,7 @@ package org.apache.qpid.proton4j.engine.impl;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
@@ -30,6 +31,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
 import org.apache.qpid.proton4j.amqp.driver.ScriptWriter;
 import org.apache.qpid.proton4j.amqp.messaging.Accepted;
+import org.apache.qpid.proton4j.amqp.messaging.Released;
 import org.apache.qpid.proton4j.amqp.transport.DeliveryState;
 import org.apache.qpid.proton4j.amqp.transport.Role;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
@@ -737,6 +739,69 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         } else {
             sender.detach();
         }
+
+        driver.assertScriptComplete();
+
+        assertNull(failure);
+    }
+
+    @Test
+    public void testNoDispositionSentAfterDeliverySettledForSender() throws Exception {
+        ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
+        engine.errorHandler(result -> failure = result);
+        AMQPTestDriver driver = new AMQPTestDriver(engine);
+        engine.outputConsumer(driver);
+        ScriptWriter script = driver.createScriptWriter();
+
+        script.expectAMQPHeader().respondWithAMQPHeader();
+        script.expectOpen().respond().withContainerId("driver");
+        script.expectBegin().respond();
+        script.expectAttach().withRole(Role.SENDER).respond();
+        script.remoteFlow().withDeliveryCount(0)
+                           .withLinkCredit(10)
+                           .withIncomingWindow(1024)
+                           .withOutgoingWindow(10)
+                           .withNextIncomingId(0)
+                           .withNextOutgoingId(1).queue();
+        script.expectTransfer().withHandle(0)
+                               .withSettled(false)
+                               .withState((DeliveryState) null)
+                               .withDeliveryId(0)
+                               .withDeliveryTag(new byte[] {0});
+        script.expectDisposition().withFirst(0)
+                                  .withSettled(true)
+                                  .withState(Accepted.getInstance());
+        script.expectDetach().withHandle(0).respond();
+
+        Connection connection = engine.start();
+
+        connection.open();
+        Session session = connection.session();
+        session.open();
+
+        ProtonBuffer payload = ProtonByteBufferAllocator.DEFAULT.wrap(new byte[] {0, 1, 2, 3, 4});
+
+        Sender sender = session.sender("sender-1");
+
+        final AtomicBoolean deliverySentAfterSenable = new AtomicBoolean();
+        sender.sendableEventHandler(handler -> {
+            handler.delivery().setTag(new byte[] {0}).writeBytes(payload);
+            deliverySentAfterSenable.set(true);
+        });
+
+        sender.open();
+
+        assertTrue("Delivery should have been sent after credit arrived", deliverySentAfterSenable.get());
+
+        OutgoingDelivery delivery1 = sender.delivery();
+        delivery1.disposition(Accepted.getInstance(), true);
+        OutgoingDelivery delivery2 = sender.delivery();
+        // TODO - Currently we advance to next only after a settle which isn't really workable
+        //        and we need an advance type API to allow sends without settling
+        assertNotSame(delivery1, delivery2);
+        delivery2.disposition(Released.getInstance(), true);
+
+        sender.close();
 
         driver.assertScriptComplete();
 
