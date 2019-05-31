@@ -175,8 +175,13 @@ public class ProtonIncomingDelivery implements IncomingDelivery {
     @Override
     public ProtonIncomingDelivery readBytes(ProtonBuffer buffer) {
         if (payload != null) {
+            int bytesRead = payload.getReadableBytes();
             payload.readBytes(buffer);
-            // TODO - If keeping this method we need to report the read to the session
+            bytesRead -= payload.getReadableBytes();
+            if (!payload.isReadable()) {
+                payload = null;
+            }
+            link.deliveryRead(this, bytesRead);
         }
         return this;
     }
@@ -184,8 +189,13 @@ public class ProtonIncomingDelivery implements IncomingDelivery {
     @Override
     public ProtonIncomingDelivery readBytes(byte[] array, int offset, int length) {
         if (payload != null) {
+            int bytesRead = payload.getReadableBytes();
             payload.readBytes(array, offset, length);
-            // TODO - If keeping this method we need to report the read to the session
+            bytesRead -= payload.getReadableBytes();
+            if (!payload.isReadable()) {
+                payload = null;
+            }
+            link.deliveryRead(this, bytesRead);
         }
         return this;
     }
