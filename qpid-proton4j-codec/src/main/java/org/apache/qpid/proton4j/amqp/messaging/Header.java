@@ -57,6 +57,10 @@ public final class Header implements Section {
         this.deliveryCount = other.deliveryCount;
     }
 
+    public Header copy() {
+        return new Header(this);
+    }
+
     //----- Query the state of the Header object -----------------------------//
 
     public boolean isEmpty() {

@@ -16,38 +16,24 @@
  */
 package org.apache.qpid.proton4j.amqp.messaging;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
 import org.apache.qpid.proton4j.amqp.Symbol;
-import org.apache.qpid.proton4j.amqp.UnsignedLong;
+import org.junit.Test;
 
-public final class Footer implements Section {
+public class TerminusExpiryPolicyTest {
 
-    public static final UnsignedLong DESCRIPTOR_CODE = UnsignedLong.valueOf(0x0000000000000078L);
-    public static final Symbol DESCRIPTOR_SYMBOL = Symbol.valueOf("amqp:footer:map");
+    @Test
+    public void testValueOf() {
+        assertEquals(TerminusExpiryPolicy.valueOf(Symbol.valueOf("link-detach")), TerminusExpiryPolicy.LINK_DETACH);
+        assertEquals(TerminusExpiryPolicy.valueOf(Symbol.valueOf("session-end")), TerminusExpiryPolicy.SESSION_END);
+        assertEquals(TerminusExpiryPolicy.valueOf(Symbol.valueOf("connection-close")), TerminusExpiryPolicy.CONNECTION_CLOSE);
+        assertEquals(TerminusExpiryPolicy.valueOf(Symbol.valueOf("never")), TerminusExpiryPolicy.NEVER);
 
-    private final Map<Object, Object> value;
-
-    public Footer(Map<Object, Object> value) {
-        this.value = value;
-    }
-
-    public Footer copy() {
-        return new Footer(value == null ? null : new LinkedHashMap<>(value));
-    }
-
-    public Map<Object, Object> getValue() {
-        return value;
-    }
-
-    @Override
-    public String toString() {
-        return "Footer{ " + value + " }";
-    }
-
-    @Override
-    public SectionType getType() {
-        return SectionType.Footer;
+        try {
+            TerminusExpiryPolicy.valueOf((Symbol) null);
+            fail("Should not accept null value");
+        } catch (IllegalArgumentException iae) {}
     }
 }

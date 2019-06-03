@@ -114,7 +114,7 @@ public class SourceTypeDecoder extends AbstractDescribedTypeDecoder<Source> {
                     break;
                 case 1:
                     long durability = state.getDecoder().readUnsignedInteger(buffer, state, 0);
-                    source.setDurable(TerminusDurability.get(durability));
+                    source.setDurable(TerminusDurability.valueOf(durability));
                     break;
                 case 2:
                     Symbol expiryPolicy = state.getDecoder().readSymbol(buffer, state);

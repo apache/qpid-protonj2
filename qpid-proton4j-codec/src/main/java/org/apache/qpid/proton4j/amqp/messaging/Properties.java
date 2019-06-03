@@ -75,6 +75,10 @@ public final class Properties implements Section {
         this.replyToGroupId = other.replyToGroupId;
     }
 
+    public Properties copy() {
+        return new Properties(this);
+    }
+
     //----- Query the state of the Header object -----------------------------//
 
     public boolean isEmpty() {

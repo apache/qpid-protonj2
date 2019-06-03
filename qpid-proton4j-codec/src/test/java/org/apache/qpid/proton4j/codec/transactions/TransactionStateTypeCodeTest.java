@@ -17,6 +17,7 @@
 package org.apache.qpid.proton4j.codec.transactions;
 
 import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertSame;
 
@@ -26,6 +27,8 @@ import org.apache.qpid.proton4j.amqp.transactions.TransactionalState;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.codec.CodecTestSupport;
+import org.apache.qpid.proton4j.codec.decoders.transactions.TransactionStateTypeDecoder;
+import org.apache.qpid.proton4j.codec.encoders.transactions.TransactionStateTypeEncoder;
 import org.junit.Test;
 
 /**
@@ -33,23 +36,34 @@ import org.junit.Test;
  */
 public class TransactionStateTypeCodeTest extends CodecTestSupport {
 
-   @Test
-   public void testEncodeDecodeType() throws Exception {
-      ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+    @Test
+    public void testDescriptors() throws Exception {
+        TransactionStateTypeDecoder decoder = new TransactionStateTypeDecoder();
+        TransactionStateTypeEncoder encoder = new TransactionStateTypeEncoder();
 
-      TransactionalState input = new TransactionalState();
-      input.setTxnId(new Binary(new byte[] {2, 4, 6, 8}));
-      input.setOutcome(Accepted.getInstance());
+        assertEquals(TransactionalState.DESCRIPTOR_CODE, decoder.getDescriptorCode());
+        assertEquals(TransactionalState.DESCRIPTOR_CODE, encoder.getDescriptorCode());
+        assertEquals(TransactionalState.DESCRIPTOR_SYMBOL, decoder.getDescriptorSymbol());
+        assertEquals(TransactionalState.DESCRIPTOR_SYMBOL, decoder.getDescriptorSymbol());
+    }
 
-      encoder.writeObject(buffer, encoderState, input);
+    @Test
+    public void testEncodeDecodeType() throws Exception {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
 
-      final TransactionalState result = (TransactionalState)decoder.readObject(buffer, decoderState);
+        TransactionalState input = new TransactionalState();
+        input.setTxnId(new Binary(new byte[] { 2, 4, 6, 8 }));
+        input.setOutcome(Accepted.getInstance());
 
-      assertSame(result.getOutcome(), Accepted.getInstance());
+        encoder.writeObject(buffer, encoderState, input);
 
-      assertNotNull(result.getTxnId());
-      assertNotNull(result.getTxnId().getArray());
+        final TransactionalState result = (TransactionalState) decoder.readObject(buffer, decoderState);
 
-      assertArrayEquals(new byte[] {2, 4, 6, 8}, result.getTxnId().getArray());
-   }
+        assertSame(result.getOutcome(), Accepted.getInstance());
+
+        assertNotNull(result.getTxnId());
+        assertNotNull(result.getTxnId().getArray());
+
+        assertArrayEquals(new byte[] { 2, 4, 6, 8 }, result.getTxnId().getArray());
+    }
 }

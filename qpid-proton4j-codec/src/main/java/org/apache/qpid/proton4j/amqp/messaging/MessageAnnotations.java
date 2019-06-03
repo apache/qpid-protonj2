@@ -16,6 +16,7 @@
  */
 package org.apache.qpid.proton4j.amqp.messaging;
 
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 import org.apache.qpid.proton4j.amqp.Symbol;
@@ -30,6 +31,10 @@ public final class MessageAnnotations implements Section {
 
     public MessageAnnotations(Map<Symbol, Object> value) {
         this.value = value;
+    }
+
+    public MessageAnnotations copy() {
+        return new MessageAnnotations(value == null ? null : new LinkedHashMap<>(value));
     }
 
     public Map<Symbol, Object> getValue() {

@@ -21,13 +21,26 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.nio.charset.StandardCharsets;
 
 import org.apache.qpid.proton4j.amqp.Binary;
+import org.apache.qpid.proton4j.amqp.UnsignedInteger;
+import org.apache.qpid.proton4j.amqp.messaging.Section.SectionType;
 import org.junit.Test;
 
 public class PropertiesTypeTest {
+
+    @Test
+    public void testToStringOnEmptyObject() {
+        assertNotNull(new Properties().toString());
+    }
+
+    @Test
+    public void testGetType() {
+        assertEquals(SectionType.Properties, new Properties().getType());
+    }
 
     @Test
     public void testCreate() {
@@ -49,6 +62,45 @@ public class PropertiesTypeTest {
 
         assertTrue(properties.isEmpty());
         assertEquals(0, properties.getElementCount());
+    }
+
+    @Test
+    public void testCopyFromDefault() {
+        Properties properties = new Properties();
+
+        assertNull(properties.getMessageId());
+        assertNull(properties.getUserId());
+        assertNull(properties.getTo());
+        assertNull(properties.getSubject());
+        assertNull(properties.getReplyTo());
+        assertNull(properties.getCorrelationId());
+        assertNull(properties.getContentType());
+        assertNull(properties.getContentEncoding());
+        assertEquals(0, properties.getAbsoluteExpiryTime());
+        assertEquals(0, properties.getCreationTime());
+        assertNull(properties.getGroupId());
+        assertEquals(0, properties.getGroupSequence());
+        assertNull(properties.getReplyToGroupId());
+        assertTrue(properties.isEmpty());
+        assertEquals(0, properties.getElementCount());
+
+        Properties copy = properties.copy();
+
+        assertNull(copy.getMessageId());
+        assertNull(copy.getUserId());
+        assertNull(copy.getTo());
+        assertNull(copy.getSubject());
+        assertNull(copy.getReplyTo());
+        assertNull(copy.getCorrelationId());
+        assertNull(copy.getContentType());
+        assertNull(copy.getContentEncoding());
+        assertEquals(0, copy.getAbsoluteExpiryTime());
+        assertEquals(0, copy.getCreationTime());
+        assertNull(copy.getGroupId());
+        assertEquals(0, copy.getGroupSequence());
+        assertNull(copy.getReplyToGroupId());
+        assertTrue(copy.isEmpty());
+        assertEquals(0, copy.getElementCount());
     }
 
     @Test
@@ -267,6 +319,16 @@ public class PropertiesTypeTest {
         properties.clearGroupSequence();
         assertFalse(properties.hasGroupSequence());
         assertEquals(0, properties.getGroupSequence());
+
+        try {
+            properties.setGroupSequence(UnsignedInteger.MAX_VALUE.longValue() + 1);
+            fail("Should perform range check on set value");
+        } catch (IllegalArgumentException iae) {}
+
+        try {
+            properties.setGroupSequence(-1);
+            fail("Should perform range check on set value");
+        } catch (IllegalArgumentException iae) {}
     }
 
     @Test

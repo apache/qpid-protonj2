@@ -17,6 +17,7 @@
 package org.apache.qpid.proton4j.codec.transactions;
 
 import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
@@ -25,6 +26,8 @@ import org.apache.qpid.proton4j.amqp.transactions.Discharge;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.codec.CodecTestSupport;
+import org.apache.qpid.proton4j.codec.decoders.transactions.DischargeTypeDecoder;
+import org.apache.qpid.proton4j.codec.encoders.transactions.DischargeTypeEncoder;
 import org.junit.Test;
 
 /**
@@ -32,24 +35,35 @@ import org.junit.Test;
  */
 public class DischargeTypeCodeTest extends CodecTestSupport {
 
-   @Test
-   public void testEncodeDecodeType() throws Exception {
-      ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+    @Test
+    public void testDescriptors() throws Exception {
+        DischargeTypeDecoder decoder = new DischargeTypeDecoder();
+        DischargeTypeEncoder encoder = new DischargeTypeEncoder();
 
-      Discharge input = new Discharge();
+        assertEquals(Discharge.DESCRIPTOR_CODE, decoder.getDescriptorCode());
+        assertEquals(Discharge.DESCRIPTOR_CODE, encoder.getDescriptorCode());
+        assertEquals(Discharge.DESCRIPTOR_SYMBOL, decoder.getDescriptorSymbol());
+        assertEquals(Discharge.DESCRIPTOR_SYMBOL, decoder.getDescriptorSymbol());
+    }
 
-      input.setFail(true);
-      input.setTxnId(new Binary(new byte[] {8, 7, 6, 5}));
+    @Test
+    public void testEncodeDecodeType() throws Exception {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
 
-      encoder.writeObject(buffer, encoderState, input);
+        Discharge input = new Discharge();
 
-      final Discharge result = (Discharge)decoder.readObject(buffer, decoderState);
+        input.setFail(true);
+        input.setTxnId(new Binary(new byte[] { 8, 7, 6, 5 }));
 
-      assertTrue(result.getFail());
+        encoder.writeObject(buffer, encoderState, input);
 
-      assertNotNull(result.getTxnId());
-      assertNotNull(result.getTxnId().getArray());
+        final Discharge result = (Discharge) decoder.readObject(buffer, decoderState);
 
-      assertArrayEquals(new byte[] {8, 7, 6, 5}, result.getTxnId().getArray());
-   }
+        assertTrue(result.getFail());
+
+        assertNotNull(result.getTxnId());
+        assertNotNull(result.getTxnId().getArray());
+
+        assertArrayEquals(new byte[] { 8, 7, 6, 5 }, result.getTxnId().getArray());
+    }
 }

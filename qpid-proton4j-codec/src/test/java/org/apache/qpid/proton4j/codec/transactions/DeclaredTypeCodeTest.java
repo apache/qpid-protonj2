@@ -17,6 +17,7 @@
 package org.apache.qpid.proton4j.codec.transactions;
 
 import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
 import org.apache.qpid.proton4j.amqp.Binary;
@@ -24,12 +25,25 @@ import org.apache.qpid.proton4j.amqp.transactions.Declared;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.codec.CodecTestSupport;
+import org.apache.qpid.proton4j.codec.decoders.transactions.DeclaredTypeDecoder;
+import org.apache.qpid.proton4j.codec.encoders.transactions.DeclaredTypeEncoder;
 import org.junit.Test;
 
 /**
  * Test for handling Declared serialization
  */
 public class DeclaredTypeCodeTest extends CodecTestSupport {
+
+    @Test
+    public void testDescriptors() throws Exception {
+        DeclaredTypeDecoder decoder = new DeclaredTypeDecoder();
+        DeclaredTypeEncoder encoder = new DeclaredTypeEncoder();
+
+        assertEquals(Declared.DESCRIPTOR_CODE, decoder.getDescriptorCode());
+        assertEquals(Declared.DESCRIPTOR_CODE, encoder.getDescriptorCode());
+        assertEquals(Declared.DESCRIPTOR_SYMBOL, decoder.getDescriptorSymbol());
+        assertEquals(Declared.DESCRIPTOR_SYMBOL, decoder.getDescriptorSymbol());
+    }
 
    @Test
    public void testEncodeDecodeType() throws Exception {

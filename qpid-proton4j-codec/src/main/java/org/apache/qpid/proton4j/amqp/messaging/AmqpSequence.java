@@ -16,6 +16,7 @@
  */
 package org.apache.qpid.proton4j.amqp.messaging;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.qpid.proton4j.amqp.Symbol;
@@ -34,6 +35,10 @@ public final class AmqpSequence implements Section {
 
     public List<Object> getValue() {
         return value;
+    }
+
+    public AmqpSequence copy() {
+        return new AmqpSequence(value != null ? new ArrayList<>(value) : null);
     }
 
     @Override

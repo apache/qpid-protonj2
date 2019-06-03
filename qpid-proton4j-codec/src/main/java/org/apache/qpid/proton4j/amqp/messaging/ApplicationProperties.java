@@ -16,6 +16,7 @@
  */
 package org.apache.qpid.proton4j.amqp.messaging;
 
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 import org.apache.qpid.proton4j.amqp.Symbol;
@@ -30,6 +31,10 @@ public final class ApplicationProperties implements Section {
 
     public ApplicationProperties(Map<String, Object> value) {
         this.value = value;
+    }
+
+    public ApplicationProperties copy() {
+        return new ApplicationProperties(value == null ? null : new LinkedHashMap<>(value));
     }
 
     public Map<String, Object> getValue() {

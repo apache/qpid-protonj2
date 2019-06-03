@@ -20,6 +20,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.io.IOException;
 
@@ -47,10 +48,57 @@ public class UnsignedIntegerTypeCodecTest extends CodecTestSupport {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
 
         encoder.writeUnsignedInteger(buffer, encoderState, 640);
+        encoder.writeUnsignedInteger(buffer, encoderState, 0);
+        encoder.writeUnsignedInteger(buffer, encoderState, 255);
+        encoder.writeUnsignedInteger(buffer, encoderState, 254);
 
         Object result = decoder.readObject(buffer, decoderState);
         assertTrue(result instanceof UnsignedInteger);
         assertEquals(640, ((UnsignedInteger) result).intValue());
+        result = decoder.readObject(buffer, decoderState);
+        assertTrue(result instanceof UnsignedInteger);
+        assertEquals(0, ((UnsignedInteger) result).intValue());
+        result = decoder.readObject(buffer, decoderState);
+        assertTrue(result instanceof UnsignedInteger);
+        assertEquals(255, ((UnsignedInteger) result).intValue());
+        result = decoder.readObject(buffer, decoderState);
+        assertTrue(result instanceof UnsignedInteger);
+        assertEquals(254, ((UnsignedInteger) result).intValue());
+    }
+
+    @Test
+    public void testEncodeDecodeLong() throws Exception {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        encoder.writeUnsignedInteger(buffer, encoderState, 640l);
+        encoder.writeUnsignedInteger(buffer, encoderState, 0l);
+
+        Object result = decoder.readObject(buffer, decoderState);
+        assertTrue(result instanceof UnsignedInteger);
+        assertEquals(640, ((UnsignedInteger) result).intValue());
+        result = decoder.readObject(buffer, decoderState);
+        assertTrue(result instanceof UnsignedInteger);
+        assertEquals(0, ((UnsignedInteger) result).intValue());
+
+        try {
+            encoder.writeUnsignedInteger(buffer, encoderState, UnsignedInteger.MAX_VALUE.longValue() + 1);
+            fail("Should fail on value out of range");
+        } catch (IllegalArgumentException iae) {}
+    }
+
+    @Test
+    public void testEncodeDecodeByte() throws Exception {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        encoder.writeUnsignedInteger(buffer, encoderState, (byte) 64);
+        encoder.writeUnsignedInteger(buffer, encoderState, (byte) 0);
+
+        Object result = decoder.readObject(buffer, decoderState);
+        assertTrue(result instanceof UnsignedInteger);
+        assertEquals(64, ((UnsignedInteger) result).byteValue());
+        result = decoder.readObject(buffer, decoderState);
+        assertTrue(result instanceof UnsignedInteger);
+        assertEquals(0, ((UnsignedInteger) result).byteValue());
     }
 
     @Test

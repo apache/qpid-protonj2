@@ -31,6 +31,10 @@ public final class Data implements Section {
         this.value = value;
     }
 
+    public Data copy() {
+        return new Data(value == null ? null : value.copy());
+    }
+
     public Binary getValue() {
         return value;
     }

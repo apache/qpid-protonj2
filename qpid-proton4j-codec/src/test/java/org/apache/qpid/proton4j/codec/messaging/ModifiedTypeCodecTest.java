@@ -16,6 +16,8 @@
  */
 package org.apache.qpid.proton4j.codec.messaging;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
@@ -26,6 +28,7 @@ import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.codec.CodecTestSupport;
 import org.apache.qpid.proton4j.codec.EncodingCodes;
+import org.apache.qpid.proton4j.codec.TypeDecoder;
 import org.junit.Test;
 
 /**
@@ -34,7 +37,7 @@ import org.junit.Test;
 public class ModifiedTypeCodecTest  extends CodecTestSupport {
 
     @Test
-    public void TestDecodeModified() throws IOException {
+    public void testDecodeModified() throws IOException {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
 
         Modified value = new Modified();
@@ -48,7 +51,36 @@ public class ModifiedTypeCodecTest  extends CodecTestSupport {
     }
 
     @Test
-    public void TestDecodeModifiedWithList8() throws IOException {
+    public void testSkipValue() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        Modified value = new Modified();
+        value.setDeliveryFailed(true);
+        value.setUndeliverableHere(true);
+
+        for (int i = 0; i < 10; ++i) {
+            encoder.writeObject(buffer, encoderState, value);
+        }
+
+        encoder.writeObject(buffer, encoderState, new Modified());
+
+        for (int i = 0; i < 10; ++i) {
+            TypeDecoder<?> typeDecoder = decoder.readNextTypeDecoder(buffer, decoderState);
+            assertEquals(Modified.class, typeDecoder.getTypeClass());
+            typeDecoder.skipValue(buffer, decoderState);
+        }
+
+        final Object result = decoder.readObject(buffer, decoderState);
+
+        assertNotNull(result);
+        assertTrue(result instanceof Modified);
+        value = (Modified) result;
+        assertFalse(value.getUndeliverableHere());
+        assertFalse(value.getDeliveryFailed());
+    }
+
+    @Test
+    public void testDecodeModifiedWithList8() throws IOException {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
 
         buffer.writeByte((byte) 0); // Described Type Indicator
@@ -65,7 +97,7 @@ public class ModifiedTypeCodecTest  extends CodecTestSupport {
     }
 
     @Test
-    public void TestDecodeModifiedWithList32() throws IOException {
+    public void testDecodeModifiedWithList32() throws IOException {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
 
         buffer.writeByte((byte) 0); // Described Type Indicator

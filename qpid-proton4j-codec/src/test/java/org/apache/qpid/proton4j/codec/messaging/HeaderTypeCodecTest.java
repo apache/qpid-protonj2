@@ -17,6 +17,7 @@
 package org.apache.qpid.proton4j.codec.messaging;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
@@ -26,6 +27,7 @@ import org.apache.qpid.proton4j.amqp.messaging.Header;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.codec.CodecTestSupport;
+import org.apache.qpid.proton4j.codec.TypeDecoder;
 import org.junit.Test;
 
 /**
@@ -121,5 +123,42 @@ public class HeaderTypeCodecTest extends CodecTestSupport {
             assertTrue(resultArray[i] instanceof Header);
             assertEquals(headerArray[i].isDurable(), resultArray[i].isDurable());
         }
+    }
+
+    @Test
+    public void testSkipValue() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        Header header = new Header();
+
+        header.setDurable(Boolean.TRUE);
+        header.setPriority((byte) 3);
+        header.setDeliveryCount(10);
+        header.setFirstAcquirer(Boolean.FALSE);
+        header.setTimeToLive(500);
+
+        for (int i = 0; i < 10; ++i) {
+            encoder.writeObject(buffer, encoderState, new Header());
+        }
+
+        encoder.writeObject(buffer, encoderState, header);
+
+        for (int i = 0; i < 10; ++i) {
+            TypeDecoder<?> typeDecoder = decoder.readNextTypeDecoder(buffer, decoderState);
+            assertEquals(Header.class, typeDecoder.getTypeClass());
+            typeDecoder.skipValue(buffer, decoderState);
+        }
+
+        final Object result = decoder.readObject(buffer, decoderState);
+
+        assertNotNull(result);
+        assertTrue(result instanceof Header);
+
+        Header value = (Header) result;
+        assertEquals(3, value.getPriority());
+        assertTrue(value.isDurable());
+        assertFalse(value.isFirstAcquirer());
+        assertEquals(500, header.getTimeToLive());
+        assertEquals(10, header.getDeliveryCount());
     }
 }

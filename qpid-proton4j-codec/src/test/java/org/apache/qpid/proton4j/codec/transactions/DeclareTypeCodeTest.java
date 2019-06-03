@@ -16,18 +16,32 @@
  */
 package org.apache.qpid.proton4j.codec.transactions;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 
 import org.apache.qpid.proton4j.amqp.transactions.Declare;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.codec.CodecTestSupport;
+import org.apache.qpid.proton4j.codec.decoders.transactions.DeclareTypeDecoder;
+import org.apache.qpid.proton4j.codec.encoders.transactions.DeclareTypeEncoder;
 import org.junit.Test;
 
 /**
  * Test for handling Declare serialization
  */
 public class DeclareTypeCodeTest extends CodecTestSupport {
+
+    @Test
+    public void testDescriptors() throws Exception {
+        DeclareTypeDecoder decoder = new DeclareTypeDecoder();
+        DeclareTypeEncoder encoder = new DeclareTypeEncoder();
+
+        assertEquals(Declare.DESCRIPTOR_CODE, decoder.getDescriptorCode());
+        assertEquals(Declare.DESCRIPTOR_CODE, encoder.getDescriptorCode());
+        assertEquals(Declare.DESCRIPTOR_SYMBOL, decoder.getDescriptorSymbol());
+        assertEquals(Declare.DESCRIPTOR_SYMBOL, decoder.getDescriptorSymbol());
+    }
 
    @Test
    public void testEncodeDecodeType() throws Exception {

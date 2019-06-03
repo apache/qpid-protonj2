@@ -16,38 +16,20 @@
  */
 package org.apache.qpid.proton4j.amqp.messaging;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertSame;
 
-import org.apache.qpid.proton4j.amqp.Symbol;
-import org.apache.qpid.proton4j.amqp.UnsignedLong;
+import org.junit.Test;
 
-public final class Footer implements Section {
+public class DeleteOnNoLinksOrMessagesTest {
 
-    public static final UnsignedLong DESCRIPTOR_CODE = UnsignedLong.valueOf(0x0000000000000078L);
-    public static final Symbol DESCRIPTOR_SYMBOL = Symbol.valueOf("amqp:footer:map");
-
-    private final Map<Object, Object> value;
-
-    public Footer(Map<Object, Object> value) {
-        this.value = value;
+    @Test
+    public void testToString() {
+        assertNotNull(DeleteOnNoLinksOrMessages.getInstance().toString());
     }
 
-    public Footer copy() {
-        return new Footer(value == null ? null : new LinkedHashMap<>(value));
-    }
-
-    public Map<Object, Object> getValue() {
-        return value;
-    }
-
-    @Override
-    public String toString() {
-        return "Footer{ " + value + " }";
-    }
-
-    @Override
-    public SectionType getType() {
-        return SectionType.Footer;
+    @Test
+    public void testSingleton() {
+        assertSame(DeleteOnNoLinksOrMessages.getInstance(), DeleteOnNoLinksOrMessages.getInstance());
     }
 }

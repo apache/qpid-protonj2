@@ -30,6 +30,10 @@ public final class AmqpValue implements Section {
         this.value = value;
     }
 
+    public AmqpValue copy() {
+        return new AmqpValue(value);
+    }
+
     public Object getValue() {
         return value;
     }

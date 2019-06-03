@@ -26,11 +26,11 @@ public enum TerminusDurability {
         return UnsignedInteger.valueOf(ordinal());
     }
 
-    public static TerminusDurability get(UnsignedInteger value) {
-        return TerminusDurability.get(value.intValue());
+    public static TerminusDurability valueOf(UnsignedInteger value) {
+        return TerminusDurability.valueOf(value.intValue());
     }
 
-    public static TerminusDurability get(long value) {
+    public static TerminusDurability valueOf(long value) {
         if (value == 0) {
             return NONE;
         } else if (value == 1) {

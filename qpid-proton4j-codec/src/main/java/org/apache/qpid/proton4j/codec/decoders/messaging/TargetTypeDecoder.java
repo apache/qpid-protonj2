@@ -113,7 +113,7 @@ public class TargetTypeDecoder extends AbstractDescribedTypeDecoder<Target> {
                     break;
                 case 1:
                     long durability = state.getDecoder().readUnsignedInteger(buffer, state, 0);
-                    target.setDurable(TerminusDurability.get(durability));
+                    target.setDurable(TerminusDurability.valueOf(durability));
                     break;
                 case 2:
                     Symbol expiryPolicy = state.getDecoder().readSymbol(buffer, state);

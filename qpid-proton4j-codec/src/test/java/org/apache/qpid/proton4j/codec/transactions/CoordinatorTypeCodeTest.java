@@ -17,12 +17,15 @@
 package org.apache.qpid.proton4j.codec.transactions;
 
 import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
 
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.transactions.Coordinator;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.codec.CodecTestSupport;
+import org.apache.qpid.proton4j.codec.decoders.transactions.CoordinatorTypeDecoder;
+import org.apache.qpid.proton4j.codec.encoders.transactions.CoordinatorTypeEncoder;
 import org.junit.Test;
 
 /**
@@ -30,19 +33,30 @@ import org.junit.Test;
  */
 public class CoordinatorTypeCodeTest extends CodecTestSupport {
 
-   @Test
-   public void testEncodeDecodeCoordinatorType() throws Exception {
-      ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+    @Test
+    public void testDescriptors() throws Exception {
+        CoordinatorTypeDecoder decoder = new CoordinatorTypeDecoder();
+        CoordinatorTypeEncoder encoder = new CoordinatorTypeEncoder();
 
-      Symbol[] capabilities = new Symbol[] {Symbol.valueOf("Cap-1"), Symbol.valueOf("Cap-2")};
+        assertEquals(Coordinator.DESCRIPTOR_CODE, decoder.getDescriptorCode());
+        assertEquals(Coordinator.DESCRIPTOR_CODE, encoder.getDescriptorCode());
+        assertEquals(Coordinator.DESCRIPTOR_SYMBOL, decoder.getDescriptorSymbol());
+        assertEquals(Coordinator.DESCRIPTOR_SYMBOL, decoder.getDescriptorSymbol());
+    }
 
-      Coordinator input = new Coordinator();
-      input.setCapabilities(capabilities);
+    @Test
+    public void testEncodeDecodeCoordinatorType() throws Exception {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
 
-      encoder.writeObject(buffer, encoderState, input);
+        Symbol[] capabilities = new Symbol[] { Symbol.valueOf("Cap-1"), Symbol.valueOf("Cap-2") };
 
-      final Coordinator result = (Coordinator)decoder.readObject(buffer, decoderState);
+        Coordinator input = new Coordinator();
+        input.setCapabilities(capabilities);
 
-      assertArrayEquals(capabilities, result.getCapabilities());
-   }
+        encoder.writeObject(buffer, encoderState, input);
+
+        final Coordinator result = (Coordinator) decoder.readObject(buffer, decoderState);
+
+        assertArrayEquals(capabilities, result.getCapabilities());
+    }
 }

@@ -163,7 +163,7 @@ public abstract class TypeMapper {
                 new org.apache.qpid.proton4j.amqp.messaging.Source();
 
             mapped.setAddress(source.getAddress());
-            mapped.setDurable(TerminusDurability.get(source.getDurable()));
+            mapped.setDurable(TerminusDurability.valueOf(source.getDurable()));
             mapped.setExpiryPolicy(TerminusExpiryPolicy.valueOf(source.getExpiryPolicy()));
             mapped.setTimeout(source.getTimeout());
             mapped.setDynamic(source.getDynamic());
@@ -204,7 +204,7 @@ public abstract class TypeMapper {
                 new org.apache.qpid.proton4j.amqp.messaging.Target();
 
             mapped.setAddress(target.getAddress());
-            mapped.setDurable(TerminusDurability.get(target.getDurable()));
+            mapped.setDurable(TerminusDurability.valueOf(target.getDurable()));
             mapped.setExpiryPolicy(TerminusExpiryPolicy.valueOf(target.getExpiryPolicy()));
             mapped.setTimeout(target.getTimeout());
             mapped.setDynamic(target.getDynamic());

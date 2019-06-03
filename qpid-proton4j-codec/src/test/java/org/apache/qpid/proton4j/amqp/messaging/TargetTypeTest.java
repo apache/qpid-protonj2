@@ -16,10 +16,16 @@
  */
 package org.apache.qpid.proton4j.amqp.messaging;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 
+import java.util.HashMap;
+import java.util.Map;
+
+import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedInteger;
 import org.junit.Test;
 
@@ -36,5 +42,87 @@ public class TargetTypeTest {
         assertFalse(target.getDynamic());
         assertNull(target.getDynamicNodeProperties());
         assertNull(target.getCapabilities());
+    }
+
+    @Test
+    public void testCopyFromDefault() {
+        Target target = new Target();
+
+        assertNull(target.getAddress());
+        assertEquals(TerminusDurability.NONE, target.getDurable());
+        assertEquals(TerminusExpiryPolicy.SESSION_END, target.getExpiryPolicy());
+        assertEquals(UnsignedInteger.ZERO, target.getTimeout());
+        assertFalse(target.getDynamic());
+        assertNull(target.getDynamicNodeProperties());
+        assertNull(target.getCapabilities());
+
+        Target copy = target.copy();
+
+        assertNull(copy.getAddress());
+        assertEquals(TerminusDurability.NONE, copy.getDurable());
+        assertEquals(TerminusExpiryPolicy.SESSION_END, copy.getExpiryPolicy());
+        assertEquals(UnsignedInteger.ZERO, copy.getTimeout());
+        assertFalse(copy.getDynamic());
+        assertNull(copy.getDynamicNodeProperties());
+        assertNull(copy.getCapabilities());
+    }
+
+    @Test
+    public void testCopyWithValues() {
+        Target target = new Target();
+
+        Map<Symbol, Object> dynamicProperties = new HashMap<>();
+        dynamicProperties.put(Symbol.valueOf("test"), "test");
+
+        assertNull(target.getAddress());
+        assertEquals(TerminusDurability.NONE, target.getDurable());
+        assertEquals(TerminusExpiryPolicy.SESSION_END, target.getExpiryPolicy());
+        assertEquals(UnsignedInteger.ZERO, target.getTimeout());
+        assertFalse(target.getDynamic());
+        target.setDynamicNodeProperties(dynamicProperties);
+        assertNotNull(target.getDynamicNodeProperties());
+        target.setCapabilities(Symbol.valueOf("test"));
+        assertNotNull(target.getCapabilities());
+
+        Target copy = target.copy();
+
+        assertNull(copy.getAddress());
+        assertEquals(TerminusDurability.NONE, copy.getDurable());
+        assertEquals(TerminusExpiryPolicy.SESSION_END, copy.getExpiryPolicy());
+        assertEquals(UnsignedInteger.ZERO, copy.getTimeout());
+        assertFalse(copy.getDynamic());
+        assertNotNull(copy.getDynamicNodeProperties());
+        assertEquals(dynamicProperties, copy.getDynamicNodeProperties());
+        assertNotNull(copy.getCapabilities());
+        assertArrayEquals(new Symbol[] { Symbol.valueOf("test") }, target.getCapabilities());
+
+        assertEquals(target.toString(), copy.toString());
+    }
+
+    @Test
+    public void testSetExpiryPolicy() {
+        Target target = new Target();
+
+        assertEquals(TerminusExpiryPolicy.SESSION_END, target.getExpiryPolicy());
+        target.setExpiryPolicy(TerminusExpiryPolicy.CONNECTION_CLOSE);
+        assertEquals(TerminusExpiryPolicy.CONNECTION_CLOSE, target.getExpiryPolicy());
+        target.setExpiryPolicy(null);
+        assertEquals(TerminusExpiryPolicy.SESSION_END, target.getExpiryPolicy());
+    }
+
+    @Test
+    public void testTerminusDurability() {
+        Target target = new Target();
+
+        assertEquals(TerminusDurability.NONE, target.getDurable());
+        target.setDurable(TerminusDurability.UNSETTLED_STATE);
+        assertEquals(TerminusDurability.UNSETTLED_STATE, target.getDurable());
+        target.setDurable(null);
+        assertEquals(TerminusDurability.NONE, target.getDurable());
+    }
+
+    @Test
+    public void testToStringOnEmptyObject() {
+        assertNotNull(new Target().toString());
     }
 }

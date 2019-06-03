@@ -29,7 +29,7 @@ public enum TerminusExpiryPolicy {
     NEVER("never");
 
     private Symbol policy;
-    private static final Map<Symbol, TerminusExpiryPolicy> map = new HashMap<Symbol, TerminusExpiryPolicy>();
+    private static final Map<Symbol, TerminusExpiryPolicy> map = new HashMap<>();
 
     TerminusExpiryPolicy(String policy) {
         this.policy = Symbol.valueOf(policy);
