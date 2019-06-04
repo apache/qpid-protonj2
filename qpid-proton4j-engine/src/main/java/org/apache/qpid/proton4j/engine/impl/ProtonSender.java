@@ -24,6 +24,7 @@ import org.apache.qpid.proton4j.amqp.transport.Role;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.engine.EventHandler;
 import org.apache.qpid.proton4j.engine.LinkCreditState;
+import org.apache.qpid.proton4j.engine.LinkState;
 import org.apache.qpid.proton4j.engine.OutgoingDelivery;
 import org.apache.qpid.proton4j.engine.Sender;
 import org.apache.qpid.proton4j.engine.Session;
@@ -132,9 +133,16 @@ public class ProtonSender extends ProtonLink<Sender> implements Sender {
     }
 
     Sender signalSendable() {
+        this.sendHandler = this::sendSink;
+
         if (sendableEventHandler != null) {
             sendableEventHandler.handle(this);
         }
+        return this;
+    }
+
+    Sender signalNoLongerSendable() {
+        this.sendHandler = this::senderNotWritableSink;
         return this;
     }
 
@@ -159,14 +167,14 @@ public class ProtonSender extends ProtonLink<Sender> implements Sender {
     @Override
     protected void transitionedToLocallyOpened() {
         // TODO - Set to not writable and handle transitions
-        this.sendHandler = this::sendSink;
+        this.sendHandler = this::senderNotWritableSink;
+        // TODO - Handle transport not writable and prevent or queue these ?
         this.dispositionHandler = this::dispositionSink;
         this.abortHandler = this::abortSink;
     }
 
     @Override
     protected void transitionedToLocallyDetached() {
-        // TODO - Variant for detached or update message in sink to reflect state.
         this.sendHandler = this::senderClosedSink;
         this.dispositionHandler = this::senderClosedSink;
         this.abortHandler = this::senderClosedSink;
@@ -192,7 +200,11 @@ public class ProtonSender extends ProtonLink<Sender> implements Sender {
     }
 
     private void senderClosedSink(ProtonOutgoingDelivery delivery, ProtonBuffer buffer) {
-        throw new IllegalStateException("Cannot send a disposition when sender link is closed");
+        if (getLocalState() == LinkState.DETACHED) {
+            throw new IllegalStateException("Cannot send a disposition when sender link is detached");
+        } else {
+            throw new IllegalStateException("Cannot send a disposition when sender link is closed");
+        }
     }
 
     private void senderClosedSink(ProtonOutgoingDelivery delivery) {
