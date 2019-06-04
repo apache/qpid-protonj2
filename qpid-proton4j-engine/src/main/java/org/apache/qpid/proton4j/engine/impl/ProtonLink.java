@@ -155,9 +155,14 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
             long localHandle = session.findFreeLocalHandle(this);
             localAttach.setHandle(localHandle);
             trySendLocalAttach();
+            transitionedToLocallyOpened();
         }
 
         return this;
+    }
+
+    protected void transitionedToLocallyOpened() {
+        // Subclass can respond to this state change as needed.
     }
 
     @Override
@@ -165,9 +170,14 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
         if (getLocalState() == LinkState.ACTIVE) {
             localState = LinkState.DETACHED;
             trySendLocalDetach(false);
+            transitionedToLocallyDetached();
         }
 
         return this;
+    }
+
+    protected void transitionedToLocallyDetached() {
+        // Subclass can respond to this state change as needed.
     }
 
     @Override
@@ -175,9 +185,14 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
         if (getLocalState() == LinkState.ACTIVE) {
             localState = LinkState.CLOSED;
             trySendLocalDetach(true);
+            transitionedToLocallyClosed();
         }
 
         return this;
+    }
+
+    protected void transitionedToLocallyClosed() {
+        // Subclass can respond to this state change as needed.
     }
 
     @Override
