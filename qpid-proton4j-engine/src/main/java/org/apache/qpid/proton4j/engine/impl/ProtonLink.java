@@ -154,8 +154,8 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
             localState = LinkState.ACTIVE;
             long localHandle = session.findFreeLocalHandle(this);
             localAttach.setHandle(localHandle);
-            trySendLocalAttach();
             transitionedToLocallyOpened();
+            trySendLocalAttach();
         }
 
         return this;
@@ -169,8 +169,8 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
     public ProtonLink<T> detach() {
         if (getLocalState() == LinkState.ACTIVE) {
             localState = LinkState.DETACHED;
-            trySendLocalDetach(false);
             transitionedToLocallyDetached();
+            trySendLocalDetach(false);
         }
 
         return this;
@@ -184,8 +184,8 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
     public ProtonLink<T> close() {
         if (getLocalState() == LinkState.ACTIVE) {
             localState = LinkState.CLOSED;
-            trySendLocalDetach(true);
             transitionedToLocallyClosed();
+            trySendLocalDetach(true);
         }
 
         return this;

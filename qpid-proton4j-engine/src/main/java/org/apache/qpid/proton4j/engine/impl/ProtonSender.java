@@ -16,6 +16,9 @@
  */
 package org.apache.qpid.proton4j.engine.impl;
 
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
+
 import org.apache.qpid.proton4j.amqp.transport.Disposition;
 import org.apache.qpid.proton4j.amqp.transport.Role;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
@@ -36,9 +39,11 @@ public class ProtonSender extends ProtonLink<Sender> implements Sender {
     private EventHandler<Sender> sendableEventHandler = null;
     private EventHandler<LinkCreditState> drainRequestedEventHandler = null;
 
-    private OutgoingDelivery current;
+    private BiConsumer<ProtonOutgoingDelivery, ProtonBuffer> sendHandler = this::senderClosedSink;
+    private Consumer<ProtonOutgoingDelivery> dispositionHandler = this::senderClosedSink;
+    private Consumer<ProtonOutgoingDelivery> abortHandler = this::senderClosedSink;
 
-    // TODO - On open validate that required handlers are not null
+    private OutgoingDelivery current;
 
     /**
      * Create a new {@link Sender} instance with the given {@link Session} parent.
@@ -94,25 +99,18 @@ public class ProtonSender extends ProtonLink<Sender> implements Sender {
     //----- Delivery output related access points
 
     void send(ProtonOutgoingDelivery delivery, ProtonBuffer buffer) {
-        if (!isSendable()) {
-            throw new IllegalStateException("Cannot send when sender is not sendable");
-        }
-        creditState.send(delivery, buffer);
+        sendHandler.accept(delivery, buffer);
     }
 
     void disposition(ProtonOutgoingDelivery delivery) {
-        // TODO - Enforce not closed etc
-        creditState.disposition(delivery);
+        dispositionHandler.accept(delivery);
     }
 
     void abort(ProtonOutgoingDelivery delivery) {
-        // TODO - Enforce not closed etc
-        creditState.abort(delivery);
+        abortHandler.accept(delivery);
     }
 
     //----- Sender event handlers
-
-    // TODO - Don't let valid handlers be nulled unless closed
 
     @Override
     public Sender deliveryUpdatedEventHandler(EventHandler<OutgoingDelivery> handler) {
@@ -154,5 +152,58 @@ public class ProtonSender extends ProtonLink<Sender> implements Sender {
             drainRequestedEventHandler.handle(getCreditState().snapshot());
         }
         return this;
+    }
+
+    //----- Internal routing and state management
+
+    @Override
+    protected void transitionedToLocallyOpened() {
+        // TODO - Set to not writable and handle transitions
+        this.sendHandler = this::sendSink;
+        this.dispositionHandler = this::dispositionSink;
+        this.abortHandler = this::abortSink;
+    }
+
+    @Override
+    protected void transitionedToLocallyDetached() {
+        // TODO - Variant for detached or update message in sink to reflect state.
+        this.sendHandler = this::senderClosedSink;
+        this.dispositionHandler = this::senderClosedSink;
+        this.abortHandler = this::senderClosedSink;
+    }
+
+    @Override
+    protected void transitionedToLocallyClosed() {
+        this.sendHandler = this::senderClosedSink;
+        this.dispositionHandler = this::senderClosedSink;
+        this.abortHandler = this::senderClosedSink;
+    }
+
+    private void sendSink(ProtonOutgoingDelivery delivery, ProtonBuffer payload) {
+        creditState.send(delivery, payload);
+    }
+
+    private void dispositionSink(ProtonOutgoingDelivery delivery) {
+        creditState.disposition(delivery);
+    }
+
+    private void abortSink(ProtonOutgoingDelivery delivery) {
+        creditState.abort(delivery);
+    }
+
+    private void senderClosedSink(ProtonOutgoingDelivery delivery, ProtonBuffer buffer) {
+        throw new IllegalStateException("Cannot send a disposition when sender link is closed");
+    }
+
+    private void senderClosedSink(ProtonOutgoingDelivery delivery) {
+        throw new IllegalStateException("Cannot send a disposition when sender link is closed");
+    }
+
+    private void senderNotWritableSink(ProtonOutgoingDelivery delivery, ProtonBuffer buffer) {
+        throw new IllegalStateException("Cannot send disposition when sender is not currently writable");
+    }
+
+    private void senderNotWritableSink(ProtonOutgoingDelivery delivery) {
+        throw new IllegalStateException("Cannot send disposition when sender is not currently writable");
     }
 }
