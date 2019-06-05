@@ -20,6 +20,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.io.IOException;
 
@@ -30,6 +31,8 @@ import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.codec.CodecTestSupport;
 import org.apache.qpid.proton4j.codec.EncodingCodes;
 import org.apache.qpid.proton4j.codec.TypeDecoder;
+import org.apache.qpid.proton4j.codec.decoders.messaging.AcceptedTypeDecoder;
+import org.apache.qpid.proton4j.codec.encoders.messaging.AcceptedTypeEncoder;
 import org.junit.Test;
 
 /**
@@ -38,7 +41,13 @@ import org.junit.Test;
 public class AcceptedTypeCodecTest  extends CodecTestSupport {
 
     @Test
-    public void TestDecodeAccepted() throws IOException {
+    public void testTypeClassReturnsCorrectType() throws IOException {
+        assertEquals(Accepted.class, new AcceptedTypeDecoder().getTypeClass());
+        assertEquals(Accepted.class, new AcceptedTypeEncoder().getTypeClass());
+    }
+
+    @Test
+    public void testDecodeAccepted() throws IOException {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
 
         Accepted value = Accepted.getInstance();
@@ -56,7 +65,7 @@ public class AcceptedTypeCodecTest  extends CodecTestSupport {
     }
 
     @Test
-    public void TestDecodeAcceptedWithList8() throws IOException {
+    public void testDecodeAcceptedWithList8() throws IOException {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
 
         buffer.writeByte((byte) 0); // Described Type Indicator
@@ -79,7 +88,7 @@ public class AcceptedTypeCodecTest  extends CodecTestSupport {
     }
 
     @Test
-    public void TestDecodeAcceptedWithList32() throws IOException {
+    public void testDecodeAcceptedWithList32() throws IOException {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
 
         buffer.writeByte((byte) 0); // Described Type Indicator
@@ -99,6 +108,39 @@ public class AcceptedTypeCodecTest  extends CodecTestSupport {
         Accepted decoded = (Accepted) result;
 
         assertEquals(value, decoded);
+    }
+
+    @Test
+    public void testDecodeAcceptedWithInvalidMap32Type() throws IOException {
+        doTestDecodeAcceptedWithInvalidMapType(EncodingCodes.MAP32);
+    }
+
+    @Test
+    public void testDecodeAcceptedWithInvalidMap8Type() throws IOException {
+        doTestDecodeAcceptedWithInvalidMapType(EncodingCodes.MAP8);
+    }
+
+    private void doTestDecodeAcceptedWithInvalidMapType(byte mapType) throws IOException {
+
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        buffer.writeByte((byte) 0); // Described Type Indicator
+        buffer.writeByte(EncodingCodes.SMALLULONG);
+        buffer.writeByte(Accepted.DESCRIPTOR_CODE.byteValue());
+        if (mapType == EncodingCodes.MAP32) {
+            buffer.writeByte(EncodingCodes.MAP32);
+            buffer.writeInt((byte) 0);  // Size
+            buffer.writeInt((byte) 0);  // Count
+        } else {
+            buffer.writeByte(EncodingCodes.MAP8);
+            buffer.writeByte((byte) 0);  // Size
+            buffer.writeByte((byte) 0);  // Count
+        }
+
+        try {
+            decoder.readObject(buffer, decoderState);
+            fail("Should not decode type with invalid encoding");
+        } catch (IOException ex) {}
     }
 
     @Test

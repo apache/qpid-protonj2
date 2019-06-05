@@ -16,6 +16,7 @@
  */
 package org.apache.qpid.proton4j.codec.messaging;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
@@ -26,12 +27,20 @@ import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.codec.CodecTestSupport;
 import org.apache.qpid.proton4j.codec.EncodingCodes;
+import org.apache.qpid.proton4j.codec.decoders.messaging.DeleteOnNoLinksTypeDecoder;
+import org.apache.qpid.proton4j.codec.encoders.messaging.DeleteOnNoLinksTypeEncoder;
 import org.junit.Test;
 
 /**
  * Test codec handling of DeleteOnNoLinks types.
  */
 public class DeleteOnNoLinksTypeCodecTest  extends CodecTestSupport {
+
+    @Test
+    public void testTypeClassReturnsCorrectType() throws IOException {
+        assertEquals(DeleteOnNoLinks.class, new DeleteOnNoLinksTypeDecoder().getTypeClass());
+        assertEquals(DeleteOnNoLinks.class, new DeleteOnNoLinksTypeEncoder().getTypeClass());
+    }
 
     @Test
     public void TestDecodeDeleteOnNoLinks() throws IOException {

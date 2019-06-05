@@ -27,9 +27,17 @@ import org.apache.qpid.proton4j.amqp.transport.Flow;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.codec.CodecTestSupport;
+import org.apache.qpid.proton4j.codec.decoders.transport.FlowTypeDecoder;
+import org.apache.qpid.proton4j.codec.encoders.transport.FlowTypeEncoder;
 import org.junit.Test;
 
 public class FlowTypeCodecTest extends CodecTestSupport {
+
+    @Test
+    public void testTypeClassReturnsCorrectType() throws IOException {
+        assertEquals(Flow.class, new FlowTypeDecoder().getTypeClass());
+        assertEquals(Flow.class, new FlowTypeEncoder().getTypeClass());
+    }
 
     @Test
     public void testDecodeFlow() throws IOException {

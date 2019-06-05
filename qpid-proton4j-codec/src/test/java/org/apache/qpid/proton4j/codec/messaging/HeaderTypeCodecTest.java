@@ -28,12 +28,20 @@ import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.codec.CodecTestSupport;
 import org.apache.qpid.proton4j.codec.TypeDecoder;
+import org.apache.qpid.proton4j.codec.decoders.messaging.HeaderTypeDecoder;
+import org.apache.qpid.proton4j.codec.encoders.messaging.HeaderTypeEncoder;
 import org.junit.Test;
 
 /**
  * Test for decoder of AMQP Header type.
  */
 public class HeaderTypeCodecTest extends CodecTestSupport {
+
+    @Test
+    public void testTypeClassReturnsCorrectType() throws IOException {
+        assertEquals(Header.class, new HeaderTypeDecoder().getTypeClass());
+        assertEquals(Header.class, new HeaderTypeEncoder().getTypeClass());
+    }
 
     @Test
     public void testDecodeHeader() throws IOException {

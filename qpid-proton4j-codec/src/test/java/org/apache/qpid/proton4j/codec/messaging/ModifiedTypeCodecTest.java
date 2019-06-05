@@ -29,12 +29,20 @@ import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.codec.CodecTestSupport;
 import org.apache.qpid.proton4j.codec.EncodingCodes;
 import org.apache.qpid.proton4j.codec.TypeDecoder;
+import org.apache.qpid.proton4j.codec.decoders.messaging.ModifiedTypeDecoder;
+import org.apache.qpid.proton4j.codec.encoders.messaging.ModifiedTypeEncoder;
 import org.junit.Test;
 
 /**
  * Test codec handling of Modified types.
  */
 public class ModifiedTypeCodecTest  extends CodecTestSupport {
+
+    @Test
+    public void testTypeClassReturnsCorrectType() throws IOException {
+        assertEquals(Modified.class, new ModifiedTypeDecoder().getTypeClass());
+        assertEquals(Modified.class, new ModifiedTypeEncoder().getTypeClass());
+    }
 
     @Test
     public void testDecodeModified() throws IOException {

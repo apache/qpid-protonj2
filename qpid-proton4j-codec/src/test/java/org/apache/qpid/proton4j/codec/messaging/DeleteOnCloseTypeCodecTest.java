@@ -16,6 +16,7 @@
  */
 package org.apache.qpid.proton4j.codec.messaging;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
@@ -26,12 +27,20 @@ import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.codec.CodecTestSupport;
 import org.apache.qpid.proton4j.codec.EncodingCodes;
+import org.apache.qpid.proton4j.codec.decoders.messaging.DeleteOnCloseTypeDecoder;
+import org.apache.qpid.proton4j.codec.encoders.messaging.DeleteOnCloseTypeEncoder;
 import org.junit.Test;
 
 /**
  * Test codec handling of DeleteOnClose types.
  */
 public class DeleteOnCloseTypeCodecTest  extends CodecTestSupport {
+
+    @Test
+    public void testTypeClassReturnsCorrectType() throws IOException {
+        assertEquals(DeleteOnClose.class, new DeleteOnCloseTypeDecoder().getTypeClass());
+        assertEquals(DeleteOnClose.class, new DeleteOnCloseTypeEncoder().getTypeClass());
+    }
 
     @Test
     public void TestDecodeDeleteOnClose() throws IOException {

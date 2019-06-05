@@ -27,12 +27,20 @@ import org.apache.qpid.proton4j.amqp.messaging.AmqpValue;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.codec.CodecTestSupport;
+import org.apache.qpid.proton4j.codec.decoders.messaging.AmqpValueTypeDecoder;
+import org.apache.qpid.proton4j.codec.encoders.messaging.AmqpValueTypeEncoder;
 import org.junit.Test;
 
 /**
  * Test for decoder of the AmqpValue type.
  */
 public class AmqpValueTypeCodecTest extends CodecTestSupport {
+
+    @Test
+    public void testTypeClassReturnsCorrectType() throws IOException {
+        assertEquals(AmqpValue.class, new AmqpValueTypeDecoder().getTypeClass());
+        assertEquals(AmqpValue.class, new AmqpValueTypeEncoder().getTypeClass());
+    }
 
     @Test
     public void testDecodeAmqpValueString() throws IOException {

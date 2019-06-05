@@ -32,9 +32,17 @@ import org.apache.qpid.proton4j.amqp.messaging.MessageAnnotations;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.codec.CodecTestSupport;
+import org.apache.qpid.proton4j.codec.decoders.messaging.MessageAnnotationsTypeDecoder;
+import org.apache.qpid.proton4j.codec.encoders.messaging.MessageAnnotationsTypeEncoder;
 import org.junit.Test;
 
 public class MessageAnnotationsTypeCodecTest extends CodecTestSupport {
+
+    @Test
+    public void testTypeClassReturnsCorrectType() throws IOException {
+        assertEquals(MessageAnnotations.class, new MessageAnnotationsTypeDecoder().getTypeClass());
+        assertEquals(MessageAnnotations.class, new MessageAnnotationsTypeEncoder().getTypeClass());
+    }
 
     @Test
     public void testDecodeSmallSeriesOfMessageAnnotations() throws IOException {

@@ -16,6 +16,7 @@
  */
 package org.apache.qpid.proton4j.codec.messaging;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
@@ -26,12 +27,20 @@ import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.codec.CodecTestSupport;
 import org.apache.qpid.proton4j.codec.EncodingCodes;
+import org.apache.qpid.proton4j.codec.decoders.messaging.ReleasedTypeDecoder;
+import org.apache.qpid.proton4j.codec.encoders.messaging.ReleasedTypeEncoder;
 import org.junit.Test;
 
 /**
  * Test codec handling of Released types.
  */
 public class ReleasedTypeCodecTest  extends CodecTestSupport {
+
+    @Test
+    public void testTypeClassReturnsCorrectType() throws IOException {
+        assertEquals(Released.class, new ReleasedTypeDecoder().getTypeClass());
+        assertEquals(Released.class, new ReleasedTypeEncoder().getTypeClass());
+    }
 
     @Test
     public void TestDecodeReleased() throws IOException {

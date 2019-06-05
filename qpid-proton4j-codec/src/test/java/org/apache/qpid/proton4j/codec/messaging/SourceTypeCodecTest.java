@@ -19,6 +19,7 @@ package org.apache.qpid.proton4j.codec.messaging;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 
+import java.io.IOException;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -31,12 +32,20 @@ import org.apache.qpid.proton4j.amqp.messaging.TerminusExpiryPolicy;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.codec.CodecTestSupport;
+import org.apache.qpid.proton4j.codec.decoders.messaging.SourceTypeDecoder;
+import org.apache.qpid.proton4j.codec.encoders.messaging.SourceTypeEncoder;
 import org.junit.Test;
 
 /**
  * Test for handling Source serialization
  */
 public class SourceTypeCodecTest extends CodecTestSupport {
+
+    @Test
+    public void testTypeClassReturnsCorrectType() throws IOException {
+        assertEquals(Source.class, new SourceTypeDecoder().getTypeClass());
+        assertEquals(Source.class, new SourceTypeEncoder().getTypeClass());
+    }
 
    @Test
    public void testEncodeDecodeSourceType() throws Exception {

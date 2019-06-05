@@ -27,9 +27,17 @@ import org.apache.qpid.proton4j.amqp.messaging.Data;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.codec.CodecTestSupport;
+import org.apache.qpid.proton4j.codec.decoders.messaging.DataTypeDecoder;
+import org.apache.qpid.proton4j.codec.encoders.messaging.DataTypeEncoder;
 import org.junit.Test;
 
 public class DataTypeCodecTest extends CodecTestSupport {
+
+    @Test
+    public void testTypeClassReturnsCorrectType() throws IOException {
+        assertEquals(Data.class, new DataTypeDecoder().getTypeClass());
+        assertEquals(Data.class, new DataTypeEncoder().getTypeClass());
+    }
 
     @Test
     public void testDecodeData() throws IOException {

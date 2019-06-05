@@ -18,7 +18,9 @@ package org.apache.qpid.proton4j.codec.messaging;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.io.IOException;
 import java.util.LinkedHashMap;
@@ -28,9 +30,18 @@ import org.apache.qpid.proton4j.amqp.messaging.Footer;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.codec.CodecTestSupport;
+import org.apache.qpid.proton4j.codec.EncodingCodes;
+import org.apache.qpid.proton4j.codec.decoders.messaging.FooterTypeDecoder;
+import org.apache.qpid.proton4j.codec.encoders.messaging.FooterTypeEncoder;
 import org.junit.Test;
 
 public class FooterTypeCodecTest extends CodecTestSupport {
+
+    @Test
+    public void testTypeClassReturnsCorrectType() throws IOException {
+        assertEquals(Footer.class, new FooterTypeEncoder().getTypeClass());
+        assertEquals(Footer.class, new FooterTypeDecoder().getTypeClass());
+    }
 
     @Test
     public void testDecodeSmallSeriesOfFooter() throws IOException {
@@ -72,5 +83,51 @@ public class FooterTypeCodecTest extends CodecTestSupport {
             assertEquals(8, decoded.getValue().size());
             assertTrue(decoded.getValue().equals(propertiesMap));
         }
+    }
+
+    @Test
+    public void testDecodeFailsWhenDescriedValueIsNotMapType() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        buffer.writeByte((byte) 0); // Described Type Indicator
+        buffer.writeByte(EncodingCodes.SMALLULONG);
+        buffer.writeByte(Footer.DESCRIPTOR_CODE.byteValue());
+        buffer.writeByte(EncodingCodes.LIST32);
+        buffer.writeInt(0);
+        buffer.writeInt(0);
+
+        try {
+            decoder.readObject(buffer, decoderState);
+            fail("Should not decode type with invalid encoding");
+        } catch (IOException ex) {}
+    }
+
+    @Test
+    public void testDecodeWithNullBodyUsingDescriptorCode() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        buffer.writeByte((byte) 0); // Described Type Indicator
+        buffer.writeByte(EncodingCodes.SMALLULONG);
+        buffer.writeByte(Footer.DESCRIPTOR_CODE.byteValue());
+        buffer.writeByte(EncodingCodes.NULL);
+
+        final Footer result = (Footer) decoder.readObject(buffer, decoderState);
+
+        assertNull(result.getValue());
+    }
+
+    @Test
+    public void testDecodeWithNullBodyUsingDescriptorSymbol() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        buffer.writeByte((byte) 0); // Described Type Indicator
+        buffer.writeByte(EncodingCodes.SYM8);
+        buffer.writeByte(Footer.DESCRIPTOR_SYMBOL.getLength());
+        Footer.DESCRIPTOR_SYMBOL.writeTo(buffer);
+        buffer.writeByte(EncodingCodes.NULL);
+
+        final Footer result = (Footer) decoder.readObject(buffer, decoderState);
+
+        assertNull(result.getValue());
     }
 }

@@ -28,12 +28,20 @@ import org.apache.qpid.proton4j.amqp.messaging.Properties;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.codec.CodecTestSupport;
+import org.apache.qpid.proton4j.codec.decoders.messaging.PropertiesTypeDecoder;
+import org.apache.qpid.proton4j.codec.encoders.messaging.PropertiesTypeEncoder;
 import org.junit.Test;
 
 /**
  * Test for decoder of AMQP Properties type.
  */
 public class PropertiesTypeCodecTest extends CodecTestSupport {
+
+    @Test
+    public void testTypeClassReturnsCorrectType() throws IOException {
+        assertEquals(Properties.class, new PropertiesTypeDecoder().getTypeClass());
+        assertEquals(Properties.class, new PropertiesTypeEncoder().getTypeClass());
+    }
 
     @Test
     public void testDecodeSmallSeriesOfPropertiess() throws IOException {
