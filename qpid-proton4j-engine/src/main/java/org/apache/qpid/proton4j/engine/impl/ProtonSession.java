@@ -382,15 +382,15 @@ public class ProtonSession implements Session {
 
     //----- Handle incoming performatives
 
-    void handleOpen(Open open, int channel) {
+    void remoteOpen(Open open, int channel) {
         // TODO - Respond to connection being remotely opened
     }
 
-    void handleClose(Close close, int channel) {
+    void remoteClose(Close close, int channel) {
         // TODO - Respond to connection being remotely closed
     }
 
-    void handleBegin(Begin begin, int channel) {
+    void remoteBegin(Begin begin, int channel) {
         remoteBegin = begin;
         localBegin.setRemoteChannel(channel);
         remoteState = SessionState.ACTIVE;
@@ -402,7 +402,7 @@ public class ProtonSession implements Session {
         }
     }
 
-    void handleEnd(End end, int channel) {
+    void remoteEnd(End end, int channel) {
         // TODO - Fully implement handling for remote End
 
         setRemoteCondition(end.getError());
@@ -413,7 +413,7 @@ public class ProtonSession implements Session {
         }
     }
 
-    void handleAttach(Attach attach, int channel) {
+    void remoteAttach(Attach attach, int channel) {
         if (validateHandleMaxCompliance(attach)) {
             // TODO - Space efficient primitive data structure
             if (remoteLinks.containsKey((int) attach.getHandle())) {
@@ -428,21 +428,21 @@ public class ProtonSession implements Session {
 
             remoteLinks.put((int) attach.getHandle(), link);
 
-            link.handleAttach(attach);
+            link.remoteAttach(attach);
         }
     }
 
-    void handleDetach(Detach detach, int channel) {
+    void remoteDetach(Detach detach, int channel) {
         final ProtonLink<?> link = remoteLinks.get((int) detach.getHandle());
         if (link == null) {
             getEngine().engineFailed(new ProtocolViolationException(
                 "Received uncorrelated handle on Detach from remote: " + channel));
         }
 
-        link.handleDetach(detach);
+        link.remoteDetach(detach);
     }
 
-    void handleFlow(Flow flow, int channel) {
+    void remoteFlow(Flow flow, int channel) {
         // Session level flow processing.
         incomingWindow.handleFlow(flow);
         outgoingWindow.handleFlow(flow);
@@ -456,7 +456,7 @@ public class ProtonSession implements Session {
                     "Received uncorrelated handle on Flow from remote: " + channel));
             }
 
-            link.handleFlow(flow);
+            link.remoteFlow(flow);
         } else {
             link = null;
         }
@@ -466,7 +466,7 @@ public class ProtonSession implements Session {
         }
     }
 
-    void handleTransfer(Transfer transfer, ProtonBuffer payload, int channel) {
+    void remoteTransfer(Transfer transfer, ProtonBuffer payload, int channel) {
         final ProtonLink<?> link = remoteLinks.get((int) transfer.getHandle());
         if (link == null) {
             getEngine().engineFailed(new ProtocolViolationException(
@@ -480,7 +480,7 @@ public class ProtonSession implements Session {
         incomingWindow.handleTransfer(link, transfer, payload);
     }
 
-    void handleDisposition(Disposition disposition, int channel) {
+    void remoteDispsotion(Disposition disposition, int channel) {
         if (disposition.getRole() == Role.RECEIVER) {
             outgoingWindow.handleDisposition(disposition);
         } else {
@@ -587,7 +587,13 @@ public class ProtonSession implements Session {
     void fireSessionEnd() {
         localEndSent = true;
         connection.freeLocalChannel(localChannel);
-        connection.getEngine().pipeline().fireWrite(new End().setError(getLocalCondition()), localChannel, null, null);
+        End localEnd = new End().setError(getLocalCondition());
+
+        for (ProtonLink<?> link : localLinks.values()) {
+            link.localEnd(localEnd, localChannel);
+        }
+
+        connection.getEngine().pipeline().fireWrite(localEnd, localChannel, null, null);
     }
 
     long findFreeLocalHandle(ProtonLink<?> link) {

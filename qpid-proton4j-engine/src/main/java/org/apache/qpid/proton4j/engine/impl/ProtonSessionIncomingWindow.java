@@ -128,7 +128,7 @@ public class ProtonSessionIncomingWindow {
         incomingWindow--;
         nextIncomingId++;
 
-        ProtonIncomingDelivery delivery = link.handleTransfer(transfer, payload);
+        ProtonIncomingDelivery delivery = link.remoteTransfer(transfer, payload);
         if (delivery != null && !delivery.isRemotelySettled()) {
             // TODO - An optimization for split frame deliveries would be to track
             //        if this is delivery 1 or N and only try and insert into the
@@ -172,7 +172,7 @@ public class ProtonSessionIncomingWindow {
                     unsettled.remove((int) index);
                 }
 
-                delivery.getLink().handleDisposition(disposition, delivery);
+                delivery.getLink().remoteDisposition(disposition, delivery);
             }
         } while (++index <= last);
 

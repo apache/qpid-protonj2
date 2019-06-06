@@ -106,7 +106,7 @@ public class ProtonReceiver extends ProtonLink<Receiver> implements Receiver {
 
     //----- Internal support methods
 
-    void handleDisposition(Disposition disposition, ProtonIncomingDelivery delivery) {
+    void remoteDisposition(Disposition disposition, ProtonIncomingDelivery delivery) {
         getCreditState().handleDisposition(disposition, delivery);
     }
 

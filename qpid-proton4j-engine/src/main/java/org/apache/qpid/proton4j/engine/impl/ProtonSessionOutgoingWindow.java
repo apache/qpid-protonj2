@@ -158,7 +158,7 @@ public class ProtonSessionOutgoingWindow {
                     unsettled.remove((int) index);
                 }
 
-                delivery.getLink().handleDisposition(disposition, delivery);
+                delivery.getLink().remoteDisposition(disposition, delivery);
             }
         } while (index++ <= last);
 

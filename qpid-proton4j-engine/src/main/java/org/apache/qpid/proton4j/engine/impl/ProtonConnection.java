@@ -333,6 +333,8 @@ public class ProtonConnection implements Connection, AMQPHeader.HeaderHandler<Pr
 
     @Override
     public ProtonSession session() {
+        checkConnectionClosed("Cannot create a Session from a Connection that is already closed");
+
         int localChannel = findFreeLocalChannel();
         ProtonSession newSession = new ProtonSession(this, localChannel);
         localSessions.put(localChannel, newSession);
@@ -363,7 +365,7 @@ public class ProtonConnection implements Connection, AMQPHeader.HeaderHandler<Pr
 
         // Inform the local sessions that remote has opened this connection.
         for (ProtonSession localSession : localSessions.values()) {
-            localSession.handleOpen(open, channel);
+            localSession.remoteOpen(open, channel);
         }
 
         if (remoteOpenHandler != null) {
@@ -378,7 +380,7 @@ public class ProtonConnection implements Connection, AMQPHeader.HeaderHandler<Pr
 
         // Inform the local sessions that remote has closed this connection.
         for (ProtonSession session : localSessions.values()) {
-            session.handleClose(close, channel);
+            session.remoteClose(close, channel);
         }
 
         if (remoteCloseHandler != null) {
@@ -415,7 +417,7 @@ public class ProtonConnection implements Connection, AMQPHeader.HeaderHandler<Pr
             remoteSessions.put(channel, session);
 
             // Let the session handle the remote Begin now.
-            session.handleBegin(begin, channel);
+            session.remoteBegin(begin, channel);
 
             // If the session was initiated remotely then we signal the creation to the any registered
             // remote session event handler
@@ -432,7 +434,7 @@ public class ProtonConnection implements Connection, AMQPHeader.HeaderHandler<Pr
             engine.engineFailed(new ProtocolViolationException("Received uncorrelated channel on End from remote: " + channel));
         }
 
-        session.handleEnd(end, channel);
+        session.remoteEnd(end, channel);
     }
 
     @Override
@@ -442,7 +444,7 @@ public class ProtonConnection implements Connection, AMQPHeader.HeaderHandler<Pr
             engine.engineFailed(new ProtocolViolationException("Received uncorrelated channel on Attach from remote: " + channel));
         }
 
-        session.handleAttach(attach, channel);
+        session.remoteAttach(attach, channel);
     }
 
     @Override
@@ -452,7 +454,7 @@ public class ProtonConnection implements Connection, AMQPHeader.HeaderHandler<Pr
             engine.engineFailed(new ProtocolViolationException("Received uncorrelated channel on Detach from remote: " + channel));
         }
 
-        session.handleDetach(detach, channel);
+        session.remoteDetach(detach, channel);
     }
 
     @Override
@@ -462,7 +464,7 @@ public class ProtonConnection implements Connection, AMQPHeader.HeaderHandler<Pr
             engine.engineFailed(new ProtocolViolationException("Received uncorrelated channel on Flow from remote: " + channel));
         }
 
-        session.handleFlow(flow, channel);
+        session.remoteFlow(flow, channel);
     }
 
     @Override
@@ -472,7 +474,7 @@ public class ProtonConnection implements Connection, AMQPHeader.HeaderHandler<Pr
             engine.engineFailed(new ProtocolViolationException("Received uncorrelated channel on Transfer from remote: " + channel));
         }
 
-        session.handleTransfer(transfer, payload, channel);
+        session.remoteTransfer(transfer, payload, channel);
     }
 
     @Override
@@ -482,7 +484,7 @@ public class ProtonConnection implements Connection, AMQPHeader.HeaderHandler<Pr
             engine.engineFailed(new ProtocolViolationException("Received uncorrelated channel on Disposition from remote: " + channel));
         }
 
-        session.handleDisposition(disposition, channel);
+        session.remoteDispsotion(disposition, channel);
     }
 
     //----- API for event handling of Connection related remote events
@@ -530,6 +532,12 @@ public class ProtonConnection implements Connection, AMQPHeader.HeaderHandler<Pr
     private void checkNotOpened(String errorMessage) {
         if (localState.ordinal() > ConnectionState.IDLE.ordinal()) {
             throw new IllegalStateException(errorMessage);
+        }
+    }
+
+    private void checkConnectionClosed(String errorMessage) {
+        if (isLocallyClosed() || isRemotelyClosed()) {
+             throw new IllegalStateException(errorMessage);
         }
     }
 

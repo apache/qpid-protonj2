@@ -93,7 +93,7 @@ public class ProtonSender extends ProtonLink<Sender> implements Sender {
         return current;
     }
 
-    void handleDisposition(Disposition disposition, ProtonOutgoingDelivery delivery) {
+    void remoteDisposition(Disposition disposition, ProtonOutgoingDelivery delivery) {
         getCreditState().handleDisposition(disposition, delivery);
     }
 

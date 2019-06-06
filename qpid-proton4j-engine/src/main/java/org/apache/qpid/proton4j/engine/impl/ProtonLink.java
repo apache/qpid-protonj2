@@ -30,6 +30,7 @@ import org.apache.qpid.proton4j.amqp.messaging.Target;
 import org.apache.qpid.proton4j.amqp.transport.Attach;
 import org.apache.qpid.proton4j.amqp.transport.Begin;
 import org.apache.qpid.proton4j.amqp.transport.Detach;
+import org.apache.qpid.proton4j.amqp.transport.End;
 import org.apache.qpid.proton4j.amqp.transport.ErrorCondition;
 import org.apache.qpid.proton4j.amqp.transport.Flow;
 import org.apache.qpid.proton4j.amqp.transport.Role;
@@ -385,9 +386,15 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
         }
     }
 
+    void localEnd(End end, int channel) {
+        if (!isLocallyClosed()) {
+            localState = LinkState.CLOSED;
+        }
+    }
+
     //----- Handle incoming performatives
 
-    void handleAttach(Attach attach) {
+    void remoteAttach(Attach attach) {
         remoteAttach = attach;
         remoteState = LinkState.ACTIVE;
         getCreditState().handleAttach(attach);
@@ -415,7 +422,7 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
         }
     }
 
-    ProtonLink<?> handleDetach(Detach detach) {
+    ProtonLink<?> remoteDetach(Detach detach) {
         setRemoteCondition(detach.getError());
 
         if (detach.getClosed()) {
@@ -433,11 +440,11 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
         return this;
     }
 
-    ProtonIncomingDelivery handleTransfer(Transfer transfer, ProtonBuffer payload) {
+    ProtonIncomingDelivery remoteTransfer(Transfer transfer, ProtonBuffer payload) {
         return getCreditState().handleTransfer(transfer, payload);
     }
 
-    ProtonLink<?> handleFlow(Flow flow) {
+    ProtonLink<?> remoteFlow(Flow flow) {
         getCreditState().handleFlow(flow);
         return this;
     }
