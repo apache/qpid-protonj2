@@ -633,7 +633,6 @@ public class SplayMap<E> implements NavigableMap<UnsignedInteger, E> {
             this.value = value;
         }
 
-        @SuppressWarnings("unused")
         public int getIntKey() {
             return key;
         }
