@@ -49,7 +49,7 @@ public class CoordinatorTypeCodecTest extends CodecTestSupport {
         assertEquals(Coordinator.DESCRIPTOR_CODE, decoder.getDescriptorCode());
         assertEquals(Coordinator.DESCRIPTOR_CODE, encoder.getDescriptorCode());
         assertEquals(Coordinator.DESCRIPTOR_SYMBOL, decoder.getDescriptorSymbol());
-        assertEquals(Coordinator.DESCRIPTOR_SYMBOL, decoder.getDescriptorSymbol());
+        assertEquals(Coordinator.DESCRIPTOR_SYMBOL, encoder.getDescriptorSymbol());
     }
 
     @Test

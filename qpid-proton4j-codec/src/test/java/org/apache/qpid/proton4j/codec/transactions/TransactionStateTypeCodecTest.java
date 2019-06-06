@@ -52,7 +52,7 @@ public class TransactionStateTypeCodecTest extends CodecTestSupport {
         assertEquals(TransactionalState.DESCRIPTOR_CODE, decoder.getDescriptorCode());
         assertEquals(TransactionalState.DESCRIPTOR_CODE, encoder.getDescriptorCode());
         assertEquals(TransactionalState.DESCRIPTOR_SYMBOL, decoder.getDescriptorSymbol());
-        assertEquals(TransactionalState.DESCRIPTOR_SYMBOL, decoder.getDescriptorSymbol());
+        assertEquals(TransactionalState.DESCRIPTOR_SYMBOL, encoder.getDescriptorSymbol());
     }
 
     @Test

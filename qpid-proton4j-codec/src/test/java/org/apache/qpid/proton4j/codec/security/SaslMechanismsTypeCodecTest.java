@@ -59,7 +59,7 @@ public class SaslMechanismsTypeCodecTest extends CodecTestSupport {
         assertEquals(SaslMechanisms.DESCRIPTOR_CODE, decoder.getDescriptorCode());
         assertEquals(SaslMechanisms.DESCRIPTOR_CODE, encoder.getDescriptorCode());
         assertEquals(SaslMechanisms.DESCRIPTOR_SYMBOL, decoder.getDescriptorSymbol());
-        assertEquals(SaslMechanisms.DESCRIPTOR_SYMBOL, decoder.getDescriptorSymbol());
+        assertEquals(SaslMechanisms.DESCRIPTOR_SYMBOL, encoder.getDescriptorSymbol());
     }
 
     @Test

@@ -48,7 +48,7 @@ public class DeclareTypeCodecTest extends CodecTestSupport {
         assertEquals(Declare.DESCRIPTOR_CODE, decoder.getDescriptorCode());
         assertEquals(Declare.DESCRIPTOR_CODE, encoder.getDescriptorCode());
         assertEquals(Declare.DESCRIPTOR_SYMBOL, decoder.getDescriptorSymbol());
-        assertEquals(Declare.DESCRIPTOR_SYMBOL, decoder.getDescriptorSymbol());
+        assertEquals(Declare.DESCRIPTOR_SYMBOL, encoder.getDescriptorSymbol());
     }
 
    @Test

@@ -59,7 +59,7 @@ public class SaslChallengeTypeCodecTest extends CodecTestSupport {
         assertEquals(SaslChallenge.DESCRIPTOR_CODE, decoder.getDescriptorCode());
         assertEquals(SaslChallenge.DESCRIPTOR_CODE, encoder.getDescriptorCode());
         assertEquals(SaslChallenge.DESCRIPTOR_SYMBOL, decoder.getDescriptorSymbol());
-        assertEquals(SaslChallenge.DESCRIPTOR_SYMBOL, decoder.getDescriptorSymbol());
+        assertEquals(SaslChallenge.DESCRIPTOR_SYMBOL, encoder.getDescriptorSymbol());
     }
 
     @Test

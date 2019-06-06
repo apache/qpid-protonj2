@@ -60,7 +60,7 @@ public class SaslOutcomeTypeCodecTest extends CodecTestSupport {
         assertEquals(SaslOutcome.DESCRIPTOR_CODE, decoder.getDescriptorCode());
         assertEquals(SaslOutcome.DESCRIPTOR_CODE, encoder.getDescriptorCode());
         assertEquals(SaslOutcome.DESCRIPTOR_SYMBOL, decoder.getDescriptorSymbol());
-        assertEquals(SaslOutcome.DESCRIPTOR_SYMBOL, decoder.getDescriptorSymbol());
+        assertEquals(SaslOutcome.DESCRIPTOR_SYMBOL, encoder.getDescriptorSymbol());
     }
 
     @Test

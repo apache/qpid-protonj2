@@ -51,7 +51,7 @@ public class DischargeTypeCodecTest extends CodecTestSupport {
         assertEquals(Discharge.DESCRIPTOR_CODE, decoder.getDescriptorCode());
         assertEquals(Discharge.DESCRIPTOR_CODE, encoder.getDescriptorCode());
         assertEquals(Discharge.DESCRIPTOR_SYMBOL, decoder.getDescriptorSymbol());
-        assertEquals(Discharge.DESCRIPTOR_SYMBOL, decoder.getDescriptorSymbol());
+        assertEquals(Discharge.DESCRIPTOR_SYMBOL, encoder.getDescriptorSymbol());
     }
 
     @Test
