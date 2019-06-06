@@ -20,6 +20,8 @@ import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
+import java.io.IOException;
+
 import org.apache.qpid.proton4j.amqp.Binary;
 import org.apache.qpid.proton4j.amqp.transactions.Declared;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
@@ -32,7 +34,13 @@ import org.junit.Test;
 /**
  * Test for handling Declared serialization
  */
-public class DeclaredTypeCodeTest extends CodecTestSupport {
+public class DeclaredTypeCodecTest extends CodecTestSupport {
+
+    @Test
+    public void testTypeClassReturnsCorrectType() throws IOException {
+        assertEquals(Declared.class, new DeclaredTypeEncoder().getTypeClass());
+        assertEquals(Declared.class, new DeclaredTypeEncoder().getTypeClass());
+    }
 
     @Test
     public void testDescriptors() throws Exception {

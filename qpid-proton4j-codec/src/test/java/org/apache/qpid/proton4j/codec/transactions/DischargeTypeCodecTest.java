@@ -19,51 +19,59 @@ package org.apache.qpid.proton4j.codec.transactions;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
+
+import java.io.IOException;
 
 import org.apache.qpid.proton4j.amqp.Binary;
-import org.apache.qpid.proton4j.amqp.messaging.Accepted;
-import org.apache.qpid.proton4j.amqp.transactions.TransactionalState;
+import org.apache.qpid.proton4j.amqp.transactions.Discharge;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.codec.CodecTestSupport;
-import org.apache.qpid.proton4j.codec.decoders.transactions.TransactionStateTypeDecoder;
-import org.apache.qpid.proton4j.codec.encoders.transactions.TransactionStateTypeEncoder;
+import org.apache.qpid.proton4j.codec.decoders.transactions.DischargeTypeDecoder;
+import org.apache.qpid.proton4j.codec.encoders.transactions.DischargeTypeEncoder;
 import org.junit.Test;
 
 /**
- * Test for handling Declared serialization
+ * Test for handling Declare serialization
  */
-public class TransactionStateTypeCodeTest extends CodecTestSupport {
+public class DischargeTypeCodecTest extends CodecTestSupport {
+
+    @Test
+    public void testTypeClassReturnsCorrectType() throws IOException {
+        assertEquals(Discharge.class, new DischargeTypeDecoder().getTypeClass());
+        assertEquals(Discharge.class, new DischargeTypeDecoder().getTypeClass());
+    }
 
     @Test
     public void testDescriptors() throws Exception {
-        TransactionStateTypeDecoder decoder = new TransactionStateTypeDecoder();
-        TransactionStateTypeEncoder encoder = new TransactionStateTypeEncoder();
+        DischargeTypeDecoder decoder = new DischargeTypeDecoder();
+        DischargeTypeEncoder encoder = new DischargeTypeEncoder();
 
-        assertEquals(TransactionalState.DESCRIPTOR_CODE, decoder.getDescriptorCode());
-        assertEquals(TransactionalState.DESCRIPTOR_CODE, encoder.getDescriptorCode());
-        assertEquals(TransactionalState.DESCRIPTOR_SYMBOL, decoder.getDescriptorSymbol());
-        assertEquals(TransactionalState.DESCRIPTOR_SYMBOL, decoder.getDescriptorSymbol());
+        assertEquals(Discharge.DESCRIPTOR_CODE, decoder.getDescriptorCode());
+        assertEquals(Discharge.DESCRIPTOR_CODE, encoder.getDescriptorCode());
+        assertEquals(Discharge.DESCRIPTOR_SYMBOL, decoder.getDescriptorSymbol());
+        assertEquals(Discharge.DESCRIPTOR_SYMBOL, decoder.getDescriptorSymbol());
     }
 
     @Test
     public void testEncodeDecodeType() throws Exception {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
 
-        TransactionalState input = new TransactionalState();
-        input.setTxnId(new Binary(new byte[] { 2, 4, 6, 8 }));
-        input.setOutcome(Accepted.getInstance());
+        Discharge input = new Discharge();
+
+        input.setFail(true);
+        input.setTxnId(new Binary(new byte[] { 8, 7, 6, 5 }));
 
         encoder.writeObject(buffer, encoderState, input);
 
-        final TransactionalState result = (TransactionalState) decoder.readObject(buffer, decoderState);
+        final Discharge result = (Discharge) decoder.readObject(buffer, decoderState);
 
-        assertSame(result.getOutcome(), Accepted.getInstance());
+        assertTrue(result.getFail());
 
         assertNotNull(result.getTxnId());
         assertNotNull(result.getTxnId().getArray());
 
-        assertArrayEquals(new byte[] { 2, 4, 6, 8 }, result.getTxnId().getArray());
+        assertArrayEquals(new byte[] { 8, 7, 6, 5 }, result.getTxnId().getArray());
     }
 }

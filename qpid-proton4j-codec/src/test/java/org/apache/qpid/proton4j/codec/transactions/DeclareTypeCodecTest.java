@@ -19,6 +19,8 @@ package org.apache.qpid.proton4j.codec.transactions;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 
+import java.io.IOException;
+
 import org.apache.qpid.proton4j.amqp.transactions.Declare;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
@@ -30,7 +32,13 @@ import org.junit.Test;
 /**
  * Test for handling Declare serialization
  */
-public class DeclareTypeCodeTest extends CodecTestSupport {
+public class DeclareTypeCodecTest extends CodecTestSupport {
+
+    @Test
+    public void testTypeClassReturnsCorrectType() throws IOException {
+        assertEquals(Declare.class, new DeclareTypeDecoder().getTypeClass());
+        assertEquals(Declare.class, new DeclareTypeEncoder().getTypeClass());
+    }
 
     @Test
     public void testDescriptors() throws Exception {

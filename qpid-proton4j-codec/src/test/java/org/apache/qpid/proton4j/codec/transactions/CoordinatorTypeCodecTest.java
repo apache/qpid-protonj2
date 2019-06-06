@@ -19,6 +19,8 @@ package org.apache.qpid.proton4j.codec.transactions;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 
+import java.io.IOException;
+
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.transactions.Coordinator;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
@@ -31,7 +33,13 @@ import org.junit.Test;
 /**
  * Test for handling Coordinator serialization
  */
-public class CoordinatorTypeCodeTest extends CodecTestSupport {
+public class CoordinatorTypeCodecTest extends CodecTestSupport {
+
+    @Test
+    public void testTypeClassReturnsCorrectType() throws IOException {
+        assertEquals(Coordinator.class, new CoordinatorTypeDecoder().getTypeClass());
+        assertEquals(Coordinator.class, new CoordinatorTypeEncoder().getTypeClass());
+    }
 
     @Test
     public void testDescriptors() throws Exception {

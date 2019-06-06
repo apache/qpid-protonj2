@@ -33,7 +33,7 @@ import org.apache.qpid.proton4j.codec.decoders.primitives.ListTypeDecoder;
 public class SaslInitTypeDecoder extends AbstractDescribedTypeDecoder<SaslInit> {
 
     private static final int MIN_SASL_INIT_LIST_ENTRIES = 0;
-    private static final int MAX_SASL_INIT_LIST_ENTRIES = 1;
+    private static final int MAX_SASL_INIT_LIST_ENTRIES = 3;
 
     @Override
     public UnsignedLong getDescriptorCode() {
