@@ -52,12 +52,21 @@ public interface ProtonLinkCreditState<DeliveryType extends Delivery> extends Li
     }
 
     /**
+     * Perform any needed cleanup or state change when the parent link instance is locally
+     * closed or detached.
+     *
+     * @param closed
+     *      indicates if the link was closed or detached
+     */
+    abstract void localClose(boolean closed);
+
+    /**
      * Perform any needed initialization for link credit based on the initial Attach
      * sent from the remote
      *
      * @param attach
      */
-    abstract void handleAttach(Attach attach);
+    abstract void remoteAttach(Attach attach);
 
     /**
      * Handle incoming {@link Flow} performatives and update link credit accordingly.
@@ -65,7 +74,7 @@ public interface ProtonLinkCreditState<DeliveryType extends Delivery> extends Li
      * @param flow
      *      The {@link Flow} instance to be processed.
      */
-    abstract void handleFlow(Flow flow);
+    abstract void remoteFlow(Flow flow);
 
     /**
      * Handle incoming {@link Transfer} performatives and update link credit accordingly.
@@ -77,7 +86,7 @@ public interface ProtonLinkCreditState<DeliveryType extends Delivery> extends Li
      *
      * @return the incoming delivery associated with this transfer
      */
-    abstract ProtonIncomingDelivery handleTransfer(Transfer transfer, ProtonBuffer payload);
+    abstract ProtonIncomingDelivery remoteTransfer(Transfer transfer, ProtonBuffer payload);
 
     /**
      * Handle incoming {@link Disposition} performatives and update link accordingly.
@@ -87,6 +96,6 @@ public interface ProtonLinkCreditState<DeliveryType extends Delivery> extends Li
      * @param delivery
      *      The {@link Delivery} that is the target of this disposition.
      */
-    abstract void handleDisposition(Disposition disposition, DeliveryType delivery);
+    abstract void remoteDisposition(Disposition disposition, DeliveryType delivery);
 
 }

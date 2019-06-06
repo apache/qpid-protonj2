@@ -373,9 +373,8 @@ public class ProtonSession implements Session {
             localEndSent = true;
             localState = SessionState.CLOSED;
 
-            // TODO - let all links know that the session is now closed.
             for (ProtonLink<?> link : localLinks.values()) {
-                // TODO - Need a method, do we need local and remote events?
+                link.localClose(localClose);
             }
         }
     }

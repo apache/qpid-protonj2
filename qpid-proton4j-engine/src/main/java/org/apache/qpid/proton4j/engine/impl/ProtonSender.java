@@ -94,7 +94,7 @@ public class ProtonSender extends ProtonLink<Sender> implements Sender {
     }
 
     void remoteDisposition(Disposition disposition, ProtonOutgoingDelivery delivery) {
-        getCreditState().handleDisposition(disposition, delivery);
+        getCreditState().remoteDisposition(disposition, delivery);
     }
 
     //----- Delivery output related access points

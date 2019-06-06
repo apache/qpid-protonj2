@@ -40,7 +40,6 @@ import org.apache.qpid.proton4j.engine.Connection;
 import org.apache.qpid.proton4j.engine.OutgoingDelivery;
 import org.apache.qpid.proton4j.engine.Sender;
 import org.apache.qpid.proton4j.engine.Session;
-import org.junit.Ignore;
 import org.junit.Test;
 
 /**
@@ -809,7 +808,6 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Ignore("Fails for now since we don't full propagate close to all resources.")
     @Test
     public void testSenderCannotSendAfterConnectionClosed() throws Exception {
         ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();

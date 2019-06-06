@@ -64,14 +64,20 @@ public class ProtonReceiverCreditState implements ProtonLinkCreditState<ProtonIn
     }
 
     @Override
-    public void handleAttach(Attach attach) {
+    public void localClose(boolean closed) {
+        this.credit = 0;
+        this.unsettled.clear();
+    }
+
+    @Override
+    public void remoteAttach(Attach attach) {
         if (credit > 0) {
             sessionWindow.writeFlow(receiver);
         }
     }
 
     @Override
-    public void handleFlow(Flow flow) {
+    public void remoteFlow(Flow flow) {
         if (flow.getDrain()) {
             deliveryCount = (int) flow.getDeliveryCount();
             credit = (int) flow.getLinkCredit();
@@ -86,7 +92,7 @@ public class ProtonReceiverCreditState implements ProtonLinkCreditState<ProtonIn
     }
 
     @Override
-    public ProtonIncomingDelivery handleTransfer(Transfer transfer, ProtonBuffer payload) {
+    public ProtonIncomingDelivery remoteTransfer(Transfer transfer, ProtonBuffer payload) {
         final ProtonIncomingDelivery delivery;
 
         boolean isFirstTransfer = true;
@@ -156,7 +162,7 @@ public class ProtonReceiverCreditState implements ProtonLinkCreditState<ProtonIn
     }
 
     @Override
-    public void handleDisposition(Disposition disposition, ProtonIncomingDelivery delivery) {
+    public void remoteDisposition(Disposition disposition, ProtonIncomingDelivery delivery) {
         boolean updated = false;
 
         if (disposition.getState() != null && !disposition.getState().equals(delivery.getRemoteState())) {

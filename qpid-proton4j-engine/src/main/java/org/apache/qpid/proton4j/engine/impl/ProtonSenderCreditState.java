@@ -85,12 +85,19 @@ public class ProtonSenderCreditState implements ProtonLinkCreditState<ProtonOutg
     //----- Handlers for processing incoming events
 
     @Override
-    public void handleAttach(Attach attach) {
+    public void localClose(boolean closed) {
+        this.credit = 0;
+        this.sendable = false;
+        this.unsettled.clear();
+    }
+
+    @Override
+    public void remoteAttach(Attach attach) {
         // Nothing to do yet.
     }
 
     @Override
-    public void handleFlow(Flow flow) {
+    public void remoteFlow(Flow flow) {
         credit = (int) (flow.getDeliveryCount() + flow.getLinkCredit() - deliveryCount);
         draining = flow.getDrain();
         drained = credit > 0;
@@ -110,7 +117,7 @@ public class ProtonSenderCreditState implements ProtonLinkCreditState<ProtonOutg
     }
 
     @Override
-    public void handleDisposition(Disposition disposition, ProtonOutgoingDelivery delivery) {
+    public void remoteDisposition(Disposition disposition, ProtonOutgoingDelivery delivery) {
         boolean updated = false;
 
         if (disposition.getState() != null && !disposition.getState().equals(delivery.getRemoteState())) {
@@ -131,7 +138,7 @@ public class ProtonSenderCreditState implements ProtonLinkCreditState<ProtonOutg
     }
 
     @Override
-    public ProtonIncomingDelivery handleTransfer(Transfer transfer, ProtonBuffer payload) {
+    public ProtonIncomingDelivery remoteTransfer(Transfer transfer, ProtonBuffer payload) {
         throw new IllegalStateException("Cannot receive a Transfer at the Sender end of a link");
     }
 

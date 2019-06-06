@@ -29,6 +29,7 @@ import org.apache.qpid.proton4j.amqp.messaging.Source;
 import org.apache.qpid.proton4j.amqp.messaging.Target;
 import org.apache.qpid.proton4j.amqp.transport.Attach;
 import org.apache.qpid.proton4j.amqp.transport.Begin;
+import org.apache.qpid.proton4j.amqp.transport.Close;
 import org.apache.qpid.proton4j.amqp.transport.Detach;
 import org.apache.qpid.proton4j.amqp.transport.End;
 import org.apache.qpid.proton4j.amqp.transport.ErrorCondition;
@@ -386,9 +387,21 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
         }
     }
 
+    void localClose(Close localClose) {
+        if (!isLocallyClosed()) {
+            // TODO - State as closed or detached ?
+            localState = LinkState.CLOSED;
+            getCreditState().localClose(true);
+            transitionedToLocallyClosed();
+        }
+    }
+
     void localEnd(End end, int channel) {
         if (!isLocallyClosed()) {
+            // TODO - State as closed or detached ?
             localState = LinkState.CLOSED;
+            getCreditState().localClose(true);
+            transitionedToLocallyClosed();
         }
     }
 
@@ -397,7 +410,7 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
     void remoteAttach(Attach attach) {
         remoteAttach = attach;
         remoteState = LinkState.ACTIVE;
-        getCreditState().handleAttach(attach);
+        getCreditState().remoteAttach(attach);
 
         if (remoteOpenHandler != null) {
             remoteOpenHandler.handle(result(self(), null));
@@ -441,11 +454,11 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
     }
 
     ProtonIncomingDelivery remoteTransfer(Transfer transfer, ProtonBuffer payload) {
-        return getCreditState().handleTransfer(transfer, payload);
+        return getCreditState().remoteTransfer(transfer, payload);
     }
 
     ProtonLink<?> remoteFlow(Flow flow) {
-        getCreditState().handleFlow(flow);
+        getCreditState().remoteFlow(flow);
         return this;
     }
 
