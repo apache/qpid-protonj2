@@ -31,6 +31,10 @@ public class ProtonCoordinator extends ProtonLink<ProtonCoordinator> {
     // TODO - Should be two ends of a coordinator, sender and receiver
     //        one side drives the declare and discharge and the other
     //        handles those requests for TX boundaries.
+    //
+    // CoordinatorClient -> CoordinatorServer
+    // CoordinatorSource -> CoordinatorSink
+    // CoordinatorSender -> CoordinatorReceiver
 
     protected ProtonCoordinator(ProtonSession session, String name) {
         super(session, name);
@@ -58,7 +62,7 @@ public class ProtonCoordinator extends ProtonLink<ProtonCoordinator> {
         return null;
     }
 
-    public void declare(byte[] txnId) {
+    public void declare() {
 
     }
 
