@@ -17,6 +17,7 @@
 package org.apache.qpid.proton4j.codec.messaging;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
@@ -29,9 +30,11 @@ import org.apache.qpid.proton4j.amqp.UnsignedByte;
 import org.apache.qpid.proton4j.amqp.UnsignedInteger;
 import org.apache.qpid.proton4j.amqp.UnsignedShort;
 import org.apache.qpid.proton4j.amqp.messaging.MessageAnnotations;
+import org.apache.qpid.proton4j.amqp.messaging.Modified;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.codec.CodecTestSupport;
+import org.apache.qpid.proton4j.codec.TypeDecoder;
 import org.apache.qpid.proton4j.codec.decoders.messaging.MessageAnnotationsTypeDecoder;
 import org.apache.qpid.proton4j.codec.encoders.messaging.MessageAnnotationsTypeEncoder;
 import org.junit.Test;
@@ -131,5 +134,35 @@ public class MessageAnnotationsTypeCodecTest extends CodecTestSupport {
             assertEquals(resultMap.get(SYMBOL_2), UnsignedShort.valueOf((short) 128));
             assertEquals(resultMap.get(SYMBOL_3), UnsignedInteger.valueOf(128));
         }
+    }
+
+    @Test
+    public void testSkipValue() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        Map<Symbol, Object> map = new HashMap<>();
+        map.put(Symbol.valueOf("one"), 1);
+        map.put(Symbol.valueOf("two"), Boolean.TRUE);
+        map.put(Symbol.valueOf("three"), "test");
+
+        for (int i = 0; i < 10; ++i) {
+            encoder.writeObject(buffer, encoderState, new MessageAnnotations(map));
+        }
+
+        encoder.writeObject(buffer, encoderState, new Modified());
+
+        for (int i = 0; i < 10; ++i) {
+            TypeDecoder<?> typeDecoder = decoder.readNextTypeDecoder(buffer, decoderState);
+            assertEquals(MessageAnnotations.class, typeDecoder.getTypeClass());
+            typeDecoder.skipValue(buffer, decoderState);
+        }
+
+        final Object result = decoder.readObject(buffer, decoderState);
+
+        assertNotNull(result);
+        assertTrue(result instanceof Modified);
+        Modified modified = (Modified) result;
+        assertFalse(modified.getUndeliverableHere());
+        assertFalse(modified.getDeliveryFailed());
     }
 }

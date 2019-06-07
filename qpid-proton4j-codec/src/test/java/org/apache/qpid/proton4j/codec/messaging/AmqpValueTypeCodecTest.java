@@ -17,6 +17,7 @@
 package org.apache.qpid.proton4j.codec.messaging;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
@@ -24,9 +25,11 @@ import java.io.IOException;
 import java.util.UUID;
 
 import org.apache.qpid.proton4j.amqp.messaging.AmqpValue;
+import org.apache.qpid.proton4j.amqp.messaging.Modified;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.codec.CodecTestSupport;
+import org.apache.qpid.proton4j.codec.TypeDecoder;
 import org.apache.qpid.proton4j.codec.decoders.messaging.AmqpValueTypeDecoder;
 import org.apache.qpid.proton4j.codec.encoders.messaging.AmqpValueTypeEncoder;
 import org.junit.Test;
@@ -110,5 +113,30 @@ public class AmqpValueTypeCodecTest extends CodecTestSupport {
             assertTrue(resultArray[i] instanceof AmqpValue);
             assertEquals(array[i].getValue(), resultArray[i].getValue());
         }
+    }
+
+    @Test
+    public void testSkipValue() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        for (int i = 0; i < 10; ++i) {
+            encoder.writeObject(buffer, encoderState, new AmqpValue("skipMe"));
+        }
+
+        encoder.writeObject(buffer, encoderState, new Modified());
+
+        for (int i = 0; i < 10; ++i) {
+            TypeDecoder<?> typeDecoder = decoder.readNextTypeDecoder(buffer, decoderState);
+            assertEquals(AmqpValue.class, typeDecoder.getTypeClass());
+            typeDecoder.skipValue(buffer, decoderState);
+        }
+
+        final Object result = decoder.readObject(buffer, decoderState);
+
+        assertNotNull(result);
+        assertTrue(result instanceof Modified);
+        Modified modified = (Modified) result;
+        assertFalse(modified.getUndeliverableHere());
+        assertFalse(modified.getDeliveryFailed());
     }
 }

@@ -17,16 +17,19 @@
 package org.apache.qpid.proton4j.codec.messaging;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 
 import org.apache.qpid.proton4j.amqp.messaging.DeleteOnNoMessages;
+import org.apache.qpid.proton4j.amqp.messaging.Modified;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.codec.CodecTestSupport;
 import org.apache.qpid.proton4j.codec.EncodingCodes;
+import org.apache.qpid.proton4j.codec.TypeDecoder;
 import org.apache.qpid.proton4j.codec.decoders.messaging.DeleteOnNoMessagesTypeDecoder;
 import org.apache.qpid.proton4j.codec.encoders.messaging.DeleteOnNoMessagesTypeEncoder;
 import org.junit.Test;
@@ -43,7 +46,7 @@ public class DeleteOnNoMessagesTypeCodecTest  extends CodecTestSupport {
     }
 
     @Test
-    public void TestDecodeDeleteOnNoMessages() throws IOException {
+    public void testDecodeDeleteOnNoMessages() throws IOException {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
 
         DeleteOnNoMessages value = DeleteOnNoMessages.getInstance();
@@ -57,7 +60,7 @@ public class DeleteOnNoMessagesTypeCodecTest  extends CodecTestSupport {
     }
 
     @Test
-    public void TestDecodeDeleteOnNoMessagesWithList8() throws IOException {
+    public void testDecodeDeleteOnNoMessagesWithList8() throws IOException {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
 
         buffer.writeByte((byte) 0); // Described Type Indicator
@@ -74,7 +77,7 @@ public class DeleteOnNoMessagesTypeCodecTest  extends CodecTestSupport {
     }
 
     @Test
-    public void TestDecodeDeleteOnNoMessagesWithList32() throws IOException {
+    public void testDecodeDeleteOnNoMessagesWithList32() throws IOException {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
 
         buffer.writeByte((byte) 0); // Described Type Indicator
@@ -88,5 +91,30 @@ public class DeleteOnNoMessagesTypeCodecTest  extends CodecTestSupport {
 
         assertNotNull(result);
         assertTrue(result instanceof DeleteOnNoMessages);
+    }
+
+    @Test
+    public void testSkipValue() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        for (int i = 0; i < 10; ++i) {
+            encoder.writeObject(buffer, encoderState, DeleteOnNoMessages.getInstance());
+        }
+
+        encoder.writeObject(buffer, encoderState, new Modified());
+
+        for (int i = 0; i < 10; ++i) {
+            TypeDecoder<?> typeDecoder = decoder.readNextTypeDecoder(buffer, decoderState);
+            assertEquals(DeleteOnNoMessages.class, typeDecoder.getTypeClass());
+            typeDecoder.skipValue(buffer, decoderState);
+        }
+
+        final Object result = decoder.readObject(buffer, decoderState);
+
+        assertNotNull(result);
+        assertTrue(result instanceof Modified);
+        Modified modified = (Modified) result;
+        assertFalse(modified.getUndeliverableHere());
+        assertFalse(modified.getDeliveryFailed());
     }
 }

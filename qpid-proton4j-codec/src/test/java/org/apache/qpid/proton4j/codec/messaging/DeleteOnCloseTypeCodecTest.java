@@ -17,16 +17,19 @@
 package org.apache.qpid.proton4j.codec.messaging;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 
 import org.apache.qpid.proton4j.amqp.messaging.DeleteOnClose;
+import org.apache.qpid.proton4j.amqp.messaging.Modified;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.codec.CodecTestSupport;
 import org.apache.qpid.proton4j.codec.EncodingCodes;
+import org.apache.qpid.proton4j.codec.TypeDecoder;
 import org.apache.qpid.proton4j.codec.decoders.messaging.DeleteOnCloseTypeDecoder;
 import org.apache.qpid.proton4j.codec.encoders.messaging.DeleteOnCloseTypeEncoder;
 import org.junit.Test;
@@ -88,5 +91,30 @@ public class DeleteOnCloseTypeCodecTest  extends CodecTestSupport {
 
         assertNotNull(result);
         assertTrue(result instanceof DeleteOnClose);
+    }
+
+    @Test
+    public void testSkipValue() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        for (int i = 0; i < 10; ++i) {
+            encoder.writeObject(buffer, encoderState, DeleteOnClose.getInstance());
+        }
+
+        encoder.writeObject(buffer, encoderState, new Modified());
+
+        for (int i = 0; i < 10; ++i) {
+            TypeDecoder<?> typeDecoder = decoder.readNextTypeDecoder(buffer, decoderState);
+            assertEquals(DeleteOnClose.class, typeDecoder.getTypeClass());
+            typeDecoder.skipValue(buffer, decoderState);
+        }
+
+        final Object result = decoder.readObject(buffer, decoderState);
+
+        assertNotNull(result);
+        assertTrue(result instanceof Modified);
+        Modified modified = (Modified) result;
+        assertFalse(modified.getUndeliverableHere());
+        assertFalse(modified.getDeliveryFailed());
     }
 }

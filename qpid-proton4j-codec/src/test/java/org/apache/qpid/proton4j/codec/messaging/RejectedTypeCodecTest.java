@@ -17,16 +17,21 @@
 package org.apache.qpid.proton4j.codec.messaging;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 
+import org.apache.qpid.proton4j.amqp.messaging.Modified;
 import org.apache.qpid.proton4j.amqp.messaging.Rejected;
+import org.apache.qpid.proton4j.amqp.transactions.TransactionErrors;
+import org.apache.qpid.proton4j.amqp.transport.ErrorCondition;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.codec.CodecTestSupport;
 import org.apache.qpid.proton4j.codec.EncodingCodes;
+import org.apache.qpid.proton4j.codec.TypeDecoder;
 import org.apache.qpid.proton4j.codec.decoders.messaging.RejectedTypeDecoder;
 import org.apache.qpid.proton4j.codec.encoders.messaging.RejectedTypeEncoder;
 import org.junit.Test;
@@ -43,7 +48,7 @@ public class RejectedTypeCodecTest  extends CodecTestSupport {
     }
 
     @Test
-    public void TestDecodeRejected() throws IOException {
+    public void testDecodeRejected() throws IOException {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
 
         Rejected value = new Rejected();
@@ -57,7 +62,7 @@ public class RejectedTypeCodecTest  extends CodecTestSupport {
     }
 
     @Test
-    public void TestDecodeRejectedWithList8() throws IOException {
+    public void testDecodeRejectedWithList8() throws IOException {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
 
         buffer.writeByte((byte) 0); // Described Type Indicator
@@ -74,7 +79,7 @@ public class RejectedTypeCodecTest  extends CodecTestSupport {
     }
 
     @Test
-    public void TestDecodeRejectedWithList32() throws IOException {
+    public void testDecodeRejectedWithList32() throws IOException {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
 
         buffer.writeByte((byte) 0); // Described Type Indicator
@@ -88,5 +93,33 @@ public class RejectedTypeCodecTest  extends CodecTestSupport {
 
         assertNotNull(result);
         assertTrue(result instanceof Rejected);
+    }
+
+    @Test
+    public void testSkipValue() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        Rejected rejected = new Rejected();
+        rejected.setError(new ErrorCondition(TransactionErrors.TRANSACTION_ROLLBACK, "Failure"));
+
+        for (int i = 0; i < 10; ++i) {
+            encoder.writeObject(buffer, encoderState, rejected);
+        }
+
+        encoder.writeObject(buffer, encoderState, new Modified());
+
+        for (int i = 0; i < 10; ++i) {
+            TypeDecoder<?> typeDecoder = decoder.readNextTypeDecoder(buffer, decoderState);
+            assertEquals(Rejected.class, typeDecoder.getTypeClass());
+            typeDecoder.skipValue(buffer, decoderState);
+        }
+
+        final Object result = decoder.readObject(buffer, decoderState);
+
+        assertNotNull(result);
+        assertTrue(result instanceof Modified);
+        Modified modified = (Modified) result;
+        assertFalse(modified.getUndeliverableHere());
+        assertFalse(modified.getDeliveryFailed());
     }
 }

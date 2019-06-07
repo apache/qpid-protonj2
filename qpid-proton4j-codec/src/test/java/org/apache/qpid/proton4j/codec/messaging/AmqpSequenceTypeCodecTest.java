@@ -17,6 +17,7 @@
 package org.apache.qpid.proton4j.codec.messaging;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
@@ -26,9 +27,11 @@ import java.util.List;
 import java.util.UUID;
 
 import org.apache.qpid.proton4j.amqp.messaging.AmqpSequence;
+import org.apache.qpid.proton4j.amqp.messaging.Modified;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.codec.CodecTestSupport;
+import org.apache.qpid.proton4j.codec.TypeDecoder;
 import org.apache.qpid.proton4j.codec.decoders.messaging.AmqpSequenceTypeDecoder;
 import org.apache.qpid.proton4j.codec.encoders.messaging.AmqpSequenceTypeEncoder;
 import org.junit.Test;
@@ -96,5 +99,35 @@ public class AmqpSequenceTypeCodecTest extends CodecTestSupport {
             assertTrue(resultArray[i] instanceof AmqpSequence);
             assertEquals(array[i].getValue(), resultArray[i].getValue());
         }
+    }
+
+    @Test
+    public void testSkipValue() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        List<Object> list = new ArrayList<>();
+        list.add("one");
+        list.add("two");
+        list.add("three");
+
+        for (int i = 0; i < 10; ++i) {
+            encoder.writeObject(buffer, encoderState, new AmqpSequence(list));
+        }
+
+        encoder.writeObject(buffer, encoderState, new Modified());
+
+        for (int i = 0; i < 10; ++i) {
+            TypeDecoder<?> typeDecoder = decoder.readNextTypeDecoder(buffer, decoderState);
+            assertEquals(AmqpSequence.class, typeDecoder.getTypeClass());
+            typeDecoder.skipValue(buffer, decoderState);
+        }
+
+        final Object result = decoder.readObject(buffer, decoderState);
+
+        assertNotNull(result);
+        assertTrue(result instanceof Modified);
+        Modified modified = (Modified) result;
+        assertFalse(modified.getUndeliverableHere());
+        assertFalse(modified.getDeliveryFailed());
     }
 }

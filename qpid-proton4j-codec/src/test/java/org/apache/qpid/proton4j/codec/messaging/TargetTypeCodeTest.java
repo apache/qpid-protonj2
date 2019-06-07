@@ -18,6 +18,9 @@ package org.apache.qpid.proton4j.codec.messaging;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 import java.util.LinkedHashMap;
@@ -25,12 +28,14 @@ import java.util.Map;
 
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedInteger;
+import org.apache.qpid.proton4j.amqp.messaging.Modified;
 import org.apache.qpid.proton4j.amqp.messaging.Target;
 import org.apache.qpid.proton4j.amqp.messaging.TerminusDurability;
 import org.apache.qpid.proton4j.amqp.messaging.TerminusExpiryPolicy;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.codec.CodecTestSupport;
+import org.apache.qpid.proton4j.codec.TypeDecoder;
 import org.apache.qpid.proton4j.codec.decoders.messaging.TargetTypeDecoder;
 import org.apache.qpid.proton4j.codec.encoders.messaging.TargetTypeEncoder;
 import org.junit.Test;
@@ -91,5 +96,35 @@ public class TargetTypeCodeTest extends CodecTestSupport {
       assertEquals(false, result.getDynamic());
       assertEquals(nodeProperties, result.getDynamicNodeProperties());
       assertArrayEquals(new Symbol[] {Symbol.valueOf("RELEASED"), Symbol.valueOf("MODIFIED")}, result.getCapabilities());
+   }
+
+   @Test
+   public void testSkipValue() throws IOException {
+       ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+       Target target = new Target();
+       target.setAddress("address");
+       target.setDurable(TerminusDurability.CONFIGURATION);
+       target.setCapabilities(Symbol.valueOf("QUEUE"));
+
+       for (int i = 0; i < 10; ++i) {
+           encoder.writeObject(buffer, encoderState, target);
+       }
+
+       encoder.writeObject(buffer, encoderState, new Modified());
+
+       for (int i = 0; i < 10; ++i) {
+           TypeDecoder<?> typeDecoder = decoder.readNextTypeDecoder(buffer, decoderState);
+           assertEquals(Target.class, typeDecoder.getTypeClass());
+           typeDecoder.skipValue(buffer, decoderState);
+       }
+
+       final Object result = decoder.readObject(buffer, decoderState);
+
+       assertNotNull(result);
+       assertTrue(result instanceof Modified);
+       Modified modified = (Modified) result;
+       assertFalse(modified.getUndeliverableHere());
+       assertFalse(modified.getDeliveryFailed());
    }
 }
