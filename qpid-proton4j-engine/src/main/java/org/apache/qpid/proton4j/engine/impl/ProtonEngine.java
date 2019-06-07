@@ -37,8 +37,8 @@ public class ProtonEngine implements Engine {
     private static final ProtonLogger LOG = ProtonLoggerFactory.getLogger(ProtonEngine.class);
 
     private final ProtonEnginePipeline pipeline =  new ProtonEnginePipeline(this);
-    private final ProtonConnection connection = new ProtonConnection(this);
     private final ProtonEngineConfiguration configuration = new ProtonEngineConfiguration(this);
+    private final ProtonConnection connection = new ProtonConnection(this);
 
     private EngineSaslContext saslContext = new ProtonEngineNoOpSaslContext();
 

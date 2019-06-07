@@ -106,6 +106,9 @@ public class ProtonConnection implements Connection, AMQPHeader.HeaderHandler<Pr
      */
     ProtonConnection(ProtonEngine engine) {
         this.engine = engine;
+
+        // Base the initial max frame size on the value configured on the engine.
+        this.localOpen.setMaxFrameSize(engine.configuration().getMaxFrameSize());
     }
 
     public ProtonEngine getEngine() {
@@ -177,11 +180,11 @@ public class ProtonConnection implements Connection, AMQPHeader.HeaderHandler<Pr
         return localOpen.getHostname();
     }
 
-
     @Override
     public Connection setMaxFrameSize(long maxFrameSize) {
         checkNotOpened("Cannot set Max Frame Size on already opened Connection");
         localOpen.setMaxFrameSize(maxFrameSize);
+        engine.configuration().setMaxFrameSize((int) maxFrameSize);
         return this;
     }
 
@@ -551,6 +554,7 @@ public class ProtonConnection implements Connection, AMQPHeader.HeaderHandler<Pr
                 if (!localOpenSent) {
                     localOpenSent = true;
                     engine.pipeline().fireWrite(localOpen, 0, null, null);
+                    engine.configuration().recomputeEffectiveFrameSizeLimits();
                 }
 
                 if (getLocalState() == ConnectionState.CLOSED && !localCloseSent) {

@@ -43,7 +43,7 @@ public class ProtonEngineConfiguration implements EngineConfiguration {
     }
 
     @Override
-    public EngineConfiguration setMaxFrameSize(int maxFrameSize) {
+    public ProtonEngineConfiguration setMaxFrameSize(int maxFrameSize) {
         this.maxFrameSize = Math.max(ProtonConstants.MIN_MAX_AMQP_FRAME_SIZE, maxFrameSize);
         return this;
     }
@@ -59,7 +59,7 @@ public class ProtonEngineConfiguration implements EngineConfiguration {
     }
 
     @Override
-    public EngineConfiguration setBufferAllocator(ProtonBufferAllocator allocator) {
+    public ProtonEngineConfiguration setBufferAllocator(ProtonBufferAllocator allocator) {
         this.allocator = allocator;
         return this;
     }
@@ -73,7 +73,7 @@ public class ProtonEngineConfiguration implements EngineConfiguration {
     }
 
     @Override
-    public EngineConfiguration setSchedulerService(ScheduledExecutorService scheduler) {
+    public ProtonEngineConfiguration setSchedulerService(ScheduledExecutorService scheduler) {
         return this;
     }
 
