@@ -18,7 +18,6 @@ package org.apache.qpid.proton4j.codec.encoders.transport;
 
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
-import org.apache.qpid.proton4j.amqp.transport.ReceiverSettleMode;
 import org.apache.qpid.proton4j.amqp.transport.Transfer;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.EncoderState;
@@ -87,8 +86,11 @@ public class TransferTypeEncoder extends AbstractDescribedListTypeEncoder<Transf
                 }
                 break;
             case 6:
-                ReceiverSettleMode rcvSettleMode = transfer.getRcvSettleMode();
-                state.getEncoder().writeUnsignedByte(buffer, state, rcvSettleMode == null ? null : rcvSettleMode.byteValue());
+                if (transfer.hasRcvSettleMode()) {
+                    state.getEncoder().writeUnsignedByte(buffer, state, transfer.getRcvSettleMode().byteValue());
+                } else {
+                    buffer.writeByte(EncodingCodes.NULL);
+                }
                 break;
             case 7:
                 state.getEncoder().writeObject(buffer, state, transfer.getState());
