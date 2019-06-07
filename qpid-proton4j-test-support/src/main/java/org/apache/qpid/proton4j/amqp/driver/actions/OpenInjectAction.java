@@ -62,13 +62,28 @@ public class OpenInjectAction extends AbstractPerformativeInjectAction<Open> {
         return this;
     }
 
+    public OpenInjectAction withMaxFrameSize(int maxFrameSize) {
+        open.setMaxFrameSize(UnsignedInteger.valueOf(maxFrameSize));
+        return this;
+    }
+
     public OpenInjectAction withMaxFrameSize(UnsignedInteger maxFrameSize) {
         open.setMaxFrameSize(maxFrameSize);
         return this;
     }
 
+    public OpenInjectAction withChannelMax(short channelMax) {
+        open.setMaxFrameSize(UnsignedInteger.valueOf(channelMax));
+        return this;
+    }
+
     public OpenInjectAction withChannelMax(UnsignedShort channelMax) {
         open.setChannelMax(channelMax);
+        return this;
+    }
+
+    public OpenInjectAction withIdleTimeOut(int idleTimeout) {
+        open.setIdleTimeOut(UnsignedInteger.valueOf(idleTimeout));
         return this;
     }
 
