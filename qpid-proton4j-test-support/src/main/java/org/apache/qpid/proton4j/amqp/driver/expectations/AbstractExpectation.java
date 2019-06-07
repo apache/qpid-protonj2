@@ -89,7 +89,9 @@ public abstract class AbstractExpectation<T extends ListDescribedType> implement
     }
 
     protected final void verifyPayload(ProtonBuffer payload) {
-        if (payload != null) {
+        if (getPayloadMatcher() != null) {
+            assertThat("Paylod does not match expectation", payload, getPayloadMatcher());
+        } else if (payload != null) {
             throw new AssertionError("Performative should not have been sent with a paylod: ");
         }
     }
@@ -114,6 +116,10 @@ public abstract class AbstractExpectation<T extends ListDescribedType> implement
     protected abstract Enum<?> getFieldEnum(int fieldIndex);
 
     protected abstract Class<T> getExpectedTypeClass();
+
+    protected Matcher<ProtonBuffer> getPayloadMatcher() {
+        return null;
+    }
 
     //----- Base implementation of the handle methods to describe when we get wrong type.
 

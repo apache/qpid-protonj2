@@ -28,7 +28,10 @@ import org.apache.qpid.proton4j.amqp.driver.codec.util.TypeMapper;
 import org.apache.qpid.proton4j.amqp.driver.matchers.transport.TransferMatcher;
 import org.apache.qpid.proton4j.amqp.transport.DeliveryState;
 import org.apache.qpid.proton4j.amqp.transport.ReceiverSettleMode;
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.hamcrest.Matcher;
+import org.hamcrest.Matchers;
 
 /**
  * Scripted expectation for the AMQP Transfer performative
@@ -36,6 +39,8 @@ import org.hamcrest.Matcher;
 public class TransferExpectation extends AbstractExpectation<Transfer> {
 
     private final TransferMatcher matcher = new TransferMatcher();
+
+    private Matcher<ProtonBuffer> payloadMatcher = Matchers.any(ProtonBuffer.class);
 
     public TransferExpectation(AMQPTestDriver driver) {
         super(driver);
@@ -121,6 +126,18 @@ public class TransferExpectation extends AbstractExpectation<Transfer> {
         return withBatchable(equalTo(batchable));
     }
 
+    public TransferExpectation withPayload(byte[] buffer) {
+        // TODO - Create Matcher which describes the mismatch in detail
+        this.payloadMatcher = Matchers.equalTo(ProtonByteBufferAllocator.DEFAULT.wrap(buffer));
+        return this;
+    }
+
+    public TransferExpectation withPayload(ProtonBuffer buffer) {
+        // TODO - Create Matcher which describes the mismatch in detail
+        this.payloadMatcher = Matchers.equalTo(buffer);
+        return this;
+    }
+
     //----- Matcher based with methods for more complex validation
 
     public TransferExpectation withHandle(Matcher<?> m) {
@@ -178,9 +195,19 @@ public class TransferExpectation extends AbstractExpectation<Transfer> {
         return this;
     }
 
+    public TransferExpectation withPayload(Matcher<ProtonBuffer> payloadMatcher) {
+        this.payloadMatcher = payloadMatcher;
+        return this;
+    }
+
     @Override
     protected Matcher<ListDescribedType> getExpectationMatcher() {
         return matcher;
+    }
+
+    @Override
+    protected Matcher<ProtonBuffer> getPayloadMatcher() {
+        return payloadMatcher;
     }
 
     @Override
