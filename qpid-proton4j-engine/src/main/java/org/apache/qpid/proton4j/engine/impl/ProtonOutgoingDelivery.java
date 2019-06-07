@@ -149,7 +149,7 @@ public class ProtonOutgoingDelivery implements OutgoingDelivery {
         checkCompleteOrAborted();
         payload.writeBytes(buffer);  // TODO don't copy if we can
         complete = true;
-        link.send(this, buffer);
+        link.send(this, payload);
         return this;
     }
 
@@ -163,7 +163,7 @@ public class ProtonOutgoingDelivery implements OutgoingDelivery {
         checkCompleteOrAborted();
         payload.writeBytes(buffer);  // TODO don't copy if we can
         this.complete = complete;
-        link.send(this, buffer);
+        link.send(this, payload);
         return this;
     }
 
