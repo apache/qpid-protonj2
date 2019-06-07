@@ -190,12 +190,7 @@ public final class Transfer implements Performative {
     }
 
     public Transfer setMore(boolean more) {
-        if (more) {
-            modified |= MORE;
-        } else {
-            modified &= ~MORE;
-        }
-
+        this.modified |= MORE;
         this.more = more;
         return this;
     }
@@ -235,12 +230,7 @@ public final class Transfer implements Performative {
     }
 
     public Transfer setResume(boolean resume) {
-        if (resume) {
-            modified |= RESUME;
-        } else {
-            modified &= ~RESUME;
-        }
-
+        this.modified |= RESUME;
         this.resume = resume;
         return this;
     }
@@ -250,12 +240,7 @@ public final class Transfer implements Performative {
     }
 
     public Transfer setAborted(boolean aborted) {
-        if (aborted) {
-            modified |= ABORTED;
-        } else {
-            modified &= ~ABORTED;
-        }
-
+        this.modified |= ABORTED;
         this.aborted = aborted;
         return this;
     }
@@ -265,12 +250,7 @@ public final class Transfer implements Performative {
     }
 
     public Transfer setBatchable(boolean batchable) {
-        if (batchable) {
-            modified |= BATCHABLE;
-        } else {
-            modified &= ~BATCHABLE;
-        }
-
+        this.modified |= BATCHABLE;
         this.batchable = batchable;
         return this;
     }

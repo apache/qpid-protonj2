@@ -243,12 +243,7 @@ public final class Flow implements Performative {
     }
 
     public Flow setDrain(boolean drain) {
-        if (drain) {
-            modified |= DRAIN;
-        } else {
-            modified &= ~DRAIN;
-        }
-
+        this.modified |= DRAIN;
         this.drain = drain;
         return this;
     }
@@ -258,12 +253,7 @@ public final class Flow implements Performative {
     }
 
     public Flow setEcho(boolean echo) {
-        if (echo) {
-            modified |= ECHO;
-        } else {
-            modified &= ~ECHO;
-        }
-
+        this.modified |= ECHO;
         this.echo = echo;
         return this;
     }
