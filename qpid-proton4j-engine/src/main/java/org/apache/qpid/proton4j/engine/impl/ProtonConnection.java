@@ -108,7 +108,8 @@ public class ProtonConnection implements Connection, AMQPHeader.HeaderHandler<Pr
         this.engine = engine;
 
         // Base the initial max frame size on the value configured on the engine.
-        this.localOpen.setMaxFrameSize(engine.configuration().getMaxFrameSize());
+        // this.localOpen.setMaxFrameSize(engine.configuration().getMaxFrameSize());
+        // TODO - This creates a default which we haven't settled on so leaving it off for now.
     }
 
     public ProtonEngine getEngine() {

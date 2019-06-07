@@ -35,6 +35,9 @@ public interface EngineConfiguration {
      *      The value to assign as the maximum frame size.
      *
      * @return this {@link EngineConfiguration} for chaining.
+     *
+     * TODO - This is a little confusing as we have a setter in the Connection
+     *        and there doesn't seem to be any benefit of having this here  ?
      */
     EngineConfiguration setMaxFrameSize(int maxFrameSize);
 

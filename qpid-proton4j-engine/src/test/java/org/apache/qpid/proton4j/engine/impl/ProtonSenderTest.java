@@ -478,6 +478,8 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         engine.outputConsumer(driver);
         ScriptWriter script = driver.createScriptWriter();
 
+        final byte [] payloadBuffer = new byte[] {0, 1, 2, 3, 4};
+
         script.expectAMQPHeader().respondWithAMQPHeader();
         script.expectOpen().respond().withContainerId("driver");
         script.expectBegin().respond();
@@ -492,7 +494,8 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
                                .withSettled(false)
                                .withState((DeliveryState) null)
                                .withDeliveryId(0)
-                               .withDeliveryTag(new byte[] {0});
+                               .withDeliveryTag(new byte[] {0})
+                               .withPayload(payloadBuffer);
         script.expectDetach().withHandle(0).respond();
 
         Connection connection = engine.start();
@@ -501,7 +504,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         Session session = connection.session();
         session.open();
 
-        ProtonBuffer payload = ProtonByteBufferAllocator.DEFAULT.wrap(new byte[] {0, 1, 2, 3, 4});
+        ProtonBuffer payload = ProtonByteBufferAllocator.DEFAULT.wrap(payloadBuffer);
 
         Sender sender = session.sender("sender-1");
 
@@ -527,6 +530,8 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         engine.outputConsumer(driver);
         ScriptWriter script = driver.createScriptWriter();
 
+        ProtonBuffer payload = ProtonByteBufferAllocator.DEFAULT.wrap(new byte[] {0, 1, 2, 3, 4});
+
         script.expectAMQPHeader().respondWithAMQPHeader();
         script.expectOpen().respond().withContainerId("driver");
         script.expectBegin().respond();
@@ -541,7 +546,8 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
                                .withSettled(false)
                                .withState((DeliveryState) null)
                                .withDeliveryId(0)
-                               .withDeliveryTag(new byte[] {0});
+                               .withDeliveryTag(new byte[] {0})
+                               .withPayload(payload.copy());
         script.remoteDisposition().withSettled(true)
                                   .withRole(Role.RECEIVER)
                                   .withState(Accepted.getInstance())
@@ -553,8 +559,6 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         connection.open();
         Session session = connection.session();
         session.open();
-
-        ProtonBuffer payload = ProtonByteBufferAllocator.DEFAULT.wrap(new byte[] {0, 1, 2, 3, 4});
 
         Sender sender = session.sender("sender-1");
 
@@ -858,6 +862,128 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
 
         driver.assertScriptComplete();
 
+        assertNull(failure);
+    }
+
+    @Test
+    public void testSendMultiFrameDeliveryAndSingleFrameDeliveryOnSingleSessionFromDifferentSenders() {
+        doMultiplexMultiFrameDeliveryOnSingleSessionOutgoingTestImpl(false);
+    }
+
+    @Test
+    public void testMultipleMultiFrameDeliveriesOnSingleSessionFromDifferentSenders() {
+        doMultiplexMultiFrameDeliveryOnSingleSessionOutgoingTestImpl(true);
+    }
+
+    private void doMultiplexMultiFrameDeliveryOnSingleSessionOutgoingTestImpl(boolean bothDeliveriesMultiFrame) {
+        ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
+        engine.errorHandler(result -> failure = result);
+        AMQPTestDriver driver = new AMQPTestDriver(engine);
+        engine.outputConsumer(driver);
+        ScriptWriter script = driver.createScriptWriter();
+
+        int contentLength1 = 6000;
+        int frameSizeLimit = 4000;
+        int contentLength2 = 2000;
+        if (bothDeliveriesMultiFrame) {
+            contentLength2 = 6000;
+        }
+
+        script.expectAMQPHeader().respondWithAMQPHeader();
+        script.expectOpen().withMaxFrameSize(frameSizeLimit).respond().withContainerId("driver").withMaxFrameSize(frameSizeLimit);
+        script.expectBegin().respond();
+        script.expectAttach().withRole(Role.SENDER).respond();
+        script.expectAttach().withRole(Role.SENDER).respond();
+
+        Connection connection = engine.start();
+        connection.setMaxFrameSize(frameSizeLimit);
+        connection.open();
+        Session session = connection.session();
+        session.open();
+
+        String linkName1 = "Sender1";
+        Sender sender1 = session.sender(linkName1);
+        sender1.open();
+
+        String linkName2 = "Sender2";
+        Sender sender2 = session.sender(linkName2);
+        sender2.open();
+
+        final AtomicBoolean sender1MarkedSendable = new AtomicBoolean();
+        sender1.sendableEventHandler(handler -> {
+            sender1MarkedSendable.set(true);
+        });
+
+        final AtomicBoolean sender2MarkedSendable = new AtomicBoolean();
+        sender2.sendableEventHandler(handler -> {
+            sender2MarkedSendable.set(true);
+        });
+
+        script.remoteFlow().withHandle(0)
+                           .withDeliveryCount(0)
+                           .withLinkCredit(10)
+                           .withIncomingWindow(1024)
+                           .withOutgoingWindow(10)
+                           .withNextIncomingId(0)
+                           .withNextOutgoingId(1).now();
+        script.remoteFlow().withHandle(1)
+                           .withDeliveryCount(0)
+                           .withLinkCredit(10)
+                           .withIncomingWindow(1024)
+                           .withOutgoingWindow(10)
+                           .withNextIncomingId(0)
+                           .withNextOutgoingId(1).now();
+
+        assertTrue("Sender 1 should now be sendable", sender1MarkedSendable.get());
+        assertTrue("Sender 2 should now be sendable", sender2MarkedSendable.get());
+
+        // Frames are not multiplexed for large deliveries as we write the full
+        // writable portion out when a write is called.
+
+        script.expectTransfer().withHandle(0)
+                               .withSettled(true)
+                               .withState(Accepted.getInstance())
+                               .withDeliveryId(0)
+                               .withMore(true)
+                               .withDeliveryTag(new byte[] {1});
+        script.expectTransfer().withHandle(0)
+                               .withSettled(true)
+                               .withState(Accepted.getInstance())
+                               .withDeliveryId(0)
+                               .withMore(false)
+                               .withDeliveryTag(new byte[] {1});
+
+        script.expectTransfer().withHandle(1)
+                               .withSettled(true)
+                               .withState(Accepted.getInstance())
+                               .withDeliveryId(1)
+                               .withMore(bothDeliveriesMultiFrame)
+                               .withDeliveryTag(new byte[] {2});
+        if (bothDeliveriesMultiFrame) {
+            script.expectTransfer().withHandle(1)
+                                   .withSettled(true)
+                                   .withState(Accepted.getInstance())
+                                   .withDeliveryId(1)
+                                   .withMore(false)
+                                   .withDeliveryTag(new byte[] {2});
+        }
+
+        ProtonBuffer messageContent1 = createContentBuffer(contentLength1);
+        OutgoingDelivery delivery1 = sender1.delivery();
+        delivery1.setTag(new byte[] { 1 });
+        delivery1.disposition(Accepted.getInstance(), true);
+        delivery1.writeBytes(messageContent1);
+
+        ProtonBuffer messageContent2 = createContentBuffer(contentLength2);
+        OutgoingDelivery delivery2 = sender2.delivery();
+        delivery2.setTag(new byte[] { 2 });
+        delivery2.disposition(Accepted.getInstance(), true);
+        delivery2.writeBytes(messageContent2);
+
+        script.expectClose().respond();
+        connection.close();
+
+        driver.assertScriptComplete();
         assertNull(failure);
     }
 }

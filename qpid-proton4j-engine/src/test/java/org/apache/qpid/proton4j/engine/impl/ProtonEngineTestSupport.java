@@ -18,6 +18,7 @@ package org.apache.qpid.proton4j.engine.impl;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Random;
 
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
@@ -103,5 +104,16 @@ public abstract class ProtonEngineTestSupport {
         }
 
         return (E) val;
+    }
+
+    protected static ProtonBuffer createContentBuffer(int length) {
+        Random rand = new Random(System.currentTimeMillis());
+
+        byte[] payload = new byte[length];
+        for (int i = 0; i < length; i++) {
+            payload[i] = (byte) (64 + 1 + rand.nextInt(9));
+        }
+
+        return ProtonByteBufferAllocator.DEFAULT.wrap(payload).setIndex(0, length);
     }
 }
