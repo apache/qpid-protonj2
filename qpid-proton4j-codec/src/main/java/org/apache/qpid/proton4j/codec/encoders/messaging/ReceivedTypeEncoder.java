@@ -45,11 +45,6 @@ public class ReceivedTypeEncoder extends AbstractDescribedListTypeEncoder<Receiv
     }
 
     @Override
-    public int getListEncoding(Received value) {
-        return EncodingCodes.LIST8 & 0xff;
-    }
-
-    @Override
     public void writeElement(Received source, int index, ProtonBuffer buffer, EncoderState state) {
         switch (index) {
             case 0:
@@ -61,6 +56,11 @@ public class ReceivedTypeEncoder extends AbstractDescribedListTypeEncoder<Receiv
             default:
                 throw new IllegalArgumentException("Unknown Received value index: " + index);
         }
+    }
+
+    @Override
+    public int getListEncoding(Received value) {
+        return EncodingCodes.LIST8;
     }
 
     @Override
