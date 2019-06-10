@@ -16,6 +16,7 @@
  */
 package org.apache.qpid.proton4j.engine.impl;
 
+import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -979,6 +980,115 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         delivery2.setTag(new byte[] { 2 });
         delivery2.disposition(Accepted.getInstance(), true);
         delivery2.writeBytes(messageContent2);
+
+        script.expectClose().respond();
+        connection.close();
+
+        driver.assertScriptComplete();
+        assertNull(failure);
+    }
+
+    @Test
+    public void testMaxFrameSizeOfPeerHasEffect() {
+        doMaxFrameSizeTestImpl(0, 0, 5700, 1);
+        doMaxFrameSizeTestImpl(1024, 0, 5700, 6);
+    }
+
+    @Test
+    public void testMaxFrameSizeOutgoingFrameSizeLimitHasEffect() {
+        doMaxFrameSizeTestImpl(0, 512, 5700, 12);
+        doMaxFrameSizeTestImpl(1024, 512, 5700, 12);
+        doMaxFrameSizeTestImpl(1024, 2048, 5700, 6);
+    }
+
+    void doMaxFrameSizeTestImpl(int remoteMaxFrameSize, int outboundFrameSizeLimit, int contentLength, int expectedNumFrames) {
+        ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
+        engine.errorHandler(result -> failure = result);
+        AMQPTestDriver driver = new AMQPTestDriver(engine);
+        engine.outputConsumer(driver);
+        ScriptWriter script = driver.createScriptWriter();
+
+        script.expectAMQPHeader().respondWithAMQPHeader();
+        if (outboundFrameSizeLimit == 0) {
+            if (remoteMaxFrameSize == 0) {
+                script.expectOpen().respond();
+            } else {
+                script.expectOpen().respond().withMaxFrameSize(remoteMaxFrameSize);
+            }
+        } else {
+            if (remoteMaxFrameSize == 0) {
+                script.expectOpen().withMaxFrameSize(outboundFrameSizeLimit).respond();
+            } else {
+                script.expectOpen().withMaxFrameSize(outboundFrameSizeLimit)
+                                   .respond()
+                                   .withMaxFrameSize(remoteMaxFrameSize);
+            }
+        }
+        script.expectBegin().respond();
+        script.expectAttach().withRole(Role.SENDER).respond();
+
+        Connection connection = engine.start();
+        if (outboundFrameSizeLimit != 0) {
+            connection.setMaxFrameSize(outboundFrameSizeLimit);
+        }
+        connection.open();
+        Session session = connection.session();
+        session.open();
+
+        String linkName = "mySender";
+        Sender sender = session.sender(linkName);
+        sender.open();
+
+        final AtomicBoolean senderMarkedSendable = new AtomicBoolean();
+        sender.sendableEventHandler(handler -> {
+            senderMarkedSendable.set(true);
+        });
+
+        script.remoteFlow().withHandle(0)
+                           .withDeliveryCount(0)
+                           .withLinkCredit(50)
+                           .withIncomingWindow(65535)
+                           .withOutgoingWindow(65535)
+                           .withNextIncomingId(0)
+                           .withNextOutgoingId(1).now();
+
+        assertTrue("Sender should now be sendable", senderMarkedSendable.get());
+
+        // This calculation isn't entirely precise, there is some added performative/frame overhead not
+        // accounted for...but values are chosen to work, and verified here.
+        final int frameCount;
+        if(remoteMaxFrameSize == 0 && outboundFrameSizeLimit == 0) {
+            frameCount = 1;
+        } else if(remoteMaxFrameSize == 0 && outboundFrameSizeLimit != 0) {
+            frameCount = (int) Math.ceil((double)contentLength / (double) outboundFrameSizeLimit);
+        } else {
+            int effectiveMaxFrameSize;
+            if(outboundFrameSizeLimit != 0) {
+                effectiveMaxFrameSize = Math.min(outboundFrameSizeLimit, remoteMaxFrameSize);
+            } else {
+                effectiveMaxFrameSize = remoteMaxFrameSize;
+            }
+
+            frameCount = (int) Math.ceil((double)contentLength / (double) effectiveMaxFrameSize);
+        }
+
+        assertEquals("Unexpected number of frames calculated", expectedNumFrames, frameCount);
+
+        for (int i = 1; i <= expectedNumFrames; ++i) {
+            script.expectTransfer().withHandle(0)
+                                   .withSettled(true)
+                                   .withState(Accepted.getInstance())
+                                   .withDeliveryId(0)
+                                   .withMore(i != expectedNumFrames ? true : false)
+                                   .withDeliveryTag(notNullValue())
+                                   .withPayload(notNullValue(ProtonBuffer.class));
+        }
+
+        ProtonBuffer messageContent = createContentBuffer(contentLength);
+        OutgoingDelivery delivery = sender.delivery();
+        delivery.setTag(new byte[] { 1 });
+        delivery.disposition(Accepted.getInstance(), true);
+        delivery.writeBytes(messageContent);
 
         script.expectClose().respond();
         connection.close();

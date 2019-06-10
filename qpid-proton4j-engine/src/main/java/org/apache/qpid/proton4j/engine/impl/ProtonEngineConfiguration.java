@@ -44,7 +44,13 @@ public class ProtonEngineConfiguration implements EngineConfiguration {
 
     @Override
     public ProtonEngineConfiguration setMaxFrameSize(int maxFrameSize) {
-        this.maxFrameSize = Math.max(ProtonConstants.MIN_MAX_AMQP_FRAME_SIZE, maxFrameSize);
+        // TODO - Hack the code to limit the max we would write to 2GB for now just for
+        //        now to test some of the max frame size code, more work to be done here.
+        if (maxFrameSize >= 0) {
+            this.maxFrameSize = Math.max(ProtonConstants.MIN_MAX_AMQP_FRAME_SIZE, maxFrameSize);
+        } else {
+            this.maxFrameSize = Integer.MAX_VALUE;
+        }
         return this;
     }
 
