@@ -47,7 +47,9 @@ public final class SaslResponse implements SaslPerformative {
     @Override
     public SaslResponse copy() {
         SaslResponse copy = new SaslResponse();
-        copy.setResponse(response == null ? null : response.copy());
+        if (response != null) {
+            copy.setResponse(response.copy());
+        }
         return copy;
     }
 

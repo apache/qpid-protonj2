@@ -63,7 +63,9 @@ public final class SaslInit implements SaslPerformative {
 
         copy.setHostname(hostname);
         copy.setInitialResponse(initialResponse == null ? null : initialResponse.copy());
-        copy.setMechanism(mechanism);
+        if (mechanism != null) {
+            copy.setMechanism(mechanism);
+        }
 
         return copy;
     }

@@ -52,7 +52,9 @@ public final class SaslOutcome implements SaslPerformative {
     public SaslOutcome copy() {
         SaslOutcome copy = new SaslOutcome();
 
-        copy.setCode(code);
+        if (code != null) {
+            copy.setCode(code);
+        }
         copy.setAdditionalData(additionalData == null ? null : additionalData.copy());
 
         return copy;
