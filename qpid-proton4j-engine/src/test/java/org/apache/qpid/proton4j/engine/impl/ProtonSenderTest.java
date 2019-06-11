@@ -17,6 +17,7 @@
 package org.apache.qpid.proton4j.engine.impl;
 
 import static org.hamcrest.CoreMatchers.notNullValue;
+import static org.hamcrest.CoreMatchers.nullValue;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -1094,6 +1095,75 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         connection.close();
 
         driver.assertScriptComplete();
+        assertNull(failure);
+    }
+
+    @Test
+    public void testAbortInProgressDelivery() throws Exception {
+        ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
+        engine.errorHandler(result -> failure = result);
+        AMQPTestDriver driver = new AMQPTestDriver(engine);
+        engine.outputConsumer(driver);
+        ScriptWriter script = driver.createScriptWriter();
+
+        ProtonBuffer payload = ProtonByteBufferAllocator.DEFAULT.wrap(new byte[] {0, 1, 2, 3, 4});
+
+        script.expectAMQPHeader().respondWithAMQPHeader();
+        script.expectOpen().respond().withContainerId("driver");
+        script.expectBegin().respond();
+        script.expectAttach().withRole(Role.SENDER).respond();
+        script.remoteFlow().withDeliveryCount(0)
+                           .withLinkCredit(10)
+                           .withIncomingWindow(1024)
+                           .withOutgoingWindow(10)
+                           .withNextIncomingId(0)
+                           .withNextOutgoingId(1).queue();
+        script.expectTransfer().withHandle(0)
+                               .withMore(true)
+                               .withSettled(false)
+                               .withState((DeliveryState) null)
+                               .withDeliveryId(0)
+                               .withDeliveryTag(new byte[] {0})
+                               .withPayload(payload.copy());
+        script.expectTransfer().withHandle(0)
+                               .withState((DeliveryState) null)
+                               .withDeliveryId(0)
+                               .withDeliveryTag(new byte[] {0})
+                               .withAborted(true)
+                               .withSettled(true)
+                               .withMore(false)
+                               .withPayload(nullValue(ProtonBuffer.class));
+        script.expectDetach().withHandle(0).respond();
+
+        Connection connection = engine.start();
+
+        connection.open();
+        Session session = connection.session();
+        session.open();
+
+        Sender sender = session.sender("sender-1");
+        sender.open();
+
+        final AtomicBoolean senderMarkedSendable = new AtomicBoolean();
+        sender.sendableEventHandler(handler -> {
+            senderMarkedSendable.set(true);
+        });
+
+        OutgoingDelivery delivery = sender.current();
+        assertNotNull(delivery);
+
+        delivery.setTag(new byte[] {0});
+        delivery.streamBytes(payload);
+        delivery.abort();
+
+        assertTrue(delivery.isAborted());
+        assertFalse(delivery.isPartial());
+        assertTrue(delivery.isSettled());
+
+        sender.close();
+
+        driver.assertScriptComplete();
+
         assertNull(failure);
     }
 }

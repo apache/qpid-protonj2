@@ -174,6 +174,7 @@ public class ProtonOutgoingDelivery implements OutgoingDelivery {
         // Cannot abort when nothing has been sent so far.
         if (deliveryId > DELIVERY_INACTIVE) {
             aborted = true;
+            locallySettled = true;
             link.abort(this);
             deliveryId = DELIVERY_ABORTED;
         }
