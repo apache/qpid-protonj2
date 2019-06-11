@@ -118,8 +118,10 @@ public final class Binary {
         return str.toString();
     }
 
-    public static Binary combine(final Collection<Binary> binaries) {
+    // TODO - These aren't used currently and could be removed to allow this type of operation
+    //        to fall on the ProtonBuffer class.
 
+    public static Binary combine(final Collection<Binary> binaries) {
         if (binaries.size() == 1) {
             return binaries.iterator().next();
         }
@@ -138,19 +140,21 @@ public final class Binary {
     }
 
     public Binary subBinary(final int offset, final int length) {
-        return new Binary(data, offset + offset, length);
+        return new Binary(this.data, this.offset + offset, length);
     }
 
     public static Binary create(ByteBuffer buffer) {
-        if (buffer == null)
+        if (buffer == null) {
             return null;
-        if (buffer.isDirect() || buffer.isReadOnly()) {
-            byte data[] = new byte[buffer.remaining()];
-            ByteBuffer dup = buffer.duplicate();
-            dup.get(data);
-            return new Binary(data);
         } else {
-            return new Binary(buffer.array(), buffer.arrayOffset() + buffer.position(), buffer.remaining());
+            if (buffer.isDirect() || buffer.isReadOnly()) {
+                byte data[] = new byte[buffer.remaining()];
+                ByteBuffer dup = buffer.duplicate();
+                dup.get(data);
+                return new Binary(data);
+            } else {
+                return new Binary(buffer.array(), buffer.arrayOffset() + buffer.position(), buffer.remaining());
+            }
         }
     }
 }
