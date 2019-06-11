@@ -27,7 +27,6 @@ import org.apache.qpid.proton4j.amqp.transport.Role;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.engine.EventHandler;
 import org.apache.qpid.proton4j.engine.LinkCreditState;
-import org.apache.qpid.proton4j.engine.LinkState;
 import org.apache.qpid.proton4j.engine.OutgoingDelivery;
 import org.apache.qpid.proton4j.engine.Sender;
 import org.apache.qpid.proton4j.engine.Session;
@@ -43,9 +42,15 @@ public class ProtonSender extends ProtonLink<Sender> implements Sender {
     private EventHandler<Sender> sendableEventHandler = null;
     private EventHandler<LinkCreditState> drainRequestedEventHandler = null;
 
-    private BiConsumer<ProtonOutgoingDelivery, ProtonBuffer> sendHandler = this::senderClosedSink;
-    private Consumer<ProtonOutgoingDelivery> dispositionHandler = this::senderClosedSink;
-    private Consumer<ProtonOutgoingDelivery> abortHandler = this::senderClosedSink;
+    private BiConsumer<ProtonOutgoingDelivery, ProtonBuffer> sendHandler = (delivery, buffer) -> {
+        throw new IllegalStateException("Cannot send when sender link has not been locally opened");
+    };
+    private Consumer<ProtonOutgoingDelivery> dispositionHandler = delivery -> {
+        throw new IllegalStateException("Cannot send a disposition when sender link has not been locally opened");
+    };
+    private Consumer<ProtonOutgoingDelivery> abortHandler = delivery -> {
+        throw new IllegalStateException("Cannot abort a delivery when sender link has not been locally opened");
+    };
 
     private OutgoingDelivery current;
 
@@ -179,25 +184,37 @@ public class ProtonSender extends ProtonLink<Sender> implements Sender {
 
     @Override
     protected void transitionedToLocallyOpened() {
-        // TODO - Set to not writable and handle transitions
-        this.sendHandler = this::senderNotWritableSink;
-        // TODO - Handle transport not writable and prevent or queue these ?
-        this.dispositionHandler = this::dispositionSink;
-        this.abortHandler = this::abortSink;
+        // TODO - Handle engine not writable and prevent or queue these ?
+
+        this.sendHandler = (delivery, buffer) -> senderNotWritableSink(delivery, buffer);
+        this.dispositionHandler = delivery -> dispositionSink(delivery);
+        this.abortHandler = delivery -> abortSink(delivery);
     }
 
     @Override
     protected void transitionedToLocallyDetached() {
-        this.sendHandler = this::senderClosedSink;
-        this.dispositionHandler = this::senderClosedSink;
-        this.abortHandler = this::senderClosedSink;
+        this.sendHandler = (delivery, buffer) -> {
+            throw new IllegalStateException("Cannot send when sender link is detached");
+        };
+        this.dispositionHandler = delivery -> {
+            throw new IllegalStateException("Cannot send a disposition when sender link is detached");
+        };
+        this.abortHandler = delivery -> {
+            throw new IllegalStateException("Cannot abort a delivery when sender link is detached");
+        };
     }
 
     @Override
     protected void transitionedToLocallyClosed() {
-        this.sendHandler = this::senderClosedSink;
-        this.dispositionHandler = this::senderClosedSink;
-        this.abortHandler = this::senderClosedSink;
+        this.sendHandler = (delivery, buffer) -> {
+            throw new IllegalStateException("Cannot send when sender link is closed");
+        };
+        this.dispositionHandler = delivery -> {
+            throw new IllegalStateException("Cannot send a disposition when sender link is closed");
+        };
+        this.abortHandler = delivery -> {
+            throw new IllegalStateException("Cannot abort a delivery when sender link is closed");
+        };
     }
 
     private void sendSink(ProtonOutgoingDelivery delivery, ProtonBuffer payload) {
@@ -212,23 +229,7 @@ public class ProtonSender extends ProtonLink<Sender> implements Sender {
         creditState.abort(delivery);
     }
 
-    private void senderClosedSink(ProtonOutgoingDelivery delivery, ProtonBuffer buffer) {
-        if (getLocalState() == LinkState.DETACHED) {
-            throw new IllegalStateException("Cannot send a disposition when sender link is detached");
-        } else {
-            throw new IllegalStateException("Cannot send a disposition when sender link is closed");
-        }
-    }
-
-    private void senderClosedSink(ProtonOutgoingDelivery delivery) {
-        throw new IllegalStateException("Cannot send a disposition when sender link is closed");
-    }
-
     private void senderNotWritableSink(ProtonOutgoingDelivery delivery, ProtonBuffer buffer) {
-        throw new IllegalStateException("Cannot send disposition when sender is not currently writable");
-    }
-
-    private void senderNotWritableSink(ProtonOutgoingDelivery delivery) {
-        throw new IllegalStateException("Cannot send disposition when sender is not currently writable");
+        throw new IllegalStateException("Cannot send when sender is not currently writable");
     }
 }
