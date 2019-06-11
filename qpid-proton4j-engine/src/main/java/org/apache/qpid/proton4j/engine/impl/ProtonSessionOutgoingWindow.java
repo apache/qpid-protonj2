@@ -235,11 +235,11 @@ public class ProtonSessionOutgoingWindow {
 
         transfer.setDeliveryId(delivery.getDeliveryId());
         transfer.setDeliveryTag(new Binary(delivery.getTag()));
-        transfer.setMore(delivery.isPartial());
+        transfer.setMore(false);
         transfer.setState(null);
-        transfer.setSettled(false);
+        transfer.setSettled(true);
         transfer.setResume(false);
-        transfer.setAborted(false);
+        transfer.setAborted(true);
         transfer.setBatchable(false);
         transfer.setRcvSettleMode(null);
         transfer.setHandle(sender.getHandle());
