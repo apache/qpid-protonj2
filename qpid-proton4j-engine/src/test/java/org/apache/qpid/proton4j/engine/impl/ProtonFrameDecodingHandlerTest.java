@@ -54,6 +54,36 @@ public class ProtonFrameDecodingHandlerTest {
     }
 
     @Test
+    public void testReadValidHeaderInSingleByteChunks() {
+        ProtonFrameDecodingHandler handler = new ProtonFrameDecodingHandler();
+        EngineHandlerContext context = Mockito.mock(EngineHandlerContext.class);
+
+        handler.handleRead(context, ProtonByteBufferAllocator.DEFAULT.wrap(new byte[] { 'A' }));
+        handler.handleRead(context, ProtonByteBufferAllocator.DEFAULT.wrap(new byte[] { 'M' }));
+        handler.handleRead(context, ProtonByteBufferAllocator.DEFAULT.wrap(new byte[] { 'Q' }));
+        handler.handleRead(context, ProtonByteBufferAllocator.DEFAULT.wrap(new byte[] { 'P' }));
+        handler.handleRead(context, ProtonByteBufferAllocator.DEFAULT.wrap(new byte[] { 0 }));
+        handler.handleRead(context, ProtonByteBufferAllocator.DEFAULT.wrap(new byte[] { 1 }));
+        handler.handleRead(context, ProtonByteBufferAllocator.DEFAULT.wrap(new byte[] { 0 }));
+        handler.handleRead(context, ProtonByteBufferAllocator.DEFAULT.wrap(new byte[] { 0 }));
+
+        Mockito.verify(context).fireRead(Mockito.any(HeaderFrame.class));
+        Mockito.verifyNoMoreInteractions(context);
+    }
+
+    @Test
+    public void testReadValidHeaderInSplitChunks() {
+        ProtonFrameDecodingHandler handler = new ProtonFrameDecodingHandler();
+        EngineHandlerContext context = Mockito.mock(EngineHandlerContext.class);
+
+        handler.handleRead(context, ProtonByteBufferAllocator.DEFAULT.wrap(new byte[] { 'A', 'M', 'Q', 'P' }));
+        handler.handleRead(context, ProtonByteBufferAllocator.DEFAULT.wrap(new byte[] { 0, 1, 0, 0 }));
+
+        Mockito.verify(context).fireRead(Mockito.any(HeaderFrame.class));
+        Mockito.verifyNoMoreInteractions(context);
+    }
+
+    @Test
     public void testDecodeValidSaslHeaderTriggersHeaderRead() {
         Engine engine = createEngine();
 

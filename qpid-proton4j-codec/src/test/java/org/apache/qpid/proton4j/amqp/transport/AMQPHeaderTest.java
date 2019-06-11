@@ -21,6 +21,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
@@ -127,6 +128,31 @@ public class AMQPHeaderTest {
         assertTrue(header.toString().startsWith("AMQP"));
     }
 
+    @Test
+    public void testValidateByteWithValidHeaderBytes() {
+        ProtonBuffer buffer = AMQPHeader.getAMQPHeader().getBuffer();
+
+        byte[] bytes = buffer.getArray();
+
+        for (int i = 0; i < AMQPHeader.HEADER_SIZE_BYTES; ++i) {
+            AMQPHeader.validateByte(i, bytes[i]);
+        }
+    }
+
+    @Test
+    public void testValidateByteWithInvalidHeaderBytes() {
+        byte[] bytes = new byte[] { 1, 2, 3, 4, 5, 6, 7, 8 };
+
+        for (int i = 0; i < AMQPHeader.HEADER_SIZE_BYTES; ++i) {
+            try {
+                AMQPHeader.validateByte(i, bytes[i]);
+                fail("Should throw IllegalArgumentException as bytes are invalid");
+            } catch (IllegalArgumentException iae) {
+                // Expected
+            }
+        }
+    }
+
     @Test(expected = NullPointerException.class)
     public void testCreateWithNullBuffer() {
         new AMQPHeader((ProtonBuffer) null);
@@ -170,6 +196,51 @@ public class AMQPHeaderTest {
     @Test(expected = IllegalArgumentException.class)
     public void testCreateWithInvalidHeaderRevision() {
         new AMQPHeader(new byte[] {'A', 'M', 'Q', 'P', 0, 1, 0, 1});
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testValidateHeaderByte0WithInvalidValue() {
+        AMQPHeader.validateByte(0, (byte) 85);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testValidateHeaderByte1WithInvalidValue() {
+        AMQPHeader.validateByte(0, (byte) 85);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testValidateHeaderByte2WithInvalidValue() {
+        AMQPHeader.validateByte(0, (byte) 85);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testValidateHeaderByte3WithInvalidValue() {
+        AMQPHeader.validateByte(0, (byte) 85);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testValidateHeaderByte4WithInvalidValue() {
+        AMQPHeader.validateByte(0, (byte) 85);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testValidateHeaderByte5WithInvalidValue() {
+        AMQPHeader.validateByte(0, (byte) 85);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testValidateHeaderByte6WithInvalidValue() {
+        AMQPHeader.validateByte(0, (byte) 85);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testValidateHeaderByte7WithInvalidValue() {
+        AMQPHeader.validateByte(0, (byte) 85);
+    }
+
+    @Test(expected = IndexOutOfBoundsException.class)
+    public void testValidateHeaderByteIndexOutOfBounds() {
+        AMQPHeader.validateByte(9, (byte) 65);
     }
 
     @Test

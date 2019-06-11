@@ -168,33 +168,115 @@ public class AMQPHeader {
                 throw new IllegalArgumentException("Not an AMQP header buffer");
             }
 
-            byte current = value.getByte(PROTOCOL_ID_INDEX);
-            if (current != AMQP_PROTOCOL_ID && current != SASL_PROTOCOL_ID) {
-                throw new IllegalArgumentException(String.format(
-                    "Invalid protocol Id specified %d : expected one of %d or %d",
-                    current, AMQP_PROTOCOL_ID, SASL_PROTOCOL_ID));
-            }
-
-            current = value.getByte(MAJOR_VERSION_INDEX);
-            if (current != 1) {
-                throw new IllegalArgumentException(String.format(
-                    "Invalid Major version specified %d : expected %d", current, 1));
-            }
-
-            current = value.getByte(MINOR_VERSION_INDEX);
-            if (current != 0) {
-                throw new IllegalArgumentException(String.format(
-                    "Invalid Minor version specified %d : expected %d", current, 0));
-            }
-
-            current = value.getByte(REVISION_INDEX);
-            if (current != 0) {
-                throw new IllegalArgumentException(String.format(
-                    "Invalid revision specified %d : expected %d", current, 0));
-            }
+            validateProtocolByte(value.getByte(PROTOCOL_ID_INDEX));
+            validateMajorVersionByte(value.getByte(MAJOR_VERSION_INDEX));
+            validateMinorVersionByte(value.getByte(MINOR_VERSION_INDEX));
+            validateRevisionByte(value.getByte(REVISION_INDEX));
         }
 
         buffer = value;
+    }
+
+    /**
+     * Called to validate a byte according to a given index within the AMQP Header
+     *
+     * If the index is outside the range of the header size an {@link IndexOutOfBoundsException}
+     * will be thrown.
+     *
+     * @param index
+     *      The index in the header where the byte should be validated.
+     * @param value
+     *      The value to check validity of in the given index in the AMQP Header.
+     *
+     * @throws IllegalArgumentException if the value is not valid for the index given in the AMQP header
+     * @throws IndexOutOfBoundsException if the index value is greater than the AMQP header size.
+     */
+    public static void validateByte(int index, byte value) {
+        switch (index) {
+            case 0:
+                validatePrefixByte1(value);
+                break;
+            case 1:
+                validatePrefixByte2(value);
+                break;
+            case 2:
+                validatePrefixByte3(value);
+                break;
+            case 3:
+                validatePrefixByte4(value);
+                break;
+            case 4:
+                validateProtocolByte(value);
+                break;
+            case 5:
+                validateMajorVersionByte(value);
+                break;
+            case 6:
+                validateMinorVersionByte(value);
+                break;
+            case 7:
+                validateRevisionByte(value);
+                break;
+            default:
+                throw new IndexOutOfBoundsException("Invalid AMQP Header byte index provided to validation method: " + index);
+        }
+    }
+
+    private static void validatePrefixByte1(byte value) {
+        if (value != PREFIX[0]) {
+            throw new IllegalArgumentException(String.format(
+                "Invalid header byte(1) specified %d : expected %d", value, PREFIX[0]));
+        }
+    }
+
+    private static void validatePrefixByte2(byte value) {
+        if (value != PREFIX[1]) {
+            throw new IllegalArgumentException(String.format(
+                "Invalid header byte(2) specified %d : expected %d", value, PREFIX[1]));
+        }
+    }
+
+    private static void validatePrefixByte3(byte value) {
+        if (value != PREFIX[2]) {
+            throw new IllegalArgumentException(String.format(
+                "Invalid header byte(3) specified %d : expected %d", value, PREFIX[2]));
+        }
+    }
+
+    private static void validatePrefixByte4(byte value) {
+        if (value != PREFIX[3]) {
+            throw new IllegalArgumentException(String.format(
+                "Invalid header byte(4) specified %d : expected %d", value, PREFIX[3]));
+        }
+    }
+
+    private static void validateProtocolByte(byte value) {
+        if (value != AMQP_PROTOCOL_ID && value != SASL_PROTOCOL_ID) {
+            throw new IllegalArgumentException(String.format(
+                "Invalid protocol Id specified %d : expected one of %d or %d",
+                value, AMQP_PROTOCOL_ID, SASL_PROTOCOL_ID));
+        }
+    }
+
+    private static void validateMajorVersionByte(byte value) {
+        if (value != 1) {
+            throw new IllegalArgumentException(String.format(
+                "Invalid Major version specified %d : expected %d", value, 1));
+        }
+    }
+
+    private static void validateMinorVersionByte(byte value) {
+        if (value != 0) {
+            throw new IllegalArgumentException(String.format(
+                "Invalid Minor version specified %d : expected %d", value, 0));
+        }
+    }
+
+    private static void validateRevisionByte(byte value) {
+        if (value != 0) {
+            throw new IllegalArgumentException(String.format(
+                "Invalid revision specified %d : expected %d", value, 0));
+        }
     }
 
     /**

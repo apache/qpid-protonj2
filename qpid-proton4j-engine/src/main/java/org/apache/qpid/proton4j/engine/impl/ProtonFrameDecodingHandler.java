@@ -170,24 +170,28 @@ public class ProtonFrameDecodingHandler implements EngineHandler, SaslPerformati
         @Override
         public void parse(EngineHandlerContext context, ProtonBuffer incoming) throws IOException {
             while (incoming.isReadable() && headerByte <= AMQPHeader.HEADER_SIZE_BYTES) {
-                headerBytes[headerByte++] = incoming.readByte();
+                byte nextByte = incoming.readByte();
+                AMQPHeader.validateByte(headerByte, nextByte);
+                headerBytes[headerByte++] = nextByte;
             }
 
-            // Construct a new Header from the read bytes which will validate the contents
-            AMQPHeader header = new AMQPHeader(headerBytes);
+            if (headerByte == AMQPHeader.HEADER_SIZE_BYTES) {
+                // Construct a new Header from the read bytes which will validate the contents
+                AMQPHeader header = new AMQPHeader(headerBytes);
 
-            // Transition to parsing the frames if any pipelined into this buffer.
-            transitionToFrameSizeParsingStage();
+                // Transition to parsing the frames if any pipelined into this buffer.
+                transitionToFrameSizeParsingStage();
 
-            // This probably isn't right as this fires to next not current.
-            if (header.isSaslHeader()) {
-                decoder = CodecFactory.getSaslDecoder();
-                decoderState = decoder.newDecoderState();
-                context.fireRead(HeaderFrame.SASL_HEADER_FRAME);
-            } else {
-                decoder = CodecFactory.getDecoder();
-                decoderState = decoder.newDecoderState();
-                context.fireRead(HeaderFrame.AMQP_HEADER_FRAME);
+                // This probably isn't right as this fires to next not current.
+                if (header.isSaslHeader()) {
+                    decoder = CodecFactory.getSaslDecoder();
+                    decoderState = decoder.newDecoderState();
+                    context.fireRead(HeaderFrame.SASL_HEADER_FRAME);
+                } else {
+                    decoder = CodecFactory.getDecoder();
+                    decoderState = decoder.newDecoderState();
+                    context.fireRead(HeaderFrame.AMQP_HEADER_FRAME);
+                }
             }
         }
 
