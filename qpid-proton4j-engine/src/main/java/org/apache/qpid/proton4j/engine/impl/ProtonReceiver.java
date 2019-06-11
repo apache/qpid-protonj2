@@ -113,7 +113,7 @@ public class ProtonReceiver extends ProtonLink<Receiver> implements Receiver {
     //----- Delivery related access points
 
     void disposition(ProtonIncomingDelivery delivery) {
-        checkNotClosed("Cannot get credit on a closed Receiver");
+        checkNotClosed("Cannot set a disposition for a delivery on a closed Receiver");
 
         // TODO - Better way to check all this state on each operation.
         if (session.isLocallyClosed() || connection.isLocallyClosed() ||
