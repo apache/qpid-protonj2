@@ -37,6 +37,9 @@ public interface SaslConstants {
         SASL_FAIL
     }
 
+    // TODO - Likely this becomes internal state for our SASL engine and outcomes gets shrunken to include
+    //        only real SASL outcomes.
+
     public enum SaslOutcomes {
 
         /** negotiation not completed */

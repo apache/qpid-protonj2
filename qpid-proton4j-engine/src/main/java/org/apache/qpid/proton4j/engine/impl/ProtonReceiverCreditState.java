@@ -30,6 +30,8 @@ import org.apache.qpid.proton4j.engine.util.SplayMap;
 
 /**
  * Credit state handler for {@link Receiver} links.
+ *
+ * TODO - Refactor into a Receiver State object and break out Credit State
  */
 public class ProtonReceiverCreditState implements ProtonLinkCreditState<ProtonIncomingDelivery> {
 

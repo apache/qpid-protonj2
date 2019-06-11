@@ -31,7 +31,9 @@ import org.apache.qpid.proton4j.engine.util.SplayMap;
 
 /**
  * Credit state handler for {@link Sender} links.
- */
+ *
+ * TODO - Refactor into a Sender State object and break out Credit State
+*/
 public class ProtonSenderCreditState implements ProtonLinkCreditState<ProtonOutgoingDelivery> {
 
     private final ProtonSender sender;
@@ -53,7 +55,7 @@ public class ProtonSenderCreditState implements ProtonLinkCreditState<ProtonOutg
     }
 
     public boolean isSendable() {
-        return sendable; // TODO - Session window has outbound capacity ?
+        return sendable; // TODO Map other events that change sendable state into this boolean
     }
 
     public boolean isDraining() {

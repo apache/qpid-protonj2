@@ -51,6 +51,9 @@ public interface Sender extends Link<Sender> {
      */
     OutgoingDelivery current();
 
+    // TODO: Possibly add another method that creates the next delivery and have current return the existing one
+    //       until next is called, and next may need to throw or something if the current one is partial etc.
+
     // TODO - Sample method for accessing link unsettled deliveries from the API level view
     //        Another option might be an foreach style method that allows a consumer to be applied
     //        or a disposition method that takes a predicate and the state to be applied.

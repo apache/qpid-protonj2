@@ -125,6 +125,8 @@ public class ProtonOutgoingDelivery implements OutgoingDelivery {
     @Override
     public OutgoingDelivery disposition(DeliveryState state, boolean settle) {
         if (locallySettled) {
+            //TODO: maybe if already-settled and state *differs*? Double-settling seems unlikely, but not really
+            //      a problem if nothing changes?
             throw new IllegalStateException("Cannot update disposition or settle and already settled Delivery");
         }
 
@@ -169,9 +171,12 @@ public class ProtonOutgoingDelivery implements OutgoingDelivery {
 
     @Override
     public OutgoingDelivery abort() {
+        // TODO: calling abort on already-aborted seems like it should no-op, this will throw?
+        //       Exception message could also mislead.
         checkCompleteOrAborted();
 
         // Cannot abort when nothing has been sent so far.
+        // TODO: Need to document [credit] handling in the case nothing is ever sent before aborting.
         if (deliveryId > DELIVERY_INACTIVE) {
             aborted = true;
             locallySettled = true;
