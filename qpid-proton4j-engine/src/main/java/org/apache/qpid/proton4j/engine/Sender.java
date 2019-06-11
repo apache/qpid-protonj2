@@ -58,8 +58,8 @@ public interface Sender extends Link<Sender> {
     // public void settle(Predicate<OutgoingDelivery> filter);
 
     /**
-     * Retrieves the list of unsettled deliveries that this sender has sent.  The deliveries in the list
-     * cannot be sent more payload but can have their settled state and disposition updated.
+     * Retrieves the list of unsettled deliveries sent from this {@link Sender}.  The deliveries in the list
+     * cannot be written to but can have their settled state and disposition updated.
      *
      * @return a collection of unsettled deliveries or an empty list if no pending deliveries are outstanding.
      */
