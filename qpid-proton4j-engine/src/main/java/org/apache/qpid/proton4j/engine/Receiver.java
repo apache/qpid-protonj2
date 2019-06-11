@@ -16,6 +16,8 @@
  */
 package org.apache.qpid.proton4j.engine;
 
+import java.util.Collection;
+
 import org.apache.qpid.proton4j.amqp.transport.DeliveryState;
 
 /**
@@ -42,9 +44,9 @@ public interface Receiver extends Link<Receiver> {
     // Receiver drain(EventHandler<Receiver> handler);
     // Receiver drain(int credits, EventHandler<Receiver> handler);
 
-    // Sender disposition(OutgoingDelivery... deliveries, boolean settle);
+    // Sender disposition(IncomingDelivery... deliveries, DeliveryState state, boolean settle);
 
-    // Sender settle(OoutgoingDelivery... deliveries);
+    // Sender settle(IncomingDelivery... deliveries);
 
     /**
      * Configures a default DeliveryState to be used if a received delivery is settled/freed
@@ -60,6 +62,20 @@ public interface Receiver extends Link<Receiver> {
      * @return the default delivery state for this delivery
      */
     public DeliveryState getDefaultDeliveryState();
+
+    // TODO - Sample method for accessing link unsettled deliveries from the API level view
+    //        Another option might be an foreach style method that allows a consumer to be applied
+    //        or a disposition method that takes a predicate and the state to be applied.
+    // public void disposition(Predicate<IncomingDelivery> filter, DeliveryState state, boolean settle);
+    // public void settle(Predicate<IncomingDelivery> filter);
+
+    /**
+     * Retrieves the list of unsettled deliveries that this sender has sent.  The deliveries in the list
+     * cannot be sent more payload but can have their settled state and disposition updated.
+     *
+     * @return a collection of unsettled deliveries or an empty list if no pending deliveries are outstanding.
+     */
+    Collection<IncomingDelivery> unsettled();
 
     //----- Event handlers for the Receiver
 

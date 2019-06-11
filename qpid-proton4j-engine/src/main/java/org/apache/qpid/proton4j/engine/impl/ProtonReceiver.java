@@ -16,6 +16,10 @@
  */
 package org.apache.qpid.proton4j.engine.impl;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+
 import org.apache.qpid.proton4j.amqp.transport.DeliveryState;
 import org.apache.qpid.proton4j.amqp.transport.Disposition;
 import org.apache.qpid.proton4j.amqp.transport.Role;
@@ -104,6 +108,16 @@ public class ProtonReceiver extends ProtonLink<Receiver> implements Receiver {
         return this;
     }
 
+    @SuppressWarnings("unchecked")
+    @Override
+    public Collection<IncomingDelivery> unsettled() {
+        if (creditState.unsettledDeliveries().isEmpty()) {
+            return Collections.EMPTY_LIST;
+        } else {
+            return Collections.unmodifiableCollection(new ArrayList<>(creditState.unsettledDeliveries().values()));
+        }
+    }
+
     //----- Internal support methods
 
     void remoteDisposition(Disposition disposition, ProtonIncomingDelivery delivery) {
@@ -133,8 +147,6 @@ public class ProtonReceiver extends ProtonLink<Receiver> implements Receiver {
     }
 
     //----- Receiver event handlers
-
-    // TODO - Don't let valid handlers be nulled unless closed
 
     @Override
     public Receiver deliveryReceivedEventHandler(EventHandler<IncomingDelivery> handler) {

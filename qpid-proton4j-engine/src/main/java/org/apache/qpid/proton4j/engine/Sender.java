@@ -16,6 +16,8 @@
  */
 package org.apache.qpid.proton4j.engine;
 
+import java.util.Collection;
+
 /**
  * AMQP Sender API
  */
@@ -29,7 +31,7 @@ public interface Sender extends Link<Sender> {
 
     // Sender drained(LinkCreditState state);
 
-    // Sender disposition(OutgoingDelivery... deliveries, boolean settle);
+    // Sender disposition(OutgoingDelivery... deliveries, DeliveryState state, boolean settle);
 
     // Sender settle(OoutgoingDelivery... deliveries);
 
@@ -47,7 +49,21 @@ public interface Sender extends Link<Sender> {
      *
      * @return the current active outgoing delivery or a new instance ready for sending.
      */
-    OutgoingDelivery delivery();
+    OutgoingDelivery current();
+
+    // TODO - Sample method for accessing link unsettled deliveries from the API level view
+    //        Another option might be an foreach style method that allows a consumer to be applied
+    //        or a disposition method that takes a predicate and the state to be applied.
+    // public void disposition(Predicate<OutgoingDelivery> filter, DeliveryState state, boolean settle);
+    // public void settle(Predicate<OutgoingDelivery> filter);
+
+    /**
+     * Retrieves the list of unsettled deliveries that this sender has sent.  The deliveries in the list
+     * cannot be sent more payload but can have their settled state and disposition updated.
+     *
+     * @return a collection of unsettled deliveries or an empty list if no pending deliveries are outstanding.
+     */
+    Collection<OutgoingDelivery> unsettled();
 
     //----- Event handlers for the Sender
 

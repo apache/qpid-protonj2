@@ -16,6 +16,9 @@
  */
 package org.apache.qpid.proton4j.engine.impl;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
@@ -85,12 +88,22 @@ public class ProtonSender extends ProtonLink<Sender> implements Sender {
     }
 
     @Override
-    public OutgoingDelivery delivery() {
+    public OutgoingDelivery current() {
         if (current == null || current.isSettled()) {
             current = new ProtonOutgoingDelivery(this);
         }
 
         return current;
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public Collection<OutgoingDelivery> unsettled() {
+        if (creditState.unsettledDeliveries().isEmpty()) {
+            return Collections.EMPTY_LIST;
+        } else {
+            return Collections.unmodifiableCollection(new ArrayList<>(creditState.unsettledDeliveries().values()));
+        }
     }
 
     void remoteDisposition(Disposition disposition, ProtonOutgoingDelivery delivery) {

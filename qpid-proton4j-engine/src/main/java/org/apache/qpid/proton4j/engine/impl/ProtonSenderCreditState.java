@@ -16,6 +16,9 @@
  */
 package org.apache.qpid.proton4j.engine.impl;
 
+import java.util.Map;
+
+import org.apache.qpid.proton4j.amqp.UnsignedInteger;
 import org.apache.qpid.proton4j.amqp.transport.Attach;
 import org.apache.qpid.proton4j.amqp.transport.Disposition;
 import org.apache.qpid.proton4j.amqp.transport.Flow;
@@ -80,6 +83,10 @@ public class ProtonSenderCreditState implements ProtonLinkCreditState<ProtonOutg
         snapshot.drained = drained;
         snapshot.deliveryCount = deliveryCount;
         return snapshot;
+    }
+
+    Map<UnsignedInteger, ProtonOutgoingDelivery> unsettledDeliveries() {
+        return unsettled;
     }
 
     //----- Handlers for processing incoming events

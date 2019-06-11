@@ -16,6 +16,9 @@
  */
 package org.apache.qpid.proton4j.engine.impl;
 
+import java.util.Map;
+
+import org.apache.qpid.proton4j.amqp.UnsignedInteger;
 import org.apache.qpid.proton4j.amqp.transport.Attach;
 import org.apache.qpid.proton4j.amqp.transport.Disposition;
 import org.apache.qpid.proton4j.amqp.transport.Flow;
@@ -54,13 +57,17 @@ public class ProtonReceiverCreditState implements ProtonLinkCreditState<ProtonIn
         return deliveryCount;
     }
 
-    public void setCredit(int credit) {
+    void setCredit(int credit) {
         if (this.credit != credit) {
             this.credit = credit;
             if (receiver.isRemotelyOpened()) {
                 sessionWindow.writeFlow(receiver);
             }
         }
+    }
+
+    Map<UnsignedInteger, ProtonIncomingDelivery> unsettledDeliveries() {
+        return unsettled;
     }
 
     @Override
