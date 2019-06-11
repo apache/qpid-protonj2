@@ -19,11 +19,75 @@ package org.apache.qpid.proton4j;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
 
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.junit.Test;
 
 public class SymbolTest {
+
+    @Test
+    public void testCompareTo() {
+        String symbolString1 = "Symbol-1";
+        String symbolString2 = "Symbol-2";
+        String symbolString3 = "Symbol-3";
+
+        Symbol symbol1 = Symbol.valueOf(symbolString1);
+        Symbol symbol2 = Symbol.valueOf(symbolString2);
+        Symbol symbol3 = Symbol.valueOf(symbolString3);
+
+        assertEquals(0, symbol1.compareTo(symbol1));
+        assertEquals(0, symbol2.compareTo(symbol2));
+        assertEquals(0, symbol3.compareTo(symbol3));
+
+        assertTrue(symbol2.compareTo(symbol1) > 0);
+        assertTrue(symbol3.compareTo(symbol1) > 0);
+        assertTrue(symbol3.compareTo(symbol2) > 0);
+
+        assertTrue(symbol1.compareTo(symbol2) < 0);
+        assertTrue(symbol1.compareTo(symbol3) < 0);
+        assertTrue(symbol2.compareTo(symbol3) < 0);
+    }
+
+    @Test
+    public void testEquals() {
+        String symbolString1 = "Symbol-1";
+        String symbolString2 = "Symbol-2";
+        String symbolString3 = "Symbol-3";
+
+        Symbol symbol1 = Symbol.valueOf(symbolString1);
+        Symbol symbol2 = Symbol.valueOf(symbolString2);
+        Symbol symbol3 = Symbol.valueOf(symbolString3);
+
+        assertNotEquals(symbol1, symbol2);
+
+        assertEquals(symbolString1, symbol1.toString());
+        assertEquals(symbolString2, symbol2.toString());
+        assertEquals(symbolString3, symbol3.toString());
+
+        assertNotEquals(symbol1, symbol2);
+        assertNotEquals(symbol2, symbol3);
+        assertNotEquals(symbol3, symbol1);
+
+        assertNotEquals(symbolString1, symbol1);
+        assertNotEquals(symbolString2, symbol2);
+        assertNotEquals(symbolString3, symbol3);
+    }
+
+    @Test
+    public void testHashcode() {
+        String symbolString1 = "Symbol-1";
+        String symbolString2 = "Symbol-2";
+
+        Symbol symbol1 = Symbol.valueOf(symbolString1);
+        Symbol symbol2 = Symbol.valueOf(symbolString2);
+
+        assertNotEquals(symbol1, symbol2);
+        assertNotEquals(symbol1.hashCode(), symbol2.hashCode());
+
+        assertEquals(symbol1.hashCode(), Symbol.valueOf(symbolString1).hashCode());
+        assertEquals(symbol2.hashCode(), Symbol.valueOf(symbolString2).hashCode());
+    }
 
     @Test
     public void testValueOf() {

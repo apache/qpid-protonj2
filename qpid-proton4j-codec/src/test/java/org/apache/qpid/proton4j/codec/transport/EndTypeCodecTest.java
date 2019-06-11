@@ -18,20 +18,32 @@ package org.apache.qpid.proton4j.codec.transport;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
 import org.apache.qpid.proton4j.amqp.Symbol;
+import org.apache.qpid.proton4j.amqp.transport.AmqpError;
 import org.apache.qpid.proton4j.amqp.transport.End;
 import org.apache.qpid.proton4j.amqp.transport.ErrorCondition;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.codec.CodecTestSupport;
+import org.apache.qpid.proton4j.codec.TypeDecoder;
+import org.apache.qpid.proton4j.codec.decoders.transport.EndTypeDecoder;
+import org.apache.qpid.proton4j.codec.encoders.transport.EndTypeEncoder;
 import org.junit.Test;
 
 public class EndTypeCodecTest extends CodecTestSupport {
+
+    @Test
+    public void testTypeClassReturnsCorrectType() throws IOException {
+        assertEquals(End.class, new EndTypeDecoder().getTypeClass());
+        assertEquals(End.class, new EndTypeEncoder().getTypeClass());
+    }
 
     @Test
     public void testEncodeAndDecode() throws IOException {
@@ -59,5 +71,36 @@ public class EndTypeCodecTest extends CodecTestSupport {
         assertEquals(Symbol.valueOf("amqp-error"), resultError.getCondition());
         assertEquals("Something bad", resultError.getDescription());
         assertEquals(infoMap, resultError.getInfo());
+    }
+    
+    @Test
+    public void testSkipValue() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        End end = new End();
+
+        end.setError(new ErrorCondition(AmqpError.INVALID_FIELD, "test"));
+
+        for (int i = 0; i < 10; ++i) {
+            encoder.writeObject(buffer, encoderState, end);
+        }
+
+        end.setError(null);
+
+        encoder.writeObject(buffer, encoderState, end);
+
+        for (int i = 0; i < 10; ++i) {
+            TypeDecoder<?> typeDecoder = decoder.readNextTypeDecoder(buffer, decoderState);
+            assertEquals(End.class, typeDecoder.getTypeClass());
+            typeDecoder.skipValue(buffer, decoderState);
+        }
+
+        final Object result = decoder.readObject(buffer, decoderState);
+
+        assertNotNull(result);
+        assertTrue(result instanceof End);
+
+        End value = (End) result;
+        assertNull(value.getError());
     }
 }

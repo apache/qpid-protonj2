@@ -22,15 +22,27 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
+import java.io.IOException;
+
 import org.apache.qpid.proton4j.amqp.Symbol;
+import org.apache.qpid.proton4j.amqp.transport.AmqpError;
 import org.apache.qpid.proton4j.amqp.transport.Detach;
 import org.apache.qpid.proton4j.amqp.transport.ErrorCondition;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.codec.CodecTestSupport;
+import org.apache.qpid.proton4j.codec.TypeDecoder;
+import org.apache.qpid.proton4j.codec.decoders.transport.DetachTypeDecoder;
+import org.apache.qpid.proton4j.codec.encoders.transport.DetachTypeEncoder;
 import org.junit.Test;
 
 public class DetachTypeCodecTest extends CodecTestSupport {
+
+    @Test
+    public void testTypeClassReturnsCorrectType() throws IOException {
+        assertEquals(Detach.class, new DetachTypeDecoder().getTypeClass());
+        assertEquals(Detach.class, new DetachTypeEncoder().getTypeClass());
+    }
 
     @Test
     public void testEncodeDecodeTypeWithNoError() throws Exception {
@@ -68,5 +80,36 @@ public class DetachTypeCodecTest extends CodecTestSupport {
         assertNotNull(result.getError());
         assertNotNull(result.getError().getCondition());
         assertNull(result.getError().getDescription());
+    }
+
+    @Test
+    public void testSkipValue() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        Detach detach = new Detach();
+
+        detach.setError(new ErrorCondition(AmqpError.INVALID_FIELD, "test"));
+
+        for (int i = 0; i < 10; ++i) {
+            encoder.writeObject(buffer, encoderState, detach);
+        }
+
+        detach.setError(null);
+
+        encoder.writeObject(buffer, encoderState, detach);
+
+        for (int i = 0; i < 10; ++i) {
+            TypeDecoder<?> typeDecoder = decoder.readNextTypeDecoder(buffer, decoderState);
+            assertEquals(Detach.class, typeDecoder.getTypeClass());
+            typeDecoder.skipValue(buffer, decoderState);
+        }
+
+        final Object result = decoder.readObject(buffer, decoderState);
+
+        assertNotNull(result);
+        assertTrue(result instanceof Detach);
+
+        Detach value = (Detach) result;
+        assertNull(value.getError());
     }
 }

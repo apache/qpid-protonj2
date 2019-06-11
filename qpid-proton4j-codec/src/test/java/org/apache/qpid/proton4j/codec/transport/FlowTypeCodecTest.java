@@ -17,6 +17,7 @@
 package org.apache.qpid.proton4j.codec.transport;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
@@ -27,9 +28,18 @@ import org.apache.qpid.proton4j.amqp.transport.Flow;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.codec.CodecTestSupport;
+import org.apache.qpid.proton4j.codec.TypeDecoder;
+import org.apache.qpid.proton4j.codec.decoders.transport.FlowTypeDecoder;
+import org.apache.qpid.proton4j.codec.encoders.transport.FlowTypeEncoder;
 import org.junit.Test;
 
 public class FlowTypeCodecTest extends CodecTestSupport {
+
+    @Test
+    public void testTypeClassReturnsCorrectType() throws IOException {
+        assertEquals(Flow.class, new FlowTypeDecoder().getTypeClass());
+        assertEquals(Flow.class, new FlowTypeEncoder().getTypeClass());
+    }
 
     @Test
     public void testEncodeAndDecode() throws IOException {
@@ -63,5 +73,64 @@ public class FlowTypeCodecTest extends CodecTestSupport {
         assertTrue(input.getDrain());
         assertTrue(input.getEcho());
         assertNull(input.getProperties());
+    }
+
+    @Test
+    public void testSkipValue() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        Flow flow = new Flow();
+
+        flow.setNextIncomingId(1);
+        flow.setIncomingWindow(2);
+        flow.setNextOutgoingId(3);
+        flow.setOutgoingWindow(4);
+        flow.setHandle(UnsignedInteger.valueOf(10).longValue());
+        flow.setDeliveryCount(5);
+        flow.setLinkCredit(6);
+        flow.setAvailable(7);
+        flow.setDrain(false);
+        flow.setEcho(false);
+
+        for (int i = 0; i < 10; ++i) {
+            encoder.writeObject(buffer, encoderState, flow);
+        }
+
+        flow.setNextIncomingId(10);
+        flow.setIncomingWindow(20);
+        flow.setNextOutgoingId(30);
+        flow.setOutgoingWindow(40);
+        flow.setHandle(UnsignedInteger.MAX_VALUE.longValue());
+        flow.setDeliveryCount(50);
+        flow.setLinkCredit(60);
+        flow.setAvailable(70);
+        flow.setDrain(true);
+        flow.setEcho(true);
+
+        encoder.writeObject(buffer, encoderState, flow);
+
+        for (int i = 0; i < 10; ++i) {
+            TypeDecoder<?> typeDecoder = decoder.readNextTypeDecoder(buffer, decoderState);
+            assertEquals(Flow.class, typeDecoder.getTypeClass());
+            typeDecoder.skipValue(buffer, decoderState);
+        }
+
+        final Object result = decoder.readObject(buffer, decoderState);
+
+        assertNotNull(result);
+        assertTrue(result instanceof Flow);
+
+        Flow value = (Flow) result;
+        assertEquals(10, value.getNextIncomingId());
+        assertEquals(20, value.getIncomingWindow());
+        assertEquals(30, value.getNextOutgoingId());
+        assertEquals(40, value.getOutgoingWindow());
+        assertEquals(UnsignedInteger.MAX_VALUE.longValue(), value.getHandle());
+        assertEquals(50, value.getDeliveryCount());
+        assertEquals(60, value.getLinkCredit());
+        assertEquals(70, value.getAvailable());
+        assertTrue(value.getDrain());
+        assertTrue(value.getEcho());
+        assertNull(value.getProperties());
     }
 }

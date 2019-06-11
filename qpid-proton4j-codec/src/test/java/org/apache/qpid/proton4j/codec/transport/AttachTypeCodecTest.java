@@ -23,6 +23,8 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
+import java.io.IOException;
+
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.amqp.messaging.Source;
@@ -34,9 +36,18 @@ import org.apache.qpid.proton4j.amqp.transport.SenderSettleMode;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.codec.CodecTestSupport;
+import org.apache.qpid.proton4j.codec.TypeDecoder;
+import org.apache.qpid.proton4j.codec.decoders.transport.AttachTypeDecoder;
+import org.apache.qpid.proton4j.codec.encoders.transport.AttachTypeEncoder;
 import org.junit.Test;
 
 public class AttachTypeCodecTest extends CodecTestSupport {
+
+    @Test
+    public void testTypeClassReturnsCorrectType() throws IOException {
+        assertEquals(Attach.class, new AttachTypeDecoder().getTypeClass());
+        assertEquals(Attach.class, new AttachTypeEncoder().getTypeClass());
+    }
 
     @Test
     public void testEncodeDecodeType() throws Exception {
@@ -136,5 +147,42 @@ public class AttachTypeCodecTest extends CodecTestSupport {
         final Attach result = (Attach) decoder.readObject(buffer, decoderState);
         assertNotNull(result);
         assertTypesEqual(input, result);
+    }
+
+    @Test
+    public void testSkipValue() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        Attach attach = new Attach();
+
+        attach.setHandle(1);
+        attach.setRole(Role.RECEIVER);
+        attach.setName("skip");
+
+        for (int i = 0; i < 10; ++i) {
+            encoder.writeObject(buffer, encoderState, attach);
+        }
+
+        attach.setHandle(2);
+        attach.setRole(Role.SENDER);
+        attach.setName("test");
+
+        encoder.writeObject(buffer, encoderState, attach);
+
+        for (int i = 0; i < 10; ++i) {
+            TypeDecoder<?> typeDecoder = decoder.readNextTypeDecoder(buffer, decoderState);
+            assertEquals(Attach.class, typeDecoder.getTypeClass());
+            typeDecoder.skipValue(buffer, decoderState);
+        }
+
+        final Object result = decoder.readObject(buffer, decoderState);
+
+        assertNotNull(result);
+        assertTrue(result instanceof Attach);
+
+        Attach value = (Attach) result;
+        assertEquals(Role.SENDER, value.getRole());
+        assertEquals(2, value.getHandle());
+        assertEquals("test", value.getName());
     }
 }

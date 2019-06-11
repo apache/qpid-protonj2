@@ -17,7 +17,9 @@
 package org.apache.qpid.proton4j.codec.transport;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.io.IOException;
@@ -28,10 +30,19 @@ import org.apache.qpid.proton4j.amqp.transport.Role;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.codec.CodecTestSupport;
+import org.apache.qpid.proton4j.codec.TypeDecoder;
+import org.apache.qpid.proton4j.codec.decoders.transport.DispositionTypeDecoder;
+import org.apache.qpid.proton4j.codec.encoders.transport.DispositionTypeEncoder;
 import org.junit.Ignore;
 import org.junit.Test;
 
 public class DispositionTypeCodecTest extends CodecTestSupport {
+
+    @Test
+    public void testTypeClassReturnsCorrectType() throws IOException {
+        assertEquals(Disposition.class, new DispositionTypeDecoder().getTypeClass());
+        assertEquals(Disposition.class, new DispositionTypeEncoder().getTypeClass());
+    }
 
     @Test
     public void testEncodeAndDecode() throws IOException {
@@ -75,5 +86,44 @@ public class DispositionTypeCodecTest extends CodecTestSupport {
             fail("Should not encode when no First value is set");
         } catch (Exception ex) {
         }
+    }
+
+    @Test
+    public void testSkipValue() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        Disposition disposition = new Disposition();
+
+        disposition.setFirst(1);
+        disposition.setLast(2);
+        disposition.setRole(Role.RECEIVER);
+
+        for (int i = 0; i < 10; ++i) {
+            encoder.writeObject(buffer, encoderState, disposition);
+        }
+
+        disposition.setFirst(2);
+        disposition.setLast(3);
+        disposition.setRole(Role.SENDER);
+        disposition.setState(Accepted.getInstance());
+
+        encoder.writeObject(buffer, encoderState, disposition);
+
+        for (int i = 0; i < 10; ++i) {
+            TypeDecoder<?> typeDecoder = decoder.readNextTypeDecoder(buffer, decoderState);
+            assertEquals(Disposition.class, typeDecoder.getTypeClass());
+            typeDecoder.skipValue(buffer, decoderState);
+        }
+
+        final Object result = decoder.readObject(buffer, decoderState);
+
+        assertNotNull(result);
+        assertTrue(result instanceof Disposition);
+
+        Disposition value = (Disposition) result;
+        assertEquals(2, value.getFirst());
+        assertEquals(3, value.getLast());
+        assertEquals(Role.SENDER, value.getRole());
+        assertSame(Accepted.getInstance(), value.getState());
     }
 }

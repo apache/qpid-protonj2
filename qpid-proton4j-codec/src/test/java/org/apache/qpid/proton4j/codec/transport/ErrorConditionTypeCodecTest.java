@@ -20,8 +20,11 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
 
+import java.io.IOException;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -31,9 +34,18 @@ import org.apache.qpid.proton4j.amqp.transport.ErrorCondition;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.codec.CodecTestSupport;
+import org.apache.qpid.proton4j.codec.TypeDecoder;
+import org.apache.qpid.proton4j.codec.decoders.transport.ErrorConditionTypeDecoder;
+import org.apache.qpid.proton4j.codec.encoders.transport.ErrorConditionTypeEncoder;
 import org.junit.Test;
 
 public class ErrorConditionTypeCodecTest extends CodecTestSupport {
+
+    @Test
+    public void testTypeClassReturnsCorrectType() throws IOException {
+        assertEquals(ErrorCondition.class, new ErrorConditionTypeDecoder().getTypeClass());
+        assertEquals(ErrorCondition.class, new ErrorConditionTypeEncoder().getTypeClass());
+    }
 
     @Test
     public void testEncodeDecodeType() throws Exception {
@@ -57,6 +69,41 @@ public class ErrorConditionTypeCodecTest extends CodecTestSupport {
         assertEquals(Symbol.valueOf("amqp-error"), result.getCondition());
         assertEquals("Something bad", result.getDescription());
         assertEquals(infoMap, result.getInfo());
+    }
+
+    @Test
+    public void testSkipValue() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        Map<Object, Object> infoMap = new LinkedHashMap<>();
+        infoMap.put("1", true);
+        infoMap.put("2", "string");
+
+        ErrorCondition error = new ErrorCondition(Symbol.valueOf("amqp-error"), "Something bad", infoMap);
+
+        for (int i = 0; i < 10; ++i) {
+            encoder.writeObject(buffer, encoderState, error);
+        }
+
+        error = new ErrorCondition(Symbol.valueOf("amqp-error-2"), "Something bad also", null);
+
+        encoder.writeObject(buffer, encoderState, error);
+
+        for (int i = 0; i < 10; ++i) {
+            TypeDecoder<?> typeDecoder = decoder.readNextTypeDecoder(buffer, decoderState);
+            assertEquals(ErrorCondition.class, typeDecoder.getTypeClass());
+            typeDecoder.skipValue(buffer, decoderState);
+        }
+
+        final Object result = decoder.readObject(buffer, decoderState);
+
+        assertNotNull(result);
+        assertTrue(result instanceof ErrorCondition);
+
+        ErrorCondition value = (ErrorCondition) result;
+        assertEquals(Symbol.valueOf("amqp-error-2"), value.getCondition());
+        assertEquals("Something bad also", value.getDescription());
+        assertNull(value.getInfo());
     }
 
     @Test

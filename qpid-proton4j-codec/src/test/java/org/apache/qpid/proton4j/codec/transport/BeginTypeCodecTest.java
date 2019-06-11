@@ -21,6 +21,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -30,9 +31,18 @@ import org.apache.qpid.proton4j.amqp.transport.Begin;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.codec.CodecTestSupport;
+import org.apache.qpid.proton4j.codec.TypeDecoder;
+import org.apache.qpid.proton4j.codec.decoders.transport.BeginTypeDecoder;
+import org.apache.qpid.proton4j.codec.encoders.transport.BeginTypeEncoder;
 import org.junit.Test;
 
 public class BeginTypeCodecTest extends CodecTestSupport {
+
+    @Test
+    public void testTypeClassReturnsCorrectType() throws IOException {
+        assertEquals(Begin.class, new BeginTypeDecoder().getTypeClass());
+        assertEquals(Begin.class, new BeginTypeEncoder().getTypeClass());
+    }
 
     @Test
     public void testEncodeDecodeType() throws Exception {
@@ -124,5 +134,39 @@ public class BeginTypeCodecTest extends CodecTestSupport {
         assertNotNull(result);
 
         assertTypesEqual(input, result);
+    }
+
+    @Test
+    public void testSkipValue() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        Begin begin = new Begin();
+
+        begin.setRemoteChannel(1);
+        begin.setHandleMax(25);
+
+        for (int i = 0; i < 10; ++i) {
+            encoder.writeObject(buffer, encoderState, begin);
+        }
+
+        begin.setRemoteChannel(2);
+        begin.setHandleMax(50);
+
+        encoder.writeObject(buffer, encoderState, begin);
+
+        for (int i = 0; i < 10; ++i) {
+            TypeDecoder<?> typeDecoder = decoder.readNextTypeDecoder(buffer, decoderState);
+            assertEquals(Begin.class, typeDecoder.getTypeClass());
+            typeDecoder.skipValue(buffer, decoderState);
+        }
+
+        final Object result = decoder.readObject(buffer, decoderState);
+
+        assertNotNull(result);
+        assertTrue(result instanceof Begin);
+
+        Begin value = (Begin) result;
+        assertEquals(2, value.getRemoteChannel());
+        assertEquals(50, value.getHandleMax());
     }
 }

@@ -36,9 +36,18 @@ import org.apache.qpid.proton4j.amqp.transport.Performative;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.codec.CodecTestSupport;
+import org.apache.qpid.proton4j.codec.TypeDecoder;
+import org.apache.qpid.proton4j.codec.decoders.transport.OpenTypeDecoder;
+import org.apache.qpid.proton4j.codec.encoders.transport.OpenTypeEncoder;
 import org.junit.Test;
 
 public class OpenTypeCodecTest extends CodecTestSupport {
+
+    @Test
+    public void testTypeClassReturnsCorrectType() throws IOException {
+        assertEquals(Open.class, new OpenTypeDecoder().getTypeClass());
+        assertEquals(Open.class, new OpenTypeEncoder().getTypeClass());
+    }
 
     @Test
     public void testEncodeAndDecode() throws IOException {
@@ -68,6 +77,51 @@ public class OpenTypeCodecTest extends CodecTestSupport {
         assertEquals(UnsignedInteger.ZERO.longValue(), result.getIdleTimeOut());
         assertArrayEquals(offeredCapabilities, result.getOfferedCapabilities());
         assertArrayEquals(desiredCapabilities, result.getDesiredCapabilities());
+    }
+
+    @Test
+    public void testSkipValue() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        Open close = new Open();
+
+        close.setContainerId("skip");
+        close.setHostname("google");
+        close.setChannelMax(UnsignedShort.valueOf(256).intValue());
+        close.setMaxFrameSize(UnsignedInteger.ZERO.longValue());
+        close.setIdleTimeOut(UnsignedInteger.ONE.longValue());
+
+        for (int i = 0; i < 10; ++i) {
+            encoder.writeObject(buffer, encoderState, close);
+        }
+
+        close.setContainerId("test");
+        close.setHostname("localhost");
+        close.setChannelMax(UnsignedShort.valueOf(512).intValue());
+        close.setMaxFrameSize(UnsignedInteger.ONE.longValue());
+        close.setIdleTimeOut(UnsignedInteger.ZERO.longValue());
+
+        encoder.writeObject(buffer, encoderState, close);
+
+        for (int i = 0; i < 10; ++i) {
+            TypeDecoder<?> typeDecoder = decoder.readNextTypeDecoder(buffer, decoderState);
+            assertEquals(Open.class, typeDecoder.getTypeClass());
+            typeDecoder.skipValue(buffer, decoderState);
+        }
+
+        final Object result = decoder.readObject(buffer, decoderState);
+
+        assertNotNull(result);
+        assertTrue(result instanceof Open);
+
+        Open value = (Open) result;
+        assertEquals("test", value.getContainerId());
+        assertEquals("localhost", value.getHostname());
+        assertEquals(UnsignedShort.valueOf(512).intValue(), value.getChannelMax());
+        assertEquals(UnsignedInteger.ONE.longValue(), value.getMaxFrameSize());
+        assertEquals(UnsignedInteger.ZERO.longValue(), value.getIdleTimeOut());
+        assertNull(value.getOfferedCapabilities());
+        assertNull(value.getDesiredCapabilities());
     }
 
     @Test
