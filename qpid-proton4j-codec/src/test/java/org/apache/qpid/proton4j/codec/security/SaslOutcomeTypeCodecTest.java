@@ -18,6 +18,8 @@ package org.apache.qpid.proton4j.codec.security;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 
@@ -27,6 +29,7 @@ import org.apache.qpid.proton4j.amqp.security.SaslOutcome;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.codec.CodecTestSupport;
+import org.apache.qpid.proton4j.codec.TypeDecoder;
 import org.apache.qpid.proton4j.codec.decoders.ProtonDecoderFactory;
 import org.apache.qpid.proton4j.codec.decoders.security.SaslOutcomeTypeDecoder;
 import org.apache.qpid.proton4j.codec.encoders.ProtonEncoderFactory;
@@ -80,5 +83,39 @@ public class SaslOutcomeTypeCodecTest extends CodecTestSupport {
 
         assertEquals(code, result.getCode());
         assertArrayEquals(data, result.getAdditionalData().getArray());
+    }
+
+    @Test
+    public void testSkipValue() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        SaslOutcome outcome = new SaslOutcome();
+
+        outcome.setAdditionalData(new Binary(new byte[] {0}));
+        outcome.setCode(SaslCode.AUTH);
+
+        for (int i = 0; i < 10; ++i) {
+            encoder.writeObject(buffer, encoderState, outcome);
+        }
+
+        outcome.setAdditionalData(new Binary(new byte[] {1, 2}));
+        outcome.setCode(SaslCode.SYS_TEMP);
+
+        encoder.writeObject(buffer, encoderState, outcome);
+
+        for (int i = 0; i < 10; ++i) {
+            TypeDecoder<?> typeDecoder = decoder.readNextTypeDecoder(buffer, decoderState);
+            assertEquals(SaslOutcome.class, typeDecoder.getTypeClass());
+            typeDecoder.skipValue(buffer, decoderState);
+        }
+
+        final Object result = decoder.readObject(buffer, decoderState);
+
+        assertNotNull(result);
+        assertTrue(result instanceof SaslOutcome);
+
+        SaslOutcome value = (SaslOutcome) result;
+        assertArrayEquals(new byte[] {1, 2}, value.getAdditionalData().getArray());
+        assertEquals(SaslCode.SYS_TEMP, value.getCode());
     }
 }

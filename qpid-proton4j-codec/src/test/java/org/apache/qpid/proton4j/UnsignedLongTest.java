@@ -17,6 +17,8 @@
 package org.apache.qpid.proton4j;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.math.BigInteger;
@@ -25,10 +27,70 @@ import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.junit.Test;
 
 public class UnsignedLongTest {
+
     private static final byte[] TWO_TO_64_PLUS_ONE_BYTES =
         new byte[] { 1, 0, 0, 0, 0, 0, 0, 0, 1 };
     private static final byte[] TWO_TO_64_MINUS_ONE_BYTES =
         new byte[] { 1, 1, 1, 1, 1, 1, 1, 1 };
+
+    @Test
+    public void testToString() {
+        assertEquals("0",  UnsignedLong.valueOf(0).toString());
+        assertEquals("65535", UnsignedLong.valueOf(65535).toString());
+        assertEquals("127", UnsignedLong.valueOf(127).toString());
+    }
+
+    @Test
+    public void testHashcode() {
+        UnsignedLong ubyte1 = UnsignedLong.valueOf((short) 1);
+        UnsignedLong ubyte2 = UnsignedLong.valueOf((short) 2);
+
+        assertNotEquals(ubyte1, ubyte2);
+        assertNotEquals(ubyte1.hashCode(), ubyte2.hashCode());
+
+        assertEquals(ubyte1.hashCode(), UnsignedLong.valueOf((short) 1).hashCode());
+        assertEquals(ubyte2.hashCode(), UnsignedLong.valueOf((short) 2).hashCode());
+    }
+
+    @Test
+    public void testShortValue() {
+        assertEquals((short) 0, UnsignedLong.valueOf(0).shortValue());
+        assertEquals((short) 65535, UnsignedLong.valueOf(65535).shortValue());
+        assertEquals((short) 1, UnsignedLong.valueOf(1).shortValue());
+        assertEquals((short) 127, UnsignedLong.valueOf(127).shortValue());
+    }
+
+    @Test
+    public void testIntValue() {
+        assertEquals(0, UnsignedLong.valueOf(0).intValue());
+        assertEquals(65535, UnsignedLong.valueOf(65535).intValue());
+        assertEquals(1, UnsignedLong.valueOf(1).intValue());
+        assertEquals(127, UnsignedLong.valueOf(127).intValue());
+    }
+
+    @Test
+    public void testLongValue() {
+        assertEquals(0l, UnsignedLong.valueOf(0).longValue());
+        assertEquals(65535l, UnsignedLong.valueOf(65535).longValue());
+        assertEquals(1l, UnsignedLong.valueOf(1).longValue());
+        assertEquals(127l, UnsignedLong.valueOf(127).longValue());
+    }
+
+    @Test
+    public void testCompareToByte() {
+        assertTrue(UnsignedLong.valueOf(255).compareTo(255) == 0);
+        assertTrue(UnsignedLong.valueOf(0).compareTo(0) == 0);
+        assertTrue(UnsignedLong.valueOf(127).compareTo(126) > 0);
+        assertTrue(UnsignedLong.valueOf(32).compareTo(64) < 0);
+    }
+
+    @Test
+    public void testCompareToUnsignedInteger() {
+        assertTrue(UnsignedLong.valueOf(65535).compareTo(UnsignedLong.valueOf(65535)) == 0);
+        assertTrue(UnsignedLong.valueOf(0).compareTo(UnsignedLong.valueOf(0)) == 0);
+        assertTrue(UnsignedLong.valueOf(127).compareTo(UnsignedLong.valueOf(126)) > 0);
+        assertTrue(UnsignedLong.valueOf(32).compareTo(UnsignedLong.valueOf(64)) < 0);
+    }
 
     @Test
     public void testValueOfStringWithNegativeNumberThrowsNFE() throws Exception {

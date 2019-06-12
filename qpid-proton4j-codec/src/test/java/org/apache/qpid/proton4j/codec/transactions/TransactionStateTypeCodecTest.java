@@ -19,7 +19,9 @@ package org.apache.qpid.proton4j.codec.transactions;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 
@@ -29,6 +31,7 @@ import org.apache.qpid.proton4j.amqp.transactions.TransactionalState;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.codec.CodecTestSupport;
+import org.apache.qpid.proton4j.codec.TypeDecoder;
 import org.apache.qpid.proton4j.codec.decoders.transactions.TransactionStateTypeDecoder;
 import org.apache.qpid.proton4j.codec.encoders.transactions.TransactionStateTypeEncoder;
 import org.junit.Test;
@@ -73,5 +76,39 @@ public class TransactionStateTypeCodecTest extends CodecTestSupport {
         assertNotNull(result.getTxnId().getArray());
 
         assertArrayEquals(new byte[] { 2, 4, 6, 8 }, result.getTxnId().getArray());
+    }
+
+    @Test
+    public void testSkipValue() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        TransactionalState txnState = new TransactionalState();
+
+        txnState.setTxnId(new Binary(new byte[] {0}));
+        txnState.setOutcome(Accepted.getInstance());
+
+        for (int i = 0; i < 10; ++i) {
+            encoder.writeObject(buffer, encoderState, txnState);
+        }
+
+        txnState.setTxnId(new Binary(new byte[] {1, 2}));
+        txnState.setOutcome(null);
+
+        encoder.writeObject(buffer, encoderState, txnState);
+
+        for (int i = 0; i < 10; ++i) {
+            TypeDecoder<?> typeDecoder = decoder.readNextTypeDecoder(buffer, decoderState);
+            assertEquals(TransactionalState.class, typeDecoder.getTypeClass());
+            typeDecoder.skipValue(buffer, decoderState);
+        }
+
+        final Object result = decoder.readObject(buffer, decoderState);
+
+        assertNotNull(result);
+        assertTrue(result instanceof TransactionalState);
+
+        TransactionalState value = (TransactionalState) result;
+        assertArrayEquals(new byte[] {1, 2}, value.getTxnId().getArray());
+        assertNull(value.getOutcome());
     }
 }

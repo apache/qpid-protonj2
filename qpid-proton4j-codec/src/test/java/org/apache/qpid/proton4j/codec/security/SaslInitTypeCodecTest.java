@@ -18,6 +18,8 @@ package org.apache.qpid.proton4j.codec.security;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 
@@ -27,6 +29,7 @@ import org.apache.qpid.proton4j.amqp.security.SaslInit;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.codec.CodecTestSupport;
+import org.apache.qpid.proton4j.codec.TypeDecoder;
 import org.apache.qpid.proton4j.codec.decoders.ProtonDecoderFactory;
 import org.apache.qpid.proton4j.codec.decoders.security.SaslInitTypeDecoder;
 import org.apache.qpid.proton4j.codec.encoders.ProtonEncoderFactory;
@@ -81,5 +84,41 @@ public class SaslInitTypeCodecTest extends CodecTestSupport {
         assertEquals("test", result.getHostname());
         assertEquals(Symbol.valueOf("ANONYMOUS"), result.getMechanism());
         assertArrayEquals(initialResponse, result.getInitialResponse().getArray());
+    }
+
+    @Test
+    public void testSkipValue() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        SaslInit init = new SaslInit();
+
+        init.setInitialResponse(new Binary(new byte[] {0}));
+        init.setHostname("skip");
+
+        for (int i = 0; i < 10; ++i) {
+            encoder.writeObject(buffer, encoderState, init);
+        }
+
+        init.setInitialResponse(new Binary(new byte[] {1, 2}));
+        init.setHostname("localhost");
+        init.setMechanism(Symbol.valueOf("PLAIN"));
+
+        encoder.writeObject(buffer, encoderState, init);
+
+        for (int i = 0; i < 10; ++i) {
+            TypeDecoder<?> typeDecoder = decoder.readNextTypeDecoder(buffer, decoderState);
+            assertEquals(SaslInit.class, typeDecoder.getTypeClass());
+            typeDecoder.skipValue(buffer, decoderState);
+        }
+
+        final Object result = decoder.readObject(buffer, decoderState);
+
+        assertNotNull(result);
+        assertTrue(result instanceof SaslInit);
+
+        SaslInit value = (SaslInit) result;
+        assertArrayEquals(new byte[] {1, 2}, value.getInitialResponse().getArray());
+        assertEquals("localhost", value.getHostname());
+        assertEquals(Symbol.valueOf("PLAIN"), value.getMechanism());
     }
 }

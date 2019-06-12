@@ -18,6 +18,8 @@ package org.apache.qpid.proton4j.codec.transactions;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 
@@ -26,6 +28,7 @@ import org.apache.qpid.proton4j.amqp.transactions.Coordinator;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.codec.CodecTestSupport;
+import org.apache.qpid.proton4j.codec.TypeDecoder;
 import org.apache.qpid.proton4j.codec.decoders.transactions.CoordinatorTypeDecoder;
 import org.apache.qpid.proton4j.codec.encoders.transactions.CoordinatorTypeEncoder;
 import org.junit.Test;
@@ -66,5 +69,37 @@ public class CoordinatorTypeCodecTest extends CodecTestSupport {
         final Coordinator result = (Coordinator) decoder.readObject(buffer, decoderState);
 
         assertArrayEquals(capabilities, result.getCapabilities());
+    }
+
+    @Test
+    public void testSkipValue() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        Coordinator coordinator = new Coordinator();
+
+        coordinator.setCapabilities(Symbol.valueOf("skip"));
+
+        for (int i = 0; i < 10; ++i) {
+            encoder.writeObject(buffer, encoderState, coordinator);
+        }
+
+        coordinator.setCapabilities(Symbol.valueOf("read"));
+
+        encoder.writeObject(buffer, encoderState, coordinator);
+
+        for (int i = 0; i < 10; ++i) {
+            TypeDecoder<?> typeDecoder = decoder.readNextTypeDecoder(buffer, decoderState);
+            assertEquals(Coordinator.class, typeDecoder.getTypeClass());
+            typeDecoder.skipValue(buffer, decoderState);
+        }
+
+        final Object result = decoder.readObject(buffer, decoderState);
+
+        assertNotNull(result);
+        assertTrue(result instanceof Coordinator);
+
+        Coordinator value = (Coordinator) result;
+        assertEquals(1, value.getCapabilities().length);
+        assertEquals(Symbol.valueOf("read"), value.getCapabilities()[0]);
     }
 }

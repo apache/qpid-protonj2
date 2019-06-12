@@ -18,6 +18,8 @@ package org.apache.qpid.proton4j.codec.security;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 
@@ -26,6 +28,7 @@ import org.apache.qpid.proton4j.amqp.security.SaslMechanisms;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.codec.CodecTestSupport;
+import org.apache.qpid.proton4j.codec.TypeDecoder;
 import org.apache.qpid.proton4j.codec.decoders.ProtonDecoderFactory;
 import org.apache.qpid.proton4j.codec.decoders.security.SaslMechanismsTypeDecoder;
 import org.apache.qpid.proton4j.codec.encoders.ProtonEncoderFactory;
@@ -76,5 +79,36 @@ public class SaslMechanismsTypeCodecTest extends CodecTestSupport {
         final SaslMechanisms result = (SaslMechanisms) decoder.readObject(buffer, decoderState);
 
         assertArrayEquals(mechanisms, result.getSaslServerMechanisms());
+    }
+
+    @Test
+    public void testSkipValue() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        SaslMechanisms mechanisms = new SaslMechanisms();
+
+        mechanisms.setSaslServerMechanisms(Symbol.valueOf("ANONYMOUS"));
+
+        for (int i = 0; i < 10; ++i) {
+            encoder.writeObject(buffer, encoderState, mechanisms);
+        }
+
+        mechanisms.setSaslServerMechanisms(Symbol.valueOf("ANONYMOUS"), Symbol.valueOf("EXTERNAL"));
+
+        encoder.writeObject(buffer, encoderState, mechanisms);
+
+        for (int i = 0; i < 10; ++i) {
+            TypeDecoder<?> typeDecoder = decoder.readNextTypeDecoder(buffer, decoderState);
+            assertEquals(SaslMechanisms.class, typeDecoder.getTypeClass());
+            typeDecoder.skipValue(buffer, decoderState);
+        }
+
+        final Object result = decoder.readObject(buffer, decoderState);
+
+        assertNotNull(result);
+        assertTrue(result instanceof SaslMechanisms);
+
+        SaslMechanisms value = (SaslMechanisms) result;
+        assertArrayEquals(new Symbol[] {Symbol.valueOf("ANONYMOUS"), Symbol.valueOf("EXTERNAL")}, value.getSaslServerMechanisms());
     }
 }

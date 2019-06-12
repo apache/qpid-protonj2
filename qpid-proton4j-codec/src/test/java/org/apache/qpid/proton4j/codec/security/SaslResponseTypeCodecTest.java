@@ -18,6 +18,8 @@ package org.apache.qpid.proton4j.codec.security;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 
@@ -26,6 +28,7 @@ import org.apache.qpid.proton4j.amqp.security.SaslResponse;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.codec.CodecTestSupport;
+import org.apache.qpid.proton4j.codec.TypeDecoder;
 import org.apache.qpid.proton4j.codec.decoders.ProtonDecoderFactory;
 import org.apache.qpid.proton4j.codec.decoders.security.SaslResponseTypeDecoder;
 import org.apache.qpid.proton4j.codec.encoders.ProtonEncoderFactory;
@@ -76,5 +79,36 @@ public class SaslResponseTypeCodecTest extends CodecTestSupport {
         final SaslResponse result = (SaslResponse) decoder.readObject(buffer, decoderState);
 
         assertArrayEquals(response, result.getResponse().getArray());
+    }
+
+    @Test
+    public void testSkipValue() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        SaslResponse response = new SaslResponse();
+
+        response.setResponse(new Binary(new byte[] {0}));
+
+        for (int i = 0; i < 10; ++i) {
+            encoder.writeObject(buffer, encoderState, response);
+        }
+
+        response.setResponse(new Binary(new byte[] {1, 2}));
+
+        encoder.writeObject(buffer, encoderState, response);
+
+        for (int i = 0; i < 10; ++i) {
+            TypeDecoder<?> typeDecoder = decoder.readNextTypeDecoder(buffer, decoderState);
+            assertEquals(SaslResponse.class, typeDecoder.getTypeClass());
+            typeDecoder.skipValue(buffer, decoderState);
+        }
+
+        final Object result = decoder.readObject(buffer, decoderState);
+
+        assertNotNull(result);
+        assertTrue(result instanceof SaslResponse);
+
+        SaslResponse value = (SaslResponse) result;
+        assertArrayEquals(new byte[] {1, 2}, value.getResponse().getArray());
     }
 }

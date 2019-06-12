@@ -28,6 +28,7 @@ import org.apache.qpid.proton4j.amqp.transactions.Discharge;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.codec.CodecTestSupport;
+import org.apache.qpid.proton4j.codec.TypeDecoder;
 import org.apache.qpid.proton4j.codec.decoders.transactions.DischargeTypeDecoder;
 import org.apache.qpid.proton4j.codec.encoders.transactions.DischargeTypeEncoder;
 import org.junit.Test;
@@ -73,5 +74,39 @@ public class DischargeTypeCodecTest extends CodecTestSupport {
         assertNotNull(result.getTxnId().getArray());
 
         assertArrayEquals(new byte[] { 8, 7, 6, 5 }, result.getTxnId().getArray());
+    }
+
+    @Test
+    public void testSkipValue() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        Discharge discharge = new Discharge();
+
+        discharge.setTxnId(new Binary(new byte[] {0}));
+        discharge.setFail(false);
+
+        for (int i = 0; i < 10; ++i) {
+            encoder.writeObject(buffer, encoderState, discharge);
+        }
+
+        discharge.setTxnId(new Binary(new byte[] {1, 2}));
+        discharge.setFail(true);
+
+        encoder.writeObject(buffer, encoderState, discharge);
+
+        for (int i = 0; i < 10; ++i) {
+            TypeDecoder<?> typeDecoder = decoder.readNextTypeDecoder(buffer, decoderState);
+            assertEquals(Discharge.class, typeDecoder.getTypeClass());
+            typeDecoder.skipValue(buffer, decoderState);
+        }
+
+        final Object result = decoder.readObject(buffer, decoderState);
+
+        assertNotNull(result);
+        assertTrue(result instanceof Discharge);
+
+        Discharge value = (Discharge) result;
+        assertArrayEquals(new byte[] {1, 2}, value.getTxnId().getArray());
+        assertTrue(value.getFail());
     }
 }

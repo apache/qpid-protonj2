@@ -19,6 +19,7 @@ package org.apache.qpid.proton4j.codec.transactions;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 
@@ -27,6 +28,7 @@ import org.apache.qpid.proton4j.amqp.transactions.Declared;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.codec.CodecTestSupport;
+import org.apache.qpid.proton4j.codec.TypeDecoder;
 import org.apache.qpid.proton4j.codec.decoders.transactions.DeclaredTypeDecoder;
 import org.apache.qpid.proton4j.codec.encoders.transactions.DeclaredTypeEncoder;
 import org.junit.Test;
@@ -68,5 +70,36 @@ public class DeclaredTypeCodecTest extends CodecTestSupport {
       assertNotNull(result.getTxnId().getArray());
 
       assertArrayEquals(new byte[] {2, 4, 6, 8}, result.getTxnId().getArray());
+   }
+
+   @Test
+   public void testSkipValue() throws IOException {
+       ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+       Declared declared = new Declared();
+
+       declared.setTxnId(new Binary(new byte[] {0}));
+
+       for (int i = 0; i < 10; ++i) {
+           encoder.writeObject(buffer, encoderState, declared);
+       }
+
+       declared.setTxnId(new Binary(new byte[] {1, 2}));
+
+       encoder.writeObject(buffer, encoderState, declared);
+
+       for (int i = 0; i < 10; ++i) {
+           TypeDecoder<?> typeDecoder = decoder.readNextTypeDecoder(buffer, decoderState);
+           assertEquals(Declared.class, typeDecoder.getTypeClass());
+           typeDecoder.skipValue(buffer, decoderState);
+       }
+
+       final Object result = decoder.readObject(buffer, decoderState);
+
+       assertNotNull(result);
+       assertTrue(result instanceof Declared);
+
+       Declared value = (Declared) result;
+       assertArrayEquals(new byte[] {1, 2}, value.getTxnId().getArray());
    }
 }
