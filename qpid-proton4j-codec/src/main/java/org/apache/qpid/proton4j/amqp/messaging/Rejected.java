@@ -32,8 +32,9 @@ public final class Rejected implements DeliveryState, Outcome {
         return error;
     }
 
-    public void setError(ErrorCondition error) {
+    public Rejected setError(ErrorCondition error) {
         this.error = error;
+        return this;
     }
 
     @Override

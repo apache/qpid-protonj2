@@ -125,9 +125,11 @@ public class ProtonOutgoingDelivery implements OutgoingDelivery {
     @Override
     public OutgoingDelivery disposition(DeliveryState state, boolean settle) {
         if (locallySettled) {
-            //TODO: maybe if already-settled and state *differs*? Double-settling seems unlikely, but not really
-            //      a problem if nothing changes?
-            throw new IllegalStateException("Cannot update disposition or settle and already settled Delivery");
+            if ((localState != null && !localState.equals(state)) || localState != state) {
+                throw new IllegalStateException("Cannot update disposition on an already settled Delivery");
+            } else {
+                return this;
+            }
         }
 
         this.locallySettled = settle;
@@ -171,12 +173,9 @@ public class ProtonOutgoingDelivery implements OutgoingDelivery {
 
     @Override
     public OutgoingDelivery abort() {
-        // TODO: calling abort on already-aborted seems like it should no-op, this will throw?
-        //       Exception message could also mislead.
-        checkCompleteOrAborted();
+        checkComplete();
 
         // Cannot abort when nothing has been sent so far.
-        // TODO: Need to document [credit] handling in the case nothing is ever sent before aborting.
         if (deliveryId > DELIVERY_INACTIVE) {
             aborted = true;
             locallySettled = true;
@@ -213,6 +212,12 @@ public class ProtonOutgoingDelivery implements OutgoingDelivery {
     }
 
     //----- Private helper methods
+
+    private void checkComplete() {
+        if (complete) {
+            throw new IllegalArgumentException("Cannot write to a delivery already marked as complete.");
+        }
+    }
 
     private void checkCompleteOrAborted() {
         if (complete || aborted) {

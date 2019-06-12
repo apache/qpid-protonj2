@@ -34,20 +34,22 @@ public final class TransactionalState implements DeliveryState {
         return txnId;
     }
 
-    public void setTxnId(Binary txnId) {
+    public TransactionalState setTxnId(Binary txnId) {
         if (txnId == null) {
             throw new NullPointerException("the txn-id field is mandatory");
         }
 
         this.txnId = txnId;
+        return this;
     }
 
     public Outcome getOutcome() {
         return outcome;
     }
 
-    public void setOutcome(Outcome outcome) {
+    public TransactionalState setOutcome(Outcome outcome) {
         this.outcome = outcome;
+        return this;
     }
 
     @Override

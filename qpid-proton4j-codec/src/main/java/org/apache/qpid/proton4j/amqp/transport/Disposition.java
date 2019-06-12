@@ -143,7 +143,7 @@ public final class Disposition implements Performative {
         if (state != null) {
             this.modified |= STATE;
         } else {
-            this.modified &= STATE;
+            this.modified &= ~STATE;
         }
 
         this.state = state;

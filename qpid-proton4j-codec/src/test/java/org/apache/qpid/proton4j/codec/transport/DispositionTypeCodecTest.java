@@ -18,6 +18,7 @@ package org.apache.qpid.proton4j.codec.transport;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -42,6 +43,29 @@ public class DispositionTypeCodecTest extends CodecTestSupport {
     public void testTypeClassReturnsCorrectType() throws IOException {
         assertEquals(Disposition.class, new DispositionTypeDecoder().getTypeClass());
         assertEquals(Disposition.class, new DispositionTypeEncoder().getTypeClass());
+    }
+
+    @Test
+    public void testEncodeAndDecodeWithNullState() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        Disposition input = new Disposition();
+
+        input.setFirst(1);
+        input.setRole(Role.RECEIVER);
+        input.setBatchable(false);
+        input.setSettled(true);
+        input.setState(null);
+
+        encoder.writeObject(buffer, encoderState, input);
+
+        final Disposition result = (Disposition) decoder.readObject(buffer, decoderState);
+
+        assertEquals(1, result.getFirst());
+        assertEquals(Role.RECEIVER, result.getRole());
+        assertEquals(false, result.getBatchable());
+        assertEquals(true, result.getSettled());
+        assertNull(result.getState());
     }
 
     @Test

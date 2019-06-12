@@ -35,24 +35,27 @@ public final class Modified implements DeliveryState, Outcome {
         return deliveryFailed;
     }
 
-    public void setDeliveryFailed(boolean deliveryFailed) {
+    public Modified setDeliveryFailed(boolean deliveryFailed) {
         this.deliveryFailed = deliveryFailed;
+        return this;
     }
 
     public boolean getUndeliverableHere() {
         return undeliverableHere;
     }
 
-    public void setUndeliverableHere(boolean undeliverableHere) {
+    public Modified setUndeliverableHere(boolean undeliverableHere) {
         this.undeliverableHere = undeliverableHere;
+        return this;
     }
 
     public Map<Symbol, Object> getMessageAnnotations() {
         return messageAnnotations;
     }
 
-    public void setMessageAnnotations(Map<Symbol, Object> messageAnnotations) {
+    public Modified setMessageAnnotations(Map<Symbol, Object> messageAnnotations) {
         this.messageAnnotations = messageAnnotations;
+        return this;
     }
 
     @Override
