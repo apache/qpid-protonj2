@@ -23,7 +23,10 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.io.IOException;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
+import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.messaging.Modified;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
@@ -57,6 +60,72 @@ public class ModifiedTypeCodecTest  extends CodecTestSupport {
 
         assertNotNull(result);
         assertTrue(result instanceof Modified);
+
+        value = (Modified) result;
+        assertFalse(value.getDeliveryFailed());
+        assertFalse(value.getUndeliverableHere());
+    }
+
+    @Test
+    public void testDecodeModifiedDeliveryFailed() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        Modified value = new Modified();
+        value.setDeliveryFailed(true);
+
+        encoder.writeObject(buffer, encoderState, value);
+
+        final Object result = decoder.readObject(buffer, decoderState);
+
+        assertNotNull(result);
+        assertTrue(result instanceof Modified);
+
+        value = (Modified) result;
+        assertTrue(value.getDeliveryFailed());
+        assertFalse(value.getUndeliverableHere());
+    }
+
+    @Test
+    public void testDecodeModifiedDeliveryFailedUndeliverableHere() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        Modified value = new Modified();
+        value.setDeliveryFailed(true);
+        value.setUndeliverableHere(true);
+
+        encoder.writeObject(buffer, encoderState, value);
+
+        final Object result = decoder.readObject(buffer, decoderState);
+
+        assertNotNull(result);
+        assertTrue(result instanceof Modified);
+
+        value = (Modified) result;
+        assertTrue(value.getDeliveryFailed());
+        assertTrue(value.getUndeliverableHere());
+    }
+
+    @Test
+    public void testDecodeModifiedWithAnnotations() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        Map<Symbol, Object> annotations = new LinkedHashMap<>();
+        annotations.put(Symbol.valueOf("test"), "value");
+
+        Modified value = new Modified();
+        value.setMessageAnnotations(annotations);
+
+        encoder.writeObject(buffer, encoderState, value);
+
+        final Object result = decoder.readObject(buffer, decoderState);
+
+        assertNotNull(result);
+        assertTrue(result instanceof Modified);
+
+        value = (Modified) result;
+        assertFalse(value.getDeliveryFailed());
+        assertFalse(value.getUndeliverableHere());
+        assertEquals(annotations, value.getMessageAnnotations());
     }
 
     @Test
@@ -133,7 +202,6 @@ public class ModifiedTypeCodecTest  extends CodecTestSupport {
     }
 
     private void doTestDecodeWithInvalidMapType(byte mapType) throws IOException {
-
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
 
         buffer.writeByte((byte) 0); // Described Type Indicator
@@ -152,6 +220,41 @@ public class ModifiedTypeCodecTest  extends CodecTestSupport {
         try {
             decoder.readObject(buffer, decoderState);
             fail("Should not decode type with invalid encoding");
+        } catch (IOException ex) {}
+    }
+
+    @Test
+    public void testSkipValueWithInvalidMap32Type() throws IOException {
+        doTestSkipValueWithInvalidMapType(EncodingCodes.MAP32);
+    }
+
+    @Test
+    public void testSkipValueWithInvalidMap8Type() throws IOException {
+        doTestSkipValueWithInvalidMapType(EncodingCodes.MAP8);
+    }
+
+    private void doTestSkipValueWithInvalidMapType(byte mapType) throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        buffer.writeByte((byte) 0); // Described Type Indicator
+        buffer.writeByte(EncodingCodes.SMALLULONG);
+        buffer.writeByte(Modified.DESCRIPTOR_CODE.byteValue());
+        if (mapType == EncodingCodes.MAP32) {
+            buffer.writeByte(EncodingCodes.MAP32);
+            buffer.writeInt((byte) 0);  // Size
+            buffer.writeInt((byte) 0);  // Count
+        } else {
+            buffer.writeByte(EncodingCodes.MAP8);
+            buffer.writeByte((byte) 0);  // Size
+            buffer.writeByte((byte) 0);  // Count
+        }
+
+        TypeDecoder<?> typeDecoder = decoder.readNextTypeDecoder(buffer, decoderState);
+        assertEquals(Modified.class, typeDecoder.getTypeClass());
+
+        try {
+            typeDecoder.skipValue(buffer, decoderState);
+            fail("Should not be able to skip type with invalid encoding");
         } catch (IOException ex) {}
     }
 }

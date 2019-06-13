@@ -81,6 +81,12 @@ public class DeleteOnCloseTypeDecoder extends AbstractDescribedTypeDecoder<Delet
 
     @Override
     public void skipValue(ProtonBuffer buffer, DecoderState state) throws IOException {
-        buffer.skipBytes(Byte.BYTES);
+        TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
+
+        if (!(decoder instanceof ListTypeDecoder)) {
+            throw new IOException("Expected List type indicator but got decoder for type: " + decoder.getTypeClass().getName());
+        }
+
+        decoder.skipValue(buffer, state);
     }
 }

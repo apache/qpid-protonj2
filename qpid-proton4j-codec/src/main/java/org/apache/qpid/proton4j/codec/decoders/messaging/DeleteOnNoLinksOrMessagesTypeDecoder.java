@@ -55,7 +55,6 @@ public class DeleteOnNoLinksOrMessagesTypeDecoder extends AbstractDescribedTypeD
             throw new IOException("Expected List type indicator but got decoder for type: " + decoder.getTypeClass().getName());
         }
 
-        // TODO - Should we validate list size ?
         decoder.skipValue(buffer, state);
 
         return DeleteOnNoLinksOrMessages.getInstance();
@@ -81,6 +80,12 @@ public class DeleteOnNoLinksOrMessagesTypeDecoder extends AbstractDescribedTypeD
 
     @Override
     public void skipValue(ProtonBuffer buffer, DecoderState state) throws IOException {
-        buffer.skipBytes(Byte.BYTES);
+        TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
+
+        if (!(decoder instanceof ListTypeDecoder)) {
+            throw new IOException("Expected List type indicator but got decoder for type: " + decoder.getTypeClass().getName());
+        }
+
+        decoder.skipValue(buffer, state);
     }
 }

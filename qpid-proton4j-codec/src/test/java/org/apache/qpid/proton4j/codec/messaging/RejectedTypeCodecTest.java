@@ -27,6 +27,7 @@ import java.io.IOException;
 import org.apache.qpid.proton4j.amqp.messaging.Modified;
 import org.apache.qpid.proton4j.amqp.messaging.Rejected;
 import org.apache.qpid.proton4j.amqp.transactions.TransactionErrors;
+import org.apache.qpid.proton4j.amqp.transport.AmqpError;
 import org.apache.qpid.proton4j.amqp.transport.ErrorCondition;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
@@ -60,6 +61,27 @@ public class RejectedTypeCodecTest  extends CodecTestSupport {
 
         assertNotNull(result);
         assertTrue(result instanceof Rejected);
+    }
+
+    @Test
+    public void testDecodeRejectedWithErrorCondition() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        ErrorCondition error = new ErrorCondition(AmqpError.DECODE_ERROR, "invalid");
+
+        Rejected value = new Rejected();
+        value.setError(error);
+
+        encoder.writeObject(buffer, encoderState, value);
+
+        final Object result = decoder.readObject(buffer, decoderState);
+
+        assertNotNull(result);
+        assertTrue(result instanceof Rejected);
+
+        value = (Rejected) result;
+        assertNotNull(value.getError());
+        assertEquals(error, value.getError());
     }
 
     @Test
@@ -135,7 +157,6 @@ public class RejectedTypeCodecTest  extends CodecTestSupport {
     }
 
     private void doTestDecodeWithInvalidMapType(byte mapType) throws IOException {
-
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
 
         buffer.writeByte((byte) 0); // Described Type Indicator
@@ -154,6 +175,41 @@ public class RejectedTypeCodecTest  extends CodecTestSupport {
         try {
             decoder.readObject(buffer, decoderState);
             fail("Should not decode type with invalid encoding");
+        } catch (IOException ex) {}
+    }
+
+    @Test
+    public void testSkipValueWithInvalidMap32Type() throws IOException {
+        doTestSkipValueWithInvalidMapType(EncodingCodes.MAP32);
+    }
+
+    @Test
+    public void testSkipValueWithInvalidMap8Type() throws IOException {
+        doTestSkipValueWithInvalidMapType(EncodingCodes.MAP8);
+    }
+
+    private void doTestSkipValueWithInvalidMapType(byte mapType) throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        buffer.writeByte((byte) 0); // Described Type Indicator
+        buffer.writeByte(EncodingCodes.SMALLULONG);
+        buffer.writeByte(Rejected.DESCRIPTOR_CODE.byteValue());
+        if (mapType == EncodingCodes.MAP32) {
+            buffer.writeByte(EncodingCodes.MAP32);
+            buffer.writeInt((byte) 0);  // Size
+            buffer.writeInt((byte) 0);  // Count
+        } else {
+            buffer.writeByte(EncodingCodes.MAP8);
+            buffer.writeByte((byte) 0);  // Size
+            buffer.writeByte((byte) 0);  // Count
+        }
+
+        TypeDecoder<?> typeDecoder = decoder.readNextTypeDecoder(buffer, decoderState);
+        assertEquals(Rejected.class, typeDecoder.getTypeClass());
+
+        try {
+            typeDecoder.skipValue(buffer, decoderState);
+            fail("Should not be able to skip type with invalid encoding");
         } catch (IOException ex) {}
     }
 }

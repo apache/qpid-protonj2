@@ -165,4 +165,61 @@ public class FooterTypeCodecTest extends CodecTestSupport {
         assertFalse(modified.getUndeliverableHere());
         assertFalse(modified.getDeliveryFailed());
     }
+
+    @Test
+    public void testEncodeDecodeMessageAnnotationsWithEmptyValue() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        encoder.writeObject(buffer, encoderState, new Footer(null));
+
+        final Object result = decoder.readObject(buffer, decoderState);
+
+        assertNotNull(result);
+        assertTrue(result instanceof Footer);
+
+        Footer readAnnotations = (Footer) result;
+        assertNull(readAnnotations.getValue());
+    }
+
+    @Test
+    public void testSkipValueWithInvalidList32Type() throws IOException {
+        doTestSkipValueWithInvalidListType(EncodingCodes.LIST32);
+    }
+
+    @Test
+    public void testSkipValueWithInvalidList8Type() throws IOException {
+        doTestSkipValueWithInvalidListType(EncodingCodes.LIST8);
+    }
+
+    @Test
+    public void testSkipValueWithInvalidList0Type() throws IOException {
+        doTestSkipValueWithInvalidListType(EncodingCodes.LIST0);
+    }
+
+    private void doTestSkipValueWithInvalidListType(byte listType) throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        buffer.writeByte((byte) 0); // Described Type Indicator
+        buffer.writeByte(EncodingCodes.SMALLULONG);
+        buffer.writeByte(Footer.DESCRIPTOR_CODE.byteValue());
+        if (listType == EncodingCodes.LIST32) {
+            buffer.writeByte(EncodingCodes.LIST32);
+            buffer.writeInt((byte) 0);  // Size
+            buffer.writeInt((byte) 0);  // Count
+        } else if (listType == EncodingCodes.LIST8){
+            buffer.writeByte(EncodingCodes.LIST8);
+            buffer.writeByte((byte) 0);  // Size
+            buffer.writeByte((byte) 0);  // Count
+        } else {
+            buffer.writeByte(EncodingCodes.LIST0);
+        }
+
+        TypeDecoder<?> typeDecoder = decoder.readNextTypeDecoder(buffer, decoderState);
+        assertEquals(Footer.class, typeDecoder.getTypeClass());
+
+        try {
+            typeDecoder.skipValue(buffer, decoderState);
+            fail("Should not be able to skip type with invalid encoding");
+        } catch (IOException ex) {}
+    }
 }

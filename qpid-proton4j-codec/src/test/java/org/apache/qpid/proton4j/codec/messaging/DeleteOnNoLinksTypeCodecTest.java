@@ -130,7 +130,6 @@ public class DeleteOnNoLinksTypeCodecTest  extends CodecTestSupport {
     }
 
     private void doTestDecodeWithInvalidMapType(byte mapType) throws IOException {
-
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
 
         buffer.writeByte((byte) 0); // Described Type Indicator
@@ -149,6 +148,41 @@ public class DeleteOnNoLinksTypeCodecTest  extends CodecTestSupport {
         try {
             decoder.readObject(buffer, decoderState);
             fail("Should not decode type with invalid encoding");
+        } catch (IOException ex) {}
+    }
+
+    @Test
+    public void testSkipValueWithInvalidMap32Type() throws IOException {
+        doTestSkipValueWithInvalidMapType(EncodingCodes.MAP32);
+    }
+
+    @Test
+    public void testSkipValueWithInvalidMap8Type() throws IOException {
+        doTestSkipValueWithInvalidMapType(EncodingCodes.MAP8);
+    }
+
+    private void doTestSkipValueWithInvalidMapType(byte mapType) throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        buffer.writeByte((byte) 0); // Described Type Indicator
+        buffer.writeByte(EncodingCodes.SMALLULONG);
+        buffer.writeByte(DeleteOnNoLinks.DESCRIPTOR_CODE.byteValue());
+        if (mapType == EncodingCodes.MAP32) {
+            buffer.writeByte(EncodingCodes.MAP32);
+            buffer.writeInt((byte) 0);  // Size
+            buffer.writeInt((byte) 0);  // Count
+        } else {
+            buffer.writeByte(EncodingCodes.MAP8);
+            buffer.writeByte((byte) 0);  // Size
+            buffer.writeByte((byte) 0);  // Count
+        }
+
+        TypeDecoder<?> typeDecoder = decoder.readNextTypeDecoder(buffer, decoderState);
+        assertEquals(DeleteOnNoLinks.class, typeDecoder.getTypeClass());
+
+        try {
+            typeDecoder.skipValue(buffer, decoderState);
+            fail("Should not be able to skip type with invalid encoding");
         } catch (IOException ex) {}
     }
 }

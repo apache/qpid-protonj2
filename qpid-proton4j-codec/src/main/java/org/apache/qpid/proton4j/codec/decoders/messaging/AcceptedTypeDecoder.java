@@ -55,9 +55,7 @@ public class AcceptedTypeDecoder extends AbstractDescribedTypeDecoder<Accepted> 
             throw new IOException("Expected List type indicator but got decoder for type: " + decoder.getTypeClass().getName());
         }
 
-        // TODO - Should we validate list size ?
-
-        decoder.skipValue(buffer, state);;
+        decoder.skipValue(buffer, state);
 
         return Accepted.getInstance();
     }
@@ -82,6 +80,12 @@ public class AcceptedTypeDecoder extends AbstractDescribedTypeDecoder<Accepted> 
 
     @Override
     public void skipValue(ProtonBuffer buffer, DecoderState state) throws IOException {
-        buffer.skipBytes(Byte.BYTES);
+        TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
+
+        if (!(decoder instanceof ListTypeDecoder)) {
+            throw new IOException("Expected List type indicator but got decoder for type: " + decoder.getTypeClass().getName());
+        }
+
+        decoder.skipValue(buffer, state);
     }
 }

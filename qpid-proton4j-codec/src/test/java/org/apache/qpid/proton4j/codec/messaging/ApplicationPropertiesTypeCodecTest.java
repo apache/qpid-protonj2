@@ -19,7 +19,9 @@ package org.apache.qpid.proton4j.codec.messaging;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -31,6 +33,7 @@ import org.apache.qpid.proton4j.amqp.messaging.Modified;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.codec.CodecTestSupport;
+import org.apache.qpid.proton4j.codec.EncodingCodes;
 import org.apache.qpid.proton4j.codec.TypeDecoder;
 import org.apache.qpid.proton4j.codec.decoders.messaging.ApplicationPropertiesTypeDecoder;
 import org.apache.qpid.proton4j.codec.encoders.messaging.ApplicationPropertiesTypeEncoder;
@@ -161,5 +164,62 @@ public class ApplicationPropertiesTypeCodecTest extends CodecTestSupport {
         Modified modified = (Modified) result;
         assertFalse(modified.getUndeliverableHere());
         assertFalse(modified.getDeliveryFailed());
+    }
+
+    @Test
+    public void testEncodeDecodeMessageAnnotationsWithEmptyValue() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        encoder.writeObject(buffer, encoderState, new ApplicationProperties(null));
+
+        final Object result = decoder.readObject(buffer, decoderState);
+
+        assertNotNull(result);
+        assertTrue(result instanceof ApplicationProperties);
+
+        ApplicationProperties readAnnotations = (ApplicationProperties) result;
+        assertNull(readAnnotations.getValue());
+    }
+
+    @Test
+    public void testSkipValueWithInvalidList32Type() throws IOException {
+        doTestSkipValueWithInvalidListType(EncodingCodes.LIST32);
+    }
+
+    @Test
+    public void testSkipValueWithInvalidList8Type() throws IOException {
+        doTestSkipValueWithInvalidListType(EncodingCodes.LIST8);
+    }
+
+    @Test
+    public void testSkipValueWithInvalidList0Type() throws IOException {
+        doTestSkipValueWithInvalidListType(EncodingCodes.LIST0);
+    }
+
+    private void doTestSkipValueWithInvalidListType(byte listType) throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        buffer.writeByte((byte) 0); // Described Type Indicator
+        buffer.writeByte(EncodingCodes.SMALLULONG);
+        buffer.writeByte(ApplicationProperties.DESCRIPTOR_CODE.byteValue());
+        if (listType == EncodingCodes.LIST32) {
+            buffer.writeByte(EncodingCodes.LIST32);
+            buffer.writeInt((byte) 0);  // Size
+            buffer.writeInt((byte) 0);  // Count
+        } else if (listType == EncodingCodes.LIST8){
+            buffer.writeByte(EncodingCodes.LIST8);
+            buffer.writeByte((byte) 0);  // Size
+            buffer.writeByte((byte) 0);  // Count
+        } else {
+            buffer.writeByte(EncodingCodes.LIST0);
+        }
+
+        TypeDecoder<?> typeDecoder = decoder.readNextTypeDecoder(buffer, decoderState);
+        assertEquals(ApplicationProperties.class, typeDecoder.getTypeClass());
+
+        try {
+            typeDecoder.skipValue(buffer, decoderState);
+            fail("Should not be able to skip type with invalid encoding");
+        } catch (IOException ex) {}
     }
 }

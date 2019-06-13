@@ -19,6 +19,7 @@ package org.apache.qpid.proton4j.codec.messaging;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
@@ -87,6 +88,22 @@ public class AmqpValueTypeCodecTest extends CodecTestSupport {
 
             assertEquals(value.getValue(), decoded.getValue());
         }
+    }
+
+    @Test
+    public void testDecodeAmqpValueWithEmptyValue() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        encoder.writeObject(buffer, encoderState, new AmqpValue(null));
+
+        final Object result = decoder.readObject(buffer, decoderState);
+
+        assertNotNull(result);
+        assertTrue(result instanceof AmqpValue);
+
+        AmqpValue decoded = (AmqpValue) result;
+
+        assertNull(decoded.getValue());
     }
 
     @Test
