@@ -57,6 +57,7 @@ import org.apache.qpid.proton4j.amqp.driver.codec.transport.Close;
 import org.apache.qpid.proton4j.amqp.driver.codec.transport.Detach;
 import org.apache.qpid.proton4j.amqp.driver.codec.transport.Disposition;
 import org.apache.qpid.proton4j.amqp.driver.codec.transport.End;
+import org.apache.qpid.proton4j.amqp.driver.codec.transport.ErrorCondition;
 import org.apache.qpid.proton4j.amqp.driver.codec.transport.Flow;
 import org.apache.qpid.proton4j.amqp.driver.codec.transport.Open;
 import org.apache.qpid.proton4j.amqp.driver.codec.transport.Transfer;
@@ -99,6 +100,8 @@ public abstract class DescribedTypeRegistry {
         describedTypes.put(Disposition.DESCRIPTOR_SYMBOL, Disposition.class);
         describedTypes.put(End.DESCRIPTOR_CODE, End.class);
         describedTypes.put(End.DESCRIPTOR_SYMBOL, End.class);
+        describedTypes.put(ErrorCondition.DESCRIPTOR_CODE, ErrorCondition.class);
+        describedTypes.put(ErrorCondition.DESCRIPTOR_SYMBOL, ErrorCondition.class);
         describedTypes.put(Flow.DESCRIPTOR_CODE, Flow.class);
         describedTypes.put(Flow.DESCRIPTOR_SYMBOL, Flow.class);
         describedTypes.put(Modified.DESCRIPTOR_CODE, Modified.class);

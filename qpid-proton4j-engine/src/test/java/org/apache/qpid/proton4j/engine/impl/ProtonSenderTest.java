@@ -38,7 +38,9 @@ import org.apache.qpid.proton4j.amqp.messaging.Modified;
 import org.apache.qpid.proton4j.amqp.messaging.Rejected;
 import org.apache.qpid.proton4j.amqp.messaging.Released;
 import org.apache.qpid.proton4j.amqp.transactions.TransactionalState;
+import org.apache.qpid.proton4j.amqp.transport.AmqpError;
 import org.apache.qpid.proton4j.amqp.transport.DeliveryState;
+import org.apache.qpid.proton4j.amqp.transport.ErrorCondition;
 import org.apache.qpid.proton4j.amqp.transport.Role;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
@@ -1312,9 +1314,12 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
 
     @Test
     public void testSettleTransferWithRejectedDisposition() throws Exception {
-        // TODO - Seems to be an issue with ErrorCondition matching
-        // doTestSettleTransferWithSpecifiedOutcome(new Rejected().setError(new ErrorCondition(AmqpError.DECODE_ERROR, "test")));
         doTestSettleTransferWithSpecifiedOutcome(new Rejected());
+    }
+
+    @Test
+    public void testSettleTransferWithRejectedWithErrorDisposition() throws Exception {
+        doTestSettleTransferWithSpecifiedOutcome(new Rejected().setError(new ErrorCondition(AmqpError.DECODE_ERROR, "test")));
     }
 
     @Test
