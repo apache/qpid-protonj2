@@ -72,4 +72,33 @@ public class TransactionalState extends ListDescribedType {
     public DescribedType getOutcome() {
         return (DescribedType) getList().get(Field.OUTCOME.ordinal());
     }
+
+    @Override
+    public int hashCode() {
+        return System.identityHashCode(this);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == this) {
+            return true;
+        }
+
+        if (!(obj instanceof DescribedType)) {
+            return false;
+        }
+
+        DescribedType d = (DescribedType) obj;
+        if (!(DESCRIPTOR_CODE.equals(d.getDescriptor()) || DESCRIPTOR_SYMBOL.equals(d.getDescriptor()))) {
+            return false;
+        }
+
+        Object described = getDescribed();
+        Object described2 = d.getDescribed();
+        if (described == null) {
+            return described2 == null;
+        } else {
+            return described.equals(described2);
+        }
+    }
 }

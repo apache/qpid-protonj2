@@ -46,7 +46,6 @@ import org.apache.qpid.proton4j.engine.Connection;
 import org.apache.qpid.proton4j.engine.OutgoingDelivery;
 import org.apache.qpid.proton4j.engine.Sender;
 import org.apache.qpid.proton4j.engine.Session;
-import org.junit.Ignore;
 import org.junit.Test;
 
 /**
@@ -1325,7 +1324,6 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         doTestSettleTransferWithSpecifiedOutcome(new Modified().setDeliveryFailed(true).setUndeliverableHere(true));
     }
 
-    @Ignore("Issue with matching TransactionState in test driver fails the test")
     @Test
     public void testSettleTransferWithTransactionalDisposition() throws Exception {
         doTestSettleTransferWithSpecifiedOutcome(new TransactionalState().setTxnId(new Binary(new byte[] {1})).setOutcome(Accepted.getInstance()));
