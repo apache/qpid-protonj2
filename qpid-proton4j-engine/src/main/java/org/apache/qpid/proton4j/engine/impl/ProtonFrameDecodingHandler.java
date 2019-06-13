@@ -49,7 +49,7 @@ public class ProtonFrameDecodingHandler implements EngineHandler, SaslPerformati
     public static final byte AMQP_FRAME_TYPE = (byte) 0;
     public static final byte SASL_FRAME_TYPE = (byte) 1;
 
-    public static final int FRAME_SIZE_BTYES = 4;
+    public static final int FRAME_SIZE_BYTES = 4;
 
     private final ProtocolFramePool framePool = ProtocolFramePool.DEFAULT;
 
@@ -205,7 +205,7 @@ public class ProtonFrameDecodingHandler implements EngineHandler, SaslPerformati
     private class FrameSizeParsingStage implements FrameParserStage {
 
         private int frameSize;
-        private int multiplier = FRAME_SIZE_BTYES;
+        private int multiplier = FRAME_SIZE_BYTES;
 
         @Override
         public void parse(EngineHandlerContext context, ProtonBuffer input) throws IOException {
@@ -220,7 +220,7 @@ public class ProtonFrameDecodingHandler implements EngineHandler, SaslPerformati
                 validateFrameSize();
 
                 // Normalize the frame size to the reminder portion
-                frameSize -= FRAME_SIZE_BTYES;
+                frameSize -= FRAME_SIZE_BYTES;
 
                 if (input.getReadableBytes() < frameSize) {
                     transitionToFrameBufferingStage(frameSize);
@@ -246,7 +246,7 @@ public class ProtonFrameDecodingHandler implements EngineHandler, SaslPerformati
 
         @Override
         public FrameSizeParsingStage reset(int frameSize) {
-            multiplier = FRAME_SIZE_BTYES;
+            multiplier = FRAME_SIZE_BYTES;
             this.frameSize = frameSize;
             return this;
         }
@@ -292,7 +292,7 @@ public class ProtonFrameDecodingHandler implements EngineHandler, SaslPerformati
                 throw new ProtonException(String.format(
                     "specified frame data offset %d smaller than minimum frame header size %d", dataOffset, 8));
             }
-            if (dataOffset > frameSize + FRAME_SIZE_BTYES) {
+            if (dataOffset > frameSize + FRAME_SIZE_BYTES) {
                 throw new ProtonException(String.format(
                     "specified frame data offset %d larger than the frame size %d", dataOffset, frameSize));
             }
@@ -305,7 +305,7 @@ public class ProtonFrameDecodingHandler implements EngineHandler, SaslPerformati
                 input.setReadIndex(input.getReadIndex() + dataOffset - 8);
             }
 
-            final int frameBodySize = frameSize - (dataOffset - FRAME_SIZE_BTYES);
+            final int frameBodySize = frameSize - (dataOffset - FRAME_SIZE_BYTES);
 
             ProtonBuffer payload = null;
             Object val = null;
