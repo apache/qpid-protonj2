@@ -17,18 +17,23 @@
 package org.apache.qpid.proton4j.engine.impl;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 
 import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
+import org.apache.qpid.proton4j.amqp.transport.Open;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.engine.Engine;
 import org.apache.qpid.proton4j.engine.EngineHandlerContext;
 import org.apache.qpid.proton4j.engine.HeaderFrame;
+import org.apache.qpid.proton4j.engine.ProtocolFrame;
 import org.apache.qpid.proton4j.engine.util.TestSupportTransportHandler;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 
 public class ProtonFrameDecodingHandlerTest {
@@ -110,6 +115,57 @@ public class ProtonFrameDecodingHandlerTest {
         Mockito.clearInvocations(context);
         handler.handleRead(context, AMQPHeader.getSASLHeader().getBuffer());
         Mockito.verify(context).fireDecodingError(Mockito.any(IOException.class));
+    }
+
+    @Test
+    public void testDecodeEmptyOpenEncodedFrame() throws Exception {
+        // Frame data for: Open
+        //   Open{ containerId='null', hostname='null', maxFrameSize=4294967295, channelMax=65535,
+        //         idleTimeOut=null, outgoingLocales=null, incomingLocales=null, offeredCapabilities=null,
+        //         desiredCapabilities=null, properties=null}
+        byte[] emptyOpen = new byte[] {0, 0, 0, 15, 2, 0, 0, 0, 0, 83, 16, -64, 2, 1, 64};
+
+        ArgumentCaptor<ProtocolFrame> argument = ArgumentCaptor.forClass(ProtocolFrame.class);
+
+        ProtonFrameDecodingHandler handler = createFrameDecoder();
+        EngineHandlerContext context = Mockito.mock(EngineHandlerContext.class);
+
+        handler.handleRead(context, AMQPHeader.getAMQPHeader().getBuffer());
+        handler.handleRead(context, ProtonByteBufferAllocator.DEFAULT.wrap(emptyOpen));
+
+        Mockito.verify(context).fireRead(Mockito.any(HeaderFrame.class));
+        Mockito.verify(context).fireRead(argument.capture());
+        Mockito.verifyNoMoreInteractions(context);
+
+        assertNotNull(argument.getValue());
+        assertTrue(argument.getValue().getBody() instanceof Open);
+
+        Open decoded = (Open) argument.getValue().getBody();
+
+        assertTrue(decoded.hasContainerId());  // Defaults to empty string from proton-j
+        assertFalse(decoded.hasHostname());
+        assertFalse(decoded.hasMaxFrameSize());
+        assertFalse(decoded.hasChannelMax());
+        assertFalse(decoded.hasIdleTimeout());
+        assertFalse(decoded.hasOutgoingLocales());
+        assertFalse(decoded.hasIncomingLocales());
+        assertFalse(decoded.hasOfferedCapabilites());
+        assertFalse(decoded.hasDesiredCapabilites());
+        assertFalse(decoded.hasProperties());
+    }
+
+    private ProtonFrameDecodingHandler createFrameDecoder() throws Exception {
+        ProtonEngineConfiguration configuration = Mockito.mock(ProtonEngineConfiguration.class);
+        Mockito.when(configuration.getInboundMaxFrameSize()).thenReturn(Integer.valueOf(65535));
+        ProtonEngine engine = Mockito.mock(ProtonEngine.class);
+        Mockito.when(engine.configuration()).thenReturn(configuration);
+        EngineHandlerContext context = Mockito.mock(EngineHandlerContext.class);
+        Mockito.when(context.getEngine()).thenReturn(engine);
+
+        ProtonFrameDecodingHandler handler = new ProtonFrameDecodingHandler();
+        handler.handlerAdded(context);
+
+        return handler;
     }
 
     private Engine createEngine() {
