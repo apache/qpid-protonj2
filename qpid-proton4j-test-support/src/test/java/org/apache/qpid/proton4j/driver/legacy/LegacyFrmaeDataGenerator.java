@@ -47,7 +47,7 @@ public class LegacyFrmaeDataGenerator {
         builder.append("    // ").append("  ").append(protonType.toString()).append("\n");
 
         // Create variable for test
-        builder.append("    private byte[] ")
+        builder.append("    final byte[] ")
                .append(varName)
                .append(" = new byte[] {")
                .append(generateFrameEncoding(protonType))

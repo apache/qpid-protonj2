@@ -123,7 +123,7 @@ public class ProtonFrameDecodingHandlerTest {
         //   Open{ containerId='null', hostname='null', maxFrameSize=4294967295, channelMax=65535,
         //         idleTimeOut=null, outgoingLocales=null, incomingLocales=null, offeredCapabilities=null,
         //         desiredCapabilities=null, properties=null}
-        byte[] emptyOpen = new byte[] {0, 0, 0, 15, 2, 0, 0, 0, 0, 83, 16, -64, 2, 1, 64};
+        final byte[] emptyOpen = new byte[] {0, 0, 0, 15, 2, 0, 0, 0, 0, 83, 16, -64, 2, 1, 64};
 
         ArgumentCaptor<ProtocolFrame> argument = ArgumentCaptor.forClass(ProtocolFrame.class);
 
@@ -147,6 +147,48 @@ public class ProtonFrameDecodingHandlerTest {
         assertFalse(decoded.hasMaxFrameSize());
         assertFalse(decoded.hasChannelMax());
         assertFalse(decoded.hasIdleTimeout());
+        assertFalse(decoded.hasOutgoingLocales());
+        assertFalse(decoded.hasIncomingLocales());
+        assertFalse(decoded.hasOfferedCapabilites());
+        assertFalse(decoded.hasDesiredCapabilites());
+        assertFalse(decoded.hasProperties());
+    }
+
+    @Test
+    public void testDecodeSimpleOpenEncodedFrame() throws Exception {
+        // Frame data for: Open
+        //   Open{ containerId='container', hostname='localhost', maxFrameSize=16384, channelMax=65535,
+        //         idleTimeOut=30000, outgoingLocales=null, incomingLocales=null, offeredCapabilities=null,
+        //         desiredCapabilities=null, properties=null}
+        final byte[] basicOpen = new byte[] {0, 0, 0, 49, 2, 0, 0, 0, 0, 83, 16, -64, 36, 5, -95, 9, 99, 111,
+                                             110, 116, 97, 105, 110, 101, 114, -95, 9, 108, 111, 99, 97, 108,
+                                             104, 111, 115, 116, 112, 0, 0, 64, 0, 96, -1, -1, 112, 0, 0, 117, 48};
+        ArgumentCaptor<ProtocolFrame> argument = ArgumentCaptor.forClass(ProtocolFrame.class);
+
+        ProtonFrameDecodingHandler handler = createFrameDecoder();
+        EngineHandlerContext context = Mockito.mock(EngineHandlerContext.class);
+
+        handler.handleRead(context, AMQPHeader.getAMQPHeader().getBuffer());
+        handler.handleRead(context, ProtonByteBufferAllocator.DEFAULT.wrap(basicOpen));
+
+        Mockito.verify(context).fireRead(Mockito.any(HeaderFrame.class));
+        Mockito.verify(context).fireRead(argument.capture());
+        Mockito.verifyNoMoreInteractions(context);
+
+        assertNotNull(argument.getValue());
+        assertTrue(argument.getValue().getBody() instanceof Open);
+
+        Open decoded = (Open) argument.getValue().getBody();
+
+        assertTrue(decoded.hasContainerId());
+        assertEquals("container", decoded.getContainerId());
+        assertTrue(decoded.hasHostname());
+        assertEquals("localhost", decoded.getHostname());
+        assertTrue(decoded.hasMaxFrameSize());
+        assertEquals(16384, decoded.getMaxFrameSize());
+        assertFalse(decoded.hasChannelMax());
+        assertTrue(decoded.hasIdleTimeout());
+        assertEquals(30000, decoded.getIdleTimeOut());
         assertFalse(decoded.hasOutgoingLocales());
         assertFalse(decoded.hasIncomingLocales());
         assertFalse(decoded.hasOfferedCapabilites());

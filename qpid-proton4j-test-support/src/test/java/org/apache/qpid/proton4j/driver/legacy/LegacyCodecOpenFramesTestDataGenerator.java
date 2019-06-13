@@ -16,6 +16,7 @@
  */
 package org.apache.qpid.proton4j.driver.legacy;
 
+import org.apache.qpid.proton.amqp.UnsignedInteger;
 import org.apache.qpid.proton.amqp.transport.Open;
 
 /**
@@ -29,5 +30,14 @@ public class LegacyCodecOpenFramesTestDataGenerator {
         Open emptyOpen = new Open();
         String emptyOpenFrameString = LegacyFrmaeDataGenerator.generateUnitTestVariable("emptyOpen", emptyOpen);
         System.out.println(emptyOpenFrameString);
+
+        // 2: Basic Open - No capabilities or locals set
+        Open basicOpen = new Open();
+        basicOpen.setContainerId("container");
+        basicOpen.setHostname("localhost");
+        basicOpen.setMaxFrameSize(UnsignedInteger.valueOf(16384));
+        basicOpen.setIdleTimeOut(UnsignedInteger.valueOf(30000));
+        String basicOpenString = LegacyFrmaeDataGenerator.generateUnitTestVariable("basicOpen", basicOpen);
+        System.out.println(basicOpenString);
     }
 }
