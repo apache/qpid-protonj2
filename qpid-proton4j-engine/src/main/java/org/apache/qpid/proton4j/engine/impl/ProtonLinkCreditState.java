@@ -16,20 +16,47 @@
  */
 package org.apache.qpid.proton4j.engine.impl;
 
-import org.apache.qpid.proton4j.amqp.transport.Attach;
-import org.apache.qpid.proton4j.amqp.transport.Disposition;
-import org.apache.qpid.proton4j.amqp.transport.Flow;
-import org.apache.qpid.proton4j.amqp.transport.Transfer;
-import org.apache.qpid.proton4j.buffer.ProtonBuffer;
-import org.apache.qpid.proton4j.engine.Delivery;
 import org.apache.qpid.proton4j.engine.LinkCreditState;
 
 /**
- * Proton LinkCreditState base used to define common API amongst the implementations.
- *
- * @param <DeliveryType>
+ * Holds the current credit state for a given link.
  */
-public interface ProtonLinkCreditState<DeliveryType extends Delivery> extends LinkCreditState {
+public class ProtonLinkCreditState implements LinkCreditState {
+
+    private int credit;
+    private int deliveryCount;
+
+    @Override
+    public int getCredit() {
+        return credit;
+    }
+
+    public ProtonLinkCreditState setCredit(int credit) {
+        this.credit = credit;
+        return this;
+    }
+
+    public void decrementCredit() {
+        credit = credit == 0 ? 0 : credit - 1;
+    }
+
+    @Override
+    public int getDeliveryCount() {
+        return deliveryCount;
+    }
+
+    public ProtonLinkCreditState setDeliveryCount(int deliveryCount) {
+        this.deliveryCount = deliveryCount;
+        return this;
+    }
+
+    public int incrementDeliveryCount() {
+        return deliveryCount++;
+    }
+
+    public int decrementDeliveryCount() {
+        return deliveryCount--;
+    }
 
     /**
      * Creates a snapshot of the current credit state, a subclass should implement this
@@ -37,65 +64,28 @@ public interface ProtonLinkCreditState<DeliveryType extends Delivery> extends Li
      *
      * @return a snapshot of the current credit state.
      */
-    ProtonLinkCreditState<?> snapshot();
-
-    /**
-     * Initialize link state on an outbound Attach for this link
-     *
-     * @param attach
-     *      the {@link Attach} performative that will be sent.
-     *
-     * @return the attach object for chaining
-     */
-    default Attach configureAttach(Attach attach) {
-        return attach;
+    LinkCreditState snapshot() {
+        return new UnmodifiableLinkCreditState(credit, deliveryCount);
     }
 
-    /**
-     * Perform any needed cleanup or state change when the parent link instance is locally
-     * closed or detached.
-     *
-     * @param closed
-     *      indicates if the link was closed or detached
-     */
-    abstract void localClose(boolean closed);
+    private static class UnmodifiableLinkCreditState implements LinkCreditState {
 
-    /**
-     * Perform any needed initialization for link credit based on the initial Attach
-     * sent from the remote
-     *
-     * @param attach
-     */
-    abstract void remoteAttach(Attach attach);
+        private final int credit;
+        private final int deliveryCount;
 
-    /**
-     * Handle incoming {@link Flow} performatives and update link credit accordingly.
-     *
-     * @param flow
-     *      The {@link Flow} instance to be processed.
-     */
-    abstract void remoteFlow(Flow flow);
+        public UnmodifiableLinkCreditState(int credit, int deliveryCount) {
+            this.credit = credit;
+            this.deliveryCount = deliveryCount;
+        }
 
-    /**
-     * Handle incoming {@link Transfer} performatives and update link credit accordingly.
-     *
-     * @param transfer
-     *      The {@link Transfer} instance to be processed.
-     * @param payload
-     *      The buffer containing the payload of the incoming {@link Transfer}
-     *
-     * @return the incoming delivery associated with this transfer
-     */
-    abstract ProtonIncomingDelivery remoteTransfer(Transfer transfer, ProtonBuffer payload);
+        @Override
+        public int getCredit() {
+            return credit;
+        }
 
-    /**
-     * Handle incoming {@link Disposition} performatives and update link accordingly.
-     *
-     * @param disposition
-     *      The {@link Disposition} instance to be processed.
-     * @param delivery
-     *      The {@link Delivery} that is the target of this disposition.
-     */
-    abstract void remoteDisposition(Disposition disposition, DeliveryType delivery);
-
+        @Override
+        public int getDeliveryCount() {
+            return deliveryCount;
+        }
+    }
 }

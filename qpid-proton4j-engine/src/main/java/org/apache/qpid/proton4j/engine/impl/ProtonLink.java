@@ -107,7 +107,7 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
 
     protected abstract T self();
 
-    protected abstract ProtonLinkCreditState<?> getCreditState();
+    protected abstract ProtonLinkState<?> getState();
 
     long getHandle() {
         return localAttach.getHandle();
@@ -391,7 +391,7 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
         if (!isLocallyClosed()) {
             // TODO - State as closed or detached ?
             localState = LinkState.CLOSED;
-            getCreditState().localClose(true);
+            getState().localClose(true);
             transitionedToLocallyClosed();
         }
     }
@@ -400,7 +400,7 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
         if (!isLocallyClosed()) {
             // TODO - State as closed or detached ?
             localState = LinkState.CLOSED;
-            getCreditState().localClose(true);
+            getState().localClose(true);
             transitionedToLocallyClosed();
         }
     }
@@ -410,7 +410,7 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
     void remoteAttach(Attach attach) {
         remoteAttach = attach;
         remoteState = LinkState.ACTIVE;
-        getCreditState().remoteAttach(attach);
+        getState().remoteAttach(attach);
 
         if (remoteOpenHandler != null) {
             remoteOpenHandler.handle(result(self(), null));
@@ -454,11 +454,11 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
     }
 
     ProtonIncomingDelivery remoteTransfer(Transfer transfer, ProtonBuffer payload) {
-        return getCreditState().remoteTransfer(transfer, payload);
+        return getState().remoteTransfer(transfer, payload);
     }
 
     ProtonLink<?> remoteFlow(Flow flow) {
-        getCreditState().remoteFlow(flow);
+        getState().remoteFlow(flow);
         return this;
     }
 
@@ -494,7 +494,7 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
 
             // TODO - Still need to check for transport being writable at this time.
             session.getEngine().pipeline().fireWrite(
-                getCreditState().configureAttach(localAttach), session.getLocalChannel(), null, null);
+                getState().configureAttach(localAttach), session.getLocalChannel(), null, null);
         }
     }
 

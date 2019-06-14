@@ -57,7 +57,7 @@ public class ProtonCoordinator extends ProtonLink<ProtonCoordinator> {
     }
 
     @Override
-    protected ProtonLinkCreditState<?> getCreditState() {
+    protected ProtonLinkState<?> getState() {
         // TODO Auto-generated method stub
         return null;
     }

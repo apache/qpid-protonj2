@@ -33,7 +33,7 @@ import org.apache.qpid.proton4j.engine.Session;
  */
 public class ProtonReceiver extends ProtonLink<Receiver> implements Receiver {
 
-    private final ProtonReceiverCreditState creditState;
+    private final ProtonReceiverState creditState;
 
     private EventHandler<IncomingDelivery> deliveryReceivedEventHandler = null;
     private EventHandler<IncomingDelivery> deliveryUpdatedEventHandler = null;
@@ -53,7 +53,7 @@ public class ProtonReceiver extends ProtonLink<Receiver> implements Receiver {
      */
     public ProtonReceiver(ProtonSession session, String name) {
         super(session, name);
-        this.creditState = new ProtonReceiverCreditState(this, session.getIncomingWindow());
+        this.creditState = new ProtonReceiverState(this, session.getIncomingWindow());
     }
 
     @Override
@@ -78,7 +78,7 @@ public class ProtonReceiver extends ProtonLink<Receiver> implements Receiver {
     }
 
     @Override
-    protected ProtonReceiverCreditState getCreditState() {
+    protected ProtonReceiverState getState() {
         return creditState;
     }
 
@@ -121,7 +121,7 @@ public class ProtonReceiver extends ProtonLink<Receiver> implements Receiver {
     //----- Internal support methods
 
     void remoteDisposition(Disposition disposition, ProtonIncomingDelivery delivery) {
-        getCreditState().remoteDisposition(disposition, delivery);
+        getState().remoteDisposition(disposition, delivery);
     }
 
     //----- Delivery related access points

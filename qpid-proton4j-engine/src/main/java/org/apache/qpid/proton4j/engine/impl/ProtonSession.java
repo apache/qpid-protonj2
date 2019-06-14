@@ -623,9 +623,9 @@ public class ProtonSession implements Session {
         flow.setOutgoingWindow(getOutgoingWindow().getOutgoingWindow());
 
         if (link != null) {
-            flow.setLinkCredit(link.getCreditState().getCredit());
+            flow.setLinkCredit(link.getState().getCredit());
             flow.setHandle(link.getHandle());
-            flow.setDeliveryCount(link.getCreditState().getDeliveryCount());
+            flow.setDeliveryCount(link.getState().getDeliveryCount());
         }
 
         getEngine().pipeline().fireWrite(flow, localChannel, null, null);

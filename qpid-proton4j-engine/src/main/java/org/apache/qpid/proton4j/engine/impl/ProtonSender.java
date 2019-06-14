@@ -36,7 +36,7 @@ import org.apache.qpid.proton4j.engine.Session;
  */
 public class ProtonSender extends ProtonLink<Sender> implements Sender {
 
-    private final ProtonSenderCreditState creditState;
+    private final ProtonSenderState linkState;
 
     private EventHandler<OutgoingDelivery> deliveryUpdatedEventHandler = null;
     private EventHandler<Sender> sendableEventHandler = null;
@@ -64,7 +64,7 @@ public class ProtonSender extends ProtonLink<Sender> implements Sender {
      */
     public ProtonSender(ProtonSession session, String name) {
         super(session, name);
-        this.creditState = new ProtonSenderCreditState(this, session.getOutgoingWindow());
+        this.linkState = new ProtonSenderState(this, session.getOutgoingWindow());
     }
 
     @Override
@@ -79,17 +79,17 @@ public class ProtonSender extends ProtonLink<Sender> implements Sender {
 
     @Override
     public int getCredit() {
-        return creditState.getCredit();
+        return linkState.getCredit();
     }
 
     @Override
-    protected ProtonSenderCreditState getCreditState() {
-        return creditState;
+    protected ProtonSenderState getState() {
+        return linkState;
     }
 
     @Override
     public boolean isSendable() {
-        return creditState.isSendable();
+        return linkState.isSendable();
     }
 
     @Override
@@ -104,15 +104,15 @@ public class ProtonSender extends ProtonLink<Sender> implements Sender {
     @SuppressWarnings("unchecked")
     @Override
     public Collection<OutgoingDelivery> unsettled() {
-        if (creditState.unsettledDeliveries().isEmpty()) {
+        if (linkState.unsettledDeliveries().isEmpty()) {
             return Collections.EMPTY_LIST;
         } else {
-            return Collections.unmodifiableCollection(new ArrayList<>(creditState.unsettledDeliveries().values()));
+            return Collections.unmodifiableCollection(new ArrayList<>(linkState.unsettledDeliveries().values()));
         }
     }
 
     void remoteDisposition(Disposition disposition, ProtonOutgoingDelivery delivery) {
-        getCreditState().remoteDisposition(disposition, delivery);
+        getState().remoteDisposition(disposition, delivery);
     }
 
     //----- Delivery output related access points
@@ -175,7 +175,7 @@ public class ProtonSender extends ProtonLink<Sender> implements Sender {
         //        reduce link credit in case the remote has updated the credit since the event was
         //        triggered.
         if (drainRequestedEventHandler != null) {
-            drainRequestedEventHandler.handle(getCreditState().snapshot());
+            drainRequestedEventHandler.handle(linkState.getCreditState().snapshot());
         }
         return this;
     }
@@ -218,15 +218,15 @@ public class ProtonSender extends ProtonLink<Sender> implements Sender {
     }
 
     private void sendSink(ProtonOutgoingDelivery delivery, ProtonBuffer payload) {
-        creditState.send(delivery, payload);
+        linkState.send(delivery, payload);
     }
 
     private void dispositionSink(ProtonOutgoingDelivery delivery) {
-        creditState.disposition(delivery);
+        linkState.disposition(delivery);
     }
 
     private void abortSink(ProtonOutgoingDelivery delivery) {
-        creditState.abort(delivery);
+        linkState.abort(delivery);
     }
 
     private void senderNotWritableSink(ProtonOutgoingDelivery delivery, ProtonBuffer buffer) {

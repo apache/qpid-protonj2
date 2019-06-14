@@ -31,25 +31,22 @@ import org.apache.qpid.proton4j.engine.util.SplayMap;
 
 /**
  * Credit state handler for {@link Sender} links.
- *
- * TODO - Refactor into a Sender State object and break out Credit State
 */
-public class ProtonSenderCreditState implements ProtonLinkCreditState<ProtonOutgoingDelivery> {
+public class ProtonSenderState implements ProtonLinkState<ProtonOutgoingDelivery> {
 
     private final ProtonSender sender;
     private final ProtonSessionOutgoingWindow sessionWindow;
 
     private final DeliveryIdTracker currentDelivery = new DeliveryIdTracker();
+    private final ProtonLinkCreditState creditState = new ProtonLinkCreditState();
 
     private boolean sendable;
-    private int credit;
-    private int deliveryCount;
     private boolean draining;
     private boolean drained;
 
     private final SplayMap<ProtonOutgoingDelivery> unsettled = new SplayMap<>();
 
-    public ProtonSenderCreditState(ProtonSender sender, ProtonSessionOutgoingWindow sessionWindow) {
+    public ProtonSenderState(ProtonSender sender, ProtonSessionOutgoingWindow sessionWindow) {
         this.sessionWindow = sessionWindow;
         this.sender = sender;
     }
@@ -64,27 +61,22 @@ public class ProtonSenderCreditState implements ProtonLinkCreditState<ProtonOutg
 
     @Override
     public int getCredit() {
-        return credit;
+        return creditState.getCredit();
     }
 
     @Override
     public int getDeliveryCount() {
-        return deliveryCount;
+        return creditState.getDeliveryCount();
+    }
+
+    @Override
+    public ProtonLinkCreditState getCreditState() {
+        return creditState;
     }
 
     @Override
     public Attach configureAttach(Attach attach) {
         return attach.setInitialDeliveryCount(0);
-    }
-
-    @Override
-    public ProtonSenderCreditState snapshot() {
-        ProtonSenderCreditState snapshot = new ProtonSenderCreditState(sender, sessionWindow);
-        snapshot.draining = draining;
-        snapshot.credit = credit;
-        snapshot.drained = drained;
-        snapshot.deliveryCount = deliveryCount;
-        return snapshot;
     }
 
     Map<UnsignedInteger, ProtonOutgoingDelivery> unsettledDeliveries() {
@@ -95,9 +87,9 @@ public class ProtonSenderCreditState implements ProtonLinkCreditState<ProtonOutg
 
     @Override
     public void localClose(boolean closed) {
-        this.credit = 0;
-        this.sendable = false;
-        this.unsettled.clear();
+        creditState.setCredit(0);
+        sendable = false;
+        unsettled.clear();
     }
 
     @Override
@@ -107,14 +99,14 @@ public class ProtonSenderCreditState implements ProtonLinkCreditState<ProtonOutg
 
     @Override
     public void remoteFlow(Flow flow) {
-        credit = (int) (flow.getDeliveryCount() + flow.getLinkCredit() - deliveryCount);
+        creditState.setCredit((int) (flow.getDeliveryCount() + flow.getLinkCredit() - getDeliveryCount()));
         draining = flow.getDrain();
-        drained = credit > 0;
+        drained = getCredit() > 0;
 
         if (sender.getLocalState() == LinkState.ACTIVE) {
             // TODO - Signal for sendable, draining etc
 
-            if (credit > 0 && !sendable) {
+            if (getCredit() > 0 && !sendable) {
                 sendable = true;
                 sender.signalSendable();
             }
@@ -177,10 +169,10 @@ public class ProtonSenderCreditState implements ProtonLinkCreditState<ProtonOutg
 
         if (!delivery.isPartial()) {
             currentDelivery.reset();
-            deliveryCount++;
-            credit--;
+            creditState.incrementDeliveryCount();
+            creditState.decrementCredit();
 
-            if (credit == 0) {
+            if (getCredit() == 0) {
                 sendable = false;
             }
         }

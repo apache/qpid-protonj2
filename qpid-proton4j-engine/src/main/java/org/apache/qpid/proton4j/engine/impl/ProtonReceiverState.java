@@ -30,38 +30,39 @@ import org.apache.qpid.proton4j.engine.util.SplayMap;
 
 /**
  * Credit state handler for {@link Receiver} links.
- *
- * TODO - Refactor into a Receiver State object and break out Credit State
  */
-public class ProtonReceiverCreditState implements ProtonLinkCreditState<ProtonIncomingDelivery> {
+public class ProtonReceiverState implements ProtonLinkState<ProtonIncomingDelivery> {
 
     private final ProtonReceiver receiver;
     private final ProtonSessionIncomingWindow sessionWindow;
 
-    private int credit;
-    private int deliveryCount;
-
+    private final ProtonLinkCreditState creditState = new ProtonLinkCreditState();
     private final DeliveryIdTracker currentDeliveryId = new DeliveryIdTracker();
     private final SplayMap<ProtonIncomingDelivery> unsettled = new SplayMap<>();
 
-    public ProtonReceiverCreditState(ProtonReceiver parent, ProtonSessionIncomingWindow sessionWindow) {
+    public ProtonReceiverState(ProtonReceiver parent, ProtonSessionIncomingWindow sessionWindow) {
         this.sessionWindow = sessionWindow;
         this.receiver = parent;
     }
 
     @Override
     public int getCredit() {
-        return credit;
+        return creditState.getCredit();
     }
 
     @Override
     public int getDeliveryCount() {
-        return deliveryCount;
+        return creditState.getDeliveryCount();
+    }
+
+    @Override
+    public ProtonLinkCreditState getCreditState() {
+        return creditState;
     }
 
     void setCredit(int credit) {
-        if (this.credit != credit) {
-            this.credit = credit;
+        if (getCredit() != credit) {
+            creditState.setCredit(credit);
             if (receiver.isRemotelyOpened()) {
                 sessionWindow.writeFlow(receiver);
             }
@@ -74,13 +75,13 @@ public class ProtonReceiverCreditState implements ProtonLinkCreditState<ProtonIn
 
     @Override
     public void localClose(boolean closed) {
-        this.credit = 0;
-        this.unsettled.clear();
+        creditState.setCredit(0);
+        unsettled.clear();
     }
 
     @Override
     public void remoteAttach(Attach attach) {
-        if (credit > 0) {
+        if (getCredit() > 0) {
             sessionWindow.writeFlow(receiver);
         }
     }
@@ -88,9 +89,9 @@ public class ProtonReceiverCreditState implements ProtonLinkCreditState<ProtonIn
     @Override
     public void remoteFlow(Flow flow) {
         if (flow.getDrain()) {
-            deliveryCount = (int) flow.getDeliveryCount();
-            credit = (int) flow.getLinkCredit();
-            if (credit != 0) {
+            creditState.setDeliveryCount((int) flow.getDeliveryCount());
+            creditState.setCredit((int) flow.getLinkCredit());
+            if (creditState.getCredit() != 0) {
                 throw new IllegalArgumentException("Receiver read flow with drain set but credit was not zero");
             }
 
@@ -139,8 +140,8 @@ public class ProtonReceiverCreditState implements ProtonLinkCreditState<ProtonIn
                 delivery.completed();
             }
 
-            credit = Math.min(credit - 1, 0);
-            deliveryCount++;
+            creditState.decrementCredit();
+            creditState.incrementDeliveryCount();
             currentDeliveryId.reset();
         }
 
@@ -189,14 +190,6 @@ public class ProtonReceiverCreditState implements ProtonLinkCreditState<ProtonIn
         if (updated) {
             delivery.getLink().signalDeliveryUpdated(delivery);
         }
-    }
-
-    @Override
-    public ProtonReceiverCreditState snapshot() {
-        ProtonReceiverCreditState snapshot = new ProtonReceiverCreditState(receiver, sessionWindow);
-        snapshot.credit = credit;
-        snapshot.deliveryCount = deliveryCount;
-        return snapshot;
     }
 
     //----- Actions invoked from Delivery instances
