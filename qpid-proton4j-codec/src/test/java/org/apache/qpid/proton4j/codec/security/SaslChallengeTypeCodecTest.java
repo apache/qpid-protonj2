@@ -20,6 +20,7 @@ import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.io.IOException;
 
@@ -28,6 +29,7 @@ import org.apache.qpid.proton4j.amqp.security.SaslChallenge;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.codec.CodecTestSupport;
+import org.apache.qpid.proton4j.codec.EncodingCodes;
 import org.apache.qpid.proton4j.codec.TypeDecoder;
 import org.apache.qpid.proton4j.codec.decoders.ProtonDecoderFactory;
 import org.apache.qpid.proton4j.codec.decoders.security.SaslChallengeTypeDecoder;
@@ -110,5 +112,72 @@ public class SaslChallengeTypeCodecTest extends CodecTestSupport {
 
         SaslChallenge value = (SaslChallenge) result;
         assertArrayEquals(new byte[] {1, 2}, value.getChallenge().getArray());
+    }
+
+    @Test
+    public void testSkipValueWithInvalidMap32Type() throws IOException {
+        doTestSkipValueWithInvalidMapType(EncodingCodes.MAP32);
+    }
+
+    @Test
+    public void testSkipValueWithInvalidMap8Type() throws IOException {
+        doTestSkipValueWithInvalidMapType(EncodingCodes.MAP8);
+    }
+
+    private void doTestSkipValueWithInvalidMapType(byte mapType) throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        buffer.writeByte((byte) 0); // Described Type Indicator
+        buffer.writeByte(EncodingCodes.SMALLULONG);
+        buffer.writeByte(SaslChallenge.DESCRIPTOR_CODE.byteValue());
+        if (mapType == EncodingCodes.MAP32) {
+            buffer.writeByte(EncodingCodes.MAP32);
+            buffer.writeInt((byte) 0);  // Size
+            buffer.writeInt((byte) 0);  // Count
+        } else {
+            buffer.writeByte(EncodingCodes.MAP8);
+            buffer.writeByte((byte) 0);  // Size
+            buffer.writeByte((byte) 0);  // Count
+        }
+
+        TypeDecoder<?> typeDecoder = decoder.readNextTypeDecoder(buffer, decoderState);
+        assertEquals(SaslChallenge.class, typeDecoder.getTypeClass());
+
+        try {
+            typeDecoder.skipValue(buffer, decoderState);
+            fail("Should not be able to skip type with invalid encoding");
+        } catch (IOException ex) {}
+    }
+
+    @Test
+    public void testDecodedWithInvalidMap32Type() throws IOException {
+        doTestDecodeWithInvalidMapType(EncodingCodes.MAP32);
+    }
+
+    @Test
+    public void testDecodeWithInvalidMap8Type() throws IOException {
+        doTestDecodeWithInvalidMapType(EncodingCodes.MAP8);
+    }
+
+    private void doTestDecodeWithInvalidMapType(byte mapType) throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        buffer.writeByte((byte) 0); // Described Type Indicator
+        buffer.writeByte(EncodingCodes.SMALLULONG);
+        buffer.writeByte(SaslChallenge.DESCRIPTOR_CODE.byteValue());
+        if (mapType == EncodingCodes.MAP32) {
+            buffer.writeByte(EncodingCodes.MAP32);
+            buffer.writeInt((byte) 0);  // Size
+            buffer.writeInt((byte) 0);  // Count
+        } else {
+            buffer.writeByte(EncodingCodes.MAP8);
+            buffer.writeByte((byte) 0);  // Size
+            buffer.writeByte((byte) 0);  // Count
+        }
+
+        try {
+            decoder.readObject(buffer, decoderState);
+            fail("Should not decode type with invalid encoding");
+        } catch (IOException ex) {}
     }
 }
