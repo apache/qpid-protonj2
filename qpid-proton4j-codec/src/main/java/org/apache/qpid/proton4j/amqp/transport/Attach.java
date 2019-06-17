@@ -311,7 +311,7 @@ public final class Attach implements Performative {
     }
 
     public Attach setInitialDeliveryCount(long initialDeliveryCount) {
-        if (handle < 0 || handle > UINT_MAX) {
+        if (initialDeliveryCount < 0 || initialDeliveryCount > UINT_MAX) {
             throw new IllegalArgumentException("The initial delivery count value given is out of range: " + handle);
         } else {
             modified |= INITIAL_DELIVERY_COUNT;

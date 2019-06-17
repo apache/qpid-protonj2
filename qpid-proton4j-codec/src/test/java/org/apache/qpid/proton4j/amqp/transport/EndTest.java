@@ -32,4 +32,12 @@ public class EndTest {
     public void testToStringOnFreshInstance() {
         assertNotNull(new End().toString());
     }
+
+    @Test
+    public void testCopyFromNew() {
+        End original = new End();
+        End copy = original.copy();
+
+        assertEquals(original.getError(), copy.getError());
+    }
 }

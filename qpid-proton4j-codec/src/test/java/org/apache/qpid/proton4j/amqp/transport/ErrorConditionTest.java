@@ -16,7 +16,13 @@
  */
 package org.apache.qpid.proton4j.amqp.transport;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
+
+import java.util.HashMap;
+import java.util.Map;
 
 import org.junit.Test;
 
@@ -25,5 +31,46 @@ public class ErrorConditionTest {
     @Test
     public void testToStringOnFreshInstance() {
         assertNotNull(new ErrorCondition(AmqpError.DECODE_ERROR, (String) null).toString());
+    }
+
+    @SuppressWarnings("unlikely-arg-type")
+    @Test
+    public void testEquals() {
+        ErrorCondition original = new ErrorCondition(AmqpError.DECODE_ERROR, "error");
+        ErrorCondition copy = original.copy();
+
+        assertEquals(original, copy);
+
+        Map<Object, Object> infoMap = new HashMap<>();
+        ErrorCondition other1 = new ErrorCondition(null, "error", infoMap);
+        ErrorCondition other2 = new ErrorCondition(AmqpError.DECODE_ERROR, null, infoMap);
+        ErrorCondition other3 = new ErrorCondition(AmqpError.DECODE_ERROR, "error", infoMap);
+        ErrorCondition other4 = new ErrorCondition(null, null, infoMap);
+        ErrorCondition other5 = new ErrorCondition(null, null, null);
+
+        assertNotEquals(original, other1);
+        assertNotEquals(original, other2);
+        assertNotEquals(original, other3);
+        assertNotEquals(original, other4);
+        assertNotEquals(original, other5);
+
+        assertNotEquals(other1, original);
+        assertNotEquals(other2, original);
+        assertNotEquals(other3, original);
+        assertNotEquals(other4, original);
+        assertNotEquals(other5, original);
+
+        assertFalse(original.equals(null));
+        assertFalse(original.equals(Boolean.TRUE));
+    }
+
+    @Test
+    public void testCopyFromNew() {
+        ErrorCondition original = new ErrorCondition(AmqpError.DECODE_ERROR, "error");
+        ErrorCondition copy = original.copy();
+
+        assertEquals(original.getCondition(), copy.getCondition());
+        assertEquals(original.getDescription(), copy.getDescription());
+        assertEquals(original.getInfo(), copy.getInfo());
     }
 }

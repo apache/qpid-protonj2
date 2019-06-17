@@ -32,4 +32,13 @@ public class DetachTest {
     public void testToStringOnFreshInstance() {
         assertNotNull(new Detach().toString());
     }
+
+    @Test
+    public void testCopyFromNew() {
+        Detach original = new Detach();
+        Detach copy = original.copy();
+
+        assertEquals(original.getClosed(), copy.getClosed());
+        assertEquals(original.getError(), copy.getError());
+    }
 }

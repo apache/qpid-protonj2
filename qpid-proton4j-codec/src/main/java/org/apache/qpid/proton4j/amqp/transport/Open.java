@@ -67,23 +67,31 @@ public final class Open implements Performative {
         Open copy = new Open();
 
         copy.setContainerId(containerId);
-        copy.setHostname(hostname);
-        copy.setMaxFrameSize(maxFrameSize);
-        copy.setChannelMax(channelMax);
-        copy.setIdleTimeOut(idleTimeOut);
-        if (outgoingLocales != null) {
+        if (hasHostname()) {
+            copy.setHostname(hostname);
+        }
+        if (hasMaxFrameSize()) {
+            copy.setMaxFrameSize(maxFrameSize);
+        }
+        if (hasChannelMax()) {
+            copy.setChannelMax(channelMax);
+        }
+        if (hasIdleTimeout()) {
+            copy.setIdleTimeOut(idleTimeOut);
+        }
+        if (hasOutgoingLocales()) {
             copy.setOutgoingLocales(Arrays.copyOf(outgoingLocales, outgoingLocales.length));
         }
-        if (incomingLocales != null) {
+        if (hasIncomingLocales()) {
             copy.setIncomingLocales(Arrays.copyOf(incomingLocales, incomingLocales.length));
         }
-        if (offeredCapabilities != null) {
+        if (hasOfferedCapabilites()) {
             copy.setOfferedCapabilities(Arrays.copyOf(offeredCapabilities, offeredCapabilities.length));
         }
-        if (desiredCapabilities != null) {
+        if (hasDesiredCapabilites()) {
             copy.setOfferedCapabilities(Arrays.copyOf(desiredCapabilities, desiredCapabilities.length));
         }
-        if (properties != null) {
+        if (hasProperties()) {
             copy.setProperties(new LinkedHashMap<>(properties));
         }
 
