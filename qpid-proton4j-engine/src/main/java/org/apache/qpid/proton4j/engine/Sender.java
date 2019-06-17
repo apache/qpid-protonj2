@@ -17,23 +17,30 @@
 package org.apache.qpid.proton4j.engine;
 
 import java.util.Collection;
+import java.util.function.Predicate;
+
+import org.apache.qpid.proton4j.amqp.transport.DeliveryState;
 
 /**
  * AMQP Sender API
  */
 public interface Sender extends Link<Sender> {
 
-    // int available();
+    /**
+     * @return true if the {@link Sender} is currently marked as draining.
+     */
+    boolean isDraining();
 
-    // boolean isDraining();
-
-    // boolean isDrained();
-
-    // Sender drained(LinkCreditState state);
-
-    // Sender disposition(OutgoingDelivery... deliveries, DeliveryState state, boolean settle);
-
-    // Sender settle(OoutgoingDelivery... deliveries);
+    /**
+     * Called when the {@link Receiver} has requested a drain of credit and the sender
+     * has sent all available messages.
+     *
+     * @param state
+     *      The {@link Link} credit state that was given when the sender drain started.
+     *
+     * @return this Sender instance for chaining.
+     */
+    Sender drained(LinkCreditState state);
 
     /**
      * Checks if the sender has credit and the session window allows for any bytes to be written currently.
@@ -51,14 +58,39 @@ public interface Sender extends Link<Sender> {
      */
     OutgoingDelivery current();
 
-    // TODO: Possibly add another method that creates the next delivery and have current return the existing one
-    //       until next is called, and next may need to throw or something if the current one is partial etc.
+    /**
+     * When there has been no deliveries so far or the current delivery has reached a complete state this
+     * method updates the current delivery to a new instance and returns that value, otherwise it returns null.
+     *
+     * @return a new delivery instance unless the current delivery is not complete.
+     */
+    OutgoingDelivery next();
 
-    // TODO - Sample method for accessing link unsettled deliveries from the API level view
-    //        Another option might be an foreach style method that allows a consumer to be applied
-    //        or a disposition method that takes a predicate and the state to be applied.
-    // public void disposition(Predicate<OutgoingDelivery> filter, DeliveryState state, boolean settle);
-    // public void settle(Predicate<OutgoingDelivery> filter);
+    /**
+     * For each unsettled outgoing delivery that is pending in the {@link Sender} apply the given predicate
+     * and if it matches then apply the given delivery state and settled value to it.
+     *
+     * @param filter
+     *      The predicate to apply to each unsettled delivery to test for a match.
+     * @param state
+     *      The new {@link DeliveryState} to apply to any matching outgoing deliveries.
+     * @param settle
+     *      Boolean indicating if the matching unsettled deliveries should be settled.
+     *
+     * @return this sender for chaining.
+     */
+    public Sender disposition(Predicate<OutgoingDelivery> filter, DeliveryState state, boolean settle);
+
+    /**
+     * For each unsettled outgoing delivery that is pending in the {@link Sender} apply the given predicate
+     * and if it matches then settle the delivery.
+     *
+     * @param filter
+     *      The predicate to apply to each unsettled delivery to test for a match.
+     *
+     * @return this sender for chaining.
+     */
+    public Sender settle(Predicate<OutgoingDelivery> filter);
 
     /**
      * Retrieves the list of unsettled deliveries sent from this {@link Sender}.  The deliveries in the list

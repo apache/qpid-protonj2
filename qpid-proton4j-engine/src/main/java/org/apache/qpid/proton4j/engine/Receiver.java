@@ -17,6 +17,7 @@
 package org.apache.qpid.proton4j.engine;
 
 import java.util.Collection;
+import java.util.function.Predicate;
 
 import org.apache.qpid.proton4j.amqp.transport.DeliveryState;
 
@@ -41,12 +42,8 @@ public interface Receiver extends Link<Receiver> {
     // Receiver addCredit(int amount);
     // Receiver reduceCredit(int amount);
 
-    // Receiver drain(EventHandler<Receiver> handler);
-    // Receiver drain(int credits, EventHandler<Receiver> handler);
-
-    // Sender disposition(IncomingDelivery... deliveries, DeliveryState state, boolean settle);
-
-    // Sender settle(IncomingDelivery... deliveries);
+    // Receiver drain();
+    // Receiver drain(int credits);
 
     /**
      * Configures a default DeliveryState to be used if a received delivery is settled/freed
@@ -63,11 +60,31 @@ public interface Receiver extends Link<Receiver> {
      */
     public DeliveryState getDefaultDeliveryState();
 
-    // TODO - Sample method for accessing link unsettled deliveries from the API level view
-    //        Another option might be an foreach style method that allows a consumer to be applied
-    //        or a disposition method that takes a predicate and the state to be applied.
-    // public void disposition(Predicate<IncomingDelivery> filter, DeliveryState state, boolean settle);
-    // public void settle(Predicate<IncomingDelivery> filter);
+    /**
+     * For each unsettled outgoing delivery that is pending in the {@link Receiver} apply the given predicate
+     * and if it matches then apply the given delivery state and settled value to it.
+     *
+     * @param filter
+     *      The predicate to apply to each unsettled delivery to test for a match.
+     * @param state
+     *      The new {@link DeliveryState} to apply to any matching outgoing deliveries.
+     * @param settle
+     *      Boolean indicating if the matching unsettled deliveries should be settled.
+     *
+     * @return this {@link Receiver} for chaining
+     */
+    public Receiver disposition(Predicate<OutgoingDelivery> filter, DeliveryState state, boolean settle);
+
+    /**
+     * For each unsettled outgoing delivery that is pending in the {@link Receiver} apply the given predicate
+     * and if it matches then settle the delivery.
+     *
+     * @param filter
+     *      The predicate to apply to each unsettled delivery to test for a match.
+     *
+     * @return this {@link Receiver} for chaining
+     */
+    public Receiver settle(Predicate<OutgoingDelivery> filter);
 
     /**
      * Retrieves the list of unsettled deliveries for this {@link Receiver} link which have yet to be settled

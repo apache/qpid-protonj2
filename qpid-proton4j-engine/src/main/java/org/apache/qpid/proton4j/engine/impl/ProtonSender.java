@@ -21,7 +21,9 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 
+import org.apache.qpid.proton4j.amqp.transport.DeliveryState;
 import org.apache.qpid.proton4j.amqp.transport.Disposition;
 import org.apache.qpid.proton4j.amqp.transport.Role;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
@@ -93,12 +95,42 @@ public class ProtonSender extends ProtonLink<Sender> implements Sender {
     }
 
     @Override
+    public boolean isDraining() {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    @Override
+    public Sender drained(LinkCreditState state) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public Sender disposition(Predicate<OutgoingDelivery> filter, DeliveryState state, boolean settle) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public Sender settle(Predicate<OutgoingDelivery> filter) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
     public OutgoingDelivery current() {
         if (current == null || current.isSettled()) {
             current = new ProtonOutgoingDelivery(this);
         }
 
         return current;
+    }
+
+    @Override
+    public OutgoingDelivery next() {
+        // TODO Auto-generated method stub
+        return null;
     }
 
     @SuppressWarnings("unchecked")
@@ -110,6 +142,8 @@ public class ProtonSender extends ProtonLink<Sender> implements Sender {
             return Collections.unmodifiableCollection(new ArrayList<>(linkState.unsettledDeliveries().values()));
         }
     }
+
+    //----- Handle remote events for this Sender
 
     void remoteDisposition(Disposition disposition, ProtonOutgoingDelivery delivery) {
         getState().remoteDisposition(disposition, delivery);

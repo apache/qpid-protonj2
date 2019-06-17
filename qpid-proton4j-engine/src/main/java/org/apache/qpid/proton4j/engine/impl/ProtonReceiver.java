@@ -19,12 +19,14 @@ package org.apache.qpid.proton4j.engine.impl;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.function.Predicate;
 
 import org.apache.qpid.proton4j.amqp.transport.DeliveryState;
 import org.apache.qpid.proton4j.amqp.transport.Disposition;
 import org.apache.qpid.proton4j.amqp.transport.Role;
 import org.apache.qpid.proton4j.engine.EventHandler;
 import org.apache.qpid.proton4j.engine.IncomingDelivery;
+import org.apache.qpid.proton4j.engine.OutgoingDelivery;
 import org.apache.qpid.proton4j.engine.Receiver;
 import org.apache.qpid.proton4j.engine.Session;
 
@@ -40,8 +42,6 @@ public class ProtonReceiver extends ProtonLink<Receiver> implements Receiver {
     private EventHandler<Receiver> receiverDrainedEventHandler = null;
 
     private DeliveryState defaultDeliveryState;
-
-    // TODO - On open validate that required handlers are not null
 
     /**
      * Create a new {@link Receiver} instance with the given {@link Session} parent.
@@ -106,6 +106,18 @@ public class ProtonReceiver extends ProtonLink<Receiver> implements Receiver {
         creditState.setCredit(credit);
 
         return this;
+    }
+
+    @Override
+    public Receiver disposition(Predicate<OutgoingDelivery> filter, DeliveryState state, boolean settle) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public Receiver settle(Predicate<OutgoingDelivery> filter) {
+        // TODO Auto-generated method stub
+        return null;
     }
 
     @SuppressWarnings("unchecked")
