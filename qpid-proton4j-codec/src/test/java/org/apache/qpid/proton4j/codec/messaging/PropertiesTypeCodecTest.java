@@ -203,4 +203,34 @@ public class PropertiesTypeCodecTest extends CodecTestSupport {
             fail("Should not be able to skip type with invalid encoding");
         } catch (IOException ex) {}
     }
+
+    @Test
+    public void testEncodeDecodeArray() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        Properties[] array = new Properties[3];
+
+        array[0] = new Properties();
+        array[1] = new Properties();
+        array[2] = new Properties();
+
+        array[0].setAbsoluteExpiryTime(1);
+        array[1].setAbsoluteExpiryTime(2);
+        array[2].setAbsoluteExpiryTime(3);
+
+        encoder.writeObject(buffer, encoderState, array);
+
+        final Object result = decoder.readObject(buffer, decoderState);
+
+        assertTrue(result.getClass().isArray());
+        assertEquals(Properties.class, result.getClass().getComponentType());
+
+        Properties[] resultArray = (Properties[]) result;
+
+        for (int i = 0; i < resultArray.length; ++i) {
+            assertNotNull(resultArray[i]);
+            assertTrue(resultArray[i] instanceof Properties);
+            assertEquals(array[i].getAbsoluteExpiryTime(), resultArray[i].getAbsoluteExpiryTime());
+        }
+    }
 }

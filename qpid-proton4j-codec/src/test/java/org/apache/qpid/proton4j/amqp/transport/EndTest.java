@@ -18,6 +18,7 @@ package org.apache.qpid.proton4j.amqp.transport;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNotSame;
 
 import org.junit.Test;
 
@@ -38,6 +39,17 @@ public class EndTest {
         End original = new End();
         End copy = original.copy();
 
+        assertEquals(original.getError(), copy.getError());
+    }
+
+    @Test
+    public void testCopyWithError() {
+        End original = new End();
+        original.setError(new ErrorCondition(AmqpError.DECODE_ERROR, "test"));
+
+        End copy = original.copy();
+
+        assertNotSame(copy.getError(), original.getError());
         assertEquals(original.getError(), copy.getError());
     }
 }

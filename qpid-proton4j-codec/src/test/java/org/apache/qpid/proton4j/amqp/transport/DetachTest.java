@@ -18,6 +18,7 @@ package org.apache.qpid.proton4j.amqp.transport;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNotSame;
 
 import org.junit.Test;
 
@@ -39,6 +40,17 @@ public class DetachTest {
         Detach copy = original.copy();
 
         assertEquals(original.getClosed(), copy.getClosed());
+        assertEquals(original.getError(), copy.getError());
+    }
+
+    @Test
+    public void testCopyWithError() {
+        Detach original = new Detach();
+        original.setError(new ErrorCondition(AmqpError.DECODE_ERROR, "test"));
+
+        Detach copy = original.copy();
+
+        assertNotSame(copy.getError(), original.getError());
         assertEquals(original.getError(), copy.getError());
     }
 }
