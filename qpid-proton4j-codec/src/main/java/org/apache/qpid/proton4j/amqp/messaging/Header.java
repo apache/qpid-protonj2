@@ -97,7 +97,7 @@ public final class Header implements Section {
         return durable;
     }
 
-    public void setDurable(boolean value) {
+    public Header setDurable(boolean value) {
         if (value) {
             modified |= DURABLE;
         } else {
@@ -105,6 +105,7 @@ public final class Header implements Section {
         }
 
         durable = value;
+        return this;
     }
 
     public void clearDurable() {
@@ -116,7 +117,7 @@ public final class Header implements Section {
         return priority;
     }
 
-    public void setPriority(byte value) {
+    public Header setPriority(byte value) {
         if (value == DEFAULT_PRIORITY) {
             modified &= ~PRIORITY;
         } else {
@@ -124,6 +125,7 @@ public final class Header implements Section {
         }
 
         priority = value;
+        return this;
     }
 
     public void clearPriority() {
@@ -135,7 +137,7 @@ public final class Header implements Section {
         return timeToLive;
     }
 
-    public void setTimeToLive(long value) {
+    public Header setTimeToLive(long value) {
         if (value < 0 || value > UINT_MAX) {
             throw new IllegalArgumentException("TTL value given is out of range: " + value);
         } else {
@@ -143,6 +145,7 @@ public final class Header implements Section {
         }
 
         timeToLive = value;
+        return this;
     }
 
     public void clearTimeToLive() {
@@ -154,7 +157,7 @@ public final class Header implements Section {
         return firstAcquirer;
     }
 
-    public void setFirstAcquirer(boolean value) {
+    public Header setFirstAcquirer(boolean value) {
         if (value) {
             modified |= FIRST_ACQUIRER;
         } else {
@@ -162,6 +165,7 @@ public final class Header implements Section {
         }
 
         firstAcquirer = value;
+        return this;
     }
 
     public void clearFirstAcquirer() {
@@ -173,7 +177,7 @@ public final class Header implements Section {
         return deliveryCount;
     }
 
-    public void setDeliveryCount(long value) {
+    public Header setDeliveryCount(long value) {
         if (value < 0 || value > UINT_MAX) {
             throw new IllegalArgumentException("Delivery Count value given is out of range: " + value);
         } else if (value == 0) {
@@ -183,6 +187,7 @@ public final class Header implements Section {
         }
 
         deliveryCount = value;
+        return this;
     }
 
     public void clearDeliveryCount() {

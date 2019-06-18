@@ -23,6 +23,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.io.IOException;
+import java.util.Random;
 
 import org.apache.qpid.proton4j.amqp.Binary;
 import org.apache.qpid.proton4j.amqp.transactions.Discharge;
@@ -76,6 +77,28 @@ public class DischargeTypeCodecTest extends CodecTestSupport {
         assertNotNull(result.getTxnId().getArray());
 
         assertArrayEquals(new byte[] { 8, 7, 6, 5 }, result.getTxnId().getArray());
+    }
+
+    @Test
+    public void testEncodeDecodeTypeWithLargeResponseBlob() throws Exception {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        byte[] txnId = new byte[512];
+
+        Random rand = new Random();
+        rand.setSeed(System.currentTimeMillis());
+        rand.nextBytes(txnId);
+
+        Discharge input = new Discharge();
+
+        input.setFail(true);
+        input.setTxnId(new Binary(txnId));
+
+        encoder.writeObject(buffer, encoderState, input);
+
+        final Discharge result = (Discharge) decoder.readObject(buffer, decoderState);
+
+        assertArrayEquals(txnId, result.getTxnId().getArray());
     }
 
     @Test
@@ -177,5 +200,36 @@ public class DischargeTypeCodecTest extends CodecTestSupport {
             decoder.readObject(buffer, decoderState);
             fail("Should not decode type with invalid encoding");
         } catch (IOException ex) {}
+    }
+
+    @Test
+    public void testEncodeDecodeArray() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        Discharge[] array = new Discharge[3];
+
+        array[0] = new Discharge();
+        array[1] = new Discharge();
+        array[2] = new Discharge();
+
+        array[0].setTxnId(new Binary(new byte[] {0})).setFail(true);
+        array[1].setTxnId(new Binary(new byte[] {1})).setFail(false);
+        array[2].setTxnId(new Binary(new byte[] {2})).setFail(true);
+
+        encoder.writeObject(buffer, encoderState, array);
+
+        final Object result = decoder.readObject(buffer, decoderState);
+
+        assertTrue(result.getClass().isArray());
+        assertEquals(Discharge.class, result.getClass().getComponentType());
+
+        Discharge[] resultArray = (Discharge[]) result;
+
+        for (int i = 0; i < resultArray.length; ++i) {
+            assertNotNull(resultArray[i]);
+            assertTrue(resultArray[i] instanceof Discharge);
+            assertEquals(array[i].getTxnId(), resultArray[i].getTxnId());
+            assertEquals(array[i].getFail(), resultArray[i].getFail());
+        }
     }
 }

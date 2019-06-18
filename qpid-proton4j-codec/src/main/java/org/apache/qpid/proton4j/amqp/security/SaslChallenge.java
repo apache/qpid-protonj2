@@ -31,12 +31,13 @@ public final class SaslChallenge implements SaslPerformative {
         return challenge;
     }
 
-    public void setChallenge(Binary challenge) {
+    public SaslChallenge setChallenge(Binary challenge) {
         if (challenge == null) {
             throw new NullPointerException("the challenge field is mandatory");
         }
 
         this.challenge = challenge;
+        return this;
     }
 
     @Override

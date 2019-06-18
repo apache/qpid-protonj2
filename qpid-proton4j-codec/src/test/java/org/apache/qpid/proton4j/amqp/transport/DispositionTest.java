@@ -17,6 +17,7 @@
 package org.apache.qpid.proton4j.amqp.transport;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
@@ -32,6 +33,20 @@ public class DispositionTest {
     @Test
     public void testToStringOnFreshInstance() {
         assertNotNull(new Disposition().toString());
+    }
+
+    @Test
+    public void testInitialState() {
+        Disposition disposition = new Disposition();
+
+        assertEquals(0, disposition.getElementCount());
+        assertTrue(disposition.isEmpty());
+        assertFalse(disposition.hasBatchable());
+        assertFalse(disposition.hasFirst());
+        assertFalse(disposition.hasLast());
+        assertFalse(disposition.hasRole());
+        assertFalse(disposition.hasSettled());
+        assertFalse(disposition.hasState());
     }
 
     @Test

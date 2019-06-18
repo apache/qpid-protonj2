@@ -32,12 +32,13 @@ public final class SaslMechanisms implements SaslPerformative {
         return saslServerMechanisms;
     }
 
-    public void setSaslServerMechanisms(Symbol... saslServerMechanisms) {
+    public SaslMechanisms setSaslServerMechanisms(Symbol... saslServerMechanisms) {
         if (saslServerMechanisms == null) {
             throw new NullPointerException("the sasl-server-mechanisms field is mandatory");
         }
 
         this.saslServerMechanisms = saslServerMechanisms;
+        return this;
     }
 
     @Override

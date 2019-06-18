@@ -43,8 +43,9 @@ public final class Coordinator implements Terminus {
         return capabilities;
     }
 
-    public final void setCapabilities(Symbol... capabilities) {
+    public final Coordinator setCapabilities(Symbol... capabilities) {
         this.capabilities = capabilities;
+        return this;
     }
 
     @Override

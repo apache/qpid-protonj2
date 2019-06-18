@@ -196,4 +196,36 @@ public class TargetTypeCodeTest extends CodecTestSupport {
            fail("Should not be able to skip type with invalid encoding");
        } catch (IOException ex) {}
    }
+
+   @Test
+   public void testEncodeDecodeArray() throws IOException {
+       ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+       Target[] array = new Target[3];
+
+       array[0] = new Target();
+       array[1] = new Target();
+       array[2] = new Target();
+
+       array[0].setAddress("test-1").setDynamic(true).setDurable(TerminusDurability.CONFIGURATION);
+       array[1].setAddress("test-2").setDynamic(true).setDurable(TerminusDurability.NONE);
+       array[2].setAddress("test-3").setDynamic(true).setDurable(TerminusDurability.UNSETTLED_STATE);
+
+       encoder.writeObject(buffer, encoderState, array);
+
+       final Object result = decoder.readObject(buffer, decoderState);
+
+       assertTrue(result.getClass().isArray());
+       assertEquals(Target.class, result.getClass().getComponentType());
+
+       Target[] resultArray = (Target[]) result;
+
+       for (int i = 0; i < resultArray.length; ++i) {
+           assertNotNull(resultArray[i]);
+           assertTrue(resultArray[i] instanceof Target);
+           assertEquals(array[i].getAddress(), resultArray[i].getAddress());
+           assertEquals(array[i].getDynamic(), resultArray[i].getDynamic());
+           assertEquals(array[i].getDurable(), resultArray[i].getDurable());
+       }
+   }
 }

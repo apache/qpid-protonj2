@@ -81,88 +81,99 @@ public final class Source implements Terminus {
         return address;
     }
 
-    public void setAddress(String address) {
+    public Source setAddress(String address) {
         this.address = address;
+        return this;
     }
 
     public TerminusDurability getDurable() {
         return durable;
     }
 
-    public void setDurable(TerminusDurability durable) {
+    public Source setDurable(TerminusDurability durable) {
         this.durable = durable == null ? TerminusDurability.NONE : durable;
+        return this;
     }
 
     public TerminusExpiryPolicy getExpiryPolicy() {
         return expiryPolicy;
     }
 
-    public void setExpiryPolicy(TerminusExpiryPolicy expiryPolicy) {
+    public Source setExpiryPolicy(TerminusExpiryPolicy expiryPolicy) {
         this.expiryPolicy = expiryPolicy == null ? TerminusExpiryPolicy.SESSION_END : expiryPolicy;
+        return this;
     }
 
     public UnsignedInteger getTimeout() {
         return timeout;
     }
 
-    public void setTimeout(UnsignedInteger timeout) {
+    public Source setTimeout(UnsignedInteger timeout) {
         this.timeout = timeout;
+        return this;
     }
 
     public boolean getDynamic() {
         return dynamic;
     }
 
-    public void setDynamic(boolean dynamic) {
+    public Source setDynamic(boolean dynamic) {
         this.dynamic = dynamic;
+        return this;
     }
 
     public Map<Symbol, Object> getDynamicNodeProperties() {
         return dynamicNodeProperties;
     }
 
-    public void setDynamicNodeProperties(Map<Symbol, Object> dynamicNodeProperties) {
+    public Source setDynamicNodeProperties(Map<Symbol, Object> dynamicNodeProperties) {
         this.dynamicNodeProperties = dynamicNodeProperties;
+        return this;
     }
 
     public Symbol[] getCapabilities() {
         return capabilities;
     }
 
-    public final void setCapabilities(Symbol... capabilities) {
+    public Source setCapabilities(Symbol... capabilities) {
         this.capabilities = capabilities;
+        return this;
     }
 
     public Symbol getDistributionMode() {
         return distributionMode;
     }
 
-    public void setDistributionMode(Symbol distributionMode) {
+    public Source setDistributionMode(Symbol distributionMode) {
         this.distributionMode = distributionMode;
+        return this;
     }
 
     public Map<Symbol, Object> getFilter() {
         return filter;
     }
 
-    public void setFilter(Map<Symbol, Object> filter) {
+    public Source setFilter(Map<Symbol, Object> filter) {
         this.filter = filter;
+        return this;
     }
 
     public Outcome getDefaultOutcome() {
         return defaultOutcome;
     }
 
-    public void setDefaultOutcome(Outcome defaultOutcome) {
+    public Source setDefaultOutcome(Outcome defaultOutcome) {
         this.defaultOutcome = defaultOutcome;
+        return this;
     }
 
     public Symbol[] getOutcomes() {
         return outcomes;
     }
 
-    public void setOutcomes(Symbol... outcomes) {
+    public Source setOutcomes(Symbol... outcomes) {
         this.outcomes = outcomes;
+        return this;
     }
 
     @Override

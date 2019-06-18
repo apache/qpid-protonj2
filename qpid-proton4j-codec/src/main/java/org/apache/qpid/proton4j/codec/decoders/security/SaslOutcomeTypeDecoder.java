@@ -75,7 +75,18 @@ public class SaslOutcomeTypeDecoder extends AbstractDescribedTypeDecoder<SaslOut
 
     @Override
     public SaslOutcome[] readArrayElements(ProtonBuffer buffer, DecoderState state, int count) throws IOException {
-        return null;
+        TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
+
+        if (!(decoder instanceof ListTypeDecoder)) {
+            throw new IOException("Expected List type indicator but got decoder for type: " + decoder.getTypeClass().getName());
+        }
+
+        SaslOutcome[] result = new SaslOutcome[count];
+        for (int i = 0; i < count; ++i) {
+            result[i] = readProperties(buffer, state, (ListTypeDecoder) decoder);
+        }
+
+        return result;
     }
 
     private SaslOutcome readProperties(ProtonBuffer buffer, DecoderState state, ListTypeDecoder listDecoder) throws IOException {

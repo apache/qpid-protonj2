@@ -23,6 +23,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.io.IOException;
+import java.util.Random;
 
 import org.apache.qpid.proton4j.amqp.Binary;
 import org.apache.qpid.proton4j.amqp.transactions.Declared;
@@ -72,6 +73,27 @@ public class DeclaredTypeCodecTest extends CodecTestSupport {
       assertNotNull(result.getTxnId().getArray());
 
       assertArrayEquals(new byte[] {2, 4, 6, 8}, result.getTxnId().getArray());
+   }
+
+   @Test
+   public void testEncodeDecodeTypeWithLargeResponseBlob() throws Exception {
+       ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+       byte[] txnId = new byte[512];
+
+       Random rand = new Random();
+       rand.setSeed(System.currentTimeMillis());
+       rand.nextBytes(txnId);
+
+       Declared input = new Declared();
+
+       input.setTxnId(new Binary(txnId));
+
+       encoder.writeObject(buffer, encoderState, input);
+
+       final Declared result = (Declared) decoder.readObject(buffer, decoderState);
+
+       assertArrayEquals(txnId, result.getTxnId().getArray());
    }
 
    @Test
@@ -170,5 +192,35 @@ public class DeclaredTypeCodecTest extends CodecTestSupport {
            decoder.readObject(buffer, decoderState);
            fail("Should not decode type with invalid encoding");
        } catch (IOException ex) {}
+   }
+
+   @Test
+   public void testEncodeDecodeArray() throws IOException {
+       ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+       Declared[] array = new Declared[3];
+
+       array[0] = new Declared();
+       array[1] = new Declared();
+       array[2] = new Declared();
+
+       array[0].setTxnId(new Binary(new byte[] {0}));
+       array[1].setTxnId(new Binary(new byte[] {1}));
+       array[2].setTxnId(new Binary(new byte[] {2}));
+
+       encoder.writeObject(buffer, encoderState, array);
+
+       final Object result = decoder.readObject(buffer, decoderState);
+
+       assertTrue(result.getClass().isArray());
+       assertEquals(Declared.class, result.getClass().getComponentType());
+
+       Declared[] resultArray = (Declared[]) result;
+
+       for (int i = 0; i < resultArray.length; ++i) {
+           assertNotNull(resultArray[i]);
+           assertTrue(resultArray[i] instanceof Declared);
+           assertEquals(array[i].getTxnId(), resultArray[i].getTxnId());
+       }
    }
 }

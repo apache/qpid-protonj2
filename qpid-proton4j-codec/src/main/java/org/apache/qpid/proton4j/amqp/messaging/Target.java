@@ -65,56 +65,63 @@ public final class Target implements Terminus {
         return address;
     }
 
-    public void setAddress(String address) {
+    public Target setAddress(String address) {
         this.address = address;
+        return this;
     }
 
     public TerminusDurability getDurable() {
         return durable;
     }
 
-    public void setDurable(TerminusDurability durable) {
+    public Target setDurable(TerminusDurability durable) {
         this.durable = durable == null ? TerminusDurability.NONE : durable;
+        return this;
     }
 
     public TerminusExpiryPolicy getExpiryPolicy() {
         return expiryPolicy;
     }
 
-    public void setExpiryPolicy(TerminusExpiryPolicy expiryPolicy) {
+    public Target setExpiryPolicy(TerminusExpiryPolicy expiryPolicy) {
         this.expiryPolicy = expiryPolicy == null ? TerminusExpiryPolicy.SESSION_END : expiryPolicy;
+        return this;
     }
 
     public UnsignedInteger getTimeout() {
         return timeout;
     }
 
-    public void setTimeout(UnsignedInteger timeout) {
+    public Target setTimeout(UnsignedInteger timeout) {
         this.timeout = timeout;
+        return this;
     }
 
     public boolean getDynamic() {
         return dynamic;
     }
 
-    public void setDynamic(boolean dynamic) {
+    public Target setDynamic(boolean dynamic) {
         this.dynamic = dynamic;
+        return this;
     }
 
     public Map<Symbol, Object> getDynamicNodeProperties() {
         return dynamicNodeProperties;
     }
 
-    public void setDynamicNodeProperties(Map<Symbol, Object> dynamicNodeProperties) {
+    public Target setDynamicNodeProperties(Map<Symbol, Object> dynamicNodeProperties) {
         this.dynamicNodeProperties = dynamicNodeProperties;
+        return this;
     }
 
     public Symbol[] getCapabilities() {
         return capabilities;
     }
 
-    public final void setCapabilities(Symbol... capabilities) {
+    public Target setCapabilities(Symbol... capabilities) {
         this.capabilities = capabilities;
+        return this;
     }
 
     @Override

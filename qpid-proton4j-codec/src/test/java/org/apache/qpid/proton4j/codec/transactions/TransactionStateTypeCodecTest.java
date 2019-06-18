@@ -28,6 +28,8 @@ import java.io.IOException;
 
 import org.apache.qpid.proton4j.amqp.Binary;
 import org.apache.qpid.proton4j.amqp.messaging.Accepted;
+import org.apache.qpid.proton4j.amqp.messaging.Rejected;
+import org.apache.qpid.proton4j.amqp.messaging.Released;
 import org.apache.qpid.proton4j.amqp.transactions.TransactionalState;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
@@ -179,5 +181,36 @@ public class TransactionStateTypeCodecTest extends CodecTestSupport {
             decoder.readObject(buffer, decoderState);
             fail("Should not decode type with invalid encoding");
         } catch (IOException ex) {}
+    }
+
+    @Test
+    public void testEncodeDecodeArray() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        TransactionalState[] array = new TransactionalState[3];
+
+        array[0] = new TransactionalState();
+        array[1] = new TransactionalState();
+        array[2] = new TransactionalState();
+
+        array[0].setTxnId(new Binary(new byte[] {0})).setOutcome(Accepted.getInstance());
+        array[1].setTxnId(new Binary(new byte[] {1})).setOutcome(Released.getInstance());
+        array[2].setTxnId(new Binary(new byte[] {2})).setOutcome(new Rejected());
+
+        encoder.writeObject(buffer, encoderState, array);
+
+        final Object result = decoder.readObject(buffer, decoderState);
+
+        assertTrue(result.getClass().isArray());
+        assertEquals(TransactionalState.class, result.getClass().getComponentType());
+
+        TransactionalState[] resultArray = (TransactionalState[]) result;
+
+        for (int i = 0; i < resultArray.length; ++i) {
+            assertNotNull(resultArray[i]);
+            assertTrue(resultArray[i] instanceof TransactionalState);
+            assertEquals(array[i].getTxnId(), resultArray[i].getTxnId());
+            assertEquals(array[i].getOutcome().getClass(), resultArray[i].getOutcome().getClass());
+        }
     }
 }

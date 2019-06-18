@@ -212,4 +212,34 @@ public class RejectedTypeCodecTest  extends CodecTestSupport {
             fail("Should not be able to skip type with invalid encoding");
         } catch (IOException ex) {}
     }
+
+    @Test
+    public void testEncodeDecodeArray() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        Rejected[] array = new Rejected[3];
+
+        array[0] = new Rejected();
+        array[1] = new Rejected();
+        array[2] = new Rejected();
+
+        array[0].setError(new ErrorCondition(AmqpError.DECODE_ERROR, "1"));
+        array[0].setError(new ErrorCondition(AmqpError.FRAME_SIZE_TOO_SMALL, "2"));
+        array[0].setError(new ErrorCondition(AmqpError.INVALID_FIELD, "3"));
+
+        encoder.writeObject(buffer, encoderState, array);
+
+        final Object result = decoder.readObject(buffer, decoderState);
+
+        assertTrue(result.getClass().isArray());
+        assertEquals(Rejected.class, result.getClass().getComponentType());
+
+        Rejected[] resultArray = (Rejected[]) result;
+
+        for (int i = 0; i < resultArray.length; ++i) {
+            assertNotNull(resultArray[i]);
+            assertTrue(resultArray[i] instanceof Rejected);
+            assertEquals(array[i].getError(), resultArray[i].getError());
+        }
+    }
 }

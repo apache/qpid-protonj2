@@ -32,20 +32,22 @@ public final class Discharge {
         return txnId;
     }
 
-    public void setTxnId(Binary txnId) {
+    public Discharge setTxnId(Binary txnId) {
         if (txnId == null) {
             throw new NullPointerException("the txn-id field is mandatory");
         }
 
         this.txnId = txnId;
+        return this;
     }
 
     public boolean getFail() {
         return fail;
     }
 
-    public void setFail(boolean fail) {
+    public Discharge setFail(boolean fail) {
         this.fail = fail;
+        return this;
     }
 
     @Override

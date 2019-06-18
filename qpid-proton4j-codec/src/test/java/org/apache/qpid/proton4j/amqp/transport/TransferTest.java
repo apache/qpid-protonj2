@@ -17,6 +17,7 @@
 package org.apache.qpid.proton4j.amqp.transport;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
@@ -32,6 +33,25 @@ public class TransferTest {
     @Test
     public void testToStringOnFreshInstance() {
         assertNotNull(new Transfer().toString());
+    }
+
+    @Test
+    public void testInitialState() {
+        Transfer transfer = new Transfer();
+
+        assertEquals(0, transfer.getElementCount());
+        assertTrue(transfer.isEmpty());
+        assertFalse(transfer.hasAborted());
+        assertFalse(transfer.hasBatchable());
+        assertFalse(transfer.hasDeliveryId());
+        assertFalse(transfer.hasDeliveryTag());
+        assertFalse(transfer.hasHandle());
+        assertFalse(transfer.hasMessageFormat());
+        assertFalse(transfer.hasMore());
+        assertFalse(transfer.hasRcvSettleMode());
+        assertFalse(transfer.hasResume());
+        assertFalse(transfer.hasSettled());
+        assertFalse(transfer.hasState());
     }
 
     @Test

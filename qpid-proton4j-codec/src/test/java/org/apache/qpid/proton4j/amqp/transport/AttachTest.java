@@ -17,6 +17,7 @@
 package org.apache.qpid.proton4j.amqp.transport;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -34,6 +35,27 @@ public class AttachTest {
     @Test
     public void testToStringOnFreshInstance() {
         assertNotNull(new Attach().toString());
+    }
+
+    @Test
+    public void testInitialState() {
+        Attach attach = new Attach();
+
+        assertEquals(0, attach.getElementCount());
+        assertTrue(attach.isEmpty());
+        assertFalse(attach.hasDesiredCapabilites());
+        assertFalse(attach.hasHandle());
+        assertFalse(attach.hasIncompleteUnsettled());
+        assertFalse(attach.hasInitialDeliveryCount());
+        assertFalse(attach.hasMaxMessageSize());
+        assertFalse(attach.hasName());
+        assertFalse(attach.hasOfferedCapabilites());
+        assertFalse(attach.hasProperties());
+        assertFalse(attach.hasReceiverSettleMode());
+        assertFalse(attach.hasRole());
+        assertFalse(attach.hasSenderSettleMode());
+        assertFalse(attach.hasSource());
+        assertFalse(attach.hasTarget());
     }
 
     @Test

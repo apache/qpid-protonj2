@@ -225,4 +225,34 @@ public class MessageAnnotationsTypeCodecTest extends CodecTestSupport {
             fail("Should not be able to skip type with invalid encoding");
         } catch (IOException ex) {}
     }
+
+    @Test
+    public void testEncodeDecodeArray() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        MessageAnnotations[] array = new MessageAnnotations[3];
+
+        Map<Symbol, Object> map = new HashMap<>();
+        map.put(Symbol.valueOf("1"), Boolean.TRUE);
+        map.put(Symbol.valueOf("2"), Boolean.FALSE);
+
+        array[0] = new MessageAnnotations(new HashMap<>());
+        array[1] = new MessageAnnotations(map);
+        array[2] = new MessageAnnotations(map);
+
+        encoder.writeObject(buffer, encoderState, array);
+
+        final Object result = decoder.readObject(buffer, decoderState);
+
+        assertTrue(result.getClass().isArray());
+        assertEquals(MessageAnnotations.class, result.getClass().getComponentType());
+
+        MessageAnnotations[] resultArray = (MessageAnnotations[]) result;
+
+        for (int i = 0; i < resultArray.length; ++i) {
+            assertNotNull(resultArray[i]);
+            assertTrue(resultArray[i] instanceof MessageAnnotations);
+            assertEquals(array[i].getValue(), resultArray[i].getValue());
+        }
+    }
 }

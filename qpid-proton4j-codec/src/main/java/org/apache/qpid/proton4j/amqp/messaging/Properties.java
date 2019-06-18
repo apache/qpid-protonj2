@@ -147,7 +147,7 @@ public final class Properties implements Section {
         return messageId;
     }
 
-    public void setMessageId(Object messageId) {
+    public Properties setMessageId(Object messageId) {
         if (messageId == null) {
             modified &= ~MESSAGE_ID;
         } else {
@@ -155,13 +155,14 @@ public final class Properties implements Section {
         }
 
         this.messageId = messageId;
+        return this;
     }
 
     public Binary getUserId() {
         return userId;
     }
 
-    public void setUserId(Binary userId) {
+    public Properties setUserId(Binary userId) {
         if (userId == null) {
             modified &= ~USER_ID;
         } else {
@@ -169,13 +170,14 @@ public final class Properties implements Section {
         }
 
         this.userId = userId;
+        return this;
     }
 
     public String getTo() {
         return to;
     }
 
-    public void setTo(String to) {
+    public Properties setTo(String to) {
         if (to == null) {
             modified &= ~TO;
         } else {
@@ -183,13 +185,14 @@ public final class Properties implements Section {
         }
 
         this.to = to;
+        return this;
     }
 
     public String getSubject() {
         return subject;
     }
 
-    public void setSubject(String subject) {
+    public Properties setSubject(String subject) {
         if (subject == null) {
             modified &= ~SUBJECT;
         } else {
@@ -197,13 +200,14 @@ public final class Properties implements Section {
         }
 
         this.subject = subject;
+        return this;
     }
 
     public String getReplyTo() {
         return replyTo;
     }
 
-    public void setReplyTo(String replyTo) {
+    public Properties setReplyTo(String replyTo) {
         if (replyTo == null) {
             modified &= ~REPLY_TO;
         } else {
@@ -211,13 +215,14 @@ public final class Properties implements Section {
         }
 
         this.replyTo = replyTo;
+        return this;
     }
 
     public Object getCorrelationId() {
         return correlationId;
     }
 
-    public void setCorrelationId(Object correlationId) {
+    public Properties setCorrelationId(Object correlationId) {
         if (correlationId == null) {
             modified &= ~CORRELATION_ID;
         } else {
@@ -225,13 +230,14 @@ public final class Properties implements Section {
         }
 
         this.correlationId = correlationId;
+        return this;
     }
 
     public String getContentType() {
         return contentType;
     }
 
-    public void setContentType(String contentType) {
+    public Properties setContentType(String contentType) {
         if (contentType == null) {
             modified &= ~CONTENT_TYPE;
         } else {
@@ -239,13 +245,14 @@ public final class Properties implements Section {
         }
 
         this.contentType = contentType;
+        return this;
     }
 
     public String getContentEncoding() {
         return contentEncoding;
     }
 
-    public void setContentEncoding(String contentEncoding) {
+    public Properties setContentEncoding(String contentEncoding) {
         if (contentEncoding == null) {
             modified &= ~CONTENT_ENCODING;
         } else {
@@ -253,15 +260,17 @@ public final class Properties implements Section {
         }
 
         this.contentEncoding = contentEncoding;
+        return this;
     }
 
     public long getAbsoluteExpiryTime() {
         return absoluteExpiryTime;
     }
 
-    public void setAbsoluteExpiryTime(long absoluteExpiryTime) {
+    public Properties setAbsoluteExpiryTime(long absoluteExpiryTime) {
         modified |= ABSOLUTE_EXPIRY;
         this.absoluteExpiryTime = absoluteExpiryTime;
+        return this;
     }
 
     public void clearAbsoluteExpiryTime() {
@@ -273,9 +282,10 @@ public final class Properties implements Section {
         return creationTime;
     }
 
-    public void setCreationTime(long creationTime) {
+    public Properties setCreationTime(long creationTime) {
         modified |= CREATION_TIME;
         this.creationTime = creationTime;
+        return this;
     }
 
     public void clearCreationTime() {
@@ -287,7 +297,7 @@ public final class Properties implements Section {
         return groupId;
     }
 
-    public void setGroupId(String groupId) {
+    public Properties setGroupId(String groupId) {
         if (groupId == null) {
             modified &= ~GROUP_ID;
         } else {
@@ -295,13 +305,14 @@ public final class Properties implements Section {
         }
 
         this.groupId = groupId;
+        return this;
     }
 
     public long getGroupSequence() {
         return groupSequence;
     }
 
-    public void setGroupSequence(long groupSequence) {
+    public Properties setGroupSequence(long groupSequence) {
         if (groupSequence < 0 || groupSequence > UnsignedInteger.MAX_VALUE.longValue()) {
             throw new IllegalArgumentException("Group Sequence value given is out of range: " + groupSequence);
         } else {
@@ -309,6 +320,7 @@ public final class Properties implements Section {
         }
 
         this.groupSequence = groupSequence;
+        return this;
     }
 
     public void clearGroupSequence() {
@@ -320,7 +332,7 @@ public final class Properties implements Section {
         return replyToGroupId;
     }
 
-    public void setReplyToGroupId(String replyToGroupId) {
+    public Properties setReplyToGroupId(String replyToGroupId) {
         if (replyToGroupId == null) {
             modified &= ~REPLY_TO_GROUP_ID;
         } else {
@@ -328,6 +340,7 @@ public final class Properties implements Section {
         }
 
         this.replyToGroupId = replyToGroupId;
+        return this;
     }
 
     @Override

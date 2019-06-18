@@ -19,6 +19,7 @@ package org.apache.qpid.proton4j.codec.primitives;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
@@ -27,6 +28,7 @@ import org.apache.qpid.proton4j.amqp.UnsignedByte;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.codec.CodecTestSupport;
+import org.apache.qpid.proton4j.codec.EncodingCodes;
 import org.junit.Test;
 
 public class UnsignedByteTypeCodecTest extends CodecTestSupport {
@@ -119,5 +121,72 @@ public class UnsignedByteTypeCodecTest extends CodecTestSupport {
 
         UnsignedByte[] array = (UnsignedByte[]) result;
         assertEquals(source.length, array.length);
+    }
+
+    @Test
+    public void testDecodeEncodedBytes() throws Exception {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        buffer.writeByte(EncodingCodes.UBYTE);
+        buffer.writeByte(0);
+        buffer.writeByte(EncodingCodes.UBYTE);
+        buffer.writeByte(127);
+        buffer.writeByte(EncodingCodes.UBYTE);
+        buffer.writeByte(255);
+
+        UnsignedByte result1 = decoder.readUnsignedByte(buffer, decoderState);
+        UnsignedByte result2 = decoder.readUnsignedByte(buffer, decoderState);
+        UnsignedByte result3 = decoder.readUnsignedByte(buffer, decoderState);
+
+        assertEquals(UnsignedByte.valueOf((byte) 0), result1);
+        assertEquals(UnsignedByte.valueOf((byte) 127), result2);
+        assertEquals(UnsignedByte.valueOf((byte) 255), result3);
+    }
+
+    @Test
+    public void testDecodeEncodedBytesAsPrimitive() throws Exception {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        buffer.writeByte(EncodingCodes.UBYTE);
+        buffer.writeByte(0);
+        buffer.writeByte(EncodingCodes.UBYTE);
+        buffer.writeByte(127);
+        buffer.writeByte(EncodingCodes.UBYTE);
+        buffer.writeByte(255);
+
+        byte result1 = decoder.readUnsignedByte(buffer, decoderState, (byte) 1);
+        byte result2 = decoder.readUnsignedByte(buffer, decoderState, (byte) 105);
+        byte result3 = decoder.readUnsignedByte(buffer, decoderState, (byte) 200);
+
+        assertEquals((byte) 0, result1);
+        assertEquals((byte) 127, result2);
+        assertEquals((byte) 255, result3);
+    }
+
+    @Test
+    public void testDecodeBooleanFromNullEncoding() throws Exception {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        encoder.writeUnsignedByte(buffer, encoderState, (byte) 1);
+        encoder.writeNull(buffer, encoderState);
+
+        UnsignedByte result1 = decoder.readUnsignedByte(buffer, decoderState);
+        UnsignedByte result2 = decoder.readUnsignedByte(buffer, decoderState);
+
+        assertEquals(UnsignedByte.valueOf((byte) 1), result1);
+        assertNull(result2);
+    }
+
+    @Test
+    public void testDecodeBooleanAsPrimitiveWithDefault() throws Exception {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        encoder.writeUnsignedByte(buffer, encoderState, (byte) 27);
+        encoder.writeNull(buffer, encoderState);
+
+        byte result = decoder.readUnsignedByte(buffer, decoderState, (byte) 0);
+        assertEquals((byte) 27, result);
+        result = decoder.readUnsignedByte(buffer, decoderState, (byte) 127);
+        assertEquals((byte) 127, result);
     }
 }

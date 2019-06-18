@@ -33,28 +33,31 @@ public final class SaslInit implements SaslPerformative {
         return mechanism;
     }
 
-    public void setMechanism(Symbol mechanism) {
+    public SaslInit setMechanism(Symbol mechanism) {
         if (mechanism == null) {
             throw new NullPointerException("the mechanism field is mandatory");
         }
 
         this.mechanism = mechanism;
+        return this;
     }
 
     public Binary getInitialResponse() {
         return initialResponse;
     }
 
-    public void setInitialResponse(Binary initialResponse) {
+    public SaslInit setInitialResponse(Binary initialResponse) {
         this.initialResponse = initialResponse;
+        return this;
     }
 
     public String getHostname() {
         return hostname;
     }
 
-    public void setHostname(String hostname) {
+    public SaslInit setHostname(String hostname) {
         this.hostname = hostname;
+        return this;
     }
 
     @Override

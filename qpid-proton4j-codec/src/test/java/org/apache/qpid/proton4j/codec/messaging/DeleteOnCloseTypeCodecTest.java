@@ -185,4 +185,29 @@ public class DeleteOnCloseTypeCodecTest  extends CodecTestSupport {
             fail("Should not be able to skip type with invalid encoding");
         } catch (IOException ex) {}
     }
+
+    @Test
+    public void testEncodeDecodeArray() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        DeleteOnClose[] array = new DeleteOnClose[3];
+
+        array[0] = DeleteOnClose.getInstance();
+        array[1] = DeleteOnClose.getInstance();
+        array[2] = DeleteOnClose.getInstance();
+
+        encoder.writeObject(buffer, encoderState, array);
+
+        final Object result = decoder.readObject(buffer, decoderState);
+
+        assertTrue(result.getClass().isArray());
+        assertEquals(DeleteOnClose.class, result.getClass().getComponentType());
+
+        DeleteOnClose[] resultArray = (DeleteOnClose[]) result;
+
+        for (int i = 0; i < resultArray.length; ++i) {
+            assertNotNull(resultArray[i]);
+            assertTrue(resultArray[i] instanceof DeleteOnClose);
+        }
+    }
 }

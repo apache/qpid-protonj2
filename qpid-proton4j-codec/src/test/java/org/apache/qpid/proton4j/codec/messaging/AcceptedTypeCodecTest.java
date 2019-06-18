@@ -202,4 +202,29 @@ public class AcceptedTypeCodecTest  extends CodecTestSupport {
         assertFalse(modified.getUndeliverableHere());
         assertFalse(modified.getDeliveryFailed());
     }
+
+    @Test
+    public void testEncodeDecodeArray() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        Accepted[] array = new Accepted[3];
+
+        array[0] = Accepted.getInstance();
+        array[1] = Accepted.getInstance();
+        array[2] = Accepted.getInstance();
+
+        encoder.writeObject(buffer, encoderState, array);
+
+        final Object result = decoder.readObject(buffer, decoderState);
+
+        assertTrue(result.getClass().isArray());
+        assertEquals(Accepted.class, result.getClass().getComponentType());
+
+        Accepted[] resultArray = (Accepted[]) result;
+
+        for (int i = 0; i < resultArray.length; ++i) {
+            assertNotNull(resultArray[i]);
+            assertTrue(resultArray[i] instanceof Accepted);
+        }
+    }
 }

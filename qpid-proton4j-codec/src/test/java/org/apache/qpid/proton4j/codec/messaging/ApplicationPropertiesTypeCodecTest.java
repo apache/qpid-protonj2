@@ -222,4 +222,34 @@ public class ApplicationPropertiesTypeCodecTest extends CodecTestSupport {
             fail("Should not be able to skip type with invalid encoding");
         } catch (IOException ex) {}
     }
+
+    @Test
+    public void testEncodeDecodeArray() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        ApplicationProperties[] array = new ApplicationProperties[3];
+
+        Map<String, Object> map = new HashMap<>();
+        map.put("1", Boolean.TRUE);
+        map.put("2", Boolean.FALSE);
+
+        array[0] = new ApplicationProperties(new HashMap<>());
+        array[1] = new ApplicationProperties(map);
+        array[2] = new ApplicationProperties(map);
+
+        encoder.writeObject(buffer, encoderState, array);
+
+        final Object result = decoder.readObject(buffer, decoderState);
+
+        assertTrue(result.getClass().isArray());
+        assertEquals(ApplicationProperties.class, result.getClass().getComponentType());
+
+        ApplicationProperties[] resultArray = (ApplicationProperties[]) result;
+
+        for (int i = 0; i < resultArray.length; ++i) {
+            assertNotNull(resultArray[i]);
+            assertTrue(resultArray[i] instanceof ApplicationProperties);
+            assertEquals(array[i].getValue(), resultArray[i].getValue());
+        }
+    }
 }

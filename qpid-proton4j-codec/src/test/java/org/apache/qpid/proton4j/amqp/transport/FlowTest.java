@@ -17,6 +17,7 @@
 package org.apache.qpid.proton4j.amqp.transport;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
@@ -32,6 +33,25 @@ public class FlowTest {
     @Test
     public void testToStringOnFreshInstance() {
         assertNotNull(new Flow().toString());
+    }
+
+    @Test
+    public void testInitialState() {
+        Flow flow = new Flow();
+
+        assertEquals(0, flow.getElementCount());
+        assertTrue(flow.isEmpty());
+        assertFalse(flow.hasAvailable());
+        assertFalse(flow.hasDeliveryCount());
+        assertFalse(flow.hasDrain());
+        assertFalse(flow.hasEcho());
+        assertFalse(flow.hasHandle());
+        assertFalse(flow.hasIncomingWindow());
+        assertFalse(flow.hasLinkCredit());
+        assertFalse(flow.hasNextIncomingId());
+        assertFalse(flow.hasNextOutgoingId());
+        assertFalse(flow.hasOutgoingWindow());
+        assertFalse(flow.hasProperties());
     }
 
     @Test

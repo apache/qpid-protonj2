@@ -183,7 +183,7 @@ public class DeliveryAnnotationsTypeCodecTest extends CodecTestSupport {
         DeliveryAnnotations readAnnotations = (DeliveryAnnotations) result;
         assertNull(readAnnotations.getValue());
     }
-    
+
     @Test
     public void testSkipValueWithInvalidList32Type() throws IOException {
         doTestSkipValueWithInvalidListType(EncodingCodes.LIST32);
@@ -224,5 +224,35 @@ public class DeliveryAnnotationsTypeCodecTest extends CodecTestSupport {
             typeDecoder.skipValue(buffer, decoderState);
             fail("Should not be able to skip type with invalid encoding");
         } catch (IOException ex) {}
+    }
+
+    @Test
+    public void testEncodeDecodeArray() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        DeliveryAnnotations[] array = new DeliveryAnnotations[3];
+
+        Map<Symbol, Object> map = new HashMap<>();
+        map.put(Symbol.valueOf("1"), Boolean.TRUE);
+        map.put(Symbol.valueOf("2"), Boolean.FALSE);
+
+        array[0] = new DeliveryAnnotations(new HashMap<>());
+        array[1] = new DeliveryAnnotations(map);
+        array[2] = new DeliveryAnnotations(map);
+
+        encoder.writeObject(buffer, encoderState, array);
+
+        final Object result = decoder.readObject(buffer, decoderState);
+
+        assertTrue(result.getClass().isArray());
+        assertEquals(DeliveryAnnotations.class, result.getClass().getComponentType());
+
+        DeliveryAnnotations[] resultArray = (DeliveryAnnotations[]) result;
+
+        for (int i = 0; i < resultArray.length; ++i) {
+            assertNotNull(resultArray[i]);
+            assertTrue(resultArray[i] instanceof DeliveryAnnotations);
+            assertEquals(array[i].getValue(), resultArray[i].getValue());
+        }
     }
 }

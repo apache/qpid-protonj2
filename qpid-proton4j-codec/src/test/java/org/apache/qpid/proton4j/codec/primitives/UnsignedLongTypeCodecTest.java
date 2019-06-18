@@ -19,6 +19,7 @@ package org.apache.qpid.proton4j.codec.primitives;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
@@ -27,6 +28,7 @@ import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.codec.CodecTestSupport;
+import org.apache.qpid.proton4j.codec.EncodingCodes;
 import org.junit.Test;
 
 public class UnsignedLongTypeCodecTest extends CodecTestSupport {
@@ -119,5 +121,126 @@ public class UnsignedLongTypeCodecTest extends CodecTestSupport {
 
         UnsignedLong[] array = (UnsignedLong[]) result;
         assertEquals(source.length, array.length);
+    }
+
+    @Test
+    public void testDecodeEncodedBytes() throws Exception {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        buffer.writeByte(EncodingCodes.ULONG0);
+        buffer.writeByte(EncodingCodes.SMALLULONG);
+        buffer.writeByte(127);
+        buffer.writeByte(EncodingCodes.ULONG);
+        buffer.writeLong(255);
+
+        UnsignedLong result1 = decoder.readUnsignedLong(buffer, decoderState);
+        UnsignedLong result2 = decoder.readUnsignedLong(buffer, decoderState);
+        UnsignedLong result3 = decoder.readUnsignedLong(buffer, decoderState);
+
+        assertEquals(UnsignedLong.valueOf(0), result1);
+        assertEquals(UnsignedLong.valueOf(127), result2);
+        assertEquals(UnsignedLong.valueOf(255), result3);
+    }
+
+    @Test
+    public void testDecodeEncodedBytesAsPrimitive() throws Exception {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        buffer.writeByte(EncodingCodes.ULONG0);
+        buffer.writeByte(EncodingCodes.SMALLULONG);
+        buffer.writeByte(127);
+        buffer.writeByte(EncodingCodes.ULONG);
+        buffer.writeLong(255);
+
+        long result1 = decoder.readUnsignedLong(buffer, decoderState, 1);
+        long result2 = decoder.readUnsignedLong(buffer, decoderState, 105);
+        long result3 = decoder.readUnsignedLong(buffer, decoderState, 200);
+
+        assertEquals(0, result1);
+        assertEquals(127, result2);
+        assertEquals(255, result3);
+    }
+
+    @Test
+    public void testDecodeBooleanFromNullEncoding() throws Exception {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        encoder.writeUnsignedLong(buffer, encoderState, (byte) 1);
+        encoder.writeNull(buffer, encoderState);
+
+        UnsignedLong result1 = decoder.readUnsignedLong(buffer, decoderState);
+        UnsignedLong result2 = decoder.readUnsignedLong(buffer, decoderState);
+
+        assertEquals(UnsignedLong.valueOf(1), result1);
+        assertNull(result2);
+    }
+
+    @Test
+    public void testDecodeBooleanAsPrimitiveWithDefault() throws Exception {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        encoder.writeUnsignedLong(buffer, encoderState, 27);
+        encoder.writeNull(buffer, encoderState);
+
+        long result = decoder.readUnsignedLong(buffer, decoderState, 0);
+        assertEquals(27, result);
+        result = decoder.readUnsignedLong(buffer, decoderState, 127);
+        assertEquals(127, result);
+    }
+
+    @Test
+    public void testWriteLongZeroEncodesAsOneByte() throws Exception {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        encoder.writeUnsignedLong(buffer, encoderState, 0l);
+        assertEquals(1, buffer.getReadableBytes());
+        assertEquals(EncodingCodes.ULONG0, buffer.readByte());
+    }
+
+    @Test
+    public void testWriteLongValuesInSmallULongRange() throws Exception {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        encoder.writeUnsignedLong(buffer, encoderState, 1l);
+        assertEquals(2, buffer.getReadableBytes());
+        assertEquals(EncodingCodes.SMALLULONG, buffer.readByte());
+        assertEquals((byte) 1, buffer.readByte());
+        encoder.writeUnsignedLong(buffer, encoderState, 64l);
+        assertEquals(2, buffer.getReadableBytes());
+        assertEquals(EncodingCodes.SMALLULONG, buffer.readByte());
+        assertEquals((byte) 64, buffer.readByte());
+        encoder.writeUnsignedLong(buffer, encoderState, 255l);
+        assertEquals(2, buffer.getReadableBytes());
+        assertEquals(EncodingCodes.SMALLULONG, buffer.readByte());
+        assertEquals((byte) 255, buffer.readByte());
+    }
+
+    @Test
+    public void testWriteLongValuesOutsideOfSmallULongRange() throws Exception {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        encoder.writeUnsignedLong(buffer, encoderState, 314l);
+        assertEquals(9, buffer.getReadableBytes());
+        assertEquals(EncodingCodes.ULONG, buffer.readByte());
+        assertEquals(314l, buffer.readLong());
+    }
+
+    @Test
+    public void testWriteByteZeroEncodesAsOneByte() throws Exception {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        encoder.writeUnsignedLong(buffer, encoderState, (byte) 0);
+        assertEquals(1, buffer.getReadableBytes());
+        assertEquals(EncodingCodes.ULONG0, buffer.readByte());
+    }
+
+    @Test
+    public void testWriteByteInSmallULongRange() throws Exception {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        encoder.writeUnsignedLong(buffer, encoderState, (byte) 64);
+        assertEquals(2, buffer.getReadableBytes());
+        assertEquals(EncodingCodes.SMALLULONG, buffer.readByte());
+        assertEquals((byte) 64, buffer.readByte());
     }
 }

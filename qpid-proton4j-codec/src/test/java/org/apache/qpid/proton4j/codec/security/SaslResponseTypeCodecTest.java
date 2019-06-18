@@ -23,6 +23,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.io.IOException;
+import java.util.Random;
 
 import org.apache.qpid.proton4j.amqp.Binary;
 import org.apache.qpid.proton4j.amqp.security.SaslResponse;
@@ -72,6 +73,26 @@ public class SaslResponseTypeCodecTest extends CodecTestSupport {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
 
         byte[] response = new byte[] { 1, 2, 3, 4 };
+
+        SaslResponse input = new SaslResponse();
+        input.setResponse(new Binary(response));
+
+        encoder.writeObject(buffer, encoderState, input);
+
+        final SaslResponse result = (SaslResponse) decoder.readObject(buffer, decoderState);
+
+        assertArrayEquals(response, result.getResponse().getArray());
+    }
+
+    @Test
+    public void testEncodeDecodeTypeWithLargeResponseBlob() throws Exception {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        byte[] response = new byte[512];
+
+        Random rand = new Random();
+        rand.setSeed(System.currentTimeMillis());
+        rand.nextBytes(response);
 
         SaslResponse input = new SaslResponse();
         input.setResponse(new Binary(response));
@@ -179,5 +200,35 @@ public class SaslResponseTypeCodecTest extends CodecTestSupport {
             decoder.readObject(buffer, decoderState);
             fail("Should not decode type with invalid encoding");
         } catch (IOException ex) {}
+    }
+
+    @Test
+    public void testEncodeDecodeArray() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        SaslResponse[] array = new SaslResponse[3];
+
+        array[0] = new SaslResponse();
+        array[1] = new SaslResponse();
+        array[2] = new SaslResponse();
+
+        array[0].setResponse(new Binary(new byte[] {0}));
+        array[1].setResponse(new Binary(new byte[] {1}));
+        array[2].setResponse(new Binary(new byte[] {2}));
+
+        encoder.writeObject(buffer, encoderState, array);
+
+        final Object result = decoder.readObject(buffer, decoderState);
+
+        assertTrue(result.getClass().isArray());
+        assertEquals(SaslResponse.class, result.getClass().getComponentType());
+
+        SaslResponse[] resultArray = (SaslResponse[]) result;
+
+        for (int i = 0; i < resultArray.length; ++i) {
+            assertNotNull(resultArray[i]);
+            assertTrue(resultArray[i] instanceof SaslResponse);
+            assertEquals(array[i].getResponse(), resultArray[i].getResponse());
+        }
     }
 }

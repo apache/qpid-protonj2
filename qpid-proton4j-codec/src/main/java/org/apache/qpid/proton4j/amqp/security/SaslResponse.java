@@ -31,12 +31,13 @@ public final class SaslResponse implements SaslPerformative {
         return response;
     }
 
-    public void setResponse(Binary response) {
+    public SaslResponse setResponse(Binary response) {
         if (response == null) {
             throw new NullPointerException("the response field is mandatory");
         }
 
         this.response = response;
+        return this;
     }
 
     @Override

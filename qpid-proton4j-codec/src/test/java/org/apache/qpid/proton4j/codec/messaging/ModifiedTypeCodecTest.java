@@ -257,4 +257,35 @@ public class ModifiedTypeCodecTest  extends CodecTestSupport {
             fail("Should not be able to skip type with invalid encoding");
         } catch (IOException ex) {}
     }
+
+    @Test
+    public void testEncodeDecodeArray() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        Modified[] array = new Modified[3];
+
+        array[0] = new Modified();
+        array[1] = new Modified();
+        array[2] = new Modified();
+
+        array[0].setDeliveryFailed(true).setUndeliverableHere(true);
+        array[1].setDeliveryFailed(false).setUndeliverableHere(true);
+        array[2].setDeliveryFailed(false).setUndeliverableHere(false);
+
+        encoder.writeObject(buffer, encoderState, array);
+
+        final Object result = decoder.readObject(buffer, decoderState);
+
+        assertTrue(result.getClass().isArray());
+        assertEquals(Modified.class, result.getClass().getComponentType());
+
+        Modified[] resultArray = (Modified[]) result;
+
+        for (int i = 0; i < resultArray.length; ++i) {
+            assertNotNull(resultArray[i]);
+            assertTrue(resultArray[i] instanceof Modified);
+            assertEquals(array[i].getDeliveryFailed(), resultArray[i].getDeliveryFailed());
+            assertEquals(array[i].getUndeliverableHere(), resultArray[i].getUndeliverableHere());
+        }
+    }
 }

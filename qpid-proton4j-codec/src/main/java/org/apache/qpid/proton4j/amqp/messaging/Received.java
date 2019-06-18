@@ -33,16 +33,18 @@ public final class Received implements DeliveryState {
         return sectionNumber;
     }
 
-    public void setSectionNumber(UnsignedInteger sectionNumber) {
+    public Received setSectionNumber(UnsignedInteger sectionNumber) {
         this.sectionNumber = sectionNumber;
+        return this;
     }
 
     public UnsignedLong getSectionOffset() {
         return sectionOffset;
     }
 
-    public void setSectionOffset(UnsignedLong sectionOffset) {
+    public Received setSectionOffset(UnsignedLong sectionOffset) {
         this.sectionOffset = sectionOffset;
+        return this;
     }
 
     @Override

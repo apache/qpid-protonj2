@@ -185,4 +185,29 @@ public class ReleasedTypeCodecTest  extends CodecTestSupport {
             fail("Should not be able to skip type with invalid encoding");
         } catch (IOException ex) {}
     }
+
+    @Test
+    public void testEncodeDecodeArray() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        Released[] array = new Released[3];
+
+        array[0] = Released.getInstance();
+        array[1] = Released.getInstance();
+        array[2] = Released.getInstance();
+
+        encoder.writeObject(buffer, encoderState, array);
+
+        final Object result = decoder.readObject(buffer, decoderState);
+
+        assertTrue(result.getClass().isArray());
+        assertEquals(Released.class, result.getClass().getComponentType());
+
+        Released[] resultArray = (Released[]) result;
+
+        for (int i = 0; i < resultArray.length; ++i) {
+            assertNotNull(resultArray[i]);
+            assertTrue(resultArray[i] instanceof Released);
+        }
+    }
 }

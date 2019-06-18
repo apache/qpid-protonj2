@@ -29,6 +29,7 @@ import java.util.Map;
 
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedInteger;
+import org.apache.qpid.proton4j.amqp.messaging.Accepted;
 import org.apache.qpid.proton4j.amqp.messaging.Modified;
 import org.apache.qpid.proton4j.amqp.messaging.Released;
 import org.apache.qpid.proton4j.amqp.messaging.Source;
@@ -209,5 +210,37 @@ public class SourceTypeCodecTest extends CodecTestSupport {
            typeDecoder.skipValue(buffer, decoderState);
            fail("Should not be able to skip type with invalid encoding");
        } catch (IOException ex) {}
+   }
+
+   @Test
+   public void testEncodeDecodeArray() throws IOException {
+       ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+       Source[] array = new Source[3];
+
+       array[0] = new Source();
+       array[1] = new Source();
+       array[2] = new Source();
+
+       array[0].setAddress("test-1").setDynamic(true).setDefaultOutcome(Accepted.getInstance());
+       array[1].setAddress("test-2").setDynamic(false).setDefaultOutcome(Released.getInstance());
+       array[2].setAddress("test-3").setDynamic(true).setDefaultOutcome(Accepted.getInstance());
+
+       encoder.writeObject(buffer, encoderState, array);
+
+       final Object result = decoder.readObject(buffer, decoderState);
+
+       assertTrue(result.getClass().isArray());
+       assertEquals(Source.class, result.getClass().getComponentType());
+
+       Source[] resultArray = (Source[]) result;
+
+       for (int i = 0; i < resultArray.length; ++i) {
+           assertNotNull(resultArray[i]);
+           assertTrue(resultArray[i] instanceof Source);
+           assertEquals(array[i].getAddress(), resultArray[i].getAddress());
+           assertEquals(array[i].getDynamic(), resultArray[i].getDynamic());
+           assertEquals(array[i].getDefaultOutcome(), resultArray[i].getDefaultOutcome());
+       }
    }
 }

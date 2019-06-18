@@ -181,4 +181,34 @@ public class SaslMechanismsTypeCodecTest extends CodecTestSupport {
             fail("Should not decode type with invalid encoding");
         } catch (IOException ex) {}
     }
+
+    @Test
+    public void testEncodeDecodeArray() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        SaslMechanisms[] array = new SaslMechanisms[3];
+
+        array[0] = new SaslMechanisms();
+        array[1] = new SaslMechanisms();
+        array[2] = new SaslMechanisms();
+
+        array[0].setSaslServerMechanisms(Symbol.valueOf("ANONYMOUS"), Symbol.valueOf("PLAIN"), Symbol.valueOf("EXTERNAL"));
+        array[1].setSaslServerMechanisms(Symbol.valueOf("ANONYMOUS"), Symbol.valueOf("PLAIN"));
+        array[2].setSaslServerMechanisms(Symbol.valueOf("ANONYMOUS"));
+
+        encoder.writeObject(buffer, encoderState, array);
+
+        final Object result = decoder.readObject(buffer, decoderState);
+
+        assertTrue(result.getClass().isArray());
+        assertEquals(SaslMechanisms.class, result.getClass().getComponentType());
+
+        SaslMechanisms[] resultArray = (SaslMechanisms[]) result;
+
+        for (int i = 0; i < resultArray.length; ++i) {
+            assertNotNull(resultArray[i]);
+            assertTrue(resultArray[i] instanceof SaslMechanisms);
+            assertArrayEquals(array[i].getSaslServerMechanisms(), resultArray[i].getSaslServerMechanisms());
+        }
+    }
 }

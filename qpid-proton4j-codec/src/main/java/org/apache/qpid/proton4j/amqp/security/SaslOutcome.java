@@ -32,20 +32,22 @@ public final class SaslOutcome implements SaslPerformative {
         return code;
     }
 
-    public void setCode(SaslCode code) {
+    public SaslOutcome setCode(SaslCode code) {
         if (code == null) {
             throw new NullPointerException("the code field is mandatory");
         }
 
         this.code = code;
+        return this;
     }
 
     public Binary getAdditionalData() {
         return additionalData;
     }
 
-    public void setAdditionalData(Binary additionalData) {
+    public SaslOutcome setAdditionalData(Binary additionalData) {
         this.additionalData = additionalData;
+        return this;
     }
 
     @Override

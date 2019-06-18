@@ -162,4 +162,30 @@ public class DeclareTypeCodecTest extends CodecTestSupport {
             fail("Should not decode type with invalid encoding");
         } catch (IOException ex) {}
     }
+
+    @Test
+    public void testEncodeDecodeArray() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        Declare[] array = new Declare[3];
+
+        array[0] = new Declare();
+        array[1] = new Declare();
+        array[2] = new Declare();
+
+        encoder.writeObject(buffer, encoderState, array);
+
+        final Object result = decoder.readObject(buffer, decoderState);
+
+        assertTrue(result.getClass().isArray());
+        assertEquals(Declare.class, result.getClass().getComponentType());
+
+        Declare[] resultArray = (Declare[]) result;
+
+        for (int i = 0; i < resultArray.length; ++i) {
+            assertNotNull(resultArray[i]);
+            assertTrue(resultArray[i] instanceof Declare);
+            assertNull(array[i].getGlobalId());
+        }
+    }
 }

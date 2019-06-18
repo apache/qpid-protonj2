@@ -20,19 +20,66 @@ import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.io.IOException;
 
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.codec.CodecTestSupport;
+import org.apache.qpid.proton4j.codec.EncodingCodes;
 import org.junit.Test;
 
 /**
  * Test the BooleanTypeDecoder for correctness
  */
 public class BooleanTypeCodecTest extends CodecTestSupport {
+
+    @Test
+    public void testDecodeBooleanEncodedBytes() throws Exception {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        buffer.writeByte(EncodingCodes.BOOLEAN_TRUE);
+        buffer.writeByte(EncodingCodes.BOOLEAN);
+        buffer.writeByte(0);
+        buffer.writeByte(EncodingCodes.BOOLEAN_FALSE);
+        buffer.writeByte(EncodingCodes.BOOLEAN);
+        buffer.writeByte(1);
+
+        boolean result1 = decoder.readBoolean(buffer, decoderState);
+        boolean result2 = decoder.readBoolean(buffer, decoderState);
+        boolean result3 = decoder.readBoolean(buffer, decoderState);
+        boolean result4 = decoder.readBoolean(buffer, decoderState);
+
+        assertTrue(result1);
+        assertFalse(result2);
+        assertFalse(result3);
+        assertTrue(result4);
+    }
+
+    @Test
+    public void testDecodeBooleanEncodedBytesAsPrimtives() throws Exception {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        buffer.writeByte(EncodingCodes.BOOLEAN_TRUE);
+        buffer.writeByte(EncodingCodes.BOOLEAN);
+        buffer.writeByte(0);
+        buffer.writeByte(EncodingCodes.BOOLEAN_FALSE);
+        buffer.writeByte(EncodingCodes.BOOLEAN);
+        buffer.writeByte(1);
+
+        boolean result1 = decoder.readBoolean(buffer, decoderState, false);
+        boolean result2 = decoder.readBoolean(buffer, decoderState, true);
+        boolean result3 = decoder.readBoolean(buffer, decoderState, true);
+        boolean result4 = decoder.readBoolean(buffer, decoderState, false);
+
+        assertTrue(result1);
+        assertFalse(result2);
+        assertFalse(result3);
+        assertTrue(result4);
+    }
 
     @Test
     public void testDecodeBooleanTrue() throws Exception {
@@ -43,6 +90,12 @@ public class BooleanTypeCodecTest extends CodecTestSupport {
         Object result = decoder.readObject(buffer, decoderState);
         assertTrue(result instanceof Boolean);
         assertTrue(((Boolean) result).booleanValue());
+
+        encoder.writeBoolean(buffer, encoderState, true);
+
+        Boolean booleanResult = decoder.readBoolean(buffer, decoderState);
+        assertTrue(booleanResult.booleanValue());
+        assertEquals(Boolean.TRUE, booleanResult);
     }
 
     @Test
@@ -54,6 +107,43 @@ public class BooleanTypeCodecTest extends CodecTestSupport {
         Object result = decoder.readObject(buffer, decoderState);
         assertTrue(result instanceof Boolean);
         assertFalse(((Boolean) result).booleanValue());
+    }
+
+    @Test
+    public void testDecodeBooleanFromNullEncoding() throws Exception {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        encoder.writeBoolean(buffer, encoderState, true);
+        encoder.writeNull(buffer, encoderState);
+
+        boolean result = decoder.readBoolean(buffer, decoderState);
+        assertTrue(result);
+        assertNull(decoder.readBoolean(buffer, decoderState));
+    }
+
+    @Test
+    public void testDecodeBooleanAsPrimitiveWithDefault() throws Exception {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        encoder.writeBoolean(buffer, encoderState, true);
+        encoder.writeNull(buffer, encoderState);
+
+        boolean result = decoder.readBoolean(buffer, decoderState, false);
+        assertTrue(result);
+        result = decoder.readBoolean(buffer, decoderState, false);
+        assertFalse(result);
+    }
+
+    @Test
+    public void testDecodeBooleanFailsForNonBooleanType() throws Exception {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        encoder.writeLong(buffer, encoderState, 1l);
+
+        try {
+            decoder.readBoolean(buffer, decoderState);
+            fail("Should not read long as boolean value.");
+        } catch (IOException ioex) {}
     }
 
     @Test

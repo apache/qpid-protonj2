@@ -188,4 +188,35 @@ public class SaslOutcomeTypeCodecTest extends CodecTestSupport {
             fail("Should not decode type with invalid encoding");
         } catch (IOException ex) {}
     }
+
+    @Test
+    public void testEncodeDecodeArray() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        SaslOutcome[] array = new SaslOutcome[3];
+
+        array[0] = new SaslOutcome();
+        array[1] = new SaslOutcome();
+        array[2] = new SaslOutcome();
+
+        array[0].setCode(SaslCode.OK).setAdditionalData(new Binary(new byte[] {0}));
+        array[1].setCode(SaslCode.SYS_TEMP).setAdditionalData(new Binary(new byte[] {1}));
+        array[2].setCode(SaslCode.AUTH).setAdditionalData(new Binary(new byte[] {2}));
+
+        encoder.writeObject(buffer, encoderState, array);
+
+        final Object result = decoder.readObject(buffer, decoderState);
+
+        assertTrue(result.getClass().isArray());
+        assertEquals(SaslOutcome.class, result.getClass().getComponentType());
+
+        SaslOutcome[] resultArray = (SaslOutcome[]) result;
+
+        for (int i = 0; i < resultArray.length; ++i) {
+            assertNotNull(resultArray[i]);
+            assertTrue(resultArray[i] instanceof SaslOutcome);
+            assertEquals(array[i].getCode(), resultArray[i].getCode());
+            assertEquals(array[i].getAdditionalData(), resultArray[i].getAdditionalData());
+        }
+    }
 }

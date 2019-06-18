@@ -238,4 +238,35 @@ public class HeaderTypeCodecTest extends CodecTestSupport {
             fail("Should not be able to skip type with invalid encoding");
         } catch (IOException ex) {}
     }
+
+    @Test
+    public void testEncodeDecodeArray() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        Header[] array = new Header[3];
+
+        array[0] = new Header();
+        array[1] = new Header();
+        array[2] = new Header();
+
+        array[0].setPriority((byte) 1).setDeliveryCount(1);
+        array[1].setPriority((byte) 2).setDeliveryCount(2);
+        array[2].setPriority((byte) 3).setDeliveryCount(3);
+
+        encoder.writeObject(buffer, encoderState, array);
+
+        final Object result = decoder.readObject(buffer, decoderState);
+
+        assertTrue(result.getClass().isArray());
+        assertEquals(Header.class, result.getClass().getComponentType());
+
+        Header[] resultArray = (Header[]) result;
+
+        for (int i = 0; i < resultArray.length; ++i) {
+            assertNotNull(resultArray[i]);
+            assertTrue(resultArray[i] instanceof Header);
+            assertEquals(array[i].getPriority(), resultArray[i].getPriority());
+            assertEquals(array[i].getDeliveryCount(), resultArray[i].getDeliveryCount());
+        }
+    }
 }
