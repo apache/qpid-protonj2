@@ -29,6 +29,7 @@ import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.codec.CodecTestSupport;
 import org.apache.qpid.proton4j.codec.EncodingCodes;
+import org.apache.qpid.proton4j.codec.TypeDecoder;
 import org.junit.Test;
 
 public class UnsignedByteTypeCodecTest extends CodecTestSupport {
@@ -188,5 +189,32 @@ public class UnsignedByteTypeCodecTest extends CodecTestSupport {
         assertEquals((byte) 27, result);
         result = decoder.readUnsignedByte(buffer, decoderState, (byte) 127);
         assertEquals((byte) 127, result);
+    }
+
+    @Test
+    public void testSkipValue() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        for (int i = 0; i < 10; ++i) {
+            encoder.writeUnsignedByte(buffer, encoderState, UnsignedByte.valueOf((byte) i));
+        }
+
+        UnsignedByte expected = UnsignedByte.valueOf((byte) 42);
+
+        encoder.writeObject(buffer, encoderState, expected);
+
+        for (int i = 0; i < 10; ++i) {
+            TypeDecoder<?> typeDecoder = decoder.readNextTypeDecoder(buffer, decoderState);
+            assertEquals(UnsignedByte.class, typeDecoder.getTypeClass());
+            typeDecoder.skipValue(buffer, decoderState);
+        }
+
+        final Object result = decoder.readObject(buffer, decoderState);
+
+        assertNotNull(result);
+        assertTrue(result instanceof UnsignedByte);
+
+        UnsignedByte value = (UnsignedByte) result;
+        assertEquals(expected, value);
     }
 }

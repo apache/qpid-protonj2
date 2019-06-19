@@ -254,4 +254,36 @@ public class AttachTypeCodecTest extends CodecTestSupport {
             fail("Should not decode type with invalid encoding");
         } catch (IOException ex) {}
     }
+
+    @Test
+    public void testEncodeDecodeArray() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        Attach[] array = new Attach[3];
+
+        array[0] = new Attach();
+        array[1] = new Attach();
+        array[2] = new Attach();
+
+        array[0].setHandle(0).setName("0").setInitialDeliveryCount(0);
+        array[1].setHandle(1).setName("1").setInitialDeliveryCount(1);
+        array[2].setHandle(2).setName("2").setInitialDeliveryCount(2);
+
+        encoder.writeObject(buffer, encoderState, array);
+
+        final Object result = decoder.readObject(buffer, decoderState);
+
+        assertTrue(result.getClass().isArray());
+        assertEquals(Attach.class, result.getClass().getComponentType());
+
+        Attach[] resultArray = (Attach[]) result;
+
+        for (int i = 0; i < resultArray.length; ++i) {
+            assertNotNull(resultArray[i]);
+            assertTrue(resultArray[i] instanceof Attach);
+            assertEquals(array[i].getHandle(), resultArray[i].getHandle());
+            assertEquals(array[i].getName(), resultArray[i].getName());
+            assertEquals(array[i].getInitialDeliveryCount(), resultArray[i].getInitialDeliveryCount());
+        }
+    }
 }

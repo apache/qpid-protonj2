@@ -34,6 +34,7 @@ import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.codec.CodecTestSupport;
 import org.apache.qpid.proton4j.codec.EncodingCodes;
+import org.apache.qpid.proton4j.codec.TypeDecoder;
 import org.junit.Test;
 
 public class StringTypeCodecTest extends CodecTestSupport {
@@ -241,5 +242,32 @@ public class StringTypeCodecTest extends CodecTestSupport {
             }
         }
         return strings;
+    }
+
+    @Test
+    public void testSkipValue() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        for (int i = 0; i < 10; ++i) {
+            encoder.writeString(buffer, encoderState, "skipMe");
+        }
+
+        String expected = "expected-string-value";
+
+        encoder.writeObject(buffer, encoderState, expected);
+
+        for (int i = 0; i < 10; ++i) {
+            TypeDecoder<?> typeDecoder = decoder.readNextTypeDecoder(buffer, decoderState);
+            assertEquals(String.class, typeDecoder.getTypeClass());
+            typeDecoder.skipValue(buffer, decoderState);
+        }
+
+        final Object result = decoder.readObject(buffer, decoderState);
+
+        assertNotNull(result);
+        assertTrue(result instanceof String);
+
+        String value = (String) result;
+        assertEquals(expected, value);
     }
 }

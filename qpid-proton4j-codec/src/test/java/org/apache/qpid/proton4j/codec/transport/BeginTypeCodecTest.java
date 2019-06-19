@@ -238,4 +238,37 @@ public class BeginTypeCodecTest extends CodecTestSupport {
             fail("Should not decode type with invalid encoding");
         } catch (IOException ex) {}
     }
+
+    @Test
+    public void testEncodeDecodeArray() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        Begin[] array = new Begin[3];
+
+        array[0] = new Begin();
+        array[1] = new Begin();
+        array[2] = new Begin();
+
+        array[0].setNextOutgoingId(0).setRemoteChannel(0).setIncomingWindow(0).setOutgoingWindow(0);
+        array[1].setNextOutgoingId(1).setRemoteChannel(1).setIncomingWindow(1).setOutgoingWindow(1);
+        array[2].setNextOutgoingId(2).setRemoteChannel(2).setIncomingWindow(2).setOutgoingWindow(2);
+
+        encoder.writeObject(buffer, encoderState, array);
+
+        final Object result = decoder.readObject(buffer, decoderState);
+
+        assertTrue(result.getClass().isArray());
+        assertEquals(Begin.class, result.getClass().getComponentType());
+
+        Begin[] resultArray = (Begin[]) result;
+
+        for (int i = 0; i < resultArray.length; ++i) {
+            assertNotNull(resultArray[i]);
+            assertTrue(resultArray[i] instanceof Begin);
+            assertEquals(array[i].getNextOutgoingId(), resultArray[i].getNextOutgoingId());
+            assertEquals(array[i].getOutgoingWindow(), resultArray[i].getOutgoingWindow());
+            assertEquals(array[i].getIncomingWindow(), resultArray[i].getIncomingWindow());
+            assertEquals(array[i].getRemoteChannel(), resultArray[i].getRemoteChannel());
+        }
+    }
 }

@@ -459,4 +459,36 @@ public class OpenTypeCodecTest extends CodecTestSupport {
             fail("Should not decode type with invalid encoding");
         } catch (IOException ex) {}
     }
+
+    @Test
+    public void testEncodeDecodeArray() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        Open[] array = new Open[3];
+
+        array[0] = new Open();
+        array[1] = new Open();
+        array[2] = new Open();
+
+        array[0].setHostname("1").setIdleTimeOut(1).setMaxFrameSize(1);
+        array[1].setHostname("2").setIdleTimeOut(2).setMaxFrameSize(2);
+        array[2].setHostname("3").setIdleTimeOut(3).setMaxFrameSize(3);
+
+        encoder.writeObject(buffer, encoderState, array);
+
+        final Object result = decoder.readObject(buffer, decoderState);
+
+        assertTrue(result.getClass().isArray());
+        assertEquals(Open.class, result.getClass().getComponentType());
+
+        Open[] resultArray = (Open[]) result;
+
+        for (int i = 0; i < resultArray.length; ++i) {
+            assertNotNull(resultArray[i]);
+            assertTrue(resultArray[i] instanceof Open);
+            assertEquals(array[i].getHostname(), resultArray[i].getHostname());
+            assertEquals(array[i].getIdleTimeOut(), resultArray[i].getIdleTimeOut());
+            assertEquals(array[i].getMaxFrameSize(), resultArray[i].getMaxFrameSize());
+        }
+    }
 }

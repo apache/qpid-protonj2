@@ -218,4 +218,36 @@ public class DispositionTypeCodecTest extends CodecTestSupport {
             fail("Should not decode type with invalid encoding");
         } catch (IOException ex) {}
     }
+
+    @Test
+    public void testEncodeDecodeArray() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        Disposition[] array = new Disposition[3];
+
+        array[0] = new Disposition();
+        array[1] = new Disposition();
+        array[2] = new Disposition();
+
+        array[0].setFirst(0).setRole(Role.SENDER).setSettled(true);
+        array[1].setFirst(1).setRole(Role.RECEIVER).setSettled(false);
+        array[2].setFirst(2).setRole(Role.SENDER).setSettled(true);
+
+        encoder.writeObject(buffer, encoderState, array);
+
+        final Object result = decoder.readObject(buffer, decoderState);
+
+        assertTrue(result.getClass().isArray());
+        assertEquals(Disposition.class, result.getClass().getComponentType());
+
+        Disposition[] resultArray = (Disposition[]) result;
+
+        for (int i = 0; i < resultArray.length; ++i) {
+            assertNotNull(resultArray[i]);
+            assertTrue(resultArray[i] instanceof Disposition);
+            assertEquals(array[i].getFirst(), resultArray[i].getFirst());
+            assertEquals(array[i].getRole(), resultArray[i].getRole());
+            assertEquals(array[i].getSettled(), resultArray[i].getSettled());
+        }
+    }
 }

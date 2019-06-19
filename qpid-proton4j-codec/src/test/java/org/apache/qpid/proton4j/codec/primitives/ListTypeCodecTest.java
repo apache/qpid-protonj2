@@ -34,6 +34,7 @@ import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.codec.CodecTestSupport;
 import org.apache.qpid.proton4j.codec.EncodingCodes;
+import org.apache.qpid.proton4j.codec.TypeDecoder;
 import org.junit.Test;
 
 /**
@@ -127,7 +128,7 @@ public class ListTypeCodecTest extends CodecTestSupport {
 
         ArrayList<UUID>[] source = new ArrayList[2];
         for (int i = 0; i < source.length; ++i) {
-            source[i] = new ArrayList<UUID>(3);
+            source[i] = new ArrayList<>(3);
             source[i].add(UUID.randomUUID());
             source[i].add(UUID.randomUUID());
             source[i].add(UUID.randomUUID());
@@ -173,5 +174,139 @@ public class ListTypeCodecTest extends CodecTestSupport {
             decoder.readObject(buffer, decoderState);
             fail("should throw an IllegalArgumentException");
         } catch (IllegalArgumentException iae) {}
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    public void testDecodeEmptyList() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        buffer.writeByte(EncodingCodes.LIST0);
+
+        final Object result = decoder.readObject(buffer, decoderState);
+
+        assertNotNull(result);
+        assertTrue(result instanceof List);
+
+        List<UUID> value = (List<UUID>) result;
+        assertEquals(0, value.size());
+    }
+
+    @Test
+    public void testEncodeEmptyListIsList0() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        encoder.writeList(buffer, encoderState, new ArrayList<>());
+
+        assertEquals(1, buffer.getReadableBytes());
+        assertEquals(EncodingCodes.LIST0, buffer.readByte());
+    }
+
+    @Test
+    public void testDecodeFailsEarlyOnInvliadLengthList8() throws Exception {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate(16, 16);
+
+        buffer.writeByte(EncodingCodes.LIST8);
+        buffer.writeByte(255);
+
+        TypeDecoder<?> typeDecoder = decoder.readNextTypeDecoder(buffer, decoderState);
+        assertEquals(List.class, typeDecoder.getTypeClass());
+
+        try {
+            typeDecoder.readValue(buffer, decoderState);
+            fail("Should not be able to read list with length greater than readable bytes");
+        } catch (IllegalArgumentException ex) {}
+
+        assertEquals(2, buffer.getReadIndex());
+    }
+
+    @Test
+    public void testDecodeFailsEarlyOnInvliadLengthList32() throws Exception {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate(16, 16);
+
+        buffer.writeByte(EncodingCodes.LIST32);
+        buffer.writeInt(Integer.MAX_VALUE);
+
+        TypeDecoder<?> typeDecoder = decoder.readNextTypeDecoder(buffer, decoderState);
+        assertEquals(List.class, typeDecoder.getTypeClass());
+
+        try {
+            typeDecoder.readValue(buffer, decoderState);
+            fail("Should not be able to read list with length greater than readable bytes");
+        } catch (IllegalArgumentException ex) {}
+
+        assertEquals(5, buffer.getReadIndex());
+    }
+
+    @Test
+    public void testDecodeFailsEarlyOnInvliadElementCountForList8() throws Exception {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate(16, 16);
+
+        buffer.writeByte(EncodingCodes.LIST8);
+        buffer.writeByte(1);
+        buffer.writeByte(255);
+
+        TypeDecoder<?> typeDecoder = decoder.readNextTypeDecoder(buffer, decoderState);
+        assertEquals(List.class, typeDecoder.getTypeClass());
+
+        try {
+            typeDecoder.readValue(buffer, decoderState);
+            fail("Should not be able to read list with length greater than readable bytes");
+        } catch (IllegalArgumentException ex) {}
+
+        assertEquals(3, buffer.getReadIndex());
+    }
+
+    @Test
+    public void testDecodeFailsEarlyOnInvliadElementLengthList32() throws Exception {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate(16, 16);
+
+        buffer.writeByte(EncodingCodes.LIST32);
+        buffer.writeInt(2);
+        buffer.writeInt(Integer.MAX_VALUE);
+
+        TypeDecoder<?> typeDecoder = decoder.readNextTypeDecoder(buffer, decoderState);
+        assertEquals(List.class, typeDecoder.getTypeClass());
+
+        try {
+            typeDecoder.readValue(buffer, decoderState);
+            fail("Should not be able to read list with length greater than readable bytes");
+        } catch (IllegalArgumentException ex) {}
+
+        assertEquals(9, buffer.getReadIndex());
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    public void testSkipValue() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        List<UUID> skip = new ArrayList<>();
+        for (int i = 0; i < 10; ++i) {
+            skip.add(UUID.randomUUID());
+        }
+
+        for (int i = 0; i < 10; ++i) {
+            encoder.writeList(buffer, encoderState, skip);
+        }
+
+        List<UUID> expected = new ArrayList<>();
+        expected.add(UUID.randomUUID());
+
+        encoder.writeObject(buffer, encoderState, expected);
+
+        for (int i = 0; i < 10; ++i) {
+            TypeDecoder<?> typeDecoder = decoder.readNextTypeDecoder(buffer, decoderState);
+            assertEquals(List.class, typeDecoder.getTypeClass());
+            typeDecoder.skipValue(buffer, decoderState);
+        }
+
+        final Object result = decoder.readObject(buffer, decoderState);
+
+        assertNotNull(result);
+        assertTrue(result instanceof List);
+
+        List<UUID> value = (List<UUID>) result;
+        assertEquals(expected, value);
     }
 }

@@ -16,6 +16,7 @@
  */
 package org.apache.qpid.proton4j.codec.transport;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -184,5 +185,36 @@ public class TransferTypeCodeTest extends CodecTestSupport {
             decoder.readObject(buffer, decoderState);
             fail("Should not decode type with invalid encoding");
         } catch (IOException ex) {}
+    }
+
+    @Test
+    public void testEncodeDecodeArray() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        Transfer[] array = new Transfer[3];
+
+        array[0] = new Transfer();
+        array[1] = new Transfer();
+        array[2] = new Transfer();
+
+        array[0].setHandle(0).setDeliveryTag(new Binary(new byte[] {0}));
+        array[1].setHandle(1).setDeliveryTag(new Binary(new byte[] {1}));
+        array[2].setHandle(2).setDeliveryTag(new Binary(new byte[] {2}));
+
+        encoder.writeObject(buffer, encoderState, array);
+
+        final Object result = decoder.readObject(buffer, decoderState);
+
+        assertTrue(result.getClass().isArray());
+        assertEquals(Transfer.class, result.getClass().getComponentType());
+
+        Transfer[] resultArray = (Transfer[]) result;
+
+        for (int i = 0; i < resultArray.length; ++i) {
+            assertNotNull(resultArray[i]);
+            assertTrue(resultArray[i] instanceof Transfer);
+            assertEquals(array[i].getHandle(), resultArray[i].getHandle());
+            assertArrayEquals(array[i].getDeliveryTag().getArray(), resultArray[i].getDeliveryTag().getArray());
+        }
     }
 }

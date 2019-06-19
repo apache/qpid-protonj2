@@ -236,4 +236,34 @@ public class CloseTypeCodecTest extends CodecTestSupport {
             fail("Should not decode type with invalid encoding");
         } catch (IOException ex) {}
     }
+
+    @Test
+    public void testEncodeDecodeArray() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        Close[] array = new Close[3];
+
+        array[0] = new Close();
+        array[1] = new Close();
+        array[2] = new Close();
+
+        array[0].setError(new ErrorCondition(AmqpError.DECODE_ERROR, "1"));
+        array[1].setError(new ErrorCondition(AmqpError.UNAUTHORIZED_ACCESS, "2"));
+        array[2].setError(new ErrorCondition(AmqpError.RESOURCE_LIMIT_EXCEEDED, "3"));
+
+        encoder.writeObject(buffer, encoderState, array);
+
+        final Object result = decoder.readObject(buffer, decoderState);
+
+        assertTrue(result.getClass().isArray());
+        assertEquals(Close.class, result.getClass().getComponentType());
+
+        Close[] resultArray = (Close[]) result;
+
+        for (int i = 0; i < resultArray.length; ++i) {
+            assertNotNull(resultArray[i]);
+            assertTrue(resultArray[i] instanceof Close);
+            assertEquals(array[i].getError(), resultArray[i].getError());
+        }
+    }
 }

@@ -29,6 +29,7 @@ import org.apache.qpid.proton4j.amqp.messaging.Data;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.codec.CodecTestSupport;
+import org.apache.qpid.proton4j.codec.TypeDecoder;
 import org.junit.Test;
 
 public class UUIDTypeCodecTest extends CodecTestSupport {
@@ -187,5 +188,32 @@ public class UUIDTypeCodecTest extends CodecTestSupport {
             UUID[] uuids = (UUID[]) nested;
             assertEquals(0, uuids.length);
         }
+    }
+
+    @Test
+    public void testSkipValue() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        for (int i = 0; i < 10; ++i) {
+            encoder.writeUUID(buffer, encoderState, UUID.randomUUID());
+        }
+
+        UUID expected = UUID.randomUUID();
+
+        encoder.writeObject(buffer, encoderState, expected);
+
+        for (int i = 0; i < 10; ++i) {
+            TypeDecoder<?> typeDecoder = decoder.readNextTypeDecoder(buffer, decoderState);
+            assertEquals(UUID.class, typeDecoder.getTypeClass());
+            typeDecoder.skipValue(buffer, decoderState);
+        }
+
+        final Object result = decoder.readObject(buffer, decoderState);
+
+        assertNotNull(result);
+        assertTrue(result instanceof UUID);
+
+        UUID value = (UUID) result;
+        assertEquals(expected, value);
     }
 }

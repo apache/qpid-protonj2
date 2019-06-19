@@ -33,10 +33,6 @@ public class NullTypeEncoder extends AbstractPrimitiveTypeEncoder<Void> {
 
     @Override
     public void writeType(ProtonBuffer buffer, EncoderState state, Void value) {
-        if (value != null) {
-            throw new IllegalArgumentException("Null Encoder given non-null value.");
-        }
-
         buffer.writeByte(EncodingCodes.NULL);
     }
 

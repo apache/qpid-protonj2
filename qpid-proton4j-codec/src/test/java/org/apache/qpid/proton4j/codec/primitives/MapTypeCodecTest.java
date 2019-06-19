@@ -23,6 +23,7 @@ import static org.junit.Assert.fail;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -32,6 +33,7 @@ import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.codec.CodecTestSupport;
 import org.apache.qpid.proton4j.codec.EncodingCodes;
+import org.apache.qpid.proton4j.codec.TypeDecoder;
 import org.junit.Test;
 
 public class MapTypeCodecTest extends CodecTestSupport {
@@ -70,7 +72,7 @@ public class MapTypeCodecTest extends CodecTestSupport {
         String myStringKey = "myString";
         String myString = myStringKey;
 
-        Map<String, Object> map = new LinkedHashMap<String, Object>();
+        Map<String, Object> map = new LinkedHashMap<>();
         map.put(myBoolKey, myBool);
         map.put(myByteKey, myByte);
         map.put(myBytesKey, new Binary(myBytes));
@@ -107,7 +109,7 @@ public class MapTypeCodecTest extends CodecTestSupport {
 
         Map<String, UUID>[] source = new LinkedHashMap[2];
         for (int i = 0; i < source.length; ++i) {
-            source[i] = new LinkedHashMap<String, UUID>();
+            source[i] = new LinkedHashMap<>();
             source[i].put("1", UUID.randomUUID());
             source[i].put("2", UUID.randomUUID());
             source[i].put("3", UUID.randomUUID());
@@ -194,5 +196,39 @@ public class MapTypeCodecTest extends CodecTestSupport {
             decoder.readObject(buffer, decoderState);
             fail("should throw an IllegalArgumentException");
         } catch (IllegalArgumentException iae) {}
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    public void testSkipValue() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        Map<String, UUID> skip = new HashMap<>();
+        for (int i = 0; i < 10; ++i) {
+            skip.put(UUID.randomUUID().toString(), UUID.randomUUID());
+        }
+
+        for (int i = 0; i < 10; ++i) {
+            encoder.writeMap(buffer, encoderState, skip);
+        }
+
+        Map<String, UUID> expected = new LinkedHashMap<>();
+        expected.put(UUID.randomUUID().toString(), UUID.randomUUID());
+
+        encoder.writeObject(buffer, encoderState, expected);
+
+        for (int i = 0; i < 10; ++i) {
+            TypeDecoder<?> typeDecoder = decoder.readNextTypeDecoder(buffer, decoderState);
+            assertEquals(Map.class, typeDecoder.getTypeClass());
+            typeDecoder.skipValue(buffer, decoderState);
+        }
+
+        final Object result = decoder.readObject(buffer, decoderState);
+
+        assertNotNull(result);
+        assertTrue(result instanceof Map);
+
+        Map<String, UUID> value = (Map<String, UUID>) result;
+        assertEquals(expected, value);
     }
 }

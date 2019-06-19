@@ -37,8 +37,12 @@ public class ListTypeEncoder extends AbstractPrimitiveTypeEncoder<List> {
 
     @Override
     public void writeType(ProtonBuffer buffer, EncoderState state, List value) {
-        buffer.writeByte(EncodingCodes.LIST32);
-        writeValue(buffer, state, value);
+        if (value.isEmpty()) {
+            buffer.writeByte(EncodingCodes.LIST0);
+        } else {
+            buffer.writeByte(EncodingCodes.LIST32);
+            writeValue(buffer, state, value);
+        }
     }
 
     @Override
@@ -74,7 +78,7 @@ public class ListTypeEncoder extends AbstractPrimitiveTypeEncoder<List> {
             }
 
             encoder.writeType(buffer, state, entry);
-        };
+        }
 
         // Move back and write the size
         int endIndex = buffer.getWriteIndex();

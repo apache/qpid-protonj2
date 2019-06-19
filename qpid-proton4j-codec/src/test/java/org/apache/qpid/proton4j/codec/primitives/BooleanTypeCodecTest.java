@@ -30,6 +30,7 @@ import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.codec.CodecTestSupport;
 import org.apache.qpid.proton4j.codec.EncodingCodes;
+import org.apache.qpid.proton4j.codec.TypeDecoder;
 import org.junit.Test;
 
 /**
@@ -324,5 +325,90 @@ public class BooleanTypeCodecTest extends CodecTestSupport {
             assertEquals(source[i].length, nested.length);
             assertArrayEquals(source[i], nested);
         }
+    }
+
+    @Test
+    public void testReadAllBooleanTypeEncodings() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        buffer.writeByte(EncodingCodes.BOOLEAN_TRUE);
+        buffer.writeByte(EncodingCodes.BOOLEAN_FALSE);
+        buffer.writeByte(EncodingCodes.BOOLEAN);
+        buffer.writeByte(1);
+        buffer.writeByte(EncodingCodes.BOOLEAN);
+        buffer.writeByte(0);
+
+        TypeDecoder<?> typeDecoder = decoder.readNextTypeDecoder(buffer, decoderState);
+        assertEquals(Boolean.class, typeDecoder.getTypeClass());
+        assertTrue((Boolean) typeDecoder.readValue(buffer, decoderState));
+        typeDecoder = decoder.readNextTypeDecoder(buffer, decoderState);
+        assertEquals(Boolean.class, typeDecoder.getTypeClass());
+        assertFalse((Boolean) typeDecoder.readValue(buffer, decoderState));
+        typeDecoder = decoder.readNextTypeDecoder(buffer, decoderState);
+        assertEquals(Boolean.class, typeDecoder.getTypeClass());
+        assertTrue((Boolean) typeDecoder.readValue(buffer, decoderState));
+        typeDecoder = decoder.readNextTypeDecoder(buffer, decoderState);
+        assertEquals(Boolean.class, typeDecoder.getTypeClass());
+        assertFalse((Boolean) typeDecoder.readValue(buffer, decoderState));
+    }
+
+    @Test
+    public void testSkipValueFullBooleanTypeEncodings() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        for (int i = 0; i < 10; ++i) {
+            buffer.writeByte(EncodingCodes.BOOLEAN);
+            buffer.writeByte(1);
+            buffer.writeByte(EncodingCodes.BOOLEAN);
+            buffer.writeByte(0);
+        }
+
+        encoder.writeObject(buffer, encoderState, false);
+
+        for (int i = 0; i < 10; ++i) {
+            TypeDecoder<?> typeDecoder = decoder.readNextTypeDecoder(buffer, decoderState);
+            assertEquals(Boolean.class, typeDecoder.getTypeClass());
+            typeDecoder.skipValue(buffer, decoderState);
+            typeDecoder = decoder.readNextTypeDecoder(buffer, decoderState);
+            assertEquals(Boolean.class, typeDecoder.getTypeClass());
+            typeDecoder.skipValue(buffer, decoderState);
+        }
+
+        final Object result = decoder.readObject(buffer, decoderState);
+
+        assertNotNull(result);
+        assertTrue(result instanceof Boolean);
+
+        Boolean value = (Boolean) result;
+        assertEquals(false, value);
+    }
+
+    @Test
+    public void testSkipValue() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        for (int i = 0; i < 10; ++i) {
+            encoder.writeBoolean(buffer, encoderState, Boolean.TRUE);
+            encoder.writeBoolean(buffer, encoderState, false);
+        }
+
+        encoder.writeObject(buffer, encoderState, false);
+
+        for (int i = 0; i < 10; ++i) {
+            TypeDecoder<?> typeDecoder = decoder.readNextTypeDecoder(buffer, decoderState);
+            assertEquals(Boolean.class, typeDecoder.getTypeClass());
+            typeDecoder.skipValue(buffer, decoderState);
+            typeDecoder = decoder.readNextTypeDecoder(buffer, decoderState);
+            assertEquals(Boolean.class, typeDecoder.getTypeClass());
+            typeDecoder.skipValue(buffer, decoderState);
+        }
+
+        final Object result = decoder.readObject(buffer, decoderState);
+
+        assertNotNull(result);
+        assertTrue(result instanceof Boolean);
+
+        Boolean value = (Boolean) result;
+        assertEquals(false, value);
     }
 }

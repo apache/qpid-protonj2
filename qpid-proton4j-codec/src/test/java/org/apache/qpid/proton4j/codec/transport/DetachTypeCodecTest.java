@@ -181,4 +181,34 @@ public class DetachTypeCodecTest extends CodecTestSupport {
             fail("Should not decode type with invalid encoding");
         } catch (IOException ex) {}
     }
+
+    @Test
+    public void testEncodeDecodeArray() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        Detach[] array = new Detach[3];
+
+        array[0] = new Detach();
+        array[1] = new Detach();
+        array[2] = new Detach();
+
+        array[0].setError(new ErrorCondition(AmqpError.DECODE_ERROR, "1"));
+        array[1].setError(new ErrorCondition(AmqpError.UNAUTHORIZED_ACCESS, "2"));
+        array[2].setError(new ErrorCondition(AmqpError.RESOURCE_LIMIT_EXCEEDED, "3"));
+
+        encoder.writeObject(buffer, encoderState, array);
+
+        final Object result = decoder.readObject(buffer, decoderState);
+
+        assertTrue(result.getClass().isArray());
+        assertEquals(Detach.class, result.getClass().getComponentType());
+
+        Detach[] resultArray = (Detach[]) result;
+
+        for (int i = 0; i < resultArray.length; ++i) {
+            assertNotNull(resultArray[i]);
+            assertTrue(resultArray[i] instanceof Detach);
+            assertEquals(array[i].getError(), resultArray[i].getError());
+        }
+    }
 }

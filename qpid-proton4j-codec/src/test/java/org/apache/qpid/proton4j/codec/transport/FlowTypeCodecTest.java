@@ -202,4 +202,36 @@ public class FlowTypeCodecTest extends CodecTestSupport {
             fail("Should not decode type with invalid encoding");
         } catch (IOException ex) {}
     }
+
+    @Test
+    public void testEncodeDecodeArray() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        Flow[] array = new Flow[3];
+
+        array[0] = new Flow();
+        array[1] = new Flow();
+        array[2] = new Flow();
+
+        array[0].setHandle(0).setLinkCredit(0).setDeliveryCount(1);
+        array[1].setHandle(1).setLinkCredit(1).setDeliveryCount(1);
+        array[2].setHandle(2).setLinkCredit(2).setDeliveryCount(1);
+
+        encoder.writeObject(buffer, encoderState, array);
+
+        final Object result = decoder.readObject(buffer, decoderState);
+
+        assertTrue(result.getClass().isArray());
+        assertEquals(Flow.class, result.getClass().getComponentType());
+
+        Flow[] resultArray = (Flow[]) result;
+
+        for (int i = 0; i < resultArray.length; ++i) {
+            assertNotNull(resultArray[i]);
+            assertTrue(resultArray[i] instanceof Flow);
+            assertEquals(array[i].getHandle(), resultArray[i].getHandle());
+            assertEquals(array[i].getLinkCredit(), resultArray[i].getLinkCredit());
+            assertEquals(array[i].getDeliveryCount(), resultArray[i].getDeliveryCount());
+        }
+    }
 }

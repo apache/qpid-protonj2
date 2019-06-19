@@ -31,6 +31,7 @@ import java.util.UUID;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.codec.CodecTestSupport;
+import org.apache.qpid.proton4j.codec.TypeDecoder;
 import org.junit.Test;
 
 /**
@@ -953,5 +954,48 @@ public class ArrayTypeCodecTest extends CodecTestSupport {
         }
 
         return payload;
+    }
+
+    @Test
+    public void testSkipValueSmallByteArray() throws IOException {
+        doTestSkipValueOnArrayOfSize(200);
+    }
+
+    @Test
+    public void testSkipValueLargeByteArray() throws IOException {
+        doTestSkipValueOnArrayOfSize(1024);
+    }
+
+    private void doTestSkipValueOnArrayOfSize(int arraySize) throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        Random filler = new Random();
+        filler.setSeed(System.nanoTime());
+
+        byte[] bytes = new byte[arraySize];
+        filler.nextBytes(bytes);
+
+        for (int i = 0; i < 10; ++i) {
+            encoder.writeArray(buffer, encoderState, bytes);
+        }
+
+        byte[] expected = new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
+
+        encoder.writeObject(buffer, encoderState, expected);
+
+        for (int i = 0; i < 10; ++i) {
+            TypeDecoder<?> typeDecoder = decoder.readNextTypeDecoder(buffer, decoderState);
+            assertEquals(Object[].class, typeDecoder.getTypeClass());
+            assertTrue(typeDecoder.isArrayType());
+            typeDecoder.skipValue(buffer, decoderState);
+        }
+
+        final Object result = decoder.readObject(buffer, decoderState);
+
+        assertNotNull(result);
+        assertTrue(result instanceof byte[]);
+
+        byte[] value = (byte[]) result;
+        assertArrayEquals(expected, value);
     }
 }

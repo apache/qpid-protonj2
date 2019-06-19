@@ -29,6 +29,7 @@ import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.codec.CodecTestSupport;
 import org.apache.qpid.proton4j.codec.EncodingCodes;
+import org.apache.qpid.proton4j.codec.TypeDecoder;
 import org.junit.Test;
 
 public class UnsignedLongTypeCodecTest extends CodecTestSupport {
@@ -242,5 +243,58 @@ public class UnsignedLongTypeCodecTest extends CodecTestSupport {
         assertEquals(2, buffer.getReadableBytes());
         assertEquals(EncodingCodes.SMALLULONG, buffer.readByte());
         assertEquals((byte) 64, buffer.readByte());
+    }
+
+    @Test
+    public void testWriteByteAsZeroULong() throws Exception {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        encoder.writeUnsignedLong(buffer, encoderState, (byte) 0);
+        assertEquals(1, buffer.getReadableBytes());
+        assertEquals(EncodingCodes.ULONG0, buffer.readByte());
+        assertFalse(buffer.isReadable());
+    }
+
+    @Test
+    public void testReadULongZeroDoesNotTouchBuffer() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate(1, 1);
+
+        buffer.writeByte(EncodingCodes.ULONG0);
+
+        TypeDecoder<?> typeDecoder = decoder.readNextTypeDecoder(buffer, decoderState);
+        assertEquals(UnsignedLong.class, typeDecoder.getTypeClass());
+        assertFalse(buffer.isReadable());
+        assertEquals(UnsignedLong.ZERO, typeDecoder.readValue(buffer, decoderState));
+    }
+
+    @Test
+    public void testSkipValue() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        for (int i = 0; i < 10; ++i) {
+            encoder.writeUnsignedLong(buffer, encoderState, UnsignedLong.valueOf(Long.MAX_VALUE - i));
+            encoder.writeUnsignedLong(buffer, encoderState, UnsignedLong.valueOf(i));
+        }
+
+        UnsignedLong expected = UnsignedLong.valueOf(42);
+
+        encoder.writeObject(buffer, encoderState, expected);
+
+        for (int i = 0; i < 10; ++i) {
+            TypeDecoder<?> typeDecoder = decoder.readNextTypeDecoder(buffer, decoderState);
+            assertEquals(UnsignedLong.class, typeDecoder.getTypeClass());
+            typeDecoder.skipValue(buffer, decoderState);
+            typeDecoder = decoder.readNextTypeDecoder(buffer, decoderState);
+            assertEquals(UnsignedLong.class, typeDecoder.getTypeClass());
+            typeDecoder.skipValue(buffer, decoderState);
+        }
+
+        final Object result = decoder.readObject(buffer, decoderState);
+
+        assertNotNull(result);
+        assertTrue(result instanceof UnsignedLong);
+
+        UnsignedLong value = (UnsignedLong) result;
+        assertEquals(expected, value);
     }
 }

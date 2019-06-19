@@ -31,6 +31,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 import org.apache.qpid.proton4j.amqp.Symbol;
+import org.apache.qpid.proton4j.amqp.transport.AmqpError;
 import org.apache.qpid.proton4j.amqp.transport.ErrorCondition;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
@@ -244,5 +245,31 @@ public class ErrorConditionTypeCodecTest extends CodecTestSupport {
             decoder.readObject(buffer, decoderState);
             fail("Should not decode type with invalid encoding");
         } catch (IOException ex) {}
+    }
+
+    @Test
+    public void testEncodeDecodeArray() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        ErrorCondition[] array = new ErrorCondition[3];
+
+        array[0] = new ErrorCondition(AmqpError.DECODE_ERROR, "1");
+        array[1] = new ErrorCondition(AmqpError.UNAUTHORIZED_ACCESS, "2");
+        array[2] = new ErrorCondition(AmqpError.RESOURCE_LIMIT_EXCEEDED, "3");
+
+        encoder.writeObject(buffer, encoderState, array);
+
+        final Object result = decoder.readObject(buffer, decoderState);
+
+        assertTrue(result.getClass().isArray());
+        assertEquals(ErrorCondition.class, result.getClass().getComponentType());
+
+        ErrorCondition[] resultArray = (ErrorCondition[]) result;
+
+        for (int i = 0; i < resultArray.length; ++i) {
+            assertNotNull(resultArray[i]);
+            assertTrue(resultArray[i] instanceof ErrorCondition);
+            assertEquals(array[i], resultArray[i]);
+        }
     }
 }

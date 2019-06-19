@@ -28,6 +28,7 @@ import org.apache.qpid.proton4j.amqp.UnsignedShort;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.codec.CodecTestSupport;
+import org.apache.qpid.proton4j.codec.TypeDecoder;
 import org.junit.Test;
 
 public class UnsignedShortTypeCodecTest extends CodecTestSupport {
@@ -54,7 +55,6 @@ public class UnsignedShortTypeCodecTest extends CodecTestSupport {
         assertTrue(((UnsignedShort) result).shortValue() < 0);
         assertEquals(33565, ((UnsignedShort) result).intValue());
     }
-
 
     @Test
     public void testEncodeDecodeUnsignedShortFromInt() throws Exception {
@@ -151,5 +151,32 @@ public class UnsignedShortTypeCodecTest extends CodecTestSupport {
 
         UnsignedShort[] array = (UnsignedShort[]) result;
         assertEquals(source.length, array.length);
+    }
+
+    @Test
+    public void testSkipValue() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        for (int i = 0; i < 10; ++i) {
+            encoder.writeUnsignedShort(buffer, encoderState, UnsignedShort.valueOf(i));
+        }
+
+        UnsignedShort expected = UnsignedShort.valueOf(42);
+
+        encoder.writeObject(buffer, encoderState, expected);
+
+        for (int i = 0; i < 10; ++i) {
+            TypeDecoder<?> typeDecoder = decoder.readNextTypeDecoder(buffer, decoderState);
+            assertEquals(UnsignedShort.class, typeDecoder.getTypeClass());
+            typeDecoder.skipValue(buffer, decoderState);
+        }
+
+        final Object result = decoder.readObject(buffer, decoderState);
+
+        assertNotNull(result);
+        assertTrue(result instanceof UnsignedShort);
+
+        UnsignedShort value = (UnsignedShort) result;
+        assertEquals(expected, value);
     }
 }
