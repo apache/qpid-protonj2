@@ -42,18 +42,16 @@
     <tag>HEAD</tag>
   </scm>
 
-  <developers>
-    <developer>
-      <name>Timothy Bish</name>
-      <email>tabish121@gmail.com</email>
-    </developer>
-  </developers>
-
   <properties>
-    <qpid-jms-version>0.25.0</qpid-jms-version>
-    <activemq-version>5.15.0</activemq-version>
+    <proton4j-version>0.1.0-SNAPSHOT</proton4j-version>
     <slf4j-version>1.7.25</slf4j-version>
-    <mockito-version>2.10.0</mockito-version>
+    <netty-version>4.1.36.Final</netty-version>
+    <netty-tcnative-version>2.0.25.Final</netty-tcnative-version>
+
+    <!--  Test Dependencies -->
+    <qpid-jms-version>0.43.0</qpid-jms-version>
+    <activemq-version>5.15.9</activemq-version>
+    <mockito-version>2.28.2</mockito-version>
     <junit-version>4.12</junit-version>
 
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -62,27 +60,29 @@
     <maven.compiler.source>1.8</maven.compiler.source>
     <maven.compiler.target>1.8</maven.compiler.target>
 
-    <apache-rat-version>0.12</apache-rat-version>
+    <apache-rat-version>0.13</apache-rat-version>
     <maven-gpg-plugin-version>1.6</maven-gpg-plugin-version>
-    <maven-eclipse-plugin-version>2.10</maven-eclipse-plugin-version>
-    <maven-idea-plugin-version>2.2.1</maven-idea-plugin-version>
-    <maven-surefire-plugin-version>2.18.1</maven-surefire-plugin-version>
+    <maven-surefire-plugin-version>2.22.0</maven-surefire-plugin-version>
     <maven-release-plugin-version>2.5.3</maven-release-plugin-version>
     <nexus-staging-maven-plugin-version>1.6.8</nexus-staging-maven-plugin-version>
-    <maven-bundle-plugin-version>3.2.0</maven-bundle-plugin-version>
-    <maven-compiler-plugin-version>3.6.2</maven-compiler-plugin-version>
+    <maven-bundle-plugin-version>3.5.1</maven-bundle-plugin-version>
+    <maven-compiler-plugin-version>3.7.0</maven-compiler-plugin-version>
     <maven-source-plugin-version>3.0.1</maven-source-plugin-version>
-    <maven-javadoc-plugin-version>2.10.4</maven-javadoc-plugin-version>
+    <maven-javadoc-plugin-version>3.0.1</maven-javadoc-plugin-version>
     <maven-deploy-plugin-version>2.8.2</maven-deploy-plugin-version>
     <findbugs-maven-plugin-version>3.0.2</findbugs-maven-plugin-version>
-    <jacoco-plugin-version>0.7.9</jacoco-plugin-version>
+    <jacoco-plugin-version>0.8.1</jacoco-plugin-version>
 
     <!-- Test properties -->
     <maven.test.redirectTestOutputToFile>true</maven.test.redirectTestOutputToFile>
     <surefire.runOrder>filesystem</surefire.runOrder>
+    <proton.trace.frames>false</proton.trace.frames>
 
     <!-- surefire forked jvm arguments -->
     <argLine>-Xmx2g -enableassertions ${jacoco-config}</argLine>
+
+    <netty-transport-native-epoll-classifier>linux-x86_64</netty-transport-native-epoll-classifier>
+    <netty-transport-native-kqueue-classifier>osx-x86_64</netty-transport-native-kqueue-classifier>
   </properties>
 
   <modules>
@@ -110,6 +110,11 @@
         <version>${project.version}</version>
       </dependency>
       <dependency>
+        <groupId>org.apache.qpid</groupId>
+        <artifactId>qpid-proton4j-engine</artifactId>
+        <version>${proton4j-version}</version>
+      </dependency>
+      <dependency>
         <groupId>org.slf4j</groupId>
         <artifactId>slf4j-api</artifactId>
         <version>${slf4j-version}</version>
@@ -119,7 +124,49 @@
         <artifactId>slf4j-log4j12</artifactId>
         <version>${slf4j-version}</version>
       </dependency>
-
+      <dependency>
+        <groupId>io.netty</groupId>
+        <artifactId>netty-buffer</artifactId>
+        <version>${netty-version}</version>
+      </dependency>
+      <dependency>
+        <groupId>io.netty</groupId>
+        <artifactId>netty-common</artifactId>
+        <version>${netty-version}</version>
+      </dependency>
+      <dependency>
+        <groupId>io.netty</groupId>
+        <artifactId>netty-handler</artifactId>
+        <version>${netty-version}</version>
+      </dependency>
+      <dependency>
+        <groupId>io.netty</groupId>
+        <artifactId>netty-transport</artifactId>
+        <version>${netty-version}</version>
+      </dependency>
+      <dependency>
+        <groupId>io.netty</groupId>
+        <artifactId>netty-transport-native-epoll</artifactId>
+        <version>${netty-version}</version>
+        <classifier>${netty-transport-native-epoll-classifier}</classifier>
+      </dependency>
+      <dependency>
+        <groupId>io.netty</groupId>
+        <artifactId>netty-transport-native-kqueue</artifactId>
+        <version>${netty-version}</version>
+        <classifier>${netty-transport-native-kqueue-classifier}</classifier>
+      </dependency>
+      <dependency>
+        <groupId>io.netty</groupId>
+        <artifactId>netty-codec-http</artifactId>
+        <version>${netty-version}</version>
+      </dependency>
+      <!--  Testing only Uber Jar inclusion -->
+      <dependency>
+         <groupId>io.netty</groupId>
+         <artifactId>netty-tcnative-boringssl-static</artifactId>
+         <version>${netty-tcnative-version}</version>
+      </dependency>
       <!-- Test Dependencies -->
       <dependency>
         <groupId>org.apache.activemq</groupId>
@@ -206,24 +253,9 @@
               <java.awt.headless>true</java.awt.headless>
             </systemPropertyVariables>
             <failIfNoTests>false</failIfNoTests>
-          </configuration>
-        </plugin>
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-eclipse-plugin</artifactId>
-          <version>${maven-eclipse-plugin-version}</version>
-          <configuration>
-            <downloadSources>true</downloadSources>
-            <downloadJavadocs>true</downloadJavadocs>
-          </configuration>
-        </plugin>
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-idea-plugin</artifactId>
-          <version>${maven-idea-plugin-version}</version>
-          <configuration>
-            <downloadSources>true</downloadSources>
-            <downloadJavadocs>true</downloadJavadocs>
+            <environmentVariables>
+              <PN_TRACE_FRM>${proton.trace.frames}</PN_TRACE_FRM>
+            </environmentVariables>
           </configuration>
         </plugin>
         <plugin>
