@@ -109,6 +109,12 @@ public class ProtonReceiver extends ProtonLink<Receiver> implements Receiver {
     }
 
     @Override
+    public Receiver drain() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
     public Receiver disposition(Predicate<OutgoingDelivery> filter, DeliveryState state, boolean settle) {
         // TODO Auto-generated method stub
         return null;

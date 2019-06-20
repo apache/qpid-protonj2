@@ -42,7 +42,16 @@ public interface Receiver extends Link<Receiver> {
     // Receiver addCredit(int amount);
     // Receiver reduceCredit(int amount);
 
-    // Receiver drain();
+    /**
+     * Initiate a drain of all remaining credit of this {@link Receiver} link.
+     *
+     * If the link has no credit then the drained event will be triggered immediately to
+     * indicate that result.
+     *
+     * @return this {@link Receiver} for chaining.
+     */
+    Receiver drain();
+
     // Receiver drain(int credits);
 
     /**
@@ -51,7 +60,7 @@ public interface Receiver extends Link<Receiver> {
      *
      * @param state the default delivery state
      *
-     * @return this {@link Receiver}
+     * @return this {@link Receiver} for chaining.
      */
     public Receiver setDefaultDeliveryState(DeliveryState state);
 
