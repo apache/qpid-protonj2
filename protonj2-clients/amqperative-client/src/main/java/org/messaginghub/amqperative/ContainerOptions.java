@@ -16,30 +16,9 @@
  */
 package org.messaginghub.amqperative;
 
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
-import java.util.function.Consumer;
-
-public interface Sender {
-
-    /**
-     * Send the given message.
-     *
-     * @param message
-     *            the message to send
-     * @return the tracker for the message delivery
-     */
-    Tracker send(Message message);
-
-    Future<Sender> close();
-
-    Future<Sender> detach();
-
-    //TODO: Ideas
-    Tracker trySend(Message message, Consumer<Tracker> onUpdated) throws IllegalStateException;
-
-    Tracker send(Message message, Consumer<Tracker> onUpdated);
-
-    Tracker send(Message message, Consumer<Tracker> onUpdated, ExecutorService executor);
+/**
+ * Container Options for customizing the behavior of the Container
+ */
+public class ContainerOptions {
 
 }

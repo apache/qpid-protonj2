@@ -16,30 +16,40 @@
  */
 package org.messaginghub.amqperative;
 
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
-import java.util.function.Consumer;
+/**
+ *
+ */
+public interface Tracker {
 
-public interface Sender {
+    Message getMessage();
+    //TODO: need this?
 
     /**
-     * Send the given message.
+     * Gets the current remote state for the delivery.
      *
-     * @param message
-     *            the message to send
-     * @return the tracker for the message delivery
+     * @return the remote delivery state
      */
-    Tracker send(Message message);
+    DeliveryState getRemoteState();
 
-    Future<Sender> close();
+    /**
+     * Gets whether the delivery was settled by the remote peer yet.
+     *
+     * @return whether the delivery is remotely settled
+     */
+    boolean isRemotelySettled();
 
-    Future<Sender> detach();
+    /**
+     * Settles the delivery locally, if not {@link SenderOptions#isAutoSettle() auto-settling}.
+     *
+     * @return the delivery
+     */
+    Tracker settle();
 
-    //TODO: Ideas
-    Tracker trySend(Message message, Consumer<Tracker> onUpdated) throws IllegalStateException;
-
-    Tracker send(Message message, Consumer<Tracker> onUpdated);
-
-    Tracker send(Message message, Consumer<Tracker> onUpdated, ExecutorService executor);
+    /**
+     * Gets the delivery tag for this delivery
+     *
+     * @return the tag
+     */
+    byte[] getTag();
 
 }

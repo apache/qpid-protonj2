@@ -16,23 +16,67 @@
  */
 package org.messaginghub.amqperative;
 
-import java.net.URI;
+import java.util.concurrent.Future;
 
-public class Connection {
+public interface Connection {
 
-    public static Connection createConnection(String remoteURI) throws Exception {
-        return new Connection();
-    }
+    Future<Connection> openFuture();
 
-    public static Connection createConnection(URI remoteURI) throws Exception {
-        return new Connection();
-    }
+    Future<Connection> close();
 
-    public Sender createSender(String address) throws Exception {
-        return new Sender();
-    }
+    /**
+     * Creates a receiver used to consumer messages from the given node address.
+     *
+     * @param address
+     *            The source address to attach the consumer to.
+     *
+     * @return the consumer.
+     */
+    Receiver createReceiver(String address);
 
-    public Receiver createReceiver(String address) throws Exception {
-        return new Receiver();
-    }
+    /**
+     * Creates a receiver used to consumer messages from the given node address.
+     *
+     * @param address
+     *            The source address to attach the consumer to.
+     * @param receiverOptions
+     *            The options for this receiver.
+     *
+     * @return the consumer.
+     */
+    Receiver createReceiver(String address, ReceiverOptions receiverOptions);
+
+    /**
+     * Creates a sender used to send messages to the given node address. If no
+     * address (i.e null) is specified then a sender will be established to the
+     * 'anonymous relay' and each message must specify its destination address.
+     *
+     * @param address
+     *            The target address to attach to, or null to attach to the
+     *            anonymous relay.
+     *
+     * @return the sender.
+     */
+    Sender createSender(String address);
+
+    /**
+     * Creates a sender used to send messages to the given node address. If no
+     * address (i.e null) is specified then a sender will be established to the
+     * 'anonymous relay' and each message must specify its destination address.
+     *
+     * @param address
+     *            The target address to attach to, or null to attach to the
+     *            anonymous relay.
+     * @param senderOptions
+     *            The options for this sender.
+     *
+     * @return the sender.
+     */
+    Sender createSender(String address, SenderOptions senderOptions);
+
+    // TODO:
+    // Error state?
+    // Sessions?
+    // Capabilities (+options?)
+    // Properties (+options?)
 }

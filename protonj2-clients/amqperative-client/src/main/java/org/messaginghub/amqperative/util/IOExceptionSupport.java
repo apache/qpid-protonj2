@@ -14,32 +14,34 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.messaginghub.amqperative;
+package org.messaginghub.amqperative.util;
 
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
-import java.util.function.Consumer;
+import java.io.IOException;
 
-public interface Sender {
+/**
+ * Used to make throwing IOException instances easier.
+ */
+public class IOExceptionSupport {
 
     /**
-     * Send the given message.
+     * Checks the given cause to determine if it's already an IOException type and
+     * if not creates a new IOException to wrap it.
      *
-     * @param message
-     *            the message to send
-     * @return the tracker for the message delivery
+     * @param cause
+     *        The initiating exception that should be cast or wrapped.
+     *
+     * @return an IOException instance.
      */
-    Tracker send(Message message);
+    public static IOException create(Throwable cause) {
+        if (cause instanceof IOException) {
+            return (IOException) cause;
+        }
 
-    Future<Sender> close();
+        String message = cause.getMessage();
+        if (message == null || message.length() == 0) {
+            message = cause.toString();
+        }
 
-    Future<Sender> detach();
-
-    //TODO: Ideas
-    Tracker trySend(Message message, Consumer<Tracker> onUpdated) throws IllegalStateException;
-
-    Tracker send(Message message, Consumer<Tracker> onUpdated);
-
-    Tracker send(Message message, Consumer<Tracker> onUpdated, ExecutorService executor);
-
+        return new IOException(message, cause);
+    }
 }

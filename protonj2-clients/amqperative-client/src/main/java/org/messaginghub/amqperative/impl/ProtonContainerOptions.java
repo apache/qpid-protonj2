@@ -14,32 +14,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.messaginghub.amqperative;
+package org.messaginghub.amqperative.impl;
 
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
-import java.util.function.Consumer;
+import org.messaginghub.amqperative.ContainerOptions;
 
-public interface Sender {
+/**
+ * Container options used for default
+ */
+public class ProtonContainerOptions extends ContainerOptions {
 
-    /**
-     * Send the given message.
-     *
-     * @param message
-     *            the message to send
-     * @return the tracker for the message delivery
-     */
-    Tracker send(Message message);
+    public ProtonContainerOptions() {
+        // Defaults apply
+    }
 
-    Future<Sender> close();
-
-    Future<Sender> detach();
-
-    //TODO: Ideas
-    Tracker trySend(Message message, Consumer<Tracker> onUpdated) throws IllegalStateException;
-
-    Tracker send(Message message, Consumer<Tracker> onUpdated);
-
-    Tracker send(Message message, Consumer<Tracker> onUpdated, ExecutorService executor);
-
+    public ProtonContainerOptions(ContainerOptions source) {
+        // TODO - Copy source into this instance.
+    }
 }

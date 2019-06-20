@@ -14,32 +14,35 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.messaginghub.amqperative;
+package org.messaginghub.amqperative.transport;
 
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
-import java.util.function.Consumer;
+import io.netty.buffer.ByteBuf;
 
-public interface Sender {
+/**
+ * Listener interface that should be implemented by users of the various
+ * QpidJMS Transport classes.
+ */
+public interface TransportListener {
 
     /**
-     * Send the given message.
+     * Called when new incoming data has become available.
      *
-     * @param message
-     *            the message to send
-     * @return the tracker for the message delivery
+     * @param incoming
+     *        the next incoming packet of data.
      */
-    Tracker send(Message message);
+    void onData(ByteBuf incoming);
 
-    Future<Sender> close();
+    /**
+     * Called if the connection state becomes closed.
+     */
+    void onTransportClosed();
 
-    Future<Sender> detach();
-
-    //TODO: Ideas
-    Tracker trySend(Message message, Consumer<Tracker> onUpdated) throws IllegalStateException;
-
-    Tracker send(Message message, Consumer<Tracker> onUpdated);
-
-    Tracker send(Message message, Consumer<Tracker> onUpdated, ExecutorService executor);
+    /**
+     * Called when an error occurs during normal Transport operations.
+     *
+     * @param cause
+     *        the error that triggered this event.
+     */
+    void onTransportError(Throwable cause);
 
 }

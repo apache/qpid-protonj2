@@ -16,30 +16,42 @@
  */
 package org.messaginghub.amqperative;
 
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
-import java.util.function.Consumer;
+/**
+ * Options that control the behavior of the {@link Receiver} created from them.
+ */
+public class ReceiverOptions {
 
-public interface Sender {
+    private int creditWindow = -1;
+    private String linkName;
+    private boolean dynamic;
 
-    /**
-     * Send the given message.
-     *
-     * @param message
-     *            the message to send
-     * @return the tracker for the message delivery
-     */
-    Tracker send(Message message);
+    public ReceiverOptions() {
+    }
 
-    Future<Sender> close();
+    public ReceiverOptions setLinkName(String linkName) {
+        this.linkName = linkName;
+        return this;
+    }
 
-    Future<Sender> detach();
+    public String getLinkName() {
+        return linkName;
+    }
 
-    //TODO: Ideas
-    Tracker trySend(Message message, Consumer<Tracker> onUpdated) throws IllegalStateException;
+    public ReceiverOptions setDynamic(boolean dynamic) {
+        this.dynamic = dynamic;
+        return this;
+    }
 
-    Tracker send(Message message, Consumer<Tracker> onUpdated);
+    public boolean isDynamic() {
+        return dynamic;
+    }
 
-    Tracker send(Message message, Consumer<Tracker> onUpdated, ExecutorService executor);
+    public int getCreditWindow() {
+        return creditWindow;
+    }
 
+    public ReceiverOptions setCreditWindow(int creditWindow) {
+        this.creditWindow = creditWindow;
+        return this;
+    }
 }

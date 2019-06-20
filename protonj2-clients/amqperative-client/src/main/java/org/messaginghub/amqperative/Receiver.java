@@ -16,6 +16,35 @@
  */
 package org.messaginghub.amqperative;
 
-public class Receiver {
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
+import java.util.function.Consumer;
+
+public interface Receiver {
+
+    // Waits forever.
+    Delivery receive() throws IllegalStateException;
+
+    // Returns message if there is one, null if not.
+    Delivery tryReceive() throws IllegalStateException;
+
+    Delivery receive(long timeout) throws IllegalStateException;
+    // TODO: with credit window, above is fine...without, we would need to
+    // manage the credit in one of various fashions (or say we dont).
+
+    Future<Receiver> close();
+
+    Future<Receiver> detach();
+
+    // TODO: ideas
+    long getQueueSize();
+
+    Receiver onMessage(Consumer<Delivery> handler);
+
+    Receiver onMessage(Consumer<Delivery> handler, ExecutorService executor);
+
+    Receiver addCredit(int credits) throws IllegalStateException;
+
+    Future<Receiver> drainCredit(long timeout) throws IllegalStateException, IllegalArgumentException;
 
 }
