@@ -51,6 +51,14 @@ public class ErrorConditionTypeCodecTest extends CodecTestSupport {
     }
 
     @Test
+    public void testDescriptors() throws IOException {
+        assertEquals(ErrorCondition.DESCRIPTOR_CODE, new ErrorConditionTypeDecoder().getDescriptorCode());
+        assertEquals(ErrorCondition.DESCRIPTOR_CODE, new ErrorConditionTypeEncoder().getDescriptorCode());
+        assertEquals(ErrorCondition.DESCRIPTOR_SYMBOL, new ErrorConditionTypeDecoder().getDescriptorSymbol());
+        assertEquals(ErrorCondition.DESCRIPTOR_SYMBOL, new ErrorConditionTypeEncoder().getDescriptorSymbol());
+    }
+
+    @Test
     public void testEncodeDecodeType() throws Exception {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
 

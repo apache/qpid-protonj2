@@ -55,6 +55,14 @@ public class SourceTypeCodecTest extends CodecTestSupport {
         assertEquals(Source.class, new SourceTypeEncoder().getTypeClass());
     }
 
+    @Test
+    public void testDescriptors() throws IOException {
+        assertEquals(Source.DESCRIPTOR_CODE, new SourceTypeDecoder().getDescriptorCode());
+        assertEquals(Source.DESCRIPTOR_CODE, new SourceTypeEncoder().getDescriptorCode());
+        assertEquals(Source.DESCRIPTOR_SYMBOL, new SourceTypeDecoder().getDescriptorSymbol());
+        assertEquals(Source.DESCRIPTOR_SYMBOL, new SourceTypeEncoder().getDescriptorSymbol());
+    }
+
    @Test
    public void testEncodeDecodeSourceType() throws Exception {
       ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();

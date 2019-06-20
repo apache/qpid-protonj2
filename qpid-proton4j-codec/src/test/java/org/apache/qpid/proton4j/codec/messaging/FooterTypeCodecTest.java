@@ -50,6 +50,14 @@ public class FooterTypeCodecTest extends CodecTestSupport {
     }
 
     @Test
+    public void testDescriptors() throws IOException {
+        assertEquals(Footer.DESCRIPTOR_CODE, new FooterTypeEncoder().getDescriptorCode());
+        assertEquals(Footer.DESCRIPTOR_CODE, new FooterTypeDecoder().getDescriptorCode());
+        assertEquals(Footer.DESCRIPTOR_SYMBOL, new FooterTypeEncoder().getDescriptorSymbol());
+        assertEquals(Footer.DESCRIPTOR_SYMBOL, new FooterTypeDecoder().getDescriptorSymbol());
+    }
+
+    @Test
     public void testDecodeSmallSeriesOfFooter() throws IOException {
         doTestDecodeHeaderSeries(SMALL_SIZE);
     }

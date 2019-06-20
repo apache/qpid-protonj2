@@ -49,6 +49,28 @@ public class DispositionTest {
         assertFalse(disposition.hasState());
     }
 
+
+    @Test
+    public void testIsEmpty() {
+        Disposition disposition = new Disposition();
+
+        assertEquals(0, disposition.getElementCount());
+        assertTrue(disposition.isEmpty());
+        assertFalse(disposition.hasFirst());
+
+        disposition.setFirst(0);
+
+        assertTrue(disposition.getElementCount() > 0);
+        assertFalse(disposition.isEmpty());
+        assertTrue(disposition.hasFirst());
+
+        disposition.setFirst(1);
+
+        assertTrue(disposition.getElementCount() > 0);
+        assertFalse(disposition.isEmpty());
+        assertTrue(disposition.hasFirst());
+    }
+
     @Test
     public void testCopyFromNew() {
         Disposition original = new Disposition();

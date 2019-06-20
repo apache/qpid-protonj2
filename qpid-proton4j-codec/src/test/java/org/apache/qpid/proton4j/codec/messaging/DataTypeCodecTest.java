@@ -45,6 +45,14 @@ public class DataTypeCodecTest extends CodecTestSupport {
     }
 
     @Test
+    public void testDescriptors() throws IOException {
+        assertEquals(Data.DESCRIPTOR_CODE, new DataTypeDecoder().getDescriptorCode());
+        assertEquals(Data.DESCRIPTOR_CODE, new DataTypeEncoder().getDescriptorCode());
+        assertEquals(Data.DESCRIPTOR_SYMBOL, new DataTypeDecoder().getDescriptorSymbol());
+        assertEquals(Data.DESCRIPTOR_SYMBOL, new DataTypeEncoder().getDescriptorSymbol());
+    }
+
+    @Test
     public void testDecodeData() throws IOException {
         doTestDecodeDataSeries(1);
     }

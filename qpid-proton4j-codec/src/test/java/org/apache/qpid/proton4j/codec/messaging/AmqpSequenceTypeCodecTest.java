@@ -50,6 +50,14 @@ public class AmqpSequenceTypeCodecTest extends CodecTestSupport {
     }
 
     @Test
+    public void testDescriptors() throws IOException {
+        assertEquals(AmqpSequence.DESCRIPTOR_CODE, new AmqpSequenceTypeDecoder().getDescriptorCode());
+        assertEquals(AmqpSequence.DESCRIPTOR_CODE, new AmqpSequenceTypeEncoder().getDescriptorCode());
+        assertEquals(AmqpSequence.DESCRIPTOR_SYMBOL, new AmqpSequenceTypeDecoder().getDescriptorSymbol());
+        assertEquals(AmqpSequence.DESCRIPTOR_SYMBOL, new AmqpSequenceTypeEncoder().getDescriptorSymbol());
+    }
+
+    @Test
     public void testDecodeAmqpValueString() throws IOException {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
 

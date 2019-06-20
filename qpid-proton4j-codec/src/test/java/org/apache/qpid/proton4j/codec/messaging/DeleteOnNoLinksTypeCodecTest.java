@@ -47,6 +47,14 @@ public class DeleteOnNoLinksTypeCodecTest  extends CodecTestSupport {
     }
 
     @Test
+    public void testDescriptors() throws IOException {
+        assertEquals(DeleteOnNoLinks.DESCRIPTOR_CODE, new DeleteOnNoLinksTypeDecoder().getDescriptorCode());
+        assertEquals(DeleteOnNoLinks.DESCRIPTOR_CODE, new DeleteOnNoLinksTypeEncoder().getDescriptorCode());
+        assertEquals(DeleteOnNoLinks.DESCRIPTOR_SYMBOL, new DeleteOnNoLinksTypeDecoder().getDescriptorSymbol());
+        assertEquals(DeleteOnNoLinks.DESCRIPTOR_SYMBOL, new DeleteOnNoLinksTypeEncoder().getDescriptorSymbol());
+    }
+
+    @Test
     public void testDecodeDeleteOnNoLinks() throws IOException {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
 

@@ -47,6 +47,14 @@ public class DeleteOnCloseTypeCodecTest  extends CodecTestSupport {
     }
 
     @Test
+    public void testDescriptors() throws IOException {
+        assertEquals(DeleteOnClose.DESCRIPTOR_CODE, new DeleteOnCloseTypeDecoder().getDescriptorCode());
+        assertEquals(DeleteOnClose.DESCRIPTOR_CODE, new DeleteOnCloseTypeEncoder().getDescriptorCode());
+        assertEquals(DeleteOnClose.DESCRIPTOR_SYMBOL, new DeleteOnCloseTypeDecoder().getDescriptorSymbol());
+        assertEquals(DeleteOnClose.DESCRIPTOR_SYMBOL, new DeleteOnCloseTypeEncoder().getDescriptorSymbol());
+    }
+
+    @Test
     public void TestDecodeDeleteOnClose() throws IOException {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
 

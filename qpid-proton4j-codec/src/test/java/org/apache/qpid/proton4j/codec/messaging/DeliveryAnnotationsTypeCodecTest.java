@@ -51,6 +51,14 @@ public class DeliveryAnnotationsTypeCodecTest extends CodecTestSupport {
     }
 
     @Test
+    public void testDescriptors() throws IOException {
+        assertEquals(DeliveryAnnotations.DESCRIPTOR_CODE, new DeliveryAnnotationsTypeDecoder().getDescriptorCode());
+        assertEquals(DeliveryAnnotations.DESCRIPTOR_CODE, new DeliveryAnnotationsTypeEncoder().getDescriptorCode());
+        assertEquals(DeliveryAnnotations.DESCRIPTOR_SYMBOL, new DeliveryAnnotationsTypeDecoder().getDescriptorSymbol());
+        assertEquals(DeliveryAnnotations.DESCRIPTOR_SYMBOL, new DeliveryAnnotationsTypeEncoder().getDescriptorSymbol());
+    }
+
+    @Test
     public void testDecodeSmallSeriesOfDeliveryAnnotations() throws IOException {
         doTestDecodeDeliveryAnnotationsSeries(SMALL_SIZE);
     }

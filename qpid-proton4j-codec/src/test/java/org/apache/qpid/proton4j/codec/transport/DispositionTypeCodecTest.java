@@ -47,6 +47,14 @@ public class DispositionTypeCodecTest extends CodecTestSupport {
     }
 
     @Test
+    public void testDescriptors() throws IOException {
+        assertEquals(Disposition.DESCRIPTOR_CODE, new DispositionTypeDecoder().getDescriptorCode());
+        assertEquals(Disposition.DESCRIPTOR_CODE, new DispositionTypeEncoder().getDescriptorCode());
+        assertEquals(Disposition.DESCRIPTOR_SYMBOL, new DispositionTypeDecoder().getDescriptorSymbol());
+        assertEquals(Disposition.DESCRIPTOR_SYMBOL, new DispositionTypeEncoder().getDescriptorSymbol());
+    }
+
+    @Test
     public void testEncodeAndDecodeWithNullState() throws IOException {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
 

@@ -47,6 +47,14 @@ public class DeleteOnNoMessagesTypeCodecTest  extends CodecTestSupport {
     }
 
     @Test
+    public void testDescriptors() throws IOException {
+        assertEquals(DeleteOnNoMessages.DESCRIPTOR_CODE, new DeleteOnNoMessagesTypeDecoder().getDescriptorCode());
+        assertEquals(DeleteOnNoMessages.DESCRIPTOR_CODE, new DeleteOnNoMessagesTypeEncoder().getDescriptorCode());
+        assertEquals(DeleteOnNoMessages.DESCRIPTOR_SYMBOL, new DeleteOnNoMessagesTypeDecoder().getDescriptorSymbol());
+        assertEquals(DeleteOnNoMessages.DESCRIPTOR_SYMBOL, new DeleteOnNoMessagesTypeEncoder().getDescriptorSymbol());
+    }
+
+    @Test
     public void testDecodeDeleteOnNoMessages() throws IOException {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
 

@@ -59,6 +59,27 @@ public class AttachTest {
     }
 
     @Test
+    public void testIsEmpty() {
+        Attach attach = new Attach();
+
+        assertEquals(0, attach.getElementCount());
+        assertTrue(attach.isEmpty());
+        assertFalse(attach.hasHandle());
+
+        attach.setHandle(0);
+
+        assertTrue(attach.getElementCount() > 0);
+        assertFalse(attach.isEmpty());
+        assertTrue(attach.hasHandle());
+
+        attach.setHandle(1);
+
+        assertTrue(attach.getElementCount() > 0);
+        assertFalse(attach.isEmpty());
+        assertTrue(attach.hasHandle());
+    }
+
+    @Test
     public void testSetNameRefusesNull() {
         try {
             new Attach().setName(null);

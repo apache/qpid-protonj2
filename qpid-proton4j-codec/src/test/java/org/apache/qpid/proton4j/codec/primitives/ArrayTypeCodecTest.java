@@ -24,7 +24,11 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.UUID;
 
@@ -206,6 +210,66 @@ public class ArrayTypeCodecTest extends CodecTestSupport {
         assertEquals(String.class, decoded.getClass().getComponentType());
         String[] result = (String[]) decoded;
         assertArrayEquals(input, result);
+    }
+
+    @Test
+    public void testEncodeAndDecodeArrayOfListsUsingReadMultiple() throws Exception {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        @SuppressWarnings("rawtypes")
+        List[] lists = new List[3];
+
+        ArrayList<String> content1 = new ArrayList<>();
+        ArrayList<String> content2 = new ArrayList<>();
+        ArrayList<String> content3 = new ArrayList<>();
+
+        content1.add("test-1");
+        content2.add("test-2");
+        content3.add("test-3");
+
+        lists[0] = content1;
+        lists[1] = content2;
+        lists[2] = content3;
+
+        encoder.writeObject(buffer, encoderState, lists);
+
+        @SuppressWarnings("rawtypes")
+        List[] decoded = decoder.readMultiple(buffer, decoderState, List.class);
+
+        assertNotNull(decoded);
+        assertTrue(decoded.getClass().isArray());
+        assertEquals(List.class, decoded.getClass().getComponentType());
+        assertArrayEquals(lists, decoded);
+    }
+
+    @Test
+    public void testEncodeAndDecodeArrayOfMapsUsingReadMultiple() throws Exception {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        @SuppressWarnings("rawtypes")
+        Map[] maps = new Map[3];
+
+        Map<String, Object> content1 = new LinkedHashMap<>();
+        Map<String, Object> content2 = new LinkedHashMap<>();
+        Map<String, Object> content3 = new LinkedHashMap<>();
+
+        content1.put("test-1", UUID.randomUUID());
+        content2.put("test-2", "String");
+        content3.put("test-3", Boolean.FALSE);
+
+        maps[0] = content1;
+        maps[1] = content2;
+        maps[2] = content3;
+
+        encoder.writeObject(buffer, encoderState, maps);
+
+        @SuppressWarnings("rawtypes")
+        Map[] decoded = decoder.readMultiple(buffer, decoderState, Map.class);
+
+        assertNotNull(decoded);
+        assertTrue(decoded.getClass().isArray());
+        assertEquals(Map.class, decoded.getClass().getComponentType());
+        assertArrayEquals(maps, decoded);
     }
 
     @Test

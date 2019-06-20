@@ -45,6 +45,14 @@ public class FlowTypeCodecTest extends CodecTestSupport {
     }
 
     @Test
+    public void testDescriptors() throws IOException {
+        assertEquals(Flow.DESCRIPTOR_CODE, new FlowTypeDecoder().getDescriptorCode());
+        assertEquals(Flow.DESCRIPTOR_CODE, new FlowTypeEncoder().getDescriptorCode());
+        assertEquals(Flow.DESCRIPTOR_SYMBOL, new FlowTypeDecoder().getDescriptorSymbol());
+        assertEquals(Flow.DESCRIPTOR_SYMBOL, new FlowTypeEncoder().getDescriptorSymbol());
+    }
+
+    @Test
     public void testDecodeFlow() throws IOException {
         doTestDecodeFlowSeries(1);
     }

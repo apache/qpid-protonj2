@@ -49,6 +49,14 @@ public class ReceivedTypeCodecTest extends CodecTestSupport {
     }
 
     @Test
+    public void testDescriptors() throws IOException {
+        assertEquals(Received.DESCRIPTOR_CODE, new ReceivedTypeDecoder().getDescriptorCode());
+        assertEquals(Received.DESCRIPTOR_CODE, new ReceivedTypeEncoder().getDescriptorCode());
+        assertEquals(Received.DESCRIPTOR_SYMBOL, new ReceivedTypeDecoder().getDescriptorSymbol());
+        assertEquals(Received.DESCRIPTOR_SYMBOL, new ReceivedTypeEncoder().getDescriptorSymbol());
+    }
+
+    @Test
     public void TestDecodeRecieved() throws IOException {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
 

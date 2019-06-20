@@ -51,6 +51,14 @@ public class MessageAnnotationsTypeCodecTest extends CodecTestSupport {
     }
 
     @Test
+    public void testDescriptors() throws IOException {
+        assertEquals(MessageAnnotations.DESCRIPTOR_CODE, new MessageAnnotationsTypeDecoder().getDescriptorCode());
+        assertEquals(MessageAnnotations.DESCRIPTOR_CODE, new MessageAnnotationsTypeEncoder().getDescriptorCode());
+        assertEquals(MessageAnnotations.DESCRIPTOR_SYMBOL, new MessageAnnotationsTypeDecoder().getDescriptorSymbol());
+        assertEquals(MessageAnnotations.DESCRIPTOR_SYMBOL, new MessageAnnotationsTypeEncoder().getDescriptorSymbol());
+    }
+
+    @Test
     public void testDecodeSmallSeriesOfMessageAnnotations() throws IOException {
         doTestDecodeMessageAnnotationsSeries(SMALL_SIZE);
     }

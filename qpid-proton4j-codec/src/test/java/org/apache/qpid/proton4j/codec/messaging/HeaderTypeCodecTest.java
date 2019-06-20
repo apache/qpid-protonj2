@@ -46,6 +46,14 @@ public class HeaderTypeCodecTest extends CodecTestSupport {
     }
 
     @Test
+    public void testDescriptors() throws IOException {
+        assertEquals(Header.DESCRIPTOR_CODE, new HeaderTypeDecoder().getDescriptorCode());
+        assertEquals(Header.DESCRIPTOR_CODE, new HeaderTypeEncoder().getDescriptorCode());
+        assertEquals(Header.DESCRIPTOR_SYMBOL, new HeaderTypeDecoder().getDescriptorSymbol());
+        assertEquals(Header.DESCRIPTOR_SYMBOL, new HeaderTypeEncoder().getDescriptorSymbol());
+    }
+
+    @Test
     public void testDecodeHeader() throws IOException {
         doTestDecodeHeaderSeries(1);
     }

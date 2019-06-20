@@ -17,6 +17,7 @@
 package org.apache.qpid.proton4j;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -33,16 +34,65 @@ public class UnsignedIntegerTest {
         assertEquals("127", UnsignedInteger.valueOf(127).toString());
     }
 
+    @SuppressWarnings("unlikely-arg-type")
+    @Test
+    public void testEquals() {
+        UnsignedInteger uint1 = UnsignedInteger.valueOf(1);
+        UnsignedInteger uint2 = UnsignedInteger.valueOf(2);
+
+        assertEquals(uint1, uint1);
+        assertEquals(uint1, UnsignedInteger.valueOf(1));
+        assertEquals(uint1, UnsignedInteger.valueOf("1"));
+        assertFalse(uint1.equals(uint2));
+        assertNotEquals(uint1.hashCode(), uint2.hashCode());
+
+        assertEquals(uint1.hashCode(), UnsignedInteger.valueOf(1).hashCode());
+        assertEquals(uint2.hashCode(), UnsignedInteger.valueOf(2).hashCode());
+
+        assertFalse(uint1.equals(null));
+        assertFalse(uint1.equals("test"));
+    }
+
     @Test
     public void testHashcode() {
-        UnsignedInteger ubyte1 = UnsignedInteger.valueOf((short) 1);
-        UnsignedInteger ubyte2 = UnsignedInteger.valueOf((short) 2);
+        UnsignedInteger uint1 = UnsignedInteger.valueOf(1);
+        UnsignedInteger uint2 = UnsignedInteger.valueOf(2);
 
-        assertNotEquals(ubyte1, ubyte2);
-        assertNotEquals(ubyte1.hashCode(), ubyte2.hashCode());
+        assertNotEquals(uint1, uint2);
+        assertNotEquals(uint1.hashCode(), uint2.hashCode());
 
-        assertEquals(ubyte1.hashCode(), UnsignedInteger.valueOf((short) 1).hashCode());
-        assertEquals(ubyte2.hashCode(), UnsignedInteger.valueOf((short) 2).hashCode());
+        assertEquals(uint1.hashCode(), UnsignedInteger.valueOf(1).hashCode());
+        assertEquals(uint2.hashCode(), UnsignedInteger.valueOf(2).hashCode());
+    }
+
+    @Test
+    public void testAdd() {
+        UnsignedInteger uint1 = UnsignedInteger.valueOf(1);
+        UnsignedInteger result = uint1.add(uint1);
+        assertEquals(2, result.intValue());
+    }
+
+    @Test
+    public void testSubtract() {
+        UnsignedInteger uint1 = UnsignedInteger.valueOf(1);
+        UnsignedInteger result = uint1.subtract(uint1);
+        assertEquals(0, result.intValue());
+    }
+
+    @Test
+    public void testCompareToPrimitiveInt() {
+        UnsignedInteger uint1 = UnsignedInteger.valueOf(1);
+        assertEquals(0, uint1.compareTo(1));
+        assertEquals(1, uint1.compareTo(0));
+        assertEquals(-1, uint1.compareTo(2));
+    }
+
+    @Test
+    public void testCompareToPrimitiveLong() {
+        UnsignedInteger uint1 = UnsignedInteger.valueOf(1);
+        assertEquals(0, uint1.compareTo(1l));
+        assertEquals(1, uint1.compareTo(0l));
+        assertEquals(-1, uint1.compareTo(2l));
     }
 
     @Test
@@ -70,6 +120,22 @@ public class UnsignedIntegerTest {
     }
 
     @Test
+    public void testFloatValue() {
+        assertEquals(0.0f, UnsignedInteger.valueOf(0).floatValue(), 0.0f);
+        assertEquals(65535.0f, UnsignedInteger.valueOf(65535).floatValue(), 0.0f);
+        assertEquals(1.0f, UnsignedInteger.valueOf(1).floatValue(), 0.0f);
+        assertEquals(127.0f, UnsignedInteger.valueOf(127).floatValue(), 0.0f);
+    }
+
+    @Test
+    public void testDoubleValue() {
+        assertEquals(0.0, UnsignedInteger.valueOf(0).doubleValue(), 0.0);
+        assertEquals(65535.0, UnsignedInteger.valueOf(65535).doubleValue(), 0.0);
+        assertEquals(1.0, UnsignedInteger.valueOf(1).doubleValue(), 0.0);
+        assertEquals(127.0, UnsignedInteger.valueOf(127).doubleValue(), 0.0);
+    }
+
+    @Test
     public void testCompareToByte() {
         assertTrue(UnsignedInteger.valueOf(255).compareTo(255) == 0);
         assertTrue(UnsignedInteger.valueOf(0).compareTo(0) == 0);
@@ -91,6 +157,14 @@ public class UnsignedIntegerTest {
         assertTrue(UnsignedInteger.compare(0, 0) == 0);
         assertTrue(UnsignedInteger.compare(1, 2) < 0);
         assertTrue(UnsignedInteger.compare(127, 32) > 0);
+    }
+
+    @Test
+    public void testCompareToLongLong() {
+        assertTrue(UnsignedInteger.compare(65536l, 65536l) == 0);
+        assertTrue(UnsignedInteger.compare(0l, 0l) == 0);
+        assertTrue(UnsignedInteger.compare(1l, 2l) < 0);
+        assertTrue(UnsignedInteger.compare(127l, 32l) > 0);
     }
 
     @Test

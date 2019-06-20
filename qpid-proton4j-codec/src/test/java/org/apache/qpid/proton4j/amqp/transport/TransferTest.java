@@ -20,6 +20,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import org.junit.Test;
 
@@ -52,6 +53,74 @@ public class TransferTest {
         assertFalse(transfer.hasResume());
         assertFalse(transfer.hasSettled());
         assertFalse(transfer.hasState());
+    }
+
+    @Test
+    public void testIsEmpty() {
+        Transfer transfer = new Transfer();
+
+        assertEquals(0, transfer.getElementCount());
+        assertTrue(transfer.isEmpty());
+        assertFalse(transfer.hasAborted());
+
+        transfer.setAborted(true);
+
+        assertTrue(transfer.getElementCount() > 0);
+        assertFalse(transfer.isEmpty());
+        assertTrue(transfer.hasAborted());
+        assertTrue(transfer.getAborted());
+
+        transfer.setAborted(false);
+
+        assertTrue(transfer.getElementCount() > 0);
+        assertFalse(transfer.isEmpty());
+        assertTrue(transfer.hasAborted());
+        assertFalse(transfer.getAborted());
+    }
+
+    @Test
+    public void testSetHandleEnforcesRange() {
+        Transfer transfer = new Transfer();
+
+        try {
+            transfer.setHandle(-1);
+            fail("Should not be able to set out of range value");
+        } catch (IllegalArgumentException iae) {}
+
+        try {
+            transfer.setHandle(Long.MAX_VALUE);
+            fail("Should not be able to set out of range value");
+        } catch (IllegalArgumentException iae) {}
+    }
+
+    @Test
+    public void testSetDeliveryIdEnforcesRange() {
+        Transfer transfer = new Transfer();
+
+        try {
+            transfer.setDeliveryId(-1);
+            fail("Should not be able to set out of range value");
+        } catch (IllegalArgumentException iae) {}
+
+        try {
+            transfer.setDeliveryId(Long.MAX_VALUE);
+            fail("Should not be able to set out of range value");
+        } catch (IllegalArgumentException iae) {}
+    }
+
+    @Test
+    public void testSetMessageFormatEnforcesRange() {
+        Transfer transfer = new Transfer();
+
+        try {
+            transfer.setMessageFormat(-1);
+            fail("Should not be able to set out of range value");
+        } catch (IllegalArgumentException iae) {}
+
+        try {
+            transfer.setMessageFormat(Long.MAX_VALUE);
+            fail("Should not be able to set out of range value");
+        } catch (IllegalArgumentException iae) {}
     }
 
     @Test

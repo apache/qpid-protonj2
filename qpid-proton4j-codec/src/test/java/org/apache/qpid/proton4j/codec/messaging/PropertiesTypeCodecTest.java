@@ -49,6 +49,14 @@ public class PropertiesTypeCodecTest extends CodecTestSupport {
     }
 
     @Test
+    public void testDescriptors() throws IOException {
+        assertEquals(Properties.DESCRIPTOR_CODE, new PropertiesTypeDecoder().getDescriptorCode());
+        assertEquals(Properties.DESCRIPTOR_CODE, new PropertiesTypeEncoder().getDescriptorCode());
+        assertEquals(Properties.DESCRIPTOR_SYMBOL, new PropertiesTypeDecoder().getDescriptorSymbol());
+        assertEquals(Properties.DESCRIPTOR_SYMBOL, new PropertiesTypeEncoder().getDescriptorSymbol());
+    }
+
+    @Test
     public void testDecodeSmallSeriesOfPropertiess() throws IOException {
         doTestDecodePropertiesSeries(SMALL_SIZE);
     }

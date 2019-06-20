@@ -46,6 +46,14 @@ public class CloseTypeCodecTest extends CodecTestSupport {
     }
 
     @Test
+    public void testDescriptors() throws IOException {
+        assertEquals(Close.DESCRIPTOR_CODE, new CloseTypeDecoder().getDescriptorCode());
+        assertEquals(Close.DESCRIPTOR_CODE, new CloseTypeEncoder().getDescriptorCode());
+        assertEquals(Close.DESCRIPTOR_SYMBOL, new CloseTypeDecoder().getDescriptorSymbol());
+        assertEquals(Close.DESCRIPTOR_SYMBOL, new CloseTypeEncoder().getDescriptorSymbol());
+    }
+
+    @Test
     public void testEncodeDecodeTypeWithNoError() throws Exception {
        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
 

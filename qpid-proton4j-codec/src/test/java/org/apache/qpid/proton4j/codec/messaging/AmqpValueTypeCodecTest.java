@@ -47,6 +47,14 @@ public class AmqpValueTypeCodecTest extends CodecTestSupport {
     }
 
     @Test
+    public void testDescriptors() throws IOException {
+        assertEquals(AmqpValue.DESCRIPTOR_CODE, new AmqpValueTypeDecoder().getDescriptorCode());
+        assertEquals(AmqpValue.DESCRIPTOR_CODE, new AmqpValueTypeEncoder().getDescriptorCode());
+        assertEquals(AmqpValue.DESCRIPTOR_SYMBOL, new AmqpValueTypeDecoder().getDescriptorSymbol());
+        assertEquals(AmqpValue.DESCRIPTOR_SYMBOL, new AmqpValueTypeEncoder().getDescriptorSymbol());
+    }
+
+    @Test
     public void testDecodeAmqpValueString() throws IOException {
         doTestDecodeAmqpValueSeries(1, new AmqpValue("test"));
     }

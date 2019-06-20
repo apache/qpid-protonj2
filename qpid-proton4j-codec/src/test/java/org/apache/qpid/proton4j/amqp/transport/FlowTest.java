@@ -55,6 +55,27 @@ public class FlowTest {
     }
 
     @Test
+    public void testIsEmpty() {
+        Flow flow = new Flow();
+
+        assertEquals(0, flow.getElementCount());
+        assertTrue(flow.isEmpty());
+        assertFalse(flow.hasLinkCredit());
+
+        flow.setLinkCredit(10);
+
+        assertTrue(flow.getElementCount() > 0);
+        assertFalse(flow.isEmpty());
+        assertTrue(flow.hasLinkCredit());
+
+        flow.setLinkCredit(0);
+
+        assertTrue(flow.getElementCount() > 0);
+        assertFalse(flow.isEmpty());
+        assertTrue(flow.hasLinkCredit());
+    }
+
+    @Test
     public void testCopyFromNew() {
         Flow original = new Flow();
         Flow copy = original.copy();

@@ -47,6 +47,14 @@ public class DetachTypeCodecTest extends CodecTestSupport {
     }
 
     @Test
+    public void testDescriptors() throws IOException {
+        assertEquals(Detach.DESCRIPTOR_CODE, new DetachTypeDecoder().getDescriptorCode());
+        assertEquals(Detach.DESCRIPTOR_CODE, new DetachTypeEncoder().getDescriptorCode());
+        assertEquals(Detach.DESCRIPTOR_SYMBOL, new DetachTypeDecoder().getDescriptorSymbol());
+        assertEquals(Detach.DESCRIPTOR_SYMBOL, new DetachTypeEncoder().getDescriptorSymbol());
+    }
+
+    @Test
     public void testEncodeDecodeTypeWithNoError() throws Exception {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
 

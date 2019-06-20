@@ -46,6 +46,14 @@ public class TransferTypeCodeTest extends CodecTestSupport {
     }
 
     @Test
+    public void testDescriptors() throws IOException {
+        assertEquals(Transfer.DESCRIPTOR_CODE, new TransferTypeDecoder().getDescriptorCode());
+        assertEquals(Transfer.DESCRIPTOR_CODE, new TransferTypeEncoder().getDescriptorCode());
+        assertEquals(Transfer.DESCRIPTOR_SYMBOL, new TransferTypeDecoder().getDescriptorSymbol());
+        assertEquals(Transfer.DESCRIPTOR_SYMBOL, new TransferTypeEncoder().getDescriptorSymbol());
+    }
+
+    @Test
     public void testEncodeAndDecode() throws IOException {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
 

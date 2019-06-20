@@ -47,6 +47,14 @@ public class BeginTypeCodecTest extends CodecTestSupport {
     }
 
     @Test
+    public void testDescriptors() throws IOException {
+        assertEquals(Begin.DESCRIPTOR_CODE, new BeginTypeDecoder().getDescriptorCode());
+        assertEquals(Begin.DESCRIPTOR_CODE, new BeginTypeEncoder().getDescriptorCode());
+        assertEquals(Begin.DESCRIPTOR_SYMBOL, new BeginTypeDecoder().getDescriptorSymbol());
+        assertEquals(Begin.DESCRIPTOR_SYMBOL, new BeginTypeEncoder().getDescriptorSymbol());
+    }
+
+    @Test
     public void testEncodeDecodeType() throws Exception {
        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
 

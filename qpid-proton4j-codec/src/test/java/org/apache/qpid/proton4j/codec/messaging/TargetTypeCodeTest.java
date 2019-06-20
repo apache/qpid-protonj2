@@ -53,6 +53,14 @@ public class TargetTypeCodeTest extends CodecTestSupport {
         assertEquals(Target.class, new TargetTypeEncoder().getTypeClass());
     }
 
+    @Test
+    public void testDescriptors() throws IOException {
+        assertEquals(Target.DESCRIPTOR_CODE, new TargetTypeDecoder().getDescriptorCode());
+        assertEquals(Target.DESCRIPTOR_CODE, new TargetTypeEncoder().getDescriptorCode());
+        assertEquals(Target.DESCRIPTOR_SYMBOL, new TargetTypeDecoder().getDescriptorSymbol());
+        assertEquals(Target.DESCRIPTOR_SYMBOL, new TargetTypeEncoder().getDescriptorSymbol());
+    }
+
    @Test
    public void testEncodeDecodeOfTarget() throws Exception {
       ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();

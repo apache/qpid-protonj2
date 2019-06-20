@@ -51,6 +51,14 @@ public class OpenTypeCodecTest extends CodecTestSupport {
     }
 
     @Test
+    public void testDescriptors() throws IOException {
+        assertEquals(Open.DESCRIPTOR_CODE, new OpenTypeDecoder().getDescriptorCode());
+        assertEquals(Open.DESCRIPTOR_CODE, new OpenTypeEncoder().getDescriptorCode());
+        assertEquals(Open.DESCRIPTOR_SYMBOL, new OpenTypeDecoder().getDescriptorSymbol());
+        assertEquals(Open.DESCRIPTOR_SYMBOL, new OpenTypeEncoder().getDescriptorSymbol());
+    }
+
+    @Test
     public void testEncodeAndDecode() throws IOException {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
 

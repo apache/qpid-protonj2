@@ -17,8 +17,10 @@
 package org.apache.qpid.proton4j.amqp.transport;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import org.junit.Test;
 
@@ -32,6 +34,102 @@ public class BeginTest {
     @Test
     public void testToStringOnFreshInstance() {
         assertNotNull(new Begin().toString());
+    }
+
+    @Test
+    public void testIsEmpty() {
+        Begin begin = new Begin();
+
+        assertEquals(0, begin.getElementCount());
+        assertTrue(begin.isEmpty());
+        assertFalse(begin.hasOutgoingWindow());
+
+        begin.setOutgoingWindow(1);
+
+        assertTrue(begin.getElementCount() > 0);
+        assertFalse(begin.isEmpty());
+        assertTrue(begin.hasOutgoingWindow());
+
+        begin.setOutgoingWindow(0);
+
+        assertTrue(begin.getElementCount() > 0);
+        assertFalse(begin.isEmpty());
+        assertTrue(begin.hasOutgoingWindow());
+    }
+
+    @Test
+    public void testIncomingWindowEnforcesRange() {
+        Begin begin = new Begin();
+
+        try {
+            begin.setIncomingWindow(-1);
+            fail("Should not be able to set out of range value");
+        } catch (IllegalArgumentException iae) {}
+
+        try {
+            begin.setIncomingWindow(Long.MAX_VALUE);
+            fail("Should not be able to set out of range value");
+        } catch (IllegalArgumentException iae) {}
+    }
+
+    @Test
+    public void testOutgoingWindowEnforcesRange() {
+        Begin begin = new Begin();
+
+        try {
+            begin.setOutgoingWindow(-1);
+            fail("Should not be able to set out of range value");
+        } catch (IllegalArgumentException iae) {}
+
+        try {
+            begin.setOutgoingWindow(Long.MAX_VALUE);
+            fail("Should not be able to set out of range value");
+        } catch (IllegalArgumentException iae) {}
+    }
+
+    @Test
+    public void testHandleMaxEnforcesRange() {
+        Begin begin = new Begin();
+
+        try {
+            begin.setHandleMax(-1);
+            fail("Should not be able to set out of range value");
+        } catch (IllegalArgumentException iae) {}
+
+        try {
+            begin.setHandleMax(Long.MAX_VALUE);
+            fail("Should not be able to set out of range value");
+        } catch (IllegalArgumentException iae) {}
+    }
+
+    @Test
+    public void testNextOutgoingIdEnforcesRange() {
+        Begin begin = new Begin();
+
+        try {
+            begin.setNextOutgoingId(-1);
+            fail("Should not be able to set out of range value");
+        } catch (IllegalArgumentException iae) {}
+
+        try {
+            begin.setNextOutgoingId(Long.MAX_VALUE);
+            fail("Should not be able to set out of range value");
+        } catch (IllegalArgumentException iae) {}
+    }
+
+    @Test
+    public void testRemoteChannelEnforcesRange() {
+        Begin begin = new Begin();
+
+        try {
+            begin.setRemoteChannel(-1);
+            fail("Should not be able to set out of range value");
+        } catch (IllegalArgumentException iae) {}
+
+        try {
+            begin.setRemoteChannel(Integer.MAX_VALUE);
+            fail("Should not be able to set out of range value");
+        } catch (IllegalArgumentException iae) {}
     }
 
     @Test

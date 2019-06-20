@@ -75,7 +75,7 @@ public final class UnsignedInteger extends Number implements Comparable<Unsigned
         return true;
     }
 
-    public int compreTo(int value) {
+    public int compareTo(int value) {
         return Integer.compareUnsigned(underlying, value);
     }
 
