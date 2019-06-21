@@ -21,4 +21,16 @@ package org.messaginghub.amqperative;
  */
 public class ConnectionOptions {
 
+    /**
+     * Copy all options from this {@link ConnectionOptions} instance into the instance
+     * provided.
+     *
+     * @param other
+     *      the target of this copy operation.
+     *
+     * @return this options class for chaining.
+     */
+    public ConnectionOptions copyInto(ConnectionOptions other) {
+        return this;
+    }
 }

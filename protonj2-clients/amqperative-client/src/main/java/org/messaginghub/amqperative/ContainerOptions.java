@@ -26,7 +26,7 @@ public class ContainerOptions {
     /**
      * @return the ID configured the Container
      */
-    public String getContainerName() {
+    public String getContainerId() {
         return containerId;
     }
 
@@ -38,8 +38,22 @@ public class ContainerOptions {
      *
      * @return this options class for chaining.
      */
-    public ContainerOptions setContainerName(String containerId) {
+    public ContainerOptions setContainerId(String containerId) {
         this.containerId = containerId;
+        return this;
+    }
+
+    /**
+     * Copy all options from this {@link ContainerOptions} instance into the instance
+     * provided.
+     *
+     * @param other
+     *      the target of this copy operation.
+     *
+     * @return this options class for chaining.
+     */
+    public ContainerOptions copyInto(ContainerOptions other) {
+        other.setContainerId(containerId);
         return this;
     }
 }

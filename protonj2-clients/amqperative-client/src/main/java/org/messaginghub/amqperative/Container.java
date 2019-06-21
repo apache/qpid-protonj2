@@ -36,7 +36,7 @@ public interface Container {
     }
 
     /**
-     * @returns the container id assigned to this {@link Container} instance.
+     * @return the container id assigned to this {@link Container} instance.
      */
     String getContainerId();
 

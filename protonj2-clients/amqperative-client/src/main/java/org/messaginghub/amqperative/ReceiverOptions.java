@@ -54,4 +54,21 @@ public class ReceiverOptions {
         this.creditWindow = creditWindow;
         return this;
     }
+
+    /**
+     * Copy all options from this {@link ReceiverOptions} instance into the instance
+     * provided.
+     *
+     * @param other
+     *      the target of this copy operation.
+     *
+     * @return this options class for chaining.
+     */
+    public ReceiverOptions copyInto(ReceiverOptions other) {
+        other.setCreditWindow(creditWindow);
+        other.setDynamic(dynamic);
+        other.setLinkName(linkName);
+
+        return this;
+    }
 }

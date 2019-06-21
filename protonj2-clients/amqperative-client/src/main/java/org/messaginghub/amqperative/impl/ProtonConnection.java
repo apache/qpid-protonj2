@@ -17,7 +17,6 @@
 package org.messaginghub.amqperative.impl;
 
 import java.io.IOException;
-import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
@@ -53,6 +52,7 @@ public class ProtonConnection implements Connection {
 
     private static final AtomicInteger CONNECTION_SEQUENCE = new AtomicInteger();
 
+    private final ProtonContainer container;
     private final ProtonConnectionOptions options;
 
     private final ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
@@ -73,7 +73,8 @@ public class ProtonConnection implements Connection {
      * @param options
      *      the connection options that configure this {@link Connection} instance.
      */
-    public ProtonConnection(ProtonConnectionOptions options) {
+    public ProtonConnection(ProtonContainer container, ProtonConnectionOptions options) {
+        this.container = container;
         this.options = options;
 
         ThreadFactory transportThreadFactory = new ProtonConnectionThreadFactory(
@@ -122,7 +123,7 @@ public class ProtonConnection implements Connection {
 
     //----- Internal API
 
-    void connect() {
+    ProtonConnection connect() {
         try {
             //TODO: have the connect itself be async?
             executor = transport.connect(() -> {
@@ -159,17 +160,21 @@ public class ProtonConnection implements Connection {
                 LOG.trace("close of transport reported error", t);
             }
 
-            return;
+            return this;
         }
 
         open(); // TODO - Separate open from connect ?
+
+        return this;
     }
 
     //----- Private implementation
 
     private void open() {
         executor.execute(() -> {
-            protonConnection.setContainerId(UUID.randomUUID().toString()); // TODO remove, added for broker testing
+            if (container.getContainerId() != null) {
+                protonConnection.setContainerId(container.getContainerId());
+            }
             protonConnection.open();
         });
     }

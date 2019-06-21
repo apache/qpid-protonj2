@@ -28,6 +28,6 @@ public class ProtonContainerOptions extends ContainerOptions {
     }
 
     public ProtonContainerOptions(ContainerOptions source) {
-        // TODO - Copy source into this instance.
+        source.copyInto(this);
     }
 }

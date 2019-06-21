@@ -34,10 +34,6 @@ public class ProtonReceiverOptions extends ReceiverOptions {
      * @param options
      */
     public ProtonReceiverOptions(ReceiverOptions options) {
-        setLinkName(options.getLinkName());
-        setDynamic(options.isDynamic());
-        setCreditWindow(options.getCreditWindow());
-
-        // TODO - Other options
+        options.copyInto(this);
     }
 }

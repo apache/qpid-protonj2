@@ -40,7 +40,7 @@ public class ProtonConnectionOptions extends ConnectionOptions {
         this.port = port;
 
         if (options != null) {
-            // TODO - Copy options
+            options.copyInto(this);
         }
     }
 

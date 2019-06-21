@@ -35,7 +35,6 @@ public class ProtonSenderOptions extends SenderOptions {
      *      Original options which will be copied into this instance
      */
     public ProtonSenderOptions(SenderOptions options) {
-        setLinkName(options.getLinkName());
-        // TODO
+        options.copyInto(this);
     }
 }

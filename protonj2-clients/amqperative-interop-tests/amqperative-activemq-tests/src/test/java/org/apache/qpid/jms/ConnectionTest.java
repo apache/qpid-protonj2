@@ -20,6 +20,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertSame;
 
 import java.net.URI;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.qpid.jms.support.AMQPerativeTestSupport;
@@ -27,6 +28,7 @@ import org.apache.qpid.jms.support.Wait;
 import org.junit.Test;
 import org.messaginghub.amqperative.Connection;
 import org.messaginghub.amqperative.Container;
+import org.messaginghub.amqperative.ContainerOptions;
 
 /**
  * Test for basic JmsConnection functionality and error handling.
@@ -37,7 +39,9 @@ public class ConnectionTest extends AMQPerativeTestSupport {
     public void testCreateConnection() throws Exception {
         URI brokerURI = getBrokerAmqpConnectionURI();
 
-        Container container = Container.create();
+        ContainerOptions options = new ContainerOptions();
+        options.setContainerId(UUID.randomUUID().toString());
+        Container container = Container.create(options);
         assertNotNull(container);
 
         Connection connection = container.createConnection(brokerURI.getHost(), brokerURI.getPort());

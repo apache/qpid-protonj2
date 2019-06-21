@@ -72,4 +72,21 @@ public class SenderOptions {
     public boolean isAutoSettle() {
         return autoSettle;
     }
+
+    /**
+     * Copy all options from this {@link SenderOptions} instance into the instance
+     * provided.
+     *
+     * @param other
+     *      the target of this copy operation.
+     *
+     * @return this options class for chaining.
+     */
+    public SenderOptions copyInto(SenderOptions other) {
+        other.setAutoSettle(autoSettle);
+        other.setDynamic(dynamic);
+        other.setLinkName(linkName);
+
+        return this;
+    }
 }

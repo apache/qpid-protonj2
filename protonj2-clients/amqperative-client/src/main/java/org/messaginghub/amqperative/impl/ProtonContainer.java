@@ -38,24 +38,16 @@ public class ProtonContainer implements Container {
 
     @Override
     public Connection createConnection(String hostname, int port) {
-        ProtonConnection connection = new ProtonConnection(new ProtonConnectionOptions(hostname, port));
-
-        connection.connect();  // For now we only have a synchronous connect API
-
-        return connection;
+        return new ProtonConnection(this, new ProtonConnectionOptions(hostname, port)).connect();
     }
 
     @Override
     public Connection createConnection(String hostname, int port, ConnectionOptions options) {
-        ProtonConnection connection = new ProtonConnection(new ProtonConnectionOptions(hostname, port, options));
-
-        connection.connect();  // For now we only have a synchronous connect API
-
-        return connection;
+        return new ProtonConnection(this, new ProtonConnectionOptions(hostname, port, options)).connect();
     }
 
     @Override
     public String getContainerId() {
-        return options.getContainerName();
+        return options.getContainerId();
     }
 }
