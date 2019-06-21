@@ -42,6 +42,10 @@ public class ByteBufWrapper extends ProtonAbstractByteBuffer {
         wrapped = Unpooled.buffer(1024, maximumCapacity);
     }
 
+    public ByteBuf unwrap() {
+        return wrapped;
+    }
+
     @Override
     public int capacity() {
         return wrapped.capacity();
@@ -81,8 +85,14 @@ public class ByteBufWrapper extends ProtonAbstractByteBuffer {
 
     @Override
     public ProtonBuffer getBytes(int index, ProtonBuffer destination, int offset, int length) {
+        if (destination.hasArray()) {
+            wrapped.getBytes(index, destination.getArray(), destination.getArrayOffset() + offset, length);
+        } else if (destination instanceof ByteBufWrapper) {
+            ByteBufWrapper wrapper = (ByteBufWrapper) destination;
+            wrapped.getBytes(index, wrapper.unwrap(), offset, length);
+        }
         // TODO - Optimize get as much as possible before single byte copy.
-        return null;
+        return this;
     }
 
     @Override
@@ -124,7 +134,13 @@ public class ByteBufWrapper extends ProtonAbstractByteBuffer {
     }
 
     @Override
-    public ProtonBuffer setBytes(int index, ProtonBuffer value, int offset, int length) {
+    public ProtonBuffer setBytes(int index, ProtonBuffer source, int offset, int length) {
+        if (source.hasArray()) {
+            wrapped.setBytes(index, source.getArray(), source.getArrayOffset() + offset, length);
+        } else if (source instanceof ByteBufWrapper) {
+            ByteBufWrapper wrapper = (ByteBufWrapper) source;
+            wrapped.getBytes(index, wrapper.unwrap(), offset, length);
+        }
         // TODO - Optimize put as much as possible before single byte copy.
         return this;
     }

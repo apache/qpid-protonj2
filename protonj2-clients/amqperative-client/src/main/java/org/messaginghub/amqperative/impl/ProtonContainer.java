@@ -37,14 +37,20 @@ public class ProtonContainer implements Container {
     }
 
     @Override
-    public Connection createConnection(String host, int port) {
-        // TODO Auto-generated method stub
-        return null;
+    public Connection createConnection(String hostname, int port) {
+        ProtonConnection connection = new ProtonConnection(new ProtonConnectionOptions(hostname, port));
+
+        connection.connect();  // For now we only have a synchronous connect API
+
+        return connection;
     }
 
     @Override
-    public Connection createConnection(String host, int port, ConnectionOptions options) {
-        // TODO Auto-generated method stub
-        return null;
+    public Connection createConnection(String hostname, int port, ConnectionOptions options) {
+        ProtonConnection connection = new ProtonConnection(new ProtonConnectionOptions(hostname, port, options));
+
+        connection.connect();  // For now we only have a synchronous connect API
+
+        return connection;
     }
 }
