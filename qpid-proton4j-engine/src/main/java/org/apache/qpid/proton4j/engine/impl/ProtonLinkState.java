@@ -26,7 +26,7 @@ import org.apache.qpid.proton4j.engine.Delivery;
 /**
  * Proton Link state base used to define common API amongst the implementations.
  *
- * @param <DeliveryType>
+ * @param <DeliveryType> The type of delivery (incoming or outgoing that this link state manages.
  */
 public interface ProtonLinkState<DeliveryType extends Delivery> {
 
@@ -75,6 +75,7 @@ public interface ProtonLinkState<DeliveryType extends Delivery> {
      * sent from the remote
      *
      * @param attach
+     *      The attach that the remote sent for this link.
      */
     void remoteAttach(Attach attach);
 

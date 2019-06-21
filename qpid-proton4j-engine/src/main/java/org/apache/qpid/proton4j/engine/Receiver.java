@@ -34,8 +34,8 @@ public interface Receiver extends Link<Receiver> {
      *
      * @return this {@link Receiver}
      *
-     * @throw {@link IllegalArgumentException} if the credit amount is negative.
-     * @throw {@link IllegalStateException} if the Receiver is not open.
+     * @throws IllegalArgumentException if the credit amount is negative.
+     * @throws IllegalStateException if the Receiver is not open.
      */
     Receiver setCredit(int credit);
 
@@ -111,7 +111,6 @@ public interface Receiver extends Link<Receiver> {
      *
      * TODO -- What to do when drain won't complete, another event or signal this one with async
      *         success or failure since it was asked for anyway async event isn't that unexpected.
-     * Receiver receiverDrainedEventHandler(EventHandler<AsyncEvent<Receiver>> handler);
      *
      * @param handler
      *      The handler that will be invoked when receiver credit has been drained by the remote sender.

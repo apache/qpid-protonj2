@@ -218,7 +218,7 @@ public interface Session {
      * Sets a {@link EventHandler} for when an AMQP Begin frame is received from the remote peer for this
      * {@link Session} which would have been locally opened previously.
      *
-     * Typically used by clients, servers rely on {@link ProtonConnection#sessionOpenHandler(Handler)}.
+     * Typically used by clients, servers rely on {@link ProtonConnection#sessionOpenEventHandler(EventHandler)}.
      *
      * @param remoteOpenHandler
      *      The {@link EventHandler} to notify when this session is remotely opened.

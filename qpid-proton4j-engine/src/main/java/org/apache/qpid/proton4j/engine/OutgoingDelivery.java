@@ -53,7 +53,8 @@ public interface OutgoingDelivery extends Delivery {
      * @return this outgoing delivery instance.
      *
      * TODO - Decide how we handle not being able to write some or all of the bytes
-     * @throws {@link IllegalStateException} if the current credit prohibits sending the requested amount of bytes
+     *
+     * @throws IllegalStateException if the current credit prohibits sending the requested amount of bytes
      */
     OutgoingDelivery writeBytes(ProtonBuffer buffer);
 
@@ -71,7 +72,8 @@ public interface OutgoingDelivery extends Delivery {
      * @return this outgoing delivery instance.
      *
      * TODO - Decide how we handle not being able to write some or all of the bytes
-     * @throws {@link IllegalStateException} if the current credit prohibits sending the requested amount of bytes
+     *
+     * @throws IllegalStateException if the current credit prohibits sending the requested amount of bytes
      */
     OutgoingDelivery streamBytes(ProtonBuffer buffer);
 
@@ -87,7 +89,8 @@ public interface OutgoingDelivery extends Delivery {
      * @return this outgoing delivery instance.
      *
      * TODO - Decide how we handle not being able to write some or all of the bytes
-     * @throws {@link IllegalStateException} if the current credit prohibits sending the requested amount of bytes
+     *
+     * @throws IllegalStateException if the current credit prohibits sending the requested amount of bytes
      */
     OutgoingDelivery streamBytes(ProtonBuffer buffer, boolean complete);
 

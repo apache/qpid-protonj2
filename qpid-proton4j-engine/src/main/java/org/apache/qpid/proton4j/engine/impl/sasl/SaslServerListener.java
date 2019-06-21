@@ -60,7 +60,6 @@ public interface SaslServerListener {
      *
      * @param context the SaslServerContext object
      * @param initResponse the initial response sent by the remote
-     * @param the Binary payload of the initial response if any.
      */
     void onSaslInit(ProtonSaslServerContext context, Binary initResponse);
 
@@ -70,7 +69,6 @@ public interface SaslServerListener {
      *
      * @param context the SaslServerContext object
      * @param response the response sent by the remote
-     * @param the Binary payload of the challenge response if any.
      */
     void onSaslResponse(ProtonSaslServerContext context, Binary response);
 
