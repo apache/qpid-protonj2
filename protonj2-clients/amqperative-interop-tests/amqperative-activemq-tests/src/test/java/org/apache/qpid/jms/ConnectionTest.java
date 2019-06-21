@@ -47,5 +47,7 @@ public class ConnectionTest extends AMQPerativeTestSupport {
         Wait.assertTrue("Broker did not register a connection", () -> getProxyToBroker().getCurrentConnectionsCount() == 1);
 
         assertSame(connection, connection.close().get(5, TimeUnit.SECONDS));
+
+        Wait.assertTrue("Broker did not register a connection close", () -> getProxyToBroker().getCurrentConnectionsCount() == 0);
     }
 }
