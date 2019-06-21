@@ -33,7 +33,7 @@ import org.messaginghub.amqperative.Container;
  */
 public class ConnectionTest extends AMQPerativeTestSupport {
 
-    @Test
+    @Test(timeout = 60000)
     public void testCreateConnection() throws Exception {
         URI brokerURI = getBrokerAmqpConnectionURI();
 

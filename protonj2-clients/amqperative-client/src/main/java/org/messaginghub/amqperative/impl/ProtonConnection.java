@@ -22,7 +22,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -88,17 +87,17 @@ public class ProtonConnection implements Connection {
 
     @Override
     public Future<Connection> openFuture() {
-        return openFuture;  // TODO
+        return openFuture;
     }
 
     @Override
     public Future<Connection> close() {
         if (!openFuture.isCompletedExceptionally()) {
-            executor.schedule(() -> {
+            executor.execute(() -> {
                 protonConnection.close();
-            }, 1, TimeUnit.SECONDS);//TODO: remove artificial delay, use execute
+            });
         }
-        return closeFuture; // TODO
+        return closeFuture;
     }
 
     @Override
@@ -169,10 +168,10 @@ public class ProtonConnection implements Connection {
     //----- Private implementation
 
     private void open() {
-        executor.schedule(() -> {
+        executor.execute(() -> {
             protonConnection.setContainerId(UUID.randomUUID().toString()); // TODO remove, added for broker testing
             protonConnection.open();
-        }, 1, TimeUnit.SECONDS);//TODO: remove artificial delay, use execute
+        });
     }
 
     private static class TransportHandler implements TransportListener {
