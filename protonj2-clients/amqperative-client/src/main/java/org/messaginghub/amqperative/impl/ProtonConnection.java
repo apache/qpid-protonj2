@@ -17,6 +17,7 @@
 package org.messaginghub.amqperative.impl;
 
 import java.io.IOException;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
@@ -169,6 +170,7 @@ public class ProtonConnection implements Connection {
 
     private void open() {
         executor.schedule(() -> {
+            protonConnection.setContainerId(UUID.randomUUID().toString()); // TODO remove, added for broker testing
             protonConnection.open();
         }, 1, TimeUnit.SECONDS);//TODO: remove artificial delay, use execute
     }

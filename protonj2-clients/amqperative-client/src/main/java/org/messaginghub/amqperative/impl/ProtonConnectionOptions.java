@@ -24,7 +24,7 @@ import org.messaginghub.amqperative.ConnectionOptions;
 /**
  * Connection Options for the ProtonConnection implementation
  */
-public class ProtonConnectionOptions implements ConnectionOptions {
+public class ProtonConnectionOptions extends ConnectionOptions {
 
     private final String hostname;
     private final int port;

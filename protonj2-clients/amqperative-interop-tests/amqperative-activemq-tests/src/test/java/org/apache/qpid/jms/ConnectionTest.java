@@ -17,9 +17,15 @@
 package org.apache.qpid.jms;
 
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertSame;
+
+import java.net.URI;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.qpid.jms.support.AMQPerativeTestSupport;
+import org.apache.qpid.jms.support.Wait;
 import org.junit.Test;
+import org.messaginghub.amqperative.Connection;
 import org.messaginghub.amqperative.Container;
 
 /**
@@ -29,8 +35,17 @@ public class ConnectionTest extends AMQPerativeTestSupport {
 
     @Test
     public void testCreateConnection() throws Exception {
-        Container container = Container.create();
+        URI brokerURI = getBrokerAmqpConnectionURI();
 
+        Container container = Container.create();
         assertNotNull(container);
+
+        Connection connection = container.createConnection(brokerURI.getHost(), brokerURI.getPort());
+        assertNotNull(connection);
+        assertSame(connection, connection.openFuture().get(5, TimeUnit.SECONDS));
+
+        Wait.assertTrue("Broker did not register a connection", () -> getProxyToBroker().getCurrentConnectionsCount() == 1);
+
+        assertSame(connection, connection.close().get(5, TimeUnit.SECONDS));
     }
 }

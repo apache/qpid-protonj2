@@ -53,4 +53,9 @@ public class ProtonContainer implements Container {
 
         return connection;
     }
+
+    @Override
+    public String getContainerId() {
+        return options.getContainerName();
+    }
 }

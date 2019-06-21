@@ -18,6 +18,8 @@ package org.apache.qpid.jms.support;
 
 import java.util.concurrent.TimeUnit;
 
+import org.junit.Assert;
+
 public class Wait {
 
     public static final long MAX_WAIT_MILLIS = 30 * 1000;
@@ -27,7 +29,7 @@ public class Wait {
         boolean isSatisfied() throws Exception;
     }
 
-    public static boolean waitFor(Condition condition) throws Exception {
+    public static boolean waitFor(final Condition condition) throws Exception {
         return waitFor(condition, MAX_WAIT_MILLIS);
     }
 
@@ -43,5 +45,69 @@ public class Wait {
             conditionSatisfied = condition.isSatisfied();
         }
         return conditionSatisfied;
+    }
+
+    //----- Convenience methods for boolean wait for assertions
+
+    public static void assertTrue(String failureMessage, final Condition condition) throws Exception {
+        assertTrue(failureMessage, condition, MAX_WAIT_MILLIS);
+    }
+
+    public static void assertTrue(String failureMessage, final Condition condition, final long duration) throws Exception {
+        assertTrue(failureMessage, condition, duration, SLEEP_MILLIS);
+    }
+
+    public static void assertTrue(final Condition condition, final long duration, final long sleep) throws Exception {
+        assertTrue("Specified condition not met", condition, duration, sleep);
+    }
+
+    public static void assertTrue(String failureMessage, final Condition condition, final long duration, final long sleep) throws Exception {
+        boolean result = waitFor(condition, duration, sleep);
+
+        if (!result) {
+            Assert.fail(failureMessage);
+        }
+    }
+
+    //----- Convenience methods for integer based wait for assertions
+
+    public interface LongCondition {
+        long getCount() throws Exception;
+     }
+
+     public interface IntCondition {
+        int getCount() throws Exception;
+     }
+
+    public static void assertEquals(long size, LongCondition condition) throws Exception {
+        assertEquals(size, condition, MAX_WAIT_MILLIS);
+    }
+
+    public static void assertEquals(long size, LongCondition condition, long timeout) throws Exception {
+        assertEquals(size, condition, timeout, SLEEP_MILLIS);
+    }
+
+    public static void assertEquals(Long size, LongCondition condition, long timeout, long sleepMillis) throws Exception {
+        boolean result = waitFor(() -> condition.getCount() == size, timeout, sleepMillis);
+
+        if (!result) {
+            Assert.fail(size + " != " + condition.getCount());
+        }
+    }
+
+    public static void assertEquals(int size, IntCondition condition) throws Exception {
+        assertEquals(size, condition, MAX_WAIT_MILLIS);
+    }
+
+    public static void assertEquals(int size, IntCondition condition, long timeout) throws Exception {
+        assertEquals(size, condition, timeout, SLEEP_MILLIS);
+    }
+
+    public static void assertEquals(int size, IntCondition condition, long timeout, long sleepMillis) throws Exception {
+        boolean result = waitFor(() -> condition.getCount() == size, timeout, sleepMillis);
+
+        if (!result) {
+            Assert.fail(size + " != " + condition.getCount());
+        }
     }
 }

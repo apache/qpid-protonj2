@@ -222,6 +222,10 @@ public class AMQPerativeTestSupport {
         return false;
     }
 
+    protected boolean isAllowNonSaslConnections() {
+        return true;
+    }
+
     protected BrokerService createBroker(String name, boolean deleteAllMessages) throws Exception {
         return createBroker(name, deleteAllMessages, Collections.<String, Integer> emptyMap());
     }
@@ -290,6 +294,7 @@ public class AMQPerativeTestSupport {
             "?transport.transformer=" + getAmqpTransformer() +
             "&transport.socketBufferSize=" + getSocketBufferSize() +
             "&transport.tcpNoDelay=true" +
+            "&wireFormat.allowNonSaslConnections=" + isAllowNonSaslConnections() +
             "&ioBufferSize=" + getIOBufferSize());
         connector.setName("amqp");
         port = connector.getPublishableConnectURI().getPort();

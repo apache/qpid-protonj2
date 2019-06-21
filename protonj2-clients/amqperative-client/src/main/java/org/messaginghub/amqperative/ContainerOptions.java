@@ -21,4 +21,25 @@ package org.messaginghub.amqperative;
  */
 public class ContainerOptions {
 
+    private String containerId;
+
+    /**
+     * @return the ID configured the Container
+     */
+    public String getContainerName() {
+        return containerId;
+    }
+
+    /**
+     * Sets the container ID that should be used when creating Connections
+     *
+     * @param containerId
+     *      The container Id that should be assigned to container connections.
+     *
+     * @return this options class for chaining.
+     */
+    public ContainerOptions setContainerName(String containerId) {
+        this.containerId = containerId;
+        return this;
+    }
 }

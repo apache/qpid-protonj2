@@ -36,6 +36,11 @@ public interface Container {
     }
 
     /**
+     * @returns the container id assigned to this {@link Container} instance.
+     */
+    String getContainerId();
+
+    /**
      * Connect to the specified host and port, without credentials.
      *
      * @param host
