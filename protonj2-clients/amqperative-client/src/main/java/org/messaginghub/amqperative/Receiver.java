@@ -32,6 +32,8 @@ public interface Receiver {
     // TODO: with credit window, above is fine...without, we would need to
     // manage the credit in one of various fashions (or say we dont).
 
+    Future<Receiver> openFuture();
+
     Future<Receiver> close();
 
     Future<Receiver> detach();

@@ -31,6 +31,8 @@ public interface Sender {
      */
     Tracker send(Message message);
 
+    Future<Sender> openFuture();
+
     Future<Sender> close();
 
     Future<Sender> detach();

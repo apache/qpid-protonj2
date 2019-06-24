@@ -16,52 +16,90 @@
  */
 package org.messaginghub.amqperative.impl;
 
-import org.apache.qpid.proton4j.engine.Session;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Future;
+import java.util.concurrent.ScheduledExecutorService;
+
 import org.messaginghub.amqperative.Receiver;
 import org.messaginghub.amqperative.ReceiverOptions;
 import org.messaginghub.amqperative.Sender;
 import org.messaginghub.amqperative.SenderOptions;
+import org.messaginghub.amqperative.Session;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  *
  */
-public class ProtonSession {
+public class ProtonSession implements Session {
+
+    private static final Logger LOG = LoggerFactory.getLogger(ProtonSession.class);
+
+    private CompletableFuture<Session> openFuture = new CompletableFuture<Session>();
+    private CompletableFuture<Session> closeFuture = new CompletableFuture<Session>();
 
     private final ProtonSessionOptions options;
     private final ProtonConnection connection;
-    private final Session session;
+    private final org.apache.qpid.proton4j.engine.Session session;
+    private final ScheduledExecutorService executor;
 
-    public ProtonSession(ProtonSessionOptions options, ProtonConnection connection, Session session) {
+    public ProtonSession(ProtonSessionOptions options, ProtonConnection connection, org.apache.qpid.proton4j.engine.Session session) {
         this.options = options;
         this.connection = connection;
         this.session = session;
+        this.executor = connection.getScheduler();
     }
 
-    /**
-     * Creates a new {@link Receiver} instance using the given options and address.
-     *
-     * @param address
-     *      The address to be used when creating the receiver link.
-     * @param receiverOptions
-     *      The options used to configure the receiver link.
-     *
-     * @return a new {@link Receiver} instance configured with the given options and address.
-     */
+    @Override
+    public Future<Session> openFuture() {
+        return openFuture;
+    }
+
+    @Override
+    public Future<Session> close() {
+        return closeFuture;
+    }
+
+    @Override
+    public Receiver createReceiver(String address) {
+        return createReceiver(address, new ProtonReceiverOptions());
+    }
+
+    @Override
     public Receiver createReceiver(String address, ReceiverOptions receiverOptions) {
-        return new ProtonReceiver(receiverOptions, this, session.receiver(address));
+        return new ProtonReceiver(receiverOptions, this, session.receiver(address)).open();
     }
 
-    /**
-     * Creates a new {@link Sender} instance using the given options and address.
-     *
-     * @param address
-     *      The address to be used when creating the receiver link.
-     * @param senderOptions
-     *      The options used to configure the receiver link.
-     *
-     * @return a new {@link Sender} instance configured with the given options and address.
-     */
+    @Override
+    public Sender createSender(String address) {
+        return createSender(address, new ProtonSenderOptions());
+    }
+
+    @Override
     public Sender createSender(String address, SenderOptions senderOptions) {
-        return new ProtonSender(senderOptions, this, session.sender(address));
+        return new ProtonSender(senderOptions, this, session.sender(address)).open();
+    }
+
+    //----- Internal API
+
+    ProtonSession open() {
+        executor.execute(() -> {
+            session.openHandler(result -> {
+                if (result.succeeded()) {
+                    openFuture.complete(this);
+                    LOG.trace("Connection session opened successfully");
+                } else {
+                    openFuture.completeExceptionally(result.error());
+                    LOG.error("Connection session failed to open: ", result.error());
+                }
+            });
+            session.open();
+        });
+
+        return this;
+    }
+
+    ScheduledExecutorService getScheduler() {
+        return executor;
     }
 }

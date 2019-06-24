@@ -16,27 +16,43 @@
  */
 package org.messaginghub.amqperative.impl;
 
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.function.Consumer;
 
 import org.messaginghub.amqperative.Delivery;
 import org.messaginghub.amqperative.Receiver;
 import org.messaginghub.amqperative.ReceiverOptions;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  *
  */
 public class ProtonReceiver implements Receiver {
 
+    private static final Logger LOG = LoggerFactory.getLogger(ProtonReceiver.class);
+
+    private CompletableFuture<Receiver> openFuture = new CompletableFuture<Receiver>();
+    private CompletableFuture<Receiver> closeFuture = new CompletableFuture<Receiver>();
+
     private final ProtonReceiverOptions options;
     private final ProtonSession session;
     private final org.apache.qpid.proton4j.engine.Receiver receiver;
+    private final ScheduledExecutorService executor;
 
     public ProtonReceiver(ReceiverOptions options, ProtonSession session, org.apache.qpid.proton4j.engine.Receiver receiver) {
         this.options = new ProtonReceiverOptions(options);
         this.session = session;
         this.receiver = receiver;
+        this.executor = session.getScheduler();
+    }
+
+    @Override
+    public Future<Receiver> openFuture() {
+        return openFuture;
     }
 
     @Override
@@ -59,14 +75,12 @@ public class ProtonReceiver implements Receiver {
 
     @Override
     public Future<Receiver> close() {
-        // TODO Auto-generated method stub
-        return null;
+        return closeFuture;
     }
 
     @Override
     public Future<Receiver> detach() {
-        // TODO Auto-generated method stub
-        return null;
+        return closeFuture;
     }
 
     @Override
@@ -97,5 +111,24 @@ public class ProtonReceiver implements Receiver {
     public Future<Receiver> drainCredit(long timeout) throws IllegalStateException, IllegalArgumentException {
         // TODO Auto-generated method stub
         return null;
+    }
+
+    //----- Internal API
+
+    ProtonReceiver open() {
+        executor.execute(() -> {
+            receiver.openHandler(result -> {
+                if (result.succeeded()) {
+                    openFuture.complete(this);
+                    LOG.trace("Receiver opened successfully");
+                } else {
+                    openFuture.completeExceptionally(result.error());
+                    LOG.error("Receiver failed to open: ", result.error());
+                }
+            });
+            receiver.open();
+        });
+
+        return this;
     }
 }

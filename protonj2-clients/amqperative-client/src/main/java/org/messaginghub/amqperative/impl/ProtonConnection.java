@@ -26,7 +26,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.qpid.proton4j.buffer.ProtonByteBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
-import org.apache.qpid.proton4j.engine.Session;
 import org.apache.qpid.proton4j.engine.exceptions.EngineStateException;
 import org.apache.qpid.proton4j.engine.impl.ProtonEngine;
 import org.apache.qpid.proton4j.engine.impl.ProtonEngineFactory;
@@ -138,23 +137,11 @@ public class ProtonConnection implements Connection {
                     remoteOpened.set(true);
 
                     // TODO - Lazy create connection session for sender and receiver create
-
-                    Session session = protonConnection.session();
-                    session.openHandler(sessioOpened -> {
-                        if (sessioOpened.succeeded()) {
-                            LOG.trace("Connection session opened successfully");
-                        } else {
-                            LOG.error("Connection session failed to open: ", sessioOpened.error());
-                        }
-                    });
-
                     // Creates the Connection Session used for connection created senders and receivers.
                     // TODO - Open currently is done on connect so this is safe from NPE when doing
                     //        open -> begin -> attach things but could go horribly wrong later
-                    connectionSession = new ProtonSession(new ProtonSessionOptions(), ProtonConnection.this, session);
-
-                    // Now do the open.
-                    session.open();
+                    connectionSession = new ProtonSession(
+                        new ProtonSessionOptions(), ProtonConnection.this, protonConnection.session()).open();
 
                     openFuture.complete(this);
                 });
@@ -191,6 +178,10 @@ public class ProtonConnection implements Connection {
         open(); // TODO - Separate open from connect ?
 
         return this;
+    }
+
+    ScheduledExecutorService getScheduler() {
+        return executor;
     }
 
     //----- Private implementation
