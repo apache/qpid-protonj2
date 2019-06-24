@@ -26,10 +26,12 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.qpid.proton4j.buffer.ProtonByteBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
+import org.apache.qpid.proton4j.engine.Session;
 import org.apache.qpid.proton4j.engine.exceptions.EngineStateException;
 import org.apache.qpid.proton4j.engine.impl.ProtonEngine;
 import org.apache.qpid.proton4j.engine.impl.ProtonEngineFactory;
 import org.messaginghub.amqperative.Connection;
+import org.messaginghub.amqperative.Container;
 import org.messaginghub.amqperative.Receiver;
 import org.messaginghub.amqperative.ReceiverOptions;
 import org.messaginghub.amqperative.Sender;
@@ -57,6 +59,7 @@ public class ProtonConnection implements Connection {
 
     private final ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
     private org.apache.qpid.proton4j.engine.Connection protonConnection;
+    private ProtonSession connectionSession;
     private Transport transport;
 
     private CompletableFuture<Connection> openFuture = new CompletableFuture<Connection>();
@@ -70,6 +73,8 @@ public class ProtonConnection implements Connection {
      * Create a connection and define the initial configuration used to manage the
      * connection to the remote.
      *
+     * @param container
+     *      the {@link Container} that this connection resides within.
      * @param options
      *      the connection options that configure this {@link Connection} instance.
      */
@@ -108,7 +113,7 @@ public class ProtonConnection implements Connection {
 
     @Override
     public Receiver createReceiver(String address, ReceiverOptions receiverOptions) {
-        return new ProtonReceiver(receiverOptions);
+        return connectionSession.createReceiver(address, receiverOptions);
     }
 
     @Override
@@ -118,7 +123,7 @@ public class ProtonConnection implements Connection {
 
     @Override
     public Sender createSender(String address, SenderOptions senderOptions) {
-        return new ProtonSender(senderOptions);
+        return connectionSession.createSender(address, senderOptions);
     }
 
     //----- Internal API
@@ -131,6 +136,26 @@ public class ProtonConnection implements Connection {
 
                 protonConnection.openEventHandler((result) -> {
                     remoteOpened.set(true);
+
+                    // TODO - Lazy create connection session for sender and receiver create
+
+                    Session session = protonConnection.session();
+                    session.openHandler(sessioOpened -> {
+                        if (sessioOpened.succeeded()) {
+                            LOG.trace("Connection session opened successfully");
+                        } else {
+                            LOG.error("Connection session failed to open: ", sessioOpened.error());
+                        }
+                    });
+
+                    // Creates the Connection Session used for connection created senders and receivers.
+                    // TODO - Open currently is done on connect so this is safe from NPE when doing
+                    //        open -> begin -> attach things but could go horribly wrong later
+                    connectionSession = new ProtonSession(new ProtonSessionOptions(), ProtonConnection.this, session);
+
+                    // Now do the open.
+                    session.open();
+
                     openFuture.complete(this);
                 });
 

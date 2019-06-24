@@ -32,6 +32,7 @@ public class ProtonReceiverOptions extends ReceiverOptions {
 
     /**
      * @param options
+     *      The options to use to configure this options instance.
      */
     public ProtonReceiverOptions(ReceiverOptions options) {
         options.copyInto(this);

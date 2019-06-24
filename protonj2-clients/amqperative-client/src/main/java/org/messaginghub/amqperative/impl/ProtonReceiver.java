@@ -30,12 +30,13 @@ import org.messaginghub.amqperative.ReceiverOptions;
 public class ProtonReceiver implements Receiver {
 
     private final ProtonReceiverOptions options;
+    private final ProtonSession session;
+    private final org.apache.qpid.proton4j.engine.Receiver receiver;
 
-    /**
-     *
-     */
-    public ProtonReceiver(ReceiverOptions options) {
+    public ProtonReceiver(ReceiverOptions options, ProtonSession session, org.apache.qpid.proton4j.engine.Receiver receiver) {
         this.options = new ProtonReceiverOptions(options);
+        this.session = session;
+        this.receiver = receiver;
     }
 
     @Override
@@ -97,5 +98,4 @@ public class ProtonReceiver implements Receiver {
         // TODO Auto-generated method stub
         return null;
     }
-
 }

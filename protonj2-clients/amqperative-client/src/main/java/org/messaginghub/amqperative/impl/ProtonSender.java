@@ -31,12 +31,13 @@ import org.messaginghub.amqperative.Tracker;
 public class ProtonSender implements Sender {
 
     private final ProtonSenderOptions options;
+    private final ProtonSession session;
+    private final org.apache.qpid.proton4j.engine.Sender sender;
 
-    /**
-     *
-     */
-    public ProtonSender(SenderOptions options) {
+    public ProtonSender(SenderOptions options, ProtonSession session, org.apache.qpid.proton4j.engine.Sender sender) {
         this.options = new ProtonSenderOptions(options);
+        this.session = session;
+        this.sender = sender;
     }
 
     @Override
