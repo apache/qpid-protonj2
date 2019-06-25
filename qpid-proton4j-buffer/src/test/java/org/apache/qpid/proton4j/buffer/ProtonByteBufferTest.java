@@ -27,8 +27,10 @@ import static org.junit.Assert.fail;
 
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.util.Random;
 
 import org.apache.qpid.proton4j.buffer.util.ProtonTestByteBuffer;
+import org.junit.Before;
 import org.junit.Test;
 
 /**
@@ -37,6 +39,17 @@ import org.junit.Test;
 public class ProtonByteBufferTest {
 
     private static final int CAPACITY = 4096; // Must be even for these tests
+    private static final int BLOCK_SIZE = 128;
+
+    private long seed;
+    private Random random;
+
+    @Before
+    public void setUp() {
+        seed = System.currentTimeMillis();
+        random = new Random();
+        random.setSeed(seed);
+    }
 
     //----- Test Buffer creation ---------------------------------------------//
 
@@ -2058,6 +2071,494 @@ public class ProtonByteBufferTest {
 
         for (int i = 0; i < data.length; ++i) {
             assertEquals(buffer.getByte(i), target.getByte(i));
+        }
+    }
+
+    //----- Miscellaneous Stress Tests
+
+    @Test
+    public void testRandomByteAccess() {
+        ProtonBuffer buffer = new ProtonByteBuffer(CAPACITY);
+
+        for (int i = 0; i < buffer.capacity(); i ++) {
+            byte value = (byte) random.nextInt();
+            buffer.setByte(i, value);
+        }
+
+        random.setSeed(seed);
+        for (int i = 0; i < buffer.capacity(); i ++) {
+            byte value = (byte) random.nextInt();
+            assertEquals(value, buffer.getByte(i));
+        }
+    }
+
+    @Test
+    public void testRandomShortAccess() {
+        ProtonBuffer buffer = new ProtonByteBuffer(CAPACITY);
+
+        for (int i = 0; i < buffer.capacity() - 1; i += 2) {
+            short value = (short) random.nextInt();
+            buffer.setShort(i, value);
+        }
+
+        random.setSeed(seed);
+        for (int i = 0; i < buffer.capacity() - 1; i += 2) {
+            short value = (short) random.nextInt();
+            assertEquals(value, buffer.getShort(i));
+        }
+    }
+
+    @Test
+    public void testShortConsistentWithByteBuffer() {
+        ProtonBuffer buffer = new ProtonByteBuffer(CAPACITY);
+
+        for (int i = 0; i < 64; ++i) {
+            ByteBuffer javaBuffer = ByteBuffer.allocate(buffer.capacity());
+
+            short expected = (short) (random.nextInt() & 0xFFFF);
+            javaBuffer.putShort(expected);
+
+            final int bufferIndex = buffer.capacity() - 2;
+            buffer.setShort(bufferIndex, expected);
+            javaBuffer.flip();
+
+            short javaActual = javaBuffer.getShort();
+            assertEquals(expected, javaActual);
+            assertEquals(javaActual, buffer.getShort(bufferIndex));
+        }
+    }
+
+    @Test
+    public void testRandomIntAccess() {
+        ProtonBuffer buffer = new ProtonByteBuffer(CAPACITY);
+
+        for (int i = 0; i < buffer.capacity() - 3; i += 4) {
+            int value = random.nextInt();
+            buffer.setInt(i, value);
+        }
+
+        random.setSeed(seed);
+        for (int i = 0; i < buffer.capacity() - 3; i += 4) {
+            int value = random.nextInt();
+            assertEquals(value, buffer.getInt(i));
+        }
+    }
+
+    @Test
+    public void testIntConsistentWithByteBuffer() {
+        ProtonBuffer buffer = new ProtonByteBuffer(CAPACITY);
+
+        for (int i = 0; i < 64; ++i) {
+            ByteBuffer javaBuffer = ByteBuffer.allocate(buffer.capacity());
+            int expected = random.nextInt();
+            javaBuffer.putInt(expected);
+
+            final int bufferIndex = buffer.capacity() - 4;
+            buffer.setInt(bufferIndex, expected);
+            javaBuffer.flip();
+
+            int javaActual = javaBuffer.getInt();
+            assertEquals(expected, javaActual);
+            assertEquals(javaActual, buffer.getInt(bufferIndex));
+        }
+    }
+
+    @Test
+    public void testRandomLongAccess() {
+        ProtonBuffer buffer = new ProtonByteBuffer(CAPACITY);
+
+        for (int i = 0; i < buffer.capacity() - 7; i += 8) {
+            long value = random.nextLong();
+            buffer.setLong(i, value);
+        }
+
+        random.setSeed(seed);
+        for (int i = 0; i < buffer.capacity() - 7; i += 8) {
+            long value = random.nextLong();
+            assertEquals(value, buffer.getLong(i));
+        }
+    }
+
+    @Test
+    public void testLongConsistentWithByteBuffer() {
+        ProtonBuffer buffer = new ProtonByteBuffer(CAPACITY);
+
+        for (int i = 0; i < 64; ++i) {
+            ByteBuffer javaBuffer = ByteBuffer.allocate(buffer.capacity());
+
+            long expected = random.nextLong();
+            javaBuffer.putLong(expected);
+
+            final int bufferIndex = buffer.capacity() - 8;
+            buffer.setLong(bufferIndex, expected);
+            javaBuffer.flip();
+
+            long javaActual = javaBuffer.getLong();
+            assertEquals(expected, javaActual);
+            assertEquals(javaActual, buffer.getLong(bufferIndex));
+        }
+    }
+
+    @Test
+    public void testRandomFloatAccess() {
+        ProtonBuffer buffer = new ProtonByteBuffer(CAPACITY);
+
+        for (int i = 0; i < buffer.capacity() - 7; i += 8) {
+            float value = random.nextFloat();
+            buffer.setFloat(i, value);
+        }
+
+        random.setSeed(seed);
+        for (int i = 0; i < buffer.capacity() - 7; i += 8) {
+            float expected = random.nextFloat();
+            float actual = buffer.getFloat(i);
+            assertEquals(expected, actual, 0.01);
+        }
+    }
+
+    @Test
+    public void testRandomDoubleAccess() {
+        ProtonBuffer buffer = new ProtonByteBuffer(CAPACITY);
+
+        for (int i = 0; i < buffer.capacity() - 7; i += 8) {
+            double value = random.nextDouble();
+            buffer.setDouble(i, value);
+        }
+
+        random.setSeed(seed);
+        for (int i = 0; i < buffer.capacity() - 7; i += 8) {
+            double expected = random.nextDouble();
+            double actual = buffer.getDouble(i);
+            assertEquals(expected, actual, 0.01);
+        }
+    }
+
+    @Test
+    public void testSequentialByteAccess() {
+        ProtonBuffer buffer = new ProtonByteBuffer(CAPACITY);
+
+        buffer.setWriteIndex(0);
+        for (int i = 0; i < buffer.capacity(); i ++) {
+            byte value = (byte) random.nextInt();
+            assertEquals(i, buffer.getWriteIndex());
+            assertTrue(buffer.isWritable());
+            buffer.writeByte(value);
+        }
+
+        assertEquals(0, buffer.getReadIndex());
+        assertEquals(buffer.capacity(), buffer.getWriteIndex());
+        assertFalse(buffer.isWritable());
+
+        random.setSeed(seed);
+        for (int i = 0; i < buffer.capacity(); i ++) {
+            byte value = (byte) random.nextInt();
+            assertEquals(i, buffer.getReadIndex());
+            assertTrue(buffer.isReadable());
+            assertEquals(value, buffer.readByte());
+        }
+
+        assertEquals(buffer.capacity(), buffer.getReadIndex());
+        assertEquals(buffer.capacity(), buffer.getWriteIndex());
+        assertFalse(buffer.isReadable());
+        assertFalse(buffer.isWritable());
+    }
+
+    @Test
+    public void testSequentialShortAccess() {
+        ProtonBuffer buffer = new ProtonByteBuffer(CAPACITY);
+
+        buffer.setWriteIndex(0);
+        for (int i = 0; i < buffer.capacity(); i += 2) {
+            short value = (short) random.nextInt();
+            assertEquals(i, buffer.getWriteIndex());
+            assertTrue(buffer.isWritable());
+            buffer.writeShort(value);
+        }
+
+        assertEquals(0, buffer.getReadIndex());
+        assertEquals(buffer.capacity(), buffer.getWriteIndex());
+        assertFalse(buffer.isWritable());
+
+        random.setSeed(seed);
+        for (int i = 0; i < buffer.capacity(); i += 2) {
+            short value = (short) random.nextInt();
+            assertEquals(i, buffer.getReadIndex());
+            assertTrue(buffer.isReadable());
+            assertEquals(value, buffer.readShort());
+        }
+
+        assertEquals(buffer.capacity(), buffer.getReadIndex());
+        assertEquals(buffer.capacity(), buffer.getWriteIndex());
+        assertFalse(buffer.isReadable());
+        assertFalse(buffer.isWritable());
+    }
+
+    @Test
+    public void testSequentialIntAccess() {
+        ProtonBuffer buffer = new ProtonByteBuffer(CAPACITY);
+
+        buffer.setWriteIndex(0);
+        for (int i = 0; i < buffer.capacity(); i += 4) {
+            int value = random.nextInt();
+            assertEquals(i, buffer.getWriteIndex());
+            assertTrue(buffer.isWritable());
+            buffer.writeInt(value);
+        }
+
+        assertEquals(0, buffer.getReadIndex());
+        assertEquals(buffer.capacity(), buffer.getWriteIndex());
+        assertFalse(buffer.isWritable());
+
+        random.setSeed(seed);
+        for (int i = 0; i < buffer.capacity(); i += 4) {
+            int value = random.nextInt();
+            assertEquals(i, buffer.getReadIndex());
+            assertTrue(buffer.isReadable());
+            assertEquals(value, buffer.readInt());
+        }
+
+        assertEquals(buffer.capacity(), buffer.getReadIndex());
+        assertEquals(buffer.capacity(), buffer.getWriteIndex());
+        assertFalse(buffer.isReadable());
+        assertFalse(buffer.isWritable());
+    }
+
+    @Test
+    public void testSequentialLongAccess() {
+        ProtonBuffer buffer = new ProtonByteBuffer(CAPACITY);
+
+        buffer.setWriteIndex(0);
+        for (int i = 0; i < buffer.capacity(); i += 8) {
+            long value = random.nextLong();
+            assertEquals(i, buffer.getWriteIndex());
+            assertTrue(buffer.isWritable());
+            buffer.writeLong(value);
+        }
+
+        assertEquals(0, buffer.getReadIndex());
+        assertEquals(buffer.capacity(), buffer.getWriteIndex());
+        assertFalse(buffer.isWritable());
+
+        random.setSeed(seed);
+        for (int i = 0; i < buffer.capacity(); i += 8) {
+            long value = random.nextLong();
+            assertEquals(i, buffer.getReadIndex());
+            assertTrue(buffer.isReadable());
+            assertEquals(value, buffer.readLong());
+        }
+
+        assertEquals(buffer.capacity(), buffer.getReadIndex());
+        assertEquals(buffer.capacity(), buffer.getWriteIndex());
+        assertFalse(buffer.isReadable());
+        assertFalse(buffer.isWritable());
+    }
+
+    @Test
+    public void testByteArrayTransfer() {
+        ProtonBuffer buffer = new ProtonByteBuffer(CAPACITY);
+
+        byte[] value = new byte[BLOCK_SIZE * 2];
+        for (int i = 0; i < buffer.capacity() - BLOCK_SIZE + 1; i += BLOCK_SIZE) {
+            random.nextBytes(value);
+            buffer.setBytes(i, value, random.nextInt(BLOCK_SIZE), BLOCK_SIZE);
+        }
+
+        random.setSeed(seed);
+        byte[] expectedValue = new byte[BLOCK_SIZE * 2];
+        for (int i = 0; i < buffer.capacity() - BLOCK_SIZE + 1; i += BLOCK_SIZE) {
+            random.nextBytes(expectedValue);
+            int valueOffset = random.nextInt(BLOCK_SIZE);
+            buffer.getBytes(i, value, valueOffset, BLOCK_SIZE);
+            for (int j = valueOffset; j < valueOffset + BLOCK_SIZE; j ++) {
+                assertEquals(expectedValue[j], value[j]);
+            }
+        }
+    }
+
+    @Test
+    public void testRandomByteArrayTransfer1() {
+        ProtonBuffer buffer = new ProtonByteBuffer(CAPACITY);
+
+        byte[] value = new byte[BLOCK_SIZE];
+        for (int i = 0; i < buffer.capacity() - BLOCK_SIZE + 1; i += BLOCK_SIZE) {
+            random.nextBytes(value);
+            buffer.setBytes(i, value);
+        }
+
+        random.setSeed(seed);
+        byte[] expectedValueContent = new byte[BLOCK_SIZE];
+        ProtonBuffer expectedValue = new ProtonByteBuffer(expectedValueContent);
+        for (int i = 0; i < buffer.capacity() - BLOCK_SIZE + 1; i += BLOCK_SIZE) {
+            random.nextBytes(expectedValueContent);
+            buffer.getBytes(i, value);
+            for (int j = 0; j < BLOCK_SIZE; j ++) {
+                assertEquals(expectedValue.getByte(j), value[j]);
+            }
+        }
+    }
+
+    @Test
+    public void testRandomByteArrayTransfer2() {
+        ProtonBuffer buffer = new ProtonByteBuffer(CAPACITY);
+
+        byte[] value = new byte[BLOCK_SIZE * 2];
+        for (int i = 0; i < buffer.capacity() - BLOCK_SIZE + 1; i += BLOCK_SIZE) {
+            random.nextBytes(value);
+            buffer.setBytes(i, value, random.nextInt(BLOCK_SIZE), BLOCK_SIZE);
+        }
+
+        random.setSeed(seed);
+        byte[] expectedValueContent = new byte[BLOCK_SIZE * 2];
+        ProtonBuffer expectedValue = new ProtonByteBuffer(expectedValueContent);
+        for (int i = 0; i < buffer.capacity() - BLOCK_SIZE + 1; i += BLOCK_SIZE) {
+            random.nextBytes(expectedValueContent);
+            int valueOffset = random.nextInt(BLOCK_SIZE);
+            buffer.getBytes(i, value, valueOffset, BLOCK_SIZE);
+            for (int j = valueOffset; j < valueOffset + BLOCK_SIZE; j ++) {
+                assertEquals(expectedValue.getByte(j), value[j]);
+            }
+        }
+    }
+
+    @Test
+    public void testRandomProtonBufferTransfer1() {
+        ProtonBuffer buffer = new ProtonByteBuffer(CAPACITY);
+
+        byte[] valueContent = new byte[BLOCK_SIZE];
+        ProtonBuffer value = new ProtonByteBuffer(valueContent);
+        for (int i = 0; i < buffer.capacity() - BLOCK_SIZE + 1; i += BLOCK_SIZE) {
+            random.nextBytes(valueContent);
+            value.setIndex(0, BLOCK_SIZE);
+            buffer.setBytes(i, value);
+            assertEquals(BLOCK_SIZE, value.getReadIndex());
+            assertEquals(BLOCK_SIZE, value.getWriteIndex());
+        }
+
+        random.setSeed(seed);
+        byte[] expectedValueContent = new byte[BLOCK_SIZE];
+        ProtonBuffer expectedValue = new ProtonByteBuffer(expectedValueContent);
+        for (int i = 0; i < buffer.capacity() - BLOCK_SIZE + 1; i += BLOCK_SIZE) {
+            random.nextBytes(expectedValueContent);
+            value.clear();
+            buffer.getBytes(i, value);
+            assertEquals(0, value.getReadIndex());
+            assertEquals(BLOCK_SIZE, value.getWriteIndex());
+            for (int j = 0; j < BLOCK_SIZE; j ++) {
+                assertEquals(expectedValue.getByte(j), value.getByte(j));
+            }
+        }
+    }
+
+    @Test
+    public void testRandomProtonBufferTransfer2() {
+        ProtonBuffer buffer = new ProtonByteBuffer(CAPACITY);
+
+        byte[] valueContent = new byte[BLOCK_SIZE * 2];
+        ProtonBuffer value = new ProtonByteBuffer(valueContent);
+        for (int i = 0; i < buffer.capacity() - BLOCK_SIZE + 1; i += BLOCK_SIZE) {
+            random.nextBytes(valueContent);
+            buffer.setBytes(i, value, random.nextInt(BLOCK_SIZE), BLOCK_SIZE);
+        }
+
+        random.setSeed(seed);
+        byte[] expectedValueContent = new byte[BLOCK_SIZE * 2];
+        ProtonBuffer expectedValue = new ProtonByteBuffer(expectedValueContent);
+        for (int i = 0; i < buffer.capacity() - BLOCK_SIZE + 1; i += BLOCK_SIZE) {
+            random.nextBytes(expectedValueContent);
+            int valueOffset = random.nextInt(BLOCK_SIZE);
+            buffer.getBytes(i, value, valueOffset, BLOCK_SIZE);
+            for (int j = valueOffset; j < valueOffset + BLOCK_SIZE; j ++) {
+                assertEquals(expectedValue.getByte(j), value.getByte(j));
+            }
+        }
+    }
+
+    @Test
+    public void testRandomByteBufferTransfer() {
+        doTestRandomByteBufferTransfer(false);
+    }
+
+    @Test
+    public void testRandomDirectByteBufferTransfer() {
+        doTestRandomByteBufferTransfer(true);
+    }
+
+    private void doTestRandomByteBufferTransfer(boolean direct) {
+        ProtonBuffer buffer = new ProtonByteBuffer(CAPACITY);
+
+        ByteBuffer value = ByteBuffer.allocate(BLOCK_SIZE * 2);
+        for (int i = 0; i < buffer.capacity() - BLOCK_SIZE + 1; i += BLOCK_SIZE) {
+            random.nextBytes(value.array());
+            value.clear().position(random.nextInt(BLOCK_SIZE));
+            value.limit(value.position() + BLOCK_SIZE);
+            buffer.setBytes(i, value);
+        }
+
+        random.setSeed(seed);
+        ByteBuffer expectedValue = ByteBuffer.allocate(BLOCK_SIZE * 2);
+        for (int i = 0; i < buffer.capacity() - BLOCK_SIZE + 1; i += BLOCK_SIZE) {
+            random.nextBytes(expectedValue.array());
+            int valueOffset = random.nextInt(BLOCK_SIZE);
+            value.clear().position(valueOffset).limit(valueOffset + BLOCK_SIZE);
+            buffer.getBytes(i, value);
+            assertEquals(valueOffset + BLOCK_SIZE, value.position());
+            for (int j = valueOffset; j < valueOffset + BLOCK_SIZE; j ++) {
+                assertEquals(expectedValue.get(j), value.get(j));
+            }
+        }
+    }
+
+    @Test
+    public void testSequentialByteArrayTransfer1() {
+        ProtonBuffer buffer = new ProtonByteBuffer(CAPACITY);
+
+        byte[] value = new byte[BLOCK_SIZE];
+        buffer.setWriteIndex(0);
+        for (int i = 0; i < buffer.capacity() - BLOCK_SIZE + 1; i += BLOCK_SIZE) {
+            random.nextBytes(value);
+            assertEquals(0, buffer.getReadIndex());
+            assertEquals(i, buffer.getWriteIndex());
+            buffer.writeBytes(value);
+        }
+
+        random.setSeed(seed);
+        byte[] expectedValue = new byte[BLOCK_SIZE];
+        for (int i = 0; i < buffer.capacity() - BLOCK_SIZE + 1; i += BLOCK_SIZE) {
+            random.nextBytes(expectedValue);
+            assertEquals(i, buffer.getReadIndex());
+            assertEquals(CAPACITY, buffer.getWriteIndex());
+            buffer.readBytes(value);
+            for (int j = 0; j < BLOCK_SIZE; j ++) {
+                assertEquals(expectedValue[j], value[j]);
+            }
+        }
+    }
+
+    @Test
+    public void testSequentialByteArrayTransfer2() {
+        ProtonBuffer buffer = new ProtonByteBuffer(CAPACITY);
+
+        byte[] value = new byte[BLOCK_SIZE * 2];
+        buffer.setWriteIndex(0);
+        for (int i = 0; i < buffer.capacity() - BLOCK_SIZE + 1; i += BLOCK_SIZE) {
+            random.nextBytes(value);
+            assertEquals(0, buffer.getReadIndex());
+            assertEquals(i, buffer.getWriteIndex());
+            int readerIndex = random.nextInt(BLOCK_SIZE);
+            buffer.writeBytes(value, readerIndex, BLOCK_SIZE);
+        }
+
+        random.setSeed(seed);
+        byte[] expectedValue = new byte[BLOCK_SIZE * 2];
+        for (int i = 0; i < buffer.capacity() - BLOCK_SIZE + 1; i += BLOCK_SIZE) {
+            random.nextBytes(expectedValue);
+            int valueOffset = random.nextInt(BLOCK_SIZE);
+            assertEquals(i, buffer.getReadIndex());
+            assertEquals(CAPACITY, buffer.getWriteIndex());
+            buffer.readBytes(value, valueOffset, BLOCK_SIZE);
+            for (int j = valueOffset; j < valueOffset + BLOCK_SIZE; j ++) {
+                assertEquals(expectedValue[j], value[j]);
+            }
         }
     }
 }
