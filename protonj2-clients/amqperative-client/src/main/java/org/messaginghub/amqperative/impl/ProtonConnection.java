@@ -24,8 +24,6 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.apache.qpid.proton4j.buffer.ProtonByteBuffer;
-import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.engine.exceptions.EngineStateException;
 import org.apache.qpid.proton4j.engine.impl.ProtonEngine;
 import org.apache.qpid.proton4j.engine.impl.ProtonEngineFactory;
@@ -38,6 +36,7 @@ import org.messaginghub.amqperative.SenderOptions;
 import org.messaginghub.amqperative.transport.Transport;
 import org.messaginghub.amqperative.transport.TransportListener;
 import org.messaginghub.amqperative.transport.TransportOptions;
+import org.messaginghub.amqperative.transport.impl.ByteBufWrapper;
 import org.messaginghub.amqperative.transport.impl.TcpTransport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -202,18 +201,12 @@ public class ProtonConnection implements Connection {
             this.engine = engine;
         }
 
-        private ProtonByteBufferAllocator allocator = ProtonByteBufferAllocator.DEFAULT;
-
         @Override
         public void onData(ByteBuf incoming) {
-            int readable = incoming.readableBytes();
-            ProtonByteBuffer buffer = allocator.allocate(readable, readable);
-
-            // Copy for now until the wrapper implementation is done.
-            buffer.writeBytes(incoming.nioBuffer());
+            ByteBufWrapper bufferAdapter = new ByteBufWrapper(incoming);
 
             try {
-                engine.ingest(buffer);
+                engine.ingest(bufferAdapter);
             } catch (EngineStateException e) {
                 LOG.warn("Engine ingest threw error: ", e);
             }
