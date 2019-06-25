@@ -854,7 +854,37 @@ public class ByteBifWrapperTest {
     }
 
     @Test
-    public void testRandomHeapBufferTransfer2() {
+    public void testRandomProtonBufferTransfer2() {
+        ByteBuf netty = Unpooled.buffer(CAPACITY);
+        ByteBufWrapper buffer = new ByteBufWrapper(netty);
+
+        byte[] valueContent = new byte[BLOCK_SIZE];
+        ByteBufWrapper value = new ByteBufWrapper(Unpooled.wrappedBuffer(valueContent));
+        for (int i = 0; i < buffer.capacity() - BLOCK_SIZE + 1; i += BLOCK_SIZE) {
+            random.nextBytes(valueContent);
+            value.setIndex(0, BLOCK_SIZE);
+            buffer.setBytes(i, value);
+            assertEquals(BLOCK_SIZE, value.getReadIndex());
+            assertEquals(BLOCK_SIZE, value.getWriteIndex());
+        }
+
+        random.setSeed(seed);
+        byte[] expectedValueContent = new byte[BLOCK_SIZE];
+        ByteBufWrapper expectedValue = new ByteBufWrapper(Unpooled.wrappedBuffer(expectedValueContent));
+        for (int i = 0; i < buffer.capacity() - BLOCK_SIZE + 1; i += BLOCK_SIZE) {
+            random.nextBytes(expectedValueContent);
+            value.clear();
+            buffer.getBytes(i, value);
+            assertEquals(0, value.getReadIndex());
+            assertEquals(BLOCK_SIZE, value.getWriteIndex());
+            for (int j = 0; j < BLOCK_SIZE; j ++) {
+                assertEquals(expectedValue.getByte(j), value.getByte(j));
+            }
+        }
+    }
+
+    @Test
+    public void testRandomProtonBufferTransfer3() {
         ByteBuf netty = Unpooled.buffer(CAPACITY);
         ByteBufWrapper buffer = new ByteBufWrapper(netty);
 
@@ -874,6 +904,123 @@ public class ByteBifWrapperTest {
             buffer.getBytes(i, value, valueOffset, BLOCK_SIZE);
             for (int j = valueOffset; j < valueOffset + BLOCK_SIZE; j ++) {
                 assertEquals(expectedValue.getByte(j), value.getByte(j));
+            }
+        }
+    }
+
+    @Test
+    public void testRandomProtonBufferTransfer4() {
+        ByteBuf netty = Unpooled.buffer(CAPACITY);
+        ByteBufWrapper buffer = new ByteBufWrapper(netty);
+
+        byte[] valueContent = new byte[BLOCK_SIZE * 2];
+        ByteBufWrapper value = new ByteBufWrapper(Unpooled.wrappedBuffer(valueContent));
+        for (int i = 0; i < buffer.capacity() - BLOCK_SIZE + 1; i += BLOCK_SIZE) {
+            random.nextBytes(valueContent);
+            buffer.setBytes(i, value, random.nextInt(BLOCK_SIZE), BLOCK_SIZE);
+        }
+
+        random.setSeed(seed);
+        byte[] expectedValueContent = new byte[BLOCK_SIZE * 2];
+        ByteBufWrapper expectedValue = new ByteBufWrapper(Unpooled.wrappedBuffer(expectedValueContent));
+        for (int i = 0; i < buffer.capacity() - BLOCK_SIZE + 1; i += BLOCK_SIZE) {
+            random.nextBytes(expectedValueContent);
+            int valueOffset = random.nextInt(BLOCK_SIZE);
+            buffer.getBytes(i, value, valueOffset, BLOCK_SIZE);
+            for (int j = valueOffset; j < valueOffset + BLOCK_SIZE; j ++) {
+                assertEquals(expectedValue.getByte(j), value.getByte(j));
+            }
+        }
+    }
+
+    @Test
+    public void testRandomByteBufferTransfer() {
+        doTestRandomByteBufferTransfer(false);
+    }
+
+    @Test
+    public void testRandomDirectByteBufferTransfer() {
+        doTestRandomByteBufferTransfer(true);
+    }
+
+    private void doTestRandomByteBufferTransfer(boolean direct) {
+        ByteBuf netty = Unpooled.buffer(CAPACITY);
+        ByteBufWrapper buffer = new ByteBufWrapper(netty);
+
+        ByteBuffer value = ByteBuffer.allocate(BLOCK_SIZE * 2);
+        for (int i = 0; i < buffer.capacity() - BLOCK_SIZE + 1; i += BLOCK_SIZE) {
+            random.nextBytes(value.array());
+            value.clear().position(random.nextInt(BLOCK_SIZE));
+            value.limit(value.position() + BLOCK_SIZE);
+            buffer.setBytes(i, value);
+        }
+
+        random.setSeed(seed);
+        ByteBuffer expectedValue = ByteBuffer.allocate(BLOCK_SIZE * 2);
+        for (int i = 0; i < buffer.capacity() - BLOCK_SIZE + 1; i += BLOCK_SIZE) {
+            random.nextBytes(expectedValue.array());
+            int valueOffset = random.nextInt(BLOCK_SIZE);
+            value.clear().position(valueOffset).limit(valueOffset + BLOCK_SIZE);
+            buffer.getBytes(i, value);
+            assertEquals(valueOffset + BLOCK_SIZE, value.position());
+            for (int j = valueOffset; j < valueOffset + BLOCK_SIZE; j ++) {
+                assertEquals(expectedValue.get(j), value.get(j));
+            }
+        }
+    }
+
+    @Test
+    public void testSequentialByteArrayTransfer1() {
+        ByteBuf netty = Unpooled.buffer(CAPACITY);
+        ByteBufWrapper buffer = new ByteBufWrapper(netty);
+
+        byte[] value = new byte[BLOCK_SIZE];
+        buffer.setWriteIndex(0);
+        for (int i = 0; i < buffer.capacity() - BLOCK_SIZE + 1; i += BLOCK_SIZE) {
+            random.nextBytes(value);
+            assertEquals(0, buffer.getReadIndex());
+            assertEquals(i, buffer.getWriteIndex());
+            buffer.writeBytes(value);
+        }
+
+        random.setSeed(seed);
+        byte[] expectedValue = new byte[BLOCK_SIZE];
+        for (int i = 0; i < buffer.capacity() - BLOCK_SIZE + 1; i += BLOCK_SIZE) {
+            random.nextBytes(expectedValue);
+            assertEquals(i, buffer.getReadIndex());
+            assertEquals(CAPACITY, buffer.getWriteIndex());
+            buffer.readBytes(value);
+            for (int j = 0; j < BLOCK_SIZE; j ++) {
+                assertEquals(expectedValue[j], value[j]);
+            }
+        }
+    }
+
+    @Test
+    public void testSequentialByteArrayTransfer2() {
+        ByteBuf netty = Unpooled.buffer(CAPACITY);
+        ByteBufWrapper buffer = new ByteBufWrapper(netty);
+
+        byte[] value = new byte[BLOCK_SIZE * 2];
+        buffer.setWriteIndex(0);
+        for (int i = 0; i < buffer.capacity() - BLOCK_SIZE + 1; i += BLOCK_SIZE) {
+            random.nextBytes(value);
+            assertEquals(0, buffer.getReadIndex());
+            assertEquals(i, buffer.getWriteIndex());
+            int readerIndex = random.nextInt(BLOCK_SIZE);
+            buffer.writeBytes(value, readerIndex, BLOCK_SIZE);
+        }
+
+        random.setSeed(seed);
+        byte[] expectedValue = new byte[BLOCK_SIZE * 2];
+        for (int i = 0; i < buffer.capacity() - BLOCK_SIZE + 1; i += BLOCK_SIZE) {
+            random.nextBytes(expectedValue);
+            int valueOffset = random.nextInt(BLOCK_SIZE);
+            assertEquals(i, buffer.getReadIndex());
+            assertEquals(CAPACITY, buffer.getWriteIndex());
+            buffer.readBytes(value, valueOffset, BLOCK_SIZE);
+            for (int j = valueOffset; j < valueOffset + BLOCK_SIZE; j ++) {
+                assertEquals(expectedValue[j], value[j]);
             }
         }
     }
