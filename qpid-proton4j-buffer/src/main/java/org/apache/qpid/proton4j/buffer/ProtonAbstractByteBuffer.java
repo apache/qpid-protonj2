@@ -550,7 +550,7 @@ public abstract class ProtonAbstractByteBuffer implements ProtonBuffer {
         int length = getReadIndex() + Math.min(getReadableBytes(), other.getReadableBytes());
 
         for (int i = this.getReadIndex(), j = getReadIndex(); i < length; i++, j++) {
-            int cmp = Byte.compare(getByte(i), other.getByte(j));
+            int cmp = Integer.compare(getByte(i) & 0xFF, other.getByte(j) & 0xFF);
             if (cmp != 0) {
                 return cmp;
             }

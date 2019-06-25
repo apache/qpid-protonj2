@@ -36,6 +36,8 @@ import org.junit.Test;
  */
 public class ProtonByteBufferTest {
 
+    private static final int CAPACITY = 4096; // Must be even for these tests
+
     //----- Test Buffer creation ---------------------------------------------//
 
     @Test
@@ -1447,6 +1449,21 @@ public class ProtonByteBufferTest {
 
         assertEquals(1, buffer1.compareTo(buffer2));
         assertEquals(-1, buffer2.compareTo(buffer1));
+    }
+
+    @Test
+    public void testComparableInterfaceNotViolatedWithLongWrites() {
+        ProtonBuffer buffer1 = new ProtonByteBuffer(CAPACITY);
+        ProtonBuffer buffer2 = new ProtonByteBuffer(CAPACITY);
+
+        buffer1.setWriteIndex(buffer1.getReadIndex());
+        buffer1.writeLong(0);
+
+        buffer2.setWriteIndex(buffer2.getReadIndex());
+        buffer2.writeLong(0xF0000000L);
+
+        assertTrue(buffer1.compareTo(buffer2) < 0);
+        assertTrue(buffer2.compareTo(buffer1) > 0);
     }
 
     //----- Tests for readBytes variants -------------------------------------//
