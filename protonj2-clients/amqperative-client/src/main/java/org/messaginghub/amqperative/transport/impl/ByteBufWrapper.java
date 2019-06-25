@@ -34,6 +34,8 @@ public class ByteBufWrapper extends ProtonAbstractByteBuffer {
     public ByteBufWrapper(ByteBuf toWrap) {
         super(toWrap.maxCapacity());
         this.wrapped = toWrap;
+
+        setIndex(toWrap.readerIndex(), toWrap.writerIndex());
     }
 
     public ByteBufWrapper(int maximumCapacity) {
