@@ -18,6 +18,8 @@ package org.messaginghub.amqperative.transport.impl;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotSame;
+import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -28,6 +30,7 @@ import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBuffer;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mockito;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
@@ -51,6 +54,16 @@ public class ByteBifWrapperTest {
         random = new Random(seed);
     }
 
+    @Test
+    public void testUnwrap() {
+        ByteBuf buffer = Unpooled.buffer(CAPACITY);
+        ByteBufWrapper wrapper = new ByteBufWrapper(buffer);
+
+        assertSame(buffer, wrapper.unwrap());
+        ProtonBuffer duplicate = wrapper.duplicate();
+        assertTrue(duplicate instanceof ByteBufWrapper);
+        assertNotSame(((ByteBufWrapper) duplicate).unwrap(), buffer);
+    }
     @Test
     public void testReaderIndexBoundaryCheck4() {
         ByteBuf buffer = Unpooled.buffer(CAPACITY);
@@ -1022,6 +1035,297 @@ public class ByteBifWrapperTest {
             for (int j = valueOffset; j < valueOffset + BLOCK_SIZE; j ++) {
                 assertEquals(expectedValue[j], value[j]);
             }
+        }
+    }
+
+    @Test
+    public void testSequentialProtonBufferTransfer1() {
+        ByteBuf netty = Unpooled.buffer(CAPACITY);
+        ByteBufWrapper buffer = new ByteBufWrapper(netty);
+
+        byte[] valueContent = new byte[BLOCK_SIZE * 2];
+        ProtonBuffer value = new ProtonByteBuffer(valueContent);
+        buffer.setWriteIndex(0);
+        for (int i = 0; i < buffer.capacity() - BLOCK_SIZE + 1; i += BLOCK_SIZE) {
+            random.nextBytes(valueContent);
+            assertEquals(0, buffer.getReadIndex());
+            assertEquals(i, buffer.getWriteIndex());
+            buffer.writeBytes(value, random.nextInt(BLOCK_SIZE), BLOCK_SIZE);
+            assertEquals(0, value.getReadIndex());
+            assertEquals(valueContent.length, value.getWriteIndex());
+        }
+
+        random.setSeed(seed);
+        byte[] expectedValueContent = new byte[BLOCK_SIZE * 2];
+        ProtonBuffer expectedValue = new ProtonByteBuffer(expectedValueContent);
+        for (int i = 0; i < buffer.capacity() - BLOCK_SIZE + 1; i += BLOCK_SIZE) {
+            random.nextBytes(expectedValueContent);
+            int valueOffset = random.nextInt(BLOCK_SIZE);
+            assertEquals(i, buffer.getReadIndex());
+            assertEquals(CAPACITY, buffer.getWriteIndex());
+            buffer.readBytes(value, valueOffset, BLOCK_SIZE);
+            for (int j = valueOffset; j < valueOffset + BLOCK_SIZE; j ++) {
+                assertEquals(expectedValue.getByte(j), value.getByte(j));
+            }
+            assertEquals(0, value.getReadIndex());
+            assertEquals(valueContent.length, value.getWriteIndex());
+        }
+    }
+
+    @Test
+    public void testSequentialProtonBufferTransfer2() {
+        ByteBuf netty = Unpooled.buffer(CAPACITY);
+        ByteBufWrapper buffer = new ByteBufWrapper(netty);
+
+        byte[] valueContent = new byte[BLOCK_SIZE * 2];
+        ProtonBuffer value = new ProtonByteBuffer(valueContent);
+        buffer.setWriteIndex(0);
+        for (int i = 0; i < buffer.capacity() - BLOCK_SIZE + 1; i += BLOCK_SIZE) {
+            random.nextBytes(valueContent);
+            assertEquals(0, buffer.getReadIndex());
+            assertEquals(i, buffer.getWriteIndex());
+            int readerIndex = random.nextInt(BLOCK_SIZE);
+            value.setReadIndex(readerIndex);
+            value.setWriteIndex(readerIndex + BLOCK_SIZE);
+            buffer.writeBytes(value);
+            assertEquals(readerIndex + BLOCK_SIZE, value.getWriteIndex());
+            assertEquals(value.getWriteIndex(), value.getReadIndex());
+        }
+
+        random.setSeed(seed);
+        byte[] expectedValueContent = new byte[BLOCK_SIZE * 2];
+        ProtonBuffer expectedValue = new ProtonByteBuffer(expectedValueContent);
+        for (int i = 0; i < buffer.capacity() - BLOCK_SIZE + 1; i += BLOCK_SIZE) {
+            random.nextBytes(expectedValueContent);
+            int valueOffset = random.nextInt(BLOCK_SIZE);
+            assertEquals(i, buffer.getReadIndex());
+            assertEquals(CAPACITY, buffer.getWriteIndex());
+            value.setReadIndex(valueOffset);
+            value.setWriteIndex(valueOffset);
+            buffer.readBytes(value, BLOCK_SIZE);
+            for (int j = valueOffset; j < valueOffset + BLOCK_SIZE; j ++) {
+                assertEquals(expectedValue.getByte(j), value.getByte(j));
+            }
+            assertEquals(valueOffset, value.getReadIndex());
+            assertEquals(valueOffset + BLOCK_SIZE, value.getWriteIndex());
+        }
+    }
+
+    @Test
+    public void testSequentialSlice1() {
+        ByteBuf netty = Unpooled.buffer(CAPACITY);
+        ByteBufWrapper buffer = new ByteBufWrapper(netty);
+
+        buffer.setWriteIndex(0);
+        for (int i = 0; i < buffer.capacity() - BLOCK_SIZE + 1; i += BLOCK_SIZE) {
+            byte[] value = new byte[BLOCK_SIZE];
+            random.nextBytes(value);
+            assertEquals(0, buffer.getReadIndex());
+            assertEquals(i, buffer.getWriteIndex());
+            buffer.writeBytes(value);
+        }
+
+        random.setSeed(seed);
+        byte[] expectedValue = new byte[BLOCK_SIZE];
+        for (int i = 0; i < buffer.capacity() - BLOCK_SIZE + 1; i += BLOCK_SIZE) {
+            random.nextBytes(expectedValue);
+            assertEquals(i, buffer.getReadIndex());
+            assertEquals(CAPACITY, buffer.getWriteIndex());
+            ProtonBuffer actualValue = buffer.slice(buffer.getReadIndex(), BLOCK_SIZE);
+            buffer.setReadIndex(BLOCK_SIZE + buffer.getReadIndex());
+            assertEquals(new ProtonByteBuffer(expectedValue), actualValue);
+
+            // Make sure if it is a sliced buffer.
+            actualValue.setByte(0, (byte) (actualValue.getByte(0) + 1));
+            assertEquals(buffer.getByte(i), actualValue.getByte(0));
+        }
+    }
+
+    @Test
+    public void testCopy() {
+        ByteBuf netty = Unpooled.buffer(CAPACITY);
+        ByteBufWrapper buffer = new ByteBufWrapper(netty);
+
+        for (int i = 0; i < buffer.capacity(); i ++) {
+            byte value = (byte) random.nextInt();
+            buffer.setByte(i, value);
+        }
+
+        final int readerIndex = CAPACITY / 3;
+        final int writerIndex = CAPACITY * 2 / 3;
+        buffer.setIndex(readerIndex, writerIndex);
+
+        // Make sure all properties are copied.
+        ProtonBuffer copy = buffer.copy();
+        assertEquals(0, copy.getReadIndex());
+        assertEquals(buffer.getReadableBytes(), copy.getWriteIndex());
+        assertEquals(buffer.getReadableBytes(), copy.capacity());
+        for (int i = 0; i < copy.capacity(); i ++) {
+            assertEquals(buffer.getByte(i + readerIndex), copy.getByte(i));
+        }
+
+        // Make sure the buffer content is independent from each other.
+        buffer.setByte(readerIndex, (byte) (buffer.getByte(readerIndex) + 1));
+        assertTrue(buffer.getByte(readerIndex) != copy.getByte(0));
+        copy.setByte(1, (byte) (copy.getByte(1) + 1));
+        assertTrue(buffer.getByte(readerIndex + 1) != copy.getByte(1));
+    }
+
+    @Test
+    public void testDuplicate() {
+        ByteBuf netty = Unpooled.buffer(CAPACITY);
+        ByteBufWrapper buffer = new ByteBufWrapper(netty);
+
+        for (int i = 0; i < buffer.capacity(); i ++) {
+            byte value = (byte) random.nextInt();
+            buffer.setByte(i, value);
+        }
+
+        final int readerIndex = CAPACITY / 3;
+        final int writerIndex = CAPACITY * 2 / 3;
+        buffer.setIndex(readerIndex, writerIndex);
+
+        // Make sure all properties are copied.
+        ProtonBuffer duplicate = buffer.duplicate();
+        assertEquals(buffer.getReadableBytes(), duplicate.getReadableBytes());
+        assertEquals(0, buffer.compareTo(duplicate));
+
+        // Make sure the buffer content is shared.
+        buffer.setByte(readerIndex, (byte) (buffer.getByte(readerIndex) + 1));
+        assertEquals(buffer.getByte(readerIndex), duplicate.getByte(duplicate.getReadIndex()));
+        duplicate.setByte(duplicate.getReadIndex(), (byte) (duplicate.getByte(duplicate.getReadIndex()) + 1));
+        assertEquals(buffer.getByte(readerIndex), duplicate.getByte(duplicate.getReadIndex()));
+    }
+
+    @Test
+    public void testSliceIndex() throws Exception {
+        ByteBuf netty = Unpooled.buffer(CAPACITY);
+        ByteBufWrapper buffer = new ByteBufWrapper(netty);
+
+        assertEquals(0, buffer.slice(0, buffer.capacity()).getReadIndex());
+        assertEquals(0, buffer.slice(0, buffer.capacity() - 1).getReadIndex());
+        assertEquals(0, buffer.slice(1, buffer.capacity() - 1).getReadIndex());
+        assertEquals(0, buffer.slice(1, buffer.capacity() - 2).getReadIndex());
+
+        assertEquals(buffer.capacity(), buffer.slice(0, buffer.capacity()).getWriteIndex());
+        assertEquals(buffer.capacity() - 1, buffer.slice(0, buffer.capacity() - 1).getWriteIndex());
+        assertEquals(buffer.capacity() - 1, buffer.slice(1, buffer.capacity() - 1).getWriteIndex());
+        assertEquals(buffer.capacity() - 2, buffer.slice(1, buffer.capacity() - 2).getWriteIndex());
+    }
+
+    @Test
+    public void testCompareToContract() {
+        ByteBuf netty = Unpooled.buffer(CAPACITY);
+        ByteBufWrapper buffer = new ByteBufWrapper(netty);
+
+        try {
+            buffer.compareTo(null);
+            fail();
+        } catch (NullPointerException e) {
+            // Expected
+        }
+
+        // Fill the random stuff
+        byte[] value = new byte[32];
+        random.nextBytes(value);
+        // Prevent overflow / underflow
+        if (value[0] == 0) {
+            value[0]++;
+        } else if (value[0] == -1) {
+            value[0]--;
+        }
+
+        buffer.setIndex(0, value.length);
+        buffer.setBytes(0, value);
+
+        assertEquals(0, buffer.compareTo(new ProtonByteBuffer(value)));
+
+        value[0]++;
+        assertTrue(buffer.compareTo(new ProtonByteBuffer(value)) < 0);
+        value[0] -= 2;
+        assertTrue(buffer.compareTo(new ProtonByteBuffer(value)) > 0);
+    }
+
+    @Test
+    public void testSkipBytes1() {
+        ByteBuf netty = Unpooled.buffer(CAPACITY);
+        ByteBufWrapper buffer = new ByteBufWrapper(netty);
+
+        buffer.setIndex(CAPACITY / 4, CAPACITY / 2);
+
+        buffer.skipBytes(CAPACITY / 4);
+        assertEquals(CAPACITY / 4 * 2, buffer.getReadIndex());
+
+        try {
+            buffer.skipBytes(CAPACITY / 4 + 1);
+            fail();
+        } catch (IndexOutOfBoundsException e) {
+            // Expected
+        }
+
+        // Should remain unchanged.
+        assertEquals(CAPACITY / 4 * 2, buffer.getReadIndex());
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testCapacityEnforceMaxCapacity() {
+        ByteBuf netty = Unpooled.buffer(3, 13);
+        ByteBufWrapper buffer = new ByteBufWrapper(netty);
+        assertEquals(13, buffer.maxCapacity());
+        assertEquals(3, buffer.capacity());
+        buffer.capacity(14);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testCapacityNegative() {
+        ByteBuf netty = Unpooled.buffer(3, 13);
+        ByteBufWrapper buffer = new ByteBufWrapper(netty);
+        assertEquals(13, buffer.maxCapacity());
+        assertEquals(3, buffer.capacity());
+        buffer.capacity(-1);
+    }
+
+    @Test
+    public void testCapacityDecrease() {
+        ByteBuf netty = Unpooled.buffer(3, 13);
+        ByteBufWrapper buffer = new ByteBufWrapper(netty);
+        assertEquals(13, buffer.maxCapacity());
+        assertEquals(3, buffer.capacity());
+        buffer.capacity(2);
+        assertEquals(2, buffer.capacity());
+        assertEquals(13, buffer.maxCapacity());
+    }
+
+    @Test
+    public void testCapacityIncrease() {
+        ByteBuf netty = Unpooled.buffer(3, 13);
+        ByteBufWrapper buffer = new ByteBufWrapper(netty);
+        assertEquals(13, buffer.maxCapacity());
+        assertEquals(3, buffer.capacity());
+        buffer.capacity(4);
+        assertEquals(4, buffer.capacity());
+        assertEquals(13, buffer.maxCapacity());
+    }
+
+    @Test
+    public void testGetBytesUsingBuffer() {
+        ByteBuf netty = Unpooled.buffer(8, 8);
+        ByteBufWrapper buffer = new ByteBufWrapper(netty);
+
+        ProtonBuffer target = new ProtonByteBuffer(8, 8);
+        ProtonBuffer mocked = Mockito.spy(target);
+        Mockito.when(mocked.hasArray()).thenReturn(false);
+
+        byte[] data = new byte[] { 1, 2, 3, 4, 5, 6, 7, 8 };
+
+        buffer.writeBytes(data);
+        buffer.getBytes(0, mocked);
+
+        assertTrue(mocked.isReadable());
+        assertEquals(8, mocked.getReadableBytes());
+
+        for (int i = 0; i < data.length; ++i) {
+            assertEquals(buffer.getByte(i), mocked.getByte(i));
         }
     }
 }
