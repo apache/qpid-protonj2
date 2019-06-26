@@ -16,6 +16,7 @@
  */
 package org.apache.qpid.proton4j.buffer;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
@@ -167,6 +168,44 @@ public class ProtonByteBufferTest {
             buffer.writeByte(10);
             fail("Should not be able to write more than the max capacity bytes");
         } catch (IndexOutOfBoundsException iobe) {}
+    }
+
+    //----- Tests for altering buffer capacity -------------------------------//
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testCapacityEnforceMaxCapacity() {
+        ProtonBuffer buffer = new ProtonByteBuffer(3, 13);
+        assertEquals(13, buffer.maxCapacity());
+        assertEquals(3, buffer.capacity());
+        buffer.capacity(14);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testCapacityNegative() {
+        ProtonBuffer buffer = new ProtonByteBuffer(3, 13);
+        assertEquals(13, buffer.maxCapacity());
+        assertEquals(3, buffer.capacity());
+        buffer.capacity(-1);
+    }
+
+    @Test
+    public void testCapacityDecrease() {
+        ProtonBuffer buffer = new ProtonByteBuffer(3, 13);
+        assertEquals(13, buffer.maxCapacity());
+        assertEquals(3, buffer.capacity());
+        buffer.capacity(2);
+        assertEquals(2, buffer.capacity());
+        assertEquals(13, buffer.maxCapacity());
+    }
+
+    @Test
+    public void testCapacityIncrease() {
+        ProtonBuffer buffer = new ProtonByteBuffer(3, 13);
+        assertEquals(13, buffer.maxCapacity());
+        assertEquals(3, buffer.capacity());
+        buffer.capacity(4);
+        assertEquals(4, buffer.capacity());
+        assertEquals(13, buffer.maxCapacity());
     }
 
     //----- Tests for altering buffer properties -----------------------------//
@@ -1232,6 +1271,35 @@ public class ProtonByteBufferTest {
         }
     }
 
+    @Test
+    public void testCopy() {
+        ProtonBuffer buffer = new ProtonByteBuffer(CAPACITY);
+
+        for (int i = 0; i < buffer.capacity(); i ++) {
+            byte value = (byte) random.nextInt();
+            buffer.setByte(i, value);
+        }
+
+        final int readerIndex = CAPACITY / 3;
+        final int writerIndex = CAPACITY * 2 / 3;
+        buffer.setIndex(readerIndex, writerIndex);
+
+        // Make sure all properties are copied.
+        ProtonBuffer copy = buffer.copy();
+        assertEquals(0, copy.getReadIndex());
+        assertEquals(buffer.getReadableBytes(), copy.getWriteIndex());
+        assertEquals(buffer.getReadableBytes(), copy.capacity());
+        for (int i = 0; i < copy.capacity(); i ++) {
+            assertEquals(buffer.getByte(i + readerIndex), copy.getByte(i));
+        }
+
+        // Make sure the buffer content is independent from each other.
+        buffer.setByte(readerIndex, (byte) (buffer.getByte(readerIndex) + 1));
+        assertTrue(buffer.getByte(readerIndex) != copy.getByte(0));
+        copy.setByte(1, (byte) (copy.getByte(1) + 1));
+        assertTrue(buffer.getByte(readerIndex + 1) != copy.getByte(1));
+    }
+
     //----- Tests for Buffer duplication -------------------------------------//
 
     @Test
@@ -1244,6 +1312,77 @@ public class ProtonByteBufferTest {
 
         assertSame(buffer.getArray(), duplicate.getArray());
         assertEquals(0, buffer.getArrayOffset());
+    }
+
+    @Test
+    public void testDuplicate() {
+        ProtonBuffer buffer = new ProtonByteBuffer(CAPACITY);
+
+        for (int i = 0; i < buffer.capacity(); i ++) {
+            byte value = (byte) random.nextInt();
+            buffer.setByte(i, value);
+        }
+
+        final int readerIndex = CAPACITY / 3;
+        final int writerIndex = CAPACITY * 2 / 3;
+        buffer.setIndex(readerIndex, writerIndex);
+
+        // Make sure all properties are copied.
+        ProtonBuffer duplicate = buffer.duplicate();
+        assertEquals(buffer.getReadableBytes(), duplicate.getReadableBytes());
+        assertEquals(0, buffer.compareTo(duplicate));
+
+        // Make sure the buffer content is shared.
+        buffer.setByte(readerIndex, (byte) (buffer.getByte(readerIndex) + 1));
+        assertEquals(buffer.getByte(readerIndex), duplicate.getByte(duplicate.getReadIndex()));
+        duplicate.setByte(duplicate.getReadIndex(), (byte) (duplicate.getByte(duplicate.getReadIndex()) + 1));
+        assertEquals(buffer.getByte(readerIndex), duplicate.getByte(duplicate.getReadIndex()));
+    }
+
+    //----- Tests for Buffer slicing -----------------------------------------//
+
+    @Test
+    public void testSliceIndex() throws Exception {
+        ProtonBuffer buffer = new ProtonByteBuffer(CAPACITY);
+
+        assertEquals(0, buffer.slice(0, buffer.capacity()).getReadIndex());
+        assertEquals(0, buffer.slice(0, buffer.capacity() - 1).getReadIndex());
+        assertEquals(0, buffer.slice(1, buffer.capacity() - 1).getReadIndex());
+        assertEquals(0, buffer.slice(1, buffer.capacity() - 2).getReadIndex());
+
+        assertEquals(buffer.capacity(), buffer.slice(0, buffer.capacity()).getWriteIndex());
+        assertEquals(buffer.capacity() - 1, buffer.slice(0, buffer.capacity() - 1).getWriteIndex());
+        assertEquals(buffer.capacity() - 1, buffer.slice(1, buffer.capacity() - 1).getWriteIndex());
+        assertEquals(buffer.capacity() - 2, buffer.slice(1, buffer.capacity() - 2).getWriteIndex());
+    }
+
+    @Test
+    public void testSequentialSlice1() {
+        ProtonBuffer buffer = new ProtonByteBuffer(CAPACITY);
+
+        buffer.setWriteIndex(0);
+        for (int i = 0; i < buffer.capacity() - BLOCK_SIZE + 1; i += BLOCK_SIZE) {
+            byte[] value = new byte[BLOCK_SIZE];
+            random.nextBytes(value);
+            assertEquals(0, buffer.getReadIndex());
+            assertEquals(i, buffer.getWriteIndex());
+            buffer.writeBytes(value);
+        }
+
+        random.setSeed(seed);
+        byte[] expectedValue = new byte[BLOCK_SIZE];
+        for (int i = 0; i < buffer.capacity() - BLOCK_SIZE + 1; i += BLOCK_SIZE) {
+            random.nextBytes(expectedValue);
+            assertEquals(i, buffer.getReadIndex());
+            assertEquals(CAPACITY, buffer.getWriteIndex());
+            ProtonBuffer actualValue = buffer.slice(buffer.getReadIndex(), BLOCK_SIZE);
+            buffer.setReadIndex(BLOCK_SIZE + buffer.getReadIndex());
+            assertEquals(new ProtonByteBuffer(expectedValue), actualValue);
+
+            // Make sure if it is a sliced buffer.
+            actualValue.setByte(0, (byte) (actualValue.getByte(0) + 1));
+            assertEquals(buffer.getByte(i), actualValue.getByte(0));
+        }
     }
 
     //----- Tests for conversion to ByteBuffer -------------------------------//
@@ -1278,6 +1417,32 @@ public class ProtonByteBufferTest {
         assertTrue(byteBuffer.hasArray());
         assertNotNull(byteBuffer.array());
         assertSame(buffer.getArray(), byteBuffer.array());
+    }
+
+    @Test
+    public void testNioBufferNoArgVariant() {
+        ProtonBuffer buffer = new ProtonByteBuffer(CAPACITY);
+
+        byte[] value = new byte[buffer.capacity()];
+        random.nextBytes(value);
+        buffer.clear();
+        buffer.writeBytes(value);
+
+        assertRemainingEquals(ByteBuffer.wrap(value), buffer.toByteBuffer());
+    }
+
+    @Test
+    public void testToByteBufferWithRange() {
+        ProtonBuffer buffer = new ProtonByteBuffer(CAPACITY);
+
+        byte[] value = new byte[buffer.capacity()];
+        random.nextBytes(value);
+        buffer.clear();
+        buffer.writeBytes(value);
+
+        for (int i = 0; i < buffer.capacity() - BLOCK_SIZE + 1; i += BLOCK_SIZE) {
+            assertRemainingEquals(ByteBuffer.wrap(value, i, BLOCK_SIZE), buffer.toByteBuffer(i, BLOCK_SIZE));
+        }
     }
 
     //----- Tests for string conversion --------------------------------------//
@@ -1367,6 +1532,25 @@ public class ProtonByteBufferTest {
             buffer.resetWriteIndex();
             fail("Should not be able to reset to invalid mark");
         } catch (IndexOutOfBoundsException iobe) {}
+    }
+
+    @Test(expected = IndexOutOfBoundsException.class)
+    public void testReaderIndexLargerThanWriterIndex() {
+        String content1 = "hello";
+        String content2 = "world";
+        int length = content1.length() + content2.length();
+
+        ProtonBuffer buffer = new ProtonByteBuffer(length);
+        buffer.setIndex(0, 0);
+        buffer.writeBytes(content1.getBytes(StandardCharsets.UTF_8));
+        buffer.markWriteIndex();
+        buffer.skipBytes(content1.length());
+        buffer.writeBytes(content2.getBytes(StandardCharsets.UTF_8));
+        buffer.skipBytes(content2.length());
+        assertTrue(buffer.getReadIndex() <= buffer.getWriteIndex());
+
+        buffer.resetWriteIndex();
+        fail("Should throw when reset positions write index before read index");
     }
 
     //----- Tests for equality and comparison --------------------------------//
@@ -1477,6 +1661,42 @@ public class ProtonByteBufferTest {
 
         assertTrue(buffer1.compareTo(buffer2) < 0);
         assertTrue(buffer2.compareTo(buffer1) > 0);
+    }
+
+    @Test
+    public void testCompareToContract() {
+        ProtonBuffer buffer = new ProtonByteBuffer(CAPACITY);
+
+        try {
+            buffer.compareTo(null);
+            fail();
+        } catch (NullPointerException e) {
+            // Expected
+        }
+
+        // Fill the random stuff
+        byte[] value = new byte[32];
+        random.nextBytes(value);
+        // Prevent overflow / underflow
+        if (value[0] == 0) {
+            value[0]++;
+        } else if (value[0] == -1) {
+            value[0]--;
+        }
+
+        buffer.setIndex(0, value.length);
+        buffer.setBytes(0, value);
+
+        assertEquals(0, buffer.compareTo(new ProtonByteBuffer(value)));
+
+        value[0]++;
+        assertTrue(buffer.compareTo(new ProtonByteBuffer(value)) < 0);
+        value[0] -= 2;
+        assertTrue(buffer.compareTo(new ProtonByteBuffer(value)) > 0);
+        value[0]++;
+
+        assertTrue(buffer.compareTo(new ProtonByteBuffer(value, 0, 31)) > 0);
+        assertTrue(buffer.slice(0, 31).compareTo(new ProtonByteBuffer(value)) < 0);
     }
 
     //----- Tests for readBytes variants -------------------------------------//
@@ -2560,5 +2780,90 @@ public class ProtonByteBufferTest {
                 assertEquals(expectedValue[j], value[j]);
             }
         }
+    }
+
+    @Test
+    public void testSequentialProtonBufferTransfer1() {
+        ProtonBuffer buffer = new ProtonByteBuffer(CAPACITY);
+
+        byte[] valueContent = new byte[BLOCK_SIZE * 2];
+        ProtonBuffer value = new ProtonByteBuffer(valueContent);
+        buffer.setWriteIndex(0);
+        for (int i = 0; i < buffer.capacity() - BLOCK_SIZE + 1; i += BLOCK_SIZE) {
+            random.nextBytes(valueContent);
+            assertEquals(0, buffer.getReadIndex());
+            assertEquals(i, buffer.getWriteIndex());
+            buffer.writeBytes(value, random.nextInt(BLOCK_SIZE), BLOCK_SIZE);
+            assertEquals(0, value.getReadIndex());
+            assertEquals(valueContent.length, value.getWriteIndex());
+        }
+
+        random.setSeed(seed);
+        byte[] expectedValueContent = new byte[BLOCK_SIZE * 2];
+        ProtonBuffer expectedValue = new ProtonByteBuffer(expectedValueContent);
+        for (int i = 0; i < buffer.capacity() - BLOCK_SIZE + 1; i += BLOCK_SIZE) {
+            random.nextBytes(expectedValueContent);
+            int valueOffset = random.nextInt(BLOCK_SIZE);
+            assertEquals(i, buffer.getReadIndex());
+            assertEquals(CAPACITY, buffer.getWriteIndex());
+            buffer.readBytes(value, valueOffset, BLOCK_SIZE);
+            for (int j = valueOffset; j < valueOffset + BLOCK_SIZE; j ++) {
+                assertEquals(expectedValue.getByte(j), value.getByte(j));
+            }
+            assertEquals(0, value.getReadIndex());
+            assertEquals(valueContent.length, value.getWriteIndex());
+        }
+    }
+
+    @Test
+    public void testSequentialProtonBufferTransfer2() {
+        ProtonBuffer buffer = new ProtonByteBuffer(CAPACITY);
+
+        byte[] valueContent = new byte[BLOCK_SIZE * 2];
+        ProtonBuffer value = new ProtonByteBuffer(valueContent);
+        buffer.setWriteIndex(0);
+        for (int i = 0; i < buffer.capacity() - BLOCK_SIZE + 1; i += BLOCK_SIZE) {
+            random.nextBytes(valueContent);
+            assertEquals(0, buffer.getReadIndex());
+            assertEquals(i, buffer.getWriteIndex());
+            int readerIndex = random.nextInt(BLOCK_SIZE);
+            value.setReadIndex(readerIndex);
+            value.setWriteIndex(readerIndex + BLOCK_SIZE);
+            buffer.writeBytes(value);
+            assertEquals(readerIndex + BLOCK_SIZE, value.getWriteIndex());
+            assertEquals(value.getWriteIndex(), value.getReadIndex());
+        }
+
+        random.setSeed(seed);
+        byte[] expectedValueContent = new byte[BLOCK_SIZE * 2];
+        ProtonBuffer expectedValue = new ProtonByteBuffer(expectedValueContent);
+        for (int i = 0; i < buffer.capacity() - BLOCK_SIZE + 1; i += BLOCK_SIZE) {
+            random.nextBytes(expectedValueContent);
+            int valueOffset = random.nextInt(BLOCK_SIZE);
+            assertEquals(i, buffer.getReadIndex());
+            assertEquals(CAPACITY, buffer.getWriteIndex());
+            value.setReadIndex(valueOffset);
+            value.setWriteIndex(valueOffset);
+            buffer.readBytes(value, BLOCK_SIZE);
+            for (int j = valueOffset; j < valueOffset + BLOCK_SIZE; j ++) {
+                assertEquals(expectedValue.getByte(j), value.getByte(j));
+            }
+            assertEquals(valueOffset, value.getReadIndex());
+            assertEquals(valueOffset + BLOCK_SIZE, value.getWriteIndex());
+        }
+    }
+
+    //----- Test support methods
+
+    private static void assertRemainingEquals(ByteBuffer expected, ByteBuffer actual) {
+        int remaining1 = expected.remaining();
+        int remaining2 = actual.remaining();
+
+        assertEquals(remaining1, remaining2);
+        byte[] array1 = new byte[remaining1];
+        byte[] array2 = new byte[remaining2];
+        expected.get(array1);
+        actual.get(array2);
+        assertArrayEquals(array1, array2);
     }
 }
