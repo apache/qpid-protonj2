@@ -108,13 +108,13 @@ public class ProtonSender extends ProtonLink<Sender> implements Sender {
 
     @Override
     public Sender disposition(Predicate<OutgoingDelivery> filter, DeliveryState state, boolean settle) {
-        // TODO Auto-generated method stub
+        linkState.applyDisposition(filter, state, true);
         return null;
     }
 
     @Override
     public Sender settle(Predicate<OutgoingDelivery> filter) {
-        // TODO Auto-generated method stub
+        linkState.applyDisposition(filter, null, true);
         return null;
     }
 

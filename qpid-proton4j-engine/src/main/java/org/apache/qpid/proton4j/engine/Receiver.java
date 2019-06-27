@@ -82,7 +82,7 @@ public interface Receiver extends Link<Receiver> {
      *
      * @return this {@link Receiver} for chaining
      */
-    public Receiver disposition(Predicate<OutgoingDelivery> filter, DeliveryState state, boolean settle);
+    public Receiver disposition(Predicate<IncomingDelivery> filter, DeliveryState state, boolean settle);
 
     /**
      * For each unsettled outgoing delivery that is pending in the {@link Receiver} apply the given predicate
@@ -93,7 +93,7 @@ public interface Receiver extends Link<Receiver> {
      *
      * @return this {@link Receiver} for chaining
      */
-    public Receiver settle(Predicate<OutgoingDelivery> filter);
+    public Receiver settle(Predicate<IncomingDelivery> filter);
 
     /**
      * Retrieves the list of unsettled deliveries for this {@link Receiver} link which have yet to be settled

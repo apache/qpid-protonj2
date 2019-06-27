@@ -226,6 +226,16 @@ public class ProtonIncomingDelivery implements IncomingDelivery {
         return this;
     }
 
+    ProtonIncomingDelivery locallySettled() {
+        this.locallySettled = true;
+        return this;
+    }
+
+    ProtonIncomingDelivery localState(DeliveryState localState) {
+        this.localState = localState;
+        return this;
+    }
+
     ProtonIncomingDelivery appendToPayload(ProtonBuffer buffer) {
         if (payload == null) {
             payload = buffer;

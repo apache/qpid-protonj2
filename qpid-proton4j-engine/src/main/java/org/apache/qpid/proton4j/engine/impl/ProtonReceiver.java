@@ -26,7 +26,6 @@ import org.apache.qpid.proton4j.amqp.transport.Disposition;
 import org.apache.qpid.proton4j.amqp.transport.Role;
 import org.apache.qpid.proton4j.engine.EventHandler;
 import org.apache.qpid.proton4j.engine.IncomingDelivery;
-import org.apache.qpid.proton4j.engine.OutgoingDelivery;
 import org.apache.qpid.proton4j.engine.Receiver;
 import org.apache.qpid.proton4j.engine.Session;
 
@@ -35,7 +34,7 @@ import org.apache.qpid.proton4j.engine.Session;
  */
 public class ProtonReceiver extends ProtonLink<Receiver> implements Receiver {
 
-    private final ProtonReceiverState creditState;
+    private final ProtonReceiverState linkState;
 
     private EventHandler<IncomingDelivery> deliveryReceivedEventHandler = null;
     private EventHandler<IncomingDelivery> deliveryUpdatedEventHandler = null;
@@ -53,7 +52,7 @@ public class ProtonReceiver extends ProtonLink<Receiver> implements Receiver {
      */
     public ProtonReceiver(ProtonSession session, String name) {
         super(session, name);
-        this.creditState = new ProtonReceiverState(this, session.getIncomingWindow());
+        this.linkState = new ProtonReceiverState(this, session.getIncomingWindow());
     }
 
     @Override
@@ -79,13 +78,13 @@ public class ProtonReceiver extends ProtonLink<Receiver> implements Receiver {
 
     @Override
     protected ProtonReceiverState getState() {
-        return creditState;
+        return linkState;
     }
 
     @Override
     public int getCredit() {
         checkNotClosed("Cannot get credit on a closed Receiver");
-        return creditState.getCredit();
+        return linkState.getCredit();
     }
 
     @Override
@@ -103,7 +102,7 @@ public class ProtonReceiver extends ProtonLink<Receiver> implements Receiver {
             throw new IllegalArgumentException("Set credit cannot be zero");
         }
 
-        creditState.setCredit(credit);
+        linkState.setCredit(credit);
 
         return this;
     }
@@ -115,24 +114,24 @@ public class ProtonReceiver extends ProtonLink<Receiver> implements Receiver {
     }
 
     @Override
-    public Receiver disposition(Predicate<OutgoingDelivery> filter, DeliveryState state, boolean settle) {
-        // TODO Auto-generated method stub
+    public Receiver disposition(Predicate<IncomingDelivery> filter, DeliveryState state, boolean settle) {
+        linkState.applyDisposition(filter, state, true);
         return null;
     }
 
     @Override
-    public Receiver settle(Predicate<OutgoingDelivery> filter) {
-        // TODO Auto-generated method stub
+    public Receiver settle(Predicate<IncomingDelivery> filter) {
+        linkState.applyDisposition(filter, null, true);
         return null;
     }
 
     @SuppressWarnings("unchecked")
     @Override
     public Collection<IncomingDelivery> unsettled() {
-        if (creditState.unsettledDeliveries().isEmpty()) {
+        if (linkState.unsettledDeliveries().isEmpty()) {
             return Collections.EMPTY_LIST;
         } else {
-            return Collections.unmodifiableCollection(new ArrayList<>(creditState.unsettledDeliveries().values()));
+            return Collections.unmodifiableCollection(new ArrayList<>(linkState.unsettledDeliveries().values()));
         }
     }
 
@@ -154,14 +153,14 @@ public class ProtonReceiver extends ProtonLink<Receiver> implements Receiver {
         }
 
         // TODO - Enforce not closed etc
-        creditState.disposition(delivery);
+        linkState.disposition(delivery);
     }
 
     void deliveryRead(ProtonIncomingDelivery delivery, int bytesRead) {
         // TODO - When any resource is closed we could still allow read of inbound data but the user
         //        can't operate on the delivery so do we want that ?
 
-        creditState.deliveryRead(delivery, bytesRead);
+        linkState.deliveryRead(delivery, bytesRead);
     }
 
     //----- Receiver event handlers

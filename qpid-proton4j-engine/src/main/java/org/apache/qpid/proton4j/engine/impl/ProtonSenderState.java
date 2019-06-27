@@ -16,15 +16,21 @@
  */
 package org.apache.qpid.proton4j.engine.impl;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
+import java.util.function.Predicate;
 
 import org.apache.qpid.proton4j.amqp.UnsignedInteger;
 import org.apache.qpid.proton4j.amqp.transport.Attach;
+import org.apache.qpid.proton4j.amqp.transport.DeliveryState;
 import org.apache.qpid.proton4j.amqp.transport.Disposition;
 import org.apache.qpid.proton4j.amqp.transport.Flow;
 import org.apache.qpid.proton4j.amqp.transport.Transfer;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.engine.LinkState;
+import org.apache.qpid.proton4j.engine.OutgoingDelivery;
 import org.apache.qpid.proton4j.engine.Sender;
 import org.apache.qpid.proton4j.engine.util.DeliveryIdTracker;
 import org.apache.qpid.proton4j.engine.util.SplayMap;
@@ -175,6 +181,28 @@ public class ProtonSenderState implements ProtonLinkState<ProtonOutgoingDelivery
             if (getCredit() == 0) {
                 sendable = false;
             }
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    void applyDisposition(Predicate<OutgoingDelivery> predicate, DeliveryState disposition, boolean settle) {
+        List<UnsignedInteger> toRemove = settle ? new ArrayList<>() : Collections.EMPTY_LIST;
+
+        unsettled.forEach((deliveryId, delivery) -> {
+            if (predicate.test(delivery)) {
+                if (disposition != null) {
+                    delivery.localState(disposition);
+                }
+                if (settle) {
+                    delivery.locallySettled();
+                    toRemove.add(deliveryId);
+                }
+                sessionWindow.processDisposition(sender, delivery);
+            }
+        });
+
+        if (!toRemove.isEmpty()) {
+            toRemove.forEach(deliveryId -> unsettled.remove(deliveryId));
         }
     }
 

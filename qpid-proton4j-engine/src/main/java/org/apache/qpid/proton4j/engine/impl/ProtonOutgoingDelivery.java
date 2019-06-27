@@ -211,6 +211,16 @@ public class ProtonOutgoingDelivery implements OutgoingDelivery {
         return this;
     }
 
+    ProtonOutgoingDelivery locallySettled() {
+        this.locallySettled = true;
+        return this;
+    }
+
+    ProtonOutgoingDelivery localState(DeliveryState localState) {
+        this.localState = localState;
+        return this;
+    }
+
     //----- Private helper methods
 
     private void checkComplete() {
