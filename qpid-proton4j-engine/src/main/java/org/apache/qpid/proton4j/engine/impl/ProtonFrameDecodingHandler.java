@@ -62,7 +62,7 @@ public class ProtonFrameDecodingHandler implements EngineHandler, SaslPerformati
     // Parser stages used during the parsing process
     private final FrameSizeParsingStage frameSizeParser = new FrameSizeParsingStage();
     private final FrameBufferingStage frameBufferingStage = new FrameBufferingStage();
-    private final FrameParserStage frameBodyParsingStage = new FrameBodyParsingStage();
+    private final FrameBodyParsingStage frameBodyParsingStage = new FrameBodyParsingStage();
 
     //----- Handler method implementations
 
@@ -113,12 +113,12 @@ public class ProtonFrameDecodingHandler implements EngineHandler, SaslPerformati
         return stage = frameSizeParser.reset(0);
     }
 
-    private FrameParserStage transitionToFrameBufferingStage(int frameSize) {
-        return stage = frameBufferingStage.reset(frameSize);
+    private FrameParserStage transitionToFrameBufferingStage(int length) {
+        return stage = frameBufferingStage.reset(length);
     }
 
-    private FrameParserStage initializeFrameBodyParsingStage(int frameSize) {
-        return stage = frameBodyParsingStage.reset(frameSize);
+    private FrameParserStage initializeFrameBodyParsingStage(int length) {
+        return stage = frameBodyParsingStage.reset(length);
     }
 
     private ParsingErrorStage transitionToErrorStage(IOException error) {
@@ -150,12 +150,12 @@ public class ProtonFrameDecodingHandler implements EngineHandler, SaslPerformati
         /**
          * Reset the stage to its defaults for a new cycle of parsing.
          *
-         * @param frameSize
-         *      The frameSize to use for this part of the parsing operation
+         * @param length
+         *      The length to use for this part of the parsing operation
          *
          * @return a reference to this parsing stage for chaining.
          */
-        FrameParserStage reset(int frameSize);
+        FrameParserStage reset(int length);
 
     }
 
@@ -219,13 +219,12 @@ public class ProtonFrameDecodingHandler implements EngineHandler, SaslPerformati
             if (multiplier == 0) {
                 validateFrameSize();
 
-                // Normalize the frame size to the reminder portion
-                frameSize -= FRAME_SIZE_BYTES;
+                int length = frameSize - FRAME_SIZE_BYTES;
 
-                if (input.getReadableBytes() < frameSize) {
-                    transitionToFrameBufferingStage(frameSize);
+                if (input.getReadableBytes() < length) {
+                    transitionToFrameBufferingStage(length);
                 } else {
-                    initializeFrameBodyParsingStage(frameSize);
+                    initializeFrameBodyParsingStage(length);
                 }
 
                 stage.parse(context, input);
@@ -274,38 +273,32 @@ public class ProtonFrameDecodingHandler implements EngineHandler, SaslPerformati
         }
 
         @Override
-        public FrameBufferingStage reset(int frameSize) {
-            buffer = ProtonByteBufferAllocator.DEFAULT.allocate(frameSize, frameSize);
+        public FrameBufferingStage reset(int length) {
+            buffer = ProtonByteBufferAllocator.DEFAULT.allocate(length, length);
             return this;
         }
     }
 
     private class FrameBodyParsingStage implements FrameParserStage {
 
-        private int frameSize;
+        private int length;
 
         @Override
         public void parse(EngineHandlerContext context, ProtonBuffer input) throws IOException {
             int dataOffset = (input.readByte() << 2) & 0x3FF;
+            int frameSize = length + FRAME_SIZE_BYTES;
 
-            if (dataOffset < 8) {
-                throw new ProtonException(String.format(
-                    "specified frame data offset %d smaller than minimum frame header size %d", dataOffset, 8));
-            }
-            if (dataOffset > frameSize + FRAME_SIZE_BYTES) {
-                throw new ProtonException(String.format(
-                    "specified frame data offset %d larger than the frame size %d", dataOffset, frameSize));
-            }
+            validateDataOffset(dataOffset, frameSize);
 
             int type = input.readByte() & 0xFF;
             short channel = input.readShort();
 
-            // note that this skips over the extended header if it's present
+            // Skip over the extended header if present (i.e offset > 8)
             if (dataOffset != 8) {
                 input.setReadIndex(input.getReadIndex() + dataOffset - 8);
             }
 
-            final int frameBodySize = frameSize - (dataOffset - FRAME_SIZE_BYTES);
+            final int frameBodySize = frameSize - dataOffset;
 
             ProtonBuffer payload = null;
             Object val = null;
@@ -345,9 +338,21 @@ public class ProtonFrameDecodingHandler implements EngineHandler, SaslPerformati
             }
         }
 
+        private void validateDataOffset(int dataOffset, int frameSize) throws ProtonException {
+            if (dataOffset < 8) {
+                throw new ProtonException(String.format(
+                    "specified frame data offset %d smaller than minimum frame header size %d", dataOffset, 8));
+            }
+
+            if (dataOffset > frameSize) {
+                throw new ProtonException(String.format(
+                    "specified frame data offset %d larger than the frame size %d", dataOffset, frameSize));
+            }
+        }
+
         @Override
-        public FrameBodyParsingStage reset(int frameSize) {
-            this.frameSize = frameSize;
+        public FrameBodyParsingStage reset(int length) {
+            this.length = length;
             return this;
         }
     }
@@ -374,7 +379,7 @@ public class ProtonFrameDecodingHandler implements EngineHandler, SaslPerformati
         }
 
         @Override
-        public ParsingErrorStage reset(int frameSize) {
+        public ParsingErrorStage reset(int length) {
             return this;
         }
     }

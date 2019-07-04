@@ -20,12 +20,15 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertThat;
+import static org.hamcrest.CoreMatchers.containsString;
 
 import java.io.IOException;
 
 import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
 import org.apache.qpid.proton4j.amqp.transport.Open;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
+import org.apache.qpid.proton4j.engine.EmptyFrame;
 import org.apache.qpid.proton4j.engine.Engine;
 import org.apache.qpid.proton4j.engine.EngineHandlerContext;
 import org.apache.qpid.proton4j.engine.HeaderFrame;
@@ -194,6 +197,120 @@ public class ProtonFrameDecodingHandlerTest {
         assertFalse(decoded.hasOfferedCapabilites());
         assertFalse(decoded.hasDesiredCapabilites());
         assertFalse(decoded.hasProperties());
+    }
+
+    /*
+     * Test that empty frames, as used for heartbeating, decode as expected.
+     */
+    @Test
+    public void testDecodeEmptyFrame() throws Exception {
+        // http://docs.oasis-open.org/amqp/core/v1.0/os/amqp-core-transport-v1.0-os.html#doc-idp124752
+        // Description: '8byte sized' empty AMQP frame
+        byte[] undersizedFrameHeader = new byte[] { (byte) 0x00, 0x00, 0x00, 0x08, 0x02, 0x00, 0x00, 0x00 };
+
+        ProtonFrameDecodingHandler handler = createFrameDecoder();
+        EngineHandlerContext context = Mockito.mock(EngineHandlerContext.class);
+
+        handler.handleRead(context, AMQPHeader.getAMQPHeader().getBuffer());
+
+        Mockito.verify(context).fireRead(Mockito.any(HeaderFrame.class));
+        Mockito.verifyNoMoreInteractions(context);
+
+        handler.handleRead(context, ProtonByteBufferAllocator.DEFAULT.wrap(undersizedFrameHeader));
+
+        ArgumentCaptor<ProtocolFrame> argument = ArgumentCaptor.forClass(ProtocolFrame.class);
+        Mockito.verify(context).fireRead(argument.capture());
+        Mockito.verifyNoMoreInteractions(context);
+
+        assertNotNull(argument.getValue());
+        assertTrue(argument.getValue() instanceof EmptyFrame);
+    }
+
+    /*
+     * Test that frames indicating they are under 8 bytes (the minimum size of the frame header) causes an error.
+     */
+    @Test
+    public void testInputOfFrameWithInvalidSizeBelowMinimumPossible() throws Exception
+    {
+        // http://docs.oasis-open.org/amqp/core/v1.0/os/amqp-core-transport-v1.0-os.html#doc-idp124752
+        // Description: '7byte sized' AMQP frame header
+        byte[] undersizedFrameHeader = new byte[] { (byte) 0x00, 0x00, 0x00, 0x07, 0x02, 0x00, 0x00, 0x00 };
+
+        ProtonFrameDecodingHandler handler = createFrameDecoder();
+        EngineHandlerContext context = Mockito.mock(EngineHandlerContext.class);
+
+        handler.handleRead(context, AMQPHeader.getAMQPHeader().getBuffer());
+
+        Mockito.verify(context).fireRead(Mockito.any(HeaderFrame.class));
+        Mockito.verifyNoMoreInteractions(context);
+
+        handler.handleRead(context, ProtonByteBufferAllocator.DEFAULT.wrap(undersizedFrameHeader));
+
+        ArgumentCaptor<Throwable> argument = ArgumentCaptor.forClass(Throwable.class);
+        Mockito.verify(context).fireDecodingError(argument.capture());
+        Mockito.verifyNoMoreInteractions(context);
+
+        Throwable t = argument.getValue();
+        assertTrue("Unexpected exception type:" + t, t instanceof IOException);
+        assertThat(t.getMessage(), containsString("frame size 7 smaller than minimum"));
+    }
+
+    /*
+     * Test that frames indicating a DOFF under 8 bytes (the minimum size of the frame header) causes an error.
+     */
+    @Test
+    public void testInputOfFrameWithInvalidDoffBelowMinimumPossible() throws Exception
+    {
+        // http://docs.oasis-open.org/amqp/core/v1.0/os/amqp-core-transport-v1.0-os.html#doc-idp124752
+        // Description: '8byte sized' AMQP frame header with invalid doff of 1[*4 = 4bytes]
+        byte[] underMinDoffFrameHeader = new byte[] { (byte) 0x00, 0x00, 0x00, 0x08, 0x01, 0x00, 0x00, 0x00 };
+
+        ProtonFrameDecodingHandler handler = createFrameDecoder();
+        EngineHandlerContext context = Mockito.mock(EngineHandlerContext.class);
+
+        handler.handleRead(context, AMQPHeader.getAMQPHeader().getBuffer());
+
+        Mockito.verify(context).fireRead(Mockito.any(HeaderFrame.class));
+        Mockito.verifyNoMoreInteractions(context);
+
+        handler.handleRead(context, ProtonByteBufferAllocator.DEFAULT.wrap(underMinDoffFrameHeader));
+
+        ArgumentCaptor<Throwable> argument = ArgumentCaptor.forClass(Throwable.class);
+        Mockito.verify(context).fireDecodingError(argument.capture());
+        Mockito.verifyNoMoreInteractions(context);
+
+        Throwable t = argument.getValue();
+        assertTrue("Unexpected exception type:" + t, t instanceof IOException);
+        assertThat(t.getMessage(), containsString("data offset 4 smaller than minimum"));
+    }
+
+    /*
+     * Test that frames indicating a DOFF larger than the frame size cause expected error.
+     */
+    @Test
+    public void testInputOfFrameWithInvalidDoffAboveMaximumPossible() throws Exception
+    {
+        // http://docs.oasis-open.org/amqp/core/v1.0/os/amqp-core-transport-v1.0-os.html#doc-idp124752
+        // Description: '8byte sized' AMQP frame header with invalid doff of 3[*4 = 12bytes]
+        byte[] overFrameSizeDoffFrameHeader = new byte[] { (byte) 0x00, 0x00, 0x00, 0x08, 0x03, 0x00, 0x00, 0x00 };
+
+        ProtonFrameDecodingHandler handler = createFrameDecoder();
+        EngineHandlerContext context = Mockito.mock(EngineHandlerContext.class);
+
+        handler.handleRead(context, AMQPHeader.getAMQPHeader().getBuffer());
+
+        Mockito.verify(context).fireRead(Mockito.any(HeaderFrame.class));
+        Mockito.verifyNoMoreInteractions(context);
+
+        handler.handleRead(context, ProtonByteBufferAllocator.DEFAULT.wrap(overFrameSizeDoffFrameHeader));
+
+        ArgumentCaptor<Throwable> argument = ArgumentCaptor.forClass(Throwable.class);
+        Mockito.verify(context).fireDecodingError(argument.capture());
+        Mockito.verifyNoMoreInteractions(context);
+
+        Throwable t = argument.getValue();
+        assertTrue("Unexpected exception type:" + t, t instanceof IOException);
+        assertThat(t.getMessage(), containsString("data offset 12 larger than the frame size 8"));
     }
 
     private ProtonFrameDecodingHandler createFrameDecoder() throws Exception {
