@@ -321,6 +321,20 @@ public interface ProtonBuffer extends Comparable<ProtonBuffer> {
     boolean isReadable(int size);
 
     /**
+     * Compares the remaining content of the current buffer with the remaining content of the
+     * given buffer, which must not be null. Each byte is compared in turn as an unsigned value,
+     * returning upon the first difference. If no difference is found before the end of one
+     * buffer, the shorter buffer is considered less than the other, or else if the same length
+     * then they are considered equal.
+     *
+     * @return  a negative, zero, or positive integer when this buffer is less than, equal to,
+     *          or greater than the given buffer.
+     * @see Comparable#compareTo(Object)
+     */
+    @Override
+    public int compareTo(ProtonBuffer buffer);
+
+    /**
      * Gets a boolean from the specified index, this method will not modify the read or write
      * index.
      *
