@@ -461,6 +461,7 @@ public class ProtonSession implements Session {
             link = null;
         }
 
+        //TODO: perhaps make this optional 'auto-echo'? Otherwise listeners above might not have had time to perform desired work before below occurs.
         if (flow.getEcho()) {
             writeFlow(link);
         }
