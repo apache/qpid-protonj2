@@ -206,7 +206,7 @@ public class ProtonFrameDecodingHandlerTest {
     public void testDecodeEmptyFrame() throws Exception {
         // http://docs.oasis-open.org/amqp/core/v1.0/os/amqp-core-transport-v1.0-os.html#doc-idp124752
         // Description: '8byte sized' empty AMQP frame
-        byte[] undersizedFrameHeader = new byte[] { (byte) 0x00, 0x00, 0x00, 0x08, 0x02, 0x00, 0x00, 0x00 };
+        byte[] emptyFrame = new byte[] { (byte) 0x00, 0x00, 0x00, 0x08, 0x02, 0x00, 0x00, 0x00 };
 
         ProtonFrameDecodingHandler handler = createFrameDecoder();
         EngineHandlerContext context = Mockito.mock(EngineHandlerContext.class);
@@ -216,7 +216,7 @@ public class ProtonFrameDecodingHandlerTest {
         Mockito.verify(context).fireRead(Mockito.any(HeaderFrame.class));
         Mockito.verifyNoMoreInteractions(context);
 
-        handler.handleRead(context, ProtonByteBufferAllocator.DEFAULT.wrap(undersizedFrameHeader));
+        handler.handleRead(context, ProtonByteBufferAllocator.DEFAULT.wrap(emptyFrame));
 
         ArgumentCaptor<ProtocolFrame> argument = ArgumentCaptor.forClass(ProtocolFrame.class);
         Mockito.verify(context).fireRead(argument.capture());
