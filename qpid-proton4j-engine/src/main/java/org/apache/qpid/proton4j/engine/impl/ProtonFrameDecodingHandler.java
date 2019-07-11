@@ -210,24 +210,28 @@ public class ProtonFrameDecodingHandler implements EngineHandler, SaslPerformati
         @Override
         public void parse(EngineHandlerContext context, ProtonBuffer input) throws IOException {
             while (input.isReadable()) {
-                frameSize |= ((input.readByte() & 0xFF) << --multiplier * Byte.SIZE);
+                //TODO: The below only parsed a single frame. Require repeated parse calls, or
+                //      have a single parse execution read out multiple frames as now added above?
+                while (input.isReadable()) {
+                    frameSize |= ((input.readByte() & 0xFF) << --multiplier * Byte.SIZE);
+                    if (multiplier == 0) {
+                        break;
+                    }
+                }
+
                 if (multiplier == 0) {
-                    break;
+                    validateFrameSize();
+
+                    int length = frameSize - FRAME_SIZE_BYTES;
+
+                    if (input.getReadableBytes() < length) {
+                        transitionToFrameBufferingStage(length);
+                    } else {
+                        initializeFrameBodyParsingStage(length);
+                    }
+
+                    stage.parse(context, input);
                 }
-            }
-
-            if (multiplier == 0) {
-                validateFrameSize();
-
-                int length = frameSize - FRAME_SIZE_BYTES;
-
-                if (input.getReadableBytes() < length) {
-                    transitionToFrameBufferingStage(length);
-                } else {
-                    initializeFrameBodyParsingStage(length);
-                }
-
-                stage.parse(context, input);
             }
         }
 

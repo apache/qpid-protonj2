@@ -24,6 +24,7 @@ import static org.junit.Assert.assertThat;
 import static org.hamcrest.CoreMatchers.containsString;
 
 import java.io.IOException;
+import java.util.List;
 
 import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
 import org.apache.qpid.proton4j.amqp.transport.Open;
@@ -224,6 +225,38 @@ public class ProtonFrameDecodingHandlerTest {
 
         assertNotNull(argument.getValue());
         assertTrue(argument.getValue() instanceof EmptyFrame);
+    }
+
+    /*
+     * Test that two empty frames, as used for heartbeating, decode as expected when arriving back to back.
+     */
+    @Test
+    public void testDecodeMultipleEmptyFrames() throws Exception {
+        // http://docs.oasis-open.org/amqp/core/v1.0/os/amqp-core-transport-v1.0-os.html#doc-idp124752
+        // Description: 2x '8byte sized' empty AMQP frames
+        byte[] emptyFrames = new byte[] { (byte) 0x00, 0x00, 0x00, 0x08, 0x02, 0x00, 0x00, 0x00,
+                                                    (byte) 0x00, 0x00, 0x00, 0x08, 0x02, 0x00, 0x00, 0x00 };
+
+        ProtonFrameDecodingHandler handler = createFrameDecoder();
+        EngineHandlerContext context = Mockito.mock(EngineHandlerContext.class);
+
+        handler.handleRead(context, AMQPHeader.getAMQPHeader().getBuffer());
+
+        Mockito.verify(context).fireRead(Mockito.any(HeaderFrame.class));
+        Mockito.verifyNoMoreInteractions(context);
+
+        handler.handleRead(context, ProtonByteBufferAllocator.DEFAULT.wrap(emptyFrames));
+
+        ArgumentCaptor<ProtocolFrame> argument = ArgumentCaptor.forClass(ProtocolFrame.class);
+        Mockito.verify(context, Mockito.times(2)).fireRead(argument.capture());
+
+        List<ProtocolFrame> frames = argument.getAllValues();
+        assertNotNull(frames);
+        assertEquals(2, frames.size());
+        assertTrue(frames.get(0) instanceof EmptyFrame);
+        assertTrue(frames.get(1) instanceof EmptyFrame);
+
+        Mockito.verifyNoMoreInteractions(context);
     }
 
     /*
