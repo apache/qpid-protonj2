@@ -453,6 +453,7 @@ public class ProtonSession implements Session {
             if (link == null) {
                 getEngine().engineFailed(new ProtocolViolationException(
                     "Received uncorrelated handle on Flow from remote: " + channel));
+                return;
             }
 
             link.remoteFlow(flow);
