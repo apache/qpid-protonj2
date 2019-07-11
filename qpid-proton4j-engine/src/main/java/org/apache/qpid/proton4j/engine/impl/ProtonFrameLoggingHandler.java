@@ -33,10 +33,21 @@ import org.apache.qpid.proton4j.engine.SaslFrame;
  */
 public class ProtonFrameLoggingHandler implements EngineHandler {
 
-    private static ProtonLogger LOG = ProtonLoggerFactory.getLogger(ProtonFrameLoggingHandler.class);
+    private static final ProtonLogger LOG = ProtonLoggerFactory.getLogger(ProtonFrameLoggingHandler.class);
+
+    private static final String PN_TRACE_FRM = "PN_TRACE_FRM";
+    private static final boolean TRACE_FRM_ENABLED = checkTraceFramesEnabled();
+
+    private static final boolean checkTraceFramesEnabled()
+    {
+        String value = System.getenv(PN_TRACE_FRM);
+        return "true".equalsIgnoreCase(value) ||
+            "1".equals(value) ||
+            "yes".equalsIgnoreCase(value);
+    }
 
     // TODO - Possible that this should also have configuration for on / off and even looks at
-    //        env for PN_TRACE_FRM for legacy reasons.
+    //        env for PN_TRACE_FRM for legacy reasons (hacky version of that since added).
 
     // TODO - Implement the frame logging where now we are only stringifying the frames.
 
@@ -50,36 +61,60 @@ public class ProtonFrameLoggingHandler implements EngineHandler {
 
     @Override
     public void handleRead(EngineHandlerContext context, HeaderFrame header) {
+        if(TRACE_FRM_ENABLED) {
+            System.out.println("<- " + header.getBody());
+        }
+
         LOG.trace("<- {}", header.getBody());
         context.fireRead(header);
     }
 
     @Override
     public void handleRead(EngineHandlerContext context, SaslFrame frame) {
+        if(TRACE_FRM_ENABLED) {
+            System.out.println("<- SASL: " + frame.getBody());
+        }
+
         LOG.trace("<- SASL: {}", frame.getBody());
         context.fireRead(frame);
     }
 
     @Override
     public void handleRead(EngineHandlerContext context, ProtocolFrame frame) {
+        if(TRACE_FRM_ENABLED) {
+            System.out.println("<- AMQP: " + frame.getBody());
+        }
+
         LOG.trace("<- AMQP: {}", frame.getBody());
         context.fireRead(frame);
     }
 
     @Override
     public void handleWrite(EngineHandlerContext context, AMQPHeader header) {
+        if(TRACE_FRM_ENABLED) {
+            System.out.println("-> AMQP: " + header);
+        }
+
         LOG.trace("-> AMQP: {}", header);
         context.fireWrite(header);
     }
 
     @Override
     public void handleWrite(EngineHandlerContext context, Performative performative, int channel, ProtonBuffer payload, Runnable payloadToLarge) {
+        if(TRACE_FRM_ENABLED) {
+            System.out.println("-> AMQP: " + performative);  // TODO - Payload ?
+        }
+
         LOG.trace("-> AMQP: {}", performative);  // TODO - Payload ?
         context.fireWrite(performative, channel, payload, payloadToLarge);
     }
 
     @Override
     public void handleWrite(EngineHandlerContext context, SaslPerformative performative) {
+        if(TRACE_FRM_ENABLED) {
+            System.out.println("-> SASL: " + performative);
+        }
+
         LOG.trace("-> SASL: {}", performative);
         context.fireWrite(performative);
     }
