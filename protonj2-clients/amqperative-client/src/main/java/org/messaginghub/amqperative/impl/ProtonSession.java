@@ -16,10 +16,13 @@
  */
 package org.messaginghub.amqperative.impl;
 
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 
+import org.apache.qpid.proton4j.amqp.messaging.Source;
+import org.apache.qpid.proton4j.amqp.messaging.Target;
 import org.messaginghub.amqperative.Receiver;
 import org.messaginghub.amqperative.ReceiverOptions;
 import org.messaginghub.amqperative.Sender;
@@ -67,7 +70,23 @@ public class ProtonSession implements Session {
 
     @Override
     public Receiver createReceiver(String address, ReceiverOptions receiverOptions) {
-        return new ProtonReceiver(receiverOptions, this, session.receiver(address)).open();
+        String name = receiverOptions.getLinkName();
+        if(name == null) {
+            //TODO: use container-id + counter rather than UUID?
+            name = "reciever-" + UUID.randomUUID();
+        }
+
+        //TODO: not thread safe
+        org.apache.qpid.proton4j.engine.Receiver receiver = session.receiver(name);
+
+        //TODO: flesh out source
+        Source source = new Source();
+        source.setAddress(address);
+
+        receiver.setSource(source);
+        receiver.setTarget(new Target());
+
+        return new ProtonReceiver(receiverOptions, this, receiver).open();
     }
 
     @Override
@@ -77,7 +96,23 @@ public class ProtonSession implements Session {
 
     @Override
     public Sender createSender(String address, SenderOptions senderOptions) {
-        return new ProtonSender(senderOptions, this, session.sender(address)).open();
+        String name = senderOptions.getLinkName();
+        if(name == null) {
+            //TODO: use container-id + counter rather than UUID?
+            name = "sender-" + UUID.randomUUID();
+        }
+
+        //TODO: this is not thread safe
+        org.apache.qpid.proton4j.engine.Sender sender = session.sender(name);
+
+        //TODO: flesh out target
+        Target target = new Target();
+        target.setAddress(address);
+
+        sender.setTarget(target);
+        sender.setSource(new Source());
+
+        return new ProtonSender(senderOptions, this, sender).open();
     }
 
     //----- Internal API

@@ -16,6 +16,12 @@
  */
 package org.messaginghub.amqperative;
 
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+
+import org.junit.Ignore;
 import org.junit.Test;
 
 /**
@@ -29,5 +35,59 @@ public class ConnectionTest {
 
     @Test
     public void testCreateConnectionURI() throws Exception {
+    }
+
+    @Ignore("Skipped for now, needs server, and proton changes")//TODO
+    @Test
+    public void testSendAndReceiveMessage() throws InterruptedException, ExecutionException, TimeoutException {
+        Container container = Container.create();
+        System.out.println("Created container");
+
+        Connection conn = container.createConnection("localhost", 5672);
+        System.out.println("Connection creation started (or already failed), waiting.");
+
+        int timeout = 300;
+        conn.openFuture().get(timeout, TimeUnit.SECONDS);
+        System.out.println("Open completed successfully");
+
+        ReceiverOptions receiverOptions = new ReceiverOptions().setCreditWindow(10);
+
+        Receiver receiver = conn.createReceiver("queue", receiverOptions);
+        receiver.openFuture().get(timeout, TimeUnit.SECONDS);
+
+        Sender sender = conn.createSender("queue");
+
+        sender.openFuture().get(timeout, TimeUnit.SECONDS);
+        System.out.println("Sender created successfully");
+
+        Thread.sleep(200);//TODO: remove, hack to allow sender to become sendable first.
+
+        int count = 100;
+        for (int i = 1; i <= count; i++) {
+            //TODO: This fails if a prev message wasn't locally settled yet (which I'm deliberately not doing here,
+            //      instead tweaked proton current() method to use !isPartial() rather than isSettled(..but that causes test failures))
+            Tracker tracker = sender.send(Message.create("myBasicTextMessage" + i));
+            System.out.println("Sent message " + i);
+
+            Delivery delivery = receiver.receive(1000);
+
+            if(delivery == null) {
+                throw new IllegalStateException("Expected delivery but did not get one");
+            }
+
+            System.out.println("Got message body: " + delivery.getMessage().getBody());
+
+            delivery.accept();
+
+            Thread.sleep(20); //TODO: remove, hack to give time for settlement propagation (when send+receive done end to end via dispatch router)
+            System.out.println("Settled: " + tracker.isRemotelySettled());
+            //TODO: should locally settle sent delivery..if sender not set to 'auto settle' when peer does.
+        }
+
+        Future<Connection> closing = conn.close();
+        System.out.println("Close started, waiting.");
+
+        closing.get(3, TimeUnit.SECONDS);
+        System.out.println("Close completed");
     }
 }

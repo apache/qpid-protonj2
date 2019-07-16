@@ -22,6 +22,14 @@ import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.function.Consumer;
 
+import org.apache.qpid.proton4j.amqp.messaging.AmqpValue;
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
+import org.apache.qpid.proton4j.codec.CodecFactory;
+import org.apache.qpid.proton4j.codec.Encoder;
+import org.apache.qpid.proton4j.codec.EncoderState;
+import org.apache.qpid.proton4j.engine.OutgoingDelivery;
+import org.messaginghub.amqperative.DeliveryState;
 import org.messaginghub.amqperative.Message;
 import org.messaginghub.amqperative.Sender;
 import org.messaginghub.amqperative.SenderOptions;
@@ -49,6 +57,7 @@ public class ProtonSender implements Sender {
         this.session = session;
         this.sender = sender;
         this.executor = session.getScheduler();
+
     }
 
     @Override
@@ -58,8 +67,60 @@ public class ProtonSender implements Sender {
 
     @Override
     public Tracker send(Message message) {
-        // TODO Auto-generated method stub
-        return null;
+        //TODO: block for credit
+        //TODO: check sender.isSendable();
+        ProtonMessage msg = (ProtonMessage) message;
+
+        // TODO: implement message handling properly
+        Object o = msg.getBody();
+        AmqpValue body = new AmqpValue(o);
+
+        Encoder encoder = CodecFactory.getDefaultEncoder();
+        EncoderState encoderState = encoder.newEncoderState();
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate(4096);
+
+        try {
+            encoder.writeObject(buffer, encoderState, body);
+        } finally {
+            encoderState.reset();
+        }
+
+        //TODO: this is not thread safe, at all
+        OutgoingDelivery delivery = sender.current();
+        delivery.setTag(new byte[] {0});
+        delivery.writeBytes(buffer);
+
+        return new Tracker() {
+
+            @Override
+            public Tracker settle() {
+                // TODO Auto-generated method stub
+                throw new UnsupportedOperationException();
+            }
+
+            @Override
+            public boolean isRemotelySettled() {
+                return delivery.isRemotelySettled();
+            }
+
+            @Override
+            public byte[] getTag() {
+                // TODO Auto-generated method stub
+                throw new UnsupportedOperationException();
+            }
+
+            @Override
+            public DeliveryState getRemoteState() {
+                // TODO Auto-generated method stub
+                throw new UnsupportedOperationException();
+            }
+
+            @Override
+            public Message getMessage() {
+                // TODO Auto-generated method stub
+                throw new UnsupportedOperationException();
+            }
+        };
     }
 
     @Override

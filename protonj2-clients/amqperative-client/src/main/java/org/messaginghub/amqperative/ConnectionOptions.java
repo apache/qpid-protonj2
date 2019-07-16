@@ -17,7 +17,7 @@
 package org.messaginghub.amqperative;
 
 /**
- * Options the control the behavior of the {@link Connection} created from them.
+ * Options that control the behaviour of the {@link Connection} created from them.
  */
 public class ConnectionOptions {
 

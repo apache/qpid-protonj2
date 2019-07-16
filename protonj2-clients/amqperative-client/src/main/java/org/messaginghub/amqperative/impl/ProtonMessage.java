@@ -14,20 +14,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.messaginghub.amqperative;
+package org.messaginghub.amqperative.impl;
 
-import org.messaginghub.amqperative.impl.ProtonMessage;
+import org.messaginghub.amqperative.Message;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-/**
- *
- */
-public interface Message {
+public class ProtonMessage implements Message {
 
-    // TODO: actual Message interface.
-    // Various questions: Have specific body type setters? Allow setting general body section types? Do both? Use a Message builder/factory?
+    private static final Logger LOG = LoggerFactory.getLogger(ProtonMessage.class);
+
+    private Object body;
+
     public static Message create(Object body) {
-        return ProtonMessage.create(body);
+        return new ProtonMessage().setBody(body);
     }
 
-    Object getBody();
+    public Object getBody() {
+        return body;
+    }
+
+    //----- Internal API
+
+    ProtonMessage setBody(Object body) {
+        this.body = body;
+        return this;
+    }
 }
