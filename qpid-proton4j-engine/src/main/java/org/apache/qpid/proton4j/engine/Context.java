@@ -21,20 +21,75 @@ package org.apache.qpid.proton4j.engine;
  */
 public interface Context {
 
-    // TODO API Docs once API settled
-
+    /**
+     * @return the user set linked resource for this Context instance.
+     */
     Object getLinkedResource();
 
+    /**
+     * Gets the linked resource (if set) and returns it using the type information
+     * provided to cast the returned value.
+     *
+     * @param <T> The type to cast the linked resource to if one is set.
+     * @param typeClass the type's Class which is used for casting the returned value.
+     *
+     * @return the user set linked resource for this Context instance.
+     */
     <T> T getLinkedResource(Class<T> typeClass);
 
+    /**
+     * Gets the user set context value that is associated with the given key, or null
+     * if no data is mapped to the key.
+     *
+     * @param key
+     *      The key to use to lookup the mapped data.
+     *
+     * @return the object associated with the given key in this Context.
+     */
     Object get(String key);
 
+    /**
+     * Gets the user set context value that is associated with the given key, or null
+     * if no data is mapped to the key.
+     *
+     * @param <T> The type to cast the context mapped value to if one is set.
+     *
+     * @param key
+     *      The key to use to lookup the mapped data.
+     * @param typeClass
+     *      The Class that will be used when casting the returned context mapped object.
+     *
+     * @return the object associated with the given key in this Context.
+     */
     <T> T get(String key, Class<T> typeClass);
 
-    <T> void set(String key, T value);
+    /**
+     * Maps a given object to the given key in this context instance.
+     *
+     * @param <T> The type of the value being set
+     *
+     * @param key
+     *      The key to assign the value to
+     * @param value
+     *      The value to map to the given key.
+     *
+     * @return this Context instance.
+     */
+    <T> Context set(String key, T value);
 
+    /**
+     * Checks if the given key has a value mapped to it in this context.
+     *
+     * @param key
+     *      The key to search for a mapping to in this context.
+     *
+     * @return true if there is a value mapped to the given key in this context.
+     */
     boolean containsKey(String key);
 
+    /**
+     * @return this context with all mapped values and the linked resource cleared.
+     */
     Context clear();
 
 }

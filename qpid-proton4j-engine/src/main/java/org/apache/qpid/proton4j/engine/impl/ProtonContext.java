@@ -26,9 +26,7 @@ import org.apache.qpid.proton4j.engine.Context;
  */
 public class ProtonContext implements Context {
 
-    //TODO: create if used, avoid garbage?
-    private final Map<Object, Object> contextMap = new HashMap<>();
-
+    private Map<Object, Object> contextMap;
     private Object linkedResource;
 
     @Override
@@ -43,29 +41,40 @@ public class ProtonContext implements Context {
 
     @Override
     public Object get(String key) {
-        return contextMap.get(key);
+        return contextMap == null ? null : contextMap.get(key);
     }
 
     @Override
     public <T> T get(String key, Class<T> typeClass) {
-        return typeClass.cast(contextMap.get(key));
+        return contextMap == null ? null : typeClass.cast(contextMap.get(key));
     }
 
     @Override
-    public void set(String key, Object value) {
-        contextMap.put(key, value);
+    public ProtonContext set(String key, Object value) {
+        safeGetContextMap().put(key, value);
+        return this;
     }
 
     @Override
     public boolean containsKey(String key) {
-        return contextMap.containsKey(key);
+        return contextMap == null ? false : contextMap.containsKey(key);
     }
 
     @Override
     public Context clear() {
         linkedResource = null;
-        contextMap.clear();
+        if (contextMap != null) {
+            contextMap.clear();
+        }
 
         return this;
+    }
+
+    private Map<Object, Object> safeGetContextMap() {
+        if (contextMap == null) {
+            contextMap = new HashMap<>();
+        }
+
+        return contextMap;
     }
 }
