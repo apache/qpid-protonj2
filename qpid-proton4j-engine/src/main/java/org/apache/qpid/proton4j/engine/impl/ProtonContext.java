@@ -26,6 +26,7 @@ import org.apache.qpid.proton4j.engine.Context;
  */
 public class ProtonContext implements Context {
 
+    //TODO: create if used, avoid garbage?
     private final Map<Object, Object> contextMap = new HashMap<>();
 
     private Object linkedResource;
