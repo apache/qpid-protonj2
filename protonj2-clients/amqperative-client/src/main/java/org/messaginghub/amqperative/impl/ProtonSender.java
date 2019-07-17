@@ -86,7 +86,7 @@ public class ProtonSender implements Sender {
         }
 
         //TODO: this is not thread safe, at all
-        OutgoingDelivery delivery = sender.current();
+        OutgoingDelivery delivery = sender.next();
         delivery.setTag(new byte[] {0});
         delivery.writeBytes(buffer);
 
