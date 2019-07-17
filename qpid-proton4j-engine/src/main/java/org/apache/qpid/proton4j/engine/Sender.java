@@ -50,19 +50,19 @@ public interface Sender extends Link<Sender> {
     boolean isSendable();
 
     /**
-     * Gets the current incomplete {@link OutgoingDelivery} or creates a new instance for use by the
-     * sender.  An {@link OutgoingDelivery} must be marked completed before a new instance will be returned
-     * from this method.
+     * Gets the current {@link OutgoingDelivery} for this {@link Sender} if one is available.
      *
-     * @return the current active outgoing delivery or a new instance ready for sending.
+     * @return the current active outgoing delivery or null if there is no current delivery.
      */
     OutgoingDelivery current();
 
     /**
      * When there has been no deliveries so far or the current delivery has reached a complete state this
-     * method updates the current delivery to a new instance and returns that value, otherwise it returns null.
+     * method updates the current delivery to a new instance and returns that value.
      *
      * @return a new delivery instance unless the current delivery is not complete.
+     *
+     * @throws IllegalStateException if the current delivery has not been marked complete.
      */
     OutgoingDelivery next();
 

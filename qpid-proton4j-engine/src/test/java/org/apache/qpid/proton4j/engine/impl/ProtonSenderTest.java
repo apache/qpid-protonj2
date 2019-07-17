@@ -418,7 +418,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
 
         sender.open();
 
-        OutgoingDelivery delivery = sender.current();
+        OutgoingDelivery delivery = sender.next();
         assertNotNull(delivery);
 
         assertFalse(delivery.isAborted());
@@ -519,7 +519,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         assertFalse(sender.isSendable());
 
         sender.sendableEventHandler(handler -> {
-            handler.current().setTag(new byte[] {0}).writeBytes(payload);
+            handler.next().setTag(new byte[] {0}).writeBytes(payload);
         });
 
         sender.open();
@@ -583,7 +583,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         assertFalse(sender.isSendable());
 
         sender.sendableEventHandler(handler -> {
-            handler.current().setTag(new byte[] {0}).writeBytes(payload);
+            handler.next().setTag(new byte[] {0}).writeBytes(payload);
         });
 
         sender.open();
@@ -797,7 +797,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
 
         final AtomicBoolean deliverySentAfterSenable = new AtomicBoolean();
         sender.sendableEventHandler(handler -> {
-            handler.current().setTag(new byte[] {0}).writeBytes(payload);
+            handler.next().setTag(new byte[] {0}).writeBytes(payload);
             deliverySentAfterSenable.set(true);
         });
 
@@ -808,10 +808,10 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         OutgoingDelivery delivery1 = sender.current();
         delivery1.disposition(Accepted.getInstance(), true);
         OutgoingDelivery delivery2 = sender.current();
-        // TODO - Currently we advance to next only after a settle which isn't really workable
-        //        and we need an advance type API to allow sends without settling
-        assertNotSame(delivery1, delivery2);
-        delivery2.disposition(Released.getInstance(), true);
+        OutgoingDelivery delivery3 = sender.next();
+        assertSame(delivery1, delivery2);
+        assertNotSame(delivery2, delivery3);
+        delivery3.disposition(Released.getInstance(), true);
 
         sender.close();
 
@@ -850,7 +850,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
 
         assertFalse(sender.isSendable());
 
-        OutgoingDelivery delivery = sender.current();
+        OutgoingDelivery delivery = sender.next();
         assertNotNull(delivery);
 
         sender.open();
@@ -977,13 +977,13 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         }
 
         ProtonBuffer messageContent1 = createContentBuffer(contentLength1);
-        OutgoingDelivery delivery1 = sender1.current();
+        OutgoingDelivery delivery1 = sender1.next();
         delivery1.setTag(new byte[] { 1 });
         delivery1.disposition(Accepted.getInstance(), true);
         delivery1.writeBytes(messageContent1);
 
         ProtonBuffer messageContent2 = createContentBuffer(contentLength2);
-        OutgoingDelivery delivery2 = sender2.current();
+        OutgoingDelivery delivery2 = sender2.next();
         delivery2.setTag(new byte[] { 2 });
         delivery2.disposition(Accepted.getInstance(), true);
         delivery2.writeBytes(messageContent2);
@@ -1092,7 +1092,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         }
 
         ProtonBuffer messageContent = createContentBuffer(contentLength);
-        OutgoingDelivery delivery = sender.current();
+        OutgoingDelivery delivery = sender.next();
         delivery.setTag(new byte[] { 1 });
         delivery.disposition(Accepted.getInstance(), true);
         delivery.writeBytes(messageContent);
@@ -1155,7 +1155,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
             senderMarkedSendable.set(true);
         });
 
-        OutgoingDelivery delivery = sender.current();
+        OutgoingDelivery delivery = sender.next();
         assertNotNull(delivery);
 
         delivery.setTag(new byte[] {0});
@@ -1224,7 +1224,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
             senderMarkedSendable.set(true);
         });
 
-        OutgoingDelivery delivery = sender.current();
+        OutgoingDelivery delivery = sender.next();
         assertNotNull(delivery);
 
         delivery.setTag(new byte[] {0});
@@ -1279,7 +1279,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
             senderMarkedSendable.set(true);
         });
 
-        OutgoingDelivery delivery = sender.current();
+        OutgoingDelivery delivery = sender.next();
         assertNotNull(delivery);
 
         delivery.setTag(new byte[] {0});
@@ -1373,7 +1373,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
 
         final AtomicBoolean deliverySentAfterSenable = new AtomicBoolean();
         sender.sendableEventHandler(handler -> {
-            handler.current().setTag(new byte[] {0}).writeBytes(payload);
+            handler.next().setTag(new byte[] {0}).writeBytes(payload);
             deliverySentAfterSenable.set(true);
         });
 
@@ -1456,7 +1456,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
 
         final AtomicBoolean deliverySentAfterSenable = new AtomicBoolean();
         sender.sendableEventHandler(handler -> {
-            handler.current().setTag(new byte[] {0}).writeBytes(payload);
+            handler.next().setTag(new byte[] {0}).writeBytes(payload);
             deliverySentAfterSenable.set(true);
         });
 

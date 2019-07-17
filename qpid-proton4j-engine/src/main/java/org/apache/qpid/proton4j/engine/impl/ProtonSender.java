@@ -120,17 +120,16 @@ public class ProtonSender extends ProtonLink<Sender> implements Sender {
 
     @Override
     public OutgoingDelivery current() {
-        if (current == null || current.isSettled()) {
-            current = new ProtonOutgoingDelivery(this);
-        }
-
         return current;
     }
 
     @Override
     public OutgoingDelivery next() {
-        // TODO Auto-generated method stub
-        return null;
+        if (current != null && current.isPartial()) {
+            throw new IllegalStateException("Current delivery is not complete and cannot be advanced.");
+        }
+
+        return current = new ProtonOutgoingDelivery(this);
     }
 
     @SuppressWarnings("unchecked")
