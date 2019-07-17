@@ -38,7 +38,7 @@ import io.netty.buffer.Unpooled;
 /**
  * Test the buffer wrapper around Netty ByteBuf instances
  */
-public class ByteBifWrapperTest {
+public class ByteBufWrapperTest {
 
     private static final int CAPACITY = 4096; // Must be even
     private static final int BLOCK_SIZE = 128;
