@@ -22,6 +22,7 @@ import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.engine.exceptions.EngineClosedException;
 import org.apache.qpid.proton4j.engine.exceptions.EngineNotWritableException;
 import org.apache.qpid.proton4j.engine.exceptions.EngineStateException;
+import org.apache.qpid.proton4j.engine.exceptions.EngineStateRuntimeException;
 import org.apache.qpid.proton4j.engine.exceptions.ProtonException;
 
 /**
@@ -99,14 +100,23 @@ public interface Engine extends Consumer<ProtonBuffer> {
      */
     Engine ingest(ProtonBuffer input) throws EngineStateException;
 
-    // TODO - Allow the Engine to be handed off to more generic input methods that take functional
-    //        style parameters, in this case a consumer.
+    /**
+     * Provide data input for this Engine from some external source.
+     * <p>
+     * The provided {@link ProtonBuffer} should be a non-pooled buffer which the Engine
+     * will take ownership of and should not be modified or reused by the caller.
+     *
+     * @param input
+     *      The data to feed into to Engine.
+     *
+     * @throws EngineStateRuntimeException if the Engine state precludes accepting new input.
+     */
     @Override
     default void accept(ProtonBuffer input) {
         try {
             ingest(input);
         } catch (EngineStateException e) {
-            // TODO What would we throw EngineStateRuntimeException ?
+            throw new EngineStateRuntimeException(e);
         }
     }
 
