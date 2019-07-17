@@ -75,10 +75,12 @@ public class ProtonFrameDecodingHandler implements EngineHandler, SaslPerformati
     @Override
     public void handleRead(EngineHandlerContext context, ProtonBuffer buffer) {
         try {
-            // Parses in-incoming data and emit one complete frame before returning, caller should
-            // ensure that the input buffer is drained into the engine or stop if the engine
+            // Parses in-incoming data and emit events for complete frames before returning, caller
+            // should ensure that the input buffer is drained into the engine or stop if the engine
             // has changed to a non-writable state.
-            stage.parse(context, buffer);
+            while (buffer.isReadable() && engine.isWritable()) {
+                stage.parse(context, buffer);
+            }
         } catch (IOException ex) {
             transitionToErrorStage(ex).fireError(context);
         } catch (Throwable throwable) {
@@ -210,28 +212,24 @@ public class ProtonFrameDecodingHandler implements EngineHandler, SaslPerformati
         @Override
         public void parse(EngineHandlerContext context, ProtonBuffer input) throws IOException {
             while (input.isReadable()) {
-                //TODO: The below only parsed a single frame. Require repeated parse calls, or
-                //      have a single parse execution read out multiple frames as now added above?
-                while (input.isReadable()) {
-                    frameSize |= ((input.readByte() & 0xFF) << --multiplier * Byte.SIZE);
-                    if (multiplier == 0) {
-                        break;
-                    }
-                }
-
+                frameSize |= ((input.readByte() & 0xFF) << --multiplier * Byte.SIZE);
                 if (multiplier == 0) {
-                    validateFrameSize();
-
-                    int length = frameSize - FRAME_SIZE_BYTES;
-
-                    if (input.getReadableBytes() < length) {
-                        transitionToFrameBufferingStage(length);
-                    } else {
-                        initializeFrameBodyParsingStage(length);
-                    }
-
-                    stage.parse(context, input);
+                    break;
                 }
+            }
+
+            if (multiplier == 0) {
+                validateFrameSize();
+
+                int length = frameSize - FRAME_SIZE_BYTES;
+
+                if (input.getReadableBytes() < length) {
+                    transitionToFrameBufferingStage(length);
+                } else {
+                    initializeFrameBodyParsingStage(length);
+                }
+
+                stage.parse(context, input);
             }
         }
 

@@ -16,12 +16,12 @@
  */
 package org.apache.qpid.proton4j.engine.impl;
 
+import static org.hamcrest.CoreMatchers.containsString;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertThat;
-import static org.hamcrest.CoreMatchers.containsString;
+import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 import java.util.List;
@@ -53,6 +53,8 @@ public class ProtonFrameDecodingHandlerTest {
     public void testDecodeValidHeaderTriggersHeaderRead() {
         Engine engine = createEngine();
 
+        engine.start();
+
         // Check for Header processing
         engine.pipeline().fireRead(AMQPHeader.getAMQPHeader().getBuffer());
 
@@ -63,8 +65,8 @@ public class ProtonFrameDecodingHandlerTest {
     }
 
     @Test
-    public void testReadValidHeaderInSingleByteChunks() {
-        ProtonFrameDecodingHandler handler = new ProtonFrameDecodingHandler();
+    public void testReadValidHeaderInSingleByteChunks() throws Exception {
+        ProtonFrameDecodingHandler handler = createFrameDecoder();
         EngineHandlerContext context = Mockito.mock(EngineHandlerContext.class);
 
         handler.handleRead(context, ProtonByteBufferAllocator.DEFAULT.wrap(new byte[] { 'A' }));
@@ -81,8 +83,8 @@ public class ProtonFrameDecodingHandlerTest {
     }
 
     @Test
-    public void testReadValidHeaderInSplitChunks() {
-        ProtonFrameDecodingHandler handler = new ProtonFrameDecodingHandler();
+    public void testReadValidHeaderInSplitChunks() throws Exception {
+        ProtonFrameDecodingHandler handler = createFrameDecoder();
         EngineHandlerContext context = Mockito.mock(EngineHandlerContext.class);
 
         handler.handleRead(context, ProtonByteBufferAllocator.DEFAULT.wrap(new byte[] { 'A', 'M', 'Q', 'P' }));
@@ -95,6 +97,8 @@ public class ProtonFrameDecodingHandlerTest {
     @Test
     public void testDecodeValidSaslHeaderTriggersHeaderRead() {
         Engine engine = createEngine();
+
+        engine.start();
 
         // Check for Header processing
         engine.pipeline().fireRead(AMQPHeader.getSASLHeader().getBuffer());
@@ -235,7 +239,7 @@ public class ProtonFrameDecodingHandlerTest {
         // http://docs.oasis-open.org/amqp/core/v1.0/os/amqp-core-transport-v1.0-os.html#doc-idp124752
         // Description: 2x '8byte sized' empty AMQP frames
         byte[] emptyFrames = new byte[] { (byte) 0x00, 0x00, 0x00, 0x08, 0x02, 0x00, 0x00, 0x00,
-                                                    (byte) 0x00, 0x00, 0x00, 0x08, 0x02, 0x00, 0x00, 0x00 };
+                                          (byte) 0x00, 0x00, 0x00, 0x08, 0x02, 0x00, 0x00, 0x00 };
 
         ProtonFrameDecodingHandler handler = createFrameDecoder();
         EngineHandlerContext context = Mockito.mock(EngineHandlerContext.class);
@@ -263,8 +267,7 @@ public class ProtonFrameDecodingHandlerTest {
      * Test that frames indicating they are under 8 bytes (the minimum size of the frame header) causes an error.
      */
     @Test
-    public void testInputOfFrameWithInvalidSizeBelowMinimumPossible() throws Exception
-    {
+    public void testInputOfFrameWithInvalidSizeBelowMinimumPossible() throws Exception {
         // http://docs.oasis-open.org/amqp/core/v1.0/os/amqp-core-transport-v1.0-os.html#doc-idp124752
         // Description: '7byte sized' AMQP frame header
         byte[] undersizedFrameHeader = new byte[] { (byte) 0x00, 0x00, 0x00, 0x07, 0x02, 0x00, 0x00, 0x00 };
@@ -292,8 +295,7 @@ public class ProtonFrameDecodingHandlerTest {
      * Test that frames indicating a DOFF under 8 bytes (the minimum size of the frame header) causes an error.
      */
     @Test
-    public void testInputOfFrameWithInvalidDoffBelowMinimumPossible() throws Exception
-    {
+    public void testInputOfFrameWithInvalidDoffBelowMinimumPossible() throws Exception {
         // http://docs.oasis-open.org/amqp/core/v1.0/os/amqp-core-transport-v1.0-os.html#doc-idp124752
         // Description: '8byte sized' AMQP frame header with invalid doff of 1[*4 = 4bytes]
         byte[] underMinDoffFrameHeader = new byte[] { (byte) 0x00, 0x00, 0x00, 0x08, 0x01, 0x00, 0x00, 0x00 };
@@ -321,8 +323,7 @@ public class ProtonFrameDecodingHandlerTest {
      * Test that frames indicating a DOFF larger than the frame size cause expected error.
      */
     @Test
-    public void testInputOfFrameWithInvalidDoffAboveMaximumPossible() throws Exception
-    {
+    public void testInputOfFrameWithInvalidDoffAboveMaximumPossible() throws Exception {
         // http://docs.oasis-open.org/amqp/core/v1.0/os/amqp-core-transport-v1.0-os.html#doc-idp124752
         // Description: '8byte sized' AMQP frame header with invalid doff of 3[*4 = 12bytes]
         byte[] overFrameSizeDoffFrameHeader = new byte[] { (byte) 0x00, 0x00, 0x00, 0x08, 0x03, 0x00, 0x00, 0x00 };
@@ -351,6 +352,7 @@ public class ProtonFrameDecodingHandlerTest {
         Mockito.when(configuration.getInboundMaxFrameSize()).thenReturn(Integer.valueOf(65535));
         ProtonEngine engine = Mockito.mock(ProtonEngine.class);
         Mockito.when(engine.configuration()).thenReturn(configuration);
+        Mockito.when(engine.isWritable()).thenReturn(Boolean.TRUE);
         EngineHandlerContext context = Mockito.mock(EngineHandlerContext.class);
         Mockito.when(context.getEngine()).thenReturn(engine);
 
