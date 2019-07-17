@@ -208,6 +208,9 @@ public class ProtonConnection implements Connection {
 
         @Override
         public void onData(ByteBuf incoming) {
+            // TODO - if this buffer is pooled than we need to copy it, or we need to do
+            //        a copy in our frame decoder vs just using a slice to hold onto the
+            //        body.
             ByteBufWrapper bufferAdapter = new ByteBufWrapper(incoming);
 
             try {
