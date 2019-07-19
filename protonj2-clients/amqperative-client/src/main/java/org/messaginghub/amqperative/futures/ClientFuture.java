@@ -16,16 +16,18 @@
  */
 package org.messaginghub.amqperative.futures;
 
-import java.io.IOException;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
-
-import org.messaginghub.amqperative.util.IOExceptionSupport;
 
 /**
  * Asynchronous Client Future class.
+ *
+ * @param <V> the eventual result type for this Future
  */
-public abstract class ClientFuture implements AsyncResult {
+public abstract class ClientFuture<V> implements Future<V>, AsyncResult {
 
     protected final ClientSynchronization synchronization;
 
@@ -33,14 +35,18 @@ public abstract class ClientFuture implements AsyncResult {
     protected static final int INCOMPLETE = 0;
     protected static final int COMPLETING = 1;
     protected static final int SUCCESS = 2;
-    protected static final int FAILURE = 3;
+    protected static final int CANCELLED = 3;
+    protected static final int FAILURE = 4;
 
+    @SuppressWarnings("rawtypes")
     protected static final AtomicIntegerFieldUpdater<ClientFuture> STATE_FIELD_UPDATER =
         AtomicIntegerFieldUpdater.newUpdater(ClientFuture.class,"state");
 
     private volatile int state = INCOMPLETE;
     protected Throwable error;
+    protected boolean cancelled;
     protected int waiting;
+    protected V result;
 
     public ClientFuture() {
         this(null);
@@ -48,6 +54,30 @@ public abstract class ClientFuture implements AsyncResult {
 
     public ClientFuture(ClientSynchronization synchronization) {
         this.synchronization = synchronization;
+    }
+
+    @Override
+    public boolean cancel(boolean mayInterruptIfRunning) {
+        // TODO
+        return false;
+    }
+
+    public boolean isFailed() {
+        return error != null;
+    }
+
+    public V getResult() {
+        return result;
+    }
+
+    @Override
+    public boolean isCancelled() {
+        return cancelled;
+    }
+
+    @Override
+    public boolean isDone() {
+        return isComplete() || isCancelled() || isFailed();
     }
 
     @Override
@@ -90,32 +120,24 @@ public abstract class ClientFuture implements AsyncResult {
         }
     }
 
-    /**
-     * Waits for a response to some requested operation.
-     *
-     * @throws IOException if an error occurs while waiting for the response.
-     */
-    public abstract void sync() throws IOException;
+    @Override
+    public abstract V get() throws InterruptedException, ExecutionException;
+
+    @Override
+    public abstract V get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException;
 
     /**
-     * Timed wait for a response to an operation.
-     *
-     * @param amount
-     *        The amount of time to wait before abandoning the wait.
-     * @param unit
-     *        The unit to use for this wait period.
-     *
-     * @return true if the operation succeeded and false if the waiting time elapsed while
-     * 	       waiting for the operation to complete.
-     *
-     * @throws IOException if an error occurs while waiting for the response.
+     * TODO - Provide hook to run on the event loop to do whatever it means to cancel this task and
+     *        update the task state in a thread safe manner.
      */
-    public abstract boolean sync(long amount, TimeUnit unit) throws IOException;
+    protected void tryCancelTask() {
 
-    protected void failOnError() throws IOException {
+    }
+
+    protected void failOnError() throws ExecutionException {
         Throwable cause = error;
         if (cause != null) {
-            throw IOExceptionSupport.create(cause);
+            throw new ExecutionException(error);
         }
     }
 }

@@ -71,7 +71,7 @@ public abstract class ClientFutureFactory {
     /**
      * @return a new ProviderFuture instance.
      */
-    public abstract ClientFuture createFuture();
+    public abstract <V> ClientFuture<V> createFuture();
 
     /**
      * @param synchronization
@@ -79,12 +79,12 @@ public abstract class ClientFutureFactory {
      *
      * @return a new ProviderFuture instance.
      */
-    public abstract ClientFuture createFuture(ClientSynchronization synchronization);
+    public abstract <V> ClientFuture<V> createFuture(ClientSynchronization synchronization);
 
     /**
      * @return a ProviderFuture that treats failures as success calls that simply complete the operation.
      */
-    public abstract ClientFuture createUnfailableFuture();
+    public abstract <V> ClientFuture<V> createUnfailableFuture();
 
     //----- Internal support methods -----------------------------------------//
 
@@ -105,18 +105,18 @@ public abstract class ClientFutureFactory {
     private static class ConservativeProviderFutureFactory extends ClientFutureFactory {
 
         @Override
-        public ClientFuture createFuture() {
-            return new ConservativeClientFuture();
+        public <V> ClientFuture<V> createFuture() {
+            return new ConservativeClientFuture<V>();
         }
 
         @Override
-        public ClientFuture createFuture(ClientSynchronization synchronization) {
-            return new ConservativeClientFuture(synchronization);
+        public <V> ClientFuture<V> createFuture(ClientSynchronization synchronization) {
+            return new ConservativeClientFuture<V>(synchronization);
         }
 
         @Override
-        public ClientFuture createUnfailableFuture() {
-            return new ConservativeClientFuture() {
+        public <V> ClientFuture<V> createUnfailableFuture() {
+            return new ConservativeClientFuture<V>() {
 
                 @Override
                 public void onFailure(Throwable t) {
@@ -129,18 +129,18 @@ public abstract class ClientFutureFactory {
     private static class BalancedProviderFutureFactory extends ClientFutureFactory {
 
         @Override
-        public ClientFuture createFuture() {
-            return new BalancedClientFuture();
+        public <V> ClientFuture<V> createFuture() {
+            return new BalancedClientFuture<V>();
         }
 
         @Override
-        public ClientFuture createFuture(ClientSynchronization synchronization) {
-            return new BalancedClientFuture(synchronization);
+        public <V> ClientFuture<V> createFuture(ClientSynchronization synchronization) {
+            return new BalancedClientFuture<V>(synchronization);
         }
 
         @Override
-        public ClientFuture createUnfailableFuture() {
-            return new BalancedClientFuture() {
+        public <V> ClientFuture<V> createUnfailableFuture() {
+            return new BalancedClientFuture<V>() {
 
                 @Override
                 public void onFailure(Throwable t) {
@@ -153,18 +153,18 @@ public abstract class ClientFutureFactory {
     private static class ProgressiveProviderFutureFactory extends ClientFutureFactory {
 
         @Override
-        public ClientFuture createFuture() {
-            return new ProgressiveClientFuture();
+        public <V> ClientFuture<V> createFuture() {
+            return new ProgressiveClientFuture<V>();
         }
 
         @Override
-        public ClientFuture createFuture(ClientSynchronization synchronization) {
-            return new ProgressiveClientFuture(synchronization);
+        public <V> ClientFuture<V> createFuture(ClientSynchronization synchronization) {
+            return new ProgressiveClientFuture<V>(synchronization);
         }
 
         @Override
-        public ClientFuture createUnfailableFuture() {
-            return new ProgressiveClientFuture() {
+        public <V> ClientFuture<V> createUnfailableFuture() {
+            return new ProgressiveClientFuture<V>() {
 
                 @Override
                 public void onFailure(Throwable t) {

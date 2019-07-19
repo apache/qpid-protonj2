@@ -16,18 +16,19 @@
  */
 package org.messaginghub.amqperative.futures;
 
-import java.io.IOException;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
-
-import org.messaginghub.amqperative.util.IOExceptionSupport;
+import java.util.concurrent.TimeoutException;
 
 /**
  * A more conservative implementation of a ClientFuture that is better on some
  * platforms or resource constrained hardware where high CPU usage can be more
  * counter productive than other variants that might spin or otherwise avoid
  * entry into states requiring thread signaling.
- */
-public class ConservativeClientFuture extends ClientFuture {
+ *
+  * @param <V> The type that result from completion of this Future
+*/
+public class ConservativeClientFuture<V> extends ClientFuture<V> {
 
     public ConservativeClientFuture() {
         this(null);
@@ -38,11 +39,11 @@ public class ConservativeClientFuture extends ClientFuture {
     }
 
     @Override
-    public boolean sync(long amount, TimeUnit unit) throws IOException {
+    public V get(long amount, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
         try {
             if (isComplete() || amount == 0) {
                 failOnError();
-                return true;
+                return getResult();
             }
 
             final long timeout = unit.toNanos(amount);
@@ -60,18 +61,18 @@ public class ConservativeClientFuture extends ClientFuture {
 
                 if (diff >= 0) {
                     failOnError();
-                    return isComplete();
+                    return getResult();
                 }
 
                 if (isComplete()) {
                     failOnError();
-                    return true;
+                    return getResult();
                 }
 
                 synchronized (this) {
                     if (isComplete()) {
                         failOnError();
-                        return true;
+                        return getResult();
                     }
 
                     waiting++;
@@ -84,16 +85,16 @@ public class ConservativeClientFuture extends ClientFuture {
             }
         } catch (InterruptedException e) {
             Thread.interrupted();
-            throw IOExceptionSupport.create(e);
+            throw e;
         }
     }
 
     @Override
-    public void sync() throws IOException {
+    public V get() throws InterruptedException, ExecutionException {
         try {
             if (isComplete()) {
                 failOnError();
-                return;
+                return getResult();
             }
 
             if (Thread.currentThread().isInterrupted()) {
@@ -103,13 +104,13 @@ public class ConservativeClientFuture extends ClientFuture {
             while (true) {
                 if (isComplete()) {
                     failOnError();
-                    return;
+                    return getResult();
                 }
 
                 synchronized (this) {
                     if (isComplete()) {
                         failOnError();
-                        return;
+                        return getResult();
                     }
 
                     waiting++;
@@ -122,7 +123,7 @@ public class ConservativeClientFuture extends ClientFuture {
             }
         } catch (InterruptedException e) {
             Thread.interrupted();
-            throw IOExceptionSupport.create(e);
+            throw e;
         }
     }
 }

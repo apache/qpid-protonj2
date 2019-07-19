@@ -16,17 +16,18 @@
  */
 package org.messaginghub.amqperative.futures;
 
-import java.io.IOException;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.locks.LockSupport;
-
-import org.messaginghub.amqperative.util.IOExceptionSupport;
 
 /**
  * An optimized version of a ClientFuture that makes use of spin waits and other
  * methods of reacting to asynchronous completion in a more timely manner.
+ *
+ * @param <V> The type that result from completion of this Future
  */
-public class ProgressiveClientFuture extends ClientFuture {
+public class ProgressiveClientFuture<V> extends ClientFuture<V> {
 
     // Using a progressive wait strategy helps to avoid wait happening before
     // completion and avoid using expensive thread signaling
@@ -46,11 +47,11 @@ public class ProgressiveClientFuture extends ClientFuture {
     }
 
     @Override
-    public boolean sync(long amount, TimeUnit unit) throws IOException {
+    public V get(long amount, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
         try {
             if (isComplete() || amount == 0) {
                 failOnError();
-                return true;
+                return getResult();
             }
 
             final long timeout = unit.toNanos(amount);
@@ -71,12 +72,12 @@ public class ProgressiveClientFuture extends ClientFuture {
 
                 if (diff >= 0) {
                     failOnError();
-                    return isComplete();
+                    return getResult();
                 }
 
                 if (isComplete()) {
                     failOnError();
-                    return true;
+                    return getResult();
                 }
 
                 if (idleCount < SPIN_COUNT) {
@@ -94,7 +95,7 @@ public class ProgressiveClientFuture extends ClientFuture {
                     synchronized (this) {
                         if (isComplete()) {
                             failOnError();
-                            return true;
+                            return getResult();
                         }
 
                         waiting++;
@@ -108,16 +109,16 @@ public class ProgressiveClientFuture extends ClientFuture {
             }
         } catch (InterruptedException e) {
             Thread.interrupted();
-            throw IOExceptionSupport.create(e);
+            throw e;
         }
     }
 
     @Override
-    public void sync() throws IOException {
+    public V get() throws InterruptedException, ExecutionException {
         try {
             if (isComplete()) {
                 failOnError();
-                return;
+                return getResult();
             }
 
             int idleCount = 0;
@@ -129,7 +130,7 @@ public class ProgressiveClientFuture extends ClientFuture {
             while (true) {
                 if (isComplete()) {
                     failOnError();
-                    return;
+                    return getResult();
                 }
 
                 if (idleCount < SPIN_COUNT) {
@@ -147,7 +148,7 @@ public class ProgressiveClientFuture extends ClientFuture {
                     synchronized (this) {
                         if (isComplete()) {
                             failOnError();
-                            return;
+                            return getResult();
                         }
 
                         waiting++;
@@ -161,7 +162,7 @@ public class ProgressiveClientFuture extends ClientFuture {
             }
         } catch (InterruptedException e) {
             Thread.interrupted();
-            throw IOExceptionSupport.create(e);
+            throw e;
         }
     }
 }
