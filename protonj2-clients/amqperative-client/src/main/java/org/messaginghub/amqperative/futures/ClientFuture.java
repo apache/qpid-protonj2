@@ -35,8 +35,8 @@ public abstract class ClientFuture<V> implements Future<V>, AsyncResult {
     protected static final int INCOMPLETE = 0;
     protected static final int COMPLETING = 1;
     protected static final int SUCCESS = 2;
-    protected static final int CANCELLED = 3;
-    protected static final int FAILURE = 4;
+    protected static final int FAILURE = 3;
+    protected static final int CANCELLED = 4;
 
     @SuppressWarnings("rawtypes")
     protected static final AtomicIntegerFieldUpdater<ClientFuture> STATE_FIELD_UPDATER =
@@ -44,7 +44,6 @@ public abstract class ClientFuture<V> implements Future<V>, AsyncResult {
 
     private volatile int state = INCOMPLETE;
     protected Throwable error;
-    protected boolean cancelled;
     protected int waiting;
     protected V result;
 
@@ -72,7 +71,7 @@ public abstract class ClientFuture<V> implements Future<V>, AsyncResult {
 
     @Override
     public boolean isCancelled() {
-        return cancelled;
+        return state > FAILURE;
     }
 
     @Override
