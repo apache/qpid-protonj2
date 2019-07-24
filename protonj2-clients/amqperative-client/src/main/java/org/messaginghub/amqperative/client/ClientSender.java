@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.messaginghub.amqperative.impl;
+package org.messaginghub.amqperative.client;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
@@ -40,20 +40,20 @@ import org.slf4j.LoggerFactory;
 /**
  * Proton based AMQP Sender
  */
-public class ProtonSender implements Sender {
+public class ClientSender implements Sender {
 
-    private static final Logger LOG = LoggerFactory.getLogger(ProtonSender.class);
+    private static final Logger LOG = LoggerFactory.getLogger(ClientSender.class);
 
     private CompletableFuture<Sender> openFuture = new CompletableFuture<Sender>();
     private CompletableFuture<Sender> closeFuture = new CompletableFuture<Sender>();
 
-    private final ProtonSenderOptions options;
-    private final ProtonSession session;
+    private final ClientSenderOptions options;
+    private final ClientSession session;
     private final org.apache.qpid.proton4j.engine.Sender sender;
     private final ScheduledExecutorService executor;
 
-    public ProtonSender(SenderOptions options, ProtonSession session, org.apache.qpid.proton4j.engine.Sender sender) {
-        this.options = new ProtonSenderOptions(options);
+    public ClientSender(SenderOptions options, ClientSession session, org.apache.qpid.proton4j.engine.Sender sender) {
+        this.options = new ClientSenderOptions(options);
         this.session = session;
         this.sender = sender;
         this.executor = session.getScheduler();
@@ -69,7 +69,7 @@ public class ProtonSender implements Sender {
     public Tracker send(Message message) {
         //TODO: block for credit
         //TODO: check sender.isSendable();
-        ProtonMessage msg = (ProtonMessage) message;
+        ClientMessage msg = (ClientMessage) message;
 
         // TODO: implement message handling properly
         Object o = msg.getBody();
@@ -153,7 +153,7 @@ public class ProtonSender implements Sender {
 
     //----- Internal API
 
-    ProtonSender open() {
+    ClientSender open() {
         executor.execute(() -> {
             sender.openHandler(result -> {
                 if (result.succeeded()) {

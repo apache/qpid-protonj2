@@ -14,27 +14,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.messaginghub.amqperative.impl;
+package org.messaginghub.amqperative.client;
 
-import org.messaginghub.amqperative.ReceiverOptions;
+import org.messaginghub.amqperative.ContainerOptions;
 
 /**
- *
+ * Container options used for default
  */
-public class ProtonReceiverOptions extends ReceiverOptions {
+public class ClientContainerOptions extends ContainerOptions {
 
-    /**
-     *
-     */
-    public ProtonReceiverOptions() {
-        // TODO Auto-generated constructor stub
+    public ClientContainerOptions() {
+        // Defaults apply
     }
 
-    /**
-     * @param options
-     *      The options to use to configure this options instance.
-     */
-    public ProtonReceiverOptions(ReceiverOptions options) {
-        options.copyInto(this);
+    public ClientContainerOptions(ContainerOptions source) {
+        source.copyInto(this);
     }
 }

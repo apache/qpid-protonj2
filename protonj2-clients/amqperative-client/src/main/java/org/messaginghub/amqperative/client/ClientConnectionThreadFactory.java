@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.messaginghub.amqperative.impl;
+package org.messaginghub.amqperative.client;
 
 import java.lang.Thread.UncaughtExceptionHandler;
 import java.util.concurrent.ThreadFactory;
@@ -26,9 +26,9 @@ import org.slf4j.LoggerFactory;
 /**
  * Simple ThreadFactory object
  */
-public class ProtonConnectionThreadFactory implements ThreadFactory {
+public class ClientConnectionThreadFactory implements ThreadFactory {
 
-    private static final Logger LOG = LoggerFactory.getLogger(ProtonConnectionThreadFactory.class);
+    private static final Logger LOG = LoggerFactory.getLogger(ClientConnectionThreadFactory.class);
 
     private final String threadName;
     private final boolean daemon;
@@ -43,7 +43,7 @@ public class ProtonConnectionThreadFactory implements ThreadFactory {
      * @param daemon
      *      should the created thread be a daemon thread.
      */
-    public ProtonConnectionThreadFactory(String threadName, boolean daemon) {
+    public ClientConnectionThreadFactory(String threadName, boolean daemon) {
         this.threadName = threadName;
         this.daemon = daemon;
         this.threadTracker = null;
@@ -65,7 +65,7 @@ public class ProtonConnectionThreadFactory implements ThreadFactory {
      * @param threadTracker
      *      AtomicReference that will be updated any time a new Thread is created.
      */
-    public ProtonConnectionThreadFactory(String threadName, boolean daemon, AtomicReference<Thread> threadTracker) {
+    public ClientConnectionThreadFactory(String threadName, boolean daemon, AtomicReference<Thread> threadTracker) {
         this.threadName = threadName;
         this.daemon = daemon;
         this.threadTracker = threadTracker;

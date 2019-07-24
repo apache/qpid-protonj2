@@ -14,20 +14,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.messaginghub.amqperative;
+package org.messaginghub.amqperative.client.exceptions;
 
-import org.messaginghub.amqperative.client.ClientMessage;
+import org.messaginghub.amqperative.client.ClientException;
 
 /**
- *
+ * Exception type that is thrown when the provider has encountered an unrecoverable error.
  */
-public interface Message {
+public class ClientIOException extends ClientException {
 
-    // TODO: actual Message interface.
-    // Various questions: Have specific body type setters? Allow setting general body section types? Do both? Use a Message builder/factory?
-    public static Message create(Object body) {
-        return ClientMessage.create(body);
+    private static final long serialVersionUID = 7022573614211991693L;
+
+    public ClientIOException(String message) {
+        super(message);
     }
 
-    Object getBody();
+    public ClientIOException(String message, Throwable cause) {
+        super(message, cause);
+    }
 }

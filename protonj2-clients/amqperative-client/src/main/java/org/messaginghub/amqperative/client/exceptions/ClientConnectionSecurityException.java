@@ -14,20 +14,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.messaginghub.amqperative;
-
-import org.messaginghub.amqperative.client.ClientMessage;
+package org.messaginghub.amqperative.client.exceptions;
 
 /**
- *
+ * Connection level Security Exception used to indicate a security violation has occurred.
  */
-public interface Message {
+public class ClientConnectionSecurityException extends ClientConnectionRemotelyClosedException {
 
-    // TODO: actual Message interface.
-    // Various questions: Have specific body type setters? Allow setting general body section types? Do both? Use a Message builder/factory?
-    public static Message create(Object body) {
-        return ClientMessage.create(body);
+    private static final long serialVersionUID = -1895132556606592253L;
+
+    public ClientConnectionSecurityException(String message) {
+        super(message);
     }
 
-    Object getBody();
+    public ClientConnectionSecurityException(String message, Throwable cause) {
+        super(message, cause);
+    }
 }

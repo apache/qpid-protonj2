@@ -14,20 +14,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.messaginghub.amqperative.impl;
+package org.messaginghub.amqperative.client.exceptions;
 
-import org.messaginghub.amqperative.ContainerOptions;
+import org.messaginghub.amqperative.client.ClientException;
 
 /**
- * Container options used for default
+ * Thrown when an action request is not supported through this provider.
  */
-public class ProtonContainerOptions extends ContainerOptions {
+public class ClientUnsupportedOperationException extends ClientException {
 
-    public ProtonContainerOptions() {
-        // Defaults apply
+    private static final long serialVersionUID = -680156277783719903L;
+
+    public ClientUnsupportedOperationException(String message) {
+        super(message);
     }
 
-    public ProtonContainerOptions(ContainerOptions source) {
-        source.copyInto(this);
+    public ClientUnsupportedOperationException(String message, Throwable cause) {
+        super(message, cause);
     }
 }

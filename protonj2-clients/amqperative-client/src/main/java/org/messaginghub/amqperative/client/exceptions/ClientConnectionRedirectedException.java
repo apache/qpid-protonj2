@@ -14,20 +14,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.messaginghub.amqperative;
+package org.messaginghub.amqperative.client.exceptions;
 
-import org.messaginghub.amqperative.client.ClientMessage;
+import java.io.IOException;
+import java.net.URI;
 
 /**
- *
+ * {@link IOException} derivative that defines that the remote peer has requested that this
+ * connection be redirected to some alternative peer.
  */
-public interface Message {
+public class ClientConnectionRedirectedException extends ClientConnectionRemotelyClosedException {
 
-    // TODO: actual Message interface.
-    // Various questions: Have specific body type setters? Allow setting general body section types? Do both? Use a Message builder/factory?
-    public static Message create(Object body) {
-        return ClientMessage.create(body);
+    private static final long serialVersionUID = 5872211116061710369L;
+
+    private final URI redirect;
+
+    public ClientConnectionRedirectedException(String reason, URI redirect) {
+        super(reason);
+
+        this.redirect = redirect;
     }
 
-    Object getBody();
+    /**
+     * @return the URI that represents the redirection.
+     */
+    public URI getRedirectionURI() {
+        return redirect;
+    }
 }

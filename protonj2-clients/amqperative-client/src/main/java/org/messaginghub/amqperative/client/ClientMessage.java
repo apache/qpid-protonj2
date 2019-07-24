@@ -14,20 +14,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.messaginghub.amqperative;
+package org.messaginghub.amqperative.client;
 
-import org.messaginghub.amqperative.client.ClientMessage;
+import org.messaginghub.amqperative.Message;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-/**
- *
- */
-public interface Message {
+public class ClientMessage implements Message {
 
-    // TODO: actual Message interface.
-    // Various questions: Have specific body type setters? Allow setting general body section types? Do both? Use a Message builder/factory?
+    private static final Logger LOG = LoggerFactory.getLogger(ClientMessage.class);
+
+    private Object body;
+
     public static Message create(Object body) {
-        return ClientMessage.create(body);
+        return new ClientMessage().setBody(body);
     }
 
-    Object getBody();
+    public Object getBody() {
+        return body;
+    }
+
+    //----- Internal API
+
+    ClientMessage setBody(Object body) {
+        this.body = body;
+        return this;
+    }
 }

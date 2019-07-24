@@ -14,20 +14,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.messaginghub.amqperative;
-
-import org.messaginghub.amqperative.client.ClientMessage;
+package org.messaginghub.amqperative.client.exceptions;
 
 /**
- *
+ * Thrown when the Provider fails a connection due to idle timeout.
  */
-public interface Message {
+public class ClientIdleTimeoutException extends ClientIOException {
 
-    // TODO: actual Message interface.
-    // Various questions: Have specific body type setters? Allow setting general body section types? Do both? Use a Message builder/factory?
-    public static Message create(Object body) {
-        return ClientMessage.create(body);
+    private static final long serialVersionUID = 7925210908123213499L;
+
+    public ClientIdleTimeoutException(String message) {
+        super(message);
     }
 
-    Object getBody();
+    public ClientIdleTimeoutException(String message, Throwable cause) {
+        super(message, cause);
+    }
 }

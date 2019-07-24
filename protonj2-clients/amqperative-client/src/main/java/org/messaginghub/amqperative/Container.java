@@ -18,8 +18,8 @@ package org.messaginghub.amqperative;
 
 import java.util.Objects;
 
-import org.messaginghub.amqperative.impl.ProtonContainer;
-import org.messaginghub.amqperative.impl.ProtonContainerOptions;
+import org.messaginghub.amqperative.client.ClientContainer;
+import org.messaginghub.amqperative.client.ClientContainerOptions;
 
 /**
  * The Container that hosts the AMQP Connection
@@ -27,12 +27,12 @@ import org.messaginghub.amqperative.impl.ProtonContainerOptions;
 public interface Container {
 
     static Container create() {
-        return create(new ProtonContainerOptions());
+        return create(new ClientContainerOptions());
     }
 
     static Container create(ContainerOptions options) {
         Objects.requireNonNull(options, "options must be non-null");
-        return new ProtonContainer(options);
+        return new ClientContainer(options);
     }
 
     /**

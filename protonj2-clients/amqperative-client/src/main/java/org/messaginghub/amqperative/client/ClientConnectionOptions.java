@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.messaginghub.amqperative.impl;
+package org.messaginghub.amqperative.client;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -24,18 +24,18 @@ import org.messaginghub.amqperative.ConnectionOptions;
 /**
  * Connection Options for the ProtonConnection implementation
  */
-public class ProtonConnectionOptions extends ConnectionOptions {
+public class ClientConnectionOptions extends ConnectionOptions {
 
     private final String hostname;
     private final int port;
 
     // TODO - For failover the single host / port configuration is not sufficient.
 
-    public ProtonConnectionOptions(String hostname, int port) {
+    public ClientConnectionOptions(String hostname, int port) {
         this(hostname, port, null);
     }
 
-    public ProtonConnectionOptions(String hostname, int port, ConnectionOptions options) {
+    public ClientConnectionOptions(String hostname, int port, ConnectionOptions options) {
         this.hostname = hostname;
         this.port = port;
 

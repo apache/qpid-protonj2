@@ -14,20 +14,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.messaginghub.amqperative;
+package org.messaginghub.amqperative.client;
 
-import org.messaginghub.amqperative.client.ClientMessage;
+import org.messaginghub.amqperative.SenderOptions;
 
 /**
  *
  */
-public interface Message {
+public class ClientSenderOptions extends SenderOptions {
 
-    // TODO: actual Message interface.
-    // Various questions: Have specific body type setters? Allow setting general body section types? Do both? Use a Message builder/factory?
-    public static Message create(Object body) {
-        return ClientMessage.create(body);
+    /**
+     *
+     */
+    public ClientSenderOptions() {
+        // TODO Auto-generated constructor stub
     }
 
-    Object getBody();
+    /**
+     * @param options
+     *      Original options which will be copied into this instance
+     */
+    public ClientSenderOptions(SenderOptions options) {
+        options.copyInto(this);
+    }
 }

@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.messaginghub.amqperative.impl;
+package org.messaginghub.amqperative.client;
 
 import java.io.IOException;
 import java.util.concurrent.CompletableFuture;
@@ -34,28 +34,29 @@ import org.messaginghub.amqperative.DeliveryState;
 import org.messaginghub.amqperative.Message;
 import org.messaginghub.amqperative.Receiver;
 import org.messaginghub.amqperative.ReceiverOptions;
+import org.messaginghub.amqperative.util.FifoMessageQueue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
  *
  */
-public class ProtonReceiver implements Receiver {
+public class ClientReceiver implements Receiver {
 
-    private static final Logger LOG = LoggerFactory.getLogger(ProtonReceiver.class);
+    private static final Logger LOG = LoggerFactory.getLogger(ClientReceiver.class);
 
     private CompletableFuture<Receiver> openFuture = new CompletableFuture<Receiver>();
     private CompletableFuture<Receiver> closeFuture = new CompletableFuture<Receiver>();
 
-    private final ProtonReceiverOptions options;
-    private final ProtonSession session;
+    private final ClientReceiverOptions options;
+    private final ClientSession session;
     private final org.apache.qpid.proton4j.engine.Receiver receiver;
     private final ScheduledExecutorService executor;
 
     private final FifoMessageQueue messageQueue;
 
-    public ProtonReceiver(ReceiverOptions options, ProtonSession session, org.apache.qpid.proton4j.engine.Receiver receiver) {
-        this.options = new ProtonReceiverOptions(options);
+    public ClientReceiver(ReceiverOptions options, ClientSession session, org.apache.qpid.proton4j.engine.Receiver receiver) {
+        this.options = new ClientReceiverOptions(options);
         this.session = session;
         this.receiver = receiver;
         this.executor = session.getScheduler();
@@ -135,7 +136,7 @@ public class ProtonReceiver implements Receiver {
 
     //----- Internal API
 
-    ProtonReceiver open() {
+    ClientReceiver open() {
         executor.execute(() -> {
             receiver.openHandler(result -> {
                 if (result.succeeded()) {

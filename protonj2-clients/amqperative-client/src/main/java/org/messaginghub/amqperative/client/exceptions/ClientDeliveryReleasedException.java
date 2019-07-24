@@ -14,20 +14,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.messaginghub.amqperative;
+package org.messaginghub.amqperative.client.exceptions;
 
-import org.messaginghub.amqperative.client.ClientMessage;
+import org.messaginghub.amqperative.client.ClientException;
 
 /**
- *
+ * Thrown when a send fails because the remote released the delivery
  */
-public interface Message {
+public class ClientDeliveryReleasedException extends ClientException {
 
-    // TODO: actual Message interface.
-    // Various questions: Have specific body type setters? Allow setting general body section types? Do both? Use a Message builder/factory?
-    public static Message create(Object body) {
-        return ClientMessage.create(body);
+    private static final long serialVersionUID = 4749969190587880823L;
+
+    public ClientDeliveryReleasedException(String message) {
+        super(message);
     }
 
-    Object getBody();
+    public ClientDeliveryReleasedException(String message, Throwable cause) {
+        super(message, cause);
+    }
 }

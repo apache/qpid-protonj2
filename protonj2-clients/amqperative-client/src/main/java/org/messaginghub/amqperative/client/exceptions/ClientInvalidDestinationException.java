@@ -14,30 +14,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.messaginghub.amqperative.impl;
+package org.messaginghub.amqperative.client.exceptions;
 
-import org.messaginghub.amqperative.Message;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.messaginghub.amqperative.client.ClientException;
 
-public class ProtonMessage implements Message {
+public class ClientInvalidDestinationException extends ClientException {
 
-    private static final Logger LOG = LoggerFactory.getLogger(ProtonMessage.class);
+    private static final long serialVersionUID = 2356310049638567033L;
 
-    private Object body;
-
-    public static Message create(Object body) {
-        return new ProtonMessage().setBody(body);
+    public ClientInvalidDestinationException(String message) {
+        super(message);
     }
 
-    public Object getBody() {
-        return body;
-    }
-
-    //----- Internal API
-
-    ProtonMessage setBody(Object body) {
-        this.body = body;
-        return this;
+    public ClientInvalidDestinationException(String message, Throwable cause) {
+        super(message, cause);
     }
 }

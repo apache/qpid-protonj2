@@ -14,20 +14,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.messaginghub.amqperative;
+package org.messaginghub.amqperative.client.exceptions;
 
-import org.messaginghub.amqperative.client.ClientMessage;
+import org.messaginghub.amqperative.client.ClientException;
 
 /**
- *
+ * Thrown when a message send operation times out in the Provider layer.
  */
-public interface Message {
+public class ClientTransactionRolledBackException extends ClientException {
 
-    // TODO: actual Message interface.
-    // Various questions: Have specific body type setters? Allow setting general body section types? Do both? Use a Message builder/factory?
-    public static Message create(Object body) {
-        return ClientMessage.create(body);
+    private static final long serialVersionUID = 222325890763309867L;
+
+    public ClientTransactionRolledBackException(String message) {
+        super(message, null);
     }
 
-    Object getBody();
+    public ClientTransactionRolledBackException(String message, Throwable cause) {
+        super(message, cause);
+    }
 }

@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.messaginghub.amqperative.impl;
+package org.messaginghub.amqperative.client;
 
 import java.io.IOException;
 import java.util.concurrent.CompletableFuture;
@@ -46,18 +46,18 @@ import io.netty.buffer.ByteBuf;
 /**
  * A {@link Connection} implementation that uses the Proton engine for AMQP protocol support.
  */
-public class ProtonConnection implements Connection {
+public class ClientConnection implements Connection {
 
-    private static final Logger LOG = LoggerFactory.getLogger(ProtonConnection.class);
+    private static final Logger LOG = LoggerFactory.getLogger(ClientConnection.class);
 
     private static final AtomicInteger CONNECTION_SEQUENCE = new AtomicInteger();
 
-    private final ProtonContainer container;
-    private final ProtonConnectionOptions options;
+    private final ClientContainer container;
+    private final ClientConnectionOptions options;
 
     private final ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
     private org.apache.qpid.proton4j.engine.Connection protonConnection;
-    private ProtonSession connectionSession;
+    private ClientSession connectionSession;
     private Transport transport;
 
     private CompletableFuture<Connection> openFuture = new CompletableFuture<Connection>();
@@ -76,11 +76,11 @@ public class ProtonConnection implements Connection {
      * @param options
      *      the connection options that configure this {@link Connection} instance.
      */
-    public ProtonConnection(ProtonContainer container, ProtonConnectionOptions options) {
+    public ClientConnection(ClientContainer container, ClientConnectionOptions options) {
         this.container = container;
         this.options = options;
 
-        ThreadFactory transportThreadFactory = new ProtonConnectionThreadFactory(
+        ThreadFactory transportThreadFactory = new ClientConnectionThreadFactory(
             "ProtonConnection :(" + CONNECTION_SEQUENCE.incrementAndGet()
                           + "):[" + options.getHostname() + ":" + options.getPort() + "]", true);
         transport = new TcpTransport(
@@ -109,7 +109,7 @@ public class ProtonConnection implements Connection {
 
     @Override
     public Receiver createReceiver(String address) {
-        return createReceiver(address, new ProtonReceiverOptions());
+        return createReceiver(address, new ClientReceiverOptions());
     }
 
     @Override
@@ -121,7 +121,7 @@ public class ProtonConnection implements Connection {
 
     @Override
     public Sender createSender(String address) {
-        return createSender(address, new ProtonSenderOptions());
+        return createSender(address, new ClientSenderOptions());
     }
 
     @Override
@@ -131,7 +131,7 @@ public class ProtonConnection implements Connection {
 
     //----- Internal API
 
-    ProtonConnection connect() {
+    ClientConnection connect() {
         try {
             //TODO: have the connect itself be async?
             executor = transport.connect(() -> {
@@ -144,8 +144,8 @@ public class ProtonConnection implements Connection {
                     // Creates the Connection Session used for connection created senders and receivers.
                     // TODO - Open currently is done on connect so this is safe from NPE when doing
                     //        open -> begin -> attach things but could go horribly wrong later
-                    connectionSession = new ProtonSession(
-                        new ProtonSessionOptions(), ProtonConnection.this, protonConnection.session()).open();
+                    connectionSession = new ClientSession(
+                        new ClientSessionOptions(), ClientConnection.this, protonConnection.session()).open();
 
                     openFuture.complete(this);
                 });

@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.messaginghub.amqperative.impl;
+package org.messaginghub.amqperative.client;
 
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -34,19 +34,19 @@ import org.slf4j.LoggerFactory;
 /**
  *
  */
-public class ProtonSession implements Session {
+public class ClientSession implements Session {
 
-    private static final Logger LOG = LoggerFactory.getLogger(ProtonSession.class);
+    private static final Logger LOG = LoggerFactory.getLogger(ClientSession.class);
 
     private CompletableFuture<Session> openFuture = new CompletableFuture<Session>();
     private CompletableFuture<Session> closeFuture = new CompletableFuture<Session>();
 
-    private final ProtonSessionOptions options;
-    private final ProtonConnection connection;
+    private final ClientSessionOptions options;
+    private final ClientConnection connection;
     private final org.apache.qpid.proton4j.engine.Session session;
     private final ScheduledExecutorService executor;
 
-    public ProtonSession(ProtonSessionOptions options, ProtonConnection connection, org.apache.qpid.proton4j.engine.Session session) {
+    public ClientSession(ClientSessionOptions options, ClientConnection connection, org.apache.qpid.proton4j.engine.Session session) {
         this.options = options;
         this.connection = connection;
         this.session = session;
@@ -65,7 +65,7 @@ public class ProtonSession implements Session {
 
     @Override
     public Receiver createReceiver(String address) {
-        return createReceiver(address, new ProtonReceiverOptions());
+        return createReceiver(address, new ClientReceiverOptions());
     }
 
     @Override
@@ -86,12 +86,12 @@ public class ProtonSession implements Session {
         receiver.setSource(source);
         receiver.setTarget(new Target());
 
-        return new ProtonReceiver(receiverOptions, this, receiver).open();
+        return new ClientReceiver(receiverOptions, this, receiver).open();
     }
 
     @Override
     public Sender createSender(String address) {
-        return createSender(address, new ProtonSenderOptions());
+        return createSender(address, new ClientSenderOptions());
     }
 
     @Override
@@ -112,12 +112,12 @@ public class ProtonSession implements Session {
         sender.setTarget(target);
         sender.setSource(new Source());
 
-        return new ProtonSender(senderOptions, this, sender).open();
+        return new ClientSender(senderOptions, this, sender).open();
     }
 
     //----- Internal API
 
-    ProtonSession open() {
+    ClientSession open() {
         executor.execute(() -> {
             session.openHandler(result -> {
                 if (result.succeeded()) {

@@ -14,27 +14,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.messaginghub.amqperative.impl;
-
-import org.messaginghub.amqperative.SenderOptions;
+package org.messaginghub.amqperative.client.exceptions;
 
 /**
- *
+ * Thrown when a message send operation times out in the Provider layer.
  */
-public class ProtonSenderOptions extends SenderOptions {
+public class ClientSendTimedOutException extends ClientOperationTimedOutException {
 
-    /**
-     *
-     */
-    public ProtonSenderOptions() {
-        // TODO Auto-generated constructor stub
+    private static final long serialVersionUID = 222325890763309867L;
+
+//    private final JmsMessage unsentMessage;  TODO
+
+    public ClientSendTimedOutException(String reason) {
+        super(reason);
     }
 
-    /**
-     * @param options
-     *      Original options which will be copied into this instance
-     */
-    public ProtonSenderOptions(SenderOptions options) {
-        options.copyInto(this);
-    }
+//    public ProviderSendTimedOutException(String reason, JmsMessage unsentMessage) {
+//        super(reason, null);
+//        this.unsentMessage = unsentMessage;
+//    }
+
+//    public JmsMessage getUnsentMessage() {
+//        return unsentMessage;
+//    }
 }

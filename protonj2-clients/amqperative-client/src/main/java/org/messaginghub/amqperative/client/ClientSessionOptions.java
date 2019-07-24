@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.messaginghub.amqperative.impl;
+package org.messaginghub.amqperative.client;
 
 import java.util.List;
 import java.util.Map;
@@ -24,14 +24,14 @@ import org.apache.qpid.proton4j.amqp.Symbol;
 /**
  * TODO
  */
-public class ProtonSessionOptions {
+public class ClientSessionOptions {
 
     private long handleMax = -1;
     private Map<Symbol, Object> properties;
     private List<Symbol> offeredCapabilities;
     private List<Symbol> desiredCapabilities;
 
-    public ProtonSessionOptions copyInto(ProtonSessionOptions options) {
+    public ClientSessionOptions copyInto(ClientSessionOptions options) {
         return this;
     }
 

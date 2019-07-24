@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.messaginghub.amqperative.impl;
+package org.messaginghub.amqperative.client;
 
 import org.messaginghub.amqperative.Connection;
 import org.messaginghub.amqperative.ConnectionOptions;
@@ -24,26 +24,26 @@ import org.messaginghub.amqperative.ContainerOptions;
 /**
  *
  */
-public class ProtonContainer implements Container {
+public class ClientContainer implements Container {
 
-    private final ProtonContainerOptions options;
+    private final ClientContainerOptions options;
 
     /**
      * @param options
      *      The container options to use to configure this container instance.
      */
-    public ProtonContainer(ContainerOptions options) {
-        this.options = new ProtonContainerOptions(options);
+    public ClientContainer(ContainerOptions options) {
+        this.options = new ClientContainerOptions(options);
     }
 
     @Override
     public Connection createConnection(String hostname, int port) {
-        return new ProtonConnection(this, new ProtonConnectionOptions(hostname, port)).connect();
+        return new ClientConnection(this, new ClientConnectionOptions(hostname, port)).connect();
     }
 
     @Override
     public Connection createConnection(String hostname, int port, ConnectionOptions options) {
-        return new ProtonConnection(this, new ProtonConnectionOptions(hostname, port, options)).connect();
+        return new ClientConnection(this, new ClientConnectionOptions(hostname, port, options)).connect();
     }
 
     @Override

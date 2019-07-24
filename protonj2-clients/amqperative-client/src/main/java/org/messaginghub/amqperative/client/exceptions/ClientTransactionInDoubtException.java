@@ -14,20 +14,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.messaginghub.amqperative;
+package org.messaginghub.amqperative.client.exceptions;
 
-import org.messaginghub.amqperative.client.ClientMessage;
+import org.messaginghub.amqperative.client.ClientException;
 
 /**
- *
+ * Thrown when a transaction operation fails and state is now unknown.
  */
-public interface Message {
+public class ClientTransactionInDoubtException extends ClientException {
 
-    // TODO: actual Message interface.
-    // Various questions: Have specific body type setters? Allow setting general body section types? Do both? Use a Message builder/factory?
-    public static Message create(Object body) {
-        return ClientMessage.create(body);
+    private static final long serialVersionUID = -5532644122754198664L;
+
+    public ClientTransactionInDoubtException(String message) {
+        super(message);
     }
 
-    Object getBody();
+    public ClientTransactionInDoubtException(String message, Throwable cause) {
+        super(message, cause);
+    }
 }
