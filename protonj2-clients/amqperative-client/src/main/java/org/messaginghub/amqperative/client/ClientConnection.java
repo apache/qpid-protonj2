@@ -24,7 +24,6 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.apache.qpid.proton4j.engine.exceptions.EngineStateException;
 import org.apache.qpid.proton4j.engine.impl.ProtonEngine;
 import org.apache.qpid.proton4j.engine.impl.ProtonEngineFactory;
 import org.messaginghub.amqperative.Connection;
@@ -33,10 +32,9 @@ import org.messaginghub.amqperative.Receiver;
 import org.messaginghub.amqperative.ReceiverOptions;
 import org.messaginghub.amqperative.Sender;
 import org.messaginghub.amqperative.SenderOptions;
+import org.messaginghub.amqperative.client.exceptions.ClientIOException;
 import org.messaginghub.amqperative.transport.Transport;
-import org.messaginghub.amqperative.transport.TransportListener;
 import org.messaginghub.amqperative.transport.TransportOptions;
-import org.messaginghub.amqperative.transport.impl.ByteBufWrapper;
 import org.messaginghub.amqperative.transport.impl.TcpTransport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -64,6 +62,7 @@ public class ClientConnection implements Connection {
     private CompletableFuture<Connection> closeFuture = new CompletableFuture<Connection>();
     private AtomicBoolean remoteOpened = new AtomicBoolean();
     private AtomicBoolean remoteClosed = new AtomicBoolean();
+    private AtomicBoolean closed = new AtomicBoolean();
 
     private ScheduledExecutorService executor;
 
@@ -84,7 +83,7 @@ public class ClientConnection implements Connection {
             "ProtonConnection :(" + CONNECTION_SEQUENCE.incrementAndGet()
                           + "):[" + options.getHostname() + ":" + options.getPort() + "]", true);
         transport = new TcpTransport(
-            new TransportHandler(engine), options.getRemoteURI(), new TransportOptions(), false);
+            new ClientTransportListener(this), options.getRemoteURI(), new TransportOptions(), false);
 
         transport.setThreadFactory(transportThreadFactory);
     }
@@ -99,7 +98,7 @@ public class ClientConnection implements Connection {
 
     @Override
     public Future<Connection> close() {
-        if (!openFuture.isCompletedExceptionally()) {
+        if (closed.compareAndSet(false, true) && !openFuture.isCompletedExceptionally()) {
             executor.execute(() -> {
                 protonConnection.close();
             });
@@ -184,8 +183,20 @@ public class ClientConnection implements Connection {
         return this;
     }
 
+    boolean isClosed() {
+        return closed.get();
+    }
+
     ScheduledExecutorService getScheduler() {
         return executor;
+    }
+
+    ProtonEngine getEngine() {
+        return engine;
+    }
+
+    void handleClientException(ClientIOException createOrPassthroughFatal) {
+        // TODO
     }
 
     //----- Private implementation
@@ -197,37 +208,5 @@ public class ClientConnection implements Connection {
             }
             protonConnection.open();
         });
-    }
-
-    private static class TransportHandler implements TransportListener {
-        private ProtonEngine engine;
-
-        public TransportHandler(ProtonEngine engine) {
-            this.engine = engine;
-        }
-
-        @Override
-        public void onData(ByteBuf incoming) {
-            // TODO - if this buffer is pooled than we need to copy it, or we need to do
-            //        a copy in our frame decoder vs just using a slice to hold onto the
-            //        body.
-            ByteBufWrapper bufferAdapter = new ByteBufWrapper(incoming);
-
-            try {
-                engine.ingest(bufferAdapter);
-            } catch (EngineStateException e) {
-                LOG.warn("Engine ingest threw error: ", e);
-            }
-        }
-
-        @Override
-        public void onTransportClosed() {
-            LOG.warn("Transport has closed");
-        }
-
-        @Override
-        public void onTransportError(Throwable cause) {
-            LOG.warn("Transport has reported an error:", cause);
-        }
     }
 }
