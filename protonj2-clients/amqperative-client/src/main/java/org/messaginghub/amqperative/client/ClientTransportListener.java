@@ -55,11 +55,13 @@ public class ClientTransportListener implements TransportListener {
         ByteBufWrapper bufferAdapter = new ByteBufWrapper(incoming);
 
         try {
-            engine.ingest(bufferAdapter);
-            // TODO
-//            do {
-//                engine.ingest(bufferAdapter);
-//            } while (incoming.isReadable() && engine.isWritable());
+            do {
+                engine.ingest(bufferAdapter);
+            } while (bufferAdapter.isReadable() && engine.isWritable());
+            // TODO - How do we handle case of not all data read ?
+
+            // TODO - properly handle by reading all data from the buffer
+            //        currently the wrapper has its own read index.
         } catch (EngineStateException e) {
             LOG.warn("Caught problem during incoming data processing: {}", e.getMessage(), e);
             connection.handleClientException(ClientExceptionSupport.createOrPassthroughFatal(e));
