@@ -23,6 +23,7 @@ import java.util.concurrent.TimeoutException;
 
 import org.junit.Ignore;
 import org.junit.Test;
+import org.messaginghub.amqperative.client.ClientException;
 
 /**
  * Test for the Connection class
@@ -39,7 +40,7 @@ public class ConnectionTest {
 
     @Ignore("Skipped for now, needs server, and proton changes")//TODO
     @Test
-    public void testSendAndReceiveMessage() throws InterruptedException, ExecutionException, TimeoutException {
+    public void testSendAndReceiveMessage() throws InterruptedException, ExecutionException, TimeoutException, ClientException {
         Container container = Container.create();
         System.out.println("Created container");
 
@@ -71,7 +72,7 @@ public class ConnectionTest {
 
             Delivery delivery = receiver.receive(1000);
 
-            if(delivery == null) {
+            if (delivery == null) {
                 throw new IllegalStateException("Expected delivery but did not get one");
             }
 

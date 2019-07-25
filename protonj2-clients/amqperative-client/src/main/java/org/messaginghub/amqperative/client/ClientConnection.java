@@ -114,24 +114,24 @@ public class ClientConnection implements Connection {
     }
 
     @Override
-    public Receiver createReceiver(String address) {
+    public Receiver createReceiver(String address) throws ClientException {
         return createReceiver(address, new ClientReceiverOptions());
     }
 
     @Override
-    public Receiver createReceiver(String address, ReceiverOptions receiverOptions) {
+    public Receiver createReceiver(String address, ReceiverOptions receiverOptions) throws ClientException {
         // TODO: await connection/session opening? Intertwine their open-futures?
 
         return connectionSession.createReceiver(address, receiverOptions);
     }
 
     @Override
-    public Sender createSender(String address) {
+    public Sender createSender(String address) throws ClientException {
         return createSender(address, new ClientSenderOptions());
     }
 
     @Override
-    public Sender createSender(String address, SenderOptions senderOptions) {
+    public Sender createSender(String address, SenderOptions senderOptions) throws ClientException {
         return connectionSession.createSender(address, senderOptions);
     }
 

@@ -18,6 +18,8 @@ package org.messaginghub.amqperative;
 
 import java.util.concurrent.Future;
 
+import org.messaginghub.amqperative.client.ClientException;
+
 /**
  *
  */
@@ -34,8 +36,10 @@ public interface Session {
      *            The source address to attach the consumer to.
      *
      * @return the consumer.
+     *
+     * @throws ClientException if an internal error occurs.
      */
-    Receiver createReceiver(String address);
+    Receiver createReceiver(String address) throws ClientException;
 
     /**
      * Creates a receiver used to consumer messages from the given node address.
@@ -46,8 +50,10 @@ public interface Session {
      *            The options for this receiver.
      *
      * @return the consumer.
+     *
+     * @throws ClientException if an internal error occurs.
      */
-    Receiver createReceiver(String address, ReceiverOptions receiverOptions);
+    Receiver createReceiver(String address, ReceiverOptions receiverOptions) throws ClientException;
 
     /**
      * Creates a sender used to send messages to the given node address. If no
@@ -59,8 +65,10 @@ public interface Session {
      *            anonymous relay.
      *
      * @return the sender.
+     *
+     * @throws ClientException if an internal error occurs.
      */
-    Sender createSender(String address);
+    Sender createSender(String address) throws ClientException;
 
     /**
      * Creates a sender used to send messages to the given node address. If no
@@ -74,7 +82,9 @@ public interface Session {
      *            The options for this sender.
      *
      * @return the sender.
+     *
+     * @throws ClientException if an internal error occurs.
      */
-    Sender createSender(String address, SenderOptions senderOptions);
+    Sender createSender(String address, SenderOptions senderOptions) throws ClientException;
 
 }

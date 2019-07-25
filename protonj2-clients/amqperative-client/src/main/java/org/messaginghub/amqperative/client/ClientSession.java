@@ -69,55 +69,73 @@ public class ClientSession implements Session {
     }
 
     @Override
-    public Receiver createReceiver(String address) {
+    public Receiver createReceiver(String address) throws ClientException {
         return createReceiver(address, new ClientReceiverOptions());
     }
 
     @Override
-    public Receiver createReceiver(String address, ReceiverOptions receiverOptions) {
-        String name = receiverOptions.getLinkName();
-        if(name == null) {
-            //TODO: use container-id + counter rather than UUID?
-            name = "reciever-" + UUID.randomUUID();
+    public Receiver createReceiver(String address, ReceiverOptions receiverOptions) throws ClientException {
+        ClientFuture<Receiver> createReceiver = getFutureFactory().createFuture();
+
+        executor.execute(() -> {
+            String name = receiverOptions.getLinkName();
+            if (name == null) {
+                //TODO: use container-id + counter rather than UUID?
+                name = "reciever-" + UUID.randomUUID();
+            }
+
+            final org.apache.qpid.proton4j.engine.Receiver receiver = session.receiver(name);
+
+            //TODO: flesh out source
+            Source source = new Source();
+            source.setAddress(address);
+
+            receiver.setSource(source);
+            receiver.setTarget(new Target());
+
+            createReceiver.complete(new ClientReceiver(receiverOptions, this, receiver).open());
+        });
+
+        try {
+            return createReceiver.get();
+        } catch (Throwable e) {
+            throw ClientExceptionSupport.createNonFatalOrPassthrough(e);
         }
-
-        //TODO: not thread safe
-        org.apache.qpid.proton4j.engine.Receiver receiver = session.receiver(name);
-
-        //TODO: flesh out source
-        Source source = new Source();
-        source.setAddress(address);
-
-        receiver.setSource(source);
-        receiver.setTarget(new Target());
-
-        return new ClientReceiver(receiverOptions, this, receiver).open();
     }
 
     @Override
-    public Sender createSender(String address) {
+    public Sender createSender(String address) throws ClientException {
         return createSender(address, new ClientSenderOptions());
     }
 
     @Override
-    public Sender createSender(String address, SenderOptions senderOptions) {
-        String name = senderOptions.getLinkName();
-        if(name == null) {
-            //TODO: use container-id + counter rather than UUID?
-            name = "sender-" + UUID.randomUUID();
+    public Sender createSender(String address, SenderOptions senderOptions) throws ClientException {
+        ClientFuture<Sender> createSender = getFutureFactory().createFuture();
+
+        executor.execute(() -> {
+            String name = senderOptions.getLinkName();
+            if (name == null) {
+                //TODO: use container-id + counter rather than UUID?
+                name = "sender-" + UUID.randomUUID();
+            }
+
+            org.apache.qpid.proton4j.engine.Sender sender = session.sender(name);
+
+            //TODO: flesh out target
+            Target target = new Target();
+            target.setAddress(address);
+
+            sender.setTarget(target);
+            sender.setSource(new Source());
+
+            createSender.complete(new ClientSender(senderOptions, this, sender).open());
+        });
+
+        try {
+            return createSender.get();
+        } catch (Throwable e) {
+            throw ClientExceptionSupport.createNonFatalOrPassthrough(e);
         }
-
-        //TODO: this is not thread safe
-        org.apache.qpid.proton4j.engine.Sender sender = session.sender(name);
-
-        //TODO: flesh out target
-        Target target = new Target();
-        target.setAddress(address);
-
-        sender.setTarget(target);
-        sender.setSource(new Source());
-
-        return new ClientSender(senderOptions, this, sender).open();
     }
 
     //----- Internal API
