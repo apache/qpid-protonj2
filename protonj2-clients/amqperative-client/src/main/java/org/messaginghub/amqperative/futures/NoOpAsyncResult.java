@@ -16,20 +16,22 @@
  */
 package org.messaginghub.amqperative.futures;
 
+import org.messaginghub.amqperative.client.ClientException;
+
 /**
  * Simple NoOp implementation used when the result of the operation does not matter.
  */
-public class NoOpAsyncResult implements AsyncResult {
+public class NoOpAsyncResult implements AsyncResult<Void> {
 
     public final static NoOpAsyncResult INSTANCE = new NoOpAsyncResult();
 
     @Override
-    public void onFailure(Throwable result) {
+    public void failed(ClientException result) {
 
     }
 
     @Override
-    public void onSuccess() {
+    public void complete(Void result) {
 
     }
 

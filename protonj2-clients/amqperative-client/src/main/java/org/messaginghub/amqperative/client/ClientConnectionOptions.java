@@ -29,6 +29,8 @@ public class ClientConnectionOptions extends ConnectionOptions {
     private final String hostname;
     private final int port;
 
+    private String futureType;
+
     // TODO - For failover the single host / port configuration is not sufficient.
 
     public ClientConnectionOptions(String hostname, int port) {
@@ -56,6 +58,27 @@ public class ClientConnectionOptions extends ConnectionOptions {
      */
     public int getPort() {
         return port;
+    }
+
+    /**
+     * @return the configure future type to use for this client connection
+     */
+    public String getFutureType() {
+        return futureType;
+    }
+
+    /**
+     * Sets the desired future type that the client connection should use when creating
+     * the futures used by the API.
+     *
+     * @param futureType
+     *      The name of the future type to use.
+     *
+     * @return this options object for chaining.
+     */
+    public ClientConnectionOptions setFutureType(String futureType) {
+        this.futureType = futureType;
+        return this;
     }
 
     /**

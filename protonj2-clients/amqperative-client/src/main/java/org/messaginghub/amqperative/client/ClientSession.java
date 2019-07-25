@@ -17,17 +17,20 @@
 package org.messaginghub.amqperative.client;
 
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 
 import org.apache.qpid.proton4j.amqp.messaging.Source;
 import org.apache.qpid.proton4j.amqp.messaging.Target;
+import org.apache.qpid.proton4j.engine.impl.ProtonEngine;
 import org.messaginghub.amqperative.Receiver;
 import org.messaginghub.amqperative.ReceiverOptions;
 import org.messaginghub.amqperative.Sender;
 import org.messaginghub.amqperative.SenderOptions;
 import org.messaginghub.amqperative.Session;
+import org.messaginghub.amqperative.client.exceptions.ClientExceptionSupport;
+import org.messaginghub.amqperative.futures.ClientFuture;
+import org.messaginghub.amqperative.futures.ClientFutureFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,8 +41,8 @@ public class ClientSession implements Session {
 
     private static final Logger LOG = LoggerFactory.getLogger(ClientSession.class);
 
-    private CompletableFuture<Session> openFuture = new CompletableFuture<Session>();
-    private CompletableFuture<Session> closeFuture = new CompletableFuture<Session>();
+    private final ClientFuture<Session> openFuture;
+    private final ClientFuture<Session> closeFuture;
 
     private final ClientSessionOptions options;
     private final ClientConnection connection;
@@ -51,6 +54,8 @@ public class ClientSession implements Session {
         this.connection = connection;
         this.session = session;
         this.executor = connection.getScheduler();
+        this.openFuture = connection.getFutureFactory().createFuture();
+        this.closeFuture = connection.getFutureFactory().createFuture();
     }
 
     @Override
@@ -124,7 +129,7 @@ public class ClientSession implements Session {
                     openFuture.complete(this);
                     LOG.trace("Connection session opened successfully");
                 } else {
-                    openFuture.completeExceptionally(result.error());
+                    openFuture.failed(ClientExceptionSupport.createNonFatalOrPassthrough(result.error()));
                     LOG.error("Connection session failed to open: ", result.error());
                 }
             });
@@ -136,5 +141,13 @@ public class ClientSession implements Session {
 
     ScheduledExecutorService getScheduler() {
         return executor;
+    }
+
+    ProtonEngine getEngine() {
+        return connection.getEngine();
+    }
+
+    ClientFutureFactory getFutureFactory() {
+        return connection.getFutureFactory();
     }
 }

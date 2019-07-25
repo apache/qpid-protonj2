@@ -16,7 +16,7 @@
  */
 package org.messaginghub.amqperative.futures;
 
-import java.util.Map;
+import org.messaginghub.amqperative.client.ClientException;
 
 /**
  * Factory for client future instances that will create specific versions based on
@@ -35,17 +35,15 @@ public abstract class ClientFutureFactory {
     private static final String PROGRESSIVE = "progressive";
 
     /**
-     * Create a new Provider
+     * Create a new ClientFutureFactory instance based on the given type name.
      *
-     * @param providerOptions
-     * 		Configuration options to be consumed by this factory create method
+     * @param futureType
+     * 		the future type whose factory should be returned.
      *
-     * @return a new ProviderFutureFactory that will be used to create the desired future types.
+     * @return a new {@link ClientFutureFactory} that will be used to create the desired future types.
      */
-    public static ClientFutureFactory create(Map<String, String> providerOptions) {
-        String futureTypeKey = providerOptions.remove(PROVIDER_FUTURE_TYPE_KEY);
-
-        if (futureTypeKey == null || futureTypeKey.isEmpty()) {
+    public static ClientFutureFactory create(final String futureType) {
+        if (futureType == null || futureType.isEmpty()) {
             if (Runtime.getRuntime().availableProcessors() < 4) {
                 return new ConservativeProviderFutureFactory();
             } else if (isWindows()) {
@@ -55,7 +53,7 @@ public abstract class ClientFutureFactory {
             }
         }
 
-        switch (futureTypeKey.toLowerCase()) {
+        switch (futureType.toLowerCase()) {
             case CONSERVATIVE:
                 return new ConservativeProviderFutureFactory();
             case BALANCED:
@@ -64,12 +62,12 @@ public abstract class ClientFutureFactory {
                 return new ProgressiveProviderFutureFactory();
             default:
                 throw new IllegalArgumentException(
-                    "No ProviderFuture implementation with name " + futureTypeKey + " found");
+                    "No ClientFuture implementation with name " + futureType + " found");
         }
     }
 
     /**
-     * @return a new ProviderFuture instance.
+     * @return a new ClientFuture instance.
      */
     public abstract <V> ClientFuture<V> createFuture();
 
@@ -77,12 +75,12 @@ public abstract class ClientFutureFactory {
      * @param synchronization
      * 		The {@link ClientSynchronization} to assign to the returned {@link ClientFuture}.
      *
-     * @return a new ProviderFuture instance.
+     * @return a new ClientFuture instance.
      */
     public abstract <V> ClientFuture<V> createFuture(ClientSynchronization synchronization);
 
     /**
-     * @return a ProviderFuture that treats failures as success calls that simply complete the operation.
+     * @return a ClientFuture that treats failures as success calls that simply complete the operation.
      */
     public abstract <V> ClientFuture<V> createUnfailableFuture();
 
@@ -100,7 +98,7 @@ public abstract class ClientFutureFactory {
         return currentOSName.startsWith(osNamePrefix);
     }
 
-    //----- ProviderFutureFactory implementation -----------------------------//
+    //----- ClientFutureFactory implementation -----------------------------//
 
     private static class ConservativeProviderFutureFactory extends ClientFutureFactory {
 
@@ -119,8 +117,8 @@ public abstract class ClientFutureFactory {
             return new ConservativeClientFuture<V>() {
 
                 @Override
-                public void onFailure(Throwable t) {
-                    this.onSuccess();
+                public void failed(ClientException t) {
+                    this.complete(null);
                 }
             };
         }
@@ -143,8 +141,8 @@ public abstract class ClientFutureFactory {
             return new BalancedClientFuture<V>() {
 
                 @Override
-                public void onFailure(Throwable t) {
-                    this.onSuccess();
+                public void failed(ClientException t) {
+                    this.complete(null);
                 }
             };
         }
@@ -167,8 +165,8 @@ public abstract class ClientFutureFactory {
             return new ProgressiveClientFuture<V>() {
 
                 @Override
-                public void onFailure(Throwable t) {
-                    this.onSuccess();
+                public void failed(ClientException t) {
+                    this.complete(null);
                 }
             };
         }

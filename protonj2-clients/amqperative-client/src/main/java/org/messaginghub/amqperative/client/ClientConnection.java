@@ -17,7 +17,6 @@
 package org.messaginghub.amqperative.client;
 
 import java.io.IOException;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
@@ -32,7 +31,10 @@ import org.messaginghub.amqperative.Receiver;
 import org.messaginghub.amqperative.ReceiverOptions;
 import org.messaginghub.amqperative.Sender;
 import org.messaginghub.amqperative.SenderOptions;
+import org.messaginghub.amqperative.client.exceptions.ClientExceptionSupport;
 import org.messaginghub.amqperative.client.exceptions.ClientIOException;
+import org.messaginghub.amqperative.futures.ClientFuture;
+import org.messaginghub.amqperative.futures.ClientFutureFactory;
 import org.messaginghub.amqperative.transport.Transport;
 import org.messaginghub.amqperative.transport.TransportOptions;
 import org.messaginghub.amqperative.transport.impl.TcpTransport;
@@ -52,14 +54,15 @@ public class ClientConnection implements Connection {
 
     private final ClientContainer container;
     private final ClientConnectionOptions options;
+    private final ClientFutureFactory futureFactoy;
 
     private final ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
     private org.apache.qpid.proton4j.engine.Connection protonConnection;
     private ClientSession connectionSession;
     private Transport transport;
 
-    private CompletableFuture<Connection> openFuture = new CompletableFuture<Connection>();
-    private CompletableFuture<Connection> closeFuture = new CompletableFuture<Connection>();
+    private ClientFuture<Connection> openFuture;
+    private ClientFuture<Connection> closeFuture;
     private AtomicBoolean remoteOpened = new AtomicBoolean();
     private AtomicBoolean remoteClosed = new AtomicBoolean();
     private AtomicBoolean closed = new AtomicBoolean();
@@ -78,6 +81,7 @@ public class ClientConnection implements Connection {
     public ClientConnection(ClientContainer container, ClientConnectionOptions options) {
         this.container = container;
         this.options = options;
+        this.futureFactoy = ClientFutureFactory.create(options.getFutureType());
 
         ThreadFactory transportThreadFactory = new ClientConnectionThreadFactory(
             "ProtonConnection :(" + CONNECTION_SEQUENCE.incrementAndGet()
@@ -86,6 +90,9 @@ public class ClientConnection implements Connection {
             new ClientTransportListener(this), options.getRemoteURI(), new TransportOptions(), false);
 
         transport.setThreadFactory(transportThreadFactory);
+
+        openFuture = futureFactoy.createFuture();
+        closeFuture = futureFactoy.createFuture();
     }
 
     @Override
@@ -98,7 +105,7 @@ public class ClientConnection implements Connection {
 
     @Override
     public Future<Connection> close() {
-        if (closed.compareAndSet(false, true) && !openFuture.isCompletedExceptionally()) {
+        if (closed.compareAndSet(false, true) && !openFuture.isFailed()) {
             executor.execute(() -> {
                 protonConnection.close();
             });
@@ -168,7 +175,7 @@ public class ClientConnection implements Connection {
                 });
             }, null);
         } catch (Throwable e) {
-            openFuture.completeExceptionally(e);
+            openFuture.failed(ClientExceptionSupport.createNonFatalOrPassthrough(e));
             try {
                 transport.close();
             } catch (Throwable t) {
@@ -193,6 +200,10 @@ public class ClientConnection implements Connection {
 
     ProtonEngine getEngine() {
         return engine;
+    }
+
+    ClientFutureFactory getFutureFactory() {
+        return futureFactoy;
     }
 
     void handleClientException(ClientIOException createOrPassthroughFatal) {

@@ -22,12 +22,14 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 
+import org.messaginghub.amqperative.client.ClientException;
+
 /**
  * Asynchronous Client Future class.
  *
  * @param <V> the eventual result type for this Future
  */
-public abstract class ClientFuture<V> implements Future<V>, AsyncResult {
+public abstract class ClientFuture<V> implements Future<V>, AsyncResult<V> {
 
     protected final ClientSynchronization synchronization;
 
@@ -43,7 +45,7 @@ public abstract class ClientFuture<V> implements Future<V>, AsyncResult {
         AtomicIntegerFieldUpdater.newUpdater(ClientFuture.class,"state");
 
     private volatile int state = INCOMPLETE;
-    protected Throwable error;
+    protected ClientException error;
     protected int waiting;
     protected V result;
 
@@ -85,7 +87,7 @@ public abstract class ClientFuture<V> implements Future<V>, AsyncResult {
     }
 
     @Override
-    public void onFailure(Throwable result) {
+    public void failed(ClientException result) {
         if (STATE_FIELD_UPDATER.compareAndSet(this, INCOMPLETE, COMPLETING)) {
             error = result;
             if (synchronization != null) {
@@ -103,8 +105,10 @@ public abstract class ClientFuture<V> implements Future<V>, AsyncResult {
     }
 
     @Override
-    public void onSuccess() {
+    public void complete(V result) {
         if (STATE_FIELD_UPDATER.compareAndSet(this, INCOMPLETE, COMPLETING)) {
+            this.result = result;
+
             if (synchronization != null) {
                 synchronization.onPendingSuccess();
             }

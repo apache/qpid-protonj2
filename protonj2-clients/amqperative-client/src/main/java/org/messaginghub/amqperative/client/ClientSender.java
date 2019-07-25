@@ -16,7 +16,6 @@
  */
 package org.messaginghub.amqperative.client;
 
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
@@ -34,6 +33,8 @@ import org.messaginghub.amqperative.Message;
 import org.messaginghub.amqperative.Sender;
 import org.messaginghub.amqperative.SenderOptions;
 import org.messaginghub.amqperative.Tracker;
+import org.messaginghub.amqperative.client.exceptions.ClientExceptionSupport;
+import org.messaginghub.amqperative.futures.ClientFuture;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,8 +45,8 @@ public class ClientSender implements Sender {
 
     private static final Logger LOG = LoggerFactory.getLogger(ClientSender.class);
 
-    private CompletableFuture<Sender> openFuture = new CompletableFuture<Sender>();
-    private CompletableFuture<Sender> closeFuture = new CompletableFuture<Sender>();
+    private final ClientFuture<Sender> openFuture;
+    private final ClientFuture<Sender> closeFuture;
 
     private final ClientSenderOptions options;
     private final ClientSession session;
@@ -57,7 +58,8 @@ public class ClientSender implements Sender {
         this.session = session;
         this.sender = sender;
         this.executor = session.getScheduler();
-
+        this.openFuture = session.getFutureFactory().createFuture();
+        this.closeFuture = session.getFutureFactory().createFuture();
     }
 
     @Override
@@ -160,7 +162,7 @@ public class ClientSender implements Sender {
                     openFuture.complete(this);
                     LOG.trace("Sender opened successfully");
                 } else {
-                    openFuture.completeExceptionally(result.error());
+                    openFuture.failed(ClientExceptionSupport.createNonFatalOrPassthrough(result.error()));
                     LOG.error("Sender failed to open: ", result.error());
                 }
             });

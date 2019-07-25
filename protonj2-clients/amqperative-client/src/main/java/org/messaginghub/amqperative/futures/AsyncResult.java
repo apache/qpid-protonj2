@@ -16,10 +16,14 @@
  */
 package org.messaginghub.amqperative.futures;
 
+import org.messaginghub.amqperative.client.ClientException;
+
 /**
  * Defines a result interface for Asynchronous operations.
+ *
+ * @param <V> Type used to complete the future.
  */
-public interface AsyncResult {
+public interface AsyncResult<V> {
 
     /**
      * If the operation fails this method is invoked with the Exception
@@ -28,13 +32,16 @@ public interface AsyncResult {
      * @param result
      *        The error that resulted in this asynchronous operation failing.
      */
-    void onFailure(Throwable result);
+    void failed(ClientException result);
 
     /**
      * If the operation succeeds the resulting value produced is set to null and
      * the waiting parties are signaled.
+     *
+     * @param result
+     *      the object that completes the future.
      */
-    void onSuccess();
+    void complete(V result);
 
     /**
      * Returns true if the AsyncResult has completed.  The task is considered complete

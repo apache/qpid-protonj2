@@ -17,7 +17,6 @@
 package org.messaginghub.amqperative.client;
 
 import java.io.IOException;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
@@ -34,19 +33,18 @@ import org.messaginghub.amqperative.DeliveryState;
 import org.messaginghub.amqperative.Message;
 import org.messaginghub.amqperative.Receiver;
 import org.messaginghub.amqperative.ReceiverOptions;
+import org.messaginghub.amqperative.client.exceptions.ClientExceptionSupport;
+import org.messaginghub.amqperative.futures.ClientFuture;
 import org.messaginghub.amqperative.util.FifoMessageQueue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- *
- */
 public class ClientReceiver implements Receiver {
 
     private static final Logger LOG = LoggerFactory.getLogger(ClientReceiver.class);
 
-    private CompletableFuture<Receiver> openFuture = new CompletableFuture<Receiver>();
-    private CompletableFuture<Receiver> closeFuture = new CompletableFuture<Receiver>();
+    private final ClientFuture<Receiver> openFuture;
+    private final ClientFuture<Receiver> closeFuture;
 
     private final ClientReceiverOptions options;
     private final ClientSession session;
@@ -60,10 +58,14 @@ public class ClientReceiver implements Receiver {
         this.session = session;
         this.receiver = receiver;
         this.executor = session.getScheduler();
-        if(options.getCreditWindow() > 0) {
+        this.openFuture = session.getFutureFactory().createFuture();
+        this.closeFuture = session.getFutureFactory().createFuture();
+
+        if (options.getCreditWindow() > 0) {
             receiver.setCredit(options.getCreditWindow());
         }
-        this.messageQueue = new FifoMessageQueue(options.getCreditWindow());
+
+        messageQueue = new FifoMessageQueue(options.getCreditWindow());
         messageQueue.start();
     }
 
@@ -143,7 +145,7 @@ public class ClientReceiver implements Receiver {
                     openFuture.complete(this);
                     LOG.trace("Receiver opened successfully");
                 } else {
-                    openFuture.completeExceptionally(result.error());
+                    openFuture.failed(ClientExceptionSupport.createNonFatalOrPassthrough(result.error()));
                     LOG.error("Receiver failed to open: ", result.error());
                 }
             });
