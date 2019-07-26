@@ -50,7 +50,7 @@ public class ClientSession implements Session {
     private final ScheduledExecutorService executor;
 
     public ClientSession(ClientSessionOptions options, ClientConnection connection, org.apache.qpid.proton4j.engine.Session session) {
-        this.options = options;
+        this.options = new ClientSessionOptions(options);
         this.connection = connection;
         this.session = session;
         this.executor = connection.getScheduler();

@@ -20,16 +20,31 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.qpid.proton4j.amqp.Symbol;
+import org.messaginghub.amqperative.SessionOptions;
 
 /**
  * TODO
  */
-public class ClientSessionOptions {
+public class ClientSessionOptions extends SessionOptions {
 
     private long handleMax = -1;
     private Map<Symbol, Object> properties;
     private List<Symbol> offeredCapabilities;
     private List<Symbol> desiredCapabilities;
+
+    /**
+     *
+     */
+    public ClientSessionOptions() {
+    }
+
+    /**
+     * @param options
+     *      Original options which will be copied into this instance
+     */
+    public ClientSessionOptions(SessionOptions options) {
+        options.copyInto(this);
+    }
 
     public ClientSessionOptions copyInto(ClientSessionOptions options) {
         return this;

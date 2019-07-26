@@ -31,6 +31,8 @@ import org.messaginghub.amqperative.Receiver;
 import org.messaginghub.amqperative.ReceiverOptions;
 import org.messaginghub.amqperative.Sender;
 import org.messaginghub.amqperative.SenderOptions;
+import org.messaginghub.amqperative.Session;
+import org.messaginghub.amqperative.SessionOptions;
 import org.messaginghub.amqperative.client.exceptions.ClientExceptionSupport;
 import org.messaginghub.amqperative.client.exceptions.ClientIOException;
 import org.messaginghub.amqperative.futures.ClientFuture;
@@ -111,6 +113,31 @@ public class ClientConnection implements Connection {
             });
         }
         return closeFuture;
+    }
+
+    @Override
+    public Session createSession() throws ClientException {
+        return createSession(new ClientSessionOptions());
+    }
+
+    @Override
+    public Session createSession(SessionOptions options) throws ClientException {
+        ClientFuture<Session> result = getFutureFactory().createFuture();
+
+        executor.execute(() -> {
+            ClientSession session = new ClientSession(
+                new ClientSessionOptions(), ClientConnection.this, protonConnection.session());
+
+            // TODO - This relies on protonConnection having been created by an open already
+
+            result.complete(session.open());
+        });
+
+        try {
+            return result.get();
+        } catch (Throwable e) {
+            throw ClientExceptionSupport.createNonFatalOrPassthrough(e);
+        }
     }
 
     @Override

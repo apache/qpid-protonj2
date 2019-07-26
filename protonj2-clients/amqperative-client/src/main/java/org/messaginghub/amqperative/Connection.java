@@ -84,9 +84,29 @@ public interface Connection {
      */
     Sender createSender(String address, SenderOptions senderOptions) throws ClientException;
 
+    /**
+     * Creates a new {@link Session} instance for use by the client application.
+     *
+     * @return a new {@link Session} instance.
+     *
+     * @throws ClientException if an internal error occurs.
+     */
+    Session createSession() throws ClientException;
+
+    /**
+     * Creates a new {@link Session} instance for use by the client application.
+     *
+     * @param options
+     *      The {@link SessionOptions} that control properties of the created session.
+     *
+     * @return a new {@link Session} instance.
+     *
+     * @throws ClientException if an internal error occurs.
+     */
+    Session createSession(SessionOptions options) throws ClientException;
+
     // TODO:
     // Error state?
-    // Sessions?
     // Capabilities (+options?)
     // Properties (+options?)
 }
