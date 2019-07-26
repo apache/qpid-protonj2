@@ -309,15 +309,16 @@ public class ProtonFrameDecodingHandler implements EngineHandler, SaslPerformati
                 int startReadIndex = input.getReadIndex();
                 val = decoder.readObject(input, decoderState);
 
-                // Slice to the known payload size and use that as the buffer for any payload once
-                // the actual Performative has been decoded.  The implies that the data comprising the
-                // performative will be held as long as the payload buffer is kept.  If a large buffer
-                // is read that contains many frames we might want to opt to copy each payload buffer
-                // to avoid holding large chunks of memory if client doesn't settle quickly.
+                // Copy the payload portion of the incoming bytes for now as the incoming may be
+                // from a wrapped pooled buffer and for now we have no way of retaining or otherwise
+                // ensuring that the buffer remains ours.  Since we might want to store received
+                // data at a client level and decode later we could end up losing the data to reuse
+                // if it was pooled.
                 if (input.isReadable()) {
                     int payloadSize = frameBodySize - (input.getReadIndex() - startReadIndex);
-                    payload = input.slice(input.getReadIndex(), payloadSize);
-                    input.skipBytes(payloadSize);
+                    // TODO - What other alternatives can we persue here to avoid a copy ?
+                    payload = configuration.getBufferAllocator().allocate(payloadSize, payloadSize);
+                    payload.writeBytes(input, payloadSize);
                 }
             } else {
                 transitionToFrameSizeParsingStage();
