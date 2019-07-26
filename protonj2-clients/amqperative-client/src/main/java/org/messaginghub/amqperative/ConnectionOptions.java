@@ -16,10 +16,20 @@
  */
 package org.messaginghub.amqperative;
 
+import java.util.Map;
+
 /**
  * Options that control the behaviour of the {@link Connection} created from them.
  */
 public class ConnectionOptions {
+
+    // TODO - Strings or expose a Symbol type, depending on how Message types are
+    //        constructed same issue, some things require Symbols unless we hide
+    //        everything behind facades.
+
+    private String[] offeredCapabilities;
+    private String[] desiredCapabilities;
+    private Map<String, Object> properties;
 
     /**
      * Copy all options from this {@link ConnectionOptions} instance into the instance
@@ -32,5 +42,47 @@ public class ConnectionOptions {
      */
     public ConnectionOptions copyInto(ConnectionOptions other) {
         return this;
+    }
+
+    /**
+     * @return the offeredCapabilities
+     */
+    public String[] getOfferedCapabilities() {
+        return offeredCapabilities;
+    }
+
+    /**
+     * @param offeredCapabilities the offeredCapabilities to set
+     */
+    public void setOfferedCapabilities(String[] offeredCapabilities) {
+        this.offeredCapabilities = offeredCapabilities;
+    }
+
+    /**
+     * @return the desiredCapabilities
+     */
+    public String[] getDesiredCapabilities() {
+        return desiredCapabilities;
+    }
+
+    /**
+     * @param desiredCapabilities the desiredCapabilities to set
+     */
+    public void setDesiredCapabilities(String[] desiredCapabilities) {
+        this.desiredCapabilities = desiredCapabilities;
+    }
+
+    /**
+     * @return the properties
+     */
+    public Map<String, Object> getProperties() {
+        return properties;
+    }
+
+    /**
+     * @param properties the properties to set
+     */
+    public void setProperties(Map<String, Object> properties) {
+        this.properties = properties;
     }
 }
