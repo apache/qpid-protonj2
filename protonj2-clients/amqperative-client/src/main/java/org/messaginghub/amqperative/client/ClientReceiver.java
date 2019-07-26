@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
 import org.apache.qpid.proton4j.amqp.messaging.Accepted;
@@ -50,6 +51,7 @@ public class ClientReceiver implements Receiver {
     private final ClientSession session;
     private final org.apache.qpid.proton4j.engine.Receiver receiver;
     private final ScheduledExecutorService executor;
+    private final AtomicBoolean closed = new AtomicBoolean();
 
     private final FifoMessageQueue messageQueue;
 
@@ -98,6 +100,11 @@ public class ClientReceiver implements Receiver {
 
     @Override
     public Future<Receiver> close() {
+        if (closed.compareAndSet(false, true) && !openFuture.isFailed()) {
+            executor.execute(() -> {
+                receiver.close();
+            });
+        }
         return closeFuture;
     }
 
@@ -149,6 +156,11 @@ public class ClientReceiver implements Receiver {
                     LOG.error("Receiver failed to open: ", result.error());
                 }
             });
+            receiver.closeHandler(result -> {
+                closed.set(true);
+                closeFuture.complete(this);
+            });
+
             receiver.deliveryReceivedEventHandler(d -> {
                 ProtonBuffer buffer = d.readAll();
 

@@ -22,6 +22,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLongFieldUpdater;
 
 import org.apache.qpid.proton4j.engine.impl.ProtonEngine;
 import org.apache.qpid.proton4j.engine.impl.ProtonEngineFactory;
@@ -54,6 +55,9 @@ public class ClientConnection implements Connection {
 
     private static final AtomicInteger CONNECTION_SEQUENCE = new AtomicInteger();
 
+    private static final AtomicLongFieldUpdater<ClientConnection> CLOSE_STATE_UPDATER =
+        AtomicLongFieldUpdater.newUpdater(ClientConnection.class, "closeState");
+
     private final ClientContainer container;
     private final ClientConnectionOptions options;
     private final ClientFutureFactory futureFactoy;
@@ -65,9 +69,9 @@ public class ClientConnection implements Connection {
 
     private ClientFuture<Connection> openFuture;
     private ClientFuture<Connection> closeFuture;
-    private AtomicBoolean remoteOpened = new AtomicBoolean();
-    private AtomicBoolean remoteClosed = new AtomicBoolean();
-    private AtomicBoolean closed = new AtomicBoolean();
+    private final AtomicBoolean remoteOpened = new AtomicBoolean();
+    private final AtomicBoolean remoteClosed = new AtomicBoolean();
+    private volatile long closeState;
 
     private ScheduledExecutorService executor;
 
@@ -107,7 +111,7 @@ public class ClientConnection implements Connection {
 
     @Override
     public Future<Connection> close() {
-        if (closed.compareAndSet(false, true) && !openFuture.isFailed()) {
+        if (CLOSE_STATE_UPDATER.compareAndSet(this, 0, 1) && !openFuture.isFailed()) {
             executor.execute(() -> {
                 protonConnection.close();
             });
@@ -186,6 +190,7 @@ public class ClientConnection implements Connection {
 
                 protonConnection.closeEventHandler(result -> {
                     remoteClosed.set(true);
+                    CLOSE_STATE_UPDATER.lazySet(this, 1);
                     closeFuture.complete(this);
                 });
 
@@ -219,7 +224,7 @@ public class ClientConnection implements Connection {
     }
 
     boolean isClosed() {
-        return closed.get();
+        return closeState > 0;
     }
 
     ScheduledExecutorService getScheduler() {
@@ -235,7 +240,8 @@ public class ClientConnection implements Connection {
     }
 
     void handleClientException(ClientIOException createOrPassthroughFatal) {
-        // TODO
+        // TODO - Implement handling of critical exception from IO etc.
+        //        maybe rename to handleFatalException or something
     }
 
     //----- Private implementation

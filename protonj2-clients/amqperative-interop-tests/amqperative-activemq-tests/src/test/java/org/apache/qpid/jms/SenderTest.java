@@ -25,7 +25,6 @@ import java.util.concurrent.TimeUnit;
 
 import org.apache.qpid.jms.support.AMQPerativeTestSupport;
 import org.apache.qpid.jms.support.Wait;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.messaginghub.amqperative.Connection;
 import org.messaginghub.amqperative.Container;
@@ -34,7 +33,6 @@ import org.messaginghub.amqperative.Sender;
 
 public class SenderTest extends AMQPerativeTestSupport {
 
-    @Ignore
     @Test(timeout = 60000)
     public void testCreateReceiver() throws Exception {
         URI brokerURI = getBrokerAmqpConnectionURI();

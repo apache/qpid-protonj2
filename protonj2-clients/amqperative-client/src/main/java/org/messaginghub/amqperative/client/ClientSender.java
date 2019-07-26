@@ -19,6 +19,7 @@ package org.messaginghub.amqperative.client;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
 import org.apache.qpid.proton4j.amqp.messaging.AmqpValue;
@@ -52,6 +53,7 @@ public class ClientSender implements Sender {
     private final ClientSession session;
     private final org.apache.qpid.proton4j.engine.Sender sender;
     private final ScheduledExecutorService executor;
+    private final AtomicBoolean closed = new AtomicBoolean();
 
     public ClientSender(SenderOptions options, ClientSession session, org.apache.qpid.proton4j.engine.Sender sender) {
         this.options = new ClientSenderOptions(options);
@@ -127,6 +129,11 @@ public class ClientSender implements Sender {
 
     @Override
     public Future<Sender> close() {
+        if (closed.compareAndSet(false, true) && !openFuture.isFailed()) {
+            executor.execute(() -> {
+                sender.close();
+            });
+        }
         return closeFuture;
     }
 
@@ -166,6 +173,12 @@ public class ClientSender implements Sender {
                     LOG.error("Sender failed to open: ", result.error());
                 }
             });
+
+            sender.closeHandler(result -> {
+                closed.set(true);
+                closeFuture.complete(this);
+            });
+
             sender.open();
         });
 

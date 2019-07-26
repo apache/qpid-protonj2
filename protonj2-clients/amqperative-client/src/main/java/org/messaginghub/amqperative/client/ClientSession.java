@@ -19,6 +19,7 @@ package org.messaginghub.amqperative.client;
 import java.util.UUID;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.qpid.proton4j.amqp.messaging.Source;
 import org.apache.qpid.proton4j.amqp.messaging.Target;
@@ -48,6 +49,7 @@ public class ClientSession implements Session {
     private final ClientConnection connection;
     private final org.apache.qpid.proton4j.engine.Session session;
     private final ScheduledExecutorService executor;
+    private final AtomicBoolean closed = new AtomicBoolean();
 
     public ClientSession(ClientSessionOptions options, ClientConnection connection, org.apache.qpid.proton4j.engine.Session session) {
         this.options = new ClientSessionOptions(options);
@@ -65,6 +67,11 @@ public class ClientSession implements Session {
 
     @Override
     public Future<Session> close() {
+        if (closed.compareAndSet(false, true) && !openFuture.isFailed()) {
+            executor.execute(() -> {
+                session.close();
+            });
+        }
         return closeFuture;
     }
 
@@ -153,6 +160,11 @@ public class ClientSession implements Session {
                     LOG.error("Connection session failed to open: ", result.error());
                 }
             });
+            session.closeHandler(result -> {
+                closed.set(true);
+                closeFuture.complete(this);
+            });
+
             session.open();
         });
 
