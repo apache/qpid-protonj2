@@ -29,7 +29,6 @@ import org.apache.qpid.proton4j.codec.CodecFactory;
 import org.apache.qpid.proton4j.codec.Encoder;
 import org.apache.qpid.proton4j.codec.EncoderState;
 import org.apache.qpid.proton4j.engine.OutgoingDelivery;
-import org.messaginghub.amqperative.DeliveryState;
 import org.messaginghub.amqperative.Message;
 import org.messaginghub.amqperative.Sender;
 import org.messaginghub.amqperative.SenderOptions;
@@ -70,61 +69,42 @@ public class ClientSender implements Sender {
     }
 
     @Override
-    public Tracker send(Message message) {
-        //TODO: block for credit
-        //TODO: check sender.isSendable();
-        ClientMessage msg = (ClientMessage) message;
+    public Tracker send(Message message) throws ClientException {
+        ClientFuture<Tracker> operation = session.getFutureFactory().createFuture();
 
-        // TODO: implement message handling properly
-        Object o = msg.getBody();
-        AmqpValue body = new AmqpValue(o);
+        executor.execute(() -> {
+            //TODO: block for credit
+            //TODO: check sender.isSendable();
 
-        Encoder encoder = CodecFactory.getDefaultEncoder();
-        EncoderState encoderState = encoder.newEncoderState();
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate(4096);
+            ClientMessage msg = (ClientMessage) message;
+
+            // TODO: implement message handling properly
+            Object o = msg.getBody();
+            AmqpValue body = new AmqpValue(o);
+
+            Encoder encoder = CodecFactory.getDefaultEncoder();
+            EncoderState encoderState = encoder.newEncoderState();
+            ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate(4096);
+
+            try {
+                encoder.writeObject(buffer, encoderState, body);
+            } finally {
+                encoderState.reset();
+            }
+
+            OutgoingDelivery delivery = sender.next();
+            delivery.setTag(new byte[] {0});
+            delivery.writeBytes(buffer);
+
+            operation.complete(new ClientTracker(delivery));
+        });
 
         try {
-            encoder.writeObject(buffer, encoderState, body);
-        } finally {
-            encoderState.reset();
+            // TODO - Timeouts ?
+            return operation.get();
+        } catch (Throwable e) {
+            throw ClientExceptionSupport.createNonFatalOrPassthrough(e);
         }
-
-        //TODO: this is not thread safe, at all
-        OutgoingDelivery delivery = sender.next();
-        delivery.setTag(new byte[] {0});
-        delivery.writeBytes(buffer);
-
-        return new Tracker() {
-
-            @Override
-            public Tracker settle() {
-                // TODO Auto-generated method stub
-                throw new UnsupportedOperationException();
-            }
-
-            @Override
-            public boolean isRemotelySettled() {
-                return delivery.isRemotelySettled();
-            }
-
-            @Override
-            public byte[] getTag() {
-                // TODO Auto-generated method stub
-                throw new UnsupportedOperationException();
-            }
-
-            @Override
-            public DeliveryState getRemoteState() {
-                // TODO Auto-generated method stub
-                throw new UnsupportedOperationException();
-            }
-
-            @Override
-            public Message getMessage() {
-                // TODO Auto-generated method stub
-                throw new UnsupportedOperationException();
-            }
-        };
     }
 
     @Override

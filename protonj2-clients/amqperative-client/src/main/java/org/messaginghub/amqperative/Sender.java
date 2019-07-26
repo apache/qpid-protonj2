@@ -20,16 +20,21 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.function.Consumer;
 
+import org.messaginghub.amqperative.client.ClientException;
+
 public interface Sender {
 
     /**
      * Send the given message.
      *
      * @param message
-     *            the message to send
+     *      the message to send
+     *
      * @return the tracker for the message delivery
+     *
+     * @throws ClientException if an error occurs while initiating the send operation.
      */
-    Tracker send(Message message);
+    Tracker send(Message message) throws ClientException;
 
     Future<Sender> openFuture();
 
