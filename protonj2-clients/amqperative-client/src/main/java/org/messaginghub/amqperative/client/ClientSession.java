@@ -97,6 +97,7 @@ public class ClientSession implements Session {
         });
 
         try {
+            // TODO - Timeouts ?
             return createReceiver.get();
         } catch (Throwable e) {
             throw ClientExceptionSupport.createNonFatalOrPassthrough(e);
@@ -132,6 +133,7 @@ public class ClientSession implements Session {
         });
 
         try {
+            // TODO - Timeouts ?
             return createSender.get();
         } catch (Throwable e) {
             throw ClientExceptionSupport.createNonFatalOrPassthrough(e);

@@ -134,6 +134,7 @@ public class ClientConnection implements Connection {
         });
 
         try {
+            // TODO - Timeouts ?
             return result.get();
         } catch (Throwable e) {
             throw ClientExceptionSupport.createNonFatalOrPassthrough(e);
