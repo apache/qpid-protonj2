@@ -25,23 +25,28 @@ import org.apache.qpid.proton4j.engine.IncomingDelivery;
 import org.messaginghub.amqperative.Delivery;
 import org.messaginghub.amqperative.DeliveryState;
 import org.messaginghub.amqperative.Message;
+import org.messaginghub.amqperative.Receiver;
 
 /**
  * Client inbound delivery object.
  */
 public class ClientDelivery implements Delivery {
 
-    private final IncomingDelivery protonDelivery;
+    private final ClientReceiver receiver;
+    private final IncomingDelivery delivery;
 
     /**
      * Creates a new client delivery object linked to the given {@link IncomingDelivery}
      * instance.
      *
+     * @param receiver
+     *      The {@link Receiver} that processed this delivery.
      * @param delivery
      *      The proton incoming delivery that backs this client delivery facade.
      */
-    ClientDelivery(IncomingDelivery delivery) {
-        this.protonDelivery = delivery;
+    ClientDelivery(ClientReceiver receiver, IncomingDelivery delivery) {
+        this.receiver = receiver;
+        this.delivery = delivery;
     }
 
     @Override
@@ -52,7 +57,7 @@ public class ClientDelivery implements Delivery {
 
     @Override
     public Delivery accept() {
-        protonDelivery.disposition(Accepted.getInstance());
+        delivery.disposition(Accepted.getInstance());
         return this;
     }
 
@@ -77,13 +82,13 @@ public class ClientDelivery implements Delivery {
             }
         }
 
-        protonDelivery.disposition(protonState, settle);
+        receiver.disposition(delivery, protonState, settle);
         return this;
     }
 
     @Override
     public Delivery settle() {
-        protonDelivery.settle();
+        receiver.disposition(delivery, null, true);
         return this;
     }
 
@@ -101,16 +106,16 @@ public class ClientDelivery implements Delivery {
 
     @Override
     public boolean isRemotelySettled() {
-        return protonDelivery.isRemotelySettled();
+        return delivery.isRemotelySettled();
     }
 
     @Override
     public byte[] getTag() {
-        return protonDelivery.getTag();
+        return delivery.getTag();
     }
 
     @Override
     public int getMessageFormat() {
-        return protonDelivery.getMessageFormat();
+        return delivery.getMessageFormat();
     }
 }

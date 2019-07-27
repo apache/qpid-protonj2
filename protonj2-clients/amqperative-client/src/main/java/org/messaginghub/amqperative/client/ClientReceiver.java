@@ -23,14 +23,14 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
-import org.apache.qpid.proton4j.amqp.messaging.Accepted;
 import org.apache.qpid.proton4j.amqp.messaging.AmqpValue;
+import org.apache.qpid.proton4j.amqp.transport.DeliveryState;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.CodecFactory;
 import org.apache.qpid.proton4j.codec.Decoder;
 import org.apache.qpid.proton4j.codec.DecoderState;
+import org.apache.qpid.proton4j.engine.IncomingDelivery;
 import org.messaginghub.amqperative.Delivery;
-import org.messaginghub.amqperative.DeliveryState;
 import org.messaginghub.amqperative.Message;
 import org.messaginghub.amqperative.Receiver;
 import org.messaginghub.amqperative.ReceiverOptions;
@@ -145,6 +145,12 @@ public class ClientReceiver implements Receiver {
 
     //----- Internal API
 
+    void disposition(IncomingDelivery delivery, DeliveryState state, boolean settled) {
+        executor.execute(() -> {
+            delivery.disposition(state, settled);
+        });
+    }
+
     ClientReceiver open() {
         executor.execute(() -> {
             receiver.openHandler(result -> {
@@ -161,8 +167,8 @@ public class ClientReceiver implements Receiver {
                 closeFuture.complete(this);
             });
 
-            receiver.deliveryReceivedEventHandler(d -> {
-                ProtonBuffer buffer = d.readAll();
+            receiver.deliveryReceivedEventHandler(delivery -> {
+                ProtonBuffer buffer = delivery.readAll();
 
                 Decoder decoder = CodecFactory.getDefaultDecoder();
                 DecoderState decoderState = decoder.newDecoderState();
@@ -179,71 +185,10 @@ public class ClientReceiver implements Receiver {
 
                 Object body = ((AmqpValue) o).getValue();
 
+                // TODO - Move processing into delivery
                 Message msg  = Message.create(body);
 
-                Delivery del = new Delivery() {
-
-                    @Override
-                    public Delivery settle() {
-                        // TODO Auto-generated method stub
-                        return null;
-                    }
-
-                    @Override
-                    public boolean isRemotelySettled() {
-                        // TODO Auto-generated method stub
-                        return false;
-                    }
-
-                    @Override
-                    public byte[] getTag() {
-                        // TODO Auto-generated method stub
-                        return null;
-                    }
-
-                    @Override
-                    public DeliveryState getRemoteState() {
-                        // TODO Auto-generated method stub
-                        return null;
-                    }
-
-                    @Override
-                    public int getMessageFormat() {
-                        // TODO Auto-generated method stub
-                        return 0;
-                    }
-
-                    @Override
-                    public Message getMessage() {
-                        return msg;
-                    }
-
-                    @Override
-                    public DeliveryState getLocalState() {
-                        // TODO Auto-generated method stub
-                        return null;
-                    }
-
-                    @Override
-                    public Delivery disposition(DeliveryState state, boolean settle) {
-                        // TODO Auto-generated method stub
-                        return null;
-                    }
-
-                    @Override
-                    public Delivery accept() {
-                        executor.execute(() -> {
-                            d.disposition(Accepted.getInstance(), true);
-
-                            //TODO: only do if the credit window is set
-                            //TODO: proper replenishment
-                            receiver.setCredit( receiver.getCredit() + 1);
-                        });
-                        return this;
-                    }
-                };
-
-                messageQueue.enqueue(del);
+                messageQueue.enqueue(new ClientDelivery(this, delivery));
             });
             receiver.open();
         });

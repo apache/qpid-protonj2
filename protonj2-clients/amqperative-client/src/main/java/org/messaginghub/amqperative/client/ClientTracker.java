@@ -26,15 +26,19 @@ import org.messaginghub.amqperative.Tracker;
  */
 public class ClientTracker implements Tracker {
 
+    private final ClientSender sender;
     private final OutgoingDelivery delivery;
 
     /**
      * Create an instance of a client outgoing delivery tracker.
      *
+     * @param sender
+     *      The sender that was used to send the delivery
      * @param delivery
      *      The proton outgoing delivery object that backs this tracker.
      */
-    ClientTracker(OutgoingDelivery delivery) {
+    ClientTracker(ClientSender sender, OutgoingDelivery delivery) {
+        this.sender = sender;
         this.delivery = delivery;
     }
 

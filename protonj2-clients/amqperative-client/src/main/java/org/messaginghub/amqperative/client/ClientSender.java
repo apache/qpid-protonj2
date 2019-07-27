@@ -23,6 +23,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
 import org.apache.qpid.proton4j.amqp.messaging.AmqpValue;
+import org.apache.qpid.proton4j.amqp.transport.DeliveryState;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.codec.CodecFactory;
@@ -96,7 +97,7 @@ public class ClientSender implements Sender {
             delivery.setTag(new byte[] {0});
             delivery.writeBytes(buffer);
 
-            operation.complete(new ClientTracker(delivery));
+            operation.complete(new ClientTracker(this, delivery));
         });
 
         try {
@@ -141,6 +142,12 @@ public class ClientSender implements Sender {
     }
 
     //----- Internal API
+
+    void disposition(OutgoingDelivery delivery, DeliveryState state, boolean settled) {
+        executor.execute(() -> {
+            delivery.disposition(state, settled);
+        });
+    }
 
     ClientSender open() {
         executor.execute(() -> {
