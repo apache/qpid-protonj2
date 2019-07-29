@@ -16,22 +16,15 @@
  */
 package org.messaginghub.amqperative.client;
 
-import java.io.IOException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
-import org.apache.qpid.proton4j.amqp.messaging.AmqpValue;
 import org.apache.qpid.proton4j.amqp.transport.DeliveryState;
-import org.apache.qpid.proton4j.buffer.ProtonBuffer;
-import org.apache.qpid.proton4j.codec.CodecFactory;
-import org.apache.qpid.proton4j.codec.Decoder;
-import org.apache.qpid.proton4j.codec.DecoderState;
 import org.apache.qpid.proton4j.engine.IncomingDelivery;
 import org.messaginghub.amqperative.Delivery;
-import org.messaginghub.amqperative.Message;
 import org.messaginghub.amqperative.Receiver;
 import org.messaginghub.amqperative.ReceiverOptions;
 import org.messaginghub.amqperative.client.exceptions.ClientExceptionSupport;
@@ -78,14 +71,21 @@ public class ClientReceiver implements Receiver {
 
     @Override
     public Delivery receive() throws IllegalStateException {
-        // TODO Auto-generated method stub
-        return null;
+        //TODO: verify timeout conventions align
+        try {
+            return messageQueue.dequeue(-1);
+        } catch (InterruptedException e) {
+            throw new IllegalStateException(e);//TODO: better exception
+        }
     }
 
     @Override
     public Delivery tryReceive() throws IllegalStateException {
-        // TODO Auto-generated method stub
-        return null;
+        try {
+            return messageQueue.dequeue(0);
+        } catch (InterruptedException e) {
+            throw new IllegalStateException(e);//TODO: better exception
+        }
     }
 
     @Override
@@ -115,8 +115,7 @@ public class ClientReceiver implements Receiver {
 
     @Override
     public long getQueueSize() {
-        // TODO Auto-generated method stub
-        return 0;
+        return messageQueue.size();
     }
 
     @Override
@@ -168,28 +167,18 @@ public class ClientReceiver implements Receiver {
             });
 
             receiver.deliveryReceivedEventHandler(delivery -> {
-                ProtonBuffer buffer = delivery.readAll();
-
-                Decoder decoder = CodecFactory.getDefaultDecoder();
-                DecoderState decoderState = decoder.newDecoderState();
-
-                Object o;
-                try {
-                    //TODO: Decode failed with netty ref count violation if decode was deferred until removing
-                    //      the IncomingDelivery (rather than imperative Delivery with decoded message as now done)
-                    //      from the queue, suggests work is needed on lifecycle of the payload buffer.
-                    o = decoder.readObject(buffer, decoderState);
-                } catch (IOException e) {
-                    throw new IllegalStateException(e);//TODO: better exception
-                }
-
-                Object body = ((AmqpValue) o).getValue();
-
-                // TODO - Move processing into delivery
-                Message msg  = Message.create(body);
-
                 messageQueue.enqueue(new ClientDelivery(this, delivery));
             });
+
+            receiver.deliveryUpdatedEventHandler(delivery -> {
+               LOG.info("Delivery was updated: ", delivery);
+               // TODO - event or other reaction
+            });
+
+            receiver.detachHandler(receiver -> {
+                LOG.info("Receiver link remotely detached: ", receiver);
+            });
+
             receiver.open();
         });
 

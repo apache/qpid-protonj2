@@ -16,18 +16,52 @@
  */
 package org.messaginghub.amqperative;
 
+import org.apache.qpid.proton4j.amqp.messaging.AmqpValue;
 import org.messaginghub.amqperative.client.ClientMessage;
 
 /**
+ * Message object that provides a high level abstraction to raw AMQP types
+ * <p>
+ * TODO - Should we have an AMQPMessage or some such that exposed more of the raw
+ * proton types and make this one a much more abstract mapping ?
  *
+ * @param <E> The type of the message body that this message carries
  */
-public interface Message {
+public interface Message<E> {
 
     // TODO: actual Message interface.
-    // Various questions: Have specific body type setters? Allow setting general body section types? Do both? Use a Message builder/factory?
-    public static Message create(Object body) {
-        return ClientMessage.create(body);
+    // Various questions: Have specific body type setters? Allow setting general body section types? Do both? Use a
+    // Message builder/factory?
+    //
+    // public static <E> Message<E> create(Class<E> typeClass);
+    //
+    public static Message<String> create(String body) {
+        return ClientMessage.create(body, () -> {
+            return new AmqpValue(body);
+        });
     }
 
-    Object getBody();
+    /**
+     * Controls if the message is marked as durable when sent.
+     *
+     * @param durable
+     *      value assigned to the durable flag for this message.
+     *
+     * @return this message for chaining.
+     */
+    Message<E> setDurable(boolean durable);
+
+    /**
+     * @return true if the Message is marked as being durable
+     */
+    boolean isDurable();
+
+    /**
+     * Returns the body that is conveyed in this message or null if no body was set locally
+     * or sent from the remote if this is an incoming message.
+     *
+     * @return the message body or null if none present.
+     */
+    E getBody();
+
 }
