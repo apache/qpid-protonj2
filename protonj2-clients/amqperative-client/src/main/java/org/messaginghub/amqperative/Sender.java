@@ -34,7 +34,7 @@ public interface Sender {
      *
      * @throws ClientException if an error occurs while initiating the send operation.
      */
-    Tracker send(Message message) throws ClientException;
+    Tracker send(Message<?> message) throws ClientException;
 
     Future<Sender> openFuture();
 
@@ -43,10 +43,10 @@ public interface Sender {
     Future<Sender> detach();
 
     //TODO: Ideas
-    Tracker trySend(Message message, Consumer<Tracker> onUpdated) throws IllegalStateException;
+    Tracker trySend(Message<?> message, Consumer<Tracker> onUpdated) throws IllegalStateException;
 
-    Tracker send(Message message, Consumer<Tracker> onUpdated);
+    Tracker send(Message<?> message, Consumer<Tracker> onUpdated);
 
-    Tracker send(Message message, Consumer<Tracker> onUpdated, ExecutorService executor);
+    Tracker send(Message<?> message, Consumer<Tracker> onUpdated, ExecutorService executor);
 
 }

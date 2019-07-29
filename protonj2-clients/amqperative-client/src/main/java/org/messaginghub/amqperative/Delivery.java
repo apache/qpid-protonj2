@@ -16,13 +16,15 @@
  */
 package org.messaginghub.amqperative;
 
+import org.messaginghub.amqperative.client.ClientException;
+
 /**
  *
  */
 public interface Delivery {
 
-    //TODO: or just expose everything via Delivery.
-    Message getMessage();
+    // TODO: or just expose everything via Delivery.
+    Message<?> getMessage() throws ClientException;
 
     /**
      * Accepts and settles the delivery.

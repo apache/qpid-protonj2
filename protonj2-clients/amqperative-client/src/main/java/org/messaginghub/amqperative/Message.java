@@ -16,7 +16,13 @@
  */
 package org.messaginghub.amqperative;
 
+import java.util.List;
+import java.util.Map;
+
+import org.apache.qpid.proton4j.amqp.Binary;
+import org.apache.qpid.proton4j.amqp.messaging.AmqpSequence;
 import org.apache.qpid.proton4j.amqp.messaging.AmqpValue;
+import org.apache.qpid.proton4j.amqp.messaging.Data;
 import org.messaginghub.amqperative.client.ClientMessage;
 
 /**
@@ -35,7 +41,37 @@ public interface Message<E> {
     //
     // public static <E> Message<E> create(Class<E> typeClass);
     //
+    public static Message<Void> create() {
+        return ClientMessage.create(null, () -> {
+            return null;
+        });
+    }
+
+    public static Message<Object> create(Object body) {
+        return ClientMessage.create(body, () -> {
+            return new AmqpValue(body);
+        });
+    }
+
     public static Message<String> create(String body) {
+        return ClientMessage.create(body, () -> {
+            return new AmqpValue(body);
+        });
+    }
+
+    public static Message<byte[]> create(byte[] body) {
+        return ClientMessage.create(body, () -> {
+            return new Data(new Binary(body));
+        });
+    }
+
+    public static Message<List<Object>> create(List<Object> body) {
+        return ClientMessage.create(body, () -> {
+            return new AmqpSequence(body);
+        });
+    }
+
+    public static Message<Map<Object, Object>> create(Map<Object, Object> body) {
         return ClientMessage.create(body, () -> {
             return new AmqpValue(body);
         });

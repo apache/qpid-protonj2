@@ -132,8 +132,12 @@ public class ClientReceiver implements Receiver {
 
     @Override
     public Receiver addCredit(int credits) throws IllegalStateException {
-        // TODO Auto-generated method stub
-        return null;
+        executor.execute(() -> {
+            // TODO - This is just a set without addition for now
+            receiver.setCredit(credits);
+        });
+
+        return this;
     }
 
     @Override

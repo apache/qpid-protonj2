@@ -22,13 +22,8 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
-import org.apache.qpid.proton4j.amqp.messaging.AmqpValue;
 import org.apache.qpid.proton4j.amqp.transport.DeliveryState;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
-import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
-import org.apache.qpid.proton4j.codec.CodecFactory;
-import org.apache.qpid.proton4j.codec.Encoder;
-import org.apache.qpid.proton4j.codec.EncoderState;
 import org.apache.qpid.proton4j.engine.OutgoingDelivery;
 import org.messaginghub.amqperative.Message;
 import org.messaginghub.amqperative.Sender;
@@ -70,29 +65,36 @@ public class ClientSender implements Sender {
     }
 
     @Override
-    public Tracker send(Message message) throws ClientException {
+    public Future<Sender> close() {
+        if (closed.compareAndSet(false, true) && !openFuture.isFailed()) {
+            executor.execute(() -> {
+                sender.close();
+            });
+        }
+        return closeFuture;
+    }
+
+    @Override
+    public Future<Sender> detach() {
+        if (closed.compareAndSet(false, true) && !openFuture.isFailed()) {
+            executor.execute(() -> {
+                sender.detach();
+            });
+        }
+        return closeFuture;
+    }
+
+    @Override
+    public Tracker send(Message<?> message) throws ClientException {
         ClientFuture<Tracker> operation = session.getFutureFactory().createFuture();
 
         executor.execute(() -> {
             //TODO: block for credit
             //TODO: check sender.isSendable();
 
-            ClientMessage msg = (ClientMessage) message;
+            ClientMessage<?> msg = (ClientMessage<?>) message;
 
-            // TODO: implement message handling properly
-            Object o = msg.getBody();
-            AmqpValue body = new AmqpValue(o);
-
-            Encoder encoder = CodecFactory.getDefaultEncoder();
-            EncoderState encoderState = encoder.newEncoderState();
-            ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate(4096);
-
-            try {
-                encoder.writeObject(buffer, encoderState, body);
-            } finally {
-                encoderState.reset();
-            }
-
+            ProtonBuffer buffer = ClientMessage.encodeMessage(msg);
             OutgoingDelivery delivery = sender.next();
             delivery.setTag(new byte[] {0});
             delivery.writeBytes(buffer);
@@ -109,34 +111,19 @@ public class ClientSender implements Sender {
     }
 
     @Override
-    public Future<Sender> close() {
-        if (closed.compareAndSet(false, true) && !openFuture.isFailed()) {
-            executor.execute(() -> {
-                sender.close();
-            });
-        }
-        return closeFuture;
-    }
-
-    @Override
-    public Future<Sender> detach() {
-        return closeFuture;
-    }
-
-    @Override
-    public Tracker trySend(Message message, Consumer<Tracker> onUpdated) throws IllegalStateException {
+    public Tracker trySend(Message<?> message, Consumer<Tracker> onUpdated) throws IllegalStateException {
         // TODO Auto-generated method stub
         return null;
     }
 
     @Override
-    public Tracker send(Message message, Consumer<Tracker> onUpdated) {
+    public Tracker send(Message<?> message, Consumer<Tracker> onUpdated) {
         // TODO Auto-generated method stub
         return null;
     }
 
     @Override
-    public Tracker send(Message message, Consumer<Tracker> onUpdated, ExecutorService executor) {
+    public Tracker send(Message<?> message, Consumer<Tracker> onUpdated, ExecutorService executor) {
         // TODO Auto-generated method stub
         return null;
     }
@@ -164,6 +151,18 @@ public class ClientSender implements Sender {
             sender.closeHandler(result -> {
                 closed.set(true);
                 closeFuture.complete(this);
+            });
+
+            sender.detachHandler(result -> {
+                // TODO
+            });
+
+            sender.deliveryUpdatedEventHandler(delivery -> {
+                // TODO
+            });
+
+            sender.sendableEventHandler(result -> {
+                // TODO
             });
 
             sender.open();

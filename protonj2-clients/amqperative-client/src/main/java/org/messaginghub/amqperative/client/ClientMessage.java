@@ -26,17 +26,14 @@ import org.apache.qpid.proton4j.amqp.messaging.MessageAnnotations;
 import org.apache.qpid.proton4j.amqp.messaging.Properties;
 import org.apache.qpid.proton4j.amqp.messaging.Section;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import org.apache.qpid.proton4j.buffer.ProtonBufferAllocator;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.codec.CodecFactory;
 import org.apache.qpid.proton4j.codec.Encoder;
 import org.apache.qpid.proton4j.codec.EncoderState;
 import org.messaginghub.amqperative.Message;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class ClientMessage<E> implements Message<E> {
-
-    private static final Logger LOG = LoggerFactory.getLogger(ClientMessage.class);
 
     private Header header;
     private DeliveryAnnotations deliveryAnnotations;
@@ -59,8 +56,10 @@ public class ClientMessage<E> implements Message<E> {
         this.sectionSupplier = sectionSupplier;
     }
 
-    public static Message<String> create(String body, Supplier<Section> sectionSupplier) {
-        return new ClientMessage<String>(sectionSupplier).setBody(body);
+    //----- Entry point for creating new ClientMessage instances.
+
+    public static <V> Message<V> create(V body, Supplier<Section> sectionSupplier) {
+        return new ClientMessage<V>(sectionSupplier).setBody(body);
     }
 
     //----- Message Header API
@@ -95,28 +94,58 @@ public class ClientMessage<E> implements Message<E> {
         return header;
     }
 
+    Message<?> setHeader(Header header) {
+        this.header = header;
+        return this;
+    }
+
     DeliveryAnnotations getDeliveryAnnotations() {
         return deliveryAnnotations;
+    }
+
+    Message<E> setDeliveryAnnotations(DeliveryAnnotations annotations) {
+        this.deliveryAnnotations = annotations;
+        return this;
     }
 
     MessageAnnotations getMessageAnnotations() {
         return messageAnnotations;
     }
 
+    Message<?> setMessageAnnotations(MessageAnnotations annotations) {
+        this.messageAnnotations = annotations;
+        return this;
+    }
+
     Properties getProperties() {
         return properties;
+    }
+
+    Message<?> setProperties(Properties properties) {
+        this.properties = properties;
+        return this;
     }
 
     ApplicationProperties getApplicationProperties() {
         return applicationProperties;
     }
 
-    Section getBodySection() {
-        return sectionSupplier.get();
+    Message<?> setApplicationProperties(ApplicationProperties applicationProperties) {
+        this.applicationProperties = applicationProperties;
+        return this;
     }
 
     Footer getFooter() {
         return footer;
+    }
+
+    Message<?> setFooter(Footer footer) {
+        this.footer = footer;
+        return this;
+    }
+
+    Section getBodySection() {
+        return sectionSupplier.get();
     }
 
     //----- Internal API
@@ -127,10 +156,13 @@ public class ClientMessage<E> implements Message<E> {
     }
 
     public static ProtonBuffer encodeMessage(ClientMessage<?> message) {
+        return encodeMessage(CodecFactory.getDefaultEncoder(), ProtonByteBufferAllocator.DEFAULT, message);
+    }
+
+    public static ProtonBuffer encodeMessage(Encoder encoder, ProtonBufferAllocator allocator, ClientMessage<?> message) {
         // TODO - Hand in the Engine and use configured allocator and or cached encoder
-        Encoder encoder = CodecFactory.getDefaultEncoder();
         EncoderState encoderState = encoder.newEncoderState();
-        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate(4096);
+        ProtonBuffer buffer = allocator.allocate();
 
         Header header = message.getHeader();
         DeliveryAnnotations deliveryAnnotations = message.getDeliveryAnnotations();

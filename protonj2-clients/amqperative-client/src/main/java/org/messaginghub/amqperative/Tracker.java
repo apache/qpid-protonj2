@@ -21,7 +21,7 @@ package org.messaginghub.amqperative;
  */
 public interface Tracker {
 
-    Message getMessage();
+    Message<?> getMessage();
     //TODO: need this?
 
     /**
