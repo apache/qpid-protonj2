@@ -23,12 +23,14 @@ import java.net.URI;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
+import org.apache.activemq.broker.jmx.QueueViewMBean;
 import org.apache.qpid.jms.support.AMQPerativeTestSupport;
 import org.apache.qpid.jms.support.Wait;
 import org.junit.Test;
 import org.messaginghub.amqperative.Connection;
 import org.messaginghub.amqperative.Container;
 import org.messaginghub.amqperative.ContainerOptions;
+import org.messaginghub.amqperative.Message;
 import org.messaginghub.amqperative.Sender;
 
 public class SenderTest extends AMQPerativeTestSupport {
@@ -57,5 +59,40 @@ public class SenderTest extends AMQPerativeTestSupport {
         Wait.assertTrue("Broker did not register a sender close", () -> getProxyToBroker().getQueueProducers().length == 0);
 
         assertSame(connection, connection.close().get(5, TimeUnit.SECONDS));
+    }
+
+    @Test(timeout = 60000)
+    public void testSendMessageToRemoteQueueDurable() throws Exception {
+        doTestSendMessageToRemoteQueueDurable(true);
+    }
+
+    @Test(timeout = 60000)
+    public void testSendMessageToRemoteQueueNotDurable() throws Exception {
+        doTestSendMessageToRemoteQueueDurable(false);
+    }
+
+    private void doTestSendMessageToRemoteQueueDurable(boolean durable) throws Exception {
+        URI brokerURI = getBrokerAmqpConnectionURI();
+
+        ContainerOptions options = new ContainerOptions();
+        options.setContainerId(UUID.randomUUID().toString());
+        Container container = Container.create(options);
+        assertNotNull(container);
+
+        Connection connection = container.createConnection(brokerURI.getHost(), brokerURI.getPort());
+        assertNotNull(connection);
+        assertSame(connection, connection.openFuture().get(5, TimeUnit.SECONDS));
+
+        Sender sender = connection.createSender(getTestName()).openFuture().get(5, TimeUnit.SECONDS);
+        assertNotNull(sender);
+
+        Message<String> message = Message.create("Hello World").setDurable(durable);
+        sender.send(message);
+
+        final QueueViewMBean queueView = getProxyToQueue(getTestName());
+        Wait.assertEquals(1, () -> queueView.getQueueSize());
+
+        assertNotNull(sender.close().get(5, TimeUnit.SECONDS));
+        assertNotNull(connection.close().get(5, TimeUnit.SECONDS));
     }
 }
