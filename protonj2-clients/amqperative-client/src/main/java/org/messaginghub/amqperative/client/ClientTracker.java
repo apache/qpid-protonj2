@@ -61,7 +61,7 @@ public class ClientTracker implements Tracker {
 
     @Override
     public Tracker settle() {
-        delivery.settle();
+        sender.disposition(delivery, null, true);
         return this;
     }
 
