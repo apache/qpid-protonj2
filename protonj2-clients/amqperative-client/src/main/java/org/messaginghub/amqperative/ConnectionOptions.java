@@ -30,11 +30,15 @@ public class ConnectionOptions {
     public static final long DEFAULT_CLOSE_TIMEOUT = 60000;
     public static final long DEFAULT_SEND_TIMEOUT = INFINITE;
     public static final long DEFAULT_REQUEST_TIMEOUT = INFINITE;
+    public static final long DEFAULT_IDLE_TIMEOUT = 60000;
+    public static final long DEFAULT_DRAIN_TIMEOUT = 60000;
 
     private long sendTimeout = DEFAULT_SEND_TIMEOUT;
     private long requestTimeout = DEFAULT_REQUEST_TIMEOUT;
     private long connectTimeout = DEFAULT_CONNECT_TIMEOUT;
     private long closeTimeout = DEFAULT_CLOSE_TIMEOUT;
+    private long idleTimeout = DEFAULT_IDLE_TIMEOUT;
+    private long drainTimeout = DEFAULT_DRAIN_TIMEOUT;
 
     // TODO - Strings or expose a Symbol type, depending on how Message types are
     //        constructed same issue, some things require Symbols unless we hide
@@ -58,6 +62,8 @@ public class ConnectionOptions {
         other.setConnectTimeout(connectTimeout);
         other.setSendTimeout(sendTimeout);
         other.setRequestTimeout(requestTimeout);
+        other.setIdleTimeout(idleTimeout);
+        other.setDrainTimeout(drainTimeout);
 
         if (offeredCapabilities != null) {
             other.setOfferedCapabilities(Arrays.copyOf(offeredCapabilities, offeredCapabilities.length));
@@ -104,6 +110,38 @@ public class ConnectionOptions {
 
     public void setRequestTimeout(long requestTimeout) {
         this.requestTimeout = requestTimeout;
+    }
+
+    public long getIdleTimeout() {
+        return idleTimeout;
+    }
+
+    /**
+     * Sets the idle timeout (in milliseconds) after which the connection will
+     * be closed if the peer has not send any data. The provided value will be
+     * halved before being transmitted as our advertised idle-timeout in the
+     * AMQP Open frame.
+     *
+     * @param idleTimeout the timeout in milliseconds.
+     */
+    public void setIdleTimeout(long idleTimeout) {
+        this.idleTimeout = idleTimeout;
+    }
+
+    public long getDrainTimeout() {
+        return drainTimeout;
+    }
+
+    /**
+     * Sets the drain timeout (in milliseconds) after which a receiver will be
+     * treated as having failed and will be closed due to unknown state of the
+     * remote having not responded to the requested drain.
+     *
+     * @param drainTimeout
+     *      the drainTimeout to use for receiver links.
+     */
+    public void setDrainTimeout(long drainTimeout) {
+        this.drainTimeout = drainTimeout;
     }
 
     /**
