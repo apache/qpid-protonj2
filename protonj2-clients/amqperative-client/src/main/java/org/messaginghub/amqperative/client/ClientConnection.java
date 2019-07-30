@@ -89,7 +89,7 @@ public class ClientConnection implements Connection {
         this.options = options;
         this.futureFactoy = ClientFutureFactory.create(options.getFutureType());
 
-        ThreadFactory transportThreadFactory = new ClientConnectionThreadFactory(
+        ThreadFactory transportThreadFactory = new ClientThreadFactory(
             "ProtonConnection :(" + CONNECTION_SEQUENCE.incrementAndGet()
                           + "):[" + options.getHostname() + ":" + options.getPort() + "]", true);
         transport = new TcpTransport(

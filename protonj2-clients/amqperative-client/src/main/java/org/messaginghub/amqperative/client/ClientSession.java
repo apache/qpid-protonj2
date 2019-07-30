@@ -17,9 +17,14 @@
 package org.messaginghub.amqperative.client;
 
 import java.util.UUID;
+import java.util.concurrent.Executor;
 import java.util.concurrent.Future;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.apache.qpid.proton4j.amqp.messaging.Source;
 import org.apache.qpid.proton4j.amqp.messaging.Target;
@@ -32,6 +37,7 @@ import org.messaginghub.amqperative.Session;
 import org.messaginghub.amqperative.client.exceptions.ClientExceptionSupport;
 import org.messaginghub.amqperative.futures.ClientFuture;
 import org.messaginghub.amqperative.futures.ClientFutureFactory;
+import org.messaginghub.amqperative.util.NoOpExecutor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -50,6 +56,10 @@ public class ClientSession implements Session {
     private final org.apache.qpid.proton4j.engine.Session session;
     private final ScheduledExecutorService serializer;
     private final AtomicBoolean closed = new AtomicBoolean();
+    private final String sessionId = UUID.randomUUID().toString();  // TODO - add trailing numeric session count
+
+    private volatile ThreadPoolExecutor deliveryExecutor;
+    private final AtomicReference<Thread> deliveryThread = new AtomicReference<Thread>();
 
     public ClientSession(ClientSessionOptions options, ClientConnection connection, org.apache.qpid.proton4j.engine.Session session) {
         this.options = new ClientSessionOptions(options);
@@ -181,5 +191,45 @@ public class ClientSession implements Session {
 
     ClientFutureFactory getFutureFactory() {
         return connection.getFutureFactory();
+    }
+
+    Executor getDeliveryExecutor() {
+        ThreadPoolExecutor exec = deliveryExecutor;
+        if (exec == null) {
+            synchronized (options) {
+                if (deliveryExecutor == null) {
+                    if (!closed.get()) {
+                        deliveryExecutor = exec = createExecutor("delivery dispatcher", deliveryThread);
+                    } else {
+                        return NoOpExecutor.INSTANCE;
+                    }
+                } else {
+                    exec = deliveryExecutor;
+                }
+            }
+        }
+
+        return exec;
+    }
+
+    //----- Private implementation methods
+
+    private ThreadPoolExecutor createExecutor(final String threadNameSuffix, AtomicReference<Thread> threadTracker) {
+        ThreadPoolExecutor executor = new ThreadPoolExecutor(1, 1, 1, TimeUnit.MINUTES, new LinkedBlockingQueue<Runnable>(),
+            new ClientThreadFactory("ClientSession ["+ sessionId + "] " + threadNameSuffix, true, threadTracker));
+
+        executor.setRejectedExecutionHandler(new ThreadPoolExecutor.DiscardOldestPolicy() {
+
+            @Override
+            public void rejectedExecution(Runnable r, ThreadPoolExecutor e) {
+                // Completely ignore the task if the session has closed.
+                if (!closed.get()) {
+                    LOG.trace("Task {} rejected from executor: {}", r, e);
+                    super.rejectedExecution(r, e);
+                }
+            }
+        });
+
+        return executor;
     }
 }

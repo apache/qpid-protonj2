@@ -26,9 +26,9 @@ import org.slf4j.LoggerFactory;
 /**
  * Simple ThreadFactory object
  */
-public class ClientConnectionThreadFactory implements ThreadFactory {
+public class ClientThreadFactory implements ThreadFactory {
 
-    private static final Logger LOG = LoggerFactory.getLogger(ClientConnectionThreadFactory.class);
+    private static final Logger LOG = LoggerFactory.getLogger(ClientThreadFactory.class);
 
     private final String threadName;
     private final boolean daemon;
@@ -43,7 +43,7 @@ public class ClientConnectionThreadFactory implements ThreadFactory {
      * @param daemon
      *      should the created thread be a daemon thread.
      */
-    public ClientConnectionThreadFactory(String threadName, boolean daemon) {
+    public ClientThreadFactory(String threadName, boolean daemon) {
         this.threadName = threadName;
         this.daemon = daemon;
         this.threadTracker = null;
@@ -65,7 +65,7 @@ public class ClientConnectionThreadFactory implements ThreadFactory {
      * @param threadTracker
      *      AtomicReference that will be updated any time a new Thread is created.
      */
-    public ClientConnectionThreadFactory(String threadName, boolean daemon, AtomicReference<Thread> threadTracker) {
+    public ClientThreadFactory(String threadName, boolean daemon, AtomicReference<Thread> threadTracker) {
         this.threadName = threadName;
         this.daemon = daemon;
         this.threadTracker = threadTracker;
