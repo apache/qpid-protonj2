@@ -23,6 +23,7 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLongFieldUpdater;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.apache.qpid.proton4j.engine.impl.ProtonEngine;
 import org.apache.qpid.proton4j.engine.impl.ProtonEngineFactory;
@@ -72,6 +73,7 @@ public class ClientConnection implements Connection {
     private final AtomicBoolean remoteOpened = new AtomicBoolean();
     private final AtomicBoolean remoteClosed = new AtomicBoolean();
     private volatile long closeState;
+    private final AtomicReference<Throwable> failureCause = new AtomicReference<>();
 
     private ScheduledExecutorService executor;
 
@@ -245,6 +247,12 @@ public class ClientConnection implements Connection {
     }
 
     //----- Private implementation
+
+    protected void checkClosed() throws IllegalStateException {
+        if (CLOSE_STATE_UPDATER.get(this) > 0) {
+            throw new IllegalStateException("The Connection is closed");
+        }
+    }
 
     private void open() {
         executor.execute(() -> {

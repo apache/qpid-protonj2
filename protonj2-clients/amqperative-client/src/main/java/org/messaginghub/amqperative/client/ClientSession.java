@@ -60,6 +60,7 @@ public class ClientSession implements Session {
 
     private volatile ThreadPoolExecutor deliveryExecutor;
     private final AtomicReference<Thread> deliveryThread = new AtomicReference<Thread>();
+    private final AtomicReference<Throwable> failureCause = new AtomicReference<>();
 
     public ClientSession(ClientSessionOptions options, ClientConnection connection, org.apache.qpid.proton4j.engine.Session session) {
         this.options = new ClientSessionOptions(options);
@@ -212,7 +213,30 @@ public class ClientSession implements Session {
         return exec;
     }
 
+    void setFailureCause(Throwable failureCause) {
+        this.failureCause.set(failureCause);
+    }
+
+    Throwable getFailureCause() {
+        return failureCause.get();
+    }
+
     //----- Private implementation methods
+
+    private void checkClosed() throws IllegalStateException {
+        if (closed.get()) {
+            IllegalStateException error = null;
+
+            if (failureCause.get() == null) {
+                error = new IllegalStateException("The Session is closed");
+            } else {
+                error = new IllegalStateException("The Session was closed due to an unrecoverable error.");
+                error.initCause(failureCause.get());
+            }
+
+            throw error;
+        }
+    }
 
     private ThreadPoolExecutor createExecutor(final String threadNameSuffix, AtomicReference<Thread> threadTracker) {
         ThreadPoolExecutor executor = new ThreadPoolExecutor(1, 1, 1, TimeUnit.MINUTES, new LinkedBlockingQueue<Runnable>(),

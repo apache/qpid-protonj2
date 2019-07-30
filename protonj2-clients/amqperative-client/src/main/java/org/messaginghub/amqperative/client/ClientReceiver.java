@@ -20,6 +20,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
 import org.apache.qpid.proton4j.amqp.transport.DeliveryState;
@@ -45,6 +46,7 @@ public class ClientReceiver implements Receiver {
     private final org.apache.qpid.proton4j.engine.Receiver receiver;
     private final ScheduledExecutorService executor;
     private final AtomicBoolean closed = new AtomicBoolean();
+    private final AtomicReference<Throwable> failureCause = new AtomicReference<>();
 
     private final FifoMessageQueue messageQueue;
 
@@ -80,19 +82,19 @@ public class ClientReceiver implements Receiver {
     }
 
     @Override
-    public Delivery tryReceive() throws IllegalStateException {
+    public Delivery receive(long timeout) throws IllegalStateException {
+        //TODO: verify timeout conventions align
         try {
-            return messageQueue.dequeue(0);
+            return messageQueue.dequeue(timeout);
         } catch (InterruptedException e) {
             throw new IllegalStateException(e);//TODO: better exception
         }
     }
 
     @Override
-    public Delivery receive(long timeout) throws IllegalStateException {
-        //TODO: verify timeout conventions align
+    public Delivery tryReceive() throws IllegalStateException {
         try {
-            return messageQueue.dequeue(timeout);
+            return messageQueue.dequeue(0);
         } catch (InterruptedException e) {
             throw new IllegalStateException(e);//TODO: better exception
         }
@@ -187,5 +189,34 @@ public class ClientReceiver implements Receiver {
         });
 
         return this;
+    }
+
+    void setFailureCause(Throwable failureCause) {
+        this.failureCause.set(failureCause);
+    }
+
+    Throwable getFailureCause() {
+        if (failureCause.get() == null) {
+            return session.getFailureCause();
+        }
+
+        return failureCause.get();
+    }
+
+    //----- Private implementation details
+
+    private void checkClosed() throws IllegalStateException {
+        if (closed.get()) {
+            IllegalStateException error = null;
+
+            if (getFailureCause() == null) {
+                error = new IllegalStateException("The Receiver is closed");
+            } else {
+                error = new IllegalStateException("The Receiver was closed due to an unrecoverable error.");
+                error.initCause(getFailureCause());
+            }
+
+            throw error;
+        }
     }
 }

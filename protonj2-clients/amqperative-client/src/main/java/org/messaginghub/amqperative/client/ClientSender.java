@@ -20,6 +20,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
 import org.apache.qpid.proton4j.amqp.transport.DeliveryState;
@@ -49,6 +50,7 @@ public class ClientSender implements Sender {
     private final org.apache.qpid.proton4j.engine.Sender sender;
     private final ScheduledExecutorService executor;
     private final AtomicBoolean closed = new AtomicBoolean();
+    private final AtomicReference<Throwable> failureCause = new AtomicReference<>();
 
     public ClientSender(SenderOptions options, ClientSession session, org.apache.qpid.proton4j.engine.Sender sender) {
         this.options = new ClientSenderOptions(options);
@@ -169,5 +171,34 @@ public class ClientSender implements Sender {
         });
 
         return this;
+    }
+
+    void setFailureCause(Throwable failureCause) {
+        this.failureCause.set(failureCause);
+    }
+
+    Throwable getFailureCause() {
+        if (failureCause.get() == null) {
+            return session.getFailureCause();
+        }
+
+        return failureCause.get();
+    }
+
+    //----- Private implementation details
+
+    private void checkClosed() throws IllegalStateException {
+        if (closed.get()) {
+            IllegalStateException error = null;
+
+            if (getFailureCause() == null) {
+                error = new IllegalStateException("The Sender is closed");
+            } else {
+                error = new IllegalStateException("The Sender was closed due to an unrecoverable error.");
+                error.initCause(getFailureCause());
+            }
+
+            throw error;
+        }
     }
 }
