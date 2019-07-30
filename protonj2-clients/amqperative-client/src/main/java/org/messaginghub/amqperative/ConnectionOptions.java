@@ -16,12 +16,25 @@
  */
 package org.messaginghub.amqperative;
 
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
  * Options that control the behaviour of the {@link Connection} created from them.
  */
 public class ConnectionOptions {
+
+    public static final long INFINITE = -1;
+    public static final long DEFAULT_CONNECT_TIMEOUT = 15000;
+    public static final long DEFAULT_CLOSE_TIMEOUT = 60000;
+    public static final long DEFAULT_SEND_TIMEOUT = INFINITE;
+    public static final long DEFAULT_REQUEST_TIMEOUT = INFINITE;
+
+    private long sendTimeout = DEFAULT_SEND_TIMEOUT;
+    private long requestTimeout = DEFAULT_REQUEST_TIMEOUT;
+    private long connectTimeout = DEFAULT_CONNECT_TIMEOUT;
+    private long closeTimeout = DEFAULT_CLOSE_TIMEOUT;
 
     // TODO - Strings or expose a Symbol type, depending on how Message types are
     //        constructed same issue, some things require Symbols unless we hide
@@ -41,7 +54,56 @@ public class ConnectionOptions {
      * @return this options class for chaining.
      */
     public ConnectionOptions copyInto(ConnectionOptions other) {
+        other.setCloseTimeout(closeTimeout);
+        other.setConnectTimeout(connectTimeout);
+        other.setSendTimeout(sendTimeout);
+        other.setRequestTimeout(requestTimeout);
+
+        if (offeredCapabilities != null) {
+            other.setOfferedCapabilities(Arrays.copyOf(offeredCapabilities, offeredCapabilities.length));
+        }
+        if (desiredCapabilities != null) {
+            other.setDesiredCapabilities(Arrays.copyOf(desiredCapabilities, desiredCapabilities.length));
+        }
+        if (properties != null) {
+            other.setProperties(new HashMap<>(properties));
+        }
+
         return this;
+    }
+
+    // TODO - Proper Javadocs
+
+    public long getCloseTimeout() {
+        return closeTimeout;
+    }
+
+    public void setCloseTimeout(long closeTimeout) {
+        this.closeTimeout = closeTimeout;
+    }
+
+    public long getConnectTimeout() {
+        return connectTimeout;
+    }
+
+    public void setConnectTimeout(long connectTimeout) {
+        this.connectTimeout = connectTimeout;
+    }
+
+    public long getSendTimeout() {
+        return sendTimeout;
+    }
+
+    public void setSendTimeout(long sendTimeout) {
+        this.sendTimeout = sendTimeout;
+    }
+
+    public long getRequestTimeout() {
+        return requestTimeout;
+    }
+
+    public void setRequestTimeout(long requestTimeout) {
+        this.requestTimeout = requestTimeout;
     }
 
     /**

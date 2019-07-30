@@ -25,6 +25,11 @@ public class ReceiverOptions {
     private String linkName;
     private boolean dynamic;
 
+    private long sendTimeout = ConnectionOptions.DEFAULT_SEND_TIMEOUT;
+    private long requestTimeout = ConnectionOptions.DEFAULT_REQUEST_TIMEOUT;
+    private long connectTimeout = ConnectionOptions.DEFAULT_CONNECT_TIMEOUT;
+    private long closeTimeout = ConnectionOptions.DEFAULT_CLOSE_TIMEOUT;
+
     public ReceiverOptions() {
     }
 
@@ -55,6 +60,38 @@ public class ReceiverOptions {
         return this;
     }
 
+    public long getCloseTimeout() {
+        return closeTimeout;
+    }
+
+    public void setCloseTimeout(long closeTimeout) {
+        this.closeTimeout = closeTimeout;
+    }
+
+    public long getConnectTimeout() {
+        return connectTimeout;
+    }
+
+    public void setConnectTimeout(long connectTimeout) {
+        this.connectTimeout = connectTimeout;
+    }
+
+    public long getSendTimeout() {
+        return sendTimeout;
+    }
+
+    public void setSendTimeout(long sendTimeout) {
+        this.sendTimeout = sendTimeout;
+    }
+
+    public long getRequestTimeout() {
+        return requestTimeout;
+    }
+
+    public void setRequestTimeout(long requestTimeout) {
+        this.requestTimeout = requestTimeout;
+    }
+
     /**
      * Copy all options from this {@link ReceiverOptions} instance into the instance
      * provided.
@@ -68,6 +105,10 @@ public class ReceiverOptions {
         other.setCreditWindow(creditWindow);
         other.setDynamic(dynamic);
         other.setLinkName(linkName);
+        other.setCloseTimeout(closeTimeout);
+        other.setConnectTimeout(connectTimeout);
+        other.setSendTimeout(sendTimeout);
+        other.setRequestTimeout(requestTimeout);
 
         return this;
     }

@@ -25,6 +25,11 @@ public class SenderOptions {
     private boolean dynamic;
     private boolean autoSettle;
 
+    private long sendTimeout = ConnectionOptions.DEFAULT_SEND_TIMEOUT;
+    private long requestTimeout = ConnectionOptions.DEFAULT_REQUEST_TIMEOUT;
+    private long connectTimeout = ConnectionOptions.DEFAULT_CONNECT_TIMEOUT;
+    private long closeTimeout = ConnectionOptions.DEFAULT_CLOSE_TIMEOUT;
+
     public SenderOptions() {
     }
 
@@ -73,6 +78,38 @@ public class SenderOptions {
         return autoSettle;
     }
 
+    public long getCloseTimeout() {
+        return closeTimeout;
+    }
+
+    public void setCloseTimeout(long closeTimeout) {
+        this.closeTimeout = closeTimeout;
+    }
+
+    public long getConnectTimeout() {
+        return connectTimeout;
+    }
+
+    public void setConnectTimeout(long connectTimeout) {
+        this.connectTimeout = connectTimeout;
+    }
+
+    public long getSendTimeout() {
+        return sendTimeout;
+    }
+
+    public void setSendTimeout(long sendTimeout) {
+        this.sendTimeout = sendTimeout;
+    }
+
+    public long getRequestTimeout() {
+        return requestTimeout;
+    }
+
+    public void setRequestTimeout(long requestTimeout) {
+        this.requestTimeout = requestTimeout;
+    }
+
     /**
      * Copy all options from this {@link SenderOptions} instance into the instance
      * provided.
@@ -86,6 +123,10 @@ public class SenderOptions {
         other.setAutoSettle(autoSettle);
         other.setDynamic(dynamic);
         other.setLinkName(linkName);
+        other.setCloseTimeout(closeTimeout);
+        other.setConnectTimeout(connectTimeout);
+        other.setSendTimeout(sendTimeout);
+        other.setRequestTimeout(requestTimeout);
 
         return this;
     }

@@ -43,7 +43,7 @@ public class ClientTracker implements Tracker {
     }
 
     @Override
-    public Message getMessage() {
+    public Message<?> getMessage() {
         // TODO Are we holding a message or just tracking the outgoing delivery object ?
         return null;
     }

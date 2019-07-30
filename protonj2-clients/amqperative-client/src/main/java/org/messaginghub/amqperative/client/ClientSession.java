@@ -36,7 +36,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- *
+ * Client implementation of the Session API.
  */
 public class ClientSession implements Session {
 
@@ -48,14 +48,14 @@ public class ClientSession implements Session {
     private final ClientSessionOptions options;
     private final ClientConnection connection;
     private final org.apache.qpid.proton4j.engine.Session session;
-    private final ScheduledExecutorService executor;
+    private final ScheduledExecutorService serializer;
     private final AtomicBoolean closed = new AtomicBoolean();
 
     public ClientSession(ClientSessionOptions options, ClientConnection connection, org.apache.qpid.proton4j.engine.Session session) {
         this.options = new ClientSessionOptions(options);
         this.connection = connection;
         this.session = session;
-        this.executor = connection.getScheduler();
+        this.serializer = connection.getScheduler();
         this.openFuture = connection.getFutureFactory().createFuture();
         this.closeFuture = connection.getFutureFactory().createFuture();
     }
@@ -68,7 +68,7 @@ public class ClientSession implements Session {
     @Override
     public Future<Session> close() {
         if (closed.compareAndSet(false, true) && !openFuture.isFailed()) {
-            executor.execute(() -> {
+            serializer.execute(() -> {
                 session.close();
             });
         }
@@ -84,7 +84,7 @@ public class ClientSession implements Session {
     public Receiver createReceiver(String address, ReceiverOptions receiverOptions) throws ClientException {
         ClientFuture<Receiver> createReceiver = getFutureFactory().createFuture();
 
-        executor.execute(() -> {
+        serializer.execute(() -> {
             String name = receiverOptions.getLinkName();
             if (name == null) {
                 //TODO: use container-id + counter rather than UUID?
@@ -120,7 +120,7 @@ public class ClientSession implements Session {
     public Sender createSender(String address, SenderOptions senderOptions) throws ClientException {
         ClientFuture<Sender> createSender = getFutureFactory().createFuture();
 
-        executor.execute(() -> {
+        serializer.execute(() -> {
             String name = senderOptions.getLinkName();
             if (name == null) {
                 //TODO: use container-id + counter rather than UUID?
@@ -150,7 +150,7 @@ public class ClientSession implements Session {
     //----- Internal API
 
     ClientSession open() {
-        executor.execute(() -> {
+        serializer.execute(() -> {
             session.openHandler(result -> {
                 if (result.succeeded()) {
                     openFuture.complete(this);
@@ -172,7 +172,7 @@ public class ClientSession implements Session {
     }
 
     ScheduledExecutorService getScheduler() {
-        return executor;
+        return serializer;
     }
 
     ProtonEngine getEngine() {
