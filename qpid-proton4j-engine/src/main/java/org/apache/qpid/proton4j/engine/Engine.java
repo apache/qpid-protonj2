@@ -16,6 +16,7 @@
  */
 package org.apache.qpid.proton4j.engine;
 
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.function.Consumer;
 
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
@@ -121,7 +122,7 @@ public interface Engine extends Consumer<ProtonBuffer> {
     }
 
     /**
-     * Prompt the transport to perform idle-timeout/heartbeat handling, and return an absolute
+     * Prompt the engine to perform idle-timeout/heartbeat handling, and return an absolute
      * deadline in milliseconds that tick must again be called by/at, based on the provided
      * current time in milliseconds, to ensure the periodic work is carried out as necessary.
      *
@@ -131,11 +132,14 @@ public interface Engine extends Consumer<ProtonBuffer> {
      * This method will use a monotonic clock to determine current time
      *
      * @return the absolute deadline in milliseconds to next call tick by/at, or 0 if there is none.
+     *
+     * @throws EngineStateException if the Engine state precludes accepting new input.
+     * @throws EngineClosedException if the Engine has been shutdown or has failed.
      */
-    long tick();
+    long tick() throws EngineStateException;
 
     /**
-     * Prompt the transport to perform idle-timeout/heartbeat handling, and return an absolute
+     * Prompt the engine to perform idle-timeout/heartbeat handling, and return an absolute
      * deadline in milliseconds that tick must again be called by/at, based on the provided
      * current time in milliseconds, to ensure the periodic work is carried out as necessary.
      *
@@ -152,8 +156,24 @@ public interface Engine extends Consumer<ProtonBuffer> {
      *      the current time of this tick call.
      *
      * @return the absolute deadline in milliseconds to next call tick by/at, or 0 if there is none.
+     *
+     * @throws EngineStateException if the Engine state precludes accepting new input.
+     * @throws EngineClosedException if the Engine has been shutdown or has failed.
      */
-    long tick(long currentTime);
+    long tick(long currentTime) throws EngineStateException;
+
+    /**
+     * Allows the engine to manage idle timeout processing by providing it the single threaded executor
+     * context where all transport work is done which ensures singled threaded access while removing the
+     * need for the client library or application to manage calls to the {@link Engine#tick} methods.
+     *
+     * @param executor
+     *      The execution context where all engine work takes place
+     *
+     * @throws EngineStateException if the Engine state precludes accepting new input.
+     * @throws EngineClosedException if the Engine has been shutdown or has failed.
+     */
+    void autoTick(ScheduledExecutorService executor) throws EngineStateException;
 
     //----- Engine configuration and state
 

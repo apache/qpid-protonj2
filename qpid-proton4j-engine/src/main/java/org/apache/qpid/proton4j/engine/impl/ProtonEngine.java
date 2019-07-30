@@ -16,14 +16,20 @@
  */
 package org.apache.qpid.proton4j.engine.impl;
 
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
+
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.common.logging.ProtonLogger;
 import org.apache.qpid.proton4j.common.logging.ProtonLoggerFactory;
+import org.apache.qpid.proton4j.engine.ConnectionState;
 import org.apache.qpid.proton4j.engine.Engine;
 import org.apache.qpid.proton4j.engine.EngineSaslContext;
 import org.apache.qpid.proton4j.engine.EngineState;
 import org.apache.qpid.proton4j.engine.EventHandler;
 import org.apache.qpid.proton4j.engine.exceptions.EngineClosedException;
+import org.apache.qpid.proton4j.engine.exceptions.EngineIdleTimeoutException;
 import org.apache.qpid.proton4j.engine.exceptions.EngineNotWritableException;
 import org.apache.qpid.proton4j.engine.exceptions.EngineStateException;
 import org.apache.qpid.proton4j.engine.exceptions.ProtonException;
@@ -45,9 +51,13 @@ public class ProtonEngine implements Engine {
     private boolean writable;
     private EngineState state = EngineState.IDLE;
 
+    // Idle Timeout Check data
+    private ScheduledFuture<?> nextIdleTimeoutCheck;
+    private ScheduledExecutorService idleTimeoutExecutor;
+
+    // Engine event points
     private EventHandler<ProtonBuffer> outputHandler;
     private EventHandler<ProtonException> errorHandler;
-
     private EventHandler<ProtonException> engineErrorHandler = (error) -> {
         LOG.warn("Engine encounted error and will shutdown: ", error);
     };
@@ -94,17 +104,101 @@ public class ProtonEngine implements Engine {
     public ProtonEngine shutdown() {
         state = EngineState.SHUTDOWN;
         writable = false;
+
+        if (nextIdleTimeoutCheck != null) {
+            LOG.trace("Cancelling scheduled Idle Timeout Check");
+            nextIdleTimeoutCheck.cancel(false);
+            nextIdleTimeoutCheck = null;
+        }
+
         return this;
     }
 
     @Override
-    public long tick() {
+    public long tick() throws EngineStateException {
         return tick(System.nanoTime());
     }
 
     @Override
-    public long tick(long currentTime) {
-        return 0;
+    public long tick(long currentTime) throws EngineStateException {
+        long deadline = 0;
+
+        // TODO - Map processing into Engine implementation
+//        if (connection.getIdleTimeout() > 0) {
+//            if (localIdleDeadline == 0 || lastBytesInput != bytesInput) {
+//                localIdleDeadline = computeDeadline(now, localIdleTimeout);
+//                lastBytesInput = bytesInput;
+//            } else if (localIdleDeadline - now <= 0) {
+//                localIdleDeadline = computeDeadline(now, localIdleTimeout);
+//                if (connectionEndpoint != null &&
+//                    connectionEndpoint.getLocalState() != EndpointState.CLOSED) {
+//                    ErrorCondition condition = new ErrorCondition(
+//                        Symbol.getSymbol("amqp:resource-limit-exceeded"), "local-idle-timeout expired");
+//                    connectionEndpoint.setCondition(condition);
+//                    connectionEndpoint.setLocalState(EndpointState.CLOSED);
+//
+//                    if (!isOpenSent) {
+//                        if ((sasl != null) && (!sasl.isDone())) {
+//                            sasl.fail();
+//                        }
+//                        Open open = new Open();
+//                        isOpenSent = true;
+//                        writeFrame(0, open, null, null);
+//                    }
+//                    if (!isCloseSent) {
+//                        Close close = new Close();
+//                        close.setError(condition);
+//                        isCloseSent = true;
+//                        writeFrame(0, close, null, null);
+//                    }
+//                    close_tail();
+//                }
+//            }
+//            deadline = localIdleDeadline;
+//        }
+//
+//        if (connection.getRemoteIdleTimeout() != 0 && !isCloseSent) {
+//            if (remoteIdleDeadline == 0 || lastBytesOutput != bytesOutput) {
+//                remoteIdleDeadline = computeDeadline(now, remoteIdleTimeout / 2);
+//                lastBytesOutput = bytesOutput;
+//            } else if (remoteIdleDeadline - now <= 0) {
+//                remoteIdleDeadline = computeDeadline(now, remoteIdleTimeout / 2);
+//                if (pending() == 0) {
+//                    writeFrame(0, null, null, null);
+//                    lastBytesOutput += pending();
+//                }
+//            }
+//
+//            if (deadline == 0) {
+//                deadline = remoteIdleDeadline;
+//            } else {
+//                if (remoteIdleDeadline - localIdleDeadline <= 0) {
+//                    deadline = remoteIdleDeadline;
+//                } else {
+//                    deadline = localIdleDeadline;
+//                }
+//            }
+//        }
+
+        return deadline;
+    }
+
+    @Override
+    public void autoTick(ScheduledExecutorService executor) throws EngineStateException {
+        if (isShutdown()) {
+            throw new EngineClosedException("The engine has already shut down.");
+        }
+
+        this.idleTimeoutExecutor = executor;
+
+        // Using nano time since it is not related to the wall clock, which may change
+        long now = TimeUnit.NANOSECONDS.toMillis(System.nanoTime());
+        long deadline = tick(now);
+        if (deadline != 0) {
+            long delay = deadline - now;
+            LOG.trace("Idle Timeout Check being initiated, initial delay: {}", delay);
+            nextIdleTimeoutCheck = idleTimeoutExecutor.schedule(new IdleTimeoutCheck(), delay, TimeUnit.MILLISECONDS);
+        }
     }
 
     @Override
@@ -195,6 +289,54 @@ public class ProtonEngine implements Engine {
     void engineFailed(ProtonException cause) {
         state = EngineState.FAILED;
         writable = false;
+
+        if (nextIdleTimeoutCheck != null) {
+            LOG.trace("Cancelling scheduled Idle Timeout Check");
+            nextIdleTimeoutCheck.cancel(false);
+            nextIdleTimeoutCheck = null;
+        }
+
         engineErrorHandler.handle(cause);
+    }
+
+    //----- Utility classes for internal use only.
+
+    private final class IdleTimeoutCheck implements Runnable {
+
+        @Override
+        public void run() {
+            boolean checkScheduled = false;
+
+            if (connection.getLocalState() == ConnectionState.ACTIVE) {
+                // Using nano time since it is not related to the wall clock, which may change
+                long now = TimeUnit.NANOSECONDS.toMillis(System.nanoTime());
+
+                try {
+                    long deadline = tick(now);
+
+                    if (connection.getLocalState() == ConnectionState.CLOSED) {
+                        LOG.info("Idle Timeout Check closed the Engine due to the peer exceeding our requested idle-timeout.");
+                        engineFailed(new EngineIdleTimeoutException(
+                            "Engine shutdown due to the peer exceeding our requested idle-timeout"));
+                    } else {
+                        if (deadline != 0) {
+                            long delay = deadline - now;
+                            checkScheduled = true;
+                            LOG.trace("IdleTimeoutCheck rescheduling with delay: {}", delay);
+                            nextIdleTimeoutCheck = idleTimeoutExecutor.schedule(this, delay, TimeUnit.MILLISECONDS);
+                        }
+                    }
+                } catch (Throwable t) {
+                    LOG.trace("Engine Idle Check encountered error during check: ", t);
+                }
+            } else {
+                LOG.trace("IdleTimeoutCheck skipping check, connection is not active.");
+            }
+
+            if (!checkScheduled) {
+                nextIdleTimeoutCheck = null;
+                LOG.trace("Idle Timeout Check task exiting and will not be rescheduled");
+            }
+        }
     }
 }
