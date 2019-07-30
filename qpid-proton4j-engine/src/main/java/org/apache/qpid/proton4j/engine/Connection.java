@@ -238,6 +238,11 @@ public interface Connection {
     String getRemoteHostname();
 
     /**
+     * @return the idle timeout value provided by the remote end of this Connection.
+     */
+    long getRemoteIdleTimeout();
+
+    /**
      * @return the capabilities offered by the remote when it opened its end of the Connection.
      */
     Symbol[] getRemoteOfferedCapabilities();

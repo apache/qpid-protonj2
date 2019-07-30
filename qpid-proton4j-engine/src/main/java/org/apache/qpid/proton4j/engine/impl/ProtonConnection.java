@@ -294,6 +294,11 @@ public class ProtonConnection implements Connection, AMQPHeader.HeaderHandler<Pr
     }
 
     @Override
+    public long getRemoteIdleTimeout() {
+        return remoteOpen == null ? -1 : remoteOpen.getIdleTimeOut();
+    }
+
+    @Override
     public Symbol[] getRemoteOfferedCapabilities() {
         if (remoteOpen != null && remoteOpen.getOfferedCapabilities() != null) {
             return Arrays.copyOf(remoteOpen.getOfferedCapabilities(), remoteOpen.getOfferedCapabilities().length);
