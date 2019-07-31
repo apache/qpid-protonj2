@@ -50,10 +50,16 @@ public class ProtonEngine implements Engine {
 
     private boolean writable;
     private EngineState state = EngineState.IDLE;
+    private int inputSequence;
+    private int outputSequence;
 
     // Idle Timeout Check data
     private ScheduledFuture<?> nextIdleTimeoutCheck;
     private ScheduledExecutorService idleTimeoutExecutor;
+    private int lastInputSequence;
+    private int lastOutputSequence;
+    private long localIdleDeadline = 0;
+    private long remoteIdleDeadline = 0;
 
     // Engine event points
     private EventHandler<ProtonBuffer> outputHandler;
@@ -122,16 +128,16 @@ public class ProtonEngine implements Engine {
     @Override
     public long tick(long currentTime) throws EngineStateException {
         long deadline = 0;
+        long localIdleTimeout = connection.getIdleTimeout();
+        long remoteIdleTimeout = connection.getRemoteIdleTimeout();
 
-        // TODO - Map processing into Engine implementation
-//        if (connection.getIdleTimeout() > 0) {
-//            if (localIdleDeadline == 0 || lastBytesInput != bytesInput) {
-//                localIdleDeadline = computeDeadline(now, localIdleTimeout);
-//                lastBytesInput = bytesInput;
-//            } else if (localIdleDeadline - now <= 0) {
-//                localIdleDeadline = computeDeadline(now, localIdleTimeout);
-//                if (connectionEndpoint != null &&
-//                    connectionEndpoint.getLocalState() != EndpointState.CLOSED) {
+        if (localIdleTimeout > 0) {
+            if (localIdleDeadline == 0 || lastInputSequence != inputSequence) {
+                localIdleDeadline = computeDeadline(currentTime, localIdleTimeout);
+                lastInputSequence = inputSequence;
+            } else if (localIdleDeadline - currentTime <= 0) {
+                localIdleDeadline = computeDeadline(currentTime, localIdleTimeout);
+                if (connection.getLocalState() != ConnectionState.CLOSED) {
 //                    ErrorCondition condition = new ErrorCondition(
 //                        Symbol.getSymbol("amqp:resource-limit-exceeded"), "local-idle-timeout expired");
 //                    connectionEndpoint.setCondition(condition);
@@ -151,34 +157,31 @@ public class ProtonEngine implements Engine {
 //                        isCloseSent = true;
 //                        writeFrame(0, close, null, null);
 //                    }
-//                    close_tail();
-//                }
-//            }
-//            deadline = localIdleDeadline;
-//        }
-//
-//        if (connection.getRemoteIdleTimeout() != 0 && !isCloseSent) {
-//            if (remoteIdleDeadline == 0 || lastBytesOutput != bytesOutput) {
-//                remoteIdleDeadline = computeDeadline(now, remoteIdleTimeout / 2);
-//                lastBytesOutput = bytesOutput;
-//            } else if (remoteIdleDeadline - now <= 0) {
-//                remoteIdleDeadline = computeDeadline(now, remoteIdleTimeout / 2);
-//                if (pending() == 0) {
-//                    writeFrame(0, null, null, null);
-//                    lastBytesOutput += pending();
-//                }
-//            }
-//
-//            if (deadline == 0) {
-//                deadline = remoteIdleDeadline;
-//            } else {
-//                if (remoteIdleDeadline - localIdleDeadline <= 0) {
-//                    deadline = remoteIdleDeadline;
-//                } else {
-//                    deadline = localIdleDeadline;
-//                }
-//            }
-//        }
+                    // TODO - Engine should not be writable any longer
+                }
+            }
+            deadline = localIdleDeadline;
+        }
+
+        if (remoteIdleTimeout != 0 && !connection.isLocallyClosed()) { // TODO - Was close already sent
+            if (remoteIdleDeadline == 0 || lastOutputSequence != outputSequence) {
+                remoteIdleDeadline = computeDeadline(currentTime, remoteIdleTimeout / 2);
+                lastOutputSequence = outputSequence;
+            } else if (remoteIdleDeadline - currentTime <= 0) {
+                remoteIdleDeadline = computeDeadline(currentTime, remoteIdleTimeout / 2);
+                // TODO - Write an empty frame somehow
+            }
+
+            if (deadline == 0) {
+                deadline = remoteIdleDeadline;
+            } else {
+                if (remoteIdleDeadline - localIdleDeadline <= 0) {
+                    deadline = remoteIdleDeadline;
+                } else {
+                    deadline = localIdleDeadline;
+                }
+            }
+        }
 
         return deadline;
     }
@@ -206,6 +209,8 @@ public class ProtonEngine implements Engine {
         if (isShutdown()) {
             throw new EngineClosedException("The engine has already shut down.");
         }
+
+        inputSequence++;
 
         if (!isWritable()) {
             throw new EngineNotWritableException("Engine is currently not accepting new input");
@@ -280,6 +285,7 @@ public class ProtonEngine implements Engine {
 
     void dispatchWriteToEventHandler(ProtonBuffer buffer) {
         if (outputHandler != null) {
+            outputSequence++;
             outputHandler.handle(buffer);
         } else {
             engineFailed(new EngineStateException("No output handler configured"));
@@ -297,6 +303,13 @@ public class ProtonEngine implements Engine {
         }
 
         engineErrorHandler.handle(cause);
+    }
+
+    private long computeDeadline(long now, long timeout) {
+        long deadline = now + timeout;
+        // We use 0 to signal not-initialised and/or no-timeout, so in the
+        // unlikely event thats to be the actual deadline, return 1 instead
+        return deadline != 0 ? deadline : 1;
     }
 
     //----- Utility classes for internal use only.
