@@ -16,25 +16,10 @@
  */
 package org.messaginghub.amqperative.client;
 
-import java.util.List;
-import java.util.Map;
-
-import org.apache.qpid.proton4j.amqp.Symbol;
 import org.messaginghub.amqperative.SessionOptions;
 
-/**
- * TODO
- */
-public class ClientSessionOptions extends SessionOptions {
+public final class ClientSessionOptions extends SessionOptions {
 
-    private long handleMax = -1;
-    private Map<Symbol, Object> properties;
-    private List<Symbol> offeredCapabilities;
-    private List<Symbol> desiredCapabilities;
-
-    /**
-     *
-     */
     public ClientSessionOptions() {
     }
 
@@ -43,66 +28,8 @@ public class ClientSessionOptions extends SessionOptions {
      *      Original options which will be copied into this instance
      */
     public ClientSessionOptions(SessionOptions options) {
-        options.copyInto(this);
-    }
-
-    public ClientSessionOptions copyInto(ClientSessionOptions options) {
-        return this;
-    }
-
-    /**
-     * @return the handleMax
-     */
-    public long getHandleMax() {
-        return handleMax;
-    }
-
-    /**
-     * @param handleMax the handleMax to set
-     */
-    public void setHandleMax(long handleMax) {
-        this.handleMax = handleMax;
-    }
-
-    /**
-     * @return the properties
-     */
-    public Map<Symbol, Object> getProperties() {
-        return properties;
-    }
-
-    /**
-     * @param properties the properties to set
-     */
-    public void setProperties(Map<Symbol, Object> properties) {
-        this.properties = properties;
-    }
-
-    /**
-     * @return the offeredCapabilities
-     */
-    public List<Symbol> getOfferedCapabilities() {
-        return offeredCapabilities;
-    }
-
-    /**
-     * @param offeredCapabilities the offeredCapabilities to set
-     */
-    public void setOfferedCapabilities(List<Symbol> offeredCapabilities) {
-        this.offeredCapabilities = offeredCapabilities;
-    }
-
-    /**
-     * @return the desiredCapabilities
-     */
-    public List<Symbol> getDesiredCapabilities() {
-        return desiredCapabilities;
-    }
-
-    /**
-     * @param desiredCapabilities the desiredCapabilities to set
-     */
-    public void setDesiredCapabilities(List<Symbol> desiredCapabilities) {
-        this.desiredCapabilities = desiredCapabilities;
+        if (options != null) {
+            options.copyInto(this);
+        }
     }
 }

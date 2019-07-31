@@ -16,19 +16,27 @@
  */
 package org.messaginghub.amqperative;
 
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * Options that control the behavior of a {@link Sender} created from them.
  */
 public class SenderOptions {
 
-    private String linkName;
-    private boolean dynamic;
-    private boolean autoSettle;
-
     private long sendTimeout = ConnectionOptions.DEFAULT_SEND_TIMEOUT;
     private long requestTimeout = ConnectionOptions.DEFAULT_REQUEST_TIMEOUT;
     private long connectTimeout = ConnectionOptions.DEFAULT_CONNECT_TIMEOUT;
     private long closeTimeout = ConnectionOptions.DEFAULT_CLOSE_TIMEOUT;
+
+    private String linkName;
+    private boolean dynamic;
+    private boolean autoSettle;
+
+    private String[] offeredCapabilities;
+    private String[] desiredCapabilities;
+    private Map<String, Object> properties;
 
     public SenderOptions() {
     }
@@ -111,6 +119,48 @@ public class SenderOptions {
     }
 
     /**
+     * @return the offeredCapabilities
+     */
+    public String[] getOfferedCapabilities() {
+        return offeredCapabilities;
+    }
+
+    /**
+     * @param offeredCapabilities the offeredCapabilities to set
+     */
+    public void setOfferedCapabilities(String[] offeredCapabilities) {
+        this.offeredCapabilities = offeredCapabilities;
+    }
+
+    /**
+     * @return the desiredCapabilities
+     */
+    public String[] getDesiredCapabilities() {
+        return desiredCapabilities;
+    }
+
+    /**
+     * @param desiredCapabilities the desiredCapabilities to set
+     */
+    public void setDesiredCapabilities(String[] desiredCapabilities) {
+        this.desiredCapabilities = desiredCapabilities;
+    }
+
+    /**
+     * @return the properties
+     */
+    public Map<String, Object> getProperties() {
+        return properties;
+    }
+
+    /**
+     * @param properties the properties to set
+     */
+    public void setProperties(Map<String, Object> properties) {
+        this.properties = properties;
+    }
+
+    /**
      * Copy all options from this {@link SenderOptions} instance into the instance
      * provided.
      *
@@ -127,6 +177,16 @@ public class SenderOptions {
         other.setConnectTimeout(connectTimeout);
         other.setSendTimeout(sendTimeout);
         other.setRequestTimeout(requestTimeout);
+
+        if (offeredCapabilities != null) {
+            other.setOfferedCapabilities(Arrays.copyOf(offeredCapabilities, offeredCapabilities.length));
+        }
+        if (desiredCapabilities != null) {
+            other.setDesiredCapabilities(Arrays.copyOf(desiredCapabilities, desiredCapabilities.length));
+        }
+        if (properties != null) {
+            other.setProperties(new HashMap<>(properties));
+        }
 
         return this;
     }

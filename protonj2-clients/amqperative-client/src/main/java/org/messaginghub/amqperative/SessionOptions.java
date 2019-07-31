@@ -16,6 +16,12 @@
  */
 package org.messaginghub.amqperative;
 
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
+
+import org.apache.qpid.proton4j.amqp.UnsignedInteger;
+
 /**
  * Options that control the behaviour of the {@link Session} created from them.
  */
@@ -25,6 +31,11 @@ public class SessionOptions {
     private long requestTimeout = ConnectionOptions.DEFAULT_REQUEST_TIMEOUT;
     private long connectTimeout = ConnectionOptions.DEFAULT_CONNECT_TIMEOUT;
     private long closeTimeout = ConnectionOptions.DEFAULT_CLOSE_TIMEOUT;
+
+    private long handleMax = -1;
+    private String[] offeredCapabilities;
+    private String[] desiredCapabilities;
+    private Map<String, Object> properties;
 
     /**
      * Copy all options from this {@link SessionOptions} instance into the instance
@@ -40,6 +51,16 @@ public class SessionOptions {
         other.setConnectTimeout(connectTimeout);
         other.setSendTimeout(sendTimeout);
         other.setRequestTimeout(requestTimeout);
+
+        if (offeredCapabilities != null) {
+            other.setOfferedCapabilities(Arrays.copyOf(offeredCapabilities, offeredCapabilities.length));
+        }
+        if (desiredCapabilities != null) {
+            other.setDesiredCapabilities(Arrays.copyOf(desiredCapabilities, desiredCapabilities.length));
+        }
+        if (properties != null) {
+            other.setProperties(new HashMap<>(properties));
+        }
 
         return this;
     }
@@ -74,5 +95,64 @@ public class SessionOptions {
 
     public void setRequestTimeout(long requestTimeout) {
         this.requestTimeout = requestTimeout;
+    }
+
+    /**
+     * @return the handleMax
+     */
+    public long getHandleMax() {
+        return handleMax;
+    }
+
+    /**
+     * @param handleMax the handleMax to set
+     */
+    public void setHandleMax(long handleMax) {
+        if (handleMax < -1 || handleMax > UnsignedInteger.MAX_VALUE.longValue()) {
+            throw new IllegalArgumentException("Handle max value given is out of range: " + handleMax);
+        }
+        this.handleMax = handleMax;
+    }
+
+    /**
+     * @return the offeredCapabilities
+     */
+    public String[] getOfferedCapabilities() {
+        return offeredCapabilities;
+    }
+
+    /**
+     * @param offeredCapabilities the offeredCapabilities to set
+     */
+    public void setOfferedCapabilities(String[] offeredCapabilities) {
+        this.offeredCapabilities = offeredCapabilities;
+    }
+
+    /**
+     * @return the desiredCapabilities
+     */
+    public String[] getDesiredCapabilities() {
+        return desiredCapabilities;
+    }
+
+    /**
+     * @param desiredCapabilities the desiredCapabilities to set
+     */
+    public void setDesiredCapabilities(String[] desiredCapabilities) {
+        this.desiredCapabilities = desiredCapabilities;
+    }
+
+    /**
+     * @return the properties
+     */
+    public Map<String, Object> getProperties() {
+        return properties;
+    }
+
+    /**
+     * @param properties the properties to set
+     */
+    public void setProperties(Map<String, Object> properties) {
+        this.properties = properties;
     }
 }

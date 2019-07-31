@@ -18,23 +18,15 @@ package org.messaginghub.amqperative.client;
 
 import org.messaginghub.amqperative.SenderOptions;
 
-/**
- *
- */
-public class ClientSenderOptions extends SenderOptions {
+public final class ClientSenderOptions extends SenderOptions {
 
-    /**
-     *
-     */
     public ClientSenderOptions() {
-        // TODO Auto-generated constructor stub
+        super();
     }
 
-    /**
-     * @param options
-     *      Original options which will be copied into this instance
-     */
     public ClientSenderOptions(SenderOptions options) {
-        options.copyInto(this);
+        if (options != null) {
+            options.copyInto(this);
+        }
     }
 }

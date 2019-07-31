@@ -32,6 +32,13 @@ public class ConnectionOptions {
     public static final long DEFAULT_REQUEST_TIMEOUT = INFINITE;
     public static final long DEFAULT_IDLE_TIMEOUT = 60000;
     public static final long DEFAULT_DRAIN_TIMEOUT = 60000;
+    public static final int DEFAULT_CHANNEL_MAX = 65535;
+    public static final int DEFAULT_MAX_FRAME_SIZE = 65535;
+
+    private final String hostname;
+    private final int port;
+
+    private String futureType;
 
     private long sendTimeout = DEFAULT_SEND_TIMEOUT;
     private long requestTimeout = DEFAULT_REQUEST_TIMEOUT;
@@ -44,9 +51,24 @@ public class ConnectionOptions {
     //        constructed same issue, some things require Symbols unless we hide
     //        everything behind facades.
 
+    private int channelMax = DEFAULT_CHANNEL_MAX;
+    private int maxFrameSize = DEFAULT_MAX_FRAME_SIZE;
     private String[] offeredCapabilities;
     private String[] desiredCapabilities;
     private Map<String, Object> properties;
+
+    public ConnectionOptions(String hostname, int port) {
+        this(hostname, port, null);
+    }
+
+    public ConnectionOptions(String hostname, int port, ConnectionOptions options) {
+        this.hostname = hostname;
+        this.port = port;
+
+        if (options != null) {
+            options.copyInto(this);
+        }
+    }
 
     /**
      * Copy all options from this {@link ConnectionOptions} instance into the instance
@@ -64,6 +86,9 @@ public class ConnectionOptions {
         other.setRequestTimeout(requestTimeout);
         other.setIdleTimeout(idleTimeout);
         other.setDrainTimeout(drainTimeout);
+        other.setChannelMax(channelMax);
+        other.setMaxFrameSize(maxFrameSize);
+        other.setFutureType(futureType);
 
         if (offeredCapabilities != null) {
             other.setOfferedCapabilities(Arrays.copyOf(offeredCapabilities, offeredCapabilities.length));
@@ -78,42 +103,87 @@ public class ConnectionOptions {
         return this;
     }
 
+    /**
+     * @return the host name that this connection should resolve and connect to.
+     */
+    public String getHostname() {
+        return hostname;
+    }
+
+    /**
+     * @return the port on the remote that the connection should attach to.
+     */
+    public int getPort() {
+        return port;
+    }
+
     // TODO - Proper Javadocs
 
     public long getCloseTimeout() {
         return closeTimeout;
     }
 
-    public void setCloseTimeout(long closeTimeout) {
+    public ConnectionOptions setCloseTimeout(long closeTimeout) {
         this.closeTimeout = closeTimeout;
+        return this;
     }
 
     public long getConnectTimeout() {
         return connectTimeout;
     }
 
-    public void setConnectTimeout(long connectTimeout) {
+    public ConnectionOptions setConnectTimeout(long connectTimeout) {
         this.connectTimeout = connectTimeout;
+        return this;
     }
 
     public long getSendTimeout() {
         return sendTimeout;
     }
 
-    public void setSendTimeout(long sendTimeout) {
+    public ConnectionOptions setSendTimeout(long sendTimeout) {
         this.sendTimeout = sendTimeout;
+        return this;
     }
 
     public long getRequestTimeout() {
         return requestTimeout;
     }
 
-    public void setRequestTimeout(long requestTimeout) {
+    public ConnectionOptions setRequestTimeout(long requestTimeout) {
         this.requestTimeout = requestTimeout;
+        return this;
     }
 
     public long getIdleTimeout() {
         return idleTimeout;
+    }
+
+    public int getChannelMax() {
+        return channelMax;
+    }
+
+    public ConnectionOptions setChannelMax(int channelMax) {
+        this.channelMax = channelMax;
+        return this;
+    }
+
+    public int getMaxFrameSize() {
+        return maxFrameSize;
+    }
+
+    /**
+     * Sets the max frame size (in bytes).
+     *
+     * Values of -1 indicates to use the proton default.
+     *
+     * @param maxFrameSize the frame size in bytes.
+     *
+     * @return this options object for chaining.
+     */
+    public ConnectionOptions setMaxFrameSize(int maxFrameSize) {
+        this.maxFrameSize = maxFrameSize;
+        return this;
     }
 
     /**
@@ -123,9 +193,12 @@ public class ConnectionOptions {
      * AMQP Open frame.
      *
      * @param idleTimeout the timeout in milliseconds.
+     *
+     * @return this options object for chaining.
      */
-    public void setIdleTimeout(long idleTimeout) {
+    public ConnectionOptions setIdleTimeout(long idleTimeout) {
         this.idleTimeout = idleTimeout;
+        return this;
     }
 
     public long getDrainTimeout() {
@@ -139,9 +212,12 @@ public class ConnectionOptions {
      *
      * @param drainTimeout
      *      the drainTimeout to use for receiver links.
+     *
+     * @return this options object for chaining.
      */
-    public void setDrainTimeout(long drainTimeout) {
+    public ConnectionOptions setDrainTimeout(long drainTimeout) {
         this.drainTimeout = drainTimeout;
+        return this;
     }
 
     /**
@@ -153,9 +229,12 @@ public class ConnectionOptions {
 
     /**
      * @param offeredCapabilities the offeredCapabilities to set
+     *
+     * @return this options object for chaining.
      */
-    public void setOfferedCapabilities(String[] offeredCapabilities) {
+    public ConnectionOptions setOfferedCapabilities(String[] offeredCapabilities) {
         this.offeredCapabilities = offeredCapabilities;
+        return this;
     }
 
     /**
@@ -167,9 +246,12 @@ public class ConnectionOptions {
 
     /**
      * @param desiredCapabilities the desiredCapabilities to set
+     *
+     * @return this options object for chaining.
      */
-    public void setDesiredCapabilities(String[] desiredCapabilities) {
+    public ConnectionOptions setDesiredCapabilities(String[] desiredCapabilities) {
         this.desiredCapabilities = desiredCapabilities;
+        return this;
     }
 
     /**
@@ -181,8 +263,32 @@ public class ConnectionOptions {
 
     /**
      * @param properties the properties to set
+     *
+     * @return this options object for chaining.
      */
-    public void setProperties(Map<String, Object> properties) {
+    public ConnectionOptions setProperties(Map<String, Object> properties) {
         this.properties = properties;
+        return this;
+    }
+
+    /**
+     * @return the configure future type to use for this client connection
+     */
+    public String getFutureType() {
+        return futureType;
+    }
+
+    /**
+     * Sets the desired future type that the client connection should use when creating
+     * the futures used by the API.
+     *
+     * @param futureType
+     *      The name of the future type to use.
+     *
+     * @return this options object for chaining.
+     */
+    public ConnectionOptions setFutureType(String futureType) {
+        this.futureType = futureType;
+        return this;
     }
 }

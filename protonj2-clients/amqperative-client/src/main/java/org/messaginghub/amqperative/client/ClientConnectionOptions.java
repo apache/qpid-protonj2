@@ -24,60 +24,19 @@ import org.messaginghub.amqperative.ConnectionOptions;
 /**
  * Connection Options for the ProtonConnection implementation
  */
-public class ClientConnectionOptions extends ConnectionOptions {
-
-    private final String hostname;
-    private final int port;
-
-    private String futureType;
-
-    // TODO - For failover the single host / port configuration is not sufficient.
+public final class ClientConnectionOptions extends ConnectionOptions {
 
     public ClientConnectionOptions(String hostname, int port) {
         this(hostname, port, null);
     }
 
     public ClientConnectionOptions(String hostname, int port, ConnectionOptions options) {
-        this.hostname = hostname;
-        this.port = port;
-
-        if (options != null) {
-            options.copyInto(this);
-        }
+        super(hostname, port, options);
     }
 
-    /**
-     * @return the host name that this connection should resolve and connect to.
-     */
-    public String getHostname() {
-        return hostname;
-    }
-
-    /**
-     * @return the port on the remote that the connection should attach to.
-     */
-    public int getPort() {
-        return port;
-    }
-
-    /**
-     * @return the configure future type to use for this client connection
-     */
-    public String getFutureType() {
-        return futureType;
-    }
-
-    /**
-     * Sets the desired future type that the client connection should use when creating
-     * the futures used by the API.
-     *
-     * @param futureType
-     *      The name of the future type to use.
-     *
-     * @return this options object for chaining.
-     */
-    public ClientConnectionOptions setFutureType(String futureType) {
-        this.futureType = futureType;
+    @Override
+    public ClientConnectionOptions copyInto(ConnectionOptions options) {
+        super.copyInto(options);
         return this;
     }
 

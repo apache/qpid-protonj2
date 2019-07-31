@@ -21,13 +21,15 @@ import org.messaginghub.amqperative.ContainerOptions;
 /**
  * Container options used for default
  */
-public class ClientContainerOptions extends ContainerOptions {
+public final class ClientContainerOptions extends ContainerOptions {
 
     public ClientContainerOptions() {
-        // Defaults apply
+        super();
     }
 
-    public ClientContainerOptions(ContainerOptions source) {
-        source.copyInto(this);
+    public ClientContainerOptions(ContainerOptions options) {
+        if (options != null) {
+            options.copyInto(this);
+        }
     }
 }

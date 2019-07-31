@@ -18,16 +18,10 @@ package org.messaginghub.amqperative.client;
 
 import org.messaginghub.amqperative.ReceiverOptions;
 
-/**
- *
- */
-public class ClientReceiverOptions extends ReceiverOptions {
+public final class ClientReceiverOptions extends ReceiverOptions {
 
-    /**
-     *
-     */
     public ClientReceiverOptions() {
-        // TODO Auto-generated constructor stub
+        super();
     }
 
     /**
@@ -35,6 +29,8 @@ public class ClientReceiverOptions extends ReceiverOptions {
      *      The options to use to configure this options instance.
      */
     public ClientReceiverOptions(ReceiverOptions options) {
-        options.copyInto(this);
+        if (options != null) {
+            options.copyInto(this);
+        }
     }
 }
