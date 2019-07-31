@@ -148,6 +148,8 @@ public class ClientDelivery implements Delivery {
         return delivery.getMessageFormat();
     }
 
+    // TODO - Move to Message Codec helper class
+
     public static Message<?> decodeMessage(ProtonBuffer buffer) throws ClientException {
         Decoder decoder = CodecFactory.getDefaultDecoder();
         DecoderState state = decoder.newDecoderState();

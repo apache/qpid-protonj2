@@ -92,6 +92,22 @@ public interface Message<E> {
      */
     boolean isDurable();
 
+    byte getPriority();
+
+    Message<E> setPriority(byte priority);
+
+    long getTimeToLive();
+
+    Message<E> setTimeToLive(long timeToLive);
+
+    boolean getFirstAcquirer();
+
+    Message<E> setFirstAcquirer(boolean firstAcquirer);
+
+    long getDeliveryCount();
+
+    Message<E> setDeliveryCount(long deliveryCount);
+
     /**
      * Returns the body that is conveyed in this message or null if no body was set locally
      * or sent from the remote if this is an incoming message.

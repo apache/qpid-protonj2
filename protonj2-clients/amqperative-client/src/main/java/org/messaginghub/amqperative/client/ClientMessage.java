@@ -65,20 +65,58 @@ public class ClientMessage<E> implements Message<E> {
     //----- Message Header API
 
     @Override
-    public Message<E> setDurable(boolean durable) {
-        if (header == null) {
-            header = new Header();
-        }
+    public boolean isDurable() {
+        return header == null ? Header.DEFAULT_DURABILITY : header.isDurable();
+    }
 
-        header.setDurable(durable);
-
+    @Override
+    public ClientMessage<E> setDurable(boolean durable) {
+        lazyCreateHeader().setDurable(durable);
         return this;
     }
 
     @Override
-    public boolean isDurable() {
-        // TODO Auto-generated method stub
-        return header == null ? false : header.isDurable();
+    public byte getPriority() {
+        return header != null ? Header.DEFAULT_PRIORITY : header.getPriority();
+    }
+
+    @Override
+    public ClientMessage<E> setPriority(byte priority) {
+        lazyCreateHeader().setPriority(priority);
+        return this;
+    }
+
+    @Override
+    public long getTimeToLive() {
+        return header != null ? Header.DEFAULT_TIME_TO_LIVE : header.getPriority();
+    }
+
+    @Override
+    public ClientMessage<E> setTimeToLive(long timeToLive) {
+        lazyCreateHeader().setTimeToLive(timeToLive);
+        return this;
+    }
+
+    @Override
+    public boolean getFirstAcquirer() {
+        return header != null ? Header.DEFAULT_FIRST_ACQUIRER : header.isFirstAcquirer();
+    }
+
+    @Override
+    public ClientMessage<E> setFirstAcquirer(boolean firstAcquirer) {
+        lazyCreateHeader().setFirstAcquirer(firstAcquirer);
+        return this;
+    }
+
+    @Override
+    public long getDeliveryCount() {
+        return header != null ? Header.DEFAULT_DELIVERY_COUNT : header.getDeliveryCount();
+    }
+
+    @Override
+    public ClientMessage<E> setDeliveryCount(long deliveryCount) {
+        lazyCreateHeader().setDeliveryCount(deliveryCount);
+        return this;
     }
 
     //----- Message body access
@@ -86,6 +124,11 @@ public class ClientMessage<E> implements Message<E> {
     @Override
     public E getBody() {
         return body;
+    }
+
+    ClientMessage<E> setBody(E body) {
+        this.body = body;
+        return this;
     }
 
     //----- Access to proton resources
@@ -150,10 +193,15 @@ public class ClientMessage<E> implements Message<E> {
 
     //----- Internal API
 
-    ClientMessage<E> setBody(E body) {
-        this.body = body;
-        return this;
+    private Header lazyCreateHeader() {
+        if (header == null) {
+            header = new Header();
+        }
+
+        return header;
     }
+
+    // TODO - Move these to a codec helper class
 
     public static ProtonBuffer encodeMessage(ClientMessage<?> message) {
         return encodeMessage(CodecFactory.getDefaultEncoder(), ProtonByteBufferAllocator.DEFAULT, message);
