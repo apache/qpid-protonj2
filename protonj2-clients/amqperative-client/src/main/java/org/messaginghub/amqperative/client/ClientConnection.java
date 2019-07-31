@@ -259,7 +259,7 @@ public class ClientConnection implements Connection {
             if (container.getContainerId() != null) {
                 protonConnection.setContainerId(container.getContainerId());
             }
-            protonConnection.open();
+            options.configureConnection(protonConnection).open();
         });
     }
 }

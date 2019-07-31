@@ -35,6 +35,7 @@ public class ConnectionOptions {
     public static final int DEFAULT_CHANNEL_MAX = 65535;
     public static final int DEFAULT_MAX_FRAME_SIZE = 65535;
 
+    // TODO - Configure vhost ?
     private final String hostname;
     private final int port;
 
