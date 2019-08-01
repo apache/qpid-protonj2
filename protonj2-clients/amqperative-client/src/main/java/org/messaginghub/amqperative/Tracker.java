@@ -39,6 +39,25 @@ public interface Tracker {
     boolean isRemotelySettled();
 
     /**
+     * Accepts and settles the delivery.
+     *
+     * @return itself
+     */
+    Tracker accept();
+
+    /**
+     * Updates the DeliveryState, and optionally settle the delivery as well.
+     *
+     * @param state
+     *            the delivery state to apply
+     * @param settle
+     *            whether to {@link #settle()} the delivery at the same time
+     *
+     * @return itself
+     */
+    Tracker disposition(DeliveryState state, boolean settle);
+
+    /**
      * Settles the delivery locally, if not {@link SenderOptions#isAutoSettle() auto-settling}.
      *
      * @return the delivery

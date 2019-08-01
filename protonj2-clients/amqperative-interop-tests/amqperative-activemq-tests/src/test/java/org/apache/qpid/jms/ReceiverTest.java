@@ -30,6 +30,7 @@ import javax.jms.Queue;
 import javax.jms.Session;
 import javax.jms.TextMessage;
 
+import org.apache.activemq.broker.jmx.QueueViewMBean;
 import org.apache.qpid.jms.support.AMQPerativeTestSupport;
 import org.apache.qpid.jms.support.Wait;
 import org.junit.Test;
@@ -37,6 +38,7 @@ import org.messaginghub.amqperative.Connection;
 import org.messaginghub.amqperative.Container;
 import org.messaginghub.amqperative.ContainerOptions;
 import org.messaginghub.amqperative.Delivery;
+import org.messaginghub.amqperative.DeliveryState;
 import org.messaginghub.amqperative.Message;
 import org.messaginghub.amqperative.Receiver;
 
@@ -95,6 +97,52 @@ public class ReceiverTest extends AMQPerativeTestSupport {
         assertEquals("Hello World", value);
 
         delivery.accept();
+
+        assertSame(receiver, receiver.close().get(5, TimeUnit.SECONDS));
+        assertSame(connection, connection.close().get(5, TimeUnit.SECONDS));
+    }
+
+    @Test(timeout = 60000)
+    public void testReceiveJMSTextMessageFromQueueAndSettleWithDeliveryState() throws Exception {
+        doTestReceiveJMSTextMessageFromQueueAndApplyDeliveryState(DeliveryState.accepted());
+    }
+
+    // TODO - Apply other dispositions
+
+    public void doTestReceiveJMSTextMessageFromQueueAndApplyDeliveryState(DeliveryState state) throws Exception {
+        URI brokerURI = getBrokerAmqpConnectionURI();
+
+        sendTextMessageToQueue();
+
+        ContainerOptions options = new ContainerOptions();
+        options.setContainerId(UUID.randomUUID().toString());
+        Container container = Container.create(options);
+        assertNotNull(container);
+
+        Connection connection = container.createConnection(brokerURI.getHost(), brokerURI.getPort());
+        assertNotNull(connection.openFuture().get(5, TimeUnit.SECONDS));
+        Receiver receiver = connection.createReceiver(getTestName());
+        assertSame(receiver, receiver.openFuture().get(5, TimeUnit.SECONDS));
+        receiver.addCredit(1);
+
+        Wait.assertEquals(1, () -> receiver.getQueueSize());
+        Delivery delivery = receiver.receive();
+        assertNotNull(delivery);
+        Message<?> received = delivery.getMessage();
+        assertNotNull(received);
+        assertTrue(received.getBody() instanceof String);
+        String value = (String) received.getBody();
+        assertEquals("Hello World", value);
+
+        final QueueViewMBean queueView = getProxyToQueue(getTestName());
+        Wait.assertEquals(1, () -> queueView.getInFlightCount());
+
+        delivery.disposition(state, true);
+
+        Wait.assertEquals(0, () -> queueView.getInFlightCount());
+        if (state.getType().equals(DeliveryState.Type.ACCEPTED)) {
+            Wait.assertEquals(0, () -> queueView.getQueueSize());
+        }
 
         assertSame(receiver, receiver.close().get(5, TimeUnit.SECONDS));
         assertSame(connection, connection.close().get(5, TimeUnit.SECONDS));

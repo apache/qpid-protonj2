@@ -36,9 +36,9 @@ public final class ClientReceiverOptions extends ReceiverOptions {
     }
 
     Receiver configureReceiver(Receiver protonReceiver) {
-        protonReceiver.setOfferedCapabilities(ClientSupport.stringArrayToSymbol(getOfferedCapabilities()));
-        protonReceiver.setDesiredCapabilities(ClientSupport.stringArrayToSymbol(getDesiredCapabilities()));
-        protonReceiver.setProperties(ClientSupport.stringKeyedMapToSymbol(getProperties()));
+        protonReceiver.setOfferedCapabilities(ClientConversionSupport.toSymbolArray(getOfferedCapabilities()));
+        protonReceiver.setDesiredCapabilities(ClientConversionSupport.toSymbolArray(getDesiredCapabilities()));
+        protonReceiver.setProperties(ClientConversionSupport.toSymbolKeyedMap(getProperties()));
 
         return protonReceiver;
     }

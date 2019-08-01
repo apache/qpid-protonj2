@@ -25,12 +25,6 @@ import org.apache.qpid.proton4j.amqp.messaging.Header;
 import org.apache.qpid.proton4j.amqp.messaging.MessageAnnotations;
 import org.apache.qpid.proton4j.amqp.messaging.Properties;
 import org.apache.qpid.proton4j.amqp.messaging.Section;
-import org.apache.qpid.proton4j.buffer.ProtonBuffer;
-import org.apache.qpid.proton4j.buffer.ProtonBufferAllocator;
-import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
-import org.apache.qpid.proton4j.codec.CodecFactory;
-import org.apache.qpid.proton4j.codec.Encoder;
-import org.apache.qpid.proton4j.codec.EncoderState;
 import org.messaginghub.amqperative.Message;
 
 public class ClientMessage<E> implements Message<E> {
@@ -199,49 +193,5 @@ public class ClientMessage<E> implements Message<E> {
         }
 
         return header;
-    }
-
-    // TODO - Move these to a codec helper class
-
-    public static ProtonBuffer encodeMessage(ClientMessage<?> message) {
-        return encodeMessage(CodecFactory.getDefaultEncoder(), ProtonByteBufferAllocator.DEFAULT, message);
-    }
-
-    public static ProtonBuffer encodeMessage(Encoder encoder, ProtonBufferAllocator allocator, ClientMessage<?> message) {
-        // TODO - Hand in the Engine and use configured allocator and or cached encoder
-        EncoderState encoderState = encoder.newEncoderState();
-        ProtonBuffer buffer = allocator.allocate();
-
-        Header header = message.getHeader();
-        DeliveryAnnotations deliveryAnnotations = message.getDeliveryAnnotations();
-        MessageAnnotations messageAnnotations = message.getMessageAnnotations();
-        Properties properties = message.getProperties();
-        ApplicationProperties applicationProperties = message.getApplicationProperties();
-        Section body = message.getBodySection();
-        Footer footer = message.getFooter();
-
-        if (header != null) {
-            encoder.writeObject(buffer, encoderState, header);
-        }
-        if (deliveryAnnotations != null) {
-            encoder.writeObject(buffer, encoderState, deliveryAnnotations);
-        }
-        if (messageAnnotations != null) {
-            encoder.writeObject(buffer, encoderState, messageAnnotations);
-        }
-        if (properties != null) {
-            encoder.writeObject(buffer, encoderState, properties);
-        }
-        if (applicationProperties != null) {
-            encoder.writeObject(buffer, encoderState, applicationProperties);
-        }
-        if (body != null) {
-            encoder.writeObject(buffer, encoderState, body);
-        }
-        if (footer != null) {
-            encoder.writeObject(buffer, encoderState, footer);
-        }
-
-        return buffer;
     }
 }

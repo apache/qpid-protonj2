@@ -57,9 +57,9 @@ public final class ClientConnectionOptions extends ConnectionOptions {
         protonConnection.setMaxFrameSize(getMaxFrameSize());
         protonConnection.setHostname(getHostname());
         protonConnection.setIdleTimeout((int) getIdleTimeout());
-        protonConnection.setOfferedCapabilities(ClientSupport.stringArrayToSymbol(getOfferedCapabilities()));
-        protonConnection.setDesiredCapabilities(ClientSupport.stringArrayToSymbol(getDesiredCapabilities()));
-        protonConnection.setProperties(ClientSupport.stringKeyedMapToSymbol(getProperties()));
+        protonConnection.setOfferedCapabilities(ClientConversionSupport.toSymbolArray(getOfferedCapabilities()));
+        protonConnection.setDesiredCapabilities(ClientConversionSupport.toSymbolArray(getDesiredCapabilities()));
+        protonConnection.setProperties(ClientConversionSupport.toSymbolKeyedMap(getProperties()));
 
         return protonConnection;
     }

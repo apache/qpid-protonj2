@@ -16,8 +16,13 @@
  */
 package org.messaginghub.amqperative;
 
+import org.messaginghub.amqperative.client.ClientDeliveryState.ClientAccepted;
+import org.messaginghub.amqperative.client.ClientDeliveryState.ClientModified;
+import org.messaginghub.amqperative.client.ClientDeliveryState.ClientRejected;
+import org.messaginghub.amqperative.client.ClientDeliveryState.ClientReleased;
+
 /**
- *
+ * Conveys the outcome of a Delivery either incoming or outgoing.
  */
 public interface DeliveryState {
 
@@ -31,4 +36,22 @@ public interface DeliveryState {
     }
 
     Type getType();
+
+    //----- Factory methods for default DeliveryState types
+
+    public static DeliveryState accepted() {
+        return ClientAccepted.getInstance();
+    }
+
+    public static DeliveryState released() {
+        return ClientReleased.getInstance();
+    }
+
+    public static DeliveryState rejected(String condition, String description) {
+        return new ClientRejected(condition, description);
+    }
+
+    public static DeliveryState modified(boolean failed, boolean undeliverable) {
+        return new ClientModified(failed, undeliverable);
+    }
 }

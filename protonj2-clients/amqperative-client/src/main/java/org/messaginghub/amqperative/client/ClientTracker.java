@@ -16,6 +16,7 @@
  */
 package org.messaginghub.amqperative.client;
 
+import org.apache.qpid.proton4j.amqp.messaging.Accepted;
 import org.apache.qpid.proton4j.engine.OutgoingDelivery;
 import org.messaginghub.amqperative.DeliveryState;
 import org.messaginghub.amqperative.Message;
@@ -57,6 +58,27 @@ public class ClientTracker implements Tracker {
     @Override
     public boolean isRemotelySettled() {
         return delivery.isRemotelySettled();
+    }
+
+    @Override
+    public Tracker accept() {
+        delivery.disposition(Accepted.getInstance());
+        return this;
+    }
+
+    @Override
+    public Tracker disposition(DeliveryState state, boolean settle) {
+        org.apache.qpid.proton4j.amqp.transport.DeliveryState protonState = null;
+        if (state != null) {
+            try {
+                protonState = ((ClientDeliveryState) state).getProtonDeliveryState();
+            } catch (ClassCastException ccex) {
+                throw new IllegalArgumentException("Unknown DeliveryState type given, no disposition applied to Delivery.");
+            }
+        }
+
+        sender.disposition(delivery, protonState, settle);
+        return this;
     }
 
     @Override

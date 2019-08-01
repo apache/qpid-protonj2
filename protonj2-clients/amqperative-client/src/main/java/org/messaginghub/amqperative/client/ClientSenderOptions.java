@@ -32,9 +32,9 @@ public final class ClientSenderOptions extends SenderOptions {
     }
 
     Sender configureSender(Sender protonSender) {
-        protonSender.setOfferedCapabilities(ClientSupport.stringArrayToSymbol(getOfferedCapabilities()));
-        protonSender.setDesiredCapabilities(ClientSupport.stringArrayToSymbol(getDesiredCapabilities()));
-        protonSender.setProperties(ClientSupport.stringKeyedMapToSymbol(getProperties()));
+        protonSender.setOfferedCapabilities(ClientConversionSupport.toSymbolArray(getOfferedCapabilities()));
+        protonSender.setDesiredCapabilities(ClientConversionSupport.toSymbolArray(getDesiredCapabilities()));
+        protonSender.setProperties(ClientConversionSupport.toSymbolKeyedMap(getProperties()));
 
         return protonSender;
     }

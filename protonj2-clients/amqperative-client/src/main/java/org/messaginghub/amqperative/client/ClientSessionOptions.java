@@ -35,9 +35,9 @@ public final class ClientSessionOptions extends SessionOptions {
     }
 
     Session configureSession(Session protonSession) {
-        protonSession.setOfferedCapabilities(ClientSupport.stringArrayToSymbol(getOfferedCapabilities()));
-        protonSession.setDesiredCapabilities(ClientSupport.stringArrayToSymbol(getDesiredCapabilities()));
-        protonSession.setProperties(ClientSupport.stringKeyedMapToSymbol(getProperties()));
+        protonSession.setOfferedCapabilities(ClientConversionSupport.toSymbolArray(getOfferedCapabilities()));
+        protonSession.setDesiredCapabilities(ClientConversionSupport.toSymbolArray(getDesiredCapabilities()));
+        protonSession.setProperties(ClientConversionSupport.toSymbolKeyedMap(getProperties()));
 
         return protonSession;
     }

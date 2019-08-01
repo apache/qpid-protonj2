@@ -25,9 +25,9 @@ import org.apache.qpid.proton4j.amqp.Symbol;
 /**
  * Utilities used by various classes in the Client core
  */
-class ClientSupport {
+abstract class ClientConversionSupport {
 
-    public static Symbol[] stringArrayToSymbol(String[] stringArray) {
+    public static Symbol[] toSymbolArray(String[] stringArray) {
         Symbol[] result = null;
 
         if (stringArray != null) {
@@ -40,7 +40,7 @@ class ClientSupport {
         return result;
     }
 
-    public static String[] stringArrayToSymbol(Symbol[] symbolArray) {
+    public static String[] toStringArray(Symbol[] symbolArray) {
         String[] result = null;
 
         if (symbolArray != null) {
@@ -53,7 +53,7 @@ class ClientSupport {
         return result;
     }
 
-    public static Map<Symbol, Object> stringKeyedMapToSymbol(Map<String, Object> stringsMap) {
+    public static Map<Symbol, Object> toSymbolKeyedMap(Map<String, Object> stringsMap) {
         Map<Symbol, Object> result = null;
 
         if (stringsMap != null) {
@@ -66,7 +66,7 @@ class ClientSupport {
         return result;
     }
 
-    public static Map<String, Object> symbolKeyedMapToString(Map<Symbol, Object> symbokMap) {
+    public static Map<String, Object> toStringKeyedMap(Map<Symbol, Object> symbokMap) {
         Map<String, Object> result = null;
 
         if (symbokMap != null) {

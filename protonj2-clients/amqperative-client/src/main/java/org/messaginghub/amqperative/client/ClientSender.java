@@ -96,7 +96,7 @@ public class ClientSender implements Sender {
 
             ClientMessage<?> msg = (ClientMessage<?>) message;
 
-            ProtonBuffer buffer = ClientMessage.encodeMessage(msg);
+            ProtonBuffer buffer = ClientMessageSupport.encodeMessage(msg);
             OutgoingDelivery delivery = sender.next();
             delivery.setTag(new byte[] {0});
             delivery.writeBytes(buffer);
