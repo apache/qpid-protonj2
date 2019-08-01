@@ -16,6 +16,7 @@
  */
 package org.messaginghub.amqperative.client;
 
+import org.apache.qpid.proton4j.engine.Sender;
 import org.messaginghub.amqperative.SenderOptions;
 
 public final class ClientSenderOptions extends SenderOptions {
@@ -28,5 +29,13 @@ public final class ClientSenderOptions extends SenderOptions {
         if (options != null) {
             options.copyInto(this);
         }
+    }
+
+    Sender configureSender(Sender protonSender) {
+        protonSender.setOfferedCapabilities(ClientSupport.stringArrayToSymbol(getOfferedCapabilities()));
+        protonSender.setDesiredCapabilities(ClientSupport.stringArrayToSymbol(getDesiredCapabilities()));
+        protonSender.setProperties(ClientSupport.stringKeyedMapToSymbol(getProperties()));
+
+        return protonSender;
     }
 }

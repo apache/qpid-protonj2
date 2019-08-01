@@ -185,7 +185,7 @@ public class ClientReceiver implements Receiver {
                 LOG.info("Receiver link remotely detached: ", receiver);
             });
 
-            receiver.open();
+            options.configureReceiver(receiver).open();
         });
 
         return this;

@@ -16,6 +16,7 @@
  */
 package org.messaginghub.amqperative.client;
 
+import org.apache.qpid.proton4j.engine.Receiver;
 import org.messaginghub.amqperative.ReceiverOptions;
 
 public final class ClientReceiverOptions extends ReceiverOptions {
@@ -32,5 +33,13 @@ public final class ClientReceiverOptions extends ReceiverOptions {
         if (options != null) {
             options.copyInto(this);
         }
+    }
+
+    Receiver configureReceiver(Receiver protonReceiver) {
+        protonReceiver.setOfferedCapabilities(ClientSupport.stringArrayToSymbol(getOfferedCapabilities()));
+        protonReceiver.setDesiredCapabilities(ClientSupport.stringArrayToSymbol(getDesiredCapabilities()));
+        protonReceiver.setProperties(ClientSupport.stringKeyedMapToSymbol(getProperties()));
+
+        return protonReceiver;
     }
 }

@@ -176,7 +176,7 @@ public class ClientSession implements Session {
                 closeFuture.complete(this);
             });
 
-            session.open();
+            options.configureSession(session).open();
         });
 
         return this;

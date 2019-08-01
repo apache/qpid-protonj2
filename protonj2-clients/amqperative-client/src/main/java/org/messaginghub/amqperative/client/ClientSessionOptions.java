@@ -16,6 +16,7 @@
  */
 package org.messaginghub.amqperative.client;
 
+import org.apache.qpid.proton4j.engine.Session;
 import org.messaginghub.amqperative.SessionOptions;
 
 public final class ClientSessionOptions extends SessionOptions {
@@ -31,5 +32,13 @@ public final class ClientSessionOptions extends SessionOptions {
         if (options != null) {
             options.copyInto(this);
         }
+    }
+
+    Session configureSession(Session protonSession) {
+        protonSession.setOfferedCapabilities(ClientSupport.stringArrayToSymbol(getOfferedCapabilities()));
+        protonSession.setDesiredCapabilities(ClientSupport.stringArrayToSymbol(getDesiredCapabilities()));
+        protonSession.setProperties(ClientSupport.stringKeyedMapToSymbol(getProperties()));
+
+        return protonSession;
     }
 }

@@ -18,11 +18,7 @@ package org.messaginghub.amqperative.client;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Map.Entry;
 
-import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.engine.Connection;
 import org.messaginghub.amqperative.ConnectionOptions;
 
@@ -61,29 +57,9 @@ public final class ClientConnectionOptions extends ConnectionOptions {
         protonConnection.setMaxFrameSize(getMaxFrameSize());
         protonConnection.setHostname(getHostname());
         protonConnection.setIdleTimeout((int) getIdleTimeout());
-
-        // TODO - Will need this for all endpoint types so create some utilities to convert.
-
-        if (getOfferedCapabilities() != null && getOfferedCapabilities().length > 0) {
-            Symbol[] offeredCapabilities = new Symbol[getOfferedCapabilities().length];
-            for (int i = 0; i < getOfferedCapabilities().length; ++i) {
-                offeredCapabilities[i] = Symbol.valueOf(getOfferedCapabilities()[i]);
-            }
-        }
-
-        if (getDesiredCapabilities() != null && getDesiredCapabilities().length > 0) {
-            Symbol[] desiredCapabilities = new Symbol[getDesiredCapabilities().length];
-            for (int i = 0; i < getDesiredCapabilities().length; ++i) {
-                desiredCapabilities[i] = Symbol.valueOf(getDesiredCapabilities()[i]);
-            }
-        }
-
-        if (getProperties() != null && !getProperties().isEmpty()) {
-            Map<Symbol, Object> properties = new HashMap<>(getProperties().size());
-            for (Entry<String, Object> entry : getProperties().entrySet()) {
-                properties.put(Symbol.valueOf(entry.getKey()), entry.getValue());
-            }
-        }
+        protonConnection.setOfferedCapabilities(ClientSupport.stringArrayToSymbol(getOfferedCapabilities()));
+        protonConnection.setDesiredCapabilities(ClientSupport.stringArrayToSymbol(getDesiredCapabilities()));
+        protonConnection.setProperties(ClientSupport.stringKeyedMapToSymbol(getProperties()));
 
         return protonConnection;
     }

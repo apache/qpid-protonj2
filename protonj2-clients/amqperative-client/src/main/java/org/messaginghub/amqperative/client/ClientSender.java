@@ -167,7 +167,7 @@ public class ClientSender implements Sender {
                 // TODO
             });
 
-            sender.open();
+            options.configureSender(sender).open();
         });
 
         return this;

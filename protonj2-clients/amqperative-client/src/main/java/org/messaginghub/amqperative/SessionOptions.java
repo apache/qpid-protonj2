@@ -20,8 +20,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.apache.qpid.proton4j.amqp.UnsignedInteger;
-
 /**
  * Options that control the behaviour of the {@link Session} created from them.
  */
@@ -32,7 +30,6 @@ public class SessionOptions {
     private long connectTimeout = ConnectionOptions.DEFAULT_CONNECT_TIMEOUT;
     private long closeTimeout = ConnectionOptions.DEFAULT_CLOSE_TIMEOUT;
 
-    private long handleMax = -1;
     private String[] offeredCapabilities;
     private String[] desiredCapabilities;
     private Map<String, Object> properties;
@@ -95,23 +92,6 @@ public class SessionOptions {
 
     public void setRequestTimeout(long requestTimeout) {
         this.requestTimeout = requestTimeout;
-    }
-
-    /**
-     * @return the handleMax
-     */
-    public long getHandleMax() {
-        return handleMax;
-    }
-
-    /**
-     * @param handleMax the handleMax to set
-     */
-    public void setHandleMax(long handleMax) {
-        if (handleMax < -1 || handleMax > UnsignedInteger.MAX_VALUE.longValue()) {
-            throw new IllegalArgumentException("Handle max value given is out of range: " + handleMax);
-        }
-        this.handleMax = handleMax;
     }
 
     /**
