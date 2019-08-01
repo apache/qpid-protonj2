@@ -73,6 +73,7 @@ public class ClientReceiver implements Receiver {
 
     @Override
     public Delivery receive() throws IllegalStateException {
+        checkClosed();
         //TODO: verify timeout conventions align
         try {
             return messageQueue.dequeue(-1);
@@ -83,6 +84,7 @@ public class ClientReceiver implements Receiver {
 
     @Override
     public Delivery receive(long timeout) throws IllegalStateException {
+        checkClosed();
         //TODO: verify timeout conventions align
         try {
             return messageQueue.dequeue(timeout);
@@ -93,6 +95,7 @@ public class ClientReceiver implements Receiver {
 
     @Override
     public Delivery tryReceive() throws IllegalStateException {
+        checkClosed();
         try {
             return messageQueue.dequeue(0);
         } catch (InterruptedException e) {
@@ -112,6 +115,11 @@ public class ClientReceiver implements Receiver {
 
     @Override
     public Future<Receiver> detach() {
+        if (closed.compareAndSet(false, true) && !openFuture.isFailed()) {
+            executor.execute(() -> {
+                receiver.close();
+            });
+        }
         return closeFuture;
     }
 
@@ -134,6 +142,7 @@ public class ClientReceiver implements Receiver {
 
     @Override
     public Receiver addCredit(int credits) throws IllegalStateException {
+        checkClosed();
         executor.execute(() -> {
             // TODO - This is just a set without addition for now
             receiver.setCredit(credits);
@@ -144,6 +153,7 @@ public class ClientReceiver implements Receiver {
 
     @Override
     public Future<Receiver> drainCredit(long timeout) throws IllegalStateException, IllegalArgumentException {
+        checkClosed();
         // TODO Auto-generated method stub
         return null;
     }
@@ -151,6 +161,7 @@ public class ClientReceiver implements Receiver {
     //----- Internal API
 
     void disposition(IncomingDelivery delivery, DeliveryState state, boolean settled) {
+        checkClosed();
         executor.execute(() -> {
             delivery.disposition(state, settled);
         });
@@ -169,6 +180,7 @@ public class ClientReceiver implements Receiver {
             });
             receiver.closeHandler(result -> {
                 closed.set(true);
+                messageQueue.clear();
                 closeFuture.complete(this);
             });
 
@@ -183,6 +195,9 @@ public class ClientReceiver implements Receiver {
 
             receiver.detachHandler(receiver -> {
                 LOG.info("Receiver link remotely detached: ", receiver);
+                closed.set(true);
+                messageQueue.clear();
+                closeFuture.complete(this);
             });
 
             options.configureReceiver(receiver).open();

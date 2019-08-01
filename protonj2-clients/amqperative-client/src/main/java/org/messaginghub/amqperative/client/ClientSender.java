@@ -88,6 +88,7 @@ public class ClientSender implements Sender {
 
     @Override
     public Tracker send(Message<?> message) throws ClientException {
+        checkClosed();
         ClientFuture<Tracker> operation = session.getFutureFactory().createFuture();
 
         executor.execute(() -> {
@@ -114,18 +115,21 @@ public class ClientSender implements Sender {
 
     @Override
     public Tracker trySend(Message<?> message, Consumer<Tracker> onUpdated) throws IllegalStateException {
+        checkClosed();
         // TODO Auto-generated method stub
         return null;
     }
 
     @Override
     public Tracker send(Message<?> message, Consumer<Tracker> onUpdated) {
+        checkClosed();
         // TODO Auto-generated method stub
         return null;
     }
 
     @Override
     public Tracker send(Message<?> message, Consumer<Tracker> onUpdated, ExecutorService executor) {
+        checkClosed();
         // TODO Auto-generated method stub
         return null;
     }
@@ -133,6 +137,7 @@ public class ClientSender implements Sender {
     //----- Internal API
 
     void disposition(OutgoingDelivery delivery, DeliveryState state, boolean settled) {
+        checkClosed();
         executor.execute(() -> {
             delivery.disposition(state, settled);
         });

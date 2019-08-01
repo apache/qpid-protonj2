@@ -93,6 +93,7 @@ public class ClientSession implements Session {
 
     @Override
     public Receiver createReceiver(String address, ReceiverOptions receiverOptions) throws ClientException {
+        checkClosed();
         ClientFuture<Receiver> createReceiver = getFutureFactory().createFuture();
 
         serializer.execute(() -> {
@@ -129,6 +130,7 @@ public class ClientSession implements Session {
 
     @Override
     public Sender createSender(String address, SenderOptions senderOptions) throws ClientException {
+        checkClosed();
         ClientFuture<Sender> createSender = getFutureFactory().createFuture();
 
         serializer.execute(() -> {
