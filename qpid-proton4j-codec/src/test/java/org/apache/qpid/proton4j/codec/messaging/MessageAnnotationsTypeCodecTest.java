@@ -26,6 +26,7 @@ import static org.junit.Assert.fail;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedByte;
@@ -262,5 +263,46 @@ public class MessageAnnotationsTypeCodecTest extends CodecTestSupport {
             assertTrue(resultArray[i] instanceof MessageAnnotations);
             assertEquals(array[i].getValue(), resultArray[i].getValue());
         }
+    }
+
+    @Test
+    public void testEncodeAndDecodeAnnoationsWithEmbeddedMaps() throws IOException {
+        final Symbol SYMBOL_1 = Symbol.valueOf("x-opt-test1");
+        final Symbol SYMBOL_2 = Symbol.valueOf("x-opt-test2");
+
+        final String VALUE_1 = "string";
+        final UnsignedInteger VALUE_2 = UnsignedInteger.valueOf(42);
+        final UUID VALUE_3 = UUID.randomUUID();
+
+        Map<String, Object> stringKeyedMap = new HashMap<>();
+        stringKeyedMap.put("key1", VALUE_1);
+        stringKeyedMap.put("key2", VALUE_2);
+        stringKeyedMap.put("key3", VALUE_3);
+
+        Map<Symbol, Object> symbolKeyedMap = new HashMap<>();
+        symbolKeyedMap.put(Symbol.valueOf("key1"), VALUE_1);
+        symbolKeyedMap.put(Symbol.valueOf("key2"), VALUE_2);
+        symbolKeyedMap.put(Symbol.valueOf("key3"), VALUE_3);
+
+        MessageAnnotations annotations = new MessageAnnotations(new HashMap<>());
+        annotations.getValue().put(SYMBOL_1, stringKeyedMap);
+        annotations.getValue().put(SYMBOL_2, symbolKeyedMap);
+
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        encoder.writeObject(buffer, encoderState, annotations);
+
+        final Object result = decoder.readObject(buffer, decoderState);
+
+        assertNotNull(result);
+        assertTrue(result instanceof MessageAnnotations);
+
+        MessageAnnotations readAnnotations = (MessageAnnotations) result;
+
+        Map<Symbol, Object> resultMap = readAnnotations.getValue();
+
+        assertEquals(annotations.getValue().size(), resultMap.size());
+        assertEquals(resultMap.get(SYMBOL_1), stringKeyedMap);
+        assertEquals(resultMap.get(SYMBOL_2), symbolKeyedMap);
     }
 }
