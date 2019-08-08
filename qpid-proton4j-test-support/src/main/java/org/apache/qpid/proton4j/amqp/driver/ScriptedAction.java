@@ -49,22 +49,28 @@ public interface ScriptedAction extends ScriptedElement {
     /**
      * Runs the scripted action on its associated test driver immediately
      * regardless of any queued tasks or expected inputs.
+     *
+     * @return this scripted action.
      */
-    void now();
+    ScriptedAction now();
 
     /**
      * Queues the scripted action for later run after any preceding scripted
      * elements are performed.
+     *
+     * @return this scripted action.
      */
-    void queue();
+    ScriptedAction queue();
 
     /**
      * Triggers the action to be performed on the given {@link Consumer}.
      *
      * @param driver
      *      The test driver that is managing the test
+     *
+     * @return this scripted action.
      */
-    void perform(AMQPTestDriver driver);
+    ScriptedAction perform(AMQPTestDriver driver);
 
     // By default the Action type is not expecting to be triggered by an incoming
     // AMQP frame so in all these cases we fail because the script was wrong or the

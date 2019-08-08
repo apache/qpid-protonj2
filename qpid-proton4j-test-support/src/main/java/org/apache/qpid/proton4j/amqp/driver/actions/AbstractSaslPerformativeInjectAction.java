@@ -38,13 +38,21 @@ public abstract class AbstractSaslPerformativeInjectAction<P extends DescribedTy
     }
 
     @Override
-    public void now() {
+    public AbstractSaslPerformativeInjectAction<P> now() {
         perform(driver);
+        return this;
     }
 
     @Override
-    public void queue() {
+    public AbstractSaslPerformativeInjectAction<P> queue() {
         driver.addScriptedElement(this);
+        return this;
+    }
+
+    @Override
+    public AbstractSaslPerformativeInjectAction<P> perform(AMQPTestDriver driver) {
+        driver.sendSaslFrame(onChannel(), getPerformative());
+        return this;
     }
 
     public int onChannel() {
@@ -58,8 +66,4 @@ public abstract class AbstractSaslPerformativeInjectAction<P extends DescribedTy
 
     public abstract P getPerformative();
 
-    @Override
-    public void perform(AMQPTestDriver driver) {
-        driver.sendSaslFrame(onChannel(), getPerformative());
-    }
 }

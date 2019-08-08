@@ -16,11 +16,13 @@
  */
 package org.apache.qpid.proton4j.amqp.driver;
 
-import java.util.ArrayDeque;
 import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 import org.apache.qpid.proton4j.amqp.DescribedType;
+import org.apache.qpid.proton4j.amqp.driver.actions.ScriptCompleteAction;
 import org.apache.qpid.proton4j.amqp.driver.codec.security.SaslDescribedType;
 import org.apache.qpid.proton4j.amqp.driver.codec.transport.PerformativeDescribedType;
 import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
@@ -42,7 +44,7 @@ public class AMQPTestDriver implements Consumer<ProtonBuffer> {
 
     private final Consumer<ProtonBuffer> frameConsumer;
 
-    private AssertionError failureCause;
+    private volatile AssertionError failureCause;
 
     private int advertisedIdleTimeout = 0;
     private volatile int emptyFrameCount;
@@ -53,7 +55,7 @@ public class AMQPTestDriver implements Consumer<ProtonBuffer> {
     /**
      *  Holds the expectations for processing of data from the peer under test.
      */
-    private final Queue<ScriptedElement> script = new ArrayDeque<>();
+    private final Queue<ScriptedElement> script = new ConcurrentLinkedQueue<>();
 
     /**
      * Create a test driver instance connected to the given Engine instance.
@@ -148,7 +150,14 @@ public class AMQPTestDriver implements Consumer<ProtonBuffer> {
             signalFailure(new AssertionError("Received header when not expecting any input."));
         }
 
-        header.invoke(scriptEntry, this);
+        try {
+            header.invoke(scriptEntry, this);
+        } catch (Throwable t) {
+            if (scriptEntry.isOptional()) {
+                handleHeader(header);
+            }
+        }
+
         prcessScript(scriptEntry);
     }
 
@@ -158,7 +167,14 @@ public class AMQPTestDriver implements Consumer<ProtonBuffer> {
             signalFailure(new AssertionError("Received performative[" + sasl + "] when not expecting any input."));
         }
 
-        sasl.invoke(scriptEntry, this);
+        try {
+            sasl.invoke(scriptEntry, this);
+        } catch (Throwable t) {
+            if (scriptEntry.isOptional()) {
+                handleSaslPerformative(sasl, channel, payload);
+            }
+        }
+
         prcessScript(scriptEntry);
     }
 
@@ -170,7 +186,14 @@ public class AMQPTestDriver implements Consumer<ProtonBuffer> {
             signalFailure(new AssertionError("Received performative[" + amqp + "] when not expecting any input."));
         }
 
-        amqp.invoke(scriptEntry, payload, channel, this);
+        try {
+            amqp.invoke(scriptEntry, payload, channel, this);
+        } catch (Throwable t) {
+            if (scriptEntry.isOptional()) {
+                handlePerformative(amqp, channel, payload);
+            }
+        }
+
         prcessScript(scriptEntry);
     }
 
@@ -204,6 +227,34 @@ public class AMQPTestDriver implements Consumer<ProtonBuffer> {
         if (!script.isEmpty()) {
             // TODO - Dump all elements that were not executed in the script.
             throw new AssertionError("Not all expected actions were completed");
+        }
+    }
+
+    public void waitForScriptToComplete() {
+        checkFailed();
+        if (!script.isEmpty()) {
+            try {
+                new ScriptCompleteAction(this).queue().await();
+            } catch (InterruptedException e) {
+                Thread.interrupted();
+                signalFailure("Interrupted while waiting for script to complete");
+            }
+        }
+    }
+
+    public void waitForScriptToComplete(long timeout) {
+        waitForScriptToComplete(timeout, TimeUnit.SECONDS);
+    }
+
+    public void waitForScriptToComplete(long timeout, TimeUnit units) {
+        checkFailed();
+        if (!script.isEmpty()) {
+            try {
+                new ScriptCompleteAction(this).queue().await(timeout, units);
+            } catch (InterruptedException e) {
+                Thread.interrupted();
+                signalFailure("Interrupted while waiting for script to complete");
+            }
         }
     }
 

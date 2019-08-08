@@ -16,39 +16,48 @@
  */
 package org.apache.qpid.proton4j.amqp.driver.actions;
 
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+
 import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
 import org.apache.qpid.proton4j.amqp.driver.ScriptedAction;
-import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
 
 /**
- * AMQP Header injection action which can be added to a driver for write at a specific time or
- * following on from some other action in the test script.
+ * Action that will signal when the script has completed all expectations and
+ * scripted actions or when a configured timeout occurs.
  */
-public class AMQPHeaderInjectAction implements ScriptedAction {
+public class ScriptCompleteAction implements ScriptedAction {
 
-    private final AMQPTestDriver driver;
-    private final AMQPHeader header;
+    protected final AMQPTestDriver driver;
+    protected final CountDownLatch complete = new CountDownLatch(1);
 
-    public AMQPHeaderInjectAction(AMQPTestDriver driver, AMQPHeader header) {
-        this.header = header;
+    public ScriptCompleteAction(AMQPTestDriver driver) {
         this.driver = driver;
     }
 
     @Override
-    public AMQPHeaderInjectAction perform(AMQPTestDriver driver) {
-        driver.sendHeader(header);
+    public ScriptCompleteAction now() {
+        complete.countDown();
         return this;
     }
 
     @Override
-    public AMQPHeaderInjectAction now() {
-        perform(driver);
-        return this;
-    }
-
-    @Override
-    public AMQPHeaderInjectAction queue() {
+    public ScriptCompleteAction queue() {
         driver.addScriptedElement(this);
         return this;
+    }
+
+    @Override
+    public ScriptCompleteAction perform(AMQPTestDriver driver) {
+        complete.countDown();
+        return this;
+    }
+
+    public void await() throws InterruptedException {
+        complete.await();
+    }
+
+    public void await(long timeout, TimeUnit units ) throws InterruptedException {
+        complete.await(timeout, units);
     }
 }

@@ -40,17 +40,20 @@ public class EmptyFrameInjectAction implements ScriptedAction {
     }
 
     @Override
-    public void perform(AMQPTestDriver driver) {
+    public EmptyFrameInjectAction perform(AMQPTestDriver driver) {
         driver.sendEmptyFrame(this.channel == CHANNEL_UNSET ? 0 : this.channel);
+        return this;
     }
 
     @Override
-    public void now() {
+    public EmptyFrameInjectAction now() {
         perform(driver);
+        return this;
     }
 
     @Override
-    public void queue() {
+    public EmptyFrameInjectAction queue() {
         driver.addScriptedElement(this);
+        return this;
     }
 }

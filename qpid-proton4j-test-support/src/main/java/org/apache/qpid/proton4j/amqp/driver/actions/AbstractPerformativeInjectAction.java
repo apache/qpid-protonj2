@@ -40,13 +40,23 @@ public abstract class AbstractPerformativeInjectAction<P extends DescribedType> 
     }
 
     @Override
-    public void now() {
+    public AbstractPerformativeInjectAction<P> now() {
         perform(driver);
+        return this;
     }
 
     @Override
-    public void queue() {
+    public AbstractPerformativeInjectAction<P> queue() {
         driver.addScriptedElement(this);
+        return this;
+    }
+
+    @Override
+    public AbstractPerformativeInjectAction<P> perform(AMQPTestDriver driver) {
+        // Give actors a chance to prepare.
+        beforeActionPerformed(driver);
+        driver.sendAMQPFrame(onChannel(), getPerformative(), getPayload());
+        return this;
     }
 
     public int onChannel() {
@@ -73,14 +83,6 @@ public abstract class AbstractPerformativeInjectAction<P extends DescribedType> 
      */
     public ProtonBuffer getPayload() {
         return null;
-    }
-
-    @Override
-    public void perform(AMQPTestDriver driver) {
-        // Give actors a chance to prepare.
-        beforeActionPerformed(driver);
-
-        driver.sendAMQPFrame(onChannel(), getPerformative(), getPayload());
     }
 
     protected void beforeActionPerformed(AMQPTestDriver driver) {

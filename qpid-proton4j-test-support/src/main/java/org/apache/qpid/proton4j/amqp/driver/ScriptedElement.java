@@ -38,6 +38,13 @@ public interface ScriptedElement extends AMQPHeader.HeaderHandler<AMQPTestDriver
     ScriptEntryType getType();
 
     /**
+     * @return true if this element represents an optional part of the script.
+     */
+    default boolean isOptional() {
+        return false;
+    }
+
+    /**
      * @return a {@link ScriptedAction} to perform after the element has been performed.
      */
     default ScriptedAction performAfterwards() {
