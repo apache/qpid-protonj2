@@ -62,7 +62,7 @@ public class FooterTypeEncoder extends AbstractDescribedMapTypeEncoder<Object, O
     @Override
     public void writeMapEntries(ProtonBuffer buffer, EncoderState state, Footer value) {
         // Write the Map elements and then compute total size written.
-        for (Map.Entry<Object, Object> entry : value.getValue().entrySet()) {
+        for (Map.Entry<Symbol, Object> entry : value.getValue().entrySet()) {
             state.getEncoder().writeObject(buffer, state, entry.getKey());
             state.getEncoder().writeObject(buffer, state, entry.getValue());
         }

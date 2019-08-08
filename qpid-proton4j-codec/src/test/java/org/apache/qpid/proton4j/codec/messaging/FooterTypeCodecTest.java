@@ -72,17 +72,17 @@ public class FooterTypeCodecTest extends CodecTestSupport {
     private void doTestDecodeHeaderSeries(int size) throws IOException {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
 
-        Map<Object, Object> propertiesMap = new LinkedHashMap<>();
+        Map<Symbol, Object> propertiesMap = new LinkedHashMap<>();
         Footer properties = new Footer(propertiesMap);
 
-        propertiesMap.put("key-1", "1");
-        propertiesMap.put("key-2", "2");
-        propertiesMap.put("key-3", "3");
-        propertiesMap.put("key-4", "4");
-        propertiesMap.put("key-5", "5");
-        propertiesMap.put("key-6", "6");
-        propertiesMap.put("key-7", "7");
-        propertiesMap.put("key-8", "8");
+        propertiesMap.put(Symbol.valueOf("key-1"), "1");
+        propertiesMap.put(Symbol.valueOf("key-2"), "2");
+        propertiesMap.put(Symbol.valueOf("key-3"), "3");
+        propertiesMap.put(Symbol.valueOf("key-4"), "4");
+        propertiesMap.put(Symbol.valueOf("key-5"), "5");
+        propertiesMap.put(Symbol.valueOf("key-6"), "6");
+        propertiesMap.put(Symbol.valueOf("key-7"), "7");
+        propertiesMap.put(Symbol.valueOf("key-8"), "8");
 
         for (int i = 0; i < size; ++i) {
             encoder.writeObject(buffer, encoderState, properties);
@@ -151,7 +151,7 @@ public class FooterTypeCodecTest extends CodecTestSupport {
     public void testSkipValue() throws IOException {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
 
-        Map<Object, Object> map = new HashMap<>();
+        Map<Symbol, Object> map = new HashMap<>();
         map.put(Symbol.valueOf("one"), 1);
         map.put(Symbol.valueOf("two"), Boolean.TRUE);
         map.put(Symbol.valueOf("three"), "test");
@@ -241,7 +241,7 @@ public class FooterTypeCodecTest extends CodecTestSupport {
 
         Footer[] array = new Footer[3];
 
-        Map<Object, Object> map = new HashMap<>();
+        Map<Symbol, Object> map = new HashMap<>();
         map.put(Symbol.valueOf("1"), Boolean.TRUE);
         map.put(Symbol.valueOf("2"), Boolean.FALSE);
 
@@ -299,7 +299,7 @@ public class FooterTypeCodecTest extends CodecTestSupport {
 
         Footer readAnnotations = (Footer) result;
 
-        Map<Object, Object> resultMap = readAnnotations.getValue();
+        Map<Symbol, Object> resultMap = readAnnotations.getValue();
 
         assertEquals(annotations.getValue().size(), resultMap.size());
         assertEquals(resultMap.get(SYMBOL_1), stringKeyedMap);

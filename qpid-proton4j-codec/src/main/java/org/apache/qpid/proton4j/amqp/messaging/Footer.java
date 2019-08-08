@@ -27,9 +27,9 @@ public final class Footer implements Section {
     public static final UnsignedLong DESCRIPTOR_CODE = UnsignedLong.valueOf(0x0000000000000078L);
     public static final Symbol DESCRIPTOR_SYMBOL = Symbol.valueOf("amqp:footer:map");
 
-    private final Map<Object, Object> value;
+    private final Map<Symbol, Object> value;
 
-    public Footer(Map<Object, Object> value) {
+    public Footer(Map<Symbol, Object> value) {
         this.value = value;
     }
 
@@ -37,7 +37,7 @@ public final class Footer implements Section {
         return new Footer(value == null ? null : new LinkedHashMap<>(value));
     }
 
-    public Map<Object, Object> getValue() {
+    public Map<Symbol, Object> getValue() {
         return value;
     }
 

@@ -24,6 +24,7 @@ import static org.junit.Assert.assertNull;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.messaging.Section.SectionType;
 import org.junit.Test;
 
@@ -41,8 +42,8 @@ public class FooterTest {
 
     @Test
     public void testCopy() {
-        Map<Object, Object> payload = new HashMap<>();
-        payload.put("key", "value");
+        Map<Symbol, Object> payload = new HashMap<>();
+        payload.put(Symbol.valueOf("key"), "value");
 
         Footer original = new Footer(payload);
         Footer copy = original.copy();
