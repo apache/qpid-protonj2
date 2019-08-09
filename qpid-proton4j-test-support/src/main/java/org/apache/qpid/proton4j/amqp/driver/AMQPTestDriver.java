@@ -54,6 +54,8 @@ public class AMQPTestDriver implements Consumer<ProtonBuffer> {
 
     /**
      *  Holds the expectations for processing of data from the peer under test.
+     *  Uses a thread safe queue to avoid contention on adding script entries
+     *  and processing incoming data (although you should probably not do that).
      */
     private final Queue<ScriptedElement> script = new ConcurrentLinkedQueue<>();
 
@@ -69,16 +71,6 @@ public class AMQPTestDriver implements Consumer<ProtonBuffer> {
         // Configure test driver resources
         this.frameParser = new FrameDecoder(this);
         this.frameEncoder = new FrameEncoder(this);
-    }
-
-    /**
-     * Creates and returns a new script writer for use in building the expectations
-     * and actions that will comprise an AMQP test.
-     *
-     * @return a new {@link ScriptWriter} linked to this driver.
-     */
-    public ScriptWriter createScriptWriter() {
-        return new ScriptWriter(this);
     }
 
     /**
@@ -203,35 +195,19 @@ public class AMQPTestDriver implements Consumer<ProtonBuffer> {
 
     //----- Test driver actions
 
-    /**
-     * Checks that the test script was fully consumed and that the driver is not
-     * in an error state.
-     *
-     * @throws AssertionError if the scripted events are not all completed when called.
-     */
-    public void assertScriptComplete() throws AssertionError {
-        checkFailed();
-        if (!script.isEmpty()) {
-            // TODO - Dump all elements that were not executed in the script.
-            throw new AssertionError("Not all expected actions were completed");
-        }
-    }
-
-    /**
-     * Checks that the test script was fully consumed but ignores any failure
-     * state as that may have been expected.
-     *
-     * @throws AssertionError if the scripted events are not all completed when called.
-     */
-    public void assertScriptCompleteIngoreErrors() throws AssertionError {
-        if (!script.isEmpty()) {
-            // TODO - Dump all elements that were not executed in the script.
-            throw new AssertionError("Not all expected actions were completed");
-        }
-    }
-
     public void waitForScriptToComplete() {
         checkFailed();
+        if (!script.isEmpty()) {
+            try {
+                new ScriptCompleteAction(this).queue().await();
+            } catch (InterruptedException e) {
+                Thread.interrupted();
+                signalFailure("Interrupted while waiting for script to complete");
+            }
+        }
+    }
+
+    public void waitForScriptToCompleteIgnoreErrors() {
         if (!script.isEmpty()) {
             try {
                 new ScriptCompleteAction(this).queue().await();

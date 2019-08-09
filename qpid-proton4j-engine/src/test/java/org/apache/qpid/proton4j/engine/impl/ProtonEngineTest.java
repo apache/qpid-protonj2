@@ -23,8 +23,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
-import org.apache.qpid.proton4j.amqp.driver.ScriptWriter;
+import org.apache.qpid.proton4j.amqp.driver.ProtonTestPeer;
 import org.apache.qpid.proton4j.engine.Connection;
 import org.apache.qpid.proton4j.engine.ConnectionState;
 import org.apache.qpid.proton4j.engine.Session;
@@ -56,12 +55,8 @@ public class ProtonEngineTest extends ProtonEngineTestSupport {
     public void testEngineEmitsAMQPHeaderOnConnectionOpen() {
         ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
         engine.errorHandler(result -> failure = result);
-
-        // Create the test driver and link it to the engine for output handling.
-        AMQPTestDriver driver = new AMQPTestDriver(engine);
-        engine.outputConsumer(driver);
-
-        ScriptWriter script = driver.createScriptWriter();
+        ProtonTestPeer peer = new ProtonTestPeer(engine);
+        engine.outputConsumer(peer);
 
         Connection connection = engine.start();
         assertNotNull(connection);
@@ -69,13 +64,13 @@ public class ProtonEngineTest extends ProtonEngineTestSupport {
         // Default engine should start and return a connection immediately
         assertNotNull(connection);
 
-        script.expectAMQPHeader().respondWithAMQPHeader();
-        script.expectOpen().respond().withContainerId("driver");
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond().withContainerId("driver");
 
         connection.setContainerId("test");
         connection.open();
 
-        driver.assertScriptComplete();
+        peer.waitForScriptToComplete();
 
         assertEquals(ConnectionState.ACTIVE, connection.getLocalState());
         assertEquals(ConnectionState.ACTIVE, connection.getRemoteState());
@@ -87,12 +82,8 @@ public class ProtonEngineTest extends ProtonEngineTestSupport {
     public void testExceptionThrownFromOpenWhenRemoteSignalsFailure() {
         ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
         engine.errorHandler(result -> failure = result);
-
-        // Create the test driver and link it to the engine for output handling.
-        AMQPTestDriver driver = new AMQPTestDriver(engine);
-        engine.outputConsumer(driver);
-
-        ScriptWriter script = driver.createScriptWriter();
+        ProtonTestPeer peer = new ProtonTestPeer(engine);
+        engine.outputConsumer(peer);
 
         Connection connection = engine.start();
         assertNotNull(connection);
@@ -100,9 +91,9 @@ public class ProtonEngineTest extends ProtonEngineTestSupport {
         // Default engine should start and return a connection immediately
         assertNotNull(connection);
 
-        script.expectAMQPHeader().respondWithAMQPHeader();
-        script.expectOpen().respond().withContainerId("driver");
-        script.expectAttach();  // TODO Script error back to source
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond().withContainerId("driver");
+        peer.expectAttach();  // TODO Script error back to source
 
         connection.setContainerId("test");
         connection.open();
@@ -115,7 +106,7 @@ public class ProtonEngineTest extends ProtonEngineTestSupport {
             // Error was expected - TODO - Refine API to indicate what error is going to appear.
         }
 
-        driver.assertScriptCompleteIngoreErrors();
+        peer.waitForScriptToCompleteIgnoreErrors();
 
         // TODO - Should we also fire error here.
         //assertNotNull(failure);

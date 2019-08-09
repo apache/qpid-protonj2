@@ -31,8 +31,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.apache.qpid.proton4j.amqp.Binary;
-import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
-import org.apache.qpid.proton4j.amqp.driver.ScriptWriter;
+import org.apache.qpid.proton4j.amqp.driver.ProtonTestPeer;
 import org.apache.qpid.proton4j.amqp.messaging.Accepted;
 import org.apache.qpid.proton4j.amqp.messaging.Modified;
 import org.apache.qpid.proton4j.amqp.messaging.Rejected;
@@ -59,15 +58,14 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
     public void testSenderOpenAndCloseAreIdempotent() throws Exception {
         ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
         engine.errorHandler(result -> failure = result);
-        AMQPTestDriver driver = new AMQPTestDriver(engine);
-        engine.outputConsumer(driver);
-        ScriptWriter script = driver.createScriptWriter();
+        ProtonTestPeer peer = new ProtonTestPeer(engine);
+        engine.outputConsumer(peer);
 
-        script.expectAMQPHeader().respondWithAMQPHeader();
-        script.expectOpen().respond().withContainerId("driver");
-        script.expectBegin().respond();
-        script.expectAttach().respond();
-        script.expectDetach().respond();
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond().withContainerId("driver");
+        peer.expectBegin().respond();
+        peer.expectAttach().respond();
+        peer.expectDetach().respond();
 
         Connection connection = engine.start();
 
@@ -88,7 +86,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         // Should not emit another detach frame
         sender.close();
 
-        driver.assertScriptComplete();
+        peer.waitForScriptToComplete();
 
         assertNull(failure);
     }
@@ -97,15 +95,14 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
     public void testEngineEmitsAttachAfterLocalSenderOpened() throws Exception {
         ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
         engine.errorHandler(result -> failure = result);
-        AMQPTestDriver driver = new AMQPTestDriver(engine);
-        engine.outputConsumer(driver);
-        ScriptWriter script = driver.createScriptWriter();
+        ProtonTestPeer peer = new ProtonTestPeer(engine);
+        engine.outputConsumer(peer);
 
-        script.expectAMQPHeader().respondWithAMQPHeader();
-        script.expectOpen().respond().withContainerId("driver");
-        script.expectBegin().respond();
-        script.expectAttach().respond();
-        script.expectDetach().respond();
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond().withContainerId("driver");
+        peer.expectBegin().respond();
+        peer.expectAttach().respond();
+        peer.expectDetach().respond();
 
         Connection connection = engine.start();
 
@@ -119,7 +116,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         sender.open();
         sender.close();
 
-        driver.assertScriptComplete();
+        peer.waitForScriptToComplete();
 
         assertNull(failure);
     }
@@ -128,15 +125,13 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
     public void testOpenBeginAttachBeforeRemoteResponds() throws Exception {
         ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
         engine.errorHandler(result -> failure = result);
-        // Create the test driver and link it to the engine for output handling.
-        AMQPTestDriver driver = new AMQPTestDriver(engine);
-        engine.outputConsumer(driver);
-        ScriptWriter script = driver.createScriptWriter();
+        ProtonTestPeer peer = new ProtonTestPeer(engine);
+        engine.outputConsumer(peer);
 
-        script.expectAMQPHeader().respondWithAMQPHeader();
-        script.expectOpen();
-        script.expectBegin();
-        script.expectAttach();
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen();
+        peer.expectBegin();
+        peer.expectAttach();
 
         Connection connection = engine.start();
 
@@ -149,7 +144,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         Sender sender = session.sender("test");
         sender.open();
 
-        driver.assertScriptComplete();
+        peer.waitForScriptToComplete();
 
         assertNull(failure);
     }
@@ -158,15 +153,14 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
     public void testSenderFireOpenedEventAfterRemoteAttachArrives() throws Exception {
         ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
         engine.errorHandler(result -> failure = result);
-        AMQPTestDriver driver = new AMQPTestDriver(engine);
-        engine.outputConsumer(driver);
-        ScriptWriter script = driver.createScriptWriter();
+        ProtonTestPeer peer = new ProtonTestPeer(engine);
+        engine.outputConsumer(peer);
 
-        script.expectAMQPHeader().respondWithAMQPHeader();
-        script.expectOpen().respond().withContainerId("driver");
-        script.expectBegin().respond();
-        script.expectAttach().respond();
-        script.expectDetach().respond();
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond().withContainerId("driver");
+        peer.expectBegin().respond();
+        peer.expectAttach().respond();
+        peer.expectDetach().respond();
 
         final AtomicBoolean senderRemotelyOpened = new AtomicBoolean();
 
@@ -188,7 +182,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
 
         sender.close();
 
-        driver.assertScriptComplete();
+        peer.waitForScriptToComplete();
 
         assertNull(failure);
     }
@@ -197,17 +191,16 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
     public void testOpenAndCloseMultipleSenders() throws Exception {
         ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
         engine.errorHandler(result -> failure = result);
-        AMQPTestDriver driver = new AMQPTestDriver(engine);
-        engine.outputConsumer(driver);
-        ScriptWriter script = driver.createScriptWriter();
+        ProtonTestPeer peer = new ProtonTestPeer(engine);
+        engine.outputConsumer(peer);
 
-        script.expectAMQPHeader().respondWithAMQPHeader();
-        script.expectOpen().respond().withContainerId("driver");
-        script.expectBegin().respond();
-        script.expectAttach().withHandle(0).respond();
-        script.expectAttach().withHandle(1).respond();
-        script.expectDetach().withHandle(1).respond();
-        script.expectDetach().withHandle(0).respond();
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond().withContainerId("driver");
+        peer.expectBegin().respond();
+        peer.expectAttach().withHandle(0).respond();
+        peer.expectAttach().withHandle(1).respond();
+        peer.expectDetach().withHandle(1).respond();
+        peer.expectDetach().withHandle(0).respond();
 
         Connection connection = engine.start();
 
@@ -224,7 +217,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         sender2.close();
         sender1.close();
 
-        driver.assertScriptComplete();
+        peer.waitForScriptToComplete();
 
         assertNull(failure);
     }
@@ -233,15 +226,14 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
     public void testSenderFireClosedEventAfterRemoteDetachArrives() throws Exception {
         ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
         engine.errorHandler(result -> failure = result);
-        AMQPTestDriver driver = new AMQPTestDriver(engine);
-        engine.outputConsumer(driver);
-        ScriptWriter script = driver.createScriptWriter();
+        ProtonTestPeer peer = new ProtonTestPeer(engine);
+        engine.outputConsumer(peer);
 
-        script.expectAMQPHeader().respondWithAMQPHeader();
-        script.expectOpen().respond().withContainerId("driver");
-        script.expectBegin().respond();
-        script.expectAttach().respond();
-        script.expectDetach().respond();
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond().withContainerId("driver");
+        peer.expectBegin().respond();
+        peer.expectAttach().respond();
+        peer.expectDetach().respond();
 
         final AtomicBoolean senderRemotelyOpened = new AtomicBoolean();
         final AtomicBoolean senderRemotelyClosed = new AtomicBoolean();
@@ -269,7 +261,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
 
         assertTrue("Sender remote closed event did not fire", senderRemotelyClosed.get());
 
-        driver.assertScriptComplete();
+        peer.waitForScriptToComplete();
 
         assertNull(failure);
     }
@@ -278,20 +270,19 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
     public void testConnectionSignalsRemoteSenderOpen() throws Exception {
         ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
         engine.errorHandler(result -> failure = result);
-        AMQPTestDriver driver = new AMQPTestDriver(engine);
-        engine.outputConsumer(driver);
-        ScriptWriter script = driver.createScriptWriter();
+        ProtonTestPeer peer = new ProtonTestPeer(engine);
+        engine.outputConsumer(peer);
 
-        script.expectAMQPHeader().respondWithAMQPHeader();
-        script.expectOpen().respond().withContainerId("driver");
-        script.expectBegin().respond();
-        script.remoteAttach().withName("sender")
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond().withContainerId("driver");
+        peer.expectBegin().respond();
+        peer.remoteAttach().withName("sender")
                              .withHandle(0)
                              .withRole(Role.RECEIVER)
                              .withInitialDeliveryCount(0)
                              .onChannel(0).queue();
-        script.expectAttach();
-        script.expectDetach().respond();
+        peer.expectAttach();
+        peer.expectDetach().respond();
 
         final AtomicBoolean senderRemotelyOpened = new AtomicBoolean();
         final AtomicReference<Sender> sender = new AtomicReference<>();
@@ -315,7 +306,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         sender.get().open();
         sender.get().close();
 
-        driver.assertScriptComplete();
+        peer.waitForScriptToComplete();
 
         assertNull(failure);
     }
@@ -324,14 +315,13 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
     public void testCannotOpenSenderAfterSessionClosed() throws Exception {
         ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
         engine.errorHandler(result -> failure = result);
-        AMQPTestDriver driver = new AMQPTestDriver(engine);
-        engine.outputConsumer(driver);
-        ScriptWriter script = driver.createScriptWriter();
+        ProtonTestPeer peer = new ProtonTestPeer(engine);
+        engine.outputConsumer(peer);
 
-        script.expectAMQPHeader().respondWithAMQPHeader();
-        script.expectOpen().respond().withContainerId("driver");
-        script.expectBegin().respond();
-        script.expectEnd().respond();
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond().withContainerId("driver");
+        peer.expectBegin().respond();
+        peer.expectEnd().respond();
 
         Connection connection = engine.start();
 
@@ -353,7 +343,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
 
         sender.close();
 
-        driver.assertScriptComplete();
+        peer.waitForScriptToComplete();
 
         assertNull(failure);
     }
@@ -362,14 +352,13 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
     public void testCannotOpenSenderAfterSessionRemotelyClosed() throws Exception {
         ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
         engine.errorHandler(result -> failure = result);
-        AMQPTestDriver driver = new AMQPTestDriver(engine);
-        engine.outputConsumer(driver);
-        ScriptWriter script = driver.createScriptWriter();
+        ProtonTestPeer peer = new ProtonTestPeer(engine);
+        engine.outputConsumer(peer);
 
-        script.expectAMQPHeader().respondWithAMQPHeader();
-        script.expectOpen().respond().withContainerId("driver");
-        script.expectBegin().respond();
-        script.remoteEnd().queue(); // TODO - Last opened is used here, but a thenEnd() on the expect begin would be more clear
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond().withContainerId("driver");
+        peer.expectBegin().respond();
+        peer.remoteEnd().queue(); // TODO - Last opened is used here, but a thenEnd() on the expect begin would be more clear
 
         Connection connection = engine.start();
 
@@ -389,7 +378,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
 
         sender.close();
 
-        driver.assertScriptComplete();
+        peer.waitForScriptToComplete();
 
         assertNull(failure);
     }
@@ -398,15 +387,14 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
     public void testGetCurrentDeliveryFromSender() throws Exception {
         ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
         engine.errorHandler(result -> failure = result);
-        AMQPTestDriver driver = new AMQPTestDriver(engine);
-        engine.outputConsumer(driver);
-        ScriptWriter script = driver.createScriptWriter();
+        ProtonTestPeer peer = new ProtonTestPeer(engine);
+        engine.outputConsumer(peer);
 
-        script.expectAMQPHeader().respondWithAMQPHeader();
-        script.expectOpen().respond().withContainerId("driver");
-        script.expectBegin().respond();
-        script.expectAttach().withHandle(0).respond();
-        script.expectDetach().withHandle(0).respond();
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond().withContainerId("driver");
+        peer.expectBegin().respond();
+        peer.expectAttach().withHandle(0).respond();
+        peer.expectDetach().withHandle(0).respond();
 
         Connection connection = engine.start();
 
@@ -431,7 +419,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
 
         sender.close();
 
-        driver.assertScriptComplete();
+        peer.waitForScriptToComplete();
 
         assertNull(failure);
     }
@@ -440,21 +428,20 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
     public void testSenderGetsCreditOnIncomingFlow() throws Exception {
         ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
         engine.errorHandler(result -> failure = result);
-        AMQPTestDriver driver = new AMQPTestDriver(engine);
-        engine.outputConsumer(driver);
-        ScriptWriter script = driver.createScriptWriter();
+        ProtonTestPeer peer = new ProtonTestPeer(engine);
+        engine.outputConsumer(peer);
 
-        script.expectAMQPHeader().respondWithAMQPHeader();
-        script.expectOpen().respond().withContainerId("driver");
-        script.expectBegin().respond();
-        script.expectAttach().withRole(Role.SENDER).respond();
-        script.remoteFlow().withDeliveryCount(0)
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond().withContainerId("driver");
+        peer.expectBegin().respond();
+        peer.expectAttach().withRole(Role.SENDER).respond();
+        peer.remoteFlow().withDeliveryCount(0)
                            .withLinkCredit(10)
                            .withIncomingWindow(1024)
                            .withOutgoingWindow(10)
                            .withNextIncomingId(0)
                            .withNextOutgoingId(1).queue();
-        script.expectDetach().withHandle(0).respond();
+        peer.expectDetach().withHandle(0).respond();
 
         Connection connection = engine.start();
 
@@ -473,7 +460,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
 
         sender.close();
 
-        driver.assertScriptComplete();
+        peer.waitForScriptToComplete();
 
         assertNull(failure);
     }
@@ -482,29 +469,28 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
     public void testSendSmallPayloadWhenCreditAvailable() throws Exception {
         ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
         engine.errorHandler(result -> failure = result);
-        AMQPTestDriver driver = new AMQPTestDriver(engine);
-        engine.outputConsumer(driver);
-        ScriptWriter script = driver.createScriptWriter();
+        ProtonTestPeer peer = new ProtonTestPeer(engine);
+        engine.outputConsumer(peer);
 
         final byte [] payloadBuffer = new byte[] {0, 1, 2, 3, 4};
 
-        script.expectAMQPHeader().respondWithAMQPHeader();
-        script.expectOpen().respond().withContainerId("driver");
-        script.expectBegin().respond();
-        script.expectAttach().withRole(Role.SENDER).respond();
-        script.remoteFlow().withDeliveryCount(0)     // TODO - Would be nice to automate filling in these
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond().withContainerId("driver");
+        peer.expectBegin().respond();
+        peer.expectAttach().withRole(Role.SENDER).respond();
+        peer.remoteFlow().withDeliveryCount(0)     // TODO - Would be nice to automate filling in these
                            .withLinkCredit(10)       //        these bits using last session opened values
                            .withIncomingWindow(1024) //        plus some defaults or generated values.
                            .withOutgoingWindow(10)
                            .withNextIncomingId(0)
                            .withNextOutgoingId(1).queue();
-        script.expectTransfer().withHandle(0)
+        peer.expectTransfer().withHandle(0)
                                .withSettled(false)
                                .withState((DeliveryState) null)
                                .withDeliveryId(0)
                                .withDeliveryTag(new byte[] {0})
                                .withPayload(payloadBuffer);
-        script.expectDetach().withHandle(0).respond();
+        peer.expectDetach().withHandle(0).respond();
 
         Connection connection = engine.start();
 
@@ -525,7 +511,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         sender.open();
         sender.close();
 
-        driver.assertScriptComplete();
+        peer.waitForScriptToComplete();
 
         assertNull(failure);
     }
@@ -534,33 +520,32 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
     public void testSenderSignalsDeliveryUpdatedOnSettled() throws Exception {
         ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
         engine.errorHandler(result -> failure = result);
-        AMQPTestDriver driver = new AMQPTestDriver(engine);
-        engine.outputConsumer(driver);
-        ScriptWriter script = driver.createScriptWriter();
+        ProtonTestPeer peer = new ProtonTestPeer(engine);
+        engine.outputConsumer(peer);
 
         ProtonBuffer payload = ProtonByteBufferAllocator.DEFAULT.wrap(new byte[] {0, 1, 2, 3, 4});
 
-        script.expectAMQPHeader().respondWithAMQPHeader();
-        script.expectOpen().respond().withContainerId("driver");
-        script.expectBegin().respond();
-        script.expectAttach().withRole(Role.SENDER).respond();
-        script.remoteFlow().withDeliveryCount(0)
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond().withContainerId("driver");
+        peer.expectBegin().respond();
+        peer.expectAttach().withRole(Role.SENDER).respond();
+        peer.remoteFlow().withDeliveryCount(0)
                            .withLinkCredit(10)
                            .withIncomingWindow(1024)
                            .withOutgoingWindow(10)
                            .withNextIncomingId(0)
                            .withNextOutgoingId(1).queue();
-        script.expectTransfer().withHandle(0)
+        peer.expectTransfer().withHandle(0)
                                .withSettled(false)
                                .withState((DeliveryState) null)
                                .withDeliveryId(0)
                                .withDeliveryTag(new byte[] {0})
                                .withPayload(payload.copy());
-        script.remoteDisposition().withSettled(true)
+        peer.remoteDisposition().withSettled(true)
                                   .withRole(Role.RECEIVER)
                                   .withState(Accepted.getInstance())
                                   .withFirst(0).queue();
-        script.expectDetach().withHandle(0).respond();
+        peer.expectDetach().withHandle(0).respond();
 
         Connection connection = engine.start();
 
@@ -593,7 +578,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
 
         sender.close();
 
-        driver.assertScriptComplete();
+        peer.waitForScriptToComplete();
 
         assertNull(failure);
     }
@@ -602,9 +587,8 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
     public void testOpenSenderBeforeOpenConnection() {
         ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
         engine.errorHandler(result -> failure = result);
-        AMQPTestDriver driver = new AMQPTestDriver(engine);
-        engine.outputConsumer(driver);
-        ScriptWriter script = driver.createScriptWriter();
+        ProtonTestPeer peer = new ProtonTestPeer(engine);
+        engine.outputConsumer(peer);
 
         // Create the connection but don't open, then open a session and a sender and
         // the session begin and sender attach shouldn't go out until the connection
@@ -615,15 +599,15 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         Sender sender = session.sender("sender");
         sender.open();
 
-        script.expectAMQPHeader().respondWithAMQPHeader();
-        script.expectOpen().respond();
-        script.expectBegin().respond();
-        script.expectAttach().withHandle(0).withName("sender").withRole(Role.SENDER).respond();
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond();
+        peer.expectBegin().respond();
+        peer.expectAttach().withHandle(0).withName("sender").withRole(Role.SENDER).respond();
 
         // Now open the connection, expect the Open, Begin, and Attach frames
         connection.open();
 
-        driver.assertScriptComplete();
+        peer.waitForScriptToComplete();
 
         assertNull(failure);
     }
@@ -632,12 +616,11 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
     public void testOpenSenderBeforeOpenSession() {
         ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
         engine.errorHandler(result -> failure = result);
-        AMQPTestDriver driver = new AMQPTestDriver(engine);
-        engine.outputConsumer(driver);
-        ScriptWriter script = driver.createScriptWriter();
+        ProtonTestPeer peer = new ProtonTestPeer(engine);
+        engine.outputConsumer(peer);
 
-        script.expectAMQPHeader().respondWithAMQPHeader();
-        script.expectOpen().respond();
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond();
 
         // Create the connection and open it, then create a session and a sender
         // and observe that the sender doesn't send its attach until the session
@@ -648,13 +631,13 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         Sender sender = session.sender("sender");
         sender.open();
 
-        script.expectBegin().respond();
-        script.expectAttach().withHandle(0).withName("sender").withRole(Role.SENDER).respond();
+        peer.expectBegin().respond();
+        peer.expectAttach().withHandle(0).withName("sender").withRole(Role.SENDER).respond();
 
         // Now open the session, expect the Begin, and Attach frames
         session.open();
 
-        driver.assertScriptComplete();
+        peer.waitForScriptToComplete();
 
         assertNull(failure);
     }
@@ -672,15 +655,14 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
     public void doTestSenderClosedOrDetachedAfterEndSent(boolean close) {
         ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
         engine.errorHandler(result -> failure = result);
-        AMQPTestDriver driver = new AMQPTestDriver(engine);
-        engine.outputConsumer(driver);
-        ScriptWriter script = driver.createScriptWriter();
+        ProtonTestPeer peer = new ProtonTestPeer(engine);
+        engine.outputConsumer(peer);
 
-        script.expectAMQPHeader().respondWithAMQPHeader();
-        script.expectOpen().respond();
-        script.expectBegin().respond();
-        script.expectAttach().withHandle(0).withName("sender").withRole(Role.SENDER).respond();
-        script.expectEnd().respond();
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond();
+        peer.expectBegin().respond();
+        peer.expectAttach().withHandle(0).withName("sender").withRole(Role.SENDER).respond();
+        peer.expectEnd().respond();
 
         // Create the connection and open it, then create a session and a sender
         // and observe that the sender doesn't send its detach if the session has
@@ -703,7 +685,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
             sender.detach();
         }
 
-        driver.assertScriptComplete();
+        peer.waitForScriptToComplete();
 
         assertNull(failure);
     }
@@ -721,15 +703,14 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
     public void doTestSenderClosedOrDetachedAfterCloseSent(boolean close) {
         ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
         engine.errorHandler(result -> failure = result);
-        AMQPTestDriver driver = new AMQPTestDriver(engine);
-        engine.outputConsumer(driver);
-        ScriptWriter script = driver.createScriptWriter();
+        ProtonTestPeer peer = new ProtonTestPeer(engine);
+        engine.outputConsumer(peer);
 
-        script.expectAMQPHeader().respondWithAMQPHeader();
-        script.expectOpen().respond();
-        script.expectBegin().respond();
-        script.expectAttach().withHandle(0).withName("sender").withRole(Role.SENDER).respond();
-        script.expectClose().respond();
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond();
+        peer.expectBegin().respond();
+        peer.expectAttach().withHandle(0).withName("sender").withRole(Role.SENDER).respond();
+        peer.expectClose().respond();
 
         // Create the connection and open it, then create a session and a sender
         // and observe that the sender doesn't send its detach if the connection has
@@ -752,7 +733,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
             sender.detach();
         }
 
-        driver.assertScriptComplete();
+        peer.waitForScriptToComplete();
 
         assertNull(failure);
     }
@@ -761,29 +742,28 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
     public void testNoDispositionSentAfterDeliverySettledForSender() throws Exception {
         ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
         engine.errorHandler(result -> failure = result);
-        AMQPTestDriver driver = new AMQPTestDriver(engine);
-        engine.outputConsumer(driver);
-        ScriptWriter script = driver.createScriptWriter();
+        ProtonTestPeer peer = new ProtonTestPeer(engine);
+        engine.outputConsumer(peer);
 
-        script.expectAMQPHeader().respondWithAMQPHeader();
-        script.expectOpen().respond().withContainerId("driver");
-        script.expectBegin().respond();
-        script.expectAttach().withRole(Role.SENDER).respond();
-        script.remoteFlow().withDeliveryCount(0)
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond().withContainerId("driver");
+        peer.expectBegin().respond();
+        peer.expectAttach().withRole(Role.SENDER).respond();
+        peer.remoteFlow().withDeliveryCount(0)
                            .withLinkCredit(10)
                            .withIncomingWindow(1024)
                            .withOutgoingWindow(10)
                            .withNextIncomingId(0)
                            .withNextOutgoingId(1).queue();
-        script.expectTransfer().withHandle(0)
+        peer.expectTransfer().withHandle(0)
                                .withSettled(false)
                                .withState((DeliveryState) null)
                                .withDeliveryId(0)
                                .withDeliveryTag(new byte[] {0});
-        script.expectDisposition().withFirst(0)
+        peer.expectDisposition().withFirst(0)
                                   .withSettled(true)
                                   .withState(Accepted.getInstance());
-        script.expectDetach().withHandle(0).respond();
+        peer.expectDetach().withHandle(0).respond();
 
         Connection connection = engine.start();
 
@@ -815,7 +795,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
 
         sender.close();
 
-        driver.assertScriptComplete();
+        peer.waitForScriptToComplete();
 
         assertNull(failure);
     }
@@ -824,21 +804,20 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
     public void testSenderCannotSendAfterConnectionClosed() throws Exception {
         ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
         engine.errorHandler(result -> failure = result);
-        AMQPTestDriver driver = new AMQPTestDriver(engine);
-        engine.outputConsumer(driver);
-        ScriptWriter script = driver.createScriptWriter();
+        ProtonTestPeer peer = new ProtonTestPeer(engine);
+        engine.outputConsumer(peer);
 
-        script.expectAMQPHeader().respondWithAMQPHeader();
-        script.expectOpen().respond().withContainerId("driver");
-        script.expectBegin().respond();
-        script.expectAttach().withRole(Role.SENDER).respond();
-        script.remoteFlow().withDeliveryCount(0)
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond().withContainerId("driver");
+        peer.expectBegin().respond();
+        peer.expectAttach().withRole(Role.SENDER).respond();
+        peer.remoteFlow().withDeliveryCount(0)
                            .withLinkCredit(10)
                            .withIncomingWindow(1024)
                            .withOutgoingWindow(10)
                            .withNextIncomingId(0)
                            .withNextOutgoingId(1).queue();
-        script.expectClose().respond();
+        peer.expectClose().respond();
 
         Connection connection = engine.start();
 
@@ -868,7 +847,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
             // Should not allow writes on past delivery instances after connection closed
         }
 
-        driver.assertScriptComplete();
+        peer.waitForScriptToComplete();
 
         assertNull(failure);
     }
@@ -886,9 +865,8 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
     private void doMultiplexMultiFrameDeliveryOnSingleSessionOutgoingTestImpl(boolean bothDeliveriesMultiFrame) {
         ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
         engine.errorHandler(result -> failure = result);
-        AMQPTestDriver driver = new AMQPTestDriver(engine);
-        engine.outputConsumer(driver);
-        ScriptWriter script = driver.createScriptWriter();
+        ProtonTestPeer peer = new ProtonTestPeer(engine);
+        engine.outputConsumer(peer);
 
         int contentLength1 = 6000;
         int frameSizeLimit = 4000;
@@ -897,11 +875,11 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
             contentLength2 = 6000;
         }
 
-        script.expectAMQPHeader().respondWithAMQPHeader();
-        script.expectOpen().withMaxFrameSize(frameSizeLimit).respond().withContainerId("driver").withMaxFrameSize(frameSizeLimit);
-        script.expectBegin().respond();
-        script.expectAttach().withRole(Role.SENDER).respond();
-        script.expectAttach().withRole(Role.SENDER).respond();
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().withMaxFrameSize(frameSizeLimit).respond().withContainerId("driver").withMaxFrameSize(frameSizeLimit);
+        peer.expectBegin().respond();
+        peer.expectAttach().withRole(Role.SENDER).respond();
+        peer.expectAttach().withRole(Role.SENDER).respond();
 
         Connection connection = engine.start();
         connection.setMaxFrameSize(frameSizeLimit);
@@ -927,14 +905,14 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
             sender2MarkedSendable.set(true);
         });
 
-        script.remoteFlow().withHandle(0)
+        peer.remoteFlow().withHandle(0)
                            .withDeliveryCount(0)
                            .withLinkCredit(10)
                            .withIncomingWindow(1024)
                            .withOutgoingWindow(10)
                            .withNextIncomingId(0)
                            .withNextOutgoingId(1).now();
-        script.remoteFlow().withHandle(1)
+        peer.remoteFlow().withHandle(1)
                            .withDeliveryCount(0)
                            .withLinkCredit(10)
                            .withIncomingWindow(1024)
@@ -948,27 +926,27 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         // Frames are not multiplexed for large deliveries as we write the full
         // writable portion out when a write is called.
 
-        script.expectTransfer().withHandle(0)
+        peer.expectTransfer().withHandle(0)
                                .withSettled(true)
                                .withState(Accepted.getInstance())
                                .withDeliveryId(0)
                                .withMore(true)
                                .withDeliveryTag(new byte[] {1});
-        script.expectTransfer().withHandle(0)
+        peer.expectTransfer().withHandle(0)
                                .withSettled(true)
                                .withState(Accepted.getInstance())
                                .withDeliveryId(0)
                                .withMore(false)
                                .withDeliveryTag(new byte[] {1});
 
-        script.expectTransfer().withHandle(1)
+        peer.expectTransfer().withHandle(1)
                                .withSettled(true)
                                .withState(Accepted.getInstance())
                                .withDeliveryId(1)
                                .withMore(bothDeliveriesMultiFrame)
                                .withDeliveryTag(new byte[] {2});
         if (bothDeliveriesMultiFrame) {
-            script.expectTransfer().withHandle(1)
+            peer.expectTransfer().withHandle(1)
                                    .withSettled(true)
                                    .withState(Accepted.getInstance())
                                    .withDeliveryId(1)
@@ -988,10 +966,10 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         delivery2.disposition(Accepted.getInstance(), true);
         delivery2.writeBytes(messageContent2);
 
-        script.expectClose().respond();
+        peer.expectClose().respond();
         connection.close();
 
-        driver.assertScriptComplete();
+        peer.waitForScriptToComplete();
         assertNull(failure);
     }
 
@@ -1011,28 +989,27 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
     void doMaxFrameSizeTestImpl(int remoteMaxFrameSize, int outboundFrameSizeLimit, int contentLength, int expectedNumFrames) {
         ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
         engine.errorHandler(result -> failure = result);
-        AMQPTestDriver driver = new AMQPTestDriver(engine);
-        engine.outputConsumer(driver);
-        ScriptWriter script = driver.createScriptWriter();
+        ProtonTestPeer peer = new ProtonTestPeer(engine);
+        engine.outputConsumer(peer);
 
-        script.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectAMQPHeader().respondWithAMQPHeader();
         if (outboundFrameSizeLimit == 0) {
             if (remoteMaxFrameSize == 0) {
-                script.expectOpen().respond();
+                peer.expectOpen().respond();
             } else {
-                script.expectOpen().respond().withMaxFrameSize(remoteMaxFrameSize);
+                peer.expectOpen().respond().withMaxFrameSize(remoteMaxFrameSize);
             }
         } else {
             if (remoteMaxFrameSize == 0) {
-                script.expectOpen().withMaxFrameSize(outboundFrameSizeLimit).respond();
+                peer.expectOpen().withMaxFrameSize(outboundFrameSizeLimit).respond();
             } else {
-                script.expectOpen().withMaxFrameSize(outboundFrameSizeLimit)
+                peer.expectOpen().withMaxFrameSize(outboundFrameSizeLimit)
                                    .respond()
                                    .withMaxFrameSize(remoteMaxFrameSize);
             }
         }
-        script.expectBegin().respond();
-        script.expectAttach().withRole(Role.SENDER).respond();
+        peer.expectBegin().respond();
+        peer.expectAttach().withRole(Role.SENDER).respond();
 
         Connection connection = engine.start();
         if (outboundFrameSizeLimit != 0) {
@@ -1051,7 +1028,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
             senderMarkedSendable.set(true);
         });
 
-        script.remoteFlow().withHandle(0)
+        peer.remoteFlow().withHandle(0)
                            .withDeliveryCount(0)
                            .withLinkCredit(50)
                            .withIncomingWindow(65535)
@@ -1082,7 +1059,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         assertEquals("Unexpected number of frames calculated", expectedNumFrames, frameCount);
 
         for (int i = 1; i <= expectedNumFrames; ++i) {
-            script.expectTransfer().withHandle(0)
+            peer.expectTransfer().withHandle(0)
                                    .withSettled(true)
                                    .withState(Accepted.getInstance())
                                    .withDeliveryId(0)
@@ -1097,10 +1074,10 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         delivery.disposition(Accepted.getInstance(), true);
         delivery.writeBytes(messageContent);
 
-        script.expectClose().respond();
+        peer.expectClose().respond();
         connection.close();
 
-        driver.assertScriptComplete();
+        peer.waitForScriptToComplete();
         assertNull(failure);
     }
 
@@ -1108,30 +1085,29 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
     public void testAbortInProgressDelivery() throws Exception {
         ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
         engine.errorHandler(result -> failure = result);
-        AMQPTestDriver driver = new AMQPTestDriver(engine);
-        engine.outputConsumer(driver);
-        ScriptWriter script = driver.createScriptWriter();
+        ProtonTestPeer peer = new ProtonTestPeer(engine);
+        engine.outputConsumer(peer);
 
         ProtonBuffer payload = ProtonByteBufferAllocator.DEFAULT.wrap(new byte[] {0, 1, 2, 3, 4});
 
-        script.expectAMQPHeader().respondWithAMQPHeader();
-        script.expectOpen().respond().withContainerId("driver");
-        script.expectBegin().respond();
-        script.expectAttach().withRole(Role.SENDER).respond();
-        script.remoteFlow().withDeliveryCount(0)
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond().withContainerId("driver");
+        peer.expectBegin().respond();
+        peer.expectAttach().withRole(Role.SENDER).respond();
+        peer.remoteFlow().withDeliveryCount(0)
                            .withLinkCredit(10)
                            .withIncomingWindow(1024)
                            .withOutgoingWindow(10)
                            .withNextIncomingId(0)
                            .withNextOutgoingId(1).queue();
-        script.expectTransfer().withHandle(0)
+        peer.expectTransfer().withHandle(0)
                                .withMore(true)
                                .withSettled(false)
                                .withState((DeliveryState) null)
                                .withDeliveryId(0)
                                .withDeliveryTag(new byte[] {0})
                                .withPayload(payload.copy());
-        script.expectTransfer().withHandle(0)
+        peer.expectTransfer().withHandle(0)
                                .withState((DeliveryState) null)
                                .withDeliveryId(0)
                                .withDeliveryTag(new byte[] {0})
@@ -1139,7 +1115,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
                                .withSettled(true)
                                .withMore(false)
                                .withPayload(nullValue(ProtonBuffer.class));
-        script.expectDetach().withHandle(0).respond();
+        peer.expectDetach().withHandle(0).respond();
 
         Connection connection = engine.start();
 
@@ -1168,7 +1144,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
 
         sender.close();
 
-        driver.assertScriptComplete();
+        peer.waitForScriptToComplete();
 
         assertNull(failure);
     }
@@ -1177,30 +1153,29 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
     public void testAbortAlreadyAbortedDelivery() throws Exception {
         ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
         engine.errorHandler(result -> failure = result);
-        AMQPTestDriver driver = new AMQPTestDriver(engine);
-        engine.outputConsumer(driver);
-        ScriptWriter script = driver.createScriptWriter();
+        ProtonTestPeer peer = new ProtonTestPeer(engine);
+        engine.outputConsumer(peer);
 
         ProtonBuffer payload = ProtonByteBufferAllocator.DEFAULT.wrap(new byte[] {0, 1, 2, 3, 4});
 
-        script.expectAMQPHeader().respondWithAMQPHeader();
-        script.expectOpen().respond().withContainerId("driver");
-        script.expectBegin().respond();
-        script.expectAttach().withRole(Role.SENDER).respond();
-        script.remoteFlow().withDeliveryCount(0)
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond().withContainerId("driver");
+        peer.expectBegin().respond();
+        peer.expectAttach().withRole(Role.SENDER).respond();
+        peer.remoteFlow().withDeliveryCount(0)
                            .withLinkCredit(10)
                            .withIncomingWindow(1024)
                            .withOutgoingWindow(10)
                            .withNextIncomingId(0)
                            .withNextOutgoingId(1).queue();
-        script.expectTransfer().withHandle(0)
+        peer.expectTransfer().withHandle(0)
                                .withMore(true)
                                .withSettled(false)
                                .withState((DeliveryState) null)
                                .withDeliveryId(0)
                                .withDeliveryTag(new byte[] {0})
                                .withPayload(payload.copy());
-        script.expectTransfer().withHandle(0)
+        peer.expectTransfer().withHandle(0)
                                .withState((DeliveryState) null)
                                .withDeliveryId(0)
                                .withDeliveryTag(new byte[] {0})
@@ -1208,7 +1183,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
                                .withSettled(true)
                                .withMore(false)
                                .withPayload(nullValue(ProtonBuffer.class));
-        script.expectDetach().withHandle(0).respond();
+        peer.expectDetach().withHandle(0).respond();
 
         Connection connection = engine.start();
 
@@ -1240,7 +1215,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
 
         sender.close();
 
-        driver.assertScriptComplete();
+        peer.waitForScriptToComplete();
 
         assertNull(failure);
     }
@@ -1249,21 +1224,20 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
     public void testAbortOnDeliveryThatHasNoWritesIsNoOp() throws Exception {
         ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
         engine.errorHandler(result -> failure = result);
-        AMQPTestDriver driver = new AMQPTestDriver(engine);
-        engine.outputConsumer(driver);
-        ScriptWriter script = driver.createScriptWriter();
+        ProtonTestPeer peer = new ProtonTestPeer(engine);
+        engine.outputConsumer(peer);
 
-        script.expectAMQPHeader().respondWithAMQPHeader();
-        script.expectOpen().respond().withContainerId("driver");
-        script.expectBegin().respond();
-        script.expectAttach().withRole(Role.SENDER).respond();
-        script.remoteFlow().withDeliveryCount(0)
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond().withContainerId("driver");
+        peer.expectBegin().respond();
+        peer.expectAttach().withRole(Role.SENDER).respond();
+        peer.remoteFlow().withDeliveryCount(0)
                            .withLinkCredit(10)
                            .withIncomingWindow(1024)
                            .withOutgoingWindow(10)
                            .withNextIncomingId(0)
                            .withNextOutgoingId(1).queue();
-        script.expectDetach().withHandle(0).respond();
+        peer.expectDetach().withHandle(0).respond();
 
         Connection connection = engine.start();
 
@@ -1292,7 +1266,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
 
         sender.close();
 
-        driver.assertScriptComplete();
+        peer.waitForScriptToComplete();
 
         assertNull(failure);
     }
@@ -1337,29 +1311,28 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
     private void doTestSettleTransferWithSpecifiedOutcome(DeliveryState state) throws Exception {
         ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
         engine.errorHandler(result -> failure = result);
-        AMQPTestDriver driver = new AMQPTestDriver(engine);
-        engine.outputConsumer(driver);
-        ScriptWriter script = driver.createScriptWriter();
+        ProtonTestPeer peer = new ProtonTestPeer(engine);
+        engine.outputConsumer(peer);
 
-        script.expectAMQPHeader().respondWithAMQPHeader();
-        script.expectOpen().respond().withContainerId("driver");
-        script.expectBegin().respond();
-        script.expectAttach().withRole(Role.SENDER).respond();
-        script.remoteFlow().withDeliveryCount(0)
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond().withContainerId("driver");
+        peer.expectBegin().respond();
+        peer.expectAttach().withRole(Role.SENDER).respond();
+        peer.remoteFlow().withDeliveryCount(0)
                            .withLinkCredit(10)
                            .withIncomingWindow(1024)
                            .withOutgoingWindow(10)
                            .withNextIncomingId(0)
                            .withNextOutgoingId(1).queue();
-        script.expectTransfer().withHandle(0)
+        peer.expectTransfer().withHandle(0)
                                .withSettled(false)
                                .withState((DeliveryState) null)
                                .withDeliveryId(0)
                                .withDeliveryTag(new byte[] {0});
-        script.expectDisposition().withFirst(0)
+        peer.expectDisposition().withFirst(0)
                                   .withSettled(true)
                                   .withState(state);
-        script.expectDetach().withHandle(0).respond();
+        peer.expectDetach().withHandle(0).respond();
 
         Connection connection = engine.start();
 
@@ -1387,7 +1360,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
 
         sender.close();
 
-        driver.assertScriptComplete();
+        peer.waitForScriptToComplete();
 
         assertNull(failure);
     }
@@ -1420,29 +1393,28 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
     private void doTestAttemptedSecondDispostionOnAlreadySettledDelivery(DeliveryState first, DeliveryState second) throws Exception {
         ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
         engine.errorHandler(result -> failure = result);
-        AMQPTestDriver driver = new AMQPTestDriver(engine);
-        engine.outputConsumer(driver);
-        ScriptWriter script = driver.createScriptWriter();
+        ProtonTestPeer peer = new ProtonTestPeer(engine);
+        engine.outputConsumer(peer);
 
-        script.expectAMQPHeader().respondWithAMQPHeader();
-        script.expectOpen().respond().withContainerId("driver");
-        script.expectBegin().respond();
-        script.expectAttach().withRole(Role.SENDER).respond();
-        script.remoteFlow().withDeliveryCount(0)
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond().withContainerId("driver");
+        peer.expectBegin().respond();
+        peer.expectAttach().withRole(Role.SENDER).respond();
+        peer.remoteFlow().withDeliveryCount(0)
                            .withLinkCredit(10)
                            .withIncomingWindow(1024)
                            .withOutgoingWindow(10)
                            .withNextIncomingId(0)
                            .withNextOutgoingId(1).queue();
-        script.expectTransfer().withHandle(0)
+        peer.expectTransfer().withHandle(0)
                                .withSettled(false)
                                .withState((DeliveryState) null)
                                .withDeliveryId(0)
                                .withDeliveryTag(new byte[] {0});
-        script.expectDisposition().withFirst(0)
+        peer.expectDisposition().withFirst(0)
                                   .withSettled(true)
                                   .withState(first);
-        script.expectDetach().withHandle(0).respond();
+        peer.expectDetach().withHandle(0).respond();
 
         Connection connection = engine.start();
 
@@ -1480,7 +1452,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
 
         sender.close();
 
-        driver.assertScriptComplete();
+        peer.waitForScriptToComplete();
 
         assertNull(failure);
     }

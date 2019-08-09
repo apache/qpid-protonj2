@@ -43,141 +43,139 @@ import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
 /**
  * Class used to create test scripts using the {@link AMQPTestDriver}
  */
-public class ScriptWriter {
-
-    private final AMQPTestDriver driver;
+public abstract class ScriptWriter {
 
     /**
-     * @param driver
-     *      The test driver that will be used when creating the test script
+     * Implemented in the subclass this method returns the active AMQP test driver
+     * instance being used for the tests.
+     *
+     * @return the {@link AMQPTestDriver} to use for building a test script.
      */
-    public ScriptWriter(AMQPTestDriver driver) {
-        this.driver = driver;
-    }
+    protected abstract AMQPTestDriver getDriver();
 
     public AMQPHeaderExpectation expectAMQPHeader() {
-        AMQPHeaderExpectation expecting = new AMQPHeaderExpectation(AMQPHeader.getAMQPHeader(), driver);
-        driver.addScriptedElement(expecting);
+        AMQPHeaderExpectation expecting = new AMQPHeaderExpectation(AMQPHeader.getAMQPHeader(), getDriver());
+        getDriver().addScriptedElement(expecting);
         return expecting;
     }
 
     public AMQPHeaderExpectation expectSASLHeader() {
-        AMQPHeaderExpectation expecting = new AMQPHeaderExpectation(AMQPHeader.getSASLHeader(), driver);
-        driver.addScriptedElement(expecting);
+        AMQPHeaderExpectation expecting = new AMQPHeaderExpectation(AMQPHeader.getSASLHeader(), getDriver());
+        getDriver().addScriptedElement(expecting);
         return expecting;
     }
 
     public OpenExpectation expectOpen() {
-        OpenExpectation expecting = new OpenExpectation(driver);
-        driver.addScriptedElement(expecting);
+        OpenExpectation expecting = new OpenExpectation(getDriver());
+        getDriver().addScriptedElement(expecting);
         return expecting;
     }
 
     public CloseExpectation expectClose() {
-        CloseExpectation expecting = new CloseExpectation(driver);
-        driver.addScriptedElement(expecting);
+        CloseExpectation expecting = new CloseExpectation(getDriver());
+        getDriver().addScriptedElement(expecting);
         return expecting;
     }
 
     public BeginExpectation expectBegin() {
-        BeginExpectation expecting = new BeginExpectation(driver);
-        driver.addScriptedElement(expecting);
+        BeginExpectation expecting = new BeginExpectation(getDriver());
+        getDriver().addScriptedElement(expecting);
         return expecting;
     }
 
     public EndExpectation expectEnd() {
-        EndExpectation expecting = new EndExpectation(driver);
-        driver.addScriptedElement(expecting);
+        EndExpectation expecting = new EndExpectation(getDriver());
+        getDriver().addScriptedElement(expecting);
         return expecting;
     }
 
     public AttachExpectation expectAttach() {
-        AttachExpectation expecting = new AttachExpectation(driver);
-        driver.addScriptedElement(expecting);
+        AttachExpectation expecting = new AttachExpectation(getDriver());
+        getDriver().addScriptedElement(expecting);
         return expecting;
     }
 
     public DetachExpectation expectDetach() {
-        DetachExpectation expecting = new DetachExpectation(driver);
-        driver.addScriptedElement(expecting);
+        DetachExpectation expecting = new DetachExpectation(getDriver());
+        getDriver().addScriptedElement(expecting);
         return expecting;
     }
 
     public FlowExpectation expectFlow() {
-        FlowExpectation expecting = new FlowExpectation(driver);
-        driver.addScriptedElement(expecting);
+        FlowExpectation expecting = new FlowExpectation(getDriver());
+        getDriver().addScriptedElement(expecting);
         return expecting;
     }
 
     public TransferExpectation expectTransfer() {
-        TransferExpectation expecting = new TransferExpectation(driver);
-        driver.addScriptedElement(expecting);
+        TransferExpectation expecting = new TransferExpectation(getDriver());
+        getDriver().addScriptedElement(expecting);
         return expecting;
     }
 
     public DispositionExpectation expectDisposition() {
-        DispositionExpectation expecting = new DispositionExpectation(driver);
-        driver.addScriptedElement(expecting);
+        DispositionExpectation expecting = new DispositionExpectation(getDriver());
+        getDriver().addScriptedElement(expecting);
         return expecting;
     }
 
     //----- Remote operations that happen while running the test script
 
     public void remoteHeader(AMQPHeader header) {
-        driver.addScriptedElement(new AMQPHeaderInjectAction(driver, header));
+        getDriver().addScriptedElement(new AMQPHeaderInjectAction(getDriver(), header));
     }
 
     public OpenInjectAction remoteOpen() {
-        return new OpenInjectAction(driver);
+        return new OpenInjectAction(getDriver());
     }
 
     public CloseInjectAction remoteClose() {
-        return new CloseInjectAction(driver);
+        return new CloseInjectAction(getDriver());
     }
 
     public BeginInjectAction remoteBegin() {
-        return new BeginInjectAction(driver);
+        return new BeginInjectAction(getDriver());
     }
 
     public EndInjectAction remoteEnd() {
-        return new EndInjectAction(driver);
+        return new EndInjectAction(getDriver());
     }
 
     public AttachInjectAction remoteAttach() {
-        return new AttachInjectAction(driver);
+        return new AttachInjectAction(getDriver());
     }
 
     public DetachInjectAction remoteDetach() {
-        return new DetachInjectAction(driver);
+        return new DetachInjectAction(getDriver());
     }
 
     public FlowInjectAction remoteFlow() {
-        return new FlowInjectAction(driver);
+        return new FlowInjectAction(getDriver());
     }
 
     public TransferInjectAction remoteTransfer() {
-        return new TransferInjectAction(driver);
+        return new TransferInjectAction(getDriver());
     }
 
     public DispositionInjectAction remoteDisposition() {
-        return new DispositionInjectAction(driver);
+        return new DispositionInjectAction(getDriver());
     }
 
     public EmptyFrameInjectAction remoteEmptyFrame() {
-        return new EmptyFrameInjectAction(driver);
+        return new EmptyFrameInjectAction(getDriver());
     }
 
     //----- Immediate operations performed outside the test script
 
     public void fire(AMQPHeader header) {
-        driver.sendHeader(header);
+        getDriver().sendHeader(header);
     }
 
     public void fireAMQP(DescribedType performative) {
-        driver.sendAMQPFrame(0, performative, null);
+        getDriver().sendAMQPFrame(0, performative, null);
     }
 
     public void fireSASL(DescribedType performative) {
-        driver.sendSaslFrame(0, performative);
+        getDriver().sendSaslFrame(0, performative);
     }
 }
