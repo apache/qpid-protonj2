@@ -287,6 +287,8 @@ public class AMQPHeader {
      *      The {@link HeaderHandler} instance to use to process the header.
      * @param context
      *      A context object to pass along with the header.
+     *
+     * @param <E> The type that will be passed as the context for this event
      */
     public <E> void invoke(HeaderHandler<E> handler, E context) {
         if (isSaslHeader()) {

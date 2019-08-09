@@ -23,7 +23,7 @@ import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 /**
  * Interface for an decoder of a specific AMQP Type.
  *
- * @param <V>
+ * @param <V> The type that will be returned when this decoder reads a value.
  */
 public interface TypeDecoder<V> {
 
