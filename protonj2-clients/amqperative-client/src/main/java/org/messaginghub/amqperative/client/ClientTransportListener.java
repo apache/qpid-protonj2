@@ -23,7 +23,7 @@ import org.apache.qpid.proton4j.engine.impl.ProtonEngine;
 import org.messaginghub.amqperative.client.exceptions.ClientExceptionSupport;
 import org.messaginghub.amqperative.client.exceptions.ClientFailedException;
 import org.messaginghub.amqperative.transport.TransportListener;
-import org.messaginghub.amqperative.transport.impl.ByteBufWrapper;
+import org.messaginghub.amqperative.transport.impl.ProtonNettyByteBuffer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,16 +52,13 @@ public class ClientTransportListener implements TransportListener {
         // TODO - if this buffer is pooled than we need to copy it, or we need to do
         //        a copy in our frame decoder vs just using a slice to hold onto the
         //        body.
-        ByteBufWrapper bufferAdapter = new ByteBufWrapper(incoming);
+        ProtonNettyByteBuffer bufferAdapter = new ProtonNettyByteBuffer(incoming);
 
         try {
             do {
                 engine.ingest(bufferAdapter);
             } while (bufferAdapter.isReadable() && engine.isWritable());
             // TODO - How do we handle case of not all data read ?
-
-            // TODO - properly handle by reading all data from the buffer
-            //        currently the wrapper has its own read index.
         } catch (EngineStateException e) {
             LOG.warn("Caught problem during incoming data processing: {}", e.getMessage(), e);
             connection.handleClientException(ClientExceptionSupport.createOrPassthroughFatal(e));

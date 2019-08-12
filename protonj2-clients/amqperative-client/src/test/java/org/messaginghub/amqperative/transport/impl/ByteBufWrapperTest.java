@@ -57,17 +57,17 @@ public class ByteBufWrapperTest {
     @Test
     public void testUnwrap() {
         ByteBuf buffer = Unpooled.buffer(CAPACITY);
-        ByteBufWrapper wrapper = new ByteBufWrapper(buffer);
+        ProtonNettyByteBuffer wrapper = new ProtonNettyByteBuffer(buffer);
 
         assertSame(buffer, wrapper.unwrap());
         ProtonBuffer duplicate = wrapper.duplicate();
-        assertTrue(duplicate instanceof ByteBufWrapper);
-        assertNotSame(((ByteBufWrapper) duplicate).unwrap(), buffer);
+        assertTrue(duplicate instanceof ProtonNettyByteBuffer);
+        assertNotSame(((ProtonNettyByteBuffer) duplicate).unwrap(), buffer);
     }
     @Test
     public void testReaderIndexBoundaryCheck4() {
         ByteBuf buffer = Unpooled.buffer(CAPACITY);
-        ByteBufWrapper wrapper = new ByteBufWrapper(buffer);
+        ProtonNettyByteBuffer wrapper = new ProtonNettyByteBuffer(buffer);
 
         wrapper.setWriteIndex(0);
         wrapper.setReadIndex(0);
@@ -78,7 +78,7 @@ public class ByteBufWrapperTest {
     @Test
     public void testCreateWrapper() {
         ByteBuf buffer = Unpooled.buffer();
-        ByteBufWrapper wrapper = new ByteBufWrapper(buffer);
+        ProtonNettyByteBuffer wrapper = new ProtonNettyByteBuffer(buffer);
 
         assertEquals(buffer.capacity(), wrapper.capacity());
         assertEquals(buffer.readableBytes(), wrapper.getReadableBytes());
@@ -95,7 +95,7 @@ public class ByteBufWrapperTest {
             buffer.writeByte(i);
         }
 
-        ByteBufWrapper wrapper = new ByteBufWrapper(buffer);
+        ProtonNettyByteBuffer wrapper = new ProtonNettyByteBuffer(buffer);
 
         assertEquals(buffer.capacity(), wrapper.capacity());
         assertEquals(buffer.readableBytes(), wrapper.getReadableBytes());
@@ -116,7 +116,7 @@ public class ByteBufWrapperTest {
             buffer.writeShort(i);
         }
 
-        ByteBufWrapper wrapper = new ByteBufWrapper(buffer);
+        ProtonNettyByteBuffer wrapper = new ProtonNettyByteBuffer(buffer);
 
         assertEquals(buffer.capacity(), wrapper.capacity());
         assertEquals(buffer.readableBytes(), wrapper.getReadableBytes());
@@ -137,7 +137,7 @@ public class ByteBufWrapperTest {
             buffer.writeInt(i);
         }
 
-        ByteBufWrapper wrapper = new ByteBufWrapper(buffer);
+        ProtonNettyByteBuffer wrapper = new ProtonNettyByteBuffer(buffer);
 
         assertEquals(buffer.capacity(), wrapper.capacity());
         assertEquals(buffer.readableBytes(), wrapper.getReadableBytes());
@@ -158,7 +158,7 @@ public class ByteBufWrapperTest {
             buffer.writeLong(i);
         }
 
-        ByteBufWrapper wrapper = new ByteBufWrapper(buffer);
+        ProtonNettyByteBuffer wrapper = new ProtonNettyByteBuffer(buffer);
 
         assertEquals(buffer.capacity(), wrapper.capacity());
         assertEquals(buffer.readableBytes(), wrapper.getReadableBytes());
@@ -176,8 +176,8 @@ public class ByteBufWrapperTest {
         ByteBuf buffer1 = Unpooled.buffer(CAPACITY);
         ByteBuf buffer2 = Unpooled.buffer(CAPACITY);
 
-        ByteBufWrapper wrapper1 = new ByteBufWrapper(buffer1);
-        ByteBufWrapper wrapper2 = new ByteBufWrapper(buffer2);
+        ProtonNettyByteBuffer wrapper1 = new ProtonNettyByteBuffer(buffer1);
+        ProtonNettyByteBuffer wrapper2 = new ProtonNettyByteBuffer(buffer2);
 
         wrapper1.setWriteIndex(wrapper2.getReadIndex());
         wrapper1.writeLong(0);
@@ -192,7 +192,7 @@ public class ByteBufWrapperTest {
     @Test(expected = IndexOutOfBoundsException.class)
     public void testSetReadIndexBoundaryCheckForNegative() {
         ByteBuf buffer = Unpooled.buffer(CAPACITY);
-        ByteBufWrapper wrapper = new ByteBufWrapper(buffer);
+        ProtonNettyByteBuffer wrapper = new ProtonNettyByteBuffer(buffer);
 
         try {
             wrapper.setWriteIndex(0);
@@ -205,7 +205,7 @@ public class ByteBufWrapperTest {
     @Test(expected = IndexOutOfBoundsException.class)
     public void testSetReadIndexBoundaryCheckForOverCapacityValue() {
         ByteBuf buffer = Unpooled.buffer(CAPACITY);
-        ByteBufWrapper wrapper = new ByteBufWrapper(buffer);
+        ProtonNettyByteBuffer wrapper = new ProtonNettyByteBuffer(buffer);
 
         try {
             wrapper.setWriteIndex(buffer.capacity());
@@ -218,7 +218,7 @@ public class ByteBufWrapperTest {
     @Test(expected = IndexOutOfBoundsException.class)
     public void setReadIndexBoundaryCheckValueBeyondWriteIndex() {
         ByteBuf buffer = Unpooled.buffer(CAPACITY);
-        ByteBufWrapper wrapper = new ByteBufWrapper(buffer);
+        ProtonNettyByteBuffer wrapper = new ProtonNettyByteBuffer(buffer);
 
         try {
             wrapper.setWriteIndex(CAPACITY / 2);
@@ -231,7 +231,7 @@ public class ByteBufWrapperTest {
     @Test(expected = IndexOutOfBoundsException.class)
     public void setWriteIndexBoundaryCheckValueBeyondCapacity() {
         ByteBuf buffer = Unpooled.buffer(CAPACITY);
-        ByteBufWrapper wrapper = new ByteBufWrapper(buffer);
+        ProtonNettyByteBuffer wrapper = new ProtonNettyByteBuffer(buffer);
 
         try {
             wrapper.setWriteIndex(CAPACITY);
@@ -245,7 +245,7 @@ public class ByteBufWrapperTest {
     @Test(expected = IndexOutOfBoundsException.class)
     public void setWriteIndexBoundaryCheckWriteIndexBelowReadIndex() {
         ByteBuf buffer = Unpooled.buffer(CAPACITY);
-        ByteBufWrapper wrapper = new ByteBufWrapper(buffer);
+        ProtonNettyByteBuffer wrapper = new ProtonNettyByteBuffer(buffer);
 
         try {
             wrapper.setWriteIndex(CAPACITY);
@@ -259,7 +259,7 @@ public class ByteBufWrapperTest {
     @Test
     public void testWriterIndexBoundaryCheckEmptyWriteDoesNotThrow() {
         ByteBuf buffer = Unpooled.buffer(CAPACITY);
-        ByteBufWrapper wrapper = new ByteBufWrapper(buffer);
+        ProtonNettyByteBuffer wrapper = new ProtonNettyByteBuffer(buffer);
 
         wrapper.setWriteIndex(0);
         wrapper.setReadIndex(0);
@@ -271,91 +271,91 @@ public class ByteBufWrapperTest {
     @Test(expected = IndexOutOfBoundsException.class)
     public void testGetBooleanBoundaryCheck1() {
         ByteBuf buffer = Unpooled.buffer(CAPACITY);
-        ByteBufWrapper wrapper = new ByteBufWrapper(buffer);
+        ProtonNettyByteBuffer wrapper = new ProtonNettyByteBuffer(buffer);
         wrapper.getBoolean(-1);
     }
 
     @Test(expected = IndexOutOfBoundsException.class)
     public void testGetBooleanBoundaryCheck2() {
         ByteBuf buffer = Unpooled.buffer(CAPACITY);
-        ByteBufWrapper wrapper = new ByteBufWrapper(buffer);
+        ProtonNettyByteBuffer wrapper = new ProtonNettyByteBuffer(buffer);
         wrapper.getBoolean(wrapper.capacity());
     }
 
     @Test(expected = IndexOutOfBoundsException.class)
     public void testGetByteBoundaryCheck1() {
         ByteBuf buffer = Unpooled.buffer(CAPACITY);
-        ByteBufWrapper wrapper = new ByteBufWrapper(buffer);
+        ProtonNettyByteBuffer wrapper = new ProtonNettyByteBuffer(buffer);
         wrapper.getByte(-1);
     }
 
     @Test(expected = IndexOutOfBoundsException.class)
     public void testGetByteBoundaryCheck2() {
         ByteBuf buffer = Unpooled.buffer(CAPACITY);
-        ByteBufWrapper wrapper = new ByteBufWrapper(buffer);
+        ProtonNettyByteBuffer wrapper = new ProtonNettyByteBuffer(buffer);
         wrapper.getByte(wrapper.capacity());
     }
 
     @Test(expected = IndexOutOfBoundsException.class)
     public void testGetShortBoundaryCheck1() {
         ByteBuf buffer = Unpooled.buffer(CAPACITY);
-        ByteBufWrapper wrapper = new ByteBufWrapper(buffer);
+        ProtonNettyByteBuffer wrapper = new ProtonNettyByteBuffer(buffer);
         wrapper.getShort(-1);
     }
 
     @Test(expected = IndexOutOfBoundsException.class)
     public void testGetShortBoundaryCheck2() {
         ByteBuf buffer = Unpooled.buffer(CAPACITY);
-        ByteBufWrapper wrapper = new ByteBufWrapper(buffer);
+        ProtonNettyByteBuffer wrapper = new ProtonNettyByteBuffer(buffer);
         wrapper.getShort(wrapper.capacity() - 1);
     }
 
     @Test(expected = IndexOutOfBoundsException.class)
     public void testGetIntBoundaryCheck1() {
         ByteBuf buffer = Unpooled.buffer(CAPACITY);
-        ByteBufWrapper wrapper = new ByteBufWrapper(buffer);
+        ProtonNettyByteBuffer wrapper = new ProtonNettyByteBuffer(buffer);
         wrapper.getInt(-1);
     }
 
     @Test(expected = IndexOutOfBoundsException.class)
     public void testGetIntBoundaryCheck2() {
         ByteBuf buffer = Unpooled.buffer(CAPACITY);
-        ByteBufWrapper wrapper = new ByteBufWrapper(buffer);
+        ProtonNettyByteBuffer wrapper = new ProtonNettyByteBuffer(buffer);
         wrapper.getInt(wrapper.capacity() - 3);
     }
 
     @Test(expected = IndexOutOfBoundsException.class)
     public void testGetLongBoundaryCheck1() {
         ByteBuf buffer = Unpooled.buffer(CAPACITY);
-        ByteBufWrapper wrapper = new ByteBufWrapper(buffer);
+        ProtonNettyByteBuffer wrapper = new ProtonNettyByteBuffer(buffer);
         wrapper.getLong(-1);
     }
 
     @Test(expected = IndexOutOfBoundsException.class)
     public void testGetLongBoundaryCheck2() {
         ByteBuf buffer = Unpooled.buffer(CAPACITY);
-        ByteBufWrapper wrapper = new ByteBufWrapper(buffer);
+        ProtonNettyByteBuffer wrapper = new ProtonNettyByteBuffer(buffer);
         wrapper.getLong(wrapper.capacity() - 7);
     }
 
     @Test(expected = IndexOutOfBoundsException.class)
     public void testGetByteArrayBoundaryCheck1() {
         ByteBuf buffer = Unpooled.buffer(CAPACITY);
-        ByteBufWrapper wrapper = new ByteBufWrapper(buffer);
+        ProtonNettyByteBuffer wrapper = new ProtonNettyByteBuffer(buffer);
         wrapper.getBytes(-1, EMPTY_BYTES);
     }
 
     @Test(expected = IndexOutOfBoundsException.class)
     public void testGetByteArrayBoundaryCheck2() {
         ByteBuf buffer = Unpooled.buffer(CAPACITY);
-        ByteBufWrapper wrapper = new ByteBufWrapper(buffer);
+        ProtonNettyByteBuffer wrapper = new ProtonNettyByteBuffer(buffer);
         wrapper.getBytes(-1, EMPTY_BYTES, 0, 0);
     }
 
     @Test
     public void testGetByteArrayBoundaryCheckWithNegativeOffset() {
         ByteBuf netty = Unpooled.buffer(CAPACITY);
-        ByteBufWrapper wrapper = new ByteBufWrapper(netty);
+        ProtonNettyByteBuffer wrapper = new ProtonNettyByteBuffer(netty);
 
         byte[] dst = new byte[4];
         wrapper.setInt(0, 0x01020304);
@@ -376,7 +376,7 @@ public class ByteBufWrapperTest {
     @Test
     public void testGetByteArrayBoundaryCheckRangeOfWriteOutOfBounds() {
         ByteBuf netty = Unpooled.buffer(CAPACITY);
-        ByteBufWrapper wrapper = new ByteBufWrapper(netty);
+        ProtonNettyByteBuffer wrapper = new ProtonNettyByteBuffer(netty);
 
         byte[] dst = new byte[4];
         wrapper.setInt(0, 0x01020304);
@@ -397,56 +397,56 @@ public class ByteBufWrapperTest {
     @Test(expected = IndexOutOfBoundsException.class)
     public void testGetByteBufferBoundaryCheck() {
         ByteBuf netty = Unpooled.buffer(CAPACITY);
-        ByteBufWrapper wrapper = new ByteBufWrapper(netty);
+        ProtonNettyByteBuffer wrapper = new ProtonNettyByteBuffer(netty);
         wrapper.getBytes(-1, ByteBuffer.allocate(0));
     }
 
     @Test(expected = IndexOutOfBoundsException.class)
     public void testCopyBoundaryCheck1() {
         ByteBuf netty = Unpooled.buffer(CAPACITY);
-        ByteBufWrapper wrapper = new ByteBufWrapper(netty);
+        ProtonNettyByteBuffer wrapper = new ProtonNettyByteBuffer(netty);
         wrapper.copy(-1, 0);
     }
 
     @Test(expected = IndexOutOfBoundsException.class)
     public void testCopyBoundaryCheck2() {
         ByteBuf netty = Unpooled.buffer(CAPACITY);
-        ByteBufWrapper wrapper = new ByteBufWrapper(netty);
+        ProtonNettyByteBuffer wrapper = new ProtonNettyByteBuffer(netty);
         wrapper.copy(0, wrapper.capacity() + 1);
     }
 
     @Test(expected = IndexOutOfBoundsException.class)
     public void testCopyBoundaryCheck3() {
         ByteBuf netty = Unpooled.buffer(CAPACITY);
-        ByteBufWrapper wrapper = new ByteBufWrapper(netty);
+        ProtonNettyByteBuffer wrapper = new ProtonNettyByteBuffer(netty);
         wrapper.copy(wrapper.capacity() + 1, 0);
     }
 
     @Test(expected = IndexOutOfBoundsException.class)
     public void testCopyBoundaryCheck4() {
         ByteBuf netty = Unpooled.buffer(CAPACITY);
-        ByteBufWrapper wrapper = new ByteBufWrapper(netty);
+        ProtonNettyByteBuffer wrapper = new ProtonNettyByteBuffer(netty);
         wrapper.copy(wrapper.capacity(), 1);
     }
 
     @Test(expected = IndexOutOfBoundsException.class)
     public void testSetIndexBoundaryCheck1() {
         ByteBuf netty = Unpooled.buffer(CAPACITY);
-        ByteBufWrapper wrapper = new ByteBufWrapper(netty);
+        ProtonNettyByteBuffer wrapper = new ProtonNettyByteBuffer(netty);
         wrapper.setIndex(-1, CAPACITY);
     }
 
     @Test(expected = IndexOutOfBoundsException.class)
     public void testSetIndexBoundaryCheck2() {
         ByteBuf netty = Unpooled.buffer(CAPACITY);
-        ByteBufWrapper wrapper = new ByteBufWrapper(netty);
+        ProtonNettyByteBuffer wrapper = new ProtonNettyByteBuffer(netty);
         wrapper.setIndex(CAPACITY / 2, CAPACITY / 4);
     }
 
     @Test(expected = IndexOutOfBoundsException.class)
     public void testSetIndexBoundaryCheck3() {
         ByteBuf netty = Unpooled.buffer(CAPACITY);
-        ByteBufWrapper wrapper = new ByteBufWrapper(netty);
+        ProtonNettyByteBuffer wrapper = new ProtonNettyByteBuffer(netty);
         wrapper.setIndex(0, CAPACITY + 1);
     }
 
@@ -455,7 +455,7 @@ public class ByteBufWrapperTest {
         ByteBuffer dst = ByteBuffer.allocate(4);
 
         ByteBuf netty = Unpooled.buffer(CAPACITY);
-        ByteBufWrapper wrapper = new ByteBufWrapper(netty);
+        ProtonNettyByteBuffer wrapper = new ProtonNettyByteBuffer(netty);
 
         dst.position(1);
         dst.limit(3);
@@ -479,7 +479,7 @@ public class ByteBufWrapperTest {
     @Test
     public void testRandomByteAccess() {
         ByteBuf netty = Unpooled.buffer(CAPACITY);
-        ByteBufWrapper wrapper = new ByteBufWrapper(netty);
+        ProtonNettyByteBuffer wrapper = new ProtonNettyByteBuffer(netty);
 
         for (int i = 0; i < wrapper.capacity(); i ++) {
             byte value = (byte) random.nextInt();
@@ -496,7 +496,7 @@ public class ByteBufWrapperTest {
     @Test
     public void testRandomShortAccess() {
         ByteBuf netty = Unpooled.buffer(CAPACITY);
-        ByteBufWrapper wrapper = new ByteBufWrapper(netty);
+        ProtonNettyByteBuffer wrapper = new ProtonNettyByteBuffer(netty);
 
         for (int i = 0; i < wrapper.capacity() - 1; i += 2) {
             short value = (short) random.nextInt();
@@ -513,7 +513,7 @@ public class ByteBufWrapperTest {
     @Test
     public void testShortConsistentWithByteBuffer() {
         ByteBuf netty = Unpooled.buffer(CAPACITY);
-        ByteBufWrapper wrapper = new ByteBufWrapper(netty);
+        ProtonNettyByteBuffer wrapper = new ProtonNettyByteBuffer(netty);
 
         for (int i = 0; i < 64; ++i) {
             ByteBuffer javaBuffer = ByteBuffer.allocate(wrapper.capacity());
@@ -534,7 +534,7 @@ public class ByteBufWrapperTest {
     @Test
     public void testRandomIntAccess() {
         ByteBuf netty = Unpooled.buffer(CAPACITY);
-        ByteBufWrapper wrapper = new ByteBufWrapper(netty);
+        ProtonNettyByteBuffer wrapper = new ProtonNettyByteBuffer(netty);
 
         for (int i = 0; i < wrapper.capacity() - 3; i += 4) {
             int value = random.nextInt();
@@ -551,7 +551,7 @@ public class ByteBufWrapperTest {
     @Test
     public void testIntConsistentWithByteBuffer() {
         ByteBuf netty = Unpooled.buffer(CAPACITY);
-        ByteBufWrapper wrapper = new ByteBufWrapper(netty);
+        ProtonNettyByteBuffer wrapper = new ProtonNettyByteBuffer(netty);
 
         for (int i = 0; i < 64; ++i) {
             ByteBuffer javaBuffer = ByteBuffer.allocate(wrapper.capacity());
@@ -571,7 +571,7 @@ public class ByteBufWrapperTest {
     @Test
     public void testRandomLongAccess() {
         ByteBuf netty = Unpooled.buffer(CAPACITY);
-        ByteBufWrapper wrapper = new ByteBufWrapper(netty);
+        ProtonNettyByteBuffer wrapper = new ProtonNettyByteBuffer(netty);
 
         for (int i = 0; i < wrapper.capacity() - 7; i += 8) {
             long value = random.nextLong();
@@ -588,7 +588,7 @@ public class ByteBufWrapperTest {
     @Test
     public void testLongConsistentWithByteBuffer() {
         ByteBuf netty = Unpooled.buffer(CAPACITY);
-        ByteBufWrapper wrapper = new ByteBufWrapper(netty);
+        ProtonNettyByteBuffer wrapper = new ProtonNettyByteBuffer(netty);
 
         for (int i = 0; i < 64; ++i) {
             ByteBuffer javaBuffer = ByteBuffer.allocate(wrapper.capacity());
@@ -609,7 +609,7 @@ public class ByteBufWrapperTest {
     @Test
     public void testRandomFloatAccess() {
         ByteBuf netty = Unpooled.buffer(CAPACITY);
-        ByteBufWrapper wrapper = new ByteBufWrapper(netty);
+        ProtonNettyByteBuffer wrapper = new ProtonNettyByteBuffer(netty);
 
         for (int i = 0; i < wrapper.capacity() - 7; i += 8) {
             float value = random.nextFloat();
@@ -627,7 +627,7 @@ public class ByteBufWrapperTest {
     @Test
     public void testRandomDoubleAccess() {
         ByteBuf netty = Unpooled.buffer(CAPACITY);
-        ByteBufWrapper wrapper = new ByteBufWrapper(netty);
+        ProtonNettyByteBuffer wrapper = new ProtonNettyByteBuffer(netty);
 
         for (int i = 0; i < wrapper.capacity() - 7; i += 8) {
             double value = random.nextDouble();
@@ -645,7 +645,7 @@ public class ByteBufWrapperTest {
     @Test
     public void testSequentialByteAccess() {
         ByteBuf netty = Unpooled.buffer(CAPACITY);
-        ByteBufWrapper buffer = new ByteBufWrapper(netty);
+        ProtonNettyByteBuffer buffer = new ProtonNettyByteBuffer(netty);
 
         buffer.setWriteIndex(0);
         for (int i = 0; i < buffer.capacity(); i ++) {
@@ -676,7 +676,7 @@ public class ByteBufWrapperTest {
     @Test
     public void testSequentialShortAccess() {
         ByteBuf netty = Unpooled.buffer(CAPACITY);
-        ByteBufWrapper buffer = new ByteBufWrapper(netty);
+        ProtonNettyByteBuffer buffer = new ProtonNettyByteBuffer(netty);
 
         buffer.setWriteIndex(0);
         for (int i = 0; i < buffer.capacity(); i += 2) {
@@ -707,7 +707,7 @@ public class ByteBufWrapperTest {
     @Test
     public void testSequentialIntAccess() {
         ByteBuf netty = Unpooled.buffer(CAPACITY);
-        ByteBufWrapper buffer = new ByteBufWrapper(netty);
+        ProtonNettyByteBuffer buffer = new ProtonNettyByteBuffer(netty);
 
         buffer.setWriteIndex(0);
         for (int i = 0; i < buffer.capacity(); i += 4) {
@@ -738,7 +738,7 @@ public class ByteBufWrapperTest {
     @Test
     public void testSequentialLongAccess() {
         ByteBuf netty = Unpooled.buffer(CAPACITY);
-        ByteBufWrapper buffer = new ByteBufWrapper(netty);
+        ProtonNettyByteBuffer buffer = new ProtonNettyByteBuffer(netty);
 
         buffer.setWriteIndex(0);
         for (int i = 0; i < buffer.capacity(); i += 8) {
@@ -769,7 +769,7 @@ public class ByteBufWrapperTest {
     @Test
     public void testByteArrayTransfer() {
         ByteBuf netty = Unpooled.buffer(CAPACITY);
-        ByteBufWrapper buffer = new ByteBufWrapper(netty);
+        ProtonNettyByteBuffer buffer = new ProtonNettyByteBuffer(netty);
 
         byte[] value = new byte[BLOCK_SIZE * 2];
         for (int i = 0; i < buffer.capacity() - BLOCK_SIZE + 1; i += BLOCK_SIZE) {
@@ -792,7 +792,7 @@ public class ByteBufWrapperTest {
     @Test
     public void testRandomByteArrayTransfer1() {
         ByteBuf netty = Unpooled.buffer(CAPACITY);
-        ByteBufWrapper buffer = new ByteBufWrapper(netty);
+        ProtonNettyByteBuffer buffer = new ProtonNettyByteBuffer(netty);
 
         byte[] value = new byte[BLOCK_SIZE];
         for (int i = 0; i < buffer.capacity() - BLOCK_SIZE + 1; i += BLOCK_SIZE) {
@@ -802,7 +802,7 @@ public class ByteBufWrapperTest {
 
         random.setSeed(seed);
         byte[] expectedValueContent = new byte[BLOCK_SIZE];
-        ByteBufWrapper expectedValue = new ByteBufWrapper(Unpooled.wrappedBuffer(expectedValueContent));
+        ProtonNettyByteBuffer expectedValue = new ProtonNettyByteBuffer(Unpooled.wrappedBuffer(expectedValueContent));
         for (int i = 0; i < buffer.capacity() - BLOCK_SIZE + 1; i += BLOCK_SIZE) {
             random.nextBytes(expectedValueContent);
             buffer.getBytes(i, value);
@@ -815,7 +815,7 @@ public class ByteBufWrapperTest {
     @Test
     public void testRandomByteArrayTransfer2() {
         ByteBuf netty = Unpooled.buffer(CAPACITY);
-        ByteBufWrapper buffer = new ByteBufWrapper(netty);
+        ProtonNettyByteBuffer buffer = new ProtonNettyByteBuffer(netty);
 
         byte[] value = new byte[BLOCK_SIZE * 2];
         for (int i = 0; i < buffer.capacity() - BLOCK_SIZE + 1; i += BLOCK_SIZE) {
@@ -825,7 +825,7 @@ public class ByteBufWrapperTest {
 
         random.setSeed(seed);
         byte[] expectedValueContent = new byte[BLOCK_SIZE * 2];
-        ByteBufWrapper expectedValue = new ByteBufWrapper(Unpooled.wrappedBuffer(expectedValueContent));
+        ProtonNettyByteBuffer expectedValue = new ProtonNettyByteBuffer(Unpooled.wrappedBuffer(expectedValueContent));
         for (int i = 0; i < buffer.capacity() - BLOCK_SIZE + 1; i += BLOCK_SIZE) {
             random.nextBytes(expectedValueContent);
             int valueOffset = random.nextInt(BLOCK_SIZE);
@@ -839,7 +839,7 @@ public class ByteBufWrapperTest {
     @Test
     public void testRandomProtonBufferTransfer1() {
         ByteBuf netty = Unpooled.buffer(CAPACITY);
-        ByteBufWrapper buffer = new ByteBufWrapper(netty);
+        ProtonNettyByteBuffer buffer = new ProtonNettyByteBuffer(netty);
 
         byte[] valueContent = new byte[BLOCK_SIZE];
         ProtonBuffer value = new ProtonByteBuffer(valueContent);
@@ -869,10 +869,10 @@ public class ByteBufWrapperTest {
     @Test
     public void testRandomProtonBufferTransfer2() {
         ByteBuf netty = Unpooled.buffer(CAPACITY);
-        ByteBufWrapper buffer = new ByteBufWrapper(netty);
+        ProtonNettyByteBuffer buffer = new ProtonNettyByteBuffer(netty);
 
         byte[] valueContent = new byte[BLOCK_SIZE];
-        ByteBufWrapper value = new ByteBufWrapper(Unpooled.wrappedBuffer(valueContent));
+        ProtonNettyByteBuffer value = new ProtonNettyByteBuffer(Unpooled.wrappedBuffer(valueContent));
         for (int i = 0; i < buffer.capacity() - BLOCK_SIZE + 1; i += BLOCK_SIZE) {
             random.nextBytes(valueContent);
             value.setIndex(0, BLOCK_SIZE);
@@ -883,7 +883,7 @@ public class ByteBufWrapperTest {
 
         random.setSeed(seed);
         byte[] expectedValueContent = new byte[BLOCK_SIZE];
-        ByteBufWrapper expectedValue = new ByteBufWrapper(Unpooled.wrappedBuffer(expectedValueContent));
+        ProtonNettyByteBuffer expectedValue = new ProtonNettyByteBuffer(Unpooled.wrappedBuffer(expectedValueContent));
         for (int i = 0; i < buffer.capacity() - BLOCK_SIZE + 1; i += BLOCK_SIZE) {
             random.nextBytes(expectedValueContent);
             value.clear();
@@ -899,7 +899,7 @@ public class ByteBufWrapperTest {
     @Test
     public void testRandomProtonBufferTransfer3() {
         ByteBuf netty = Unpooled.buffer(CAPACITY);
-        ByteBufWrapper buffer = new ByteBufWrapper(netty);
+        ProtonNettyByteBuffer buffer = new ProtonNettyByteBuffer(netty);
 
         byte[] valueContent = new byte[BLOCK_SIZE * 2];
         ProtonBuffer value = new ProtonByteBuffer(valueContent);
@@ -924,10 +924,10 @@ public class ByteBufWrapperTest {
     @Test
     public void testRandomProtonBufferTransfer4() {
         ByteBuf netty = Unpooled.buffer(CAPACITY);
-        ByteBufWrapper buffer = new ByteBufWrapper(netty);
+        ProtonNettyByteBuffer buffer = new ProtonNettyByteBuffer(netty);
 
         byte[] valueContent = new byte[BLOCK_SIZE * 2];
-        ByteBufWrapper value = new ByteBufWrapper(Unpooled.wrappedBuffer(valueContent));
+        ProtonNettyByteBuffer value = new ProtonNettyByteBuffer(Unpooled.wrappedBuffer(valueContent));
         for (int i = 0; i < buffer.capacity() - BLOCK_SIZE + 1; i += BLOCK_SIZE) {
             random.nextBytes(valueContent);
             buffer.setBytes(i, value, random.nextInt(BLOCK_SIZE), BLOCK_SIZE);
@@ -935,7 +935,7 @@ public class ByteBufWrapperTest {
 
         random.setSeed(seed);
         byte[] expectedValueContent = new byte[BLOCK_SIZE * 2];
-        ByteBufWrapper expectedValue = new ByteBufWrapper(Unpooled.wrappedBuffer(expectedValueContent));
+        ProtonNettyByteBuffer expectedValue = new ProtonNettyByteBuffer(Unpooled.wrappedBuffer(expectedValueContent));
         for (int i = 0; i < buffer.capacity() - BLOCK_SIZE + 1; i += BLOCK_SIZE) {
             random.nextBytes(expectedValueContent);
             int valueOffset = random.nextInt(BLOCK_SIZE);
@@ -958,7 +958,7 @@ public class ByteBufWrapperTest {
 
     private void doTestRandomByteBufferTransfer(boolean direct) {
         ByteBuf netty = Unpooled.buffer(CAPACITY);
-        ByteBufWrapper buffer = new ByteBufWrapper(netty);
+        ProtonNettyByteBuffer buffer = new ProtonNettyByteBuffer(netty);
 
         ByteBuffer value = ByteBuffer.allocate(BLOCK_SIZE * 2);
         for (int i = 0; i < buffer.capacity() - BLOCK_SIZE + 1; i += BLOCK_SIZE) {
@@ -985,7 +985,7 @@ public class ByteBufWrapperTest {
     @Test
     public void testSequentialByteArrayTransfer1() {
         ByteBuf netty = Unpooled.buffer(CAPACITY);
-        ByteBufWrapper buffer = new ByteBufWrapper(netty);
+        ProtonNettyByteBuffer buffer = new ProtonNettyByteBuffer(netty);
 
         byte[] value = new byte[BLOCK_SIZE];
         buffer.setWriteIndex(0);
@@ -1012,7 +1012,7 @@ public class ByteBufWrapperTest {
     @Test
     public void testSequentialByteArrayTransfer2() {
         ByteBuf netty = Unpooled.buffer(CAPACITY);
-        ByteBufWrapper buffer = new ByteBufWrapper(netty);
+        ProtonNettyByteBuffer buffer = new ProtonNettyByteBuffer(netty);
 
         byte[] value = new byte[BLOCK_SIZE * 2];
         buffer.setWriteIndex(0);
@@ -1041,7 +1041,7 @@ public class ByteBufWrapperTest {
     @Test
     public void testSequentialProtonBufferTransfer1() {
         ByteBuf netty = Unpooled.buffer(CAPACITY);
-        ByteBufWrapper buffer = new ByteBufWrapper(netty);
+        ProtonNettyByteBuffer buffer = new ProtonNettyByteBuffer(netty);
 
         byte[] valueContent = new byte[BLOCK_SIZE * 2];
         ProtonBuffer value = new ProtonByteBuffer(valueContent);
@@ -1075,7 +1075,7 @@ public class ByteBufWrapperTest {
     @Test
     public void testSequentialProtonBufferTransfer2() {
         ByteBuf netty = Unpooled.buffer(CAPACITY);
-        ByteBufWrapper buffer = new ByteBufWrapper(netty);
+        ProtonNettyByteBuffer buffer = new ProtonNettyByteBuffer(netty);
 
         byte[] valueContent = new byte[BLOCK_SIZE * 2];
         ProtonBuffer value = new ProtonByteBuffer(valueContent);
@@ -1114,7 +1114,7 @@ public class ByteBufWrapperTest {
     @Test
     public void testSequentialSlice1() {
         ByteBuf netty = Unpooled.buffer(CAPACITY);
-        ByteBufWrapper buffer = new ByteBufWrapper(netty);
+        ProtonNettyByteBuffer buffer = new ProtonNettyByteBuffer(netty);
 
         buffer.setWriteIndex(0);
         for (int i = 0; i < buffer.capacity() - BLOCK_SIZE + 1; i += BLOCK_SIZE) {
@@ -1144,7 +1144,7 @@ public class ByteBufWrapperTest {
     @Test
     public void testCopy() {
         ByteBuf netty = Unpooled.buffer(CAPACITY);
-        ByteBufWrapper buffer = new ByteBufWrapper(netty);
+        ProtonNettyByteBuffer buffer = new ProtonNettyByteBuffer(netty);
 
         for (int i = 0; i < buffer.capacity(); i ++) {
             byte value = (byte) random.nextInt();
@@ -1174,7 +1174,7 @@ public class ByteBufWrapperTest {
     @Test
     public void testDuplicate() {
         ByteBuf netty = Unpooled.buffer(CAPACITY);
-        ByteBufWrapper buffer = new ByteBufWrapper(netty);
+        ProtonNettyByteBuffer buffer = new ProtonNettyByteBuffer(netty);
 
         for (int i = 0; i < buffer.capacity(); i ++) {
             byte value = (byte) random.nextInt();
@@ -1200,7 +1200,7 @@ public class ByteBufWrapperTest {
     @Test
     public void testSliceIndex() throws Exception {
         ByteBuf netty = Unpooled.buffer(CAPACITY);
-        ByteBufWrapper buffer = new ByteBufWrapper(netty);
+        ProtonNettyByteBuffer buffer = new ProtonNettyByteBuffer(netty);
 
         assertEquals(0, buffer.slice(0, buffer.capacity()).getReadIndex());
         assertEquals(0, buffer.slice(0, buffer.capacity() - 1).getReadIndex());
@@ -1216,7 +1216,7 @@ public class ByteBufWrapperTest {
     @Test
     public void testCompareToContract() {
         ByteBuf netty = Unpooled.buffer(CAPACITY);
-        ByteBufWrapper buffer = new ByteBufWrapper(netty);
+        ProtonNettyByteBuffer buffer = new ProtonNettyByteBuffer(netty);
 
         try {
             buffer.compareTo(null);
@@ -1249,7 +1249,7 @@ public class ByteBufWrapperTest {
     @Test
     public void testSkipBytes1() {
         ByteBuf netty = Unpooled.buffer(CAPACITY);
-        ByteBufWrapper buffer = new ByteBufWrapper(netty);
+        ProtonNettyByteBuffer buffer = new ProtonNettyByteBuffer(netty);
 
         buffer.setIndex(CAPACITY / 4, CAPACITY / 2);
 
@@ -1270,7 +1270,7 @@ public class ByteBufWrapperTest {
     @Test(expected = IllegalArgumentException.class)
     public void testCapacityEnforceMaxCapacity() {
         ByteBuf netty = Unpooled.buffer(3, 13);
-        ByteBufWrapper buffer = new ByteBufWrapper(netty);
+        ProtonNettyByteBuffer buffer = new ProtonNettyByteBuffer(netty);
         assertEquals(13, buffer.maxCapacity());
         assertEquals(3, buffer.capacity());
         buffer.capacity(14);
@@ -1279,7 +1279,7 @@ public class ByteBufWrapperTest {
     @Test(expected = IllegalArgumentException.class)
     public void testCapacityNegative() {
         ByteBuf netty = Unpooled.buffer(3, 13);
-        ByteBufWrapper buffer = new ByteBufWrapper(netty);
+        ProtonNettyByteBuffer buffer = new ProtonNettyByteBuffer(netty);
         assertEquals(13, buffer.maxCapacity());
         assertEquals(3, buffer.capacity());
         buffer.capacity(-1);
@@ -1288,7 +1288,7 @@ public class ByteBufWrapperTest {
     @Test
     public void testCapacityDecrease() {
         ByteBuf netty = Unpooled.buffer(3, 13);
-        ByteBufWrapper buffer = new ByteBufWrapper(netty);
+        ProtonNettyByteBuffer buffer = new ProtonNettyByteBuffer(netty);
         assertEquals(13, buffer.maxCapacity());
         assertEquals(3, buffer.capacity());
         buffer.capacity(2);
@@ -1299,7 +1299,7 @@ public class ByteBufWrapperTest {
     @Test
     public void testCapacityIncrease() {
         ByteBuf netty = Unpooled.buffer(3, 13);
-        ByteBufWrapper buffer = new ByteBufWrapper(netty);
+        ProtonNettyByteBuffer buffer = new ProtonNettyByteBuffer(netty);
         assertEquals(13, buffer.maxCapacity());
         assertEquals(3, buffer.capacity());
         buffer.capacity(4);
@@ -1310,7 +1310,7 @@ public class ByteBufWrapperTest {
     @Test
     public void testGetBytesUsingBuffer() {
         ByteBuf netty = Unpooled.buffer(8, 8);
-        ByteBufWrapper buffer = new ByteBufWrapper(netty);
+        ProtonNettyByteBuffer buffer = new ProtonNettyByteBuffer(netty);
 
         ProtonBuffer target = new ProtonByteBuffer(8, 8);
         ProtonBuffer mocked = Mockito.spy(target);
