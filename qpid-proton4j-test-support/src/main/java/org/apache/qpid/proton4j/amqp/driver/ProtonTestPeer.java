@@ -30,24 +30,29 @@ import org.apache.qpid.proton4j.buffer.ProtonBuffer;
  * and not for use by client implementations where a socket based test peer would be
  * a more appropriate choice.
  */
-public class ProtonTestPeer extends ScriptWriter implements Consumer<ProtonBuffer> {
+public class ProtonTestPeer extends ScriptWriter implements Consumer<ProtonBuffer>, AutoCloseable {
 
     private final AMQPTestDriver driver;
-    private final Consumer<ProtonBuffer> frameSink;
+    private final Consumer<ProtonBuffer> inputConsumer;
     private final AtomicBoolean closed = new AtomicBoolean();
 
     public ProtonTestPeer(Consumer<ProtonBuffer> frameSink) {
         this.driver = new AMQPTestDriver((frame) -> {
-            processDriverOutput(frame);
+            processIncomingData(frame);
         });
 
-        this.frameSink = frameSink;
+        this.inputConsumer = frameSink;
     }
 
+    @Override
     public void close() {
         if (closed.compareAndSet(false, true)) {
             processCloseRequest();
         }
+    }
+
+    public boolean isClosed() {
+        return closed.get();
     }
 
     @Override
@@ -79,8 +84,8 @@ public class ProtonTestPeer extends ScriptWriter implements Consumer<ProtonBuffe
         // nothing to do in this peer implementation.
     }
 
-    protected void processDriverOutput(ProtonBuffer frame) {
-        frameSink.accept(frame);
+    protected void processIncomingData(ProtonBuffer frame) {
+        inputConsumer.accept(frame);
     }
 
     @Override
