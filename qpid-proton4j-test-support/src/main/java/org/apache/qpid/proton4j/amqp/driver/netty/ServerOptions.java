@@ -38,8 +38,6 @@ public class ServerOptions implements Cloneable {
     public static final int DEFAULT_SO_TIMEOUT = -1;
     public static final int DEFAULT_CONNECT_TIMEOUT = 60000;
     public static final int DEFAULT_TCP_PORT = 5672;
-    public static final boolean DEFAULT_USE_EPOLL = true;
-    public static final boolean DEFAULT_USE_KQUEUE = false;
     public static final boolean DEFAULT_TRACE_BYTES = false;
     public static final String DEFAULT_STORE_TYPE = "jks";
     public static final String DEFAULT_CONTEXT_PROTOCOL = "TLS";
@@ -47,7 +45,6 @@ public class ServerOptions implements Cloneable {
     public static final boolean DEFAULT_VERIFY_HOST = true;
     public static final List<String> DEFAULT_DISABLED_PROTOCOLS = Collections.unmodifiableList(Arrays.asList(new String[]{"SSLv2Hello", "SSLv3"}));
     public static final int DEFAULT_SSL_PORT = 5671;
-    public static final boolean DEFAULT_USE_OPENSSL = false;
     public static final int DEFAULT_LOCAL_PORT = 0;
     public static final boolean DEFAULT_USE_WEBSOCKETS = false;
     public static final boolean DEFAULT_SECURE_SERVER = false;
@@ -71,10 +68,7 @@ public class ServerOptions implements Cloneable {
     private int defaultTcpPort = DEFAULT_TCP_PORT;
     private String localAddress;
     private int localPort = DEFAULT_LOCAL_PORT;
-    private boolean useEpoll = DEFAULT_USE_EPOLL;
-    private boolean useKQueue = DEFAULT_USE_KQUEUE;
     private boolean traceBytes = DEFAULT_TRACE_BYTES;
-    private boolean useOpenSSL = DEFAULT_USE_OPENSSL;
     private boolean useWebSockets = DEFAULT_USE_WEBSOCKETS;
 
     private boolean secure = DEFAULT_SECURE_SERVER;
@@ -247,40 +241,6 @@ public class ServerOptions implements Cloneable {
 
     public void setLocalPort(int localPort) {
         this.localPort = localPort;
-    }
-
-    /**
-     * @return true if the netty epoll transport can be used if available on this platform.
-     */
-    public boolean isUseEpoll() {
-        return useEpoll;
-    }
-
-    /**
-     * Determines if the netty epoll transport can be used if available on this platform.
-     *
-     * @param useEpoll
-     * 		should use of available epoll transport be used.
-     */
-    public void setUseEpoll(boolean useEpoll) {
-        this.useEpoll = useEpoll;
-    }
-
-    /**
-     * @return true if the netty kqueue transport can be used if available on this platform.
-     */
-    public boolean isUseKQueue() {
-        return useKQueue;
-    }
-
-    /**
-     * Determines if the netty kqueue transport can be used if available on this platform.
-     *
-     * @param useKQueue
-     * 		should use of available kqueue transport be used.
-     */
-    public void setUseKQueue(boolean useKQueue) {
-        this.useKQueue = useKQueue;
     }
 
     /**
@@ -538,21 +498,6 @@ public class ServerOptions implements Cloneable {
     }
 
     /**
-     * @return true if the netty OpenSSL support can be used if available.
-     */
-    public boolean isUseOpenSSL() {
-        return useOpenSSL;
-    }
-
-    /**
-     * @param useOpenSSL
-     * 		Configure if the transport should attempt to use OpenSSL support if available.
-     */
-    public void setUseOpenSSL(boolean useOpenSSL) {
-        this.useOpenSSL = useOpenSSL;
-    }
-
-    /**
      * @return the configuration that controls if the server requires client authentication.
      */
     public boolean isNeedClientAuth() {
@@ -607,7 +552,6 @@ public class ServerOptions implements Cloneable {
         copy.setTcpNoDelay(isTcpNoDelay());
         copy.setTrafficClass(getTrafficClass());
         copy.setDefaultTcpPort(getDefaultTcpPort());
-        copy.setUseEpoll(isUseEpoll());
         copy.setTraceBytes(isTraceBytes());
         copy.setKeyStoreLocation(getKeyStoreLocation());
         copy.setKeyStorePassword(getKeyStorePassword());
@@ -625,7 +569,6 @@ public class ServerOptions implements Cloneable {
         copy.setContextProtocol(getContextProtocol());
         copy.setDefaultSslPort(getDefaultSslPort());
         copy.setSslContextOverride(getSslContextOverride());
-        copy.setUseOpenSSL(isUseOpenSSL());
         copy.setLocalAddress(getLocalAddress());
         copy.setLocalPort(getLocalPort());
         copy.setSecure(isSecure());
