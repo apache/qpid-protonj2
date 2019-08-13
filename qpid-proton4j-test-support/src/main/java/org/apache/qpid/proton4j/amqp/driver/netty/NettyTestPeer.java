@@ -14,12 +14,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.qpid.proton4j.amqp.driver;
+package org.apache.qpid.proton4j.amqp.driver.netty;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import org.apache.qpid.proton4j.amqp.driver.netty.NettyServer;
-import org.apache.qpid.proton4j.amqp.driver.netty.ServerOptions;
+import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
+import org.apache.qpid.proton4j.amqp.driver.ScriptWriter;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,19 +32,19 @@ import io.netty.channel.SimpleChannelInboundHandler;
 /**
  * Netty based Test Peer implementation.
  */
-public class SocketTestPeer extends ScriptWriter implements AutoCloseable {
+public class NettyTestPeer extends ScriptWriter implements AutoCloseable {
 
-    private static final Logger LOG = LoggerFactory.getLogger(SocketTestPeer.class);
+    private static final Logger LOG = LoggerFactory.getLogger(NettyTestPeer.class);
 
     private final ServerOptions options;
-    private final TestDriverSever server;
+    private final TestDriverServer server;
     private final AMQPTestDriver driver;
     private final AtomicBoolean closed = new AtomicBoolean();
 
     /**
      * Creates a Socket Test Peer using all default Server options.
      */
-    public SocketTestPeer() {
+    public NettyTestPeer() {
         this(new ServerOptions());
     }
 
@@ -54,12 +54,12 @@ public class SocketTestPeer extends ScriptWriter implements AutoCloseable {
      * @param options
      *      The options that control the behavior of the deployed server.
      */
-    public SocketTestPeer(ServerOptions options) {
+    public NettyTestPeer(ServerOptions options) {
         this.options = options;
         this.driver = new AMQPTestDriver((frame) -> {
             processDriverOutput(frame);
         });
-        this.server = new TestDriverSever(options);
+        this.server = new TestDriverServer(options);
     }
 
     @Override
@@ -75,9 +75,9 @@ public class SocketTestPeer extends ScriptWriter implements AutoCloseable {
 
     //----- Channel handler that drives IO for the test driver
 
-    private final class TestDriverSever extends NettyServer {
+    private final class TestDriverServer extends NettyServer {
 
-        public TestDriverSever(ServerOptions options) {
+        public TestDriverServer(ServerOptions options) {
             super(options);
         }
 
@@ -90,7 +90,8 @@ public class SocketTestPeer extends ScriptWriter implements AutoCloseable {
                     LOG.debug("AMQP Server Channel read: {}", input);
 
                     try {
-                        // processIncomingData(input);
+                        // ProtonNettyByteBuffer wrapper = new ProtonNettyByteBuffer(input);
+                        // processIncomingData(wrapper);
                     } catch (Throwable e) {
                         ctx.channel().close();
                     } finally {
