@@ -70,12 +70,14 @@ import io.netty.util.concurrent.GenericFutureListener;
 /**
  * Base Server implementation used to create Netty based server implementations for
  * unit testing aspects of the client code.
+ *
+ * TODO - Server should be a one-shot server and close the sever channel after a connect.
  */
 public abstract class NettyServer implements AutoCloseable {
 
     private static final Logger LOG = LoggerFactory.getLogger(NettyServer.class);
 
-    static final int PORT = Integer.parseInt(System.getProperty("port", "8007"));
+    static final int PORT = Integer.parseInt(System.getProperty("port", "5672"));
     static final String WEBSOCKET_PATH = "/";
     static final int DEFAULT_MAX_FRAME_SIZE = 65535;
 
@@ -83,7 +85,6 @@ public abstract class NettyServer implements AutoCloseable {
     private EventLoopGroup workerGroup;
     private Channel serverChannel;
     private final ServerOptions options;
-    private int serverPort;
     private int maxFrameSize = DEFAULT_MAX_FRAME_SIZE;
     private String webSocketPath = WEBSOCKET_PATH;
     private volatile boolean fragmentWrites;
@@ -245,13 +246,13 @@ public abstract class NettyServer implements AutoCloseable {
     }
 
     public int getServerPort() {
-        if (serverPort == 0) {
+        if (options.getServerPort() == 0) {
             ServerSocket ss = null;
             try {
                 ss = ServerSocketFactory.getDefault().createServerSocket(0);
-                serverPort = ss.getLocalPort();
+                options.setServerPort(ss.getLocalPort());
             } catch (IOException e) { // revert back to default
-                serverPort = PORT;
+                options.setServerPort(PORT);
             } finally {
                 try {
                     if (ss != null ) {
@@ -261,7 +262,7 @@ public abstract class NettyServer implements AutoCloseable {
                 }
             }
         }
-        return serverPort;
+        return options.getServerPort();
     }
 
     private class NettyServerOutboundHandler extends ChannelOutboundHandlerAdapter  {

@@ -36,15 +36,13 @@ public class ServerOptions implements Cloneable {
     public static final boolean DEFAULT_TCP_KEEP_ALIVE = false;
     public static final int DEFAULT_SO_LINGER = Integer.MIN_VALUE;
     public static final int DEFAULT_SO_TIMEOUT = -1;
-    public static final int DEFAULT_CONNECT_TIMEOUT = 60000;
-    public static final int DEFAULT_TCP_PORT = 5672;
+    public static final int DEFAULT_SERVER_PORT = 0;
     public static final boolean DEFAULT_TRACE_BYTES = false;
     public static final String DEFAULT_STORE_TYPE = "jks";
     public static final String DEFAULT_CONTEXT_PROTOCOL = "TLS";
     public static final boolean DEFAULT_TRUST_ALL = false;
     public static final boolean DEFAULT_VERIFY_HOST = true;
     public static final List<String> DEFAULT_DISABLED_PROTOCOLS = Collections.unmodifiableList(Arrays.asList(new String[]{"SSLv2Hello", "SSLv3"}));
-    public static final int DEFAULT_SSL_PORT = 5671;
     public static final int DEFAULT_LOCAL_PORT = 0;
     public static final boolean DEFAULT_USE_WEBSOCKETS = false;
     public static final boolean DEFAULT_SECURE_SERVER = false;
@@ -60,12 +58,11 @@ public class ServerOptions implements Cloneable {
     private int sendBufferSize = DEFAULT_SEND_BUFFER_SIZE;
     private int receiveBufferSize = DEFAULT_RECEIVE_BUFFER_SIZE;
     private int trafficClass = DEFAULT_TRAFFIC_CLASS;
-    private int connectTimeout = DEFAULT_CONNECT_TIMEOUT;
     private int soTimeout = DEFAULT_SO_TIMEOUT;
     private int soLinger = DEFAULT_SO_LINGER;
     private boolean tcpKeepAlive = DEFAULT_TCP_KEEP_ALIVE;
     private boolean tcpNoDelay = DEFAULT_TCP_NO_DELAY;
-    private int defaultTcpPort = DEFAULT_TCP_PORT;
+    private int serverPort = DEFAULT_SERVER_PORT;
     private String localAddress;
     private int localPort = DEFAULT_LOCAL_PORT;
     private boolean traceBytes = DEFAULT_TRACE_BYTES;
@@ -88,7 +85,6 @@ public class ServerOptions implements Cloneable {
     private boolean trustAll = DEFAULT_TRUST_ALL;
     private boolean verifyHost = DEFAULT_VERIFY_HOST;
     private String keyAlias;
-    private int defaultSslPort = DEFAULT_SSL_PORT;
     private SSLContext sslContextOverride;
 
     private final Map<String, String> httpHeaders = new HashMap<>();
@@ -211,20 +207,12 @@ public class ServerOptions implements Cloneable {
         this.tcpKeepAlive = keepAlive;
     }
 
-    public int getConnectTimeout() {
-        return connectTimeout;
+    public int getServerPort() {
+        return serverPort;
     }
 
-    public void setConnectTimeout(int connectTimeout) {
-        this.connectTimeout = connectTimeout;
-    }
-
-    public int getDefaultTcpPort() {
-        return defaultTcpPort;
-    }
-
-    public void setDefaultTcpPort(int defaultTcpPort) {
-        this.defaultTcpPort = defaultTcpPort;
+    public void setServerPort(int serverPort) {
+        this.serverPort = serverPort;
     }
 
     public String getLocalAddress() {
@@ -477,14 +465,6 @@ public class ServerOptions implements Cloneable {
         this.keyAlias = keyAlias;
     }
 
-    public int getDefaultSslPort() {
-        return defaultSslPort;
-    }
-
-    public void setDefaultSslPort(int defaultSslPort) {
-        this.defaultSslPort = defaultSslPort;
-    }
-
     public void setSslContextOverride(SSLContext sslContextOverride) {
         this.sslContextOverride = sslContextOverride;
     }
@@ -543,7 +523,6 @@ public class ServerOptions implements Cloneable {
     }
 
     protected ServerOptions copyOptions(ServerOptions copy) {
-        copy.setConnectTimeout(getConnectTimeout());
         copy.setReceiveBufferSize(getReceiveBufferSize());
         copy.setSendBufferSize(getSendBufferSize());
         copy.setSoLinger(getSoLinger());
@@ -551,7 +530,7 @@ public class ServerOptions implements Cloneable {
         copy.setTcpKeepAlive(isTcpKeepAlive());
         copy.setTcpNoDelay(isTcpNoDelay());
         copy.setTrafficClass(getTrafficClass());
-        copy.setDefaultTcpPort(getDefaultTcpPort());
+        copy.setServerPort(getServerPort());
         copy.setTraceBytes(isTraceBytes());
         copy.setKeyStoreLocation(getKeyStoreLocation());
         copy.setKeyStorePassword(getKeyStorePassword());
@@ -567,7 +546,6 @@ public class ServerOptions implements Cloneable {
         copy.setVerifyHost(isVerifyHost());
         copy.setKeyAlias(getKeyAlias());
         copy.setContextProtocol(getContextProtocol());
-        copy.setDefaultSslPort(getDefaultSslPort());
         copy.setSslContextOverride(getSslContextOverride());
         copy.setLocalAddress(getLocalAddress());
         copy.setLocalPort(getLocalPort());

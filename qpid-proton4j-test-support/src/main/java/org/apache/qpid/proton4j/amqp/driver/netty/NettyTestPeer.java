@@ -16,6 +16,7 @@
  */
 package org.apache.qpid.proton4j.amqp.driver.netty;
 
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
@@ -25,6 +26,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
+import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
@@ -37,9 +40,10 @@ public class NettyTestPeer extends ScriptWriter implements AutoCloseable {
     private static final Logger LOG = LoggerFactory.getLogger(NettyTestPeer.class);
 
     private final ServerOptions options;
-    private final TestDriverServer server;
     private final AMQPTestDriver driver;
+    private final TestDriverServer server;
     private final AtomicBoolean closed = new AtomicBoolean();
+    private volatile Channel channel;
 
     /**
      * Creates a Socket Test Peer using all default Server options.
@@ -87,15 +91,21 @@ public class NettyTestPeer extends ScriptWriter implements AutoCloseable {
 
                 @Override
                 protected void channelRead0(ChannelHandlerContext ctx, ByteBuf input) throws Exception {
-                    LOG.debug("AMQP Server Channel read: {}", input);
+                    LOG.trace("AMQP Server Channel read: {}", input);
 
                     try {
-                        // ProtonNettyByteBuffer wrapper = new ProtonNettyByteBuffer(input);
-                        // processIncomingData(wrapper);
+                        // Driver processes new data and may produce output based on this.
+                        processChannelInput(new ProtonNettyByteBuffer(input));
                     } catch (Throwable e) {
                         ctx.channel().close();
                     } finally {
                     }
+                }
+
+                @Override
+                public void channelActive(ChannelHandlerContext ctx) throws Exception {
+                    channel = ctx.channel();
+                    ctx.fireChannelActive();
                 }
             };
         }
@@ -104,10 +114,31 @@ public class NettyTestPeer extends ScriptWriter implements AutoCloseable {
     //----- Internal implementation which can be overridden
 
     protected void processCloseRequest() {
-        // nothing to do in this peer implementation.
+        if (channel != null) {
+            try {
+                if (!channel.close().await(10, TimeUnit.SECONDS)) {
+                    LOG.info("Channel close timed out wiating for result");
+                }
+            } catch (InterruptedException e) {
+                Thread.interrupted();
+                LOG.debug("Close of channel interrupted while awaiting result");
+            }
+        }
     }
 
     protected void processDriverOutput(ProtonBuffer frame) {
+        LOG.trace("AMQP Server Channel writing: {}", frame);
+        // TODO - Error handling for failed write
+        // TODO - If we allow test driver to allocate io buffers we might save this copy
+        //        if it can create an netty buffer wrapper.
+        ByteBuf outbound = Unpooled.buffer(frame.getReadableBytes());
+        outbound.writeBytes(frame.toByteBuffer());
+        channel.writeAndFlush(outbound, channel.voidPromise());
+    }
+
+    protected void processChannelInput(ProtonBuffer input) {
+        LOG.trace("AMQP Server Channel processing: {}", input);
+        driver.accept(input);
     }
 
     @Override
