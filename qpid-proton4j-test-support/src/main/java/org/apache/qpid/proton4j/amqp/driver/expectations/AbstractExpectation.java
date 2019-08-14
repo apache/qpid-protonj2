@@ -38,6 +38,7 @@ import org.apache.qpid.proton4j.amqp.driver.codec.transport.End;
 import org.apache.qpid.proton4j.amqp.driver.codec.transport.Flow;
 import org.apache.qpid.proton4j.amqp.driver.codec.transport.Open;
 import org.apache.qpid.proton4j.amqp.driver.codec.transport.Transfer;
+import org.apache.qpid.proton4j.amqp.driver.exceptions.UnexpectedPerformativeError;
 import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.common.logging.ProtonLogger;
@@ -216,6 +217,6 @@ public abstract class AbstractExpectation<T extends ListDescribedType> implement
     }
 
     private void reportTypeExpectationError(Object received, Class<T> expected) {
-        throw new AssertionError("Expeceted type: " + expected + " but received value: " + received);
+        throw new UnexpectedPerformativeError("Expeceted type: " + expected + " but received value: " + received);
     }
 }

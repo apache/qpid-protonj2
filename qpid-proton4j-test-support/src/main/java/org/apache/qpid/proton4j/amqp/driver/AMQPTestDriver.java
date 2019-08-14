@@ -25,6 +25,7 @@ import org.apache.qpid.proton4j.amqp.DescribedType;
 import org.apache.qpid.proton4j.amqp.driver.actions.ScriptCompleteAction;
 import org.apache.qpid.proton4j.amqp.driver.codec.security.SaslDescribedType;
 import org.apache.qpid.proton4j.amqp.driver.codec.transport.PerformativeDescribedType;
+import org.apache.qpid.proton4j.amqp.driver.exceptions.UnexpectedPerformativeError;
 import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.common.logging.ProtonLogger;
@@ -147,6 +148,8 @@ public class AMQPTestDriver implements Consumer<ProtonBuffer> {
         } catch (Throwable t) {
             if (scriptEntry.isOptional()) {
                 handleHeader(header);
+            } else {
+                throw t;
             }
         }
 
@@ -161,9 +164,11 @@ public class AMQPTestDriver implements Consumer<ProtonBuffer> {
 
         try {
             sasl.invoke(scriptEntry, this);
-        } catch (Throwable t) {
+        } catch (UnexpectedPerformativeError e) {
             if (scriptEntry.isOptional()) {
                 handleSaslPerformative(sasl, channel, payload);
+            } else {
+                throw e;
             }
         }
 
@@ -180,9 +185,11 @@ public class AMQPTestDriver implements Consumer<ProtonBuffer> {
 
         try {
             amqp.invoke(scriptEntry, payload, channel, this);
-        } catch (Throwable t) {
+        } catch (UnexpectedPerformativeError e) {
             if (scriptEntry.isOptional()) {
                 handlePerformative(amqp, channel, payload);
+            } else {
+                throw e;
             }
         }
 
