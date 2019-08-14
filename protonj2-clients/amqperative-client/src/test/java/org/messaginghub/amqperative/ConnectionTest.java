@@ -16,22 +16,51 @@
  */
 package org.messaginghub.amqperative;
 
+import java.net.URI;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import org.apache.qpid.proton4j.amqp.driver.netty.NettyTestPeer;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.messaginghub.amqperative.client.ClientException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Test for the Connection class
  */
 public class ConnectionTest {
 
-    @Test
+    private static final Logger LOG = LoggerFactory.getLogger(ConnectionTest.class);
+
+    @Test(timeout = 60000)
     public void testCreateConnectionString() throws Exception {
+        try (NettyTestPeer peer = new NettyTestPeer()) {
+            peer.expectAMQPHeader().respondWithAMQPHeader();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectClose().respond();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            Container container = Container.create();
+            LOG.info("Created container");
+
+            Connection connection = container.createConnection(remoteURI.getHost(), remoteURI.getPort());
+            LOG.info("Connection creation started (or already failed), waiting.");
+
+            connection.openFuture().get(10, TimeUnit.SECONDS);
+            LOG.info("Open completed successfully");
+
+            connection.close().get(10, TimeUnit.SECONDS);
+            LOG.info("Close completed successfully");
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
     }
 
     @Test

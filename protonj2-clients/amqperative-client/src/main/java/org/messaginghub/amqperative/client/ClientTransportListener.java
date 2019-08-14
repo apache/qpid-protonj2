@@ -18,6 +18,8 @@ package org.messaginghub.amqperative.client;
 
 import java.util.concurrent.ScheduledExecutorService;
 
+import org.apache.qpid.proton4j.buffer.ProtonByteBuffer;
+import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.engine.exceptions.EngineStateException;
 import org.apache.qpid.proton4j.engine.impl.ProtonEngine;
 import org.messaginghub.amqperative.client.exceptions.ClientExceptionSupport;
@@ -51,13 +53,18 @@ public class ClientTransportListener implements TransportListener {
     public void onData(ByteBuf incoming) {
         // TODO - if this buffer is pooled than we need to copy it, or we need to do
         //        a copy in our frame decoder vs just using a slice to hold onto the
-        //        body.
-        ProtonNettyByteBuffer bufferAdapter = new ProtonNettyByteBuffer(incoming);
+        //        body.  Determining if a netty buffer is pooled is non-trivial
+
+        // Use the wrapper to try and let the copy run along the most efficient path depending
+        // on which buffer has an array.  Falls back to slower copy method if neither does.
+        ProtonNettyByteBuffer wrapper = new ProtonNettyByteBuffer(incoming);
+        ProtonByteBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate(incoming.readableBytes());
+        buffer.writeBytes(wrapper);
 
         try {
             do {
-                engine.ingest(bufferAdapter);
-            } while (bufferAdapter.isReadable() && engine.isWritable());
+                engine.ingest(buffer);
+            } while (buffer.isReadable() && engine.isWritable());
             // TODO - How do we handle case of not all data read ?
         } catch (EngineStateException e) {
             LOG.warn("Caught problem during incoming data processing: {}", e.getMessage(), e);
