@@ -1146,15 +1146,15 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         peer.expectAttach().respond();
         peer.expectFlow().withLinkCredit(2);
         peer.remoteTransfer().withDeliveryId(0)
-                               .withDeliveryTag(new byte[] {0})
-                               .withMore(true)
-                               .withMessageFormat(0)
-                               .withBody().withData(first).also().queue();
+                             .withDeliveryTag(new byte[] {0})
+                             .withMore(true)
+                             .withMessageFormat(0)
+                             .withBody().withData(first).also().queue();
         peer.remoteTransfer().withDeliveryId(0)
-                               .withDeliveryTag(new byte[] {0})
-                               .withMore(false)
-                               .withMessageFormat(0)
-                               .withBody().withData(second).also().queue();
+                             .withDeliveryTag(new byte[] {0})
+                             .withMore(false)
+                             .withMessageFormat(0)
+                             .withBody().withData(second).also().queue();
         peer.expectDetach().respond();
 
         Connection connection = engine.start();
@@ -1282,17 +1282,17 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         assertNull("Should not have any delivery date yet on receiver 2", receivedDelivery2.get());
 
         peer.remoteTransfer().withDeliveryId(0)
-                               .withHandle(0)
-                               .withDeliveryTag(deliveryTag1.getBytes(StandardCharsets.UTF_8))
-                               .withMore(true)
-                               .withMessageFormat(0)
-                               .withPayload(payload1).now();
+                             .withHandle(0)
+                             .withDeliveryTag(deliveryTag1.getBytes(StandardCharsets.UTF_8))
+                             .withMore(true)
+                             .withMessageFormat(0)
+                             .withPayload(payload1).now();
         peer.remoteTransfer().withDeliveryId(1)
-                               .withHandle(1)
-                               .withDeliveryTag(deliveryTag2.getBytes(StandardCharsets.UTF_8))
-                               .withMore(bothDeliveriesMultiFrame)
-                               .withMessageFormat(0)
-                               .withPayload(payload2).now();
+                             .withHandle(1)
+                             .withDeliveryTag(deliveryTag2.getBytes(StandardCharsets.UTF_8))
+                             .withMore(bothDeliveriesMultiFrame)
+                             .withMessageFormat(0)
+                             .withPayload(payload2).now();
 
         assertNotNull("Should have a delivery event on receiver 1", receivedDelivery1.get());
         assertNotNull("Should have a delivery event on receiver 2", receivedDelivery2.get());
@@ -1305,31 +1305,31 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         }
 
         peer.remoteTransfer().withDeliveryId(0)
-                               .withHandle(0)
-                               .withDeliveryTag(deliveryTag1.getBytes(StandardCharsets.UTF_8))
-                               .withMore(false)
-                               .withMessageFormat(0)
-                               .withPayload(payload1).now();
+                             .withHandle(0)
+                             .withDeliveryTag(deliveryTag1.getBytes(StandardCharsets.UTF_8))
+                             .withMore(false)
+                             .withMessageFormat(0)
+                             .withPayload(payload1).now();
         if (bothDeliveriesMultiFrame) {
             peer.remoteTransfer().withDeliveryId(1)
-                                   .withHandle(1)
-                                   .withDeliveryTag(deliveryTag2.getBytes(StandardCharsets.UTF_8))
-                                   .withMore(false)
-                                   .withMessageFormat(0)
-                                   .withPayload(payload2).now();
+                                 .withHandle(1)
+                                 .withDeliveryTag(deliveryTag2.getBytes(StandardCharsets.UTF_8))
+                                 .withMore(false)
+                                 .withMessageFormat(0)
+                                 .withPayload(payload2).now();
         }
 
         assertFalse("Delivery on Receiver 1 Should be complete", receivedDelivery1.get().isPartial());
         assertFalse("Delivery on Receiver 2 Should be complete", receivedDelivery2.get().isPartial());
 
         peer.expectDisposition().withFirst(1)
-                                  .withSettled(true)
-                                  .withRole(Role.RECEIVER)
-                                  .withState(Accepted.getInstance());
+                                .withSettled(true)
+                                .withRole(Role.RECEIVER)
+                                .withState(Accepted.getInstance());
         peer.expectDisposition().withFirst(0)
-                                  .withSettled(true)
-                                  .withRole(Role.RECEIVER)
-                                  .withState(Accepted.getInstance());
+                                .withSettled(true)
+                                .withRole(Role.RECEIVER)
+                                .withState(Accepted.getInstance());
 
         assertArrayEquals(deliveryTag1.getBytes(StandardCharsets.UTF_8), receivedDelivery1.get().getTag());
         assertArrayEquals(deliveryTag2.getBytes(StandardCharsets.UTF_8), receivedDelivery2.get().getTag());
@@ -1411,10 +1411,10 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
 
         // First chunk indicates more to come.
         peer.remoteTransfer().withDeliveryId(0)
-                               .withDeliveryTag(new byte[] {1})
-                               .withMore(true)
-                               .withMessageFormat(0)
-                               .withPayload(payload).now();
+                             .withDeliveryTag(new byte[] {1})
+                             .withMore(true)
+                             .withMessageFormat(0)
+                             .withPayload(payload).now();
 
         assertNotNull("Should have delivery data on receiver", receivedDelivery.get());
         assertEquals("Should have delivery data on receiver", 1, deliveryCounter.get());
@@ -1422,11 +1422,11 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
 
         // Second chunk indicates more to come as a twist but also signals aborted.
         peer.remoteTransfer().withDeliveryId(0)
-                               .withSettled(setSettledOnAbortedTransfer)
-                               .withMore(setMoreOnAbortedTransfer)
-                               .withAborted(true)
-                               .withMessageFormat(0)
-                               .withPayload(payload).now();
+                             .withSettled(setSettledOnAbortedTransfer)
+                             .withMore(setMoreOnAbortedTransfer)
+                             .withAborted(true)
+                             .withMessageFormat(0)
+                             .withPayload(payload).now();
 
         assertNotNull("Should have delivery data on receiver", receivedDelivery.get());
         assertEquals("Should have delivery data on receiver", 1, deliveryCounter.get());
@@ -1440,10 +1440,10 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
 
         // Another delivery now which should arrive just fine, no further frames on this one.
         peer.remoteTransfer().withDeliveryId(1)
-                               .withDeliveryTag(new byte[] {2})
-                               .withMore(false)
-                               .withMessageFormat(0)
-                               .withPayload(payload).now();
+                             .withDeliveryTag(new byte[] {2})
+                             .withMore(false)
+                             .withMessageFormat(0)
+                             .withPayload(payload).now();
 
         assertNotNull("Should have delivery data on receiver", receivedDelivery.get());
         assertEquals("Should have delivery data on receiver", 2, deliveryCounter.get());
@@ -1536,17 +1536,17 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         assertEquals("Receiver 2 should not have any transfers yet", 0, receiver2Transfers.get());
 
         peer.remoteTransfer().withDeliveryId(0)
-                               .withHandle(0)
-                               .withDeliveryTag(deliveryTag1.getBytes(StandardCharsets.UTF_8))
-                               .withMore(true)
-                               .withMessageFormat(0)
-                               .withPayload(new byte[] {1}).now();
+                             .withHandle(0)
+                             .withDeliveryTag(deliveryTag1.getBytes(StandardCharsets.UTF_8))
+                             .withMore(true)
+                             .withMessageFormat(0)
+                             .withPayload(new byte[] {1}).now();
         peer.remoteTransfer().withDeliveryId(1)
-                               .withHandle(1)
-                               .withDeliveryTag(deliveryTag2.getBytes(StandardCharsets.UTF_8))
-                               .withMore(true)
-                               .withMessageFormat(0)
-                               .withPayload(new byte[] {10}).now();
+                             .withHandle(1)
+                             .withDeliveryTag(deliveryTag2.getBytes(StandardCharsets.UTF_8))
+                             .withMore(true)
+                             .withMessageFormat(0)
+                             .withPayload(new byte[] {10}).now();
 
         assertNotNull("Should have a delivery event on receiver 1", receivedDelivery1.get());
         assertNotNull("Should have a delivery event on receiver 2", receivedDelivery2.get());
@@ -1555,15 +1555,15 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         assertNotSame(receivedDelivery1.get(), receivedDelivery2.get());
 
         peer.remoteTransfer().withHandle(1)
-                               .withDeliveryTag(deliveryTag2.getBytes(StandardCharsets.UTF_8))
-                               .withMore(true)
-                               .withMessageFormat(0)
-                               .withPayload(new byte[] {11}).now();
+                             .withDeliveryTag(deliveryTag2.getBytes(StandardCharsets.UTF_8))
+                             .withMore(true)
+                             .withMessageFormat(0)
+                             .withPayload(new byte[] {11}).now();
         peer.remoteTransfer().withHandle(0)
-                               .withDeliveryTag(deliveryTag1.getBytes(StandardCharsets.UTF_8))
-                               .withMore(true)
-                               .withMessageFormat(0)
-                               .withPayload(new byte[] {2}).now();
+                             .withDeliveryTag(deliveryTag1.getBytes(StandardCharsets.UTF_8))
+                             .withMore(true)
+                             .withMessageFormat(0)
+                             .withPayload(new byte[] {2}).now();
 
         assertNotNull("Should have a delivery event on receiver 1", receivedDelivery1.get());
         assertNotNull("Should have a delivery event on receiver 2", receivedDelivery2.get());
@@ -1572,15 +1572,15 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         assertNotSame(receivedDelivery1.get(), receivedDelivery2.get());
 
         peer.remoteTransfer().withHandle(0)
-                               .withDeliveryTag(deliveryTag1.getBytes(StandardCharsets.UTF_8))
-                               .withMore(false)
-                               .withMessageFormat(0)
-                               .withPayload(new byte[] {3}).now();
+                             .withDeliveryTag(deliveryTag1.getBytes(StandardCharsets.UTF_8))
+                             .withMore(false)
+                             .withMessageFormat(0)
+                             .withPayload(new byte[] {3}).now();
         peer.remoteTransfer().withHandle(1)
-                               .withDeliveryTag(deliveryTag2.getBytes(StandardCharsets.UTF_8))
-                               .withMore(true)
-                               .withMessageFormat(0)
-                               .withPayload(new byte[] {12}).now();
+                             .withDeliveryTag(deliveryTag2.getBytes(StandardCharsets.UTF_8))
+                             .withMore(true)
+                             .withMessageFormat(0)
+                             .withPayload(new byte[] {12}).now();
 
         assertNotNull("Should have a delivery event on receiver 1", receivedDelivery1.get());
         assertNotNull("Should have a delivery event on receiver 2", receivedDelivery2.get());
@@ -1589,10 +1589,10 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         assertNotSame(receivedDelivery1.get(), receivedDelivery2.get());
 
         peer.remoteTransfer().withHandle(1)
-                               .withDeliveryTag(deliveryTag2.getBytes(StandardCharsets.UTF_8))
-                               .withMore(false)
-                               .withMessageFormat(0)
-                               .withPayload(new byte[] {13}).now();
+                             .withDeliveryTag(deliveryTag2.getBytes(StandardCharsets.UTF_8))
+                             .withMore(false)
+                             .withMessageFormat(0)
+                             .withPayload(new byte[] {13}).now();
 
         assertNotNull("Should have a delivery event on receiver 1", receivedDelivery1.get());
         assertNotNull("Should have a delivery event on receiver 2", receivedDelivery2.get());
@@ -1708,34 +1708,34 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         assertEquals("Receiver should not have any deliveries yet", 0, deliveryCounter.get());
 
         peer.remoteTransfer().withDeliveryId(deliveryId1.intValue())
-                               .withDeliveryTag(deliveryTag1.getBytes(StandardCharsets.UTF_8))
-                               .withMessageFormat(0)
-                               .withPayload(new byte[] {1}).now();
+                             .withDeliveryTag(deliveryTag1.getBytes(StandardCharsets.UTF_8))
+                             .withMessageFormat(0)
+                             .withPayload(new byte[] {1}).now();
 
         assertNotNull("Should have received delivery 1", receivedDelivery1.get());
         assertNull("Should not have received delivery 2", receivedDelivery2.get());
         assertNull("Should not have received delivery 3", receivedDelivery3.get());
-        assertEquals("Receiver should not have any deliveries yet", 1, deliveryCounter.get());
+        assertEquals("Receiver should have 1 deliveries now", 1, deliveryCounter.get());
 
         peer.remoteTransfer().withDeliveryId(deliveryId2.intValue())
-                               .withDeliveryTag(deliveryTag2.getBytes(StandardCharsets.UTF_8))
-                               .withMessageFormat(0)
-                               .withPayload(new byte[] {2}).now();
+                             .withDeliveryTag(deliveryTag2.getBytes(StandardCharsets.UTF_8))
+                             .withMessageFormat(0)
+                             .withPayload(new byte[] {2}).now();
 
         assertNotNull("Should have received delivery 1", receivedDelivery1.get());
         assertNotNull("Should have received delivery 2", receivedDelivery2.get());
         assertNull("Should not have received delivery 3", receivedDelivery3.get());
-        assertEquals("Receiver should not have any deliveries yet", 2, deliveryCounter.get());
+        assertEquals("Receiver should have 2 deliveries now", 2, deliveryCounter.get());
 
         peer.remoteTransfer().withDeliveryId(deliveryId3.intValue())
-                               .withDeliveryTag(deliveryTag3.getBytes(StandardCharsets.UTF_8))
-                               .withMessageFormat(0)
-                               .withPayload(new byte[] {3}).now();
+                             .withDeliveryTag(deliveryTag3.getBytes(StandardCharsets.UTF_8))
+                             .withMessageFormat(0)
+                             .withPayload(new byte[] {3}).now();
 
         assertNotNull("Should have received delivery 1", receivedDelivery1.get());
         assertNotNull("Should have received delivery 2", receivedDelivery2.get());
         assertNotNull("Should have received delivery 3", receivedDelivery3.get());
-        assertEquals("Receiver should not have any deliveries yet", 3, deliveryCounter.get());
+        assertEquals("Receiver should have 3 deliveries now", 3, deliveryCounter.get());
 
         assertNotSame("delivery duplicate detected", receivedDelivery1.get(), receivedDelivery2.get());
         assertNotSame("delivery duplicate detected", receivedDelivery2.get(), receivedDelivery3.get());

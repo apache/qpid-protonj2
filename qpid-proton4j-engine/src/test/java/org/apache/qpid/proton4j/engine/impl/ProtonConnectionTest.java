@@ -234,16 +234,16 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
 
         peer.expectAMQPHeader().respondWithAMQPHeader();
         peer.expectOpen().withMaxFrameSize(expectedMaxFrameSizeMatcher)
-                           .withChannelMax(expectedChannelMaxMatcher)
-                           .withContainerId(expectedContainerId)
-                           .withHostname(expectedHostname)
-                           .withIdleTimeOut(expectedIdleTimeout)
-                           .withIncomingLocales(nullValue())
-                           .withOutgoingLocales(nullValue())
-                           .withDesiredCapabilities(nullValue())
-                           .withOfferedCapabilities(nullValue())
-                           .withProperties(nullValue())
-                           .respond().withContainerId("driver");
+                         .withChannelMax(expectedChannelMaxMatcher)
+                         .withContainerId(expectedContainerId)
+                         .withHostname(expectedHostname)
+                         .withIdleTimeOut(expectedIdleTimeout)
+                         .withIncomingLocales(nullValue())
+                         .withOutgoingLocales(nullValue())
+                         .withDesiredCapabilities(nullValue())
+                         .withOfferedCapabilities(nullValue())
+                         .withProperties(nullValue())
+                         .respond().withContainerId("driver");
         peer.expectClose().respond();
 
         ProtonConnection connection = engine.start();
@@ -294,10 +294,10 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
 
         peer.expectAMQPHeader().respondWithAMQPHeader();
         peer.expectOpen().withOfferedCapabilities(clientOfferedCapabilities)
-                           .withDesiredCapabilities(clientDesiredCapabilities)
-                           .respond()
-                           .withDesiredCapabilities(serverDesiredCapabilities)
-                           .withOfferedCapabilities(serverOfferedCapabilities);
+                         .withDesiredCapabilities(clientDesiredCapabilities)
+                         .respond()
+                         .withDesiredCapabilities(serverDesiredCapabilities)
+                         .withOfferedCapabilities(serverOfferedCapabilities);
         peer.expectClose().respond();
 
         ProtonConnection connection = engine.start();
@@ -345,8 +345,8 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
 
         peer.expectAMQPHeader().respondWithAMQPHeader();
         peer.expectOpen().withProperties(clientProperties)
-                           .respond()
-                           .withProperties(serverProperties);
+                         .respond()
+                         .withProperties(serverProperties);
         peer.expectClose().respond();
 
         ProtonConnection connection = engine.start();

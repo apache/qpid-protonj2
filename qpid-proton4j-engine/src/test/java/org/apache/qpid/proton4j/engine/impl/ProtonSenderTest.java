@@ -276,11 +276,11 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         peer.expectAMQPHeader().respondWithAMQPHeader();
         peer.expectOpen().respond().withContainerId("driver");
         peer.expectBegin().respond();
-        peer.remoteAttach().withName("sender")
-                             .withHandle(0)
-                             .withRole(Role.RECEIVER)
-                             .withInitialDeliveryCount(0)
-                             .onChannel(0).queue();
+        peer.remoteAttach().withName("receiver")
+                           .withHandle(0)
+                           .withRole(Role.RECEIVER)
+                           .withInitialDeliveryCount(0)
+                           .onChannel(0).queue();
         peer.expectAttach();
         peer.expectDetach().respond();
 
@@ -436,11 +436,11 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         peer.expectBegin().respond();
         peer.expectAttach().withRole(Role.SENDER).respond();
         peer.remoteFlow().withDeliveryCount(0)
-                           .withLinkCredit(10)
-                           .withIncomingWindow(1024)
-                           .withOutgoingWindow(10)
-                           .withNextIncomingId(0)
-                           .withNextOutgoingId(1).queue();
+                         .withLinkCredit(10)
+                         .withIncomingWindow(1024)
+                         .withOutgoingWindow(10)
+                         .withNextIncomingId(0)
+                         .withNextOutgoingId(1).queue();
         peer.expectDetach().withHandle(0).respond();
 
         Connection connection = engine.start();
@@ -479,17 +479,17 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         peer.expectBegin().respond();
         peer.expectAttach().withRole(Role.SENDER).respond();
         peer.remoteFlow().withDeliveryCount(0)     // TODO - Would be nice to automate filling in these
-                           .withLinkCredit(10)       //        these bits using last session opened values
-                           .withIncomingWindow(1024) //        plus some defaults or generated values.
-                           .withOutgoingWindow(10)
-                           .withNextIncomingId(0)
-                           .withNextOutgoingId(1).queue();
+                         .withLinkCredit(10)       //        these bits using last session opened values
+                         .withIncomingWindow(1024) //        plus some defaults or generated values.
+                         .withOutgoingWindow(10)
+                         .withNextIncomingId(0)
+                         .withNextOutgoingId(1).queue();
         peer.expectTransfer().withHandle(0)
-                               .withSettled(false)
-                               .withState((DeliveryState) null)
-                               .withDeliveryId(0)
-                               .withDeliveryTag(new byte[] {0})
-                               .withPayload(payloadBuffer);
+                             .withSettled(false)
+                             .withState((DeliveryState) null)
+                             .withDeliveryId(0)
+                             .withDeliveryTag(new byte[] {0})
+                             .withPayload(payloadBuffer);
         peer.expectDetach().withHandle(0).respond();
 
         Connection connection = engine.start();
@@ -530,21 +530,21 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         peer.expectBegin().respond();
         peer.expectAttach().withRole(Role.SENDER).respond();
         peer.remoteFlow().withDeliveryCount(0)
-                           .withLinkCredit(10)
-                           .withIncomingWindow(1024)
-                           .withOutgoingWindow(10)
-                           .withNextIncomingId(0)
-                           .withNextOutgoingId(1).queue();
+                         .withLinkCredit(10)
+                         .withIncomingWindow(1024)
+                         .withOutgoingWindow(10)
+                         .withNextIncomingId(0)
+                         .withNextOutgoingId(1).queue();
         peer.expectTransfer().withHandle(0)
-                               .withSettled(false)
-                               .withState((DeliveryState) null)
-                               .withDeliveryId(0)
-                               .withDeliveryTag(new byte[] {0})
-                               .withPayload(payload.copy());
+                             .withSettled(false)
+                             .withState((DeliveryState) null)
+                             .withDeliveryId(0)
+                             .withDeliveryTag(new byte[] {0})
+                             .withPayload(payload.copy());
         peer.remoteDisposition().withSettled(true)
-                                  .withRole(Role.RECEIVER)
-                                  .withState(Accepted.getInstance())
-                                  .withFirst(0).queue();
+                                .withRole(Role.RECEIVER)
+                                .withState(Accepted.getInstance())
+                                .withFirst(0).queue();
         peer.expectDetach().withHandle(0).respond();
 
         Connection connection = engine.start();
@@ -750,19 +750,19 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         peer.expectBegin().respond();
         peer.expectAttach().withRole(Role.SENDER).respond();
         peer.remoteFlow().withDeliveryCount(0)
-                           .withLinkCredit(10)
-                           .withIncomingWindow(1024)
-                           .withOutgoingWindow(10)
-                           .withNextIncomingId(0)
-                           .withNextOutgoingId(1).queue();
+                         .withLinkCredit(10)
+                         .withIncomingWindow(1024)
+                         .withOutgoingWindow(10)
+                         .withNextIncomingId(0)
+                         .withNextOutgoingId(1).queue();
         peer.expectTransfer().withHandle(0)
-                               .withSettled(false)
-                               .withState((DeliveryState) null)
-                               .withDeliveryId(0)
-                               .withDeliveryTag(new byte[] {0});
+                             .withSettled(false)
+                             .withState((DeliveryState) null)
+                             .withDeliveryId(0)
+                             .withDeliveryTag(new byte[] {0});
         peer.expectDisposition().withFirst(0)
-                                  .withSettled(true)
-                                  .withState(Accepted.getInstance());
+                                .withSettled(true)
+                                .withState(Accepted.getInstance());
         peer.expectDetach().withHandle(0).respond();
 
         Connection connection = engine.start();
@@ -812,11 +812,11 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         peer.expectBegin().respond();
         peer.expectAttach().withRole(Role.SENDER).respond();
         peer.remoteFlow().withDeliveryCount(0)
-                           .withLinkCredit(10)
-                           .withIncomingWindow(1024)
-                           .withOutgoingWindow(10)
-                           .withNextIncomingId(0)
-                           .withNextOutgoingId(1).queue();
+                         .withLinkCredit(10)
+                         .withIncomingWindow(1024)
+                         .withOutgoingWindow(10)
+                         .withNextIncomingId(0)
+                         .withNextOutgoingId(1).queue();
         peer.expectClose().respond();
 
         Connection connection = engine.start();
@@ -906,19 +906,19 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         });
 
         peer.remoteFlow().withHandle(0)
-                           .withDeliveryCount(0)
-                           .withLinkCredit(10)
-                           .withIncomingWindow(1024)
-                           .withOutgoingWindow(10)
-                           .withNextIncomingId(0)
-                           .withNextOutgoingId(1).now();
+                         .withDeliveryCount(0)
+                         .withLinkCredit(10)
+                         .withIncomingWindow(1024)
+                         .withOutgoingWindow(10)
+                         .withNextIncomingId(0)
+                         .withNextOutgoingId(1).now();
         peer.remoteFlow().withHandle(1)
-                           .withDeliveryCount(0)
-                           .withLinkCredit(10)
-                           .withIncomingWindow(1024)
-                           .withOutgoingWindow(10)
-                           .withNextIncomingId(0)
-                           .withNextOutgoingId(1).now();
+                         .withDeliveryCount(0)
+                         .withLinkCredit(10)
+                         .withIncomingWindow(1024)
+                         .withOutgoingWindow(10)
+                         .withNextIncomingId(0)
+                         .withNextOutgoingId(1).now();
 
         assertTrue("Sender 1 should now be sendable", sender1MarkedSendable.get());
         assertTrue("Sender 2 should now be sendable", sender2MarkedSendable.get());
@@ -927,31 +927,30 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         // writable portion out when a write is called.
 
         peer.expectTransfer().withHandle(0)
-                               .withSettled(true)
-                               .withState(Accepted.getInstance())
-                               .withDeliveryId(0)
-                               .withMore(true)
-                               .withDeliveryTag(new byte[] {1});
+                             .withSettled(true)
+                             .withState(Accepted.getInstance())
+                             .withDeliveryId(0)
+                             .withMore(true)
+                             .withDeliveryTag(new byte[] {1});
         peer.expectTransfer().withHandle(0)
-                               .withSettled(true)
-                               .withState(Accepted.getInstance())
-                               .withDeliveryId(0)
-                               .withMore(false)
-                               .withDeliveryTag(new byte[] {1});
-
+                             .withSettled(true)
+                             .withState(Accepted.getInstance())
+                             .withDeliveryId(0)
+                             .withMore(false)
+                             .withDeliveryTag(new byte[] {1});
         peer.expectTransfer().withHandle(1)
-                               .withSettled(true)
-                               .withState(Accepted.getInstance())
-                               .withDeliveryId(1)
-                               .withMore(bothDeliveriesMultiFrame)
-                               .withDeliveryTag(new byte[] {2});
+                             .withSettled(true)
+                             .withState(Accepted.getInstance())
+                             .withDeliveryId(1)
+                             .withMore(bothDeliveriesMultiFrame)
+                             .withDeliveryTag(new byte[] {2});
         if (bothDeliveriesMultiFrame) {
             peer.expectTransfer().withHandle(1)
-                                   .withSettled(true)
-                                   .withState(Accepted.getInstance())
-                                   .withDeliveryId(1)
-                                   .withMore(false)
-                                   .withDeliveryTag(new byte[] {2});
+                                 .withSettled(true)
+                                 .withState(Accepted.getInstance())
+                                 .withDeliveryId(1)
+                                 .withMore(false)
+                                 .withDeliveryTag(new byte[] {2});
         }
 
         ProtonBuffer messageContent1 = createContentBuffer(contentLength1);
@@ -1004,8 +1003,8 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
                 peer.expectOpen().withMaxFrameSize(outboundFrameSizeLimit).respond();
             } else {
                 peer.expectOpen().withMaxFrameSize(outboundFrameSizeLimit)
-                                   .respond()
-                                   .withMaxFrameSize(remoteMaxFrameSize);
+                                 .respond()
+                                 .withMaxFrameSize(remoteMaxFrameSize);
             }
         }
         peer.expectBegin().respond();
@@ -1029,12 +1028,12 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         });
 
         peer.remoteFlow().withHandle(0)
-                           .withDeliveryCount(0)
-                           .withLinkCredit(50)
-                           .withIncomingWindow(65535)
-                           .withOutgoingWindow(65535)
-                           .withNextIncomingId(0)
-                           .withNextOutgoingId(1).now();
+                         .withDeliveryCount(0)
+                         .withLinkCredit(50)
+                         .withIncomingWindow(65535)
+                         .withOutgoingWindow(65535)
+                         .withNextIncomingId(0)
+                         .withNextOutgoingId(1).now();
 
         assertTrue("Sender should now be sendable", senderMarkedSendable.get());
 
@@ -1060,12 +1059,12 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
 
         for (int i = 1; i <= expectedNumFrames; ++i) {
             peer.expectTransfer().withHandle(0)
-                                   .withSettled(true)
-                                   .withState(Accepted.getInstance())
-                                   .withDeliveryId(0)
-                                   .withMore(i != expectedNumFrames ? true : false)
-                                   .withDeliveryTag(notNullValue())
-                                   .withPayload(notNullValue(ProtonBuffer.class));
+                                 .withSettled(true)
+                                 .withState(Accepted.getInstance())
+                                 .withDeliveryId(0)
+                                 .withMore(i != expectedNumFrames ? true : false)
+                                 .withDeliveryTag(notNullValue())
+                                 .withPayload(notNullValue(ProtonBuffer.class));
         }
 
         ProtonBuffer messageContent = createContentBuffer(contentLength);
@@ -1095,26 +1094,26 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         peer.expectBegin().respond();
         peer.expectAttach().withRole(Role.SENDER).respond();
         peer.remoteFlow().withDeliveryCount(0)
-                           .withLinkCredit(10)
-                           .withIncomingWindow(1024)
-                           .withOutgoingWindow(10)
-                           .withNextIncomingId(0)
-                           .withNextOutgoingId(1).queue();
+                         .withLinkCredit(10)
+                         .withIncomingWindow(1024)
+                         .withOutgoingWindow(10)
+                         .withNextIncomingId(0)
+                         .withNextOutgoingId(1).queue();
         peer.expectTransfer().withHandle(0)
-                               .withMore(true)
-                               .withSettled(false)
-                               .withState((DeliveryState) null)
-                               .withDeliveryId(0)
-                               .withDeliveryTag(new byte[] {0})
-                               .withPayload(payload.copy());
+                             .withMore(true)
+                             .withSettled(false)
+                             .withState((DeliveryState) null)
+                             .withDeliveryId(0)
+                             .withDeliveryTag(new byte[] {0})
+                             .withPayload(payload.copy());
         peer.expectTransfer().withHandle(0)
-                               .withState((DeliveryState) null)
-                               .withDeliveryId(0)
-                               .withDeliveryTag(new byte[] {0})
-                               .withAborted(true)
-                               .withSettled(true)
-                               .withMore(false)
-                               .withPayload(nullValue(ProtonBuffer.class));
+                             .withState((DeliveryState) null)
+                             .withDeliveryId(0)
+                             .withDeliveryTag(new byte[] {0})
+                             .withAborted(true)
+                             .withSettled(true)
+                             .withMore(false)
+                             .withPayload(nullValue(ProtonBuffer.class));
         peer.expectDetach().withHandle(0).respond();
 
         Connection connection = engine.start();
@@ -1163,26 +1162,26 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         peer.expectBegin().respond();
         peer.expectAttach().withRole(Role.SENDER).respond();
         peer.remoteFlow().withDeliveryCount(0)
-                           .withLinkCredit(10)
-                           .withIncomingWindow(1024)
-                           .withOutgoingWindow(10)
-                           .withNextIncomingId(0)
-                           .withNextOutgoingId(1).queue();
+                         .withLinkCredit(10)
+                         .withIncomingWindow(1024)
+                         .withOutgoingWindow(10)
+                         .withNextIncomingId(0)
+                         .withNextOutgoingId(1).queue();
         peer.expectTransfer().withHandle(0)
-                               .withMore(true)
-                               .withSettled(false)
-                               .withState((DeliveryState) null)
-                               .withDeliveryId(0)
-                               .withDeliveryTag(new byte[] {0})
-                               .withPayload(payload.copy());
+                             .withMore(true)
+                             .withSettled(false)
+                             .withState((DeliveryState) null)
+                             .withDeliveryId(0)
+                             .withDeliveryTag(new byte[] {0})
+                             .withPayload(payload.copy());
         peer.expectTransfer().withHandle(0)
-                               .withState((DeliveryState) null)
-                               .withDeliveryId(0)
-                               .withDeliveryTag(new byte[] {0})
-                               .withAborted(true)
-                               .withSettled(true)
-                               .withMore(false)
-                               .withPayload(nullValue(ProtonBuffer.class));
+                             .withState((DeliveryState) null)
+                             .withDeliveryId(0)
+                             .withDeliveryTag(new byte[] {0})
+                             .withAborted(true)
+                             .withSettled(true)
+                             .withMore(false)
+                             .withPayload(nullValue(ProtonBuffer.class));
         peer.expectDetach().withHandle(0).respond();
 
         Connection connection = engine.start();
@@ -1232,11 +1231,11 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         peer.expectBegin().respond();
         peer.expectAttach().withRole(Role.SENDER).respond();
         peer.remoteFlow().withDeliveryCount(0)
-                           .withLinkCredit(10)
-                           .withIncomingWindow(1024)
-                           .withOutgoingWindow(10)
-                           .withNextIncomingId(0)
-                           .withNextOutgoingId(1).queue();
+                         .withLinkCredit(10)
+                         .withIncomingWindow(1024)
+                         .withOutgoingWindow(10)
+                         .withNextIncomingId(0)
+                         .withNextOutgoingId(1).queue();
         peer.expectDetach().withHandle(0).respond();
 
         Connection connection = engine.start();
@@ -1319,19 +1318,19 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         peer.expectBegin().respond();
         peer.expectAttach().withRole(Role.SENDER).respond();
         peer.remoteFlow().withDeliveryCount(0)
-                           .withLinkCredit(10)
-                           .withIncomingWindow(1024)
-                           .withOutgoingWindow(10)
-                           .withNextIncomingId(0)
-                           .withNextOutgoingId(1).queue();
+                         .withLinkCredit(10)
+                         .withIncomingWindow(1024)
+                         .withOutgoingWindow(10)
+                         .withNextIncomingId(0)
+                         .withNextOutgoingId(1).queue();
         peer.expectTransfer().withHandle(0)
-                               .withSettled(false)
-                               .withState((DeliveryState) null)
-                               .withDeliveryId(0)
-                               .withDeliveryTag(new byte[] {0});
+                             .withSettled(false)
+                             .withState((DeliveryState) null)
+                             .withDeliveryId(0)
+                             .withDeliveryTag(new byte[] {0});
         peer.expectDisposition().withFirst(0)
-                                  .withSettled(true)
-                                  .withState(state);
+                                .withSettled(true)
+                                .withState(state);
         peer.expectDetach().withHandle(0).respond();
 
         Connection connection = engine.start();
@@ -1401,19 +1400,19 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         peer.expectBegin().respond();
         peer.expectAttach().withRole(Role.SENDER).respond();
         peer.remoteFlow().withDeliveryCount(0)
-                           .withLinkCredit(10)
-                           .withIncomingWindow(1024)
-                           .withOutgoingWindow(10)
-                           .withNextIncomingId(0)
-                           .withNextOutgoingId(1).queue();
+                         .withLinkCredit(10)
+                         .withIncomingWindow(1024)
+                         .withOutgoingWindow(10)
+                         .withNextIncomingId(0)
+                         .withNextOutgoingId(1).queue();
         peer.expectTransfer().withHandle(0)
-                               .withSettled(false)
-                               .withState((DeliveryState) null)
-                               .withDeliveryId(0)
-                               .withDeliveryTag(new byte[] {0});
+                             .withSettled(false)
+                             .withState((DeliveryState) null)
+                             .withDeliveryId(0)
+                             .withDeliveryTag(new byte[] {0});
         peer.expectDisposition().withFirst(0)
-                                  .withSettled(true)
-                                  .withState(first);
+                                .withSettled(true)
+                                .withState(first);
         peer.expectDetach().withHandle(0).respond();
 
         Connection connection = engine.start();
