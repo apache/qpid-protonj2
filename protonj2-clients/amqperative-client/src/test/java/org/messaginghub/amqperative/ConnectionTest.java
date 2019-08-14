@@ -47,19 +47,17 @@ public class ConnectionTest {
 
             URI remoteURI = peer.getServerURI();
 
-            Container container = Container.create();
-            LOG.info("Created container");
+            LOG.info("Connect test started, peer listening on: {}", remoteURI);
 
+            Container container = Container.create();
             Connection connection = container.createConnection(remoteURI.getHost(), remoteURI.getPort());
-            LOG.info("Connection creation started (or already failed), waiting.");
 
             connection.openFuture().get(10, TimeUnit.SECONDS);
-            LOG.info("Open completed successfully");
-
             connection.close().get(10, TimeUnit.SECONDS);
-            LOG.info("Close completed successfully");
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+
+            LOG.info("Connect test completed normally");
         }
     }
 
