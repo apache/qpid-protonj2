@@ -99,6 +99,24 @@ public class NettyTestPeer extends ScriptWriter implements AutoCloseable {
         }
     }
 
+    //----- Test Completion API
+
+    public void waitForScriptToCompleteIgnoreErrors() {
+        driver.waitForScriptToCompleteIgnoreErrors();
+    }
+
+    public void waitForScriptToComplete() {
+        driver.waitForScriptToComplete();
+    }
+
+    public void waitForScriptToComplete(long timeout) {
+        driver.waitForScriptToComplete(timeout);
+    }
+
+    public void waitForScriptToComplete(long timeout, TimeUnit units) {
+        driver.waitForScriptToComplete(timeout, units);
+    }
+
     //----- Channel handler that drives IO for the test driver
 
     private final class TestDriverServer extends NettyServer {

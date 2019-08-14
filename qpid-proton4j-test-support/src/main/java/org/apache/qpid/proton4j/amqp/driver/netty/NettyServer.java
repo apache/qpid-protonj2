@@ -320,12 +320,15 @@ public abstract class NettyServer implements AutoCloseable {
                     }
                 });
             }
+
+            ctx.fireChannelActive();
         }
 
         @Override
         public void channelInactive(ChannelHandlerContext ctx) throws Exception {
             LOG.info("NettyServerHandler: channel has gone inactive: {}", ctx.channel());
             ctx.close();
+            ctx.fireChannelInactive();
         }
 
         @Override
