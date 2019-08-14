@@ -18,6 +18,7 @@ package org.apache.qpid.proton4j.driver.netty;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
@@ -65,6 +66,114 @@ public class ProtonNettyByteBufferTest {
         assertTrue(duplicate instanceof ProtonNettyByteBuffer);
         assertNotSame(((ProtonNettyByteBuffer) duplicate).unwrap(), buffer);
     }
+
+    //----- Tests for equality and comparison --------------------------------//
+
+    @Test
+    public void testEqualsSelf() {
+        byte[] payload = new byte[] { 0, 1, 2, 3, 4 };
+        ProtonBuffer buffer = new ProtonNettyByteBuffer(Unpooled.wrappedBuffer(payload));
+        assertTrue(buffer.equals(buffer));
+    }
+
+    @SuppressWarnings("unlikely-arg-type")
+    @Test
+    public void testEqualsFailsForOtherBufferType() {
+        byte[] payload = new byte[] { 0, 1, 2, 3, 4 };
+        ProtonBuffer buffer = new ProtonNettyByteBuffer(Unpooled.wrappedBuffer(payload));
+        ByteBuffer byteBuffer = ByteBuffer.wrap(payload);
+
+        assertFalse(buffer.equals(byteBuffer));
+    }
+
+    @Test
+    public void testEqualsWithSameContents() {
+        byte[] payload = new byte[] { 0, 1, 2, 3, 4 };
+        ByteBuf byteBuf1 = Unpooled.wrappedBuffer(payload);
+        ByteBuf byteBuf2 = Unpooled.wrappedBuffer(payload);
+        ProtonBuffer buffer1 = new ProtonNettyByteBuffer(byteBuf1);
+        ProtonBuffer buffer2 = new ProtonNettyByteBuffer(byteBuf2);
+
+        assertTrue(buffer1.equals(buffer2));
+        assertTrue(buffer2.equals(buffer1));
+    }
+
+    @Test
+    public void testEqualsWithSameContentDifferenceArrays() {
+        byte[] payload1 = new byte[] { 0, 1, 2, 3, 4 };
+        byte[] payload2 = new byte[] { 0, 1, 2, 3, 4 };
+        ByteBuf byteBuf1 = Unpooled.wrappedBuffer(payload1);
+        ByteBuf byteBuf2 = Unpooled.wrappedBuffer(payload2);
+        ProtonBuffer buffer1 = new ProtonNettyByteBuffer(byteBuf1);
+        ProtonBuffer buffer2 = new ProtonNettyByteBuffer(byteBuf2);
+
+        assertTrue(buffer1.equals(buffer2));
+        assertTrue(buffer2.equals(buffer1));
+    }
+
+    @Test
+    public void testEqualsWithDiffereingContent() {
+        byte[] payload1 = new byte[] { 1, 2, 3, 4, 5 };
+        byte[] payload2 = new byte[] { 0, 1, 2, 3, 4 };
+        ByteBuf byteBuf1 = Unpooled.wrappedBuffer(payload1);
+        ByteBuf byteBuf2 = Unpooled.wrappedBuffer(payload2);
+        ProtonBuffer buffer1 = new ProtonNettyByteBuffer(byteBuf1);
+        ProtonBuffer buffer2 = new ProtonNettyByteBuffer(byteBuf2);
+
+        assertFalse(buffer1.equals(buffer2));
+        assertFalse(buffer2.equals(buffer1));
+    }
+
+    @Test
+    public void testEqualsWithDifferingReadableBytes() {
+        byte[] payload1 = new byte[] { 0, 1, 2, 3, 4 };
+        byte[] payload2 = new byte[] { 0, 1, 2, 3, 4 };
+        ByteBuf byteBuf1 = Unpooled.wrappedBuffer(payload1);
+        ByteBuf byteBuf2 = Unpooled.wrappedBuffer(payload2);
+        ProtonBuffer buffer1 = new ProtonNettyByteBuffer(byteBuf1);
+        ProtonBuffer buffer2 = new ProtonNettyByteBuffer(byteBuf2);
+
+        buffer1.readByte();
+
+        assertFalse(buffer1.equals(buffer2));
+        assertFalse(buffer2.equals(buffer1));
+    }
+
+    @Test
+    public void testHashCode() {
+        byte[] payload = new byte[] { 0, 1, 2, 3, 4 };
+        ProtonBuffer buffer = new ProtonNettyByteBuffer(Unpooled.wrappedBuffer(payload));
+        assertNotEquals(0, buffer.hashCode());
+        assertNotEquals(buffer.hashCode(), System.identityHashCode(buffer));
+    }
+
+    @Test
+    public void testCompareToSameContents() {
+        byte[] payload1 = new byte[] { 0, 1, 2, 3, 4 };
+        byte[] payload2 = new byte[] { 0, 1, 2, 3, 4 };
+        ByteBuf byteBuf1 = Unpooled.wrappedBuffer(payload1);
+        ByteBuf byteBuf2 = Unpooled.wrappedBuffer(payload2);
+        ProtonBuffer buffer1 = new ProtonNettyByteBuffer(byteBuf1);
+        ProtonBuffer buffer2 = new ProtonNettyByteBuffer(byteBuf2);
+
+        assertEquals(0, buffer1.compareTo(buffer1));
+        assertEquals(0, buffer1.compareTo(buffer2));
+        assertEquals(0, buffer2.compareTo(buffer1));
+    }
+
+    @Test
+    public void testCompareToDifferentContents() {
+        byte[] payload1 = new byte[] { 1, 2, 3, 4, 5 };
+        byte[] payload2 = new byte[] { 0, 1, 2, 3, 4 };
+        ByteBuf byteBuf1 = Unpooled.wrappedBuffer(payload1);
+        ByteBuf byteBuf2 = Unpooled.wrappedBuffer(payload2);
+        ProtonBuffer buffer1 = new ProtonNettyByteBuffer(byteBuf1);
+        ProtonBuffer buffer2 = new ProtonNettyByteBuffer(byteBuf2);
+
+        assertEquals(1, buffer1.compareTo(buffer2));
+        assertEquals(-1, buffer2.compareTo(buffer1));
+    }
+
     @Test
     public void testReaderIndexBoundaryCheck4() {
         ByteBuf buffer = Unpooled.buffer(CAPACITY);
