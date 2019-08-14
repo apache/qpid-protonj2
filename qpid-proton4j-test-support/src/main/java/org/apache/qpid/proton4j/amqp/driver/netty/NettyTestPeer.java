@@ -16,6 +16,7 @@
  */
 package org.apache.qpid.proton4j.amqp.driver.netty;
 
+import java.net.URI;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -39,7 +40,6 @@ public class NettyTestPeer extends ScriptWriter implements AutoCloseable {
 
     private static final Logger LOG = LoggerFactory.getLogger(NettyTestPeer.class);
 
-    private final ServerOptions options;
     private final AMQPTestDriver driver;
     private final TestDriverServer server;
     private final AtomicBoolean closed = new AtomicBoolean();
@@ -59,22 +59,44 @@ public class NettyTestPeer extends ScriptWriter implements AutoCloseable {
      *      The options that control the behavior of the deployed server.
      */
     public NettyTestPeer(ServerOptions options) {
-        this.options = options;
         this.driver = new AMQPTestDriver((frame) -> {
             processDriverOutput(frame);
         });
         this.server = new TestDriverServer(options);
     }
 
+    public void start() {
+        checkClosed();
+        try {
+            server.start();
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to start server", e);
+        }
+    }
+
     @Override
     public void close() {
         if (closed.compareAndSet(false, true)) {
             processCloseRequest();
+            try {
+                server.stop();
+            } catch (Throwable e) {
+                LOG.info("Error suppressed on server stop: ", e);
+            }
         }
     }
 
     public boolean isClosed() {
         return closed.get();
+    }
+
+    public URI getServerURI() {
+        checkClosed();
+        try {
+            return server.getConnectionURI();
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to get connection URI: ", e);
+        }
     }
 
     //----- Channel handler that drives IO for the test driver
@@ -112,6 +134,12 @@ public class NettyTestPeer extends ScriptWriter implements AutoCloseable {
     }
 
     //----- Internal implementation which can be overridden
+
+    private void checkClosed() {
+        if (closed.get()) {
+            throw new IllegalStateException("The test peer is closed");
+        }
+    }
 
     protected void processCloseRequest() {
         if (channel != null) {
