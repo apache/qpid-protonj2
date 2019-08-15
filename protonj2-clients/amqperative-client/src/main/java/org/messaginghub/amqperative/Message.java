@@ -77,6 +77,13 @@ public interface Message<E> {
         });
     }
 
+    //----- AMQP Header Section
+
+    /**
+     * @return true if the Message is marked as being durable
+     */
+    boolean isDurable();
+
     /**
      * Controls if the message is marked as durable when sent.
      *
@@ -88,12 +95,19 @@ public interface Message<E> {
     Message<E> setDurable(boolean durable);
 
     /**
-     * @return true if the Message is marked as being durable
+     * @return the currently configured priority or the default if none set.
      */
-    boolean isDurable();
-
     byte getPriority();
 
+    /**
+     * Sets the relative message priority.  Higher numbers indicate higher priority messages.
+     * Messages with higher priorities MAY be delivered before those with lower priorities.
+     *
+     * @param priority
+     * 		The priority value to assign this message.
+     *
+     * @return this message instance.
+     */
     Message<E> setPriority(byte priority);
 
     long getTimeToLive();
@@ -107,6 +121,62 @@ public interface Message<E> {
     long getDeliveryCount();
 
     Message<E> setDeliveryCount(long deliveryCount);
+
+    //----- AMQP Properties Section
+
+    Object getMessageId();
+
+    Message<?> setMessageId(Object messageId);
+
+    byte[] getUserId();
+
+    Message<?> setUserId(byte[] userId);
+
+    String getTo();
+
+    Message<?> setTo(String to);
+
+    String getSubject();
+
+    Message<?> setSubject(String subject);
+
+    String getReplyTo();
+
+    Message<?> setReplyTo(String replyTo);
+
+    Object getCorrelationId();
+
+    Message<?> setCorrelationId(Object correlationId);
+
+    String getContentType();
+
+    Message<?> setContentType(String contentType);
+
+    String getContentEncoding();
+
+    Message<?> setContentEncoding(String contentEncoding);
+
+    long getAbsoluteExpiryTime();
+
+    Message<?> setAbsoluteExpiryTime(long expiryTime);
+
+    long getCreationTime();
+
+    Message<?> setCreationTime(long createTime);
+
+    String getGroupId();
+
+    Message<?> setGroupId(String groupId);
+
+    int getGroupSequence();
+
+    Message<?> setGroupSequence(int groupSequence);
+
+    String getReplyToGroupId();
+
+    Message<?> setReplyToGroupId(String replyToGroupId);
+
+    //----- AMQP Body Section
 
     /**
      * Returns the body that is conveyed in this message or null if no body was set locally

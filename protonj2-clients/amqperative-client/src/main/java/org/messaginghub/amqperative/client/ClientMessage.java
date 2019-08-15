@@ -16,8 +16,10 @@
  */
 package org.messaginghub.amqperative.client;
 
+import java.util.Arrays;
 import java.util.function.Supplier;
 
+import org.apache.qpid.proton4j.amqp.Binary;
 import org.apache.qpid.proton4j.amqp.messaging.ApplicationProperties;
 import org.apache.qpid.proton4j.amqp.messaging.DeliveryAnnotations;
 import org.apache.qpid.proton4j.amqp.messaging.Footer;
@@ -113,6 +115,156 @@ public class ClientMessage<E> implements Message<E> {
         return this;
     }
 
+    //----- Message Properties access
+
+    @Override
+    public Object getMessageId() {
+        return properties != null ? properties.getMessageId() : null;
+    }
+
+    @Override
+    public Message<?> setMessageId(Object messageId) {
+        lazyCreateProperties().setMessageId(messageId);
+        return this;
+    }
+
+    @Override
+    public byte[] getUserId() {
+        byte[] copyOfUserId = null;
+        if (properties != null && properties.getUserId() != null) {
+            copyOfUserId = properties.getUserId().arrayCopy();
+        }
+
+        return copyOfUserId;
+    }
+
+    @Override
+    public Message<?> setUserId(byte[] userId) {
+        lazyCreateProperties().setUserId(new Binary(Arrays.copyOf(userId, userId.length)));
+        return this;
+    }
+
+    @Override
+    public String getTo() {
+        return properties != null ? properties.getTo() : null;
+    }
+
+    @Override
+    public Message<?> setTo(String to) {
+        lazyCreateProperties().setTo(to);
+        return this;
+    }
+
+    @Override
+    public String getSubject() {
+        return properties != null ? properties.getSubject() : null;
+    }
+
+    @Override
+    public Message<?> setSubject(String subject) {
+        lazyCreateProperties().setSubject(subject);
+        return this;
+    }
+
+    @Override
+    public String getReplyTo() {
+        return properties != null ? properties.getReplyTo() : null;
+    }
+
+    @Override
+    public Message<?> setReplyTo(String replyTo) {
+        lazyCreateProperties().setReplyTo(replyTo);
+        return this;
+    }
+
+    @Override
+    public Object getCorrelationId() {
+        return properties != null ? properties.getCorrelationId() : null;
+    }
+
+    @Override
+    public Message<?> setCorrelationId(Object correlationId) {
+        lazyCreateProperties().setCorrelationId(correlationId);
+        return this;
+    }
+
+    @Override
+    public String getContentType() {
+        return properties != null ? properties.getContentType() : null;
+    }
+
+    @Override
+    public Message<?> setContentType(String contentType) {
+        lazyCreateProperties().setContentType(contentType);
+        return this;
+    }
+
+    @Override
+    public String getContentEncoding() {
+        return properties != null ? properties.getContentEncoding() : null;
+    }
+
+    @Override
+    public Message<?> setContentEncoding(String contentEncoding) {
+        lazyCreateProperties().setContentEncoding(contentEncoding);
+        return this;
+    }
+
+    @Override
+    public long getAbsoluteExpiryTime() {
+        return properties != null ? properties.getAbsoluteExpiryTime() : null;
+    }
+
+    @Override
+    public Message<?> setAbsoluteExpiryTime(long expiryTime) {
+        lazyCreateProperties().setAbsoluteExpiryTime(expiryTime);
+        return this;
+    }
+
+    @Override
+    public long getCreationTime() {
+        return properties != null ? properties.getCreationTime() : null;
+    }
+
+    @Override
+    public Message<?> setCreationTime(long createTime) {
+        lazyCreateProperties().setCreationTime(createTime);
+        return this;
+    }
+
+    @Override
+    public String getGroupId() {
+        return properties != null ? properties.getGroupId() : null;
+    }
+
+    @Override
+    public Message<?> setGroupId(String groupId) {
+        lazyCreateProperties().setGroupId(groupId);
+        return this;
+    }
+
+    @Override
+    public int getGroupSequence() {
+        return properties != null ? (int) properties.getGroupSequence() : null;
+    }
+
+    @Override
+    public Message<?> setGroupSequence(int groupSequence) {
+        lazyCreateProperties().setGroupSequence(groupSequence);
+        return this;
+    }
+
+    @Override
+    public String getReplyToGroupId() {
+        return properties != null ? properties.getReplyToGroupId() : null;
+    }
+
+    @Override
+    public Message<?> setReplyToGroupId(String replyToGroupId) {
+        lazyCreateProperties().setReplyToGroupId(replyToGroupId);
+        return this;
+    }
+
     //----- Message body access
 
     @Override
@@ -193,5 +345,13 @@ public class ClientMessage<E> implements Message<E> {
         }
 
         return header;
+    }
+
+    private Properties lazyCreateProperties() {
+        if (properties == null) {
+            properties = new Properties();
+        }
+
+        return properties;
     }
 }
