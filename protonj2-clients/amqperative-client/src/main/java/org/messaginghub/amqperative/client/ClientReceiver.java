@@ -184,6 +184,13 @@ public class ClientReceiver implements Receiver {
                 closeFuture.complete(this);
             });
 
+            receiver.detachHandler(receiver -> {
+                LOG.info("Receiver link remotely detached: ", receiver);
+                closed.set(true);
+                messageQueue.clear();
+                closeFuture.complete(this);
+            });
+
             receiver.deliveryReceivedEventHandler(delivery -> {
                 messageQueue.enqueue(new ClientDelivery(this, delivery));
             });
@@ -191,13 +198,6 @@ public class ClientReceiver implements Receiver {
             receiver.deliveryUpdatedEventHandler(delivery -> {
                LOG.info("Delivery was updated: ", delivery);
                // TODO - event or other reaction
-            });
-
-            receiver.detachHandler(receiver -> {
-                LOG.info("Receiver link remotely detached: ", receiver);
-                closed.set(true);
-                messageQueue.clear();
-                closeFuture.complete(this);
             });
 
             options.configureReceiver(receiver).open();

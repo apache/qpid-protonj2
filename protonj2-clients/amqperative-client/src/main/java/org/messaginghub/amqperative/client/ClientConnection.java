@@ -105,9 +105,6 @@ public class ClientConnection implements Connection {
 
     @Override
     public Future<Connection> openFuture() {
-        // TODO: perhaps create a custom 'future' type?
-        // Our tasks generally aren't going to be user-cancellable for example. The current impl uses CompletableFuture, which will say cancelled without any knowledge of the task at all. Could have knock on problems.
-        // CompletionStage would give the stage handling and all the composition/execution bloat...but doesnt give a direct 'get result' style method itself....though does have 'toCompletableFuture' (but back to square one on cancel).
         return openFuture;
     }
 
@@ -244,6 +241,7 @@ public class ClientConnection implements Connection {
     void handleClientException(ClientIOException createOrPassthroughFatal) {
         // TODO - Implement handling of critical exception from IO etc.
         //        maybe rename to handleFatalException or something
+        failureCause.set(createOrPassthroughFatal);
     }
 
     //----- Private implementation

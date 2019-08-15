@@ -19,6 +19,7 @@ package org.messaginghub.amqperative.client;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
@@ -31,6 +32,7 @@ import org.messaginghub.amqperative.Sender;
 import org.messaginghub.amqperative.SenderOptions;
 import org.messaginghub.amqperative.Tracker;
 import org.messaginghub.amqperative.client.exceptions.ClientExceptionSupport;
+import org.messaginghub.amqperative.futures.AsyncResult;
 import org.messaginghub.amqperative.futures.ClientFuture;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -161,7 +163,8 @@ public class ClientSender implements Sender {
             });
 
             sender.detachHandler(result -> {
-                // TODO
+                closed.set(true);
+                closeFuture.complete(this);
             });
 
             sender.deliveryUpdatedEventHandler(delivery -> {
@@ -188,6 +191,43 @@ public class ClientSender implements Sender {
         }
 
         return failureCause.get();
+    }
+
+    //----- Send Result Tracker
+
+    @SuppressWarnings("unused")
+    private class InFlightSend implements AsyncResult<Tracker> {
+
+        private final ClientMessage<?> message;
+        private final ClientFuture<Tracker> operation;
+        private final ScheduledFuture<Void> timeout;
+
+        public InFlightSend(ClientMessage<?> message, ClientFuture<Tracker> operation, ScheduledFuture<Void> timeout) {
+            this.message = message;
+            this.operation = operation;
+            this.timeout = timeout;
+        }
+
+        @Override
+        public void failed(ClientException result) {
+            if (timeout != null) {
+                timeout.cancel(true);
+            }
+            operation.failed(result);
+        }
+
+        @Override
+        public void complete(Tracker result) {
+            if (timeout != null) {
+                timeout.cancel(true);
+            }
+            operation.complete(result);
+        }
+
+        @Override
+        public boolean isComplete() {
+            return operation.isDone();
+        }
     }
 
     //----- Private implementation details
