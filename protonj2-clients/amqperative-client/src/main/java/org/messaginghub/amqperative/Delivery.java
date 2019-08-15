@@ -19,12 +19,17 @@ package org.messaginghub.amqperative;
 import org.messaginghub.amqperative.client.ClientException;
 
 /**
- *
+ * Incoming Delivery type that provides access to the message and the delivery
+ * data along with methods for settling the delivery when processing completes.
  */
 public interface Delivery {
 
     // TODO: or just expose everything via Delivery.
     Message<?> getMessage() throws ClientException;
+
+    // TODO: Expose means of reading delivery bytes
+    // readAll(InputStream stream);
+    // readAll(ByteBuffer buffer);
 
     /**
      * Accepts and settles the delivery.
