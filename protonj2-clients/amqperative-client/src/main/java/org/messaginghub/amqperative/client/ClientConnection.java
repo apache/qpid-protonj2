@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLongFieldUpdater;
@@ -29,12 +30,14 @@ import org.apache.qpid.proton4j.engine.impl.ProtonEngine;
 import org.apache.qpid.proton4j.engine.impl.ProtonEngineFactory;
 import org.messaginghub.amqperative.Connection;
 import org.messaginghub.amqperative.Container;
+import org.messaginghub.amqperative.Message;
 import org.messaginghub.amqperative.Receiver;
 import org.messaginghub.amqperative.ReceiverOptions;
 import org.messaginghub.amqperative.Sender;
 import org.messaginghub.amqperative.SenderOptions;
 import org.messaginghub.amqperative.Session;
 import org.messaginghub.amqperative.SessionOptions;
+import org.messaginghub.amqperative.Tracker;
 import org.messaginghub.amqperative.client.exceptions.ClientExceptionSupport;
 import org.messaginghub.amqperative.client.exceptions.ClientIOException;
 import org.messaginghub.amqperative.futures.ClientFuture;
@@ -66,6 +69,7 @@ public class ClientConnection implements Connection {
     private final ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
     private org.apache.qpid.proton4j.engine.Connection protonConnection;
     private ClientSession connectionSession;
+    private ClientSender connectionSender;
     private Transport transport;
 
     private ClientFuture<Connection> openFuture;
@@ -125,23 +129,20 @@ public class ClientConnection implements Connection {
 
     @Override
     public Session createSession(SessionOptions options) throws ClientException {
-        ClientFuture<Session> result = getFutureFactory().createFuture();
+        checkClosed();
+        ClientFuture<Session> createSession = getFutureFactory().createFuture();
 
         executor.execute(() -> {
+            // TODO - This relies on protonConnection having been created by an open already
+            //        if connect is not a requirement of create connection then we need a
+            //        lazy connect style call that ensures the engine is created and started
+            //        so that the proton connection exists.
             ClientSession session = new ClientSession(
                 new ClientSessionOptions(), ClientConnection.this, protonConnection.session());
-
-            // TODO - This relies on protonConnection having been created by an open already
-
-            result.complete(session.open());
+            createSession.complete(session.open());
         });
 
-        try {
-            // TODO - Timeouts ?
-            return result.get();
-        } catch (Throwable e) {
-            throw ClientExceptionSupport.createNonFatalOrPassthrough(e);
-        }
+        return request(createSession, options.getRequestTimeout(), TimeUnit.MILLISECONDS);
     }
 
     @Override
@@ -151,9 +152,19 @@ public class ClientConnection implements Connection {
 
     @Override
     public Receiver createReceiver(String address, ReceiverOptions receiverOptions) throws ClientException {
-        // TODO: await connection/session opening? Intertwine their open-futures?
+        checkClosed();
+        ClientFuture<Receiver> createReceiver = getFutureFactory().createFuture();
 
-        return connectionSession.createReceiver(address, receiverOptions);
+        executor.execute(() -> {
+            try {
+                checkClosed();
+                createReceiver.complete(lazyCreateConnectionSession().internalCreateReceiver(receiverOptions, address).open());
+            } catch (Throwable error) {
+                createReceiver.failed(ClientExceptionSupport.createNonFatalOrPassthrough(error));
+            }
+        });
+
+        return request(createReceiver, options.getRequestTimeout(), TimeUnit.MILLISECONDS);
     }
 
     @Override
@@ -163,7 +174,36 @@ public class ClientConnection implements Connection {
 
     @Override
     public Sender createSender(String address, SenderOptions senderOptions) throws ClientException {
-        return connectionSession.createSender(address, senderOptions);
+        checkClosed();
+        ClientFuture<Sender> createSender = getFutureFactory().createFuture();
+
+        executor.execute(() -> {
+            try {
+                checkClosed();
+                createSender.complete(lazyCreateConnectionSession().internalCreateSender(senderOptions, address).open());
+            } catch (Throwable error) {
+                createSender.failed(ClientExceptionSupport.createNonFatalOrPassthrough(error));
+            }
+        });
+
+        return request(createSender, options.getRequestTimeout(), TimeUnit.MILLISECONDS);
+    }
+
+    @Override
+    public Tracker send(Message<?> message) throws ClientException {
+        checkClosed();
+        ClientFuture<Tracker> result = getFutureFactory().createFuture();
+
+        executor.execute(() -> {
+            try {
+                checkClosed();
+                result.complete(lazyCreateConnectionSender().send(message));
+            } catch (Throwable error) {
+                result.failed(ClientExceptionSupport.createNonFatalOrPassthrough(error));
+            }
+        });
+
+        return request(result, options.getSendTimeout(), TimeUnit.MILLISECONDS);
     }
 
     //----- Internal API
@@ -176,14 +216,6 @@ public class ClientConnection implements Connection {
 
                 protonConnection.openEventHandler((result) -> {
                     remoteOpened.set(true);
-
-                    // TODO - Lazy create connection session for sender and receiver create
-                    // Creates the Connection Session used for connection created senders and receivers.
-                    // TODO - Open currently is done on connect so this is safe from NPE when doing
-                    //        open -> begin -> attach things but could go horribly wrong later
-                    connectionSession = new ClientSession(
-                        new ClientSessionOptions(), ClientConnection.this, protonConnection.session()).open();
-
                     openFuture.complete(this);
                 });
 
@@ -244,7 +276,42 @@ public class ClientConnection implements Connection {
         failureCause.set(createOrPassthroughFatal);
     }
 
+    <T> T request(ClientFuture<T> request, long timeout, TimeUnit units) throws ClientException {
+        try {
+            if (timeout > 0) {
+                return request.get(timeout, units);
+            } else {
+                return request.get();
+            }
+        } catch (Throwable error) {
+            throw ClientExceptionSupport.createNonFatalOrPassthrough(error);
+        } finally {
+            // TODO - Remove request from request map
+        }
+    }
+
     //----- Private implementation
+
+    private ClientSession lazyCreateConnectionSession() {
+        if (connectionSession == null) {
+            connectionSession = new ClientSession(
+                new ClientSessionOptions(), this, protonConnection.session());
+            connectionSession.open();
+        }
+
+        return connectionSession;
+    }
+
+    private ClientSender lazyCreateConnectionSender() {
+        if (connectionSender == null) {
+            // TODO - Ensure this creates an anonymous sender
+            // TODO - What if remote doesn't support anonymous?
+            connectionSender = lazyCreateConnectionSession().internalCreateSender(new ClientSenderOptions(), null);
+            connectionSender.open();
+        }
+
+        return connectionSender;
+    }
 
     protected void checkClosed() throws IllegalStateException {
         if (CLOSE_STATE_UPDATER.get(this) > 0) {

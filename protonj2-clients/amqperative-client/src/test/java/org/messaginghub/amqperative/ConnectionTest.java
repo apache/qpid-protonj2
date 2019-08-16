@@ -41,7 +41,9 @@ public class ConnectionTest {
         try (NettyTestPeer peer = new NettyTestPeer()) {
             peer.expectAMQPHeader().respondWithAMQPHeader();
             peer.expectOpen().respond();
-            peer.expectBegin().respond();
+            // TODO - Wrong frame should trigger connection drop so that
+            //        the waits for open / close etc will fail quickly.
+            // peer.expectBegin().respond();
             peer.expectClose().respond();
             peer.start();
 

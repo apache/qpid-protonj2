@@ -105,6 +105,19 @@ public interface Connection {
      */
     Session createSession(SessionOptions options) throws ClientException;
 
+    /**
+     * Sends the given {@link Message} using the internal connection sender.
+     * <p>
+     * The connection {@link Sender} is an anonymous AMQP sender which requires that the
+     * given message has a valid to value set.
+     *
+     * @param message
+     * 		The message to send
+     *
+     * @return a {@link Tracker} that allows the client to track settlement of the message.
+     */
+    Tracker send(Message<?> message) throws ClientException;
+
     // TODO:
     // Error state?
     // Capabilities (+options?)

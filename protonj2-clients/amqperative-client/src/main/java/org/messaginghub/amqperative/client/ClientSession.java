@@ -16,6 +16,8 @@
  */
 package org.messaginghub.amqperative.client;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Future;
@@ -62,6 +64,10 @@ public class ClientSession implements Session {
     private final AtomicReference<Thread> deliveryThread = new AtomicReference<Thread>();
     private final AtomicReference<Throwable> failureCause = new AtomicReference<>();
 
+    // TODO - Ensure closed resources are removed from these
+    private final List<ClientSender> senders = new ArrayList<>();
+    private final List<ClientReceiver> receivers = new ArrayList<>();
+
     public ClientSession(ClientSessionOptions options, ClientConnection connection, org.apache.qpid.proton4j.engine.Session session) {
         this.options = new ClientSessionOptions(options);
         this.connection = connection;
@@ -97,30 +103,15 @@ public class ClientSession implements Session {
         ClientFuture<Receiver> createReceiver = getFutureFactory().createFuture();
 
         serializer.execute(() -> {
-            String name = receiverOptions.getLinkName();
-            if (name == null) {
-                //TODO: use container-id + counter rather than UUID?
-                name = "reciever-" + UUID.randomUUID();
+            try {
+                checkClosed();
+                createReceiver.complete(internalCreateReceiver(receiverOptions, address).open());
+            } catch (Throwable error) {
+                createReceiver.failed(ClientExceptionSupport.createNonFatalOrPassthrough(error));
             }
-
-            final org.apache.qpid.proton4j.engine.Receiver receiver = session.receiver(name);
-
-            //TODO: flesh out source
-            Source source = new Source();
-            source.setAddress(address);
-
-            receiver.setSource(source);
-            receiver.setTarget(new Target());
-
-            createReceiver.complete(new ClientReceiver(receiverOptions, this, receiver).open());
         });
 
-        try {
-            // TODO - Timeouts ?
-            return createReceiver.get();
-        } catch (Throwable e) {
-            throw ClientExceptionSupport.createNonFatalOrPassthrough(e);
-        }
+        return connection.request(createReceiver, options.getRequestTimeout(), TimeUnit.MILLISECONDS);
     }
 
     @Override
@@ -134,33 +125,61 @@ public class ClientSession implements Session {
         ClientFuture<Sender> createSender = getFutureFactory().createFuture();
 
         serializer.execute(() -> {
-            String name = senderOptions.getLinkName();
-            if (name == null) {
-                //TODO: use container-id + counter rather than UUID?
-                name = "sender-" + UUID.randomUUID();
+            try {
+                checkClosed();
+                createSender.complete(internalCreateSender(senderOptions, address).open());
+            } catch (Throwable error) {
+                createSender.failed(ClientExceptionSupport.createNonFatalOrPassthrough(error));
             }
-
-            org.apache.qpid.proton4j.engine.Sender sender = session.sender(name);
-
-            //TODO: flesh out target
-            Target target = new Target();
-            target.setAddress(address);
-
-            sender.setTarget(target);
-            sender.setSource(new Source());
-
-            createSender.complete(new ClientSender(senderOptions, this, sender).open());
         });
 
-        try {
-            // TODO - Timeouts ?
-            return createSender.get();
-        } catch (Throwable e) {
-            throw ClientExceptionSupport.createNonFatalOrPassthrough(e);
-        }
+        return connection.request(createSender, options.getRequestTimeout(), TimeUnit.MILLISECONDS);
     }
 
-    //----- Internal API
+    //----- Internal API accessible for use within the package
+
+    ClientReceiver internalCreateReceiver(ReceiverOptions options, String address) {
+        String name = options.getLinkName();
+        if (name == null) {
+            //TODO: use container-id + counter rather than UUID?
+            name = "reciever-" + UUID.randomUUID();
+        }
+
+        final org.apache.qpid.proton4j.engine.Receiver receiver = session.receiver(name);
+
+        //TODO: flesh out source
+        Source source = new Source();
+        source.setAddress(address);
+
+        receiver.setSource(source);
+        receiver.setTarget(new Target());
+
+        ClientReceiver result = new ClientReceiver(options, this, receiver);
+        receivers.add(result);
+        return result;
+    }
+
+    ClientSender internalCreateSender(SenderOptions options, String address) {
+        String name = options.getLinkName();
+        if (name == null) {
+            //TODO: use container-id + counter rather than UUID?
+            name = "sender-" + UUID.randomUUID();
+        }
+
+        org.apache.qpid.proton4j.engine.Sender sender = session.sender(name);
+
+        //TODO: flesh out target
+        Target target = new Target();
+        target.setAddress(address);
+
+        sender.setTarget(target);
+        sender.setSource(new Source());
+
+        ClientSender result = new ClientSender(options, this, sender);
+        senders.add(result);
+
+        return result;
+    }
 
     ClientSession open() {
         serializer.execute(() -> {
