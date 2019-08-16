@@ -18,8 +18,6 @@ package org.messaginghub.amqperative.client;
 
 import java.util.concurrent.ScheduledExecutorService;
 
-import org.apache.qpid.proton4j.buffer.ProtonByteBuffer;
-import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.engine.exceptions.EngineStateException;
 import org.apache.qpid.proton4j.engine.impl.ProtonEngine;
 import org.messaginghub.amqperative.client.exceptions.ClientExceptionSupport;
