@@ -51,15 +51,12 @@ public class ClientTransportListener implements TransportListener {
 
     @Override
     public void onData(ByteBuf incoming) {
-        // TODO - if this buffer is pooled than we need to copy it, or we need to do
-        //        a copy in our frame decoder vs just using a slice to hold onto the
-        //        body.  Determining if a netty buffer is pooled is non-trivial
-
-        // Use the wrapper to try and let the copy run along the most efficient path depending
-        // on which buffer has an array.  Falls back to slower copy method if neither does.
-        ProtonNettyByteBuffer wrapper = new ProtonNettyByteBuffer(incoming);
-        ProtonByteBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate(incoming.readableBytes());
-        buffer.writeBytes(wrapper);
+        // TODO - If the buffer is pooled then there can be issues with the life-cycle
+        //        of the data read from it if we don't copy anything we are preserving
+        //        for later use.  Currently proton4j is attempting to make copies for
+        //        all held buffers but we need to double check that we hit all those
+        //        cases.
+        ProtonNettyByteBuffer buffer = new ProtonNettyByteBuffer(incoming);
 
         try {
             do {
