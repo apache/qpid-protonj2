@@ -246,14 +246,6 @@ public class AMQPTestDriver implements Consumer<ProtonBuffer> {
         script.offer(element);
     }
 
-    public void performImmediately(ScriptedAction action) {
-        checkFailed();
-        action.perform(this);
-        while (action.performAfterwards() != null && failureCause == null) {
-            action.performAfterwards().perform(this);
-        }
-    }
-
     /**
      * Encodes the given frame data into a ProtonBuffer and injects it into the configured consumer.
      *

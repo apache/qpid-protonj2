@@ -19,9 +19,12 @@ package org.apache.qpid.proton4j.amqp.driver.netty;
 import java.net.URI;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Consumer;
 
+import org.apache.qpid.proton4j.amqp.DescribedType;
 import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
 import org.apache.qpid.proton4j.amqp.driver.ScriptWriter;
+import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,6 +34,7 @@ import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.EventLoop;
 import io.netty.channel.SimpleChannelInboundHandler;
 
 /**
@@ -59,7 +63,7 @@ public class NettyTestPeer extends ScriptWriter implements AutoCloseable {
      *      The options that control the behavior of the deployed server.
      */
     public NettyTestPeer(ServerOptions options) {
-        this.driver = new AMQPTestDriver((frame) -> {
+        this.driver = new NettyAwareAMQPTestDriver((frame) -> {
             processDriverOutput(frame);
         });
         this.server = new TestDriverServer(options);
@@ -148,6 +152,69 @@ public class NettyTestPeer extends ScriptWriter implements AutoCloseable {
                     ctx.fireChannelActive();
                 }
             };
+        }
+    }
+
+    //----- Test driver Wrapper to ensure actions occur on the event loop
+
+    private final class NettyAwareAMQPTestDriver extends AMQPTestDriver {
+
+        public NettyAwareAMQPTestDriver(Consumer<ProtonBuffer> frameConsumer) {
+            super(frameConsumer);
+        }
+
+        // If the send call occurs from a reaction to processing incoming data the
+        // call will be on the event loop but for actions requested by the test that
+        // are directed to happen immediately they will be running on the test thread
+        // and so we direct the resulting action into the event loop to avoid codec or
+        // other driver resources being used on two different threads.
+
+        @Override
+        public void sendAMQPFrame(int channel, DescribedType performative, ProtonBuffer payload) {
+            EventLoop loop = NettyTestPeer.this.channel.eventLoop();
+            if (loop.inEventLoop()) {
+                super.sendAMQPFrame(channel, performative, payload);
+            } else {
+                loop.execute(() -> {
+                    super.sendAMQPFrame(channel, performative, payload);
+                });
+            }
+        }
+
+        @Override
+        public void sendSaslFrame(int channel, DescribedType performative) {
+            EventLoop loop = NettyTestPeer.this.channel.eventLoop();
+            if (loop.inEventLoop()) {
+                super.sendSaslFrame(channel, performative);
+            } else {
+                loop.execute(() -> {
+                    super.sendSaslFrame(channel, performative);
+                });
+            }
+        }
+
+        @Override
+        public void sendHeader(AMQPHeader header) {
+            EventLoop loop = NettyTestPeer.this.channel.eventLoop();
+            if (loop.inEventLoop()) {
+                super.sendHeader(header);
+            } else {
+                loop.execute(() -> {
+                    super.sendHeader(header);
+                });
+            }
+        }
+
+        @Override
+        public void sendEmptyFrame(int channel) {
+            EventLoop loop = NettyTestPeer.this.channel.eventLoop();
+            if (loop.inEventLoop()) {
+                super.sendEmptyFrame(channel);
+            } else {
+                loop.execute(() -> {
+                    super.sendEmptyFrame(channel);
+                });
+            }
         }
     }
 
