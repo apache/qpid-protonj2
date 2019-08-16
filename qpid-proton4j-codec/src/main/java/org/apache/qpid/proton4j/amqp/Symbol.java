@@ -103,7 +103,10 @@ public final class Symbol implements Comparable<Symbol> {
         Symbol symbol = bufferToSymbols.get(symbolBuffer);
         if (symbol == null) {
             if (copyOnCreate) {
-                symbolBuffer = symbolBuffer.copy();
+                // Copy to a known heap based buffer to avoid issue with life-cycle of pooled buffer types.
+                int symbolSize = symbolBuffer.getReadableBytes();
+                ProtonBuffer copy = ProtonByteBufferAllocator.DEFAULT.allocate(symbolSize, symbolSize);
+                symbolBuffer = copy.setBytes(0, symbolBuffer, 0, symbolSize).setWriteIndex(symbolSize);
             }
 
             symbol = new Symbol(symbolBuffer);
