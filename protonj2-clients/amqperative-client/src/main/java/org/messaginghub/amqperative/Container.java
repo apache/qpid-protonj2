@@ -41,6 +41,20 @@ public interface Container {
     String getContainerId();
 
     /**
+     * Places the client in a stopped state and closes any previously opened
+     * {@link Connection} instances.  Once stopped the container cannot be
+     * restarted.
+     *
+     * @return this {@link Container} instance.
+     */
+    Container stop();
+
+    /**
+     * @return true if the {@link Container} has been stopped.
+     */
+    boolean isStopped();
+
+    /**
      * Connect to the specified host and port, without credentials.
      *
      * @param host

@@ -16,17 +16,22 @@
  */
 package org.messaginghub.amqperative.client;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.messaginghub.amqperative.Connection;
 import org.messaginghub.amqperative.ConnectionOptions;
 import org.messaginghub.amqperative.Container;
 import org.messaginghub.amqperative.ContainerOptions;
 
 /**
- *
+ * Container of {@link Connection} instances that are all created with the same
+ * container parent and therefore share the same container Id.
  */
 public class ClientContainer implements Container {
 
     private final ClientContainerOptions options;
+    private final Map<String, ClientConnection> connections = new HashMap<>();
 
     /**
      * @param options
@@ -49,5 +54,35 @@ public class ClientContainer implements Container {
     @Override
     public String getContainerId() {
         return options.getContainerId();
+    }
+
+    @Override
+    public Container stop() {
+        return this;
+    }
+
+    @Override
+    public boolean isStopped() {
+        return true;
+    }
+
+    //----- Internal API
+
+    void addConnection(ClientConnection connection) {
+        synchronized (connections) {
+            this.connections.put(connection.getId(), connection);
+        }
+    }
+
+    void removeConnection(ClientConnection connection) {
+        synchronized (connections) {
+            this.connections.remove(connection.getId());
+        }
+    }
+
+    void checkStopped() {
+        if (isStopped()) {
+            throw new IllegalStateException("Container has already been stopped.");
+        }
     }
 }

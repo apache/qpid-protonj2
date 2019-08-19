@@ -17,6 +17,7 @@
 package org.messaginghub.amqperative.client;
 
 import java.io.IOException;
+import java.util.UUID;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
@@ -80,6 +81,7 @@ public class ClientConnection implements Connection {
     private final AtomicBoolean remoteClosed = new AtomicBoolean();
     private volatile long closeState;
     private volatile ClientException failureCause;
+    private String connectionId;
 
     private ScheduledExecutorService executor;
 
@@ -107,6 +109,7 @@ public class ClientConnection implements Connection {
 
         openFuture = futureFactoy.createFuture();
         closeFuture = futureFactoy.createFuture();
+        connectionId = UUID.randomUUID().toString();  // TODO - Sequence number of connection
     }
 
     @Override
@@ -209,6 +212,10 @@ public class ClientConnection implements Connection {
     }
 
     //----- Internal API
+
+    String getId() {
+        return connectionId;
+    }
 
     ClientConnection connect() {
         try {
