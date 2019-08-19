@@ -51,7 +51,7 @@ public class ConnectionTest {
 
             LOG.info("Connect test started, peer listening on: {}", remoteURI);
 
-            Container container = Container.create();
+            Client container = Client.create();
             Connection connection = container.createConnection(remoteURI.getHost(), remoteURI.getPort());
 
             connection.openFuture().get(10, TimeUnit.SECONDS);
@@ -70,7 +70,7 @@ public class ConnectionTest {
     @Ignore("Skipped for now, needs server, and proton changes")//TODO
     @Test
     public void testSendAndReceiveMessage() throws InterruptedException, ExecutionException, TimeoutException, ClientException {
-        Container container = Container.create();
+        Client container = Client.create();
         System.out.println("Created container");
 
         Connection conn = container.createConnection("localhost", 5672);

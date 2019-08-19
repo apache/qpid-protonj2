@@ -30,7 +30,7 @@ import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 import org.apache.qpid.proton4j.engine.impl.ProtonEngine;
 import org.apache.qpid.proton4j.engine.impl.ProtonEngineFactory;
 import org.messaginghub.amqperative.Connection;
-import org.messaginghub.amqperative.Container;
+import org.messaginghub.amqperative.Client;
 import org.messaginghub.amqperative.Message;
 import org.messaginghub.amqperative.Receiver;
 import org.messaginghub.amqperative.ReceiverOptions;
@@ -65,7 +65,7 @@ public class ClientConnection implements Connection {
     private static final AtomicReferenceFieldUpdater<ClientConnection, ClientException> FAILURE_CAUSE_UPDATER =
             AtomicReferenceFieldUpdater.newUpdater(ClientConnection.class, ClientException.class, "failureCause");
 
-    private final ClientContainer container;
+    private final ClientInstance container;
     private final ClientConnectionOptions options;
     private final ClientFutureFactory futureFactoy;
 
@@ -90,11 +90,11 @@ public class ClientConnection implements Connection {
      * connection to the remote.
      *
      * @param container
-     *      the {@link Container} that this connection resides within.
+     *      the {@link Client} that this connection resides within.
      * @param options
      *      the connection options that configure this {@link Connection} instance.
      */
-    public ClientConnection(ClientContainer container, ClientConnectionOptions options) {
+    public ClientConnection(ClientInstance container, ClientConnectionOptions options) {
         this.container = container;
         this.options = options;
         this.futureFactoy = ClientFutureFactory.create(options.getFutureType());

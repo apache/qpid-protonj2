@@ -18,25 +18,25 @@ package org.messaginghub.amqperative;
 
 import java.util.Objects;
 
-import org.messaginghub.amqperative.client.ClientContainer;
+import org.messaginghub.amqperative.client.ClientInstance;
 import org.messaginghub.amqperative.client.ClientContainerOptions;
 
 /**
  * The Container that hosts the AMQP Connection
  */
-public interface Container {
+public interface Client {
 
-    static Container create() {
+    static Client create() {
         return create(new ClientContainerOptions());
     }
 
-    static Container create(ContainerOptions options) {
+    static Client create(ContainerOptions options) {
         Objects.requireNonNull(options, "options must be non-null");
-        return new ClientContainer(options);
+        return new ClientInstance(options);
     }
 
     /**
-     * @return the container id assigned to this {@link Container} instance.
+     * @return the container id assigned to this {@link Client} instance.
      */
     String getContainerId();
 
@@ -45,12 +45,12 @@ public interface Container {
      * {@link Connection} instances.  Once stopped the container cannot be
      * restarted.
      *
-     * @return this {@link Container} instance.
+     * @return this {@link Client} instance.
      */
-    Container stop();
+    Client stop();
 
     /**
-     * @return true if the {@link Container} has been stopped.
+     * @return true if the {@link Client} has been stopped.
      */
     boolean isStopped();
 

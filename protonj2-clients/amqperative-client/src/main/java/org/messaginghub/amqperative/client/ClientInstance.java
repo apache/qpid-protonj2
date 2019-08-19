@@ -21,14 +21,14 @@ import java.util.Map;
 
 import org.messaginghub.amqperative.Connection;
 import org.messaginghub.amqperative.ConnectionOptions;
-import org.messaginghub.amqperative.Container;
+import org.messaginghub.amqperative.Client;
 import org.messaginghub.amqperative.ContainerOptions;
 
 /**
  * Container of {@link Connection} instances that are all created with the same
  * container parent and therefore share the same container Id.
  */
-public class ClientContainer implements Container {
+public class ClientInstance implements Client {
 
     private final ClientContainerOptions options;
     private final Map<String, ClientConnection> connections = new HashMap<>();
@@ -37,7 +37,7 @@ public class ClientContainer implements Container {
      * @param options
      *      The container options to use to configure this container instance.
      */
-    public ClientContainer(ContainerOptions options) {
+    public ClientInstance(ContainerOptions options) {
         this.options = new ClientContainerOptions(options);
     }
 
@@ -57,7 +57,7 @@ public class ClientContainer implements Container {
     }
 
     @Override
-    public Container stop() {
+    public Client stop() {
         return this;
     }
 
