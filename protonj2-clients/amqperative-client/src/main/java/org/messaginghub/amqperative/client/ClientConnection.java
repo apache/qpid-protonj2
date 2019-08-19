@@ -24,7 +24,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLongFieldUpdater;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 
 import org.apache.qpid.proton4j.engine.impl.ProtonEngine;
 import org.apache.qpid.proton4j.engine.impl.ProtonEngineFactory;
@@ -61,6 +61,8 @@ public class ClientConnection implements Connection {
 
     private static final AtomicLongFieldUpdater<ClientConnection> CLOSE_STATE_UPDATER =
         AtomicLongFieldUpdater.newUpdater(ClientConnection.class, "closeState");
+    private static final AtomicReferenceFieldUpdater<ClientConnection, ClientException> FAILURE_CAUSE_UPDATER =
+            AtomicReferenceFieldUpdater.newUpdater(ClientConnection.class, ClientException.class, "failureCause");
 
     private final ClientContainer container;
     private final ClientConnectionOptions options;
@@ -77,7 +79,7 @@ public class ClientConnection implements Connection {
     private final AtomicBoolean remoteOpened = new AtomicBoolean();
     private final AtomicBoolean remoteClosed = new AtomicBoolean();
     private volatile long closeState;
-    private final AtomicReference<Throwable> failureCause = new AtomicReference<>();
+    private volatile ClientException failureCause;
 
     private ScheduledExecutorService executor;
 
@@ -270,10 +272,14 @@ public class ClientConnection implements Connection {
         return futureFactoy;
     }
 
-    void handleClientException(ClientIOException createOrPassthroughFatal) {
+    ClientException getFailureCause() {
+        return failureCause;
+    }
+
+    void handleClientException(ClientIOException error) {
         // TODO - Implement handling of critical exception from IO etc.
         //        maybe rename to handleFatalException or something
-        failureCause.set(createOrPassthroughFatal);
+        FAILURE_CAUSE_UPDATER.compareAndSet(this, null, error);
     }
 
     <T> T request(ClientFuture<T> request, long timeout, TimeUnit units) throws ClientException {
