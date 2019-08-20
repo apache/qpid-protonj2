@@ -16,8 +16,6 @@
  */
 package org.messaginghub.amqperative.client;
 
-import java.util.concurrent.ScheduledExecutorService;
-
 import org.apache.qpid.proton4j.engine.exceptions.EngineStateException;
 import org.apache.qpid.proton4j.engine.impl.ProtonEngine;
 import org.messaginghub.amqperative.client.exceptions.ClientExceptionSupport;
@@ -39,12 +37,10 @@ public class ClientTransportListener implements TransportListener {
 
     private final ClientConnection connection;
     private final ProtonEngine engine;
-    private final ScheduledExecutorService serializer;
 
     public ClientTransportListener(ClientConnection connection) {
         this.connection = connection;
         this.engine = connection.getEngine();
-        this.serializer = connection.getScheduler();
     }
 
     @Override
@@ -69,8 +65,8 @@ public class ClientTransportListener implements TransportListener {
 
     @Override
     public void onTransportClosed() {
-        if (!serializer.isShutdown()) {
-            serializer.execute(() -> {
+        if (!connection.getScheduler().isShutdown()) {
+            connection.getScheduler().execute(() -> {
                 LOG.debug("Transport connection remotely closed");
                 if (!connection.isClosed()) {
                     // We can't send any more output, so close the transport
@@ -83,8 +79,8 @@ public class ClientTransportListener implements TransportListener {
 
     @Override
     public void onTransportError(Throwable error) {
-        if (!serializer.isShutdown()) {
-            serializer.execute(() -> {
+        if (!connection.getScheduler().isShutdown()) {
+            connection.getScheduler().execute(() -> {
                 LOG.info("Transport failed: {}", error.getMessage());
                 if (!connection.isClosed()) {
                     // We can't send any more output, so close the transport

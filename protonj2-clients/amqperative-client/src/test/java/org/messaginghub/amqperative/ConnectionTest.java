@@ -16,6 +16,8 @@
  */
 package org.messaginghub.amqperative;
 
+import static org.junit.Assert.fail;
+
 import java.net.URI;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -65,6 +67,41 @@ public class ConnectionTest {
 
     @Test
     public void testCreateConnectionURI() throws Exception {
+    }
+
+    @Test(timeout = 60000)
+    public void testConnectionOpenFutureWaitCancelledOnConnectionDrop() throws Exception {
+        try (NettyTestPeer peer = new NettyTestPeer()) {
+            peer.expectAMQPHeader().respondWithAMQPHeader();
+            peer.expectOpen();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Connect test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.createConnection(remoteURI.getHost(), remoteURI.getPort());
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+            peer.close();
+
+            try {
+                connection.openFuture().get(10, TimeUnit.SECONDS);
+                fail("Should have thrown an execution error due to connection drop");
+            } catch (ExecutionException error) {
+                LOG.info("connection open failed with error: ", error);
+            }
+
+            try {
+                connection.close().get(10, TimeUnit.SECONDS);
+            } catch (Throwable error) {
+                LOG.info("connection close failed with error: ", error);
+                fail("Close should ignore connect error and complete without error.");
+            }
+
+            LOG.info("Connect test completed normally");
+        }
     }
 
     @Ignore("Skipped for now, needs server, and proton changes")//TODO

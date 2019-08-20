@@ -29,8 +29,8 @@ import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 
 import org.apache.qpid.proton4j.engine.impl.ProtonEngine;
 import org.apache.qpid.proton4j.engine.impl.ProtonEngineFactory;
-import org.messaginghub.amqperative.Connection;
 import org.messaginghub.amqperative.Client;
+import org.messaginghub.amqperative.Connection;
 import org.messaginghub.amqperative.Message;
 import org.messaginghub.amqperative.Receiver;
 import org.messaginghub.amqperative.ReceiverOptions;
@@ -287,6 +287,16 @@ public class ClientConnection implements Connection {
         // TODO - Implement handling of critical exception from IO etc.
         //        maybe rename to handleFatalException or something
         FAILURE_CAUSE_UPDATER.compareAndSet(this, null, error);
+        try {
+            executor.execute(() -> {
+                protonConnection.close();
+                // Signal any waiters that the operation is done due to error.
+                openFuture.failed(error);
+                closeFuture.complete(ClientConnection.this);
+            });
+        } catch (Throwable ingored) {
+            LOG.trace("Ignoring error while closing down from client internal exception: ", ingored);
+        }
     }
 
     <T> T request(ClientFuture<T> request, long timeout, TimeUnit units) throws ClientException {
