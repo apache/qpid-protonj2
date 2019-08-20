@@ -111,6 +111,11 @@ public class ProtonEngine implements Engine {
         state = EngineState.SHUTDOWN;
         writable = false;
 
+        // TODO - Once shutdown future calls that trigger output should not write anything
+        //        or if they do the write should probably just no-op as we know we are already
+        //        shut down and can't emit any frames.  Does this entail closing connection if
+        //        still open ?
+
         if (nextIdleTimeoutCheck != null) {
             LOG.trace("Cancelling scheduled Idle Timeout Check");
             nextIdleTimeoutCheck.cancel(false);
