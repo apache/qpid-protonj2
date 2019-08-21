@@ -50,9 +50,6 @@ public class AttachExpectation extends AbstractExpectation<Attach> {
 
     private final AttachMatcher matcher = new AttachMatcher();
 
-    private SourceMatcher sourceMatcher;
-    private TargetMatcher targetMatcher;
-
     private AttachInjectAction response;
 
     public AttachExpectation(AMQPTestDriver driver) {
@@ -105,11 +102,11 @@ public class AttachExpectation extends AbstractExpectation<Attach> {
         if (response.getPerformative().getRcvSettleMode() == null) {
             response.withRcvSettleMode(ReceiverSettleMode.valueOf(attach.getRcvSettleMode()));
         }
-        if (response.getPerformative().getSource() == null) {
-            // TODO response.withSource(attach.getSource());
+        if (response.getPerformative().getSource() == null && !response.isNullSourceRequired()) {
+            response.withSource(attach.getSource());
         }
-        if (response.getPerformative().getTarget() == null) {
-            // TODO response.withTarget(attach.getTarget());
+        if (response.getPerformative().getTarget() == null && !response.isNullTargetRequired()) {
+            response.withTarget(attach.getTarget());
         }
 
         // Other fields are left not set for now unless test script configured

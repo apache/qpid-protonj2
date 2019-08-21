@@ -43,6 +43,9 @@ public class AttachInjectAction extends AbstractPerformativeInjectAction<Attach>
 
     private final Attach attach = new Attach();
 
+    private boolean nullSourceRequired;
+    private boolean nullTargetRequired;
+
     public AttachInjectAction(AMQPTestDriver driver) {
         super(driver);
     }
@@ -82,15 +85,45 @@ public class AttachInjectAction extends AbstractPerformativeInjectAction<Attach>
         return this;
     }
 
+    public boolean isNullSourceRequired() {
+        return nullSourceRequired;
+    }
+
+    public AttachInjectAction withNullSource() {
+        nullSourceRequired = true;
+        attach.setSource(null);
+        return this;
+    }
+
     // TODO - Source builder
     public AttachInjectAction withSource(Source source) {
         attach.setSource(TypeMapper.mapFromProtonType(source));
         return this;
     }
 
+    public AttachInjectAction withSource(org.apache.qpid.proton4j.amqp.driver.codec.messaging.Source source) {
+        attach.setSource(source);
+        return this;
+    }
+
+    public boolean isNullTargetRequired() {
+        return nullTargetRequired;
+    }
+
+    public AttachInjectAction withNullTarget() {
+        nullTargetRequired = true;
+        attach.setTarget(null);
+        return this;
+    }
+
     // TODO - Target builder
     public AttachInjectAction withTarget(Target target) {
         attach.setTarget(TypeMapper.mapFromProtonType(target));
+        return this;
+    }
+
+    public AttachInjectAction withTarget(org.apache.qpid.proton4j.amqp.driver.codec.messaging.Target target) {
+        attach.setTarget(target);
         return this;
     }
 

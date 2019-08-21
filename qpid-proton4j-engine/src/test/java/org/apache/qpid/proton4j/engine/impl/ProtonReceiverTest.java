@@ -16,6 +16,7 @@
  */
 package org.apache.qpid.proton4j.engine.impl;
 
+import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -38,11 +39,14 @@ import org.apache.qpid.proton4j.amqp.driver.ProtonTestPeer;
 import org.apache.qpid.proton4j.amqp.messaging.Accepted;
 import org.apache.qpid.proton4j.amqp.messaging.Data;
 import org.apache.qpid.proton4j.amqp.messaging.Released;
+import org.apache.qpid.proton4j.amqp.messaging.Source;
+import org.apache.qpid.proton4j.amqp.messaging.Target;
 import org.apache.qpid.proton4j.amqp.transport.Role;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.engine.Connection;
 import org.apache.qpid.proton4j.engine.IncomingDelivery;
+import org.apache.qpid.proton4j.engine.LinkState;
 import org.apache.qpid.proton4j.engine.Receiver;
 import org.apache.qpid.proton4j.engine.Session;
 import org.junit.Test;
@@ -51,6 +55,45 @@ import org.junit.Test;
  * Test the {@link ProtonReceiver}
  */
 public class ProtonReceiverTest extends ProtonEngineTestSupport {
+
+    @Test
+    public void testCreateReceiverAndInspectRemoteEndpoint() throws Exception {
+        ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
+        engine.errorHandler(result -> failure = result);
+        ProtonTestPeer peer = new ProtonTestPeer(engine);
+        engine.outputConsumer(peer);
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond().withContainerId("driver");
+        peer.expectBegin().respond();
+        peer.expectAttach().withTarget(notNullValue())
+                           .withTarget(notNullValue())
+                           .respond();
+        peer.expectDetach().respond();
+
+        Connection connection = engine.start();
+
+        // Default engine should start and return a connection immediately
+        assertNotNull(connection);
+
+        connection.open();
+        Session session = connection.session();
+        session.open();
+        Receiver receiver = session.receiver("test");
+        receiver.setSource(new Source());
+        receiver.setTarget(new Target());
+        receiver.open();
+
+        assertTrue(receiver.getRemoteState().equals(LinkState.ACTIVE));
+        assertNotNull(receiver.getRemoteSource());
+        assertNotNull(receiver.getRemoteTarget());
+
+        receiver.close();
+
+        peer.waitForScriptToComplete();
+
+        assertNull(failure);
+    }
 
     @Test
     public void testReceiverOpenAndCloseAreIdempotent() throws Exception {
