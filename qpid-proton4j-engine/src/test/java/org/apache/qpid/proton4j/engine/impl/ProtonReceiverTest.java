@@ -34,10 +34,13 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.apache.qpid.proton4j.amqp.Binary;
+import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedInteger;
 import org.apache.qpid.proton4j.amqp.driver.ProtonTestPeer;
 import org.apache.qpid.proton4j.amqp.messaging.Accepted;
 import org.apache.qpid.proton4j.amqp.messaging.Data;
+import org.apache.qpid.proton4j.amqp.messaging.Modified;
+import org.apache.qpid.proton4j.amqp.messaging.Rejected;
 import org.apache.qpid.proton4j.amqp.messaging.Released;
 import org.apache.qpid.proton4j.amqp.messaging.Source;
 import org.apache.qpid.proton4j.amqp.messaging.Target;
@@ -55,6 +58,11 @@ import org.junit.Test;
  * Test the {@link ProtonReceiver}
  */
 public class ProtonReceiverTest extends ProtonEngineTestSupport {
+
+    public static final Symbol[] SUPPORTED_OUTCOMES = new Symbol[] { Accepted.DESCRIPTOR_SYMBOL,
+                                                                     Rejected.DESCRIPTOR_SYMBOL,
+                                                                     Released.DESCRIPTOR_SYMBOL,
+                                                                     Modified.DESCRIPTOR_SYMBOL };
 
     @Test
     public void testCreateReceiverAndInspectRemoteEndpoint() throws Exception {
@@ -79,14 +87,25 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         connection.open();
         Session session = connection.session();
         session.open();
+
+        final Modified defaultOutcome = new Modified().setDeliveryFailed(true);
+
+        Source source = new Source();
+        source.setAddress("test");
+        source.setOutcomes(SUPPORTED_OUTCOMES);
+        source.setDefaultOutcome(defaultOutcome);
+
         Receiver receiver = session.receiver("test");
-        receiver.setSource(new Source());
+        receiver.setSource(source);
         receiver.setTarget(new Target());
         receiver.open();
 
         assertTrue(receiver.getRemoteState().equals(LinkState.ACTIVE));
         assertNotNull(receiver.getRemoteSource());
         assertNotNull(receiver.getRemoteTarget());
+        assertArrayEquals(SUPPORTED_OUTCOMES, receiver.getRemoteSource().getOutcomes());
+        assertTrue(receiver.getRemoteSource().getDefaultOutcome() instanceof Modified);
+        assertEquals("test", receiver.getRemoteSource().getAddress());
 
         receiver.close();
 
