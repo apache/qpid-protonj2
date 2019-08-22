@@ -76,7 +76,7 @@ class StringElement extends AtomicElement<String> {
         final int length = bytes.length;
 
         int size = size(length);
-        if (buffer.getWritableBytes() < size) {
+        if (buffer.getMaxWritableBytes() < size) {
             return 0;
         }
         if (isElementOfArray()) {

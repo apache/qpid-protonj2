@@ -254,6 +254,7 @@ public class AMQPTestDriver implements Consumer<ProtonBuffer> {
      * @param payload
      */
     public void sendAMQPFrame(int channel, DescribedType performative, ProtonBuffer payload) {
+        LOG.trace("Sending performative: {}", performative);
         // TODO - handle split frames when frame size requires it
         ProtonBuffer buffer = frameEncoder.handleWrite(performative, channel, payload, null);
 
@@ -271,6 +272,7 @@ public class AMQPTestDriver implements Consumer<ProtonBuffer> {
      * @param performative
      */
     public void sendSaslFrame(int channel, DescribedType performative) {
+        LOG.trace("Sending sasl performative: {}", performative);
         ProtonBuffer buffer = frameEncoder.handleWrite(performative, channel);
 
         try {
@@ -287,6 +289,7 @@ public class AMQPTestDriver implements Consumer<ProtonBuffer> {
      *      The byte array to send as the AMQP Header.
      */
     public void sendHeader(AMQPHeader header) {
+        LOG.trace("Sending AMQP Header: {}", header);
         try {
             frameConsumer.accept(header.getBuffer());
         } catch (Throwable t) {

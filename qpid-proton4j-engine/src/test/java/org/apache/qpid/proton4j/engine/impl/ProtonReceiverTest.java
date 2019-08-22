@@ -29,6 +29,7 @@ import static org.junit.Assert.fail;
 
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
@@ -89,9 +90,10 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         session.open();
 
         final Modified defaultOutcome = new Modified().setDeliveryFailed(true);
+        final String sourceAddress = UUID.randomUUID().toString() + ":1";
 
         Source source = new Source();
-        source.setAddress("test");
+        source.setAddress(sourceAddress);
         source.setOutcomes(SUPPORTED_OUTCOMES);
         source.setDefaultOutcome(defaultOutcome);
 
@@ -105,7 +107,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         assertNotNull(receiver.getRemoteTarget());
         assertArrayEquals(SUPPORTED_OUTCOMES, receiver.getRemoteSource().getOutcomes());
         assertTrue(receiver.getRemoteSource().getDefaultOutcome() instanceof Modified);
-        assertEquals("test", receiver.getRemoteSource().getAddress());
+        assertEquals(sourceAddress, receiver.getRemoteSource().getAddress());
 
         receiver.close();
 

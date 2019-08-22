@@ -56,6 +56,11 @@ public abstract class ProtonAbstractByteBuffer implements ProtonBuffer {
     }
 
     @Override
+    public int getMaxWritableBytes() {
+        return maxCapacity() - writeIndex;
+    }
+
+    @Override
     public int getReadIndex() {
         return readIndex;
     }

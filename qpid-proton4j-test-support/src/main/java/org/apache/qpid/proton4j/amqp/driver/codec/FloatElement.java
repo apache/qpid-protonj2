@@ -45,7 +45,7 @@ class FloatElement extends AtomicElement<Float> {
     @Override
     public int encode(ProtonBuffer buffer) {
         int size = size();
-        if (buffer.getWritableBytes() >= size) {
+        if (buffer.getMaxWritableBytes() >= size) {
             if (size == 5) {
                 buffer.writeByte((byte) 0x72);
             }

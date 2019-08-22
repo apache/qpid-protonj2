@@ -51,7 +51,7 @@ class UnsignedByteElement extends AtomicElement<UnsignedByte> {
                 return 1;
             }
         } else {
-            if (buffer.getWritableBytes() >= 2) {
+            if (buffer.getMaxWritableBytes() >= 2) {
                 buffer.writeByte((byte) 0x50);
                 buffer.writeByte(value.byteValue());
                 return 2;

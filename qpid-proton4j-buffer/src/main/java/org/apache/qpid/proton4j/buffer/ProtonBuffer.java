@@ -223,6 +223,15 @@ public interface ProtonBuffer extends Comparable<ProtonBuffer> {
     int getWritableBytes();
 
     /**
+     * Gets the current maximum number of bytes that can be written to this buffer.  This is
+     * the same value that can be computed by subtracting the current write index from the
+     * maximum buffer capacity.
+     *
+     * @return the maximum number of bytes that can be written to this buffer before the limit is hit.
+     */
+    int getMaxWritableBytes();
+
+    /**
      * @return the current value of the read index for this buffer.
      */
     int getReadIndex();

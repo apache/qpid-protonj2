@@ -69,7 +69,7 @@ class BinaryElement extends AtomicElement<Binary> {
     @Override
     public int encode(ProtonBuffer buffer) {
         int size = size();
-        if (buffer.getWritableBytes() < size) {
+        if (buffer.getMaxWritableBytes() < size) {
             return 0;
         }
         if (isElementOfArray()) {

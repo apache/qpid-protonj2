@@ -112,7 +112,7 @@ class MapElement extends AbstractElement<Map<Object, Object>> {
             elt = elt.next();
         }
 
-        if (encodedSize > buffer.getWritableBytes()) {
+        if (encodedSize > buffer.getMaxWritableBytes()) {
             return 0;
         } else {
             if (isElementOfArray()) {

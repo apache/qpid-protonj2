@@ -47,7 +47,7 @@ class TimestampElement extends AtomicElement<Date> {
     @Override
     public int encode(ProtonBuffer buffer) {
         int size = size();
-        if (size > buffer.getWritableBytes()) {
+        if (size > buffer.getMaxWritableBytes()) {
             return 0;
         }
         if (size == 9) {

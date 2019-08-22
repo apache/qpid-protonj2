@@ -45,7 +45,7 @@ class CharElement extends AtomicElement<Integer> {
     @Override
     public int encode(ProtonBuffer buffer) {
         final int size = size();
-        if (size <= buffer.getWritableBytes()) {
+        if (size <= buffer.getMaxWritableBytes()) {
             if (size == 5) {
                 buffer.writeByte((byte) 0x73);
             }

@@ -50,7 +50,7 @@ class ByteElement extends AtomicElement<Byte> {
                 return 1;
             }
         } else {
-            if (buffer.getWritableBytes() >= 2) {
+            if (buffer.getMaxWritableBytes() >= 2) {
                 buffer.writeByte((byte) 0x51);
                 buffer.writeByte(value);
                 return 2;

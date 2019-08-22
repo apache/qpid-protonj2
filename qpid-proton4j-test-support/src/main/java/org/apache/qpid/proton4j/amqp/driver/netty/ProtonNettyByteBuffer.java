@@ -231,6 +231,11 @@ public class ProtonNettyByteBuffer implements ProtonBuffer {
     }
 
     @Override
+    public int getMaxWritableBytes() {
+        return wrapped.maxWritableBytes();
+    }
+
+    @Override
     public int getWriteIndex() {
         return wrapped.writerIndex();
     }

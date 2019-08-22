@@ -75,16 +75,22 @@ public class FrameEncoder {
     private int writePerformative(DescribedType performative, ProtonBuffer payload, int maxFrameSize, ProtonBuffer output, Runnable onPayloadTooLarge) {
         output.setWriteIndex(FRAME_HEADER_SIZE);
 
+        long encodedSize = 0;
+
         if (performative != null) {
             try {
                 codec.putDescribedType(performative);
-                codec.encode(output);
+                encodedSize = codec.encode(output);
             } finally {
                 codec.clear();
             }
         }
 
         int performativeSize = output.getWriteIndex();
+
+        if (performativeSize < encodedSize) {
+            throw new IllegalStateException("Unable to encode performative into provided proton buffer");
+        }
 
         if (onPayloadTooLarge != null && maxFrameSize > 0 && payload != null && (payload.getReadableBytes() + performativeSize) > maxFrameSize) {
             // Next iteration will re-encode the frame body again with updates from the <payload-to-large>

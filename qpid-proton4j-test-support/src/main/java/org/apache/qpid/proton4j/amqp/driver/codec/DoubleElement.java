@@ -45,7 +45,7 @@ class DoubleElement extends AtomicElement<Double> {
     @Override
     public int encode(ProtonBuffer buffer) {
         int size = size();
-        if (buffer.getWritableBytes() >= size) {
+        if (buffer.getMaxWritableBytes() >= size) {
             if (size == 9) {
                 buffer.writeByte((byte) 0x82);
             }

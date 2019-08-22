@@ -70,7 +70,7 @@ class DescribedTypeElement extends AbstractElement<DescribedType> {
     public int encode(ProtonBuffer buffer) {
         int encodedSize = size();
 
-        if (encodedSize > buffer.getWritableBytes()) {
+        if (encodedSize > buffer.getMaxWritableBytes()) {
             return 0;
         } else {
             buffer.writeByte((byte) 0);

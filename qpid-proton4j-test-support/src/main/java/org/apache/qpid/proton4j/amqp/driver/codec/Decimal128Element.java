@@ -46,7 +46,7 @@ class Decimal128Element extends AtomicElement<Decimal128> {
     @Override
     public int encode(ProtonBuffer buffer) {
         int size = size();
-        if (buffer.getWritableBytes() >= size) {
+        if (buffer.getMaxWritableBytes() >= size) {
             if (size == 17) {
                 buffer.writeByte((byte) 0x94);
             }

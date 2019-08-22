@@ -69,7 +69,7 @@ class UnsignedLongElement extends AtomicElement<UnsignedLong> {
     @Override
     public int encode(ProtonBuffer buffer) {
         int size = size();
-        if (size > buffer.getWritableBytes()) {
+        if (size > buffer.getMaxWritableBytes()) {
             return 0;
         }
         switch (size) {

@@ -128,7 +128,7 @@ public class CodecImpl implements Codec {
         int size = 0;
         while (elt != null) {
             final int eltSize = elt.size();
-            if (eltSize <= buffer.getWritableBytes()) {
+            if (eltSize <= buffer.getMaxWritableBytes()) {
                 size += elt.encode(buffer);
             } else {
                 size += eltSize;

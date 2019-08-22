@@ -46,7 +46,7 @@ class Decimal64Element extends AtomicElement<Decimal64> {
     @Override
     public int encode(ProtonBuffer buffer) {
         int size = size();
-        if (buffer.getWritableBytes() >= size) {
+        if (buffer.getMaxWritableBytes() >= size) {
             if (size == 9) {
                 buffer.writeByte((byte) 0x84);
             }

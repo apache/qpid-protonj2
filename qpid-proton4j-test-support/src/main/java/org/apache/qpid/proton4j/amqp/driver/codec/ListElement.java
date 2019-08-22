@@ -111,7 +111,7 @@ class ListElement extends AbstractElement<List<Object>> {
             elt = elt.next();
         }
 
-        if (encodedSize > buffer.getWritableBytes()) {
+        if (encodedSize > buffer.getMaxWritableBytes()) {
             return 0;
         } else {
             if (isElementOfArray()) {

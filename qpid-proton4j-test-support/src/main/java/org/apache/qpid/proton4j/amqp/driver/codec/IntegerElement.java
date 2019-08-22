@@ -59,7 +59,7 @@ class IntegerElement extends AtomicElement<Integer> {
     @Override
     public int encode(ProtonBuffer buffer) {
         int size = size();
-        if (size <= buffer.getWritableBytes()) {
+        if (size <= buffer.getMaxWritableBytes()) {
             switch (size) {
                 case 2:
                     buffer.writeByte((byte) 0x54);

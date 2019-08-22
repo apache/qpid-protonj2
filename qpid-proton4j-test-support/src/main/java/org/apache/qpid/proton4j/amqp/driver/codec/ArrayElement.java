@@ -155,7 +155,7 @@ class ArrayElement extends AbstractElement<Object[]> {
 
         final int count = (int) count();
 
-        if (buffer.getWritableBytes() >= size) {
+        if (buffer.getMaxWritableBytes() >= size) {
             if (!isElementOfArray()) {
                 if (size > 257 || count > 255) {
                     buffer.writeByte((byte) 0xf0);

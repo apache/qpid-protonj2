@@ -45,12 +45,12 @@ class ShortElement extends AtomicElement<Short> {
     @Override
     public int encode(ProtonBuffer buffer) {
         if (isElementOfArray()) {
-            if (buffer.getWritableBytes() >= 2) {
+            if (buffer.getMaxWritableBytes() >= 2) {
                 buffer.writeShort(value);
                 return 2;
             }
         } else {
-            if (buffer.getWritableBytes() >= 3) {
+            if (buffer.getMaxWritableBytes() >= 3) {
                 buffer.writeByte((byte) 0x61);
                 buffer.writeShort(value);
                 return 3;
