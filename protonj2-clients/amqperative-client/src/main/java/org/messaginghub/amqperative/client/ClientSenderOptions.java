@@ -16,6 +16,10 @@
  */
 package org.messaginghub.amqperative.client;
 
+import static org.messaginghub.amqperative.client.ClientConstants.DEFAULT_SUPPORTED_OUTCOMES;
+
+import org.apache.qpid.proton4j.amqp.messaging.Source;
+import org.apache.qpid.proton4j.amqp.messaging.Target;
 import org.apache.qpid.proton4j.engine.Sender;
 import org.messaginghub.amqperative.SenderOptions;
 
@@ -31,10 +35,21 @@ public final class ClientSenderOptions extends SenderOptions {
         }
     }
 
-    Sender configureSender(Sender protonSender) {
+    Sender configureSender(Sender protonSender, String address) {
         protonSender.setOfferedCapabilities(ClientConversionSupport.toSymbolArray(getOfferedCapabilities()));
         protonSender.setDesiredCapabilities(ClientConversionSupport.toSymbolArray(getDesiredCapabilities()));
         protonSender.setProperties(ClientConversionSupport.toSymbolKeyedMap(getProperties()));
+
+        // TODO: flesh out target
+        Target target = new Target();
+        target.setAddress(address);
+
+        Source source = new Source();
+        // TODO - User somehow sets their own desired outcomes for this receiver source.
+        source.setOutcomes(DEFAULT_SUPPORTED_OUTCOMES);
+
+        protonSender.setTarget(target);
+        protonSender.setSource(source);
 
         return protonSender;
     }

@@ -54,13 +54,15 @@ public class ClientSender implements Sender {
     private final AtomicBoolean closed = new AtomicBoolean();
     private final AtomicReference<Throwable> failureCause = new AtomicReference<>();
 
-    public ClientSender(SenderOptions options, ClientSession session, org.apache.qpid.proton4j.engine.Sender sender) {
+    public ClientSender(SenderOptions options, ClientSession session, org.apache.qpid.proton4j.engine.Sender sender, String address) {
         this.options = new ClientSenderOptions(options);
         this.session = session;
         this.sender = sender;
         this.executor = session.getScheduler();
         this.openFuture = session.getFutureFactory().createFuture();
         this.closeFuture = session.getFutureFactory().createFuture();
+
+        this.options.configureSender(sender, address);
     }
 
     @Override
@@ -175,7 +177,7 @@ public class ClientSender implements Sender {
                 // TODO
             });
 
-            options.configureSender(sender).open();
+            sender.open();
         });
 
         return this;

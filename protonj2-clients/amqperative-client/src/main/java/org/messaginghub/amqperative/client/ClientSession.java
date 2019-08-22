@@ -28,8 +28,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
-import org.apache.qpid.proton4j.amqp.messaging.Source;
-import org.apache.qpid.proton4j.amqp.messaging.Target;
 import org.apache.qpid.proton4j.engine.impl.ProtonEngine;
 import org.messaginghub.amqperative.Receiver;
 import org.messaginghub.amqperative.ReceiverOptions;
@@ -94,7 +92,19 @@ public class ClientSession implements Session {
 
     @Override
     public Receiver createReceiver(String address) throws ClientException {
-        return createReceiver(address, new ClientReceiverOptions());
+        checkClosed();
+        ClientFuture<Receiver> createReceiver = getFutureFactory().createFuture();
+
+        serializer.execute(() -> {
+            try {
+                checkClosed();
+                createReceiver.complete(internalCreateReceiver(address, new ReceiverOptions()).open());
+            } catch (Throwable error) {
+                createReceiver.failed(ClientExceptionSupport.createNonFatalOrPassthrough(error));
+            }
+        });
+
+        return connection.request(createReceiver, options.getRequestTimeout(), TimeUnit.MILLISECONDS);
     }
 
     @Override
@@ -105,7 +115,7 @@ public class ClientSession implements Session {
         serializer.execute(() -> {
             try {
                 checkClosed();
-                createReceiver.complete(internalCreateReceiver(receiverOptions, address).open());
+                createReceiver.complete(internalCreateReceiver(address, receiverOptions).open());
             } catch (Throwable error) {
                 createReceiver.failed(ClientExceptionSupport.createNonFatalOrPassthrough(error));
             }
@@ -127,7 +137,7 @@ public class ClientSession implements Session {
         serializer.execute(() -> {
             try {
                 checkClosed();
-                createSender.complete(internalCreateSender(senderOptions, address).open());
+                createSender.complete(internalCreateSender(address, senderOptions).open());
             } catch (Throwable error) {
                 createSender.failed(ClientExceptionSupport.createNonFatalOrPassthrough(error));
             }
@@ -138,46 +148,27 @@ public class ClientSession implements Session {
 
     //----- Internal API accessible for use within the package
 
-    ClientReceiver internalCreateReceiver(ReceiverOptions options, String address) {
+    ClientReceiver internalCreateReceiver(String address, ReceiverOptions options) {
         String name = options.getLinkName();
         if (name == null) {
             //TODO: use container-id + counter rather than UUID?
             name = "reciever-" + UUID.randomUUID();
         }
 
-        final org.apache.qpid.proton4j.engine.Receiver receiver = session.receiver(name);
-
-        //TODO: flesh out source
-        Source source = new Source();
-        source.setAddress(address);
-
-        receiver.setSource(source);
-        receiver.setTarget(new Target());
-
-        ClientReceiver result = new ClientReceiver(options, this, receiver);
+        ClientReceiver result = new ClientReceiver(options, this, session.receiver(name), address);
         receivers.add(result);
         return result;
     }
 
-    ClientSender internalCreateSender(SenderOptions options, String address) {
+    ClientSender internalCreateSender(String address, SenderOptions options) {
         String name = options.getLinkName();
         if (name == null) {
             //TODO: use container-id + counter rather than UUID?
             name = "sender-" + UUID.randomUUID();
         }
 
-        org.apache.qpid.proton4j.engine.Sender sender = session.sender(name);
-
-        //TODO: flesh out target
-        Target target = new Target();
-        target.setAddress(address);
-
-        sender.setTarget(target);
-        sender.setSource(new Source());
-
-        ClientSender result = new ClientSender(options, this, sender);
+        ClientSender result = new ClientSender(options, this, session.sender(name), address);
         senders.add(result);
-
         return result;
     }
 

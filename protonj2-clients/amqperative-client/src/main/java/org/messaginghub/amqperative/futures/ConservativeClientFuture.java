@@ -61,7 +61,10 @@ public class ConservativeClientFuture<V> extends ClientFuture<V> {
 
                 if (diff >= 0) {
                     failOnError();
-                    return getResult();
+                    if (isComplete()) {
+                        return getResult();
+                    }
+                    throw new TimeoutException("Timed out waiting for completion");
                 }
 
                 if (isComplete()) {

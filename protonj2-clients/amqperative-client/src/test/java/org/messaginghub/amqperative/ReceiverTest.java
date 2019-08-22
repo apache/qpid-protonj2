@@ -14,7 +14,7 @@ public class ReceiverTest {
     private static final Logger LOG = LoggerFactory.getLogger(ReceiverTest.class);
 
     @Test(timeout = 60000)
-    public void testCreateConnectionString() throws Exception {
+    public void testCreateReceiver() throws Exception {
         try (NettyTestPeer peer = new NettyTestPeer()) {
             peer.expectAMQPHeader().respondWithAMQPHeader();
             peer.expectOpen().respond();

@@ -17,6 +17,7 @@
 package org.messaginghub.amqperative.client;
 
 import java.io.IOException;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
@@ -152,6 +153,7 @@ public class ClientConnection implements Connection {
 
     @Override
     public Receiver createReceiver(String address) throws ClientException {
+        Objects.requireNonNull(address, "Cannot create a sender with a null address");
         return createReceiver(address, new ClientReceiverOptions());
     }
 
@@ -163,7 +165,7 @@ public class ClientConnection implements Connection {
         executor.execute(() -> {
             try {
                 checkClosed();
-                createReceiver.complete(lazyCreateConnectionSession().internalCreateReceiver(receiverOptions, address).open());
+                createReceiver.complete(lazyCreateConnectionSession().internalCreateReceiver(address, receiverOptions).open());
             } catch (Throwable error) {
                 createReceiver.failed(ClientExceptionSupport.createNonFatalOrPassthrough(error));
             }
@@ -185,13 +187,25 @@ public class ClientConnection implements Connection {
         executor.execute(() -> {
             try {
                 checkClosed();
-                createSender.complete(lazyCreateConnectionSession().internalCreateSender(senderOptions, address).open());
+                createSender.complete(lazyCreateConnectionSession().internalCreateSender(address, senderOptions).open());
             } catch (Throwable error) {
                 createSender.failed(ClientExceptionSupport.createNonFatalOrPassthrough(error));
             }
         });
 
         return request(createSender, options.getRequestTimeout(), TimeUnit.MILLISECONDS);
+    }
+
+    @Override
+    public Sender createAnonymousSender() throws ClientException {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public Sender createAnonymousSender(SenderOptions senderOptions) throws ClientException {
+        // TODO Auto-generated method stub
+        return null;
     }
 
     @Override
@@ -329,7 +343,7 @@ public class ClientConnection implements Connection {
         if (connectionSender == null) {
             // TODO - Ensure this creates an anonymous sender
             // TODO - What if remote doesn't support anonymous?
-            connectionSender = lazyCreateConnectionSession().internalCreateSender(new ClientSenderOptions(), null);
+            connectionSender = lazyCreateConnectionSession().internalCreateSender(null, new ClientSenderOptions());
             connectionSender.open();
         }
 

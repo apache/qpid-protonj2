@@ -16,6 +16,11 @@
  */
 package org.messaginghub.amqperative.client;
 
+import static org.messaginghub.amqperative.client.ClientConstants.DEFAULT_SUPPORTED_OUTCOMES;
+import static org.messaginghub.amqperative.client.ClientConstants.MODIFIED_FAILED;
+
+import org.apache.qpid.proton4j.amqp.messaging.Source;
+import org.apache.qpid.proton4j.amqp.messaging.Target;
 import org.apache.qpid.proton4j.engine.Receiver;
 import org.messaginghub.amqperative.ReceiverOptions;
 
@@ -35,10 +40,20 @@ public final class ClientReceiverOptions extends ReceiverOptions {
         }
     }
 
-    Receiver configureReceiver(Receiver protonReceiver) {
+    Receiver configureReceiver(Receiver protonReceiver, String address) {
         protonReceiver.setOfferedCapabilities(ClientConversionSupport.toSymbolArray(getOfferedCapabilities()));
         protonReceiver.setDesiredCapabilities(ClientConversionSupport.toSymbolArray(getDesiredCapabilities()));
         protonReceiver.setProperties(ClientConversionSupport.toSymbolKeyedMap(getProperties()));
+
+        //TODO: flesh out source configuration
+        Source source = new Source();
+        source.setAddress(address);
+        // TODO - User somehow sets their own desired outcomes for this receiver source.
+        source.setOutcomes(DEFAULT_SUPPORTED_OUTCOMES);
+        source.setDefaultOutcome(MODIFIED_FAILED);
+
+        protonReceiver.setSource(source);
+        protonReceiver.setTarget(new Target());
 
         return protonReceiver;
     }

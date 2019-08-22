@@ -53,13 +53,10 @@ public interface Connection {
     Receiver createReceiver(String address, ReceiverOptions receiverOptions) throws ClientException;
 
     /**
-     * Creates a sender used to send messages to the given node address. If no
-     * address (i.e null) is specified then a sender will be established to the
-     * 'anonymous relay' and each message must specify its destination address.
+     * Creates a sender used to send messages to the given node address.
      *
      * @param address
-     *            The target address to attach to, or null to attach to the
-     *            anonymous relay.
+     *            The target address to attach to, cannot be null.
      *
      * @return the sender.
      *
@@ -68,13 +65,10 @@ public interface Connection {
     Sender createSender(String address) throws ClientException;
 
     /**
-     * Creates a sender used to send messages to the given node address. If no
-     * address (i.e null) is specified then a sender will be established to the
-     * 'anonymous relay' and each message must specify its destination address.
+     * Creates a sender used to send messages to the given node address.
      *
      * @param address
-     *            The target address to attach to, or null to attach to the
-     *            anonymous relay.
+     *            The target address to attach to, cannot be null.
      * @param senderOptions
      *            The options for this sender.
      *
@@ -83,6 +77,31 @@ public interface Connection {
      * @throws ClientException if an internal error occurs.
      */
     Sender createSender(String address, SenderOptions senderOptions) throws ClientException;
+
+    /**
+     * Creates a sender that is established to the 'anonymous relay' and as such each
+     * message that is sent using this sender must specify an address in its destination
+     * address field.
+     *
+     * @return the sender.
+     *
+     * @throws ClientException if an internal error occurs.
+     */
+    Sender createAnonymousSender() throws ClientException;
+
+    /**
+     * Creates a sender that is established to the 'anonymous relay' and as such each
+     * message that is sent using this sender must specify an address in its destination
+     * address field.
+     *
+     * @param senderOptions
+     *            The options for this sender.
+     *
+     * @return the sender.
+     *
+     * @throws ClientException if an internal error occurs.
+     */
+    Sender createAnonymousSender(SenderOptions senderOptions) throws ClientException;
 
     /**
      * Creates a new {@link Session} instance for use by the client application.

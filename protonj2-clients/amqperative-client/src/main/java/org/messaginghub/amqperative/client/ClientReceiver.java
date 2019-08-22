@@ -50,13 +50,15 @@ public class ClientReceiver implements Receiver {
 
     private final FifoMessageQueue messageQueue;
 
-    public ClientReceiver(ReceiverOptions options, ClientSession session, org.apache.qpid.proton4j.engine.Receiver receiver) {
+    public ClientReceiver(ReceiverOptions options, ClientSession session, org.apache.qpid.proton4j.engine.Receiver receiver, String address) {
         this.options = new ClientReceiverOptions(options);
         this.session = session;
         this.receiver = receiver;
         this.executor = session.getScheduler();
         this.openFuture = session.getFutureFactory().createFuture();
         this.closeFuture = session.getFutureFactory().createFuture();
+
+        this.options.configureReceiver(receiver, address);
 
         if (options.getCreditWindow() > 0) {
             receiver.setCredit(options.getCreditWindow());
@@ -200,7 +202,7 @@ public class ClientReceiver implements Receiver {
                // TODO - event or other reaction
             });
 
-            options.configureReceiver(receiver).open();
+            receiver.open();
         });
 
         return this;
