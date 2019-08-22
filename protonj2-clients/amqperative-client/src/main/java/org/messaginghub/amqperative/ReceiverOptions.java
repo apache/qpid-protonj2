@@ -41,6 +41,12 @@ public class ReceiverOptions {
     public ReceiverOptions() {
     }
 
+    public ReceiverOptions(ReceiverOptions options) {
+        if (options != null) {
+            options.copyInto(this);
+        }
+    }
+
     public ReceiverOptions setLinkName(String linkName) {
         this.linkName = linkName;
         return this;
@@ -151,7 +157,7 @@ public class ReceiverOptions {
      *
      * @return this options class for chaining.
      */
-    public ReceiverOptions copyInto(ReceiverOptions other) {
+    protected ReceiverOptions copyInto(ReceiverOptions other) {
         other.setCreditWindow(creditWindow);
         other.setDynamic(dynamic);
         other.setLinkName(linkName);

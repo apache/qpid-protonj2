@@ -27,18 +27,26 @@ import org.messaginghub.amqperative.ConnectionOptions;
  */
 public final class ClientConnectionOptions extends ConnectionOptions {
 
-    public ClientConnectionOptions(String hostname, int port) {
+    private final String hostname;
+    private final int port;
+
+    ClientConnectionOptions(String hostname, int port) {
         this(hostname, port, null);
     }
 
-    public ClientConnectionOptions(String hostname, int port, ConnectionOptions options) {
-        super(hostname, port, options);
+    ClientConnectionOptions(String hostname, int port, ConnectionOptions options) {
+        super(options);
+
+        this.hostname = hostname;
+        this.port = port;
     }
 
-    @Override
-    public ClientConnectionOptions copyInto(ConnectionOptions options) {
-        super.copyInto(options);
-        return this;
+    public String getHostname() {
+        return hostname;
+    }
+
+    public int getPort() {
+        return port;
     }
 
     /**
@@ -51,6 +59,8 @@ public final class ClientConnectionOptions extends ConnectionOptions {
             throw new IllegalArgumentException("Could not create URI from provided host and port");
         }
     }
+
+    //----- Internal support methods used by the client
 
     Connection configureConnection(Connection protonConnection) {
         protonConnection.setChannelMax(getChannelMax());

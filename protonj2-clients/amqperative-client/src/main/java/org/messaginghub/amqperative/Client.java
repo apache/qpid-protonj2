@@ -16,13 +16,14 @@
  */
 package org.messaginghub.amqperative;
 
+import java.net.URI;
 import java.util.Objects;
 
-import org.messaginghub.amqperative.client.ClientInstance;
 import org.messaginghub.amqperative.client.ClientContainerOptions;
+import org.messaginghub.amqperative.client.ClientInstance;
 
 /**
- * The Container that hosts the AMQP Connection
+ * The Container that hosts AMQP Connections
  */
 public interface Client {
 
@@ -41,18 +42,37 @@ public interface Client {
     String getContainerId();
 
     /**
-     * Places the client in a stopped state and closes any previously opened
-     * {@link Connection} instances.  Once stopped the container cannot be
-     * restarted.
+     * Closes all currently open {@link Connection} instances created by this client.
      *
      * @return this {@link Client} instance.
      */
-    Client stop();
+    Client closeAll();
 
     /**
-     * @return true if the {@link Client} has been stopped.
+     * Connect to the specified remote using the given {@link URI} and configures
+     * the connection options using the parameters encoded in the query portion of
+     * the given {@link URI}.
+     *
+     * @param remoteUri
+     *            the {@link URI} of the remote to connect to.
+     *
+     * @return connection, establishment not yet completed
      */
-    boolean isStopped();
+    Connection createConnection(URI remoteUri);
+
+    /**
+     * Connect to the specified remote using the given {@link URI} and configures
+     * the connection options using the parameters encoded in the query portion of
+     * the given {@link URI}.
+     *
+     * @param remoteUri
+     *            the {@link URI} of the remote to connect to.
+     * @param options
+     *            options to use when creating the connection.
+     *
+     * @return connection, establishment not yet completed
+     */
+    Connection createConnection(URI remoteUri, ConnectionOptions options);
 
     /**
      * Connect to the specified host and port, without credentials.
@@ -73,7 +93,8 @@ public interface Client {
      * @param port
      *            the port to connect to
      * @param options
-     *            options.
+     *            options to use when creating the connection.
+     *
      * @return connection, establishment not yet completed
      */
     Connection createConnection(String host, int port, ConnectionOptions options);

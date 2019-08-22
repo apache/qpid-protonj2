@@ -35,9 +35,7 @@ public final class ClientReceiverOptions extends ReceiverOptions {
      *      The options to use to configure this options instance.
      */
     public ClientReceiverOptions(ReceiverOptions options) {
-        if (options != null) {
-            options.copyInto(this);
-        }
+        super(options);
     }
 
     Receiver configureReceiver(Receiver protonReceiver, String address) {

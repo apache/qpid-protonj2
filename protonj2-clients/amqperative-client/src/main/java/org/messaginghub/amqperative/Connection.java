@@ -134,11 +134,11 @@ public interface Connection {
      * 		The message to send
      *
      * @return a {@link Tracker} that allows the client to track settlement of the message.
+     *
+     * @throws ClientException if an internal error occurs.
      */
     Tracker send(Message<?> message) throws ClientException;
 
     // TODO:
     // Error state?
-    // Capabilities (+options?)
-    // Properties (+options?)
 }

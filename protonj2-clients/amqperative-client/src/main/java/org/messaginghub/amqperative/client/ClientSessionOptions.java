@@ -22,16 +22,11 @@ import org.messaginghub.amqperative.SessionOptions;
 public final class ClientSessionOptions extends SessionOptions {
 
     public ClientSessionOptions() {
+        super();
     }
 
-    /**
-     * @param options
-     *      Original options which will be copied into this instance
-     */
     public ClientSessionOptions(SessionOptions options) {
-        if (options != null) {
-            options.copyInto(this);
-        }
+        super(options);
     }
 
     Session configureSession(Session protonSession) {

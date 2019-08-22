@@ -41,6 +41,12 @@ public class SenderOptions {
     public SenderOptions() {
     }
 
+    public SenderOptions(SenderOptions options) {
+        if (options != null) {
+            options.copyInto(this);
+        }
+    }
+
     public SenderOptions setLinkName(String linkName) {
         this.linkName = linkName;
         return this;
@@ -169,7 +175,7 @@ public class SenderOptions {
      *
      * @return this options class for chaining.
      */
-    public SenderOptions copyInto(SenderOptions other) {
+    protected SenderOptions copyInto(SenderOptions other) {
         other.setAutoSettle(autoSettle);
         other.setDynamic(dynamic);
         other.setLinkName(linkName);

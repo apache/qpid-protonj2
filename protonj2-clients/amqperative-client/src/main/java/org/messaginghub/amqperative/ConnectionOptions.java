@@ -35,12 +35,6 @@ public class ConnectionOptions {
     public static final int DEFAULT_CHANNEL_MAX = 65535;
     public static final int DEFAULT_MAX_FRAME_SIZE = 65535;
 
-    // TODO - Configure vhost ?
-    private final String hostname;
-    private final int port;
-
-    private String futureType;
-
     private long sendTimeout = DEFAULT_SEND_TIMEOUT;
     private long requestTimeout = DEFAULT_REQUEST_TIMEOUT;
     private long connectTimeout = DEFAULT_CONNECT_TIMEOUT;
@@ -48,24 +42,21 @@ public class ConnectionOptions {
     private long idleTimeout = DEFAULT_IDLE_TIMEOUT;
     private long drainTimeout = DEFAULT_DRAIN_TIMEOUT;
 
-    // TODO - Strings or expose a Symbol type, depending on how Message types are
-    //        constructed same issue, some things require Symbols unless we hide
-    //        everything behind facades.
+    private String futureType;
 
+    private String user;
+    private String password;
     private int channelMax = DEFAULT_CHANNEL_MAX;
     private int maxFrameSize = DEFAULT_MAX_FRAME_SIZE;
     private String[] offeredCapabilities;
     private String[] desiredCapabilities;
     private Map<String, Object> properties;
+    private String vhost;
 
-    public ConnectionOptions(String hostname, int port) {
-        this(hostname, port, null);
+    public ConnectionOptions() {
     }
 
-    public ConnectionOptions(String hostname, int port, ConnectionOptions options) {
-        this.hostname = hostname;
-        this.port = port;
-
+    public ConnectionOptions(ConnectionOptions options) {
         if (options != null) {
             options.copyInto(this);
         }
@@ -80,7 +71,7 @@ public class ConnectionOptions {
      *
      * @return this options class for chaining.
      */
-    public ConnectionOptions copyInto(ConnectionOptions other) {
+    protected ConnectionOptions copyInto(ConnectionOptions other) {
         other.setCloseTimeout(closeTimeout);
         other.setConnectTimeout(connectTimeout);
         other.setSendTimeout(sendTimeout);
@@ -90,6 +81,8 @@ public class ConnectionOptions {
         other.setChannelMax(channelMax);
         other.setMaxFrameSize(maxFrameSize);
         other.setFutureType(futureType);
+        other.setUser(user);
+        other.setPassword(password);
 
         if (offeredCapabilities != null) {
             other.setOfferedCapabilities(Arrays.copyOf(offeredCapabilities, offeredCapabilities.length));
@@ -102,20 +95,6 @@ public class ConnectionOptions {
         }
 
         return this;
-    }
-
-    /**
-     * @return the host name that this connection should resolve and connect to.
-     */
-    public String getHostname() {
-        return hostname;
-    }
-
-    /**
-     * @return the port on the remote that the connection should attach to.
-     */
-    public int getPort() {
-        return port;
     }
 
     // TODO - Proper Javadocs
@@ -291,5 +270,47 @@ public class ConnectionOptions {
     public ConnectionOptions setFutureType(String futureType) {
         this.futureType = futureType;
         return this;
+    }
+
+    /**
+     * @return the vhost
+     */
+    public String getVhost() {
+        return vhost;
+    }
+
+    /**
+     * @param vhost the vhost to set
+     */
+    public void setVhost(String vhost) {
+        this.vhost = vhost;
+    }
+
+    /**
+     * @return the user
+     */
+    public String getUser() {
+        return user;
+    }
+
+    /**
+     * @param user the user to set
+     */
+    public void setUser(String user) {
+        this.user = user;
+    }
+
+    /**
+     * @return the password
+     */
+    public String getPassword() {
+        return password;
+    }
+
+    /**
+     * @param password the password to set
+     */
+    public void setPassword(String password) {
+        this.password = password;
     }
 }

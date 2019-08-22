@@ -30,9 +30,7 @@ public final class ClientSenderOptions extends SenderOptions {
     }
 
     public ClientSenderOptions(SenderOptions options) {
-        if (options != null) {
-            options.copyInto(this);
-        }
+        super(options);
     }
 
     Sender configureSender(Sender protonSender, String address) {

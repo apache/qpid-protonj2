@@ -16,6 +16,7 @@
  */
 package org.messaginghub.amqperative.client;
 
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -58,12 +59,25 @@ public class ClientInstance implements Client {
     }
 
     @Override
+    public Connection createConnection(URI remoteUri) {
+        return createConnection(remoteUri, new ConnectionOptions());
+    }
+
+    @Override
+    public Connection createConnection(URI remoteUri, ConnectionOptions options) {
+        // TODO - Build ClientConnectionOptions from the given URI and configure from the provided options.
+        ClientConnectionOptions clientOptions = new ClientConnectionOptions(remoteUri.getHost(), remoteUri.getPort(), options);
+
+        return new ClientConnection(this, clientOptions).connect();
+    }
+
+    @Override
     public String getContainerId() {
         return options.getContainerId();
     }
 
     @Override
-    public Client stop() {
+    public Client closeAll() {
         synchronized (connections) {
             List<Connection> connectionsView = new ArrayList<>(connections.values());
             for (Connection connection : connectionsView) {
@@ -74,33 +88,21 @@ public class ClientInstance implements Client {
                 }
             }
         }
-        return this;
-    }
 
-    @Override
-    public boolean isStopped() {
-        return true;
+        return this;
     }
 
     //----- Internal API
 
     void addConnection(ClientConnection connection) {
         synchronized (connections) {
-            checkStopped();
             this.connections.put(connection.getId(), connection);
         }
     }
 
     void removeConnection(ClientConnection connection) {
         synchronized (connections) {
-            checkStopped();
             this.connections.remove(connection.getId());
-        }
-    }
-
-    void checkStopped() {
-        if (isStopped()) {
-            throw new IllegalStateException("Container has already been stopped.");
         }
     }
 }

@@ -34,6 +34,15 @@ public class SessionOptions {
     private String[] desiredCapabilities;
     private Map<String, Object> properties;
 
+    public SessionOptions() {
+    }
+
+    public SessionOptions(SessionOptions options) {
+        if (options != null) {
+            options.copyInto(this);
+        }
+    }
+
     /**
      * Copy all options from this {@link SessionOptions} instance into the instance
      * provided.
@@ -43,7 +52,7 @@ public class SessionOptions {
      *
      * @return this options class for chaining.
      */
-    public SessionOptions copyInto(SessionOptions other) {
+    protected SessionOptions copyInto(SessionOptions other) {
         other.setCloseTimeout(closeTimeout);
         other.setConnectTimeout(connectTimeout);
         other.setSendTimeout(sendTimeout);
