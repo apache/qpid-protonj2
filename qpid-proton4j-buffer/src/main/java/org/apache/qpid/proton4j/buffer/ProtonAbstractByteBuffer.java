@@ -560,6 +560,14 @@ public abstract class ProtonAbstractByteBuffer implements ProtonBuffer {
     }
 
     @Override
+    public String toString() {
+        return getClass().getSimpleName() +
+               "{ read:" + getReadIndex() +
+               ", write: " + getWriteIndex() +
+               ", capacity: " + capacity() + "}";
+    }
+
+    @Override
     public String toString(Charset charset) {
         final String result;
 

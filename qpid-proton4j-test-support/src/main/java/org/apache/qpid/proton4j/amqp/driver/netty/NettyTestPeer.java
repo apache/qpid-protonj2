@@ -26,6 +26,7 @@ import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
 import org.apache.qpid.proton4j.amqp.driver.ScriptWriter;
 import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -138,8 +139,12 @@ public class NettyTestPeer extends ScriptWriter implements AutoCloseable {
                     LOG.trace("AMQP Server Channel read: {}", input);
 
                     try {
+                        // Create a stable copy to avoid issue with retained buffer slices when input is pooled.
+                        ProtonBuffer copy = ProtonByteBufferAllocator.DEFAULT.allocate(input.readableBytes());
+                        copy.writeBytes(new ProtonNettyByteBuffer(input));
+
                         // Driver processes new data and may produce output based on this.
-                        processChannelInput(new ProtonNettyByteBuffer(input));
+                        processChannelInput(copy);
                     } catch (Throwable e) {
                         ctx.channel().close();
                     } finally {
