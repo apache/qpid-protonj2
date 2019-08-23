@@ -77,6 +77,10 @@ public class ClientInstance implements Client {
         return options.getContainerId();
     }
 
+    String getClientUniqueId() {
+        return options.getClientUniqueId();
+    }
+
     @Override
     public Client closeAll() {
         synchronized (connections) {

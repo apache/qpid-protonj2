@@ -26,9 +26,11 @@ public final class ClientInstanceOptions extends ClientOptions {
 
     private final IdGenerator CONTAINER_ID_GENERATOR = new IdGenerator();
 
+    private final String clientUniqueId = CONTAINER_ID_GENERATOR.generateId();
+
     public ClientInstanceOptions() {
         super();
-        setContainerId(CONTAINER_ID_GENERATOR.generateId());
+        setContainerId(clientUniqueId);
     }
 
     public ClientInstanceOptions(ClientOptions options) {
@@ -37,7 +39,11 @@ public final class ClientInstanceOptions extends ClientOptions {
         }
 
         if (getContainerId() == null || getContainerId().isEmpty()) {
-            setContainerId(CONTAINER_ID_GENERATOR.generateId());
+            setContainerId(clientUniqueId);
         }
+    }
+
+    String getClientUniqueId() {
+        return clientUniqueId;
     }
 }

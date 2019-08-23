@@ -22,7 +22,7 @@ import java.util.Map;
 /**
  * Options type that carries configuration for link Source types.
  */
-public class SourceOptions extends TerminusOptions {
+public final class SourceOptions extends TerminusOptions<SourceOptions> {
 
     /**
      * Control whether messages are browsed or consumed.
@@ -71,5 +71,10 @@ public class SourceOptions extends TerminusOptions {
      */
     public void setFilters(Map<String, String> filters) {
         this.filters = filters;
+    }
+
+    @Override
+    SourceOptions self() {
+        return this;
     }
 }

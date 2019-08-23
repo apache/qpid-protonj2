@@ -26,8 +26,10 @@ import org.apache.qpid.proton4j.amqp.messaging.Target;
 /**
  * Base options type for configuration of {@link Source} and {@link Target} types
  * used by {@link Sender} and {@link Receiver} end points.
+ *
+ * @param <E> the subclass that implements this terminus options type.
  */
-public abstract class TerminusOptions {
+public abstract class TerminusOptions<E extends TerminusOptions<E>> {
 
     /**
      * Control the persistence of source or target state.
@@ -56,6 +58,8 @@ public abstract class TerminusOptions {
     private ExpiryPolicy expiryPolicy;
     private String[] capabilities;
 
+    abstract E self();
+
     /**
      * @return the address
      */
@@ -66,9 +70,12 @@ public abstract class TerminusOptions {
     /**
      * @param address
      * 		the address to set
+     *
+     * @return this options instance.
      */
-    public void setAddress(String address) {
+    public E setAddress(String address) {
         this.address = address;
+        return self();
     }
 
     /**
@@ -80,9 +87,12 @@ public abstract class TerminusOptions {
 
     /**
      * @param durabilityMode the durabilityMode to set
+     *
+     * @return this options instance.
      */
-    public void setDurabilityMode(DurabilityMode durabilityMode) {
+    public E setDurabilityMode(DurabilityMode durabilityMode) {
         this.durabilityMode = durabilityMode;
+        return self();
     }
 
     /**
@@ -94,9 +104,12 @@ public abstract class TerminusOptions {
 
     /**
      * @param dynamic the dynamic to set
+     *
+     * @return this options instance.
      */
-    public void setDynamic(boolean dynamic) {
+    public E setDynamic(boolean dynamic) {
         this.dynamic = dynamic;
+        return self();
     }
 
     /**
@@ -108,9 +121,12 @@ public abstract class TerminusOptions {
 
     /**
      * @param dynamicNodeProperties the dynamicNodeProperties to set
+     *
+     * @return this options instance.
      */
-    public void setDynamicNodeProperties(Map<String, Object> dynamicNodeProperties) {
+    public E setDynamicNodeProperties(Map<String, Object> dynamicNodeProperties) {
         this.dynamicNodeProperties = dynamicNodeProperties;
+        return self();
     }
 
     /**
@@ -122,9 +138,12 @@ public abstract class TerminusOptions {
 
     /**
      * @param timeout the timeout to set
+     *
+     * @return this options instance.
      */
-    public void setTimeout(long timeout) {
+    public E setTimeout(long timeout) {
         this.timeout = timeout;
+        return self();
     }
 
     /**
@@ -136,9 +155,12 @@ public abstract class TerminusOptions {
 
     /**
      * @param expiryPolicy the expiryPolicy to set
+     *
+     * @return this options instance.
      */
-    public void setExpiryPolicy(ExpiryPolicy expiryPolicy) {
+    public E setExpiryPolicy(ExpiryPolicy expiryPolicy) {
         this.expiryPolicy = expiryPolicy;
+        return self();
     }
 
     /**
@@ -150,12 +172,15 @@ public abstract class TerminusOptions {
 
     /**
      * @param capabilities the capabilities to set
+     *
+     * @return this options instance.
      */
-    public void setCapabilities(String[] capabilities) {
+    public E setCapabilities(String[] capabilities) {
         this.capabilities = capabilities;
+        return self();
     }
 
-    protected void copyInto(TerminusOptions other) {
+    protected void copyInto(TerminusOptions<E> other) {
         other.setAddress(address);
         other.setDurabilityMode(durabilityMode);
         other.setDynamic(dynamic);

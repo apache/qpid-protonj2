@@ -19,10 +19,15 @@ package org.messaginghub.amqperative;
 /**
  * Options type that carries configuration for link Target types.
  */
-public class TargetOptions extends TerminusOptions {
+public final class TargetOptions extends TerminusOptions<TargetOptions> {
 
     public TargetOptions copyInto(TargetOptions other) {
         super.copyInto(other);
+        return this;
+    }
+
+    @Override
+    TargetOptions self() {
         return this;
     }
 }

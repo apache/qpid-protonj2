@@ -49,6 +49,15 @@ public class SenderOptions {
         }
     }
 
+    public boolean isDynamic() {
+        return getTarget().isDynamic();
+    }
+
+    public SenderOptions setDynamic(boolean value) {
+        getTarget().setDynamic(value);
+        return this;
+    }
+
     public SenderOptions setLinkName(String linkName) {
         this.linkName = linkName;
         return this;
