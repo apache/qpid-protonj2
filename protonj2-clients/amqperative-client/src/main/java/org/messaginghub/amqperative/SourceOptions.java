@@ -14,22 +14,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.messaginghub.amqperative.client;
+package org.messaginghub.amqperative;
 
-import org.messaginghub.amqperative.ClientOptions;
+import java.util.Map;
 
 /**
- * Container options used for default
+ * Options type that carries configuration for link Source types.
  */
-public final class ClientContainerOptions extends ClientOptions {
+public class SourceOptions {
 
-    public ClientContainerOptions() {
-        super();
-    }
+    private String address;
+    private String durabilityMode;  // TODO - type
+    private boolean dynamic;
+    private Map<String, Object> dynamicNodeProperties;
+    private long timeout;
+    private String expiryPolicy; // TODO - type
+    private String[] capabilities;
+    private String distributionMode;  // TODO - type
+    private Map<String, String> filters;
 
-    public ClientContainerOptions(ClientOptions options) {
-        if (options != null) {
-            options.copyInto(this);
-        }
-    }
 }

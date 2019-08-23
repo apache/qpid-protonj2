@@ -29,7 +29,7 @@ import org.apache.qpid.jms.support.Wait;
 import org.junit.Test;
 import org.messaginghub.amqperative.Connection;
 import org.messaginghub.amqperative.Client;
-import org.messaginghub.amqperative.ContainerOptions;
+import org.messaginghub.amqperative.ClientOptions;
 import org.messaginghub.amqperative.Message;
 import org.messaginghub.amqperative.Sender;
 
@@ -39,7 +39,7 @@ public class SenderTest extends AMQPerativeTestSupport {
     public void testCreateReceiver() throws Exception {
         URI brokerURI = getBrokerAmqpConnectionURI();
 
-        ContainerOptions options = new ContainerOptions();
+        ClientOptions options = new ClientOptions();
         options.setContainerId(UUID.randomUUID().toString());
         Client container = Client.create(options);
         assertNotNull(container);
@@ -74,7 +74,7 @@ public class SenderTest extends AMQPerativeTestSupport {
     private void doTestSendMessageToRemoteQueueDurable(boolean durable) throws Exception {
         URI brokerURI = getBrokerAmqpConnectionURI();
 
-        ContainerOptions options = new ContainerOptions();
+        ClientOptions options = new ClientOptions();
         options.setContainerId(UUID.randomUUID().toString());
         Client container = Client.create(options);
         assertNotNull(container);

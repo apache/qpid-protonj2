@@ -36,7 +36,7 @@ import org.apache.qpid.jms.support.Wait;
 import org.junit.Test;
 import org.messaginghub.amqperative.Connection;
 import org.messaginghub.amqperative.Client;
-import org.messaginghub.amqperative.ContainerOptions;
+import org.messaginghub.amqperative.ClientOptions;
 import org.messaginghub.amqperative.Delivery;
 import org.messaginghub.amqperative.DeliveryState;
 import org.messaginghub.amqperative.Message;
@@ -48,7 +48,7 @@ public class ReceiverTest extends AMQPerativeTestSupport {
     public void testCreateReceiver() throws Exception {
         URI brokerURI = getBrokerAmqpConnectionURI();
 
-        ContainerOptions options = new ContainerOptions();
+        ClientOptions options = new ClientOptions();
         options.setContainerId(UUID.randomUUID().toString());
         Client container = Client.create(options);
         assertNotNull(container);
@@ -76,7 +76,7 @@ public class ReceiverTest extends AMQPerativeTestSupport {
 
         sendTextMessageToQueue();
 
-        ContainerOptions options = new ContainerOptions();
+        ClientOptions options = new ClientOptions();
         options.setContainerId(UUID.randomUUID().toString());
         Client container = Client.create(options);
         assertNotNull(container);
@@ -114,7 +114,7 @@ public class ReceiverTest extends AMQPerativeTestSupport {
 
         sendTextMessageToQueue();
 
-        ContainerOptions options = new ContainerOptions();
+        ClientOptions options = new ClientOptions();
         options.setContainerId(UUID.randomUUID().toString());
         Client container = Client.create(options);
         assertNotNull(container);

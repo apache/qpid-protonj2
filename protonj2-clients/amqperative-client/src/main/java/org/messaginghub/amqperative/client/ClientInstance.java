@@ -25,7 +25,7 @@ import java.util.Map;
 import org.messaginghub.amqperative.Client;
 import org.messaginghub.amqperative.Connection;
 import org.messaginghub.amqperative.ConnectionOptions;
-import org.messaginghub.amqperative.ContainerOptions;
+import org.messaginghub.amqperative.ClientOptions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,7 +44,7 @@ public class ClientInstance implements Client {
      * @param options
      *      The container options to use to configure this container instance.
      */
-    public ClientInstance(ContainerOptions options) {
+    public ClientInstance(ClientOptions options) {
         this.options = new ClientContainerOptions(options);
     }
 
@@ -60,7 +60,7 @@ public class ClientInstance implements Client {
 
     @Override
     public Connection createConnection(URI remoteUri) {
-        return createConnection(remoteUri, new ConnectionOptions());
+        return createConnection(remoteUri, null);
     }
 
     @Override

@@ -19,7 +19,7 @@ package org.messaginghub.amqperative;
 /**
  * Container Options for customizing the behavior of the Container
  */
-public class ContainerOptions {
+public class ClientOptions {
 
     private String containerId;
 
@@ -38,13 +38,13 @@ public class ContainerOptions {
      *
      * @return this options class for chaining.
      */
-    public ContainerOptions setContainerId(String containerId) {
+    public ClientOptions setContainerId(String containerId) {
         this.containerId = containerId;
         return this;
     }
 
     /**
-     * Copy all options from this {@link ContainerOptions} instance into the instance
+     * Copy all options from this {@link ClientOptions} instance into the instance
      * provided.
      *
      * @param other
@@ -52,7 +52,7 @@ public class ContainerOptions {
      *
      * @return this options class for chaining.
      */
-    public ContainerOptions copyInto(ContainerOptions other) {
+    public ClientOptions copyInto(ClientOptions other) {
         other.setContainerId(containerId);
         return this;
     }

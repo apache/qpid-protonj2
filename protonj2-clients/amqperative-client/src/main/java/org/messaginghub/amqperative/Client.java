@@ -31,7 +31,7 @@ public interface Client {
         return create(new ClientContainerOptions());
     }
 
-    static Client create(ContainerOptions options) {
+    static Client create(ClientOptions options) {
         Objects.requireNonNull(options, "options must be non-null");
         return new ClientInstance(options);
     }

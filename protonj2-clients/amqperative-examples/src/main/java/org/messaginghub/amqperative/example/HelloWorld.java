@@ -25,7 +25,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.messaginghub.amqperative.Connection;
 import org.messaginghub.amqperative.Client;
-import org.messaginghub.amqperative.ContainerOptions;
+import org.messaginghub.amqperative.ClientOptions;
 import org.messaginghub.amqperative.Delivery;
 import org.messaginghub.amqperative.Message;
 import org.messaginghub.amqperative.Receiver;
@@ -41,7 +41,7 @@ public class HelloWorld {
             int brokerPort = 5672;
             String queueName = "test-queue";
 
-            ContainerOptions options = new ContainerOptions();
+            ClientOptions options = new ClientOptions();
             options.setContainerId(UUID.randomUUID().toString());
             Client container = Client.create(options);
 
