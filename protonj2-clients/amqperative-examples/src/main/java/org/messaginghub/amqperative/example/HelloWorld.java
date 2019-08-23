@@ -45,8 +45,8 @@ public class HelloWorld {
             options.setContainerId(UUID.randomUUID().toString());
             Client container = Client.create(options);
 
-            Connection connection = container.createConnection(brokerHost, brokerPort);
-            Sender sender = connection.createSender(queueName);
+            Connection connection = container.connect(brokerHost, brokerPort);
+            Sender sender = connection.openSender(queueName);
             sender.openFuture().get(5, TimeUnit.SECONDS);
 
             Message<String> message = Message.create("Hello World").setDurable(true);
@@ -54,7 +54,7 @@ public class HelloWorld {
 
             tracker.settle();
 
-            Receiver receiver = connection.createReceiver(queueName);
+            Receiver receiver = connection.openReceiver(queueName);
             receiver.openFuture().get(5, TimeUnit.SECONDS);
             receiver.addCredit(1);
 

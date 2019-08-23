@@ -58,7 +58,7 @@ public interface Client {
      *
      * @return connection, establishment not yet completed
      */
-    Connection createConnection(URI remoteUri);
+    Connection connect(URI remoteUri);
 
     /**
      * Connect to the specified remote using the given {@link URI} and configures
@@ -72,7 +72,7 @@ public interface Client {
      *
      * @return connection, establishment not yet completed
      */
-    Connection createConnection(URI remoteUri, ConnectionOptions options);
+    Connection connect(URI remoteUri, ConnectionOptions options);
 
     /**
      * Connect to the specified host and port, without credentials.
@@ -83,7 +83,7 @@ public interface Client {
      *            the port to connect to
      * @return connection, establishment not yet completed
      */
-    Connection createConnection(String host, int port);
+    Connection connect(String host, int port);
 
     /**
      * Connect to the specified host and port, with given options.
@@ -97,6 +97,6 @@ public interface Client {
      *
      * @return connection, establishment not yet completed
      */
-    Connection createConnection(String host, int port, ConnectionOptions options);
+    Connection connect(String host, int port, ConnectionOptions options);
 
 }

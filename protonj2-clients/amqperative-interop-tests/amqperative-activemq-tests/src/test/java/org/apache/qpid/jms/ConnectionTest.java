@@ -44,7 +44,7 @@ public class ConnectionTest extends AMQPerativeTestSupport {
         Client container = Client.create(options);
         assertNotNull(container);
 
-        Connection connection = container.createConnection(brokerURI.getHost(), brokerURI.getPort());
+        Connection connection = container.connect(brokerURI.getHost(), brokerURI.getPort());
         assertNotNull(connection);
         assertSame(connection, connection.openFuture().get(5, TimeUnit.SECONDS));
 

@@ -129,12 +129,17 @@ public class ClientConnection implements Connection {
     }
 
     @Override
-    public Session createSession() throws ClientException {
-        return createSession(new ClientSessionOptions());
+    public Session defaultSession() throws ClientException {
+        return lazyCreateConnectionSession();
     }
 
     @Override
-    public Session createSession(SessionOptions options) throws ClientException {
+    public Session openSession() throws ClientException {
+        return openSession(new ClientSessionOptions());
+    }
+
+    @Override
+    public Session openSession(SessionOptions options) throws ClientException {
         checkClosed();
         ClientFuture<Session> createSession = getFutureFactory().createFuture();
 
@@ -152,13 +157,13 @@ public class ClientConnection implements Connection {
     }
 
     @Override
-    public Receiver createReceiver(String address) throws ClientException {
+    public Receiver openReceiver(String address) throws ClientException {
         Objects.requireNonNull(address, "Cannot create a sender with a null address");
-        return createReceiver(address, new ClientReceiverOptions());
+        return openReceiver(address, new ClientReceiverOptions());
     }
 
     @Override
-    public Receiver createReceiver(String address, ReceiverOptions receiverOptions) throws ClientException {
+    public Receiver openReceiver(String address, ReceiverOptions receiverOptions) throws ClientException {
         checkClosed();
         ClientFuture<Receiver> createReceiver = getFutureFactory().createFuture();
 
@@ -175,12 +180,17 @@ public class ClientConnection implements Connection {
     }
 
     @Override
-    public Sender createSender(String address) throws ClientException {
-        return createSender(address, new ClientSenderOptions());
+    public Sender defaultSender() throws ClientException {
+        return lazyCreateConnectionSender();
     }
 
     @Override
-    public Sender createSender(String address, SenderOptions senderOptions) throws ClientException {
+    public Sender openSender(String address) throws ClientException {
+        return openSender(address, new ClientSenderOptions());
+    }
+
+    @Override
+    public Sender openSender(String address, SenderOptions senderOptions) throws ClientException {
         checkClosed();
         ClientFuture<Sender> createSender = getFutureFactory().createFuture();
 
@@ -197,13 +207,13 @@ public class ClientConnection implements Connection {
     }
 
     @Override
-    public Sender createAnonymousSender() throws ClientException {
+    public Sender openAnonymousSender() throws ClientException {
         // TODO Auto-generated method stub
         return null;
     }
 
     @Override
-    public Sender createAnonymousSender(SenderOptions senderOptions) throws ClientException {
+    public Sender openAnonymousSender(SenderOptions senderOptions) throws ClientException {
         // TODO Auto-generated method stub
         return null;
     }
@@ -233,7 +243,6 @@ public class ClientConnection implements Connection {
 
     ClientConnection connect() {
         try {
-            //TODO: have the connect itself be async?
             executor = transport.connect(() -> {
                 protonConnection = engine.start();
 
@@ -269,10 +278,20 @@ public class ClientConnection implements Connection {
                 LOG.trace("close of transport reported error", t);
             }
 
-            return this;
+            // TODO - Set closed and error state due to failed connect
         }
 
-        open(); // TODO - Separate open from connect ?
+        return this;
+    }
+
+    ClientConnection open() {
+        checkClosed();
+        executor.execute(() -> {
+            if (container.getContainerId() != null) {
+                protonConnection.setContainerId(container.getContainerId());
+            }
+            options.configureConnection(protonConnection).open();
+        });
 
         return this;
     }
@@ -354,14 +373,5 @@ public class ClientConnection implements Connection {
         if (CLOSE_STATE_UPDATER.get(this) > 0) {
             throw new IllegalStateException("The Connection is closed");
         }
-    }
-
-    private void open() {
-        executor.execute(() -> {
-            if (container.getContainerId() != null) {
-                protonConnection.setContainerId(container.getContainerId());
-            }
-            options.configureConnection(protonConnection).open();
-        });
     }
 }

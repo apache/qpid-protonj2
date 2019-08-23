@@ -53,11 +53,11 @@ public class ReceiverTest extends AMQPerativeTestSupport {
         Client container = Client.create(options);
         assertNotNull(container);
 
-        Connection connection = container.createConnection(brokerURI.getHost(), brokerURI.getPort());
+        Connection connection = container.connect(brokerURI.getHost(), brokerURI.getPort());
         assertNotNull(connection);
         assertSame(connection, connection.openFuture().get(5, TimeUnit.SECONDS));
 
-        Receiver receiver = connection.createReceiver(getTestName());
+        Receiver receiver = connection.openReceiver(getTestName());
         assertNotNull(receiver);
         assertSame(receiver, receiver.openFuture().get(5, TimeUnit.SECONDS));
 
@@ -81,9 +81,9 @@ public class ReceiverTest extends AMQPerativeTestSupport {
         Client container = Client.create(options);
         assertNotNull(container);
 
-        Connection connection = container.createConnection(brokerURI.getHost(), brokerURI.getPort());
+        Connection connection = container.connect(brokerURI.getHost(), brokerURI.getPort());
         assertNotNull(connection.openFuture().get(5, TimeUnit.SECONDS));
-        Receiver receiver = connection.createReceiver(getTestName());
+        Receiver receiver = connection.openReceiver(getTestName());
         assertSame(receiver, receiver.openFuture().get(5, TimeUnit.SECONDS));
         receiver.addCredit(1);
 
@@ -119,9 +119,9 @@ public class ReceiverTest extends AMQPerativeTestSupport {
         Client container = Client.create(options);
         assertNotNull(container);
 
-        Connection connection = container.createConnection(brokerURI.getHost(), brokerURI.getPort());
+        Connection connection = container.connect(brokerURI.getHost(), brokerURI.getPort());
         assertNotNull(connection.openFuture().get(5, TimeUnit.SECONDS));
-        Receiver receiver = connection.createReceiver(getTestName());
+        Receiver receiver = connection.openReceiver(getTestName());
         assertSame(receiver, receiver.openFuture().get(5, TimeUnit.SECONDS));
         receiver.addCredit(1);
 

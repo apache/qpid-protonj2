@@ -44,11 +44,11 @@ public class SenderTest extends AMQPerativeTestSupport {
         Client container = Client.create(options);
         assertNotNull(container);
 
-        Connection connection = container.createConnection(brokerURI.getHost(), brokerURI.getPort());
+        Connection connection = container.connect(brokerURI.getHost(), brokerURI.getPort());
         assertNotNull(connection);
         assertSame(connection, connection.openFuture().get(5, TimeUnit.SECONDS));
 
-        Sender sender = connection.createSender(getTestName());
+        Sender sender = connection.openSender(getTestName());
         assertNotNull(sender);
         assertSame(sender, sender.openFuture().get(5, TimeUnit.SECONDS));
 
@@ -79,11 +79,11 @@ public class SenderTest extends AMQPerativeTestSupport {
         Client container = Client.create(options);
         assertNotNull(container);
 
-        Connection connection = container.createConnection(brokerURI.getHost(), brokerURI.getPort());
+        Connection connection = container.connect(brokerURI.getHost(), brokerURI.getPort());
         assertNotNull(connection);
         assertSame(connection, connection.openFuture().get(5, TimeUnit.SECONDS));
 
-        Sender sender = connection.createSender(getTestName()).openFuture().get(5, TimeUnit.SECONDS);
+        Sender sender = connection.openSender(getTestName()).openFuture().get(5, TimeUnit.SECONDS);
         assertNotNull(sender);
 
         Message<String> message = Message.create("Hello World").setDurable(durable);

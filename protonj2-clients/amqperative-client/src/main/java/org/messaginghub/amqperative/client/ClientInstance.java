@@ -49,26 +49,27 @@ public class ClientInstance implements Client {
     }
 
     @Override
-    public Connection createConnection(String hostname, int port) {
-        return new ClientConnection(this, new ClientConnectionOptions(hostname, port)).connect();
+    public Connection connect(String hostname, int port) {
+        return new ClientConnection(this, new ClientConnectionOptions(hostname, port)).connect().open();
     }
 
     @Override
-    public Connection createConnection(String hostname, int port, ConnectionOptions options) {
-        return new ClientConnection(this, new ClientConnectionOptions(hostname, port, options)).connect();
+    public Connection connect(String hostname, int port, ConnectionOptions options) {
+        return new ClientConnection(this, new ClientConnectionOptions(hostname, port, options)).connect().open();
     }
 
     @Override
-    public Connection createConnection(URI remoteUri) {
-        return createConnection(remoteUri, null);
+    public Connection connect(URI remoteUri) {
+        return connect(remoteUri, null);
     }
 
     @Override
-    public Connection createConnection(URI remoteUri, ConnectionOptions options) {
+    public Connection connect(URI remoteUri, ConnectionOptions options) {
+        // TODO - Preserve original URI in connection options for later use.
         // TODO - Build ClientConnectionOptions from the given URI and configure from the provided options.
         ClientConnectionOptions clientOptions = new ClientConnectionOptions(remoteUri.getHost(), remoteUri.getPort(), options);
 
-        return new ClientConnection(this, clientOptions).connect();
+        return new ClientConnection(this, clientOptions).connect().open();
     }
 
     @Override

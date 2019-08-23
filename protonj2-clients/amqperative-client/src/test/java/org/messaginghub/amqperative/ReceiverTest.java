@@ -29,11 +29,11 @@ public class ReceiverTest {
             LOG.info("Connect test started, peer listening on: {}", remoteURI);
 
             Client container = Client.create();
-            Connection connection = container.createConnection(remoteURI.getHost(), remoteURI.getPort());
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
 
             connection.openFuture().get(10, TimeUnit.SECONDS);
 
-            Session session = connection.createSession();
+            Session session = connection.openSession();
             session.openFuture().get(10, TimeUnit.SECONDS);
 
             Receiver receiver = session.createReceiver("test-queue");

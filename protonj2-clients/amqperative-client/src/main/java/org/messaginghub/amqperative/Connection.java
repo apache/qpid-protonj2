@@ -36,7 +36,7 @@ public interface Connection {
      *
      * @throws ClientException if an internal error occurs.
      */
-    Receiver createReceiver(String address) throws ClientException;
+    Receiver openReceiver(String address) throws ClientException;
 
     /**
      * Creates a receiver used to consumer messages from the given node address.
@@ -50,7 +50,18 @@ public interface Connection {
      *
      * @throws ClientException if an internal error occurs.
      */
-    Receiver createReceiver(String address, ReceiverOptions receiverOptions) throws ClientException;
+    Receiver openReceiver(String address, ReceiverOptions receiverOptions) throws ClientException;
+
+    /**
+     * Returns the default anonymous sender used by this {@link Connection} for {@link #send(Message)}
+     * calls.  If the sender has not been created yet this call will initiate its creation and open with
+     * the remote peer.
+     *
+     * @return the sender.
+     *
+     * @throws ClientException if an internal error occurs.
+     */
+    Sender defaultSender() throws ClientException;
 
     /**
      * Creates a sender used to send messages to the given node address.
@@ -62,7 +73,7 @@ public interface Connection {
      *
      * @throws ClientException if an internal error occurs.
      */
-    Sender createSender(String address) throws ClientException;
+    Sender openSender(String address) throws ClientException;
 
     /**
      * Creates a sender used to send messages to the given node address.
@@ -76,7 +87,7 @@ public interface Connection {
      *
      * @throws ClientException if an internal error occurs.
      */
-    Sender createSender(String address, SenderOptions senderOptions) throws ClientException;
+    Sender openSender(String address, SenderOptions senderOptions) throws ClientException;
 
     /**
      * Creates a sender that is established to the 'anonymous relay' and as such each
@@ -87,7 +98,7 @@ public interface Connection {
      *
      * @throws ClientException if an internal error occurs.
      */
-    Sender createAnonymousSender() throws ClientException;
+    Sender openAnonymousSender() throws ClientException;
 
     /**
      * Creates a sender that is established to the 'anonymous relay' and as such each
@@ -101,7 +112,17 @@ public interface Connection {
      *
      * @throws ClientException if an internal error occurs.
      */
-    Sender createAnonymousSender(SenderOptions senderOptions) throws ClientException;
+    Sender openAnonymousSender(SenderOptions senderOptions) throws ClientException;
+
+    /**
+     * Returns the default {@link Session} instance that is used by this Connection to
+     * create the default anonymous connection {@link Sender}.
+     *
+     * @return a new {@link Session} instance.
+     *
+     * @throws ClientException if an internal error occurs.
+     */
+    Session defaultSession() throws ClientException;
 
     /**
      * Creates a new {@link Session} instance for use by the client application.
@@ -110,7 +131,7 @@ public interface Connection {
      *
      * @throws ClientException if an internal error occurs.
      */
-    Session createSession() throws ClientException;
+    Session openSession() throws ClientException;
 
     /**
      * Creates a new {@link Session} instance for use by the client application.
@@ -122,7 +143,7 @@ public interface Connection {
      *
      * @throws ClientException if an internal error occurs.
      */
-    Session createSession(SessionOptions options) throws ClientException;
+    Session openSession(SessionOptions options) throws ClientException;
 
     /**
      * Sends the given {@link Message} using the internal connection sender.
@@ -139,6 +160,4 @@ public interface Connection {
      */
     Tracker send(Message<?> message) throws ClientException;
 
-    // TODO:
-    // Error state?
 }

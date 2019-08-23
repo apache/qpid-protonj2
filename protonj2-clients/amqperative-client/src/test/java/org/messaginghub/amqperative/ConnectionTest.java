@@ -54,7 +54,7 @@ public class ConnectionTest {
             LOG.info("Connect test started, peer listening on: {}", remoteURI);
 
             Client container = Client.create();
-            Connection connection = container.createConnection(remoteURI.getHost(), remoteURI.getPort());
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
 
             connection.openFuture().get(10, TimeUnit.SECONDS);
             connection.close().get(10, TimeUnit.SECONDS);
@@ -81,7 +81,7 @@ public class ConnectionTest {
             LOG.info("Connect test started, peer listening on: {}", remoteURI);
 
             Client container = Client.create();
-            Connection connection = container.createConnection(remoteURI.getHost(), remoteURI.getPort());
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
             peer.close();
@@ -110,7 +110,7 @@ public class ConnectionTest {
         Client container = Client.create();
         System.out.println("Created container");
 
-        Connection conn = container.createConnection("localhost", 5672);
+        Connection conn = container.connect("localhost", 5672);
         System.out.println("Connection creation started (or already failed), waiting.");
 
         int timeout = 300;
@@ -119,10 +119,10 @@ public class ConnectionTest {
 
         ReceiverOptions receiverOptions = new ReceiverOptions().setCreditWindow(10);
 
-        Receiver receiver = conn.createReceiver("queue", receiverOptions);
+        Receiver receiver = conn.openReceiver("queue", receiverOptions);
         receiver.openFuture().get(timeout, TimeUnit.SECONDS);
 
-        Sender sender = conn.createSender("queue");
+        Sender sender = conn.openSender("queue");
 
         sender.openFuture().get(timeout, TimeUnit.SECONDS);
         System.out.println("Sender created successfully");
