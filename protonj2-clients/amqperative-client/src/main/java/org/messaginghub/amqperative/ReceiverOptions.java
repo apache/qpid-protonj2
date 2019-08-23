@@ -32,7 +32,9 @@ public class ReceiverOptions {
 
     private int creditWindow = -1;
     private String linkName;
-    private boolean dynamic;
+
+    private final SourceOptions source = new SourceOptions();
+    private final TargetOptions target = new TargetOptions();
 
     private String[] offeredCapabilities;
     private String[] desiredCapabilities;
@@ -54,15 +56,6 @@ public class ReceiverOptions {
 
     public String getLinkName() {
         return linkName;
-    }
-
-    public ReceiverOptions setDynamic(boolean dynamic) {
-        this.dynamic = dynamic;
-        return this;
-    }
-
-    public boolean isDynamic() {
-        return dynamic;
     }
 
     public int getCreditWindow() {
@@ -149,6 +142,20 @@ public class ReceiverOptions {
     }
 
     /**
+     * @return the source
+     */
+    public SourceOptions getSource() {
+        return source;
+    }
+
+    /**
+     * @return the target
+     */
+    public TargetOptions getTarget() {
+        return target;
+    }
+
+    /**
      * Copy all options from this {@link ReceiverOptions} instance into the instance
      * provided.
      *
@@ -159,7 +166,6 @@ public class ReceiverOptions {
      */
     protected ReceiverOptions copyInto(ReceiverOptions other) {
         other.setCreditWindow(creditWindow);
-        other.setDynamic(dynamic);
         other.setLinkName(linkName);
         other.setCloseTimeout(closeTimeout);
         other.setConnectTimeout(connectTimeout);
@@ -175,6 +181,9 @@ public class ReceiverOptions {
         if (properties != null) {
             other.setProperties(new HashMap<>(properties));
         }
+
+        source.copyInto(other.getSource());
+        target.copyInto(other.getTarget());
 
         return this;
     }

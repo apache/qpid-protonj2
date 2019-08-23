@@ -31,8 +31,10 @@ public class SenderOptions {
     private long closeTimeout = ConnectionOptions.DEFAULT_CLOSE_TIMEOUT;
 
     private String linkName;
-    private boolean dynamic;
     private boolean autoSettle;
+
+    private final SourceOptions source = new SourceOptions();
+    private final TargetOptions target = new TargetOptions();
 
     private String[] offeredCapabilities;
     private String[] desiredCapabilities;
@@ -54,15 +56,6 @@ public class SenderOptions {
 
     public String getLinkName() {
         return linkName;
-    }
-
-    public SenderOptions setDynamic(boolean dynamic) {
-        this.dynamic = dynamic;
-        return this;
-    }
-
-    public boolean isDynamic() {
-        return dynamic;
     }
 
     /**
@@ -167,6 +160,20 @@ public class SenderOptions {
     }
 
     /**
+     * @return the source
+     */
+    public SourceOptions getSource() {
+        return source;
+    }
+
+    /**
+     * @return the target
+     */
+    public TargetOptions getTarget() {
+        return target;
+    }
+
+    /**
      * Copy all options from this {@link SenderOptions} instance into the instance
      * provided.
      *
@@ -176,8 +183,8 @@ public class SenderOptions {
      * @return this options class for chaining.
      */
     protected SenderOptions copyInto(SenderOptions other) {
+        // TODO - Copy source and target options
         other.setAutoSettle(autoSettle);
-        other.setDynamic(dynamic);
         other.setLinkName(linkName);
         other.setCloseTimeout(closeTimeout);
         other.setConnectTimeout(connectTimeout);

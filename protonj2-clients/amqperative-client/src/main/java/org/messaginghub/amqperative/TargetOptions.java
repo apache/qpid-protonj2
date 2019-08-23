@@ -16,19 +16,13 @@
  */
 package org.messaginghub.amqperative;
 
-import java.util.Map;
-
 /**
  * Options type that carries configuration for link Target types.
  */
-public class TargetOptions {
+public class TargetOptions extends TerminusOptions {
 
-    private String address;
-    private String durabilityMode;  // TODO - type
-    private boolean dynamic;
-    private Map<String, Object> dynamicNodeProperties;
-    private long timeout;
-    private String expiryPolicy; // TODO - type
-    private String[] capabilities;
-
+    public TargetOptions copyInto(TargetOptions other) {
+        super.copyInto(other);
+        return this;
+    }
 }

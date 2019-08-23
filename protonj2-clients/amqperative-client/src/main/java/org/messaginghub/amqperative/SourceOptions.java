@@ -16,21 +16,60 @@
  */
 package org.messaginghub.amqperative;
 
+import java.util.HashMap;
 import java.util.Map;
 
 /**
  * Options type that carries configuration for link Source types.
  */
-public class SourceOptions {
+public class SourceOptions extends TerminusOptions {
 
-    private String address;
-    private String durabilityMode;  // TODO - type
-    private boolean dynamic;
-    private Map<String, Object> dynamicNodeProperties;
-    private long timeout;
-    private String expiryPolicy; // TODO - type
-    private String[] capabilities;
-    private String distributionMode;  // TODO - type
+    /**
+     * Control whether messages are browsed or consumed.
+     */
+    public enum DistributionMode {
+        COPY,
+        MOVE
+    }
+
+    private DistributionMode distributionMode;
     private Map<String, String> filters;
 
+    public SourceOptions copyInto(SourceOptions other) {
+        super.copyInto(other);
+        other.setDistributionMode(distributionMode);
+        if (filters != null) {
+            other.setFilters(new HashMap<>(filters));
+        }
+
+        return this;
+    }
+
+    /**
+     * @return the distributionMode
+     */
+    public DistributionMode getDistributionMode() {
+        return distributionMode;
+    }
+
+    /**
+     * @param distributionMode the distributionMode to set
+     */
+    public void setDistributionMode(DistributionMode distributionMode) {
+        this.distributionMode = distributionMode;
+    }
+
+    /**
+     * @return the filters
+     */
+    public Map<String, String> getFilters() {
+        return filters;
+    }
+
+    /**
+     * @param filters the filters to set
+     */
+    public void setFilters(Map<String, String> filters) {
+        this.filters = filters;
+    }
 }
