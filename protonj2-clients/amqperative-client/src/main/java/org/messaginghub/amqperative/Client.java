@@ -19,7 +19,7 @@ package org.messaginghub.amqperative;
 import java.net.URI;
 import java.util.Objects;
 
-import org.messaginghub.amqperative.client.ClientContainerOptions;
+import org.messaginghub.amqperative.client.ClientInstanceOptions;
 import org.messaginghub.amqperative.client.ClientInstance;
 
 /**
@@ -28,7 +28,7 @@ import org.messaginghub.amqperative.client.ClientInstance;
 public interface Client {
 
     static Client create() {
-        return create(new ClientContainerOptions());
+        return create(new ClientInstanceOptions());
     }
 
     static Client create(ClientOptions options) {

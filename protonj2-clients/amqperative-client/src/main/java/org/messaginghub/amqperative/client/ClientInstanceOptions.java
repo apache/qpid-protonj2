@@ -17,19 +17,27 @@
 package org.messaginghub.amqperative.client;
 
 import org.messaginghub.amqperative.ClientOptions;
+import org.messaginghub.amqperative.util.IdGenerator;
 
 /**
  * Container options used for default
  */
-public final class ClientContainerOptions extends ClientOptions {
+public final class ClientInstanceOptions extends ClientOptions {
 
-    public ClientContainerOptions() {
+    private final IdGenerator CONTAINER_ID_GENERATOR = new IdGenerator();
+
+    public ClientInstanceOptions() {
         super();
+        setContainerId(CONTAINER_ID_GENERATOR.generateId());
     }
 
-    public ClientContainerOptions(ClientOptions options) {
+    public ClientInstanceOptions(ClientOptions options) {
         if (options != null) {
             options.copyInto(this);
+        }
+
+        if (getContainerId() == null || getContainerId().isEmpty()) {
+            setContainerId(CONTAINER_ID_GENERATOR.generateId());
         }
     }
 }

@@ -23,9 +23,9 @@ import java.util.List;
 import java.util.Map;
 
 import org.messaginghub.amqperative.Client;
+import org.messaginghub.amqperative.ClientOptions;
 import org.messaginghub.amqperative.Connection;
 import org.messaginghub.amqperative.ConnectionOptions;
-import org.messaginghub.amqperative.ClientOptions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,7 +37,7 @@ public class ClientInstance implements Client {
 
     private static final Logger LOG = LoggerFactory.getLogger(ClientInstance.class);
 
-    private final ClientContainerOptions options;
+    private final ClientInstanceOptions options;
     private final Map<String, ClientConnection> connections = new HashMap<>();
 
     /**
@@ -45,7 +45,7 @@ public class ClientInstance implements Client {
      *      The container options to use to configure this container instance.
      */
     public ClientInstance(ClientOptions options) {
-        this.options = new ClientContainerOptions(options);
+        this.options = new ClientInstanceOptions(options);
     }
 
     @Override
