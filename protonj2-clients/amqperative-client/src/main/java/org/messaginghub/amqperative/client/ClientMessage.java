@@ -17,9 +17,11 @@
 package org.messaginghub.amqperative.client;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.function.Supplier;
 
 import org.apache.qpid.proton4j.amqp.Binary;
+import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.messaging.ApplicationProperties;
 import org.apache.qpid.proton4j.amqp.messaging.DeliveryAnnotations;
 import org.apache.qpid.proton4j.amqp.messaging.Footer;
@@ -216,7 +218,7 @@ public class ClientMessage<E> implements Message<E> {
     }
 
     @Override
-    public Message<?> setAbsoluteExpiryTime(long expiryTime) {
+    public Message<E> setAbsoluteExpiryTime(long expiryTime) {
         lazyCreateProperties().setAbsoluteExpiryTime(expiryTime);
         return this;
     }
@@ -227,7 +229,7 @@ public class ClientMessage<E> implements Message<E> {
     }
 
     @Override
-    public Message<?> setCreationTime(long createTime) {
+    public Message<E> setCreationTime(long createTime) {
         lazyCreateProperties().setCreationTime(createTime);
         return this;
     }
@@ -238,7 +240,7 @@ public class ClientMessage<E> implements Message<E> {
     }
 
     @Override
-    public Message<?> setGroupId(String groupId) {
+    public Message<E> setGroupId(String groupId) {
         lazyCreateProperties().setGroupId(groupId);
         return this;
     }
@@ -249,7 +251,7 @@ public class ClientMessage<E> implements Message<E> {
     }
 
     @Override
-    public Message<?> setGroupSequence(int groupSequence) {
+    public Message<E> setGroupSequence(int groupSequence) {
         lazyCreateProperties().setGroupSequence(groupSequence);
         return this;
     }
@@ -260,8 +262,72 @@ public class ClientMessage<E> implements Message<E> {
     }
 
     @Override
-    public Message<?> setReplyToGroupId(String replyToGroupId) {
+    public Message<E> setReplyToGroupId(String replyToGroupId) {
         lazyCreateProperties().setReplyToGroupId(replyToGroupId);
+        return this;
+    }
+
+    //----- Delivery Annotations Access
+
+    public Object getDeliveryAnnotations(String key) {
+        Object value = null;
+        if (deliveryAnnotations != null) {
+            value = deliveryAnnotations.getValue().get(Symbol.valueOf(key));
+        }
+
+        return value;
+    }
+
+    public ClientMessage<E> setDeliveryAnnotation(String key, Object value) {
+        lazyCreateDeliveryAnnotations().getValue().put(Symbol.valueOf(key),value);
+        return this;
+    }
+
+    //----- Message Annotations Access
+
+    public Object getMessageAnnotation(String key) {
+        Object value = null;
+        if (messageAnnotations != null) {
+            value = messageAnnotations.getValue().get(Symbol.valueOf(key));
+        }
+
+        return value;
+    }
+
+    public ClientMessage<E> setMessageAnnotation(String key, Object value) {
+        lazyCreateMessageAnnotations().getValue().put(Symbol.valueOf(key),value);
+        return this;
+    }
+
+    //----- Application Properties Access
+
+    public Object getApplicationProperty(String key) {
+        Object value = null;
+        if (applicationProperties != null) {
+            value = applicationProperties.getValue().get(key);
+        }
+
+        return value;
+    }
+
+    public ClientMessage<E> setApplicationProperty(String key, Object value) {
+        lazyCreateApplicationProperties().getValue().put(key,value);
+        return this;
+    }
+
+    //----- Footer Access
+
+    public Object getFooter(String key) {
+        Object value = null;
+        if (footer != null) {
+            value = footer.getValue().get(Symbol.valueOf(key));
+        }
+
+        return value;
+    }
+
+    public ClientMessage<E> setFooter(String key, Object value) {
+        lazyCreateFooter().getValue().put(Symbol.valueOf(key),value);
         return this;
     }
 
@@ -353,5 +419,37 @@ public class ClientMessage<E> implements Message<E> {
         }
 
         return properties;
+    }
+
+    private ApplicationProperties lazyCreateApplicationProperties() {
+        if (applicationProperties == null) {
+            applicationProperties = new ApplicationProperties(new HashMap<>());
+        }
+
+        return applicationProperties;
+    }
+
+    private MessageAnnotations lazyCreateMessageAnnotations() {
+        if (messageAnnotations == null) {
+            messageAnnotations = new MessageAnnotations(new HashMap<>());
+        }
+
+        return messageAnnotations;
+    }
+
+    private DeliveryAnnotations lazyCreateDeliveryAnnotations() {
+        if (deliveryAnnotations == null) {
+            deliveryAnnotations = new DeliveryAnnotations(new HashMap<>());
+        }
+
+        return deliveryAnnotations;
+    }
+
+    private Footer lazyCreateFooter() {
+        if (footer == null) {
+            footer = new Footer(new HashMap<>());
+        }
+
+        return footer;
     }
 }
