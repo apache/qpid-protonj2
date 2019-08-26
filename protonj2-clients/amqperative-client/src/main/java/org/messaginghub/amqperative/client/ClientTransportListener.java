@@ -59,7 +59,7 @@ public class ClientTransportListener implements TransportListener {
             // TODO - How do we handle case of not all data read ?
         } catch (EngineStateException e) {
             LOG.warn("Caught problem during incoming data processing: {}", e.getMessage(), e);
-            connection.handleClientException(ClientExceptionSupport.createOrPassthroughFatal(e));
+            connection.handleClientIOException(ClientExceptionSupport.createOrPassthroughFatal(e));
         }
     }
 
@@ -71,7 +71,7 @@ public class ClientTransportListener implements TransportListener {
                 if (!connection.isClosed()) {
                     // We can't send any more output, so close the transport
                     engine.shutdown();
-                    connection.handleClientException(new ClientFailedException("Transport connection remotely closed."));
+                    connection.handleClientIOException(new ClientFailedException("Transport connection remotely closed."));
                 }
             });
         }
@@ -85,7 +85,7 @@ public class ClientTransportListener implements TransportListener {
                 if (!connection.isClosed()) {
                     // We can't send any more output, so close the transport
                     engine.shutdown();
-                    connection.handleClientException(ClientExceptionSupport.createOrPassthroughFatal(error));
+                    connection.handleClientIOException(ClientExceptionSupport.createOrPassthroughFatal(error));
                 }
             });
         }

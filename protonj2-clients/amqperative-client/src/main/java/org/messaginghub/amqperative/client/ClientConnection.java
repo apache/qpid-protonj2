@@ -17,7 +17,9 @@
 package org.messaginghub.amqperative.client;
 
 import java.io.IOException;
+import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
@@ -69,6 +71,7 @@ public class ClientConnection implements Connection {
     private final ClientConnectionOptions options;
     private final ClientFutureFactory futureFactoy;
 
+    private final Map<ClientFuture<?>, ClientFuture<?>> requests = new ConcurrentHashMap<>();
     private final ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
     private org.apache.qpid.proton4j.engine.Connection protonConnection;
     private ClientSession connectionSession;
@@ -144,10 +147,6 @@ public class ClientConnection implements Connection {
         ClientFuture<Session> createSession = getFutureFactory().createFuture();
 
         executor.execute(() -> {
-            // TODO - This relies on protonConnection having been created by an open already
-            //        if connect is not a requirement of create connection then we need a
-            //        lazy connect style call that ensures the engine is created and started
-            //        so that the proton connection exists.
             ClientSession session = new ClientSession(
                 options, ClientConnection.this, protonConnection.session());
             createSession.complete(session.open());
@@ -288,7 +287,8 @@ public class ClientConnection implements Connection {
                 LOG.trace("close of transport reported error", t);
             }
 
-            // TODO - Set closed and error state due to failed connect
+            CLOSE_STATE_UPDATER.set(this, 1);
+            FAILURE_CAUSE_UPDATER.compareAndSet(this, null, ClientExceptionSupport.createOrPassthroughFatal(e));
         }
 
         return this;
@@ -330,9 +330,7 @@ public class ClientConnection implements Connection {
         return getId() + ":" + (++sessionCounter);
     }
 
-    void handleClientException(ClientIOException error) {
-        // TODO - Implement handling of critical exception from IO etc.
-        //        maybe rename to handleFatalException or something
+    void handleClientIOException(ClientIOException error) {
         FAILURE_CAUSE_UPDATER.compareAndSet(this, null, error);
         try {
             executor.execute(() -> {
@@ -347,6 +345,8 @@ public class ClientConnection implements Connection {
     }
 
     <T> T request(ClientFuture<T> request, long timeout, TimeUnit units) throws ClientException {
+        requests.put(request, request);
+
         try {
             if (timeout > 0) {
                 return request.get(timeout, units);
@@ -356,7 +356,7 @@ public class ClientConnection implements Connection {
         } catch (Throwable error) {
             throw ClientExceptionSupport.createNonFatalOrPassthrough(error);
         } finally {
-            // TODO - Remove request from request map
+            requests.remove(request);
         }
     }
 
