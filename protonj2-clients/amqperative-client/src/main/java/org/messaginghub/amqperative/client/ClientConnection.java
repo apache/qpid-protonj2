@@ -63,7 +63,7 @@ public class ClientConnection implements Connection {
     private static final AtomicLongFieldUpdater<ClientConnection> CLOSE_STATE_UPDATER =
         AtomicLongFieldUpdater.newUpdater(ClientConnection.class, "closeState");
     private static final AtomicReferenceFieldUpdater<ClientConnection, ClientException> FAILURE_CAUSE_UPDATER =
-            AtomicReferenceFieldUpdater.newUpdater(ClientConnection.class, ClientException.class, "failureCause");
+        AtomicReferenceFieldUpdater.newUpdater(ClientConnection.class, ClientException.class, "failureCause");
 
     private final ClientInstance container;
     private final ClientConnectionOptions options;
@@ -77,11 +77,12 @@ public class ClientConnection implements Connection {
 
     private ClientFuture<Connection> openFuture;
     private ClientFuture<Connection> closeFuture;
-    private final AtomicBoolean remoteOpened = new AtomicBoolean();
-    private final AtomicBoolean remoteClosed = new AtomicBoolean();
+    private final AtomicBoolean remoteOpened = new AtomicBoolean();  // TODO - Updater?
+    private final AtomicBoolean remoteClosed = new AtomicBoolean();  // TODO - Updater?
     private volatile long closeState;
+    private volatile int sessionCounter;
     private volatile ClientException failureCause;
-    private String connectionId;
+    private final String connectionId;
 
     private ScheduledExecutorService executor;
 
@@ -97,6 +98,7 @@ public class ClientConnection implements Connection {
     public ClientConnection(ClientInstance container, ClientConnectionOptions options) {
         this.container = container;
         this.options = options;
+        this.connectionId = container.nextConnectionId();
         this.futureFactoy = ClientFutureFactory.create(options.getFutureType());
 
         ThreadFactory transportThreadFactory = new ClientThreadFactory(
@@ -109,7 +111,6 @@ public class ClientConnection implements Connection {
 
         openFuture = futureFactoy.createFuture();
         closeFuture = futureFactoy.createFuture();
-        connectionId = container.getClientUniqueId();  // TODO - Sequence number of connection
     }
 
     @Override
@@ -134,7 +135,7 @@ public class ClientConnection implements Connection {
 
     @Override
     public Session openSession() throws ClientException {
-        return openSession(new ClientSessionOptions());
+        return openSession(new SessionOptions());
     }
 
     @Override
@@ -148,7 +149,7 @@ public class ClientConnection implements Connection {
             //        lazy connect style call that ensures the engine is created and started
             //        so that the proton connection exists.
             ClientSession session = new ClientSession(
-                new ClientSessionOptions(), ClientConnection.this, protonConnection.session());
+                options, ClientConnection.this, protonConnection.session());
             createSession.complete(session.open());
         });
 
@@ -325,6 +326,10 @@ public class ClientConnection implements Connection {
         return failureCause;
     }
 
+    String nextSessionId() {
+        return getId() + ":" + (++sessionCounter);
+    }
+
     void handleClientException(ClientIOException error) {
         // TODO - Implement handling of critical exception from IO etc.
         //        maybe rename to handleFatalException or something
@@ -360,7 +365,7 @@ public class ClientConnection implements Connection {
     private ClientSession lazyCreateConnectionSession() {
         if (connectionSession == null) {
             connectionSession = new ClientSession(
-                new ClientSessionOptions(), this, protonConnection.session());
+                new SessionOptions(), this, protonConnection.session());
             connectionSession.open();
         }
 

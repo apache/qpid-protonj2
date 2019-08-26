@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.messaginghub.amqperative.Client;
 import org.messaginghub.amqperative.ClientOptions;
@@ -37,6 +38,7 @@ public class ClientInstance implements Client {
 
     private static final Logger LOG = LoggerFactory.getLogger(ClientInstance.class);
 
+    private final AtomicInteger CONNECTION_COUNTER = new AtomicInteger();
     private final ClientInstanceOptions options;
     private final Map<String, ClientConnection> connections = new HashMap<>();
 
@@ -67,7 +69,8 @@ public class ClientInstance implements Client {
     public Connection connect(URI remoteUri, ConnectionOptions options) {
         // TODO - Preserve original URI in connection options for later use.
         // TODO - Build ClientConnectionOptions from the given URI and configure from the provided options.
-        ClientConnectionOptions clientOptions = new ClientConnectionOptions(remoteUri.getHost(), remoteUri.getPort(), options);
+        ClientConnectionOptions clientOptions =
+            new ClientConnectionOptions(remoteUri.getHost(), remoteUri.getPort(), options);
 
         return new ClientConnection(this, clientOptions).connect().open();
     }
@@ -98,6 +101,10 @@ public class ClientInstance implements Client {
     }
 
     //----- Internal API
+
+    String nextConnectionId() {
+        return getClientUniqueId() + ":" + CONNECTION_COUNTER.incrementAndGet();
+    }
 
     void addConnection(ClientConnection connection) {
         synchronized (connections) {

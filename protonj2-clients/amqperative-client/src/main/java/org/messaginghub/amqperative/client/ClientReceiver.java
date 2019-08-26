@@ -47,13 +47,14 @@ public class ClientReceiver implements Receiver {
     private final ScheduledExecutorService executor;
     private final AtomicBoolean closed = new AtomicBoolean();
     private final AtomicReference<Throwable> failureCause = new AtomicReference<>();
-
+    private final String receiverId;
     private final FifoMessageQueue messageQueue;
 
     public ClientReceiver(ReceiverOptions options, ClientSession session, org.apache.qpid.proton4j.engine.Receiver receiver, String address) {
         this.options = new ClientReceiverOptions(options);
         this.session = session;
         this.receiver = receiver;
+        this.receiverId = session.nextReceiverId();
         this.executor = session.getScheduler();
         this.openFuture = session.getFutureFactory().createFuture();
         this.closeFuture = session.getFutureFactory().createFuture();
@@ -218,6 +219,10 @@ public class ClientReceiver implements Receiver {
         }
 
         return failureCause.get();
+    }
+
+    String getId() {
+        return receiverId;
     }
 
     //----- Private implementation details

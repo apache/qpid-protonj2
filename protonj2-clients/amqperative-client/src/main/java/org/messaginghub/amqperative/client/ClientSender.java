@@ -53,11 +53,13 @@ public class ClientSender implements Sender {
     private final ScheduledExecutorService executor;
     private final AtomicBoolean closed = new AtomicBoolean();
     private final AtomicReference<Throwable> failureCause = new AtomicReference<>();
+    private final String senderId;
 
     public ClientSender(SenderOptions options, ClientSession session, org.apache.qpid.proton4j.engine.Sender sender, String address) {
         this.options = new ClientSenderOptions(options);
         this.session = session;
         this.sender = sender;
+        this.senderId = session.nextSenderId();
         this.executor = session.getScheduler();
         this.openFuture = session.getFutureFactory().createFuture();
         this.closeFuture = session.getFutureFactory().createFuture();
@@ -193,6 +195,10 @@ public class ClientSender implements Sender {
         }
 
         return failureCause.get();
+    }
+
+    String getId() {
+        return senderId;
     }
 
     //----- Send Result Tracker

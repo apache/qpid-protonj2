@@ -25,6 +25,8 @@ import java.util.Map;
  */
 public class SessionOptions {
 
+    static final SessionOptions DEFAULT = new SessionOptions();
+
     private long sendTimeout = ConnectionOptions.DEFAULT_SEND_TIMEOUT;
     private long requestTimeout = ConnectionOptions.DEFAULT_REQUEST_TIMEOUT;
     private long connectTimeout = ConnectionOptions.DEFAULT_CONNECT_TIMEOUT;

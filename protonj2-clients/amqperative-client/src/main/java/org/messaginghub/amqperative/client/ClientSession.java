@@ -34,6 +34,7 @@ import org.messaginghub.amqperative.ReceiverOptions;
 import org.messaginghub.amqperative.Sender;
 import org.messaginghub.amqperative.SenderOptions;
 import org.messaginghub.amqperative.Session;
+import org.messaginghub.amqperative.SessionOptions;
 import org.messaginghub.amqperative.client.exceptions.ClientExceptionSupport;
 import org.messaginghub.amqperative.futures.ClientFuture;
 import org.messaginghub.amqperative.futures.ClientFutureFactory;
@@ -56,7 +57,9 @@ public class ClientSession implements Session {
     private final org.apache.qpid.proton4j.engine.Session session;
     private final ScheduledExecutorService serializer;
     private final AtomicBoolean closed = new AtomicBoolean();
-    private final String sessionId = UUID.randomUUID().toString();  // TODO - add trailing numeric session count
+    private final String sessionId;
+    private volatile int senderCounter;
+    private volatile int receiverCounter;
 
     private volatile ThreadPoolExecutor deliveryExecutor;
     private final AtomicReference<Thread> deliveryThread = new AtomicReference<Thread>();
@@ -66,10 +69,11 @@ public class ClientSession implements Session {
     private final List<ClientSender> senders = new ArrayList<>();
     private final List<ClientReceiver> receivers = new ArrayList<>();
 
-    public ClientSession(ClientSessionOptions options, ClientConnection connection, org.apache.qpid.proton4j.engine.Session session) {
+    public ClientSession(SessionOptions options, ClientConnection connection, org.apache.qpid.proton4j.engine.Session session) {
         this.options = new ClientSessionOptions(options);
         this.connection = connection;
         this.session = session;
+        this.sessionId = connection.nextSessionId();
         this.serializer = connection.getScheduler();
         this.openFuture = connection.getFutureFactory().createFuture();
         this.closeFuture = connection.getFutureFactory().createFuture();
@@ -231,6 +235,14 @@ public class ClientSession implements Session {
 
     Throwable getFailureCause() {
         return failureCause.get();
+    }
+
+    String nextReceiverId() {
+        return sessionId + ":" + (++receiverCounter);
+    }
+
+    String nextSenderId() {
+        return sessionId + ":" + (++senderCounter);
     }
 
     //----- Private implementation methods
