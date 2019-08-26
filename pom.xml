@@ -37,10 +37,10 @@
     <!-- Test dependency versions -->
     <junit-version>4.12</junit-version>
     <mockito-version>3.0.0</mockito-version>
-    <proton-version>0.33.1</proton-version>
+    <proton-version>0.33.2</proton-version>
     <slf4j-version>1.7.25</slf4j-version>
     <hamcrest-version>2.1</hamcrest-version>
-    <netty-version>4.1.38.Final</netty-version>
+    <netty-version>4.1.39.Final</netty-version>
 
     <!-- Plugin versions -->
     <maven-bundle-plugin-version>3.5.1</maven-bundle-plugin-version>
