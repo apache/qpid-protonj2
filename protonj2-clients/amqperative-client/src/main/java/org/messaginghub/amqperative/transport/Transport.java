@@ -24,6 +24,8 @@ import java.util.concurrent.ThreadFactory;
 
 import javax.net.ssl.SSLContext;
 
+import org.messaginghub.amqperative.TransportOptions;
+
 import io.netty.buffer.ByteBuf;
 
 /**

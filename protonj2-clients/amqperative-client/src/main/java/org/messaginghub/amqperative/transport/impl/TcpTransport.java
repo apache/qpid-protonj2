@@ -27,9 +27,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.net.ssl.SSLContext;
 
+import org.messaginghub.amqperative.TransportOptions;
 import org.messaginghub.amqperative.transport.Transport;
 import org.messaginghub.amqperative.transport.TransportListener;
-import org.messaginghub.amqperative.transport.TransportOptions;
 import org.messaginghub.amqperative.transport.TransportSupport;
 import org.messaginghub.amqperative.util.IOExceptionSupport;
 import org.slf4j.Logger;

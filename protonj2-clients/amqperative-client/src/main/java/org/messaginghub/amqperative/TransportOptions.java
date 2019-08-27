@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.messaginghub.amqperative.transport;
+package org.messaginghub.amqperative;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -104,7 +104,7 @@ public class TransportOptions implements Cloneable {
 
     @Override
     public TransportOptions clone() {
-        return copyOptions(new TransportOptions());
+        return copyInto(new TransportOptions());
     }
 
     /**
@@ -244,14 +244,14 @@ public class TransportOptions implements Cloneable {
     }
 
     /**
-     * @return true if the netty epoll transport can be used if available on this platform.
+     * @return true if an epoll based transport can be used if available on this platform.
      */
     public boolean isUseEpoll() {
         return useEpoll;
     }
 
     /**
-     * Determines if the netty epoll transport can be used if available on this platform.
+     * Determines if the an epoll transport can be used if available on this platform.
      *
      * @param useEpoll
      * 		should use of available epoll transport be used.
@@ -261,14 +261,14 @@ public class TransportOptions implements Cloneable {
     }
 
     /**
-     * @return true if the netty kqueue transport can be used if available on this platform.
+     * @return true if the a kqueue transport can be used if available on this platform.
      */
     public boolean isUseKQueue() {
         return useKQueue;
     }
 
     /**
-     * Determines if the netty kqueue transport can be used if available on this platform.
+     * Determines if the a kqueue transport can be used if available on this platform.
      *
      * @param useKQueue
      * 		should use of available kqueue transport be used.
@@ -527,13 +527,12 @@ public class TransportOptions implements Cloneable {
         return sslContextOverride;
     }
 
-    // TODO - Expose headers ( ? getWSHeaders : getAuthHeaders ...
     public Map<String, String> getHttpHeaders() {
         return httpHeaders;
     }
 
     /**
-     * @return true if the netty OpenSSL support can be used if available.
+     * @return true if the an OpenSSL based transport can be used if available.
      */
     public boolean isUseOpenSSL() {
         return useOpenSSL;
@@ -547,38 +546,46 @@ public class TransportOptions implements Cloneable {
         this.useOpenSSL = useOpenSSL;
     }
 
-    protected TransportOptions copyOptions(TransportOptions copy) {
-        copy.setConnectTimeout(getConnectTimeout());
-        copy.setReceiveBufferSize(getReceiveBufferSize());
-        copy.setSendBufferSize(getSendBufferSize());
-        copy.setSoLinger(getSoLinger());
-        copy.setSoTimeout(getSoTimeout());
-        copy.setTcpKeepAlive(isTcpKeepAlive());
-        copy.setTcpNoDelay(isTcpNoDelay());
-        copy.setTrafficClass(getTrafficClass());
-        copy.setDefaultTcpPort(getDefaultTcpPort());
-        copy.setUseEpoll(isUseEpoll());
-        copy.setTraceBytes(isTraceBytes());
-        copy.setKeyStoreLocation(getKeyStoreLocation());
-        copy.setKeyStorePassword(getKeyStorePassword());
-        copy.setTrustStoreLocation(getTrustStoreLocation());
-        copy.setTrustStorePassword(getTrustStorePassword());
-        copy.setKeyStoreType(getKeyStoreType());
-        copy.setTrustStoreType(getTrustStoreType());
-        copy.setEnabledCipherSuites(getEnabledCipherSuites());
-        copy.setDisabledCipherSuites(getDisabledCipherSuites());
-        copy.setEnabledProtocols(getEnabledProtocols());
-        copy.setDisabledProtocols(getDisabledProtocols());
-        copy.setTrustAll(isTrustAll());
-        copy.setVerifyHost(isVerifyHost());
-        copy.setKeyAlias(getKeyAlias());
-        copy.setContextProtocol(getContextProtocol());
-        copy.setDefaultSslPort(getDefaultSslPort());
-        copy.setSslContextOverride(getSslContextOverride());
-        copy.setUseOpenSSL(isUseOpenSSL());
-        copy.setLocalAddress(getLocalAddress());
-        copy.setLocalPort(getLocalPort());
+    /**
+     * Copy all configuration into the given {@link TransportOptions} from this instance.
+     *
+     * @param other
+     * 		another {@link TransportOptions} instance that will receive the configuration from this instance.
+     *
+     * @return the options instance that was copied into.
+     */
+    public TransportOptions copyInto(TransportOptions other) {
+        other.setConnectTimeout(getConnectTimeout());
+        other.setReceiveBufferSize(getReceiveBufferSize());
+        other.setSendBufferSize(getSendBufferSize());
+        other.setSoLinger(getSoLinger());
+        other.setSoTimeout(getSoTimeout());
+        other.setTcpKeepAlive(isTcpKeepAlive());
+        other.setTcpNoDelay(isTcpNoDelay());
+        other.setTrafficClass(getTrafficClass());
+        other.setDefaultTcpPort(getDefaultTcpPort());
+        other.setUseEpoll(isUseEpoll());
+        other.setTraceBytes(isTraceBytes());
+        other.setKeyStoreLocation(getKeyStoreLocation());
+        other.setKeyStorePassword(getKeyStorePassword());
+        other.setTrustStoreLocation(getTrustStoreLocation());
+        other.setTrustStorePassword(getTrustStorePassword());
+        other.setKeyStoreType(getKeyStoreType());
+        other.setTrustStoreType(getTrustStoreType());
+        other.setEnabledCipherSuites(getEnabledCipherSuites());
+        other.setDisabledCipherSuites(getDisabledCipherSuites());
+        other.setEnabledProtocols(getEnabledProtocols());
+        other.setDisabledProtocols(getDisabledProtocols());
+        other.setTrustAll(isTrustAll());
+        other.setVerifyHost(isVerifyHost());
+        other.setKeyAlias(getKeyAlias());
+        other.setContextProtocol(getContextProtocol());
+        other.setDefaultSslPort(getDefaultSslPort());
+        other.setSslContextOverride(getSslContextOverride());
+        other.setUseOpenSSL(isUseOpenSSL());
+        other.setLocalAddress(getLocalAddress());
+        other.setLocalPort(getLocalPort());
 
-        return copy;
+        return other;
     }
 }

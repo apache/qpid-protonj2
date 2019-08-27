@@ -42,7 +42,7 @@ public class ConnectionOptions {
     private long idleTimeout = DEFAULT_IDLE_TIMEOUT;
     private long drainTimeout = DEFAULT_DRAIN_TIMEOUT;
 
-    private String futureType;
+    private final TransportOptions transport = new TransportOptions();
 
     private String user;
     private String password;
@@ -52,6 +52,7 @@ public class ConnectionOptions {
     private String[] desiredCapabilities;
     private Map<String, Object> properties;
     private String vhost;
+    private String futureType;
 
     public ConnectionOptions() {
     }
@@ -93,6 +94,8 @@ public class ConnectionOptions {
         if (properties != null) {
             other.setProperties(new HashMap<>(properties));
         }
+
+        transport.copyInto(other.getTransport());
 
         return this;
     }
@@ -312,5 +315,12 @@ public class ConnectionOptions {
      */
     public void setPassword(String password) {
         this.password = password;
+    }
+
+    /**
+     * @return the transport options that will be used for the {@link Connection}.
+     */
+    public TransportOptions getTransport() {
+        return transport;
     }
 }

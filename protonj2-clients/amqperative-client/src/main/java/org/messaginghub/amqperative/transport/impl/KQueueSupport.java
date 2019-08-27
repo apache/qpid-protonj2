@@ -18,7 +18,7 @@ package org.messaginghub.amqperative.transport.impl;
 
 import java.util.concurrent.ThreadFactory;
 
-import org.messaginghub.amqperative.transport.TransportOptions;
+import org.messaginghub.amqperative.TransportOptions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

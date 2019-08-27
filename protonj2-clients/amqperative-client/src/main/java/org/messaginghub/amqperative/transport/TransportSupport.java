@@ -36,6 +36,7 @@ import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509ExtendedKeyManager;
 
+import org.messaginghub.amqperative.TransportOptions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
