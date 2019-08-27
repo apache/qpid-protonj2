@@ -17,9 +17,14 @@
 package org.messaginghub.amqperative.client;
 
 import org.apache.qpid.proton4j.engine.Session;
+import org.messaginghub.amqperative.ReceiverOptions;
+import org.messaginghub.amqperative.SenderOptions;
 import org.messaginghub.amqperative.SessionOptions;
 
 public final class ClientSessionOptions extends SessionOptions {
+
+    private SenderOptions defaultSenderOptions;
+    private ReceiverOptions defaultReceivernOptions;
 
     public ClientSessionOptions() {
         super();
@@ -29,11 +34,59 @@ public final class ClientSessionOptions extends SessionOptions {
         super(options);
     }
 
+    //----- Internal support APIs
+
     Session configureSession(Session protonSession) {
         protonSession.setOfferedCapabilities(ClientConversionSupport.toSymbolArray(getOfferedCapabilities()));
         protonSession.setDesiredCapabilities(ClientConversionSupport.toSymbolArray(getDesiredCapabilities()));
         protonSession.setProperties(ClientConversionSupport.toSymbolKeyedMap(getProperties()));
 
         return protonSession;
+    }
+
+    /*
+     * Sender options used when none specified by the caller creating a new sender.
+     */
+    SenderOptions getDefaultSenderOptions() {
+        SenderOptions options = defaultSenderOptions;
+        if (options == null) {
+            synchronized (this) {
+                options = defaultSenderOptions;
+                if (options == null) {
+                    options = new SenderOptions();
+                    options.setConnectTimeout(getConnectTimeout());
+                    options.setCloseTimeout(getCloseTimeout());
+                    options.setRequestTimeout(getRequestTimeout());
+                    options.setSendTimeout(getSendTimeout());
+                }
+
+                defaultSenderOptions = options;
+            }
+        }
+
+        return options;
+    }
+
+    /*
+     * Receiver options used when none specified by the caller creating a new receiver.
+     */
+    ReceiverOptions getDefaultReceiverOptions() {
+        ReceiverOptions options = defaultReceivernOptions;
+        if (options == null) {
+            synchronized (this) {
+                options = defaultReceivernOptions;
+                if (options == null) {
+                    options = new ReceiverOptions();
+                    options.setConnectTimeout(getConnectTimeout());
+                    options.setCloseTimeout(getCloseTimeout());
+                    options.setRequestTimeout(getRequestTimeout());
+                    options.setSendTimeout(getSendTimeout());
+                }
+
+                defaultReceivernOptions = options;
+            }
+        }
+
+        return options;
     }
 }

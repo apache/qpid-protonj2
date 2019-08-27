@@ -36,7 +36,7 @@ public class ReceiverTest {
             Session session = connection.openSession();
             session.openFuture().get(10, TimeUnit.SECONDS);
 
-            Receiver receiver = session.createReceiver("test-queue");
+            Receiver receiver = session.openReceiver("test-queue");
             receiver.openFuture().get(10, TimeUnit.SECONDS);
             receiver.close().get(10, TimeUnit.SECONDS);
 

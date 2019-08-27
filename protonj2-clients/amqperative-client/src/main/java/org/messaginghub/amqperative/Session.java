@@ -39,7 +39,7 @@ public interface Session {
      *
      * @throws ClientException if an internal error occurs.
      */
-    Receiver createReceiver(String address) throws ClientException;
+    Receiver openReceiver(String address) throws ClientException;
 
     /**
      * Creates a receiver used to consumer messages from the given node address.
@@ -53,7 +53,7 @@ public interface Session {
      *
      * @throws ClientException if an internal error occurs.
      */
-    Receiver createReceiver(String address, ReceiverOptions receiverOptions) throws ClientException;
+    Receiver openReceiver(String address, ReceiverOptions receiverOptions) throws ClientException;
 
     /**
      * Creates a sender used to send messages to the given node address. If no
@@ -68,7 +68,7 @@ public interface Session {
      *
      * @throws ClientException if an internal error occurs.
      */
-    Sender createSender(String address) throws ClientException;
+    Sender openSender(String address) throws ClientException;
 
     /**
      * Creates a sender used to send messages to the given node address. If no
@@ -85,6 +85,31 @@ public interface Session {
      *
      * @throws ClientException if an internal error occurs.
      */
-    Sender createSender(String address, SenderOptions senderOptions) throws ClientException;
+    Sender openSender(String address, SenderOptions senderOptions) throws ClientException;
+
+    /**
+     * Creates a sender that is established to the 'anonymous relay' and as such each
+     * message that is sent using this sender must specify an address in its destination
+     * address field.
+     *
+     * @return the sender.
+     *
+     * @throws ClientException if an internal error occurs.
+     */
+    Sender openAnonymousSender() throws ClientException;
+
+    /**
+     * Creates a sender that is established to the 'anonymous relay' and as such each
+     * message that is sent using this sender must specify an address in its destination
+     * address field.
+     *
+     * @param senderOptions
+     *            The options for this sender.
+     *
+     * @return the sender.
+     *
+     * @throws ClientException if an internal error occurs.
+     */
+    Sender openAnonymousSender(SenderOptions senderOptions) throws ClientException;
 
 }

@@ -36,7 +36,7 @@ public class SenderTest {
             Session session = connection.openSession();
             session.openFuture().get(10, TimeUnit.SECONDS);
 
-            Sender sender = session.createSender("test-queue");
+            Sender sender = session.openSender("test-queue");
             sender.openFuture().get(10, TimeUnit.SECONDS);
             sender.close().get(10, TimeUnit.SECONDS);
 

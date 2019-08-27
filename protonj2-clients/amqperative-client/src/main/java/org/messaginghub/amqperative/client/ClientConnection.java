@@ -26,7 +26,7 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLongFieldUpdater;
+import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 
 import org.apache.qpid.proton4j.engine.impl.ProtonEngine;
@@ -62,10 +62,10 @@ public class ClientConnection implements Connection {
 
     private static final AtomicInteger CONNECTION_SEQUENCE = new AtomicInteger();
 
-    private static final AtomicLongFieldUpdater<ClientConnection> CLOSE_STATE_UPDATER =
-        AtomicLongFieldUpdater.newUpdater(ClientConnection.class, "closeState");
+    private static final AtomicIntegerFieldUpdater<ClientConnection> CLOSE_STATE_UPDATER =
+            AtomicIntegerFieldUpdater.newUpdater(ClientConnection.class, "closeState");
     private static final AtomicReferenceFieldUpdater<ClientConnection, ClientException> FAILURE_CAUSE_UPDATER =
-        AtomicReferenceFieldUpdater.newUpdater(ClientConnection.class, ClientException.class, "failureCause");
+            AtomicReferenceFieldUpdater.newUpdater(ClientConnection.class, ClientException.class, "failureCause");
 
     private final ClientInstance container;
     private final ClientConnectionOptions options;
@@ -82,7 +82,7 @@ public class ClientConnection implements Connection {
     private ClientFuture<Connection> closeFuture;
     private final AtomicBoolean remoteOpened = new AtomicBoolean();  // TODO - Updater?
     private final AtomicBoolean remoteClosed = new AtomicBoolean();  // TODO - Updater?
-    private volatile long closeState;
+    private volatile int closeState;
     private volatile int sessionCounter;
     private volatile ClientException failureCause;
     private final String connectionId;
@@ -138,17 +138,18 @@ public class ClientConnection implements Connection {
 
     @Override
     public Session openSession() throws ClientException {
-        return openSession(new SessionOptions());
+        return openSession(options.getDefaultSessionOptions());
     }
 
     @Override
-    public Session openSession(SessionOptions options) throws ClientException {
+    public Session openSession(SessionOptions sessionOptions) throws ClientException {
         checkClosed();
-        ClientFuture<Session> createSession = getFutureFactory().createFuture();
+
+        final ClientFuture<Session> createSession = getFutureFactory().createFuture();
+        final SessionOptions sessionOpts = sessionOptions == null ? options.getDefaultSessionOptions() : sessionOptions;
 
         executor.execute(() -> {
-            ClientSession session = new ClientSession(
-                options, ClientConnection.this, protonConnection.session());
+            ClientSession session = new ClientSession(sessionOpts, ClientConnection.this, protonConnection.session());
             createSession.complete(session.open());
         });
 
@@ -158,18 +159,20 @@ public class ClientConnection implements Connection {
     @Override
     public Receiver openReceiver(String address) throws ClientException {
         Objects.requireNonNull(address, "Cannot create a sender with a null address");
-        return openReceiver(address, new ReceiverOptions());
+        return openReceiver(address, options.getDefaultReceiverOptions());
     }
 
     @Override
     public Receiver openReceiver(String address, ReceiverOptions receiverOptions) throws ClientException {
         checkClosed();
-        ClientFuture<Receiver> createReceiver = getFutureFactory().createFuture();
+
+        final ClientFuture<Receiver> createReceiver = getFutureFactory().createFuture();
+        final ReceiverOptions receiverOpts = receiverOptions == null ? options.getDefaultReceiverOptions() : receiverOptions;
 
         executor.execute(() -> {
             try {
                 checkClosed();
-                createReceiver.complete(lazyCreateConnectionSession().internalCreateReceiver(address, receiverOptions).open());
+                createReceiver.complete(lazyCreateConnectionSession().internalCreateReceiver(address, receiverOpts).open());
             } catch (Throwable error) {
                 createReceiver.failed(ClientExceptionSupport.createNonFatalOrPassthrough(error));
             }
@@ -185,18 +188,20 @@ public class ClientConnection implements Connection {
 
     @Override
     public Sender openSender(String address) throws ClientException {
-        return openSender(address, new SenderOptions());
+        return openSender(address, options.getDefaultSenderOptions());
     }
 
     @Override
     public Sender openSender(String address, SenderOptions senderOptions) throws ClientException {
         checkClosed();
-        ClientFuture<Sender> createSender = getFutureFactory().createFuture();
+
+        final ClientFuture<Sender> createSender = getFutureFactory().createFuture();
+        final SenderOptions senderOpts = senderOptions == null ? options.getDefaultSenderOptions() : senderOptions;
 
         executor.execute(() -> {
             try {
                 checkClosed();
-                createSender.complete(lazyCreateConnectionSession().internalCreateSender(address, senderOptions).open());
+                createSender.complete(lazyCreateConnectionSession().internalCreateSender(address, senderOpts).open());
             } catch (Throwable error) {
                 createSender.failed(ClientExceptionSupport.createNonFatalOrPassthrough(error));
             }
@@ -213,12 +218,13 @@ public class ClientConnection implements Connection {
     @Override
     public Sender openAnonymousSender(SenderOptions senderOptions) throws ClientException {
         checkClosed();
-        ClientFuture<Sender> createSender = getFutureFactory().createFuture();
+        final ClientFuture<Sender> createSender = getFutureFactory().createFuture();
+        final SenderOptions senderOpts = senderOptions == null ? options.getDefaultSenderOptions() : senderOptions;
 
         executor.execute(() -> {
             try {
                 checkClosed();
-                createSender.complete(lazyCreateConnectionSession().internalCreateSender(null, senderOptions.setDynamic(true)).open());
+                createSender.complete(lazyCreateConnectionSession().internalCreateSender(null, senderOpts).open());
             } catch (Throwable error) {
                 createSender.failed(ClientExceptionSupport.createNonFatalOrPassthrough(error));
             }
@@ -230,6 +236,7 @@ public class ClientConnection implements Connection {
     @Override
     public Tracker send(Message<?> message) throws ClientException {
         checkClosed();
+        Objects.requireNonNull(message, "Cannot send a null message");
         ClientFuture<Tracker> result = getFutureFactory().createFuture();
 
         executor.execute(() -> {
@@ -364,9 +371,7 @@ public class ClientConnection implements Connection {
 
     private ClientSession lazyCreateConnectionSession() {
         if (connectionSession == null) {
-            connectionSession = new ClientSession(
-                new SessionOptions(), this, protonConnection.session());
-            connectionSession.open();
+            connectionSession = new ClientSession(options.getDefaultSessionOptions(), this, protonConnection.session()).open();
         }
 
         return connectionSession;
@@ -376,8 +381,7 @@ public class ClientConnection implements Connection {
         if (connectionSender == null) {
             // TODO - Ensure this creates an anonymous sender
             // TODO - What if remote doesn't support anonymous?
-            connectionSender = lazyCreateConnectionSession().internalCreateSender(null, new SenderOptions());
-            connectionSender.open();
+            connectionSender = lazyCreateConnectionSession().internalCreateSender(null, options.getDefaultSenderOptions()).open();
         }
 
         return connectionSender;

@@ -18,9 +18,13 @@ package org.messaginghub.amqperative.client;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Objects;
 
 import org.apache.qpid.proton4j.engine.Connection;
 import org.messaginghub.amqperative.ConnectionOptions;
+import org.messaginghub.amqperative.ReceiverOptions;
+import org.messaginghub.amqperative.SenderOptions;
+import org.messaginghub.amqperative.SessionOptions;
 
 /**
  * Connection Options for the ProtonConnection implementation
@@ -30,12 +34,18 @@ public final class ClientConnectionOptions extends ConnectionOptions {
     private final String hostname;
     private final int port;
 
+    private SessionOptions defaultSessionOptions;
+    private SenderOptions defaultSenderOptions;
+    private ReceiverOptions defaultReceivernOptions;
+
     ClientConnectionOptions(String hostname, int port) {
         this(hostname, port, null);
     }
 
     ClientConnectionOptions(String hostname, int port, ConnectionOptions options) {
         super(options);
+
+        Objects.requireNonNull(hostname);
 
         this.hostname = hostname;
         this.port = port;
@@ -61,6 +71,75 @@ public final class ClientConnectionOptions extends ConnectionOptions {
     }
 
     //----- Internal support methods used by the client
+
+    /*
+     * Session options used when none specified by the caller creating a new session.
+     */
+    SessionOptions getDefaultSessionOptions() {
+        SessionOptions options = defaultSessionOptions;
+        if (options == null) {
+            synchronized (this) {
+                options = defaultSessionOptions;
+                if (options == null) {
+                    options = new SessionOptions();
+                    options.setConnectTimeout(getConnectTimeout());
+                    options.setCloseTimeout(getCloseTimeout());
+                    options.setRequestTimeout(getRequestTimeout());
+                    options.setSendTimeout(getSendTimeout());
+                }
+
+                defaultSessionOptions = options;
+            }
+        }
+
+        return options;
+    }
+
+    /*
+     * Sender options used when none specified by the caller creating a new sender.
+     */
+    SenderOptions getDefaultSenderOptions() {
+        SenderOptions options = defaultSenderOptions;
+        if (options == null) {
+            synchronized (this) {
+                options = defaultSenderOptions;
+                if (options == null) {
+                    options = new SenderOptions();
+                    options.setConnectTimeout(getConnectTimeout());
+                    options.setCloseTimeout(getCloseTimeout());
+                    options.setRequestTimeout(getRequestTimeout());
+                    options.setSendTimeout(getSendTimeout());
+                }
+
+                defaultSenderOptions = options;
+            }
+        }
+
+        return options;
+    }
+
+    /*
+     * Receiver options used when none specified by the caller creating a new receiver.
+     */
+    ReceiverOptions getDefaultReceiverOptions() {
+        ReceiverOptions options = defaultReceivernOptions;
+        if (options == null) {
+            synchronized (this) {
+                options = defaultReceivernOptions;
+                if (options == null) {
+                    options = new ReceiverOptions();
+                    options.setConnectTimeout(getConnectTimeout());
+                    options.setCloseTimeout(getCloseTimeout());
+                    options.setRequestTimeout(getRequestTimeout());
+                    options.setSendTimeout(getSendTimeout());
+                }
+
+                defaultReceivernOptions = options;
+            }
+        }
+
+        return options;
+    }
 
     Connection configureConnection(Connection protonConnection) {
         protonConnection.setChannelMax(getChannelMax());

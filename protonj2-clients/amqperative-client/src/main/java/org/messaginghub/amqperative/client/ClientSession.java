@@ -25,7 +25,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.apache.qpid.proton4j.engine.impl.ProtonEngine;
@@ -49,6 +49,9 @@ public class ClientSession implements Session {
 
     private static final Logger LOG = LoggerFactory.getLogger(ClientSession.class);
 
+    private static final AtomicIntegerFieldUpdater<ClientSession> CLOSE_STATE_UPDATER =
+            AtomicIntegerFieldUpdater.newUpdater(ClientSession.class, "closed");
+
     private final ClientFuture<Session> openFuture;
     private final ClientFuture<Session> closeFuture;
 
@@ -56,8 +59,8 @@ public class ClientSession implements Session {
     private final ClientConnection connection;
     private final org.apache.qpid.proton4j.engine.Session session;
     private final ScheduledExecutorService serializer;
-    private final AtomicBoolean closed = new AtomicBoolean();
     private final String sessionId;
+    private volatile int closed;
     private volatile int senderCounter;
     private volatile int receiverCounter;
 
@@ -86,7 +89,7 @@ public class ClientSession implements Session {
 
     @Override
     public Future<Session> close() {
-        if (closed.compareAndSet(false, true) && !openFuture.isFailed()) {
+        if (CLOSE_STATE_UPDATER.compareAndSet(this, 0, 1) && !openFuture.isFailed()) {
             serializer.execute(() -> {
                 session.close();
             });
@@ -95,14 +98,20 @@ public class ClientSession implements Session {
     }
 
     @Override
-    public Receiver createReceiver(String address) throws ClientException {
+    public Receiver openReceiver(String address) throws ClientException {
+        return openReceiver(address, options.getDefaultReceiverOptions());
+    }
+
+    @Override
+    public Receiver openReceiver(String address, ReceiverOptions receiverOptions) throws ClientException {
         checkClosed();
-        ClientFuture<Receiver> createReceiver = getFutureFactory().createFuture();
+        final ClientFuture<Receiver> createReceiver = getFutureFactory().createFuture();
+        final ReceiverOptions receiverOpts = receiverOptions == null ? options.getDefaultReceiverOptions() : receiverOptions;
 
         serializer.execute(() -> {
             try {
                 checkClosed();
-                createReceiver.complete(internalCreateReceiver(address, new ReceiverOptions()).open());
+                createReceiver.complete(internalCreateReceiver(address, receiverOpts).open());
             } catch (Throwable error) {
                 createReceiver.failed(ClientExceptionSupport.createNonFatalOrPassthrough(error));
             }
@@ -112,36 +121,43 @@ public class ClientSession implements Session {
     }
 
     @Override
-    public Receiver createReceiver(String address, ReceiverOptions receiverOptions) throws ClientException {
+    public Sender openSender(String address) throws ClientException {
+        return openSender(address, options.getDefaultSenderOptions());
+    }
+
+    @Override
+    public Sender openSender(String address, SenderOptions senderOptions) throws ClientException {
         checkClosed();
-        ClientFuture<Receiver> createReceiver = getFutureFactory().createFuture();
+        final ClientFuture<Sender> createSender = getFutureFactory().createFuture();
+        final SenderOptions senderOpts = senderOptions == null ? options.getDefaultSenderOptions() : senderOptions;
 
         serializer.execute(() -> {
             try {
                 checkClosed();
-                createReceiver.complete(internalCreateReceiver(address, receiverOptions).open());
+                createSender.complete(internalCreateSender(address, senderOpts).open());
             } catch (Throwable error) {
-                createReceiver.failed(ClientExceptionSupport.createNonFatalOrPassthrough(error));
+                createSender.failed(ClientExceptionSupport.createNonFatalOrPassthrough(error));
             }
         });
 
-        return connection.request(createReceiver, options.getRequestTimeout(), TimeUnit.MILLISECONDS);
+        return connection.request(createSender, options.getRequestTimeout(), TimeUnit.MILLISECONDS);
     }
 
     @Override
-    public Sender createSender(String address) throws ClientException {
-        return createSender(address, new ClientSenderOptions());
+    public Sender openAnonymousSender() throws ClientException {
+        return openAnonymousSender(options.getDefaultSenderOptions());
     }
 
     @Override
-    public Sender createSender(String address, SenderOptions senderOptions) throws ClientException {
+    public Sender openAnonymousSender(SenderOptions senderOptions) throws ClientException {
         checkClosed();
-        ClientFuture<Sender> createSender = getFutureFactory().createFuture();
+        final ClientFuture<Sender> createSender = getFutureFactory().createFuture();
+        final SenderOptions senderOpts = senderOptions == null ? options.getDefaultSenderOptions() : senderOptions;
 
         serializer.execute(() -> {
             try {
                 checkClosed();
-                createSender.complete(internalCreateSender(address, senderOptions).open());
+                createSender.complete(internalCreateSender(null, senderOpts).open());
             } catch (Throwable error) {
                 createSender.failed(ClientExceptionSupport.createNonFatalOrPassthrough(error));
             }
@@ -188,7 +204,7 @@ public class ClientSession implements Session {
                 }
             });
             session.closeHandler(result -> {
-                closed.set(true);
+                CLOSE_STATE_UPDATER.set(this, 1);
                 closeFuture.complete(this);
             });
 
@@ -215,7 +231,7 @@ public class ClientSession implements Session {
         if (exec == null) {
             synchronized (options) {
                 if (deliveryExecutor == null) {
-                    if (!closed.get()) {
+                    if (!isClosed()) {
                         deliveryExecutor = exec = createExecutor("delivery dispatcher", deliveryThread);
                     } else {
                         return NoOpExecutor.INSTANCE;
@@ -245,10 +261,14 @@ public class ClientSession implements Session {
         return sessionId + ":" + (++senderCounter);
     }
 
+    boolean isClosed() {
+        return closed > 0;
+    }
+
     //----- Private implementation methods
 
     private void checkClosed() throws IllegalStateException {
-        if (closed.get()) {
+        if (isClosed()) {
             IllegalStateException error = null;
 
             if (failureCause.get() == null) {
@@ -271,7 +291,7 @@ public class ClientSession implements Session {
             @Override
             public void rejectedExecution(Runnable r, ThreadPoolExecutor e) {
                 // Completely ignore the task if the session has closed.
-                if (!closed.get()) {
+                if (!isClosed()) {
                     LOG.trace("Task {} rejected from executor: {}", r, e);
                     super.rejectedExecution(r, e);
                 }
