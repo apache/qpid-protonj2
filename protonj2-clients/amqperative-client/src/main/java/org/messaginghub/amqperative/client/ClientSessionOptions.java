@@ -25,6 +25,7 @@ public final class ClientSessionOptions extends SessionOptions {
 
     private SenderOptions defaultSenderOptions;
     private ReceiverOptions defaultReceivernOptions;
+    private ReceiverOptions defaultDynamicReceivernOptions;
 
     public ClientSessionOptions() {
         super();
@@ -84,6 +85,30 @@ public final class ClientSessionOptions extends SessionOptions {
                 }
 
                 defaultReceivernOptions = options;
+            }
+        }
+
+        return options;
+    }
+
+    /*
+     * Receiver options used when none specified by the caller creating a new dynamic receiver.
+     */
+    ReceiverOptions getDefaultDynamicReceiverOptions() {
+        ReceiverOptions options = defaultDynamicReceivernOptions;
+        if (options == null) {
+            synchronized (this) {
+                options = defaultDynamicReceivernOptions;
+                if (options == null) {
+                    options = new ReceiverOptions();
+                    options.setConnectTimeout(getConnectTimeout());
+                    options.setCloseTimeout(getCloseTimeout());
+                    options.setRequestTimeout(getRequestTimeout());
+                    options.setSendTimeout(getSendTimeout());
+                    options.setDynamic(true);
+                }
+
+                defaultDynamicReceivernOptions = options;
             }
         }
 

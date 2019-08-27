@@ -20,10 +20,19 @@ import java.util.concurrent.Future;
 
 import org.messaginghub.amqperative.client.ClientException;
 
+/**
+ * Connection
+ */
 public interface Connection {
 
+    /**
+     * @return a {@link Future} that will be completed when the remote opens this {@link Connection}.
+     */
     Future<Connection> openFuture();
 
+    /**
+     * @return a {@link Future} that will be completed when the remote opens this {@link Connection}.
+     */
     Future<Connection> close();
 
     /**

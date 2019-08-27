@@ -21,39 +21,66 @@ import java.util.concurrent.Future;
 import org.messaginghub.amqperative.client.ClientException;
 
 /**
- *
+ * Session object used to create {@link Sender} and {@link Receiver} instances.
  */
 public interface Session {
 
+    /**
+     * @return a {@link Future} that will be completed when the remote opens this {@link Session}.
+     */
     Future<Session> openFuture();
 
+    /**
+     * @return a {@link Future} that will be completed when the remote closes this {@link Session}.
+     */
     Future<Session> close();
 
     /**
-     * Creates a receiver used to consumer messages from the given node address.
+     * Creates a receiver used to consume messages from the given node address.
      *
      * @param address
      *            The source address to attach the consumer to.
      *
-     * @return the consumer.
+     * @return the newly created {@link Receiver}
      *
      * @throws ClientException if an internal error occurs.
      */
     Receiver openReceiver(String address) throws ClientException;
 
     /**
-     * Creates a receiver used to consumer messages from the given node address.
+     * Creates a receiver used to consume messages from the given node address.
      *
      * @param address
      *            The source address to attach the consumer to.
      * @param receiverOptions
      *            The options for this receiver.
      *
-     * @return the consumer.
+     * @return the newly created {@link Receiver}
      *
      * @throws ClientException if an internal error occurs.
      */
     Receiver openReceiver(String address, ReceiverOptions receiverOptions) throws ClientException;
+
+    /**
+     * Creates a dynamic receiver used to consume messages from the given node address.
+     *
+     * @return the newly created {@link Receiver}
+     *
+     * @throws ClientException if an internal error occurs.
+     */
+    Receiver openDynamicReceiver() throws ClientException;
+
+    /**
+     * Creates a dynamic receiver used to consume messages from the given node address.
+     *
+     * @param receiverOptions
+     *            The options for this receiver.
+     *
+     * @return the newly created {@link Receiver}
+     *
+     * @throws ClientException if an internal error occurs.
+     */
+    Receiver openDynamicReceiver(ReceiverOptions receiverOptions) throws ClientException;
 
     /**
      * Creates a sender used to send messages to the given node address. If no
@@ -64,7 +91,7 @@ public interface Session {
      *            The target address to attach to, or null to attach to the
      *            anonymous relay.
      *
-     * @return the sender.
+     * @return the newly created {@link Sender}.
      *
      * @throws ClientException if an internal error occurs.
      */
@@ -81,7 +108,7 @@ public interface Session {
      * @param senderOptions
      *            The options for this sender.
      *
-     * @return the sender.
+     * @return the newly created {@link Sender}.
      *
      * @throws ClientException if an internal error occurs.
      */
@@ -92,7 +119,7 @@ public interface Session {
      * message that is sent using this sender must specify an address in its destination
      * address field.
      *
-     * @return the sender.
+     * @return the newly created {@link Sender}.
      *
      * @throws ClientException if an internal error occurs.
      */
@@ -106,7 +133,7 @@ public interface Session {
      * @param senderOptions
      *            The options for this sender.
      *
-     * @return the sender.
+     * @return the newly created {@link Sender}.
      *
      * @throws ClientException if an internal error occurs.
      */

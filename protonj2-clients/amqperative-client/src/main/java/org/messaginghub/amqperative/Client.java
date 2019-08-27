@@ -19,18 +19,29 @@ package org.messaginghub.amqperative;
 import java.net.URI;
 import java.util.Objects;
 
-import org.messaginghub.amqperative.client.ClientInstanceOptions;
 import org.messaginghub.amqperative.client.ClientInstance;
+import org.messaginghub.amqperative.client.ClientInstanceOptions;
 
 /**
  * The Container that hosts AMQP Connections
  */
 public interface Client {
 
+    /**
+     * @return a new {@link Client} instance configured with defaults.
+     */
     static Client create() {
         return create(new ClientInstanceOptions());
     }
 
+    /**
+     * Create a new {@link Client} instance using provided configuration options.
+     *
+     * @param options
+     * 		The configuration options to use when creating the client.
+     *
+     * @return a new {@link Client} instance configured using the provided options.
+     */
     static Client create(ClientOptions options) {
         Objects.requireNonNull(options, "options must be non-null");
         return new ClientInstance(options);

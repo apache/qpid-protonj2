@@ -121,6 +121,29 @@ public class ClientSession implements Session {
     }
 
     @Override
+    public Receiver openDynamicReceiver() throws ClientException {
+        return openDynamicReceiver(options.getDefaultDynamicReceiverOptions());
+    }
+
+    @Override
+    public Receiver openDynamicReceiver(ReceiverOptions receiverOptions) throws ClientException {
+        checkClosed();
+        final ClientFuture<Receiver> createReceiver = getFutureFactory().createFuture();
+        final ReceiverOptions receiverOpts = receiverOptions == null ? options.getDefaultReceiverOptions() : receiverOptions;
+
+        serializer.execute(() -> {
+            try {
+                checkClosed();
+                createReceiver.complete(internalCreateReceiver(null, receiverOpts).open());
+            } catch (Throwable error) {
+                createReceiver.failed(ClientExceptionSupport.createNonFatalOrPassthrough(error));
+            }
+        });
+
+        return connection.request(createReceiver, options.getRequestTimeout(), TimeUnit.MILLISECONDS);
+    }
+
+    @Override
     public Sender openSender(String address) throws ClientException {
         return openSender(address, options.getDefaultSenderOptions());
     }
