@@ -41,7 +41,6 @@ import org.messaginghub.amqperative.SenderOptions;
 import org.messaginghub.amqperative.Session;
 import org.messaginghub.amqperative.SessionOptions;
 import org.messaginghub.amqperative.Tracker;
-import org.messaginghub.amqperative.TransportOptions;
 import org.messaginghub.amqperative.client.exceptions.ClientExceptionSupport;
 import org.messaginghub.amqperative.client.exceptions.ClientIOException;
 import org.messaginghub.amqperative.futures.ClientFuture;
@@ -108,7 +107,7 @@ public class ClientConnection implements Connection {
             "ProtonConnection :(" + CONNECTION_SEQUENCE.incrementAndGet()
                           + "):[" + options.getHostname() + ":" + options.getPort() + "]", true);
         transport = new TcpTransport(
-            new ClientTransportListener(this), options.getRemoteURI(), new TransportOptions(), false);
+            new ClientTransportListener(this), options.getRemoteURI(), options.getTransport(), false);
 
         transport.setThreadFactory(transportThreadFactory);
 
@@ -144,7 +143,6 @@ public class ClientConnection implements Connection {
     @Override
     public Session openSession(SessionOptions sessionOptions) throws ClientException {
         checkClosed();
-
         final ClientFuture<Session> createSession = getFutureFactory().createFuture();
         final SessionOptions sessionOpts = sessionOptions == null ? options.getDefaultSessionOptions() : sessionOptions;
 
@@ -165,7 +163,6 @@ public class ClientConnection implements Connection {
     @Override
     public Receiver openReceiver(String address, ReceiverOptions receiverOptions) throws ClientException {
         checkClosed();
-
         final ClientFuture<Receiver> createReceiver = getFutureFactory().createFuture();
         final ReceiverOptions receiverOpts = receiverOptions == null ? options.getDefaultReceiverOptions() : receiverOptions;
 
@@ -194,7 +191,6 @@ public class ClientConnection implements Connection {
     @Override
     public Sender openSender(String address, SenderOptions senderOptions) throws ClientException {
         checkClosed();
-
         final ClientFuture<Sender> createSender = getFutureFactory().createFuture();
         final SenderOptions senderOpts = senderOptions == null ? options.getDefaultSenderOptions() : senderOptions;
 
@@ -237,7 +233,7 @@ public class ClientConnection implements Connection {
     public Tracker send(Message<?> message) throws ClientException {
         checkClosed();
         Objects.requireNonNull(message, "Cannot send a null message");
-        ClientFuture<Tracker> result = getFutureFactory().createFuture();
+        final ClientFuture<Tracker> result = getFutureFactory().createFuture();
 
         executor.execute(() -> {
             try {
