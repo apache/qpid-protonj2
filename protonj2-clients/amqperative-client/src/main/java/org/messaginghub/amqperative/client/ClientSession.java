@@ -29,6 +29,8 @@ import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.apache.qpid.proton4j.engine.impl.ProtonEngine;
+import org.messaginghub.amqperative.Client;
+import org.messaginghub.amqperative.Connection;
 import org.messaginghub.amqperative.Receiver;
 import org.messaginghub.amqperative.ReceiverOptions;
 import org.messaginghub.amqperative.Sender;
@@ -80,6 +82,16 @@ public class ClientSession implements Session {
         this.serializer = connection.getScheduler();
         this.openFuture = connection.getFutureFactory().createFuture();
         this.closeFuture = connection.getFutureFactory().createFuture();
+    }
+
+    @Override
+    public Client getClient() {
+        return connection.getClient();
+    }
+
+    @Override
+    public Connection getConnection() {
+        return connection;
     }
 
     @Override

@@ -26,6 +26,16 @@ import org.messaginghub.amqperative.client.ClientException;
 public interface Session {
 
     /**
+     * @return the {@link Client} instance that holds this session's {@link Connection}
+     */
+    Client getClient();
+
+    /**
+     * @return the {@link Connection} that created and holds this {@link Session}.
+     */
+    Connection getConnection();
+
+    /**
      * @return a {@link Future} that will be completed when the remote opens this {@link Session}.
      */
     Future<Session> openFuture();

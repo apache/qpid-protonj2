@@ -22,6 +22,16 @@ import java.util.function.Consumer;
 
 public interface Receiver {
 
+    /**
+     * @return the {@link Client} instance that holds this session's {@link Receiver}
+     */
+    Client getClient();
+
+    /**
+     * @return the {@link Session} that created and holds this {@link Receiver}.
+     */
+    Session getSession();
+
     // Waits forever.
     Delivery receive() throws IllegalStateException;
 

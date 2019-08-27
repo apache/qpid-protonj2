@@ -25,6 +25,16 @@ import org.messaginghub.amqperative.client.ClientException;
 public interface Sender {
 
     /**
+     * @return the {@link Client} instance that holds this session's {@link Sender}
+     */
+    Client getClient();
+
+    /**
+     * @return the {@link Session} that created and holds this {@link Sender}.
+     */
+    Session getSession();
+
+    /**
      * Send the given message.
      *
      * @param message

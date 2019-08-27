@@ -27,9 +27,11 @@ import java.util.function.Consumer;
 import org.apache.qpid.proton4j.amqp.transport.DeliveryState;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.engine.OutgoingDelivery;
+import org.messaginghub.amqperative.Client;
 import org.messaginghub.amqperative.Message;
 import org.messaginghub.amqperative.Sender;
 import org.messaginghub.amqperative.SenderOptions;
+import org.messaginghub.amqperative.Session;
 import org.messaginghub.amqperative.Tracker;
 import org.messaginghub.amqperative.client.exceptions.ClientExceptionSupport;
 import org.messaginghub.amqperative.futures.AsyncResult;
@@ -65,6 +67,16 @@ public class ClientSender implements Sender {
         this.closeFuture = session.getFutureFactory().createFuture();
 
         this.options.configureSender(sender, address);
+    }
+
+    @Override
+    public Client getClient() {
+        return session.getClient();
+    }
+
+    @Override
+    public Session getSession() {
+        return session;
     }
 
     @Override

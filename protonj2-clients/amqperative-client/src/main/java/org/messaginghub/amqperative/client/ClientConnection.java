@@ -66,7 +66,7 @@ public class ClientConnection implements Connection {
     private static final AtomicReferenceFieldUpdater<ClientConnection, ClientException> FAILURE_CAUSE_UPDATER =
             AtomicReferenceFieldUpdater.newUpdater(ClientConnection.class, ClientException.class, "failureCause");
 
-    private final ClientInstance container;
+    private final ClientInstance client;
     private final ClientConnectionOptions options;
     private final ClientFutureFactory futureFactoy;
 
@@ -92,15 +92,15 @@ public class ClientConnection implements Connection {
      * Create a connection and define the initial configuration used to manage the
      * connection to the remote.
      *
-     * @param container
+     * @param client
      *      the {@link Client} that this connection resides within.
      * @param options
      *      the connection options that configure this {@link Connection} instance.
      */
-    public ClientConnection(ClientInstance container, ClientConnectionOptions options) {
-        this.container = container;
+    public ClientConnection(ClientInstance client, ClientConnectionOptions options) {
+        this.client = client;
         this.options = options;
-        this.connectionId = container.nextConnectionId();
+        this.connectionId = client.nextConnectionId();
         this.futureFactoy = ClientFutureFactory.create(options.getFutureType());
 
         ThreadFactory transportThreadFactory = new ClientThreadFactory(
@@ -113,6 +113,11 @@ public class ClientConnection implements Connection {
 
         openFuture = futureFactoy.createFuture();
         closeFuture = futureFactoy.createFuture();
+    }
+
+    @Override
+    public Client getClient() {
+        return client;
     }
 
     @Override
@@ -300,8 +305,8 @@ public class ClientConnection implements Connection {
     ClientConnection open() {
         checkClosed();
         executor.execute(() -> {
-            if (container.getContainerId() != null) {
-                protonConnection.setContainerId(container.getContainerId());
+            if (client.getContainerId() != null) {
+                protonConnection.setContainerId(client.getContainerId());
             }
             options.configureConnection(protonConnection).open();
         });

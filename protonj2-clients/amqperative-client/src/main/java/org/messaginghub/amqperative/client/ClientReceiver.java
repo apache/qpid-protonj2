@@ -25,9 +25,11 @@ import java.util.function.Consumer;
 
 import org.apache.qpid.proton4j.amqp.transport.DeliveryState;
 import org.apache.qpid.proton4j.engine.IncomingDelivery;
+import org.messaginghub.amqperative.Client;
 import org.messaginghub.amqperative.Delivery;
 import org.messaginghub.amqperative.Receiver;
 import org.messaginghub.amqperative.ReceiverOptions;
+import org.messaginghub.amqperative.Session;
 import org.messaginghub.amqperative.client.exceptions.ClientExceptionSupport;
 import org.messaginghub.amqperative.futures.ClientFuture;
 import org.messaginghub.amqperative.util.FifoMessageQueue;
@@ -67,6 +69,16 @@ public class ClientReceiver implements Receiver {
 
         messageQueue = new FifoMessageQueue(options.getCreditWindow());
         messageQueue.start();
+    }
+
+    @Override
+    public Client getClient() {
+        return session.getClient();
+    }
+
+    @Override
+    public Session getSession() {
+        return session;
     }
 
     @Override
