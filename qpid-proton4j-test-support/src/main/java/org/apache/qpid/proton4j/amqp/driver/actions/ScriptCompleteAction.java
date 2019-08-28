@@ -18,6 +18,7 @@ package org.apache.qpid.proton4j.amqp.driver.actions;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
 import org.apache.qpid.proton4j.amqp.driver.ScriptedAction;
@@ -58,6 +59,8 @@ public class ScriptCompleteAction implements ScriptedAction {
     }
 
     public void await(long timeout, TimeUnit units ) throws InterruptedException {
-        complete.await(timeout, units);
+        if (!complete.await(timeout, units)) {
+            throw new AssertionError("Timed out waiting for scripted expectations to be met", new TimeoutException());
+        }
     }
 }
