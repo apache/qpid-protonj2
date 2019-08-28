@@ -54,6 +54,9 @@ public interface Client {
 
     /**
      * Closes all currently open {@link Connection} instances created by this client.
+     * <p>
+     * This method blocks and waits for each connection to close in turn using the configured
+     * close timeout of the {@link ConnectionOptions} that the connection was created with.
      *
      * @return this {@link Client} instance.
      */
@@ -62,7 +65,8 @@ public interface Client {
     /**
      * Connect to the specified remote using the given {@link URI} and configures
      * the connection options using the parameters encoded in the query portion of
-     * the given {@link URI}.
+     * the given {@link URI}.  Any options not configured on the {@link URI} is set
+     * to the connection default.
      *
      * @param remoteUri
      *            the {@link URI} of the remote to connect to.
@@ -74,7 +78,8 @@ public interface Client {
     /**
      * Connect to the specified remote using the given {@link URI} and configures
      * the connection options using the parameters encoded in the query portion of
-     * the given {@link URI}.
+     * the given {@link URI} to override any options that are configured in the
+     * supplied {@link ConnectionOptions} instance.
      *
      * @param remoteUri
      *            the {@link URI} of the remote to connect to.
@@ -86,18 +91,20 @@ public interface Client {
     Connection connect(URI remoteUri, ConnectionOptions options);
 
     /**
-     * Connect to the specified host and port, without credentials.
+     * Connect to the specified host and port, without credentials and with all
+     * connection options set to their defaults.
      *
      * @param host
      *            the host to connect to
      * @param port
      *            the port to connect to
+     *
      * @return connection, establishment not yet completed
      */
     Connection connect(String host, int port);
 
     /**
-     * Connect to the specified host and port, with given options.
+     * Connect to the specified host and port, with given connection options.
      *
      * @param host
      *            the host to connect to
