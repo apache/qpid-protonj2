@@ -39,6 +39,29 @@ public abstract class ClientDeliveryState implements DeliveryState {
      */
     abstract org.apache.qpid.proton4j.amqp.transport.DeliveryState getProtonDeliveryState();
 
+    //----- Create Delivery State from Proton instance
+
+    static DeliveryState fromProtonType(org.apache.qpid.proton4j.amqp.transport.DeliveryState state) {
+        if (state == null) {
+            return null;
+        }
+
+        switch (state.getType()) {
+            case Accepted:
+                return ClientAccepted.getInstance();
+            case Released:
+                return ClientReleased.getInstance();
+            case Rejected:
+                return ClientReleased.fromProtonType(state);
+            case Modified:
+                return ClientModified.fromProtonType(state);
+            case Transactional:
+                // TODO - Currently don't support transactions in the API
+            default:
+                throw new IllegalArgumentException("Cannot map to unknown Proton Delivery State type");
+        }
+    }
+
     //----- Delivery State implementations
 
     public static class ClientAccepted extends ClientDeliveryState {

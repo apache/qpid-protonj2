@@ -49,9 +49,13 @@ public class ClientTracker implements Tracker {
     }
 
     @Override
+    public DeliveryState getLocalState() {
+        return ClientDeliveryState.fromProtonType(delivery.getLocalState());
+    }
+
+    @Override
     public DeliveryState getRemoteState() {
-        // TODO - Create simple mapping builder in our DeliveryState implementation
-        return null;
+        return ClientDeliveryState.fromProtonType(delivery.getRemoteState());
     }
 
     @Override

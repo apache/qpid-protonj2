@@ -47,7 +47,14 @@ public interface Tracker {
     boolean isSettled();
 
     /**
-     * Gets the current remote state for the delivery.
+     * Gets the current local state for the tracked delivery.
+     *
+     * @return the delivery state
+     */
+    DeliveryState getLocalState();
+
+    /**
+     * Gets the current remote state for the tracked delivery.
      *
      * @return the remote delivery state
      */
