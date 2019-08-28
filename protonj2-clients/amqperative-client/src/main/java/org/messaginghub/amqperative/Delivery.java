@@ -24,7 +24,19 @@ import org.messaginghub.amqperative.client.ClientException;
  */
 public interface Delivery {
 
-    // TODO: or just expose everything via Delivery.
+    /**
+     * @return the {@link Receiver} that originated this {@link Delivery}.
+     */
+    Receiver getReceiver();
+
+    /**
+     * Decode the {@link Delivery} payload and return an {@link Message} object
+     * that can be used to
+     *
+     * @return a {@link Message} instance that wraps the decoded payload.
+     *
+     * @throws ClientException if an error occurs while decoding the payload.
+     */
     Message<?> getMessage() throws ClientException;
 
     // TODO: Expose means of reading delivery bytes
@@ -58,7 +70,10 @@ public interface Delivery {
      */
     Delivery settle();
 
-    //TODO: add helpers like isAccepted?
+    /**
+     * @return true if the delivery has been locally settled.
+     */
+    boolean isSettled();
 
     /**
      * Gets the current local state for the delivery.

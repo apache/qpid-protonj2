@@ -115,4 +115,14 @@ public class ClientDelivery implements Delivery {
     public int getMessageFormat() {
         return delivery.getMessageFormat();
     }
+
+    @Override
+    public Receiver getReceiver() {
+        return receiver;
+    }
+
+    @Override
+    public boolean isSettled() {
+        return delivery.isSettled();
+    }
 }

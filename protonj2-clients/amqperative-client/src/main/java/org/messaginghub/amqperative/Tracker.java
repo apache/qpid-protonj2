@@ -17,12 +17,34 @@
 package org.messaginghub.amqperative;
 
 /**
- *
+ * Tracker object used to track the state of a sent {@link Message} at the remote
+ * and allows for local settlement and disposition management.
  */
 public interface Tracker {
 
-    Message<?> getMessage();
-    //TODO: need this?
+    /**
+     * @return the {@link Sender} that was used to send the delivery that is being tracked.
+     */
+    Sender getSender();
+
+    /**
+     * Gets the delivery tag for this delivery
+     *
+     * @return the binary delivery tag that has been assigned to the sent message.
+     */
+    byte[] getTag();
+
+    /**
+     * Settles the delivery locally, if not {@link SenderOptions#isAutoSettle() auto-settling}.
+     *
+     * @return the delivery
+     */
+    Tracker settle();
+
+    /**
+     * @return true if the sent message has been locally settled.
+     */
+    boolean isSettled();
 
     /**
      * Gets the current remote state for the delivery.
@@ -56,19 +78,5 @@ public interface Tracker {
      * @return itself
      */
     Tracker disposition(DeliveryState state, boolean settle);
-
-    /**
-     * Settles the delivery locally, if not {@link SenderOptions#isAutoSettle() auto-settling}.
-     *
-     * @return the delivery
-     */
-    Tracker settle();
-
-    /**
-     * Gets the delivery tag for this delivery
-     *
-     * @return the tag
-     */
-    byte[] getTag();
 
 }

@@ -19,7 +19,7 @@ package org.messaginghub.amqperative.client;
 import org.apache.qpid.proton4j.amqp.messaging.Accepted;
 import org.apache.qpid.proton4j.engine.OutgoingDelivery;
 import org.messaginghub.amqperative.DeliveryState;
-import org.messaginghub.amqperative.Message;
+import org.messaginghub.amqperative.Sender;
 import org.messaginghub.amqperative.Tracker;
 
 /**
@@ -44,9 +44,8 @@ public class ClientTracker implements Tracker {
     }
 
     @Override
-    public Message<?> getMessage() {
-        // TODO Are we holding a message or just tracking the outgoing delivery object ?
-        return null;
+    public Sender getSender() {
+        return sender;
     }
 
     @Override
@@ -85,6 +84,11 @@ public class ClientTracker implements Tracker {
     public Tracker settle() {
         sender.disposition(delivery, null, true);
         return this;
+    }
+
+    @Override
+    public boolean isSettled() {
+        return delivery.isSettled();
     }
 
     @Override
