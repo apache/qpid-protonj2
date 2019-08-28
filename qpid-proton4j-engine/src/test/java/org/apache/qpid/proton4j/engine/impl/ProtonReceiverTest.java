@@ -116,6 +116,50 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
+    @Test(timeout = 60000)
+    public void testCreateReceiverAndClose() throws Exception {
+        doTestCreateReceiverAndCloseOrDetachLink(true);
+    }
+
+    @Test(timeout = 60000)
+    public void testCreateReceiverAndDetach() throws Exception {
+        doTestCreateReceiverAndCloseOrDetachLink(false);
+    }
+
+    private void doTestCreateReceiverAndCloseOrDetachLink(boolean close) throws Exception {
+        ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
+        engine.errorHandler(result -> failure = result);
+        ProtonTestPeer peer = new ProtonTestPeer(engine);
+        engine.outputConsumer(peer);
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond();
+        peer.expectBegin().respond();
+        peer.expectAttach().withRole(Role.RECEIVER).respond();
+        peer.expectDetach().withClosed(close).respond();
+        peer.expectClose().respond();
+
+        Connection connection = engine.start();
+        connection.open();
+        Session session = connection.session();
+        session.open();
+
+        Receiver receiver = session.receiver("test");
+        receiver.open();
+
+        if (close) {
+            receiver.close();
+        } else {
+            receiver.detach();
+        }
+
+        connection.close();
+
+        peer.waitForScriptToComplete();
+
+        assertNull(failure);
+    }
+
     @Test
     public void testReceiverOpenAndCloseAreIdempotent() throws Exception {
         ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();

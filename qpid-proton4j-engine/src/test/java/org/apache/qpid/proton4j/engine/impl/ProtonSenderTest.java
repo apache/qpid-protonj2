@@ -91,6 +91,50 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
+    @Test(timeout = 60000)
+    public void testCreateSenderAndClose() throws Exception {
+        doTestCreateSenderAndCloseOrDetachLink(true);
+    }
+
+    @Test(timeout = 60000)
+    public void testCreateSenderAndDetach() throws Exception {
+        doTestCreateSenderAndCloseOrDetachLink(false);
+    }
+
+    private void doTestCreateSenderAndCloseOrDetachLink(boolean close) throws Exception {
+        ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
+        engine.errorHandler(result -> failure = result);
+        ProtonTestPeer peer = new ProtonTestPeer(engine);
+        engine.outputConsumer(peer);
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond();
+        peer.expectBegin().respond();
+        peer.expectAttach().withRole(Role.SENDER).respond();
+        peer.expectDetach().withClosed(close).respond();
+        peer.expectClose().respond();
+
+        Connection connection = engine.start();
+        connection.open();
+        Session session = connection.session();
+        session.open();
+
+        Sender sender = session.sender("test");
+        sender.open();
+
+        if (close) {
+            sender.close();
+        } else {
+            sender.detach();
+        }
+
+        connection.close();
+
+        peer.waitForScriptToComplete();
+
+        assertNull(failure);
+    }
+
     @Test
     public void testEngineEmitsAttachAfterLocalSenderOpened() throws Exception {
         ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();

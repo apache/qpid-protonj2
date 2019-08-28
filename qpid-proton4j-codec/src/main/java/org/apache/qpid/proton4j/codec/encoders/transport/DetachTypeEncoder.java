@@ -55,18 +55,10 @@ public class DetachTypeEncoder extends AbstractDescribedListTypeEncoder<Detach> 
                 }
                 break;
             case 1:
-                if (detach.hasClosed()) {
-                    state.getEncoder().writeBoolean(buffer, state, detach.getClosed());
-                } else {
-                    buffer.writeByte(EncodingCodes.NULL);
-                }
+                buffer.writeByte(detach.getClosed() ? EncodingCodes.BOOLEAN_TRUE : EncodingCodes.BOOLEAN_FALSE);
                 break;
             case 2:
-                if (detach.hasError()) {
-                    state.getEncoder().writeObject(buffer, state, detach.getError());
-                } else {
-                    buffer.writeByte(EncodingCodes.NULL);
-                }
+                state.getEncoder().writeObject(buffer, state, detach.getError());
                 break;
             default:
                 throw new IllegalArgumentException("Unknown Detach value index: " + index);
@@ -82,7 +74,7 @@ public class DetachTypeEncoder extends AbstractDescribedListTypeEncoder<Detach> 
     public int getElementCount(Detach detach) {
         if (detach.getError() != null) {
             return 3;
-        } else if (detach.getClosed()) {
+        } else if (detach.hasClosed()) {
             return 2;
         } else {
             return 1;
