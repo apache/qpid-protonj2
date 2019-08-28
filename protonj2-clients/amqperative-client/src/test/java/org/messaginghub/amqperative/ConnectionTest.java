@@ -25,6 +25,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import org.apache.qpid.proton4j.amqp.driver.netty.NettyTestPeer;
+import org.apache.qpid.proton4j.amqp.transport.ConnectionError;
+import org.apache.qpid.proton4j.amqp.transport.ErrorCondition;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.messaginghub.amqperative.client.ClientException;
@@ -67,6 +69,59 @@ public class ConnectionTest {
 
     @Test
     public void testCreateConnectionURI() throws Exception {
+    }
+
+    @Test(timeout = 60000)
+    public void testConnectionCloseGetsResponseWithErrorDoesNotThrow() throws Exception {
+        try (NettyTestPeer peer = new NettyTestPeer()) {
+            peer.expectAMQPHeader().respondWithAMQPHeader();
+            peer.expectOpen().respond();
+            peer.expectClose().respond().
+                               withErrorCondition(new ErrorCondition(ConnectionError.CONNECTION_FORCED, "Not accepting connections"));
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Connect test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+
+            connection.openFuture().get(10, TimeUnit.SECONDS);
+            // Should close normally and not throw error as we initiated the close.
+            connection.close().get(10, TimeUnit.SECONDS);
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+
+            LOG.info("Connect test completed normally");
+        }
+    }
+
+    @Test(timeout = 60000)
+    public void testConnectionRemoteClosedAfterOpened() throws Exception {
+        try (NettyTestPeer peer = new NettyTestPeer()) {
+            peer.expectAMQPHeader().respondWithAMQPHeader();
+            peer.expectOpen().respond();
+            peer.remoteClose().withErrorCondition(
+                    new ErrorCondition(ConnectionError.CONNECTION_FORCED, "Not accepting connections")).queue();
+            peer.expectClose();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Connect test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+
+            connection.openFuture().get(10, TimeUnit.SECONDS);
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+
+            connection.close().get(10, TimeUnit.SECONDS);
+
+            LOG.info("Connect test completed normally");
+        }
     }
 
     @Test(timeout = 60000)

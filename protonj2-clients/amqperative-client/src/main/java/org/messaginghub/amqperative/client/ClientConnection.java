@@ -24,7 +24,6 @@ import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
@@ -79,8 +78,6 @@ public class ClientConnection implements Connection {
 
     private ClientFuture<Connection> openFuture;
     private ClientFuture<Connection> closeFuture;
-    private final AtomicBoolean remoteOpened = new AtomicBoolean();  // TODO - Updater?
-    private final AtomicBoolean remoteClosed = new AtomicBoolean();  // TODO - Updater?
     private volatile int closeState;
     private volatile int sessionCounter;
     private volatile ClientException failureCause;
@@ -129,7 +126,15 @@ public class ClientConnection implements Connection {
     public Future<Connection> close() {
         if (CLOSE_STATE_UPDATER.compareAndSet(this, 0, 1) && !openFuture.isFailed()) {
             executor.execute(() -> {
-                protonConnection.close();
+                try {
+                    protonConnection.close();
+                } catch (Throwable ignored) {
+                    LOG.trace("Error on attempt to close proton connection was ignored");
+                    try {
+                        transport.close();
+                    } catch (IOException ignore) {}
+                    closeFuture.complete(ClientConnection.this);
+                }
             });
         }
         return closeFuture;
@@ -265,12 +270,30 @@ public class ClientConnection implements Connection {
                 protonConnection = engine.start();
 
                 protonConnection.openEventHandler((result) -> {
-                    remoteOpened.set(true);
                     openFuture.complete(this);
                 });
 
                 protonConnection.closeEventHandler(result -> {
-                    remoteClosed.set(true);
+                    // TODO - On remote close we need to ensure that sessions and their resources
+                    //        all reflect the fact that they are now closed.  Also there is not a
+                    //        way currently to reflect the fact that a remote closed happened in
+                    //        the existing imperative client API.
+
+                    // Close should be idempotent so we can just respond here with a close in case
+                    // of remotely closed connection.  We should set error state from remote though
+                    // so client can see it.
+                    try {
+                        protonConnection.close();
+                    } catch (Throwable ignored) {
+                        LOG.trace("Error on attempt to close proton connection was ignored");
+                    }
+                    try {
+                        transport.close();
+                    } catch (IOException ignore) {}
+                    // TODO - What is the mapping of proton exception from error condition on the connection ?
+                    if (result.error() != null) {
+                        FAILURE_CAUSE_UPDATER.compareAndSet(this, null, ClientExceptionSupport.createOrPassthroughFatal(result.error()));
+                    }
                     CLOSE_STATE_UPDATER.lazySet(this, 1);
                     closeFuture.complete(this);
                 });
@@ -344,6 +367,10 @@ public class ClientConnection implements Connection {
         try {
             executor.execute(() -> {
                 protonConnection.close();
+                try {
+                    transport.close();
+                } catch (IOException ignored) {
+                }
                 // Signal any waiters that the operation is done due to error.
                 openFuture.failed(error);
                 closeFuture.complete(ClientConnection.this);
