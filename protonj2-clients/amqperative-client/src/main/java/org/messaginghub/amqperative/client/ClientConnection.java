@@ -161,13 +161,13 @@ public class ClientConnection implements Connection {
 
     @Override
     public Receiver openReceiver(String address) throws ClientException {
-        Objects.requireNonNull(address, "Cannot create a sender with a null address");
         return openReceiver(address, options.getDefaultReceiverOptions());
     }
 
     @Override
     public Receiver openReceiver(String address, ReceiverOptions receiverOptions) throws ClientException {
         checkClosed();
+        Objects.requireNonNull(address, "Cannot create a receiver with a null address");
         final ClientFuture<Receiver> createReceiver = getFutureFactory().createFuture();
         final ReceiverOptions receiverOpts = receiverOptions == null ? options.getDefaultReceiverOptions() : receiverOptions;
 
@@ -196,6 +196,7 @@ public class ClientConnection implements Connection {
     @Override
     public Sender openSender(String address, SenderOptions senderOptions) throws ClientException {
         checkClosed();
+        Objects.requireNonNull(address, "Cannot create a sender with a null address");
         final ClientFuture<Sender> createSender = getFutureFactory().createFuture();
         final SenderOptions senderOpts = senderOptions == null ? options.getDefaultSenderOptions() : senderOptions;
 

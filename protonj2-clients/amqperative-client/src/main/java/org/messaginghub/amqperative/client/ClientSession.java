@@ -18,6 +18,7 @@ package org.messaginghub.amqperative.client;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Future;
@@ -117,6 +118,7 @@ public class ClientSession implements Session {
     @Override
     public Receiver openReceiver(String address, ReceiverOptions receiverOptions) throws ClientException {
         checkClosed();
+        Objects.requireNonNull(address, "Cannot create a receiver with a null address");
         final ClientFuture<Receiver> createReceiver = getFutureFactory().createFuture();
         final ReceiverOptions receiverOpts = receiverOptions == null ? options.getDefaultReceiverOptions() : receiverOptions;
 
@@ -140,6 +142,11 @@ public class ClientSession implements Session {
     @Override
     public Receiver openDynamicReceiver(ReceiverOptions receiverOptions) throws ClientException {
         checkClosed();
+
+        if (!receiverOptions.isDynamic()) {
+            throw new IllegalArgumentException("Dynamic receiver requires the options configured for dynamic.");
+        }
+
         final ClientFuture<Receiver> createReceiver = getFutureFactory().createFuture();
         final ReceiverOptions receiverOpts = receiverOptions == null ? options.getDefaultReceiverOptions() : receiverOptions;
 
@@ -163,6 +170,7 @@ public class ClientSession implements Session {
     @Override
     public Sender openSender(String address, SenderOptions senderOptions) throws ClientException {
         checkClosed();
+        Objects.requireNonNull(address, "Cannot create a sender with a null address");
         final ClientFuture<Sender> createSender = getFutureFactory().createFuture();
         final SenderOptions senderOpts = senderOptions == null ? options.getDefaultSenderOptions() : senderOptions;
 
