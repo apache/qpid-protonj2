@@ -18,9 +18,6 @@ package org.apache.qpid.proton4j.amqp.driver.expectations;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
-
 import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
 import org.apache.qpid.proton4j.amqp.driver.ScriptedExpectation;
 import org.apache.qpid.proton4j.amqp.driver.codec.ListDescribedType;
@@ -58,7 +55,6 @@ public abstract class AbstractExpectation<T extends ListDescribedType> implement
     public static int ANY_CHANNEL = -1;
 
     protected int expectedChannel = ANY_CHANNEL;
-    protected final Map<Enum<?>, Matcher<?>> fieldMatchers = new LinkedHashMap<>();
     protected final AMQPTestDriver driver;
 
     public AbstractExpectation(AMQPTestDriver driver) {
@@ -84,7 +80,7 @@ public abstract class AbstractExpectation<T extends ListDescribedType> implement
      */
     protected final void verifyPerformative(T performative) throws AssertionError {
         LOG.debug("About to check the fields of the performative." +
-                  "\n  Received:" + performative + "\n  Expectations: " + fieldMatchers);
+                  "\n  Received:" + performative + "\n  Expectations: " + getExpectationMatcher());
 
         assertThat("Performative does not match expectation", performative, getExpectationMatcher());
     }
@@ -101,13 +97,6 @@ public abstract class AbstractExpectation<T extends ListDescribedType> implement
         if (expectedChannel != ANY_CHANNEL && expectedChannel != channel) {
             throw new AssertionError("Expected send on channel + " + expectedChannel + ": but was on channel:" + channel);
         }
-    }
-
-    /**
-     * @return the Map of matchers used to validate fields of the received performative.
-     */
-    protected Map<Enum<?>, Matcher<?>> getMatchers() {
-        return fieldMatchers;
     }
 
     protected abstract Matcher<ListDescribedType> getExpectationMatcher();
