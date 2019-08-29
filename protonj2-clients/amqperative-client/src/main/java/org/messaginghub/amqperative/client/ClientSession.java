@@ -24,6 +24,7 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
@@ -39,6 +40,7 @@ import org.messaginghub.amqperative.SenderOptions;
 import org.messaginghub.amqperative.Session;
 import org.messaginghub.amqperative.SessionOptions;
 import org.messaginghub.amqperative.client.exceptions.ClientExceptionSupport;
+import org.messaginghub.amqperative.futures.AsyncResult;
 import org.messaginghub.amqperative.futures.ClientFuture;
 import org.messaginghub.amqperative.futures.ClientFutureFactory;
 import org.messaginghub.amqperative.util.NoOpExecutor;
@@ -303,6 +305,14 @@ public class ClientSession implements Session {
 
     boolean isClosed() {
         return closed > 0;
+    }
+
+    ScheduledFuture<?> scheduleRequestTimeout(final AsyncResult<?> request, long timeout, final ClientException error) {
+        return connection.scheduleRequestTimeout(request, timeout, error);
+    }
+
+    <T> T request(ClientFuture<T> request, long timeout, TimeUnit units) throws ClientException {
+        return connection.request(request, timeout, units);
     }
 
     //----- Private implementation methods

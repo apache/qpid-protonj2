@@ -38,13 +38,25 @@ public interface Sender {
      * Send the given message.
      *
      * @param message
-     *      the message to send
+     *      the {@link Message} to send.
      *
-     * @return the tracker for the message delivery
+     * @return the {@link Tracker} for the message delivery
      *
      * @throws ClientException if an error occurs while initiating the send operation.
      */
     Tracker send(Message<?> message) throws ClientException;
+
+    /**
+     * Send the given message if credit is available.
+     *
+     * @param message
+     *      the {@link Message} to send if credit is available.
+     *
+     * @return the {@link Tracker} for the message delivery or null if no credit for sending.
+     *
+     * @throws ClientException if an error occurs while initiating the send operation.
+     */
+    Tracker trySend(Message<?> message) throws ClientException;
 
     Future<Sender> openFuture();
 
@@ -52,8 +64,7 @@ public interface Sender {
 
     Future<Sender> detach();
 
-    //TODO: Ideas
-    Tracker trySend(Message<?> message, Consumer<Tracker> onUpdated) throws IllegalStateException;
+    // Ideas not yet worked out.
 
     Tracker send(Message<?> message, Consumer<Tracker> onUpdated);
 

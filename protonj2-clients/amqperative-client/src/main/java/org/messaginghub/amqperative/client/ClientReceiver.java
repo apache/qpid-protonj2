@@ -25,6 +25,7 @@ import java.util.function.Consumer;
 
 import org.apache.qpid.proton4j.amqp.transport.DeliveryState;
 import org.apache.qpid.proton4j.engine.IncomingDelivery;
+import org.apache.qpid.proton4j.engine.LinkState;
 import org.messaginghub.amqperative.Client;
 import org.messaginghub.amqperative.Delivery;
 import org.messaginghub.amqperative.Receiver;
@@ -186,73 +187,12 @@ public class ClientReceiver implements Receiver {
 
     ClientReceiver open() {
         executor.execute(() -> {
-            protonReceiver.openHandler(event -> {
-                if (event.getRemoteSource() != null) {
-                    openFuture.complete(this);
-                    LOG.trace("Receiver opened successfully");
-                } else {
-                    LOG.debug("Receiver opened but remote signalled close is pending: ", event);
-                }
-            });
-            protonReceiver.closeHandler(event -> {
-                LOG.info("Receiver link remotely closed: ", event);
-                CLOSED_UPDATER.lazySet(this, 1);
-                messageQueue.clear();
-
-                // Close should be idempotent so we can just respond here with a close in case
-                // of remotely closed receiver.  We should set error state from remote though
-                // so client can see it.
-                try {
-                    protonReceiver.close();
-                } catch (Throwable ignored) {
-                    LOG.trace("Error on attempt to close proton receiver was ignored: ", ignored);
-                }
-
-                // TODO - Error open future if remote indicated open would fail using an appropriate
-                //        exception based on remote error condition if one is set.
-                if (event.getRemoteSource() == null) {
-                    openFuture.failed(new ClientException("Link creation was refused"));
-                } else {
-                    openFuture.complete(this);
-                }
-                closeFuture.complete(this);
-            });
-
-            protonReceiver.detachHandler(event -> {
-                LOG.info("Receiver link remotely detached: ", event);
-                CLOSED_UPDATER.lazySet(this, 1);
-                messageQueue.clear();
-
-                // Detach should be idempotent so we can just respond here with a detach in case
-                // of remotely detached receiver.  We should set error state from remote though
-                // so client can see it.
-                try {
-                    protonReceiver.detach();
-                } catch (Throwable ignored) {
-                    LOG.trace("Error on attempt to close proton receiver was ignored: ", ignored);
-                }
-
-                // TODO - Error open future if remote indicated open would fail using an appropriate
-                //        exception based on remote error condition if one is set.
-                if (event.getRemoteSource() == null) {
-                    openFuture.failed(new ClientException("Link creation was refused"));
-                } else {
-                    openFuture.complete(this);
-                }
-                closeFuture.complete(this);
-            });
-
-            protonReceiver.deliveryReceivedEventHandler(delivery -> {
-                LOG.debug("Delivery was updated: ", delivery);
-                messageQueue.enqueue(new ClientDelivery(this, delivery));
-            });
-
-            protonReceiver.deliveryUpdatedEventHandler(delivery -> {
-               LOG.debug("Delivery was updated: ", delivery);
-               // TODO - event or other reaction
-            });
-
-            protonReceiver.open();
+            protonReceiver.openHandler(receiver -> handleRemoteOpen(receiver))
+                          .closeHandler(receiver -> handleRemoteCloseOrDetach(receiver))
+                          .detachHandler(receiver -> handleRemoteCloseOrDetach(receiver))
+                          .deliveryUpdatedEventHandler(delivery -> handleDeliveryRemotelyUpdated(delivery))
+                          .deliveryReceivedEventHandler(delivery -> handleDeliveryReceivied(delivery))
+                          .open();
         });
 
         return this;
@@ -276,6 +216,56 @@ public class ClientReceiver implements Receiver {
 
     boolean isClosed() {
         return closed > 0;
+    }
+
+    //----- Handlers for proton receiver events
+
+    private void handleRemoteOpen(org.apache.qpid.proton4j.engine.Receiver receiver) {
+        // Check for deferred close pending and hold completion if so
+        if (receiver.getRemoteSource() != null) {
+            openFuture.complete(this);
+            LOG.trace("Receiver opened successfully");
+        } else {
+            LOG.debug("Receiver opened but remote signalled close is pending: ", receiver);
+        }
+    }
+
+    private void handleRemoteCloseOrDetach(org.apache.qpid.proton4j.engine.Receiver receiver) {
+        CLOSED_UPDATER.lazySet(this, 1);
+
+        // Close should be idempotent so we can just respond here with a close in case
+        // of remotely closed sender.  We should set error state from remote though
+        // so client can see it.
+        try {
+            if (receiver.getRemoteState() == LinkState.CLOSED) {
+                LOG.info("Sender link remotely closed: ", receiver);
+                receiver.close();
+            } else {
+                LOG.info("Sender link remotely detached: ", receiver);
+                receiver.detach();
+            }
+        } catch (Throwable ignored) {
+            LOG.trace("Error while processing remote close event: ", ignored);
+        }
+
+        // TODO - Error open future if remote indicated open would fail using an appropriate
+        //        exception based on remote error condition if one is set.
+        if (receiver.getRemoteSource() == null) {
+            openFuture.failed(new ClientException("Link creation was refused"));
+        } else {
+            openFuture.complete(this);
+        }
+        closeFuture.complete(this);
+    }
+
+    private void handleDeliveryReceivied(IncomingDelivery delivery) {
+        LOG.debug("Delivery was updated: ", delivery);
+        messageQueue.enqueue(new ClientDelivery(this, delivery));
+    }
+
+    private void handleDeliveryRemotelyUpdated(IncomingDelivery delivery) {
+        LOG.debug("Delivery was updated: ", delivery);
+        // TODO - event or other reaction
     }
 
     //----- Private implementation details

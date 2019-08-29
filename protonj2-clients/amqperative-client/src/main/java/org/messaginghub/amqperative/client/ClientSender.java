@@ -16,16 +16,22 @@
  */
 package org.messaginghub.amqperative.client;
 
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
 import org.apache.qpid.proton4j.amqp.transport.DeliveryState;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import org.apache.qpid.proton4j.engine.LinkCreditState;
+import org.apache.qpid.proton4j.engine.LinkState;
 import org.apache.qpid.proton4j.engine.OutgoingDelivery;
 import org.messaginghub.amqperative.Client;
 import org.messaginghub.amqperative.Message;
@@ -33,7 +39,7 @@ import org.messaginghub.amqperative.Sender;
 import org.messaginghub.amqperative.SenderOptions;
 import org.messaginghub.amqperative.Session;
 import org.messaginghub.amqperative.Tracker;
-import org.messaginghub.amqperative.client.exceptions.ClientExceptionSupport;
+import org.messaginghub.amqperative.client.exceptions.ClientSendTimedOutException;
 import org.messaginghub.amqperative.futures.AsyncResult;
 import org.messaginghub.amqperative.futures.ClientFuture;
 import org.slf4j.Logger;
@@ -52,6 +58,7 @@ public class ClientSender implements Sender {
     private final ClientFuture<Sender> openFuture;
     private final ClientFuture<Sender> closeFuture;
 
+    private final Map<Object, InFlightSend> blocked = new LinkedHashMap<Object, InFlightSend>();
     private final ClientSenderOptions options;
     private final ClientSession session;
     private final org.apache.qpid.proton4j.engine.Sender protonSender;
@@ -59,6 +66,7 @@ public class ClientSender implements Sender {
     private final AtomicReference<Throwable> failureCause = new AtomicReference<>();
     private final String senderId;
     private volatile int closed;
+    private LinkCreditState drainingState;
 
     public ClientSender(SenderOptions options, ClientSession session, org.apache.qpid.proton4j.engine.Sender sender, String address) {
         this.options = new ClientSenderOptions(options);
@@ -113,45 +121,52 @@ public class ClientSender implements Sender {
         ClientFuture<Tracker> operation = session.getFutureFactory().createFuture();
 
         executor.execute(() -> {
-            //TODO: block for credit
-            //TODO: check sender.isSendable();
+            if (protonSender.isSendable()) {
+                assumeSendableAndSend((ClientMessage<?>) message, operation);
+            } else {
+                final ScheduledFuture<?> sendTimeout;
+                if (options.getSendTimeout() > 0) {
+                    // TODO - Add variant that takes a builder of exceptions to reduce allocation overhead.
+                    sendTimeout = session.scheduleRequestTimeout(
+                        operation, options.getSendTimeout(), new ClientSendTimedOutException("Timed out waiting for send"));
+                } else {
+                    sendTimeout = null;
+                }
 
-            ClientMessage<?> msg = (ClientMessage<?>) message;
-
-            ProtonBuffer buffer = ClientMessageSupport.encodeMessage(msg);
-            OutgoingDelivery delivery = protonSender.next();
-            delivery.setTag(new byte[] {0});
-            delivery.writeBytes(buffer);
-
-            operation.complete(new ClientTracker(this, delivery));
+                final InFlightSend send = new InFlightSend((ClientMessage<?>) message, operation, sendTimeout);
+                blocked.put(send, send);
+            }
         });
 
-        try {
-            // TODO - Timeouts ?
-            return operation.get();
-        } catch (Throwable e) {
-            throw ClientExceptionSupport.createNonFatalOrPassthrough(e);
-        }
+        return session.request(operation, options.getSendTimeout(), TimeUnit.MILLISECONDS);
     }
 
     @Override
-    public Tracker trySend(Message<?> message, Consumer<Tracker> onUpdated) throws IllegalStateException {
+    public Tracker trySend(Message<?> message) throws ClientException {
         checkClosed();
-        // TODO Auto-generated method stub
-        return null;
+        ClientFuture<Tracker> operation = session.getFutureFactory().createFuture();
+        executor.execute(() -> {
+            if (protonSender.isSendable()) {
+                assumeSendableAndSend((ClientMessage<?>) message, operation);
+            } else {
+                operation.complete(null);
+            }
+        });
+
+        return session.request(operation, options.getSendTimeout(), TimeUnit.MILLISECONDS);
     }
 
     @Override
     public Tracker send(Message<?> message, Consumer<Tracker> onUpdated) {
         checkClosed();
-        // TODO Auto-generated method stub
+        // TODO - So many questions
         return null;
     }
 
     @Override
     public Tracker send(Message<?> message, Consumer<Tracker> onUpdated, ExecutorService executor) {
         checkClosed();
-        // TODO Auto-generated method stub
+        // TODO - Even more questions
         return null;
     }
 
@@ -166,68 +181,14 @@ public class ClientSender implements Sender {
 
     ClientSender open() {
         executor.execute(() -> {
-            protonSender.openHandler(event -> {
-                if (event.getRemoteTarget() != null) {
-                    openFuture.complete(this);
-                    LOG.trace("Sender opened successfully");
-                } else {
-                    LOG.debug("Sender opened but remote signalled close is pending: ", event);
-                }
-            });
+            protonSender.openHandler(sender -> handleRemoteOpen(sender))
+                        .closeHandler(sender -> handleRemoteCloseOrDetach(sender))
+                        .detachHandler(sender -> handleRemoteCloseOrDetach(sender))
+                        .deliveryUpdatedEventHandler(delivery -> handleDeliveryUpdated(delivery))
+                        .drainRequestedEventHandler(linkState -> handleRemoteRequestedDrain(linkState))
+                        .sendableEventHandler(sender -> handleRemoteNowSendable(sender))
+                        .open();
 
-            protonSender.closeHandler(event -> {
-                LOG.info("Sender link remotely closed: ", event);
-                CLOSED_UPDATER.lazySet(this, 1);
-
-                // Close should be idempotent so we can just respond here with a close in case
-                // of remotely closed sender.  We should set error state from remote though
-                // so client can see it.
-                try {
-                    protonSender.close();
-                } catch (Throwable ignored) {
-                    LOG.trace("Error on attempt to close proton sender was ignored: ", ignored);
-                }
-
-                if (event.getRemoteTarget() == null) {
-                    openFuture.failed(new ClientException("Link creation was refused"));
-                } else {
-                    openFuture.complete(this);
-                }
-                closeFuture.complete(this);
-            });
-
-            protonSender.detachHandler(event -> {
-                LOG.info("Sender link remotely closed: ", event);
-                CLOSED_UPDATER.lazySet(this, 1);
-
-                // Detach should be idempotent so we can just respond here with a detach in case
-                // of remotely detached sender.  We should set error state from remote though
-                // so client can see it.
-                try {
-                    protonSender.detach();
-                } catch (Throwable ignored) {
-                    LOG.trace("Error on attempt to close proton sender was ignored: ", ignored);
-                }
-
-                // TODO - Error open future if remote indicated open would fail using an appropriate
-                //        exception based on remote error condition if one is set.
-                if (event.getRemoteTarget() == null) {
-                    openFuture.failed(new ClientException("Link creation was refused"));
-                } else {
-                    openFuture.complete(this);
-                }
-                closeFuture.complete(this);
-            });
-
-            protonSender.deliveryUpdatedEventHandler(delivery -> {
-                // TODO
-            });
-
-            protonSender.sendableEventHandler(result -> {
-                // TODO
-            });
-
-            protonSender.open();
         });
 
         return this;
@@ -253,16 +214,85 @@ public class ClientSender implements Sender {
         return closed > 0;
     }
 
-    //----- Send Result Tracker
+    //----- Handlers for proton receiver events
 
-    @SuppressWarnings("unused")
+    private void handleRemoteOpen(org.apache.qpid.proton4j.engine.Sender sender) {
+        // Check for deferred close pending and hold completion if so
+        if (sender.getRemoteTarget() != null) {
+            openFuture.complete(this);
+            LOG.trace("Sender opened successfully");
+        } else {
+            LOG.debug("Sender opened but remote signalled close is pending: ", sender);
+        }
+    }
+
+    private void handleRemoteCloseOrDetach(org.apache.qpid.proton4j.engine.Sender sender) {
+        CLOSED_UPDATER.lazySet(this, 1);
+
+        // Close should be idempotent so we can just respond here with a close in case
+        // of remotely closed sender.  We should set error state from remote though
+        // so client can see it.
+        try {
+            if (protonSender.getRemoteState() == LinkState.CLOSED) {
+                LOG.info("Sender link remotely closed: ", sender);
+                protonSender.close();
+            } else {
+                LOG.info("Sender link remotely detached: ", sender);
+                protonSender.detach();
+            }
+        } catch (Throwable ignored) {
+            LOG.trace("Error while processing remote close event: ", ignored);
+        }
+
+        if (sender.getRemoteTarget() == null) {
+            openFuture.failed(new ClientException("Link creation was refused"));
+        } else {
+            openFuture.complete(this);
+        }
+        closeFuture.complete(this);
+    }
+
+    private void handleRemoteNowSendable(org.apache.qpid.proton4j.engine.Sender sender) {
+        if (!blocked.isEmpty()) {
+            Iterator<InFlightSend> blockedSends = blocked.values().iterator();
+            while (sender.isSendable() && blockedSends.hasNext()) {
+                LOG.trace("Dispatching previously held send");
+                InFlightSend held = blockedSends.next();
+                try {
+                    assumeSendableAndSend(held.message, held);
+                } finally {
+                    blockedSends.remove();
+                }
+            }
+        }
+
+        if (drainingState != null) {
+            sender.drained(drainingState);
+            drainingState = null;
+        }
+    }
+
+    private void handleRemoteRequestedDrain(LinkCreditState linkState) {
+        if (blocked.isEmpty()) {
+            protonSender.drained(linkState);
+        } else {
+            drainingState = linkState;
+        }
+    }
+
+    private void handleDeliveryUpdated(OutgoingDelivery delivery) {
+        // TODO - Signal received etc
+    }
+
+    //----- Send Result Tracker used for send blocked on credit
+
     private class InFlightSend implements AsyncResult<Tracker> {
 
         private final ClientMessage<?> message;
         private final ClientFuture<Tracker> operation;
-        private final ScheduledFuture<Void> timeout;
+        private final ScheduledFuture<?> timeout;
 
-        public InFlightSend(ClientMessage<?> message, ClientFuture<Tracker> operation, ScheduledFuture<Void> timeout) {
+        public InFlightSend(ClientMessage<?> message, ClientFuture<Tracker> operation, ScheduledFuture<?> timeout) {
             this.message = message;
             this.operation = operation;
             this.timeout = timeout;
@@ -291,6 +321,15 @@ public class ClientSender implements Sender {
     }
 
     //----- Private implementation details
+
+    private void assumeSendableAndSend(ClientMessage<?> message, AsyncResult<Tracker> request) {
+        ProtonBuffer buffer = ClientMessageSupport.encodeMessage(message);
+        OutgoingDelivery delivery = protonSender.next();
+        delivery.setTag(new byte[] {0});
+        delivery.writeBytes(buffer);
+
+        request.complete(new ClientTracker(this, delivery));
+    }
 
     private void checkClosed() throws IllegalStateException {
         if (isClosed()) {

@@ -22,6 +22,7 @@ import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -43,6 +44,7 @@ import org.messaginghub.amqperative.Tracker;
 import org.messaginghub.amqperative.client.exceptions.ClientConnectionRemotelyClosedException;
 import org.messaginghub.amqperative.client.exceptions.ClientExceptionSupport;
 import org.messaginghub.amqperative.client.exceptions.ClientIOException;
+import org.messaginghub.amqperative.futures.AsyncResult;
 import org.messaginghub.amqperative.futures.ClientFuture;
 import org.messaginghub.amqperative.futures.ClientFutureFactory;
 import org.messaginghub.amqperative.transport.Transport;
@@ -59,6 +61,7 @@ public class ClientConnection implements Connection {
 
     private static final Logger LOG = LoggerFactory.getLogger(ClientConnection.class);
 
+    private static final long INFINITE = -1;
     private static final AtomicInteger CONNECTION_SEQUENCE = new AtomicInteger();
 
     private static final AtomicIntegerFieldUpdater<ClientConnection> CLOSED_UPDATER =
@@ -395,6 +398,14 @@ public class ClientConnection implements Connection {
             throw ClientExceptionSupport.createNonFatalOrPassthrough(error);
         } finally {
             requests.remove(request);
+        }
+    }
+
+    ScheduledFuture<?> scheduleRequestTimeout(final AsyncResult<?> request, long timeout, final ClientException error) {
+        if (timeout != INFINITE) {
+            return executor.schedule(() -> request.failed(error), timeout, TimeUnit.MILLISECONDS);
+        } else {
+            return null;
         }
     }
 
