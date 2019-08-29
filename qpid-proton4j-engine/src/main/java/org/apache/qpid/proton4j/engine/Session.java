@@ -225,7 +225,7 @@ public interface Session {
      *
      * @return the session for chaining.
      */
-    Session openHandler(EventHandler<AsyncEvent<Session>> remoteOpenHandler);
+    Session openHandler(EventHandler<Session> remoteOpenHandler);
 
     /**
      * Sets a {@link EventHandler} for when an AMQP End frame is received from the remote peer for this
@@ -236,7 +236,7 @@ public interface Session {
      *
      * @return the session for chaining.
      */
-    Session closeHandler(EventHandler<AsyncEvent<Session>> remoteCloseHandler);
+    Session closeHandler(EventHandler<Session> remoteCloseHandler);
 
     /**
      * Sets a EventHandler for when an AMQP Attach frame is received from the remote peer for a sending link.

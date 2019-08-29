@@ -16,8 +16,6 @@
  */
 package org.apache.qpid.proton4j.engine.impl;
 
-import static org.apache.qpid.proton4j.engine.impl.ProtonSupport.result;
-
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -39,7 +37,6 @@ import org.apache.qpid.proton4j.amqp.transport.Transfer;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.common.logging.ProtonLogger;
 import org.apache.qpid.proton4j.common.logging.ProtonLoggerFactory;
-import org.apache.qpid.proton4j.engine.AsyncEvent;
 import org.apache.qpid.proton4j.engine.EventHandler;
 import org.apache.qpid.proton4j.engine.Link;
 import org.apache.qpid.proton4j.engine.LinkState;
@@ -71,12 +68,12 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
     private ErrorCondition localError;
     private ErrorCondition remoteError;
 
-    private EventHandler<AsyncEvent<T>> remoteOpenHandler;
+    private EventHandler<T> remoteOpenHandler;
 
-    private EventHandler<AsyncEvent<T>> remoteDetachHandler = (result) -> {
+    private EventHandler<T> remoteDetachHandler = (result) -> {
         LOG.trace("Remote link detach arrived at default handler.");
     };
-    private EventHandler<AsyncEvent<T>> remoteCloseHandler = (result) -> {
+    private EventHandler<T> remoteCloseHandler = (result) -> {
         LOG.trace("Remote link close arrived at default handler.");
     };
 
@@ -354,19 +351,19 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
     }
 
     @Override
-    public T openHandler(EventHandler<AsyncEvent<T>> remoteOpenHandler) {
+    public T openHandler(EventHandler<T> remoteOpenHandler) {
         this.remoteOpenHandler = remoteOpenHandler;
         return self();
     }
 
     @Override
-    public T detachHandler(EventHandler<AsyncEvent<T>> remoteDetachHandler) {
+    public T detachHandler(EventHandler<T> remoteDetachHandler) {
         this.remoteDetachHandler = remoteDetachHandler;
         return self();
     }
 
     @Override
-    public T closeHandler(EventHandler<AsyncEvent<T>> remoteCloseHandler) {
+    public T closeHandler(EventHandler<T> remoteCloseHandler) {
         this.remoteCloseHandler = remoteCloseHandler;
         return self();
     }
@@ -413,7 +410,7 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
         getState().remoteAttach(attach);
 
         if (remoteOpenHandler != null) {
-            remoteOpenHandler.handle(result(self(), null));
+            remoteOpenHandler.handle(self());
         } else {
             if (getRole() == Role.RECEIVER) {
                 if (session.receiverOpenEventHandler() != null) {
@@ -441,12 +438,12 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
         if (detach.getClosed()) {
             remoteState = LinkState.CLOSED;
             if (remoteCloseHandler != null) {
-                remoteCloseHandler.handle(result(self(), getRemoteCondition()));
+                remoteCloseHandler.handle(self());
             }
         } else {
             remoteState = LinkState.DETACHED;
             if (remoteDetachHandler != null) {
-                remoteDetachHandler.handle(result(self(), getRemoteCondition()));
+                remoteDetachHandler.handle(self());
             }
         }
 

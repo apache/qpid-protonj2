@@ -16,8 +16,6 @@
  */
 package org.apache.qpid.proton4j.engine.impl;
 
-import static org.apache.qpid.proton4j.engine.impl.ProtonSupport.result;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -41,7 +39,6 @@ import org.apache.qpid.proton4j.amqp.transport.Transfer;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.common.logging.ProtonLogger;
 import org.apache.qpid.proton4j.common.logging.ProtonLoggerFactory;
-import org.apache.qpid.proton4j.engine.AsyncEvent;
 import org.apache.qpid.proton4j.engine.Connection;
 import org.apache.qpid.proton4j.engine.ConnectionState;
 import org.apache.qpid.proton4j.engine.EventHandler;
@@ -79,11 +76,11 @@ public class ProtonConnection implements Connection, AMQPHeader.HeaderHandler<Pr
     private boolean localOpenSent;
     private boolean localCloseSent;
 
-    private EventHandler<AsyncEvent<Connection>> remoteOpenHandler = (result) -> {
+    private EventHandler<Connection> remoteOpenHandler = (result) -> {
         LOG.trace("Remote open arrived at default handler.");
     };
 
-    private EventHandler<AsyncEvent<Connection>> remoteCloseHandler = (result) -> {
+    private EventHandler<Connection> remoteCloseHandler = (result) -> {
         LOG.trace("Remote close arrived at default handler.");
     };
 
@@ -378,7 +375,7 @@ public class ProtonConnection implements Connection, AMQPHeader.HeaderHandler<Pr
         }
 
         if (remoteOpenHandler != null) {
-            remoteOpenHandler.handle(result(this, null));
+            remoteOpenHandler.handle(this);
         }
     }
 
@@ -393,7 +390,7 @@ public class ProtonConnection implements Connection, AMQPHeader.HeaderHandler<Pr
         }
 
         if (remoteCloseHandler != null) {
-            remoteCloseHandler.handle(result(this, close.getError()));
+            remoteCloseHandler.handle(this);
         }
     }
 
@@ -499,13 +496,13 @@ public class ProtonConnection implements Connection, AMQPHeader.HeaderHandler<Pr
     //----- API for event handling of Connection related remote events
 
     @Override
-    public Connection openEventHandler(EventHandler<AsyncEvent<Connection>> remoteOpenEventHandler) {
+    public Connection openEventHandler(EventHandler<Connection> remoteOpenEventHandler) {
         this.remoteOpenHandler = remoteOpenEventHandler;
         return this;
     }
 
     @Override
-    public Connection closeEventHandler(EventHandler<AsyncEvent<Connection>> remoteCloseEventHandler) {
+    public Connection closeEventHandler(EventHandler<Connection> remoteCloseEventHandler) {
         this.remoteCloseHandler = remoteCloseEventHandler;
         return this;
     }

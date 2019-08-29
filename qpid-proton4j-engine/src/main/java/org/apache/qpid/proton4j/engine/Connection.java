@@ -282,7 +282,7 @@ public interface Connection {
      *
      * @return this connection
      */
-    Connection openEventHandler(EventHandler<AsyncEvent<Connection>> remoteOpenEventHandler);
+    Connection openEventHandler(EventHandler<Connection> remoteOpenEventHandler);
 
     /**
      * Sets a EventHandler for when an AMQP Close frame is received from the remote peer.
@@ -292,7 +292,7 @@ public interface Connection {
      *
      * @return this connection
      */
-    Connection closeEventHandler(EventHandler<AsyncEvent<Connection>> remoteCloseEventHandler);
+    Connection closeEventHandler(EventHandler<Connection> remoteCloseEventHandler);
 
     /**
      * Sets a EventHandler for when an AMQP Begin frame is received from the remote peer.

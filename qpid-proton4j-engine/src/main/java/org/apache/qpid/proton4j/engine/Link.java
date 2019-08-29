@@ -287,7 +287,7 @@ public interface Link<T extends Link<T>> {
      *
      * @return the link for chaining.
      */
-    T openHandler(EventHandler<AsyncEvent<T>> remoteOpenHandler);
+    T openHandler(EventHandler<T> remoteOpenHandler);
 
     /**
      * Sets a {@link EventHandler} for when an AMQP Detach frame is received from the remote peer for this
@@ -299,7 +299,7 @@ public interface Link<T extends Link<T>> {
      *
      * @return the link for chaining.
      */
-    T detachHandler(EventHandler<AsyncEvent<T>> remoteDetachHandler);
+    T detachHandler(EventHandler<T> remoteDetachHandler);
 
     /**
      * Sets a {@link EventHandler} for when an AMQP Detach frame is received from the remote peer for this
@@ -311,6 +311,6 @@ public interface Link<T extends Link<T>> {
      *
      * @return the link for chaining.
      */
-    T closeHandler(EventHandler<AsyncEvent<T>> remoteCloseHandler);
+    T closeHandler(EventHandler<T> remoteCloseHandler);
 
 }

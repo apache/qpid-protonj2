@@ -20,7 +20,6 @@ import org.apache.qpid.proton4j.amqp.transactions.Declare;
 import org.apache.qpid.proton4j.amqp.transactions.Declared;
 import org.apache.qpid.proton4j.amqp.transactions.Discharge;
 import org.apache.qpid.proton4j.amqp.transport.Role;
-import org.apache.qpid.proton4j.engine.AsyncEvent;
 import org.apache.qpid.proton4j.engine.EventHandler;
 
 /**
@@ -72,15 +71,15 @@ public class ProtonCoordinator extends ProtonLink<ProtonCoordinator> {
 
     // TODO - Possible event points to handle declare of a TX and the response, and the discharge of a TX
 
-    public ProtonCoordinator declareHandler(EventHandler<AsyncEvent<Declare>> remoteDeclareHandler) {
+    public ProtonCoordinator declareHandler(EventHandler<Declare> remoteDeclareHandler) {
         return this;
     }
 
-    public ProtonCoordinator declaredHandler(EventHandler<AsyncEvent<Declared>> remoteDeclaredHandler) {
+    public ProtonCoordinator declaredHandler(EventHandler<Declared> remoteDeclaredHandler) {
         return this;
     }
 
-    public ProtonCoordinator dischargeHandler(EventHandler<AsyncEvent<Discharge>> remoteDischargeHandler) {
+    public ProtonCoordinator dischargeHandler(EventHandler<Discharge> remoteDischargeHandler) {
         return this;
     }
 }

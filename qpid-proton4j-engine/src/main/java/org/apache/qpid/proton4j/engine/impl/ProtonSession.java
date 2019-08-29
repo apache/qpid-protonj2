@@ -16,8 +16,6 @@
  */
 package org.apache.qpid.proton4j.engine.impl;
 
-import static org.apache.qpid.proton4j.engine.impl.ProtonSupport.result;
-
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -40,7 +38,6 @@ import org.apache.qpid.proton4j.amqp.transport.Transfer;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.common.logging.ProtonLogger;
 import org.apache.qpid.proton4j.common.logging.ProtonLoggerFactory;
-import org.apache.qpid.proton4j.engine.AsyncEvent;
 import org.apache.qpid.proton4j.engine.ConnectionState;
 import org.apache.qpid.proton4j.engine.EventHandler;
 import org.apache.qpid.proton4j.engine.LinkState;
@@ -84,10 +81,10 @@ public class ProtonSession implements Session {
     private boolean localBeginSent;
     private boolean localEndSent;
 
-    private EventHandler<AsyncEvent<Session>> remoteOpenHandler = (result) -> {
+    private EventHandler<Session> remoteOpenHandler = (result) -> {
         LOG.trace("Remote session open arrived at default handler.");
     };
-    private EventHandler<AsyncEvent<Session>> remoteCloseHandler = (result) -> {
+    private EventHandler<Session> remoteCloseHandler = (result) -> {
         LOG.trace("Remote session close arrived at default handler.");
     };
 
@@ -323,13 +320,13 @@ public class ProtonSession implements Session {
     //----- Event handler registration for this Session
 
     @Override
-    public ProtonSession openHandler(EventHandler<AsyncEvent<Session>> remoteOpenEventHandler) {
+    public ProtonSession openHandler(EventHandler<Session> remoteOpenEventHandler) {
         this.remoteOpenHandler = remoteOpenEventHandler;
         return this;
     }
 
     @Override
-    public ProtonSession closeHandler(EventHandler<AsyncEvent<Session>> remoteCloseEventHandler) {
+    public ProtonSession closeHandler(EventHandler<Session> remoteCloseEventHandler) {
         this.remoteCloseHandler = remoteCloseEventHandler;
         return this;
     }
@@ -397,7 +394,7 @@ public class ProtonSession implements Session {
         outgoingWindow.handleBegin(begin);
 
         if (getLocalState() == SessionState.ACTIVE && remoteOpenHandler != null) {
-            remoteOpenHandler.handle(result(this, null));
+            remoteOpenHandler.handle(this);
         }
     }
 
@@ -408,7 +405,7 @@ public class ProtonSession implements Session {
         remoteState = SessionState.CLOSED;
 
         if (remoteCloseHandler != null) {
-            remoteCloseHandler.handle(result(this, getRemoteCondition()));
+            remoteCloseHandler.handle(this);
         }
     }
 
