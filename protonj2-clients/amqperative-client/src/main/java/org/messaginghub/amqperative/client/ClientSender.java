@@ -167,21 +167,16 @@ public class ClientSender implements Sender {
     ClientSender open() {
         executor.execute(() -> {
             protonSender.openHandler(event -> {
-                if (event.succeeded()) {
-                    if (event.get().getRemoteTarget() != null) {
-                        openFuture.complete(this);
-                        LOG.trace("Sender opened successfully");
-                    } else {
-                        LOG.debug("Sender opened but remote signalled close is pending: ", event.get());
-                    }
+                if (event.getRemoteTarget() != null) {
+                    openFuture.complete(this);
+                    LOG.trace("Sender opened successfully");
                 } else {
-                    openFuture.failed(ClientExceptionSupport.createNonFatalOrPassthrough(event.error()));
-                    LOG.error("Sender failed to open: ", event.error());
+                    LOG.debug("Sender opened but remote signalled close is pending: ", event);
                 }
             });
 
             protonSender.closeHandler(event -> {
-                LOG.info("Sender link remotely closed: ", event.get());
+                LOG.info("Sender link remotely closed: ", event);
                 CLOSED_UPDATER.lazySet(this, 1);
 
                 // Close should be idempotent so we can just respond here with a close in case
@@ -193,7 +188,7 @@ public class ClientSender implements Sender {
                     LOG.trace("Error on attempt to close proton sender was ignored: ", ignored);
                 }
 
-                if (event.get().getRemoteTarget() == null) {
+                if (event.getRemoteTarget() == null) {
                     openFuture.failed(new ClientException("Link creation was refused"));
                 } else {
                     openFuture.complete(this);
@@ -202,7 +197,7 @@ public class ClientSender implements Sender {
             });
 
             protonSender.detachHandler(event -> {
-                LOG.info("Sender link remotely closed: ", event.get());
+                LOG.info("Sender link remotely closed: ", event);
                 CLOSED_UPDATER.lazySet(this, 1);
 
                 // Detach should be idempotent so we can just respond here with a detach in case
@@ -216,7 +211,7 @@ public class ClientSender implements Sender {
 
                 // TODO - Error open future if remote indicated open would fail using an appropriate
                 //        exception based on remote error condition if one is set.
-                if (event.get().getRemoteTarget() == null) {
+                if (event.getRemoteTarget() == null) {
                     openFuture.failed(new ClientException("Link creation was refused"));
                 } else {
                     openFuture.complete(this);

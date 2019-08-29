@@ -40,6 +40,7 @@ import org.messaginghub.amqperative.SenderOptions;
 import org.messaginghub.amqperative.Session;
 import org.messaginghub.amqperative.SessionOptions;
 import org.messaginghub.amqperative.Tracker;
+import org.messaginghub.amqperative.client.exceptions.ClientConnectionRemotelyClosedException;
 import org.messaginghub.amqperative.client.exceptions.ClientExceptionSupport;
 import org.messaginghub.amqperative.client.exceptions.ClientIOException;
 import org.messaginghub.amqperative.futures.ClientFuture;
@@ -269,7 +270,7 @@ public class ClientConnection implements Connection {
             executor = transport.connect(() -> {
                 protonConnection = engine.start();
 
-                protonConnection.openEventHandler((result) -> {
+                protonConnection.openEventHandler(result -> {
                     openFuture.complete(this);
                 });
 
@@ -290,9 +291,10 @@ public class ClientConnection implements Connection {
                     try {
                         transport.close();
                     } catch (IOException ignore) {}
-                    // TODO - What is the mapping of proton exception from error condition on the connection ?
-                    if (result.error() != null) {
-                        FAILURE_CAUSE_UPDATER.compareAndSet(this, null, ClientExceptionSupport.createOrPassthroughFatal(result.error()));
+                    if (result.getRemoteCondition() != null) {
+                        // TODO - Convert remote error to client exception
+                        ClientException ex = new ClientConnectionRemotelyClosedException("Remote closed with error");
+                        FAILURE_CAUSE_UPDATER.compareAndSet(this, null, ex);
                     }
                     CLOSED_UPDATER.lazySet(this, 1);
                     closeFuture.complete(this);

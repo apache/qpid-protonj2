@@ -30,7 +30,6 @@ import org.messaginghub.amqperative.Delivery;
 import org.messaginghub.amqperative.Receiver;
 import org.messaginghub.amqperative.ReceiverOptions;
 import org.messaginghub.amqperative.Session;
-import org.messaginghub.amqperative.client.exceptions.ClientExceptionSupport;
 import org.messaginghub.amqperative.futures.ClientFuture;
 import org.messaginghub.amqperative.util.FifoMessageQueue;
 import org.slf4j.Logger;
@@ -188,20 +187,15 @@ public class ClientReceiver implements Receiver {
     ClientReceiver open() {
         executor.execute(() -> {
             protonReceiver.openHandler(event -> {
-                if (event.succeeded()) {
-                    if (event.get().getRemoteSource() != null) {
-                        openFuture.complete(this);
-                        LOG.trace("Receiver opened successfully");
-                    } else {
-                        LOG.debug("Receiver opened but remote signalled close is pending: ", event.get());
-                    }
+                if (event.getRemoteSource() != null) {
+                    openFuture.complete(this);
+                    LOG.trace("Receiver opened successfully");
                 } else {
-                    openFuture.failed(ClientExceptionSupport.createNonFatalOrPassthrough(event.error()));
-                    LOG.error("Receiver failed to open: ", event.error());
+                    LOG.debug("Receiver opened but remote signalled close is pending: ", event);
                 }
             });
             protonReceiver.closeHandler(event -> {
-                LOG.info("Receiver link remotely closed: ", event.get());
+                LOG.info("Receiver link remotely closed: ", event);
                 CLOSED_UPDATER.lazySet(this, 1);
                 messageQueue.clear();
 
@@ -216,7 +210,7 @@ public class ClientReceiver implements Receiver {
 
                 // TODO - Error open future if remote indicated open would fail using an appropriate
                 //        exception based on remote error condition if one is set.
-                if (event.get().getRemoteSource() == null) {
+                if (event.getRemoteSource() == null) {
                     openFuture.failed(new ClientException("Link creation was refused"));
                 } else {
                     openFuture.complete(this);
@@ -225,7 +219,7 @@ public class ClientReceiver implements Receiver {
             });
 
             protonReceiver.detachHandler(event -> {
-                LOG.info("Receiver link remotely detached: ", event.get());
+                LOG.info("Receiver link remotely detached: ", event);
                 CLOSED_UPDATER.lazySet(this, 1);
                 messageQueue.clear();
 
@@ -240,7 +234,7 @@ public class ClientReceiver implements Receiver {
 
                 // TODO - Error open future if remote indicated open would fail using an appropriate
                 //        exception based on remote error condition if one is set.
-                if (event.get().getRemoteSource() == null) {
+                if (event.getRemoteSource() == null) {
                     openFuture.failed(new ClientException("Link creation was refused"));
                 } else {
                     openFuture.complete(this);

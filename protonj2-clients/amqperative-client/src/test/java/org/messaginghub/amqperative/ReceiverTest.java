@@ -8,7 +8,6 @@ import org.apache.qpid.proton4j.amqp.messaging.Source;
 import org.apache.qpid.proton4j.amqp.transport.AmqpError;
 import org.apache.qpid.proton4j.amqp.transport.ErrorCondition;
 import org.apache.qpid.proton4j.amqp.transport.Role;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -66,9 +65,8 @@ public class ReceiverTest {
         }
     }
 
-    @Ignore("Some issues with remote detach and error tpyes generated")
     @Test(timeout = 60000)
-    public void testCreateReceiverOpenRejectedByRemote() throws Exception {
+    public void testReceiverOpenRejectedByRemote() throws Exception {
         try (NettyTestPeer peer = new NettyTestPeer()) {
             peer.expectAMQPHeader().respondWithAMQPHeader();
             peer.expectOpen().respond();
@@ -101,6 +99,7 @@ public class ReceiverTest {
             peer.expectClose().respond();
             connection.close().get(10, TimeUnit.SECONDS);
 
+            peer.waitForScriptToComplete(1, TimeUnit.SECONDS);
             LOG.info("Receiver test completed normally");
         }
     }
