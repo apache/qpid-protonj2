@@ -29,6 +29,8 @@ import javax.net.ssl.SSLContext;
  */
 public class ServerOptions implements Cloneable {
 
+    private static final int SERVER_CHOOSES_PORT = 0;
+
     public static final int DEFAULT_SEND_BUFFER_SIZE = 64 * 1024;
     public static final int DEFAULT_RECEIVE_BUFFER_SIZE = DEFAULT_SEND_BUFFER_SIZE;
     public static final int DEFAULT_TRAFFIC_CLASS = 0;
@@ -36,7 +38,7 @@ public class ServerOptions implements Cloneable {
     public static final boolean DEFAULT_TCP_KEEP_ALIVE = false;
     public static final int DEFAULT_SO_LINGER = Integer.MIN_VALUE;
     public static final int DEFAULT_SO_TIMEOUT = -1;
-    public static final int DEFAULT_SERVER_PORT = 0;
+    public static final int DEFAULT_SERVER_PORT = SERVER_CHOOSES_PORT;
     public static final boolean DEFAULT_TRACE_BYTES = false;
     public static final String DEFAULT_STORE_TYPE = "jks";
     public static final String DEFAULT_CONTEXT_PROTOCOL = "TLS";

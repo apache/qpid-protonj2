@@ -19,15 +19,13 @@ package org.apache.qpid.proton4j.amqp.driver.netty;
 import static io.netty.handler.codec.http.HttpResponseStatus.BAD_REQUEST;
 import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 
-import java.io.IOException;
-import java.net.ServerSocket;
+import java.net.InetSocketAddress;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import javax.net.ServerSocketFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
 
@@ -176,10 +174,8 @@ public abstract class NettyServer implements AutoCloseable {
     }
 
     public void start() throws Exception {
-
         if (started.compareAndSet(false, true)) {
-
-            // Configure the server.
+            // Configure the server to basic NIO type channels
             bossGroup = new NioEventLoopGroup(1);
             workerGroup = new NioEventLoopGroup();
 
@@ -213,8 +209,10 @@ public abstract class NettyServer implements AutoCloseable {
                 }
             });
 
-            // Start the server.
-            serverChannel = server.bind(getServerPort()).sync().channel();
+            // Start the server and then update the server port in case the configuration
+            // was such that the server chose a free port.
+            serverChannel = server.bind(options.getServerPort()).sync().channel();
+            options.setServerPort(((InetSocketAddress) serverChannel.localAddress()).getPort());
         }
     }
 
@@ -246,22 +244,10 @@ public abstract class NettyServer implements AutoCloseable {
     }
 
     public int getServerPort() {
-        if (options.getServerPort() == 0) {
-            ServerSocket ss = null;
-            try {
-                ss = ServerSocketFactory.getDefault().createServerSocket(0);
-                options.setServerPort(ss.getLocalPort());
-            } catch (IOException e) { // revert back to default
-                options.setServerPort(PORT);
-            } finally {
-                try {
-                    if (ss != null ) {
-                        ss.close();
-                    }
-                } catch (IOException e) { // ignore
-                }
-            }
+        if (!started.get()) {
+            throw new IllegalStateException("Cannot get server port of non-started server");
         }
+
         return options.getServerPort();
     }
 
