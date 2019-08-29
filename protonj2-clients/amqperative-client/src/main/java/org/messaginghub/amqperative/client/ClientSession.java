@@ -52,7 +52,7 @@ public class ClientSession implements Session {
 
     private static final Logger LOG = LoggerFactory.getLogger(ClientSession.class);
 
-    private static final AtomicIntegerFieldUpdater<ClientSession> CLOSE_STATE_UPDATER =
+    private static final AtomicIntegerFieldUpdater<ClientSession> CLOSED_UPDATER =
             AtomicIntegerFieldUpdater.newUpdater(ClientSession.class, "closed");
 
     private final ClientFuture<Session> openFuture;
@@ -102,7 +102,7 @@ public class ClientSession implements Session {
 
     @Override
     public Future<Session> close() {
-        if (CLOSE_STATE_UPDATER.compareAndSet(this, 0, 1) && !openFuture.isFailed()) {
+        if (CLOSED_UPDATER.compareAndSet(this, 0, 1) && !openFuture.isFailed()) {
             serializer.execute(() -> {
                 session.close();
             });
@@ -247,7 +247,7 @@ public class ClientSession implements Session {
                 }
             });
             session.closeHandler(result -> {
-                CLOSE_STATE_UPDATER.set(this, 1);
+                CLOSED_UPDATER.lazySet(this, 1);
                 closeFuture.complete(this);
             });
 

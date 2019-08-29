@@ -60,8 +60,8 @@ public class ClientConnection implements Connection {
 
     private static final AtomicInteger CONNECTION_SEQUENCE = new AtomicInteger();
 
-    private static final AtomicIntegerFieldUpdater<ClientConnection> CLOSE_STATE_UPDATER =
-            AtomicIntegerFieldUpdater.newUpdater(ClientConnection.class, "closeState");
+    private static final AtomicIntegerFieldUpdater<ClientConnection> CLOSED_UPDATER =
+            AtomicIntegerFieldUpdater.newUpdater(ClientConnection.class, "closed");
     private static final AtomicReferenceFieldUpdater<ClientConnection, ClientException> FAILURE_CAUSE_UPDATER =
             AtomicReferenceFieldUpdater.newUpdater(ClientConnection.class, ClientException.class, "failureCause");
 
@@ -78,7 +78,7 @@ public class ClientConnection implements Connection {
 
     private ClientFuture<Connection> openFuture;
     private ClientFuture<Connection> closeFuture;
-    private volatile int closeState;
+    private volatile int closed;
     private volatile int sessionCounter;
     private volatile ClientException failureCause;
     private final String connectionId;
@@ -124,7 +124,7 @@ public class ClientConnection implements Connection {
 
     @Override
     public Future<Connection> close() {
-        if (CLOSE_STATE_UPDATER.compareAndSet(this, 0, 1) && !openFuture.isFailed()) {
+        if (CLOSED_UPDATER.compareAndSet(this, 0, 1) && !openFuture.isFailed()) {
             executor.execute(() -> {
                 try {
                     protonConnection.close();
@@ -294,7 +294,7 @@ public class ClientConnection implements Connection {
                     if (result.error() != null) {
                         FAILURE_CAUSE_UPDATER.compareAndSet(this, null, ClientExceptionSupport.createOrPassthroughFatal(result.error()));
                     }
-                    CLOSE_STATE_UPDATER.lazySet(this, 1);
+                    CLOSED_UPDATER.lazySet(this, 1);
                     closeFuture.complete(this);
                 });
 
@@ -319,7 +319,7 @@ public class ClientConnection implements Connection {
                 LOG.trace("close of transport reported error", t);
             }
 
-            CLOSE_STATE_UPDATER.set(this, 1);
+            CLOSED_UPDATER.set(this, 1);
             FAILURE_CAUSE_UPDATER.compareAndSet(this, null, ClientExceptionSupport.createOrPassthroughFatal(e));
         }
 
@@ -339,7 +339,7 @@ public class ClientConnection implements Connection {
     }
 
     boolean isClosed() {
-        return closeState > 0;
+        return closed > 0;
     }
 
     ScheduledExecutorService getScheduler() {
@@ -417,7 +417,7 @@ public class ClientConnection implements Connection {
     }
 
     protected void checkClosed() throws IllegalStateException {
-        if (CLOSE_STATE_UPDATER.get(this) > 0) {
+        if (CLOSED_UPDATER.get(this) > 0) {
             throw new IllegalStateException("The Connection is closed");
         }
     }

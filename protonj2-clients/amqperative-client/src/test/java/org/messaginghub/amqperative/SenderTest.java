@@ -14,13 +14,22 @@ public class SenderTest {
     private static final Logger LOG = LoggerFactory.getLogger(SenderTest.class);
 
     @Test(timeout = 60000)
-    public void testCreateSender() throws Exception {
+    public void testCreateSenderAndClose() throws Exception {
+        doTestCreateSenderAndCloseOrDeatch(true);
+    }
+
+    @Test(timeout = 60000)
+    public void testCreateSenderAndDetach() throws Exception {
+        doTestCreateSenderAndCloseOrDeatch(false);
+    }
+
+    private void doTestCreateSenderAndCloseOrDeatch(boolean close) throws Exception {
         try (NettyTestPeer peer = new NettyTestPeer()) {
             peer.expectAMQPHeader().respondWithAMQPHeader();
             peer.expectOpen().respond();
             peer.expectBegin().respond();
             peer.expectAttach().withRole(Role.SENDER).respond();  // TODO match other options
-            peer.expectDetach().withClosed(true).respond();
+            peer.expectDetach().withClosed(close).respond();
             peer.expectClose().respond();
             peer.start();
 
@@ -38,7 +47,12 @@ public class SenderTest {
 
             Sender sender = session.openSender("test-queue");
             sender.openFuture().get(10, TimeUnit.SECONDS);
-            sender.close().get(10, TimeUnit.SECONDS);
+
+            if (close) {
+                sender.close().get(10, TimeUnit.SECONDS);
+            } else {
+                sender.detach().get(10, TimeUnit.SECONDS);
+            }
 
             connection.close().get(10, TimeUnit.SECONDS);
 

@@ -20,7 +20,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
@@ -46,21 +46,24 @@ public class ClientSender implements Sender {
 
     private static final Logger LOG = LoggerFactory.getLogger(ClientSender.class);
 
+    private static final AtomicIntegerFieldUpdater<ClientSender> CLOSED_UPDATER =
+            AtomicIntegerFieldUpdater.newUpdater(ClientSender.class, "closed");
+
     private final ClientFuture<Sender> openFuture;
     private final ClientFuture<Sender> closeFuture;
 
     private final ClientSenderOptions options;
     private final ClientSession session;
-    private final org.apache.qpid.proton4j.engine.Sender sender;
+    private final org.apache.qpid.proton4j.engine.Sender protonSender;
     private final ScheduledExecutorService executor;
-    private final AtomicBoolean closed = new AtomicBoolean();
     private final AtomicReference<Throwable> failureCause = new AtomicReference<>();
     private final String senderId;
+    private volatile int closed;
 
     public ClientSender(SenderOptions options, ClientSession session, org.apache.qpid.proton4j.engine.Sender sender, String address) {
         this.options = new ClientSenderOptions(options);
         this.session = session;
-        this.sender = sender;
+        this.protonSender = sender;
         this.senderId = session.nextSenderId();
         this.executor = session.getScheduler();
         this.openFuture = session.getFutureFactory().createFuture();
@@ -86,9 +89,9 @@ public class ClientSender implements Sender {
 
     @Override
     public Future<Sender> close() {
-        if (closed.compareAndSet(false, true) && !openFuture.isFailed()) {
+        if (CLOSED_UPDATER.compareAndSet(this, 0, 1) && !openFuture.isFailed()) {
             executor.execute(() -> {
-                sender.close();
+                protonSender.close();
             });
         }
         return closeFuture;
@@ -96,9 +99,9 @@ public class ClientSender implements Sender {
 
     @Override
     public Future<Sender> detach() {
-        if (closed.compareAndSet(false, true) && !openFuture.isFailed()) {
+        if (CLOSED_UPDATER.compareAndSet(this, 0, 1) && !openFuture.isFailed()) {
             executor.execute(() -> {
-                sender.detach();
+                protonSender.detach();
             });
         }
         return closeFuture;
@@ -116,7 +119,7 @@ public class ClientSender implements Sender {
             ClientMessage<?> msg = (ClientMessage<?>) message;
 
             ProtonBuffer buffer = ClientMessageSupport.encodeMessage(msg);
-            OutgoingDelivery delivery = sender.next();
+            OutgoingDelivery delivery = protonSender.next();
             delivery.setTag(new byte[] {0});
             delivery.writeBytes(buffer);
 
@@ -163,35 +166,73 @@ public class ClientSender implements Sender {
 
     ClientSender open() {
         executor.execute(() -> {
-            sender.openHandler(result -> {
-                if (result.succeeded()) {
-                    openFuture.complete(this);
-                    LOG.trace("Sender opened successfully");
+            protonSender.openHandler(event -> {
+                if (event.succeeded()) {
+                    if (event.get().getRemoteTarget() != null) {
+                        openFuture.complete(this);
+                        LOG.trace("Sender opened successfully");
+                    } else {
+                        LOG.debug("Sender opened but remote signalled close is pending: ", event.get());
+                    }
                 } else {
-                    openFuture.failed(ClientExceptionSupport.createNonFatalOrPassthrough(result.error()));
-                    LOG.error("Sender failed to open: ", result.error());
+                    openFuture.failed(ClientExceptionSupport.createNonFatalOrPassthrough(event.error()));
+                    LOG.error("Sender failed to open: ", event.error());
                 }
             });
 
-            sender.closeHandler(result -> {
-                closed.set(true);
+            protonSender.closeHandler(event -> {
+                LOG.info("Sender link remotely closed: ", event.get());
+                CLOSED_UPDATER.lazySet(this, 1);
+
+                // Close should be idempotent so we can just respond here with a close in case
+                // of remotely closed sender.  We should set error state from remote though
+                // so client can see it.
+                try {
+                    protonSender.close();
+                } catch (Throwable ignored) {
+                    LOG.trace("Error on attempt to close proton sender was ignored: ", ignored);
+                }
+
+                if (event.get().getRemoteTarget() == null) {
+                    openFuture.failed(new ClientException("Link creation was refused"));
+                } else {
+                    openFuture.complete(this);
+                }
                 closeFuture.complete(this);
             });
 
-            sender.detachHandler(result -> {
-                closed.set(true);
+            protonSender.detachHandler(event -> {
+                LOG.info("Sender link remotely closed: ", event.get());
+                CLOSED_UPDATER.lazySet(this, 1);
+
+                // Detach should be idempotent so we can just respond here with a detach in case
+                // of remotely detached sender.  We should set error state from remote though
+                // so client can see it.
+                try {
+                    protonSender.detach();
+                } catch (Throwable ignored) {
+                    LOG.trace("Error on attempt to close proton sender was ignored: ", ignored);
+                }
+
+                // TODO - Error open future if remote indicated open would fail using an appropriate
+                //        exception based on remote error condition if one is set.
+                if (event.get().getRemoteTarget() == null) {
+                    openFuture.failed(new ClientException("Link creation was refused"));
+                } else {
+                    openFuture.complete(this);
+                }
                 closeFuture.complete(this);
             });
 
-            sender.deliveryUpdatedEventHandler(delivery -> {
+            protonSender.deliveryUpdatedEventHandler(delivery -> {
                 // TODO
             });
 
-            sender.sendableEventHandler(result -> {
+            protonSender.sendableEventHandler(result -> {
                 // TODO
             });
 
-            sender.open();
+            protonSender.open();
         });
 
         return this;
@@ -211,6 +252,10 @@ public class ClientSender implements Sender {
 
     String getId() {
         return senderId;
+    }
+
+    boolean isClosed() {
+        return closed > 0;
     }
 
     //----- Send Result Tracker
@@ -253,7 +298,7 @@ public class ClientSender implements Sender {
     //----- Private implementation details
 
     private void checkClosed() throws IllegalStateException {
-        if (closed.get()) {
+        if (isClosed()) {
             IllegalStateException error = null;
 
             if (getFailureCause() == null) {
