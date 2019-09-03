@@ -161,6 +161,7 @@ public class ClientReceiver implements Receiver {
     @Override
     public Receiver addCredit(int credits) throws IllegalStateException {
         checkClosed();
+
         executor.execute(() -> {
             // TODO - This is just a set without addition for now
             protonReceiver.setCredit(credits);
@@ -172,8 +173,14 @@ public class ClientReceiver implements Receiver {
     @Override
     public Future<Receiver> drainCredit(long timeout) throws IllegalStateException, IllegalArgumentException {
         checkClosed();
-        // TODO Auto-generated method stub
-        return null;
+        ClientFuture<Receiver> drained = session.getFutureFactory().createFuture();
+
+        executor.execute(() -> {
+            // TODO
+            protonReceiver.drain();
+        });
+
+        return drained;
     }
 
     //----- Internal API
@@ -192,6 +199,7 @@ public class ClientReceiver implements Receiver {
                           .detachHandler(receiver -> handleRemoteCloseOrDetach(receiver))
                           .deliveryUpdatedEventHandler(delivery -> handleDeliveryRemotelyUpdated(delivery))
                           .deliveryReceivedEventHandler(delivery -> handleDeliveryReceivied(delivery))
+                          .receiverDrainedEventHandler(receiver -> handleReceiverReportsDrained(receiver))
                           .open();
         });
 
@@ -265,6 +273,11 @@ public class ClientReceiver implements Receiver {
 
     private void handleDeliveryRemotelyUpdated(IncomingDelivery delivery) {
         LOG.debug("Delivery was updated: ", delivery);
+        // TODO - event or other reaction
+    }
+
+    private void handleReceiverReportsDrained(org.apache.qpid.proton4j.engine.Receiver receiver) {
+        LOG.debug("Receiver reports drained: ", receiver);
         // TODO - event or other reaction
     }
 
