@@ -1,5 +1,8 @@
 package org.messaginghub.amqperative;
 
+import static org.hamcrest.CoreMatchers.notNullValue;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
 
 import java.net.URI;
@@ -10,6 +13,7 @@ import org.apache.qpid.proton4j.amqp.messaging.Target;
 import org.apache.qpid.proton4j.amqp.transport.AmqpError;
 import org.apache.qpid.proton4j.amqp.transport.ErrorCondition;
 import org.apache.qpid.proton4j.amqp.transport.Role;
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.junit.Test;
 import org.messaginghub.amqperative.client.exceptions.ClientSendTimedOutException;
 import org.slf4j.Logger;
@@ -63,8 +67,6 @@ public class SenderTest {
             connection.close().get(10, TimeUnit.SECONDS);
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
-
-            LOG.info("Sender test completed normally");
         }
     }
 
@@ -103,7 +105,6 @@ public class SenderTest {
             connection.close().get(10, TimeUnit.SECONDS);
 
             peer.waitForScriptToComplete(1, TimeUnit.SECONDS);
-            LOG.info("Receiver test completed normally");
         }
     }
 
@@ -148,9 +149,109 @@ public class SenderTest {
             connection.close().get(10, TimeUnit.SECONDS);
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
-
-            LOG.info("Sender test completed normally");
         }
     }
 
+    @Test(timeout = 60000)
+    public void testSendWhenCreditIsAvailable() throws Exception {
+        doTestSendWhenCreditIsAvailable(false);
+    }
+
+    @Test(timeout = 60000)
+    public void testTrySendWhenCreditIsAvailable() throws Exception {
+        doTestSendWhenCreditIsAvailable(true);
+    }
+
+    private void doTestSendWhenCreditIsAvailable(boolean trySend) throws Exception {
+        try (NettyTestPeer peer = new NettyTestPeer()) {
+            peer.expectAMQPHeader().respondWithAMQPHeader();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().withRole(Role.SENDER).respond();
+            peer.remoteFlow().withDeliveryCount(0)
+                             .withLinkCredit(10)
+                             .withIncomingWindow(1024)
+                             .withOutgoingWindow(10)
+                             .withNextIncomingId(0)
+                             .withNextOutgoingId(1).queue();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Sender test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+
+            connection.openFuture().get(10, TimeUnit.SECONDS);
+
+            Session session = connection.openSession();
+            session.openFuture().get(10, TimeUnit.SECONDS);
+
+            Sender sender = session.openSender("test-queue");
+            sender.openFuture().get(10, TimeUnit.SECONDS);
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+            peer.expectTransfer().withPayload(notNullValue(ProtonBuffer.class));
+            peer.expectDetach().respond();
+            peer.expectClose().respond();
+
+            Message<String> message = Message.create("Hello World");
+
+            // TODO - Race on try send and credit could use some way to ensure there is credit
+            //        before a send call is made.
+
+            final Tracker tracker;
+            if (trySend) {
+                tracker = sender.trySend(message);
+            } else {
+                tracker = sender.send(message);
+            }
+            assertNotNull(tracker);
+
+            sender.close().get(10, TimeUnit.SECONDS);
+
+            connection.close().get(10, TimeUnit.SECONDS);
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test(timeout = 60000)
+    public void testTrySendWhenNoCreditAvailable() throws Exception {
+        try (NettyTestPeer peer = new NettyTestPeer()) {
+            peer.expectAMQPHeader().respondWithAMQPHeader();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().withRole(Role.SENDER).respond();
+            peer.expectDetach().respond();
+            peer.expectClose().respond();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Sender test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            ConnectionOptions options = new ConnectionOptions();
+            options.setSendTimeout(1);
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), options);
+
+            connection.openFuture().get(10, TimeUnit.SECONDS);
+
+            Session session = connection.openSession();
+            session.openFuture().get(10, TimeUnit.SECONDS);
+
+            Sender sender = session.openSender("test-queue");
+            sender.openFuture().get(10, TimeUnit.SECONDS);
+
+            Message<String> message = Message.create("Hello World");
+            assertNull(sender.trySend(message));
+
+            sender.close().get(10, TimeUnit.SECONDS);
+            connection.close().get(10, TimeUnit.SECONDS);
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
 }
