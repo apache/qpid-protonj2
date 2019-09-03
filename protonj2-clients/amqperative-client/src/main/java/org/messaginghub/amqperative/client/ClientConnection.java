@@ -369,6 +369,10 @@ public class ClientConnection implements Connection {
         return options;
     }
 
+    org.apache.qpid.proton4j.engine.Connection getProtonConnection() {
+        return protonConnection;
+    }
+
     String nextSessionId() {
         return getId() + ":" + (++sessionCounter);
     }

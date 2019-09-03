@@ -19,7 +19,6 @@ package org.messaginghub.amqperative.client;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.UUID;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -215,25 +214,13 @@ public class ClientSession implements Session {
     //----- Internal API accessible for use within the package
 
     ClientReceiver internalCreateReceiver(String address, ReceiverOptions options) {
-        String name = options.getLinkName();
-        if (name == null) {
-            //TODO: use container-id + counter rather than UUID?
-            name = "reciever-" + UUID.randomUUID();
-        }
-
-        ClientReceiver result = new ClientReceiver(options, this, session.receiver(name), address);
+        ClientReceiver result = new ClientReceiver(options, this, address);
         receivers.add(result);
         return result;
     }
 
     ClientSender internalCreateSender(String address, SenderOptions options) {
-        String name = options.getLinkName();
-        if (name == null) {
-            //TODO: use container-id + counter rather than UUID?
-            name = "sender-" + UUID.randomUUID();
-        }
-
-        ClientSender result = new ClientSender(options, this, session.sender(name), address);
+        ClientSender result = new ClientSender(options, this, address);
         senders.add(result);
         return result;
     }
@@ -319,6 +306,10 @@ public class ClientSession implements Session {
 
     <T> T request(ClientFuture<T> request, long timeout, TimeUnit units) throws ClientException {
         return connection.request(request, timeout, units);
+    }
+
+    org.apache.qpid.proton4j.engine.Session getProtonSession() {
+        return session;
     }
 
     //----- Private implementation methods

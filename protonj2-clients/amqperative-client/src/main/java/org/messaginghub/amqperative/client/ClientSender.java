@@ -69,16 +69,21 @@ public class ClientSender implements Sender {
     private volatile int closed;
     private LinkCreditState drainingState;
 
-    public ClientSender(SenderOptions options, ClientSession session, org.apache.qpid.proton4j.engine.Sender sender, String address) {
+    public ClientSender(SenderOptions options, ClientSession session, String address) {
         this.options = new ClientSenderOptions(options);
         this.session = session;
-        this.protonSender = sender;
         this.senderId = session.nextSenderId();
         this.executor = session.getScheduler();
         this.openFuture = session.getFutureFactory().createFuture();
         this.closeFuture = session.getFutureFactory().createFuture();
 
-        this.options.configureSender(sender, address);
+        if (options.getLinkName() != null) {
+            this.protonSender = session.getProtonSession().sender(options.getLinkName());
+        } else {
+            this.protonSender = session.getProtonSession().sender("sender-" + getId());
+        }
+
+        this.options.configureSender(protonSender, address);
     }
 
     @Override
@@ -209,6 +214,10 @@ public class ClientSender implements Sender {
 
     boolean isClosed() {
         return closed > 0;
+    }
+
+    org.apache.qpid.proton4j.engine.Sender getProtonSender() {
+        return this.protonSender;
     }
 
     //----- Handlers for proton receiver events

@@ -55,19 +55,24 @@ public class ClientReceiver implements Receiver {
     private final FifoMessageQueue messageQueue;
     private volatile int closed;
 
-    public ClientReceiver(ReceiverOptions options, ClientSession session, org.apache.qpid.proton4j.engine.Receiver receiver, String address) {
+    public ClientReceiver(ReceiverOptions options, ClientSession session, String address) {
         this.options = new ClientReceiverOptions(options);
         this.session = session;
-        this.protonReceiver = receiver;
         this.receiverId = session.nextReceiverId();
         this.executor = session.getScheduler();
         this.openFuture = session.getFutureFactory().createFuture();
         this.closeFuture = session.getFutureFactory().createFuture();
 
-        this.options.configureReceiver(receiver, address);
+        if (options.getLinkName() != null) {
+            this.protonReceiver = session.getProtonSession().receiver(options.getLinkName());
+        } else {
+            this.protonReceiver = session.getProtonSession().receiver("receiver-" + getId());
+        }
+
+        this.options.configureReceiver(protonReceiver, address);
 
         if (options.getCreditWindow() > 0) {
-            receiver.setCredit(options.getCreditWindow());
+            protonReceiver.setCredit(options.getCreditWindow());
         }
 
         messageQueue = new FifoMessageQueue(options.getCreditWindow());
@@ -224,6 +229,10 @@ public class ClientReceiver implements Receiver {
 
     boolean isClosed() {
         return closed > 0;
+    }
+
+    org.apache.qpid.proton4j.engine.Receiver getProtonReceiver() {
+        return protonReceiver;
     }
 
     //----- Handlers for proton receiver events
