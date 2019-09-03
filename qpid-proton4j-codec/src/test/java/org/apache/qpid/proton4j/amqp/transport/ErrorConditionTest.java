@@ -24,6 +24,7 @@ import static org.junit.Assert.assertNotNull;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.apache.qpid.proton4j.amqp.Symbol;
 import org.junit.Test;
 
 public class ErrorConditionTest {
@@ -41,7 +42,7 @@ public class ErrorConditionTest {
 
         assertEquals(original, copy);
 
-        Map<Object, Object> infoMap = new HashMap<>();
+        Map<Symbol, Object> infoMap = new HashMap<>();
         ErrorCondition other1 = new ErrorCondition(null, "error", infoMap);
         ErrorCondition other2 = new ErrorCondition(AmqpError.DECODE_ERROR, null, infoMap);
         ErrorCondition other3 = new ErrorCondition(AmqpError.DECODE_ERROR, "error", infoMap);

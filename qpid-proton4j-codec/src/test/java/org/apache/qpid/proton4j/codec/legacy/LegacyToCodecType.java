@@ -675,7 +675,7 @@ public abstract class LegacyToCodecType {
     public static ErrorCondition convertToCodecType(org.apache.qpid.proton.amqp.transport.ErrorCondition errorCondition) {
         Symbol condition = null;
         String description = null;
-        Map<Object, Object> info = null;
+        Map<Symbol, Object> info = null;
 
         if (errorCondition.getCondition() != null) {
             condition = convertToCodecType(errorCondition.getCondition());
@@ -684,7 +684,7 @@ public abstract class LegacyToCodecType {
             description = errorCondition.getDescription();
         }
         if (errorCondition.getInfo() != null) {
-            info = (Map<Object, Object>) convertToCodecType(errorCondition.getInfo());
+            info = (Map<Symbol, Object>) convertToCodecType(errorCondition.getInfo());
         }
 
         return new ErrorCondition(condition, description, info);

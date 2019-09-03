@@ -104,7 +104,7 @@ public class ErrorConditionTypeDecoder extends AbstractDescribedTypeDecoder<Erro
 
         Symbol condition = null;
         String description = null;
-        Map<Object, Object> info = null;
+        Map<Symbol, Object> info = null;
 
         for (int index = 0; index < count; ++index) {
             switch (index) {

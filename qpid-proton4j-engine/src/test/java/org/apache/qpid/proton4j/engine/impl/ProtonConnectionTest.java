@@ -374,7 +374,7 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
 
     @Test
     public void testOpenedCarriesRemoteErrorCondition() throws Exception {
-        Map<Object, Object> errorInfo = new HashMap<>();
+        Map<Symbol, Object> errorInfo = new HashMap<>();
         errorInfo.put(Symbol.getSymbol("error"), "value");
         errorInfo.put(Symbol.getSymbol("error-list"), Arrays.asList("entry-1", "entry-2", "entry-3"));
         ErrorCondition remoteCondition = new ErrorCondition(Symbol.getSymbol("myerror"), "mydepeerion", errorInfo);

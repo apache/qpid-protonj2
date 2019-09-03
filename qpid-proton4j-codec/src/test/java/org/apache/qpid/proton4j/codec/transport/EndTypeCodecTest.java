@@ -59,9 +59,9 @@ public class EndTypeCodecTest extends CodecTestSupport {
     public void testEncodeAndDecode() throws IOException {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
 
-        Map<Object, Object> infoMap = new LinkedHashMap<>();
-        infoMap.put("1", true);
-        infoMap.put("2", "string");
+        Map<Symbol, Object> infoMap = new LinkedHashMap<>();
+        infoMap.put(Symbol.valueOf("1"), true);
+        infoMap.put(Symbol.valueOf("2"), "string");
 
         ErrorCondition error = new ErrorCondition(Symbol.valueOf("amqp-error"), "Something bad", infoMap);
 

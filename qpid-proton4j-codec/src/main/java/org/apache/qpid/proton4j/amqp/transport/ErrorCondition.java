@@ -29,13 +29,13 @@ public final class ErrorCondition {
 
     private final Symbol condition;
     private final String description;
-    private final Map<Object, Object> info;
+    private final Map<Symbol, Object> info;
 
     public ErrorCondition(Symbol condition, String description) {
         this(condition, description, null);
     }
 
-    public ErrorCondition(Symbol condition, String description, Map<Object, Object> info) {
+    public ErrorCondition(Symbol condition, String description, Map<Symbol, Object> info) {
         this.condition = condition;
         this.description = description;
         this.info = info != null ? Collections.unmodifiableMap(info) : null;
@@ -49,7 +49,7 @@ public final class ErrorCondition {
         return description;
     }
 
-    public Map<Object, Object> getInfo() {
+    public Map<Symbol, Object> getInfo() {
         return info;
     }
 

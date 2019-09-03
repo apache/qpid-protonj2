@@ -74,14 +74,14 @@ public class ErrorCondition extends ListDescribedType {
         return (String) getList().get(Field.DESCRIPTION.ordinal());
     }
 
-    public ErrorCondition setInfo(Map<Object, Object> o) {
+    public ErrorCondition setInfo(Map<Symbol, Object> o) {
         getList().set(Field.INFO.ordinal(), o);
         return this;
     }
 
     @SuppressWarnings("unchecked")
-    public Map<Object, Object> getInfo() {
-        return (Map<Object, Object>) getList().get(Field.INFO.ordinal());
+    public Map<Symbol, Object> getInfo() {
+        return (Map<Symbol, Object>) getList().get(Field.INFO.ordinal());
     }
 
     @Override
