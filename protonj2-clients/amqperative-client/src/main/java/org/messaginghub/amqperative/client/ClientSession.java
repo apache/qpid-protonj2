@@ -29,6 +29,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Supplier;
 
 import org.apache.qpid.proton4j.engine.impl.ProtonEngine;
 import org.messaginghub.amqperative.Client;
@@ -309,6 +310,10 @@ public class ClientSession implements Session {
 
     ScheduledFuture<?> scheduleRequestTimeout(final AsyncResult<?> request, long timeout, final ClientException error) {
         return connection.scheduleRequestTimeout(request, timeout, error);
+    }
+
+    ScheduledFuture<?> scheduleRequestTimeout(final AsyncResult<?> request, long timeout, Supplier<ClientException> errorSupplier) {
+        return connection.scheduleRequestTimeout(request, timeout, errorSupplier);
     }
 
     <T> T request(ClientFuture<T> request, long timeout, TimeUnit units) throws ClientException {

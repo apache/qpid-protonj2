@@ -34,6 +34,10 @@ public class ClientExceptionSupport {
             return (ClientIOException) cause;
         }
 
+        if (cause.getCause() instanceof ClientIOException) {
+            return (ClientIOException) cause.getCause();
+        }
+
         String message = cause.getMessage();
         if (message == null || message.length() == 0) {
             message = cause.toString();
@@ -56,6 +60,10 @@ public class ClientExceptionSupport {
     public static ClientException createNonFatalOrPassthrough(Throwable cause) {
         if (cause instanceof ClientException) {
             return (ClientException) cause;
+        }
+
+        if (cause.getCause() instanceof ClientException) {
+            return (ClientException) cause.getCause();
         }
 
         String message = cause.getMessage();

@@ -27,6 +27,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 import org.apache.qpid.proton4j.amqp.transport.DeliveryState;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
@@ -124,21 +125,17 @@ public class ClientSender implements Sender {
             if (protonSender.isSendable()) {
                 assumeSendableAndSend((ClientMessage<?>) message, operation);
             } else {
-                final ScheduledFuture<?> sendTimeout;
+                final InFlightSend send = new InFlightSend((ClientMessage<?>) message, operation);
                 if (options.getSendTimeout() > 0) {
-                    // TODO - Add variant that takes a builder of exceptions to reduce allocation overhead.
-                    sendTimeout = session.scheduleRequestTimeout(
-                        operation, options.getSendTimeout(), new ClientSendTimedOutException("Timed out waiting for send"));
-                } else {
-                    sendTimeout = null;
+                    send.timeout = session.scheduleRequestTimeout(
+                        operation, options.getSendTimeout(), send);
                 }
 
-                final InFlightSend send = new InFlightSend((ClientMessage<?>) message, operation, sendTimeout);
                 blocked.put(send, send);
             }
         });
 
-        return session.request(operation, options.getSendTimeout(), TimeUnit.MILLISECONDS);
+        return session.request(operation, options.getRequestTimeout(), TimeUnit.MILLISECONDS);
     }
 
     @Override
@@ -286,16 +283,16 @@ public class ClientSender implements Sender {
 
     //----- Send Result Tracker used for send blocked on credit
 
-    private class InFlightSend implements AsyncResult<Tracker> {
+    private class InFlightSend implements AsyncResult<Tracker>, Supplier<ClientException> {
 
         private final ClientMessage<?> message;
         private final ClientFuture<Tracker> operation;
-        private final ScheduledFuture<?> timeout;
 
-        public InFlightSend(ClientMessage<?> message, ClientFuture<Tracker> operation, ScheduledFuture<?> timeout) {
+        private ScheduledFuture<?> timeout;
+
+        public InFlightSend(ClientMessage<?> message, ClientFuture<Tracker> operation) {
             this.message = message;
             this.operation = operation;
-            this.timeout = timeout;
         }
 
         @Override
@@ -317,6 +314,11 @@ public class ClientSender implements Sender {
         @Override
         public boolean isComplete() {
             return operation.isDone();
+        }
+
+        @Override
+        public ClientException get() {
+            return new ClientSendTimedOutException("Timed out waiting for credit to send");
         }
     }
 

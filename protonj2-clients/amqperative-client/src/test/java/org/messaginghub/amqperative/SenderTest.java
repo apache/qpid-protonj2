@@ -1,5 +1,7 @@
 package org.messaginghub.amqperative;
 
+import static org.junit.Assert.fail;
+
 import java.net.URI;
 import java.util.concurrent.TimeUnit;
 
@@ -9,6 +11,7 @@ import org.apache.qpid.proton4j.amqp.transport.AmqpError;
 import org.apache.qpid.proton4j.amqp.transport.ErrorCondition;
 import org.apache.qpid.proton4j.amqp.transport.Role;
 import org.junit.Test;
+import org.messaginghub.amqperative.client.exceptions.ClientSendTimedOutException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -103,4 +106,51 @@ public class SenderTest {
             LOG.info("Receiver test completed normally");
         }
     }
+
+    @Test(timeout = 60000)
+    public void testSendTimesOutWhenNoCreditIssued() throws Exception {
+        try (NettyTestPeer peer = new NettyTestPeer()) {
+            peer.expectAMQPHeader().respondWithAMQPHeader();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().withRole(Role.SENDER).respond();
+            peer.expectDetach().respond();
+            peer.expectClose().respond();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Sender test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            ConnectionOptions options = new ConnectionOptions();
+            options.setSendTimeout(1);
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), options);
+
+            connection.openFuture().get(10, TimeUnit.SECONDS);
+
+            Session session = connection.openSession();
+            session.openFuture().get(10, TimeUnit.SECONDS);
+
+            Sender sender = session.openSender("test-queue");
+            sender.openFuture().get(10, TimeUnit.SECONDS);
+
+            Message<String> message = Message.create("Hello World");
+            try {
+                sender.send(message);
+                fail("Should throw a send timed out exception");
+            } catch (ClientSendTimedOutException ex) {
+                // Expected error, ignore
+            }
+
+            sender.close().get(10, TimeUnit.SECONDS);
+
+            connection.close().get(10, TimeUnit.SECONDS);
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+
+            LOG.info("Sender test completed normally");
+        }
+    }
+
 }

@@ -28,6 +28,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
+import java.util.function.Supplier;
 
 import org.apache.qpid.proton4j.engine.impl.ProtonEngine;
 import org.apache.qpid.proton4j.engine.impl.ProtonEngineFactory;
@@ -404,6 +405,14 @@ public class ClientConnection implements Connection {
     ScheduledFuture<?> scheduleRequestTimeout(final AsyncResult<?> request, long timeout, final ClientException error) {
         if (timeout != INFINITE) {
             return executor.schedule(() -> request.failed(error), timeout, TimeUnit.MILLISECONDS);
+        } else {
+            return null;
+        }
+    }
+
+    ScheduledFuture<?> scheduleRequestTimeout(final AsyncResult<?> request, long timeout, Supplier<ClientException> errorSupplier) {
+        if (timeout != INFINITE) {
+            return executor.schedule(() -> request.failed(errorSupplier.get()), timeout, TimeUnit.MILLISECONDS);
         } else {
             return null;
         }
