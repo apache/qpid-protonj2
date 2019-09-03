@@ -241,12 +241,13 @@ public class ClientSession implements Session {
     ClientSession open() {
         serializer.execute(() -> {
             session.openHandler(result -> {
-                // TODO - handle error condition
                 openFuture.complete(this);
                 LOG.trace("Connection session opened successfully");
             });
             session.closeHandler(result -> {
-                // TODO - handle remote close
+                if (result.getRemoteCondition() != null) {
+                    // TODO - Process as failure cause if none set
+                }
                 CLOSED_UPDATER.lazySet(this, 1);
                 closeFuture.complete(this);
             });

@@ -17,6 +17,7 @@
 package org.messaginghub.amqperative.client;
 
 import java.io.IOException;
+import java.net.URI;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
@@ -364,8 +365,17 @@ public class ClientConnection implements Connection {
         return failureCause;
     }
 
+    ClientConnectionOptions getOptions() {
+        return options;
+    }
+
     String nextSessionId() {
         return getId() + ":" + (++sessionCounter);
+    }
+
+    URI getRemoteURI() {
+        // TODO - URI with scheme type preserved.
+        return transport.getRemoteLocation();
     }
 
     void handleClientIOException(ClientIOException error) {

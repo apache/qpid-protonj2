@@ -30,6 +30,11 @@ public class ClientConstants {
     public static final Symbol[] DEFAULT_SUPPORTED_OUTCOMES = new Symbol[]{ Accepted.DESCRIPTOR_SYMBOL, Rejected.DESCRIPTOR_SYMBOL,
                                                                             Released.DESCRIPTOR_SYMBOL, Modified.DESCRIPTOR_SYMBOL };
 
+    // Symbols used to announce connection error information
+    public static final Symbol CONNECTION_OPEN_FAILED = Symbol.valueOf("amqp:connection-establishment-failed");
+    public static final Symbol INVALID_FIELD = Symbol.valueOf("invalid-field");
+    public static final Symbol CONTAINER_ID = Symbol.valueOf("container-id");
+
     // Symbols used for connection capabilities
     public static final Symbol SOLE_CONNECTION_CAPABILITY = Symbol.valueOf("sole-connection-for-container");
     public static final Symbol ANONYMOUS_RELAY = Symbol.valueOf("ANONYMOUS-RELAY");
@@ -40,6 +45,13 @@ public class ClientConstants {
     public static final Rejected REJECTED = new Rejected();
     public static final Modified MODIFIED_FAILED = new Modified();
     public static final Modified MODIFIED_FAILED_UNDELIVERABLE = new Modified();
+
+    // Symbols used to announce connection redirect ErrorCondition 'info'
+    public static final Symbol PATH = Symbol.valueOf("path");
+    public static final Symbol SCHEME = Symbol.valueOf("scheme");
+    public static final Symbol PORT = Symbol.valueOf("port");
+    public static final Symbol NETWORK_HOST = Symbol.valueOf("network-host");
+    public static final Symbol OPEN_HOSTNAME = Symbol.valueOf("hostname");
 
     //----- Static initializer for constants that need configuration
 

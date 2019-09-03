@@ -174,6 +174,7 @@ public class SenderTest {
                              .withOutgoingWindow(10)
                              .withNextIncomingId(0)
                              .withNextOutgoingId(1).queue();
+            peer.expectAttach().withRole(Role.RECEIVER).respond();
             peer.start();
 
             URI remoteURI = peer.getServerURI();
@@ -191,15 +192,16 @@ public class SenderTest {
             Sender sender = session.openSender("test-queue");
             sender.openFuture().get(10, TimeUnit.SECONDS);
 
+            // This ensures that the flow to sender is processed before we try-send
+            Receiver receiver = session.openReceiver("test-queue");
+            receiver.openFuture().get(10, TimeUnit.SECONDS);
+
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
             peer.expectTransfer().withPayload(notNullValue(ProtonBuffer.class));
             peer.expectDetach().respond();
             peer.expectClose().respond();
 
             Message<String> message = Message.create("Hello World");
-
-            // TODO - Race on try send and credit could use some way to ensure there is credit
-            //        before a send call is made.
 
             final Tracker tracker;
             if (trySend) {
