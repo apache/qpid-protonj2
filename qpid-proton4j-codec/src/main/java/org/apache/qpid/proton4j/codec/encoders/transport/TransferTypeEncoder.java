@@ -73,14 +73,14 @@ public class TransferTypeEncoder extends AbstractDescribedListTypeEncoder<Transf
                 break;
             case 4:
                 if (transfer.hasSettled()) {
-                    state.getEncoder().writeBoolean(buffer, state, transfer.getSettled());
+                    buffer.writeByte(transfer.getSettled() ? EncodingCodes.BOOLEAN_TRUE : EncodingCodes.BOOLEAN_FALSE);
                 } else {
                     buffer.writeByte(EncodingCodes.NULL);
                 }
                 break;
             case 5:
                 if (transfer.hasMore()) {
-                    state.getEncoder().writeBoolean(buffer, state, transfer.getMore());
+                    buffer.writeByte(transfer.getMore() ? EncodingCodes.BOOLEAN_TRUE : EncodingCodes.BOOLEAN_FALSE);
                 } else {
                     buffer.writeByte(EncodingCodes.NULL);
                 }
@@ -97,21 +97,21 @@ public class TransferTypeEncoder extends AbstractDescribedListTypeEncoder<Transf
                 break;
             case 8:
                 if (transfer.hasResume()) {
-                    state.getEncoder().writeBoolean(buffer, state, transfer.getResume());
+                    buffer.writeByte(transfer.getResume() ? EncodingCodes.BOOLEAN_TRUE : EncodingCodes.BOOLEAN_FALSE);
                 } else {
                     buffer.writeByte(EncodingCodes.NULL);
                 }
                 break;
             case 9:
                 if (transfer.hasAborted()) {
-                    state.getEncoder().writeBoolean(buffer, state, transfer.getAborted());
+                    buffer.writeByte(transfer.getAborted() ? EncodingCodes.BOOLEAN_TRUE : EncodingCodes.BOOLEAN_FALSE);
                 } else {
                     buffer.writeByte(EncodingCodes.NULL);
                 }
                 break;
             case 10:
                 if (transfer.hasBatchable()) {
-                    state.getEncoder().writeBoolean(buffer, state, transfer.getBatchable());
+                    buffer.writeByte(transfer.getBatchable() ? EncodingCodes.BOOLEAN_TRUE : EncodingCodes.BOOLEAN_FALSE);
                 } else {
                     buffer.writeByte(EncodingCodes.NULL);
                 }

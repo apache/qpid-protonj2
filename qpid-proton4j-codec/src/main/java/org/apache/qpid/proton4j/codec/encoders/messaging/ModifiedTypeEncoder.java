@@ -48,10 +48,10 @@ public class ModifiedTypeEncoder extends AbstractDescribedListTypeEncoder<Modifi
     public void writeElement(Modified source, int index, ProtonBuffer buffer, EncoderState state) {
         switch (index) {
             case 0:
-                state.getEncoder().writeBoolean(buffer, state, source.getDeliveryFailed());
+                buffer.writeByte(source.getDeliveryFailed() ? EncodingCodes.BOOLEAN_TRUE : EncodingCodes.BOOLEAN_FALSE);
                 break;
             case 1:
-                state.getEncoder().writeBoolean(buffer, state, source.getUndeliverableHere());
+                buffer.writeByte(source.getUndeliverableHere() ? EncodingCodes.BOOLEAN_TRUE : EncodingCodes.BOOLEAN_FALSE);
                 break;
             case 2:
                 state.getEncoder().writeMap(buffer, state, source.getMessageAnnotations());

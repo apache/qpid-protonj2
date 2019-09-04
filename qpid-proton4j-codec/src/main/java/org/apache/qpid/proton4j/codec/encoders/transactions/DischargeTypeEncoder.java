@@ -51,7 +51,7 @@ public class DischargeTypeEncoder extends AbstractDescribedListTypeEncoder<Disch
                 state.getEncoder().writeBinary(buffer, state, discharge.getTxnId());
                 break;
             case 1:
-                state.getEncoder().writeBoolean(buffer, state, discharge.getFail());
+                buffer.writeByte(discharge.getFail() ? EncodingCodes.BOOLEAN_TRUE : EncodingCodes.BOOLEAN_FALSE);
                 break;
             default:
                 throw new IllegalArgumentException("Unknown Discharge value index: " + index);

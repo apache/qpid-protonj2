@@ -61,7 +61,7 @@ public class SourceTypeEncoder extends AbstractDescribedListTypeEncoder<Source> 
                 state.getEncoder().writeUnsignedInteger(buffer, state, source.getTimeout());
                 break;
             case 4:
-                state.getEncoder().writeBoolean(buffer, state, source.getDynamic());
+                buffer.writeByte(source.getDynamic() ? EncodingCodes.BOOLEAN_TRUE : EncodingCodes.BOOLEAN_FALSE);
                 break;
             case 5:
                 state.getEncoder().writeMap(buffer, state, source.getDynamicNodeProperties());

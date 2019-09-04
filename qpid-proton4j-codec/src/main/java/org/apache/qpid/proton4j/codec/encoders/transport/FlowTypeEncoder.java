@@ -105,14 +105,14 @@ public class FlowTypeEncoder extends AbstractDescribedListTypeEncoder<Flow> {
                 break;
             case 8:
                 if (flow.hasDrain()) {
-                    state.getEncoder().writeBoolean(buffer, state, flow.getDrain());
+                    buffer.writeByte(flow.getDrain() ? EncodingCodes.BOOLEAN_TRUE : EncodingCodes.BOOLEAN_FALSE);
                 } else {
                     buffer.writeByte(EncodingCodes.NULL);
                 }
                 break;
             case 9:
                 if (flow.hasEcho()) {
-                    state.getEncoder().writeBoolean(buffer, state, flow.getEcho());
+                    buffer.writeByte(flow.getEcho() ? EncodingCodes.BOOLEAN_TRUE : EncodingCodes.BOOLEAN_FALSE);
                 } else {
                     buffer.writeByte(EncodingCodes.NULL);
                 }

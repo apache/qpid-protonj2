@@ -51,7 +51,7 @@ public class DispositionTypeEncoder extends AbstractDescribedListTypeEncoder<Dis
         switch (index) {
             case 0:
                 if (disposition.hasRole()) {
-                    state.getEncoder().writeBoolean(buffer, state, disposition.getRole().getValue());
+                    buffer.writeByte(disposition.getRole().getValue() ? EncodingCodes.BOOLEAN_TRUE : EncodingCodes.BOOLEAN_FALSE);
                 } else {
                     buffer.writeByte(EncodingCodes.NULL);
                 }
@@ -72,7 +72,7 @@ public class DispositionTypeEncoder extends AbstractDescribedListTypeEncoder<Dis
                 break;
             case 3:
                 if (disposition.hasSettled()) {
-                    state.getEncoder().writeBoolean(buffer, state, disposition.getSettled());
+                    buffer.writeByte(disposition.getSettled() ? EncodingCodes.BOOLEAN_TRUE : EncodingCodes.BOOLEAN_FALSE);
                 } else {
                     buffer.writeByte(EncodingCodes.NULL);
                 }
@@ -94,7 +94,7 @@ public class DispositionTypeEncoder extends AbstractDescribedListTypeEncoder<Dis
                 break;
             case 5:
                 if (disposition.hasBatchable()) {
-                    state.getEncoder().writeBoolean(buffer, state, disposition.getBatchable());
+                    buffer.writeByte(disposition.getBatchable() ? EncodingCodes.BOOLEAN_TRUE : EncodingCodes.BOOLEAN_FALSE);
                 } else {
                     buffer.writeByte(EncodingCodes.NULL);
                 }

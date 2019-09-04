@@ -63,7 +63,7 @@ public class AttachTypeEncoder extends AbstractDescribedListTypeEncoder<Attach> 
                 break;
             case 2:
                 if (attach.hasRole()) {
-                    state.getEncoder().writeBoolean(buffer, state, attach.getRole().getValue());
+                    buffer.writeByte(attach.getRole().getValue() ? EncodingCodes.BOOLEAN_TRUE : EncodingCodes.BOOLEAN_FALSE);
                 } else {
                     buffer.writeByte(EncodingCodes.NULL);
                 }
@@ -105,7 +105,7 @@ public class AttachTypeEncoder extends AbstractDescribedListTypeEncoder<Attach> 
                 break;
             case 8:
                 if (attach.hasIncompleteUnsettled()) {
-                    state.getEncoder().writeBoolean(buffer, state, attach.getIncompleteUnsettled());
+                    buffer.writeByte(attach.getIncompleteUnsettled() ? EncodingCodes.BOOLEAN_TRUE : EncodingCodes.BOOLEAN_FALSE);
                 } else {
                     buffer.writeByte(EncodingCodes.NULL);
                 }

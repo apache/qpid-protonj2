@@ -57,7 +57,7 @@ public class HeaderTypeEncoder extends AbstractDescribedListTypeEncoder<Header> 
         switch (index) {
             case 0:
                 if (header.hasDurable()) {
-                    state.getEncoder().writeBoolean(buffer, state, header.isDurable());
+                    buffer.writeByte(header.isDurable() ? EncodingCodes.BOOLEAN_TRUE : EncodingCodes.BOOLEAN_FALSE);
                 } else {
                     buffer.writeByte(EncodingCodes.NULL);
                 }
@@ -78,7 +78,7 @@ public class HeaderTypeEncoder extends AbstractDescribedListTypeEncoder<Header> 
                 break;
             case 3:
                 if (header.hasFirstAcquirer()) {
-                    state.getEncoder().writeBoolean(buffer, state, header.isFirstAcquirer());
+                    buffer.writeByte(header.isFirstAcquirer() ? EncodingCodes.BOOLEAN_TRUE : EncodingCodes.BOOLEAN_FALSE);
                 } else {
                     buffer.writeByte(EncodingCodes.NULL);
                 }

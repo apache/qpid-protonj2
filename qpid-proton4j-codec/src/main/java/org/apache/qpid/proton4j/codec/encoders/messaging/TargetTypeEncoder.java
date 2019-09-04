@@ -61,7 +61,7 @@ public class TargetTypeEncoder extends AbstractDescribedListTypeEncoder<Target> 
                 state.getEncoder().writeUnsignedInteger(buffer, state, target.getTimeout());
                 break;
             case 4:
-                state.getEncoder().writeBoolean(buffer, state, target.getDynamic());
+                buffer.writeByte(target.getDynamic() ? EncodingCodes.BOOLEAN_TRUE : EncodingCodes.BOOLEAN_FALSE);
                 break;
             case 5:
                 state.getEncoder().writeMap(buffer, state, target.getDynamicNodeProperties());
