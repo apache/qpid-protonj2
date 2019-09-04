@@ -30,8 +30,9 @@ public final class Declare {
         return globalId;
     }
 
-    public void setGlobalId(GlobalTxId globalId) {
+    public Declare setGlobalId(GlobalTxId globalId) {
         this.globalId = globalId;
+        return this;
     }
 
     @Override

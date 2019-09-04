@@ -162,7 +162,7 @@ public class AMQPHeader {
         return true;
     }
 
-    private void setBuffer(ProtonBuffer value, boolean validate) {
+    private AMQPHeader setBuffer(ProtonBuffer value, boolean validate) {
         if (validate) {
             if (value.getReadableBytes() != 8 || !startsWith(value, PREFIX)) {
                 throw new IllegalArgumentException("Not an AMQP header buffer");
@@ -175,6 +175,7 @@ public class AMQPHeader {
         }
 
         buffer = value;
+        return this;
     }
 
     /**

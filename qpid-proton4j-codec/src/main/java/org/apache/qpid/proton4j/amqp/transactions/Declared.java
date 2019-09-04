@@ -33,12 +33,13 @@ public final class Declared implements DeliveryState, Outcome {
         return txnId;
     }
 
-    public void setTxnId(Binary txnId) {
+    public Declared setTxnId(Binary txnId) {
         if (txnId == null) {
             throw new NullPointerException("the txn-id field is mandatory");
         }
 
         this.txnId = txnId;
+        return this;
     }
 
     @Override

@@ -108,9 +108,10 @@ public final class Header implements Section {
         return this;
     }
 
-    public void clearDurable() {
+    public Header clearDurable() {
         modified &= ~DURABLE;
         durable = DEFAULT_DURABILITY;
+        return this;
     }
 
     public byte getPriority() {
@@ -128,9 +129,10 @@ public final class Header implements Section {
         return this;
     }
 
-    public void clearPriority() {
+    public Header clearPriority() {
         modified &= ~PRIORITY;
         priority = DEFAULT_PRIORITY;
+        return this;
     }
 
     public long getTimeToLive() {
@@ -148,9 +150,10 @@ public final class Header implements Section {
         return this;
     }
 
-    public void clearTimeToLive() {
+    public Header clearTimeToLive() {
         modified &= ~TIME_TO_LIVE;
         timeToLive = DEFAULT_TIME_TO_LIVE;
+        return this;
     }
 
     public boolean isFirstAcquirer() {
@@ -168,9 +171,10 @@ public final class Header implements Section {
         return this;
     }
 
-    public void clearFirstAcquirer() {
+    public Header clearFirstAcquirer() {
         modified &= ~FIRST_ACQUIRER;
         firstAcquirer = DEFAULT_FIRST_ACQUIRER;
+        return this;
     }
 
     public long getDeliveryCount() {
@@ -190,9 +194,20 @@ public final class Header implements Section {
         return this;
     }
 
-    public void clearDeliveryCount() {
+    public Header clearDeliveryCount() {
         modified &= ~DELIVERY_COUNT;
         deliveryCount = DEFAULT_DELIVERY_COUNT;
+        return this;
+    }
+
+    public Header reset() {
+        modified = 0;
+        durable = DEFAULT_DURABILITY;
+        priority = DEFAULT_PRIORITY;
+        timeToLive = DEFAULT_TIME_TO_LIVE;
+        firstAcquirer = DEFAULT_FIRST_ACQUIRER;
+        deliveryCount = DEFAULT_DELIVERY_COUNT;
+        return this;
     }
 
     @Override
