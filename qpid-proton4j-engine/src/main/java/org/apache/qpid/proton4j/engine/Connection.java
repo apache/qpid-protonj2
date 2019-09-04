@@ -282,7 +282,7 @@ public interface Connection {
      *
      * @return this connection
      */
-    Connection openEventHandler(EventHandler<Connection> remoteOpenEventHandler);
+    Connection openHandler(EventHandler<Connection> remoteOpenEventHandler);
 
     /**
      * Sets a EventHandler for when an AMQP Close frame is received from the remote peer.
@@ -292,7 +292,7 @@ public interface Connection {
      *
      * @return this connection
      */
-    Connection closeEventHandler(EventHandler<Connection> remoteCloseEventHandler);
+    Connection closeHandler(EventHandler<Connection> remoteCloseEventHandler);
 
     /**
      * Sets a EventHandler for when an AMQP Begin frame is received from the remote peer.
@@ -305,7 +305,7 @@ public interface Connection {
      *
      * @return this connection
      */
-    Connection sessionOpenEventHandler(EventHandler<Session> remoteSessionOpenEventHandler);
+    Connection sessionOpenHandler(EventHandler<Session> remoteSessionOpenEventHandler);
 
     /**
      * Sets a EventHandler for when an AMQP Attach frame is received from the remote peer for a sending link.
@@ -320,7 +320,7 @@ public interface Connection {
      *
      * @return this connection
      */
-    Connection senderOpenEventHandler(EventHandler<Sender> remoteSenderOpenEventHandler);
+    Connection senderOpenHandler(EventHandler<Sender> remoteSenderOpenEventHandler);
 
     /**
      * Sets a EventHandler for when an AMQP Attach frame is received from the remote peer for a receiving link.
@@ -335,6 +335,6 @@ public interface Connection {
      *
      * @return this connection
      */
-    Connection receiverOpenEventHandler(EventHandler<Receiver> remoteReceiverOpenEventHandler);
+    Connection receiverOpenHandler(EventHandler<Receiver> remoteReceiverOpenEventHandler);
 
 }

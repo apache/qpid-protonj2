@@ -95,7 +95,7 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
         // Default engine should start and return a connection immediately
         assertNotNull(connection);
 
-        connection.openEventHandler((result) -> {
+        connection.openHandler((result) -> {
             remoteOpened.set(true);
         });
 
@@ -125,10 +125,10 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
         // Default engine should start and return a connection immediately
         assertNotNull(connection);
 
-        connection.openEventHandler(result -> {
+        connection.openHandler(result -> {
             connectionOpenedSignaled.set(true);
         });
-        connection.closeEventHandler(result -> {
+        connection.closeHandler(result -> {
             connectionClosedSignaled.set(true);
         });
 
@@ -304,7 +304,7 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
 
         connection.setDesiredCapabilities(clientDesiredCapabilities);
         connection.setOfferedCapabilities(clientOfferedCapabilities);
-        connection.openEventHandler(result -> {
+        connection.openHandler(result -> {
             remotelyOpened.set(true);
         });
         connection.open();
@@ -352,7 +352,7 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
         ProtonConnection connection = engine.start();
 
         connection.setProperties(clientProperties);
-        connection.openEventHandler(result -> {
+        connection.openHandler(result -> {
             remotelyOpened.set(true);
         });
         connection.open();
@@ -394,10 +394,10 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
 
         ProtonConnection connection = engine.start();
 
-        connection.openEventHandler(result -> {
+        connection.openHandler(result -> {
             remotelyOpened.set(true);
         });
-        connection.closeEventHandler(result -> {
+        connection.closeHandler(result -> {
             remotelyClosed.set(true);
         });
         connection.open();
@@ -435,10 +435,10 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
 
         ProtonConnection connection = engine.start();
 
-        connection.openEventHandler(result -> {
+        connection.openHandler(result -> {
             remotelyOpened.set(true);
         });
-        connection.closeEventHandler(result -> {
+        connection.closeHandler(result -> {
             remotelyClosed.set(true);
         });
         connection.open();
@@ -469,7 +469,7 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
 
         ProtonConnection connection = engine.start();
 
-        connection.openEventHandler(result -> {
+        connection.openHandler(result -> {
             remotelyOpened.set(true);
         });
         connection.open();
@@ -502,7 +502,7 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
 
         ProtonConnection connection = engine.start();
 
-        connection.openEventHandler(result -> {
+        connection.openHandler(result -> {
             remotelyOpened.set(true);
         });
 

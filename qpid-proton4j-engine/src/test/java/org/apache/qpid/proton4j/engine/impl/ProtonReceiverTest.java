@@ -394,7 +394,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
 
         Connection connection = engine.start();
 
-        connection.receiverOpenEventHandler(result -> {
+        connection.receiverOpenHandler(result -> {
             receiverRemotelyOpened.set(true);
             receiver.set(result);
         });
@@ -842,7 +842,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
 
         final AtomicBoolean deliveryArrived = new AtomicBoolean();
         final AtomicReference<IncomingDelivery> receivedDelivery = new AtomicReference<>();
-        receiver.deliveryReceivedEventHandler(delivery -> {
+        receiver.deliveryReceivedHandler(delivery -> {
             deliveryArrived.set(true);
             receivedDelivery.set(delivery);
         });
@@ -892,7 +892,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
 
         final AtomicBoolean deliveryArrived = new AtomicBoolean();
         final AtomicReference<IncomingDelivery> receivedDelivery = new AtomicReference<>();
-        receiver.deliveryReceivedEventHandler(delivery -> {
+        receiver.deliveryReceivedHandler(delivery -> {
             deliveryArrived.set(true);
             receivedDelivery.set(delivery);
 
@@ -945,7 +945,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
 
         final AtomicBoolean deliveryArrived = new AtomicBoolean();
         final AtomicReference<IncomingDelivery> receivedDelivery = new AtomicReference<>();
-        receiver.deliveryReceivedEventHandler(delivery -> {
+        receiver.deliveryReceivedHandler(delivery -> {
             deliveryArrived.set(true);
             receivedDelivery.set(delivery);
 
@@ -1010,7 +1010,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
 
         final AtomicBoolean deliveryArrived = new AtomicBoolean();
         final AtomicReference<IncomingDelivery> receivedDelivery = new AtomicReference<>();
-        receiver.deliveryReceivedEventHandler(delivery -> {
+        receiver.deliveryReceivedHandler(delivery -> {
             deliveryArrived.set(true);
             receivedDelivery.set(delivery);
 
@@ -1066,7 +1066,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
 
         final AtomicBoolean deliveryArrived = new AtomicBoolean();
         final AtomicReference<IncomingDelivery> receivedDelivery = new AtomicReference<>();
-        receiver.deliveryReceivedEventHandler(delivery -> {
+        receiver.deliveryReceivedHandler(delivery -> {
             deliveryArrived.set(true);
             receivedDelivery.set(delivery);
         });
@@ -1133,14 +1133,14 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
 
         final AtomicBoolean deliveryArrived = new AtomicBoolean();
         final AtomicReference<IncomingDelivery> receivedDelivery = new AtomicReference<>();
-        receiver.deliveryReceivedEventHandler(delivery -> {
+        receiver.deliveryReceivedHandler(delivery -> {
             deliveryArrived.set(true);
             receivedDelivery.set(delivery);
         });
 
         final AtomicBoolean deliveryUpdatedAndSettled = new AtomicBoolean();
         final AtomicReference<IncomingDelivery> updatedDelivery = new AtomicReference<>();
-        receiver.deliveryUpdatedEventHandler(delivery -> {
+        receiver.deliveryUpdatedHandler(delivery -> {
             if (delivery.isRemotelySettled()) {
                 deliveryUpdatedAndSettled.set(true);
             }
@@ -1205,11 +1205,11 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
 
         final ArrayList<IncomingDelivery> deliveries = new ArrayList<>();
 
-        receiver.deliveryReceivedEventHandler(delivery -> {
+        receiver.deliveryReceivedHandler(delivery -> {
             deliveryCounter.incrementAndGet();
         });
 
-        receiver.deliveryUpdatedEventHandler(delivery -> {
+        receiver.deliveryUpdatedHandler(delivery -> {
             if (delivery.isRemotelySettled()) {
                 dispositionCounter.incrementAndGet();
                 deliveries.add(delivery);
@@ -1277,13 +1277,13 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
 
         final AtomicBoolean deliveryArrived = new AtomicBoolean();
         final AtomicReference<IncomingDelivery> receivedDelivery = new AtomicReference<>();
-        receiver.deliveryReceivedEventHandler(delivery -> {
+        receiver.deliveryReceivedHandler(delivery -> {
             deliveryArrived.set(true);
             receivedDelivery.set(delivery);
         });
 
         final AtomicReference<IncomingDelivery> updatedDelivery = new AtomicReference<>();
-        receiver.deliveryUpdatedEventHandler(delivery -> {
+        receiver.deliveryUpdatedHandler(delivery -> {
             updatedDelivery.set(delivery);
         });
 
@@ -1365,18 +1365,18 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         final byte[] payload2 = new byte[] { 2, 2 };
 
         // Receiver 1 handlers for delivery processing.
-        receiver1.deliveryReceivedEventHandler(delivery -> {
+        receiver1.deliveryReceivedHandler(delivery -> {
             receivedDelivery1.set(delivery);
         });
-        receiver1.deliveryUpdatedEventHandler(delivery -> {
+        receiver1.deliveryUpdatedHandler(delivery -> {
             delivery1Updated.set(true);
         });
 
         // Receiver 2 handlers for delivery processing.
-        receiver2.deliveryReceivedEventHandler(delivery -> {
+        receiver2.deliveryReceivedHandler(delivery -> {
             receivedDelivery2.set(delivery);
         });
-        receiver2.deliveryUpdatedEventHandler(delivery -> {
+        receiver2.deliveryUpdatedHandler(delivery -> {
             delivery2Updated.set(true);
         });
 
@@ -1503,11 +1503,11 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         final byte[] payload = new byte[] { 1 };
 
         // Receiver 1 handlers for delivery processing.
-        receiver.deliveryReceivedEventHandler(delivery -> {
+        receiver.deliveryReceivedHandler(delivery -> {
             deliveryCounter.incrementAndGet();
             receivedDelivery.set(delivery);
         });
-        receiver.deliveryUpdatedEventHandler(delivery -> {
+        receiver.deliveryUpdatedHandler(delivery -> {
             deliveryUpdated.set(true);
         });
 
@@ -1613,21 +1613,21 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         final String deliveryTag2 = "tag2";
 
         // Receiver 1 handlers for delivery processing.
-        receiver1.deliveryReceivedEventHandler(delivery -> {
+        receiver1.deliveryReceivedHandler(delivery -> {
             receivedDelivery1.set(delivery);
             receiver1Transfers.incrementAndGet();
         });
-        receiver1.deliveryUpdatedEventHandler(delivery -> {
+        receiver1.deliveryUpdatedHandler(delivery -> {
             delivery1Updated.set(true);
             receiver1Transfers.incrementAndGet();
         });
 
         // Receiver 2 handlers for delivery processing.
-        receiver2.deliveryReceivedEventHandler(delivery -> {
+        receiver2.deliveryReceivedHandler(delivery -> {
             receivedDelivery2.set(delivery);
             receiver2Transfers.incrementAndGet();
         });
-        receiver2.deliveryUpdatedEventHandler(delivery -> {
+        receiver2.deliveryUpdatedHandler(delivery -> {
             delivery2Updated.set(true);
             receiver2Transfers.incrementAndGet();
         });
@@ -1787,7 +1787,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         final String deliveryTag3 = "tag3";
 
         // Receiver handlers for delivery processing.
-        receiver.deliveryReceivedEventHandler(delivery -> {
+        receiver.deliveryReceivedHandler(delivery -> {
             switch (deliveryCounter.get()) {
                 case 0:
                     receivedDelivery1.set(delivery);
@@ -1803,7 +1803,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
             }
             deliveryCounter.incrementAndGet();
         });
-        receiver.deliveryUpdatedEventHandler(delivery -> {
+        receiver.deliveryUpdatedHandler(delivery -> {
             deliveryCounter.incrementAndGet();
         });
 

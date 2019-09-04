@@ -279,8 +279,8 @@ public interface Link<T extends Link<T>> {
      * Sets a {@link EventHandler} for when an AMQP Begin frame is received from the remote peer for this
      * {@link Link} which would have been locally opened previously.
      *
-     * Typically used by clients, servers rely on {@link ProtonSession#senderOpenEventHandler(EventHandler)} and
-     * {@link ProtonSession#receiverOpenEventHandler(EventHandler)}.
+     * Typically used by clients, servers rely on {@link ProtonSession#senderOpenHandler(EventHandler)} and
+     * {@link ProtonSession#receiverOpenHandler(EventHandler)}.
      *
      * @param remoteOpenHandler
      *      The {@link EventHandler} to notify when this link is remotely opened.

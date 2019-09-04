@@ -496,25 +496,25 @@ public class ProtonConnection implements Connection, AMQPHeader.HeaderHandler<Pr
     //----- API for event handling of Connection related remote events
 
     @Override
-    public Connection openEventHandler(EventHandler<Connection> remoteOpenEventHandler) {
+    public Connection openHandler(EventHandler<Connection> remoteOpenEventHandler) {
         this.remoteOpenHandler = remoteOpenEventHandler;
         return this;
     }
 
     @Override
-    public Connection closeEventHandler(EventHandler<Connection> remoteCloseEventHandler) {
+    public Connection closeHandler(EventHandler<Connection> remoteCloseEventHandler) {
         this.remoteCloseHandler = remoteCloseEventHandler;
         return this;
     }
 
     @Override
-    public Connection sessionOpenEventHandler(EventHandler<Session> remoteSessionOpenEventHandler) {
+    public Connection sessionOpenHandler(EventHandler<Session> remoteSessionOpenEventHandler) {
         this.remoteSessionOpenEventHandler = remoteSessionOpenEventHandler;
         return this;
     }
 
     @Override
-    public Connection senderOpenEventHandler(EventHandler<Sender> remoteSenderOpenEventHandler) {
+    public Connection senderOpenHandler(EventHandler<Sender> remoteSenderOpenEventHandler) {
         this.remoteSenderOpenEventHandler = remoteSenderOpenEventHandler;
         return this;
     }
@@ -524,7 +524,7 @@ public class ProtonConnection implements Connection, AMQPHeader.HeaderHandler<Pr
     }
 
     @Override
-    public Connection receiverOpenEventHandler(EventHandler<Receiver> remoteReceiverOpenEventHandler) {
+    public Connection receiverOpenHandler(EventHandler<Receiver> remoteReceiverOpenEventHandler) {
         this.remoteReceiverOpenEventHandler = remoteReceiverOpenEventHandler;
         return this;
     }

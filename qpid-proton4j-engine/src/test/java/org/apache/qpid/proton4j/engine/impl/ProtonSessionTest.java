@@ -126,7 +126,7 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
         assertNotNull(connection);
 
         connection.open();
-        connection.openEventHandler((result) -> {
+        connection.openHandler((result) -> {
             remoteOpened.set(true);
         });
 
@@ -154,7 +154,7 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
 
         ProtonConnection connection = engine.start();
 
-        connection.openEventHandler((result) -> {
+        connection.openHandler((result) -> {
             connectionRemotelyOpened.set(true);
         });
         connection.open();
@@ -228,10 +228,10 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
         // Default engine should start and return a connection immediately
         assertNotNull(connection);
 
-        connection.openEventHandler((result) -> {
+        connection.openHandler((result) -> {
             connectionRemotelyOpened.set(true);
         });
-        connection.sessionOpenEventHandler(result -> {
+        connection.sessionOpenHandler(result -> {
             remoteSession.set(result);
             sessionRemotelyOpened.set(true);
         });
@@ -329,10 +329,10 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
         // Default engine should start and return a connection immediately
         assertNotNull(connection);
 
-        connection.openEventHandler(result -> {
+        connection.openHandler(result -> {
             connectionOpenedSignaled.set(true);
         });
-        connection.closeEventHandler(result -> {
+        connection.closeHandler(result -> {
             connectionClosedSignaled.set(true);
         });
 
@@ -372,10 +372,10 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
         // Default engine should start and return a connection immediately
         assertNotNull(connection);
 
-        connection.openEventHandler(result -> {
+        connection.openHandler(result -> {
             connectionOpenedSignaled.set(true);
         });
-        connection.closeEventHandler(result -> {
+        connection.closeHandler(result -> {
             connectionClosedSignaled.set(true);
         });
 
@@ -465,11 +465,11 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
         assertNotNull(connection);
 
         connection.open();
-        connection.openEventHandler((result) -> {
+        connection.openHandler((result) -> {
             remoteOpened.set(true);
         });
 
-        connection.sessionOpenEventHandler(session -> {
+        connection.sessionOpenHandler(session -> {
             remoteSession.set(true);
         });
 
@@ -643,7 +643,7 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
 
         final AtomicInteger deliveryArrived = new AtomicInteger();
         final AtomicReference<IncomingDelivery> delivered = new AtomicReference<>();
-        receiver.deliveryReceivedEventHandler(delivery -> {
+        receiver.deliveryReceivedHandler(delivery -> {
             deliveryArrived.incrementAndGet();
             delivered.set(delivery);
         });

@@ -332,7 +332,7 @@ public class ProtonSession implements Session {
     }
 
     @Override
-    public ProtonSession senderOpenEventHandler(EventHandler<Sender> remoteSenderOpenEventHandler) {
+    public ProtonSession senderOpenHandler(EventHandler<Sender> remoteSenderOpenEventHandler) {
         this.remoteSenderOpenEventHandler = remoteSenderOpenEventHandler;
         return this;
     }
@@ -342,7 +342,7 @@ public class ProtonSession implements Session {
     }
 
     @Override
-    public ProtonSession receiverOpenEventHandler(EventHandler<Receiver> remoteReceiverOpenEventHandler) {
+    public ProtonSession receiverOpenHandler(EventHandler<Receiver> remoteReceiverOpenEventHandler) {
         this.remoteReceiverOpenEventHandler = remoteReceiverOpenEventHandler;
         return this;
     }

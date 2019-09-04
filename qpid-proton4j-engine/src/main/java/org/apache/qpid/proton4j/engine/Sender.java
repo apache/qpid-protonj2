@@ -111,7 +111,7 @@ public interface Sender extends Link<Sender> {
      *
      * @return this sender
      */
-    Sender sendableEventHandler(EventHandler<Sender> handler);
+    Sender sendableHandler(EventHandler<Sender> handler);
 
     /**
      * Called when the {@link Receiver} end of the link has requested a drain of the outstanding
@@ -125,7 +125,7 @@ public interface Sender extends Link<Sender> {
      *
      * @return this sender
      */
-    Sender drainRequestedEventHandler(EventHandler<LinkCreditState> handler);
+    Sender drainRequestedHandler(EventHandler<LinkCreditState> handler);
 
     /**
      * Handler for updates for deliveries that have previously been sent.
@@ -138,6 +138,6 @@ public interface Sender extends Link<Sender> {
      *
      * @return this sender
      */
-    Sender deliveryUpdatedEventHandler(EventHandler<OutgoingDelivery> handler);
+    Sender deliveryUpdatedHandler(EventHandler<OutgoingDelivery> handler);
 
 }

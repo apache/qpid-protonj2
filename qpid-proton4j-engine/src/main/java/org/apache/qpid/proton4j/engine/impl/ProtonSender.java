@@ -165,7 +165,7 @@ public class ProtonSender extends ProtonLink<Sender> implements Sender {
     //----- Sender event handlers
 
     @Override
-    public Sender deliveryUpdatedEventHandler(EventHandler<OutgoingDelivery> handler) {
+    public Sender deliveryUpdatedHandler(EventHandler<OutgoingDelivery> handler) {
         this.deliveryUpdatedEventHandler = handler;
         return this;
     }
@@ -178,7 +178,7 @@ public class ProtonSender extends ProtonLink<Sender> implements Sender {
     }
 
     @Override
-    public Sender sendableEventHandler(EventHandler<Sender> handler) {
+    public Sender sendableHandler(EventHandler<Sender> handler) {
         this.sendableEventHandler = handler;
         return this;
     }
@@ -198,7 +198,7 @@ public class ProtonSender extends ProtonLink<Sender> implements Sender {
     }
 
     @Override
-    public Sender drainRequestedEventHandler(EventHandler<LinkCreditState> handler) {
+    public Sender drainRequestedHandler(EventHandler<LinkCreditState> handler) {
         this.drainRequestedEventHandler = handler;
         return this;
     }

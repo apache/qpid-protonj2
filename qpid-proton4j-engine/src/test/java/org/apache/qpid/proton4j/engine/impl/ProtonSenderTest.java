@@ -333,7 +333,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
 
         Connection connection = engine.start();
 
-        connection.senderOpenEventHandler(result -> {
+        connection.senderOpenHandler(result -> {
             senderRemotelyOpened.set(true);
             sender.set(result);
         });
@@ -548,7 +548,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
 
         assertFalse(sender.isSendable());
 
-        sender.sendableEventHandler(handler -> {
+        sender.sendableHandler(handler -> {
             handler.next().setTag(new byte[] {0}).writeBytes(payload);
         });
 
@@ -601,7 +601,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
 
         final AtomicBoolean deliveryUpdatedAndSettled = new AtomicBoolean();
         final AtomicReference<OutgoingDelivery> updatedDelivery = new AtomicReference<>();
-        sender.deliveryUpdatedEventHandler(delivery -> {
+        sender.deliveryUpdatedHandler(delivery -> {
             if (delivery.isRemotelySettled()) {
                 deliveryUpdatedAndSettled.set(true);
             }
@@ -611,7 +611,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
 
         assertFalse(sender.isSendable());
 
-        sender.sendableEventHandler(handler -> {
+        sender.sendableHandler(handler -> {
             handler.next().setTag(new byte[] {0}).writeBytes(payload);
         });
 
@@ -820,7 +820,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         Sender sender = session.sender("sender-1");
 
         final AtomicBoolean deliverySentAfterSenable = new AtomicBoolean();
-        sender.sendableEventHandler(handler -> {
+        sender.sendableHandler(handler -> {
             handler.next().setTag(new byte[] {0}).writeBytes(payload);
             deliverySentAfterSenable.set(true);
         });
@@ -940,12 +940,12 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         sender2.open();
 
         final AtomicBoolean sender1MarkedSendable = new AtomicBoolean();
-        sender1.sendableEventHandler(handler -> {
+        sender1.sendableHandler(handler -> {
             sender1MarkedSendable.set(true);
         });
 
         final AtomicBoolean sender2MarkedSendable = new AtomicBoolean();
-        sender2.sendableEventHandler(handler -> {
+        sender2.sendableHandler(handler -> {
             sender2MarkedSendable.set(true);
         });
 
@@ -1067,7 +1067,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         sender.open();
 
         final AtomicBoolean senderMarkedSendable = new AtomicBoolean();
-        sender.sendableEventHandler(handler -> {
+        sender.sendableHandler(handler -> {
             senderMarkedSendable.set(true);
         });
 
@@ -1170,7 +1170,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         sender.open();
 
         final AtomicBoolean senderMarkedSendable = new AtomicBoolean();
-        sender.sendableEventHandler(handler -> {
+        sender.sendableHandler(handler -> {
             senderMarkedSendable.set(true);
         });
 
@@ -1238,7 +1238,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         sender.open();
 
         final AtomicBoolean senderMarkedSendable = new AtomicBoolean();
-        sender.sendableEventHandler(handler -> {
+        sender.sendableHandler(handler -> {
             senderMarkedSendable.set(true);
         });
 
@@ -1292,7 +1292,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         sender.open();
 
         final AtomicBoolean senderMarkedSendable = new AtomicBoolean();
-        sender.sendableEventHandler(handler -> {
+        sender.sendableHandler(handler -> {
             senderMarkedSendable.set(true);
         });
 
@@ -1388,7 +1388,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         Sender sender = session.sender("sender-1");
 
         final AtomicBoolean deliverySentAfterSenable = new AtomicBoolean();
-        sender.sendableEventHandler(handler -> {
+        sender.sendableHandler(handler -> {
             handler.next().setTag(new byte[] {0}).writeBytes(payload);
             deliverySentAfterSenable.set(true);
         });
@@ -1470,7 +1470,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         Sender sender = session.sender("sender-1");
 
         final AtomicBoolean deliverySentAfterSenable = new AtomicBoolean();
-        sender.sendableEventHandler(handler -> {
+        sender.sendableHandler(handler -> {
             handler.next().setTag(new byte[] {0}).writeBytes(payload);
             deliverySentAfterSenable.set(true);
         });

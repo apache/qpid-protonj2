@@ -166,7 +166,7 @@ public class ProtonReceiver extends ProtonLink<Receiver> implements Receiver {
     //----- Receiver event handlers
 
     @Override
-    public Receiver deliveryReceivedEventHandler(EventHandler<IncomingDelivery> handler) {
+    public Receiver deliveryReceivedHandler(EventHandler<IncomingDelivery> handler) {
         this.deliveryReceivedEventHandler = handler;
         return this;
     }
@@ -179,7 +179,7 @@ public class ProtonReceiver extends ProtonLink<Receiver> implements Receiver {
     }
 
     @Override
-    public Receiver deliveryUpdatedEventHandler(EventHandler<IncomingDelivery> handler) {
+    public Receiver deliveryUpdatedHandler(EventHandler<IncomingDelivery> handler) {
         this.deliveryUpdatedEventHandler = handler;
         return this;
     }
@@ -192,7 +192,7 @@ public class ProtonReceiver extends ProtonLink<Receiver> implements Receiver {
     }
 
     @Override
-    public Receiver receiverDrainedEventHandler(EventHandler<Receiver> handler) {
+    public Receiver drainStateUpdatedHandler(EventHandler<Receiver> handler) {
         this.receiverDrainedEventHandler = handler;
         return this;
     }

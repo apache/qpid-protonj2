@@ -117,7 +117,7 @@ public interface Receiver extends Link<Receiver> {
      *
      * @return this receiver
      */
-    Receiver receiverDrainedEventHandler(EventHandler<Receiver> handler);
+    Receiver drainStateUpdatedHandler(EventHandler<Receiver> handler);
 
     /**
      * Handler for incoming deliveries
@@ -127,7 +127,7 @@ public interface Receiver extends Link<Receiver> {
      *
      * @return this receiver
      */
-    Receiver deliveryReceivedEventHandler(EventHandler<IncomingDelivery> handler);
+    Receiver deliveryReceivedHandler(EventHandler<IncomingDelivery> handler);
 
     /**
      * Handler for updates for deliveries that have previously been received.
@@ -140,6 +140,6 @@ public interface Receiver extends Link<Receiver> {
      *
      * @return this receiver
      */
-    Receiver deliveryUpdatedEventHandler(EventHandler<IncomingDelivery> handler);
+    Receiver deliveryUpdatedHandler(EventHandler<IncomingDelivery> handler);
 
 }
