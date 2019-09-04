@@ -275,11 +275,11 @@ public class ClientConnection implements Connection {
             executor = transport.connect(() -> {
                 protonConnection = engine.start();
 
-                protonConnection.openEventHandler(result -> {
+                protonConnection.openHandler(result -> {
                     openFuture.complete(this);
                 });
 
-                protonConnection.closeEventHandler(result -> {
+                protonConnection.closeHandler(result -> {
                     // TODO - On remote close we need to ensure that sessions and their resources
                     //        all reflect the fact that they are now closed.  Also there is not a
                     //        way currently to reflect the fact that a remote closed happened in

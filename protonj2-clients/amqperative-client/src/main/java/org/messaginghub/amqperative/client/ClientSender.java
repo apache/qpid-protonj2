@@ -186,9 +186,9 @@ public class ClientSender implements Sender {
             protonSender.openHandler(sender -> handleRemoteOpen(sender))
                         .closeHandler(sender -> handleRemoteCloseOrDetach(sender))
                         .detachHandler(sender -> handleRemoteCloseOrDetach(sender))
-                        .deliveryUpdatedEventHandler(delivery -> handleDeliveryUpdated(delivery))
-                        .drainRequestedEventHandler(linkState -> handleRemoteRequestedDrain(linkState))
-                        .sendableEventHandler(sender -> handleRemoteNowSendable(sender))
+                        .deliveryUpdatedHandler(delivery -> handleDeliveryUpdated(delivery))
+                        .drainRequestedHandler(linkState -> handleRemoteRequestedDrain(linkState))
+                        .sendableHandler(sender -> handleRemoteNowSendable(sender))
                         .open();
 
         });
