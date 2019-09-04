@@ -20,6 +20,8 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
+import org.apache.qpid.proton4j.amqp.Symbol;
+import org.apache.qpid.proton4j.amqp.transport.ErrorCondition;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.common.logging.ProtonLogger;
 import org.apache.qpid.proton4j.common.logging.ProtonLoggerFactory;
@@ -143,26 +145,16 @@ public class ProtonEngine implements Engine {
             } else if (localIdleDeadline - currentTime <= 0) {
                 localIdleDeadline = computeDeadline(currentTime, localIdleTimeout);
                 if (connection.getLocalState() != ConnectionState.CLOSED) {
-//                    ErrorCondition condition = new ErrorCondition(
-//                        Symbol.getSymbol("amqp:resource-limit-exceeded"), "local-idle-timeout expired");
-//                    connectionEndpoint.setCondition(condition);
-//                    connectionEndpoint.setLocalState(EndpointState.CLOSED);
-//
-//                    if (!isOpenSent) {
-//                        if ((sasl != null) && (!sasl.isDone())) {
-//                            sasl.fail();
-//                        }
-//                        Open open = new Open();
-//                        isOpenSent = true;
-//                        writeFrame(0, open, null, null);
-//                    }
-//                    if (!isCloseSent) {
-//                        Close close = new Close();
-//                        close.setError(condition);
-//                        isCloseSent = true;
-//                        writeFrame(0, close, null, null);
-//                    }
+                    ErrorCondition condition = new ErrorCondition(
+                        Symbol.getSymbol("amqp:resource-limit-exceeded"), "local-idle-timeout expired");
+                    connection.setLocalCondition(condition);
+                    connection.open();  // Ensure open sent and state ready for close call.
+                    connection.close();
+
+                    // TODO - What about SASL layer ?
+                    // saslContext().fail(); ??
                     // TODO - Engine should not be writable any longer
+                    // shutdown();  ??
                 }
             }
             deadline = localIdleDeadline;
