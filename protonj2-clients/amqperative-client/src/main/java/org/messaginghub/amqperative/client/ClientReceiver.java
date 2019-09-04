@@ -176,7 +176,7 @@ public class ClientReceiver implements Receiver {
     }
 
     @Override
-    public Future<Receiver> drainCredit(long timeout) throws IllegalStateException, IllegalArgumentException {
+    public Future<Receiver> drain() {
         checkClosed();
         ClientFuture<Receiver> drained = session.getFutureFactory().createFuture();
 

@@ -48,6 +48,8 @@ public interface Receiver {
 
     Future<Receiver> detach();
 
+    Future<Receiver> drain();
+
     // TODO: ideas
     long getQueueSize();
 
@@ -56,7 +58,5 @@ public interface Receiver {
     Receiver onMessage(Consumer<Delivery> handler, ExecutorService executor);
 
     Receiver addCredit(int credits) throws IllegalStateException;
-
-    Future<Receiver> drainCredit(long timeout) throws IllegalStateException, IllegalArgumentException;
 
 }
