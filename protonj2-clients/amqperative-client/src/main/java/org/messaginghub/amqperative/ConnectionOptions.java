@@ -34,6 +34,9 @@ public class ConnectionOptions {
     public static final long DEFAULT_DRAIN_TIMEOUT = 60000;
     public static final int DEFAULT_CHANNEL_MAX = 65535;
     public static final int DEFAULT_MAX_FRAME_SIZE = 65535;
+    public static final boolean DEFAULT_ALLOW_INSECURE_REDIRECTS = false;
+    public static final boolean DEFAULT_SASL_ENABLED = true;
+    public static final boolean DEFAULT_SASL_ALLOW_INSECURE_MECHS = false;
 
     private long sendTimeout = DEFAULT_SEND_TIMEOUT;
     private long requestTimeout = DEFAULT_REQUEST_TIMEOUT;
@@ -53,6 +56,10 @@ public class ConnectionOptions {
     private Map<String, Object> properties;
     private String vhost;
     private String futureType;
+    private boolean saslEnabled = DEFAULT_SASL_ENABLED;
+    private boolean saslAllowInsecureMechs = DEFAULT_SASL_ALLOW_INSECURE_MECHS;
+    private String saslAllowedMechanisms;
+    private boolean allowInsecureRedirects = DEFAULT_ALLOW_INSECURE_REDIRECTS;
 
     public ConnectionOptions() {
     }
@@ -84,6 +91,10 @@ public class ConnectionOptions {
         other.setFutureType(futureType);
         other.setUser(user);
         other.setPassword(password);
+        other.setSaslEnabled(saslEnabled);
+        other.setSaslAllowInsecureMechs(saslAllowInsecureMechs);
+        other.setSaslAllowedMechanisms(saslAllowedMechanisms);
+        other.setAllowInsecureRedirects(allowInsecureRedirects);
 
         if (offeredCapabilities != null) {
             other.setOfferedCapabilities(Arrays.copyOf(offeredCapabilities, offeredCapabilities.length));
@@ -322,5 +333,61 @@ public class ConnectionOptions {
      */
     public TransportOptions getTransport() {
         return transport;
+    }
+
+    /**
+     * @return the allowInsecureRedirects
+     */
+    public boolean isAllowInsecureRedirects() {
+        return allowInsecureRedirects;
+    }
+
+    /**
+     * @param allowInsecureRedirects the allowInsecureRedirects to set
+     */
+    public void setAllowInsecureRedirects(boolean allowInsecureRedirects) {
+        this.allowInsecureRedirects = allowInsecureRedirects;
+    }
+
+    /**
+     * @return the saslLayer
+     */
+    public boolean isSaslEnabled() {
+        return saslEnabled;
+    }
+
+    /**
+     * @param saslEnabled the saslLayer to set
+     */
+    public void setSaslEnabled(boolean saslEnabled) {
+        this.saslEnabled = saslEnabled;
+    }
+
+    /**
+     * @return the saslMechanisms
+     */
+    public String getSaslAllowedMechanisms() {
+        return saslAllowedMechanisms;
+    }
+
+    /**
+     * @param saslAllowedMechanisms the SASL Mechanisms to allow
+     */
+    public void setSaslAllowedMechanisms(String saslAllowedMechanisms) {
+        this.saslAllowedMechanisms = saslAllowedMechanisms;
+    }
+
+    /**
+     * @return the saslAllowInsecureMechs
+     */
+    public boolean isSaslAllowInsecureMechs() {
+        return saslAllowInsecureMechs;
+    }
+
+    /**
+     * @param saslAllowInsecureMechs the saslAllowInsecureMechs to set
+     */
+    public void setSaslAllowInsecureMechs(boolean saslAllowInsecureMechs) {
+        this.saslAllowInsecureMechs = saslAllowInsecureMechs;
     }
 }
