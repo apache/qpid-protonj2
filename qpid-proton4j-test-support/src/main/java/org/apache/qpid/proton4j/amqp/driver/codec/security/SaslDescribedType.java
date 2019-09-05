@@ -45,12 +45,21 @@ public abstract class SaslDescribedType extends ListDescribedType {
 
     public interface SaslPerformativeHandler<E> {
 
-        default void handleMechanisms(SaslMechanisms saslMechanisms, E context) {}
-        default void handleInit(SaslInit saslInit, E context) {}
-        default void handleChallenge(SaslChallenge saslChallenge, E context) {}
-        default void handleResponse(SaslResponse saslResponse, E context) {}
-        default void handleOutcome(SaslOutcome saslOutcome, E context) {}
-
+        default void handleMechanisms(SaslMechanisms saslMechanisms, E context) {
+            throw new AssertionError("SASL Mechanisms was not handled");
+        }
+        default void handleInit(SaslInit saslInit, E context) {
+            throw new AssertionError("SASL Init was not handled");
+        }
+        default void handleChallenge(SaslChallenge saslChallenge, E context) {
+            throw new AssertionError("SASL Challenge was not handled");
+        }
+        default void handleResponse(SaslResponse saslResponse, E context) {
+            throw new AssertionError("SASL Response was not handled");
+        }
+        default void handleOutcome(SaslOutcome saslOutcome, E context) {
+            throw new AssertionError("SASL Outcome was not handled");
+        }
     }
 
     public abstract <E> void invoke(SaslPerformativeHandler<E> handler, E context);

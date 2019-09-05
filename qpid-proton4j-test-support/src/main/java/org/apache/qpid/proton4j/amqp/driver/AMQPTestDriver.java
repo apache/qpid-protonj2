@@ -24,7 +24,9 @@ import java.util.function.Consumer;
 import org.apache.qpid.proton4j.amqp.DescribedType;
 import org.apache.qpid.proton4j.amqp.driver.actions.ScriptCompleteAction;
 import org.apache.qpid.proton4j.amqp.driver.codec.security.SaslDescribedType;
+import org.apache.qpid.proton4j.amqp.driver.codec.transport.HeartBeat;
 import org.apache.qpid.proton4j.amqp.driver.codec.transport.PerformativeDescribedType;
+import org.apache.qpid.proton4j.amqp.driver.codec.transport.PerformativeDescribedType.PerformativeType;
 import org.apache.qpid.proton4j.amqp.driver.exceptions.UnexpectedPerformativeError;
 import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
@@ -48,7 +50,10 @@ public class AMQPTestDriver implements Consumer<ProtonBuffer> {
     private volatile AssertionError failureCause;
 
     private int advertisedIdleTimeout = 0;
+
     private volatile int emptyFrameCount;
+    private volatile int performativeCount;
+    private volatile int saslPerformativeCount;
 
     private int inboundMaxFrameSize = Integer.MAX_VALUE;
     private int outboundMaxFrameSize = Integer.MAX_VALUE;
@@ -93,6 +98,14 @@ public class AMQPTestDriver implements Consumer<ProtonBuffer> {
 
     public int getEmptyFrameCount() {
         return emptyFrameCount;
+    }
+
+    public int getPerformativeCount() {
+        return performativeCount;
+    }
+
+    public int getSaslPerformativeCount() {
+        return saslPerformativeCount;
     }
 
     /**
@@ -176,6 +189,9 @@ public class AMQPTestDriver implements Consumer<ProtonBuffer> {
     }
 
     void handlePerformative(PerformativeDescribedType amqp, int channel, ProtonBuffer payload) throws AssertionError {
+        if (!amqp.getPerformativeType().equals(PerformativeType.HEARTBEAT)) {
+            performativeCount++;
+        }
         ScriptedElement scriptEntry = script.poll();
         if (scriptEntry == null) {
             // TODO - Need to ensure a readable error by converting the codec type to a true performative type when
@@ -196,8 +212,9 @@ public class AMQPTestDriver implements Consumer<ProtonBuffer> {
         prcessScript(scriptEntry);
     }
 
-    void handleHeartbeat() {
+    void handleHeartbeat(int channel) {
         emptyFrameCount++;
+        handlePerformative(HeartBeat.INSTANCE, channel, null);
     }
 
     //----- Test driver actions

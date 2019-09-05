@@ -44,6 +44,18 @@ public class ProtonTestPeer extends ScriptWriter implements Consumer<ProtonBuffe
         this.inputConsumer = frameSink;
     }
 
+    public int getEmptyFrameCount() {
+        return driver.getEmptyFrameCount();
+    }
+
+    public int getPerformativeCount() {
+        return driver.getPerformativeCount();
+    }
+
+    public int getSaslPerformativeCount() {
+        return driver.getSaslPerformativeCount();
+    }
+
     @Override
     public void close() {
         if (closed.compareAndSet(false, true)) {

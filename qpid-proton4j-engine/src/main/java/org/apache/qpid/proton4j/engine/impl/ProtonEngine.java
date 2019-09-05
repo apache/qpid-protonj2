@@ -26,6 +26,7 @@ import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.common.logging.ProtonLogger;
 import org.apache.qpid.proton4j.common.logging.ProtonLoggerFactory;
 import org.apache.qpid.proton4j.engine.ConnectionState;
+import org.apache.qpid.proton4j.engine.EmptyFrame;
 import org.apache.qpid.proton4j.engine.Engine;
 import org.apache.qpid.proton4j.engine.EngineSaslContext;
 import org.apache.qpid.proton4j.engine.EngineState;
@@ -166,7 +167,8 @@ public class ProtonEngine implements Engine {
                 lastOutputSequence = outputSequence;
             } else if (remoteIdleDeadline - currentTime <= 0) {
                 remoteIdleDeadline = computeDeadline(currentTime, remoteIdleTimeout / 2);
-                // TODO - Write an empty frame somehow
+                // TODO - Ensure that the pipeline can handle this fake performative
+                pipeline().fireWrite(EmptyFrame.PERFORMATIVE, 0, null, null);
             }
 
             if (deadline == 0) {

@@ -34,6 +34,7 @@ import org.apache.qpid.proton4j.amqp.driver.expectations.BeginExpectation;
 import org.apache.qpid.proton4j.amqp.driver.expectations.CloseExpectation;
 import org.apache.qpid.proton4j.amqp.driver.expectations.DetachExpectation;
 import org.apache.qpid.proton4j.amqp.driver.expectations.DispositionExpectation;
+import org.apache.qpid.proton4j.amqp.driver.expectations.EmptyFrameExpectation;
 import org.apache.qpid.proton4j.amqp.driver.expectations.EndExpectation;
 import org.apache.qpid.proton4j.amqp.driver.expectations.FlowExpectation;
 import org.apache.qpid.proton4j.amqp.driver.expectations.OpenExpectation;
@@ -115,6 +116,12 @@ public abstract class ScriptWriter {
 
     public DispositionExpectation expectDisposition() {
         DispositionExpectation expecting = new DispositionExpectation(getDriver());
+        getDriver().addScriptedElement(expecting);
+        return expecting;
+    }
+
+    public EmptyFrameExpectation expectEmptyFrame() {
+        EmptyFrameExpectation expecting = new EmptyFrameExpectation(getDriver());
         getDriver().addScriptedElement(expecting);
         return expecting;
     }

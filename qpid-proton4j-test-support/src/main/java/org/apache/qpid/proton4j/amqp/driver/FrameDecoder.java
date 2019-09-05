@@ -18,6 +18,7 @@ package org.apache.qpid.proton4j.amqp.driver;
 
 import org.apache.qpid.proton4j.amqp.driver.codec.Codec;
 import org.apache.qpid.proton4j.amqp.driver.codec.security.SaslDescribedType;
+import org.apache.qpid.proton4j.amqp.driver.codec.transport.HeartBeat;
 import org.apache.qpid.proton4j.amqp.driver.codec.transport.PerformativeDescribedType;
 import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
@@ -290,8 +291,9 @@ class FrameDecoder {
                     input.skipBytes(payloadSize);
                 }
             } else {
+                LOG.trace("Driver Read: CH[{}] : {} [{}]", channel, HeartBeat.INSTANCE, payload);
                 transitionToFrameSizeParsingStage();
-                driver.handleHeartbeat();
+                driver.handleHeartbeat(channel);
                 return;
             }
 

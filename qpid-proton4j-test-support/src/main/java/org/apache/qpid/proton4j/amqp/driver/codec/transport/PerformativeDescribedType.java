@@ -35,7 +35,8 @@ public abstract class PerformativeDescribedType extends ListDescribedType {
         END,
         FLOW,
         OPEN,
-        TRANSFER
+        TRANSFER,
+        HEARTBEAT
     }
 
     public PerformativeDescribedType(int numberOfFields) {
@@ -50,16 +51,36 @@ public abstract class PerformativeDescribedType extends ListDescribedType {
 
     public interface PerformativeHandler<E> {
 
-        default void handleOpen(Open open, ProtonBuffer payload, int channel, E context) {}
-        default void handleBegin(Begin begin, ProtonBuffer payload, int channel, E context) {}
-        default void handleAttach(Attach attach, ProtonBuffer payload, int channel, E context) {}
-        default void handleFlow(Flow flow, ProtonBuffer payload, int channel, E context) {}
-        default void handleTransfer(Transfer transfer, ProtonBuffer payload, int channel, E context) {}
-        default void handleDisposition(Disposition disposition, ProtonBuffer payload, int channel, E context) {}
-        default void handleDetach(Detach detach, ProtonBuffer payload, int channel, E context) {}
-        default void handleEnd(End end, ProtonBuffer payload, int channel, E context) {}
-        default void handleClose(Close close, ProtonBuffer payload, int channel, E context) {}
-
+        default void handleOpen(Open open, ProtonBuffer payload, int channel, E context) {
+            throw new AssertionError("AMQP Open was not handled");
+        }
+        default void handleBegin(Begin begin, ProtonBuffer payload, int channel, E context) {
+            throw new AssertionError("AMQP Begin was not handled");
+        }
+        default void handleAttach(Attach attach, ProtonBuffer payload, int channel, E context) {
+            throw new AssertionError("AMQP Attach was not handled");
+        }
+        default void handleFlow(Flow flow, ProtonBuffer payload, int channel, E context) {
+            throw new AssertionError("AMQP Flow was not handled");
+        }
+        default void handleTransfer(Transfer transfer, ProtonBuffer payload, int channel, E context) {
+            throw new AssertionError("AMQP Transfer was not handled");
+        }
+        default void handleDisposition(Disposition disposition, ProtonBuffer payload, int channel, E context) {
+            throw new AssertionError("AMQP Disposition was not handled");
+        }
+        default void handleDetach(Detach detach, ProtonBuffer payload, int channel, E context) {
+            throw new AssertionError("AMQP Detach was not handled");
+        }
+        default void handleEnd(End end, ProtonBuffer payload, int channel, E context) {
+            throw new AssertionError("AMQP End was not handled");
+        }
+        default void handleClose(Close close, ProtonBuffer payload, int channel, E context) {
+            throw new AssertionError("AMQP Close was not handled");
+        }
+        default void handleHeartBeat(HeartBeat thump, ProtonBuffer payload, int channel, E context) {
+            throw new AssertionError("AMQP Heart Beat frame was not handled");
+        }
     }
 
     public Object getFieldValueOrSpecDefault(int index) {

@@ -33,6 +33,7 @@ import org.apache.qpid.proton4j.amqp.driver.codec.transport.Detach;
 import org.apache.qpid.proton4j.amqp.driver.codec.transport.Disposition;
 import org.apache.qpid.proton4j.amqp.driver.codec.transport.End;
 import org.apache.qpid.proton4j.amqp.driver.codec.transport.Flow;
+import org.apache.qpid.proton4j.amqp.driver.codec.transport.HeartBeat;
 import org.apache.qpid.proton4j.amqp.driver.codec.transport.Open;
 import org.apache.qpid.proton4j.amqp.driver.codec.transport.Transfer;
 import org.apache.qpid.proton4j.amqp.driver.exceptions.UnexpectedPerformativeError;
@@ -156,6 +157,11 @@ public abstract class AbstractExpectation<T extends ListDescribedType> implement
     @Override
     public void handleClose(Close close, ProtonBuffer payload, int channel, AMQPTestDriver context) {
         doVerification(close, payload, channel, context);
+    }
+
+    @Override
+    public void handleHeartBeat(HeartBeat thump, ProtonBuffer payload, int channel, AMQPTestDriver context) {
+        doVerification(thump, payload, channel, context);
     }
 
     @Override
