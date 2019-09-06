@@ -23,7 +23,6 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 
 import org.apache.qpid.proton4j.amqp.driver.ProtonTestPeer;
 import org.apache.qpid.proton4j.engine.Connection;
@@ -79,37 +78,6 @@ public class ProtonEngineTest extends ProtonEngineTestSupport {
         assertEquals(ConnectionState.ACTIVE, connection.getRemoteState());
 
         assertNull(failure);
-    }
-
-    @Test
-    public void testExceptionThrownFromOpenWhenRemoteSignalsFailure() {
-        ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
-        engine.errorHandler(result -> failure = result);
-        ProtonTestPeer peer = new ProtonTestPeer(engine);
-        engine.outputConsumer(peer);
-
-        Connection connection = engine.start();
-        assertNotNull(connection);
-
-        peer.expectAMQPHeader().respondWithAMQPHeader();
-        peer.expectOpen().respond().withContainerId("driver");
-        peer.expectAttach();  // TODO Script error back to source
-
-        connection.setContainerId("test");
-        connection.open();
-
-        Session session = connection.session();
-        try {
-            session.open();
-            fail("Should have thrown an exception");
-        } catch (Throwable other) {
-            // Error was expected - TODO - Refine API to indicate what error is going to appear.
-        }
-
-        peer.waitForScriptToCompleteIgnoreErrors();
-
-        // TODO - Should we also fire error here.
-        //assertNotNull(failure);
     }
 
     @Test
