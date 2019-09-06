@@ -16,6 +16,7 @@
  */
 package org.apache.qpid.proton4j.amqp.driver.matchers.transport;
 
+import org.apache.qpid.proton4j.amqp.driver.codec.ListDescribedType;
 import org.apache.qpid.proton4j.amqp.driver.codec.transport.HeartBeat;
 import org.apache.qpid.proton4j.amqp.driver.matchers.ListDescribedTypeMatcher;
 
@@ -31,5 +32,10 @@ public class HeartBeatMatcher extends ListDescribedTypeMatcher {
     @Override
     protected Class<?> getDescribedTypeClass() {
         return HeartBeat.class;
+    }
+
+    @Override
+    protected boolean matchesSafely(ListDescribedType received) {
+        return received instanceof HeartBeat;
     }
 }

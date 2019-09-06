@@ -69,7 +69,7 @@ public class ProtonFrameEncodingHandler implements EngineHandler {
 
     @Override
     public void handleWrite(EngineHandlerContext context, SaslPerformative performative) {
-        context.fireWrite(writeFrame(saslEncoder, saslEncoderState, performative, null, SASL_FRAME_TYPE, (short) 0, configuration.getOutboundMaxFrameSize(), null));
+        context.fireWrite(writeFrame(saslEncoder, saslEncoderState, performative, null, SASL_FRAME_TYPE, 0, configuration.getOutboundMaxFrameSize(), null));
     }
 
     private ProtonBuffer writeFrame(Encoder encoder, EncoderState encoderState, Object performative, ProtonBuffer payload, byte frameType, int channel, int maxFrameSize, Runnable onPayloadTooLarge) {

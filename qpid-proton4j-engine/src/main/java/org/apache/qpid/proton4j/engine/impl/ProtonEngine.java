@@ -66,7 +66,6 @@ public class ProtonEngine implements Engine {
 
     // Engine event points
     private EventHandler<ProtonBuffer> outputHandler;
-    private EventHandler<ProtonException> errorHandler;
     private EventHandler<ProtonException> engineErrorHandler = (error) -> {
         LOG.warn("Engine encounted error and will shutdown: ", error);
     };
@@ -151,24 +150,23 @@ public class ProtonEngine implements Engine {
                     connection.setLocalCondition(condition);
                     connection.open();  // Ensure open sent and state ready for close call.
                     connection.close();
-
                     // TODO - What about SASL layer ?
                     // saslContext().fail(); ??
-                    // TODO - Engine should not be writable any longer
-                    // shutdown();  ??
+                    engineFailed(new EngineIdleTimeoutException("Remote idle timeout detected"));
+                    return 0;
                 }
             }
             deadline = localIdleDeadline;
         }
 
-        if (remoteIdleTimeout != 0 && !connection.isLocallyClosed()) { // TODO - Was close already sent
+        if (remoteIdleTimeout != 0 && !connection.isLocallyClosed()) {
             if (remoteIdleDeadline == 0 || lastOutputSequence != outputSequence) {
                 remoteIdleDeadline = computeDeadline(currentTime, remoteIdleTimeout / 2);
                 lastOutputSequence = outputSequence;
             } else if (remoteIdleDeadline - currentTime <= 0) {
                 remoteIdleDeadline = computeDeadline(currentTime, remoteIdleTimeout / 2);
-                // TODO - Ensure that the pipeline can handle this fake performative
-                pipeline().fireWrite(EmptyFrame.PERFORMATIVE, 0, null, null);
+                pipeline().fireWrite(EmptyFrame.EMPTY_FRAME_BUFFER.duplicate());
+                lastOutputSequence++;
             }
 
             if (deadline == 0) {
@@ -240,12 +238,12 @@ public class ProtonEngine implements Engine {
 
     @Override
     public ProtonEngine errorHandler(EventHandler<ProtonException> handler) {
-        this.errorHandler = handler;
+        this.engineErrorHandler = handler;
         return this;
     }
 
     EventHandler<ProtonException> errorHandler() {
-        return errorHandler;
+        return engineErrorHandler;
     }
 
     @Override

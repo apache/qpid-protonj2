@@ -33,7 +33,7 @@ class FrameDecoder {
     public static final byte AMQP_FRAME_TYPE = (byte) 0;
     public static final byte SASL_FRAME_TYPE = (byte) 1;
 
-    public static final int FRAME_SIZE_BTYES = 4;
+    public static final int FRAME_SIZE_BYTES = 4;
 
     private final AMQPTestDriver driver;
     private final Codec codec = Codec.Factory.create();
@@ -134,16 +134,18 @@ class FrameDecoder {
                 headerBytes[headerByte++] = incoming.readByte();
             }
 
-            // Construct a new Header from the read bytes which will validate the contents
-            AMQPHeader header = new AMQPHeader(headerBytes);
+            if (headerByte == AMQPHeader.HEADER_SIZE_BYTES) {
+                // Construct a new Header from the read bytes which will validate the contents
+                AMQPHeader header = new AMQPHeader(headerBytes);
 
-            // Transition to parsing the frames if any pipelined into this buffer.
-            transitionToFrameSizeParsingStage();
+                // Transition to parsing the frames if any pipelined into this buffer.
+                transitionToFrameSizeParsingStage();
 
-            if (header.isSaslHeader()) {
-                driver.handleHeader(AMQPHeader.getSASLHeader());
-            } else {
-                driver.handleHeader(AMQPHeader.getAMQPHeader());
+                if (header.isSaslHeader()) {
+                    driver.handleHeader(AMQPHeader.getSASLHeader());
+                } else {
+                    driver.handleHeader(AMQPHeader.getAMQPHeader());
+                }
             }
         }
 
@@ -157,7 +159,7 @@ class FrameDecoder {
     private class FrameSizeParsingStage implements FrameParserStage {
 
         private int frameSize;
-        private int multiplier = FRAME_SIZE_BTYES;
+        private int multiplier = FRAME_SIZE_BYTES;
 
         @Override
         public void parse(ProtonBuffer input) throws AssertionError {
@@ -172,12 +174,12 @@ class FrameDecoder {
                 validateFrameSize();
 
                 // Normalize the frame size to the reminder portion
-                frameSize -= FRAME_SIZE_BTYES;
+                int length = frameSize - FRAME_SIZE_BYTES;
 
-                if (input.getReadableBytes() < frameSize) {
-                    transitionToFrameBufferingStage(frameSize);
+                if (input.getReadableBytes() < length) {
+                    transitionToFrameBufferingStage(length);
                 } else {
-                    initializeFrameBodyParsingStage(frameSize);
+                    initializeFrameBodyParsingStage(length);
                 }
 
                 stage.parse(input);
@@ -198,7 +200,7 @@ class FrameDecoder {
 
         @Override
         public FrameSizeParsingStage reset(int frameSize) {
-            multiplier = FRAME_SIZE_BTYES;
+            multiplier = FRAME_SIZE_BYTES;
             this.frameSize = frameSize;
             return this;
         }
@@ -239,15 +241,9 @@ class FrameDecoder {
         @Override
         public void parse(ProtonBuffer input) throws AssertionError {
             int dataOffset = (input.readByte() << 2) & 0x3FF;
+            int frameSize = this.frameSize + FRAME_SIZE_BYTES;
 
-            if (dataOffset < 8) {
-                throw new AssertionError(String.format(
-                    "specified frame data offset %d smaller than minimum frame header size %d", dataOffset, 8));
-            }
-            if (dataOffset > frameSize) {
-                throw new AssertionError(String.format(
-                    "specified frame data offset %d larger than the frame size %d", dataOffset, frameSize));
-            }
+            validateDataOffset(dataOffset, frameSize);
 
             int type = input.readByte() & 0xFF;
             short channel = input.readShort();
@@ -257,7 +253,7 @@ class FrameDecoder {
                 input.setReadIndex(input.getReadIndex() + dataOffset - 8);
             }
 
-            final int frameBodySize = frameSize - (dataOffset - FRAME_SIZE_BTYES);
+            final int frameBodySize = frameSize - dataOffset;
 
             ProtonBuffer payload = null;
             Object val = null;
@@ -316,6 +312,18 @@ class FrameDecoder {
         public FrameBodyParsingStage reset(int frameSize) {
             this.frameSize = frameSize;
             return this;
+        }
+
+        private void validateDataOffset(int dataOffset, int frameSize) {
+            if (dataOffset < 8) {
+                throw new AssertionError(String.format(
+                    "specified frame data offset %d smaller than minimum frame header size %d", dataOffset, 8));
+            }
+
+            if (dataOffset > frameSize) {
+                throw new AssertionError(String.format(
+                    "specified frame data offset %d larger than the frame size %d", dataOffset, frameSize));
+            }
         }
     }
 

@@ -16,9 +16,9 @@
  */
 package org.apache.qpid.proton4j.engine;
 
-import org.apache.qpid.proton4j.amqp.transport.Performative;
 import org.apache.qpid.proton4j.amqp.transport.Performative.PerformativeHandler;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 
 /**
  * An empty frame which can be used to drive transport activity when idle.
@@ -26,7 +26,9 @@ import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 public final class EmptyFrame extends ProtocolFrame {
 
     public static final EmptyFrame INSTANCE = new EmptyFrame();
-    public static final EmptyPerformative PERFORMATIVE = new EmptyPerformative();
+
+    public static final ProtonBuffer EMPTY_FRAME_BUFFER =
+        ProtonByteBufferAllocator.DEFAULT.wrap(new byte[] {0x00, 0x00, 0x00, 0x08, 0x02, 0x00, 0x00, 0x00});
 
     public EmptyFrame() {
         super();
@@ -40,28 +42,5 @@ public final class EmptyFrame extends ProtocolFrame {
     @Override
     public <E> void invoke(PerformativeHandler<E> handler, E context) {
         // Nothing to do for empty frame.
-    }
-
-    public static final class EmptyPerformative implements Performative {
-
-        @Override
-        public PerformativeType getPerformativeType() {
-            return null;
-        }
-
-        @Override
-        public Performative copy() {
-            return this;
-        }
-
-        @Override
-        public <E> void invoke(PerformativeHandler<E> handler, ProtonBuffer payload, int channel, E context) {
-            // Nothing to do for an empty performative
-        }
-
-        @Override
-        public String toString() {
-            return "Empty Performative";
-        }
     }
 }

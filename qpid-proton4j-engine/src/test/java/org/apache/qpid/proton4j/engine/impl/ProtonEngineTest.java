@@ -113,6 +113,98 @@ public class ProtonEngineTest extends ProtonEngineTestSupport {
     }
 
     @Test
+    public void testTickRemoteTimeout() throws EngineStateException {
+        ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
+        engine.errorHandler(result -> failure = result);
+        ProtonTestPeer peer = new ProtonTestPeer(engine);
+        engine.outputConsumer(peer);
+
+        Connection connection = engine.start();
+        assertNotNull(connection);
+
+        final int remoteTimeout = 4000;
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().withIdleTimeOut(nullValue()).respond().withIdleTimeOut(remoteTimeout);
+
+        // Set our local idleTimeout
+        connection.open();
+
+        long deadline = engine.tick(0);
+        assertEquals("Expected to be returned a deadline of 2000",  2000, deadline);  // deadline = 4000 / 2
+
+        deadline = engine.tick(1000);    // Wait for less than the deadline with no data - get the same value
+        assertEquals("When the deadline hasn't been reached tick() should return the previous deadline",  2000, deadline);
+        assertEquals("When the deadline hasn't been reached tick() shouldn't write data", 0, peer.getEmptyFrameCount());
+
+        peer.expectEmptyFrame();
+
+        deadline = engine.tick(remoteTimeout / 2); // Wait for the deadline - next deadline should be (4000/2)*2
+        assertEquals("When the deadline has been reached expected a new deadline to be returned 4000",  4000, deadline);
+        assertEquals("tick() should have written data", 1, peer.getEmptyFrameCount());
+
+        peer.expectBegin();
+        Session session = connection.session().open();
+
+        deadline = engine.tick(3000);
+        assertEquals("Writing data resets the deadline", 5000, deadline);
+        assertEquals("When the deadline is reset tick() shouldn't write an empty frame", 1, peer.getEmptyFrameCount());
+
+        peer.expectAttach();
+        session.sender("test").open();
+
+        deadline = engine.tick(4000);
+        assertEquals("Writing data resets the deadline", 6000, deadline);
+        assertEquals("When the deadline is reset tick() shouldn't write an empty frame", 1, peer.getEmptyFrameCount());
+
+        peer.waitForScriptToComplete();
+        assertNull(failure);
+    }
+
+    @Test
+    public void testTickLocalTimeout() throws EngineStateException {
+        ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
+        engine.errorHandler(result -> failure = result);
+        ProtonTestPeer peer = new ProtonTestPeer(engine);
+        engine.outputConsumer(peer);
+
+        Connection connection = engine.start();
+        assertNotNull(connection);
+
+        final int localTimeout = 4000;
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().withIdleTimeOut(localTimeout).respond();
+
+        // Set our local idleTimeout
+        connection.setIdleTimeout(localTimeout);
+        connection.open();
+
+        long deadline = engine.tick(0);
+        assertEquals("Expected to be returned a deadline of 4000",  4000, deadline);
+
+        deadline = engine.tick(1000);    // Wait for less than the deadline with no data - get the same value
+        assertEquals("When the deadline hasn't been reached tick() should return the previous deadline",  4000, deadline);
+        assertEquals("Reading data should never result in a frame being written", 0, peer.getEmptyFrameCount());
+
+        // remote sends an empty frame now
+        peer.remoteEmptyFrame().now();
+
+        deadline = engine.tick(2000);
+        assertEquals("Reading data resets the deadline", 6000, deadline);
+        assertEquals("Reading data should never result in a frame being written", 0, peer.getEmptyFrameCount());
+        assertEquals("Reading data before the deadline should keep the connection open", ConnectionState.ACTIVE, connection.getLocalState());
+
+        peer.expectClose().respond();
+
+        deadline = engine.tick(7000);
+        assertEquals("Calling tick() after the deadline should result in the connection being closed", ConnectionState.CLOSED, connection.getLocalState());
+
+        peer.waitForScriptToComplete();
+        assertNotNull(failure);
+    }
+
+    @Test
     public void testTickWithZeroIdleTimeoutsGivesZeroDeadline() throws EngineStateException {
         doTickWithNoIdleTimeoutGivesZeroDeadlineTestImpl(true);
     }
@@ -171,6 +263,7 @@ public class ProtonEngineTest extends ProtonEngineTestSupport {
     }
 
     private void doTickWithLocalTimeoutTestImpl(int localTimeout, long tick1, long expectedDeadline1, long expectedDeadline2, long expectedDeadline3) throws EngineStateException {
+        this.failure = null;
         ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
         engine.errorHandler(result -> failure = result);
         ProtonTestPeer peer = new ProtonTestPeer(engine);
@@ -221,6 +314,485 @@ public class ProtonEngineTest extends ProtonEngineTestSupport {
         assertEquals("Calling tick() after the deadline should result in the connection being closed", ConnectionState.CLOSED, connection.getLocalState());
 
         peer.waitForScriptToComplete();
+        assertNotNull(failure);
+    }
+
+    @Test
+    public void testTickWithRemoteTimeout() throws EngineStateException {
+        // all-positive
+        doTickWithRemoteTimeoutTestImpl(4000, 10000, 14000, 18000, 22000);
+
+        // all-negative
+        doTickWithRemoteTimeoutTestImpl(2000, -100000, -98000, -96000, -94000);
+
+        // negative to positive missing 0
+        doTickWithRemoteTimeoutTestImpl(500, -950, -450, 50, 550);
+
+        // negative to positive striking 0
+        doTickWithRemoteTimeoutTestImpl(3000, -6000, -3000, 1, 3001);
+    }
+
+    private void doTickWithRemoteTimeoutTestImpl(int remoteTimeoutHalf, long tick1, long expectedDeadline1, long expectedDeadline2, long expectedDeadline3) throws EngineStateException {
+        ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
+        engine.errorHandler(result -> failure = result);
+        ProtonTestPeer peer = new ProtonTestPeer(engine);
+        engine.outputConsumer(peer);
+
+        Connection connection = engine.start();
+        assertNotNull(connection);
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        // Handle the peer transmitting [half] their timeout. We half it on receipt to avoid spurious timeouts
+        // if they not have transmitted half their actual timeout, as the AMQP spec only says they SHOULD do that.
+        peer.expectOpen().respond().withIdleTimeOut(remoteTimeoutHalf * 2);
+
+        connection.open();
+
+        peer.waitForScriptToComplete();
         assertNull(failure);
+
+        long deadline = engine.tick(tick1);
+        assertEquals("Unexpected deadline returned", expectedDeadline1, deadline);
+
+        // Wait for less time than the deadline with no data - get the same value
+        long interimTick = tick1 + 10;
+        assertTrue (interimTick < expectedDeadline1);
+        assertEquals("When the deadline hasn't been reached tick() should return the previous deadline",  expectedDeadline1, engine.tick(interimTick));
+        assertEquals("When the deadline hasn't been reached tick() shouldn't write data", 1, peer.getPerformativeCount());
+        assertEquals("When the deadline hasn't been reached tick() shouldn't write data", 0, peer.getEmptyFrameCount());
+
+        peer.expectEmptyFrame();
+
+        deadline = engine.tick(expectedDeadline1);
+        assertEquals("When the deadline has been reached expected a new remote deadline to be returned", expectedDeadline2, deadline);
+        assertEquals("tick() should have written data", 1, peer.getEmptyFrameCount());
+
+        peer.expectBegin();
+
+        // Do some actual work, create real traffic, removing the need to send empty frame to satisfy idle-timeout
+        connection.session().open();
+
+        assertEquals("session open should have written data", 2, peer.getPerformativeCount());
+
+        deadline = engine.tick(expectedDeadline2);
+        assertEquals("When the deadline has been reached expected a new remote deadline to be returned", expectedDeadline3, deadline);
+        assertEquals("tick() should not have written data as there was actual activity", 2, peer.getPerformativeCount());
+        assertEquals("tick() should not have written data as there was actual activity", 1, peer.getEmptyFrameCount());
+
+        peer.expectEmptyFrame();
+
+        engine.tick(expectedDeadline3);
+        assertEquals("tick() should have written data", 2, peer.getEmptyFrameCount());
+
+        peer.waitForScriptToComplete();
+        assertNull(failure);
+    }
+
+    @Test
+    public void testTickWithBothTimeouts() throws EngineStateException {
+        // all-positive
+        doTickWithBothTimeoutsTestImpl(true, 5000, 2000, 10000, 12000, 14000, 15000);
+        doTickWithBothTimeoutsTestImpl(false, 5000, 2000, 10000, 12000, 14000, 15000);
+
+        // all-negative
+        doTickWithBothTimeoutsTestImpl(true, 10000, 4000, -100000, -96000, -92000, -90000);
+        doTickWithBothTimeoutsTestImpl(false, 10000, 4000, -100000, -96000, -92000, -90000);
+
+        // negative to positive missing 0
+        doTickWithBothTimeoutsTestImpl(true, 500, 200, -450, -250, -50, 50);
+        doTickWithBothTimeoutsTestImpl(false, 500, 200, -450, -250, -50, 50);
+
+        // negative to positive striking 0 with local deadline
+        doTickWithBothTimeoutsTestImpl(true, 500, 200, -500, -300, -100, 1);
+        doTickWithBothTimeoutsTestImpl(false, 500, 200, -500, -300, -100, 1);
+
+        // negative to positive striking 0 with remote deadline
+        doTickWithBothTimeoutsTestImpl(true, 500, 200, -200, 1, 201, 300);
+        doTickWithBothTimeoutsTestImpl(false, 500, 200, -200, 1, 201, 300);
+    }
+
+    private void doTickWithBothTimeoutsTestImpl(boolean allowLocalTimeout, int localTimeout, int remoteTimeoutHalf, long tick1,
+                                                long expectedDeadline1, long expectedDeadline2, long expectedDeadline3) throws EngineStateException {
+
+        this.failure = null;
+        ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
+        engine.errorHandler(result -> failure = result);
+        ProtonTestPeer peer = new ProtonTestPeer(engine);
+        engine.outputConsumer(peer);
+
+        Connection connection = engine.start();
+        assertNotNull(connection);
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        // Handle the peer transmitting [half] their timeout. We half it on receipt to avoid spurious timeouts
+        // if they not have transmitted half their actual timeout, as the AMQP spec only says they SHOULD do that.
+        peer.expectOpen().respond().withIdleTimeOut(remoteTimeoutHalf * 2);
+
+        connection.setIdleTimeout(localTimeout);
+        connection.open();
+
+        long deadline = engine.tick(tick1);
+        assertEquals("Unexpected deadline returned", expectedDeadline1, deadline);
+
+        // Wait for less time than the deadline with no data - get the same value
+        long interimTick = tick1 + 10;
+        assertTrue (interimTick < expectedDeadline1);
+        assertEquals("When the deadline hasn't been reached tick() should return the previous deadline",  expectedDeadline1, engine.tick(interimTick));
+        assertEquals("When the deadline hasn't been reached tick() shouldn't write data", 0, peer.getEmptyFrameCount());
+
+        peer.expectEmptyFrame();
+
+        deadline = engine.tick(expectedDeadline1);
+        assertEquals("When the deadline has been reached expected a new remote deadline to be returned", expectedDeadline2, deadline);
+        assertEquals("tick() should have written data", 1, peer.getEmptyFrameCount());
+
+        peer.expectEmptyFrame();
+
+        deadline = engine.tick(expectedDeadline2);
+        assertEquals("When the deadline has been reached expected a new local deadline to be returned", expectedDeadline3, deadline);
+        assertEquals("tick() should have written data", 2, peer.getEmptyFrameCount());
+
+        peer.waitForScriptToComplete();
+
+        if (allowLocalTimeout) {
+            peer.expectClose().respond();
+
+            assertEquals("Connection should be active", ConnectionState.ACTIVE, connection.getLocalState());
+            engine.tick(expectedDeadline3); // Wait for the deadline, but don't receive traffic, allow local timeout to expire
+            assertEquals("Calling tick() after the deadline should result in the connection being closed", ConnectionState.CLOSED, connection.getLocalState());
+            assertEquals("tick() should have written data but not an empty frame", 2, peer.getEmptyFrameCount());
+
+            peer.waitForScriptToComplete();
+            assertNotNull(failure);
+        } else {
+            peer.remoteEmptyFrame().now();
+
+            deadline = engine.tick(expectedDeadline3);
+            assertEquals("Receiving data should have reset the deadline (to the next remote one)",  expectedDeadline2 + (remoteTimeoutHalf), deadline);
+            assertEquals("tick() shouldn't have written data", 2, peer.getEmptyFrameCount());
+            assertEquals("Connection should be active", ConnectionState.ACTIVE, connection.getLocalState());
+
+            peer.waitForScriptToComplete();
+            assertNull(failure);
+        }
+    }
+
+    @Test
+    public void testTickWithNanoTimeDerivedValueWhichWrapsLocalThenRemote() throws EngineStateException {
+        doTickWithNanoTimeDerivedValueWhichWrapsLocalThenRemoteTestImpl(false);
+    }
+
+    @Test
+    public void testTickWithNanoTimeDerivedValueWhichWrapsLocalThenRemoteWithLocalTimeout() throws EngineStateException {
+        doTickWithNanoTimeDerivedValueWhichWrapsLocalThenRemoteTestImpl(true);
+    }
+
+    private void doTickWithNanoTimeDerivedValueWhichWrapsLocalThenRemoteTestImpl(boolean allowLocalTimeout) throws EngineStateException {
+        int localTimeout = 5000;
+        int remoteTimeoutHalf = 2000;
+        assertTrue(remoteTimeoutHalf < localTimeout);
+
+        long offset = 2500;
+        assertTrue(offset < localTimeout);
+        assertTrue(offset > remoteTimeoutHalf);
+
+        ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
+        engine.errorHandler(result -> failure = result);
+        ProtonTestPeer peer = new ProtonTestPeer(engine);
+        engine.outputConsumer(peer);
+
+        Connection connection = engine.start();
+        assertNotNull(connection);
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        // Handle the peer transmitting [half] their timeout. We half it on receipt to avoid spurious timeouts
+        // if they not have transmitted half their actual timeout, as the AMQP spec only says they SHOULD do that.
+        peer.expectOpen().respond().withIdleTimeOut(remoteTimeoutHalf * 2);
+
+        connection.setIdleTimeout(localTimeout);
+        connection.open();
+
+        long deadline = engine.tick(Long.MAX_VALUE - offset);
+        assertEquals("Unexpected deadline returned", Long.MAX_VALUE - offset + remoteTimeoutHalf, deadline);
+
+        deadline = engine.tick(Long.MAX_VALUE - (offset - 100));    // Wait for less time than the deadline with no data - get the same value
+        assertEquals("When the deadline hasn't been reached tick() should return the previous deadline",  Long.MAX_VALUE -offset + remoteTimeoutHalf, deadline);
+        assertEquals("When the deadline hasn't been reached tick() shouldn't write data", 0, peer.getEmptyFrameCount());
+
+        peer.expectEmptyFrame();
+
+        deadline = engine.tick(Long.MAX_VALUE -offset + remoteTimeoutHalf); // Wait for the deadline - next deadline should be previous + remoteTimeoutHalf;
+        assertEquals("When the deadline has been reached expected a new remote deadline to be returned", Long.MIN_VALUE + (2* remoteTimeoutHalf) - offset -1, deadline);
+        assertEquals("tick() should have written data", 1, peer.getEmptyFrameCount());
+
+        peer.expectEmptyFrame();
+
+        deadline = engine.tick(Long.MIN_VALUE + (2* remoteTimeoutHalf) - offset -1); // Wait for the deadline - next deadline should be orig + localTimeout;
+        assertEquals("When the deadline has been reached expected a new local deadline to be returned", Long.MIN_VALUE + (localTimeout - offset) -1, deadline);
+        assertEquals("tick() should have written data", 2, peer.getEmptyFrameCount());
+
+        peer.waitForScriptToComplete();
+
+        if (allowLocalTimeout) {
+            peer.expectClose().respond();
+
+            assertEquals("Connection should be active", ConnectionState.ACTIVE, connection.getLocalState());
+            engine.tick(Long.MIN_VALUE + (localTimeout - offset) -1); // Wait for the deadline, but don't receive traffic, allow local timeout to expire
+            assertEquals("Calling tick() after the deadline should result in the connection being closed", ConnectionState.CLOSED, connection.getLocalState());
+            assertEquals("tick() should have written data but not an empty frame", 2, peer.getEmptyFrameCount());
+
+            peer.waitForScriptToComplete();
+            assertNotNull(failure);
+        } else {
+            peer.remoteEmptyFrame().now();
+
+            deadline = engine.tick(Long.MIN_VALUE + (localTimeout - offset) -1); // Wait for the deadline - next deadline should be orig + 3*remoteTimeoutHalf;
+            assertEquals("Receiving data should have reset the deadline (to the remote one)",  Long.MIN_VALUE + (3* remoteTimeoutHalf) - offset -1, deadline);
+            assertEquals("tick() shouldn't have written data", 2, peer.getEmptyFrameCount());
+            assertEquals("Connection should be active", ConnectionState.ACTIVE, connection.getLocalState());
+
+            peer.waitForScriptToComplete();
+            assertNull(failure);
+        }
+    }
+
+    @Test
+    public void testTickWithNanoTimeDerivedValueWhichWrapsRemoteThenLocal() throws EngineStateException {
+        doTickWithNanoTimeDerivedValueWhichWrapsRemoteThenLocalTestImpl(false);
+    }
+
+    @Test
+    public void testTickWithNanoTimeDerivedValueWhichWrapsRemoteThenLocalWithLocalTimeout() throws EngineStateException {
+        doTickWithNanoTimeDerivedValueWhichWrapsRemoteThenLocalTestImpl(true);
+    }
+
+    private void doTickWithNanoTimeDerivedValueWhichWrapsRemoteThenLocalTestImpl(boolean allowLocalTimeout) throws EngineStateException {
+        int localTimeout = 2000;
+        int remoteTimeoutHalf = 5000;
+        assertTrue(localTimeout < remoteTimeoutHalf);
+
+        long offset = 2500;
+        assertTrue(offset > localTimeout);
+        assertTrue(offset < remoteTimeoutHalf);
+
+        ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
+        engine.errorHandler(result -> failure = result);
+        ProtonTestPeer peer = new ProtonTestPeer(engine);
+        engine.outputConsumer(peer);
+
+        Connection connection = engine.start();
+        assertNotNull(connection);
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        // Handle the peer transmitting [half] their timeout. We half it on receipt to avoid spurious timeouts
+        // if they not have transmitted half their actual timeout, as the AMQP spec only says they SHOULD do that.
+        peer.expectOpen().respond().withIdleTimeOut(remoteTimeoutHalf * 2);
+
+        connection.setIdleTimeout(localTimeout);
+        connection.open();
+
+        long deadline = engine.tick(Long.MAX_VALUE - offset);
+        assertEquals("Unexpected deadline returned",  Long.MAX_VALUE - offset + localTimeout, deadline);
+
+        deadline = engine.tick(Long.MAX_VALUE - (offset - 100));    // Wait for less time than the deadline with no data - get the same value
+        assertEquals("When the deadline hasn't been reached tick() should return the previous deadline",  Long.MAX_VALUE - offset + localTimeout, deadline);
+        assertEquals("tick() shouldn't have written data", 0, peer.getEmptyFrameCount());
+
+        // Receive Empty frame to satisfy local deadline
+        peer.remoteEmptyFrame().now();
+
+        deadline = engine.tick(Long.MAX_VALUE - offset + localTimeout); // Wait for the deadline - next deadline should be orig + 2* localTimeout;
+        assertEquals("When the deadline has been reached expected a new local deadline to be returned", Long.MIN_VALUE + (localTimeout - offset) -1 + localTimeout, deadline);
+        assertEquals("tick() should not have written data", 0, peer.getEmptyFrameCount());
+
+        peer.waitForScriptToComplete();
+
+        if (allowLocalTimeout) {
+            peer.expectClose().respond();
+
+            assertEquals("Connection should be active", ConnectionState.ACTIVE, connection.getLocalState());
+            engine.tick(Long.MIN_VALUE + (localTimeout - offset) -1 + localTimeout); // Wait for the deadline, but don't receive traffic, allow local timeout to expire
+            assertEquals("Calling tick() after the deadline should result in the connection being closed", ConnectionState.CLOSED, connection.getLocalState());
+            assertEquals("tick() should have written data but not an empty frame", 0, peer.getEmptyFrameCount());
+
+            peer.waitForScriptToComplete();
+            assertNotNull(failure);
+        } else {
+            // Receive Empty frame to satisfy local deadline
+            peer.remoteEmptyFrame().now();
+
+            deadline = engine.tick(Long.MIN_VALUE + (localTimeout - offset) -1 + localTimeout); // Wait for the deadline - next deadline should be orig + remoteTimeoutHalf;
+            assertEquals("Receiving data should have reset the deadline (to the remote one)",  Long.MIN_VALUE + remoteTimeoutHalf - offset -1, deadline);
+            assertEquals("tick() shouldn't have written data", 0, peer.getEmptyFrameCount());
+
+            peer.expectEmptyFrame();
+
+            deadline = engine.tick(Long.MIN_VALUE + remoteTimeoutHalf - offset -1); // Wait for the deadline - next deadline should be orig + 3* localTimeout;
+            assertEquals("When the deadline has been reached expected a new local deadline to be returned", Long.MIN_VALUE + (3* localTimeout) - offset -1, deadline);
+            assertEquals("tick() should have written an empty frame", 1, peer.getEmptyFrameCount());
+            assertEquals("Connection should be active", ConnectionState.ACTIVE, connection.getLocalState());
+
+            peer.waitForScriptToComplete();
+            assertNull(failure);
+        }
+    }
+
+    @Test
+    public void testTickWithNanoTimeDerivedValueWhichWrapsBothRemoteFirst() throws EngineStateException {
+        doTickWithNanoTimeDerivedValueWhichWrapsBothRemoteFirstTestImpl(false);
+    }
+
+    @Test
+    public void testTickWithNanoTimeDerivedValueWhichWrapsBothRemoteFirstWithLocalTimeout() throws EngineStateException {
+        doTickWithNanoTimeDerivedValueWhichWrapsBothRemoteFirstTestImpl(true);
+    }
+
+    private void doTickWithNanoTimeDerivedValueWhichWrapsBothRemoteFirstTestImpl(boolean allowLocalTimeout) throws EngineStateException {
+        int localTimeout = 2000;
+        int remoteTimeoutHalf = 2500;
+        assertTrue(localTimeout < remoteTimeoutHalf);
+
+        long offset = 500;
+        assertTrue(offset < localTimeout);
+
+        ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
+        engine.errorHandler(result -> failure = result);
+        ProtonTestPeer peer = new ProtonTestPeer(engine);
+        engine.outputConsumer(peer);
+
+        Connection connection = engine.start();
+        assertNotNull(connection);
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        // Handle the peer transmitting [half] their timeout. We half it on receipt to avoid spurious timeouts
+        // if they not have transmitted half their actual timeout, as the AMQP spec only says they SHOULD do that.
+        peer.expectOpen().respond().withIdleTimeOut(remoteTimeoutHalf * 2);
+
+        connection.setIdleTimeout(localTimeout);
+        connection.open();
+
+        long deadline = engine.tick(Long.MAX_VALUE - offset);
+        assertEquals("Unexpected deadline returned",  Long.MIN_VALUE + (localTimeout - offset) -1, deadline);
+
+        deadline = engine.tick(Long.MAX_VALUE - (offset - 100));    // Wait for less time than the deadline with no data - get the same value
+        assertEquals("When the deadline hasn't been reached tick() should return the previous deadline",  Long.MIN_VALUE + (localTimeout - offset) -1, deadline);
+        assertEquals("tick() shouldn't have written data", 0, peer.getEmptyFrameCount());
+
+        // Receive Empty frame to satisfy local deadline
+        peer.remoteEmptyFrame().now();
+
+        deadline = engine.tick(Long.MIN_VALUE + (localTimeout - offset) -1); // Wait for the deadline - next deadline should be orig + remoteTimeoutHalf;
+        assertEquals("When the deadline has been reached expected a new remote deadline to be returned", Long.MIN_VALUE + (remoteTimeoutHalf - offset) -1, deadline);
+        assertEquals("When the deadline hasn't been reached tick() shouldn't write data", 0, peer.getEmptyFrameCount());
+
+        peer.expectEmptyFrame();
+
+        deadline = engine.tick(Long.MIN_VALUE + (remoteTimeoutHalf - offset) -1); // Wait for the deadline - next deadline should be orig + 2* localTimeout;
+        assertEquals("When the deadline has been reached expected a new local deadline to be returned", Long.MIN_VALUE + (localTimeout - offset) -1 + localTimeout, deadline);
+        assertEquals("tick() should have written data", 1, peer.getEmptyFrameCount());
+
+        peer.waitForScriptToComplete();
+
+        if (allowLocalTimeout) {
+            peer.expectClose().respond();
+
+            assertEquals("Connection should be active", ConnectionState.ACTIVE, connection.getLocalState());
+            engine.tick(Long.MIN_VALUE + (localTimeout - offset) -1 + localTimeout); // Wait for the deadline, but don't receive traffic, allow local timeout to expire
+            assertEquals("Calling tick() after the deadline should result in the connection being closed", ConnectionState.CLOSED, connection.getLocalState());
+            assertEquals("tick() should have written data but not an empty frame", 1, peer.getEmptyFrameCount());
+
+            peer.waitForScriptToComplete();
+            assertNotNull(failure);
+        } else {
+            // Receive Empty frame to satisfy local deadline
+            peer.remoteEmptyFrame().now();
+
+            deadline = engine.tick(Long.MIN_VALUE + (localTimeout - offset) -1 + localTimeout); // Wait for the deadline - next deadline should be orig + 2*remoteTimeoutHalf;
+            assertEquals("Receiving data should have reset the deadline (to the remote one)",  Long.MIN_VALUE + (2* remoteTimeoutHalf) - offset -1, deadline);
+            assertEquals("tick() shouldn't have written data", 1, peer.getEmptyFrameCount());
+            assertEquals("Connection should be active", ConnectionState.ACTIVE, connection.getLocalState());
+
+            peer.waitForScriptToComplete();
+            assertNull(failure);
+        }
+    }
+
+    @Test
+    public void testTickWithNanoTimeDerivedValueWhichWrapsBothLocalFirst() throws EngineStateException {
+        doTickWithNanoTimeDerivedValueWhichWrapsBothLocalFirstTestImpl(false);
+    }
+
+    @Test
+    public void testTickWithNanoTimeDerivedValueWhichWrapsBothLocalFirstWithLocalTimeout() throws EngineStateException {
+        doTickWithNanoTimeDerivedValueWhichWrapsBothLocalFirstTestImpl(true);
+    }
+
+    private void doTickWithNanoTimeDerivedValueWhichWrapsBothLocalFirstTestImpl(boolean allowLocalTimeout) throws EngineStateException {
+        int localTimeout = 5000;
+        int remoteTimeoutHalf = 2000;
+        assertTrue(remoteTimeoutHalf < localTimeout);
+
+        long offset = 500;
+        assertTrue(offset < remoteTimeoutHalf);
+
+        ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
+        engine.errorHandler(result -> failure = result);
+        ProtonTestPeer peer = new ProtonTestPeer(engine);
+        engine.outputConsumer(peer);
+
+        Connection connection = engine.start();
+        assertNotNull(connection);
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        // Handle the peer transmitting [half] their timeout. We half it on receipt to avoid spurious timeouts
+        // if they not have transmitted half their actual timeout, as the AMQP spec only says they SHOULD do that.
+        peer.expectOpen().respond().withIdleTimeOut(remoteTimeoutHalf * 2);
+
+        connection.setIdleTimeout(localTimeout);
+        connection.open();
+
+        long deadline = engine.tick(Long.MAX_VALUE - offset);
+        assertEquals("Unexpected deadline returned",  Long.MIN_VALUE + (remoteTimeoutHalf - offset) -1, deadline);
+
+        deadline = engine.tick(Long.MAX_VALUE - (offset - 100));    // Wait for less time than the deadline with no data - get the same value
+        assertEquals("When the deadline hasn't been reached tick() should return the previous deadline",  Long.MIN_VALUE + (remoteTimeoutHalf - offset) -1, deadline);
+        assertEquals("When the deadline hasn't been reached tick() shouldn't write data", 0, peer.getEmptyFrameCount());
+
+        peer.expectEmptyFrame();
+
+        deadline = engine.tick(Long.MIN_VALUE + (remoteTimeoutHalf - offset) -1); // Wait for the deadline - next deadline should be previous + remoteTimeoutHalf;
+        assertEquals("When the deadline has been reached expected a new remote deadline to be returned", Long.MIN_VALUE + (remoteTimeoutHalf - offset) -1 + remoteTimeoutHalf, deadline);
+        assertEquals("tick() should have written data", 1, peer.getEmptyFrameCount());
+
+        peer.expectEmptyFrame();
+
+        deadline = engine.tick(Long.MIN_VALUE + (remoteTimeoutHalf - offset) -1 + remoteTimeoutHalf); // Wait for the deadline - next deadline should be orig + localTimeout;
+        assertEquals("When the deadline has been reached expected a new local deadline to be returned", Long.MIN_VALUE + (localTimeout - offset) -1, deadline);
+        assertEquals("tick() should have written data", 2, peer.getEmptyFrameCount());
+
+        peer.waitForScriptToComplete();
+
+        if (allowLocalTimeout) {
+            peer.expectClose().respond();
+
+            assertEquals("Connection should be active", ConnectionState.ACTIVE, connection.getLocalState());
+            engine.tick(Long.MIN_VALUE + (localTimeout - offset) -1); // Wait for the deadline, but don't receive traffic, allow local timeout to expire
+            assertEquals("Calling tick() after the deadline should result in the connection being closed", ConnectionState.CLOSED, connection.getLocalState());
+            assertEquals("tick() should have written data but not an empty frame", 2, peer.getEmptyFrameCount());
+
+            peer.waitForScriptToComplete();
+            assertNotNull(failure);
+        } else {
+            // Receive Empty frame to satisfy local deadline
+            peer.remoteEmptyFrame().now();
+
+            deadline = engine.tick(Long.MIN_VALUE + (localTimeout - offset) -1); // Wait for the deadline - next deadline should be orig + 3*remoteTimeoutHalf;
+            assertEquals("Receiving data should have reset the deadline (to the remote one)",  Long.MIN_VALUE + (3* remoteTimeoutHalf) - offset -1, deadline);
+            assertEquals("tick() shouldn't have written data", 2, peer.getEmptyFrameCount());
+            assertEquals("Connection should be active", ConnectionState.ACTIVE, connection.getLocalState());
+
+            peer.waitForScriptToComplete();
+            assertNull(failure);
+        }
     }
 }
