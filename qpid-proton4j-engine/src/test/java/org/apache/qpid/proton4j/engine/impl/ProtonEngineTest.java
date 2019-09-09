@@ -81,27 +81,6 @@ public class ProtonEngineTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-
-    private void doTestNoArgTickFailsWhenConnectionNotOpened(boolean setLocalTimeout) throws EngineStateException {
-        ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
-        engine.errorHandler(result -> failure = result);
-        ProtonTestPeer peer = new ProtonTestPeer(engine);
-        engine.outputConsumer(peer);
-
-        Connection connection = engine.start();
-        assertNotNull(connection);
-
-        if (setLocalTimeout) {
-            connection.setIdleTimeout(1000);
-        }
-
-        try {
-            engine.tick();
-            fail("Should not be able to tick an unopened connection");
-        } catch (IllegalStateException ise) {
-        }
-    }
-
     @Test
     public void testNoArgTickFailsWhenConnectionNotOpenedNoLocalIdleSet() throws EngineStateException {
         doTestTickFailsBasedOnState(false, false, false, false, false);
