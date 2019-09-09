@@ -25,6 +25,8 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import java.util.concurrent.Executors;
+
 import org.apache.qpid.proton4j.amqp.driver.ProtonTestPeer;
 import org.apache.qpid.proton4j.engine.Connection;
 import org.apache.qpid.proton4j.engine.ConnectionState;
@@ -158,6 +160,64 @@ public class ProtonEngineTest extends ProtonEngineTestSupport {
             } else {
                 engine.tick();
             }
+            fail("Should not be able to tick an unopened connection");
+        } catch (IllegalStateException ise) {
+        }
+    }
+
+    @Test
+    public void testAutoTickFailsWhenConnectionNotOpenedNoLocalIdleSet() throws EngineStateException {
+        doTestAutoTickFailsBasedOnState(false, false, false, false);
+    }
+
+    @Test
+    public void testAutoTickFailsWhenConnectionNotOpenedLocalIdleSet() throws EngineStateException {
+        doTestAutoTickFailsBasedOnState(true, false, false, false);
+    }
+
+    @Test
+    public void testAutoTickFailsWhenEngineShutdownNoLocalIdleSet() throws EngineStateException {
+        doTestAutoTickFailsBasedOnState(false, true, true, true);
+    }
+
+    @Test
+    public void testAutoTickFailsWhenEngineShutdownLocalIdleSet() throws EngineStateException {
+        doTestAutoTickFailsBasedOnState(true, true, true, true);
+    }
+
+    private void doTestAutoTickFailsBasedOnState(boolean setLocalTimeout, boolean open, boolean close, boolean shutdown) throws EngineStateException {
+        ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
+        engine.errorHandler(result -> failure = result);
+        ProtonTestPeer peer = new ProtonTestPeer(engine);
+        engine.outputConsumer(peer);
+
+        Connection connection = engine.start();
+        assertNotNull(connection);
+
+        if (setLocalTimeout) {
+            connection.setIdleTimeout(1000);
+        }
+
+        if (open) {
+            peer.expectAMQPHeader().respondWithAMQPHeader();
+            peer.expectOpen().respond();
+            connection.open();
+        }
+
+        if (close) {
+            peer.expectClose().respond();
+            connection.close();
+        }
+
+        peer.waitForScriptToComplete();
+        assertNull(failure);
+
+        if (shutdown) {
+            engine.shutdown();
+        }
+
+        try {
+            engine.autoTick(Executors.newScheduledThreadPool(1));
             fail("Should not be able to tick an unopened connection");
         } catch (IllegalStateException ise) {
         }
