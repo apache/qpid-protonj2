@@ -116,6 +116,8 @@ public class ProtonEngine implements Engine {
         state = EngineState.SHUTDOWN;
         writable = false;
 
+        // TODO - We aren't currently checking connection state, do we want to close if open ?
+
         // TODO - Once shutdown future calls that trigger output should not write anything
         //        or if they do the write should probably just no-op as we know we are already
         //        shut down and can't emit any frames.  Does this entail closing connection if
@@ -131,12 +133,16 @@ public class ProtonEngine implements Engine {
     }
 
     @Override
-    public long tick() throws EngineStateException {
+    public long tick() {
         return tick(TimeUnit.NANOSECONDS.toMillis(System.nanoTime()));
     }
 
     @Override
-    public long tick(long currentTime) throws EngineStateException {
+    public long tick(long currentTime) {
+        if (isShutdown() || connection.getState() != ConnectionState.ACTIVE) {
+            throw new IllegalStateException("Cannot tick on a Connection that is not opened or an engine that has been shut down.");
+        }
+
         long deadline = 0;
         long localIdleTimeout = connection.getIdleTimeout();
         long remoteIdleTimeout = connection.getRemoteIdleTimeout();
@@ -151,10 +157,7 @@ public class ProtonEngine implements Engine {
                     ErrorCondition condition = new ErrorCondition(
                         Symbol.getSymbol("amqp:resource-limit-exceeded"), "local-idle-timeout expired");
                     connection.setCondition(condition);
-                    connection.open();  // Ensure open sent and state ready for close call.
                     connection.close();
-                    // TODO - What about SASL layer ?
-                    // saslContext().fail(); ??
                     engineFailed(new EngineIdleTimeoutException("Remote idle timeout detected"));
                     return 0;
                 }
@@ -176,6 +179,7 @@ public class ProtonEngine implements Engine {
                 // There was no local deadline, so use whatever the remote is.
                 deadline = remoteIdleDeadline;
             } else {
+                // Use the 'earlier' of the remote and local deadline values
                 if (remoteIdleDeadline - localIdleDeadline <= 0) {
                     deadline = remoteIdleDeadline;
                 } else {

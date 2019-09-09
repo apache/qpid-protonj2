@@ -123,8 +123,9 @@ public interface Engine extends Consumer<ProtonBuffer> {
 
     /**
      * Prompt the engine to perform idle-timeout/heartbeat handling, and return an absolute
-     * deadline in milliseconds that tick must again be called by/at, based on the provided
-     * current time in milliseconds, to ensure the periodic work is carried out as necessary.
+     * deadline in milliseconds that tick must again be called by/at, based on the system provided
+     * current time in milliseconds, to ensure the periodic work is carried out as necessary.  It
+     * is an error to call this method if the connection has not been opened.
      *
      * A returned deadline of 0 indicates there is no periodic work necessitating tick be called, e.g.
      * because neither peer has defined an idle-timeout value.
@@ -133,15 +134,15 @@ public interface Engine extends Consumer<ProtonBuffer> {
      *
      * @return the absolute deadline in milliseconds to next call tick by/at, or 0 if there is none.
      *
-     * @throws EngineStateException if the Engine state precludes accepting new input.
-     * @throws EngineClosedException if the Engine has been shutdown or has failed.
+     * @throws IllegalStateException if the connection associated with the engine is not currently Open
      */
-    long tick() throws EngineStateException;
+    long tick();
 
     /**
      * Prompt the engine to perform idle-timeout/heartbeat handling, and return an absolute
      * deadline in milliseconds that tick must again be called by/at, based on the provided
      * current time in milliseconds, to ensure the periodic work is carried out as necessary.
+     * It is an error to call this method if the connection has not been opened.
      *
      * A returned deadline of 0 indicates there is no periodic work necessitating tick be called, e.g.
      * because neither peer has defined an idle-timeout value.
@@ -157,10 +158,9 @@ public interface Engine extends Consumer<ProtonBuffer> {
      *
      * @return the absolute deadline in milliseconds to next call tick by/at, or 0 if there is none.
      *
-     * @throws EngineStateException if the Engine state precludes accepting new input.
-     * @throws EngineClosedException if the Engine has been shutdown or has failed.
+     * @throws IllegalStateException if the connection associated with the engine is not currently Open
      */
-    long tick(long currentTime) throws EngineStateException;
+    long tick(long currentTime);
 
     /**
      * Allows the engine to manage idle timeout processing by providing it the single threaded executor

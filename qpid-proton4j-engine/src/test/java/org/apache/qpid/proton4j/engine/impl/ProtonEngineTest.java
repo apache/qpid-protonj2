@@ -23,6 +23,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import org.apache.qpid.proton4j.amqp.driver.ProtonTestPeer;
 import org.apache.qpid.proton4j.engine.Connection;
@@ -78,6 +79,109 @@ public class ProtonEngineTest extends ProtonEngineTestSupport {
         assertEquals(ConnectionState.ACTIVE, connection.getRemoteState());
 
         assertNull(failure);
+    }
+
+
+    private void doTestNoArgTickFailsWhenConnectionNotOpened(boolean setLocalTimeout) throws EngineStateException {
+        ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
+        engine.errorHandler(result -> failure = result);
+        ProtonTestPeer peer = new ProtonTestPeer(engine);
+        engine.outputConsumer(peer);
+
+        Connection connection = engine.start();
+        assertNotNull(connection);
+
+        if (setLocalTimeout) {
+            connection.setIdleTimeout(1000);
+        }
+
+        try {
+            engine.tick();
+            fail("Should not be able to tick an unopened connection");
+        } catch (IllegalStateException ise) {
+        }
+    }
+
+    @Test
+    public void testNoArgTickFailsWhenConnectionNotOpenedNoLocalIdleSet() throws EngineStateException {
+        doTestTickFailsBasedOnState(false, false, false, false, false);
+    }
+
+    @Test
+    public void testNoArgTickFailsWhenConnectionNotOpenedLocalIdleSet() throws EngineStateException {
+        doTestTickFailsBasedOnState(true, false, false, false, false);
+    }
+
+    @Test
+    public void testTickFailsWhenConnectionNotOpenedNoLocalIdleSet() throws EngineStateException {
+        doTestTickFailsBasedOnState(false, true, false, false, false);
+    }
+
+    @Test
+    public void testTickFailsWhenConnectionNotOpenedLocalIdleSet() throws EngineStateException {
+        doTestTickFailsBasedOnState(true, true, false, false, false);
+    }
+
+    @Test
+    public void testNoArgTickFailsWhenEngineShutdownNoLocalIdleSet() throws EngineStateException {
+        doTestTickFailsBasedOnState(false, false, true, true, true);
+    }
+
+    @Test
+    public void testNoArgTickFailsWhenEngineShutdownLocalIdleSet() throws EngineStateException {
+        doTestTickFailsBasedOnState(true, false, true, true, true);
+    }
+
+    @Test
+    public void testTickFailsWhenEngineIsShutdownNoLocalIdleSet() throws EngineStateException {
+        doTestTickFailsBasedOnState(false, true, true, true, true);
+    }
+
+    @Test
+    public void testTickFailsWhenEngineIsShutdownLocalIdleSet() throws EngineStateException {
+        doTestTickFailsBasedOnState(true, true, true, true, true);
+    }
+
+    private void doTestTickFailsBasedOnState(boolean setLocalTimeout, boolean tickWithArgs, boolean open, boolean close, boolean shutdown) throws EngineStateException {
+        ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
+        engine.errorHandler(result -> failure = result);
+        ProtonTestPeer peer = new ProtonTestPeer(engine);
+        engine.outputConsumer(peer);
+
+        Connection connection = engine.start();
+        assertNotNull(connection);
+
+        if (setLocalTimeout) {
+            connection.setIdleTimeout(1000);
+        }
+
+        if (open) {
+            peer.expectAMQPHeader().respondWithAMQPHeader();
+            peer.expectOpen().respond();
+            connection.open();
+        }
+
+        if (close) {
+            peer.expectClose().respond();
+            connection.close();
+        }
+
+        peer.waitForScriptToComplete();
+        assertNull(failure);
+
+        if (shutdown) {
+            engine.shutdown();
+        }
+
+        try {
+            if (tickWithArgs) {
+                engine.tick(5000);
+            } else {
+                engine.tick();
+            }
+            fail("Should not be able to tick an unopened connection");
+        } catch (IllegalStateException ise) {
+        }
     }
 
     @Test
