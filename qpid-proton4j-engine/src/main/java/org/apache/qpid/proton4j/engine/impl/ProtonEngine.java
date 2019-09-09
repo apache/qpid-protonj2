@@ -16,6 +16,7 @@
  */
 package org.apache.qpid.proton4j.engine.impl;
 
+import java.util.Objects;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
@@ -193,8 +194,10 @@ public class ProtonEngine implements Engine {
 
     @Override
     public void autoTick(ScheduledExecutorService executor) throws EngineStateException {
-        if (isShutdown()) {
-            throw new EngineClosedException("The engine has already shut down.");
+        Objects.requireNonNull(executor);
+
+        if (isShutdown() || connection.getState() != ConnectionState.ACTIVE) {
+            throw new IllegalStateException("Cannot tick on a Connection that is not opened or an engine that has been shut down.");
         }
 
         this.idleTimeoutExecutor = executor;
@@ -203,8 +206,8 @@ public class ProtonEngine implements Engine {
         long now = TimeUnit.NANOSECONDS.toMillis(System.nanoTime());
         long deadline = tick(now);
         if (deadline != 0) {
-            long delay = deadline - now;
-            LOG.trace("Idle Timeout Check being initiated, initial delay: {}", delay);
+            long delay = (deadline - now) / 2;
+            LOG.trace("Auto Idle Timeout Check being initiated, initial delay: {}", delay);
             nextIdleTimeoutCheck = idleTimeoutExecutor.schedule(new IdleTimeoutCheck(), delay, TimeUnit.MILLISECONDS);
         }
     }
@@ -327,37 +330,31 @@ public class ProtonEngine implements Engine {
         public void run() {
             boolean checkScheduled = false;
 
-            final ConnectionState state = connection.getState();
-
-            if (state == ConnectionState.ACTIVE) {
+            if (connection.getState() == ConnectionState.ACTIVE && !isShutdown()) {
                 // Using nano time since it is not related to the wall clock, which may change
                 long now = TimeUnit.NANOSECONDS.toMillis(System.nanoTime());
 
                 try {
                     long deadline = tick(now);
 
-                    if (state == ConnectionState.CLOSED) {
-                        LOG.info("Idle Timeout Check closed the Engine due to the peer exceeding our requested idle-timeout.");
-                        engineFailed(new EngineIdleTimeoutException(
-                            "Engine shutdown due to the peer exceeding our requested idle-timeout"));
-                    } else {
-                        if (deadline != 0) {
-                            long delay = deadline - now;
-                            checkScheduled = true;
-                            LOG.trace("IdleTimeoutCheck rescheduling with delay: {}", delay);
-                            nextIdleTimeoutCheck = idleTimeoutExecutor.schedule(this, delay, TimeUnit.MILLISECONDS);
-                        }
+                    // Tick will close down the engine and fire error so we need to check that engine state is
+                    // active and engine is not shutdown before scheduling again.
+                    if (deadline != 0 && connection.getState() == ConnectionState.ACTIVE && !isShutdown()) {
+                        // Run the next idle check at half the deadline to try and ensure we meet our
+                        // obligation of sending our heart beat on time.
+                        long delay = (deadline - now) / 2;
+                        checkScheduled = true;
+                        LOG.trace("IdleTimeoutCheck rescheduling with delay: {}", delay);
+                        nextIdleTimeoutCheck = idleTimeoutExecutor.schedule(this, delay, TimeUnit.MILLISECONDS);
                     }
                 } catch (Throwable t) {
-                    LOG.trace("Engine Idle Check encountered error during check: ", t);
+                    LOG.trace("Auto Idle Timeout Check encountered error during check: ", t);
                 }
-            } else {
-                LOG.trace("IdleTimeoutCheck skipping check, connection is not active.");
             }
 
             if (!checkScheduled) {
                 nextIdleTimeoutCheck = null;
-                LOG.trace("Idle Timeout Check task exiting and will not be rescheduled");
+                LOG.trace("Auto Idle Timeout Check task exiting and will not be rescheduled");
             }
         }
     }
