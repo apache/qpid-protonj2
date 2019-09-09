@@ -141,7 +141,8 @@ public class NettyTestPeer extends ScriptWriter implements AutoCloseable {
                     try {
                         // Create a stable copy to avoid issue with retained buffer slices when input is pooled.
                         ProtonBuffer copy = ProtonByteBufferAllocator.DEFAULT.allocate(input.readableBytes());
-                        copy.writeBytes(new ProtonNettyByteBuffer(input));
+                        copy.writeBytes(input.nioBuffer());
+                        input.skipBytes(input.readableBytes());
 
                         // Driver processes new data and may produce output based on this.
                         processChannelInput(copy);
