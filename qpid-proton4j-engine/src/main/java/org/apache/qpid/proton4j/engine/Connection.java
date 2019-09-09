@@ -50,7 +50,7 @@ public interface Connection {
     /**
      * @return the local connection state only/
      */
-    ConnectionState getLocalState();
+    ConnectionState getState();
 
     /**
      * @return the local endpoint error, or null if there is none

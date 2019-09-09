@@ -31,30 +31,32 @@ public class ProtonLinkCreditState implements LinkCreditState {
         return credit;
     }
 
-    public ProtonLinkCreditState setCredit(int credit) {
-        this.credit = credit;
-        return this;
-    }
-
-    public void decrementCredit() {
-        credit = credit == 0 ? 0 : credit - 1;
-    }
-
     @Override
     public int getDeliveryCount() {
         return deliveryCount;
     }
 
-    public ProtonLinkCreditState setDeliveryCount(int deliveryCount) {
+    //----- Internal API for managing credit state
+
+    ProtonLinkCreditState setCredit(int credit) {
+        this.credit = credit;
+        return this;
+    }
+
+    void decrementCredit() {
+        credit = credit == 0 ? 0 : credit - 1;
+    }
+
+    ProtonLinkCreditState setDeliveryCount(int deliveryCount) {
         this.deliveryCount = deliveryCount;
         return this;
     }
 
-    public int incrementDeliveryCount() {
+    int incrementDeliveryCount() {
         return deliveryCount++;
     }
 
-    public int decrementDeliveryCount() {
+    int decrementDeliveryCount() {
         return deliveryCount--;
     }
 
@@ -67,6 +69,8 @@ public class ProtonLinkCreditState implements LinkCreditState {
     LinkCreditState snapshot() {
         return new UnmodifiableLinkCreditState(credit, deliveryCount);
     }
+
+    //----- Provide an immutable view type for protection
 
     private static class UnmodifiableLinkCreditState implements LinkCreditState {
 

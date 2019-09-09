@@ -85,7 +85,7 @@ public class ProtonSender extends ProtonLink<Sender> implements Sender {
     }
 
     @Override
-    protected ProtonSenderState getState() {
+    protected ProtonSenderState linkState() {
         return linkState;
     }
 
@@ -145,7 +145,7 @@ public class ProtonSender extends ProtonLink<Sender> implements Sender {
     //----- Handle remote events for this Sender
 
     void remoteDisposition(Disposition disposition, ProtonOutgoingDelivery delivery) {
-        getState().remoteDisposition(disposition, delivery);
+        linkState().remoteDisposition(disposition, delivery);
     }
 
     //----- Delivery output related access points

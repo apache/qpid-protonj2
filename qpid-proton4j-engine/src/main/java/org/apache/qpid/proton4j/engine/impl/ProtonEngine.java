@@ -147,7 +147,7 @@ public class ProtonEngine implements Engine {
                 lastInputSequence = inputSequence;
             } else if (localIdleDeadline - currentTime <= 0) {
                 localIdleDeadline = computeDeadline(currentTime, localIdleTimeout);
-                if (connection.getLocalState() != ConnectionState.CLOSED) {
+                if (connection.getState() != ConnectionState.CLOSED) {
                     ErrorCondition condition = new ErrorCondition(
                         Symbol.getSymbol("amqp:resource-limit-exceeded"), "local-idle-timeout expired");
                     connection.setCondition(condition);
@@ -323,7 +323,7 @@ public class ProtonEngine implements Engine {
         public void run() {
             boolean checkScheduled = false;
 
-            final ConnectionState state = connection.getLocalState();
+            final ConnectionState state = connection.getState();
 
             if (state == ConnectionState.ACTIVE) {
                 // Using nano time since it is not related to the wall clock, which may change

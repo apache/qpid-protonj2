@@ -74,7 +74,7 @@ public class ProtonEngineTest extends ProtonEngineTestSupport {
 
         peer.waitForScriptToComplete();
 
-        assertEquals(ConnectionState.ACTIVE, connection.getLocalState());
+        assertEquals(ConnectionState.ACTIVE, connection.getState());
         assertEquals(ConnectionState.ACTIVE, connection.getRemoteState());
 
         assertNull(failure);
@@ -161,12 +161,12 @@ public class ProtonEngineTest extends ProtonEngineTestSupport {
         deadline = engine.tick(2000);
         assertEquals("Reading data resets the deadline", 6000, deadline);
         assertEquals("Reading data should never result in a frame being written", 0, peer.getEmptyFrameCount());
-        assertEquals("Reading data before the deadline should keep the connection open", ConnectionState.ACTIVE, connection.getLocalState());
+        assertEquals("Reading data before the deadline should keep the connection open", ConnectionState.ACTIVE, connection.getState());
 
         peer.expectClose().respond();
 
         deadline = engine.tick(7000);
-        assertEquals("Calling tick() after the deadline should result in the connection being closed", ConnectionState.CLOSED, connection.getLocalState());
+        assertEquals("Calling tick() after the deadline should result in the connection being closed", ConnectionState.CLOSED, connection.getState());
 
         peer.waitForScriptToComplete();
         assertNotNull(failure);
@@ -276,10 +276,10 @@ public class ProtonEngineTest extends ProtonEngineTestSupport {
 
         peer.expectClose().withError(notNullValue()).respond();
 
-        assertEquals("Connection should be active", ConnectionState.ACTIVE, connection.getLocalState());
+        assertEquals("Connection should be active", ConnectionState.ACTIVE, connection.getState());
         engine.tick(expectedDeadline3); // Wait for the deadline, but don't receive traffic, allow local timeout to expire
         assertEquals("tick() should have written data", 2, peer.getPerformativeCount());
-        assertEquals("Calling tick() after the deadline should result in the connection being closed", ConnectionState.CLOSED, connection.getLocalState());
+        assertEquals("Calling tick() after the deadline should result in the connection being closed", ConnectionState.CLOSED, connection.getState());
 
         peer.waitForScriptToComplete();
         assertNotNull(failure);
@@ -425,9 +425,9 @@ public class ProtonEngineTest extends ProtonEngineTestSupport {
         if (allowLocalTimeout) {
             peer.expectClose().respond();
 
-            assertEquals("Connection should be active", ConnectionState.ACTIVE, connection.getLocalState());
+            assertEquals("Connection should be active", ConnectionState.ACTIVE, connection.getState());
             engine.tick(expectedDeadline3); // Wait for the deadline, but don't receive traffic, allow local timeout to expire
-            assertEquals("Calling tick() after the deadline should result in the connection being closed", ConnectionState.CLOSED, connection.getLocalState());
+            assertEquals("Calling tick() after the deadline should result in the connection being closed", ConnectionState.CLOSED, connection.getState());
             assertEquals("tick() should have written data but not an empty frame", 2, peer.getEmptyFrameCount());
 
             peer.waitForScriptToComplete();
@@ -438,7 +438,7 @@ public class ProtonEngineTest extends ProtonEngineTestSupport {
             deadline = engine.tick(expectedDeadline3);
             assertEquals("Receiving data should have reset the deadline (to the next remote one)",  expectedDeadline2 + (remoteTimeoutHalf), deadline);
             assertEquals("tick() shouldn't have written data", 2, peer.getEmptyFrameCount());
-            assertEquals("Connection should be active", ConnectionState.ACTIVE, connection.getLocalState());
+            assertEquals("Connection should be active", ConnectionState.ACTIVE, connection.getState());
 
             peer.waitForScriptToComplete();
             assertNull(failure);
@@ -504,9 +504,9 @@ public class ProtonEngineTest extends ProtonEngineTestSupport {
         if (allowLocalTimeout) {
             peer.expectClose().respond();
 
-            assertEquals("Connection should be active", ConnectionState.ACTIVE, connection.getLocalState());
+            assertEquals("Connection should be active", ConnectionState.ACTIVE, connection.getState());
             engine.tick(Long.MIN_VALUE + (localTimeout - offset) -1); // Wait for the deadline, but don't receive traffic, allow local timeout to expire
-            assertEquals("Calling tick() after the deadline should result in the connection being closed", ConnectionState.CLOSED, connection.getLocalState());
+            assertEquals("Calling tick() after the deadline should result in the connection being closed", ConnectionState.CLOSED, connection.getState());
             assertEquals("tick() should have written data but not an empty frame", 2, peer.getEmptyFrameCount());
 
             peer.waitForScriptToComplete();
@@ -517,7 +517,7 @@ public class ProtonEngineTest extends ProtonEngineTestSupport {
             deadline = engine.tick(Long.MIN_VALUE + (localTimeout - offset) -1); // Wait for the deadline - next deadline should be orig + 3*remoteTimeoutHalf;
             assertEquals("Receiving data should have reset the deadline (to the remote one)",  Long.MIN_VALUE + (3* remoteTimeoutHalf) - offset -1, deadline);
             assertEquals("tick() shouldn't have written data", 2, peer.getEmptyFrameCount());
-            assertEquals("Connection should be active", ConnectionState.ACTIVE, connection.getLocalState());
+            assertEquals("Connection should be active", ConnectionState.ACTIVE, connection.getState());
 
             peer.waitForScriptToComplete();
             assertNull(failure);
@@ -578,9 +578,9 @@ public class ProtonEngineTest extends ProtonEngineTestSupport {
         if (allowLocalTimeout) {
             peer.expectClose().respond();
 
-            assertEquals("Connection should be active", ConnectionState.ACTIVE, connection.getLocalState());
+            assertEquals("Connection should be active", ConnectionState.ACTIVE, connection.getState());
             engine.tick(Long.MIN_VALUE + (localTimeout - offset) -1 + localTimeout); // Wait for the deadline, but don't receive traffic, allow local timeout to expire
-            assertEquals("Calling tick() after the deadline should result in the connection being closed", ConnectionState.CLOSED, connection.getLocalState());
+            assertEquals("Calling tick() after the deadline should result in the connection being closed", ConnectionState.CLOSED, connection.getState());
             assertEquals("tick() should have written data but not an empty frame", 0, peer.getEmptyFrameCount());
 
             peer.waitForScriptToComplete();
@@ -598,7 +598,7 @@ public class ProtonEngineTest extends ProtonEngineTestSupport {
             deadline = engine.tick(Long.MIN_VALUE + remoteTimeoutHalf - offset -1); // Wait for the deadline - next deadline should be orig + 3* localTimeout;
             assertEquals("When the deadline has been reached expected a new local deadline to be returned", Long.MIN_VALUE + (3* localTimeout) - offset -1, deadline);
             assertEquals("tick() should have written an empty frame", 1, peer.getEmptyFrameCount());
-            assertEquals("Connection should be active", ConnectionState.ACTIVE, connection.getLocalState());
+            assertEquals("Connection should be active", ConnectionState.ACTIVE, connection.getState());
 
             peer.waitForScriptToComplete();
             assertNull(failure);
@@ -664,9 +664,9 @@ public class ProtonEngineTest extends ProtonEngineTestSupport {
         if (allowLocalTimeout) {
             peer.expectClose().respond();
 
-            assertEquals("Connection should be active", ConnectionState.ACTIVE, connection.getLocalState());
+            assertEquals("Connection should be active", ConnectionState.ACTIVE, connection.getState());
             engine.tick(Long.MIN_VALUE + (localTimeout - offset) -1 + localTimeout); // Wait for the deadline, but don't receive traffic, allow local timeout to expire
-            assertEquals("Calling tick() after the deadline should result in the connection being closed", ConnectionState.CLOSED, connection.getLocalState());
+            assertEquals("Calling tick() after the deadline should result in the connection being closed", ConnectionState.CLOSED, connection.getState());
             assertEquals("tick() should have written data but not an empty frame", 1, peer.getEmptyFrameCount());
 
             peer.waitForScriptToComplete();
@@ -678,7 +678,7 @@ public class ProtonEngineTest extends ProtonEngineTestSupport {
             deadline = engine.tick(Long.MIN_VALUE + (localTimeout - offset) -1 + localTimeout); // Wait for the deadline - next deadline should be orig + 2*remoteTimeoutHalf;
             assertEquals("Receiving data should have reset the deadline (to the remote one)",  Long.MIN_VALUE + (2* remoteTimeoutHalf) - offset -1, deadline);
             assertEquals("tick() shouldn't have written data", 1, peer.getEmptyFrameCount());
-            assertEquals("Connection should be active", ConnectionState.ACTIVE, connection.getLocalState());
+            assertEquals("Connection should be active", ConnectionState.ACTIVE, connection.getState());
 
             peer.waitForScriptToComplete();
             assertNull(failure);
@@ -743,9 +743,9 @@ public class ProtonEngineTest extends ProtonEngineTestSupport {
         if (allowLocalTimeout) {
             peer.expectClose().respond();
 
-            assertEquals("Connection should be active", ConnectionState.ACTIVE, connection.getLocalState());
+            assertEquals("Connection should be active", ConnectionState.ACTIVE, connection.getState());
             engine.tick(Long.MIN_VALUE + (localTimeout - offset) -1); // Wait for the deadline, but don't receive traffic, allow local timeout to expire
-            assertEquals("Calling tick() after the deadline should result in the connection being closed", ConnectionState.CLOSED, connection.getLocalState());
+            assertEquals("Calling tick() after the deadline should result in the connection being closed", ConnectionState.CLOSED, connection.getState());
             assertEquals("tick() should have written data but not an empty frame", 2, peer.getEmptyFrameCount());
 
             peer.waitForScriptToComplete();
@@ -757,7 +757,7 @@ public class ProtonEngineTest extends ProtonEngineTestSupport {
             deadline = engine.tick(Long.MIN_VALUE + (localTimeout - offset) -1); // Wait for the deadline - next deadline should be orig + 3*remoteTimeoutHalf;
             assertEquals("Receiving data should have reset the deadline (to the remote one)",  Long.MIN_VALUE + (3* remoteTimeoutHalf) - offset -1, deadline);
             assertEquals("tick() shouldn't have written data", 2, peer.getEmptyFrameCount());
-            assertEquals("Connection should be active", ConnectionState.ACTIVE, connection.getLocalState());
+            assertEquals("Connection should be active", ConnectionState.ACTIVE, connection.getState());
 
             peer.waitForScriptToComplete();
             assertNull(failure);

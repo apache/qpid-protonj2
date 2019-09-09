@@ -49,7 +49,7 @@ public interface Session {
     /**
      * @return the local session state
      */
-    SessionState getLocalState();
+    SessionState getState();
 
     /**
      * @return the local endpoint error, or null if there is none

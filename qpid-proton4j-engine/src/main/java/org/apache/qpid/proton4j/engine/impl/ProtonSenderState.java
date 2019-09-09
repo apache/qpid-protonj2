@@ -109,7 +109,7 @@ public class ProtonSenderState implements ProtonLinkState<ProtonOutgoingDelivery
         draining = flow.getDrain();
         drained = getCredit() > 0;
 
-        if (sender.getLocalState() == LinkState.ACTIVE) {
+        if (sender.getState() == LinkState.ACTIVE) {
             // TODO - Signal for sendable, draining etc
 
             if (getCredit() > 0 && !sendable) {

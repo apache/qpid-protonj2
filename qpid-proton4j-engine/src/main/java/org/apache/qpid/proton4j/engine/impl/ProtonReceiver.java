@@ -77,7 +77,7 @@ public class ProtonReceiver extends ProtonLink<Receiver> implements Receiver {
     }
 
     @Override
-    protected ProtonReceiverState getState() {
+    protected ProtonReceiverState linkState() {
         return linkState;
     }
 
@@ -138,7 +138,7 @@ public class ProtonReceiver extends ProtonLink<Receiver> implements Receiver {
     //----- Internal support methods
 
     void remoteDisposition(Disposition disposition, ProtonIncomingDelivery delivery) {
-        getState().remoteDisposition(disposition, delivery);
+        linkState().remoteDisposition(disposition, delivery);
     }
 
     //----- Delivery related access points

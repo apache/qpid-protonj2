@@ -104,7 +104,7 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
 
     protected abstract T self();
 
-    protected abstract ProtonLinkState<?> getState();
+    protected abstract ProtonLinkState<?> linkState();
 
     long getHandle() {
         return localAttach.getHandle();
@@ -116,7 +116,7 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
     }
 
     @Override
-    public LinkState getLocalState() {
+    public LinkState getState() {
         return localState;
     }
 
@@ -149,7 +149,7 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
     @Override
     public ProtonLink<T> open() {
         checkSessionNotClosed();
-        if (getLocalState() == LinkState.IDLE) {
+        if (getState() == LinkState.IDLE) {
             localState = LinkState.ACTIVE;
             long localHandle = session.findFreeLocalHandle(this);
             localAttach.setHandle(localHandle);
@@ -166,7 +166,7 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
 
     @Override
     public ProtonLink<T> detach() {
-        if (getLocalState() == LinkState.ACTIVE) {
+        if (getState() == LinkState.ACTIVE) {
             localState = LinkState.DETACHED;
             transitionedToLocallyDetached();
             trySendLocalDetach(false);
@@ -181,7 +181,7 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
 
     @Override
     public ProtonLink<T> close() {
-        if (getLocalState() == LinkState.ACTIVE) {
+        if (getState() == LinkState.ACTIVE) {
             localState = LinkState.CLOSED;
             transitionedToLocallyClosed();
             trySendLocalDetach(true);
@@ -372,7 +372,7 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
 
     void localBegin(Begin begin, int channel) {
         // Fire held attach if link already marked as active.
-        if (getLocalState().ordinal() >= LinkState.ACTIVE.ordinal()) {
+        if (getState().ordinal() >= LinkState.ACTIVE.ordinal()) {
             trySendLocalAttach();
         }
 
@@ -388,7 +388,7 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
         if (!isLocallyClosed()) {
             // TODO - State as closed or detached ?
             localState = LinkState.CLOSED;
-            getState().localClose(true);
+            linkState().localClose(true);
             transitionedToLocallyClosed();
         }
     }
@@ -397,7 +397,7 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
         if (!isLocallyClosed()) {
             // TODO - State as closed or detached ?
             localState = LinkState.CLOSED;
-            getState().localClose(true);
+            linkState().localClose(true);
             transitionedToLocallyClosed();
         }
     }
@@ -407,7 +407,7 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
     void remoteAttach(Attach attach) {
         remoteAttach = attach;
         remoteState = LinkState.ACTIVE;
-        getState().remoteAttach(attach);
+        linkState().remoteAttach(attach);
 
         if (remoteOpenHandler != null) {
             remoteOpenHandler.handle(self());
@@ -451,18 +451,18 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
     }
 
     ProtonIncomingDelivery remoteTransfer(Transfer transfer, ProtonBuffer payload) {
-        return getState().remoteTransfer(transfer, payload);
+        return linkState().remoteTransfer(transfer, payload);
     }
 
     ProtonLink<?> remoteFlow(Flow flow) {
-        getState().remoteFlow(flow);
+        linkState().remoteFlow(flow);
         return this;
     }
 
     //----- Internal methods
 
     boolean isLocallyOpened() {
-        return getLocalState() == LinkState.ACTIVE;
+        return getState() == LinkState.ACTIVE;
     }
 
     boolean isRemotelyOpened() {
@@ -470,7 +470,7 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
     }
 
     boolean isLocallyClosed() {
-        return getLocalState() == LinkState.CLOSED;
+        return getState() == LinkState.CLOSED;
     }
 
     boolean isRemotelyClosed() {
@@ -478,7 +478,7 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
     }
 
     boolean isLocallyDetached() {
-        return getLocalState() == LinkState.DETACHED;
+        return getState() == LinkState.DETACHED;
     }
 
     boolean isRemotelyDetached() {
@@ -491,7 +491,7 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
 
             // TODO - Still need to check for transport being writable at this time.
             session.getEngine().pipeline().fireWrite(
-                getState().configureAttach(localAttach), session.getLocalChannel(), null, null);
+                linkState().configureAttach(localAttach), session.getLocalChannel(), null, null);
         }
     }
 
@@ -523,7 +523,7 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
     }
 
     private void checkSessionNotClosed() {
-        if (session.getLocalState() == SessionState.CLOSED || session.getRemoteState() == SessionState.CLOSED) {
+        if (session.getState() == SessionState.CLOSED || session.getRemoteState() == SessionState.CLOSED) {
             throw new IllegalStateException("Cannot open link for session that has already been closed.");
         }
     }

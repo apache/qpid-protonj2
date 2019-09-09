@@ -62,7 +62,7 @@ public interface Link<T extends Link<T>> {
     /**
      * @return the local link state
      */
-    LinkState getLocalState();
+    LinkState getState();
 
     /**
      * @return the local endpoint error, or null if there is none

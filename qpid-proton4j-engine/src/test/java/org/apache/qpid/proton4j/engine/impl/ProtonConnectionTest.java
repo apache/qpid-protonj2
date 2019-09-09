@@ -134,14 +134,14 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
 
         connection.open();
 
-        assertEquals(ConnectionState.ACTIVE, connection.getLocalState());
+        assertEquals(ConnectionState.ACTIVE, connection.getState());
         assertEquals(ConnectionState.ACTIVE, connection.getRemoteState());
 
         connection.close();
 
         peer.waitForScriptToComplete();
 
-        assertEquals(ConnectionState.CLOSED, connection.getLocalState());
+        assertEquals(ConnectionState.CLOSED, connection.getState());
         assertEquals(ConnectionState.CLOSED, connection.getRemoteState());
 
         assertNull(failure);

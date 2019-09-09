@@ -120,7 +120,7 @@ public class ProtonConnection implements Connection, AMQPHeader.HeaderHandler<Pr
     }
 
     @Override
-    public ConnectionState getLocalState() {
+    public ConnectionState getState() {
         return localState;
     }
 
@@ -137,7 +137,7 @@ public class ProtonConnection implements Connection, AMQPHeader.HeaderHandler<Pr
 
     @Override
     public ProtonConnection open() {
-        if (getLocalState() == ConnectionState.IDLE) {
+        if (getState() == ConnectionState.IDLE) {
             localState = ConnectionState.ACTIVE;
             processStateChangeAndRespond();
         }
@@ -147,7 +147,7 @@ public class ProtonConnection implements Connection, AMQPHeader.HeaderHandler<Pr
 
     @Override
     public ProtonConnection close() {
-        if (getLocalState() == ConnectionState.ACTIVE) {
+        if (getState() == ConnectionState.ACTIVE) {
             localState = ConnectionState.CLOSED;
             processStateChangeAndRespond();
         }
@@ -431,7 +431,7 @@ public class ProtonConnection implements Connection, AMQPHeader.HeaderHandler<Pr
 
             // If the session was initiated remotely then we signal the creation to the any registered
             // remote session event handler
-            if (session.getLocalState() == SessionState.IDLE && remoteSessionOpenEventHandler != null) {
+            if (session.getState() == SessionState.IDLE && remoteSessionOpenEventHandler != null) {
                 remoteSessionOpenEventHandler.handle(session);
             }
         }
@@ -555,7 +555,7 @@ public class ProtonConnection implements Connection, AMQPHeader.HeaderHandler<Pr
         // When the engine state changes or we have read an incoming AMQP header etc we need to check
         // if we have pending work to send and do so
         if (headerSent) {
-            final ConnectionState state = getLocalState();
+            final ConnectionState state = getState();
 
             // Once an incoming header arrives we can emit our open if locally opened and also send close if
             // that is what our state is already.
@@ -609,7 +609,7 @@ public class ProtonConnection implements Connection, AMQPHeader.HeaderHandler<Pr
     }
 
     boolean isLocallyOpened() {
-        return getLocalState() == ConnectionState.ACTIVE;
+        return getState() == ConnectionState.ACTIVE;
     }
 
     boolean isRemotelyOpened() {
@@ -617,7 +617,7 @@ public class ProtonConnection implements Connection, AMQPHeader.HeaderHandler<Pr
     }
 
     boolean isLocallyClosed() {
-        return getLocalState() == ConnectionState.CLOSED;
+        return getState() == ConnectionState.CLOSED;
     }
 
     boolean isRemotelyClosed() {

@@ -123,7 +123,7 @@ public class ProtonSession implements Session {
     }
 
     @Override
-    public SessionState getLocalState() {
+    public SessionState getState() {
         return localState;
     }
 
@@ -155,13 +155,13 @@ public class ProtonSession implements Session {
     @Override
     public ProtonSession open() {
         checkConnectionClosed();
-        if (getLocalState() == SessionState.IDLE) {
+        if (getState() == SessionState.IDLE) {
             localState = SessionState.ACTIVE;
             incomingWindow.configureOutbound(localBegin);
             outgoingWindow.configureOutbound(localBegin);
             // The connection could be open but not have written the Open due to SASL or other pre-processing
             // which means we must wait until signaled that the connection actually is ready for the begin.
-            if (connection.getLocalState() == ConnectionState.ACTIVE && connection.wasLocalOpenSent()) {
+            if (connection.getState() == ConnectionState.ACTIVE && connection.wasLocalOpenSent()) {
                 fireSessionBegin();
             }
         }
@@ -171,9 +171,9 @@ public class ProtonSession implements Session {
 
     @Override
     public ProtonSession close() {
-        if (getLocalState() == SessionState.ACTIVE) {
+        if (getState() == SessionState.ACTIVE) {
             localState = SessionState.CLOSED;
-            if (connection.getLocalState() == ConnectionState.ACTIVE) {
+            if (connection.getState() == ConnectionState.ACTIVE) {
                 fireSessionEnd();
             }
         }
@@ -393,7 +393,7 @@ public class ProtonSession implements Session {
         incomingWindow.handleBegin(begin);
         outgoingWindow.handleBegin(begin);
 
-        if (getLocalState() == SessionState.ACTIVE && remoteOpenHandler != null) {
+        if (getState() == SessionState.ACTIVE && remoteOpenHandler != null) {
             remoteOpenHandler.handle(this);
         }
     }
@@ -495,7 +495,7 @@ public class ProtonSession implements Session {
     }
 
     private void checkConnectionClosed() {
-        if (connection.getLocalState() == ConnectionState.CLOSED || connection.getRemoteState() == ConnectionState.CLOSED) {
+        if (connection.getState() == ConnectionState.CLOSED || connection.getRemoteState() == ConnectionState.CLOSED) {
              throw new IllegalStateException("Cannot open a Session from a Connection that is already closed");
         }
     }
@@ -549,7 +549,7 @@ public class ProtonSession implements Session {
     }
 
     boolean isLocallyOpened() {
-        return getLocalState() == SessionState.ACTIVE;
+        return getState() == SessionState.ACTIVE;
     }
 
     boolean isRemotelyOpened() {
@@ -557,7 +557,7 @@ public class ProtonSession implements Session {
     }
 
     boolean isLocallyClosed() {
-        return getLocalState() == SessionState.CLOSED;
+        return getState() == SessionState.CLOSED;
     }
 
     boolean isRemotelyClosed() {
@@ -622,9 +622,9 @@ public class ProtonSession implements Session {
         flow.setOutgoingWindow(getOutgoingWindow().getOutgoingWindow());
 
         if (link != null) {
-            flow.setLinkCredit(link.getState().getCredit());
+            flow.setLinkCredit(link.linkState().getCredit());
             flow.setHandle(link.getHandle());
-            flow.setDeliveryCount(link.getState().getDeliveryCount());
+            flow.setDeliveryCount(link.linkState().getDeliveryCount());
         }
 
         getEngine().pipeline().fireWrite(flow, localChannel, null, null);
