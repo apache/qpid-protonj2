@@ -76,6 +76,7 @@ public class FrameEncoder {
         output.setWriteIndex(FRAME_HEADER_SIZE);
 
         long encodedSize = 0;
+        int startIndex = output.getWriteIndex();
 
         if (performative != null) {
             try {
@@ -86,9 +87,9 @@ public class FrameEncoder {
             }
         }
 
-        int performativeSize = output.getWriteIndex();
+        int performativeSize = output.getWriteIndex() - startIndex;
 
-        if (performativeSize < encodedSize) {
+        if (performativeSize != encodedSize) {
             throw new IllegalStateException("Unable to encode performative into provided proton buffer");
         }
 
