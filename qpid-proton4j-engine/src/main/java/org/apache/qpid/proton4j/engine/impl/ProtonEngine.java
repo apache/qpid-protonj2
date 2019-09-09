@@ -23,10 +23,10 @@ import java.util.concurrent.TimeUnit;
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.transport.ErrorCondition;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.common.logging.ProtonLogger;
 import org.apache.qpid.proton4j.common.logging.ProtonLoggerFactory;
 import org.apache.qpid.proton4j.engine.ConnectionState;
-import org.apache.qpid.proton4j.engine.EmptyFrame;
 import org.apache.qpid.proton4j.engine.Engine;
 import org.apache.qpid.proton4j.engine.EngineSaslContext;
 import org.apache.qpid.proton4j.engine.EngineState;
@@ -44,6 +44,9 @@ import org.apache.qpid.proton4j.engine.exceptions.ProtonExceptionSupport;
 public class ProtonEngine implements Engine {
 
     private static final ProtonLogger LOG = ProtonLoggerFactory.getLogger(ProtonEngine.class);
+
+    private static final ProtonBuffer EMPTY_FRAME_BUFFER =
+        ProtonByteBufferAllocator.DEFAULT.wrap(new byte[] {0x00, 0x00, 0x00, 0x08, 0x02, 0x00, 0x00, 0x00});
 
     private final ProtonEnginePipeline pipeline =  new ProtonEnginePipeline(this);
     private final ProtonEngineConfiguration configuration = new ProtonEngineConfiguration(this);
@@ -165,7 +168,7 @@ public class ProtonEngine implements Engine {
                 lastOutputSequence = outputSequence;
             } else if (remoteIdleDeadline - currentTime <= 0) {
                 remoteIdleDeadline = computeDeadline(currentTime, remoteIdleTimeout / 2);
-                pipeline().fireWrite(EmptyFrame.EMPTY_FRAME_BUFFER.duplicate());
+                pipeline().fireWrite(EMPTY_FRAME_BUFFER.duplicate());
                 lastOutputSequence++;
             }
 

@@ -17,8 +17,6 @@
 package org.apache.qpid.proton4j.engine;
 
 import org.apache.qpid.proton4j.amqp.transport.Performative.PerformativeHandler;
-import org.apache.qpid.proton4j.buffer.ProtonBuffer;
-import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 
 /**
  * An empty frame which can be used to drive transport activity when idle.
@@ -26,9 +24,6 @@ import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 public final class EmptyFrame extends ProtocolFrame {
 
     public static final EmptyFrame INSTANCE = new EmptyFrame();
-
-    public static final ProtonBuffer EMPTY_FRAME_BUFFER =
-        ProtonByteBufferAllocator.DEFAULT.wrap(new byte[] {0x00, 0x00, 0x00, 0x08, 0x02, 0x00, 0x00, 0x00});
 
     public EmptyFrame() {
         super();
