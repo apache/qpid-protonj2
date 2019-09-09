@@ -67,7 +67,7 @@ public interface Link<T extends Link<T>> {
     /**
      * @return the local endpoint error, or null if there is none
      */
-    ErrorCondition getLocalCondition();
+    ErrorCondition getCondition();
 
     /**
      * Sets the local {@link ErrorCondition} to be applied to a {@link Link} close.
@@ -77,7 +77,7 @@ public interface Link<T extends Link<T>> {
      *
      * @return this Link.
      */
-    Link<T> setLocalCondition(ErrorCondition condition);
+    Link<T> setCondition(ErrorCondition condition);
 
     /**
      * Get the credit that is currently available or assigned to this link.

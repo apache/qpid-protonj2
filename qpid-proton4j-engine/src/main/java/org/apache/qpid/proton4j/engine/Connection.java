@@ -48,14 +48,14 @@ public interface Connection {
     Context getContext();
 
     /**
-     * @return the local endpoint state
+     * @return the local connection state only/
      */
     ConnectionState getLocalState();
 
     /**
      * @return the local endpoint error, or null if there is none
      */
-    ErrorCondition getLocalCondition();
+    ErrorCondition getCondition();
 
     /**
      * Sets the local {@link ErrorCondition} to be applied to a {@link Connection} close.
@@ -65,7 +65,7 @@ public interface Connection {
      *
      * @return this connection.
      */
-    Connection setLocalCondition(ErrorCondition condition);
+    Connection setCondition(ErrorCondition condition);
 
     //----- Operations on local end of this Connection
 
@@ -165,12 +165,12 @@ public interface Connection {
      *
      * @throws IllegalStateException if the Connection has already been opened.
      */
-    Connection setIdleTimeout(int idleTimeout);
+    Connection setIdleTimeout(long idleTimeout);
 
     /**
      * @return the currently configured idle timeout for this {@link Connection}
      */
-    int getIdleTimeout();
+    long getIdleTimeout();
 
     /**
      * Sets the capabilities to be offered on to the remote when this Connection is

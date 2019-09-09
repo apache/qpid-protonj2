@@ -24,6 +24,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 import org.apache.qpid.proton4j.amqp.Symbol;
+import org.apache.qpid.proton4j.amqp.UnsignedInteger;
 import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
 import org.apache.qpid.proton4j.amqp.transport.Attach;
 import org.apache.qpid.proton4j.amqp.transport.Begin;
@@ -124,12 +125,12 @@ public class ProtonConnection implements Connection, AMQPHeader.HeaderHandler<Pr
     }
 
     @Override
-    public ErrorCondition getLocalCondition() {
+    public ErrorCondition getCondition() {
         return localError;
     }
 
     @Override
-    public ProtonConnection setLocalCondition(ErrorCondition condition) {
+    public ProtonConnection setCondition(ErrorCondition condition) {
         localError = condition == null ? null : condition.copy();
         return this;
     }
@@ -203,15 +204,18 @@ public class ProtonConnection implements Connection, AMQPHeader.HeaderHandler<Pr
     }
 
     @Override
-    public ProtonConnection setIdleTimeout(int idleTimeout) {
+    public ProtonConnection setIdleTimeout(long idleTimeout) {
         checkNotOpened("Cannot set Idle Timeout on already opened Connection");
+        if (idleTimeout < 0 || idleTimeout > UnsignedInteger.MAX_VALUE.longValue()) {
+            throw new IllegalArgumentException("Idle timeout cannot exceed the maximum value of an unsigned integer");
+        }
         localOpen.setIdleTimeOut(idleTimeout);
         return this;
     }
 
     @Override
-    public int getIdleTimeout() {
-        return (int) localOpen.getIdleTimeOut();
+    public long getIdleTimeout() {
+        return localOpen.getIdleTimeOut();
     }
 
     @Override
@@ -551,9 +555,11 @@ public class ProtonConnection implements Connection, AMQPHeader.HeaderHandler<Pr
         // When the engine state changes or we have read an incoming AMQP header etc we need to check
         // if we have pending work to send and do so
         if (headerSent) {
+            final ConnectionState state = getLocalState();
+
             // Once an incoming header arrives we can emit our open if locally opened and also send close if
             // that is what our state is already.
-            if (getLocalState() != ConnectionState.IDLE) {
+            if (state != ConnectionState.IDLE) {
                 if (!localOpenSent) {
                     localOpenSent = true;
                     engine.pipeline().fireWrite(localOpen, 0, null, null);
@@ -561,9 +567,9 @@ public class ProtonConnection implements Connection, AMQPHeader.HeaderHandler<Pr
                     engine.configuration().recomputeEffectiveFrameSizeLimits();
                 }
 
-                if (getLocalState() == ConnectionState.CLOSED && !localCloseSent) {
+                if (state == ConnectionState.CLOSED && !localCloseSent) {
                     localCloseSent = true;
-                    Close localClose = new Close().setError(getLocalCondition());
+                    Close localClose = new Close().setError(getCondition());
                     // Inform all sessions that the connection has now written its local close
                     ArrayList<ProtonSession> sessions = new ArrayList<>(localSessions.values());
                     sessions.forEach(session -> {

@@ -128,12 +128,12 @@ public class ProtonSession implements Session {
     }
 
     @Override
-    public ErrorCondition getLocalCondition() {
+    public ErrorCondition getCondition() {
         return localError;
     }
 
     @Override
-    public ProtonSession setLocalCondition(ErrorCondition condition) {
+    public ProtonSession setCondition(ErrorCondition condition) {
         localError = condition == null ? null : condition.copy();
         return this;
     }
@@ -532,7 +532,7 @@ public class ProtonSession implements Session {
             ErrorCondition condition = new ErrorCondition(ConnectionError.FRAMING_ERROR, "Session handle-max exceeded");
 
             // TODO - Provide way to close the connection from this end in error.
-            connection.setLocalCondition(condition);
+            connection.setCondition(condition);
 
             return false;
         }
@@ -585,7 +585,7 @@ public class ProtonSession implements Session {
     void fireSessionEnd() {
         localEndSent = true;
         connection.freeLocalChannel(localChannel);
-        End localEnd = new End().setError(getLocalCondition());
+        End localEnd = new End().setError(getCondition());
 
         for (ProtonLink<?> link : localLinks.values()) {
             link.localEnd(localEnd, localChannel);

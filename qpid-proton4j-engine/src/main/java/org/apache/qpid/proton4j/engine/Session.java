@@ -54,7 +54,7 @@ public interface Session {
     /**
      * @return the local endpoint error, or null if there is none
      */
-    ErrorCondition getLocalCondition();
+    ErrorCondition getCondition();
 
     /**
      * Sets the local {@link ErrorCondition} to be applied to a {@link Session} close.
@@ -64,7 +64,7 @@ public interface Session {
      *
      * @return this Session
      */
-    Session setLocalCondition(ErrorCondition condition);
+    Session setCondition(ErrorCondition condition);
 
     /**
      * @return the parent {@link Connection} for this Session.

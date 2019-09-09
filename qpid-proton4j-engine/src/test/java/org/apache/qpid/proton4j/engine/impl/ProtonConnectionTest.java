@@ -405,7 +405,7 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
         assertTrue("Connection remote opened event did not fire", remotelyOpened.get());
         assertTrue("Connection remote closed event did not fire", remotelyClosed.get());
 
-        assertNull(connection.getLocalCondition());
+        assertNull(connection.getCondition());
         assertNotNull(connection.getRemoteCondition());
 
         assertEquals(remoteCondition, connection.getRemoteCondition());

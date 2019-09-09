@@ -121,12 +121,12 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
     }
 
     @Override
-    public ErrorCondition getLocalCondition() {
+    public ErrorCondition getCondition() {
         return localError;
     }
 
     @Override
-    public ProtonLink<T> setLocalCondition(ErrorCondition condition) {
+    public ProtonLink<T> setCondition(ErrorCondition condition) {
         localError = condition == null ? null : condition.copy();
 
         return this;
@@ -503,7 +503,7 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
             Detach detach = new Detach();
             detach.setHandle(localAttach.getHandle());
             detach.setClosed(closed);
-            detach.setError(getLocalCondition());
+            detach.setError(getCondition());
 
             session.freeLocalHandle(localAttach.getHandle());
             session.getEngine().pipeline().fireWrite(detach, session.getLocalChannel(), null, null);

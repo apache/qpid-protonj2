@@ -132,7 +132,7 @@ public class ProtonEngine implements Engine {
 
     @Override
     public long tick() throws EngineStateException {
-        return tick(System.nanoTime());
+        return tick(TimeUnit.NANOSECONDS.toMillis(System.nanoTime()));
     }
 
     @Override
@@ -150,7 +150,7 @@ public class ProtonEngine implements Engine {
                 if (connection.getLocalState() != ConnectionState.CLOSED) {
                     ErrorCondition condition = new ErrorCondition(
                         Symbol.getSymbol("amqp:resource-limit-exceeded"), "local-idle-timeout expired");
-                    connection.setLocalCondition(condition);
+                    connection.setCondition(condition);
                     connection.open();  // Ensure open sent and state ready for close call.
                     connection.close();
                     // TODO - What about SASL layer ?
@@ -173,6 +173,7 @@ public class ProtonEngine implements Engine {
             }
 
             if (deadline == 0) {
+                // There was no local deadline, so use whatever the remote is.
                 deadline = remoteIdleDeadline;
             } else {
                 if (remoteIdleDeadline - localIdleDeadline <= 0) {
@@ -210,14 +211,16 @@ public class ProtonEngine implements Engine {
             throw new EngineClosedException("The engine has already shut down.");
         }
 
-        inputSequence++;
-
         if (!isWritable()) {
             throw new EngineNotWritableException("Engine is currently not accepting new input");
         }
 
         try {
+            int startIndex = input.getReadIndex();
             pipeline.fireRead(input);
+            if (input.getReadIndex() != startIndex) {
+                inputSequence++;
+            }
         } catch (Throwable t) {
             // TODO define what the pipeline does here as far as throwing vs signaling etc.
             engineFailed(ProtonExceptionSupport.create(t));
@@ -320,14 +323,16 @@ public class ProtonEngine implements Engine {
         public void run() {
             boolean checkScheduled = false;
 
-            if (connection.getLocalState() == ConnectionState.ACTIVE) {
+            final ConnectionState state = connection.getLocalState();
+
+            if (state == ConnectionState.ACTIVE) {
                 // Using nano time since it is not related to the wall clock, which may change
                 long now = TimeUnit.NANOSECONDS.toMillis(System.nanoTime());
 
                 try {
                     long deadline = tick(now);
 
-                    if (connection.getLocalState() == ConnectionState.CLOSED) {
+                    if (state == ConnectionState.CLOSED) {
                         LOG.info("Idle Timeout Check closed the Engine due to the peer exceeding our requested idle-timeout.");
                         engineFailed(new EngineIdleTimeoutException(
                             "Engine shutdown due to the peer exceeding our requested idle-timeout"));
