@@ -79,6 +79,16 @@ public interface ProtonBuffer extends Comparable<ProtonBuffer> {
      */
     ProtonBuffer capacity(int newCapacity);
 
+    // TODO: Not sure this makes sense. Do we want to copy this rather frustrating aspect of netty?
+    // Capacity is capacity? Either you can write to the buffer or not.
+    // This is basically saying the 'not-max' capacity is merely the 'limit', except that it
+    // doesn't actually limit anything, just lies about things, e.g the isWritable etc methods are
+    // basically broken, to the point we had to change the proton code to make it work as expected.
+    // Other people will misuse it similarly.
+    //
+    // Future work item: Simplify this buffer implementation and define hard expectations on the
+    // behaviors of capacity, isWritable etc.
+
     /**
      * Returns the number of bytes that this buffer is allowed to grow to when write
      * operations exceed the current capacity value.
