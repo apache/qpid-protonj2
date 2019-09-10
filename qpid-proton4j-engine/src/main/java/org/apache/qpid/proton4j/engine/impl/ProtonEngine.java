@@ -134,82 +134,39 @@ public class ProtonEngine implements Engine {
     }
 
     @Override
-    public long tick() {
-        return tick(TimeUnit.NANOSECONDS.toMillis(System.nanoTime()));
-    }
-
-    @Override
     public long tick(long currentTime) {
         if (isShutdown() || connection.getState() != ConnectionState.ACTIVE) {
             throw new IllegalStateException("Cannot tick on a Connection that is not opened or an engine that has been shut down.");
         }
 
-        long deadline = 0;
-        long localIdleTimeout = connection.getIdleTimeout();
-        long remoteIdleTimeout = connection.getRemoteIdleTimeout();
-
-        if (localIdleTimeout > 0) {
-            if (localIdleDeadline == 0 || lastInputSequence != inputSequence) {
-                localIdleDeadline = computeDeadline(currentTime, localIdleTimeout);
-                lastInputSequence = inputSequence;
-            } else if (localIdleDeadline - currentTime <= 0) {
-                localIdleDeadline = computeDeadline(currentTime, localIdleTimeout);
-                if (connection.getState() != ConnectionState.CLOSED) {
-                    ErrorCondition condition = new ErrorCondition(
-                        Symbol.getSymbol("amqp:resource-limit-exceeded"), "local-idle-timeout expired");
-                    connection.setCondition(condition);
-                    connection.close();
-                    engineFailed(new EngineIdleTimeoutException("Remote idle timeout detected"));
-                    return 0;
-                }
-            }
-            deadline = localIdleDeadline;
+        if (idleTimeoutExecutor != null) {
+            throw new IllegalStateException("Automatic ticking previously initiated.");
         }
 
-        if (remoteIdleTimeout != 0 && !connection.isLocallyClosed()) {
-            if (remoteIdleDeadline == 0 || lastOutputSequence != outputSequence) {
-                remoteIdleDeadline = computeDeadline(currentTime, remoteIdleTimeout / 2);
-                lastOutputSequence = outputSequence;
-            } else if (remoteIdleDeadline - currentTime <= 0) {
-                remoteIdleDeadline = computeDeadline(currentTime, remoteIdleTimeout / 2);
-                pipeline().fireWrite(EMPTY_FRAME_BUFFER.duplicate());
-                lastOutputSequence++;
-            }
-
-            if (deadline == 0) {
-                // There was no local deadline, so use whatever the remote is.
-                deadline = remoteIdleDeadline;
-            } else {
-                // Use the 'earlier' of the remote and local deadline values
-                if (remoteIdleDeadline - localIdleDeadline <= 0) {
-                    deadline = remoteIdleDeadline;
-                } else {
-                    deadline = localIdleDeadline;
-                }
-            }
-        }
-
-        return deadline;
+        return performTick(currentTime);
     }
 
     @Override
-    public void autoTick(ScheduledExecutorService executor) throws EngineStateException {
+    public void tickAuto(ScheduledExecutorService executor) {
         Objects.requireNonNull(executor);
 
         if (isShutdown() || connection.getState() != ConnectionState.ACTIVE) {
             throw new IllegalStateException("Cannot tick on a Connection that is not opened or an engine that has been shut down.");
         }
 
-        this.idleTimeoutExecutor = executor;
-
-        // Using nano time since it is not related to the wall clock, which may change
-        long now = TimeUnit.NANOSECONDS.toMillis(System.nanoTime());
-        long deadline = tick(now);
-        if (deadline != 0) {
-            long delay = (deadline - now) / 2;
-            LOG.trace("Auto Idle Timeout Check being initiated, initial delay: {}", delay);
-            nextIdleTimeoutCheck = idleTimeoutExecutor.schedule(new IdleTimeoutCheck(), delay, TimeUnit.MILLISECONDS);
+        if (idleTimeoutExecutor != null) {
+            throw new IllegalStateException("Automatic ticking previously initiated.");
         }
+
+        // TODO - As an additional feature of this method we could allow for calling before connection is
+        //        opened such that it starts ticking either on open local and also checks as a response to
+        //        remote open which seems might be needed anyway, see notes in IdleTimeoutCheck class.
+
+        // Immediate run of the idle timeout check logic will decide afterwards when / if we should
+        // reschedule the idle timeout processing.
+        LOG.trace("Auto Idle Timeout Check being initiated");
+        idleTimeoutExecutor = executor;
+        idleTimeoutExecutor.execute(new IdleTimeoutCheck());
     }
 
     @Override
@@ -315,6 +272,56 @@ public class ProtonEngine implements Engine {
         engineErrorHandler.handle(cause);
     }
 
+    private long performTick(long currentTime) {
+
+        long deadline = 0;
+        long localIdleTimeout = connection.getIdleTimeout();
+        long remoteIdleTimeout = connection.getRemoteIdleTimeout();
+
+        if (localIdleTimeout > 0) {
+            if (localIdleDeadline == 0 || lastInputSequence != inputSequence) {
+                localIdleDeadline = computeDeadline(currentTime, localIdleTimeout);
+                lastInputSequence = inputSequence;
+            } else if (localIdleDeadline - currentTime <= 0) {
+                localIdleDeadline = computeDeadline(currentTime, localIdleTimeout);
+                if (connection.getState() != ConnectionState.CLOSED) {
+                    ErrorCondition condition = new ErrorCondition(
+                        Symbol.getSymbol("amqp:resource-limit-exceeded"), "local-idle-timeout expired");
+                    connection.setCondition(condition);
+                    connection.close();
+                    engineFailed(new EngineIdleTimeoutException("Remote idle timeout detected"));
+                    return 0;
+                }
+            }
+            deadline = localIdleDeadline;
+        }
+
+        if (remoteIdleTimeout != 0 && !connection.isLocallyClosed()) {
+            if (remoteIdleDeadline == 0 || lastOutputSequence != outputSequence) {
+                remoteIdleDeadline = computeDeadline(currentTime, remoteIdleTimeout / 2);
+                lastOutputSequence = outputSequence;
+            } else if (remoteIdleDeadline - currentTime <= 0) {
+                remoteIdleDeadline = computeDeadline(currentTime, remoteIdleTimeout / 2);
+                pipeline().fireWrite(EMPTY_FRAME_BUFFER.duplicate());
+                lastOutputSequence++;
+            }
+
+            if (deadline == 0) {
+                // There was no local deadline, so use whatever the remote is.
+                deadline = remoteIdleDeadline;
+            } else {
+                // Use the 'earlier' of the remote and local deadline values
+                if (remoteIdleDeadline - localIdleDeadline <= 0) {
+                    deadline = remoteIdleDeadline;
+                } else {
+                    deadline = localIdleDeadline;
+                }
+            }
+        }
+
+        return deadline;
+    }
+
     private long computeDeadline(long now, long timeout) {
         long deadline = now + timeout;
         // We use 0 to signal not-initialised and/or no-timeout, so in the
@@ -325,6 +332,10 @@ public class ProtonEngine implements Engine {
     //----- Utility classes for internal use only.
 
     private final class IdleTimeoutCheck implements Runnable {
+
+        // TODO - Pick reasonable values
+        private final long MIN_IDLE_CHECK_INTERVAL = 1000;
+        private final long MAX_IDLE_CHECK_INTERVAL = 10000;
 
         @Override
         public void run() {
@@ -343,10 +354,21 @@ public class ProtonEngine implements Engine {
                         // Run the next idle check at half the deadline to try and ensure we meet our
                         // obligation of sending our heart beat on time.
                         long delay = (deadline - now) / 2;
+
+                        // TODO - Some computation to work out a reasonable delay that still compensates for
+                        //        errors in scheduling while preventing over eagerness.
+                        delay = Math.max(MIN_IDLE_CHECK_INTERVAL, delay);
+                        delay = Math.min(MAX_IDLE_CHECK_INTERVAL, delay);
+
                         checkScheduled = true;
                         LOG.trace("IdleTimeoutCheck rescheduling with delay: {}", delay);
                         nextIdleTimeoutCheck = idleTimeoutExecutor.schedule(this, delay, TimeUnit.MILLISECONDS);
                     }
+
+                    // TODO - If no local timeout but remote hasn't opened we might return zero and not
+                    //        schedule any ticking ?  Possible solution is to schedule after remote open
+                    //        arrives if nothing set to run and remote indicates it has an idle timeout.
+
                 } catch (Throwable t) {
                     LOG.trace("Auto Idle Timeout Check encountered error during check: ", t);
                 }

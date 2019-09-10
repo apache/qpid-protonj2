@@ -25,7 +25,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 
 import org.apache.qpid.proton4j.amqp.driver.ProtonTestPeer;
 import org.apache.qpid.proton4j.engine.Connection;
@@ -33,6 +33,7 @@ import org.apache.qpid.proton4j.engine.ConnectionState;
 import org.apache.qpid.proton4j.engine.Session;
 import org.apache.qpid.proton4j.engine.exceptions.EngineStateException;
 import org.junit.Test;
+import org.mockito.Mockito;
 
 /**
  * Test for basic functionality of the ProtonEngine implementation.
@@ -84,46 +85,36 @@ public class ProtonEngineTest extends ProtonEngineTestSupport {
     }
 
     @Test
-    public void testNoArgTickFailsWhenConnectionNotOpenedNoLocalIdleSet() throws EngineStateException {
-        doTestTickFailsBasedOnState(false, false, false, false, false);
-    }
-
-    @Test
-    public void testNoArgTickFailsWhenConnectionNotOpenedLocalIdleSet() throws EngineStateException {
-        doTestTickFailsBasedOnState(true, false, false, false, false);
-    }
-
-    @Test
     public void testTickFailsWhenConnectionNotOpenedNoLocalIdleSet() throws EngineStateException {
-        doTestTickFailsBasedOnState(false, true, false, false, false);
+        doTestTickFailsBasedOnState(false, false, false, false);
     }
 
     @Test
     public void testTickFailsWhenConnectionNotOpenedLocalIdleSet() throws EngineStateException {
-        doTestTickFailsBasedOnState(true, true, false, false, false);
-    }
-
-    @Test
-    public void testNoArgTickFailsWhenEngineShutdownNoLocalIdleSet() throws EngineStateException {
-        doTestTickFailsBasedOnState(false, false, true, true, true);
-    }
-
-    @Test
-    public void testNoArgTickFailsWhenEngineShutdownLocalIdleSet() throws EngineStateException {
-        doTestTickFailsBasedOnState(true, false, true, true, true);
+        doTestTickFailsBasedOnState(true, false, false, false);
     }
 
     @Test
     public void testTickFailsWhenEngineIsShutdownNoLocalIdleSet() throws EngineStateException {
-        doTestTickFailsBasedOnState(false, true, true, true, true);
+        doTestTickFailsBasedOnState(false, true, true, true);
     }
 
     @Test
     public void testTickFailsWhenEngineIsShutdownLocalIdleSet() throws EngineStateException {
-        doTestTickFailsBasedOnState(true, true, true, true, true);
+        doTestTickFailsBasedOnState(true, true, true, true);
     }
 
-    private void doTestTickFailsBasedOnState(boolean setLocalTimeout, boolean tickWithArgs, boolean open, boolean close, boolean shutdown) throws EngineStateException {
+    @Test
+    public void testTickFailsWhenEngineIsShutdownButCloseNotCalledNoLocalIdleSet() throws EngineStateException {
+        doTestTickFailsBasedOnState(false, true, false, true);
+    }
+
+    @Test
+    public void testTickFailsWhenEngineIsShutdownButCloseNotCalledLocalIdleSet() throws EngineStateException {
+        doTestTickFailsBasedOnState(true, true, false, true);
+    }
+
+    private void doTestTickFailsBasedOnState(boolean setLocalTimeout, boolean open, boolean close, boolean shutdown) throws EngineStateException {
         ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
         engine.errorHandler(result -> failure = result);
         ProtonTestPeer peer = new ProtonTestPeer(engine);
@@ -155,11 +146,7 @@ public class ProtonEngineTest extends ProtonEngineTestSupport {
         }
 
         try {
-            if (tickWithArgs) {
-                engine.tick(5000);
-            } else {
-                engine.tick();
-            }
+            engine.tick(5000);
             fail("Should not be able to tick an unopened connection");
         } catch (IllegalStateException ise) {
         }
@@ -217,10 +204,70 @@ public class ProtonEngineTest extends ProtonEngineTestSupport {
         }
 
         try {
-            engine.autoTick(Executors.newScheduledThreadPool(1));
+            engine.tickAuto(Mockito.mock(ScheduledExecutorService.class));
             fail("Should not be able to tick an unopened connection");
         } catch (IllegalStateException ise) {
         }
+    }
+
+    @Test
+    public void testTickAutoPreventsDoubleInvocation() {
+        ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
+        engine.errorHandler(result -> failure = result);
+        ProtonTestPeer peer = new ProtonTestPeer(engine);
+        engine.outputConsumer(peer);
+
+        Connection connection = engine.start();
+        assertNotNull(connection);
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond();
+        peer.expectClose().respond();
+
+        connection.open();
+
+        engine.tickAuto(Mockito.mock(ScheduledExecutorService.class));
+
+        try {
+            engine.tickAuto(Mockito.mock(ScheduledExecutorService.class));
+            fail("Should not be able call tickAuto more than once.");
+        } catch (IllegalStateException ise) {
+        }
+
+        connection.close();
+
+        peer.waitForScriptToComplete();
+        assertNull(failure);
+    }
+
+    @Test
+    public void testCannotCallTickAfterTickAutoCalled() {
+        ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
+        engine.errorHandler(result -> failure = result);
+        ProtonTestPeer peer = new ProtonTestPeer(engine);
+        engine.outputConsumer(peer);
+
+        Connection connection = engine.start();
+        assertNotNull(connection);
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond();
+        peer.expectClose().respond();
+
+        connection.open();
+
+        engine.tickAuto(Mockito.mock(ScheduledExecutorService.class));
+
+        try {
+            engine.tick(5000);
+            fail("Should not be able call tick after enabling the auto tick feature.");
+        } catch (IllegalStateException ise) {
+        }
+
+        connection.close();
+
+        peer.waitForScriptToComplete();
+        assertNull(failure);
     }
 
     @Test

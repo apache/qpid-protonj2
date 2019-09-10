@@ -123,23 +123,6 @@ public interface Engine extends Consumer<ProtonBuffer> {
 
     /**
      * Prompt the engine to perform idle-timeout/heartbeat handling, and return an absolute
-     * deadline in milliseconds that tick must again be called by/at, based on the system provided
-     * current time in milliseconds, to ensure the periodic work is carried out as necessary.  It
-     * is an error to call this method if the connection has not been opened.
-     *
-     * A returned deadline of 0 indicates there is no periodic work necessitating tick be called, e.g.
-     * because neither peer has defined an idle-timeout value.
-     *
-     * This method will use a monotonic clock to determine current time
-     *
-     * @return the absolute deadline in milliseconds to next call tick by/at, or 0 if there is none.
-     *
-     * @throws IllegalStateException if the connection associated with the engine is not currently Open
-     */
-    long tick();
-
-    /**
-     * Prompt the engine to perform idle-timeout/heartbeat handling, and return an absolute
      * deadline in milliseconds that tick must again be called by/at, based on the provided
      * current time in milliseconds, to ensure the periodic work is carried out as necessary.
      * It is an error to call this method if the connection has not been opened.
@@ -147,11 +130,17 @@ public interface Engine extends Consumer<ProtonBuffer> {
      * A returned deadline of 0 indicates there is no periodic work necessitating tick be called, e.g.
      * because neither peer has defined an idle-timeout value.
      *
-     * The provided milliseconds time values can be from {@link System#currentTimeMillis()} or derived
-     * from {@link System#nanoTime()}, noting that for the later in particular that the returned
-     * deadline could be a different sign than the given time, and (if non-zero) the returned
+     * The provided milliseconds time values should be derived from a monotonic source such as
+     * {@link System#nanoTime()} to prevent wall clock changes leading to erroneous behaviour. Note
+     * that for {@link System#nanoTime()} derived values in particular that the returned deadline
+     * could be a different sign than the originally given value, and so (if non-zero) the returned
      * deadline should have the current time originally provided subtracted from it in order to
      * establish a relative time delay to the next deadline.
+     *
+     * Supplying {@link System#currentTimeMillis()} derived values can lead to erroneous behaviour
+     * during wall clock changes and so is not recommended.
+     *
+     * It is an error to call this method if {@link Engine#tickAuto(ScheduledExecutorService)} was called.
      *
      * @param currentTime
      *      the current time of this tick call.
@@ -159,21 +148,22 @@ public interface Engine extends Consumer<ProtonBuffer> {
      * @return the absolute deadline in milliseconds to next call tick by/at, or 0 if there is none.
      *
      * @throws IllegalStateException if the connection associated with the engine is not currently Open
+     *                               the Engine is shut down or the auto ticking feature is enabled.
      */
     long tick(long currentTime);
 
     /**
      * Allows the engine to manage idle timeout processing by providing it the single threaded executor
      * context where all transport work is done which ensures singled threaded access while removing the
-     * need for the client library or application to manage calls to the {@link Engine#tick} methods.
+     * need for the client library or server application to manage calls to the {@link Engine#tick} methods.
      *
      * @param executor
-     *      The execution context where all engine work takes place
+     *      The single threaded execution context where all engine work takes place.
      *
-     * @throws EngineStateException if the Engine state precludes accepting new input.
-     * @throws EngineClosedException if the Engine has been shutdown or has failed.
+     * @throws IllegalStateException if the connection associated with the engine is not currently Open
+     *                               or the Engine has already been shut down.
      */
-    void autoTick(ScheduledExecutorService executor) throws EngineStateException;
+    void tickAuto(ScheduledExecutorService executor);
 
     //----- Engine configuration and state
 
