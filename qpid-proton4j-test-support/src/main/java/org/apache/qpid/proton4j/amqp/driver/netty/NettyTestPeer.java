@@ -17,9 +17,11 @@
 package org.apache.qpid.proton4j.amqp.driver.netty;
 
 import java.net.URI;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 import org.apache.qpid.proton4j.amqp.DescribedType;
 import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
@@ -66,7 +68,7 @@ public class NettyTestPeer extends ScriptWriter implements AutoCloseable {
     public NettyTestPeer(ServerOptions options) {
         this.driver = new NettyAwareAMQPTestDriver((frame) -> {
             processDriverOutput(frame);
-        });
+        }, () -> eventLoop());
         this.server = new TestDriverServer(options);
     }
 
@@ -165,8 +167,8 @@ public class NettyTestPeer extends ScriptWriter implements AutoCloseable {
 
     private final class NettyAwareAMQPTestDriver extends AMQPTestDriver {
 
-        public NettyAwareAMQPTestDriver(Consumer<ProtonBuffer> frameConsumer) {
-            super(frameConsumer);
+        public NettyAwareAMQPTestDriver(Consumer<ProtonBuffer> frameConsumer, Supplier<ScheduledExecutorService> scheduler) {
+            super(frameConsumer, scheduler);
         }
 
         // If the send call occurs from a reaction to processing incoming data the
@@ -258,6 +260,15 @@ public class NettyTestPeer extends ScriptWriter implements AutoCloseable {
     protected void processChannelInput(ProtonBuffer input) {
         LOG.trace("AMQP Server Channel processing: {}", input);
         driver.accept(input);
+    }
+
+
+    protected ScheduledExecutorService eventLoop() {
+        if (channel == null || !channel.isActive()) {
+            throw new IllegalStateException("Channel is not connected or has closed");
+        }
+
+        return channel.eventLoop();
     }
 
     @Override

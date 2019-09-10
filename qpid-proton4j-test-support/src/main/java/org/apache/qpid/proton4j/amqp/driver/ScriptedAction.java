@@ -55,6 +55,18 @@ public interface ScriptedAction extends ScriptedElement {
     ScriptedAction now();
 
     /**
+     * Runs the scripted action on its associated test driver immediately
+     * following the given wait time regardless of any queued tasks or
+     * expected inputs.
+     *
+     * @param waitTime
+     *      Time in milliseconds to wait before running this action.
+     *
+     * @return this scripted action.
+     */
+    ScriptedAction later(int waitTime);
+
+    /**
      * Queues the scripted action for later run after any preceding scripted
      * elements are performed.
      *

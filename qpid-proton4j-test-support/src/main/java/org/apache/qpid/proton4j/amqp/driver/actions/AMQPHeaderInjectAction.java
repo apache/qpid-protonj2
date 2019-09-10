@@ -47,6 +47,12 @@ public class AMQPHeaderInjectAction implements ScriptedAction {
     }
 
     @Override
+    public AMQPHeaderInjectAction later(int delay) {
+        driver.afterDelay(delay, this);
+        return this;
+    }
+
+    @Override
     public AMQPHeaderInjectAction queue() {
         driver.addScriptedElement(this);
         return this;

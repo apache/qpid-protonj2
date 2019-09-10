@@ -49,6 +49,12 @@ public class ScriptCompleteAction implements ScriptedAction {
     }
 
     @Override
+    public ScriptCompleteAction later(int delay) {
+        driver.afterDelay(delay, this);
+        return this;
+    }
+
+    @Override
     public ScriptCompleteAction perform(AMQPTestDriver driver) {
         complete.countDown();
         return this;

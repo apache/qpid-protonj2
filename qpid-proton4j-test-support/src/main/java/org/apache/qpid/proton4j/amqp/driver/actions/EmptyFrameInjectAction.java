@@ -52,6 +52,12 @@ public class EmptyFrameInjectAction implements ScriptedAction {
     }
 
     @Override
+    public EmptyFrameInjectAction later(int delay) {
+        driver.afterDelay(delay, this);
+        return this;
+    }
+
+    @Override
     public EmptyFrameInjectAction queue() {
         driver.addScriptedElement(this);
         return this;

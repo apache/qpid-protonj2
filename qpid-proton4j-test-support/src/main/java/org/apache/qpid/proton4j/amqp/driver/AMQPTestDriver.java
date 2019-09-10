@@ -16,10 +16,13 @@
  */
 package org.apache.qpid.proton4j.amqp.driver;
 
+import java.util.Objects;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 import org.apache.qpid.proton4j.amqp.DescribedType;
 import org.apache.qpid.proton4j.amqp.driver.actions.ScriptCompleteAction;
@@ -46,6 +49,7 @@ public class AMQPTestDriver implements Consumer<ProtonBuffer> {
     private final DriverSessions sessions = new DriverSessions(this);
 
     private final Consumer<ProtonBuffer> frameConsumer;
+    private final Supplier<ScheduledExecutorService> schedulerSupplier;
 
     private volatile AssertionError failureCause;
 
@@ -70,9 +74,12 @@ public class AMQPTestDriver implements Consumer<ProtonBuffer> {
      *
      * @param frameConsumer
      *      A {@link Consumer} that will accept encoded frames in ProtonBuffer instances.
+     * @param scheduler
+     *      A {@link Supplier} that will provide this driver with a scheduler service for delayed actions
      */
-    public AMQPTestDriver(Consumer<ProtonBuffer> frameConsumer) {
+    public AMQPTestDriver(Consumer<ProtonBuffer> frameConsumer, Supplier<ScheduledExecutorService> scheduler) {
         this.frameConsumer = frameConsumer;
+        this.schedulerSupplier = scheduler;
 
         // Configure test driver resources
         this.frameParser = new FrameDecoder(this);
@@ -215,6 +222,16 @@ public class AMQPTestDriver implements Consumer<ProtonBuffer> {
     void handleHeartbeat(int channel) {
         emptyFrameCount++;
         handlePerformative(HeartBeat.INSTANCE, channel, null);
+    }
+
+    public void afterDelay(int delay, ScriptedAction action) {
+        Objects.requireNonNull(schedulerSupplier, "This driver cannot schedule delayed events, no scheduler available");
+        ScheduledExecutorService scheduler = schedulerSupplier.get();
+        Objects.requireNonNull(scheduler, "This driver cannot schedule delayed events, no scheduler available");
+
+        scheduler.schedule(() -> {
+            action.perform(this);
+        }, delay, TimeUnit.MILLISECONDS);
     }
 
     //----- Test driver actions

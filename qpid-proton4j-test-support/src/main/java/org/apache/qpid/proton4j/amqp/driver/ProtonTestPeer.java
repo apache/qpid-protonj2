@@ -39,7 +39,7 @@ public class ProtonTestPeer extends ScriptWriter implements Consumer<ProtonBuffe
     public ProtonTestPeer(Consumer<ProtonBuffer> frameSink) {
         this.driver = new AMQPTestDriver((frame) -> {
             processIncomingData(frame);
-        });
+        }, null);
 
         this.inputConsumer = frameSink;
     }

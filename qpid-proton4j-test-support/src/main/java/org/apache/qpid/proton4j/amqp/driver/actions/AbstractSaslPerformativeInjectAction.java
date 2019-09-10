@@ -44,6 +44,12 @@ public abstract class AbstractSaslPerformativeInjectAction<P extends DescribedTy
     }
 
     @Override
+    public AbstractSaslPerformativeInjectAction<P> later(int delay) {
+        driver.afterDelay(delay, this);
+        return this;
+    }
+
+    @Override
     public AbstractSaslPerformativeInjectAction<P> queue() {
         driver.addScriptedElement(this);
         return this;

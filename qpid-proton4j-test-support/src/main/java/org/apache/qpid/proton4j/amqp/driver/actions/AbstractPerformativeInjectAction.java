@@ -46,6 +46,12 @@ public abstract class AbstractPerformativeInjectAction<P extends DescribedType> 
     }
 
     @Override
+    public AbstractPerformativeInjectAction<P> later(int delay) {
+        driver.afterDelay(delay, this);
+        return this;
+    }
+
+    @Override
     public AbstractPerformativeInjectAction<P> queue() {
         driver.addScriptedElement(this);
         return this;
