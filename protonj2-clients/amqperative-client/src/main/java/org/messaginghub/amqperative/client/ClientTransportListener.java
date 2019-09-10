@@ -18,10 +18,10 @@ package org.messaginghub.amqperative.client;
 
 import org.apache.qpid.proton4j.engine.exceptions.EngineStateException;
 import org.apache.qpid.proton4j.engine.impl.ProtonEngine;
+import org.apache.qpid.proton4j.netty.ProtonNettyByteBuffer;
 import org.messaginghub.amqperative.client.exceptions.ClientExceptionSupport;
 import org.messaginghub.amqperative.client.exceptions.ClientFailedException;
 import org.messaginghub.amqperative.transport.TransportListener;
-import org.messaginghub.amqperative.transport.impl.ProtonNettyByteBuffer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
