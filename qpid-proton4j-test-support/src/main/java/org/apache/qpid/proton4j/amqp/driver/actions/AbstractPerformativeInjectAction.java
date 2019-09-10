@@ -34,39 +34,77 @@ public abstract class AbstractPerformativeInjectAction<P extends DescribedType> 
     private final AMQPTestDriver driver;
 
     private int channel = CHANNEL_UNSET;
+    private int delay = -1;
 
     public AbstractPerformativeInjectAction(AMQPTestDriver driver) {
         this.driver = driver;
     }
 
     @Override
-    public AbstractPerformativeInjectAction<P> now() {
+    public final AbstractPerformativeInjectAction<P> now() {
         perform(driver);
         return this;
     }
 
     @Override
-    public AbstractPerformativeInjectAction<P> later(int delay) {
+    public final AbstractPerformativeInjectAction<P> later(int delay) {
         driver.afterDelay(delay, this);
         return this;
     }
 
     @Override
-    public AbstractPerformativeInjectAction<P> queue() {
+    public final AbstractPerformativeInjectAction<P> queue() {
         driver.addScriptedElement(this);
         return this;
     }
 
     @Override
-    public AbstractPerformativeInjectAction<P> perform(AMQPTestDriver driver) {
+    public final AbstractPerformativeInjectAction<P> perform(AMQPTestDriver driver) {
         // Give actors a chance to prepare.
         beforeActionPerformed(driver);
-        driver.sendAMQPFrame(onChannel(), getPerformative(), getPayload());
+
+        if (afterDelay() > 0) {
+            driver.afterDelay(afterDelay(), new ScriptedAction() {
+
+                @Override
+                public ScriptedAction queue() {
+                    return this;
+                }
+
+                @Override
+                public ScriptedAction perform(AMQPTestDriver driver) {
+                    driver.sendAMQPFrame(onChannel(), getPerformative(), getPayload());
+                    return this;
+                }
+
+                @Override
+                public ScriptedAction now() {
+                    return this;
+                }
+
+                @Override
+                public ScriptedAction later(int waitTime) {
+                    return this;
+                }
+            });
+        } else {
+            driver.sendAMQPFrame(onChannel(), getPerformative(), getPayload());
+        }
+
         return this;
     }
 
     public int onChannel() {
-        return this.channel;
+        return channel;
+    }
+
+    public int afterDelay() {
+        return delay;
+    }
+
+    public AbstractPerformativeInjectAction<?> afterDelay(int delay) {
+        this.delay = delay;
+        return this;
     }
 
     public AbstractPerformativeInjectAction<?> onChannel(int channel) {
