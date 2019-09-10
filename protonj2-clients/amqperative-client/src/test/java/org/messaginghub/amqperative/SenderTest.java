@@ -153,6 +153,61 @@ public class SenderTest {
     }
 
     @Test(timeout = 60000)
+    public void testSendCompletesWhenCreditEventuallyOffered() throws Exception {
+        try (NettyTestPeer peer = new NettyTestPeer()) {
+            peer.expectAMQPHeader().respondWithAMQPHeader();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().withRole(Role.SENDER).respond();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Sender test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            ConnectionOptions options = new ConnectionOptions();
+            options.setSendTimeout(200);
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), options);
+
+            connection.openFuture().get(10, TimeUnit.SECONDS);
+
+            Session session = connection.openSession();
+            session.openFuture().get(10, TimeUnit.SECONDS);
+
+            Sender sender = session.openSender("test-queue");
+            sender.openFuture().get(10, TimeUnit.SECONDS);
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+
+            // Expect a transfer but only after the flow which is delayed to allow the
+            // client time to block on credit.
+            peer.expectTransfer().withPayload(notNullValue(ProtonBuffer.class));
+            peer.remoteFlow().withDeliveryCount(0)
+                             .withLinkCredit(1)
+                             .withIncomingWindow(1024)
+                             .withOutgoingWindow(10)
+                             .withNextIncomingId(0)
+                             .withNextOutgoingId(1).later(30);
+            peer.expectDetach().respond();
+            peer.expectClose().respond();
+
+            Message<String> message = Message.create("Hello World");
+            try {
+                LOG.debug("Attempting send with sender: {}", sender);
+                sender.send(message);
+            } catch (ClientSendTimedOutException ex) {
+                fail("Should throw a send timed out exception");
+            }
+
+            sender.close().get(10, TimeUnit.SECONDS);
+
+            connection.close().get(10, TimeUnit.SECONDS);
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+    @Test(timeout = 60000)
     public void testSendWhenCreditIsAvailable() throws Exception {
         doTestSendWhenCreditIsAvailable(false);
     }
