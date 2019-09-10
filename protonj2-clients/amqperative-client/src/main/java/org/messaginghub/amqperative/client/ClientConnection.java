@@ -307,11 +307,20 @@ public class ClientConnection implements Connection {
 
                 engine.outputHandler((toWrite) -> {
                     try {
+                        // TODO - Revisit this later on when we have fully worked out the p4j bits
+                        //        around configuring buffer allocators and have one for the client
+                        //        or a common one from p4j that allocates a netty wrapped buffer
+                        //        for outbound work and use it directly.
+                        //
+                        // if (toWrite instanceof ProtonNettyByteBuffer) {
+                        //     transport.writeAndFlust((ByteBuf) toWrite.unwrap());
+                        // } else {
+                        //     be ready for bad stuff and do the old copy style.
+                        // }
                         ByteBuf outbound = transport.allocateSendBuffer(toWrite.getReadableBytes());
                         outbound.writeBytes(toWrite.toByteBuffer());
 
-                        transport.write(outbound);
-                        transport.flush();
+                        transport.writeAndFlush(outbound);
                     } catch (IOException e) {
                         LOG.warn("Error while writing engine output to transport:", e);
                         e.printStackTrace();
@@ -340,6 +349,11 @@ public class ClientConnection implements Connection {
                 protonConnection.setContainerId(client.getContainerId());
             }
             options.configureConnection(protonConnection).open();
+
+            // TODO - As a simplification would it make sense to add tick and tickAuto to Connection in p4j
+            //             options.configureConnection(protonConnection).open().tickAuto(executor);
+
+            engine.tickAuto(executor);
         });
 
         return this;
