@@ -25,7 +25,6 @@ import org.apache.qpid.proton4j.engine.EngineHandlerContext;
 import org.apache.qpid.proton4j.engine.HeaderFrame;
 import org.apache.qpid.proton4j.engine.ProtocolFrame;
 import org.apache.qpid.proton4j.engine.SaslFrame;
-import org.apache.qpid.proton4j.engine.sasl.SaslConstants;
 
 /**
  * Base class used for common portions of the SASL processing pipeline.

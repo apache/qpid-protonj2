@@ -17,8 +17,10 @@
 package org.apache.qpid.proton4j.engine.impl;
 
 import org.apache.qpid.proton4j.engine.EngineSaslContext;
-import org.apache.qpid.proton4j.engine.sasl.SaslConstants;
-import org.apache.qpid.proton4j.engine.sasl.SaslConstants.SaslOutcomes;
+import org.apache.qpid.proton4j.engine.impl.sasl.SaslConstants;
+import org.apache.qpid.proton4j.engine.sasl.SaslClientContext;
+import org.apache.qpid.proton4j.engine.sasl.SaslOutcome;
+import org.apache.qpid.proton4j.engine.sasl.SaslServerContext;
 
 /**
  * A Default No-Op SASL context that is used to provide the engine with a stub
@@ -32,8 +34,8 @@ public class ProtonEngineNoOpSaslContext implements EngineSaslContext {
     }
 
     @Override
-    public SaslOutcomes getSaslOutcome() {
-        return SaslOutcomes.SASL_SKIPPED;
+    public SaslOutcome getSaslOutcome() {
+        return null;
     }
 
     @Override
@@ -43,5 +45,15 @@ public class ProtonEngineNoOpSaslContext implements EngineSaslContext {
 
     @Override
     public void setMaxFrameSize(int maxFrameSize) {
+    }
+
+    @Override
+    public SaslClientContext client() {
+        throw new IllegalStateException("Engine not configured with a SASL layer");
+    }
+
+    @Override
+    public SaslServerContext server() {
+        throw new IllegalStateException("Engine not configured with a SASL layer");
     }
 }

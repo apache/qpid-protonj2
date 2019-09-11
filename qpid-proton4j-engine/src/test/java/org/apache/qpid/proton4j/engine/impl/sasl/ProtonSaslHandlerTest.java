@@ -38,7 +38,7 @@ import org.apache.qpid.proton4j.engine.Frame;
 import org.apache.qpid.proton4j.engine.HeaderFrame;
 import org.apache.qpid.proton4j.engine.SaslFrame;
 import org.apache.qpid.proton4j.engine.impl.ProtonEngine;
-import org.apache.qpid.proton4j.engine.sasl.SaslConstants.SaslOutcomes;
+import org.apache.qpid.proton4j.engine.impl.sasl.SaslConstants.SaslOutcomes;
 import org.apache.qpid.proton4j.engine.util.TestSupportTransportHandler;
 import org.junit.Before;
 import org.junit.Test;

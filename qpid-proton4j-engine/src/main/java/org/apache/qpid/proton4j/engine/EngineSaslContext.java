@@ -16,7 +16,9 @@
  */
 package org.apache.qpid.proton4j.engine;
 
-import org.apache.qpid.proton4j.engine.sasl.SaslConstants.SaslOutcomes;
+import org.apache.qpid.proton4j.engine.sasl.SaslClientContext;
+import org.apache.qpid.proton4j.engine.sasl.SaslOutcome;
+import org.apache.qpid.proton4j.engine.sasl.SaslServerContext;
 
 /**
  * Context for the Engine that exposes SASL state and configuration.
@@ -25,8 +27,6 @@ import org.apache.qpid.proton4j.engine.sasl.SaslConstants.SaslOutcomes;
  * current state of the authentication and allows for configuration of the SASL layer
  * prior to the start of the authentication process.  Once authentication is complete
  * the context provides a means of determining the outcome of process.
- *
- * TODO - One possible way to allow for SASL state to be visible at the engine level
  */
 public interface EngineSaslContext {
 
@@ -65,16 +65,48 @@ public interface EngineSaslContext {
     }
 
     /**
+     * Configure this {@link EngineSaslContext} as a client instance and return the associated
+     * {@link SaslClientContext} instance that should be used to complete the SASL negotiation
+     * with the server end.
+     *
+     * @return the SASL client context.
+     *
+     * @throws IllegalStateException if the engine is already in server mode or the engine has not
+     *                               been configure with SASL support.
+     */
+    SaslClientContext client();
+
+    /**
+     * Configure this {@link EngineSaslContext} as a server instance and return the associated
+     * {@link SaslServerContext} instance that should be used to complete the SASL negotiation
+     * with the client end.
+     *
+     * @return the SASL server context.
+     *
+     * @throws IllegalStateException if the engine is already in client mode or the engine has not
+     *                               been configure with SASL support.
+     */
+    SaslServerContext server();
+
+    /**
+     * Returns a SaslState that indicates the current operating state of the SASL
+     * negotiation process or conversely if no SASL layer is configured this method
+     * should return the disabled state.  This method must never return a null result.
+     *
      * @return the current state of SASL Authentication.
      */
     SaslState getSaslState();
 
     /**
      * Provides a low level outcome value for the SASL authentication process.
+     * <p>
+     * If the SASL exchange is ongoing or the SASL layer was skipped because a
+     * particular engine configuration allows such behavior then this method
+     * should return null to indicate no SASL outcome is available.
      *
      * @return the SASL outcome code that results from authentication
      */
-    SaslOutcomes getSaslOutcome();
+    SaslOutcome getSaslOutcome();
 
     //----- Configuration
 
@@ -90,12 +122,5 @@ public interface EngineSaslContext {
      *      The maximum allowed frame size from the remote sender.
      */
     void setMaxFrameSize(int maxFrameSize);
-
-    // TODO - User configures if they want client or server where not configured defaults based
-    //        on events and likely fails due to not being configured in the first place
-
-    // SaslClientContext client();
-
-    // SaslServerContext server();
 
 }

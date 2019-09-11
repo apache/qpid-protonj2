@@ -27,8 +27,8 @@ import org.apache.qpid.proton4j.amqp.security.SaslResponse;
 import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.engine.EngineHandlerContext;
-import org.apache.qpid.proton4j.engine.sasl.SaslConstants.SaslOutcomes;
-import org.apache.qpid.proton4j.engine.sasl.SaslConstants.SaslStates;
+import org.apache.qpid.proton4j.engine.impl.sasl.SaslConstants.SaslOutcomes;
+import org.apache.qpid.proton4j.engine.impl.sasl.SaslConstants.SaslStates;
 
 /**
  * The State engine for a Sasl exchange.
