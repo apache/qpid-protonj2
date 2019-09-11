@@ -16,8 +16,6 @@
  */
 package org.apache.qpid.proton4j.engine;
 
-import java.util.concurrent.ScheduledExecutorService;
-
 import org.apache.qpid.proton4j.buffer.ProtonBufferAllocator;
 
 /**
@@ -64,18 +62,5 @@ public interface EngineConfiguration {
      * @return the currently assigned {@link ProtonBufferAllocator}.
      */
     ProtonBufferAllocator getBufferAllocator();
-
-    /**
-     * Performs idle handling internally if provided, otherwise user must call the
-     * {@link Engine#tick(long)} method on the engine based on the idle time of the
-     * connection in order to prompt idle frame generation and close of connections
-     * that have violated the idle timeout value.
-     *
-     * @param scheduler
-     *      A {@link ScheduledExecutorService} that the engine can use to schedule an idle hander
-     *
-     * @return this {@link EngineConfiguration} for chaining.
-     */
-    EngineConfiguration setSchedulerService(ScheduledExecutorService scheduler);
 
 }
