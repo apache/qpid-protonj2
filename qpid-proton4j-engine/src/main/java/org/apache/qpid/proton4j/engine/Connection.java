@@ -99,7 +99,7 @@ public interface Connection {
      * remote peer to determine the correct back-end service to connect the
      * client to.  This value will be sent in the Open performative.
      *
-     * <b>Note that it is illegal to set the hostname to a numeric IP
+     * <b>Note that it is illegal to set the host name to a numeric IP
      * address or include a port number.</b>
      *
      * @param hostname the RFC1035 compliant host name.

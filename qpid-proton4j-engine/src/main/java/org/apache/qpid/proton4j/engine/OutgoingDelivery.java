@@ -16,6 +16,7 @@
  */
 package org.apache.qpid.proton4j.engine;
 
+import org.apache.qpid.proton4j.amqp.transport.Transfer;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 
 /**
@@ -29,11 +30,6 @@ public interface OutgoingDelivery extends Delivery {
     @Override
     Sender getLink();
 
-    // TODO - Work out how to manage send of data and pending changes, we need to allow for
-    //        push of current written bytes without sending a transfer with the more flag
-    //        set to false as that precludes streaming more bytes later.
-
-
     /**
      * Sets the delivery tag to assign to this outgoing delivery.
      *
@@ -46,6 +42,10 @@ public interface OutgoingDelivery extends Delivery {
 
     /**
      * Write the given bytes as the payload of this delivery, no additional writes can occur on this delivery,
+     * <p>
+     * When called the provided buffer is treated as containing the entirety of the transfer payload and the
+     * Transfer(s) that result from this call will result in a final Transfer frame whose more flag is set to
+     * false which tells the remote that no additional data will be sent for this {@link Transfer}.
      *
      * @param buffer
      *      The buffer whose contents should be sent.
