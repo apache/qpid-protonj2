@@ -22,6 +22,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.concurrent.ScheduledExecutorService;
 
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedInteger;
@@ -153,6 +154,20 @@ public class ProtonConnection implements Connection, AMQPHeader.HeaderHandler<Pr
             processStateChangeAndRespond();
         }
 
+        return this;
+    }
+
+    @Override
+    public Connection tick(long current) {
+        checkConnectionClosed("Cannot call tick on an already closed Connection");
+        engine.tick(current);
+        return this;
+    }
+
+    @Override
+    public Connection tickAuto(ScheduledExecutorService executor) {
+        checkConnectionClosed("Cannot call tickAuto on an already closed Connection");
+        engine.tickAuto(executor);
         return this;
     }
 

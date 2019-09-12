@@ -17,6 +17,7 @@
 package org.apache.qpid.proton4j.engine;
 
 import java.util.Map;
+import java.util.concurrent.ScheduledExecutorService;
 
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.transport.ErrorCondition;
@@ -41,6 +42,30 @@ public interface Connection {
      * @return this connection.
      */
     Connection close();
+
+    /**
+     * Convenience method which is the same as calling {@link Engine#tick(long)}.
+     *
+     * @param current
+     *      Current time value usually taken from {@link System#nanoTime()}
+     *
+     * @return this {@link Connection} instance.
+     *
+     * @see Engine#tick(long)
+     */
+    Connection tick(long current);
+
+    /**
+     * Convenience method which is the same as calling {@link Engine#tickAuto(ScheduledExecutorService)}.
+     *
+     * @param executor
+     *      The single threaded execution context where all engine work takes place.
+     *
+     * @return this {@link Connection} instance.
+     *
+     * @see Engine#tickAuto(ScheduledExecutorService)
+     */
+    Connection tickAuto(ScheduledExecutorService executor);
 
     /**
      * @return the {@link Context} instance that is associated with this {@link Connection}
