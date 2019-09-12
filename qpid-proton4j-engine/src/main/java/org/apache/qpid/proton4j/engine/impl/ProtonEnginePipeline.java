@@ -86,7 +86,7 @@ public class ProtonEnginePipeline implements EnginePipeline {
             newFirst.getHandler().handlerAdded(newFirst);
         } catch (Exception e) {
             // TODO - Log the error and move on ?
-        };
+        }
 
         return this;
     }
@@ -114,7 +114,7 @@ public class ProtonEnginePipeline implements EnginePipeline {
             newLast.getHandler().handlerAdded(newLast);
         } catch (Exception e) {
             // TODO - Log the error and move on ?
-        };
+        }
 
         return this;
     }
@@ -131,7 +131,7 @@ public class ProtonEnginePipeline implements EnginePipeline {
                 oldFirst.getHandler().handlerRemoved(oldFirst);
             } catch (Exception e) {
                 // TODO - Log the error and move on ?
-            };
+            }
         }
 
         return this;
@@ -149,7 +149,7 @@ public class ProtonEnginePipeline implements EnginePipeline {
                 oldLast.getHandler().handlerRemoved(oldLast);
             } catch (Exception e) {
                 // TODO - Log the error and move on ?
-            };
+            }
         }
 
         return this;
@@ -180,7 +180,7 @@ public class ProtonEnginePipeline implements EnginePipeline {
                     removed.getHandler().handlerRemoved(removed);
                 } catch (Exception e) {
                     // TODO - Log the error and move on ?
-                };
+                }
             }
         }
 
@@ -304,7 +304,7 @@ public class ProtonEnginePipeline implements EnginePipeline {
         @Override
         public void fireRead(ProtonBuffer buffer) {
             // TODO Decide on the exact error to be fired, move Transport to failed state.
-            EventHandler<ProtonException> handler = engine.errorHandler();
+            EventHandler<Throwable> handler = engine.errorHandler();
             if (handler != null) {
                 handler.handle(new ProtonException("No handler processed Transport read event."));
             }
@@ -313,7 +313,7 @@ public class ProtonEnginePipeline implements EnginePipeline {
         @Override
         public void fireRead(HeaderFrame header) {
             // TODO Decide on the exact error to be fired, move Transport to failed state.
-            EventHandler<ProtonException> handler = engine.errorHandler();
+            EventHandler<Throwable> handler = engine.errorHandler();
             if (handler != null) {
                 handler.handle(new ProtonException("No handler processed AMQP Header event."));
             }
@@ -322,7 +322,7 @@ public class ProtonEnginePipeline implements EnginePipeline {
         @Override
         public void fireRead(SaslFrame frame) {
             // TODO Decide on the exact error to be fired, move Transport to failed state.
-            EventHandler<ProtonException> handler = engine.errorHandler();
+            EventHandler<Throwable> handler = engine.errorHandler();
             if (handler != null) {
                 handler.handle(new ProtonException("No handler processed SASL frame event."));
             }
@@ -331,7 +331,7 @@ public class ProtonEnginePipeline implements EnginePipeline {
         @Override
         public void fireRead(ProtocolFrame frame) {
             // TODO Decide on the exact error to be fired, move Transport to failed state.
-            EventHandler<ProtonException> handler = engine.errorHandler();
+            EventHandler<Throwable> handler = engine.errorHandler();
             if (handler != null) {
                 handler.handle(new ProtonException("No handler processed protocol frame event."));
             }
@@ -340,7 +340,7 @@ public class ProtonEnginePipeline implements EnginePipeline {
         @Override
         public void fireEncodingError(Throwable e) {
             // TODO Decide on the exact error to be fired, move Transport to failed state.
-            EventHandler<ProtonException> handler = engine.errorHandler();
+            EventHandler<Throwable> handler = engine.errorHandler();
             if (handler != null) {
                 handler.handle(new ProtonException("No handler processed encoding error.", e));
             }
@@ -349,7 +349,7 @@ public class ProtonEnginePipeline implements EnginePipeline {
         @Override
         public void fireDecodingError(Throwable e) {
             // TODO Decide on the exact error to be fired, move Transport to failed state.
-            EventHandler<ProtonException> handler = engine.errorHandler();
+            EventHandler<Throwable> handler = engine.errorHandler();
             if (handler != null) {
                 handler.handle(new ProtonException("No handler processed decoding error.", e));
             }
@@ -358,7 +358,7 @@ public class ProtonEnginePipeline implements EnginePipeline {
         @Override
         public void fireFailed(Throwable e) {
             // TODO Decide on the exact error to be fired, move Transport to failed state.
-            EventHandler<ProtonException> handler = engine.errorHandler();
+            EventHandler<Throwable> handler = engine.errorHandler();
             if (handler != null) {
                 handler.handle(ProtonExceptionSupport.create(e));
             }
@@ -374,7 +374,7 @@ public class ProtonEnginePipeline implements EnginePipeline {
         @Override
         public void fireWrite(AMQPHeader header) {
             // TODO Decide on the exact error to be fired, move Transport to failed state.
-            EventHandler<ProtonException> handler = engine.errorHandler();
+            EventHandler<Throwable> handler = engine.errorHandler();
             if (handler != null) {
                 handler.handle(new ProtonException("No handler processed write AMQP Header event."));
             }
@@ -383,7 +383,7 @@ public class ProtonEnginePipeline implements EnginePipeline {
         @Override
         public void fireWrite(Performative performative, int channel, ProtonBuffer payload, Runnable payloadToLarge) {
             // TODO Decide on the exact error to be fired, move Transport to failed state.
-            EventHandler<ProtonException> handler = engine.errorHandler();
+            EventHandler<Throwable> handler = engine.errorHandler();
             if (handler != null) {
                 handler.handle(new ProtonException("No handler processed write AMQP performative event."));
             }
@@ -392,7 +392,7 @@ public class ProtonEnginePipeline implements EnginePipeline {
         @Override
         public void fireWrite(SaslPerformative performative) {
             // TODO Decide on the exact error to be fired, move Transport to failed state.
-            EventHandler<ProtonException> handler = engine.errorHandler();
+            EventHandler<Throwable> handler = engine.errorHandler();
             if (handler != null) {
                 handler.handle(new ProtonException("No handler processed write SASL performative event."));
             }
@@ -419,7 +419,7 @@ public class ProtonEnginePipeline implements EnginePipeline {
         @Override
         public void handleRead(EngineHandlerContext context, ProtonBuffer buffer) {
             // TODO Decide on the exact error to be fired, move Transport to failed state.
-            EventHandler<ProtonException> handler = engine.errorHandler();
+            EventHandler<Throwable> handler = engine.errorHandler();
             if (handler != null) {
                 handler.handle(new ProtonException("No handler processed Transport read event."));
             }
@@ -428,7 +428,7 @@ public class ProtonEnginePipeline implements EnginePipeline {
         @Override
         public void handleRead(EngineHandlerContext context, HeaderFrame header) {
             // TODO Decide on the exact error to be fired, move Transport to failed state.
-            EventHandler<ProtonException> handler = engine.errorHandler();
+            EventHandler<Throwable> handler = engine.errorHandler();
             if (handler != null) {
                 handler.handle(new ProtonException("No handler processed AMQP Header event."));
             }
@@ -437,7 +437,7 @@ public class ProtonEnginePipeline implements EnginePipeline {
         @Override
         public void handleRead(EngineHandlerContext context, SaslFrame frame) {
             // TODO Decide on the exact error to be fired, move Transport to failed state.
-            EventHandler<ProtonException> handler = engine.errorHandler();
+            EventHandler<Throwable> handler = engine.errorHandler();
             if (handler != null) {
                 handler.handle(new ProtonException("No handler processed SASL frame event."));
             }
@@ -446,7 +446,7 @@ public class ProtonEnginePipeline implements EnginePipeline {
         @Override
         public void handleRead(EngineHandlerContext context, ProtocolFrame frame) {
             // TODO Decide on the exact error to be fired, move Transport to failed state.
-            EventHandler<ProtonException> handler = engine.errorHandler();
+            EventHandler<Throwable> handler = engine.errorHandler();
             if (handler != null) {
                 handler.handle(new ProtonException("No handler processed protocol frame event."));
             }
@@ -455,7 +455,7 @@ public class ProtonEnginePipeline implements EnginePipeline {
         @Override
         public void transportEncodingError(EngineHandlerContext context, Throwable e) {
             // TODO Decide on the exact error to be fired, move Transport to failed state.
-            EventHandler<ProtonException> handler = engine.errorHandler();
+            EventHandler<Throwable> handler = engine.errorHandler();
             if (handler != null) {
                 handler.handle(new ProtonException("No handler processed encoding error.", e));
             }
@@ -464,7 +464,7 @@ public class ProtonEnginePipeline implements EnginePipeline {
         @Override
         public void transportDecodingError(EngineHandlerContext context, Throwable e) {
             // TODO Decide on the exact error to be fired, move Transport to failed state.
-            EventHandler<ProtonException> handler = engine.errorHandler();
+            EventHandler<Throwable> handler = engine.errorHandler();
             if (handler != null) {
                 handler.handle(new ProtonException("No handler processed decoding error.", e));
             }
@@ -473,7 +473,7 @@ public class ProtonEnginePipeline implements EnginePipeline {
         @Override
         public void transportFailed(EngineHandlerContext context, Throwable e) {
             // TODO Decide on the exact error to be fired, move Transport to failed state.
-            EventHandler<ProtonException> handler = engine.errorHandler();
+            EventHandler<Throwable> handler = engine.errorHandler();
             if (handler != null) {
                 handler.handle(ProtonExceptionSupport.create(e));
             }
@@ -482,7 +482,7 @@ public class ProtonEnginePipeline implements EnginePipeline {
         @Override
         public void handleWrite(EngineHandlerContext context, AMQPHeader header) {
             // TODO Decide on the exact error to be fired, move Transport to failed state.
-            EventHandler<ProtonException> handler = engine.errorHandler();
+            EventHandler<Throwable> handler = engine.errorHandler();
             if (handler != null) {
                 handler.handle(new ProtonException("No handler processed write AMQP Header event."));
             }
@@ -491,7 +491,7 @@ public class ProtonEnginePipeline implements EnginePipeline {
         @Override
         public void handleWrite(EngineHandlerContext context, Performative performative, int channel, ProtonBuffer payload, Runnable payloadToLarge) {
             // TODO Decide on the exact error to be fired, move Transport to failed state.
-            EventHandler<ProtonException> handler = engine.errorHandler();
+            EventHandler<Throwable> handler = engine.errorHandler();
             if (handler != null) {
                 handler.handle(new ProtonException("No handler processed write AMQP performative event."));
             }
@@ -500,7 +500,7 @@ public class ProtonEnginePipeline implements EnginePipeline {
         @Override
         public void handleWrite(EngineHandlerContext context, SaslPerformative performative) {
             // TODO Decide on the exact error to be fired, move Transport to failed state.
-            EventHandler<ProtonException> handler = engine.errorHandler();
+            EventHandler<Throwable> handler = engine.errorHandler();
             if (handler != null) {
                 handler.handle(new ProtonException("No handler processed write SASL performative event."));
             }

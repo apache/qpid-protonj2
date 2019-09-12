@@ -20,10 +20,6 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.function.Consumer;
 
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
-import org.apache.qpid.proton4j.engine.exceptions.EngineClosedException;
-import org.apache.qpid.proton4j.engine.exceptions.EngineNotWritableException;
-import org.apache.qpid.proton4j.engine.exceptions.EngineStateException;
-import org.apache.qpid.proton4j.engine.exceptions.EngineStateRuntimeException;
 import org.apache.qpid.proton4j.engine.exceptions.ProtonException;
 
 /**
@@ -85,11 +81,9 @@ public interface Engine extends Consumer<ProtonBuffer> {
      *
      * @return this Engine
      *
-     * @throws EngineStateException if the Engine state precludes accepting new input.
-     * @throws EngineNotWritableException if the Engine is not accepting new input.
-     * @throws EngineClosedException if the Engine has been shutdown or has failed.
+     * @throws IllegalStateException if the Engine state precludes accepting new input.
      */
-    Engine ingest(ProtonBuffer input) throws EngineStateException;
+    Engine ingest(ProtonBuffer input);
 
     /**
      * Provide data input for this Engine from some external source.
@@ -97,15 +91,11 @@ public interface Engine extends Consumer<ProtonBuffer> {
      * @param input
      *      The data to feed into to Engine.
      *
-     * @throws EngineStateRuntimeException if the Engine state precludes accepting new input.
+     * @throws IllegalStateException if the Engine state precludes accepting new input.
      */
     @Override
     default void accept(ProtonBuffer input) {
-        try {
-            ingest(input);
-        } catch (EngineStateException e) {
-            throw new EngineStateRuntimeException(e);
-        }
+        ingest(input);
     }
 
     /**
@@ -212,6 +202,6 @@ public interface Engine extends Consumer<ProtonBuffer> {
      *
      * @return this Engine
      */
-    Engine errorHandler(EventHandler<ProtonException> engineFailure);
+    Engine errorHandler(EventHandler<Throwable> engineFailure);
 
 }

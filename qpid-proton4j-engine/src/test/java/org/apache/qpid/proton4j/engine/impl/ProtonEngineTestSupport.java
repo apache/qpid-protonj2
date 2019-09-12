@@ -42,7 +42,7 @@ public abstract class ProtonEngineTestSupport {
     protected final Encoder encoder = CodecFactory.getDefaultEncoder();
     protected final EncoderState encoderState = encoder.newEncoderState();
 
-    protected Exception failure;
+    protected Throwable failure;
 
     @After
     public void tearDown() {

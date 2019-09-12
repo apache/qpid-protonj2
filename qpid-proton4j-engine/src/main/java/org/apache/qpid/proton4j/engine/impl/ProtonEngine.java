@@ -36,7 +36,6 @@ import org.apache.qpid.proton4j.engine.exceptions.EngineClosedException;
 import org.apache.qpid.proton4j.engine.exceptions.EngineIdleTimeoutException;
 import org.apache.qpid.proton4j.engine.exceptions.EngineNotWritableException;
 import org.apache.qpid.proton4j.engine.exceptions.EngineStateException;
-import org.apache.qpid.proton4j.engine.exceptions.ProtonException;
 import org.apache.qpid.proton4j.engine.exceptions.ProtonExceptionSupport;
 
 /**
@@ -70,7 +69,7 @@ public class ProtonEngine implements Engine {
 
     // Engine event points
     private EventHandler<ProtonBuffer> outputHandler;
-    private EventHandler<ProtonException> engineErrorHandler = (error) -> {
+    private EventHandler<Throwable> engineErrorHandler = (error) -> {
         LOG.warn("Engine encounted error and will shutdown: ", error);
     };
 
@@ -170,7 +169,7 @@ public class ProtonEngine implements Engine {
     }
 
     @Override
-    public ProtonEngine ingest(ProtonBuffer input) throws EngineStateException {
+    public ProtonEngine ingest(ProtonBuffer input) {
         if (isShutdown()) {
             throw new EngineClosedException("The engine has already shut down.");
         }
@@ -207,12 +206,12 @@ public class ProtonEngine implements Engine {
     }
 
     @Override
-    public ProtonEngine errorHandler(EventHandler<ProtonException> handler) {
+    public ProtonEngine errorHandler(EventHandler<Throwable> handler) {
         this.engineErrorHandler = handler;
         return this;
     }
 
-    EventHandler<ProtonException> errorHandler() {
+    EventHandler<Throwable> errorHandler() {
         return engineErrorHandler;
     }
 
@@ -259,7 +258,7 @@ public class ProtonEngine implements Engine {
         }
     }
 
-    void engineFailed(ProtonException cause) {
+    void engineFailed(Throwable cause) {
         state = EngineState.FAILED;
         writable = false;
 

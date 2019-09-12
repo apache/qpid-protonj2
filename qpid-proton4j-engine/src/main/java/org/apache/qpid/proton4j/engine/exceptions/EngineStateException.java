@@ -19,7 +19,7 @@ package org.apache.qpid.proton4j.engine.exceptions;
 /**
  * Root type for exceptions thrown from the engine due to state violations
  */
-public class EngineStateException extends ProtonException {
+public class EngineStateException extends IllegalStateException {
 
     private static final long serialVersionUID = 4191691747006604768L;
 
