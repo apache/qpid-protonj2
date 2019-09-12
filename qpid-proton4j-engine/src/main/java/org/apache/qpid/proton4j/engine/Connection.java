@@ -48,6 +48,11 @@ public interface Connection {
     Context getContext();
 
     /**
+     * @return the {@link Engine} which created this {@link Connection} instance.
+     */
+    Engine getEngine();
+
+    /**
      * @return the local connection state only/
      */
     ConnectionState getState();

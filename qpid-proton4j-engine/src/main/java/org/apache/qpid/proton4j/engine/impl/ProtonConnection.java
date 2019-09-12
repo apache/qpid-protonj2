@@ -110,6 +110,7 @@ public class ProtonConnection implements Connection, AMQPHeader.HeaderHandler<Pr
         // TODO - This creates a default which we haven't settled on so leaving it off for now.
     }
 
+    @Override
     public ProtonEngine getEngine() {
         return engine;
     }
