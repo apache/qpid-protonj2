@@ -29,7 +29,7 @@ import org.apache.qpid.proton4j.common.logging.ProtonLogger;
 import org.apache.qpid.proton4j.common.logging.ProtonLoggerFactory;
 import org.apache.qpid.proton4j.engine.ConnectionState;
 import org.apache.qpid.proton4j.engine.Engine;
-import org.apache.qpid.proton4j.engine.EngineSaslContext;
+import org.apache.qpid.proton4j.engine.EngineSaslDriver;
 import org.apache.qpid.proton4j.engine.EngineState;
 import org.apache.qpid.proton4j.engine.EventHandler;
 import org.apache.qpid.proton4j.engine.exceptions.EngineClosedException;
@@ -52,7 +52,7 @@ public class ProtonEngine implements Engine {
     private final ProtonEngineConfiguration configuration = new ProtonEngineConfiguration(this);
     private final ProtonConnection connection = new ProtonConnection(this);
 
-    private EngineSaslContext saslContext = new ProtonEngineNoOpSaslContext();
+    private EngineSaslDriver saslDriver = new ProtonEngineNoOpSaslDriver();
 
     private boolean writable;
     private EngineState state = EngineState.IDLE;
@@ -226,25 +226,25 @@ public class ProtonEngine implements Engine {
     }
 
     @Override
-    public EngineSaslContext saslContext() {
-        return saslContext;
+    public EngineSaslDriver saslContext() {
+        return saslDriver;
     }
 
     /**
-     * Allows for registration of a custom {@link EngineSaslContext} that will convey
+     * Allows for registration of a custom {@link EngineSaslDriver} that will convey
      * SASL state and configuration for this engine.
      *
-     * @param saslContext
-     *      The {@link EngineSaslContext} that this engine will use.
+     * @param saslDriver
+     *      The {@link EngineSaslDriver} that this engine will use.
      *
      * @throws EngineStateException if the engine state doesn't allow for changes
      */
-    public void registerSaslContext(EngineSaslContext saslContext) throws EngineStateException {
+    public void registerSaslDriver(EngineSaslDriver saslDriver) {
         if (state.ordinal() > EngineState.STARTING.ordinal()) {
-            throw new EngineStateException("Cannot alter SASL context after engine has been started.");
+            throw new EngineStateException("Cannot alter SASL driver after engine has been started.");
         }
 
-        this.saslContext = saslContext;
+        this.saslDriver = saslDriver;
     }
 
     //----- Internal proton engine implementation

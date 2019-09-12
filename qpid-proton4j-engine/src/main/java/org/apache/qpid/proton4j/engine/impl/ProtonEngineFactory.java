@@ -19,8 +19,6 @@ package org.apache.qpid.proton4j.engine.impl;
 import org.apache.qpid.proton4j.engine.Engine;
 import org.apache.qpid.proton4j.engine.EngineFactory;
 import org.apache.qpid.proton4j.engine.impl.sasl.ProtonSaslHandler;
-import org.apache.qpid.proton4j.engine.impl.sasl.SaslClientListener;
-import org.apache.qpid.proton4j.engine.impl.sasl.SaslServerListener;
 
 /**
  * Factory class for proton4j Engine creation
@@ -29,52 +27,24 @@ public final class ProtonEngineFactory implements EngineFactory {
 
     @Override
     public Engine createEngine() {
-        return createDefaultEngine();
-    }
+        ProtonEngine engine = new ProtonEngine();
+        ProtonEnginePipeline pipeline = engine.pipeline();
+
+        pipeline.addLast(ProtonConstants.AMQP_PERFORMATIVE_HANDLER, new ProtonPerformativeHandler());
+        pipeline.addLast(ProtonConstants.SASL_PERFORMATIVE_HANDLER, new ProtonSaslHandler());
+        pipeline.addLast(ProtonConstants.FRAME_LOGGING_HANDLER, new ProtonFrameLoggingHandler());
+        pipeline.addLast(ProtonConstants.FRAME_DECODING_HANDLER, new ProtonFrameDecodingHandler());
+        pipeline.addLast(ProtonConstants.FRAME_ENCODING_HANDLER, new ProtonFrameEncodingHandler());
+
+        return engine;
+   }
 
     @Override
-    public Engine createSaslEngine() {
-        throw new UnsupportedOperationException();
-    }
-
-    public static ProtonEngine createDefaultEngine() {
+    public Engine createNonSaslEngine() {
         ProtonEngine engine = new ProtonEngine();
-
         ProtonEnginePipeline pipeline = engine.pipeline();
 
         pipeline.addLast(ProtonConstants.AMQP_PERFORMATIVE_HANDLER, new ProtonPerformativeHandler());
-        pipeline.addLast(ProtonConstants.FRAME_LOGGING_HANDLER, new ProtonFrameLoggingHandler());
-        pipeline.addLast(ProtonConstants.FRAME_DECODING_HANDLER, new ProtonFrameDecodingHandler());
-        pipeline.addLast(ProtonConstants.FRAME_ENCODING_HANDLER, new ProtonFrameEncodingHandler());
-
-        return engine;
-    }
-
-    // TODO - Do we want to force client and server on SASL here, or move that to the EngineSaslContext
-    //        so that it can be decided later, or possible configured to auto decide based on configured
-    //        mechanisms. ?
-
-    public static ProtonEngine createSaslClientEngine(SaslClientListener listener) {
-        ProtonEngine engine = new ProtonEngine();
-
-        ProtonEnginePipeline pipeline = engine.pipeline();
-
-        pipeline.addLast(ProtonConstants.AMQP_PERFORMATIVE_HANDLER, new ProtonPerformativeHandler());
-        pipeline.addLast(ProtonConstants.SASL_PERFORMATIVE_HANDLER, ProtonSaslHandler.client(listener));
-        pipeline.addLast(ProtonConstants.FRAME_LOGGING_HANDLER, new ProtonFrameLoggingHandler());
-        pipeline.addLast(ProtonConstants.FRAME_DECODING_HANDLER, new ProtonFrameDecodingHandler());
-        pipeline.addLast(ProtonConstants.FRAME_ENCODING_HANDLER, new ProtonFrameEncodingHandler());
-
-        return engine;
-    }
-
-    public static ProtonEngine createSaslServerEngine(SaslServerListener listener) {
-        ProtonEngine engine = new ProtonEngine();
-
-        ProtonEnginePipeline pipeline = engine.pipeline();
-
-        pipeline.addLast(ProtonConstants.AMQP_PERFORMATIVE_HANDLER, new ProtonPerformativeHandler());
-        pipeline.addLast(ProtonConstants.SASL_PERFORMATIVE_HANDLER, ProtonSaslHandler.server(listener));
         pipeline.addLast(ProtonConstants.FRAME_LOGGING_HANDLER, new ProtonFrameLoggingHandler());
         pipeline.addLast(ProtonConstants.FRAME_DECODING_HANDLER, new ProtonFrameDecodingHandler());
         pipeline.addLast(ProtonConstants.FRAME_ENCODING_HANDLER, new ProtonFrameEncodingHandler());

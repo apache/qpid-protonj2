@@ -28,6 +28,8 @@ import org.apache.qpid.proton4j.buffer.ProtonBuffer;
  */
 public interface SaslClientListener {
 
+    // TODO - Use listener interface of lambda event points ?
+
     /**
      * Called to give the application code a clear point to initialize all
      * the client side expectations.

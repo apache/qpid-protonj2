@@ -21,14 +21,14 @@ import org.apache.qpid.proton4j.engine.sasl.SaslOutcome;
 import org.apache.qpid.proton4j.engine.sasl.SaslServerContext;
 
 /**
- * Context for the Engine that exposes SASL state and configuration.
+ * Driver for the Engine that exposes SASL state and configuration.
  * <p>
- * When configured for SASL authentication the SASL context provides a view of the
+ * When configured for SASL authentication the SASL driver provides a view of the
  * current state of the authentication and allows for configuration of the SASL layer
  * prior to the start of the authentication process.  Once authentication is complete
- * the context provides a means of determining the outcome of process.
+ * the driver provides a means of determining the outcome of process.
  */
-public interface EngineSaslContext {
+public interface EngineSaslDriver {
 
     public enum SaslState {
 
@@ -65,7 +65,7 @@ public interface EngineSaslContext {
     }
 
     /**
-     * Configure this {@link EngineSaslContext} as a client instance and return the associated
+     * Configure this {@link EngineSaslDriver} to operate in client mode and return the associated
      * {@link SaslClientContext} instance that should be used to complete the SASL negotiation
      * with the server end.
      *
@@ -77,7 +77,7 @@ public interface EngineSaslContext {
     SaslClientContext client();
 
     /**
-     * Configure this {@link EngineSaslContext} as a server instance and return the associated
+     * Configure this {@link EngineSaslDriver} to operate in server mode and return the associated
      * {@link SaslServerContext} instance that should be used to complete the SASL negotiation
      * with the client end.
      *

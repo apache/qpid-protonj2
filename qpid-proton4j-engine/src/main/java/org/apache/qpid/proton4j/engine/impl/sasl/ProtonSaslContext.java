@@ -29,13 +29,12 @@ import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.engine.EngineHandlerContext;
 import org.apache.qpid.proton4j.engine.impl.sasl.SaslConstants.SaslOutcomes;
 import org.apache.qpid.proton4j.engine.impl.sasl.SaslConstants.SaslStates;
+import org.apache.qpid.proton4j.engine.sasl.SaslContext;
 
 /**
- * The State engine for a Sasl exchange.
+ * The State engine for a SASL exchange.
  */
-public abstract class ProtonSaslContext implements AMQPHeader.HeaderHandler<EngineHandlerContext>, SaslPerformative.SaslPerformativeHandler<EngineHandlerContext> {
-
-    enum Role { CLIENT, SERVER };
+public abstract class ProtonSaslContext implements SaslContext, AMQPHeader.HeaderHandler<EngineHandlerContext>, SaslPerformative.SaslPerformativeHandler<EngineHandlerContext> {
 
     protected ProtonSaslHandler saslHandler;
 
@@ -72,11 +71,13 @@ public abstract class ProtonSaslContext implements AMQPHeader.HeaderHandler<Engi
      *
      * @return the Role of this SASL Context
      */
-    abstract Role getRole();
+    @Override
+    public abstract Role getRole();
 
     /**
      * @return true if this is a SASL server context.
      */
+    @Override
     public boolean isServer() {
         return getRole() == Role.SERVER;
     }
@@ -84,6 +85,7 @@ public abstract class ProtonSaslContext implements AMQPHeader.HeaderHandler<Engi
     /**
      * @return true if this is a SASL client context.
      */
+    @Override
     public boolean isClient() {
         return getRole() == Role.SERVER;
     }
@@ -91,6 +93,7 @@ public abstract class ProtonSaslContext implements AMQPHeader.HeaderHandler<Engi
     /**
      * @return true if SASL authentication has completed
      */
+    @Override
     public boolean isDone() {
         return done;
     }
@@ -103,39 +106,34 @@ public abstract class ProtonSaslContext implements AMQPHeader.HeaderHandler<Engi
     @Override
     public abstract void handleSASLHeader(AMQPHeader header, EngineHandlerContext context);
 
-    //----- Entry point for Sasl Performative processing ---------------------//
+    //----- Entry point for SASL Performative processing ---------------------//
 
     @Override
     public void handleMechanisms(SaslMechanisms saslMechanisms, EngineHandlerContext context) {
-        // TODO - Error type ?
         context.fireFailed(new IllegalStateException(
             "Unexpected SASL Mechanisms Frame received."));
     }
 
     @Override
     public void handleInit(SaslInit saslInit, EngineHandlerContext context) {
-        // TODO - Error type ?
         context.fireFailed(new IllegalStateException(
             "Unexpected SASL Init Frame received."));
     }
 
     @Override
     public void handleChallenge(SaslChallenge saslChallenge, EngineHandlerContext context) {
-        // TODO - Error type ?
         context.fireFailed(new IllegalStateException(
             "Unexpected SASL Challenge Frame received."));
     }
 
     @Override
     public void handleResponse(SaslResponse saslResponse, EngineHandlerContext context) {
-        // TODO - Error type ?
         context.fireFailed(new IllegalStateException(
             "Unexpected SASL Response Frame received."));
     }
 
     @Override
     public void handleOutcome(SaslOutcome saslOutcome, EngineHandlerContext context) {
-        // TODO - Error type ?
         context.fireFailed(new IllegalStateException(
             "Unexpected SASL Outcome Frame received."));
     }

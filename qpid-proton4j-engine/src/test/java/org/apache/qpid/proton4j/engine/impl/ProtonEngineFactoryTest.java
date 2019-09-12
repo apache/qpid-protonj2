@@ -19,7 +19,9 @@ package org.apache.qpid.proton4j.engine.impl;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
-import org.apache.qpid.proton4j.engine.EngineSaslContext.SaslState;
+import org.apache.qpid.proton4j.engine.Engine;
+import org.apache.qpid.proton4j.engine.EngineFactory;
+import org.apache.qpid.proton4j.engine.EngineSaslDriver.SaslState;
 import org.apache.qpid.proton4j.engine.EngineState;
 import org.junit.Test;
 
@@ -29,8 +31,17 @@ import org.junit.Test;
 public class ProtonEngineFactoryTest {
 
     @Test
-    public void testCreateDefaultEngine() {
-        ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
+    public void testCreateEngine() {
+        Engine engine = EngineFactory.PROTON.createEngine();
+
+        assertEquals(EngineState.IDLE, engine.state());
+        assertNotNull(engine.saslContext());
+        assertEquals(engine.saslContext().getSaslState(), SaslState.IDLE);
+    }
+
+    @Test
+    public void testCreateNonSaslEngine() {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
 
         assertEquals(EngineState.IDLE, engine.state());
         assertNotNull(engine.saslContext());

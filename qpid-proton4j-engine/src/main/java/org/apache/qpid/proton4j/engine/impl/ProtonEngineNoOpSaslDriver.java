@@ -16,7 +16,7 @@
  */
 package org.apache.qpid.proton4j.engine.impl;
 
-import org.apache.qpid.proton4j.engine.EngineSaslContext;
+import org.apache.qpid.proton4j.engine.EngineSaslDriver;
 import org.apache.qpid.proton4j.engine.impl.sasl.SaslConstants;
 import org.apache.qpid.proton4j.engine.sasl.SaslClientContext;
 import org.apache.qpid.proton4j.engine.sasl.SaslOutcome;
@@ -26,7 +26,9 @@ import org.apache.qpid.proton4j.engine.sasl.SaslServerContext;
  * A Default No-Op SASL context that is used to provide the engine with a stub
  * when no SASL is configured for the operating engine.
  */
-public class ProtonEngineNoOpSaslContext implements EngineSaslContext {
+public final class ProtonEngineNoOpSaslDriver implements EngineSaslDriver {
+
+    public static final ProtonEngineNoOpSaslDriver INSTANCE = new ProtonEngineNoOpSaslDriver();
 
     @Override
     public SaslState getSaslState() {

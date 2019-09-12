@@ -19,7 +19,7 @@ package org.apache.qpid.proton4j.engine.impl;
 import org.apache.qpid.proton4j.buffer.ProtonBufferAllocator;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.engine.EngineConfiguration;
-import org.apache.qpid.proton4j.engine.EngineSaslContext.SaslState;
+import org.apache.qpid.proton4j.engine.EngineSaslDriver.SaslState;
 
 /**
  * Proton engine configuration API

@@ -24,12 +24,12 @@ import org.apache.qpid.proton4j.engine.Engine;
  * configured as a SASL client or that has initialed the SASL exchange by
  * being the first to initiate the AMQP header exchange.
  */
-public interface SaslClientContext extends SaslOperatingContext {
+public interface SaslClientContext extends SaslContext {
 
     /**
      * @return the {@link SaslClientListener} that is currently assigned to this context.
      */
-    SaslServerListener getClientListener();
+    SaslClientListener getClientListener();
 
     /**
      * Sets the {@link SaslClientListener} that will be called during SASL negotiations.

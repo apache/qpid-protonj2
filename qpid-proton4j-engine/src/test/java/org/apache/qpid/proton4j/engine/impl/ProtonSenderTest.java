@@ -44,6 +44,8 @@ import org.apache.qpid.proton4j.amqp.transport.Role;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.engine.Connection;
+import org.apache.qpid.proton4j.engine.Engine;
+import org.apache.qpid.proton4j.engine.EngineFactory;
 import org.apache.qpid.proton4j.engine.OutgoingDelivery;
 import org.apache.qpid.proton4j.engine.Sender;
 import org.apache.qpid.proton4j.engine.Session;
@@ -56,7 +58,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
 
     @Test
     public void testSenderOpenAndCloseAreIdempotent() throws Exception {
-        ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
         ProtonTestPeer peer = new ProtonTestPeer(engine);
         engine.outputConsumer(peer);
@@ -102,7 +104,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
     }
 
     private void doTestCreateSenderAndCloseOrDetachLink(boolean close) throws Exception {
-        ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
         ProtonTestPeer peer = new ProtonTestPeer(engine);
         engine.outputConsumer(peer);
@@ -137,7 +139,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
 
     @Test
     public void testEngineEmitsAttachAfterLocalSenderOpened() throws Exception {
-        ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
         ProtonTestPeer peer = new ProtonTestPeer(engine);
         engine.outputConsumer(peer);
@@ -167,7 +169,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
 
     @Test
     public void testOpenBeginAttachBeforeRemoteResponds() throws Exception {
-        ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
         ProtonTestPeer peer = new ProtonTestPeer(engine);
         engine.outputConsumer(peer);
@@ -195,7 +197,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
 
     @Test
     public void testSenderFireOpenedEventAfterRemoteAttachArrives() throws Exception {
-        ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
         ProtonTestPeer peer = new ProtonTestPeer(engine);
         engine.outputConsumer(peer);
@@ -233,7 +235,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
 
     @Test
     public void testOpenAndCloseMultipleSenders() throws Exception {
-        ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
         ProtonTestPeer peer = new ProtonTestPeer(engine);
         engine.outputConsumer(peer);
@@ -268,7 +270,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
 
     @Test
     public void testSenderFireClosedEventAfterRemoteDetachArrives() throws Exception {
-        ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
         ProtonTestPeer peer = new ProtonTestPeer(engine);
         engine.outputConsumer(peer);
@@ -312,7 +314,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
 
     @Test
     public void testConnectionSignalsRemoteSenderOpen() throws Exception {
-        ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
         ProtonTestPeer peer = new ProtonTestPeer(engine);
         engine.outputConsumer(peer);
@@ -357,7 +359,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
 
     @Test
     public void testCannotOpenSenderAfterSessionClosed() throws Exception {
-        ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
         ProtonTestPeer peer = new ProtonTestPeer(engine);
         engine.outputConsumer(peer);
@@ -394,7 +396,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
 
     @Test
     public void testCannotOpenSenderAfterSessionRemotelyClosed() throws Exception {
-        ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
         ProtonTestPeer peer = new ProtonTestPeer(engine);
         engine.outputConsumer(peer);
@@ -429,7 +431,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
 
     @Test
     public void testGetCurrentDeliveryFromSender() throws Exception {
-        ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
         ProtonTestPeer peer = new ProtonTestPeer(engine);
         engine.outputConsumer(peer);
@@ -470,7 +472,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
 
     @Test
     public void testSenderGetsCreditOnIncomingFlow() throws Exception {
-        ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
         ProtonTestPeer peer = new ProtonTestPeer(engine);
         engine.outputConsumer(peer);
@@ -511,7 +513,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
 
     @Test
     public void testSendSmallPayloadWhenCreditAvailable() throws Exception {
-        ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
         ProtonTestPeer peer = new ProtonTestPeer(engine);
         engine.outputConsumer(peer);
@@ -562,7 +564,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
 
     @Test
     public void testSenderSignalsDeliveryUpdatedOnSettled() throws Exception {
-        ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
         ProtonTestPeer peer = new ProtonTestPeer(engine);
         engine.outputConsumer(peer);
@@ -629,7 +631,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
 
     @Test
     public void testOpenSenderBeforeOpenConnection() {
-        ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
         ProtonTestPeer peer = new ProtonTestPeer(engine);
         engine.outputConsumer(peer);
@@ -658,7 +660,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
 
     @Test
     public void testOpenSenderBeforeOpenSession() {
-        ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
         ProtonTestPeer peer = new ProtonTestPeer(engine);
         engine.outputConsumer(peer);
@@ -697,7 +699,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
     }
 
     public void doTestSenderClosedOrDetachedAfterEndSent(boolean close) {
-        ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
         ProtonTestPeer peer = new ProtonTestPeer(engine);
         engine.outputConsumer(peer);
@@ -745,7 +747,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
     }
 
     public void doTestSenderClosedOrDetachedAfterCloseSent(boolean close) {
-        ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
         ProtonTestPeer peer = new ProtonTestPeer(engine);
         engine.outputConsumer(peer);
@@ -784,7 +786,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
 
     @Test
     public void testNoDispositionSentAfterDeliverySettledForSender() throws Exception {
-        ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
         ProtonTestPeer peer = new ProtonTestPeer(engine);
         engine.outputConsumer(peer);
@@ -846,7 +848,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
 
     @Test
     public void testSenderCannotSendAfterConnectionClosed() throws Exception {
-        ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
         ProtonTestPeer peer = new ProtonTestPeer(engine);
         engine.outputConsumer(peer);
@@ -907,7 +909,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
     }
 
     private void doMultiplexMultiFrameDeliveryOnSingleSessionOutgoingTestImpl(boolean bothDeliveriesMultiFrame) {
-        ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
         ProtonTestPeer peer = new ProtonTestPeer(engine);
         engine.outputConsumer(peer);
@@ -1030,7 +1032,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
     }
 
     void doMaxFrameSizeTestImpl(int remoteMaxFrameSize, int outboundFrameSizeLimit, int contentLength, int expectedNumFrames) {
-        ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
         ProtonTestPeer peer = new ProtonTestPeer(engine);
         engine.outputConsumer(peer);
@@ -1126,7 +1128,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
 
     @Test
     public void testAbortInProgressDelivery() throws Exception {
-        ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
         ProtonTestPeer peer = new ProtonTestPeer(engine);
         engine.outputConsumer(peer);
@@ -1194,7 +1196,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
 
     @Test
     public void testAbortAlreadyAbortedDelivery() throws Exception {
-        ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
         ProtonTestPeer peer = new ProtonTestPeer(engine);
         engine.outputConsumer(peer);
@@ -1265,7 +1267,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
 
     @Test
     public void testAbortOnDeliveryThatHasNoWritesIsNoOp() throws Exception {
-        ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
         ProtonTestPeer peer = new ProtonTestPeer(engine);
         engine.outputConsumer(peer);
@@ -1352,7 +1354,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
     }
 
     private void doTestSettleTransferWithSpecifiedOutcome(DeliveryState state) throws Exception {
-        ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
         ProtonTestPeer peer = new ProtonTestPeer(engine);
         engine.outputConsumer(peer);
@@ -1434,7 +1436,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
     }
 
     private void doTestAttemptedSecondDispostionOnAlreadySettledDelivery(DeliveryState first, DeliveryState second) throws Exception {
-        ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
         ProtonTestPeer peer = new ProtonTestPeer(engine);
         engine.outputConsumer(peer);

@@ -17,10 +17,9 @@
 package org.apache.qpid.proton4j.engine.sasl;
 
 /**
- * The basic SASL operating context APIs common to both client and server
- * sides of the SASL exchange.
+ * The basic SASL context APIs common to both client and server sides of the SASL exchange.
  */
-public interface SaslOperatingContext {
+public interface SaslContext {
 
     enum Role { CLIENT, SERVER }
 
@@ -29,7 +28,7 @@ public interface SaslOperatingContext {
      *
      * @return the Role of this SASL Context
      */
-    abstract Role getRole();
+    Role getRole();
 
     /**
      * @return true if SASL authentication has completed

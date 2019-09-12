@@ -37,6 +37,8 @@ import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedInteger;
 import org.apache.qpid.proton4j.amqp.driver.ProtonTestPeer;
 import org.apache.qpid.proton4j.engine.Connection;
+import org.apache.qpid.proton4j.engine.Engine;
+import org.apache.qpid.proton4j.engine.EngineFactory;
 import org.apache.qpid.proton4j.engine.IncomingDelivery;
 import org.apache.qpid.proton4j.engine.Receiver;
 import org.apache.qpid.proton4j.engine.Session;
@@ -52,7 +54,7 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
 
     @Test
     public void testSessionOpenAndCloseAreIdempotent() throws Exception {
-        ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
         ProtonTestPeer peer = new ProtonTestPeer(engine);
         engine.outputConsumer(peer);
@@ -86,14 +88,14 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
 
     @Test
     public void testOpenSessionBeforeOpenConnection() {
-        ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
         ProtonTestPeer peer = new ProtonTestPeer(engine);
         engine.outputConsumer(peer);
 
         // An opened session shouldn't write its begin until the parent connection
         // is opened and once it is the begin should be automatically written.
-        ProtonConnection connection = engine.start();
+        Connection connection = engine.start();
         Session session = connection.session();
         session.open();
 
@@ -109,7 +111,7 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
 
     @Test
     public void testEngineEmitsBeginAfterLocalSessionOpened() throws IOException {
-        ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
         ProtonTestPeer peer = new ProtonTestPeer(engine);
         engine.outputConsumer(peer);
@@ -140,7 +142,7 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
 
     @Test
     public void testSessionFiresOpenedEventAfterRemoteOpensLocallyOpenedSession() throws IOException {
-        ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
         ProtonTestPeer peer = new ProtonTestPeer(engine);
         engine.outputConsumer(peer);
@@ -152,7 +154,7 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
         final AtomicBoolean connectionRemotelyOpened = new AtomicBoolean();
         final AtomicBoolean sessionRemotelyOpened = new AtomicBoolean();
 
-        ProtonConnection connection = engine.start();
+        Connection connection = engine.start();
 
         connection.openHandler((result) -> {
             connectionRemotelyOpened.set(true);
@@ -161,7 +163,7 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
 
         assertTrue("Connection remote opened event did not fire", connectionRemotelyOpened.get());
 
-        ProtonSession session = connection.session();
+        Session session = connection.session();
         session.openHandler(result -> {
             sessionRemotelyOpened.set(true);
         });
@@ -176,7 +178,7 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
 
     @Test
     public void testOpenAndCloseMultipleSessions() throws IOException {
-        ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
         ProtonTestPeer peer = new ProtonTestPeer(engine);
         engine.outputConsumer(peer);
@@ -189,12 +191,12 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
         peer.expectEnd().onChannel(0).respond();
         peer.expectClose();
 
-        ProtonConnection connection = engine.start();
+        Connection connection = engine.start();
         connection.open();
 
-        ProtonSession session1 = connection.session();
+        Session session1 = connection.session();
         session1.open();
-        ProtonSession session2 = connection.session();
+        Session session2 = connection.session();
         session2.open();
 
         session2.close();
@@ -209,7 +211,7 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
 
     @Test
     public void testEngineFireRemotelyOpenedSessionEventWhenRemoteBeginArrives() throws IOException {
-        ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
         ProtonTestPeer peer = new ProtonTestPeer(engine);
         engine.outputConsumer(peer);
@@ -265,7 +267,7 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
         final int MAX_FRAME_SIZE = 32767;
         final int SESSION_INCOMING_CAPACITY = Integer.MAX_VALUE;
 
-        ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
         ProtonTestPeer peer = new ProtonTestPeer(engine);
         engine.outputConsumer(peer);
@@ -292,13 +294,13 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
                           .respond();
         peer.expectEnd().respond();
 
-        ProtonConnection connection = engine.start();
+        Connection connection = engine.start();
         if (setMaxFrameSize) {
             connection.setMaxFrameSize(MAX_FRAME_SIZE);
         }
         connection.open();
 
-        ProtonSession session = connection.session();
+        Session session = connection.session();
         if (setIncomingCapacity) {
             session.setIncomingCapacity(SESSION_INCOMING_CAPACITY);
         }
@@ -312,7 +314,7 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
 
     @Test
     public void testSessionOpenFailsWhenConnectionClosed() throws EngineStateException {
-        ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
         ProtonTestPeer peer = new ProtonTestPeer(engine);
         engine.outputConsumer(peer);
@@ -355,7 +357,7 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
 
     @Test
     public void testSessionOpenFailsWhenConnectionRemotelyClosed() throws EngineStateException {
-        ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
         ProtonTestPeer peer = new ProtonTestPeer(engine);
         engine.outputConsumer(peer);
@@ -397,7 +399,7 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
 
     @Test
     public void testSessionOpenNotSentUntilConnectionOpened() throws EngineStateException {
-        ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
         ProtonTestPeer peer = new ProtonTestPeer(engine);
         engine.outputConsumer(peer);
@@ -421,7 +423,7 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
 
     @Test
     public void testSessionCloseNotSentUntilConnectionOpened() throws EngineStateException {
-        ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
         ProtonTestPeer peer = new ProtonTestPeer(engine);
         engine.outputConsumer(peer);
@@ -448,7 +450,7 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
     @Ignore("Handle invalid begin either by connection close or end of remotely opened resource.")
     @Test
     public void testHandleRemoteBeginWithInvalidRemoteChannelSet() throws IOException {
-        ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
         ProtonTestPeer peer = new ProtonTestPeer(engine);
         engine.outputConsumer(peer);
@@ -494,7 +496,7 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
 
         final AtomicBoolean sessionRemotelyOpened = new AtomicBoolean();
 
-        ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
         ProtonTestPeer peer = new ProtonTestPeer(engine);
         engine.outputConsumer(peer);
@@ -508,10 +510,10 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
                           .withOfferedCapabilities(serverOfferedCapabilities);
         peer.expectEnd().respond();
 
-        ProtonConnection connection = engine.start();
+        Connection connection = engine.start();
         connection.open();
 
-        ProtonSession session = connection.session();
+        Session session = connection.session();
 
         session.setDesiredCapabilities(clientDesiredCapabilities);
         session.setOfferedCapabilities(clientOfferedCapabilities);
@@ -549,7 +551,7 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
 
         final AtomicBoolean sessionRemotelyOpened = new AtomicBoolean();
 
-        ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
         ProtonTestPeer peer = new ProtonTestPeer(engine);
         engine.outputConsumer(peer);
@@ -561,10 +563,10 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
                           .withProperties(serverProperties);
         peer.expectEnd().respond();
 
-        ProtonConnection connection = engine.start();
+        Connection connection = engine.start();
         connection.open();
 
-        ProtonSession session = connection.session();
+        Session session = connection.session();
 
         session.setProperties(clientProperties);
         session.openHandler(result -> {
@@ -599,7 +601,7 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
         final int TEST_MAX_FRAME_SIZE = 5 * 1024;
         final int TEST_SESSION_CAPACITY = 100 * 1024;
 
-        ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
         ProtonTestPeer peer = new ProtonTestPeer(engine);
         engine.outputConsumer(peer);
@@ -619,7 +621,7 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
         peer.expectBegin().withIncomingWindow(expectedWindowSize).respond();
         peer.expectAttach().respond();
 
-        ProtonConnection connection = engine.start();
+        Connection connection = engine.start();
         if (setFrameSize) {
             connection.setMaxFrameSize(TEST_MAX_FRAME_SIZE);
         }

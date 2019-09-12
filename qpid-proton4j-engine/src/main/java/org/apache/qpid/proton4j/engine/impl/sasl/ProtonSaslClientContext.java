@@ -27,27 +27,43 @@ import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.engine.EngineHandlerContext;
 import org.apache.qpid.proton4j.engine.impl.sasl.SaslConstants.SaslOutcomes;
 import org.apache.qpid.proton4j.engine.impl.sasl.SaslConstants.SaslStates;
+import org.apache.qpid.proton4j.engine.sasl.SaslClientContext;
+import org.apache.qpid.proton4j.engine.sasl.SaslClientListener;
 
-public class ProtonSaslClientContext extends ProtonSaslContext {
+public class ProtonSaslClientContext extends ProtonSaslContext implements SaslClientContext {
 
-    private final SaslClientListener listener;
+    private SaslClientListener listener;
 
-    public ProtonSaslClientContext(ProtonSaslHandler handler, SaslClientListener listener) {
+    public ProtonSaslClientContext(ProtonSaslHandler handler) {
         super(handler);
-
-        this.listener = listener;
     }
 
     @Override
-    Role getRole() {
+    public Role getRole() {
         return Role.SERVER;
     }
 
-    /**
-     * @return the SASL client listener.
-     */
+    @Override
     public SaslClientListener getClientListener() {
         return listener;
+    }
+
+    @Override
+    public SaslClientContext setClientListener(SaslClientListener listener) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public SaslClientContext sendChosenMechanism(String mechanism, String host) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public SaslClientContext sendResponse(ProtonBuffer response) {
+        // TODO Auto-generated method stub
+        return null;
     }
 
     //----- Remote Server state information ----------------------------------//
@@ -62,7 +78,8 @@ public class ProtonSaslClientContext extends ProtonSaslContext {
 
     //----- Mutable state ----------------------------------------------------//
 
-    // TODO - Remove these now ? or do something that checks these and does pipeline ?
+    // TODO - Remove these setters and require listener to initiate work
+    //        we can leave accessors to fetch what was done.
 
     public String getHostname() {
         return hostname;
@@ -88,32 +105,6 @@ public class ProtonSaslClientContext extends ProtonSaslContext {
         this.response = response;
     }
 
-    //----- Event response methods -------------------------------------------//
-
-    /**
-     * Sends a response to the SASL server indicating the chosen mechanism for this
-     * client and the host-name that this client is identifying itself as.
-     *
-     * @param mechanism
-     *      The chosen mechanism selected from the list the server provided.
-     * @param host
-     *      The host-name that the client is identified as.
-     */
-    public void sendChosenMechanism(String mechanism, String host) {
-        // TODO - Possible means of async trigger of mechanism send
-    }
-
-    /**
-     * Sends a response to a server side challenge that comprises the challenge / response
-     * exchange for the chosen SASL mechanism.
-     *
-     * @param response
-     *      The response bytes to be sent to the server for this cycle.
-     */
-    public void sendResponse(ProtonBuffer response) {
-        // TODO - Possible means of async challenge response send
-    }
-
     //----- SASL Frame event handlers ----------------------------------------//
 
     @Override
@@ -133,7 +124,7 @@ public class ProtonSaslClientContext extends ProtonSaslContext {
         serverMechanisms = saslMechanisms.getSaslServerMechanisms();
 
         // TODO - Should we use ProtonBuffer slices as response containers ?
-        listener.onSaslMechanisms(this, getServerMechanisms());
+//        listener.onSaslMechanisms(this, getServerMechanisms());
 
         // TODO - How is the listener driving output, send methods ?
         //        We probably want to support asynchronous triggering
@@ -142,7 +133,7 @@ public class ProtonSaslClientContext extends ProtonSaslContext {
     @Override
     public void handleChallenge(SaslChallenge saslChallenge, EngineHandlerContext context) {
         // TODO - Should we use ProtonBuffer slices as response containers ?
-        listener.onSaslChallenge(this, saslChallenge.getChallenge());
+//        listener.onSaslChallenge(this, saslChallenge.getChallenge());
 
         if (state == SaslStates.SASL_STEP && getResponse() != null) {
             SaslResponse response = new SaslResponse();
@@ -163,6 +154,6 @@ public class ProtonSaslClientContext extends ProtonSaslContext {
 
         done = true;
 
-        listener.onSaslOutcome(this, saslOutcome.getAdditionalData());
+//        listener.onSaslOutcome(this, saslOutcome.getAdditionalData());
     }
 }

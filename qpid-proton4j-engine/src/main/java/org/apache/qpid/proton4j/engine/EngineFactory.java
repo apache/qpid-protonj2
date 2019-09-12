@@ -23,21 +23,7 @@ import org.apache.qpid.proton4j.engine.impl.ProtonEngineFactory;
  */
 public interface EngineFactory {
 
-    /**
-     * Creates an engine using the default Engine implementation in this Proton library.
-     *
-     * @return a new Engine instance using the default implementation.
-     */
-    public static Engine createDefaultEngine() {
-        return ProtonEngineFactory.createDefaultEngine();
-    }
-
-    /**
-     * Create a new Engine instance that handles only raw AMQP with no SASL layer enabled.
-     *
-     * @return a new raw AMQP aware Engine implementation.
-     */
-    Engine createEngine();
+    public static final EngineFactory PROTON = new ProtonEngineFactory();
 
     /**
      * Create a new Engine instance with a SASL authentication layer added.  The returned
@@ -46,6 +32,13 @@ public interface EngineFactory {
      *
      * @return a new Engine instance that can handle SASL authentication.
      */
-    Engine createSaslEngine();
+    Engine createEngine();
+
+    /**
+     * Create a new Engine instance that handles only raw AMQP with no SASL layer enabled.
+     *
+     * @return a new raw AMQP aware Engine implementation.
+     */
+    Engine createNonSaslEngine();
 
 }

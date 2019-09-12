@@ -24,7 +24,7 @@ import org.apache.qpid.proton4j.engine.Engine;
  * configured as a SASL server or that has receiver an AMQP header thereby
  * forcing it into becoming the server side of the SASL exchange.
  */
-public interface SaslServerContext extends SaslOperatingContext {
+public interface SaslServerContext extends SaslContext {
 
     /**
      * @return the {@link SaslServerListener} that is currently assigned to this context.

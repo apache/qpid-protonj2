@@ -162,7 +162,7 @@ public interface Engine extends Consumer<ProtonBuffer> {
      *
      * @return the SASL context for the engine.
      */
-    EngineSaslContext saslContext();
+    EngineSaslDriver saslContext();
 
     //----- Engine event points
 

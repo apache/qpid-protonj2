@@ -30,6 +30,8 @@ import java.util.concurrent.ScheduledExecutorService;
 import org.apache.qpid.proton4j.amqp.driver.ProtonTestPeer;
 import org.apache.qpid.proton4j.engine.Connection;
 import org.apache.qpid.proton4j.engine.ConnectionState;
+import org.apache.qpid.proton4j.engine.Engine;
+import org.apache.qpid.proton4j.engine.EngineFactory;
 import org.apache.qpid.proton4j.engine.Session;
 import org.apache.qpid.proton4j.engine.exceptions.EngineStateException;
 import org.junit.Test;
@@ -42,7 +44,7 @@ public class ProtonEngineTest extends ProtonEngineTestSupport {
 
     @Test
     public void testEngineStart() {
-        ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
 
         // Engine cannot accept input bytes until started.
@@ -59,7 +61,7 @@ public class ProtonEngineTest extends ProtonEngineTestSupport {
 
     @Test
     public void testEngineEmitsAMQPHeaderOnConnectionOpen() {
-        ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
         ProtonTestPeer peer = new ProtonTestPeer(engine);
         engine.outputConsumer(peer);
@@ -115,7 +117,7 @@ public class ProtonEngineTest extends ProtonEngineTestSupport {
     }
 
     private void doTestTickFailsBasedOnState(boolean setLocalTimeout, boolean open, boolean close, boolean shutdown) throws EngineStateException {
-        ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
         ProtonTestPeer peer = new ProtonTestPeer(engine);
         engine.outputConsumer(peer);
@@ -173,7 +175,7 @@ public class ProtonEngineTest extends ProtonEngineTestSupport {
     }
 
     private void doTestAutoTickFailsBasedOnState(boolean setLocalTimeout, boolean open, boolean close, boolean shutdown) throws EngineStateException {
-        ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
         ProtonTestPeer peer = new ProtonTestPeer(engine);
         engine.outputConsumer(peer);
@@ -212,7 +214,7 @@ public class ProtonEngineTest extends ProtonEngineTestSupport {
 
     @Test
     public void testTickAutoPreventsDoubleInvocation() {
-        ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
         ProtonTestPeer peer = new ProtonTestPeer(engine);
         engine.outputConsumer(peer);
@@ -242,7 +244,7 @@ public class ProtonEngineTest extends ProtonEngineTestSupport {
 
     @Test
     public void testCannotCallTickAfterTickAutoCalled() {
-        ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
         ProtonTestPeer peer = new ProtonTestPeer(engine);
         engine.outputConsumer(peer);
@@ -272,7 +274,7 @@ public class ProtonEngineTest extends ProtonEngineTestSupport {
 
     @Test
     public void testTickRemoteTimeout() throws EngineStateException {
-        ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
         ProtonTestPeer peer = new ProtonTestPeer(engine);
         engine.outputConsumer(peer);
@@ -321,7 +323,7 @@ public class ProtonEngineTest extends ProtonEngineTestSupport {
 
     @Test
     public void testTickLocalTimeout() throws EngineStateException {
-        ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
         ProtonTestPeer peer = new ProtonTestPeer(engine);
         engine.outputConsumer(peer);
@@ -373,7 +375,7 @@ public class ProtonEngineTest extends ProtonEngineTestSupport {
     }
 
     private void doTickWithNoIdleTimeoutGivesZeroDeadlineTestImpl(boolean useZero) throws EngineStateException {
-        ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
         ProtonTestPeer peer = new ProtonTestPeer(engine);
         engine.outputConsumer(peer);
@@ -422,7 +424,7 @@ public class ProtonEngineTest extends ProtonEngineTestSupport {
 
     private void doTickWithLocalTimeoutTestImpl(int localTimeout, long tick1, long expectedDeadline1, long expectedDeadline2, long expectedDeadline3) throws EngineStateException {
         this.failure = null;
-        ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
         ProtonTestPeer peer = new ProtonTestPeer(engine);
         engine.outputConsumer(peer);
@@ -491,7 +493,7 @@ public class ProtonEngineTest extends ProtonEngineTestSupport {
     }
 
     private void doTickWithRemoteTimeoutTestImpl(int remoteTimeoutHalf, long tick1, long expectedDeadline1, long expectedDeadline2, long expectedDeadline3) throws EngineStateException {
-        ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
         ProtonTestPeer peer = new ProtonTestPeer(engine);
         engine.outputConsumer(peer);
@@ -573,7 +575,7 @@ public class ProtonEngineTest extends ProtonEngineTestSupport {
                                                 long expectedDeadline1, long expectedDeadline2, long expectedDeadline3) throws EngineStateException {
 
         this.failure = null;
-        ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
         ProtonTestPeer peer = new ProtonTestPeer(engine);
         engine.outputConsumer(peer);
@@ -654,7 +656,7 @@ public class ProtonEngineTest extends ProtonEngineTestSupport {
         assertTrue(offset < localTimeout);
         assertTrue(offset > remoteTimeoutHalf);
 
-        ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
         ProtonTestPeer peer = new ProtonTestPeer(engine);
         engine.outputConsumer(peer);
@@ -733,7 +735,7 @@ public class ProtonEngineTest extends ProtonEngineTestSupport {
         assertTrue(offset > localTimeout);
         assertTrue(offset < remoteTimeoutHalf);
 
-        ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
         ProtonTestPeer peer = new ProtonTestPeer(engine);
         engine.outputConsumer(peer);
@@ -813,7 +815,7 @@ public class ProtonEngineTest extends ProtonEngineTestSupport {
         long offset = 500;
         assertTrue(offset < localTimeout);
 
-        ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
         ProtonTestPeer peer = new ProtonTestPeer(engine);
         engine.outputConsumer(peer);
@@ -893,7 +895,7 @@ public class ProtonEngineTest extends ProtonEngineTestSupport {
         long offset = 500;
         assertTrue(offset < remoteTimeoutHalf);
 
-        ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
         ProtonTestPeer peer = new ProtonTestPeer(engine);
         engine.outputConsumer(peer);

@@ -25,33 +25,56 @@ import org.apache.qpid.proton4j.amqp.security.SaslMechanisms;
 import org.apache.qpid.proton4j.amqp.security.SaslOutcome;
 import org.apache.qpid.proton4j.amqp.security.SaslResponse;
 import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.engine.EngineHandlerContext;
 import org.apache.qpid.proton4j.engine.HeaderFrame;
 import org.apache.qpid.proton4j.engine.impl.sasl.SaslConstants.SaslOutcomes;
 import org.apache.qpid.proton4j.engine.impl.sasl.SaslConstants.SaslStates;
+import org.apache.qpid.proton4j.engine.sasl.SaslServerContext;
+import org.apache.qpid.proton4j.engine.sasl.SaslServerListener;
 
-public class ProtonSaslServerContext extends ProtonSaslContext {
+public class ProtonSaslServerContext extends ProtonSaslContext implements SaslServerContext {
 
-    private final SaslServerListener listener;
+    private SaslServerListener listener;
 
     private boolean allowNonSasl;
 
-    public ProtonSaslServerContext(ProtonSaslHandler handler, SaslServerListener listener) {
+    public ProtonSaslServerContext(ProtonSaslHandler handler) {
         super(handler);
-
-        this.listener = listener;
     }
 
     @Override
-    Role getRole() {
+    public Role getRole() {
         return Role.SERVER;
     }
 
-    /**
-     * @return the SASL server listener.
-     */
+    @Override
     public SaslServerListener getServerListener() {
         return listener;
+    }
+
+    @Override
+    public SaslServerContext setSaslServerListener(SaslServerListener listener) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public SaslServerContext sendMechanisms(String[] mechanisms) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public SaslServerContext sendChallenge(ProtonBuffer challenge) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public SaslServerContext sendOutcome(org.apache.qpid.proton4j.engine.sasl.SaslOutcome outcome, ProtonBuffer additional) {
+        // TODO Auto-generated method stub
+        return null;
     }
 
     //----- Remote Client state ----------------------------------------------//
@@ -65,6 +88,9 @@ public class ProtonSaslServerContext extends ProtonSaslContext {
     }
 
     //----- Context mutable state --------------------------------------------//
+
+    // TODO - Remove these setters and require listener to initiate work
+    //        we can leave accessors to fetch what was done.
 
     public String[] getMechanisms() {
         String[] mechanisms = null;
@@ -88,7 +114,6 @@ public class ProtonSaslServerContext extends ProtonSaslContext {
 
             this.serverMechanisms = serverMechanisms;
         } else {
-            // TODO What is the right error here.
             throw new IllegalStateException("Server Mechanisms arlready sent to remote");
         }
     }
@@ -217,7 +242,7 @@ public class ProtonSaslServerContext extends ProtonSaslContext {
         initReceived = true;
 
         // TODO - Should we use ProtonBuffer slices as response containers ?
-        listener.onSaslInit(this, saslInit.getInitialResponse());
+//        listener.onSaslInit(this, saslInit.getInitialResponse());
 
         pumpServerState(context);
     }
@@ -225,7 +250,7 @@ public class ProtonSaslServerContext extends ProtonSaslContext {
     @Override
     public void handleResponse(SaslResponse saslResponse, EngineHandlerContext context) {
         // TODO - Should we use ProtonBuffer slices as response containers ?
-        listener.onSaslResponse(this, saslResponse.getResponse());
+//        listener.onSaslResponse(this, saslResponse.getResponse());
 
         pumpServerState(context);
     }

@@ -25,63 +25,30 @@ import org.apache.qpid.proton4j.engine.EngineHandlerContext;
 import org.apache.qpid.proton4j.engine.HeaderFrame;
 import org.apache.qpid.proton4j.engine.ProtocolFrame;
 import org.apache.qpid.proton4j.engine.SaslFrame;
+import org.apache.qpid.proton4j.engine.impl.ProtonEngine;
+import org.apache.qpid.proton4j.engine.impl.ProtonEngineNoOpSaslDriver;
 
 /**
  * Base class used for common portions of the SASL processing pipeline.
  */
 public class ProtonSaslHandler implements EngineHandler {
 
-    private int maxFrameSizeLimit = SaslConstants.MIN_MAX_SASL_FRAME_SIZE;
-
+    private final ProtonEngineSaslDriver driver = new ProtonEngineSaslDriver();
     private ProtonSaslContext saslContext;
 
-    public void setMaxSaslFrameSize(int maxFrameSize) {
-        this.maxFrameSizeLimit = Math.max(SaslConstants.MIN_MAX_SASL_FRAME_SIZE, maxFrameSize);
-    }
-
-    public int getMaxSaslFrameSize() {
-        return maxFrameSizeLimit;
-    }
-
     public boolean isDone() {
-        return saslContext.isDone();
+        return saslContext != null && saslContext.isDone();
     }
 
-    // TODO Remove these factory methods and create directly
-
-    public static ProtonSaslHandler client(SaslClientListener listener) {
-        if (listener == null) {
-            throw new IllegalArgumentException("SaslClientListener must not be null");
-        }
-
-        ProtonSaslHandler handler = new ProtonSaslHandler();
-        ProtonSaslClientContext context = new ProtonSaslClientContext(handler, listener);
-        handler.saslContext = context;
-
-        // Allow the application a change to configure the client handler
-        listener.initialize(context);
-
-        return handler;
+    @Override
+    public void handlerAdded(EngineHandlerContext context) throws Exception {
+        ((ProtonEngine) context.getEngine()).registerSaslDriver(driver);
     }
 
-    // TODO Remove these factory methods
-
-    public static ProtonSaslHandler server(SaslServerListener listener) {
-        if (listener == null) {
-            throw new IllegalArgumentException("SaslServerListener must not be null");
-        }
-
-        ProtonSaslHandler handler = new ProtonSaslHandler();
-        ProtonSaslServerContext context = new ProtonSaslServerContext(handler, listener);
-        handler.saslContext = context;
-
-        // Allow the application a change to configure the server handler
-        listener.initialize(context);
-
-        return handler;
+    @Override
+    public void handlerRemoved(EngineHandlerContext context) throws Exception {
+        ((ProtonEngine) context.getEngine()).registerSaslDriver(ProtonEngineNoOpSaslDriver.INSTANCE);
     }
-
-    //----- TransportHandler implementation ----------------------------------//
 
     @Override
     public void handleRead(EngineHandlerContext context, HeaderFrame header) {
@@ -95,7 +62,6 @@ public class ProtonSaslHandler implements EngineHandler {
     @Override
     public void handleRead(EngineHandlerContext context, SaslFrame frame) {
         if (isDone()) {
-            // TODO specific error for this case.
             context.fireFailed(new IllegalStateException(
                 "Unexpected SASL Frame: SASL processing has already completed"));
         }
@@ -108,54 +74,43 @@ public class ProtonSaslHandler implements EngineHandler {
         if (isDone()) {
             context.fireRead(frame);
         } else {
-            // TODO - We shouldn't be receiving these here if not done as we should be
-            //        holding off on decoding the frames until after done and then passing
-            //        them along to the next layer.
-
-            // TODO specific error for this case.
             context.fireFailed(new IllegalStateException(
                 "Unexpected AMQP Frame: SASL processing not yet completed"));
         }
     }
 
-    // TODO - Decide what to implement and what to allow as a pass through
-
     @Override
     public void handleWrite(EngineHandlerContext context, AMQPHeader header) {
         if (isDone()) {
-            // TODO We are done with sasl so this can be written to the transport as bytes
+            context.fireWrite(header);
         } else {
-            // TODO We are not done so this is not valid here and we should fail.
+            context.fireFailed(new IllegalStateException(
+                "Unexpected AMQP Frame: SASL processing not yet completed"));
         }
     }
 
     @Override
     public void handleWrite(EngineHandlerContext context, Performative performative, int channel, ProtonBuffer payload, Runnable payloadToLarge) {
         if (isDone()) {
-            // TODO We are done with sasl so this can be written to the transport as bytes
+            context.fireWrite(performative, channel, payload, payloadToLarge);
         } else {
-            // TODO We are not done so this is not valid here and we should fail.
+            context.fireFailed(new IllegalStateException(
+                "Unexpected AMQP Performative: SASL processing not yet completed"));
         }
     }
 
     @Override
     public void handleWrite(EngineHandlerContext context, SaslPerformative performative) {
-        // TODO - Currently context routes it's writes here, but that presents some issues.
-        //        Might be better if context does all the encoding and we decide on rules for
-        //        what happens if user manually writes a sasl performative.
-
         if (isDone()) {
-            // TODO We are done so writing a performative would be invalid.
+            context.fireFailed(new IllegalStateException(
+                "Unexpected SASL Performative: SASL processing has yet completed"));
         } else {
-            // TODO We are not done but the context should process any external sasl performatives ?
-            //      or is this always invalid and async sasl work should be done via the context ?
+            context.fireWrite(performative);
         }
     }
 
     @Override
     public void handleWrite(EngineHandlerContext context, ProtonBuffer buffer) {
-        // TODO - in this case we don't know what is being written, if not done we should probably fail
-        //        since we are controlling SASL here and if someone is trying to circumvent this handler
-        //        that is not right.
+        context.fireWrite(buffer);
     }
 }
