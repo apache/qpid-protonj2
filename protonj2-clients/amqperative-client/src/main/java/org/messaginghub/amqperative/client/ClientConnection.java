@@ -31,8 +31,8 @@ import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 import java.util.function.Supplier;
 
-import org.apache.qpid.proton4j.engine.impl.ProtonEngine;
-import org.apache.qpid.proton4j.engine.impl.ProtonEngineFactory;
+import org.apache.qpid.proton4j.engine.Engine;
+import org.apache.qpid.proton4j.engine.EngineFactory;
 import org.messaginghub.amqperative.Client;
 import org.messaginghub.amqperative.Connection;
 import org.messaginghub.amqperative.Message;
@@ -76,7 +76,7 @@ public class ClientConnection implements Connection {
     private final ClientFutureFactory futureFactoy;
 
     private final Map<ClientFuture<?>, ClientFuture<?>> requests = new ConcurrentHashMap<>();
-    private final ProtonEngine engine = ProtonEngineFactory.createDefaultEngine();
+    private final Engine engine = EngineFactory.PROTON.createNonSaslEngine(); // TODO - Use SASL
     private org.apache.qpid.proton4j.engine.Connection protonConnection;
     private ClientSession connectionSession;
     private ClientSender connectionSender;
@@ -364,7 +364,7 @@ public class ClientConnection implements Connection {
         return executor;
     }
 
-    ProtonEngine getEngine() {
+    Engine getEngine() {
         return engine;
     }
 

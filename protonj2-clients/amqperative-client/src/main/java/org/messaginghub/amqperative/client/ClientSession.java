@@ -30,7 +30,7 @@ import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 
-import org.apache.qpid.proton4j.engine.impl.ProtonEngine;
+import org.apache.qpid.proton4j.engine.Engine;
 import org.messaginghub.amqperative.Client;
 import org.messaginghub.amqperative.Connection;
 import org.messaginghub.amqperative.Receiver;
@@ -249,7 +249,7 @@ public class ClientSession implements Session {
         return serializer;
     }
 
-    ProtonEngine getEngine() {
+    Engine getEngine() {
         return connection.getEngine();
     }
 

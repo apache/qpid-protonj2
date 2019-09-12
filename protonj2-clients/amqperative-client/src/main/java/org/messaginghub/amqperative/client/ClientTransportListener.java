@@ -16,8 +16,8 @@
  */
 package org.messaginghub.amqperative.client;
 
+import org.apache.qpid.proton4j.engine.Engine;
 import org.apache.qpid.proton4j.engine.exceptions.EngineStateException;
-import org.apache.qpid.proton4j.engine.impl.ProtonEngine;
 import org.apache.qpid.proton4j.netty.ProtonNettyByteBuffer;
 import org.messaginghub.amqperative.client.exceptions.ClientExceptionSupport;
 import org.messaginghub.amqperative.client.exceptions.ClientFailedException;
@@ -36,7 +36,7 @@ public class ClientTransportListener implements TransportListener {
     private static final Logger LOG = LoggerFactory.getLogger(ClientTransportListener.class);
 
     private final ClientConnection connection;
-    private final ProtonEngine engine;
+    private final Engine engine;
 
     public ClientTransportListener(ClientConnection connection) {
         this.connection = connection;
