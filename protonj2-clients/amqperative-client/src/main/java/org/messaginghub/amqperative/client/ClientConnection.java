@@ -345,15 +345,12 @@ public class ClientConnection implements Connection {
     ClientConnection open() {
         checkClosed();
         executor.execute(() -> {
+            // TODO - We aren't currently handling exceptions from the proton API methods
+            //        in any meaningful way so eventually we need to get round to doing that
             if (client.getContainerId() != null) {
                 protonConnection.setContainerId(client.getContainerId());
             }
-            options.configureConnection(protonConnection).open();
-
-            // TODO - As a simplification would it make sense to add tick and tickAuto to Connection in p4j
-            //             options.configureConnection(protonConnection).open().tickAuto(executor);
-
-            engine.tickAuto(executor);
+            options.configureConnection(protonConnection).open().tickAuto(executor);
         });
 
         return this;
