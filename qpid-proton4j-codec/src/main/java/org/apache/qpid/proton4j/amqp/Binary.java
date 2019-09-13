@@ -19,6 +19,9 @@ package org.apache.qpid.proton4j.amqp;
 import java.nio.ByteBuffer;
 import java.util.Collection;
 
+// TODO - Consider whether this class makes sense or if just using ProtonBuffer and or byte[]
+//        API in the codec and engine makes more sense and allow for more flexibility
+
 public final class Binary {
 
     private final byte[] data;
