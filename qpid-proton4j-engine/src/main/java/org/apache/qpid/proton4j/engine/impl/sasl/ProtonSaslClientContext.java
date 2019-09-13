@@ -16,12 +16,10 @@
  */
 package org.apache.qpid.proton4j.engine.impl.sasl;
 
-import org.apache.qpid.proton4j.amqp.Binary;
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.security.SaslChallenge;
 import org.apache.qpid.proton4j.amqp.security.SaslMechanisms;
 import org.apache.qpid.proton4j.amqp.security.SaslOutcome;
-import org.apache.qpid.proton4j.amqp.security.SaslResponse;
 import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.engine.EngineHandlerContext;
@@ -33,6 +31,9 @@ import org.apache.qpid.proton4j.engine.sasl.SaslClientListener;
 public class ProtonSaslClientContext extends ProtonSaslContext implements SaslClientContext {
 
     private SaslClientListener listener;
+
+    private boolean mechanismsReceived;
+    private boolean mechanismChosen;
 
     public ProtonSaslClientContext(ProtonSaslHandler handler) {
         super(handler);
@@ -97,14 +98,6 @@ public class ProtonSaslClientContext extends ProtonSaslContext implements SaslCl
         chosenMechanism = Symbol.valueOf(mechanism);
     }
 
-    public Binary getResponse() {
-        return response;
-    }
-
-    public void setResponse(Binary response) {
-        this.response = response;
-    }
-
     //----- SASL Frame event handlers ----------------------------------------//
 
     @Override
@@ -135,12 +128,12 @@ public class ProtonSaslClientContext extends ProtonSaslContext implements SaslCl
         // TODO - Should we use ProtonBuffer slices as response containers ?
 //        listener.onSaslChallenge(this, saslChallenge.getChallenge());
 
-        if (state == SaslStates.SASL_STEP && getResponse() != null) {
-            SaslResponse response = new SaslResponse();
-            response.setResponse(getResponse());
-            setResponse(null);
-            saslHandler.handleWrite(context, response);
-        }
+//        if (state == SaslStates.SASL_STEP && getResponse() != null) {
+//            SaslResponse response = new SaslResponse();
+//            response.setResponse(getResponse());
+//            setResponse(null);
+//            saslHandler.handleWrite(context, response);
+//        }
 
         // TODO - We probably want to support asynchronous triggering
     }

@@ -16,7 +16,6 @@
  */
 package org.apache.qpid.proton4j.engine.impl.sasl;
 
-import org.apache.qpid.proton4j.amqp.Binary;
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.security.SaslChallenge;
 import org.apache.qpid.proton4j.amqp.security.SaslInit;
@@ -25,7 +24,6 @@ import org.apache.qpid.proton4j.amqp.security.SaslOutcome;
 import org.apache.qpid.proton4j.amqp.security.SaslPerformative;
 import org.apache.qpid.proton4j.amqp.security.SaslResponse;
 import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
-import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.engine.EngineHandlerContext;
 import org.apache.qpid.proton4j.engine.impl.sasl.SaslConstants.SaslOutcomes;
 import org.apache.qpid.proton4j.engine.impl.sasl.SaslConstants.SaslStates;
@@ -47,20 +45,8 @@ public abstract class ProtonSaslContext implements SaslContext, AMQPHeader.Heade
 
     protected boolean done;
 
-    protected ProtonBuffer pending;
-
-    protected boolean mechanismsSent;
-    protected boolean mechanismsReceived;
-
     protected boolean headerWritten;
     protected boolean headerReceived;
-
-    protected boolean initReceived;
-    protected boolean initSent;
-
-    protected Binary challenge;
-    protected Binary response;
-    protected Binary additionalData;
 
     public ProtonSaslContext(ProtonSaslHandler handler) {
         this.saslHandler = handler;

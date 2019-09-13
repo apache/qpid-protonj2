@@ -19,9 +19,7 @@ package org.apache.qpid.proton4j.engine.impl.sasl;
 import org.apache.qpid.proton4j.engine.EngineSaslDriver;
 import org.apache.qpid.proton4j.engine.impl.sasl.SaslConstants.SaslOutcomes;
 import org.apache.qpid.proton4j.engine.impl.sasl.SaslConstants.SaslStates;
-import org.apache.qpid.proton4j.engine.sasl.SaslClientContext;
 import org.apache.qpid.proton4j.engine.sasl.SaslOutcome;
-import org.apache.qpid.proton4j.engine.sasl.SaslServerContext;
 
 /**
  * Proton4J Engine SASL Context implementation.
@@ -33,35 +31,41 @@ public class ProtonEngineSaslDriver implements EngineSaslDriver {
      */
     public final static int MIN_MAX_SASL_FRAME_SIZE = 4096;
 
+    private final ProtonSaslHandler handler;
+
     private SaslState saslState = SaslState.IDLE;
     private SaslOutcome saslOutcome;
     private int maxFrameSize = MIN_MAX_SASL_FRAME_SIZE;
     private ProtonSaslContext context;
 
+    public ProtonEngineSaslDriver(ProtonSaslHandler handler) {
+        this.handler = handler;
+    }
+
     @Override
-    public SaslClientContext client() {
+    public ProtonSaslClientContext client() {
         if (context != null && context.isServer()) {
             throw new IllegalStateException("Engine SASL Context already operating in server mode");
         }
 
         if (context == null) {
-            // TODO
+            context = new ProtonSaslClientContext(handler);
         }
 
-        return (SaslClientContext) context;
+        return (ProtonSaslClientContext) context;
     }
 
     @Override
-    public SaslServerContext server() {
+    public ProtonSaslServerContext server() {
         if (context != null && context.isClient()) {
             throw new IllegalStateException("Engine SASL Context already operating in client mode");
         }
 
         if (context == null) {
-            // TODO
+            context = new ProtonSaslServerContext(handler);
         }
 
-        return (SaslServerContext) context;
+        return (ProtonSaslServerContext) context;
     }
 
     @Override
@@ -89,6 +93,10 @@ public class ProtonEngineSaslDriver implements EngineSaslDriver {
     }
 
     //----- Internal Engine SASL Context API
+
+    boolean isInitialized() {
+        return context != null;
+    }
 
     protected SaslStates classifyStateFromOutcome(SaslOutcomes outcome) {
         return outcome == SaslOutcomes.SASL_OK ? SaslStates.SASL_PASS : SaslStates.SASL_FAIL;

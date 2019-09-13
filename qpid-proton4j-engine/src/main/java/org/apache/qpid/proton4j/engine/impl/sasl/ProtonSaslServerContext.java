@@ -16,13 +16,9 @@
  */
 package org.apache.qpid.proton4j.engine.impl.sasl;
 
-import org.apache.qpid.proton4j.amqp.Binary;
 import org.apache.qpid.proton4j.amqp.Symbol;
-import org.apache.qpid.proton4j.amqp.security.SaslChallenge;
-import org.apache.qpid.proton4j.amqp.security.SaslCode;
 import org.apache.qpid.proton4j.amqp.security.SaslInit;
 import org.apache.qpid.proton4j.amqp.security.SaslMechanisms;
-import org.apache.qpid.proton4j.amqp.security.SaslOutcome;
 import org.apache.qpid.proton4j.amqp.security.SaslResponse;
 import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
@@ -38,6 +34,9 @@ public class ProtonSaslServerContext extends ProtonSaslContext implements SaslSe
     private SaslServerListener listener;
 
     private boolean allowNonSasl;
+
+    private boolean mechanismsSent;
+    private boolean mechanismChosen;
 
     public ProtonSaslServerContext(ProtonSaslHandler handler) {
         super(handler);
@@ -116,22 +115,6 @@ public class ProtonSaslServerContext extends ProtonSaslContext implements SaslSe
         } else {
             throw new IllegalStateException("Server Mechanisms arlready sent to remote");
         }
-    }
-
-    public Binary getChallenge() {
-        return challenge;
-    }
-
-    public void setChallenge(Binary challenge) {
-        this.challenge = challenge;
-    }
-
-    public Binary getAdditionalData() {
-        return additionalData;
-    }
-
-    public void setAdditionalData(Binary additionalData) {
-        this.additionalData = additionalData;
     }
 
     /**
@@ -231,7 +214,7 @@ public class ProtonSaslServerContext extends ProtonSaslContext implements SaslSe
 
     @Override
     public void handleInit(SaslInit saslInit, EngineHandlerContext context) {
-        if (initReceived) {
+        if (mechanismChosen) {
             // TODO - Handle SaslInit already read with better error
             context.fireFailed(new IllegalStateException("SASL Handler received second SASL Init"));
             return;
@@ -239,7 +222,7 @@ public class ProtonSaslServerContext extends ProtonSaslContext implements SaslSe
 
         hostname = saslInit.getHostname();
         chosenMechanism = saslInit.getMechanism();
-        initReceived = true;
+        mechanismChosen = true;
 
         // TODO - Should we use ProtonBuffer slices as response containers ?
 //        listener.onSaslInit(this, saslInit.getInitialResponse());
@@ -256,21 +239,21 @@ public class ProtonSaslServerContext extends ProtonSaslContext implements SaslSe
     }
 
     private void pumpServerState(EngineHandlerContext context) {
-        if (state == SaslStates.SASL_STEP && getChallenge() != null) {
-            SaslChallenge challenge = new SaslChallenge();
-            challenge.setChallenge(getChallenge());
-            setChallenge(null);
-            context.fireWrite(challenge);
-        }
-
-        if (getOutcome() != SaslOutcomes.SASL_NONE) {
-            SaslOutcome outcome = new SaslOutcome();
-            // TODO Clean up SaslCode mechanics
-            outcome.setCode(SaslCode.values()[getOutcome().getCode()]);
-            outcome.setAdditionalData(additionalData);
-            setAdditionalData(null);
-            done = true;
-            context.fireWrite(outcome);
-        }
+//        if (state == SaslStates.SASL_STEP && getChallenge() != null) {
+//            SaslChallenge challenge = new SaslChallenge();
+//            challenge.setChallenge(getChallenge());
+//            setChallenge(null);
+//            context.fireWrite(challenge);
+//        }
+//
+//        if (getOutcome() != SaslOutcomes.SASL_NONE) {
+//            SaslOutcome outcome = new SaslOutcome();
+//            // TODO Clean up SaslCode mechanics
+//            outcome.setCode(SaslCode.values()[getOutcome().getCode()]);
+//            outcome.setAdditionalData(additionalData);
+//            setAdditionalData(null);
+//            done = true;
+//            context.fireWrite(outcome);
+//        }
     }
 }

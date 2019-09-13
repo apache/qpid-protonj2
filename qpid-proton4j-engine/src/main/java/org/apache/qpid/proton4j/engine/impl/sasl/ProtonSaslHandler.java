@@ -33,8 +33,13 @@ import org.apache.qpid.proton4j.engine.impl.ProtonEngineNoOpSaslDriver;
  */
 public class ProtonSaslHandler implements EngineHandler {
 
-    private final ProtonEngineSaslDriver driver = new ProtonEngineSaslDriver();
+    private final ProtonEngineSaslDriver driver;
+
     private ProtonSaslContext saslContext;
+
+    public ProtonSaslHandler() {
+        this.driver = new ProtonEngineSaslDriver(this);
+    }
 
     public boolean isDone() {
         return saslContext != null && saslContext.isDone();
@@ -54,9 +59,14 @@ public class ProtonSaslHandler implements EngineHandler {
     public void handleRead(EngineHandlerContext context, HeaderFrame header) {
         if (isDone()) {
             context.fireRead(header);
-        }
+        } else {
+            if (!driver.isInitialized()) {
+                saslContext = driver.server();
+                // TODO - Initialize the context as engine must be started to get here.
+            }
 
-        header.invoke(saslContext, context);
+            header.invoke(saslContext, context);
+        }
     }
 
     @Override
@@ -64,9 +74,9 @@ public class ProtonSaslHandler implements EngineHandler {
         if (isDone()) {
             context.fireFailed(new IllegalStateException(
                 "Unexpected SASL Frame: SASL processing has already completed"));
+        } else {
+            frame.invoke(safeGetSaslContext("Cannot process incoming SASL performative, driver not yet initialized"), context);
         }
-
-        frame.invoke(saslContext, context);
     }
 
     @Override
@@ -112,5 +122,13 @@ public class ProtonSaslHandler implements EngineHandler {
     @Override
     public void handleWrite(EngineHandlerContext context, ProtonBuffer buffer) {
         context.fireWrite(buffer);
+    }
+
+    private ProtonSaslContext safeGetSaslContext(String errorMessage) {
+        if (saslContext != null) {
+            return saslContext;
+        }
+
+        throw new IllegalStateException(errorMessage);
     }
 }
