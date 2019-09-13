@@ -26,6 +26,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
@@ -66,8 +67,8 @@ public class ClientSession implements Session {
     private final ScheduledExecutorService serializer;
     private final String sessionId;
     private volatile int closed;
-    private volatile int senderCounter;
-    private volatile int receiverCounter;
+    private final AtomicInteger senderCounter = new AtomicInteger();
+    private final AtomicInteger receiverCounter = new AtomicInteger();
 
     private volatile ThreadPoolExecutor deliveryExecutor;
     private final AtomicReference<Thread> deliveryThread = new AtomicReference<Thread>();
@@ -285,11 +286,11 @@ public class ClientSession implements Session {
     }
 
     String nextReceiverId() {
-        return sessionId + ":" + (++receiverCounter);
+        return sessionId + ":" + receiverCounter.incrementAndGet();
     }
 
     String nextSenderId() {
-        return sessionId + ":" + (++senderCounter);
+        return sessionId + ":" + senderCounter.incrementAndGet();
     }
 
     boolean isClosed() {

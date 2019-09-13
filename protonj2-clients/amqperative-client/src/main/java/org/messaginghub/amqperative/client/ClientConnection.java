@@ -87,7 +87,7 @@ public class ClientConnection implements Connection {
     private ClientFuture<Connection> openFuture;
     private ClientFuture<Connection> closeFuture;
     private volatile int closed;
-    private volatile int sessionCounter;
+    private final AtomicInteger sessionCounter = new AtomicInteger();
     private volatile ClientException failureCause;
     private final String connectionId;
 
@@ -387,7 +387,7 @@ public class ClientConnection implements Connection {
     }
 
     String nextSessionId() {
-        return getId() + ":" + (++sessionCounter);
+        return getId() + ":" + sessionCounter.incrementAndGet();
     }
 
     URI getRemoteURI() {
