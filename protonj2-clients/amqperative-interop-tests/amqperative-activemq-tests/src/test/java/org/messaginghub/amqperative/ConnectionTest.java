@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.qpid.jms;
+package org.messaginghub.amqperative;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertSame;
@@ -23,10 +23,10 @@ import java.net.URI;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
-import org.apache.qpid.jms.support.AMQPerativeTestSupport;
-import org.apache.qpid.jms.support.Wait;
 import org.junit.Test;
 import org.messaginghub.amqperative.Connection;
+import org.messaginghub.amqperative.support.AMQPerativeTestSupport;
+import org.messaginghub.amqperative.support.Wait;
 import org.messaginghub.amqperative.Client;
 import org.messaginghub.amqperative.ClientOptions;
 
