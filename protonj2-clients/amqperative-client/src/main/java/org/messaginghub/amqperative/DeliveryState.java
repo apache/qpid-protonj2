@@ -18,10 +18,10 @@ package org.messaginghub.amqperative;
 
 import java.util.Map;
 
-import org.messaginghub.amqperative.client.ClientDeliveryState.ClientAccepted;
-import org.messaginghub.amqperative.client.ClientDeliveryState.ClientModified;
-import org.messaginghub.amqperative.client.ClientDeliveryState.ClientRejected;
-import org.messaginghub.amqperative.client.ClientDeliveryState.ClientReleased;
+import org.messaginghub.amqperative.impl.ClientDeliveryState.ClientAccepted;
+import org.messaginghub.amqperative.impl.ClientDeliveryState.ClientModified;
+import org.messaginghub.amqperative.impl.ClientDeliveryState.ClientRejected;
+import org.messaginghub.amqperative.impl.ClientDeliveryState.ClientReleased;
 
 /**
  * Conveys the outcome of a Delivery either incoming or outgoing.

@@ -16,7 +16,7 @@
  */
 package org.messaginghub.amqperative.futures;
 
-import org.messaginghub.amqperative.client.ClientException;
+import org.messaginghub.amqperative.impl.ClientException;
 
 /**
  * Factory for client future instances that will create specific versions based on

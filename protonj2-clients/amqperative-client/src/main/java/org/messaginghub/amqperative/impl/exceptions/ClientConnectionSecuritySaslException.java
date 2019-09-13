@@ -14,29 +14,33 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.messaginghub.amqperative.futures;
-
-import org.messaginghub.amqperative.impl.ClientException;
+package org.messaginghub.amqperative.impl.exceptions;
 
 /**
- * Simple NoOp implementation used when the result of the operation does not matter.
+ * Security Exception used to indicate a security violation has occurred.
  */
-public class NoOpAsyncResult implements AsyncResult<Void> {
+public class ClientConnectionSecuritySaslException extends ClientConnectionSecurityException {
 
-    public final static NoOpAsyncResult INSTANCE = new NoOpAsyncResult();
+    private static final long serialVersionUID = 313318720407251822L;
+    private static final int SASL_SYS_TEMP = 4;
 
-    @Override
-    public void failed(ClientException result) {
+    private int outcome = -1;
 
+    public ClientConnectionSecuritySaslException(String message) {
+        this(message, -1, null);
     }
 
-    @Override
-    public void complete(Void result) {
-
+    public ClientConnectionSecuritySaslException(String message, int outcome) {
+        this(message, outcome, null);
     }
 
-    @Override
-    public boolean isComplete() {
-        return true;
+    public ClientConnectionSecuritySaslException(String message, int outcome, Throwable cause) {
+        super(message, cause);
+
+        this.outcome = outcome;
+    }
+
+    public boolean isSysTempFailure() {
+        return outcome == SASL_SYS_TEMP;
     }
 }

@@ -14,29 +14,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.messaginghub.amqperative.futures;
+package org.messaginghub.amqperative.impl.exceptions;
 
 import org.messaginghub.amqperative.impl.ClientException;
 
 /**
- * Simple NoOp implementation used when the result of the operation does not matter.
+ * Exception type that is thrown when the provider has encountered an unrecoverable error.
  */
-public class NoOpAsyncResult implements AsyncResult<Void> {
+public class ClientIOException extends ClientException {
 
-    public final static NoOpAsyncResult INSTANCE = new NoOpAsyncResult();
+    private static final long serialVersionUID = 7022573614211991693L;
 
-    @Override
-    public void failed(ClientException result) {
-
+    public ClientIOException(String message) {
+        super(message);
     }
 
-    @Override
-    public void complete(Void result) {
-
-    }
-
-    @Override
-    public boolean isComplete() {
-        return true;
+    public ClientIOException(String message, Throwable cause) {
+        super(message, cause);
     }
 }

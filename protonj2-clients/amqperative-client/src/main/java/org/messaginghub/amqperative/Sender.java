@@ -20,7 +20,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.function.Consumer;
 
-import org.messaginghub.amqperative.client.ClientException;
+import org.messaginghub.amqperative.impl.ClientException;
 
 public interface Sender {
 

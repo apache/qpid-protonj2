@@ -29,7 +29,7 @@ import org.apache.qpid.proton4j.amqp.transport.ConnectionError;
 import org.apache.qpid.proton4j.amqp.transport.ErrorCondition;
 import org.junit.Ignore;
 import org.junit.Test;
-import org.messaginghub.amqperative.client.ClientException;
+import org.messaginghub.amqperative.impl.ClientException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

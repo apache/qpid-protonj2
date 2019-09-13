@@ -22,7 +22,7 @@ import java.util.Map;
 import org.apache.qpid.proton4j.amqp.Binary;
 import org.apache.qpid.proton4j.amqp.messaging.AmqpValue;
 import org.apache.qpid.proton4j.amqp.messaging.Data;
-import org.messaginghub.amqperative.client.ClientMessage;
+import org.messaginghub.amqperative.impl.ClientMessage;
 
 /**
  * Message object that provides a high level abstraction to raw AMQP types

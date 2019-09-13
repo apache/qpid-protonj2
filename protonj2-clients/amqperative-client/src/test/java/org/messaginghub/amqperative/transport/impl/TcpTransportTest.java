@@ -36,7 +36,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.messaginghub.amqperative.TransportOptions;
-import org.messaginghub.amqperative.client.ClientThreadFactory;
+import org.messaginghub.amqperative.impl.ClientThreadFactory;
 import org.messaginghub.amqperative.test.AMQPerativeTestCase;
 import org.messaginghub.amqperative.test.Wait;
 import org.messaginghub.amqperative.transport.Transport;

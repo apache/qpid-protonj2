@@ -15,7 +15,7 @@ import org.apache.qpid.proton4j.amqp.transport.ErrorCondition;
 import org.apache.qpid.proton4j.amqp.transport.Role;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.junit.Test;
-import org.messaginghub.amqperative.client.exceptions.ClientSendTimedOutException;
+import org.messaginghub.amqperative.impl.exceptions.ClientSendTimedOutException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

@@ -18,7 +18,7 @@ package org.messaginghub.amqperative;
 
 import java.util.concurrent.Future;
 
-import org.messaginghub.amqperative.client.ClientException;
+import org.messaginghub.amqperative.impl.ClientException;
 
 /**
  * Connection

@@ -18,8 +18,8 @@ package org.messaginghub.amqperative;
 
 import java.util.Objects;
 
-import org.messaginghub.amqperative.client.ClientInstance;
-import org.messaginghub.amqperative.client.ClientInstanceOptions;
+import org.messaginghub.amqperative.impl.ClientInstance;
+import org.messaginghub.amqperative.impl.ClientInstanceOptions;
 
 /**
  * The Container that hosts AMQP Connections

@@ -14,29 +14,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.messaginghub.amqperative.futures;
+package org.messaginghub.amqperative.impl.exceptions;
 
 import org.messaginghub.amqperative.impl.ClientException;
 
 /**
- * Simple NoOp implementation used when the result of the operation does not matter.
+ * Thrown when an action request is not supported through this provider.
  */
-public class NoOpAsyncResult implements AsyncResult<Void> {
+public class ClientUnsupportedOperationException extends ClientException {
 
-    public final static NoOpAsyncResult INSTANCE = new NoOpAsyncResult();
+    private static final long serialVersionUID = -680156277783719903L;
 
-    @Override
-    public void failed(ClientException result) {
-
+    public ClientUnsupportedOperationException(String message) {
+        super(message);
     }
 
-    @Override
-    public void complete(Void result) {
-
-    }
-
-    @Override
-    public boolean isComplete() {
-        return true;
+    public ClientUnsupportedOperationException(String message, Throwable cause) {
+        super(message, cause);
     }
 }

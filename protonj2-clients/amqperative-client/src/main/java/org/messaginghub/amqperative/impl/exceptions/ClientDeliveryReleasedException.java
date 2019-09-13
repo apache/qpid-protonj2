@@ -14,29 +14,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.messaginghub.amqperative.futures;
+package org.messaginghub.amqperative.impl.exceptions;
 
 import org.messaginghub.amqperative.impl.ClientException;
 
 /**
- * Simple NoOp implementation used when the result of the operation does not matter.
+ * Thrown when a send fails because the remote released the delivery
  */
-public class NoOpAsyncResult implements AsyncResult<Void> {
+public class ClientDeliveryReleasedException extends ClientException {
 
-    public final static NoOpAsyncResult INSTANCE = new NoOpAsyncResult();
+    private static final long serialVersionUID = 4749969190587880823L;
 
-    @Override
-    public void failed(ClientException result) {
-
+    public ClientDeliveryReleasedException(String message) {
+        super(message);
     }
 
-    @Override
-    public void complete(Void result) {
-
-    }
-
-    @Override
-    public boolean isComplete() {
-        return true;
+    public ClientDeliveryReleasedException(String message, Throwable cause) {
+        super(message, cause);
     }
 }

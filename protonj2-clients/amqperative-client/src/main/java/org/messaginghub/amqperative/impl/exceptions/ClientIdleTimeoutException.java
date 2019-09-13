@@ -14,29 +14,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.messaginghub.amqperative.futures;
-
-import org.messaginghub.amqperative.impl.ClientException;
+package org.messaginghub.amqperative.impl.exceptions;
 
 /**
- * Simple NoOp implementation used when the result of the operation does not matter.
+ * Thrown when the Provider fails a connection due to idle timeout.
  */
-public class NoOpAsyncResult implements AsyncResult<Void> {
+public class ClientIdleTimeoutException extends ClientIOException {
 
-    public final static NoOpAsyncResult INSTANCE = new NoOpAsyncResult();
+    private static final long serialVersionUID = 7925210908123213499L;
 
-    @Override
-    public void failed(ClientException result) {
-
+    public ClientIdleTimeoutException(String message) {
+        super(message);
     }
 
-    @Override
-    public void complete(Void result) {
-
-    }
-
-    @Override
-    public boolean isComplete() {
-        return true;
+    public ClientIdleTimeoutException(String message, Throwable cause) {
+        super(message, cause);
     }
 }

@@ -14,29 +14,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.messaginghub.amqperative.futures;
+package org.messaginghub.amqperative.impl.exceptions;
 
-import org.messaginghub.amqperative.impl.ClientException;
+import java.io.IOException;
+import java.net.URI;
 
 /**
- * Simple NoOp implementation used when the result of the operation does not matter.
+ * {@link IOException} derivative that defines that the remote peer has requested that this
+ * connection be redirected to some alternative peer.
  */
-public class NoOpAsyncResult implements AsyncResult<Void> {
+public class ClientConnectionRedirectedException extends ClientConnectionRemotelyClosedException {
 
-    public final static NoOpAsyncResult INSTANCE = new NoOpAsyncResult();
+    private static final long serialVersionUID = 5872211116061710369L;
 
-    @Override
-    public void failed(ClientException result) {
+    private final URI redirect;
 
+    public ClientConnectionRedirectedException(String reason, URI redirect) {
+        super(reason);
+
+        this.redirect = redirect;
     }
 
-    @Override
-    public void complete(Void result) {
-
-    }
-
-    @Override
-    public boolean isComplete() {
-        return true;
+    /**
+     * @return the URI that represents the redirection.
+     */
+    public URI getRedirectionURI() {
+        return redirect;
     }
 }

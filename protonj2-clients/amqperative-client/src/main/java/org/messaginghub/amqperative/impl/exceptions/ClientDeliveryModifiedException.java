@@ -14,29 +14,37 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.messaginghub.amqperative.futures;
+package org.messaginghub.amqperative.impl.exceptions;
 
+import org.apache.qpid.proton4j.amqp.messaging.Modified;
 import org.messaginghub.amqperative.impl.ClientException;
 
 /**
- * Simple NoOp implementation used when the result of the operation does not matter.
+ * Thrown when a send fails because the remote modified the delivery
  */
-public class NoOpAsyncResult implements AsyncResult<Void> {
+public class ClientDeliveryModifiedException extends ClientException {
 
-    public final static NoOpAsyncResult INSTANCE = new NoOpAsyncResult();
+    private static final long serialVersionUID = 4099784529012859035L;
 
-    @Override
-    public void failed(ClientException result) {
+    private final Modified modification;
 
+    public ClientDeliveryModifiedException(String message, Modified modification) {
+        super(message);
+
+        this.modification = modification;
     }
 
-    @Override
-    public void complete(Void result) {
+    public ClientDeliveryModifiedException(String message, Throwable cause, Modified modification) {
+        super(message, cause);
 
+        this.modification = modification;
     }
 
-    @Override
-    public boolean isComplete() {
-        return true;
+    public boolean isDeliveryFailed() {
+        return modification.getDeliveryFailed();
+    }
+
+    public boolean isUndeliverableHere() {
+        return modification.getUndeliverableHere();
     }
 }

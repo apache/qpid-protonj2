@@ -14,29 +14,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.messaginghub.amqperative.futures;
-
-import org.messaginghub.amqperative.impl.ClientException;
+package org.messaginghub.amqperative.impl.exceptions;
 
 /**
- * Simple NoOp implementation used when the result of the operation does not matter.
+ * Thrown when a message send operation times out in the Provider layer.
  */
-public class NoOpAsyncResult implements AsyncResult<Void> {
+public class ClientSendTimedOutException extends ClientOperationTimedOutException {
 
-    public final static NoOpAsyncResult INSTANCE = new NoOpAsyncResult();
+    private static final long serialVersionUID = 222325890763309867L;
 
-    @Override
-    public void failed(ClientException result) {
+//    private final JmsMessage unsentMessage;  TODO
 
+    public ClientSendTimedOutException(String reason) {
+        super(reason);
     }
 
-    @Override
-    public void complete(Void result) {
+//    public ProviderSendTimedOutException(String reason, JmsMessage unsentMessage) {
+//        super(reason, null);
+//        this.unsentMessage = unsentMessage;
+//    }
 
-    }
-
-    @Override
-    public boolean isComplete() {
-        return true;
-    }
+//    public JmsMessage getUnsentMessage() {
+//        return unsentMessage;
+//    }
 }

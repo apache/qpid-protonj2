@@ -14,29 +14,36 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.messaginghub.amqperative.futures;
+package org.messaginghub.amqperative.impl;
 
-import org.messaginghub.amqperative.impl.ClientException;
+import org.messaginghub.amqperative.ClientOptions;
+import org.messaginghub.amqperative.util.IdGenerator;
 
 /**
- * Simple NoOp implementation used when the result of the operation does not matter.
+ * Container options used for default
  */
-public class NoOpAsyncResult implements AsyncResult<Void> {
+public final class ClientInstanceOptions extends ClientOptions {
 
-    public final static NoOpAsyncResult INSTANCE = new NoOpAsyncResult();
+    private final IdGenerator CONTAINER_ID_GENERATOR = new IdGenerator();
 
-    @Override
-    public void failed(ClientException result) {
+    private final String clientUniqueId = CONTAINER_ID_GENERATOR.generateId();
 
+    public ClientInstanceOptions() {
+        super();
+        setContainerId(clientUniqueId);
     }
 
-    @Override
-    public void complete(Void result) {
+    public ClientInstanceOptions(ClientOptions options) {
+        if (options != null) {
+            options.copyInto(this);
+        }
 
+        if (getContainerId() == null || getContainerId().isEmpty()) {
+            setContainerId(clientUniqueId);
+        }
     }
 
-    @Override
-    public boolean isComplete() {
-        return true;
+    String getClientUniqueId() {
+        return clientUniqueId;
     }
 }
