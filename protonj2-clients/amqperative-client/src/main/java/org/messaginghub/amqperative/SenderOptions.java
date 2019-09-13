@@ -25,9 +25,11 @@ import java.util.Map;
  */
 public class SenderOptions {
 
+    // TODO: simplify configuration options for things like durable subs, shared subs? Or add a helper to create the options?
+
     private long sendTimeout = ConnectionOptions.DEFAULT_SEND_TIMEOUT;
     private long requestTimeout = ConnectionOptions.DEFAULT_REQUEST_TIMEOUT;
-    private long connectTimeout = ConnectionOptions.DEFAULT_CONNECT_TIMEOUT;
+    private long openTimeout = ConnectionOptions.DEFAULT_OPEN_TIMEOUT;
     private long closeTimeout = ConnectionOptions.DEFAULT_CLOSE_TIMEOUT;
 
     private String linkName;
@@ -102,12 +104,12 @@ public class SenderOptions {
         this.closeTimeout = closeTimeout;
     }
 
-    public long getConnectTimeout() {
-        return connectTimeout;
+    public long getOpenTimeout() {
+        return openTimeout;
     }
 
-    public void setConnectTimeout(long connectTimeout) {
-        this.connectTimeout = connectTimeout;
+    public void setOpenTimeout(long openTimeout) {
+        this.openTimeout = openTimeout;
     }
 
     public long getSendTimeout() {
@@ -196,7 +198,7 @@ public class SenderOptions {
         other.setAutoSettle(autoSettle);
         other.setLinkName(linkName);
         other.setCloseTimeout(closeTimeout);
-        other.setConnectTimeout(connectTimeout);
+        other.setOpenTimeout(openTimeout);
         other.setSendTimeout(sendTimeout);
         other.setRequestTimeout(requestTimeout);
 

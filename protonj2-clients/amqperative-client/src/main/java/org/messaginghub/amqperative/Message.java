@@ -20,7 +20,6 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.qpid.proton4j.amqp.Binary;
-import org.apache.qpid.proton4j.amqp.messaging.AmqpSequence;
 import org.apache.qpid.proton4j.amqp.messaging.AmqpValue;
 import org.apache.qpid.proton4j.amqp.messaging.Data;
 import org.messaginghub.amqperative.client.ClientMessage;
@@ -30,6 +29,7 @@ import org.messaginghub.amqperative.client.ClientMessage;
  * <p>
  * TODO - Should we have an AMQPMessage or some such that exposed more of the raw
  * proton types and make this one a much more abstract mapping ?
+ * something like toAdvancedMessage or magic cast into something based on type of
  *
  * @param <E> The type of the message body that this message carries
  */
@@ -65,13 +65,13 @@ public interface Message<E> {
         });
     }
 
-    public static Message<List<Object>> create(List<Object> body) {
+    public static <E> Message<List<E>> create(List<E> body) {
         return ClientMessage.create(body, () -> {
-            return new AmqpSequence(body);
+            return new AmqpValue(body);
         });
     }
 
-    public static Message<Map<Object, Object>> create(Map<Object, Object> body) {
+    public static <K, V> Message<Map<K, V>> create(Map<K, V> body) {
         return ClientMessage.create(body, () -> {
             return new AmqpValue(body);
         });
@@ -126,31 +126,31 @@ public interface Message<E> {
 
     Object getMessageId();
 
-    Message<?> setMessageId(Object messageId);
+    Message<E> setMessageId(Object messageId);
 
     byte[] getUserId();
 
-    Message<?> setUserId(byte[] userId);
+    Message<E> setUserId(byte[] userId);
 
     String getTo();
 
-    Message<?> setTo(String to);
+    Message<E> setTo(String to);
 
     String getSubject();
 
-    Message<?> setSubject(String subject);
+    Message<E> setSubject(String subject);
 
     String getReplyTo();
 
-    Message<?> setReplyTo(String replyTo);
+    Message<E> setReplyTo(String replyTo);
 
     Object getCorrelationId();
 
-    Message<?> setCorrelationId(Object correlationId);
+    Message<E> setCorrelationId(Object correlationId);
 
     String getContentType();
 
-    Message<?> setContentType(String contentType);
+    Message<E> setContentType(String contentType);
 
     String getContentEncoding();
 
@@ -158,23 +158,23 @@ public interface Message<E> {
 
     long getAbsoluteExpiryTime();
 
-    Message<?> setAbsoluteExpiryTime(long expiryTime);
+    Message<E> setAbsoluteExpiryTime(long expiryTime);
 
     long getCreationTime();
 
-    Message<?> setCreationTime(long createTime);
+    Message<E> setCreationTime(long createTime);
 
     String getGroupId();
 
-    Message<?> setGroupId(String groupId);
+    Message<E> setGroupId(String groupId);
 
     int getGroupSequence();
 
-    Message<?> setGroupSequence(int groupSequence);
+    Message<E> setGroupSequence(int groupSequence);
 
     String getReplyToGroupId();
 
-    Message<?> setReplyToGroupId(String replyToGroupId);
+    Message<E> setReplyToGroupId(String replyToGroupId);
 
     //----- AMQP Body Section
 

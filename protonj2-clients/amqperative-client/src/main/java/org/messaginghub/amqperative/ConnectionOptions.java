@@ -26,7 +26,7 @@ import java.util.Map;
 public class ConnectionOptions {
 
     public static final long INFINITE = -1;
-    public static final long DEFAULT_CONNECT_TIMEOUT = 15000;
+    public static final long DEFAULT_OPEN_TIMEOUT = 15000;
     public static final long DEFAULT_CLOSE_TIMEOUT = 60000;
     public static final long DEFAULT_SEND_TIMEOUT = INFINITE;
     public static final long DEFAULT_REQUEST_TIMEOUT = INFINITE;
@@ -40,7 +40,7 @@ public class ConnectionOptions {
 
     private long sendTimeout = DEFAULT_SEND_TIMEOUT;
     private long requestTimeout = DEFAULT_REQUEST_TIMEOUT;
-    private long connectTimeout = DEFAULT_CONNECT_TIMEOUT;
+    private long openTimeout = DEFAULT_OPEN_TIMEOUT;
     private long closeTimeout = DEFAULT_CLOSE_TIMEOUT;
     private long idleTimeout = DEFAULT_IDLE_TIMEOUT;
     private long drainTimeout = DEFAULT_DRAIN_TIMEOUT;
@@ -81,7 +81,7 @@ public class ConnectionOptions {
      */
     protected ConnectionOptions copyInto(ConnectionOptions other) {
         other.setCloseTimeout(closeTimeout);
-        other.setConnectTimeout(connectTimeout);
+        other.setOpenTimeout(openTimeout);
         other.setSendTimeout(sendTimeout);
         other.setRequestTimeout(requestTimeout);
         other.setIdleTimeout(idleTimeout);
@@ -122,12 +122,12 @@ public class ConnectionOptions {
         return this;
     }
 
-    public long getConnectTimeout() {
-        return connectTimeout;
+    public long getOpenTimeout() {
+        return openTimeout;
     }
 
-    public ConnectionOptions setConnectTimeout(long connectTimeout) {
-        this.connectTimeout = connectTimeout;
+    public ConnectionOptions setOpenTimeout(long openTimeout) {
+        this.openTimeout = openTimeout;
         return this;
     }
 
@@ -370,12 +370,19 @@ public class ConnectionOptions {
         return saslAllowedMechanisms;
     }
 
+    // TODO: A better or alternate API might be to have addAllowedMechanism() that
+    //       returns this so chaining can be done.  Same for black list is added.
+
     /**
+     * Comma separated list of allowed SASL mechanisms.
+     *
      * @param saslAllowedMechanisms the SASL Mechanisms to allow
      */
     public void setSaslAllowedMechanisms(String saslAllowedMechanisms) {
         this.saslAllowedMechanisms = saslAllowedMechanisms;
     }
+
+    // TODO - Remove this bit of configuration and go with something like a black / white list mechanism.
 
     /**
      * @return the saslAllowInsecureMechs

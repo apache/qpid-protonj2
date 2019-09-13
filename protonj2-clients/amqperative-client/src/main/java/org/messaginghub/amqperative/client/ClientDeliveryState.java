@@ -16,6 +16,8 @@
  */
 package org.messaginghub.amqperative.client;
 
+import java.util.Map;
+
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.messaging.Accepted;
 import org.apache.qpid.proton4j.amqp.messaging.Modified;
@@ -112,6 +114,13 @@ public abstract class ClientDeliveryState implements DeliveryState {
             }
         }
 
+        public ClientRejected(String condition, String description, Map<String, Object> info) {
+            if (condition != null || description != null) {
+                rejected.setError(new ErrorCondition(
+                    Symbol.valueOf(condition), description, ClientConversionSupport.toSymbolKeyedMap(info)));
+            }
+        }
+
         @Override
         public Type getType() {
             return Type.RELEASED;
@@ -130,6 +139,12 @@ public abstract class ClientDeliveryState implements DeliveryState {
         public ClientModified(boolean failed, boolean undeliverable) {
             modified.setDeliveryFailed(failed);
             modified.setUndeliverableHere(undeliverable);
+        }
+
+        public ClientModified(boolean failed, boolean undeliverable, Map<String, Object> annotations) {
+            modified.setDeliveryFailed(failed);
+            modified.setUndeliverableHere(undeliverable);
+            modified.setMessageAnnotations(ClientConversionSupport.toSymbolKeyedMap(annotations));
         }
 
         @Override

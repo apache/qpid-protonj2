@@ -36,11 +36,16 @@ public interface Delivery {
      * @return a {@link Message} instance that wraps the decoded payload.
      *
      * @throws ClientException if an error occurs while decoding the payload.
+     *
+     * @param <E> The type of message body that should be contained in the returned {@link Message}.
      */
-    Message<?> getMessage() throws ClientException;
+    <E> Message<E> getMessage() throws ClientException;
 
-    // TODO: Expose means of reading delivery bytes
-    // readAll(InputStream stream);
+    // TODO: Expose means of reading delivery bytes possibly with support for partial reads/
+    //       Need to define how we expose partial messages if at all and how to allow uses to
+    //       read / write those.  The above would likely have to throw a specific error if the
+    //       users is handed an incomplete message.
+    // readAll(OutputStream stream);
     // readAll(ByteBuffer buffer);
 
     /**
@@ -80,7 +85,7 @@ public interface Delivery {
      *
      * @return the delivery state
      */
-    DeliveryState getLocalState();
+    DeliveryState getState();
 
     /**
      * Gets the current remote state for the delivery.
@@ -88,6 +93,9 @@ public interface Delivery {
      * @return the remote delivery state
      */
     DeliveryState getRemoteState();
+
+    // TODO: Hide this not so useful and probably to low level API in a new
+    //       message interface or other construct for advanced AMQP bits
 
     /**
      * Gets whether the delivery was settled by the remote peer yet.

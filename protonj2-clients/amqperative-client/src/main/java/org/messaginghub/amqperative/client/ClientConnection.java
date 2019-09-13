@@ -66,6 +66,8 @@ public class ClientConnection implements Connection {
     private static final long INFINITE = -1;
     private static final AtomicInteger CONNECTION_SEQUENCE = new AtomicInteger();
 
+    // Future tracking of Closing. Closed. Failed state vs just simple boolean is intended here
+    // later on we may decide this is overly optimized.
     private static final AtomicIntegerFieldUpdater<ClientConnection> CLOSED_UPDATER =
             AtomicIntegerFieldUpdater.newUpdater(ClientConnection.class, "closed");
     private static final AtomicReferenceFieldUpdater<ClientConnection, ClientException> FAILURE_CAUSE_UPDATER =

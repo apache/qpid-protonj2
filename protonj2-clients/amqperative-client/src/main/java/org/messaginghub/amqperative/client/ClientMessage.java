@@ -125,7 +125,7 @@ public class ClientMessage<E> implements Message<E> {
     }
 
     @Override
-    public Message<?> setMessageId(Object messageId) {
+    public Message<E> setMessageId(Object messageId) {
         lazyCreateProperties().setMessageId(messageId);
         return this;
     }
@@ -141,7 +141,7 @@ public class ClientMessage<E> implements Message<E> {
     }
 
     @Override
-    public Message<?> setUserId(byte[] userId) {
+    public Message<E> setUserId(byte[] userId) {
         lazyCreateProperties().setUserId(new Binary(Arrays.copyOf(userId, userId.length)));
         return this;
     }
@@ -152,7 +152,7 @@ public class ClientMessage<E> implements Message<E> {
     }
 
     @Override
-    public Message<?> setTo(String to) {
+    public Message<E> setTo(String to) {
         lazyCreateProperties().setTo(to);
         return this;
     }
@@ -163,7 +163,7 @@ public class ClientMessage<E> implements Message<E> {
     }
 
     @Override
-    public Message<?> setSubject(String subject) {
+    public Message<E> setSubject(String subject) {
         lazyCreateProperties().setSubject(subject);
         return this;
     }
@@ -174,7 +174,7 @@ public class ClientMessage<E> implements Message<E> {
     }
 
     @Override
-    public Message<?> setReplyTo(String replyTo) {
+    public Message<E> setReplyTo(String replyTo) {
         lazyCreateProperties().setReplyTo(replyTo);
         return this;
     }
@@ -185,7 +185,7 @@ public class ClientMessage<E> implements Message<E> {
     }
 
     @Override
-    public Message<?> setCorrelationId(Object correlationId) {
+    public Message<E> setCorrelationId(Object correlationId) {
         lazyCreateProperties().setCorrelationId(correlationId);
         return this;
     }
@@ -196,7 +196,7 @@ public class ClientMessage<E> implements Message<E> {
     }
 
     @Override
-    public Message<?> setContentType(String contentType) {
+    public Message<E> setContentType(String contentType) {
         lazyCreateProperties().setContentType(contentType);
         return this;
     }
@@ -207,7 +207,7 @@ public class ClientMessage<E> implements Message<E> {
     }
 
     @Override
-    public Message<?> setContentEncoding(String contentEncoding) {
+    public Message<E> setContentEncoding(String contentEncoding) {
         lazyCreateProperties().setContentEncoding(contentEncoding);
         return this;
     }
@@ -349,7 +349,7 @@ public class ClientMessage<E> implements Message<E> {
         return header;
     }
 
-    Message<?> setHeader(Header header) {
+    Message<E> setHeader(Header header) {
         this.header = header;
         return this;
     }
@@ -367,7 +367,7 @@ public class ClientMessage<E> implements Message<E> {
         return messageAnnotations;
     }
 
-    Message<?> setMessageAnnotations(MessageAnnotations annotations) {
+    Message<E> setMessageAnnotations(MessageAnnotations annotations) {
         this.messageAnnotations = annotations;
         return this;
     }
@@ -376,7 +376,7 @@ public class ClientMessage<E> implements Message<E> {
         return properties;
     }
 
-    Message<?> setProperties(Properties properties) {
+    Message<E> setProperties(Properties properties) {
         this.properties = properties;
         return this;
     }
@@ -385,7 +385,7 @@ public class ClientMessage<E> implements Message<E> {
         return applicationProperties;
     }
 
-    Message<?> setApplicationProperties(ApplicationProperties applicationProperties) {
+    Message<E> setApplicationProperties(ApplicationProperties applicationProperties) {
         this.applicationProperties = applicationProperties;
         return this;
     }
@@ -394,7 +394,7 @@ public class ClientMessage<E> implements Message<E> {
         return footer;
     }
 
-    Message<?> setFooter(Footer footer) {
+    Message<E> setFooter(Footer footer) {
         this.footer = footer;
         return this;
     }

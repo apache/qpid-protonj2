@@ -25,6 +25,9 @@ import org.messaginghub.amqperative.client.ClientException;
  */
 public interface Connection {
 
+    // TODO - API docs should;d better reflect the implied state of the returned objects
+    //        like senders, receivers and session where the might not yet be remotely opened.
+
     /**
      * @return the {@link Client} instance that holds this {@link Connection}
      */
@@ -66,6 +69,10 @@ public interface Connection {
      */
     Receiver openReceiver(String address, ReceiverOptions receiverOptions) throws ClientException;
 
+    // TODO: Does this verify if the server supports anonymous senders and throw if they don't?
+    // TODO: Why have both send + defaultSender methods? To allow for waiting for the attach/open to complete before send?
+    // TODO: If it gets closed, do we create a new one and have this return the updated one?
+
     /**
      * Returns the default anonymous sender used by this {@link Connection} for {@link #send(Message)}
      * calls.  If the sender has not been created yet this call will initiate its creation and open with
@@ -103,6 +110,11 @@ public interface Connection {
      */
     Sender openSender(String address, SenderOptions senderOptions) throws ClientException;
 
+
+    // TODO: Does this verify if the server supports anonymous senders and throw if they don't? Try and fail?
+    // (Well, actually, that would succeed since it isn't remotely opened on return...)
+    // Need to define what the exceptional cases are vs the going to fail later on wait cases.
+
     /**
      * Creates a sender that is established to the 'anonymous relay' and as such each
      * message that is sent using this sender must specify an address in its destination
@@ -130,7 +142,9 @@ public interface Connection {
 
     /**
      * Returns the default {@link Session} instance that is used by this Connection to
-     * create the default anonymous connection {@link Sender}.
+     * create the default anonymous connection {@link Sender} as well as creating those
+     * resources created from the {@link Connection} such as {@link Sender} and {@link Receiver}
+     * instances not married to a specific {@link Session}.
      *
      * @return a new {@link Session} instance.
      *
@@ -158,6 +172,9 @@ public interface Connection {
      * @throws ClientException if an internal error occurs.
      */
     Session openSession(SessionOptions options) throws ClientException;
+
+    // TODO: Does this verify if the server supports anonymous senders and throw if they don't?
+    //       the contract isn't made entirely clear here and needs to be made more explicit.
 
     /**
      * Sends the given {@link Message} using the internal connection sender.

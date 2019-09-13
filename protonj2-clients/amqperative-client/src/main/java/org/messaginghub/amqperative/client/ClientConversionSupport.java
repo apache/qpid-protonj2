@@ -18,7 +18,6 @@ package org.messaginghub.amqperative.client;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Map.Entry;
 
 import org.apache.qpid.proton4j.amqp.Symbol;
 
@@ -58,22 +57,22 @@ abstract class ClientConversionSupport {
 
         if (stringsMap != null) {
             Map<Symbol, Object> properties = new HashMap<>(stringsMap.size());
-            for (Entry<String, Object> entry : stringsMap.entrySet()) {
-                properties.put(Symbol.valueOf(entry.getKey()), entry.getValue());
-            }
+            stringsMap.forEach((key, value) -> {
+                properties.put(Symbol.valueOf(key), value);
+            });
         }
 
         return result;
     }
 
-    public static Map<String, Object> toStringKeyedMap(Map<Symbol, Object> symbokMap) {
+    public static Map<String, Object> toStringKeyedMap(Map<Symbol, Object> symbolMap) {
         Map<String, Object> result = null;
 
-        if (symbokMap != null) {
-            Map<String, Object> properties = new HashMap<>(symbokMap.size());
-            for (Entry<Symbol, Object> entry : symbokMap.entrySet()) {
-                properties.put(entry.getKey().toString(), entry.getValue());
-            }
+        if (symbolMap != null) {
+            Map<String, Object> properties = new HashMap<>(symbolMap.size());
+            symbolMap.forEach((key, value) -> {
+                properties.put(key.toString(), value);
+            });
         }
 
         return result;

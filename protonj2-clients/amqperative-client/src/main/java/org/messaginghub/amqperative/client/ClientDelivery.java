@@ -47,16 +47,17 @@ public class ClientDelivery implements Delivery {
         this.delivery = delivery;
     }
 
+    @SuppressWarnings("unchecked")
     @Override
-    public Message<?> getMessage() throws ClientException {
+    public <E> Message<E> getMessage() throws ClientException {
         if (delivery.isPartial()) {
             // TODO - Client exception of some sort, ClientPartialMessageException etc
             throw new IllegalStateException("Message is still only partially delivered.");
         }
 
-        Message<?> message = cachedMessage;
+        Message<E> message = (Message<E>) cachedMessage;
         if (message == null && delivery.available() > 0) {
-            message = ClientMessageSupport.decodeMessage(delivery.readAll());
+            message = (Message<E>) (cachedMessage = ClientMessageSupport.decodeMessage(delivery.readAll()));
         }
 
         return message;
@@ -64,7 +65,7 @@ public class ClientDelivery implements Delivery {
 
     @Override
     public Delivery accept() {
-        delivery.disposition(Accepted.getInstance());
+        receiver.disposition(delivery, Accepted.getInstance(), true);  // TODO - Are we Auto settling ?
         return this;
     }
 
@@ -90,7 +91,7 @@ public class ClientDelivery implements Delivery {
     }
 
     @Override
-    public DeliveryState getLocalState() {
+    public DeliveryState getState() {
         return ClientDeliveryState.fromProtonType(delivery.getLocalState());
     }
 
@@ -98,6 +99,9 @@ public class ClientDelivery implements Delivery {
     public DeliveryState getRemoteState() {
         return ClientDeliveryState.fromProtonType(delivery.getRemoteState());
     }
+
+    // TODO: Additional note about hiding this away someplace where it is less likely to
+    //       confuse / harm the caller since it isn't really telling of actual remote settled.
 
     @Override
     public boolean isRemotelySettled() {

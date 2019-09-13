@@ -51,6 +51,10 @@ public interface Receiver {
     Future<Receiver> drain();
 
     // TODO: ideas
+
+    // TODO: JMS 2 style 'receiveBody' that gets rid of delivery handling? Auto-acks
+    //       (could extend later to client ack / transacted via session?)
+
     long getQueueSize();
 
     Receiver onMessage(Consumer<Delivery> handler);

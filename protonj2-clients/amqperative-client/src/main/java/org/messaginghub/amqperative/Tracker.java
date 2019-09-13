@@ -22,6 +22,12 @@ package org.messaginghub.amqperative;
  */
 public interface Tracker {
 
+    // TODO Think about if we want to be able to return the original message from
+    //      a tracker which while nice has some definite complications such as if
+    //      the user happens to be sending the same message over and over with small
+    //      modifications.  JMS style rules are annoying but would need something that
+    //      give that sort of direction on when you can do this.
+
     /**
      * @return the {@link Sender} that was used to send the delivery that is being tracked.
      */

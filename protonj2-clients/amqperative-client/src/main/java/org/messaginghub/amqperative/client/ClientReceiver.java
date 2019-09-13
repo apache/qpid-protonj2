@@ -168,6 +168,7 @@ public class ClientReceiver implements Receiver {
         checkClosed();
 
         executor.execute(() -> {
+            // TODO - Are we draining?  If so you've done something wrong...bang!
             // TODO - This is just a set without addition for now
             protonReceiver.setCredit(credits);
         });
@@ -181,7 +182,13 @@ public class ClientReceiver implements Receiver {
         ClientFuture<Receiver> drained = session.getFutureFactory().createFuture();
 
         executor.execute(() -> {
-            // TODO
+            // TODO: If already draining throw IllegalStateException type error as we don't allow stacked drains.
+            //       Also don't drain if credit already zero etc other sanity checking.
+            // if (protonReceiver.draining()) {
+            //	drained.failed(new ClientException("Already draining"));
+            // }
+
+            // TODO: Maybe proton should be returning something here to indicate drain started.
             protonReceiver.drain();
         });
 
@@ -203,7 +210,7 @@ public class ClientReceiver implements Receiver {
                           .closeHandler(receiver -> handleRemoteCloseOrDetach(receiver))
                           .detachHandler(receiver -> handleRemoteCloseOrDetach(receiver))
                           .deliveryUpdatedHandler(delivery -> handleDeliveryRemotelyUpdated(delivery))
-                          .deliveryReceivedHandler(delivery -> handleDeliveryReceivied(delivery))
+                          .deliveryReceivedHandler(delivery -> handleDeliveryReceived(delivery))
                           .drainStateUpdatedHandler(receiver -> handleReceiverReportsDrained(receiver))
                           .open();
         });
@@ -275,9 +282,12 @@ public class ClientReceiver implements Receiver {
         closeFuture.complete(this);
     }
 
-    private void handleDeliveryReceivied(IncomingDelivery delivery) {
+    private void handleDeliveryReceived(IncomingDelivery delivery) {
         LOG.debug("Delivery was updated: ", delivery);
         messageQueue.enqueue(new ClientDelivery(this, delivery));
+        // TODO: we never replenish the credit window if configured right now.
+        //       we should do something Qpid-JMS like and replenish on dispatch from
+        //       prefetch when we hit a certain threshold like 50% (configurable?)
     }
 
     private void handleDeliveryRemotelyUpdated(IncomingDelivery delivery) {
@@ -287,7 +297,7 @@ public class ClientReceiver implements Receiver {
 
     private void handleReceiverReportsDrained(org.apache.qpid.proton4j.engine.Receiver receiver) {
         LOG.debug("Receiver reports drained: ", receiver);
-        // TODO - event or other reaction
+        // TODO - event or other reaction, complete saved 'drained' future
     }
 
     //----- Private implementation details

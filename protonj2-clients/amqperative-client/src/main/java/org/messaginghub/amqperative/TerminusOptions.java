@@ -31,6 +31,12 @@ import org.apache.qpid.proton4j.amqp.messaging.Target;
  */
 public abstract class TerminusOptions<E extends TerminusOptions<E>> {
 
+    // TODO - Consider ease of use options vs exposing every possible AMQP
+    //        configuration here to make the general users life simpler and
+    //        expose some more low level proton / AMQP specific configuration
+    //        that we can then assume the user knows what they are doing and
+    //        not apply to much corrective logic.
+
     /**
      * Control the persistence of source or target state.
      */
@@ -108,6 +114,7 @@ public abstract class TerminusOptions<E extends TerminusOptions<E>> {
      * @return this options instance.
      */
     public E setDynamic(boolean dynamic) {
+        // TODO: don't let them be set unless address is null? Clear on setting address?
         this.dynamic = dynamic;
         return self();
     }
@@ -125,6 +132,7 @@ public abstract class TerminusOptions<E extends TerminusOptions<E>> {
      * @return this options instance.
      */
     public E setDynamicNodeProperties(Map<String, Object> dynamicNodeProperties) {
+        // TODO: don't let them be set unless dynamic = true? Clear on setting dynamic=false?
         this.dynamicNodeProperties = dynamicNodeProperties;
         return self();
     }

@@ -29,7 +29,7 @@ public class SessionOptions {
 
     private long sendTimeout = ConnectionOptions.DEFAULT_SEND_TIMEOUT;
     private long requestTimeout = ConnectionOptions.DEFAULT_REQUEST_TIMEOUT;
-    private long connectTimeout = ConnectionOptions.DEFAULT_CONNECT_TIMEOUT;
+    private long openTimeout = ConnectionOptions.DEFAULT_OPEN_TIMEOUT;
     private long closeTimeout = ConnectionOptions.DEFAULT_CLOSE_TIMEOUT;
 
     private String[] offeredCapabilities;
@@ -56,7 +56,7 @@ public class SessionOptions {
      */
     protected SessionOptions copyInto(SessionOptions other) {
         other.setCloseTimeout(closeTimeout);
-        other.setConnectTimeout(connectTimeout);
+        other.setOpenTimeout(openTimeout);
         other.setSendTimeout(sendTimeout);
         other.setRequestTimeout(requestTimeout);
 
@@ -81,12 +81,12 @@ public class SessionOptions {
         this.closeTimeout = closeTimeout;
     }
 
-    public long getConnectTimeout() {
-        return connectTimeout;
+    public long getOpenTimeout() {
+        return openTimeout;
     }
 
-    public void setConnectTimeout(long connectTimeout) {
-        this.connectTimeout = connectTimeout;
+    public void setOpenTimeout(long connectTimeout) {
+        this.openTimeout = connectTimeout;
     }
 
     public long getSendTimeout() {

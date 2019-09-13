@@ -16,6 +16,8 @@
  */
 package org.messaginghub.amqperative;
 
+import java.util.Map;
+
 import org.messaginghub.amqperative.client.ClientDeliveryState.ClientAccepted;
 import org.messaginghub.amqperative.client.ClientDeliveryState.ClientModified;
 import org.messaginghub.amqperative.client.ClientDeliveryState.ClientRejected;
@@ -51,7 +53,15 @@ public interface DeliveryState {
         return new ClientRejected(condition, description);
     }
 
+    public static DeliveryState rejected(String condition, String description, Map<String, Object> info) {
+        return new ClientRejected(condition, description, info);
+    }
+
     public static DeliveryState modified(boolean failed, boolean undeliverable) {
         return new ClientModified(failed, undeliverable);
+    }
+
+    public static DeliveryState modified(boolean failed, boolean undeliverable, Map<String, Object> annotations) {
+        return new ClientModified(failed, undeliverable, annotations);
     }
 }

@@ -82,7 +82,7 @@ public final class ClientConnectionOptions extends ConnectionOptions {
                 options = defaultSessionOptions;
                 if (options == null) {
                     options = new SessionOptions();
-                    options.setConnectTimeout(getConnectTimeout());
+                    options.setOpenTimeout(getOpenTimeout());
                     options.setCloseTimeout(getCloseTimeout());
                     options.setRequestTimeout(getRequestTimeout());
                     options.setSendTimeout(getSendTimeout());
@@ -105,7 +105,7 @@ public final class ClientConnectionOptions extends ConnectionOptions {
                 options = defaultSenderOptions;
                 if (options == null) {
                     options = new SenderOptions();
-                    options.setConnectTimeout(getConnectTimeout());
+                    options.setOpenTimeout(getOpenTimeout());
                     options.setCloseTimeout(getCloseTimeout());
                     options.setRequestTimeout(getRequestTimeout());
                     options.setSendTimeout(getSendTimeout());
@@ -128,7 +128,7 @@ public final class ClientConnectionOptions extends ConnectionOptions {
                 options = defaultReceivernOptions;
                 if (options == null) {
                     options = new ReceiverOptions();
-                    options.setConnectTimeout(getConnectTimeout());
+                    options.setOpenTimeout(getOpenTimeout());
                     options.setCloseTimeout(getCloseTimeout());
                     options.setRequestTimeout(getRequestTimeout());
                     options.setSendTimeout(getSendTimeout());

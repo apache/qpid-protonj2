@@ -51,6 +51,9 @@ public interface Client {
      */
     String getContainerId();
 
+    // TODO: Rename just close, make it retain that state until not closed and then maybe make it stop / start cycle.
+    //       closeAll implies races on closeAll and another thread doing an open etc.
+
     /**
      * Closes all currently open {@link Connection} instances created by this client.
      * <p>

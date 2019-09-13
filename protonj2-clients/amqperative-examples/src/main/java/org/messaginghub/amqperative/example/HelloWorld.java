@@ -23,9 +23,9 @@ package org.messaginghub.amqperative.example;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
-import org.messaginghub.amqperative.Connection;
 import org.messaginghub.amqperative.Client;
 import org.messaginghub.amqperative.ClientOptions;
+import org.messaginghub.amqperative.Connection;
 import org.messaginghub.amqperative.Delivery;
 import org.messaginghub.amqperative.Message;
 import org.messaginghub.amqperative.Receiver;
@@ -39,14 +39,14 @@ public class HelloWorld {
         try {
             String brokerHost = "localhost";
             int brokerPort = 5672;
-            String queueName = "test-queue";
+            String address = "examples";
 
             ClientOptions options = new ClientOptions();
             options.setContainerId(UUID.randomUUID().toString());
             Client container = Client.create(options);
 
             Connection connection = container.connect(brokerHost, brokerPort);
-            Sender sender = connection.openSender(queueName);
+            Sender sender = connection.openSender(address);
             sender.openFuture().get(5, TimeUnit.SECONDS);
 
             Message<String> message = Message.create("Hello World").setDurable(true);
@@ -54,19 +54,18 @@ public class HelloWorld {
 
             tracker.settle();
 
-            Receiver receiver = connection.openReceiver(queueName);
+            Receiver receiver = connection.openReceiver(address);
             receiver.openFuture().get(5, TimeUnit.SECONDS);
             receiver.addCredit(1);
 
             Delivery delivery = receiver.receive();
+
             if (delivery != null) {
-                Message<?> received = delivery.getMessage();
-                if (received.getBody() instanceof String) {
-                    System.out.println(received.getBody());
-                } else {
-                    System.out.println("Unexpected body type: " + received.getBody());
-                }
+                Message<String> received = delivery.getMessage();
+
+                System.out.println(received.getBody());
             }
+
         } catch (Exception exp) {
             System.out.println("Caught exception, exiting.");
             exp.printStackTrace(System.out);

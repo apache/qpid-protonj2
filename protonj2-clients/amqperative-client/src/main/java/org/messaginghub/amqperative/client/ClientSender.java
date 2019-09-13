@@ -17,8 +17,8 @@
 package org.messaginghub.amqperative.client;
 
 import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.LinkedHashSet;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
@@ -27,7 +27,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
-import java.util.function.Supplier;
 
 import org.apache.qpid.proton4j.amqp.transport.DeliveryState;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
@@ -59,7 +58,7 @@ public class ClientSender implements Sender {
     private final ClientFuture<Sender> openFuture;
     private final ClientFuture<Sender> closeFuture;
 
-    private final Map<Object, InFlightSend> blocked = new LinkedHashMap<Object, InFlightSend>();
+    private final Set<InFlightSend> blocked = new LinkedHashSet<InFlightSend>();
     private final ClientSenderOptions options;
     private final ClientSession session;
     private final org.apache.qpid.proton4j.engine.Sender protonSender;
@@ -133,10 +132,10 @@ public class ClientSender implements Sender {
                 final InFlightSend send = new InFlightSend((ClientMessage<?>) message, operation);
                 if (options.getSendTimeout() > 0) {
                     send.timeout = session.scheduleRequestTimeout(
-                        operation, options.getSendTimeout(), send);
+                        operation, options.getSendTimeout(), () -> send.createSendTimedOutException());
                 }
 
-                blocked.put(send, send);
+                blocked.add(send);
             }
         });
 
@@ -147,6 +146,7 @@ public class ClientSender implements Sender {
     public Tracker trySend(Message<?> message) throws ClientException {
         checkClosed();
         ClientFuture<Tracker> operation = session.getFutureFactory().createFuture();
+
         executor.execute(() -> {
             if (protonSender.isSendable()) {
                 assumeSendableAndSend((ClientMessage<?>) message, operation);
@@ -155,7 +155,7 @@ public class ClientSender implements Sender {
             }
         });
 
-        return session.request(operation, options.getSendTimeout(), TimeUnit.MILLISECONDS);
+        return session.request(operation, options.getRequestTimeout(), TimeUnit.MILLISECONDS);
     }
 
     @Override
@@ -260,7 +260,7 @@ public class ClientSender implements Sender {
 
     private void handleRemoteNowSendable(org.apache.qpid.proton4j.engine.Sender sender) {
         if (!blocked.isEmpty()) {
-            Iterator<InFlightSend> blockedSends = blocked.values().iterator();
+            Iterator<InFlightSend> blockedSends = blocked.iterator();
             while (sender.isSendable() && blockedSends.hasNext()) {
                 LOG.trace("Dispatching previously held send");
                 InFlightSend held = blockedSends.next();
@@ -292,7 +292,7 @@ public class ClientSender implements Sender {
 
     //----- Send Result Tracker used for send blocked on credit
 
-    private class InFlightSend implements AsyncResult<Tracker>, Supplier<ClientException> {
+    private class InFlightSend implements AsyncResult<Tracker> {
 
         private final ClientMessage<?> message;
         private final ClientFuture<Tracker> operation;
@@ -325,8 +325,7 @@ public class ClientSender implements Sender {
             return operation.isDone();
         }
 
-        @Override
-        public ClientException get() {
+        public ClientException createSendTimedOutException() {
             return new ClientSendTimedOutException("Timed out waiting for credit to send");
         }
     }
