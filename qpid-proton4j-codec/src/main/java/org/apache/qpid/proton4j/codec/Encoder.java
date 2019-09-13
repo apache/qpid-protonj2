@@ -112,6 +112,22 @@ public interface Encoder {
 
     void writeBinary(ProtonBuffer buffer, EncoderState state, Binary value);
 
+    /**
+     * Writes the contents of the given {@link ProtonBuffer} value into the provided {@link ProtonBuffer}
+     * instance as an AMQP Binary type.  This method does not modify the read index of the value given such
+     * that is can be read later or written again without needing to reset the read index manually.
+     * <p>
+     * If the provided value to write is null an AMQP null type is encoded into the target buffer.
+     *
+     * @param buffer
+     *      the target buffer where the binary value is to be encoded
+     * @param state
+     *      the {@link EncoderState} instance that manages the calling threads state tracking.
+     * @param value
+     *      the {@link ProtonBuffer} value to be encoded as an AMQP binary instance.
+     */
+    void writeBinary(ProtonBuffer buffer, EncoderState state, ProtonBuffer value);
+
     void writeBinary(ProtonBuffer buffer, EncoderState state, byte[] value);
 
     void writeString(ProtonBuffer buffer, EncoderState state, String value);

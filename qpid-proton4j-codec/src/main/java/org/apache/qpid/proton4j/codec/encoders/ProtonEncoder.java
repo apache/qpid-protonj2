@@ -361,6 +361,15 @@ public class ProtonEncoder implements Encoder {
     }
 
     @Override
+    public void writeBinary(ProtonBuffer buffer, EncoderState state, ProtonBuffer value) {
+        if (value == null) {
+            buffer.writeByte(EncodingCodes.NULL);
+        } else {
+            binaryEncoder.writeType(buffer, state, value);
+        }
+    }
+
+    @Override
     public void writeBinary(ProtonBuffer buffer, EncoderState state, byte[] value) {
         if (value == null) {
             buffer.writeByte(EncodingCodes.NULL);

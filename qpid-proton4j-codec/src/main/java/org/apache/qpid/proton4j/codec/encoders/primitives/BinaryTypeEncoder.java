@@ -45,6 +45,18 @@ public class BinaryTypeEncoder extends AbstractPrimitiveTypeEncoder<Binary> {
         }
     }
 
+    public void writeType(ProtonBuffer buffer, EncoderState state, ProtonBuffer value) {
+        if (value.getReadableBytes() > 255) {
+            buffer.writeByte(EncodingCodes.VBIN32);
+            buffer.writeInt(value.getReadableBytes());
+            value.getBytes(0, buffer);
+        } else {
+            buffer.writeByte(EncodingCodes.VBIN8);
+            buffer.writeByte((byte) value.getReadableBytes());
+            value.getBytes(0, buffer);
+        }
+    }
+
     public void writeType(ProtonBuffer buffer, EncoderState state, byte[] value) {
         if (value.length > 255) {
             buffer.writeByte(EncodingCodes.VBIN32);
