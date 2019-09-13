@@ -16,7 +16,6 @@
  */
 package org.messaginghub.amqperative.client;
 
-import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -58,21 +57,6 @@ public class ClientInstance implements Client {
     @Override
     public Connection connect(String hostname, int port, ConnectionOptions options) {
         return new ClientConnection(this, new ClientConnectionOptions(hostname, port, options)).connect().open();
-    }
-
-    @Override
-    public Connection connect(URI remoteUri) {
-        return connect(remoteUri, null);
-    }
-
-    @Override
-    public Connection connect(URI remoteUri, ConnectionOptions options) {
-        // TODO - Preserve original URI in connection options for later use.
-        // TODO - Build ClientConnectionOptions from the given URI and configure from the provided options.
-        ClientConnectionOptions clientOptions =
-            new ClientConnectionOptions(remoteUri.getHost(), remoteUri.getPort(), options);
-
-        return new ClientConnection(this, clientOptions).connect().open();
     }
 
     @Override

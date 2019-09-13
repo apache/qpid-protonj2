@@ -16,7 +16,6 @@
  */
 package org.messaginghub.amqperative;
 
-import java.net.URI;
 import java.util.Objects;
 
 import org.messaginghub.amqperative.client.ClientInstance;
@@ -61,34 +60,6 @@ public interface Client {
      * @return this {@link Client} instance.
      */
     Client closeAll();
-
-    /**
-     * Connect to the specified remote using the given {@link URI} and configures
-     * the connection options using the parameters encoded in the query portion of
-     * the given {@link URI}.  Any options not configured on the {@link URI} is set
-     * to the connection default.
-     *
-     * @param remoteUri
-     *            the {@link URI} of the remote to connect to.
-     *
-     * @return connection, establishment not yet completed
-     */
-    Connection connect(URI remoteUri);
-
-    /**
-     * Connect to the specified remote using the given {@link URI} and configures
-     * the connection options using the parameters encoded in the query portion of
-     * the given {@link URI} to override any options that are configured in the
-     * supplied {@link ConnectionOptions} instance.
-     *
-     * @param remoteUri
-     *            the {@link URI} of the remote to connect to.
-     * @param options
-     *            options to use when creating the connection.
-     *
-     * @return connection, establishment not yet completed
-     */
-    Connection connect(URI remoteUri, ConnectionOptions options);
 
     /**
      * Connect to the specified host and port, without credentials and with all
