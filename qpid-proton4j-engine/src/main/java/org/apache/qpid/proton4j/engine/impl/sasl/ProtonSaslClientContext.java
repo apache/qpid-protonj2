@@ -16,22 +16,23 @@
  */
 package org.apache.qpid.proton4j.engine.impl.sasl;
 
+import java.util.Objects;
+import java.util.function.Consumer;
+
+import org.apache.qpid.proton4j.amqp.Binary;
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.security.SaslChallenge;
 import org.apache.qpid.proton4j.amqp.security.SaslMechanisms;
 import org.apache.qpid.proton4j.amqp.security.SaslOutcome;
 import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
-import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.engine.EngineHandlerContext;
-import org.apache.qpid.proton4j.engine.impl.sasl.SaslConstants.SaslOutcomes;
-import org.apache.qpid.proton4j.engine.impl.sasl.SaslConstants.SaslStates;
 import org.apache.qpid.proton4j.engine.sasl.SaslClientContext;
-import org.apache.qpid.proton4j.engine.sasl.SaslClientListener;
 
 public class ProtonSaslClientContext extends ProtonSaslContext implements SaslClientContext {
 
-    private SaslClientListener listener;
-
+    // Work state trackers
+    private boolean headerWritten;
+    private boolean headerReceived;
     private boolean mechanismsReceived;
     private boolean mechanismChosen;
 
@@ -41,112 +42,115 @@ public class ProtonSaslClientContext extends ProtonSaslContext implements SaslCl
 
     @Override
     public Role getRole() {
-        return Role.SERVER;
+        return Role.CLIENT;
     }
 
     @Override
-    public SaslClientListener getClientListener() {
-        return listener;
-    }
-
-    @Override
-    public SaslClientContext setClientListener(SaslClientListener listener) {
+    public SaslClientContext sendSASLHeader() {
         // TODO Auto-generated method stub
-        return null;
-    }
+        if (!headerWritten) {
 
-    @Override
-    public SaslClientContext sendChosenMechanism(String mechanism, String host) {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public SaslClientContext sendResponse(ProtonBuffer response) {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    //----- Remote Server state information ----------------------------------//
-
-    public String[] getServerMechanisms() {
-        String[] mechanisms = new String[serverMechanisms.length];
-        for (int i = 0; i < serverMechanisms.length; i++) {
-            mechanisms[i] = serverMechanisms[i].toString();
         }
-        return mechanisms;
+        return this;
     }
 
-    //----- Mutable state ----------------------------------------------------//
-
-    // TODO - Remove these setters and require listener to initiate work
-    //        we can leave accessors to fetch what was done.
-
-    public String getHostname() {
-        return hostname;
+    @Override
+    public SaslClientContext sendChosenMechanism(Symbol mechanism, String host, Binary initialResponse) {
+        // TODO Auto-generated method stub
+        return this;
     }
 
-    public void setHostname(String hostname) {
-        this.hostname = hostname;
+    @Override
+    public SaslClientContext sendResponse(Binary response) {
+        // TODO Auto-generated method stub
+        return this;
     }
 
-    public String getMechanism() {
-        return chosenMechanism.toString();
-    }
-
-    public void setMechanism(String mechanism) {
-        chosenMechanism = Symbol.valueOf(mechanism);
-    }
-
-    //----- SASL Frame event handlers ----------------------------------------//
+    //----- SASL Frame event handlers for Client negotiations
 
     @Override
     public void handleAMQPHeader(AMQPHeader header, EngineHandlerContext context) {
-        // TODO - Error on server not supporting SASL
         saslHandler.transportFailed(context, new IllegalStateException(
             "Remote does not support SASL authentication."));
     }
 
     @Override
     public void handleSASLHeader(AMQPHeader header, EngineHandlerContext context) {
-        // TODO Auto-generated method stub
+        if (!headerReceived) {
+            headerReceived = true;
+            if (!headerWritten) {
+                context.fireWrite(AMQPHeader.getSASLHeader());
+                headerWritten = true;
+            }
+        } else {
+            saslHandler.transportFailed(context, new IllegalStateException(
+                "Remote sent illegal additional SASL headers."));
+        }
     }
 
     @Override
     public void handleMechanisms(SaslMechanisms saslMechanisms, EngineHandlerContext context) {
-        serverMechanisms = saslMechanisms.getSaslServerMechanisms();
-
-        // TODO - Should we use ProtonBuffer slices as response containers ?
-//        listener.onSaslMechanisms(this, getServerMechanisms());
-
-        // TODO - How is the listener driving output, send methods ?
-        //        We probably want to support asynchronous triggering
+        if (!mechanismsReceived) {
+            // TODO - Track state of the SASL negotiations
+            serverMechanisms = saslMechanisms.getSaslServerMechanisms();
+            mechanismsHandler.accept(getServerMechanisms());
+        } else {
+            saslHandler.transportFailed(context, new IllegalStateException(
+                "Remote sent illegal additional SASL Mechanisms frame."));
+        }
     }
 
     @Override
     public void handleChallenge(SaslChallenge saslChallenge, EngineHandlerContext context) {
-        // TODO - Should we use ProtonBuffer slices as response containers ?
-//        listener.onSaslChallenge(this, saslChallenge.getChallenge());
-
-//        if (state == SaslStates.SASL_STEP && getResponse() != null) {
-//            SaslResponse response = new SaslResponse();
-//            response.setResponse(getResponse());
-//            setResponse(null);
-//            saslHandler.handleWrite(context, response);
-//        }
-
-        // TODO - We probably want to support asynchronous triggering
+        // TODO - Check state, are we ready
+        challengeHandler.accept(saslChallenge.getChallenge());
     }
 
     @Override
     public void handleOutcome(SaslOutcome saslOutcome, EngineHandlerContext context) {
-        this.outcome = SaslOutcomes.valueOf(outcome.getCode());
-        if (state != SaslStates.SASL_IDLE) {
-            state = classifyStateFromOutcome(outcome);
-        }
+//        this.outcome = SaslOutcomes.valueOf(outcome.getCode());
+//        if (state != SaslStates.SASL_IDLE) {
+//            state = classifyStateFromOutcome(outcome);
+//        }
 
         done = true;
+        outcomeHandler.accept(saslOutcome.getAdditionalData());
+    }
 
-//        listener.onSaslOutcome(this, saslOutcome.getAdditionalData());
+    //----- Registration of SASL client event handlers
+
+    private Consumer<SaslClientContext> initializationHandler; // TODO - Change to engine started handler ?
+
+    // TODO - Defaults that will respond but eventually fail the SASL exchange.
+
+    private Consumer<Symbol[]> mechanismsHandler;
+    private Consumer<Binary> challengeHandler;
+    private Consumer<Binary> outcomeHandler;
+
+    @Override
+    public void initializationHandler(Consumer<SaslClientContext> handler) {
+        if (handler != null) {
+            this.initializationHandler = handler;
+        } else {
+            this.initializationHandler = (context) -> {};
+        }
+    }
+
+    @Override
+    public void saslMechanismsHandler(Consumer<Symbol[]> handler) {
+        Objects.requireNonNull(handler);
+        this.mechanismsHandler = handler;
+    }
+
+    @Override
+    public void saslChallengeHandler(Consumer<Binary> handler) {
+        Objects.requireNonNull(handler);
+        this.challengeHandler = handler;
+    }
+
+    @Override
+    public void saslOutcomeHandler(Consumer<Binary> handler) {
+        Objects.requireNonNull(handler);
+        this.outcomeHandler = handler;
     }
 }

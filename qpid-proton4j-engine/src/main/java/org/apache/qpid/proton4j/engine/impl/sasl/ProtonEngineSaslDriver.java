@@ -17,8 +17,6 @@
 package org.apache.qpid.proton4j.engine.impl.sasl;
 
 import org.apache.qpid.proton4j.engine.EngineSaslDriver;
-import org.apache.qpid.proton4j.engine.impl.sasl.SaslConstants.SaslOutcomes;
-import org.apache.qpid.proton4j.engine.impl.sasl.SaslConstants.SaslStates;
 import org.apache.qpid.proton4j.engine.sasl.SaslOutcome;
 
 /**
@@ -33,8 +31,6 @@ public class ProtonEngineSaslDriver implements EngineSaslDriver {
 
     private final ProtonSaslHandler handler;
 
-    private SaslState saslState = SaslState.IDLE;
-    private SaslOutcome saslOutcome;
     private int maxFrameSize = MIN_MAX_SASL_FRAME_SIZE;
     private ProtonSaslContext context;
 
@@ -70,12 +66,12 @@ public class ProtonEngineSaslDriver implements EngineSaslDriver {
 
     @Override
     public SaslState getSaslState() {
-        return saslState;
+        return context == null ? SaslState.IDLE : context.getSaslState();
     }
 
     @Override
     public SaslOutcome getSaslOutcome() {
-        return saslOutcome;
+        return context == null ? null : context.getSaslOutcome();
     }
 
     @Override
@@ -85,7 +81,7 @@ public class ProtonEngineSaslDriver implements EngineSaslDriver {
 
     @Override
     public void setMaxFrameSize(int maxFrameSize) {
-        if (saslState == SaslState.IDLE) {
+        if (getSaslState() == SaslState.IDLE) {
             this.maxFrameSize = maxFrameSize;
         } else {
             throw new IllegalStateException("Cannot configure max SASL frame size after SASL negotiations have started");
@@ -96,9 +92,5 @@ public class ProtonEngineSaslDriver implements EngineSaslDriver {
 
     boolean isInitialized() {
         return context != null;
-    }
-
-    protected SaslStates classifyStateFromOutcome(SaslOutcomes outcome) {
-        return outcome == SaslOutcomes.SASL_OK ? SaslStates.SASL_PASS : SaslStates.SASL_FAIL;
     }
 }

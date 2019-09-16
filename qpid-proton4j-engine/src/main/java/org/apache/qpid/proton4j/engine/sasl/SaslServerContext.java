@@ -16,7 +16,11 @@
  */
 package org.apache.qpid.proton4j.engine.sasl;
 
-import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
+
+import org.apache.qpid.proton4j.amqp.Binary;
+import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.engine.Engine;
 
 /**
@@ -27,19 +31,33 @@ import org.apache.qpid.proton4j.engine.Engine;
 public interface SaslServerContext extends SaslContext {
 
     /**
-     * @return the {@link SaslServerListener} that is currently assigned to this context.
+     * After the server has sent its supported mechanisms this method will return a
+     * copy of that list for review by the server event handler.  If called before
+     * the server has received the mechanisms list this method will return null.
+     *
+     * @return the mechanisms that the server offered to the client.
      */
-    SaslServerListener getServerListener();
+
+    Symbol[] getServerMechanisms();
 
     /**
-     * Sets the {@link SaslServerListener} that will be called during SASL negotiations.
+     * Returns the mechanism that was sent to the server to select the SASL mechanism
+     * to use for negotiations.  If called before the client has sent its chosen mechanism
+     * this method returns null.
      *
-     * @param listener
-     *      The {@link SaslServerListener} instance to use for negotiation.
-     *
-     * @return this server context.
+     * @return the SASL mechanism that the client selected to use for negotiation.
      */
-    SaslServerContext setSaslServerListener(SaslServerListener listener);
+    Symbol getChosenMechanism();
+
+    /**
+     * The DNS name of the host (either fully qualified or relative) that was sent to the server
+     * which define the host the sending peer is connecting to.
+     *
+     * @return the host name the client has requested to connect to.
+     */
+    String getHostname();
+
+    //----- SASL Negotiation API
 
     /**
      * Sends the set of supported mechanisms to the SASL client from which it must
@@ -51,7 +69,7 @@ public interface SaslServerContext extends SaslContext {
      *
      * @return this server context.
      */
-    SaslServerContext sendMechanisms(String[] mechanisms);
+    SaslServerContext sendMechanisms(Symbol[] mechanisms);
 
     /**
      * Sends the SASL challenge defined by the SASL mechanism that is in use during
@@ -63,7 +81,7 @@ public interface SaslServerContext extends SaslContext {
      *
      * @return this server context.
      */
-    SaslServerContext sendChallenge(ProtonBuffer challenge);
+    SaslServerContext sendChallenge(Binary challenge);
 
     /**
      * Sends a response to a server side challenge that comprises the challenge / response
@@ -76,6 +94,41 @@ public interface SaslServerContext extends SaslContext {
      *
      * @return this server context.
      */
-    SaslServerContext sendOutcome(SaslOutcome outcome, ProtonBuffer additional);
+    SaslServerContext sendOutcome(SaslOutcome outcome, Binary additional);
+
+    //----- SASL Server Context event handlers
+
+    /**
+     * Called to give the application code a clear point to initialize all
+     * the server side expectations.
+     *
+     * @param handler
+     *      The handler that will handle initialization for the server context.
+     */
+    void initializationHandler(Consumer<SaslServerContext> handler);
+
+    /**
+     * Called when a SASL init frame has arrived from the client indicating the chosen
+     * SASL mechanism and the initial response data if any.  Based on the chosen mechanism
+     * the server handler should provide additional challenges or complete the SASL negotiation
+     * by sending an outcome to the client.  The handler can either respond immediately or
+     * it should response using the same thread that invoked this handler.
+     *
+     * @param handler
+     *      The handler that will process the received SASL init from the client.
+     */
+    void saslInitHandler(BiConsumer<Symbol, Binary> handler);
+
+    /**
+     * Called when a SASL response frame has arrived from the client.  The server should process
+     * the response and either offer additional challenges or complete the SASL negotiations based
+     * on the mechanics of the chosen SASL mechanism.  The server handler should either respond
+     * immediately or should respond from the same thread that the response handler was invoked
+     * from.
+     *
+     * @param handler
+     *      The handler that will process the received SASL response from the client.
+     */
+    void saslResponseHandler(Consumer<Binary> handler);
 
 }

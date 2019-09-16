@@ -32,7 +32,7 @@ public final class ProtonEngineNoOpSaslDriver implements EngineSaslDriver {
 
     @Override
     public SaslState getSaslState() {
-        return SaslState.DISABLED;
+        return SaslState.NONE;
     }
 
     @Override

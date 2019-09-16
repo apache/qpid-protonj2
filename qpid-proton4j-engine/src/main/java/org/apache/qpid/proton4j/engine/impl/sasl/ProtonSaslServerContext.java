@@ -16,25 +16,24 @@
  */
 package org.apache.qpid.proton4j.engine.impl.sasl;
 
+import java.util.Objects;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
+
+import org.apache.qpid.proton4j.amqp.Binary;
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.security.SaslInit;
 import org.apache.qpid.proton4j.amqp.security.SaslMechanisms;
 import org.apache.qpid.proton4j.amqp.security.SaslResponse;
 import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
-import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.engine.EngineHandlerContext;
-import org.apache.qpid.proton4j.engine.HeaderFrame;
-import org.apache.qpid.proton4j.engine.impl.sasl.SaslConstants.SaslOutcomes;
-import org.apache.qpid.proton4j.engine.impl.sasl.SaslConstants.SaslStates;
 import org.apache.qpid.proton4j.engine.sasl.SaslServerContext;
-import org.apache.qpid.proton4j.engine.sasl.SaslServerListener;
 
 public class ProtonSaslServerContext extends ProtonSaslContext implements SaslServerContext {
 
-    private SaslServerListener listener;
-
-    private boolean allowNonSasl;
-
+    // Work state trackers
+    private boolean headerWritten;
+    private boolean headerReceived;
     private boolean mechanismsSent;
     private boolean mechanismChosen;
 
@@ -48,134 +47,29 @@ public class ProtonSaslServerContext extends ProtonSaslContext implements SaslSe
     }
 
     @Override
-    public SaslServerListener getServerListener() {
-        return listener;
-    }
-
-    @Override
-    public SaslServerContext setSaslServerListener(SaslServerListener listener) {
+    public SaslServerContext sendMechanisms(Symbol[] mechanisms) {
         // TODO Auto-generated method stub
         return null;
     }
 
     @Override
-    public SaslServerContext sendMechanisms(String[] mechanisms) {
+    public SaslServerContext sendChallenge(Binary challenge) {
         // TODO Auto-generated method stub
         return null;
     }
 
     @Override
-    public SaslServerContext sendChallenge(ProtonBuffer challenge) {
+    public SaslServerContext sendOutcome(org.apache.qpid.proton4j.engine.sasl.SaslOutcome outcome, Binary additional) {
         // TODO Auto-generated method stub
         return null;
-    }
-
-    @Override
-    public SaslServerContext sendOutcome(org.apache.qpid.proton4j.engine.sasl.SaslOutcome outcome, ProtonBuffer additional) {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    //----- Remote Client state ----------------------------------------------//
-
-    public String getClientMechanism() {
-        return chosenMechanism.toString();
-    }
-
-    public String getClientHostname() {
-        return hostname;
-    }
-
-    //----- Context mutable state --------------------------------------------//
-
-    // TODO - Remove these setters and require listener to initiate work
-    //        we can leave accessors to fetch what was done.
-
-    public String[] getMechanisms() {
-        String[] mechanisms = null;
-
-        if (serverMechanisms != null) {
-            mechanisms = new String[serverMechanisms.length];
-            for (int i = 0; i < serverMechanisms.length; i++) {
-                mechanisms[i] = serverMechanisms[i].toString();
-            }
-        }
-
-        return mechanisms;
-    }
-
-    public void setMechanisms(String... mechanisms) {
-        if (!mechanismsSent) {
-            Symbol[] serverMechanisms = new Symbol[mechanisms.length];
-            for (int i = 0; i < mechanisms.length; i++) {
-                serverMechanisms[i] = Symbol.valueOf(mechanisms[i]);
-            }
-
-            this.serverMechanisms = serverMechanisms;
-        } else {
-            throw new IllegalStateException("Server Mechanisms arlready sent to remote");
-        }
-    }
-
-    /**
-     * @return whether this Server allows non-sasl connection attempts
-     */
-    public boolean isAllowNonSasl() {
-        return allowNonSasl;
-    }
-
-    /**
-     * Determines if the server allows non-SASL connection attempts.
-     *
-     * @param allowNonSasl
-     *      the configuration for allowing non-sasl connections
-     */
-    public void setAllowNonSasl(boolean allowNonSasl) {
-        this.allowNonSasl = allowNonSasl;
-    }
-
-    /**
-     * @return the currently set SASL outcome.
-     */
-    public SaslOutcomes getOutcome() {
-        return outcome;
-    }
-
-    /**
-     * Sets the SASL outcome to return to the remote.
-     *
-     * @param outcome
-     *      The SASL outcome that should be returned to the remote.
-     */
-    public void setOutcome(SaslOutcomes outcome) {
-        this.outcome = outcome;
     }
 
     //----- Transport event handlers -----------------------------------------//
 
     @Override
     public void handleAMQPHeader(AMQPHeader header, EngineHandlerContext context) {
-        if (!headerReceived) {
-            if (isAllowNonSasl()) {
-                // Set proper outcome etc.
-                classifyStateFromOutcome(SaslOutcomes.SASL_OK);
-                done = true;
-                saslHandler.handleRead(context, HeaderFrame.AMQP_HEADER_FRAME);
-            } else {
-                // TODO - Error type ?
-                classifyStateFromOutcome(SaslOutcomes.SASL_SKIPPED);
-                done = true;
-                context.fireWrite(AMQPHeader.getSASLHeader());
-                context.fireFailed(new IllegalStateException(
-                    "Unexpected AMQP Header before SASL Authentication completed."));
-            }
-        } else {
-            // Report the variety of errors that exist in this state such as the
-            // fact that we shouldn't get an AMQP header before sasl is done, and when
-            // it is done we are currently bypassing this call in the parent SaslHandler.
-            context.fireFailed(new IllegalStateException(
-                "Unexpected AMQP Header before SASL Authentication completed."));
-        }
+        context.fireFailed(new IllegalStateException(
+            "Unexpected AMQP Header before SASL Authentication completed."));
     }
 
     @Override
@@ -186,15 +80,11 @@ public class ProtonSaslServerContext extends ProtonSaslContext implements SaslSe
         }
 
         if (headerReceived) {
-            // TODO - Error out on receive of another SASL Header.
             context.fireFailed(new IllegalStateException(
                 "Unexpected second SASL Header read before SASL Authentication completed."));
         } else {
             headerReceived = true;
         }
-
-        // Give the callback handler a chance to configure this handler
-        listener.onSaslHeader(this, header);
 
         // TODO - When to fail when no mechanisms set, now or on some earlier started / connected event ?
         //        Or allow it to be empty and await an async write of a SaslInit frame etc ?
@@ -209,7 +99,7 @@ public class ProtonSaslServerContext extends ProtonSaslContext implements SaslSe
         // Send the server mechanisms now.
         context.fireWrite(mechanisms);
         mechanismsSent = true;
-        state = SaslStates.SASL_STEP;
+//        state = SaslStates.SASL_STEP;
     }
 
     @Override
@@ -255,5 +145,35 @@ public class ProtonSaslServerContext extends ProtonSaslContext implements SaslSe
 //            done = true;
 //            context.fireWrite(outcome);
 //        }
+    }
+
+    //----- Registration of SASL server event handlers
+
+    private Consumer<SaslServerContext> initializationHandler; // TODO - Change to engine started handler ?
+
+    // TODO - Defaults that will respond but eventually fail the SASL exchange.
+
+    private BiConsumer<Symbol, Binary> initHandler;
+    private Consumer<Binary> responseHandler;
+
+    @Override
+    public void initializationHandler(Consumer<SaslServerContext> handler) {
+        if (handler != null) {
+            this.initializationHandler = handler;
+        } else {
+            this.initializationHandler = (context) -> {};
+        }
+    }
+
+    @Override
+    public void saslInitHandler(BiConsumer<Symbol, Binary> handler) {
+        Objects.requireNonNull(handler);
+        this.initHandler = handler;
+    }
+
+    @Override
+    public void saslResponseHandler(Consumer<Binary> handler) {
+        Objects.requireNonNull(handler);
+        this.responseHandler = handler;
     }
 }

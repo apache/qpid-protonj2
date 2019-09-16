@@ -45,6 +45,6 @@ public class ProtonEngineFactoryTest {
 
         assertEquals(EngineState.IDLE, engine.state());
         assertNotNull(engine.saslContext());
-        assertEquals(engine.saslContext().getSaslState(), SaslState.DISABLED);
+        assertEquals(engine.saslContext().getSaslState(), SaslState.NONE);
     }
 }

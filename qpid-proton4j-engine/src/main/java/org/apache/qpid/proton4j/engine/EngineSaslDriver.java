@@ -53,14 +53,9 @@ public interface EngineSaslDriver {
         AUTHENTICATION_FAILED,
 
         /**
-         * Authentication skipped when allowed by configuration
-         */
-        SKIPPED,
-
-        /**
          * No authentication layer configured.
          */
-        DISABLED
+        NONE
 
     }
 

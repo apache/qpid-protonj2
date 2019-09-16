@@ -16,6 +16,8 @@
  */
 package org.apache.qpid.proton4j.engine.impl.sasl;
 
+import java.util.Arrays;
+
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.security.SaslChallenge;
 import org.apache.qpid.proton4j.amqp.security.SaslInit;
@@ -25,6 +27,7 @@ import org.apache.qpid.proton4j.amqp.security.SaslPerformative;
 import org.apache.qpid.proton4j.amqp.security.SaslResponse;
 import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
 import org.apache.qpid.proton4j.engine.EngineHandlerContext;
+import org.apache.qpid.proton4j.engine.EngineSaslDriver.SaslState;
 import org.apache.qpid.proton4j.engine.impl.sasl.SaslConstants.SaslOutcomes;
 import org.apache.qpid.proton4j.engine.impl.sasl.SaslConstants.SaslStates;
 import org.apache.qpid.proton4j.engine.sasl.SaslContext;
@@ -36,17 +39,14 @@ public abstract class ProtonSaslContext implements SaslContext, AMQPHeader.Heade
 
     protected ProtonSaslHandler saslHandler;
 
-    protected SaslOutcomes outcome = SaslOutcomes.SASL_NONE;
-    protected SaslStates state = SaslStates.SASL_IDLE;
-
+    // Client negotiations tracking.
     protected Symbol[] serverMechanisms;
     protected Symbol chosenMechanism;
     protected String hostname;
+    protected SaslState state = SaslState.IDLE;
+    protected org.apache.qpid.proton4j.engine.sasl.SaslOutcome outcome;
 
     protected boolean done;
-
-    protected boolean headerWritten;
-    protected boolean headerReceived;
 
     public ProtonSaslContext(ProtonSaslHandler handler) {
         this.saslHandler = handler;
@@ -76,12 +76,41 @@ public abstract class ProtonSaslContext implements SaslContext, AMQPHeader.Heade
         return getRole() == Role.SERVER;
     }
 
+    @Override
+    public org.apache.qpid.proton4j.engine.sasl.SaslOutcome getSaslOutcome() {
+        return outcome;
+    }
+
+    @Override
+    public SaslState getSaslState() {
+        return state;
+    }
+
     /**
      * @return true if SASL authentication has completed
      */
     @Override
     public boolean isDone() {
         return done;
+    }
+
+    @Override
+    public Symbol getChosenMechanism() {
+        return chosenMechanism;
+    }
+
+    @Override
+    public String getHostname() {
+        return hostname;
+    }
+
+    @Override
+    public Symbol[] getServerMechanisms() {
+        return serverMechanisms != null ? Arrays.copyOf(serverMechanisms, serverMechanisms.length) : null;
+    }
+
+    ProtonSaslHandler getHandler() {
+        return saslHandler;
     }
 
     //----- Handle AMQP Header input -----------------------------------------//

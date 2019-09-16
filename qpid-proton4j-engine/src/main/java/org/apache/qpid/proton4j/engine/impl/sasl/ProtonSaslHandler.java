@@ -42,7 +42,7 @@ public class ProtonSaslHandler implements EngineHandler {
     }
 
     public boolean isDone() {
-        return saslContext != null && saslContext.isDone();
+        return saslContext != null ? saslContext.isDone() : false;
     }
 
     @Override

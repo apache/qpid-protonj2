@@ -16,6 +16,9 @@
  */
 package org.apache.qpid.proton4j.engine.sasl;
 
+import org.apache.qpid.proton4j.amqp.Symbol;
+import org.apache.qpid.proton4j.engine.EngineSaslDriver.SaslState;
+
 /**
  * The basic SASL context APIs common to both client and server sides of the SASL exchange.
  */
@@ -48,4 +51,52 @@ public interface SaslContext {
     default boolean isClient() {
         return getRole() == Role.SERVER;
     }
+
+    /**
+     * Provides a low level outcome value for the SASL authentication process.
+     * <p>
+     * If the SASL exchange is ongoing or the SASL layer was skipped because a
+     * particular engine configuration allows such behavior then this method
+     * should return null to indicate no SASL outcome is available.
+     *
+     * @return the SASL outcome code that results from authentication
+     */
+    SaslOutcome getSaslOutcome();
+
+    /**
+     * Returns a SaslState that indicates the current operating state of the SASL
+     * negotiation process or conversely if no SASL layer is configured this method
+     * should return the no-SASL state.  This method must never return a null result.
+     *
+     * @return the current state of SASL Authentication.
+     */
+    SaslState getSaslState();
+
+    /**
+     * After the server has sent its supported mechanisms this method will return a
+     * copy of that list for review by the server event handler.  If called before
+     * the server has sent the mechanisms list this method will return null.
+     *
+     * @return the mechanisms that the server offered to the client.
+     */
+    Symbol[] getServerMechanisms();
+
+    /**
+     * Returns the mechanism that was sent to the server to select the SASL mechanism
+     * to use for negotiations.  If called before the client has sent its chosen mechanism
+     * this method returns null.
+     *
+     * @return the SASL mechanism that the client selected to use for negotiation.
+     */
+    Symbol getChosenMechanism();
+
+    /**
+     * The DNS name of the host (either fully qualified or relative) that was sent to the server
+     * which define the host the sending peer is connecting to.  If called before the client sent
+     * the host name information to the server this method returns null.
+     *
+     * @return the host name the client has requested to connect to.
+     */
+    String getHostname();
+
 }
