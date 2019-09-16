@@ -22,20 +22,19 @@ import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.security.SaslChallenge;
 import org.apache.qpid.proton4j.amqp.security.SaslInit;
 import org.apache.qpid.proton4j.amqp.security.SaslMechanisms;
-import org.apache.qpid.proton4j.amqp.security.SaslOutcome;
 import org.apache.qpid.proton4j.amqp.security.SaslPerformative;
 import org.apache.qpid.proton4j.amqp.security.SaslResponse;
 import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
 import org.apache.qpid.proton4j.engine.EngineHandlerContext;
 import org.apache.qpid.proton4j.engine.EngineSaslDriver.SaslState;
-import org.apache.qpid.proton4j.engine.impl.sasl.SaslConstants.SaslOutcomes;
-import org.apache.qpid.proton4j.engine.impl.sasl.SaslConstants.SaslStates;
+import org.apache.qpid.proton4j.engine.impl.ProtonEngine;
 import org.apache.qpid.proton4j.engine.sasl.SaslContext;
+import org.apache.qpid.proton4j.engine.sasl.SaslOutcome;
 
 /**
  * The State engine for a SASL exchange.
  */
-public abstract class ProtonSaslContext implements SaslContext, AMQPHeader.HeaderHandler<EngineHandlerContext>, SaslPerformative.SaslPerformativeHandler<EngineHandlerContext> {
+abstract class ProtonSaslContext implements SaslContext, AMQPHeader.HeaderHandler<EngineHandlerContext>, SaslPerformative.SaslPerformativeHandler<EngineHandlerContext> {
 
     protected ProtonSaslHandler saslHandler;
 
@@ -44,11 +43,12 @@ public abstract class ProtonSaslContext implements SaslContext, AMQPHeader.Heade
     protected Symbol chosenMechanism;
     protected String hostname;
     protected SaslState state = SaslState.IDLE;
-    protected org.apache.qpid.proton4j.engine.sasl.SaslOutcome outcome;
+    protected SaslOutcome outcome;
 
+    protected boolean initialized;
     protected boolean done;
 
-    public ProtonSaslContext(ProtonSaslHandler handler) {
+    ProtonSaslContext(ProtonSaslHandler handler) {
         this.saslHandler = handler;
     }
 
@@ -77,7 +77,7 @@ public abstract class ProtonSaslContext implements SaslContext, AMQPHeader.Heade
     }
 
     @Override
-    public org.apache.qpid.proton4j.engine.sasl.SaslOutcome getSaslOutcome() {
+    public SaslOutcome getSaslOutcome() {
         return outcome;
     }
 
@@ -148,12 +148,13 @@ public abstract class ProtonSaslContext implements SaslContext, AMQPHeader.Heade
     }
 
     @Override
-    public void handleOutcome(SaslOutcome saslOutcome, EngineHandlerContext context) {
+    public void handleOutcome(org.apache.qpid.proton4j.amqp.security.SaslOutcome saslOutcome, EngineHandlerContext context) {
         context.fireFailed(new IllegalStateException(
             "Unexpected SASL Outcome Frame received."));
     }
 
-    protected SaslStates classifyStateFromOutcome(SaslOutcomes outcome) {
-        return outcome == SaslOutcomes.SASL_OK ? SaslStates.SASL_PASS : SaslStates.SASL_FAIL;
-    }
+    //----- Internal events for the specific contexts to respond to
+
+    abstract void handleEngineStarting(ProtonEngine engine);
+
 }

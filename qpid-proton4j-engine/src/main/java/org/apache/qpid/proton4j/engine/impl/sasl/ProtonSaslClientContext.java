@@ -26,9 +26,10 @@ import org.apache.qpid.proton4j.amqp.security.SaslMechanisms;
 import org.apache.qpid.proton4j.amqp.security.SaslOutcome;
 import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
 import org.apache.qpid.proton4j.engine.EngineHandlerContext;
+import org.apache.qpid.proton4j.engine.impl.ProtonEngine;
 import org.apache.qpid.proton4j.engine.sasl.SaslClientContext;
 
-public class ProtonSaslClientContext extends ProtonSaslContext implements SaslClientContext {
+final class ProtonSaslClientContext extends ProtonSaslContext implements SaslClientContext {
 
     // Work state trackers
     private boolean headerWritten;
@@ -152,5 +153,12 @@ public class ProtonSaslClientContext extends ProtonSaslContext implements SaslCl
     public void saslOutcomeHandler(Consumer<Binary> handler) {
         Objects.requireNonNull(handler);
         this.outcomeHandler = handler;
+    }
+
+    //----- Internal methods and super overrides
+
+    @Override
+    void handleEngineStarting(ProtonEngine engine) {
+        initializationHandler.accept(this);
     }
 }

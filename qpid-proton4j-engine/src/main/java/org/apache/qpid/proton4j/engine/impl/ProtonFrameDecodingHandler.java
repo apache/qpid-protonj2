@@ -67,7 +67,7 @@ public class ProtonFrameDecodingHandler implements EngineHandler, SaslPerformati
     //----- Handler method implementations
 
     @Override
-    public void handlerAdded(EngineHandlerContext context) throws Exception {
+    public void handlerAdded(EngineHandlerContext context) {
         engine = (ProtonEngine) context.getEngine();
         configuration = engine.configuration();
     }

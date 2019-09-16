@@ -17,12 +17,14 @@
 package org.apache.qpid.proton4j.engine.impl.sasl;
 
 import org.apache.qpid.proton4j.engine.EngineSaslDriver;
+import org.apache.qpid.proton4j.engine.EngineState;
+import org.apache.qpid.proton4j.engine.impl.ProtonEngine;
 import org.apache.qpid.proton4j.engine.sasl.SaslOutcome;
 
 /**
  * Proton4J Engine SASL Context implementation.
  */
-public class ProtonEngineSaslDriver implements EngineSaslDriver {
+final class ProtonEngineSaslDriver implements EngineSaslDriver {
 
     /**
      * Default max frame size value used by this engine SASL context if not otherwise configured.
@@ -30,12 +32,14 @@ public class ProtonEngineSaslDriver implements EngineSaslDriver {
     public final static int MIN_MAX_SASL_FRAME_SIZE = 4096;
 
     private final ProtonSaslHandler handler;
+    private final ProtonEngine engine;
 
     private int maxFrameSize = MIN_MAX_SASL_FRAME_SIZE;
     private ProtonSaslContext context;
 
-    public ProtonEngineSaslDriver(ProtonSaslHandler handler) {
+    ProtonEngineSaslDriver(ProtonEngine engine, ProtonSaslHandler handler) {
         this.handler = handler;
+        this.engine = engine;
     }
 
     @Override
@@ -43,9 +47,16 @@ public class ProtonEngineSaslDriver implements EngineSaslDriver {
         if (context != null && context.isServer()) {
             throw new IllegalStateException("Engine SASL Context already operating in server mode");
         }
+        if (engine.state().ordinal() > EngineState.STARTED.ordinal()) {
+            throw new IllegalStateException("Engine is already shutdown or failed, cannot create client context.");
+        }
 
         if (context == null) {
             context = new ProtonSaslClientContext(handler);
+            // If already started or starting we initialize here to ensure that it gets done
+            if (engine.state() == EngineState.STARTING || engine.state() == EngineState.STARTED) {
+                context.handleEngineStarting(engine);
+            }
         }
 
         return (ProtonSaslClientContext) context;
@@ -56,9 +67,16 @@ public class ProtonEngineSaslDriver implements EngineSaslDriver {
         if (context != null && context.isClient()) {
             throw new IllegalStateException("Engine SASL Context already operating in client mode");
         }
+        if (engine.state().ordinal() > EngineState.STARTED.ordinal()) {
+            throw new IllegalStateException("Engine is already shutdown or failed, cannot create server context.");
+        }
 
         if (context == null) {
             context = new ProtonSaslServerContext(handler);
+            // If already started or starting we initialize here to ensure that it gets done
+            if (engine.state() == EngineState.STARTING || engine.state() == EngineState.STARTED) {
+                context.handleEngineStarting(engine);
+            }
         }
 
         return (ProtonSaslServerContext) context;
@@ -90,7 +108,13 @@ public class ProtonEngineSaslDriver implements EngineSaslDriver {
 
     //----- Internal Engine SASL Context API
 
-    boolean isInitialized() {
+    void handleEngineStarting(ProtonEngine engine) {
+        if (context != null) {
+            context.handleEngineStarting(engine);
+        }
+    }
+
+    boolean hasContext() {
         return context != null;
     }
 }

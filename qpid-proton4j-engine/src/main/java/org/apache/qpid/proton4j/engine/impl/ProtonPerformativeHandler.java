@@ -49,7 +49,7 @@ public class ProtonPerformativeHandler implements EngineHandler, AMQPHeader.Head
     //----- Handle transport events
 
     @Override
-    public void handlerAdded(EngineHandlerContext context) throws Exception {
+    public void handlerAdded(EngineHandlerContext context) {
         engine = (ProtonEngine) context.getEngine();
         connection = engine.getConnection();
         configuration = engine.configuration();

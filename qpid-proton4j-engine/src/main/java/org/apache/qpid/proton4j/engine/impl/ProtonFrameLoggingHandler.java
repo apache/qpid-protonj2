@@ -46,14 +46,6 @@ public class ProtonFrameLoggingHandler implements EngineHandler {
     }
 
     @Override
-    public void handlerAdded(EngineHandlerContext context) throws Exception {
-    }
-
-    @Override
-    public void handlerRemoved(EngineHandlerContext context) throws Exception {
-    }
-
-    @Override
     public void handleRead(EngineHandlerContext context, HeaderFrame header) {
         if (TRACE_FRM_ENABLED) {
             System.out.println("<- " + header.getBody());

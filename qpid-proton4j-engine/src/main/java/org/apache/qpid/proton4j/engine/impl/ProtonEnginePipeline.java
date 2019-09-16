@@ -23,6 +23,7 @@ import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.engine.EngineHandler;
 import org.apache.qpid.proton4j.engine.EngineHandlerContext;
 import org.apache.qpid.proton4j.engine.EnginePipeline;
+import org.apache.qpid.proton4j.engine.EngineState;
 import org.apache.qpid.proton4j.engine.EventHandler;
 import org.apache.qpid.proton4j.engine.HeaderFrame;
 import org.apache.qpid.proton4j.engine.ProtocolFrame;
@@ -84,8 +85,8 @@ public class ProtonEnginePipeline implements EnginePipeline {
 
         try {
             newFirst.getHandler().handlerAdded(newFirst);
-        } catch (Exception e) {
-            // TODO - Log the error and move on ?
+        } catch (Throwable e) {
+            engine.engineFailed(e);
         }
 
         return this;
@@ -112,8 +113,8 @@ public class ProtonEnginePipeline implements EnginePipeline {
 
         try {
             newLast.getHandler().handlerAdded(newLast);
-        } catch (Exception e) {
-            // TODO - Log the error and move on ?
+        } catch (Throwable e) {
+            engine.engineFailed(e);
         }
 
         return this;
@@ -129,8 +130,8 @@ public class ProtonEnginePipeline implements EnginePipeline {
 
             try {
                 oldFirst.getHandler().handlerRemoved(oldFirst);
-            } catch (Exception e) {
-                // TODO - Log the error and move on ?
+            } catch (Throwable e) {
+                engine.engineFailed(e);
             }
         }
 
@@ -147,8 +148,8 @@ public class ProtonEnginePipeline implements EnginePipeline {
 
             try {
                 oldLast.getHandler().handlerRemoved(oldLast);
-            } catch (Exception e) {
-                // TODO - Log the error and move on ?
+            } catch (Throwable e) {
+                engine.engineFailed(e);
             }
         }
 
@@ -178,8 +179,8 @@ public class ProtonEnginePipeline implements EnginePipeline {
             if (removed != null) {
                 try {
                     removed.getHandler().handlerRemoved(removed);
-                } catch (Exception e) {
-                    // TODO - Log the error and move on ?
+                } catch (Throwable e) {
+                    engine.engineFailed(e);
                 }
             }
         }
@@ -211,7 +212,18 @@ public class ProtonEnginePipeline implements EnginePipeline {
 
     @Override
     public ProtonEnginePipeline fireEngineStarting() {
-        head.fireEngineStarting();
+        ProtonEngineHandlerContext current = head;
+        while (current != tail) {
+            if (engine.state().ordinal() < EngineState.SHUTTING_DOWN.ordinal()) {
+                try {
+                    current.fireEngineStarting();
+                } catch (Throwable error) {
+                    engine.engineFailed(error);
+                    break;
+                }
+                current = current.next;
+            }
+        }
         return this;
     }
 

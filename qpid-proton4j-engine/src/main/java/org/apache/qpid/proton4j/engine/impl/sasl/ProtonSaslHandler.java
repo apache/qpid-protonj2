@@ -31,28 +31,35 @@ import org.apache.qpid.proton4j.engine.impl.ProtonEngineNoOpSaslDriver;
 /**
  * Base class used for common portions of the SASL processing pipeline.
  */
-public class ProtonSaslHandler implements EngineHandler {
+public final class ProtonSaslHandler implements EngineHandler {
 
-    private final ProtonEngineSaslDriver driver;
-
+    private ProtonEngineSaslDriver driver;
+    private ProtonEngine engine;
     private ProtonSaslContext saslContext;
-
-    public ProtonSaslHandler() {
-        this.driver = new ProtonEngineSaslDriver(this);
-    }
 
     public boolean isDone() {
         return saslContext != null ? saslContext.isDone() : false;
     }
 
     @Override
-    public void handlerAdded(EngineHandlerContext context) throws Exception {
-        ((ProtonEngine) context.getEngine()).registerSaslDriver(driver);
+    public void handlerAdded(EngineHandlerContext context) {
+        this.engine = (ProtonEngine) context.getEngine();
+        this.driver = new ProtonEngineSaslDriver(engine, this);
+
+        engine.registerSaslDriver(driver);
     }
 
     @Override
-    public void handlerRemoved(EngineHandlerContext context) throws Exception {
-        ((ProtonEngine) context.getEngine()).registerSaslDriver(ProtonEngineNoOpSaslDriver.INSTANCE);
+    public void handlerRemoved(EngineHandlerContext context) {
+        this.driver = null;
+        this.saslContext = null;
+
+        engine.registerSaslDriver(ProtonEngineNoOpSaslDriver.INSTANCE);
+    }
+
+    @Override
+    public void engineStarting(EngineHandlerContext context) {
+        driver.handleEngineStarting(engine);
     }
 
     @Override
@@ -60,9 +67,9 @@ public class ProtonSaslHandler implements EngineHandler {
         if (isDone()) {
             context.fireRead(header);
         } else {
-            if (!driver.isInitialized()) {
+            // Default to server if application has not configured one way or the other.
+            if (!driver.hasContext()) {
                 saslContext = driver.server();
-                // TODO - Initialize the context as engine must be started to get here.
             }
 
             header.invoke(saslContext, context);
