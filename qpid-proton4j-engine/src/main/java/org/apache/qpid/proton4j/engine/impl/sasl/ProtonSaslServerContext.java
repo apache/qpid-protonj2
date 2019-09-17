@@ -16,14 +16,18 @@
  */
 package org.apache.qpid.proton4j.engine.impl.sasl;
 
+import java.util.Arrays;
 import java.util.Objects;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 import org.apache.qpid.proton4j.amqp.Binary;
 import org.apache.qpid.proton4j.amqp.Symbol;
+import org.apache.qpid.proton4j.amqp.security.SaslChallenge;
+import org.apache.qpid.proton4j.amqp.security.SaslCode;
 import org.apache.qpid.proton4j.amqp.security.SaslInit;
 import org.apache.qpid.proton4j.amqp.security.SaslMechanisms;
+import org.apache.qpid.proton4j.amqp.security.SaslOutcome;
 import org.apache.qpid.proton4j.amqp.security.SaslResponse;
 import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
 import org.apache.qpid.proton4j.engine.EngineHandlerContext;
@@ -37,6 +41,7 @@ final class ProtonSaslServerContext extends ProtonSaslContext implements SaslSer
     private boolean headerReceived;
     private boolean mechanismsSent;
     private boolean mechanismChosen;
+    private boolean responseRequired;
 
     ProtonSaslServerContext(ProtonSaslHandler handler) {
         super(handler);
@@ -49,20 +54,44 @@ final class ProtonSaslServerContext extends ProtonSaslContext implements SaslSer
 
     @Override
     public SaslServerContext sendMechanisms(Symbol[] mechanisms) {
-        // TODO Auto-generated method stub
-        return null;
+        Objects.requireNonNull(mechanisms);
+
+        if (!mechanismsSent) {
+            saslHandler.context().fireWrite(new SaslMechanisms().setSaslServerMechanisms(mechanisms));
+            mechanisms = Arrays.copyOf(mechanisms, mechanisms.length);
+            mechanismsSent = true;
+        } else {
+            throw new IllegalStateException("SASL Mechanisms already sent to client");
+        }
+        return this;
     }
 
     @Override
     public SaslServerContext sendChallenge(Binary challenge) {
-        // TODO Auto-generated method stub
-        return null;
+        if (headerWritten && mechanismsSent && !responseRequired) {
+            saslHandler.context().fireWrite(new SaslChallenge().setChallenge(challenge));
+            responseRequired = true;
+        } else {
+            throw new IllegalStateException("SASL Challenge sent when state does not allow it");
+        }
+        return this;
     }
 
     @Override
     public SaslServerContext sendOutcome(org.apache.qpid.proton4j.engine.sasl.SaslOutcome outcome, Binary additional) {
-        // TODO Auto-generated method stub
-        return null;
+        if (headerWritten && mechanismsSent && !responseRequired) {
+            SaslOutcome saslOutcome = new SaslOutcome();
+
+            saslOutcome.setCode(SaslCode.values()[outcome.ordinal()]);
+            saslOutcome.setAdditionalData(additional);
+
+            saslHandler.context().fireWrite(saslOutcome);
+
+            done(outcome);
+        } else {
+            throw new IllegalStateException("SASL Challenge sent when state does not allow it");
+        }
+        return this;
     }
 
     //----- Transport event handlers -----------------------------------------//
@@ -87,26 +116,12 @@ final class ProtonSaslServerContext extends ProtonSaslContext implements SaslSer
             headerReceived = true;
         }
 
-        // TODO - When to fail when no mechanisms set, now or on some earlier started / connected event ?
-        //        Or allow it to be empty and await an async write of a SaslInit frame etc ?
-        if (serverMechanisms == null || serverMechanisms.length == 0) {
-            context.fireFailed(new IllegalStateException("SASL Server has no configured mechanisms"));
-        }
-
-        // TODO - Check state, then send mechanisms
-        SaslMechanisms mechanisms = new SaslMechanisms();
-        mechanisms.setSaslServerMechanisms(serverMechanisms);
-
-        // Send the server mechanisms now.
-        context.fireWrite(mechanisms);
-        mechanismsSent = true;
-//        state = SaslStates.SASL_STEP;
+        saslStartedHandler.accept(header);
     }
 
     @Override
     public void handleInit(SaslInit saslInit, EngineHandlerContext context) {
         if (mechanismChosen) {
-            // TODO - Handle SaslInit already read with better error
             context.fireFailed(new IllegalStateException("SASL Handler received second SASL Init"));
             return;
         }
@@ -115,45 +130,27 @@ final class ProtonSaslServerContext extends ProtonSaslContext implements SaslSer
         chosenMechanism = saslInit.getMechanism();
         mechanismChosen = true;
 
-        // TODO - Should we use ProtonBuffer slices as response containers ?
-//        listener.onSaslInit(this, saslInit.getInitialResponse());
-
-        pumpServerState(context);
+        initHandler.accept(chosenMechanism, saslInit.getInitialResponse());
     }
 
     @Override
     public void handleResponse(SaslResponse saslResponse, EngineHandlerContext context) {
-        // TODO - Should we use ProtonBuffer slices as response containers ?
-//        listener.onSaslResponse(this, saslResponse.getResponse());
-
-        pumpServerState(context);
-    }
-
-    private void pumpServerState(EngineHandlerContext context) {
-//        if (state == SaslStates.SASL_STEP && getChallenge() != null) {
-//            SaslChallenge challenge = new SaslChallenge();
-//            challenge.setChallenge(getChallenge());
-//            setChallenge(null);
-//            context.fireWrite(challenge);
-//        }
-//
-//        if (getOutcome() != SaslOutcomes.SASL_NONE) {
-//            SaslOutcome outcome = new SaslOutcome();
-//            // TODO Clean up SaslCode mechanics
-//            outcome.setCode(SaslCode.values()[getOutcome().getCode()]);
-//            outcome.setAdditionalData(additionalData);
-//            setAdditionalData(null);
-//            done = true;
-//            context.fireWrite(outcome);
-//        }
+        if (responseRequired) {
+            responseHandler.accept(saslResponse.getResponse());
+        } else {
+            context.fireFailed(new IllegalStateException("SASL Response received when none was expected"));
+        }
     }
 
     //----- Registration of SASL server event handlers
+
+    // TODO - Listener interface feels more intuitive and useful for SASL than the handler paradigm
 
     private Consumer<SaslServerContext> initializationHandler; // TODO - Change to engine started handler ?
 
     // TODO - Defaults that will respond but eventually fail the SASL exchange.
 
+    private Consumer<AMQPHeader> saslStartedHandler;
     private BiConsumer<Symbol, Binary> initHandler;
     private Consumer<Binary> responseHandler;
 
@@ -164,6 +161,12 @@ final class ProtonSaslServerContext extends ProtonSaslContext implements SaslSer
         } else {
             this.initializationHandler = (context) -> {};
         }
+    }
+
+    @Override
+    public void saslStartedHandler(Consumer<AMQPHeader> handler) {
+        Objects.requireNonNull(handler);
+        this.saslStartedHandler = handler;
     }
 
     @Override

@@ -21,6 +21,7 @@ import java.util.function.Consumer;
 
 import org.apache.qpid.proton4j.amqp.Binary;
 import org.apache.qpid.proton4j.amqp.Symbol;
+import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
 import org.apache.qpid.proton4j.engine.Engine;
 
 /**
@@ -38,6 +39,7 @@ public interface SaslServerContext extends SaslContext {
      * @return the mechanisms that the server offered to the client.
      */
 
+    @Override
     Symbol[] getServerMechanisms();
 
     /**
@@ -47,6 +49,7 @@ public interface SaslServerContext extends SaslContext {
      *
      * @return the SASL mechanism that the client selected to use for negotiation.
      */
+    @Override
     Symbol getChosenMechanism();
 
     /**
@@ -55,6 +58,7 @@ public interface SaslServerContext extends SaslContext {
      *
      * @return the host name the client has requested to connect to.
      */
+    @Override
     String getHostname();
 
     //----- SASL Negotiation API
@@ -106,6 +110,17 @@ public interface SaslServerContext extends SaslContext {
      *      The handler that will handle initialization for the server context.
      */
     void initializationHandler(Consumer<SaslServerContext> handler);
+
+    /**
+     * Called when the client has sent it's SASL header and the server has answered with
+     * it's own SASL header.  The server should answer with the list of supported mechanisms
+     * by calling {@link #sendMechanisms(Symbol[])} either immediately or later from the same
+     * thread that was used to invoke this handler.
+     *
+     * @param handler
+     *      The handler that will process the initial phase of the SASL negotiations process.
+     */
+    void saslStartedHandler(Consumer<AMQPHeader> handler);
 
     /**
      * Called when a SASL init frame has arrived from the client indicating the chosen

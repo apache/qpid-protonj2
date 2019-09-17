@@ -94,6 +94,12 @@ abstract class ProtonSaslContext implements SaslContext, AMQPHeader.HeaderHandle
         return done;
     }
 
+    ProtonSaslContext done(SaslOutcome outcome) {
+        this.done = true;
+        this.outcome = outcome;
+        return this;
+    }
+
     @Override
     public Symbol getChosenMechanism() {
         return chosenMechanism;
@@ -113,7 +119,7 @@ abstract class ProtonSaslContext implements SaslContext, AMQPHeader.HeaderHandle
         return saslHandler;
     }
 
-    //----- Handle AMQP Header input -----------------------------------------//
+    //----- Handle AMQP Header input
 
     @Override
     public abstract void handleAMQPHeader(AMQPHeader header, EngineHandlerContext context);
@@ -121,7 +127,7 @@ abstract class ProtonSaslContext implements SaslContext, AMQPHeader.HeaderHandle
     @Override
     public abstract void handleSASLHeader(AMQPHeader header, EngineHandlerContext context);
 
-    //----- Entry point for SASL Performative processing ---------------------//
+    //----- Entry point for SASL Performative processing
 
     @Override
     public void handleMechanisms(SaslMechanisms saslMechanisms, EngineHandlerContext context) {

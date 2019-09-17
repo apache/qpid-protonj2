@@ -53,8 +53,8 @@ final class ProtonEngineSaslDriver implements EngineSaslDriver {
 
         if (context == null) {
             context = new ProtonSaslClientContext(handler);
-            // If already started or starting we initialize here to ensure that it gets done
-            if (engine.state() == EngineState.STARTING || engine.state() == EngineState.STARTED) {
+            // If already started we initialize here to ensure that it gets done
+            if (engine.state() == EngineState.STARTED) {
                 context.handleEngineStarting(engine);
             }
         }
@@ -73,8 +73,8 @@ final class ProtonEngineSaslDriver implements EngineSaslDriver {
 
         if (context == null) {
             context = new ProtonSaslServerContext(handler);
-            // If already started or starting we initialize here to ensure that it gets done
-            if (engine.state() == EngineState.STARTING || engine.state() == EngineState.STARTED) {
+            // If already started we initialize here to ensure that it gets done
+            if (engine.state() == EngineState.STARTED) {
                 context.handleEngineStarting(engine);
             }
         }

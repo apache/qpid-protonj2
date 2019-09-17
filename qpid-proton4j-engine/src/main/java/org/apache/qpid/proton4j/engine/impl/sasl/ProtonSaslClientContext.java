@@ -22,8 +22,10 @@ import java.util.function.Consumer;
 import org.apache.qpid.proton4j.amqp.Binary;
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.security.SaslChallenge;
+import org.apache.qpid.proton4j.amqp.security.SaslInit;
 import org.apache.qpid.proton4j.amqp.security.SaslMechanisms;
 import org.apache.qpid.proton4j.amqp.security.SaslOutcome;
+import org.apache.qpid.proton4j.amqp.security.SaslResponse;
 import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
 import org.apache.qpid.proton4j.engine.EngineHandlerContext;
 import org.apache.qpid.proton4j.engine.impl.ProtonEngine;
@@ -36,6 +38,7 @@ final class ProtonSaslClientContext extends ProtonSaslContext implements SaslCli
     private boolean headerReceived;
     private boolean mechanismsReceived;
     private boolean mechanismChosen;
+    private boolean responseRequired;
 
     public ProtonSaslClientContext(ProtonSaslHandler handler) {
         super(handler);
@@ -48,22 +51,44 @@ final class ProtonSaslClientContext extends ProtonSaslContext implements SaslCli
 
     @Override
     public SaslClientContext sendSASLHeader() {
-        // TODO Auto-generated method stub
         if (!headerWritten) {
+            saslHandler.context().fireWrite(AMQPHeader.getSASLHeader());
+            headerWritten = true;
+        } else {
+            throw new IllegalStateException("SASL Header already sent to the remote SASL server");
+        }
 
+        return this;
+    }
+
+    @Override
+    public SaslClientContext sendChosenMechanism(Symbol mechanism, String hostname, Binary initialResponse) {
+        if (!mechanismChosen) {
+            Objects.requireNonNull(mechanism, "Cannot send an initial response with no chosen mechanism.");
+
+            this.chosenMechanism = mechanism;
+            this.hostname = hostname;
+
+            SaslInit init = new SaslInit().setHostname(hostname)
+                                          .setMechanism(mechanism)
+                                          .setInitialResponse(initialResponse);
+
+            saslHandler.context().fireWrite(init);
+            mechanismChosen = true;
+        } else {
+            throw new IllegalStateException("SASL Init already sent to the remote SASL server");
         }
         return this;
     }
 
     @Override
-    public SaslClientContext sendChosenMechanism(Symbol mechanism, String host, Binary initialResponse) {
-        // TODO Auto-generated method stub
-        return this;
-    }
-
-    @Override
     public SaslClientContext sendResponse(Binary response) {
-        // TODO Auto-generated method stub
+        if (responseRequired) {
+            saslHandler.context().fireWrite(new SaslResponse().setResponse(response));
+            responseRequired = false;
+        } else {
+            throw new IllegalStateException("SASL Response is not currently expected by remote server");
+        }
         return this;
     }
 
@@ -92,7 +117,6 @@ final class ProtonSaslClientContext extends ProtonSaslContext implements SaslCli
     @Override
     public void handleMechanisms(SaslMechanisms saslMechanisms, EngineHandlerContext context) {
         if (!mechanismsReceived) {
-            // TODO - Track state of the SASL negotiations
             serverMechanisms = saslMechanisms.getSaslServerMechanisms();
             mechanismsHandler.accept(getServerMechanisms());
         } else {
@@ -103,8 +127,12 @@ final class ProtonSaslClientContext extends ProtonSaslContext implements SaslCli
 
     @Override
     public void handleChallenge(SaslChallenge saslChallenge, EngineHandlerContext context) {
-        // TODO - Check state, are we ready
-        challengeHandler.accept(saslChallenge.getChallenge());
+        if (mechanismsReceived) {
+            challengeHandler.accept(saslChallenge.getChallenge());
+        } else {
+            saslHandler.transportFailed(context, new IllegalStateException(
+                "Remote sent unexpected SASL Challenge frame."));
+        }
     }
 
     @Override

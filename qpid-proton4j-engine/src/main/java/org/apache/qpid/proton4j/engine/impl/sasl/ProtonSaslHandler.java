@@ -33,6 +33,7 @@ import org.apache.qpid.proton4j.engine.impl.ProtonEngineNoOpSaslDriver;
  */
 public final class ProtonSaslHandler implements EngineHandler {
 
+    private EngineHandlerContext context;
     private ProtonEngineSaslDriver driver;
     private ProtonEngine engine;
     private ProtonSaslContext saslContext;
@@ -45,6 +46,7 @@ public final class ProtonSaslHandler implements EngineHandler {
     public void handlerAdded(EngineHandlerContext context) {
         this.engine = (ProtonEngine) context.getEngine();
         this.driver = new ProtonEngineSaslDriver(engine, this);
+        this.context = context;
 
         engine.registerSaslDriver(driver);
     }
@@ -53,6 +55,8 @@ public final class ProtonSaslHandler implements EngineHandler {
     public void handlerRemoved(EngineHandlerContext context) {
         this.driver = null;
         this.saslContext = null;
+        this.engine = null;
+        this.context = null;
 
         engine.registerSaslDriver(ProtonEngineNoOpSaslDriver.INSTANCE);
     }
@@ -100,9 +104,18 @@ public final class ProtonSaslHandler implements EngineHandler {
     public void handleWrite(EngineHandlerContext context, AMQPHeader header) {
         if (isDone()) {
             context.fireWrite(header);
+        } else if (header.isSaslHeader()) {
+            // TODO - Handle AMQP Header if not started as client yet.
+            // Default to client if application has not configured one way or the other.
+            if (!driver.hasContext()) {
+                ProtonSaslClientContext client = driver.client();
+                client.sendSASLHeader();
+                saslContext = client;
+            }
+            context.fireWrite(header);
         } else {
             context.fireFailed(new IllegalStateException(
-                "Unexpected AMQP Frame: SASL processing not yet completed"));
+                "Unexpected AMQP Header: SASL processing not yet completed"));
         }
     }
 
@@ -129,6 +142,16 @@ public final class ProtonSaslHandler implements EngineHandler {
     @Override
     public void handleWrite(EngineHandlerContext context, ProtonBuffer buffer) {
         context.fireWrite(buffer);
+    }
+
+    //----- Internal implementation API and helper methods
+
+    ProtonEngine engine() {
+        return engine;
+    }
+
+    EngineHandlerContext context() {
+        return context;
     }
 
     private ProtonSaslContext safeGetSaslContext(String errorMessage) {
