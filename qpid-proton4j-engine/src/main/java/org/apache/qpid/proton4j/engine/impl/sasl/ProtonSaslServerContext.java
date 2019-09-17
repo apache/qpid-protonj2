@@ -33,8 +33,13 @@ import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
 import org.apache.qpid.proton4j.engine.EngineHandlerContext;
 import org.apache.qpid.proton4j.engine.impl.ProtonEngine;
 import org.apache.qpid.proton4j.engine.sasl.SaslServerContext;
+import org.apache.qpid.proton4j.engine.sasl.SaslServerListener;
 
 final class ProtonSaslServerContext extends ProtonSaslContext implements SaslServerContext {
+
+    // TODO - Update SASL State in driver
+
+    private SaslServerListener server = new ProtonDefaultSaslServerListener();
 
     // Work state trackers
     private boolean headerWritten;
@@ -50,6 +55,18 @@ final class ProtonSaslServerContext extends ProtonSaslContext implements SaslSer
     @Override
     public Role getRole() {
         return Role.SERVER;
+    }
+
+    @Override
+    public SaslServerContext setListener(SaslServerListener listener) {
+        Objects.requireNonNull(listener, "Cannot configure a null SaslServerListnener");
+        this.server = listener;
+        return this;
+    }
+
+    @Override
+    public SaslServerListener getListener() {
+        return server;
     }
 
     @Override
@@ -116,6 +133,7 @@ final class ProtonSaslServerContext extends ProtonSaslContext implements SaslSer
             headerReceived = true;
         }
 
+        // TODO ? server.handleSaslHeader(this, header);
         saslStartedHandler.accept(header);
     }
 
@@ -130,12 +148,14 @@ final class ProtonSaslServerContext extends ProtonSaslContext implements SaslSer
         chosenMechanism = saslInit.getMechanism();
         mechanismChosen = true;
 
+        // TODO ? server.handleSaslInit(this, chosenMechanism, saslInit.getInitialResponse());
         initHandler.accept(chosenMechanism, saslInit.getInitialResponse());
     }
 
     @Override
     public void handleResponse(SaslResponse saslResponse, EngineHandlerContext context) {
         if (responseRequired) {
+            // TODO ? server.handleSaslResponse(this, saslResponse.getResponse());
             responseHandler.accept(saslResponse.getResponse());
         } else {
             context.fireFailed(new IllegalStateException("SASL Response received when none was expected"));
@@ -186,5 +206,25 @@ final class ProtonSaslServerContext extends ProtonSaslContext implements SaslSer
     @Override
     void handleEngineStarting(ProtonEngine engine) {
         initializationHandler.accept(this);
+    }
+
+    //----- Default SASL Server listener that fails any negotiations
+
+    public static class ProtonDefaultSaslServerListener implements SaslServerListener {
+
+        @Override
+        public void handleSaslHeader(SaslServerContext context, AMQPHeader header) {
+            // TODO Auto-generated method stub
+        }
+
+        @Override
+        public void handleSaslInit(SaslServerContext context, Symbol mechanism, Binary initResponse) {
+            // TODO Auto-generated method stub
+        }
+
+        @Override
+        public void handleSaslResponse(SaslServerContext context, Binary response) {
+            // TODO Auto-generated method stub
+        }
     }
 }

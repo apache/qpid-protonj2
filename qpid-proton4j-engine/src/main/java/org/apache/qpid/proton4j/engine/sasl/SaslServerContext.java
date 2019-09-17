@@ -61,6 +61,24 @@ public interface SaslServerContext extends SaslContext {
     @Override
     String getHostname();
 
+    /**
+     * Sets the {@link SaslServerListener} that will be used to driver the server side SASL
+     * negotiations with a connected "client".  As the client initiates or responds to the
+     * various phases of the SASL negotiation the {@link SaslServerListener} will be notified
+     * and allowed to respond.
+     *
+     * @param listener
+     *      The {@link SaslServerListener} to use for SASL negotiations, cannot be null.
+     *
+     * @return this server context.
+     */
+    SaslServerContext setListener(SaslServerListener listener);
+
+    /**
+     * @return the currently set {@link SaslServerListener} instance.
+     */
+    SaslServerListener getListener();
+
     //----- SASL Negotiation API
 
     /**

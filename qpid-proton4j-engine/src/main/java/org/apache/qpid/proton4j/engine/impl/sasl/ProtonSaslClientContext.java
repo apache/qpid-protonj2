@@ -30,8 +30,13 @@ import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
 import org.apache.qpid.proton4j.engine.EngineHandlerContext;
 import org.apache.qpid.proton4j.engine.impl.ProtonEngine;
 import org.apache.qpid.proton4j.engine.sasl.SaslClientContext;
+import org.apache.qpid.proton4j.engine.sasl.SaslClientListener;
 
 final class ProtonSaslClientContext extends ProtonSaslContext implements SaslClientContext {
+
+    // TODO - Update SASL State in driver
+
+    private SaslClientListener client = new ProtonDefaultSaslClientListener();
 
     // Work state trackers
     private boolean headerWritten;
@@ -48,6 +53,20 @@ final class ProtonSaslClientContext extends ProtonSaslContext implements SaslCli
     public Role getRole() {
         return Role.CLIENT;
     }
+
+    @Override
+    public SaslClientContext setListener(SaslClientListener listener) {
+        Objects.requireNonNull(listener, "Cannot configure a null SaslClientListener");
+        this.client = listener;
+        return this;
+    }
+
+    @Override
+    public SaslClientListener getListener() {
+        return client;
+    }
+
+    //----- SASL negotiations API
 
     @Override
     public SaslClientContext sendSASLHeader() {
@@ -118,6 +137,7 @@ final class ProtonSaslClientContext extends ProtonSaslContext implements SaslCli
     public void handleMechanisms(SaslMechanisms saslMechanisms, EngineHandlerContext context) {
         if (!mechanismsReceived) {
             serverMechanisms = saslMechanisms.getSaslServerMechanisms();
+            // TODO ? client.handleSaslMechanisms(this, getServerMechanisms());
             mechanismsHandler.accept(getServerMechanisms());
         } else {
             saslHandler.transportFailed(context, new IllegalStateException(
@@ -128,6 +148,7 @@ final class ProtonSaslClientContext extends ProtonSaslContext implements SaslCli
     @Override
     public void handleChallenge(SaslChallenge saslChallenge, EngineHandlerContext context) {
         if (mechanismsReceived) {
+            // TODO ? client.handleSaslChallenge(this, saslChallenge.getChallenge());
             challengeHandler.accept(saslChallenge.getChallenge());
         } else {
             saslHandler.transportFailed(context, new IllegalStateException(
@@ -137,12 +158,8 @@ final class ProtonSaslClientContext extends ProtonSaslContext implements SaslCli
 
     @Override
     public void handleOutcome(SaslOutcome saslOutcome, EngineHandlerContext context) {
-//        this.outcome = SaslOutcomes.valueOf(outcome.getCode());
-//        if (state != SaslStates.SASL_IDLE) {
-//            state = classifyStateFromOutcome(outcome);
-//        }
-
-        done = true;
+        done(org.apache.qpid.proton4j.engine.sasl.SaslOutcome.values()[saslOutcome.getCode().ordinal()]);
+        // TODO ? client.handleSaslOutcome(this, saslOutcome.getCode(), saslOutcome.getAdditionalData());
         outcomeHandler.accept(saslOutcome.getAdditionalData());
     }
 
@@ -189,4 +206,24 @@ final class ProtonSaslClientContext extends ProtonSaslContext implements SaslCli
     void handleEngineStarting(ProtonEngine engine) {
         initializationHandler.accept(this);
     }
+
+    //----- Default SASL Client listener fails the exchange
+
+    private static class ProtonDefaultSaslClientListener implements SaslClientListener {
+
+       @Override
+       public void handleSaslMechanisms(SaslClientContext context, Symbol[] mechanisms) {
+           // TODO Auto-generated method stub
+       }
+
+       @Override
+       public void handleSaslChallenge(SaslClientContext context, Binary challenge) {
+           // TODO Auto-generated method stub
+       }
+
+       @Override
+       public void handleSaslOutcome(SaslClientContext context, org.apache.qpid.proton4j.engine.sasl.SaslOutcome outcome, Binary additional) {
+           // TODO Auto-generated method stub
+       }
+   }
 }

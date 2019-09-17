@@ -45,8 +45,7 @@ abstract class ProtonSaslContext implements SaslContext, AMQPHeader.HeaderHandle
     protected SaslState state = SaslState.IDLE;
     protected SaslOutcome outcome;
 
-    protected boolean initialized;
-    protected boolean done;
+    private boolean done;
 
     ProtonSaslContext(ProtonSaslHandler handler) {
         this.saslHandler = handler;

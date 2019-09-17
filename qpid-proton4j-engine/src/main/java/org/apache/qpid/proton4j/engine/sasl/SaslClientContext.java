@@ -37,6 +37,7 @@ public interface SaslClientContext extends SaslContext {
      *
      * @return the mechanisms that the server offered to the client.
      */
+    @Override
     Symbol[] getServerMechanisms();
 
     /**
@@ -46,6 +47,7 @@ public interface SaslClientContext extends SaslContext {
      *
      * @return the SASL mechanism that the client selected to use for negotiation.
      */
+    @Override
     Symbol getChosenMechanism();
 
     /**
@@ -54,7 +56,26 @@ public interface SaslClientContext extends SaslContext {
      *
      * @return the host name the client has requested to connect to.
      */
+    @Override
     String getHostname();
+
+    /**
+     * Sets the {@link SaslClientListener} that will be used to driver the client side SASL
+     * negotiations with a connected "server".  As the server initiates or responds to the
+     * various phases of the SASL negotiation the {@link SaslClientListener} will be notified
+     * and allowed to respond.
+     *
+     * @param listener
+     *      The {@link SaslClientListener} to use for SASL negotiations, cannot be null.
+     *
+     * @return this client context.
+     */
+    SaslClientContext setListener(SaslClientListener listener);
+
+    /**
+     * @return the currently set {@link SaslClientListener} instance.
+     */
+    SaslClientListener getListener();
 
     //----- SASL Negotiation API
 
