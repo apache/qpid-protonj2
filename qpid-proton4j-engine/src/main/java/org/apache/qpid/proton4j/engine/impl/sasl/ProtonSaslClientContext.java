@@ -16,6 +16,7 @@
  */
 package org.apache.qpid.proton4j.engine.impl.sasl;
 
+import java.util.Arrays;
 import java.util.Objects;
 
 import org.apache.qpid.proton4j.amqp.Binary;
@@ -27,6 +28,7 @@ import org.apache.qpid.proton4j.amqp.security.SaslOutcome;
 import org.apache.qpid.proton4j.amqp.security.SaslResponse;
 import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
 import org.apache.qpid.proton4j.engine.EngineHandlerContext;
+import org.apache.qpid.proton4j.engine.EngineSaslDriver.SaslState;
 import org.apache.qpid.proton4j.engine.impl.ProtonEngine;
 import org.apache.qpid.proton4j.engine.sasl.SaslClientContext;
 import org.apache.qpid.proton4j.engine.sasl.SaslClientListener;
@@ -114,6 +116,7 @@ final class ProtonSaslClientContext extends ProtonSaslContext implements SaslCli
 
     @Override
     public void handleAMQPHeader(AMQPHeader header, EngineHandlerContext context) {
+        state = SaslState.AUTHENTICATION_FAILED;
         saslHandler.transportFailed(context, new IllegalStateException(
             "Remote does not support SASL authentication."));
     }
@@ -122,6 +125,7 @@ final class ProtonSaslClientContext extends ProtonSaslContext implements SaslCli
     public void handleSASLHeader(AMQPHeader header, EngineHandlerContext context) {
         if (!headerReceived) {
             headerReceived = true;
+            state = SaslState.AUTHENTICATING;
             if (!headerWritten) {
                 context.fireWrite(AMQPHeader.getSASLHeader());
                 headerWritten = true;
@@ -165,27 +169,35 @@ final class ProtonSaslClientContext extends ProtonSaslContext implements SaslCli
     //----- Internal methods and super overrides
 
     @Override
-    void handleEngineStarting(ProtonEngine engine) {
+    ProtonSaslClientContext handleContextInitialization(ProtonEngine engine) {
         getListener().initialize(this);
+        return this;
     }
 
     //----- Default SASL Client listener fails the exchange
 
     private static class ProtonDefaultSaslClientListener implements SaslClientListener {
 
-       @Override
-       public void handleSaslMechanisms(SaslClientContext context, Symbol[] mechanisms) {
-           // TODO Auto-generated method stub
+        private final Symbol ANONYMOUS = Symbol.valueOf("ANONYMOUS");
+
+        @Override
+        public void handleSaslMechanisms(SaslClientContext context, Symbol[] mechanisms) {
+           if (mechanisms != null && Arrays.binarySearch(mechanisms, ANONYMOUS) > 0) {
+               context.sendChosenMechanism(ANONYMOUS, null, null);
+           } else {
+               ProtonSaslContext sasl = (ProtonSaslContext) context;
+               sasl.done(org.apache.qpid.proton4j.engine.sasl.SaslOutcome.SASL_SYS);
+               // TODO - Fail engine
+           }
        }
 
-       @Override
-       public void handleSaslChallenge(SaslClientContext context, Binary challenge) {
-           // TODO Auto-generated method stub
-       }
+        @Override
+        public void handleSaslChallenge(SaslClientContext context, Binary challenge) {
+            // TODO - Fail engine
+        }
 
-       @Override
-       public void handleSaslOutcome(SaslClientContext context, org.apache.qpid.proton4j.engine.sasl.SaslOutcome outcome, Binary additional) {
-           // TODO Auto-generated method stub
-       }
-   }
+        @Override
+        public void handleSaslOutcome(SaslClientContext context, org.apache.qpid.proton4j.engine.sasl.SaslOutcome outcome, Binary additional) {
+        }
+    }
 }

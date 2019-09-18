@@ -72,7 +72,8 @@ public final class ProtonSaslHandler implements EngineHandler {
             context.fireRead(header);
         } else {
             // Default to server if application has not configured one way or the other.
-            if (!driver.hasContext()) {
+            saslContext = driver.context();
+            if (saslContext == null) {
                 saslContext = driver.server();
             }
 
@@ -105,13 +106,14 @@ public final class ProtonSaslHandler implements EngineHandler {
         if (isDone()) {
             context.fireWrite(header);
         } else if (header.isSaslHeader()) {
-            // TODO - Handle AMQP Header if not started as client yet.
             // Default to client if application has not configured one way or the other.
-            if (!driver.hasContext()) {
-                ProtonSaslClientContext client = driver.client();
-                client.sendSASLHeader();
-                saslContext = client;
+            saslContext = driver.context();
+            if (saslContext == null) {
+                saslContext = driver.client();
             }
+
+            // TODO - Handle non-SASL header from Connection Open starting the AMQP negotiation exchange.
+            //        also direct write through the SASL context so it can track state
             context.fireWrite(header);
         } else {
             context.fireFailed(new IllegalStateException(
@@ -135,7 +137,11 @@ public final class ProtonSaslHandler implements EngineHandler {
             context.fireFailed(new IllegalStateException(
                 "Unexpected SASL Performative: SASL processing has yet completed"));
         } else {
-            context.fireWrite(performative);
+            // TODO - Manual write bypasses the driver SaslContext implementation which
+            //        would cause state to become invalid, handle or fail engine ?
+            // context.fireWrite(performative);
+            context.fireFailed(new IllegalStateException(
+                "Unexpected SASL Performative: SASL processing configured to use the Proton SASL Driver"));
         }
     }
 

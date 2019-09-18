@@ -17,7 +17,6 @@
 package org.apache.qpid.proton4j.engine.impl;
 
 import org.apache.qpid.proton4j.engine.EngineSaslDriver;
-import org.apache.qpid.proton4j.engine.impl.sasl.SaslConstants;
 import org.apache.qpid.proton4j.engine.sasl.SaslClientContext;
 import org.apache.qpid.proton4j.engine.sasl.SaslOutcome;
 import org.apache.qpid.proton4j.engine.sasl.SaslServerContext;
@@ -29,6 +28,8 @@ import org.apache.qpid.proton4j.engine.sasl.SaslServerContext;
 public final class ProtonEngineNoOpSaslDriver implements EngineSaslDriver {
 
     public static final ProtonEngineNoOpSaslDriver INSTANCE = new ProtonEngineNoOpSaslDriver();
+
+    public static final int MIN_MAX_SASL_FRAME_SIZE = 512;
 
     @Override
     public SaslState getSaslState() {
@@ -42,7 +43,7 @@ public final class ProtonEngineNoOpSaslDriver implements EngineSaslDriver {
 
     @Override
     public int getMaxFrameSize() {
-        return SaslConstants.MIN_MAX_SASL_FRAME_SIZE;
+        return MIN_MAX_SASL_FRAME_SIZE;
     }
 
     @Override

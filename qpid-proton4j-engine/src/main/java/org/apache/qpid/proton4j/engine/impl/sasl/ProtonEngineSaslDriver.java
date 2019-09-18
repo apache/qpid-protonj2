@@ -27,14 +27,19 @@ import org.apache.qpid.proton4j.engine.sasl.SaslOutcome;
 final class ProtonEngineSaslDriver implements EngineSaslDriver {
 
     /**
-     * Default max frame size value used by this engine SASL context if not otherwise configured.
+     * Default max frame size value used by this engine SASL driver if not otherwise configured.
      */
-    public final static int MIN_MAX_SASL_FRAME_SIZE = 4096;
+    public final static int DEFAULT_MAX_SASL_FRAME_SIZE = 4096;
+
+    /*
+     * The specification define lower bound for SASL frame size.
+     */
+    private final static int MIN_MAX_SASL_FRAME_SIZE = 512;
 
     private final ProtonSaslHandler handler;
     private final ProtonEngine engine;
 
-    private int maxFrameSize = MIN_MAX_SASL_FRAME_SIZE;
+    private int maxFrameSize = DEFAULT_MAX_SASL_FRAME_SIZE;
     private ProtonSaslContext context;
 
     ProtonEngineSaslDriver(ProtonEngine engine, ProtonSaslHandler handler) {
@@ -55,7 +60,7 @@ final class ProtonEngineSaslDriver implements EngineSaslDriver {
             context = new ProtonSaslClientContext(handler);
             // If already started we initialize here to ensure that it gets done
             if (engine.state() == EngineState.STARTED) {
-                context.handleEngineStarting(engine);
+                context.handleContextInitialization(engine);
             }
         }
 
@@ -75,7 +80,7 @@ final class ProtonEngineSaslDriver implements EngineSaslDriver {
             context = new ProtonSaslServerContext(handler);
             // If already started we initialize here to ensure that it gets done
             if (engine.state() == EngineState.STARTED) {
-                context.handleEngineStarting(engine);
+                context.handleContextInitialization(engine);
             }
         }
 
@@ -100,7 +105,11 @@ final class ProtonEngineSaslDriver implements EngineSaslDriver {
     @Override
     public void setMaxFrameSize(int maxFrameSize) {
         if (getSaslState() == SaslState.IDLE) {
-            this.maxFrameSize = maxFrameSize;
+            if (maxFrameSize < MIN_MAX_SASL_FRAME_SIZE) {
+                throw new IllegalArgumentException("Cannot set a max frame size lower than: " + MIN_MAX_SASL_FRAME_SIZE);
+            } else {
+                this.maxFrameSize = maxFrameSize;
+            }
         } else {
             throw new IllegalStateException("Cannot configure max SASL frame size after SASL negotiations have started");
         }
@@ -110,11 +119,11 @@ final class ProtonEngineSaslDriver implements EngineSaslDriver {
 
     void handleEngineStarting(ProtonEngine engine) {
         if (context != null) {
-            context.handleEngineStarting(engine);
+            context.handleContextInitialization(engine);
         }
     }
 
-    boolean hasContext() {
-        return context != null;
+    ProtonSaslContext context() {
+        return context;
     }
 }

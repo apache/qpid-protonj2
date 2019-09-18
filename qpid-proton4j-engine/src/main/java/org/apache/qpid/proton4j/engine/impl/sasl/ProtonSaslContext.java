@@ -96,6 +96,8 @@ abstract class ProtonSaslContext implements SaslContext, AMQPHeader.HeaderHandle
     ProtonSaslContext done(SaslOutcome outcome) {
         this.done = true;
         this.outcome = outcome;
+        this.state = outcome == SaslOutcome.SASL_OK ? SaslState.AUTHENTICATED : SaslState.AUTHENTICATION_FAILED;
+
         return this;
     }
 
@@ -117,6 +119,10 @@ abstract class ProtonSaslContext implements SaslContext, AMQPHeader.HeaderHandle
     ProtonSaslHandler getHandler() {
         return saslHandler;
     }
+
+    //----- Internal events for the specific contexts to respond to
+
+    abstract ProtonSaslContext handleContextInitialization(ProtonEngine engine);
 
     //----- Handle AMQP Header input
 
@@ -157,9 +163,4 @@ abstract class ProtonSaslContext implements SaslContext, AMQPHeader.HeaderHandle
         context.fireFailed(new IllegalStateException(
             "Unexpected SASL Outcome Frame received."));
     }
-
-    //----- Internal events for the specific contexts to respond to
-
-    abstract void handleEngineStarting(ProtonEngine engine);
-
 }

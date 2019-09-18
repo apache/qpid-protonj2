@@ -29,6 +29,7 @@ import org.apache.qpid.proton4j.amqp.security.SaslOutcome;
 import org.apache.qpid.proton4j.amqp.security.SaslResponse;
 import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
 import org.apache.qpid.proton4j.engine.EngineHandlerContext;
+import org.apache.qpid.proton4j.engine.EngineSaslDriver.SaslState;
 import org.apache.qpid.proton4j.engine.impl.ProtonEngine;
 import org.apache.qpid.proton4j.engine.sasl.SaslServerContext;
 import org.apache.qpid.proton4j.engine.sasl.SaslServerListener;
@@ -119,16 +120,17 @@ final class ProtonSaslServerContext extends ProtonSaslContext implements SaslSer
 
     @Override
     public void handleSASLHeader(AMQPHeader header, EngineHandlerContext context) {
-        if (!headerWritten) {
-            context.fireWrite(header);
-            headerWritten = true;
-        }
-
         if (headerReceived) {
             context.fireFailed(new IllegalStateException(
                 "Unexpected second SASL Header read before SASL Authentication completed."));
         } else {
             headerReceived = true;
+        }
+
+        if (!headerWritten) {
+            context.fireWrite(header);
+            headerWritten = true;
+            state = SaslState.AUTHENTICATING;
         }
 
         server.handleSaslHeader(this, header);
@@ -160,27 +162,34 @@ final class ProtonSaslServerContext extends ProtonSaslContext implements SaslSer
     //----- Internal methods and super overrides
 
     @Override
-    void handleEngineStarting(ProtonEngine engine) {
+    ProtonSaslServerContext handleContextInitialization(ProtonEngine engine) {
         getListener().initialize(this);
+        return this;
     }
 
     //----- Default SASL Server listener that fails any negotiations
 
+    // TODO - Default behavior when server not configured ?
+    //        Present a Mechanism like PLAIN that always fails the authentication ?
+    //        Default to insecure and just offer ANONYMOUS ?
+
     public static class ProtonDefaultSaslServerListener implements SaslServerListener {
+
+        private static final Symbol[] PLAIN = { Symbol.valueOf("PLAIN") };
 
         @Override
         public void handleSaslHeader(SaslServerContext context, AMQPHeader header) {
-            // TODO Auto-generated method stub
+            context.sendMechanisms(PLAIN);
         }
 
         @Override
         public void handleSaslInit(SaslServerContext context, Symbol mechanism, Binary initResponse) {
-            // TODO Auto-generated method stub
+            context.sendOutcome(org.apache.qpid.proton4j.engine.sasl.SaslOutcome.SASL_AUTH, null);
         }
 
         @Override
         public void handleSaslResponse(SaslServerContext context, Binary response) {
-            // TODO Auto-generated method stub
+            // TODO Failure of engine, response not expected ?
         }
     }
 }
