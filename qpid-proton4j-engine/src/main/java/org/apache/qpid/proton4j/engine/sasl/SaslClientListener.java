@@ -29,6 +29,8 @@ import org.apache.qpid.proton4j.amqp.Symbol;
  */
 public interface SaslClientListener {
 
+    // TODO - Work out how to use ProtonBuffer instead of Binary
+
     /**
      * Called to give the application code a clear point to initialize all the client side expectations.
      * <p>

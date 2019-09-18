@@ -17,7 +17,6 @@
 package org.apache.qpid.proton4j.engine.impl.sasl;
 
 import java.util.Objects;
-import java.util.function.Consumer;
 
 import org.apache.qpid.proton4j.amqp.Binary;
 import org.apache.qpid.proton4j.amqp.Symbol;
@@ -137,8 +136,7 @@ final class ProtonSaslClientContext extends ProtonSaslContext implements SaslCli
     public void handleMechanisms(SaslMechanisms saslMechanisms, EngineHandlerContext context) {
         if (!mechanismsReceived) {
             serverMechanisms = saslMechanisms.getSaslServerMechanisms();
-            // TODO ? client.handleSaslMechanisms(this, getServerMechanisms());
-            mechanismsHandler.accept(getServerMechanisms());
+            client.handleSaslMechanisms(this, getServerMechanisms());
         } else {
             saslHandler.transportFailed(context, new IllegalStateException(
                 "Remote sent illegal additional SASL Mechanisms frame."));
@@ -148,8 +146,7 @@ final class ProtonSaslClientContext extends ProtonSaslContext implements SaslCli
     @Override
     public void handleChallenge(SaslChallenge saslChallenge, EngineHandlerContext context) {
         if (mechanismsReceived) {
-            // TODO ? client.handleSaslChallenge(this, saslChallenge.getChallenge());
-            challengeHandler.accept(saslChallenge.getChallenge());
+            client.handleSaslChallenge(this, saslChallenge.getChallenge());
         } else {
             saslHandler.transportFailed(context, new IllegalStateException(
                 "Remote sent unexpected SASL Challenge frame."));
@@ -159,52 +156,17 @@ final class ProtonSaslClientContext extends ProtonSaslContext implements SaslCli
     @Override
     public void handleOutcome(SaslOutcome saslOutcome, EngineHandlerContext context) {
         done(org.apache.qpid.proton4j.engine.sasl.SaslOutcome.values()[saslOutcome.getCode().ordinal()]);
-        // TODO ? client.handleSaslOutcome(this, saslOutcome.getCode(), saslOutcome.getAdditionalData());
-        outcomeHandler.accept(saslOutcome.getAdditionalData());
+        client.handleSaslOutcome(this, getSaslOutcome(), saslOutcome.getAdditionalData());
     }
 
     //----- Registration of SASL client event handlers
 
-    private Consumer<SaslClientContext> initializationHandler; // TODO - Change to engine started handler ?
-
-    // TODO - Defaults that will respond but eventually fail the SASL exchange.
-
-    private Consumer<Symbol[]> mechanismsHandler;
-    private Consumer<Binary> challengeHandler;
-    private Consumer<Binary> outcomeHandler;
-
-    @Override
-    public void initializationHandler(Consumer<SaslClientContext> handler) {
-        if (handler != null) {
-            this.initializationHandler = handler;
-        } else {
-            this.initializationHandler = (context) -> {};
-        }
-    }
-
-    @Override
-    public void saslMechanismsHandler(Consumer<Symbol[]> handler) {
-        Objects.requireNonNull(handler);
-        this.mechanismsHandler = handler;
-    }
-
-    @Override
-    public void saslChallengeHandler(Consumer<Binary> handler) {
-        Objects.requireNonNull(handler);
-        this.challengeHandler = handler;
-    }
-
-    @Override
-    public void saslOutcomeHandler(Consumer<Binary> handler) {
-        Objects.requireNonNull(handler);
-        this.outcomeHandler = handler;
-    }
 
     //----- Internal methods and super overrides
 
     @Override
     void handleEngineStarting(ProtonEngine engine) {
-        initializationHandler.accept(this);
+        getListener().initialize(this);
     }
 
     //----- Default SASL Client listener fails the exchange

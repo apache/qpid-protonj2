@@ -18,8 +18,6 @@ package org.apache.qpid.proton4j.engine.impl.sasl;
 
 import java.util.Arrays;
 import java.util.Objects;
-import java.util.function.BiConsumer;
-import java.util.function.Consumer;
 
 import org.apache.qpid.proton4j.amqp.Binary;
 import org.apache.qpid.proton4j.amqp.Symbol;
@@ -133,8 +131,7 @@ final class ProtonSaslServerContext extends ProtonSaslContext implements SaslSer
             headerReceived = true;
         }
 
-        // TODO ? server.handleSaslHeader(this, header);
-        saslStartedHandler.accept(header);
+        server.handleSaslHeader(this, header);
     }
 
     @Override
@@ -148,64 +145,23 @@ final class ProtonSaslServerContext extends ProtonSaslContext implements SaslSer
         chosenMechanism = saslInit.getMechanism();
         mechanismChosen = true;
 
-        // TODO ? server.handleSaslInit(this, chosenMechanism, saslInit.getInitialResponse());
-        initHandler.accept(chosenMechanism, saslInit.getInitialResponse());
+        server.handleSaslInit(this, chosenMechanism, saslInit.getInitialResponse());
     }
 
     @Override
     public void handleResponse(SaslResponse saslResponse, EngineHandlerContext context) {
         if (responseRequired) {
-            // TODO ? server.handleSaslResponse(this, saslResponse.getResponse());
-            responseHandler.accept(saslResponse.getResponse());
+            server.handleSaslResponse(this, saslResponse.getResponse());
         } else {
             context.fireFailed(new IllegalStateException("SASL Response received when none was expected"));
         }
-    }
-
-    //----- Registration of SASL server event handlers
-
-    // TODO - Listener interface feels more intuitive and useful for SASL than the handler paradigm
-
-    private Consumer<SaslServerContext> initializationHandler; // TODO - Change to engine started handler ?
-
-    // TODO - Defaults that will respond but eventually fail the SASL exchange.
-
-    private Consumer<AMQPHeader> saslStartedHandler;
-    private BiConsumer<Symbol, Binary> initHandler;
-    private Consumer<Binary> responseHandler;
-
-    @Override
-    public void initializationHandler(Consumer<SaslServerContext> handler) {
-        if (handler != null) {
-            this.initializationHandler = handler;
-        } else {
-            this.initializationHandler = (context) -> {};
-        }
-    }
-
-    @Override
-    public void saslStartedHandler(Consumer<AMQPHeader> handler) {
-        Objects.requireNonNull(handler);
-        this.saslStartedHandler = handler;
-    }
-
-    @Override
-    public void saslInitHandler(BiConsumer<Symbol, Binary> handler) {
-        Objects.requireNonNull(handler);
-        this.initHandler = handler;
-    }
-
-    @Override
-    public void saslResponseHandler(Consumer<Binary> handler) {
-        Objects.requireNonNull(handler);
-        this.responseHandler = handler;
     }
 
     //----- Internal methods and super overrides
 
     @Override
     void handleEngineStarting(ProtonEngine engine) {
-        initializationHandler.accept(this);
+        getListener().initialize(this);
     }
 
     //----- Default SASL Server listener that fails any negotiations

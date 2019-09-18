@@ -30,6 +30,8 @@ import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
  */
 public interface SaslServerListener {
 
+    // TODO - Work out how to use ProtonBuffer instead of Binary
+
     /**
      * Called to give the application code a clear point to initialize all the Server side expectations.
      * <p>
