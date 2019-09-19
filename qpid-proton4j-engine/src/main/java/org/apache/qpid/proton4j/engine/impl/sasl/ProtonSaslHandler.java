@@ -77,7 +77,7 @@ public final class ProtonSaslHandler implements EngineHandler {
                 saslContext = driver.server();
             }
 
-            header.invoke(saslContext, context);
+            header.invoke(saslContext.headerReadContext(), context);
         }
     }
 
@@ -87,7 +87,7 @@ public final class ProtonSaslHandler implements EngineHandler {
             context.fireFailed(new IllegalStateException(
                 "Unexpected SASL Frame: SASL processing has already completed"));
         } else {
-            frame.invoke(safeGetSaslContext("Cannot process incoming SASL performative, driver not yet initialized"), context);
+            frame.invoke(safeGetSaslContext().saslReadContext(), context);
         }
     }
 
@@ -105,19 +105,15 @@ public final class ProtonSaslHandler implements EngineHandler {
     public void handleWrite(EngineHandlerContext context, AMQPHeader header) {
         if (isDone()) {
             context.fireWrite(header);
-        } else if (header.isSaslHeader()) {
+        } else {
             // Default to client if application has not configured one way or the other.
             saslContext = driver.context();
             if (saslContext == null) {
                 saslContext = driver.client();
             }
 
-            // TODO - Handle non-SASL header from Connection Open starting the AMQP negotiation exchange.
-            //        also direct write through the SASL context so it can track state
-            context.fireWrite(header);
-        } else {
-            context.fireFailed(new IllegalStateException(
-                "Unexpected AMQP Header: SASL processing not yet completed"));
+            // Delegate write to the SASL Context in use to allow for state updates.
+            header.invoke(saslContext.headerWriteContext(), context);
         }
     }
 
@@ -137,11 +133,8 @@ public final class ProtonSaslHandler implements EngineHandler {
             context.fireFailed(new IllegalStateException(
                 "Unexpected SASL Performative: SASL processing has yet completed"));
         } else {
-            // TODO - Manual write bypasses the driver SaslContext implementation which
-            //        would cause state to become invalid, handle or fail engine ?
-            // context.fireWrite(performative);
-            context.fireFailed(new IllegalStateException(
-                "Unexpected SASL Performative: SASL processing configured to use the Proton SASL Driver"));
+            // Delegate to the SASL Context to allow state tracking to be maintained.
+            performative.invoke(safeGetSaslContext().saslWriteContext(), context);
         }
     }
 
@@ -160,11 +153,11 @@ public final class ProtonSaslHandler implements EngineHandler {
         return context;
     }
 
-    private ProtonSaslContext safeGetSaslContext(String errorMessage) {
+    private ProtonSaslContext safeGetSaslContext() {
         if (saslContext != null) {
             return saslContext;
         }
 
-        throw new IllegalStateException(errorMessage);
+        throw new IllegalStateException("Cannot process incoming SASL performative, driver not yet initialized");
     }
 }

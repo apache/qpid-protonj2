@@ -26,8 +26,10 @@ import org.apache.qpid.proton4j.amqp.security.SaslCode;
 import org.apache.qpid.proton4j.amqp.security.SaslInit;
 import org.apache.qpid.proton4j.amqp.security.SaslMechanisms;
 import org.apache.qpid.proton4j.amqp.security.SaslOutcome;
+import org.apache.qpid.proton4j.amqp.security.SaslPerformative.SaslPerformativeHandler;
 import org.apache.qpid.proton4j.amqp.security.SaslResponse;
 import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
+import org.apache.qpid.proton4j.amqp.transport.AMQPHeader.HeaderHandler;
 import org.apache.qpid.proton4j.engine.EngineHandlerContext;
 import org.apache.qpid.proton4j.engine.EngineSaslDriver.SaslState;
 import org.apache.qpid.proton4j.engine.impl.ProtonEngine;
@@ -35,8 +37,6 @@ import org.apache.qpid.proton4j.engine.sasl.SaslServerContext;
 import org.apache.qpid.proton4j.engine.sasl.SaslServerListener;
 
 final class ProtonSaslServerContext extends ProtonSaslContext implements SaslServerContext {
-
-    // TODO - Update SASL State in driver
 
     private SaslServerListener server = new ProtonDefaultSaslServerListener();
 
@@ -68,103 +68,211 @@ final class ProtonSaslServerContext extends ProtonSaslContext implements SaslSer
         return server;
     }
 
+    //----- SASL negotiations API
+
+    // TODO - Consider routing these sends through the engine proper such that the engine could
+    //        track outbound work for a future timeout of SASL feature, and also ensures that all
+    //        handlers see the outbound work item.
+    //
+    //          engine.pipeline.fireWrite(X);
+
     @Override
     public SaslServerContext sendMechanisms(Symbol[] mechanisms) {
         Objects.requireNonNull(mechanisms);
-
-        if (!mechanismsSent) {
-            saslHandler.context().fireWrite(new SaslMechanisms().setSaslServerMechanisms(mechanisms));
-            mechanisms = Arrays.copyOf(mechanisms, mechanisms.length);
-            mechanismsSent = true;
-        } else {
-            throw new IllegalStateException("SASL Mechanisms already sent to client");
-        }
+        saslWriteContext().handleMechanisms(new SaslMechanisms().setSaslServerMechanisms(mechanisms), saslHandler.context());
         return this;
     }
 
     @Override
     public SaslServerContext sendChallenge(Binary challenge) {
-        if (headerWritten && mechanismsSent && !responseRequired) {
-            saslHandler.context().fireWrite(new SaslChallenge().setChallenge(challenge));
-            responseRequired = true;
-        } else {
-            throw new IllegalStateException("SASL Challenge sent when state does not allow it");
-        }
+        Objects.requireNonNull(challenge);
+        saslWriteContext().handleChallenge(new SaslChallenge().setChallenge(challenge), saslHandler.context());
         return this;
     }
 
     @Override
     public SaslServerContext sendOutcome(org.apache.qpid.proton4j.engine.sasl.SaslOutcome outcome, Binary additional) {
-        if (headerWritten && mechanismsSent && !responseRequired) {
-            SaslOutcome saslOutcome = new SaslOutcome();
+        Objects.requireNonNull(outcome);
 
-            saslOutcome.setCode(SaslCode.values()[outcome.ordinal()]);
-            saslOutcome.setAdditionalData(additional);
+        SaslOutcome saslOutcome = new SaslOutcome();
+        saslOutcome.setCode(SaslCode.values()[outcome.ordinal()]);
+        saslOutcome.setAdditionalData(additional);
 
-            saslHandler.context().fireWrite(saslOutcome);
-
-            done(outcome);
-        } else {
-            throw new IllegalStateException("SASL Challenge sent when state does not allow it");
-        }
+        saslWriteContext().handleOutcome(saslOutcome, saslHandler.context());
         return this;
     }
 
-    //----- Transport event handlers -----------------------------------------//
-
-    @Override
-    public void handleAMQPHeader(AMQPHeader header, EngineHandlerContext context) {
-        context.fireFailed(new IllegalStateException(
-            "Unexpected AMQP Header before SASL Authentication completed."));
-    }
-
-    @Override
-    public void handleSASLHeader(AMQPHeader header, EngineHandlerContext context) {
-        if (headerReceived) {
-            context.fireFailed(new IllegalStateException(
-                "Unexpected second SASL Header read before SASL Authentication completed."));
-        } else {
-            headerReceived = true;
-        }
-
-        if (!headerWritten) {
-            context.fireWrite(header);
-            headerWritten = true;
-            state = SaslState.AUTHENTICATING;
-        }
-
-        server.handleSaslHeader(this, header);
-    }
-
-    @Override
-    public void handleInit(SaslInit saslInit, EngineHandlerContext context) {
-        if (mechanismChosen) {
-            context.fireFailed(new IllegalStateException("SASL Handler received second SASL Init"));
-            return;
-        }
-
-        hostname = saslInit.getHostname();
-        chosenMechanism = saslInit.getMechanism();
-        mechanismChosen = true;
-
-        server.handleSaslInit(this, chosenMechanism, saslInit.getInitialResponse());
-    }
-
-    @Override
-    public void handleResponse(SaslResponse saslResponse, EngineHandlerContext context) {
-        if (responseRequired) {
-            server.handleSaslResponse(this, saslResponse.getResponse());
-        } else {
-            context.fireFailed(new IllegalStateException("SASL Response received when none was expected"));
-        }
-    }
-
-    //----- Internal methods and super overrides
+    //----- SASL Handler API sink for all reads and writes
 
     @Override
     ProtonSaslServerContext handleContextInitialization(ProtonEngine engine) {
         getListener().initialize(this);
         return this;
+    }
+
+    @Override
+    HeaderHandler<EngineHandlerContext> headerReadContext() {
+        return this.headerReadContext;
+    }
+
+    @Override
+    HeaderHandler<EngineHandlerContext> headerWriteContext() {
+        return this.headerWriteContext;
+    }
+
+    @Override
+    SaslPerformativeHandler<EngineHandlerContext> saslReadContext() {
+        return this.saslReadContext;
+    }
+
+    @Override
+    SaslPerformativeHandler<EngineHandlerContext> saslWriteContext() {
+        return this.saslWriteContext;
+    }
+
+    //----- Read and Write contexts for SASL and Header types
+
+    private final HeaderReadContext headerReadContext = new HeaderReadContext();
+    private final HeaderWriteContext headerWriteContext = new HeaderWriteContext();
+    private final SaslReadContext saslReadContext = new SaslReadContext();
+    private final SaslWriteContext saslWriteContext = new SaslWriteContext();
+
+    private final class HeaderReadContext implements HeaderHandler<EngineHandlerContext> {
+
+        @Override
+        public void handleAMQPHeader(AMQPHeader header, EngineHandlerContext context) {
+            // Raw AMQP Header shouldn't arrive before the SASL negotiations are done.
+            context.fireWrite(AMQPHeader.getSASLHeader());
+            context.fireFailed(new IllegalStateException(
+                "Unexpected AMQP Header before SASL Authentication completed."));
+        }
+
+        @Override
+        public void handleSASLHeader(AMQPHeader header, EngineHandlerContext context) {
+            if (headerReceived) {
+                context.fireFailed(new IllegalStateException(
+                    "Unexpected second SASL Header read before SASL Authentication completed."));
+            } else {
+                headerReceived = true;
+            }
+
+            if (!headerWritten) {
+                context.fireWrite(header);
+                headerWritten = true;
+                state = SaslState.AUTHENTICATING;
+            }
+
+            server.handleSaslHeader(ProtonSaslServerContext.this, header);
+        }
+    }
+
+    private final class HeaderWriteContext implements HeaderHandler<EngineHandlerContext> {
+
+        @Override
+        public void handleAMQPHeader(AMQPHeader header, EngineHandlerContext context) {
+            context.fireFailed(new IllegalStateException(
+                "Unexpected AMQP Header write before SASL Authentication completed."));
+        }
+
+        @Override
+        public void handleSASLHeader(AMQPHeader header, EngineHandlerContext context) {
+            if (headerWritten) {
+                context.fireFailed(new IllegalStateException(
+                    "Unexpected SASL write following a previous header send."));
+            }
+            headerWritten = true;
+            context.fireWrite(AMQPHeader.getSASLHeader());
+        }
+    }
+
+    private final class SaslReadContext implements SaslPerformativeHandler<EngineHandlerContext> {
+
+        @Override
+        public void handleMechanisms(SaslMechanisms saslMechanisms, EngineHandlerContext context) {
+            context.fireFailed(new IllegalStateException(
+                "Unexpected SASL Mechanisms Frame received at SASL Server."));
+        }
+
+        @Override
+        public void handleInit(SaslInit saslInit, EngineHandlerContext context) {
+            if (mechanismChosen) {
+                context.fireFailed(new IllegalStateException("SASL Handler received second SASL Init"));
+                return;
+            }
+
+            hostname = saslInit.getHostname();
+            chosenMechanism = saslInit.getMechanism();
+            mechanismChosen = true;
+
+            server.handleSaslInit(ProtonSaslServerContext.this, chosenMechanism, saslInit.getInitialResponse());
+        }
+
+        @Override
+        public void handleChallenge(SaslChallenge saslChallenge, EngineHandlerContext context) {
+            context.fireFailed(new IllegalStateException(
+                "Unexpected SASL Challenege Frame received at SASL Server."));
+        }
+
+        @Override
+        public void handleResponse(SaslResponse saslResponse, EngineHandlerContext context) {
+            if (responseRequired) {
+                server.handleSaslResponse(ProtonSaslServerContext.this, saslResponse.getResponse());
+            } else {
+                context.fireFailed(new IllegalStateException("SASL Response received when none was expected"));
+            }
+        }
+
+        @Override
+        public void handleOutcome(SaslOutcome saslOutcome, EngineHandlerContext context) {
+            context.fireFailed(new IllegalStateException(
+                "Unexpected SASL Outcome Frame received at SASL Server."));
+        }
+    }
+
+    private final class SaslWriteContext implements SaslPerformativeHandler<EngineHandlerContext> {
+
+        @Override
+        public void handleMechanisms(SaslMechanisms saslMechanisms, EngineHandlerContext context) {
+            if (!mechanismsSent) {
+                context.fireWrite(saslMechanisms);
+                serverMechanisms = Arrays.copyOf(saslMechanisms.getSaslServerMechanisms(), saslMechanisms.getSaslServerMechanisms().length);
+                mechanismsSent = true;
+            } else {
+                throw new IllegalStateException("SASL Mechanisms already sent to client");
+            }
+        }
+
+        @Override
+        public void handleInit(SaslInit saslInit, EngineHandlerContext context) {
+            context.fireFailed(new IllegalStateException(
+                "Unexpected SASL Init Frame write attempted on SASL Server."));
+        }
+
+        @Override
+        public void handleChallenge(SaslChallenge saslChallenge, EngineHandlerContext context) {
+            if (headerWritten && mechanismsSent && !responseRequired) {
+                context.fireWrite(saslChallenge);
+                responseRequired = true;
+            } else {
+                throw new IllegalStateException("SASL Challenge sent when state does not allow it");
+            }
+        }
+
+        @Override
+        public void handleResponse(SaslResponse saslResponse, EngineHandlerContext context) {
+            context.fireFailed(new IllegalStateException(
+                "Unexpected SASL Response Frame write attempted on SASL Server."));
+        }
+
+        @Override
+        public void handleOutcome(SaslOutcome saslOutcome, EngineHandlerContext context) {
+            if (headerWritten && mechanismsSent && !responseRequired) {
+                done(org.apache.qpid.proton4j.engine.sasl.SaslOutcome.valueOf(saslOutcome.getCode().getValue().byteValue()));
+                context.fireWrite(saslOutcome);
+            } else {
+                throw new IllegalStateException("SASL Outcome sent when state does not allow it");
+            }
+        }
     }
 
     //----- Default SASL Server listener that fails any negotiations

@@ -19,12 +19,8 @@ package org.apache.qpid.proton4j.engine.impl.sasl;
 import java.util.Arrays;
 
 import org.apache.qpid.proton4j.amqp.Symbol;
-import org.apache.qpid.proton4j.amqp.security.SaslChallenge;
-import org.apache.qpid.proton4j.amqp.security.SaslInit;
-import org.apache.qpid.proton4j.amqp.security.SaslMechanisms;
-import org.apache.qpid.proton4j.amqp.security.SaslPerformative;
-import org.apache.qpid.proton4j.amqp.security.SaslResponse;
-import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
+import org.apache.qpid.proton4j.amqp.security.SaslPerformative.SaslPerformativeHandler;
+import org.apache.qpid.proton4j.amqp.transport.AMQPHeader.HeaderHandler;
 import org.apache.qpid.proton4j.engine.EngineHandlerContext;
 import org.apache.qpid.proton4j.engine.EngineSaslDriver.SaslState;
 import org.apache.qpid.proton4j.engine.impl.ProtonEngine;
@@ -34,7 +30,7 @@ import org.apache.qpid.proton4j.engine.sasl.SaslOutcome;
 /**
  * The State engine for a SASL exchange.
  */
-abstract class ProtonSaslContext implements SaslContext, AMQPHeader.HeaderHandler<EngineHandlerContext>, SaslPerformative.SaslPerformativeHandler<EngineHandlerContext> {
+abstract class ProtonSaslContext implements SaslContext {
 
     protected ProtonSaslHandler saslHandler;
 
@@ -124,43 +120,12 @@ abstract class ProtonSaslContext implements SaslContext, AMQPHeader.HeaderHandle
 
     abstract ProtonSaslContext handleContextInitialization(ProtonEngine engine);
 
-    //----- Handle AMQP Header input
+    abstract HeaderHandler<EngineHandlerContext> headerReadContext();
 
-    @Override
-    public abstract void handleAMQPHeader(AMQPHeader header, EngineHandlerContext context);
+    abstract HeaderHandler<EngineHandlerContext> headerWriteContext();
 
-    @Override
-    public abstract void handleSASLHeader(AMQPHeader header, EngineHandlerContext context);
+    abstract SaslPerformativeHandler<EngineHandlerContext> saslReadContext();
 
-    //----- Entry point for SASL Performative processing
+    abstract SaslPerformativeHandler<EngineHandlerContext> saslWriteContext();
 
-    @Override
-    public void handleMechanisms(SaslMechanisms saslMechanisms, EngineHandlerContext context) {
-        context.fireFailed(new IllegalStateException(
-            "Unexpected SASL Mechanisms Frame received."));
-    }
-
-    @Override
-    public void handleInit(SaslInit saslInit, EngineHandlerContext context) {
-        context.fireFailed(new IllegalStateException(
-            "Unexpected SASL Init Frame received."));
-    }
-
-    @Override
-    public void handleChallenge(SaslChallenge saslChallenge, EngineHandlerContext context) {
-        context.fireFailed(new IllegalStateException(
-            "Unexpected SASL Challenge Frame received."));
-    }
-
-    @Override
-    public void handleResponse(SaslResponse saslResponse, EngineHandlerContext context) {
-        context.fireFailed(new IllegalStateException(
-            "Unexpected SASL Response Frame received."));
-    }
-
-    @Override
-    public void handleOutcome(org.apache.qpid.proton4j.amqp.security.SaslOutcome saslOutcome, EngineHandlerContext context) {
-        context.fireFailed(new IllegalStateException(
-            "Unexpected SASL Outcome Frame received."));
-    }
 }
