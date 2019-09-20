@@ -17,6 +17,7 @@
 package org.apache.qpid.proton4j.engine.sasl;
 
 import org.apache.qpid.proton4j.amqp.Symbol;
+import org.apache.qpid.proton4j.engine.Context;
 import org.apache.qpid.proton4j.engine.EngineSaslDriver.SaslState;
 
 /**
@@ -25,6 +26,14 @@ import org.apache.qpid.proton4j.engine.EngineSaslDriver.SaslState;
 public interface SaslContext {
 
     enum Role { CLIENT, SERVER }
+
+    /**
+     * Returns a mutable context that the application layer can use to store meaningful data for itself
+     * in relation to this specific SASL context object.
+     *
+     * @return the {@link Context} instance that is associated with this {@link SaslContext}
+     */
+    Context getContext();
 
     /**
      * Return the Role of the context implementation.

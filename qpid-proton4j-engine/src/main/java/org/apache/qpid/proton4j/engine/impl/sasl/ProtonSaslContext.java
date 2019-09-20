@@ -23,6 +23,7 @@ import org.apache.qpid.proton4j.amqp.security.SaslPerformative.SaslPerformativeH
 import org.apache.qpid.proton4j.amqp.transport.AMQPHeader.HeaderHandler;
 import org.apache.qpid.proton4j.engine.EngineHandlerContext;
 import org.apache.qpid.proton4j.engine.EngineSaslDriver.SaslState;
+import org.apache.qpid.proton4j.engine.impl.ProtonContext;
 import org.apache.qpid.proton4j.engine.impl.ProtonEngine;
 import org.apache.qpid.proton4j.engine.sasl.SaslContext;
 import org.apache.qpid.proton4j.engine.sasl.SaslOutcome;
@@ -32,7 +33,9 @@ import org.apache.qpid.proton4j.engine.sasl.SaslOutcome;
  */
 abstract class ProtonSaslContext implements SaslContext {
 
-    protected ProtonSaslHandler saslHandler;
+    protected final ProtonSaslHandler saslHandler;
+
+    private final ProtonContext context = new ProtonContext();
 
     // Client negotiations tracking.
     protected Symbol[] serverMechanisms;
@@ -45,6 +48,11 @@ abstract class ProtonSaslContext implements SaslContext {
 
     ProtonSaslContext(ProtonSaslHandler handler) {
         this.saslHandler = handler;
+    }
+
+    @Override
+    public ProtonContext getContext() {
+        return context;
     }
 
     /**
@@ -82,7 +90,7 @@ abstract class ProtonSaslContext implements SaslContext {
     }
 
     /**
-     * @return true if SASL authentication has completed
+     * @return true if SASL authentication has completed regardless of outcome
      */
     @Override
     public boolean isDone() {
@@ -119,6 +127,8 @@ abstract class ProtonSaslContext implements SaslContext {
     //----- Internal events for the specific contexts to respond to
 
     abstract ProtonSaslContext handleContextInitialization(ProtonEngine engine);
+
+    //----- Read and Write contexts that will see all inbound and outbound activity
 
     abstract HeaderHandler<EngineHandlerContext> headerReadContext();
 
