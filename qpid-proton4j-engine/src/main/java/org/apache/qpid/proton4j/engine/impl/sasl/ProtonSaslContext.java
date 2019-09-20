@@ -76,7 +76,7 @@ abstract class ProtonSaslContext implements SaslContext {
      */
     @Override
     public boolean isClient() {
-        return getRole() == Role.SERVER;
+        return getRole() == Role.CLIENT;
     }
 
     @Override

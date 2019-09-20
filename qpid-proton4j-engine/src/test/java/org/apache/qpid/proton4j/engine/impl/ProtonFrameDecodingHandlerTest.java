@@ -34,7 +34,7 @@ import org.apache.qpid.proton4j.engine.Engine;
 import org.apache.qpid.proton4j.engine.EngineHandlerContext;
 import org.apache.qpid.proton4j.engine.HeaderFrame;
 import org.apache.qpid.proton4j.engine.ProtocolFrame;
-import org.apache.qpid.proton4j.engine.util.TestSupportTransportHandler;
+import org.apache.qpid.proton4j.engine.util.FrameRecordingTransportHandler;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
@@ -42,11 +42,11 @@ import org.mockito.Mockito;
 
 public class ProtonFrameDecodingHandlerTest {
 
-    private TestSupportTransportHandler testHandler;
+    private FrameRecordingTransportHandler testHandler;
 
     @Before
     public void setUp() {
-        testHandler = new TestSupportTransportHandler();
+        testHandler = new FrameRecordingTransportHandler();
     }
 
     @Test
