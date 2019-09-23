@@ -172,6 +172,7 @@ public class ProtonReceiver extends ProtonLink<Receiver> implements Receiver {
     }
 
     Receiver signalDeliveryReceived(IncomingDelivery delivery) {
+        //TODO: what if it is null? Limbo? Release? Should we instead error out?
         if (deliveryReceivedEventHandler != null) {
             deliveryReceivedEventHandler.handle(delivery);
         }

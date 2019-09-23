@@ -125,6 +125,7 @@ public class ProtonSender extends ProtonLink<Sender> implements Sender {
 
     @Override
     public OutgoingDelivery next() {
+        // TODO: null 'current' upon completion instead of checking partial here? Thats what current() doc suggests.
         if (current != null && current.isPartial()) {
             throw new IllegalStateException("Current delivery is not complete and cannot be advanced.");
         }
