@@ -49,11 +49,15 @@ public class BinaryTypeEncoder extends AbstractPrimitiveTypeEncoder<Binary> {
         if (value.getReadableBytes() > 255) {
             buffer.writeByte(EncodingCodes.VBIN32);
             buffer.writeInt(value.getReadableBytes());
-            value.getBytes(0, buffer); //TODO: we dont necessarily know the index is 0, do we? value.getReadIndex()?
+            // TODO: In testing there are some possible bugs here that are encountered when trying to switch over
+            //       to proton buffer inside Binary types.  More tests needed.
+            value.getBytes(value.getReadIndex(), buffer);
         } else {
             buffer.writeByte(EncodingCodes.VBIN8);
             buffer.writeByte((byte) value.getReadableBytes());
-            value.getBytes(0, buffer); //TODO: we dont necessarily know the index is 0, do we? value.getReadIndex()?
+            // TODO: In testing there are some possible bugs here that are encountered when trying to switch over
+            //       to proton buffer inside Binary types.  More tests needed.
+            value.getBytes(value.getReadIndex(), buffer);
         }
     }
 

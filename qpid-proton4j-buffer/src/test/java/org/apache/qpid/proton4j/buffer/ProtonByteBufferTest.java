@@ -2191,6 +2191,31 @@ public class ProtonByteBufferTest {
         } catch (IndexOutOfBoundsException iobe) {}
     }
 
+    @Test
+    public void testSetBytesFromLargerBufferIntoSmallerBuffer() {
+        ProtonBuffer buffer = new ProtonByteBuffer(2, 2);
+        ProtonBuffer other = new ProtonByteBuffer(3, 3);
+
+        other.writeByte(1);
+        other.writeByte(2);
+        other.writeByte(3);
+
+        try {
+            buffer.setBytes(0, other);
+        } catch (IndexOutOfBoundsException iobe) {}
+
+        buffer.setBytes(0, other, 2);
+
+        assertFalse(buffer.isReadable());
+
+        buffer.setWriteIndex(2);
+
+        assertEquals(buffer.readByte(), 1);
+        assertEquals(buffer.readByte(), 2);
+
+        assertEquals(2, other.getReadIndex());
+    }
+
     //----- Test for getBytes methods ----------------------------------------//
 
     @Test
@@ -2292,6 +2317,29 @@ public class ProtonByteBufferTest {
         for (int i = 0; i < data.length; ++i) {
             assertEquals(buffer.getByte(i), target.getByte(i));
         }
+    }
+
+    @Test
+    public void testGetBytesFromLargerBufferIntoSmallerBuffer() {
+        ProtonBuffer buffer = new ProtonByteBuffer(2, 2);
+        ProtonBuffer other = new ProtonByteBuffer(3, 3);
+
+        other.writeByte(1);
+        other.writeByte(2);
+        other.writeByte(3);
+
+        other.getBytes(0, buffer);
+
+        assertTrue(buffer.isReadable());
+
+        assertEquals(other.readByte(), 1);
+        assertEquals(other.readByte(), 2);
+        assertEquals(other.readByte(), 3);
+
+        assertEquals(3, other.getReadIndex());
+
+        assertEquals(buffer.readByte(), 1);
+        assertEquals(buffer.readByte(), 2);
     }
 
     //----- Miscellaneous Stress Tests
