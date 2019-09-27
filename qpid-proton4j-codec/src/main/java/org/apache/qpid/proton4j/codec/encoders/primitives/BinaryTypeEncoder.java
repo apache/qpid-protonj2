@@ -34,30 +34,27 @@ public class BinaryTypeEncoder extends AbstractPrimitiveTypeEncoder<Binary> {
 
     @Override
     public void writeType(ProtonBuffer buffer, EncoderState state, Binary value) {
-        if (value.getLength() > 255) {
-            buffer.writeByte(EncodingCodes.VBIN32);
-            buffer.writeInt(value.getLength());
-            buffer.writeBytes(value.getArray(), value.getArrayOffset(), value.getLength());
-        } else {
-            buffer.writeByte(EncodingCodes.VBIN8);
-            buffer.writeByte((byte) value.getLength());
-            buffer.writeBytes(value.getArray(), value.getArrayOffset(), value.getLength());
-        }
+        writeType(buffer, state, value.asProtonBuffer());
     }
 
     public void writeType(ProtonBuffer buffer, EncoderState state, ProtonBuffer value) {
         if (value.getReadableBytes() > 255) {
             buffer.writeByte(EncodingCodes.VBIN32);
             buffer.writeInt(value.getReadableBytes());
-            // TODO: In testing there are some possible bugs here that are encountered when trying to switch over
-            //       to proton buffer inside Binary types.  More tests needed.
-            value.getBytes(value.getReadIndex(), buffer);
         } else {
             buffer.writeByte(EncodingCodes.VBIN8);
             buffer.writeByte((byte) value.getReadableBytes());
-            // TODO: In testing there are some possible bugs here that are encountered when trying to switch over
-            //       to proton buffer inside Binary types.  More tests needed.
-            value.getBytes(value.getReadIndex(), buffer);
+        }
+
+        // buffer.ensureWritable(value.getReadableBytes());
+        // value.getBytes(value.getReadIndex(), buffer);
+        // TODO: In testing there are some possible bugs here that are encountered when trying to switch over
+        //       to proton buffer inside Binary types.  More tests needed, temporary working options is coded.
+        value.markReadIndex();
+        try {
+            buffer.writeBytes(value);
+        } finally {
+            value.resetReadIndex();
         }
     }
 
@@ -78,8 +75,15 @@ public class BinaryTypeEncoder extends AbstractPrimitiveTypeEncoder<Binary> {
         buffer.writeByte(EncodingCodes.VBIN32);
         for (Object value : values) {
             Binary binary = (Binary) value;
-            buffer.writeInt(binary.getLength());
-            buffer.writeBytes(binary.getArray(), binary.getArrayOffset(), binary.getLength());
+            ProtonBuffer binaryBuffer = binary.asProtonBuffer();
+
+            buffer.writeInt(binaryBuffer.getReadableBytes());
+            binaryBuffer.markReadIndex();
+            try {
+                buffer.writeBytes(binaryBuffer);
+            } finally {
+                binaryBuffer.resetReadIndex();
+            }
         }
     }
 }

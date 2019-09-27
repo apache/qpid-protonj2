@@ -20,6 +20,7 @@ import java.io.IOException;
 
 import org.apache.qpid.proton4j.amqp.Binary;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.codec.DecoderState;
 import org.apache.qpid.proton4j.codec.decoders.AbstractPrimitiveTypeDecoder;
 
@@ -38,10 +39,11 @@ public abstract class AbstractBinaryTypeDecoder extends AbstractPrimitiveTypeDec
                               "of data available (%d)", length, buffer.getReadableBytes()));
         }
 
-        byte[] data = new byte[length];
-        buffer.readBytes(data, 0, length);
+        ProtonBuffer payload = ProtonByteBufferAllocator.DEFAULT.allocate(length, length);
 
-        return new Binary(data);
+        buffer.readBytes(payload);
+
+        return new Binary(payload);
     }
 
     @Override
