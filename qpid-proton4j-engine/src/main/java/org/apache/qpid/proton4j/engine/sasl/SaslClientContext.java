@@ -16,8 +16,8 @@
  */
 package org.apache.qpid.proton4j.engine.sasl;
 
-import org.apache.qpid.proton4j.amqp.Binary;
 import org.apache.qpid.proton4j.amqp.Symbol;
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.engine.Connection;
 import org.apache.qpid.proton4j.engine.Engine;
 
@@ -71,7 +71,7 @@ public interface SaslClientContext extends SaslContext {
      *
      * @return this client context.
      */
-    SaslClientContext sendChosenMechanism(Symbol mechanism, String host, Binary initialResponse);
+    SaslClientContext sendChosenMechanism(Symbol mechanism, String host, ProtonBuffer initialResponse);
 
     /**
      * Sends a response to a server side challenge that comprises the challenge / response
@@ -82,6 +82,6 @@ public interface SaslClientContext extends SaslContext {
      *
      * @return this client context.
      */
-    SaslClientContext sendResponse(Binary response);
+    SaslClientContext sendResponse(ProtonBuffer response);
 
 }

@@ -21,6 +21,7 @@ import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.amqp.security.SaslOutcome;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.EncoderState;
+import org.apache.qpid.proton4j.codec.EncodingCodes;
 import org.apache.qpid.proton4j.codec.encoders.AbstractDescribedListTypeEncoder;
 
 /**
@@ -54,6 +55,15 @@ public class SaslOutcomeTypeEncoder extends AbstractDescribedListTypeEncoder<Sas
                 break;
             default:
                 throw new IllegalArgumentException("Unknown SaslOutcome value index: " + index);
+        }
+    }
+
+    @Override
+    public int getListEncoding(SaslOutcome value) {
+        if (value.getAdditionalData().getReadableBytes() < 253) {
+            return EncodingCodes.LIST8;
+        } else {
+            return EncodingCodes.LIST32;
         }
     }
 

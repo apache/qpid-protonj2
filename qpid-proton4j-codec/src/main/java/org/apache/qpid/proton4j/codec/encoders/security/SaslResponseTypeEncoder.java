@@ -46,7 +46,7 @@ public class SaslResponseTypeEncoder extends AbstractDescribedListTypeEncoder<Sa
 
     @Override
     public int getListEncoding(SaslResponse value) {
-        if (value.getResponse().getLength() < 255) {
+        if (value.getResponse().getReadableBytes() < 255) {
             return EncodingCodes.LIST8;
         } else {
             return EncodingCodes.LIST32;

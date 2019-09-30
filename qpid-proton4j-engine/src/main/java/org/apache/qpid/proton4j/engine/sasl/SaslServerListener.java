@@ -16,9 +16,9 @@
  */
 package org.apache.qpid.proton4j.engine.sasl;
 
-import org.apache.qpid.proton4j.amqp.Binary;
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 
 /**
  * Listener for SASL frame arrival to facilitate relevant handling for the SASL
@@ -71,10 +71,10 @@ public interface SaslServerListener {
      * @param initResponse
      *      the initial response sent by the remote.
      *
-     * @see SaslServerContext#sendChallenge(Binary)
-     * @see SaslServerContext#sendOutcome(SaslOutcome, Binary)
+     * @see SaslServerContext#sendChallenge(ProtonBuffer)
+     * @see SaslServerContext#sendOutcome(SaslOutcome, ProtonBuffer)
      */
-    void handleSaslInit(SaslServerContext context, Symbol mechanism, Binary initResponse);
+    void handleSaslInit(SaslServerContext context, Symbol mechanism, ProtonBuffer initResponse);
 
     /**
      * Called when a SASL response frame has arrived from the client.  The server should process
@@ -88,9 +88,9 @@ public interface SaslServerListener {
      * @param response
      *      the response sent by the remote SASL "client".
      *
-     * @see SaslServerContext#sendChallenge(Binary)
-     * @see SaslServerContext#sendOutcome(SaslOutcome, Binary)
+     * @see SaslServerContext#sendChallenge(ProtonBuffer)
+     * @see SaslServerContext#sendOutcome(SaslOutcome, ProtonBuffer)
      */
-    void handleSaslResponse(SaslServerContext context, Binary response);
+    void handleSaslResponse(SaslServerContext context, ProtonBuffer response);
 
 }

@@ -16,8 +16,8 @@
  */
 package org.apache.qpid.proton4j.engine.sasl;
 
-import org.apache.qpid.proton4j.amqp.Binary;
 import org.apache.qpid.proton4j.amqp.Symbol;
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.engine.Engine;
 
 /**
@@ -69,7 +69,7 @@ public interface SaslServerContext extends SaslContext {
      *
      * @return this server context.
      */
-    SaslServerContext sendChallenge(Binary challenge);
+    SaslServerContext sendChallenge(ProtonBuffer challenge);
 
     /**
      * Sends a response to a server side challenge that comprises the challenge / response
@@ -82,6 +82,6 @@ public interface SaslServerContext extends SaslContext {
      *
      * @return this server context.
      */
-    SaslServerContext sendOutcome(SaslOutcome outcome, Binary additional);
+    SaslServerContext sendOutcome(SaslOutcome outcome, ProtonBuffer additional);
 
 }

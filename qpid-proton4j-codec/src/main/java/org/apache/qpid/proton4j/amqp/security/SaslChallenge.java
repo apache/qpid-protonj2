@@ -16,26 +16,32 @@
  */
 package org.apache.qpid.proton4j.amqp.security;
 
+import java.util.Objects;
+
 import org.apache.qpid.proton4j.amqp.Binary;
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 
 public final class SaslChallenge implements SaslPerformative {
 
     public static final UnsignedLong DESCRIPTOR_CODE = UnsignedLong.valueOf(0x0000000000000042L);
     public static final Symbol DESCRIPTOR_SYMBOL = Symbol.valueOf("amqp:sasl-challenge:list");
 
-    private Binary challenge;
+    private ProtonBuffer challenge;
 
-    public Binary getChallenge() {
+    public ProtonBuffer getChallenge() {
         return challenge;
     }
 
     public SaslChallenge setChallenge(Binary challenge) {
-        if (challenge == null) {
-            throw new NullPointerException("the challenge field is mandatory");
-        }
+        Objects.requireNonNull(challenge, "The challenge field is mandatory");
+        setChallenge(challenge.asProtonBuffer());
+        return this;
+    }
 
+    public SaslChallenge setChallenge(ProtonBuffer challenge) {
+        Objects.requireNonNull(challenge, "The challenge field is mandatory");
         this.challenge = challenge;
         return this;
     }

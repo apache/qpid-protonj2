@@ -16,26 +16,32 @@
  */
 package org.apache.qpid.proton4j.amqp.security;
 
+import java.util.Objects;
+
 import org.apache.qpid.proton4j.amqp.Binary;
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 
 public final class SaslResponse implements SaslPerformative {
 
     public static final UnsignedLong DESCRIPTOR_CODE = UnsignedLong.valueOf(0x0000000000000043L);
     public static final Symbol DESCRIPTOR_SYMBOL = Symbol.valueOf("amqp:sasl-response:list");
 
-    private Binary response;
+    private ProtonBuffer response;
 
-    public Binary getResponse() {
+    public ProtonBuffer getResponse() {
         return response;
     }
 
     public SaslResponse setResponse(Binary response) {
-        if (response == null) {
-            throw new NullPointerException("the response field is mandatory");
-        }
+        Objects.requireNonNull(response, "The response field is mandatory");
+        setResponse(response.asProtonBuffer());
+        return this;
+    }
 
+    public SaslResponse setResponse(ProtonBuffer response) {
+        Objects.requireNonNull(response, "The response field is mandatory");
         this.response = response;
         return this;
     }

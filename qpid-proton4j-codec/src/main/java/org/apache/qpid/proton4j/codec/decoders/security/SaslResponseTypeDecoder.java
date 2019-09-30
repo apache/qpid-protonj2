@@ -102,7 +102,7 @@ public class SaslResponseTypeDecoder extends AbstractDescribedTypeDecoder<SaslRe
         for (int index = 0; index < count; ++index) {
             switch (index) {
                 case 0:
-                    response.setResponse(state.getDecoder().readBinary(buffer, state));
+                    response.setResponse(state.getDecoder().readBinaryAsBuffer(buffer, state));
                     break;
                 default:
                     throw new IllegalStateException("To many entries in Properties encoding");

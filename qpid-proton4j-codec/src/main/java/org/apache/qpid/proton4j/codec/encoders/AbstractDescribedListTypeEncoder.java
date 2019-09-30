@@ -42,7 +42,7 @@ public abstract class AbstractDescribedListTypeEncoder<V> extends AbstractDescri
      * @return the encoding code of the list type encoding needed for this object.
      */
     public int getListEncoding(V value) {
-        return EncodingCodes.LIST32 & 0xff;
+        return EncodingCodes.LIST32;
     }
 
     /**
@@ -103,7 +103,7 @@ public abstract class AbstractDescribedListTypeEncoder<V> extends AbstractDescri
 
         final int fieldWidth;
 
-        if (encodingCode == EncodingCodes.LIST8) {
+        if (encodingCode == (EncodingCodes.LIST8)) {
             fieldWidth = 1;
         } else {
             fieldWidth = 4;

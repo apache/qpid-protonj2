@@ -19,7 +19,6 @@ package org.apache.qpid.proton4j.engine.impl.sasl;
 import java.util.Arrays;
 import java.util.Objects;
 
-import org.apache.qpid.proton4j.amqp.Binary;
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.security.SaslChallenge;
 import org.apache.qpid.proton4j.amqp.security.SaslCode;
@@ -30,6 +29,7 @@ import org.apache.qpid.proton4j.amqp.security.SaslPerformative.SaslPerformativeH
 import org.apache.qpid.proton4j.amqp.security.SaslResponse;
 import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
 import org.apache.qpid.proton4j.amqp.transport.AMQPHeader.HeaderHandler;
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.engine.EngineHandlerContext;
 import org.apache.qpid.proton4j.engine.EngineSaslDriver.SaslState;
 import org.apache.qpid.proton4j.engine.impl.ProtonEngine;
@@ -84,14 +84,14 @@ final class ProtonSaslServerContext extends ProtonSaslContext implements SaslSer
     }
 
     @Override
-    public SaslServerContext sendChallenge(Binary challenge) {
+    public SaslServerContext sendChallenge(ProtonBuffer challenge) {
         Objects.requireNonNull(challenge);
         saslWriteContext().handleChallenge(new SaslChallenge().setChallenge(challenge), saslHandler.context());
         return this;
     }
 
     @Override
-    public SaslServerContext sendOutcome(org.apache.qpid.proton4j.engine.sasl.SaslOutcome outcome, Binary additional) {
+    public SaslServerContext sendOutcome(org.apache.qpid.proton4j.engine.sasl.SaslOutcome outcome, ProtonBuffer additional) {
         Objects.requireNonNull(outcome);
 
         SaslOutcome saslOutcome = new SaslOutcome();
@@ -291,12 +291,12 @@ final class ProtonSaslServerContext extends ProtonSaslContext implements SaslSer
         }
 
         @Override
-        public void handleSaslInit(SaslServerContext context, Symbol mechanism, Binary initResponse) {
+        public void handleSaslInit(SaslServerContext context, Symbol mechanism, ProtonBuffer initResponse) {
             context.sendOutcome(org.apache.qpid.proton4j.engine.sasl.SaslOutcome.SASL_AUTH, null);
         }
 
         @Override
-        public void handleSaslResponse(SaslServerContext context, Binary response) {
+        public void handleSaslResponse(SaslServerContext context, ProtonBuffer response) {
             // TODO Failure of engine, response not expected ?
         }
     }

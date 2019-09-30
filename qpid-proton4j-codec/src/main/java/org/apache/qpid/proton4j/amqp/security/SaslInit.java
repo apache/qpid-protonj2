@@ -19,6 +19,7 @@ package org.apache.qpid.proton4j.amqp.security;
 import org.apache.qpid.proton4j.amqp.Binary;
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 
 public final class SaslInit implements SaslPerformative {
 
@@ -26,7 +27,7 @@ public final class SaslInit implements SaslPerformative {
     public static final Symbol DESCRIPTOR_SYMBOL = Symbol.valueOf("amqp:sasl-init:list");
 
     private Symbol mechanism;
-    private Binary initialResponse;
+    private ProtonBuffer initialResponse;
     private String hostname;
 
     public Symbol getMechanism() {
@@ -42,11 +43,18 @@ public final class SaslInit implements SaslPerformative {
         return this;
     }
 
-    public Binary getInitialResponse() {
+    public ProtonBuffer getInitialResponse() {
         return initialResponse;
     }
 
     public SaslInit setInitialResponse(Binary initialResponse) {
+        if (initialResponse != null) {
+            setInitialResponse(initialResponse.asProtonBuffer());
+        }
+        return this;
+    }
+
+    public SaslInit setInitialResponse(ProtonBuffer initialResponse) {
         this.initialResponse = initialResponse;
         return this;
     }

@@ -19,7 +19,6 @@ package org.apache.qpid.proton4j.engine.impl.sasl;
 import java.util.Arrays;
 import java.util.Objects;
 
-import org.apache.qpid.proton4j.amqp.Binary;
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.security.SaslChallenge;
 import org.apache.qpid.proton4j.amqp.security.SaslInit;
@@ -29,6 +28,7 @@ import org.apache.qpid.proton4j.amqp.security.SaslPerformative.SaslPerformativeH
 import org.apache.qpid.proton4j.amqp.security.SaslResponse;
 import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
 import org.apache.qpid.proton4j.amqp.transport.AMQPHeader.HeaderHandler;
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.engine.EngineHandlerContext;
 import org.apache.qpid.proton4j.engine.EngineSaslDriver.SaslState;
 import org.apache.qpid.proton4j.engine.impl.ProtonEngine;
@@ -84,7 +84,7 @@ final class ProtonSaslClientContext extends ProtonSaslContext implements SaslCli
     }
 
     @Override
-    public SaslClientContext sendChosenMechanism(Symbol mechanism, String hostname, Binary initialResponse) {
+    public SaslClientContext sendChosenMechanism(Symbol mechanism, String hostname, ProtonBuffer initialResponse) {
         Objects.requireNonNull(mechanism, "Client must choose a mechanism");
         SaslInit saslInit = new SaslInit().setHostname(hostname)
                                           .setMechanism(mechanism)
@@ -94,7 +94,7 @@ final class ProtonSaslClientContext extends ProtonSaslContext implements SaslCli
     }
 
     @Override
-    public SaslClientContext sendResponse(Binary response) {
+    public SaslClientContext sendResponse(ProtonBuffer response) {
         Objects.requireNonNull(response);
         saslWriteContext.handleResponse(new SaslResponse().setResponse(response), saslHandler.context());
         return this;
@@ -290,12 +290,12 @@ final class ProtonSaslClientContext extends ProtonSaslContext implements SaslCli
        }
 
         @Override
-        public void handleSaslChallenge(SaslClientContext context, Binary challenge) {
+        public void handleSaslChallenge(SaslClientContext context, ProtonBuffer challenge) {
             // TODO - Fail engine
         }
 
         @Override
-        public void handleSaslOutcome(SaslClientContext context, org.apache.qpid.proton4j.engine.sasl.SaslOutcome outcome, Binary additional) {
+        public void handleSaslOutcome(SaslClientContext context, org.apache.qpid.proton4j.engine.sasl.SaslOutcome outcome, ProtonBuffer additional) {
         }
     }
 }

@@ -113,7 +113,7 @@ public class SaslOutcomeTypeDecoder extends AbstractDescribedTypeDecoder<SaslOut
                     outcome.setCode(SaslCode.valueOf(state.getDecoder().readUnsignedByte(buffer, state)));
                     break;
                 case 1:
-                    outcome.setAdditionalData(state.getDecoder().readBinary(buffer, state));
+                    outcome.setAdditionalData(state.getDecoder().readBinaryAsBuffer(buffer, state));
                     break;
                 default:
                     throw new IllegalStateException("To many entries in Properties encoding");

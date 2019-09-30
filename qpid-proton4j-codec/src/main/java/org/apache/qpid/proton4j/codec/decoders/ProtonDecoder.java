@@ -38,8 +38,45 @@ import org.apache.qpid.proton4j.codec.Decoder;
 import org.apache.qpid.proton4j.codec.DecoderState;
 import org.apache.qpid.proton4j.codec.EncodingCodes;
 import org.apache.qpid.proton4j.codec.TypeDecoder;
+import org.apache.qpid.proton4j.codec.decoders.primitives.Array32TypeDecoder;
+import org.apache.qpid.proton4j.codec.decoders.primitives.Array8TypeDecoder;
+import org.apache.qpid.proton4j.codec.decoders.primitives.Binary32TypeDecoder;
+import org.apache.qpid.proton4j.codec.decoders.primitives.Binary8TypeDecoder;
+import org.apache.qpid.proton4j.codec.decoders.primitives.BooleanFalseTypeDecoder;
+import org.apache.qpid.proton4j.codec.decoders.primitives.BooleanTrueTypeDecoder;
+import org.apache.qpid.proton4j.codec.decoders.primitives.BooleanTypeDecoder;
+import org.apache.qpid.proton4j.codec.decoders.primitives.ByteTypeDecoder;
+import org.apache.qpid.proton4j.codec.decoders.primitives.CharacterTypeDecoder;
+import org.apache.qpid.proton4j.codec.decoders.primitives.Decimal128TypeDecoder;
+import org.apache.qpid.proton4j.codec.decoders.primitives.Decimal32TypeDecoder;
+import org.apache.qpid.proton4j.codec.decoders.primitives.Decimal64TypeDecoder;
+import org.apache.qpid.proton4j.codec.decoders.primitives.DoubleTypeDecoder;
+import org.apache.qpid.proton4j.codec.decoders.primitives.FloatTypeDecoder;
+import org.apache.qpid.proton4j.codec.decoders.primitives.Integer32TypeDecoder;
+import org.apache.qpid.proton4j.codec.decoders.primitives.Integer8TypeDecoder;
+import org.apache.qpid.proton4j.codec.decoders.primitives.List0TypeDecoder;
+import org.apache.qpid.proton4j.codec.decoders.primitives.List32TypeDecoder;
+import org.apache.qpid.proton4j.codec.decoders.primitives.List8TypeDecoder;
+import org.apache.qpid.proton4j.codec.decoders.primitives.Long8TypeDecoder;
+import org.apache.qpid.proton4j.codec.decoders.primitives.LongTypeDecoder;
+import org.apache.qpid.proton4j.codec.decoders.primitives.Map32TypeDecoder;
+import org.apache.qpid.proton4j.codec.decoders.primitives.Map8TypeDecoder;
+import org.apache.qpid.proton4j.codec.decoders.primitives.NullTypeDecoder;
+import org.apache.qpid.proton4j.codec.decoders.primitives.ShortTypeDecoder;
+import org.apache.qpid.proton4j.codec.decoders.primitives.String32TypeDecoder;
+import org.apache.qpid.proton4j.codec.decoders.primitives.String8TypeDecoder;
 import org.apache.qpid.proton4j.codec.decoders.primitives.Symbol32TypeDecoder;
 import org.apache.qpid.proton4j.codec.decoders.primitives.Symbol8TypeDecoder;
+import org.apache.qpid.proton4j.codec.decoders.primitives.TimestampTypeDecoder;
+import org.apache.qpid.proton4j.codec.decoders.primitives.UUIDTypeDecoder;
+import org.apache.qpid.proton4j.codec.decoders.primitives.UnsignedByteTypeDecoder;
+import org.apache.qpid.proton4j.codec.decoders.primitives.UnsignedInteger0TypeDecoder;
+import org.apache.qpid.proton4j.codec.decoders.primitives.UnsignedInteger32TypeDecoder;
+import org.apache.qpid.proton4j.codec.decoders.primitives.UnsignedInteger8TypeDecoder;
+import org.apache.qpid.proton4j.codec.decoders.primitives.UnsignedLong0TypeDecoder;
+import org.apache.qpid.proton4j.codec.decoders.primitives.UnsignedLong64TypeDecoder;
+import org.apache.qpid.proton4j.codec.decoders.primitives.UnsignedLong8TypeDecoder;
+import org.apache.qpid.proton4j.codec.decoders.primitives.UnsignedShortTypeDecoder;
 
 /**
  * The default AMQP Decoder implementation.
@@ -47,16 +84,79 @@ import org.apache.qpid.proton4j.codec.decoders.primitives.Symbol8TypeDecoder;
 public class ProtonDecoder implements Decoder {
 
     // The decoders for primitives are fixed and cannot be altered by users who want
-    // to register custom decoders.
-    private PrimitiveTypeDecoder<?>[] primitiveDecoders = new PrimitiveTypeDecoder[256];
+    // to register custom decoders.  The decoders created here are stateless and can be
+    // made static to reduce overhead of creating Decoder instances.
+    private static final PrimitiveTypeDecoder<?>[] primitiveDecoders = new PrimitiveTypeDecoder[256];
+
+    static {
+        primitiveDecoders[EncodingCodes.BOOLEAN & 0xFF] = new BooleanTypeDecoder();
+        primitiveDecoders[EncodingCodes.BOOLEAN_TRUE & 0xFF] = new BooleanTrueTypeDecoder();
+        primitiveDecoders[EncodingCodes.BOOLEAN_FALSE & 0xFF] = new BooleanFalseTypeDecoder();
+        primitiveDecoders[EncodingCodes.VBIN8 & 0xFF] = new Binary8TypeDecoder();
+        primitiveDecoders[EncodingCodes.VBIN32 & 0xFF] = new Binary32TypeDecoder();
+        primitiveDecoders[EncodingCodes.BYTE & 0xFF] = new ByteTypeDecoder();
+        primitiveDecoders[EncodingCodes.CHAR & 0xFF] = new CharacterTypeDecoder();
+        primitiveDecoders[EncodingCodes.DECIMAL32 & 0xFF] = new Decimal32TypeDecoder();
+        primitiveDecoders[EncodingCodes.DECIMAL64 & 0xFF] = new Decimal64TypeDecoder();
+        primitiveDecoders[EncodingCodes.DECIMAL128 & 0xFF] = new Decimal128TypeDecoder();
+        primitiveDecoders[EncodingCodes.DOUBLE & 0xFF] = new DoubleTypeDecoder();
+        primitiveDecoders[EncodingCodes.FLOAT & 0xFF] = new FloatTypeDecoder();
+        primitiveDecoders[EncodingCodes.NULL & 0xFF] = new NullTypeDecoder();
+        primitiveDecoders[EncodingCodes.SHORT & 0xFF] = new ShortTypeDecoder();
+        primitiveDecoders[EncodingCodes.SMALLINT & 0xFF] = new Integer8TypeDecoder();
+        primitiveDecoders[EncodingCodes.INT & 0xFF] = new Integer32TypeDecoder();
+        primitiveDecoders[EncodingCodes.SMALLLONG & 0xFF] = new Long8TypeDecoder();
+        primitiveDecoders[EncodingCodes.LONG & 0xFF] = new LongTypeDecoder();
+        primitiveDecoders[EncodingCodes.UBYTE & 0xFF] = new UnsignedByteTypeDecoder();
+        primitiveDecoders[EncodingCodes.USHORT & 0xFF] = new UnsignedShortTypeDecoder();
+        primitiveDecoders[EncodingCodes.UINT0 & 0xFF] = new UnsignedInteger0TypeDecoder();
+        primitiveDecoders[EncodingCodes.SMALLUINT & 0xFF] = new UnsignedInteger8TypeDecoder();
+        primitiveDecoders[EncodingCodes.UINT & 0xFF] = new UnsignedInteger32TypeDecoder();
+        primitiveDecoders[EncodingCodes.ULONG0 & 0xFF] = new UnsignedLong0TypeDecoder();
+        primitiveDecoders[EncodingCodes.SMALLULONG & 0xFF] = new UnsignedLong8TypeDecoder();
+        primitiveDecoders[EncodingCodes.ULONG & 0xFF] = new UnsignedLong64TypeDecoder();
+        primitiveDecoders[EncodingCodes.STR8 & 0xFF] = new String8TypeDecoder();
+        primitiveDecoders[EncodingCodes.STR32 & 0xFF] = new String32TypeDecoder();
+        primitiveDecoders[EncodingCodes.SYM8 & 0xFF] = new Symbol8TypeDecoder();
+        primitiveDecoders[EncodingCodes.SYM32 & 0xFF] = new Symbol32TypeDecoder();
+        primitiveDecoders[EncodingCodes.UUID & 0xFF] = new UUIDTypeDecoder();
+        primitiveDecoders[EncodingCodes.TIMESTAMP & 0xFF] = new TimestampTypeDecoder();
+        primitiveDecoders[EncodingCodes.LIST0 & 0xFF] = new List0TypeDecoder();
+        primitiveDecoders[EncodingCodes.LIST8 & 0xFF] = new List8TypeDecoder();
+        primitiveDecoders[EncodingCodes.LIST32 & 0xFF] = new List32TypeDecoder();
+        primitiveDecoders[EncodingCodes.MAP8 & 0xFF] = new Map8TypeDecoder();
+        primitiveDecoders[EncodingCodes.MAP32 & 0xFF] = new Map32TypeDecoder();
+        primitiveDecoders[EncodingCodes.ARRAY8 & 0xFF] = new Array8TypeDecoder();
+        primitiveDecoders[EncodingCodes.ARRAY32 & 0xFF] = new Array32TypeDecoder();
+
+        // Initialize the locally used primitive type decoders for the main API
+        symbol8Decoder = (Symbol8TypeDecoder) primitiveDecoders[EncodingCodes.SYM8 & 0xFF];
+        symbol32Decoder = (Symbol32TypeDecoder) primitiveDecoders[EncodingCodes.SYM32 & 0xFF];
+        binary8Decoder = (Binary8TypeDecoder) primitiveDecoders[EncodingCodes.VBIN8 & 0xFF];
+        binary32Decoder = (Binary32TypeDecoder) primitiveDecoders[EncodingCodes.VBIN32 & 0xFF];
+        list8Decoder = (List8TypeDecoder) primitiveDecoders[EncodingCodes.LIST8 & 0xFF];
+        list32Decoder = (List32TypeDecoder) primitiveDecoders[EncodingCodes.LIST32 & 0xFF];
+        map8Decoder = (Map8TypeDecoder) primitiveDecoders[EncodingCodes.MAP8 & 0xFF];
+        map32Decoder = (Map32TypeDecoder) primitiveDecoders[EncodingCodes.MAP32 & 0xFF];
+        string32Decoder = (String32TypeDecoder) primitiveDecoders[EncodingCodes.STR32 & 0xFF];
+        string8Decoder = (String8TypeDecoder) primitiveDecoders[EncodingCodes.STR8 & 0xFF];
+    }
 
     // Registry of decoders for described types which can be updated with user defined
     // decoders as well as the default decoders.
     private Map<Object, DescribedTypeDecoder<?>> describedTypeDecoders = new HashMap<>();
 
     // Internal Decoders used to prevent user to access Proton specific decoding methods
-    private static final Symbol8TypeDecoder symbol8TypeDecoder = new Symbol8TypeDecoder();
-    private static final Symbol32TypeDecoder symbol32TypeDecoder = new Symbol32TypeDecoder();
+    private static final Symbol8TypeDecoder symbol8Decoder;
+    private static final Symbol32TypeDecoder symbol32Decoder;
+    private static final Binary8TypeDecoder binary8Decoder;
+    private static final Binary32TypeDecoder binary32Decoder;
+    private static final List8TypeDecoder list8Decoder;
+    private static final List32TypeDecoder list32Decoder;
+    private static final Map8TypeDecoder map8Decoder;
+    private static final Map32TypeDecoder map32Decoder;
+    private static final String8TypeDecoder string8Decoder;
+    private static final String32TypeDecoder string32Decoder;
 
     @Override
     public ProtonDecoderState newDecoderState() {
@@ -155,17 +255,10 @@ public class ProtonDecoder implements Decoder {
     }
 
     @Override
-    public <V> ProtonDecoder registerTypeDecoder(TypeDecoder<V> decoder) {
-        if (decoder instanceof PrimitiveTypeDecoder) {
-            PrimitiveTypeDecoder<?> primitiveTypeDecoder = (PrimitiveTypeDecoder<?>) decoder;
-            primitiveDecoders[primitiveTypeDecoder.getTypeCode()] = primitiveTypeDecoder;
-        } else if (decoder instanceof DescribedTypeDecoder) {
-            DescribedTypeDecoder<?> describedTypeDecoder = (DescribedTypeDecoder<?>) decoder;
-            describedTypeDecoders.put(describedTypeDecoder.getDescriptorCode(), describedTypeDecoder);
-            describedTypeDecoders.put(describedTypeDecoder.getDescriptorSymbol(), describedTypeDecoder);
-        } else {
-            throw new IllegalArgumentException("The given TypeDecoder implementation is not supported");
-        }
+    public <V> ProtonDecoder registerDescribedTypeDecoder(DescribedTypeDecoder<V> decoder) {
+        DescribedTypeDecoder<?> describedTypeDecoder = decoder;
+        describedTypeDecoders.put(describedTypeDecoder.getDescriptorCode(), describedTypeDecoder);
+        describedTypeDecoders.put(describedTypeDecoder.getDescriptorSymbol(), describedTypeDecoder);
 
         return this;
     }
@@ -637,9 +730,25 @@ public class ProtonDecoder implements Decoder {
 
         switch (encodingCode) {
             case EncodingCodes.VBIN8:
-                return (Binary) primitiveDecoders[EncodingCodes.VBIN8 & 0xff].readValue(buffer, state);
+                return binary8Decoder.readValue(buffer, state);
             case EncodingCodes.VBIN32:
-                return (Binary) primitiveDecoders[EncodingCodes.VBIN32 & 0xff].readValue(buffer, state);
+                return binary32Decoder.readValue(buffer, state);
+            case EncodingCodes.NULL:
+                return null;
+            default:
+                throw new IOException("Expected Binary type but found encoding: " + encodingCode);
+        }
+    }
+
+    @Override
+    public ProtonBuffer readBinaryAsBuffer(ProtonBuffer buffer, DecoderState state) throws IOException {
+        byte encodingCode = buffer.readByte();
+
+        switch (encodingCode) {
+            case EncodingCodes.VBIN8:
+                return binary8Decoder.readValueAsBuffer(buffer, state);
+            case EncodingCodes.VBIN32:
+                return binary32Decoder.readValueAsBuffer(buffer, state);
             case EncodingCodes.NULL:
                 return null;
             default:
@@ -653,9 +762,9 @@ public class ProtonDecoder implements Decoder {
 
         switch (encodingCode) {
             case EncodingCodes.STR8:
-                return (String) primitiveDecoders[EncodingCodes.STR8 & 0xff].readValue(buffer, state);
+                return string8Decoder.readValue(buffer, state);
             case EncodingCodes.STR32:
-                return (String) primitiveDecoders[EncodingCodes.STR32 & 0xff].readValue(buffer, state);
+                return string32Decoder.readValue(buffer, state);
             case EncodingCodes.NULL:
                 return null;
             default:
@@ -669,9 +778,9 @@ public class ProtonDecoder implements Decoder {
 
         switch (encodingCode) {
             case EncodingCodes.SYM8:
-                return (Symbol) primitiveDecoders[EncodingCodes.SYM8 & 0xff].readValue(buffer, state);
+                return symbol8Decoder.readValue(buffer, state);
             case EncodingCodes.SYM32:
-                return (Symbol) primitiveDecoders[EncodingCodes.SYM32 & 0xff].readValue(buffer, state);
+                return symbol32Decoder.readValue(buffer, state);
             case EncodingCodes.NULL:
                 return null;
             default:
@@ -685,9 +794,9 @@ public class ProtonDecoder implements Decoder {
 
         switch (encodingCode) {
             case EncodingCodes.SYM8:
-                return symbol8TypeDecoder.readString(buffer, state);
+                return symbol8Decoder.readString(buffer, state);
             case EncodingCodes.SYM32:
-                return symbol32TypeDecoder.readString(buffer, state);
+                return symbol32Decoder.readString(buffer, state);
             case EncodingCodes.NULL:
                 return defaultValue;
             default:
@@ -744,9 +853,9 @@ public class ProtonDecoder implements Decoder {
 
         switch (encodingCode) {
             case EncodingCodes.MAP8:
-                return (Map<K, V>) primitiveDecoders[EncodingCodes.MAP8 & 0xff].readValue(buffer, state);
+                return (Map<K, V>) map8Decoder.readValue(buffer, state);
             case EncodingCodes.MAP32:
-                return (Map<K, V>) primitiveDecoders[EncodingCodes.MAP32 & 0xff].readValue(buffer, state);
+                return (Map<K, V>) map32Decoder.readValue(buffer, state);
             case EncodingCodes.NULL:
                 return null;
             default:
@@ -763,9 +872,9 @@ public class ProtonDecoder implements Decoder {
             case EncodingCodes.LIST0:
                 return Collections.emptyList();
             case EncodingCodes.LIST8:
-                return (List<V>) primitiveDecoders[EncodingCodes.LIST8 & 0xff].readValue(buffer, state);
+                return (List<V>) list8Decoder.readValue(buffer, state);
             case EncodingCodes.LIST32:
-                return (List<V>) primitiveDecoders[EncodingCodes.LIST32 & 0xff].readValue(buffer, state);
+                return (List<V>) list32Decoder.readValue(buffer, state);
             case EncodingCodes.NULL:
                 return null;
             default:

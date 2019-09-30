@@ -45,11 +45,6 @@ public class SaslChallengeTypeEncoder extends AbstractDescribedListTypeEncoder<S
     }
 
     @Override
-    public int getListEncoding(SaslChallenge value) {
-        return EncodingCodes.LIST8;
-    }
-
-    @Override
     public void writeElement(SaslChallenge challenge, int index, ProtonBuffer buffer, EncoderState state) {
         switch (index) {
             case 0:
@@ -57,6 +52,15 @@ public class SaslChallengeTypeEncoder extends AbstractDescribedListTypeEncoder<S
                 break;
             default:
                 throw new IllegalArgumentException("Unknown SaslChallenge value index: " + index);
+        }
+    }
+
+    @Override
+    public int getListEncoding(SaslChallenge value) {
+        if (value.getChallenge().getReadableBytes() < 255) {
+            return EncodingCodes.LIST8;
+        } else {
+            return EncodingCodes.LIST32;
         }
     }
 

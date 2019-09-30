@@ -102,7 +102,7 @@ public class SaslChallengeTypeDecoder extends AbstractDescribedTypeDecoder<SaslC
         for (int index = 0; index < count; ++index) {
             switch (index) {
                 case 0:
-                    challenge.setChallenge(state.getDecoder().readBinary(buffer, state));
+                    challenge.setChallenge(state.getDecoder().readBinaryAsBuffer(buffer, state));
                     break;
                 default:
                     throw new IllegalStateException("To many entries in Properties encoding");

@@ -36,45 +36,6 @@ import org.apache.qpid.proton4j.codec.decoders.messaging.RejectedTypeDecoder;
 import org.apache.qpid.proton4j.codec.decoders.messaging.ReleasedTypeDecoder;
 import org.apache.qpid.proton4j.codec.decoders.messaging.SourceTypeDecoder;
 import org.apache.qpid.proton4j.codec.decoders.messaging.TargetTypeDecoder;
-import org.apache.qpid.proton4j.codec.decoders.primitives.Array32TypeDecoder;
-import org.apache.qpid.proton4j.codec.decoders.primitives.Array8TypeDecoder;
-import org.apache.qpid.proton4j.codec.decoders.primitives.Binary32TypeDecoder;
-import org.apache.qpid.proton4j.codec.decoders.primitives.Binary8TypeDecoder;
-import org.apache.qpid.proton4j.codec.decoders.primitives.BooleanFalseTypeDecoder;
-import org.apache.qpid.proton4j.codec.decoders.primitives.BooleanTrueTypeDecoder;
-import org.apache.qpid.proton4j.codec.decoders.primitives.BooleanTypeDecoder;
-import org.apache.qpid.proton4j.codec.decoders.primitives.ByteTypeDecoder;
-import org.apache.qpid.proton4j.codec.decoders.primitives.CharacterTypeDecoder;
-import org.apache.qpid.proton4j.codec.decoders.primitives.Decimal128TypeDecoder;
-import org.apache.qpid.proton4j.codec.decoders.primitives.Decimal32TypeDecoder;
-import org.apache.qpid.proton4j.codec.decoders.primitives.Decimal64TypeDecoder;
-import org.apache.qpid.proton4j.codec.decoders.primitives.DoubleTypeDecoder;
-import org.apache.qpid.proton4j.codec.decoders.primitives.FloatTypeDecoder;
-import org.apache.qpid.proton4j.codec.decoders.primitives.Integer32TypeDecoder;
-import org.apache.qpid.proton4j.codec.decoders.primitives.Integer8TypeDecoder;
-import org.apache.qpid.proton4j.codec.decoders.primitives.List0TypeDecoder;
-import org.apache.qpid.proton4j.codec.decoders.primitives.List32TypeDecoder;
-import org.apache.qpid.proton4j.codec.decoders.primitives.List8TypeDecoder;
-import org.apache.qpid.proton4j.codec.decoders.primitives.Long8TypeDecoder;
-import org.apache.qpid.proton4j.codec.decoders.primitives.LongTypeDecoder;
-import org.apache.qpid.proton4j.codec.decoders.primitives.Map32TypeDecoder;
-import org.apache.qpid.proton4j.codec.decoders.primitives.Map8TypeDecoder;
-import org.apache.qpid.proton4j.codec.decoders.primitives.NullTypeDecoder;
-import org.apache.qpid.proton4j.codec.decoders.primitives.ShortTypeDecoder;
-import org.apache.qpid.proton4j.codec.decoders.primitives.String32TypeDecoder;
-import org.apache.qpid.proton4j.codec.decoders.primitives.String8TypeDecoder;
-import org.apache.qpid.proton4j.codec.decoders.primitives.Symbol32TypeDecoder;
-import org.apache.qpid.proton4j.codec.decoders.primitives.Symbol8TypeDecoder;
-import org.apache.qpid.proton4j.codec.decoders.primitives.TimestampTypeDecoder;
-import org.apache.qpid.proton4j.codec.decoders.primitives.UUIDTypeDecoder;
-import org.apache.qpid.proton4j.codec.decoders.primitives.UnsignedByteTypeDecoder;
-import org.apache.qpid.proton4j.codec.decoders.primitives.UnsignedInteger0TypeDecoder;
-import org.apache.qpid.proton4j.codec.decoders.primitives.UnsignedInteger32TypeDecoder;
-import org.apache.qpid.proton4j.codec.decoders.primitives.UnsignedInteger8TypeDecoder;
-import org.apache.qpid.proton4j.codec.decoders.primitives.UnsignedLong0TypeDecoder;
-import org.apache.qpid.proton4j.codec.decoders.primitives.UnsignedLong64TypeDecoder;
-import org.apache.qpid.proton4j.codec.decoders.primitives.UnsignedLong8TypeDecoder;
-import org.apache.qpid.proton4j.codec.decoders.primitives.UnsignedShortTypeDecoder;
 import org.apache.qpid.proton4j.codec.decoders.security.SaslChallengeTypeDecoder;
 import org.apache.qpid.proton4j.codec.decoders.security.SaslInitTypeDecoder;
 import org.apache.qpid.proton4j.codec.decoders.security.SaslMechanismsTypeDecoder;
@@ -107,7 +68,6 @@ public class ProtonDecoderFactory {
     public static ProtonDecoder create() {
         ProtonDecoder decoder = new ProtonDecoder();
 
-        addPrimitiveDecoders(decoder);
         addMessagingTypeDecoders(decoder);
         addTransactionTypeDecoders(decoder);
         addTransportTypeDecoders(decoder);
@@ -119,102 +79,59 @@ public class ProtonDecoderFactory {
         ProtonDecoder decoder = new ProtonDecoder();
 
         addSaslTypeDecoders(decoder);
-        addPrimitiveDecoders(decoder);
 
         return decoder;
     }
 
     private static void addMessagingTypeDecoders(ProtonDecoder Decoder) {
-        Decoder.registerTypeDecoder(new AcceptedTypeDecoder());
-        Decoder.registerTypeDecoder(new AmqpSequenceTypeDecoder());
-        Decoder.registerTypeDecoder(new AmqpValueTypeDecoder());
-        Decoder.registerTypeDecoder(new ApplicationPropertiesTypeDecoder());
-        Decoder.registerTypeDecoder(new DataTypeDecoder());
-        Decoder.registerTypeDecoder(new DeleteOnCloseTypeDecoder());
-        Decoder.registerTypeDecoder(new DeleteOnNoLinksOrMessagesTypeDecoder());
-        Decoder.registerTypeDecoder(new DeleteOnNoLinksTypeDecoder());
-        Decoder.registerTypeDecoder(new DeleteOnNoMessagesTypeDecoder());
-        Decoder.registerTypeDecoder(new DeliveryAnnotationsTypeDecoder());
-        Decoder.registerTypeDecoder(new FooterTypeDecoder());
-        Decoder.registerTypeDecoder(new HeaderTypeDecoder());
-        Decoder.registerTypeDecoder(new MessageAnnotationsTypeDecoder());
-        Decoder.registerTypeDecoder(new ModifiedTypeDecoder());
-        Decoder.registerTypeDecoder(new PropertiesTypeDecoder());
-        Decoder.registerTypeDecoder(new ReceivedTypeDecoder());
-        Decoder.registerTypeDecoder(new RejectedTypeDecoder());
-        Decoder.registerTypeDecoder(new ReleasedTypeDecoder());
-        Decoder.registerTypeDecoder(new SourceTypeDecoder());
-        Decoder.registerTypeDecoder(new TargetTypeDecoder());
+        Decoder.registerDescribedTypeDecoder(new AcceptedTypeDecoder());
+        Decoder.registerDescribedTypeDecoder(new AmqpSequenceTypeDecoder());
+        Decoder.registerDescribedTypeDecoder(new AmqpValueTypeDecoder());
+        Decoder.registerDescribedTypeDecoder(new ApplicationPropertiesTypeDecoder());
+        Decoder.registerDescribedTypeDecoder(new DataTypeDecoder());
+        Decoder.registerDescribedTypeDecoder(new DeleteOnCloseTypeDecoder());
+        Decoder.registerDescribedTypeDecoder(new DeleteOnNoLinksOrMessagesTypeDecoder());
+        Decoder.registerDescribedTypeDecoder(new DeleteOnNoLinksTypeDecoder());
+        Decoder.registerDescribedTypeDecoder(new DeleteOnNoMessagesTypeDecoder());
+        Decoder.registerDescribedTypeDecoder(new DeliveryAnnotationsTypeDecoder());
+        Decoder.registerDescribedTypeDecoder(new FooterTypeDecoder());
+        Decoder.registerDescribedTypeDecoder(new HeaderTypeDecoder());
+        Decoder.registerDescribedTypeDecoder(new MessageAnnotationsTypeDecoder());
+        Decoder.registerDescribedTypeDecoder(new ModifiedTypeDecoder());
+        Decoder.registerDescribedTypeDecoder(new PropertiesTypeDecoder());
+        Decoder.registerDescribedTypeDecoder(new ReceivedTypeDecoder());
+        Decoder.registerDescribedTypeDecoder(new RejectedTypeDecoder());
+        Decoder.registerDescribedTypeDecoder(new ReleasedTypeDecoder());
+        Decoder.registerDescribedTypeDecoder(new SourceTypeDecoder());
+        Decoder.registerDescribedTypeDecoder(new TargetTypeDecoder());
     }
 
     private static void addTransactionTypeDecoders(ProtonDecoder Decoder) {
-        Decoder.registerTypeDecoder(new CoordinatorTypeDecoder());
-        Decoder.registerTypeDecoder(new DeclaredTypeDecoder());
-        Decoder.registerTypeDecoder(new DeclareTypeDecoder());
-        Decoder.registerTypeDecoder(new DischargeTypeDecoder());
-        Decoder.registerTypeDecoder(new TransactionStateTypeDecoder());
+        Decoder.registerDescribedTypeDecoder(new CoordinatorTypeDecoder());
+        Decoder.registerDescribedTypeDecoder(new DeclaredTypeDecoder());
+        Decoder.registerDescribedTypeDecoder(new DeclareTypeDecoder());
+        Decoder.registerDescribedTypeDecoder(new DischargeTypeDecoder());
+        Decoder.registerDescribedTypeDecoder(new TransactionStateTypeDecoder());
     }
 
     private static void addTransportTypeDecoders(ProtonDecoder Decoder) {
-        Decoder.registerTypeDecoder(new AttachTypeDecoder());
-        Decoder.registerTypeDecoder(new BeginTypeDecoder());
-        Decoder.registerTypeDecoder(new CloseTypeDecoder());
-        Decoder.registerTypeDecoder(new DetachTypeDecoder());
-        Decoder.registerTypeDecoder(new DispositionTypeDecoder());
-        Decoder.registerTypeDecoder(new EndTypeDecoder());
-        Decoder.registerTypeDecoder(new ErrorConditionTypeDecoder());
-        Decoder.registerTypeDecoder(new FlowTypeDecoder());
-        Decoder.registerTypeDecoder(new OpenTypeDecoder());
-        Decoder.registerTypeDecoder(new TransferTypeDecoder());
-    }
-
-    private static void addPrimitiveDecoders(ProtonDecoder decoder) {
-        decoder.registerTypeDecoder(new BooleanTypeDecoder());
-        decoder.registerTypeDecoder(new BooleanFalseTypeDecoder());
-        decoder.registerTypeDecoder(new BooleanTrueTypeDecoder());
-        decoder.registerTypeDecoder(new Binary32TypeDecoder());
-        decoder.registerTypeDecoder(new Binary8TypeDecoder());
-        decoder.registerTypeDecoder(new ByteTypeDecoder());
-        decoder.registerTypeDecoder(new CharacterTypeDecoder());
-        decoder.registerTypeDecoder(new Decimal32TypeDecoder());
-        decoder.registerTypeDecoder(new Decimal64TypeDecoder());
-        decoder.registerTypeDecoder(new Decimal128TypeDecoder());
-        decoder.registerTypeDecoder(new DoubleTypeDecoder());
-        decoder.registerTypeDecoder(new FloatTypeDecoder());
-        decoder.registerTypeDecoder(new NullTypeDecoder());
-        decoder.registerTypeDecoder(new UnsignedByteTypeDecoder());
-        decoder.registerTypeDecoder(new ShortTypeDecoder());
-        decoder.registerTypeDecoder(new UnsignedShortTypeDecoder());
-        decoder.registerTypeDecoder(new Integer8TypeDecoder());
-        decoder.registerTypeDecoder(new Integer32TypeDecoder());
-        decoder.registerTypeDecoder(new UnsignedInteger32TypeDecoder());
-        decoder.registerTypeDecoder(new UnsignedInteger0TypeDecoder());
-        decoder.registerTypeDecoder(new UnsignedInteger8TypeDecoder());
-        decoder.registerTypeDecoder(new LongTypeDecoder());
-        decoder.registerTypeDecoder(new Long8TypeDecoder());
-        decoder.registerTypeDecoder(new UnsignedLong64TypeDecoder());
-        decoder.registerTypeDecoder(new UnsignedLong0TypeDecoder());
-        decoder.registerTypeDecoder(new UnsignedLong8TypeDecoder());
-        decoder.registerTypeDecoder(new String32TypeDecoder());
-        decoder.registerTypeDecoder(new String8TypeDecoder());
-        decoder.registerTypeDecoder(new Symbol8TypeDecoder());
-        decoder.registerTypeDecoder(new Symbol32TypeDecoder());
-        decoder.registerTypeDecoder(new UUIDTypeDecoder());
-        decoder.registerTypeDecoder(new TimestampTypeDecoder());
-        decoder.registerTypeDecoder(new List0TypeDecoder());
-        decoder.registerTypeDecoder(new List8TypeDecoder());
-        decoder.registerTypeDecoder(new List32TypeDecoder());
-        decoder.registerTypeDecoder(new Map8TypeDecoder());
-        decoder.registerTypeDecoder(new Map32TypeDecoder());
-        decoder.registerTypeDecoder(new Array32TypeDecoder());
-        decoder.registerTypeDecoder(new Array8TypeDecoder());
+        Decoder.registerDescribedTypeDecoder(new AttachTypeDecoder());
+        Decoder.registerDescribedTypeDecoder(new BeginTypeDecoder());
+        Decoder.registerDescribedTypeDecoder(new CloseTypeDecoder());
+        Decoder.registerDescribedTypeDecoder(new DetachTypeDecoder());
+        Decoder.registerDescribedTypeDecoder(new DispositionTypeDecoder());
+        Decoder.registerDescribedTypeDecoder(new EndTypeDecoder());
+        Decoder.registerDescribedTypeDecoder(new ErrorConditionTypeDecoder());
+        Decoder.registerDescribedTypeDecoder(new FlowTypeDecoder());
+        Decoder.registerDescribedTypeDecoder(new OpenTypeDecoder());
+        Decoder.registerDescribedTypeDecoder(new TransferTypeDecoder());
     }
 
     private static void addSaslTypeDecoders(ProtonDecoder decoder) {
-        decoder.registerTypeDecoder(new SaslChallengeTypeDecoder());
-        decoder.registerTypeDecoder(new SaslInitTypeDecoder());
-        decoder.registerTypeDecoder(new SaslMechanismsTypeDecoder());
-        decoder.registerTypeDecoder(new SaslOutcomeTypeDecoder());
-        decoder.registerTypeDecoder(new SaslResponseTypeDecoder());
+        decoder.registerDescribedTypeDecoder(new SaslChallengeTypeDecoder());
+        decoder.registerDescribedTypeDecoder(new SaslInitTypeDecoder());
+        decoder.registerDescribedTypeDecoder(new SaslMechanismsTypeDecoder());
+        decoder.registerDescribedTypeDecoder(new SaslOutcomeTypeDecoder());
+        decoder.registerDescribedTypeDecoder(new SaslResponseTypeDecoder());
     }
 }

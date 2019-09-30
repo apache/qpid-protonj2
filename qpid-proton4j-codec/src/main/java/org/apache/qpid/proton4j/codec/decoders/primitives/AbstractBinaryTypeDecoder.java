@@ -31,6 +31,10 @@ public abstract class AbstractBinaryTypeDecoder extends AbstractPrimitiveTypeDec
 
     @Override
     public Binary readValue(ProtonBuffer buffer, DecoderState state) {
+        return new Binary(readValueAsBuffer(buffer, state));
+    }
+
+    public ProtonBuffer readValueAsBuffer(ProtonBuffer buffer, DecoderState state) {
         int length = readSize(buffer);
 
         if (length > buffer.getReadableBytes()) {
@@ -43,7 +47,7 @@ public abstract class AbstractBinaryTypeDecoder extends AbstractPrimitiveTypeDec
 
         buffer.readBytes(payload);
 
-        return new Binary(payload);
+        return payload;
     }
 
     @Override

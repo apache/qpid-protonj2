@@ -112,7 +112,7 @@ public class SaslInitTypeDecoder extends AbstractDescribedTypeDecoder<SaslInit> 
                     init.setMechanism(state.getDecoder().readSymbol(buffer, state));
                     break;
                 case 1:
-                    init.setInitialResponse(state.getDecoder().readBinary(buffer, state));
+                    init.setInitialResponse(state.getDecoder().readBinaryAsBuffer(buffer, state));
                     break;
                 case 2:
                     init.setHostname(state.getDecoder().readString(buffer, state));

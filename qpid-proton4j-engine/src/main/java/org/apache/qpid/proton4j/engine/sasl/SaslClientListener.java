@@ -16,8 +16,8 @@
  */
 package org.apache.qpid.proton4j.engine.sasl;
 
-import org.apache.qpid.proton4j.amqp.Binary;
 import org.apache.qpid.proton4j.amqp.Symbol;
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 
 /**
  * Listener for SASL frame arrival to facilitate relevant handling for the SASL
@@ -46,7 +46,7 @@ public interface SaslClientListener {
      * Called when a SASL mechanisms frame has arrived and its effect applied, indicating
      * the offered mechanisms sent by the 'server' peer.  The client should respond to the
      * mechanisms event by selecting one from the offered list and calling the
-     * {@link SaslClientContext#sendChosenMechanism(Symbol, String, Binary)} method immediately
+     * {@link SaslClientContext#sendChosenMechanism(Symbol, String, ProtonBuffer)} method immediately
      * or later using the same thread that triggered this event.
      *
      * @param context
@@ -54,7 +54,7 @@ public interface SaslClientListener {
      * @param mechanisms
      *      the mechanisms that the remote supports.
      *
-     * @see SaslClientContext#sendChosenMechanism(Symbol, String, Binary)
+     * @see SaslClientContext#sendChosenMechanism(Symbol, String, ProtonBuffer)
      */
     void handleSaslMechanisms(SaslClientContext context, Symbol[] mechanisms);
 
@@ -62,7 +62,7 @@ public interface SaslClientListener {
      * Called when a SASL challenge frame has arrived and its effect applied, indicating the
      * challenge sent by the 'server' peer.  The client should respond to the mechanisms event
      *  by selecting one from the offered list and calling the
-     * {@link SaslClientContext#sendResponse(Binary)} method immediately or later using the same
+     * {@link SaslClientContext#sendResponse(ProtonBuffer)} method immediately or later using the same
      * thread that triggered this event.
      *
      * @param context
@@ -70,9 +70,9 @@ public interface SaslClientListener {
      * @param challenge
      *      the challenge bytes sent from the SASL server.
      *
-     * @see SaslClientContext#sendResponse(Binary)
+     * @see SaslClientContext#sendResponse(ProtonBuffer)
      */
-    void handleSaslChallenge(SaslClientContext context, Binary challenge);
+    void handleSaslChallenge(SaslClientContext context, ProtonBuffer challenge);
 
     /**
      * Called when a SASL outcome frame has arrived and its effect applied, indicating the outcome and
@@ -87,6 +87,6 @@ public interface SaslClientListener {
      * @param additional
      *      the additional data sent from the server, or null if none.
      */
-    void handleSaslOutcome(SaslClientContext context, SaslOutcome outcome, Binary additional);
+    void handleSaslOutcome(SaslClientContext context, SaslOutcome outcome, ProtonBuffer additional);
 
 }

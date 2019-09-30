@@ -28,6 +28,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.apache.qpid.proton4j.amqp.Binary;
 import org.apache.qpid.proton4j.amqp.security.SaslPerformative.SaslPerformativeHandler;
 import org.apache.qpid.proton4j.amqp.security.SaslPerformative.SaslPerformativeType;
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.junit.Test;
 
 public class SaslResponseTest {
@@ -66,7 +67,12 @@ public class SaslResponseTest {
         SaslResponse init = new SaslResponse();
 
         try {
-            init.setResponse(null);
+            init.setResponse((Binary) null);
+            fail("Response field is required and should not be cleared");
+        } catch (NullPointerException npe) {}
+
+        try {
+            init.setResponse((ProtonBuffer) null);
             fail("Response field is required and should not be cleared");
         } catch (NullPointerException npe) {}
     }

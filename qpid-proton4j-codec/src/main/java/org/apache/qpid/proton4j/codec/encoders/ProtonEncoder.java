@@ -67,33 +67,63 @@ import org.apache.qpid.proton4j.codec.encoders.primitives.UnsignedShortTypeEncod
  */
 public class ProtonEncoder implements Encoder {
 
-    private final ArrayTypeEncoder arrayEncoder = new ArrayTypeEncoder();
-    private final BinaryTypeEncoder binaryEncoder = new BinaryTypeEncoder();
-    private final BooleanTypeEncoder booleanEncoder = new BooleanTypeEncoder();
-    private final ByteTypeEncoder byteEncoder = new ByteTypeEncoder();
-    private final CharacterTypeEncoder charEncoder = new CharacterTypeEncoder();
-    private final Decimal32TypeEncoder decimal32Encoder = new Decimal32TypeEncoder();
-    private final Decimal64TypeEncoder decimal64Encoder = new Decimal64TypeEncoder();
-    private final Decimal128TypeEncoder decimal128Encoder = new Decimal128TypeEncoder();
-    private final DoubleTypeEncoder doubleEncoder = new DoubleTypeEncoder();
-    private final FloatTypeEncoder floatEncoder = new FloatTypeEncoder();
-    private final IntegerTypeEncoder integerEncoder = new IntegerTypeEncoder();
-    private final ListTypeEncoder listEncoder = new ListTypeEncoder();
-    private final LongTypeEncoder longEncoder = new LongTypeEncoder();
-    private final MapTypeEncoder mapEncoder = new MapTypeEncoder();
-    private final NullTypeEncoder nullEncoder = new NullTypeEncoder();
-    private final ShortTypeEncoder shortEncoder = new ShortTypeEncoder();
-    private final StringTypeEncoder stringEncoder = new StringTypeEncoder();
-    private final SymbolTypeEncoder symbolEncoder = new SymbolTypeEncoder();
-    private final TimestampTypeEncoder timestampEncoder = new TimestampTypeEncoder();
-    private final UnknownDescribedTypeEncoder unknownTypeEncoder = new UnknownDescribedTypeEncoder();
-    private final UUIDTypeEncoder uuidEncoder = new UUIDTypeEncoder();
-    private final UnsignedByteTypeEncoder ubyteEncoder = new UnsignedByteTypeEncoder();
-    private final UnsignedShortTypeEncoder ushortEncoder = new UnsignedShortTypeEncoder();
-    private final UnsignedIntegerTypeEncoder uintEncoder = new UnsignedIntegerTypeEncoder();
-    private final UnsignedLongTypeEncoder ulongEncoder = new UnsignedLongTypeEncoder();
+    // The encoders for primitives are fixed and cannot be altered by users who want
+    // to register custom encoders, these encoders are stateless so they can be safely
+    // made static to reduce overhead of creating and destroying this type.
+    private static final ArrayTypeEncoder arrayEncoder = new ArrayTypeEncoder();
+    private static final BinaryTypeEncoder binaryEncoder = new BinaryTypeEncoder();
+    private static final BooleanTypeEncoder booleanEncoder = new BooleanTypeEncoder();
+    private static final ByteTypeEncoder byteEncoder = new ByteTypeEncoder();
+    private static final CharacterTypeEncoder charEncoder = new CharacterTypeEncoder();
+    private static final Decimal32TypeEncoder decimal32Encoder = new Decimal32TypeEncoder();
+    private static final Decimal64TypeEncoder decimal64Encoder = new Decimal64TypeEncoder();
+    private static final Decimal128TypeEncoder decimal128Encoder = new Decimal128TypeEncoder();
+    private static final DoubleTypeEncoder doubleEncoder = new DoubleTypeEncoder();
+    private static final FloatTypeEncoder floatEncoder = new FloatTypeEncoder();
+    private static final IntegerTypeEncoder integerEncoder = new IntegerTypeEncoder();
+    private static final ListTypeEncoder listEncoder = new ListTypeEncoder();
+    private static final LongTypeEncoder longEncoder = new LongTypeEncoder();
+    private static final MapTypeEncoder mapEncoder = new MapTypeEncoder();
+    private static final NullTypeEncoder nullEncoder = new NullTypeEncoder();
+    private static final ShortTypeEncoder shortEncoder = new ShortTypeEncoder();
+    private static final StringTypeEncoder stringEncoder = new StringTypeEncoder();
+    private static final SymbolTypeEncoder symbolEncoder = new SymbolTypeEncoder();
+    private static final TimestampTypeEncoder timestampEncoder = new TimestampTypeEncoder();
+    private static final UnknownDescribedTypeEncoder unknownTypeEncoder = new UnknownDescribedTypeEncoder();
+    private static final UUIDTypeEncoder uuidEncoder = new UUIDTypeEncoder();
+    private static final UnsignedByteTypeEncoder ubyteEncoder = new UnsignedByteTypeEncoder();
+    private static final UnsignedShortTypeEncoder ushortEncoder = new UnsignedShortTypeEncoder();
+    private static final UnsignedIntegerTypeEncoder uintEncoder = new UnsignedIntegerTypeEncoder();
+    private static final UnsignedLongTypeEncoder ulongEncoder = new UnsignedLongTypeEncoder();
 
     private final Map<Class<?>, TypeEncoder<?>> typeEncoders = new HashMap<>();
+    {
+        typeEncoders.put(arrayEncoder.getTypeClass(), arrayEncoder);
+        typeEncoders.put(binaryEncoder.getTypeClass(), binaryEncoder);
+        typeEncoders.put(booleanEncoder.getTypeClass(), booleanEncoder);
+        typeEncoders.put(byteEncoder.getTypeClass(), byteEncoder);
+        typeEncoders.put(charEncoder.getTypeClass(), charEncoder);
+        typeEncoders.put(decimal32Encoder.getTypeClass(), decimal32Encoder);
+        typeEncoders.put(decimal64Encoder.getTypeClass(), decimal64Encoder);
+        typeEncoders.put(decimal128Encoder.getTypeClass(), decimal128Encoder);
+        typeEncoders.put(doubleEncoder.getTypeClass(), doubleEncoder);
+        typeEncoders.put(floatEncoder.getTypeClass(), floatEncoder);
+        typeEncoders.put(integerEncoder.getTypeClass(), integerEncoder);
+        typeEncoders.put(listEncoder.getTypeClass(), listEncoder);
+        typeEncoders.put(longEncoder.getTypeClass(), longEncoder);
+        typeEncoders.put(mapEncoder.getTypeClass(), mapEncoder);
+        typeEncoders.put(nullEncoder.getTypeClass(), nullEncoder);
+        typeEncoders.put(shortEncoder.getTypeClass(), shortEncoder);
+        typeEncoders.put(stringEncoder.getTypeClass(), stringEncoder);
+        typeEncoders.put(symbolEncoder.getTypeClass(), symbolEncoder);
+        typeEncoders.put(timestampEncoder.getTypeClass(), timestampEncoder);
+        typeEncoders.put(unknownTypeEncoder.getTypeClass(), unknownTypeEncoder);
+        typeEncoders.put(uuidEncoder.getTypeClass(), uuidEncoder);
+        typeEncoders.put(ubyteEncoder.getTypeClass(), ubyteEncoder);
+        typeEncoders.put(ushortEncoder.getTypeClass(), ushortEncoder);
+        typeEncoders.put(uintEncoder.getTypeClass(), uintEncoder);
+        typeEncoders.put(ulongEncoder.getTypeClass(), ulongEncoder);
+    }
 
     @Override
     public ProtonEncoderState newEncoderState() {
@@ -651,7 +681,7 @@ public class ProtonEncoder implements Encoder {
     }
 
     @Override
-    public <V> ProtonEncoder registerTypeEncoder(TypeEncoder<V> encoder) {
+    public <V> ProtonEncoder registerDescribedTypeEncoder(DescribedTypeEncoder<V> encoder) {
         typeEncoders.put(encoder.getTypeClass(), encoder);
         return this;
     }

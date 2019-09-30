@@ -36,30 +36,6 @@ import org.apache.qpid.proton4j.codec.encoders.messaging.RejectedTypeEncoder;
 import org.apache.qpid.proton4j.codec.encoders.messaging.ReleasedTypeEncoder;
 import org.apache.qpid.proton4j.codec.encoders.messaging.SourceTypeEncoder;
 import org.apache.qpid.proton4j.codec.encoders.messaging.TargetTypeEncoder;
-import org.apache.qpid.proton4j.codec.encoders.primitives.ArrayTypeEncoder;
-import org.apache.qpid.proton4j.codec.encoders.primitives.BinaryTypeEncoder;
-import org.apache.qpid.proton4j.codec.encoders.primitives.BooleanTypeEncoder;
-import org.apache.qpid.proton4j.codec.encoders.primitives.ByteTypeEncoder;
-import org.apache.qpid.proton4j.codec.encoders.primitives.CharacterTypeEncoder;
-import org.apache.qpid.proton4j.codec.encoders.primitives.Decimal128TypeEncoder;
-import org.apache.qpid.proton4j.codec.encoders.primitives.Decimal32TypeEncoder;
-import org.apache.qpid.proton4j.codec.encoders.primitives.Decimal64TypeEncoder;
-import org.apache.qpid.proton4j.codec.encoders.primitives.DoubleTypeEncoder;
-import org.apache.qpid.proton4j.codec.encoders.primitives.FloatTypeEncoder;
-import org.apache.qpid.proton4j.codec.encoders.primitives.IntegerTypeEncoder;
-import org.apache.qpid.proton4j.codec.encoders.primitives.ListTypeEncoder;
-import org.apache.qpid.proton4j.codec.encoders.primitives.LongTypeEncoder;
-import org.apache.qpid.proton4j.codec.encoders.primitives.MapTypeEncoder;
-import org.apache.qpid.proton4j.codec.encoders.primitives.NullTypeEncoder;
-import org.apache.qpid.proton4j.codec.encoders.primitives.ShortTypeEncoder;
-import org.apache.qpid.proton4j.codec.encoders.primitives.StringTypeEncoder;
-import org.apache.qpid.proton4j.codec.encoders.primitives.SymbolTypeEncoder;
-import org.apache.qpid.proton4j.codec.encoders.primitives.TimestampTypeEncoder;
-import org.apache.qpid.proton4j.codec.encoders.primitives.UUIDTypeEncoder;
-import org.apache.qpid.proton4j.codec.encoders.primitives.UnsignedByteTypeEncoder;
-import org.apache.qpid.proton4j.codec.encoders.primitives.UnsignedIntegerTypeEncoder;
-import org.apache.qpid.proton4j.codec.encoders.primitives.UnsignedLongTypeEncoder;
-import org.apache.qpid.proton4j.codec.encoders.primitives.UnsignedShortTypeEncoder;
 import org.apache.qpid.proton4j.codec.encoders.security.SaslChallengeTypeEncoder;
 import org.apache.qpid.proton4j.codec.encoders.security.SaslInitTypeEncoder;
 import org.apache.qpid.proton4j.codec.encoders.security.SaslMechanismsTypeEncoder;
@@ -92,7 +68,6 @@ public class ProtonEncoderFactory {
     public static ProtonEncoder create() {
         ProtonEncoder encoder = new ProtonEncoder();
 
-        addPrimitiveTypeEncoders(encoder);
         addMessagingTypeEncoders(encoder);
         addTransactionTypeEncoders(encoder);
         addTransportTypeEncoders(encoder);
@@ -104,87 +79,59 @@ public class ProtonEncoderFactory {
         ProtonEncoder encoder = new ProtonEncoder();
 
         addSaslTypeEncoders(encoder);
-        addPrimitiveTypeEncoders(encoder);
 
         return encoder;
     }
 
     private static void addMessagingTypeEncoders(ProtonEncoder encoder) {
-        encoder.registerTypeEncoder(new AcceptedTypeEncoder());
-        encoder.registerTypeEncoder(new AmqpSequenceTypeEncoder());
-        encoder.registerTypeEncoder(new AmqpValueTypeEncoder());
-        encoder.registerTypeEncoder(new ApplicationPropertiesTypeEncoder());
-        encoder.registerTypeEncoder(new DataTypeEncoder());
-        encoder.registerTypeEncoder(new DeleteOnCloseTypeEncoder());
-        encoder.registerTypeEncoder(new DeleteOnNoLinksOrMessagesTypeEncoder());
-        encoder.registerTypeEncoder(new DeleteOnNoLinksTypeEncoder());
-        encoder.registerTypeEncoder(new DeleteOnNoMessagesTypeEncoder());
-        encoder.registerTypeEncoder(new DeliveryAnnotationsTypeEncoder());
-        encoder.registerTypeEncoder(new FooterTypeEncoder());
-        encoder.registerTypeEncoder(new HeaderTypeEncoder());
-        encoder.registerTypeEncoder(new MessageAnnotationsTypeEncoder());
-        encoder.registerTypeEncoder(new ModifiedTypeEncoder());
-        encoder.registerTypeEncoder(new PropertiesTypeEncoder());
-        encoder.registerTypeEncoder(new ReceivedTypeEncoder());
-        encoder.registerTypeEncoder(new RejectedTypeEncoder());
-        encoder.registerTypeEncoder(new ReleasedTypeEncoder());
-        encoder.registerTypeEncoder(new SourceTypeEncoder());
-        encoder.registerTypeEncoder(new TargetTypeEncoder());
+        encoder.registerDescribedTypeEncoder(new AcceptedTypeEncoder());
+        encoder.registerDescribedTypeEncoder(new AmqpSequenceTypeEncoder());
+        encoder.registerDescribedTypeEncoder(new AmqpValueTypeEncoder());
+        encoder.registerDescribedTypeEncoder(new ApplicationPropertiesTypeEncoder());
+        encoder.registerDescribedTypeEncoder(new DataTypeEncoder());
+        encoder.registerDescribedTypeEncoder(new DeleteOnCloseTypeEncoder());
+        encoder.registerDescribedTypeEncoder(new DeleteOnNoLinksOrMessagesTypeEncoder());
+        encoder.registerDescribedTypeEncoder(new DeleteOnNoLinksTypeEncoder());
+        encoder.registerDescribedTypeEncoder(new DeleteOnNoMessagesTypeEncoder());
+        encoder.registerDescribedTypeEncoder(new DeliveryAnnotationsTypeEncoder());
+        encoder.registerDescribedTypeEncoder(new FooterTypeEncoder());
+        encoder.registerDescribedTypeEncoder(new HeaderTypeEncoder());
+        encoder.registerDescribedTypeEncoder(new MessageAnnotationsTypeEncoder());
+        encoder.registerDescribedTypeEncoder(new ModifiedTypeEncoder());
+        encoder.registerDescribedTypeEncoder(new PropertiesTypeEncoder());
+        encoder.registerDescribedTypeEncoder(new ReceivedTypeEncoder());
+        encoder.registerDescribedTypeEncoder(new RejectedTypeEncoder());
+        encoder.registerDescribedTypeEncoder(new ReleasedTypeEncoder());
+        encoder.registerDescribedTypeEncoder(new SourceTypeEncoder());
+        encoder.registerDescribedTypeEncoder(new TargetTypeEncoder());
     }
 
     private static void addTransactionTypeEncoders(ProtonEncoder encoder) {
-        encoder.registerTypeEncoder(new CoordinatorTypeEncoder());
-        encoder.registerTypeEncoder(new DeclaredTypeEncoder());
-        encoder.registerTypeEncoder(new DeclareTypeEncoder());
-        encoder.registerTypeEncoder(new DischargeTypeEncoder());
-        encoder.registerTypeEncoder(new TransactionStateTypeEncoder());
+        encoder.registerDescribedTypeEncoder(new CoordinatorTypeEncoder());
+        encoder.registerDescribedTypeEncoder(new DeclaredTypeEncoder());
+        encoder.registerDescribedTypeEncoder(new DeclareTypeEncoder());
+        encoder.registerDescribedTypeEncoder(new DischargeTypeEncoder());
+        encoder.registerDescribedTypeEncoder(new TransactionStateTypeEncoder());
     }
 
     private static void addTransportTypeEncoders(ProtonEncoder encoder) {
-        encoder.registerTypeEncoder(new AttachTypeEncoder());
-        encoder.registerTypeEncoder(new BeginTypeEncoder());
-        encoder.registerTypeEncoder(new CloseTypeEncoder());
-        encoder.registerTypeEncoder(new DetachTypeEncoder());
-        encoder.registerTypeEncoder(new DispositionTypeEncoder());
-        encoder.registerTypeEncoder(new EndTypeEncoder());
-        encoder.registerTypeEncoder(new ErrorConditionTypeEncoder());
-        encoder.registerTypeEncoder(new FlowTypeEncoder());
-        encoder.registerTypeEncoder(new OpenTypeEncoder());
-        encoder.registerTypeEncoder(new TransferTypeEncoder());
-    }
-
-    private static void addPrimitiveTypeEncoders(ProtonEncoder encoder) {
-        encoder.registerTypeEncoder(new ArrayTypeEncoder());
-        encoder.registerTypeEncoder(new BinaryTypeEncoder());
-        encoder.registerTypeEncoder(new BooleanTypeEncoder());
-        encoder.registerTypeEncoder(new ByteTypeEncoder());
-        encoder.registerTypeEncoder(new CharacterTypeEncoder());
-        encoder.registerTypeEncoder(new Decimal32TypeEncoder());
-        encoder.registerTypeEncoder(new Decimal64TypeEncoder());
-        encoder.registerTypeEncoder(new Decimal128TypeEncoder());
-        encoder.registerTypeEncoder(new DoubleTypeEncoder());
-        encoder.registerTypeEncoder(new FloatTypeEncoder());
-        encoder.registerTypeEncoder(new IntegerTypeEncoder());
-        encoder.registerTypeEncoder(new ListTypeEncoder());
-        encoder.registerTypeEncoder(new LongTypeEncoder());
-        encoder.registerTypeEncoder(new MapTypeEncoder());
-        encoder.registerTypeEncoder(new NullTypeEncoder());
-        encoder.registerTypeEncoder(new ShortTypeEncoder());
-        encoder.registerTypeEncoder(new StringTypeEncoder());
-        encoder.registerTypeEncoder(new SymbolTypeEncoder());
-        encoder.registerTypeEncoder(new TimestampTypeEncoder());
-        encoder.registerTypeEncoder(new UnsignedByteTypeEncoder());
-        encoder.registerTypeEncoder(new UnsignedShortTypeEncoder());
-        encoder.registerTypeEncoder(new UnsignedIntegerTypeEncoder());
-        encoder.registerTypeEncoder(new UnsignedLongTypeEncoder());
-        encoder.registerTypeEncoder(new UUIDTypeEncoder());
+        encoder.registerDescribedTypeEncoder(new AttachTypeEncoder());
+        encoder.registerDescribedTypeEncoder(new BeginTypeEncoder());
+        encoder.registerDescribedTypeEncoder(new CloseTypeEncoder());
+        encoder.registerDescribedTypeEncoder(new DetachTypeEncoder());
+        encoder.registerDescribedTypeEncoder(new DispositionTypeEncoder());
+        encoder.registerDescribedTypeEncoder(new EndTypeEncoder());
+        encoder.registerDescribedTypeEncoder(new ErrorConditionTypeEncoder());
+        encoder.registerDescribedTypeEncoder(new FlowTypeEncoder());
+        encoder.registerDescribedTypeEncoder(new OpenTypeEncoder());
+        encoder.registerDescribedTypeEncoder(new TransferTypeEncoder());
     }
 
     private static void addSaslTypeEncoders(ProtonEncoder encoder) {
-        encoder.registerTypeEncoder(new SaslChallengeTypeEncoder());
-        encoder.registerTypeEncoder(new SaslInitTypeEncoder());
-        encoder.registerTypeEncoder(new SaslMechanismsTypeEncoder());
-        encoder.registerTypeEncoder(new SaslOutcomeTypeEncoder());
-        encoder.registerTypeEncoder(new SaslResponseTypeEncoder());
+        encoder.registerDescribedTypeEncoder(new SaslChallengeTypeEncoder());
+        encoder.registerDescribedTypeEncoder(new SaslInitTypeEncoder());
+        encoder.registerDescribedTypeEncoder(new SaslMechanismsTypeEncoder());
+        encoder.registerDescribedTypeEncoder(new SaslOutcomeTypeEncoder());
+        encoder.registerDescribedTypeEncoder(new SaslResponseTypeEncoder());
     }
 }

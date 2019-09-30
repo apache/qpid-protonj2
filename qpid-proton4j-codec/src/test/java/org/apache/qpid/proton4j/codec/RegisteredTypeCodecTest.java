@@ -38,8 +38,8 @@ public class RegisteredTypeCodecTest extends CodecTestSupport {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
 
         // Register the codec pair.
-        encoder.registerTypeEncoder(new NoLocalTypeEncoder());
-        decoder.registerTypeDecoder(new NoLocalTypeDecoder());
+        encoder.registerDescribedTypeEncoder(new NoLocalTypeEncoder());
+        decoder.registerDescribedTypeDecoder(new NoLocalTypeDecoder());
 
         encoder.writeObject(buffer, encoderState, NoLocalType.NO_LOCAL);
 

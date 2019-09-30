@@ -32,6 +32,7 @@ import org.apache.qpid.proton4j.amqp.UnsignedInteger;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.amqp.UnsignedShort;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import org.apache.qpid.proton4j.codec.encoders.DescribedTypeEncoder;
 
 /**
  * Encode AMQP types into binary streams
@@ -180,7 +181,7 @@ public interface Encoder {
 
     void writeArray(ProtonBuffer buffer, EncoderState state, UUID[] value);
 
-    <V> Encoder registerTypeEncoder(TypeEncoder<V> encoder);
+    <V> Encoder registerDescribedTypeEncoder(DescribedTypeEncoder<V> encoder);
 
     TypeEncoder<?> getTypeEncoder(Object value);
 

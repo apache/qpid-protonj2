@@ -32,6 +32,7 @@ import org.apache.qpid.proton4j.amqp.security.SaslInit;
 import org.apache.qpid.proton4j.amqp.security.SaslMechanisms;
 import org.apache.qpid.proton4j.amqp.security.SaslPerformative;
 import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.engine.Engine;
 import org.apache.qpid.proton4j.engine.Frame;
 import org.apache.qpid.proton4j.engine.HeaderFrame;
@@ -70,11 +71,11 @@ public class ProtonSaslHandlerTest {
         engine.saslContext().server().setListener(new SaslServerListener() {
 
             @Override
-            public void handleSaslResponse(SaslServerContext context, Binary response) {
+            public void handleSaslResponse(SaslServerContext context, ProtonBuffer response) {
             }
 
             @Override
-            public void handleSaslInit(SaslServerContext context, Symbol mechanism, Binary initResponse) {
+            public void handleSaslInit(SaslServerContext context, Symbol mechanism, ProtonBuffer initResponse) {
             }
 
             @Override
@@ -121,11 +122,11 @@ public class ProtonSaslHandlerTest {
             }
 
             @Override
-            public void handleSaslInit(SaslServerContext context, Symbol mechanism, Binary initResponse) {
+            public void handleSaslInit(SaslServerContext context, Symbol mechanism, ProtonBuffer initResponse) {
             }
 
             @Override
-            public void handleSaslResponse(SaslServerContext context, Binary response) {
+            public void handleSaslResponse(SaslServerContext context, ProtonBuffer response) {
             }
         });
 
@@ -177,10 +178,10 @@ public class ProtonSaslHandlerTest {
             }
 
             @Override
-            public void handleSaslInit(SaslServerContext context, Symbol mechanism, Binary initResponse) {
+            public void handleSaslInit(SaslServerContext context, Symbol mechanism, ProtonBuffer initResponse) {
                 clientHostname.set(context.getHostname());
                 clientMechanism.set(mechanism);
-                if (initResponse.getLength() == 0) {
+                if (initResponse.getReadableBytes() == 0) {
                     emptyResponse.set(true);
                 }
 
@@ -188,7 +189,7 @@ public class ProtonSaslHandlerTest {
             }
 
             @Override
-            public void handleSaslResponse(SaslServerContext context, Binary response) {
+            public void handleSaslResponse(SaslServerContext context, ProtonBuffer response) {
 
             }
         });

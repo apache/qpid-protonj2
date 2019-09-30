@@ -31,6 +31,7 @@ import org.apache.qpid.proton4j.amqp.UnsignedInteger;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.amqp.UnsignedShort;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import org.apache.qpid.proton4j.codec.decoders.DescribedTypeDecoder;
 
 /**
  * Decode AMQP types from a byte stream
@@ -99,6 +100,8 @@ public interface Decoder {
 
     Binary readBinary(ProtonBuffer buffer, DecoderState state) throws IOException;
 
+    ProtonBuffer readBinaryAsBuffer(ProtonBuffer buffer, DecoderState state) throws IOException;
+
     String readString(ProtonBuffer buffer, DecoderState state) throws IOException;
 
     Symbol readSymbol(ProtonBuffer buffer, DecoderState state) throws IOException;
@@ -125,7 +128,7 @@ public interface Decoder {
 
     TypeDecoder<?> peekNextTypeDecoder(ProtonBuffer buffer, DecoderState state) throws IOException;
 
-    <V> Decoder registerTypeDecoder(TypeDecoder<V> decoder);
+    <V> Decoder registerDescribedTypeDecoder(DescribedTypeDecoder<V> decoder);
 
     TypeDecoder<?> getTypeDecoder(Object instance);
 
