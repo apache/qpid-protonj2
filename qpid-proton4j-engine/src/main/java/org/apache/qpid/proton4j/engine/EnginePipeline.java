@@ -70,10 +70,6 @@ public interface EnginePipeline {
 
     EnginePipeline fireWrite(ProtonBuffer buffer);
 
-    EnginePipeline fireEncodingError(Throwable e);
-
-    EnginePipeline fireDecodingError(Throwable e);
-
     EnginePipeline fireFailed(Throwable e);
 
 }

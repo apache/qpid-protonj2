@@ -91,18 +91,8 @@ public class ProtonEngineHandlerContext implements EngineHandlerContext {
     }
 
     @Override
-    public void fireEncodingError(Throwable e) {
-        previous.getHandler().transportEncodingError(previous, e);
-    }
-
-    @Override
-    public void fireDecodingError(Throwable e) {
-        previous.getHandler().transportDecodingError(previous, e);
-    }
-
-    @Override
     public void fireFailed(Throwable e) {
-        previous.getHandler().transportFailed(previous, e);
+        previous.getHandler().engineFailed(previous, e);
     }
 
     @Override

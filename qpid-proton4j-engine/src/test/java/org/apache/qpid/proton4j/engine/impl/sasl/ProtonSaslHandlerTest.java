@@ -34,6 +34,7 @@ import org.apache.qpid.proton4j.amqp.security.SaslPerformative;
 import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.engine.Engine;
+import org.apache.qpid.proton4j.engine.EngineState;
 import org.apache.qpid.proton4j.engine.Frame;
 import org.apache.qpid.proton4j.engine.HeaderFrame;
 import org.apache.qpid.proton4j.engine.SaslFrame;
@@ -104,6 +105,8 @@ public class ProtonSaslHandlerTest {
                     fail("Invalid Frame read during exchange: " + frame);
             }
         }
+
+        assertEquals(EngineState.FAILED, engine.state());
     }
 
     @Test

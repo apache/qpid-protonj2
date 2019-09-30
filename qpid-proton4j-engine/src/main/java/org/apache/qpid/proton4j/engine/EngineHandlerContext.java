@@ -52,10 +52,6 @@ public interface EngineHandlerContext {
 
     void fireWrite(ProtonBuffer buffer);
 
-    void fireEncodingError(Throwable e);
-
-    void fireDecodingError(Throwable e);
-
     void fireFailed(Throwable e);
 
 }

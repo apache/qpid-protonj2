@@ -116,13 +116,13 @@ public class ProtonFrameDecodingHandlerTest {
 
         handler.handleRead(context, ProtonByteBufferAllocator.DEFAULT.wrap(new byte[] { 'S' }));
 
-        Mockito.verify(context).fireDecodingError(Mockito.any(IOException.class));
+        Mockito.verify(context).fireFailed(Mockito.any(IOException.class));
         Mockito.verifyNoMoreInteractions(context);
 
         // Verify that the parser accepts no new input once in error state.
         Mockito.clearInvocations(context);
         handler.handleRead(context, AMQPHeader.getSASLHeader().getBuffer());
-        Mockito.verify(context).fireDecodingError(Mockito.any(IOException.class));
+        Mockito.verify(context).fireFailed(Mockito.any(IOException.class));
     }
 
     @Test
@@ -283,7 +283,7 @@ public class ProtonFrameDecodingHandlerTest {
         handler.handleRead(context, ProtonByteBufferAllocator.DEFAULT.wrap(undersizedFrameHeader));
 
         ArgumentCaptor<Throwable> argument = ArgumentCaptor.forClass(Throwable.class);
-        Mockito.verify(context).fireDecodingError(argument.capture());
+        Mockito.verify(context).fireFailed(argument.capture());
         Mockito.verifyNoMoreInteractions(context);
 
         Throwable t = argument.getValue();
@@ -311,7 +311,7 @@ public class ProtonFrameDecodingHandlerTest {
         handler.handleRead(context, ProtonByteBufferAllocator.DEFAULT.wrap(underMinDoffFrameHeader));
 
         ArgumentCaptor<Throwable> argument = ArgumentCaptor.forClass(Throwable.class);
-        Mockito.verify(context).fireDecodingError(argument.capture());
+        Mockito.verify(context).fireFailed(argument.capture());
         Mockito.verifyNoMoreInteractions(context);
 
         Throwable t = argument.getValue();
@@ -339,7 +339,7 @@ public class ProtonFrameDecodingHandlerTest {
         handler.handleRead(context, ProtonByteBufferAllocator.DEFAULT.wrap(overFrameSizeDoffFrameHeader));
 
         ArgumentCaptor<Throwable> argument = ArgumentCaptor.forClass(Throwable.class);
-        Mockito.verify(context).fireDecodingError(argument.capture());
+        Mockito.verify(context).fireFailed(argument.capture());
         Mockito.verifyNoMoreInteractions(context);
 
         Throwable t = argument.getValue();

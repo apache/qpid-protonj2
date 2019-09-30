@@ -101,17 +101,7 @@ public interface EngineHandler {
         context.fireWrite(buffer);
     }
 
-    // Error events
-
-    default void transportEncodingError(EngineHandlerContext context, Throwable e) {
-        context.fireEncodingError(e);
-    }
-
-    default void transportDecodingError(EngineHandlerContext context, Throwable e) {
-        context.fireDecodingError(e);
-    }
-
-    default void transportFailed(EngineHandlerContext context, Throwable e) {
+    default void engineFailed(EngineHandlerContext context, Throwable e) {
         context.fireFailed(e);
     }
 }

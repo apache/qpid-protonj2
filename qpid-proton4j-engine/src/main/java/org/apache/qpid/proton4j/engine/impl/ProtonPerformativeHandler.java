@@ -72,19 +72,7 @@ public class ProtonPerformativeHandler implements EngineHandler, AMQPHeader.Head
     }
 
     @Override
-    public void transportEncodingError(EngineHandlerContext context, Throwable e) {
-        // TODO signal error to the connection, try and differentiate between fatal and non-fatal conditions ?
-        engine.engineFailed(ProtonExceptionSupport.create(e));
-    }
-
-    @Override
-    public void transportDecodingError(EngineHandlerContext context, Throwable e) {
-        // TODO signal error to the connection, try and differentiate between fatal and non-fatal conditions ?
-        engine.engineFailed(ProtonExceptionSupport.create(e));
-    }
-
-    @Override
-    public void transportFailed(EngineHandlerContext context, Throwable e) {
+    public void engineFailed(EngineHandlerContext context, Throwable e) {
         engine.engineFailed(ProtonExceptionSupport.create(e));
     }
 
@@ -117,7 +105,7 @@ public class ProtonPerformativeHandler implements EngineHandler, AMQPHeader.Head
     @Override
     public void handleOpen(Open open, ProtonBuffer payload, int channel, EngineHandlerContext context) {
         if (channel != 0) {
-            transportFailed(context, new ProtocolViolationException("Open not sent on channel zero"));
+            engineFailed(context, new ProtocolViolationException("Open not sent on channel zero"));
         }
 
         // TODO - This isn't storing the truth of what remote said, so configuration reports

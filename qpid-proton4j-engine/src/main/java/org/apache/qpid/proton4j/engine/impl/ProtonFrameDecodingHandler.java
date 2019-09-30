@@ -373,7 +373,7 @@ public class ProtonFrameDecodingHandler implements EngineHandler, SaslPerformati
         }
 
         public void fireError(EngineHandlerContext context) {
-            context.fireDecodingError(parsingError);
+            context.fireFailed(parsingError);
         }
 
         @Override
