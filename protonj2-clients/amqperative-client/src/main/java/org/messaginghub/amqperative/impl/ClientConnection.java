@@ -49,6 +49,8 @@ import org.messaginghub.amqperative.futures.ClientFutureFactory;
 import org.messaginghub.amqperative.impl.exceptions.ClientConnectionRemotelyClosedException;
 import org.messaginghub.amqperative.impl.exceptions.ClientExceptionSupport;
 import org.messaginghub.amqperative.impl.exceptions.ClientIOException;
+import org.messaginghub.amqperative.impl.sasl.SaslAuthenticator;
+import org.messaginghub.amqperative.impl.sasl.SaslMechanismSelector;
 import org.messaginghub.amqperative.transport.Transport;
 import org.messaginghub.amqperative.transport.impl.TcpTransport;
 import org.slf4j.Logger;
@@ -276,6 +278,13 @@ public class ClientConnection implements Connection {
         try {
             executor = transport.connect(() -> {
                 protonConnection = engine.start();
+
+                if (options.isSaslEnabled()) {
+                    SaslMechanismSelector mechSelector =
+                        new SaslMechanismSelector(options.allowedMechanisms(), options.blacklistedMechanisms());
+
+                    engine.saslContext().client().setListener(new SaslAuthenticator(this, mechSelector));
+                }
 
                 protonConnection.openHandler(result -> {
                     openFuture.complete(this);

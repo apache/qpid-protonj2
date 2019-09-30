@@ -17,8 +17,11 @@
 package org.messaginghub.amqperative;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Options that control the behaviour of the {@link Connection} created from them.
@@ -35,7 +38,7 @@ public class ConnectionOptions {
     public static final int DEFAULT_CHANNEL_MAX = 65535;
     public static final int DEFAULT_MAX_FRAME_SIZE = 65535;
     public static final boolean DEFAULT_ALLOW_INSECURE_REDIRECTS = false;
-    public static final boolean DEFAULT_SASL_ENABLED = true;
+    public static final boolean DEFAULT_SASL_ENABLED = false;   // TODO - Enable in future
     public static final boolean DEFAULT_SASL_ALLOW_INSECURE_MECHS = false;
 
     private long sendTimeout = DEFAULT_SEND_TIMEOUT;
@@ -57,8 +60,8 @@ public class ConnectionOptions {
     private String vhost;
     private String futureType;
     private boolean saslEnabled = DEFAULT_SASL_ENABLED;
-    private boolean saslAllowInsecureMechs = DEFAULT_SASL_ALLOW_INSECURE_MECHS;
-    private String saslAllowedMechanisms;
+    private final Set<String> saslAllowedMechs = new LinkedHashSet<>();
+    private final Set<String> saslBlacklistedMechs = new LinkedHashSet<>();
     private boolean allowInsecureRedirects = DEFAULT_ALLOW_INSECURE_REDIRECTS;
 
     public ConnectionOptions() {
@@ -92,8 +95,8 @@ public class ConnectionOptions {
         other.setUser(user);
         other.setPassword(password);
         other.setSaslEnabled(saslEnabled);
-        other.setSaslAllowInsecureMechs(saslAllowInsecureMechs);
-        other.setSaslAllowedMechanisms(saslAllowedMechanisms);
+        other.saslAllowedMechs.addAll(this.saslAllowedMechs);
+        other.saslBlacklistedMechs.addAll(this.saslBlacklistedMechs);
         other.setAllowInsecureRedirects(allowInsecureRedirects);
 
         if (offeredCapabilities != null) {
@@ -364,37 +367,58 @@ public class ConnectionOptions {
     }
 
     /**
-     * @return the saslMechanisms
-     */
-    public String getSaslAllowedMechanisms() {
-        return saslAllowedMechanisms;
-    }
-
-    // TODO: A better or alternate API might be to have addAllowedMechanism() that
-    //       returns this so chaining can be done.  Same for black list is added.
-
-    /**
-     * Comma separated list of allowed SASL mechanisms.
+     * Adds a mechanism to the list of allowed SASL mechanisms this client will use
+     * when selecting from the remote peers offered set of SASL mechanisms.
      *
-     * @param saslAllowedMechanisms the SASL Mechanisms to allow
+     * TODO allow all if none configured here ?
+     *
+     * @param mechanism
+     * 		The mechanism to allow.
+     *
+     * @return this options object for chaining.
      */
-    public void setSaslAllowedMechanisms(String saslAllowedMechanisms) {
-        this.saslAllowedMechanisms = saslAllowedMechanisms;
+    public ConnectionOptions addAllowedMechanism(String mechanism) {
+        // TODO - Validate mech is even supported.
+
+        if (saslBlacklistedMechs.contains(mechanism)) {
+            throw new IllegalArgumentException("Cannot add mechanism to both allowed and blacklisted mechanisms");
+        }
+
+        this.saslAllowedMechs.add(mechanism);
+        return this;
     }
 
-    // TODO - Remove this bit of configuration and go with something like a black / white list mechanism.
-
     /**
-     * @return the saslAllowInsecureMechs
+     * @return the current list of allowed SASL Mechanisms.
      */
-    public boolean isSaslAllowInsecureMechs() {
-        return saslAllowInsecureMechs;
+    public Set<String> allowedMechanisms() {
+        return Collections.unmodifiableSet(saslAllowedMechs);
     }
 
     /**
-     * @param saslAllowInsecureMechs the saslAllowInsecureMechs to set
+     * Adds a mechanism to the list of blacklisted SASL mechanisms this client will use
+     * when selecting from the remote peers offered set of SASL mechanisms.
+     *
+     * @param mechanism
+     * 		The mechanism to disallow.
+     *
+     * @return this options object for chaining.
      */
-    public void setSaslAllowInsecureMechs(boolean saslAllowInsecureMechs) {
-        this.saslAllowInsecureMechs = saslAllowInsecureMechs;
+    public ConnectionOptions addBlacklistedMechanism(String mechanism) {
+        // TODO - Validate mech is even supported.
+
+        if (saslAllowedMechs.contains(mechanism)) {
+            throw new IllegalArgumentException("Cannot add mechanism to both allowed and blacklisted mechanisms");
+        }
+
+        this.saslBlacklistedMechs.add(mechanism);
+        return this;
+    }
+
+    /**
+     * @return the current list of blacklisted SASL Mechanisms.
+     */
+    public Set<String> blacklistedMechanisms() {
+        return Collections.unmodifiableSet(saslBlacklistedMechs);
     }
 }
