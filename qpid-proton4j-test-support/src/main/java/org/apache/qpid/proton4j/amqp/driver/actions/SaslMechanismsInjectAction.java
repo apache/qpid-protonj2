@@ -32,6 +32,20 @@ public class SaslMechanismsInjectAction extends AbstractSaslPerformativeInjectAc
         super(driver);
     }
 
+    public SaslMechanismsInjectAction withMechanisms(String... saslServerMechanisms) {
+        Symbol[] mechanisms = null;
+
+        if (saslServerMechanisms != null) {
+            mechanisms = new Symbol[saslServerMechanisms.length];
+            for(int i = 0; i < saslServerMechanisms.length; ++i) {
+                mechanisms[i] = Symbol.valueOf(saslServerMechanisms[i]);
+            }
+        }
+
+        saslMechanisms.setSaslServerMechanisms(mechanisms);
+        return this;
+    }
+
     public SaslMechanismsInjectAction withMechanisms(Symbol... saslServerMechanisms) {
         saslMechanisms.setSaslServerMechanisms(saslServerMechanisms);
         return this;

@@ -20,6 +20,7 @@ import org.apache.qpid.proton4j.amqp.Binary;
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
 import org.apache.qpid.proton4j.amqp.driver.codec.security.SaslInit;
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 
 /**
  * AMQP SaslInit injection action which can be added to a driver for write at a specific time or
@@ -33,8 +34,18 @@ public class SaslInitInjectAction extends AbstractSaslPerformativeInjectAction<S
         super(driver);
     }
 
+    public SaslInitInjectAction withMechanism(String mechanism) {
+        saslInit.setMechanism(Symbol.valueOf(mechanism));
+        return this;
+    }
+
     public SaslInitInjectAction withMechanism(Symbol mechanism) {
         saslInit.setMechanism(mechanism);
+        return this;
+    }
+
+    public SaslInitInjectAction withMechanism(ProtonBuffer response) {
+        saslInit.setInitialResponse(new Binary(response));
         return this;
     }
 
