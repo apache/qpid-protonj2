@@ -23,6 +23,7 @@ import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
 import org.apache.qpid.proton4j.amqp.driver.codec.ListDescribedType;
 import org.apache.qpid.proton4j.amqp.driver.codec.security.SaslResponse;
 import org.apache.qpid.proton4j.amqp.driver.matchers.security.SaslResponseMatcher;
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.hamcrest.Matcher;
 
 /**
@@ -38,8 +39,12 @@ public class SaslResponseExpectation extends AbstractExpectation<SaslResponse> {
 
     //----- Type specific with methods that perform simple equals checks
 
-    public SaslResponseExpectation withResponse(Binary response) {
+    public SaslResponseExpectation withResponse(ProtonBuffer response) {
         return withResponse(equalTo(response));
+    }
+
+    public SaslResponseExpectation withResponse(Binary response) {
+        return withResponse(equalTo(response.asProtonBuffer()));
     }
 
     //----- Matcher based with methods for more complex validation

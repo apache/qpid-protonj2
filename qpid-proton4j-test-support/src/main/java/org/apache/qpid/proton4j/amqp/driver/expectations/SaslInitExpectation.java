@@ -24,6 +24,7 @@ import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
 import org.apache.qpid.proton4j.amqp.driver.codec.ListDescribedType;
 import org.apache.qpid.proton4j.amqp.driver.codec.security.SaslInit;
 import org.apache.qpid.proton4j.amqp.driver.matchers.security.SaslInitMatcher;
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.hamcrest.Matcher;
 
 /**
@@ -39,12 +40,20 @@ public class SaslInitExpectation extends AbstractExpectation<SaslInit> {
 
     //----- Type specific with methods that perform simple equals checks
 
+    public SaslInitExpectation withMechanism(String mechanism) {
+        return withMechanism(equalTo(Symbol.valueOf(mechanism)));
+    }
+
     public SaslInitExpectation withMechanism(Symbol mechanism) {
         return withMechanism(equalTo(mechanism));
     }
 
-    public SaslInitExpectation withInitialResponse(Binary initialResponse) {
+    public SaslInitExpectation withInitialResponse(ProtonBuffer initialResponse) {
         return withInitialResponse(equalTo(initialResponse));
+    }
+
+    public SaslInitExpectation withInitialResponse(Binary initialResponse) {
+        return withInitialResponse(equalTo(initialResponse.asProtonBuffer()));
     }
 
     public SaslInitExpectation withHostname(String hostname) {

@@ -24,6 +24,7 @@ import org.apache.qpid.proton4j.amqp.driver.actions.SaslResponseInjectAction;
 import org.apache.qpid.proton4j.amqp.driver.codec.ListDescribedType;
 import org.apache.qpid.proton4j.amqp.driver.codec.security.SaslChallenge;
 import org.apache.qpid.proton4j.amqp.driver.matchers.security.SaslChallengeMatcher;
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.hamcrest.Matcher;
 
 /**
@@ -45,8 +46,12 @@ public class SaslChallengeExpectation extends AbstractExpectation<SaslChallenge>
 
     //----- Type specific with methods that perform simple equals checks
 
-    public SaslChallengeExpectation withChallenge(Binary challenge) {
+    public SaslChallengeExpectation withChallenge(ProtonBuffer challenge) {
         return withChallenge(equalTo(challenge));
+    }
+
+    public SaslChallengeExpectation withChallenge(Binary challenge) {
+        return withChallenge(equalTo(challenge.asProtonBuffer()));
     }
 
     //----- Matcher based with methods for more complex validation

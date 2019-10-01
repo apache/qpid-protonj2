@@ -24,6 +24,7 @@ import org.apache.qpid.proton4j.amqp.driver.codec.ListDescribedType;
 import org.apache.qpid.proton4j.amqp.driver.codec.security.SaslOutcome;
 import org.apache.qpid.proton4j.amqp.driver.matchers.security.SaslOutcomeMatcher;
 import org.apache.qpid.proton4j.amqp.security.SaslCode;
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.hamcrest.Matcher;
 
 /**
@@ -43,8 +44,12 @@ public class SaslOutcomeExpectation extends AbstractExpectation<SaslOutcome> {
         return withCode(equalTo(code));
     }
 
-    public SaslOutcomeExpectation withAdditionalData(Binary additionalData) {
+    public SaslOutcomeExpectation withAdditionalData(ProtonBuffer additionalData) {
         return withAdditionalData(equalTo(additionalData));
+    }
+
+    public SaslOutcomeExpectation withAdditionalData(Binary additionalData) {
+        return withAdditionalData(equalTo(additionalData.asByteBuffer()));
     }
 
     //----- Matcher based with methods for more complex validation

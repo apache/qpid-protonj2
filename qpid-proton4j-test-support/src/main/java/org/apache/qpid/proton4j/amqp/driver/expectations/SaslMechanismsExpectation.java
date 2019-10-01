@@ -38,6 +38,19 @@ public class SaslMechanismsExpectation extends AbstractExpectation<SaslMechanism
 
     //----- Type specific with methods that perform simple equals checks
 
+    public SaslMechanismsExpectation withSaslServerMechanisms(String... mechanisms) {
+        Symbol[] expected = null;
+
+        if (mechanisms != null) {
+            expected = new Symbol[mechanisms.length];
+            for (int i = 0; i < mechanisms.length; ++i) {
+                expected[i] = Symbol.valueOf(mechanisms[i]);
+            }
+        }
+
+        return withSaslServerMechanisms(equalTo(expected));
+    }
+
     public SaslMechanismsExpectation withSaslServerMechanisms(Symbol... mechanisms) {
         return withSaslServerMechanisms(equalTo(mechanisms));
     }
