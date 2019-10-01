@@ -171,7 +171,7 @@ public class ProtonFrameDecodingHandler implements EngineHandler, SaslPerformati
 
         @Override
         public void parse(EngineHandlerContext context, ProtonBuffer incoming) throws IOException {
-            while (incoming.isReadable() && headerByte <= AMQPHeader.HEADER_SIZE_BYTES) {
+            while (incoming.isReadable() && headerByte < AMQPHeader.HEADER_SIZE_BYTES) {
                 byte nextByte = incoming.readByte();
                 AMQPHeader.validateByte(headerByte, nextByte);
                 headerBytes[headerByte++] = nextByte;
