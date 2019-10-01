@@ -18,34 +18,18 @@ package org.messaginghub.amqperative.impl.sasl;
 
 import java.security.Principal;
 
-import org.apache.qpid.proton4j.buffer.ProtonBuffer;
-
 /**
- * Implements the Anonymous SASL authentication mechanism.
+ * Interface for a supplier of login credentials used by the SASL Authenticator to
+ * select and configure the client SASL mechanism.
  */
-public class AnonymousMechanism extends AbstractMechanism {
+public interface SaslCredentialsProvider {
 
-    public AnonymousMechanism(int sequence) {
-        super(sequence);
-    }
+    String vhost();
 
-    @Override
-    public ProtonBuffer getInitialResponse() {
-        return EMPTY;
-    }
+    String username();
 
-    @Override
-    public ProtonBuffer getChallengeResponse(ProtonBuffer challenge) {
-        return EMPTY;
-    }
+    String password();
 
-    @Override
-    public String getName() {
-        return "ANONYMOUS";
-    }
+    Principal localPrincipal();
 
-    @Override
-    public boolean isApplicable(String username, String password, Principal localPrincipal) {
-        return true;
-    }
 }

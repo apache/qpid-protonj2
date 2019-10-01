@@ -38,7 +38,7 @@ public class ConnectionOptions {
     public static final int DEFAULT_CHANNEL_MAX = 65535;
     public static final int DEFAULT_MAX_FRAME_SIZE = 65535;
     public static final boolean DEFAULT_ALLOW_INSECURE_REDIRECTS = false;
-    public static final boolean DEFAULT_SASL_ENABLED = false;   // TODO - Enable in future
+    public static final boolean DEFAULT_SASL_ENABLED = false;  // TODO - Get tests working with default true
     public static final boolean DEFAULT_SASL_ALLOW_INSECURE_MECHS = false;
 
     private long sendTimeout = DEFAULT_SEND_TIMEOUT;

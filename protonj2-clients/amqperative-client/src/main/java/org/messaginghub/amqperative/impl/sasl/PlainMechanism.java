@@ -19,6 +19,9 @@ package org.messaginghub.amqperative.impl.sasl;
 import java.nio.charset.StandardCharsets;
 import java.security.Principal;
 
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
+
 /**
  * Implements the SASL PLAIN authentication Mechanism.
  *
@@ -36,7 +39,7 @@ public class PlainMechanism extends AbstractMechanism {
     }
 
     @Override
-    public byte[] getInitialResponse() {
+    public ProtonBuffer getInitialResponse() {
         String username = getUsername();
         String password = getPassword();
 
@@ -51,13 +54,15 @@ public class PlainMechanism extends AbstractMechanism {
         byte[] usernameBytes = username.getBytes(StandardCharsets.UTF_8);
         byte[] passwordBytes = password.getBytes(StandardCharsets.UTF_8);
         byte[] data = new byte[usernameBytes.length + passwordBytes.length + 2];
+
         System.arraycopy(usernameBytes, 0, data, 1, usernameBytes.length);
         System.arraycopy(passwordBytes, 0, data, 2 + usernameBytes.length, passwordBytes.length);
-        return data;
+
+        return ProtonByteBufferAllocator.DEFAULT.wrap(data).setWriteIndex(data.length);
     }
 
     @Override
-    public byte[] getChallengeResponse(byte[] challenge) {
+    public ProtonBuffer getChallengeResponse(ProtonBuffer challenge) {
         return EMPTY;
     }
 

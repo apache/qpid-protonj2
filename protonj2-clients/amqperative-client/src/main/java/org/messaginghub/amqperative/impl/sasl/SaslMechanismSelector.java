@@ -16,13 +16,17 @@
  */
 package org.messaginghub.amqperative.impl.sasl;
 
-import java.security.Principal;
+import java.util.LinkedHashSet;
 import java.util.Set;
+
+import org.apache.qpid.proton4j.amqp.Symbol;
 
 /**
  * Used to select a matching mechanism from the server offered list of mechanisms
  */
 public final class SaslMechanismSelector {
+
+    // TODO - internally we should use Symbol ?
 
     private final Set<String> allowedMechanisms;
     private final Set<String> blackListedMechanisms;
@@ -32,7 +36,27 @@ public final class SaslMechanismSelector {
         this.blackListedMechanisms = blacklisted;
     }
 
-    public Mechanism select(String[] serverMechs, String username, String password, Principal localPrincipal) {
-        return null;
+    public Mechanism select(Symbol[] serverMechs, SaslCredentialsProvider credentials) {
+        Mechanism selected = null;
+
+        Set<String> matching = new LinkedHashSet<>(serverMechs.length);
+        for (Symbol serverMech : serverMechs) {
+            matching.add(serverMech.toString());
+        }
+
+        if (blackListedMechanisms != null) {
+            matching.removeAll(blackListedMechanisms);
+        }
+
+        matching.retainAll(allowedMechanisms);
+
+        for (String match : matching) {
+            SaslMechanisms option = SaslMechanisms.valueOf(match);
+            if (option.isApplicable(credentials)) {
+                selected = option.createMechanism();
+            }
+        }
+
+        return selected;
     }
 }

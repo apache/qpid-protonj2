@@ -21,36 +21,75 @@ import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.engine.sasl.SaslClientContext;
 import org.apache.qpid.proton4j.engine.sasl.SaslClientListener;
 import org.apache.qpid.proton4j.engine.sasl.SaslOutcome;
-import org.messaginghub.amqperative.impl.ClientConnection;
 
 /**
  * Handles SASL traffic from the proton engine and drives the authentication process
  */
 public class SaslAuthenticator implements SaslClientListener {
 
-    private final ClientConnection connection;
-    private final SaslMechanismSelector mechanisms;
+    private final SaslMechanismSelector selector;
+    private final SaslCredentialsProvider credentials;
 
-    public SaslAuthenticator(ClientConnection connection, SaslMechanismSelector mechanisms) {
-        this.connection = connection;
-        this.mechanisms = mechanisms;
+    private Mechanism chosenMechanism;
+
+    public SaslAuthenticator(SaslMechanismSelector selector, SaslCredentialsProvider credentials) {
+        this.credentials = credentials;
+        this.selector = selector;
     }
 
     @Override
     public void handleSaslMechanisms(SaslClientContext context, Symbol[] mechanisms) {
-        // TODO Auto-generated method stub
+        chosenMechanism = selector.select(mechanisms, credentials);
 
+        if (chosenMechanism == null) {
+            // TODO - Locally fail the engine we cannot proceed without a mechanism.
+        }
+
+        // Configure the mechanism based on provided credentials
+        chosenMechanism.setUsername(credentials.username());
+        chosenMechanism.setPassword(credentials.password());
+
+        ProtonBuffer initialResponse = null;
+        try {
+            initialResponse = chosenMechanism.getInitialResponse();
+        } catch (Throwable t) {
+            // TODO - Failure generating response, fail locally
+        }
+
+        context.sendChosenMechanism(chosenMechanism.symbolicName(), credentials.vhost(), initialResponse);
     }
 
     @Override
     public void handleSaslChallenge(SaslClientContext context, ProtonBuffer challenge) {
-        // TODO Auto-generated method stub
+        ProtonBuffer response = null;
+        try {
+            response = chosenMechanism.getChallengeResponse(challenge);
+        } catch (Throwable t) {
+            // TODO - Failure generating response, fail locally
+        }
 
+        context.sendResponse(response);
     }
 
     @Override
     public void handleSaslOutcome(SaslClientContext context, SaslOutcome outcome, ProtonBuffer additional) {
-        // TODO Auto-generated method stub
+        chosenMechanism.verifyCompletion();
 
+        switch (outcome) {
+            case SASL_TEMP:
+                // TODO - signal temporary failure
+                break;
+            case SASL_AUTH:
+                // TODO - signal credentials failure
+                break;
+            case SASL_PERM:
+                // TODO - signal some unrecoverable failure
+                break;
+            case SASL_SYS:
+                // TODO - signal some other system failure
+                break;
+            default:
+                break;
+        }
     }
 }

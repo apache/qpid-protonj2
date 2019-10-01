@@ -18,6 +18,7 @@ package org.messaginghub.amqperative.impl;
 
 import java.io.IOException;
 import java.net.URI;
+import java.security.Principal;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
@@ -50,6 +51,7 @@ import org.messaginghub.amqperative.impl.exceptions.ClientConnectionRemotelyClos
 import org.messaginghub.amqperative.impl.exceptions.ClientExceptionSupport;
 import org.messaginghub.amqperative.impl.exceptions.ClientIOException;
 import org.messaginghub.amqperative.impl.sasl.SaslAuthenticator;
+import org.messaginghub.amqperative.impl.sasl.SaslCredentialsProvider;
 import org.messaginghub.amqperative.impl.sasl.SaslMechanismSelector;
 import org.messaginghub.amqperative.transport.Transport;
 import org.messaginghub.amqperative.transport.impl.TcpTransport;
@@ -80,7 +82,7 @@ public class ClientConnection implements Connection {
     private final ClientFutureFactory futureFactoy;
 
     private final Map<ClientFuture<?>, ClientFuture<?>> requests = new ConcurrentHashMap<>();
-    private final Engine engine = EngineFactory.PROTON.createNonSaslEngine(); // TODO - Use SASL
+    private final Engine engine;
     private org.apache.qpid.proton4j.engine.Connection protonConnection;
     private ClientSession connectionSession;
     private ClientSender connectionSender;
@@ -109,6 +111,12 @@ public class ClientConnection implements Connection {
         this.options = options;
         this.connectionId = client.nextConnectionId();
         this.futureFactoy = ClientFutureFactory.create(options.getFutureType());
+
+        if (options.isSaslEnabled()) {
+            engine = EngineFactory.PROTON.createEngine();
+        } else {
+            engine = EngineFactory.PROTON.createNonSaslEngine();
+        }
 
         ThreadFactory transportThreadFactory = new ClientThreadFactory(
             "ProtonConnection :(" + CONNECTION_SEQUENCE.incrementAndGet()
@@ -283,7 +291,28 @@ public class ClientConnection implements Connection {
                     SaslMechanismSelector mechSelector =
                         new SaslMechanismSelector(options.allowedMechanisms(), options.blacklistedMechanisms());
 
-                    engine.saslContext().client().setListener(new SaslAuthenticator(this, mechSelector));
+                    engine.saslContext().client().setListener(new SaslAuthenticator(mechSelector, new SaslCredentialsProvider() {
+
+                        @Override
+                        public String vhost() {
+                            return options.getVhost();
+                        }
+
+                        @Override
+                        public String username() {
+                            return options.getUser();
+                        }
+
+                        @Override
+                        public String password() {
+                            return options.getPassword();
+                        }
+
+                        @Override
+                        public Principal localPrincipal() {
+                            return transport.getLocalPrincipal();
+                        }
+                    }));
                 }
 
                 protonConnection.openHandler(result -> {
@@ -337,6 +366,20 @@ public class ClientConnection implements Connection {
                         e.printStackTrace();
                     }
                 });
+
+                engine.errorHandler((error) -> {
+                    // TODO - Better handle errors and
+                    try {
+                        // Engine encountered critical error, shutdown.
+                        transport.close();
+                    } catch (IOException e) {
+                        LOG.error("Engine encountered critical error", error);
+                    } finally {
+                        CLOSED_UPDATER.lazySet(this, 1);
+                        openFuture.failed(new ClientException("Engine encountered critical error", error));
+                        closeFuture.complete(this);
+                    }
+                });
             }, null);
         } catch (Throwable e) {
             openFuture.failed(ClientExceptionSupport.createNonFatalOrPassthrough(e));
@@ -358,6 +401,9 @@ public class ClientConnection implements Connection {
         executor.execute(() -> {
             // TODO - We aren't currently handling exceptions from the proton API methods
             //        in any meaningful way so eventually we need to get round to doing that
+            //        From limited use of the API the current exception model may be a bit
+            //        to vague and we may need to consider checked exceptions or at least
+            //        some structured exceptions from the engine.
             if (client.getContainerId() != null) {
                 protonConnection.setContainerId(client.getContainerId());
             }

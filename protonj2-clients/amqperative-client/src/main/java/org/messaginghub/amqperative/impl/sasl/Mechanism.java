@@ -19,12 +19,15 @@ package org.messaginghub.amqperative.impl.sasl;
 import java.security.Principal;
 import java.util.Map;
 
-import javax.security.sasl.SaslException;
+import org.apache.qpid.proton4j.amqp.Symbol;
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 
 /**
  * Interface for all SASL authentication mechanism implementations.
  */
 public interface Mechanism {
+
+    // TODO Refine the API and decide how errors are communicated.
 
     /**
      * @return the assigned sequence number for this SASL mechanism.
@@ -35,6 +38,13 @@ public interface Mechanism {
      * @return the well known name of this SASL mechanism.
      */
     String getName();
+
+    /**
+     * @return the symbolic name used to identify this Mechanism.
+     */
+    default Symbol symbolicName() {
+        return Symbol.valueOf(getName());
+    }
 
     /**
      * Perform any configuration initiation required by the mechanism.
@@ -50,9 +60,10 @@ public interface Mechanism {
      * May be null if there is no initial response.
      *
      * @return the initial response, or null if there isn't one.
-     * @throws SaslException if an error occurs computing the response.
+     *
+     * TODO throws SaslException if an error occurs computing the response.
      */
-    byte[] getInitialResponse() throws SaslException;
+    ProtonBuffer getInitialResponse();
 
     /**
      * Create a response based on a given challenge from the remote peer.
@@ -61,9 +72,10 @@ public interface Mechanism {
      *        the challenge that this Mechanism should response to.
      *
      * @return the response that answers the given challenge.
-     * @throws SaslException if an error occurs computing the response.
+     *
+     * TODO throws SaslException if an error occurs computing the response.
      */
-    byte[] getChallengeResponse(byte[] challenge) throws SaslException;
+    ProtonBuffer getChallengeResponse(ProtonBuffer challenge);
 
     /**
      * Verifies that the SASL exchange has completed successfully. This is
@@ -71,9 +83,9 @@ public interface Mechanism {
      * steps have been completed successfully and to cleanup and resources
      * that are held by this Mechanism.
      *
-     * @throws SaslException if the outcome of the SASL exchange is not valid for this Mechanism
+     * TODO throws SaslException if the outcome of the SASL exchange is not valid for this Mechanism
      */
-    void verifyCompletion() throws SaslException;
+    void verifyCompletion();
 
     /**
      * Sets the user name value for this Mechanism.  The Mechanism can ignore this

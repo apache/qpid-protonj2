@@ -18,7 +18,8 @@ package org.messaginghub.amqperative.impl.sasl;
 
 import java.util.Map;
 
-import javax.security.sasl.SaslException;
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 
 /**
  * Base class for SASL Authentication Mechanism that implements the basic
@@ -26,7 +27,7 @@ import javax.security.sasl.SaslException;
  */
 public abstract class AbstractMechanism implements Mechanism {
 
-    protected static final byte[] EMPTY = new byte[0];
+    protected static final ProtonBuffer EMPTY = ProtonByteBufferAllocator.DEFAULT.allocate(0, 0);
 
     private final int sequence;
 
@@ -47,7 +48,7 @@ public abstract class AbstractMechanism implements Mechanism {
     }
 
     @Override
-    public void verifyCompletion() throws SaslException {
+    public void verifyCompletion() {
     }
 
     @Override
