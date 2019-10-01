@@ -335,7 +335,8 @@ public class ProtonFrameDecodingHandler implements EngineHandler, SaslPerformati
                 SaslPerformative performative = (SaslPerformative) val;
                 SaslFrame saslFrame = new SaslFrame(performative, frameSize, payload);
                 transitionToFrameSizeParsingStage();
-                context.fireRead(saslFrame);
+                // Ensure we process transition from SASL to AMQP header state
+                handleRead(context, saslFrame);
             } else {
                 throw new ProtonException(String.format("unknown frame type: %d", type));
             }
