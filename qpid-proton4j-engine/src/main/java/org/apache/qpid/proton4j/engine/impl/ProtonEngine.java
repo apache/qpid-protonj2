@@ -345,7 +345,7 @@ public class ProtonEngine implements Engine {
                 long now = TimeUnit.NANOSECONDS.toMillis(System.nanoTime());
 
                 try {
-                    long deadline = tick(now);
+                    long deadline = performTick(now);
 
                     // Tick will close down the engine and fire error so we need to check that engine state is
                     // active and engine is not shutdown before scheduling again.
