@@ -17,7 +17,6 @@
 package org.messaginghub.amqperative.impl.sasl;
 
 import org.apache.qpid.proton4j.amqp.Symbol;
-import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 
 /**
  * Implements the External SASL authentication mechanism.
@@ -25,16 +24,6 @@ import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 public class ExternalMechanism extends AbstractMechanism {
 
     public static final Symbol EXTERNAL = Symbol.valueOf("EXTERNAL");
-
-    @Override
-    public ProtonBuffer getInitialResponse() {
-        return EMPTY;
-    }
-
-    @Override
-    public ProtonBuffer getChallengeResponse(ProtonBuffer challenge) {
-        return EMPTY;
-    }
 
     @Override
     public Symbol getName() {

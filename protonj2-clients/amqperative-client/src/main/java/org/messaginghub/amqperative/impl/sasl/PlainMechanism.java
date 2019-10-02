@@ -58,9 +58,4 @@ public class PlainMechanism extends AbstractMechanism {
 
         return ProtonByteBufferAllocator.DEFAULT.wrap(data).setWriteIndex(data.length);
     }
-
-    @Override
-    public ProtonBuffer getChallengeResponse(ProtonBuffer challenge) {
-        return EMPTY;
-    }
 }

@@ -45,11 +45,6 @@ public class CramMD5Mechanism extends AbstractMechanism {
     }
 
     @Override
-    public ProtonBuffer getInitialResponse() {
-        return EMPTY;
-    }
-
-    @Override
     public ProtonBuffer getChallengeResponse(ProtonBuffer challenge) {
         if (!sentResponse && challenge != null && challenge.getReadableBytes() != 0) {
             try {

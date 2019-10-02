@@ -17,7 +17,6 @@
 package org.messaginghub.amqperative.impl.sasl;
 
 import org.apache.qpid.proton4j.amqp.Symbol;
-import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 
 /**
  * Implements the Anonymous SASL authentication mechanism.
@@ -25,16 +24,6 @@ import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 public class AnonymousMechanism extends AbstractMechanism {
 
     public static final Symbol ANONYMOUS = Symbol.valueOf("ANONYMOUS");
-
-    @Override
-    public ProtonBuffer getInitialResponse() {
-        return EMPTY;
-    }
-
-    @Override
-    public ProtonBuffer getChallengeResponse(ProtonBuffer challenge) {
-        return EMPTY;
-    }
 
     @Override
     public Symbol getName() {

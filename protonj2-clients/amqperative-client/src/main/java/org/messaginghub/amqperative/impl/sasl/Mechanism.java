@@ -24,8 +24,6 @@ import org.apache.qpid.proton4j.buffer.ProtonBuffer;
  */
 public interface Mechanism {
 
-    // TODO Refine the API and decide how errors are communicated.
-
     /**
      * @return the well known name of this SASL mechanism.
      */

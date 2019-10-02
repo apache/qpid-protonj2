@@ -35,6 +35,16 @@ public abstract class AbstractMechanism implements Mechanism {
     }
 
     @Override
+    public ProtonBuffer getInitialResponse() {
+        return null;
+    }
+
+    @Override
+    public ProtonBuffer getChallengeResponse(ProtonBuffer challenge) {
+        return EMPTY;
+    }
+
+    @Override
     public void setUsername(String value) {
         this.username = value;
     }
