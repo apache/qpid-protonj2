@@ -72,12 +72,6 @@ public class DetachTypeEncoder extends AbstractDescribedListTypeEncoder<Detach> 
 
     @Override
     public int getElementCount(Detach detach) {
-        if (detach.getError() != null) {
-            return 3;
-        } else if (detach.hasClosed()) {
-            return 2;
-        } else {
-            return 1;
-        }
+        return detach.getElementCount();
     }
 }

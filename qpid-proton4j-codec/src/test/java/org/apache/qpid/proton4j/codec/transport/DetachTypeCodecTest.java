@@ -98,6 +98,7 @@ public class DetachTypeCodecTest extends CodecTestSupport {
 
         Detach detach = new Detach();
 
+        detach.setHandle(1);
         detach.setError(new ErrorCondition(AmqpError.INVALID_FIELD, "test"));
 
         for (int i = 0; i < 10; ++i) {
