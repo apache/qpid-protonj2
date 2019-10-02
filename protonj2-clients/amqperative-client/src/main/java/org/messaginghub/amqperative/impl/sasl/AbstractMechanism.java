@@ -16,8 +16,6 @@
  */
 package org.messaginghub.amqperative.impl.sasl;
 
-import java.util.Map;
-
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 
@@ -29,23 +27,8 @@ public abstract class AbstractMechanism implements Mechanism {
 
     protected static final ProtonBuffer EMPTY = ProtonByteBufferAllocator.DEFAULT.allocate(0, 0);
 
-    private final int sequence;
-
     private String username;
     private String password;
-
-    public AbstractMechanism(int sequence) {
-        this.sequence = sequence;
-    }
-
-    @Override
-    public int getSequence() {
-        return sequence;
-    }
-
-    @Override
-    public void init(Map<String, String> options) {
-    }
 
     @Override
     public void verifyCompletion() {
@@ -74,10 +57,5 @@ public abstract class AbstractMechanism implements Mechanism {
     @Override
     public String toString() {
         return "SASL-" + getName();
-    }
-
-    @Override
-    public boolean isEnabledByDefault() {
-        return true;
     }
 }

@@ -16,6 +16,8 @@
  */
 package org.messaginghub.amqperative.impl.sasl;
 
+import java.util.regex.Pattern;
+
 import org.apache.qpid.proton4j.amqp.Symbol;
 
 /**
@@ -24,18 +26,23 @@ import org.apache.qpid.proton4j.amqp.Symbol;
  */
 public enum SaslMechanisms {
 
-    PLAIN {
-
-        private final Symbol name = Symbol.valueOf("PLAIN");
-
-        @Override
-        public Symbol symbolicName() {
-            return name;
-        }
+    EXTERNAL {
 
         @Override
         public Mechanism createMechanism() {
-            return new PlainMechanism(ordinal());
+            return new ExternalMechanism();
+        }
+
+        @Override
+        public boolean isApplicable(SaslCredentialsProvider credentials) {
+            return credentials.localPrincipal() != null;
+        }
+    },
+    CRAM_MD5 {
+
+        @Override
+        public Mechanism createMechanism() {
+            return new CramMD5Mechanism();
         }
 
         @Override
@@ -44,30 +51,53 @@ public enum SaslMechanisms {
                    credentials.password() != null && !credentials.password().isEmpty();
         }
     },
-    ANONYMOUS {
-
-        private final Symbol name = Symbol.valueOf("ANONYMOUS");
-
-        @Override
-        public Symbol symbolicName() {
-            return name;
-        }
+    PLAIN {
 
         @Override
         public Mechanism createMechanism() {
-            return new AnonymousMechanism(ordinal());
+            return new PlainMechanism();
         }
 
         @Override
         public boolean isApplicable(SaslCredentialsProvider credentials) {
-            return true;
+            return credentials.username() != null && !credentials.username().isEmpty() &&
+                   credentials.password() != null && !credentials.password().isEmpty();
+        }
+    },
+    XOAUTH2 {
+
+        private final Pattern ACCESS_TOKEN_PATTERN = Pattern.compile("^[\\x20-\\x7F]+$");
+
+        @Override
+        public Mechanism createMechanism() {
+            return new XOauth2Mechanism();
+        }
+
+        @Override
+        public boolean isApplicable(SaslCredentialsProvider credentials) {
+            if (credentials.username() != null && !credentials.username().isEmpty()  &&
+                credentials.password() != null && !credentials.password().isEmpty()) {
+
+                return ACCESS_TOKEN_PATTERN.matcher(credentials.password()).matches();
+            } else {
+                return false;
+            }
+        }
+    },
+    ANONYMOUS {
+
+        @Override
+        public Mechanism createMechanism() {
+            return new AnonymousMechanism();
         }
     };
 
     /**
      * @return the {@link Symbol} that represents the {@link Mechanism} name.
      */
-    public abstract Symbol symbolicName();
+    public Symbol getName() {
+        return Symbol.valueOf(toString());
+    }
 
     /**
      * Creates the object that implements the SASL Mechanism represented by this enumeration.
@@ -85,7 +115,19 @@ public enum SaslMechanisms {
      *
      * @return true if the mechanism can be used with the provided credentials
      */
-    public abstract boolean isApplicable(SaslCredentialsProvider credentials);
+    public boolean isApplicable(SaslCredentialsProvider credentials) {
+        return true;
+    }
+
+    /**
+     * Allows the mechanism to indicate if it is enabled by default, or only when explicitly enabled
+     * through configuring the permitted SASL mechanisms.
+     *
+     * @return true if this Mechanism is enabled by default.
+     */
+    public boolean isEnabledByDefault() {
+        return true;
+    }
 
     /**
      * Returns the matching {@link SaslMechanisms} enumeration value for the given

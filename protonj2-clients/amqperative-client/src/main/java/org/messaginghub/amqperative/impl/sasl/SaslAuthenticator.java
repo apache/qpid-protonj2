@@ -56,7 +56,7 @@ public class SaslAuthenticator implements SaslClientListener {
             // TODO - Failure generating response, fail locally
         }
 
-        context.sendChosenMechanism(chosenMechanism.symbolicName(), credentials.vhost(), initialResponse);
+        context.sendChosenMechanism(chosenMechanism.getName(), credentials.vhost(), initialResponse);
     }
 
     @Override
@@ -73,6 +73,7 @@ public class SaslAuthenticator implements SaslClientListener {
 
     @Override
     public void handleSaslOutcome(SaslClientContext context, SaslOutcome outcome, ProtonBuffer additional) {
+        // TODO - If this throws then we need a way to fail the engine or the client
         chosenMechanism.verifyCompletion();
 
         switch (outcome) {

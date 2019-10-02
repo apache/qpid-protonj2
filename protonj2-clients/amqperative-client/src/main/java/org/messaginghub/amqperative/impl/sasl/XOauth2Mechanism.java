@@ -23,21 +23,24 @@ import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 
 /**
- * Implements the SASL PLAIN authentication Mechanism.
+ * Implements the SASL XOAUTH2 authentication Mechanism .
  *
  * User name and Password values are sent without being encrypted.
  */
-public class PlainMechanism extends AbstractMechanism {
+public class XOauth2Mechanism extends AbstractMechanism {
 
-    public static final Symbol PLAIN = Symbol.valueOf("PLAIN");
+    public static final Symbol XOAUTH2 = Symbol.valueOf("XOAUTH2");
+
+    private String additionalFailureInformation;
 
     @Override
     public Symbol getName() {
-        return PLAIN;
+        return XOAUTH2;
     }
 
     @Override
     public ProtonBuffer getInitialResponse() {
+
         String username = getUsername();
         String password = getPassword();
 
@@ -51,16 +54,29 @@ public class PlainMechanism extends AbstractMechanism {
 
         byte[] usernameBytes = username.getBytes(StandardCharsets.UTF_8);
         byte[] passwordBytes = password.getBytes(StandardCharsets.UTF_8);
-        byte[] data = new byte[usernameBytes.length + passwordBytes.length + 2];
-
-        System.arraycopy(usernameBytes, 0, data, 1, usernameBytes.length);
-        System.arraycopy(passwordBytes, 0, data, 2 + usernameBytes.length, passwordBytes.length);
+        byte[] data = new byte[usernameBytes.length + passwordBytes.length + 20];
+        System.arraycopy("user=".getBytes(StandardCharsets.US_ASCII), 0, data, 0, 5);
+        System.arraycopy(usernameBytes, 0, data, 5, usernameBytes.length);
+        data[5+usernameBytes.length] = 1;
+        System.arraycopy("auth=Bearer ".getBytes(StandardCharsets.US_ASCII), 0, data, 6+usernameBytes.length, 12);
+        System.arraycopy(passwordBytes, 0, data, 18 + usernameBytes.length, passwordBytes.length);
+        data[data.length-2] = 1;
+        data[data.length-1] = 1;
 
         return ProtonByteBufferAllocator.DEFAULT.wrap(data).setWriteIndex(data.length);
     }
 
     @Override
     public ProtonBuffer getChallengeResponse(ProtonBuffer challenge) {
+        if (challenge != null && challenge.getReadableBytes() > 0 && additionalFailureInformation == null) {
+            additionalFailureInformation = challenge.toString(StandardCharsets.UTF_8);
+        }
+
         return EMPTY;
+    }
+
+    @Override
+    public String getAdditionalFailureInformation() {
+        return additionalFailureInformation;
     }
 }

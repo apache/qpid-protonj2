@@ -16,8 +16,7 @@
  */
 package org.messaginghub.amqperative.impl.sasl;
 
-import java.security.Principal;
-
+import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 
 /**
@@ -25,9 +24,7 @@ import org.apache.qpid.proton4j.buffer.ProtonBuffer;
  */
 public class AnonymousMechanism extends AbstractMechanism {
 
-    public AnonymousMechanism(int sequence) {
-        super(sequence);
-    }
+    public static final Symbol ANONYMOUS = Symbol.valueOf("ANONYMOUS");
 
     @Override
     public ProtonBuffer getInitialResponse() {
@@ -40,12 +37,7 @@ public class AnonymousMechanism extends AbstractMechanism {
     }
 
     @Override
-    public String getName() {
-        return "ANONYMOUS";
-    }
-
-    @Override
-    public boolean isApplicable(String username, String password, Principal localPrincipal) {
-        return true;
+    public Symbol getName() {
+        return ANONYMOUS;
     }
 }

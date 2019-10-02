@@ -16,9 +16,6 @@
  */
 package org.messaginghub.amqperative.impl.sasl;
 
-import java.security.Principal;
-import java.util.Map;
-
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 
@@ -30,29 +27,9 @@ public interface Mechanism {
     // TODO Refine the API and decide how errors are communicated.
 
     /**
-     * @return the assigned sequence number for this SASL mechanism.
-     */
-    int getSequence();
-
-    /**
      * @return the well known name of this SASL mechanism.
      */
-    String getName();
-
-    /**
-     * @return the symbolic name used to identify this Mechanism.
-     */
-    default Symbol symbolicName() {
-        return Symbol.valueOf(getName());
-    }
-
-    /**
-     * Perform any configuration initiation required by the mechanism.
-     *
-     * @param options
-     *        An immutable map of sasl options. Will always be non-null.
-     */
-    void init(Map<String, String> options);
+    Symbol getName();
 
     /**
      * Create an initial response based on selected mechanism.
@@ -118,29 +95,6 @@ public interface Mechanism {
      * @return the currently set password value for this Mechanism.
      */
     String getPassword();
-
-    /**
-     * Allows the mechanism to determine if it can be used given the authentication
-     * provided.
-     *
-     * @param username
-     * 		The user name given to the client for authentication.
-     * @param password
-     * 		The password given to the client for authentication.
-     * @param localPrincipal
-     * 		The local Principal configured for the client for authentication.
-     *
-     * @return if this Mechanism is able to validate using the given credentials.
-     */
-    boolean isApplicable(String username, String password, Principal localPrincipal);
-
-    /**
-     * Allows the mechanism to indicate if it is enabled by default, or only when explicitly enabled
-     * through configuring the permitted sasl mechanisms.
-     *
-     * @return true if this Mechanism is enabled by default.
-     */
-    boolean isEnabledByDefault();
 
     /**
      * Allows a mechanism to report additional information on the reason for

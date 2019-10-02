@@ -16,51 +16,28 @@
  */
 package org.messaginghub.amqperative.impl.sasl;
 
-import java.nio.charset.StandardCharsets;
-
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
-import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 
 /**
- * Implements the SASL PLAIN authentication Mechanism.
- *
- * User name and Password values are sent without being encrypted.
+ * Implements the External SASL authentication mechanism.
  */
-public class PlainMechanism extends AbstractMechanism {
+public class ExternalMechanism extends AbstractMechanism {
 
-    public static final Symbol PLAIN = Symbol.valueOf("PLAIN");
-
-    @Override
-    public Symbol getName() {
-        return PLAIN;
-    }
+    public static final Symbol EXTERNAL = Symbol.valueOf("EXTERNAL");
 
     @Override
     public ProtonBuffer getInitialResponse() {
-        String username = getUsername();
-        String password = getPassword();
-
-        if (username == null) {
-            username = "";
-        }
-
-        if (password == null) {
-            password = "";
-        }
-
-        byte[] usernameBytes = username.getBytes(StandardCharsets.UTF_8);
-        byte[] passwordBytes = password.getBytes(StandardCharsets.UTF_8);
-        byte[] data = new byte[usernameBytes.length + passwordBytes.length + 2];
-
-        System.arraycopy(usernameBytes, 0, data, 1, usernameBytes.length);
-        System.arraycopy(passwordBytes, 0, data, 2 + usernameBytes.length, passwordBytes.length);
-
-        return ProtonByteBufferAllocator.DEFAULT.wrap(data).setWriteIndex(data.length);
+        return EMPTY;
     }
 
     @Override
     public ProtonBuffer getChallengeResponse(ProtonBuffer challenge) {
         return EMPTY;
+    }
+
+    @Override
+    public Symbol getName() {
+        return EXTERNAL;
     }
 }
