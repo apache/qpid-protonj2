@@ -27,6 +27,7 @@ import java.util.function.Supplier;
 import org.apache.qpid.proton4j.amqp.DescribedType;
 import org.apache.qpid.proton4j.amqp.driver.actions.ScriptCompleteAction;
 import org.apache.qpid.proton4j.amqp.driver.codec.security.SaslDescribedType;
+import org.apache.qpid.proton4j.amqp.driver.codec.security.SaslOutcome;
 import org.apache.qpid.proton4j.amqp.driver.codec.transport.HeartBeat;
 import org.apache.qpid.proton4j.amqp.driver.codec.transport.PerformativeDescribedType;
 import org.apache.qpid.proton4j.amqp.driver.codec.transport.PerformativeDescribedType.PerformativeType;
@@ -306,6 +307,12 @@ public class AMQPTestDriver implements Consumer<ProtonBuffer> {
      * @param performative
      */
     public void sendSaslFrame(int channel, DescribedType performative) {
+        // When the outcome of SASL is written the decoder should revert to initial state
+        // as the only valid next incoming value is an AMQP header.
+        if (performative instanceof SaslOutcome) {
+            frameParser.resetToExpectingHeader();
+        }
+
         LOG.trace("Sending sasl performative: {}", performative);
         ProtonBuffer buffer = frameEncoder.handleWrite(performative, channel);
 
