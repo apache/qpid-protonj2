@@ -38,8 +38,7 @@ public class ConnectionOptions {
     public static final int DEFAULT_CHANNEL_MAX = 65535;
     public static final int DEFAULT_MAX_FRAME_SIZE = 65535;
     public static final boolean DEFAULT_ALLOW_INSECURE_REDIRECTS = false;
-    public static final boolean DEFAULT_SASL_ENABLED = false;  // TODO - Get tests working with default true
-    public static final boolean DEFAULT_SASL_ALLOW_INSECURE_MECHS = false;
+    public static final boolean DEFAULT_SASL_ENABLED = true;
 
     private long sendTimeout = DEFAULT_SEND_TIMEOUT;
     private long requestTimeout = DEFAULT_REQUEST_TIMEOUT;
@@ -61,7 +60,6 @@ public class ConnectionOptions {
     private String futureType;
     private boolean saslEnabled = DEFAULT_SASL_ENABLED;
     private final Set<String> saslAllowedMechs = new LinkedHashSet<>();
-    private final Set<String> saslBlacklistedMechs = new LinkedHashSet<>();
     private boolean allowInsecureRedirects = DEFAULT_ALLOW_INSECURE_REDIRECTS;
 
     public ConnectionOptions() {
@@ -96,7 +94,6 @@ public class ConnectionOptions {
         other.setPassword(password);
         other.setSaslEnabled(saslEnabled);
         other.saslAllowedMechs.addAll(this.saslAllowedMechs);
-        other.saslBlacklistedMechs.addAll(this.saslBlacklistedMechs);
         other.setAllowInsecureRedirects(allowInsecureRedirects);
 
         if (offeredCapabilities != null) {
@@ -368,9 +365,9 @@ public class ConnectionOptions {
 
     /**
      * Adds a mechanism to the list of allowed SASL mechanisms this client will use
-     * when selecting from the remote peers offered set of SASL mechanisms.
-     *
-     * TODO allow all if none configured here ?
+     * when selecting from the remote peers offered set of SASL mechanisms.  If no
+     * allowed mechanisms are configured then the client will select the first mechanism
+     * from the server offered mechanisms that is supported.
      *
      * @param mechanism
      * 		The mechanism to allow.
@@ -378,12 +375,6 @@ public class ConnectionOptions {
      * @return this options object for chaining.
      */
     public ConnectionOptions addAllowedMechanism(String mechanism) {
-        // TODO - Validate mech is even supported.
-
-        if (saslBlacklistedMechs.contains(mechanism)) {
-            throw new IllegalArgumentException("Cannot add mechanism to both allowed and blacklisted mechanisms");
-        }
-
         this.saslAllowedMechs.add(mechanism);
         return this;
     }
@@ -393,32 +384,5 @@ public class ConnectionOptions {
      */
     public Set<String> allowedMechanisms() {
         return Collections.unmodifiableSet(saslAllowedMechs);
-    }
-
-    /**
-     * Adds a mechanism to the list of blacklisted SASL mechanisms this client will use
-     * when selecting from the remote peers offered set of SASL mechanisms.
-     *
-     * @param mechanism
-     * 		The mechanism to disallow.
-     *
-     * @return this options object for chaining.
-     */
-    public ConnectionOptions addBlacklistedMechanism(String mechanism) {
-        // TODO - Validate mech is even supported.
-
-        if (saslAllowedMechs.contains(mechanism)) {
-            throw new IllegalArgumentException("Cannot add mechanism to both allowed and blacklisted mechanisms");
-        }
-
-        this.saslBlacklistedMechs.add(mechanism);
-        return this;
-    }
-
-    /**
-     * @return the current list of blacklisted SASL Mechanisms.
-     */
-    public Set<String> blacklistedMechanisms() {
-        return Collections.unmodifiableSet(saslBlacklistedMechs);
     }
 }

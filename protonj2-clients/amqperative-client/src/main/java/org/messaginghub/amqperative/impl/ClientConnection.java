@@ -116,6 +116,7 @@ public class ClientConnection implements Connection {
             engine = EngineFactory.PROTON.createEngine();
         } else {
             engine = EngineFactory.PROTON.createNonSaslEngine();
+            // TODO - Check that all allowed mechanisms are actually supported ?
         }
 
         ThreadFactory transportThreadFactory = new ClientThreadFactory(
@@ -289,7 +290,7 @@ public class ClientConnection implements Connection {
 
                 if (options.isSaslEnabled()) {
                     SaslMechanismSelector mechSelector =
-                        new SaslMechanismSelector(options.allowedMechanisms(), options.blacklistedMechanisms());
+                        new SaslMechanismSelector(options.allowedMechanisms());
 
                     engine.saslContext().client().setListener(new SaslAuthenticator(mechSelector, new SaslCredentialsProvider() {
 

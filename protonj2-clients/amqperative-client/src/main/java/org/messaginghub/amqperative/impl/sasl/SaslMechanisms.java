@@ -26,6 +26,13 @@ public enum SaslMechanisms {
 
     PLAIN {
 
+        private final Symbol name = Symbol.valueOf("PLAIN");
+
+        @Override
+        public Symbol symbolicName() {
+            return name;
+        }
+
         @Override
         public Mechanism createMechanism() {
             return new PlainMechanism(ordinal());
@@ -39,6 +46,13 @@ public enum SaslMechanisms {
     },
     ANONYMOUS {
 
+        private final Symbol name = Symbol.valueOf("ANONYMOUS");
+
+        @Override
+        public Symbol symbolicName() {
+            return name;
+        }
+
         @Override
         public Mechanism createMechanism() {
             return new AnonymousMechanism(ordinal());
@@ -49,6 +63,11 @@ public enum SaslMechanisms {
             return true;
         }
     };
+
+    /**
+     * @return the {@link Symbol} that represents the {@link Mechanism} name.
+     */
+    public abstract Symbol symbolicName();
 
     /**
      * Creates the object that implements the SASL Mechanism represented by this enumeration.

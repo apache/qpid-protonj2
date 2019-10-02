@@ -28,7 +28,7 @@ public class ReceiverTest {
 
     private void doTestCreateReceiverAndCloseOrDetachLink(boolean close) throws Exception {
         try (NettyTestPeer peer = new NettyTestPeer()) {
-            peer.expectAMQPHeader().respondWithAMQPHeader();
+            peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();
             peer.expectAttach().withRole(Role.RECEIVER).respond();  // TODO match other options
@@ -68,7 +68,7 @@ public class ReceiverTest {
     @Test(timeout = 60000)
     public void testReceiverOpenRejectedByRemote() throws Exception {
         try (NettyTestPeer peer = new NettyTestPeer()) {
-            peer.expectAMQPHeader().respondWithAMQPHeader();
+            peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();
             peer.expectAttach().respond().withSource((Source) null);

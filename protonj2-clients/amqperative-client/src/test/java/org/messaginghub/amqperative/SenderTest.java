@@ -35,7 +35,7 @@ public class SenderTest {
 
     private void doTestCreateSenderAndCloseOrDeatch(boolean close) throws Exception {
         try (NettyTestPeer peer = new NettyTestPeer()) {
-            peer.expectAMQPHeader().respondWithAMQPHeader();
+            peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();
             peer.expectAttach().withRole(Role.SENDER).respond();  // TODO match other options
@@ -73,7 +73,7 @@ public class SenderTest {
     @Test(timeout = 60000)
     public void testSenderOpenRejectedByRemote() throws Exception {
         try (NettyTestPeer peer = new NettyTestPeer()) {
-            peer.expectAMQPHeader().respondWithAMQPHeader();
+            peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();
             peer.expectAttach().respond().withTarget((Target) null);
@@ -111,7 +111,7 @@ public class SenderTest {
     @Test(timeout = 60000)
     public void testSendTimesOutWhenNoCreditIssued() throws Exception {
         try (NettyTestPeer peer = new NettyTestPeer()) {
-            peer.expectAMQPHeader().respondWithAMQPHeader();
+            peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();
             peer.expectAttach().withRole(Role.SENDER).respond();
@@ -155,7 +155,7 @@ public class SenderTest {
     @Test(timeout = 60000)
     public void testSendCompletesWhenCreditEventuallyOffered() throws Exception {
         try (NettyTestPeer peer = new NettyTestPeer()) {
-            peer.expectAMQPHeader().respondWithAMQPHeader();
+            peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();
             peer.expectAttach().withRole(Role.SENDER).respond();
@@ -219,7 +219,7 @@ public class SenderTest {
 
     private void doTestSendWhenCreditIsAvailable(boolean trySend) throws Exception {
         try (NettyTestPeer peer = new NettyTestPeer()) {
-            peer.expectAMQPHeader().respondWithAMQPHeader();
+            peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();
             peer.expectAttach().withRole(Role.SENDER).respond();
@@ -277,7 +277,7 @@ public class SenderTest {
     @Test(timeout = 60000)
     public void testTrySendWhenNoCreditAvailable() throws Exception {
         try (NettyTestPeer peer = new NettyTestPeer()) {
-            peer.expectAMQPHeader().respondWithAMQPHeader();
+            peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();
             peer.expectAttach().withRole(Role.SENDER).respond();

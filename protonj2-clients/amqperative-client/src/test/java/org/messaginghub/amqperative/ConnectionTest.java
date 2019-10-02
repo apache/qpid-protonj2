@@ -43,7 +43,7 @@ public class ConnectionTest {
     @Test(timeout = 60000)
     public void testCreateConnectionString() throws Exception {
         try (NettyTestPeer peer = new NettyTestPeer()) {
-            peer.expectAMQPHeader().respondWithAMQPHeader();
+            peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             // TODO - Wrong frame should trigger connection drop so that
             //        the waits for open / close etc will fail quickly.
@@ -70,7 +70,7 @@ public class ConnectionTest {
     @Test(timeout = 60000)
     public void testConnectionCloseGetsResponseWithErrorDoesNotThrow() throws Exception {
         try (NettyTestPeer peer = new NettyTestPeer()) {
-            peer.expectAMQPHeader().respondWithAMQPHeader();
+            peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectClose().respond().
                                withErrorCondition(new ErrorCondition(ConnectionError.CONNECTION_FORCED, "Not accepting connections"));
@@ -96,7 +96,7 @@ public class ConnectionTest {
     @Test(timeout = 60000)
     public void testConnectionRemoteClosedAfterOpened() throws Exception {
         try (NettyTestPeer peer = new NettyTestPeer()) {
-            peer.expectAMQPHeader().respondWithAMQPHeader();
+            peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.remoteClose().withErrorCondition(
                     new ErrorCondition(ConnectionError.CONNECTION_FORCED, "Not accepting connections")).queue();
@@ -123,7 +123,7 @@ public class ConnectionTest {
     @Test(timeout = 60000)
     public void testConnectionOpenFutureWaitCancelledOnConnectionDrop() throws Exception {
         try (NettyTestPeer peer = new NettyTestPeer()) {
-            peer.expectAMQPHeader().respondWithAMQPHeader();
+            peer.expectSASLAnonymousConnect();
             peer.expectOpen();
             peer.start();
 

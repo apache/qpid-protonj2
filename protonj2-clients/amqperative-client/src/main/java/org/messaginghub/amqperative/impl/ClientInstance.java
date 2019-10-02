@@ -51,7 +51,7 @@ public class ClientInstance implements Client {
 
     @Override
     public Connection connect(String hostname, int port) {
-        return new ClientConnection(this, ClientConnectionOptions.getDefaultConnectionOptions(hostname, port)).connect().open();
+        return new ClientConnection(this, new ClientConnectionOptions(hostname, port)).connect().open();
     }
 
     @Override

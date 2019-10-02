@@ -223,7 +223,7 @@ public class AMQPerativeTestSupport {
     }
 
     protected boolean isAllowNonSaslConnections() {
-        return true;
+        return false;
     }
 
     protected BrokerService createBroker(String name, boolean deleteAllMessages) throws Exception {

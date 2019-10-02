@@ -29,11 +29,9 @@ public final class SaslMechanismSelector {
     // TODO - internally we should use Symbol ?
 
     private final Set<String> allowedMechanisms;
-    private final Set<String> blackListedMechanisms;
 
-    public SaslMechanismSelector(Set<String> allowed, Set<String> blacklisted) {
+    public SaslMechanismSelector(Set<String> allowed) {
         this.allowedMechanisms = allowed;
-        this.blackListedMechanisms = blacklisted;
     }
 
     public Mechanism select(Symbol[] serverMechs, SaslCredentialsProvider credentials) {
@@ -44,11 +42,9 @@ public final class SaslMechanismSelector {
             matching.add(serverMech.toString());
         }
 
-        if (blackListedMechanisms != null) {
-            matching.removeAll(blackListedMechanisms);
+        if (allowedMechanisms != null && !allowedMechanisms.isEmpty()) {
+            matching.retainAll(allowedMechanisms);
         }
-
-        matching.retainAll(allowedMechanisms);
 
         for (String match : matching) {
             SaslMechanisms option = SaslMechanisms.valueOf(match);

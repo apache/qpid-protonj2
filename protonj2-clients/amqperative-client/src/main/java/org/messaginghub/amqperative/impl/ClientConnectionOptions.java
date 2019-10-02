@@ -72,16 +72,6 @@ public final class ClientConnectionOptions extends ConnectionOptions {
 
     //----- Internal support methods used by the client
 
-    static ClientConnectionOptions getDefaultConnectionOptions(String hostname, int port) {
-        ClientConnectionOptions options = new ClientConnectionOptions(hostname, port);
-
-        // TODO - Defaults for SASL mechanisms
-        options.addAllowedMechanism("PLAIN");
-        options.addAllowedMechanism("ANONYMOUS");
-
-        return options;
-    }
-
     /*
      * Session options used when none specified by the caller creating a new session.
      */
