@@ -249,13 +249,15 @@ public abstract class ScriptWriter {
      * corresponding SASL header and an immediate SASL mechanisms frame that only
      * advertises anonymous as the mechanism.  It is expected that the remote will
      * send a SASL init with the anonymous mechanism selected and the outcome is
-     * predefined as success.
+     * predefined as success.  Once done the expectation is added for the AMQP
+     * header to arrive and a header response will be sent.
      */
     public void expectSASLAnonymousConnect() {
         expectSASLHeader().respondWithSASLPHeader();
         remoteSaslMechanisms().withMechanisms("ANONYMOUS").queue();
         expectSaslInit().withMechanism("ANONYMOUS");
         remoteSaslOutcome().withCode(SaslCode.OK).queue();
+        expectAMQPHeader().respondWithAMQPHeader();
     }
 
     //----- Immediate operations performed outside the test script
