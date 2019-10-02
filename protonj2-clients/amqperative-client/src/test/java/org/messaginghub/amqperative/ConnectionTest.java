@@ -67,10 +67,6 @@ public class ConnectionTest {
         }
     }
 
-    @Test
-    public void testCreateConnectionURI() throws Exception {
-    }
-
     @Test(timeout = 60000)
     public void testConnectionCloseGetsResponseWithErrorDoesNotThrow() throws Exception {
         try (NettyTestPeer peer = new NettyTestPeer()) {
