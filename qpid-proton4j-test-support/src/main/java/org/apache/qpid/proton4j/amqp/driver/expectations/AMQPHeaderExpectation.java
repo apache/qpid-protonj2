@@ -43,6 +43,12 @@ public class AMQPHeaderExpectation implements ScriptedExpectation {
         return response;
     }
 
+    public AMQPHeaderInjectAction respondWithSASLPHeader() {
+        AMQPHeaderInjectAction response = new AMQPHeaderInjectAction(driver, AMQPHeader.getSASLHeader());
+        driver.addScriptedElement(response);
+        return response;
+    }
+
     @Override
     public void handleAMQPHeader(AMQPHeader header, AMQPTestDriver driver) {
         assertThat("AMQP Header should match expected.", expected, equalTo(header));

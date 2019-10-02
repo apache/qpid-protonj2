@@ -27,6 +27,11 @@ import org.apache.qpid.proton4j.amqp.driver.actions.EmptyFrameInjectAction;
 import org.apache.qpid.proton4j.amqp.driver.actions.EndInjectAction;
 import org.apache.qpid.proton4j.amqp.driver.actions.FlowInjectAction;
 import org.apache.qpid.proton4j.amqp.driver.actions.OpenInjectAction;
+import org.apache.qpid.proton4j.amqp.driver.actions.SaslChallengeInjectAction;
+import org.apache.qpid.proton4j.amqp.driver.actions.SaslInitInjectAction;
+import org.apache.qpid.proton4j.amqp.driver.actions.SaslMechanismsInjectAction;
+import org.apache.qpid.proton4j.amqp.driver.actions.SaslOutcomeInjectAction;
+import org.apache.qpid.proton4j.amqp.driver.actions.SaslResponseInjectAction;
 import org.apache.qpid.proton4j.amqp.driver.actions.TransferInjectAction;
 import org.apache.qpid.proton4j.amqp.driver.expectations.AMQPHeaderExpectation;
 import org.apache.qpid.proton4j.amqp.driver.expectations.AttachExpectation;
@@ -38,7 +43,13 @@ import org.apache.qpid.proton4j.amqp.driver.expectations.EmptyFrameExpectation;
 import org.apache.qpid.proton4j.amqp.driver.expectations.EndExpectation;
 import org.apache.qpid.proton4j.amqp.driver.expectations.FlowExpectation;
 import org.apache.qpid.proton4j.amqp.driver.expectations.OpenExpectation;
+import org.apache.qpid.proton4j.amqp.driver.expectations.SaslChallengeExpectation;
+import org.apache.qpid.proton4j.amqp.driver.expectations.SaslInitExpectation;
+import org.apache.qpid.proton4j.amqp.driver.expectations.SaslMechanismsExpectation;
+import org.apache.qpid.proton4j.amqp.driver.expectations.SaslOutcomeExpectation;
+import org.apache.qpid.proton4j.amqp.driver.expectations.SaslResponseExpectation;
 import org.apache.qpid.proton4j.amqp.driver.expectations.TransferExpectation;
+import org.apache.qpid.proton4j.amqp.security.SaslCode;
 import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
 
 /**
@@ -54,14 +65,10 @@ public abstract class ScriptWriter {
      */
     protected abstract AMQPTestDriver getDriver();
 
+    //----- AMQP Performative expectations
+
     public AMQPHeaderExpectation expectAMQPHeader() {
         AMQPHeaderExpectation expecting = new AMQPHeaderExpectation(AMQPHeader.getAMQPHeader(), getDriver());
-        getDriver().addScriptedElement(expecting);
-        return expecting;
-    }
-
-    public AMQPHeaderExpectation expectSASLHeader() {
-        AMQPHeaderExpectation expecting = new AMQPHeaderExpectation(AMQPHeader.getSASLHeader(), getDriver());
         getDriver().addScriptedElement(expecting);
         return expecting;
     }
@@ -126,6 +133,44 @@ public abstract class ScriptWriter {
         return expecting;
     }
 
+    //----- SASL performative expectations
+
+    public AMQPHeaderExpectation expectSASLHeader() {
+        AMQPHeaderExpectation expecting = new AMQPHeaderExpectation(AMQPHeader.getSASLHeader(), getDriver());
+        getDriver().addScriptedElement(expecting);
+        return expecting;
+    }
+
+    public SaslMechanismsExpectation expectSaslMechanisms() {
+        SaslMechanismsExpectation expecting = new SaslMechanismsExpectation(getDriver());
+        getDriver().addScriptedElement(expecting);
+        return expecting;
+    }
+
+    public SaslInitExpectation expectSaslInit() {
+        SaslInitExpectation expecting = new SaslInitExpectation(getDriver());
+        getDriver().addScriptedElement(expecting);
+        return expecting;
+    }
+
+    public SaslChallengeExpectation expectSaslChallenge() {
+        SaslChallengeExpectation expecting = new SaslChallengeExpectation(getDriver());
+        getDriver().addScriptedElement(expecting);
+        return expecting;
+    }
+
+    public SaslResponseExpectation expectSaslResponse() {
+        SaslResponseExpectation expecting = new SaslResponseExpectation(getDriver());
+        getDriver().addScriptedElement(expecting);
+        return expecting;
+    }
+
+    public SaslOutcomeExpectation expectSaslOutcome() {
+        SaslOutcomeExpectation expecting = new SaslOutcomeExpectation(getDriver());
+        getDriver().addScriptedElement(expecting);
+        return expecting;
+    }
+
     //----- Remote operations that happen while running the test script
 
     public void remoteHeader(AMQPHeader header) {
@@ -170,6 +215,47 @@ public abstract class ScriptWriter {
 
     public EmptyFrameInjectAction remoteEmptyFrame() {
         return new EmptyFrameInjectAction(getDriver());
+    }
+
+    //----- Remote SASL operations that can be scripted during tests
+
+    public SaslInitInjectAction remoteSaslInit() {
+        return new SaslInitInjectAction(getDriver());
+    }
+
+    public SaslMechanismsInjectAction remoteSaslMechanisms() {
+        return new SaslMechanismsInjectAction(getDriver());
+    }
+
+    public SaslChallengeInjectAction remoteSaslChallenge() {
+        return new SaslChallengeInjectAction(getDriver());
+    }
+
+    public SaslResponseInjectAction remoteSaslResponse() {
+        return new SaslResponseInjectAction(getDriver());
+    }
+
+    public SaslOutcomeInjectAction remoteSaslOutcome() {
+        return new SaslOutcomeInjectAction(getDriver());
+    }
+
+    //----- SASL related test expectations
+
+    /**
+     * Creates all the scripted elements needed for a successful SASL Anonymous
+     * connection.
+     * <p>
+     * For this exchange the SASL header is expected which is responded to with the
+     * corresponding SASL header and an immediate SASL mechanisms frame that only
+     * advertises anonymous as the mechanism.  It is expected that the remote will
+     * send a SASL init with the anonymous mechanism selected and the outcome is
+     * predefined as success.
+     */
+    public void expectSASLAnonymousConnect() {
+        expectSASLHeader().respondWithSASLPHeader();
+        remoteSaslMechanisms().withMechanisms("ANONYMOUS").queue();
+        expectSaslInit().withMechanism("ANONYMOUS");
+        remoteSaslOutcome().withCode(SaslCode.OK).queue();
     }
 
     //----- Immediate operations performed outside the test script

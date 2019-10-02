@@ -149,6 +149,7 @@ public class NettyTestPeer extends ScriptWriter implements AutoCloseable {
                         // Driver processes new data and may produce output based on this.
                         processChannelInput(copy);
                     } catch (Throwable e) {
+                        LOG.error("Close test peer channel due to error: ", e);
                         ctx.channel().close();
                     } finally {
                     }
