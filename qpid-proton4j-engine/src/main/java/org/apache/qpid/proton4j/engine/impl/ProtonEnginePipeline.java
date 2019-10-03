@@ -227,61 +227,105 @@ public class ProtonEnginePipeline implements EnginePipeline {
 
     @Override
     public ProtonEnginePipeline fireEngineStateChanged() {
-        head.fireEngineStateChanged();
+        try {
+            head.fireEngineStateChanged();
+        } catch (Throwable error) {
+            engine.engineFailed(error);
+        }
         return this;
     }
 
     @Override
     public ProtonEnginePipeline fireRead(ProtonBuffer input) {
-        tail.fireRead(input);
+        try {
+            tail.fireRead(input);
+        } catch (Throwable error) {
+            engine.engineFailed(error);
+            throw error;
+        }
         return this;
     }
 
     @Override
     public ProtonEnginePipeline fireRead(HeaderFrame header) {
-        tail.fireRead(header);
+        try {
+            tail.fireRead(header);
+        } catch (Throwable error) {
+            engine.engineFailed(error);
+            throw error;
+        }
         return this;
     }
 
     @Override
     public ProtonEnginePipeline fireRead(SaslFrame frame) {
-        tail.fireRead(frame);
+        try {
+            tail.fireRead(frame);
+        } catch (Throwable error) {
+            engine.engineFailed(error);
+            throw error;
+        }
         return this;
     }
 
     @Override
     public ProtonEnginePipeline fireRead(ProtocolFrame frame) {
-        tail.fireRead(frame);
+        try {
+            tail.fireRead(frame);
+        } catch (Throwable error) {
+            engine.engineFailed(error);
+            throw error;
+        }
         return this;
     }
 
     @Override
     public ProtonEnginePipeline fireWrite(AMQPHeader header) {
-        head.fireWrite(header);
+        try {
+            head.fireWrite(header);
+        } catch (Throwable error) {
+            engine.engineFailed(error);
+        }
         return this;
     }
 
     @Override
     public ProtonEnginePipeline fireWrite(Performative performative, int channel, ProtonBuffer payload, Runnable payloadToLarge) {
-        head.fireWrite(performative, channel, payload, payloadToLarge);
+        try {
+            head.fireWrite(performative, channel, payload, payloadToLarge);
+        } catch (Throwable error) {
+            engine.engineFailed(error);
+        }
         return this;
     }
 
     @Override
     public ProtonEnginePipeline fireWrite(SaslPerformative performative) {
-        head.fireWrite(performative);
+        try {
+            head.fireWrite(performative);
+        } catch (Throwable error) {
+            engine.engineFailed(error);
+        }
         return this;
     }
 
     @Override
     public ProtonEnginePipeline fireWrite(ProtonBuffer buffer) {
-        head.fireWrite(buffer);
+        try {
+            head.fireWrite(buffer);
+        } catch (Throwable error) {
+            engine.engineFailed(error);
+        }
         return this;
     }
 
     @Override
     public ProtonEnginePipeline fireFailed(Throwable e) {
-        tail.fireFailed(e);
+        try {
+            tail.fireFailed(e);
+        } catch (Throwable error) {
+            engine.engineFailed(error);
+        }
         return this;
     }
 
@@ -352,7 +396,11 @@ public class ProtonEnginePipeline implements EnginePipeline {
             // engine to be handed to any registered output handler.  The engine is then
             // responsible for error handling if nothing is registered there to handle the
             // output of frame data.
-            engine.dispatchWriteToEventHandler(buffer);
+            try {
+                engine.dispatchWriteToEventHandler(buffer);
+            } catch (Throwable error) {
+                engine.engineFailed(error);
+            }
         }
     }
 
