@@ -50,6 +50,7 @@ public final class SaslMechanismSelector {
             SaslMechanisms option = SaslMechanisms.valueOf(match);
             if (option.isApplicable(credentials)) {
                 selected = option.createMechanism();
+                break;
             }
         }
 

@@ -24,11 +24,8 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import org.junit.Test;
-import org.messaginghub.amqperative.Connection;
 import org.messaginghub.amqperative.support.AMQPerativeTestSupport;
 import org.messaginghub.amqperative.support.Wait;
-import org.messaginghub.amqperative.Client;
-import org.messaginghub.amqperative.ClientOptions;
 
 /**
  * Test for basic JmsConnection functionality and error handling.
@@ -41,12 +38,37 @@ public class ConnectionTest extends AMQPerativeTestSupport {
 
         ClientOptions options = new ClientOptions();
         options.setContainerId(UUID.randomUUID().toString());
-        Client container = Client.create(options);
-        assertNotNull(container);
+        Client client = Client.create(options);
+        assertNotNull(client);
 
-        Connection connection = container.connect(brokerURI.getHost(), brokerURI.getPort());
+        Connection connection = client.connect(brokerURI.getHost(), brokerURI.getPort());
         assertNotNull(connection);
         assertSame(connection, connection.openFuture().get(5, TimeUnit.SECONDS));
+
+        Wait.assertTrue("Broker did not register a connection", () -> getProxyToBroker().getCurrentConnectionsCount() == 1);
+
+        assertSame(connection, connection.close().get(5, TimeUnit.SECONDS));
+
+        Wait.assertTrue("Broker did not register a connection close", () -> getProxyToBroker().getCurrentConnectionsCount() == 0);
+    }
+
+    @Test(timeout = 60000)
+    public void testCreateConnectionWithUserAndPassWithPlainOnlyAllowed() throws Exception {
+        URI brokerURI = getBrokerAmqpConnectionURI();
+
+        ClientOptions options = new ClientOptions();
+        options.setContainerId(UUID.randomUUID().toString());
+        Client client = Client.create(options);
+        assertNotNull(client);
+
+        ConnectionOptions connectionOpts = new ConnectionOptions();
+        connectionOpts.setUser("system");
+        connectionOpts.setPassword("manager");
+        connectionOpts.addAllowedMechanism("PLAIN");
+
+        Connection connection = client.connect(brokerURI.getHost(), brokerURI.getPort(), connectionOpts);
+        assertNotNull(connection);
+        assertSame(connection, connection.openFuture().get(50, TimeUnit.SECONDS));
 
         Wait.assertTrue("Broker did not register a connection", () -> getProxyToBroker().getCurrentConnectionsCount() == 1);
 
