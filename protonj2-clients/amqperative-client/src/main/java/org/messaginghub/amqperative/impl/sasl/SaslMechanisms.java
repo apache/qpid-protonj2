@@ -38,6 +38,32 @@ public enum SaslMechanisms {
             return credentials.localPrincipal() != null;
         }
     },
+    SCRAM_SHA_256 {
+
+        @Override
+        public Mechanism createMechanism() {
+            return new ScramSHA256Mechanism();
+        }
+
+        @Override
+        public boolean isApplicable(SaslCredentialsProvider credentials) {
+            return credentials.username() != null && !credentials.username().isEmpty() &&
+                   credentials.password() != null && !credentials.password().isEmpty();
+        }
+    },
+    SCRAM_SHA_1 {
+
+        @Override
+        public Mechanism createMechanism() {
+            return new ScramSHA1Mechanism();
+        }
+
+        @Override
+        public boolean isApplicable(SaslCredentialsProvider credentials) {
+            return credentials.username() != null && !credentials.username().isEmpty() &&
+                   credentials.password() != null && !credentials.password().isEmpty();
+        }
+    },
     CRAM_MD5 {
 
         @Override
