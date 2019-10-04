@@ -22,6 +22,7 @@ package org.messaginghub.amqperative.example;
 
 import java.util.UUID;
 import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 import org.messaginghub.amqperative.Client;
@@ -37,6 +38,7 @@ import org.messaginghub.amqperative.SenderOptions;
 import org.messaginghub.amqperative.Tracker;
 import org.messaginghub.amqperative.impl.ClientException;
 import org.messaginghub.amqperative.TerminusOptions.DurabilityMode;
+import org.messaginghub.amqperative.TerminusOptions.ExpiryPolicy;
 
 public class Samples {
 
@@ -77,7 +79,7 @@ public class Samples {
         sender.openFuture().get(5, TimeUnit.SECONDS);
 
         SenderOptions senderOptions = new SenderOptions();
-        senderOptions.getTarget().setCapabilities(new String[]{"queue"});
+        senderOptions.getTarget().setCapabilities(new String[]{"topic"});
         senderOptions.setSendTimeout(30_000);
         Sender sender2 = connection.openSender(address, senderOptions); // address and options
 
@@ -94,13 +96,16 @@ public class Samples {
         receiver.openFuture().get(5, TimeUnit.SECONDS);
 
         ReceiverOptions receiverOptions = new ReceiverOptions();
+        //receiverOptions.setCreditWindow(10);
         receiverOptions.setLinkName("myLinkName");
         receiverOptions.getSource().setDurabilityMode(DurabilityMode.CONFIGURATION);
+        receiverOptions.getSource().setExpiryPolicy(ExpiryPolicy.NEVER);
+        receiverOptions.getSource().setCapabilities(new String[]{"topic"});
         Receiver receiver2 = connection.openReceiver(address, receiverOptions); // address and options
 
         // =============== Receive a message ===========
 
-        receiver.addCredit(1); // Or configure a credit window.
+        receiver.addCredit(1); // Or configure a credit window (see above)
 
 
         Delivery delivery = receiver.receive(); // Waits forever
@@ -127,5 +132,16 @@ public class Samples {
 
 
         delivery.accept(); // Or configure auto-accept?
+
+        // =============== Close/ detach ===========
+
+        Future<Sender> closeFuture = sender.close();
+        closeFuture.get(5, TimeUnit.SECONDS);
+
+        Future<Receiver> detachFuture = receiver.detach();
+        detachFuture.get(5, TimeUnit.SECONDS);
+
+        Future<Client> closeClientFuture = client.close();
+        closeClientFuture.get(5, TimeUnit.SECONDS);
     }
 }

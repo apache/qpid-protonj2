@@ -17,6 +17,7 @@
 package org.messaginghub.amqperative;
 
 import java.util.Objects;
+import java.util.concurrent.Future;
 
 import org.messaginghub.amqperative.impl.ClientInstance;
 import org.messaginghub.amqperative.impl.ClientInstanceOptions;
@@ -51,18 +52,15 @@ public interface Client {
      */
     String getContainerId();
 
-    // TODO: Rename just close, make it retain that state until not closed and then maybe make it stop / start cycle.
-    //       closeAll implies races on closeAll and another thread doing an open etc.
-
     /**
      * Closes all currently open {@link Connection} instances created by this client.
      * <p>
      * This method blocks and waits for each connection to close in turn using the configured
      * close timeout of the {@link ConnectionOptions} that the connection was created with.
      *
-     * @return this {@link Client} instance.
+     * @return a {@link Future} that will be completed when all open connections have closed.
      */
-    Client close();
+    Future<Client> close();
 
     /**
      * Connect to the specified host and port, without credentials and with all

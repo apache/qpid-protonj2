@@ -20,12 +20,14 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.messaginghub.amqperative.Client;
 import org.messaginghub.amqperative.ClientOptions;
 import org.messaginghub.amqperative.Connection;
 import org.messaginghub.amqperative.ConnectionOptions;
+import org.messaginghub.amqperative.futures.ClientFutureFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -81,7 +83,7 @@ public class ClientInstance implements Client {
     }
 
     @Override
-    public Client close() {
+    public Future<Client> close() {
         //TODO: prevent new connections being created after calling close
 
         synchronized (connections) {
@@ -95,7 +97,8 @@ public class ClientInstance implements Client {
             }
         }
 
-        return this;
+        //TODO: await the actual futures above after starting the process.
+        return ClientFutureFactory.completedFuture(this);
     }
 
     //----- Internal API

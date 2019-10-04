@@ -16,6 +16,8 @@
  */
 package org.messaginghub.amqperative.futures;
 
+import java.util.concurrent.Future;
+
 import org.messaginghub.amqperative.impl.ClientException;
 
 /**
@@ -64,6 +66,13 @@ public abstract class ClientFutureFactory {
                 throw new IllegalArgumentException(
                     "No ClientFuture implementation with name " + futureType + " found");
         }
+    }
+
+    public static <T> Future<T> completedFuture(T result) {
+        BalancedClientFuture<T> future = new BalancedClientFuture<T>();
+        future.complete(result);
+
+        return future;
     }
 
     /**
