@@ -30,8 +30,7 @@ public interface Delivery {
     Receiver getReceiver();
 
     /**
-     * Decode the {@link Delivery} payload and return an {@link Message} object
-     * that can be used to
+     * Decode the {@link Delivery} payload and return an {@link Message} object.
      *
      * @return a {@link Message} instance that wraps the decoded payload.
      *
@@ -45,6 +44,7 @@ public interface Delivery {
     //       Need to define how we expose partial messages if at all and how to allow uses to
     //       read / write those.  The above would likely have to throw a specific error if the
     //       users is handed an incomplete message.
+    //       If adding such support the read and getMessage objects should be made mutually exclusive.
     // readAll(OutputStream stream);
     // readAll(ByteBuffer buffer);
 
