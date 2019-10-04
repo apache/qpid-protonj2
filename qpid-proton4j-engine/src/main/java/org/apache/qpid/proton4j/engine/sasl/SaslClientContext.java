@@ -16,6 +16,8 @@
  */
 package org.apache.qpid.proton4j.engine.sasl;
 
+import javax.security.sasl.SaslException;
+
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.engine.Connection;
@@ -83,5 +85,18 @@ public interface SaslClientContext extends SaslContext {
      * @return this client context.
      */
     SaslClientContext sendResponse(ProtonBuffer response);
+
+    /**
+     * Allows the client implementation to fail the SASL negotiation process due to some
+     * unrecoverable error.  Failing the process will signal the engine that the SASL process
+     * has failed and place the engine in a failed state as well as notify the registered error
+     * handler for the {@link Engine}.
+     *
+     * @param failure
+     *      The exception to report to the {@link Engine} that describes the failure.
+     *
+     * @return this client context.
+     */
+    SaslClientContext saslFailure(SaslException failure);
 
 }

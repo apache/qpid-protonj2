@@ -16,6 +16,8 @@
  */
 package org.apache.qpid.proton4j.engine.exceptions;
 
+import javax.security.sasl.SaslException;
+
 import org.apache.qpid.proton4j.amqp.security.SaslCode;
 
 /**

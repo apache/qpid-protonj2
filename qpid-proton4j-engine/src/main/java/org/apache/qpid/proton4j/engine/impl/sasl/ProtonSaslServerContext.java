@@ -19,6 +19,8 @@ package org.apache.qpid.proton4j.engine.impl.sasl;
 import java.util.Arrays;
 import java.util.Objects;
 
+import javax.security.sasl.SaslException;
+
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.security.SaslChallenge;
 import org.apache.qpid.proton4j.amqp.security.SaslCode;
@@ -102,6 +104,13 @@ final class ProtonSaslServerContext extends ProtonSaslContext implements SaslSer
         return this;
     }
 
+    @Override
+    public SaslServerContext saslFailure(SaslException failure) {
+        done(org.apache.qpid.proton4j.engine.sasl.SaslOutcome.SASL_PERM);
+        saslHandler.engine().pipeline().fireFailed(failure);
+        return this;
+    }
+
     //----- SASL Handler API sink for all reads and writes
 
     @Override
@@ -162,7 +171,11 @@ final class ProtonSaslServerContext extends ProtonSaslContext implements SaslSer
                 state = SaslState.AUTHENTICATING;
             }
 
-            server.handleSaslHeader(ProtonSaslServerContext.this, header);
+            try {
+                server.handleSaslHeader(ProtonSaslServerContext.this, header);
+            } catch (Throwable error) {
+                context.fireFailed(error);
+            }
         }
     }
 
@@ -204,7 +217,11 @@ final class ProtonSaslServerContext extends ProtonSaslContext implements SaslSer
             chosenMechanism = saslInit.getMechanism();
             mechanismChosen = true;
 
-            server.handleSaslInit(ProtonSaslServerContext.this, chosenMechanism, saslInit.getInitialResponse());
+            try {
+                server.handleSaslInit(ProtonSaslServerContext.this, chosenMechanism, saslInit.getInitialResponse());
+            } catch (Throwable error) {
+                context.fireFailed(error);
+            }
         }
 
         @Override
@@ -216,7 +233,11 @@ final class ProtonSaslServerContext extends ProtonSaslContext implements SaslSer
         @Override
         public void handleResponse(SaslResponse saslResponse, EngineHandlerContext context) {
             if (responseRequired) {
-                server.handleSaslResponse(ProtonSaslServerContext.this, saslResponse.getResponse());
+                try {
+                    server.handleSaslResponse(ProtonSaslServerContext.this, saslResponse.getResponse());
+                } catch (Throwable error) {
+                    context.fireFailed(error);
+                }
             } else {
                 context.fireFailed(new IllegalStateException("SASL Response received when none was expected"));
             }
@@ -238,7 +259,7 @@ final class ProtonSaslServerContext extends ProtonSaslContext implements SaslSer
                 serverMechanisms = Arrays.copyOf(saslMechanisms.getSaslServerMechanisms(), saslMechanisms.getSaslServerMechanisms().length);
                 mechanismsSent = true;
             } else {
-                throw new IllegalStateException("SASL Mechanisms already sent to client");
+                context.fireFailed(new IllegalStateException("SASL Mechanisms already sent to client"));
             }
         }
 
@@ -254,7 +275,7 @@ final class ProtonSaslServerContext extends ProtonSaslContext implements SaslSer
                 context.fireWrite(saslChallenge);
                 responseRequired = true;
             } else {
-                throw new IllegalStateException("SASL Challenge sent when state does not allow it");
+                context.fireFailed(new IllegalStateException("SASL Challenge sent when state does not allow it"));
             }
         }
 
@@ -270,7 +291,7 @@ final class ProtonSaslServerContext extends ProtonSaslContext implements SaslSer
                 done(org.apache.qpid.proton4j.engine.sasl.SaslOutcome.valueOf(saslOutcome.getCode().getValue().byteValue()));
                 context.fireWrite(saslOutcome);
             } else {
-                throw new IllegalStateException("SASL Outcome sent when state does not allow it");
+                context.fireFailed(new IllegalStateException("SASL Outcome sent when state does not allow it"));
             }
         }
     }

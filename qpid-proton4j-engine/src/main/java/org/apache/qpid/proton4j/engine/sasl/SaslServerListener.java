@@ -19,6 +19,7 @@ package org.apache.qpid.proton4j.engine.sasl;
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import org.apache.qpid.proton4j.engine.Engine;
 
 /**
  * Listener for SASL frame arrival to facilitate relevant handling for the SASL
@@ -30,13 +31,15 @@ import org.apache.qpid.proton4j.buffer.ProtonBuffer;
  */
 public interface SaslServerListener {
 
-    // TODO - Work out how to use ProtonBuffer instead of Binary
-
     /**
      * Called to give the application code a clear point to initialize all the Server side expectations.
      * <p>
      * The application should use this event to configure the server mechanisms and other server
      * authentication properties.
+     * <p>
+     * In the event that the server implementation cannot proceed with SASL authentication it should call the
+     * {@link SaslServerContext#saslFailure(org.apache.qpid.proton4j.engine.exceptions.SaslException)} signal
+     * the {@link Engine} that it should transition to a failed state.
      *
      * @param context
      *      the {@link SaslServerContext} used to authenticate the connection.
@@ -47,6 +50,10 @@ public interface SaslServerListener {
      * Called when the SASL header has been received and the server is now ready to send the configured SASL
      * mechanisms.  The handler should respond be calling the {@link SaslServerContext#sendMechanisms(Symbol[])}
      * method immediately or later using the same thread that invoked this event handler.
+     * <p>
+     * In the event that the server implementation cannot proceed with SASL authentication it should call the
+     * {@link SaslServerContext#saslFailure(org.apache.qpid.proton4j.engine.exceptions.SaslException)} to fail
+     * the SASL negotiation and signal the {@link Engine} that it should transition to a failed state.
      *
      * @param context
      *      the {@link SaslServerContext} object that received the SASL header.
@@ -58,12 +65,15 @@ public interface SaslServerListener {
     void handleSaslHeader(SaslServerContext context, AMQPHeader header);
 
     /**
-     * Called when a SASL init frame has arrived from the client indicating the chosen
-     * SASL mechanism and the initial response data if any.  Based on the chosen mechanism
-     * the server handler should provide additional challenges or complete the SASL negotiation
-     * by sending an outcome to the client.  The handler can either respond immediately or
-     * it should response using the same thread that invoked this handler.
-    *
+     * Called when a SASL init frame has arrived from the client indicating the chosen SASL mechanism
+     * and the initial response data if any.  Based on the chosen mechanism the server handler should provide
+     * additional challenges or complete the SASL negotiation by sending an outcome to the client.  The handler
+     * can either respond immediately or it should response using the same thread that invoked this handler.
+     * <p>
+     * In the event that the server implementation cannot proceed with SASL authentication it should call the
+     * {@link SaslServerContext#saslFailure(org.apache.qpid.proton4j.engine.exceptions.SaslException)} to fail
+     * the SASL negotiation and signal the {@link Engine} that it should transition to a failed state.
+     *
      * @param context
      *      the {@link SaslServerContext} object that is to process the SASL initial frame.
      * @param mechanism
@@ -77,11 +87,14 @@ public interface SaslServerListener {
     void handleSaslInit(SaslServerContext context, Symbol mechanism, ProtonBuffer initResponse);
 
     /**
-     * Called when a SASL response frame has arrived from the client.  The server should process
-     * the response and either offer additional challenges or complete the SASL negotiations based
-     * on the mechanics of the chosen SASL mechanism.  The server handler should either respond
-     * immediately or should respond from the same thread that the response handler was invoked
-     * from.
+     * Called when a SASL response frame has arrived from the client.  The server should process the response
+     * and either offer additional challenges or complete the SASL negotiations based on the mechanics of the
+     * chosen SASL mechanism.  The server handler should either respond immediately or should respond from the
+     * same thread that the response handler was invoked from.
+     * <p>
+     * In the event that the server implementation cannot proceed with SASL authentication it should call the
+     * {@link SaslServerContext#saslFailure(org.apache.qpid.proton4j.engine.exceptions.SaslException)} to fail
+     * the SASL negotiation and signal the {@link Engine} that it should transition to a failed state.
      *
      * @param context
      *      the {@link SaslServerContext} object that is to process the incoming response.

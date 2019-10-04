@@ -18,6 +18,7 @@ package org.apache.qpid.proton4j.engine.sasl;
 
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import org.apache.qpid.proton4j.engine.Engine;
 
 /**
  * Listener for SASL frame arrival to facilitate relevant handling for the SASL
@@ -29,13 +30,15 @@ import org.apache.qpid.proton4j.buffer.ProtonBuffer;
  */
 public interface SaslClientListener {
 
-    // TODO - Work out how to use ProtonBuffer instead of Binary
-
     /**
      * Called to give the application code a clear point to initialize all the client side expectations.
      * <p>
      * The application should use this event to configure the client mechanisms and other client
      * authentication properties.
+     * <p>
+     * In the event that the client implementation cannot proceed with SASL authentication it should call the
+     * {@link SaslClientContext#saslFailure(org.apache.qpid.proton4j.engine.exceptions.SaslException)}
+     * to signal the {@link Engine} that it should transition to a failed state.
      *
      * @param context
      *      the {@link SaslClientContext} used to authenticate the connection.
@@ -48,6 +51,10 @@ public interface SaslClientListener {
      * mechanisms event by selecting one from the offered list and calling the
      * {@link SaslClientContext#sendChosenMechanism(Symbol, String, ProtonBuffer)} method immediately
      * or later using the same thread that triggered this event.
+     * <p>
+     * In the event that the client implementation cannot proceed with SASL authentication it should call the
+     * {@link SaslClientContext#saslFailure(org.apache.qpid.proton4j.engine.exceptions.SaslException)} to fail
+     * the SASL negotiation and signal the {@link Engine} that it should transition to a failed state.
      *
      * @param context
      *      the {@link SaslClientContext} that is to handle the mechanism selection
@@ -64,6 +71,10 @@ public interface SaslClientListener {
      *  by selecting one from the offered list and calling the
      * {@link SaslClientContext#sendResponse(ProtonBuffer)} method immediately or later using the same
      * thread that triggered this event.
+     * <p>
+     * In the event that the client implementation cannot proceed with SASL authentication it should call the
+     * {@link SaslClientContext#saslFailure(org.apache.qpid.proton4j.engine.exceptions.SaslException)} to fail
+     * the SASL negotiation and signal the {@link Engine} that it should transition to a failed state.
      *
      * @param context
      *      the {@link SaslClientContext} that is to handle the SASL challenge.
@@ -79,6 +90,10 @@ public interface SaslClientListener {
      * any success additional data sent by the 'server' peer.  The client can consider the SASL negotiations
      * complete following this event.  The client should respond appropriately to the outcome whose state can
      * indicate that negotiations have failed and the server has not authenticated the client.
+     * <p>
+     * In the event that the client implementation cannot proceed with SASL authentication it should call the
+     * {@link SaslClientContext#saslFailure(org.apache.qpid.proton4j.engine.exceptions.SaslException)} to fail
+     * the SASL negotiation and signal the {@link Engine} that it should transition to a failed state.
      *
      * @param context
      *      the {@link SaslClientContext} that is to handle the resulting SASL outcome.
