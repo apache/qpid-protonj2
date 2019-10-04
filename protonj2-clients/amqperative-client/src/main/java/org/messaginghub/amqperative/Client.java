@@ -62,7 +62,7 @@ public interface Client {
      *
      * @return this {@link Client} instance.
      */
-    Client closeAll();
+    Client close();
 
     /**
      * Connect to the specified host and port, without credentials and with all
@@ -91,4 +91,27 @@ public interface Client {
      */
     Connection connect(String host, int port, ConnectionOptions options);
 
+    /**
+     * Connect to the specified host, using the default port, without credentials and with all
+     * connection options set to their defaults.
+     *
+     * @param host
+     *            the host to connect to
+     *
+     * @return connection, establishment not yet completed
+     */
+    Connection connect(String host);
+
+    /**
+     * Connect to the specified host, using the default port, without credentials and with all
+     * connection options set to their defaults.
+     *
+     * @param host
+     *            the host to connect to
+     * @param options
+     *            options to use when creating the connection.
+     *
+     * @return connection, establishment not yet completed
+     */
+    Connection connect(String host, ConnectionOptions options);
 }

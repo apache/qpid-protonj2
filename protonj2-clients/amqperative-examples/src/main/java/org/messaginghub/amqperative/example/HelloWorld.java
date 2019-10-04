@@ -43,9 +43,9 @@ public class HelloWorld {
 
             ClientOptions options = new ClientOptions();
             options.setContainerId(UUID.randomUUID().toString());
-            Client container = Client.create(options);
+            Client client = Client.create(options);
 
-            Connection connection = container.connect(brokerHost, brokerPort);
+            Connection connection = client.connect(brokerHost, brokerPort);
             Sender sender = connection.openSender(address);
             sender.openFuture().get(5, TimeUnit.SECONDS);
 

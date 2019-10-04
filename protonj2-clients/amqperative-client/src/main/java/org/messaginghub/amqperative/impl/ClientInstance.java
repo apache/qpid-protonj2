@@ -60,6 +60,18 @@ public class ClientInstance implements Client {
     }
 
     @Override
+    public Connection connect(String host) {
+        // TODO: implement
+        throw new UnsupportedOperationException("Not implemented");
+    }
+
+    @Override
+    public Connection connect(String host, ConnectionOptions options) {
+        // TODO: implement
+        throw new UnsupportedOperationException("Not implemented");
+    }
+
+    @Override
     public String getContainerId() {
         return options.getContainerId();
     }
@@ -69,7 +81,9 @@ public class ClientInstance implements Client {
     }
 
     @Override
-    public Client closeAll() {
+    public Client close() {
+        //TODO: prevent new connections being created after calling close
+
         synchronized (connections) {
             List<Connection> connectionsView = new ArrayList<>(connections.values());
             for (Connection connection : connectionsView) {
