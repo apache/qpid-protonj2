@@ -61,6 +61,7 @@ public interface SaslServerListener {
      *      the AMQP Header that was read.
      *
      * @see SaslServerContext#sendMechanisms(Symbol[])
+     * @see SaslServerContext#saslFailure(javax.security.sasl.SaslException)
      */
     void handleSaslHeader(SaslServerContext context, AMQPHeader header);
 
@@ -83,6 +84,7 @@ public interface SaslServerListener {
      *
      * @see SaslServerContext#sendChallenge(ProtonBuffer)
      * @see SaslServerContext#sendOutcome(SaslOutcome, ProtonBuffer)
+     * @see SaslServerContext#saslFailure(javax.security.sasl.SaslException)
      */
     void handleSaslInit(SaslServerContext context, Symbol mechanism, ProtonBuffer initResponse);
 
@@ -103,6 +105,7 @@ public interface SaslServerListener {
      *
      * @see SaslServerContext#sendChallenge(ProtonBuffer)
      * @see SaslServerContext#sendOutcome(SaslOutcome, ProtonBuffer)
+     * @see SaslServerContext#saslFailure(javax.security.sasl.SaslException)
      */
     void handleSaslResponse(SaslServerContext context, ProtonBuffer response);
 

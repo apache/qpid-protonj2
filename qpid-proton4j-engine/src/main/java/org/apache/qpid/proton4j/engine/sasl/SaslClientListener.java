@@ -62,6 +62,7 @@ public interface SaslClientListener {
      *      the mechanisms that the remote supports.
      *
      * @see SaslClientContext#sendChosenMechanism(Symbol, String, ProtonBuffer)
+     * @see SaslClientContext#saslFailure(javax.security.sasl.SaslException)
      */
     void handleSaslMechanisms(SaslClientContext context, Symbol[] mechanisms);
 
@@ -82,6 +83,7 @@ public interface SaslClientListener {
      *      the challenge bytes sent from the SASL server.
      *
      * @see SaslClientContext#sendResponse(ProtonBuffer)
+     * @see SaslClientContext#saslFailure(javax.security.sasl.SaslException)
      */
     void handleSaslChallenge(SaslClientContext context, ProtonBuffer challenge);
 
@@ -101,6 +103,8 @@ public interface SaslClientListener {
      *      the outcome that was supplied by the SASL "server".
      * @param additional
      *      the additional data sent from the server, or null if none.
+     *
+     * @see SaslClientContext#saslFailure(javax.security.sasl.SaslException)
      */
     void handleSaslOutcome(SaslClientContext context, SaslOutcome outcome, ProtonBuffer additional);
 
