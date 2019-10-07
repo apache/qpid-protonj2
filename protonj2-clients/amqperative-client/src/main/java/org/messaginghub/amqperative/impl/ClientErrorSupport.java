@@ -21,8 +21,6 @@ import static org.messaginghub.amqperative.impl.ClientConstants.INVALID_FIELD;
 
 import java.util.Map;
 
-import javax.xml.ws.Endpoint;
-
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.transactions.TransactionErrors;
 import org.apache.qpid.proton4j.amqp.transport.AmqpError;
@@ -50,14 +48,12 @@ public abstract class ClientErrorSupport {
      *
      * @param connection
      * 		the AMQP Client instance that originates this exception
-     * @param endpoint
-     *      The target of the error.
      * @param errorCondition
      *      The ErrorCondition returned from the remote peer.
      *
      * @return a new Exception instance that best matches the ErrorCondition value.
      */
-    public static ClientConnectionRemotelyClosedException convertToConnectionClosedException(ClientConnection connection, Endpoint endpoint, ErrorCondition errorCondition) {
+    public static ClientConnectionRemotelyClosedException convertToConnectionClosedException(ClientConnection connection, ErrorCondition errorCondition) {
         ClientConnectionRemotelyClosedException remoteError = null;
 
         if (errorCondition != null && errorCondition.getCondition() != null) {
@@ -99,14 +95,12 @@ public abstract class ClientErrorSupport {
      *
      * @param connection
      * 		the AMQP Client connection instance that originates this exception
-     * @param endpoint
-     *      The target of the error.
      * @param errorCondition
      *      The ErrorCondition returned from the remote peer.
      *
      * @return a new Exception instance that best matches the ErrorCondition value.
      */
-    public static ClientException convertToNonFatalException(ClientConnection connection, Endpoint endpoint, ErrorCondition errorCondition) {
+    public static ClientException convertToNonFatalException(ClientConnection connection, ErrorCondition errorCondition) {
         ClientException remoteError = null;
 
         if (errorCondition != null && errorCondition.getCondition() != null) {
