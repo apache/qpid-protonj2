@@ -17,7 +17,6 @@
 package org.messaginghub.amqperative.impl;
 
 import java.io.IOException;
-import java.net.URI;
 import java.security.Principal;
 import java.util.Map;
 import java.util.Objects;
@@ -318,6 +317,10 @@ public class ClientConnection implements Connection {
     ClientConnection open() {
         checkClosed();
         executor.execute(() -> {
+            if (engine.isShutdown()) {
+                return;
+            }
+
             // TODO - We aren't currently handling exceptions from the proton API methods
             //        in any meaningful way so eventually we need to get round to doing that
             //        From limited use of the API the current exception model may be a bit
@@ -326,6 +329,7 @@ public class ClientConnection implements Connection {
             if (client.getContainerId() != null) {
                 protonConnection.setContainerId(client.getContainerId());
             }
+
             options.configureConnection(protonConnection).open().tickAuto(executor);
         });
 
@@ -362,11 +366,6 @@ public class ClientConnection implements Connection {
 
     String nextSessionId() {
         return getId() + ":" + sessionCounter.incrementAndGet();
-    }
-
-    URI getRemoteURI() {
-        // TODO - URI with scheme type preserved.
-        return transport.getRemoteLocation();
     }
 
     void handleClientIOException(ClientIOException error) {

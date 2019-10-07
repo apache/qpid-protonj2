@@ -24,11 +24,11 @@ import static org.messaginghub.amqperative.impl.ClientConstants.SCHEME;
 
 import java.io.IOException;
 import java.net.URI;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
 import org.apache.qpid.proton4j.amqp.Symbol;
-import org.messaginghub.amqperative.util.PropertyUtil;
 import org.messaginghub.amqperative.util.URISupport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,6 +41,7 @@ public class ClientRedirect {
     private static final Logger LOG = LoggerFactory.getLogger(ClientRedirect.class);
 
     private final Map<Symbol, Object> redirect;
+    @SuppressWarnings("unused")
     private final ClientConnection connection;
 
     public ClientRedirect(Map<Symbol, Object> redirect, ClientConnection connection) {
@@ -49,11 +50,6 @@ public class ClientRedirect {
 
         if (connection == null) {
             throw new IllegalArgumentException("A Client Connection instance is required");
-        }
-
-        URI remoteURI = connection.getRemoteURI();
-        if (remoteURI == null || remoteURI.getScheme() == null || remoteURI.getScheme().isEmpty()) {
-            throw new IllegalArgumentException("The provider instance must provide a valid scheme");
         }
     }
 
@@ -72,9 +68,9 @@ public class ClientRedirect {
 
         LOG.trace("Redirect issued host and port as follows: {}:{}", networkHost, networkPort);
 
-        String sourceScheme = connection.getRemoteURI().getScheme();
-        String scheme = (String) redirect.get(SCHEME);
-        if (scheme != null && !scheme.isEmpty() && !scheme.equals(sourceScheme)) {
+//        String sourceScheme = connection.getRemoteURI().getScheme();
+//        String scheme = (String) redirect.get(SCHEME);
+//        if (scheme != null && !scheme.isEmpty() && !scheme.equals(sourceScheme)) {
 
             // TODO - Implement means of determining the URI scheme and other
             //        data such as allow insecure redirects.
@@ -124,7 +120,7 @@ public class ClientRedirect {
 //            // Update the redirect information with the resolved target scheme used to create
 //            // the provider for the redirection.
 //            redirect.put(SCHEME, amqpFactory.getProviderScheme());
-        }
+//        }
 
         // Check it actually converts to URI since we require it do so later
         toURI();
@@ -166,7 +162,7 @@ public class ClientRedirect {
     public String getScheme() {
         String scheme = (String) redirect.get(SCHEME);
         if (scheme == null || scheme.isEmpty()) {
-            scheme = connection.getRemoteURI().getScheme();
+            //scheme = connection.getRemoteURI().getScheme();
         }
 
         return scheme;
@@ -187,7 +183,8 @@ public class ClientRedirect {
      * @throws Exception if an error occurs construct a URI from the redirection information.
      */
     public URI toURI() throws Exception {
-        Map<String, String> queryOptions = PropertyUtil.parseQuery(connection.getRemoteURI());
+        @SuppressWarnings("unchecked")
+        Map<String, String> queryOptions = Collections.EMPTY_MAP; // PropertyUtil.parseQuery(connection.getRemoteURI());
 
         URI result = new URI(getScheme(), null, getNetworkHost(), getPort(), getPath(), null, null);
 
