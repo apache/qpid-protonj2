@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.qpid.proton4j.netty;
+package org.apache.qpid.proton4j.buffer;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -26,9 +26,6 @@ import static org.junit.Assert.fail;
 import java.nio.ByteBuffer;
 import java.util.Random;
 
-import org.apache.qpid.proton4j.buffer.ProtonBuffer;
-import org.apache.qpid.proton4j.buffer.ProtonByteBuffer;
-import org.apache.qpid.proton4j.netty.ProtonNettyByteBuffer;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
