@@ -46,12 +46,16 @@ public class SaslChallengeExpectation extends AbstractExpectation<SaslChallenge>
 
     //----- Type specific with methods that perform simple equals checks
 
+    public SaslChallengeExpectation withChallenge(byte[] challenge) {
+        return withChallenge(equalTo(new Binary(challenge)));
+    }
+
     public SaslChallengeExpectation withChallenge(ProtonBuffer challenge) {
-        return withChallenge(equalTo(challenge));
+        return withChallenge(equalTo(new Binary(challenge)));
     }
 
     public SaslChallengeExpectation withChallenge(Binary challenge) {
-        return withChallenge(equalTo(challenge.asProtonBuffer()));
+        return withChallenge(equalTo(challenge));
     }
 
     //----- Matcher based with methods for more complex validation

@@ -48,12 +48,16 @@ public class SaslInitExpectation extends AbstractExpectation<SaslInit> {
         return withMechanism(equalTo(mechanism));
     }
 
+    public SaslInitExpectation withInitialResponse(byte[] initialResponse) {
+        return withInitialResponse(equalTo(new Binary(initialResponse)));
+    }
+
     public SaslInitExpectation withInitialResponse(ProtonBuffer initialResponse) {
-        return withInitialResponse(equalTo(initialResponse));
+        return withInitialResponse(equalTo(new Binary(initialResponse)));
     }
 
     public SaslInitExpectation withInitialResponse(Binary initialResponse) {
-        return withInitialResponse(equalTo(initialResponse.asProtonBuffer()));
+        return withInitialResponse(equalTo(initialResponse));
     }
 
     public SaslInitExpectation withHostname(String hostname) {

@@ -16,6 +16,8 @@
  */
 package org.apache.qpid.proton4j.amqp.driver;
 
+import java.nio.charset.StandardCharsets;
+
 import org.apache.qpid.proton4j.amqp.DescribedType;
 import org.apache.qpid.proton4j.amqp.driver.actions.AMQPHeaderInjectAction;
 import org.apache.qpid.proton4j.amqp.driver.actions.AttachInjectAction;
@@ -256,6 +258,38 @@ public abstract class ScriptWriter {
         expectSASLHeader().respondWithSASLPHeader();
         remoteSaslMechanisms().withMechanisms("ANONYMOUS").queue();
         expectSaslInit().withMechanism("ANONYMOUS");
+        remoteSaslOutcome().withCode(SaslCode.OK).queue();
+        expectAMQPHeader().respondWithAMQPHeader();
+    }
+
+    /**
+     * Creates all the scripted elements needed for a successful SASL Plain
+     * connection.
+     * <p>
+     * For this exchange the SASL header is expected which is responded to with the
+     * corresponding SASL header and an immediate SASL mechanisms frame that only
+     * advertises plain as the mechanism.  It is expected that the remote will
+     * send a SASL init with the plain mechanism selected and the outcome is
+     * predefined as success.  Once done the expectation is added for the AMQP
+     * header to arrive and a header response will be sent.
+     *
+     * @param username
+     *      The user name that is expected in the SASL Plain initial response.
+     * @param password
+     *      The password that is expected in the SASL Plain initial response.
+     */
+    public void expectSASLPlainConnect(String username, String password) {
+        expectSASLHeader().respondWithSASLPHeader();
+        remoteSaslMechanisms().withMechanisms("PLAIN").queue();
+
+        // SASL PLAIN initial response encoding
+        byte[] usernameBytes = username.getBytes(StandardCharsets.UTF_8);
+        byte[] passwordBytes = password.getBytes(StandardCharsets.UTF_8);
+        byte[] initialResponse = new byte[usernameBytes.length+passwordBytes.length+2];
+        System.arraycopy(usernameBytes, 0, initialResponse, 1, usernameBytes.length);
+        System.arraycopy(passwordBytes, 0, initialResponse, 2 + usernameBytes.length, passwordBytes.length);
+
+        expectSaslInit().withMechanism("PLAIN").withInitialResponse(initialResponse);
         remoteSaslOutcome().withCode(SaslCode.OK).queue();
         expectAMQPHeader().respondWithAMQPHeader();
     }

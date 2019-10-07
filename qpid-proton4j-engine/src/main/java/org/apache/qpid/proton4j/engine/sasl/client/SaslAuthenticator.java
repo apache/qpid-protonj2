@@ -40,6 +40,28 @@ public class SaslAuthenticator implements SaslClientListener {
 
     private Mechanism chosenMechanism;
 
+    /**
+     * Creates a new SASL Authenticator initialized with the given credentials provider instance.  Because no
+     * {@link Mechanism} selector is given the full set of supported SASL mechanisms will be chosen from when
+     * attempting to match one to the server offered SASL mechanisms.
+     *
+     * @param credentials
+     *      The credentials that will be used when the SASL negotiation is in progress.
+     */
+    public SaslAuthenticator(SaslCredentialsProvider credentials) {
+        this(new SaslMechanismSelector(), credentials);
+    }
+
+    /**
+     * Creates a new client SASL Authenticator with the given {@link Mechanism} and client credentials
+     * provider instances.  The configured {@link Mechanism} selector is used when attempting to match
+     * a SASL {@link Mechanism} with the server offered set of supported SASL mechanisms.
+     *
+     * @param selector
+     *     The {@link SaslMechanismSelector} that will be called upon to choose a server supported mechanism.
+     * @param credentials
+     *      The credentials that will be used when the SASL negotiation is in progress.
+     */
     public SaslAuthenticator(SaslMechanismSelector selector, SaslCredentialsProvider credentials) {
         Objects.requireNonNull(selector, "A SASL Mechanism selector implementation is required");
         Objects.requireNonNull(credentials, "A SASL Credentials provider implementation is required");

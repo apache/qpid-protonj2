@@ -39,7 +39,7 @@ public final class Binary {
     }
 
     public Binary(final byte[] data, final int offset, final int length) {
-        this.buffer = ProtonByteBufferAllocator.DEFAULT.wrap(data, offset, length).setWriteIndex(length);
+        this.buffer = ProtonByteBufferAllocator.DEFAULT.wrap(data, offset, length);
     }
 
     public Binary copy() {

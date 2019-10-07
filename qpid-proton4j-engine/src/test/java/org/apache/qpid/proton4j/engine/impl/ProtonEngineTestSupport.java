@@ -27,12 +27,19 @@ import org.apache.qpid.proton4j.codec.Decoder;
 import org.apache.qpid.proton4j.codec.DecoderState;
 import org.apache.qpid.proton4j.codec.Encoder;
 import org.apache.qpid.proton4j.codec.EncoderState;
+import org.apache.qpid.proton4j.common.logging.ProtonLogger;
+import org.apache.qpid.proton4j.common.logging.ProtonLoggerFactory;
 import org.junit.After;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.rules.TestName;
 
 /**
  * Base class for Proton Engine and its components.
  */
 public abstract class ProtonEngineTestSupport {
+
+    private static final ProtonLogger LOG = ProtonLoggerFactory.getLogger(ProtonEngineTestSupport.class);
 
     protected ArrayList<ProtonBuffer> engineWrites = new ArrayList<>();
 
@@ -44,6 +51,14 @@ public abstract class ProtonEngineTestSupport {
 
     protected Throwable failure;
 
+    @Rule
+    public TestName testName = new TestName();
+
+    @Before
+    public void setUp() {
+        LOG.info("========== start " + getTestName() + " ==========");
+    }
+
     @After
     public void tearDown() {
         engineWrites.clear();
@@ -51,6 +66,8 @@ public abstract class ProtonEngineTestSupport {
         encoderState.reset();
 
         failure = null;
+
+        LOG.info("========== tearDown " + getTestName() + " ==========");
     }
 
     protected ProtonBuffer wrapInFrame(Object input, int channel) {
@@ -115,5 +132,9 @@ public abstract class ProtonEngineTestSupport {
         }
 
         return ProtonByteBufferAllocator.DEFAULT.wrap(payload).setIndex(0, length);
+    }
+
+    protected String getTestName() {
+        return getClass().getSimpleName() + "." + testName.getMethodName();
     }
 }

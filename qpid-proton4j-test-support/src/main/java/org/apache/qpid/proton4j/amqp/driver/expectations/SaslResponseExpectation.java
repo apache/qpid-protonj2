@@ -39,12 +39,16 @@ public class SaslResponseExpectation extends AbstractExpectation<SaslResponse> {
 
     //----- Type specific with methods that perform simple equals checks
 
+    public SaslResponseExpectation withResponse(byte[] response) {
+        return withResponse(equalTo(new Binary(response)));
+    }
+
     public SaslResponseExpectation withResponse(ProtonBuffer response) {
-        return withResponse(equalTo(response));
+        return withResponse(equalTo(new Binary(response)));
     }
 
     public SaslResponseExpectation withResponse(Binary response) {
-        return withResponse(equalTo(response.asProtonBuffer()));
+        return withResponse(equalTo(response));
     }
 
     //----- Matcher based with methods for more complex validation

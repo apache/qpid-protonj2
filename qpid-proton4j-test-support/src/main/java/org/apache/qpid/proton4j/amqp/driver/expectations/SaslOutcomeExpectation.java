@@ -44,12 +44,16 @@ public class SaslOutcomeExpectation extends AbstractExpectation<SaslOutcome> {
         return withCode(equalTo(code));
     }
 
+    public SaslOutcomeExpectation withAdditionalData(byte[] additionalData) {
+        return withAdditionalData(equalTo(new Binary(additionalData)));
+    }
+
     public SaslOutcomeExpectation withAdditionalData(ProtonBuffer additionalData) {
-        return withAdditionalData(equalTo(additionalData));
+        return withAdditionalData(equalTo(new Binary(additionalData)));
     }
 
     public SaslOutcomeExpectation withAdditionalData(Binary additionalData) {
-        return withAdditionalData(equalTo(additionalData.asByteBuffer()));
+        return withAdditionalData(equalTo(additionalData));
     }
 
     //----- Matcher based with methods for more complex validation
