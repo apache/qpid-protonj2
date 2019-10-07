@@ -32,8 +32,12 @@ import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 import java.util.function.Supplier;
 
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.engine.Engine;
 import org.apache.qpid.proton4j.engine.EngineFactory;
+import org.apache.qpid.proton4j.engine.sasl.client.SaslAuthenticator;
+import org.apache.qpid.proton4j.engine.sasl.client.SaslCredentialsProvider;
+import org.apache.qpid.proton4j.engine.sasl.client.SaslMechanismSelector;
 import org.messaginghub.amqperative.Client;
 import org.messaginghub.amqperative.Connection;
 import org.messaginghub.amqperative.Message;
@@ -50,9 +54,6 @@ import org.messaginghub.amqperative.futures.ClientFutureFactory;
 import org.messaginghub.amqperative.impl.exceptions.ClientConnectionRemotelyClosedException;
 import org.messaginghub.amqperative.impl.exceptions.ClientExceptionSupport;
 import org.messaginghub.amqperative.impl.exceptions.ClientIOException;
-import org.messaginghub.amqperative.impl.sasl.SaslAuthenticator;
-import org.messaginghub.amqperative.impl.sasl.SaslCredentialsProvider;
-import org.messaginghub.amqperative.impl.sasl.SaslMechanismSelector;
 import org.messaginghub.amqperative.transport.Transport;
 import org.messaginghub.amqperative.transport.impl.TcpTransport;
 import org.slf4j.Logger;
@@ -286,104 +287,18 @@ public class ClientConnection implements Connection {
     ClientConnection connect() {
         try {
             executor = transport.connect(() -> {
+
+                engine.outputHandler(toWrite -> handleEngineOutput(toWrite))
+                      .errorHandler(error -> handleEngineErrors(error));
+
+                configureEngineSaslSupport();
+
                 protonConnection = engine.start();
+                protonConnection.openHandler(connection -> handleRemoteOpen(connection))
+                                .closeHandler(connection -> handleRemotecClose(connection));
 
-                if (options.isSaslEnabled()) {
-                    SaslMechanismSelector mechSelector =
-                        new SaslMechanismSelector(options.allowedMechanisms());
-
-                    engine.saslContext().client().setListener(new SaslAuthenticator(mechSelector, new SaslCredentialsProvider() {
-
-                        @Override
-                        public String vhost() {
-                            return options.getVhost();
-                        }
-
-                        @Override
-                        public String username() {
-                            return options.getUser();
-                        }
-
-                        @Override
-                        public String password() {
-                            return options.getPassword();
-                        }
-
-                        @Override
-                        public Principal localPrincipal() {
-                            return transport.getLocalPrincipal();
-                        }
-                    }));
-                }
-
-                protonConnection.openHandler(result -> {
-                    openFuture.complete(this);
-                });
-
-                protonConnection.closeHandler(result -> {
-                    // TODO - On remote close we need to ensure that sessions and their resources
-                    //        all reflect the fact that they are now closed.  Also there is not a
-                    //        way currently to reflect the fact that a remote closed happened in
-                    //        the existing imperative client API.
-
-                    // Close should be idempotent so we can just respond here with a close in case
-                    // of remotely closed connection.  We should set error state from remote though
-                    // so client can see it.
-                    try {
-                        protonConnection.close();
-                    } catch (Throwable ignored) {
-                        LOG.trace("Error on attempt to close proton connection was ignored");
-                    }
-                    try {
-                        transport.close();
-                    } catch (IOException ignore) {}
-                    if (result.getRemoteCondition() != null) {
-                        // TODO - Convert remote error to client exception
-                        ClientException ex = new ClientConnectionRemotelyClosedException("Remote closed with error");
-                        FAILURE_CAUSE_UPDATER.compareAndSet(this, null, ex);
-                    }
-                    CLOSED_UPDATER.lazySet(this, 1);
-                    closeFuture.complete(this);
-                });
-
-                engine.outputHandler((toWrite) -> {
-                    try {
-                        // TODO - Revisit this later on when we have fully worked out the p4j bits
-                        //        around configuring buffer allocators and have one for the client
-                        //        or a common one from p4j that allocates a netty wrapped buffer
-                        //        for outbound work and use it directly.
-                        //
-                        // if (toWrite instanceof ProtonNettyByteBuffer) {
-                        //     transport.writeAndFlust((ByteBuf) toWrite.unwrap());
-                        // } else {
-                        //     be ready for bad stuff and do the old copy style.
-                        // }
-                        ByteBuf outbound = transport.allocateSendBuffer(toWrite.getReadableBytes());
-                        outbound.writeBytes(toWrite.toByteBuffer());
-
-                        transport.writeAndFlush(outbound);
-                    } catch (IOException e) {
-                        LOG.warn("Error while writing engine output to transport:", e);
-                        e.printStackTrace();
-                    }
-                });
-
-                engine.errorHandler((error) -> {
-                    // TODO - Better handle errors and
-                    try {
-                        // Engine encountered critical error, shutdown.
-                        transport.close();
-                    } catch (IOException e) {
-                        LOG.error("Engine encountered critical error", error);
-                    } finally {
-                        CLOSED_UPDATER.lazySet(this, 1);
-                        openFuture.failed(new ClientException("Engine encountered critical error", error));
-                        closeFuture.complete(this);
-                    }
-                });
             }, null);
         } catch (Throwable e) {
-            openFuture.failed(ClientExceptionSupport.createNonFatalOrPassthrough(e));
             try {
                 transport.close();
             } catch (Throwable t) {
@@ -392,6 +307,9 @@ public class ClientConnection implements Connection {
 
             CLOSED_UPDATER.set(this, 1);
             FAILURE_CAUSE_UPDATER.compareAndSet(this, null, ClientExceptionSupport.createOrPassthroughFatal(e));
+
+            openFuture.failed(ClientExceptionSupport.createNonFatalOrPassthrough(e));
+            closeFuture.complete(this);
         }
 
         return this;
@@ -501,7 +419,108 @@ public class ClientConnection implements Connection {
         }
     }
 
-    //----- Private implementation
+    //----- Private implementation events handlers and utility methods
+
+    private void handleRemoteOpen(org.apache.qpid.proton4j.engine.Connection connection) {
+        openFuture.complete(this);
+    }
+
+    private void handleRemotecClose(org.apache.qpid.proton4j.engine.Connection connection) {
+        // TODO - On remote close we need to ensure that sessions and their resources
+        //        all reflect the fact that they are now closed.  Also there is not a
+        //        way currently to reflect the fact that a remote closed happened in
+        //        the existing imperative client API.
+
+        // Close should be idempotent so we can just respond here with a close in case
+        // of remotely closed connection.  We should set error state from remote though
+        // so client can see it.
+        try {
+            connection.close();
+        } catch (Throwable ignored) {
+            LOG.trace("Error on attempt to close proton connection was ignored");
+        }
+
+        try {
+            transport.close();
+        } catch (IOException ignore) {}
+
+        if (connection.getRemoteCondition() != null) {
+            // TODO - Convert remote error to client exception
+            ClientException ex = new ClientConnectionRemotelyClosedException("Remote closed with error");
+            FAILURE_CAUSE_UPDATER.compareAndSet(this, null, ex);
+        }
+
+        CLOSED_UPDATER.lazySet(this, 1);
+        closeFuture.complete(this);
+    }
+
+    private void handleEngineOutput(ProtonBuffer output) {
+        try {
+            // TODO - Revisit this later on when we have fully worked out the p4j bits
+            //        around configuring buffer allocators and have one for the client
+            //        or a common one from p4j that allocates a netty wrapped buffer
+            //        for outbound work and use it directly.
+            //
+            // if (toWrite instanceof ProtonNettyByteBuffer) {
+            //     transport.writeAndFlust((ByteBuf) toWrite.unwrap());
+            // } else {
+            //     be ready for bad stuff and do the old copy style.
+            // }
+            ByteBuf outbound = transport.allocateSendBuffer(output.getReadableBytes());
+            outbound.writeBytes(output.toByteBuffer());
+
+            transport.writeAndFlush(outbound);
+        } catch (IOException e) {
+            LOG.warn("Error while writing engine output to transport:", e);
+            e.printStackTrace();
+        }
+    }
+
+    private void handleEngineErrors(Throwable error) {
+        // TODO - Better handle errors and
+        try {
+            // Engine encountered critical error, shutdown.
+            transport.close();
+        } catch (IOException e) {
+            LOG.error("Engine encountered critical error", error);
+        } finally {
+            CLOSED_UPDATER.lazySet(this, 1);
+            openFuture.failed(new ClientException("Engine encountered critical error", error));
+            closeFuture.complete(this);
+        }
+    }
+
+    private Engine configureEngineSaslSupport() {
+        if (options.isSaslEnabled()) {
+            SaslMechanismSelector mechSelector =
+                new SaslMechanismSelector(ClientConversionSupport.toSymbolSet(options.allowedMechanisms()));
+
+            engine.saslContext().client().setListener(new SaslAuthenticator(mechSelector, new SaslCredentialsProvider() {
+
+                @Override
+                public String vhost() {
+                    return options.getVhost();
+                }
+
+                @Override
+                public String username() {
+                    return options.getUser();
+                }
+
+                @Override
+                public String password() {
+                    return options.getPassword();
+                }
+
+                @Override
+                public Principal localPrincipal() {
+                    return transport.getLocalPrincipal();
+                }
+            }));
+        }
+
+        return engine;
+    }
 
     private ClientSession lazyCreateConnectionSession() {
         if (connectionSession == null) {

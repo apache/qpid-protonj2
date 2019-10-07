@@ -17,7 +17,10 @@
 package org.messaginghub.amqperative.impl;
 
 import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.qpid.proton4j.amqp.Symbol;
 
@@ -53,26 +56,60 @@ abstract class ClientConversionSupport {
     }
 
     public static Map<Symbol, Object> toSymbolKeyedMap(Map<String, Object> stringsMap) {
-        Map<Symbol, Object> result = null;
+        final Map<Symbol, Object> result;
 
         if (stringsMap != null) {
-            Map<Symbol, Object> properties = new HashMap<>(stringsMap.size());
+            result = new HashMap<>(stringsMap.size());
             stringsMap.forEach((key, value) -> {
-                properties.put(Symbol.valueOf(key), value);
+                result.put(Symbol.valueOf(key), value);
             });
+        } else {
+            result = null;
         }
 
         return result;
     }
 
     public static Map<String, Object> toStringKeyedMap(Map<Symbol, Object> symbolMap) {
-        Map<String, Object> result = null;
+        Map<String, Object> result;
 
         if (symbolMap != null) {
-            Map<String, Object> properties = new HashMap<>(symbolMap.size());
+            result = new LinkedHashMap<>(symbolMap.size());
             symbolMap.forEach((key, value) -> {
-                properties.put(key.toString(), value);
+                result.put(key.toString(), value);
             });
+        } else {
+            result = null;
+        }
+
+        return result;
+    }
+
+    public static Set<Symbol> toSymbolSet(Set<String> stringsSet) {
+        final Set<Symbol> result;
+
+        if (stringsSet != null) {
+            result = new LinkedHashSet<>(stringsSet.size());
+            stringsSet.forEach((entry) -> {
+                result.add(Symbol.valueOf(entry));
+            });
+        } else {
+            result = null;
+        }
+
+        return result;
+    }
+
+    public static Set<String> toStringSet(Set<Symbol> symbolSet) {
+        Set<String> result;
+
+        if (symbolSet != null) {
+            result = new LinkedHashSet<>(symbolSet.size());
+            symbolSet.forEach((entry) -> {
+                result.add(entry.toString());
+            });
+        } else {
+            result = null;
         }
 
         return result;
