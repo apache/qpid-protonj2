@@ -46,13 +46,12 @@ public class HelloWorld {
             Client client = Client.create(options);
 
             Connection connection = client.connect(brokerHost, brokerPort);
+
             Sender sender = connection.openSender(address);
             sender.openFuture().get(5, TimeUnit.SECONDS);
 
             Message<String> message = Message.create("Hello World").setDurable(true);
             Tracker tracker = sender.send(message);
-
-            tracker.settle();
 
             Receiver receiver = connection.openReceiver(address);
             receiver.openFuture().get(5, TimeUnit.SECONDS);

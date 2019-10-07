@@ -42,7 +42,8 @@ import org.messaginghub.amqperative.TerminusOptions.ExpiryPolicy;
 
 public class Samples {
 
-    public static void main(String[] args) throws Exception {
+    @SuppressWarnings("unused")
+	public static void main(String[] args) throws Exception {
         if(args.length < 10) {
             throw new IllegalStateException("This clas isnt meant to be run, its for textual examples usage");
         }
