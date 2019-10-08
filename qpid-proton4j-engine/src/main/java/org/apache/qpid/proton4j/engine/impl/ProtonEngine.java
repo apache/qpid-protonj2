@@ -36,7 +36,6 @@ import org.apache.qpid.proton4j.engine.exceptions.EngineClosedException;
 import org.apache.qpid.proton4j.engine.exceptions.EngineIdleTimeoutException;
 import org.apache.qpid.proton4j.engine.exceptions.EngineNotWritableException;
 import org.apache.qpid.proton4j.engine.exceptions.EngineStateException;
-import org.apache.qpid.proton4j.engine.exceptions.ProtonExceptionSupport;
 
 /**
  * The default proton4j Engine implementation.
@@ -56,6 +55,7 @@ public class ProtonEngine implements Engine {
 
     private boolean writable;
     private EngineState state = EngineState.IDLE;
+    private Throwable failureCause;
     private int inputSequence;
     private int outputSequence;
 
@@ -85,7 +85,17 @@ public class ProtonEngine implements Engine {
 
     @Override
     public boolean isShutdown() {
-        return state == EngineState.SHUTDOWN;
+        return state.ordinal() >= EngineState.SHUTDOWN.ordinal();
+    }
+
+    @Override
+    public boolean isFailed() {
+        return state == EngineState.FAILED;
+    }
+
+    @Override
+    public Throwable failureCause() {
+        return failureCause;
     }
 
     @Override
@@ -95,17 +105,18 @@ public class ProtonEngine implements Engine {
 
     @Override
     public ProtonConnection start() {
-        state = EngineState.STARTING;
-        try {
-            pipeline().fireEngineStarting();
-            state = EngineState.STARTED;
-            writable = true;
-        } catch (Throwable error) {
-            // TODO - Error types ?
-            state = EngineState.FAILED;
-            writable = false;
+        if (state == EngineState.IDLE) {
+            state = EngineState.STARTING;
+            try {
+                pipeline().fireEngineStarting();
+                state = EngineState.STARTED;
+                writable = true;
+            } catch (Throwable error) {
+                state = EngineState.FAILED;
+                writable = false;
 
-            throw error;
+                throw error;
+            }
         }
 
         return connection;
@@ -113,20 +124,22 @@ public class ProtonEngine implements Engine {
 
     @Override
     public ProtonEngine shutdown() {
-        state = EngineState.SHUTDOWN;
-        writable = false;
+        if (state.ordinal() < EngineState.SHUTTING_DOWN.ordinal()) {
+            state = EngineState.SHUTDOWN;
+            writable = false;
 
-        // TODO - We aren't currently checking connection state, do we want to close if open ?
+            // TODO - We aren't currently checking connection state, do we want to close if open ?
 
-        // TODO - Once shutdown future calls that trigger output should not write anything
-        //        or if they do the write should probably just no-op as we know we are already
-        //        shut down and can't emit any frames.  Does this entail closing connection if
-        //        still open ?
+            // TODO - Once shutdown future calls that trigger output should not write anything
+            //        or if they do the write should probably just no-op as we know we are already
+            //        shut down and can't emit any frames.  Does this entail closing connection if
+            //        still open ?
 
-        if (nextIdleTimeoutCheck != null) {
-            LOG.trace("Cancelling scheduled Idle Timeout Check");
-            nextIdleTimeoutCheck.cancel(false);
-            nextIdleTimeoutCheck = null;
+            if (nextIdleTimeoutCheck != null) {
+                LOG.trace("Cancelling scheduled Idle Timeout Check");
+                nextIdleTimeoutCheck.cancel(false);
+                nextIdleTimeoutCheck = null;
+            }
         }
 
         return this;
@@ -185,8 +198,7 @@ public class ProtonEngine implements Engine {
                 inputSequence++;
             }
         } catch (Throwable t) {
-            // TODO define what the pipeline does here as far as throwing vs signaling etc.
-            engineFailed(ProtonExceptionSupport.create(t));
+            engineFailed(t);
             throw t;
         }
 
@@ -260,6 +272,7 @@ public class ProtonEngine implements Engine {
 
     void engineFailed(Throwable cause) {
         state = EngineState.FAILED;
+        failureCause = cause;
         writable = false;
 
         if (nextIdleTimeoutCheck != null) {

@@ -107,8 +107,11 @@ final class ProtonSaslClientContext extends ProtonSaslContext implements SaslCli
 
     @Override
     public SaslClientContext saslFailure(SaslException failure) {
-        done(org.apache.qpid.proton4j.engine.sasl.SaslOutcome.SASL_PERM);
-        saslHandler.engine().pipeline().fireFailed(failure);
+        if (!isDone()) {
+            done(org.apache.qpid.proton4j.engine.sasl.SaslOutcome.SASL_PERM);
+            saslHandler.engine().pipeline().fireFailed(failure);
+        }
+
         return this;
     }
 
@@ -241,14 +244,25 @@ final class ProtonSaslClientContext extends ProtonSaslContext implements SaslCli
         public void handleOutcome(SaslOutcome saslOutcome, EngineHandlerContext context) {
             done(org.apache.qpid.proton4j.engine.sasl.SaslOutcome.values()[saslOutcome.getCode().ordinal()]);
 
+            SaslException saslFailure = null;
+            if (!saslOutcome.getCode().equals(SaslCode.OK)) {
+                saslFailure = new SaslAuthenticationException(saslOutcome.getCode(), "SASL Authentication Failed");
+            }
+
             try {
                 client.handleSaslOutcome(ProtonSaslClientContext.this, getSaslOutcome(), saslOutcome.getAdditionalData());
             } catch (Throwable error) {
-                context.fireFailed(error);
+                if (saslFailure == null) {
+                    context.fireFailed(error);
+                }
             }
 
-            if (pausedAMQPHeader != null) {
-                context.fireWrite(pausedAMQPHeader);
+            if (saslFailure == null) {
+                if (pausedAMQPHeader != null) {
+                    context.fireWrite(pausedAMQPHeader);
+                }
+            } else {
+                context.fireFailed(saslFailure);
             }
         }
     }

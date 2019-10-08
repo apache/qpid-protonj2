@@ -37,7 +37,6 @@ import org.apache.qpid.proton4j.engine.ProtocolFrame;
 import org.apache.qpid.proton4j.engine.ProtocolFramePool;
 import org.apache.qpid.proton4j.engine.SaslFrame;
 import org.apache.qpid.proton4j.engine.exceptions.ProtonException;
-import org.apache.qpid.proton4j.engine.exceptions.ProtonExceptionSupport;
 
 /**
  * Handler used to parse incoming frame data input into the engine
@@ -84,7 +83,7 @@ public class ProtonFrameDecodingHandler implements EngineHandler, SaslPerformati
         } catch (IOException ex) {
             transitionToErrorStage(ex).fireError(context);
         } catch (Throwable throwable) {
-            transitionToErrorStage(ProtonExceptionSupport.create(throwable)).fireError(context);
+            transitionToErrorStage(new IOException(throwable)).fireError(context);
         }
     }
 

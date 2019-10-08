@@ -34,7 +34,6 @@ import org.apache.qpid.proton4j.engine.HeaderFrame;
 import org.apache.qpid.proton4j.engine.ProtocolFrame;
 import org.apache.qpid.proton4j.engine.exceptions.ProtocolViolationException;
 import org.apache.qpid.proton4j.engine.exceptions.ProtonException;
-import org.apache.qpid.proton4j.engine.exceptions.ProtonExceptionSupport;
 
 /**
  * Transport Handler that forwards the incoming Performatives to the associated Connection
@@ -73,7 +72,7 @@ public class ProtonPerformativeHandler implements EngineHandler, AMQPHeader.Head
 
     @Override
     public void engineFailed(EngineHandlerContext context, Throwable e) {
-        engine.engineFailed(ProtonExceptionSupport.create(e));
+        engine.engineFailed(e);
     }
 
     //----- Deal with the incoming AMQP performatives

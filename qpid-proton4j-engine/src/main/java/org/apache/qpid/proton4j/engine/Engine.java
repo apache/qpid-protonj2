@@ -45,6 +45,16 @@ public interface Engine extends Consumer<ProtonBuffer> {
     boolean isShutdown();
 
     /**
+     * @return true if the Engine has encountered a critical error and has shutdown.
+     */
+    boolean isFailed();
+
+    /**
+     * @return the error that caused the {@link Engine} fail and shutdown (or null if not failed).
+     */
+    Throwable failureCause();
+
+    /**
      * @return the current state of the engine.
      */
     EngineState state();

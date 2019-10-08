@@ -16,7 +16,10 @@
  */
 package org.apache.qpid.proton4j.engine.impl.sasl;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 import java.security.Principal;
 
@@ -25,6 +28,7 @@ import org.apache.qpid.proton4j.amqp.security.SaslCode;
 import org.apache.qpid.proton4j.engine.Connection;
 import org.apache.qpid.proton4j.engine.Engine;
 import org.apache.qpid.proton4j.engine.EngineFactory;
+import org.apache.qpid.proton4j.engine.exceptions.SaslAuthenticationException;
 import org.apache.qpid.proton4j.engine.impl.ProtonEngineTestSupport;
 import org.apache.qpid.proton4j.engine.sasl.client.SaslAuthenticator;
 import org.apache.qpid.proton4j.engine.sasl.client.SaslCredentialsProvider;
@@ -164,6 +168,38 @@ public class ProtonSaslClientTests extends ProtonEngineTestSupport {
         peer.waitForScriptToComplete();
 
         assertNull(failure);
+    }
+
+    @Test
+    public void testSaslFailureCodesFailEngine() throws Exception {
+        doSaslFailureCodesTestImpl(SaslCode.AUTH);
+        doSaslFailureCodesTestImpl(SaslCode.SYS);
+        doSaslFailureCodesTestImpl(SaslCode.SYS_PERM);
+        doSaslFailureCodesTestImpl(SaslCode.SYS_TEMP);
+    }
+
+    private void doSaslFailureCodesTestImpl(SaslCode saslFailureCode) throws Exception {
+        Engine engine = EngineFactory.PROTON.createEngine();
+        engine.errorHandler(result -> failure = result);
+        ProtonTestPeer peer = new ProtonTestPeer(engine);
+        engine.outputConsumer(peer);
+
+        peer.expectSASLHeader().respondWithSASLPHeader();
+        peer.remoteSaslMechanisms().withMechanisms("PLAIN", "ANONYMOUS").queue();
+        peer.expectSaslInit().withMechanism("PLAIN");
+        peer.remoteSaslOutcome().withCode(saslFailureCode).queue();
+
+        engine.saslContext().client().setListener(createSaslPlainAuthenticator("user", "pass"));
+
+        engine.start().open();
+
+        peer.waitForScriptToComplete();
+
+        assertNotNull(failure);
+        assertTrue(engine.isShutdown());
+        assertTrue(engine.isFailed());
+        assertEquals(failure, engine.failureCause());
+        assertTrue(failure instanceof SaslAuthenticationException);
     }
 
     private SaslAuthenticator createSaslPlainAuthenticator(String user, String password) {

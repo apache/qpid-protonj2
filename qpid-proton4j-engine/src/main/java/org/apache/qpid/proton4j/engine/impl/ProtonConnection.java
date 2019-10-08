@@ -49,7 +49,6 @@ import org.apache.qpid.proton4j.engine.Sender;
 import org.apache.qpid.proton4j.engine.Session;
 import org.apache.qpid.proton4j.engine.SessionState;
 import org.apache.qpid.proton4j.engine.exceptions.ProtocolViolationException;
-import org.apache.qpid.proton4j.engine.exceptions.ProtonException;
 
 /**
  * Implements the proton4j Connection API
@@ -376,7 +375,7 @@ public class ProtonConnection implements Connection, AMQPHeader.HeaderHandler<Pr
 
     @Override
     public void handleSASLHeader(AMQPHeader header, ProtonEngine context) {
-        context.engineFailed(new ProtonException("Receivded unexpected SASL Header"));
+        context.engineFailed(new ProtocolViolationException("Receivded unexpected SASL Header"));
     }
 
     @Override
