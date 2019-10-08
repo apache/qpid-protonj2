@@ -22,16 +22,20 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.util.concurrent.ScheduledExecutorService;
+
+import javax.security.sasl.SaslException;
 
 import org.apache.qpid.proton4j.amqp.driver.ProtonTestPeer;
 import org.apache.qpid.proton4j.engine.Connection;
 import org.apache.qpid.proton4j.engine.ConnectionState;
 import org.apache.qpid.proton4j.engine.Engine;
 import org.apache.qpid.proton4j.engine.EngineFactory;
+import org.apache.qpid.proton4j.engine.EngineState;
 import org.apache.qpid.proton4j.engine.Session;
 import org.apache.qpid.proton4j.engine.exceptions.EngineStateException;
 import org.junit.Test;
@@ -53,10 +57,77 @@ public class ProtonEngineTest extends ProtonEngineTestSupport {
         Connection connection = engine.start();
         assertNotNull(connection);
 
+        assertFalse(engine.isShutdown());
+        assertFalse(engine.isFailed());
+        assertNull(engine.failureCause());
+
+        // Should be idempotent and return same Connection
+        Connection another = engine.start();
+        assertSame(connection, another);
+
         // Default engine should start and return a connection immediately
         assertTrue(engine.isWritable());
         assertNotNull(connection);
         assertNull(failure);
+    }
+
+    @Test
+    public void testEngineShutdown() {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result);
+
+        // Engine cannot accept input bytes until started.
+        assertFalse(engine.isWritable());
+
+        Connection connection = engine.start();
+        assertNotNull(connection);
+
+        assertTrue(engine.isWritable());
+        assertFalse(engine.isShutdown());
+        assertFalse(engine.isFailed());
+        assertNull(engine.failureCause());
+        assertEquals(EngineState.STARTED, engine.state());
+
+        engine.shutdown();
+
+        assertFalse(engine.isWritable());
+        assertTrue(engine.isShutdown());
+        assertFalse(engine.isFailed());
+        assertNull(engine.failureCause());
+        assertEquals(EngineState.SHUTDOWN, engine.state());
+
+        assertNotNull(connection);
+        assertNull(failure);
+    }
+
+    @Test
+    public void testEngineFailure() {
+        ProtonEngine engine = (ProtonEngine) EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result);
+
+        // Engine cannot accept input bytes until started.
+        assertFalse(engine.isWritable());
+
+        Connection connection = engine.start();
+        assertNotNull(connection);
+
+        assertTrue(engine.isWritable());
+        assertFalse(engine.isShutdown());
+        assertFalse(engine.isFailed());
+        assertNull(engine.failureCause());
+        assertEquals(EngineState.STARTED, engine.state());
+
+        engine.engineFailed(new SaslException());
+
+        assertFalse(engine.isWritable());
+        assertTrue(engine.isShutdown());
+        assertTrue(engine.isFailed());
+        assertNotNull(engine.failureCause());
+        assertEquals(EngineState.FAILED, engine.state());
+
+        assertNotNull(connection);
+        assertNotNull(failure);
+        assertTrue(failure instanceof SaslException);
     }
 
     @Test
