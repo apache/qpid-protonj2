@@ -281,17 +281,61 @@ public abstract class ScriptWriter {
     public void expectSASLPlainConnect(String username, String password) {
         expectSASLHeader().respondWithSASLPHeader();
         remoteSaslMechanisms().withMechanisms("PLAIN").queue();
+        expectSaslInit().withMechanism("PLAIN").withInitialResponse(saslPlainInitialResponse(username, password));
+        remoteSaslOutcome().withCode(SaslCode.OK).queue();
+        expectAMQPHeader().respondWithAMQPHeader();
+    }
 
-        // SASL PLAIN initial response encoding
+    /**
+     * Creates all the scripted elements needed for a successful SASL XOAUTH2
+     * connection.
+     * <p>
+     * For this exchange the SASL header is expected which is responded to with the
+     * corresponding SASL header and an immediate SASL mechanisms frame that only
+     * advertises XOAUTH2 as the mechanism.  It is expected that the remote will
+     * send a SASL init with the XOAUTH2 mechanism selected and the outcome is
+     * predefined as success.  Once done the expectation is added for the AMQP
+     * header to arrive and a header response will be sent.
+     *
+     * @param username
+     *      The user name that is expected in the SASL initial response.
+     * @param password
+     *      The password that is expected in the SASL initial response.
+     */
+    public void expectSaslXOauth2Connect(String username, String password) {
+        expectSASLHeader().respondWithSASLPHeader();
+        remoteSaslMechanisms().withMechanisms("XOAUTH2").queue();
+        expectSaslInit().withMechanism("XOAUTH2").withInitialResponse(saslXOauth2InitialResponse(username, password));
+        remoteSaslOutcome().withCode(SaslCode.OK).queue();
+        expectAMQPHeader().respondWithAMQPHeader();
+    }
+
+    //----- Utility methods for tests writing raw scripted SASL tests
+
+    public byte[] saslPlainInitialResponse(String username, String password) {
         byte[] usernameBytes = username.getBytes(StandardCharsets.UTF_8);
         byte[] passwordBytes = password.getBytes(StandardCharsets.UTF_8);
         byte[] initialResponse = new byte[usernameBytes.length+passwordBytes.length+2];
         System.arraycopy(usernameBytes, 0, initialResponse, 1, usernameBytes.length);
         System.arraycopy(passwordBytes, 0, initialResponse, 2 + usernameBytes.length, passwordBytes.length);
 
-        expectSaslInit().withMechanism("PLAIN").withInitialResponse(initialResponse);
-        remoteSaslOutcome().withCode(SaslCode.OK).queue();
-        expectAMQPHeader().respondWithAMQPHeader();
+        return initialResponse;
+    }
+
+    public byte[] saslXOauth2InitialResponse(String username, String password) {
+        byte[] usernameBytes = username.getBytes(StandardCharsets.UTF_8);
+        byte[] passwordBytes = password.getBytes(StandardCharsets.UTF_8);
+        byte[] initialResponse = new byte[usernameBytes.length+passwordBytes.length+20];
+
+        System.arraycopy("user=".getBytes(StandardCharsets.US_ASCII), 0, initialResponse, 0, 5);
+        System.arraycopy(usernameBytes, 0, initialResponse, 5, usernameBytes.length);
+        initialResponse[5 + usernameBytes.length] = 1;
+        System.arraycopy("auth=Bearer ".getBytes(StandardCharsets.US_ASCII), 0, initialResponse, 6+usernameBytes.length, 12);
+        System.arraycopy(passwordBytes, 0, initialResponse, 18 + usernameBytes.length, passwordBytes.length);
+        initialResponse[initialResponse.length - 2] = 1;
+        initialResponse[initialResponse.length - 1] = 1;
+
+        return initialResponse;
     }
 
     //----- Immediate operations performed outside the test script

@@ -68,19 +68,27 @@ public final class SaslMechanismSelector {
     public Mechanism select(Symbol[] serverMechs, SaslCredentialsProvider credentials) {
         Mechanism selected = null;
 
-        Set<Symbol> matching = new LinkedHashSet<>(serverMechs.length);
+        Set<Symbol> candidates = new LinkedHashSet<>(serverMechs.length);
         for (Symbol serverMech : serverMechs) {
-            matching.add(serverMech);
+            candidates.add(serverMech);
         }
 
         if (!allowedMechanisms.isEmpty()) {
-            matching.retainAll(allowedMechanisms);
+            candidates.retainAll(allowedMechanisms);
         }
 
-        for (Symbol match : matching) {
-            SaslMechanisms option = SaslMechanisms.valueOf(match);
-            if (option.isApplicable(credentials)) {
-                selected = option.createMechanism();
+        for (Symbol match : candidates) {
+            final SaslMechanisms potential;
+
+            try {
+                potential = SaslMechanisms.valueOf(match);
+            } catch (Throwable e) {
+                // No match in supported mechanisms
+                continue;
+            }
+
+            if (potential.isApplicable(credentials)) {
+                selected = potential.createMechanism();
                 break;
             }
         }
