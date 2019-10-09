@@ -129,6 +129,7 @@ public class AMQPerativeTestSupport {
     }
 
     private static final int PORT = Integer.getInteger("activemq.test.amqp.port", 0);
+    private static final int WS_PORT = Integer.getInteger("activemq.test.ws.port", 0);
 
     protected String getAmqpTransformer() {
         return "jms";
@@ -140,6 +141,10 @@ public class AMQPerativeTestSupport {
 
     protected int getIOBufferSize() {
         return 8 * 1024;
+    }
+
+    protected boolean isAddWebSocketConnector() {
+        return false;
     }
 
     protected boolean isAddOpenWireConnector() {
@@ -187,19 +192,25 @@ public class AMQPerativeTestSupport {
         }
     }
 
-    public String getAmqpFailoverURI() throws Exception {
-        StringBuilder uri = new StringBuilder();
-        uri.append("failover://(");
-        uri.append(brokerService.getTransportConnectorByName("amqp").getPublishableConnectString());
+    public URI getBrokerWebSocketConnectionURI() {
+        try {
+            if (!isAddWebSocketConnector()) {
+                throw new IllegalStateException("BrokerService was not configured with a WS transport connector");
+            }
 
-        for (BrokerService broker : brokers) {
-            uri.append(",");
-            uri.append(broker.getTransportConnectorByName("amqp").getPublishableConnectString());
+            String uri = "ws://127.0.0.1:" +
+                brokerService.getTransportConnectorByName("ws").getPublishableConnectURI().getPort();
+
+            if (!getAmqpConnectionURIOptions().isEmpty()) {
+                uri = uri + "?amqp.traceFrames=" + isFrameTracingEnabled() + "&" + getAmqpConnectionURIOptions();
+            } else {
+                uri = uri + "?amqp.traceFrames=" + isFrameTracingEnabled();
+            }
+
+            return new URI(uri);
+        } catch (Exception e) {
+            throw new RuntimeException();
         }
-
-        uri.append(")");
-
-        return uri.toString();
     }
 
     protected boolean isPersistent() {
@@ -299,6 +310,18 @@ public class AMQPerativeTestSupport {
         connector.setName("amqp");
         port = connector.getPublishableConnectURI().getPort();
         LOG.debug("Using amqp port: {}", port);
+
+        if (isAddWebSocketConnector()) {
+            int ws_port = WS_PORT;
+            if (portMap.containsKey("ws")) {
+                ws_port = portMap.get("ws");
+            }
+            TransportConnector wsConnector = brokerService.addConnector(
+                "ws://0.0.0.0:" + ws_port + "?websocket.maxBinaryMessageSize=1048576");
+            wsConnector.setName("ws");
+            ws_port = wsConnector.getPublishableConnectURI().getPort();
+            LOG.debug("Using WebSocket port: {}", ws_port);
+        }
 
         if (isAddOpenWireConnector()) {
             if (portMap.containsKey("openwire")) {

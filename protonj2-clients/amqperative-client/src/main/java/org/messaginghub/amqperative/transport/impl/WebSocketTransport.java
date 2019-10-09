@@ -21,6 +21,7 @@ import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
+import org.messaginghub.amqperative.SslOptions;
 import org.messaginghub.amqperative.TransportOptions;
 import org.messaginghub.amqperative.transport.TransportListener;
 import org.slf4j.Logger;
@@ -61,11 +62,11 @@ public class WebSocketTransport extends TcpTransport {
      *        the URI that defines the remote resource to connect to.
      * @param options
      *        the transport options used to configure the socket connection.
-     * @param secure
-     * 		  should the transport enable an SSL layer.
+     * @param sslOptions
+     * 		  SSL options to use if the options indicate SSL support is enabled.
      */
-    public WebSocketTransport(URI remoteLocation, TransportOptions options, boolean secure) {
-        super(null, remoteLocation, options, secure);
+    public WebSocketTransport(URI remoteLocation, TransportOptions options, SslOptions sslOptions) {
+        super(null, remoteLocation, options, sslOptions);
     }
 
     /**
@@ -77,11 +78,11 @@ public class WebSocketTransport extends TcpTransport {
      *        the URI that defines the remote resource to connect to.
      * @param options
      *        the transport options used to configure the socket connection.
-     * @param secure
-     * 		  should the transport enable an SSL layer.
+     * @param sslOptions
+     * 		  SSL options to use if the options indicate SSL support is enabled.
      */
-    public WebSocketTransport(TransportListener listener, URI remoteLocation, TransportOptions options, boolean secure) {
-        super(listener, remoteLocation, options, secure);
+    public WebSocketTransport(TransportListener listener, URI remoteLocation, TransportOptions options, SslOptions sslOptions) {
+        super(listener, remoteLocation, options, sslOptions);
     }
 
     @Override

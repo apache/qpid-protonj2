@@ -31,8 +31,9 @@ import javax.net.ServerSocketFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
 
+import org.messaginghub.amqperative.SslOptions;
 import org.messaginghub.amqperative.TransportOptions;
-import org.messaginghub.amqperative.transport.TransportSupport;
+import org.messaginghub.amqperative.transport.SslSupport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -84,10 +85,9 @@ public abstract class NettyServer implements AutoCloseable {
     private EventLoopGroup workerGroup;
     private Channel serverChannel;
     private final TransportOptions options;
-    private final boolean secure;
+    private final SslOptions sslOptions;
     private int serverPort;
     private final boolean needClientAuth;
-    private final boolean webSocketServer;
     private int maxFrameSize = TcpTransport.DEFAULT_MAX_FRAME_SIZE;
     private String webSocketPath = WEBSOCKET_PATH;
     private volatile boolean fragmentWrites;
@@ -97,27 +97,22 @@ public abstract class NettyServer implements AutoCloseable {
 
     private final AtomicBoolean started = new AtomicBoolean();
 
-    public NettyServer(TransportOptions options, boolean secure) {
-        this(options, secure, false);
+    public NettyServer(TransportOptions options, SslOptions sslOptions) {
+        this(options, sslOptions, false);
     }
 
-    public NettyServer(TransportOptions options, boolean secure, boolean needClientAuth) {
-        this(options, secure, needClientAuth, false);
-    }
-
-    public NettyServer(TransportOptions options, boolean secure, boolean needClientAuth, boolean webSocketServer) {
-        this.secure = secure;
+    public NettyServer(TransportOptions options, SslOptions sslOptions, boolean needClientAuth) {
+        this.sslOptions = sslOptions;
         this.options = options;
         this.needClientAuth = needClientAuth;
-        this.webSocketServer = webSocketServer;
     }
 
     public boolean isSecureServer() {
-        return secure;
+        return sslOptions.isSSLEnabled();
     }
 
     public boolean isWebSocketServer() {
-        return webSocketServer;
+        return options.isUseWebSockets();
     }
 
     public String getWebSocketPath() {
@@ -137,7 +132,7 @@ public abstract class NettyServer implements AutoCloseable {
     }
 
     public void setFragmentWrites(boolean fragmentWrites) {
-        if(!webSocketServer) {
+        if(!isWebSocketServer()) {
             throw new IllegalStateException("Only applicable to WebSocket servers");
         }
 
@@ -207,15 +202,15 @@ public abstract class NettyServer implements AutoCloseable {
                 @Override
                 public void initChannel(Channel ch) throws Exception {
                     if (isSecureServer()) {
-                        SSLContext context = TransportSupport.createJdkSslContext(options);
-                        SSLEngine engine = TransportSupport.createJdkSslEngine(null, context, options);
+                        SSLContext context = SslSupport.createJdkSslContext(sslOptions);
+                        SSLEngine engine = SslSupport.createJdkSslEngine(null, context, sslOptions);
                         engine.setUseClientMode(false);
                         engine.setNeedClientAuth(needClientAuth);
                         sslHandler = new SslHandler(engine);
                         ch.pipeline().addLast(sslHandler);
                     }
 
-                    if (webSocketServer) {
+                    if (isWebSocketServer()) {
                         ch.pipeline().addLast(new HttpServerCodec());
                         ch.pipeline().addLast(new HttpObjectAggregator(65536));
                         ch.pipeline().addLast(new WebSocketServerProtocolHandler(getWebSocketPath(), "amqp", true, maxFrameSize));

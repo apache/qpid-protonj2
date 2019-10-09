@@ -30,9 +30,9 @@ import java.security.cert.X509Certificate;
 import java.util.concurrent.TimeUnit;
 
 import org.junit.Test;
+import org.messaginghub.amqperative.SslOptions;
 import org.messaginghub.amqperative.TransportOptions;
 import org.messaginghub.amqperative.transport.Transport;
-import org.messaginghub.amqperative.transport.TransportListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -60,26 +60,38 @@ public class SslTransportTest extends TcpTransportTest {
     public static final String KEYSTORE_TYPE = "jks";
 
     @Override
-    @Test(timeout = 60 * 1000)
+    @Test(timeout = 60000)
     public void testCreateWithNullOptionsThrowsIAE() throws Exception {
         URI serverLocation = new URI("tcp://localhost:5762");
 
         try {
-            createTransport(serverLocation, testListener, null);
+            createTransport(serverLocation, testListener, null, null);
+            fail("Should have thrown IllegalArgumentException");
+        } catch (IllegalArgumentException iae) {
+        }
+
+        try {
+            createTransport(serverLocation, testListener, new TransportOptions(), null);
+            fail("Should have thrown IllegalArgumentException");
+        } catch (IllegalArgumentException iae) {
+        }
+
+        try {
+            createTransport(serverLocation, testListener, null, new SslOptions());
             fail("Should have thrown IllegalArgumentException");
         } catch (IllegalArgumentException iae) {
         }
     }
 
-    @Test(timeout = 60 * 1000)
+    @Test(timeout = 60000)
     public void testConnectToServerWithoutTrustStoreFails() throws Exception {
-        try (NettyEchoServer server = createEchoServer(createServerOptions())) {
+        try (NettyEchoServer server = createEchoServer()) {
             server.start();
 
             int port = server.getServerPort();
             URI serverLocation = new URI("tcp://localhost:" + port);
 
-            Transport transport = createTransport(serverLocation, testListener, createClientOptionsWithoutTrustStore(false));
+            Transport transport = createTransport(serverLocation, testListener, createTransportOptions(), createSSLOptionsWithoutTrustStore(false));
             try {
                 transport.connect(null, null);
                 fail("Should not have connected to the server: " + serverLocation);
@@ -97,20 +109,20 @@ public class SslTransportTest extends TcpTransportTest {
         assertTrue(exceptions.isEmpty());
     }
 
-    @Test(timeout = 60 * 1000)
+    @Test(timeout = 60000)
     public void testConnectToServerUsingUntrustedKeyFails() throws Exception {
-        try (NettyEchoServer server = createEchoServer(createServerOptions())) {
+        try (NettyEchoServer server = createEchoServer()) {
             server.start();
 
             int port = server.getServerPort();
             URI serverLocation = new URI("tcp://localhost:" + port);
 
-            TransportOptions options = new TransportOptions();
+            SslOptions sslOptions = createSSLOptions();
 
-            options.setTrustStoreLocation(OTHER_CA_TRUSTSTORE);
-            options.setTrustStorePassword(PASSWORD);
+            sslOptions.setTrustStoreLocation(OTHER_CA_TRUSTSTORE);
+            sslOptions.setTrustStorePassword(PASSWORD);
 
-            Transport transport = createTransport(serverLocation, testListener, options);
+            Transport transport = createTransport(serverLocation, testListener, createTransportOptions(), sslOptions);
             try {
                 transport.connect(null, null);
                 fail("Should not have connected to the server: " + serverLocation);
@@ -124,15 +136,15 @@ public class SslTransportTest extends TcpTransportTest {
         }
     }
 
-    @Test(timeout = 60 * 1000)
+    @Test(timeout = 60000)
     public void testConnectToServerClientTrustsAll() throws Exception {
-        try (NettyEchoServer server = createEchoServer(createServerOptions())) {
+        try (NettyEchoServer server = createEchoServer()) {
             server.start();
 
             int port = server.getServerPort();
             URI serverLocation = new URI("tcp://localhost:" + port);
 
-            Transport transport = createTransport(serverLocation, testListener, createClientOptionsWithoutTrustStore(true));
+            Transport transport = createTransport(serverLocation, testListener, createTransportOptions(), createSSLOptionsWithoutTrustStore(true));
             try {
                 transport.connect(null, null);
                 LOG.info("Connection established to untrusted test server: {}", serverLocation);
@@ -150,19 +162,15 @@ public class SslTransportTest extends TcpTransportTest {
         assertTrue(exceptions.isEmpty());
     }
 
-    @Test(timeout = 60 * 1000)
+    @Test(timeout = 60000)
     public void testConnectWithNeedClientAuth() throws Exception {
-        TransportOptions serverOptions = createServerOptions();
-
-        try (NettyEchoServer server = createEchoServer(serverOptions, true)) {
+        try (NettyEchoServer server = createEchoServer(true)) {
             server.start();
 
             int port = server.getServerPort();
             URI serverLocation = new URI("tcp://localhost:" + port);
 
-            TransportOptions clientOptions = createClientOptions();
-
-            TcpTransport transport = createTransport(serverLocation, testListener, clientOptions);
+            Transport transport = createTransport(serverLocation, testListener, createTransportOptions(), createSSLOptions());
             try {
                 transport.connect(null, null);
                 LOG.info("Connection established to test server: {}", serverLocation);
@@ -184,26 +192,24 @@ public class SslTransportTest extends TcpTransportTest {
         assertTrue(exceptions.isEmpty());
     }
 
-    @Test(timeout = 60 * 1000)
+    @Test(timeout = 60000)
     public void testConnectWithSpecificClientAuthKeyAlias() throws Exception {
         doClientAuthAliasTestImpl(CLIENT_KEY_ALIAS, CLIENT_DN);
         doClientAuthAliasTestImpl(CLIENT2_KEY_ALIAS, CLIENT2_DN);
     }
 
     private void doClientAuthAliasTestImpl(String alias, String expectedDN) throws Exception, URISyntaxException, IOException, InterruptedException {
-        TransportOptions serverOptions = createServerOptions();
-
-        try (NettyEchoServer server = createEchoServer(serverOptions, true)) {
+        try (NettyEchoServer server = createEchoServer(true)) {
             server.start();
 
             int port = server.getServerPort();
             URI serverLocation = new URI("tcp://localhost:" + port);
 
-            TransportOptions clientOptions = createClientOptions();
-            clientOptions.setKeyStoreLocation(CLIENT_MULTI_KEYSTORE);
-            clientOptions.setKeyAlias(alias);
+            SslOptions sslOptions = createSSLOptions();
+            sslOptions.setKeyStoreLocation(CLIENT_MULTI_KEYSTORE);
+            sslOptions.setKeyAlias(alias);
 
-            TcpTransport transport = createTransport(serverLocation, testListener, clientOptions);
+            Transport transport = createTransport(serverLocation, testListener, createTransportOptions(), sslOptions);
             try {
                 transport.connect(null, null);
                 LOG.info("Connection established to test server: {}", serverLocation);
@@ -231,18 +237,18 @@ public class SslTransportTest extends TcpTransportTest {
         assertTrue(exceptions.isEmpty());
     }
 
-    @Test(timeout = 60 * 1000)
+    @Test(timeout = 60000)
     public void testConnectToServerVerifyHost() throws Exception {
         doConnectToServerVerifyHostTestImpl(true);
     }
 
-    @Test(timeout = 60 * 1000)
+    @Test(timeout = 60000)
     public void testConnectToServerNoVerifyHost() throws Exception {
         doConnectToServerVerifyHostTestImpl(false);
     }
 
     private void doConnectToServerVerifyHostTestImpl(boolean verifyHost) throws Exception, URISyntaxException, IOException, InterruptedException {
-        TransportOptions serverOptions = createServerOptions();
+        SslOptions serverOptions = createServerSSLOptions();
         serverOptions.setKeyStoreLocation(SERVER_WRONG_HOST_KEYSTORE);
 
         try (NettyEchoServer server = createEchoServer(serverOptions)) {
@@ -251,7 +257,7 @@ public class SslTransportTest extends TcpTransportTest {
             int port = server.getServerPort();
             URI serverLocation = new URI("tcp://localhost:" + port);
 
-            TransportOptions clientOptions = createClientOptionsIsVerify(verifyHost);
+            SslOptions clientOptions = createSSLOptionsIsVerify(verifyHost);
 
             if (verifyHost) {
                 assertTrue("Expected verifyHost to be true", clientOptions.isVerifyHost());
@@ -259,7 +265,7 @@ public class SslTransportTest extends TcpTransportTest {
                 assertFalse("Expected verifyHost to be false", clientOptions.isVerifyHost());
             }
 
-            Transport transport = createTransport(serverLocation, testListener, clientOptions);
+            Transport transport = createTransport(serverLocation, testListener, createTransportOptions(), clientOptions);
             try {
                 transport.connect(null, null);
                 if (verifyHost) {
@@ -285,28 +291,14 @@ public class SslTransportTest extends TcpTransportTest {
     }
 
     @Override
-    protected TcpTransport createTransport(URI serverLocation, TransportListener listener, TransportOptions options) {
-        return new TcpTransport(listener, serverLocation, options, true);
+    protected SslOptions createSSLOptions() {
+        return createSSLOptionsIsVerify(false);
     }
 
-    @Override
-    protected NettyEchoServer createEchoServer(TransportOptions options) {
-        return createEchoServer(options, false);
-    }
+    protected SslOptions createSSLOptionsIsVerify(boolean verifyHost) {
+        SslOptions options = new SslOptions();
 
-    @Override
-    protected NettyEchoServer createEchoServer(TransportOptions options, boolean needClientAuth) {
-        return new NettyEchoServer(options, true, needClientAuth);
-    }
-
-    @Override
-    protected TransportOptions createClientOptions() {
-        return createClientOptionsIsVerify(false);
-    }
-
-    protected TransportOptions createClientOptionsIsVerify(boolean verifyHost) {
-        TransportOptions options = new TransportOptions();
-
+        options.setSSLEnabled(true);
         options.setKeyStoreLocation(CLIENT_KEYSTORE);
         options.setKeyStorePassword(PASSWORD);
         options.setTrustStoreLocation(CLIENT_TRUSTSTORE);
@@ -317,26 +309,28 @@ public class SslTransportTest extends TcpTransportTest {
         return options;
     }
 
+    protected SslOptions createSSLOptionsWithoutTrustStore(boolean trustAll) {
+        SslOptions options = new SslOptions();
+
+        options.setSSLEnabled(true);
+        options.setStoreType(KEYSTORE_TYPE);
+        options.setTrustAll(trustAll);
+
+        return options;
+    }
+
     @Override
-    protected TransportOptions createServerOptions() {
-        TransportOptions options = new TransportOptions();
+    protected SslOptions createServerSSLOptions() {
+        SslOptions options = new SslOptions();
 
         // Run the server in JDK mode for now to validate cross compatibility
+        options.setSSLEnabled(true);
         options.setKeyStoreLocation(SERVER_KEYSTORE);
         options.setKeyStorePassword(PASSWORD);
         options.setTrustStoreLocation(SERVER_TRUSTSTORE);
         options.setTrustStorePassword(PASSWORD);
         options.setStoreType(KEYSTORE_TYPE);
         options.setVerifyHost(false);
-
-        return options;
-    }
-
-    protected TransportOptions createClientOptionsWithoutTrustStore(boolean trustAll) {
-        TransportOptions options = new TransportOptions();
-
-        options.setStoreType(KEYSTORE_TYPE);
-        options.setTrustAll(trustAll);
 
         return options;
     }

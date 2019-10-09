@@ -35,6 +35,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.Ignore;
 import org.junit.Test;
+import org.messaginghub.amqperative.SslOptions;
 import org.messaginghub.amqperative.TransportOptions;
 import org.messaginghub.amqperative.impl.ClientThreadFactory;
 import org.messaginghub.amqperative.test.AMQPerativeTestCase;
@@ -69,11 +70,11 @@ public class TcpTransportTest extends AMQPerativeTestCase {
 
     protected final TransportListener testListener = new NettyTransportListener(false);
 
-    @Test(timeout = 60 * 1000)
+    @Test(timeout = 60000)
     public void testCloseOnNeverConnectedTransport() throws Exception {
         URI serverLocation = new URI("tcp://localhost:5762");
 
-        Transport transport = createTransport(serverLocation, testListener, createClientOptions());
+        Transport transport = createTransport(serverLocation, testListener, createTransportOptions(), createServerSSLOptions());
         assertFalse(transport.isConnected());
 
         transport.close();
@@ -83,12 +84,24 @@ public class TcpTransportTest extends AMQPerativeTestCase {
         assertTrue(data.isEmpty());
     }
 
-    @Test(timeout = 60 * 1000)
+    @Test(timeout = 60000)
     public void testCreateWithNullOptionsThrowsIAE() throws Exception {
         URI serverLocation = new URI("tcp://localhost:5762");
 
         try {
-            createTransport(serverLocation, testListener, null);
+            createTransport(serverLocation, testListener, null, null);
+            fail("Should have thrown IllegalArgumentException");
+        } catch (IllegalArgumentException iae) {
+        }
+
+        try {
+            createTransport(serverLocation, testListener, createTransportOptions(), null);
+            fail("Should have thrown IllegalArgumentException");
+        } catch (IllegalArgumentException iae) {
+        }
+
+        try {
+            createTransport(serverLocation, testListener, null, createSSLOptions());
             fail("Should have thrown IllegalArgumentException");
         } catch (IllegalArgumentException iae) {
         }
@@ -96,14 +109,14 @@ public class TcpTransportTest extends AMQPerativeTestCase {
 
     @Test(timeout = 60000)
     public void testConnectWithCustomThreadFactoryConfigured() throws Exception {
-        try (NettyEchoServer server = createEchoServer(createServerOptions())) {
+        try (NettyEchoServer server = createEchoServer()) {
             server.start();
 
             int port = server.getServerPort();
             URI serverLocation = new URI("tcp://localhost:" + port);
             ClientThreadFactory factory = new ClientThreadFactory("NettyTransportTest", true);
 
-            Transport transport = createTransport(serverLocation, testListener, createClientOptions());
+            Transport transport = createTransport(serverLocation, testListener, createTransportOptions(), createSSLOptions());
             transport.setThreadFactory(factory);
 
             try {
@@ -130,9 +143,9 @@ public class TcpTransportTest extends AMQPerativeTestCase {
         assertTrue(data.isEmpty());
     }
 
-    @Test(timeout = 60 * 1000)
+    @Test(timeout = 60000)
     public void testConnectWithoutRunningServer() throws Exception {
-        try (NettyEchoServer server = createEchoServer(createServerOptions())) {
+        try (NettyEchoServer server = createEchoServer()) {
             server.start();
 
             int port = server.getServerPort();
@@ -140,7 +153,7 @@ public class TcpTransportTest extends AMQPerativeTestCase {
 
             server.close();
 
-            Transport transport = createTransport(serverLocation, testListener, createClientOptions());
+            Transport transport = createTransport(serverLocation, testListener, createTransportOptions(), createSSLOptions());
             try {
                 transport.connect(null, null);
                 fail("Should have failed to connect to the server: " + serverLocation);
@@ -158,15 +171,15 @@ public class TcpTransportTest extends AMQPerativeTestCase {
         assertTrue(data.isEmpty());
     }
 
-    @Test(timeout = 60 * 1000)
+    @Test(timeout = 60000)
     public void testConnectWithoutListenerFails() throws Exception {
-        try (NettyEchoServer server = createEchoServer(createServerOptions())) {
+        try (NettyEchoServer server = createEchoServer()) {
             server.start();
 
             int port = server.getServerPort();
             URI serverLocation = new URI("tcp://localhost:" + port);
 
-            Transport transport = createTransport(serverLocation, null, createClientOptions());
+            Transport transport = createTransport(serverLocation, null, createTransportOptions(), createSSLOptions());
             try {
                 transport.connect(null, null);
                 fail("Should have failed to connect to the server: " + serverLocation);
@@ -180,15 +193,15 @@ public class TcpTransportTest extends AMQPerativeTestCase {
         }
     }
 
-    @Test(timeout = 60 * 1000)
+    @Test(timeout = 60000)
     public void testConnectAfterListenerSetWorks() throws Exception {
-        try (NettyEchoServer server = createEchoServer(createServerOptions())) {
+        try (NettyEchoServer server = createEchoServer()) {
             server.start();
 
             int port = server.getServerPort();
             URI serverLocation = new URI("tcp://localhost:" + port);
 
-            Transport transport = createTransport(serverLocation, null, createClientOptions());
+            Transport transport = createTransport(serverLocation, null, createTransportOptions(), createSSLOptions());
             assertNull(transport.getTransportListener());
             transport.setTransportListener(testListener);
             assertNotNull(transport.getTransportListener());
@@ -206,15 +219,15 @@ public class TcpTransportTest extends AMQPerativeTestCase {
         }
     }
 
-    @Test(timeout = 60 * 1000)
+    @Test(timeout = 60000)
     public void testConnectToServer() throws Exception {
-        try (NettyEchoServer server = createEchoServer(createServerOptions())) {
+        try (NettyEchoServer server = createEchoServer()) {
             server.start();
 
             int port = server.getServerPort();
             URI serverLocation = new URI("tcp://localhost:" + port);
 
-            Transport transport = createTransport(serverLocation, testListener, createClientOptions());
+            Transport transport = createTransport(serverLocation, testListener, createTransportOptions(), createSSLOptions());
             try {
                 transport.connect(null, null);
                 LOG.info("Connected to server:{} as expected.", serverLocation);
@@ -236,11 +249,11 @@ public class TcpTransportTest extends AMQPerativeTestCase {
         assertTrue(data.isEmpty());
     }
 
-    @Test(timeout = 60 * 1000)
+    @Test(timeout = 60000)
     public void testMultipleConnectionsToServer() throws Exception {
         final int CONNECTION_COUNT = 10;
 
-        try (NettyEchoServer server = createEchoServer(createServerOptions())) {
+        try (NettyEchoServer server = createEchoServer()) {
             server.start();
 
             int port = server.getServerPort();
@@ -249,7 +262,7 @@ public class TcpTransportTest extends AMQPerativeTestCase {
             List<Transport> transports = new ArrayList<Transport>();
 
             for (int i = 0; i < CONNECTION_COUNT; ++i) {
-                Transport transport = createTransport(serverLocation, testListener, createClientOptions());
+                Transport transport = createTransport(serverLocation, testListener, createTransportOptions(), createSSLOptions());
                 try {
                     transport.connect(null, null);
                     assertTrue(transport.isConnected());
@@ -270,7 +283,7 @@ public class TcpTransportTest extends AMQPerativeTestCase {
         assertTrue(data.isEmpty());
     }
 
-    @Test(timeout = 60 * 1000)
+    @Test(timeout = 60000)
     public void testMultipleConnectionsSendReceive() throws Exception {
         final int CONNECTION_COUNT = 10;
         final int FRAME_SIZE = 8;
@@ -280,7 +293,7 @@ public class TcpTransportTest extends AMQPerativeTestCase {
             sendBuffer.writeByte('A');
         }
 
-        try (NettyEchoServer server = createEchoServer(createServerOptions())) {
+        try (NettyEchoServer server = createEchoServer()) {
             server.start();
 
             int port = server.getServerPort();
@@ -289,7 +302,7 @@ public class TcpTransportTest extends AMQPerativeTestCase {
             List<Transport> transports = new ArrayList<Transport>();
 
             for (int i = 0; i < CONNECTION_COUNT; ++i) {
-                Transport transport = createTransport(serverLocation, testListener, createClientOptions());
+                Transport transport = createTransport(serverLocation, testListener, createTransportOptions(), createSSLOptions());
                 try {
                     transport.connect(null, null);
                     transport.writeAndFlush(sendBuffer.copy());
@@ -315,17 +328,17 @@ public class TcpTransportTest extends AMQPerativeTestCase {
         assertTrue(exceptions.isEmpty());
     }
 
-    @Test(timeout = 60 * 1000)
+    @Test(timeout = 60000)
     public void testDetectServerClose() throws Exception {
         Transport transport = null;
 
-        try (NettyEchoServer server = createEchoServer(createServerOptions())) {
+        try (NettyEchoServer server = createEchoServer()) {
             server.start();
 
             int port = server.getServerPort();
             URI serverLocation = new URI("tcp://localhost:" + port);
 
-            transport = createTransport(serverLocation, testListener, createClientOptions());
+            transport = createTransport(serverLocation, testListener, createTransportOptions(), createSSLOptions());
             try {
                 transport.connect(null, null);
                 LOG.info("Connected to server:{} as expected.", serverLocation);
@@ -355,15 +368,15 @@ public class TcpTransportTest extends AMQPerativeTestCase {
         }
     }
 
-    @Test(timeout = 60 * 1000)
+    @Test(timeout = 60000)
     public void testZeroSizedSentNoErrors() throws Exception {
-        try (NettyEchoServer server = createEchoServer(createServerOptions())) {
+        try (NettyEchoServer server = createEchoServer()) {
             server.start();
 
             int port = server.getServerPort();
             URI serverLocation = new URI("tcp://localhost:" + port);
 
-            Transport transport = createTransport(serverLocation, testListener, createClientOptions());
+            Transport transport = createTransport(serverLocation, testListener, createTransportOptions(), createSSLOptions());
             try {
                 transport.connect(null, null);
                 LOG.info("Connected to server:{} as expected.", serverLocation);
@@ -383,15 +396,15 @@ public class TcpTransportTest extends AMQPerativeTestCase {
         assertTrue(data.isEmpty());
     }
 
-    @Test(timeout = 60 * 1000)
+    @Test(timeout = 60000)
     public void testDataSentIsReceived() throws Exception {
-        try (NettyEchoServer server = createEchoServer(createServerOptions())) {
+        try (NettyEchoServer server = createEchoServer()) {
             server.start();
 
             int port = server.getServerPort();
             URI serverLocation = new URI("tcp://localhost:" + port);
 
-            Transport transport = createTransport(serverLocation, testListener, createClientOptions());
+            Transport transport = createTransport(serverLocation, testListener, createTransportOptions(), createSSLOptions());
             try {
                 transport.connect(null, null);
                 LOG.info("Connected to server:{} as expected.", serverLocation);
@@ -424,25 +437,25 @@ public class TcpTransportTest extends AMQPerativeTestCase {
         assertTrue(exceptions.isEmpty());
     }
 
-    @Test(timeout = 60 * 1000)
+    @Test(timeout = 60000)
     public void testMultipleDataPacketsSentAreReceived() throws Exception {
         doMultipleDataPacketsSentAndReceive(SEND_BYTE_COUNT, 1);
     }
 
-    @Test(timeout = 60 * 1000)
+    @Test(timeout = 60000)
     public void testMultipleDataPacketsSentAreReceivedRepeatedly() throws Exception {
         doMultipleDataPacketsSentAndReceive(SEND_BYTE_COUNT, 10);
     }
 
     public void doMultipleDataPacketsSentAndReceive(final int byteCount, final int iterations) throws Exception {
 
-        try (NettyEchoServer server = createEchoServer(createServerOptions())) {
+        try (NettyEchoServer server = createEchoServer()) {
             server.start();
 
             int port = server.getServerPort();
             URI serverLocation = new URI("tcp://localhost:" + port);
 
-            Transport transport = createTransport(serverLocation, testListener, createClientOptions());
+            Transport transport = createTransport(serverLocation, testListener, createTransportOptions(), createSSLOptions());
             try {
                 transport.connect(null, null);
                 LOG.info("Connected to server:{} as expected.", serverLocation);
@@ -475,17 +488,17 @@ public class TcpTransportTest extends AMQPerativeTestCase {
         assertTrue(exceptions.isEmpty());
     }
 
-    @Test(timeout = 60 * 1000)
+    @Test(timeout = 60000)
     public void testSendToClosedTransportFails() throws Exception {
         Transport transport = null;
 
-        try (NettyEchoServer server = createEchoServer(createServerOptions())) {
+        try (NettyEchoServer server = createEchoServer()) {
             server.start();
 
             int port = server.getServerPort();
             URI serverLocation = new URI("tcp://localhost:" + port);
 
-            transport = createTransport(serverLocation, testListener, createClientOptions());
+            transport = createTransport(serverLocation, testListener, createTransportOptions(), createSSLOptions());
             try {
                 transport.connect(null, null);
                 LOG.info("Connected to server:{} as expected.", serverLocation);
@@ -508,14 +521,14 @@ public class TcpTransportTest extends AMQPerativeTestCase {
 
     @Test(timeout = 60000)
     public void testConnectRunsInitializationMethod() throws Exception {
-        try (NettyEchoServer server = createEchoServer(createServerOptions())) {
+        try (NettyEchoServer server = createEchoServer()) {
             server.start();
 
             int port = server.getServerPort();
             URI serverLocation = new URI("tcp://localhost:" + port);
             final AtomicBoolean initialized = new AtomicBoolean();
 
-            Transport transport = createTransport(serverLocation, testListener, createClientOptions());
+            Transport transport = createTransport(serverLocation, testListener, createTransportOptions(), createSSLOptions());
             try {
                 transport.connect(() -> initialized.set(true), null);
                 LOG.info("Connected to server:{} as expected.", serverLocation);
@@ -537,13 +550,13 @@ public class TcpTransportTest extends AMQPerativeTestCase {
 
     @Test(timeout = 60000)
     public void testFailureInInitializationRoutineFailsConnect() throws Exception {
-        try (NettyEchoServer server = createEchoServer(createServerOptions())) {
+        try (NettyEchoServer server = createEchoServer()) {
             server.start();
 
             int port = server.getServerPort();
             URI serverLocation = new URI("tcp://localhost:" + port);
 
-            Transport transport = createTransport(serverLocation, testListener, createClientOptions());
+            Transport transport = createTransport(serverLocation, testListener, createTransportOptions(), createSSLOptions());
             try {
                 transport.connect(() -> { throw new RuntimeException(); }, null);
                 fail("Should not have connected to the server at " + serverLocation);
@@ -563,20 +576,20 @@ public class TcpTransportTest extends AMQPerativeTestCase {
     }
 
     @Ignore("Used for checking for transport level leaks, my be unstable on CI.")
-    @Test(timeout = 60 * 1000)
+    @Test(timeout = 60000)
     public void testSendToClosedTransportFailsButDoesNotLeak() throws Exception {
         Transport transport = null;
 
         ResourceLeakDetector.setLevel(Level.PARANOID);
 
-        try (NettyEchoServer server = createEchoServer(createServerOptions())) {
+        try (NettyEchoServer server = createEchoServer()) {
             server.start();
 
             int port = server.getServerPort();
             URI serverLocation = new URI("tcp://localhost:" + port);
 
             for (int i = 0; i < 256; ++i) {
-                transport = createTransport(serverLocation, testListener, createClientOptions());
+                transport = createTransport(serverLocation, testListener, createTransportOptions(), createSSLOptions());
                 try {
                     transport.connect(null, null);
                     LOG.info("Connected to server:{} as expected.", serverLocation);
@@ -602,12 +615,12 @@ public class TcpTransportTest extends AMQPerativeTestCase {
         }
     }
 
-    @Test(timeout = 60 * 1000)
+    @Test(timeout = 60000)
     public void testConnectToServerWithEpollEnabled() throws Exception {
         doTestEpollSupport(true);
     }
 
-    @Test(timeout = 60 * 1000)
+    @Test(timeout = 60000)
     public void testConnectToServerWithEpollDisabled() throws Exception {
         doTestEpollSupport(false);
     }
@@ -615,16 +628,15 @@ public class TcpTransportTest extends AMQPerativeTestCase {
     private void doTestEpollSupport(boolean useEpoll) throws Exception {
         assumeTrue(Epoll.isAvailable());
 
-        try (NettyEchoServer server = createEchoServer(createServerOptions())) {
+        try (NettyEchoServer server = createEchoServer()) {
             server.start();
 
             int port = server.getServerPort();
             URI serverLocation = new URI("tcp://localhost:" + port);
 
-            TransportOptions options = createClientOptions();
-            options.setUseEpoll(useEpoll);
-            options.setUseKQueue(false);
-            Transport transport = createTransport(serverLocation, testListener, options);
+            TransportOptions options = createTransportOptions();
+            options.setAllowNativeIO(useEpoll);
+            Transport transport = createTransport(serverLocation, testListener, options, createSSLOptions());
             try {
                 transport.connect(null, null);
                 LOG.info("Connected to server:{} as expected.", serverLocation);
@@ -672,12 +684,12 @@ public class TcpTransportTest extends AMQPerativeTestCase {
         }
     }
 
-    @Test(timeout = 60 * 1000)
+    @Test(timeout = 60000)
     public void testConnectToServerWithKQueueEnabled() throws Exception {
         doTestKQueueSupport(true);
     }
 
-    @Test(timeout = 60 * 1000)
+    @Test(timeout = 60000)
     public void testConnectToServerWithKQueueDisabled() throws Exception {
         doTestKQueueSupport(false);
     }
@@ -685,16 +697,15 @@ public class TcpTransportTest extends AMQPerativeTestCase {
     private void doTestKQueueSupport(boolean useKQueue) throws Exception {
         assumeTrue(KQueue.isAvailable());
 
-        try (NettyEchoServer server = createEchoServer(createServerOptions())) {
+        try (NettyEchoServer server = createEchoServer()) {
             server.start();
 
             int port = server.getServerPort();
             URI serverLocation = new URI("tcp://localhost:" + port);
 
-            TransportOptions options = createClientOptions();
-            options.setUseKQueue(useKQueue);
-            options.setUseEpoll(false);
-            Transport transport = createTransport(serverLocation, testListener, options);
+            TransportOptions options = createTransportOptions();
+            options.setAllowNativeIO(true);
+            Transport transport = createTransport(serverLocation, testListener, options, createSSLOptions());
             try {
                 transport.connect(null, null);
                 LOG.info("Connected to server:{} as expected.", serverLocation);
@@ -742,20 +753,28 @@ public class TcpTransportTest extends AMQPerativeTestCase {
         }
     }
 
-    protected Transport createTransport(URI serverLocation, TransportListener listener, TransportOptions options) {
+    protected Transport createTransport(URI serverLocation, TransportListener listener, TransportOptions options, SslOptions sslOptios ) {
         if (listener == null) {
-            return new TcpTransport(serverLocation, options, false);
+            return new TcpTransport(serverLocation, options, sslOptios);
         } else {
-            return new TcpTransport(listener, serverLocation, options, false);
+            return new TcpTransport(listener, serverLocation, options, sslOptios);
         }
     }
 
-    protected TransportOptions createClientOptions() {
+    protected TransportOptions createTransportOptions() {
         return new TransportOptions();
     }
 
-    protected TransportOptions createServerOptions() {
+    protected SslOptions createSSLOptions() {
+        return new SslOptions().setSSLEnabled(false);
+    }
+
+    protected TransportOptions createServerTransportOptions() {
         return new TransportOptions();
+    }
+
+    protected SslOptions createServerSSLOptions() {
+        return new SslOptions().setSSLEnabled(false);
     }
 
     protected void logTransportErrors() {
@@ -766,12 +785,24 @@ public class TcpTransportTest extends AMQPerativeTestCase {
         }
     }
 
-    protected NettyEchoServer createEchoServer(TransportOptions options) {
+    protected final NettyEchoServer createEchoServer() {
+        return createEchoServer(false);
+    }
+
+    protected final NettyEchoServer createEchoServer(SslOptions options) {
         return createEchoServer(options, false);
     }
 
-    protected NettyEchoServer createEchoServer(TransportOptions options, boolean needClientAuth) {
-        return new NettyEchoServer(options, false, needClientAuth, false);
+    protected final NettyEchoServer createEchoServer(boolean needClientAuth) {
+        return createEchoServer(createServerSSLOptions(), needClientAuth);
+    }
+
+    protected final NettyEchoServer createEchoServer(SslOptions options, boolean needClientAuth) {
+        return createEchoServer(createServerTransportOptions(), options, needClientAuth);
+    }
+
+    protected final NettyEchoServer createEchoServer(TransportOptions options, SslOptions sslOptions, boolean needClientAuth) {
+        return new NettyEchoServer(options, sslOptions, needClientAuth);
     }
 
     public class NettyTransportListener implements TransportListener {

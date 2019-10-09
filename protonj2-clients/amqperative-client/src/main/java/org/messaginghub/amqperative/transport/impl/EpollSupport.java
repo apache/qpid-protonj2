@@ -34,7 +34,7 @@ public class EpollSupport {
 
     public static boolean isAvailable(TransportOptions transportOptions) {
         try {
-            return transportOptions.isUseEpoll() && Epoll.isAvailable();
+            return transportOptions.isAllowNativeIO() && Epoll.isAvailable();
         } catch (NoClassDefFoundError ncdfe) {
             LOG.debug("Unable to check for Epoll support due to missing class definition", ncdfe);
             return false;

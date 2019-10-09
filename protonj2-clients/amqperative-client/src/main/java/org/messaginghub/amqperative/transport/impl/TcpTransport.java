@@ -27,10 +27,11 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.net.ssl.SSLContext;
 
+import org.messaginghub.amqperative.SslOptions;
 import org.messaginghub.amqperative.TransportOptions;
 import org.messaginghub.amqperative.transport.Transport;
 import org.messaginghub.amqperative.transport.TransportListener;
-import org.messaginghub.amqperative.transport.TransportSupport;
+import org.messaginghub.amqperative.transport.SslSupport;
 import org.messaginghub.amqperative.util.IOExceptionSupport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -73,8 +74,8 @@ public class TcpTransport implements Transport {
     protected ThreadFactory ioThreadfactory;
     protected int maxFrameSize = DEFAULT_MAX_FRAME_SIZE;
 
-    private final boolean secure;
     private final TransportOptions options;
+    private final SslOptions sslOptions;
     private final URI remote;
     private final AtomicBoolean connected = new AtomicBoolean();
     private final AtomicBoolean closed = new AtomicBoolean();
@@ -88,11 +89,11 @@ public class TcpTransport implements Transport {
      *        the URI that defines the remote resource to connect to.
      * @param options
      *        the transport options used to configure the socket connection.
-     * @param secure
-     * 		  should the transport enable an SSL layer.
+     * @param sslOptions
+     * 		  the SSL options to use if the options indicate SSL is enabled.
      */
-    public TcpTransport(URI remoteLocation, TransportOptions options, boolean secure) {
-        this(null, remoteLocation, options, secure);
+    public TcpTransport(URI remoteLocation, TransportOptions options, SslOptions sslOptions) {
+        this(null, remoteLocation, options, sslOptions);
     }
 
     /**
@@ -104,19 +105,23 @@ public class TcpTransport implements Transport {
      *        the URI that defines the remote resource to connect to.
      * @param options
      *        the transport options used to configure the socket connection.
-     * @param secure
-     * 		  should the transport enable an SSL layer.
+     * @param sslOptions
+     * 		  the SSL options to use if the options indicate SSL is enabled.
      */
-    public TcpTransport(TransportListener listener, URI remoteLocation, TransportOptions options, boolean secure) {
+    public TcpTransport(TransportListener listener, URI remoteLocation, TransportOptions options, SslOptions sslOptions) {
         if (options == null) {
             throw new IllegalArgumentException("Transport Options cannot be null");
+        }
+
+        if (sslOptions == null) {
+            throw new IllegalArgumentException("Transport SSL Options cannot be null");
         }
 
         if (remoteLocation == null) {
             throw new IllegalArgumentException("Transport remote location cannot be null");
         }
 
-        this.secure = secure;
+        this.sslOptions = sslOptions;
         this.options = options;
         this.listener = listener;
         this.remote = remoteLocation;
@@ -173,7 +178,7 @@ public class TcpTransport implements Transport {
         });
 
         configureNetty(bootstrap, transportOptions);
-        transportOptions.setSslContextOverride(sslContextOverride);
+        sslOptions.setSslContextOverride(sslContextOverride);
 
         ChannelFuture future = bootstrap.connect(getRemoteHost(), getRemotePort());
         future.addListener(new ChannelFutureListener() {
@@ -221,7 +226,7 @@ public class TcpTransport implements Transport {
 
     @Override
     public boolean isSecure() {
-        return secure;
+        return sslOptions.isSSLEnabled();
     }
 
     @Override
@@ -285,6 +290,10 @@ public class TcpTransport implements Transport {
         return options;
     }
 
+    public SslOptions getSslOptions() {
+        return sslOptions;
+    }
+
     @Override
     public URI getRemoteLocation() {
         return remote;
@@ -340,7 +349,7 @@ public class TcpTransport implements Transport {
         if (remote.getPort() != -1) {
             return remote.getPort();
         } else {
-            return isSecure() ? getTransportOptions().getDefaultSslPort() : getTransportOptions().getDefaultTcpPort();
+            return isSecure() ? getSslOptions().getDefaultSslPort() : getTransportOptions().getDefaultTcpPort();
         }
     }
 
@@ -470,7 +479,7 @@ public class TcpTransport implements Transport {
         if (isSecure()) {
             final SslHandler sslHandler;
             try {
-                sslHandler = TransportSupport.createSslHandler(channel.alloc(), getRemoteLocation(), getTransportOptions());
+                sslHandler = SslSupport.createSslHandler(channel.alloc(), getRemoteLocation(), getSslOptions());
             } catch (Exception ex) {
                 throw IOExceptionSupport.create(ex);
             }

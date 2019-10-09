@@ -48,6 +48,7 @@ public class ConnectionOptions {
     private long drainTimeout = DEFAULT_DRAIN_TIMEOUT;
 
     private final TransportOptions transport = new TransportOptions();
+    private final SslOptions ssl = new SslOptions();
 
     private String user;
     private String password;
@@ -106,7 +107,7 @@ public class ConnectionOptions {
             other.setProperties(new HashMap<>(properties));
         }
 
-        transport.copyInto(other.getTransport());
+        transport.copyInto(other.getTransportOptions());
 
         return this;
     }
@@ -295,9 +296,12 @@ public class ConnectionOptions {
 
     /**
      * @param vhost the vhost to set
+     *
+     * @return this options instance.
      */
-    public void setVhost(String vhost) {
+    public ConnectionOptions setVhost(String vhost) {
         this.vhost = vhost;
+        return this;
     }
 
     /**
@@ -309,9 +313,12 @@ public class ConnectionOptions {
 
     /**
      * @param user the user to set
+     *
+     * @return this options instance.
      */
-    public void setUser(String user) {
+    public ConnectionOptions setUser(String user) {
         this.user = user;
+        return this;
     }
 
     /**
@@ -323,16 +330,26 @@ public class ConnectionOptions {
 
     /**
      * @param password the password to set
+     *
+     * @return this options instance.
      */
-    public void setPassword(String password) {
+    public ConnectionOptions setPassword(String password) {
         this.password = password;
+        return this;
     }
 
     /**
      * @return the transport options that will be used for the {@link Connection}.
      */
-    public TransportOptions getTransport() {
+    public TransportOptions getTransportOptions() {
         return transport;
+    }
+
+    /**
+     * @return the SSL options that will be used for the {@link Connection}.
+     */
+    public SslOptions getSSLOptions() {
+        return ssl;
     }
 
     /**
@@ -344,9 +361,12 @@ public class ConnectionOptions {
 
     /**
      * @param allowInsecureRedirects the allowInsecureRedirects to set
+     *
+     * @return this options instance.
      */
-    public void setAllowInsecureRedirects(boolean allowInsecureRedirects) {
+    public ConnectionOptions setAllowInsecureRedirects(boolean allowInsecureRedirects) {
         this.allowInsecureRedirects = allowInsecureRedirects;
+        return this;
     }
 
     /**
@@ -358,9 +378,31 @@ public class ConnectionOptions {
 
     /**
      * @param saslEnabled the saslLayer to set
+     *
+     * @return this options instance.
      */
-    public void setSaslEnabled(boolean saslEnabled) {
+    public ConnectionOptions setSaslEnabled(boolean saslEnabled) {
         this.saslEnabled = saslEnabled;
+        return this;
+    }
+
+    /**
+     * @return true if SSL support has been enabled for this connection.
+     */
+    public boolean isSSLEnabled() {
+        return ssl.isSSLEnabled();
+    }
+
+    /**
+     *
+     * @param sslEnabled
+     * 		Is SSL encryption enabled for the {@link Connection}.
+     *
+     * @return this options instance.
+     */
+    public ConnectionOptions setSSLEnabled(boolean sslEnabled) {
+        ssl.setSSLEnabled(sslEnabled);
+        return this;
     }
 
     /**

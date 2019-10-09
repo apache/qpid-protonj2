@@ -16,18 +16,13 @@
  */
 package org.messaginghub.amqperative;
 
-import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-import javax.net.ssl.SSLContext;
-
 import org.junit.Test;
-import org.messaginghub.amqperative.TransportOptions;
 import org.messaginghub.amqperative.test.AMQPerativeTestCase;
-import org.mockito.Mockito;
 
 /**
  * Test for class TransportOptions
@@ -45,55 +40,17 @@ public class TransportOptionsTest extends AMQPerativeTestCase {
     public static final int TEST_DEFAULT_TCP_PORT = 5682;
     public static final String LOCAL_ADDRESS = "localhost";
     public static final int LOCAL_PORT = 30000;
-    public static final boolean TEST_USE_EPOLL_VALUE = !TransportOptions.DEFAULT_USE_EPOLL;
+    public static final boolean TEST_ALLOW_NATIVE_IO_VALUE = !TransportOptions.DEFAULT_ALLOW_NATIVE_IO;
     public static final boolean TEST_TRACE_BYTES_VALUE = !TransportOptions.DEFAULT_TRACE_BYTES;
-
-    private static final String PASSWORD = "password";
-    private static final String CLIENT_KEYSTORE = "src/test/resources/client-jks.keystore";
-    private static final String CLIENT_TRUSTSTORE = "src/test/resources/client-jks.truststore";
-    private static final String KEYSTORE_TYPE = "jks";
-    private static final String KEY_ALIAS = "myTestAlias";
-    private static final String CONTEXT_PROTOCOL = "TLSv1.1";
-    private static final boolean TRUST_ALL = true;
-    private static final boolean VERIFY_HOST = true;
-
-    private static final int TEST_DEFAULT_SSL_PORT = 5681;
-
-    private static final String[] ENABLED_PROTOCOLS = new String[] {"TLSv1.2"};
-    private static final String[] DISABLED_PROTOCOLS = new String[] {"SSLv3", "TLSv1.2"};
-    private static final String[] ENABLED_CIPHERS = new String[] {"CIPHER_A", "CIPHER_B"};
-    private static final String[] DISABLED_CIPHERS = new String[] {"CIPHER_C"};
-
-    private static final SSLContext SSL_CONTEXT = Mockito.mock(SSLContext.class);
-
-    private static final String JAVAX_NET_SSL_KEY_STORE = "javax.net.ssl.keyStore";
-    private static final String JAVAX_NET_SSL_KEY_STORE_PASSWORD = "javax.net.ssl.keyStorePassword";
-    private static final String JAVAX_NET_SSL_TRUST_STORE = "javax.net.ssl.trustStore";
-    private static final String JAVAX_NET_SSL_TRUST_STORE_PASSWORD = "javax.net.ssl.trustStorePassword";
-
 
     @Test
     public void testCreate() {
         TransportOptions options = new TransportOptions();
 
         assertEquals(TransportOptions.DEFAULT_TCP_NO_DELAY, options.isTcpNoDelay());
-        assertEquals(TransportOptions.DEFAULT_TRUST_ALL, options.isTrustAll());
-        assertEquals(TransportOptions.DEFAULT_STORE_TYPE, options.getKeyStoreType());
-        assertEquals(TransportOptions.DEFAULT_STORE_TYPE, options.getTrustStoreType());
 
-        assertEquals(TransportOptions.DEFAULT_CONTEXT_PROTOCOL, options.getContextProtocol());
-        assertNull(options.getEnabledProtocols());
-        assertArrayEquals(TransportOptions.DEFAULT_DISABLED_PROTOCOLS.toArray(new String[0]),
-                          options.getDisabledProtocols());
-        assertNull(options.getEnabledCipherSuites());
-        assertNull(options.getDisabledCipherSuites());
-
-        assertNull(options.getKeyStoreLocation());
-        assertNull(options.getKeyStorePassword());
-        assertNull(options.getTrustStoreLocation());
-        assertNull(options.getTrustStorePassword());
-        assertNull(options.getKeyAlias());
-        assertNull(options.getSslContextOverride());
+        assertTrue(options.isAllowNativeIO());
+        assertFalse(options.isUseWebSockets());
     }
 
     @Test
@@ -109,7 +66,7 @@ public class TransportOptionsTest extends AMQPerativeTestCase {
         assertEquals(TEST_SO_TIMEOUT, options.getSoTimeout());
         assertEquals(TEST_CONNECT_TIMEOUT, options.getConnectTimeout());
         assertEquals(TEST_DEFAULT_TCP_PORT, options.getDefaultTcpPort());
-        assertEquals(TEST_USE_EPOLL_VALUE, options.isUseEpoll());
+        assertEquals(TEST_ALLOW_NATIVE_IO_VALUE, options.isAllowNativeIO());
         assertEquals(TEST_TRACE_BYTES_VALUE, options.isTraceBytes());
     }
 
@@ -126,24 +83,10 @@ public class TransportOptionsTest extends AMQPerativeTestCase {
         assertEquals(TEST_SO_TIMEOUT, options.getSoTimeout());
         assertEquals(TEST_CONNECT_TIMEOUT, options.getConnectTimeout());
         assertEquals(TEST_DEFAULT_TCP_PORT, options.getDefaultTcpPort());
-        assertEquals(TEST_DEFAULT_SSL_PORT, options.getDefaultSslPort());
-        assertEquals(TEST_USE_EPOLL_VALUE, options.isUseEpoll());
+        assertEquals(TEST_ALLOW_NATIVE_IO_VALUE, options.isAllowNativeIO());
         assertEquals(TEST_TRACE_BYTES_VALUE, options.isTraceBytes());
-        assertEquals(CLIENT_KEYSTORE, options.getKeyStoreLocation());
-        assertEquals(PASSWORD, options.getKeyStorePassword());
-        assertEquals(CLIENT_TRUSTSTORE, options.getTrustStoreLocation());
-        assertEquals(PASSWORD, options.getTrustStorePassword());
-        assertEquals(KEYSTORE_TYPE, options.getKeyStoreType());
-        assertEquals(KEYSTORE_TYPE, options.getTrustStoreType());
-        assertEquals(KEY_ALIAS, options.getKeyAlias());
-        assertEquals(CONTEXT_PROTOCOL, options.getContextProtocol());
         assertEquals(LOCAL_ADDRESS,options.getLocalAddress());
         assertEquals(LOCAL_PORT,options.getLocalPort());
-        assertEquals(SSL_CONTEXT, options.getSslContextOverride());
-        assertArrayEquals(ENABLED_PROTOCOLS,options.getEnabledProtocols());
-        assertArrayEquals(DISABLED_PROTOCOLS,options.getDisabledProtocols());
-        assertArrayEquals(ENABLED_CIPHERS,options.getEnabledCipherSuites());
-        assertArrayEquals(DISABLED_CIPHERS,options.getDisabledCipherSuites());
     }
 
     @Test
@@ -201,7 +144,7 @@ public class TransportOptionsTest extends AMQPerativeTestCase {
 
     @Test
     public void testCreateAndConfigure() {
-        TransportOptions options = createSslOptions();
+        TransportOptions options = createNonDefaultOptions();
 
         assertEquals(TEST_SEND_BUFFER_SIZE, options.getSendBufferSize());
         assertEquals(TEST_RECEIVE_BUFFER_SIZE, options.getReceiveBufferSize());
@@ -211,94 +154,6 @@ public class TransportOptionsTest extends AMQPerativeTestCase {
         assertEquals(TEST_SO_LINGER, options.getSoLinger());
         assertEquals(TEST_SO_TIMEOUT, options.getSoTimeout());
         assertEquals(TEST_CONNECT_TIMEOUT, options.getConnectTimeout());
-
-        assertEquals(CLIENT_KEYSTORE, options.getKeyStoreLocation());
-        assertEquals(PASSWORD, options.getKeyStorePassword());
-        assertEquals(CLIENT_TRUSTSTORE, options.getTrustStoreLocation());
-        assertEquals(PASSWORD, options.getTrustStorePassword());
-        assertEquals(KEYSTORE_TYPE, options.getKeyStoreType());
-        assertEquals(KEYSTORE_TYPE, options.getTrustStoreType());
-        assertEquals(KEY_ALIAS, options.getKeyAlias());
-        assertEquals(CONTEXT_PROTOCOL, options.getContextProtocol());
-        assertEquals(SSL_CONTEXT, options.getSslContextOverride());
-        assertArrayEquals(ENABLED_PROTOCOLS,options.getEnabledProtocols());
-        assertArrayEquals(DISABLED_PROTOCOLS,options.getDisabledProtocols());
-        assertArrayEquals(ENABLED_CIPHERS,options.getEnabledCipherSuites());
-        assertArrayEquals(DISABLED_CIPHERS,options.getDisabledCipherSuites());
-    }
-
-    private TransportOptions createSslOptions() {
-        TransportOptions options = new TransportOptions();
-
-        options.setKeyStoreLocation(CLIENT_KEYSTORE);
-        options.setTrustStoreLocation(CLIENT_TRUSTSTORE);
-        options.setKeyStorePassword(PASSWORD);
-        options.setTrustStorePassword(PASSWORD);
-        options.setStoreType(KEYSTORE_TYPE);
-        options.setTrustAll(TRUST_ALL);
-        options.setVerifyHost(VERIFY_HOST);
-        options.setKeyAlias(KEY_ALIAS);
-        options.setContextProtocol(CONTEXT_PROTOCOL);
-        options.setEnabledProtocols(ENABLED_PROTOCOLS);
-        options.setDisabledProtocols(DISABLED_PROTOCOLS);
-        options.setEnabledCipherSuites(ENABLED_CIPHERS);
-        options.setDisabledCipherSuites(DISABLED_CIPHERS);
-
-        options.setSendBufferSize(TEST_SEND_BUFFER_SIZE);
-        options.setReceiveBufferSize(TEST_RECEIVE_BUFFER_SIZE);
-        options.setTrafficClass(TEST_TRAFFIC_CLASS);
-        options.setTcpNoDelay(TEST_TCP_NO_DELAY);
-        options.setTcpKeepAlive(TEST_TCP_KEEP_ALIVE);
-        options.setSoLinger(TEST_SO_LINGER);
-        options.setSoTimeout(TEST_SO_TIMEOUT);
-        options.setConnectTimeout(TEST_CONNECT_TIMEOUT);
-        options.setDefaultSslPort(TEST_DEFAULT_SSL_PORT);
-        options.setSslContextOverride(SSL_CONTEXT);
-
-        return options;
-    }
-
-    @Test
-    public void testSslSystemPropertiesInfluenceDefaults() {
-        String keystore = "keystore";
-        String keystorePass = "keystorePass";
-        String truststore = "truststore";
-        String truststorePass = "truststorePass";
-
-        setSslSystemPropertiesForCurrentTest(keystore, keystorePass, truststore, truststorePass);
-
-        TransportOptions options1 = new TransportOptions();
-
-        assertEquals(keystore, options1.getKeyStoreLocation());
-        assertEquals(keystorePass, options1.getKeyStorePassword());
-        assertEquals(truststore, options1.getTrustStoreLocation());
-        assertEquals(truststorePass, options1.getTrustStorePassword());
-
-        keystore +="2";
-        keystorePass +="2";
-        truststore +="2";
-        truststorePass +="2";
-
-        setSslSystemPropertiesForCurrentTest(keystore, keystorePass, truststore, truststorePass);
-
-        TransportOptions options2 = new TransportOptions();
-
-        assertEquals(keystore, options2.getKeyStoreLocation());
-        assertEquals(keystorePass, options2.getKeyStorePassword());
-        assertEquals(truststore, options2.getTrustStoreLocation());
-        assertEquals(truststorePass, options2.getTrustStorePassword());
-
-        assertNotEquals(options1.getKeyStoreLocation(), options2.getKeyStoreLocation());
-        assertNotEquals(options1.getKeyStorePassword(), options2.getKeyStorePassword());
-        assertNotEquals(options1.getTrustStoreLocation(), options2.getTrustStoreLocation());
-        assertNotEquals(options1.getTrustStorePassword(), options2.getTrustStorePassword());
-    }
-
-    private void setSslSystemPropertiesForCurrentTest(String keystore, String keystorePassword, String truststore, String truststorePassword) {
-        setTestSystemProperty(JAVAX_NET_SSL_KEY_STORE, keystore);
-        setTestSystemProperty(JAVAX_NET_SSL_KEY_STORE_PASSWORD, keystorePassword);
-        setTestSystemProperty(JAVAX_NET_SSL_TRUST_STORE, truststore);
-        setTestSystemProperty(JAVAX_NET_SSL_TRUST_STORE_PASSWORD, truststorePassword);
     }
 
     private TransportOptions createNonDefaultOptions() {
@@ -313,20 +168,8 @@ public class TransportOptionsTest extends AMQPerativeTestCase {
         options.setSoTimeout(TEST_SO_TIMEOUT);
         options.setConnectTimeout(TEST_CONNECT_TIMEOUT);
         options.setDefaultTcpPort(TEST_DEFAULT_TCP_PORT);
-        options.setDefaultSslPort(TEST_DEFAULT_SSL_PORT);
-        options.setUseEpoll(TEST_USE_EPOLL_VALUE);
+        options.setAllowNativeIO(TEST_ALLOW_NATIVE_IO_VALUE);
         options.setTraceBytes(TEST_TRACE_BYTES_VALUE);
-        options.setKeyStoreLocation(CLIENT_KEYSTORE);
-        options.setKeyStorePassword(PASSWORD);
-        options.setTrustStoreLocation(CLIENT_TRUSTSTORE);
-        options.setTrustStorePassword(PASSWORD);
-        options.setKeyAlias(KEY_ALIAS);
-        options.setContextProtocol(CONTEXT_PROTOCOL);
-        options.setSslContextOverride(SSL_CONTEXT);
-        options.setEnabledProtocols(ENABLED_PROTOCOLS);
-        options.setEnabledCipherSuites(ENABLED_CIPHERS);
-        options.setDisabledProtocols(DISABLED_PROTOCOLS);
-        options.setDisabledCipherSuites(DISABLED_CIPHERS);
         options.setLocalAddress(LOCAL_ADDRESS);
         options.setLocalPort(LOCAL_PORT);
 

@@ -55,6 +55,7 @@ import org.messaginghub.amqperative.impl.exceptions.ClientExceptionSupport;
 import org.messaginghub.amqperative.impl.exceptions.ClientIOException;
 import org.messaginghub.amqperative.transport.Transport;
 import org.messaginghub.amqperative.transport.impl.TcpTransport;
+import org.messaginghub.amqperative.transport.impl.WebSocketTransport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -122,8 +123,14 @@ public class ClientConnection implements Connection {
         ThreadFactory transportThreadFactory = new ClientThreadFactory(
             "ProtonConnection :(" + CONNECTION_SEQUENCE.incrementAndGet()
                           + "):[" + options.getHostname() + ":" + options.getPort() + "]", true);
-        transport = new TcpTransport(
-            new ClientTransportListener(this), options.getRemoteURI(), options.getTransport(), false);
+
+        if (options.getTransportOptions().isUseWebSockets()) {
+            transport = new WebSocketTransport(
+                new ClientTransportListener(this), options.getRemoteURI(), options.getTransportOptions(), options.getSSLOptions());
+        } else {
+            transport = new TcpTransport(
+                new ClientTransportListener(this), options.getRemoteURI(), options.getTransportOptions(), options.getSSLOptions());
+        }
 
         transport.setThreadFactory(transportThreadFactory);
 

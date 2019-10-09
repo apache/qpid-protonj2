@@ -16,38 +16,33 @@
  */
 package org.messaginghub.amqperative.transport.impl;
 
+import java.net.URI;
+
 import org.messaginghub.amqperative.SslOptions;
 import org.messaginghub.amqperative.TransportOptions;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import io.netty.buffer.ByteBuf;
-import io.netty.channel.ChannelHandler;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.SimpleChannelInboundHandler;
+import org.messaginghub.amqperative.transport.TransportListener;
 
 /**
- * Simple Netty Server used to echo all data.
+ * Test the WebSocketTransport with channel level security enabled.
  */
-public class NettyEchoServer extends NettyServer {
+public class SecureWebSocketTransportTest extends SslTransportTest {
 
-    private static final Logger LOG = LoggerFactory.getLogger(NettyEchoServer.class);
-
-    public NettyEchoServer(TransportOptions options, SslOptions sslOptions, boolean needClientAuth) {
-        super(options, sslOptions, needClientAuth);
+    @Override
+    protected WebSocketTransport createTransport(URI serverLocation, TransportListener listener, TransportOptions options, SslOptions sslOptions) {
+        if (listener == null) {
+            return new WebSocketTransport(serverLocation, options, sslOptions);
+        } else {
+            return new WebSocketTransport(listener, serverLocation, options, sslOptions);
+        }
     }
 
     @Override
-    protected ChannelHandler getServerHandler() {
-        return new EchoServerHandler();
+    protected TransportOptions createTransportOptions() {
+        return new TransportOptions().setUseWebSockets(true);
     }
 
-    private class EchoServerHandler extends SimpleChannelInboundHandler<ByteBuf>  {
-
-        @Override
-        public void channelRead0(ChannelHandlerContext ctx, ByteBuf msg) {
-            LOG.trace("Channel read: {}", msg);
-            ctx.write(msg.copy());
-        }
+    @Override
+    protected TransportOptions createServerTransportOptions() {
+        return new TransportOptions().setUseWebSockets(true);
     }
 }

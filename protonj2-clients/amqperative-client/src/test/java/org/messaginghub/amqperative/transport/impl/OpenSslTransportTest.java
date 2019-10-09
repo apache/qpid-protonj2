@@ -30,9 +30,9 @@ import javax.net.ssl.SSLContext;
 
 import org.junit.Ignore;
 import org.junit.Test;
-import org.messaginghub.amqperative.TransportOptions;
+import org.messaginghub.amqperative.SslOptions;
 import org.messaginghub.amqperative.transport.Transport;
-import org.messaginghub.amqperative.transport.TransportSupport;
+import org.messaginghub.amqperative.transport.SslSupport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -63,16 +63,16 @@ public class OpenSslTransportTest extends SslTransportTest {
         assumeTrue(OpenSsl.isAvailable());
         assumeTrue(OpenSsl.supportsKeyManagerFactory());
 
-        try (NettyEchoServer server = createEchoServer(createServerOptions())) {
+        try (NettyEchoServer server = createEchoServer()) {
             server.start();
 
             int port = server.getServerPort();
             URI serverLocation = new URI("tcp://localhost:" + port);
 
-            TransportOptions options = createClientOptions();
-            options.setUseOpenSSL(useOpenSSL);
+            SslOptions options = createSSLOptions();
+            options.setAllowNativeSSL(useOpenSSL);
 
-            Transport transport = createTransport(serverLocation, testListener, options);
+            Transport transport = createTransport(serverLocation, testListener, createTransportOptions(), options);
             try {
                 transport.connect(null, null);
                 LOG.info("Connected to server:{} as expected.", serverLocation);
@@ -100,27 +100,29 @@ public class OpenSslTransportTest extends SslTransportTest {
         assumeTrue(OpenSsl.isAvailable());
         assumeTrue(OpenSsl.supportsKeyManagerFactory());
 
-        try (NettyEchoServer server = createEchoServer(createServerOptions())) {
+        try (NettyEchoServer server = createEchoServer()) {
             server.start();
 
             int port = server.getServerPort();
             URI serverLocation = new URI("tcp://localhost:" + port);
 
-            TransportOptions options = new TransportOptions();
+            SslOptions options = new SslOptions();
 
+            options.setSSLEnabled(true);
             options.setKeyStoreLocation(CLIENT_KEYSTORE);
             options.setKeyStorePassword(PASSWORD);
             options.setTrustStoreLocation(CLIENT_TRUSTSTORE);
             options.setTrustStorePassword(PASSWORD);
             options.setStoreType(KEYSTORE_TYPE);
 
-            SSLContext sslContext = TransportSupport.createJdkSslContext(options);
+            SSLContext sslContext = SslSupport.createJdkSslContext(options);
 
-            options = new TransportOptions();
+            options = new SslOptions();
+            options.setSSLEnabled(true);
             options.setVerifyHost(false);
-            options.setUseOpenSSL(true);
+            options.setAllowNativeSSL(true);
 
-            Transport transport = createTransport(serverLocation, testListener, options);
+            Transport transport = createTransport(serverLocation, testListener, createTransportOptions(), options);
             try {
                 transport.connect(null, sslContext);
                 LOG.info("Connected to server:{} as expected.", serverLocation);
@@ -183,10 +185,11 @@ public class OpenSslTransportTest extends SslTransportTest {
     }
 
     @Override
-    protected TransportOptions createClientOptionsIsVerify(boolean verifyHost) {
-        TransportOptions options = new TransportOptions();
+    protected SslOptions createSSLOptionsIsVerify(boolean verifyHost) {
+        SslOptions options = new SslOptions();
 
-        options.setUseOpenSSL(true);
+        options.setSSLEnabled(true);
+        options.setAllowNativeSSL(true);
         options.setKeyStoreLocation(CLIENT_KEYSTORE);
         options.setKeyStorePassword(PASSWORD);
         options.setTrustStoreLocation(CLIENT_TRUSTSTORE);
@@ -198,11 +201,12 @@ public class OpenSslTransportTest extends SslTransportTest {
     }
 
     @Override
-    protected TransportOptions createClientOptionsWithoutTrustStore(boolean trustAll) {
-        TransportOptions options = new TransportOptions();
+    protected SslOptions createSSLOptionsWithoutTrustStore(boolean trustAll) {
+        SslOptions options = new SslOptions();
 
+        options.setSSLEnabled(true);
         options.setStoreType(KEYSTORE_TYPE);
-        options.setUseOpenSSL(true);
+        options.setAllowNativeSSL(true);
         options.setTrustAll(trustAll);
 
         return options;
