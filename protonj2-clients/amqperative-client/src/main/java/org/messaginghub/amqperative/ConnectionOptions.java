@@ -108,6 +108,7 @@ public class ConnectionOptions {
         }
 
         transport.copyInto(other.getTransportOptions());
+        ssl.copyInto(other.getSSLOptions());
 
         return this;
     }

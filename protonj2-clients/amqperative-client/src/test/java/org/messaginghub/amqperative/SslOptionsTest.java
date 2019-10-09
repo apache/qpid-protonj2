@@ -18,8 +18,10 @@ package org.messaginghub.amqperative;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 import javax.net.ssl.SSLContext;
 
@@ -60,6 +62,8 @@ public class SslOptionsTest extends AMQPerativeTestCase {
     public void testCreate() {
         SslOptions options = new SslOptions();
 
+        assertFalse(options.isSSLEnabled());
+
         assertEquals(SslOptions.DEFAULT_TRUST_ALL, options.isTrustAll());
         assertEquals(SslOptions.DEFAULT_STORE_TYPE, options.getKeyStoreType());
         assertEquals(SslOptions.DEFAULT_STORE_TYPE, options.getTrustStoreType());
@@ -82,6 +86,7 @@ public class SslOptionsTest extends AMQPerativeTestCase {
     public void testClone() {
         SslOptions options = createNonDefaultOptions().clone();
 
+        assertTrue(options.isSSLEnabled());
         assertEquals(TEST_DEFAULT_SSL_PORT, options.getDefaultSslPort());
         assertEquals(CLIENT_KEYSTORE, options.getKeyStoreLocation());
         assertEquals(PASSWORD, options.getKeyStorePassword());
@@ -163,6 +168,7 @@ public class SslOptionsTest extends AMQPerativeTestCase {
     private SslOptions createNonDefaultOptions() {
         SslOptions options = new SslOptions();
 
+        options.setSSLEnabled(true);
         options.setDefaultSslPort(TEST_DEFAULT_SSL_PORT);
         options.setAllowNativeSSL(TEST_ALLOW_NATIVE_SSL);
         options.setKeyStoreLocation(CLIENT_KEYSTORE);
