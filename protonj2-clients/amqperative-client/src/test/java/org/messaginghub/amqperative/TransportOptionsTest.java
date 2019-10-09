@@ -18,6 +18,7 @@ package org.messaginghub.amqperative;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -42,6 +43,7 @@ public class TransportOptionsTest extends AMQPerativeTestCase {
     public static final int LOCAL_PORT = 30000;
     public static final boolean TEST_ALLOW_NATIVE_IO_VALUE = !TransportOptions.DEFAULT_ALLOW_NATIVE_IO;
     public static final boolean TEST_TRACE_BYTES_VALUE = !TransportOptions.DEFAULT_TRACE_BYTES;
+    public static final String TEST_WEBSOCKET_PATH = "/test";
 
     @Test
     public void testCreate() {
@@ -51,6 +53,7 @@ public class TransportOptionsTest extends AMQPerativeTestCase {
 
         assertTrue(options.isAllowNativeIO());
         assertFalse(options.isUseWebSockets());
+        assertNull(options.getWebSocketPath());
     }
 
     @Test
@@ -87,6 +90,7 @@ public class TransportOptionsTest extends AMQPerativeTestCase {
         assertEquals(TEST_TRACE_BYTES_VALUE, options.isTraceBytes());
         assertEquals(LOCAL_ADDRESS,options.getLocalAddress());
         assertEquals(LOCAL_PORT,options.getLocalPort());
+        assertEquals(TEST_WEBSOCKET_PATH, options.getWebSocketPath());
     }
 
     @Test
@@ -172,6 +176,7 @@ public class TransportOptionsTest extends AMQPerativeTestCase {
         options.setTraceBytes(TEST_TRACE_BYTES_VALUE);
         options.setLocalAddress(LOCAL_ADDRESS);
         options.setLocalPort(LOCAL_PORT);
+        options.setWebSocketPath(TEST_WEBSOCKET_PATH);
 
         return options;
     }

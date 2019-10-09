@@ -52,6 +52,7 @@ public class TransportOptions implements Cloneable {
     private boolean allowNativeIO = DEFAULT_ALLOW_NATIVE_IO;
     private boolean traceBytes = DEFAULT_TRACE_BYTES;
     private boolean useWebSockets = DEFAULT_USE_WEBSOCKETS;
+    private String webSocketPath;
 
     private final Map<String, String> httpHeaders = new HashMap<>();
 
@@ -266,6 +267,15 @@ public class TransportOptions implements Cloneable {
         return this;
     }
 
+    public String getWebSocketPath() {
+        return webSocketPath;
+    }
+
+    public TransportOptions setWebSocketPath(String webSocketPath) {
+        this.webSocketPath = webSocketPath;
+        return this;
+    }
+
     /**
      * Copy all configuration into the given {@link TransportOptions} from this instance.
      *
@@ -289,6 +299,7 @@ public class TransportOptions implements Cloneable {
         other.setLocalAddress(getLocalAddress());
         other.setLocalPort(getLocalPort());
         other.setUseWebSockets(isUseWebSockets());
+        other.setWebSocketPath(getWebSocketPath());
 
         return other;
     }
