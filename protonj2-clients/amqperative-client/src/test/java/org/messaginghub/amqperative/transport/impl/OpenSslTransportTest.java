@@ -31,8 +31,8 @@ import javax.net.ssl.SSLContext;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.messaginghub.amqperative.SslOptions;
-import org.messaginghub.amqperative.transport.Transport;
 import org.messaginghub.amqperative.transport.SslSupport;
+import org.messaginghub.amqperative.transport.Transport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -74,7 +74,7 @@ public class OpenSslTransportTest extends SslTransportTest {
 
             Transport transport = createTransport(serverLocation, testListener, createTransportOptions(), options);
             try {
-                transport.connect(null, null);
+                transport.connect(null);
                 LOG.info("Connected to server:{} as expected.", serverLocation);
             } catch (Exception e) {
                 fail("Should have connected to the server at " + serverLocation + " but got exception: " + e);
@@ -121,10 +121,11 @@ public class OpenSslTransportTest extends SslTransportTest {
             options.setSSLEnabled(true);
             options.setVerifyHost(false);
             options.setAllowNativeSSL(true);
+            options.setSslContextOverride(sslContext);
 
             Transport transport = createTransport(serverLocation, testListener, createTransportOptions(), options);
             try {
-                transport.connect(null, sslContext);
+                transport.connect(null);
                 LOG.info("Connected to server:{} as expected.", serverLocation);
             } catch (Exception e) {
                 fail("Should have connected to the server at " + serverLocation + " but got exception: " + e);

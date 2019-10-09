@@ -25,13 +25,11 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import javax.net.ssl.SSLContext;
-
 import org.messaginghub.amqperative.SslOptions;
 import org.messaginghub.amqperative.TransportOptions;
+import org.messaginghub.amqperative.transport.SslSupport;
 import org.messaginghub.amqperative.transport.Transport;
 import org.messaginghub.amqperative.transport.TransportListener;
-import org.messaginghub.amqperative.transport.SslSupport;
 import org.messaginghub.amqperative.util.IOExceptionSupport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -128,7 +126,7 @@ public class TcpTransport implements Transport {
     }
 
     @Override
-    public ScheduledExecutorService connect(final Runnable initRoutine, SSLContext sslContextOverride) throws IOException {
+    public ScheduledExecutorService connect(final Runnable initRoutine) throws IOException {
         if (closed.get()) {
             throw new IllegalStateException("Transport has already been closed");
         }
@@ -178,7 +176,6 @@ public class TcpTransport implements Transport {
         });
 
         configureNetty(bootstrap, transportOptions);
-        sslOptions.setSslContextOverride(sslContextOverride);
 
         ChannelFuture future = bootstrap.connect(getRemoteHost(), getRemotePort());
         future.addListener(new ChannelFutureListener() {
@@ -290,7 +287,8 @@ public class TcpTransport implements Transport {
         return options;
     }
 
-    public SslOptions getSslOptions() {
+    @Override
+	public SslOptions getSslOptions() {
         return sslOptions;
     }
 

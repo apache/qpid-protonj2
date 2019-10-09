@@ -303,7 +303,7 @@ public class ClientConnection implements Connection {
                 protonConnection.openHandler(connection -> handleRemoteOpen(connection))
                                 .closeHandler(connection -> handleRemotecClose(connection));
 
-            }, null);
+            });
         } catch (Throwable e) {
             try {
                 transport.close();

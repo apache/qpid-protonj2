@@ -22,8 +22,7 @@ import java.security.Principal;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
 
-import javax.net.ssl.SSLContext;
-
+import org.messaginghub.amqperative.SslOptions;
 import org.messaginghub.amqperative.TransportOptions;
 
 import io.netty.buffer.ByteBuf;
@@ -41,15 +40,12 @@ public interface Transport {
      * 			a runnable initialization method that is executed in the context
      *          of the transport's IO thread to allow thread safe setup of resources
      *          that will be run from the transport executor service.
-     * @param sslContextOverride
-     *          a user-provided SSLContext to use if establishing a secure
-     *          connection, overrides applicable URI configuration
      *
      * @return A ScheduledThreadPoolExecutor that can run work on the Transport IO thread.
      *
      * @throws IOException if an error occurs while attempting the connect.
      */
-    ScheduledExecutorService connect(Runnable initRoutine, SSLContext sslContextOverride) throws IOException;
+    ScheduledExecutorService connect(Runnable initRoutine) throws IOException;
 
     /**
      * @return true if transport is connected or false if the connection is down.
@@ -140,14 +136,19 @@ public interface Transport {
      * @param factory
      * 		The {@link ThreadFactory}
      *
-     * @throws IllegalStateException if called after a call to {@link #connect(Runnable, SSLContext)}
+     * @throws IllegalStateException if called after a call to {@link #connect(Runnable)}
      */
     void setThreadFactory(ThreadFactory factory);
 
     /**
-     * @return the TransportOptions instance that holds the configuration for this Transport.
+     * @return the {@link TransportOptions} instance that holds the configuration for this Transport.
      */
     TransportOptions getTransportOptions();
+
+    /**
+     * @return the {@link SslOptions} instance that holds the configuration for this Transport.
+     */
+    SslOptions getSslOptions();
 
     /**
      * @return the URI of the remote peer that this Transport connects to.

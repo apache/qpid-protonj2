@@ -93,7 +93,7 @@ public class SslTransportTest extends TcpTransportTest {
 
             Transport transport = createTransport(serverLocation, testListener, createTransportOptions(), createSSLOptionsWithoutTrustStore(false));
             try {
-                transport.connect(null, null);
+                transport.connect(null);
                 fail("Should not have connected to the server: " + serverLocation);
             } catch (Exception e) {
                 LOG.info("Connection failed to untrusted test server: {}", serverLocation);
@@ -124,7 +124,7 @@ public class SslTransportTest extends TcpTransportTest {
 
             Transport transport = createTransport(serverLocation, testListener, createTransportOptions(), sslOptions);
             try {
-                transport.connect(null, null);
+                transport.connect(null);
                 fail("Should not have connected to the server: " + serverLocation);
             } catch (Exception e) {
                 LOG.info("Connection failed to untrusted test server: {}", serverLocation);
@@ -146,7 +146,7 @@ public class SslTransportTest extends TcpTransportTest {
 
             Transport transport = createTransport(serverLocation, testListener, createTransportOptions(), createSSLOptionsWithoutTrustStore(true));
             try {
-                transport.connect(null, null);
+                transport.connect(null);
                 LOG.info("Connection established to untrusted test server: {}", serverLocation);
             } catch (Exception e) {
                 fail("Should have connected to the server at " + serverLocation + " but got exception: " + e);
@@ -172,7 +172,7 @@ public class SslTransportTest extends TcpTransportTest {
 
             Transport transport = createTransport(serverLocation, testListener, createTransportOptions(), createSSLOptions());
             try {
-                transport.connect(null, null);
+                transport.connect(null);
                 LOG.info("Connection established to test server: {}", serverLocation);
             } catch (Exception e) {
                 fail("Should have connected to the server at " + serverLocation + " but got exception: " + e);
@@ -211,7 +211,7 @@ public class SslTransportTest extends TcpTransportTest {
 
             Transport transport = createTransport(serverLocation, testListener, createTransportOptions(), sslOptions);
             try {
-                transport.connect(null, null);
+                transport.connect(null);
                 LOG.info("Connection established to test server: {}", serverLocation);
             } catch (Exception e) {
                 fail("Should have connected to the server at " + serverLocation + " but got exception: " + e);
@@ -267,7 +267,7 @@ public class SslTransportTest extends TcpTransportTest {
 
             Transport transport = createTransport(serverLocation, testListener, createTransportOptions(), clientOptions);
             try {
-                transport.connect(null, null);
+                transport.connect(null);
                 if (verifyHost) {
                     fail("Should not have connected to the server: " + serverLocation);
                 }

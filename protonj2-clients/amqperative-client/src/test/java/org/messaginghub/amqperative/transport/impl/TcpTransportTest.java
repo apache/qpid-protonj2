@@ -120,7 +120,7 @@ public class TcpTransportTest extends AMQPerativeTestCase {
             transport.setThreadFactory(factory);
 
             try {
-                transport.connect(null, null);
+                transport.connect(null);
             } catch (Exception e) {
                 LOG.info("Failed to connect to: {} as expected.", serverLocation);
                 fail("Should have failed to connect to the server: " + serverLocation);
@@ -155,7 +155,7 @@ public class TcpTransportTest extends AMQPerativeTestCase {
 
             Transport transport = createTransport(serverLocation, testListener, createTransportOptions(), createSSLOptions());
             try {
-                transport.connect(null, null);
+                transport.connect(null);
                 fail("Should have failed to connect to the server: " + serverLocation);
             } catch (Exception e) {
                 LOG.info("Failed to connect to: {} as expected.", serverLocation);
@@ -181,7 +181,7 @@ public class TcpTransportTest extends AMQPerativeTestCase {
 
             Transport transport = createTransport(serverLocation, null, createTransportOptions(), createSSLOptions());
             try {
-                transport.connect(null, null);
+                transport.connect(null);
                 fail("Should have failed to connect to the server: " + serverLocation);
             } catch (Exception e) {
                 LOG.info("Failed to connect to: {} as expected.", serverLocation);
@@ -207,7 +207,7 @@ public class TcpTransportTest extends AMQPerativeTestCase {
             assertNotNull(transport.getTransportListener());
 
             try {
-                transport.connect(null, null);
+                transport.connect(null);
                 LOG.info("Connected to server:{} as expected.", serverLocation);
             } catch (Exception e) {
                 fail("Should not have failed to connect to the server at " + serverLocation + " but got exception: " + e);
@@ -229,7 +229,7 @@ public class TcpTransportTest extends AMQPerativeTestCase {
 
             Transport transport = createTransport(serverLocation, testListener, createTransportOptions(), createSSLOptions());
             try {
-                transport.connect(null, null);
+                transport.connect(null);
                 LOG.info("Connected to server:{} as expected.", serverLocation);
             } catch (Exception e) {
                 fail("Should have connected to the server at " + serverLocation + " but got exception: " + e);
@@ -264,7 +264,7 @@ public class TcpTransportTest extends AMQPerativeTestCase {
             for (int i = 0; i < CONNECTION_COUNT; ++i) {
                 Transport transport = createTransport(serverLocation, testListener, createTransportOptions(), createSSLOptions());
                 try {
-                    transport.connect(null, null);
+                    transport.connect(null);
                     assertTrue(transport.isConnected());
                     LOG.info("Connected to server:{} as expected.", serverLocation);
                     transports.add(transport);
@@ -304,7 +304,7 @@ public class TcpTransportTest extends AMQPerativeTestCase {
             for (int i = 0; i < CONNECTION_COUNT; ++i) {
                 Transport transport = createTransport(serverLocation, testListener, createTransportOptions(), createSSLOptions());
                 try {
-                    transport.connect(null, null);
+                    transport.connect(null);
                     transport.writeAndFlush(sendBuffer.copy());
                     transports.add(transport);
                 } catch (Exception e) {
@@ -340,7 +340,7 @@ public class TcpTransportTest extends AMQPerativeTestCase {
 
             transport = createTransport(serverLocation, testListener, createTransportOptions(), createSSLOptions());
             try {
-                transport.connect(null, null);
+                transport.connect(null);
                 LOG.info("Connected to server:{} as expected.", serverLocation);
             } catch (Exception e) {
                 fail("Should have connected to the server at " + serverLocation + " but got exception: " + e);
@@ -378,7 +378,7 @@ public class TcpTransportTest extends AMQPerativeTestCase {
 
             Transport transport = createTransport(serverLocation, testListener, createTransportOptions(), createSSLOptions());
             try {
-                transport.connect(null, null);
+                transport.connect(null);
                 LOG.info("Connected to server:{} as expected.", serverLocation);
             } catch (Exception e) {
                 fail("Should have connected to the server at " + serverLocation + " but got exception: " + e);
@@ -406,7 +406,7 @@ public class TcpTransportTest extends AMQPerativeTestCase {
 
             Transport transport = createTransport(serverLocation, testListener, createTransportOptions(), createSSLOptions());
             try {
-                transport.connect(null, null);
+                transport.connect(null);
                 LOG.info("Connected to server:{} as expected.", serverLocation);
             } catch (Exception e) {
                 fail("Should have connected to the server at " + serverLocation + " but got exception: " + e);
@@ -457,7 +457,7 @@ public class TcpTransportTest extends AMQPerativeTestCase {
 
             Transport transport = createTransport(serverLocation, testListener, createTransportOptions(), createSSLOptions());
             try {
-                transport.connect(null, null);
+                transport.connect(null);
                 LOG.info("Connected to server:{} as expected.", serverLocation);
             } catch (Exception e) {
                 fail("Should have connected to the server at " + serverLocation + " but got exception: " + e);
@@ -500,7 +500,7 @@ public class TcpTransportTest extends AMQPerativeTestCase {
 
             transport = createTransport(serverLocation, testListener, createTransportOptions(), createSSLOptions());
             try {
-                transport.connect(null, null);
+                transport.connect(null);
                 LOG.info("Connected to server:{} as expected.", serverLocation);
             } catch (Exception e) {
                 fail("Should have connected to the server at " + serverLocation + " but got exception: " + e);
@@ -530,7 +530,7 @@ public class TcpTransportTest extends AMQPerativeTestCase {
 
             Transport transport = createTransport(serverLocation, testListener, createTransportOptions(), createSSLOptions());
             try {
-                transport.connect(() -> initialized.set(true), null);
+                transport.connect(() -> initialized.set(true));
                 LOG.info("Connected to server:{} as expected.", serverLocation);
             } catch (Exception e) {
                 fail("Should have connected to the server at " + serverLocation + " but got exception: " + e);
@@ -558,7 +558,7 @@ public class TcpTransportTest extends AMQPerativeTestCase {
 
             Transport transport = createTransport(serverLocation, testListener, createTransportOptions(), createSSLOptions());
             try {
-                transport.connect(() -> { throw new RuntimeException(); }, null);
+                transport.connect(() -> { throw new RuntimeException(); });
                 fail("Should not have connected to the server at " + serverLocation);
             } catch (Exception e) {
                 LOG.info("Failed to connect to server:{} as expected", serverLocation);
@@ -591,7 +591,7 @@ public class TcpTransportTest extends AMQPerativeTestCase {
             for (int i = 0; i < 256; ++i) {
                 transport = createTransport(serverLocation, testListener, createTransportOptions(), createSSLOptions());
                 try {
-                    transport.connect(null, null);
+                    transport.connect(null);
                     LOG.info("Connected to server:{} as expected.", serverLocation);
                 } catch (Exception e) {
                     fail("Should have connected to the server at " + serverLocation + " but got exception: " + e);
@@ -638,7 +638,7 @@ public class TcpTransportTest extends AMQPerativeTestCase {
             options.setAllowNativeIO(useEpoll);
             Transport transport = createTransport(serverLocation, testListener, options, createSSLOptions());
             try {
-                transport.connect(null, null);
+                transport.connect(null);
                 LOG.info("Connected to server:{} as expected.", serverLocation);
             } catch (Exception e) {
                 fail("Should have connected to the server at " + serverLocation + " but got exception: " + e);
@@ -707,7 +707,7 @@ public class TcpTransportTest extends AMQPerativeTestCase {
             options.setAllowNativeIO(true);
             Transport transport = createTransport(serverLocation, testListener, options, createSSLOptions());
             try {
-                transport.connect(null, null);
+                transport.connect(null);
                 LOG.info("Connected to server:{} as expected.", serverLocation);
             } catch (Exception e) {
                 fail("Should have connected to the server at " + serverLocation + " but got exception: " + e);
