@@ -19,7 +19,6 @@ package org.messaginghub.amqperative.transport.impl;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
-import java.util.Map;
 
 import org.messaginghub.amqperative.SslOptions;
 import org.messaginghub.amqperative.TransportOptions;
@@ -53,6 +52,7 @@ import io.netty.handler.codec.http.websocketx.WebSocketVersion;
 public class WebSocketTransport extends TcpTransport {
 
     private static final Logger LOG = LoggerFactory.getLogger(WebSocketTransport.class);
+
     private static final String AMQP_SUB_PROTOCOL = "amqp";
 
     /**
@@ -136,10 +136,9 @@ public class WebSocketTransport extends TcpTransport {
         public NettyWebSocketTransportHandler() {
             DefaultHttpHeaders headers = new DefaultHttpHeaders();
 
-            getTransportOptions().getHttpHeaders();
-            for (Map.Entry<String, String> entry : getTransportOptions().getHttpHeaders().entrySet()) {
-                headers.set(entry.getKey(), entry.getValue());
-            }
+            getTransportOptions().getWebSocketHeaders().forEach((key, value) -> {
+                headers.set(key, value);
+            });
 
             handshaker = WebSocketClientHandshakerFactory.newHandshaker(
                 getRemoteLocation(), WebSocketVersion.V13, AMQP_SUB_PROTOCOL,

@@ -337,8 +337,8 @@ public class WebSocketTransportTest extends TcpTransportTest {
             URI serverLocation = new URI("tcp://localhost:" + port);
 
             TransportOptions clientOptions = createTransportOptions();
-            clientOptions.getHttpHeaders().put("test-header1", "FOO");
-            clientOptions.getHttpHeaders().put("test-header2", "BAR");
+            clientOptions.addWebSocketHeader("test-header1", "FOO");
+            clientOptions.getWebSocketHeaders().put("test-header2", "BAR");
 
             Transport transport = createTransport(serverLocation, testListener, clientOptions, createSSLOptions());
             try {

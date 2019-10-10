@@ -54,7 +54,7 @@ public class TransportOptions implements Cloneable {
     private boolean useWebSockets = DEFAULT_USE_WEBSOCKETS;
     private String webSocketPath;
 
-    private final Map<String, String> httpHeaders = new HashMap<>();
+    private final Map<String, String> webSocketHeaders = new HashMap<>();
 
     @Override
     public TransportOptions clone() {
@@ -254,10 +254,6 @@ public class TransportOptions implements Cloneable {
         return this;
     }
 
-    public Map<String, String> getHttpHeaders() {
-        return httpHeaders;
-    }
-
     public boolean isUseWebSockets() {
         return useWebSockets;
     }
@@ -273,6 +269,15 @@ public class TransportOptions implements Cloneable {
 
     public TransportOptions setWebSocketPath(String webSocketPath) {
         this.webSocketPath = webSocketPath;
+        return this;
+    }
+
+    public Map<String, String> getWebSocketHeaders() {
+        return webSocketHeaders;
+    }
+
+    public TransportOptions addWebSocketHeader(String key, String value) {
+        this.webSocketHeaders.put(key, value);
         return this;
     }
 
@@ -300,6 +305,7 @@ public class TransportOptions implements Cloneable {
         other.setLocalPort(getLocalPort());
         other.setUseWebSockets(isUseWebSockets());
         other.setWebSocketPath(getWebSocketPath());
+        other.getWebSocketHeaders().putAll(webSocketHeaders);
 
         return other;
     }

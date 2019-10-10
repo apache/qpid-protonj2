@@ -44,6 +44,8 @@ public class TransportOptionsTest extends AMQPerativeTestCase {
     public static final boolean TEST_ALLOW_NATIVE_IO_VALUE = !TransportOptions.DEFAULT_ALLOW_NATIVE_IO;
     public static final boolean TEST_TRACE_BYTES_VALUE = !TransportOptions.DEFAULT_TRACE_BYTES;
     public static final String TEST_WEBSOCKET_PATH = "/test";
+    public static final String TEST_WEBSOCKET_HEADER_KEY = "compression";
+    public static final String TEST_WEBSOCKET_HEADER_VALUE = "gzip";
 
     @Test
     public void testCreate() {
@@ -91,6 +93,7 @@ public class TransportOptionsTest extends AMQPerativeTestCase {
         assertEquals(LOCAL_ADDRESS,options.getLocalAddress());
         assertEquals(LOCAL_PORT,options.getLocalPort());
         assertEquals(TEST_WEBSOCKET_PATH, options.getWebSocketPath());
+        assertEquals(TEST_WEBSOCKET_HEADER_VALUE, options.getWebSocketHeaders().get(TEST_WEBSOCKET_HEADER_KEY));
     }
 
     @Test
@@ -177,6 +180,7 @@ public class TransportOptionsTest extends AMQPerativeTestCase {
         options.setLocalAddress(LOCAL_ADDRESS);
         options.setLocalPort(LOCAL_PORT);
         options.setWebSocketPath(TEST_WEBSOCKET_PATH);
+        options.addWebSocketHeader(TEST_WEBSOCKET_HEADER_KEY, TEST_WEBSOCKET_HEADER_VALUE);
 
         return options;
     }
