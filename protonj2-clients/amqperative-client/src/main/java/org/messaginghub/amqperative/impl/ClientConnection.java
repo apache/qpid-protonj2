@@ -125,13 +125,12 @@ public class ClientConnection implements Connection {
                           + "):[" + options.getHostname() + ":" + options.getPort() + "]", true);
 
         if (options.getTransportOptions().isUseWebSockets()) {
-            transport = new WebSocketTransport(
-                new ClientTransportListener(this), options.getRemoteURI(), options.getTransportOptions(), options.getSSLOptions());
+            transport = new WebSocketTransport(options.getRemoteURI(), options.getTransportOptions(), options.getSSLOptions());
         } else {
-            transport = new TcpTransport(
-                new ClientTransportListener(this), options.getRemoteURI(), options.getTransportOptions(), options.getSSLOptions());
+            transport = new TcpTransport(options.getRemoteURI(), options.getTransportOptions(), options.getSSLOptions());
         }
 
+        transport.setTransportListener(new ClientTransportListener(this));
         transport.setThreadFactory(transportThreadFactory);
 
         openFuture = futureFactoy.createFuture();

@@ -84,9 +84,11 @@ public interface Transport {
      * @param output
      *        The buffer of data that is to be transmitted.
      *
+     * @return this Transport instance.
+     *
      * @throws IOException if an error occurs during the write operation.
      */
-    void write(ByteBuf output) throws IOException;
+    Transport write(ByteBuf output) throws IOException;
 
     /**
      * Writes a chunk of data over the Transport connection and requests a flush of
@@ -95,16 +97,20 @@ public interface Transport {
      * @param output
      *        The buffer of data that is to be transmitted.
      *
+     * @return this Transport instance.
+     *
      * @throws IOException if an error occurs during the write operation.
      */
-    void writeAndFlush(ByteBuf output) throws IOException;
+    Transport writeAndFlush(ByteBuf output) throws IOException;
 
     /**
      * Request a flush of all pending writes to the underlying connection.
      *
+     * @return this Transport instance.
+     *
      * @throws IOException if an error occurs during the flush operation.
      */
-    void flush() throws IOException;
+    Transport flush() throws IOException;
 
     /**
      * Gets the currently set TransportListener instance
@@ -120,9 +126,11 @@ public interface Transport {
      * @param listener
      *        The new TransportListener instance to use (cannot be null).
      *
+     * @return this Transport instance.
+     *
      * @throws IllegalArgumentException if the given listener is null.
      */
-    void setTransportListener(TransportListener listener);
+    Transport setTransportListener(TransportListener listener);
 
     /**
      * @return the {@link ThreadFactory} used to create the IO thread for this Transport
@@ -136,9 +144,11 @@ public interface Transport {
      * @param factory
      * 		The {@link ThreadFactory}
      *
+     * @return this Transport instance.
+     *
      * @throws IllegalStateException if called after a call to {@link #connect(Runnable)}
      */
-    void setThreadFactory(ThreadFactory factory);
+    Transport setThreadFactory(ThreadFactory factory);
 
     /**
      * @return the {@link TransportOptions} instance that holds the configuration for this Transport.
@@ -167,8 +177,10 @@ public interface Transport {
      *
      * @param maxFrameSize
      * 		The maximum frame size to accept from the remote.
+     *
+     * @return this Transport instance.
      */
-    void setMaxFrameSize(int maxFrameSize);
+    Transport setMaxFrameSize(int maxFrameSize);
 
     /**
      * Returns the currently configured maximum frame size setting.

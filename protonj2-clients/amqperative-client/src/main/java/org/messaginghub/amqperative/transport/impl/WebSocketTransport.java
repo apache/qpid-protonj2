@@ -22,7 +22,6 @@ import java.nio.charset.StandardCharsets;
 
 import org.messaginghub.amqperative.SslOptions;
 import org.messaginghub.amqperative.TransportOptions;
-import org.messaginghub.amqperative.transport.TransportListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -66,49 +65,37 @@ public class WebSocketTransport extends TcpTransport {
      * 		  SSL options to use if the options indicate SSL support is enabled.
      */
     public WebSocketTransport(URI remoteLocation, TransportOptions options, SslOptions sslOptions) {
-        super(null, remoteLocation, options, sslOptions);
-    }
-
-    /**
-     * Create a new transport instance
-     *
-     * @param listener
-     *        the TransportListener that will receive events from this Transport.
-     * @param remoteLocation
-     *        the URI that defines the remote resource to connect to.
-     * @param options
-     *        the transport options used to configure the socket connection.
-     * @param sslOptions
-     * 		  SSL options to use if the options indicate SSL support is enabled.
-     */
-    public WebSocketTransport(TransportListener listener, URI remoteLocation, TransportOptions options, SslOptions sslOptions) {
-        super(listener, remoteLocation, options, sslOptions);
+        super(remoteLocation, options, sslOptions);
     }
 
     @Override
-    public void write(ByteBuf output) throws IOException {
+    public WebSocketTransport write(ByteBuf output) throws IOException {
         checkConnected();
         int length = output.readableBytes();
         if (length == 0) {
-            return;
+            return this;
         }
 
         LOG.trace("Attempted write of: {} bytes", length);
 
         channel.write(new BinaryWebSocketFrame(output), channel.voidPromise());
+
+        return this;
     }
 
     @Override
-    public void writeAndFlush(ByteBuf output) throws IOException {
+    public WebSocketTransport writeAndFlush(ByteBuf output) throws IOException {
         checkConnected();
         int length = output.readableBytes();
         if (length == 0) {
-            return;
+            return this;
         }
 
         LOG.trace("Attempted write and flush of: {} bytes", length);
 
         channel.writeAndFlush(new BinaryWebSocketFrame(output), channel.voidPromise());
+
+        return this;
     }
 
     @Override

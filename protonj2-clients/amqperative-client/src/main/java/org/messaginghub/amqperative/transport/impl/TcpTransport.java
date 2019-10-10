@@ -91,22 +91,6 @@ public class TcpTransport implements Transport {
      * 		  the SSL options to use if the options indicate SSL is enabled.
      */
     public TcpTransport(URI remoteLocation, TransportOptions options, SslOptions sslOptions) {
-        this(null, remoteLocation, options, sslOptions);
-    }
-
-    /**
-     * Create a new transport instance
-     *
-     * @param listener
-     *        the TransportListener that will receive events from this Transport.
-     * @param remoteLocation
-     *        the URI that defines the remote resource to connect to.
-     * @param options
-     *        the transport options used to configure the socket connection.
-     * @param sslOptions
-     * 		  the SSL options to use if the options indicate SSL is enabled.
-     */
-    public TcpTransport(TransportListener listener, URI remoteLocation, TransportOptions options, SslOptions sslOptions) {
         if (options == null) {
             throw new IllegalArgumentException("Transport Options cannot be null");
         }
@@ -121,7 +105,6 @@ public class TcpTransport implements Transport {
 
         this.sslOptions = sslOptions;
         this.options = options;
-        this.listener = listener;
         this.remote = remoteLocation;
     }
 
@@ -252,24 +235,27 @@ public class TcpTransport implements Transport {
     }
 
     @Override
-    public void write(ByteBuf output) throws IOException {
+    public TcpTransport write(ByteBuf output) throws IOException {
         checkConnected(output);
         LOG.trace("Attempted write of: {} bytes", output.readableBytes());
         channel.write(output, channel.voidPromise());
+        return this;
     }
 
     @Override
-    public void writeAndFlush(ByteBuf output) throws IOException {
+    public TcpTransport writeAndFlush(ByteBuf output) throws IOException {
         checkConnected(output);
         LOG.trace("Attempted write and flush of: {} bytes", output.readableBytes());
         channel.writeAndFlush(output, channel.voidPromise());
+        return this;
     }
 
     @Override
-    public void flush() throws IOException {
+    public TcpTransport flush() throws IOException {
         checkConnected();
         LOG.trace("Attempted flush of pending writes");
         channel.flush();
+        return this;
     }
 
     @Override
@@ -278,8 +264,9 @@ public class TcpTransport implements Transport {
     }
 
     @Override
-    public void setTransportListener(TransportListener listener) {
+    public TcpTransport setTransportListener(TransportListener listener) {
         this.listener = listener;
+        return this;
     }
 
     @Override
@@ -288,7 +275,7 @@ public class TcpTransport implements Transport {
     }
 
     @Override
-	public SslOptions getSslOptions() {
+    public SslOptions getSslOptions() {
         return sslOptions;
     }
 
@@ -310,12 +297,13 @@ public class TcpTransport implements Transport {
     }
 
     @Override
-    public void setMaxFrameSize(int maxFrameSize) {
+    public TcpTransport setMaxFrameSize(int maxFrameSize) {
         if (connected.get()) {
             throw new IllegalStateException("Cannot change Max Frame Size while connected.");
         }
 
         this.maxFrameSize = maxFrameSize;
+        return this;
     }
 
     @Override
@@ -329,12 +317,13 @@ public class TcpTransport implements Transport {
     }
 
     @Override
-    public void setThreadFactory(ThreadFactory factory) {
+    public TcpTransport setThreadFactory(ThreadFactory factory) {
         if (isConnected() || channel != null) {
             throw new IllegalStateException("Cannot set IO ThreadFactory after Transport connect");
         }
 
         this.ioThreadfactory = factory;
+        return this;
     }
 
     //----- Internal implementation details, can be overridden as needed -----//

@@ -51,11 +51,9 @@ public class WebSocketTransportTest extends TcpTransportTest {
 
     @Override
     protected Transport createTransport(URI serverLocation, TransportListener listener, TransportOptions options, SslOptions sslOptions) {
-        if (listener == null) {
-            return new WebSocketTransport(serverLocation, options, sslOptions);
-        } else {
-            return new WebSocketTransport(listener, serverLocation, options, sslOptions);
-        }
+        WebSocketTransport transport = new WebSocketTransport(serverLocation, options, sslOptions);
+        transport.setTransportListener(listener);
+        return transport;
     }
 
     @Override

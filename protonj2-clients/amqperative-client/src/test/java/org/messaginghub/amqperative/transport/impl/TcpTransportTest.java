@@ -753,12 +753,12 @@ public class TcpTransportTest extends AMQPerativeTestCase {
         }
     }
 
-    protected Transport createTransport(URI serverLocation, TransportListener listener, TransportOptions options, SslOptions sslOptios ) {
-        if (listener == null) {
-            return new TcpTransport(serverLocation, options, sslOptios);
-        } else {
-            return new TcpTransport(listener, serverLocation, options, sslOptios);
-        }
+    protected Transport createTransport(URI serverLocation, TransportListener listener, TransportOptions options, SslOptions sslOptions) {
+        TcpTransport transport = new TcpTransport(serverLocation, options, sslOptions);
+
+        transport.setTransportListener(listener);
+
+        return transport;
     }
 
     protected TransportOptions createTransportOptions() {
