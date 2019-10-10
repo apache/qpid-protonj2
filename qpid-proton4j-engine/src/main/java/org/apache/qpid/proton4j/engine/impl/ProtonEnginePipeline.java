@@ -187,6 +187,38 @@ public class ProtonEnginePipeline implements EnginePipeline {
     }
 
     @Override
+    public EnginePipeline remove(EngineHandler handler) {
+        if (handler != null) {
+            ProtonEngineHandlerContext current = head.next;
+            ProtonEngineHandlerContext removed = null;
+            while (current != tail) {
+                if (current.getHandler() == handler) {
+                    removed = current;
+
+                    ProtonEngineHandlerContext newNext = current.next;
+
+                    current.previous.next = newNext;
+                    newNext.previous = current.previous;
+
+                    break;
+                }
+
+                current = current.next;
+            }
+
+            if (removed != null) {
+                try {
+                    removed.getHandler().handlerRemoved(removed);
+                } catch (Throwable e) {
+                    engine.engineFailed(e);
+                }
+            }
+        }
+
+        return this;
+    }
+
+    @Override
     public EngineHandler first() {
         return head.next == tail ? null : head.next.getHandler();
     }

@@ -30,11 +30,13 @@ public final class ProtonEngineFactory implements EngineFactory {
         ProtonEngine engine = new ProtonEngine();
         ProtonEnginePipeline pipeline = engine.pipeline();
 
+        pipeline.addLast(ProtonConstants.ENGINE_NOT_STARTED_WRITE_GATE, ProtonEngineNotStartedHandler.INSTANCE);
         pipeline.addLast(ProtonConstants.AMQP_PERFORMATIVE_HANDLER, new ProtonPerformativeHandler());
         pipeline.addLast(ProtonConstants.SASL_PERFORMATIVE_HANDLER, new ProtonSaslHandler());
         pipeline.addLast(ProtonConstants.FRAME_LOGGING_HANDLER, new ProtonFrameLoggingHandler());
         pipeline.addLast(ProtonConstants.FRAME_DECODING_HANDLER, new ProtonFrameDecodingHandler());
         pipeline.addLast(ProtonConstants.FRAME_ENCODING_HANDLER, new ProtonFrameEncodingHandler());
+        pipeline.addLast(ProtonConstants.ENGINE_NOT_STARTED_READ_GATE, ProtonEngineNotStartedHandler.INSTANCE);
 
         return engine;
    }
@@ -44,10 +46,12 @@ public final class ProtonEngineFactory implements EngineFactory {
         ProtonEngine engine = new ProtonEngine();
         ProtonEnginePipeline pipeline = engine.pipeline();
 
+        pipeline.addLast(ProtonConstants.ENGINE_NOT_STARTED_WRITE_GATE, ProtonEngineNotStartedHandler.INSTANCE);
         pipeline.addLast(ProtonConstants.AMQP_PERFORMATIVE_HANDLER, new ProtonPerformativeHandler());
         pipeline.addLast(ProtonConstants.FRAME_LOGGING_HANDLER, new ProtonFrameLoggingHandler());
         pipeline.addLast(ProtonConstants.FRAME_DECODING_HANDLER, new ProtonFrameDecodingHandler());
         pipeline.addLast(ProtonConstants.FRAME_ENCODING_HANDLER, new ProtonFrameEncodingHandler());
+        pipeline.addLast(ProtonConstants.ENGINE_NOT_STARTED_READ_GATE, ProtonEngineNotStartedHandler.INSTANCE);
 
         return engine;
     }

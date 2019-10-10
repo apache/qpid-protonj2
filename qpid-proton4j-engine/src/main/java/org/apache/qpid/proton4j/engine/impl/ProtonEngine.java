@@ -32,9 +32,9 @@ import org.apache.qpid.proton4j.engine.Engine;
 import org.apache.qpid.proton4j.engine.EngineSaslDriver;
 import org.apache.qpid.proton4j.engine.EngineState;
 import org.apache.qpid.proton4j.engine.EventHandler;
-import org.apache.qpid.proton4j.engine.exceptions.EngineClosedException;
 import org.apache.qpid.proton4j.engine.exceptions.EngineIdleTimeoutException;
 import org.apache.qpid.proton4j.engine.exceptions.EngineNotWritableException;
+import org.apache.qpid.proton4j.engine.exceptions.EngineShutdownException;
 import org.apache.qpid.proton4j.engine.exceptions.EngineStateException;
 
 /**
@@ -112,9 +112,7 @@ public class ProtonEngine implements Engine {
                 state = EngineState.STARTED;
                 writable = true;
             } catch (Throwable error) {
-                state = EngineState.FAILED;
-                writable = false;
-
+                engineFailed(error);
                 throw error;
             }
         }
@@ -130,16 +128,15 @@ public class ProtonEngine implements Engine {
 
             // TODO - We aren't currently checking connection state, do we want to close if open ?
 
-            // TODO - Once shutdown future calls that trigger output should not write anything
-            //        or if they do the write should probably just no-op as we know we are already
-            //        shut down and can't emit any frames.  Does this entail closing connection if
-            //        still open ?
-
             if (nextIdleTimeoutCheck != null) {
                 LOG.trace("Cancelling scheduled Idle Timeout Check");
                 nextIdleTimeoutCheck.cancel(false);
                 nextIdleTimeoutCheck = null;
             }
+
+            try {
+                pipeline.fireEngineStateChanged();
+            } catch (Throwable ignored) {}
         }
 
         return this;
@@ -184,7 +181,7 @@ public class ProtonEngine implements Engine {
     @Override
     public ProtonEngine ingest(ProtonBuffer input) {
         if (isShutdown()) {
-            throw new EngineClosedException("The engine has already shut down.");
+            throw new EngineShutdownException("The engine has already shut down.");
         }
 
         if (!isWritable()) {
@@ -270,18 +267,26 @@ public class ProtonEngine implements Engine {
         }
     }
 
-    void engineFailed(Throwable cause) {
-        state = EngineState.FAILED;
-        failureCause = cause;
-        writable = false;
+    Throwable engineFailed(Throwable cause) {
+        if (state.ordinal() < EngineState.SHUTTING_DOWN.ordinal()) {
+            state = EngineState.FAILED;
+            failureCause = cause;
+            writable = false;
 
-        if (nextIdleTimeoutCheck != null) {
-            LOG.trace("Cancelling scheduled Idle Timeout Check");
-            nextIdleTimeoutCheck.cancel(false);
-            nextIdleTimeoutCheck = null;
+            if (nextIdleTimeoutCheck != null) {
+                LOG.trace("Cancelling scheduled Idle Timeout Check");
+                nextIdleTimeoutCheck.cancel(false);
+                nextIdleTimeoutCheck = null;
+            }
+
+            try {
+                pipeline.fireEngineStateChanged();
+            } catch (Throwable ignored) {}
+
+            engineErrorHandler.handle(cause);
         }
 
-        engineErrorHandler.handle(cause);
+        return cause;
     }
 
     private long performTick(long currentTime) {

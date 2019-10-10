@@ -31,6 +31,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import javax.security.sasl.SaslException;
 
 import org.apache.qpid.proton4j.amqp.driver.ProtonTestPeer;
+import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
 import org.apache.qpid.proton4j.engine.Connection;
 import org.apache.qpid.proton4j.engine.ConnectionState;
 import org.apache.qpid.proton4j.engine.Engine;
@@ -45,6 +46,21 @@ import org.mockito.Mockito;
  * Test for basic functionality of the ProtonEngine implementation.
  */
 public class ProtonEngineTest extends ProtonEngineTestSupport {
+
+    @Test
+    public void testEnginePipelineWriteFailsBeforeStart() {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result);
+
+        // Engine cannot accept input bytes until started.
+        assertFalse(engine.isWritable());
+
+        // TODO - We should probably make these throw to allow clients to detach IO errors
+        //        and have simpler implementations than checking engine failed after each call.
+        engine.pipeline().fireWrite(AMQPHeader.getAMQPHeader());
+
+        assertNotNull(failure);
+    }
 
     @Test
     public void testEngineStart() {

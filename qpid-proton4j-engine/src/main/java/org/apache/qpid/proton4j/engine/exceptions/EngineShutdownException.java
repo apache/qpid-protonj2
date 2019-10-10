@@ -19,22 +19,22 @@ package org.apache.qpid.proton4j.engine.exceptions;
 /**
  * Exception thrown when an option is performed on a closed engine.
  */
-public class EngineClosedException extends EngineStateException {
+public class EngineShutdownException extends EngineStateException {
 
     private static final long serialVersionUID = 7020379252988873878L;
 
-    public EngineClosedException() {
+    public EngineShutdownException() {
     }
 
-    public EngineClosedException(String message, Throwable cause) {
+    public EngineShutdownException(String message, Throwable cause) {
         super(message, cause);
     }
 
-    public EngineClosedException(String message) {
+    public EngineShutdownException(String message) {
         super(message);
     }
 
-    public EngineClosedException(Throwable cause) {
+    public EngineShutdownException(Throwable cause) {
         super(cause);
     }
 }

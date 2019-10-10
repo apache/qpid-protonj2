@@ -37,7 +37,7 @@ import org.junit.Test;
 /**
  * Test proton engine from the perspective of a SASL client
  */
-public class ProtonSaslClientTests extends ProtonEngineTestSupport {
+public class ProtonSaslClientTest extends ProtonEngineTestSupport {
 
     @Test
     public void testSaslAnonymousConnection() throws Exception {

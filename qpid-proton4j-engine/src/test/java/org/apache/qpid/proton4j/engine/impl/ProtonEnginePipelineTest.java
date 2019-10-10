@@ -22,8 +22,6 @@ import static org.junit.Assert.assertSame;
 import static org.junit.Assert.fail;
 
 import org.apache.qpid.proton4j.engine.EngineHandler;
-import org.apache.qpid.proton4j.engine.impl.ProtonEngine;
-import org.apache.qpid.proton4j.engine.impl.ProtonEnginePipeline;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -33,13 +31,13 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class ProtonEnginePipelineTest {
 
-    @Mock private ProtonEngine transport;
+    @Mock private ProtonEngine engine;
 
     @Test
     public void testCreatePipeline() {
-        ProtonEnginePipeline pipeline = new ProtonEnginePipeline(transport);
+        ProtonEnginePipeline pipeline = new ProtonEnginePipeline(engine);
 
-        assertSame(pipeline.engine(), transport);
+        assertSame(pipeline.engine(), engine);
         assertNull(pipeline.first());
         assertNull(pipeline.last());
         assertNull(pipeline.firstContext());
@@ -58,7 +56,7 @@ public class ProtonEnginePipelineTest {
 
     @Test
     public void testAddFirstRejectsNullHandler() {
-        ProtonEnginePipeline pipeline = new ProtonEnginePipeline(transport);
+        ProtonEnginePipeline pipeline = new ProtonEnginePipeline(engine);
 
         try {
             pipeline.addFirst("one", null);
@@ -69,7 +67,7 @@ public class ProtonEnginePipelineTest {
     @Test
     public void testAddFirstRejectsNullHandlerName() {
         EngineHandler handler = Mockito.mock(EngineHandler.class);
-        ProtonEnginePipeline pipeline = new ProtonEnginePipeline(transport);
+        ProtonEnginePipeline pipeline = new ProtonEnginePipeline(engine);
 
         try {
             pipeline.addFirst(null, handler);
@@ -80,7 +78,7 @@ public class ProtonEnginePipelineTest {
     @Test
     public void testAddFirstRejectsEmptyHandlerName() {
         EngineHandler handler = Mockito.mock(EngineHandler.class);
-        ProtonEnginePipeline pipeline = new ProtonEnginePipeline(transport);
+        ProtonEnginePipeline pipeline = new ProtonEnginePipeline(engine);
 
         try {
             pipeline.addFirst("", handler);
@@ -92,7 +90,7 @@ public class ProtonEnginePipelineTest {
     public void testAddFirstWithOneHandler() {
         EngineHandler handler = Mockito.mock(EngineHandler.class);
 
-        ProtonEnginePipeline pipeline = new ProtonEnginePipeline(transport);
+        ProtonEnginePipeline pipeline = new ProtonEnginePipeline(engine);
 
         pipeline.addFirst("one", handler);
 
@@ -108,7 +106,7 @@ public class ProtonEnginePipelineTest {
         EngineHandler handler2 = Mockito.mock(EngineHandler.class);
         EngineHandler handler3 = Mockito.mock(EngineHandler.class);
 
-        ProtonEnginePipeline pipeline = new ProtonEnginePipeline(transport);
+        ProtonEnginePipeline pipeline = new ProtonEnginePipeline(engine);
 
         pipeline.addFirst("three", handler3);
         pipeline.addFirst("two", handler2);
@@ -127,7 +125,7 @@ public class ProtonEnginePipelineTest {
 
     @Test
     public void testAddLastRejectsNullHandler() {
-        ProtonEnginePipeline pipeline = new ProtonEnginePipeline(transport);
+        ProtonEnginePipeline pipeline = new ProtonEnginePipeline(engine);
 
         try {
             pipeline.addLast("one", null);
@@ -138,7 +136,7 @@ public class ProtonEnginePipelineTest {
     @Test
     public void testAddLastRejectsNullHandlerName() {
         EngineHandler handler = Mockito.mock(EngineHandler.class);
-        ProtonEnginePipeline pipeline = new ProtonEnginePipeline(transport);
+        ProtonEnginePipeline pipeline = new ProtonEnginePipeline(engine);
 
         try {
             pipeline.addLast(null, handler);
@@ -149,7 +147,7 @@ public class ProtonEnginePipelineTest {
     @Test
     public void testAddLastRejectsEmptyHandlerName() {
         EngineHandler handler = Mockito.mock(EngineHandler.class);
-        ProtonEnginePipeline pipeline = new ProtonEnginePipeline(transport);
+        ProtonEnginePipeline pipeline = new ProtonEnginePipeline(engine);
 
         try {
             pipeline.addLast("", handler);
@@ -161,7 +159,7 @@ public class ProtonEnginePipelineTest {
     public void testAddLastWithOneHandler() {
         EngineHandler handler = Mockito.mock(EngineHandler.class);
 
-        ProtonEnginePipeline pipeline = new ProtonEnginePipeline(transport);
+        ProtonEnginePipeline pipeline = new ProtonEnginePipeline(engine);
 
         pipeline.addLast("one", handler);
 
@@ -180,7 +178,7 @@ public class ProtonEnginePipelineTest {
         EngineHandler handler2 = Mockito.mock(EngineHandler.class);
         EngineHandler handler3 = Mockito.mock(EngineHandler.class);
 
-        ProtonEnginePipeline pipeline = new ProtonEnginePipeline(transport);
+        ProtonEnginePipeline pipeline = new ProtonEnginePipeline(engine);
 
         pipeline.addLast("one", handler1);
         pipeline.addLast("two", handler2);
@@ -201,7 +199,7 @@ public class ProtonEnginePipelineTest {
     public void testRemoveFirstWithOneHandler() {
         EngineHandler handler = Mockito.mock(EngineHandler.class);
 
-        ProtonEnginePipeline pipeline = new ProtonEnginePipeline(transport);
+        ProtonEnginePipeline pipeline = new ProtonEnginePipeline(engine);
 
         pipeline.addFirst("one", handler);
 
@@ -218,7 +216,7 @@ public class ProtonEnginePipelineTest {
         EngineHandler handler2 = Mockito.mock(EngineHandler.class);
         EngineHandler handler3 = Mockito.mock(EngineHandler.class);
 
-        ProtonEnginePipeline pipeline = new ProtonEnginePipeline(transport);
+        ProtonEnginePipeline pipeline = new ProtonEnginePipeline(engine);
 
         pipeline.addFirst("three", handler3);
         pipeline.addFirst("two", handler2);
@@ -240,7 +238,7 @@ public class ProtonEnginePipelineTest {
     public void testRemoveLastWithOneHandler() {
         EngineHandler handler = Mockito.mock(EngineHandler.class);
 
-        ProtonEnginePipeline pipeline = new ProtonEnginePipeline(transport);
+        ProtonEnginePipeline pipeline = new ProtonEnginePipeline(engine);
 
         pipeline.addFirst("one", handler);
 
@@ -257,7 +255,7 @@ public class ProtonEnginePipelineTest {
         EngineHandler handler2 = Mockito.mock(EngineHandler.class);
         EngineHandler handler3 = Mockito.mock(EngineHandler.class);
 
-        ProtonEnginePipeline pipeline = new ProtonEnginePipeline(transport);
+        ProtonEnginePipeline pipeline = new ProtonEnginePipeline(engine);
 
         pipeline.addFirst("three", handler3);
         pipeline.addFirst("two", handler2);
@@ -277,18 +275,19 @@ public class ProtonEnginePipelineTest {
 
     @Test
     public void testRemoveWhenEmpty() {
-        ProtonEnginePipeline pipeline = new ProtonEnginePipeline(transport);
+        ProtonEnginePipeline pipeline = new ProtonEnginePipeline(engine);
 
         assertSame(pipeline, pipeline.remove("unknown"));
         assertSame(pipeline, pipeline.remove(""));
-        assertSame(pipeline, pipeline.remove(null));
+        assertSame(pipeline, pipeline.remove((String) null));
+        assertSame(pipeline, pipeline.remove((EngineHandler) null));
     }
 
     @Test
     public void testRemoveWithOneHandler() {
         EngineHandler handler = Mockito.mock(EngineHandler.class);
 
-        ProtonEnginePipeline pipeline = new ProtonEnginePipeline(transport);
+        ProtonEnginePipeline pipeline = new ProtonEnginePipeline(engine);
 
         pipeline.addFirst("one", handler);
 
@@ -296,10 +295,20 @@ public class ProtonEnginePipelineTest {
 
         assertSame(pipeline, pipeline.remove("unknown"));
         assertSame(pipeline, pipeline.remove(""));
-        assertSame(pipeline, pipeline.remove(null));
+        assertSame(pipeline, pipeline.remove((String) null));
+        assertSame(pipeline, pipeline.remove((EngineHandler) null));
 
         assertSame(handler, pipeline.first());
         assertSame(pipeline, pipeline.remove("one"));
+
+        assertNull(pipeline.first());
+        assertNull(pipeline.last());
+
+        pipeline.addFirst("one", handler);
+
+        assertSame(handler, pipeline.first());
+
+        assertSame(pipeline, pipeline.remove(handler));
 
         assertNull(pipeline.first());
         assertNull(pipeline.last());
@@ -311,7 +320,7 @@ public class ProtonEnginePipelineTest {
         EngineHandler handler2 = Mockito.mock(EngineHandler.class);
         EngineHandler handler3 = Mockito.mock(EngineHandler.class);
 
-        ProtonEnginePipeline pipeline = new ProtonEnginePipeline(transport);
+        ProtonEnginePipeline pipeline = new ProtonEnginePipeline(engine);
 
         pipeline.addFirst("three", handler3);
         pipeline.addFirst("two", handler2);
@@ -323,6 +332,20 @@ public class ProtonEnginePipelineTest {
         assertSame(pipeline, pipeline.remove("two"));
         assertSame(handler3, pipeline.first());
         assertSame(pipeline, pipeline.remove("three"));
+
+        assertNull(pipeline.first());
+        assertNull(pipeline.last());
+
+        pipeline.addFirst("three", handler3);
+        pipeline.addFirst("two", handler2);
+        pipeline.addFirst("one", handler1);
+
+        assertSame(handler1, pipeline.first());
+        assertSame(pipeline, pipeline.remove(handler1));
+        assertSame(handler2, pipeline.first());
+        assertSame(pipeline, pipeline.remove(handler2));
+        assertSame(handler3, pipeline.first());
+        assertSame(pipeline, pipeline.remove(handler3));
 
         assertNull(pipeline.first());
         assertNull(pipeline.last());

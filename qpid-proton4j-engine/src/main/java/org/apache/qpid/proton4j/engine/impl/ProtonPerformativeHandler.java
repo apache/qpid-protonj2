@@ -17,6 +17,7 @@
 package org.apache.qpid.proton4j.engine.impl;
 
 import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
+import org.apache.qpid.proton4j.amqp.transport.AMQPHeader.HeaderHandler;
 import org.apache.qpid.proton4j.amqp.transport.Attach;
 import org.apache.qpid.proton4j.amqp.transport.Begin;
 import org.apache.qpid.proton4j.amqp.transport.Close;
@@ -25,7 +26,7 @@ import org.apache.qpid.proton4j.amqp.transport.Disposition;
 import org.apache.qpid.proton4j.amqp.transport.End;
 import org.apache.qpid.proton4j.amqp.transport.Flow;
 import org.apache.qpid.proton4j.amqp.transport.Open;
-import org.apache.qpid.proton4j.amqp.transport.Performative;
+import org.apache.qpid.proton4j.amqp.transport.Performative.PerformativeHandler;
 import org.apache.qpid.proton4j.amqp.transport.Transfer;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.engine.EngineHandler;
@@ -39,7 +40,7 @@ import org.apache.qpid.proton4j.engine.exceptions.ProtonException;
  * Transport Handler that forwards the incoming Performatives to the associated Connection
  * as well as any error encountered during the Transport processing.
  */
-public class ProtonPerformativeHandler implements EngineHandler, AMQPHeader.HeaderHandler<EngineHandlerContext>, Performative.PerformativeHandler<EngineHandlerContext> {
+public class ProtonPerformativeHandler implements EngineHandler, HeaderHandler<EngineHandlerContext>, PerformativeHandler<EngineHandlerContext> {
 
     private ProtonEngine engine;
     private ProtonConnection connection;

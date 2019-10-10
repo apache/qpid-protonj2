@@ -40,6 +40,8 @@ public interface EnginePipeline {
 
     EnginePipeline remove(String name);
 
+    EnginePipeline remove(EngineHandler handler);
+
     EngineHandler first();
 
     EngineHandler last();
