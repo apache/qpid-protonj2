@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.messaginghub.amqperative.transport.impl;
+package org.messaginghub.amqperative.transport;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -24,7 +24,6 @@ import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeTrue;
 
 import java.lang.reflect.Field;
-import java.net.URI;
 
 import javax.net.ssl.SSLContext;
 
@@ -66,22 +65,22 @@ public class OpenSslTransportTest extends SslTransportTest {
         try (NettyEchoServer server = createEchoServer()) {
             server.start();
 
-            int port = server.getServerPort();
-            URI serverLocation = new URI("tcp://localhost:" + port);
+            final int port = server.getServerPort();
 
             SslOptions options = createSSLOptions();
             options.setAllowNativeSSL(useOpenSSL);
 
-            Transport transport = createTransport(serverLocation, testListener, createTransportOptions(), options);
+            Transport transport = createTransport(HOSTNAME, port, testListener, createTransportOptions(), options);
             try {
                 transport.connect(null);
-                LOG.info("Connected to server:{} as expected.", serverLocation);
+                LOG.info("Connected to server:{}:{} as expected.", HOSTNAME, port);
             } catch (Exception e) {
-                fail("Should have connected to the server at " + serverLocation + " but got exception: " + e);
+                fail("Should have connected to the server at " + HOSTNAME + ":" + port + " but got exception: " + e);
             }
 
             assertTrue(transport.isConnected());
-            assertEquals(serverLocation, transport.getRemoteLocation());
+            assertEquals(HOSTNAME, transport.getHost());
+            assertEquals(port, transport.getPort());
             assertOpenSSL("Transport should be using OpenSSL", useOpenSSL, transport);
 
             transport.close();
@@ -103,8 +102,7 @@ public class OpenSslTransportTest extends SslTransportTest {
         try (NettyEchoServer server = createEchoServer()) {
             server.start();
 
-            int port = server.getServerPort();
-            URI serverLocation = new URI("tcp://localhost:" + port);
+            final int port = server.getServerPort();
 
             SslOptions options = new SslOptions();
 
@@ -123,16 +121,17 @@ public class OpenSslTransportTest extends SslTransportTest {
             options.setAllowNativeSSL(true);
             options.setSslContextOverride(sslContext);
 
-            Transport transport = createTransport(serverLocation, testListener, createTransportOptions(), options);
+            Transport transport = createTransport(HOSTNAME, port, testListener, createTransportOptions(), options);
             try {
                 transport.connect(null);
-                LOG.info("Connected to server:{} as expected.", serverLocation);
+                LOG.info("Connected to server:{} as expected.", HOSTNAME, port);
             } catch (Exception e) {
-                fail("Should have connected to the server at " + serverLocation + " but got exception: " + e);
+                fail("Should have connected to the server at " + HOSTNAME + ":" + port + " but got exception: " + e);
             }
 
             assertTrue(transport.isConnected());
-            assertEquals(serverLocation, transport.getRemoteLocation());
+            assertEquals("Server host is incorrect", HOSTNAME, transport.getHost());
+            assertEquals("Server port is incorrect", port, transport.getPort());
             assertOpenSSL("Transport should not be using OpenSSL", false, transport);
 
             transport.close();

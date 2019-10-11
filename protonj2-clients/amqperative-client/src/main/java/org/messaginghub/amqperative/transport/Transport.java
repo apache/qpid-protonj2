@@ -17,7 +17,6 @@
 package org.messaginghub.amqperative.transport;
 
 import java.io.IOException;
-import java.net.URI;
 import java.security.Principal;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
@@ -161,9 +160,14 @@ public interface Transport {
     SslOptions getSslOptions();
 
     /**
-     * @return the URI of the remote peer that this Transport connects to.
+     * @return the host name or IP address that the transport connects to.
      */
-    URI getRemoteLocation();
+    String getHost();
+
+    /**
+     * @return the port that the transport connects to.
+     */
+    int getPort();
 
     /**
      * @return the local principal for a Transport that is using a secure connection.

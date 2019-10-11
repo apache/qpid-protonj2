@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.messaginghub.amqperative.transport.impl;
+package org.messaginghub.amqperative.transport;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
@@ -53,6 +53,8 @@ public class SslSupportTest extends AMQPerativeTestCase {
 
     public static final String PASSWORD = "password";
 
+    public static final String HOSTNAME = "localhost";
+
     public static final String BROKER_JKS_KEYSTORE = "src/test/resources/broker-jks.keystore";
     public static final String BROKER_JKS_TRUSTSTORE = "src/test/resources/broker-jks.truststore";
     public static final String CLIENT_JKS_KEYSTORE = "src/test/resources/client-jks.keystore";
@@ -87,7 +89,7 @@ public class SslSupportTest extends AMQPerativeTestCase {
         SSLContext context = SslSupport.createJdkSslContext(options);
         assertNotNull(context);
 
-        SSLEngine engine = SslSupport.createJdkSslEngine(null, context, options);
+        SSLEngine engine = SslSupport.createJdkSslEngine(null, -1, context, options);
         assertNotNull(engine);
 
         List<String> engineProtocols = Arrays.asList(engine.getEnabledProtocols());
@@ -105,7 +107,7 @@ public class SslSupportTest extends AMQPerativeTestCase {
         SslContext context = SslSupport.createOpenSslContext(options);
         assertNotNull(context);
 
-        SSLEngine engine = SslSupport.createOpenSslEngine(PooledByteBufAllocator.DEFAULT, null, context, options);
+        SSLEngine engine = SslSupport.createOpenSslEngine(PooledByteBufAllocator.DEFAULT, null, -1, context, options);
         assertNotNull(engine);
 
         List<String> engineProtocols = Arrays.asList(engine.getEnabledProtocols());
@@ -320,7 +322,7 @@ public class SslSupportTest extends AMQPerativeTestCase {
         SSLContext context = SslSupport.createJdkSslContext(options);
         assertNotNull(context);
 
-        SSLEngine engine = SslSupport.createJdkSslEngine(null, context, options);
+        SSLEngine engine = SslSupport.createJdkSslEngine(null, -1, context, options);
         assertNotNull(engine);
 
         List<String> engineProtocols = Arrays.asList(engine.getEnabledProtocols());
@@ -337,7 +339,7 @@ public class SslSupportTest extends AMQPerativeTestCase {
         SslContext context = SslSupport.createOpenSslContext(options);
         assertNotNull(context);
 
-        SSLEngine engine = SslSupport.createOpenSslEngine(PooledByteBufAllocator.DEFAULT, null, context, options);
+        SSLEngine engine = SslSupport.createOpenSslEngine(PooledByteBufAllocator.DEFAULT, null, -1, context, options);
         assertNotNull(engine);
 
         List<String> engineProtocols = Arrays.asList(engine.getEnabledProtocols());
@@ -351,7 +353,7 @@ public class SslSupportTest extends AMQPerativeTestCase {
         SSLContext context = SslSupport.createJdkSslContext(options);
         assertNotNull(context);
 
-        SSLEngine engine = SslSupport.createJdkSslEngine(null, context, options);
+        SSLEngine engine = SslSupport.createJdkSslEngine(null, -1, context, options);
         assertNotNull(engine);
 
         assertArrayEquals("Enabled protocols not as expected", ENABLED_PROTOCOLS, engine.getEnabledProtocols());
@@ -367,7 +369,7 @@ public class SslSupportTest extends AMQPerativeTestCase {
         SslContext context = SslSupport.createOpenSslContext(options);
         assertNotNull(context);
 
-        SSLEngine engine = SslSupport.createOpenSslEngine(PooledByteBufAllocator.DEFAULT, null, context, options);
+        SSLEngine engine = SslSupport.createOpenSslEngine(PooledByteBufAllocator.DEFAULT, null, -1, context, options);
         assertNotNull(engine);
 
         assertArrayEquals("Enabled protocols not as expected", ENABLED_OPENSSL_PROTOCOLS, engine.getEnabledProtocols());
@@ -380,7 +382,7 @@ public class SslSupportTest extends AMQPerativeTestCase {
         SSLContext context = SslSupport.createJdkSslContext(options);
         assertNotNull(context);
 
-        SSLEngine engine = SslSupport.createJdkSslEngine(null, context, options);
+        SSLEngine engine = SslSupport.createJdkSslEngine(null, -1, context, options);
         assertNotNull(engine);
 
         List<String> engineProtocols = Arrays.asList(engine.getEnabledProtocols());
@@ -397,7 +399,7 @@ public class SslSupportTest extends AMQPerativeTestCase {
         SslContext context = SslSupport.createOpenSslContext(options);
         assertNotNull(context);
 
-        SSLEngine engine = SslSupport.createOpenSslEngine(PooledByteBufAllocator.DEFAULT, null, context, options);
+        SSLEngine engine = SslSupport.createOpenSslEngine(PooledByteBufAllocator.DEFAULT, null, -1, context, options);
         assertNotNull(engine);
 
         List<String> engineProtocols = Arrays.asList(engine.getEnabledProtocols());
@@ -411,7 +413,7 @@ public class SslSupportTest extends AMQPerativeTestCase {
         SSLContext context = SslSupport.createJdkSslContext(options);
         assertNotNull(context);
 
-        SSLEngine engine = SslSupport.createJdkSslEngine(null, context, options);
+        SSLEngine engine = SslSupport.createJdkSslEngine(null, -1, context, options);
         assertNotNull(engine);
 
         assertArrayEquals("Enabled protocols not as expected", ENABLED_PROTOCOLS, engine.getEnabledProtocols());
@@ -427,7 +429,7 @@ public class SslSupportTest extends AMQPerativeTestCase {
         SslContext context = SslSupport.createOpenSslContext(options);
         assertNotNull(context);
 
-        SSLEngine engine = SslSupport.createOpenSslEngine(PooledByteBufAllocator.DEFAULT, null, context, options);
+        SSLEngine engine = SslSupport.createOpenSslEngine(PooledByteBufAllocator.DEFAULT, null, -1, context, options);
         assertNotNull(engine);
 
         assertArrayEquals("Enabled protocols not as expected", ENABLED_OPENSSL_PROTOCOLS, engine.getEnabledProtocols());
@@ -446,7 +448,7 @@ public class SslSupportTest extends AMQPerativeTestCase {
         String[] trimmedProtocols = Arrays.copyOf(protocols, protocols.length - 1);
         options.setDisabledProtocols(disabledProtocol);
         SSLContext context = SslSupport.createJdkSslContext(options);
-        SSLEngine engine = SslSupport.createJdkSslEngine(null, context, options);
+        SSLEngine engine = SslSupport.createJdkSslEngine(null, -1, context, options);
 
         // verify the option took effect
         assertNotNull(engine);
@@ -469,7 +471,7 @@ public class SslSupportTest extends AMQPerativeTestCase {
         String[] trimmedProtocols = Arrays.copyOf(protocols, protocols.length - 1);
         options.setDisabledProtocols(disabledProtocol);
         SslContext context = SslSupport.createOpenSslContext(options);
-        SSLEngine engine = SslSupport.createOpenSslEngine(PooledByteBufAllocator.DEFAULT, null, context, options);
+        SSLEngine engine = SslSupport.createOpenSslEngine(PooledByteBufAllocator.DEFAULT, null, -1, context, options);
 
         // verify the option took effect
         assertNotNull(engine);
@@ -493,7 +495,7 @@ public class SslSupportTest extends AMQPerativeTestCase {
         options.setEnabledProtocols(enabledProtocols);
         options.setDisabledProtocols(disabledProtocol);
         SSLContext context = SslSupport.createJdkSslContext(options);
-        SSLEngine engine = SslSupport.createJdkSslEngine(null, context, options);
+        SSLEngine engine = SslSupport.createJdkSslEngine(null, -1, context, options);
 
         // verify the option took effect, that the disabled protocols were removed from the enabled list.
         assertNotNull(engine);
@@ -520,7 +522,7 @@ public class SslSupportTest extends AMQPerativeTestCase {
         options.setEnabledProtocols(enabledProtocols);
         options.setDisabledProtocols(disabledProtocol);
         SslContext context = SslSupport.createOpenSslContext(options);
-        SSLEngine engine = SslSupport.createOpenSslEngine(PooledByteBufAllocator.DEFAULT, null, context, options);
+        SSLEngine engine = SslSupport.createOpenSslEngine(PooledByteBufAllocator.DEFAULT, null, -1, context, options);
 
         // Because Netty cannot currently disable SSLv2Hello in OpenSSL we need to account for it popping up.
         ArrayList<String> remainingProtocolsList = new ArrayList<>(Arrays.asList(remainingProtocols));
@@ -549,7 +551,7 @@ public class SslSupportTest extends AMQPerativeTestCase {
         String[] enabledCipher = new String[] { cipher };
         options.setEnabledCipherSuites(enabledCipher);
         SSLContext context = SslSupport.createJdkSslContext(options);
-        SSLEngine engine = SslSupport.createJdkSslEngine(null, context, options);
+        SSLEngine engine = SslSupport.createJdkSslEngine(null, -1, context, options);
 
         // verify the option took effect
         assertNotNull(engine);
@@ -572,7 +574,7 @@ public class SslSupportTest extends AMQPerativeTestCase {
         String[] enabledCipher = new String[] { cipher };
         options.setEnabledCipherSuites(enabledCipher);
         SslContext context = SslSupport.createOpenSslContext(options);
-        SSLEngine engine = SslSupport.createOpenSslEngine(PooledByteBufAllocator.DEFAULT, null, context, options);
+        SSLEngine engine = SslSupport.createOpenSslEngine(PooledByteBufAllocator.DEFAULT, null, -1, context, options);
 
         // verify the option took effect
         assertNotNull(engine);
@@ -592,7 +594,7 @@ public class SslSupportTest extends AMQPerativeTestCase {
         String[] trimmedCiphers = Arrays.copyOf(ciphers, ciphers.length - 1);
         options.setDisabledCipherSuites(disabledCipher);
         SSLContext context = SslSupport.createJdkSslContext(options);
-        SSLEngine engine = SslSupport.createJdkSslEngine(null, context, options);
+        SSLEngine engine = SslSupport.createJdkSslEngine(null, -1, context, options);
 
         // verify the option took effect
         assertNotNull(engine);
@@ -615,7 +617,7 @@ public class SslSupportTest extends AMQPerativeTestCase {
         String[] trimmedCiphers = Arrays.copyOf(ciphers, ciphers.length - 1);
         options.setDisabledCipherSuites(disabledCipher);
         SslContext context = SslSupport.createOpenSslContext(options);
-        SSLEngine engine = SslSupport.createOpenSslEngine(PooledByteBufAllocator.DEFAULT, null, context, options);
+        SSLEngine engine = SslSupport.createOpenSslEngine(PooledByteBufAllocator.DEFAULT, null, -1, context, options);
 
         // verify the option took effect
         assertNotNull(engine);
@@ -639,7 +641,7 @@ public class SslSupportTest extends AMQPerativeTestCase {
         options.setEnabledCipherSuites(enabledCiphers);
         options.setDisabledCipherSuites(disabledCipher);
         SSLContext context = SslSupport.createJdkSslContext(options);
-        SSLEngine engine = SslSupport.createJdkSslEngine(null, context, options);
+        SSLEngine engine = SslSupport.createJdkSslEngine(null, -1, context, options);
 
         // verify the option took effect, that the disabled ciphers were removed from the enabled list.
         assertNotNull(engine);
@@ -666,7 +668,7 @@ public class SslSupportTest extends AMQPerativeTestCase {
         options.setEnabledCipherSuites(enabledCiphers);
         options.setDisabledCipherSuites(disabledCipher);
         SslContext context = SslSupport.createOpenSslContext(options);
-        SSLEngine engine = SslSupport.createOpenSslEngine(PooledByteBufAllocator.DEFAULT, null, context, options);
+        SSLEngine engine = SslSupport.createOpenSslEngine(PooledByteBufAllocator.DEFAULT, null, -1, context, options);
 
         // verify the option took effect, that the disabled ciphers were removed from the enabled list.
         assertNotNull(engine);
@@ -680,7 +682,7 @@ public class SslSupportTest extends AMQPerativeTestCase {
         SSLContext context = SslSupport.createJdkSslContext(options);
         assertNotNull(context);
 
-        SSLEngine engine = SslSupport.createJdkSslEngine(null, context, options);
+        SSLEngine engine = SslSupport.createJdkSslEngine(null, -1, context, options);
         assertNotNull(engine);
 
         List<String> engineProtocols = Arrays.asList(engine.getEnabledProtocols());
@@ -697,7 +699,7 @@ public class SslSupportTest extends AMQPerativeTestCase {
         SslContext context = SslSupport.createOpenSslContext(options);
         assertNotNull(context);
 
-        SSLEngine engine = SslSupport.createOpenSslEngine(PooledByteBufAllocator.DEFAULT, null, context, options);
+        SSLEngine engine = SslSupport.createOpenSslEngine(PooledByteBufAllocator.DEFAULT, null, -1, context, options);
         assertNotNull(engine);
 
         List<String> engineProtocols = Arrays.asList(engine.getEnabledProtocols());
@@ -711,7 +713,7 @@ public class SslSupportTest extends AMQPerativeTestCase {
         SSLContext context = SslSupport.createJdkSslContext(options);
         assertNotNull(context);
 
-        SSLEngine engine = SslSupport.createJdkSslEngine(null, context, options);
+        SSLEngine engine = SslSupport.createJdkSslEngine(null, -1, context, options);
         assertNotNull(engine);
 
         assertArrayEquals("Enabled protocols not as expected", ENABLED_PROTOCOLS, engine.getEnabledProtocols());
@@ -729,7 +731,7 @@ public class SslSupportTest extends AMQPerativeTestCase {
         SslContext context = SslSupport.createOpenSslContext(options);
         assertNotNull(context);
 
-        SSLEngine engine = SslSupport.createOpenSslEngine(PooledByteBufAllocator.DEFAULT, null, context, options);
+        SSLEngine engine = SslSupport.createOpenSslEngine(PooledByteBufAllocator.DEFAULT, null, -1, context, options);
         assertNotNull(engine);
 
         assertArrayEquals("Enabled protocols not as expected", ENABLED_OPENSSL_PROTOCOLS, engine.getEnabledProtocols());
@@ -743,7 +745,7 @@ public class SslSupportTest extends AMQPerativeTestCase {
         SSLContext context = SslSupport.createJdkSslContext(options);
         assertNotNull(context);
 
-        SSLEngine engine = SslSupport.createJdkSslEngine(null, context, options);
+        SSLEngine engine = SslSupport.createJdkSslEngine(null, -1, context, options);
         assertNotNull(engine);
 
         assertEquals("HTTPS", engine.getSSLParameters().getEndpointIdentificationAlgorithm());
@@ -761,7 +763,7 @@ public class SslSupportTest extends AMQPerativeTestCase {
         SslContext context = SslSupport.createOpenSslContext(options);
         assertNotNull(context);
 
-        SSLEngine engine = SslSupport.createOpenSslEngine(PooledByteBufAllocator.DEFAULT, null, context, options);
+        SSLEngine engine = SslSupport.createOpenSslEngine(PooledByteBufAllocator.DEFAULT, null, -1, context, options);
         assertNotNull(engine);
 
         assertEquals("HTTPS", engine.getSSLParameters().getEndpointIdentificationAlgorithm());
@@ -775,7 +777,7 @@ public class SslSupportTest extends AMQPerativeTestCase {
         SSLContext context = SslSupport.createJdkSslContext(options);
         assertNotNull(context);
 
-        SSLEngine engine = SslSupport.createJdkSslEngine(null, context, options);
+        SSLEngine engine = SslSupport.createJdkSslEngine(null, -1, context, options);
         assertNotNull(engine);
 
         assertNull(engine.getSSLParameters().getEndpointIdentificationAlgorithm());
@@ -793,7 +795,7 @@ public class SslSupportTest extends AMQPerativeTestCase {
         SslContext context = SslSupport.createOpenSslContext(options);
         assertNotNull(context);
 
-        SSLEngine engine = SslSupport.createOpenSslEngine(PooledByteBufAllocator.DEFAULT, null, context, options);
+        SSLEngine engine = SslSupport.createOpenSslEngine(PooledByteBufAllocator.DEFAULT, null, -1, context, options);
         assertNotNull(engine);
 
         assertNull(engine.getSSLParameters().getEndpointIdentificationAlgorithm());
@@ -876,7 +878,7 @@ public class SslSupportTest extends AMQPerativeTestCase {
         options.setSSLEnabled(true);
         options.setAllowNativeSSL(false);
 
-        SslHandler handler = SslSupport.createSslHandler(null, null, options);
+        SslHandler handler = SslSupport.createSslHandler(null, null, -1, options);
         assertNotNull(handler);
         assertFalse(handler.engine() instanceof OpenSslEngine);
     }
@@ -889,7 +891,7 @@ public class SslSupportTest extends AMQPerativeTestCase {
         SslOptions options = new SslOptions();
         options.setAllowNativeSSL(true);
 
-        SslHandler handler = SslSupport.createSslHandler(PooledByteBufAllocator.DEFAULT, null, options);
+        SslHandler handler = SslSupport.createSslHandler(PooledByteBufAllocator.DEFAULT, null, -1, options);
         assertNotNull(handler);
         assertTrue(handler.engine() instanceof OpenSslEngine);
     }
@@ -904,7 +906,7 @@ public class SslSupportTest extends AMQPerativeTestCase {
 
         SslContext context = SslSupport.createOpenSslContext(options);
         try {
-            SslSupport.createOpenSslEngine(null, null, context, options);
+            SslSupport.createOpenSslEngine(null, null, -1, context, options);
             fail("Should throw IllegalArgumentException for null allocator.");
         } catch (IllegalArgumentException iae) {}
     }

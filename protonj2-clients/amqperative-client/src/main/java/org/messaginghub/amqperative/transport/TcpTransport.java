@@ -14,10 +14,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.messaginghub.amqperative.transport.impl;
+package org.messaginghub.amqperative.transport;
 
 import java.io.IOException;
-import java.net.URI;
 import java.security.Principal;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ScheduledExecutorService;
@@ -27,9 +26,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.messaginghub.amqperative.SslOptions;
 import org.messaginghub.amqperative.TransportOptions;
-import org.messaginghub.amqperative.transport.SslSupport;
-import org.messaginghub.amqperative.transport.Transport;
-import org.messaginghub.amqperative.transport.TransportListener;
 import org.messaginghub.amqperative.util.IOExceptionSupport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -74,7 +70,8 @@ public class TcpTransport implements Transport {
 
     private final TransportOptions options;
     private final SslOptions sslOptions;
-    private final URI remote;
+    private final String host;
+    private final int port;
     private final AtomicBoolean connected = new AtomicBoolean();
     private final AtomicBoolean closed = new AtomicBoolean();
     private final CountDownLatch connectLatch = new CountDownLatch(1);
@@ -83,14 +80,16 @@ public class TcpTransport implements Transport {
     /**
      * Create a new transport instance
      *
-     * @param remoteLocation
-     *        the URI that defines the remote resource to connect to.
+     * @param host
+     *        the host name or IP address that this transport connects to.
+     * @param port
+     * 		  the port on the given host that this transport connects to.
      * @param options
      *        the transport options used to configure the socket connection.
      * @param sslOptions
      * 		  the SSL options to use if the options indicate SSL is enabled.
      */
-    public TcpTransport(URI remoteLocation, TransportOptions options, SslOptions sslOptions) {
+    public TcpTransport(String host, int port, TransportOptions options, SslOptions sslOptions) {
         if (options == null) {
             throw new IllegalArgumentException("Transport Options cannot be null");
         }
@@ -99,13 +98,18 @@ public class TcpTransport implements Transport {
             throw new IllegalArgumentException("Transport SSL Options cannot be null");
         }
 
-        if (remoteLocation == null) {
-            throw new IllegalArgumentException("Transport remote location cannot be null");
+        if (host == null || host.isEmpty()) {
+            throw new IllegalArgumentException("Transport host value cannot be null");
         }
 
         this.sslOptions = sslOptions;
         this.options = options;
-        this.remote = remoteLocation;
+        this.host = host;
+        if (port < 0) {
+            this.port = sslOptions.isSSLEnabled() ? sslOptions.getDefaultSslPort() : options.getDefaultTcpPort();
+        } else {
+            this.port = port;
+        }
     }
 
     @Override
@@ -160,7 +164,7 @@ public class TcpTransport implements Transport {
 
         configureNetty(bootstrap, transportOptions);
 
-        ChannelFuture future = bootstrap.connect(getRemoteHost(), getRemotePort());
+        ChannelFuture future = bootstrap.connect(getHost(), getPort());
         future.addListener(new ChannelFutureListener() {
 
             @Override
@@ -207,6 +211,16 @@ public class TcpTransport implements Transport {
     @Override
     public boolean isSecure() {
         return sslOptions.isSSLEnabled();
+    }
+
+    @Override
+    public String getHost() {
+        return host;
+    }
+
+    @Override
+    public int getPort() {
+        return port;
     }
 
     @Override
@@ -280,11 +294,6 @@ public class TcpTransport implements Transport {
     }
 
     @Override
-    public URI getRemoteLocation() {
-        return remote;
-    }
-
-    @Override
     public Principal getLocalPrincipal() {
         Principal result = null;
 
@@ -327,18 +336,6 @@ public class TcpTransport implements Transport {
     }
 
     //----- Internal implementation details, can be overridden as needed -----//
-
-    protected String getRemoteHost() {
-        return remote.getHost();
-    }
-
-    protected int getRemotePort() {
-        if (remote.getPort() != -1) {
-            return remote.getPort();
-        } else {
-            return isSecure() ? getSslOptions().getDefaultSslPort() : getTransportOptions().getDefaultTcpPort();
-        }
-    }
 
     protected void addAdditionalHandlers(ChannelPipeline pipeline) {
 
@@ -466,7 +463,7 @@ public class TcpTransport implements Transport {
         if (isSecure()) {
             final SslHandler sslHandler;
             try {
-                sslHandler = SslSupport.createSslHandler(channel.alloc(), getRemoteLocation(), getSslOptions());
+                sslHandler = SslSupport.createSslHandler(channel.alloc(), getHost(), getPort(), getSslOptions());
             } catch (Exception ex) {
                 throw IOExceptionSupport.create(ex);
             }

@@ -14,10 +14,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.messaginghub.amqperative.transport.impl;
+package org.messaginghub.amqperative.transport;
 
 import java.io.IOException;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 
 import org.messaginghub.amqperative.SslOptions;
@@ -57,15 +58,17 @@ public class WebSocketTransport extends TcpTransport {
     /**
      * Create a new transport instance
      *
-     * @param remoteLocation
-     *        the URI that defines the remote resource to connect to.
+     * @param host
+     *        the host name or IP address that this transport connects to.
+     * @param port
+     * 		  the port on the given host that this transport connects to.
      * @param options
      *        the transport options used to configure the socket connection.
      * @param sslOptions
      * 		  SSL options to use if the options indicate SSL support is enabled.
      */
-    public WebSocketTransport(URI remoteLocation, TransportOptions options, SslOptions sslOptions) {
-        super(remoteLocation, options, sslOptions);
+    public WebSocketTransport(String host, int port, TransportOptions options, SslOptions sslOptions) {
+        super(host, port, options, sslOptions);
     }
 
     @Override
@@ -115,6 +118,14 @@ public class WebSocketTransport extends TcpTransport {
     }
 
     //----- Handle connection events -----------------------------------------//
+
+    private URI getRemoteLocation() {
+        try {
+            return new URI(null, null, getHost(), getPort(), getTransportOptions().getWebSocketPath(), null, null);
+        } catch (URISyntaxException use) {
+            throw new IllegalArgumentException(use);
+        }
+    }
 
     private class NettyWebSocketTransportHandler extends NettyDefaultHandler<Object> {
 

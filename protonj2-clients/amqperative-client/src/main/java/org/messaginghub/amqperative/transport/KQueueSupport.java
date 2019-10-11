@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.messaginghub.amqperative.transport.impl;
+package org.messaginghub.amqperative.transport;
 
 import java.util.concurrent.ThreadFactory;
 
@@ -24,28 +24,28 @@ import org.slf4j.LoggerFactory;
 
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.EventLoopGroup;
-import io.netty.channel.epoll.Epoll;
-import io.netty.channel.epoll.EpollEventLoopGroup;
-import io.netty.channel.epoll.EpollSocketChannel;
+import io.netty.channel.kqueue.KQueue;
+import io.netty.channel.kqueue.KQueueEventLoopGroup;
+import io.netty.channel.kqueue.KQueueSocketChannel;
 
-public class EpollSupport {
+public class KQueueSupport {
 
-    private static final Logger LOG = LoggerFactory.getLogger(EpollSupport.class);
+    private static final Logger LOG = LoggerFactory.getLogger(KQueueSupport.class);
 
     public static boolean isAvailable(TransportOptions transportOptions) {
         try {
-            return transportOptions.isAllowNativeIO() && Epoll.isAvailable();
+            return transportOptions.isAllowNativeIO() && KQueue.isAvailable();
         } catch (NoClassDefFoundError ncdfe) {
-            LOG.debug("Unable to check for Epoll support due to missing class definition", ncdfe);
+            LOG.debug("Unable to check for KQueue support due to missing class definition", ncdfe);
             return false;
         }
     }
 
     public static EventLoopGroup createGroup(int nThreads, ThreadFactory ioThreadfactory) {
-        return new EpollEventLoopGroup(nThreads, ioThreadfactory);
+        return new KQueueEventLoopGroup(nThreads, ioThreadfactory);
     }
 
     public static void createChannel(Bootstrap bootstrap) {
-        bootstrap.channel(EpollSocketChannel.class);
+        bootstrap.channel(KQueueSocketChannel.class);
     }
 }

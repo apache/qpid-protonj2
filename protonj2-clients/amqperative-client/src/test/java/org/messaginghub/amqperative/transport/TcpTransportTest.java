@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.messaginghub.amqperative.transport.impl;
+package org.messaginghub.amqperative.transport;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -27,7 +27,6 @@ import static org.junit.Assume.assumeTrue;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
-import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -40,6 +39,7 @@ import org.messaginghub.amqperative.TransportOptions;
 import org.messaginghub.amqperative.impl.ClientThreadFactory;
 import org.messaginghub.amqperative.test.AMQPerativeTestCase;
 import org.messaginghub.amqperative.test.Wait;
+import org.messaginghub.amqperative.transport.TcpTransport;
 import org.messaginghub.amqperative.transport.Transport;
 import org.messaginghub.amqperative.transport.TransportListener;
 import org.slf4j.Logger;
@@ -61,7 +61,8 @@ public class TcpTransportTest extends AMQPerativeTestCase {
 
     private static final Logger LOG = LoggerFactory.getLogger(TcpTransportTest.class);
 
-    private static final int SEND_BYTE_COUNT = 1024;
+    protected static final int SEND_BYTE_COUNT = 1024;
+    protected static final String HOSTNAME = "localhost";
 
     protected boolean transportClosed;
     protected final List<Throwable> exceptions = new ArrayList<Throwable>();
@@ -72,9 +73,7 @@ public class TcpTransportTest extends AMQPerativeTestCase {
 
     @Test(timeout = 60000)
     public void testCloseOnNeverConnectedTransport() throws Exception {
-        URI serverLocation = new URI("tcp://localhost:5762");
-
-        Transport transport = createTransport(serverLocation, testListener, createTransportOptions(), createServerSSLOptions());
+        Transport transport = createTransport(HOSTNAME, 5672, testListener, createTransportOptions(), createServerSSLOptions());
         assertFalse(transport.isConnected());
 
         transport.close();
@@ -86,22 +85,20 @@ public class TcpTransportTest extends AMQPerativeTestCase {
 
     @Test(timeout = 60000)
     public void testCreateWithNullOptionsThrowsIAE() throws Exception {
-        URI serverLocation = new URI("tcp://localhost:5762");
-
         try {
-            createTransport(serverLocation, testListener, null, null);
+            createTransport(HOSTNAME, 5672, testListener, null, null);
             fail("Should have thrown IllegalArgumentException");
         } catch (IllegalArgumentException iae) {
         }
 
         try {
-            createTransport(serverLocation, testListener, createTransportOptions(), null);
+            createTransport(HOSTNAME, 5672, testListener, createTransportOptions(), null);
             fail("Should have thrown IllegalArgumentException");
         } catch (IllegalArgumentException iae) {
         }
 
         try {
-            createTransport(serverLocation, testListener, null, createSSLOptions());
+            createTransport(HOSTNAME, 5672, testListener, null, createSSLOptions());
             fail("Should have thrown IllegalArgumentException");
         } catch (IllegalArgumentException iae) {
         }
@@ -112,18 +109,18 @@ public class TcpTransportTest extends AMQPerativeTestCase {
         try (NettyEchoServer server = createEchoServer()) {
             server.start();
 
-            int port = server.getServerPort();
-            URI serverLocation = new URI("tcp://localhost:" + port);
+            final int port = server.getServerPort();
+
             ClientThreadFactory factory = new ClientThreadFactory("NettyTransportTest", true);
 
-            Transport transport = createTransport(serverLocation, testListener, createTransportOptions(), createSSLOptions());
+            Transport transport = createTransport(HOSTNAME, port, testListener, createTransportOptions(), createSSLOptions());
             transport.setThreadFactory(factory);
 
             try {
                 transport.connect(null);
             } catch (Exception e) {
-                LOG.info("Failed to connect to: {} as expected.", serverLocation);
-                fail("Should have failed to connect to the server: " + serverLocation);
+                LOG.info("Failed to connect to: {}:{} as expected.", HOSTNAME, port);
+                fail("Should have failed to connect to the server: " + HOSTNAME + ":" + port);
             }
 
             assertTrue(transport.isConnected());
@@ -148,17 +145,16 @@ public class TcpTransportTest extends AMQPerativeTestCase {
         try (NettyEchoServer server = createEchoServer()) {
             server.start();
 
-            int port = server.getServerPort();
-            URI serverLocation = new URI("tcp://localhost:" + port);
+            final int port = server.getServerPort();
 
             server.close();
 
-            Transport transport = createTransport(serverLocation, testListener, createTransportOptions(), createSSLOptions());
+            Transport transport = createTransport(HOSTNAME, port, testListener, createTransportOptions(), createSSLOptions());
             try {
                 transport.connect(null);
-                fail("Should have failed to connect to the server: " + serverLocation);
+                fail("Should have failed to connect to the server: " + HOSTNAME + ":" + port);
             } catch (Exception e) {
-                LOG.info("Failed to connect to: {} as expected.", serverLocation);
+                LOG.info("Failed to connect to: {}:{} as expected.", HOSTNAME, port);
             }
 
             assertFalse(transport.isConnected());
@@ -176,15 +172,14 @@ public class TcpTransportTest extends AMQPerativeTestCase {
         try (NettyEchoServer server = createEchoServer()) {
             server.start();
 
-            int port = server.getServerPort();
-            URI serverLocation = new URI("tcp://localhost:" + port);
+            final int port = server.getServerPort();
 
-            Transport transport = createTransport(serverLocation, null, createTransportOptions(), createSSLOptions());
+            Transport transport = createTransport(HOSTNAME, port, null, createTransportOptions(), createSSLOptions());
             try {
                 transport.connect(null);
-                fail("Should have failed to connect to the server: " + serverLocation);
+                fail("Should have failed to connect to the server: " + HOSTNAME + ":" + port);
             } catch (Exception e) {
-                LOG.info("Failed to connect to: {} as expected.", serverLocation);
+                LOG.info("Failed to connect to: {}:{} as expected.", HOSTNAME, port);
             }
 
             assertFalse(transport.isConnected());
@@ -198,19 +193,18 @@ public class TcpTransportTest extends AMQPerativeTestCase {
         try (NettyEchoServer server = createEchoServer()) {
             server.start();
 
-            int port = server.getServerPort();
-            URI serverLocation = new URI("tcp://localhost:" + port);
+            final int port = server.getServerPort();
 
-            Transport transport = createTransport(serverLocation, null, createTransportOptions(), createSSLOptions());
+            Transport transport = createTransport(HOSTNAME, port, null, createTransportOptions(), createSSLOptions());
             assertNull(transport.getTransportListener());
             transport.setTransportListener(testListener);
             assertNotNull(transport.getTransportListener());
 
             try {
                 transport.connect(null);
-                LOG.info("Connected to server:{} as expected.", serverLocation);
+                LOG.info("Connected to server:{}:{} as expected.", HOSTNAME, port);
             } catch (Exception e) {
-                fail("Should not have failed to connect to the server at " + serverLocation + " but got exception: " + e);
+                fail("Should not have failed to connect to the server at " + HOSTNAME + ":" + port + " but got exception: " + e);
             }
 
             assertTrue(transport.isConnected());
@@ -224,19 +218,19 @@ public class TcpTransportTest extends AMQPerativeTestCase {
         try (NettyEchoServer server = createEchoServer()) {
             server.start();
 
-            int port = server.getServerPort();
-            URI serverLocation = new URI("tcp://localhost:" + port);
+            final int port = server.getServerPort();
 
-            Transport transport = createTransport(serverLocation, testListener, createTransportOptions(), createSSLOptions());
+            Transport transport = createTransport(HOSTNAME, port, testListener, createTransportOptions(), createSSLOptions());
             try {
                 transport.connect(null);
-                LOG.info("Connected to server:{} as expected.", serverLocation);
+                LOG.info("Connected to server:{}:{} as expected.", HOSTNAME, port);
             } catch (Exception e) {
-                fail("Should have connected to the server at " + serverLocation + " but got exception: " + e);
+                fail("Should not have failed to connect to the server at " + HOSTNAME + ":" + port + " but got exception: " + e);
             }
 
             assertTrue(transport.isConnected());
-            assertEquals(serverLocation, transport.getRemoteLocation());
+            assertEquals("Server host is incorrect", HOSTNAME, transport.getHost());
+            assertEquals("Server port is incorrect", port, transport.getPort());
 
             transport.close();
 
@@ -256,20 +250,19 @@ public class TcpTransportTest extends AMQPerativeTestCase {
         try (NettyEchoServer server = createEchoServer()) {
             server.start();
 
-            int port = server.getServerPort();
-            URI serverLocation = new URI("tcp://localhost:" + port);
+            final int port = server.getServerPort();
 
             List<Transport> transports = new ArrayList<Transport>();
 
             for (int i = 0; i < CONNECTION_COUNT; ++i) {
-                Transport transport = createTransport(serverLocation, testListener, createTransportOptions(), createSSLOptions());
+                Transport transport = createTransport(HOSTNAME, port, testListener, createTransportOptions(), createSSLOptions());
                 try {
                     transport.connect(null);
                     assertTrue(transport.isConnected());
-                    LOG.info("Connected to server:{} as expected.", serverLocation);
+                    LOG.info("Connected to server:{}:{} as expected.", HOSTNAME, port);
                     transports.add(transport);
                 } catch (Exception e) {
-                    fail("Should have connected to the server at " + serverLocation + " but got exception: " + e);
+                    fail("Should not have failed to connect to the server at " + HOSTNAME + ":" + port + " but got exception: " + e);
                 }
             }
 
@@ -296,19 +289,18 @@ public class TcpTransportTest extends AMQPerativeTestCase {
         try (NettyEchoServer server = createEchoServer()) {
             server.start();
 
-            int port = server.getServerPort();
-            URI serverLocation = new URI("tcp://localhost:" + port);
+            final int port = server.getServerPort();
 
             List<Transport> transports = new ArrayList<Transport>();
 
             for (int i = 0; i < CONNECTION_COUNT; ++i) {
-                Transport transport = createTransport(serverLocation, testListener, createTransportOptions(), createSSLOptions());
+                Transport transport = createTransport(HOSTNAME, port, testListener, createTransportOptions(), createSSLOptions());
                 try {
                     transport.connect(null);
                     transport.writeAndFlush(sendBuffer.copy());
                     transports.add(transport);
                 } catch (Exception e) {
-                    fail("Should have connected to the server at " + serverLocation + " but got exception: " + e);
+                    fail("Should not have failed to connect to the server at " + HOSTNAME + ":" + port + " but got exception: " + e);
                 }
             }
 
@@ -336,14 +328,13 @@ public class TcpTransportTest extends AMQPerativeTestCase {
             server.start();
 
             int port = server.getServerPort();
-            URI serverLocation = new URI("tcp://localhost:" + port);
 
-            transport = createTransport(serverLocation, testListener, createTransportOptions(), createSSLOptions());
+            transport = createTransport(HOSTNAME, port, testListener, createTransportOptions(), createSSLOptions());
             try {
                 transport.connect(null);
-                LOG.info("Connected to server:{} as expected.", serverLocation);
+                LOG.info("Connected to server:{}:{} as expected.", HOSTNAME, port);
             } catch (Exception e) {
-                fail("Should have connected to the server at " + serverLocation + " but got exception: " + e);
+                fail("Should not have failed to connect to the server at " + HOSTNAME + ":" + port + " but got exception: " + e);
             }
 
             assertTrue(transport.isConnected());
@@ -374,14 +365,13 @@ public class TcpTransportTest extends AMQPerativeTestCase {
             server.start();
 
             int port = server.getServerPort();
-            URI serverLocation = new URI("tcp://localhost:" + port);
 
-            Transport transport = createTransport(serverLocation, testListener, createTransportOptions(), createSSLOptions());
+            Transport transport = createTransport(HOSTNAME, port, testListener, createTransportOptions(), createSSLOptions());
             try {
                 transport.connect(null);
-                LOG.info("Connected to server:{} as expected.", serverLocation);
+                LOG.info("Connected to server:{}:{} as expected.", HOSTNAME, port);
             } catch (Exception e) {
-                fail("Should have connected to the server at " + serverLocation + " but got exception: " + e);
+                fail("Should not have failed to connect to the server at " + HOSTNAME + ":" + port + " but got exception: " + e);
             }
 
             assertTrue(transport.isConnected());
@@ -402,14 +392,13 @@ public class TcpTransportTest extends AMQPerativeTestCase {
             server.start();
 
             int port = server.getServerPort();
-            URI serverLocation = new URI("tcp://localhost:" + port);
 
-            Transport transport = createTransport(serverLocation, testListener, createTransportOptions(), createSSLOptions());
+            Transport transport = createTransport(HOSTNAME, port, testListener, createTransportOptions(), createSSLOptions());
             try {
                 transport.connect(null);
-                LOG.info("Connected to server:{} as expected.", serverLocation);
+                LOG.info("Connected to server:{}:{} as expected.", HOSTNAME, port);
             } catch (Exception e) {
-                fail("Should have connected to the server at " + serverLocation + " but got exception: " + e);
+                fail("Should not have failed to connect to the server at " + HOSTNAME + ":" + port + " but got exception: " + e);
             }
 
             assertTrue(transport.isConnected());
@@ -453,14 +442,13 @@ public class TcpTransportTest extends AMQPerativeTestCase {
             server.start();
 
             int port = server.getServerPort();
-            URI serverLocation = new URI("tcp://localhost:" + port);
 
-            Transport transport = createTransport(serverLocation, testListener, createTransportOptions(), createSSLOptions());
+            Transport transport = createTransport(HOSTNAME, port, testListener, createTransportOptions(), createSSLOptions());
             try {
                 transport.connect(null);
-                LOG.info("Connected to server:{} as expected.", serverLocation);
+                LOG.info("Connected to server:{}:{} as expected.", HOSTNAME, port);
             } catch (Exception e) {
-                fail("Should have connected to the server at " + serverLocation + " but got exception: " + e);
+                fail("Should not have failed to connect to the server at " + HOSTNAME + ":" + port + " but got exception: " + e);
             }
 
             assertTrue(transport.isConnected());
@@ -496,14 +484,13 @@ public class TcpTransportTest extends AMQPerativeTestCase {
             server.start();
 
             int port = server.getServerPort();
-            URI serverLocation = new URI("tcp://localhost:" + port);
 
-            transport = createTransport(serverLocation, testListener, createTransportOptions(), createSSLOptions());
+            transport = createTransport(HOSTNAME, port, testListener, createTransportOptions(), createSSLOptions());
             try {
                 transport.connect(null);
-                LOG.info("Connected to server:{} as expected.", serverLocation);
+                LOG.info("Connected to server:{}:{} as expected.", HOSTNAME, port);
             } catch (Exception e) {
-                fail("Should have connected to the server at " + serverLocation + " but got exception: " + e);
+                fail("Should not have failed to connect to the server at " + HOSTNAME + ":" + port + " but got exception: " + e);
             }
 
             assertTrue(transport.isConnected());
@@ -525,19 +512,19 @@ public class TcpTransportTest extends AMQPerativeTestCase {
             server.start();
 
             int port = server.getServerPort();
-            URI serverLocation = new URI("tcp://localhost:" + port);
             final AtomicBoolean initialized = new AtomicBoolean();
 
-            Transport transport = createTransport(serverLocation, testListener, createTransportOptions(), createSSLOptions());
+            Transport transport = createTransport(HOSTNAME, port, testListener, createTransportOptions(), createSSLOptions());
             try {
                 transport.connect(() -> initialized.set(true));
-                LOG.info("Connected to server:{} as expected.", serverLocation);
+                LOG.info("Connected to server:{}:{} as expected.", HOSTNAME, port);
             } catch (Exception e) {
-                fail("Should have connected to the server at " + serverLocation + " but got exception: " + e);
+                fail("Should not have failed to connect to the server at " + HOSTNAME + ":" + port + " but got exception: " + e);
             }
 
             assertTrue(transport.isConnected());
-            assertEquals(serverLocation, transport.getRemoteLocation());
+            assertEquals("Server host is incorrect", HOSTNAME, transport.getHost());
+            assertEquals("Server port is incorrect", port, transport.getPort());
             assertTrue(initialized.get());
 
             transport.close();
@@ -554,18 +541,18 @@ public class TcpTransportTest extends AMQPerativeTestCase {
             server.start();
 
             int port = server.getServerPort();
-            URI serverLocation = new URI("tcp://localhost:" + port);
 
-            Transport transport = createTransport(serverLocation, testListener, createTransportOptions(), createSSLOptions());
+            Transport transport = createTransport(HOSTNAME, port, testListener, createTransportOptions(), createSSLOptions());
             try {
                 transport.connect(() -> { throw new RuntimeException(); });
-                fail("Should not have connected to the server at " + serverLocation);
+                fail("Should not have connected to the server at " + HOSTNAME + ":" + port);
             } catch (Exception e) {
-                LOG.info("Failed to connect to server:{} as expected", serverLocation);
+                LOG.info("Failed to connect to: {}:{} as expected.", HOSTNAME, port);
             }
 
             assertFalse("Should not be connected", transport.isConnected());
-            assertEquals("Server location is incorrect", serverLocation, transport.getRemoteLocation());
+            assertEquals("Server host is incorrect", HOSTNAME, transport.getHost());
+            assertEquals("Server port is incorrect", port, transport.getPort());
 
             transport.close();
         }
@@ -586,15 +573,14 @@ public class TcpTransportTest extends AMQPerativeTestCase {
             server.start();
 
             int port = server.getServerPort();
-            URI serverLocation = new URI("tcp://localhost:" + port);
 
             for (int i = 0; i < 256; ++i) {
-                transport = createTransport(serverLocation, testListener, createTransportOptions(), createSSLOptions());
+                transport = createTransport(HOSTNAME, port, testListener, createTransportOptions(), createSSLOptions());
                 try {
                     transport.connect(null);
-                    LOG.info("Connected to server:{} as expected.", serverLocation);
+                    LOG.info("Connected to server:{}:{} as expected.", HOSTNAME, port);
                 } catch (Exception e) {
-                    fail("Should have connected to the server at " + serverLocation + " but got exception: " + e);
+                    fail("Should not have failed to connect to the server at " + HOSTNAME + ":" + port + " but got exception: " + e);
                 }
 
                 assertTrue(transport.isConnected());
@@ -632,20 +618,20 @@ public class TcpTransportTest extends AMQPerativeTestCase {
             server.start();
 
             int port = server.getServerPort();
-            URI serverLocation = new URI("tcp://localhost:" + port);
 
             TransportOptions options = createTransportOptions();
             options.setAllowNativeIO(useEpoll);
-            Transport transport = createTransport(serverLocation, testListener, options, createSSLOptions());
+            Transport transport = createTransport(HOSTNAME, port, testListener, options, createSSLOptions());
             try {
                 transport.connect(null);
-                LOG.info("Connected to server:{} as expected.", serverLocation);
+                LOG.info("Connected to server:{}:{} as expected.", HOSTNAME, port);
             } catch (Exception e) {
-                fail("Should have connected to the server at " + serverLocation + " but got exception: " + e);
+                fail("Should not have failed to connect to the server at " + HOSTNAME + ":" + port + " but got exception: " + e);
             }
 
             assertTrue(transport.isConnected());
-            assertEquals(serverLocation, transport.getRemoteLocation());
+            assertEquals("Server host is incorrect", HOSTNAME, transport.getHost());
+            assertEquals("Server port is incorrect", port, transport.getPort());
             assertEpoll("Transport should be using Epoll", useEpoll, transport);
 
             transport.close();
@@ -701,20 +687,20 @@ public class TcpTransportTest extends AMQPerativeTestCase {
             server.start();
 
             int port = server.getServerPort();
-            URI serverLocation = new URI("tcp://localhost:" + port);
 
             TransportOptions options = createTransportOptions();
             options.setAllowNativeIO(true);
-            Transport transport = createTransport(serverLocation, testListener, options, createSSLOptions());
+            Transport transport = createTransport(HOSTNAME, port, testListener, options, createSSLOptions());
             try {
                 transport.connect(null);
-                LOG.info("Connected to server:{} as expected.", serverLocation);
+                LOG.info("Connected to server:{}:{} as expected.", HOSTNAME, port);
             } catch (Exception e) {
-                fail("Should have connected to the server at " + serverLocation + " but got exception: " + e);
+                fail("Should not have failed to connect to the server at " + HOSTNAME + ":" + port + " but got exception: " + e);
             }
 
             assertTrue(transport.isConnected());
-            assertEquals(serverLocation, transport.getRemoteLocation());
+            assertEquals("Server host is incorrect", HOSTNAME, transport.getHost());
+            assertEquals("Server port is incorrect", port, transport.getPort());
             assertKQueue("Transport should be using Kqueue", useKQueue, transport);
 
             transport.close();
@@ -753,11 +739,9 @@ public class TcpTransportTest extends AMQPerativeTestCase {
         }
     }
 
-    protected Transport createTransport(URI serverLocation, TransportListener listener, TransportOptions options, SslOptions sslOptions) {
-        TcpTransport transport = new TcpTransport(serverLocation, options, sslOptions);
-
+    protected Transport createTransport(String host, int port, TransportListener listener, TransportOptions options, SslOptions sslOptions) {
+        TcpTransport transport = new TcpTransport(host, port, options, sslOptions);
         transport.setTransportListener(listener);
-
         return transport;
     }
 

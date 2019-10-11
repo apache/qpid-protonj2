@@ -19,7 +19,6 @@ package org.messaginghub.amqperative.transport;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
-import java.net.URI;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.SecureRandom;
@@ -98,8 +97,10 @@ public class SslSupport {
      *
      * @param allocator
      *		  The Netty Buffer Allocator to use when Netty resources need to be created.
-     * @param remote
-     *        The URI of the remote peer that the SslHandler will be used against.
+     * @param host
+     *        the host name or IP address that this transport connects to.
+     * @param port
+     * 		  the port on the given host that this transport connects to.
      * @param options
      *        The SSL options object to build the SslHandler instance from.
      *
@@ -107,19 +108,19 @@ public class SslSupport {
      *
      * @throws Exception if an error occurs while creating the SslHandler instance.
      */
-    public static SslHandler createSslHandler(ByteBufAllocator allocator, URI remote, SslOptions options) throws Exception {
+    public static SslHandler createSslHandler(ByteBufAllocator allocator, String host, int port, SslOptions options) throws Exception {
         final SSLEngine sslEngine;
 
         if (isOpenSSLPossible(options)) {
             SslContext sslContext = createOpenSslContext(options);
-            sslEngine = createOpenSslEngine(allocator, remote, sslContext, options);
+            sslEngine = createOpenSslEngine(allocator, host, port, sslContext, options);
         } else {
             SSLContext sslContext = options.getSslContextOverride();
             if (sslContext == null) {
                 sslContext = createJdkSslContext(options);
             }
 
-            sslEngine = createJdkSslEngine(remote, sslContext, options);
+            sslEngine = createJdkSslEngine(host, port, sslContext, options);
         }
 
         return new SslHandler(sslEngine);
@@ -160,8 +161,10 @@ public class SslSupport {
      * Create a new JDK SSLEngine instance in client mode from the given SSLContext and
      * TransportOptions instances.
      *
-     * @param remote
-     *        the URI of the remote peer that will be used to initialize the engine, may be null if none should.
+     * @param host
+     *        the host name or IP address that this transport connects to.
+     * @param port
+     * 		  the port on the given host that this transport connects to.
      * @param context
      *        the SSLContext to use when creating the engine.
      * @param options
@@ -171,12 +174,12 @@ public class SslSupport {
      *
      * @throws Exception if an error occurs while creating the new SSLEngine.
      */
-    public static SSLEngine createJdkSslEngine(URI remote, SSLContext context, SslOptions options) throws Exception {
+    public static SSLEngine createJdkSslEngine(String host, int port, SSLContext context, SslOptions options) throws Exception {
         SSLEngine engine = null;
-        if (remote == null) {
+        if (host == null || host.isEmpty()) {
             engine = context.createSSLEngine();
         } else {
-            engine = context.createSSLEngine(remote.getHost(), remote.getPort());
+            engine = context.createSSLEngine(host, port);
         }
 
         engine.setEnabledProtocols(buildEnabledProtocols(engine, options));
@@ -238,8 +241,10 @@ public class SslSupport {
      *
      * @param allocator
      *		  the Netty ByteBufAllocator to use to create the OpenSSL engine
-     * @param remote
-     *        the URI of the remote peer that will be used to initialize the engine, may be null if none should.
+     * @param host
+     *        the host name or IP address that this transport connects to.
+     * @param port
+     * 		  the port on the given host that this transport connects to.
      * @param context
      *        the Netty SslContext to use when creating the engine.
      * @param options
@@ -249,17 +254,17 @@ public class SslSupport {
      *
      * @throws Exception if an error occurs while creating the new SSLEngine.
      */
-    public static SSLEngine createOpenSslEngine(ByteBufAllocator allocator, URI remote, SslContext context, SslOptions options) throws Exception {
+    public static SSLEngine createOpenSslEngine(ByteBufAllocator allocator, String host, int port, SslContext context, SslOptions options) throws Exception {
         SSLEngine engine = null;
 
         if (allocator == null) {
             throw new IllegalArgumentException("OpenSSL engine requires a valid ByteBufAllocator to operate");
         }
 
-        if (remote == null) {
+        if (host == null || host.isEmpty()) {
             engine = context.newEngine(allocator);
         } else {
-            engine = context.newEngine(allocator, remote.getHost(), remote.getPort());
+            engine = context.newEngine(allocator, host, port);
         }
 
         engine.setEnabledProtocols(buildEnabledProtocols(engine, options));

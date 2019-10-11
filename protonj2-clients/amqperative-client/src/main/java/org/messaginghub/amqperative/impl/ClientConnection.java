@@ -53,9 +53,9 @@ import org.messaginghub.amqperative.futures.ClientFutureFactory;
 import org.messaginghub.amqperative.impl.exceptions.ClientConnectionRemotelyClosedException;
 import org.messaginghub.amqperative.impl.exceptions.ClientExceptionSupport;
 import org.messaginghub.amqperative.impl.exceptions.ClientIOException;
+import org.messaginghub.amqperative.transport.TcpTransport;
 import org.messaginghub.amqperative.transport.Transport;
-import org.messaginghub.amqperative.transport.impl.TcpTransport;
-import org.messaginghub.amqperative.transport.impl.WebSocketTransport;
+import org.messaginghub.amqperative.transport.WebSocketTransport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -125,9 +125,9 @@ public class ClientConnection implements Connection {
                           + "):[" + options.getHostname() + ":" + options.getPort() + "]", true);
 
         if (options.getTransportOptions().isUseWebSockets()) {
-            transport = new WebSocketTransport(options.getRemoteURI(), options.getTransportOptions(), options.getSSLOptions());
+            transport = new WebSocketTransport(options.getHostname(), options.getPort(), options.getTransportOptions(), options.getSSLOptions());
         } else {
-            transport = new TcpTransport(options.getRemoteURI(), options.getTransportOptions(), options.getSSLOptions());
+            transport = new TcpTransport(options.getHostname(), options.getPort(), options.getTransportOptions(), options.getSSLOptions());
         }
 
         transport.setTransportListener(new ClientTransportListener(this));

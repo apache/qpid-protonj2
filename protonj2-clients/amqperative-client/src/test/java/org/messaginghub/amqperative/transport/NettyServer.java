@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.messaginghub.amqperative.transport.impl;
+package org.messaginghub.amqperative.transport;
 
 import static io.netty.handler.codec.http.HttpResponseStatus.BAD_REQUEST;
 import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
@@ -34,6 +34,7 @@ import javax.net.ssl.SSLEngine;
 import org.messaginghub.amqperative.SslOptions;
 import org.messaginghub.amqperative.TransportOptions;
 import org.messaginghub.amqperative.transport.SslSupport;
+import org.messaginghub.amqperative.transport.TcpTransport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -203,7 +204,7 @@ public abstract class NettyServer implements AutoCloseable {
                 public void initChannel(Channel ch) throws Exception {
                     if (isSecureServer()) {
                         SSLContext context = SslSupport.createJdkSslContext(sslOptions);
-                        SSLEngine engine = SslSupport.createJdkSslEngine(null, context, sslOptions);
+                        SSLEngine engine = SslSupport.createJdkSslEngine(null, -1, context, sslOptions);
                         engine.setUseClientMode(false);
                         engine.setNeedClientAuth(needClientAuth);
                         sslHandler = new SslHandler(engine);

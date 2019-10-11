@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.messaginghub.amqperative.transport.impl;
+package org.messaginghub.amqperative.transport;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -23,7 +23,6 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.io.IOException;
-import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
@@ -31,7 +30,6 @@ import java.util.concurrent.TimeUnit;
 
 import org.junit.Test;
 import org.messaginghub.amqperative.SslOptions;
-import org.messaginghub.amqperative.TransportOptions;
 import org.messaginghub.amqperative.transport.Transport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -59,44 +57,19 @@ public class SslTransportTest extends TcpTransportTest {
 
     public static final String KEYSTORE_TYPE = "jks";
 
-    @Override
-    @Test(timeout = 60000)
-    public void testCreateWithNullOptionsThrowsIAE() throws Exception {
-        URI serverLocation = new URI("tcp://localhost:5762");
-
-        try {
-            createTransport(serverLocation, testListener, null, null);
-            fail("Should have thrown IllegalArgumentException");
-        } catch (IllegalArgumentException iae) {
-        }
-
-        try {
-            createTransport(serverLocation, testListener, new TransportOptions(), null);
-            fail("Should have thrown IllegalArgumentException");
-        } catch (IllegalArgumentException iae) {
-        }
-
-        try {
-            createTransport(serverLocation, testListener, null, new SslOptions());
-            fail("Should have thrown IllegalArgumentException");
-        } catch (IllegalArgumentException iae) {
-        }
-    }
-
     @Test(timeout = 60000)
     public void testConnectToServerWithoutTrustStoreFails() throws Exception {
         try (NettyEchoServer server = createEchoServer()) {
             server.start();
 
-            int port = server.getServerPort();
-            URI serverLocation = new URI("tcp://localhost:" + port);
+            final int port = server.getServerPort();
 
-            Transport transport = createTransport(serverLocation, testListener, createTransportOptions(), createSSLOptionsWithoutTrustStore(false));
+            Transport transport = createTransport(HOSTNAME, port, testListener, createTransportOptions(), createSSLOptionsWithoutTrustStore(false));
             try {
                 transport.connect(null);
-                fail("Should not have connected to the server: " + serverLocation);
+                fail("Should have failed to connect to the server: " + HOSTNAME + ":" + port);
             } catch (Exception e) {
-                LOG.info("Connection failed to untrusted test server: {}", serverLocation);
+                LOG.info("Connection failed to untrusted test server: {}:{}", HOSTNAME, port);
             }
 
             assertFalse(transport.isConnected());
@@ -114,20 +87,19 @@ public class SslTransportTest extends TcpTransportTest {
         try (NettyEchoServer server = createEchoServer()) {
             server.start();
 
-            int port = server.getServerPort();
-            URI serverLocation = new URI("tcp://localhost:" + port);
+            final int port = server.getServerPort();
 
             SslOptions sslOptions = createSSLOptions();
 
             sslOptions.setTrustStoreLocation(OTHER_CA_TRUSTSTORE);
             sslOptions.setTrustStorePassword(PASSWORD);
 
-            Transport transport = createTransport(serverLocation, testListener, createTransportOptions(), sslOptions);
+            Transport transport = createTransport(HOSTNAME, port, testListener, createTransportOptions(), sslOptions);
             try {
                 transport.connect(null);
-                fail("Should not have connected to the server: " + serverLocation);
+                fail("Should have failed to connect to the server: " + HOSTNAME + ":" + port);
             } catch (Exception e) {
-                LOG.info("Connection failed to untrusted test server: {}", serverLocation);
+                LOG.info("Connection failed to untrusted test server: {}:{}", HOSTNAME, port);
             }
 
             assertFalse(transport.isConnected());
@@ -141,15 +113,14 @@ public class SslTransportTest extends TcpTransportTest {
         try (NettyEchoServer server = createEchoServer()) {
             server.start();
 
-            int port = server.getServerPort();
-            URI serverLocation = new URI("tcp://localhost:" + port);
+            final int port = server.getServerPort();
 
-            Transport transport = createTransport(serverLocation, testListener, createTransportOptions(), createSSLOptionsWithoutTrustStore(true));
+            Transport transport = createTransport(HOSTNAME, port, testListener, createTransportOptions(), createSSLOptionsWithoutTrustStore(true));
             try {
                 transport.connect(null);
-                LOG.info("Connection established to untrusted test server: {}", serverLocation);
+                LOG.info("Connection established to test server: {}:{}", HOSTNAME, port);
             } catch (Exception e) {
-                fail("Should have connected to the server at " + serverLocation + " but got exception: " + e);
+                fail("Should not have failed to connect to the server at " + HOSTNAME + ":" + port + " but got exception: " + e);
             }
 
             assertTrue(transport.isConnected());
@@ -167,15 +138,14 @@ public class SslTransportTest extends TcpTransportTest {
         try (NettyEchoServer server = createEchoServer(true)) {
             server.start();
 
-            int port = server.getServerPort();
-            URI serverLocation = new URI("tcp://localhost:" + port);
+            final int port = server.getServerPort();
 
-            Transport transport = createTransport(serverLocation, testListener, createTransportOptions(), createSSLOptions());
+            Transport transport = createTransport(HOSTNAME, port, testListener, createTransportOptions(), createSSLOptions());
             try {
                 transport.connect(null);
-                LOG.info("Connection established to test server: {}", serverLocation);
+                LOG.info("Connection established to test server: {}:{}", HOSTNAME, port);
             } catch (Exception e) {
-                fail("Should have connected to the server at " + serverLocation + " but got exception: " + e);
+                fail("Should not have failed to connect to the server at " + HOSTNAME + ":" + port + " but got exception: " + e);
             }
 
             assertTrue(transport.isConnected());
@@ -202,19 +172,18 @@ public class SslTransportTest extends TcpTransportTest {
         try (NettyEchoServer server = createEchoServer(true)) {
             server.start();
 
-            int port = server.getServerPort();
-            URI serverLocation = new URI("tcp://localhost:" + port);
+            final int port = server.getServerPort();
 
             SslOptions sslOptions = createSSLOptions();
             sslOptions.setKeyStoreLocation(CLIENT_MULTI_KEYSTORE);
             sslOptions.setKeyAlias(alias);
 
-            Transport transport = createTransport(serverLocation, testListener, createTransportOptions(), sslOptions);
+            Transport transport = createTransport(HOSTNAME, port, testListener, createTransportOptions(), sslOptions);
             try {
                 transport.connect(null);
-                LOG.info("Connection established to test server: {}", serverLocation);
+                LOG.info("Connection established to test server: {}:{}", HOSTNAME, port);
             } catch (Exception e) {
-                fail("Should have connected to the server at " + serverLocation + " but got exception: " + e);
+                fail("Should not have failed to connect to the server at " + HOSTNAME + ":" + port + " but got exception: " + e);
             }
 
             assertTrue(transport.isConnected());
@@ -254,8 +223,7 @@ public class SslTransportTest extends TcpTransportTest {
         try (NettyEchoServer server = createEchoServer(serverOptions)) {
             server.start();
 
-            int port = server.getServerPort();
-            URI serverLocation = new URI("tcp://localhost:" + port);
+            final int port = server.getServerPort();
 
             SslOptions clientOptions = createSSLOptionsIsVerify(verifyHost);
 
@@ -265,18 +233,18 @@ public class SslTransportTest extends TcpTransportTest {
                 assertFalse("Expected verifyHost to be false", clientOptions.isVerifyHost());
             }
 
-            Transport transport = createTransport(serverLocation, testListener, createTransportOptions(), clientOptions);
+            Transport transport = createTransport(HOSTNAME, port, testListener, createTransportOptions(), clientOptions);
             try {
                 transport.connect(null);
                 if (verifyHost) {
-                    fail("Should not have connected to the server: " + serverLocation);
+                    fail("Should not have connected to the server: " + HOSTNAME + ":" + port);
                 }
             } catch (Exception e) {
                 if (verifyHost) {
-                    LOG.info("Connection failed to test server: {} as expected.", serverLocation);
+                    LOG.info("Connection failed to test server: {}:{} as expected.", HOSTNAME, port);
                 } else {
-                    LOG.error("Failed to connect to test server: " + serverLocation, e);
-                    fail("Should have connected to the server at " + serverLocation + " but got exception: " + e);
+                    LOG.error("Failed to connect to test server: {}:{}" + HOSTNAME, port, e);
+                    fail("Should have connected to the server at " + HOSTNAME + ":" + port + " but got exception: " + e);
                 }
             }
 

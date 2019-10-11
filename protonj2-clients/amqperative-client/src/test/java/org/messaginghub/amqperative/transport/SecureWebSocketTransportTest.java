@@ -14,13 +14,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.messaginghub.amqperative.transport.impl;
-
-import java.net.URI;
+package org.messaginghub.amqperative.transport;
 
 import org.messaginghub.amqperative.SslOptions;
 import org.messaginghub.amqperative.TransportOptions;
 import org.messaginghub.amqperative.transport.TransportListener;
+import org.messaginghub.amqperative.transport.WebSocketTransport;
 
 /**
  * Test the WebSocketTransport with channel level security enabled.
@@ -28,8 +27,8 @@ import org.messaginghub.amqperative.transport.TransportListener;
 public class SecureWebSocketTransportTest extends SslTransportTest {
 
     @Override
-    protected WebSocketTransport createTransport(URI serverLocation, TransportListener listener, TransportOptions options, SslOptions sslOptions) {
-        WebSocketTransport transport = new WebSocketTransport(serverLocation, options, sslOptions);
+    protected WebSocketTransport createTransport(String host, int port, TransportListener listener, TransportOptions options, SslOptions sslOptions) {
+        WebSocketTransport transport = new WebSocketTransport(host, port, options, sslOptions);
         transport.setTransportListener(listener);
         return transport;
     }
