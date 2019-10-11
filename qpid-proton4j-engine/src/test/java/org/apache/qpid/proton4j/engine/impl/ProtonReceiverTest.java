@@ -17,6 +17,9 @@
 package org.apache.qpid.proton4j.engine.impl;
 
 import static org.hamcrest.CoreMatchers.notNullValue;
+import static org.hamcrest.Matchers.anyOf;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -55,6 +58,7 @@ import org.apache.qpid.proton4j.engine.IncomingDelivery;
 import org.apache.qpid.proton4j.engine.LinkState;
 import org.apache.qpid.proton4j.engine.Receiver;
 import org.apache.qpid.proton4j.engine.Session;
+import org.hamcrest.Matcher;
 import org.junit.Test;
 
 /**
@@ -737,6 +741,60 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         peer.expectFlow().withLinkCredit(1);
 
         connection.open();
+
+        peer.waitForScriptToComplete();
+
+        assertNull(failure);
+    }
+
+    @Test(timeout=20000)
+    public void testReceiverDrainAllOutstanding() throws Exception {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result);
+        ProtonTestPeer peer = new ProtonTestPeer(engine);
+        engine.outputConsumer(peer);
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond().withContainerId("driver");
+        peer.expectBegin().respond();
+        peer.expectAttach().respond();
+
+        Connection connection = engine.start();
+
+        // Default engine should start and return a connection immediately
+        assertNotNull(connection);
+
+        connection.open();
+        Session session = connection.session();
+        session.open();
+        Receiver receiver = session.receiver("test");
+        receiver.open();
+
+        int creditWindow = 100;
+
+        // Add some credit, verify not draining
+        Matcher<Boolean> notDrainingMatcher = anyOf(equalTo(false), nullValue());
+        peer.expectFlow().withDrain(notDrainingMatcher).withLinkCredit(creditWindow).withDeliveryCount(0);
+        receiver.setCredit(creditWindow);
+
+        peer.waitForScriptToComplete();
+
+        // Check that calling drain sends flow, and calls handler on response draining all credit
+        AtomicBoolean handlerCalled = new AtomicBoolean();
+        receiver.drainStateUpdatedHandler(x -> {
+            handlerCalled.set(true);
+        });
+
+        peer.expectFlow().withDrain(true).withLinkCredit(creditWindow).withDeliveryCount(0)
+            .respond().withDrain(true).withLinkCredit(0).withDeliveryCount(creditWindow);
+
+        receiver.drain();
+
+        peer.waitForScriptToComplete();
+        assertTrue("Handler was not called", handlerCalled.get());
+
+        peer.expectDetach().respond();
+        receiver.close();
 
         peer.waitForScriptToComplete();
 

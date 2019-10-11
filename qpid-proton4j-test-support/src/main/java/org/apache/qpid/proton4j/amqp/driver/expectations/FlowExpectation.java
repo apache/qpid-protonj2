@@ -22,10 +22,15 @@ import java.util.Map;
 
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedInteger;
+import org.apache.qpid.proton4j.amqp.UnsignedShort;
 import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
+import org.apache.qpid.proton4j.amqp.driver.SessionTracker;
+import org.apache.qpid.proton4j.amqp.driver.actions.BeginInjectAction;
+import org.apache.qpid.proton4j.amqp.driver.actions.FlowInjectAction;
 import org.apache.qpid.proton4j.amqp.driver.codec.ListDescribedType;
 import org.apache.qpid.proton4j.amqp.driver.codec.transport.Flow;
 import org.apache.qpid.proton4j.amqp.driver.matchers.transport.FlowMatcher;
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.hamcrest.Matcher;
 
 /**
@@ -34,6 +39,7 @@ import org.hamcrest.Matcher;
 public class FlowExpectation extends AbstractExpectation<Flow> {
 
     private final FlowMatcher matcher = new FlowMatcher();
+    private FlowInjectAction response;
 
     public FlowExpectation(AMQPTestDriver driver) {
         super(driver);
@@ -43,6 +49,56 @@ public class FlowExpectation extends AbstractExpectation<Flow> {
     public FlowExpectation onChannel(int channel) {
         super.onChannel(channel);
         return this;
+    }
+
+    public FlowInjectAction respond() {
+        response = new FlowInjectAction(driver);
+        driver.addScriptedElement(response);
+        return response;
+    }
+
+    //----- Handle the performative and configure response is told to respond
+
+    @Override
+    public void handleFlow(Flow flow, ProtonBuffer payload, int channel, AMQPTestDriver context) {
+        super.handleFlow(flow, payload, channel, context);
+
+        if (response == null) {
+            return;
+        }
+
+        SessionTracker session = driver.getSessions().getSessionFromRemoteChannel(UnsignedShort.valueOf(channel));
+
+        // Input was validated now populate response with auto values where not configured
+        // to say otherwise by the test.
+        if (response.onChannel() == BeginInjectAction.CHANNEL_UNSET) {
+            response.onChannel(session.getLocalChannel());
+        }
+
+        // Populate the fields of the response with defaults if non set by the test script
+        if (response.getPerformative().getNextIncomingId() == null) {
+            response.withNextIncomingId(flow.getNextOutgoingId().longValue()); //TODO: this could be wrong, need to know about the transfers received (and sent by peer).
+        }
+
+        if (response.getPerformative().getIncomingWindow() == null) {
+            response.withIncomingWindow(Integer.MAX_VALUE); //TODO: shouldnt be hard coded
+        }
+
+        if (response.getPerformative().getNextOutgoingId() == null) {
+            response.withNextOutgoingId(flow.getNextIncomingId().longValue()); //TODO: this could be wrong, need to know about the transfers sent (and received at recipient peer).
+        }
+
+        if (response.getPerformative().getOutgoingWindow() == null) {
+            response.withOutgoingWindow(0); //TODO: shouldnt be hard coded, session might have senders on it as well as receivers
+        }
+
+        if (response.getPerformative().getHandle() == null) {
+            response.withHandle(flow.getHandle().longValue()); //TODO: this is wrong, need a lookup for the local link and then get its remote handle.
+        }
+
+        // TODO: blow up on response if credit not populated?
+
+        // Other fields are left not set for now unless test script configured
     }
 
     //----- Type specific with methods that perform simple equals checks

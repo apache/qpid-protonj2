@@ -30,6 +30,7 @@ import org.apache.qpid.proton4j.amqp.transport.Flow;
 import org.apache.qpid.proton4j.amqp.transport.Transfer;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.engine.IncomingDelivery;
+import org.apache.qpid.proton4j.engine.LinkCreditState;
 import org.apache.qpid.proton4j.engine.Receiver;
 import org.apache.qpid.proton4j.engine.exceptions.ProtocolViolationException;
 import org.apache.qpid.proton4j.engine.util.DeliveryIdTracker;
@@ -63,8 +64,8 @@ public class ProtonReceiverState implements ProtonLinkState<ProtonIncomingDelive
     }
 
     @Override
-    public ProtonLinkCreditState getCreditState() {
-        return creditState;
+    public LinkCreditState snapshotCreditState() {
+        return creditState.snapshot();
     }
 
     void setCredit(int credit) {
@@ -73,6 +74,12 @@ public class ProtonReceiverState implements ProtonLinkState<ProtonIncomingDelive
             if (receiver.isRemotelyOpened()) {
                 sessionWindow.writeFlow(receiver);
             }
+        }
+    }
+
+    void drain() {
+        if (receiver.isRemotelyOpened()) {
+            sessionWindow.writeFlow(receiver);
         }
     }
 
@@ -106,6 +113,7 @@ public class ProtonReceiverState implements ProtonLinkState<ProtonIncomingDelive
 
             receiver.signalReceiverDrained();
         }
+        //TODO: else somehow notify of remote flow? (e.g session windows changed, peer echo'd its view of the state
     }
 
     @Override

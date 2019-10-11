@@ -26,6 +26,7 @@ import org.apache.qpid.proton4j.amqp.transport.Disposition;
 import org.apache.qpid.proton4j.amqp.transport.Role;
 import org.apache.qpid.proton4j.engine.EventHandler;
 import org.apache.qpid.proton4j.engine.IncomingDelivery;
+import org.apache.qpid.proton4j.engine.LinkCreditState;
 import org.apache.qpid.proton4j.engine.Receiver;
 import org.apache.qpid.proton4j.engine.Session;
 
@@ -41,6 +42,8 @@ public class ProtonReceiver extends ProtonLink<Receiver> implements Receiver {
     private EventHandler<Receiver> receiverDrainedEventHandler = null;
 
     private DeliveryState defaultDeliveryState;
+
+    private LinkCreditState drainStateSnapshot;
 
     /**
      * Create a new {@link Receiver} instance with the given {@link Session} parent.
@@ -99,7 +102,11 @@ public class ProtonReceiver extends ProtonLink<Receiver> implements Receiver {
             throw new IllegalStateException("Cannot set credit when session or connection already closed");
         }
         if (credit < 0) {
-            throw new IllegalArgumentException("Set credit cannot be zero");
+            throw new IllegalArgumentException("Set credit cannot be less than zero");
+        }
+
+        if (credit < getCredit()) {
+            throw new IllegalArgumentException("Cannot reduce outstanding credit, use drain to consume existing credit");
         }
 
         linkState.setCredit(credit);
@@ -109,8 +116,29 @@ public class ProtonReceiver extends ProtonLink<Receiver> implements Receiver {
 
     @Override
     public Receiver drain() {
-        // TODO Auto-generated method stub
-        return null;
+        checkNotClosed("Cannot drain a closed Receiver");
+
+        if(drainStateSnapshot != null) {
+            throw new IllegalStateException("Drain attempt already outstanding");
+        }
+
+        LinkCreditState snapshot = linkState.snapshotCreditState();
+        if(snapshot.getCredit() <= 0) {
+            throw new IllegalStateException("No existing credit to drain");
+        }
+
+        drainStateSnapshot = snapshot;
+
+        linkState.drain();
+
+        return this;
+    }
+
+    @Override
+    public boolean isDrain() {
+        checkNotClosed("Cannot check isDrain on a closed Receiver");
+
+        return drainStateSnapshot != null;
     }
 
     @Override
@@ -199,6 +227,7 @@ public class ProtonReceiver extends ProtonLink<Receiver> implements Receiver {
     }
 
     Receiver signalReceiverDrained() {
+        drainStateSnapshot = null;
         if (receiverDrainedEventHandler != null) {
             receiverDrainedEventHandler.handle(this);
         }

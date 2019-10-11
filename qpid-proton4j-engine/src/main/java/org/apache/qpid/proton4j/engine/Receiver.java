@@ -45,12 +45,10 @@ public interface Receiver extends Link<Receiver> {
     /**
      * Initiate a drain of all remaining credit of this {@link Receiver} link.
      *
-     * If the link has no credit then the drained event will be triggered immediately to
-     * indicate that result.
-     *
      * @return this {@link Receiver} for chaining.
+     * @throws IllegalStateException if there is no credit to drain, or an existing drain attempt is incomplete.
      */
-    Receiver drain();
+    Receiver drain() throws IllegalStateException;
 
     // Receiver drain(int credits);
 

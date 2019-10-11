@@ -22,6 +22,7 @@ import org.apache.qpid.proton4j.amqp.transport.Flow;
 import org.apache.qpid.proton4j.amqp.transport.Transfer;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.engine.Delivery;
+import org.apache.qpid.proton4j.engine.LinkCreditState;
 
 /**
  * Proton Link state base used to define common API amongst the implementations.
@@ -45,9 +46,9 @@ public interface ProtonLinkState<DeliveryType extends Delivery> {
     int getDeliveryCount();
 
     /**
-     * @return the current credit state for this link.
+     * @return snapshot of the current credit state for this link.
      */
-    ProtonLinkCreditState getCreditState();
+    LinkCreditState snapshotCreditState();
 
     /**
      * Initialize link state on an outbound Attach for this link

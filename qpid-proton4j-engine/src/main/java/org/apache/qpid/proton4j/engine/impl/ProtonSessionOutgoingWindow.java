@@ -165,7 +165,7 @@ public class ProtonSessionOutgoingWindow {
         return disposition;
     }
 
-    void writeFlow(ProtonLink<?> link) {
+    void writeFlow(ProtonSender link) {
         session.writeFlow(link);
     }
 

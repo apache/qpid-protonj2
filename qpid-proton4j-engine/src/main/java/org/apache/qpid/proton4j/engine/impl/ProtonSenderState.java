@@ -29,6 +29,7 @@ import org.apache.qpid.proton4j.amqp.transport.Disposition;
 import org.apache.qpid.proton4j.amqp.transport.Flow;
 import org.apache.qpid.proton4j.amqp.transport.Transfer;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import org.apache.qpid.proton4j.engine.LinkCreditState;
 import org.apache.qpid.proton4j.engine.LinkState;
 import org.apache.qpid.proton4j.engine.OutgoingDelivery;
 import org.apache.qpid.proton4j.engine.Sender;
@@ -76,8 +77,8 @@ public class ProtonSenderState implements ProtonLinkState<ProtonOutgoingDelivery
     }
 
     @Override
-    public ProtonLinkCreditState getCreditState() {
-        return creditState;
+    public LinkCreditState snapshotCreditState() {
+        return creditState.snapshot();
     }
 
     @Override

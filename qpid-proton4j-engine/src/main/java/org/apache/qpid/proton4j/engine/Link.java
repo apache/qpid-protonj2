@@ -86,6 +86,8 @@ public interface Link<T extends Link<T>> {
      */
     int getCredit();
 
+    boolean isDrain();
+
     /**
      * @return the {@link Role} that this end of the link is performing.
      */

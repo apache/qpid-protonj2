@@ -209,9 +209,16 @@ public class ProtonSender extends ProtonLink<Sender> implements Sender {
         //        reduce link credit in case the remote has updated the credit since the event was
         //        triggered.
         if (drainRequestedEventHandler != null) {
-            drainRequestedEventHandler.handle(linkState.getCreditState().snapshot());
+            drainRequestedEventHandler.handle(linkState.snapshotCreditState());
         }
         return this;
+    }
+
+    @Override
+    public boolean isDrain() {
+        checkNotClosed("Cannot check isDrain on a closed Sender");
+
+        return false; //TODO
     }
 
     //----- Internal routing and state management

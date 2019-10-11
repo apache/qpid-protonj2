@@ -46,6 +46,12 @@ public class ProtonCoordinator extends ProtonLink<ProtonCoordinator> {
     }
 
     @Override
+    public boolean isDrain() {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    @Override
     public Role getRole() {
         return Role.SENDER;
     }
