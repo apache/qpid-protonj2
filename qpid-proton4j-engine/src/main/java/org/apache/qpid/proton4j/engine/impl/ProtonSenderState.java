@@ -49,7 +49,7 @@ public class ProtonSenderState implements ProtonLinkState<ProtonOutgoingDelivery
 
     private boolean sendable;
     private boolean draining;
-    private boolean drained;
+    private boolean drained;  // TODO - This was added from old code, since we are reactive we probably don't need to retain this state.
 
     private final SplayMap<ProtonOutgoingDelivery> unsettled = new SplayMap<>();
 

@@ -216,6 +216,8 @@ public class ProtonSender extends ProtonLink<Sender> implements Sender {
 
     @Override
     public boolean isDrain() {
+        // TODO - Do we want to throw from methods that don't initiate a state change or induce a write
+        //        as they answer when closed could just be false ?
         checkNotClosed("Cannot check isDrain on a closed Sender");
 
         return false; //TODO
