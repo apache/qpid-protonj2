@@ -21,6 +21,7 @@
 package org.messaginghub.amqperative.example;
 
 import java.util.UUID;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 import org.messaginghub.amqperative.Client;
@@ -47,15 +48,15 @@ public class HelloWorld {
 
             Connection connection = client.connect(brokerHost, brokerPort);
 
+            Receiver receiver = connection.openReceiver(address);
+            receiver.openFuture().get(5, TimeUnit.SECONDS);
+            receiver.addCredit(10);
+
             Sender sender = connection.openSender(address);
             sender.openFuture().get(5, TimeUnit.SECONDS);
 
             Message<String> message = Message.create("Hello World").setDurable(true);
             Tracker tracker = sender.send(message);
-
-            Receiver receiver = connection.openReceiver(address);
-            receiver.openFuture().get(5, TimeUnit.SECONDS);
-            receiver.addCredit(1);
 
             Delivery delivery = receiver.receive();
 
@@ -65,6 +66,10 @@ public class HelloWorld {
                 System.out.println(received.getBody());
             }
 
+            Future<Receiver> draining = receiver.drain();
+            draining.get(5, TimeUnit.SECONDS);
+
+            connection.close().get(5, TimeUnit.SECONDS);
         } catch (Exception exp) {
             System.out.println("Caught exception, exiting.");
             exp.printStackTrace(System.out);

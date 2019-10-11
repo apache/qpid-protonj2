@@ -183,13 +183,21 @@ public class ClientReceiver implements Receiver {
 
         executor.execute(() -> {
             // TODO: If already draining throw IllegalStateException type error as we don't allow stacked drains.
-            //       Also don't drain if credit already zero etc other sanity checking.
-            // if (protonReceiver.draining()) {
-            //	drained.failed(new ClientException("Already draining"));
-            // }
+             if (protonReceiver.isDrain()) {
+                 drained.failed(new ClientException("Already draining"));
+             }
+
+             if (protonReceiver.getCredit() == 0) {
+                 drained.complete(this);
+                 return;
+             }
 
             // TODO: Maybe proton should be returning something here to indicate drain started.
             protonReceiver.drain();
+            protonReceiver.drainStateUpdatedHandler(x -> {
+                protonReceiver.drainStateUpdatedHandler(null);
+                drained.complete(this);
+            });
         });
 
         return drained;
