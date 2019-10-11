@@ -58,8 +58,6 @@ import org.messaginghub.amqperative.transport.TransportBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.netty.buffer.ByteBuf;
-
 /**
  * A {@link Connection} implementation that uses the Proton engine for AMQP protocol support.
  */
@@ -459,28 +457,17 @@ public class ClientConnection implements Connection {
 
     private void handleEngineOutput(ProtonBuffer output) {
         try {
-            // TODO - Revisit this later on when we have fully worked out the p4j bits
-            //        around configuring buffer allocators and have one for the client
-            //        or a common one from p4j that allocates a netty wrapped buffer
-            //        for outbound work and use it directly.
-            //
-            // if (toWrite instanceof ProtonNettyByteBuffer) {
-            //     transport.writeAndFlust((ByteBuf) toWrite.unwrap());
-            // } else {
-            //     be ready for bad stuff and do the old copy style.
-            // }
-            ByteBuf outbound = transport.allocateSendBuffer(output.getReadableBytes());
-            outbound.writeBytes(output.toByteBuffer());
-
-            transport.writeAndFlush(outbound);
+            transport.writeAndFlush(output);
         } catch (IOException e) {
             LOG.warn("Error while writing engine output to transport:", e);
             e.printStackTrace();
+            // TODO - Engine should handle thrown errors but we already see this one
+            handleEngineErrors(e);
         }
     }
 
     private void handleEngineErrors(Throwable error) {
-        // TODO - Better handle errors and
+        // TODO - Better handle errors and let all tracked resources know about them
         try {
             // Engine encountered critical error, shutdown.
             transport.close();

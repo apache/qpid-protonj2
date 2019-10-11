@@ -21,12 +21,12 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.messaginghub.amqperative.SslOptions;
 import org.messaginghub.amqperative.TransportOptions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
@@ -72,31 +72,31 @@ public class WebSocketTransport extends TcpTransport {
     }
 
     @Override
-    public WebSocketTransport write(ByteBuf output) throws IOException {
+    public WebSocketTransport write(ProtonBuffer output) throws IOException {
         checkConnected();
-        int length = output.readableBytes();
+        int length = output.getReadableBytes();
         if (length == 0) {
             return this;
         }
 
         LOG.trace("Attempted write of: {} bytes", length);
 
-        channel.write(new BinaryWebSocketFrame(output), channel.voidPromise());
+        channel.write(new BinaryWebSocketFrame(toOutputBuffer(output)), channel.voidPromise());
 
         return this;
     }
 
     @Override
-    public WebSocketTransport writeAndFlush(ByteBuf output) throws IOException {
+    public WebSocketTransport writeAndFlush(ProtonBuffer output) throws IOException {
         checkConnected();
-        int length = output.readableBytes();
+        int length = output.getReadableBytes();
         if (length == 0) {
             return this;
         }
 
         LOG.trace("Attempted write and flush of: {} bytes", length);
 
-        channel.writeAndFlush(new BinaryWebSocketFrame(output), channel.voidPromise());
+        channel.writeAndFlush(new BinaryWebSocketFrame(toOutputBuffer(output)), channel.voidPromise());
 
         return this;
     }

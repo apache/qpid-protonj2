@@ -24,6 +24,8 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import org.apache.qpid.proton4j.buffer.ProtonNettyByteBuffer;
 import org.messaginghub.amqperative.SslOptions;
 import org.messaginghub.amqperative.TransportOptions;
 import org.messaginghub.amqperative.util.IOExceptionSupport;
@@ -241,25 +243,29 @@ public class TcpTransport implements Transport {
         }
     }
 
+    // TODO - With new proton we can configure an allocator so perhaps the transport should
+    //        provide a allocator that create wrapped Netty buffers from the channel from the
+    //        IO buffer methods.  So after connect, configure engine with transport allocator.
+
     @Override
-    public ByteBuf allocateSendBuffer(int size) throws IOException {
+    public ProtonNettyByteBuffer allocateSendBuffer(int size) throws IOException {
         checkConnected();
-        return channel.alloc().ioBuffer(size, size);
+        return new ProtonNettyByteBuffer(channel.alloc().ioBuffer(size, size));
     }
 
     @Override
-    public TcpTransport write(ByteBuf output) throws IOException {
+    public TcpTransport write(ProtonBuffer output) throws IOException {
         checkConnected(output);
-        LOG.trace("Attempted write of: {} bytes", output.readableBytes());
-        channel.write(output, channel.voidPromise());
+        LOG.trace("Attempted write of: {} bytes", output.getReadableBytes());
+        channel.write(toOutputBuffer(output), channel.voidPromise());
         return this;
     }
 
     @Override
-    public TcpTransport writeAndFlush(ByteBuf output) throws IOException {
+    public TcpTransport writeAndFlush(ProtonBuffer output) throws IOException {
         checkConnected(output);
-        LOG.trace("Attempted write and flush of: {} bytes", output.readableBytes());
-        channel.writeAndFlush(output, channel.voidPromise());
+        LOG.trace("Attempted write and flush of: {} bytes", output.getReadableBytes());
+        channel.writeAndFlush(toOutputBuffer(output), channel.voidPromise());
         return this;
     }
 
@@ -324,6 +330,20 @@ public class TcpTransport implements Transport {
 
         this.ioThreadfactory = factory;
         return this;
+    }
+
+    protected final ByteBuf toOutputBuffer(final ProtonBuffer output) throws IOException {
+        final ByteBuf nettyBuf;
+
+        if (output instanceof ProtonNettyByteBuffer) {
+            nettyBuf = (ByteBuf) output.unwrap();
+        } else {
+            ProtonNettyByteBuffer wrapped = allocateSendBuffer(output.getReadableBytes());
+            wrapped.writeBytes(output);
+            nettyBuf = (ByteBuf) wrapped.unwrap();
+        }
+
+        return nettyBuf;
     }
 
     //----- Internal implementation details, can be overridden as needed -----//
@@ -396,9 +416,11 @@ public class TcpTransport implements Transport {
         }
     }
 
-    private void checkConnected(ByteBuf output) throws IOException {
+    private void checkConnected(ProtonBuffer output) throws IOException {
         if (!connected.get() || !channel.isActive()) {
-            ReferenceCountUtil.release(output);
+            if (output instanceof ProtonNettyByteBuffer) {
+                ReferenceCountUtil.release(output.unwrap());
+            }
             throw new IOException("Cannot send to a non-connected transport.");
         }
     }

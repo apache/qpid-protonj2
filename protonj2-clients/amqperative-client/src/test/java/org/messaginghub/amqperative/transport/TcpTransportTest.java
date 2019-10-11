@@ -32,6 +32,8 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import org.apache.qpid.proton4j.buffer.ProtonNettyByteBuffer;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.messaginghub.amqperative.SslOptions;
@@ -299,7 +301,7 @@ public class TcpTransportTest extends AMQPerativeTestCase {
         final int CONNECTION_COUNT = 10;
         final int FRAME_SIZE = 8;
 
-        ByteBuf sendBuffer = Unpooled.buffer(FRAME_SIZE);
+        ProtonNettyByteBuffer sendBuffer = new ProtonNettyByteBuffer(Unpooled.buffer(FRAME_SIZE));
         for (int i = 0; i < 8; ++i) {
             sendBuffer.writeByte('A');
         }
@@ -394,7 +396,7 @@ public class TcpTransportTest extends AMQPerativeTestCase {
 
             assertTrue(transport.isConnected());
 
-            transport.writeAndFlush(Unpooled.buffer(0));
+            transport.writeAndFlush(new ProtonNettyByteBuffer(Unpooled.buffer(0)));
 
             transport.close();
         }
@@ -421,7 +423,7 @@ public class TcpTransportTest extends AMQPerativeTestCase {
 
             assertTrue(transport.isConnected());
 
-            ByteBuf sendBuffer = transport.allocateSendBuffer(SEND_BYTE_COUNT);
+            ProtonBuffer sendBuffer = transport.allocateSendBuffer(SEND_BYTE_COUNT);
             for (int i = 0; i < SEND_BYTE_COUNT; ++i) {
                 sendBuffer.writeByte('A');
             }
@@ -471,7 +473,7 @@ public class TcpTransportTest extends AMQPerativeTestCase {
 
             assertTrue(transport.isConnected());
 
-            ByteBuf sendBuffer = Unpooled.buffer(byteCount);
+            ProtonNettyByteBuffer sendBuffer = new ProtonNettyByteBuffer(Unpooled.buffer(byteCount));
             for (int i = 0; i < byteCount; ++i) {
                 sendBuffer.writeByte('A');
             }
@@ -515,7 +517,7 @@ public class TcpTransportTest extends AMQPerativeTestCase {
 
             transport.close();
 
-            ByteBuf sendBuffer = Unpooled.buffer(10);
+            ProtonNettyByteBuffer sendBuffer = new ProtonNettyByteBuffer(Unpooled.buffer(10));
             try {
                 transport.writeAndFlush(sendBuffer);
                 fail("Should throw on send of closed transport");
@@ -603,7 +605,7 @@ public class TcpTransportTest extends AMQPerativeTestCase {
 
                 assertTrue(transport.isConnected());
 
-                ByteBuf sendBuffer = transport.allocateSendBuffer(10 * 1024 * 1024);
+                ProtonBuffer sendBuffer = transport.allocateSendBuffer(10 * 1024 * 1024);
                 sendBuffer.writeBytes(new byte[] {0, 1, 2, 3, 4});
 
                 transport.close();

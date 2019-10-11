@@ -26,6 +26,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import org.apache.qpid.proton4j.buffer.ProtonNettyByteBuffer;
 import org.junit.Test;
 import org.messaginghub.amqperative.SslOptions;
 import org.messaginghub.amqperative.TransportOptions;
@@ -134,7 +136,7 @@ public class WebSocketTransportTest extends TcpTransportTest {
     public void testConnectionsSendReceiveLargeDataWhenFrameSizeAllowsIt() throws Exception {
         final int FRAME_SIZE = 8192;
 
-        ByteBuf sendBuffer = Unpooled.buffer(FRAME_SIZE);
+        ProtonBuffer sendBuffer = new ProtonNettyByteBuffer(Unpooled.buffer(FRAME_SIZE));
         for (int i = 0; i < FRAME_SIZE; ++i) {
             sendBuffer.writeByte('A');
         }
@@ -180,7 +182,7 @@ public class WebSocketTransportTest extends TcpTransportTest {
     public void testConnectionReceivesFragmentedData() throws Exception {
         final int FRAME_SIZE = 5317;
 
-        ByteBuf sendBuffer = Unpooled.buffer(FRAME_SIZE);
+        ProtonBuffer sendBuffer = new ProtonNettyByteBuffer(Unpooled.buffer(FRAME_SIZE));
         for (int i = 0; i < FRAME_SIZE; ++i) {
             sendBuffer.writeByte('A' + (i % 10));
         }
@@ -230,7 +232,7 @@ public class WebSocketTransportTest extends TcpTransportTest {
             }
 
             assertEquals("Unexpected data length", FRAME_SIZE, receivedBuffer.readableBytes());
-            assertTrue("Unexpected data", ByteBufUtil.equals(sendBuffer, 0, receivedBuffer, 0, FRAME_SIZE));
+            assertTrue("Unexpected data", ByteBufUtil.equals((ByteBuf) sendBuffer.unwrap(), 0, receivedBuffer, 0, FRAME_SIZE));
         } finally {
             for (ByteBuf buf : data) {
                 buf.release();
@@ -244,7 +246,7 @@ public class WebSocketTransportTest extends TcpTransportTest {
     public void testConnectionsSendReceiveLargeDataFailsDueToMaxFrameSize() throws Exception {
         final int FRAME_SIZE = 1024;
 
-        ByteBuf sendBuffer = Unpooled.buffer(FRAME_SIZE);
+        ProtonBuffer sendBuffer = new ProtonNettyByteBuffer(Unpooled.buffer(FRAME_SIZE));
         for (int i = 0; i < FRAME_SIZE; ++i) {
             sendBuffer.writeByte('A');
         }
@@ -280,7 +282,7 @@ public class WebSocketTransportTest extends TcpTransportTest {
     public void testTransportDetectsConnectionDropWhenServerEnforcesMaxFrameSize() throws Exception {
         final int FRAME_SIZE = 1024;
 
-        ByteBuf sendBuffer = Unpooled.buffer(FRAME_SIZE);
+        ProtonBuffer sendBuffer = new ProtonNettyByteBuffer(Unpooled.buffer(FRAME_SIZE));
         for (int i = 0; i < FRAME_SIZE; ++i) {
             sendBuffer.writeByte('A');
         }

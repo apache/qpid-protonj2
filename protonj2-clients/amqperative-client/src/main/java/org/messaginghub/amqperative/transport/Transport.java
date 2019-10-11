@@ -21,10 +21,9 @@ import java.security.Principal;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
 
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.messaginghub.amqperative.SslOptions;
 import org.messaginghub.amqperative.TransportOptions;
-
-import io.netty.buffer.ByteBuf;
 
 /**
  * Base class for all QpidJMS Transport instances.
@@ -74,7 +73,7 @@ public interface Transport {
      *
      * @throws IOException if an error occurs while allocating the send buffer.
      */
-    ByteBuf allocateSendBuffer(int size) throws IOException;
+    ProtonBuffer allocateSendBuffer(int size) throws IOException;
 
     /**
      * Writes a chunk of data over the Transport connection without performing an
@@ -87,7 +86,7 @@ public interface Transport {
      *
      * @throws IOException if an error occurs during the write operation.
      */
-    Transport write(ByteBuf output) throws IOException;
+    Transport write(ProtonBuffer output) throws IOException;
 
     /**
      * Writes a chunk of data over the Transport connection and requests a flush of
@@ -100,7 +99,7 @@ public interface Transport {
      *
      * @throws IOException if an error occurs during the write operation.
      */
-    Transport writeAndFlush(ByteBuf output) throws IOException;
+    Transport writeAndFlush(ProtonBuffer output) throws IOException;
 
     /**
      * Request a flush of all pending writes to the underlying connection.
