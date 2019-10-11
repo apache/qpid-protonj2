@@ -67,9 +67,9 @@ public class TcpTransport implements Transport {
     protected TransportListener listener;
     protected ThreadFactory ioThreadfactory;
     protected int maxFrameSize = DEFAULT_MAX_FRAME_SIZE;
+    protected final TransportOptions options;
+    protected final SslOptions sslOptions;
 
-    private final TransportOptions options;
-    private final SslOptions sslOptions;
     private final String host;
     private final int port;
     private final AtomicBoolean connected = new AtomicBoolean();
@@ -102,14 +102,14 @@ public class TcpTransport implements Transport {
             throw new IllegalArgumentException("Transport host value cannot be null");
         }
 
+        if (port < 0) {
+            throw new IllegalArgumentException("Transport port value must be a non-negative int value");
+        }
+
         this.sslOptions = sslOptions;
         this.options = options;
         this.host = host;
-        if (port < 0) {
-            this.port = sslOptions.isSSLEnabled() ? sslOptions.getDefaultSslPort() : options.getDefaultTcpPort();
-        } else {
-            this.port = port;
-        }
+        this.port = port;
     }
 
     @Override
@@ -122,9 +122,8 @@ public class TcpTransport implements Transport {
             throw new IllegalStateException("A transport listener must be set before connection attempts.");
         }
 
-        TransportOptions transportOptions = getTransportOptions();
-        boolean useKQueue = KQueueSupport.isAvailable(transportOptions);
-        boolean useEpoll = EpollSupport.isAvailable(transportOptions);
+        boolean useKQueue = KQueueSupport.isAvailable(options);
+        boolean useEpoll = EpollSupport.isAvailable(options);
 
         if (useKQueue) {
             LOG.trace("Netty Transport using KQueue mode");
@@ -162,7 +161,7 @@ public class TcpTransport implements Transport {
             }
         });
 
-        configureNetty(bootstrap, transportOptions);
+        configureNetty(bootstrap, options);
 
         ChannelFuture future = bootstrap.connect(getHost(), getPort());
         future.addListener(new ChannelFutureListener() {
@@ -277,20 +276,19 @@ public class TcpTransport implements Transport {
         return listener;
     }
 
-    @Override
-    public TcpTransport setTransportListener(TransportListener listener) {
+    TcpTransport setTransportListener(TransportListener listener) {
         this.listener = listener;
         return this;
     }
 
     @Override
     public TransportOptions getTransportOptions() {
-        return options;
+        return options.clone();
     }
 
     @Override
     public SslOptions getSslOptions() {
-        return sslOptions;
+        return sslOptions.clone();
     }
 
     @Override
@@ -305,8 +303,7 @@ public class TcpTransport implements Transport {
         return result;
     }
 
-    @Override
-    public TcpTransport setMaxFrameSize(int maxFrameSize) {
+    TcpTransport setMaxFrameSize(int maxFrameSize) {
         if (connected.get()) {
             throw new IllegalStateException("Cannot change Max Frame Size while connected.");
         }
@@ -316,17 +313,11 @@ public class TcpTransport implements Transport {
     }
 
     @Override
-    public int getMaxFrameSize() {
-        return maxFrameSize;
-    }
-
-    @Override
     public ThreadFactory getThreadFactory() {
         return ioThreadfactory;
     }
 
-    @Override
-    public TcpTransport setThreadFactory(ThreadFactory factory) {
+    TcpTransport setThreadFactory(ThreadFactory factory) {
         if (isConnected() || channel != null) {
             throw new IllegalStateException("Cannot set IO ThreadFactory after Transport connect");
         }
@@ -463,7 +454,7 @@ public class TcpTransport implements Transport {
         if (isSecure()) {
             final SslHandler sslHandler;
             try {
-                sslHandler = SslSupport.createSslHandler(channel.alloc(), getHost(), getPort(), getSslOptions());
+                sslHandler = SslSupport.createSslHandler(channel.alloc(), getHost(), getPort(), sslOptions);
             } catch (Exception ex) {
                 throw IOExceptionSupport.create(ex);
             }
@@ -471,7 +462,7 @@ public class TcpTransport implements Transport {
             channel.pipeline().addLast("ssl", sslHandler);
         }
 
-        if (getTransportOptions().isTraceBytes()) {
+        if (options.isTraceBytes()) {
             channel.pipeline().addLast("logger", new LoggingHandler(getClass()));
         }
 

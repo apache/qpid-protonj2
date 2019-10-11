@@ -119,43 +119,17 @@ public interface Transport {
     TransportListener getTransportListener();
 
     /**
-     * Sets the Transport Listener instance that will be notified of incoming data or
-     * error events.
-     *
-     * @param listener
-     *        The new TransportListener instance to use (cannot be null).
-     *
-     * @return this Transport instance.
-     *
-     * @throws IllegalArgumentException if the given listener is null.
-     */
-    Transport setTransportListener(TransportListener listener);
-
-    /**
      * @return the {@link ThreadFactory} used to create the IO thread for this Transport
      */
     ThreadFactory getThreadFactory();
 
     /**
-     * Sets the {@link ThreadFactory} that the Transport should use when creating the Transport
-     * IO thread for processing.
-     *
-     * @param factory
-     * 		The {@link ThreadFactory}
-     *
-     * @return this Transport instance.
-     *
-     * @throws IllegalStateException if called after a call to {@link #connect(Runnable)}
-     */
-    Transport setThreadFactory(ThreadFactory factory);
-
-    /**
-     * @return the {@link TransportOptions} instance that holds the configuration for this Transport.
+     * @return a {@link TransportOptions} instance copied from the immutable options given at create time..
      */
     TransportOptions getTransportOptions();
 
     /**
-     * @return the {@link SslOptions} instance that holds the configuration for this Transport.
+     * @return a {@link SslOptions} instance copied from the immutable options given at create time..
      */
     SslOptions getSslOptions();
 
@@ -173,24 +147,5 @@ public interface Transport {
      * @return the local principal for a Transport that is using a secure connection.
      */
     Principal getLocalPrincipal();
-
-    /**
-     * Sets the Maximum Frame Size the transport should accept from the remote.  This option
-     * is not applicable to all transport types, those that support validating the incoming
-     * frame size should apply the configured value.
-     *
-     * @param maxFrameSize
-     * 		The maximum frame size to accept from the remote.
-     *
-     * @return this Transport instance.
-     */
-    Transport setMaxFrameSize(int maxFrameSize);
-
-    /**
-     * Returns the currently configured maximum frame size setting.
-     *
-     * @return the current max frame size setting for this transport.
-     */
-    int getMaxFrameSize();
 
 }

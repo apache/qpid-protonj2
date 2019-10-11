@@ -53,9 +53,8 @@ import org.messaginghub.amqperative.futures.ClientFutureFactory;
 import org.messaginghub.amqperative.impl.exceptions.ClientConnectionRemotelyClosedException;
 import org.messaginghub.amqperative.impl.exceptions.ClientExceptionSupport;
 import org.messaginghub.amqperative.impl.exceptions.ClientIOException;
-import org.messaginghub.amqperative.transport.TcpTransport;
 import org.messaginghub.amqperative.transport.Transport;
-import org.messaginghub.amqperative.transport.WebSocketTransport;
+import org.messaginghub.amqperative.transport.TransportBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -124,14 +123,13 @@ public class ClientConnection implements Connection {
             "ProtonConnection :(" + CONNECTION_SEQUENCE.incrementAndGet()
                           + "):[" + options.getHostname() + ":" + options.getPort() + "]", true);
 
-        if (options.getTransportOptions().isUseWebSockets()) {
-            transport = new WebSocketTransport(options.getHostname(), options.getPort(), options.getTransportOptions(), options.getSSLOptions());
-        } else {
-            transport = new TcpTransport(options.getHostname(), options.getPort(), options.getTransportOptions(), options.getSSLOptions());
-        }
-
-        transport.setTransportListener(new ClientTransportListener(this));
-        transport.setThreadFactory(transportThreadFactory);
+        transport = new TransportBuilder().host(options.getHostname())
+                                          .port(options.getPort())
+                                          .transportOptions(options.getTransportOptions())
+                                          .sslOptions(options.getSSLOptions())
+                                          .transportListener(new ClientTransportListener(this))
+                                          .threadFactory(transportThreadFactory)
+                                          .build();
 
         openFuture = futureFactoy.createFuture();
         closeFuture = futureFactoy.createFuture();

@@ -37,6 +37,7 @@ public class TransportOptions implements Cloneable {
     public static final boolean DEFAULT_TRACE_BYTES = false;
     public static final int DEFAULT_LOCAL_PORT = 0;
     public static final boolean DEFAULT_USE_WEBSOCKETS = false;
+    public static final int DEFAULT_WEBSOCKET_MAX_FRAME_SIZE = 65535;
 
     private int sendBufferSize = DEFAULT_SEND_BUFFER_SIZE;
     private int receiveBufferSize = DEFAULT_RECEIVE_BUFFER_SIZE;
@@ -53,6 +54,7 @@ public class TransportOptions implements Cloneable {
     private boolean traceBytes = DEFAULT_TRACE_BYTES;
     private boolean useWebSockets = DEFAULT_USE_WEBSOCKETS;
     private String webSocketPath;
+    private int webSocketMaxFrameSize = DEFAULT_WEBSOCKET_MAX_FRAME_SIZE;
 
     private final Map<String, String> webSocketHeaders = new HashMap<>();
 
@@ -281,6 +283,15 @@ public class TransportOptions implements Cloneable {
         return this;
     }
 
+    public TransportOptions setWebSocketMaxFrameSize(int maxFrameSize) {
+        this.webSocketMaxFrameSize = maxFrameSize;
+        return this;
+    }
+
+    public int getWebSocketMaxFrameSize() {
+        return webSocketMaxFrameSize;
+    }
+
     /**
      * Copy all configuration into the given {@link TransportOptions} from this instance.
      *
@@ -306,6 +317,7 @@ public class TransportOptions implements Cloneable {
         other.setUseWebSockets(isUseWebSockets());
         other.setWebSocketPath(getWebSocketPath());
         other.getWebSocketHeaders().putAll(webSocketHeaders);
+        other.setWebSocketMaxFrameSize(getWebSocketMaxFrameSize());
 
         return other;
     }

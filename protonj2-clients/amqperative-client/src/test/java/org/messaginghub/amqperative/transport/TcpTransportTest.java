@@ -39,9 +39,6 @@ import org.messaginghub.amqperative.TransportOptions;
 import org.messaginghub.amqperative.impl.ClientThreadFactory;
 import org.messaginghub.amqperative.test.AMQPerativeTestCase;
 import org.messaginghub.amqperative.test.Wait;
-import org.messaginghub.amqperative.transport.TcpTransport;
-import org.messaginghub.amqperative.transport.Transport;
-import org.messaginghub.amqperative.transport.TransportListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -84,6 +81,27 @@ public class TcpTransportTest extends AMQPerativeTestCase {
     }
 
     @Test(timeout = 60000)
+    public void testCreateWithBadHostOrPortThrowsIAE() throws Exception {
+        try {
+            createTransport(HOSTNAME, -1, testListener, createTransportOptions(), createSSLOptions());
+            fail("Should have thrown IllegalArgumentException");
+        } catch (IllegalArgumentException iae) {
+        }
+
+        try {
+            createTransport(null, 5672, testListener, createTransportOptions(), createSSLOptions());
+            fail("Should have thrown IllegalArgumentException");
+        } catch (IllegalArgumentException iae) {
+        }
+
+        try {
+            createTransport("", 5672, testListener, createTransportOptions(), createSSLOptions());
+            fail("Should have thrown IllegalArgumentException");
+        } catch (IllegalArgumentException iae) {
+        }
+    }
+
+    @Test(timeout = 60000)
     public void testCreateWithNullOptionsThrowsIAE() throws Exception {
         try {
             createTransport(HOSTNAME, 5672, testListener, null, null);
@@ -113,7 +131,7 @@ public class TcpTransportTest extends AMQPerativeTestCase {
 
             ClientThreadFactory factory = new ClientThreadFactory("NettyTransportTest", true);
 
-            Transport transport = createTransport(HOSTNAME, port, testListener, createTransportOptions(), createSSLOptions());
+            TcpTransport transport = createTransport(HOSTNAME, port, testListener, createTransportOptions(), createSSLOptions());
             transport.setThreadFactory(factory);
 
             try {
@@ -195,7 +213,7 @@ public class TcpTransportTest extends AMQPerativeTestCase {
 
             final int port = server.getServerPort();
 
-            Transport transport = createTransport(HOSTNAME, port, null, createTransportOptions(), createSSLOptions());
+            TcpTransport transport = createTransport(HOSTNAME, port, null, createTransportOptions(), createSSLOptions());
             assertNull(transport.getTransportListener());
             transport.setTransportListener(testListener);
             assertNotNull(transport.getTransportListener());
@@ -739,7 +757,7 @@ public class TcpTransportTest extends AMQPerativeTestCase {
         }
     }
 
-    protected Transport createTransport(String host, int port, TransportListener listener, TransportOptions options, SslOptions sslOptions) {
+    protected TcpTransport createTransport(String host, int port, TransportListener listener, TransportOptions options, SslOptions sslOptions) {
         TcpTransport transport = new TcpTransport(host, port, options, sslOptions);
         transport.setTransportListener(listener);
         return transport;

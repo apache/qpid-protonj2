@@ -30,8 +30,6 @@ import javax.net.ssl.SSLContext;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.messaginghub.amqperative.SslOptions;
-import org.messaginghub.amqperative.transport.SslSupport;
-import org.messaginghub.amqperative.transport.Transport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,12 +46,12 @@ public class OpenSslTransportTest extends SslTransportTest {
 
     private static final Logger LOG = LoggerFactory.getLogger(OpenSslTransportTest.class);
 
-    @Test(timeout = 240 * 1000)
+    @Test(timeout = 240000)
     public void testConnectToServerWithOpenSSLEnabled() throws Exception {
         doTestOpenSSLSupport(true);
     }
 
-    @Test(timeout = 60 * 1000)
+    @Test(timeout = 60000)
     public void testConnectToServerWithOpenSSLDisabled() throws Exception {
         doTestOpenSSLSupport(false);
     }
@@ -94,7 +92,7 @@ public class OpenSslTransportTest extends SslTransportTest {
         assertTrue(data.isEmpty());
     }
 
-    @Test(timeout = 60 * 1000)
+    @Test(timeout = 60000)
     public void testConnectToServerWithUserSuppliedSSLContextWorksWhenOpenSSLRequested() throws Exception {
         assumeTrue(OpenSsl.isAvailable());
         assumeTrue(OpenSsl.supportsKeyManagerFactory());
@@ -179,7 +177,7 @@ public class OpenSslTransportTest extends SslTransportTest {
 
     @Override
     @Ignore("Can't apply keyAlias in Netty OpenSSL impl")
-    @Test(timeout = 60 * 1000)
+    @Test(timeout = 60000)
     public void testConnectWithSpecificClientAuthKeyAlias() throws Exception {
         // TODO - Revert to superclass version if keyAlias becomes supported for Netty.
     }

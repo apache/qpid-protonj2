@@ -46,6 +46,7 @@ public class TransportOptionsTest extends AMQPerativeTestCase {
     public static final String TEST_WEBSOCKET_PATH = "/test";
     public static final String TEST_WEBSOCKET_HEADER_KEY = "compression";
     public static final String TEST_WEBSOCKET_HEADER_VALUE = "gzip";
+    public static final int TEST_WEBSOCKET_MAX_FRAME_SIZE = TransportOptions.DEFAULT_WEBSOCKET_MAX_FRAME_SIZE + 1024;
 
     @Test
     public void testCreate() {
@@ -94,6 +95,7 @@ public class TransportOptionsTest extends AMQPerativeTestCase {
         assertEquals(LOCAL_PORT,options.getLocalPort());
         assertEquals(TEST_WEBSOCKET_PATH, options.getWebSocketPath());
         assertEquals(TEST_WEBSOCKET_HEADER_VALUE, options.getWebSocketHeaders().get(TEST_WEBSOCKET_HEADER_KEY));
+        assertEquals(TEST_WEBSOCKET_MAX_FRAME_SIZE, options.getWebSocketMaxFrameSize());
     }
 
     @Test
@@ -181,6 +183,7 @@ public class TransportOptionsTest extends AMQPerativeTestCase {
         options.setLocalPort(LOCAL_PORT);
         options.setWebSocketPath(TEST_WEBSOCKET_PATH);
         options.addWebSocketHeader(TEST_WEBSOCKET_HEADER_KEY, TEST_WEBSOCKET_HEADER_VALUE);
+        options.setWebSocketMaxFrameSize(TEST_WEBSOCKET_MAX_FRAME_SIZE);
 
         return options;
     }

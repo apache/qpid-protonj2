@@ -30,9 +30,6 @@ import org.junit.Test;
 import org.messaginghub.amqperative.SslOptions;
 import org.messaginghub.amqperative.TransportOptions;
 import org.messaginghub.amqperative.test.Wait;
-import org.messaginghub.amqperative.transport.Transport;
-import org.messaginghub.amqperative.transport.TransportListener;
-import org.messaginghub.amqperative.transport.WebSocketTransport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -50,7 +47,7 @@ public class WebSocketTransportTest extends TcpTransportTest {
     private static final Logger LOG = LoggerFactory.getLogger(WebSocketTransportTest.class);
 
     @Override
-    protected Transport createTransport(String host, int port, TransportListener listener, TransportOptions options, SslOptions sslOptions) {
+    protected WebSocketTransport createTransport(String host, int port, TransportListener listener, TransportOptions options, SslOptions sslOptions) {
         WebSocketTransport transport = new WebSocketTransport(host, port, options, sslOptions);
         transport.setTransportListener(listener);
         return transport;
@@ -151,10 +148,11 @@ public class WebSocketTransportTest extends TcpTransportTest {
 
             List<Transport> transports = new ArrayList<Transport>();
 
-            Transport transport = createTransport(HOSTNAME, port, testListener, createTransportOptions(), createSSLOptions());
+            Transport transport = createTransport(
+                HOSTNAME, port, testListener, createTransportOptions().setWebSocketMaxFrameSize(FRAME_SIZE), createSSLOptions());
+
             try {
                 // The transport should allow for the size of data we sent.
-                transport.setMaxFrameSize(FRAME_SIZE);
                 transport.connect(null);
                 transports.add(transport);
                 transport.writeAndFlush(sendBuffer.copy());
@@ -199,12 +197,12 @@ public class WebSocketTransportTest extends TcpTransportTest {
 
             TransportOptions clientOptions = createTransportOptions();
             clientOptions.setTraceBytes(true);
+            clientOptions.setWebSocketMaxFrameSize(FRAME_SIZE);
 
             NettyTransportListener wsListener = new NettyTransportListener(true);
 
             Transport transport = createTransport(HOSTNAME, port, wsListener, clientOptions, createSSLOptions());
             try {
-                transport.setMaxFrameSize(FRAME_SIZE);
                 transport.connect(null);
                 transports.add(transport);
                 transport.writeAndFlush(sendBuffer.copy());
@@ -260,11 +258,11 @@ public class WebSocketTransportTest extends TcpTransportTest {
 
             List<Transport> transports = new ArrayList<Transport>();
 
-            Transport transport = createTransport(HOSTNAME, port, testListener, createTransportOptions(), createSSLOptions());
+            Transport transport = createTransport(
+                HOSTNAME, port, testListener, createTransportOptions().setWebSocketMaxFrameSize(FRAME_SIZE / 2), createSSLOptions());
             try {
                 // Transport can't receive anything bigger so it should fail the connection
                 // when data arrives that is larger than this value.
-                transport.setMaxFrameSize(FRAME_SIZE / 2);
                 transport.connect(null);
                 transports.add(transport);
                 transport.writeAndFlush(sendBuffer.copy());
@@ -296,10 +294,11 @@ public class WebSocketTransportTest extends TcpTransportTest {
 
             List<Transport> transports = new ArrayList<Transport>();
 
-            final Transport transport = createTransport(HOSTNAME, port, testListener, createTransportOptions(), createSSLOptions());
+            final Transport transport = createTransport(
+                HOSTNAME, port, testListener, createTransportOptions().setWebSocketMaxFrameSize(FRAME_SIZE), createSSLOptions());
+
             try {
                 // Transport allows bigger frames in so that server is the one causing the failure.
-                transport.setMaxFrameSize(FRAME_SIZE);
                 transport.connect(null);
                 transports.add(transport);
                 transport.writeAndFlush(sendBuffer.copy());
