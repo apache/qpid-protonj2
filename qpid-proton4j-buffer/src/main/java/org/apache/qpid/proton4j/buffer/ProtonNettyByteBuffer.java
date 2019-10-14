@@ -27,7 +27,7 @@ import io.netty.buffer.Unpooled;
 /**
  * Wrapper class for Netty ByteBuf instances
  */
-public class ProtonNettyByteBuffer implements ProtonBuffer {
+public final class ProtonNettyByteBuffer implements ProtonBuffer {
 
     private final ByteBuf wrapped;
 
@@ -40,7 +40,7 @@ public class ProtonNettyByteBuffer implements ProtonBuffer {
     }
 
     @Override
-    public Object unwrap() {
+    public ByteBuf unwrap() {
         return wrapped;
     }
 
