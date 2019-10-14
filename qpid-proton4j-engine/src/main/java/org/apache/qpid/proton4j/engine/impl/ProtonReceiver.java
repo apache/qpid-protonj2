@@ -136,8 +136,6 @@ public class ProtonReceiver extends ProtonLink<Receiver> implements Receiver {
 
     @Override
     public boolean isDrain() {
-        checkNotClosed("Cannot check isDrain on a closed Receiver");
-
         return drainStateSnapshot != null;
     }
 
