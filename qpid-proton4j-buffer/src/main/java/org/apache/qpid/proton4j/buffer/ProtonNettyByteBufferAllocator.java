@@ -18,18 +18,17 @@ package org.apache.qpid.proton4j.buffer;
 
 import java.nio.ByteBuffer;
 
-import org.apache.qpid.proton4j.buffer.ProtonBuffer;
-import org.apache.qpid.proton4j.buffer.ProtonBufferAllocator;
-
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 
 /**
  * A default {@link ProtonBufferAllocator} that creates wrapped Netty {@link ByteBuf} buffers.
+ *
+ * Output buffers are created using a Netty ByteBuf backed {@link ProtonBuffer} while the other
+ * methods may choose to use simple {@link ProtonByteBuffer} objects to reduce the number of
+ * intermediate allocations from wrapping one buffer type with another.
  */
 public class ProtonNettyByteBufferAllocator implements ProtonBufferAllocator {
-
-    // TODO - Create only ByteBuf backed buffers for IO work, others would be better as proton types.
 
     public static final ProtonNettyByteBufferAllocator DEFAULT = new ProtonNettyByteBufferAllocator();
 
@@ -44,28 +43,28 @@ public class ProtonNettyByteBufferAllocator implements ProtonBufferAllocator {
     }
 
     @Override
-    public ProtonBuffer allocate() {
-        return new ProtonNettyByteBuffer(Unpooled.buffer());
+    public ProtonByteBuffer allocate() {
+        return new ProtonByteBuffer();
     }
 
     @Override
-    public ProtonBuffer allocate(int initialCapacity) {
-        return new ProtonNettyByteBuffer(Unpooled.buffer(initialCapacity));
+    public ProtonByteBuffer allocate(int initialCapacity) {
+        return new ProtonByteBuffer(initialCapacity);
     }
 
     @Override
-    public ProtonBuffer allocate(int initialCapacity, int maximumCapacity) {
-        return new ProtonNettyByteBuffer(Unpooled.buffer(initialCapacity, maximumCapacity));
+    public ProtonByteBuffer allocate(int initialCapacity, int maximumCapacity) {
+        return new ProtonByteBuffer(initialCapacity, maximumCapacity);
     }
 
     @Override
     public ProtonBuffer wrap(byte[] array) {
-        return new ProtonNettyByteBuffer(Unpooled.wrappedBuffer(array));
+        return new ProtonByteBuffer(array, array.length).slice();
     }
 
     @Override
     public ProtonBuffer wrap(byte[] array, int offset, int length) {
-        return new ProtonNettyByteBuffer(Unpooled.wrappedBuffer(array, offset, length));
+        return new ProtonByteBuffer(array, array.length).slice(offset, length);
     }
 
     @Override
