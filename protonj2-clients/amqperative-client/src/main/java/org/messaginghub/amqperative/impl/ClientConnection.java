@@ -317,6 +317,9 @@ public class ClientConnection implements Connection {
     }
 
     ClientConnection open() {
+        // TODO - This throws IllegalStateException which might be confusing.  The client could
+        //        throw ClientException with a failure cause if connect failed.  Or could return
+        //        and allow openFuture.get() to fail but that might also be confusing.
         checkClosed();
         executor.execute(() -> {
             if (engine.isShutdown()) {
