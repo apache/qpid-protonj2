@@ -106,6 +106,14 @@ public class NettyTestPeer extends ScriptWriter implements AutoCloseable {
         }
     }
 
+    public boolean isSecure() {
+        return server.isSecureServer();
+    }
+
+    public boolean hasSecureConnection() {
+        return server.hasSecureConnection();
+    }
+
     //----- Test Completion API
 
     public void waitForScriptToCompleteIgnoreErrors() {

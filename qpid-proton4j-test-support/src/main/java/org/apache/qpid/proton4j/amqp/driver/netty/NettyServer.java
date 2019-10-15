@@ -100,6 +100,10 @@ public abstract class NettyServer implements AutoCloseable {
         return options.isSecure();
     }
 
+    public boolean hasSecureConnection() {
+        return sslHandler != null;
+    }
+
     public boolean isWebSocketServer() {
         return options.isUseWebSockets();
     }
