@@ -28,6 +28,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
+import javax.net.ssl.SSLPeerUnverifiedException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -100,8 +101,32 @@ public abstract class NettyServer implements AutoCloseable {
         return options.isSecure();
     }
 
+    public boolean isAcceptingConnections() {
+        return serverChannel != null && serverChannel.isOpen();
+    }
+
     public boolean hasSecureConnection() {
         return sslHandler != null;
+    }
+
+    public boolean isPeerVerified() {
+        try {
+            if (hasSecureConnection()) {
+                return sslHandler.engine().getSession().getPeerPrincipal() != null;
+            } else {
+                return false;
+            }
+        } catch (SSLPeerUnverifiedException unverified) {
+            return false;
+        }
+    }
+
+    public SSLEngine getConnectionSSLEngine() {
+        if (hasSecureConnection()) {
+            return sslHandler.engine();
+        } else {
+            return null;
+        }
     }
 
     public boolean isWebSocketServer() {
@@ -192,6 +217,9 @@ public abstract class NettyServer implements AutoCloseable {
 
                 @Override
                 public void initChannel(Channel ch) throws Exception {
+                    // Don't accept any new connections.
+                    serverChannel.close();
+
                     if (isSecureServer()) {
                         SSLContext context = ServerSupport.createJdkSslContext(options);
                         SSLEngine engine = ServerSupport.createJdkSslEngine(null, context, options);

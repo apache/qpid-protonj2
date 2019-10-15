@@ -175,8 +175,8 @@ public abstract class ScriptWriter {
 
     //----- Remote operations that happen while running the test script
 
-    public void remoteHeader(AMQPHeader header) {
-        getDriver().addScriptedElement(new AMQPHeaderInjectAction(getDriver(), header));
+    public AMQPHeaderInjectAction remoteHeader(AMQPHeader header) {
+        return new AMQPHeaderInjectAction(getDriver(), header);
     }
 
     public OpenInjectAction remoteOpen() {

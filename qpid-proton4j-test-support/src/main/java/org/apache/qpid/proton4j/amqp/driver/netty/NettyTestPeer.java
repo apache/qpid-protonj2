@@ -23,6 +23,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
+import javax.net.ssl.SSLEngine;
+
 import org.apache.qpid.proton4j.amqp.DescribedType;
 import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
 import org.apache.qpid.proton4j.amqp.driver.ScriptWriter;
@@ -106,12 +108,24 @@ public class NettyTestPeer extends ScriptWriter implements AutoCloseable {
         }
     }
 
+    public boolean isAcceptingConnections() {
+        return server.isAcceptingConnections();
+    }
+
     public boolean isSecure() {
         return server.isSecureServer();
     }
 
     public boolean hasSecureConnection() {
         return server.hasSecureConnection();
+    }
+
+    public boolean isConnectionVerified() {
+        return server.isPeerVerified();
+    }
+
+    public SSLEngine getConnectionSSLEngine() {
+        return server.getConnectionSSLEngine();
     }
 
     //----- Test Completion API
