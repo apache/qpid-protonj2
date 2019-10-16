@@ -37,7 +37,10 @@ import org.apache.qpid.proton4j.engine.ConnectionState;
 import org.apache.qpid.proton4j.engine.Engine;
 import org.apache.qpid.proton4j.engine.EngineFactory;
 import org.apache.qpid.proton4j.engine.EngineState;
+import org.apache.qpid.proton4j.engine.HeaderFrame;
 import org.apache.qpid.proton4j.engine.Session;
+import org.apache.qpid.proton4j.engine.exceptions.EngineNotStartedException;
+import org.apache.qpid.proton4j.engine.exceptions.EngineShutdownException;
 import org.apache.qpid.proton4j.engine.exceptions.EngineStateException;
 import org.junit.Test;
 import org.mockito.Mockito;
@@ -55,9 +58,36 @@ public class ProtonEngineTest extends ProtonEngineTestSupport {
         // Engine cannot accept input bytes until started.
         assertFalse(engine.isWritable());
 
-        // TODO - We should probably make these throw to allow clients to detach IO errors
-        //        and have simpler implementations than checking engine failed after each call.
-        engine.pipeline().fireWrite(AMQPHeader.getAMQPHeader());
+        try {
+            engine.pipeline().fireWrite(AMQPHeader.getAMQPHeader());
+            fail("Should not be able to write until engine has been started");
+        } catch (EngineNotStartedException error) {
+            // Expected
+        }
+
+        // TODO - This situation isn't necessarily fatal, consider not failing engine in this case ?
+        assertTrue(engine.isFailed());
+
+        assertNotNull(failure);
+    }
+
+    @Test
+    public void testEnginePipelineReadFailsBeforeStart() {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result);
+
+        // Engine cannot accept input bytes until started.
+        assertFalse(engine.isWritable());
+
+        try {
+            engine.pipeline().fireRead(HeaderFrame.AMQP_HEADER_FRAME);
+            fail("Should not be able to read data until engine has been started");
+        } catch (EngineNotStartedException error) {
+            // Expected
+        }
+
+        // TODO - This situation isn't necessarily fatal, consider not failing engine in this case ?
+        assertTrue(engine.isFailed());
 
         assertNotNull(failure);
     }
@@ -237,7 +267,7 @@ public class ProtonEngineTest extends ProtonEngineTestSupport {
         try {
             engine.tick(5000);
             fail("Should not be able to tick an unopened connection");
-        } catch (IllegalStateException ise) {
+        } catch (IllegalStateException | EngineShutdownException error) {
         }
     }
 
@@ -295,7 +325,7 @@ public class ProtonEngineTest extends ProtonEngineTestSupport {
         try {
             engine.tickAuto(Mockito.mock(ScheduledExecutorService.class));
             fail("Should not be able to tick an unopened connection");
-        } catch (IllegalStateException ise) {
+        } catch (IllegalStateException | EngineShutdownException error) {
         }
     }
 

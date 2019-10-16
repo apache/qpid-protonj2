@@ -328,6 +328,7 @@ public class ProtonEnginePipeline implements EnginePipeline {
             head.fireWrite(header);
         } catch (Throwable error) {
             engine.engineFailed(error);
+            throw error;
         }
         return this;
     }
@@ -338,6 +339,7 @@ public class ProtonEnginePipeline implements EnginePipeline {
             head.fireWrite(performative, channel, payload, payloadToLarge);
         } catch (Throwable error) {
             engine.engineFailed(error);
+            throw error;
         }
         return this;
     }
@@ -348,6 +350,7 @@ public class ProtonEnginePipeline implements EnginePipeline {
             head.fireWrite(performative);
         } catch (Throwable error) {
             engine.engineFailed(error);
+            throw error;
         }
         return this;
     }
@@ -358,6 +361,7 @@ public class ProtonEnginePipeline implements EnginePipeline {
             head.fireWrite(buffer);
         } catch (Throwable error) {
             engine.engineFailed(error);
+            throw error;
         }
         return this;
     }
