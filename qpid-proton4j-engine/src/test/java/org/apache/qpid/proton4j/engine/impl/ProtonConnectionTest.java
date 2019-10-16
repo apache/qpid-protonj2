@@ -40,6 +40,7 @@ import org.apache.qpid.proton4j.engine.Connection;
 import org.apache.qpid.proton4j.engine.ConnectionState;
 import org.apache.qpid.proton4j.engine.Engine;
 import org.apache.qpid.proton4j.engine.EngineFactory;
+import org.apache.qpid.proton4j.engine.exceptions.EngineShutdownException;
 import org.apache.qpid.proton4j.engine.exceptions.EngineStateException;
 import org.hamcrest.Matcher;
 import org.junit.Test;
@@ -524,6 +525,55 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
         assertEquals(eventualChannelMax, connection.getChannelMax());
 
         connection.close();
+
+        peer.waitForScriptToComplete();
+
+        assertNull(failure);
+    }
+
+    @Test
+    public void testCloseConnectionAfterShutdownThrowsEngineStateExceptionOpenWrittenAndResponse() throws Exception {
+        testCloseConnectionAfterShutdownThrowsEngineStateException(true, true);
+    }
+
+    @Test
+    public void testCloseConnectionAfterShutdownThrowsEngineStateExceptionOpenWrittenButNoResponse() throws Exception {
+        testCloseConnectionAfterShutdownThrowsEngineStateException(true, false);
+    }
+
+    @Test
+    public void testCloseConnectionAfterShutdownThrowsEngineStateExceptionOpenNotWritten() throws Exception {
+        testCloseConnectionAfterShutdownThrowsEngineStateException(false, false);
+    }
+
+    private void testCloseConnectionAfterShutdownThrowsEngineStateException(boolean respondToHeader, boolean respondToOpen) throws Exception {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result);
+        ProtonTestPeer peer = new ProtonTestPeer(engine);
+        engine.outputConsumer(peer);
+
+        if (respondToHeader) {
+            peer.expectAMQPHeader().respondWithAMQPHeader();
+            if (respondToOpen) {
+                peer.expectOpen().respond();
+            } else {
+                peer.expectOpen();
+            }
+        } else {
+            peer.expectAMQPHeader();
+        }
+
+        Connection connection = engine.start();
+        connection.open();
+
+        // Shutdown before header response
+        engine.shutdown();
+
+        // Close should not allow anything to be written as the engine is shutdown
+        try {
+            connection.close();
+            fail("Should fail on close when Engine already shutdown");
+        } catch (EngineShutdownException ex) {}
 
         peer.waitForScriptToComplete();
 
