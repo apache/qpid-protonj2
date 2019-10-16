@@ -375,6 +375,7 @@ public class ClientConnection implements Connection {
     }
 
     void handleClientIOException(ClientIOException error) {
+        CLOSED_UPDATER.set(this, 1);
         FAILURE_CAUSE_UPDATER.compareAndSet(this, null, error);
         try {
             executor.execute(() -> {
