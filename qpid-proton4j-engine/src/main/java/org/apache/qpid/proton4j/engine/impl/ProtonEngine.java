@@ -141,6 +141,10 @@ public class ProtonEngine implements Engine {
             try {
                 pipeline.fireEngineStateChanged();
             } catch (Throwable ignored) {}
+
+            // Wrap the pipeline to ensure no more reads or writes
+            pipeline.addFirst(ProtonConstants.ENGINE_SHUTDOWN_WRITE_GATE, ProtonEngineShutdownHandler.INSTANCE);
+            pipeline.addLast(ProtonConstants.ENGINE_SHUTDOWN_READ_GATE, ProtonEngineShutdownHandler.INSTANCE);
         }
 
         return this;
@@ -227,6 +231,10 @@ public class ProtonEngine implements Engine {
             try {
                 pipeline.fireFailed((EngineFailedException) failure);
             } catch (Throwable ignored) {}
+
+            // Wrap the pipeline to ensure no more reads or writes
+            pipeline.addFirst(ProtonConstants.ENGINE_SHUTDOWN_WRITE_GATE, ProtonEngineShutdownHandler.INSTANCE);
+            pipeline.addLast(ProtonConstants.ENGINE_SHUTDOWN_READ_GATE, ProtonEngineShutdownHandler.INSTANCE);
 
             engineErrorHandler.handle(cause);
         } else {

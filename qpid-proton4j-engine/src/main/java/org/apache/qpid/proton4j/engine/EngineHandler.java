@@ -66,6 +66,20 @@ public interface EngineHandler {
         context.fireEngineStateChanged();
     }
 
+    /**
+     * Called when the engine has transitioned to a failed state and cannot process any additional
+     * input or output.  The handler can free and resources used for normal operations at this point
+     * as the engine is now considered shutdown.
+     *
+     * @param context
+     *      The context for this handler which can be used to forward the event to the next handler
+     * @param failure
+     *      The failure that triggered the engine to cease operations.
+     */
+    default void engineFailed(EngineHandlerContext context, EngineFailedException failure) {
+        context.fireFailed(failure);
+    }
+
     // Read events
 
     default void handleRead(EngineHandlerContext context, ProtonBuffer buffer) {
@@ -100,9 +114,5 @@ public interface EngineHandler {
 
     default void handleWrite(EngineHandlerContext context, ProtonBuffer buffer) {
         context.fireWrite(buffer);
-    }
-
-    default void engineFailed(EngineHandlerContext context, EngineFailedException failure) {
-        context.fireFailed(failure);
     }
 }

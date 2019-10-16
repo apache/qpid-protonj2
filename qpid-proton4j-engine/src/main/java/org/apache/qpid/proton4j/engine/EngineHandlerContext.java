@@ -27,15 +27,26 @@ import org.apache.qpid.proton4j.engine.exceptions.EngineFailedException;
  */
 public interface EngineHandlerContext {
 
+    /**
+     * @return the {@link EngineHandler} that is associated with the context.
+     */
     EngineHandler getHandler();
 
+    /**
+     * @return the {@link Engine} where this handler is registered.
+     */
     Engine getEngine();
 
+    /**
+     * @return the name that assigned to this {@link EngineHandler} when added to the {@link EnginePipeline}.
+     */
     String getName();
 
     void fireEngineStarting();
 
     void fireEngineStateChanged();
+
+    void fireFailed(EngineFailedException failure);
 
     void fireRead(ProtonBuffer buffer);
 
@@ -52,7 +63,5 @@ public interface EngineHandlerContext {
     void fireWrite(SaslPerformative performative);
 
     void fireWrite(ProtonBuffer buffer);
-
-    void fireFailed(EngineFailedException failure);
 
 }

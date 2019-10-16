@@ -36,6 +36,7 @@ import org.apache.qpid.proton4j.engine.HeaderFrame;
 import org.apache.qpid.proton4j.engine.ProtocolFrame;
 import org.apache.qpid.proton4j.engine.ProtocolFramePool;
 import org.apache.qpid.proton4j.engine.SaslFrame;
+import org.apache.qpid.proton4j.engine.exceptions.EngineFailedException;
 import org.apache.qpid.proton4j.engine.exceptions.ProtocolViolationException;
 import org.apache.qpid.proton4j.engine.exceptions.ProtonException;
 import org.apache.qpid.proton4j.engine.exceptions.ProtonIOException;
@@ -71,6 +72,12 @@ public class ProtonFrameDecodingHandler implements EngineHandler, SaslPerformati
     public void handlerAdded(EngineHandlerContext context) {
         engine = (ProtonEngine) context.getEngine();
         configuration = engine.configuration();
+    }
+
+    @Override
+    public void engineFailed(EngineHandlerContext context, EngineFailedException failure) {
+        transitionToErrorStage(failure);
+        context.fireFailed(failure);
     }
 
     @Override
