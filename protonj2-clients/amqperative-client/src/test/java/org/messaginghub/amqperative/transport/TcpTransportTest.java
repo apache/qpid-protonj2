@@ -423,7 +423,7 @@ public class TcpTransportTest extends AMQPerativeTestCase {
 
             assertTrue(transport.isConnected());
 
-            ProtonBuffer sendBuffer = transport.allocateSendBuffer(SEND_BYTE_COUNT);
+            ProtonBuffer sendBuffer = transport.getBufferAllocator().outputBuffer(SEND_BYTE_COUNT);
             for (int i = 0; i < SEND_BYTE_COUNT; ++i) {
                 sendBuffer.writeByte('A');
             }
@@ -605,7 +605,7 @@ public class TcpTransportTest extends AMQPerativeTestCase {
 
                 assertTrue(transport.isConnected());
 
-                ProtonBuffer sendBuffer = transport.allocateSendBuffer(10 * 1024 * 1024);
+                ProtonBuffer sendBuffer = transport.getBufferAllocator().outputBuffer(10 * 1024 * 1024);
                 sendBuffer.writeBytes(new byte[] {0, 1, 2, 3, 4});
 
                 transport.close();

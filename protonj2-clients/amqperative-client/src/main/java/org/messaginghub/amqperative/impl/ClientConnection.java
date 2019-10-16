@@ -289,6 +289,7 @@ public class ClientConnection implements Connection {
         try {
             executor = transport.connect(() -> {
 
+                engine.configuration().setBufferAllocator(transport.getBufferAllocator());
                 engine.outputHandler(toWrite -> handleEngineOutput(toWrite))
                       .errorHandler(error -> handleEngineErrors(error));
 

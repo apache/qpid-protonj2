@@ -22,6 +22,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
 
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import org.apache.qpid.proton4j.buffer.ProtonBufferAllocator;
 import org.messaginghub.amqperative.SslOptions;
 import org.messaginghub.amqperative.TransportOptions;
 
@@ -63,17 +64,12 @@ public interface Transport {
     void close() throws IOException;
 
     /**
-     * Request that the Transport provide an output buffer sized for the given
-     * value.
+     * Gets a buffer allocator that can produce {@link ProtonBuffer} instance that may be
+     * optimized for use with the underlying transport implementation.
      *
-     * @param size
-     *        the size necessary to hold the outgoing bytes.
-     *
-     * @return a new ByteBuf allocated for sends operations.
-     *
-     * @throws IOException if an error occurs while allocating the send buffer.
+     * @return a {@link ProtonBufferAllocator} that creates transport friendly buffers.
      */
-    ProtonBuffer allocateSendBuffer(int size) throws IOException;
+    ProtonBufferAllocator getBufferAllocator();
 
     /**
      * Writes a chunk of data over the Transport connection without performing an

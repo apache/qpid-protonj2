@@ -15,10 +15,11 @@ import org.apache.qpid.proton4j.amqp.transport.ErrorCondition;
 import org.apache.qpid.proton4j.amqp.transport.Role;
 import org.hamcrest.Matcher;
 import org.junit.Test;
+import org.messaginghub.amqperative.test.AMQPerativeTestCase;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class ReceiverTest {
+public class ReceiverTest extends AMQPerativeTestCase {
 
     private static final Logger LOG = LoggerFactory.getLogger(ReceiverTest.class);
 

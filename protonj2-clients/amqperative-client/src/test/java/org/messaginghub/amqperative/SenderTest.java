@@ -16,10 +16,11 @@ import org.apache.qpid.proton4j.amqp.transport.Role;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.junit.Test;
 import org.messaginghub.amqperative.impl.exceptions.ClientSendTimedOutException;
+import org.messaginghub.amqperative.test.AMQPerativeTestCase;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class SenderTest {
+public class SenderTest extends AMQPerativeTestCase {
 
     private static final Logger LOG = LoggerFactory.getLogger(SenderTest.class);
 

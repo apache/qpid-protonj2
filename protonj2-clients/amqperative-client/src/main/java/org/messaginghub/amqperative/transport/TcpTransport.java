@@ -25,7 +25,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import org.apache.qpid.proton4j.buffer.ProtonBufferAllocator;
 import org.apache.qpid.proton4j.buffer.ProtonNettyByteBuffer;
+import org.apache.qpid.proton4j.buffer.ProtonNettyByteBufferAllocator;
 import org.messaginghub.amqperative.SslOptions;
 import org.messaginghub.amqperative.TransportOptions;
 import org.messaginghub.amqperative.util.IOExceptionSupport;
@@ -243,15 +245,21 @@ public class TcpTransport implements Transport {
         }
     }
 
-    // TODO - With new proton we can configure an allocator so perhaps the transport should
-    //        provide a allocator that create wrapped Netty buffers from the channel from the
-    //        IO buffer methods.  So after connect, configure engine with transport allocator.
-
     @Override
-    public ProtonNettyByteBuffer allocateSendBuffer(int size) throws IOException {
-        checkConnected();
-        return new ProtonNettyByteBuffer(channel.alloc().ioBuffer(size, size));
-    }
+    public ProtonBufferAllocator getBufferAllocator() {
+        return new ProtonNettyByteBufferAllocator() {
+
+            @Override
+            public ProtonBuffer outputBuffer(int initialCapacity) {
+                return new ProtonNettyByteBuffer(channel.alloc().ioBuffer(initialCapacity));
+            }
+
+            @Override
+            public ProtonBuffer outputBuffer(int initialCapacity, int maximumCapacity) {
+                return new ProtonNettyByteBuffer(channel.alloc().ioBuffer(initialCapacity, initialCapacity));
+            }
+        };
+     }
 
     @Override
     public TcpTransport write(ProtonBuffer output) throws IOException {
@@ -338,9 +346,9 @@ public class TcpTransport implements Transport {
         if (output instanceof ProtonNettyByteBuffer) {
             nettyBuf = (ByteBuf) output.unwrap();
         } else {
-            ProtonNettyByteBuffer wrapped = allocateSendBuffer(output.getReadableBytes());
+            ProtonNettyByteBuffer wrapped = new ProtonNettyByteBuffer(channel.alloc().ioBuffer(output.getReadableBytes()));
             wrapped.writeBytes(output);
-            nettyBuf = (ByteBuf) wrapped.unwrap();
+            nettyBuf = wrapped.unwrap();
         }
 
         return nettyBuf;

@@ -30,13 +30,14 @@ import org.apache.qpid.proton4j.amqp.transport.ErrorCondition;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.messaginghub.amqperative.impl.ClientException;
+import org.messaginghub.amqperative.test.AMQPerativeTestCase;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
  * Test for the Connection class
  */
-public class ConnectionTest {
+public class ConnectionTest extends AMQPerativeTestCase {
 
     private static final Logger LOG = LoggerFactory.getLogger(ConnectionTest.class);
 
