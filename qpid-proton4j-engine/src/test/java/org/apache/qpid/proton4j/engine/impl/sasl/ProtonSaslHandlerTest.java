@@ -38,6 +38,7 @@ import org.apache.qpid.proton4j.engine.EngineState;
 import org.apache.qpid.proton4j.engine.Frame;
 import org.apache.qpid.proton4j.engine.HeaderFrame;
 import org.apache.qpid.proton4j.engine.SaslFrame;
+import org.apache.qpid.proton4j.engine.exceptions.ProtocolViolationException;
 import org.apache.qpid.proton4j.engine.impl.ProtonEngine;
 import org.apache.qpid.proton4j.engine.sasl.SaslOutcome;
 import org.apache.qpid.proton4j.engine.sasl.SaslServerContext;
@@ -85,7 +86,12 @@ public class ProtonSaslHandlerTest {
             }
         });
 
-        engine.pipeline().fireRead(new HeaderFrame(AMQPHeader.getAMQPHeader()));
+        try {
+            engine.pipeline().fireRead(new HeaderFrame(AMQPHeader.getAMQPHeader()));
+            fail("SASL handler should reject a non-SASL AMQP Header read.");
+        } catch (ProtocolViolationException pve) {
+            // Expected
+        }
 
         assertFalse("Should not receive a Header", headerRead.get());
 

@@ -16,25 +16,26 @@
  */
 package org.apache.qpid.proton4j.engine.exceptions;
 
+import javax.security.sasl.SaslException;
+
 /**
- * Root type for exceptions thrown from the engine due to state violations
+ * Thrown when the Engine has entered a failed state due to a failure of
+ * SASL Authentication.
  */
-public class EngineStateException extends ProtonException {
+public class EngineSaslAuthenticationException extends EngineFailedException {
 
-    private static final long serialVersionUID = 4191691747006604768L;
+    private static final long serialVersionUID = -4917637295215054305L;
 
-    public EngineStateException() {
-    }
-
-    public EngineStateException(String message, Throwable cause) {
+    public EngineSaslAuthenticationException(String message, SaslException cause) {
         super(message, cause);
     }
 
-    public EngineStateException(String message) {
-        super(message);
+    public EngineSaslAuthenticationException(SaslException cause) {
+        super(cause);
     }
 
-    public EngineStateException(Throwable cause) {
-        super(cause);
+    @Override
+    public SaslException getCause() {
+        return (SaslException) super.getCause();
     }
 }

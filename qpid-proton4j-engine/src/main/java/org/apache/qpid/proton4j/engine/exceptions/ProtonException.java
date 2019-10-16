@@ -16,9 +16,11 @@
  */
 package org.apache.qpid.proton4j.engine.exceptions;
 
-import java.io.IOException;
-
-public class ProtonException extends IOException {
+/**
+ * Base Proton Exception type that backs all the various exceptions that
+ * are thrown from within the Proton Engine.
+ */
+public class ProtonException extends RuntimeException {
 
     private static final long serialVersionUID = -8458098856099248658L;
 

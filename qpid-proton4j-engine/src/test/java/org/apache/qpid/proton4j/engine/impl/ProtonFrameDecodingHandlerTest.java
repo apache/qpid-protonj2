@@ -22,8 +22,8 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
-import java.io.IOException;
 import java.util.List;
 
 import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
@@ -34,7 +34,10 @@ import org.apache.qpid.proton4j.engine.Engine;
 import org.apache.qpid.proton4j.engine.EngineHandlerContext;
 import org.apache.qpid.proton4j.engine.HeaderFrame;
 import org.apache.qpid.proton4j.engine.ProtocolFrame;
+import org.apache.qpid.proton4j.engine.exceptions.ProtocolViolationException;
+import org.apache.qpid.proton4j.engine.util.FrameReadSinkTransportHandler;
 import org.apache.qpid.proton4j.engine.util.FrameRecordingTransportHandler;
+import org.apache.qpid.proton4j.engine.util.FrameWriteSinkTransportHandler;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
@@ -111,18 +114,24 @@ public class ProtonFrameDecodingHandlerTest {
 
     @Test
     public void testInvalidHeaderBytesTriggersError() {
-        ProtonFrameDecodingHandler handler = new ProtonFrameDecodingHandler();
+        ProtonFrameDecodingHandler handler = createFrameDecoder();
         EngineHandlerContext context = Mockito.mock(EngineHandlerContext.class);
 
-        handler.handleRead(context, ProtonByteBufferAllocator.DEFAULT.wrap(new byte[] { 'S' }));
-
-        Mockito.verify(context).fireFailed(Mockito.any(IOException.class));
-        Mockito.verifyNoMoreInteractions(context);
+        try {
+            handler.handleRead(context, ProtonByteBufferAllocator.DEFAULT.wrap(new byte[] { 'S' }));
+            fail("Handler should throw error on invalid input");
+        } catch (Throwable error) {
+            // Expected
+        }
 
         // Verify that the parser accepts no new input once in error state.
         Mockito.clearInvocations(context);
-        handler.handleRead(context, AMQPHeader.getSASLHeader().getBuffer());
-        Mockito.verify(context).fireFailed(Mockito.any(IOException.class));
+        try {
+            handler.handleRead(context, AMQPHeader.getSASLHeader().getBuffer());
+            fail("Handler should throw error on additional input");
+        } catch (Throwable error) {
+            // Expected
+        }
     }
 
     @Test
@@ -322,15 +331,15 @@ public class ProtonFrameDecodingHandlerTest {
         Mockito.verify(context).fireRead(Mockito.any(HeaderFrame.class));
         Mockito.verifyNoMoreInteractions(context);
 
-        handler.handleRead(context, ProtonByteBufferAllocator.DEFAULT.wrap(undersizedFrameHeader));
+        try {
+            handler.handleRead(context, ProtonByteBufferAllocator.DEFAULT.wrap(undersizedFrameHeader));
+            fail("Should indicate protocol has been violated.");
+        } catch (ProtocolViolationException pve) {
+            // Expected
+            assertThat(pve.getMessage(), containsString("frame size 7 smaller than minimum"));
+        }
 
-        ArgumentCaptor<Throwable> argument = ArgumentCaptor.forClass(Throwable.class);
-        Mockito.verify(context).fireFailed(argument.capture());
         Mockito.verifyNoMoreInteractions(context);
-
-        Throwable t = argument.getValue();
-        assertTrue("Unexpected exception type:" + t, t instanceof IOException);
-        assertThat(t.getMessage(), containsString("frame size 7 smaller than minimum"));
     }
 
     /*
@@ -350,15 +359,15 @@ public class ProtonFrameDecodingHandlerTest {
         Mockito.verify(context).fireRead(Mockito.any(HeaderFrame.class));
         Mockito.verifyNoMoreInteractions(context);
 
-        handler.handleRead(context, ProtonByteBufferAllocator.DEFAULT.wrap(underMinDoffFrameHeader));
+        try {
+            handler.handleRead(context, ProtonByteBufferAllocator.DEFAULT.wrap(underMinDoffFrameHeader));
+            fail("Should indicate protocol has been violated.");
+        } catch (ProtocolViolationException pve) {
+            // Expected
+            assertThat(pve.getMessage(), containsString("data offset 4 smaller than minimum"));
+        }
 
-        ArgumentCaptor<Throwable> argument = ArgumentCaptor.forClass(Throwable.class);
-        Mockito.verify(context).fireFailed(argument.capture());
         Mockito.verifyNoMoreInteractions(context);
-
-        Throwable t = argument.getValue();
-        assertTrue("Unexpected exception type:" + t, t instanceof IOException);
-        assertThat(t.getMessage(), containsString("data offset 4 smaller than minimum"));
     }
 
     /*
@@ -378,18 +387,18 @@ public class ProtonFrameDecodingHandlerTest {
         Mockito.verify(context).fireRead(Mockito.any(HeaderFrame.class));
         Mockito.verifyNoMoreInteractions(context);
 
-        handler.handleRead(context, ProtonByteBufferAllocator.DEFAULT.wrap(overFrameSizeDoffFrameHeader));
+        try {
+            handler.handleRead(context, ProtonByteBufferAllocator.DEFAULT.wrap(overFrameSizeDoffFrameHeader));
+            fail("Should indicate protocol has been violated.");
+        } catch (ProtocolViolationException pve) {
+            // Expected
+            assertThat(pve.getMessage(), containsString("data offset 12 larger than the frame size 8"));
+        }
 
-        ArgumentCaptor<Throwable> argument = ArgumentCaptor.forClass(Throwable.class);
-        Mockito.verify(context).fireFailed(argument.capture());
         Mockito.verifyNoMoreInteractions(context);
-
-        Throwable t = argument.getValue();
-        assertTrue("Unexpected exception type:" + t, t instanceof IOException);
-        assertThat(t.getMessage(), containsString("data offset 12 larger than the frame size 8"));
     }
 
-    private ProtonFrameDecodingHandler createFrameDecoder() throws Exception {
+    private ProtonFrameDecodingHandler createFrameDecoder() {
         ProtonEngineConfiguration configuration = Mockito.mock(ProtonEngineConfiguration.class);
         Mockito.when(configuration.getInboundMaxFrameSize()).thenReturn(Integer.valueOf(65535));
         ProtonEngine engine = Mockito.mock(ProtonEngine.class);
@@ -407,8 +416,10 @@ public class ProtonFrameDecodingHandlerTest {
     private Engine createEngine() {
         ProtonEngine transport = new ProtonEngine();
 
+        transport.pipeline().addLast("read-sink", new FrameReadSinkTransportHandler());
         transport.pipeline().addLast("test", testHandler);
         transport.pipeline().addLast("frames", new ProtonFrameDecodingHandler());
+        transport.pipeline().addLast("write-sink", new FrameWriteSinkTransportHandler());
 
         return transport;
     }

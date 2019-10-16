@@ -36,7 +36,9 @@ import org.apache.qpid.proton4j.engine.HeaderFrame;
 import org.apache.qpid.proton4j.engine.ProtocolFrame;
 import org.apache.qpid.proton4j.engine.ProtocolFramePool;
 import org.apache.qpid.proton4j.engine.SaslFrame;
+import org.apache.qpid.proton4j.engine.exceptions.ProtocolViolationException;
 import org.apache.qpid.proton4j.engine.exceptions.ProtonException;
+import org.apache.qpid.proton4j.engine.exceptions.ProtonIOException;
 
 /**
  * Handler used to parse incoming frame data input into the engine
@@ -81,9 +83,11 @@ public class ProtonFrameDecodingHandler implements EngineHandler, SaslPerformati
                 stage.parse(context, buffer);
             }
         } catch (IOException ex) {
-            transitionToErrorStage(ex).fireError(context);
+            transitionToErrorStage(new ProtonIOException(ex)).fireError(context);
+        } catch (ProtonException pex) {
+            transitionToErrorStage(pex).fireError(context);
         } catch (Throwable throwable) {
-            transitionToErrorStage(new IOException(throwable)).fireError(context);
+            transitionToErrorStage(new ProtonException(throwable)).fireError(context);
         }
     }
 
@@ -122,7 +126,7 @@ public class ProtonFrameDecodingHandler implements EngineHandler, SaslPerformati
         return stage = frameBodyParsingStage.reset(length);
     }
 
-    private ParsingErrorStage transitionToErrorStage(IOException error) {
+    private ParsingErrorStage transitionToErrorStage(ProtonException error) {
         if (!(stage instanceof ParsingErrorStage)) {
             LOG.trace("Frame decoder encounted error: ", error);
             stage = new ParsingErrorStage(error);
@@ -234,12 +238,12 @@ public class ProtonFrameDecodingHandler implements EngineHandler, SaslPerformati
 
         private void validateFrameSize() throws IOException {
             if (frameSize < 8) {
-               throw new ProtonException(String.format(
+               throw new ProtocolViolationException(String.format(
                     "specified frame size %d smaller than minimum frame header size 8", frameSize));
             }
 
             if (frameSize > configuration.getInboundMaxFrameSize()) {
-                throw new ProtonException(String.format(
+                throw new ProtocolViolationException(String.format(
                     "specified frame size %d larger than maximum frame size %d", frameSize, configuration.getInboundMaxFrameSize()));
             }
         }
@@ -337,18 +341,18 @@ public class ProtonFrameDecodingHandler implements EngineHandler, SaslPerformati
                 // Ensure we process transition from SASL to AMQP header state
                 handleRead(context, saslFrame);
             } else {
-                throw new ProtonException(String.format("unknown frame type: %d", type));
+                throw new ProtocolViolationException(String.format("unknown frame type: %d", type));
             }
         }
 
         private void validateDataOffset(int dataOffset, int frameSize) throws ProtonException {
             if (dataOffset < 8) {
-                throw new ProtonException(String.format(
+                throw new ProtocolViolationException(String.format(
                     "specified frame data offset %d smaller than minimum frame header size %d", dataOffset, 8));
             }
 
             if (dataOffset > frameSize) {
-                throw new ProtonException(String.format(
+                throw new ProtocolViolationException(String.format(
                     "specified frame data offset %d larger than the frame size %d", dataOffset, frameSize));
             }
         }
@@ -366,19 +370,19 @@ public class ProtonFrameDecodingHandler implements EngineHandler, SaslPerformati
      */
     private class ParsingErrorStage implements FrameParserStage {
 
-        private final IOException parsingError;
+        private final ProtonException parsingError;
 
-        public ParsingErrorStage(IOException parsingError) {
+        public ParsingErrorStage(ProtonException parsingError) {
             this.parsingError = parsingError;
         }
 
         public void fireError(EngineHandlerContext context) {
-            context.fireFailed(parsingError);
+            throw parsingError;
         }
 
         @Override
         public void parse(EngineHandlerContext context, ProtonBuffer input) throws IOException {
-            throw parsingError;
+            throw new IOException(parsingError);
         }
 
         @Override

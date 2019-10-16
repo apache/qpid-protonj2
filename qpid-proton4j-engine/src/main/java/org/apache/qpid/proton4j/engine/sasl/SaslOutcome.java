@@ -16,21 +16,55 @@
  */
 package org.apache.qpid.proton4j.engine.sasl;
 
+import org.apache.qpid.proton4j.amqp.security.SaslCode;
+
 /**
  * Represents the outcome of a SASL exchange
  */
 public enum SaslOutcome {
 
     /** authentication succeeded */
-    SASL_OK,
+    SASL_OK {
+
+        @Override
+        public SaslCode saslCode() {
+            return SaslCode.OK;
+        }
+    },
     /** failed due to bad credentials */
-    SASL_AUTH,
+    SASL_AUTH {
+
+        @Override
+        public SaslCode saslCode() {
+            return SaslCode.AUTH;
+        }
+    },
     /** failed due to a system error */
-    SASL_SYS,
+    SASL_SYS {
+
+        @Override
+        public SaslCode saslCode() {
+            return SaslCode.SYS;
+        }
+    },
     /** failed due to unrecoverable error */
-    SASL_PERM,
+    SASL_PERM {
+
+        @Override
+        public SaslCode saslCode() {
+            return SaslCode.SYS_PERM;
+        }
+    },
     /** failed due to transient error */
-    SASL_TEMP;
+    SASL_TEMP {
+
+        @Override
+        public SaslCode saslCode() {
+            return SaslCode.SYS_TEMP;
+        }
+    };
+
+    public abstract SaslCode saslCode();
 
     /**
      * Return a matching SASL Outcome from the given byte value.

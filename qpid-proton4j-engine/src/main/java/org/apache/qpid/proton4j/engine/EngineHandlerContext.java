@@ -20,6 +20,7 @@ import org.apache.qpid.proton4j.amqp.security.SaslPerformative;
 import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
 import org.apache.qpid.proton4j.amqp.transport.Performative;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import org.apache.qpid.proton4j.engine.exceptions.EngineFailedException;
 
 /**
  * Context provided to EngineHandler events to allow further event propagation
@@ -52,6 +53,6 @@ public interface EngineHandlerContext {
 
     void fireWrite(ProtonBuffer buffer);
 
-    void fireFailed(Throwable e);
+    void fireFailed(EngineFailedException failure);
 
 }

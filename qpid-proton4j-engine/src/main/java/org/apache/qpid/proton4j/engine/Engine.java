@@ -20,6 +20,9 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.function.Consumer;
 
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import org.apache.qpid.proton4j.engine.exceptions.EngineFailedException;
+import org.apache.qpid.proton4j.engine.exceptions.EngineShutdownException;
+import org.apache.qpid.proton4j.engine.exceptions.EngineStateException;
 import org.apache.qpid.proton4j.engine.exceptions.ProtonException;
 
 /**
@@ -72,8 +75,10 @@ public interface Engine extends Consumer<ProtonBuffer> {
      * Starts the engine and returns the {@link Connection} instance that is bound to this Engine.
      *
      * @return the Connection instance that is linked to this {@link Engine}
+     *
+     * @throws EngineStateException if the Engine state has already transition to shutdown or failed.
      */
-    Connection start();
+    Connection start() throws EngineStateException;
 
     /**
      * Orderly shutdown of the engine, any open connection and associated sessions and
@@ -84,16 +89,19 @@ public interface Engine extends Consumer<ProtonBuffer> {
     Engine shutdown();
 
     /**
-     * Provide data input for this Engine from some external source.
+     * Transition the {@link Engine} to a failed state if not already closed or closing.
      *
-     * @param input
-     *      The data to feed into to Engine.
+     * If called when the engine has not failed the engine will be shutdown and transition to
+     * a failed state and the method will return an appropriate {@link EngineFailedException}
+     * that wraps the given cause.  If called after the engine was shutdown the method returns
+     * an {@link EngineShutdownException} indicating that the engine was already shutdown.
      *
-     * @return this Engine
+     * @param cause
+     *      The exception that caused the engine to be forcibly transitioned to the failed state.
      *
-     * @throws IllegalStateException if the Engine state precludes accepting new input.
+     * @return an {@link EngineStateException} that can be thrown indicating the failure and engine state.
      */
-    Engine ingest(ProtonBuffer input);
+    EngineStateException engineFailed(Throwable cause);
 
     /**
      * Provide data input for this Engine from some external source.
@@ -101,10 +109,22 @@ public interface Engine extends Consumer<ProtonBuffer> {
      * @param input
      *      The data to feed into to Engine.
      *
-     * @throws IllegalStateException if the Engine state precludes accepting new input.
+     * @return this Engine
+     *
+     * @throws EngineStateException if the Engine state precludes accepting new input.
+     */
+    Engine ingest(ProtonBuffer input) throws EngineStateException;
+
+    /**
+     * Provide data input for this Engine from some external source.
+     *
+     * @param input
+     *      The data to feed into to Engine.
+     *
+     * @throws EngineStateException if the Engine state precludes accepting new input.
      */
     @Override
-    default void accept(ProtonBuffer input) {
+    default void accept(ProtonBuffer input) throws EngineStateException {
         ingest(input);
     }
 
@@ -134,10 +154,10 @@ public interface Engine extends Consumer<ProtonBuffer> {
      *
      * @return the absolute deadline in milliseconds to next call tick by/at, or 0 if there is none.
      *
-     * @throws IllegalStateException if the connection associated with the engine is not currently Open
-     *                               the Engine is shut down or the auto ticking feature is enabled.
+     * @throws IllegalStateException if the {@link Engine} is already performing auto tick handling.
+     * @throws EngineStateException if the Engine state precludes accepting new input.
      */
-    long tick(long currentTime);
+    long tick(long currentTime) throws IllegalStateException, EngineStateException;
 
     /**
      * Allows the engine to manage idle timeout processing by providing it the single threaded executor
@@ -147,10 +167,10 @@ public interface Engine extends Consumer<ProtonBuffer> {
      * @param executor
      *      The single threaded execution context where all engine work takes place.
      *
-     * @throws IllegalStateException if the connection associated with the engine is not currently Open
-     *                               or the Engine has already been shut down.
+     * @throws IllegalStateException if the {@link Engine} is already performing auto tick handling.
+     * @throws EngineStateException if the Engine state precludes accepting new input.
      */
-    void tickAuto(ScheduledExecutorService executor);
+    void tickAuto(ScheduledExecutorService executor) throws IllegalStateException, EngineStateException;
 
     /**
      * Gets the EnginePipeline for this Engine.

@@ -33,8 +33,8 @@ import org.apache.qpid.proton4j.engine.EngineHandler;
 import org.apache.qpid.proton4j.engine.EngineHandlerContext;
 import org.apache.qpid.proton4j.engine.HeaderFrame;
 import org.apache.qpid.proton4j.engine.ProtocolFrame;
+import org.apache.qpid.proton4j.engine.exceptions.EngineFailedException;
 import org.apache.qpid.proton4j.engine.exceptions.ProtocolViolationException;
-import org.apache.qpid.proton4j.engine.exceptions.ProtonException;
 
 /**
  * Transport Handler that forwards the incoming Performatives to the associated Connection
@@ -62,8 +62,6 @@ public class ProtonPerformativeHandler implements EngineHandler, HeaderHandler<E
 
     @Override
     public void handleRead(EngineHandlerContext context, ProtocolFrame frame) {
-        // TODO - If closed or failed we should reject incoming frames
-
         try {
             frame.invoke(this, context);
         } finally {
@@ -72,8 +70,12 @@ public class ProtonPerformativeHandler implements EngineHandler, HeaderHandler<E
     }
 
     @Override
-    public void engineFailed(EngineHandlerContext context, Throwable e) {
-        engine.engineFailed(e);
+    public void engineFailed(EngineHandlerContext context, EngineFailedException failure) {
+        // In case external source injects failure we grab it and propagate after the
+        // appropriate changes to our engine state.
+        if (!engine.isFailed()) {
+            engine.engineFailed(failure.getCause());
+        }
     }
 
     //----- Deal with the incoming AMQP performatives
@@ -99,13 +101,13 @@ public class ProtonPerformativeHandler implements EngineHandler, HeaderHandler<E
         // Respond with Raw AMQP Header and then fail the engine.
         context.fireWrite(AMQPHeader.getAMQPHeader());
 
-        engine.engineFailed(new ProtonException("Received SASL Header but no SASL support configured"));
+        throw new ProtocolViolationException("Received SASL Header but no SASL support configured");
     }
 
     @Override
     public void handleOpen(Open open, ProtonBuffer payload, int channel, EngineHandlerContext context) {
         if (channel != 0) {
-            engineFailed(context, new ProtocolViolationException("Open not sent on channel zero"));
+            throw new ProtocolViolationException("Open not sent on channel zero");
         }
 
         // TODO - This isn't storing the truth of what remote said, so configuration reports

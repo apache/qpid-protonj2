@@ -20,6 +20,7 @@ import org.apache.qpid.proton4j.amqp.security.SaslPerformative;
 import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
 import org.apache.qpid.proton4j.amqp.transport.Performative;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import org.apache.qpid.proton4j.engine.exceptions.EngineFailedException;
 
 /**
  * Listen for events generated from the Engine
@@ -101,7 +102,7 @@ public interface EngineHandler {
         context.fireWrite(buffer);
     }
 
-    default void engineFailed(EngineHandlerContext context, Throwable e) {
-        context.fireFailed(e);
+    default void engineFailed(EngineHandlerContext context, EngineFailedException failure) {
+        context.fireFailed(failure);
     }
 }

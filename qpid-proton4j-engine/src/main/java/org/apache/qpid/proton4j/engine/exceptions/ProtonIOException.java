@@ -17,24 +17,26 @@
 package org.apache.qpid.proton4j.engine.exceptions;
 
 /**
- * Root type for exceptions thrown from the engine due to state violations
+ * Thrown when an unchecked IO exception is encountered from a write event that
+ * invokes an outside write handler from the engine.
  */
-public class EngineStateException extends ProtonException {
+public class ProtonIOException extends ProtonException {
 
-    private static final long serialVersionUID = 4191691747006604768L;
+    private static final long serialVersionUID = -8458098856099248658L;
 
-    public EngineStateException() {
+    public ProtonIOException() {
+        super();
     }
 
-    public EngineStateException(String message, Throwable cause) {
+    public ProtonIOException(String message, Throwable cause) {
         super(message, cause);
     }
 
-    public EngineStateException(String message) {
+    public ProtonIOException(String message) {
         super(message);
     }
 
-    public EngineStateException(Throwable cause) {
+    public ProtonIOException(Throwable cause) {
         super(cause);
     }
 }

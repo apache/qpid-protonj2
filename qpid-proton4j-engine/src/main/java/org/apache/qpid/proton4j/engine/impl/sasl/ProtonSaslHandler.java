@@ -25,6 +25,7 @@ import org.apache.qpid.proton4j.engine.EngineHandlerContext;
 import org.apache.qpid.proton4j.engine.HeaderFrame;
 import org.apache.qpid.proton4j.engine.ProtocolFrame;
 import org.apache.qpid.proton4j.engine.SaslFrame;
+import org.apache.qpid.proton4j.engine.exceptions.ProtocolViolationException;
 import org.apache.qpid.proton4j.engine.impl.ProtonEngine;
 import org.apache.qpid.proton4j.engine.impl.ProtonEngineNoOpSaslDriver;
 
@@ -84,8 +85,7 @@ public final class ProtonSaslHandler implements EngineHandler {
     @Override
     public void handleRead(EngineHandlerContext context, SaslFrame frame) {
         if (isDone()) {
-            context.fireFailed(new IllegalStateException(
-                "Unexpected SASL Frame: SASL processing has already completed"));
+            throw new ProtocolViolationException("Unexpected SASL Frame: SASL processing has already completed");
         } else {
             frame.invoke(safeGetSaslContext().saslReadContext(), context);
         }
@@ -96,8 +96,7 @@ public final class ProtonSaslHandler implements EngineHandler {
         if (isDone()) {
             context.fireRead(frame);
         } else {
-            context.fireFailed(new IllegalStateException(
-                "Unexpected AMQP Frame: SASL processing not yet completed"));
+            throw new ProtocolViolationException("Unexpected AMQP Frame: SASL processing not yet completed");
         }
     }
 
@@ -122,16 +121,14 @@ public final class ProtonSaslHandler implements EngineHandler {
         if (isDone()) {
             context.fireWrite(performative, channel, payload, payloadToLarge);
         } else {
-            context.fireFailed(new IllegalStateException(
-                "Unexpected AMQP Performative: SASL processing not yet completed"));
+            throw new ProtocolViolationException("Unexpected AMQP Performative: SASL processing not yet completed");
         }
     }
 
     @Override
     public void handleWrite(EngineHandlerContext context, SaslPerformative performative) {
         if (isDone()) {
-            context.fireFailed(new IllegalStateException(
-                "Unexpected SASL Performative: SASL processing has yet completed"));
+            throw new ProtocolViolationException("Unexpected SASL Performative: SASL processing has yet completed");
         } else {
             // Delegate to the SASL Context to allow state tracking to be maintained.
             performative.invoke(safeGetSaslContext().saslWriteContext(), context);

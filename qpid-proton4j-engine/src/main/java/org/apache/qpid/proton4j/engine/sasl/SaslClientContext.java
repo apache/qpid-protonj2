@@ -22,6 +22,7 @@ import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.engine.Connection;
 import org.apache.qpid.proton4j.engine.Engine;
+import org.apache.qpid.proton4j.engine.exceptions.EngineStateException;
 
 /**
  * SASL Client operating context used by an {@link Engine} that has been
@@ -57,8 +58,10 @@ public interface SaslClientContext extends SaslContext {
      * of the normal open process.
      *
      * @return this client context.
+     *
+     * @throws EngineStateException if the {@link Engine} has been shut down or a failure occurs processing this header.
      */
-    SaslClientContext sendSASLHeader();
+    SaslClientContext sendSASLHeader() throws EngineStateException;
 
     /**
      * Sends a response to the SASL server indicating the chosen mechanism for this
@@ -72,8 +75,10 @@ public interface SaslClientContext extends SaslContext {
      *      The initial response data sent as defined by the chosen mechanism or null if none required.
      *
      * @return this client context.
+     *
+     * @throws EngineStateException if the {@link Engine} has been shut down or a failure occurs processing this mechanism.
      */
-    SaslClientContext sendChosenMechanism(Symbol mechanism, String host, ProtonBuffer initialResponse);
+    SaslClientContext sendChosenMechanism(Symbol mechanism, String host, ProtonBuffer initialResponse) throws EngineStateException;
 
     /**
      * Sends a response to a server side challenge that comprises the challenge / response
@@ -83,8 +88,10 @@ public interface SaslClientContext extends SaslContext {
      *      The response bytes to be sent to the server for this cycle.
      *
      * @return this client context.
+     *
+     * @throws EngineStateException if the {@link Engine} has been shut down or a failure occurs processing this response.
      */
-    SaslClientContext sendResponse(ProtonBuffer response);
+    SaslClientContext sendResponse(ProtonBuffer response) throws EngineStateException;
 
     /**
      * Allows the client implementation to fail the SASL negotiation process due to some

@@ -21,6 +21,7 @@ import javax.security.sasl.SaslException;
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.engine.Engine;
+import org.apache.qpid.proton4j.engine.exceptions.EngineStateException;
 
 /**
  * SASL Server operating context used by an {@link Engine} that has been
@@ -58,8 +59,10 @@ public interface SaslServerContext extends SaslContext {
      *      The mechanisms that this server supports.
      *
      * @return this server context.
+     *
+     * @throws EngineStateException if the engine has already shutdown or failed while processing the mechanisms.
      */
-    SaslServerContext sendMechanisms(Symbol[] mechanisms);
+    SaslServerContext sendMechanisms(Symbol[] mechanisms) throws EngineStateException;
 
     /**
      * Sends the SASL challenge defined by the SASL mechanism that is in use during
@@ -70,8 +73,10 @@ public interface SaslServerContext extends SaslContext {
      *      The buffer containing the server challenge.
      *
      * @return this server context.
+     *
+     * @throws EngineStateException if the engine has already shutdown or failed while sending the challenge.
      */
-    SaslServerContext sendChallenge(ProtonBuffer challenge);
+    SaslServerContext sendChallenge(ProtonBuffer challenge) throws EngineStateException;
 
     /**
      * Sends a response to a server side challenge that comprises the challenge / response
@@ -83,8 +88,10 @@ public interface SaslServerContext extends SaslContext {
      *      The additional bytes to be sent from the server along with the outcome.
      *
      * @return this server context.
+     *
+     * @throws EngineStateException if the engine has already shutdown or failed while processing the outcome.
      */
-    SaslServerContext sendOutcome(SaslOutcome outcome, ProtonBuffer additional);
+    SaslServerContext sendOutcome(SaslOutcome outcome, ProtonBuffer additional) throws EngineStateException;
 
     /**
      * Allows the server implementation to fail the SASL negotiation process due to some

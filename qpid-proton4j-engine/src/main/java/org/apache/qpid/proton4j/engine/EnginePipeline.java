@@ -20,6 +20,7 @@ import org.apache.qpid.proton4j.amqp.security.SaslPerformative;
 import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
 import org.apache.qpid.proton4j.amqp.transport.Performative;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import org.apache.qpid.proton4j.engine.exceptions.EngineFailedException;
 
 /**
  * Pipeline of handlers for Engine work.
@@ -72,6 +73,6 @@ public interface EnginePipeline {
 
     EnginePipeline fireWrite(ProtonBuffer buffer);
 
-    EnginePipeline fireFailed(Throwable e);
+    EnginePipeline fireFailed(EngineFailedException failure);
 
 }

@@ -19,7 +19,7 @@ package org.apache.qpid.proton4j.engine.exceptions;
 /**
  * Error thrown when there has been a violation of the AMQP specification
  */
-public class ProtocolViolationException extends RuntimeException {
+public class ProtocolViolationException extends ProtonException {
 
     private static final long serialVersionUID = 1L;
 

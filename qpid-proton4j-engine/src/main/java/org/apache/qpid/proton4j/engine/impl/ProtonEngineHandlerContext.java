@@ -26,6 +26,7 @@ import org.apache.qpid.proton4j.engine.EngineHandlerContext;
 import org.apache.qpid.proton4j.engine.HeaderFrame;
 import org.apache.qpid.proton4j.engine.ProtocolFrame;
 import org.apache.qpid.proton4j.engine.SaslFrame;
+import org.apache.qpid.proton4j.engine.exceptions.EngineFailedException;
 
 /**
  * Context for a registered EngineHandler
@@ -91,8 +92,8 @@ public class ProtonEngineHandlerContext implements EngineHandlerContext {
     }
 
     @Override
-    public void fireFailed(Throwable e) {
-        previous.getHandler().engineFailed(previous, e);
+    public void fireFailed(EngineFailedException failure) {
+        next.getHandler().engineFailed(previous, failure);
     }
 
     @Override
