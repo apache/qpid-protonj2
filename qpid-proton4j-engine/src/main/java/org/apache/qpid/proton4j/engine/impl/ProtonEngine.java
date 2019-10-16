@@ -33,10 +33,11 @@ import org.apache.qpid.proton4j.engine.EngineSaslDriver;
 import org.apache.qpid.proton4j.engine.EngineState;
 import org.apache.qpid.proton4j.engine.EventHandler;
 import org.apache.qpid.proton4j.engine.exceptions.EngineFailedException;
-import org.apache.qpid.proton4j.engine.exceptions.EngineIdleTimeoutException;
 import org.apache.qpid.proton4j.engine.exceptions.EngineNotWritableException;
 import org.apache.qpid.proton4j.engine.exceptions.EngineShutdownException;
+import org.apache.qpid.proton4j.engine.exceptions.EngineStartedException;
 import org.apache.qpid.proton4j.engine.exceptions.EngineStateException;
+import org.apache.qpid.proton4j.engine.exceptions.IdleTimeoutException;
 import org.apache.qpid.proton4j.engine.exceptions.ProtonExceptionSupport;
 
 /**
@@ -107,9 +108,7 @@ public class ProtonEngine implements Engine {
 
     @Override
     public ProtonConnection start() throws EngineStateException {
-        if (isShutdown()) {
-            // TODO - Check shutdown or failed and throw a meaningful exception.
-        }
+        checkShutdownOrFailed();
 
         if (state == EngineState.IDLE) {
             state = EngineState.STARTING;
@@ -149,9 +148,9 @@ public class ProtonEngine implements Engine {
 
     @Override
     public long tick(long currentTime) throws IllegalStateException, EngineStateException {
-        // TODO - check shutdown or failed
+        checkShutdownOrFailed();
 
-        if (isShutdown() || connection.getState() != ConnectionState.ACTIVE) {
+        if (connection.getState() != ConnectionState.ACTIVE) {
             throw new IllegalStateException("Cannot tick on a Connection that is not opened or an engine that has been shut down.");
         }
 
@@ -164,7 +163,7 @@ public class ProtonEngine implements Engine {
 
     @Override
     public void tickAuto(ScheduledExecutorService executor) throws IllegalStateException, EngineStateException {
-        // TODO - check shutdown or failed
+        checkShutdownOrFailed();
 
         Objects.requireNonNull(executor);
 
@@ -189,10 +188,7 @@ public class ProtonEngine implements Engine {
 
     @Override
     public ProtonEngine ingest(ProtonBuffer input) throws EngineStateException {
-        // TODO check shutdown or failed.
-        if (isShutdown()) {
-            throw new EngineShutdownException("The engine has already shut down.");
-        }
+        checkShutdownOrFailed();
 
         if (!isWritable()) {
             throw new EngineNotWritableException("Engine is currently not accepting new input");
@@ -209,6 +205,39 @@ public class ProtonEngine implements Engine {
         }
 
         return this;
+    }
+
+    @Override
+    public EngineStateException engineFailed(Throwable cause) {
+        final EngineStateException failure;
+
+        if (state.ordinal() < EngineState.SHUTTING_DOWN.ordinal()) {
+            state = EngineState.FAILED;
+            failureCause = cause;
+            writable = false;
+
+            if (nextIdleTimeoutCheck != null) {
+                LOG.trace("Cancelling scheduled Idle Timeout Check");
+                nextIdleTimeoutCheck.cancel(false);
+                nextIdleTimeoutCheck = null;
+            }
+
+            failure = ProtonExceptionSupport.createFailedException(cause);
+
+            try {
+                pipeline.fireFailed((EngineFailedException) failure);
+            } catch (Throwable ignored) {}
+
+            engineErrorHandler.handle(cause);
+        } else {
+            if (isFailed()) {
+                failure = ProtonExceptionSupport.createFailedException(cause);
+            } else {
+                failure = new EngineShutdownException("Engine has transitioned to shutdown state");
+            }
+        }
+
+        return failure;
     }
 
     //----- Engine configuration
@@ -258,14 +287,26 @@ public class ProtonEngine implements Engine {
      * @throws EngineStateException if the engine state doesn't allow for changes
      */
     public void registerSaslDriver(EngineSaslDriver saslDriver) throws EngineStateException {
+        checkShutdownOrFailed();
+
         if (state.ordinal() > EngineState.STARTING.ordinal()) {
-            throw new EngineStateException("Cannot alter SASL driver after engine has been started.");
+            throw new EngineStartedException("Cannot alter SASL driver after engine has been started.");
         }
 
         this.saslDriver = saslDriver;
     }
 
     //----- Internal proton engine implementation
+
+    void checkShutdownOrFailed() {
+        if (isShutdown()) {
+            if (isFailed()) {
+                throw ProtonExceptionSupport.createFailedException(failureCause);
+            } else {
+                throw new EngineShutdownException("Engine has already been shut down");
+            }
+        }
+    }
 
     void dispatchWriteToEventHandler(ProtonBuffer buffer) {
         if (outputHandler != null) {
@@ -276,41 +317,8 @@ public class ProtonEngine implements Engine {
                 throw engineFailed(error);
             }
         } else {
-            throw engineFailed(new EngineStateException("No output handler configured"));
+            throw engineFailed(new IllegalStateException("No output handler configured"));
         }
-    }
-
-    @Override
-    public EngineStateException engineFailed(Throwable cause) {
-        final EngineStateException failure;
-
-        if (state.ordinal() < EngineState.SHUTTING_DOWN.ordinal()) {
-            state = EngineState.FAILED;
-            failureCause = cause;
-            writable = false;
-
-            if (nextIdleTimeoutCheck != null) {
-                LOG.trace("Cancelling scheduled Idle Timeout Check");
-                nextIdleTimeoutCheck.cancel(false);
-                nextIdleTimeoutCheck = null;
-            }
-
-            failure = ProtonExceptionSupport.createFailedException(cause);
-
-            try {
-                pipeline.fireFailed((EngineFailedException) failure);
-            } catch (Throwable ignored) {}
-
-            engineErrorHandler.handle(cause);
-        } else {
-            if (isFailed()) {
-                failure = ProtonExceptionSupport.createFailedException(cause);
-            } else {
-                failure = new EngineShutdownException("Engine has transitioned to shutdown state");
-            }
-        }
-
-        return failure;
     }
 
     private long performTick(long currentTime) {
@@ -330,7 +338,7 @@ public class ProtonEngine implements Engine {
                         Symbol.getSymbol("amqp:resource-limit-exceeded"), "local-idle-timeout expired");
                     connection.setCondition(condition);
                     connection.close();
-                    engineFailed(new EngineIdleTimeoutException("Remote idle timeout detected"));
+                    engineFailed(new IdleTimeoutException("Remote idle timeout detected"));
                     return 0;
                 }
             }

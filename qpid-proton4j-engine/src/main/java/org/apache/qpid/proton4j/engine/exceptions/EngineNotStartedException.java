@@ -20,7 +20,7 @@ package org.apache.qpid.proton4j.engine.exceptions;
  * Thrown when a read or write operation is attempted on the engine before
  * it has been properly started.
  */
-public class EngineNotStartedException extends EngineStateException {
+public final class EngineNotStartedException extends EngineStateException {
 
     private static final long serialVersionUID = -4545732230266096598L;
 

@@ -19,7 +19,7 @@ package org.apache.qpid.proton4j.engine.exceptions;
 /**
  * Exception indicating that the engine is not currently accepting input of data
  */
-public class EngineNotWritableException extends EngineStateException {
+public final class EngineNotWritableException extends EngineStateException {
 
     private static final long serialVersionUID = 4395349183049727897L;
 

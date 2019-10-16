@@ -20,22 +20,22 @@ package org.apache.qpid.proton4j.engine.exceptions;
  * Error thrown when the Engine idle checking detects a timeout condition and
  * shuts down the engine and places it in an error state.
  */
-public class EngineIdleTimeoutException extends EngineStateException {
+public class IdleTimeoutException extends ProtonException {
 
     private static final long serialVersionUID = 6527918786644498627L;
 
-    public EngineIdleTimeoutException() {
+    public IdleTimeoutException() {
     }
 
-    public EngineIdleTimeoutException(String message, Throwable cause) {
+    public IdleTimeoutException(String message, Throwable cause) {
         super(message, cause);
     }
 
-    public EngineIdleTimeoutException(String message) {
+    public IdleTimeoutException(String message) {
         super(message);
     }
 
-    public EngineIdleTimeoutException(Throwable cause) {
+    public IdleTimeoutException(Throwable cause) {
         super(cause);
     }
 }

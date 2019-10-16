@@ -16,39 +16,7 @@
  */
 package org.apache.qpid.proton4j.engine.exceptions;
 
-import javax.security.sasl.SaslException;
-
 public class ProtonExceptionSupport {
-
-    /**
-     * Checks the given cause to determine if it's already an ProtonException type and
-     * if not creates a new ProtonException to wrap it.
-     *
-     * @param cause
-     *        The initiating exception that should be cast or wrapped.
-     *
-     * @return an ProtonException instance.
-     */
-    public static ProtonException createOrPassthrough(Throwable cause) {
-        if (cause instanceof ProtonException) {
-            return (ProtonException) cause;
-        }
-
-        if (cause.getCause() instanceof ProtonException) {
-            return (ProtonException) cause.getCause();
-        }
-
-        String message = cause.getMessage();
-        if (message == null || message.length() == 0) {
-            message = cause.toString();
-        }
-
-        if (cause instanceof SaslException) {
-            return new EngineSaslAuthenticationException(message, (SaslException) cause);
-        } else {
-            return new ProtonException(message, cause);
-        }
-    }
 
     /**
      * Checks the given cause to determine if it's already an ProtonException type and
@@ -64,8 +32,10 @@ public class ProtonExceptionSupport {
     }
 
     /**
-     * Checks the given cause to determine if it's already an EngineFailedException type and
-     * if not creates a new EngineFailedException to wrap it.
+     * Creates a new instance of an EngineFailedException that either wraps the given cause
+     * if it is not an instance of an {@link EngineFailedException} or creates a new copy
+     * of the given {@link EngineFailedException} in order to produce a meaningful stack trace
+     * for the caller of which of their calls failed due to the engine state being failed.
      *
      * @param message
      *        A descriptive message to be applied to the returned exception.
@@ -76,11 +46,11 @@ public class ProtonExceptionSupport {
      */
     public static EngineFailedException createFailedException(String message, Throwable cause) {
         if (cause instanceof EngineFailedException) {
-            return (EngineFailedException) cause;
+            return ((EngineFailedException) cause).duplicate();
         }
 
         if (cause.getCause() instanceof EngineFailedException) {
-            return (EngineFailedException) cause.getCause();
+            return ((EngineFailedException) cause.getCause()).duplicate();
         }
 
         if (message == null || message.isEmpty()) {
@@ -90,10 +60,6 @@ public class ProtonExceptionSupport {
             }
         }
 
-        if (cause instanceof SaslException) {
-            return new EngineSaslAuthenticationException(message, (SaslException) cause);
-        } else {
-            return new EngineFailedException(message, cause);
-        }
+        return new EngineFailedException(message, cause);
     }
 }

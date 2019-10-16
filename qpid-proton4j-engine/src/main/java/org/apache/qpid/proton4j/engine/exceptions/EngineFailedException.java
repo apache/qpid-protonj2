@@ -21,7 +21,7 @@ package org.apache.qpid.proton4j.engine.exceptions;
  * resulted in a write of data or other state modification after the engine has
  * entered the the failed state.
  */
-public class EngineFailedException extends EngineStateException {
+public final class EngineFailedException extends EngineStateException {
 
     private static final long serialVersionUID = 5947522999263302647L;
 
@@ -31,5 +31,15 @@ public class EngineFailedException extends EngineStateException {
 
     public EngineFailedException(Throwable cause) {
         super(cause);
+    }
+
+    /**
+     * Allows for duplication of {@link EngineFailedException} exceptions which
+     * preserve the message and original cause.
+     *
+     * @return new {@link EngineFailedException} which preserves details from the original.
+     */
+    EngineFailedException duplicate() {
+        return new EngineFailedException(getMessage(), getCause());
     }
 }

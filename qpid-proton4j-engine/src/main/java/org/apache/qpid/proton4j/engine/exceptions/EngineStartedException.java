@@ -16,26 +16,16 @@
  */
 package org.apache.qpid.proton4j.engine.exceptions;
 
-import javax.security.sasl.SaslException;
-
 /**
- * Thrown when the Engine has entered a failed state due to a failure of
- * SASL Authentication.
+ * Thrown when an API method has been called which cannot be allowed to proceed
+ * due to the engine having already been started and doesn't allow modification to
+ * the resource in question after that point.
  */
-public class EngineSaslAuthenticationException extends EngineFailedException {
+public class EngineStartedException extends EngineStateException {
 
-    private static final long serialVersionUID = -4917637295215054305L;
+    private static final long serialVersionUID = -2619256904685368538L;
 
-    public EngineSaslAuthenticationException(String message, SaslException cause) {
-        super(message, cause);
-    }
-
-    public EngineSaslAuthenticationException(SaslException cause) {
-        super(cause);
-    }
-
-    @Override
-    public SaslException getCause() {
-        return (SaslException) super.getCause();
+    public EngineStartedException(String message) {
+        super(message);
     }
 }
