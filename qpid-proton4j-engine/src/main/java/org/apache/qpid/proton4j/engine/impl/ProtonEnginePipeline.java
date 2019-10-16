@@ -31,7 +31,7 @@ import org.apache.qpid.proton4j.engine.exceptions.EngineFailedException;
 import org.apache.qpid.proton4j.engine.exceptions.ProtonException;
 
 /**
- * Pipeline of TransportHandlers used to process IO
+ * Pipeline of {@link EngineHandler} instances used to process IO
  */
 public class ProtonEnginePipeline implements EnginePipeline {
 
