@@ -21,6 +21,7 @@ import java.util.concurrent.ScheduledExecutorService;
 
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.transport.ErrorCondition;
+import org.apache.qpid.proton4j.engine.exceptions.EngineStateException;
 
 /**
  * AMQP Connection state container
@@ -30,18 +31,24 @@ import org.apache.qpid.proton4j.amqp.transport.ErrorCondition;
 public interface Connection {
 
     /**
-     * Open the end point.
+     * Open the end point locally, sending the Open performative immediately if possible or holding
+     * it until SASL negotiations or the AMQP header exchange has completed.
      *
      * @return this connection.
+     *
+     * @throws EngineStateException if an error occurs opening the Connection or the Engine is shutdown.
      */
-    Connection open();
+    Connection open() throws EngineStateException;
 
     /**
-     * Close the end point
+     * Close the end point locally and send the Close performative immediately if possible or holds it
+     * until the Connection / Engine state allows it.
      *
      * @return this connection.
+     *
+     * @throws EngineStateException if an error occurs closing the Connection or the Engine is shutdown.
      */
-    Connection close();
+    Connection close() throws EngineStateException;
 
     /**
      * Convenience method which is the same as calling {@link Engine#tick(long)}.
@@ -51,9 +58,12 @@ public interface Connection {
      *
      * @return this {@link Connection} instance.
      *
+     * @throws IllegalStateException if the {@link Engine} is already performing auto tick handling.
+     * @throws EngineStateException if the Engine state precludes accepting new input.
+
      * @see Engine#tick(long)
      */
-    Connection tick(long current);
+    Connection tick(long current) throws IllegalStateException, EngineStateException;
 
     /**
      * Convenience method which is the same as calling {@link Engine#tickAuto(ScheduledExecutorService)}.
@@ -62,6 +72,9 @@ public interface Connection {
      *      The single threaded execution context where all engine work takes place.
      *
      * @return this {@link Connection} instance.
+     *
+     * @throws IllegalStateException if the {@link Engine} is already performing auto tick handling.
+     * @throws EngineStateException if the Engine state precludes accepting new input.
      *
      * @see Engine#tickAuto(ScheduledExecutorService)
      */
@@ -103,8 +116,10 @@ public interface Connection {
      * Creates a new Session linked to this Connection
      *
      * @return a newly created {@link Session} linked to this {@link Connection}.
+     *
+     * @throws IllegalStateException if the {@link Connection} has already been closed.
      */
-    Session session();
+    Session session() throws IllegalStateException;
 
     /**
      * @return the Container ID assigned to this Connection

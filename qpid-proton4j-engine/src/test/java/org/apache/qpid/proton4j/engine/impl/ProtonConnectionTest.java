@@ -579,4 +579,51 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
 
         assertNull(failure);
     }
+
+    @Test
+    public void testCloseWhileWaitingForHeaderResponseDoesNotWrite() throws Exception {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result);
+        ProtonTestPeer peer = new ProtonTestPeer(engine);
+        engine.outputConsumer(peer);
+
+        peer.expectAMQPHeader();
+
+        Connection connection = engine.start();
+        connection.open();  // Trigger write of AMQP Header, we don't respond here.
+        connection.close();
+
+        peer.waitForScriptToComplete();
+
+        engine.shutdown();
+
+        assertNull(failure);
+    }
+
+    @Test
+    public void testCannotCreateSessionFromClosedConnection() throws Exception {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result);
+        ProtonTestPeer peer = new ProtonTestPeer(engine);
+        engine.outputConsumer(peer);
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond();
+        peer.expectClose().respond();
+
+        Connection connection = engine.start();
+        connection.open();
+        connection.close();
+
+        try {
+            connection.session();
+            fail("Should not create new Session from closed Connection");
+        } catch (IllegalStateException error) {
+            // Expected
+        }
+
+        peer.waitForScriptToComplete();
+
+        assertNull(failure);
+    }
 }

@@ -48,6 +48,7 @@ import org.apache.qpid.proton4j.engine.Receiver;
 import org.apache.qpid.proton4j.engine.Sender;
 import org.apache.qpid.proton4j.engine.Session;
 import org.apache.qpid.proton4j.engine.SessionState;
+import org.apache.qpid.proton4j.engine.exceptions.EngineStateException;
 import org.apache.qpid.proton4j.engine.exceptions.ProtocolViolationException;
 
 /**
@@ -74,6 +75,7 @@ public class ProtonConnection implements Connection, AMQPHeader.HeaderHandler<Pr
     private ErrorCondition remoteError;
 
     private boolean headerSent;
+    private boolean headerReceived;
     private boolean localOpenSent;
     private boolean localCloseSent;
 
@@ -137,8 +139,9 @@ public class ProtonConnection implements Connection, AMQPHeader.HeaderHandler<Pr
     }
 
     @Override
-    public ProtonConnection open() {
+    public ProtonConnection open() throws EngineStateException {
         if (getState() == ConnectionState.IDLE) {
+            engine.checkShutdownOrFailed();
             localState = ConnectionState.ACTIVE;
             processStateChangeAndRespond();
         }
@@ -147,8 +150,9 @@ public class ProtonConnection implements Connection, AMQPHeader.HeaderHandler<Pr
     }
 
     @Override
-    public ProtonConnection close() {
+    public ProtonConnection close() throws EngineStateException {
         if (getState() == ConnectionState.ACTIVE) {
+            engine.checkShutdownOrFailed();
             localState = ConnectionState.CLOSED;
             processStateChangeAndRespond();
         }
@@ -356,7 +360,7 @@ public class ProtonConnection implements Connection, AMQPHeader.HeaderHandler<Pr
     }
 
     @Override
-    public ProtonSession session() {
+    public ProtonSession session() throws IllegalStateException {
         checkConnectionClosed("Cannot create a Session from a Connection that is already closed");
 
         int localChannel = findFreeLocalChannel();
@@ -370,6 +374,7 @@ public class ProtonConnection implements Connection, AMQPHeader.HeaderHandler<Pr
 
     @Override
     public void handleAMQPHeader(AMQPHeader header, ProtonEngine context) {
+        headerReceived = true;
         processStateChangeAndRespond();
     }
 
@@ -574,7 +579,7 @@ public class ProtonConnection implements Connection, AMQPHeader.HeaderHandler<Pr
 
             // Once an incoming header arrives we can emit our open if locally opened and also send close if
             // that is what our state is already.
-            if (state != ConnectionState.IDLE) {
+            if (state != ConnectionState.IDLE && headerReceived) {
                 if (!localOpenSent) {
                     localOpenSent = true;
                     engine.pipeline().fireWrite(localOpen, 0, null, null);
