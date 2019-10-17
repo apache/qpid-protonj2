@@ -161,7 +161,7 @@ public class ProtonSenderState implements ProtonLinkState<ProtonOutgoingDelivery
         if (currentDelivery.isEmpty()) {
             currentDelivery.set(sessionWindow.getAndIncrementNextDeliveryId());
 
-            delivery.setDeliveryId(currentDelivery.byteValue());
+            delivery.setDeliveryId(currentDelivery.longValue());
         }
 
         // TODO - If not settled we should track within the link the list of unsettled deliveries
