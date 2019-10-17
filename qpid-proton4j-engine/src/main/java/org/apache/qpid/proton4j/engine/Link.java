@@ -166,7 +166,7 @@ public interface Link<T extends Link<T>> {
      *
      * @return this Link.
      */
-    Link<T> setOfferedCapabilities(Symbol[] offeredCapabilities);
+    Link<T> setOfferedCapabilities(Symbol... offeredCapabilities);
 
     /**
      * Gets the local link offered capabilities.
@@ -188,7 +188,7 @@ public interface Link<T extends Link<T>> {
      *
      * @return this Link.
      */
-    Link<T> setDesiredCapabilities(Symbol[] desiredCapabilities);
+    Link<T> setDesiredCapabilities(Symbol... desiredCapabilities);
 
     /**
      * Gets the local link desired capabilities.

@@ -220,7 +220,7 @@ public class ProtonSession implements Session {
     }
 
     @Override
-    public ProtonSession setOfferedCapabilities(Symbol[] capabilities) {
+    public ProtonSession setOfferedCapabilities(Symbol... capabilities) {
         checkNotOpened("Cannot set Offered Capabilities on already opened Session");
 
         if (capabilities != null) {
@@ -242,7 +242,7 @@ public class ProtonSession implements Session {
     }
 
     @Override
-    public ProtonSession setDesiredCapabilities(Symbol[] capabilities) {
+    public ProtonSession setDesiredCapabilities(Symbol... capabilities) {
         checkNotOpened("Cannot set Desired Capabilities on already opened Session");
 
         if (capabilities != null) {

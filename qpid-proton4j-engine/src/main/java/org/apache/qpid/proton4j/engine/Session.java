@@ -157,7 +157,7 @@ public interface Session {
      *
      * @throws IllegalStateException if the {@link Session} has already been opened.
      */
-    Session setOfferedCapabilities(Symbol[] offeredCapabilities) throws IllegalStateException;
+    Session setOfferedCapabilities(Symbol... offeredCapabilities) throws IllegalStateException;
 
     /**
      * Gets the local session offered capabilities.
@@ -181,7 +181,7 @@ public interface Session {
      *
      * @throws IllegalStateException if the {@link Session} has already been opened.
      */
-    Session setDesiredCapabilities(Symbol[] desiredCapabilities) throws IllegalStateException;
+    Session setDesiredCapabilities(Symbol... desiredCapabilities) throws IllegalStateException;
 
     /**
      * Gets the local session desired capabilities.

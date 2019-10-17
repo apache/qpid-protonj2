@@ -241,7 +241,7 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
     }
 
     @Override
-    public ProtonLink<T> setOfferedCapabilities(Symbol[] capabilities) {
+    public ProtonLink<T> setOfferedCapabilities(Symbol... capabilities) {
         checkNotOpened("Cannot set Offered Capabilities on already opened Link");
 
         if (capabilities != null) {
@@ -263,7 +263,7 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
     }
 
     @Override
-    public ProtonLink<T> setDesiredCapabilities(Symbol[] capabilities) {
+    public ProtonLink<T> setDesiredCapabilities(Symbol... capabilities) {
         checkNotOpened("Cannot set Desired Capabilities on already opened Link");
 
         if (capabilities != null) {
