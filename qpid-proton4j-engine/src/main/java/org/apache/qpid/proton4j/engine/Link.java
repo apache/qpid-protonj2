@@ -24,6 +24,7 @@ import org.apache.qpid.proton4j.amqp.messaging.Source;
 import org.apache.qpid.proton4j.amqp.messaging.Target;
 import org.apache.qpid.proton4j.amqp.transport.ErrorCondition;
 import org.apache.qpid.proton4j.amqp.transport.Role;
+import org.apache.qpid.proton4j.engine.exceptions.EngineStateException;
 import org.apache.qpid.proton4j.engine.impl.ProtonSession;
 
 /**
@@ -37,20 +38,27 @@ public interface Link<T extends Link<T>> {
      * Open this end of the link
      *
      * @return this Link.
+     *
+     * @throws IllegalStateException if the underlying {@link Session} has already been closed.
+     * @throws EngineStateException if an error occurs opening the Link or the Engine is shutdown.
      */
-    Link<T> open();
+    Link<T> open() throws IllegalStateException, EngineStateException;
 
     /**
      * Close this end of the link
      *
      * @return this Link.
+     *
+     * @throws EngineStateException if an error occurs closing the {@link Link} or the Engine is shutdown.
      */
-    Link<T> close();
+    Link<T> close() throws EngineStateException;
 
     /**
      * Detach this end of the link.
      *
      * @return this Link.
+     *
+     * @throws EngineStateException if an error occurs detaching the {@link Link} or the Engine is shutdown.
      */
     Link<T> detach();
 
@@ -110,8 +118,10 @@ public interface Link<T extends Link<T>> {
      *      The {@link Source} that will be set on the local end of this link.
      *
      * @return this Link.
+     *
+     * @throws IllegalStateException if the {@link Link} has already been opened.
      */
-    Link<T> setSource(Source source);
+    Link<T> setSource(Source source) throws IllegalStateException;
 
     /**
      * @return the {@link Source} for the local end of this link.
@@ -125,8 +135,10 @@ public interface Link<T extends Link<T>> {
      *      The {@link Target} that will be set on the local end of this link.
      *
      * @return this Link.
+     *
+     * @throws IllegalStateException if the {@link Link} has already been opened.
      */
-    Link<T> setTarget(Target target);
+    Link<T> setTarget(Target target) throws IllegalStateException;
 
     /**
      * @return the {@link Target} for the local end of this link.
@@ -152,8 +164,10 @@ public interface Link<T extends Link<T>> {
      *          the properties map to send, or null for none.
      *
      * @return this Link.
+     *
+     * @throws IllegalStateException if the {@link Link} has already been opened.
      */
-    Link<T> setProperties(Map<Symbol, Object> properties);
+    Link<T> setProperties(Map<Symbol, Object> properties) throws IllegalStateException;
 
     /**
      * Sets the local link offered capabilities, to be conveyed to the peer via the Attach frame
@@ -165,8 +179,10 @@ public interface Link<T extends Link<T>> {
      *          the offered capabilities array to send, or null for none.
      *
      * @return this Link.
+     *
+     * @throws IllegalStateException if the {@link Link} has already been opened.
      */
-    Link<T> setOfferedCapabilities(Symbol... offeredCapabilities);
+    Link<T> setOfferedCapabilities(Symbol... offeredCapabilities) throws IllegalStateException;
 
     /**
      * Gets the local link offered capabilities.
@@ -187,8 +203,10 @@ public interface Link<T extends Link<T>> {
      *          the desired capabilities array to send, or null for none.
      *
      * @return this Link.
+     *
+     * @throws IllegalStateException if the {@link Link} has already been opened.
      */
-    Link<T> setDesiredCapabilities(Symbol... desiredCapabilities);
+    Link<T> setDesiredCapabilities(Symbol... desiredCapabilities) throws IllegalStateException;
 
     /**
      * Gets the local link desired capabilities.
@@ -209,8 +227,10 @@ public interface Link<T extends Link<T>> {
      *            the local max message size value, or null to clear. 0 also means no limit.
      *
      * @return this Link.
+     *
+     * @throws IllegalStateException if the {@link Link} has already been opened.
      */
-    Link<T> setMaxMessageSize(UnsignedLong maxMessageSize);
+    Link<T> setMaxMessageSize(UnsignedLong maxMessageSize) throws IllegalStateException;
 
     /**
      * Gets the local link max message size.

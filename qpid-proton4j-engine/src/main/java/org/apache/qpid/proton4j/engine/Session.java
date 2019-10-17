@@ -36,7 +36,7 @@ public interface Session {
      * @throws IllegalStateException if the underlying {@link Connection} has already been closed.
      * @throws EngineStateException if an error occurs opening the Session or the Engine is shutdown.
      */
-    Session open();
+    Session open() throws IllegalStateException, EngineStateException;
 
     /**
      * Close the end point
@@ -45,7 +45,7 @@ public interface Session {
      *
      * @throws EngineStateException if an error occurs closing the Session or the Engine is shutdown.
      */
-    Session close();
+    Session close() throws EngineStateException;
 
     /**
      * @return the {@link Context} instance that is associated with this {@link Connection}
@@ -112,8 +112,10 @@ public interface Session {
      *      maximum number of incoming bytes this session will allow
      *
      * @return this Session
+     *
+     * @throws IllegalStateException if the {@link Session} has already been closed.
      */
-    Session setIncomingCapacity(int incomingCapacity);
+    Session setIncomingCapacity(int incomingCapacity) throws IllegalStateException;
 
     /**
      * @return the current incoming capacity of this session.
