@@ -478,9 +478,8 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
 
         connection.open();
         Session session = connection.session();
-        session.open();
-
         Receiver receiver = session.receiver("test");
+        session.open();
 
         try {
             receiver.open();

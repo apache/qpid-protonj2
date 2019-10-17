@@ -404,7 +404,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         peer.expectAMQPHeader().respondWithAMQPHeader();
         peer.expectOpen().respond().withContainerId("driver");
         peer.expectBegin().respond();
-        peer.remoteEnd().queue(); // TODO - Last opened is used here, but a thenEnd() on the expect begin would be more clear
+        peer.remoteEnd().queue();
 
         Connection connection = engine.start();
 
@@ -413,9 +413,8 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
 
         connection.open();
         Session session = connection.session();
-        session.open();
-
         Sender sender = session.sender("test");
+        session.open();
 
         try {
             sender.open();

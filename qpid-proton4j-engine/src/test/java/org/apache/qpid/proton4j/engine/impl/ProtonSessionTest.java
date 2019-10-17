@@ -36,12 +36,16 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedInteger;
 import org.apache.qpid.proton4j.amqp.driver.ProtonTestPeer;
+import org.apache.qpid.proton4j.common.logging.ProtonLogger;
+import org.apache.qpid.proton4j.common.logging.ProtonLoggerFactory;
 import org.apache.qpid.proton4j.engine.Connection;
+import org.apache.qpid.proton4j.engine.ConnectionState;
 import org.apache.qpid.proton4j.engine.Engine;
 import org.apache.qpid.proton4j.engine.EngineFactory;
 import org.apache.qpid.proton4j.engine.IncomingDelivery;
 import org.apache.qpid.proton4j.engine.Receiver;
 import org.apache.qpid.proton4j.engine.Session;
+import org.apache.qpid.proton4j.engine.exceptions.EngineFailedException;
 import org.apache.qpid.proton4j.engine.exceptions.EngineStateException;
 import org.hamcrest.Matcher;
 import org.junit.Ignore;
@@ -51,6 +55,8 @@ import org.junit.Test;
  * Test behaviors of the ProtonSession implementation.
  */
 public class ProtonSessionTest extends ProtonEngineTestSupport {
+
+    private static final ProtonLogger LOG = ProtonLoggerFactory.getLogger(ProtonEngineTestSupport.class);
 
     @Test
     public void testSessionOpenAndCloseAreIdempotent() throws Exception {
@@ -80,6 +86,56 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
 
         // Should not emit another end frame
         session.close();
+
+        peer.waitForScriptToComplete();
+
+        assertNull(failure);
+    }
+
+    @Test
+    public void testSenderCreateOnClosedSessionThrowsISE() throws Exception {
+        testLinkCreateOnClosedSessionThrowsISE(false);
+    }
+
+    @Test
+    public void testReceiverCreateOnClosedSessionThrowsISE() throws Exception {
+        testLinkCreateOnClosedSessionThrowsISE(true);
+    }
+
+    private void testLinkCreateOnClosedSessionThrowsISE(boolean receiver) throws Exception {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result);
+        ProtonTestPeer peer = new ProtonTestPeer(engine);
+        engine.outputConsumer(peer);
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond().withContainerId("driver");
+        peer.expectBegin().respond();
+        peer.expectEnd().respond();
+
+        Connection connection = engine.start();
+
+        // Default engine should start and return a connection immediately
+        assertNotNull(connection);
+
+        connection.open();
+        Session session = connection.session().open().close();
+
+        if (receiver) {
+            try {
+                session.receiver("test");
+                fail("Should not allow receiver create on closed session");
+            } catch (IllegalStateException ise) {
+                // Expected
+            }
+        } else {
+            try {
+                session.sender("test");
+                fail("Should not allow sender create on closed session");
+            } catch (IllegalStateException ise) {
+                // Expected
+            }
+        }
 
         peer.waitForScriptToComplete();
 
@@ -395,6 +451,48 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
         peer.waitForScriptToComplete();
 
         assertNull(failure);
+    }
+
+    @Test
+    public void testSessionOpenFailsWhenWriteOfBeginFailsWithException() throws EngineStateException {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result);
+        ProtonTestPeer peer = new ProtonTestPeer(engine);
+        engine.outputConsumer(peer);
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond().withContainerId("driver");
+        peer.rejectDataAfterLastScriptedElement();
+
+        Connection connection = engine.start().open();
+
+        // Default engine should start and return a connection immediately
+        assertNotNull(connection);
+        assertTrue(connection.getState() == ConnectionState.ACTIVE);
+        assertTrue(connection.getRemoteState() == ConnectionState.ACTIVE);
+
+        Session session = connection.session();
+
+        try {
+            session.open();
+            fail("Should not be able to open a session when its Connection was already closed");
+        } catch (EngineFailedException failure) {
+            LOG.trace("Got expected engine failure from session Begin write.", failure);
+        }
+
+        try {
+            session.open();
+            fail("Second open should now fail because engine is failed");
+        } catch (EngineFailedException failure) {
+            LOG.trace("Got expected engine failure from session Begin write.", failure);
+        }
+
+        peer.waitForScriptToComplete();
+
+        assertNotNull(failure);
+        assertTrue(engine.isFailed());
+        assertTrue(engine.isShutdown());
+        assertNotNull(engine.failureCause());
     }
 
     @Test

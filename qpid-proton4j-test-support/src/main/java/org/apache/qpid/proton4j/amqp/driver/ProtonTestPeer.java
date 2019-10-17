@@ -16,6 +16,8 @@
  */
 package org.apache.qpid.proton4j.amqp.driver;
 
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
@@ -35,10 +37,11 @@ public class ProtonTestPeer extends ScriptWriter implements Consumer<ProtonBuffe
     private final AMQPTestDriver driver;
     private final Consumer<ProtonBuffer> inputConsumer;
     private final AtomicBoolean closed = new AtomicBoolean();
+    private final AtomicBoolean rejecting = new AtomicBoolean();
 
     public ProtonTestPeer(Consumer<ProtonBuffer> frameSink) {
         this.driver = new AMQPTestDriver((frame) -> {
-            processIncomingData(frame);
+            processDriverOutput(frame);
         }, null);
 
         this.inputConsumer = frameSink;
@@ -69,7 +72,11 @@ public class ProtonTestPeer extends ScriptWriter implements Consumer<ProtonBuffe
 
     @Override
     public void accept(ProtonBuffer frame) {
-        driver.accept(frame);
+        if (rejecting.get()) {
+            throw new UncheckedIOException("Driver is not accepting any new input", new IOException());
+        } else {
+            driver.accept(frame);
+        }
     }
 
     //----- Test Completion API
@@ -90,13 +97,45 @@ public class ProtonTestPeer extends ScriptWriter implements Consumer<ProtonBuffe
         driver.waitForScriptToComplete(timeout, units);
     }
 
+    //----- Test scripting specific to this in VM test driver
+
+    /**
+     * After all scripted elements of the test are complete this will place the driver into
+     * a mode where any new data is rejected with an exception.
+     */
+    public void rejectDataAfterLastScriptedElement() {
+        driver.addScriptedElement(new ScriptedAction() {
+
+            @Override
+            public ScriptedAction queue() {
+                return this;
+            }
+
+            @Override
+            public ScriptedAction perform(AMQPTestDriver driver) {
+                rejecting.set(true);
+                return this;
+            }
+
+            @Override
+            public ScriptedAction now() {
+                return this;
+            }
+
+            @Override
+            public ScriptedAction later(int waitTime) {
+                return this;
+            }
+        });
+    }
+
     //----- Internal implementation which can be overridden
 
     protected void processCloseRequest() {
         // nothing to do in this peer implementation.
     }
 
-    protected void processIncomingData(ProtonBuffer frame) {
+    protected void processDriverOutput(ProtonBuffer frame) {
         inputConsumer.accept(frame);
     }
 

@@ -136,7 +136,7 @@ public interface Connection {
      *
      * @throws IllegalStateException if the Connection has already been opened.
      */
-    Connection setContainerId(String containerId);
+    Connection setContainerId(String containerId) throws IllegalStateException;
 
     /**
      * Set the name of the host (either fully qualified or relative) to which
@@ -153,7 +153,7 @@ public interface Connection {
      *
      * @throws IllegalStateException if the Connection has already been opened.
      */
-    Connection setHostname(String hostname);
+    Connection setHostname(String hostname) throws IllegalStateException;
 
     /**
      * @return returns the host name assigned to this Connection.
@@ -172,7 +172,7 @@ public interface Connection {
      *
      * @throws IllegalStateException if the Connection has already been opened.
      */
-    Connection setChannelMax(int channelMax);
+    Connection setChannelMax(int channelMax) throws IllegalStateException;
 
     /**
      * @return the currently configured channel max for this {@link Connection}
@@ -193,7 +193,7 @@ public interface Connection {
      *
      * @throws IllegalStateException if the Connection has already been opened.
      */
-    Connection setMaxFrameSize(long maxFrameSize);
+    Connection setMaxFrameSize(long maxFrameSize) throws IllegalStateException;
 
     /**
      * @return the currently configured max frame size this connection will accept.
@@ -210,7 +210,7 @@ public interface Connection {
      *
      * @throws IllegalStateException if the Connection has already been opened.
      */
-    Connection setIdleTimeout(long idleTimeout);
+    Connection setIdleTimeout(long idleTimeout) throws IllegalStateException;
 
     /**
      * @return the currently configured idle timeout for this {@link Connection}
@@ -228,7 +228,7 @@ public interface Connection {
      *
      * @throws IllegalStateException if the Connection has already been opened.
      */
-    Connection setOfferedCapabilities(Symbol[] capabilities);
+    Connection setOfferedCapabilities(Symbol[] capabilities) throws IllegalStateException;
 
     /**
      * @return the configured capabilities that are offered to the remote when the Connection is opened.
@@ -246,7 +246,7 @@ public interface Connection {
      *
      * @throws IllegalStateException if the Connection has already been opened.
      */
-    Connection setDesiredCapabilities(Symbol[] capabilities);
+    Connection setDesiredCapabilities(Symbol[] capabilities) throws IllegalStateException;
 
     /**
      * @return the configured desired capabilities that are sent to the remote when the Connection is opened.
@@ -263,7 +263,7 @@ public interface Connection {
      *
      * @throws IllegalStateException if the Connection has already been opened.
      */
-    Connection setProperties(Map<Symbol, Object> properties);
+    Connection setProperties(Map<Symbol, Object> properties) throws IllegalStateException;
 
     /**
      * @return the configured properties sent to the remote when this Connection is opened.

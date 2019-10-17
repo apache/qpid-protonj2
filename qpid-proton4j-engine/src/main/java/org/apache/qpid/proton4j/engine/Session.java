@@ -20,6 +20,7 @@ import java.util.Map;
 
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.transport.ErrorCondition;
+import org.apache.qpid.proton4j.engine.exceptions.EngineStateException;
 import org.apache.qpid.proton4j.engine.impl.ProtonConnection;
 
 /**
@@ -31,6 +32,9 @@ public interface Session {
      * Open the end point.
      *
      * @return this Session
+     *
+     * @throws IllegalStateException if the underlying {@link Connection} has already been closed.
+     * @throws EngineStateException if an error occurs opening the Session or the Engine is shutdown.
      */
     Session open();
 
@@ -38,6 +42,8 @@ public interface Session {
      * Close the end point
      *
      * @return this Session
+     *
+     * @throws EngineStateException if an error occurs closing the Session or the Engine is shutdown.
      */
     Session close();
 
@@ -80,8 +86,10 @@ public interface Session {
      *      The name to assign to the created {@link Sender}
      *
      * @return a newly created {@link Sender} instance.
+     *
+     * @throws IllegalStateException if the {@link Session} has already been closed.
      */
-    Sender sender(String name);
+    Sender sender(String name) throws IllegalStateException;
 
     /**
      * Create a new {@link Receiver} link using the provided name
@@ -90,8 +98,10 @@ public interface Session {
      *      The name to assign to the created {@link Receiver}
      *
      * @return a newly created {@link Receiver} instance.
+     *
+     * @throws IllegalStateException if the {@link Session} has already been closed.
      */
-    Receiver receiver(String name);
+    Receiver receiver(String name) throws IllegalStateException;
 
     //----- Configure the local end of the Session
 
@@ -120,8 +130,10 @@ public interface Session {
      *          the properties map to send, or null for none.
      *
      * @return this Session
+     *
+     * @throws IllegalStateException if the {@link Session} has already been opened.
      */
-    Session setProperties(Map<Symbol, Object> properties);
+    Session setProperties(Map<Symbol, Object> properties) throws IllegalStateException;
 
     /**
      * Gets the local session properties.
@@ -142,8 +154,10 @@ public interface Session {
      *          the offered capabilities array to send, or null for none.
      *
      * @return this Session
+     *
+     * @throws IllegalStateException if the {@link Session} has already been opened.
      */
-    Session setOfferedCapabilities(Symbol[] offeredCapabilities);
+    Session setOfferedCapabilities(Symbol[] offeredCapabilities) throws IllegalStateException;
 
     /**
      * Gets the local session offered capabilities.
@@ -164,8 +178,10 @@ public interface Session {
      *          the desired capabilities array to send, or null for none.
      *
      * @return this Session
+     *
+     * @throws IllegalStateException if the {@link Session} has already been opened.
      */
-    Session setDesiredCapabilities(Symbol[] desiredCapabilities);
+    Session setDesiredCapabilities(Symbol[] desiredCapabilities) throws IllegalStateException;
 
     /**
      * Gets the local session desired capabilities.

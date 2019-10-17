@@ -45,6 +45,7 @@ import org.apache.qpid.proton4j.engine.Receiver;
 import org.apache.qpid.proton4j.engine.Sender;
 import org.apache.qpid.proton4j.engine.Session;
 import org.apache.qpid.proton4j.engine.SessionState;
+import org.apache.qpid.proton4j.engine.exceptions.EngineStateException;
 import org.apache.qpid.proton4j.engine.exceptions.ProtocolViolationException;
 import org.apache.qpid.proton4j.engine.util.SplayMap;
 
@@ -153,8 +154,10 @@ public class ProtonSession implements Session {
     }
 
     @Override
-    public ProtonSession open() {
+    public ProtonSession open() throws IllegalStateException, EngineStateException {
+        getEngine().checkShutdownOrFailed();
         checkConnectionClosed();
+
         if (getState() == SessionState.IDLE) {
             localState = SessionState.ACTIVE;
             incomingWindow.configureOutbound(localBegin);
@@ -293,6 +296,8 @@ public class ProtonSession implements Session {
 
     @Override
     public ProtonSender sender(String name) {
+        checkSessionClosed("Cannot create new Sender from closed Session");
+
         if (senderByNameMap.containsKey(name)) {
             // TODO Something sane with link stealing
             throw new IllegalArgumentException("Sender with the given name already exists.");
@@ -306,6 +311,8 @@ public class ProtonSession implements Session {
 
     @Override
     public ProtonReceiver receiver(String name) {
+        checkSessionClosed("Cannot create new Receiver from closed Session");
+
         if (receiverByNameMap.containsKey(name)) {
             // TODO Something sane with link stealing
             throw new IllegalArgumentException("Receiver with the given name already exists.");
@@ -497,6 +504,12 @@ public class ProtonSession implements Session {
     private void checkConnectionClosed() {
         if (connection.getState() == ConnectionState.CLOSED || connection.getRemoteState() == ConnectionState.CLOSED) {
              throw new IllegalStateException("Cannot open a Session from a Connection that is already closed");
+        }
+    }
+
+    private void checkSessionClosed(String errorMessage) {
+        if (isLocallyClosed() || isRemotelyClosed()) {
+             throw new IllegalStateException(errorMessage);
         }
     }
 
