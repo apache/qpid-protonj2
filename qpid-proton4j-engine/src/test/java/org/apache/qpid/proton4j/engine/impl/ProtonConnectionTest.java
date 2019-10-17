@@ -27,6 +27,7 @@ import static org.junit.Assert.fail;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -601,7 +602,16 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
     }
 
     @Test
-    public void testCannotCreateSessionFromClosedConnection() throws Exception {
+    public void testCannotCreateSessionFromLocallyClosedConnection() throws Exception {
+        testCannotCreateSessionFromClosedConnection(true);
+    }
+
+    @Test
+    public void testCannotCreateSessionFromRemotelyClosedConnection() throws Exception {
+        testCannotCreateSessionFromClosedConnection(false);
+    }
+
+    private void testCannotCreateSessionFromClosedConnection(boolean localClose) throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
         ProtonTestPeer peer = new ProtonTestPeer(engine);
@@ -609,15 +619,557 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
 
         peer.expectAMQPHeader().respondWithAMQPHeader();
         peer.expectOpen().respond();
-        peer.expectClose().respond();
+        if (localClose) {
+            peer.expectClose().respond();
+        } else {
+            peer.remoteClose().queue();
+        }
 
         Connection connection = engine.start();
         connection.open();
-        connection.close();
+        if (localClose) {
+            connection.close();
+        }
 
         try {
             connection.session();
             fail("Should not create new Session from closed Connection");
+        } catch (IllegalStateException error) {
+            // Expected
+        }
+
+        peer.waitForScriptToComplete();
+
+        assertNull(failure);
+    }
+
+    @Test
+    public void testCannotSetContainerIdOnOpenConnection() throws Exception {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result);
+        ProtonTestPeer peer = new ProtonTestPeer(engine);
+        engine.outputConsumer(peer);
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond();
+
+        Connection connection = engine.start();
+        connection.open();
+
+        try {
+            connection.setContainerId("test");
+            fail("Should not be able to set container ID from open Connection");
+        } catch (IllegalStateException error) {
+            // Expected
+        }
+
+        peer.waitForScriptToComplete();
+
+        assertNull(failure);
+    }
+
+    @Test
+    public void testCannotSetContainerIdOnLocallyClosedConnection() throws Exception {
+        testCannotSetContainerIdOnClosedConnection(true);
+    }
+
+    @Test
+    public void testCannotSetContainerIdOnRemotelyClosedConnection() throws Exception {
+        testCannotSetContainerIdOnClosedConnection(false);
+    }
+
+    private void testCannotSetContainerIdOnClosedConnection(boolean localClose) throws Exception {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result);
+        ProtonTestPeer peer = new ProtonTestPeer(engine);
+        engine.outputConsumer(peer);
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond();
+        if (localClose) {
+            peer.expectClose().respond();
+        } else {
+            peer.remoteClose().queue();
+        }
+
+        Connection connection = engine.start();
+        connection.open();
+        if (localClose) {
+            connection.close();
+        }
+
+        try {
+            connection.setContainerId("test");
+            fail("Should not be able to set container ID from closed Connection");
+        } catch (IllegalStateException error) {
+            // Expected
+        }
+
+        peer.waitForScriptToComplete();
+
+        assertNull(failure);
+    }
+
+    @Test
+    public void testCannotSetHostnameOnOpenConnection() throws Exception {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result);
+        ProtonTestPeer peer = new ProtonTestPeer(engine);
+        engine.outputConsumer(peer);
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond();
+
+        Connection connection = engine.start();
+        connection.open();
+
+        try {
+            connection.setHostname("test");
+            fail("Should not be able to set host name from open Connection");
+        } catch (IllegalStateException error) {
+            // Expected
+        }
+
+        peer.waitForScriptToComplete();
+
+        assertNull(failure);
+    }
+
+    @Test
+    public void testCannotSetHostnameOnLocallyClosedConnection() throws Exception {
+        testCannotSetHostnameOnClosedConnection(true);
+    }
+
+    @Test
+    public void testCannotSetHostnameOnRemotelyClosedConnection() throws Exception {
+        testCannotSetHostnameOnClosedConnection(false);
+    }
+
+    private void testCannotSetHostnameOnClosedConnection(boolean localClose) throws Exception {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result);
+        ProtonTestPeer peer = new ProtonTestPeer(engine);
+        engine.outputConsumer(peer);
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond();
+        if (localClose) {
+            peer.expectClose().respond();
+        } else {
+            peer.remoteClose().queue();
+        }
+
+        Connection connection = engine.start();
+        connection.open();
+        if (localClose) {
+            connection.close();
+        }
+
+        try {
+            connection.setHostname("test");
+            fail("Should not be able to set host name from closed Connection");
+        } catch (IllegalStateException error) {
+            // Expected
+        }
+
+        peer.waitForScriptToComplete();
+
+        assertNull(failure);
+    }
+
+    @Test
+    public void testCannotSetChannelMaxOpenConnection() throws Exception {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result);
+        ProtonTestPeer peer = new ProtonTestPeer(engine);
+        engine.outputConsumer(peer);
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond();
+
+        Connection connection = engine.start();
+        connection.open();
+
+        try {
+            connection.setChannelMax(0);
+            fail("Should not be able to set channel max from open Connection");
+        } catch (IllegalStateException error) {
+            // Expected
+        }
+
+        peer.waitForScriptToComplete();
+
+        assertNull(failure);
+    }
+
+    @Test
+    public void testCannotSetChannelMaxOnLocallyClosedConnection() throws Exception {
+        testCannotSetChannelMaxOnClosedConnection(true);
+    }
+
+    @Test
+    public void testCannotSetChannelMaxOnRemotelyClosedConnection() throws Exception {
+        testCannotSetChannelMaxOnClosedConnection(false);
+    }
+
+    private void testCannotSetChannelMaxOnClosedConnection(boolean localClose) throws Exception {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result);
+        ProtonTestPeer peer = new ProtonTestPeer(engine);
+        engine.outputConsumer(peer);
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond();
+        if (localClose) {
+            peer.expectClose().respond();
+        } else {
+            peer.remoteClose().queue();
+        }
+
+        Connection connection = engine.start();
+        connection.open();
+        if (localClose) {
+            connection.close();
+        }
+
+        try {
+            connection.setChannelMax(0);
+            fail("Should not be able to set channel max from closed Connection");
+        } catch (IllegalStateException error) {
+            // Expected
+        }
+
+        peer.waitForScriptToComplete();
+
+        assertNull(failure);
+    }
+
+    @Test
+    public void testCannotSetMaxFrameSizeOpenConnection() throws Exception {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result);
+        ProtonTestPeer peer = new ProtonTestPeer(engine);
+        engine.outputConsumer(peer);
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond();
+
+        Connection connection = engine.start();
+        connection.open();
+
+        try {
+            connection.setMaxFrameSize(65535);
+            fail("Should not be able to set max frame size from open Connection");
+        } catch (IllegalStateException error) {
+            // Expected
+        }
+
+        peer.waitForScriptToComplete();
+
+        assertNull(failure);
+    }
+
+    @Test
+    public void testCannotSetMaxFrameSizeOnLocallyClosedConnection() throws Exception {
+        testCannotSetMaxFrameSizeOnClosedConnection(true);
+    }
+
+    @Test
+    public void testCannotSetMaxFrameSizeOnRemotelyClosedConnection() throws Exception {
+        testCannotSetMaxFrameSizeOnClosedConnection(false);
+    }
+
+    private void testCannotSetMaxFrameSizeOnClosedConnection(boolean localClose) throws Exception {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result);
+        ProtonTestPeer peer = new ProtonTestPeer(engine);
+        engine.outputConsumer(peer);
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond();
+        if (localClose) {
+            peer.expectClose().respond();
+        } else {
+            peer.remoteClose().queue();
+        }
+
+        Connection connection = engine.start();
+        connection.open();
+        if (localClose) {
+            connection.close();
+        }
+
+        try {
+            connection.setMaxFrameSize(65535);
+            fail("Should not be able to set max frame size from closed Connection");
+        } catch (IllegalStateException error) {
+            // Expected
+        }
+
+        peer.waitForScriptToComplete();
+
+        assertNull(failure);
+    }
+
+    @Test
+    public void testCannotSetIdleTimeoutOnOpenConnection() throws Exception {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result);
+        ProtonTestPeer peer = new ProtonTestPeer(engine);
+        engine.outputConsumer(peer);
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond();
+
+        Connection connection = engine.start();
+        connection.open();
+
+        try {
+            connection.setIdleTimeout(65535);
+            fail("Should not be able to set idle timeout from open Connection");
+        } catch (IllegalStateException error) {
+            // Expected
+        }
+
+        peer.waitForScriptToComplete();
+
+        assertNull(failure);
+    }
+
+    @Test
+    public void testCannotSetIdleTimeoutOnLocallyClosedConnection() throws Exception {
+        testCannotSetIdleTimeoutOnClosedConnection(true);
+    }
+
+    @Test
+    public void testCannotSetIdleTimeoutOnRemotelyClosedConnection() throws Exception {
+        testCannotSetIdleTimeoutOnClosedConnection(false);
+    }
+
+    private void testCannotSetIdleTimeoutOnClosedConnection(boolean localClose) throws Exception {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result);
+        ProtonTestPeer peer = new ProtonTestPeer(engine);
+        engine.outputConsumer(peer);
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond();
+        if (localClose) {
+            peer.expectClose().respond();
+        } else {
+            peer.remoteClose().queue();
+        }
+
+        Connection connection = engine.start();
+        connection.open();
+        if (localClose) {
+            connection.close();
+        }
+
+        try {
+            connection.setIdleTimeout(65535);
+            fail("Should not be able to set idle timeout from closed Connection");
+        } catch (IllegalStateException error) {
+            // Expected
+        }
+
+        peer.waitForScriptToComplete();
+
+        assertNull(failure);
+    }
+
+    @Test
+    public void testCannotSetOfferedCapabilitiesOnOpenConnection() throws Exception {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result);
+        ProtonTestPeer peer = new ProtonTestPeer(engine);
+        engine.outputConsumer(peer);
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond();
+
+        Connection connection = engine.start();
+        connection.open();
+
+        try {
+            connection.setOfferedCapabilities(Symbol.valueOf("ANONYMOUS_RELAY"));
+            fail("Should not be able to set offered capabilities from open Connection");
+        } catch (IllegalStateException error) {
+            // Expected
+        }
+
+        peer.waitForScriptToComplete();
+
+        assertNull(failure);
+    }
+
+    @Test
+    public void testCannotSetOfferedCapabilitiesOnLocallyClosedConnection() throws Exception {
+        testCannotSetOfferedCapabilitiesOnClosedConnection(true);
+    }
+
+    @Test
+    public void testCannotSetOfferedCapabilitiesOnRemotelyClosedConnection() throws Exception {
+        testCannotSetOfferedCapabilitiesOnClosedConnection(false);
+    }
+
+    private void testCannotSetOfferedCapabilitiesOnClosedConnection(boolean localClose) throws Exception {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result);
+        ProtonTestPeer peer = new ProtonTestPeer(engine);
+        engine.outputConsumer(peer);
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond();
+        if (localClose) {
+            peer.expectClose().respond();
+        } else {
+            peer.remoteClose().queue();
+        }
+
+        Connection connection = engine.start();
+        connection.open();
+        if (localClose) {
+            connection.close();
+        }
+
+        try {
+            connection.setOfferedCapabilities(Symbol.valueOf("ANONYMOUS_RELAY"));
+            fail("Should not be able to set offered capabilities from closed Connection");
+        } catch (IllegalStateException error) {
+            // Expected
+        }
+
+        peer.waitForScriptToComplete();
+
+        assertNull(failure);
+    }
+
+    @Test
+    public void testCannotSetDesiredCapabilitiesOnOpenConnection() throws Exception {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result);
+        ProtonTestPeer peer = new ProtonTestPeer(engine);
+        engine.outputConsumer(peer);
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond();
+
+        Connection connection = engine.start();
+        connection.open();
+
+        try {
+            connection.setDesiredCapabilities(Symbol.valueOf("ANONYMOUS_RELAY"));
+            fail("Should not be able to set desired capabilities from open Connection");
+        } catch (IllegalStateException error) {
+            // Expected
+        }
+
+        peer.waitForScriptToComplete();
+
+        assertNull(failure);
+    }
+
+    @Test
+    public void testCannotSetDesiredCapabilitiesOnLocallyClosedConnection() throws Exception {
+        testCannotSetDesiredCapabilitiesOnClosedConnection(true);
+    }
+
+    @Test
+    public void testCannotSetDesiredCapabilitiesOnRemotelyClosedConnection() throws Exception {
+        testCannotSetDesiredCapabilitiesOnClosedConnection(false);
+    }
+
+    private void testCannotSetDesiredCapabilitiesOnClosedConnection(boolean localClose) throws Exception {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result);
+        ProtonTestPeer peer = new ProtonTestPeer(engine);
+        engine.outputConsumer(peer);
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond();
+        if (localClose) {
+            peer.expectClose().respond();
+        } else {
+            peer.remoteClose().queue();
+        }
+
+        Connection connection = engine.start();
+        connection.open();
+        if (localClose) {
+            connection.close();
+        }
+
+        try {
+            connection.setDesiredCapabilities(Symbol.valueOf("ANONYMOUS_RELAY"));
+            fail("Should not be able to set desired capabilities from open Connection");
+        } catch (IllegalStateException error) {
+            // Expected
+        }
+
+        peer.waitForScriptToComplete();
+
+        assertNull(failure);
+    }
+
+    @Test
+    public void testCannotSetPropertiesOnOpenConnection() throws Exception {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result);
+        ProtonTestPeer peer = new ProtonTestPeer(engine);
+        engine.outputConsumer(peer);
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond();
+
+        Connection connection = engine.start();
+        connection.open();
+
+        try {
+            connection.setProperties(Collections.emptyMap());
+            fail("Should not be able to set properties from open Connection");
+        } catch (IllegalStateException error) {
+            // Expected
+        }
+
+        peer.waitForScriptToComplete();
+
+        assertNull(failure);
+    }
+
+    @Test
+    public void testCannotSetPropertiesOnLocallyClosedConnection() throws Exception {
+        testCannotSetPropertiesOnClosedConnection(true);
+    }
+
+    @Test
+    public void testCannotSetPropertiesOnRemotelyClosedConnection() throws Exception {
+        testCannotSetPropertiesOnClosedConnection(false);
+    }
+
+    private void testCannotSetPropertiesOnClosedConnection(boolean localClose) throws Exception {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result);
+        ProtonTestPeer peer = new ProtonTestPeer(engine);
+        engine.outputConsumer(peer);
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond();
+        if (localClose) {
+            peer.expectClose().respond();
+        } else {
+            peer.remoteClose().queue();
+        }
+
+        Connection connection = engine.start();
+        connection.open();
+        if (localClose) {
+            connection.close();
+        }
+
+        try {
+            connection.setProperties(Collections.emptyMap());
+            fail("Should not be able to set properties from open Connection");
         } catch (IllegalStateException error) {
             // Expected
         }

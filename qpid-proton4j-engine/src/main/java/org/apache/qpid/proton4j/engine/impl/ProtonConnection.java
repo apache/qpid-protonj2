@@ -238,7 +238,7 @@ public class ProtonConnection implements Connection, AMQPHeader.HeaderHandler<Pr
     }
 
     @Override
-    public ProtonConnection setOfferedCapabilities(Symbol[] capabilities) {
+    public ProtonConnection setOfferedCapabilities(Symbol... capabilities) {
         checkNotOpened("Cannot set Offered Capabilities on already opened Connection");
 
         if (capabilities != null) {
@@ -260,7 +260,7 @@ public class ProtonConnection implements Connection, AMQPHeader.HeaderHandler<Pr
     }
 
     @Override
-    public ProtonConnection setDesiredCapabilities(Symbol[] capabilities) {
+    public ProtonConnection setDesiredCapabilities(Symbol... capabilities) {
         checkNotOpened("Cannot set Desired Capabilities on already opened Connection");
 
         if (capabilities != null) {

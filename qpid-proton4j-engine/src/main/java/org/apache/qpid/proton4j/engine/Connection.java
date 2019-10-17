@@ -228,7 +228,7 @@ public interface Connection {
      *
      * @throws IllegalStateException if the Connection has already been opened.
      */
-    Connection setOfferedCapabilities(Symbol[] capabilities) throws IllegalStateException;
+    Connection setOfferedCapabilities(Symbol... capabilities) throws IllegalStateException;
 
     /**
      * @return the configured capabilities that are offered to the remote when the Connection is opened.
@@ -246,7 +246,7 @@ public interface Connection {
      *
      * @throws IllegalStateException if the Connection has already been opened.
      */
-    Connection setDesiredCapabilities(Symbol[] capabilities) throws IllegalStateException;
+    Connection setDesiredCapabilities(Symbol... capabilities) throws IllegalStateException;
 
     /**
      * @return the configured desired capabilities that are sent to the remote when the Connection is opened.
