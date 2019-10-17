@@ -142,13 +142,13 @@ public class ProtonReceiver extends ProtonLink<Receiver> implements Receiver {
     @Override
     public Receiver disposition(Predicate<IncomingDelivery> filter, DeliveryState state, boolean settle) {
         linkState.applyDisposition(filter, state, true);
-        return null;
+        return this;
     }
 
     @Override
     public Receiver settle(Predicate<IncomingDelivery> filter) {
         linkState.applyDisposition(filter, null, true);
-        return null;
+        return this;
     }
 
     @SuppressWarnings("unchecked")

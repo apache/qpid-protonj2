@@ -109,13 +109,13 @@ public class ProtonSender extends ProtonLink<Sender> implements Sender {
     @Override
     public Sender disposition(Predicate<OutgoingDelivery> filter, DeliveryState state, boolean settle) {
         linkState.applyDisposition(filter, state, true);
-        return null;
+        return this;
     }
 
     @Override
     public Sender settle(Predicate<OutgoingDelivery> filter) {
         linkState.applyDisposition(filter, null, true);
-        return null;
+        return this;
     }
 
     @Override
