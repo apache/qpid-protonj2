@@ -69,8 +69,6 @@ public class ClientTransportListener implements TransportListener {
             connection.getScheduler().execute(() -> {
                 LOG.debug("Transport connection remotely closed");
                 if (!connection.isClosed()) {
-                    // We can't send any more output, so close the transport
-                    engine.shutdown();
                     connection.handleClientIOException(new ClientFailedException("Transport connection remotely closed."));
                 }
             });

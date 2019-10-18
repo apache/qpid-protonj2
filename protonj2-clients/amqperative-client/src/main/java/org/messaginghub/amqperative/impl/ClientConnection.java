@@ -378,16 +378,16 @@ public class ClientConnection implements Connection {
         CLOSED_UPDATER.set(this, 1);
         FAILURE_CAUSE_UPDATER.compareAndSet(this, null, error);
         try {
-            executor.execute(() -> {
-                protonConnection.close();
-                try {
-                    transport.close();
-                } catch (IOException ignored) {
-                }
-                // Signal any waiters that the operation is done due to error.
-                openFuture.failed(error);
-                closeFuture.complete(ClientConnection.this);
-            });
+            engine.shutdown();
+
+            try {
+                transport.close();
+            } catch (IOException ignored) {
+            }
+
+            // Signal any waiters that the operation is done due to error.
+            openFuture.failed(error);
+            closeFuture.complete(ClientConnection.this);
         } catch (Throwable ingored) {
             LOG.trace("Ignoring error while closing down from client internal exception: ", ingored);
         }
