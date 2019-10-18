@@ -39,26 +39,6 @@ public final class ProtonConstants {
     //----- Proton engine handler names
 
     /**
-     * Engine handler that gates reads of incoming data when engine hasn't been started.
-     */
-    public static final String ENGINE_NOT_STARTED_READ_GATE = "non-started-reads";
-
-    /**
-     * Engine handler that gates writes of outgoing data when engine hasn't been started.
-     */
-    public static final String ENGINE_NOT_STARTED_WRITE_GATE = "non-started-writes";
-
-    /**
-     * Engine handler that gates reads of incoming data when engine hasn't been started.
-     */
-    public static final String ENGINE_SHUTDOWN_READ_GATE = "shutdown-reads";
-
-    /**
-     * Engine handler that gates writes of outgoing data when engine hasn't been started.
-     */
-    public static final String ENGINE_SHUTDOWN_WRITE_GATE = "shutdown-writes";
-
-    /**
      * Engine handler that acts on AMQP performatives
      */
     public static final String AMQP_PERFORMATIVE_HANDLER = "amqp";

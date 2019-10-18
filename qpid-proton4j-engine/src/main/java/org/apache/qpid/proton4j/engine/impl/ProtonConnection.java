@@ -141,7 +141,7 @@ public class ProtonConnection implements Connection, AMQPHeader.HeaderHandler<Pr
     @Override
     public ProtonConnection open() throws EngineStateException {
         if (getState() == ConnectionState.IDLE) {
-            engine.checkShutdownOrFailed();
+            getEngine().checkShutdownOrFailed("Cannot open a connection when Engine is shutdown or failed.");
             localState = ConnectionState.ACTIVE;
             processStateChangeAndRespond();
         }
@@ -152,7 +152,7 @@ public class ProtonConnection implements Connection, AMQPHeader.HeaderHandler<Pr
     @Override
     public ProtonConnection close() throws EngineStateException {
         if (getState() == ConnectionState.ACTIVE) {
-            engine.checkShutdownOrFailed();
+            getEngine().checkShutdownOrFailed("Cannot close a connection when Engine is shutdown or failed.");
             localState = ConnectionState.CLOSED;
             processStateChangeAndRespond();
         }
@@ -582,7 +582,7 @@ public class ProtonConnection implements Connection, AMQPHeader.HeaderHandler<Pr
             if (state != ConnectionState.IDLE && headerReceived) {
                 if (!localOpenSent) {
                     localOpenSent = true;
-                    engine.pipeline().fireWrite(localOpen, 0, null, null);
+                    engine.fireWrite(localOpen, 0, null, null);
                     engine.configuration().setMaxFrameSize((int) localOpen.getMaxFrameSize());
                     engine.configuration().recomputeEffectiveFrameSizeLimits();
                 }
@@ -595,7 +595,7 @@ public class ProtonConnection implements Connection, AMQPHeader.HeaderHandler<Pr
                     sessions.forEach(session -> {
                         session.localClose(localClose);
                     });
-                    engine.pipeline().fireWrite(localClose, 0, null, null);
+                    engine.fireWrite(localClose, 0, null, null);
                 } else {
                     // Inform all sessions that the connection has now written its local open
                     ArrayList<ProtonSession> sessions = new ArrayList<>(localSessions.values());
@@ -606,7 +606,7 @@ public class ProtonConnection implements Connection, AMQPHeader.HeaderHandler<Pr
             }
         } else {
             headerSent = true;
-            engine.pipeline().fireWrite(AMQPHeader.getAMQPHeader());
+            engine.fireWrite(AMQPHeader.getAMQPHeader());
         }
     }
 

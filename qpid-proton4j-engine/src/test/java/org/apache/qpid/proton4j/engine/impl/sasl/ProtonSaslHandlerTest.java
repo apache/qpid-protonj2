@@ -68,7 +68,7 @@ public class ProtonSaslHandlerTest {
     public void testSaslRejectsAMQPHeader() {
         final AtomicBoolean headerRead = new AtomicBoolean();
 
-        Engine engine = createSaslServerTransport();
+        Engine engine = createSaslServerEngine();
 
         engine.saslContext().server().setListener(new SaslServerListener() {
 
@@ -85,6 +85,8 @@ public class ProtonSaslHandlerTest {
                 headerRead.set(true);
             }
         });
+
+        engine.start();
 
         try {
             engine.pipeline().fireRead(new HeaderFrame(AMQPHeader.getAMQPHeader()));
@@ -119,7 +121,7 @@ public class ProtonSaslHandlerTest {
     public void testExchangeSaslHeader() {
         final AtomicBoolean saslHeaderRead = new AtomicBoolean();
 
-        Engine engine = createSaslServerTransport();
+        Engine engine = createSaslServerEngine().start().getEngine();
 
         engine.saslContext().server().setListener(new SaslServerListener() {
 
@@ -173,7 +175,7 @@ public class ProtonSaslHandlerTest {
         final AtomicReference<Symbol> clientMechanism = new AtomicReference<>();
         final AtomicBoolean emptyResponse = new AtomicBoolean();
 
-        Engine engine = createSaslServerTransport();
+        Engine engine = createSaslServerEngine();
 
         engine.saslContext().server().setListener(new SaslServerListener() {
 
@@ -204,7 +206,7 @@ public class ProtonSaslHandlerTest {
         });
 
         // Check for Header processing
-        engine.pipeline().fireRead(new HeaderFrame(AMQPHeader.getSASLHeader()));
+        engine.start().getEngine().pipeline().fireRead(new HeaderFrame(AMQPHeader.getSASLHeader()));
 
         assertTrue("Did not receive a SASL Header", saslHeaderRead.get());
 
@@ -256,7 +258,7 @@ public class ProtonSaslHandlerTest {
         }
     }
 
-    private Engine createSaslServerTransport() {
+    private Engine createSaslServerEngine() {
         ProtonEngine engine = new ProtonEngine();
 
         engine.pipeline().addLast("sasl", new ProtonSaslHandler());

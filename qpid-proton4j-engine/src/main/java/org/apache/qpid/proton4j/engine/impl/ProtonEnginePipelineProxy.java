@@ -61,14 +61,14 @@ public class ProtonEnginePipelineProxy implements EnginePipeline {
 
     @Override
     public ProtonEnginePipelineProxy addFirst(String name, EngineHandler handler) {
-        engine().checkShutdownOrFailed();
+        engine().checkShutdownOrFailed("Cannot add pipeline resources when Engine is shutdown or failed");
         pipeline.addFirst(name, handler);
         return this;
     }
 
     @Override
     public ProtonEnginePipelineProxy addLast(String name, EngineHandler handler) {
-        engine().checkShutdownOrFailed();
+        engine().checkShutdownOrFailed("Cannot add pipeline resources when Engine is shutdown or failed");
         pipeline.addLast(name, handler);
         return this;
     }
@@ -99,25 +99,25 @@ public class ProtonEnginePipelineProxy implements EnginePipeline {
 
     @Override
     public EngineHandler first() {
-        engine().checkShutdownOrFailed();
+        engine().checkShutdownOrFailed("Cannot access pipeline resource when Engine is shutdown or failed");
         return pipeline.first();
     }
 
     @Override
     public EngineHandler last() {
-        engine().checkShutdownOrFailed();
+        engine().checkShutdownOrFailed("Cannot access pipeline resource when Engine is shutdown or failed");
         return pipeline.last();
     }
 
     @Override
     public EngineHandlerContext firstContext() {
-        engine().checkShutdownOrFailed();
+        engine().checkShutdownOrFailed("Cannot access pipeline resource when Engine is shutdown or failed");
         return pipeline.firstContext();
     }
 
     @Override
     public EngineHandlerContext lastContext() {
-        engine().checkShutdownOrFailed();
+        engine().checkShutdownOrFailed("Cannot access pipeline resource when Engine is shutdown or failed");
         return pipeline.lastContext();
     }
 
@@ -140,68 +140,84 @@ public class ProtonEnginePipelineProxy implements EnginePipeline {
 
     @Override
     public ProtonEnginePipelineProxy fireRead(ProtonBuffer input) {
-        engine().checkShutdownOrFailed();
+        engine().checkEngineNotStarted("Cannot inject new data into an unstarted Engine");
+        engine().checkShutdownOrFailed("Cannot inject new data into an Engine that is shutdown or failed");
         pipeline.fireRead(input);
         return this;
     }
 
     @Override
     public ProtonEnginePipelineProxy fireRead(HeaderFrame header) {
-        engine().checkShutdownOrFailed();
+        engine().checkEngineNotStarted("Cannot inject new data into an unstarted Engine");
+        engine().checkShutdownOrFailed("Cannot inject new data into an Engine that is shutdown or failed");
         pipeline.fireRead(header);
         return this;
     }
 
     @Override
     public ProtonEnginePipelineProxy fireRead(SaslFrame frame) {
-        engine().checkShutdownOrFailed();
+        engine().checkEngineNotStarted("Cannot inject new data into an unstarted Engine");
+        engine().checkShutdownOrFailed("Cannot inject new data into an Engine that is shutdown or failed");
         pipeline.fireRead(frame);
         return this;
     }
 
     @Override
     public ProtonEnginePipelineProxy fireRead(ProtocolFrame frame) {
-        engine().checkShutdownOrFailed();
+        engine().checkEngineNotStarted("Cannot inject new data into an unstarted Engine");
+        engine().checkShutdownOrFailed("Cannot inject new data into an Engine that is shutdown or failed");
         pipeline.fireRead(frame);
         return this;
     }
 
     @Override
     public ProtonEnginePipelineProxy fireWrite(AMQPHeader header) {
-        engine().checkShutdownOrFailed();
+        engine().checkEngineNotStarted("Cannot write from an unstarted Engine");
+        engine().checkShutdownOrFailed("Cannot write form an Engine that is shutdown or failed");
+
         if (!engine().isWritable()) {
             throw new EngineNotWritableException("Cannot write through Engine pipeline when Engine is not writable");
         }
+
         pipeline.fireWrite(header);
         return this;
     }
 
     @Override
     public ProtonEnginePipelineProxy fireWrite(Performative performative, int channel, ProtonBuffer payload, Runnable payloadToLarge) {
-        engine().checkShutdownOrFailed();
+        engine().checkEngineNotStarted("Cannot write from an unstarted Engine");
+        engine().checkShutdownOrFailed("Cannot write form an Engine that is shutdown or failed");
+
         if (!engine().isWritable()) {
             throw new EngineNotWritableException("Cannot write through Engine pipeline when Engine is not writable");
         }
+
         pipeline.fireWrite(performative, channel, payload, payloadToLarge);
         return this;
     }
 
     @Override
     public ProtonEnginePipelineProxy fireWrite(SaslPerformative performative) {
-        engine().checkShutdownOrFailed();
+        engine().checkEngineNotStarted("Cannot write from an unstarted Engine");
+        engine().checkShutdownOrFailed("Cannot write form an Engine that is shutdown or failed");
+
         if (!engine().isWritable()) {
             throw new EngineNotWritableException("Cannot write through Engine pipeline when Engine is not writable");
         }
+
         pipeline.fireWrite(performative);
         return this;
     }
 
     @Override
     public ProtonEnginePipelineProxy fireWrite(ProtonBuffer buffer) {
-        engine().checkShutdownOrFailed();
+        engine().checkEngineNotStarted("Cannot write from an unstarted Engine");
+        engine().checkShutdownOrFailed("Cannot write form an Engine that is shutdown or failed");
+
         if (!engine().isWritable()) {
             throw new EngineNotWritableException("Cannot write through Engine pipeline when Engine is not writable");
         }
+
         pipeline.fireWrite(buffer);
         return this;
     }

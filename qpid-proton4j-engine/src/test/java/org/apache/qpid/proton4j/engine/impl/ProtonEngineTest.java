@@ -31,13 +31,18 @@ import java.util.concurrent.ScheduledExecutorService;
 import javax.security.sasl.SaslException;
 
 import org.apache.qpid.proton4j.amqp.driver.ProtonTestPeer;
+import org.apache.qpid.proton4j.amqp.security.SaslInit;
 import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
+import org.apache.qpid.proton4j.amqp.transport.Open;
+import org.apache.qpid.proton4j.buffer.ProtonByteBuffer;
 import org.apache.qpid.proton4j.engine.Connection;
 import org.apache.qpid.proton4j.engine.ConnectionState;
 import org.apache.qpid.proton4j.engine.Engine;
 import org.apache.qpid.proton4j.engine.EngineFactory;
 import org.apache.qpid.proton4j.engine.EngineState;
 import org.apache.qpid.proton4j.engine.HeaderFrame;
+import org.apache.qpid.proton4j.engine.ProtocolFramePool;
+import org.apache.qpid.proton4j.engine.SaslFrame;
 import org.apache.qpid.proton4j.engine.Session;
 import org.apache.qpid.proton4j.engine.exceptions.EngineNotStartedException;
 import org.apache.qpid.proton4j.engine.exceptions.EngineShutdownException;
@@ -59,16 +64,34 @@ public class ProtonEngineTest extends ProtonEngineTestSupport {
         assertFalse(engine.isWritable());
 
         try {
+            engine.pipeline().fireWrite(new ProtonByteBuffer(0));
+            fail("Should not be able to write until engine has been started");
+        } catch (EngineNotStartedException error) {
+            // Expected
+        }
+
+        try {
             engine.pipeline().fireWrite(AMQPHeader.getAMQPHeader());
             fail("Should not be able to write until engine has been started");
         } catch (EngineNotStartedException error) {
             // Expected
         }
 
-        // TODO - This situation isn't necessarily fatal, consider not failing engine in this case ?
-        assertTrue(engine.isFailed());
+        try {
+            engine.pipeline().fireWrite(new SaslInit());
+            fail("Should not be able to write until engine has been started");
+        } catch (EngineNotStartedException error) {
+            // Expected
+        }
 
-        assertNotNull(failure);
+        try {
+            engine.pipeline().fireWrite(new Open(), 1, null, null);
+            fail("Should not be able to write until engine has been started");
+        } catch (EngineNotStartedException error) {
+            // Expected
+        }
+
+        assertNull(failure);
     }
 
     @Test
@@ -86,10 +109,28 @@ public class ProtonEngineTest extends ProtonEngineTestSupport {
             // Expected
         }
 
-        // TODO - This situation isn't necessarily fatal, consider not failing engine in this case ?
-        assertTrue(engine.isFailed());
+        try {
+            engine.pipeline().fireRead(new SaslFrame(new SaslInit(), 64, new ProtonByteBuffer(0)));
+            fail("Should not be able to read data until engine has been started");
+        } catch (EngineNotStartedException error) {
+            // Expected
+        }
 
-        assertNotNull(failure);
+        try {
+            engine.pipeline().fireRead(new ProtocolFramePool().take(new Open(), 1, 64, new ProtonByteBuffer(0)));
+            fail("Should not be able to read data until engine has been started");
+        } catch (EngineNotStartedException error) {
+            // Expected
+        }
+
+        try {
+            engine.pipeline().fireRead(new ProtonByteBuffer(0));
+            fail("Should not be able to write until engine has been started");
+        } catch (EngineNotStartedException error) {
+            // Expected
+        }
+
+        assertNull(failure);
     }
 
     @Test

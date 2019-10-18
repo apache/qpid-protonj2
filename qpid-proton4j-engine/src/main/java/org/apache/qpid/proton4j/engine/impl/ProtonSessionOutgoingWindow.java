@@ -201,7 +201,7 @@ public class ProtonSessionOutgoingWindow {
 
             // TODO - Write up to session window limits or until done.
             try {
-                engine.pipeline().fireWrite(transfer, session.getLocalChannel(), payload, () -> transfer.setMore(true));
+                engine.fireWrite(transfer, session.getLocalChannel(), payload, () -> transfer.setMore(true));
             } finally {
                 delivery.afterTransferWritten();
             }
@@ -226,7 +226,7 @@ public class ProtonSessionOutgoingWindow {
         // TODO - Casting is ugly but our ID values are longs
         unsettled.remove((int) delivery.getDeliveryId());
 
-        engine.pipeline().fireWrite(disposition, session.getLocalChannel(), null, null);
+        engine.fireWrite(disposition, session.getLocalChannel(), null, null);
     }
 
     void processAbort(ProtonSender sender, ProtonOutgoingDelivery delivery) {
@@ -247,7 +247,7 @@ public class ProtonSessionOutgoingWindow {
         // Ensure we don't track the aborted delivery any longer.
         unsettled.remove((int) delivery.getDeliveryId());
 
-        engine.pipeline().fireWrite(transfer, session.getLocalChannel(), null, null);
+        engine.fireWrite(transfer, session.getLocalChannel(), null, null);
     }
 
     //----- Access to internal state useful for tests

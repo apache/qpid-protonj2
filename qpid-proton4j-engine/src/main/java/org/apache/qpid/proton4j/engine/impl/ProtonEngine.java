@@ -22,17 +22,21 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.qpid.proton4j.amqp.Symbol;
+import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
 import org.apache.qpid.proton4j.amqp.transport.ErrorCondition;
+import org.apache.qpid.proton4j.amqp.transport.Performative;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.common.logging.ProtonLogger;
 import org.apache.qpid.proton4j.common.logging.ProtonLoggerFactory;
 import org.apache.qpid.proton4j.engine.ConnectionState;
 import org.apache.qpid.proton4j.engine.Engine;
+import org.apache.qpid.proton4j.engine.EnginePipeline;
 import org.apache.qpid.proton4j.engine.EngineSaslDriver;
 import org.apache.qpid.proton4j.engine.EngineState;
 import org.apache.qpid.proton4j.engine.EventHandler;
 import org.apache.qpid.proton4j.engine.exceptions.EngineFailedException;
+import org.apache.qpid.proton4j.engine.exceptions.EngineNotStartedException;
 import org.apache.qpid.proton4j.engine.exceptions.EngineNotWritableException;
 import org.apache.qpid.proton4j.engine.exceptions.EngineShutdownException;
 import org.apache.qpid.proton4j.engine.exceptions.EngineStartedException;
@@ -51,6 +55,7 @@ public class ProtonEngine implements Engine {
         ProtonByteBufferAllocator.DEFAULT.wrap(new byte[] {0x00, 0x00, 0x00, 0x08, 0x02, 0x00, 0x00, 0x00});
 
     private final ProtonEnginePipeline pipeline =  new ProtonEnginePipeline(this);
+    private final ProtonEnginePipelineProxy pipelineProxy = new ProtonEnginePipelineProxy(pipeline);
     private final ProtonEngineConfiguration configuration = new ProtonEngineConfiguration(this);
     private final ProtonConnection connection = new ProtonConnection(this);
 
@@ -108,12 +113,12 @@ public class ProtonEngine implements Engine {
 
     @Override
     public ProtonConnection start() throws EngineStateException {
-        checkShutdownOrFailed();
+        checkShutdownOrFailed("Cannot start an Engine that has already been shutdown or has failed.");
 
         if (state == EngineState.IDLE) {
             state = EngineState.STARTING;
             try {
-                pipeline().fireEngineStarting();
+                pipeline.fireEngineStarting();
                 state = EngineState.STARTED;
                 writable = true;
             } catch (Throwable error) {
@@ -141,10 +146,6 @@ public class ProtonEngine implements Engine {
             try {
                 pipeline.fireEngineStateChanged();
             } catch (Throwable ignored) {}
-
-            // Wrap the pipeline to ensure no more reads or writes
-            pipeline.addFirst(ProtonConstants.ENGINE_SHUTDOWN_WRITE_GATE, ProtonEngineShutdownHandler.INSTANCE);
-            pipeline.addLast(ProtonConstants.ENGINE_SHUTDOWN_READ_GATE, ProtonEngineShutdownHandler.INSTANCE);
         }
 
         return this;
@@ -152,7 +153,7 @@ public class ProtonEngine implements Engine {
 
     @Override
     public long tick(long currentTime) throws IllegalStateException, EngineStateException {
-        checkShutdownOrFailed();
+        checkShutdownOrFailed("Cannot tick an Egnine that has been shutdown or failed.");
 
         if (connection.getState() != ConnectionState.ACTIVE) {
             throw new IllegalStateException("Cannot tick on a Connection that is not opened or an engine that has been shut down.");
@@ -167,7 +168,7 @@ public class ProtonEngine implements Engine {
 
     @Override
     public void tickAuto(ScheduledExecutorService executor) throws IllegalStateException, EngineStateException {
-        checkShutdownOrFailed();
+        checkShutdownOrFailed("Cannot start auto tick on an Engine that has been shutdown or failed");
 
         Objects.requireNonNull(executor);
 
@@ -192,7 +193,7 @@ public class ProtonEngine implements Engine {
 
     @Override
     public ProtonEngine ingest(ProtonBuffer input) throws EngineStateException {
-        checkShutdownOrFailed();
+        checkShutdownOrFailed("Cannot ingest data into an Engine that has been shutdown or failed");
 
         if (!isWritable()) {
             throw new EngineNotWritableException("Engine is currently not accepting new input");
@@ -232,10 +233,6 @@ public class ProtonEngine implements Engine {
                 pipeline.fireFailed((EngineFailedException) failure);
             } catch (Throwable ignored) {}
 
-            // Wrap the pipeline to ensure no more reads or writes
-            pipeline.addFirst(ProtonConstants.ENGINE_SHUTDOWN_WRITE_GATE, ProtonEngineShutdownHandler.INSTANCE);
-            pipeline.addLast(ProtonConstants.ENGINE_SHUTDOWN_READ_GATE, ProtonEngineShutdownHandler.INSTANCE);
-
             engineErrorHandler.handle(cause);
         } else {
             if (isFailed()) {
@@ -271,8 +268,8 @@ public class ProtonEngine implements Engine {
     }
 
     @Override
-    public ProtonEnginePipeline pipeline() {
-        return pipeline;
+    public EnginePipeline pipeline() {
+        return pipelineProxy;
     }
 
     @Override
@@ -295,10 +292,10 @@ public class ProtonEngine implements Engine {
      * @throws EngineStateException if the engine state doesn't allow for changes
      */
     public void registerSaslDriver(EngineSaslDriver saslDriver) throws EngineStateException {
-        checkShutdownOrFailed();
+        checkShutdownOrFailed("Cannot register a SASL driver on an Engine that is shutdown or failed.");
 
         if (state.ordinal() > EngineState.STARTING.ordinal()) {
-            throw new EngineStartedException("Cannot alter SASL driver after engine has been started.");
+            throw new EngineStartedException("Cannot alter SASL driver after Engine has been started.");
         }
 
         this.saslDriver = saslDriver;
@@ -306,12 +303,28 @@ public class ProtonEngine implements Engine {
 
     //----- Internal proton engine implementation
 
-    void checkShutdownOrFailed() {
+    ProtonEngine fireWrite(AMQPHeader header) {
+        pipeline.fireWrite(header);
+        return this;
+    }
+
+    ProtonEngine fireWrite(Performative performative, int channel, ProtonBuffer payload, Runnable payloadToLarge) {
+        pipeline.fireWrite(performative, channel, payload, payloadToLarge);
+        return this;
+    }
+
+    void checkEngineNotStarted(String message) {
+        if (state == EngineState.IDLE) {
+            throw new EngineNotStartedException(message);
+        }
+    }
+
+    void checkShutdownOrFailed(String message) {
         if (isShutdown()) {
             if (isFailed()) {
-                throw ProtonExceptionSupport.createFailedException(failureCause);
+                throw ProtonExceptionSupport.createFailedException(message, failureCause);
             } else {
-                throw new EngineShutdownException("Engine has already been shut down");
+                throw new EngineShutdownException(message);
             }
         }
     }
@@ -359,7 +372,7 @@ public class ProtonEngine implements Engine {
                 lastOutputSequence = outputSequence;
             } else if (remoteIdleDeadline - currentTime <= 0) {
                 remoteIdleDeadline = computeDeadline(currentTime, remoteIdleTimeout / 2);
-                pipeline().fireWrite(EMPTY_FRAME_BUFFER.duplicate());
+                pipeline.fireWrite(EMPTY_FRAME_BUFFER.duplicate());
                 lastOutputSequence++;
             }
 

@@ -118,7 +118,6 @@ public class ProtonPerformativeHandler implements EngineHandler, HeaderHandler<E
         // Recompute max frame size now based on what remote told us.
         configuration.recomputeEffectiveFrameSizeLimits();
 
-        // TODO - Define the error from these methods, IOException other ?
         connection.handleOpen(open, payload, channel, engine);
     }
 

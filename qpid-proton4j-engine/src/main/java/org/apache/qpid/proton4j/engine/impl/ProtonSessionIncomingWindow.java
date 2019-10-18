@@ -236,7 +236,7 @@ public class ProtonSessionIncomingWindow {
         // TODO - Casting is ugly but our ID values are longs
         unsettled.remove((int) delivery.getDeliveryId());
 
-        engine.pipeline().fireWrite(disposition, session.getLocalChannel(), null, null);
+        engine.fireWrite(disposition, session.getLocalChannel(), null, null);
     }
 
     void deliveryRead(ProtonIncomingDelivery delivery, int bytesRead) {

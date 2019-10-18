@@ -102,12 +102,22 @@ public interface Link<T extends Link<T>> {
     Role getRole();
 
     /**
-     * @return the parent {@link Session} of the Receiver.
+     * @return the parent {@link Connection} for the {@link Link}
+     */
+    Connection getConnection();
+
+    /**
+     * @return the parent {@link Session} of the {@link Link}
      */
     Session getSession();
 
     /**
-     * @return the link name that is assigned to this link.
+     * @return the parent {@link Engine} for this {@link Link}
+     */
+    Engine getEngine();
+
+    /**
+     * @return the link name that is assigned to this {@link Link}
      */
     String getName();
 

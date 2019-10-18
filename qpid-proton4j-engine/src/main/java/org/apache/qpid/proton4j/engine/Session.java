@@ -77,6 +77,11 @@ public interface Session {
      */
     Connection getConnection();
 
+    /**
+     * @return the parent {@link Engine} for this Session.
+     */
+    Engine getEngine();
+
     //----- Session sender and receiver factory methods
 
     /**

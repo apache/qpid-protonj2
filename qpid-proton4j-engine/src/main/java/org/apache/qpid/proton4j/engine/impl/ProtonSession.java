@@ -106,6 +106,7 @@ public class ProtonSession implements Session {
         return connection;
     }
 
+    @Override
     public ProtonEngine getEngine() {
         return connection.getEngine();
     }
@@ -155,8 +156,8 @@ public class ProtonSession implements Session {
 
     @Override
     public ProtonSession open() throws IllegalStateException, EngineStateException {
-        getEngine().checkShutdownOrFailed();
         checkConnectionClosed();
+        getEngine().checkShutdownOrFailed("Cannot open a session when Engine is shutdown or failed.");
 
         if (getState() == SessionState.IDLE) {
             localState = SessionState.ACTIVE;
@@ -587,7 +588,7 @@ public class ProtonSession implements Session {
 
     void fireSessionBegin() {
         localBeginSent = true;
-        connection.getEngine().pipeline().fireWrite(localBegin, localChannel, null, null);
+        connection.getEngine().fireWrite(localBegin, localChannel, null, null);
 
         // TODO - Implementing an efficient foreach on the MRU cache would be a nice to have.
         for (ProtonLink<?> link : localLinks.values()) {
@@ -604,7 +605,7 @@ public class ProtonSession implements Session {
             link.localEnd(localEnd, localChannel);
         }
 
-        connection.getEngine().pipeline().fireWrite(localEnd, localChannel, null, null);
+        connection.getEngine().fireWrite(localEnd, localChannel, null, null);
     }
 
     long findFreeLocalHandle(ProtonLink<?> link) {
@@ -641,6 +642,6 @@ public class ProtonSession implements Session {
             flow.setDrain(link.isDrain());
         }
 
-        getEngine().pipeline().fireWrite(flow, localChannel, null, null);
+        getEngine().fireWrite(flow, localChannel, null, null);
     }
 }

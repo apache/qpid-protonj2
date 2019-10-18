@@ -56,6 +56,7 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
 
     protected final ProtonConnection connection;
     protected final ProtonSession session;
+    protected final ProtonEngine engine;
 
     protected final Attach localAttach = new Attach();
     protected Attach remoteAttach;
@@ -88,13 +89,24 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
     protected ProtonLink(ProtonSession session, String name) {
         this.session = session;
         this.connection = session.getConnection();
+        this.engine = session.getEngine();
         this.localAttach.setName(name);
         this.localAttach.setRole(getRole());
     }
 
     @Override
+    public ProtonConnection getConnection() {
+        return connection;
+    }
+
+    @Override
     public ProtonSession getSession() {
         return session;
+    }
+
+    @Override
+    public ProtonEngine getEngine() {
+        return engine;
     }
 
     @Override
@@ -490,7 +502,7 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
             (connection.isLocallyOpened() && connection.wasLocalOpenSent())) {
 
             // TODO - Still need to check for transport being writable at this time.
-            session.getEngine().pipeline().fireWrite(
+            session.getEngine().fireWrite(
                 linkState().configureAttach(localAttach), session.getLocalChannel(), null, null);
         }
     }
@@ -506,7 +518,7 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
             detach.setError(getCondition());
 
             session.freeLocalHandle(localAttach.getHandle());
-            session.getEngine().pipeline().fireWrite(detach, session.getLocalChannel(), null, null);
+            session.getEngine().fireWrite(detach, session.getLocalChannel(), null, null);
         }
     }
 
