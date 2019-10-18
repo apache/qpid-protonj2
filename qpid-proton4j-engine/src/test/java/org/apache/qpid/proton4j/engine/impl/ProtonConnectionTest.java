@@ -17,6 +17,7 @@
 package org.apache.qpid.proton4j.engine.impl;
 
 import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
@@ -36,6 +37,8 @@ import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedInteger;
 import org.apache.qpid.proton4j.amqp.UnsignedShort;
 import org.apache.qpid.proton4j.amqp.driver.ProtonTestPeer;
+import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
+import org.apache.qpid.proton4j.amqp.transport.ConnectionError;
 import org.apache.qpid.proton4j.amqp.transport.ErrorCondition;
 import org.apache.qpid.proton4j.engine.Connection;
 import org.apache.qpid.proton4j.engine.ConnectionState;
@@ -582,7 +585,7 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
     }
 
     @Test
-    public void testCloseWhileWaitingForHeaderResponseDoesNotWrite() throws Exception {
+    public void testOpenAndCloseWhileWaitingForHeaderResponseDoesNotWriteUntilHeaderArrives() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
         ProtonTestPeer peer = new ProtonTestPeer(engine);
@@ -593,6 +596,41 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
         Connection connection = engine.start();
         connection.open();  // Trigger write of AMQP Header, we don't respond here.
         connection.close();
+
+        peer.waitForScriptToComplete();
+
+        // Now respond and Connection should open and close
+        peer.expectOpen();
+        peer.expectClose();
+        peer.remoteHeader(AMQPHeader.getAMQPHeader()).now();
+
+        peer.waitForScriptToComplete();
+
+        engine.shutdown();
+
+        assertNull(failure);
+    }
+
+    @Test
+    public void testOpenWhileWaitingForHeaderResponseDoesNotWriteThenWritesFlowAsExpected() throws Exception {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result);
+        ProtonTestPeer peer = new ProtonTestPeer(engine);
+        engine.outputConsumer(peer);
+
+        peer.expectAMQPHeader();
+
+        Connection connection = engine.start();
+        connection.open();  // Trigger write of AMQP Header, we don't respond here.
+
+        peer.waitForScriptToComplete();
+
+        // Now respond and Connection should open and close
+        peer.expectOpen();
+        peer.expectClose().withError(notNullValue());
+        peer.remoteHeader(AMQPHeader.getAMQPHeader()).now();
+
+        connection.setCondition(new ErrorCondition(ConnectionError.CONNECTION_FORCED, "something about errors")).close();
 
         peer.waitForScriptToComplete();
 
