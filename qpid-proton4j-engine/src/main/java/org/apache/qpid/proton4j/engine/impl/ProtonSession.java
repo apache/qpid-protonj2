@@ -544,9 +544,8 @@ public class ProtonSession implements Session {
             // A peer that receives a handle outside the supported range MUST close the connection with the
             // framing-error error-code.
             ErrorCondition condition = new ErrorCondition(ConnectionError.FRAMING_ERROR, "Session handle-max exceeded");
-
-            // TODO - Provide way to close the connection from this end in error.
             connection.setCondition(condition);
+            connection.close();
 
             return false;
         }

@@ -35,6 +35,7 @@ public class ProtonIncomingDelivery implements IncomingDelivery {
     private boolean complete;
     private int messageFormat;
     private boolean aborted;
+    private int transferCount;
 
     private DeliveryState defaultDeliveryState;
 
@@ -202,6 +203,14 @@ public class ProtonIncomingDelivery implements IncomingDelivery {
 
     //----- Internal methods to manage the Delivery
 
+    int getTransferCount() {
+        return transferCount;
+    }
+
+    boolean isFirstTransfer() {
+        return transferCount <= 1;
+    }
+
     long getDeliveryId() {
         return deliveryId;
     }
@@ -236,7 +245,9 @@ public class ProtonIncomingDelivery implements IncomingDelivery {
         return this;
     }
 
-    ProtonIncomingDelivery appendToPayload(ProtonBuffer buffer) {
+    ProtonIncomingDelivery appendTransferPayload(ProtonBuffer buffer) {
+        transferCount++;
+
         if (payload == null) {
             payload = buffer;
         } else {

@@ -17,6 +17,7 @@
 package org.apache.qpid.proton4j.engine.impl;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -50,7 +51,7 @@ public class ProtonIncomingDeliveryTest extends ProtonEngineTestSupport {
         byte[] data = "test-data".getBytes(StandardCharsets.UTF_8);
 
         ProtonIncomingDelivery delivery = new ProtonIncomingDelivery(Mockito.mock(ProtonReceiver.class), 1, new Binary(new byte[] {0}));
-        delivery.appendToPayload(ProtonByteBufferAllocator.DEFAULT.wrap(data));
+        delivery.appendTransferPayload(ProtonByteBufferAllocator.DEFAULT.wrap(data));
 
         // Check the full data is available
         assertNotNull("expected the delivery to be present", delivery);
@@ -86,8 +87,14 @@ public class ProtonIncomingDeliveryTest extends ProtonEngineTestSupport {
         byte[] data1 = new byte[] { 0, 1, 2, 3, 4, 5 };
         byte[] data2 = new byte[] { 6, 7, 8, 9, 10, 11 };
 
-        delivery.appendToPayload(ProtonByteBufferAllocator.DEFAULT.wrap(data1));
-        delivery.appendToPayload(ProtonByteBufferAllocator.DEFAULT.wrap(data2));
+        assertTrue(delivery.isFirstTransfer());
+        assertEquals(0, delivery.getTransferCount());
+        delivery.appendTransferPayload(ProtonByteBufferAllocator.DEFAULT.wrap(data1));
+        assertTrue(delivery.isFirstTransfer());
+        assertEquals(1, delivery.getTransferCount());
+        delivery.appendTransferPayload(ProtonByteBufferAllocator.DEFAULT.wrap(data2));
+        assertFalse(delivery.isFirstTransfer());
+        assertEquals(2, delivery.getTransferCount());
 
         assertEquals(data1.length + data2.length, delivery.available());
         assertEquals(data1.length + data2.length, delivery.readAll().getReadableBytes());

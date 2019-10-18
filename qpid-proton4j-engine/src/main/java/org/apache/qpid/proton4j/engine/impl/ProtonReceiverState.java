@@ -120,12 +120,8 @@ public class ProtonReceiverState implements ProtonLinkState<ProtonIncomingDelive
     public ProtonIncomingDelivery remoteTransfer(Transfer transfer, ProtonBuffer payload) {
         final ProtonIncomingDelivery delivery;
 
-        boolean isFirstTransfer = true;
-
         if (!currentDeliveryId.isEmpty() && (!transfer.hasDeliveryId() || currentDeliveryId.equals((int) transfer.getDeliveryId()))) {
-            // TODO - Casting is ugly but our ID values are longs
             delivery = unsettled.get(currentDeliveryId.intValue());
-            isFirstTransfer = false;
         } else {
             verifyNewDeliveryIdSequence(transfer, currentDeliveryId);
 
@@ -145,7 +141,7 @@ public class ProtonReceiverState implements ProtonLinkState<ProtonIncomingDelive
             delivery.remotelySettled();
         }
 
-        delivery.appendToPayload(payload);
+        delivery.appendTransferPayload(payload);
 
         boolean done = transfer.getAborted() || !transfer.getMore();
         if (done) {
@@ -160,7 +156,7 @@ public class ProtonReceiverState implements ProtonLinkState<ProtonIncomingDelive
             currentDeliveryId.reset();
         }
 
-        if (isFirstTransfer) {
+        if (delivery.isFirstTransfer()) {
             receiver.signalDeliveryReceived(delivery);
         } else {
             receiver.signalDeliveryUpdated(delivery);

@@ -129,10 +129,7 @@ public class ProtonSessionIncomingWindow {
         nextIncomingId++;
 
         ProtonIncomingDelivery delivery = link.remoteTransfer(transfer, payload);
-        if (delivery != null && !delivery.isRemotelySettled()) {
-            // TODO - An optimization for split frame deliveries would be to track
-            //        if this is delivery 1 or N and only try and insert into the
-            //        unsettled map on delivery 1 as the map operation can be costly.
+        if (delivery != null && !delivery.isRemotelySettled() && delivery.isFirstTransfer()) {
             unsettled.put((int) delivery.getDeliveryId(), delivery);
         }
 
