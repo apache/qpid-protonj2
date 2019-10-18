@@ -172,8 +172,8 @@ public class ProtonEngine implements Engine {
 
         Objects.requireNonNull(executor);
 
-        if (isShutdown() || connection.getState() != ConnectionState.ACTIVE) {
-            throw new IllegalStateException("Cannot tick on a Connection that is not opened or an engine that has been shut down.");
+        if (connection.getState() != ConnectionState.ACTIVE) {
+            throw new IllegalStateException("Cannot tick on a Connection that is not opened.");
         }
 
         if (idleTimeoutExecutor != null) {
