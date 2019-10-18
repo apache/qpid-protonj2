@@ -27,7 +27,9 @@ public interface ProtonBufferAllocator {
 
     /**
      * Create a new output ProtonBuffer instance with the given initial capacity and the
-     * maximum capacity should be that of the underlying buffer implementations limit.
+     * maximum capacity should be that of the underlying buffer implementations limit.  The
+     * buffer implementation should support growing the buffer on an as needed basis to allow
+     * writes without the user needing to code extra capacity and buffer reallocation checks.
      * <p>
      * The returned buffer will be used for frame output from the Proton engine and
      * can be a pooled buffer which the IO handler will then need to release once
@@ -57,12 +59,15 @@ public interface ProtonBufferAllocator {
      */
     ProtonBuffer outputBuffer(int initialCapacity, int maximumCapacity);
 
-    // TODO - For these we should document if the assumption is that
-    //        these buffers are never allowed to be pooled since we
-    //        are not going to have defined release points.
-
     /**
-     * Create a new ProtonBuffer instance with default initial capacity.
+     * Create a new ProtonBuffer instance with default initial capacity.  The buffer
+     * implementation should support growing the buffer on an as needed basis to allow
+     * writes without the user needing to code extra capacity and buffer reallocation
+     * checks.
+     *
+     * It is not recommended that these buffers be backed by a pooled resource as there
+     * is no defined release point within the buffer API and if used by an AMQP engine
+     * they could be lost as buffers are copied or aggregated together.
      *
      * @return a new ProtonBuffer instance with default initial capacity.
      */
@@ -72,6 +77,10 @@ public interface ProtonBufferAllocator {
      * Create a new ProtonBuffer instance with the given initial capacity and the
      * maximum capacity should be that of the underlying buffer implementations
      * limit.
+     *
+     * It is not recommended that these buffers be backed by a pooled resource as there
+     * is no defined release point within the buffer API and if used by an AMQP engine
+     * they could be lost as buffers are copied or aggregated together.
      *
      * @param initialCapacity
      *      The initial capacity to use when creating the new ProtonBuffer.
@@ -83,6 +92,10 @@ public interface ProtonBufferAllocator {
     /**
      * Create a new ProtonBuffer instance with the given initial capacity and the
      * maximum capacity should that of the value specified by the caller.
+     *
+     * It is not recommended that these buffers be backed by a pooled resource as there
+     * is no defined release point within the buffer API and if used by an AMQP engine
+     * they could be lost as buffers are copied or aggregated together.
      *
      * @param initialCapacity
      *      The initial capacity to use when creating the new ProtonBuffer.
@@ -108,7 +121,8 @@ public interface ProtonBufferAllocator {
 
     /**
      * Create a new ProtonBuffer that wraps the given byte array using the provided
-     * offset and length values to confine the view of that array.
+     * offset and length values to confine the view of that array.  The maximum capacity
+     * of the buffer should be that of the length of the wrapped array.
      * <p>
      * The capacity and maximum capacity for the resulting ProtonBuffer should equal
      * to the length of the wrapped array and the returned array offset is zero.
@@ -125,7 +139,9 @@ public interface ProtonBufferAllocator {
     ProtonBuffer wrap(byte[] array, int offset, int length);
 
     /**
-     * Create a new ProtonBuffer that wraps the given ByteBuffer.
+     * Create a new ProtonBuffer that wraps the given ByteBuffer.  The maximum capacity
+     * of the returned buffer should be same as the remaining bytes within the wrapped
+     * {@link ByteBuffer}.
      * <p>
      * The capacity and maximum capacity of the returned ProtonBuffer will be the
      * same as that of the underlying ByteBuffer.  The ProtonBuffer will return true
@@ -133,25 +149,10 @@ public interface ProtonBufferAllocator {
      * reports that it is backed by an array.
      *
      * @param buffer
-     *      the ByteBuffer to wrap.
+     *      the {@link ByteBuffer} to wrap.
      *
      * @return a new ProtonBuffer that wraps the given ByteBuffer.
      */
     ProtonBuffer wrap(ByteBuffer buffer);
-
-    // TODO - Methods that could offer distinctions on what can or cannot be pulled
-
-    // Buffer used to house the delivery portion of an incoming transport which can be
-    // pooled if we have defined lifetime for these buffers.
-    // ProtonBuffer deliveryBuffer(int initialCapacity);
-
-    // Buffer used for outbound frame encoding, can be pooled if frame offers release point.
-    // ProtonBuffer frameBuffer(int initialCapacity);
-
-    // Buffer used in decoding operations for message sections which shouldn't be pooled
-    // ProtonBuffer unpooled(int initialCapacity);
-
-    // Buffer used in short term operations like buffering partial frames ?
-    // ProtonBuffer poolable(int initialCapacity);
 
 }
