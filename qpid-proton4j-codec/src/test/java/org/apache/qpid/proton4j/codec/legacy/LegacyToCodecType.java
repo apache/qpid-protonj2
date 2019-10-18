@@ -98,7 +98,7 @@ public abstract class LegacyToCodecType {
         // Arrays, Maps and Lists
         if (legacyType instanceof Map) {
             return convertToCodecType((Map<?, ?>) legacyType);
-        } // TODO
+        } // TODO - Convert Lists with legacy types to new codec types.
 
         // Enumerations
         if (legacyType instanceof org.apache.qpid.proton.amqp.transport.Role) {
@@ -123,9 +123,9 @@ public abstract class LegacyToCodecType {
         } else if (legacyType instanceof org.apache.qpid.proton.amqp.messaging.LifetimePolicy) {
             return convertToCodecType((org.apache.qpid.proton.amqp.messaging.LifetimePolicy) legacyType);
         }
-        // TODO
 
         // Transaction Types
+        // TODO - Transaction types converted to new codec types
 
         // Transport Types
         if (legacyType instanceof org.apache.qpid.proton.amqp.transport.Open) {

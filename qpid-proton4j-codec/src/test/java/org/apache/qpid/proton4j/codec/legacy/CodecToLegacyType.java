@@ -90,7 +90,7 @@ public abstract class CodecToLegacyType {
         // Arrays, Maps and Lists
         if (newType instanceof Map) {
             return convertToLegacyType((Map<?, ?>) newType);
-        } // TODO
+        } // TODO - List conversions from new types to legacy
 
         // Enumerations
         if (newType instanceof Role) {
@@ -117,8 +117,8 @@ public abstract class CodecToLegacyType {
         } else if (newType instanceof LifetimePolicy) {
             return convertToLegacyType((LifetimePolicy) newType);
         }
-        // TODO
 
+        // TODO - Other types as needed including transaction types
         // Transaction Types
 
         // Transport Types

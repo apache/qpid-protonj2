@@ -33,19 +33,16 @@ abstract class AbstractElement<T> implements Element<T> {
 
     @Override
     public Element<?> next() {
-        // TODO
         return next;
     }
 
     @Override
     public Element<?> prev() {
-        // TODO
         return prev;
     }
 
     @Override
     public Element<?> parent() {
-        // TODO
         return parent;
     }
 
