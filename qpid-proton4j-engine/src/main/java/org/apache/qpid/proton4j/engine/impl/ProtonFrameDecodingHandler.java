@@ -70,7 +70,7 @@ public class ProtonFrameDecodingHandler implements EngineHandler, SaslPerformati
 
     @Override
     public void handlerAdded(EngineHandlerContext context) {
-        engine = (ProtonEngine) context.getEngine();
+        engine = (ProtonEngine) context.engine();
         configuration = engine.configuration();
     }
 

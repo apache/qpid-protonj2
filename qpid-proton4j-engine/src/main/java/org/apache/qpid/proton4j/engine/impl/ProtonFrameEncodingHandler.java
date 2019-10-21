@@ -53,7 +53,7 @@ public class ProtonFrameEncodingHandler implements EngineHandler {
 
     @Override
     public void handlerAdded(EngineHandlerContext context) {
-        engine = (ProtonEngine) context.getEngine();
+        engine = (ProtonEngine) context.engine();
         configuration = engine.configuration();
     }
 

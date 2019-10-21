@@ -244,7 +244,7 @@ final class ProtonSaslClientContext extends ProtonSaslContext implements SaslCli
                     context.fireWrite(pausedAMQPHeader);
                 }
             } else {
-                context.getEngine().engineFailed(saslFailure);
+                context.engine().engineFailed(saslFailure);
             }
         }
     }

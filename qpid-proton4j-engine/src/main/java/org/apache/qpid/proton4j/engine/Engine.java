@@ -69,7 +69,7 @@ public interface Engine extends Consumer<ProtonBuffer> {
      *
      * @return the {@link Connection} that is linked to this engine instance.
      */
-    Connection getConnection();
+    Connection connection();
 
     /**
      * Starts the engine and returns the {@link Connection} instance that is bound to this Engine.

@@ -82,7 +82,7 @@ public class ProtonEngine implements Engine {
     };
 
     @Override
-    public ProtonConnection getConnection() {
+    public ProtonConnection connection() {
         return connection;
     }
 

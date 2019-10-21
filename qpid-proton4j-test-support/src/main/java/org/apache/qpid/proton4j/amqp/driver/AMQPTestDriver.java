@@ -285,8 +285,11 @@ public class AMQPTestDriver implements Consumer<ProtonBuffer> {
      * Encodes the given frame data into a ProtonBuffer and injects it into the configured consumer.
      *
      * @param channel
+     *      The channel to use when writing the frame
      * @param performative
+     *      The AMQP Performative to write
      * @param payload
+     *      The payload to include in the encoded frame.
      */
     public void sendAMQPFrame(int channel, DescribedType performative, ProtonBuffer payload) {
         LOG.trace("Sending performative: {}", performative);
@@ -304,7 +307,9 @@ public class AMQPTestDriver implements Consumer<ProtonBuffer> {
      * Encodes the given frame data into a ProtonBuffer and injects it into the configured consumer.
      *
      * @param channel
+     *      The channel to use when writing the frame
      * @param performative
+     *      The SASL Performative to write
      */
     public void sendSaslFrame(int channel, DescribedType performative) {
         // When the outcome of SASL is written the decoder should revert to initial state

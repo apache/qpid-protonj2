@@ -40,7 +40,9 @@ public final class SaslMechanismSelector {
 
     /**
      * Creates a new {@link Mechanism} selector configured with the given set of allowed {@link Mechanism} names.
+     *
      * @param allowed
+     *      A {@link Set} of SASL mechanism names that are allowed to be used when selecting a macthing mechanism.
      */
     @SuppressWarnings("unchecked")
     public SaslMechanismSelector(Set<Symbol> allowed) {

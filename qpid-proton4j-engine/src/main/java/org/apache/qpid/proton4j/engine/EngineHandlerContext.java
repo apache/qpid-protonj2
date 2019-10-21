@@ -30,17 +30,17 @@ public interface EngineHandlerContext {
     /**
      * @return the {@link EngineHandler} that is associated with the context.
      */
-    EngineHandler getHandler();
+    EngineHandler handler();
 
     /**
      * @return the {@link Engine} where this handler is registered.
      */
-    Engine getEngine();
+    Engine engine();
 
     /**
      * @return the name that assigned to this {@link EngineHandler} when added to the {@link EnginePipeline}.
      */
-    String getName();
+    String name();
 
     void fireEngineStarting();
 

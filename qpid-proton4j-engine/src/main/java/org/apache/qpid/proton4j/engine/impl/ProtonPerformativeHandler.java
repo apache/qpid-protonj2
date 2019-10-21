@@ -50,8 +50,8 @@ public class ProtonPerformativeHandler implements EngineHandler, HeaderHandler<E
 
     @Override
     public void handlerAdded(EngineHandlerContext context) {
-        engine = (ProtonEngine) context.getEngine();
-        connection = engine.getConnection();
+        engine = (ProtonEngine) context.engine();
+        connection = engine.connection();
         configuration = engine.configuration();
     }
 

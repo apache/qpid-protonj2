@@ -83,7 +83,7 @@ public class ProtonEnginePipeline implements EnginePipeline {
         head.next = newFirst;
 
         try {
-            newFirst.getHandler().handlerAdded(newFirst);
+            newFirst.handler().handlerAdded(newFirst);
         } catch (Throwable e) {
             engine.engineFailed(e);
         }
@@ -111,7 +111,7 @@ public class ProtonEnginePipeline implements EnginePipeline {
         tail.previous = newLast;
 
         try {
-            newLast.getHandler().handlerAdded(newLast);
+            newLast.handler().handlerAdded(newLast);
         } catch (Throwable e) {
             engine.engineFailed(e);
         }
@@ -128,7 +128,7 @@ public class ProtonEnginePipeline implements EnginePipeline {
             head.next.previous = head;
 
             try {
-                oldFirst.getHandler().handlerRemoved(oldFirst);
+                oldFirst.handler().handlerRemoved(oldFirst);
             } catch (Throwable e) {
                 engine.engineFailed(e);
             }
@@ -146,7 +146,7 @@ public class ProtonEnginePipeline implements EnginePipeline {
             tail.previous.next = tail;
 
             try {
-                oldLast.getHandler().handlerRemoved(oldLast);
+                oldLast.handler().handlerRemoved(oldLast);
             } catch (Throwable e) {
                 engine.engineFailed(e);
             }
@@ -161,7 +161,7 @@ public class ProtonEnginePipeline implements EnginePipeline {
             ProtonEngineHandlerContext current = head.next;
             ProtonEngineHandlerContext removed = null;
             while (current != tail) {
-                if (current.getName().equals(name)) {
+                if (current.name().equals(name)) {
                     removed = current;
 
                     ProtonEngineHandlerContext newNext = current.next;
@@ -177,7 +177,7 @@ public class ProtonEnginePipeline implements EnginePipeline {
 
             if (removed != null) {
                 try {
-                    removed.getHandler().handlerRemoved(removed);
+                    removed.handler().handlerRemoved(removed);
                 } catch (Throwable e) {
                     engine.engineFailed(e);
                 }
@@ -193,7 +193,7 @@ public class ProtonEnginePipeline implements EnginePipeline {
             ProtonEngineHandlerContext current = head.next;
             ProtonEngineHandlerContext removed = null;
             while (current != tail) {
-                if (current.getHandler() == handler) {
+                if (current.handler() == handler) {
                     removed = current;
 
                     ProtonEngineHandlerContext newNext = current.next;
@@ -209,7 +209,7 @@ public class ProtonEnginePipeline implements EnginePipeline {
 
             if (removed != null) {
                 try {
-                    removed.getHandler().handlerRemoved(removed);
+                    removed.handler().handlerRemoved(removed);
                 } catch (Throwable e) {
                     engine.engineFailed(e);
                 }
@@ -221,12 +221,12 @@ public class ProtonEnginePipeline implements EnginePipeline {
 
     @Override
     public EngineHandler first() {
-        return head.next == tail ? null : head.next.getHandler();
+        return head.next == tail ? null : head.next.handler();
     }
 
     @Override
     public EngineHandler last() {
-        return tail.previous == head ? null : tail.previous.getHandler();
+        return tail.previous == head ? null : tail.previous.handler();
     }
 
     @Override

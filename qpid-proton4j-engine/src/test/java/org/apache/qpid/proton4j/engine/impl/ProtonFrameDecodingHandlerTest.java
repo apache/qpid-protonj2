@@ -405,7 +405,7 @@ public class ProtonFrameDecodingHandlerTest {
         Mockito.when(engine.configuration()).thenReturn(configuration);
         Mockito.when(engine.isWritable()).thenReturn(Boolean.TRUE);
         EngineHandlerContext context = Mockito.mock(EngineHandlerContext.class);
-        Mockito.when(context.getEngine()).thenReturn(engine);
+        Mockito.when(context.engine()).thenReturn(engine);
 
         ProtonFrameDecodingHandler handler = new ProtonFrameDecodingHandler();
         handler.handlerAdded(context);

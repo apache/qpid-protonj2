@@ -47,72 +47,72 @@ public class ProtonEngineHandlerContext implements EngineHandlerContext {
     }
 
     @Override
-    public EngineHandler getHandler() {
+    public EngineHandler handler() {
         return handler;
     }
 
     @Override
-    public String getName() {
+    public String name() {
         return name;
     }
 
     @Override
-    public Engine getEngine() {
+    public Engine engine() {
         return engine;
     }
 
     @Override
     public void fireEngineStarting() {
-        next.getHandler().engineStarting(next);
+        next.handler().engineStarting(next);
     }
 
     @Override
     public void fireEngineStateChanged() {
-        next.getHandler().handleEngineStateChanged(next);
+        next.handler().handleEngineStateChanged(next);
     }
 
     @Override
     public void fireRead(ProtonBuffer buffer) {
-        previous.getHandler().handleRead(previous, buffer);
+        previous.handler().handleRead(previous, buffer);
     }
 
     @Override
     public void fireRead(HeaderFrame header) {
-        previous.getHandler().handleRead(previous, header);
+        previous.handler().handleRead(previous, header);
     }
 
     @Override
     public void fireRead(SaslFrame frame) {
-        previous.getHandler().handleRead(previous, frame);
+        previous.handler().handleRead(previous, frame);
     }
 
     @Override
     public void fireRead(ProtocolFrame frame) {
-        previous.getHandler().handleRead(previous, frame);
+        previous.handler().handleRead(previous, frame);
     }
 
     @Override
     public void fireFailed(EngineFailedException failure) {
-        next.getHandler().engineFailed(previous, failure);
+        next.handler().engineFailed(previous, failure);
     }
 
     @Override
     public void fireWrite(AMQPHeader header) {
-        next.getHandler().handleWrite(next, header);
+        next.handler().handleWrite(next, header);
     }
 
     @Override
     public void fireWrite(Performative performative, int channel, ProtonBuffer payload, Runnable payloadToLarge) {
-        next.getHandler().handleWrite(next, performative, channel, payload, payloadToLarge);
+        next.handler().handleWrite(next, performative, channel, payload, payloadToLarge);
     }
 
     @Override
     public void fireWrite(SaslPerformative performative) {
-        next.getHandler().handleWrite(next, performative);
+        next.handler().handleWrite(next, performative);
     }
 
     @Override
     public void fireWrite(ProtonBuffer buffer) {
-        next.getHandler().handleWrite(next, buffer);
+        next.handler().handleWrite(next, buffer);
     }
 }

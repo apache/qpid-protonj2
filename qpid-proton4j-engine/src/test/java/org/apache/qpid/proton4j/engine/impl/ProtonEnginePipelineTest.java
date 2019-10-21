@@ -97,7 +97,7 @@ public class ProtonEnginePipelineTest {
         assertSame(handler, pipeline.first());
         assertSame(handler, pipeline.last());
         assertNotNull(pipeline.firstContext());
-        assertSame(handler, pipeline.firstContext().getHandler());
+        assertSame(handler, pipeline.firstContext().handler());
     }
 
     @Test
@@ -116,9 +116,9 @@ public class ProtonEnginePipelineTest {
         assertSame(handler3, pipeline.last());
 
         assertNotNull(pipeline.firstContext());
-        assertSame(handler1, pipeline.firstContext().getHandler());
+        assertSame(handler1, pipeline.firstContext().handler());
         assertNotNull(pipeline.lastContext());
-        assertSame(handler3, pipeline.lastContext().getHandler());
+        assertSame(handler3, pipeline.lastContext().handler());
     }
 
     //----- Tests for addLast ------------------------------------------------//
@@ -167,9 +167,9 @@ public class ProtonEnginePipelineTest {
         assertSame(handler, pipeline.last());
 
         assertNotNull(pipeline.firstContext());
-        assertSame(handler, pipeline.firstContext().getHandler());
+        assertSame(handler, pipeline.firstContext().handler());
         assertNotNull(pipeline.lastContext());
-        assertSame(handler, pipeline.lastContext().getHandler());
+        assertSame(handler, pipeline.lastContext().handler());
     }
 
     @Test
@@ -188,9 +188,9 @@ public class ProtonEnginePipelineTest {
         assertSame(handler3, pipeline.last());
 
         assertNotNull(pipeline.firstContext());
-        assertSame(handler1, pipeline.firstContext().getHandler());
+        assertSame(handler1, pipeline.firstContext().handler());
         assertNotNull(pipeline.lastContext());
-        assertSame(handler3, pipeline.lastContext().getHandler());
+        assertSame(handler3, pipeline.lastContext().handler());
     }
 
     //----- Tests for removeFirst --------------------------------------------//

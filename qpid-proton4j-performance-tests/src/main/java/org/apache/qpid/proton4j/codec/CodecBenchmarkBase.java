@@ -51,6 +51,8 @@ public abstract class CodecBenchmarkBase {
     /**
      * It could be overridden to allow encoding/decoding buffer to be sized
      * differently from {@link #DEFAULT_BUFFER_SIZE}
+     *
+     * @return the buffer size to use in tests when creating encoding buffers.
      */
     protected int bufferSize() {
         return DEFAULT_BUFFER_SIZE;

@@ -45,7 +45,7 @@ public final class ProtonSaslHandler implements EngineHandler {
 
     @Override
     public void handlerAdded(EngineHandlerContext context) {
-        this.engine = (ProtonEngine) context.getEngine();
+        this.engine = (ProtonEngine) context.engine();
         this.driver = new ProtonEngineSaslDriver(engine, this);
         this.context = context;
 
