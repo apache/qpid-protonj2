@@ -25,6 +25,7 @@ import java.util.function.Predicate;
 import org.apache.qpid.proton4j.amqp.UnsignedInteger;
 import org.apache.qpid.proton4j.amqp.transport.Attach;
 import org.apache.qpid.proton4j.amqp.transport.DeliveryState;
+import org.apache.qpid.proton4j.amqp.transport.Detach;
 import org.apache.qpid.proton4j.amqp.transport.Disposition;
 import org.apache.qpid.proton4j.amqp.transport.Flow;
 import org.apache.qpid.proton4j.amqp.transport.Transfer;
@@ -95,9 +96,15 @@ public class ProtonReceiverState implements ProtonLinkState<ProtonIncomingDelive
 
     @Override
     public void remoteAttach(Attach attach) {
-        if (getCredit() > 0) {
+        if (getCredit() > 0 && receiver.isLocallyOpened()) {
             sessionWindow.writeFlow(receiver);
         }
+    }
+
+    @Override
+    public void remoteDetach(Detach detach) {
+        creditState.setCredit(0);
+        unsettled.clear();
     }
 
     @Override

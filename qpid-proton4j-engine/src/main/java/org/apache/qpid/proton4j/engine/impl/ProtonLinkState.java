@@ -17,6 +17,7 @@
 package org.apache.qpid.proton4j.engine.impl;
 
 import org.apache.qpid.proton4j.amqp.transport.Attach;
+import org.apache.qpid.proton4j.amqp.transport.Detach;
 import org.apache.qpid.proton4j.amqp.transport.Disposition;
 import org.apache.qpid.proton4j.amqp.transport.Flow;
 import org.apache.qpid.proton4j.amqp.transport.Transfer;
@@ -79,6 +80,14 @@ public interface ProtonLinkState<DeliveryType extends Delivery> {
      *      The attach that the remote sent for this link.
      */
     void remoteAttach(Attach attach);
+
+    /**
+     * Perform any needed state cleanup for link credit based on the detach sent from the remote
+     *
+     * @param detach
+     *      The detach that the remote sent for this link.
+     */
+    void remoteDetach(Detach detach);
 
     /**
      * Handle incoming {@link Flow} performatives and update link credit accordingly.

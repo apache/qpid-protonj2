@@ -447,6 +447,8 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
     ProtonLink<?> remoteDetach(Detach detach) {
         setRemoteCondition(detach.getError());
 
+        linkState().remoteDetach(detach);
+
         if (detach.getClosed()) {
             remoteState = LinkState.CLOSED;
             if (remoteCloseHandler != null) {

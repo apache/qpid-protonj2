@@ -714,8 +714,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
 
     @Test
     public void testReceiverSendsFlowAfterConnectionOpenFinallySent() throws Exception {
-                Engine engine = EngineFactory.PROTON.createNonSaslEngine();
-
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
         ProtonTestPeer peer = new ProtonTestPeer(engine);
         engine.outputConsumer(peer);
@@ -733,8 +732,6 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         receiver.setCredit(1);
         receiver.open();
 
-        // TODO - Another test with a detach before open when flow was called.
-
         peer.expectBegin().respond();
         peer.expectAttach().respond();
         peer.expectFlow().withLinkCredit(1);
@@ -743,6 +740,38 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
 
         peer.waitForScriptToComplete();
 
+        assertNull(failure);
+    }
+
+    @Test
+    public void testReceiverOmitsFlowAfterConnectionOpenFinallySentWhenAfterDetached() throws Exception {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result);
+        ProtonTestPeer peer = new ProtonTestPeer(engine);
+        engine.outputConsumer(peer);
+
+        // Create and open all resources except don't open the connection and then
+        // we will observe that the receiver flow doesn't fire since the link was
+        // detached prior to being able to send any state updates.
+        Connection connection = engine.start();
+        Session session = connection.session();
+        session.open();
+        Receiver receiver = session.receiver("test");
+        receiver.setCredit(1);
+        receiver.open();
+        receiver.detach();
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond().withContainerId("driver");
+        peer.expectBegin().respond();
+        peer.expectAttach().respond();
+        peer.expectDetach().respond();
+
+        connection.open();
+
+        peer.waitForScriptToComplete();
+
+        assertEquals(0, receiver.getCredit());
         assertNull(failure);
     }
 
