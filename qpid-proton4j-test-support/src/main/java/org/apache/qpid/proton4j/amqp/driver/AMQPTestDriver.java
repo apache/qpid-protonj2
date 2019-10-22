@@ -360,6 +360,21 @@ public class AMQPTestDriver implements Consumer<ProtonBuffer> {
     }
 
     /**
+     * Send the specific ProtonBuffer bytes to the remote frame consumer.
+
+     * @param buffer
+     *      The buffer whose contents are to be written to the frame consumer.
+     */
+    public void sendBytes(ProtonBuffer buffer) {
+        LOG.trace("Sending bytes from ProtonBuffer: {}", buffer);
+        try {
+            frameConsumer.accept(buffer.duplicate());
+        } catch (Throwable t) {
+            signalFailure(new AssertionError("Buffer was not consumed due to error.", t));
+        }
+    }
+
+    /**
      * Throw an exception from processing incoming data which should be handled by the peer under test.
      *
      * @param ex

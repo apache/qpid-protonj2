@@ -22,7 +22,9 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
 import org.apache.qpid.proton4j.amqp.driver.ScriptedExpectation;
 import org.apache.qpid.proton4j.amqp.driver.actions.AMQPHeaderInjectAction;
+import org.apache.qpid.proton4j.amqp.driver.actions.ProtonBufferInjectAction;
 import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 
 /**
  * Expectation entry for AMQP Headers
@@ -45,6 +47,12 @@ public class AMQPHeaderExpectation implements ScriptedExpectation {
 
     public AMQPHeaderInjectAction respondWithSASLPHeader() {
         AMQPHeaderInjectAction response = new AMQPHeaderInjectAction(driver, AMQPHeader.getSASLHeader());
+        driver.addScriptedElement(response);
+        return response;
+    }
+
+    public ProtonBufferInjectAction respondWithBytes(ProtonBuffer buffer) {
+        ProtonBufferInjectAction response = new ProtonBufferInjectAction(driver, buffer);
         driver.addScriptedElement(response);
         return response;
     }
