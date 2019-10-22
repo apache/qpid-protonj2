@@ -16,8 +16,11 @@
  */
 package org.messaginghub.amqperative;
 
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import java.io.IOException;
 import java.net.URI;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -25,11 +28,16 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import org.apache.qpid.proton4j.amqp.driver.netty.NettyTestPeer;
+import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
+import org.apache.qpid.proton4j.amqp.transport.AmqpError;
 import org.apache.qpid.proton4j.amqp.transport.ConnectionError;
 import org.apache.qpid.proton4j.amqp.transport.ErrorCondition;
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.messaginghub.amqperative.impl.ClientException;
+import org.messaginghub.amqperative.impl.exceptions.ClientConnectionRemotelyClosedException;
 import org.messaginghub.amqperative.test.AMQPerativeTestCase;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,14 +49,45 @@ public class ConnectionTest extends AMQPerativeTestCase {
 
     private static final Logger LOG = LoggerFactory.getLogger(ConnectionTest.class);
 
+    @Test(timeout = 10000)
+    public void testCreateConnectionToNonSaslPeer() throws Exception {
+        doConnectionWithUnexpectedHeaderTestImpl(AMQPHeader.getAMQPHeader().getBuffer());;
+    }
+
+    @Test(timeout = 10000)
+    public void testCreateConnectionToNonAmqpPeer() throws Exception {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.wrap(new byte[] { 'N', 'O', 'T', '-', 'A', 'M', 'Q', 'P' });
+        doConnectionWithUnexpectedHeaderTestImpl(buffer);
+    }
+
+    private void doConnectionWithUnexpectedHeaderTestImpl(ProtonBuffer responseHeader) throws Exception, IOException {
+        try (NettyTestPeer peer = new NettyTestPeer()) {
+            peer.expectSASLHeader().respondWithBytes(responseHeader);
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Connect test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            ConnectionOptions options = new ConnectionOptions();
+            options.setUser("guest");
+            options.setPassword("guest");
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), options);
+
+            try {
+                connection.openFuture().get(10, TimeUnit.SECONDS);
+            } catch (ExecutionException ex) {}
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
     @Test(timeout = 60000)
     public void testCreateConnectionString() throws Exception {
         try (NettyTestPeer peer = new NettyTestPeer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
-            // TODO - Wrong frame should trigger connection drop so that
-            //        the waits for open / close etc will fail quickly.
-            // peer.expectBegin().respond();
             peer.expectClose().respond();
             peer.start();
 
@@ -151,6 +190,49 @@ public class ConnectionTest extends AMQPerativeTestCase {
                 LOG.info("connection close failed with error: ", error);
                 fail("Close should ignore connect error and complete without error.");
             }
+
+            LOG.info("Connect test completed normally");
+        }
+    }
+
+    @Test(timeout = 20000)
+    public void testRemotelyCloseConnectionDuringSessionCreation() throws Exception {
+        final String BREAD_CRUMB = "ErrorMessageBreadCrumb";
+
+        try (NettyTestPeer peer = new NettyTestPeer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin();
+            peer.remoteClose().withErrorCondition(new ErrorCondition(AmqpError.NOT_ALLOWED, BREAD_CRUMB)).queue();
+            peer.expectClose();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Connect test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            connection.openFuture().get(10, TimeUnit.SECONDS);
+
+            Session session = connection.openSession();
+
+            try {
+                session.openFuture().get(5, TimeUnit.SECONDS);
+                fail("Open should throw error when waiting for remote open and connection remotely closed.");
+            } catch (ExecutionException error) {
+                LOG.info("Session open failed with error: ", error);
+                assertNotNull("Expected exception to have a message", error.getMessage());
+                assertTrue("Expected breadcrumb to be present in message", error.getMessage().contains(BREAD_CRUMB));
+                assertNotNull("Execution error should convery the cause", error.getCause());
+                assertTrue(error.getCause() instanceof ClientConnectionRemotelyClosedException);
+            }
+
+            session.close().get(5, TimeUnit.SECONDS);
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+
+            connection.close().get(10, TimeUnit.SECONDS);
 
             LOG.info("Connect test completed normally");
         }

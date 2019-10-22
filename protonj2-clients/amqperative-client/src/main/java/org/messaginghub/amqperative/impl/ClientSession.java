@@ -348,4 +348,18 @@ public class ClientSession implements Session {
 
         return executor;
     }
+
+    // TODO - Notify links and clean up resources etc.
+    void connectionClosed(ClientException error) {
+        CLOSED_UPDATER.set(this, 1);
+
+        if (error != null) {
+            failureCause.compareAndSet(null, error);
+            openFuture.failed(error);
+        } else {
+            openFuture.complete(this);
+        }
+
+        closeFuture.complete(this);
+    }
 }

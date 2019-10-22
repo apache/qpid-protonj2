@@ -68,9 +68,7 @@ public class ClientTransportListener implements TransportListener {
         if (!connection.getScheduler().isShutdown()) {
             connection.getScheduler().execute(() -> {
                 LOG.debug("Transport connection remotely closed");
-                if (!connection.isClosed()) {
-                    connection.handleClientIOException(new ClientFailedException("Transport connection remotely closed."));
-                }
+                connection.handleClientIOException(new ClientFailedException("Transport connection remotely closed."));
             });
         }
     }
@@ -80,11 +78,7 @@ public class ClientTransportListener implements TransportListener {
         if (!connection.getScheduler().isShutdown()) {
             connection.getScheduler().execute(() -> {
                 LOG.info("Transport failed: {}", error.getMessage());
-                if (!connection.isClosed()) {
-                    // We can't send any more output, so close the transport
-                    engine.shutdown();
-                    connection.handleClientIOException(ClientExceptionSupport.createOrPassthroughFatal(error));
-                }
+                connection.handleClientIOException(ClientExceptionSupport.createOrPassthroughFatal(error));
             });
         }
     }

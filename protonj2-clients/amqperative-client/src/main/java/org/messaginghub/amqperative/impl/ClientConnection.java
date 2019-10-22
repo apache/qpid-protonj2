@@ -18,6 +18,8 @@ package org.messaginghub.amqperative.impl;
 
 import java.io.IOException;
 import java.security.Principal;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
@@ -52,7 +54,6 @@ import org.messaginghub.amqperative.futures.ClientFuture;
 import org.messaginghub.amqperative.futures.ClientFutureFactory;
 import org.messaginghub.amqperative.impl.exceptions.ClientConnectionRemotelyClosedException;
 import org.messaginghub.amqperative.impl.exceptions.ClientExceptionSupport;
-import org.messaginghub.amqperative.impl.exceptions.ClientIOException;
 import org.messaginghub.amqperative.transport.Transport;
 import org.messaginghub.amqperative.transport.TransportBuilder;
 import org.slf4j.Logger;
@@ -85,6 +86,9 @@ public class ClientConnection implements Connection {
     private ClientSession connectionSession;
     private ClientSender connectionSender;
     private Transport transport;
+
+    // TODO - Ensure closed sessions are removed from this list - Use a Map otherwise there's gaps
+    private final List<ClientSession> sessions = new ArrayList<>();
 
     private ClientFuture<Connection> openFuture;
     private ClientFuture<Connection> closeFuture;
@@ -179,6 +183,7 @@ public class ClientConnection implements Connection {
 
         executor.execute(() -> {
             ClientSession session = new ClientSession(sessionOpts, ClientConnection.this, protonConnection.session());
+            sessions.add(session);
             createSession.complete(session.open());
         });
 
@@ -374,25 +379,6 @@ public class ClientConnection implements Connection {
         return getId() + ":" + sessionCounter.incrementAndGet();
     }
 
-    void handleClientIOException(ClientIOException error) {
-        CLOSED_UPDATER.set(this, 1);
-        FAILURE_CAUSE_UPDATER.compareAndSet(this, null, error);
-        try {
-            engine.shutdown();
-
-            try {
-                transport.close();
-            } catch (IOException ignored) {
-            }
-
-            // Signal any waiters that the operation is done due to error.
-            openFuture.failed(error);
-            closeFuture.complete(ClientConnection.this);
-        } catch (Throwable ingored) {
-            LOG.trace("Ignoring error while closing down from client internal exception: ", ingored);
-        }
-    }
-
     <T> T request(ClientFuture<T> request, long timeout, TimeUnit units) throws ClientException {
         requests.put(request, request);
 
@@ -425,6 +411,31 @@ public class ClientConnection implements Connection {
         }
     }
 
+    void handleClientIOException(ClientException error) {
+        CLOSED_UPDATER.set(this, 1);
+        FAILURE_CAUSE_UPDATER.compareAndSet(this, null, error);
+        try {
+            try {
+                engine.shutdown();
+            } catch (Throwable ingore) {}
+
+            try {
+                transport.close();
+            } catch (IOException ignored) {
+            }
+
+            sessions.forEach((session) -> {
+                session.connectionClosed(error);
+            });
+
+            // Signal any waiters that the operation is done due to error.
+            openFuture.failed(error);
+            closeFuture.complete(ClientConnection.this);
+        } catch (Throwable ingored) {
+            LOG.trace("Ignoring error while closing down from client internal exception: ", ingored);
+        }
+    }
+
     //----- Private implementation events handlers and utility methods
 
     private void handleRemoteOpen(org.apache.qpid.proton4j.engine.Connection connection) {
@@ -446,18 +457,15 @@ public class ClientConnection implements Connection {
             LOG.trace("Error on attempt to close proton connection was ignored");
         }
 
-        try {
-            transport.close();
-        } catch (IOException ignore) {}
+        final ClientException ex;
 
         if (connection.getRemoteCondition() != null) {
-            // TODO - Convert remote error to client exception
-            ClientException ex = new ClientConnectionRemotelyClosedException("Remote closed with error");
-            FAILURE_CAUSE_UPDATER.compareAndSet(this, null, ex);
+            ex = ClientErrorSupport.convertToConnectionClosedException(this, connection.getRemoteCondition());
+        } else {
+            ex = new ClientConnectionRemotelyClosedException("Remote closed with error");
         }
 
-        CLOSED_UPDATER.lazySet(this, 1);
-        closeFuture.complete(this);
+        handleClientIOException(ex);
     }
 
     private void handleEngineOutput(ProtonBuffer output) {
@@ -519,7 +527,13 @@ public class ClientConnection implements Connection {
 
     private ClientSession lazyCreateConnectionSession() {
         if (connectionSession == null) {
-            connectionSession = new ClientSession(options.getDefaultSessionOptions(), this, protonConnection.session()).open();
+            connectionSession = new ClientSession(options.getDefaultSessionOptions(), this, protonConnection.session());
+            sessions.add(connectionSession);
+            try {
+                connectionSession.open();
+             } catch (Throwable error) {
+                 sessions.remove(connectionSession);
+             }
         }
 
         return connectionSession;
