@@ -163,11 +163,7 @@ public class ProtonSession implements Session {
             localState = SessionState.ACTIVE;
             incomingWindow.configureOutbound(localBegin);
             outgoingWindow.configureOutbound(localBegin);
-            // The connection could be open but not have written the Open due to SASL or other pre-processing
-            // which means we must wait until signaled that the connection actually is ready for the begin.
-            if (connection.getState() == ConnectionState.ACTIVE && connection.wasLocalOpenSent()) {
-                fireSessionBegin();
-            }
+            processStateChangeAndRespond();
         }
 
         return this;
@@ -177,9 +173,7 @@ public class ProtonSession implements Session {
     public ProtonSession close() {
         if (getState() == SessionState.ACTIVE) {
             localState = SessionState.CLOSED;
-            if (connection.getState() == ConnectionState.ACTIVE) {
-                fireSessionEnd();
-            }
+            processStateChangeAndRespond();
         }
 
         return this;
@@ -362,16 +356,10 @@ public class ProtonSession implements Session {
     //----- Respond to local Connection changes
 
     void localOpen(Open open) {
-        if (localState.ordinal() >= SessionState.ACTIVE.ordinal()) {
-            fireSessionBegin();
-
-            if (isLocallyClosed()) {
-                fireSessionEnd();
-            }
-        }
+        processStateChangeAndRespond();
     }
 
-    public void localClose(Close localClose) {
+    void localClose(Close localClose) {
         // If we weren't already closed we should report that as of now given our connection
         // was just locally closed.
         if (!isLocallyClosed()) {
@@ -583,6 +571,38 @@ public class ProtonSession implements Session {
 
     boolean wasLocalEndSent() {
         return localEndSent;
+    }
+
+    private void processStateChangeAndRespond() {
+        switch (getState()) {
+            case IDLE:
+                return;
+            case ACTIVE:
+                checkIfBeginShouldBeSent();
+                break;
+            case CLOSED:
+                checkIfBeginShouldBeSent();
+                checkIfEndShouldBeSent();
+                break;
+            default:
+                throw new IllegalStateException("Session is in unknown state and cannot proceed");
+        }
+    }
+
+    private void checkIfBeginShouldBeSent() {
+        if (!localBeginSent) {
+            if (connection.isLocallyOpened() && connection.wasLocalOpenSent()) {
+                fireSessionBegin();
+            }
+        }
+    }
+
+    private void checkIfEndShouldBeSent() {
+        if (!localEndSent) {
+            if (connection.isLocallyOpened() && connection.wasLocalOpenSent()) {
+                fireSessionEnd();
+            }
+        }
     }
 
     void fireSessionBegin() {

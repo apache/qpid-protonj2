@@ -36,6 +36,8 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedInteger;
 import org.apache.qpid.proton4j.amqp.driver.ProtonTestPeer;
+import org.apache.qpid.proton4j.amqp.transport.AmqpError;
+import org.apache.qpid.proton4j.amqp.transport.ErrorCondition;
 import org.apache.qpid.proton4j.common.logging.ProtonLogger;
 import org.apache.qpid.proton4j.common.logging.ProtonLoggerFactory;
 import org.apache.qpid.proton4j.engine.Connection;
@@ -538,6 +540,38 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
         peer.expectClose();
 
         connection.open();
+        connection.close();
+
+        peer.waitForScriptToComplete();
+
+        assertNull(failure);
+    }
+
+    @Test(timeout = 20000)
+    public void testSessionCloseAfterConnectionRemotelyClosedWhenNoBeginResponseReceived() throws EngineStateException {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result);
+        ProtonTestPeer peer = new ProtonTestPeer(engine);
+        engine.outputConsumer(peer);
+
+        Connection connection = engine.start();
+        Session session = connection.session();
+        session.open();
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond();
+        peer.expectBegin();
+        peer.remoteClose().withErrorCondition(new ErrorCondition(AmqpError.NOT_ALLOWED, "Error")).queue();
+
+        connection.open();
+
+        peer.waitForScriptToComplete();
+        peer.expectEnd();
+        peer.expectClose();
+
+        // Connection not locally closed so end still written.
+        session.close();
+
         connection.close();
 
         peer.waitForScriptToComplete();

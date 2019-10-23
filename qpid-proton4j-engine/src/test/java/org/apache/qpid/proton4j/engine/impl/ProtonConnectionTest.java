@@ -110,6 +110,38 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
 
         peer.waitForScriptToComplete();
 
+        assertTrue(remoteOpened.get());
+        assertNull(failure);
+    }
+
+    @Test
+    public void testConnectionRemoteOpenTriggeredWhenRemoteOpenArrivesBeforeLocalOpen() throws EngineStateException {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result);
+        ProtonTestPeer peer = new ProtonTestPeer(engine);
+        engine.outputConsumer(peer);
+
+        final AtomicBoolean remoteOpened = new AtomicBoolean();
+
+        Connection connection = engine.start();
+
+        // Default engine should start and return a connection immediately
+        assertNotNull(connection);
+
+        connection.openHandler((result) -> {
+            remoteOpened.set(true);
+        });
+
+        peer.expectAMQPHeader();
+
+        // Remote Header will prompt local response and then remote open should trigger
+        // the connection handler to fire so that user knows remote opened.
+        peer.remoteHeader(AMQPHeader.getAMQPHeader()).now();
+        peer.remoteOpen().now();
+
+        peer.waitForScriptToComplete();
+
+        assertTrue(remoteOpened.get());
         assertNull(failure);
     }
 
