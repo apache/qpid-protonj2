@@ -17,21 +17,36 @@
 package org.apache.qpid.proton4j.buffer;
 
 import java.nio.ByteBuffer;
+import java.util.Objects;
 
 /**
- * ProtonBuffer wrapper around a NIO ByteBuffer instance.
- *
- * TODO - Decide if we want to implement this, many limitations and issues
- *        around this as buffer can be read-only etc.
+ * A duplicated buffer wrapper for buffers known to be {@link ProtonAbstractByteBuffer} instances.
  */
-public class ProtonNioByteBuffer extends ProtonAbstractByteBuffer {
+public class ProtonDuplicatedByteBuffer extends ProtonAbstractByteBuffer {
 
-    private final ByteBuffer buffer;
+    private final ProtonAbstractByteBuffer buffer;
 
-    protected ProtonNioByteBuffer(ByteBuffer buffer) {
-        super(buffer.remaining());
+    /**
+     * Wrap the given buffer to present a duplicate buffer with independent
+     * read and write index values.
+     *
+     * @param buffer
+     *      The {@link ProtonAbstractByteBuffer} instance to wrap with this instance.
+     */
+    public ProtonDuplicatedByteBuffer(ProtonAbstractByteBuffer buffer) {
+        super(buffer.maxCapacity());
 
-        this.buffer = buffer.slice();
+        Objects.requireNonNull(buffer, "The buffer being wrapped by a duplicate must not be null");
+
+        if (buffer instanceof ProtonDuplicatedByteBuffer) {
+            this.buffer = ((ProtonDuplicatedByteBuffer) buffer).buffer;
+        } else {
+            this.buffer = buffer;
+        }
+
+        setIndex(buffer.getReadIndex(), buffer.getWriteIndex());
+        markReadIndex();
+        markWriteIndex();
     }
 
     @Override
@@ -41,27 +56,38 @@ public class ProtonNioByteBuffer extends ProtonAbstractByteBuffer {
 
     @Override
     public byte[] getArray() {
-        return buffer.array();
+        return buffer.getArray();
     }
 
     @Override
     public int getArrayOffset() {
-        return buffer.arrayOffset();
+        return buffer.getArrayOffset();
     }
 
     @Override
     public int capacity() {
-        return buffer.remaining();
+        return buffer.capacity();
     }
 
     @Override
     public ProtonBuffer capacity(int newCapacity) {
-        throw new UnsupportedOperationException("NIO Buffer wrapper cannot adjust capacity");
+        return buffer.capacity(newCapacity);
+    }
+
+    @Override
+    public ProtonBuffer duplicate() {
+        return buffer.duplicate();
+    }
+
+    @Override
+    public ProtonBuffer slice(int index, int length) {
+        // TODO Auto-generated method stub
+        return this;
     }
 
     @Override
     public byte getByte(int index) {
-        return buffer.get(index);
+        return buffer.getByte(index);
     }
 
     @Override
@@ -80,66 +106,72 @@ public class ProtonNioByteBuffer extends ProtonAbstractByteBuffer {
     }
 
     @Override
-    public ProtonBuffer getBytes(int index, ProtonBuffer dst, int dstIndex, int length) {
+    public ProtonBuffer getBytes(int index, ProtonBuffer destination, int destinationIndex, int length) {
+        buffer.getBytes(index, destination, destinationIndex, length);
         return this;
     }
 
     @Override
-    public ProtonBuffer getBytes(int index, byte[] target, int offset, int length) {
+    public ProtonBuffer getBytes(int index, byte[] destination, int offset, int length) {
+        buffer.getBytes(index, destination, offset, length);
         return this;
     }
 
     @Override
     public ProtonBuffer getBytes(int index, ByteBuffer destination) {
+        buffer.getBytes(index, destination);
         return this;
     }
 
     @Override
     public ProtonBuffer setByte(int index, int value) {
-        buffer.put(index, (byte) value);
+        buffer.setByte(index, value);
         return this;
     }
 
     @Override
     public ProtonBuffer setShort(int index, int value) {
-        buffer.putShort(index, (short) value);
+        buffer.setShort(index, value);
         return this;
     }
 
     @Override
     public ProtonBuffer setInt(int index, int value) {
-        buffer.putInt(index, value);
+        buffer.setInt(index, value);
         return this;
     }
 
     @Override
     public ProtonBuffer setLong(int index, long value) {
-        buffer.putLong(index, value);
+        buffer.setLong(index, value);
         return this;
     }
 
     @Override
     public ProtonBuffer setBytes(int index, ProtonBuffer source, int sourceIndex, int length) {
+        buffer.setBytes(index, source, sourceIndex, length);
         return this;
     }
 
     @Override
-    public ProtonBuffer setBytes(int index, byte[] src, int srcIndex, int length) {
+    public ProtonBuffer setBytes(int index, byte[] source, int sourceIndex, int length) {
+        buffer.setBytes(index, source, sourceIndex, length);
         return this;
     }
 
     @Override
-    public ProtonBuffer setBytes(int index, ByteBuffer src) {
+    public ProtonBuffer setBytes(int index, ByteBuffer source) {
+        buffer.setBytes(index, source);
         return this;
     }
 
     @Override
     public ProtonBuffer copy(int index, int length) {
-        return null;
+        return buffer.copy(index, length);
     }
 
     @Override
     public ByteBuffer toByteBuffer(int index, int length) {
-        return null;
+        return buffer.toByteBuffer(index, length);
     }
 }

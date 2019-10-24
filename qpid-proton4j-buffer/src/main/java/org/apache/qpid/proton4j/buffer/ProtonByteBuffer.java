@@ -104,18 +104,6 @@ public class ProtonByteBuffer extends ProtonAbstractByteBuffer {
     }
 
     @Override
-    public ProtonBuffer duplicate() {
-        ProtonByteBuffer dup = new ProtonByteBuffer(array, maxCapacity());
-        return dup.setIndex(readIndex, writeIndex);
-    }
-
-    @Override
-    public ProtonBuffer slice(int index, int length) {
-        checkIndex(index, length);
-        return new ProtonByteBufferSlice(this, index, length);
-    }
-
-    @Override
     public ProtonBuffer copy(int index, int length) {
         checkIndex(index, length);
         byte[] copyOf = new byte[length];

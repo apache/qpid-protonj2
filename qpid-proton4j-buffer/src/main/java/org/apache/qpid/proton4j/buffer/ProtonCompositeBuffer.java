@@ -17,33 +17,79 @@
 package org.apache.qpid.proton4j.buffer;
 
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
 
 /**
  * A composite of 1 or more ProtonBuffer instances used when aggregating buffer views.
  */
 public final class ProtonCompositeBuffer extends ProtonAbstractByteBuffer {
 
-    // Tracking of the buffers contained within this buffer instance.
-    protected int capacity;
-    protected int currentIndex;
-    protected final ArrayList<ProtonBuffer> buffers = new ArrayList<>();
+    /**
+     * Aggregated count of all readable bytes in all buffers in the composite.
+     */
+    private int capacity;
+
+    /**
+     * Current number of ProtonBuffer chunks that are contained in this composite.
+     */
+    private int totalChunks;
+
+    /**
+     * The current chunk that a read should start from which is advanced as reads consume chunks.
+     */
+    private Chunk currentChunk;
+
+    /**
+     * The fixed head pointer for the chain of buffer chunks
+     */
+    private final Chunk head;
+
+    /**
+     * The fixed tail pointer for the chain of buffer chunks
+     */
+    private final Chunk tail;
 
     /**
      * @param maximumCapacity
      */
     protected ProtonCompositeBuffer(int maximumCapacity) {
         super(maximumCapacity);
+
+        this.head = new Chunk(null);
+        this.tail = new Chunk(null);
+
+        this.head.next(tail);
+        this.tail.prev(head);
     }
 
-    public void addBuffer(ProtonBuffer newAddition) {
+    public ProtonCompositeBuffer addBuffer(ProtonBuffer newAddition) {
+        if (!newAddition.isReadable()) {
+            return this;
+        }
+
         capacity += newAddition.capacity();
-        buffers.add(newAddition);
+        totalChunks++;
+
+        Chunk newChunk = new Chunk(newAddition);
+
+        // New node linked into end of chain
+        newChunk.prev(tail.prev());
+        newChunk.next(tail);
+
+        // Preview end of chain now linked to new end.
+        tail.prev().next(newChunk);
+        tail.prev(newChunk);
+
+        // First chunk now so reset the group data.
+        if (currentChunk == null) {
+            currentChunk = newChunk;
+        }
+
+        return this;
     }
 
     @Override
     public boolean hasArray() {
-        if (buffers.size() == 1 && buffers.get(0).hasArray()) {
+        if (totalChunks == 1 && currentChunk.buffer.hasArray()) {
             return true;
         } else {
             return false;
@@ -52,12 +98,20 @@ public final class ProtonCompositeBuffer extends ProtonAbstractByteBuffer {
 
     @Override
     public byte[] getArray() {
-        return buffers.get(0).getArray();
+        if (hasArray()) {
+            return currentChunk.buffer.getArray();
+        }
+
+        throw new UnsupportedOperationException("Buffer does not have a backing array.");
     }
 
     @Override
     public int getArrayOffset() {
-        return buffers.get(0).getArrayOffset();
+        if (hasArray()) {
+            return currentChunk.buffer.getArrayOffset();
+        }
+
+        throw new UnsupportedOperationException("Buffer does not have a backing array.");
     }
 
     @Override
@@ -70,9 +124,8 @@ public final class ProtonCompositeBuffer extends ProtonAbstractByteBuffer {
         checkNewCapacity(newCapacity);
 
         if (newCapacity > capacity) {
-            // TODO - Add a new buffer that is the size of the needed capacity
-            //        the write index remains where it is so it can advance now
-            //        to the new capacity mark.
+            int amountNeeded = newCapacity - capacity;
+            addBuffer(ProtonByteBufferAllocator.DEFAULT.allocate(amountNeeded, amountNeeded));
         } else if (newCapacity < capacity) {
             // TODO - Reduce the buffers in the arrays until we get to one that
             //        can be copied into a smaller buffer that would meet the
@@ -189,5 +242,63 @@ public final class ProtonCompositeBuffer extends ProtonAbstractByteBuffer {
     public ByteBuffer toByteBuffer(int index, int length) {
         // TODO Auto-generated method stub
         return null;
+    }
+
+    /*
+     * A chunk of the composite buffer which holds the back buffer for that chunk and any
+     * additional data needed to represent this chunk in the chain.  Chucks are chained in
+     * order by link the first Chunk to the next using the next entry value.
+     */
+    private static class Chunk {
+
+        private final ProtonBuffer buffer;
+        private final int chunkSize;
+
+        // We can more quickly traverse the chunks to locate an index read / write
+        // by tracking in this chunk where it lives in the buffer scope.
+        private final int startIndex;
+        private final int endIndex;
+
+        private Chunk next;
+        private Chunk prev;
+
+        public Chunk(ProtonBuffer buffer) {
+            this.buffer = buffer;
+            this.chunkSize = buffer != null ? buffer.getReadableBytes() : 0;
+
+            // TODO - Future track what indices this chunk contains
+            this.startIndex = 0;
+            this.endIndex = 0;
+        }
+
+        public int size() {
+            return chunkSize;
+        }
+
+        public Chunk next() {
+            return next;
+        }
+
+        public Chunk next(Chunk next) {
+            this.next = next;
+            return this;
+        }
+
+        public Chunk prev() {
+            return prev;
+        }
+
+        public Chunk prev(Chunk prev) {
+            this.prev = prev;
+            return this;
+        }
+
+        public boolean isInRange(int index) {
+            if (index >= startIndex && index <= endIndex) {
+                return true;
+            } else {
+                return false;
+            }
+        }
     }
 }

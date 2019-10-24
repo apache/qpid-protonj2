@@ -169,7 +169,15 @@ public abstract class ProtonAbstractByteBuffer implements ProtonBuffer {
     }
 
     @Override
-    public abstract ProtonBuffer slice(int index, int length);
+    public ProtonBuffer slice(int index, int length) {
+        checkIndex(index, length);
+        return new ProtonByteBufferSlice(this, index, length);
+    }
+
+    @Override
+    public ProtonBuffer duplicate() {
+        return new ProtonDuplicatedByteBuffer(this);
+    }
 
     @Override
     public ProtonBuffer copy() {

@@ -23,7 +23,7 @@ import java.nio.ByteBuffer;
  */
 public class ProtonByteBufferSlice extends ProtonAbstractByteBuffer {
 
-    private final ProtonByteBuffer buffer;
+    private final ProtonAbstractByteBuffer buffer;
     private final int indexOffset;
 
     /**
@@ -36,7 +36,7 @@ public class ProtonByteBufferSlice extends ProtonAbstractByteBuffer {
      * @param capacity
      *      The amount of the buffer that this view spans.
      */
-    protected ProtonByteBufferSlice(ProtonByteBuffer buffer, int offset, int capacity) {
+    protected ProtonByteBufferSlice(ProtonAbstractByteBuffer buffer, int offset, int capacity) {
         super(capacity);
 
         checkSliceOutOfBounds(offset, capacity, buffer);
@@ -306,7 +306,7 @@ public class ProtonByteBufferSlice extends ProtonAbstractByteBuffer {
 
     //----- Internal utility methods -----------------------------------------//
 
-    static void checkSliceOutOfBounds(int index, int length, ProtonByteBuffer buffer) {
+    static void checkSliceOutOfBounds(int index, int length, ProtonAbstractByteBuffer buffer) {
         if (isOutOfBounds(index, length, buffer.capacity())) {
             throw new IndexOutOfBoundsException(buffer + ".slice(" + index + ", " + length + ')');
         }
