@@ -234,6 +234,40 @@ public class ConnectionTest extends AMQPerativeTestCase {
 
             connection.close().get(10, TimeUnit.SECONDS);
 
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+            LOG.info("Connect test completed normally");
+        }
+    }
+
+    @Test(timeout = 60000)
+    public void testConnectionCloseTimeoutWhenNoRemoteCloseArrives() throws Exception {
+        try (NettyTestPeer peer = new NettyTestPeer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectClose();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Connect test started, peer listening on: {}", remoteURI);
+
+            ConnectionOptions options = new ConnectionOptions();
+            options.setCloseTimeout(100);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), options);
+
+            connection.openFuture().get(10, TimeUnit.SECONDS);
+
+            // Shouldn't throw from close, nothing to be done anyway.
+            try {
+                connection.close().get(10, TimeUnit.SECONDS);
+            } catch (Throwable error) {
+                LOG.info("connection close failed with error: ", error);
+                fail("Close should ignore lack of close response and complete without error.");
+            }
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
             LOG.info("Connect test completed normally");
         }
     }

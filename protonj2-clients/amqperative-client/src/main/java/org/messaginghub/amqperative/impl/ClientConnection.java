@@ -34,6 +34,7 @@ import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 import java.util.function.Supplier;
 
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import org.apache.qpid.proton4j.engine.ConnectionState;
 import org.apache.qpid.proton4j.engine.Engine;
 import org.apache.qpid.proton4j.engine.EngineFactory;
 import org.apache.qpid.proton4j.engine.sasl.client.SaslAuthenticator;
@@ -150,18 +151,33 @@ public class ClientConnection implements Connection {
     @Override
     public Future<Connection> close() {
         if (CLOSED_UPDATER.compareAndSet(this, 0, 1) && !openFuture.isFailed()) {
-            executor.execute(() -> {
-                try {
-                    protonConnection.close();
-                } catch (Throwable ignored) {
-                    LOG.trace("Error on attempt to close proton connection was ignored");
+            if (executor != null && !executor.isShutdown()) {
+                executor.execute(() -> {
                     try {
-                        transport.close();
-                    } catch (IOException ignore) {}
-                    closeFuture.complete(ClientConnection.this);
+                        if (protonConnection != null) {
+                            protonConnection.close();
+                        }
+                    } catch (Throwable ignored) {
+                        protonConnection = null;
+                    }
+
+                    if (protonConnection == null || protonConnection.getRemoteState() == ConnectionState.CLOSED) {
+                        try {
+                            transport.close();
+                        } catch (IOException ignore) {}
+
+                        closeFuture.complete(this);
+                    }
+                });
+
+                if (options.getCloseTimeout() > 0) {
+                    executor.schedule(() -> closeFuture.complete(this), options.getCloseTimeout(), TimeUnit.MILLISECONDS);
                 }
-            });
+            } else {
+                closeFuture.complete(this);
+            }
         }
+
         return closeFuture;
     }
 
@@ -551,7 +567,11 @@ public class ClientConnection implements Connection {
 
     protected void checkClosed() throws IllegalStateException {
         if (CLOSED_UPDATER.get(this) > 0) {
-            throw new IllegalStateException("The Connection is closed");
+            if (failureCause != null) {
+                throw new IllegalStateException("The connection has failed", failureCause);
+            } else {
+                throw new IllegalStateException("The Connection is closed");
+            }
         }
     }
 }
