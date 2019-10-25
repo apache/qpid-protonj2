@@ -365,8 +365,8 @@ public class ClientConnection implements Connection {
             //        From limited use of the API the current exception model may be a bit
             //        to vague and we may need to consider checked exceptions or at least
             //        some structured exceptions from the engine.
-            if (client.getContainerId() != null) {
-                protonConnection.setContainerId(client.getContainerId());
+            if (client.containerId() != null) {
+                protonConnection.setContainerId(client.containerId());
             }
 
             protonConnection.open().tickAuto(executor);

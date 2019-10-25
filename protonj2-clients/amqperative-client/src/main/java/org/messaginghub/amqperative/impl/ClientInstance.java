@@ -29,6 +29,7 @@ import org.messaginghub.amqperative.ClientOptions;
 import org.messaginghub.amqperative.Connection;
 import org.messaginghub.amqperative.ConnectionOptions;
 import org.messaginghub.amqperative.futures.ClientFutureFactory;
+import org.messaginghub.amqperative.impl.exceptions.ClientClosedException;
 import org.messaginghub.amqperative.util.IdGenerator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,6 +49,8 @@ public final class ClientInstance implements Client {
     private final ConnectionOptions defaultConnectionOptions = new ConnectionOptions();
     private final Map<String, ClientConnection> connections = new HashMap<>();
     private final String clientUniqueId = CONTAINER_ID_GENERATOR.generateId();
+
+    private volatile boolean closed;
 
     public static ClientInstance create() {
         return new ClientInstance(new ClientOptions());
@@ -69,27 +72,31 @@ public final class ClientInstance implements Client {
     }
 
     @Override
-    public Connection connect(String host, int port) throws ClientException {
-        return new ClientConnection(this, host, port, defaultConnectionOptions).connect().open();
+    public synchronized Connection connect(String host, int port) throws ClientException {
+        checkClosed();
+        return addConnection(new ClientConnection(this, host, port, defaultConnectionOptions).connect().open());
     }
 
     @Override
-    public Connection connect(String host, int port, ConnectionOptions options) throws ClientException {
-        return new ClientConnection(this, host, port, new ConnectionOptions(options)).connect().open();
+    public synchronized Connection connect(String host, int port, ConnectionOptions options) throws ClientException {
+        checkClosed();
+        return addConnection(new ClientConnection(this, host, port, new ConnectionOptions(options)).connect().open());
     }
 
     @Override
-    public Connection connect(String host) throws ClientException {
-        return new ClientConnection(this, host, -1, defaultConnectionOptions).connect().open();
+    public synchronized Connection connect(String host) throws ClientException {
+        checkClosed();
+        return addConnection(new ClientConnection(this, host, -1, defaultConnectionOptions).connect().open());
     }
 
     @Override
-    public Connection connect(String host, ConnectionOptions options) throws ClientException {
-        return new ClientConnection(this, host, -1, new ConnectionOptions(options)).connect().open();
+    public synchronized Connection connect(String host, ConnectionOptions options) throws ClientException {
+        checkClosed();
+        return addConnection(new ClientConnection(this, host, -1, new ConnectionOptions(options)).connect().open());
     }
 
     @Override
-    public String getContainerId() {
+    public String containerId() {
         return options.containerId();
     }
 
@@ -98,11 +105,13 @@ public final class ClientInstance implements Client {
     }
 
     @Override
-    public Future<Client> close() {
-        //TODO: prevent new connections being created after calling close
+    public synchronized Future<Client> close() {
+        if (!closed) {
+            closed = true;
 
-        synchronized (connections) {
             List<Connection> connectionsView = new ArrayList<>(connections.values());
+            connectionsView.forEach((connection) -> connection.close());
+
             for (Connection connection : connectionsView) {
                 try {
                     connection.close().get();
@@ -110,25 +119,33 @@ public final class ClientInstance implements Client {
                     LOG.trace("Error while closing connection, ignoring", ignored);
                 }
             }
-        }
 
-        //TODO: await the actual futures above after starting the process.
-        return ClientFutureFactory.completedFuture(this);
+            //TODO: await the actual futures above after starting the process.
+            //      we don't have a future that can aggregate the futures from above.
+            return ClientFutureFactory.completedFuture(this);
+        } else {
+            return ClientFutureFactory.completedFuture(this);
+        }
     }
 
     //----- Internal API
+
+    private void checkClosed() throws ClientClosedException {
+        if (closed) {
+            throw new ClientClosedException("Cannot create new connections, the Client has been closed.");
+        }
+    }
 
     String nextConnectionId() {
         return getClientUniqueId() + ":" + CONNECTION_COUNTER.incrementAndGet();
     }
 
-    void addConnection(ClientConnection connection) {
-        synchronized (connections) {
-            this.connections.put(connection.getId(), connection);
-        }
+    private ClientConnection addConnection(ClientConnection connection) {
+        this.connections.put(connection.getId(), connection);
+        return connection;
     }
 
-    void removeConnection(ClientConnection connection) {
+    void unregisterConnection(ClientConnection connection) {
         synchronized (connections) {
             this.connections.remove(connection.getId());
         }

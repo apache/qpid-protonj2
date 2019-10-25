@@ -19,9 +19,12 @@ package org.messaginghub.amqperative;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import org.junit.Test;
+import org.messaginghub.amqperative.impl.ClientException;
+import org.messaginghub.amqperative.impl.exceptions.ClientClosedException;
 import org.messaginghub.amqperative.test.AMQPerativeTestCase;
 
 /**
@@ -56,7 +59,41 @@ public class ClientTest extends AMQPerativeTestCase {
         assertNotNull(options.containerId());
 
         Client client = Client.create(options);
-        assertNotNull(client.getContainerId());
-        assertEquals(id, client.getContainerId());
+        assertNotNull(client.containerId());
+        assertEquals(id, client.containerId());
+    }
+
+    @Test
+    public void testCoseClientAndConnectShouldFail() throws ClientException {
+        Client client = Client.create();
+        assertTrue(client.close().isDone());
+
+        try {
+            client.connect("localhost");
+            fail("Should enforce no new connections on Client close");
+        } catch (ClientClosedException closed) {
+            // Expected
+        }
+
+        try {
+            client.connect("localhost", new ConnectionOptions());
+            fail("Should enforce no new connections on Client close");
+        } catch (ClientClosedException closed) {
+            // Expected
+        }
+
+        try {
+            client.connect("localhost", 5672);
+            fail("Should enforce no new connections on Client close");
+        } catch (ClientClosedException closed) {
+            // Expected
+        }
+
+        try {
+            client.connect("localhost", 5672, new ConnectionOptions());
+            fail("Should enforce no new connections on Client close");
+        } catch (ClientClosedException closed) {
+            // Expected
+        }
     }
 }

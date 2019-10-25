@@ -48,7 +48,7 @@ public interface Client {
     /**
      * @return the container id assigned to this {@link Client} instance.
      */
-    String getContainerId();
+    String containerId();
 
     /**
      * Closes all currently open {@link Connection} instances created by this client.
