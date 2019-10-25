@@ -45,6 +45,7 @@ public final class ClientInstance implements Client {
 
     private final AtomicInteger CONNECTION_COUNTER = new AtomicInteger();
     private final ClientOptions options;
+    private final ConnectionOptions defaultConnectionOptions = new ConnectionOptions();
     private final Map<String, ClientConnection> connections = new HashMap<>();
     private final String clientUniqueId = CONTAINER_ID_GENERATOR.generateId();
 
@@ -69,22 +70,22 @@ public final class ClientInstance implements Client {
 
     @Override
     public Connection connect(String host, int port) throws ClientException {
-        return new ClientConnection(this, new ClientConnectionOptions(host, port)).connect().open();
+        return new ClientConnection(this, host, port, defaultConnectionOptions).connect().open();
     }
 
     @Override
     public Connection connect(String host, int port, ConnectionOptions options) throws ClientException {
-        return new ClientConnection(this, new ClientConnectionOptions(host, port, options)).connect().open();
+        return new ClientConnection(this, host, port, new ConnectionOptions(options)).connect().open();
     }
 
     @Override
     public Connection connect(String host) throws ClientException {
-        return new ClientConnection(this, new ClientConnectionOptions(host, -1)).connect().open();
+        return new ClientConnection(this, host, -1, defaultConnectionOptions).connect().open();
     }
 
     @Override
     public Connection connect(String host, ConnectionOptions options) throws ClientException {
-        return new ClientConnection(this, new ClientConnectionOptions(host, -1, options)).connect().open();
+        return new ClientConnection(this, host, -1, new ConnectionOptions(options)).connect().open();
     }
 
     @Override

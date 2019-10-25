@@ -42,6 +42,7 @@ import org.apache.qpid.proton4j.engine.sasl.client.SaslCredentialsProvider;
 import org.apache.qpid.proton4j.engine.sasl.client.SaslMechanismSelector;
 import org.messaginghub.amqperative.Client;
 import org.messaginghub.amqperative.Connection;
+import org.messaginghub.amqperative.ConnectionOptions;
 import org.messaginghub.amqperative.Message;
 import org.messaginghub.amqperative.Receiver;
 import org.messaginghub.amqperative.ReceiverOptions;
@@ -79,7 +80,7 @@ public class ClientConnection implements Connection {
             AtomicReferenceFieldUpdater.newUpdater(ClientConnection.class, ClientException.class, "failureCause");
 
     private final ClientInstance client;
-    private final ClientConnectionOptions options;
+    private final ConnectionOptions options;
     private final ClientFutureFactory futureFactoy;
 
     private final Map<ClientFuture<?>, ClientFuture<?>> requests = new ConcurrentHashMap<>();
@@ -105,12 +106,16 @@ public class ClientConnection implements Connection {
      * Create a connection and define the initial configuration used to manage the
      * connection to the remote.
      *
+     * @param host
+     * 		the host that this connection is connecting to.
+     * @param port
+     * 		the port on the remote host where this connection attaches.
      * @param client
      *      the {@link Client} that this connection resides within.
      * @param options
      *      the connection options that configure this {@link Connection} instance.
      */
-    public ClientConnection(ClientInstance client, ClientConnectionOptions options) {
+    public ClientConnection(ClientInstance client, String host, int port, ConnectionOptions options) {
         this.client = client;
         this.options = options;
         this.connectionId = client.nextConnectionId();
@@ -125,10 +130,10 @@ public class ClientConnection implements Connection {
 
         ThreadFactory transportThreadFactory = new ClientThreadFactory(
             "ProtonConnection :(" + CONNECTION_SEQUENCE.incrementAndGet()
-                          + "):[" + options.getHostname() + ":" + options.getPort() + "]", true);
+                          + "):[" + host + ":" + port + "]", true);
 
-        transport = new TransportBuilder().host(options.getHostname())
-                                          .port(options.getPort())
+        transport = new TransportBuilder().host(host)
+                                          .port(port)
                                           .transportOptions(options.transportOptions())
                                           .sslOptions(options.sslOptions())
                                           .transportListener(new ClientTransportListener(this))
@@ -189,14 +194,14 @@ public class ClientConnection implements Connection {
 
     @Override
     public Session openSession() throws ClientException {
-        return openSession(options.getDefaultSessionOptions());
+        return openSession(getDefaultSessionOptions());
     }
 
     @Override
     public Session openSession(SessionOptions sessionOptions) throws ClientException {
         checkClosed();
         final ClientFuture<Session> createSession = getFutureFactory().createFuture();
-        final SessionOptions sessionOpts = sessionOptions == null ? options.getDefaultSessionOptions() : sessionOptions;
+        final SessionOptions sessionOpts = sessionOptions == null ? getDefaultSessionOptions() : sessionOptions;
 
         executor.execute(() -> {
             try {
@@ -214,7 +219,7 @@ public class ClientConnection implements Connection {
 
     @Override
     public Receiver openReceiver(String address) throws ClientException {
-        return openReceiver(address, options.getDefaultReceiverOptions());
+        return openReceiver(address, getDefaultReceiverOptions());
     }
 
     @Override
@@ -222,7 +227,7 @@ public class ClientConnection implements Connection {
         checkClosed();
         Objects.requireNonNull(address, "Cannot create a receiver with a null address");
         final ClientFuture<Receiver> createReceiver = getFutureFactory().createFuture();
-        final ReceiverOptions receiverOpts = receiverOptions == null ? options.getDefaultReceiverOptions() : receiverOptions;
+        final ReceiverOptions receiverOpts = receiverOptions == null ? getDefaultReceiverOptions() : receiverOptions;
 
         executor.execute(() -> {
             try {
@@ -243,7 +248,7 @@ public class ClientConnection implements Connection {
 
     @Override
     public Sender openSender(String address) throws ClientException {
-        return openSender(address, options.getDefaultSenderOptions());
+        return openSender(address, getDefaultSenderOptions());
     }
 
     @Override
@@ -251,7 +256,7 @@ public class ClientConnection implements Connection {
         checkClosed();
         Objects.requireNonNull(address, "Cannot create a sender with a null address");
         final ClientFuture<Sender> createSender = getFutureFactory().createFuture();
-        final SenderOptions senderOpts = senderOptions == null ? options.getDefaultSenderOptions() : senderOptions;
+        final SenderOptions senderOpts = senderOptions == null ? getDefaultSenderOptions() : senderOptions;
 
         executor.execute(() -> {
             try {
@@ -274,7 +279,7 @@ public class ClientConnection implements Connection {
     public Sender openAnonymousSender(SenderOptions senderOptions) throws ClientException {
         checkClosed();
         final ClientFuture<Sender> createSender = getFutureFactory().createFuture();
-        final SenderOptions senderOpts = senderOptions == null ? options.getDefaultSenderOptions() : senderOptions;
+        final SenderOptions senderOpts = senderOptions == null ? getDefaultSenderOptions() : senderOptions;
 
         executor.execute(() -> {
             try {
@@ -323,6 +328,7 @@ public class ClientConnection implements Connection {
                 configureEngineSaslSupport();
 
                 protonConnection = engine.start();
+                configureConnection(protonConnection);
                 protonConnection.openHandler(connection -> handleRemoteOpen(connection))
                                 .closeHandler(connection -> handleRemotecClose(connection));
 
@@ -363,7 +369,7 @@ public class ClientConnection implements Connection {
                 protonConnection.setContainerId(client.getContainerId());
             }
 
-            options.configureConnection(protonConnection).open().tickAuto(executor);
+            protonConnection.open().tickAuto(executor);
         });
 
         return this;
@@ -389,7 +395,7 @@ public class ClientConnection implements Connection {
         return failureCause;
     }
 
-    ClientConnectionOptions getOptions() {
+    ConnectionOptions getOptions() {
         return options;
     }
 
@@ -546,9 +552,19 @@ public class ClientConnection implements Connection {
         return engine;
     }
 
+    private void configureConnection(org.apache.qpid.proton4j.engine.Connection protonConnection) {
+        protonConnection.setChannelMax(options.getChannelMax());
+        protonConnection.setMaxFrameSize(options.getMaxFrameSize());
+        protonConnection.setHostname(transport.getHost());
+        protonConnection.setIdleTimeout((int) options.getIdleTimeout());
+        protonConnection.setOfferedCapabilities(ClientConversionSupport.toSymbolArray(options.getOfferedCapabilities()));
+        protonConnection.setDesiredCapabilities(ClientConversionSupport.toSymbolArray(options.getDesiredCapabilities()));
+        protonConnection.setProperties(ClientConversionSupport.toSymbolKeyedMap(options.getProperties()));
+    }
+
     private ClientSession lazyCreateConnectionSession() {
         if (connectionSession == null) {
-            connectionSession = new ClientSession(options.getDefaultSessionOptions(), this, protonConnection.session());
+            connectionSession = new ClientSession(getDefaultSessionOptions(), this, protonConnection.session());
             sessions.add(connectionSession);
             try {
                 connectionSession.open();
@@ -564,7 +580,7 @@ public class ClientConnection implements Connection {
         if (connectionSender == null) {
             // TODO - Ensure this creates an anonymous sender
             // TODO - What if remote doesn't support anonymous?
-            connectionSender = lazyCreateConnectionSession().internalCreateSender(null, options.getDefaultSenderOptions()).open();
+            connectionSender = lazyCreateConnectionSession().internalCreateSender(null, getDefaultSenderOptions()).open();
         }
 
         return connectionSender;
@@ -578,5 +594,78 @@ public class ClientConnection implements Connection {
                 throw new ClientClosedException("The Connection is closed");
             }
         }
+    }
+
+    private SessionOptions defaultSessionOptions;
+    private SenderOptions defaultSenderOptions;
+    private ReceiverOptions defaultReceivernOptions;
+
+    /*
+     * Session options used when none specified by the caller creating a new session.
+     */
+    private SessionOptions getDefaultSessionOptions() {
+        SessionOptions sessionOptions = defaultSessionOptions;
+        if (sessionOptions == null) {
+            synchronized (this) {
+                sessionOptions = defaultSessionOptions;
+                if (sessionOptions == null) {
+                    sessionOptions = new SessionOptions();
+                    sessionOptions.setOpenTimeout(options.getOpenTimeout());
+                    sessionOptions.setCloseTimeout(options.getCloseTimeout());
+                    sessionOptions.setRequestTimeout(options.getRequestTimeout());
+                    sessionOptions.setSendTimeout(options.getSendTimeout());
+                }
+
+                defaultSessionOptions = sessionOptions;
+            }
+        }
+
+        return sessionOptions;
+    }
+
+    /*
+     * Sender options used when none specified by the caller creating a new sender.
+     */
+    private SenderOptions getDefaultSenderOptions() {
+        SenderOptions senderOptions = defaultSenderOptions;
+        if (senderOptions == null) {
+            synchronized (this) {
+                senderOptions = defaultSenderOptions;
+                if (senderOptions == null) {
+                    senderOptions = new SenderOptions();
+                    senderOptions.setOpenTimeout(options.getOpenTimeout());
+                    senderOptions.setCloseTimeout(options.getCloseTimeout());
+                    senderOptions.setRequestTimeout(options.getRequestTimeout());
+                    senderOptions.setSendTimeout(options.getSendTimeout());
+                }
+
+                defaultSenderOptions = senderOptions;
+            }
+        }
+
+        return senderOptions;
+    }
+
+    /*
+     * Receiver options used when none specified by the caller creating a new receiver.
+     */
+    private ReceiverOptions getDefaultReceiverOptions() {
+        ReceiverOptions receiverOptions = defaultReceivernOptions;
+        if (receiverOptions == null) {
+            synchronized (this) {
+                receiverOptions = defaultReceivernOptions;
+                if (receiverOptions == null) {
+                    receiverOptions = new ReceiverOptions();
+                    receiverOptions.setOpenTimeout(options.getOpenTimeout());
+                    receiverOptions.setCloseTimeout(options.getCloseTimeout());
+                    receiverOptions.setRequestTimeout(options.getRequestTimeout());
+                    receiverOptions.setSendTimeout(options.getSendTimeout());
+                }
+
+                defaultReceivernOptions = receiverOptions;
+            }
+        }
+
+        return receiverOptions;
     }
 }

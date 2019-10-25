@@ -16,6 +16,9 @@
  */
 package org.messaginghub.amqperative.impl;
 
+import static org.messaginghub.amqperative.impl.ClientConstants.DEFAULT_SUPPORTED_OUTCOMES;
+import static org.messaginghub.amqperative.impl.ClientConstants.MODIFIED_FAILED;
+
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
@@ -23,6 +26,8 @@ import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
+import org.apache.qpid.proton4j.amqp.messaging.Source;
+import org.apache.qpid.proton4j.amqp.messaging.Target;
 import org.apache.qpid.proton4j.amqp.transport.DeliveryState;
 import org.apache.qpid.proton4j.engine.IncomingDelivery;
 import org.apache.qpid.proton4j.engine.LinkState;
@@ -46,7 +51,7 @@ public class ClientReceiver implements Receiver {
     private final ClientFuture<Receiver> openFuture;
     private final ClientFuture<Receiver> closeFuture;
 
-    private final ClientReceiverOptions options;
+    private final ReceiverOptions options;
     private final ClientSession session;
     private final org.apache.qpid.proton4j.engine.Receiver protonReceiver;
     private final ScheduledExecutorService executor;
@@ -56,7 +61,7 @@ public class ClientReceiver implements Receiver {
     private volatile int closed;
 
     public ClientReceiver(ReceiverOptions options, ClientSession session, String address) {
-        this.options = new ClientReceiverOptions(options);
+        this.options = new ReceiverOptions(options);
         this.session = session;
         this.receiverId = session.nextReceiverId();
         this.executor = session.getScheduler();
@@ -69,7 +74,7 @@ public class ClientReceiver implements Receiver {
             this.protonReceiver = session.getProtonSession().receiver("receiver-" + getId());
         }
 
-        this.options.configureReceiver(protonReceiver, address);
+        configureReceiver(address);
 
         if (options.getCreditWindow() > 0) {
             protonReceiver.setCredit(options.getCreditWindow());
@@ -323,5 +328,21 @@ public class ClientReceiver implements Receiver {
 
             throw error;
         }
+    }
+
+    private void configureReceiver(String address) {
+        protonReceiver.setOfferedCapabilities(ClientConversionSupport.toSymbolArray(options.getOfferedCapabilities()));
+        protonReceiver.setDesiredCapabilities(ClientConversionSupport.toSymbolArray(options.getDesiredCapabilities()));
+        protonReceiver.setProperties(ClientConversionSupport.toSymbolKeyedMap(options.getProperties()));
+
+        //TODO: flesh out source configuration
+        Source source = new Source();
+        source.setAddress(address);
+        // TODO - User somehow sets their own desired outcomes for this receiver source.
+        source.setOutcomes(DEFAULT_SUPPORTED_OUTCOMES);
+        source.setDefaultOutcome(MODIFIED_FAILED);
+
+        protonReceiver.setSource(source);
+        protonReceiver.setTarget(new Target());
     }
 }
