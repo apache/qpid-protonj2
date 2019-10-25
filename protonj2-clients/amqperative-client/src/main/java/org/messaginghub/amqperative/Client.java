@@ -19,6 +19,7 @@ package org.messaginghub.amqperative;
 import java.util.Objects;
 import java.util.concurrent.Future;
 
+import org.messaginghub.amqperative.impl.ClientException;
 import org.messaginghub.amqperative.impl.ClientInstance;
 import org.messaginghub.amqperative.impl.ClientInstanceOptions;
 
@@ -72,8 +73,10 @@ public interface Client {
      *            the port to connect to
      *
      * @return connection, establishment not yet completed
+     *
+     * @throws ClientException if the {@link Client} is closed or an error occurs during connect.
      */
-    Connection connect(String host, int port);
+    Connection connect(String host, int port) throws ClientException;
 
     /**
      * Connect to the specified host and port, with given connection options.
@@ -86,8 +89,10 @@ public interface Client {
      *            options to use when creating the connection.
      *
      * @return connection, establishment not yet completed
+     *
+     * @throws ClientException if the {@link Client} is closed or an error occurs during connect.
      */
-    Connection connect(String host, int port, ConnectionOptions options);
+    Connection connect(String host, int port, ConnectionOptions options) throws ClientException;
 
     /**
      * Connect to the specified host, using the default port, without credentials and with all
@@ -97,8 +102,10 @@ public interface Client {
      *            the host to connect to
      *
      * @return connection, establishment not yet completed
+     *
+     * @throws ClientException if the {@link Client} is closed or an error occurs during connect.
      */
-    Connection connect(String host);
+    Connection connect(String host) throws ClientException;
 
     /**
      * Connect to the specified host, using the default port, without credentials and with all
@@ -110,6 +117,9 @@ public interface Client {
      *            options to use when creating the connection.
      *
      * @return connection, establishment not yet completed
+     *
+     * @throws ClientException if the {@link Client} is closed or an error occurs during connect.
      */
-    Connection connect(String host, ConnectionOptions options);
+    Connection connect(String host, ConnectionOptions options) throws ClientException;
+
 }

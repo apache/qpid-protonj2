@@ -52,23 +52,23 @@ public class ClientInstance implements Client {
     }
 
     @Override
-    public Connection connect(String hostname, int port) {
+    public Connection connect(String hostname, int port) throws ClientException {
         return new ClientConnection(this, new ClientConnectionOptions(hostname, port)).connect().open();
     }
 
     @Override
-    public Connection connect(String hostname, int port, ConnectionOptions options) {
+    public Connection connect(String hostname, int port, ConnectionOptions options) throws ClientException {
         return new ClientConnection(this, new ClientConnectionOptions(hostname, port, options)).connect().open();
     }
 
     @Override
-    public Connection connect(String host) {
+    public Connection connect(String host) throws ClientException {
         // TODO: implement
         throw new UnsupportedOperationException("Not implemented");
     }
 
     @Override
-    public Connection connect(String host, ConnectionOptions options) {
+    public Connection connect(String host, ConnectionOptions options) throws ClientException {
         // TODO: implement
         throw new UnsupportedOperationException("Not implemented");
     }

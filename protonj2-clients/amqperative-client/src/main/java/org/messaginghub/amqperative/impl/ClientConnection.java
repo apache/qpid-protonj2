@@ -53,6 +53,7 @@ import org.messaginghub.amqperative.Tracker;
 import org.messaginghub.amqperative.futures.AsyncResult;
 import org.messaginghub.amqperative.futures.ClientFuture;
 import org.messaginghub.amqperative.futures.ClientFutureFactory;
+import org.messaginghub.amqperative.impl.exceptions.ClientClosedException;
 import org.messaginghub.amqperative.impl.exceptions.ClientConnectionRemotelyClosedException;
 import org.messaginghub.amqperative.impl.exceptions.ClientExceptionSupport;
 import org.messaginghub.amqperative.transport.Transport;
@@ -198,9 +199,14 @@ public class ClientConnection implements Connection {
         final SessionOptions sessionOpts = sessionOptions == null ? options.getDefaultSessionOptions() : sessionOptions;
 
         executor.execute(() -> {
-            ClientSession session = new ClientSession(sessionOpts, ClientConnection.this, protonConnection.session());
-            sessions.add(session);
-            createSession.complete(session.open());
+            try {
+                checkClosed();
+                ClientSession session = new ClientSession(sessionOpts, ClientConnection.this, protonConnection.session());
+                sessions.add(session);
+                createSession.complete(session.open());
+            } catch (Throwable error) {
+                createSession.failed(ClientExceptionSupport.createNonFatalOrPassthrough(error));
+            }
         });
 
         return request(createSession, options.getRequestTimeout(), TimeUnit.MILLISECONDS);
@@ -338,7 +344,7 @@ public class ClientConnection implements Connection {
         return this;
     }
 
-    ClientConnection open() {
+    ClientConnection open() throws ClientException {
         // TODO - This throws IllegalStateException which might be confusing.  The client could
         //        throw ClientException with a failure cause if connect failed.  Or could return
         //        and allow openFuture.get() to fail but that might also be confusing.
@@ -489,7 +495,6 @@ public class ClientConnection implements Connection {
             transport.writeAndFlush(output);
         } catch (IOException e) {
             LOG.warn("Error while writing engine output to transport:", e);
-            e.printStackTrace();
             // TODO - Engine should handle thrown errors but we already see this one
             handleEngineErrors(e);
         }
@@ -565,12 +570,12 @@ public class ClientConnection implements Connection {
         return connectionSender;
     }
 
-    protected void checkClosed() throws IllegalStateException {
+    protected void checkClosed() throws ClientClosedException {
         if (CLOSED_UPDATER.get(this) > 0) {
             if (failureCause != null) {
-                throw new IllegalStateException("The connection has failed", failureCause);
+                throw new ClientClosedException("The Connection failed", failureCause);
             } else {
-                throw new IllegalStateException("The Connection is closed");
+                throw new ClientClosedException("The Connection is closed");
             }
         }
     }
