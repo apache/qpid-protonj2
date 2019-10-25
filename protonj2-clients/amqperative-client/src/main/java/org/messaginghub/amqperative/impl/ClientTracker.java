@@ -16,6 +16,7 @@
  */
 package org.messaginghub.amqperative.impl;
 
+import org.apache.qpid.proton4j.amqp.DeliveryTag;
 import org.apache.qpid.proton4j.amqp.messaging.Accepted;
 import org.apache.qpid.proton4j.engine.OutgoingDelivery;
 import org.messaginghub.amqperative.DeliveryState;
@@ -96,8 +97,7 @@ public class ClientTracker implements Tracker {
     }
 
     @Override
-    public byte[] getTag() {
-        delivery.getTag();
-        return null;
+    public DeliveryTag getTag() {
+        return delivery.getTag();
     }
 }

@@ -16,6 +16,7 @@
  */
 package org.messaginghub.amqperative;
 
+import org.apache.qpid.proton4j.amqp.DeliveryTag;
 import org.messaginghub.amqperative.impl.ClientException;
 
 /**
@@ -109,7 +110,7 @@ public interface Delivery {
      *
      * @return the tag
      */
-    byte[] getTag();
+    DeliveryTag getTag();
 
     /**
      * Gets the message format for the current delivery.

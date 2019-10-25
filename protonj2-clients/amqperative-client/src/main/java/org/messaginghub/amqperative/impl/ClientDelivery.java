@@ -16,6 +16,7 @@
  */
 package org.messaginghub.amqperative.impl;
 
+import org.apache.qpid.proton4j.amqp.DeliveryTag;
 import org.apache.qpid.proton4j.amqp.messaging.Accepted;
 import org.apache.qpid.proton4j.engine.IncomingDelivery;
 import org.messaginghub.amqperative.Delivery;
@@ -109,7 +110,7 @@ public class ClientDelivery implements Delivery {
     }
 
     @Override
-    public byte[] getTag() {
+    public DeliveryTag getTag() {
         return delivery.getTag();
     }
 
