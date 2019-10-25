@@ -37,7 +37,7 @@ public class ClientTest extends AMQPerativeTestCase {
     @Test
     public void testCreateWithNoContainerIdFails() {
         ClientOptions options = new ClientOptions();
-        assertNull(options.getContainerId());
+        assertNull(options.containerId());
 
         try {
             Client.create(options);
@@ -52,8 +52,8 @@ public class ClientTest extends AMQPerativeTestCase {
         final String id = "test-id";
 
         ClientOptions options = new ClientOptions();
-        options.setContainerId(id);
-        assertNotNull(options.getContainerId());
+        options.containerId(id);
+        assertNotNull(options.containerId());
 
         Client client = Client.create(options);
         assertNotNull(client.getContainerId());

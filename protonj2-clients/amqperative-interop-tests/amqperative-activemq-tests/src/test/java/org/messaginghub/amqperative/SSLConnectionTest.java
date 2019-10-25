@@ -48,7 +48,7 @@ public class SSLConnectionTest extends AMQPerativeTestSupport {
     @Test(timeout = 60000)
     public void testCreateConnection() throws Exception {
         ClientOptions options = new ClientOptions();
-        options.setContainerId(UUID.randomUUID().toString());
+        options.containerId(UUID.randomUUID().toString());
         Client client = Client.create(options);
         assertNotNull(client);
 

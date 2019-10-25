@@ -52,11 +52,11 @@ public class SenderOptions {
     }
 
     public boolean isDynamic() {
-        return getTarget().isDynamic();
+        return targetOptions().isDynamic();
     }
 
     public SenderOptions setDynamic(boolean value) {
-        getTarget().setDynamic(value);
+        targetOptions().setDynamic(value);
         return this;
     }
 
@@ -173,14 +173,14 @@ public class SenderOptions {
     /**
      * @return the source
      */
-    public SourceOptions getSource() {
+    public SourceOptions sourceOptions() {
         return source;
     }
 
     /**
      * @return the target
      */
-    public TargetOptions getTarget() {
+    public TargetOptions targetOptions() {
         return target;
     }
 

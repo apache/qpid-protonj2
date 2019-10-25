@@ -70,11 +70,11 @@ public class ReceiverOptions {
     }
 
     public boolean isDynamic() {
-        return getSource().isDynamic();
+        return sourceOptions().isDynamic();
     }
 
     public ReceiverOptions setDynamic(boolean value) {
-        getSource().setDynamic(value);
+        sourceOptions().setDynamic(value);
         return this;
     }
 
@@ -155,14 +155,14 @@ public class ReceiverOptions {
     /**
      * @return the source
      */
-    public SourceOptions getSource() {
+    public SourceOptions sourceOptions() {
         return source;
     }
 
     /**
      * @return the target
      */
-    public TargetOptions getTarget() {
+    public TargetOptions targetOptions() {
         return target;
     }
 
@@ -193,8 +193,8 @@ public class ReceiverOptions {
             other.setProperties(new HashMap<>(properties));
         }
 
-        source.copyInto(other.getSource());
-        target.copyInto(other.getTarget());
+        source.copyInto(other.sourceOptions());
+        target.copyInto(other.targetOptions());
 
         return this;
     }

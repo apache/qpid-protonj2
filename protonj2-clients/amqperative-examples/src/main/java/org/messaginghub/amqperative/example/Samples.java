@@ -57,7 +57,7 @@ public class Samples {
         Client client = Client.create(); // No-arg
 
         ClientOptions options = new ClientOptions();
-        options.setContainerId(UUID.randomUUID().toString());
+        options.containerId(UUID.randomUUID().toString());
         Client client2 = Client.create(options); // With options
 
 
@@ -80,7 +80,7 @@ public class Samples {
         sender.openFuture().get(5, TimeUnit.SECONDS);
 
         SenderOptions senderOptions = new SenderOptions();
-        senderOptions.getTarget().setCapabilities(new String[]{"topic"});
+        senderOptions.targetOptions().setCapabilities(new String[]{"topic"});
         senderOptions.setSendTimeout(30_000);
         Sender sender2 = connection.openSender(address, senderOptions); // address and options
 
@@ -99,9 +99,9 @@ public class Samples {
         ReceiverOptions receiverOptions = new ReceiverOptions();
         //receiverOptions.setCreditWindow(10);
         receiverOptions.setLinkName("myLinkName");
-        receiverOptions.getSource().setDurabilityMode(DurabilityMode.CONFIGURATION);
-        receiverOptions.getSource().setExpiryPolicy(ExpiryPolicy.NEVER);
-        receiverOptions.getSource().setCapabilities(new String[]{"topic"});
+        receiverOptions.sourceOptions().setDurabilityMode(DurabilityMode.CONFIGURATION);
+        receiverOptions.sourceOptions().setExpiryPolicy(ExpiryPolicy.NEVER);
+        receiverOptions.sourceOptions().setCapabilities(new String[]{"topic"});
         Receiver receiver2 = connection.openReceiver(address, receiverOptions); // address and options
 
         // =============== Receive a message ===========

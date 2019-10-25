@@ -46,7 +46,7 @@ public class WSConnectionTest extends AMQPerativeTestSupport {
         URI brokerURI = getBrokerWebSocketConnectionURI();
 
         ClientOptions options = new ClientOptions();
-        options.setContainerId(UUID.randomUUID().toString());
+        options.containerId(UUID.randomUUID().toString());
         Client client = Client.create(options);
         assertNotNull(client);
 
@@ -69,7 +69,7 @@ public class WSConnectionTest extends AMQPerativeTestSupport {
         URI brokerURI = getBrokerWebSocketConnectionURI();
 
         ClientOptions options = new ClientOptions();
-        options.setContainerId(UUID.randomUUID().toString());
+        options.containerId(UUID.randomUUID().toString());
         Client client = Client.create(options);
         assertNotNull(client);
 

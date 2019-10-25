@@ -34,7 +34,7 @@ public class ClientOptions {
     /**
      * @return the ID configured the Container
      */
-    public String getContainerId() {
+    public String containerId() {
         return containerId;
     }
 
@@ -46,7 +46,7 @@ public class ClientOptions {
      *
      * @return this options class for chaining.
      */
-    public ClientOptions setContainerId(String containerId) {
+    public ClientOptions containerId(String containerId) {
         this.containerId = containerId;
         return this;
     }
@@ -61,7 +61,7 @@ public class ClientOptions {
      * @return this options class for chaining.
      */
     public ClientOptions copyInto(ClientOptions other) {
-        other.setContainerId(containerId);
+        other.containerId(containerId);
         return this;
     }
 }
