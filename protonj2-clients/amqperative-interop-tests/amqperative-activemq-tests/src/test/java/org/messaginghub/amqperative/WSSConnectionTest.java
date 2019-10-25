@@ -59,10 +59,10 @@ public class WSSConnectionTest extends AMQPerativeTestSupport {
 
         ConnectionOptions connectOpts = new ConnectionOptions();
         connectOpts.setSSLEnabled(true);
-        connectOpts.getSSLOptions().setTrustStoreLocation(TRUSTSTORE);
-        connectOpts.getSSLOptions().setTrustStorePassword(PASSWORD);
-        connectOpts.getSSLOptions().setVerifyHost(false);
-        connectOpts.getTransportOptions().setUseWebSockets(true);
+        connectOpts.sslOptions().setTrustStoreLocation(TRUSTSTORE);
+        connectOpts.sslOptions().setTrustStorePassword(PASSWORD);
+        connectOpts.sslOptions().setVerifyHost(false);
+        connectOpts.transportOptions().setUseWebSockets(true);
 
         Connection connection = client.connect(connectionURI.getHost(), connectionURI.getPort(), connectOpts);
         assertNotNull(connection);

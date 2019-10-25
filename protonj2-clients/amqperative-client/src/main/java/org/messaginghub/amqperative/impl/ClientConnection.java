@@ -129,8 +129,8 @@ public class ClientConnection implements Connection {
 
         transport = new TransportBuilder().host(options.getHostname())
                                           .port(options.getPort())
-                                          .transportOptions(options.getTransportOptions())
-                                          .sslOptions(options.getSSLOptions())
+                                          .transportOptions(options.transportOptions())
+                                          .sslOptions(options.sslOptions())
                                           .transportListener(new ClientTransportListener(this))
                                           .threadFactory(transportThreadFactory)
                                           .build();

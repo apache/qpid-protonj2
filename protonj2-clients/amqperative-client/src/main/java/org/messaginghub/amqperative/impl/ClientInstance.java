@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -28,6 +29,7 @@ import org.messaginghub.amqperative.ClientOptions;
 import org.messaginghub.amqperative.Connection;
 import org.messaginghub.amqperative.ConnectionOptions;
 import org.messaginghub.amqperative.futures.ClientFutureFactory;
+import org.messaginghub.amqperative.util.IdGenerator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,42 +37,54 @@ import org.slf4j.LoggerFactory;
  * Container of {@link Connection} instances that are all created with the same
  * container parent and therefore share the same container Id.
  */
-public class ClientInstance implements Client {
+public final class ClientInstance implements Client {
 
     private static final Logger LOG = LoggerFactory.getLogger(ClientInstance.class);
 
+    private static final IdGenerator CONTAINER_ID_GENERATOR = new IdGenerator();
+
     private final AtomicInteger CONNECTION_COUNTER = new AtomicInteger();
-    private final ClientInstanceOptions options;
+    private final ClientOptions options;
     private final Map<String, ClientConnection> connections = new HashMap<>();
+    private final String clientUniqueId = CONTAINER_ID_GENERATOR.generateId();
+
+    public static ClientInstance create() {
+        return new ClientInstance(new ClientOptions());
+    }
+
+    public static ClientInstance create(ClientOptions options) {
+        Objects.requireNonNull(options, "Client options must be non-null");
+        Objects.requireNonNull(options.getContainerId(), "User supplied container Id must be non-null");
+
+        return new ClientInstance(new ClientOptions(options));
+    }
 
     /**
      * @param options
      *      The container options to use to configure this container instance.
      */
-    public ClientInstance(ClientOptions options) {
-        this.options = new ClientInstanceOptions(options);
+    ClientInstance(ClientOptions options) {
+        this.options = options;
     }
 
     @Override
-    public Connection connect(String hostname, int port) throws ClientException {
-        return new ClientConnection(this, new ClientConnectionOptions(hostname, port)).connect().open();
+    public Connection connect(String host, int port) throws ClientException {
+        return new ClientConnection(this, new ClientConnectionOptions(host, port)).connect().open();
     }
 
     @Override
-    public Connection connect(String hostname, int port, ConnectionOptions options) throws ClientException {
-        return new ClientConnection(this, new ClientConnectionOptions(hostname, port, options)).connect().open();
+    public Connection connect(String host, int port, ConnectionOptions options) throws ClientException {
+        return new ClientConnection(this, new ClientConnectionOptions(host, port, options)).connect().open();
     }
 
     @Override
     public Connection connect(String host) throws ClientException {
-        // TODO: implement
-        throw new UnsupportedOperationException("Not implemented");
+        return new ClientConnection(this, new ClientConnectionOptions(host, -1)).connect().open();
     }
 
     @Override
     public Connection connect(String host, ConnectionOptions options) throws ClientException {
-        // TODO: implement
-        throw new UnsupportedOperationException("Not implemented");
+        return new ClientConnection(this, new ClientConnectionOptions(host, -1, options)).connect().open();
     }
 
     @Override
@@ -79,7 +93,7 @@ public class ClientInstance implements Client {
     }
 
     String getClientUniqueId() {
-        return options.getClientUniqueId();
+        return clientUniqueId;
     }
 
     @Override

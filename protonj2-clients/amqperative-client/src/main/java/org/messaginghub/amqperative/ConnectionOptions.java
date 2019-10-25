@@ -107,8 +107,8 @@ public class ConnectionOptions {
             other.setProperties(new HashMap<>(properties));
         }
 
-        transport.copyInto(other.getTransportOptions());
-        ssl.copyInto(other.getSSLOptions());
+        transport.copyInto(other.transportOptions());
+        ssl.copyInto(other.sslOptions());
 
         return this;
     }
@@ -342,14 +342,14 @@ public class ConnectionOptions {
     /**
      * @return the transport options that will be used for the {@link Connection}.
      */
-    public TransportOptions getTransportOptions() {
+    public TransportOptions transportOptions() {
         return transport;
     }
 
     /**
      * @return the SSL options that will be used for the {@link Connection}.
      */
-    public SslOptions getSSLOptions() {
+    public SslOptions sslOptions() {
         return ssl;
     }
 

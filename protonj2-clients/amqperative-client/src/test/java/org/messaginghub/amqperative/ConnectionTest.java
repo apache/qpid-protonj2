@@ -108,6 +108,32 @@ public class ConnectionTest extends AMQPerativeTestCase {
     }
 
     @Test(timeout = 60000)
+    public void testCreateConnectionStringWithDefaultTcpPort() throws Exception {
+        try (NettyTestPeer peer = new NettyTestPeer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectClose().respond();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Connect test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            ConnectionOptions options = new ConnectionOptions();
+            options.transportOptions().setDefaultTcpPort(remoteURI.getPort());
+            Connection connection = container.connect(remoteURI.getHost(), options);
+
+            connection.openFuture().get(10, TimeUnit.SECONDS);
+            connection.close().get(10, TimeUnit.SECONDS);
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+
+            LOG.info("Connect test completed normally");
+        }
+    }
+
+    @Test(timeout = 60000)
     public void testConnectionCloseGetsResponseWithErrorDoesNotThrow() throws Exception {
         try (NettyTestPeer peer = new NettyTestPeer()) {
             peer.expectSASLAnonymousConnect();

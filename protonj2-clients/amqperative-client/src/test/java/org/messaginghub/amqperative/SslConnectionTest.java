@@ -113,13 +113,67 @@ public class SslConnectionTest extends AMQPerativeTestCase {
             URI remoteURI = peer.getServerURI();
 
             ConnectionOptions clientOptions = new ConnectionOptions();
-            clientOptions.setSSLEnabled(true).getSSLOptions()
+            clientOptions.setSSLEnabled(true).sslOptions()
                                              .setTrustStoreLocation(CLIENT_JKS_TRUSTSTORE)
                                              .setTrustStorePassword(PASSWORD)
                                              .setAllowNativeSSL(openSSL);
 
             Client container = Client.create();
             Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), clientOptions);
+
+            connection.openFuture().get(10, TimeUnit.SECONDS);
+
+            assertTrue(peer.hasSecureConnection());
+            assertFalse(peer.isConnectionVerified());
+
+            connection.close().get(10, TimeUnit.SECONDS);
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+
+            LOG.info("Connect test completed normally");
+
+            peer.expectClose().respond();
+            connection.close();
+        }
+    }
+
+    @Test(timeout = 20000)
+    public void testCreateAndCloseSslConnectionWithDefaultPortJDK() throws Exception {
+        testCreateAndCloseSslConnectionWithDefaultPort(false);
+    }
+
+    @Test(timeout = 20000)
+    public void testCreateAndCloseSslConnectionWithDefaultPortOpenSSL() throws Exception {
+        assumeTrue(OpenSsl.isAvailable());
+        assumeTrue(OpenSsl.supportsKeyManagerFactory());
+
+        testCreateAndCloseSslConnectionWithDefaultPort(true);
+    }
+
+    private void testCreateAndCloseSslConnectionWithDefaultPort(boolean openSSL) throws Exception {
+        ServerOptions serverOpts = new ServerOptions();
+        serverOpts.setSecure(true);
+        serverOpts.setKeyStoreLocation(BROKER_JKS_KEYSTORE);
+        serverOpts.setKeyStorePassword(PASSWORD);
+        serverOpts.setVerifyHost(false);
+
+        try (NettyTestPeer peer = new NettyTestPeer(serverOpts)) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectClose().respond();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            ConnectionOptions clientOptions = new ConnectionOptions();
+            clientOptions.setSSLEnabled(true).sslOptions()
+                                             .setTrustStoreLocation(CLIENT_JKS_TRUSTSTORE)
+                                             .setTrustStorePassword(PASSWORD)
+                                             .setAllowNativeSSL(openSSL)
+                                             .setDefaultSslPort(peer.getServerURI().getPort());
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), clientOptions);
 
             connection.openFuture().get(10, TimeUnit.SECONDS);
 
@@ -174,7 +228,7 @@ public class SslConnectionTest extends AMQPerativeTestCase {
             URI remoteURI = peer.getServerURI();
 
             ConnectionOptions clientOptions = new ConnectionOptions();
-            clientOptions.setSSLEnabled(true).getSSLOptions()
+            clientOptions.setSSLEnabled(true).sslOptions()
                                              .setTrustStoreLocation(CLIENT_JKS_TRUSTSTORE)
                                              .setTrustStorePassword(PASSWORD)
                                              .setAllowNativeSSL(openSSL);
@@ -224,7 +278,7 @@ public class SslConnectionTest extends AMQPerativeTestCase {
             URI remoteURI = peer.getServerURI();
 
             ConnectionOptions clientOptions = new ConnectionOptions();
-            clientOptions.setSSLEnabled(true).getSSLOptions()
+            clientOptions.setSSLEnabled(true).sslOptions()
                                               .setKeyStoreLocation(CLIENT_MULTI_KEYSTORE)
                                               .setKeyStorePassword(PASSWORD)
                                              .setTrustStoreLocation(CLIENT_JKS_TRUSTSTORE)
@@ -279,7 +333,7 @@ public class SslConnectionTest extends AMQPerativeTestCase {
             URI remoteURI = peer.getServerURI();
 
             ConnectionOptions clientOptions = new ConnectionOptions();
-            clientOptions.setSSLEnabled(true).getSSLOptions()
+            clientOptions.setSSLEnabled(true).sslOptions()
                                              .setKeyStoreLocation(CLIENT_MULTI_KEYSTORE)
                                              .setKeyStorePassword(PASSWORD)
                                              .setTrustStoreLocation(CLIENT_JKS_TRUSTSTORE)
@@ -337,7 +391,7 @@ public class SslConnectionTest extends AMQPerativeTestCase {
             URI remoteURI = peer.getServerURI();
 
             ConnectionOptions clientOptions = new ConnectionOptions();
-            clientOptions.setSSLEnabled(true).getSSLOptions()
+            clientOptions.setSSLEnabled(true).sslOptions()
                                              .setKeyStoreLocation(CLIENT_MULTI_KEYSTORE)
                                              .setKeyStorePassword(PASSWORD)
                                              .setTrustStoreLocation(CLIENT_JKS_TRUSTSTORE)
@@ -406,7 +460,7 @@ public class SslConnectionTest extends AMQPerativeTestCase {
             ConnectionOptions clientOptions = new ConnectionOptions();
             clientOptions.setUser("guest")
                          .setPassword("guest")
-                         .getSSLOptions().setSSLEnabled(true)
+                         .sslOptions().setSSLEnabled(true)
                                          .setSslContextOverride(sslContext);
 
             Client container = Client.create();
@@ -529,7 +583,7 @@ public class SslConnectionTest extends AMQPerativeTestCase {
 
             Client container = Client.create();
             ConnectionOptions clientOptions = new ConnectionOptions();
-            clientOptions.getSSLOptions().setSSLEnabled(true);
+            clientOptions.sslOptions().setSSLEnabled(true);
             Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), clientOptions);
 
             connection.openFuture().get(10, TimeUnit.SECONDS);

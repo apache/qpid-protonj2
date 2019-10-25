@@ -54,8 +54,8 @@ public class SSLConnectionTest extends AMQPerativeTestSupport {
 
         ConnectionOptions connectOpts = new ConnectionOptions();
         connectOpts.setSSLEnabled(true);
-        connectOpts.getSSLOptions().setTrustStoreLocation(TRUSTSTORE);
-        connectOpts.getSSLOptions().setTrustStorePassword(PASSWORD);
+        connectOpts.sslOptions().setTrustStoreLocation(TRUSTSTORE);
+        connectOpts.sslOptions().setTrustStorePassword(PASSWORD);
 
         Connection connection = client.connect(connectionURI.getHost(), connectionURI.getPort(), connectOpts);
         assertNotNull(connection);

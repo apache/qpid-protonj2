@@ -19,6 +19,7 @@ package org.messaginghub.amqperative;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.fail;
 
 import org.junit.Test;
 import org.messaginghub.amqperative.test.AMQPerativeTestCase;
@@ -28,13 +29,22 @@ import org.messaginghub.amqperative.test.AMQPerativeTestCase;
  */
 public class ClientTest extends AMQPerativeTestCase {
 
+    /**
+     * Tests that when using the ClientOptions you need to configure a
+     * container id as that is mandatory and the only reason one would
+     * be supplying ClientOptions instances.
+     */
     @Test
-    public void testCreateWithNoContainerId() {
+    public void testCreateWithNoContainerIdFails() {
         ClientOptions options = new ClientOptions();
         assertNull(options.getContainerId());
 
-        Client client = Client.create(options);
-        assertNotNull(client.getContainerId());
+        try {
+            Client.create(options);
+            fail("Should enforce user supplied container Id");
+        } catch (NullPointerException npe) {
+            // Expected
+        }
     }
 
     @Test

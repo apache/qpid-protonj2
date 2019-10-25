@@ -23,6 +23,14 @@ public class ClientOptions {
 
     private String containerId;
 
+    public ClientOptions() {}
+
+    public ClientOptions(ClientOptions options) {
+        if (options != null) {
+            options.copyInto(this);
+        }
+    }
+
     /**
      * @return the ID configured the Container
      */
