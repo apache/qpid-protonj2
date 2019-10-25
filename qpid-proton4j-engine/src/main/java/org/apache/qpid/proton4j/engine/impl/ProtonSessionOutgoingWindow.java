@@ -16,7 +16,6 @@
  */
 package org.apache.qpid.proton4j.engine.impl;
 
-import org.apache.qpid.proton4j.amqp.Binary;
 import org.apache.qpid.proton4j.amqp.transport.Begin;
 import org.apache.qpid.proton4j.amqp.transport.Disposition;
 import org.apache.qpid.proton4j.amqp.transport.Flow;
@@ -189,7 +188,7 @@ public class ProtonSessionOutgoingWindow {
             transfer.setDeliveryId(delivery.getDeliveryId());
             // TODO - Delivery Tag improvements, have our own DeliveryTag type perhaps that pools etc.
             // TODO - If we track number of transfers for a larger delivery we could omit this on continuations
-            transfer.setDeliveryTag(new Binary(delivery.getTag()));
+            transfer.setDeliveryTag(delivery.getTag());
             transfer.setMore(wasThereMore);
             transfer.setResume(false);
             transfer.setAborted(false);
@@ -234,7 +233,7 @@ public class ProtonSessionOutgoingWindow {
         Transfer transfer = new Transfer();
 
         transfer.setDeliveryId(delivery.getDeliveryId());
-        transfer.setDeliveryTag(new Binary(delivery.getTag()));
+        transfer.setDeliveryTag(delivery.getTag());
         transfer.setMore(false);
         transfer.setState(null);
         transfer.setSettled(true);

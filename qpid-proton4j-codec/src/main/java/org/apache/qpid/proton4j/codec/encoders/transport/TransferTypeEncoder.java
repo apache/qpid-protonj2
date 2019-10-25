@@ -62,7 +62,11 @@ public class TransferTypeEncoder extends AbstractDescribedListTypeEncoder<Transf
                 }
                 break;
             case 2:
-                state.getEncoder().writeBinary(buffer, state, transfer.getDeliveryTag());
+                if (transfer.hasDeliveryTag()) {
+                    state.getEncoder().writeBinary(buffer, state, transfer.getDeliveryTag().tagBytes());
+                } else {
+                    buffer.writeByte(EncodingCodes.NULL);
+                }
                 break;
             case 3:
                 if (transfer.hasMessageFormat()) {
@@ -125,7 +129,7 @@ public class TransferTypeEncoder extends AbstractDescribedListTypeEncoder<Transf
     public int getListEncoding(Transfer value) {
         if (value.getState() != null) {
             return EncodingCodes.LIST32;
-        } else if (value.getDeliveryTag() != null && value.getDeliveryTag().getLength() > 200) {
+        } else if (value.getDeliveryTag() != null && value.getDeliveryTag().tagLength() > 200) {
             return EncodingCodes.LIST32;
         } else {
             return EncodingCodes.LIST8;

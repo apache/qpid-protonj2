@@ -24,7 +24,7 @@ import static org.junit.Assert.assertTrue;
 
 import java.nio.charset.StandardCharsets;
 
-import org.apache.qpid.proton4j.amqp.Binary;
+import org.apache.qpid.proton4j.amqp.DeliveryTag;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.junit.Test;
 import org.mockito.Mockito;
@@ -35,13 +35,15 @@ public class ProtonIncomingDeliveryTest extends ProtonEngineTestSupport {
 
     @Test
     public void testToStringOnEmptyDeliveryDoesNotNPE() throws Exception {
-        ProtonIncomingDelivery delivery = new ProtonIncomingDelivery(Mockito.mock(ProtonReceiver.class), 1, new Binary(new byte[] {0}));
+        ProtonIncomingDelivery delivery = new ProtonIncomingDelivery(
+            Mockito.mock(ProtonReceiver.class), 1, new DeliveryTag.ProtonDeliveryTag(new byte[] {0}));
         assertNotNull(delivery.toString());
     }
 
     @Test
     public void testDefaultMessageFormat() throws Exception {
-        ProtonIncomingDelivery delivery = new ProtonIncomingDelivery(Mockito.mock(ProtonReceiver.class), 1, new Binary(new byte[] {0}));
+        ProtonIncomingDelivery delivery = new ProtonIncomingDelivery(
+            Mockito.mock(ProtonReceiver.class), 1, new DeliveryTag.ProtonDeliveryTag(new byte[] {0}));
         assertEquals("Unexpected value", 0L, DEFAULT_MESSAGE_FORMAT);
         assertEquals("Unexpected message format", DEFAULT_MESSAGE_FORMAT, delivery.getMessageFormat());
     }
@@ -50,7 +52,8 @@ public class ProtonIncomingDeliveryTest extends ProtonEngineTestSupport {
     public void testAvailable() throws Exception {
         byte[] data = "test-data".getBytes(StandardCharsets.UTF_8);
 
-        ProtonIncomingDelivery delivery = new ProtonIncomingDelivery(Mockito.mock(ProtonReceiver.class), 1, new Binary(new byte[] {0}));
+        ProtonIncomingDelivery delivery = new ProtonIncomingDelivery(
+            Mockito.mock(ProtonReceiver.class), 1, new DeliveryTag.ProtonDeliveryTag(new byte[] {0}));
         delivery.appendTransferPayload(ProtonByteBufferAllocator.DEFAULT.wrap(data));
 
         // Check the full data is available
@@ -76,13 +79,15 @@ public class ProtonIncomingDeliveryTest extends ProtonEngineTestSupport {
 
     @Test
     public void testAvailableWhenEmpty() throws Exception {
-        ProtonIncomingDelivery delivery = new ProtonIncomingDelivery(Mockito.mock(ProtonReceiver.class), 1, new Binary(new byte[] {0}));
+        ProtonIncomingDelivery delivery = new ProtonIncomingDelivery(
+            Mockito.mock(ProtonReceiver.class), 1, new DeliveryTag.ProtonDeliveryTag(new byte[] {0}));
         assertEquals(0, delivery.available());
     }
 
     @Test
     public void testAppendArraysToBuffer() throws Exception {
-        ProtonIncomingDelivery delivery = new ProtonIncomingDelivery(Mockito.mock(ProtonReceiver.class), 1, new Binary(new byte[] {0}));
+        ProtonIncomingDelivery delivery = new ProtonIncomingDelivery(
+            Mockito.mock(ProtonReceiver.class), 1, new DeliveryTag.ProtonDeliveryTag(new byte[] {0}));
 
         byte[] data1 = new byte[] { 0, 1, 2, 3, 4, 5 };
         byte[] data2 = new byte[] { 6, 7, 8, 9, 10, 11 };

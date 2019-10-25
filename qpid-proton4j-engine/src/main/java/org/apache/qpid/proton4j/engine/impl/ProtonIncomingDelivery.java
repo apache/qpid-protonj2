@@ -16,7 +16,7 @@
  */
 package org.apache.qpid.proton4j.engine.impl;
 
-import org.apache.qpid.proton4j.amqp.Binary;
+import org.apache.qpid.proton4j.amqp.DeliveryTag;
 import org.apache.qpid.proton4j.amqp.transport.DeliveryState;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
@@ -28,7 +28,7 @@ import org.apache.qpid.proton4j.engine.IncomingDelivery;
 public class ProtonIncomingDelivery implements IncomingDelivery {
 
     private final ProtonContext context = new ProtonContext();
-    private final Binary deliveryTag;
+    private final DeliveryTag deliveryTag;
     private final ProtonReceiver link;
     private final long deliveryId;
 
@@ -55,7 +55,7 @@ public class ProtonIncomingDelivery implements IncomingDelivery {
      * @param deliveryTag
      *      The delivery tag assigned to this delivery
      */
-    public ProtonIncomingDelivery(ProtonReceiver link, long deliveryId, Binary deliveryTag) {
+    public ProtonIncomingDelivery(ProtonReceiver link, long deliveryId, DeliveryTag deliveryTag) {
         this.deliveryId = deliveryId;
         this.deliveryTag = deliveryTag;
         this.link = link;
@@ -72,8 +72,8 @@ public class ProtonIncomingDelivery implements IncomingDelivery {
     }
 
     @Override
-    public byte[] getTag() {
-        return deliveryTag.getArray();
+    public DeliveryTag getTag() {
+        return deliveryTag;
     }
 
     @Override

@@ -149,7 +149,7 @@ public class Benchmark implements Runnable {
 
     private void benchmarkTransfer() throws IOException {
         Transfer transfer = new Transfer();
-        transfer.setDeliveryTag(new Binary(new byte[] {1, 2, 3}));
+        transfer.setDeliveryTag(new byte[] {1, 2, 3});
         transfer.setHandle(1024);
         transfer.setMessageFormat(0);
 

@@ -16,10 +16,11 @@
  */
 package org.apache.qpid.proton4j.amqp.transport;
 
-import org.apache.qpid.proton4j.amqp.Binary;
+import org.apache.qpid.proton4j.amqp.DeliveryTag;
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 
 public final class Transfer implements Performative {
 
@@ -49,7 +50,7 @@ public final class Transfer implements Performative {
 
     private long handle;
     private long deliveryId;
-    private Binary deliveryTag;
+    private DeliveryTag deliveryTag;
     private long messageFormat;
     private boolean settled;
     private boolean more;
@@ -145,11 +146,27 @@ public final class Transfer implements Performative {
         return this;
     }
 
-    public Binary getDeliveryTag() {
+    public DeliveryTag getDeliveryTag() {
         return deliveryTag;
     }
 
-    public Transfer setDeliveryTag(Binary deliveryTag) {
+    public Transfer setDeliveryTag(byte[] tagBytes) {
+        if (tagBytes != null) {
+            return setDeliveryTag(new DeliveryTag.ProtonDeliveryTag(ProtonByteBufferAllocator.DEFAULT.wrap(tagBytes)));
+        } else {
+            return setDeliveryTag((DeliveryTag) null);
+        }
+    }
+
+    public Transfer setDeliveryTag(ProtonBuffer tagBytes) {
+        if (tagBytes != null) {
+            return setDeliveryTag(new DeliveryTag.ProtonDeliveryTag(tagBytes));
+        } else {
+            return setDeliveryTag((DeliveryTag) null);
+        }
+    }
+
+    public Transfer setDeliveryTag(DeliveryTag deliveryTag) {
         if (deliveryTag != null) {
             modified |= DELIVERY_TAG;
         } else {

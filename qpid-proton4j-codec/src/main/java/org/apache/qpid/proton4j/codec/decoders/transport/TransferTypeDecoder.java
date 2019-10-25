@@ -18,6 +18,7 @@ package org.apache.qpid.proton4j.codec.decoders.transport;
 
 import java.io.IOException;
 
+import org.apache.qpid.proton4j.amqp.DeliveryTag;
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedByte;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
@@ -131,7 +132,7 @@ public class TransferTypeDecoder extends AbstractDescribedTypeDecoder<Transfer> 
                     transfer.setDeliveryId(state.getDecoder().readUnsignedInteger(buffer, state, 0l));
                     break;
                 case 2:
-                    transfer.setDeliveryTag(state.getDecoder().readBinary(buffer, state));
+                    transfer.setDeliveryTag(new DeliveryTag.ProtonDeliveryTag(state.getDecoder().readBinaryAsBuffer(buffer, state)));
                     break;
                 case 3:
                     transfer.setMessageFormat(state.getDecoder().readUnsignedInteger(buffer, state, 0l));

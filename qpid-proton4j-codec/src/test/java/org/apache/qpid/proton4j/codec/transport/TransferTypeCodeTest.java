@@ -16,7 +16,6 @@
  */
 package org.apache.qpid.proton4j.codec.transport;
 
-import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -25,7 +24,6 @@ import static org.junit.Assert.fail;
 
 import java.io.IOException;
 
-import org.apache.qpid.proton4j.amqp.Binary;
 import org.apache.qpid.proton4j.amqp.UnsignedInteger;
 import org.apache.qpid.proton4j.amqp.transport.Transfer;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
@@ -57,7 +55,7 @@ public class TransferTypeCodeTest extends CodecTestSupport {
     public void testEncodeAndDecode() throws IOException {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
 
-        Binary tag = new Binary(new byte[] {0, 1, 2});
+        ProtonBuffer tag = ProtonByteBufferAllocator.DEFAULT.wrap(new byte[] {0, 1, 2});
 
         Transfer input = new Transfer();
 
@@ -74,7 +72,7 @@ public class TransferTypeCodeTest extends CodecTestSupport {
 
         assertEquals(UnsignedInteger.MAX_VALUE.longValue(), result.getHandle());
         assertEquals(10, result.getDeliveryId());
-        assertEquals(tag, result.getDeliveryTag());
+        assertEquals(tag, result.getDeliveryTag().tagBytes());
         assertEquals(0, result.getMessageFormat());
         assertFalse(result.getSettled());
         assertFalse(result.getBatchable());
@@ -84,7 +82,7 @@ public class TransferTypeCodeTest extends CodecTestSupport {
     public void testSkipValue() throws IOException {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
 
-        Binary tag = new Binary(new byte[] {0, 1, 2});
+        ProtonBuffer tag = ProtonByteBufferAllocator.DEFAULT.wrap(new byte[] {0, 1, 2});
 
         Transfer input = new Transfer();
 
@@ -122,7 +120,7 @@ public class TransferTypeCodeTest extends CodecTestSupport {
         Transfer value = (Transfer) result;
         assertEquals(UnsignedInteger.MAX_VALUE.longValue(), value.getHandle());
         assertEquals(10, value.getDeliveryId());
-        assertEquals(tag, value.getDeliveryTag());
+        assertEquals(tag, value.getDeliveryTag().tagBytes());
         assertEquals(0, value.getMessageFormat());
         assertFalse(value.getSettled());
         assertFalse(value.getBatchable());
@@ -205,9 +203,13 @@ public class TransferTypeCodeTest extends CodecTestSupport {
         array[1] = new Transfer();
         array[2] = new Transfer();
 
-        array[0].setHandle(0).setDeliveryTag(new Binary(new byte[] {0}));
-        array[1].setHandle(1).setDeliveryTag(new Binary(new byte[] {1}));
-        array[2].setHandle(2).setDeliveryTag(new Binary(new byte[] {2}));
+        ProtonBuffer tag1 = ProtonByteBufferAllocator.DEFAULT.wrap(new byte[] {0});
+        ProtonBuffer tag2 = ProtonByteBufferAllocator.DEFAULT.wrap(new byte[] {1});
+        ProtonBuffer tag3 = ProtonByteBufferAllocator.DEFAULT.wrap(new byte[] {2});
+
+        array[0].setHandle(0).setDeliveryTag(tag1);
+        array[1].setHandle(1).setDeliveryTag(tag2);
+        array[2].setHandle(2).setDeliveryTag(tag3);
 
         encoder.writeObject(buffer, encoderState, array);
 
@@ -222,7 +224,7 @@ public class TransferTypeCodeTest extends CodecTestSupport {
             assertNotNull(resultArray[i]);
             assertTrue(resultArray[i] instanceof Transfer);
             assertEquals(array[i].getHandle(), resultArray[i].getHandle());
-            assertArrayEquals(array[i].getDeliveryTag().getArray(), resultArray[i].getDeliveryTag().getArray());
+            assertEquals(array[i].getDeliveryTag(), resultArray[i].getDeliveryTag());
         }
     }
 }

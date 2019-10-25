@@ -18,7 +18,6 @@ package org.apache.qpid.proton4j.codec.messaging;
 
 import java.io.IOException;
 
-import org.apache.qpid.proton4j.amqp.Binary;
 import org.apache.qpid.proton4j.amqp.UnsignedInteger;
 import org.apache.qpid.proton4j.amqp.transport.Transfer;
 import org.apache.qpid.proton4j.codec.CodecBenchmarkBase;
@@ -42,7 +41,7 @@ public class TransferBenchmark extends CodecBenchmarkBase {
 
     private void initTransfer() {
         transfer = new Transfer();
-        transfer.setDeliveryTag(new Binary(new byte[] { 1, 2, 3 }));
+        transfer.setDeliveryTag(new byte[] { 1, 2, 3 });
         transfer.setHandle(10);
         transfer.setMessageFormat(UnsignedInteger.ZERO.intValue());
     }

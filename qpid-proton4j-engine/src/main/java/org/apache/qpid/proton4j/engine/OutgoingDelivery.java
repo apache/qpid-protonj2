@@ -16,6 +16,7 @@
  */
 package org.apache.qpid.proton4j.engine;
 
+import org.apache.qpid.proton4j.amqp.DeliveryTag;
 import org.apache.qpid.proton4j.amqp.transport.Transfer;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 
@@ -39,6 +40,16 @@ public interface OutgoingDelivery extends Delivery {
      * @return this outgoing delivery instance.
      */
     OutgoingDelivery setTag(byte[] deliveryTag);
+
+    /**
+     * Sets the delivery tag to assign to this outgoing delivery.
+     *
+     * @param deliveryTag
+     *      a byte array containing the delivery tag to assign to this {@link OutgoingDelivery}
+     *
+     * @return this outgoing delivery instance.
+     */
+    OutgoingDelivery setTag(DeliveryTag deliveryTag);
 
     /**
      * Write the given bytes as the payload of this delivery, no additional writes can occur on this delivery,

@@ -1320,7 +1320,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         byte deliveryTag = 0;
 
         for (IncomingDelivery delivery : deliveries) {
-            assertEquals("Delivery not updated in correct order", deliveryTag++, delivery.getTag()[0]);
+            assertEquals("Delivery not updated in correct order", deliveryTag++, delivery.getTag().tagBytes().getByte(0));
             assertTrue("Delivery should be marked as remotely setted", delivery.isRemotelySettled());
         }
 
@@ -1533,8 +1533,8 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
                                 .withRole(Role.RECEIVER)
                                 .withState(Accepted.getInstance());
 
-        assertArrayEquals(deliveryTag1.getBytes(StandardCharsets.UTF_8), receivedDelivery1.get().getTag());
-        assertArrayEquals(deliveryTag2.getBytes(StandardCharsets.UTF_8), receivedDelivery2.get().getTag());
+        assertArrayEquals(deliveryTag1.getBytes(StandardCharsets.UTF_8), receivedDelivery1.get().getTag().tagBytes().getArray());
+        assertArrayEquals(deliveryTag2.getBytes(StandardCharsets.UTF_8), receivedDelivery2.get().getTag().tagBytes().getArray());
 
         ProtonBuffer payloadBuffer1 = receivedDelivery1.get().readAll();
         ProtonBuffer payloadBuffer2 = receivedDelivery2.get().readAll();
@@ -1651,7 +1651,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         assertEquals("Should have delivery data on receiver", 2, deliveryCounter.get());
         assertTrue("Should have a delivery updates on receiver", deliveryUpdated.get());
         assertFalse("Should now show that delivery is not aborted", receivedDelivery.get().isAborted());
-        assertEquals("Should have delivery tagged as two", 2, receivedDelivery.get().getTag()[0]);
+        assertEquals("Should have delivery tagged as two", 2, receivedDelivery.get().getTag().tagBytes().getByte(0));
 
         // Test that delivery count updates correctly on next flow
         peer.expectFlow().withLinkCredit(10).withDeliveryCount(2);
@@ -1804,8 +1804,8 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         assertFalse("Delivery on Receiver 1 Should be complete", receivedDelivery1.get().isPartial());
         assertFalse("Delivery on Receiver 2 Should be complete", receivedDelivery2.get().isPartial());
 
-        assertArrayEquals(deliveryTag1.getBytes(StandardCharsets.UTF_8), receivedDelivery1.get().getTag());
-        assertArrayEquals(deliveryTag2.getBytes(StandardCharsets.UTF_8), receivedDelivery2.get().getTag());
+        assertArrayEquals(deliveryTag1.getBytes(StandardCharsets.UTF_8), receivedDelivery1.get().getTag().tagBytes().getArray());
+        assertArrayEquals(deliveryTag2.getBytes(StandardCharsets.UTF_8), receivedDelivery2.get().getTag().tagBytes().getArray());
 
         ProtonBuffer delivery1Buffer = receivedDelivery1.get().readAll();
         ProtonBuffer delivery2Buffer = receivedDelivery2.get().readAll();
@@ -1944,9 +1944,9 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         assertNotSame("delivery duplicate detected", receivedDelivery1.get(), receivedDelivery3.get());
 
         // Verify deliveries arrived with expected payload
-        assertArrayEquals(deliveryTag1.getBytes(StandardCharsets.UTF_8), receivedDelivery1.get().getTag());
-        assertArrayEquals(deliveryTag2.getBytes(StandardCharsets.UTF_8), receivedDelivery2.get().getTag());
-        assertArrayEquals(deliveryTag3.getBytes(StandardCharsets.UTF_8), receivedDelivery3.get().getTag());
+        assertArrayEquals(deliveryTag1.getBytes(StandardCharsets.UTF_8), receivedDelivery1.get().getTag().tagBytes().getArray());
+        assertArrayEquals(deliveryTag2.getBytes(StandardCharsets.UTF_8), receivedDelivery2.get().getTag().tagBytes().getArray());
+        assertArrayEquals(deliveryTag3.getBytes(StandardCharsets.UTF_8), receivedDelivery3.get().getTag().tagBytes().getArray());
 
         ProtonBuffer delivery1Buffer = receivedDelivery1.get().readAll();
         ProtonBuffer delivery2Buffer = receivedDelivery2.get().readAll();

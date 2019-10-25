@@ -16,6 +16,7 @@
  */
 package org.apache.qpid.proton4j.engine.impl;
 
+import org.apache.qpid.proton4j.amqp.DeliveryTag;
 import org.apache.qpid.proton4j.amqp.transport.DeliveryState;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
@@ -36,8 +37,7 @@ public class ProtonOutgoingDelivery implements OutgoingDelivery {
 
     // TODO - Creating an internal system for generating pooled tags so
     //        that the user doesn't need to manage them would be nice
-    // private DeliveryTag deliveryTag;
-    private byte[] deliveryTag;
+    private DeliveryTag deliveryTag;
 
     private boolean complete;
     private int messageFormat;
@@ -66,12 +66,18 @@ public class ProtonOutgoingDelivery implements OutgoingDelivery {
     }
 
     @Override
-    public byte[] getTag() {
+    public DeliveryTag getTag() {
         return deliveryTag;
     }
 
     @Override
     public OutgoingDelivery setTag(byte[] deliveryTag) {
+        this.deliveryTag = new DeliveryTag.ProtonDeliveryTag(deliveryTag);
+        return this;
+    }
+
+    @Override
+    public OutgoingDelivery setTag(DeliveryTag deliveryTag) {
         this.deliveryTag = deliveryTag;
         return this;
     }

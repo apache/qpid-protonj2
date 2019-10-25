@@ -16,6 +16,7 @@
  */
 package org.apache.qpid.proton4j.engine;
 
+import org.apache.qpid.proton4j.amqp.DeliveryTag;
 import org.apache.qpid.proton4j.amqp.transport.DeliveryState;
 
 /**
@@ -38,7 +39,7 @@ public interface Delivery {
     /**
      * @return the Delivery tag assigned to this Delivery.
      */
-    byte[] getTag();
+    DeliveryTag getTag();
 
     /**
      * @return the {@link DeliveryState} at the local side of this Delivery.

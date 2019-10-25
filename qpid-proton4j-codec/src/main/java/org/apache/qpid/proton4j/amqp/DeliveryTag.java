@@ -16,34 +16,102 @@
  */
 package org.apache.qpid.proton4j.amqp;
 
+import java.nio.charset.StandardCharsets;
+import java.util.Objects;
+
 import org.apache.qpid.proton4j.amqp.transport.Transfer;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import org.apache.qpid.proton4j.buffer.ProtonByteBuffer;
+import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 
 /**
  * An abstraction around Transfer frames Binary delivery tag which can be used to
  * provide additional features to code sending transfers such as tag pooling etc.
  *
- * @see Binary
+ * @see ProtonBuffer
  * @see Transfer
  */
 public interface DeliveryTag {
 
     /**
-     * @return the Binary view of the tag bytes.
+     * @return the total number of bytes needed to represent the given tag.
      */
-    Binary toBinary();
+    default int tagLength() {
+        return tagBytes().getReadableBytes();
+    }
+
+    /**
+     * @return the ProtonBuffer view of the tag bytes.
+     */
+    ProtonBuffer tagBytes();
 
     /**
      * Optional method used by tag implementations that provide pooling of tags.
      */
-    void release();
+    default void release() {}
 
     /**
-     * Writes the bytes that comprise this {@link DeliveryTag} into the given {@link ProtonBuffer}.
+     * Create a copy of this delivery tag, the copy should account for any underlying pooling of tags that
+     * the tag source's implementation is using.
      *
-     * @param buffer
-     *      The buffer to write the tag bytes into.
+     * @return a copy of the underlying bytes that compose this delivery tag.
      */
-    void writeTo(ProtonBuffer buffer);
+    DeliveryTag copy();
 
+    /**
+     * A default DeliveryTag implementation that can be used by a codec when decoding DeliveryTag
+     * instances from the wire.
+     */
+    public static class ProtonDeliveryTag implements DeliveryTag {
+
+        private static final ProtonByteBuffer EMPTY_TAG = new ProtonByteBuffer(0, 0);
+
+        private final ProtonBuffer tag;
+
+        public ProtonDeliveryTag() {
+            this.tag = EMPTY_TAG;
+        }
+
+        public ProtonDeliveryTag(byte[] tagBytes) {
+            Objects.requireNonNull(tagBytes, "Tag bytes cannot be null");
+            this.tag = ProtonByteBufferAllocator.DEFAULT.wrap(tagBytes);
+        }
+
+        public ProtonDeliveryTag(ProtonBuffer tagBytes) {
+            Objects.requireNonNull(tagBytes, "Tag bytes cannot be null");
+            this.tag = tagBytes;
+        }
+
+        @Override
+        public ProtonBuffer tagBytes() {
+            return tag;
+        }
+
+        @Override
+        public DeliveryTag copy() {
+            return new ProtonDeliveryTag(tag.copy());
+        }
+
+        @Override
+        public int hashCode() {
+            return tag.hashCode();
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            if (this == other) {
+                return true;
+            }
+            if (!(other instanceof DeliveryTag)) {
+                return false;
+            }
+
+            return tag.equals(((DeliveryTag) other).tagBytes());
+        }
+
+        @Override
+        public String toString() {
+            return "DeliveryTag: {" + tag.toString(StandardCharsets.UTF_8) + "}";
+        }
+    }
 }
