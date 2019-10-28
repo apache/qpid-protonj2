@@ -28,6 +28,8 @@ import java.util.Set;
  */
 public class ConnectionOptions {
 
+    public static final String[] DEFAULT_DESIRED_CAPABILITIES = new String[] { "ANONYMOUS_RELAY" };
+
     public static final long INFINITE = -1;
     public static final long DEFAULT_OPEN_TIMEOUT = 15000;
     public static final long DEFAULT_CLOSE_TIMEOUT = 60000;
@@ -55,7 +57,7 @@ public class ConnectionOptions {
     private int channelMax = DEFAULT_CHANNEL_MAX;
     private int maxFrameSize = DEFAULT_MAX_FRAME_SIZE;
     private String[] offeredCapabilities;
-    private String[] desiredCapabilities;
+    private String[] desiredCapabilities = DEFAULT_DESIRED_CAPABILITIES;
     private Map<String, Object> properties;
     private String vhost;
     private String futureType;
