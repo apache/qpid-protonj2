@@ -3,9 +3,11 @@ package org.messaginghub.amqperative;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.net.URI;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.qpid.proton4j.amqp.driver.netty.NettyTestPeer;
@@ -15,6 +17,8 @@ import org.apache.qpid.proton4j.amqp.transport.ErrorCondition;
 import org.apache.qpid.proton4j.amqp.transport.Role;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.junit.Test;
+import org.messaginghub.amqperative.impl.exceptions.ClientOperationTimedOutException;
+import org.messaginghub.amqperative.impl.exceptions.ClientSecurityException;
 import org.messaginghub.amqperative.impl.exceptions.ClientSendTimedOutException;
 import org.messaginghub.amqperative.test.AMQPerativeTestCase;
 import org.slf4j.Logger;
@@ -95,7 +99,13 @@ public class SenderTest extends AMQPerativeTestCase {
             session.openFuture().get(10, TimeUnit.SECONDS);
 
             Sender sender = session.openSender("test-queue");
-            sender.openFuture().get(10, TimeUnit.SECONDS);
+            try {
+                sender.openFuture().get(10, TimeUnit.SECONDS);
+                fail("Open of sender should fail due to remote indicating pending close.");
+            } catch (ExecutionException exe) {
+                assertNotNull(exe.getCause());
+                assertTrue(exe.getCause() instanceof ClientSecurityException);
+            }
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
 
@@ -106,6 +116,62 @@ public class SenderTest extends AMQPerativeTestCase {
             connection.close().get(10, TimeUnit.SECONDS);
 
             peer.waitForScriptToComplete(1, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test(timeout = 60000)
+    public void testCloseSenderTimesOutWhenNoCloseResponseReceived() throws Exception {
+        doTestCloseOrDetachSenderTimesOutWhenNoCloseResponseReceived(true);
+    }
+
+    @Test(timeout = 60000)
+    public void testDetachSenderTimesOutWhenNoCloseResponseReceived() throws Exception {
+        doTestCloseOrDetachSenderTimesOutWhenNoCloseResponseReceived(false);
+    }
+
+    private void doTestCloseOrDetachSenderTimesOutWhenNoCloseResponseReceived(boolean close) throws Exception {
+        try (NettyTestPeer peer = new NettyTestPeer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().withRole(Role.SENDER).respond();
+            peer.expectDetach();
+            peer.expectClose().respond();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Sender test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            ConnectionOptions options = new ConnectionOptions();
+            options.setCloseTimeout(5);
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), options);
+
+            connection.openFuture().get(10, TimeUnit.SECONDS);
+
+            Session session = connection.openSession();
+            session.openFuture().get(10, TimeUnit.SECONDS);
+
+            Sender sender = session.openSender("test-queue");
+            sender.openFuture().get(10, TimeUnit.SECONDS);
+
+            try {
+                if (close) {
+                    sender.close().get(10, TimeUnit.SECONDS);
+                } else {
+                    sender.detach().get(10, TimeUnit.SECONDS);
+                }
+
+                fail("Should not complete the close or detach future without an error");
+            } catch (ExecutionException exe) {
+                Throwable cause = exe.getCause();
+                assertTrue(cause instanceof ClientOperationTimedOutException);
+            }
+
+            connection.close().get(10, TimeUnit.SECONDS);
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
     }
 

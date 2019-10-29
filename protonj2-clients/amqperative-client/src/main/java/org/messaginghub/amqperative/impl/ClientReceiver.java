@@ -37,6 +37,9 @@ import org.messaginghub.amqperative.Receiver;
 import org.messaginghub.amqperative.ReceiverOptions;
 import org.messaginghub.amqperative.Session;
 import org.messaginghub.amqperative.futures.ClientFuture;
+import org.messaginghub.amqperative.impl.exceptions.ClientOperationTimedOutException;
+import org.messaginghub.amqperative.impl.exceptions.ClientResourceAllocationException;
+import org.messaginghub.amqperative.impl.exceptions.ClientResourceClosedException;
 import org.messaginghub.amqperative.util.FifoMessageQueue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -55,10 +58,11 @@ public class ClientReceiver implements Receiver {
     private final ClientSession session;
     private final org.apache.qpid.proton4j.engine.Receiver protonReceiver;
     private final ScheduledExecutorService executor;
-    private final AtomicReference<Throwable> failureCause = new AtomicReference<>();
+    private final AtomicReference<ClientException> failureCause = new AtomicReference<>();
     private final String receiverId;
     private final FifoMessageQueue messageQueue;
     private volatile int closed;
+    private Consumer<ClientReceiver> receiverRemotelyClosedHandler;
 
     public ClientReceiver(ReceiverOptions options, ClientSession session, String address) {
         this.options = new ReceiverOptions(options);
@@ -92,6 +96,11 @@ public class ClientReceiver implements Receiver {
     @Override
     public Session getSession() {
         return session;
+    }
+
+    ClientReceiver remotelyClosedHandler(Consumer<ClientReceiver> handler) {
+        this.receiverRemotelyClosedHandler = handler;
+        return this;
     }
 
     @Override
@@ -135,7 +144,19 @@ public class ClientReceiver implements Receiver {
     public Future<Receiver> close() {
         if (CLOSED_UPDATER.compareAndSet(this, 0, 1) && !openFuture.isFailed()) {
             executor.execute(() -> {
-                protonReceiver.close();
+                try {
+                    protonReceiver.close();
+                } catch (Throwable error) {
+                    closeFuture.complete(this);
+                }
+
+                if (!closeFuture.isDone()) {
+                    final long timeout = options.getCloseTimeout() >= 0 ?
+                            options.getCloseTimeout() : options.getRequestTimeout();
+
+                    session.scheduleRequestTimeout(closeFuture, timeout,
+                        () -> new ClientOperationTimedOutException("Timed out waiting for Receiver to close"));
+                }
             });
         }
         return closeFuture;
@@ -145,7 +166,19 @@ public class ClientReceiver implements Receiver {
     public Future<Receiver> detach() {
         if (CLOSED_UPDATER.compareAndSet(this, 0, 1) && !openFuture.isFailed()) {
             executor.execute(() -> {
-                protonReceiver.detach();
+                try {
+                    protonReceiver.detach();
+                } catch (Throwable error) {
+                    closeFuture.complete(this);
+                }
+
+                if (!closeFuture.isDone()) {
+                    final long timeout = options.getCloseTimeout() >= 0 ?
+                            options.getCloseTimeout() : options.getRequestTimeout();
+
+                    session.scheduleRequestTimeout(closeFuture, timeout,
+                        () -> new ClientOperationTimedOutException("Timed out waiting for Receiver to detach"));
+                }
             });
         }
         return closeFuture;
@@ -231,11 +264,11 @@ public class ClientReceiver implements Receiver {
         return this;
     }
 
-    void setFailureCause(Throwable failureCause) {
+    void setFailureCause(ClientException failureCause) {
         this.failureCause.set(failureCause);
     }
 
-    Throwable getFailureCause() {
+    ClientException getFailureCause() {
         if (failureCause.get() == null) {
             return session.getFailureCause();
         }
@@ -268,31 +301,39 @@ public class ClientReceiver implements Receiver {
     }
 
     private void handleRemoteCloseOrDetach(org.apache.qpid.proton4j.engine.Receiver receiver) {
-        CLOSED_UPDATER.lazySet(this, 1);
-
-        // Close should be idempotent so we can just respond here with a close in case
-        // of remotely closed sender.  We should set error state from remote though
-        // so client can see it.
-        try {
-            if (receiver.getRemoteState() == LinkState.CLOSED) {
-                LOG.info("Sender link remotely closed: ", receiver);
-                receiver.close();
-            } else {
-                LOG.info("Sender link remotely detached: ", receiver);
-                receiver.detach();
+        if (CLOSED_UPDATER.compareAndSet(this, 0, 1)) {
+            // Close should be idempotent so we can just respond here with a close in case
+            // of remotely closed sender.  We should set error state from remote though
+            // so client can see it.
+            try {
+                if (protonReceiver.getRemoteState() == LinkState.CLOSED) {
+                    LOG.info("Sender link remotely closed: ", receiver);
+                    protonReceiver.close();
+                } else {
+                    LOG.info("Sender link remotely detached: ", receiver);
+                    protonReceiver.detach();
+                }
+            } catch (Throwable ignored) {
+                LOG.trace("Error while processing remote close event: ", ignored);
             }
-        } catch (Throwable ignored) {
-            LOG.trace("Error while processing remote close event: ", ignored);
-        }
 
-        // TODO - Error open future if remote indicated open would fail using an appropriate
-        //        exception based on remote error condition if one is set.
-        if (receiver.getRemoteSource() == null) {
-            openFuture.failed(new ClientException("Link creation was refused"));
+            if (protonReceiver.getRemoteCondition() != null) {
+                failureCause.set(ClientErrorSupport.convertToNonFatalException(protonReceiver.getRemoteCondition()));
+            } else if (protonReceiver.getRemoteTarget() == null) {
+                failureCause.set(new ClientResourceAllocationException("Link creation was refused"));
+            } else {
+                failureCause.set(new ClientResourceClosedException("The sender has been remotely closed"));
+            }
+
+            openFuture.failed(failureCause.get());
+            closeFuture.complete(this);
+
+            if (receiverRemotelyClosedHandler != null) {
+                receiverRemotelyClosedHandler.accept(this);
+            }
         } else {
-            openFuture.complete(this);
+            closeFuture.complete(this);
         }
-        closeFuture.complete(this);
     }
 
     private void handleDeliveryReceived(IncomingDelivery delivery) {

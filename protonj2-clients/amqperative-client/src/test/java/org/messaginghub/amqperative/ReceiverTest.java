@@ -3,8 +3,12 @@ package org.messaginghub.amqperative;
 import static org.hamcrest.Matchers.anyOf;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.nullValue;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.net.URI;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
@@ -15,6 +19,8 @@ import org.apache.qpid.proton4j.amqp.transport.ErrorCondition;
 import org.apache.qpid.proton4j.amqp.transport.Role;
 import org.hamcrest.Matcher;
 import org.junit.Test;
+import org.messaginghub.amqperative.impl.exceptions.ClientOperationTimedOutException;
+import org.messaginghub.amqperative.impl.exceptions.ClientSecurityException;
 import org.messaginghub.amqperative.test.AMQPerativeTestCase;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -96,7 +102,13 @@ public class ReceiverTest extends AMQPerativeTestCase {
             session.openFuture().get(10, TimeUnit.SECONDS);
 
             Receiver receiver = session.openReceiver("test-queue");
-            receiver.openFuture().get(10, TimeUnit.SECONDS);
+            try {
+                receiver.openFuture().get(10, TimeUnit.SECONDS);
+                fail("Open of receiver should fail due to remote indicating pending close.");
+            } catch (ExecutionException exe) {
+                assertNotNull(exe.getCause());
+                assertTrue(exe.getCause() instanceof ClientSecurityException);
+            }
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
 
@@ -108,6 +120,62 @@ public class ReceiverTest extends AMQPerativeTestCase {
 
             peer.waitForScriptToComplete(1, TimeUnit.SECONDS);
             LOG.info("Receiver test completed normally");
+        }
+    }
+
+    @Test(timeout = 60000)
+    public void testCloseReceiverTimesOutWhenNoCloseResponseReceived() throws Exception {
+        doTestCloseOrDetachReceiverTimesOutWhenNoCloseResponseReceived(true);
+    }
+
+    @Test(timeout = 60000)
+    public void testDetachReceiverTimesOutWhenNoCloseResponseReceived() throws Exception {
+        doTestCloseOrDetachReceiverTimesOutWhenNoCloseResponseReceived(false);
+    }
+
+    private void doTestCloseOrDetachReceiverTimesOutWhenNoCloseResponseReceived(boolean close) throws Exception {
+        try (NettyTestPeer peer = new NettyTestPeer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().withRole(Role.RECEIVER).respond();
+            peer.expectDetach();
+            peer.expectClose().respond();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Receiver test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            ConnectionOptions options = new ConnectionOptions();
+            options.setCloseTimeout(5);
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), options);
+
+            connection.openFuture().get(10, TimeUnit.SECONDS);
+
+            Session session = connection.openSession();
+            session.openFuture().get(10, TimeUnit.SECONDS);
+
+            Receiver receiver = session.openReceiver("test-queue");
+            receiver.openFuture().get(10, TimeUnit.SECONDS);
+
+            try {
+                if (close) {
+                    receiver.close().get(10, TimeUnit.SECONDS);
+                } else {
+                    receiver.detach().get(10, TimeUnit.SECONDS);
+                }
+
+                fail("Should not complete the close or detach future without an error");
+            } catch (ExecutionException exe) {
+                Throwable cause = exe.getCause();
+                assertTrue(cause instanceof ClientOperationTimedOutException);
+            }
+
+            connection.close().get(10, TimeUnit.SECONDS);
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
     }
 

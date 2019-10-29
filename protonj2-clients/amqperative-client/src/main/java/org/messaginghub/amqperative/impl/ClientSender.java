@@ -45,6 +45,9 @@ import org.messaginghub.amqperative.Session;
 import org.messaginghub.amqperative.Tracker;
 import org.messaginghub.amqperative.futures.AsyncResult;
 import org.messaginghub.amqperative.futures.ClientFuture;
+import org.messaginghub.amqperative.impl.exceptions.ClientOperationTimedOutException;
+import org.messaginghub.amqperative.impl.exceptions.ClientResourceAllocationException;
+import org.messaginghub.amqperative.impl.exceptions.ClientResourceClosedException;
 import org.messaginghub.amqperative.impl.exceptions.ClientSendTimedOutException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -67,10 +70,11 @@ public class ClientSender implements Sender {
     private final ClientSession session;
     private final org.apache.qpid.proton4j.engine.Sender protonSender;
     private final ScheduledExecutorService executor;
-    private final AtomicReference<Throwable> failureCause = new AtomicReference<>();
+    private final AtomicReference<ClientException> failureCause = new AtomicReference<>();
     private final String senderId;
     private volatile int closed;
     private LinkCreditState drainingState;
+    private Consumer<ClientSender> senderRemotelyClosedHandler;
 
     public ClientSender(SenderOptions options, ClientSession session, String address) {
         this.options = new SenderOptions(options);
@@ -99,6 +103,11 @@ public class ClientSender implements Sender {
         return session;
     }
 
+    Sender remotelyClosedHandler(Consumer<ClientSender> handler) {
+        this.senderRemotelyClosedHandler = handler;
+        return this;
+    }
+
     @Override
     public Future<Sender> openFuture() {
         return openFuture;
@@ -106,9 +115,21 @@ public class ClientSender implements Sender {
 
     @Override
     public Future<Sender> close() {
-        if (CLOSED_UPDATER.compareAndSet(this, 0, 1) && !openFuture.isFailed()) {
+        if (CLOSED_UPDATER.compareAndSet(this, 0, 1)) {
             executor.execute(() -> {
-                protonSender.close();
+                try {
+                    protonSender.close();
+                } catch (Throwable error) {
+                    closeFuture.complete(this);
+                }
+
+                if (!closeFuture.isDone()) {
+                    final long timeout = options.getCloseTimeout() >= 0 ?
+                            options.getCloseTimeout() : options.getRequestTimeout();
+
+                    session.scheduleRequestTimeout(closeFuture, timeout,
+                        () -> new ClientOperationTimedOutException("Timed out waiting for Sender to close"));
+                }
             });
         }
         return closeFuture;
@@ -116,9 +137,21 @@ public class ClientSender implements Sender {
 
     @Override
     public Future<Sender> detach() {
-        if (CLOSED_UPDATER.compareAndSet(this, 0, 1) && !openFuture.isFailed()) {
+        if (CLOSED_UPDATER.compareAndSet(this, 0, 1)) {
             executor.execute(() -> {
-                protonSender.detach();
+                try {
+                    protonSender.detach();
+                } catch (Throwable error) {
+                    closeFuture.complete(this);
+                }
+
+                if (!closeFuture.isDone()) {
+                    final long timeout = options.getCloseTimeout() >= 0 ?
+                            options.getCloseTimeout() : options.getRequestTimeout();
+
+                    session.scheduleRequestTimeout(closeFuture, timeout,
+                        () -> new ClientOperationTimedOutException("Timed out waiting for Sender to detach"));
+                }
             });
         }
         return closeFuture;
@@ -194,17 +227,16 @@ public class ClientSender implements Sender {
                         .drainRequestedHandler(linkState -> handleRemoteRequestedDrain(linkState))
                         .sendableHandler(sender -> handleRemoteNowSendable(sender))
                         .open();
-
         });
 
         return this;
     }
 
-    void setFailureCause(Throwable failureCause) {
+    void setFailureCause(ClientException failureCause) {
         this.failureCause.set(failureCause);
     }
 
-    Throwable getFailureCause() {
+    ClientException getFailureCause() {
         if (failureCause.get() == null) {
             return session.getFailureCause();
         }
@@ -237,29 +269,39 @@ public class ClientSender implements Sender {
     }
 
     private void handleRemoteCloseOrDetach(org.apache.qpid.proton4j.engine.Sender sender) {
-        CLOSED_UPDATER.lazySet(this, 1);
-
-        // Close should be idempotent so we can just respond here with a close in case
-        // of remotely closed sender.  We should set error state from remote though
-        // so client can see it.
-        try {
-            if (protonSender.getRemoteState() == LinkState.CLOSED) {
-                LOG.info("Sender link remotely closed: ", sender);
-                protonSender.close();
-            } else {
-                LOG.info("Sender link remotely detached: ", sender);
-                protonSender.detach();
+        if (CLOSED_UPDATER.compareAndSet(this, 0, 1)) {
+            // Close should be idempotent so we can just respond here with a close in case
+            // of remotely closed sender.  We should set error state from remote though
+            // so client can see it.
+            try {
+                if (protonSender.getRemoteState() == LinkState.CLOSED) {
+                    LOG.info("Sender link remotely closed: ", sender);
+                    protonSender.close();
+                } else {
+                    LOG.info("Sender link remotely detached: ", sender);
+                    protonSender.detach();
+                }
+            } catch (Throwable ignored) {
+                LOG.trace("Error while processing remote close event: ", ignored);
             }
-        } catch (Throwable ignored) {
-            LOG.trace("Error while processing remote close event: ", ignored);
-        }
 
-        if (sender.getRemoteTarget() == null) {
-            openFuture.failed(new ClientException("Link creation was refused"));
+            if (sender.getRemoteCondition() != null) {
+                failureCause.set(ClientErrorSupport.convertToNonFatalException(sender.getRemoteCondition()));
+            } else if (sender.getRemoteTarget() == null) {
+                failureCause.set(new ClientResourceAllocationException("Link creation was refused"));
+            } else {
+                failureCause.set(new ClientResourceClosedException("The sender has been remotely closed"));
+            }
+
+            openFuture.failed(failureCause.get());
+            closeFuture.complete(this);
+
+            if (senderRemotelyClosedHandler != null) {
+                senderRemotelyClosedHandler.accept(this);
+            }
         } else {
-            openFuture.complete(this);
+            closeFuture.complete(this);
         }
-        closeFuture.complete(this);
     }
 
     private void handleRemoteNowSendable(org.apache.qpid.proton4j.engine.Sender sender) {

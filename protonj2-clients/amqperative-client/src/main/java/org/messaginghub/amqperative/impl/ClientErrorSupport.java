@@ -93,14 +93,12 @@ public abstract class ClientErrorSupport {
      * such as link closed remotely or link create failed due to security access
      * issues.
      *
-     * @param connection
-     * 		the AMQP Client connection instance that originates this exception
      * @param errorCondition
      *      The ErrorCondition returned from the remote peer.
      *
      * @return a new Exception instance that best matches the ErrorCondition value.
      */
-    public static ClientException convertToNonFatalException(ClientConnection connection, ErrorCondition errorCondition) {
+    public static ClientException convertToNonFatalException(ErrorCondition errorCondition) {
         ClientException remoteError = null;
 
         if (errorCondition != null && errorCondition.getCondition() != null) {

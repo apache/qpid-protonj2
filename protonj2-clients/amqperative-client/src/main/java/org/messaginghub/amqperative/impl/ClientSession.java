@@ -72,7 +72,7 @@ public class ClientSession implements Session {
 
     private volatile ThreadPoolExecutor deliveryExecutor;
     private final AtomicReference<Thread> deliveryThread = new AtomicReference<Thread>();
-    private final AtomicReference<Throwable> failureCause = new AtomicReference<>();
+    private final AtomicReference<ClientException> failureCause = new AtomicReference<>();
 
     // TODO - Ensure closed resources are removed from these
     private final List<ClientSender> senders = new ArrayList<>();
@@ -279,11 +279,11 @@ public class ClientSession implements Session {
         return exec;
     }
 
-    void setFailureCause(Throwable failureCause) {
+    void setFailureCause(ClientException failureCause) {
         this.failureCause.set(failureCause);
     }
 
-    Throwable getFailureCause() {
+    ClientException getFailureCause() {
         return failureCause.get();
     }
 
