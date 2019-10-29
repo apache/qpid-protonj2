@@ -59,6 +59,8 @@ import org.messaginghub.amqperative.impl.exceptions.ClientConnectionRemotelyClos
 import org.messaginghub.amqperative.impl.exceptions.ClientExceptionSupport;
 import org.messaginghub.amqperative.transport.Transport;
 import org.messaginghub.amqperative.transport.TransportBuilder;
+import org.messaginghub.amqperative.util.UnclosableSender;
+import org.messaginghub.amqperative.util.UnclosableSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -122,10 +124,10 @@ public class ClientConnection implements Connection {
         this.futureFactoy = ClientFutureFactory.create(options.getFutureType());
 
         if (options.isSaslEnabled()) {
+            // TODO - Check that all allowed mechanisms are actually supported ?
             engine = EngineFactory.PROTON.createEngine();
         } else {
             engine = EngineFactory.PROTON.createNonSaslEngine();
-            // TODO - Check that all allowed mechanisms are actually supported ?
         }
 
         ThreadFactory transportThreadFactory = new ClientThreadFactory(
@@ -189,7 +191,19 @@ public class ClientConnection implements Connection {
 
     @Override
     public Session defaultSession() throws ClientException {
-        return lazyCreateConnectionSession();
+        checkClosed();
+        final ClientFuture<Session> defaultSession = getFutureFactory().createFuture();
+
+        executor.execute(() -> {
+            try {
+                checkClosed();
+                defaultSession.complete(new UnclosableSession(lazyCreateConnectionSession()));
+            } catch (Throwable error) {
+                defaultSession.failed(ClientExceptionSupport.createNonFatalOrPassthrough(error));
+            }
+        });
+
+        return request(defaultSession, options.getRequestTimeout(), TimeUnit.MILLISECONDS);
     }
 
     @Override
@@ -243,7 +257,19 @@ public class ClientConnection implements Connection {
 
     @Override
     public Sender defaultSender() throws ClientException {
-        return lazyCreateConnectionSender();
+        checkClosed();
+        final ClientFuture<Sender> defaultSender = getFutureFactory().createFuture();
+
+        executor.execute(() -> {
+            try {
+                checkClosed();
+                defaultSender.complete(new UnclosableSender(lazyCreateConnectionSender()));
+            } catch (Throwable error) {
+                defaultSender.failed(ClientExceptionSupport.createNonFatalOrPassthrough(error));
+            }
+        });
+
+        return request(defaultSender, options.getRequestTimeout(), TimeUnit.MILLISECONDS);
     }
 
     @Override
@@ -501,7 +527,9 @@ public class ClientConnection implements Connection {
             transport.writeAndFlush(output);
         } catch (IOException e) {
             LOG.warn("Error while writing engine output to transport:", e);
-            // TODO - Engine should handle thrown errors but we already see this one
+            // TODO - Engine should handle thrown errors but we already see this one, we could just throw
+            //        an Unchecked IOException here and let normal processing handle the error on the call
+            //        chain and the error handler callback,
             handleEngineErrors(e);
         }
     }
@@ -578,9 +606,20 @@ public class ClientConnection implements Connection {
 
     private ClientSender lazyCreateConnectionSender() {
         if (connectionSender == null) {
-            // TODO - Ensure this creates an anonymous sender
+            // TODO - Ensure this creates an anonymous sender, we won't know until connection remotely opened
+            //        which means right now we could race ahead and try to open before we know if we can.
             // TODO - What if remote doesn't support anonymous?
             connectionSender = lazyCreateConnectionSession().internalCreateSender(null, getDefaultSenderOptions()).open();
+            connectionSender.remotelyClosedHandler((sender) -> {
+                executor.execute(() -> {
+                    try {
+                        connectionSender.close();
+                    } catch (Throwable ignore) {}
+
+                    // Clear the old closed sender, a lazy create needs to construct a new sender.
+                    connectionSender = null;
+                });
+            });
         }
 
         return connectionSender;
