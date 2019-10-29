@@ -97,11 +97,13 @@ public class AttachInjectAction extends AbstractPerformativeInjectAction<Attach>
 
     // TODO - Source builder
     public AttachInjectAction withSource(Source source) {
+        nullSourceRequired = source == null;
         attach.setSource(TypeMapper.mapFromProtonType(source));
         return this;
     }
 
     public AttachInjectAction withSource(org.apache.qpid.proton4j.amqp.driver.codec.messaging.Source source) {
+        nullSourceRequired = source == null;
         attach.setSource(source);
         return this;
     }
@@ -118,11 +120,13 @@ public class AttachInjectAction extends AbstractPerformativeInjectAction<Attach>
 
     // TODO - Target builder
     public AttachInjectAction withTarget(Target target) {
+        nullTargetRequired = target == null;
         attach.setTarget(TypeMapper.mapFromProtonType(target));
         return this;
     }
 
     public AttachInjectAction withTarget(org.apache.qpid.proton4j.amqp.driver.codec.messaging.Target target) {
+        nullTargetRequired = target == null;
         attach.setTarget(target);
         return this;
     }

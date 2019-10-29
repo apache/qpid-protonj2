@@ -36,6 +36,8 @@ import org.apache.qpid.proton4j.amqp.messaging.Accepted;
 import org.apache.qpid.proton4j.amqp.messaging.Modified;
 import org.apache.qpid.proton4j.amqp.messaging.Rejected;
 import org.apache.qpid.proton4j.amqp.messaging.Released;
+import org.apache.qpid.proton4j.amqp.messaging.Source;
+import org.apache.qpid.proton4j.amqp.messaging.Target;
 import org.apache.qpid.proton4j.amqp.transactions.TransactionalState;
 import org.apache.qpid.proton4j.amqp.transport.AmqpError;
 import org.apache.qpid.proton4j.amqp.transport.DeliveryState;
@@ -225,6 +227,47 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         sender.open();
 
         assertTrue("Sender remote opened event did not fire", senderRemotelyOpened.get());
+
+        sender.close();
+
+        peer.waitForScriptToComplete();
+
+        assertNull(failure);
+    }
+
+    @Test
+    public void testSenderFireOpenedEventAfterRemoteAttachArrivesWithNullTarget() throws Exception {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result);
+        ProtonTestPeer peer = new ProtonTestPeer(engine);
+        engine.outputConsumer(peer);
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond().withContainerId("driver");
+        peer.expectBegin().respond();
+        peer.expectAttach().respond().withTarget((Target) null);
+        peer.expectDetach().respond();
+
+        final AtomicBoolean senderRemotelyOpened = new AtomicBoolean();
+
+        Connection connection = engine.start();
+
+        // Default engine should start and return a connection immediately
+        assertNotNull(connection);
+
+        connection.open();
+        Session session = connection.session();
+        session.open();
+        Sender sender = session.sender("test");
+        sender.setSource(new Source());
+        sender.setTarget(new Target());
+        sender.openHandler(result -> {
+            senderRemotelyOpened.set(true);
+        });
+        sender.open();
+
+        assertTrue("Sender remote opened event did not fire", senderRemotelyOpened.get());
+        assertNull(sender.getRemoteTarget());
 
         sender.close();
 

@@ -344,6 +344,47 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
     }
 
     @Test
+    public void testReceiverFireOpenedEventAfterRemoteAttachArrivesWithNullTarget() throws Exception {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result);
+        ProtonTestPeer peer = new ProtonTestPeer(engine);
+        engine.outputConsumer(peer);
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond().withContainerId("driver");
+        peer.expectBegin().respond();
+        peer.expectAttach().respond().withSource((Source) null);
+        peer.expectDetach().respond();
+
+        final AtomicBoolean receiverRemotelyOpened = new AtomicBoolean();
+
+        Connection connection = engine.start();
+
+        // Default engine should start and return a connection immediately
+        assertNotNull(connection);
+
+        connection.open();
+        Session session = connection.session();
+        session.open();
+        Receiver receiver = session.receiver("test");
+        receiver.setSource(new Source());
+        receiver.setTarget(new Target());
+        receiver.openHandler(result -> {
+            receiverRemotelyOpened.set(true);
+        });
+        receiver.open();
+
+        assertTrue("Receiver remote opened event did not fire", receiverRemotelyOpened.get());
+        assertNull(receiver.getRemoteSource());
+
+        receiver.close();
+
+        peer.waitForScriptToComplete();
+
+        assertNull(failure);
+    }
+
+    @Test
     public void testOpenAndCloseMultipleReceivers() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
