@@ -218,13 +218,20 @@ public class ClientSession implements Session {
 
     ClientReceiver internalCreateReceiver(String address, ReceiverOptions options) {
         ClientReceiver result = new ClientReceiver(options, this, address);
-        receivers.add(result);
+        receivers.add(result);  // TODO - We could use the protonSession to track all links ?
         return result;
     }
 
     ClientSender internalCreateSender(String address, SenderOptions options) {
         ClientSender result = new ClientSender(options, this, address);
-        senders.add(result);
+        senders.add(result);  // TODO - We could use the protonSession to track all links ?
+        return result;
+    }
+
+    // TODO - Refactor to allow this to move to ClientConnectionSession
+    ClientConnectionSender internalCreateConnectionSender(SenderOptions options) {
+        ClientConnectionSender result = new ClientConnectionSender(options, this, null);
+        senders.add(result);  // TODO - We could use the protonSession to track all links ?
         return result;
     }
 

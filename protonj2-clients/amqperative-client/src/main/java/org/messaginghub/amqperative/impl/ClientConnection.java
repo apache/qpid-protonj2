@@ -57,10 +57,9 @@ import org.messaginghub.amqperative.futures.ClientFutureFactory;
 import org.messaginghub.amqperative.impl.exceptions.ClientClosedException;
 import org.messaginghub.amqperative.impl.exceptions.ClientConnectionRemotelyClosedException;
 import org.messaginghub.amqperative.impl.exceptions.ClientExceptionSupport;
+import org.messaginghub.amqperative.impl.exceptions.ClientUnsupportedOperationException;
 import org.messaginghub.amqperative.transport.Transport;
 import org.messaginghub.amqperative.transport.TransportBuilder;
-import org.messaginghub.amqperative.util.UnclosableSender;
-import org.messaginghub.amqperative.util.UnclosableSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -83,17 +82,22 @@ public class ClientConnection implements Connection {
 
     private final ClientInstance client;
     private final ConnectionOptions options;
+    private final ClientConnectionCapabilities capabilities = new ClientConnectionCapabilities();
     private final ClientFutureFactory futureFactoy;
 
     private final Map<ClientFuture<?>, ClientFuture<?>> requests = new ConcurrentHashMap<>();
     private final Engine engine;
     private org.apache.qpid.proton4j.engine.Connection protonConnection;
-    private ClientSession connectionSession;
-    private ClientSender connectionSender;
+    private ClientConnectionSession connectionSession;
+    private ClientConnectionSender connectionSender;
     private Transport transport;
 
     // TODO - Ensure closed sessions are removed from this list - Use a Map otherwise there's gaps
     private final List<ClientSession> sessions = new ArrayList<>();
+
+    private SessionOptions defaultSessionOptions;
+    private SenderOptions defaultSenderOptions;
+    private ReceiverOptions defaultReceivernOptions;
 
     private ClientFuture<Connection> openFuture;
     private ClientFuture<Connection> closeFuture;
@@ -197,7 +201,7 @@ public class ClientConnection implements Connection {
         executor.execute(() -> {
             try {
                 checkClosed();
-                defaultSession.complete(new UnclosableSession(lazyCreateConnectionSession()));
+                defaultSession.complete(lazyCreateConnectionSession());
             } catch (Throwable error) {
                 defaultSession.failed(ClientExceptionSupport.createNonFatalOrPassthrough(error));
             }
@@ -263,7 +267,11 @@ public class ClientConnection implements Connection {
         executor.execute(() -> {
             try {
                 checkClosed();
-                defaultSender.complete(new UnclosableSender(lazyCreateConnectionSender()));
+
+                // TODO - Ensure this creates an anonymous sender, we won't know until connection remotely opened
+                //        which means right now we could race ahead and try to open before we know if we can.
+
+                defaultSender.complete(lazyCreateConnectionSender());
             } catch (Throwable error) {
                 defaultSender.failed(ClientExceptionSupport.createNonFatalOrPassthrough(error));
             }
@@ -328,6 +336,10 @@ public class ClientConnection implements Connection {
         executor.execute(() -> {
             try {
                 checkClosed();
+
+                // TODO - Ensure this creates an anonymous sender, we won't know until connection remotely opened
+                //        which means right now we could race ahead and try to open before we know if we can.
+
                 result.complete(lazyCreateConnectionSender().send(message));
             } catch (Throwable error) {
                 result.failed(ClientExceptionSupport.createNonFatalOrPassthrough(error));
@@ -395,7 +407,7 @@ public class ClientConnection implements Connection {
                 protonConnection.setContainerId(client.containerId());
             }
 
-            protonConnection.open().tickAuto(executor);
+            protonConnection.open(); //.tickAuto(executor);
         });
 
         return this;
@@ -493,6 +505,7 @@ public class ClientConnection implements Connection {
     //----- Private implementation events handlers and utility methods
 
     private void handleRemoteOpen(org.apache.qpid.proton4j.engine.Connection connection) {
+        capabilities.determineCapabilities(connection);
         openFuture.complete(this);
     }
 
@@ -590,9 +603,9 @@ public class ClientConnection implements Connection {
         protonConnection.setProperties(ClientConversionSupport.toSymbolKeyedMap(options.getProperties()));
     }
 
-    private ClientSession lazyCreateConnectionSession() {
+    private ClientConnectionSession lazyCreateConnectionSession() {
         if (connectionSession == null) {
-            connectionSession = new ClientSession(getDefaultSessionOptions(), this, protonConnection.session());
+            connectionSession = new ClientConnectionSession(getDefaultSessionOptions(), this, protonConnection.session());
             sessions.add(connectionSession);
             try {
                 connectionSession.open();
@@ -604,12 +617,10 @@ public class ClientConnection implements Connection {
         return connectionSession;
     }
 
-    private ClientSender lazyCreateConnectionSender() {
+    private ClientConnectionSender lazyCreateConnectionSender() throws ClientUnsupportedOperationException {
         if (connectionSender == null) {
-            // TODO - Ensure this creates an anonymous sender, we won't know until connection remotely opened
-            //        which means right now we could race ahead and try to open before we know if we can.
-            // TODO - What if remote doesn't support anonymous?
-            connectionSender = lazyCreateConnectionSession().internalCreateSender(null, getDefaultSenderOptions()).open();
+            checkAnonymousRelaySupported();
+            connectionSender = (ClientConnectionSender) lazyCreateConnectionSession().internalCreateConnectionSender(getDefaultSenderOptions()).open();
             connectionSender.remotelyClosedHandler((sender) -> {
                 executor.execute(() -> {
                     try {
@@ -625,6 +636,12 @@ public class ClientConnection implements Connection {
         return connectionSender;
     }
 
+    private void checkAnonymousRelaySupported() throws ClientUnsupportedOperationException {
+        if (!capabilities.anonymousRelaySupported()) {
+            throw new ClientUnsupportedOperationException("Anonymous relay support not available from this connection");
+        }
+    }
+
     protected void checkClosed() throws ClientClosedException {
         if (CLOSED_UPDATER.get(this) > 0) {
             if (failureCause != null) {
@@ -634,10 +651,6 @@ public class ClientConnection implements Connection {
             }
         }
     }
-
-    private SessionOptions defaultSessionOptions;
-    private SenderOptions defaultSenderOptions;
-    private ReceiverOptions defaultReceivernOptions;
 
     /*
      * Session options used when none specified by the caller creating a new session.

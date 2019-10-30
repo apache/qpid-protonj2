@@ -32,12 +32,15 @@ import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
 import org.apache.qpid.proton4j.amqp.transport.AmqpError;
 import org.apache.qpid.proton4j.amqp.transport.ConnectionError;
 import org.apache.qpid.proton4j.amqp.transport.ErrorCondition;
+import org.apache.qpid.proton4j.amqp.transport.Role;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.junit.Ignore;
 import org.junit.Test;
+import org.messaginghub.amqperative.impl.ClientConstants;
 import org.messaginghub.amqperative.impl.ClientException;
 import org.messaginghub.amqperative.impl.exceptions.ClientConnectionRemotelyClosedException;
+import org.messaginghub.amqperative.impl.exceptions.ClientUnsupportedOperationException;
 import org.messaginghub.amqperative.test.AMQPerativeTestCase;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -295,6 +298,75 @@ public class ConnectionTest extends AMQPerativeTestCase {
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
             LOG.info("Connect test completed normally");
+        }
+    }
+
+    @Test(timeout = 60000)
+    public void testCreateDefaultSenderFailsOnConnectionWithoutSupportForAnonymousRelay() throws Exception {
+        try (NettyTestPeer peer = new NettyTestPeer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectClose();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Connect test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+
+            try {
+                connection.openFuture().get(10, TimeUnit.SECONDS);
+            } catch (ExecutionException ex) {}
+
+            try {
+                connection.defaultSender();
+                fail("Should not be able to get the default sender when remote does not offer anonymous relay");
+            } catch (ClientUnsupportedOperationException unsupported) {
+                LOG.info("Caught expected error: ", unsupported);
+            }
+
+            connection.close();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test(timeout = 60000)
+    public void testCreateDefaultSenderOnConnectionWithSupportForAnonymousRelay() throws Exception {
+        try (NettyTestPeer peer = new NettyTestPeer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().withDesiredCapabilities(ClientConstants.ANONYMOUS_RELAY)
+                             .respond()
+                             .withOfferedCapabilities(ClientConstants.ANONYMOUS_RELAY);
+            peer.expectBegin().respond();
+            peer.expectAttach().withRole(Role.SENDER).respond();
+            peer.expectClose();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Connect test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+
+            try {
+                connection.openFuture().get(10, TimeUnit.SECONDS);
+            } catch (ExecutionException ex) {}
+
+            Sender defaultSender = connection.defaultSender().openFuture().get(5, TimeUnit.SECONDS);
+            assertNotNull(defaultSender);
+
+            try {
+                defaultSender.close();
+                fail("Should not be able to close the connection default sender");
+            } catch (UnsupportedOperationException nope) {}
+
+            connection.close();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
     }
 
