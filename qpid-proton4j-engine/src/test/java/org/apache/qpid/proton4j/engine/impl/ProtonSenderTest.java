@@ -51,6 +51,7 @@ import org.apache.qpid.proton4j.engine.EngineFactory;
 import org.apache.qpid.proton4j.engine.OutgoingDelivery;
 import org.apache.qpid.proton4j.engine.Sender;
 import org.apache.qpid.proton4j.engine.Session;
+import org.junit.Ignore;
 import org.junit.Test;
 
 /**
@@ -414,6 +415,114 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         }
 
         peer.waitForScriptToComplete();
+
+        assertNull(failure);
+    }
+
+    @Test
+    public void testRemotelyCloseSenderAndOpenNewSenderImmediatelyAfterWithNewLinkName() throws Exception {
+        doTestRemotelyTerminateLinkAndThenCreateNewLink(true, false);
+    }
+
+    @Test
+    public void testRemotelyDetachSenderAndOpenNewSenderImmediatelyAfterWithNewLinkName() throws Exception {
+        doTestRemotelyTerminateLinkAndThenCreateNewLink(false, false);
+    }
+
+    @Ignore("Issue with untracking links by name currently")  // TODO - No Free in current API when to stop tracking ?
+    @Test
+    public void testRemotelyCloseSenderAndOpenNewSenderImmediatelyAfterWithSameLinkName() throws Exception {
+        doTestRemotelyTerminateLinkAndThenCreateNewLink(true, true);
+    }
+
+    @Ignore("Issue with untracking links by name currently")  // TODO - No Free in current API when to stop tracking ?
+    @Test
+    public void testRemotelyDetachSenderAndOpenNewSenderImmediatelyAfterWithSameLinkName() throws Exception {
+        doTestRemotelyTerminateLinkAndThenCreateNewLink(false, true);
+    }
+
+    private void doTestRemotelyTerminateLinkAndThenCreateNewLink(boolean close, boolean sameLinkName) throws Exception {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result);
+        ProtonTestPeer peer = new ProtonTestPeer(engine);
+        engine.outputConsumer(peer);
+
+        String firstLinkName = "test-link-1";
+        String secondLinkName = sameLinkName ? firstLinkName : "test-link-2";
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond().withContainerId("driver");
+        peer.expectBegin().respond();
+        peer.expectAttach().withHandle(0).withRole(Role.SENDER).respond();
+        peer.remoteDetach().withClosed(close).queue();
+
+        final AtomicBoolean senderRemotelyOpened = new AtomicBoolean();
+        final AtomicBoolean senderRemotelyClosed = new AtomicBoolean();
+        final AtomicBoolean senderRemotelyDetached = new AtomicBoolean();
+
+        Connection connection = engine.start();
+
+        // Default engine should start and return a connection immediately
+        assertNotNull(connection);
+
+        connection.open();
+        Session session = connection.session();
+        session.open();
+        Sender sender = session.sender(firstLinkName);
+        sender.openHandler(result -> senderRemotelyOpened.set(true));
+        sender.closeHandler(result -> senderRemotelyClosed.set(true));
+        sender.detachHandler(result -> senderRemotelyDetached.set(true));
+        sender.open();
+
+        peer.waitForScriptToComplete();
+
+        assertTrue("Sender remote opened event did not fire", senderRemotelyOpened.get());
+        if (close) {
+            assertTrue("Sender remote closed event did not fire", senderRemotelyClosed.get());
+            assertFalse("Sender remote detached event fired", senderRemotelyDetached.get());
+        } else {
+            assertFalse("Sender remote closed event fired", senderRemotelyClosed.get());
+            assertTrue("Sender remote closed event did not fire", senderRemotelyDetached.get());
+        }
+
+        peer.expectDetach().withClosed(close);
+        if (close) {
+            sender.close();
+        } else {
+            sender.detach();
+        }
+
+        peer.waitForScriptToComplete();
+        peer.expectAttach().withHandle(0).withRole(Role.SENDER).respond();
+        peer.expectDetach().withClosed(close).respond();
+
+        // Reset trackers
+        senderRemotelyOpened.set(false);
+        senderRemotelyClosed.set(false);
+        senderRemotelyDetached.set(false);
+
+        sender = session.sender(secondLinkName);
+        sender.openHandler(result -> senderRemotelyOpened.set(true));
+        sender.closeHandler(result -> senderRemotelyClosed.set(true));
+        sender.detachHandler(result -> senderRemotelyDetached.set(true));
+        sender.open();
+
+        if (close) {
+            sender.close();
+        } else {
+            sender.detach();
+        }
+
+        peer.waitForScriptToComplete();
+
+        assertTrue("Sender remote opened event did not fire", senderRemotelyOpened.get());
+        if (close) {
+            assertTrue("Sender remote closed event did not fire", senderRemotelyClosed.get());
+            assertFalse("Sender remote detached event fired", senderRemotelyDetached.get());
+        } else {
+            assertFalse("Sender remote closed event fired", senderRemotelyClosed.get());
+            assertTrue("Sender remote closed event did not fire", senderRemotelyDetached.get());
+        }
 
         assertNull(failure);
     }

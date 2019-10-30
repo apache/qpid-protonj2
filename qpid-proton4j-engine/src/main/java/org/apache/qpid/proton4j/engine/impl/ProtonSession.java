@@ -425,7 +425,7 @@ public class ProtonSession implements Session {
     }
 
     void remoteDetach(Detach detach, int channel) {
-        final ProtonLink<?> link = remoteLinks.get((int) detach.getHandle());
+        final ProtonLink<?> link = remoteLinks.remove((int) detach.getHandle());
         if (link == null) {
             getEngine().engineFailed(new ProtocolViolationException(
                 "Received uncorrelated handle on Detach from remote: " + channel));
