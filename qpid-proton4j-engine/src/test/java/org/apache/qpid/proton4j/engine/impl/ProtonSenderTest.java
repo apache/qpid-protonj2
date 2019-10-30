@@ -68,7 +68,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         peer.expectAMQPHeader().respondWithAMQPHeader();
         peer.expectOpen().respond().withContainerId("driver");
         peer.expectBegin().respond();
-        peer.expectAttach().respond();
+        peer.expectAttach().withRole(Role.SENDER).respond();
         peer.expectDetach().respond();
 
         Connection connection = engine.start();
@@ -349,6 +349,69 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         sender.close();
 
         assertTrue("Sender remote closed event did not fire", senderRemotelyClosed.get());
+
+        peer.waitForScriptToComplete();
+
+        assertNull(failure);
+    }
+
+    @Test
+    public void testSenderFireClosedEventAfterRemoteDetachArrivesBeforeLocalClose() throws Exception {
+        doTestSenderFireEventAfterRemoteDetachArrivesBeforeLocalClose(true);
+    }
+
+    @Test
+    public void testSenderFireDetachEventAfterRemoteDetachArrivesBeforeLocalClose() throws Exception {
+        doTestSenderFireEventAfterRemoteDetachArrivesBeforeLocalClose(false);
+    }
+
+    private void doTestSenderFireEventAfterRemoteDetachArrivesBeforeLocalClose(boolean close) throws Exception {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result);
+        ProtonTestPeer peer = new ProtonTestPeer(engine);
+        engine.outputConsumer(peer);
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond().withContainerId("driver");
+        peer.expectBegin().respond();
+        peer.expectAttach().respond();
+        peer.remoteDetach().withClosed(close).queue();
+
+        final AtomicBoolean senderRemotelyOpened = new AtomicBoolean();
+        final AtomicBoolean senderRemotelyClosed = new AtomicBoolean();
+        final AtomicBoolean senderRemotelyDetached = new AtomicBoolean();
+
+        Connection connection = engine.start();
+
+        // Default engine should start and return a connection immediately
+        assertNotNull(connection);
+
+        connection.open();
+        Session session = connection.session();
+        session.open();
+        Sender sender = session.sender("test");
+        sender.openHandler(result -> senderRemotelyOpened.set(true));
+        sender.closeHandler(result -> senderRemotelyClosed.set(true));
+        sender.detachHandler(result -> senderRemotelyDetached.set(true));
+        sender.open();
+
+        peer.waitForScriptToComplete();
+
+        assertTrue("Sender remote opened event did not fire", senderRemotelyOpened.get());
+        if (close) {
+            assertTrue("Sender remote closed event did not fire", senderRemotelyClosed.get());
+            assertFalse("Sender remote detached event fired", senderRemotelyDetached.get());
+        } else {
+            assertFalse("Sender remote closed event fired", senderRemotelyClosed.get());
+            assertTrue("Sender remote closed event did not fire", senderRemotelyDetached.get());
+        }
+
+        peer.expectDetach().withClosed(close);
+        if (close) {
+            sender.close();
+        } else {
+            sender.detach();
+        }
 
         peer.waitForScriptToComplete();
 

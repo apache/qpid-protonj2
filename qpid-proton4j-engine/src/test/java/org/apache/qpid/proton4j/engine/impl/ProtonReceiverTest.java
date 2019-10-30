@@ -81,7 +81,8 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         peer.expectAMQPHeader().respondWithAMQPHeader();
         peer.expectOpen().respond().withContainerId("driver");
         peer.expectBegin().respond();
-        peer.expectAttach().withTarget(notNullValue())
+        peer.expectAttach().withRole(Role.RECEIVER)
+                           .withTarget(notNullValue())
                            .withTarget(notNullValue())
                            .respond();
         peer.expectDetach().respond();
@@ -337,6 +338,69 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         receiver.close();
 
         assertTrue("Receiver remote closed event did not fire", receiverRemotelyClosed.get());
+
+        peer.waitForScriptToComplete();
+
+        assertNull(failure);
+    }
+
+    @Test
+    public void testReceiverFireClosedEventAfterRemoteDetachArrivesBeforeLocalClose() throws Exception {
+        doTestReceiverFireEventAfterRemoteDetachArrivesBeforeLocalClose(true);
+    }
+
+    @Test
+    public void testReceiverFireDetachEventAfterRemoteDetachArrivesBeforeLocalClose() throws Exception {
+        doTestReceiverFireEventAfterRemoteDetachArrivesBeforeLocalClose(false);
+    }
+
+    private void doTestReceiverFireEventAfterRemoteDetachArrivesBeforeLocalClose(boolean close) throws Exception {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result);
+        ProtonTestPeer peer = new ProtonTestPeer(engine);
+        engine.outputConsumer(peer);
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond().withContainerId("driver");
+        peer.expectBegin().respond();
+        peer.expectAttach().respond();
+        peer.remoteDetach().withClosed(close).queue();
+
+        final AtomicBoolean receiverRemotelyOpened = new AtomicBoolean();
+        final AtomicBoolean receiverRemotelyClosed = new AtomicBoolean();
+        final AtomicBoolean receiverRemotelyDetached = new AtomicBoolean();
+
+        Connection connection = engine.start();
+
+        // Default engine should start and return a connection immediately
+        assertNotNull(connection);
+
+        connection.open();
+        Session session = connection.session();
+        session.open();
+        Receiver receiver = session.receiver("test");
+        receiver.openHandler(result -> receiverRemotelyOpened.set(true));
+        receiver.closeHandler(result -> receiverRemotelyClosed.set(true));
+        receiver.detachHandler(result -> receiverRemotelyDetached.set(true));
+        receiver.open();
+
+        peer.waitForScriptToComplete();
+
+        assertTrue("Receiver remote opened event did not fire", receiverRemotelyOpened.get());
+        if (close) {
+            assertTrue("Receiver remote closed event did not fire", receiverRemotelyClosed.get());
+            assertFalse("Receiver remote detached event fired", receiverRemotelyDetached.get());
+        } else {
+            assertFalse("Receiver remote closed event fired", receiverRemotelyClosed.get());
+            assertTrue("Receiver remote closed event did not fire", receiverRemotelyDetached.get());
+        }
+
+        peer.expectDetach().withClosed(close);
+        if (close) {
+            receiver.close();
+        } else {
+            receiver.detach();
+        }
 
         peer.waitForScriptToComplete();
 

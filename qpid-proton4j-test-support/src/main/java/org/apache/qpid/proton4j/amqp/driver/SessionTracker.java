@@ -48,6 +48,7 @@ public class SessionTracker {
     private UnsignedInteger outgoingWindow = UnsignedInteger.ZERO;
     private UnsignedInteger handleMax;
     private End end;
+    private LinkTracker lastOpenedLink;
 
     private final AMQPTestDriver driver;
 
@@ -60,6 +61,10 @@ public class SessionTracker {
 
     public AMQPTestDriver getDriver() {
         return driver;
+    }
+
+    public LinkTracker getLastOpenedLink() {
+        return lastOpenedLink;
     }
 
     public LinkTracker getLastOpenedSender() {
@@ -132,17 +137,17 @@ public class SessionTracker {
     }
 
     public LinkTracker handleAttach(Attach attach) {
-        LinkTracker tracker = new LinkTracker(this, attach);
+        lastOpenedLink = new LinkTracker(this, attach);
 
         if (attach.getRole().equals(Role.SENDER.getValue())) {
-            senders.add(tracker);
+            senders.add(lastOpenedLink);
         } else {
-            receivers.add(tracker);
+            receivers.add(lastOpenedLink);
         }
 
-        trackerMap.put(attach.getHandle(), tracker);
+        trackerMap.put(attach.getHandle(), lastOpenedLink);
 
-        return tracker;
+        return lastOpenedLink;
     }
 
     public LinkTracker handleDetach(Detach detach) {

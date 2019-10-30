@@ -72,6 +72,12 @@ public class DetachInjectAction extends AbstractPerformativeInjectAction<Detach>
             onChannel(driver.getSessions().getLastOpenedSession().getLocalChannel().intValue());
         }
 
+        // Auto select last opened sender on last opened session.  Later an option could
+        // be added to allow forcing the handle to be null for testing specification requirements.
+        if (detach.getHandle() == null) {
+            detach.setHandle(driver.getSessions().getLastOpenedSession().getLastOpenedLink().getHandle());
+        }
+
         // TODO - Process detach in the local side of the link when needed for added validation
     }
 }
