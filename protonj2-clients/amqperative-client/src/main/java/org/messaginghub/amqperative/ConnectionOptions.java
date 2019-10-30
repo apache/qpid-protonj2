@@ -28,7 +28,7 @@ import java.util.Set;
  */
 public class ConnectionOptions {
 
-    public static final String[] DEFAULT_DESIRED_CAPABILITIES = new String[] { "ANONYMOUS_RELAY" };
+    public static final String[] DEFAULT_DESIRED_CAPABILITIES = new String[] { "ANONYMOUS-RELAY" };
 
     public static final long INFINITE = -1;
     public static final long DEFAULT_OPEN_TIMEOUT = 15000;
