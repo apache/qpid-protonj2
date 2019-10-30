@@ -407,7 +407,6 @@ public class ProtonSession implements Session {
 
     void remoteAttach(Attach attach, int channel) {
         if (validateHandleMaxCompliance(attach)) {
-            // TODO - Space efficient primitive data structure
             if (remoteLinks.containsKey((int) attach.getHandle())) {
                 // TODO fail because link already in use.
                 return;

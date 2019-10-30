@@ -59,6 +59,7 @@ import org.apache.qpid.proton4j.engine.LinkState;
 import org.apache.qpid.proton4j.engine.Receiver;
 import org.apache.qpid.proton4j.engine.Session;
 import org.hamcrest.Matcher;
+import org.junit.Ignore;
 import org.junit.Test;
 
 /**
@@ -345,25 +346,40 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
     }
 
     @Test
-    public void testReceiverFireClosedEventAfterRemoteDetachArrivesBeforeLocalClose() throws Exception {
-        doTestReceiverFireEventAfterRemoteDetachArrivesBeforeLocalClose(true);
+    public void testRemotelyCloseReceiverAndOpenNewReceiverImmediatelyAfterWithNewLinkName() throws Exception {
+        doTestRemotelyTerminateLinkAndThenCreateNewLink(true, false);
     }
 
     @Test
-    public void testReceiverFireDetachEventAfterRemoteDetachArrivesBeforeLocalClose() throws Exception {
-        doTestReceiverFireEventAfterRemoteDetachArrivesBeforeLocalClose(false);
+    public void testRemotelyDetachReceiverAndOpenNewReceiverImmediatelyAfterWithNewLinkName() throws Exception {
+        doTestRemotelyTerminateLinkAndThenCreateNewLink(false, false);
     }
 
-    private void doTestReceiverFireEventAfterRemoteDetachArrivesBeforeLocalClose(boolean close) throws Exception {
+    @Ignore("Issue with untracking links by name currently")  // TODO - No Free in current API when to stop tracking ?
+    @Test
+    public void testRemotelyCloseReceiverAndOpenNewReceiverImmediatelyAfterWithSameLinkName() throws Exception {
+        doTestRemotelyTerminateLinkAndThenCreateNewLink(true, true);
+    }
+
+    @Ignore("Issue with untracking links by name currently")  // TODO - No Free in current API when to stop tracking ?
+    @Test
+    public void testRemotelyDetachReceiverAndOpenNewReceiverImmediatelyAfterWithSameLinkName() throws Exception {
+        doTestRemotelyTerminateLinkAndThenCreateNewLink(false, true);
+    }
+
+    private void doTestRemotelyTerminateLinkAndThenCreateNewLink(boolean close, boolean sameLinkName) throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
         ProtonTestPeer peer = new ProtonTestPeer(engine);
         engine.outputConsumer(peer);
 
+        String firstLinkName = "test-link-1";
+        String secondLinkName = sameLinkName ? firstLinkName : "test-link-2";
+
         peer.expectAMQPHeader().respondWithAMQPHeader();
         peer.expectOpen().respond().withContainerId("driver");
         peer.expectBegin().respond();
-        peer.expectAttach().respond();
+        peer.expectAttach().withHandle(0).withRole(Role.RECEIVER).respond();
         peer.remoteDetach().withClosed(close).queue();
 
         final AtomicBoolean receiverRemotelyOpened = new AtomicBoolean();
@@ -378,7 +394,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         connection.open();
         Session session = connection.session();
         session.open();
-        Receiver receiver = session.receiver("test");
+        Receiver receiver = session.receiver(firstLinkName);
         receiver.openHandler(result -> receiverRemotelyOpened.set(true));
         receiver.closeHandler(result -> receiverRemotelyClosed.set(true));
         receiver.detachHandler(result -> receiverRemotelyDetached.set(true));
@@ -403,6 +419,36 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         }
 
         peer.waitForScriptToComplete();
+        peer.expectAttach().withHandle(0).withRole(Role.RECEIVER).respond();
+        peer.expectDetach().withClosed(close).respond();
+
+        // Reset trackers
+        receiverRemotelyOpened.set(false);
+        receiverRemotelyClosed.set(false);
+        receiverRemotelyDetached.set(false);
+
+        receiver = session.receiver(secondLinkName);
+        receiver.openHandler(result -> receiverRemotelyOpened.set(true));
+        receiver.closeHandler(result -> receiverRemotelyClosed.set(true));
+        receiver.detachHandler(result -> receiverRemotelyDetached.set(true));
+        receiver.open();
+
+        if (close) {
+            receiver.close();
+        } else {
+            receiver.detach();
+        }
+
+        peer.waitForScriptToComplete();
+
+        assertTrue("Receiver remote opened event did not fire", receiverRemotelyOpened.get());
+        if (close) {
+            assertTrue("Receiver remote closed event did not fire", receiverRemotelyClosed.get());
+            assertFalse("Receiver remote detached event fired", receiverRemotelyDetached.get());
+        } else {
+            assertFalse("Receiver remote closed event fired", receiverRemotelyClosed.get());
+            assertTrue("Receiver remote closed event did not fire", receiverRemotelyDetached.get());
+        }
 
         assertNull(failure);
     }
@@ -528,7 +574,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
     }
 
     @Test
-    public void testCannotOpenSenderAfterSessionClosed() throws Exception {
+    public void testCannotOpenReceiverAfterSessionClosed() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
         ProtonTestPeer peer = new ProtonTestPeer(engine);
