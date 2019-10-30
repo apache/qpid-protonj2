@@ -407,7 +407,9 @@ public class ClientConnection implements Connection {
                 protonConnection.setContainerId(client.containerId());
             }
 
-            protonConnection.open(); //.tickAuto(executor);
+            // TODO - Possible issue with tick kicking in and writing idle frames before remote
+            //        Open actually received.
+            protonConnection.open().tickAuto(executor);
         });
 
         return this;
