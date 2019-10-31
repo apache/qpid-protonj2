@@ -69,28 +69,14 @@ public final class ProtonCompositeBuffer extends ProtonAbstractByteBuffer {
         this.currentChunk = head;
     }
 
-    public ProtonCompositeBuffer addBuffer(ProtonBuffer newAddition) {
-        final int readableBytes = newAddition.getReadableBytes();
-        if (readableBytes == 0) {
+    public ProtonCompositeBuffer addBuffer(ProtonBuffer buffer) {
+        if (!buffer.isReadable()) {
             return this;
         }
 
-        // We only read and write within the readable portion of the contained chunk so
-        // our capacity follows the total readable bytes from all chunks.
-        capacity += readableBytes;
-        totalChunks++;
-
-        final Chunk newChunk = new Chunk(newAddition, readableBytes, tail.prev.endIndex + 1, readableBytes - 1);
-
-        // Link the new chunk onto the end updating any previous chunk as well.
-        newChunk.prev = tail.prev;
-        newChunk.next = tail;
-        tail.prev.next = newChunk;
-        tail.prev = newChunk;
-
-        if (currentChunk == head) {
-            currentChunk = newChunk;
-        }
+        // If already at end we extend the write index to the new end of the composite
+        int newWriteIndex = writeIndex == capacity ? writeIndex + buffer.getReadableBytes() : writeIndex;
+        appendBuffer(buffer).setWriteIndex(newWriteIndex);
 
         return this;
     }
@@ -135,13 +121,36 @@ public final class ProtonCompositeBuffer extends ProtonAbstractByteBuffer {
         checkNewCapacity(newCapacity);
 
         if (newCapacity > capacity) {
-            int amountNeeded = newCapacity - capacity;
-            addBuffer(ProtonByteBufferAllocator.DEFAULT.allocate(amountNeeded, amountNeeded).setWriteIndex(amountNeeded));
+            final int amountNeeded = newCapacity - capacity;
+            appendBuffer(ProtonByteBufferAllocator.DEFAULT.allocate(amountNeeded, amountNeeded).setWriteIndex(amountNeeded));
         } else if (newCapacity < capacity) {
-            // TODO - Reduce the buffers in the arrays until we get to one that
-            //        can be copied into a smaller buffer that would meet the
-            //        new capacity requirements.  The write index needs to be moved
-            //        back to the new capacity value.
+            int reductionTarget = capacity - newCapacity;
+            Chunk current = tail.prev;
+            while (current != head) {
+                if (current.chunkSize > reductionTarget) {
+                    // We could copy here which might preserve the array backing if we held only one buffer
+                    // and the original was array backed.
+                    Chunk replacement = new Chunk(
+                        current.buffer.slice(current.startIndex, reductionTarget), reductionTarget, 0, reductionTarget - 1);
+                    current.next.prev = replacement;
+                    current.prev.next = replacement;
+                    break;
+                } else {
+                    reductionTarget -= current.chunkSize;
+                    current.next.prev = current.prev;
+                    current.prev.next = current.next;
+                }
+
+                current = current.prev;
+            }
+
+            capacity = newCapacity;
+            if (writeIndex > capacity) {
+                writeIndex = capacity;
+            }
+            if (readIndex > capacity) {
+                readIndex = capacity;
+            }
         }
 
         return this;
@@ -278,6 +287,8 @@ public final class ProtonCompositeBuffer extends ProtonAbstractByteBuffer {
         }
     }
 
+    //----- Internal Support Framework API
+
     private Chunk findChunkWithIndex(int index) {
         if (currentChunk == null) {
             return null;
@@ -302,6 +313,32 @@ public final class ProtonCompositeBuffer extends ProtonAbstractByteBuffer {
         }
 
         return result;
+    }
+
+    /*
+     * Appends the buffer to the end of the current set of chunks but does not alter the
+     * read or write index values, this is just a way to add capacity.
+     */
+    private ProtonCompositeBuffer appendBuffer(ProtonBuffer buffer) {
+        int window = buffer.getReadableBytes();
+        // We only read and write within the readable portion of the contained chunk so
+        // our capacity follows the total readable bytes from all chunks.
+        capacity += window;
+        totalChunks++;
+
+        final Chunk newChunk = new Chunk(buffer, window, tail.prev.endIndex + 1, tail.prev.endIndex + window);
+
+        // Link the new chunk onto the end updating any previous chunk as well.
+        newChunk.prev = tail.prev;
+        newChunk.next = tail;
+        tail.prev.next = newChunk;
+        tail.prev = newChunk;
+
+        if (currentChunk == head) {
+            currentChunk = newChunk;
+        }
+
+        return this;
     }
 
     /*

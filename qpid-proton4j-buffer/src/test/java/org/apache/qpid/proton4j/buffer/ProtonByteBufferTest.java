@@ -380,6 +380,7 @@ public class ProtonByteBufferTest {
 
         ProtonBuffer buffer = new ProtonByteBuffer(source);
         assertEquals(100, buffer.capacity());
+        assertEquals(100, buffer.getWriteIndex());
         assertTrue(buffer.hasArray());
         assertSame(source, buffer.getArray());
 

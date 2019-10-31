@@ -19,6 +19,7 @@ package org.apache.qpid.proton4j.buffer;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -31,6 +32,10 @@ import org.junit.Test;
 public abstract class ProtonAbstractBufferTest {
 
     public static final int DEFAULT_CAPACITY = 64;
+
+    // TODO - Remove assumptions about the array backing of a buffer as that could
+    //        vary from implementation to implementation and should be tested in the
+    //        specific tests for that buffer type.
 
     //----- Test Buffer creation ---------------------------------------------//
 
@@ -247,6 +252,132 @@ public abstract class ProtonAbstractBufferTest {
         } catch (IndexOutOfBoundsException e) {}
     }
 
+    //----- Tests for altering buffer capacity -------------------------------//
+
+    @Test
+    public void testIncreaseCapacity() {
+        byte[] source = new byte[100];
+
+        ProtonBuffer buffer = wrapBuffer(source);
+        assertEquals(100, buffer.capacity());
+        assertEquals(0, buffer.getReadIndex());
+        assertEquals(100, buffer.getWriteIndex());
+
+        buffer.capacity(200);
+        assertEquals(200, buffer.capacity());
+
+        buffer.capacity(200);
+        assertEquals(200, buffer.capacity());
+
+        assertEquals(0, buffer.getReadIndex());
+        assertEquals(100, buffer.getWriteIndex());
+    }
+
+    @Test
+    public void testDecreaseCapacity() {
+        byte[] source = new byte[100];
+
+        ProtonBuffer buffer = wrapBuffer(source);
+        assertEquals(100, buffer.capacity());
+        assertEquals(100, buffer.getWriteIndex());
+        assertTrue(buffer.hasArray());
+        assertSame(source, buffer.getArray());
+
+        buffer.capacity(50);
+        assertEquals(50, buffer.capacity());
+        assertTrue(buffer.hasArray());
+
+        // Buffer is truncated but we never read anything so read index stays at front.
+        assertEquals(0, buffer.getReadIndex());
+        assertEquals(50, buffer.getWriteIndex());
+    }
+
+    @Test
+    public void testDecreaseCapacityValidatesSize() {
+        byte[] source = new byte[100];
+
+        ProtonBuffer buffer = wrapBuffer(source);
+        assertEquals(100, buffer.capacity());
+        assertTrue(buffer.hasArray());
+        assertSame(source, buffer.getArray());
+
+        try {
+            buffer.capacity(-50);
+            fail("Should throw IllegalArgumentException");
+        } catch (IllegalArgumentException iae) {}
+    }
+
+    @Test
+    public void testDecreaseCapacityWithReadIndexIndexBeyondNewValue() {
+        byte[] source = new byte[100];
+
+        ProtonBuffer buffer = wrapBuffer(source);
+        assertEquals(100, buffer.capacity());
+        assertTrue(buffer.hasArray());
+        assertSame(source, buffer.getArray());
+
+        buffer.setReadIndex(60);
+
+        buffer.capacity(50);
+        assertEquals(50, buffer.capacity());
+
+        // Buffer should be truncated and read index moves back to end
+        assertEquals(50, buffer.getReadIndex());
+        assertEquals(50, buffer.getWriteIndex());
+    }
+
+    @Test
+    public void testDecreaseCapacityWithWriteIndexWithinNewValue() {
+        byte[] source = new byte[100];
+
+        ProtonBuffer buffer = wrapBuffer(source);
+        assertEquals(100, buffer.capacity());
+        assertTrue(buffer.hasArray());
+        assertSame(source, buffer.getArray());
+
+        buffer.setIndex(10, 30);
+
+        buffer.capacity(50);
+        assertEquals(50, buffer.capacity());
+        assertTrue(buffer.hasArray());
+
+        // Buffer should be truncated but index values remain unchanged
+        assertEquals(10, buffer.getReadIndex());
+        assertEquals(30, buffer.getWriteIndex());
+    }
+
+    @Test
+    public void testCapacityIncreasesWhenWritesExceedCurrent() {
+        ProtonBuffer buffer = allocateBuffer(10);
+
+        assertTrue(buffer.hasArray());
+
+        assertEquals(10, buffer.capacity());
+        assertEquals(10, buffer.getArray().length);
+        assertEquals(Integer.MAX_VALUE, buffer.maxCapacity());
+
+        for (int i = 1; i <= 9; ++i) {
+            buffer.writeByte(i);
+        }
+
+        assertEquals(10, buffer.capacity());
+
+        buffer.writeByte(10);
+
+        assertEquals(10, buffer.capacity());
+        assertEquals(10, buffer.getArray().length);
+
+        buffer.writeByte(11);
+
+        assertTrue(buffer.capacity() > 10);
+
+        assertEquals(11, buffer.getReadableBytes());
+
+        for (int i = 1; i < 12; ++i) {
+            assertEquals(i, buffer.readByte());
+        }
+    }
+
     //----- Tests need to define these allocation methods
 
     /**
@@ -268,5 +399,12 @@ public abstract class ProtonAbstractBufferTest {
      * @return a ProtonBuffer allocated with the given capacity and the given max-capacity.
      */
     protected abstract ProtonBuffer allocateBuffer(int initialCapacity, int maxCapacity);
+
+    /**
+     * @param array the byte array to wrap with the given buffer under test.
+     *
+     * @return a ProtonBuffer that wraps the given buffer.
+     */
+    protected abstract ProtonBuffer wrapBuffer(byte[] array);
 
 }

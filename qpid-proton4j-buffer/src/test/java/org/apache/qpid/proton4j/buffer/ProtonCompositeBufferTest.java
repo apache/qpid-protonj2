@@ -19,19 +19,12 @@ package org.apache.qpid.proton4j.buffer;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
-import org.junit.Ignore;
 import org.junit.Test;
 
 /**
  * Test the Proton Composite Buffer class
  */
 public class ProtonCompositeBufferTest extends ProtonAbstractBufferTest {
-
-    @Override
-    @Ignore("Composite buffer failing this one")
-    @Test
-    public void testCapacityDecrease() {
-    }
 
     @Test
     public void testCreateDefaultCompositeBuffer() {
@@ -48,21 +41,17 @@ public class ProtonCompositeBufferTest extends ProtonAbstractBufferTest {
 
     @Override
     protected ProtonBuffer allocateBuffer(int initialCapacity) {
-        ProtonCompositeBuffer composite = new ProtonCompositeBuffer(Integer.MAX_VALUE);
-        if (initialCapacity > 0) {
-            return composite.addBuffer(ProtonByteBufferAllocator.DEFAULT.allocate(initialCapacity).setWriteIndex(initialCapacity));
-        } else {
-            return composite;
-        }
+        return new ProtonCompositeBuffer(Integer.MAX_VALUE).capacity(initialCapacity);
     }
 
     @Override
     protected ProtonBuffer allocateBuffer(int initialCapacity, int maxCapacity) {
-        ProtonCompositeBuffer composite = new ProtonCompositeBuffer(maxCapacity);
-        if (initialCapacity > 0) {
-            return composite.addBuffer(ProtonByteBufferAllocator.DEFAULT.allocate(initialCapacity).setWriteIndex(initialCapacity));
-        } else {
-            return composite;
-        }
+        return new ProtonCompositeBuffer(maxCapacity).capacity(initialCapacity);
+    }
+
+    @Override
+    protected ProtonBuffer wrapBuffer(byte[] array) {
+        ProtonCompositeBuffer composite = new ProtonCompositeBuffer(Integer.MAX_VALUE);
+        return composite.addBuffer(ProtonByteBufferAllocator.DEFAULT.wrap(array));
     }
 }
