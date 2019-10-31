@@ -251,15 +251,13 @@ public class ClientReceiver implements Receiver {
     }
 
     ClientReceiver open() {
-        executor.execute(() -> {
-            protonReceiver.openHandler(receiver -> handleRemoteOpen(receiver))
-                          .closeHandler(receiver -> handleRemoteCloseOrDetach(receiver))
-                          .detachHandler(receiver -> handleRemoteCloseOrDetach(receiver))
-                          .deliveryUpdatedHandler(delivery -> handleDeliveryRemotelyUpdated(delivery))
-                          .deliveryReceivedHandler(delivery -> handleDeliveryReceived(delivery))
-                          .drainStateUpdatedHandler(receiver -> handleReceiverReportsDrained(receiver))
-                          .open();
-        });
+        protonReceiver.openHandler(receiver -> handleRemoteOpen(receiver))
+                      .closeHandler(receiver -> handleRemoteCloseOrDetach(receiver))
+                      .detachHandler(receiver -> handleRemoteCloseOrDetach(receiver))
+                      .deliveryUpdatedHandler(delivery -> handleDeliveryRemotelyUpdated(delivery))
+                      .deliveryReceivedHandler(delivery -> handleDeliveryReceived(delivery))
+                      .drainStateUpdatedHandler(receiver -> handleReceiverReportsDrained(receiver))
+                      .open();
 
         return this;
     }

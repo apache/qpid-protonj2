@@ -219,15 +219,13 @@ public class ClientSender implements Sender {
     }
 
     ClientSender open() {
-        executor.execute(() -> {
-            protonSender.openHandler(sender -> handleRemoteOpen(sender))
-                        .closeHandler(sender -> handleRemoteCloseOrDetach(sender))
-                        .detachHandler(sender -> handleRemoteCloseOrDetach(sender))
-                        .deliveryUpdatedHandler(delivery -> handleDeliveryUpdated(delivery))
-                        .drainRequestedHandler(linkState -> handleRemoteRequestedDrain(linkState))
-                        .sendableHandler(sender -> handleRemoteNowSendable(sender))
-                        .open();
-        });
+        protonSender.openHandler(sender -> handleRemoteOpen(sender))
+                    .closeHandler(sender -> handleRemoteCloseOrDetach(sender))
+                    .detachHandler(sender -> handleRemoteCloseOrDetach(sender))
+                    .deliveryUpdatedHandler(delivery -> handleDeliveryUpdated(delivery))
+                    .drainRequestedHandler(linkState -> handleRemoteRequestedDrain(linkState))
+                    .sendableHandler(sender -> handleRemoteNowSendable(sender))
+                    .open();
 
         return this;
     }

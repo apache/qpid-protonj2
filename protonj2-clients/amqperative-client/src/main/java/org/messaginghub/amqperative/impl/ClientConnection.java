@@ -624,14 +624,12 @@ public class ClientConnection implements Connection {
             checkAnonymousRelaySupported();
             connectionSender = (ClientConnectionSender) lazyCreateConnectionSession().internalCreateConnectionSender(getDefaultSenderOptions()).open();
             connectionSender.remotelyClosedHandler((sender) -> {
-                executor.execute(() -> {
-                    try {
-                        connectionSender.close();
-                    } catch (Throwable ignore) {}
+                try {
+                    connectionSender.close();
+                } catch (Throwable ignore) {}
 
-                    // Clear the old closed sender, a lazy create needs to construct a new sender.
-                    connectionSender = null;
-                });
+                // Clear the old closed sender, a lazy create needs to construct a new sender.
+                connectionSender = null;
             });
         }
 

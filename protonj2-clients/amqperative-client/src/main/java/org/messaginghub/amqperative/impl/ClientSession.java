@@ -236,21 +236,19 @@ public class ClientSession implements Session {
     }
 
     ClientSession open() {
-        serializer.execute(() -> {
-            protonSession.openHandler(result -> {
-                openFuture.complete(this);
-                LOG.trace("Connection session opened successfully");
-            });
-            protonSession.closeHandler(result -> {
-                if (result.getRemoteCondition() != null) {
-                    // TODO - Process as failure cause if none set
-                }
-                CLOSED_UPDATER.lazySet(this, 1);
-                closeFuture.complete(this);
-            });
-
-            protonSession.open();
+        protonSession.openHandler(result -> {
+            openFuture.complete(this);
+            LOG.trace("Connection session opened successfully");
         });
+        protonSession.closeHandler(result -> {
+            if (result.getRemoteCondition() != null) {
+                // TODO - Process as failure cause if none set
+            }
+            CLOSED_UPDATER.lazySet(this, 1);
+            closeFuture.complete(this);
+        });
+
+        protonSession.open();
 
         return this;
     }
