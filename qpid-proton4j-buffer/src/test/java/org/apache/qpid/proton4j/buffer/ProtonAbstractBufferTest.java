@@ -17,6 +17,7 @@
 package org.apache.qpid.proton4j.buffer;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -102,6 +103,148 @@ public abstract class ProtonAbstractBufferTest {
         buffer.capacity(4);
         assertEquals(4, buffer.capacity());
         assertEquals(13, buffer.maxCapacity());
+    }
+
+    //----- Tests for altering buffer properties -----------------------------//
+
+    @Test
+    public void testSetReadIndexWithNegative() {
+        ProtonBuffer buffer = allocateDefaultBuffer();
+        try {
+            buffer.setReadIndex(-1);
+            fail("Should not accept negative values");
+        } catch (IndexOutOfBoundsException e) {}
+    }
+
+    @Test
+    public void testSetReadIndexGreaterThanCapacity() {
+        ProtonBuffer buffer = allocateDefaultBuffer();
+        try {
+            buffer.setReadIndex(buffer.capacity() + buffer.capacity());
+            fail("Should not accept values bigger than capacity");
+        } catch (IndexOutOfBoundsException e) {}
+    }
+
+    @Test
+    public void testSetWriteIndexWithNegative() {
+        ProtonBuffer buffer = allocateDefaultBuffer();
+        try {
+            buffer.setWriteIndex(-1);
+            fail("Should not accept negative values");
+        } catch (IndexOutOfBoundsException e) {}
+    }
+
+    @Test
+    public void testSetWriteIndexGreaterThanCapacity() {
+        ProtonBuffer buffer = allocateDefaultBuffer();
+        try {
+            buffer.setWriteIndex(buffer.capacity() + buffer.capacity());
+            fail("Should not accept values bigger than capacity");
+        } catch (IndexOutOfBoundsException e) {}
+    }
+
+    @Test
+    public void testSetIndexWithNegativeReadIndex() {
+        ProtonBuffer buffer = allocateDefaultBuffer();
+        try {
+            buffer.setIndex(-1, 0);
+            fail("Should not accept negative values");
+        } catch (IndexOutOfBoundsException e) {}
+    }
+
+    @Test
+    public void testSetIndexWithNegativeWriteIndex() {
+        ProtonBuffer buffer = allocateDefaultBuffer();
+        try {
+            buffer.setIndex(0, -1);
+            fail("Should not accept negative values");
+        } catch (IndexOutOfBoundsException e) {}
+    }
+
+    @Test
+    public void testSetIndexWithReadIndexBiggerThanWrite() {
+        ProtonBuffer buffer = allocateDefaultBuffer();
+        try {
+            buffer.setIndex(50, 40);
+            fail("Should not accept bigger read index values");
+        } catch (IndexOutOfBoundsException e) {}
+    }
+
+    @Test
+    public void testSetIndexWithWriteIndexBiggerThanCapacity() {
+        ProtonBuffer buffer = allocateDefaultBuffer();
+        try {
+            buffer.setIndex(0, buffer.capacity() + 1);
+            fail("Should not accept write index bigger than capacity");
+        } catch (IndexOutOfBoundsException e) {}
+    }
+
+    @Test
+    public void testIsReadable() {
+        ProtonBuffer buffer = allocateDefaultBuffer();
+        assertFalse(buffer.isReadable());
+        buffer.writeBoolean(false);
+        assertTrue(buffer.isReadable());
+    }
+
+    @Test
+    public void testIsReadableWithAmount() {
+        ProtonBuffer buffer = allocateDefaultBuffer();
+        assertFalse(buffer.isReadable(1));
+        buffer.writeBoolean(false);
+        assertTrue(buffer.isReadable(1));
+        assertFalse(buffer.isReadable(2));
+    }
+
+    @Test
+    public void testIsWriteable() {
+        ProtonBuffer buffer = allocateDefaultBuffer();
+        assertTrue(buffer.isWritable());
+        buffer.setWriteIndex(buffer.capacity());
+        assertFalse(buffer.isWritable());
+    }
+
+    @Test
+    public void testIsWriteableWithAmount() {
+        ProtonBuffer buffer = allocateDefaultBuffer();
+        assertTrue(buffer.isWritable());
+        buffer.setWriteIndex(buffer.capacity() - 1);
+        assertTrue(buffer.isWritable(1));
+        assertFalse(buffer.isWritable(2));
+    }
+
+    @Test
+    public void testClear() {
+        ProtonBuffer buffer = allocateDefaultBuffer();
+        assertEquals(0, buffer.getReadIndex());
+        assertEquals(0, buffer.getWriteIndex());
+        buffer.setIndex(10, 20);
+        assertEquals(10, buffer.getReadIndex());
+        assertEquals(20, buffer.getWriteIndex());
+        buffer.clear();
+        assertEquals(0, buffer.getReadIndex());
+        assertEquals(0, buffer.getWriteIndex());
+    }
+
+    @Test
+    public void testSkipBytes() {
+        ProtonBuffer buffer = allocateDefaultBuffer();
+        buffer.setWriteIndex(buffer.capacity() / 2);
+        assertEquals(0, buffer.getReadIndex());
+        buffer.skipBytes(buffer.capacity() / 2);
+        assertEquals(buffer.capacity() / 2, buffer.getReadIndex());
+    }
+
+    @Test
+    public void testSkipBytesBeyondReable() {
+        ProtonBuffer buffer = allocateDefaultBuffer();
+        buffer.setWriteIndex(buffer.capacity() / 2);
+        assertEquals(0, buffer.getReadIndex());
+
+        try {
+            buffer.skipBytes(buffer.getReadableBytes() + 50);
+            fail("Should not be able to skip beyond write index");
+        } catch (IndexOutOfBoundsException e) {}
     }
 
     //----- Tests need to define these allocation methods

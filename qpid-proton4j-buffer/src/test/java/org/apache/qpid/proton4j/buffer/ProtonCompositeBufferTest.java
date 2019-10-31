@@ -37,12 +37,13 @@ public class ProtonCompositeBufferTest extends ProtonAbstractBufferTest {
     public void testCreateDefaultCompositeBuffer() {
         ProtonCompositeBuffer composite = new ProtonCompositeBuffer(Integer.MAX_VALUE);
         assertNotNull(composite);
+        assertEquals(0, composite.capacity());
         assertEquals(Integer.MAX_VALUE, composite.maxCapacity());
     }
 
     @Override
     protected ProtonBuffer allocateDefaultBuffer() {
-        return new ProtonCompositeBuffer(Integer.MAX_VALUE);
+        return new ProtonCompositeBuffer(Integer.MAX_VALUE).capacity(DEFAULT_CAPACITY);
     }
 
     @Override
