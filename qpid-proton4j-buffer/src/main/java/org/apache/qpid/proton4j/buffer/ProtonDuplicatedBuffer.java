@@ -20,26 +20,26 @@ import java.nio.ByteBuffer;
 import java.util.Objects;
 
 /**
- * A duplicated buffer wrapper for buffers known to be {@link ProtonAbstractByteBuffer} instances.
+ * A duplicated buffer wrapper for buffers known to be {@link ProtonAbstractBuffer} instances.
  */
-public class ProtonDuplicatedByteBuffer extends ProtonAbstractByteBuffer {
+public class ProtonDuplicatedBuffer extends ProtonAbstractBuffer {
 
-    private final ProtonAbstractByteBuffer buffer;
+    private final ProtonAbstractBuffer buffer;
 
     /**
      * Wrap the given buffer to present a duplicate buffer with independent
      * read and write index values.
      *
      * @param buffer
-     *      The {@link ProtonAbstractByteBuffer} instance to wrap with this instance.
+     *      The {@link ProtonAbstractBuffer} instance to wrap with this instance.
      */
-    public ProtonDuplicatedByteBuffer(ProtonAbstractByteBuffer buffer) {
+    public ProtonDuplicatedBuffer(ProtonAbstractBuffer buffer) {
         super(buffer.maxCapacity());
 
         Objects.requireNonNull(buffer, "The buffer being wrapped by a duplicate must not be null");
 
-        if (buffer instanceof ProtonDuplicatedByteBuffer) {
-            this.buffer = ((ProtonDuplicatedByteBuffer) buffer).buffer;
+        if (buffer instanceof ProtonDuplicatedBuffer) {
+            this.buffer = ((ProtonDuplicatedBuffer) buffer).buffer;
         } else {
             this.buffer = buffer;
         }
@@ -81,8 +81,7 @@ public class ProtonDuplicatedByteBuffer extends ProtonAbstractByteBuffer {
 
     @Override
     public ProtonBuffer slice(int index, int length) {
-        // TODO Auto-generated method stub
-        return this;
+        return buffer.slice(index, length);
     }
 
     @Override

@@ -22,7 +22,7 @@ import java.nio.ByteBuffer;
  * Implementation of the ProtonBuffer interface that uses an array backing
  * the buffer that is dynamically resized as bytes are written.
  */
-public class ProtonByteBuffer extends ProtonAbstractByteBuffer {
+public class ProtonByteBuffer extends ProtonAbstractBuffer {
 
     public static final int DEFAULT_CAPACITY = 64;
     public static final int DEFAULT_MAXIMUM_CAPACITY = Integer.MAX_VALUE;

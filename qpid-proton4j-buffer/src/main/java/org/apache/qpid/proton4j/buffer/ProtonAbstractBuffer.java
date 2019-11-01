@@ -23,7 +23,7 @@ import java.nio.charset.Charset;
  * Base class used to hold the common implementation details for Proton buffer
  * implementations.
  */
-public abstract class ProtonAbstractByteBuffer implements ProtonBuffer {
+public abstract class ProtonAbstractBuffer implements ProtonBuffer {
 
     protected int readIndex;
     protected int writeIndex;
@@ -32,7 +32,7 @@ public abstract class ProtonAbstractByteBuffer implements ProtonBuffer {
 
     private int maximumCapacity;
 
-    protected ProtonAbstractByteBuffer(int maximumCapacity) {
+    protected ProtonAbstractBuffer(int maximumCapacity) {
         if (maximumCapacity < 0) {
             throw new IllegalArgumentException("Maximum capacity should be non-negative but was: " + maximumCapacity);
         }
@@ -171,12 +171,12 @@ public abstract class ProtonAbstractByteBuffer implements ProtonBuffer {
     @Override
     public ProtonBuffer slice(int index, int length) {
         checkIndex(index, length);
-        return new ProtonByteBufferSlice(this, index, length);
+        return new ProtonSlicedBuffer(this, index, length);
     }
 
     @Override
     public ProtonBuffer duplicate() {
-        return new ProtonDuplicatedByteBuffer(this);
+        return new ProtonDuplicatedBuffer(this);
     }
 
     @Override

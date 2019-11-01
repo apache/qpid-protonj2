@@ -24,7 +24,7 @@ import java.nio.ByteBuffer;
  * TODO - Decide if we want to implement this, many limitations and issues
  *        around this as buffer can be read-only etc.
  */
-public class ProtonNioByteBuffer extends ProtonAbstractByteBuffer {
+public class ProtonNioByteBuffer extends ProtonAbstractBuffer {
 
     private final ByteBuffer buffer;
 
@@ -135,11 +135,15 @@ public class ProtonNioByteBuffer extends ProtonAbstractByteBuffer {
 
     @Override
     public ProtonBuffer copy(int index, int length) {
-        return null;
+        ProtonByteBuffer buffer = new ProtonByteBuffer(length);
+        getBytes(index, buffer, length);
+        return buffer;
     }
 
     @Override
     public ByteBuffer toByteBuffer(int index, int length) {
-        return null;
+        ByteBuffer buffer = ByteBuffer.allocate(length);
+        getBytes(index, buffer);
+        return buffer;
     }
 }

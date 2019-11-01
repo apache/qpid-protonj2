@@ -21,7 +21,7 @@ import java.nio.ByteBuffer;
 /**
  * A composite of 1 or more ProtonBuffer instances used when aggregating buffer views.
  */
-public final class ProtonCompositeBuffer extends ProtonAbstractByteBuffer {
+public final class ProtonCompositeBuffer extends ProtonAbstractBuffer {
 
     public static final int DEFAULT_MAXIMUM_CAPACITY = Integer.MAX_VALUE;
 
@@ -158,7 +158,7 @@ public final class ProtonCompositeBuffer extends ProtonAbstractByteBuffer {
 
     @Override
     public ProtonBuffer duplicate() {
-        return new ProtonDuplicatedByteBuffer(this);
+        return new ProtonDuplicatedBuffer(this);
     }
 
     @Override

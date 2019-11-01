@@ -19,11 +19,16 @@ package org.apache.qpid.proton4j.buffer;
 import java.nio.ByteBuffer;
 
 /**
- * Presents a sliced view of a ProtonByteBuffer
+ * Presents a sliced view of a {@link ProtonAbstractBuffer}.  The slice wraps the
+ * target buffer with a given offset into that buffer and a capped max capacity
+ * that limits how far into the wrapped buffer the slice will read or write.
+ *
+ * A sliced buffer does not allow capacity changes and as such any call to alter
+ * the capacity will result in an {@link UnsupportedOperationException}.
  */
-public class ProtonByteBufferSlice extends ProtonAbstractByteBuffer {
+public class ProtonSlicedBuffer extends ProtonAbstractBuffer {
 
-    private final ProtonAbstractByteBuffer buffer;
+    private final ProtonAbstractBuffer buffer;
     private final int indexOffset;
 
     /**
@@ -36,7 +41,7 @@ public class ProtonByteBufferSlice extends ProtonAbstractByteBuffer {
      * @param capacity
      *      The amount of the buffer that this view spans.
      */
-    protected ProtonByteBufferSlice(ProtonAbstractByteBuffer buffer, int offset, int capacity) {
+    protected ProtonSlicedBuffer(ProtonAbstractBuffer buffer, int offset, int capacity) {
         super(capacity);
 
         checkSliceOutOfBounds(offset, capacity, buffer);
@@ -306,7 +311,7 @@ public class ProtonByteBufferSlice extends ProtonAbstractByteBuffer {
 
     //----- Internal utility methods -----------------------------------------//
 
-    static void checkSliceOutOfBounds(int index, int length, ProtonAbstractByteBuffer buffer) {
+    static void checkSliceOutOfBounds(int index, int length, ProtonAbstractBuffer buffer) {
         if (isOutOfBounds(index, length, buffer.capacity())) {
             throw new IndexOutOfBoundsException(buffer + ".slice(" + index + ", " + length + ')');
         }
