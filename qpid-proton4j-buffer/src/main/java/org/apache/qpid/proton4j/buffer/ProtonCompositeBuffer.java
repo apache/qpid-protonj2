@@ -39,9 +39,9 @@ public final class ProtonCompositeBuffer extends ProtonAbstractBuffer {
     private int totalChunks;
 
     /**
-     * The current chunk that a read should start from which is advanced as reads consume chunks.
+     * The most recently used chunk which is used as a shortcut for linear read and write operations.
      */
-    private Chunk currentChunk;
+    private Chunk lastAccessedChunk;
 
     /**
      * The fixed head pointer for the chain of buffer chunks
@@ -60,13 +60,13 @@ public final class ProtonCompositeBuffer extends ProtonAbstractBuffer {
         super(maximumCapacity);
 
         this.head = new Chunk(null, 0, -1, -1);
-        this.tail = new Chunk(null, 0, -1, -1);
+        this.tail = new Chunk(null, 0, Integer.MAX_VALUE, Integer.MAX_VALUE);
 
         this.head.next = tail;
         this.tail.prev = head;
 
-        // We never allow current to be null, it is either at the bounds or on a valid chunk.
-        this.currentChunk = head;
+        // We never allow this to be null, it is either at the bounds or on a valid chunk.
+        this.lastAccessedChunk = head;
     }
 
     public ProtonCompositeBuffer addBuffer(ProtonBuffer buffer) {
@@ -87,7 +87,7 @@ public final class ProtonCompositeBuffer extends ProtonAbstractBuffer {
             case 0:
                 return true;
             case 1:
-                return currentChunk.buffer.hasArray();
+                return head.next.buffer.hasArray();
             default:
                 return false;
         }
@@ -96,7 +96,7 @@ public final class ProtonCompositeBuffer extends ProtonAbstractBuffer {
     @Override
     public byte[] getArray() {
         if (hasArray()) {
-            return currentChunk.buffer.getArray();
+            return head.next.buffer.getArray();
         }
 
         throw new UnsupportedOperationException("Buffer does not have a backing array.");
@@ -105,7 +105,7 @@ public final class ProtonCompositeBuffer extends ProtonAbstractBuffer {
     @Override
     public int getArrayOffset() {
         if (hasArray()) {
-            return currentChunk.buffer.getArrayOffset();
+            return head.next.buffer.getArrayOffset();
         }
 
         throw new UnsupportedOperationException("Buffer does not have a backing array.");
@@ -164,98 +164,198 @@ public final class ProtonCompositeBuffer extends ProtonAbstractBuffer {
     @Override
     public byte getByte(int index) {
         checkIndex(index, Byte.BYTES);
-        currentChunk = findChunkWithIndex(index);
-        return currentChunk.readByte(index);
+        Chunk targetChunk = findChunkWithIndex(index);
+        return targetChunk.readByte(index);
     }
 
     @Override
     public short getShort(int index) {
-        // TODO Auto-generated method stub
-        return 0;
+        checkIndex(index, Short.BYTES);
+
+        short result = 0;
+
+        lastAccessedChunk = findChunkWithIndex(index);
+
+        for (int i = Short.BYTES - 1; i >= 0; --i) {
+            result |= (lastAccessedChunk.readByte(index++) & 0xFF) << (i * Byte.SIZE);
+            if (lastAccessedChunk.endIndex < index) {
+                lastAccessedChunk = lastAccessedChunk.next;
+            }
+        }
+
+        return result;
     }
 
     @Override
     public int getInt(int index) {
-        // TODO Auto-generated method stub
-        return 0;
+        checkIndex(index, Integer.BYTES);
+        lastAccessedChunk = findChunkWithIndex(index);
+
+        int result = 0;
+
+        for (int i = Integer.BYTES - 1; i >= 0; --i) {
+            result |= (lastAccessedChunk.readByte(index++) & 0xFF) << (i * Byte.SIZE);
+            if (lastAccessedChunk.endIndex < index) {
+                lastAccessedChunk = lastAccessedChunk.next;
+            }
+        }
+
+        return result;
     }
 
     @Override
     public long getLong(int index) {
-        // TODO Auto-generated method stub
-        return 0;
+        checkIndex(index, Long.BYTES);
+        lastAccessedChunk = findChunkWithIndex(index);
+
+        long result = 0;
+
+        for (int i = Long.BYTES - 1; i >= 0; --i) {
+            result |= (long) (lastAccessedChunk.readByte(index++) & 0xFF) << (i * Byte.SIZE);
+            if (lastAccessedChunk.endIndex < index) {
+                lastAccessedChunk = lastAccessedChunk.next;
+            }
+        }
+
+        return result;
     }
 
     @Override
     public ProtonBuffer getBytes(int index, ProtonBuffer destination, int destinationIndex, int length) {
         checkDestinationIndex(index, length, destinationIndex, destination.capacity());
+        lastAccessedChunk = findChunkWithIndex(index);
+
+        // TODO - Initial exceedingly slow implementation for test construction
+        for (int i = index; i < length; ++i) {
+            destination.setByte(destinationIndex++, lastAccessedChunk.readByte(i));
+            if (lastAccessedChunk.endIndex < index) {
+                lastAccessedChunk = lastAccessedChunk.next;
+            }
+        }
+
         return this;
     }
 
     @Override
     public ProtonBuffer getBytes(int index, byte[] destination, int offset, int length) {
-        checkDestinationIndex(index, length, offset, length);
-        // TODO Auto-generated method stub
+        checkDestinationIndex(index, length, offset, destination.length);
+        lastAccessedChunk = findChunkWithIndex(index);
+
+        // TODO - Initial exceedingly slow implementation for test construction
+        for (int i = index; i < length; ++i) {
+            destination[offset++] = lastAccessedChunk.readByte(i);
+            if (lastAccessedChunk.endIndex < index) {
+                lastAccessedChunk = lastAccessedChunk.next;
+            }
+        }
+
         return this;
     }
 
     @Override
     public ProtonBuffer getBytes(int index, ByteBuffer destination) {
         checkIndex(index, destination.remaining());
-        // TODO Auto-generated method stub
+        lastAccessedChunk = findChunkWithIndex(index);
+
+        // TODO - Initial exceedingly slow implementation for test construction
+        while (destination.hasRemaining()) {
+            destination.put(lastAccessedChunk.readByte(index++));
+            if (lastAccessedChunk.endIndex < index) {
+                lastAccessedChunk = lastAccessedChunk.next;
+            }
+        }
+
         return this;
     }
 
     @Override
     public ProtonBuffer setByte(int index, int value) {
         checkIndex(index, Byte.BYTES);
-        currentChunk = findChunkWithIndex(index);
-        currentChunk.writeByte(index, value);
+        lastAccessedChunk = findChunkWithIndex(index);
+        lastAccessedChunk.writeByte(index, value);
         return this;
     }
 
     @Override
     public ProtonBuffer setShort(int index, int value) {
-        // TODO Auto-generated method stub
+        checkIndex(index, Short.BYTES);
+        lastAccessedChunk = findChunkWithIndex(index);
+
+        lastAccessedChunk.writeByte(index++, (byte) (value >>> 8));
+        if (lastAccessedChunk.endIndex < index) {
+            lastAccessedChunk = lastAccessedChunk.next;
+        }
+        lastAccessedChunk.writeByte(index++, (byte) (value & 0xFF));
+
         return this;
     }
 
     @Override
     public ProtonBuffer setInt(int index, int value) {
-        // TODO Auto-generated method stub
+        checkIndex(index, Integer.BYTES);
+        lastAccessedChunk = findChunkWithIndex(index);
+
+        for (int i = Integer.BYTES - 1; i >= 0; --i) {
+            lastAccessedChunk.writeByte(index++, (byte) (value >>> (i * Byte.SIZE)));
+            if (lastAccessedChunk.endIndex < index) {
+                lastAccessedChunk = lastAccessedChunk.next;
+            }
+        }
+
         return this;
     }
 
     @Override
     public ProtonBuffer setLong(int index, long value) {
-        // TODO Auto-generated method stub
+        checkIndex(index, Long.BYTES);
+        lastAccessedChunk = findChunkWithIndex(index);
+
+        for (int i = Long.BYTES - 1; i >= 0; --i) {
+            lastAccessedChunk.writeByte(index++, (byte) (value >>> (i * Byte.SIZE)));
+            if (lastAccessedChunk.endIndex < index) {
+                lastAccessedChunk = lastAccessedChunk.next;
+            }
+        }
+
         return this;
     }
 
     @Override
     public ProtonBuffer setBytes(int index, ProtonBuffer source, int sourceIndex, int length) {
         checkSourceIndex(index, length, sourceIndex, source.capacity());
-        // TODO Auto-generated method stub
+        //Chunk targetChunk = findChunkWithIndex(index);
+
+        // TODO - Initial exceedingly slow implementation for test construction
+        for (int i = 0; i < length; ++i) {
+            setByte(index++, source.getByte(sourceIndex++));
+        }
+
         return this;
     }
 
     @Override
     public ProtonBuffer setBytes(int index, byte[] source, int sourceIndex, int length) {
-        checkSourceIndex(index, length, sourceIndex, length);
-        // TODO Auto-generated method stub
+        checkSourceIndex(index, length, sourceIndex, source.length);
+        //Chunk targetChunk = findChunkWithIndex(index);
+
+        // TODO - Initial exceedingly slow implementation for test construction
+        for (int i = 0; i < length; ++i) {
+            setByte(index++, source[sourceIndex + i]);
+        }
+
         return this;
     }
 
     @Override
     public ProtonBuffer setBytes(int index, ByteBuffer source) {
-        // TODO Auto-generated method stub
-        return this;
-    }
+        checkSourceIndex(index, source.remaining(), source.position(), source.remaining());
+        //Chunk targetChunk = findChunkWithIndex(index);
 
-    @Override
-    public ProtonBuffer slice(int index, int length) {
-        checkIndex(index, length);
-        // TODO Auto-generated method stub
+        // TODO - Initial exceedingly slow implementation for test construction
+        while (source.hasRemaining()) {
+            setByte(index++, source.get());
+        }
+
         return this;
     }
 
@@ -265,12 +365,16 @@ public final class ProtonCompositeBuffer extends ProtonAbstractBuffer {
 
         final ProtonBuffer copy = ProtonByteBufferAllocator.DEFAULT.allocate(length);
 
-        Chunk chunk = findChunkWithIndex(index);
-        while (length > 0) {
-
+        // TODO - Exceedingly slow initial implementation test get tests going.
+        lastAccessedChunk = findChunkWithIndex(index);
+        for (int i = 0; i < length; ++i) {
+            copy.setByte(i, lastAccessedChunk.readByte(index++));
+            if (lastAccessedChunk.endIndex < index) {
+                lastAccessedChunk = lastAccessedChunk.next;
+            }
         }
 
-        // TODO Auto-generated method stub
+        copy.setWriteIndex(length);
 
         return copy;
     }
@@ -281,38 +385,32 @@ public final class ProtonCompositeBuffer extends ProtonAbstractBuffer {
             case 0:
                 return EMPTY_BYTE_BUFFER;
             case 1:
-                return ByteBuffer.wrap(EMPTY_BYTE_ARRAY);  // TODO
+                return head.next.toByteBuffer(index, length);
             default:
-                return ByteBuffer.wrap(EMPTY_BYTE_ARRAY);  // TODO
+                throw new RuntimeException("Not yet implemented.");  // TODO - Copy range into allocated ByteBuffer
         }
     }
 
     //----- Internal Support Framework API
 
     private Chunk findChunkWithIndex(int index) {
-        if (currentChunk == null) {
-            return null;
-        }
-
-        Chunk result = currentChunk;
-
-        if (index < result.startIndex) {
-            while (result.prev != head) {
-                result = result.prev;
-                if (result.isInRange(index)) {
+        if (index < lastAccessedChunk.startIndex) {
+            while (lastAccessedChunk.prev != head) {
+                lastAccessedChunk = lastAccessedChunk.prev;
+                if (lastAccessedChunk.isInRange(index)) {
                     break;
                 }
             }
-        } else if (index > result.endIndex) {
-            while (result.next != tail) {
-                result = result.next;
-                if (result.isInRange(index)) {
+        } else if (index > lastAccessedChunk.endIndex) {
+            while (lastAccessedChunk.next != tail) {
+                lastAccessedChunk = lastAccessedChunk.next;
+                if (lastAccessedChunk.isInRange(index)) {
                     break;
                 }
             }
         }
 
-        return result;
+        return lastAccessedChunk;
     }
 
     /*
@@ -334,8 +432,8 @@ public final class ProtonCompositeBuffer extends ProtonAbstractBuffer {
         tail.prev.next = newChunk;
         tail.prev = newChunk;
 
-        if (currentChunk == head) {
-            currentChunk = newChunk;
+        if (lastAccessedChunk == head || lastAccessedChunk == tail) {
+            lastAccessedChunk = newChunk;
         }
 
         return this;
@@ -380,6 +478,10 @@ public final class ProtonCompositeBuffer extends ProtonAbstractBuffer {
             } else {
                 return false;
             }
+        }
+
+        public ByteBuffer toByteBuffer(int index, int length) {
+            return buffer.toByteBuffer(index, length);
         }
 
         @Override
