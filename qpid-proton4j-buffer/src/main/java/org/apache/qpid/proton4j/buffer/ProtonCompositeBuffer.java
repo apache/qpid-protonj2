@@ -226,8 +226,8 @@ public final class ProtonCompositeBuffer extends ProtonAbstractBuffer {
         lastAccessedChunk = findChunkWithIndex(index);
 
         // TODO - Initial exceedingly slow implementation for test construction
-        for (int i = index; i < length; ++i) {
-            destination.setByte(destinationIndex++, lastAccessedChunk.readByte(i));
+        for (int i = 0; i < length; ++i) {
+            destination.setByte(destinationIndex++, lastAccessedChunk.readByte(index++));
             if (lastAccessedChunk.endIndex < index) {
                 lastAccessedChunk = lastAccessedChunk.next;
             }
@@ -242,8 +242,8 @@ public final class ProtonCompositeBuffer extends ProtonAbstractBuffer {
         lastAccessedChunk = findChunkWithIndex(index);
 
         // TODO - Initial exceedingly slow implementation for test construction
-        for (int i = index; i < length; ++i) {
-            destination[offset++] = lastAccessedChunk.readByte(i);
+        for (int i = 0; i < length; ++i) {
+            destination[offset++] = lastAccessedChunk.readByte(index++);
             if (lastAccessedChunk.endIndex < index) {
                 lastAccessedChunk = lastAccessedChunk.next;
             }
@@ -348,7 +348,7 @@ public final class ProtonCompositeBuffer extends ProtonAbstractBuffer {
 
     @Override
     public ProtonBuffer setBytes(int index, ByteBuffer source) {
-        checkSourceIndex(index, source.remaining(), source.position(), source.remaining());
+        checkSourceIndex(index, source.remaining() - source.position(), source.position(), source.remaining());
         //Chunk targetChunk = findChunkWithIndex(index);
 
         // TODO - Initial exceedingly slow implementation for test construction

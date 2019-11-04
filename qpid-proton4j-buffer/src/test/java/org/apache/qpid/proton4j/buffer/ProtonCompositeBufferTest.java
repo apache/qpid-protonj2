@@ -19,79 +19,12 @@ package org.apache.qpid.proton4j.buffer;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
-import org.junit.Ignore;
 import org.junit.Test;
 
 /**
  * Test the Proton Composite Buffer class
  */
 public class ProtonCompositeBufferTest extends ProtonAbstractBufferTest {
-
-    @Ignore("Failed base class test that needs attention")
-    @Override
-    @Test
-    public void testRandomByteBufferTransfer() {
-    }
-
-    @Ignore("Failed base class test that needs attention")
-    @Override
-    @Test
-    public void testRandomDirectByteBufferTransfer() {
-    }
-
-    @Ignore("Failed base class test that needs attention")
-    @Override
-    @Test
-    public void testSequentialProtonBufferTransfer1() {
-    }
-
-    @Ignore("Failed base class test that needs attention")
-    @Override
-    @Test
-    public void testSequentialProtonBufferTransfer2() {
-    }
-
-    @Ignore("Failed base class test that needs attention")
-    @Override
-    @Test
-    public void testSequentialByteArrayTransfer1() {
-    }
-
-    @Ignore("Failed base class test that needs attention")
-    @Override
-    @Test
-    public void testSequentialByteArrayTransfer2() {
-    }
-
-    @Ignore("Failed base class test that needs attention")
-    @Override
-    @Test
-    public void testByteArrayTransfer() {
-    }
-
-    @Ignore("Failed base class test that needs attention")
-    @Override
-    @Test
-    public void testRandomByteArrayTransfer1() {
-    }
-
-    @Ignore("Failed base class test that needs attention")
-    @Override
-    @Test
-    public void testRandomByteArrayTransfer2() {
-    }
-
-    @Ignore("Failed base class test that needs attention")
-    @Override
-    @Test
-    public void testRandomProtonBufferTransfer1() {
-    }
-
-    @Ignore("Failed base class test that needs attention")
-    @Override
-    @Test
-    public void testRandomProtonBufferTransfer2() {
-    }
 
     @Test
     public void testCreateDefaultCompositeBuffer() {
