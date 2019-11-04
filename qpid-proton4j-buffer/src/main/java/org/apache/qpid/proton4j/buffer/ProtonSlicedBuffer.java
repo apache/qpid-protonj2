@@ -46,8 +46,13 @@ public class ProtonSlicedBuffer extends ProtonAbstractBuffer {
 
         checkSliceOutOfBounds(offset, capacity, buffer);
 
-        this.buffer = buffer;
-        this.indexOffset = offset;
+        if (buffer instanceof ProtonSlicedBuffer) {
+            this.buffer = ((ProtonSlicedBuffer) buffer).buffer;
+            this.indexOffset = ((ProtonSlicedBuffer) buffer).indexOffset + offset;
+        } else {
+            this.buffer = buffer;
+            this.indexOffset = offset;
+        }
 
         setWriteIndex(capacity);
     }

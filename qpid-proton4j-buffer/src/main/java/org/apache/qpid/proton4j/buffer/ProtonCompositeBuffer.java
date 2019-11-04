@@ -17,6 +17,7 @@
 package org.apache.qpid.proton4j.buffer;
 
 import java.nio.ByteBuffer;
+import java.util.Objects;
 
 /**
  * A composite of 1 or more ProtonBuffer instances used when aggregating buffer views.
@@ -54,7 +55,17 @@ public final class ProtonCompositeBuffer extends ProtonAbstractBuffer {
     private final Chunk tail;
 
     /**
+     * Creates a Composite Buffer instance with max capacity of {@link Integer#MAX_VALUE}.
+     */
+    ProtonCompositeBuffer() {
+        this(Integer.MAX_VALUE);
+    }
+
+    /**
+     * Creates a Composite Buffer instance with the maximum capacity provided.
+     *
      * @param maximumCapacity
+     *      The maximum capacity that this buffer can grow to.
      */
     ProtonCompositeBuffer(int maximumCapacity) {
         super(maximumCapacity);
@@ -69,7 +80,48 @@ public final class ProtonCompositeBuffer extends ProtonAbstractBuffer {
         this.lastAccessedChunk = head;
     }
 
-    public ProtonCompositeBuffer addBuffer(ProtonBuffer buffer) {
+    /**
+     * Appends the given byte array to the end of the buffer segments that comprise this composite
+     * {@link ProtonBuffer} instance.
+     *
+     * @param array
+     *      The array to append.
+     *
+     * @return this {@link ProtonCompositeBuffer} instance.
+     */
+    public ProtonCompositeBuffer append(byte[] array) {
+        Objects.requireNonNull(array, "Cannot append null array to composite buffer.");
+        return append(ProtonByteBufferAllocator.DEFAULT.wrap(array));
+    }
+
+    /**
+     * Appends the given byte array to the end of the buffer segments that comprise this composite
+     * {@link ProtonBuffer} instance.
+     *
+     * @param array
+     *      The array to append.
+     * @param offset
+     *      The offset into the given array to index read and write operations.
+     * @param length
+     *      The usable portion of the given array.
+     *
+     * @return this {@link ProtonCompositeBuffer} instance.
+     */
+    public ProtonCompositeBuffer append(byte[] array, int offset, int length) {
+        Objects.requireNonNull(array, "Cannot append null array to composite buffer.");
+        return append(ProtonByteBufferAllocator.DEFAULT.wrap(array, offset, length));
+    }
+
+    /**
+     * Appends the given {@link ProtonBuffer} to the end of the buffer segments that comprise this composite
+     * {@link ProtonBuffer} instance.
+     *
+     * @param buffer
+     *      The {@link ProtonBuffer} instance to append.
+     *
+     * @return this {@link ProtonCompositeBuffer} instance.
+     */
+    public ProtonCompositeBuffer append(ProtonBuffer buffer) {
         if (!buffer.isReadable()) {
             return this;
         }
@@ -80,6 +132,15 @@ public final class ProtonCompositeBuffer extends ProtonAbstractBuffer {
 
         return this;
     }
+
+    /**
+     * @return the total number of {@link ProtonBuffer} segments in this composite buffer isntance.
+     */
+    public int numberOfBuffers() {
+        return totalChunks;
+    }
+
+    //----- ProtonAbstractBuffer API implementation
 
     @Override
     public boolean hasArray() {
@@ -95,20 +156,26 @@ public final class ProtonCompositeBuffer extends ProtonAbstractBuffer {
 
     @Override
     public byte[] getArray() {
-        if (hasArray()) {
-            return head.next.buffer.getArray();
+        switch (totalChunks) {
+            case 0:
+                return EMPTY_BYTE_ARRAY;
+            case 1:
+                return head.next.buffer.getArray();
+            default:
+                throw new UnsupportedOperationException("Buffer does not have a backing array.");
         }
-
-        throw new UnsupportedOperationException("Buffer does not have a backing array.");
     }
 
     @Override
     public int getArrayOffset() {
-        if (hasArray()) {
-            return head.next.buffer.getArrayOffset();
+        switch (totalChunks) {
+            case 0:
+                return 0;
+            case 1:
+                return head.next.buffer.getArrayOffset();
+            default:
+                throw new UnsupportedOperationException("Buffer does not have a backing array.");
         }
-
-        throw new UnsupportedOperationException("Buffer does not have a backing array.");
     }
 
     @Override
