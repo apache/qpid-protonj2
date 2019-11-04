@@ -18,11 +18,14 @@ package org.apache.qpid.proton4j.buffer;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+
+import java.nio.charset.CharacterCodingException;
 
 import org.junit.Test;
 
@@ -706,6 +709,470 @@ public class ProtonCompositeBufferTest extends ProtonAbstractBufferTest {
 //        duplicate.reclaimRead();
 //        assertEquals(10, buffer.capacity());
 //        assertEquals(buffer.capacity(), duplicate.capacity());
+    }
+
+
+    //----- Tests for hashCode -----------------------------------------------//
+
+    @Test
+    public void testHashCodeNotFromIdentity() throws CharacterCodingException {
+        ProtonCompositeBuffer buffer = new ProtonCompositeBuffer();
+
+        assertEquals(1, buffer.hashCode());
+
+        byte[] data = new byte[] {9, 8, 7, 6, 5, 4, 3, 2, 1, 0};
+
+        buffer.append(data);
+
+        assertTrue(buffer.hashCode() != 1);
+        assertNotEquals(buffer.hashCode(), System.identityHashCode(buffer));
+        assertEquals(buffer.hashCode(), buffer.hashCode());
+    }
+
+    @Test
+    public void testHashCodeOnSameBackingBuffer() throws CharacterCodingException {
+        ProtonCompositeBuffer buffer1 = new ProtonCompositeBuffer();
+        ProtonCompositeBuffer buffer2 = new ProtonCompositeBuffer();
+        ProtonCompositeBuffer buffer3 = new ProtonCompositeBuffer();
+
+        byte[] data = new byte[] {9, 8, 7, 6, 5, 4, 3, 2, 1, 0};
+
+        buffer1.append(data);
+        buffer2.append(data);
+        buffer3.append(data);
+
+        assertEquals(buffer1.hashCode(), buffer2.hashCode());
+        assertEquals(buffer2.hashCode(), buffer3.hashCode());
+        assertEquals(buffer3.hashCode(), buffer1.hashCode());
+    }
+
+    @Test
+    public void testHashCodeOnDifferentBackingBuffer() throws CharacterCodingException {
+        ProtonCompositeBuffer buffer1 = new ProtonCompositeBuffer();
+        ProtonCompositeBuffer buffer2 = new ProtonCompositeBuffer();
+
+        byte[] data1 = new byte[] {9, 8, 7, 6, 5, 4, 3, 2, 1, 0};
+        byte[] data2 = new byte[] {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
+
+        buffer1.append(data1);
+        buffer2.append(data2);
+
+        assertNotEquals(buffer1.hashCode(), buffer2.hashCode());
+    }
+
+    @Test
+    public void testHashCodeOnSplitBufferContentsNotSame() throws CharacterCodingException {
+        ProtonCompositeBuffer buffer1 = new ProtonCompositeBuffer();
+        ProtonCompositeBuffer buffer2 = new ProtonCompositeBuffer();
+
+        byte[] data1 = new byte[] {9, 8, 7, 6, 5, 4, 3, 2, 1, 0};
+        byte[] data2 = new byte[] {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
+
+        buffer1.append(data1).append(data2);
+        buffer2.append(data2).append(data1);
+
+        assertNotEquals(buffer1.hashCode(), buffer2.hashCode());
+    }
+
+    @Test
+    public void testHashCodeOnSplitBufferContentsSame() throws CharacterCodingException {
+        ProtonCompositeBuffer buffer1 = new ProtonCompositeBuffer();
+        ProtonCompositeBuffer buffer2 = new ProtonCompositeBuffer();
+
+        byte[] data1 = new byte[] {9, 8, 7, 6, 5, 4, 3, 2, 1, 0};
+        byte[] data2 = new byte[] {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
+
+        buffer1.append(data1).append(data2);
+        buffer2.append(data1).append(data2);
+
+        assertEquals(buffer1.hashCode(), buffer2.hashCode());
+    }
+
+    @Test
+    public void testHashCodeMatchesByteBufferWhenLimitSetGivesNoRemaining() throws CharacterCodingException {
+        byte[] data = new byte[] {9, 8, 7, 6, 5, 4, 3, 2, 1, 0};
+
+        ProtonCompositeBuffer buffer1 = new ProtonCompositeBuffer();
+        buffer1.append(data);
+        buffer1.setReadIndex(buffer1.getWriteIndex());
+
+        ProtonBuffer buffer2 = ProtonByteBufferAllocator.DEFAULT.wrap(data);
+        buffer2.setReadIndex(buffer1.getWriteIndex());
+
+        assertEquals(buffer1.hashCode(), buffer2.hashCode());
+    }
+
+    @Test
+    public void testHashCodeMatchesByteBufferSingleArrayContents() throws CharacterCodingException {
+        byte[] data = new byte[] {9, 8, 7, 6, 5, 4, 3, 2, 1, 0};
+
+        ProtonCompositeBuffer buffer1 = new ProtonCompositeBuffer();
+        buffer1.append(data);
+
+        ProtonBuffer buffer2 = ProtonByteBufferAllocator.DEFAULT.wrap(data);
+
+        assertEquals(buffer1.hashCode(), buffer2.hashCode());
+    }
+
+    @Test
+    public void testHashCodeMatchesByteBufferSingleArrayContentsWithSlice() throws CharacterCodingException {
+        byte[] data = new byte[] {9, 8, 7, 6, 5, 4, 3, 2, 1, 0};
+
+        ProtonCompositeBuffer buffer1 = new ProtonCompositeBuffer();
+        buffer1.append(data);
+
+        ProtonBuffer buffer2 = ProtonByteBufferAllocator.DEFAULT.wrap(data);
+
+        ProtonBuffer slice1 = buffer1.setReadIndex(1).slice();
+        ProtonBuffer slice2 = buffer2.setReadIndex(1).slice();
+
+        assertEquals(slice1.hashCode(), slice2.hashCode());
+    }
+
+    @Test
+    public void testHashCodeMatchesByteBufferMultipleArrayContents() throws CharacterCodingException {
+        byte[] data = new byte[] {9, 8, 7, 6, 5, 4, 3, 2, 1, 0};
+
+        byte[] data1 = new byte[] {9, 8, 7, 6, 5};
+        byte[] data2 = new byte[] {4, 3, 2, 1, 0};
+
+        ProtonCompositeBuffer buffer1 = new ProtonCompositeBuffer();
+        buffer1.append(data1);
+        buffer1.append(data2);
+
+        ProtonBuffer buffer2 = ProtonByteBufferAllocator.DEFAULT.wrap(data);
+
+        assertEquals(buffer1.hashCode(), buffer2.hashCode());
+    }
+
+    @Test
+    public void testHashCodeMatchesByteBufferMultipleArrayContentsWithSlice() throws CharacterCodingException {
+        byte[] data = new byte[] {9, 8, 7, 6, 5, 4, 3, 2, 1, 0};
+
+        byte[] data1 = new byte[] {9, 8, 7, 6, 5};
+        byte[] data2 = new byte[] {4, 3, 2, 1, 0};
+
+        ProtonCompositeBuffer buffer1 = new ProtonCompositeBuffer();
+        buffer1.append(data1);
+        buffer1.append(data2);
+
+        ProtonBuffer buffer2 = ProtonByteBufferAllocator.DEFAULT.wrap(data);
+
+        ProtonBuffer slice1 = buffer1.setReadIndex(1).setWriteIndex(4).slice();
+        ProtonBuffer slice2 = buffer2.setReadIndex(1).setWriteIndex(4).slice();
+
+        assertEquals(slice1.hashCode(), slice2.hashCode());
+    }
+
+    @Test
+    public void testHashCodeMatchesByteBufferMultipleArrayContentsWithRangeOfLimits() throws CharacterCodingException {
+        byte[] data = new byte[] {10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0};
+
+        byte[] data1 = new byte[] {10, 9};
+        byte[] data2 = new byte[] {8, 7};
+        byte[] data3 = new byte[] {6, 5, 4};
+        byte[] data4 = new byte[] {3};
+        byte[] data5 = new byte[] {2, 1, 0};
+
+        ProtonCompositeBuffer buffer1 = new ProtonCompositeBuffer();
+        buffer1.append(data1).append(data2).append(data3).append(data4).append(data5);
+
+        ProtonBuffer buffer2 = ProtonByteBufferAllocator.DEFAULT.wrap(data);
+
+        for (int i = 0; i < data.length; ++i) {
+            buffer1.setWriteIndex(i);
+            buffer2.setWriteIndex(i);
+
+            assertEquals(buffer1.hashCode(), buffer2.hashCode());
+        }
+    }
+
+    //----- Tests for equals -------------------------------------------------//
+
+    @Test
+    public void testEqualsOnSameBackingBuffer() throws CharacterCodingException {
+        ProtonCompositeBuffer buffer1 = new ProtonCompositeBuffer();
+        ProtonCompositeBuffer buffer2 = new ProtonCompositeBuffer();
+        ProtonCompositeBuffer buffer3 = new ProtonCompositeBuffer();
+
+        byte[] data = new byte[] {9, 8, 7, 6, 5, 4, 3, 2, 1, 0};
+
+        buffer1.append(data);
+        buffer2.append(data);
+        buffer3.append(data);
+
+        assertEquals(buffer1, buffer2);
+        assertEquals(buffer2, buffer3);
+        assertEquals(buffer3, buffer1);
+
+        assertEquals(0, buffer1.getReadIndex());
+        assertEquals(0, buffer2.getReadIndex());
+        assertEquals(0, buffer3.getReadIndex());
+    }
+
+    @Test
+    public void testEqualsOnDifferentBackingBuffer() throws CharacterCodingException {
+        ProtonCompositeBuffer buffer1 = new ProtonCompositeBuffer();
+        ProtonCompositeBuffer buffer2 = new ProtonCompositeBuffer();
+
+        byte[] data1 = new byte[] {9, 8, 7, 6, 5, 4, 3, 2, 1, 0};
+        byte[] data2 = new byte[] {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
+
+        buffer1.append(data1);
+        buffer2.append(data2);
+
+        assertNotEquals(buffer1, buffer2);
+
+        assertEquals(0, buffer1.getReadIndex());
+        assertEquals(0, buffer2.getReadIndex());
+    }
+
+    @Test
+    public void testEqualsWhenContentsInMultipleArraysNotSame() throws CharacterCodingException {
+        ProtonCompositeBuffer buffer1 = new ProtonCompositeBuffer();
+        ProtonCompositeBuffer buffer2 = new ProtonCompositeBuffer();
+
+        byte[] data1 = new byte[] {9, 8, 7, 6, 5, 4, 3, 2, 1, 0};
+        byte[] data2 = new byte[] {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
+
+        buffer1.append(data1).append(data2);
+        buffer2.append(data2).append(data1);
+
+        assertNotEquals(buffer1, buffer2);
+
+        assertEquals(0, buffer1.getReadIndex());
+        assertEquals(0, buffer2.getReadIndex());
+    }
+
+    @Test
+    public void testEqualsWhenContentsInMultipleArraysSame() throws CharacterCodingException {
+        ProtonCompositeBuffer buffer1 = new ProtonCompositeBuffer();
+        ProtonCompositeBuffer buffer2 = new ProtonCompositeBuffer();
+
+        byte[] data1 = new byte[] {9, 8, 7, 6, 5, 4, 3, 2, 1, 0};
+        byte[] data2 = new byte[] {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
+
+        buffer1.append(data1).append(data2);
+        buffer2.append(data1).append(data2);
+
+        assertEquals(buffer1, buffer2);
+
+        assertEquals(0, buffer1.getReadIndex());
+        assertEquals(0, buffer2.getReadIndex());
+    }
+
+    @Test
+    public void testEqualsWhenContentRemainingWithDifferentStartPositionsSame() throws CharacterCodingException {
+        doEqualsWhenContentRemainingWithDifferentStartPositionsSameTestImpl(false);
+    }
+
+    @Test
+    public void testEqualsWhenContentRemainingWithDifferentStartPositionsSameMultipleArrays() throws CharacterCodingException {
+        doEqualsWhenContentRemainingWithDifferentStartPositionsSameTestImpl(true);
+    }
+
+    private void doEqualsWhenContentRemainingWithDifferentStartPositionsSameTestImpl(boolean multipleArrays) {
+        ProtonCompositeBuffer buffer1 = new ProtonCompositeBuffer();
+        ProtonCompositeBuffer buffer2 = new ProtonCompositeBuffer();
+
+        byte[] data1 = new byte[] {-1, -1, 0, 1, 2, 3, 4, 5};
+        byte[] data2 = new byte[] {-1, -1, -1, 0, 1, 2, 3, 4, 5};
+
+        buffer1.append(data1);
+        buffer1.setReadIndex(2);
+        buffer1.markWriteIndex();
+
+        // Offset wrapped buffer should behave same as buffer 1
+        buffer2.append(data2, 1, data1.length);
+        buffer2.setReadIndex(2);
+        buffer2.markWriteIndex();
+
+        if (multipleArrays) {
+            byte[] data3 = new byte[] { 5, 4, 3, 2, 1 };
+            buffer1.append(data3).resetWriteIndex();
+            buffer2.append(data3).resetWriteIndex();
+        }
+
+        assertEquals(buffer1, buffer2);
+
+        assertEquals(2, buffer1.getReadIndex());
+        assertEquals(2, buffer2.getReadIndex());
+    }
+
+    @Test
+    public void testEqualsWhenContentRemainingWithDifferentStartPositionsNotSame() throws CharacterCodingException {
+        doEqualsWhenContentRemainingWithDifferentStartPositionsNotSameTestImpl(false);
+    }
+
+    @Test
+    public void testEqualsWhenContentRemainingWithDifferentStartPositionsNotSameMultipleArrays() throws CharacterCodingException {
+        doEqualsWhenContentRemainingWithDifferentStartPositionsNotSameTestImpl(true);
+    }
+
+    private void doEqualsWhenContentRemainingWithDifferentStartPositionsNotSameTestImpl(boolean multipleArrays) {
+        ProtonCompositeBuffer buffer1 = new ProtonCompositeBuffer();
+        ProtonCompositeBuffer buffer2 = new ProtonCompositeBuffer();
+
+        byte[] data1 = new byte[] {-1, -1, 0, 1, 2, 3, 4, 5};
+        byte[] data2 = new byte[] {-1, -1, -1, 0, 1, 2, 3, 4, -1};
+
+        buffer1.append(data1);
+        buffer1.setReadIndex(2);
+
+        buffer2.append(data2);
+        buffer2.setReadIndex(3);
+
+        if (multipleArrays) {
+            byte[] data3 = new byte[] { 5, 4, 3, 2, 1 };
+            buffer1.append(data3);
+            buffer2.append(data3);
+        }
+
+        assertNotEquals(buffer1, buffer2);
+
+        assertEquals(2, buffer1.getReadIndex());
+        assertEquals(3, buffer2.getReadIndex());
+    }
+
+    @Test
+    public void testEqualsWhenContentRemainingWithDifferentlyPositionedSlicesSame() throws CharacterCodingException {
+        doEqualsWhenContentRemainingWithDifferentlyPositionedSlicesSameTestImpl(false);
+    }
+
+    @Test
+    public void testEqualsWhenContentRemainingWithDifferentlyPositionedSlicesSameMultipleArrays() throws CharacterCodingException {
+        doEqualsWhenContentRemainingWithDifferentlyPositionedSlicesSameTestImpl(true);
+    }
+
+    private void doEqualsWhenContentRemainingWithDifferentlyPositionedSlicesSameTestImpl(boolean multipleArrays) {
+        ProtonCompositeBuffer buffer1 = new ProtonCompositeBuffer();
+        ProtonCompositeBuffer buffer2 = new ProtonCompositeBuffer();
+
+        byte[] data1 = new byte[] {-1, -1, 0, 1, 2, 3, 4, 5};
+        byte[] data2 = new byte[] {-1, -1, -1, 0, 1, 2, 3, 4, 5};
+
+        buffer1.append(data1);
+        buffer1.setReadIndex(2);
+
+        buffer2.append(data2);
+        buffer2.setReadIndex(3);
+
+        if (multipleArrays) {
+            byte[] data3 = new byte[] { 5, 4, 3, 2, 1 };
+            buffer1.append(data3);
+            buffer2.append(data3);
+        }
+
+        ProtonBuffer slicedBuffer1 = buffer1.slice();
+        ProtonBuffer slicedBuffer2 = buffer2.slice();
+
+        assertEquals(slicedBuffer1, slicedBuffer2);
+        assertEquals(slicedBuffer2, slicedBuffer1);
+
+        assertEquals(0, slicedBuffer1.getReadIndex());
+        assertEquals(0, slicedBuffer2.getReadIndex());
+    }
+
+    @Test
+    public void testEqualsWhenContentRemainingWithDifferentlyPositionedSlicesNotSame() throws CharacterCodingException {
+        doEqualsWhenContentRemainingWithDifferentlyPositionedSlicesNotSameTestImpl(false);
+    }
+
+    @Test
+    public void testEqualsWhenContentRemainingWithDifferentlyPositionedSlicesNotSameMultipleArrays() throws CharacterCodingException {
+        doEqualsWhenContentRemainingWithDifferentlyPositionedSlicesNotSameTestImpl(true);
+    }
+
+    private void doEqualsWhenContentRemainingWithDifferentlyPositionedSlicesNotSameTestImpl(boolean multipleArrays) {
+        ProtonCompositeBuffer buffer1 = new ProtonCompositeBuffer();
+        ProtonCompositeBuffer buffer2 = new ProtonCompositeBuffer();
+
+        byte[] data1 = new byte[] {-1, -1, 0, 1, 2, 3, 4, 5};
+        byte[] data2 = new byte[] {-1, -1, -1, 0, 1, 2, 3, 4, -1};
+
+        buffer1.append(data1);
+        buffer1.setReadIndex(2);
+
+        buffer2.append(data2);
+        buffer2.setReadIndex(3);
+
+        if (multipleArrays) {
+            byte[] data3 = new byte[] { 5, 4, 3, 2, 1 };
+            buffer1.append(data3);
+            buffer2.append(data3);
+        }
+
+        ProtonBuffer slicedBuffer1 = buffer1.slice();
+        ProtonBuffer slicedBuffer2 = buffer2.slice();
+
+        assertNotEquals(slicedBuffer1, slicedBuffer2);
+        assertNotEquals(slicedBuffer2, slicedBuffer1);
+
+        assertEquals(0, slicedBuffer1.getReadIndex());
+        assertEquals(0, slicedBuffer2.getReadIndex());
+    }
+
+    @Test
+    public void testEqualsWhenContentRemainingIsSubsetOfSingleChunkInMultiArrayBufferSame() {
+        ProtonCompositeBuffer buffer1 = new ProtonCompositeBuffer();
+        ProtonCompositeBuffer buffer2 = new ProtonCompositeBuffer();
+
+        byte[] data1 = new byte[] {-1, -1, 0, 1, 2, 3, 4, 5};
+        byte[] data2 = new byte[] {-1, -1, -1, 0, 1, 2, 3, 4, 5};
+
+        buffer1.append(data1);
+        buffer1.setReadIndex(2);
+
+        // Offset the wrapped buffer which means these two should behave the same
+        buffer2.append(data2, 1, data2.length - 1);
+        buffer2.setReadIndex(2);
+
+        byte[] data3 = new byte[] { 5, 4, 3, 2, 1 };
+        buffer1.append(data3);
+        buffer2.append(data3);
+
+        buffer1.setWriteIndex(data1.length);
+        buffer2.setWriteIndex(data1.length);
+
+        assertEquals(6, buffer1.getReadableBytes());
+        assertEquals(6, buffer2.getReadableBytes());
+
+        assertEquals(buffer1, buffer2);
+        assertEquals(buffer2, buffer1);
+
+        assertEquals(2, buffer1.getReadIndex());
+        assertEquals(2, buffer2.getReadIndex());
+    }
+
+    @Test
+    public void testEqualsWhenContentRemainingIsSubsetOfSingleChunkInMultiArrayBufferNotSame() {
+        ProtonCompositeBuffer buffer1 = new ProtonCompositeBuffer();
+        ProtonCompositeBuffer buffer2 = new ProtonCompositeBuffer();
+
+        byte[] data1 = new byte[] {-1, -1, 0, 1, 2, 3, 4, 5};
+        byte[] data2 = new byte[] {-1, -1, -1, 0, 1, 2, 3, 4, -1};
+
+        buffer1.append(data1);
+        buffer1.setReadIndex(2);
+
+        buffer2.append(data2);
+        buffer2.setReadIndex(3);
+
+        byte[] data3 = new byte[] { 5, 4, 3, 2, 1 };
+        buffer1.append(data3);
+        buffer2.append(data3);
+
+        buffer1.setWriteIndex(data1.length);
+        buffer2.setWriteIndex(data2.length);
+
+        assertEquals(6, buffer1.getReadableBytes());
+        assertEquals(6, buffer2.getReadableBytes());
+
+        assertNotEquals(buffer1, buffer2);
+        assertNotEquals(buffer2, buffer1);
+
+        assertEquals(2, buffer1.getReadIndex());
+        assertEquals(3, buffer2.getReadIndex());
     }
 
     //----- Implement abstract methods from the abstract buffer test base class
