@@ -25,12 +25,16 @@ public interface Receiver {
     /**
      * Returns the address that the {@link Receiver} instance will be subscribed to.
      *
-     * <p><ul>
-     * <li>If the Receiver was created with the dynamic receiver methods then the method will return
-     * the dynamically created address once the remote has attached its end of the receiver link.
-     * <li>If not a dynamic receiver then the address returned is the address passed to the original
-     * {@link Session#openReceiver(String)} or {@link Session#openReceiver(String, ReceiverOptions)} methods.
-     * </ul><p>
+     * <ul>
+     *  <li>
+     *   If the Receiver was created with the dynamic receiver methods then the method will return
+     *   the dynamically created address once the remote has attached its end of the receiver link.
+     *  </li>
+     *  <li>
+     *   If not a dynamic receiver then the address returned is the address passed to the original
+     *   {@link Session#openReceiver(String)} or {@link Session#openReceiver(String, ReceiverOptions)} methods.
+     *  </li>
+     * </ul>
      *
      * @return the address that this {@link Receiver} is sending to.
      */

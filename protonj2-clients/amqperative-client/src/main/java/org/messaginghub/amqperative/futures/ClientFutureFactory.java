@@ -77,6 +77,8 @@ public abstract class ClientFutureFactory {
 
     /**
      * @return a new ClientFuture instance.
+     *
+     * @param <V> the eventual result type for this Future
      */
     public abstract <V> ClientFuture<V> createFuture();
 
@@ -85,11 +87,15 @@ public abstract class ClientFutureFactory {
      * 		The {@link ClientSynchronization} to assign to the returned {@link ClientFuture}.
      *
      * @return a new ClientFuture instance.
+     *
+     * @param <V> the eventual result type for this Future
      */
     public abstract <V> ClientFuture<V> createFuture(ClientSynchronization synchronization);
 
     /**
      * @return a ClientFuture that treats failures as success calls that simply complete the operation.
+     *
+     * @param <V> the eventual result type for this Future
      */
     public abstract <V> ClientFuture<V> createUnfailableFuture();
 

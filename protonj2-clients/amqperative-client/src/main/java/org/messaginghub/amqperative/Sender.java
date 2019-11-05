@@ -29,13 +29,19 @@ public interface Sender {
      * to.  The value returned from this method is control by the configuration that was used
      * to create the sender.
      *
-     * <p><ul>
-     * <li>If the Sender is configured as an anonymous sender then this method returns null.
-     * <li>If the Sender was created with the dynamic sender methods then the method will return
-     * the dynamically created address once the remote has attached its end of the sender link.
-     * <li>If neither of the above is true then the address returned is the address passed to the original
-     * {@link Session#openSender(String)} or {@link Session#openSender(String, SenderOptions)} methods.
-     * </ul><p>
+     * <ul>
+     *  <li>
+     *    If the Sender is configured as an anonymous sender then this method returns null.
+     *  </li>
+     *  <li>
+     *    If the Sender was created with the dynamic sender methods then the method will return
+     *    the dynamically created address once the remote has attached its end of the sender link.
+     *  </li>
+     *  <li>
+     *    If neither of the above is true then the address returned is the address passed to the original
+     *    {@link Session#openSender(String)} or {@link Session#openSender(String, SenderOptions)} methods.
+     *  </li>
+     * </ul>
      *
      * @return the address that this {@link Sender} is sending to.
      */
