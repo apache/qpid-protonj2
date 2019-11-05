@@ -89,12 +89,21 @@ public class ClientReceiver implements Receiver {
     }
 
     @Override
-    public Client getClient() {
+    public String address() {
+        if (protonReceiver.getRemoteState() != LinkState.IDLE && protonReceiver.getRemoteSource() != null) {
+            return protonReceiver.getRemoteSource().getAddress();
+        } else {
+            return null;
+        }
+    }
+
+    @Override
+    public Client client() {
         return session.getClient();
     }
 
     @Override
-    public Session getSession() {
+    public Session session() {
         return session;
     }
 

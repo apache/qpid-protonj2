@@ -23,14 +23,28 @@ import java.util.function.Consumer;
 public interface Receiver {
 
     /**
+     * Returns the address that the {@link Receiver} instance will be subscribed to.
+     *
+     * <p><ul>
+     * <li>If the Receiver was created with the dynamic receiver methods then the method will return
+     * the dynamically created address once the remote has attached its end of the receiver link.
+     * <li>If not a dynamic receiver then the address returned is the address passed to the original
+     * {@link Session#openReceiver(String)} or {@link Session#openReceiver(String, ReceiverOptions)} methods.
+     * </ul><p>
+     *
+     * @return the address that this {@link Receiver} is sending to.
+     */
+    String address();
+
+    /**
      * @return the {@link Client} instance that holds this session's {@link Receiver}
      */
-    Client getClient();
+    Client client();
 
     /**
      * @return the {@link Session} that created and holds this {@link Receiver}.
      */
-    Session getSession();
+    Session session();
 
     // Waits forever.
     Delivery receive() throws IllegalStateException;

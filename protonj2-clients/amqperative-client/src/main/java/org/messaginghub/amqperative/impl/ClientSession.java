@@ -18,6 +18,7 @@ package org.messaginghub.amqperative.impl;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Future;
@@ -141,11 +142,21 @@ public class ClientSession implements Session {
 
     @Override
     public Receiver openDynamicReceiver() throws ClientException {
-        return openDynamicReceiver(getDefaultDynamicReceiverOptions());
+        return openDynamicReceiver(getDefaultDynamicReceiverOptions(), null);
+    }
+
+    @Override
+    public Receiver openDynamicReceiver(Map<String, Object> dynamicNodeProperties) throws ClientException {
+        return openDynamicReceiver(getDefaultDynamicReceiverOptions(), dynamicNodeProperties);
     }
 
     @Override
     public Receiver openDynamicReceiver(ReceiverOptions receiverOptions) throws ClientException {
+        return openDynamicReceiver(receiverOptions, null);
+    }
+
+    @Override
+    public Receiver openDynamicReceiver(ReceiverOptions receiverOptions, Map<String, Object> dynamicNodeProperties) throws ClientException {
         checkClosed();
 
         if (!receiverOptions.isDynamic()) {
@@ -158,6 +169,7 @@ public class ClientSession implements Session {
         serializer.execute(() -> {
             try {
                 checkClosed();
+                // TODO - Apply Dynamic node properties to created receiver.
                 createReceiver.complete(internalCreateReceiver(null, receiverOpts).open());
             } catch (Throwable error) {
                 createReceiver.failed(ClientExceptionSupport.createNonFatalOrPassthrough(error));

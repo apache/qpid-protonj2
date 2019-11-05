@@ -16,6 +16,7 @@
  */
 package org.messaginghub.amqperative;
 
+import java.util.Map;
 import java.util.concurrent.Future;
 
 import org.messaginghub.amqperative.impl.ClientException;
@@ -83,6 +84,18 @@ public interface Session {
     /**
      * Creates a dynamic receiver used to consume messages from the given node address.
      *
+     * @param dynamicNodeProperties
+     * 		The dynamic node properties to be applied to the node created by the remote.
+     *
+     * @return the newly created {@link Receiver}
+     *
+     * @throws ClientException if an internal error occurs.
+     */
+    Receiver openDynamicReceiver(Map<String, Object> dynamicNodeProperties) throws ClientException;
+
+    /**
+     * Creates a dynamic receiver used to consume messages from the given node address.
+     *
      * @param receiverOptions
      *            The options for this receiver.
      *
@@ -91,6 +104,20 @@ public interface Session {
      * @throws ClientException if an internal error occurs.
      */
     Receiver openDynamicReceiver(ReceiverOptions receiverOptions) throws ClientException;
+
+    /**
+     * Creates a dynamic receiver used to consume messages from the given node address.
+     *
+     * @param receiverOptions
+     *            The options for this receiver.
+     * @param dynamicNodeProperties
+     * 		The dynamic node properties to be applied to the node created by the remote.
+     *
+     * @return the newly created {@link Receiver}
+     *
+     * @throws ClientException if an internal error occurs.
+     */
+    Receiver openDynamicReceiver(ReceiverOptions receiverOptions, Map<String, Object> dynamicNodeProperties) throws ClientException;
 
     /**
      * Creates a sender used to send messages to the given node address. If no

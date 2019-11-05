@@ -94,7 +94,16 @@ public class ClientSender implements Sender {
     }
 
     @Override
-    public Client getClient() {
+    public String address() {
+        if (protonSender.getRemoteState() != LinkState.IDLE && protonSender.getRemoteTarget() != null) {
+            return protonSender.getRemoteTarget().getAddress();
+        } else {
+            return null;
+        }
+    }
+
+    @Override
+    public Client client() {
         return session.getClient();
     }
 
