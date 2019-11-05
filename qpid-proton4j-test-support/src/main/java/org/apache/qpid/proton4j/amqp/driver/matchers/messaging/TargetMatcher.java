@@ -19,8 +19,15 @@ package org.apache.qpid.proton4j.amqp.driver.matchers.messaging;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.nullValue;
 
+import java.util.Map;
+
+import org.apache.qpid.proton4j.amqp.Symbol;
+import org.apache.qpid.proton4j.amqp.UnsignedInteger;
 import org.apache.qpid.proton4j.amqp.driver.codec.messaging.Target;
 import org.apache.qpid.proton4j.amqp.driver.matchers.ListDescribedTypeMatcher;
+import org.apache.qpid.proton4j.amqp.messaging.TerminusDurability;
+import org.apache.qpid.proton4j.amqp.messaging.TerminusExpiryPolicy;
+import org.hamcrest.Matcher;
 
 public class TargetMatcher extends ListDescribedTypeMatcher {
 
@@ -38,6 +45,83 @@ public class TargetMatcher extends ListDescribedTypeMatcher {
     protected Class<?> getDescribedTypeClass() {
         return Target.class;
     }
+
+    //----- Type specific with methods that perform simple equals checks
+
+    public TargetMatcher withAddress(String name) {
+        return withAddress(equalTo(name));
+    }
+
+    public TargetMatcher withDurable(TerminusDurability durability) {
+        return withDurable(equalTo(durability.getValue()));
+    }
+
+    public TargetMatcher withExpiryPolicy(TerminusExpiryPolicy expiry) {
+        return withExpiryPolicy(equalTo(expiry.getPolicy()));
+    }
+
+    public TargetMatcher withTimeout(int timeout) {
+        return withTimeout(equalTo(UnsignedInteger.valueOf(timeout)));
+    }
+
+    public TargetMatcher withTimeout(long timeout) {
+        return withTimeout(equalTo(UnsignedInteger.valueOf(timeout)));
+    }
+
+    public TargetMatcher withTimeout(UnsignedInteger timeout) {
+        return withTimeout(equalTo(timeout));
+    }
+
+    public TargetMatcher withDynamic(boolean dynamic) {
+        return withDynamic(equalTo(dynamic));
+    }
+
+    public TargetMatcher withDynamicNodeProperties(Map<Symbol, Object> properties) {
+        return withDynamicNodeProperties(equalTo(properties));
+    }
+
+    public TargetMatcher withCapabilities(Symbol... capabilities) {
+        return withCapabilities(equalTo(capabilities));
+    }
+
+    //----- Matcher based with methods for more complex validation
+
+    public TargetMatcher withAddress(Matcher<?> m) {
+        addFieldMatcher(Target.Field.ADDRESS, m);
+        return this;
+    }
+
+    public TargetMatcher withDurable(Matcher<?> m) {
+        addFieldMatcher(Target.Field.DURABLE, m);
+        return this;
+    }
+
+    public TargetMatcher withExpiryPolicy(Matcher<?> m) {
+        addFieldMatcher(Target.Field.EXPIRY_POLICY, m);
+        return this;
+    }
+
+    public TargetMatcher withTimeout(Matcher<?> m) {
+        addFieldMatcher(Target.Field.TIMEOUT, m);
+        return this;
+    }
+
+    public TargetMatcher withDynamic(Matcher<?> m) {
+        addFieldMatcher(Target.Field.DYNAMIC, m);
+        return this;
+    }
+
+    public TargetMatcher withDynamicNodeProperties(Matcher<?> m) {
+        addFieldMatcher(Target.Field.DYNAMIC_NODE_PROPERTIES, m);
+        return this;
+    }
+
+    public TargetMatcher withCapabilities(Matcher<?> m) {
+        addFieldMatcher(Target.Field.CAPABILITIES, m);
+        return this;
+    }
+
+    //----- Populate the matcher from a given Source object
 
     private void addSourceMatchers(org.apache.qpid.proton4j.amqp.messaging.Target target) {
         if (target.getAddress() != null) {

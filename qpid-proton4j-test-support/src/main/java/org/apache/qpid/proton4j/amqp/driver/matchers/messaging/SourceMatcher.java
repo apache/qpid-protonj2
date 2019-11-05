@@ -19,10 +19,17 @@ package org.apache.qpid.proton4j.amqp.driver.matchers.messaging;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.nullValue;
 
+import java.util.Map;
+
+import org.apache.qpid.proton4j.amqp.Symbol;
+import org.apache.qpid.proton4j.amqp.UnsignedInteger;
 import org.apache.qpid.proton4j.amqp.driver.codec.messaging.Source;
 import org.apache.qpid.proton4j.amqp.driver.codec.util.TypeMapper;
 import org.apache.qpid.proton4j.amqp.driver.matchers.ListDescribedTypeMatcher;
+import org.apache.qpid.proton4j.amqp.messaging.TerminusDurability;
+import org.apache.qpid.proton4j.amqp.messaging.TerminusExpiryPolicy;
 import org.apache.qpid.proton4j.amqp.transport.DeliveryState;
+import org.hamcrest.Matcher;
 
 public class SourceMatcher extends ListDescribedTypeMatcher {
 
@@ -40,6 +47,119 @@ public class SourceMatcher extends ListDescribedTypeMatcher {
     protected Class<?> getDescribedTypeClass() {
         return Source.class;
     }
+
+    //----- Type specific with methods that perform simple equals checks
+
+    public SourceMatcher withAddress(String name) {
+        return withAddress(equalTo(name));
+    }
+
+    public SourceMatcher withDurable(TerminusDurability durability) {
+        return withDurable(equalTo(durability.getValue()));
+    }
+
+    public SourceMatcher withExpiryPolicy(TerminusExpiryPolicy expiry) {
+        return withExpiryPolicy(equalTo(expiry.getPolicy()));
+    }
+
+    public SourceMatcher withTimeout(int timeout) {
+        return withTimeout(equalTo(UnsignedInteger.valueOf(timeout)));
+    }
+
+    public SourceMatcher withTimeout(long timeout) {
+        return withTimeout(equalTo(UnsignedInteger.valueOf(timeout)));
+    }
+
+    public SourceMatcher withTimeout(UnsignedInteger timeout) {
+        return withTimeout(equalTo(timeout));
+    }
+
+    public SourceMatcher withDynamic(boolean dynamic) {
+        return withDynamic(equalTo(dynamic));
+    }
+
+    public SourceMatcher withDynamicNodeProperties(Map<Symbol, Object> properties) {
+        return withDynamicNodeProperties(equalTo(properties));
+    }
+
+    public SourceMatcher withDistributionMode(Symbol distributionMode) {
+        return withDistributionMode(equalTo(distributionMode));
+    }
+
+    public SourceMatcher withFilter(Map<Symbol, Object> filter) {
+        return withFilter(equalTo(filter));
+    }
+
+    public SourceMatcher withDefaultOutcome(DeliveryState defaultOutcome) {
+        return withDefaultOutcome(equalTo(TypeMapper.mapFromProtonType(defaultOutcome)));
+    }
+
+    public SourceMatcher withOutcomes(Symbol... outcomes) {
+        return withOutcomes(equalTo(outcomes));
+    }
+
+    public SourceMatcher withCapabilities(Symbol... capabilities) {
+        return withCapabilities(equalTo(capabilities));
+    }
+
+    //----- Matcher based with methods for more complex validation
+
+    public SourceMatcher withAddress(Matcher<?> m) {
+        addFieldMatcher(Source.Field.ADDRESS, m);
+        return this;
+    }
+
+    public SourceMatcher withDurable(Matcher<?> m) {
+        addFieldMatcher(Source.Field.DURABLE, m);
+        return this;
+    }
+
+    public SourceMatcher withExpiryPolicy(Matcher<?> m) {
+        addFieldMatcher(Source.Field.EXPIRY_POLICY, m);
+        return this;
+    }
+
+    public SourceMatcher withTimeout(Matcher<?> m) {
+        addFieldMatcher(Source.Field.TIMEOUT, m);
+        return this;
+    }
+
+    public SourceMatcher withDynamic(Matcher<?> m) {
+        addFieldMatcher(Source.Field.DYNAMIC, m);
+        return this;
+    }
+
+    public SourceMatcher withDynamicNodeProperties(Matcher<?> m) {
+        addFieldMatcher(Source.Field.DYNAMIC_NODE_PROPERTIES, m);
+        return this;
+    }
+
+    public SourceMatcher withDistributionMode(Matcher<?> m) {
+        addFieldMatcher(Source.Field.DISTRIBUTION_MODE, m);
+        return this;
+    }
+
+    public SourceMatcher withFilter(Matcher<?> m) {
+        addFieldMatcher(Source.Field.FILTER, m);
+        return this;
+    }
+
+    public SourceMatcher withDefaultOutcome(Matcher<?> m) {
+        addFieldMatcher(Source.Field.DEFAULT_OUTCOME, m);
+        return this;
+    }
+
+    public SourceMatcher withOutcomes(Matcher<?> m) {
+        addFieldMatcher(Source.Field.OUTCOMES, m);
+        return this;
+    }
+
+    public SourceMatcher withCapabilities(Matcher<?> m) {
+        addFieldMatcher(Source.Field.CAPABILITIES, m);
+        return this;
+    }
+
+    //----- Populate the matcher from a given Source object
 
     private void addSourceMatchers(org.apache.qpid.proton4j.amqp.messaging.Source source) {
         if (source.getAddress() != null) {
