@@ -30,8 +30,6 @@ import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
-import org.apache.qpid.proton4j.amqp.messaging.Source;
-import org.apache.qpid.proton4j.amqp.messaging.Target;
 import org.apache.qpid.proton4j.amqp.transport.DeliveryState;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.engine.LinkCreditState;
@@ -42,6 +40,8 @@ import org.messaginghub.amqperative.Message;
 import org.messaginghub.amqperative.Sender;
 import org.messaginghub.amqperative.SenderOptions;
 import org.messaginghub.amqperative.Session;
+import org.messaginghub.amqperative.Source;
+import org.messaginghub.amqperative.Target;
 import org.messaginghub.amqperative.Tracker;
 import org.messaginghub.amqperative.futures.AsyncResult;
 import org.messaginghub.amqperative.futures.ClientFuture;
@@ -100,6 +100,16 @@ public class ClientSender implements Sender {
         } else {
             return null;
         }
+    }
+
+    @Override
+    public Source source() {
+        return null;  // TODO
+    }
+
+    @Override
+    public Target target() {
+        return null;  // TODO
     }
 
     @Override
@@ -391,10 +401,10 @@ public class ClientSender implements Sender {
         protonSender.setProperties(ClientConversionSupport.toSymbolKeyedMap(options.getProperties()));
 
         // TODO: flesh out target
-        Target target = new Target();
+        org.apache.qpid.proton4j.amqp.messaging.Target target = new org.apache.qpid.proton4j.amqp.messaging.Target();
         target.setAddress(address);
 
-        Source source = new Source();
+        org.apache.qpid.proton4j.amqp.messaging.Source source = new org.apache.qpid.proton4j.amqp.messaging.Source();
         // TODO - User somehow sets their own desired outcomes for this receiver source.
         source.setOutcomes(DEFAULT_SUPPORTED_OUTCOMES);
 

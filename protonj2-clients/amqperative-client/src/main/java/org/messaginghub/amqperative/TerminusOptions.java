@@ -17,8 +17,6 @@
 package org.messaginghub.amqperative;
 
 import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
 
 import org.apache.qpid.proton4j.amqp.messaging.Source;
 import org.apache.qpid.proton4j.amqp.messaging.Target;
@@ -37,29 +35,7 @@ public abstract class TerminusOptions<E extends TerminusOptions<E>> {
     //        that we can then assume the user knows what they are doing and
     //        not apply to much corrective logic.
 
-    /**
-     * Control the persistence of source or target state.
-     */
-    public enum DurabilityMode {
-        NONE,
-        CONFIGURATION,
-        UNSETTLED_STATE
-    }
-
-    /**
-     * Control when the clock for expiration begins.
-     */
-    public enum ExpiryPolicy {
-        LINK_CLOSE,
-        SESSION_CLOSE,
-        CONNECTION_CLOSE,
-        NEVER
-    }
-
-    private String address;
     private DurabilityMode durabilityMode;
-    private boolean dynamic;
-    private Map<String, Object> dynamicNodeProperties;
     private long timeout;
     private ExpiryPolicy expiryPolicy;
     private String[] capabilities;
@@ -67,27 +43,9 @@ public abstract class TerminusOptions<E extends TerminusOptions<E>> {
     abstract E self();
 
     /**
-     * @return the address
-     */
-    public String getAddress() {
-        return address;
-    }
-
-    /**
-     * @param address
-     * 		the address to set
-     *
-     * @return this options instance.
-     */
-    public E setAddress(String address) {
-        this.address = address;
-        return self();
-    }
-
-    /**
      * @return the durabilityMode
      */
-    public DurabilityMode getDurabilityMode() {
+    public DurabilityMode durabilityMode() {
         return durabilityMode;
     }
 
@@ -96,51 +54,15 @@ public abstract class TerminusOptions<E extends TerminusOptions<E>> {
      *
      * @return this options instance.
      */
-    public E setDurabilityMode(DurabilityMode durabilityMode) {
+    public E durabilityMode(DurabilityMode durabilityMode) {
         this.durabilityMode = durabilityMode;
-        return self();
-    }
-
-    /**
-     * @return the dynamic
-     */
-    public boolean isDynamic() {
-        return dynamic;
-    }
-
-    /**
-     * @param dynamic the dynamic to set
-     *
-     * @return this options instance.
-     */
-    public E setDynamic(boolean dynamic) {
-        // TODO: don't let them be set unless address is null? Clear on setting address?
-        this.dynamic = dynamic;
-        return self();
-    }
-
-    /**
-     * @return the dynamicNodeProperties
-     */
-    public Map<String, Object> getDynamicNodeProperties() {
-        return dynamicNodeProperties;
-    }
-
-    /**
-     * @param dynamicNodeProperties the dynamicNodeProperties to set
-     *
-     * @return this options instance.
-     */
-    public E setDynamicNodeProperties(Map<String, Object> dynamicNodeProperties) {
-        // TODO: don't let them be set unless dynamic = true? Clear on setting dynamic=false?
-        this.dynamicNodeProperties = dynamicNodeProperties;
         return self();
     }
 
     /**
      * @return the timeout
      */
-    public long getTimeout() {
+    public long timeout() {
         return timeout;
     }
 
@@ -149,7 +71,7 @@ public abstract class TerminusOptions<E extends TerminusOptions<E>> {
      *
      * @return this options instance.
      */
-    public E setTimeout(long timeout) {
+    public E timeout(long timeout) {
         this.timeout = timeout;
         return self();
     }
@@ -157,7 +79,7 @@ public abstract class TerminusOptions<E extends TerminusOptions<E>> {
     /**
      * @return the expiryPolicy
      */
-    public ExpiryPolicy getExpiryPolicy() {
+    public ExpiryPolicy expiryPolicy() {
         return expiryPolicy;
     }
 
@@ -166,7 +88,7 @@ public abstract class TerminusOptions<E extends TerminusOptions<E>> {
      *
      * @return this options instance.
      */
-    public E setExpiryPolicy(ExpiryPolicy expiryPolicy) {
+    public E expiryPolicy(ExpiryPolicy expiryPolicy) {
         this.expiryPolicy = expiryPolicy;
         return self();
     }
@@ -174,7 +96,7 @@ public abstract class TerminusOptions<E extends TerminusOptions<E>> {
     /**
      * @return the capabilities
      */
-    public String[] getCapabilities() {
+    public String[] capabilities() {
         return capabilities;
     }
 
@@ -183,22 +105,17 @@ public abstract class TerminusOptions<E extends TerminusOptions<E>> {
      *
      * @return this options instance.
      */
-    public E setCapabilities(String[] capabilities) {
+    public E capabilities(String[] capabilities) {
         this.capabilities = capabilities;
         return self();
     }
 
     protected void copyInto(TerminusOptions<E> other) {
-        other.setAddress(address);
-        other.setDurabilityMode(durabilityMode);
-        other.setDynamic(dynamic);
-        if (dynamicNodeProperties != null) {
-            other.setDynamicNodeProperties(new HashMap<>(dynamicNodeProperties));
-        }
-        other.setTimeout(timeout);
-        other.setExpiryPolicy(expiryPolicy);
+        other.durabilityMode(durabilityMode);
+        other.timeout(timeout);
+        other.expiryPolicy(expiryPolicy);
         if (capabilities != null) {
-            other.setCapabilities(Arrays.copyOf(capabilities, capabilities.length));
+            other.capabilities(Arrays.copyOf(capabilities, capabilities.length));
         }
     }
 }

@@ -26,8 +26,6 @@ import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
-import org.apache.qpid.proton4j.amqp.messaging.Source;
-import org.apache.qpid.proton4j.amqp.messaging.Target;
 import org.apache.qpid.proton4j.amqp.transport.DeliveryState;
 import org.apache.qpid.proton4j.engine.IncomingDelivery;
 import org.apache.qpid.proton4j.engine.LinkState;
@@ -36,6 +34,8 @@ import org.messaginghub.amqperative.Delivery;
 import org.messaginghub.amqperative.Receiver;
 import org.messaginghub.amqperative.ReceiverOptions;
 import org.messaginghub.amqperative.Session;
+import org.messaginghub.amqperative.Source;
+import org.messaginghub.amqperative.Target;
 import org.messaginghub.amqperative.futures.ClientFuture;
 import org.messaginghub.amqperative.impl.exceptions.ClientOperationTimedOutException;
 import org.messaginghub.amqperative.impl.exceptions.ClientResourceAllocationException;
@@ -95,6 +95,16 @@ public class ClientReceiver implements Receiver {
         } else {
             return null;
         }
+    }
+
+    @Override
+    public Source source() {
+        return null;  // TODO
+    }
+
+    @Override
+    public Target target() {
+        return null;  // TODO
     }
 
     @Override
@@ -384,13 +394,13 @@ public class ClientReceiver implements Receiver {
         protonReceiver.setProperties(ClientConversionSupport.toSymbolKeyedMap(options.getProperties()));
 
         //TODO: flesh out source configuration
-        Source source = new Source();
+        org.apache.qpid.proton4j.amqp.messaging.Source source = new org.apache.qpid.proton4j.amqp.messaging.Source();
         source.setAddress(address);
         // TODO - User somehow sets their own desired outcomes for this receiver source.
         source.setOutcomes(DEFAULT_SUPPORTED_OUTCOMES);
         source.setDefaultOutcome(MODIFIED_FAILED);
 
         protonReceiver.setSource(source);
-        protonReceiver.setTarget(new Target());
+        protonReceiver.setTarget(new org.apache.qpid.proton4j.amqp.messaging.Target());
     }
 }

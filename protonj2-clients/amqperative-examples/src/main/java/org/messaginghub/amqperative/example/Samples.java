@@ -30,6 +30,8 @@ import org.messaginghub.amqperative.ClientOptions;
 import org.messaginghub.amqperative.Connection;
 import org.messaginghub.amqperative.ConnectionOptions;
 import org.messaginghub.amqperative.Delivery;
+import org.messaginghub.amqperative.DurabilityMode;
+import org.messaginghub.amqperative.ExpiryPolicy;
 import org.messaginghub.amqperative.Message;
 import org.messaginghub.amqperative.Receiver;
 import org.messaginghub.amqperative.ReceiverOptions;
@@ -37,17 +39,14 @@ import org.messaginghub.amqperative.Sender;
 import org.messaginghub.amqperative.SenderOptions;
 import org.messaginghub.amqperative.Tracker;
 import org.messaginghub.amqperative.impl.ClientException;
-import org.messaginghub.amqperative.TerminusOptions.DurabilityMode;
-import org.messaginghub.amqperative.TerminusOptions.ExpiryPolicy;
 
 public class Samples {
 
     @SuppressWarnings("unused")
-	public static void main(String[] args) throws Exception {
-        if(args.length < 10) {
+    public static void main(String[] args) throws Exception {
+        if (args.length < 10) {
             throw new IllegalStateException("This clas isnt meant to be run, its for textual examples usage");
         }
-
 
         String brokerHost = "localhost";
         int brokerPort = 5672;
@@ -59,7 +58,6 @@ public class Samples {
         ClientOptions options = new ClientOptions();
         options.containerId(UUID.randomUUID().toString());
         Client client2 = Client.create(options); // With options
-
 
         // =============== Create a connection ===========
 
@@ -80,7 +78,7 @@ public class Samples {
         sender.openFuture().get(5, TimeUnit.SECONDS);
 
         SenderOptions senderOptions = new SenderOptions();
-        senderOptions.targetOptions().setCapabilities(new String[]{"topic"});
+        senderOptions.targetOptions().capabilities(new String[]{"topic"});
         senderOptions.setSendTimeout(30_000);
         Sender sender2 = connection.openSender(address, senderOptions); // address and options
 
@@ -99,15 +97,14 @@ public class Samples {
         ReceiverOptions receiverOptions = new ReceiverOptions();
         //receiverOptions.setCreditWindow(10);
         receiverOptions.setLinkName("myLinkName");
-        receiverOptions.sourceOptions().setDurabilityMode(DurabilityMode.CONFIGURATION);
-        receiverOptions.sourceOptions().setExpiryPolicy(ExpiryPolicy.NEVER);
-        receiverOptions.sourceOptions().setCapabilities(new String[]{"topic"});
+        receiverOptions.sourceOptions().durabilityMode(DurabilityMode.CONFIGURATION);
+        receiverOptions.sourceOptions().expiryPolicy(ExpiryPolicy.NEVER);
+        receiverOptions.sourceOptions().capabilities(new String[]{"topic"});
         Receiver receiver2 = connection.openReceiver(address, receiverOptions); // address and options
 
         // =============== Receive a message ===========
 
         receiver.addCredit(1); // Or configure a credit window (see above)
-
 
         Delivery delivery = receiver.receive(); // Waits forever
         if (delivery != null) {
@@ -120,7 +117,6 @@ public class Samples {
 
         Delivery delivery3 = receiver.tryReceive(); // Return delivery if available, null if not.
 
-
         receiver.onMessage(delivery4 -> {
             try {
                 Message<String> received = delivery.getMessage();
@@ -130,7 +126,6 @@ public class Samples {
                 e.printStackTrace();
             }
         }, ForkJoinPool.commonPool());
-
 
         delivery.accept(); // Or configure auto-accept?
 

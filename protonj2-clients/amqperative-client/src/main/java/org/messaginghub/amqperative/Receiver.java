@@ -41,6 +41,16 @@ public interface Receiver {
     String address();
 
     /**
+     * @return the remote {@link Source} node configuration.
+     */
+    Source source();
+
+    /**
+     * @return the remote {@link Target} node configuration.
+     */
+    Target target();
+
+    /**
      * @return the {@link Client} instance that holds this session's {@link Receiver}
      */
     Client client();

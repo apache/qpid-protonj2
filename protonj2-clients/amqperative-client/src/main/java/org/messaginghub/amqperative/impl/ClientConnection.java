@@ -306,7 +306,7 @@ public class ClientConnection implements Connection {
 
     @Override
     public Sender openAnonymousSender() throws ClientException {
-        return openAnonymousSender(new SenderOptions().setDynamic(true));
+        return openAnonymousSender(new SenderOptions());
     }
 
     @Override

@@ -24,22 +24,14 @@ import java.util.Map;
  */
 public final class SourceOptions extends TerminusOptions<SourceOptions> {
 
-    /**
-     * Control whether messages are browsed or consumed.
-     */
-    public enum DistributionMode {
-        COPY,
-        MOVE
-    }
-
     private DistributionMode distributionMode;
     private Map<String, String> filters;
 
     public SourceOptions copyInto(SourceOptions other) {
         super.copyInto(other);
-        other.setDistributionMode(distributionMode);
+        other.distributionMode(distributionMode);
         if (filters != null) {
-            other.setFilters(new HashMap<>(filters));
+            other.filters(new HashMap<>(filters));
         }
 
         return this;
@@ -48,28 +40,28 @@ public final class SourceOptions extends TerminusOptions<SourceOptions> {
     /**
      * @return the distributionMode
      */
-    public DistributionMode getDistributionMode() {
+    public DistributionMode distributionMode() {
         return distributionMode;
     }
 
     /**
      * @param distributionMode the distributionMode to set
      */
-    public void setDistributionMode(DistributionMode distributionMode) {
+    public void distributionMode(DistributionMode distributionMode) {
         this.distributionMode = distributionMode;
     }
 
     /**
      * @return the filters
      */
-    public Map<String, String> getFilters() {
+    public Map<String, String> filters() {
         return filters;
     }
 
     /**
      * @param filters the filters to set
      */
-    public void setFilters(Map<String, String> filters) {
+    public void filters(Map<String, String> filters) {
         this.filters = filters;
     }
 

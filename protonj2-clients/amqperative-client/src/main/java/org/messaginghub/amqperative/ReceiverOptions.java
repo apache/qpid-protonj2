@@ -69,15 +69,6 @@ public class ReceiverOptions {
         return this;
     }
 
-    public boolean isDynamic() {
-        return sourceOptions().isDynamic();
-    }
-
-    public ReceiverOptions setDynamic(boolean value) {
-        sourceOptions().setDynamic(value);
-        return this;
-    }
-
     public long getCloseTimeout() {
         return closeTimeout;
     }

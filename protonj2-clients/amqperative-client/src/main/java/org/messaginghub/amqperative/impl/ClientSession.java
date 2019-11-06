@@ -142,12 +142,12 @@ public class ClientSession implements Session {
 
     @Override
     public Receiver openDynamicReceiver() throws ClientException {
-        return openDynamicReceiver(getDefaultDynamicReceiverOptions(), null);
+        return openDynamicReceiver(getDefaultReceiverOptions(), null);
     }
 
     @Override
     public Receiver openDynamicReceiver(Map<String, Object> dynamicNodeProperties) throws ClientException {
-        return openDynamicReceiver(getDefaultDynamicReceiverOptions(), dynamicNodeProperties);
+        return openDynamicReceiver(getDefaultReceiverOptions(), dynamicNodeProperties);
     }
 
     @Override
@@ -158,10 +158,6 @@ public class ClientSession implements Session {
     @Override
     public Receiver openDynamicReceiver(ReceiverOptions receiverOptions, Map<String, Object> dynamicNodeProperties) throws ClientException {
         checkClosed();
-
-        if (!receiverOptions.isDynamic()) {
-            throw new IllegalArgumentException("Dynamic receiver requires the options configured for dynamic.");
-        }
 
         final ClientFuture<Receiver> createReceiver = getFutureFactory().createFuture();
         final ReceiverOptions receiverOpts = receiverOptions == null ? getDefaultReceiverOptions() : receiverOptions;
@@ -390,7 +386,6 @@ public class ClientSession implements Session {
 
     private SenderOptions defaultSenderOptions;
     private ReceiverOptions defaultReceivernOptions;
-    private ReceiverOptions defaultDynamicReceivernOptions;
 
     /*
      * Sender options used when none specified by the caller creating a new sender.
@@ -432,30 +427,6 @@ public class ClientSession implements Session {
                 }
 
                 defaultReceivernOptions = receiverOptions;
-            }
-        }
-
-        return receiverOptions;
-    }
-
-    /*
-     * Receiver options used when none specified by the caller creating a new dynamic receiver.
-     */
-    ReceiverOptions getDefaultDynamicReceiverOptions() {
-        ReceiverOptions receiverOptions = defaultDynamicReceivernOptions;
-        if (receiverOptions == null) {
-            synchronized (this) {
-                receiverOptions = defaultDynamicReceivernOptions;
-                if (receiverOptions == null) {
-                    receiverOptions = new ReceiverOptions();
-                    receiverOptions.setOpenTimeout(options.getOpenTimeout());
-                    receiverOptions.setCloseTimeout(options.getCloseTimeout());
-                    receiverOptions.setRequestTimeout(options.getRequestTimeout());
-                    receiverOptions.setSendTimeout(options.getSendTimeout());
-                    receiverOptions.setDynamic(true);
-                }
-
-                defaultDynamicReceivernOptions = receiverOptions;
             }
         }
 
