@@ -37,17 +37,21 @@ import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.junit.Ignore;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.messaginghub.amqperative.impl.ClientConstants;
 import org.messaginghub.amqperative.impl.ClientException;
 import org.messaginghub.amqperative.impl.exceptions.ClientConnectionRemotelyClosedException;
 import org.messaginghub.amqperative.impl.exceptions.ClientUnsupportedOperationException;
 import org.messaginghub.amqperative.test.AMQPerativeTestCase;
+import org.messaginghub.amqperative.util.AmqperativeTestRunner;
+import org.messaginghub.amqperative.util.Repeat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
  * Test for the Connection class
  */
+@RunWith(AmqperativeTestRunner.class)
 public class ConnectionTest extends AMQPerativeTestCase {
 
     private static final Logger LOG = LoggerFactory.getLogger(ConnectionTest.class);
@@ -333,6 +337,7 @@ public class ConnectionTest extends AMQPerativeTestCase {
         }
     }
 
+    @Repeat(repetitions = 1)
     @Test(timeout = 60000)
     public void testCreateDefaultSenderOnConnectionWithSupportForAnonymousRelay() throws Exception {
         try (NettyTestPeer peer = new NettyTestPeer()) {
