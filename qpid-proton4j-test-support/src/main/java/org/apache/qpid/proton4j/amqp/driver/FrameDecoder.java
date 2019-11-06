@@ -282,9 +282,12 @@ class FrameDecoder {
                 // the actual Performative has been decoded.  The implies that the data comprising the
                 // performative will be held as long as the payload buffer is kept.
                 if (input.isReadable()) {
+                    // Check that the remaining bytes aren't part of another frame.
                     int payloadSize = frameBodySize - (input.getReadIndex() - frameBodyStartIndex);
-                    payload = input.slice(input.getReadIndex(), payloadSize);
-                    input.skipBytes(payloadSize);
+                    if (payloadSize > 0) {
+                        payload = input.slice(input.getReadIndex(), payloadSize);
+                        input.skipBytes(payloadSize);
+                    }
                 }
             } else {
                 LOG.trace("Driver Read: CH[{}] : {} [{}]", channel, HeartBeat.INSTANCE, payload);

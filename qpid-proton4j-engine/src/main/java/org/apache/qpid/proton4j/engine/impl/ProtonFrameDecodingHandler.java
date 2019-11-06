@@ -326,9 +326,11 @@ public class ProtonFrameDecodingHandler implements EngineHandler, SaslPerformati
                 // if it was pooled.
                 if (input.isReadable()) {
                     int payloadSize = frameBodySize - (input.getReadIndex() - startReadIndex);
-                    // TODO - What other alternatives can we persue here to avoid a copy ?
-                    payload = configuration.getBufferAllocator().allocate(payloadSize, payloadSize);
-                    payload.writeBytes(input, payloadSize);
+                    // Check that the remaining bytes aren't part of another frame.
+                    if (payloadSize > 0) {
+                        payload = configuration.getBufferAllocator().allocate(payloadSize, payloadSize);
+                        payload.writeBytes(input, payloadSize);
+                    }
                 }
             } else {
                 transitionToFrameSizeParsingStage();
