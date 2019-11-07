@@ -16,9 +16,9 @@
  */
 package org.apache.qpid.proton4j.amqp.driver;
 
+import java.util.ArrayDeque;
 import java.util.Objects;
 import java.util.Queue;
-import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
@@ -68,7 +68,7 @@ public class AMQPTestDriver implements Consumer<ProtonBuffer> {
      *  Uses a thread safe queue to avoid contention on adding script entries
      *  and processing incoming data (although you should probably not do that).
      */
-    private final Queue<ScriptedElement> script = new ConcurrentLinkedQueue<>();
+    private final Queue<ScriptedElement> script = new ArrayDeque<>();
 
     /**
      * Create a test driver instance connected to the given Engine instance.
@@ -159,65 +159,73 @@ public class AMQPTestDriver implements Consumer<ProtonBuffer> {
     //----- Test driver handling of decoded AMQP frames
 
     void handleHeader(AMQPHeader header) throws AssertionError {
-        ScriptedElement scriptEntry = script.poll();
-        if (scriptEntry == null) {
-            signalFailure(new AssertionError("Received header when not expecting any input."));
-        }
+        synchronized (script) {
+            final ScriptedElement scriptEntry = script.poll();
 
-        try {
-            header.invoke(scriptEntry, this);
-        } catch (Throwable t) {
-            if (scriptEntry.isOptional()) {
-                handleHeader(header);
-            } else {
-                throw t;
+            if (scriptEntry == null) {
+                signalFailure(new AssertionError("Received header when not expecting any input."));
             }
-        }
 
-        prcessScript(scriptEntry);
+            try {
+                header.invoke(scriptEntry, this);
+            } catch (Throwable t) {
+                if (scriptEntry.isOptional()) {
+                    handleHeader(header);
+                } else {
+                    throw t;
+                }
+            }
+
+            prcessScript(scriptEntry);
+        }
     }
 
     void handleSaslPerformative(SaslDescribedType sasl, int channel, ProtonBuffer payload) throws AssertionError {
-        ScriptedElement scriptEntry = script.poll();
-        if (scriptEntry == null) {
-            signalFailure(new AssertionError("Received performative[" + sasl + "] when not expecting any input."));
-        }
-
-        try {
-            sasl.invoke(scriptEntry, this);
-        } catch (UnexpectedPerformativeError e) {
-            if (scriptEntry.isOptional()) {
-                handleSaslPerformative(sasl, channel, payload);
-            } else {
-                throw e;
+        synchronized (script) {
+            final ScriptedElement scriptEntry = script.poll();
+            if (scriptEntry == null) {
+                signalFailure(new AssertionError("Received performative[" + sasl + "] when not expecting any input."));
             }
-        }
 
-        prcessScript(scriptEntry);
+            try {
+                sasl.invoke(scriptEntry, this);
+            } catch (UnexpectedPerformativeError e) {
+                if (scriptEntry.isOptional()) {
+                    handleSaslPerformative(sasl, channel, payload);
+                } else {
+                    throw e;
+                }
+            }
+
+            prcessScript(scriptEntry);
+        }
     }
 
     void handlePerformative(PerformativeDescribedType amqp, int channel, ProtonBuffer payload) throws AssertionError {
         if (!amqp.getPerformativeType().equals(PerformativeType.HEARTBEAT)) {
             performativeCount++;
         }
-        ScriptedElement scriptEntry = script.poll();
-        if (scriptEntry == null) {
-            // TODO - Need to ensure a readable error by converting the codec type to a true performative type when
-            //        logging what happened here.
-            signalFailure(new AssertionError("Received performative[" + amqp + "] when not expecting any input."));
-        }
 
-        try {
-            amqp.invoke(scriptEntry, payload, channel, this);
-        } catch (UnexpectedPerformativeError e) {
-            if (scriptEntry.isOptional()) {
-                handlePerformative(amqp, channel, payload);
-            } else {
-                throw e;
+        synchronized (script) {
+            final ScriptedElement scriptEntry = script.poll();
+            if (scriptEntry == null) {
+                // TODO - Need to ensure a readable error by converting the codec type to a true performative type when
+                //        logging what happened here.
+                signalFailure(new AssertionError("Received performative[" + amqp + "] when not expecting any input."));
             }
-        }
 
-        prcessScript(scriptEntry);
+            try {
+                amqp.invoke(scriptEntry, payload, channel, this);
+            } catch (UnexpectedPerformativeError e) {
+                if (scriptEntry.isOptional()) {
+                    handlePerformative(amqp, channel, payload);
+                } else {
+                    throw e;
+                }
+            }
+
+            prcessScript(scriptEntry);
+        }
     }
 
     void handleHeartbeat(int channel) {
@@ -239,9 +247,19 @@ public class AMQPTestDriver implements Consumer<ProtonBuffer> {
 
     public void waitForScriptToComplete() {
         checkFailed();
-        if (!script.isEmpty()) {
+
+        ScriptCompleteAction possibleWait = null;
+
+        synchronized (script) {
+            checkFailed();
+            if (!script.isEmpty()) {
+                possibleWait = new ScriptCompleteAction(this).queue();
+            }
+        }
+
+        if (possibleWait != null) {
             try {
-                new ScriptCompleteAction(this).queue().await();
+                possibleWait.await();
             } catch (InterruptedException e) {
                 Thread.interrupted();
                 signalFailure("Interrupted while waiting for script to complete");
@@ -250,9 +268,17 @@ public class AMQPTestDriver implements Consumer<ProtonBuffer> {
     }
 
     public void waitForScriptToCompleteIgnoreErrors() {
-        if (!script.isEmpty()) {
+        ScriptCompleteAction possibleWait = null;
+
+        synchronized (script) {
+            if (!script.isEmpty()) {
+                possibleWait = new ScriptCompleteAction(this).queue();
+            }
+        }
+
+        if (possibleWait != null) {
             try {
-                new ScriptCompleteAction(this).queue().await();
+                possibleWait.await();
             } catch (InterruptedException e) {
                 Thread.interrupted();
                 signalFailure("Interrupted while waiting for script to complete");
@@ -266,9 +292,19 @@ public class AMQPTestDriver implements Consumer<ProtonBuffer> {
 
     public void waitForScriptToComplete(long timeout, TimeUnit units) {
         checkFailed();
-        if (!script.isEmpty()) {
+
+        ScriptCompleteAction possibleWait = null;
+
+        synchronized (script) {
+            checkFailed();
+            if (!script.isEmpty()) {
+                possibleWait = new ScriptCompleteAction(this).queue();
+            }
+        }
+
+        if (possibleWait != null) {
             try {
-                new ScriptCompleteAction(this).queue().await(timeout, units);
+                possibleWait.await(timeout, units);
             } catch (InterruptedException e) {
                 Thread.interrupted();
                 signalFailure("Interrupted while waiting for script to complete");
@@ -278,7 +314,10 @@ public class AMQPTestDriver implements Consumer<ProtonBuffer> {
 
     public void addScriptedElement(ScriptedElement element) {
         checkFailed();
-        script.offer(element);
+        synchronized (script) {
+            checkFailed();
+            script.offer(element);
+        }
     }
 
     /**
