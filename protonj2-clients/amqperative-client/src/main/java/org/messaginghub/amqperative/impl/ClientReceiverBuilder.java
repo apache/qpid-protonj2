@@ -16,17 +16,18 @@
  */
 package org.messaginghub.amqperative.impl;
 
-import static org.messaginghub.amqperative.impl.ClientConstants.DEFAULT_SUPPORTED_OUTCOMES;
 import static org.messaginghub.amqperative.impl.ClientConstants.MODIFIED_FAILED;
 
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.apache.qpid.proton4j.amqp.messaging.Released;
 import org.apache.qpid.proton4j.amqp.messaging.Source;
 import org.apache.qpid.proton4j.amqp.messaging.Target;
 import org.apache.qpid.proton4j.engine.Receiver;
 import org.messaginghub.amqperative.ReceiverOptions;
 import org.messaginghub.amqperative.SessionOptions;
+import org.messaginghub.amqperative.SourceOptions;
 
 /**
  * Session owned builder of {@link Receiver} objects.
@@ -52,11 +53,16 @@ final class ClientReceiverBuilder {
         return new ClientReceiver(session, rcvOptions, receiverId, protonReceiver);
     }
 
-    @SuppressWarnings("unused")  // TODO
     public ClientReceiver dynamicReceiver(Map<String, Object> dynamicNodeProperties, ReceiverOptions receiverOptions) throws ClientException {
         final ReceiverOptions rcvOptions = receiverOptions != null ? receiverOptions : getDefaultReceiverOptions();
         final String receiverId = nextReceiverId();
-        return null;
+
+        final Receiver protonReceiver = createReceiver(null, rcvOptions, receiverId);
+
+        protonReceiver.getSource().setDynamic(true);
+        protonReceiver.getSource().setDynamicNodeProperties(ClientConversionSupport.toSymbolKeyedMap(dynamicNodeProperties));
+
+        return new ClientReceiver(session, rcvOptions, receiverId, protonReceiver);
     }
 
     private String nextReceiverId() {
@@ -64,29 +70,41 @@ final class ClientReceiverBuilder {
     }
 
     private Receiver createReceiver(String address, ReceiverOptions options, String receiverId) {
-        Receiver protonReceiver;
+        final String linkName;
 
         if (options.getLinkName() != null) {
-            protonReceiver = session.getProtonSession().receiver(options.getLinkName());
+            linkName = options.getLinkName();
         } else {
-            protonReceiver = session.getProtonSession().receiver("receiver-" + receiverId);
+            linkName = "receiver-" + receiverId;
         }
+
+        final Receiver protonReceiver = session.getProtonSession().receiver(linkName);
 
         protonReceiver.setOfferedCapabilities(ClientConversionSupport.toSymbolArray(options.getOfferedCapabilities()));
         protonReceiver.setDesiredCapabilities(ClientConversionSupport.toSymbolArray(options.getDesiredCapabilities()));
         protonReceiver.setProperties(ClientConversionSupport.toSymbolKeyedMap(options.getProperties()));
+        protonReceiver.setSource(createSource(address, options));
+        protonReceiver.setTarget(createTarget(address, options));
+        protonReceiver.setDefaultDeliveryState(Released.getInstance());
+
+        return protonReceiver;
+    }
+
+    private Source createSource(String address, ReceiverOptions options) {
+        final SourceOptions sourceOptions = options.sourceOptions();
 
         //TODO: flesh out source configuration
         Source source = new Source();
         source.setAddress(address);
         // TODO - User somehow sets their own desired outcomes for this receiver source.
-        source.setOutcomes(DEFAULT_SUPPORTED_OUTCOMES);
-        source.setDefaultOutcome(MODIFIED_FAILED);
+        source.setOutcomes(ClientConversionSupport.outcomesToSymbols(sourceOptions.outcomes()));
+        source.setDefaultOutcome(MODIFIED_FAILED);  // TODO set from source options.
 
-        protonReceiver.setSource(source);
-        protonReceiver.setTarget(new Target());
+        return source;
+    }
 
-        return protonReceiver;
+    private Target createTarget(String address, ReceiverOptions options) {
+        return new Target();
     }
 
     /*

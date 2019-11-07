@@ -16,15 +16,26 @@
  */
 package org.messaginghub.amqperative;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+
+import org.messaginghub.amqperative.impl.ClientDeliveryState;
 
 /**
  * Options type that carries configuration for link Source types.
  */
 public final class SourceOptions extends TerminusOptions<SourceOptions> {
 
+    private static final DeliveryState.Type[] DEFAULT_OUTCOMES = new DeliveryState.Type[] {
+        DeliveryState.Type.ACCEPTED, DeliveryState.Type.REJECTED, DeliveryState.Type.RELEASED, DeliveryState.Type.MODIFIED
+    };
+
+    private static final ClientDeliveryState DEFAULT_OUTCOME = new ClientDeliveryState.ClientModified(true, false);
+
     private DistributionMode distributionMode;
+    private DeliveryState defaultOutcome = DEFAULT_OUTCOME;
+    private DeliveryState.Type[] outcomes = DEFAULT_OUTCOMES;
     private Map<String, String> filters;
 
     public SourceOptions copyInto(SourceOptions other) {
@@ -46,9 +57,12 @@ public final class SourceOptions extends TerminusOptions<SourceOptions> {
 
     /**
      * @param distributionMode the distributionMode to set
+     *
+     * @return this {@link SourceOptions} instance.
      */
-    public void distributionMode(DistributionMode distributionMode) {
+    public SourceOptions distributionMode(DistributionMode distributionMode) {
         this.distributionMode = distributionMode;
+        return self();
     }
 
     /**
@@ -60,9 +74,48 @@ public final class SourceOptions extends TerminusOptions<SourceOptions> {
 
     /**
      * @param filters the filters to set
+     *
+     * @return this {@link SourceOptions} instance.
      */
-    public void filters(Map<String, String> filters) {
+    public SourceOptions filters(Map<String, String> filters) {
         this.filters = filters;
+        return self();
+    }
+
+    /**
+     * @return the configured default outcome as a {@link DeliveryState} instance.
+     */
+    public DeliveryState defaultOutcome() {
+        return defaultOutcome;
+    }
+
+    /**
+     * @param defaultOutcome
+     * 		The default outcome to assign to the created link source.
+     *
+     * @return this {@link SourceOptions} instance.
+     */
+    public SourceOptions defaultOutcome(DeliveryState defaultOutcome) {
+        this.defaultOutcome = defaultOutcome;
+        return self();
+    }
+
+    /**
+     * @return the currently configured supported outcomes to be used on the create link.
+     */
+    public DeliveryState.Type[] outcomes() {
+        return outcomes;
+    }
+
+    /**
+     * @param outcomes
+     * 		The supported outcomes for the link created {@link Source}.
+     *
+     * @return this {@link SourceOptions} instance.
+     */
+    public SourceOptions outcomes(DeliveryState.Type[] outcomes) {
+        this.outcomes = outcomes != null ? Arrays.copyOf(outcomes, outcomes.length) : null;
+        return self();
     }
 
     @Override

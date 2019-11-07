@@ -43,6 +43,24 @@ public abstract class ClientDeliveryState implements DeliveryState {
 
     //----- Create Delivery State from Proton instance
 
+    static DeliveryState fromProtonType(org.apache.qpid.proton4j.amqp.messaging.Outcome outcome) {
+        if (outcome == null) {
+            return null;
+        }
+
+        if (outcome instanceof Accepted) {
+            return ClientAccepted.getInstance();
+        } else if (outcome instanceof Released) {
+            return ClientReleased.getInstance();
+        } else if (outcome instanceof Rejected) {
+            return ClientRejected.fromProtonType((Rejected) outcome);
+        } else if (outcome instanceof Modified) {
+            return ClientModified.fromProtonType((Modified) outcome);
+        }
+
+        throw new IllegalArgumentException("Cannot map to unknown Proton Outcome to a DeliveryStateType: " + outcome);
+    }
+
     static DeliveryState fromProtonType(org.apache.qpid.proton4j.amqp.transport.DeliveryState state) {
         if (state == null) {
             return null;
@@ -54,11 +72,11 @@ public abstract class ClientDeliveryState implements DeliveryState {
             case Released:
                 return ClientReleased.getInstance();
             case Rejected:
-                return ClientReleased.fromProtonType(state);
+                return ClientRejected.fromProtonType((Rejected) state);
             case Modified:
-                return ClientModified.fromProtonType(state);
+                return ClientModified.fromProtonType((Modified) state);
             case Transactional:
-                // TODO - Currently don't support transactions in the API
+                throw new UnsupportedOperationException("Client does not yet support Transactional operations");
             default:
                 throw new IllegalArgumentException("Cannot map to unknown Proton Delivery State type");
         }
@@ -130,6 +148,10 @@ public abstract class ClientDeliveryState implements DeliveryState {
         org.apache.qpid.proton4j.amqp.transport.DeliveryState getProtonDeliveryState() {
             return rejected;
         }
+
+        public static ClientRejected fromProtonType(Rejected rejected) {
+            return null; // TODO
+        }
     }
 
     public static class ClientModified extends ClientDeliveryState {
@@ -155,6 +177,10 @@ public abstract class ClientDeliveryState implements DeliveryState {
         @Override
         org.apache.qpid.proton4j.amqp.transport.DeliveryState getProtonDeliveryState() {
             return modified;
+        }
+
+        public static ClientModified fromProtonType(Modified rejected) {
+            return null; // TODO
         }
     }
 }

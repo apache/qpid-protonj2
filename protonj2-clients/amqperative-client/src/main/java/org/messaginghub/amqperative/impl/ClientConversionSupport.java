@@ -23,6 +23,11 @@ import java.util.Map;
 import java.util.Set;
 
 import org.apache.qpid.proton4j.amqp.Symbol;
+import org.apache.qpid.proton4j.amqp.messaging.Accepted;
+import org.apache.qpid.proton4j.amqp.messaging.Modified;
+import org.apache.qpid.proton4j.amqp.messaging.Rejected;
+import org.apache.qpid.proton4j.amqp.messaging.Released;
+import org.messaginghub.amqperative.DeliveryState;
 
 /**
  * Utilities used by various classes in the Client core
@@ -113,5 +118,66 @@ abstract class ClientConversionSupport {
         }
 
         return result;
+    }
+
+    public static Symbol[] outcomesToSymbols(DeliveryState.Type[] outcomes) {
+        Symbol[] result = null;
+
+        if (outcomes != null) {
+            result = new Symbol[outcomes.length];
+            for (int i = 0; i < outcomes.length; ++i) {
+                result[i] = outcomeToSymbol(outcomes[i]);
+            }
+        }
+
+        return result;
+    }
+
+    public static DeliveryState.Type[] symbolsToOutcomes(Symbol[] outcomes) {
+        DeliveryState.Type[] result = null;
+
+        if (outcomes != null) {
+            result = new DeliveryState.Type[outcomes.length];
+            for (int i = 0; i < outcomes.length; ++i) {
+                result[i] = symbolToOutcome(outcomes[i]);
+            }
+        }
+
+        return result;
+    }
+
+    public static Symbol outcomeToSymbol(DeliveryState.Type outcome) {
+        if (outcome == null) {
+            return null;
+        }
+
+        switch (outcome) {
+            case ACCEPTED:
+                return Accepted.DESCRIPTOR_SYMBOL;
+            case REJECTED:
+                return Rejected.DESCRIPTOR_SYMBOL;
+            case RELEASED:
+                return Released.DESCRIPTOR_SYMBOL;
+            case MODIFIED:
+                return Modified.DESCRIPTOR_SYMBOL;
+            default:
+                throw new IllegalArgumentException("DeliveryState.Type " + outcome + " cannot be applied as an outcome");
+        }
+    }
+
+    public static DeliveryState.Type symbolToOutcome(Symbol outcome) {
+        if (outcome == null) {
+            return null;
+        } else if (outcome.equals(Accepted.DESCRIPTOR_SYMBOL)) {
+            return DeliveryState.Type.ACCEPTED;
+        } else if (outcome.equals(Rejected.DESCRIPTOR_SYMBOL)) {
+            return DeliveryState.Type.REJECTED;
+        } else if (outcome.equals(Released.DESCRIPTOR_SYMBOL)) {
+            return DeliveryState.Type.RELEASED;
+        } else if (outcome.equals(Modified.DESCRIPTOR_SYMBOL)) {
+            return DeliveryState.Type.MODIFIED;
+        } else {
+            throw new IllegalArgumentException("Cannot convert Symbol: " + outcome + " to a DeliveryState.Type outcome");
+        }
     }
 }
