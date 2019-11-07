@@ -27,7 +27,6 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
@@ -59,6 +58,8 @@ public class ClientSession implements Session {
     private static final AtomicIntegerFieldUpdater<ClientSession> CLOSED_UPDATER =
             AtomicIntegerFieldUpdater.newUpdater(ClientSession.class, "closed");
 
+    private volatile int closed;
+
     private final ClientFuture<Session> openFuture;
     private final ClientFuture<Session> closeFuture;
 
@@ -67,9 +68,8 @@ public class ClientSession implements Session {
     private final org.apache.qpid.proton4j.engine.Session protonSession;
     private final ScheduledExecutorService serializer;
     private final String sessionId;
-    private volatile int closed;
-    private final AtomicInteger senderCounter = new AtomicInteger();
-    private final AtomicInteger receiverCounter = new AtomicInteger();
+    private final ClientSenderBuilder senderBuilder;
+    private final ClientReceiverBuilder receiverBuilder;
 
     private volatile ThreadPoolExecutor deliveryExecutor;
     private final AtomicReference<Thread> deliveryThread = new AtomicReference<Thread>();
@@ -87,6 +87,8 @@ public class ClientSession implements Session {
         this.serializer = connection.getScheduler();
         this.openFuture = connection.getFutureFactory().createFuture();
         this.closeFuture = connection.getFutureFactory().createFuture();
+        this.senderBuilder = new ClientSenderBuilder(this);
+        this.receiverBuilder = new ClientReceiverBuilder(this);
 
         configureSession();
     }
@@ -118,7 +120,7 @@ public class ClientSession implements Session {
 
     @Override
     public Receiver openReceiver(String address) throws ClientException {
-        return openReceiver(address, getDefaultReceiverOptions());
+        return openReceiver(address, null);
     }
 
     @Override
@@ -126,12 +128,11 @@ public class ClientSession implements Session {
         checkClosed();
         Objects.requireNonNull(address, "Cannot create a receiver with a null address");
         final ClientFuture<Receiver> createReceiver = getFutureFactory().createFuture();
-        final ReceiverOptions receiverOpts = receiverOptions == null ? getDefaultReceiverOptions() : receiverOptions;
 
         serializer.execute(() -> {
             try {
                 checkClosed();
-                createReceiver.complete(internalCreateReceiver(address, receiverOpts).open());
+                createReceiver.complete(internalOpenReceiver(address, receiverOptions));
             } catch (Throwable error) {
                 createReceiver.failed(ClientExceptionSupport.createNonFatalOrPassthrough(error));
             }
@@ -142,31 +143,28 @@ public class ClientSession implements Session {
 
     @Override
     public Receiver openDynamicReceiver() throws ClientException {
-        return openDynamicReceiver(getDefaultReceiverOptions(), null);
+        return openDynamicReceiver(null, null);
     }
 
     @Override
     public Receiver openDynamicReceiver(Map<String, Object> dynamicNodeProperties) throws ClientException {
-        return openDynamicReceiver(getDefaultReceiverOptions(), dynamicNodeProperties);
+        return openDynamicReceiver(null, null);
     }
 
     @Override
     public Receiver openDynamicReceiver(ReceiverOptions receiverOptions) throws ClientException {
-        return openDynamicReceiver(receiverOptions, null);
+        return openDynamicReceiver(null, null);
     }
 
     @Override
-    public Receiver openDynamicReceiver(ReceiverOptions receiverOptions, Map<String, Object> dynamicNodeProperties) throws ClientException {
+    public Receiver openDynamicReceiver(Map<String, Object> dynamicNodeProperties, ReceiverOptions receiverOptions) throws ClientException {
         checkClosed();
-
         final ClientFuture<Receiver> createReceiver = getFutureFactory().createFuture();
-        final ReceiverOptions receiverOpts = receiverOptions == null ? getDefaultReceiverOptions() : receiverOptions;
 
         serializer.execute(() -> {
             try {
                 checkClosed();
-                // TODO - Apply Dynamic node properties to created receiver.
-                createReceiver.complete(internalCreateReceiver(null, receiverOpts).open());
+                createReceiver.complete(internalOpenDynamicReceiver(dynamicNodeProperties, receiverOptions));
             } catch (Throwable error) {
                 createReceiver.failed(ClientExceptionSupport.createNonFatalOrPassthrough(error));
             }
@@ -177,7 +175,7 @@ public class ClientSession implements Session {
 
     @Override
     public Sender openSender(String address) throws ClientException {
-        return openSender(address, getDefaultSenderOptions());
+        return openSender(address, null);
     }
 
     @Override
@@ -185,12 +183,11 @@ public class ClientSession implements Session {
         checkClosed();
         Objects.requireNonNull(address, "Cannot create a sender with a null address");
         final ClientFuture<Sender> createSender = getFutureFactory().createFuture();
-        final SenderOptions senderOpts = senderOptions == null ? getDefaultSenderOptions() : senderOptions;
 
         serializer.execute(() -> {
             try {
                 checkClosed();
-                createSender.complete(internalCreateSender(address, senderOpts).open());
+                createSender.complete(internalOpenSender(address, senderOptions));
             } catch (Throwable error) {
                 createSender.failed(ClientExceptionSupport.createNonFatalOrPassthrough(error));
             }
@@ -201,19 +198,18 @@ public class ClientSession implements Session {
 
     @Override
     public Sender openAnonymousSender() throws ClientException {
-        return openAnonymousSender(getDefaultSenderOptions());
+        return openAnonymousSender(null);
     }
 
     @Override
     public Sender openAnonymousSender(SenderOptions senderOptions) throws ClientException {
         checkClosed();
         final ClientFuture<Sender> createSender = getFutureFactory().createFuture();
-        final SenderOptions senderOpts = senderOptions == null ? getDefaultSenderOptions() : senderOptions;
 
         serializer.execute(() -> {
             try {
                 checkClosed();
-                createSender.complete(internalCreateSender(null, senderOpts).open());
+                createSender.complete(internalOpenAnonymousSender(senderOptions));
             } catch (Throwable error) {
                 createSender.failed(ClientExceptionSupport.createNonFatalOrPassthrough(error));
             }
@@ -222,26 +218,29 @@ public class ClientSession implements Session {
         return connection.request(createSender, options.getRequestTimeout(), TimeUnit.MILLISECONDS);
     }
 
+    //----- Internal resource open APIs expected to be called from the connection event loop
+
+    ClientReceiver internalOpenReceiver(String address, ReceiverOptions receiverOptions) throws ClientException {
+        return register(receiverBuilder.receiver(address, receiverOptions).open());
+    }
+
+    ClientReceiver internalOpenDynamicReceiver(Map<String, Object> dynamicNodeProperties, ReceiverOptions receiverOptions) throws ClientException {
+        return register(receiverBuilder.dynamicReceiver(dynamicNodeProperties, receiverOptions).open());
+    }
+
+    ClientSender internalOpenSender(String address, SenderOptions senderOptions) throws ClientException {
+        return register(senderBuilder.sender(address, senderOptions).open());
+    }
+
+    ClientSender internalOpenAnonymousSender(SenderOptions senderOptions) throws ClientException {
+        return register(senderBuilder.anonymousSender(senderOptions).open());
+    }
+
+    ClientConnectionSender internalOpenConnectionSender() throws ClientException {
+        return register(senderBuilder.connectionSender().open());
+    }
+
     //----- Internal API accessible for use within the package
-
-    ClientReceiver internalCreateReceiver(String address, ReceiverOptions options) {
-        ClientReceiver result = new ClientReceiver(options, this, address);
-        receivers.add(result);  // TODO - We could use the protonSession to track all links ?
-        return result;
-    }
-
-    ClientSender internalCreateSender(String address, SenderOptions options) {
-        ClientSender result = new ClientSender(options, this, address);
-        senders.add(result);  // TODO - We could use the protonSession to track all links ?
-        return result;
-    }
-
-    // TODO - Refactor to allow this to move to ClientConnectionSession
-    ClientConnectionSender internalCreateConnectionSender(SenderOptions options) {
-        ClientConnectionSender result = new ClientConnectionSender(options, this, null);
-        senders.add(result);  // TODO - We could use the protonSession to track all links ?
-        return result;
-    }
 
     ClientSession open() {
         protonSession.openHandler(result -> {
@@ -300,14 +299,6 @@ public class ClientSession implements Session {
         return failureCause.get();
     }
 
-    String nextReceiverId() {
-        return sessionId + ":" + receiverCounter.incrementAndGet();
-    }
-
-    String nextSenderId() {
-        return sessionId + ":" + senderCounter.incrementAndGet();
-    }
-
     boolean isClosed() {
         return closed > 0;
     }
@@ -324,11 +315,29 @@ public class ClientSession implements Session {
         return connection.request(request, timeout, units);
     }
 
+    String id() {
+        return sessionId;
+    }
+
+    SessionOptions options() {
+        return options;
+    }
+
     org.apache.qpid.proton4j.engine.Session getProtonSession() {
         return protonSession;
     }
 
     //----- Private implementation methods
+
+    private <T extends ClientSender> T register(T sender) {
+        senders.add(sender);
+        return sender;
+    }
+
+    private <T extends ClientReceiver> T register(T receiver) {
+        receivers.add(receiver);
+        return receiver;
+    }
 
     private void configureSession() {
         protonSession.setOfferedCapabilities(ClientConversionSupport.toSymbolArray(options.getOfferedCapabilities()));
@@ -382,54 +391,5 @@ public class ClientSession implements Session {
         }
 
         closeFuture.complete(this);
-    }
-
-    private SenderOptions defaultSenderOptions;
-    private ReceiverOptions defaultReceivernOptions;
-
-    /*
-     * Sender options used when none specified by the caller creating a new sender.
-     */
-    SenderOptions getDefaultSenderOptions() {
-        SenderOptions senderOptions = defaultSenderOptions;
-        if (senderOptions == null) {
-            synchronized (this) {
-                senderOptions = defaultSenderOptions;
-                if (senderOptions == null) {
-                    senderOptions = new SenderOptions();
-                    senderOptions.setOpenTimeout(options.getOpenTimeout());
-                    senderOptions.setCloseTimeout(options.getCloseTimeout());
-                    senderOptions.setRequestTimeout(options.getRequestTimeout());
-                    senderOptions.setSendTimeout(options.getSendTimeout());
-                }
-
-                defaultSenderOptions = senderOptions;
-            }
-        }
-
-        return senderOptions;
-    }
-
-    /*
-     * Receiver options used when none specified by the caller creating a new receiver.
-     */
-    ReceiverOptions getDefaultReceiverOptions() {
-        ReceiverOptions receiverOptions = defaultReceivernOptions;
-        if (receiverOptions == null) {
-            synchronized (this) {
-                receiverOptions = defaultReceivernOptions;
-                if (receiverOptions == null) {
-                    receiverOptions = new ReceiverOptions();
-                    receiverOptions.setOpenTimeout(options.getOpenTimeout());
-                    receiverOptions.setCloseTimeout(options.getCloseTimeout());
-                    receiverOptions.setRequestTimeout(options.getRequestTimeout());
-                    receiverOptions.setSendTimeout(options.getSendTimeout());
-                }
-
-                defaultReceivernOptions = receiverOptions;
-            }
-        }
-
-        return receiverOptions;
     }
 }

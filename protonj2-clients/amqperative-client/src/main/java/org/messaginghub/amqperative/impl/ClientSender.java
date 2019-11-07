@@ -16,8 +16,6 @@
  */
 package org.messaginghub.amqperative.impl;
 
-import static org.messaginghub.amqperative.impl.ClientConstants.DEFAULT_SUPPORTED_OUTCOMES;
-
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.Set;
@@ -76,21 +74,14 @@ public class ClientSender implements Sender {
     private LinkCreditState drainingState;
     private Consumer<ClientSender> senderRemotelyClosedHandler;
 
-    public ClientSender(SenderOptions options, ClientSession session, String address) {
+    public ClientSender(ClientSession session, SenderOptions options, String senderId, org.apache.qpid.proton4j.engine.Sender protonSender) {
         this.options = new SenderOptions(options);
         this.session = session;
-        this.senderId = session.nextSenderId();
+        this.senderId = senderId;
         this.executor = session.getScheduler();
         this.openFuture = session.getFutureFactory().createFuture();
         this.closeFuture = session.getFutureFactory().createFuture();
-
-        if (options.getLinkName() != null) {
-            this.protonSender = session.getProtonSession().sender(options.getLinkName());
-        } else {
-            this.protonSender = session.getProtonSession().sender("sender-" + getId());
-        }
-
-        configureSender(address);
+        this.protonSender = protonSender;
     }
 
     @Override
@@ -98,7 +89,7 @@ public class ClientSender implements Sender {
         if (protonSender.getRemoteState() != LinkState.IDLE && protonSender.getRemoteTarget() != null) {
             return protonSender.getRemoteTarget().getAddress();
         } else {
-            return null;
+            return protonSender.getTarget().getAddress();
         }
     }
 
@@ -394,23 +385,6 @@ public class ClientSender implements Sender {
     }
 
     //----- Private implementation details
-
-    void configureSender(String address) {
-        protonSender.setOfferedCapabilities(ClientConversionSupport.toSymbolArray(options.getOfferedCapabilities()));
-        protonSender.setDesiredCapabilities(ClientConversionSupport.toSymbolArray(options.getDesiredCapabilities()));
-        protonSender.setProperties(ClientConversionSupport.toSymbolKeyedMap(options.getProperties()));
-
-        // TODO: flesh out target
-        org.apache.qpid.proton4j.amqp.messaging.Target target = new org.apache.qpid.proton4j.amqp.messaging.Target();
-        target.setAddress(address);
-
-        org.apache.qpid.proton4j.amqp.messaging.Source source = new org.apache.qpid.proton4j.amqp.messaging.Source();
-        // TODO - User somehow sets their own desired outcomes for this receiver source.
-        source.setOutcomes(DEFAULT_SUPPORTED_OUTCOMES);
-
-        protonSender.setTarget(target);
-        protonSender.setSource(source);
-    }
 
     private void assumeSendableAndSend(ClientMessage<?> message, AsyncResult<Tracker> request) {
         ProtonBuffer buffer = ClientMessageSupport.encodeMessage(message);

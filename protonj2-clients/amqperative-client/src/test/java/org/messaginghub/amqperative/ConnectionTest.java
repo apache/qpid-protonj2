@@ -305,6 +305,7 @@ public class ConnectionTest extends AMQPerativeTestCase {
         }
     }
 
+    @Repeat(repetitions = 1)
     @Test(timeout = 60000)
     public void testCreateDefaultSenderFailsOnConnectionWithoutSupportForAnonymousRelay() throws Exception {
         try (NettyTestPeer peer = new NettyTestPeer()) {
@@ -337,7 +338,6 @@ public class ConnectionTest extends AMQPerativeTestCase {
         }
     }
 
-    @Repeat(repetitions = 1)
     @Test(timeout = 60000)
     public void testCreateDefaultSenderOnConnectionWithSupportForAnonymousRelay() throws Exception {
         try (NettyTestPeer peer = new NettyTestPeer()) {

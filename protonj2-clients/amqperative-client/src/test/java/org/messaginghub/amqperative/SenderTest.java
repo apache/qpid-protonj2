@@ -17,13 +17,17 @@ import org.apache.qpid.proton4j.amqp.transport.ErrorCondition;
 import org.apache.qpid.proton4j.amqp.transport.Role;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.messaginghub.amqperative.impl.exceptions.ClientOperationTimedOutException;
 import org.messaginghub.amqperative.impl.exceptions.ClientSecurityException;
 import org.messaginghub.amqperative.impl.exceptions.ClientSendTimedOutException;
 import org.messaginghub.amqperative.test.AMQPerativeTestCase;
+import org.messaginghub.amqperative.util.AmqperativeTestRunner;
+import org.messaginghub.amqperative.util.Repeat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+@RunWith(AmqperativeTestRunner.class)
 public class SenderTest extends AMQPerativeTestCase {
 
     private static final Logger LOG = LoggerFactory.getLogger(SenderTest.class);
@@ -75,6 +79,7 @@ public class SenderTest extends AMQPerativeTestCase {
         }
     }
 
+    @Repeat(repetitions = 1)
     @Test(timeout = 60000)
     public void testSenderOpenRejectedByRemote() throws Exception {
         try (NettyTestPeer peer = new NettyTestPeer()) {

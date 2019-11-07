@@ -26,13 +26,19 @@ import org.messaginghub.amqperative.SenderOptions;
  */
 public final class ClientConnectionSender extends ClientSender {
 
-    public ClientConnectionSender(SenderOptions options, ClientSession session, String address) {
-        super(options, session, address);
+    public ClientConnectionSender(ClientSession session, SenderOptions options, String senderId, org.apache.qpid.proton4j.engine.Sender protonSender) {
+        super(session, options, senderId, protonSender);
     }
 
     @Override
     public Future<Sender> close() {
         throw new UnsupportedOperationException("Sender owned by the Client Connection cannot be explicity closed.");
+    }
+
+    @Override
+	ClientConnectionSender open() {
+        super.open();
+        return this;
     }
 
     Future<Sender> internalClose() {

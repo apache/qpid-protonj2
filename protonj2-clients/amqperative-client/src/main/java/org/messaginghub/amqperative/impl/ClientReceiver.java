@@ -64,21 +64,14 @@ public class ClientReceiver implements Receiver {
     private volatile int closed;
     private Consumer<ClientReceiver> receiverRemotelyClosedHandler;
 
-    public ClientReceiver(ReceiverOptions options, ClientSession session, String address) {
-        this.options = new ReceiverOptions(options);
+    public ClientReceiver(ClientSession session, ReceiverOptions options, String receiverId, org.apache.qpid.proton4j.engine.Receiver receiver) {
+        this.options = options;
         this.session = session;
-        this.receiverId = session.nextReceiverId();
+        this.receiverId = receiverId;
         this.executor = session.getScheduler();
         this.openFuture = session.getFutureFactory().createFuture();
         this.closeFuture = session.getFutureFactory().createFuture();
-
-        if (options.getLinkName() != null) {
-            this.protonReceiver = session.getProtonSession().receiver(options.getLinkName());
-        } else {
-            this.protonReceiver = session.getProtonSession().receiver("receiver-" + getId());
-        }
-
-        configureReceiver(address);
+        this.protonReceiver = receiver;
 
         if (options.getCreditWindow() > 0) {
             protonReceiver.setCredit(options.getCreditWindow());
@@ -93,18 +86,26 @@ public class ClientReceiver implements Receiver {
         if (protonReceiver.getRemoteState() != LinkState.IDLE && protonReceiver.getRemoteSource() != null) {
             return protonReceiver.getRemoteSource().getAddress();
         } else {
-            return null;
+            return protonReceiver.getSource().getAddress();
         }
     }
 
     @Override
     public Source source() {
-        return null;  // TODO
+        if (protonReceiver.getRemoteState() != LinkState.IDLE && protonReceiver.getRemoteSource() != null) {
+            return null;  // TODO
+        } else {
+            return null;  // TODO
+        }
     }
 
     @Override
     public Target target() {
-        return null;  // TODO
+        if (protonReceiver.getRemoteState() != LinkState.IDLE && protonReceiver.getRemoteTarget() != null) {
+            return null;  // TODO
+        } else {
+            return null;  // TODO
+        }
     }
 
     @Override

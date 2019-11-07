@@ -96,8 +96,6 @@ public class ClientConnection implements Connection {
     private final List<ClientSession> sessions = new ArrayList<>();
 
     private SessionOptions defaultSessionOptions;
-    private SenderOptions defaultSenderOptions;
-    private ReceiverOptions defaultReceivernOptions;
 
     private ClientFuture<Connection> openFuture;
     private ClientFuture<Connection> closeFuture;
@@ -237,7 +235,7 @@ public class ClientConnection implements Connection {
 
     @Override
     public Receiver openReceiver(String address) throws ClientException {
-        return openReceiver(address, getDefaultReceiverOptions());
+        return openReceiver(address, null);
     }
 
     @Override
@@ -245,12 +243,11 @@ public class ClientConnection implements Connection {
         checkClosed();
         Objects.requireNonNull(address, "Cannot create a receiver with a null address");
         final ClientFuture<Receiver> createReceiver = getFutureFactory().createFuture();
-        final ReceiverOptions receiverOpts = receiverOptions == null ? getDefaultReceiverOptions() : receiverOptions;
 
         executor.execute(() -> {
             try {
                 checkClosed();
-                createReceiver.complete(lazyCreateConnectionSession().internalCreateReceiver(address, receiverOpts).open());
+                createReceiver.complete(lazyCreateConnectionSession().internalOpenReceiver(address, receiverOptions));
             } catch (Throwable error) {
                 createReceiver.failed(ClientExceptionSupport.createNonFatalOrPassthrough(error));
             }
@@ -282,7 +279,7 @@ public class ClientConnection implements Connection {
 
     @Override
     public Sender openSender(String address) throws ClientException {
-        return openSender(address, getDefaultSenderOptions());
+        return openSender(address, null);
     }
 
     @Override
@@ -290,12 +287,11 @@ public class ClientConnection implements Connection {
         checkClosed();
         Objects.requireNonNull(address, "Cannot create a sender with a null address");
         final ClientFuture<Sender> createSender = getFutureFactory().createFuture();
-        final SenderOptions senderOpts = senderOptions == null ? getDefaultSenderOptions() : senderOptions;
 
         executor.execute(() -> {
             try {
                 checkClosed();
-                createSender.complete(lazyCreateConnectionSession().internalCreateSender(address, senderOpts).open());
+                createSender.complete(lazyCreateConnectionSession().internalOpenSender(address, senderOptions));
             } catch (Throwable error) {
                 createSender.failed(ClientExceptionSupport.createNonFatalOrPassthrough(error));
             }
@@ -306,19 +302,18 @@ public class ClientConnection implements Connection {
 
     @Override
     public Sender openAnonymousSender() throws ClientException {
-        return openAnonymousSender(new SenderOptions());
+        return openAnonymousSender(null);
     }
 
     @Override
     public Sender openAnonymousSender(SenderOptions senderOptions) throws ClientException {
         checkClosed();
         final ClientFuture<Sender> createSender = getFutureFactory().createFuture();
-        final SenderOptions senderOpts = senderOptions == null ? getDefaultSenderOptions() : senderOptions;
 
         executor.execute(() -> {
             try {
                 checkClosed();
-                createSender.complete(lazyCreateConnectionSession().internalCreateSender(null, senderOpts).open());
+                createSender.complete(lazyCreateConnectionSession().internalOpenAnonymousSender(senderOptions));
             } catch (Throwable error) {
                 createSender.failed(ClientExceptionSupport.createNonFatalOrPassthrough(error));
             }
@@ -605,7 +600,7 @@ public class ClientConnection implements Connection {
         protonConnection.setProperties(ClientConversionSupport.toSymbolKeyedMap(options.getProperties()));
     }
 
-    private ClientConnectionSession lazyCreateConnectionSession() {
+    private ClientSession lazyCreateConnectionSession() {
         if (connectionSession == null) {
             connectionSession = new ClientConnectionSession(getDefaultSessionOptions(), this, protonConnection.session());
             sessions.add(connectionSession);
@@ -619,13 +614,13 @@ public class ClientConnection implements Connection {
         return connectionSession;
     }
 
-    private ClientConnectionSender lazyCreateConnectionSender() throws ClientUnsupportedOperationException {
+    private Sender lazyCreateConnectionSender() throws ClientException {
         if (connectionSender == null) {
             checkAnonymousRelaySupported();
-            connectionSender = (ClientConnectionSender) lazyCreateConnectionSession().internalCreateConnectionSender(getDefaultSenderOptions()).open();
+            connectionSender = lazyCreateConnectionSession().internalOpenConnectionSender();
             connectionSender.remotelyClosedHandler((sender) -> {
                 try {
-                    connectionSender.close();
+                    sender.close();
                 } catch (Throwable ignore) {}
 
                 // Clear the old closed sender, a lazy create needs to construct a new sender.
@@ -673,51 +668,5 @@ public class ClientConnection implements Connection {
         }
 
         return sessionOptions;
-    }
-
-    /*
-     * Sender options used when none specified by the caller creating a new sender.
-     */
-    private SenderOptions getDefaultSenderOptions() {
-        SenderOptions senderOptions = defaultSenderOptions;
-        if (senderOptions == null) {
-            synchronized (this) {
-                senderOptions = defaultSenderOptions;
-                if (senderOptions == null) {
-                    senderOptions = new SenderOptions();
-                    senderOptions.setOpenTimeout(options.getOpenTimeout());
-                    senderOptions.setCloseTimeout(options.getCloseTimeout());
-                    senderOptions.setRequestTimeout(options.getRequestTimeout());
-                    senderOptions.setSendTimeout(options.getSendTimeout());
-                }
-
-                defaultSenderOptions = senderOptions;
-            }
-        }
-
-        return senderOptions;
-    }
-
-    /*
-     * Receiver options used when none specified by the caller creating a new receiver.
-     */
-    private ReceiverOptions getDefaultReceiverOptions() {
-        ReceiverOptions receiverOptions = defaultReceivernOptions;
-        if (receiverOptions == null) {
-            synchronized (this) {
-                receiverOptions = defaultReceivernOptions;
-                if (receiverOptions == null) {
-                    receiverOptions = new ReceiverOptions();
-                    receiverOptions.setOpenTimeout(options.getOpenTimeout());
-                    receiverOptions.setCloseTimeout(options.getCloseTimeout());
-                    receiverOptions.setRequestTimeout(options.getRequestTimeout());
-                    receiverOptions.setSendTimeout(options.getSendTimeout());
-                }
-
-                defaultReceivernOptions = receiverOptions;
-            }
-        }
-
-        return receiverOptions;
     }
 }
