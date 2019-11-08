@@ -16,6 +16,7 @@
  */
 package org.messaginghub.amqperative.impl;
 
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 import org.apache.qpid.proton4j.amqp.Symbol;
@@ -124,7 +125,13 @@ public abstract class ClientDeliveryState implements DeliveryState {
 
     public static class ClientRejected extends ClientDeliveryState {
 
-        private Rejected rejected = new Rejected();
+        private final Rejected rejected = new Rejected();
+
+        ClientRejected(Rejected rejected) {
+            if (rejected.getError() != null) {
+                rejected.setError(rejected.getError().copy());
+            }
+        }
 
         public ClientRejected(String condition, String description) {
             if (condition != null || description != null) {
@@ -150,13 +157,19 @@ public abstract class ClientDeliveryState implements DeliveryState {
         }
 
         public static ClientRejected fromProtonType(Rejected rejected) {
-            return null; // TODO
+            return new ClientRejected(rejected);
         }
     }
 
     public static class ClientModified extends ClientDeliveryState {
 
-        private Modified modified = new Modified();
+        private final Modified modified = new Modified();
+
+        ClientModified(Modified modified) {
+            modified.setDeliveryFailed(modified.getDeliveryFailed());
+            modified.setUndeliverableHere(modified.getUndeliverableHere());
+            modified.setMessageAnnotations(new LinkedHashMap<>(modified.getMessageAnnotations()));
+        }
 
         public ClientModified(boolean failed, boolean undeliverable) {
             modified.setDeliveryFailed(failed);
@@ -179,8 +192,8 @@ public abstract class ClientDeliveryState implements DeliveryState {
             return modified;
         }
 
-        public static ClientModified fromProtonType(Modified rejected) {
-            return null; // TODO
+        public static ClientModified fromProtonType(Modified modified) {
+            return new ClientModified(modified);
         }
     }
 }

@@ -16,11 +16,10 @@
  */
 package org.messaginghub.amqperative.impl;
 
-import static org.messaginghub.amqperative.impl.ClientConstants.MODIFIED_FAILED;
-
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.apache.qpid.proton4j.amqp.messaging.Modified;
 import org.apache.qpid.proton4j.amqp.messaging.Released;
 import org.apache.qpid.proton4j.amqp.messaging.Source;
 import org.apache.qpid.proton4j.amqp.messaging.Target;
@@ -28,6 +27,7 @@ import org.apache.qpid.proton4j.engine.Receiver;
 import org.messaginghub.amqperative.ReceiverOptions;
 import org.messaginghub.amqperative.SessionOptions;
 import org.messaginghub.amqperative.SourceOptions;
+import org.messaginghub.amqperative.TargetOptions;
 
 /**
  * Session owned builder of {@link Receiver} objects.
@@ -93,18 +93,27 @@ final class ClientReceiverBuilder {
     private Source createSource(String address, ReceiverOptions options) {
         final SourceOptions sourceOptions = options.sourceOptions();
 
-        //TODO: flesh out source configuration
+        // TODO: fully configure source from the options
         Source source = new Source();
         source.setAddress(address);
         // TODO - User somehow sets their own desired outcomes for this receiver source.
         source.setOutcomes(ClientConversionSupport.outcomesToSymbols(sourceOptions.outcomes()));
+
+        Modified MODIFIED_FAILED = new Modified().setDeliveryFailed(true);
         source.setDefaultOutcome(MODIFIED_FAILED);  // TODO set from source options.
 
         return source;
     }
 
     private Target createTarget(String address, ReceiverOptions options) {
-        return new Target();
+        final TargetOptions targetOptions = options.targetOptions();
+
+        // TODO: fully configure target from the options
+        Target target = new Target();
+
+        target.setCapabilities(ClientConversionSupport.toSymbolArray(targetOptions.capabilities()));
+
+        return target;
     }
 
     /*

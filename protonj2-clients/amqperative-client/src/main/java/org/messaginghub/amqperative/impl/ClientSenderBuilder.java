@@ -16,8 +16,6 @@
  */
 package org.messaginghub.amqperative.impl;
 
-import static org.messaginghub.amqperative.impl.ClientConstants.DEFAULT_SUPPORTED_OUTCOMES;
-
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.qpid.proton4j.amqp.messaging.Source;
@@ -25,6 +23,8 @@ import org.apache.qpid.proton4j.amqp.messaging.Target;
 import org.apache.qpid.proton4j.engine.Sender;
 import org.messaginghub.amqperative.SenderOptions;
 import org.messaginghub.amqperative.SessionOptions;
+import org.messaginghub.amqperative.SourceOptions;
+import org.messaginghub.amqperative.TargetOptions;
 
 /**
  * Session owned builder of {@link Sender} objects.
@@ -40,10 +40,6 @@ final class ClientSenderBuilder {
     public ClientSenderBuilder(ClientSession session) {
         this.session = session;
         this.sessionOptions = session.options();
-    }
-
-    String nextSenderId() {
-        return session.id() + ":" + senderCounter.incrementAndGet();
     }
 
     public ClientSender sender(String address, SenderOptions senderOptions) throws ClientException {
@@ -69,30 +65,49 @@ final class ClientSenderBuilder {
     }
 
     private Sender createSender(String address, SenderOptions options, String senderId) {
-        Sender protonSender;
+        final String linkName;
 
         if (options.getLinkName() != null) {
-            protonSender = session.getProtonSession().sender(options.getLinkName());
+            linkName = options.getLinkName();
         } else {
-            protonSender = session.getProtonSession().sender("sender-" + nextSenderId());
+            linkName = "receiver-" + senderId;
         }
+
+        final Sender protonSender = session.getProtonSession().sender(linkName);
 
         protonSender.setOfferedCapabilities(ClientConversionSupport.toSymbolArray(options.getOfferedCapabilities()));
         protonSender.setDesiredCapabilities(ClientConversionSupport.toSymbolArray(options.getDesiredCapabilities()));
         protonSender.setProperties(ClientConversionSupport.toSymbolKeyedMap(options.getProperties()));
-
-        // TODO: flesh out target
-        Target target = new Target();
-        target.setAddress(address);
-
-        Source source = new Source();
-        // TODO - User somehow sets their own desired outcomes for this receiver source.
-        source.setOutcomes(DEFAULT_SUPPORTED_OUTCOMES);
-
-        protonSender.setTarget(target);
-        protonSender.setSource(source);
+        protonSender.setTarget(createTarget(address, options));
+        protonSender.setSource(createSource(address, options));
 
         return protonSender;
+    }
+
+    private Source createSource(String address, SenderOptions options) {
+        final SourceOptions sourceOptions = options.sourceOptions();
+
+        // TODO: fully configure source from the options
+        final Source source = new Source();
+        source.setOutcomes(ClientConversionSupport.outcomesToSymbols(sourceOptions.outcomes()));
+
+        return source;
+    }
+
+    private Target createTarget(String address, SenderOptions options) {
+        final TargetOptions targetOptions = options.targetOptions();
+
+        // TODO: fully configure target from the options
+        final Target target = new Target();
+
+        target.setAddress(address);
+        target.setCapabilities(ClientConversionSupport.toSymbolArray(targetOptions.capabilities()));
+
+        return target;
+    }
+
+    private String nextSenderId() {
+        return session.id() + ":" + senderCounter.incrementAndGet();
     }
 
     /*

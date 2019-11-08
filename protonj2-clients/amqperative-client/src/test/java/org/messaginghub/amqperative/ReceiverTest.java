@@ -12,6 +12,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
+import org.apache.qpid.proton4j.amqp.driver.matchers.messaging.SourceMatcher;
 import org.apache.qpid.proton4j.amqp.driver.netty.NettyTestPeer;
 import org.apache.qpid.proton4j.amqp.messaging.Source;
 import org.apache.qpid.proton4j.amqp.transport.AmqpError;
@@ -226,6 +227,45 @@ public class ReceiverTest extends AMQPerativeTestCase {
             connection.close().get(5, TimeUnit.SECONDS);
 
             peer.waitForScriptToComplete(1, TimeUnit.SECONDS);
+            LOG.info("Receiver test completed normally");
+        }
+    }
+
+    @Test(timeout = 60000)
+    public void testCreateDynamicReceiver() throws Exception {
+        try (NettyTestPeer peer = new NettyTestPeer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().withRole(Role.RECEIVER)
+                               .withSource(new SourceMatcher().withDynamic(true).withAddress(nullValue()))
+                               .respond();
+            peer.expectDetach().respond();
+            peer.expectClose().respond();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Connect test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            connection.openFuture().get(10, TimeUnit.SECONDS);
+
+            Session session = connection.openSession();
+            session.openFuture().get(10, TimeUnit.SECONDS);
+
+            Receiver receiver = session.openDynamicReceiver();
+            receiver.openFuture().get(10, TimeUnit.SECONDS);
+
+            assertNotNull("Remote should have assigned the address for the dynamic receiver", receiver.address());
+
+            receiver.close().get(10, TimeUnit.SECONDS);
+
+            connection.close().get(10, TimeUnit.SECONDS);
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+
             LOG.info("Receiver test completed normally");
         }
     }

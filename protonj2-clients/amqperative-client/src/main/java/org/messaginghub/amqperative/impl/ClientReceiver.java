@@ -16,9 +16,6 @@
  */
 package org.messaginghub.amqperative.impl;
 
-import static org.messaginghub.amqperative.impl.ClientConstants.DEFAULT_SUPPORTED_OUTCOMES;
-import static org.messaginghub.amqperative.impl.ClientConstants.MODIFIED_FAILED;
-
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
@@ -387,21 +384,5 @@ public class ClientReceiver implements Receiver {
 
             throw error;
         }
-    }
-
-    private void configureReceiver(String address) {
-        protonReceiver.setOfferedCapabilities(ClientConversionSupport.toSymbolArray(options.getOfferedCapabilities()));
-        protonReceiver.setDesiredCapabilities(ClientConversionSupport.toSymbolArray(options.getDesiredCapabilities()));
-        protonReceiver.setProperties(ClientConversionSupport.toSymbolKeyedMap(options.getProperties()));
-
-        //TODO: flesh out source configuration
-        org.apache.qpid.proton4j.amqp.messaging.Source source = new org.apache.qpid.proton4j.amqp.messaging.Source();
-        source.setAddress(address);
-        // TODO - User somehow sets their own desired outcomes for this receiver source.
-        source.setOutcomes(DEFAULT_SUPPORTED_OUTCOMES);
-        source.setDefaultOutcome(MODIFIED_FAILED);
-
-        protonReceiver.setSource(source);
-        protonReceiver.setTarget(new org.apache.qpid.proton4j.amqp.messaging.Target());
     }
 }
