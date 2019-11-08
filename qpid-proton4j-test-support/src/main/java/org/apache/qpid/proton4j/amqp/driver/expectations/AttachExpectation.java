@@ -20,6 +20,7 @@ import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.nullValue;
 
 import java.util.Map;
+import java.util.UUID;
 
 import org.apache.qpid.proton4j.amqp.Binary;
 import org.apache.qpid.proton4j.amqp.Symbol;
@@ -104,9 +105,15 @@ public class AttachExpectation extends AbstractExpectation<Attach> {
         }
         if (response.getPerformative().getSource() == null && !response.isNullSourceRequired()) {
             response.withSource(attach.getSource());
-        }
+            if (attach.getSource() != null && Boolean.TRUE.equals(attach.getSource().getDynamic())) {
+                attach.getSource().setAddress(UUID.randomUUID().toString());
+            }
+         }
         if (response.getPerformative().getTarget() == null && !response.isNullTargetRequired()) {
             response.withTarget(attach.getTarget());
+            if (attach.getTarget() != null && Boolean.TRUE.equals(attach.getTarget().getDynamic())) {
+                attach.getTarget().setAddress(UUID.randomUUID().toString());
+            }
         }
 
         // Other fields are left not set for now unless test script configured
