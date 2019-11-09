@@ -43,7 +43,7 @@ public interface Tracker {
     DeliveryTag getTag();
 
     /**
-     * Settles the delivery locally, if not {@link SenderOptions#isAutoSettle() auto-settling}.
+     * Settles the delivery locally, if not {@link SenderOptions#autoSettle() auto-settling}.
      *
      * @return the delivery
      */

@@ -113,10 +113,10 @@ public class SslConnectionTest extends AMQPerativeTestCase {
             URI remoteURI = peer.getServerURI();
 
             ConnectionOptions clientOptions = new ConnectionOptions();
-            clientOptions.setSSLEnabled(true).sslOptions()
-                                             .setTrustStoreLocation(CLIENT_JKS_TRUSTSTORE)
-                                             .setTrustStorePassword(PASSWORD)
-                                             .setAllowNativeSSL(openSSL);
+            clientOptions.sslEnabled(true).sslOptions()
+                                             .trustStoreLocation(CLIENT_JKS_TRUSTSTORE)
+                                             .trustStorePassword(PASSWORD)
+                                             .allowNativeSSL(openSSL);
 
             Client container = Client.create();
             Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), clientOptions);
@@ -166,11 +166,11 @@ public class SslConnectionTest extends AMQPerativeTestCase {
             URI remoteURI = peer.getServerURI();
 
             ConnectionOptions clientOptions = new ConnectionOptions();
-            clientOptions.setSSLEnabled(true).sslOptions()
-                                             .setTrustStoreLocation(CLIENT_JKS_TRUSTSTORE)
-                                             .setTrustStorePassword(PASSWORD)
-                                             .setAllowNativeSSL(openSSL)
-                                             .setDefaultSslPort(peer.getServerURI().getPort());
+            clientOptions.sslEnabled(true).sslOptions()
+                                             .trustStoreLocation(CLIENT_JKS_TRUSTSTORE)
+                                             .trustStorePassword(PASSWORD)
+                                             .allowNativeSSL(openSSL)
+                                             .defaultSslPort(peer.getServerURI().getPort());
 
             Client container = Client.create();
             Connection connection = container.connect(remoteURI.getHost(), clientOptions);
@@ -228,10 +228,10 @@ public class SslConnectionTest extends AMQPerativeTestCase {
             URI remoteURI = peer.getServerURI();
 
             ConnectionOptions clientOptions = new ConnectionOptions();
-            clientOptions.setSSLEnabled(true).sslOptions()
-                                             .setTrustStoreLocation(CLIENT_JKS_TRUSTSTORE)
-                                             .setTrustStorePassword(PASSWORD)
-                                             .setAllowNativeSSL(openSSL);
+            clientOptions.sslEnabled(true).sslOptions()
+                                             .trustStoreLocation(CLIENT_JKS_TRUSTSTORE)
+                                             .trustStorePassword(PASSWORD)
+                                             .allowNativeSSL(openSSL);
 
             Client container = Client.create();
             Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), clientOptions);
@@ -278,12 +278,12 @@ public class SslConnectionTest extends AMQPerativeTestCase {
             URI remoteURI = peer.getServerURI();
 
             ConnectionOptions clientOptions = new ConnectionOptions();
-            clientOptions.setSSLEnabled(true).sslOptions()
-                                              .setKeyStoreLocation(CLIENT_MULTI_KEYSTORE)
-                                              .setKeyStorePassword(PASSWORD)
-                                             .setTrustStoreLocation(CLIENT_JKS_TRUSTSTORE)
-                                             .setTrustStorePassword(PASSWORD)
-                                             .setAllowNativeSSL(openSSL);
+            clientOptions.sslEnabled(true).sslOptions()
+                                              .keyStoreLocation(CLIENT_MULTI_KEYSTORE)
+                                              .keyStorePassword(PASSWORD)
+                                             .trustStoreLocation(CLIENT_JKS_TRUSTSTORE)
+                                             .trustStorePassword(PASSWORD)
+                                             .allowNativeSSL(openSSL);
 
             Client container = Client.create();
             Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), clientOptions);
@@ -333,13 +333,13 @@ public class SslConnectionTest extends AMQPerativeTestCase {
             URI remoteURI = peer.getServerURI();
 
             ConnectionOptions clientOptions = new ConnectionOptions();
-            clientOptions.setSSLEnabled(true).sslOptions()
-                                             .setKeyStoreLocation(CLIENT_MULTI_KEYSTORE)
-                                             .setKeyStorePassword(PASSWORD)
-                                             .setTrustStoreLocation(CLIENT_JKS_TRUSTSTORE)
-                                             .setTrustStorePassword(PASSWORD)
-                                             .setKeyAlias(alias)
-                                             .setAllowNativeSSL(requestOpenSSL);
+            clientOptions.sslEnabled(true).sslOptions()
+                                             .keyStoreLocation(CLIENT_MULTI_KEYSTORE)
+                                             .keyStorePassword(PASSWORD)
+                                             .trustStoreLocation(CLIENT_JKS_TRUSTSTORE)
+                                             .trustStorePassword(PASSWORD)
+                                             .keyAlias(alias)
+                                             .allowNativeSSL(requestOpenSSL);
 
             Client container = Client.create();
             Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), clientOptions);
@@ -391,12 +391,12 @@ public class SslConnectionTest extends AMQPerativeTestCase {
             URI remoteURI = peer.getServerURI();
 
             ConnectionOptions clientOptions = new ConnectionOptions();
-            clientOptions.setSSLEnabled(true).sslOptions()
-                                             .setKeyStoreLocation(CLIENT_MULTI_KEYSTORE)
-                                             .setKeyStorePassword(PASSWORD)
-                                             .setTrustStoreLocation(CLIENT_JKS_TRUSTSTORE)
-                                             .setTrustStorePassword(PASSWORD)
-                                             .setKeyAlias(alias);
+            clientOptions.sslEnabled(true).sslOptions()
+                                             .keyStoreLocation(CLIENT_MULTI_KEYSTORE)
+                                             .keyStorePassword(PASSWORD)
+                                             .trustStoreLocation(CLIENT_JKS_TRUSTSTORE)
+                                             .trustStorePassword(PASSWORD)
+                                             .keyAlias(alias);
 
             Client container = Client.create();
 
@@ -415,7 +415,7 @@ public class SslConnectionTest extends AMQPerativeTestCase {
 
     /**
      * Checks that configuring different SSLContext instances using different client key
-     * stores via {@link SslOptions#setSslContextOverride(javax.net.ssl.SSLContext)} results
+     * stores via {@link SslOptions#sslContextOverride(javax.net.ssl.SSLContext)} results
      * in different certificates being observed server side following handshake.
      *
      * @throws Exception if an unexpected error is encountered
@@ -442,11 +442,11 @@ public class SslConnectionTest extends AMQPerativeTestCase {
         serverOpts.setVerifyHost(false);
 
         SslOptions clientSslOptions = new SslOptions();
-        clientSslOptions.setSSLEnabled(true)
-                        .setKeyStoreLocation(clientKeyStorePath)
-                        .setKeyStorePassword(PASSWORD)
-                        .setTrustStoreLocation(CLIENT_JKS_TRUSTSTORE)
-                        .setTrustStorePassword(PASSWORD);
+        clientSslOptions.sslEnabled(true)
+                        .keyStoreLocation(clientKeyStorePath)
+                        .keyStorePassword(PASSWORD)
+                        .trustStoreLocation(CLIENT_JKS_TRUSTSTORE)
+                        .trustStorePassword(PASSWORD);
 
         try (NettyTestPeer peer = new NettyTestPeer(serverOpts)) {
             peer.expectSASLPlainConnect("guest", "guest");
@@ -458,10 +458,10 @@ public class SslConnectionTest extends AMQPerativeTestCase {
 
             SSLContext sslContext = SslSupport.createJdkSslContext(clientSslOptions);
             ConnectionOptions clientOptions = new ConnectionOptions();
-            clientOptions.setUser("guest")
-                         .setPassword("guest")
-                         .sslOptions().setSSLEnabled(true)
-                                         .setSslContextOverride(sslContext);
+            clientOptions.user("guest")
+                         .password("guest")
+                         .sslOptions().sslEnabled(true)
+                                         .sslContextOverride(sslContext);
 
             Client container = Client.create();
             Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), clientOptions);
@@ -583,7 +583,7 @@ public class SslConnectionTest extends AMQPerativeTestCase {
 
             Client container = Client.create();
             ConnectionOptions clientOptions = new ConnectionOptions();
-            clientOptions.sslOptions().setSSLEnabled(true);
+            clientOptions.sslOptions().sslEnabled(true);
             Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), clientOptions);
 
             connection.openFuture().get(10, TimeUnit.SECONDS);

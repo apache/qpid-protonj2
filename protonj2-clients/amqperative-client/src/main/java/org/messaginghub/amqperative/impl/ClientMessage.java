@@ -63,56 +63,56 @@ public class ClientMessage<E> implements Message<E> {
     //----- Message Header API
 
     @Override
-    public boolean isDurable() {
+    public boolean durable() {
         return header == null ? Header.DEFAULT_DURABILITY : header.isDurable();
     }
 
     @Override
-    public ClientMessage<E> setDurable(boolean durable) {
+    public ClientMessage<E> durable(boolean durable) {
         lazyCreateHeader().setDurable(durable);
         return this;
     }
 
     @Override
-    public byte getPriority() {
+    public byte priority() {
         return header != null ? Header.DEFAULT_PRIORITY : header.getPriority();
     }
 
     @Override
-    public ClientMessage<E> setPriority(byte priority) {
+    public ClientMessage<E> priority(byte priority) {
         lazyCreateHeader().setPriority(priority);
         return this;
     }
 
     @Override
-    public long getTimeToLive() {
+    public long timeToLive() {
         return header != null ? Header.DEFAULT_TIME_TO_LIVE : header.getPriority();
     }
 
     @Override
-    public ClientMessage<E> setTimeToLive(long timeToLive) {
+    public ClientMessage<E> timeToLive(long timeToLive) {
         lazyCreateHeader().setTimeToLive(timeToLive);
         return this;
     }
 
     @Override
-    public boolean getFirstAcquirer() {
+    public boolean firstAcquirer() {
         return header != null ? Header.DEFAULT_FIRST_ACQUIRER : header.isFirstAcquirer();
     }
 
     @Override
-    public ClientMessage<E> setFirstAcquirer(boolean firstAcquirer) {
+    public ClientMessage<E> firstAcquirer(boolean firstAcquirer) {
         lazyCreateHeader().setFirstAcquirer(firstAcquirer);
         return this;
     }
 
     @Override
-    public long getDeliveryCount() {
+    public long deliveryCount() {
         return header != null ? Header.DEFAULT_DELIVERY_COUNT : header.getDeliveryCount();
     }
 
     @Override
-    public ClientMessage<E> setDeliveryCount(long deliveryCount) {
+    public ClientMessage<E> deliveryCount(long deliveryCount) {
         lazyCreateHeader().setDeliveryCount(deliveryCount);
         return this;
     }
@@ -120,18 +120,18 @@ public class ClientMessage<E> implements Message<E> {
     //----- Message Properties access
 
     @Override
-    public Object getMessageId() {
+    public Object messageId() {
         return properties != null ? properties.getMessageId() : null;
     }
 
     @Override
-    public Message<E> setMessageId(Object messageId) {
+    public Message<E> messageId(Object messageId) {
         lazyCreateProperties().setMessageId(messageId);
         return this;
     }
 
     @Override
-    public byte[] getUserId() {
+    public byte[] userId() {
         byte[] copyOfUserId = null;
         if (properties != null && properties.getUserId() != null) {
             copyOfUserId = properties.getUserId().arrayCopy();
@@ -141,128 +141,128 @@ public class ClientMessage<E> implements Message<E> {
     }
 
     @Override
-    public Message<E> setUserId(byte[] userId) {
+    public Message<E> userId(byte[] userId) {
         lazyCreateProperties().setUserId(new Binary(Arrays.copyOf(userId, userId.length)));
         return this;
     }
 
     @Override
-    public String getTo() {
+    public String to() {
         return properties != null ? properties.getTo() : null;
     }
 
     @Override
-    public Message<E> setTo(String to) {
+    public Message<E> to(String to) {
         lazyCreateProperties().setTo(to);
         return this;
     }
 
     @Override
-    public String getSubject() {
+    public String subject() {
         return properties != null ? properties.getSubject() : null;
     }
 
     @Override
-    public Message<E> setSubject(String subject) {
+    public Message<E> subject(String subject) {
         lazyCreateProperties().setSubject(subject);
         return this;
     }
 
     @Override
-    public String getReplyTo() {
+    public String replyTo() {
         return properties != null ? properties.getReplyTo() : null;
     }
 
     @Override
-    public Message<E> setReplyTo(String replyTo) {
+    public Message<E> replyTo(String replyTo) {
         lazyCreateProperties().setReplyTo(replyTo);
         return this;
     }
 
     @Override
-    public Object getCorrelationId() {
+    public Object correlationId() {
         return properties != null ? properties.getCorrelationId() : null;
     }
 
     @Override
-    public Message<E> setCorrelationId(Object correlationId) {
+    public Message<E> correlationId(Object correlationId) {
         lazyCreateProperties().setCorrelationId(correlationId);
         return this;
     }
 
     @Override
-    public String getContentType() {
+    public String contentType() {
         return properties != null ? properties.getContentType() : null;
     }
 
     @Override
-    public Message<E> setContentType(String contentType) {
+    public Message<E> contentType(String contentType) {
         lazyCreateProperties().setContentType(contentType);
         return this;
     }
 
     @Override
-    public String getContentEncoding() {
+    public String contentEncoding() {
         return properties != null ? properties.getContentEncoding() : null;
     }
 
     @Override
-    public Message<E> setContentEncoding(String contentEncoding) {
+    public Message<E> contentEncoding(String contentEncoding) {
         lazyCreateProperties().setContentEncoding(contentEncoding);
         return this;
     }
 
     @Override
-    public long getAbsoluteExpiryTime() {
+    public long absoluteExpiryTime() {
         return properties != null ? properties.getAbsoluteExpiryTime() : null;
     }
 
     @Override
-    public Message<E> setAbsoluteExpiryTime(long expiryTime) {
+    public Message<E> absoluteExpiryTime(long expiryTime) {
         lazyCreateProperties().setAbsoluteExpiryTime(expiryTime);
         return this;
     }
 
     @Override
-    public long getCreationTime() {
+    public long creationTime() {
         return properties != null ? properties.getCreationTime() : null;
     }
 
     @Override
-    public Message<E> setCreationTime(long createTime) {
+    public Message<E> creationTime(long createTime) {
         lazyCreateProperties().setCreationTime(createTime);
         return this;
     }
 
     @Override
-    public String getGroupId() {
+    public String groupId() {
         return properties != null ? properties.getGroupId() : null;
     }
 
     @Override
-    public Message<E> setGroupId(String groupId) {
+    public Message<E> groupId(String groupId) {
         lazyCreateProperties().setGroupId(groupId);
         return this;
     }
 
     @Override
-    public int getGroupSequence() {
+    public int groupSequence() {
         return properties != null ? (int) properties.getGroupSequence() : null;
     }
 
     @Override
-    public Message<E> setGroupSequence(int groupSequence) {
+    public Message<E> groupSequence(int groupSequence) {
         lazyCreateProperties().setGroupSequence(groupSequence);
         return this;
     }
 
     @Override
-    public String getReplyToGroupId() {
+    public String replyToGroupId() {
         return properties != null ? properties.getReplyToGroupId() : null;
     }
 
     @Override
-    public Message<E> setReplyToGroupId(String replyToGroupId) {
+    public Message<E> replyToGroupId(String replyToGroupId) {
         lazyCreateProperties().setReplyToGroupId(replyToGroupId);
         return this;
     }
@@ -334,7 +334,7 @@ public class ClientMessage<E> implements Message<E> {
     //----- Message body access
 
     @Override
-    public E getBody() {
+    public E body() {
         return body;
     }
 

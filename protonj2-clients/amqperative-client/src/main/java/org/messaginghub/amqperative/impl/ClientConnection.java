@@ -123,9 +123,9 @@ public class ClientConnection implements Connection {
         this.client = client;
         this.options = options;
         this.connectionId = client.nextConnectionId();
-        this.futureFactoy = ClientFutureFactory.create(options.getFutureType());
+        this.futureFactoy = ClientFutureFactory.create(options.futureType());
 
-        if (options.isSaslEnabled()) {
+        if (options.saslEnabled()) {
             // TODO - Check that all allowed mechanisms are actually supported ?
             engine = EngineFactory.PROTON.createEngine();
         } else {
@@ -149,7 +149,7 @@ public class ClientConnection implements Connection {
     }
 
     @Override
-    public Client getClient() {
+    public Client client() {
         return client;
     }
 
@@ -180,8 +180,8 @@ public class ClientConnection implements Connection {
                     }
                 });
 
-                if (options.getCloseTimeout() > 0) {
-                    executor.schedule(() -> closeFuture.complete(this), options.getCloseTimeout(), TimeUnit.MILLISECONDS);
+                if (options.closeTimeout() > 0) {
+                    executor.schedule(() -> closeFuture.complete(this), options.closeTimeout(), TimeUnit.MILLISECONDS);
                 }
             } else {
                 closeFuture.complete(this);
@@ -205,7 +205,7 @@ public class ClientConnection implements Connection {
             }
         });
 
-        return request(defaultSession, options.getRequestTimeout(), TimeUnit.MILLISECONDS);
+        return request(defaultSession, options.requestTimeout(), TimeUnit.MILLISECONDS);
     }
 
     @Override
@@ -230,7 +230,7 @@ public class ClientConnection implements Connection {
             }
         });
 
-        return request(createSession, options.getRequestTimeout(), TimeUnit.MILLISECONDS);
+        return request(createSession, options.requestTimeout(), TimeUnit.MILLISECONDS);
     }
 
     @Override
@@ -253,7 +253,7 @@ public class ClientConnection implements Connection {
             }
         });
 
-        return request(createReceiver, options.getRequestTimeout(), TimeUnit.MILLISECONDS);
+        return request(createReceiver, options.requestTimeout(), TimeUnit.MILLISECONDS);
     }
 
     @Override
@@ -274,7 +274,7 @@ public class ClientConnection implements Connection {
             }
         });
 
-        return request(defaultSender, options.getRequestTimeout(), TimeUnit.MILLISECONDS);
+        return request(defaultSender, options.requestTimeout(), TimeUnit.MILLISECONDS);
     }
 
     @Override
@@ -297,7 +297,7 @@ public class ClientConnection implements Connection {
             }
         });
 
-        return request(createSender, options.getRequestTimeout(), TimeUnit.MILLISECONDS);
+        return request(createSender, options.requestTimeout(), TimeUnit.MILLISECONDS);
     }
 
     @Override
@@ -319,7 +319,7 @@ public class ClientConnection implements Connection {
             }
         });
 
-        return request(createSender, options.getRequestTimeout(), TimeUnit.MILLISECONDS);
+        return request(createSender, options.requestTimeout(), TimeUnit.MILLISECONDS);
     }
 
     @Override
@@ -341,7 +341,7 @@ public class ClientConnection implements Connection {
             }
         });
 
-        return request(result, options.getSendTimeout(), TimeUnit.MILLISECONDS);
+        return request(result, options.sendTimeout(), TimeUnit.MILLISECONDS);
     }
 
     //----- Internal API
@@ -559,7 +559,7 @@ public class ClientConnection implements Connection {
     }
 
     private Engine configureEngineSaslSupport() {
-        if (options.isSaslEnabled()) {
+        if (options.saslEnabled()) {
             SaslMechanismSelector mechSelector =
                 new SaslMechanismSelector(ClientConversionSupport.toSymbolSet(options.allowedMechanisms()));
 
@@ -567,17 +567,17 @@ public class ClientConnection implements Connection {
 
                 @Override
                 public String vhost() {
-                    return options.getVhost();
+                    return options.vhost();
                 }
 
                 @Override
                 public String username() {
-                    return options.getUser();
+                    return options.user();
                 }
 
                 @Override
                 public String password() {
-                    return options.getPassword();
+                    return options.password();
                 }
 
                 @Override
@@ -591,13 +591,13 @@ public class ClientConnection implements Connection {
     }
 
     private void configureConnection(org.apache.qpid.proton4j.engine.Connection protonConnection) {
-        protonConnection.setChannelMax(options.getChannelMax());
-        protonConnection.setMaxFrameSize(options.getMaxFrameSize());
+        protonConnection.setChannelMax(options.channelMax());
+        protonConnection.setMaxFrameSize(options.maxFrameSize());
         protonConnection.setHostname(transport.getHost());
-        protonConnection.setIdleTimeout((int) options.getIdleTimeout());
-        protonConnection.setOfferedCapabilities(ClientConversionSupport.toSymbolArray(options.getOfferedCapabilities()));
-        protonConnection.setDesiredCapabilities(ClientConversionSupport.toSymbolArray(options.getDesiredCapabilities()));
-        protonConnection.setProperties(ClientConversionSupport.toSymbolKeyedMap(options.getProperties()));
+        protonConnection.setIdleTimeout((int) options.idleTimeout());
+        protonConnection.setOfferedCapabilities(ClientConversionSupport.toSymbolArray(options.offeredCapabilities()));
+        protonConnection.setDesiredCapabilities(ClientConversionSupport.toSymbolArray(options.desiredCapabilities()));
+        protonConnection.setProperties(ClientConversionSupport.toSymbolKeyedMap(options.properties()));
     }
 
     private ClientSession lazyCreateConnectionSession() {
@@ -657,10 +657,10 @@ public class ClientConnection implements Connection {
                 sessionOptions = defaultSessionOptions;
                 if (sessionOptions == null) {
                     sessionOptions = new SessionOptions();
-                    sessionOptions.setOpenTimeout(options.getOpenTimeout());
-                    sessionOptions.setCloseTimeout(options.getCloseTimeout());
-                    sessionOptions.setRequestTimeout(options.getRequestTimeout());
-                    sessionOptions.setSendTimeout(options.getSendTimeout());
+                    sessionOptions.openTimeout(options.openTimeout());
+                    sessionOptions.closeTimeout(options.closeTimeout());
+                    sessionOptions.requestTimeout(options.requestTimeout());
+                    sessionOptions.sendTimeout(options.sendTimeout());
                 }
 
                 defaultSessionOptions = sessionOptions;

@@ -55,95 +55,95 @@ public class SessionOptions {
      * @return this options class for chaining.
      */
     protected SessionOptions copyInto(SessionOptions other) {
-        other.setCloseTimeout(closeTimeout);
-        other.setOpenTimeout(openTimeout);
-        other.setSendTimeout(sendTimeout);
-        other.setRequestTimeout(requestTimeout);
+        other.closeTimeout(closeTimeout);
+        other.openTimeout(openTimeout);
+        other.sendTimeout(sendTimeout);
+        other.requestTimeout(requestTimeout);
 
         if (offeredCapabilities != null) {
-            other.setOfferedCapabilities(Arrays.copyOf(offeredCapabilities, offeredCapabilities.length));
+            other.offeredCapabilities(Arrays.copyOf(offeredCapabilities, offeredCapabilities.length));
         }
         if (desiredCapabilities != null) {
-            other.setDesiredCapabilities(Arrays.copyOf(desiredCapabilities, desiredCapabilities.length));
+            other.desiredCapabilities(Arrays.copyOf(desiredCapabilities, desiredCapabilities.length));
         }
         if (properties != null) {
-            other.setProperties(new HashMap<>(properties));
+            other.properties(new HashMap<>(properties));
         }
 
         return this;
     }
 
-    public long getCloseTimeout() {
+    public long closeTimeout() {
         return closeTimeout;
     }
 
-    public void setCloseTimeout(long closeTimeout) {
+    public void closeTimeout(long closeTimeout) {
         this.closeTimeout = closeTimeout;
     }
 
-    public long getOpenTimeout() {
+    public long openTimeout() {
         return openTimeout;
     }
 
-    public void setOpenTimeout(long connectTimeout) {
+    public void openTimeout(long connectTimeout) {
         this.openTimeout = connectTimeout;
     }
 
-    public long getSendTimeout() {
+    public long sendTimeout() {
         return sendTimeout;
     }
 
-    public void setSendTimeout(long sendTimeout) {
+    public void sendTimeout(long sendTimeout) {
         this.sendTimeout = sendTimeout;
     }
 
-    public long getRequestTimeout() {
+    public long requestTimeout() {
         return requestTimeout;
     }
 
-    public void setRequestTimeout(long requestTimeout) {
+    public void requestTimeout(long requestTimeout) {
         this.requestTimeout = requestTimeout;
     }
 
     /**
      * @return the offeredCapabilities
      */
-    public String[] getOfferedCapabilities() {
+    public String[] offeredCapabilities() {
         return offeredCapabilities;
     }
 
     /**
      * @param offeredCapabilities the offeredCapabilities to set
      */
-    public void setOfferedCapabilities(String[] offeredCapabilities) {
+    public void offeredCapabilities(String[] offeredCapabilities) {
         this.offeredCapabilities = offeredCapabilities;
     }
 
     /**
      * @return the desiredCapabilities
      */
-    public String[] getDesiredCapabilities() {
+    public String[] desiredCapabilities() {
         return desiredCapabilities;
     }
 
     /**
      * @param desiredCapabilities the desiredCapabilities to set
      */
-    public void setDesiredCapabilities(String[] desiredCapabilities) {
+    public void desiredCapabilities(String[] desiredCapabilities) {
         this.desiredCapabilities = desiredCapabilities;
     }
 
     /**
      * @return the properties
      */
-    public Map<String, Object> getProperties() {
+    public Map<String, Object> properties() {
         return properties;
     }
 
     /**
      * @param properties the properties to set
      */
-    public void setProperties(Map<String, Object> properties) {
+    public void properties(Map<String, Object> properties) {
         this.properties = properties;
     }
 }

@@ -65,7 +65,7 @@ public interface Sender {
     /**
      * @return the {@link Session} that created and holds this {@link Sender}.
      */
-    Session getSession();
+    Session session();
 
     /**
      * Send the given message.

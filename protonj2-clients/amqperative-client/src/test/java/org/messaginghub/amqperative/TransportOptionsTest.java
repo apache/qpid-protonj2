@@ -52,138 +52,138 @@ public class TransportOptionsTest extends AMQPerativeTestCase {
     public void testCreate() {
         TransportOptions options = new TransportOptions();
 
-        assertEquals(TransportOptions.DEFAULT_TCP_NO_DELAY, options.isTcpNoDelay());
+        assertEquals(TransportOptions.DEFAULT_TCP_NO_DELAY, options.tcpNoDelay());
 
-        assertTrue(options.isAllowNativeIO());
-        assertFalse(options.isUseWebSockets());
-        assertNull(options.getWebSocketPath());
+        assertTrue(options.allowNativeIO());
+        assertFalse(options.useWebSockets());
+        assertNull(options.webSocketPath());
     }
 
     @Test
     public void testOptions() {
         TransportOptions options = createNonDefaultOptions();
 
-        assertEquals(TEST_SEND_BUFFER_SIZE, options.getSendBufferSize());
-        assertEquals(TEST_RECEIVE_BUFFER_SIZE, options.getReceiveBufferSize());
-        assertEquals(TEST_TRAFFIC_CLASS, options.getTrafficClass());
-        assertEquals(TEST_TCP_NO_DELAY, options.isTcpNoDelay());
-        assertEquals(TEST_TCP_KEEP_ALIVE, options.isTcpKeepAlive());
-        assertEquals(TEST_SO_LINGER, options.getSoLinger());
-        assertEquals(TEST_SO_TIMEOUT, options.getSoTimeout());
-        assertEquals(TEST_CONNECT_TIMEOUT, options.getConnectTimeout());
-        assertEquals(TEST_DEFAULT_TCP_PORT, options.getDefaultTcpPort());
-        assertEquals(TEST_ALLOW_NATIVE_IO_VALUE, options.isAllowNativeIO());
-        assertEquals(TEST_TRACE_BYTES_VALUE, options.isTraceBytes());
+        assertEquals(TEST_SEND_BUFFER_SIZE, options.sendBufferSize());
+        assertEquals(TEST_RECEIVE_BUFFER_SIZE, options.receiveBufferSize());
+        assertEquals(TEST_TRAFFIC_CLASS, options.trafficClass());
+        assertEquals(TEST_TCP_NO_DELAY, options.tcpNoDelay());
+        assertEquals(TEST_TCP_KEEP_ALIVE, options.tcpKeepAlive());
+        assertEquals(TEST_SO_LINGER, options.soLinger());
+        assertEquals(TEST_SO_TIMEOUT, options.soTimeout());
+        assertEquals(TEST_CONNECT_TIMEOUT, options.connectTimeout());
+        assertEquals(TEST_DEFAULT_TCP_PORT, options.defaultTcpPort());
+        assertEquals(TEST_ALLOW_NATIVE_IO_VALUE, options.allowNativeIO());
+        assertEquals(TEST_TRACE_BYTES_VALUE, options.traceBytes());
     }
 
     @Test
     public void testClone() {
         TransportOptions options = createNonDefaultOptions().clone();
 
-        assertEquals(TEST_SEND_BUFFER_SIZE, options.getSendBufferSize());
-        assertEquals(TEST_RECEIVE_BUFFER_SIZE, options.getReceiveBufferSize());
-        assertEquals(TEST_TRAFFIC_CLASS, options.getTrafficClass());
-        assertEquals(TEST_TCP_NO_DELAY, options.isTcpNoDelay());
-        assertEquals(TEST_TCP_KEEP_ALIVE, options.isTcpKeepAlive());
-        assertEquals(TEST_SO_LINGER, options.getSoLinger());
-        assertEquals(TEST_SO_TIMEOUT, options.getSoTimeout());
-        assertEquals(TEST_CONNECT_TIMEOUT, options.getConnectTimeout());
-        assertEquals(TEST_DEFAULT_TCP_PORT, options.getDefaultTcpPort());
-        assertEquals(TEST_ALLOW_NATIVE_IO_VALUE, options.isAllowNativeIO());
-        assertEquals(TEST_TRACE_BYTES_VALUE, options.isTraceBytes());
-        assertEquals(LOCAL_ADDRESS,options.getLocalAddress());
-        assertEquals(LOCAL_PORT,options.getLocalPort());
-        assertEquals(TEST_WEBSOCKET_PATH, options.getWebSocketPath());
-        assertEquals(TEST_WEBSOCKET_HEADER_VALUE, options.getWebSocketHeaders().get(TEST_WEBSOCKET_HEADER_KEY));
-        assertEquals(TEST_WEBSOCKET_MAX_FRAME_SIZE, options.getWebSocketMaxFrameSize());
+        assertEquals(TEST_SEND_BUFFER_SIZE, options.sendBufferSize());
+        assertEquals(TEST_RECEIVE_BUFFER_SIZE, options.receiveBufferSize());
+        assertEquals(TEST_TRAFFIC_CLASS, options.trafficClass());
+        assertEquals(TEST_TCP_NO_DELAY, options.tcpNoDelay());
+        assertEquals(TEST_TCP_KEEP_ALIVE, options.tcpKeepAlive());
+        assertEquals(TEST_SO_LINGER, options.soLinger());
+        assertEquals(TEST_SO_TIMEOUT, options.soTimeout());
+        assertEquals(TEST_CONNECT_TIMEOUT, options.connectTimeout());
+        assertEquals(TEST_DEFAULT_TCP_PORT, options.defaultTcpPort());
+        assertEquals(TEST_ALLOW_NATIVE_IO_VALUE, options.allowNativeIO());
+        assertEquals(TEST_TRACE_BYTES_VALUE, options.traceBytes());
+        assertEquals(LOCAL_ADDRESS,options.localAddress());
+        assertEquals(LOCAL_PORT,options.localPort());
+        assertEquals(TEST_WEBSOCKET_PATH, options.webSocketPath());
+        assertEquals(TEST_WEBSOCKET_HEADER_VALUE, options.webSocketHeaders().get(TEST_WEBSOCKET_HEADER_KEY));
+        assertEquals(TEST_WEBSOCKET_MAX_FRAME_SIZE, options.webSocketMaxFrameSize());
     }
 
     @Test
     public void testSendBufferSizeValidation() {
         TransportOptions options = createNonDefaultOptions().clone();
         try {
-            options.setSendBufferSize(0);
+            options.sendBufferSize(0);
             fail("Should have thrown an IllegalArgumentException");
         } catch (IllegalArgumentException expected) {
         }
         try {
-            options.setSendBufferSize(-1);
+            options.sendBufferSize(-1);
             fail("Should have thrown an IllegalArgumentException");
         } catch (IllegalArgumentException expected) {
         }
 
-        options.setSendBufferSize(1);
+        options.sendBufferSize(1);
     }
 
     @Test
     public void testReceiveBufferSizeValidation() {
         TransportOptions options = createNonDefaultOptions().clone();
         try {
-            options.setReceiveBufferSize(0);
+            options.receiveBufferSize(0);
             fail("Should have thrown an IllegalArgumentException");
         } catch (IllegalArgumentException expected) {
         }
         try {
-            options.setReceiveBufferSize(-1);
+            options.receiveBufferSize(-1);
             fail("Should have thrown an IllegalArgumentException");
         } catch (IllegalArgumentException expected) {
         }
 
-        options.setReceiveBufferSize(1);
+        options.receiveBufferSize(1);
     }
 
     @Test
     public void testTrafficClassValidation() {
         TransportOptions options = createNonDefaultOptions().clone();
         try {
-            options.setTrafficClass(-1);
+            options.trafficClass(-1);
             fail("Should have thrown an IllegalArgumentException");
         } catch (IllegalArgumentException expected) {
         }
         try {
-            options.setTrafficClass(256);
+            options.trafficClass(256);
             fail("Should have thrown an IllegalArgumentException");
         } catch (IllegalArgumentException expected) {
         }
 
-        options.setTrafficClass(0);
-        options.setTrafficClass(128);
-        options.setTrafficClass(255);
+        options.trafficClass(0);
+        options.trafficClass(128);
+        options.trafficClass(255);
     }
 
     @Test
     public void testCreateAndConfigure() {
         TransportOptions options = createNonDefaultOptions();
 
-        assertEquals(TEST_SEND_BUFFER_SIZE, options.getSendBufferSize());
-        assertEquals(TEST_RECEIVE_BUFFER_SIZE, options.getReceiveBufferSize());
-        assertEquals(TEST_TRAFFIC_CLASS, options.getTrafficClass());
-        assertEquals(TEST_TCP_NO_DELAY, options.isTcpNoDelay());
-        assertEquals(TEST_TCP_KEEP_ALIVE, options.isTcpKeepAlive());
-        assertEquals(TEST_SO_LINGER, options.getSoLinger());
-        assertEquals(TEST_SO_TIMEOUT, options.getSoTimeout());
-        assertEquals(TEST_CONNECT_TIMEOUT, options.getConnectTimeout());
+        assertEquals(TEST_SEND_BUFFER_SIZE, options.sendBufferSize());
+        assertEquals(TEST_RECEIVE_BUFFER_SIZE, options.receiveBufferSize());
+        assertEquals(TEST_TRAFFIC_CLASS, options.trafficClass());
+        assertEquals(TEST_TCP_NO_DELAY, options.tcpNoDelay());
+        assertEquals(TEST_TCP_KEEP_ALIVE, options.tcpKeepAlive());
+        assertEquals(TEST_SO_LINGER, options.soLinger());
+        assertEquals(TEST_SO_TIMEOUT, options.soTimeout());
+        assertEquals(TEST_CONNECT_TIMEOUT, options.connectTimeout());
     }
 
     private TransportOptions createNonDefaultOptions() {
         TransportOptions options = new TransportOptions();
 
-        options.setSendBufferSize(TEST_SEND_BUFFER_SIZE);
-        options.setReceiveBufferSize(TEST_RECEIVE_BUFFER_SIZE);
-        options.setTrafficClass(TEST_TRAFFIC_CLASS);
-        options.setTcpNoDelay(TEST_TCP_NO_DELAY);
-        options.setTcpKeepAlive(TEST_TCP_KEEP_ALIVE);
-        options.setSoLinger(TEST_SO_LINGER);
-        options.setSoTimeout(TEST_SO_TIMEOUT);
-        options.setConnectTimeout(TEST_CONNECT_TIMEOUT);
-        options.setDefaultTcpPort(TEST_DEFAULT_TCP_PORT);
-        options.setAllowNativeIO(TEST_ALLOW_NATIVE_IO_VALUE);
-        options.setTraceBytes(TEST_TRACE_BYTES_VALUE);
-        options.setLocalAddress(LOCAL_ADDRESS);
-        options.setLocalPort(LOCAL_PORT);
-        options.setWebSocketPath(TEST_WEBSOCKET_PATH);
+        options.sendBufferSize(TEST_SEND_BUFFER_SIZE);
+        options.receiveBufferSize(TEST_RECEIVE_BUFFER_SIZE);
+        options.trafficClass(TEST_TRAFFIC_CLASS);
+        options.tcpNoDelay(TEST_TCP_NO_DELAY);
+        options.tcpKeepAlive(TEST_TCP_KEEP_ALIVE);
+        options.soLinger(TEST_SO_LINGER);
+        options.soTimeout(TEST_SO_TIMEOUT);
+        options.connectTimeout(TEST_CONNECT_TIMEOUT);
+        options.defaultTcpPort(TEST_DEFAULT_TCP_PORT);
+        options.allowNativeIO(TEST_ALLOW_NATIVE_IO_VALUE);
+        options.traceBytes(TEST_TRACE_BYTES_VALUE);
+        options.localAddress(LOCAL_ADDRESS);
+        options.localPort(LOCAL_PORT);
+        options.webSocketPath(TEST_WEBSOCKET_PATH);
         options.addWebSocketHeader(TEST_WEBSOCKET_HEADER_KEY, TEST_WEBSOCKET_HEADER_VALUE);
-        options.setWebSocketMaxFrameSize(TEST_WEBSOCKET_MAX_FRAME_SIZE);
+        options.webSocketMaxFrameSize(TEST_WEBSOCKET_MAX_FRAME_SIZE);
 
         return options;
     }

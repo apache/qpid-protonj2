@@ -121,7 +121,7 @@ public class WebSocketTransport extends TcpTransport {
 
     private URI getRemoteLocation() {
         try {
-            return new URI(null, null, getHost(), getPort(), options.getWebSocketPath(), null, null);
+            return new URI(null, null, getHost(), getPort(), options.webSocketPath(), null, null);
         } catch (URISyntaxException use) {
             throw new IllegalArgumentException(use);
         }
@@ -134,13 +134,13 @@ public class WebSocketTransport extends TcpTransport {
         public NettyWebSocketTransportHandler() {
             DefaultHttpHeaders headers = new DefaultHttpHeaders();
 
-            options.getWebSocketHeaders().forEach((key, value) -> {
+            options.webSocketHeaders().forEach((key, value) -> {
                 headers.set(key, value);
             });
 
             handshaker = WebSocketClientHandshakerFactory.newHandshaker(
                 getRemoteLocation(), WebSocketVersion.V13, AMQP_SUB_PROTOCOL,
-                true, headers, options.getWebSocketMaxFrameSize());
+                true, headers, options.webSocketMaxFrameSize());
         }
 
         @Override

@@ -84,29 +84,29 @@ public class ConnectionOptions {
      * @return this options class for chaining.
      */
     protected ConnectionOptions copyInto(ConnectionOptions other) {
-        other.setCloseTimeout(closeTimeout);
-        other.setOpenTimeout(openTimeout);
-        other.setSendTimeout(sendTimeout);
-        other.setRequestTimeout(requestTimeout);
-        other.setIdleTimeout(idleTimeout);
-        other.setDrainTimeout(drainTimeout);
-        other.setChannelMax(channelMax);
-        other.setMaxFrameSize(maxFrameSize);
-        other.setFutureType(futureType);
-        other.setUser(user);
-        other.setPassword(password);
-        other.setSaslEnabled(saslEnabled);
+        other.closeTimeout(closeTimeout);
+        other.openTimeout(openTimeout);
+        other.sendTimeout(sendTimeout);
+        other.requestTimeout(requestTimeout);
+        other.idleTimeout(idleTimeout);
+        other.drainTimeout(drainTimeout);
+        other.channelMax(channelMax);
+        other.maxFrameSize(maxFrameSize);
+        other.futureType(futureType);
+        other.user(user);
+        other.password(password);
+        other.saslEnabled(saslEnabled);
         other.saslAllowedMechs.addAll(this.saslAllowedMechs);
-        other.setAllowInsecureRedirects(allowInsecureRedirects);
+        other.allowInsecureRedirects(allowInsecureRedirects);
 
         if (offeredCapabilities != null) {
-            other.setOfferedCapabilities(Arrays.copyOf(offeredCapabilities, offeredCapabilities.length));
+            other.offeredCapabilities(Arrays.copyOf(offeredCapabilities, offeredCapabilities.length));
         }
         if (desiredCapabilities != null) {
-            other.setDesiredCapabilities(Arrays.copyOf(desiredCapabilities, desiredCapabilities.length));
+            other.desiredCapabilities(Arrays.copyOf(desiredCapabilities, desiredCapabilities.length));
         }
         if (properties != null) {
-            other.setProperties(new HashMap<>(properties));
+            other.properties(new HashMap<>(properties));
         }
 
         transport.copyInto(other.transportOptions());
@@ -117,56 +117,56 @@ public class ConnectionOptions {
 
     // TODO - Proper Javadocs
 
-    public long getCloseTimeout() {
+    public long closeTimeout() {
         return closeTimeout;
     }
 
-    public ConnectionOptions setCloseTimeout(long closeTimeout) {
+    public ConnectionOptions closeTimeout(long closeTimeout) {
         this.closeTimeout = closeTimeout;
         return this;
     }
 
-    public long getOpenTimeout() {
+    public long openTimeout() {
         return openTimeout;
     }
 
-    public ConnectionOptions setOpenTimeout(long openTimeout) {
+    public ConnectionOptions openTimeout(long openTimeout) {
         this.openTimeout = openTimeout;
         return this;
     }
 
-    public long getSendTimeout() {
+    public long sendTimeout() {
         return sendTimeout;
     }
 
-    public ConnectionOptions setSendTimeout(long sendTimeout) {
+    public ConnectionOptions sendTimeout(long sendTimeout) {
         this.sendTimeout = sendTimeout;
         return this;
     }
 
-    public long getRequestTimeout() {
+    public long requestTimeout() {
         return requestTimeout;
     }
 
-    public ConnectionOptions setRequestTimeout(long requestTimeout) {
+    public ConnectionOptions requestTimeout(long requestTimeout) {
         this.requestTimeout = requestTimeout;
         return this;
     }
 
-    public long getIdleTimeout() {
+    public long idleTimeout() {
         return idleTimeout;
     }
 
-    public int getChannelMax() {
+    public int channelMax() {
         return channelMax;
     }
 
-    public ConnectionOptions setChannelMax(int channelMax) {
+    public ConnectionOptions channelMax(int channelMax) {
         this.channelMax = channelMax;
         return this;
     }
 
-    public int getMaxFrameSize() {
+    public int maxFrameSize() {
         return maxFrameSize;
     }
 
@@ -179,7 +179,7 @@ public class ConnectionOptions {
      *
      * @return this options object for chaining.
      */
-    public ConnectionOptions setMaxFrameSize(int maxFrameSize) {
+    public ConnectionOptions maxFrameSize(int maxFrameSize) {
         this.maxFrameSize = maxFrameSize;
         return this;
     }
@@ -194,12 +194,12 @@ public class ConnectionOptions {
      *
      * @return this options object for chaining.
      */
-    public ConnectionOptions setIdleTimeout(long idleTimeout) {
+    public ConnectionOptions idleTimeout(long idleTimeout) {
         this.idleTimeout = idleTimeout;
         return this;
     }
 
-    public long getDrainTimeout() {
+    public long drainTimeout() {
         return drainTimeout;
     }
 
@@ -213,7 +213,7 @@ public class ConnectionOptions {
      *
      * @return this options object for chaining.
      */
-    public ConnectionOptions setDrainTimeout(long drainTimeout) {
+    public ConnectionOptions drainTimeout(long drainTimeout) {
         this.drainTimeout = drainTimeout;
         return this;
     }
@@ -221,7 +221,7 @@ public class ConnectionOptions {
     /**
      * @return the offeredCapabilities
      */
-    public String[] getOfferedCapabilities() {
+    public String[] offeredCapabilities() {
         return offeredCapabilities;
     }
 
@@ -230,7 +230,7 @@ public class ConnectionOptions {
      *
      * @return this options object for chaining.
      */
-    public ConnectionOptions setOfferedCapabilities(String[] offeredCapabilities) {
+    public ConnectionOptions offeredCapabilities(String[] offeredCapabilities) {
         this.offeredCapabilities = offeredCapabilities;
         return this;
     }
@@ -238,7 +238,7 @@ public class ConnectionOptions {
     /**
      * @return the desiredCapabilities
      */
-    public String[] getDesiredCapabilities() {
+    public String[] desiredCapabilities() {
         return desiredCapabilities;
     }
 
@@ -247,7 +247,7 @@ public class ConnectionOptions {
      *
      * @return this options object for chaining.
      */
-    public ConnectionOptions setDesiredCapabilities(String[] desiredCapabilities) {
+    public ConnectionOptions desiredCapabilities(String[] desiredCapabilities) {
         this.desiredCapabilities = desiredCapabilities;
         return this;
     }
@@ -255,7 +255,7 @@ public class ConnectionOptions {
     /**
      * @return the properties
      */
-    public Map<String, Object> getProperties() {
+    public Map<String, Object> properties() {
         return properties;
     }
 
@@ -264,7 +264,7 @@ public class ConnectionOptions {
      *
      * @return this options object for chaining.
      */
-    public ConnectionOptions setProperties(Map<String, Object> properties) {
+    public ConnectionOptions properties(Map<String, Object> properties) {
         this.properties = properties;
         return this;
     }
@@ -272,7 +272,7 @@ public class ConnectionOptions {
     /**
      * @return the configure future type to use for this client connection
      */
-    public String getFutureType() {
+    public String futureType() {
         return futureType;
     }
 
@@ -285,7 +285,7 @@ public class ConnectionOptions {
      *
      * @return this options object for chaining.
      */
-    public ConnectionOptions setFutureType(String futureType) {
+    public ConnectionOptions futureType(String futureType) {
         this.futureType = futureType;
         return this;
     }
@@ -293,7 +293,7 @@ public class ConnectionOptions {
     /**
      * @return the vhost
      */
-    public String getVhost() {
+    public String vhost() {
         return vhost;
     }
 
@@ -302,7 +302,7 @@ public class ConnectionOptions {
      *
      * @return this options instance.
      */
-    public ConnectionOptions setVhost(String vhost) {
+    public ConnectionOptions vhost(String vhost) {
         this.vhost = vhost;
         return this;
     }
@@ -310,7 +310,7 @@ public class ConnectionOptions {
     /**
      * @return the user
      */
-    public String getUser() {
+    public String user() {
         return user;
     }
 
@@ -319,7 +319,7 @@ public class ConnectionOptions {
      *
      * @return this options instance.
      */
-    public ConnectionOptions setUser(String user) {
+    public ConnectionOptions user(String user) {
         this.user = user;
         return this;
     }
@@ -327,7 +327,7 @@ public class ConnectionOptions {
     /**
      * @return the password
      */
-    public String getPassword() {
+    public String password() {
         return password;
     }
 
@@ -336,7 +336,7 @@ public class ConnectionOptions {
      *
      * @return this options instance.
      */
-    public ConnectionOptions setPassword(String password) {
+    public ConnectionOptions password(String password) {
         this.password = password;
         return this;
     }
@@ -358,7 +358,7 @@ public class ConnectionOptions {
     /**
      * @return the allowInsecureRedirects
      */
-    public boolean isAllowInsecureRedirects() {
+    public boolean allowInsecureRedirects() {
         return allowInsecureRedirects;
     }
 
@@ -367,7 +367,7 @@ public class ConnectionOptions {
      *
      * @return this options instance.
      */
-    public ConnectionOptions setAllowInsecureRedirects(boolean allowInsecureRedirects) {
+    public ConnectionOptions allowInsecureRedirects(boolean allowInsecureRedirects) {
         this.allowInsecureRedirects = allowInsecureRedirects;
         return this;
     }
@@ -375,7 +375,7 @@ public class ConnectionOptions {
     /**
      * @return the saslLayer
      */
-    public boolean isSaslEnabled() {
+    public boolean saslEnabled() {
         return saslEnabled;
     }
 
@@ -384,7 +384,7 @@ public class ConnectionOptions {
      *
      * @return this options instance.
      */
-    public ConnectionOptions setSaslEnabled(boolean saslEnabled) {
+    public ConnectionOptions saslEnabled(boolean saslEnabled) {
         this.saslEnabled = saslEnabled;
         return this;
     }
@@ -392,8 +392,8 @@ public class ConnectionOptions {
     /**
      * @return true if SSL support has been enabled for this connection.
      */
-    public boolean isSSLEnabled() {
-        return ssl.isSSLEnabled();
+    public boolean sslEnabled() {
+        return ssl.sslEnabled();
     }
 
     /**
@@ -403,8 +403,8 @@ public class ConnectionOptions {
      *
      * @return this options instance.
      */
-    public ConnectionOptions setSSLEnabled(boolean sslEnabled) {
-        ssl.setSSLEnabled(sslEnabled);
+    public ConnectionOptions sslEnabled(boolean sslEnabled) {
+        ssl.sslEnabled(sslEnabled);
         return this;
     }
 

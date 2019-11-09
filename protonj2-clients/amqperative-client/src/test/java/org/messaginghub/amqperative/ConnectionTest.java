@@ -78,8 +78,8 @@ public class ConnectionTest extends AMQPerativeTestCase {
 
             Client container = Client.create();
             ConnectionOptions options = new ConnectionOptions();
-            options.setUser("guest");
-            options.setPassword("guest");
+            options.user("guest");
+            options.password("guest");
             Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), options);
 
             try {
@@ -128,7 +128,7 @@ public class ConnectionTest extends AMQPerativeTestCase {
 
             Client container = Client.create();
             ConnectionOptions options = new ConnectionOptions();
-            options.transportOptions().setDefaultTcpPort(remoteURI.getPort());
+            options.transportOptions().defaultTcpPort(remoteURI.getPort());
             Connection connection = container.connect(remoteURI.getHost(), options);
 
             connection.openFuture().get(10, TimeUnit.SECONDS);
@@ -285,7 +285,7 @@ public class ConnectionTest extends AMQPerativeTestCase {
             LOG.info("Connect test started, peer listening on: {}", remoteURI);
 
             ConnectionOptions options = new ConnectionOptions();
-            options.setCloseTimeout(100);
+            options.closeTimeout(100);
 
             Client container = Client.create();
             Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), options);
@@ -422,7 +422,7 @@ public class ConnectionTest extends AMQPerativeTestCase {
         conn.openFuture().get(timeout, TimeUnit.SECONDS);
         System.out.println("Open completed successfully");
 
-        ReceiverOptions receiverOptions = new ReceiverOptions().setCreditWindow(10);
+        ReceiverOptions receiverOptions = new ReceiverOptions().creditWindow(10);
 
         Receiver receiver = conn.openReceiver("queue", receiverOptions);
         receiver.openFuture().get(timeout, TimeUnit.SECONDS);
@@ -447,7 +447,7 @@ public class ConnectionTest extends AMQPerativeTestCase {
                 throw new IllegalStateException("Expected delivery but did not get one");
             }
 
-            System.out.println("Got message body: " + delivery.getMessage().getBody());
+            System.out.println("Got message body: " + delivery.message().body());
 
             delivery.accept();
 

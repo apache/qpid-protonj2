@@ -105,11 +105,11 @@ public class ClientSender implements Sender {
 
     @Override
     public Client client() {
-        return session.getClient();
+        return session.client();
     }
 
     @Override
-    public Session getSession() {
+    public Session session() {
         return session;
     }
 
@@ -134,8 +134,8 @@ public class ClientSender implements Sender {
                 }
 
                 if (!closeFuture.isDone()) {
-                    final long timeout = options.getCloseTimeout() >= 0 ?
-                            options.getCloseTimeout() : options.getRequestTimeout();
+                    final long timeout = options.closeTimeout() >= 0 ?
+                            options.closeTimeout() : options.requestTimeout();
 
                     session.scheduleRequestTimeout(closeFuture, timeout,
                         () -> new ClientOperationTimedOutException("Timed out waiting for Sender to close"));
@@ -156,8 +156,8 @@ public class ClientSender implements Sender {
                 }
 
                 if (!closeFuture.isDone()) {
-                    final long timeout = options.getCloseTimeout() >= 0 ?
-                            options.getCloseTimeout() : options.getRequestTimeout();
+                    final long timeout = options.closeTimeout() >= 0 ?
+                            options.closeTimeout() : options.requestTimeout();
 
                     session.scheduleRequestTimeout(closeFuture, timeout,
                         () -> new ClientOperationTimedOutException("Timed out waiting for Sender to detach"));
@@ -177,16 +177,16 @@ public class ClientSender implements Sender {
                 assumeSendableAndSend((ClientMessage<?>) message, operation);
             } else {
                 final InFlightSend send = new InFlightSend((ClientMessage<?>) message, operation);
-                if (options.getSendTimeout() > 0) {
+                if (options.sendTimeout() > 0) {
                     send.timeout = session.scheduleRequestTimeout(
-                        operation, options.getSendTimeout(), () -> send.createSendTimedOutException());
+                        operation, options.sendTimeout(), () -> send.createSendTimedOutException());
                 }
 
                 blocked.add(send);
             }
         });
 
-        return session.request(operation, options.getRequestTimeout(), TimeUnit.MILLISECONDS);
+        return session.request(operation, options.requestTimeout(), TimeUnit.MILLISECONDS);
     }
 
     @Override
@@ -202,7 +202,7 @@ public class ClientSender implements Sender {
             }
         });
 
-        return session.request(operation, options.getRequestTimeout(), TimeUnit.MILLISECONDS);
+        return session.request(operation, options.requestTimeout(), TimeUnit.MILLISECONDS);
     }
 
     @Override

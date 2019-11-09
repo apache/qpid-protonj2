@@ -32,6 +32,7 @@ public class ReceiverOptions {
     private long openTimeout = ConnectionOptions.DEFAULT_OPEN_TIMEOUT;
     private long closeTimeout = ConnectionOptions.DEFAULT_CLOSE_TIMEOUT;
 
+    private boolean autoAccept = true;
     private int creditWindow = -1;
     private String linkName;
 
@@ -51,96 +52,118 @@ public class ReceiverOptions {
         }
     }
 
-    public ReceiverOptions setLinkName(String linkName) {
+    public ReceiverOptions autoAccept(boolean autoAccept) {
+        this.autoAccept = autoAccept;
+        return this;
+    }
+
+    public boolean autoAccept() {
+        return autoAccept;
+    }
+
+    public ReceiverOptions linkName(String linkName) {
         this.linkName = linkName;
         return this;
     }
 
-    public String getLinkName() {
+    public String linkName() {
         return linkName;
     }
 
-    public int getCreditWindow() {
+    public int creditWindow() {
         return creditWindow;
     }
 
-    public ReceiverOptions setCreditWindow(int creditWindow) {
+    public ReceiverOptions creditWindow(int creditWindow) {
         this.creditWindow = creditWindow;
         return this;
     }
 
-    public long getCloseTimeout() {
+    public long closeTimeout() {
         return closeTimeout;
     }
 
-    public void setCloseTimeout(long closeTimeout) {
+    public ReceiverOptions closeTimeout(long closeTimeout) {
         this.closeTimeout = closeTimeout;
+        return this;
     }
 
-    public long getOpenTimeout() {
+    public long openTimeout() {
         return openTimeout;
     }
 
-    public void setOpenTimeout(long openTimeout) {
+    public ReceiverOptions openTimeout(long openTimeout) {
         this.openTimeout = openTimeout;
+        return this;
     }
 
-    public long getSendTimeout() {
+    public long sendTimeout() {
         return sendTimeout;
     }
 
-    public void setSendTimeout(long sendTimeout) {
+    public ReceiverOptions sendTimeout(long sendTimeout) {
         this.sendTimeout = sendTimeout;
+        return this;
     }
 
-    public long getRequestTimeout() {
+    public long requestTimeout() {
         return requestTimeout;
     }
 
-    public void setRequestTimeout(long requestTimeout) {
+    public ReceiverOptions requestTimeout(long requestTimeout) {
         this.requestTimeout = requestTimeout;
+        return this;
     }
 
     /**
      * @return the offeredCapabilities
      */
-    public String[] getOfferedCapabilities() {
+    public String[] offeredCapabilities() {
         return offeredCapabilities;
     }
 
     /**
      * @param offeredCapabilities the offeredCapabilities to set
+     *
+     * @return this {@link ReceiverOptions} instance.
      */
-    public void setOfferedCapabilities(String[] offeredCapabilities) {
+    public ReceiverOptions offeredCapabilities(String[] offeredCapabilities) {
         this.offeredCapabilities = offeredCapabilities;
+        return this;
     }
 
     /**
      * @return the desiredCapabilities
      */
-    public String[] getDesiredCapabilities() {
+    public String[] desiredCapabilities() {
         return desiredCapabilities;
     }
 
     /**
      * @param desiredCapabilities the desiredCapabilities to set
+     *
+     * @return this {@link ReceiverOptions} instance.
      */
-    public void setDesiredCapabilities(String[] desiredCapabilities) {
+    public ReceiverOptions desiredCapabilities(String[] desiredCapabilities) {
         this.desiredCapabilities = desiredCapabilities;
+        return this;
     }
 
     /**
      * @return the properties
      */
-    public Map<String, Object> getProperties() {
+    public Map<String, Object> properties() {
         return properties;
     }
 
     /**
      * @param properties the properties to set
+     *
+     * @return this {@link ReceiverOptions} instance.
      */
-    public void setProperties(Map<String, Object> properties) {
+    public ReceiverOptions properties(Map<String, Object> properties) {
         this.properties = properties;
+        return this;
     }
 
     /**
@@ -167,21 +190,21 @@ public class ReceiverOptions {
      * @return this options class for chaining.
      */
     protected ReceiverOptions copyInto(ReceiverOptions other) {
-        other.setCreditWindow(creditWindow);
-        other.setLinkName(linkName);
-        other.setCloseTimeout(closeTimeout);
-        other.setOpenTimeout(openTimeout);
-        other.setSendTimeout(sendTimeout);
-        other.setRequestTimeout(requestTimeout);
+        other.creditWindow(creditWindow);
+        other.linkName(linkName);
+        other.closeTimeout(closeTimeout);
+        other.openTimeout(openTimeout);
+        other.sendTimeout(sendTimeout);
+        other.requestTimeout(requestTimeout);
 
         if (offeredCapabilities != null) {
-            other.setOfferedCapabilities(Arrays.copyOf(offeredCapabilities, offeredCapabilities.length));
+            other.offeredCapabilities(Arrays.copyOf(offeredCapabilities, offeredCapabilities.length));
         }
         if (desiredCapabilities != null) {
-            other.setDesiredCapabilities(Arrays.copyOf(desiredCapabilities, desiredCapabilities.length));
+            other.desiredCapabilities(Arrays.copyOf(desiredCapabilities, desiredCapabilities.length));
         }
         if (properties != null) {
-            other.setProperties(new HashMap<>(properties));
+            other.properties(new HashMap<>(properties));
         }
 
         source.copyInto(other.sourceOptions());

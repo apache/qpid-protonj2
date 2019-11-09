@@ -51,7 +51,7 @@ public class WSConnectionTest extends AMQPerativeTestSupport {
         assertNotNull(client);
 
         ConnectionOptions connectOpts = new ConnectionOptions();
-        connectOpts.transportOptions().setUseWebSockets(true);
+        connectOpts.transportOptions().useWebSockets(true);
 
         Connection connection = client.connect(brokerURI.getHost(), brokerURI.getPort(), connectOpts);
         assertNotNull(connection);
@@ -74,9 +74,9 @@ public class WSConnectionTest extends AMQPerativeTestSupport {
         assertNotNull(client);
 
         ConnectionOptions connectionOpts = new ConnectionOptions();
-        connectionOpts.transportOptions().setUseWebSockets(true);
-        connectionOpts.setUser("system");
-        connectionOpts.setPassword("manager");
+        connectionOpts.transportOptions().useWebSockets(true);
+        connectionOpts.user("system");
+        connectionOpts.password("manager");
         connectionOpts.addAllowedMechanism("PLAIN");
 
         Connection connection = client.connect(brokerURI.getHost(), brokerURI.getPort(), connectionOpts);

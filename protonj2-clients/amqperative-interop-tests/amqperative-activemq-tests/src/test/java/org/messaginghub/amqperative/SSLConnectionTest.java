@@ -53,9 +53,9 @@ public class SSLConnectionTest extends AMQPerativeTestSupport {
         assertNotNull(client);
 
         ConnectionOptions connectOpts = new ConnectionOptions();
-        connectOpts.setSSLEnabled(true);
-        connectOpts.sslOptions().setTrustStoreLocation(TRUSTSTORE);
-        connectOpts.sslOptions().setTrustStorePassword(PASSWORD);
+        connectOpts.sslEnabled(true);
+        connectOpts.sslOptions().trustStoreLocation(TRUSTSTORE);
+        connectOpts.sslOptions().trustStorePassword(PASSWORD);
 
         Connection connection = client.connect(connectionURI.getHost(), connectionURI.getPort(), connectOpts);
         assertNotNull(connection);
@@ -80,9 +80,9 @@ public class SSLConnectionTest extends AMQPerativeTestSupport {
 
         // Setup broker SSL context...
         SslOptions sslOptions = new SslOptions();
-        sslOptions.setKeyStoreLocation(KEYSTORE);
-        sslOptions.setKeyStorePassword(PASSWORD);
-        sslOptions.setVerifyHost(false);
+        sslOptions.keyStoreLocation(KEYSTORE);
+        sslOptions.keyStorePassword(PASSWORD);
+        sslOptions.verifyHost(false);
 
         SSLContext sslContext = SslSupport.createJdkSslContext(sslOptions);
 

@@ -66,7 +66,7 @@ public class OpenSslTransportTest extends SslTransportTest {
             final int port = server.getServerPort();
 
             SslOptions options = createSSLOptions();
-            options.setAllowNativeSSL(useOpenSSL);
+            options.allowNativeSSL(useOpenSSL);
 
             Transport transport = createTransport(HOSTNAME, port, testListener, createTransportOptions(), options);
             try {
@@ -104,20 +104,20 @@ public class OpenSslTransportTest extends SslTransportTest {
 
             SslOptions options = new SslOptions();
 
-            options.setSSLEnabled(true);
-            options.setKeyStoreLocation(CLIENT_KEYSTORE);
-            options.setKeyStorePassword(PASSWORD);
-            options.setTrustStoreLocation(CLIENT_TRUSTSTORE);
-            options.setTrustStorePassword(PASSWORD);
-            options.setStoreType(KEYSTORE_TYPE);
+            options.sslEnabled(true);
+            options.keyStoreLocation(CLIENT_KEYSTORE);
+            options.keyStorePassword(PASSWORD);
+            options.trustStoreLocation(CLIENT_TRUSTSTORE);
+            options.trustStorePassword(PASSWORD);
+            options.storeType(KEYSTORE_TYPE);
 
             SSLContext sslContext = SslSupport.createJdkSslContext(options);
 
             options = new SslOptions();
-            options.setSSLEnabled(true);
-            options.setVerifyHost(false);
-            options.setAllowNativeSSL(true);
-            options.setSslContextOverride(sslContext);
+            options.sslEnabled(true);
+            options.verifyHost(false);
+            options.allowNativeSSL(true);
+            options.sslContextOverride(sslContext);
 
             Transport transport = createTransport(HOSTNAME, port, testListener, createTransportOptions(), options);
             try {
@@ -186,14 +186,14 @@ public class OpenSslTransportTest extends SslTransportTest {
     protected SslOptions createSSLOptionsIsVerify(boolean verifyHost) {
         SslOptions options = new SslOptions();
 
-        options.setSSLEnabled(true);
-        options.setAllowNativeSSL(true);
-        options.setKeyStoreLocation(CLIENT_KEYSTORE);
-        options.setKeyStorePassword(PASSWORD);
-        options.setTrustStoreLocation(CLIENT_TRUSTSTORE);
-        options.setTrustStorePassword(PASSWORD);
-        options.setStoreType(KEYSTORE_TYPE);
-        options.setVerifyHost(verifyHost);
+        options.sslEnabled(true);
+        options.allowNativeSSL(true);
+        options.keyStoreLocation(CLIENT_KEYSTORE);
+        options.keyStorePassword(PASSWORD);
+        options.trustStoreLocation(CLIENT_TRUSTSTORE);
+        options.trustStorePassword(PASSWORD);
+        options.storeType(KEYSTORE_TYPE);
+        options.verifyHost(verifyHost);
 
         return options;
     }
@@ -202,10 +202,10 @@ public class OpenSslTransportTest extends SslTransportTest {
     protected SslOptions createSSLOptionsWithoutTrustStore(boolean trustAll) {
         SslOptions options = new SslOptions();
 
-        options.setSSLEnabled(true);
-        options.setStoreType(KEYSTORE_TYPE);
-        options.setAllowNativeSSL(true);
-        options.setTrustAll(trustAll);
+        options.sslEnabled(true);
+        options.storeType(KEYSTORE_TYPE);
+        options.allowNativeSSL(true);
+        options.trustAll(trustAll);
 
         return options;
     }

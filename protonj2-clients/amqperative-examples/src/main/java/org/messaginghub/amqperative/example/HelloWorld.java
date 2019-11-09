@@ -55,15 +55,15 @@ public class HelloWorld {
             Sender sender = connection.openSender(address);
             sender.openFuture().get(5, TimeUnit.SECONDS);
 
-            Message<String> message = Message.create("Hello World").setDurable(true);
+            Message<String> message = Message.create("Hello World").durable(true);
             Tracker tracker = sender.send(message);
 
             Delivery delivery = receiver.receive();
 
             if (delivery != null) {
-                Message<String> received = delivery.getMessage();
+                Message<String> received = delivery.message();
 
-                System.out.println(received.getBody());
+                System.out.println(received.body());
             }
 
             Future<Receiver> draining = receiver.drain();

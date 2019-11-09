@@ -50,7 +50,7 @@ public class ClientDelivery implements Delivery {
 
     @SuppressWarnings("unchecked")
     @Override
-    public <E> Message<E> getMessage() throws ClientException {
+    public <E> Message<E> message() throws ClientException {
         if (delivery.isPartial()) {
             // TODO - Client exception of some sort, ClientPartialMessageException etc
             throw new IllegalStateException("Message is still only partially delivered.");
@@ -92,12 +92,12 @@ public class ClientDelivery implements Delivery {
     }
 
     @Override
-    public DeliveryState getState() {
+    public DeliveryState state() {
         return ClientDeliveryState.fromProtonType(delivery.getLocalState());
     }
 
     @Override
-    public DeliveryState getRemoteState() {
+    public DeliveryState remoteState() {
         return ClientDeliveryState.fromProtonType(delivery.getRemoteState());
     }
 
@@ -105,27 +105,27 @@ public class ClientDelivery implements Delivery {
     //       confuse / harm the caller since it isn't really telling of actual remote settled.
 
     @Override
-    public boolean isRemotelySettled() {
+    public boolean remotelySettled() {
         return delivery.isRemotelySettled();
     }
 
     @Override
-    public DeliveryTag getTag() {
+    public DeliveryTag tag() {
         return delivery.getTag();
     }
 
     @Override
-    public int getMessageFormat() {
+    public int messageFormat() {
         return delivery.getMessageFormat();
     }
 
     @Override
-    public Receiver getReceiver() {
+    public Receiver receiver() {
         return receiver;
     }
 
     @Override
-    public boolean isSettled() {
+    public boolean settled() {
         return delivery.isSettled();
     }
 }

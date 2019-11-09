@@ -34,7 +34,7 @@ public class KQueueSupport {
 
     public static boolean isAvailable(TransportOptions transportOptions) {
         try {
-            return transportOptions.isAllowNativeIO() && KQueue.isAvailable();
+            return transportOptions.allowNativeIO() && KQueue.isAvailable();
         } catch (NoClassDefFoundError ncdfe) {
             LOG.debug("Unable to check for KQueue support due to missing class definition", ncdfe);
             return false;

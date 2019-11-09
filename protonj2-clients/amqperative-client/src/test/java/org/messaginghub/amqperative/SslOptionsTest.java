@@ -62,64 +62,64 @@ public class SslOptionsTest extends AMQPerativeTestCase {
     public void testCreate() {
         SslOptions options = new SslOptions();
 
-        assertFalse(options.isSSLEnabled());
+        assertFalse(options.sslEnabled());
 
-        assertEquals(SslOptions.DEFAULT_TRUST_ALL, options.isTrustAll());
-        assertEquals(SslOptions.DEFAULT_STORE_TYPE, options.getKeyStoreType());
-        assertEquals(SslOptions.DEFAULT_STORE_TYPE, options.getTrustStoreType());
+        assertEquals(SslOptions.DEFAULT_TRUST_ALL, options.trustAll());
+        assertEquals(SslOptions.DEFAULT_STORE_TYPE, options.keyStoreType());
+        assertEquals(SslOptions.DEFAULT_STORE_TYPE, options.trustStoreType());
 
-        assertEquals(SslOptions.DEFAULT_CONTEXT_PROTOCOL, options.getContextProtocol());
-        assertNull(options.getEnabledProtocols());
-        assertArrayEquals(SslOptions.DEFAULT_DISABLED_PROTOCOLS.toArray(new String[0]), options.getDisabledProtocols());
-        assertNull(options.getEnabledCipherSuites());
-        assertNull(options.getDisabledCipherSuites());
+        assertEquals(SslOptions.DEFAULT_CONTEXT_PROTOCOL, options.contextProtocol());
+        assertNull(options.enabledProtocols());
+        assertArrayEquals(SslOptions.DEFAULT_DISABLED_PROTOCOLS.toArray(new String[0]), options.disabledProtocols());
+        assertNull(options.enabledCipherSuites());
+        assertNull(options.disabledCipherSuites());
 
-        assertNull(options.getKeyStoreLocation());
-        assertNull(options.getKeyStorePassword());
-        assertNull(options.getTrustStoreLocation());
-        assertNull(options.getTrustStorePassword());
-        assertNull(options.getKeyAlias());
-        assertNull(options.getSslContextOverride());
+        assertNull(options.keyStoreLocation());
+        assertNull(options.keyStorePassword());
+        assertNull(options.trustStoreLocation());
+        assertNull(options.trustStorePassword());
+        assertNull(options.keyAlias());
+        assertNull(options.sslContextOverride());
     }
 
     @Test
     public void testClone() {
         SslOptions options = createNonDefaultOptions().clone();
 
-        assertTrue(options.isSSLEnabled());
-        assertEquals(TEST_DEFAULT_SSL_PORT, options.getDefaultSslPort());
-        assertEquals(CLIENT_KEYSTORE, options.getKeyStoreLocation());
-        assertEquals(PASSWORD, options.getKeyStorePassword());
-        assertEquals(CLIENT_TRUSTSTORE, options.getTrustStoreLocation());
-        assertEquals(PASSWORD, options.getTrustStorePassword());
-        assertEquals(KEYSTORE_TYPE, options.getKeyStoreType());
-        assertEquals(KEYSTORE_TYPE, options.getTrustStoreType());
-        assertEquals(KEY_ALIAS, options.getKeyAlias());
-        assertEquals(CONTEXT_PROTOCOL, options.getContextProtocol());
-        assertEquals(SSL_CONTEXT, options.getSslContextOverride());
-        assertArrayEquals(ENABLED_PROTOCOLS,options.getEnabledProtocols());
-        assertArrayEquals(DISABLED_PROTOCOLS,options.getDisabledProtocols());
-        assertArrayEquals(ENABLED_CIPHERS,options.getEnabledCipherSuites());
-        assertArrayEquals(DISABLED_CIPHERS,options.getDisabledCipherSuites());
+        assertTrue(options.sslEnabled());
+        assertEquals(TEST_DEFAULT_SSL_PORT, options.defaultSslPort());
+        assertEquals(CLIENT_KEYSTORE, options.keyStoreLocation());
+        assertEquals(PASSWORD, options.keyStorePassword());
+        assertEquals(CLIENT_TRUSTSTORE, options.trustStoreLocation());
+        assertEquals(PASSWORD, options.trustStorePassword());
+        assertEquals(KEYSTORE_TYPE, options.keyStoreType());
+        assertEquals(KEYSTORE_TYPE, options.trustStoreType());
+        assertEquals(KEY_ALIAS, options.keyAlias());
+        assertEquals(CONTEXT_PROTOCOL, options.contextProtocol());
+        assertEquals(SSL_CONTEXT, options.sslContextOverride());
+        assertArrayEquals(ENABLED_PROTOCOLS,options.enabledProtocols());
+        assertArrayEquals(DISABLED_PROTOCOLS,options.disabledProtocols());
+        assertArrayEquals(ENABLED_CIPHERS,options.enabledCipherSuites());
+        assertArrayEquals(DISABLED_CIPHERS,options.disabledCipherSuites());
     }
 
     @Test
     public void testCreateAndConfigure() {
         SslOptions options = createNonDefaultOptions();
 
-        assertEquals(CLIENT_KEYSTORE, options.getKeyStoreLocation());
-        assertEquals(PASSWORD, options.getKeyStorePassword());
-        assertEquals(CLIENT_TRUSTSTORE, options.getTrustStoreLocation());
-        assertEquals(PASSWORD, options.getTrustStorePassword());
-        assertEquals(KEYSTORE_TYPE, options.getKeyStoreType());
-        assertEquals(KEYSTORE_TYPE, options.getTrustStoreType());
-        assertEquals(KEY_ALIAS, options.getKeyAlias());
-        assertEquals(CONTEXT_PROTOCOL, options.getContextProtocol());
-        assertEquals(SSL_CONTEXT, options.getSslContextOverride());
-        assertArrayEquals(ENABLED_PROTOCOLS,options.getEnabledProtocols());
-        assertArrayEquals(DISABLED_PROTOCOLS,options.getDisabledProtocols());
-        assertArrayEquals(ENABLED_CIPHERS,options.getEnabledCipherSuites());
-        assertArrayEquals(DISABLED_CIPHERS,options.getDisabledCipherSuites());
+        assertEquals(CLIENT_KEYSTORE, options.keyStoreLocation());
+        assertEquals(PASSWORD, options.keyStorePassword());
+        assertEquals(CLIENT_TRUSTSTORE, options.trustStoreLocation());
+        assertEquals(PASSWORD, options.trustStorePassword());
+        assertEquals(KEYSTORE_TYPE, options.keyStoreType());
+        assertEquals(KEYSTORE_TYPE, options.trustStoreType());
+        assertEquals(KEY_ALIAS, options.keyAlias());
+        assertEquals(CONTEXT_PROTOCOL, options.contextProtocol());
+        assertEquals(SSL_CONTEXT, options.sslContextOverride());
+        assertArrayEquals(ENABLED_PROTOCOLS,options.enabledProtocols());
+        assertArrayEquals(DISABLED_PROTOCOLS,options.disabledProtocols());
+        assertArrayEquals(ENABLED_CIPHERS,options.enabledCipherSuites());
+        assertArrayEquals(DISABLED_CIPHERS,options.disabledCipherSuites());
     }
 
     @Test
@@ -133,10 +133,10 @@ public class SslOptionsTest extends AMQPerativeTestCase {
 
         SslOptions options1 = new SslOptions();
 
-        assertEquals(keystore, options1.getKeyStoreLocation());
-        assertEquals(keystorePass, options1.getKeyStorePassword());
-        assertEquals(truststore, options1.getTrustStoreLocation());
-        assertEquals(truststorePass, options1.getTrustStorePassword());
+        assertEquals(keystore, options1.keyStoreLocation());
+        assertEquals(keystorePass, options1.keyStorePassword());
+        assertEquals(truststore, options1.trustStoreLocation());
+        assertEquals(truststorePass, options1.trustStorePassword());
 
         keystore +="2";
         keystorePass +="2";
@@ -147,15 +147,15 @@ public class SslOptionsTest extends AMQPerativeTestCase {
 
         SslOptions options2 = new SslOptions();
 
-        assertEquals(keystore, options2.getKeyStoreLocation());
-        assertEquals(keystorePass, options2.getKeyStorePassword());
-        assertEquals(truststore, options2.getTrustStoreLocation());
-        assertEquals(truststorePass, options2.getTrustStorePassword());
+        assertEquals(keystore, options2.keyStoreLocation());
+        assertEquals(keystorePass, options2.keyStorePassword());
+        assertEquals(truststore, options2.trustStoreLocation());
+        assertEquals(truststorePass, options2.trustStorePassword());
 
-        assertNotEquals(options1.getKeyStoreLocation(), options2.getKeyStoreLocation());
-        assertNotEquals(options1.getKeyStorePassword(), options2.getKeyStorePassword());
-        assertNotEquals(options1.getTrustStoreLocation(), options2.getTrustStoreLocation());
-        assertNotEquals(options1.getTrustStorePassword(), options2.getTrustStorePassword());
+        assertNotEquals(options1.keyStoreLocation(), options2.keyStoreLocation());
+        assertNotEquals(options1.keyStorePassword(), options2.keyStorePassword());
+        assertNotEquals(options1.trustStoreLocation(), options2.trustStoreLocation());
+        assertNotEquals(options1.trustStorePassword(), options2.trustStorePassword());
     }
 
     private void setSslSystemPropertiesForCurrentTest(String keystore, String keystorePassword, String truststore, String truststorePassword) {
@@ -168,22 +168,22 @@ public class SslOptionsTest extends AMQPerativeTestCase {
     private SslOptions createNonDefaultOptions() {
         SslOptions options = new SslOptions();
 
-        options.setSSLEnabled(true);
-        options.setDefaultSslPort(TEST_DEFAULT_SSL_PORT);
-        options.setAllowNativeSSL(TEST_ALLOW_NATIVE_SSL);
-        options.setKeyStoreLocation(CLIENT_KEYSTORE);
-        options.setKeyStorePassword(PASSWORD);
-        options.setTrustStoreLocation(CLIENT_TRUSTSTORE);
-        options.setTrustStorePassword(PASSWORD);
-        options.setTrustAll(TRUST_ALL);
-        options.setVerifyHost(VERIFY_HOST);
-        options.setKeyAlias(KEY_ALIAS);
-        options.setContextProtocol(CONTEXT_PROTOCOL);
-        options.setSslContextOverride(SSL_CONTEXT);
-        options.setEnabledProtocols(ENABLED_PROTOCOLS);
-        options.setEnabledCipherSuites(ENABLED_CIPHERS);
-        options.setDisabledProtocols(DISABLED_PROTOCOLS);
-        options.setDisabledCipherSuites(DISABLED_CIPHERS);
+        options.sslEnabled(true);
+        options.defaultSslPort(TEST_DEFAULT_SSL_PORT);
+        options.allowNativeSSL(TEST_ALLOW_NATIVE_SSL);
+        options.keyStoreLocation(CLIENT_KEYSTORE);
+        options.keyStorePassword(PASSWORD);
+        options.trustStoreLocation(CLIENT_TRUSTSTORE);
+        options.trustStorePassword(PASSWORD);
+        options.trustAll(TRUST_ALL);
+        options.verifyHost(VERIFY_HOST);
+        options.keyAlias(KEY_ALIAS);
+        options.contextProtocol(CONTEXT_PROTOCOL);
+        options.sslContextOverride(SSL_CONTEXT);
+        options.enabledProtocols(ENABLED_PROTOCOLS);
+        options.enabledCipherSuites(ENABLED_CIPHERS);
+        options.disabledProtocols(DISABLED_PROTOCOLS);
+        options.disabledCipherSuites(DISABLED_CIPHERS);
 
         return options;
     }

@@ -67,17 +67,17 @@ final class ClientSenderBuilder {
     private Sender createSender(String address, SenderOptions options, String senderId) {
         final String linkName;
 
-        if (options.getLinkName() != null) {
-            linkName = options.getLinkName();
+        if (options.linkName() != null) {
+            linkName = options.linkName();
         } else {
             linkName = "receiver-" + senderId;
         }
 
         final Sender protonSender = session.getProtonSession().sender(linkName);
 
-        protonSender.setOfferedCapabilities(ClientConversionSupport.toSymbolArray(options.getOfferedCapabilities()));
-        protonSender.setDesiredCapabilities(ClientConversionSupport.toSymbolArray(options.getDesiredCapabilities()));
-        protonSender.setProperties(ClientConversionSupport.toSymbolKeyedMap(options.getProperties()));
+        protonSender.setOfferedCapabilities(ClientConversionSupport.toSymbolArray(options.offeredCapabilities()));
+        protonSender.setDesiredCapabilities(ClientConversionSupport.toSymbolArray(options.desiredCapabilities()));
+        protonSender.setProperties(ClientConversionSupport.toSymbolKeyedMap(options.properties()));
         protonSender.setTarget(createTarget(address, options));
         protonSender.setSource(createSource(address, options));
 
@@ -120,10 +120,10 @@ final class ClientSenderBuilder {
                 senderOptions = defaultSenderOptions;
                 if (senderOptions == null) {
                     senderOptions = new SenderOptions();
-                    senderOptions.setOpenTimeout(sessionOptions.getOpenTimeout());
-                    senderOptions.setCloseTimeout(sessionOptions.getCloseTimeout());
-                    senderOptions.setRequestTimeout(sessionOptions.getRequestTimeout());
-                    senderOptions.setSendTimeout(sessionOptions.getSendTimeout());
+                    senderOptions.openTimeout(sessionOptions.openTimeout());
+                    senderOptions.closeTimeout(sessionOptions.closeTimeout());
+                    senderOptions.requestTimeout(sessionOptions.requestTimeout());
+                    senderOptions.sendTimeout(sessionOptions.sendTimeout());
                 }
 
                 defaultSenderOptions = senderOptions;

@@ -213,7 +213,7 @@ public class TcpTransport implements Transport {
 
     @Override
     public boolean isSecure() {
-        return sslOptions.isSSLEnabled();
+        return sslOptions.sslEnabled();
     }
 
     @Override
@@ -453,29 +453,29 @@ public class TcpTransport implements Transport {
     }
 
     private void configureNetty(Bootstrap bootstrap, TransportOptions options) {
-        bootstrap.option(ChannelOption.TCP_NODELAY, options.isTcpNoDelay());
-        bootstrap.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, options.getConnectTimeout());
-        bootstrap.option(ChannelOption.SO_KEEPALIVE, options.isTcpKeepAlive());
-        bootstrap.option(ChannelOption.SO_LINGER, options.getSoLinger());
+        bootstrap.option(ChannelOption.TCP_NODELAY, options.tcpNoDelay());
+        bootstrap.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, options.connectTimeout());
+        bootstrap.option(ChannelOption.SO_KEEPALIVE, options.tcpKeepAlive());
+        bootstrap.option(ChannelOption.SO_LINGER, options.soLinger());
 
-        if (options.getSendBufferSize() != -1) {
-            bootstrap.option(ChannelOption.SO_SNDBUF, options.getSendBufferSize());
+        if (options.sendBufferSize() != -1) {
+            bootstrap.option(ChannelOption.SO_SNDBUF, options.sendBufferSize());
         }
 
-        if (options.getReceiveBufferSize() != -1) {
-            bootstrap.option(ChannelOption.SO_RCVBUF, options.getReceiveBufferSize());
-            bootstrap.option(ChannelOption.RCVBUF_ALLOCATOR, new FixedRecvByteBufAllocator(options.getReceiveBufferSize()));
+        if (options.receiveBufferSize() != -1) {
+            bootstrap.option(ChannelOption.SO_RCVBUF, options.receiveBufferSize());
+            bootstrap.option(ChannelOption.RCVBUF_ALLOCATOR, new FixedRecvByteBufAllocator(options.receiveBufferSize()));
         }
 
-        if (options.getTrafficClass() != -1) {
-            bootstrap.option(ChannelOption.IP_TOS, options.getTrafficClass());
+        if (options.trafficClass() != -1) {
+            bootstrap.option(ChannelOption.IP_TOS, options.trafficClass());
         }
 
-        if (options.getLocalAddress() != null || options.getLocalPort() != 0) {
-            if(options.getLocalAddress() != null) {
-                bootstrap.localAddress(options.getLocalAddress(), options.getLocalPort());
+        if (options.localAddress() != null || options.localPort() != 0) {
+            if(options.localAddress() != null) {
+                bootstrap.localAddress(options.localAddress(), options.localPort());
             } else {
-                bootstrap.localAddress(options.getLocalPort());
+                bootstrap.localAddress(options.localPort());
             }
         }
     }
@@ -492,7 +492,7 @@ public class TcpTransport implements Transport {
             channel.pipeline().addLast("ssl", sslHandler);
         }
 
-        if (options.isTraceBytes()) {
+        if (options.traceBytes()) {
             channel.pipeline().addLast("logger", new LoggingHandler(getClass()));
         }
 

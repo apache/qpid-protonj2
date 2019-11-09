@@ -57,12 +57,12 @@ public class WebSocketTransportTest extends TcpTransportTest {
 
     @Override
     protected TransportOptions createTransportOptions() {
-        return new TransportOptions().setUseWebSockets(true);
+        return new TransportOptions().useWebSockets(true);
     }
 
     @Override
     protected TransportOptions createServerTransportOptions() {
-        return new TransportOptions().setUseWebSockets(true);
+        return new TransportOptions().useWebSockets(true);
     }
 
     @Test(timeout = 60000)
@@ -76,7 +76,7 @@ public class WebSocketTransportTest extends TcpTransportTest {
             final int port = server.getServerPort();
 
             Transport transport = createTransport(
-                HOSTNAME, port, testListener, createTransportOptions().setWebSocketPath(WEBSOCKET_PATH), createSSLOptions());
+                HOSTNAME, port, testListener, createTransportOptions().webSocketPath(WEBSOCKET_PATH), createSSLOptions());
 
             try {
                 transport.connect(null);
@@ -113,7 +113,7 @@ public class WebSocketTransportTest extends TcpTransportTest {
             server.close();
 
             Transport transport = createTransport(
-                HOSTNAME, port, testListener, createTransportOptions().setWebSocketPath(WEBSOCKET_PATH), createSSLOptions());
+                HOSTNAME, port, testListener, createTransportOptions().webSocketPath(WEBSOCKET_PATH), createSSLOptions());
 
             try {
                 transport.connect(null);
@@ -151,7 +151,7 @@ public class WebSocketTransportTest extends TcpTransportTest {
             List<Transport> transports = new ArrayList<Transport>();
 
             Transport transport = createTransport(
-                HOSTNAME, port, testListener, createTransportOptions().setWebSocketMaxFrameSize(FRAME_SIZE), createSSLOptions());
+                HOSTNAME, port, testListener, createTransportOptions().webSocketMaxFrameSize(FRAME_SIZE), createSSLOptions());
 
             try {
                 // The transport should allow for the size of data we sent.
@@ -198,8 +198,8 @@ public class WebSocketTransportTest extends TcpTransportTest {
             List<Transport> transports = new ArrayList<Transport>();
 
             TransportOptions clientOptions = createTransportOptions();
-            clientOptions.setTraceBytes(true);
-            clientOptions.setWebSocketMaxFrameSize(FRAME_SIZE);
+            clientOptions.traceBytes(true);
+            clientOptions.webSocketMaxFrameSize(FRAME_SIZE);
 
             NettyTransportListener wsListener = new NettyTransportListener(true);
 
@@ -261,7 +261,7 @@ public class WebSocketTransportTest extends TcpTransportTest {
             List<Transport> transports = new ArrayList<Transport>();
 
             Transport transport = createTransport(
-                HOSTNAME, port, testListener, createTransportOptions().setWebSocketMaxFrameSize(FRAME_SIZE / 2), createSSLOptions());
+                HOSTNAME, port, testListener, createTransportOptions().webSocketMaxFrameSize(FRAME_SIZE / 2), createSSLOptions());
             try {
                 // Transport can't receive anything bigger so it should fail the connection
                 // when data arrives that is larger than this value.
@@ -297,7 +297,7 @@ public class WebSocketTransportTest extends TcpTransportTest {
             List<Transport> transports = new ArrayList<Transport>();
 
             final Transport transport = createTransport(
-                HOSTNAME, port, testListener, createTransportOptions().setWebSocketMaxFrameSize(FRAME_SIZE), createSSLOptions());
+                HOSTNAME, port, testListener, createTransportOptions().webSocketMaxFrameSize(FRAME_SIZE), createSSLOptions());
 
             try {
                 // Transport allows bigger frames in so that server is the one causing the failure.
@@ -335,7 +335,7 @@ public class WebSocketTransportTest extends TcpTransportTest {
 
             TransportOptions clientOptions = createTransportOptions();
             clientOptions.addWebSocketHeader("test-header1", "FOO");
-            clientOptions.getWebSocketHeaders().put("test-header2", "BAR");
+            clientOptions.webSocketHeaders().put("test-header2", "BAR");
 
             Transport transport = createTransport(HOSTNAME, port, testListener, clientOptions, createSSLOptions());
             try {

@@ -90,10 +90,10 @@ public class ReceiverTest extends AMQPerativeTestSupport {
         Wait.assertEquals(1, () -> receiver.getQueueSize());
         Delivery delivery = receiver.receive();
         assertNotNull(delivery);
-        Message<?> received = delivery.getMessage();
+        Message<?> received = delivery.message();
         assertNotNull(received);
-        assertTrue(received.getBody() instanceof String);
-        String value = (String) received.getBody();
+        assertTrue(received.body() instanceof String);
+        String value = (String) received.body();
         assertEquals("Hello World", value);
 
         delivery.accept();
@@ -128,10 +128,10 @@ public class ReceiverTest extends AMQPerativeTestSupport {
         Wait.assertEquals(1, () -> receiver.getQueueSize());
         Delivery delivery = receiver.receive();
         assertNotNull(delivery);
-        Message<?> received = delivery.getMessage();
+        Message<?> received = delivery.message();
         assertNotNull(received);
-        assertTrue(received.getBody() instanceof String);
-        String value = (String) received.getBody();
+        assertTrue(received.body() instanceof String);
+        String value = (String) received.body();
         assertEquals("Hello World", value);
 
         final QueueViewMBean queueView = getProxyToQueue(getTestName());

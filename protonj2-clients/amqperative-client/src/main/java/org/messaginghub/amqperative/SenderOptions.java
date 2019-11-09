@@ -51,12 +51,12 @@ public class SenderOptions {
         }
     }
 
-    public SenderOptions setLinkName(String linkName) {
+    public SenderOptions linkName(String linkName) {
         this.linkName = linkName;
         return this;
     }
 
-    public String getLinkName() {
+    public String linkName() {
         return linkName;
     }
 
@@ -71,7 +71,7 @@ public class SenderOptions {
      *            settled by the receiver
      * @return the sender
      */
-    public SenderOptions setAutoSettle(boolean autoSettle) {
+    public SenderOptions autoSettle(boolean autoSettle) {
         this.autoSettle = autoSettle;
         return this;
     }
@@ -81,84 +81,97 @@ public class SenderOptions {
      *
      * @return whether deliveries should be auto settled locally after being settled
      *         by the receiver
-     * @see #setAutoSettle(boolean)
+     * @see #autoSettle(boolean)
      */
-    public boolean isAutoSettle() {
+    public boolean autoSettle() {
         return autoSettle;
     }
 
-    public long getCloseTimeout() {
+    public long closeTimeout() {
         return closeTimeout;
     }
 
-    public void setCloseTimeout(long closeTimeout) {
+    public SenderOptions closeTimeout(long closeTimeout) {
         this.closeTimeout = closeTimeout;
+        return this;
     }
 
-    public long getOpenTimeout() {
+    public long openTimeout() {
         return openTimeout;
     }
 
-    public void setOpenTimeout(long openTimeout) {
+    public SenderOptions openTimeout(long openTimeout) {
         this.openTimeout = openTimeout;
+        return this;
     }
 
-    public long getSendTimeout() {
+    public long sendTimeout() {
         return sendTimeout;
     }
 
-    public void setSendTimeout(long sendTimeout) {
+    public SenderOptions sendTimeout(long sendTimeout) {
         this.sendTimeout = sendTimeout;
+        return this;
     }
 
-    public long getRequestTimeout() {
+    public long requestTimeout() {
         return requestTimeout;
     }
 
-    public void setRequestTimeout(long requestTimeout) {
+    public SenderOptions requestTimeout(long requestTimeout) {
         this.requestTimeout = requestTimeout;
+        return this;
     }
 
     /**
      * @return the offeredCapabilities
      */
-    public String[] getOfferedCapabilities() {
+    public String[] offeredCapabilities() {
         return offeredCapabilities;
     }
 
     /**
      * @param offeredCapabilities the offeredCapabilities to set
+     *
+     * @return this {@link SenderOptions} instance.
      */
-    public void setOfferedCapabilities(String[] offeredCapabilities) {
+    public SenderOptions offeredCapabilities(String[] offeredCapabilities) {
         this.offeredCapabilities = offeredCapabilities;
+        return this;
     }
 
     /**
      * @return the desiredCapabilities
      */
-    public String[] getDesiredCapabilities() {
+    public String[] desiredCapabilities() {
         return desiredCapabilities;
     }
 
     /**
      * @param desiredCapabilities the desiredCapabilities to set
+     *
+     * @return this {@link SenderOptions} instance.
      */
-    public void setDesiredCapabilities(String[] desiredCapabilities) {
+    public SenderOptions desiredCapabilities(String[] desiredCapabilities) {
         this.desiredCapabilities = desiredCapabilities;
+        return this;
     }
 
     /**
      * @return the properties
      */
-    public Map<String, Object> getProperties() {
+    public Map<String, Object> properties() {
         return properties;
     }
 
     /**
      * @param properties the properties to set
+     *
+     * @return this {@link SenderOptions} instance.
      */
-    public void setProperties(Map<String, Object> properties) {
+    public SenderOptions properties(Map<String, Object> properties) {
         this.properties = properties;
+        return this;
     }
 
     /**
@@ -186,21 +199,21 @@ public class SenderOptions {
      */
     protected SenderOptions copyInto(SenderOptions other) {
         // TODO - Copy source and target options
-        other.setAutoSettle(autoSettle);
-        other.setLinkName(linkName);
-        other.setCloseTimeout(closeTimeout);
-        other.setOpenTimeout(openTimeout);
-        other.setSendTimeout(sendTimeout);
-        other.setRequestTimeout(requestTimeout);
+        other.autoSettle(autoSettle);
+        other.linkName(linkName);
+        other.closeTimeout(closeTimeout);
+        other.openTimeout(openTimeout);
+        other.sendTimeout(sendTimeout);
+        other.requestTimeout(requestTimeout);
 
         if (offeredCapabilities != null) {
-            other.setOfferedCapabilities(Arrays.copyOf(offeredCapabilities, offeredCapabilities.length));
+            other.offeredCapabilities(Arrays.copyOf(offeredCapabilities, offeredCapabilities.length));
         }
         if (desiredCapabilities != null) {
-            other.setDesiredCapabilities(Arrays.copyOf(desiredCapabilities, desiredCapabilities.length));
+            other.desiredCapabilities(Arrays.copyOf(desiredCapabilities, desiredCapabilities.length));
         }
         if (properties != null) {
-            other.setProperties(new HashMap<>(properties));
+            other.properties(new HashMap<>(properties));
         }
 
         return this;

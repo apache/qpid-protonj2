@@ -86,7 +86,7 @@ public class SenderTest extends AMQPerativeTestSupport {
         Sender sender = connection.openSender(getTestName()).openFuture().get(5, TimeUnit.SECONDS);
         assertNotNull(sender);
 
-        Message<String> message = Message.create("Hello World").setDurable(durable);
+        Message<String> message = Message.create("Hello World").durable(durable);
         sender.send(message);
 
         final QueueViewMBean queueView = getProxyToQueue(getTestName());

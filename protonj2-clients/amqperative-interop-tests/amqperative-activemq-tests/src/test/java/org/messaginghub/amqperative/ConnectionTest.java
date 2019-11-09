@@ -62,8 +62,8 @@ public class ConnectionTest extends AMQPerativeTestSupport {
         assertNotNull(client);
 
         ConnectionOptions connectionOpts = new ConnectionOptions();
-        connectionOpts.setUser("system");
-        connectionOpts.setPassword("manager");
+        connectionOpts.user("system");
+        connectionOpts.password("manager");
         connectionOpts.addAllowedMechanism("PLAIN");
 
         Connection connection = client.connect(brokerURI.getHost(), brokerURI.getPort(), connectionOpts);

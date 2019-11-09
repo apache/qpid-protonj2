@@ -66,7 +66,7 @@ public class TransportOptions implements Cloneable {
     /**
      * @return the currently set send buffer size in bytes.
      */
-    public int getSendBufferSize() {
+    public int sendBufferSize() {
         return sendBufferSize;
     }
 
@@ -81,7 +81,7 @@ public class TransportOptions implements Cloneable {
      *
      * @throws IllegalArgumentException if the value given is not in the valid range.
      */
-    public TransportOptions setSendBufferSize(int sendBufferSize) {
+    public TransportOptions sendBufferSize(int sendBufferSize) {
         if (sendBufferSize <= 0) {
             throw new IllegalArgumentException("The send buffer size must be > 0");
         }
@@ -93,7 +93,7 @@ public class TransportOptions implements Cloneable {
     /**
      * @return the currently configured receive buffer size in bytes.
      */
-    public int getReceiveBufferSize() {
+    public int receiveBufferSize() {
         return receiveBufferSize;
     }
 
@@ -108,7 +108,7 @@ public class TransportOptions implements Cloneable {
      *
      * @throws IllegalArgumentException if the value given is not in the valid range.
      */
-    public TransportOptions setReceiveBufferSize(int receiveBufferSize) {
+    public TransportOptions receiveBufferSize(int receiveBufferSize) {
         if (receiveBufferSize <= 0) {
             throw new IllegalArgumentException("The send buffer size must be > 0");
         }
@@ -120,7 +120,7 @@ public class TransportOptions implements Cloneable {
     /**
      * @return the currently configured traffic class value.
      */
-    public int getTrafficClass() {
+    public int trafficClass() {
         return trafficClass;
     }
 
@@ -135,7 +135,7 @@ public class TransportOptions implements Cloneable {
      *
      * @throws IllegalArgumentException if the value given is not in the valid range.
      */
-    public TransportOptions setTrafficClass(int trafficClass) {
+    public TransportOptions trafficClass(int trafficClass) {
         if (trafficClass < 0 || trafficClass > 255) {
             throw new IllegalArgumentException("Traffic class must be in the range [0..255]");
         }
@@ -144,74 +144,74 @@ public class TransportOptions implements Cloneable {
         return this;
     }
 
-    public int getSoTimeout() {
+    public int soTimeout() {
         return soTimeout;
     }
 
-    public TransportOptions setSoTimeout(int soTimeout) {
+    public TransportOptions soTimeout(int soTimeout) {
         this.soTimeout = soTimeout;
         return this;
     }
 
-    public boolean isTcpNoDelay() {
+    public boolean tcpNoDelay() {
         return tcpNoDelay;
     }
 
-    public TransportOptions setTcpNoDelay(boolean tcpNoDelay) {
+    public TransportOptions tcpNoDelay(boolean tcpNoDelay) {
         this.tcpNoDelay = tcpNoDelay;
         return this;
     }
 
-    public int getSoLinger() {
+    public int soLinger() {
         return soLinger;
     }
 
-    public TransportOptions setSoLinger(int soLinger) {
+    public TransportOptions soLinger(int soLinger) {
         this.soLinger = soLinger;
         return this;
     }
 
-    public boolean isTcpKeepAlive() {
+    public boolean tcpKeepAlive() {
         return tcpKeepAlive;
     }
 
-    public TransportOptions setTcpKeepAlive(boolean keepAlive) {
+    public TransportOptions tcpKeepAlive(boolean keepAlive) {
         this.tcpKeepAlive = keepAlive;
         return this;
     }
 
-    public int getConnectTimeout() {
+    public int connectTimeout() {
         return connectTimeout;
     }
 
-    public TransportOptions setConnectTimeout(int connectTimeout) {
+    public TransportOptions connectTimeout(int connectTimeout) {
         this.connectTimeout = connectTimeout;
         return this;
     }
 
-    public int getDefaultTcpPort() {
+    public int defaultTcpPort() {
         return defaultTcpPort;
     }
 
-    public TransportOptions setDefaultTcpPort(int defaultTcpPort) {
+    public TransportOptions defaultTcpPort(int defaultTcpPort) {
         this.defaultTcpPort = defaultTcpPort;
         return this;
     }
 
-    public String getLocalAddress() {
+    public String localAddress() {
         return localAddress;
     }
 
-    public TransportOptions setLocalAddress(String localAddress) {
+    public TransportOptions localAddress(String localAddress) {
         this.localAddress = localAddress;
         return this;
     }
 
-    public int getLocalPort() {
+    public int localPort() {
         return localPort;
     }
 
-    public TransportOptions setLocalPort(int localPort) {
+    public TransportOptions localPort(int localPort) {
         this.localPort = localPort;
         return this;
     }
@@ -219,7 +219,7 @@ public class TransportOptions implements Cloneable {
     /**
      * @return true if an native IO library can be used if available on this platform instead of the JDK IO.
      */
-    public boolean isAllowNativeIO() {
+    public boolean allowNativeIO() {
         return allowNativeIO;
     }
 
@@ -231,7 +231,7 @@ public class TransportOptions implements Cloneable {
      *
      * @return this options instance.
      */
-    public TransportOptions setAllowNativeIO(boolean allowNativeIO) {
+    public TransportOptions allowNativeIO(boolean allowNativeIO) {
         this.allowNativeIO = allowNativeIO;
         return this;
     }
@@ -239,7 +239,7 @@ public class TransportOptions implements Cloneable {
     /**
      * @return true if the transport should enable byte tracing
      */
-    public boolean isTraceBytes() {
+    public boolean traceBytes() {
         return traceBytes;
     }
 
@@ -251,30 +251,30 @@ public class TransportOptions implements Cloneable {
      *
      * @return this options instance.
      */
-    public TransportOptions setTraceBytes(boolean traceBytes) {
+    public TransportOptions traceBytes(boolean traceBytes) {
         this.traceBytes = traceBytes;
         return this;
     }
 
-    public boolean isUseWebSockets() {
+    public boolean useWebSockets() {
         return useWebSockets;
     }
 
-    public TransportOptions setUseWebSockets(boolean webSockets) {
+    public TransportOptions useWebSockets(boolean webSockets) {
         this.useWebSockets = webSockets;
         return this;
     }
 
-    public String getWebSocketPath() {
+    public String webSocketPath() {
         return webSocketPath;
     }
 
-    public TransportOptions setWebSocketPath(String webSocketPath) {
+    public TransportOptions webSocketPath(String webSocketPath) {
         this.webSocketPath = webSocketPath;
         return this;
     }
 
-    public Map<String, String> getWebSocketHeaders() {
+    public Map<String, String> webSocketHeaders() {
         return webSocketHeaders;
     }
 
@@ -283,12 +283,12 @@ public class TransportOptions implements Cloneable {
         return this;
     }
 
-    public TransportOptions setWebSocketMaxFrameSize(int maxFrameSize) {
+    public TransportOptions webSocketMaxFrameSize(int maxFrameSize) {
         this.webSocketMaxFrameSize = maxFrameSize;
         return this;
     }
 
-    public int getWebSocketMaxFrameSize() {
+    public int webSocketMaxFrameSize() {
         return webSocketMaxFrameSize;
     }
 
@@ -301,23 +301,23 @@ public class TransportOptions implements Cloneable {
      * @return the options instance that was copied into.
      */
     public TransportOptions copyInto(TransportOptions other) {
-        other.setConnectTimeout(getConnectTimeout());
-        other.setReceiveBufferSize(getReceiveBufferSize());
-        other.setSendBufferSize(getSendBufferSize());
-        other.setSoLinger(getSoLinger());
-        other.setSoTimeout(getSoTimeout());
-        other.setTcpKeepAlive(isTcpKeepAlive());
-        other.setTcpNoDelay(isTcpNoDelay());
-        other.setTrafficClass(getTrafficClass());
-        other.setDefaultTcpPort(getDefaultTcpPort());
-        other.setAllowNativeIO(isAllowNativeIO());
-        other.setTraceBytes(isTraceBytes());
-        other.setLocalAddress(getLocalAddress());
-        other.setLocalPort(getLocalPort());
-        other.setUseWebSockets(isUseWebSockets());
-        other.setWebSocketPath(getWebSocketPath());
-        other.getWebSocketHeaders().putAll(webSocketHeaders);
-        other.setWebSocketMaxFrameSize(getWebSocketMaxFrameSize());
+        other.connectTimeout(connectTimeout());
+        other.receiveBufferSize(receiveBufferSize());
+        other.sendBufferSize(sendBufferSize());
+        other.soLinger(soLinger());
+        other.soTimeout(soTimeout());
+        other.tcpKeepAlive(tcpKeepAlive());
+        other.tcpNoDelay(tcpNoDelay());
+        other.trafficClass(trafficClass());
+        other.defaultTcpPort(defaultTcpPort());
+        other.allowNativeIO(allowNativeIO());
+        other.traceBytes(traceBytes());
+        other.localAddress(localAddress());
+        other.localPort(localPort());
+        other.useWebSockets(useWebSockets());
+        other.webSocketPath(webSocketPath());
+        other.webSocketHeaders().putAll(webSocketHeaders);
+        other.webSocketMaxFrameSize(webSocketMaxFrameSize());
 
         return other;
     }

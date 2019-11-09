@@ -28,7 +28,7 @@ public interface Delivery {
     /**
      * @return the {@link Receiver} that originated this {@link Delivery}.
      */
-    Receiver getReceiver();
+    Receiver receiver();
 
     /**
      * Decode the {@link Delivery} payload and return an {@link Message} object.
@@ -39,7 +39,7 @@ public interface Delivery {
      *
      * @param <E> The type of message body that should be contained in the returned {@link Message}.
      */
-    <E> Message<E> getMessage() throws ClientException;
+    <E> Message<E> message() throws ClientException;
 
     // TODO: Expose means of reading delivery bytes possibly with support for partial reads/
     //       Need to define how we expose partial messages if at all and how to allow uses to
@@ -79,21 +79,21 @@ public interface Delivery {
     /**
      * @return true if the delivery has been locally settled.
      */
-    boolean isSettled();
+    boolean settled();
 
     /**
      * Gets the current local state for the delivery.
      *
      * @return the delivery state
      */
-    DeliveryState getState();
+    DeliveryState state();
 
     /**
      * Gets the current remote state for the delivery.
      *
      * @return the remote delivery state
      */
-    DeliveryState getRemoteState();
+    DeliveryState remoteState();
 
     // TODO: Hide this not so useful and probably to low level API in a new
     //       message interface or other construct for advanced AMQP bits
@@ -103,20 +103,20 @@ public interface Delivery {
      *
      * @return whether the delivery is remotely settled
      */
-    boolean isRemotelySettled();
+    boolean remotelySettled();
 
     /**
      * Gets the delivery tag for this delivery
      *
      * @return the tag
      */
-    DeliveryTag getTag();
+    DeliveryTag tag();
 
     /**
      * Gets the message format for the current delivery.
      *
      * @return the message format
      */
-    int getMessageFormat();
+    int messageFormat();
 
 }

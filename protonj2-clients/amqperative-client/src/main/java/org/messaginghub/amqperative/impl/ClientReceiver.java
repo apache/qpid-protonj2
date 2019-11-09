@@ -70,11 +70,11 @@ public class ClientReceiver implements Receiver {
         this.closeFuture = session.getFutureFactory().createFuture();
         this.protonReceiver = receiver;
 
-        if (options.getCreditWindow() > 0) {
-            protonReceiver.setCredit(options.getCreditWindow());
+        if (options.creditWindow() > 0) {
+            protonReceiver.setCredit(options.creditWindow());
         }
 
-        messageQueue = new FifoMessageQueue(options.getCreditWindow());
+        messageQueue = new FifoMessageQueue(options.creditWindow());
         messageQueue.start();
     }
 
@@ -107,7 +107,7 @@ public class ClientReceiver implements Receiver {
 
     @Override
     public Client client() {
-        return session.getClient();
+        return session.client();
     }
 
     @Override
@@ -168,8 +168,8 @@ public class ClientReceiver implements Receiver {
                 }
 
                 if (!closeFuture.isDone()) {
-                    final long timeout = options.getCloseTimeout() >= 0 ?
-                            options.getCloseTimeout() : options.getRequestTimeout();
+                    final long timeout = options.closeTimeout() >= 0 ?
+                            options.closeTimeout() : options.requestTimeout();
 
                     session.scheduleRequestTimeout(closeFuture, timeout,
                         () -> new ClientOperationTimedOutException("Timed out waiting for Receiver to close"));
@@ -190,8 +190,8 @@ public class ClientReceiver implements Receiver {
                 }
 
                 if (!closeFuture.isDone()) {
-                    final long timeout = options.getCloseTimeout() >= 0 ?
-                            options.getCloseTimeout() : options.getRequestTimeout();
+                    final long timeout = options.closeTimeout() >= 0 ?
+                            options.closeTimeout() : options.requestTimeout();
 
                     session.scheduleRequestTimeout(closeFuture, timeout,
                         () -> new ClientOperationTimedOutException("Timed out waiting for Receiver to detach"));

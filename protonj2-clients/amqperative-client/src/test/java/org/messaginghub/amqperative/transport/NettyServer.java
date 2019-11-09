@@ -109,11 +109,11 @@ public abstract class NettyServer implements AutoCloseable {
     }
 
     public boolean isSecureServer() {
-        return sslOptions.isSSLEnabled();
+        return sslOptions.sslEnabled();
     }
 
     public boolean isWebSocketServer() {
-        return options.isUseWebSockets();
+        return options.useWebSockets();
     }
 
     public String getWebSocketPath() {

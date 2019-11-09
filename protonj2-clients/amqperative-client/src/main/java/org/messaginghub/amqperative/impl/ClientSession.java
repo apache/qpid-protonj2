@@ -94,12 +94,12 @@ public class ClientSession implements Session {
     }
 
     @Override
-    public Client getClient() {
-        return connection.getClient();
+    public Client client() {
+        return connection.client();
     }
 
     @Override
-    public Connection getConnection() {
+    public Connection connection() {
         return connection;
     }
 
@@ -138,7 +138,7 @@ public class ClientSession implements Session {
             }
         });
 
-        return connection.request(createReceiver, options.getRequestTimeout(), TimeUnit.MILLISECONDS);
+        return connection.request(createReceiver, options.requestTimeout(), TimeUnit.MILLISECONDS);
     }
 
     @Override
@@ -170,7 +170,7 @@ public class ClientSession implements Session {
             }
         });
 
-        return connection.request(createReceiver, options.getRequestTimeout(), TimeUnit.MILLISECONDS);
+        return connection.request(createReceiver, options.requestTimeout(), TimeUnit.MILLISECONDS);
     }
 
     @Override
@@ -193,7 +193,7 @@ public class ClientSession implements Session {
             }
         });
 
-        return connection.request(createSender, options.getRequestTimeout(), TimeUnit.MILLISECONDS);
+        return connection.request(createSender, options.requestTimeout(), TimeUnit.MILLISECONDS);
     }
 
     @Override
@@ -215,7 +215,7 @@ public class ClientSession implements Session {
             }
         });
 
-        return connection.request(createSender, options.getRequestTimeout(), TimeUnit.MILLISECONDS);
+        return connection.request(createSender, options.requestTimeout(), TimeUnit.MILLISECONDS);
     }
 
     //----- Internal resource open APIs expected to be called from the connection event loop
@@ -340,9 +340,9 @@ public class ClientSession implements Session {
     }
 
     private void configureSession() {
-        protonSession.setOfferedCapabilities(ClientConversionSupport.toSymbolArray(options.getOfferedCapabilities()));
-        protonSession.setDesiredCapabilities(ClientConversionSupport.toSymbolArray(options.getDesiredCapabilities()));
-        protonSession.setProperties(ClientConversionSupport.toSymbolKeyedMap(options.getProperties()));
+        protonSession.setOfferedCapabilities(ClientConversionSupport.toSymbolArray(options.offeredCapabilities()));
+        protonSession.setDesiredCapabilities(ClientConversionSupport.toSymbolArray(options.desiredCapabilities()));
+        protonSession.setProperties(ClientConversionSupport.toSymbolKeyedMap(options.properties()));
     }
 
     private void checkClosed() throws IllegalStateException {

@@ -145,7 +145,7 @@ public class SslSupportTest extends AMQPerativeTestCase {
     public void testCreateSslContextJksStoreWithConfiguredContextProtocolJDK() throws Exception {
         SslOptions options = createJksSslOptions();
         String contextProtocol = "TLSv1.2";
-        options.setContextProtocol(contextProtocol);
+        options.contextProtocol(contextProtocol);
 
         SSLContext context = SslSupport.createJdkSslContext(options);
         assertNotNull(context);
@@ -160,7 +160,7 @@ public class SslSupportTest extends AMQPerativeTestCase {
 
         SslOptions options = createJksSslOptions();
         String contextProtocol = "TLSv1.2";
-        options.setContextProtocol(contextProtocol);
+        options.contextProtocol(contextProtocol);
 
         SslContext context = SslSupport.createOpenSslContext(options);
         assertNotNull(context);
@@ -172,7 +172,7 @@ public class SslSupportTest extends AMQPerativeTestCase {
     @Test(expected = UnrecoverableKeyException.class)
     public void testCreateSslContextNoKeyStorePasswordJDK() throws Exception {
         SslOptions options = createJksSslOptions();
-        options.setKeyStorePassword(null);
+        options.keyStorePassword(null);
         SslSupport.createJdkSslContext(options);
     }
 
@@ -182,14 +182,14 @@ public class SslSupportTest extends AMQPerativeTestCase {
         assumeTrue(OpenSsl.supportsKeyManagerFactory());
 
         SslOptions options = createJksSslOptions();
-        options.setKeyStorePassword(null);
+        options.keyStorePassword(null);
         SslSupport.createOpenSslContext(options);
     }
 
     @Test(expected = IOException.class)
     public void testCreateSslContextWrongKeyStorePasswordJDK() throws Exception {
         SslOptions options = createJksSslOptions();
-        options.setKeyStorePassword("wrong");
+        options.keyStorePassword("wrong");
         SslSupport.createJdkSslContext(options);
     }
 
@@ -199,14 +199,14 @@ public class SslSupportTest extends AMQPerativeTestCase {
         assumeTrue(OpenSsl.supportsKeyManagerFactory());
 
         SslOptions options = createJksSslOptions();
-        options.setKeyStorePassword("wrong");
+        options.keyStorePassword("wrong");
         SslSupport.createOpenSslContext(options);
     }
 
     @Test(expected = IOException.class)
     public void testCreateSslContextBadPathToKeyStoreJDK() throws Exception {
         SslOptions options = createJksSslOptions();
-        options.setKeyStoreLocation(CLIENT_JKS_KEYSTORE + ".bad");
+        options.keyStoreLocation(CLIENT_JKS_KEYSTORE + ".bad");
         SslSupport.createJdkSslContext(options);
     }
 
@@ -216,14 +216,14 @@ public class SslSupportTest extends AMQPerativeTestCase {
         assumeTrue(OpenSsl.supportsKeyManagerFactory());
 
         SslOptions options = createJksSslOptions();
-        options.setKeyStoreLocation(CLIENT_JKS_KEYSTORE + ".bad");
+        options.keyStoreLocation(CLIENT_JKS_KEYSTORE + ".bad");
         SslSupport.createOpenSslContext(options);
     }
 
     @Test(expected = IOException.class)
     public void testCreateSslContextWrongTrustStorePasswordJDK() throws Exception {
         SslOptions options = createJksSslOptions();
-        options.setTrustStorePassword("wrong");
+        options.trustStorePassword("wrong");
         SslSupport.createJdkSslContext(options);
     }
 
@@ -233,14 +233,14 @@ public class SslSupportTest extends AMQPerativeTestCase {
         assumeTrue(OpenSsl.supportsKeyManagerFactory());
 
         SslOptions options = createJksSslOptions();
-        options.setTrustStorePassword("wrong");
+        options.trustStorePassword("wrong");
         SslSupport.createOpenSslContext(options);
     }
 
     @Test(expected = IOException.class)
     public void testCreateSslContextBadPathToTrustStoreJDK() throws Exception {
         SslOptions options = createJksSslOptions();
-        options.setTrustStoreLocation(CLIENT_JKS_TRUSTSTORE + ".bad");
+        options.trustStoreLocation(CLIENT_JKS_TRUSTSTORE + ".bad");
         SslSupport.createJdkSslContext(options);
     }
 
@@ -250,7 +250,7 @@ public class SslSupportTest extends AMQPerativeTestCase {
         assumeTrue(OpenSsl.supportsKeyManagerFactory());
 
         SslOptions options = createJksSslOptions();
-        options.setTrustStoreLocation(CLIENT_JKS_TRUSTSTORE + ".bad");
+        options.trustStoreLocation(CLIENT_JKS_TRUSTSTORE + ".bad");
         SslSupport.createOpenSslContext(options);
     }
 
@@ -301,7 +301,7 @@ public class SslSupportTest extends AMQPerativeTestCase {
     @Test(expected = IOException.class)
     public void testCreateSslContextIncorrectStoreTypeJDK() throws Exception {
         SslOptions options = createPkcs12SslOptions();
-        options.setStoreType(KEYSTORE_JCEKS_TYPE);
+        options.storeType(KEYSTORE_JCEKS_TYPE);
         SslSupport.createJdkSslContext(options);
     }
 
@@ -311,7 +311,7 @@ public class SslSupportTest extends AMQPerativeTestCase {
         assumeTrue(OpenSsl.supportsKeyManagerFactory());
 
         SslOptions options = createPkcs12SslOptions();
-        options.setStoreType(KEYSTORE_JCEKS_TYPE);
+        options.storeType(KEYSTORE_JCEKS_TYPE);
         SslSupport.createOpenSslContext(options);
     }
 
@@ -446,7 +446,7 @@ public class SslSupportTest extends AMQPerativeTestCase {
         // Pull out one to disable specifically
         String[] disabledProtocol = new String[] { protocols[protocols.length - 1] };
         String[] trimmedProtocols = Arrays.copyOf(protocols, protocols.length - 1);
-        options.setDisabledProtocols(disabledProtocol);
+        options.disabledProtocols(disabledProtocol);
         SSLContext context = SslSupport.createJdkSslContext(options);
         SSLEngine engine = SslSupport.createJdkSslEngine(null, -1, context, options);
 
@@ -469,7 +469,7 @@ public class SslSupportTest extends AMQPerativeTestCase {
         // Pull out one to disable specifically
         String[] disabledProtocol = new String[] { protocols[protocols.length - 1] };
         String[] trimmedProtocols = Arrays.copyOf(protocols, protocols.length - 1);
-        options.setDisabledProtocols(disabledProtocol);
+        options.disabledProtocols(disabledProtocol);
         SslContext context = SslSupport.createOpenSslContext(options);
         SSLEngine engine = SslSupport.createOpenSslEngine(PooledByteBufAllocator.DEFAULT, null, -1, context, options);
 
@@ -492,8 +492,8 @@ public class SslSupportTest extends AMQPerativeTestCase {
         String[] enabledProtocols = new String[] { protocol1, protocol2 };
         String[] disabledProtocol = new String[] { protocol1 };
         String[] remainingProtocols = new String[] { protocol2 };
-        options.setEnabledProtocols(enabledProtocols);
-        options.setDisabledProtocols(disabledProtocol);
+        options.enabledProtocols(enabledProtocols);
+        options.disabledProtocols(disabledProtocol);
         SSLContext context = SslSupport.createJdkSslContext(options);
         SSLEngine engine = SslSupport.createJdkSslEngine(null, -1, context, options);
 
@@ -519,8 +519,8 @@ public class SslSupportTest extends AMQPerativeTestCase {
         String[] enabledProtocols = new String[] { protocol1, protocol2 };
         String[] disabledProtocol = new String[] { protocol1 };
         String[] remainingProtocols = new String[] { protocol2 };
-        options.setEnabledProtocols(enabledProtocols);
-        options.setDisabledProtocols(disabledProtocol);
+        options.enabledProtocols(enabledProtocols);
+        options.disabledProtocols(disabledProtocol);
         SslContext context = SslSupport.createOpenSslContext(options);
         SSLEngine engine = SslSupport.createOpenSslEngine(PooledByteBufAllocator.DEFAULT, null, -1, context, options);
 
@@ -549,7 +549,7 @@ public class SslSupportTest extends AMQPerativeTestCase {
         // Pull out one to enable specifically
         String cipher = ciphers[0];
         String[] enabledCipher = new String[] { cipher };
-        options.setEnabledCipherSuites(enabledCipher);
+        options.enabledCipherSuites(enabledCipher);
         SSLContext context = SslSupport.createJdkSslContext(options);
         SSLEngine engine = SslSupport.createJdkSslEngine(null, -1, context, options);
 
@@ -572,7 +572,7 @@ public class SslSupportTest extends AMQPerativeTestCase {
         // Pull out one to enable specifically
         String cipher = ciphers[0];
         String[] enabledCipher = new String[] { cipher };
-        options.setEnabledCipherSuites(enabledCipher);
+        options.enabledCipherSuites(enabledCipher);
         SslContext context = SslSupport.createOpenSslContext(options);
         SSLEngine engine = SslSupport.createOpenSslEngine(PooledByteBufAllocator.DEFAULT, null, -1, context, options);
 
@@ -592,7 +592,7 @@ public class SslSupportTest extends AMQPerativeTestCase {
         // Pull out one to disable specifically
         String[] disabledCipher = new String[] { ciphers[ciphers.length - 1] };
         String[] trimmedCiphers = Arrays.copyOf(ciphers, ciphers.length - 1);
-        options.setDisabledCipherSuites(disabledCipher);
+        options.disabledCipherSuites(disabledCipher);
         SSLContext context = SslSupport.createJdkSslContext(options);
         SSLEngine engine = SslSupport.createJdkSslEngine(null, -1, context, options);
 
@@ -615,7 +615,7 @@ public class SslSupportTest extends AMQPerativeTestCase {
         // Pull out one to disable specifically
         String[] disabledCipher = new String[] { ciphers[ciphers.length - 1] };
         String[] trimmedCiphers = Arrays.copyOf(ciphers, ciphers.length - 1);
-        options.setDisabledCipherSuites(disabledCipher);
+        options.disabledCipherSuites(disabledCipher);
         SslContext context = SslSupport.createOpenSslContext(options);
         SSLEngine engine = SslSupport.createOpenSslEngine(PooledByteBufAllocator.DEFAULT, null, -1, context, options);
 
@@ -638,8 +638,8 @@ public class SslSupportTest extends AMQPerativeTestCase {
         String[] enabledCiphers = new String[] { cipher1, cipher2 };
         String[] disabledCipher = new String[] { cipher1 };
         String[] remainingCipher = new String[] { cipher2 };
-        options.setEnabledCipherSuites(enabledCiphers);
-        options.setDisabledCipherSuites(disabledCipher);
+        options.enabledCipherSuites(enabledCiphers);
+        options.disabledCipherSuites(disabledCipher);
         SSLContext context = SslSupport.createJdkSslContext(options);
         SSLEngine engine = SslSupport.createJdkSslEngine(null, -1, context, options);
 
@@ -665,8 +665,8 @@ public class SslSupportTest extends AMQPerativeTestCase {
         String[] enabledCiphers = new String[] { cipher1, cipher2 };
         String[] disabledCipher = new String[] { cipher1 };
         String[] remainingCipher = new String[] { cipher2 };
-        options.setEnabledCipherSuites(enabledCiphers);
-        options.setDisabledCipherSuites(disabledCipher);
+        options.enabledCipherSuites(enabledCiphers);
+        options.disabledCipherSuites(disabledCipher);
         SslContext context = SslSupport.createOpenSslContext(options);
         SSLEngine engine = SslSupport.createOpenSslEngine(PooledByteBufAllocator.DEFAULT, null, -1, context, options);
 
@@ -740,7 +740,7 @@ public class SslSupportTest extends AMQPerativeTestCase {
     @Test
     public void testCreateSslEngineWithVerifyHostJDK() throws Exception {
         SslOptions options = createJksSslOptions();
-        options.setVerifyHost(true);
+        options.verifyHost(true);
 
         SSLContext context = SslSupport.createJdkSslContext(options);
         assertNotNull(context);
@@ -758,7 +758,7 @@ public class SslSupportTest extends AMQPerativeTestCase {
         assumeTrue(OpenSsl.supportsHostnameValidation());
 
         SslOptions options = createJksSslOptions();
-        options.setVerifyHost(true);
+        options.verifyHost(true);
 
         SslContext context = SslSupport.createOpenSslContext(options);
         assertNotNull(context);
@@ -772,7 +772,7 @@ public class SslSupportTest extends AMQPerativeTestCase {
     @Test
     public void testCreateSslEngineWithoutVerifyHostJDK() throws Exception {
         SslOptions options = createJksSslOptions();
-        options.setVerifyHost(false);
+        options.verifyHost(false);
 
         SSLContext context = SslSupport.createJdkSslContext(options);
         assertNotNull(context);
@@ -790,7 +790,7 @@ public class SslSupportTest extends AMQPerativeTestCase {
         assumeTrue(OpenSsl.supportsHostnameValidation());
 
         SslOptions options = createJksSslOptions();
-        options.setVerifyHost(false);
+        options.verifyHost(false);
 
         SslContext context = SslSupport.createOpenSslContext(options);
         assertNotNull(context);
@@ -804,7 +804,7 @@ public class SslSupportTest extends AMQPerativeTestCase {
     @Test
     public void testCreateSslContextWithKeyAliasWhichDoesntExist() throws Exception {
         SslOptions options = createJksSslOptions();
-        options.setKeyAlias(ALIAS_DOES_NOT_EXIST);
+        options.keyAlias(ALIAS_DOES_NOT_EXIST);
 
         try {
             SslSupport.createJdkSslContext(options);
@@ -817,7 +817,7 @@ public class SslSupportTest extends AMQPerativeTestCase {
     @Test
     public void testCreateSslContextWithKeyAliasWhichRepresentsNonKeyEntry() throws Exception {
         SslOptions options = createJksSslOptions();
-        options.setKeyAlias(ALIAS_CA_CERT);
+        options.keyAlias(ALIAS_CA_CERT);
 
         try {
             SslSupport.createJdkSslContext(options);
@@ -833,10 +833,10 @@ public class SslSupportTest extends AMQPerativeTestCase {
         assumeTrue(OpenSsl.supportsKeyManagerFactory());
 
         SslOptions options = new SslOptions();
-        options.setAllowNativeSSL(false);
+        options.allowNativeSSL(false);
         assertFalse(SslSupport.isOpenSSLPossible(options));
 
-        options.setAllowNativeSSL(true);
+        options.allowNativeSSL(true);
         assertTrue(SslSupport.isOpenSSLPossible(options));
     }
 
@@ -847,12 +847,12 @@ public class SslSupportTest extends AMQPerativeTestCase {
         assumeTrue(OpenSsl.supportsHostnameValidation());
 
         SslOptions options = new SslOptions();
-        options.setAllowNativeSSL(true);
+        options.allowNativeSSL(true);
 
-        options.setVerifyHost(false);
+        options.verifyHost(false);
         assertTrue(SslSupport.isOpenSSLPossible(options));
 
-        options.setVerifyHost(true);
+        options.verifyHost(true);
         assertTrue(SslSupport.isOpenSSLPossible(options));
     }
 
@@ -863,8 +863,8 @@ public class SslSupportTest extends AMQPerativeTestCase {
         assumeTrue(OpenSsl.supportsHostnameValidation());
 
         SslOptions options = new SslOptions();
-        options.setAllowNativeSSL(true);
-        options.setKeyAlias("alias");
+        options.allowNativeSSL(true);
+        options.keyAlias("alias");
 
         assertFalse(SslSupport.isOpenSSLPossible(options));
     }
@@ -875,8 +875,8 @@ public class SslSupportTest extends AMQPerativeTestCase {
         assumeTrue(OpenSsl.supportsKeyManagerFactory());
 
         SslOptions options = new SslOptions();
-        options.setSSLEnabled(true);
-        options.setAllowNativeSSL(false);
+        options.sslEnabled(true);
+        options.allowNativeSSL(false);
 
         SslHandler handler = SslSupport.createSslHandler(null, null, -1, options);
         assertNotNull(handler);
@@ -889,7 +889,7 @@ public class SslSupportTest extends AMQPerativeTestCase {
         assumeTrue(OpenSsl.supportsKeyManagerFactory());
 
         SslOptions options = new SslOptions();
-        options.setAllowNativeSSL(true);
+        options.allowNativeSSL(true);
 
         SslHandler handler = SslSupport.createSslHandler(PooledByteBufAllocator.DEFAULT, null, -1, options);
         assertNotNull(handler);
@@ -902,7 +902,7 @@ public class SslSupportTest extends AMQPerativeTestCase {
         assumeTrue(OpenSsl.supportsKeyManagerFactory());
 
         SslOptions options = new SslOptions();
-        options.setAllowNativeSSL(true);
+        options.allowNativeSSL(true);
 
         SslContext context = SslSupport.createOpenSslContext(options);
         try {
@@ -918,14 +918,14 @@ public class SslSupportTest extends AMQPerativeTestCase {
     private SslOptions createJksSslOptions(String[] enabledProtocols) {
         SslOptions options = new SslOptions();
 
-        options.setSSLEnabled(true);
-        options.setKeyStoreLocation(CLIENT_JKS_KEYSTORE);
-        options.setTrustStoreLocation(CLIENT_JKS_TRUSTSTORE);
-        options.setStoreType(KEYSTORE_JKS_TYPE);
-        options.setKeyStorePassword(PASSWORD);
-        options.setTrustStorePassword(PASSWORD);
+        options.sslEnabled(true);
+        options.keyStoreLocation(CLIENT_JKS_KEYSTORE);
+        options.trustStoreLocation(CLIENT_JKS_TRUSTSTORE);
+        options.storeType(KEYSTORE_JKS_TYPE);
+        options.keyStorePassword(PASSWORD);
+        options.trustStorePassword(PASSWORD);
         if (enabledProtocols != null) {
-            options.setEnabledProtocols(enabledProtocols);
+            options.enabledProtocols(enabledProtocols);
         }
 
         return options;
@@ -938,14 +938,14 @@ public class SslSupportTest extends AMQPerativeTestCase {
     private SslOptions createJceksSslOptions(String[] enabledProtocols) {
         SslOptions options = new SslOptions();
 
-        options.setSSLEnabled(true);
-        options.setKeyStoreLocation(CLIENT_JCEKS_KEYSTORE);
-        options.setTrustStoreLocation(CLIENT_JCEKS_TRUSTSTORE);
-        options.setStoreType(KEYSTORE_JCEKS_TYPE);
-        options.setKeyStorePassword(PASSWORD);
-        options.setTrustStorePassword(PASSWORD);
+        options.sslEnabled(true);
+        options.keyStoreLocation(CLIENT_JCEKS_KEYSTORE);
+        options.trustStoreLocation(CLIENT_JCEKS_TRUSTSTORE);
+        options.storeType(KEYSTORE_JCEKS_TYPE);
+        options.keyStorePassword(PASSWORD);
+        options.trustStorePassword(PASSWORD);
         if (enabledProtocols != null) {
-            options.setEnabledProtocols(enabledProtocols);
+            options.enabledProtocols(enabledProtocols);
         }
 
         return options;
@@ -958,13 +958,13 @@ public class SslSupportTest extends AMQPerativeTestCase {
     private SslOptions createPkcs12SslOptions(String[] enabledProtocols) {
         SslOptions options = new SslOptions();
 
-        options.setKeyStoreLocation(CLIENT_PKCS12_KEYSTORE);
-        options.setTrustStoreLocation(CLIENT_PKCS12_TRUSTSTORE);
-        options.setStoreType(KEYSTORE_PKCS12_TYPE);
-        options.setKeyStorePassword(PASSWORD);
-        options.setTrustStorePassword(PASSWORD);
+        options.keyStoreLocation(CLIENT_PKCS12_KEYSTORE);
+        options.trustStoreLocation(CLIENT_PKCS12_TRUSTSTORE);
+        options.storeType(KEYSTORE_PKCS12_TYPE);
+        options.keyStorePassword(PASSWORD);
+        options.trustStorePassword(PASSWORD);
         if (enabledProtocols != null) {
-            options.setEnabledProtocols(enabledProtocols);
+            options.enabledProtocols(enabledProtocols);
         }
 
         return options;

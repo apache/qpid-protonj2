@@ -640,7 +640,7 @@ public class TcpTransportTest extends AMQPerativeTestCase {
             int port = server.getServerPort();
 
             TransportOptions options = createTransportOptions();
-            options.setAllowNativeIO(useEpoll);
+            options.allowNativeIO(useEpoll);
             Transport transport = createTransport(HOSTNAME, port, testListener, options, createSSLOptions());
             try {
                 transport.connect(null);
@@ -709,7 +709,7 @@ public class TcpTransportTest extends AMQPerativeTestCase {
             int port = server.getServerPort();
 
             TransportOptions options = createTransportOptions();
-            options.setAllowNativeIO(true);
+            options.allowNativeIO(true);
             Transport transport = createTransport(HOSTNAME, port, testListener, options, createSSLOptions());
             try {
                 transport.connect(null);
@@ -770,7 +770,7 @@ public class TcpTransportTest extends AMQPerativeTestCase {
     }
 
     protected SslOptions createSSLOptions() {
-        return new SslOptions().setSSLEnabled(false);
+        return new SslOptions().sslEnabled(false);
     }
 
     protected TransportOptions createServerTransportOptions() {
@@ -778,7 +778,7 @@ public class TcpTransportTest extends AMQPerativeTestCase {
     }
 
     protected SslOptions createServerSSLOptions() {
-        return new SslOptions().setSSLEnabled(false);
+        return new SslOptions().sslEnabled(false);
     }
 
     protected void logTransportErrors() {

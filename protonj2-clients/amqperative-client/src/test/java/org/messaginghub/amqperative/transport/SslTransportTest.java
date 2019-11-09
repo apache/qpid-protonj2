@@ -91,8 +91,8 @@ public class SslTransportTest extends TcpTransportTest {
 
             SslOptions sslOptions = createSSLOptions();
 
-            sslOptions.setTrustStoreLocation(OTHER_CA_TRUSTSTORE);
-            sslOptions.setTrustStorePassword(PASSWORD);
+            sslOptions.trustStoreLocation(OTHER_CA_TRUSTSTORE);
+            sslOptions.trustStorePassword(PASSWORD);
 
             Transport transport = createTransport(HOSTNAME, port, testListener, createTransportOptions(), sslOptions);
             try {
@@ -175,8 +175,8 @@ public class SslTransportTest extends TcpTransportTest {
             final int port = server.getServerPort();
 
             SslOptions sslOptions = createSSLOptions();
-            sslOptions.setKeyStoreLocation(CLIENT_MULTI_KEYSTORE);
-            sslOptions.setKeyAlias(alias);
+            sslOptions.keyStoreLocation(CLIENT_MULTI_KEYSTORE);
+            sslOptions.keyAlias(alias);
 
             Transport transport = createTransport(HOSTNAME, port, testListener, createTransportOptions(), sslOptions);
             try {
@@ -218,7 +218,7 @@ public class SslTransportTest extends TcpTransportTest {
 
     private void doConnectToServerVerifyHostTestImpl(boolean verifyHost) throws Exception, URISyntaxException, IOException, InterruptedException {
         SslOptions serverOptions = createServerSSLOptions();
-        serverOptions.setKeyStoreLocation(SERVER_WRONG_HOST_KEYSTORE);
+        serverOptions.keyStoreLocation(SERVER_WRONG_HOST_KEYSTORE);
 
         try (NettyEchoServer server = createEchoServer(serverOptions)) {
             server.start();
@@ -228,9 +228,9 @@ public class SslTransportTest extends TcpTransportTest {
             SslOptions clientOptions = createSSLOptionsIsVerify(verifyHost);
 
             if (verifyHost) {
-                assertTrue("Expected verifyHost to be true", clientOptions.isVerifyHost());
+                assertTrue("Expected verifyHost to be true", clientOptions.verifyHost());
             } else {
-                assertFalse("Expected verifyHost to be false", clientOptions.isVerifyHost());
+                assertFalse("Expected verifyHost to be false", clientOptions.verifyHost());
             }
 
             Transport transport = createTransport(HOSTNAME, port, testListener, createTransportOptions(), clientOptions);
@@ -266,13 +266,13 @@ public class SslTransportTest extends TcpTransportTest {
     protected SslOptions createSSLOptionsIsVerify(boolean verifyHost) {
         SslOptions options = new SslOptions();
 
-        options.setSSLEnabled(true);
-        options.setKeyStoreLocation(CLIENT_KEYSTORE);
-        options.setKeyStorePassword(PASSWORD);
-        options.setTrustStoreLocation(CLIENT_TRUSTSTORE);
-        options.setTrustStorePassword(PASSWORD);
-        options.setStoreType(KEYSTORE_TYPE);
-        options.setVerifyHost(verifyHost);
+        options.sslEnabled(true);
+        options.keyStoreLocation(CLIENT_KEYSTORE);
+        options.keyStorePassword(PASSWORD);
+        options.trustStoreLocation(CLIENT_TRUSTSTORE);
+        options.trustStorePassword(PASSWORD);
+        options.storeType(KEYSTORE_TYPE);
+        options.verifyHost(verifyHost);
 
         return options;
     }
@@ -280,9 +280,9 @@ public class SslTransportTest extends TcpTransportTest {
     protected SslOptions createSSLOptionsWithoutTrustStore(boolean trustAll) {
         SslOptions options = new SslOptions();
 
-        options.setSSLEnabled(true);
-        options.setStoreType(KEYSTORE_TYPE);
-        options.setTrustAll(trustAll);
+        options.sslEnabled(true);
+        options.storeType(KEYSTORE_TYPE);
+        options.trustAll(trustAll);
 
         return options;
     }
@@ -292,13 +292,13 @@ public class SslTransportTest extends TcpTransportTest {
         SslOptions options = new SslOptions();
 
         // Run the server in JDK mode for now to validate cross compatibility
-        options.setSSLEnabled(true);
-        options.setKeyStoreLocation(SERVER_KEYSTORE);
-        options.setKeyStorePassword(PASSWORD);
-        options.setTrustStoreLocation(SERVER_TRUSTSTORE);
-        options.setTrustStorePassword(PASSWORD);
-        options.setStoreType(KEYSTORE_TYPE);
-        options.setVerifyHost(false);
+        options.sslEnabled(true);
+        options.keyStoreLocation(SERVER_KEYSTORE);
+        options.keyStorePassword(PASSWORD);
+        options.trustStoreLocation(SERVER_TRUSTSTORE);
+        options.trustStorePassword(PASSWORD);
+        options.storeType(KEYSTORE_TYPE);
+        options.verifyHost(false);
 
         return options;
     }

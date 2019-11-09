@@ -82,7 +82,7 @@ public interface Message<E> {
     /**
      * @return true if the Message is marked as being durable
      */
-    boolean isDurable();
+    boolean durable();
 
     /**
      * Controls if the message is marked as durable when sent.
@@ -92,12 +92,12 @@ public interface Message<E> {
      *
      * @return this message for chaining.
      */
-    Message<E> setDurable(boolean durable);
+    Message<E> durable(boolean durable);
 
     /**
      * @return the currently configured priority or the default if none set.
      */
-    byte getPriority();
+    byte priority();
 
     /**
      * Sets the relative message priority.  Higher numbers indicate higher priority messages.
@@ -108,73 +108,73 @@ public interface Message<E> {
      *
      * @return this message instance.
      */
-    Message<E> setPriority(byte priority);
+    Message<E> priority(byte priority);
 
-    long getTimeToLive();
+    long timeToLive();
 
-    Message<E> setTimeToLive(long timeToLive);
+    Message<E> timeToLive(long timeToLive);
 
-    boolean getFirstAcquirer();
+    boolean firstAcquirer();
 
-    Message<E> setFirstAcquirer(boolean firstAcquirer);
+    Message<E> firstAcquirer(boolean firstAcquirer);
 
-    long getDeliveryCount();
+    long deliveryCount();
 
-    Message<E> setDeliveryCount(long deliveryCount);
+    Message<E> deliveryCount(long deliveryCount);
 
     //----- AMQP Properties Section
 
-    Object getMessageId();
+    Object messageId();
 
-    Message<E> setMessageId(Object messageId);
+    Message<E> messageId(Object messageId);
 
-    byte[] getUserId();
+    byte[] userId();
 
-    Message<E> setUserId(byte[] userId);
+    Message<E> userId(byte[] userId);
 
-    String getTo();
+    String to();
 
-    Message<E> setTo(String to);
+    Message<E> to(String to);
 
-    String getSubject();
+    String subject();
 
-    Message<E> setSubject(String subject);
+    Message<E> subject(String subject);
 
-    String getReplyTo();
+    String replyTo();
 
-    Message<E> setReplyTo(String replyTo);
+    Message<E> replyTo(String replyTo);
 
-    Object getCorrelationId();
+    Object correlationId();
 
-    Message<E> setCorrelationId(Object correlationId);
+    Message<E> correlationId(Object correlationId);
 
-    String getContentType();
+    String contentType();
 
-    Message<E> setContentType(String contentType);
+    Message<E> contentType(String contentType);
 
-    String getContentEncoding();
+    String contentEncoding();
 
-    Message<?> setContentEncoding(String contentEncoding);
+    Message<?> contentEncoding(String contentEncoding);
 
-    long getAbsoluteExpiryTime();
+    long absoluteExpiryTime();
 
-    Message<E> setAbsoluteExpiryTime(long expiryTime);
+    Message<E> absoluteExpiryTime(long expiryTime);
 
-    long getCreationTime();
+    long creationTime();
 
-    Message<E> setCreationTime(long createTime);
+    Message<E> creationTime(long createTime);
 
-    String getGroupId();
+    String groupId();
 
-    Message<E> setGroupId(String groupId);
+    Message<E> groupId(String groupId);
 
-    int getGroupSequence();
+    int groupSequence();
 
-    Message<E> setGroupSequence(int groupSequence);
+    Message<E> groupSequence(int groupSequence);
 
-    String getReplyToGroupId();
+    String replyToGroupId();
 
-    Message<E> setReplyToGroupId(String replyToGroupId);
+    Message<E> replyToGroupId(String replyToGroupId);
 
     //----- AMQP Body Section
 
@@ -184,6 +184,6 @@ public interface Message<E> {
      *
      * @return the message body or null if none present.
      */
-    E getBody();
+    E body();
 
 }

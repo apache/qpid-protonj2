@@ -78,7 +78,7 @@ public final class TransportBuilder {
         }
 
         if (port < 0) {
-            port = sslOptions.isSSLEnabled() ? sslOptions.getDefaultSslPort() : options.getDefaultTcpPort();
+            port = sslOptions.sslEnabled() ? sslOptions.defaultSslPort() : options.defaultTcpPort();
         }
 
         if (listener == null) {
@@ -87,7 +87,7 @@ public final class TransportBuilder {
 
         final TcpTransport transport;
 
-        if (options.isUseWebSockets()) {
+        if (options.useWebSockets()) {
             transport = new WebSocketTransport(host, port, options, sslOptions);
         } else {
             transport = new TcpTransport(host, port, options, sslOptions);

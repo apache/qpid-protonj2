@@ -150,7 +150,7 @@ public class ReceiverTest extends AMQPerativeTestCase {
 
             Client container = Client.create();
             ConnectionOptions options = new ConnectionOptions();
-            options.setCloseTimeout(5);
+            options.closeTimeout(5);
             Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), options);
 
             connection.openFuture().get(10, TimeUnit.SECONDS);

@@ -66,8 +66,8 @@ public class Samples {
         Connection connection2 = client.connect(brokerHost); // host only (port defaulted [maybe configurable at client?])
 
         ConnectionOptions connectionOptions = new ConnectionOptions();
-        connectionOptions.setUser("myUsername");
-        connectionOptions.setPassword("myPassword");
+        connectionOptions.user("myUsername");
+        connectionOptions.password("myPassword");
         Connection connection3 = client.connect(brokerHost, brokerPort, connectionOptions); // host + port + options
 
         Connection connection4 = client.connect(brokerHost, connectionOptions); // host + options
@@ -79,12 +79,12 @@ public class Samples {
 
         SenderOptions senderOptions = new SenderOptions();
         senderOptions.targetOptions().capabilities(new String[]{"topic"});
-        senderOptions.setSendTimeout(30_000);
+        senderOptions.sendTimeout(30_000);
         Sender sender2 = connection.openSender(address, senderOptions); // address and options
 
         // =============== Send a message ===========
 
-        Message<String> message = Message.create("Hello World").setDurable(true);
+        Message<String> message = Message.create("Hello World").durable(true);
         Tracker tracker = sender.send(message);
 
         tracker.settle();
@@ -96,7 +96,7 @@ public class Samples {
 
         ReceiverOptions receiverOptions = new ReceiverOptions();
         //receiverOptions.setCreditWindow(10);
-        receiverOptions.setLinkName("myLinkName");
+        receiverOptions.linkName("myLinkName");
         receiverOptions.sourceOptions().durabilityMode(DurabilityMode.CONFIGURATION);
         receiverOptions.sourceOptions().expiryPolicy(ExpiryPolicy.NEVER);
         receiverOptions.sourceOptions().capabilities(new String[]{"topic"});
@@ -108,9 +108,9 @@ public class Samples {
 
         Delivery delivery = receiver.receive(); // Waits forever
         if (delivery != null) {
-            Message<String> received = delivery.getMessage();
+            Message<String> received = delivery.message();
 
-            System.out.println(received.getBody());
+            System.out.println(received.body());
         }
 
         Delivery delivery2 = receiver.receive(5_000); // Waits with timeout
@@ -119,8 +119,8 @@ public class Samples {
 
         receiver.onMessage(delivery4 -> {
             try {
-                Message<String> received = delivery.getMessage();
-                System.out.println(received.getBody());
+                Message<String> received = delivery.message();
+                System.out.println(received.body());
             } catch (ClientException e) {
                 // TODO Make a RuntimeException
                 e.printStackTrace();

@@ -35,11 +35,11 @@ public class SecureWebSocketTransportTest extends SslTransportTest {
 
     @Override
     protected TransportOptions createTransportOptions() {
-        return new TransportOptions().setUseWebSockets(true);
+        return new TransportOptions().useWebSockets(true);
     }
 
     @Override
     protected TransportOptions createServerTransportOptions() {
-        return new TransportOptions().setUseWebSockets(true);
+        return new TransportOptions().useWebSockets(true);
     }
 }

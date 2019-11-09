@@ -67,16 +67,16 @@ public class SslSupport {
     public static boolean isOpenSSLPossible(SslOptions options) {
         boolean result = false;
 
-        if (options.isAllowNativeSSL()) {
+        if (options.allowNativeSSL()) {
             if (!OpenSsl.isAvailable()) {
                 LOG.debug("OpenSSL could not be enabled because a suitable implementation could not be found.", OpenSsl.unavailabilityCause());
-            } else if (options.getSslContextOverride() != null) {
+            } else if (options.sslContextOverride() != null) {
                 LOG.debug("OpenSSL could not be enabled due to user SSLContext being supplied.");
             } else if (!OpenSsl.supportsKeyManagerFactory()) {
                 LOG.debug("OpenSSL could not be enabled because the version provided does not allow a KeyManagerFactory to be used.");
-            } else if (options.isVerifyHost() && !OpenSsl.supportsHostnameValidation()) {
+            } else if (options.verifyHost() && !OpenSsl.supportsHostnameValidation()) {
                 LOG.debug("OpenSSL could not be enabled due to verifyHost being enabled but not supported by the provided OpenSSL version.");
-            } else if (options.getKeyAlias() != null) {
+            } else if (options.keyAlias() != null) {
                 LOG.debug("OpenSSL could not be enabled because a keyAlias is set and that feature is not supported for OpenSSL.");
             } else {
                 LOG.debug("OpenSSL Enabled: Version {} of OpenSSL will be used", OpenSsl.versionString());
@@ -115,7 +115,7 @@ public class SslSupport {
             SslContext sslContext = createOpenSslContext(options);
             sslEngine = createOpenSslEngine(allocator, host, port, sslContext, options);
         } else {
-            SSLContext sslContext = options.getSslContextOverride();
+            SSLContext sslContext = options.sslContextOverride();
             if (sslContext == null) {
                 sslContext = createJdkSslContext(options);
             }
@@ -141,7 +141,7 @@ public class SslSupport {
      */
     public static SSLContext createJdkSslContext(SslOptions options) throws Exception {
         try {
-            String contextProtocol = options.getContextProtocol();
+            String contextProtocol = options.contextProtocol();
             LOG.trace("Getting SSLContext instance using protocol: {}", contextProtocol);
 
             SSLContext context = SSLContext.getInstance(contextProtocol);
@@ -186,7 +186,7 @@ public class SslSupport {
         engine.setEnabledCipherSuites(buildEnabledCipherSuites(engine, options));
         engine.setUseClientMode(true);
 
-        if (options.isVerifyHost()) {
+        if (options.verifyHost()) {
             SSLParameters sslParameters = engine.getSSLParameters();
             sslParameters.setEndpointIdentificationAlgorithm("HTTPS");
             engine.setSSLParameters(sslParameters);
@@ -210,7 +210,7 @@ public class SslSupport {
      */
     public static SslContext createOpenSslContext(SslOptions options) throws Exception {
         try {
-            String contextProtocol = options.getContextProtocol();
+            String contextProtocol = options.contextProtocol();
             LOG.trace("Getting SslContext instance using protocol: {}", contextProtocol);
 
             KeyManagerFactory keyManagerFactory = loadKeyManagerFactory(options, SslProvider.OPENSSL);
@@ -220,10 +220,10 @@ public class SslSupport {
             // TODO - There is oddly no way in Netty right now to get the set of supported protocols
             //        when creating the SslContext or really even when creating the SSLEngine.  Seems
             //        like an oversight, for now we call it with TLSv1.2 so it looks like we did something.
-            if (options.getContextProtocol().equals(SslOptions.DEFAULT_CONTEXT_PROTOCOL)) {
+            if (options.contextProtocol().equals(SslOptions.DEFAULT_CONTEXT_PROTOCOL)) {
                 builder.protocols("TLSv1.2");
             } else {
-                builder.protocols(options.getContextProtocol());
+                builder.protocols(options.contextProtocol());
             }
             builder.keyManager(keyManagerFactory);
             builder.trustManager(trustManagerFactory);
@@ -271,7 +271,7 @@ public class SslSupport {
         engine.setEnabledCipherSuites(buildEnabledCipherSuites(engine, options));
         engine.setUseClientMode(true);
 
-        if (options.isVerifyHost()) {
+        if (options.verifyHost()) {
             SSLParameters sslParameters = engine.getSSLParameters();
             sslParameters.setEndpointIdentificationAlgorithm("HTTPS");
             engine.setSSLParameters(sslParameters);
@@ -285,8 +285,8 @@ public class SslSupport {
     private static String[] buildEnabledProtocols(SSLEngine engine, SslOptions options) {
         List<String> enabledProtocols = new ArrayList<String>();
 
-        if (options.getEnabledProtocols() != null) {
-            List<String> configuredProtocols = Arrays.asList(options.getEnabledProtocols());
+        if (options.enabledProtocols() != null) {
+            List<String> configuredProtocols = Arrays.asList(options.enabledProtocols());
             LOG.trace("Configured protocols from transport options: {}", configuredProtocols);
             enabledProtocols.addAll(configuredProtocols);
         } else {
@@ -295,7 +295,7 @@ public class SslSupport {
             enabledProtocols.addAll(engineProtocols);
         }
 
-        String[] disabledProtocols = options.getDisabledProtocols();
+        String[] disabledProtocols = options.disabledProtocols();
         if (disabledProtocols != null) {
             List<String> disabled = Arrays.asList(disabledProtocols);
             LOG.trace("Disabled protocols: {}", disabled);
@@ -310,8 +310,8 @@ public class SslSupport {
     private static String[] buildEnabledCipherSuites(SSLEngine engine, SslOptions options) {
         List<String> enabledCipherSuites = new ArrayList<String>();
 
-        if (options.getEnabledCipherSuites() != null) {
-            List<String> configuredCipherSuites = Arrays.asList(options.getEnabledCipherSuites());
+        if (options.enabledCipherSuites() != null) {
+            List<String> configuredCipherSuites = Arrays.asList(options.enabledCipherSuites());
             LOG.trace("Configured cipher suites from transport options: {}", configuredCipherSuites);
             enabledCipherSuites.addAll(configuredCipherSuites);
         } else {
@@ -320,7 +320,7 @@ public class SslSupport {
             enabledCipherSuites.addAll(engineCipherSuites);
         }
 
-        String[] disabledCipherSuites = options.getDisabledCipherSuites();
+        String[] disabledCipherSuites = options.disabledCipherSuites();
         if (disabledCipherSuites != null) {
             List<String> disabled = Arrays.asList(disabledCipherSuites);
             LOG.trace("Disabled cipher suites: {}", disabled);
@@ -342,19 +342,19 @@ public class SslSupport {
     }
 
     private static TrustManagerFactory loadTrustManagerFactory(SslOptions options) throws Exception {
-        if (options.isTrustAll()) {
+        if (options.trustAll()) {
             return InsecureTrustManagerFactory.INSTANCE;
         }
 
-        if (options.getTrustStoreLocation() == null) {
+        if (options.trustStoreLocation() == null) {
             return null;
         }
 
         TrustManagerFactory fact = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
 
-        String storeLocation = options.getTrustStoreLocation();
-        String storePassword = options.getTrustStorePassword();
-        String storeType = options.getTrustStoreType();
+        String storeLocation = options.trustStoreLocation();
+        String storePassword = options.trustStorePassword();
+        String storeType = options.trustStoreType();
 
         LOG.trace("Attempt to load TrustStore from location {} of type {}", storeLocation, storeType);
 
@@ -365,16 +365,16 @@ public class SslSupport {
     }
 
     private static KeyManager[] loadKeyManagers(SslOptions options) throws Exception {
-        if (options.getKeyStoreLocation() == null) {
+        if (options.keyStoreLocation() == null) {
             return null;
         }
 
         KeyManagerFactory fact = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
 
-        String storeLocation = options.getKeyStoreLocation();
-        String storePassword = options.getKeyStorePassword();
-        String storeType = options.getKeyStoreType();
-        String alias = options.getKeyAlias();
+        String storeLocation = options.keyStoreLocation();
+        String storePassword = options.keyStorePassword();
+        String storeType = options.keyStoreType();
+        String alias = options.keyAlias();
 
         LOG.trace("Attempt to load KeyStore from location {} of type {}", storeLocation, storeType);
 
@@ -390,7 +390,7 @@ public class SslSupport {
     }
 
     private static KeyManagerFactory loadKeyManagerFactory(SslOptions options, SslProvider provider) throws Exception {
-        if (options.getKeyStoreLocation() == null) {
+        if (options.keyStoreLocation() == null) {
             return null;
         }
 
@@ -401,9 +401,9 @@ public class SslSupport {
             factory = new OpenSslX509KeyManagerFactory();
         }
 
-        String storeLocation = options.getKeyStoreLocation();
-        String storePassword = options.getKeyStorePassword();
-        String storeType = options.getKeyStoreType();
+        String storeLocation = options.keyStoreLocation();
+        String storePassword = options.keyStorePassword();
+        String storeType = options.keyStoreType();
 
         LOG.trace("Attempt to load KeyStore from location {} of type {}", storeLocation, storeType);
 

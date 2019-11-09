@@ -72,17 +72,17 @@ final class ClientReceiverBuilder {
     private Receiver createReceiver(String address, ReceiverOptions options, String receiverId) {
         final String linkName;
 
-        if (options.getLinkName() != null) {
-            linkName = options.getLinkName();
+        if (options.linkName() != null) {
+            linkName = options.linkName();
         } else {
             linkName = "receiver-" + receiverId;
         }
 
         final Receiver protonReceiver = session.getProtonSession().receiver(linkName);
 
-        protonReceiver.setOfferedCapabilities(ClientConversionSupport.toSymbolArray(options.getOfferedCapabilities()));
-        protonReceiver.setDesiredCapabilities(ClientConversionSupport.toSymbolArray(options.getDesiredCapabilities()));
-        protonReceiver.setProperties(ClientConversionSupport.toSymbolKeyedMap(options.getProperties()));
+        protonReceiver.setOfferedCapabilities(ClientConversionSupport.toSymbolArray(options.offeredCapabilities()));
+        protonReceiver.setDesiredCapabilities(ClientConversionSupport.toSymbolArray(options.desiredCapabilities()));
+        protonReceiver.setProperties(ClientConversionSupport.toSymbolKeyedMap(options.properties()));
         protonReceiver.setSource(createSource(address, options));
         protonReceiver.setTarget(createTarget(address, options));
         protonReceiver.setDefaultDeliveryState(Released.getInstance());
@@ -126,10 +126,10 @@ final class ClientReceiverBuilder {
                 receiverOptions = defaultReceivernOptions;
                 if (receiverOptions == null) {
                     receiverOptions = new ReceiverOptions();
-                    receiverOptions.setOpenTimeout(sessionOptions.getOpenTimeout());
-                    receiverOptions.setCloseTimeout(sessionOptions.getCloseTimeout());
-                    receiverOptions.setRequestTimeout(sessionOptions.getRequestTimeout());
-                    receiverOptions.setSendTimeout(sessionOptions.getSendTimeout());
+                    receiverOptions.openTimeout(sessionOptions.openTimeout());
+                    receiverOptions.closeTimeout(sessionOptions.closeTimeout());
+                    receiverOptions.requestTimeout(sessionOptions.requestTimeout());
+                    receiverOptions.sendTimeout(sessionOptions.sendTimeout());
                 }
 
                 defaultReceivernOptions = receiverOptions;

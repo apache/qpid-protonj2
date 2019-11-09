@@ -150,7 +150,7 @@ public class SenderTest extends AMQPerativeTestCase {
 
             Client container = Client.create();
             ConnectionOptions options = new ConnectionOptions();
-            options.setCloseTimeout(5);
+            options.closeTimeout(5);
             Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), options);
 
             connection.openFuture().get(10, TimeUnit.SECONDS);
@@ -197,7 +197,7 @@ public class SenderTest extends AMQPerativeTestCase {
 
             Client container = Client.create();
             ConnectionOptions options = new ConnectionOptions();
-            options.setSendTimeout(1);
+            options.sendTimeout(1);
             Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), options);
 
             connection.openFuture().get(10, TimeUnit.SECONDS);
@@ -239,7 +239,7 @@ public class SenderTest extends AMQPerativeTestCase {
 
             Client container = Client.create();
             ConnectionOptions options = new ConnectionOptions();
-            options.setSendTimeout(200);
+            options.sendTimeout(200);
             Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), options);
 
             connection.openFuture().get(10, TimeUnit.SECONDS);
@@ -363,7 +363,7 @@ public class SenderTest extends AMQPerativeTestCase {
 
             Client container = Client.create();
             ConnectionOptions options = new ConnectionOptions();
-            options.setSendTimeout(1);
+            options.sendTimeout(1);
             Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), options);
 
             connection.openFuture().get(10, TimeUnit.SECONDS);
