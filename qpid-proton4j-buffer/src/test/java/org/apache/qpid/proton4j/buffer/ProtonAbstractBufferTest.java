@@ -56,7 +56,7 @@ public abstract class ProtonAbstractBufferTest {
     //----- Test Buffer creation ---------------------------------------------//
 
     @Test
-    public void testConstructorCapacityAndMaxCapacity() {
+    public void testConstructWithDifferingCapacityAndMaxCapacity() {
         final int baseCapaity = DEFAULT_CAPACITY + 10;
 
         ProtonBuffer buffer = allocateBuffer(baseCapaity, baseCapaity + 100);
@@ -67,13 +67,32 @@ public abstract class ProtonAbstractBufferTest {
     }
 
     @Test
-    public void testBufferRespectsMaxCapacity() {
+    public void testBufferRespectsMaxCapacityAfterGrowingToFit() {
         ProtonBuffer buffer = allocateBuffer(5, 10);
 
         assertEquals(0, buffer.getReadableBytes());
         assertEquals(5, buffer.capacity());
         assertEquals(10, buffer.maxCapacity());
 
+        for (int i = 0; i < 10; ++i) {
+            buffer.writeByte(i);
+        }
+
+        try {
+            buffer.writeByte(10);
+            fail("Should not be able to write more than the max capacity bytes");
+        } catch (IndexOutOfBoundsException iobe) {}
+    }
+
+    @Test
+    public void testBufferRespectsMaxCapacityLimitNoGrowthScenario() {
+        ProtonBuffer buffer = allocateBuffer(10, 10);
+
+        assertEquals(0, buffer.getReadableBytes());
+        assertEquals(10, buffer.capacity());
+        assertEquals(10, buffer.maxCapacity());
+
+        // Writes to capacity work, but exceeding that should fail.
         for (int i = 0; i < 10; ++i) {
             buffer.writeByte(i);
         }
@@ -867,7 +886,8 @@ public abstract class ProtonAbstractBufferTest {
 
     @Test
     public void testReadLong() {
-        ProtonBuffer buffer = allocateDefaultBuffer();
+        // This is not a capacity increase handling test so allocate with enough capacity for this test.
+        ProtonBuffer buffer = allocateBuffer(DEFAULT_CAPACITY * 2);
 
         buffer.writeLong((short) 2);
         buffer.writeLong((short) 20);
@@ -891,7 +911,7 @@ public abstract class ProtonAbstractBufferTest {
 
         try {
             buffer.readLong();
-            fail("Should not be able to read beyond current capacity");
+            fail("Should not be able to read beyond current readable bytes");
         } catch (IndexOutOfBoundsException ex) {}
     }
 
@@ -2627,10 +2647,23 @@ public abstract class ProtonAbstractBufferTest {
 
     private void doTestRandomByteBufferTransfer(boolean direct) {
         ProtonBuffer buffer = allocateBuffer(LARGE_CAPACITY);
+        final ByteBuffer value;
 
-        ByteBuffer value = ByteBuffer.allocate(BLOCK_SIZE * 2);
+        if (direct) {
+            value = ByteBuffer.allocateDirect(BLOCK_SIZE * 2);
+        } else {
+            value = ByteBuffer.allocate(BLOCK_SIZE * 2);
+        }
+
         for (int i = 0; i < buffer.capacity() - BLOCK_SIZE + 1; i += BLOCK_SIZE) {
-            random.nextBytes(value.array());
+            if (direct) {
+                byte[] nextBytes = new byte[BLOCK_SIZE * 2];
+                random.nextBytes(nextBytes);
+                value.clear();
+                value.put(nextBytes);
+            } else {
+                random.nextBytes(value.array());
+            }
             value.clear().position(random.nextInt(BLOCK_SIZE));
             value.limit(value.position() + BLOCK_SIZE);
             buffer.setBytes(i, value);
