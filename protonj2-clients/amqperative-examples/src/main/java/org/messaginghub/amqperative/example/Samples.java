@@ -129,6 +129,22 @@ public class Samples {
 
         delivery.accept(); // Or configure auto-accept?
 
+        // =============== Create a dynamic receiver for request ===========
+
+        Receiver dynamicReceiver = connection.openDynamicReceiver();
+        receiver.openFuture().get(5, TimeUnit.SECONDS);
+        String dynamicAddress = receiver.address();
+
+        Sender requestor = connection.openSender(address);
+        sender.openFuture().get(5, TimeUnit.SECONDS);
+
+        Message<String> request = Message.create("Hello World").durable(true).replyTo(dynamicAddress);
+        Tracker requestTracker = sender.send(message);
+        requestTracker.settle();
+
+        dynamicReceiver.addCredit(1);
+        Delivery response = dynamicReceiver.receive(30_000);
+
         // =============== Close/ detach ===========
 
         Future<Sender> closeFuture = sender.close();

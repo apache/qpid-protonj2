@@ -16,6 +16,7 @@
  */
 package org.messaginghub.amqperative;
 
+import java.util.Map;
 import java.util.concurrent.Future;
 
 import org.messaginghub.amqperative.impl.ClientException;
@@ -68,6 +69,53 @@ public interface Connection {
      * @throws ClientException if an internal error occurs.
      */
     Receiver openReceiver(String address, ReceiverOptions receiverOptions) throws ClientException;
+
+    /**
+     * Creates a dynamic receiver used to consume messages from the given node address.
+     *
+     * @return the newly created {@link Receiver}
+     *
+     * @throws ClientException if an internal error occurs.
+     */
+    Receiver openDynamicReceiver() throws ClientException;
+
+    /**
+     * Creates a dynamic receiver used to consume messages from the given node address.
+     *
+     * @param dynamicNodeProperties
+     * 		The dynamic node properties to be applied to the node created by the remote.
+     *
+     * @return the newly created {@link Receiver}
+     *
+     * @throws ClientException if an internal error occurs.
+     */
+    Receiver openDynamicReceiver(Map<String, Object> dynamicNodeProperties) throws ClientException;
+
+    /**
+     * Creates a dynamic receiver used to consume messages from the given node address.
+     *
+     * @param receiverOptions
+     * 		The options for this receiver.
+     *
+     * @return the newly created {@link Receiver}
+     *
+     * @throws ClientException if an internal error occurs.
+     */
+    Receiver openDynamicReceiver(ReceiverOptions receiverOptions) throws ClientException;
+
+    /**
+     * Creates a dynamic receiver used to consume messages from the given node address.
+     *
+     * @param dynamicNodeProperties
+     * 		The dynamic node properties to be applied to the node created by the remote.
+     * @param receiverOptions
+     *      The options for this receiver.
+     *
+     * @return the newly created {@link Receiver}
+     *
+     * @throws ClientException if an internal error occurs.
+     */
+    Receiver openDynamicReceiver(Map<String, Object> dynamicNodeProperties, ReceiverOptions receiverOptions) throws ClientException;
 
     // TODO: Does this verify if the server supports anonymous senders and throw if they don't?
     // TODO: Why have both send + defaultSender methods? To allow for waiting for the attach/open to complete before send?

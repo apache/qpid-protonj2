@@ -257,6 +257,38 @@ public class ClientConnection implements Connection {
     }
 
     @Override
+    public Receiver openDynamicReceiver() throws ClientException {
+        return openDynamicReceiver(null, null);
+    }
+
+    @Override
+    public Receiver openDynamicReceiver(Map<String, Object> dynamicNodeProperties) throws ClientException {
+        return openDynamicReceiver(null, null);
+    }
+
+    @Override
+    public Receiver openDynamicReceiver(ReceiverOptions receiverOptions) throws ClientException {
+        return openDynamicReceiver(null, null);
+    }
+
+    @Override
+    public Receiver openDynamicReceiver(Map<String, Object> dynamicNodeProperties, ReceiverOptions receiverOptions) throws ClientException {
+        checkClosed();
+        final ClientFuture<Receiver> createReceiver = getFutureFactory().createFuture();
+
+        executor.execute(() -> {
+            try {
+                checkClosed();
+                createReceiver.complete(lazyCreateConnectionSession().internalOpenDynamicReceiver(dynamicNodeProperties, receiverOptions));
+            } catch (Throwable error) {
+                createReceiver.failed(ClientExceptionSupport.createNonFatalOrPassthrough(error));
+            }
+        });
+
+        return request(createReceiver, options.requestTimeout(), TimeUnit.MILLISECONDS);
+    }
+
+    @Override
     public Sender defaultSender() throws ClientException {
         checkClosed();
         final ClientFuture<Sender> defaultSender = getFutureFactory().createFuture();
