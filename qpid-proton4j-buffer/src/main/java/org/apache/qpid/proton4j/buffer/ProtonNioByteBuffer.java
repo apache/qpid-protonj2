@@ -101,6 +101,8 @@ public class ProtonNioByteBuffer extends ProtonAbstractBuffer {
             destination.setBytes(destinationIndex, getArray(), getArrayOffset() + index, length);
         } else if (destination.hasArray()) {
             int position = buffer.position();
+
+            buffer.position(index);
             buffer.get(destination.getArray(), destination.getArrayOffset() + destinationIndex, length);
             buffer.position(position);
         } else {

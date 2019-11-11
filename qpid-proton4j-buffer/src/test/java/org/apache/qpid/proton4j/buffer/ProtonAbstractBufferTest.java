@@ -25,6 +25,7 @@ import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeTrue;
 
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
@@ -2517,7 +2518,23 @@ public abstract class ProtonAbstractBufferTest {
 
     @Test
     public void testByteArrayTransfer() {
-        ProtonBuffer buffer = allocateBuffer(LARGE_CAPACITY);
+        testByteArrayTransfer(false);
+    }
+
+    @Test
+    public void testByteArrayTransferDirectBackedBuffer() {
+        assumeTrue(canAllocateDirectBackedBuffers());
+        testByteArrayTransfer(true);
+    }
+
+    private void testByteArrayTransfer(boolean direct) {
+        final ProtonBuffer buffer;
+
+        if (direct) {
+            buffer = allocateDirectBuffer(LARGE_CAPACITY);
+        } else {
+            buffer = allocateBuffer(LARGE_CAPACITY);
+        }
 
         byte[] value = new byte[BLOCK_SIZE * 2];
         for (int i = 0; i < buffer.capacity() - BLOCK_SIZE + 1; i += BLOCK_SIZE) {
@@ -2539,7 +2556,23 @@ public abstract class ProtonAbstractBufferTest {
 
     @Test
     public void testRandomByteArrayTransfer1() {
-        ProtonBuffer buffer = allocateBuffer(LARGE_CAPACITY);
+        doTestRandomByteArrayTransfer1(false);
+    }
+
+    @Test
+    public void testRandomByteArrayTransfer1DirectBackedBuffer() {
+        assumeTrue(canAllocateDirectBackedBuffers());
+        doTestRandomByteArrayTransfer1(true);
+    }
+
+    private void doTestRandomByteArrayTransfer1(boolean direct) {
+        final ProtonBuffer buffer;
+
+        if (direct) {
+            buffer = allocateDirectBuffer(LARGE_CAPACITY);
+        } else {
+            buffer = allocateBuffer(LARGE_CAPACITY);
+        }
 
         byte[] value = new byte[BLOCK_SIZE];
         for (int i = 0; i < buffer.capacity() - BLOCK_SIZE + 1; i += BLOCK_SIZE) {
@@ -2561,6 +2594,16 @@ public abstract class ProtonAbstractBufferTest {
 
     @Test
     public void testRandomByteArrayTransfer2() {
+        dotestRandomByteArrayTransfer2(false);
+    }
+
+    @Test
+    public void testRandomByteArrayTransfer2DirectBackedBuffer() {
+        assumeTrue(canAllocateDirectBackedBuffers());
+        dotestRandomByteArrayTransfer2(true);
+    }
+
+    private void dotestRandomByteArrayTransfer2(boolean direct) {
         ProtonBuffer buffer = allocateBuffer(LARGE_CAPACITY);
 
         byte[] value = new byte[BLOCK_SIZE * 2];
@@ -2584,7 +2627,24 @@ public abstract class ProtonAbstractBufferTest {
 
     @Test
     public void testRandomProtonBufferTransfer1() {
-        ProtonBuffer buffer = allocateBuffer(LARGE_CAPACITY);
+        doTestRandomProtonBufferTransfer1(false);
+    }
+
+    @Test
+    public void testRandomProtonBufferTransfer1DirectBackedBuffer() {
+        assumeTrue(canAllocateDirectBackedBuffers());
+        doTestRandomProtonBufferTransfer1(true);
+    }
+
+    // TODO - Direct Buffer backed source variant
+
+    private void doTestRandomProtonBufferTransfer1(boolean direct) {
+        final ProtonBuffer buffer;
+        if (direct) {
+            buffer = allocateDirectBuffer(LARGE_CAPACITY);
+        } else {
+            buffer = allocateBuffer(LARGE_CAPACITY);
+        }
 
         byte[] valueContent = new byte[BLOCK_SIZE];
         ProtonBuffer value = new ProtonByteBuffer(valueContent);
@@ -2613,7 +2673,22 @@ public abstract class ProtonAbstractBufferTest {
 
     @Test
     public void testRandomProtonBufferTransfer2() {
-        ProtonBuffer buffer = allocateBuffer(LARGE_CAPACITY);
+        doTestRandomProtonBufferTransfer2(false);
+    }
+
+    @Test
+    public void testRandomProtonBufferTransfer2DirectBackedBuffer() {
+        assumeTrue(canAllocateDirectBackedBuffers());
+        doTestRandomProtonBufferTransfer2(true);
+    }
+
+    private void doTestRandomProtonBufferTransfer2(boolean direct) {
+        final ProtonBuffer buffer;
+        if (direct) {
+            buffer = allocateDirectBuffer(LARGE_CAPACITY);
+        } else {
+            buffer = allocateBuffer(LARGE_CAPACITY);
+        }
 
         byte[] valueContent = new byte[BLOCK_SIZE * 2];
         ProtonBuffer value = new ProtonByteBuffer(valueContent);
@@ -2685,7 +2760,22 @@ public abstract class ProtonAbstractBufferTest {
 
     @Test
     public void testSequentialByteArrayTransfer1() {
-        ProtonBuffer buffer = allocateBuffer(LARGE_CAPACITY);
+        dotestSequentialByteArrayTransfer1(false);
+    }
+
+    @Test
+    public void testSequentialByteArrayTransfer1DirectBackedBuffer() {
+        assumeTrue(canAllocateDirectBackedBuffers());
+        dotestSequentialByteArrayTransfer1(true);
+    }
+
+    private void dotestSequentialByteArrayTransfer1(boolean direct) {
+        final ProtonBuffer buffer;
+        if (direct) {
+            buffer = allocateDirectBuffer(LARGE_CAPACITY);
+        } else {
+            buffer = allocateBuffer(LARGE_CAPACITY);
+        }
 
         byte[] value = new byte[BLOCK_SIZE];
         buffer.setWriteIndex(0);
@@ -2711,7 +2801,22 @@ public abstract class ProtonAbstractBufferTest {
 
     @Test
     public void testSequentialByteArrayTransfer2() {
-        ProtonBuffer buffer = allocateBuffer(LARGE_CAPACITY);
+        doTestSequentialByteArrayTransfer2(false);
+    }
+
+    @Test
+    public void testSequentialByteArrayTransfer2DirectBackedBuffer() {
+        assumeTrue(canAllocateDirectBackedBuffers());
+        doTestSequentialByteArrayTransfer2(true);
+    }
+
+    private void doTestSequentialByteArrayTransfer2(boolean direct) {
+        final ProtonBuffer buffer;
+        if (direct) {
+            buffer = allocateDirectBuffer(LARGE_CAPACITY);
+        } else {
+            buffer = allocateBuffer(LARGE_CAPACITY);
+        }
 
         byte[] value = new byte[BLOCK_SIZE * 2];
         buffer.setWriteIndex(0);
@@ -2739,7 +2844,22 @@ public abstract class ProtonAbstractBufferTest {
 
     @Test
     public void testSequentialProtonBufferTransfer1() {
-        ProtonBuffer buffer = allocateBuffer(LARGE_CAPACITY);
+        doTestSequentialProtonBufferTransfer1(false);
+    }
+
+    @Test
+    public void testSequentialProtonBufferTransfer1DirectBackedBuffer() {
+        assumeTrue(canAllocateDirectBackedBuffers());
+        doTestSequentialProtonBufferTransfer1(true);
+    }
+
+    private void doTestSequentialProtonBufferTransfer1(boolean direct) {
+        final ProtonBuffer buffer;
+        if (direct) {
+            buffer = allocateDirectBuffer(LARGE_CAPACITY);
+        } else {
+            buffer = allocateBuffer(LARGE_CAPACITY);
+        }
 
         byte[] valueContent = new byte[BLOCK_SIZE * 2];
         ProtonBuffer value = new ProtonByteBuffer(valueContent);
@@ -2772,7 +2892,22 @@ public abstract class ProtonAbstractBufferTest {
 
     @Test
     public void testSequentialProtonBufferTransfer2() {
-        ProtonBuffer buffer = allocateBuffer(LARGE_CAPACITY);
+        doTestSequentialProtonBufferTransfer2(false);
+    }
+
+    @Test
+    public void testSequentialProtonBufferTransfer2DirectBackedBuffer() {
+        assumeTrue(canAllocateDirectBackedBuffers());
+        doTestSequentialProtonBufferTransfer2(true);
+    }
+
+    private void doTestSequentialProtonBufferTransfer2(boolean direct) {
+        final ProtonBuffer buffer;
+        if (direct) {
+            buffer = allocateDirectBuffer(LARGE_CAPACITY);
+        } else {
+            buffer = allocateBuffer(LARGE_CAPACITY);
+        }
 
         byte[] valueContent = new byte[BLOCK_SIZE * 2];
         ProtonBuffer value = new ProtonByteBuffer(valueContent);
@@ -2811,9 +2946,23 @@ public abstract class ProtonAbstractBufferTest {
     //----- Tests need to define these allocation methods
 
     /**
+     * @return true if the buffer implementation can allocate a version with a direct buffer backed implementation.
+     */
+    protected abstract boolean canAllocateDirectBackedBuffers();
+
+    /**
      * @return a ProtonBuffer allocated with defaults for capacity and max-capacity.
      */
-    protected abstract ProtonBuffer allocateDefaultBuffer();
+    protected ProtonBuffer allocateDefaultBuffer() {
+        return allocateBuffer(DEFAULT_CAPACITY);
+    }
+
+    /**
+     * @return a ProtonBuffer allocated with defaults for capacity and max-capacity.
+     */
+    protected ProtonBuffer allocateDefaultDirectBuffer() {
+        return allocateDirectBuffer(DEFAULT_CAPACITY);
+    }
 
     /**
      * @param initialCapacity the initial capacity to assign the returned buffer
@@ -2824,11 +2973,26 @@ public abstract class ProtonAbstractBufferTest {
 
     /**
      * @param initialCapacity the initial capacity to assign the returned buffer
+     *
+     * @return a ProtonBuffer allocated with the given capacity and a default max-capacity.
+     */
+    protected abstract ProtonBuffer allocateDirectBuffer(int initialCapacity);
+
+    /**
+     * @param initialCapacity the initial capacity to assign the returned buffer
      * @param maxCapacity the maximum capacity the buffer is allowed to grow to
      *
      * @return a ProtonBuffer allocated with the given capacity and the given max-capacity.
      */
     protected abstract ProtonBuffer allocateBuffer(int initialCapacity, int maxCapacity);
+
+    /**
+     * @param initialCapacity the initial capacity to assign the returned buffer
+     * @param maxCapacity the maximum capacity the buffer is allowed to grow to
+     *
+     * @return a ProtonBuffer allocated with the given capacity and the given max-capacity.
+     */
+    protected abstract ProtonBuffer allocateDirectBuffer(int initialCapacity, int maxCapacity);
 
     /**
      * @param array the byte array to wrap with the given buffer under test.

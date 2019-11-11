@@ -82,6 +82,52 @@ public class ProtonNioByteBufferTest extends ProtonAbstractBufferTest {
     public void testCapacityIncreasesWhenWritesExceedCurrent() {
     }
 
+    //----- Test NIO buffer implementation specifics
+
+    @Test
+    public void testUnwrapAllocatedBuffer() {
+        ProtonBuffer buffer = allocateBuffer(13, 13);
+
+        ByteBuffer unwrapped = (ByteBuffer) buffer.unwrap();
+
+        assertEquals(13, unwrapped.capacity());
+        assertEquals(0, unwrapped.position());
+        assertEquals(13, unwrapped.limit());
+    }
+
+    @Test
+    public void testUnwrapWrappedArray() {
+        ProtonBuffer buffer = wrapBuffer(new byte[13]);
+
+        ByteBuffer unwrapped = (ByteBuffer) buffer.unwrap();
+
+        assertEquals(13, unwrapped.capacity());
+        assertEquals(0, unwrapped.position());
+        assertEquals(13, unwrapped.limit());
+    }
+
+    @Test
+    public void testUnwrapWrappedByteBuffer() {
+        ProtonBuffer buffer = new ProtonNioByteBuffer(ByteBuffer.allocate(13));
+
+        ByteBuffer unwrapped = (ByteBuffer) buffer.unwrap();
+
+        assertEquals(13, unwrapped.capacity());
+        assertEquals(0, unwrapped.position());
+        assertEquals(13, unwrapped.limit());
+    }
+
+    @Test
+    public void testUnwrapWrappedByteBufferWithWriteIndex() {
+        ProtonBuffer buffer = new ProtonNioByteBuffer(ByteBuffer.allocate(13), 13);
+
+        ByteBuffer unwrapped = (ByteBuffer) buffer.unwrap();
+
+        assertEquals(13, unwrapped.capacity());
+        assertEquals(0, unwrapped.position());
+        assertEquals(13, unwrapped.limit());
+    }
+
     @Override
     @Test(expected = UnsupportedOperationException.class)
     public void testCapacityEnforceMaxCapacity() {
@@ -100,14 +146,21 @@ public class ProtonNioByteBufferTest extends ProtonAbstractBufferTest {
         buffer.capacity(-1);
     }
 
+    //----- Implement generic create methods from abstract test base
+
     @Override
-    protected ProtonBuffer allocateDefaultBuffer() {
-        return new ProtonNioByteBuffer(ByteBuffer.allocate(DEFAULT_CAPACITY), 0);
+    protected boolean canAllocateDirectBackedBuffers() {
+        return true;
     }
 
     @Override
     protected ProtonBuffer allocateBuffer(int initialCapacity) {
         return new ProtonNioByteBuffer(ByteBuffer.allocate(initialCapacity), 0);
+    }
+
+    @Override
+    protected ProtonBuffer allocateDirectBuffer(int initialCapacity) {
+        return new ProtonNioByteBuffer(ByteBuffer.allocateDirect(initialCapacity), 0);
     }
 
     @Override
@@ -117,6 +170,15 @@ public class ProtonNioByteBufferTest extends ProtonAbstractBufferTest {
         }
 
         return new ProtonNioByteBuffer(ByteBuffer.allocate(initialCapacity), 0);
+    }
+
+    @Override
+    protected ProtonBuffer allocateDirectBuffer(int initialCapacity, int maxCapacity) {
+        if (initialCapacity != maxCapacity) {
+            throw new UnsupportedOperationException("NIO buffer wrappers cannot grow");
+        }
+
+        return new ProtonNioByteBuffer(ByteBuffer.allocateDirect(initialCapacity), 0);
     }
 
     @Override

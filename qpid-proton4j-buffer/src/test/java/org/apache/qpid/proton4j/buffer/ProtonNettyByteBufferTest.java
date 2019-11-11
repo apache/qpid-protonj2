@@ -446,8 +446,21 @@ public class ProtonNettyByteBufferTest extends ProtonAbstractBufferTest {
 
     @Test
     public void testRandomProtonBufferTransfer3() {
-        ByteBuf netty = Unpooled.buffer(CAPACITY);
-        ProtonNettyByteBuffer buffer = new ProtonNettyByteBuffer(netty);
+        doTestRandomProtonBufferTransfer3(false);
+    }
+
+    @Test
+    public void testRandomProtonBufferTransfer3DirectBackedBuffer() {
+        doTestRandomProtonBufferTransfer3(true);
+    }
+
+    private void doTestRandomProtonBufferTransfer3(boolean direct) {
+        final ProtonBuffer buffer;
+        if (direct) {
+            buffer = allocateDirectBuffer(LARGE_CAPACITY);
+        } else {
+            buffer = allocateBuffer(LARGE_CAPACITY);
+        }
 
         byte[] valueContent = new byte[BLOCK_SIZE * 2];
         ProtonBuffer value = new ProtonByteBuffer(valueContent);
@@ -471,8 +484,21 @@ public class ProtonNettyByteBufferTest extends ProtonAbstractBufferTest {
 
     @Test
     public void testRandomProtonBufferTransfer4() {
-        ByteBuf netty = Unpooled.buffer(CAPACITY);
-        ProtonNettyByteBuffer buffer = new ProtonNettyByteBuffer(netty);
+        doTestRandomProtonBufferTransfer4(false);
+    }
+
+    @Test
+    public void testRandomProtonBufferTransfer4DirectBackedBuffer() {
+        doTestRandomProtonBufferTransfer4(true);
+    }
+
+    private void doTestRandomProtonBufferTransfer4(boolean direct) {
+        final ProtonBuffer buffer;
+        if (direct) {
+            buffer = allocateDirectBuffer(LARGE_CAPACITY);
+        } else {
+            buffer = allocateBuffer(LARGE_CAPACITY);
+        }
 
         byte[] valueContent = new byte[BLOCK_SIZE * 2];
         ProtonNettyByteBuffer value = new ProtonNettyByteBuffer(Unpooled.wrappedBuffer(valueContent));
@@ -518,8 +544,8 @@ public class ProtonNettyByteBufferTest extends ProtonAbstractBufferTest {
     //----- Test API implemented for the abstract base class tests
 
     @Override
-    protected ProtonBuffer allocateDefaultBuffer() {
-        return new ProtonNettyByteBuffer(Unpooled.buffer(DEFAULT_CAPACITY));
+    protected boolean canAllocateDirectBackedBuffers() {
+        return true;
     }
 
     @Override
@@ -528,8 +554,18 @@ public class ProtonNettyByteBufferTest extends ProtonAbstractBufferTest {
     }
 
     @Override
+    protected ProtonBuffer allocateDirectBuffer(int initialCapacity) {
+        return new ProtonNettyByteBuffer(Unpooled.directBuffer(initialCapacity));
+    }
+
+    @Override
     protected ProtonBuffer allocateBuffer(int initialCapacity, int maxCapacity) {
         return new ProtonNettyByteBuffer(Unpooled.buffer(initialCapacity, maxCapacity));
+    }
+
+    @Override
+    protected ProtonBuffer allocateDirectBuffer(int initialCapacity, int maxCapacity) {
+        return new ProtonNettyByteBuffer(Unpooled.directBuffer(initialCapacity, maxCapacity));
     }
 
     @Override

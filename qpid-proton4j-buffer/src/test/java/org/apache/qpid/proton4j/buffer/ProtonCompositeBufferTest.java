@@ -25,6 +25,7 @@ import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import java.nio.ByteBuffer;
 import java.nio.charset.CharacterCodingException;
 
 import org.junit.Test;
@@ -1178,8 +1179,8 @@ public class ProtonCompositeBufferTest extends ProtonAbstractBufferTest {
     //----- Implement abstract methods from the abstract buffer test base class
 
     @Override
-    protected ProtonBuffer allocateDefaultBuffer() {
-        return new ProtonCompositeBuffer(Integer.MAX_VALUE).capacity(DEFAULT_CAPACITY);
+    protected boolean canAllocateDirectBackedBuffers() {
+        return true;
     }
 
     @Override
@@ -1188,8 +1189,20 @@ public class ProtonCompositeBufferTest extends ProtonAbstractBufferTest {
     }
 
     @Override
+    protected ProtonBuffer allocateDirectBuffer(int initialCapacity) {
+        return new ProtonCompositeBuffer(Integer.MAX_VALUE).append(
+            new ProtonNioByteBuffer(ByteBuffer.allocateDirect(initialCapacity), 0));
+    }
+
+    @Override
     protected ProtonBuffer allocateBuffer(int initialCapacity, int maxCapacity) {
         return new ProtonCompositeBuffer(maxCapacity).capacity(initialCapacity);
+    }
+
+    @Override
+    protected ProtonBuffer allocateDirectBuffer(int initialCapacity, int maxCapacity) {
+        return new ProtonCompositeBuffer(maxCapacity).append(
+            new ProtonNioByteBuffer(ByteBuffer.allocateDirect(initialCapacity), 0));
     }
 
     @Override

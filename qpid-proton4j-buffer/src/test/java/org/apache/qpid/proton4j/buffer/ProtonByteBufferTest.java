@@ -360,8 +360,8 @@ public class ProtonByteBufferTest extends ProtonAbstractBufferTest {
     //----- Buffer creation implementation required by super-class
 
     @Override
-    protected ProtonBuffer allocateDefaultBuffer() {
-        return new ProtonByteBuffer(DEFAULT_CAPACITY);
+    protected boolean canAllocateDirectBackedBuffers() {
+        return false;
     }
 
     @Override
@@ -370,8 +370,18 @@ public class ProtonByteBufferTest extends ProtonAbstractBufferTest {
     }
 
     @Override
+    protected ProtonBuffer allocateDirectBuffer(int initialCapacity) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
     protected ProtonBuffer allocateBuffer(int initialCapacity, int maxCapacity) {
         return new ProtonByteBuffer(initialCapacity, maxCapacity);
+    }
+
+    @Override
+    protected ProtonBuffer allocateDirectBuffer(int initialCapacity, int maxCapacity) {
+        throw new UnsupportedOperationException();
     }
 
     @Override
