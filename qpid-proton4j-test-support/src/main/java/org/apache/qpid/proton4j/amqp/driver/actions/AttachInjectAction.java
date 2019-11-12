@@ -28,8 +28,11 @@ import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
 import org.apache.qpid.proton4j.amqp.driver.codec.transport.Attach;
 import org.apache.qpid.proton4j.amqp.driver.codec.util.TypeMapper;
+import org.apache.qpid.proton4j.amqp.messaging.Outcome;
 import org.apache.qpid.proton4j.amqp.messaging.Source;
 import org.apache.qpid.proton4j.amqp.messaging.Target;
+import org.apache.qpid.proton4j.amqp.messaging.TerminusDurability;
+import org.apache.qpid.proton4j.amqp.messaging.TerminusExpiryPolicy;
 import org.apache.qpid.proton4j.amqp.transport.DeliveryState;
 import org.apache.qpid.proton4j.amqp.transport.ReceiverSettleMode;
 import org.apache.qpid.proton4j.amqp.transport.Role;
@@ -95,7 +98,11 @@ public class AttachInjectAction extends AbstractPerformativeInjectAction<Attach>
         return this;
     }
 
-    // TODO - Source builder
+    public SourceBuilder withSource() {
+        nullSourceRequired = false;
+        return new SourceBuilder(getOrCreateSouce());
+    }
+
     public AttachInjectAction withSource(Source source) {
         nullSourceRequired = source == null;
         attach.setSource(TypeMapper.mapFromProtonType(source));
@@ -118,7 +125,11 @@ public class AttachInjectAction extends AbstractPerformativeInjectAction<Attach>
         return this;
     }
 
-    // TODO - Target builder
+    public TargetBuilder withTarget() {
+        nullSourceRequired = false;
+        return new TargetBuilder(getOrCreateTarget());
+    }
+
     public AttachInjectAction withTarget(Target target) {
         nullTargetRequired = target == null;
         attach.setTarget(TypeMapper.mapFromProtonType(target));
@@ -180,7 +191,185 @@ public class AttachInjectAction extends AbstractPerformativeInjectAction<Attach>
         if (onChannel() == CHANNEL_UNSET) {
             onChannel(driver.getSessions().getLastOpenedSession().getLocalChannel().intValue());
         }
+    }
 
-        // TODO - Process attach in the local side of the link when needed for added validation
+    private org.apache.qpid.proton4j.amqp.driver.codec.messaging.Source getOrCreateSouce() {
+        if (attach.getSource() == null) {
+            attach.setSource(new org.apache.qpid.proton4j.amqp.driver.codec.messaging.Source());
+        }
+        return attach.getSource();
+    }
+
+    private org.apache.qpid.proton4j.amqp.driver.codec.messaging.Target getOrCreateTarget() {
+        if (attach.getTarget() == null) {
+            attach.setTarget(new org.apache.qpid.proton4j.amqp.driver.codec.messaging.Target());
+        }
+        return attach.getTarget();
+    }
+
+    //----- Builders for Source and Target to make test writing simpler
+
+    protected abstract class TerminusBuilder {
+
+        public AttachInjectAction also() {
+            return AttachInjectAction.this;
+        }
+
+        public AttachInjectAction and() {
+            return AttachInjectAction.this;
+        }
+    }
+
+    public final class SourceBuilder extends TerminusBuilder {
+
+        private final org.apache.qpid.proton4j.amqp.driver.codec.messaging.Source source;
+
+        public SourceBuilder(org.apache.qpid.proton4j.amqp.driver.codec.messaging.Source source) {
+            this.source = source;
+        }
+
+        public SourceBuilder withAddress(String address) {
+            source.setAddress(address);
+            return this;
+        }
+
+        public SourceBuilder withDurability(TerminusDurability durability) {
+            source.setDurable(durability.getValue());
+            return this;
+        }
+
+        public SourceBuilder withExpiryPolicy(TerminusExpiryPolicy expriyPolicy) {
+            source.setExpiryPolicy(expriyPolicy.getPolicy());
+            return this;
+        }
+
+        public SourceBuilder withTimeout(int timeout) {
+            source.setTimeout(UnsignedInteger.valueOf(timeout));
+            return this;
+        }
+
+        public SourceBuilder withTimeout(long timeout) {
+            source.setTimeout(UnsignedInteger.valueOf(timeout));
+            return this;
+        }
+
+        public SourceBuilder withTimeout(UnsignedInteger timeout) {
+            source.setTimeout(timeout);
+            return this;
+        }
+
+        public SourceBuilder withDynamic(boolean dynamic) {
+            source.setDynamic(Boolean.valueOf(dynamic));
+            return this;
+        }
+
+        public SourceBuilder withDynamic(Boolean dynamic) {
+            source.setDynamic(dynamic);
+            return this;
+        }
+
+        public SourceBuilder withDynamicNodeProperties(Map<Symbol, Object> properties) {
+            source.setDynamicNodeProperties(properties);
+            return this;
+        }
+
+        public SourceBuilder withDistributionMode(String mode) {
+            source.setDistributionMode(Symbol.valueOf(mode));
+            return this;
+        }
+
+        public SourceBuilder withDistributionMode(Symbol mode) {
+            source.setDistributionMode(mode);
+            return this;
+        }
+
+        public SourceBuilder withFilter(Map<Symbol, Object> filters) {
+            source.setFilter(filters);
+            return this;
+        }
+
+        public SourceBuilder withDefaultOutcome(Outcome outcome) {
+            source.setDefaultOutcome(TypeMapper.mapFromProtonType(outcome));
+            return this;
+        }
+
+        public SourceBuilder withCapabilities(String... capabilities) {
+            source.setCapabilities(TypeMapper.toSymbolArray(capabilities));
+            return this;
+        }
+
+        public SourceBuilder withOutcomes(Symbol... outcomes) {
+            source.setOutcomes(outcomes);
+            return this;
+        }
+
+        public SourceBuilder withCapabilities(Symbol... capabilities) {
+            source.setCapabilities(capabilities);
+            return this;
+        }
+    }
+
+    public final class TargetBuilder extends TerminusBuilder {
+
+        private final org.apache.qpid.proton4j.amqp.driver.codec.messaging.Target target;
+
+        public TargetBuilder(org.apache.qpid.proton4j.amqp.driver.codec.messaging.Target target) {
+            this.target = target;
+        }
+
+        public TargetBuilder withAddress(String address) {
+            target.setAddress(address);
+            return this;
+        }
+
+        public TargetBuilder withDurability(TerminusDurability durability) {
+            target.setDurable(durability.getValue());
+            return this;
+        }
+
+        public TargetBuilder withExpiryPolicy(TerminusExpiryPolicy expriyPolicy) {
+            target.setExpiryPolicy(expriyPolicy.getPolicy());
+            return this;
+        }
+
+        public TargetBuilder withTimeout(int timeout) {
+            target.setTimeout(UnsignedInteger.valueOf(timeout));
+            return this;
+        }
+
+        public TargetBuilder withTimeout(long timeout) {
+            target.setTimeout(UnsignedInteger.valueOf(timeout));
+            return this;
+        }
+
+        public TargetBuilder withTimeout(UnsignedInteger timeout) {
+            target.setTimeout(timeout);
+            return this;
+        }
+
+        public TargetBuilder withDynamic(boolean dynamic) {
+            target.setDynamic(Boolean.valueOf(dynamic));
+            return this;
+        }
+
+        public TargetBuilder withDynamic(Boolean dynamic) {
+            target.setDynamic(dynamic);
+            return this;
+        }
+
+        public TargetBuilder withDynamicNodeProperties(Map<Symbol, Object> properties) {
+            target.setDynamicNodeProperties(properties);
+            return this;
+        }
+
+        public TargetBuilder withCapabilities(String... capabilities) {
+            target.setCapabilities(TypeMapper.toSymbolArray(capabilities));
+            return this;
+        }
+
+        public TargetBuilder withCapabilities(Symbol... capabilities) {
+            target.setCapabilities(capabilities);
+            return this;
+        }
     }
 }

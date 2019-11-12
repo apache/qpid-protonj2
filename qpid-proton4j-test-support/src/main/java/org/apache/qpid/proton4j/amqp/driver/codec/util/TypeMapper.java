@@ -16,7 +16,11 @@
  */
 package org.apache.qpid.proton4j.amqp.driver.codec.util;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.apache.qpid.proton4j.amqp.DescribedType;
+import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.driver.codec.messaging.Accepted;
 import org.apache.qpid.proton4j.amqp.driver.codec.messaging.Modified;
 import org.apache.qpid.proton4j.amqp.driver.codec.messaging.Rejected;
@@ -34,6 +38,42 @@ import org.apache.qpid.proton4j.amqp.transport.DeliveryState;
 public abstract class TypeMapper {
 
     private TypeMapper() {
+    }
+
+    public static Symbol[] toSymbolArray(String[] stringArray) {
+        Symbol[] result = null;
+
+        if (stringArray != null) {
+            result = new Symbol[stringArray.length];
+            for (int i = 0; i < stringArray.length; ++i) {
+                result[i] = Symbol.valueOf(stringArray[i]);
+            }
+        }
+
+        return result;
+    }
+
+    public static Map<Symbol, Object> toSymbolKeyedMap(Map<String, Object> stringsMap) {
+        final Map<Symbol, Object> result;
+
+        if (stringsMap != null) {
+            result = new HashMap<>(stringsMap.size());
+            stringsMap.forEach((key, value) -> {
+                result.put(Symbol.valueOf(key), value);
+            });
+        } else {
+            result = null;
+        }
+
+        return result;
+    }
+
+    public static DescribedType mapFromProtonType(Outcome outcome) {
+        if (outcome != null) {
+            return mapFromProtonType((DeliveryState) outcome);
+        } else {
+            return null;
+        }
     }
 
     public static DescribedType mapFromProtonType(DeliveryState state) {
