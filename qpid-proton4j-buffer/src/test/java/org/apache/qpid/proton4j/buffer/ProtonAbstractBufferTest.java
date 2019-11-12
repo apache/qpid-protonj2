@@ -2607,7 +2607,6 @@ public abstract class ProtonAbstractBufferTest {
 
     private void doTestRandomByteArrayTransfer1(boolean direct) {
         final ProtonBuffer buffer;
-
         if (direct) {
             buffer = allocateDirectBuffer(LARGE_CAPACITY);
         } else {
@@ -2644,7 +2643,12 @@ public abstract class ProtonAbstractBufferTest {
     }
 
     private void dotestRandomByteArrayTransfer2(boolean direct) {
-        ProtonBuffer buffer = allocateBuffer(LARGE_CAPACITY);
+        final ProtonBuffer buffer;
+        if (direct) {
+            buffer = allocateDirectBuffer(LARGE_CAPACITY);
+        } else {
+            buffer = allocateBuffer(LARGE_CAPACITY);
+        }
 
         byte[] value = new byte[BLOCK_SIZE * 2];
         for (int i = 0; i < buffer.capacity() - BLOCK_SIZE + 1; i += BLOCK_SIZE) {
