@@ -153,7 +153,7 @@ public class AttachExpectation extends AbstractExpectation<Attach> {
 
     public AttachSourceMatcher withSource() {
         AttachSourceMatcher matcher = new AttachSourceMatcher(this);
-        withTarget(matcher);
+        withSource(matcher);
         return matcher;
     }
 
