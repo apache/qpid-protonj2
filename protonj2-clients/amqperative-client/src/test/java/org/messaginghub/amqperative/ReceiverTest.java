@@ -3,6 +3,7 @@ package org.messaginghub.amqperative;
 import static org.hamcrest.Matchers.anyOf;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.nullValue;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -12,7 +13,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
-import org.apache.qpid.proton4j.amqp.driver.matchers.messaging.SourceMatcher;
 import org.apache.qpid.proton4j.amqp.driver.netty.NettyTestPeer;
 import org.apache.qpid.proton4j.amqp.messaging.Source;
 import org.apache.qpid.proton4j.amqp.transport.AmqpError;
@@ -238,8 +238,9 @@ public class ReceiverTest extends AMQPerativeTestCase {
             peer.expectOpen().respond();
             peer.expectBegin().respond();
             peer.expectAttach().withRole(Role.RECEIVER)
-                               .withSource(new SourceMatcher().withDynamic(true).withAddress(nullValue()))
-                               .respond();
+                               .withSource().withDynamic(true).withAddress((String) null)
+                               .and().respond()
+                               .withSource().withDynamic(true).withAddress("test-dynamic-node");
             peer.expectDetach().respond();
             peer.expectClose().respond();
             peer.start();
@@ -259,6 +260,7 @@ public class ReceiverTest extends AMQPerativeTestCase {
             receiver.openFuture().get(10, TimeUnit.SECONDS);
 
             assertNotNull("Remote should have assigned the address for the dynamic receiver", receiver.address());
+            assertEquals("test-dynamic-node", receiver.address());
 
             receiver.close().get(10, TimeUnit.SECONDS);
 
