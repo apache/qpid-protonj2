@@ -251,6 +251,17 @@ public abstract class ProtonAbstractBufferTest {
     }
 
     @Test
+    public void testMaxWritableBytes() {
+        ProtonBuffer buffer = allocateBuffer(DEFAULT_CAPACITY, DEFAULT_CAPACITY);
+        assertTrue(buffer.isWritable());
+        assertEquals(DEFAULT_CAPACITY, buffer.getMaxWritableBytes());
+        buffer.setWriteIndex(buffer.capacity() - 1);
+        assertTrue(buffer.isWritable(1));
+        assertFalse(buffer.isWritable(2));
+        assertEquals(1, buffer.getMaxWritableBytes());
+    }
+
+    @Test
     public void testClear() {
         ProtonBuffer buffer = allocateDefaultBuffer();
         assertEquals(0, buffer.getReadIndex());
@@ -1263,6 +1274,35 @@ public abstract class ProtonAbstractBufferTest {
         assertEquals(buffer.capacity() - 1, buffer.slice(0, buffer.capacity() - 1).getWriteIndex());
         assertEquals(buffer.capacity() - 1, buffer.slice(1, buffer.capacity() - 1).getWriteIndex());
         assertEquals(buffer.capacity() - 2, buffer.slice(1, buffer.capacity() - 2).getWriteIndex());
+    }
+
+    @Test
+    public void testAdvancingSlice() {
+        ProtonBuffer buffer = allocateBuffer(LARGE_CAPACITY);
+
+        buffer.setWriteIndex(0);
+        for (int i = 0; i < buffer.capacity() - BLOCK_SIZE + 1; i += BLOCK_SIZE) {
+            byte[] value = new byte[BLOCK_SIZE];
+            random.nextBytes(value);
+            assertEquals(0, buffer.getReadIndex());
+            assertEquals(i, buffer.getWriteIndex());
+            buffer.writeBytes(value);
+        }
+
+        random.setSeed(seed);
+        byte[] expectedValue = new byte[BLOCK_SIZE];
+        for (int i = 0; i < buffer.capacity() - BLOCK_SIZE + 1; i += BLOCK_SIZE) {
+            random.nextBytes(expectedValue);
+            assertEquals(i, buffer.getReadIndex());
+            assertEquals(LARGE_CAPACITY, buffer.getWriteIndex());
+            ProtonBuffer actualValue = buffer.slice().setWriteIndex(BLOCK_SIZE);
+            buffer.setReadIndex(BLOCK_SIZE + buffer.getReadIndex());
+            assertEquals(wrapBuffer(expectedValue), actualValue);
+
+            // Make sure if it is a sliced buffer.
+            actualValue.setByte(0, (byte) (actualValue.getByte(0) + 1));
+            assertEquals(buffer.getByte(i), actualValue.getByte(0));
+        }
     }
 
     @Test
