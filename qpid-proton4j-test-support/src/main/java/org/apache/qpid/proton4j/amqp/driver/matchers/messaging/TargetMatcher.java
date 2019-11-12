@@ -38,7 +38,7 @@ public class TargetMatcher extends ListDescribedTypeMatcher {
     public TargetMatcher(org.apache.qpid.proton4j.amqp.messaging.Target target) {
         super(Target.Field.values().length, Target.DESCRIPTOR_CODE, Target.DESCRIPTOR_SYMBOL);
 
-        addSourceMatchers(target);
+        addTargetMatchers(target);
     }
 
     @Override
@@ -123,7 +123,7 @@ public class TargetMatcher extends ListDescribedTypeMatcher {
 
     //----- Populate the matcher from a given Source object
 
-    private void addSourceMatchers(org.apache.qpid.proton4j.amqp.messaging.Target target) {
+    private void addTargetMatchers(org.apache.qpid.proton4j.amqp.messaging.Target target) {
         if (target.getAddress() != null) {
             addFieldMatcher(Target.Field.ADDRESS, equalTo(target.getAddress()));
         } else {
