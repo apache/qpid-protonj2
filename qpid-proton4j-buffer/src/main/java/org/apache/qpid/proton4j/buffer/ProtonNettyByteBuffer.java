@@ -19,8 +19,6 @@ package org.apache.qpid.proton4j.buffer;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 
-import org.apache.qpid.proton4j.buffer.ProtonBuffer;
-
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 
@@ -149,11 +147,11 @@ public final class ProtonNettyByteBuffer implements ProtonBuffer {
             destination.setBytes(offset, getArray(), getArrayOffset() + index, length);
         } else if (destination instanceof ProtonNettyByteBuffer) {
             ProtonNettyByteBuffer wrapper = (ProtonNettyByteBuffer) destination;
-            wrapped.getBytes(index, (ByteBuf) wrapper.unwrap(), offset, length);
+            wrapped.getBytes(index, wrapper.unwrap(), offset, length);
         } else {
             checkDestinationIndex(index, length, offset, destination.capacity());
             for (int i = 0; i < length; ++i) {
-                destination.setByte(index + i, wrapped.getByte(offset + i));
+                destination.setByte(offset + i, wrapped.getByte(index + i));
             }
         }
 

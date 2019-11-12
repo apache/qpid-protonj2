@@ -71,12 +71,21 @@ public class ProtonDuplicatedBuffer extends ProtonAbstractBuffer {
 
     @Override
     public ProtonBuffer capacity(int newCapacity) {
-        return buffer.capacity(newCapacity);
+        buffer.capacity(newCapacity);
+        if (getReadIndex() < newCapacity) {
+            if (getWriteIndex() > newCapacity) {
+                setWriteIndex(newCapacity);
+            }
+        } else {
+            setIndex(newCapacity, newCapacity);
+        }
+
+        return this;
     }
 
     @Override
     public ProtonBuffer duplicate() {
-        return buffer.duplicate();
+        return new ProtonDuplicatedBuffer(this);
     }
 
     @Override

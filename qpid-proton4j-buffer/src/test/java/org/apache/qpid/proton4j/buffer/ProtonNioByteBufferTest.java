@@ -20,67 +20,12 @@ import static org.junit.Assert.assertEquals;
 
 import java.nio.ByteBuffer;
 
-import org.junit.Ignore;
 import org.junit.Test;
 
 /**
  * Test class for the NIO ByteBuffer wrapper class
  */
 public class ProtonNioByteBufferTest extends ProtonAbstractBufferTest {
-
-    @Ignore("Cannot change capacity on Nio buffer")
-    @Override
-    @Test
-    public void testConstructWithDifferingCapacityAndMaxCapacity() {
-    }
-
-    @Ignore("Cannot change capacity on Nio buffer")
-    @Override
-    @Test
-    public void testBufferRespectsMaxCapacityAfterGrowingToFit() {
-    }
-
-    @Ignore("Cannot change capacity on Nio buffer")
-    @Override
-    @Test
-    public void testIncreaseCapacity() {
-    }
-
-    @Ignore("Cannot change capacity on Nio buffer")
-    @Override
-    @Test
-    public void testDecreaseCapacity() {
-    }
-
-    @Ignore("Cannot change capacity on Nio buffer")
-    @Override
-    @Test
-    public void testDecreaseCapacityWithWriteIndexWithinNewValue() {
-    }
-
-    @Ignore("Cannot change capacity on Nio buffer")
-    @Override
-    @Test
-    public void testCapacityDecrease() {
-    }
-
-    @Ignore("Cannot change capacity on Nio buffer")
-    @Override
-    @Test
-    public void testCapacityIncrease() {
-    }
-
-    @Ignore("Cannot change capacity on Nio buffer")
-    @Override
-    @Test
-    public void testDecreaseCapacityWithReadIndexIndexBeyondNewValue() {
-    }
-
-    @Ignore("Cannot change capacity on Nio buffer")
-    @Override
-    @Test
-    public void testCapacityIncreasesWhenWritesExceedCurrent() {
-    }
 
     //----- Test NIO buffer implementation specifics
 
@@ -147,6 +92,11 @@ public class ProtonNioByteBufferTest extends ProtonAbstractBufferTest {
     }
 
     //----- Implement generic create methods from abstract test base
+
+    @Override
+    protected boolean canBufferCapacityBeChanged() {
+        return false;
+    }
 
     @Override
     protected boolean canAllocateDirectBackedBuffers() {
