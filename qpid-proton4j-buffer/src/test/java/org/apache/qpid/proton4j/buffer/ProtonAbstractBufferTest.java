@@ -2774,7 +2774,7 @@ public abstract class ProtonAbstractBufferTest {
     @Test
     public void testRandomProtonBufferTransfer2DirectSourceAndTarget() {
         assumeTrue(canAllocateDirectBackedBuffers());
-        doTestRandomProtonBufferTransfer2(false, true);
+        doTestRandomProtonBufferTransfer2(true, true);
     }
 
     private void doTestRandomProtonBufferTransfer2(boolean directSource, boolean directTarget) {
@@ -3094,6 +3094,72 @@ public abstract class ProtonAbstractBufferTest {
             }
             assertEquals(valueOffset, value.getReadIndex());
             assertEquals(valueOffset + BLOCK_SIZE, value.getWriteIndex());
+        }
+    }
+
+    @Test
+    public void testSequentialProtonBufferTransfer3() {
+        doTestSequentialProtonBufferTransfer3(false, false);
+    }
+
+    @Test
+    public void testSequentialProtonBufferTransfer3DirectSource() {
+        doTestSequentialProtonBufferTransfer3(true, false);
+    }
+
+    @Test
+    public void testSequentialProtonBufferTransfer3DirectTargetBuffer() {
+        assumeTrue(canAllocateDirectBackedBuffers());
+        doTestSequentialProtonBufferTransfer3(false, true);
+    }
+
+    @Test
+    public void testSequentialProtonBufferTransfer3DirectSourceAndTargetBuffers() {
+        assumeTrue(canAllocateDirectBackedBuffers());
+        doTestSequentialProtonBufferTransfer3(true, true);
+    }
+
+    private void doTestSequentialProtonBufferTransfer3(boolean directSource, boolean directTarget) {
+        final ProtonBuffer buffer;
+        if (directTarget) {
+            buffer = allocateDirectBuffer(LARGE_CAPACITY);
+        } else {
+            buffer = allocateBuffer(LARGE_CAPACITY);
+        }
+
+        final byte[] valueContent = new byte[BLOCK_SIZE];
+        final ProtonBuffer value;
+        if (directSource) {
+            value = new ProtonNioByteBuffer(ByteBuffer.allocateDirect(BLOCK_SIZE));
+        } else {
+            value = new ProtonByteBuffer(BLOCK_SIZE, BLOCK_SIZE);
+        }
+
+        for (int i = 0; i < buffer.capacity() - BLOCK_SIZE + 1; i += BLOCK_SIZE) {
+            random.nextBytes(valueContent);
+            value.clear().writeBytes(valueContent);
+            assertEquals(0, value.getReadIndex());
+            assertEquals(BLOCK_SIZE, value.getWriteIndex());
+            buffer.setWriteIndex(buffer.getWriteIndex() + BLOCK_SIZE);
+            buffer.setBytes(i, value, BLOCK_SIZE);
+            assertEquals(BLOCK_SIZE, value.getReadIndex());
+            assertEquals(BLOCK_SIZE, value.getWriteIndex());
+        }
+
+        random.setSeed(seed);
+        byte[] expectedValueContent = new byte[BLOCK_SIZE];
+        ProtonBuffer expectedValue = new ProtonByteBuffer(expectedValueContent);
+        for (int i = 0; i < buffer.capacity() - BLOCK_SIZE + 1; i += BLOCK_SIZE) {
+            random.nextBytes(expectedValueContent);
+            value.clear();
+            assertEquals(0, value.getReadIndex());
+            assertEquals(0, value.getWriteIndex());
+            buffer.getBytes(i, value, BLOCK_SIZE);
+            assertEquals(0, value.getReadIndex());
+            assertEquals(BLOCK_SIZE, value.getWriteIndex());
+            for (int j = 0; j < BLOCK_SIZE; j++) {
+                assertEquals(expectedValue.getByte(j), value.getByte(j));
+            }
         }
     }
 

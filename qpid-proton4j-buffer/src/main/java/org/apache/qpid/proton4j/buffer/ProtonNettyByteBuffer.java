@@ -129,14 +129,16 @@ public final class ProtonNettyByteBuffer implements ProtonBuffer {
     @Override
     public ProtonBuffer getBytes(int index, ProtonBuffer destination) {
         int length = destination.getWritableBytes();
-        getBytes(index, destination, 0, length);
+        getBytes(index, destination, destination.getWriteIndex(), length);
         destination.setWriteIndex(destination.getWriteIndex() + length);
         return this;
     }
 
     @Override
     public ProtonBuffer getBytes(int index, ProtonBuffer destination, int length) {
-        return getBytes(index, destination, 0, length);
+        getBytes(index, destination, destination.getWriteIndex(), length);
+        destination.setWriteIndex(destination.getWriteIndex() + length);
+        return this;
     }
 
     @Override

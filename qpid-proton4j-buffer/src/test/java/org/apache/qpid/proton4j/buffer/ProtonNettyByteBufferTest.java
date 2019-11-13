@@ -21,6 +21,7 @@ import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeTrue;
 
 import java.nio.ByteBuffer;
 
@@ -510,6 +511,68 @@ public class ProtonNettyByteBufferTest extends ProtonAbstractBufferTest {
         random.setSeed(seed);
         byte[] expectedValueContent = new byte[BLOCK_SIZE * 2];
         ProtonNettyByteBuffer expectedValue = new ProtonNettyByteBuffer(Unpooled.wrappedBuffer(expectedValueContent));
+        for (int i = 0; i < buffer.capacity() - BLOCK_SIZE + 1; i += BLOCK_SIZE) {
+            random.nextBytes(expectedValueContent);
+            int valueOffset = random.nextInt(BLOCK_SIZE);
+            buffer.getBytes(i, value, valueOffset, BLOCK_SIZE);
+            for (int j = valueOffset; j < valueOffset + BLOCK_SIZE; j ++) {
+                assertEquals(expectedValue.getByte(j), value.getByte(j));
+            }
+        }
+    }
+
+    @Test
+    public void testRandomProtonNettyBufferTransfer2() {
+        doTestRandomProtonBufferTransfer2(false, false);
+    }
+
+    @Test
+    public void testRandomProtonNettyBufferTransfer2DirectSource() {
+        doTestRandomProtonBufferTransfer2(true, false);
+    }
+
+    @Test
+    public void testRandomProtonNettyBufferTransfer2DirectTarget() {
+        assumeTrue(canAllocateDirectBackedBuffers());
+        doTestRandomProtonBufferTransfer2(false, true);
+    }
+
+    @Test
+    public void testRandomProtonNettyBufferTransfer2DirectSourceAndTarget() {
+        assumeTrue(canAllocateDirectBackedBuffers());
+        doTestRandomProtonBufferTransfer2(true, true);
+    }
+
+    /*
+     * Tests getBytes with netty wrapper to netty wrapper with direct and non-direct variants
+     */
+    private void doTestRandomProtonBufferTransfer2(boolean directSource, boolean directTarget) {
+        final ProtonBuffer buffer;
+        if (directTarget) {
+            buffer = allocateDirectBuffer(LARGE_CAPACITY);
+        } else {
+            buffer = allocateBuffer(LARGE_CAPACITY);
+        }
+
+        final int SIZE = BLOCK_SIZE * 2;
+        byte[] valueContent = new byte[SIZE];
+        final ProtonBuffer value;
+        if (directSource) {
+            value = allocateDirectBuffer(SIZE);
+        } else {
+            value = allocateBuffer(SIZE);
+        }
+
+        for (int i = 0; i < buffer.capacity() - BLOCK_SIZE + 1; i += BLOCK_SIZE) {
+            random.nextBytes(valueContent);
+            value.clear();
+            value.writeBytes(valueContent);
+            buffer.setBytes(i, value, random.nextInt(BLOCK_SIZE), BLOCK_SIZE);
+        }
+
+        random.setSeed(seed);
+        byte[] expectedValueContent = new byte[SIZE];
+        ProtonBuffer expectedValue = new ProtonByteBuffer(expectedValueContent);
         for (int i = 0; i < buffer.capacity() - BLOCK_SIZE + 1; i += BLOCK_SIZE) {
             random.nextBytes(expectedValueContent);
             int valueOffset = random.nextInt(BLOCK_SIZE);
