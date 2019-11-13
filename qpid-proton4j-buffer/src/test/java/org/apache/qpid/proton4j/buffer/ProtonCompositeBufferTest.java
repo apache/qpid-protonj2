@@ -411,7 +411,154 @@ public class ProtonCompositeBufferTest extends ProtonAbstractBufferTest {
         assertSame(self, buffer);
     }
 
+    @Test
+    public void testSetAndGetShortAcrossMultipleArrays() {
+        ProtonCompositeBuffer buffer = new ProtonCompositeBuffer();
+
+        final int NUM_ELEMENTS = 4;
+
+        for (int i = 0; i < Short.BYTES * NUM_ELEMENTS; ++i) {
+            buffer.append(new byte[] {0});
+        }
+
+        for (int i = 0, j = 1; i < buffer.getReadableBytes(); i += Short.BYTES, j++) {
+            buffer.setShort(i, j);
+        }
+
+        assertEquals(Short.BYTES * NUM_ELEMENTS, buffer.getReadableBytes());
+        assertFalse(buffer.hasArray());
+        assertTrue(buffer.isReadable());
+        assertEquals(0, buffer.getReadIndex());
+
+        for (int i = 0, j = 1; i < buffer.getReadableBytes(); i += Short.BYTES, j++) {
+            assertEquals(j, buffer.getShort(i));
+        }
+
+        assertEquals(Short.BYTES * NUM_ELEMENTS, buffer.getReadableBytes());
+        assertEquals(0, buffer.getReadIndex());
+        assertEquals(Short.BYTES * NUM_ELEMENTS, buffer.getReadableBytes());
+    }
+
+    @Test
+    public void testSetAndGetIntegersAcrossMultipleArrays() {
+        ProtonCompositeBuffer buffer = new ProtonCompositeBuffer();
+
+        final int NUM_ELEMENTS = 4;
+
+        for (int i = 0; i < Integer.BYTES * NUM_ELEMENTS; ++i) {
+            buffer.append(new byte[] {0});
+        }
+
+        for (int i = 0, j = 1; i < buffer.getReadableBytes(); i += Integer.BYTES, j++) {
+            buffer.setShort(i, j);
+        }
+
+        assertEquals(Integer.BYTES * NUM_ELEMENTS, buffer.getReadableBytes());
+        assertFalse(buffer.hasArray());
+        assertTrue(buffer.isReadable());
+        assertEquals(0, buffer.getReadIndex());
+
+        for (int i = 0, j = 1; i < buffer.getReadableBytes(); i += Integer.BYTES, j++) {
+            assertEquals(j, buffer.getShort(i));
+        }
+
+        assertEquals(Integer.BYTES * NUM_ELEMENTS, buffer.getReadableBytes());
+        assertEquals(0, buffer.getReadIndex());
+        assertEquals(Integer.BYTES * NUM_ELEMENTS, buffer.getReadableBytes());
+    }
+
+    @Test
+    public void testSetAndGetLongsAcrossMultipleArrays() {
+        ProtonCompositeBuffer buffer = new ProtonCompositeBuffer();
+
+        final int NUM_ELEMENTS = 4;
+
+        for (int i = 0; i < Long.BYTES * NUM_ELEMENTS; ++i) {
+            buffer.append(new byte[] {0});
+        }
+
+        for (int i = 0, j = 1; i < buffer.getReadableBytes(); i += Long.BYTES, j++) {
+            buffer.setShort(i, j);
+        }
+
+        assertEquals(Long.BYTES * NUM_ELEMENTS, buffer.getReadableBytes());
+        assertFalse(buffer.hasArray());
+        assertTrue(buffer.isReadable());
+        assertEquals(0, buffer.getReadIndex());
+
+        for (int i = 0, j = 1; i < buffer.getReadableBytes(); i += Long.BYTES, j++) {
+            assertEquals(j, buffer.getShort(i));
+        }
+
+        assertEquals(Long.BYTES * NUM_ELEMENTS, buffer.getReadableBytes());
+        assertEquals(0, buffer.getReadIndex());
+        assertEquals(Long.BYTES * NUM_ELEMENTS, buffer.getReadableBytes());
+    }
+
+    //----- Test array access method
+
+    @Test
+    public void testArrayWhenEmpty() {
+        ProtonCompositeBuffer buffer = new ProtonCompositeBuffer();
+        assertNotNull(buffer.getArray());
+        assertSame(buffer.getArray(), buffer.getArray());
+
+        byte[] data1 = new byte[] {0, 1, 2, 3, 4};
+
+        buffer.append(data1, 1, data1.length - 1);
+        assertEquals(1, buffer.getArrayOffset());
+
+        assertEquals(data1, buffer.getArray());
+    }
+
+    @Test
+    public void testArrayUnsupportedWhenCompositeHasMultipleChunks() {
+        ProtonCompositeBuffer buffer = new ProtonCompositeBuffer();
+
+        byte[] data1 = new byte[] {0, 1, 2, 3, 4};
+        byte[] data2 = new byte[] {5, 6, 7, 8, 9};
+
+        final int dataLength = data1.length + data2.length;
+
+        buffer.append(data1).append(data2);
+        assertEquals(dataLength, buffer.getReadableBytes());
+
+        try {
+            buffer.getArray();
+            fail("Should not be able to get an array after more than one array added");
+        } catch (UnsupportedOperationException uoe) {}
+    }
+
     //----- Test arrayOffset method ------------------------------------------//
+
+    @Test
+    public void testArrayOffsetZeroWhenNoChunksInBuffer() {
+        ProtonCompositeBuffer buffer = new ProtonCompositeBuffer();
+        assertEquals(0, buffer.getArrayOffset());
+
+        byte[] data1 = new byte[] {0, 1, 2, 3, 4};
+
+        buffer.append(data1, 1, data1.length - 1);
+        assertEquals(1, buffer.getArrayOffset());
+    }
+
+    @Test
+    public void testArrayOffsetUnsupportedWhenCompositeHasMultipleChunks() {
+        ProtonCompositeBuffer buffer = new ProtonCompositeBuffer();
+
+        byte[] data1 = new byte[] {0, 1, 2, 3, 4};
+        byte[] data2 = new byte[] {5, 6, 7, 8, 9};
+
+        final int dataLength = data1.length + data2.length;
+
+        buffer.append(data1).append(data2);
+        assertEquals(dataLength, buffer.getReadableBytes());
+
+        try {
+            buffer.getArrayOffset();
+            fail("Should not be able to get an offset after more than one array added");
+        } catch (UnsupportedOperationException uoe) {}
+    }
 
     @Test
     public void testArrayOffsetIsZeroRegardlessOfPositionOnNonSlicedBuffer() {
@@ -595,6 +742,32 @@ public class ProtonCompositeBufferTest extends ProtonAbstractBufferTest {
         for(int i = 0; i < source3.length; i++) {
             assertEquals(source1.length + source2.length + i, buffer.readByte());
         }
+    }
+
+    @Test
+    public void testAppendToBufferAtWhenWriteIndexNotAtEnd() {
+        ProtonCompositeBuffer buffer = new ProtonCompositeBuffer();
+
+        byte[] source1 = new byte[] { 0, 1, 2, 3 };
+        byte[] source2 = new byte[] { 4, 5, 6, 7 };
+
+        buffer.append(source1);
+
+        assertEquals(source1.length, buffer.getWriteIndex());
+
+        buffer.append(source2);
+
+        assertEquals(source2.length + source1.length, buffer.getWriteIndex());
+
+        byte[] source3 = new byte[] { 8, 9, 10, 11 };
+
+        buffer.setWriteIndex(2);
+
+        buffer.append(source3);
+
+        assertEquals(2, buffer.getWriteIndex());
+        assertFalse(buffer.hasArray());
+        assertEquals(3, buffer.numberOfBuffers());
     }
 
     @Test
@@ -1174,6 +1347,47 @@ public class ProtonCompositeBufferTest extends ProtonAbstractBufferTest {
 
         assertEquals(2, buffer1.getReadIndex());
         assertEquals(3, buffer2.getReadIndex());
+    }
+
+    //----- Test toByteBuffer implementation for Composites
+
+    @Test
+    public void testToByteBufferWhenEmpty() {
+        ProtonCompositeBuffer buffer = new ProtonCompositeBuffer();
+        assertNotNull(buffer.toByteBuffer());
+        assertSame(buffer.toByteBuffer(), buffer.toByteBuffer());
+        assertEquals(0, buffer.toByteBuffer().capacity());
+    }
+
+    @Test
+    public void testToByteBufferAcrossArrays() {
+        ProtonCompositeBuffer buffer = new ProtonCompositeBuffer();
+
+        buffer.append(new byte[] {0})
+              .append(new byte[] {1, 2})
+              .append(new byte[] {3, 4, 5})
+              .append(new byte[] {6})
+              .append(new byte[] {7, 8, 9});
+
+        assertEquals(10, buffer.getReadableBytes());
+        assertFalse(buffer.hasArray());
+        assertTrue(buffer.isReadable());
+        assertEquals(0, buffer.getReadIndex());
+        assertEquals(10, buffer.getWriteIndex());
+
+        ByteBuffer nioBuffer = buffer.toByteBuffer(0, 1);
+        assertNotNull(nioBuffer);
+        assertEquals(1,  nioBuffer.capacity());
+        assertEquals(0, nioBuffer.get(0));
+
+        nioBuffer = buffer.toByteBuffer(5, 5);
+        assertNotNull(nioBuffer);
+        assertEquals(5,  nioBuffer.capacity());
+        assertEquals(5, nioBuffer.get(0));
+        assertEquals(6, nioBuffer.get(1));
+        assertEquals(7, nioBuffer.get(2));
+        assertEquals(8, nioBuffer.get(3));
+        assertEquals(9, nioBuffer.get(4));
     }
 
     //----- Implement abstract methods from the abstract buffer test base class

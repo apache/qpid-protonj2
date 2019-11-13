@@ -1244,6 +1244,43 @@ public abstract class ProtonAbstractBufferTest {
         assertTrue(buffer.getByte(readerIndex + 1) != copy.getByte(1));
     }
 
+    @Test
+    public void testSequentialRandomFilledBufferIndexedCopy() {
+        doTestSequentialRandomFilledBufferIndexedCopy(false);
+    }
+
+    @Test
+    public void testSequentialRandomFilledBufferIndexedCopyDirectBackedBuffer() {
+        assumeTrue(canAllocateDirectBackedBuffers());
+        doTestSequentialRandomFilledBufferIndexedCopy(true);
+    }
+
+    private void doTestSequentialRandomFilledBufferIndexedCopy(boolean direct) {
+        final ProtonBuffer buffer;
+        if (direct) {
+            buffer = allocateDirectBuffer(LARGE_CAPACITY);
+        } else {
+            buffer = allocateBuffer(LARGE_CAPACITY);
+        }
+
+        byte[] value = new byte[BLOCK_SIZE];
+        for (int i = 0; i < buffer.capacity() - BLOCK_SIZE + 1; i += BLOCK_SIZE) {
+            random.nextBytes(value);
+            buffer.setBytes(i, value);
+        }
+
+        random.setSeed(seed);
+        byte[] expectedValueContent = new byte[BLOCK_SIZE];
+        ProtonBuffer expectedValue = new ProtonByteBuffer(expectedValueContent);
+        for (int i = 0; i < buffer.capacity() - BLOCK_SIZE + 1; i += BLOCK_SIZE) {
+            random.nextBytes(expectedValueContent);
+            ProtonBuffer copy = buffer.copy(i, BLOCK_SIZE);
+            for (int j = 0; j < BLOCK_SIZE; j ++) {
+                assertEquals(expectedValue.getByte(j), copy.getByte(j));
+            }
+        }
+    }
+
     //----- Tests for Buffer duplication -------------------------------------//
 
     @Test

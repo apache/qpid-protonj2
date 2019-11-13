@@ -390,7 +390,6 @@ public final class ProtonCompositeBuffer extends ProtonAbstractBuffer {
     @Override
     public ProtonBuffer setBytes(int index, ProtonBuffer source, int sourceIndex, int length) {
         checkSourceIndex(index, length, sourceIndex, source.capacity());
-        //Chunk targetChunk = findChunkWithIndex(index);
 
         // TODO - Initial exceedingly slow implementation for test construction
         for (int i = 0; i < length; ++i) {
@@ -403,7 +402,6 @@ public final class ProtonCompositeBuffer extends ProtonAbstractBuffer {
     @Override
     public ProtonBuffer setBytes(int index, byte[] source, int sourceIndex, int length) {
         checkSourceIndex(index, length, sourceIndex, source.length);
-        //Chunk targetChunk = findChunkWithIndex(index);
 
         // TODO - Initial exceedingly slow implementation for test construction
         for (int i = 0; i < length; ++i) {
@@ -416,7 +414,6 @@ public final class ProtonCompositeBuffer extends ProtonAbstractBuffer {
     @Override
     public ProtonBuffer setBytes(int index, ByteBuffer source) {
         checkSourceIndex(index, source.remaining() - source.position(), source.position(), source.remaining());
-        //Chunk targetChunk = findChunkWithIndex(index);
 
         // TODO - Initial exceedingly slow implementation for test construction
         while (source.hasRemaining()) {
@@ -454,11 +451,31 @@ public final class ProtonCompositeBuffer extends ProtonAbstractBuffer {
             case 1:
                 return head.next.toByteBuffer(index, length);
             default:
-                throw new RuntimeException("Not yet implemented.");  // TODO - Copy range into allocated ByteBuffer
+                return internalToByteBuffer(index, length);
         }
     }
 
     //----- Internal Support Framework API
+
+    private ByteBuffer internalToByteBuffer(int index, int length) {
+        checkIndex(index, length);
+
+        Chunk targetChunk = findChunkWithIndex(index);
+        if (targetChunk.isInRange(index, length)) {
+            return targetChunk.toByteBuffer(index, length);
+        } else {
+            byte[] copy = new byte[length];
+            // TODO - Exceedingly slow initial implementation test get tests going.
+            for (int i = 0; i < length; ++i) {
+                copy[i] = targetChunk.readByte(index++);
+                if (targetChunk.endIndex < index) {
+                    targetChunk = targetChunk.next;
+                }
+            }
+
+            return ByteBuffer.wrap(copy);
+        }
+    }
 
     private Chunk findChunkWithIndex(int index) {
         if (index < lastAccessedChunk.startIndex) {
@@ -547,8 +564,16 @@ public final class ProtonCompositeBuffer extends ProtonAbstractBuffer {
             }
         }
 
+        public boolean isInRange(int index, int length) {
+            if (index >= startIndex && (index + (length - 1) <= endIndex)) {
+                return true;
+            } else {
+                return false;
+            }
+        }
+
         public ByteBuffer toByteBuffer(int index, int length) {
-            return buffer.toByteBuffer(index, length);
+            return buffer.toByteBuffer(index - startIndex, length);
         }
 
         @Override
