@@ -57,7 +57,7 @@ public final class ProtonCompositeBuffer extends ProtonAbstractBuffer {
     /**
      * Creates a Composite Buffer instance with max capacity of {@link Integer#MAX_VALUE}.
      */
-    ProtonCompositeBuffer() {
+    public ProtonCompositeBuffer() {
         this(Integer.MAX_VALUE);
     }
 
@@ -67,7 +67,7 @@ public final class ProtonCompositeBuffer extends ProtonAbstractBuffer {
      * @param maximumCapacity
      *      The maximum capacity that this buffer can grow to.
      */
-    ProtonCompositeBuffer(int maximumCapacity) {
+    public ProtonCompositeBuffer(int maximumCapacity) {
         super(maximumCapacity);
 
         this.head = new Chunk(null, 0, -1, -1);
@@ -88,6 +88,8 @@ public final class ProtonCompositeBuffer extends ProtonAbstractBuffer {
      *      The array to append.
      *
      * @return this {@link ProtonCompositeBuffer} instance.
+     *
+     * @throws IndexOutOfBoundsException if the appended buffer would result in max capacity being exceeded.
      */
     public ProtonCompositeBuffer append(byte[] array) {
         Objects.requireNonNull(array, "Cannot append null array to composite buffer.");
@@ -106,6 +108,8 @@ public final class ProtonCompositeBuffer extends ProtonAbstractBuffer {
      *      The usable portion of the given array.
      *
      * @return this {@link ProtonCompositeBuffer} instance.
+     *
+     * @throws IndexOutOfBoundsException if the appended buffer would result in max capacity being exceeded.
      */
     public ProtonCompositeBuffer append(byte[] array, int offset, int length) {
         Objects.requireNonNull(array, "Cannot append null array to composite buffer.");
@@ -120,10 +124,18 @@ public final class ProtonCompositeBuffer extends ProtonAbstractBuffer {
      *      The {@link ProtonBuffer} instance to append.
      *
      * @return this {@link ProtonCompositeBuffer} instance.
+     *
+     * @throws IndexOutOfBoundsException if the appended buffer would result in max capacity being exceeded.
      */
     public ProtonCompositeBuffer append(ProtonBuffer buffer) {
         if (!buffer.isReadable()) {
             return this;
+        }
+
+        if (buffer.getReadableBytes() + capacity() > maxCapacity()) {
+            throw new IndexOutOfBoundsException(String.format(
+                "capacity(%d) + readableBytes(%d) exceeds maxCapacity(%d): %s",
+                capacity(), buffer.getReadableBytes(), maxCapacity(), this));
         }
 
         // If already at end we extend the write index to the new end of the composite

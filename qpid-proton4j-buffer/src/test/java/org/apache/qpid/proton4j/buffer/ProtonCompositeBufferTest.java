@@ -885,6 +885,24 @@ public class ProtonCompositeBufferTest extends ProtonAbstractBufferTest {
 //        assertEquals(buffer.capacity(), duplicate.capacity());
     }
 
+    @Test
+    public void testAppendedBufferCannotForceMaxCapacityExceeded() {
+        ProtonCompositeBuffer buffer = new ProtonCompositeBuffer(6);
+
+        byte[] source1 = new byte[] { 0, 1, 2, 3 };
+        byte[] source2 = new byte[] { 4, 5, 6, 7 };
+
+        buffer.append(source1);
+        assertEquals(source1.length, buffer.capacity());
+
+        try {
+            buffer.append(source2);
+            fail("Should not be able to exceed max capacity limit.");
+        } catch (IndexOutOfBoundsException iae) {
+        }
+
+        assertEquals(source1.length, buffer.capacity());
+    }
 
     //----- Tests for hashCode -----------------------------------------------//
 

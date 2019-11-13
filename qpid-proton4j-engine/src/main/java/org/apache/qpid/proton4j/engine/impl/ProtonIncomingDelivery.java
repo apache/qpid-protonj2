@@ -19,7 +19,7 @@ package org.apache.qpid.proton4j.engine.impl;
 import org.apache.qpid.proton4j.amqp.DeliveryTag;
 import org.apache.qpid.proton4j.amqp.transport.DeliveryState;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
-import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
+import org.apache.qpid.proton4j.buffer.ProtonCompositeBuffer;
 import org.apache.qpid.proton4j.engine.IncomingDelivery;
 
 /**
@@ -46,6 +46,7 @@ public class ProtonIncomingDelivery implements IncomingDelivery {
     private boolean remotelySettled;
 
     private ProtonBuffer payload;
+    private ProtonCompositeBuffer aggregate;
 
     /**
      * @param link
@@ -167,6 +168,7 @@ public class ProtonIncomingDelivery implements IncomingDelivery {
             int bytesRead = payload.getReadableBytes();
             result = payload;
             payload = null;
+            aggregate = null;
             link.deliveryRead(this, bytesRead);
         }
 
@@ -181,6 +183,7 @@ public class ProtonIncomingDelivery implements IncomingDelivery {
             bytesRead -= payload.getReadableBytes();
             if (!payload.isReadable()) {
                 payload = null;
+                aggregate = null;
             }
             link.deliveryRead(this, bytesRead);
         }
@@ -195,6 +198,7 @@ public class ProtonIncomingDelivery implements IncomingDelivery {
             bytesRead -= payload.getReadableBytes();
             if (!payload.isReadable()) {
                 payload = null;
+                aggregate = null;
             }
             link.deliveryRead(this, bytesRead);
         }
@@ -250,14 +254,15 @@ public class ProtonIncomingDelivery implements IncomingDelivery {
 
         if (payload == null) {
             payload = buffer;
+        } else if (aggregate != null) {
+            aggregate.append(buffer);
         } else {
             final ProtonBuffer previous = payload;
-            final int capacity = payload.getReadableBytes() + buffer.getReadableBytes();
 
-            // TODO - CompositeBuffer would reduce copy of buffer contents.
-            payload = ProtonByteBufferAllocator.DEFAULT.allocate(capacity, capacity);
-            payload.writeBytes(previous);
-            payload.writeBytes(buffer);
+            payload = aggregate = new ProtonCompositeBuffer();
+
+            aggregate.append(previous);
+            aggregate.append(buffer);
         }
 
         return this;
