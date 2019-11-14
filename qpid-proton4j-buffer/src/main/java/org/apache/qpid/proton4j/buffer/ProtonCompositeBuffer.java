@@ -70,8 +70,8 @@ public final class ProtonCompositeBuffer extends ProtonAbstractBuffer {
     public ProtonCompositeBuffer(int maximumCapacity) {
         super(maximumCapacity);
 
-        this.head = new Chunk(null, 0, -1, -1);
-        this.tail = new Chunk(null, 0, Integer.MAX_VALUE, Integer.MAX_VALUE);
+        this.head = new Chunk(null, 0, 0, -1, -1);
+        this.tail = new Chunk(null, 0, 0, Integer.MAX_VALUE, Integer.MAX_VALUE);
 
         this.head.next = tail;
         this.tail.prev = head;
@@ -206,18 +206,17 @@ public final class ProtonCompositeBuffer extends ProtonAbstractBuffer {
             int reductionTarget = capacity - newCapacity;
             Chunk current = tail.prev;
             while (current != head) {
-                if (current.chunkSize > reductionTarget) {
+                if (current.length > reductionTarget) {
                     ProtonBuffer sliced = current.buffer.slice(current.buffer.getReadIndex(), reductionTarget);
                     Chunk replacement = new Chunk(
-                        sliced, reductionTarget, current.startIndex, current.startIndex + reductionTarget);
-
+                        sliced, 0, reductionTarget, current.startIndex, current.startIndex + reductionTarget);
                     current.next.prev = replacement;
                     current.prev.next = replacement;
                     replacement.next = current.next;
                     replacement.prev = current.prev;
                     break;
                 } else {
-                    reductionTarget -= current.chunkSize;
+                    reductionTarget -= current.length;
                     current.next.prev = current.prev;
                     current.prev.next = current.next;
                     totalChunks--;
@@ -523,7 +522,7 @@ public final class ProtonCompositeBuffer extends ProtonAbstractBuffer {
         capacity += window;
         totalChunks++;
 
-        final Chunk newChunk = new Chunk(buffer, window, tail.prev.endIndex + 1, tail.prev.endIndex + window);
+        final Chunk newChunk = new Chunk(buffer, buffer.getReadIndex(), window, tail.prev.endIndex + 1, tail.prev.endIndex + window);
 
         // Link the new chunk onto the end updating any previous chunk as well.
         newChunk.prev = tail.prev;
@@ -546,10 +545,8 @@ public final class ProtonCompositeBuffer extends ProtonAbstractBuffer {
     private static class Chunk {
 
         private final ProtonBuffer buffer;
-        private final int chunkSize;
-
-        // TODO - Add chunk offset tracking as the buffer we get may not have the read index
-        //        set to zero, and we are just tracking the readable bytes
+        private final int offset;
+        private final int length;
 
         // We can more quickly traverse the chunks to locate an index read / write
         // by tracking in this chunk where it lives in the buffer scope.
@@ -559,19 +556,20 @@ public final class ProtonCompositeBuffer extends ProtonAbstractBuffer {
         private Chunk next;
         private Chunk prev;
 
-        public Chunk(ProtonBuffer buffer, int chunkSize, int startIndex, int endIndex) {
+        public Chunk(ProtonBuffer buffer, int offset, int length, int startIndex, int endIndex) {
             this.buffer = buffer;
-            this.chunkSize = chunkSize;
+            this.offset = offset;
+            this.length = length;
             this.startIndex = startIndex;
             this.endIndex = endIndex;
         }
 
         public byte readByte(int index) {
-            return buffer.getByte(index - startIndex);
+            return buffer.getByte(offset(index));
         }
 
         public void writeByte(int index, int value) {
-            buffer.setByte(index - startIndex, value);
+            buffer.setByte(offset(index), value);
         }
 
         public boolean isInRange(int index) {
@@ -591,12 +589,16 @@ public final class ProtonCompositeBuffer extends ProtonAbstractBuffer {
         }
 
         public ByteBuffer toByteBuffer(int index, int length) {
-            return buffer.toByteBuffer(index - startIndex, length);
+            return buffer.toByteBuffer(offset(index), length);
         }
 
         @Override
         public String toString() {
-            return String.format("Chunk: { len=%d, sidx=%d, eidx=%d }", chunkSize, startIndex, endIndex);
+            return String.format("Chunk: { len=%d, sidx=%d, eidx=%d }", length, startIndex, endIndex);
+        }
+
+        private int offset(int index) {
+            return (index - startIndex) + offset;
         }
     }
 }

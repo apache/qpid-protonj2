@@ -24,6 +24,7 @@ import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeTrue;
 
 import java.nio.ByteBuffer;
 import java.nio.charset.CharacterCodingException;
@@ -1456,6 +1457,68 @@ public class ProtonCompositeBufferTest extends ProtonAbstractBufferTest {
         assertTrue(buffer.hasArray());
     }
 
+    //----- Test Access to composite buffers when they are offset
+
+    @Test
+    public void testCompositeWithOffsetBuffersReadsSequentialShorts() throws CharacterCodingException {
+        byte[] data1 = new byte[] {1, 1, 0, 0, 0, 1, 0, 2};
+        byte[] data2 = new byte[] {0, 3, 0, 4, 0, 5, 1, 1};
+        byte[] data3 = new byte[] {1, 1, 1, 1, 0, 6, 0, 7};
+
+        ProtonBuffer offset1 = new ProtonByteBuffer(data1).skipBytes(2);
+        ProtonBuffer offset2 = new ProtonByteBuffer(data2).setWriteIndex(data2.length - 2);
+        ProtonBuffer offset3 = new ProtonByteBuffer(data3).skipBytes(4);
+
+        ProtonCompositeBuffer buffer = new ProtonCompositeBuffer();
+        buffer.append(offset1).append(offset2).append(offset3);
+
+        assertEquals(data1.length + data2.length + data3.length, buffer.capacity() + 8);
+
+        final int initialNumShorts = buffer.capacity() / 2;
+
+        for (int i = 0; i < initialNumShorts; ++i) {
+            assertEquals(i, buffer.readShort());
+        }
+    }
+
+    @Test
+    public void testByteArrayTransferWithOffsetComposites() {
+        testByteArrayTransfer(false);
+    }
+
+    @Test
+    public void testByteArrayTransferDirectBackedBufferOfOffsetComposites() {
+        assumeTrue(canAllocateDirectBackedBuffers());
+        testByteArrayTransfer(true);
+    }
+
+    private void testByteArrayTransfer(boolean direct) {
+        final ProtonBuffer buffer;
+
+        if (direct) {
+            buffer = allocateDirectBufferOfOffsetComposites(LARGE_CAPACITY);
+        } else {
+            buffer = allocateBufferOfOffsetComposites(LARGE_CAPACITY);
+        }
+
+        byte[] value = new byte[BLOCK_SIZE * 2];
+        for (int i = 0; i < buffer.capacity() - BLOCK_SIZE + 1; i += BLOCK_SIZE) {
+            random.nextBytes(value);
+            buffer.setBytes(i, value, random.nextInt(BLOCK_SIZE), BLOCK_SIZE);
+        }
+
+        random.setSeed(seed);
+        byte[] expectedValue = new byte[BLOCK_SIZE * 2];
+        for (int i = 0; i < buffer.capacity() - BLOCK_SIZE + 1; i += BLOCK_SIZE) {
+            random.nextBytes(expectedValue);
+            int valueOffset = random.nextInt(BLOCK_SIZE);
+            buffer.getBytes(i, value, valueOffset, BLOCK_SIZE);
+            for (int j = valueOffset; j < valueOffset + BLOCK_SIZE; j ++) {
+                assertEquals(expectedValue[j], value[j]);
+            }
+        }
+    }
+
     //----- Implement abstract methods from the abstract buffer test base class
 
     @Override
@@ -1489,6 +1552,20 @@ public class ProtonCompositeBufferTest extends ProtonAbstractBufferTest {
     protected ProtonBuffer wrapBuffer(byte[] array) {
         ProtonCompositeBuffer composite = new ProtonCompositeBuffer(Integer.MAX_VALUE);
         return composite.append(ProtonByteBufferAllocator.DEFAULT.wrap(array));
+    }
+
+    private ProtonBuffer allocateBufferOfOffsetComposites(int capacity) {
+        ProtonBuffer buffer1 = new ProtonNioByteBuffer(ByteBuffer.allocate((capacity / 2) + 10)).skipBytes(10);
+        ProtonBuffer buffer2 = new ProtonNioByteBuffer(ByteBuffer.allocate((capacity / 2) + 10)).skipBytes(10);
+
+        return new ProtonCompositeBuffer().append(buffer1).append(buffer2);
+    }
+
+    private ProtonBuffer allocateDirectBufferOfOffsetComposites(int capacity) {
+        ProtonBuffer buffer1 = new ProtonNioByteBuffer(ByteBuffer.allocateDirect((capacity / 2) + 10)).skipBytes(10);
+        ProtonBuffer buffer2 = new ProtonNioByteBuffer(ByteBuffer.allocateDirect((capacity / 2) + 10)).skipBytes(10);
+
+        return new ProtonCompositeBuffer().append(buffer1).append(buffer2);
     }
 
     //----- Test Support Methods
