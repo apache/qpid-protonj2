@@ -1408,6 +1408,54 @@ public class ProtonCompositeBufferTest extends ProtonAbstractBufferTest {
         assertEquals(9, nioBuffer.get(4));
     }
 
+    //----- Tests for altering capacity of composite buffer instances
+
+    @Test
+    public void testReduceCapacityAndReadSequentialShortValues() throws CharacterCodingException {
+        byte[] data1 = new byte[] {0, 1, 0, 2, 0, 3, 0, 4};
+        byte[] data2 = new byte[] {0, 5, 0, 6, 0, 7, 0, 8};
+        byte[] data3 = new byte[] {0, 9, 0, 10, 0, 11, 0, 12};
+
+        ProtonCompositeBuffer buffer = new ProtonCompositeBuffer();
+        buffer.append(data1).append(data2).append(data3);
+
+        final int initialNumShorts = buffer.capacity() / 2;
+
+        for (int i = 0; i < initialNumShorts; ++i) {
+            assertEquals(i + 1, buffer.readShort());
+        }
+
+        buffer.setReadIndex(0);
+        buffer.capacity(buffer.capacity() / 2);
+
+        final int newNumShorts = buffer.capacity() / 2;
+        assertEquals(initialNumShorts / 2, newNumShorts);
+
+        for (int i = 0; i < newNumShorts; ++i) {
+            assertEquals(i + 1, buffer.readShort());
+        }
+    }
+
+    @Test
+    public void testReduceCapacityToZero() throws CharacterCodingException {
+        byte[] data1 = new byte[] {0, 1, 0, 2, 0, 3, 0, 4};
+        byte[] data2 = new byte[] {0, 5, 0, 6, 0, 7, 0, 8};
+        byte[] data3 = new byte[] {0, 9, 0, 10, 0, 11, 0, 12, 0, 13};
+
+        ProtonCompositeBuffer buffer = new ProtonCompositeBuffer();
+        buffer.append(data1).append(data2);
+
+        assertFalse(buffer.hasArray());
+        assertEquals(data1.length + data2.length, buffer.capacity());
+
+        buffer.capacity(0);
+
+        buffer.append(data3);
+
+        assertEquals(data3.length, buffer.capacity());
+        assertTrue(buffer.hasArray());
+    }
+
     //----- Implement abstract methods from the abstract buffer test base class
 
     @Override

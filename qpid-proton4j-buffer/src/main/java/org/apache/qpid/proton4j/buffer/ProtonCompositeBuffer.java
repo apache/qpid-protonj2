@@ -207,17 +207,20 @@ public final class ProtonCompositeBuffer extends ProtonAbstractBuffer {
             Chunk current = tail.prev;
             while (current != head) {
                 if (current.chunkSize > reductionTarget) {
-                    // We could copy here which might preserve the array backing if we held only one buffer
-                    // and the original was array backed.
+                    ProtonBuffer sliced = current.buffer.slice(current.buffer.getReadIndex(), reductionTarget);
                     Chunk replacement = new Chunk(
-                        current.buffer.slice(current.startIndex, reductionTarget), reductionTarget, 0, reductionTarget - 1);
+                        sliced, reductionTarget, current.startIndex, current.startIndex + reductionTarget);
+
                     current.next.prev = replacement;
                     current.prev.next = replacement;
+                    replacement.next = current.next;
+                    replacement.prev = current.prev;
                     break;
                 } else {
                     reductionTarget -= current.chunkSize;
                     current.next.prev = current.prev;
                     current.prev.next = current.next;
+                    totalChunks--;
                 }
 
                 current = current.prev;
@@ -544,6 +547,9 @@ public final class ProtonCompositeBuffer extends ProtonAbstractBuffer {
 
         private final ProtonBuffer buffer;
         private final int chunkSize;
+
+        // TODO - Add chunk offset tracking as the buffer we get may not have the read index
+        //        set to zero, and we are just tracking the readable bytes
 
         // We can more quickly traverse the chunks to locate an index read / write
         // by tracking in this chunk where it lives in the buffer scope.
