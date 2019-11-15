@@ -1554,18 +1554,22 @@ public class ProtonCompositeBufferTest extends ProtonAbstractBufferTest {
         return composite.append(ProtonByteBufferAllocator.DEFAULT.wrap(array));
     }
 
+    // TODO - Once abstract buffer test base doesn't assume the buffer under test has a backing array
+    //        we should create a variant of this test that always creates a composite that is made up
+    //        of offset buffers and buffers where the write index doesn't touch the end.
+
     private ProtonBuffer allocateBufferOfOffsetComposites(int capacity) {
         ProtonBuffer buffer1 = new ProtonNioByteBuffer(ByteBuffer.allocate((capacity / 2) + 10)).skipBytes(10);
         ProtonBuffer buffer2 = new ProtonNioByteBuffer(ByteBuffer.allocate((capacity / 2) + 10)).skipBytes(10);
 
-        return new ProtonCompositeBuffer().append(buffer1).append(buffer2);
+        return new ProtonCompositeBuffer().append(buffer1).append(buffer2).setWriteIndex(0);
     }
 
     private ProtonBuffer allocateDirectBufferOfOffsetComposites(int capacity) {
         ProtonBuffer buffer1 = new ProtonNioByteBuffer(ByteBuffer.allocateDirect((capacity / 2) + 10)).skipBytes(10);
         ProtonBuffer buffer2 = new ProtonNioByteBuffer(ByteBuffer.allocateDirect((capacity / 2) + 10)).skipBytes(10);
 
-        return new ProtonCompositeBuffer().append(buffer1).append(buffer2);
+        return new ProtonCompositeBuffer().append(buffer1).append(buffer2).setWriteIndex(0);
     }
 
     //----- Test Support Methods

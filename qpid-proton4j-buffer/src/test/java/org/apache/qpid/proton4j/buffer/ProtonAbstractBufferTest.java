@@ -54,6 +54,10 @@ public abstract class ProtonAbstractBufferTest {
         random.setSeed(seed);
     }
 
+    // TODO - Some tests still wrongly assume that the buffer under test has a backing array
+    //        need to refactor one more time to move those to the types that will and replace
+    //        those tests with a bit more generic variants.
+
     //----- Test Buffer creation ---------------------------------------------//
 
     @Test

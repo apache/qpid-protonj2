@@ -304,14 +304,13 @@ public final class ProtonCompositeBuffer extends ProtonAbstractBuffer {
     @Override
     public ProtonBuffer getBytes(int index, ProtonBuffer destination, int destinationIndex, int length) {
         checkDestinationIndex(index, length, destinationIndex, destination.capacity());
-        lastAccessedChunk = findChunkWithIndex(index);
 
-        // TODO - Initial exceedingly slow implementation for test construction
-        for (int i = 0; i < length; ++i) {
-            destination.setByte(destinationIndex++, lastAccessedChunk.readByte(index++));
-            if (lastAccessedChunk.endIndex < index) {
-                lastAccessedChunk = lastAccessedChunk.next;
-            }
+        while (length > 0) {
+            lastAccessedChunk = findChunkWithIndex(index);
+            final int readBytes = lastAccessedChunk.getBytes(index, destination, destinationIndex, length);
+            index += readBytes;
+            length -=readBytes;
+            destinationIndex += readBytes;
         }
 
         return this;
@@ -320,14 +319,13 @@ public final class ProtonCompositeBuffer extends ProtonAbstractBuffer {
     @Override
     public ProtonBuffer getBytes(int index, byte[] destination, int offset, int length) {
         checkDestinationIndex(index, length, offset, destination.length);
-        lastAccessedChunk = findChunkWithIndex(index);
 
-        // TODO - Initial exceedingly slow implementation for test construction
-        for (int i = 0; i < length; ++i) {
-            destination[offset++] = lastAccessedChunk.readByte(index++);
-            if (lastAccessedChunk.endIndex < index) {
-                lastAccessedChunk = lastAccessedChunk.next;
-            }
+        while (length > 0) {
+            lastAccessedChunk = findChunkWithIndex(index);
+            final int readBytes = lastAccessedChunk.getBytes(index, destination, offset, length);
+            index += readBytes;
+            length -=readBytes;
+            offset += readBytes;
         }
 
         return this;
@@ -336,14 +334,11 @@ public final class ProtonCompositeBuffer extends ProtonAbstractBuffer {
     @Override
     public ProtonBuffer getBytes(int index, ByteBuffer destination) {
         checkIndex(index, destination.remaining());
-        lastAccessedChunk = findChunkWithIndex(index);
 
-        // TODO - Initial exceedingly slow implementation for test construction
         while (destination.hasRemaining()) {
-            destination.put(lastAccessedChunk.readByte(index++));
-            if (lastAccessedChunk.endIndex < index) {
-                lastAccessedChunk = lastAccessedChunk.next;
-            }
+            lastAccessedChunk = findChunkWithIndex(index);
+            final int readBytes = lastAccessedChunk.getBytes(index, destination);
+            index += readBytes;
         }
 
         return this;
@@ -479,12 +474,14 @@ public final class ProtonCompositeBuffer extends ProtonAbstractBuffer {
             return targetChunk.toByteBuffer(index, length);
         } else {
             byte[] copy = new byte[length];
-            // TODO - Exceedingly slow initial implementation test get tests going.
-            for (int i = 0; i < length; ++i) {
-                copy[i] = targetChunk.readByte(index++);
-                if (targetChunk.endIndex < index) {
-                    targetChunk = targetChunk.next;
-                }
+            int offset = 0;
+
+            while (length > 0) {
+                final int readBytes = targetChunk.getBytes(index, copy, offset, length);
+                index += readBytes;
+                length -=readBytes;
+                offset += readBytes;
+                targetChunk = findChunkWithIndex(index);
             }
 
             return ByteBuffer.wrap(copy);
@@ -562,6 +559,36 @@ public final class ProtonCompositeBuffer extends ProtonAbstractBuffer {
             this.length = length;
             this.startIndex = startIndex;
             this.endIndex = endIndex;
+        }
+
+        public int getBytes(int index, ByteBuffer destination) {
+            final int readable = Math.min(length - (index - startIndex), destination.remaining());
+
+            int oldLimit = destination.limit();
+            destination.limit(destination.position() + readable);
+            try {
+                buffer.getBytes(offset(index), destination);
+            } finally {
+                destination.limit(oldLimit);
+            }
+
+            return readable;
+        }
+
+        public int getBytes(int index, byte[] destination, int offset, int desiredLength) {
+            final int readable = Math.min(length - (index - startIndex), desiredLength);
+
+            buffer.getBytes(offset(index), destination, offset, readable);
+
+            return readable;
+        }
+
+        public int getBytes(int index, ProtonBuffer destination, int destinationIndex, int desiredLength) {
+            final int readable = Math.min(length - (index - startIndex), desiredLength);
+
+            buffer.getBytes(offset(index), destination, destinationIndex, readable);
+
+            return readable;
         }
 
         public byte readByte(int index) {
