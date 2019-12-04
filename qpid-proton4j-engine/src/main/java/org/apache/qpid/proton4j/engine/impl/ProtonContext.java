@@ -30,6 +30,11 @@ public class ProtonContext implements Context {
     private Object linkedResource;
 
     @Override
+    public void setLinkedResource(Object resource) {
+        this.linkedResource = resource;
+    }
+
+    @Override
     public Object getLinkedResource() {
         return linkedResource;
     }

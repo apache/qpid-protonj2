@@ -22,6 +22,14 @@ package org.apache.qpid.proton4j.engine;
 public interface Context {
 
     /**
+     * Links a given resource to this Context.
+     *
+     * @param resource
+     *      The resource to link to this {@link Context}.
+     */
+    void setLinkedResource(Object resource);
+
+    /**
      * @return the user set linked resource for this Context instance.
      */
     Object getLinkedResource();
