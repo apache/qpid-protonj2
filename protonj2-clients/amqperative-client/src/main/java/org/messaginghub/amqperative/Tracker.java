@@ -33,14 +33,14 @@ public interface Tracker {
     /**
      * @return the {@link Sender} that was used to send the delivery that is being tracked.
      */
-    Sender getSender();
+    Sender sender();
 
     /**
      * Gets the delivery tag for this delivery
      *
      * @return the binary delivery tag that has been assigned to the sent message.
      */
-    DeliveryTag getTag();
+    DeliveryTag tag();
 
     /**
      * Settles the delivery locally, if not {@link SenderOptions#autoSettle() auto-settling}.
@@ -52,28 +52,28 @@ public interface Tracker {
     /**
      * @return true if the sent message has been locally settled.
      */
-    boolean isSettled();
+    boolean settled();
 
     /**
      * Gets the current local state for the tracked delivery.
      *
      * @return the delivery state
      */
-    DeliveryState getLocalState();
+    DeliveryState localState();
 
     /**
      * Gets the current remote state for the tracked delivery.
      *
      * @return the remote delivery state
      */
-    DeliveryState getRemoteState();
+    DeliveryState remoteState();
 
     /**
      * Gets whether the delivery was settled by the remote peer yet.
      *
      * @return whether the delivery is remotely settled
      */
-    boolean isRemotelySettled();
+    boolean remotelySettled();
 
     /**
      * Accepts and settles the delivery.

@@ -45,22 +45,22 @@ public class ClientTracker implements Tracker {
     }
 
     @Override
-    public Sender getSender() {
+    public Sender sender() {
         return sender;
     }
 
     @Override
-    public DeliveryState getLocalState() {
+    public DeliveryState localState() {
         return ClientDeliveryState.fromProtonType(delivery.getLocalState());
     }
 
     @Override
-    public DeliveryState getRemoteState() {
+    public DeliveryState remoteState() {
         return ClientDeliveryState.fromProtonType(delivery.getRemoteState());
     }
 
     @Override
-    public boolean isRemotelySettled() {
+    public boolean remotelySettled() {
         return delivery.isRemotelySettled();
     }
 
@@ -92,12 +92,12 @@ public class ClientTracker implements Tracker {
     }
 
     @Override
-    public boolean isSettled() {
+    public boolean settled() {
         return delivery.isSettled();
     }
 
     @Override
-    public DeliveryTag getTag() {
+    public DeliveryTag tag() {
         return delivery.getTag();
     }
 }

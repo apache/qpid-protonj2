@@ -490,7 +490,7 @@ public class ConnectionTest extends AMQPerativeTestCase {
             delivery.accept();
 
             Thread.sleep(20); //TODO: remove, hack to give time for settlement propagation (when send+receive done end to end via dispatch router)
-            System.out.println("Settled: " + tracker.isRemotelySettled());
+            System.out.println("Settled: " + tracker.remotelySettled());
             //TODO: should locally settle sent delivery..if sender not set to 'auto settle' when peer does.
         }
 
