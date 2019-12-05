@@ -16,12 +16,15 @@
  */
 package org.messaginghub.amqperative.impl;
 
+import java.util.concurrent.Future;
+
 import org.apache.qpid.proton4j.amqp.DeliveryTag;
 import org.apache.qpid.proton4j.amqp.messaging.Accepted;
 import org.apache.qpid.proton4j.engine.OutgoingDelivery;
 import org.messaginghub.amqperative.DeliveryState;
 import org.messaginghub.amqperative.Sender;
 import org.messaginghub.amqperative.Tracker;
+import org.messaginghub.amqperative.futures.ClientFuture;
 
 /**
  * Client outgoing delivery tracker object.
@@ -30,6 +33,8 @@ public class ClientTracker implements Tracker {
 
     private final ClientSender sender;
     private final OutgoingDelivery delivery;
+
+    private final ClientFuture<DeliveryState> remoteState;
 
     /**
      * Create an instance of a client outgoing delivery tracker.
@@ -42,6 +47,7 @@ public class ClientTracker implements Tracker {
     ClientTracker(ClientSender sender, OutgoingDelivery delivery) {
         this.sender = sender;
         this.delivery = delivery;
+        this.remoteState = sender.session().getFutureFactory().createFuture();
     }
 
     @Override
@@ -55,8 +61,8 @@ public class ClientTracker implements Tracker {
     }
 
     @Override
-    public DeliveryState remoteState() {
-        return ClientDeliveryState.fromProtonType(delivery.getRemoteState());
+    public Future<DeliveryState> remoteState() {
+        return remoteState;
     }
 
     @Override
@@ -99,5 +105,13 @@ public class ClientTracker implements Tracker {
     @Override
     public DeliveryTag tag() {
         return delivery.getTag();
+    }
+
+    //----- Internal Event hooks for delivery updates
+
+    void processDeliveryUpdated(OutgoingDelivery delivery) {
+        if (delivery.getRemoteState() != null || delivery.isRemotelySettled()) {
+            remoteState.complete(ClientDeliveryState.fromProtonType(delivery.getRemoteState()));
+        }
     }
 }

@@ -37,7 +37,6 @@ import org.messaginghub.amqperative.Client;
 import org.messaginghub.amqperative.Message;
 import org.messaginghub.amqperative.Sender;
 import org.messaginghub.amqperative.SenderOptions;
-import org.messaginghub.amqperative.Session;
 import org.messaginghub.amqperative.Source;
 import org.messaginghub.amqperative.Target;
 import org.messaginghub.amqperative.Tracker;
@@ -109,7 +108,7 @@ public class ClientSender implements Sender {
     }
 
     @Override
-    public Session session() {
+    public ClientSession session() {
         return session;
     }
 
@@ -341,7 +340,11 @@ public class ClientSender implements Sender {
     }
 
     private void handleDeliveryUpdated(OutgoingDelivery delivery) {
-        // TODO - Signal received etc
+        try {
+            delivery.getContext().getLinkedResource(ClientTracker.class).processDeliveryUpdated(delivery);
+        } catch (ClassCastException ccex) {
+            LOG.debug("Sender received update on Delivery not linked to a Tracker: {}", delivery);
+        }
     }
 
     //----- Send Result Tracker used for send blocked on credit
@@ -389,10 +392,13 @@ public class ClientSender implements Sender {
     private void assumeSendableAndSend(ClientMessage<?> message, AsyncResult<Tracker> request) {
         ProtonBuffer buffer = ClientMessageSupport.encodeMessage(message);
         OutgoingDelivery delivery = protonSender.next();
+        ClientTracker tracker = new ClientTracker(this, delivery);
+
         delivery.setTag(new byte[] {0});
         delivery.writeBytes(buffer);
+        delivery.getContext().setLinkedResource(tracker);
 
-        request.complete(new ClientTracker(this, delivery));
+        request.complete(tracker);
     }
 
     private void checkClosed() throws IllegalStateException {

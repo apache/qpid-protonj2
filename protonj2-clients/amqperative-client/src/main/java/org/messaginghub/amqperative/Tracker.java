@@ -16,6 +16,8 @@
  */
 package org.messaginghub.amqperative;
 
+import java.util.concurrent.Future;
+
 import org.apache.qpid.proton4j.amqp.DeliveryTag;
 
 /**
@@ -64,9 +66,9 @@ public interface Tracker {
     /**
      * Gets the current remote state for the tracked delivery.
      *
-     * @return the remote delivery state
+     * @return the {@link Future} that will be completed when a remote delivery state is applied.
      */
-    DeliveryState remoteState();
+    Future<DeliveryState> remoteState();
 
     /**
      * Gets whether the delivery was settled by the remote peer yet.
