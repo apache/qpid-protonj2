@@ -42,6 +42,8 @@ public interface Context {
      * @param typeClass the type's Class which is used for casting the returned value.
      *
      * @return the user set linked resource for this Context instance.
+     *
+     * @throws ClassCastException if the linked resource cannot be cast to the type requested.
      */
     <T> T getLinkedResource(Class<T> typeClass);
 
