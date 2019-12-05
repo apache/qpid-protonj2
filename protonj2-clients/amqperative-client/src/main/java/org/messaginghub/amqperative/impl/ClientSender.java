@@ -19,7 +19,6 @@ package org.messaginghub.amqperative.impl;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.Set;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -202,20 +201,6 @@ public class ClientSender implements Sender {
         });
 
         return session.request(operation, options.requestTimeout(), TimeUnit.MILLISECONDS);
-    }
-
-    @Override
-    public Tracker send(Message<?> message, Consumer<Tracker> onUpdated) {
-        checkClosed();
-        // TODO - So many questions
-        return null;
-    }
-
-    @Override
-    public Tracker send(Message<?> message, Consumer<Tracker> onUpdated, ExecutorService executor) {
-        checkClosed();
-        // TODO - Even more questions
-        return null;
     }
 
     //----- Internal API

@@ -23,6 +23,27 @@ import java.util.function.Consumer;
 public interface Receiver {
 
     /**
+     * @return a {@link Future} that will be completed when the remote opens this {@link Receiver}.
+     */
+    Future<Receiver> openFuture();
+
+    /**
+     * Requests a close of the {@link Receiver} link at the remote and returns a {@link Future} that will be
+     * completed once the link has been closed.
+     *
+     * @return a {@link Future} that will be completed when the remote closes this {@link Receiver} link.
+     */
+    Future<Receiver> close();
+
+    /**
+     * Requests a detach of the {@link Receiver} link at the remote and returns a {@link Future} that will be
+     * completed once the link has been detached.
+     *
+     * @return a {@link Future} that will be completed when the remote detaches this {@link Receiver} link.
+     */
+    Future<Receiver> detach();
+
+    /**
      * Returns the address that the {@link Receiver} instance will be subscribed to.
      *
      * <ul>
@@ -60,21 +81,28 @@ public interface Receiver {
      */
     Session session();
 
-    // Waits forever.
+    /**
+     * Blocking receive method that waits forever for the remote to provide a Message for consumption.
+     *
+     * @return a new {@link Delivery} received from the remote.
+     *
+     * @throws IllegalStateException if the {@link Receiver} is closed when the call to receive is made.
+     */
     Delivery receive() throws IllegalStateException;
 
-    // Returns message if there is one, null if not.
+    /**
+     * Non-blocking receive method that either returns a message is one is immediately available or
+     * returns null if none is currently at hand.
+     *
+     * @return a new {@link Delivery} received from the remote or null if no pending message available.
+     *
+     * @throws IllegalStateException if the {@link Receiver} is closed when the call to try to receive is made.
+     */
     Delivery tryReceive() throws IllegalStateException;
 
     Delivery receive(long timeout) throws IllegalStateException;
     // TODO: with credit window, above is fine...without, we would need to
     // manage the credit in one of various fashions (or say we dont).
-
-    Future<Receiver> openFuture();
-
-    Future<Receiver> close();
-
-    Future<Receiver> detach();
 
     Future<Receiver> drain();
 

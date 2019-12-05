@@ -22,7 +22,11 @@ import java.util.concurrent.Future;
 import org.messaginghub.amqperative.impl.ClientException;
 
 /**
- * Connection
+ * Top level {@link Connection} object that can be used as a stand alone API for sending
+ * messages and creating {@link Receiver} instances for message consumption. The Connection
+ * API also exposes a {@link Session} based API for more advanced messaging use cases.
+ *
+ * When a Connection is closed all the resources created by the connection are implicitly closed.
  */
 public interface Connection {
 
@@ -35,12 +39,20 @@ public interface Connection {
     Client client();
 
     /**
+     * When a {@link Connection} is created it may not be opened on the remote peer, the future returned
+     * from this method allows the caller to await the completion of the Connection open by the remote before
+     * proceeding on to other messaging operations.  If the open of the connection fails at the remote an
+     * {@link Exception} is thrown from the {@link Future#get()} method when called.
+     *
      * @return a {@link Future} that will be completed when the remote opens this {@link Connection}.
      */
     Future<Connection> openFuture();
 
     /**
-     * @return a {@link Future} that will be completed when the remote opens this {@link Connection}.
+     * Requests a close of the {@link Connection} at the remote and returns a {@link Future} that will be
+     * completed once the Connection has been fully closed.
+     *
+     * @return a {@link Future} that will be completed when the remote closes this {@link Connection}.
      */
     Future<Connection> close();
 
@@ -157,7 +169,6 @@ public interface Connection {
      * @throws ClientException if an internal error occurs.
      */
     Sender openSender(String address, SenderOptions senderOptions) throws ClientException;
-
 
     // TODO: Does this verify if the server supports anonymous senders and throw if they don't? Try and fail?
     // (Well, actually, that would succeed since it isn't remotely opened on return...)

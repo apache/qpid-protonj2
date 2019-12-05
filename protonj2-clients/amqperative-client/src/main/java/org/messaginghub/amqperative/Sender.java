@@ -16,13 +16,32 @@
  */
 package org.messaginghub.amqperative;
 
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
-import java.util.function.Consumer;
 
 import org.messaginghub.amqperative.impl.ClientException;
 
 public interface Sender {
+
+    /**
+     * @return a {@link Future} that will be completed when the remote opens this {@link Sender}.
+     */
+    Future<Sender> openFuture();
+
+    /**
+     * Requests a close of the {@link Sender} link at the remote and returns a {@link Future} that will be
+     * completed once the link has been closed.
+     *
+     * @return a {@link Future} that will be completed when the remote closes this {@link Sender} link.
+     */
+    Future<Sender> close();
+
+    /**
+     * Requests a detach of the {@link Sender} link at the remote and returns a {@link Future} that will be
+     * completed once the link has been detached.
+     *
+     * @return a {@link Future} that will be completed when the remote detaches this {@link Sender} link.
+     */
+    Future<Sender> detach();
 
     /**
      * Returns the address that the {@link Sender} instance will send {@link Message} objects
@@ -90,17 +109,5 @@ public interface Sender {
      * @throws ClientException if an error occurs while initiating the send operation.
      */
     Tracker trySend(Message<?> message) throws ClientException;
-
-    Future<Sender> openFuture();
-
-    Future<Sender> close();
-
-    Future<Sender> detach();
-
-    // Ideas not yet worked out.
-
-    Tracker send(Message<?> message, Consumer<Tracker> onUpdated);
-
-    Tracker send(Message<?> message, Consumer<Tracker> onUpdated, ExecutorService executor);
 
 }
