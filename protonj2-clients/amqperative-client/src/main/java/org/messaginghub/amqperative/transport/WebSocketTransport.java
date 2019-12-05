@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.messaginghub.amqperative.SslOptions;
@@ -45,6 +46,7 @@ import io.netty.handler.codec.http.websocketx.WebSocketClientHandshaker;
 import io.netty.handler.codec.http.websocketx.WebSocketClientHandshakerFactory;
 import io.netty.handler.codec.http.websocketx.WebSocketFrame;
 import io.netty.handler.codec.http.websocketx.WebSocketVersion;
+import io.netty.util.concurrent.ScheduledFuture;
 
 /**
  * Netty based WebSockets Transport that wraps and extends the TCP Transport.
@@ -54,6 +56,8 @@ public class WebSocketTransport extends TcpTransport {
     private static final Logger LOG = LoggerFactory.getLogger(WebSocketTransport.class);
 
     private static final String AMQP_SUB_PROTOCOL = "amqp";
+
+    private ScheduledFuture<?> handshakeTimeoutFuture;
 
     /**
      * Create a new transport instance
@@ -117,6 +121,17 @@ public class WebSocketTransport extends TcpTransport {
         LOG.trace("Channel has become active, awaiting WebSocket handshake! Channel is {}", channel);
     }
 
+    @Override
+    protected void handleChannelInactive(Channel channel) throws Exception {
+        try {
+            if (handshakeTimeoutFuture != null) {
+                handshakeTimeoutFuture.cancel(false);
+            }
+        } finally {
+            super.handleChannelInactive(channel);
+        }
+    }
+
     //----- Handle connection events -----------------------------------------//
 
     private URI getRemoteLocation() {
@@ -147,6 +162,13 @@ public class WebSocketTransport extends TcpTransport {
         public void channelActive(ChannelHandlerContext context) throws Exception {
             handshaker.handshake(context.channel());
 
+            handshakeTimeoutFuture = context.executor().schedule(()-> {
+                LOG.trace("WebSocket handshake timed out! Channel is {}", context.channel());
+                if (!handshaker.isHandshakeComplete()) {
+                    WebSocketTransport.super.handleException(channel, new IOException("WebSocket handshake timed out"));
+                }
+            }, getTransportOptions().connectTimeout(), TimeUnit.MILLISECONDS);
+
             super.channelActive(context);
         }
 
@@ -159,7 +181,10 @@ public class WebSocketTransport extends TcpTransport {
                 handshaker.finishHandshake(ch, (FullHttpResponse) message);
                 LOG.trace("WebSocket Client connected! {}", ctx.channel());
                 // Now trigger super processing as we are really connected.
-                WebSocketTransport.super.handleConnected(ch);
+                if (handshakeTimeoutFuture.cancel(false)) {
+                    WebSocketTransport.super.handleConnected(ch);
+                }
+
                 return;
             }
 

@@ -367,4 +367,54 @@ public class WebSocketTransportTest extends TcpTransportTest {
         assertTrue(exceptions.isEmpty());
         assertTrue(data.isEmpty());
     }
+
+    private static final String BROKER_JKS_KEYSTORE = "src/test/resources/broker-jks.keystore";
+    private static final String PASSWORD = "password";
+
+    @Test(timeout = 30000)
+    public void testNonSslWebSocketConnectionFailsToSslServer() throws Exception {
+        SslOptions serverSslOptions = new SslOptions();
+        serverSslOptions.keyStoreLocation(BROKER_JKS_KEYSTORE);
+        serverSslOptions.keyStorePassword(PASSWORD);
+        serverSslOptions.verifyHost(false);
+        serverSslOptions.sslEnabled(true);
+
+        try (NettyBlackHoleServer server = new NettyBlackHoleServer(createServerTransportOptions(), serverSslOptions)) {
+            server.start();
+
+            final int port = server.getServerPort();
+
+            TransportOptions clientOptions = createTransportOptions();
+
+            Transport transport = createTransport(HOSTNAME, port, testListener, clientOptions, createSSLOptions());
+            try {
+                transport.connect(null);
+                fail("should not have connected");
+            } catch (Exception e) {
+                LOG.trace("Failed to connect with message: {}", e.getMessage());
+            }
+        }
+    }
+
+    @Test(timeout = 30000)
+    public void testWebsocketConnectionToBlackHoleServerTimesOut() throws Exception {
+        try (NettyBlackHoleServer server = new NettyBlackHoleServer(new TransportOptions(), new SslOptions().sslEnabled(false))) {
+            server.start();
+
+            final int port = server.getServerPort();
+
+            TransportOptions clientOptions = createTransportOptions();
+            clientOptions.connectTimeout(25);
+
+            Transport transport = createTransport(HOSTNAME, port, testListener, clientOptions, createSSLOptions());
+            try {
+                transport.connect(null);
+                fail("should not have connected");
+            } catch (Exception e) {
+                String message = e.getMessage();
+                assertNotNull(message);
+                assertTrue("Unexpected message: " + message, message.contains("WebSocket handshake timed out"));
+            }
+        }
+    }
 }

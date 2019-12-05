@@ -18,8 +18,6 @@ package org.messaginghub.amqperative.transport;
 
 import org.messaginghub.amqperative.SslOptions;
 import org.messaginghub.amqperative.TransportOptions;
-import org.messaginghub.amqperative.transport.TransportListener;
-import org.messaginghub.amqperative.transport.WebSocketTransport;
 
 /**
  * Test the WebSocketTransport with channel level security enabled.
