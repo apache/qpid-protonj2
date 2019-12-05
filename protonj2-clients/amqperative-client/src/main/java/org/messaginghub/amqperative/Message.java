@@ -176,6 +176,38 @@ public interface Message<E> {
 
     Message<E> replyToGroupId(String replyToGroupId);
 
+    //----- Delivery Annotations
+
+    Object getDeliveryAnnotations(String key);
+
+    boolean hasDeliveryAnnotations(String key);
+
+    Message<E> setDeliveryAnnotation(String key, Object value);
+
+    //----- Message Annotations
+
+    Object getMessageAnnotation(String key);
+
+    boolean hasMessageAnnotation(String key);
+
+    Message<E> setMessageAnnotation(String key, Object value);
+
+    //----- Application Properties
+
+    Object getApplicationProperty(String key);
+
+    boolean hasApplicationProperty(String key);
+
+    Message<E> setApplicationProperty(String key, Object value);
+
+    //----- Footer
+
+    Object getFooter(String key);
+
+    boolean hasFooter(String key);
+
+    Message<E> setFooter(String key, Object value);
+
     //----- AMQP Body Section
 
     /**

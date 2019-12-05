@@ -269,15 +269,26 @@ public class ClientMessage<E> implements Message<E> {
 
     //----- Delivery Annotations Access
 
+    @Override
     public Object getDeliveryAnnotations(String key) {
         Object value = null;
-        if (deliveryAnnotations != null) {
+        if (deliveryAnnotations != null && deliveryAnnotations.getValue() != null) {
             value = deliveryAnnotations.getValue().get(Symbol.valueOf(key));
         }
 
         return value;
     }
 
+    @Override
+    public boolean hasDeliveryAnnotations(String key) {
+        if (deliveryAnnotations != null && deliveryAnnotations.getValue() != null) {
+            return deliveryAnnotations.getValue().containsKey(Symbol.valueOf(key));
+        } else {
+            return false;
+        }
+    }
+
+    @Override
     public ClientMessage<E> setDeliveryAnnotation(String key, Object value) {
         lazyCreateDeliveryAnnotations().getValue().put(Symbol.valueOf(key),value);
         return this;
@@ -285,6 +296,7 @@ public class ClientMessage<E> implements Message<E> {
 
     //----- Message Annotations Access
 
+    @Override
     public Object getMessageAnnotation(String key) {
         Object value = null;
         if (messageAnnotations != null) {
@@ -294,6 +306,16 @@ public class ClientMessage<E> implements Message<E> {
         return value;
     }
 
+    @Override
+    public boolean hasMessageAnnotation(String key) {
+        if (messageAnnotations != null && messageAnnotations.getValue() != null) {
+            return messageAnnotations.getValue().containsKey(Symbol.valueOf(key));
+        } else {
+            return false;
+        }
+    }
+
+    @Override
     public ClientMessage<E> setMessageAnnotation(String key, Object value) {
         lazyCreateMessageAnnotations().getValue().put(Symbol.valueOf(key),value);
         return this;
@@ -301,6 +323,7 @@ public class ClientMessage<E> implements Message<E> {
 
     //----- Application Properties Access
 
+    @Override
     public Object getApplicationProperty(String key) {
         Object value = null;
         if (applicationProperties != null) {
@@ -310,6 +333,16 @@ public class ClientMessage<E> implements Message<E> {
         return value;
     }
 
+    @Override
+    public boolean hasApplicationProperty(String key) {
+        if (applicationProperties != null && applicationProperties.getValue() != null) {
+            return applicationProperties.getValue().containsKey(key);
+        } else {
+            return false;
+        }
+    }
+
+    @Override
     public ClientMessage<E> setApplicationProperty(String key, Object value) {
         lazyCreateApplicationProperties().getValue().put(key,value);
         return this;
@@ -317,6 +350,7 @@ public class ClientMessage<E> implements Message<E> {
 
     //----- Footer Access
 
+    @Override
     public Object getFooter(String key) {
         Object value = null;
         if (footer != null) {
@@ -326,6 +360,16 @@ public class ClientMessage<E> implements Message<E> {
         return value;
     }
 
+    @Override
+    public boolean hasFooter(String key) {
+        if (footer != null && footer.getValue() != null) {
+            return footer.getValue().containsKey(Symbol.valueOf(key));
+        } else {
+            return false;
+        }
+    }
+
+    @Override
     public ClientMessage<E> setFooter(String key, Object value) {
         lazyCreateFooter().getValue().put(Symbol.valueOf(key),value);
         return this;
