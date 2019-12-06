@@ -135,7 +135,7 @@ public class SenderOptions {
      *
      * @return this {@link SenderOptions} instance.
      */
-    public SenderOptions offeredCapabilities(String[] offeredCapabilities) {
+    public SenderOptions offeredCapabilities(String... offeredCapabilities) {
         this.offeredCapabilities = offeredCapabilities;
         return this;
     }
@@ -152,7 +152,7 @@ public class SenderOptions {
      *
      * @return this {@link SenderOptions} instance.
      */
-    public SenderOptions desiredCapabilities(String[] desiredCapabilities) {
+    public SenderOptions desiredCapabilities(String... desiredCapabilities) {
         this.desiredCapabilities = desiredCapabilities;
         return this;
     }

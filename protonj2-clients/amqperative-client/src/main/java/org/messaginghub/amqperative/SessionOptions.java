@@ -115,7 +115,7 @@ public class SessionOptions {
     /**
      * @param offeredCapabilities the offeredCapabilities to set
      */
-    public void offeredCapabilities(String[] offeredCapabilities) {
+    public void offeredCapabilities(String... offeredCapabilities) {
         this.offeredCapabilities = offeredCapabilities;
     }
 
@@ -129,7 +129,7 @@ public class SessionOptions {
     /**
      * @param desiredCapabilities the desiredCapabilities to set
      */
-    public void desiredCapabilities(String[] desiredCapabilities) {
+    public void desiredCapabilities(String... desiredCapabilities) {
         this.desiredCapabilities = desiredCapabilities;
     }
 

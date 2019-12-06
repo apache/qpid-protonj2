@@ -216,7 +216,7 @@ public class SslOptions implements Cloneable {
      *
      * @return this options instance.
      */
-    public SslOptions enabledCipherSuites(String[] enabledCipherSuites) {
+    public SslOptions enabledCipherSuites(String... enabledCipherSuites) {
         this.enabledCipherSuites = enabledCipherSuites;
         return this;
     }
@@ -233,7 +233,7 @@ public class SslOptions implements Cloneable {
      *
      * @return this options instance.
      */
-    public SslOptions disabledCipherSuites(String[] disabledCipherSuites) {
+    public SslOptions disabledCipherSuites(String... disabledCipherSuites) {
         this.disabledCipherSuites = disabledCipherSuites;
         return this;
     }
@@ -252,7 +252,7 @@ public class SslOptions implements Cloneable {
      *
      * @return this options instance.
      */
-    public SslOptions enabledProtocols(String[] enabledProtocols) {
+    public SslOptions enabledProtocols(String... enabledProtocols) {
         this.enabledProtocols = enabledProtocols;
         return this;
     }
@@ -271,7 +271,7 @@ public class SslOptions implements Cloneable {
      *
      * @return this options instance.
      */
-    public SslOptions disabledProtocols(String[] disabledProtocols) {
+    public SslOptions disabledProtocols(String... disabledProtocols) {
         this.disabledProtocols = disabledProtocols;
         return this;
     }

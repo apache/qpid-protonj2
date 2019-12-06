@@ -53,6 +53,7 @@ public class Samples {
         String address = "examples";
 
         // =============== Create a client ===========
+
         Client client = Client.create(); // No-arg
 
         ClientOptions options = new ClientOptions();
@@ -68,6 +69,7 @@ public class Samples {
         ConnectionOptions connectionOptions = new ConnectionOptions();
         connectionOptions.user("myUsername");
         connectionOptions.password("myPassword");
+
         Connection connection3 = client.connect(brokerHost, brokerPort, connectionOptions); // host + port + options
 
         Connection connection4 = client.connect(brokerHost, connectionOptions); // host + options
@@ -78,7 +80,7 @@ public class Samples {
         sender.openFuture().get(5, TimeUnit.SECONDS);
 
         SenderOptions senderOptions = new SenderOptions();
-        senderOptions.targetOptions().capabilities(new String[]{"topic"});
+        senderOptions.targetOptions().capabilities("topic");
         senderOptions.sendTimeout(30_000);
         Sender sender2 = connection.openSender(address, senderOptions); // address and options
 
@@ -86,6 +88,11 @@ public class Samples {
 
         Message<String> message = Message.create("Hello World").durable(true);
         Tracker tracker = sender.send(message);
+        try {
+            tracker.remoteState().get(10, TimeUnit.SECONDS);
+        } catch (Exception ex) {
+            // Failed waiting on remote to acknowledge the send.
+        }
 
         tracker.settle();
 
@@ -99,7 +106,7 @@ public class Samples {
         receiverOptions.linkName("myLinkName");
         receiverOptions.sourceOptions().durabilityMode(DurabilityMode.CONFIGURATION);
         receiverOptions.sourceOptions().expiryPolicy(ExpiryPolicy.NEVER);
-        receiverOptions.sourceOptions().capabilities(new String[]{"topic"});
+        receiverOptions.sourceOptions().capabilities("topic");
         Receiver receiver2 = connection.openReceiver(address, receiverOptions); // address and options
 
         // =============== Receive a message ===========

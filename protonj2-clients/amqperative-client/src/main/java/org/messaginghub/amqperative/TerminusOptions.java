@@ -105,7 +105,7 @@ public abstract class TerminusOptions<E extends TerminusOptions<E>> {
      *
      * @return this options instance.
      */
-    public E capabilities(String[] capabilities) {
+    public E capabilities(String... capabilities) {
         this.capabilities = capabilities;
         return self();
     }

@@ -58,6 +58,9 @@ public class HelloWorld {
             Message<String> message = Message.create("Hello World").durable(true);
             Tracker tracker = sender.send(message);
 
+            tracker.remoteState().get(5, TimeUnit.SECONDS);
+            tracker.settle();
+
             Delivery delivery = receiver.receive();
 
             if (delivery != null) {

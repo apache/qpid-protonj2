@@ -127,7 +127,7 @@ public class ReceiverOptions {
      *
      * @return this {@link ReceiverOptions} instance.
      */
-    public ReceiverOptions offeredCapabilities(String[] offeredCapabilities) {
+    public ReceiverOptions offeredCapabilities(String... offeredCapabilities) {
         this.offeredCapabilities = offeredCapabilities;
         return this;
     }
@@ -144,7 +144,7 @@ public class ReceiverOptions {
      *
      * @return this {@link ReceiverOptions} instance.
      */
-    public ReceiverOptions desiredCapabilities(String[] desiredCapabilities) {
+    public ReceiverOptions desiredCapabilities(String... desiredCapabilities) {
         this.desiredCapabilities = desiredCapabilities;
         return this;
     }

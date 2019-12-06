@@ -230,7 +230,7 @@ public class ConnectionOptions {
      *
      * @return this options object for chaining.
      */
-    public ConnectionOptions offeredCapabilities(String[] offeredCapabilities) {
+    public ConnectionOptions offeredCapabilities(String... offeredCapabilities) {
         this.offeredCapabilities = offeredCapabilities;
         return this;
     }
@@ -247,7 +247,7 @@ public class ConnectionOptions {
      *
      * @return this options object for chaining.
      */
-    public ConnectionOptions desiredCapabilities(String[] desiredCapabilities) {
+    public ConnectionOptions desiredCapabilities(String... desiredCapabilities) {
         this.desiredCapabilities = desiredCapabilities;
         return this;
     }
