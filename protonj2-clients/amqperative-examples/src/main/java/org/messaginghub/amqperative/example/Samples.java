@@ -139,14 +139,14 @@ public class Samples {
         // =============== Create a dynamic receiver for request ===========
 
         Receiver dynamicReceiver = connection.openDynamicReceiver();
-        receiver.openFuture().get(5, TimeUnit.SECONDS);
-        String dynamicAddress = receiver.address();
+        dynamicReceiver.openFuture().get(5, TimeUnit.SECONDS);
+        String dynamicAddress = dynamicReceiver.address();
 
         Sender requestor = connection.openSender(address);
-        sender.openFuture().get(5, TimeUnit.SECONDS);
+        requestor.openFuture().get(5, TimeUnit.SECONDS);
 
         Message<String> request = Message.create("Hello World").durable(true).replyTo(dynamicAddress);
-        Tracker requestTracker = sender.send(message);
+        Tracker requestTracker = requestor.send(request);
         requestTracker.settle();
 
         dynamicReceiver.addCredit(1);
