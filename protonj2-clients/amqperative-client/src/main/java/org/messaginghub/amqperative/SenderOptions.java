@@ -69,6 +69,7 @@ public class SenderOptions {
      * @param autoSettle
      *            whether deliveries should be auto settled locally after being
      *            settled by the receiver
+     *
      * @return the sender
      */
     public SenderOptions autoSettle(boolean autoSettle) {
@@ -77,10 +78,11 @@ public class SenderOptions {
     }
 
     /**
-     * Get whether the receiver is auto settling deliveries.
+     * Get whether the {@link Sender} is auto settling deliveries.
      *
      * @return whether deliveries should be auto settled locally after being settled
      *         by the receiver
+     *
      * @see #autoSettle(boolean)
      */
     public boolean autoSettle() {

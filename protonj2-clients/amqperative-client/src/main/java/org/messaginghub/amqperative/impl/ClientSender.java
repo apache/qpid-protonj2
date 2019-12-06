@@ -330,6 +330,10 @@ public class ClientSender implements Sender {
         } catch (ClassCastException ccex) {
             LOG.debug("Sender received update on Delivery not linked to a Tracker: {}", delivery);
         }
+
+        if (options.autoSettle() && delivery.isRemotelySettled()) {
+            delivery.settle();
+        }
     }
 
     //----- Send Result Tracker used for send blocked on credit
