@@ -28,6 +28,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
 import org.apache.qpid.proton4j.amqp.transport.DeliveryState;
+import org.apache.qpid.proton4j.amqp.transport.SenderSettleMode;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.engine.LinkCreditState;
 import org.apache.qpid.proton4j.engine.LinkState;
@@ -382,6 +383,10 @@ public class ClientSender implements Sender {
         ProtonBuffer buffer = ClientMessageSupport.encodeMessage(message);
         OutgoingDelivery delivery = protonSender.next();
         ClientTracker tracker = new ClientTracker(this, delivery);
+
+        if (protonSender.getSenderSettleMode() == SenderSettleMode.SETTLED) {
+            delivery.settle();
+        }
 
         delivery.setTag(new byte[] {0});
         delivery.writeBytes(buffer);
