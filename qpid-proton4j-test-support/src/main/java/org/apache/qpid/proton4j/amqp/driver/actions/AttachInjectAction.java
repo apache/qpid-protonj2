@@ -79,12 +79,12 @@ public class AttachInjectAction extends AbstractPerformativeInjectAction<Attach>
     }
 
     public AttachInjectAction withSndSettleMode(SenderSettleMode sndSettleMode) {
-        attach.setSndSettleMode(sndSettleMode.getValue());
+        attach.setSndSettleMode(sndSettleMode == null ? null : sndSettleMode.getValue());
         return this;
     }
 
     public AttachInjectAction withRcvSettleMode(ReceiverSettleMode rcvSettleMode) {
-        attach.setRcvSettleMode(rcvSettleMode.getValue());
+        attach.setRcvSettleMode(rcvSettleMode == null ? null : rcvSettleMode.getValue());
         return this;
     }
 

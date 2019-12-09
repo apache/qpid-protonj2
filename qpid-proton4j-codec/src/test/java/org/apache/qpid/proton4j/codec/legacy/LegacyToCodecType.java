@@ -295,10 +295,10 @@ public abstract class LegacyToCodecType {
             attach.setRole(convertToCodecType(legacyAttach.getRole()));
         }
         if (legacyAttach.getSndSettleMode() != null) {
-            attach.setSndSettleMode(convertToCodecType(legacyAttach.getSndSettleMode()));
+            attach.setSenderSettleMode(convertToCodecType(legacyAttach.getSndSettleMode()));
         }
         if (legacyAttach.getRcvSettleMode() != null) {
-            attach.setRcvSettleMode(convertToCodecType(legacyAttach.getRcvSettleMode()));
+            attach.setReceiverSettleMode(convertToCodecType(legacyAttach.getRcvSettleMode()));
         }
         attach.setIncompleteUnsettled(legacyAttach.getIncompleteUnsettled());
         if (legacyAttach.getOfferedCapabilities() != null) {

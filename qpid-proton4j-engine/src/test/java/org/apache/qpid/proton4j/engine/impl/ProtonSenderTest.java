@@ -42,7 +42,9 @@ import org.apache.qpid.proton4j.amqp.transactions.TransactionalState;
 import org.apache.qpid.proton4j.amqp.transport.AmqpError;
 import org.apache.qpid.proton4j.amqp.transport.DeliveryState;
 import org.apache.qpid.proton4j.amqp.transport.ErrorCondition;
+import org.apache.qpid.proton4j.amqp.transport.ReceiverSettleMode;
 import org.apache.qpid.proton4j.amqp.transport.Role;
+import org.apache.qpid.proton4j.amqp.transport.SenderSettleMode;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.engine.Connection;
@@ -58,6 +60,68 @@ import org.junit.Test;
  * Test the {@link ProtonSender}
  */
 public class ProtonSenderTest extends ProtonEngineTestSupport {
+
+    @Test
+    public void testSenderOpenWithNoSenderOrReceiverSettleModes() throws Exception {
+        doTestOpenSenderWithConfiguredSenderAndReceiverSettlementModes(null, null);
+    }
+
+    @Test
+    public void testSenderOpenWithSettledAndFirst() throws Exception {
+        doTestOpenSenderWithConfiguredSenderAndReceiverSettlementModes(SenderSettleMode.SETTLED, ReceiverSettleMode.FIRST);
+    }
+
+    @Test
+    public void testSenderOpenWithUnsettledAndSecond() throws Exception {
+        doTestOpenSenderWithConfiguredSenderAndReceiverSettlementModes(SenderSettleMode.UNSETTLED, ReceiverSettleMode.SECOND);
+    }
+
+    private void doTestOpenSenderWithConfiguredSenderAndReceiverSettlementModes(SenderSettleMode senderMode, ReceiverSettleMode receiverMode) {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result);
+        ProtonTestPeer peer = new ProtonTestPeer(engine);
+        engine.outputConsumer(peer);
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond().withContainerId("driver");
+        peer.expectBegin().respond();
+        peer.expectAttach().withSndSettleMode(senderMode)
+                           .withRcvSettleMode(receiverMode)
+                           .respond()
+                           .withSndSettleMode(senderMode)
+                           .withRcvSettleMode(receiverMode);
+
+        Connection connection = engine.start();
+
+        connection.open();
+        Session session = connection.session();
+        session.open();
+
+        Sender sender = session.sender("sender");
+        sender.setSenderSettleMode(senderMode);
+        sender.setReceiverSettleMode(receiverMode);
+        sender.open();
+
+        peer.waitForScriptToComplete();
+        peer.expectDetach().respond();
+
+        if (senderMode != null) {
+            assertEquals(senderMode, sender.getSenderSettleMode());
+        } else {
+            assertEquals(SenderSettleMode.MIXED, sender.getSenderSettleMode());
+        }
+        if (receiverMode != null) {
+            assertEquals(receiverMode, sender.getReceiverSettleMode());
+        } else {
+            assertEquals(ReceiverSettleMode.FIRST, sender.getReceiverSettleMode());
+        }
+
+        sender.close();
+
+        peer.waitForScriptToComplete();
+
+        assertNull(failure);
+    }
 
     @Test
     public void testSenderOpenAndCloseAreIdempotent() throws Exception {

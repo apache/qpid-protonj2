@@ -221,11 +221,11 @@ public final class Attach implements Performative {
         return this;
     }
 
-    public SenderSettleMode getSndSettleMode() {
+    public SenderSettleMode getSenderSettleMode() {
         return sndSettleMode;
     }
 
-    public Attach setSndSettleMode(SenderSettleMode sndSettleMode) {
+    public Attach setSenderSettleMode(SenderSettleMode sndSettleMode) {
         if (sndSettleMode != null) {
             modified |= SENDER_SETTLE_MODE;
         } else {
@@ -236,11 +236,11 @@ public final class Attach implements Performative {
         return this;
     }
 
-    public ReceiverSettleMode getRcvSettleMode() {
+    public ReceiverSettleMode getReceiverSettleMode() {
         return rcvSettleMode;
     }
 
-    public Attach setRcvSettleMode(ReceiverSettleMode rcvSettleMode) {
+    public Attach setReceiverSettleMode(ReceiverSettleMode rcvSettleMode) {
         if (rcvSettleMode != null) {
             modified |= RECEIVER_SETTLE_MODE;
         } else {

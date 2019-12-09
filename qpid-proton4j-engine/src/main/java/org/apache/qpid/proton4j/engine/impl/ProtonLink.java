@@ -32,7 +32,9 @@ import org.apache.qpid.proton4j.amqp.transport.Detach;
 import org.apache.qpid.proton4j.amqp.transport.End;
 import org.apache.qpid.proton4j.amqp.transport.ErrorCondition;
 import org.apache.qpid.proton4j.amqp.transport.Flow;
+import org.apache.qpid.proton4j.amqp.transport.ReceiverSettleMode;
 import org.apache.qpid.proton4j.amqp.transport.Role;
+import org.apache.qpid.proton4j.amqp.transport.SenderSettleMode;
 import org.apache.qpid.proton4j.amqp.transport.Transfer;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.common.logging.ProtonLogger;
@@ -207,6 +209,30 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
     }
 
     @Override
+    public ProtonLink<T> setSenderSettleMode(SenderSettleMode senderSettleMode) {
+        checkNotOpened("Cannot set Sender settlement mode on already opened Link");
+        localAttach.setSenderSettleMode(senderSettleMode);
+        return this;
+    }
+
+    @Override
+    public SenderSettleMode getSenderSettleMode() {
+        return localAttach.getSenderSettleMode();
+    }
+
+    @Override
+    public ProtonLink<T> setReceiverSettleMode(ReceiverSettleMode receiverSettleMode) {
+        checkNotOpened("Cannot set Receiver settlement mode already opened Link");
+        localAttach.setReceiverSettleMode(receiverSettleMode);
+        return this;
+    }
+
+    @Override
+    public ReceiverSettleMode getReceiverSettleMode() {
+        return localAttach.getReceiverSettleMode();
+    }
+
+    @Override
     public ProtonLink<T> setSource(Source source) {
         checkNotOpened("Cannot set Source on already opened Link");
         localAttach.setSource(source);
@@ -306,6 +332,24 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
     @Override
     public UnsignedLong getMaxMessageSize() {
         return localAttach.getMaxMessageSize();
+    }
+
+    @Override
+    public SenderSettleMode getRemoteSenderSettleMode() {
+        if (remoteAttach != null) {
+            return remoteAttach.getSenderSettleMode();
+        }
+
+        return null;
+    }
+
+    @Override
+    public ReceiverSettleMode getRemoteReceiverSettleMode() {
+        if (remoteAttach != null) {
+            return remoteAttach.getReceiverSettleMode();
+        }
+
+        return null;
     }
 
     @Override

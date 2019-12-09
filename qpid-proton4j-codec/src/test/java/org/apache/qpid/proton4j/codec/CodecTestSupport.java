@@ -194,10 +194,10 @@ public class CodecTestSupport {
         assertTypesEqual(attach1.getUnsettled(), attach2.getUnsettled());
 
         Assert.assertSame("Expected Attach with matching has receiver settle mode values", attach1.hasReceiverSettleMode(), attach2.hasReceiverSettleMode());
-        Assert.assertEquals("Receiver settle mode values not equal", attach1.getRcvSettleMode(), attach2.getRcvSettleMode());
+        Assert.assertEquals("Receiver settle mode values not equal", attach1.getReceiverSettleMode(), attach2.getReceiverSettleMode());
 
         Assert.assertSame("Expected Attach with matching has sender settle mode values", attach1.hasSenderSettleMode(), attach2.hasSenderSettleMode());
-        Assert.assertEquals("Sender settle mode values not equal", attach1.getSndSettleMode(), attach2.getSndSettleMode());
+        Assert.assertEquals("Sender settle mode values not equal", attach1.getSenderSettleMode(), attach2.getSenderSettleMode());
 
         Assert.assertSame("Expected Attach with matching has Role values", attach1.hasRole(), attach2.hasRole());
         Assert.assertEquals("Role values not equal", attach1.getRole(), attach2.getRole());

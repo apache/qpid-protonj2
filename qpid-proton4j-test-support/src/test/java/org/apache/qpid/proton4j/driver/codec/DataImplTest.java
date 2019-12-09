@@ -151,8 +151,8 @@ public class DataImplTest {
         attach.setName("test");
         attach.setHandle(1);
         attach.setRole(Role.SENDER);
-        attach.setSndSettleMode(SenderSettleMode.MIXED);
-        attach.setRcvSettleMode(ReceiverSettleMode.FIRST);
+        attach.setSenderSettleMode(SenderSettleMode.MIXED);
+        attach.setReceiverSettleMode(ReceiverSettleMode.FIRST);
         attach.setSource(new Source());
         attach.setTarget(new Target());
 

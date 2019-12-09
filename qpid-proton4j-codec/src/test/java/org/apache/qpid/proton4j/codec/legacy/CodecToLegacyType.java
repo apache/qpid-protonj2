@@ -280,10 +280,10 @@ public abstract class CodecToLegacyType {
             legacyAttach.setRole(convertToLegacyType(attach.getRole()));
         }
         if (attach.hasSenderSettleMode()) {
-            legacyAttach.setSndSettleMode(convertToLegacyType(attach.getSndSettleMode()));
+            legacyAttach.setSndSettleMode(convertToLegacyType(attach.getSenderSettleMode()));
         }
         if (attach.hasReceiverSettleMode()) {
-            legacyAttach.setRcvSettleMode(convertToLegacyType(attach.getRcvSettleMode()));
+            legacyAttach.setRcvSettleMode(convertToLegacyType(attach.getReceiverSettleMode()));
         }
         if (attach.hasIncompleteUnsettled()) {
             legacyAttach.setIncompleteUnsettled(attach.getIncompleteUnsettled());

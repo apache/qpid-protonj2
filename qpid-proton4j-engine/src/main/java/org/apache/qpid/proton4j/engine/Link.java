@@ -23,7 +23,9 @@ import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.amqp.messaging.Source;
 import org.apache.qpid.proton4j.amqp.messaging.Target;
 import org.apache.qpid.proton4j.amqp.transport.ErrorCondition;
+import org.apache.qpid.proton4j.amqp.transport.ReceiverSettleMode;
 import org.apache.qpid.proton4j.amqp.transport.Role;
+import org.apache.qpid.proton4j.amqp.transport.SenderSettleMode;
 import org.apache.qpid.proton4j.engine.exceptions.EngineStateException;
 import org.apache.qpid.proton4j.engine.impl.ProtonSession;
 
@@ -120,6 +122,67 @@ public interface Link<T extends Link<T>> {
      * @return the link name that is assigned to this {@link Link}
      */
     String getName();
+
+    /**
+     * Sets the sender settle mode.
+     *
+     * Should only be called during link set-up, i.e. before calling {@link #open()}.
+     *
+     * If this endpoint is the initiator of the link, this method can be used to set a value other than
+     * the default.
+     *
+     * If this endpoint is not the initiator, this method should be used to set a local value. According
+     * to the AMQP spec, the application may choose to accept the sender's suggestion
+     * (accessed by calling {@link #getRemoteSenderSettleMode()}) or choose another value. The value
+     * has no effect on Proton, but may be useful to the application at a later point.
+     *
+     * In order to be AMQP compliant the application is responsible for honoring the settlement mode. See {@link Link}.
+     *
+     * @param senderSettleMode
+     *      The {@link SenderSettleMode} that will be set on the local end of this link.
+     *
+     * @return this Link.
+     *
+     * @throws IllegalStateException if the {@link Link} has already been opened.
+     */
+    Link<T> setSenderSettleMode(SenderSettleMode senderSettleMode);
+
+    /**
+     * Gets the local link sender settlement mode.
+     *
+     * @return the local sender settlement mode, or null if none was set.
+     *
+     * @see #setSenderSettleMode(SenderSettleMode)
+     */
+    SenderSettleMode getSenderSettleMode();
+
+    /**
+     * Sets the receiver settle mode.
+     *
+     * Should only be called during link set-up, i.e. before calling {@link #open()}.
+     *
+     * If this endpoint is the initiator of the link, this method can be used to set a value other than
+     * the default.
+     *
+     * Used in analogous way to {@link #setSenderSettleMode(SenderSettleMode)}
+     *
+     * @param receiverSettleMode
+     *      The {@link ReceiverSettleMode} that will be set on the local end of this link.
+     *
+     * @return this Link.
+     *
+     * @throws IllegalStateException if the {@link Link} has already been opened.
+     */
+    Link<T> setReceiverSettleMode(ReceiverSettleMode receiverSettleMode);
+
+    /**
+     * Gets the local link receiver settlement mode.
+     *
+     * @return the local receiver settlement mode, or null if none was set.
+     *
+     * @see #setReceiverSettleMode(ReceiverSettleMode)
+     */
+    ReceiverSettleMode getReceiverSettleMode();
 
     /**
      * Sets the {@link Source} to assign to the local end of this {@link Link}.
@@ -262,6 +325,26 @@ public interface Link<T extends Link<T>> {
      * @return the {@link Target} for the remote end of this link.
      */
     Target getRemoteTarget();
+
+    /**
+     * Gets the remote link sender settlement mode, as conveyed from the peer via the Attach frame
+     * when attaching the link to the session.
+     *
+     * @return the sender settlement mode conveyed by the peer, or null if there was none.
+     *
+     * @see #setSenderSettleMode(SenderSettleMode)
+     */
+    SenderSettleMode getRemoteSenderSettleMode();
+
+    /**
+     * Gets the remote link receiver settlement mode, as conveyed from the peer via the Attach frame
+     * when attaching the link to the session.
+     *
+     * @return the sender receiver mode conveyed by the peer, or null if there was none.
+     *
+     * @see #setReceiverSettleMode(ReceiverSettleMode)
+     */
+    ReceiverSettleMode getRemoteReceiverSettleMode();
 
     /**
      * Gets the remote link offered capabilities, as conveyed from the peer via the Attach frame

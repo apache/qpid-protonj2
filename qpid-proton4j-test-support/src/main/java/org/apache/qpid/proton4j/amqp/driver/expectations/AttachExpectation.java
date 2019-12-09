@@ -144,11 +144,11 @@ public class AttachExpectation extends AbstractExpectation<Attach> {
     }
 
     public AttachExpectation withSndSettleMode(SenderSettleMode sndSettleMode) {
-        return withSndSettleMode(equalTo(sndSettleMode.getValue()));
+        return withSndSettleMode(sndSettleMode == null ? nullValue() : equalTo(sndSettleMode.getValue()));
     }
 
     public AttachExpectation withRcvSettleMode(ReceiverSettleMode rcvSettleMode) {
-        return withRcvSettleMode(equalTo(rcvSettleMode.getValue()));
+        return withRcvSettleMode(rcvSettleMode == null ? nullValue() : equalTo(rcvSettleMode.getValue()));
     }
 
     public AttachSourceMatcher withSource() {

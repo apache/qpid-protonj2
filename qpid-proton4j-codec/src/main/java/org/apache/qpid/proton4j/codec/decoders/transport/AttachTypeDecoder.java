@@ -134,11 +134,11 @@ public class AttachTypeDecoder extends AbstractDescribedTypeDecoder<Attach> {
                     break;
                 case 3:
                     byte sndSettleMode = state.getDecoder().readUnsignedByte(buffer, state, (byte) 2);
-                    attach.setSndSettleMode(SenderSettleMode.valueOf(sndSettleMode));
+                    attach.setSenderSettleMode(SenderSettleMode.valueOf(sndSettleMode));
                     break;
                 case 4:
                     byte rcvSettleMode = state.getDecoder().readUnsignedByte(buffer, state, (byte) 0);
-                    attach.setRcvSettleMode(ReceiverSettleMode.valueOf(rcvSettleMode));
+                    attach.setReceiverSettleMode(ReceiverSettleMode.valueOf(rcvSettleMode));
                     break;
                 case 5:
                     attach.setSource(state.getDecoder().readObject(buffer, state, Source.class));

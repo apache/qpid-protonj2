@@ -73,8 +73,8 @@ public class AttachTypeCodecTest extends CodecTestSupport {
        input.setDesiredCapabilities(desiredCapabilities);
        input.setHandle(64);
        input.setRole(Role.RECEIVER);
-       input.setSndSettleMode(SenderSettleMode.UNSETTLED);
-       input.setRcvSettleMode(ReceiverSettleMode.SECOND);
+       input.setSenderSettleMode(SenderSettleMode.UNSETTLED);
+       input.setReceiverSettleMode(ReceiverSettleMode.SECOND);
        input.setSource(new Source());
        input.setTarget(new Target());
        input.setIncompleteUnsettled(false);
@@ -88,8 +88,8 @@ public class AttachTypeCodecTest extends CodecTestSupport {
        assertEquals("name", result.getName());
        assertEquals(64, result.getHandle());
        assertEquals(Role.RECEIVER, result.getRole());
-       assertEquals(SenderSettleMode.UNSETTLED, result.getSndSettleMode());
-       assertEquals(ReceiverSettleMode.SECOND, result.getRcvSettleMode());
+       assertEquals(SenderSettleMode.UNSETTLED, result.getSenderSettleMode());
+       assertEquals(ReceiverSettleMode.SECOND, result.getReceiverSettleMode());
        assertEquals(10, result.getInitialDeliveryCount());
        assertEquals(UnsignedLong.valueOf(1024), result.getMaxMessageSize());
        assertNotNull(result.getSource());
@@ -115,8 +115,8 @@ public class AttachTypeCodecTest extends CodecTestSupport {
         input.setDesiredCapabilities(desiredCapabilities);
         input.setHandle(64);
         input.setRole(Role.RECEIVER);
-        input.setSndSettleMode(SenderSettleMode.UNSETTLED);
-        input.setRcvSettleMode(ReceiverSettleMode.SECOND);
+        input.setSenderSettleMode(SenderSettleMode.UNSETTLED);
+        input.setReceiverSettleMode(ReceiverSettleMode.SECOND);
         input.setSource(new Source());
         input.setTarget(new Target());
         input.setIncompleteUnsettled(false);
@@ -143,8 +143,8 @@ public class AttachTypeCodecTest extends CodecTestSupport {
         input.setDesiredCapabilities(desiredCapabilities);
         input.setHandle(64);
         input.setRole(Role.RECEIVER);
-        input.setSndSettleMode(SenderSettleMode.UNSETTLED);
-        input.setRcvSettleMode(ReceiverSettleMode.SECOND);
+        input.setSenderSettleMode(SenderSettleMode.UNSETTLED);
+        input.setReceiverSettleMode(ReceiverSettleMode.SECOND);
         input.setSource(new Source());
         input.setTarget(new Target());
         input.setIncompleteUnsettled(false);

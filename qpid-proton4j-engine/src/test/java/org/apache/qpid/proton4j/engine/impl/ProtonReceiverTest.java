@@ -48,7 +48,9 @@ import org.apache.qpid.proton4j.amqp.messaging.Rejected;
 import org.apache.qpid.proton4j.amqp.messaging.Released;
 import org.apache.qpid.proton4j.amqp.messaging.Source;
 import org.apache.qpid.proton4j.amqp.messaging.Target;
+import org.apache.qpid.proton4j.amqp.transport.ReceiverSettleMode;
 import org.apache.qpid.proton4j.amqp.transport.Role;
+import org.apache.qpid.proton4j.amqp.transport.SenderSettleMode;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.engine.Connection;
@@ -71,6 +73,68 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
                                                                      Rejected.DESCRIPTOR_SYMBOL,
                                                                      Released.DESCRIPTOR_SYMBOL,
                                                                      Modified.DESCRIPTOR_SYMBOL };
+
+    @Test
+    public void testReceiverOpenWithNoSenderOrReceiverSettleModes() throws Exception {
+        doTestOpenReceiverWithConfiguredSenderAndReceiverSettlementModes(null, null);
+    }
+
+    @Test
+    public void testReceiverOpenWithSettledAndFirst() throws Exception {
+        doTestOpenReceiverWithConfiguredSenderAndReceiverSettlementModes(SenderSettleMode.SETTLED, ReceiverSettleMode.FIRST);
+    }
+
+    @Test
+    public void testReceiverOpenWithUnsettledAndSecond() throws Exception {
+        doTestOpenReceiverWithConfiguredSenderAndReceiverSettlementModes(SenderSettleMode.UNSETTLED, ReceiverSettleMode.SECOND);
+    }
+
+    private void doTestOpenReceiverWithConfiguredSenderAndReceiverSettlementModes(SenderSettleMode senderMode, ReceiverSettleMode receiverMode) {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result);
+        ProtonTestPeer peer = new ProtonTestPeer(engine);
+        engine.outputConsumer(peer);
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond().withContainerId("driver");
+        peer.expectBegin().respond();
+        peer.expectAttach().withSndSettleMode(senderMode)
+                           .withRcvSettleMode(receiverMode)
+                           .respond()
+                           .withSndSettleMode(senderMode)
+                           .withRcvSettleMode(receiverMode);
+
+        Connection connection = engine.start();
+
+        connection.open();
+        Session session = connection.session();
+        session.open();
+
+        Receiver receiver = session.receiver("test");
+        receiver.setSenderSettleMode(senderMode);
+        receiver.setReceiverSettleMode(receiverMode);
+        receiver.open();
+
+        peer.waitForScriptToComplete();
+        peer.expectDetach().respond();
+
+        if (senderMode != null) {
+            assertEquals(senderMode, receiver.getSenderSettleMode());
+        } else {
+            assertEquals(SenderSettleMode.MIXED, receiver.getSenderSettleMode());
+        }
+        if (receiverMode != null) {
+            assertEquals(receiverMode, receiver.getReceiverSettleMode());
+        } else {
+            assertEquals(ReceiverSettleMode.FIRST, receiver.getReceiverSettleMode());
+        }
+
+        receiver.close();
+
+        peer.waitForScriptToComplete();
+
+        assertNull(failure);
+    }
 
     @Test
     public void testCreateReceiverAndInspectRemoteEndpoint() throws Exception {
