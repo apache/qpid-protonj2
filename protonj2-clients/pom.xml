@@ -45,13 +45,13 @@
   <properties>
     <proton4j-version>0.1.0-SNAPSHOT</proton4j-version>
     <slf4j-version>1.7.25</slf4j-version>
-    <netty-version>4.1.42.Final</netty-version>
-    <netty-tcnative-version>2.0.26.Final</netty-tcnative-version>
+    <netty-version>4.1.43.Final</netty-version>
+    <netty-tcnative-version>2.0.28.Final</netty-tcnative-version>
 
     <!--  Test Dependencies -->
-    <qpid-jms-version>0.46.0</qpid-jms-version>
-    <activemq-version>5.15.10</activemq-version>
-    <mockito-version>3.1.0</mockito-version>
+    <qpid-jms-version>0.47.0</qpid-jms-version>
+    <activemq-version>5.15.11</activemq-version>
+    <mockito-version>3.2.0</mockito-version>
     <junit-version>4.12</junit-version>
 
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
