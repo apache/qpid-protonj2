@@ -20,6 +20,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.qpid.proton4j.amqp.messaging.Source;
 import org.apache.qpid.proton4j.amqp.messaging.Target;
+import org.apache.qpid.proton4j.amqp.transport.ReceiverSettleMode;
+import org.apache.qpid.proton4j.amqp.transport.SenderSettleMode;
 import org.apache.qpid.proton4j.engine.Sender;
 import org.messaginghub.amqperative.SenderOptions;
 import org.messaginghub.amqperative.SessionOptions;
@@ -74,6 +76,17 @@ final class ClientSenderBuilder {
         }
 
         final Sender protonSender = session.getProtonSession().sender(linkName);
+
+        switch (options.deliveryMode()) {
+            case AT_MOST_ONCE:
+                protonSender.setSenderSettleMode(SenderSettleMode.SETTLED);
+                protonSender.setReceiverSettleMode(ReceiverSettleMode.FIRST);
+                break;
+            case AT_LEAST_ONCE:
+                protonSender.setSenderSettleMode(SenderSettleMode.UNSETTLED);
+                protonSender.setReceiverSettleMode(ReceiverSettleMode.FIRST);
+                break;
+        }
 
         protonSender.setOfferedCapabilities(ClientConversionSupport.toSymbolArray(options.offeredCapabilities()));
         protonSender.setDesiredCapabilities(ClientConversionSupport.toSymbolArray(options.desiredCapabilities()));

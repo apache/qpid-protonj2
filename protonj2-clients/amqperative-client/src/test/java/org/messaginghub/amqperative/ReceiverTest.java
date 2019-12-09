@@ -17,7 +17,9 @@ import org.apache.qpid.proton4j.amqp.driver.netty.NettyTestPeer;
 import org.apache.qpid.proton4j.amqp.messaging.Source;
 import org.apache.qpid.proton4j.amqp.transport.AmqpError;
 import org.apache.qpid.proton4j.amqp.transport.ErrorCondition;
+import org.apache.qpid.proton4j.amqp.transport.ReceiverSettleMode;
 import org.apache.qpid.proton4j.amqp.transport.Role;
+import org.apache.qpid.proton4j.amqp.transport.SenderSettleMode;
 import org.hamcrest.Matcher;
 import org.junit.Test;
 import org.messaginghub.amqperative.impl.exceptions.ClientOperationTimedOutException;
@@ -74,8 +76,6 @@ public class ReceiverTest extends AMQPerativeTestCase {
             connection.close().get(10, TimeUnit.SECONDS);
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
-
-            LOG.info("Receiver test completed normally");
         }
     }
 
@@ -120,7 +120,6 @@ public class ReceiverTest extends AMQPerativeTestCase {
             connection.close().get(10, TimeUnit.SECONDS);
 
             peer.waitForScriptToComplete(1, TimeUnit.SECONDS);
-            LOG.info("Receiver test completed normally");
         }
     }
 
@@ -227,7 +226,6 @@ public class ReceiverTest extends AMQPerativeTestCase {
             connection.close().get(5, TimeUnit.SECONDS);
 
             peer.waitForScriptToComplete(1, TimeUnit.SECONDS);
-            LOG.info("Receiver test completed normally");
         }
     }
 
@@ -267,8 +265,58 @@ public class ReceiverTest extends AMQPerativeTestCase {
             connection.close().get(10, TimeUnit.SECONDS);
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
 
-            LOG.info("Receiver test completed normally");
+    @Test
+    public void testCreateReceiverWithQoSOfAtMostOnce() throws Exception {
+        doTestCreateReceiverWithConfiguredQoS(DeliveryMode.AT_MOST_ONCE);
+    }
+
+    @Test
+    public void testCreateReceiverWithQoSOfAtLeastOnce() throws Exception {
+        doTestCreateReceiverWithConfiguredQoS(DeliveryMode.AT_LEAST_ONCE);
+    }
+
+    private void doTestCreateReceiverWithConfiguredQoS(DeliveryMode qos) throws Exception {
+        SenderSettleMode sndMode = qos == DeliveryMode.AT_MOST_ONCE ? SenderSettleMode.SETTLED : SenderSettleMode.UNSETTLED;
+
+        try (NettyTestPeer peer = new NettyTestPeer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().withRole(Role.RECEIVER)
+                               .withSndSettleMode(sndMode)
+                               .withRcvSettleMode(ReceiverSettleMode.FIRST)
+                               .respond()
+                               .withSndSettleMode(sndMode)
+                               .withRcvSettleMode(ReceiverSettleMode.FIRST);
+            peer.expectDetach().respond();
+            peer.expectClose().respond();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Connect test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            connection.openFuture().get(10, TimeUnit.SECONDS);
+
+            Session session = connection.openSession();
+            session.openFuture().get(10, TimeUnit.SECONDS);
+
+            ReceiverOptions options = new ReceiverOptions().deliveryMode(qos);
+            Receiver receiver = session.openReceiver("test-qos", options);
+            receiver.openFuture().get(10, TimeUnit.SECONDS);
+
+            assertEquals("test-qos", receiver.address());
+
+            receiver.close().get(10, TimeUnit.SECONDS);
+
+            connection.close().get(10, TimeUnit.SECONDS);
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
     }
 }

@@ -23,6 +23,8 @@ import org.apache.qpid.proton4j.amqp.messaging.Modified;
 import org.apache.qpid.proton4j.amqp.messaging.Released;
 import org.apache.qpid.proton4j.amqp.messaging.Source;
 import org.apache.qpid.proton4j.amqp.messaging.Target;
+import org.apache.qpid.proton4j.amqp.transport.ReceiverSettleMode;
+import org.apache.qpid.proton4j.amqp.transport.SenderSettleMode;
 import org.apache.qpid.proton4j.engine.Receiver;
 import org.messaginghub.amqperative.ReceiverOptions;
 import org.messaginghub.amqperative.SessionOptions;
@@ -54,15 +56,15 @@ final class ClientReceiverBuilder {
     }
 
     public ClientReceiver dynamicReceiver(Map<String, Object> dynamicNodeProperties, ReceiverOptions receiverOptions) throws ClientException {
-        final ReceiverOptions rcvOptions = receiverOptions != null ? receiverOptions : getDefaultReceiverOptions();
+        final ReceiverOptions options = receiverOptions != null ? receiverOptions : getDefaultReceiverOptions();
         final String receiverId = nextReceiverId();
 
-        final Receiver protonReceiver = createReceiver(null, rcvOptions, receiverId);
+        final Receiver protonReceiver = createReceiver(null, options, receiverId);
 
         protonReceiver.getSource().setDynamic(true);
         protonReceiver.getSource().setDynamicNodeProperties(ClientConversionSupport.toSymbolKeyedMap(dynamicNodeProperties));
 
-        return new ClientReceiver(session, rcvOptions, receiverId, protonReceiver);
+        return new ClientReceiver(session, options, receiverId, protonReceiver);
     }
 
     private String nextReceiverId() {
@@ -79,6 +81,17 @@ final class ClientReceiverBuilder {
         }
 
         final Receiver protonReceiver = session.getProtonSession().receiver(linkName);
+
+        switch (options.deliveryMode()) {
+            case AT_MOST_ONCE:
+                protonReceiver.setSenderSettleMode(SenderSettleMode.SETTLED);
+                protonReceiver.setReceiverSettleMode(ReceiverSettleMode.FIRST);
+                break;
+            case AT_LEAST_ONCE:
+                protonReceiver.setSenderSettleMode(SenderSettleMode.UNSETTLED);
+                protonReceiver.setReceiverSettleMode(ReceiverSettleMode.FIRST);
+                break;
+        }
 
         protonReceiver.setOfferedCapabilities(ClientConversionSupport.toSymbolArray(options.offeredCapabilities()));
         protonReceiver.setDesiredCapabilities(ClientConversionSupport.toSymbolArray(options.desiredCapabilities()));

@@ -33,7 +33,8 @@ public class SenderOptions {
     private long closeTimeout = ConnectionOptions.DEFAULT_CLOSE_TIMEOUT;
 
     private String linkName;
-    private boolean autoSettle;
+    private boolean autoSettle = true;
+    private DeliveryMode deliveryMode = DeliveryMode.AT_LEAST_ONCE;
 
     private final SourceOptions source = new SourceOptions();
     private final TargetOptions target = new TargetOptions();
@@ -87,6 +88,15 @@ public class SenderOptions {
      */
     public boolean autoSettle() {
         return autoSettle;
+    }
+
+    public SenderOptions deliveryMode(DeliveryMode deliveryMode) {
+        this.deliveryMode = deliveryMode;
+        return this;
+    }
+
+    public DeliveryMode deliveryMode() {
+        return deliveryMode;
     }
 
     public long closeTimeout() {

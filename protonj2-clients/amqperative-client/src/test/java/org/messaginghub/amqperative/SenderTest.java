@@ -1,6 +1,7 @@
 package org.messaginghub.amqperative;
 
 import static org.hamcrest.CoreMatchers.notNullValue;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -14,7 +15,9 @@ import org.apache.qpid.proton4j.amqp.driver.netty.NettyTestPeer;
 import org.apache.qpid.proton4j.amqp.messaging.Target;
 import org.apache.qpid.proton4j.amqp.transport.AmqpError;
 import org.apache.qpid.proton4j.amqp.transport.ErrorCondition;
+import org.apache.qpid.proton4j.amqp.transport.ReceiverSettleMode;
 import org.apache.qpid.proton4j.amqp.transport.Role;
+import org.apache.qpid.proton4j.amqp.transport.SenderSettleMode;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -378,6 +381,58 @@ public class SenderTest extends AMQPerativeTestCase {
             assertNull(sender.trySend(message));
 
             sender.close().get(10, TimeUnit.SECONDS);
+            connection.close().get(10, TimeUnit.SECONDS);
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
+    public void testCreateSenderWithQoSOfAtMostOnce() throws Exception {
+        doTestCreateSenderWithConfiguredQoS(DeliveryMode.AT_MOST_ONCE);
+    }
+
+    @Test
+    public void testCreateSenderWithQoSOfAtLeastOnce() throws Exception {
+        doTestCreateSenderWithConfiguredQoS(DeliveryMode.AT_LEAST_ONCE);
+    }
+
+    private void doTestCreateSenderWithConfiguredQoS(DeliveryMode qos) throws Exception {
+        SenderSettleMode sndMode = qos == DeliveryMode.AT_MOST_ONCE ? SenderSettleMode.SETTLED : SenderSettleMode.UNSETTLED;
+
+        try (NettyTestPeer peer = new NettyTestPeer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().withRole(Role.SENDER)
+                               .withSndSettleMode(sndMode)
+                               .withRcvSettleMode(ReceiverSettleMode.FIRST)
+                               .respond()
+                               .withSndSettleMode(sndMode)
+                               .withRcvSettleMode(ReceiverSettleMode.FIRST);
+            peer.expectDetach().respond();
+            peer.expectClose().respond();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Connect test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            connection.openFuture().get(10, TimeUnit.SECONDS);
+
+            Session session = connection.openSession();
+            session.openFuture().get(10, TimeUnit.SECONDS);
+
+            SenderOptions options = new SenderOptions().deliveryMode(qos);
+            Sender sender = session.openSender("test-qos", options);
+            sender.openFuture().get(10, TimeUnit.SECONDS);
+
+            assertEquals("test-qos", sender.address());
+
+            sender.close().get(10, TimeUnit.SECONDS);
+
             connection.close().get(10, TimeUnit.SECONDS);
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
