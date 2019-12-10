@@ -94,8 +94,6 @@ public class Samples {
             // Failed waiting on remote to acknowledge the send.
         }
 
-        tracker.settle();
-
         // =============== Create a receiver ===========
 
         Receiver receiver = connection.openReceiver(address); //address-only
@@ -147,7 +145,6 @@ public class Samples {
 
         Message<String> request = Message.create("Hello World").durable(true).replyTo(dynamicAddress);
         Tracker requestTracker = requestor.send(request);
-        requestTracker.settle();
 
         dynamicReceiver.addCredit(1);
         Delivery response = dynamicReceiver.receive(30_000);

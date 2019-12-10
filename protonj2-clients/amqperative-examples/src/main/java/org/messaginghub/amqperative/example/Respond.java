@@ -69,7 +69,6 @@ public class Respond {
                     Tracker tracker = sender.send(message);
 
                     tracker.remoteState().get(5, TimeUnit.SECONDS);
-                    tracker.settle();
                 }
             }
         } catch (Exception exp) {
