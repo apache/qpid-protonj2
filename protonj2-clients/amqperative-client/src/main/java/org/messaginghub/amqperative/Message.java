@@ -110,68 +110,116 @@ public interface Message<E> {
      */
     Message<E> priority(byte priority);
 
+    /**
+     * @return the currently set Time To Live duration (milliseconds).
+     */
     long timeToLive();
 
     Message<E> timeToLive(long timeToLive);
 
+    /**
+     * @return if this message has been acquired by another link previously
+     */
     boolean firstAcquirer();
 
     Message<E> firstAcquirer(boolean firstAcquirer);
 
+    /**
+     * @return the number of failed delivery attempts that this message has been part of.
+     */
     long deliveryCount();
 
     Message<E> deliveryCount(long deliveryCount);
 
     //----- AMQP Properties Section
 
+    /**
+     * @return the currently set Message ID or null if none set.
+     */
     Object messageId();
 
     Message<E> messageId(Object messageId);
 
+    /**
+     * @return the currently set User ID or null if none set.
+     */
     byte[] userId();
 
     Message<E> userId(byte[] userId);
 
+    /**
+     * @return the currently set 'To' address which indicates the intended destination of the message.
+     */
     String to();
 
     Message<E> to(String to);
 
+    /**
+     * @return the currently set subject metadata for this message or null if none set.
+     */
     String subject();
 
     Message<E> subject(String subject);
 
+    /**
+     * @return the configured address of the node where replies to this message should be sent, or null if not set.
+     */
     String replyTo();
 
     Message<E> replyTo(String replyTo);
 
+    /**
+     * @return the currently assigned correlation ID or null if none set.
+     */
     Object correlationId();
 
     Message<E> correlationId(Object correlationId);
 
+    /**
+     * @return the assigned content type value for the message body section or null if not set.
+     */
     String contentType();
 
     Message<E> contentType(String contentType);
 
+    /**
+     * @return the assigned content encoding value for the message body section or null if not set.
+     */
     String contentEncoding();
 
     Message<?> contentEncoding(String contentEncoding);
 
+    /**
+     * @return the configured absolute time of expiration for this message.
+     */
     long absoluteExpiryTime();
 
     Message<E> absoluteExpiryTime(long expiryTime);
 
+    /**
+     * @return the absolute time of creation for this message.
+     */
     long creationTime();
 
     Message<E> creationTime(long createTime);
 
+    /**
+     * @return the assigned group ID for this message or null if not set.
+     */
     String groupId();
 
     Message<E> groupId(String groupId);
 
+    /**
+     * @return the assigned group sequence for this message.
+     */
     int groupSequence();
 
     Message<E> groupSequence(int groupSequence);
 
+    /**
+     * @return the client-specific id that is used so that client can send replies to this message to a specific group.
+     */
     String replyToGroupId();
 
     Message<E> replyToGroupId(String replyToGroupId);
