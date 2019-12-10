@@ -228,7 +228,7 @@ public class ProtonSessionIncomingWindow {
         disposition.setRole(Role.RECEIVER);
         disposition.setSettled(delivery.isSettled());
         disposition.setBatchable(false);
-        disposition.setState(delivery.getLocalState());
+        disposition.setState(delivery.getState());
 
         // TODO - Casting is ugly but our ID values are longs
         unsettled.remove((int) delivery.getDeliveryId());

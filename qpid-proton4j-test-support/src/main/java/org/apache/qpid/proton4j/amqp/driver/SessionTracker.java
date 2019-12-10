@@ -27,7 +27,9 @@ import org.apache.qpid.proton4j.amqp.driver.codec.transport.Attach;
 import org.apache.qpid.proton4j.amqp.driver.codec.transport.Begin;
 import org.apache.qpid.proton4j.amqp.driver.codec.transport.Detach;
 import org.apache.qpid.proton4j.amqp.driver.codec.transport.End;
+import org.apache.qpid.proton4j.amqp.driver.codec.transport.Transfer;
 import org.apache.qpid.proton4j.amqp.transport.Role;
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 
 /**
  * Tracks information related to an opened Session and its various links
@@ -157,6 +159,14 @@ public class SessionTracker {
             senders.remove(tracker);
             receivers.remove(tracker);
         }
+
+        return tracker;
+    }
+
+    public LinkTracker handleTransfer(Transfer transfer, ProtonBuffer payload) {
+        LinkTracker tracker = trackerMap.get(transfer.getHandle());
+
+        // TODO - Update session state based on transfer
 
         return tracker;
     }

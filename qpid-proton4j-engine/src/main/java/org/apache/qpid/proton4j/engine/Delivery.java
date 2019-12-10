@@ -44,7 +44,7 @@ public interface Delivery {
     /**
      * @return the {@link DeliveryState} at the local side of this Delivery.
      */
-    DeliveryState getLocalState();
+    DeliveryState getState();
 
     /**
      * @return the {@link DeliveryState} at the remote side of this Delivery.

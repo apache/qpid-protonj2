@@ -196,7 +196,7 @@ public class ProtonSessionOutgoingWindow {
             transfer.setRcvSettleMode(null);
             transfer.setHandle(sender.getHandle());
             transfer.setSettled(delivery.isSettled());
-            transfer.setState(delivery.getLocalState());
+            transfer.setState(delivery.getState());
 
             // TODO - Write up to session window limits or until done.
             try {
@@ -220,7 +220,7 @@ public class ProtonSessionOutgoingWindow {
         disposition.setRole(Role.SENDER);
         disposition.setSettled(delivery.isSettled());
         disposition.setBatchable(false);
-        disposition.setState(delivery.getLocalState());
+        disposition.setState(delivery.getState());
 
         // TODO - Casting is ugly but our ID values are longs
         unsettled.remove((int) delivery.getDeliveryId());

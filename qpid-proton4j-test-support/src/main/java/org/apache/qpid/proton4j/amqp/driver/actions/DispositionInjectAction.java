@@ -50,8 +50,18 @@ public class DispositionInjectAction extends AbstractPerformativeInjectAction<Di
         return this;
     }
 
+    public DispositionInjectAction withFirst(UnsignedInteger first) {
+        disposition.setFirst(first);
+        return this;
+    }
+
     public DispositionInjectAction withLast(long last) {
         disposition.setLast(UnsignedInteger.valueOf(last));
+        return this;
+    }
+
+    public DispositionInjectAction withLast(UnsignedInteger last) {
+        disposition.setLast(last);
         return this;
     }
 

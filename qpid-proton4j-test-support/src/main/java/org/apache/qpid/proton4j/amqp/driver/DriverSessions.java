@@ -24,6 +24,8 @@ import org.apache.qpid.proton4j.amqp.driver.codec.transport.Attach;
 import org.apache.qpid.proton4j.amqp.driver.codec.transport.Begin;
 import org.apache.qpid.proton4j.amqp.driver.codec.transport.Detach;
 import org.apache.qpid.proton4j.amqp.driver.codec.transport.End;
+import org.apache.qpid.proton4j.amqp.driver.codec.transport.Transfer;
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 
 /**
  * Tracks all sessions opened by the remote or initiated from the driver.
@@ -144,6 +146,17 @@ public class DriverSessions {
 
         if (tracker != null) {
             result = tracker.handleAttach(attach);
+        }
+
+        return result;
+    }
+
+    public LinkTracker handleTransfer(Transfer transfer, ProtonBuffer payload, int channel) {
+        SessionTracker tracker = remoteSessions.get(UnsignedShort.valueOf(channel));
+        LinkTracker result = null;
+
+        if (tracker != null) {
+            result = tracker.handleTransfer(transfer, payload);
         }
 
         return result;

@@ -21,6 +21,9 @@ import static org.hamcrest.CoreMatchers.equalTo;
 import org.apache.qpid.proton4j.amqp.Binary;
 import org.apache.qpid.proton4j.amqp.UnsignedInteger;
 import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
+import org.apache.qpid.proton4j.amqp.driver.LinkTracker;
+import org.apache.qpid.proton4j.amqp.driver.actions.BeginInjectAction;
+import org.apache.qpid.proton4j.amqp.driver.actions.DispositionInjectAction;
 import org.apache.qpid.proton4j.amqp.driver.codec.ListDescribedType;
 import org.apache.qpid.proton4j.amqp.driver.codec.security.SaslResponse;
 import org.apache.qpid.proton4j.amqp.driver.codec.transport.Transfer;
@@ -42,14 +45,50 @@ public class TransferExpectation extends AbstractExpectation<Transfer> {
 
     private Matcher<ProtonBuffer> payloadMatcher = Matchers.any(ProtonBuffer.class);
 
+    private DispositionInjectAction response;
+
     public TransferExpectation(AMQPTestDriver driver) {
         super(driver);
+    }
+
+    public DispositionInjectAction respond() {
+        response = new DispositionInjectAction(driver);
+        driver.addScriptedElement(response);
+        return response;
     }
 
     @Override
     public TransferExpectation onChannel(int channel) {
         super.onChannel(channel);
         return this;
+    }
+
+    @Override
+    public void handleTransfer(Transfer transfer, ProtonBuffer payload, int channel, AMQPTestDriver driver) {
+        super.handleTransfer(transfer, payload, channel, driver);
+
+        if (response == null) {
+            return;
+        }
+
+        LinkTracker link = driver.getSessions().handleTransfer(transfer, payload, channel);
+
+        // Input was validated now populate response with auto values where not configured
+        // to say otherwise by the test.
+        if (response.onChannel() == BeginInjectAction.CHANNEL_UNSET) {
+            response.onChannel(link.getSession().getLocalChannel());
+        }
+
+        // Populate the fields of the response with defaults if non set by the test script
+        if (response.getPerformative().getFirst() == null) {
+            response.withFirst(transfer.getDeliveryId());
+        }
+
+        if (response.getPerformative().getRole() == null) {
+            response.withRole(link.getRole());
+        }
+
+        // Remaining response fields should be set by the test script as they can't be inferred.
     }
 
     //----- Type specific with methods that perform simple equals checks

@@ -1779,4 +1779,74 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
 
         assertNull(failure);
     }
+
+    @Test
+    public void testSettleSentDeliveryAfterRemoteSettles() throws Exception {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result);
+        ProtonTestPeer peer = new ProtonTestPeer(engine);
+        engine.outputConsumer(peer);
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond().withContainerId("driver");
+        peer.expectBegin().respond();
+        peer.expectAttach().withRole(Role.SENDER).respond();
+        peer.remoteFlow().withDeliveryCount(0)
+                         .withLinkCredit(10)
+                         .withIncomingWindow(1024)
+                         .withOutgoingWindow(10)
+                         .withNextIncomingId(0)
+                         .withNextOutgoingId(1).queue();
+        peer.expectTransfer().withHandle(0)
+                             .withSettled(false)
+                             .withState((DeliveryState) null)
+                             .withDeliveryId(0)
+                             .withDeliveryTag(new byte[] {0})
+                             .respond()
+                                 .withSettled(true)
+                                 .withState(Accepted.getInstance());
+        peer.expectDisposition().withFirst(0)
+                                .withSettled(true)
+                                .withState(nullValue());
+        peer.expectDetach().withHandle(0).respond();
+
+        Connection connection = engine.start();
+
+        connection.open();
+        Session session = connection.session();
+        session.open();
+
+        ProtonBuffer payload = ProtonByteBufferAllocator.DEFAULT.wrap(new byte[] {0, 1, 2, 3, 4});
+
+        Sender sender = session.sender("sender-1");
+
+        final AtomicBoolean deliverySentAfterSenable = new AtomicBoolean();
+        sender.sendableHandler(handler -> {
+            handler.next().setTag(new byte[] {0}).writeBytes(payload);
+            deliverySentAfterSenable.set(true);
+        });
+
+        sender.deliveryUpdatedHandler((delivery) -> {
+            if (delivery.isRemotelySettled()) {
+                delivery.settle();
+            }
+        });
+
+        sender.open();
+
+        assertTrue("Delivery should have been sent after credit arrived", deliverySentAfterSenable.get());
+
+        OutgoingDelivery delivery = sender.current();
+        assertNotNull(delivery);
+        assertTrue(delivery.isRemotelySettled());
+        assertSame(Accepted.getInstance(), delivery.getRemoteState());
+        assertNull(delivery.getState());
+        assertTrue(delivery.isSettled());
+
+        sender.close();
+
+        peer.waitForScriptToComplete();
+
+        assertNull(failure);
+    }
 }

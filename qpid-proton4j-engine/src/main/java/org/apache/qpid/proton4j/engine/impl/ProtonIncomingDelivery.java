@@ -78,7 +78,7 @@ public class ProtonIncomingDelivery implements IncomingDelivery {
     }
 
     @Override
-    public DeliveryState getLocalState() {
+    public DeliveryState getState() {
         return localState;
     }
 

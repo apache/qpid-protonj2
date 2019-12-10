@@ -37,15 +37,19 @@ public class LinkTracker {
         return session;
     }
 
+    public Role getRole() {
+        return isSender() ? Role.SENDER : Role.RECEIVER;
+    }
+
     public UnsignedInteger getHandle() {
         return attach.getHandle();
     }
 
     public boolean isSender() {
-        return Role.SENDER.getValue() == attach.getRole();
+        return Role.RECEIVER.getValue() == attach.getRole();
     }
 
     public boolean isReceiver() {
-        return Role.RECEIVER.getValue() == attach.getRole();
+        return Role.SENDER.getValue() == attach.getRole();
     }
 }
