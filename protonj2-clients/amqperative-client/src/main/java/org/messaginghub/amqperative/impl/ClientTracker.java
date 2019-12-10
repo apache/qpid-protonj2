@@ -36,6 +36,11 @@ public class ClientTracker implements Tracker {
 
     private final ClientFuture<DeliveryState> remoteState;
 
+    // TODO - Memory consistency issues are observable if auto settle is on as the
+    //        settle and update of the remote and local state happens in the client
+    //        thread and not on the calling thread reading the state can return the
+    //        not yet updated value.
+
     /**
      * Create an instance of a client outgoing delivery tracker.
      *
@@ -56,8 +61,8 @@ public class ClientTracker implements Tracker {
     }
 
     @Override
-    public DeliveryState localState() {
-        return ClientDeliveryState.fromProtonType(delivery.getLocalState());
+    public DeliveryState state() {
+        return ClientDeliveryState.fromProtonType(delivery.getState());
     }
 
     @Override

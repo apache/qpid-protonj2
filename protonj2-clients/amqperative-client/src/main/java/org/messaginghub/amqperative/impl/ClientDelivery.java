@@ -93,7 +93,7 @@ public class ClientDelivery implements Delivery {
 
     @Override
     public DeliveryState state() {
-        return ClientDeliveryState.fromProtonType(delivery.getLocalState());
+        return ClientDeliveryState.fromProtonType(delivery.getState());
     }
 
     @Override

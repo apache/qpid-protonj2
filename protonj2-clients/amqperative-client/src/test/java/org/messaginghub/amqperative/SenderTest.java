@@ -12,6 +12,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.qpid.proton4j.amqp.driver.netty.NettyTestPeer;
+import org.apache.qpid.proton4j.amqp.messaging.Accepted;
 import org.apache.qpid.proton4j.amqp.messaging.Target;
 import org.apache.qpid.proton4j.amqp.transport.AmqpError;
 import org.apache.qpid.proton4j.amqp.transport.ErrorCondition;
@@ -282,6 +283,7 @@ public class SenderTest extends AMQPerativeTestCase {
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
     }
+
     @Test(timeout = 60000)
     public void testSendWhenCreditIsAvailable() throws Exception {
         doTestSendWhenCreditIsAvailable(false);
@@ -430,6 +432,149 @@ public class SenderTest extends AMQPerativeTestCase {
             sender.openFuture().get(10, TimeUnit.SECONDS);
 
             assertEquals("test-qos", sender.address());
+
+            sender.close().get(10, TimeUnit.SECONDS);
+
+            connection.close().get(10, TimeUnit.SECONDS);
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test(timeout = 60000)
+    public void testSendAutoSettlesOnceRemoteSettles() throws Exception {
+        doTestSentMessageGetsAutoSettledAfterRemtoeSettles(false);
+    }
+
+    @Test(timeout = 60000)
+    public void testTrySendAutoSettlesOnceRemoteSettles() throws Exception {
+        doTestSentMessageGetsAutoSettledAfterRemtoeSettles(true);
+    }
+
+    private void doTestSentMessageGetsAutoSettledAfterRemtoeSettles(boolean trySend) throws Exception {
+        try (NettyTestPeer peer = new NettyTestPeer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().withRole(Role.SENDER).respond();
+            peer.remoteFlow().withDeliveryCount(0)
+                             .withLinkCredit(10)
+                             .withIncomingWindow(1024)
+                             .withOutgoingWindow(10)
+                             .withNextIncomingId(0)
+                             .withNextOutgoingId(1).queue();
+            peer.expectAttach().withRole(Role.RECEIVER).respond();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Sender test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+
+            connection.openFuture().get(10, TimeUnit.SECONDS);
+
+            Session session = connection.openSession();
+            session.openFuture().get(10, TimeUnit.SECONDS);
+
+            Sender sender = session.openSender("test-queue");
+            sender.openFuture().get(10, TimeUnit.SECONDS);
+
+            // This ensures that the flow to sender is processed before we try-send
+            Receiver receiver = session.openReceiver("test-queue");
+            receiver.openFuture().get(10, TimeUnit.SECONDS);
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+            peer.expectTransfer().withPayload(notNullValue(ProtonBuffer.class))
+                                 .respond()
+                                 .withSettled(true).withState(Accepted.getInstance());
+            peer.expectDisposition().withSettled(true);
+            peer.expectDetach().respond();
+            peer.expectClose().respond();
+
+            Message<String> message = Message.create("Hello World");
+
+            final Tracker tracker;
+            if (trySend) {
+                tracker = sender.trySend(message);
+            } else {
+                tracker = sender.send(message);
+            }
+
+            assertNotNull(tracker);
+            assertEquals(tracker.remoteState().get(5, TimeUnit.SECONDS).getType(), DeliveryState.Type.ACCEPTED);
+
+            sender.close().get(10, TimeUnit.SECONDS);
+
+            connection.close().get(10, TimeUnit.SECONDS);
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test(timeout = 60000)
+    public void testSendDoesNotAutoSettlesOnceRemoteSettlesIfAutoSettleOff() throws Exception {
+        doTestSentMessageNotAutoSettledAfterRemtoeSettles(false);
+    }
+
+    @Test(timeout = 60000)
+    public void testTrySendDoesNotAutoSettlesOnceRemoteSettlesIfAutoSettleOff() throws Exception {
+        doTestSentMessageNotAutoSettledAfterRemtoeSettles(true);
+    }
+
+    private void doTestSentMessageNotAutoSettledAfterRemtoeSettles(boolean trySend) throws Exception {
+        try (NettyTestPeer peer = new NettyTestPeer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().withRole(Role.SENDER).respond();
+            peer.remoteFlow().withDeliveryCount(0)
+                             .withLinkCredit(10)
+                             .withIncomingWindow(1024)
+                             .withOutgoingWindow(10)
+                             .withNextIncomingId(0)
+                             .withNextOutgoingId(1).queue();
+            peer.expectAttach().withRole(Role.RECEIVER).respond();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Sender test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+
+            connection.openFuture().get(10, TimeUnit.SECONDS);
+
+            Session session = connection.openSession();
+            session.openFuture().get(10, TimeUnit.SECONDS);
+
+            Sender sender = session.openSender("test-queue", new SenderOptions().autoSettle(false));
+            sender.openFuture().get(10, TimeUnit.SECONDS);
+
+            // This ensures that the flow to sender is processed before we try-send
+            Receiver receiver = session.openReceiver("test-queue");
+            receiver.openFuture().get(10, TimeUnit.SECONDS);
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+            peer.expectTransfer().withPayload(notNullValue(ProtonBuffer.class))
+                                 .respond()
+                                 .withSettled(true).withState(Accepted.getInstance());
+            peer.expectDetach().respond();
+            peer.expectClose().respond();
+
+            Message<String> message = Message.create("Hello World");
+
+            final Tracker tracker;
+            if (trySend) {
+                tracker = sender.trySend(message);
+            } else {
+                tracker = sender.send(message);
+            }
+
+            assertNotNull(tracker);
+            assertEquals(tracker.remoteState().get(5, TimeUnit.SECONDS).getType(), DeliveryState.Type.ACCEPTED);
 
             sender.close().get(10, TimeUnit.SECONDS);
 

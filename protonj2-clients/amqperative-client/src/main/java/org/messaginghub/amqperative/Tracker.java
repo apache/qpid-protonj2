@@ -61,7 +61,7 @@ public interface Tracker {
      *
      * @return the delivery state
      */
-    DeliveryState localState();
+    DeliveryState state();
 
     /**
      * Gets the current remote state for the tracked delivery.
