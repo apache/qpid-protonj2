@@ -57,6 +57,7 @@ import org.messaginghub.amqperative.futures.ClientFutureFactory;
 import org.messaginghub.amqperative.impl.exceptions.ClientClosedException;
 import org.messaginghub.amqperative.impl.exceptions.ClientConnectionRemotelyClosedException;
 import org.messaginghub.amqperative.impl.exceptions.ClientExceptionSupport;
+import org.messaginghub.amqperative.impl.exceptions.ClientOperationTimedOutException;
 import org.messaginghub.amqperative.impl.exceptions.ClientUnsupportedOperationException;
 import org.messaginghub.amqperative.transport.Transport;
 import org.messaginghub.amqperative.transport.TransportBuilder;
@@ -416,9 +417,6 @@ public class ClientConnection implements Connection {
     }
 
     ClientConnection open() throws ClientException {
-        // TODO - This throws IllegalStateException which might be confusing.  The client could
-        //        throw ClientException with a failure cause if connect failed.  Or could return
-        //        and allow openFuture.get() to fail but that might also be confusing.
         checkClosed();
         executor.execute(() -> {
             if (engine.isShutdown()) {
@@ -430,13 +428,27 @@ public class ClientConnection implements Connection {
             //        From limited use of the API the current exception model may be a bit
             //        to vague and we may need to consider checked exceptions or at least
             //        some structured exceptions from the engine.
-            if (client.containerId() != null) {
-                protonConnection.setContainerId(client.containerId());
-            }
-
             // TODO - Possible issue with tick kicking in and writing idle frames before remote
             //        Open actually received.
-            protonConnection.open().tickAuto(executor);
+            try {
+                if (client.containerId() != null) {
+                    protonConnection.setContainerId(client.containerId());
+                }
+
+                protonConnection.open().tickAuto(executor);
+
+                if (options.openTimeout() > 0) {
+                    executor.schedule(() -> {
+                        if (!openFuture.isDone()) {
+                            handleClientIOException(new ClientOperationTimedOutException(
+                                "Connection Open timed out waiting for remote to open"));
+                        }
+                    }, options.openTimeout(), TimeUnit.MILLISECONDS);
+                }
+            } catch (Throwable error) {
+                LOG.trace("Error from proton engine during connection open", error);
+                handleClientIOException(ClientExceptionSupport.createOrPassthroughFatal(error));
+            }
         });
 
         return this;
@@ -510,6 +522,11 @@ public class ClientConnection implements Connection {
         CLOSED_UPDATER.set(this, 1);
         FAILURE_CAUSE_UPDATER.compareAndSet(this, null, error);
         try {
+            try {
+                protonConnection.close();
+            } catch (Throwable ignored) {
+            }
+
             try {
                 engine.shutdown();
             } catch (Throwable ingore) {}

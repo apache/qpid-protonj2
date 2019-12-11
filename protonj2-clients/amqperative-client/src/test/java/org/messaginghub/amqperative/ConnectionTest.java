@@ -143,7 +143,16 @@ public class ConnectionTest extends AMQPerativeTestCase {
     }
 
     @Test(timeout = 60000)
-    public void testConnectionCloseGetsResponseWithErrorDoesNotThrow() throws Exception {
+    public void testConnectionCloseGetsResponseWithErrorDoesNotThrowTimedGet() throws Exception {
+        doTestConnectionCloseGetsResponseWithErrorDoesNotThrow(true);
+    }
+
+    @Test(timeout = 60000)
+    public void testConnectionCloseGetsResponseWithErrorDoesNotThrowUntimedGet() throws Exception {
+        doTestConnectionCloseGetsResponseWithErrorDoesNotThrow(false);
+    }
+
+    protected void doTestConnectionCloseGetsResponseWithErrorDoesNotThrow(boolean tiemout) throws Exception {
         try (NettyTestPeer peer = new NettyTestPeer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
@@ -158,9 +167,15 @@ public class ConnectionTest extends AMQPerativeTestCase {
             Client container = Client.create();
             Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
 
-            connection.openFuture().get(10, TimeUnit.SECONDS);
-            // Should close normally and not throw error as we initiated the close.
-            connection.close().get(10, TimeUnit.SECONDS);
+            if (tiemout) {
+                connection.openFuture().get(10, TimeUnit.SECONDS);
+                // Should close normally and not throw error as we initiated the close.
+                connection.close().get(10, TimeUnit.SECONDS);
+            } else {
+                connection.openFuture().get();
+                // Should close normally and not throw error as we initiated the close.
+                connection.close().get();
+            }
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
 
@@ -196,7 +211,16 @@ public class ConnectionTest extends AMQPerativeTestCase {
     }
 
     @Test(timeout = 60000)
-    public void testConnectionOpenFutureWaitCancelledOnConnectionDrop() throws Exception {
+    public void testConnectionOpenFutureWaitCancelledOnConnectionDropWithTimeout() throws Exception {
+        doTestConnectionOpenFutureWaitCancelledOnConnectionDrop(true);
+    }
+
+    @Test(timeout = 60000)
+    public void testConnectionOpenFutureWaitCancelledOnConnectionDropNoTimeout() throws Exception {
+        doTestConnectionOpenFutureWaitCancelledOnConnectionDrop(false);
+    }
+
+    protected void doTestConnectionOpenFutureWaitCancelledOnConnectionDrop(boolean timeout) throws Exception {
         try (NettyTestPeer peer = new NettyTestPeer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen();
@@ -213,14 +237,22 @@ public class ConnectionTest extends AMQPerativeTestCase {
             peer.close();
 
             try {
-                connection.openFuture().get(10, TimeUnit.SECONDS);
+                if (timeout) {
+                    connection.openFuture().get(10, TimeUnit.SECONDS);
+                } else {
+                    connection.openFuture().get();
+                }
                 fail("Should have thrown an execution error due to connection drop");
             } catch (ExecutionException error) {
                 LOG.info("connection open failed with error: ", error);
             }
 
             try {
-                connection.close().get(10, TimeUnit.SECONDS);
+                if (timeout) {
+                    connection.close().get(10, TimeUnit.SECONDS);
+                } else {
+                    connection.close().get();
+                }
             } catch (Throwable error) {
                 LOG.info("connection close failed with error: ", error);
                 fail("Close should ignore connect error and complete without error.");
@@ -275,7 +307,60 @@ public class ConnectionTest extends AMQPerativeTestCase {
     }
 
     @Test(timeout = 60000)
-    public void testConnectionCloseTimeoutWhenNoRemoteCloseArrives() throws Exception {
+    public void testConnectionOpenTimeoutWhenNoRemoteOpenArrivesTimeout() throws Exception {
+        doTestConnectionOpenTimeoutWhenNoRemoteOpenArrives(true);
+    }
+
+    @Test(timeout = 60000)
+    public void testConnectionOpenTimeoutWhenNoRemoteOpenArrivesNoTimeout() throws Exception {
+        doTestConnectionOpenTimeoutWhenNoRemoteOpenArrives(false);
+    }
+
+    private void doTestConnectionOpenTimeoutWhenNoRemoteOpenArrives(boolean timeout) throws Exception {
+        try (NettyTestPeer peer = new NettyTestPeer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen();
+            peer.expectClose();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Connect test started, peer listening on: {}", remoteURI);
+
+            ConnectionOptions options = new ConnectionOptions();
+            options.openTimeout(75);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), options);
+
+            try {
+                if (timeout) {
+                    connection.openFuture().get(10, TimeUnit.SECONDS);
+                } else {
+                    connection.openFuture().get();
+                }
+
+                fail("Open should timeout when no open response and complete future with error.");
+            } catch (Throwable error) {
+                LOG.info("connection open failed with error: ", error);
+            }
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+            LOG.info("Connect test completed normally");
+        }
+    }
+
+    @Test(timeout = 60000)
+    public void testConnectionCloseTimeoutWhenNoRemoteCloseArrivesTimeout() throws Exception {
+        doTestConnectionCloseTimeoutWhenNoRemoteCloseArrives(true);
+    }
+
+    @Test(timeout = 60000)
+    public void testConnectionCloseTimeoutWhenNoRemoteCloseArrivesNoTimeout() throws Exception {
+        doTestConnectionCloseTimeoutWhenNoRemoteCloseArrives(false);
+    }
+
+    private void doTestConnectionCloseTimeoutWhenNoRemoteCloseArrives(boolean timeout) throws Exception {
         try (NettyTestPeer peer = new NettyTestPeer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
@@ -287,7 +372,7 @@ public class ConnectionTest extends AMQPerativeTestCase {
             LOG.info("Connect test started, peer listening on: {}", remoteURI);
 
             ConnectionOptions options = new ConnectionOptions();
-            options.closeTimeout(100);
+            options.closeTimeout(75);
 
             Client container = Client.create();
             Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), options);
@@ -296,7 +381,11 @@ public class ConnectionTest extends AMQPerativeTestCase {
 
             // Shouldn't throw from close, nothing to be done anyway.
             try {
-                connection.close().get(10, TimeUnit.SECONDS);
+                if (timeout) {
+                    connection.close().get(10, TimeUnit.SECONDS);
+                } else {
+                    connection.close().get();
+                }
             } catch (Throwable error) {
                 LOG.info("connection close failed with error: ", error);
                 fail("Close should ignore lack of close response and complete without error.");
