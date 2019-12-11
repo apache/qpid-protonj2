@@ -57,7 +57,6 @@ public class Request {
             System.out.println("Waiting for response to requests on address: " + dynamicAddress);
 
             SenderOptions requestorOptions = new SenderOptions();
-            requestorOptions.autoSettle(true);
             requestorOptions.targetOptions().capabilities("queue");
 
             Sender requestor = connection.openSender(address, requestorOptions);
