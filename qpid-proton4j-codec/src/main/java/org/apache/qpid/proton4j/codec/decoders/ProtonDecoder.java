@@ -296,7 +296,7 @@ public class ProtonDecoder implements Decoder {
             case EncodingCodes.NULL:
                 return null;
             default:
-                throw new IOException("Expected boolean type but found encoding: " + encodingCode);
+                throw new IOException("Expected boolean type but found encoding: " + (encodingCode & 0xFF));
         }
     }
 
@@ -314,7 +314,7 @@ public class ProtonDecoder implements Decoder {
             case EncodingCodes.NULL:
                 return defaultValue;
             default:
-                throw new IOException("Expected boolean type but found encoding: " + encodingCode);
+                throw new IOException("Expected boolean type but found encoding: " + (encodingCode & 0xFF));
         }
     }
 
@@ -328,7 +328,7 @@ public class ProtonDecoder implements Decoder {
             case EncodingCodes.NULL:
                 return null;
             default:
-                throw new IOException("Expected byte type but found encoding: " + encodingCode);
+                throw new IOException("Expected byte type but found encoding: " + (encodingCode & 0xFF));
         }
     }
 
@@ -342,7 +342,7 @@ public class ProtonDecoder implements Decoder {
             case EncodingCodes.NULL:
                 return defaultValue;
             default:
-                throw new IOException("Expected byte type but found encoding: " + encodingCode);
+                throw new IOException("Expected byte type but found encoding: " + (encodingCode & 0xFF));
         }
     }
 
@@ -356,7 +356,7 @@ public class ProtonDecoder implements Decoder {
             case EncodingCodes.NULL:
                 return null;
             default:
-                throw new IOException("Expected unsigned byte type but found encoding: " + encodingCode);
+                throw new IOException("Expected unsigned byte type but found encoding: " + (encodingCode & 0xFF));
         }
     }
 
@@ -370,7 +370,7 @@ public class ProtonDecoder implements Decoder {
             case EncodingCodes.NULL:
                 return defaultValue;
             default:
-                throw new IOException("Expected unsigned byte type but found encoding: " + encodingCode);
+                throw new IOException("Expected unsigned byte type but found encoding: " + (encodingCode & 0xFF));
         }
     }
 
@@ -384,7 +384,7 @@ public class ProtonDecoder implements Decoder {
             case EncodingCodes.NULL:
                 return null;
             default:
-                throw new IOException("Expected Character type but found encoding: " + encodingCode);
+                throw new IOException("Expected Character type but found encoding: " + (encodingCode & 0xFF));
         }
     }
 
@@ -398,7 +398,7 @@ public class ProtonDecoder implements Decoder {
             case EncodingCodes.NULL:
                 return defaultValue;
             default:
-                throw new IOException("Expected Character type but found encoding: " + encodingCode);
+                throw new IOException("Expected Character type but found encoding: " + (encodingCode & 0xFF));
         }
     }
 
@@ -412,7 +412,7 @@ public class ProtonDecoder implements Decoder {
             case EncodingCodes.NULL:
                 return null;
             default:
-                throw new IOException("Expected Decimal32 type but found encoding: " + encodingCode);
+                throw new IOException("Expected Decimal32 type but found encoding: " + (encodingCode & 0xFF));
         }
     }
 
@@ -426,7 +426,7 @@ public class ProtonDecoder implements Decoder {
             case EncodingCodes.NULL:
                 return null;
             default:
-                throw new IOException("Expected Decimal64 type but found encoding: " + encodingCode);
+                throw new IOException("Expected Decimal64 type but found encoding: " + (encodingCode & 0xFF));
         }
     }
 
@@ -440,7 +440,7 @@ public class ProtonDecoder implements Decoder {
             case EncodingCodes.NULL:
                 return null;
             default:
-                throw new IOException("Expected Decimal128 type but found encoding: " + encodingCode);
+                throw new IOException("Expected Decimal128 type but found encoding: " + (encodingCode & 0xFF));
         }
     }
 
@@ -454,7 +454,7 @@ public class ProtonDecoder implements Decoder {
             case EncodingCodes.NULL:
                 return null;
             default:
-                throw new IOException("Expected Short type but found encoding: " + encodingCode);
+                throw new IOException("Expected Short type but found encoding: " + (encodingCode & 0xFF));
         }
     }
 
@@ -468,7 +468,7 @@ public class ProtonDecoder implements Decoder {
             case EncodingCodes.NULL:
                 return defaultValue;
             default:
-                throw new IOException("Expected Short type but found encoding: " + encodingCode);
+                throw new IOException("Expected Short type but found encoding: " + (encodingCode & 0xFF));
         }
     }
 
@@ -482,7 +482,7 @@ public class ProtonDecoder implements Decoder {
             case EncodingCodes.NULL:
                 return null;
             default:
-                throw new IOException("Expected UnsignedShort type but found encoding: " + encodingCode);
+                throw new IOException("Expected UnsignedShort type but found encoding: " + (encodingCode & 0xFF));
         }
     }
 
@@ -496,7 +496,7 @@ public class ProtonDecoder implements Decoder {
             case EncodingCodes.NULL:
                 return defaultValue;
             default:
-                throw new IOException("Expected UnsignedShort type but found encoding: " + encodingCode);
+                throw new IOException("Expected UnsignedShort type but found encoding: " + (encodingCode & 0xFF));
         }
     }
 
@@ -510,7 +510,7 @@ public class ProtonDecoder implements Decoder {
             case EncodingCodes.NULL:
                 return defaultValue;
             default:
-                throw new IOException("Expected UnsignedShort type but found encoding: " + encodingCode);
+                throw new IOException("Expected UnsignedShort type but found encoding: " + (encodingCode & 0xFF));
         }
     }
 
@@ -526,7 +526,7 @@ public class ProtonDecoder implements Decoder {
             case EncodingCodes.NULL:
                 return null;
             default:
-                throw new IOException("Expected Integer type but found encoding: " + encodingCode);
+                throw new IOException("Expected Integer type but found encoding: " + (encodingCode & 0xFF));
         }
     }
 
@@ -542,7 +542,7 @@ public class ProtonDecoder implements Decoder {
             case EncodingCodes.NULL:
                 return defaultValue;
             default:
-                throw new IOException("Expected Integer type but found encoding: " + encodingCode);
+                throw new IOException("Expected Integer type but found encoding: " + (encodingCode & 0xFF));
         }
     }
 
@@ -560,7 +560,7 @@ public class ProtonDecoder implements Decoder {
             case EncodingCodes.NULL:
                 return null;
             default:
-                throw new IOException("Expected UnsignedInteger type but found encoding: " + encodingCode);
+                throw new IOException("Expected UnsignedInteger type but found encoding: " + (encodingCode & 0xFF));
         }
     }
 
@@ -578,7 +578,7 @@ public class ProtonDecoder implements Decoder {
             case EncodingCodes.NULL:
                 return defaultValue;
             default:
-                throw new IOException("Expected UnsignedInteger type but found encoding: " + encodingCode);
+                throw new IOException("Expected UnsignedInteger type but found encoding: " + (encodingCode & 0xFF));
         }
     }
 
@@ -596,7 +596,7 @@ public class ProtonDecoder implements Decoder {
             case EncodingCodes.NULL:
                 return defaultValue;
             default:
-                throw new IOException("Expected UnsignedInteger type but found encoding: " + encodingCode);
+                throw new IOException("Expected UnsignedInteger type but found encoding: " + (encodingCode & 0xFF));
         }
     }
 
@@ -612,7 +612,7 @@ public class ProtonDecoder implements Decoder {
             case EncodingCodes.NULL:
                 return null;
             default:
-                throw new IOException("Expected Long type but found encoding: " + encodingCode);
+                throw new IOException("Expected Long type but found encoding: " + (encodingCode & 0xFF));
         }
     }
 
@@ -628,7 +628,7 @@ public class ProtonDecoder implements Decoder {
             case EncodingCodes.NULL:
                 return defaultValue;
             default:
-                throw new IOException("Expected Long type but found encoding: " + encodingCode);
+                throw new IOException("Expected Long type but found encoding: " + (encodingCode & 0xFF));
         }
     }
 
@@ -646,7 +646,7 @@ public class ProtonDecoder implements Decoder {
             case EncodingCodes.NULL:
                 return null;
             default:
-                throw new IOException("Expected Long type but found encoding: " + encodingCode);
+                throw new IOException("Expected Long type but found encoding: " + (encodingCode & 0xFF));
         }
     }
 
@@ -664,7 +664,7 @@ public class ProtonDecoder implements Decoder {
             case EncodingCodes.NULL:
                 return defaultValue;
             default:
-                throw new IOException("Expected Long type but found encoding: " + encodingCode);
+                throw new IOException("Expected Long type but found encoding: " + (encodingCode & 0xFF));
         }
     }
 
@@ -678,7 +678,7 @@ public class ProtonDecoder implements Decoder {
             case EncodingCodes.NULL:
                 return null;
             default:
-                throw new IOException("Expected Float type but found encoding: " + encodingCode);
+                throw new IOException("Expected Float type but found encoding: " + (encodingCode & 0xFF));
         }
     }
 
@@ -692,7 +692,7 @@ public class ProtonDecoder implements Decoder {
             case EncodingCodes.NULL:
                 return defaultValue;
             default:
-                throw new IOException("Expected Float type but found encoding: " + encodingCode);
+                throw new IOException("Expected Float type but found encoding: " + (encodingCode & 0xFF));
         }
     }
 
@@ -706,7 +706,7 @@ public class ProtonDecoder implements Decoder {
             case EncodingCodes.NULL:
                 return null;
             default:
-                throw new IOException("Expected Double type but found encoding: " + encodingCode);
+                throw new IOException("Expected Double type but found encoding: " + (encodingCode & 0xFF));
         }
     }
 
@@ -720,7 +720,7 @@ public class ProtonDecoder implements Decoder {
             case EncodingCodes.NULL:
                 return defaultValue;
             default:
-                throw new IOException("Expected Double type but found encoding: " + encodingCode);
+                throw new IOException("Expected Double type but found encoding: " + (encodingCode & 0xFF));
         }
     }
 
@@ -736,7 +736,7 @@ public class ProtonDecoder implements Decoder {
             case EncodingCodes.NULL:
                 return null;
             default:
-                throw new IOException("Expected Binary type but found encoding: " + encodingCode);
+                throw new IOException("Expected Binary type but found encoding: " + (encodingCode & 0xFF));
         }
     }
 
@@ -752,7 +752,7 @@ public class ProtonDecoder implements Decoder {
             case EncodingCodes.NULL:
                 return null;
             default:
-                throw new IOException("Expected Binary type but found encoding: " + encodingCode);
+                throw new IOException("Expected Binary type but found encoding: " + (encodingCode & 0xFF));
         }
     }
 
@@ -768,7 +768,7 @@ public class ProtonDecoder implements Decoder {
             case EncodingCodes.NULL:
                 return null;
             default:
-                throw new IOException("Expected String type but found encoding: " + encodingCode);
+                throw new IOException("Expected String type but found encoding: " + (encodingCode & 0xFF));
         }
     }
 
@@ -784,7 +784,7 @@ public class ProtonDecoder implements Decoder {
             case EncodingCodes.NULL:
                 return null;
             default:
-                throw new IOException("Expected Symbol type but found encoding: " + encodingCode);
+                throw new IOException("Expected Symbol type but found encoding: " + (encodingCode & 0xFF));
         }
     }
 
@@ -800,7 +800,7 @@ public class ProtonDecoder implements Decoder {
             case EncodingCodes.NULL:
                 return defaultValue;
             default:
-                throw new IOException("Expected Symbol type but found encoding: " + encodingCode);
+                throw new IOException("Expected Symbol type but found encoding: " + (encodingCode & 0xFF));
         }
     }
 
@@ -814,7 +814,7 @@ public class ProtonDecoder implements Decoder {
             case EncodingCodes.NULL:
                 return null;
             default:
-                throw new IOException("Expected Timestamp type but found encoding: " + encodingCode);
+                throw new IOException("Expected Timestamp type but found encoding: " + (encodingCode & 0xFF));
         }
     }
 
@@ -828,7 +828,7 @@ public class ProtonDecoder implements Decoder {
             case EncodingCodes.NULL:
                 return defaultValue;
             default:
-                throw new IOException("Expected Timestamp type but found encoding: " + encodingCode);
+                throw new IOException("Expected Timestamp type but found encoding: " + (encodingCode & 0xFF));
         }
     }
 
@@ -842,7 +842,7 @@ public class ProtonDecoder implements Decoder {
             case EncodingCodes.NULL:
                 return null;
             default:
-                throw new IOException("Expected UUID type but found encoding: " + encodingCode);
+                throw new IOException("Expected UUID type but found encoding: " + (encodingCode & 0xFF));
         }
     }
 
@@ -859,7 +859,7 @@ public class ProtonDecoder implements Decoder {
             case EncodingCodes.NULL:
                 return null;
             default:
-                throw new IOException("Expected Map type but found encoding: " + encodingCode);
+                throw new IOException("Expected Map type but found encoding: " + (encodingCode & 0xFF));
         }
     }
 
@@ -878,7 +878,7 @@ public class ProtonDecoder implements Decoder {
             case EncodingCodes.NULL:
                 return null;
             default:
-                throw new IOException("Expected List type but found encoding: " + encodingCode);
+                throw new IOException("Expected List type but found encoding: " + (encodingCode & 0xFF));
         }
     }
 
