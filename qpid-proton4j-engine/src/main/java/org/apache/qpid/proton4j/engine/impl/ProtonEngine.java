@@ -366,7 +366,7 @@ public class ProtonEngine implements Engine {
             deadline = localIdleDeadline;
         }
 
-        if (remoteIdleTimeout != 0 && !connection.isLocallyClosed()) {
+        if (remoteIdleTimeout > 0 && !connection.isLocallyClosed()) {
             if (remoteIdleDeadline == 0 || lastOutputSequence != outputSequence) {
                 remoteIdleDeadline = computeDeadline(currentTime, remoteIdleTimeout / 2);
                 lastOutputSequence = outputSequence;
