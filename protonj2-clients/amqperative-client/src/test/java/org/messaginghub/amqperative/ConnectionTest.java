@@ -111,8 +111,6 @@ public class ConnectionTest extends AMQPerativeTestCase {
             connection.close().get(10, TimeUnit.SECONDS);
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
-
-            LOG.info("Connect test completed normally");
         }
     }
 
@@ -137,8 +135,6 @@ public class ConnectionTest extends AMQPerativeTestCase {
             connection.close().get(10, TimeUnit.SECONDS);
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
-
-            LOG.info("Connect test completed normally");
         }
     }
 
@@ -178,8 +174,6 @@ public class ConnectionTest extends AMQPerativeTestCase {
             }
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
-
-            LOG.info("Connect test completed normally");
         }
     }
 
@@ -205,8 +199,6 @@ public class ConnectionTest extends AMQPerativeTestCase {
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
 
             connection.close().get(10, TimeUnit.SECONDS);
-
-            LOG.info("Connect test completed normally");
         }
     }
 
@@ -257,8 +249,6 @@ public class ConnectionTest extends AMQPerativeTestCase {
                 LOG.info("connection close failed with error: ", error);
                 fail("Close should ignore connect error and complete without error.");
             }
-
-            LOG.info("Connect test completed normally");
         }
     }
 
@@ -276,7 +266,7 @@ public class ConnectionTest extends AMQPerativeTestCase {
 
             URI remoteURI = peer.getServerURI();
 
-            LOG.info("Connect test started, peer listening on: {}", remoteURI);
+            LOG.info("Test started, peer listening on: {}", remoteURI);
 
             Client container = Client.create();
             Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
@@ -302,7 +292,6 @@ public class ConnectionTest extends AMQPerativeTestCase {
             connection.close().get(10, TimeUnit.SECONDS);
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
-            LOG.info("Connect test completed normally");
         }
     }
 
@@ -325,7 +314,7 @@ public class ConnectionTest extends AMQPerativeTestCase {
 
             URI remoteURI = peer.getServerURI();
 
-            LOG.info("Connect test started, peer listening on: {}", remoteURI);
+            LOG.info("Test started, peer listening on: {}", remoteURI);
 
             ConnectionOptions options = new ConnectionOptions();
             options.openTimeout(75);
@@ -346,7 +335,6 @@ public class ConnectionTest extends AMQPerativeTestCase {
             }
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
-            LOG.info("Connect test completed normally");
         }
     }
 
@@ -369,7 +357,7 @@ public class ConnectionTest extends AMQPerativeTestCase {
 
             URI remoteURI = peer.getServerURI();
 
-            LOG.info("Connect test started, peer listening on: {}", remoteURI);
+            LOG.info("Test started, peer listening on: {}", remoteURI);
 
             ConnectionOptions options = new ConnectionOptions();
             options.closeTimeout(75);
@@ -392,7 +380,6 @@ public class ConnectionTest extends AMQPerativeTestCase {
             }
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
-            LOG.info("Connect test completed normally");
         }
     }
 
@@ -531,8 +518,6 @@ public class ConnectionTest extends AMQPerativeTestCase {
             connection.close().get(10, TimeUnit.SECONDS);
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
-
-            LOG.info("Receiver test completed normally");
         }
     }
 

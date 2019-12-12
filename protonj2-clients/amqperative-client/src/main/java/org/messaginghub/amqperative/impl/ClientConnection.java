@@ -518,6 +518,10 @@ public class ClientConnection implements Connection {
         }
     }
 
+    void handleClientIOException(Throwable error) {
+        handleClientIOException(ClientExceptionSupport.createOrPassthroughFatal(error));
+    }
+
     void handleClientIOException(ClientException error) {
         CLOSED_UPDATER.set(this, 1);
         FAILURE_CAUSE_UPDATER.compareAndSet(this, null, error);

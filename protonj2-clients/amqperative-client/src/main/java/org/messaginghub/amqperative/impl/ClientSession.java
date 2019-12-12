@@ -44,6 +44,7 @@ import org.messaginghub.amqperative.futures.AsyncResult;
 import org.messaginghub.amqperative.futures.ClientFuture;
 import org.messaginghub.amqperative.futures.ClientFutureFactory;
 import org.messaginghub.amqperative.impl.exceptions.ClientExceptionSupport;
+import org.messaginghub.amqperative.impl.exceptions.ClientOperationTimedOutException;
 import org.messaginghub.amqperative.util.NoOpExecutor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -112,7 +113,16 @@ public class ClientSession implements Session {
     public Future<Session> close() {
         if (CLOSED_UPDATER.compareAndSet(this, 0, 1) && !openFuture.isFailed()) {
             serializer.execute(() -> {
-                protonSession.close();
+                try {
+                    protonSession.close();
+                } catch (Throwable error) {
+                    connection.handleClientIOException(error);
+                }
+
+                if (options.closeTimeout() > 0) {
+                    connection.scheduleRequestTimeout(closeFuture, options.closeTimeout(), () ->
+                        new ClientOperationTimedOutException("Session close timed out waiting for remote to respond"));
+                }
             });
         }
         return closeFuture;
@@ -255,7 +265,24 @@ public class ClientSession implements Session {
             closeFuture.complete(this);
         });
 
-        protonSession.open();
+        try {
+            protonSession.open();
+            if (options.openTimeout() > 0) {
+                serializer.schedule(() -> {
+                    if (!openFuture.isDone()) {
+                        try {
+                            protonSession.close();
+                        } catch (Throwable error) {
+                            connection.handleClientIOException(ClientExceptionSupport.createOrPassthroughFatal(error));
+                        }
+                        openFuture.failed(new ClientOperationTimedOutException(
+                            "Session Begin timed out waiting for remote to open"));
+                    }
+                }, options.openTimeout(), TimeUnit.MILLISECONDS);
+            }
+        } catch (Throwable error) {
+            connection.handleClientIOException(ClientExceptionSupport.createOrPassthroughFatal(error));
+        }
 
         return this;
     }
