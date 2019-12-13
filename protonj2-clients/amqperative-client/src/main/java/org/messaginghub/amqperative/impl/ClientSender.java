@@ -18,6 +18,7 @@ package org.messaginghub.amqperative.impl;
 
 import java.util.Iterator;
 import java.util.LinkedHashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
@@ -203,6 +204,33 @@ public class ClientSender implements Sender {
         });
 
         return session.request(operation, options.requestTimeout(), TimeUnit.MILLISECONDS);
+    }
+
+    @Override
+    public Map<String, Object> properties() {
+        if (openFuture.isDone()) {
+            return ClientConversionSupport.toStringKeyedMap(protonSender.getRemoteProperties());
+        } else {
+            return null;
+        }
+    }
+
+    @Override
+    public String[] offeredCapabilities() {
+        if (openFuture.isDone()) {
+            return ClientConversionSupport.toStringArray(protonSender.getRemoteOfferedCapabilities());
+        } else {
+            return null;
+        }
+    }
+
+    @Override
+    public String[] desiredCapabilities() {
+        if (openFuture.isDone()) {
+            return ClientConversionSupport.toStringArray(protonSender.getRemoteDesiredCapabilities());
+        } else {
+            return null;
+        }
     }
 
     //----- Internal API

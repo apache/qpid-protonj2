@@ -16,6 +16,7 @@
  */
 package org.messaginghub.amqperative.impl;
 
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
@@ -259,6 +260,33 @@ public class ClientReceiver implements Receiver {
         });
 
         return drained;
+    }
+
+    @Override
+    public Map<String, Object> properties() {
+        if (openFuture.isDone()) {
+            return ClientConversionSupport.toStringKeyedMap(protonReceiver.getRemoteProperties());
+        } else {
+            return null;
+        }
+    }
+
+    @Override
+    public String[] offeredCapabilities() {
+        if (openFuture.isDone()) {
+            return ClientConversionSupport.toStringArray(protonReceiver.getRemoteOfferedCapabilities());
+        } else {
+            return null;
+        }
+    }
+
+    @Override
+    public String[] desiredCapabilities() {
+        if (openFuture.isDone()) {
+            return ClientConversionSupport.toStringArray(protonReceiver.getRemoteDesiredCapabilities());
+        } else {
+            return null;
+        }
     }
 
     //----- Internal API

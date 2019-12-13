@@ -250,4 +250,37 @@ public interface Connection {
      */
     Tracker send(Message<?> message) throws ClientException;
 
+    /**
+     * Returns the properties that the remote provided upon successfully opening the {@link Connection}.
+     *
+     * Until the remote opens the connection the value returned from this method will be null, only once successfully
+     * connected will this method return a non-null Map value if the remote returned any properties otherwise it will
+     * continue to return null.
+     *
+     * @return any properties provided from the remote once the connection has successfully opened.
+     */
+    Map<String, Object> properties();
+
+    /**
+     * Returns the capabilities that the remote offers upon successfully opening the {@link Connection}.
+     *
+     * Until the remote opens the connection the value returned from this method will be null, only once successfully
+     * connected will this method return a non-null string array value if the remote returned any offered capabilities
+     * otherwise it will continue to return null.
+     *
+     * @return any capabilities provided from the remote once the connection has successfully opened.
+     */
+    String[] offeredCapabilities();
+
+    /**
+     * Returns the capabilities that the remote desires upon successfully opening the {@link Connection}.
+     *
+     * Until the remote opens the connection the value returned from this method will be null, only once successfully
+     * connected will this method return a non-null string array value if the remote returned any desired capabilities
+     * otherwise it will continue to return null.
+     *
+     * @return any desired capabilities provided from the remote once the connection has successfully opened.
+     */
+    String[] desiredCapabilities();
+
 }

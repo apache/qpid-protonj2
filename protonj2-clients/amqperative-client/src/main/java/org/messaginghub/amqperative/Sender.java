@@ -16,6 +16,7 @@
  */
 package org.messaginghub.amqperative;
 
+import java.util.Map;
 import java.util.concurrent.Future;
 
 import org.messaginghub.amqperative.impl.ClientException;
@@ -75,6 +76,39 @@ public interface Sender {
      * @return the remote {@link Target} node configuration.
      */
     Target target();
+
+    /**
+     * Returns the properties that the remote provided upon successfully opening the {@link Sender}.
+     *
+     * Until the remote opens the sender the value returned from this method will be null, only once successfully
+     * connected will this method return a non-null Map value if the remote returned any properties otherwise it will
+     * continue to return null.
+     *
+     * @return any properties provided from the remote once the sender has successfully opened.
+     */
+    Map<String, Object> properties();
+
+    /**
+     * Returns the capabilities that the remote offers upon successfully opening the {@link Sender}.
+     *
+     * Until the remote opens the sender the value returned from this method will be null, only once successfully
+     * connected will this method return a non-null string array value if the remote returned any offered capabilities
+     * otherwise it will continue to return null.
+     *
+     * @return any capabilities provided from the remote once the sender has successfully opened.
+     */
+    String[] offeredCapabilities();
+
+    /**
+     * Returns the capabilities that the remote desires upon successfully opening the {@link Sender}.
+     *
+     * Until the remote opens the sender the value returned from this method will be null, only once successfully
+     * connected will this method return a non-null string array value if the remote returned any desired capabilities
+     * otherwise it will continue to return null.
+     *
+     * @return any desired capabilities provided from the remote once the sender has successfully opened.
+     */
+    String[] desiredCapabilities();
 
     /**
      * @return the {@link Client} instance that holds this session's {@link Sender}

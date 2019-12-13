@@ -231,6 +231,33 @@ public class ClientSession implements Session {
         return connection.request(createSender, options.requestTimeout(), TimeUnit.MILLISECONDS);
     }
 
+    @Override
+    public Map<String, Object> properties() {
+        if (openFuture.isDone()) {
+            return ClientConversionSupport.toStringKeyedMap(protonSession.getRemoteProperties());
+        } else {
+            return null;
+        }
+    }
+
+    @Override
+    public String[] offeredCapabilities() {
+        if (openFuture.isDone()) {
+            return ClientConversionSupport.toStringArray(protonSession.getRemoteOfferedCapabilities());
+        } else {
+            return null;
+        }
+    }
+
+    @Override
+    public String[] desiredCapabilities() {
+        if (openFuture.isDone()) {
+            return ClientConversionSupport.toStringArray(protonSession.getRemoteDesiredCapabilities());
+        } else {
+            return null;
+        }
+    }
+
     //----- Internal resource open APIs expected to be called from the connection event loop
 
     ClientReceiver internalOpenReceiver(String address, ReceiverOptions receiverOptions) throws ClientException {

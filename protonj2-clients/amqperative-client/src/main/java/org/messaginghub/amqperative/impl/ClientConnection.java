@@ -377,6 +377,33 @@ public class ClientConnection implements Connection {
         return request(result, options.sendTimeout(), TimeUnit.MILLISECONDS);
     }
 
+    @Override
+    public Map<String, Object> properties() {
+        if (openFuture.isDone()) {
+            return ClientConversionSupport.toStringKeyedMap(protonConnection.getRemoteProperties());
+        } else {
+            return null;
+        }
+    }
+
+    @Override
+    public String[] offeredCapabilities() {
+        if (openFuture.isDone()) {
+            return ClientConversionSupport.toStringArray(protonConnection.getRemoteOfferedCapabilities());
+        } else {
+            return null;
+        }
+    }
+
+    @Override
+    public String[] desiredCapabilities() {
+        if (openFuture.isDone()) {
+            return ClientConversionSupport.toStringArray(protonConnection.getRemoteDesiredCapabilities());
+        } else {
+            return null;
+        }
+    }
+
     //----- Internal API
 
     String getId() {
