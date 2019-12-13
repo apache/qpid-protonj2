@@ -129,16 +129,78 @@ public class SenderTest extends AMQPerativeTestCase {
     }
 
     @Test(timeout = 60000)
-    public void testCloseSenderTimesOutWhenNoCloseResponseReceived() throws Exception {
-        doTestCloseOrDetachSenderTimesOutWhenNoCloseResponseReceived(true);
+    public void testOpenSenderTimesOutWhenNoAttachResponseReceivedTimeout() throws Exception {
+        doTestOpenSenderTimesOutWhenNoAttachResponseReceived(true);
     }
 
     @Test(timeout = 60000)
-    public void testDetachSenderTimesOutWhenNoCloseResponseReceived() throws Exception {
-        doTestCloseOrDetachSenderTimesOutWhenNoCloseResponseReceived(false);
+    public void testOpenSenderTimesOutWhenNoAttachResponseReceivedNoTimeout() throws Exception {
+        doTestOpenSenderTimesOutWhenNoAttachResponseReceived(false);
     }
 
-    private void doTestCloseOrDetachSenderTimesOutWhenNoCloseResponseReceived(boolean close) throws Exception {
+    private void doTestOpenSenderTimesOutWhenNoAttachResponseReceived(boolean timeout) throws Exception {
+        try (NettyTestPeer peer = new NettyTestPeer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().withRole(Role.SENDER);
+            peer.expectDetach();
+            peer.expectClose().respond();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Sender test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            connection.openFuture().get(10, TimeUnit.SECONDS);
+
+            Session session = connection.openSession();
+            session.openFuture().get(10, TimeUnit.SECONDS);
+
+            Sender sender = session.openSender("test-queue", new SenderOptions().openTimeout(10));
+
+            try {
+                if (timeout) {
+                    sender.openFuture().get(10, TimeUnit.SECONDS);
+                } else {
+                    sender.openFuture().get();
+                }
+
+                fail("Should not complete the open future without an error");
+            } catch (ExecutionException exe) {
+                Throwable cause = exe.getCause();
+                assertTrue(cause instanceof ClientOperationTimedOutException);
+            }
+
+            connection.close().get(10, TimeUnit.SECONDS);
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test(timeout = 60000)
+    public void testCloseSenderTimesOutWhenNoCloseResponseReceivedTimeout() throws Exception {
+        doTestCloseOrDetachSenderTimesOutWhenNoCloseResponseReceived(true, true);
+    }
+
+    @Test(timeout = 60000)
+    public void testCloseSenderTimesOutWhenNoCloseResponseReceivedNoTimeout() throws Exception {
+        doTestCloseOrDetachSenderTimesOutWhenNoCloseResponseReceived(true, false);
+    }
+
+    @Test(timeout = 60000)
+    public void testDetachSenderTimesOutWhenNoCloseResponseReceivedTimeout() throws Exception {
+        doTestCloseOrDetachSenderTimesOutWhenNoCloseResponseReceived(false, true);
+    }
+
+    @Test(timeout = 60000)
+    public void testDetachSenderTimesOutWhenNoCloseResponseReceivedNoTimeout() throws Exception {
+        doTestCloseOrDetachSenderTimesOutWhenNoCloseResponseReceived(false, false);
+    }
+
+    private void doTestCloseOrDetachSenderTimesOutWhenNoCloseResponseReceived(boolean close, boolean timeout) throws Exception {
         try (NettyTestPeer peer = new NettyTestPeer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
@@ -154,7 +216,7 @@ public class SenderTest extends AMQPerativeTestCase {
 
             Client container = Client.create();
             ConnectionOptions options = new ConnectionOptions();
-            options.closeTimeout(5);
+            options.closeTimeout(10);
             Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), options);
 
             connection.openFuture().get(10, TimeUnit.SECONDS);
@@ -167,9 +229,17 @@ public class SenderTest extends AMQPerativeTestCase {
 
             try {
                 if (close) {
-                    sender.close().get(10, TimeUnit.SECONDS);
+                    if (timeout) {
+                        sender.close().get(10, TimeUnit.SECONDS);
+                    } else {
+                        sender.close().get();
+                    }
                 } else {
-                    sender.detach().get(10, TimeUnit.SECONDS);
+                    if (timeout) {
+                        sender.detach().get(10, TimeUnit.SECONDS);
+                    } else {
+                        sender.detach().get();
+                    }
                 }
 
                 fail("Should not complete the close or detach future without an error");

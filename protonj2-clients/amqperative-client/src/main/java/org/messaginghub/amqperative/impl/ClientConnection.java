@@ -150,7 +150,7 @@ public class ClientConnection implements Connection {
     }
 
     @Override
-    public Client client() {
+    public ClientInstance client() {
         return client;
     }
 

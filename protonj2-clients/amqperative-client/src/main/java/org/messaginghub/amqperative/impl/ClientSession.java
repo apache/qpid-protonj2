@@ -32,8 +32,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 
 import org.apache.qpid.proton4j.engine.Engine;
-import org.messaginghub.amqperative.Client;
-import org.messaginghub.amqperative.Connection;
 import org.messaginghub.amqperative.Receiver;
 import org.messaginghub.amqperative.ReceiverOptions;
 import org.messaginghub.amqperative.Sender;
@@ -95,12 +93,12 @@ public class ClientSession implements Session {
     }
 
     @Override
-    public Client client() {
+    public ClientInstance client() {
         return connection.client();
     }
 
     @Override
-    public Connection connection() {
+    public ClientConnection connection() {
         return connection;
     }
 
@@ -119,9 +117,14 @@ public class ClientSession implements Session {
                     connection.handleClientIOException(error);
                 }
 
-                if (options.closeTimeout() > 0) {
-                    connection.scheduleRequestTimeout(closeFuture, options.closeTimeout(), () ->
-                        new ClientOperationTimedOutException("Session close timed out waiting for remote to respond"));
+                if (!closeFuture.isDone()) {
+                    final long timeout = options.closeTimeout() >= 0 ?
+                            options.closeTimeout() : options.requestTimeout();
+
+                    if (timeout > 0) {
+                        connection.scheduleRequestTimeout(closeFuture, timeout, () ->
+                            new ClientOperationTimedOutException("Session close timed out waiting for remote to respond"));
+                    }
                 }
             });
         }

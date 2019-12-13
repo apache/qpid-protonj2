@@ -33,7 +33,6 @@ import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.engine.LinkCreditState;
 import org.apache.qpid.proton4j.engine.LinkState;
 import org.apache.qpid.proton4j.engine.OutgoingDelivery;
-import org.messaginghub.amqperative.Client;
 import org.messaginghub.amqperative.Message;
 import org.messaginghub.amqperative.Sender;
 import org.messaginghub.amqperative.SenderOptions;
@@ -103,7 +102,7 @@ public class ClientSender implements Sender {
     }
 
     @Override
-    public Client client() {
+    public ClientInstance client() {
         return session.client();
     }
 
@@ -158,8 +157,10 @@ public class ClientSender implements Sender {
                     final long timeout = options.closeTimeout() >= 0 ?
                             options.closeTimeout() : options.requestTimeout();
 
-                    session.scheduleRequestTimeout(closeFuture, timeout,
-                        () -> new ClientOperationTimedOutException("Timed out waiting for Sender to detach"));
+                    if (timeout > 0) {
+                        session.scheduleRequestTimeout(closeFuture, timeout,
+                            () -> new ClientOperationTimedOutException("Timed out waiting for Sender to detach"));
+                    }
                 }
             });
         }
@@ -221,6 +222,20 @@ public class ClientSender implements Sender {
                     .drainRequestedHandler(linkState -> handleRemoteRequestedDrain(linkState))
                     .sendableHandler(sender -> handleRemoteNowSendable(sender))
                     .open();
+
+        if (options.openTimeout() > 0) {
+            executor.schedule(() -> {
+                if (!openFuture.isDone()) {
+                    try {
+                        protonSender.close();
+                    } catch (Throwable error) {
+                        session.connection().handleClientIOException(error);
+                    }
+                    openFuture.failed(new ClientOperationTimedOutException(
+                        "Sender attach timed out waiting for remote to open"));
+                }
+            }, options.openTimeout(), TimeUnit.MILLISECONDS);
+        }
 
         return this;
     }

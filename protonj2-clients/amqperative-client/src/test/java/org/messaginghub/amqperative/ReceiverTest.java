@@ -124,16 +124,78 @@ public class ReceiverTest extends AMQPerativeTestCase {
     }
 
     @Test(timeout = 60000)
-    public void testCloseReceiverTimesOutWhenNoCloseResponseReceived() throws Exception {
-        doTestCloseOrDetachReceiverTimesOutWhenNoCloseResponseReceived(true);
+    public void testOpenReceiverTimesOutWhenNoAttachResponseReceivedTimeout() throws Exception {
+        doTestOpenReceiverTimesOutWhenNoAttachResponseReceived(true);
     }
 
     @Test(timeout = 60000)
-    public void testDetachReceiverTimesOutWhenNoCloseResponseReceived() throws Exception {
-        doTestCloseOrDetachReceiverTimesOutWhenNoCloseResponseReceived(false);
+    public void testOpenReceiverTimesOutWhenNoAttachResponseReceivedNoTimeout() throws Exception {
+        doTestOpenReceiverTimesOutWhenNoAttachResponseReceived(false);
     }
 
-    private void doTestCloseOrDetachReceiverTimesOutWhenNoCloseResponseReceived(boolean close) throws Exception {
+    private void doTestOpenReceiverTimesOutWhenNoAttachResponseReceived(boolean timeout) throws Exception {
+        try (NettyTestPeer peer = new NettyTestPeer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().withRole(Role.RECEIVER);
+            peer.expectDetach();
+            peer.expectClose().respond();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Receiver test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            connection.openFuture().get(10, TimeUnit.SECONDS);
+
+            Session session = connection.openSession();
+            session.openFuture().get(10, TimeUnit.SECONDS);
+
+            Receiver receiver = session.openReceiver("test-queue", new ReceiverOptions().openTimeout(10));
+
+            try {
+                if (timeout) {
+                    receiver.openFuture().get(10, TimeUnit.SECONDS);
+                } else {
+                    receiver.openFuture().get();
+                }
+
+                fail("Should not complete the open future without an error");
+            } catch (ExecutionException exe) {
+                Throwable cause = exe.getCause();
+                assertTrue(cause instanceof ClientOperationTimedOutException);
+            }
+
+            connection.close().get(10, TimeUnit.SECONDS);
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test(timeout = 60000)
+    public void testCloseReceiverTimesOutWhenNoCloseResponseReceivedTimeout() throws Exception {
+        doTestCloseOrDetachReceiverTimesOutWhenNoCloseResponseReceived(true, true);
+    }
+
+    @Test(timeout = 60000)
+    public void testCloseReceiverTimesOutWhenNoCloseResponseReceivedNoTimeout() throws Exception {
+        doTestCloseOrDetachReceiverTimesOutWhenNoCloseResponseReceived(true, false);
+    }
+
+    @Test(timeout = 60000)
+    public void testDetachReceiverTimesOutWhenNoCloseResponseReceivedTimeout() throws Exception {
+        doTestCloseOrDetachReceiverTimesOutWhenNoCloseResponseReceived(false, true);
+    }
+
+    @Test(timeout = 60000)
+    public void testDetachReceiverTimesOutWhenNoCloseResponseReceivedNoTimeout() throws Exception {
+        doTestCloseOrDetachReceiverTimesOutWhenNoCloseResponseReceived(false, false);
+    }
+
+    private void doTestCloseOrDetachReceiverTimesOutWhenNoCloseResponseReceived(boolean close, boolean timeout) throws Exception {
         try (NettyTestPeer peer = new NettyTestPeer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
@@ -162,9 +224,17 @@ public class ReceiverTest extends AMQPerativeTestCase {
 
             try {
                 if (close) {
-                    receiver.close().get(10, TimeUnit.SECONDS);
+                    if (timeout) {
+                        receiver.close().get(10, TimeUnit.SECONDS);
+                    } else {
+                        receiver.close().get();
+                    }
                 } else {
-                    receiver.detach().get(10, TimeUnit.SECONDS);
+                    if (timeout) {
+                        receiver.detach().get(10, TimeUnit.SECONDS);
+                    } else {
+                        receiver.detach().get();
+                    }
                 }
 
                 fail("Should not complete the close or detach future without an error");

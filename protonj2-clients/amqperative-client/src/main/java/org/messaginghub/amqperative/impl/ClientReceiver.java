@@ -19,6 +19,7 @@ package org.messaginghub.amqperative.impl;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
@@ -171,8 +172,10 @@ public class ClientReceiver implements Receiver {
                     final long timeout = options.closeTimeout() >= 0 ?
                             options.closeTimeout() : options.requestTimeout();
 
-                    session.scheduleRequestTimeout(closeFuture, timeout,
-                        () -> new ClientOperationTimedOutException("Timed out waiting for Receiver to close"));
+                    if (timeout > 0) {
+                        session.scheduleRequestTimeout(closeFuture, timeout,
+                            () -> new ClientOperationTimedOutException("Timed out waiting for Receiver to close"));
+                    }
                 }
             });
         }
@@ -275,6 +278,20 @@ public class ClientReceiver implements Receiver {
                       .deliveryReceivedHandler(delivery -> handleDeliveryReceived(delivery))
                       .drainStateUpdatedHandler(receiver -> handleReceiverReportsDrained(receiver))
                       .open();
+
+        if (options.openTimeout() > 0) {
+            executor.schedule(() -> {
+                if (!openFuture.isDone()) {
+                    try {
+                        protonReceiver.close();
+                    } catch (Throwable error) {
+                        session.connection().handleClientIOException(error);
+                    }
+                    openFuture.failed(new ClientOperationTimedOutException(
+                        "Receiver attach timed out waiting for remote to open"));
+                }
+            }, options.openTimeout(), TimeUnit.MILLISECONDS);
+        }
 
         return this;
     }
