@@ -88,11 +88,6 @@ public class Samples {
 
         Message<String> message = Message.create("Hello World").durable(true);
         Tracker tracker = sender.send(message);
-        try {
-            tracker.remoteState().get(10, TimeUnit.SECONDS);
-        } catch (Exception ex) {
-            // Failed waiting on remote to acknowledge the send.
-        }
 
         // =============== Create a receiver ===========
 
@@ -112,11 +107,8 @@ public class Samples {
         receiver.addCredit(1); // Or configure a credit window (see above)
 
         Delivery delivery = receiver.receive(); // Waits forever
-        if (delivery != null) {
-            Message<String> received = delivery.message();
-
-            System.out.println(received.body());
-        }
+        Message<String> message1 = delivery.message();
+        System.out.println(message1.body());
 
         Delivery delivery2 = receiver.receive(5_000); // Waits with timeout
 
@@ -124,8 +116,8 @@ public class Samples {
 
         receiver.onMessage(delivery4 -> {
             try {
-                Message<String> received = delivery.message();
-                System.out.println(received.body());
+                Message<String> message2 = delivery.message();
+                System.out.println(message2.body());
             } catch (ClientException e) {
                 // TODO Make a RuntimeException
                 e.printStackTrace();
@@ -141,8 +133,6 @@ public class Samples {
         String dynamicAddress = dynamicReceiver.address();
 
         Sender requestor = connection.openSender(address);
-        requestor.openFuture().get(5, TimeUnit.SECONDS);
-
         Message<String> request = Message.create("Hello World").durable(true).replyTo(dynamicAddress);
         Tracker requestTracker = requestor.send(request);
 
