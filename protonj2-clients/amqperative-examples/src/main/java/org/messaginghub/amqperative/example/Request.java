@@ -49,10 +49,9 @@ public class Request {
 
         try {
             Connection connection = client.connect(brokerHost, brokerPort);
-            connection.openFuture().get(5, TimeUnit.SECONDS);
 
             Receiver dynamicReceiver = connection.openDynamicReceiver();
-            dynamicReceiver.openFuture().get(5, TimeUnit.SECONDS);
+            dynamicReceiver.openFuture().get(5, TimeUnit.SECONDS);  // Waiting for remote to provide address
             String dynamicAddress = dynamicReceiver.address();
             System.out.println("Waiting for response to requests on address: " + dynamicAddress);
 
@@ -60,17 +59,13 @@ public class Request {
             requestorOptions.targetOptions().capabilities("queue");
 
             Sender requestor = connection.openSender(address, requestorOptions);
-            requestor.openFuture().get(5, TimeUnit.SECONDS);
-
             Message<String> request = Message.create("Hello World").durable(true).replyTo(dynamicAddress);
-            requestor.send(request).remoteState().get(5, TimeUnit.SECONDS);
+            requestor.send(request);
 
             dynamicReceiver.addCredit(1);
             Delivery response = dynamicReceiver.receive(30_000);
-            if (response != null) {
-                Message<String> received = response.message();
-                LOG.info("Response to request message was: {}", received.body());
-            }
+            Message<String> received = response.message();
+            LOG.info("Response to request message was: {}", received.body());
         } catch (Exception exp) {
             LOG.error("Caught exception during Request demo, exiting.", exp);
             System.exit(1);

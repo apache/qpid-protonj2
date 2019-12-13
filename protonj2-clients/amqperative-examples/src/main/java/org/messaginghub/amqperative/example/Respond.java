@@ -27,7 +27,6 @@ import org.messaginghub.amqperative.Message;
 import org.messaginghub.amqperative.Receiver;
 import org.messaginghub.amqperative.ReceiverOptions;
 import org.messaginghub.amqperative.Sender;
-import org.messaginghub.amqperative.Tracker;
 
 /**
  * Listens for Requests on a request Queue and sends a response.
@@ -46,7 +45,6 @@ public class Respond {
 
         try {
             Connection connection = client.connect(brokerHost, brokerPort);
-            connection.openFuture().get(5, TimeUnit.SECONDS);
 
             ReceiverOptions receiverOptions = new ReceiverOptions();
             receiverOptions.sourceOptions().capabilities("queue");
@@ -63,12 +61,8 @@ public class Respond {
                 String replyAddress = received.replyTo();
                 if (replyAddress != null) {
                     Sender sender = connection.openSender(address);
-                    sender.openFuture().get(5, TimeUnit.SECONDS);
-
-                    Message<String> message = Message.create("Response").durable(true);
-                    Tracker tracker = sender.send(message);
-
-                    tracker.remoteState().get(5, TimeUnit.SECONDS);
+                    sender.send(Message.create("Response").durable(true));
+                    sender.close();
                 }
             }
         } catch (Exception exp) {
