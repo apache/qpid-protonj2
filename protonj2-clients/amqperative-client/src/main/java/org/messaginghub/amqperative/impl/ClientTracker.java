@@ -16,8 +16,6 @@
  */
 package org.messaginghub.amqperative.impl;
 
-import java.util.concurrent.Future;
-
 import org.apache.qpid.proton4j.amqp.DeliveryTag;
 import org.apache.qpid.proton4j.amqp.messaging.Accepted;
 import org.apache.qpid.proton4j.engine.OutgoingDelivery;
@@ -34,7 +32,10 @@ public class ClientTracker implements Tracker {
     private final ClientSender sender;
     private final OutgoingDelivery delivery;
 
-    private final ClientFuture<DeliveryState> remoteState;
+    private final ClientFuture<Tracker> acknowledged;
+
+    private volatile boolean remotelySetted;
+    private volatile DeliveryState remoteDeliveryState;
 
     // TODO - Memory consistency issues are observable if auto settle is on as the
     //        settle and update of the remote and local state happens in the client
@@ -52,7 +53,7 @@ public class ClientTracker implements Tracker {
     ClientTracker(ClientSender sender, OutgoingDelivery delivery) {
         this.sender = sender;
         this.delivery = delivery;
-        this.remoteState = sender.session().getFutureFactory().createFuture();
+        this.acknowledged = sender.session().getFutureFactory().createFuture();
     }
 
     @Override
@@ -66,23 +67,23 @@ public class ClientTracker implements Tracker {
     }
 
     @Override
-    public Future<DeliveryState> remoteState() {
-        return remoteState;
+    public DeliveryState remoteState() {
+        return remoteDeliveryState;
     }
 
     @Override
     public boolean remotelySettled() {
-        return delivery.isRemotelySettled();
+        return remotelySetted;
     }
 
     @Override
-    public Tracker accept() {
+    public ClientTracker accept() {
         delivery.disposition(Accepted.getInstance());
         return this;
     }
 
     @Override
-    public Tracker disposition(DeliveryState state, boolean settle) {
+    public ClientTracker disposition(DeliveryState state, boolean settle) {
         org.apache.qpid.proton4j.amqp.transport.DeliveryState protonState = null;
         if (state != null) {
             try {
@@ -97,7 +98,7 @@ public class ClientTracker implements Tracker {
     }
 
     @Override
-    public Tracker settle() {
+    public ClientTracker settle() {
         sender.disposition(delivery, null, true);
         return this;
     }
@@ -112,11 +113,19 @@ public class ClientTracker implements Tracker {
         return delivery.getTag();
     }
 
+    @Override
+    public ClientFuture<Tracker> acknowledgeFuture() {
+        return acknowledged;
+    }
+
     //----- Internal Event hooks for delivery updates
 
     void processDeliveryUpdated(OutgoingDelivery delivery) {
-        if (delivery.getRemoteState() != null || delivery.isRemotelySettled()) {
-            remoteState.complete(ClientDeliveryState.fromProtonType(delivery.getRemoteState()));
+        remotelySetted = delivery.isRemotelySettled();
+        remoteDeliveryState = ClientDeliveryState.fromProtonType(delivery.getRemoteState());
+
+        if (delivery.isRemotelySettled()) {
+            acknowledged.complete(this);
         }
     }
 }

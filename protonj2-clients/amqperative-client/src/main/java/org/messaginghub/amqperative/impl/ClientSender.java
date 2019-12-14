@@ -429,6 +429,7 @@ public class ClientSender implements Sender {
 
         if (protonSender.getSenderSettleMode() == SenderSettleMode.SETTLED) {
             delivery.settle();
+            tracker.acknowledgeFuture().complete(tracker);
         }
 
         delivery.setTag(new byte[] {0});

@@ -573,7 +573,8 @@ public class SenderTest extends AMQPerativeTestCase {
             }
 
             assertNotNull(tracker);
-            assertEquals(tracker.remoteState().get(5, TimeUnit.SECONDS).getType(), DeliveryState.Type.ACCEPTED);
+            assertNotNull(tracker.acknowledgeFuture().get(5, TimeUnit.SECONDS));
+            assertEquals(tracker.remoteState().getType(), DeliveryState.Type.ACCEPTED);
 
             sender.close().get(10, TimeUnit.SECONDS);
 
@@ -644,7 +645,8 @@ public class SenderTest extends AMQPerativeTestCase {
             }
 
             assertNotNull(tracker);
-            assertEquals(tracker.remoteState().get(5, TimeUnit.SECONDS).getType(), DeliveryState.Type.ACCEPTED);
+            assertNotNull(tracker.acknowledgeFuture().get(5, TimeUnit.SECONDS));
+            assertEquals(tracker.remoteState().getType(), DeliveryState.Type.ACCEPTED);
 
             sender.close().get(10, TimeUnit.SECONDS);
 

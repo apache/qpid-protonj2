@@ -66,9 +66,9 @@ public interface Tracker {
     /**
      * Gets the current remote state for the tracked delivery.
      *
-     * @return the {@link Future} that will be completed when a remote delivery state is applied.
+     * @return the remote {@link DeliveryState} once a value is received from the remote.
      */
-    Future<DeliveryState> remoteState();
+    DeliveryState remoteState();
 
     /**
      * Gets whether the delivery was settled by the remote peer yet.
@@ -95,5 +95,13 @@ public interface Tracker {
      * @return itself
      */
     Tracker disposition(DeliveryState state, boolean settle);
+
+    /**
+     * Returns a future that can be used to wait for the remote to acknowledge receipt of
+     * a sent message.
+     *
+     * @return a {@link Future} that can be used to wait on remote acknowledgement.
+     */
+    Future<Tracker> acknowledgeFuture();
 
 }
