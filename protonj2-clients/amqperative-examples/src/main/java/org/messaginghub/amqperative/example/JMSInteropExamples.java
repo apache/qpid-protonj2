@@ -60,7 +60,7 @@ public class JMSInteropExamples {
 
         dynamicReceiver.close();
 
-        // ============== Create a receiver on a temporary Topic
+        // ============== Create a receiver on a temporary Queue
 
         receiverOptions = new ReceiverOptions();
         receiverOptions.offeredCapabilities("temporary-queue");
