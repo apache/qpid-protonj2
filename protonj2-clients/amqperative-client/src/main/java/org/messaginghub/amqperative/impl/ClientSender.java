@@ -429,6 +429,8 @@ public class ClientSender implements Sender {
 
         if (protonSender.getSenderSettleMode() == SenderSettleMode.SETTLED) {
             delivery.settle();
+
+            // Remote will not update this delivery so mark as acknowledged now.
             tracker.acknowledgeFuture().complete(tracker);
         }
 

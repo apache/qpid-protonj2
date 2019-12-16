@@ -2,6 +2,7 @@ package org.messaginghub.amqperative;
 
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -343,7 +344,7 @@ public class SenderTest extends AMQPerativeTestCase {
                 LOG.debug("Attempting send with sender: {}", sender);
                 sender.send(message);
             } catch (ClientSendTimedOutException ex) {
-                fail("Should throw a send timed out exception");
+                fail("Should not throw a send timed out exception");
             }
 
             sender.close().get(10, TimeUnit.SECONDS);
@@ -647,6 +648,70 @@ public class SenderTest extends AMQPerativeTestCase {
             assertNotNull(tracker);
             assertNotNull(tracker.acknowledgeFuture().get(5, TimeUnit.SECONDS));
             assertEquals(tracker.remoteState().getType(), DeliveryState.Type.ACCEPTED);
+            assertNull(tracker.state());
+            assertFalse(tracker.settled());
+
+            sender.close().get(10, TimeUnit.SECONDS);
+
+            connection.close().get(10, TimeUnit.SECONDS);
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
+    public void testSenderSendingSettledCompletesTrackerAcknowledgeFuture() throws Exception {
+        doTestSenderSendingSettledCompletesTrackerAcknowledgeFuture(false);
+    }
+
+    @Test
+    public void testSenderTrySendingSettledCompletesTrackerAcknowledgeFuture() throws Exception {
+        doTestSenderSendingSettledCompletesTrackerAcknowledgeFuture(true);
+    }
+
+    private void doTestSenderSendingSettledCompletesTrackerAcknowledgeFuture(boolean trySend) throws Exception {
+        try (NettyTestPeer peer = new NettyTestPeer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().withRole(Role.SENDER)
+                               .withSndSettleMode(SenderSettleMode.SETTLED)
+                               .withRcvSettleMode(ReceiverSettleMode.FIRST)
+                               .respond()
+                               .withSndSettleMode(SenderSettleMode.SETTLED)
+                               .withRcvSettleMode(ReceiverSettleMode.FIRST);
+            peer.remoteFlow().withLinkCredit(10).queue();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Connect test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort()).openFuture().get();
+
+            Session session = connection.openSession().openFuture().get();
+
+            SenderOptions options = new SenderOptions().deliveryMode(DeliveryMode.AT_MOST_ONCE);
+            Sender sender = session.openSender("test-qos", options).openFuture().get();
+            assertEquals("test-qos", sender.address());
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+            peer.expectTransfer().withPayload(notNullValue(ProtonBuffer.class));
+            peer.expectDetach().respond();
+            peer.expectClose().respond();
+
+            final Message<String> message = Message.create("Hello World");
+            final Tracker tracker;
+            if (trySend) {
+                tracker = sender.trySend(message);
+            } else {
+                tracker = sender.send(message);
+            }
+
+            assertNotNull(tracker);
+            assertNotNull(tracker.acknowledgeFuture().isDone());
+            assertNotNull(tracker.acknowledgeFuture().get().settled());
 
             sender.close().get(10, TimeUnit.SECONDS);
 
