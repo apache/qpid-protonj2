@@ -90,6 +90,22 @@ abstract class ClientConversionSupport {
         return result;
     }
 
+    public static Symbol[] toSymbolArray(Set<String> stringsSet) {
+        final Symbol[] result;
+
+        if (stringsSet != null) {
+            result = new Symbol[stringsSet.size()];
+            int index = 0;
+            for (String entry : stringsSet) {
+                result[index++] = Symbol.valueOf(entry);
+            }
+        } else {
+            result = null;
+        }
+
+        return result;
+    }
+
     public static Set<Symbol> toSymbolSet(Set<String> stringsSet) {
         final Set<Symbol> result;
 
@@ -105,14 +121,14 @@ abstract class ClientConversionSupport {
         return result;
     }
 
-    public static Set<String> toStringSet(Set<Symbol> symbolSet) {
+    public static Set<String> toStringSet(Symbol[] symbols) {
         Set<String> result;
 
-        if (symbolSet != null) {
-            result = new LinkedHashSet<>(symbolSet.size());
-            symbolSet.forEach((entry) -> {
-                result.add(entry.toString());
-            });
+        if (symbols != null) {
+            result = new LinkedHashSet<>(symbols.length);
+            for (Symbol symbol : symbols) {
+                result.add(symbol.toString());
+            }
         } else {
             result = null;
         }

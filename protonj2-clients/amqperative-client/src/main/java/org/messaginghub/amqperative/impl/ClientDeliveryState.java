@@ -83,6 +83,18 @@ public abstract class ClientDeliveryState implements DeliveryState {
         }
     }
 
+    static DeliveryState.Type fromOutcomeSymbol(Symbol outcome) {
+        if (outcome == null) {
+            return null;
+        }
+
+        try {
+            return DeliveryState.Type.valueOf(outcome.toString().toUpperCase());
+        } catch (Throwable error) {
+            throw new IllegalArgumentException("Cannot map outcome name to unknown Proton DeliveryState.Type");
+        }
+    }
+
     //----- Delivery State implementations
 
     public static class ClientAccepted extends ClientDeliveryState {

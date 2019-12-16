@@ -73,9 +73,9 @@ public interface Source {
     DeliveryState defaultOutcome();
 
     /**
-     * @return the supported outcomes of this Source node.
+     * @return the supported outcome types of this Source node.
      */
-    Set<DeliveryState> outcomes();
+    Set<DeliveryState.Type> outcomes();
 
     /**
      * @return the set of capabilities available on this Source node.

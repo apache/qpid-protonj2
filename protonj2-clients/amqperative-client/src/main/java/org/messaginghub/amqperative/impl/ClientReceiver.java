@@ -63,6 +63,9 @@ public class ClientReceiver implements Receiver {
     private volatile int closed;
     private Consumer<ClientReceiver> receiverRemotelyClosedHandler;
 
+    private volatile Source remoteSource;
+    private volatile Target remoteTarget;
+
     public ClientReceiver(ClientSession session, ReceiverOptions options, String receiverId, org.apache.qpid.proton4j.engine.Receiver receiver) {
         this.options = options;
         this.session = session;
@@ -82,29 +85,21 @@ public class ClientReceiver implements Receiver {
 
     @Override
     public String address() {
-        if (protonReceiver.getRemoteState() != LinkState.IDLE && protonReceiver.getRemoteSource() != null) {
-            return protonReceiver.getRemoteSource().getAddress();
+        if (remoteSource != null) {
+            return remoteSource.address();
         } else {
-            return protonReceiver.getSource().getAddress();
+            return protonReceiver.getSource() != null ? protonReceiver.getSource().getAddress() : null;
         }
     }
 
     @Override
     public Source source() {
-        if (protonReceiver.getRemoteState() != LinkState.IDLE && protonReceiver.getRemoteSource() != null) {
-            return null;  // TODO
-        } else {
-            return null;  // TODO
-        }
+        return remoteSource;
     }
 
     @Override
     public Target target() {
-        if (protonReceiver.getRemoteState() != LinkState.IDLE && protonReceiver.getRemoteTarget() != null) {
-            return null;  // TODO
-        } else {
-            return null;  // TODO
-        }
+        return remoteTarget;
     }
 
     @Override
@@ -353,6 +348,13 @@ public class ClientReceiver implements Receiver {
     private void handleRemoteOpen(org.apache.qpid.proton4j.engine.Receiver receiver) {
         // Check for deferred close pending and hold completion if so
         if (receiver.getRemoteSource() != null) {
+            if (receiver.getRemoteSource() != null) {
+                remoteSource = new RemoteSource(receiver.getRemoteSource());
+            }
+            if (receiver.getRemoteTarget() != null) {
+                remoteTarget = new RemoteTarget(receiver.getRemoteTarget());
+            }
+
             openFuture.complete(this);
             LOG.trace("Receiver opened successfully");
         } else {

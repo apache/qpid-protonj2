@@ -73,6 +73,9 @@ public class ClientSender implements Sender {
     private LinkCreditState drainingState;
     private Consumer<ClientSender> senderRemotelyClosedHandler;
 
+    private volatile Source remoteSource;
+    private volatile Target remoteTarget;
+
     public ClientSender(ClientSession session, SenderOptions options, String senderId, org.apache.qpid.proton4j.engine.Sender protonSender) {
         this.options = new SenderOptions(options);
         this.session = session;
@@ -94,12 +97,12 @@ public class ClientSender implements Sender {
 
     @Override
     public Source source() {
-        return null;  // TODO
+        return remoteSource;
     }
 
     @Override
     public Target target() {
-        return null;  // TODO
+        return remoteTarget;
     }
 
     @Override
@@ -297,6 +300,13 @@ public class ClientSender implements Sender {
     private void handleRemoteOpen(org.apache.qpid.proton4j.engine.Sender sender) {
         // Check for deferred close pending and hold completion if so
         if (sender.getRemoteTarget() != null) {
+            if (sender.getRemoteSource() != null) {
+                remoteSource = new RemoteSource(sender.getRemoteSource());
+            }
+            if (sender.getRemoteTarget() != null) {
+                remoteTarget = new RemoteTarget(sender.getRemoteTarget());
+            }
+
             openFuture.complete(this);
             LOG.trace("Sender opened successfully");
         } else {

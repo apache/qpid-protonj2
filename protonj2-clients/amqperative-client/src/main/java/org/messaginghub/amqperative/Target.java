@@ -58,16 +58,6 @@ public interface Target {
     Map<String, Object> dynamicNodeProperties();
 
     /**
-     * @return the default outcome configured for this Source node.
-     */
-    DeliveryState defaultOutcome();
-
-    /**
-     * @return the supported outcomes of this Source node.
-     */
-    Set<DeliveryState> outcomes();
-
-    /**
      * @return the set of capabilities available on this Source node.
      */
     Set<String> capabilities();
