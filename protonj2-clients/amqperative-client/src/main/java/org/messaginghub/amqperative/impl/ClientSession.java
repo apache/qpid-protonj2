@@ -283,17 +283,8 @@ public class ClientSession implements Session {
     //----- Internal API accessible for use within the package
 
     ClientSession open() {
-        protonSession.openHandler(result -> {
-            openFuture.complete(this);
-            LOG.trace("Connection session opened successfully");
-        });
-        protonSession.closeHandler(result -> {
-            if (result.getRemoteCondition() != null) {
-                // TODO - Process as failure cause if none set
-            }
-            CLOSED_UPDATER.lazySet(this, 1);
-            closeFuture.complete(this);
-        });
+        protonSession.openHandler(session -> handleRemoteOpen(session));
+        protonSession.closeHandler(session -> handleRemoteClose(session));
 
         try {
             protonSession.open();
@@ -434,6 +425,22 @@ public class ClientSession implements Session {
         });
 
         return executor;
+    }
+
+    private void handleRemoteOpen(org.apache.qpid.proton4j.engine.Session session) {
+        openFuture.complete(this);
+        LOG.trace("Session:{} opened successfully.", id());
+
+        // TODO - Any held anonymous sender opens can be run now since the connection
+        //        must now be open and know if they are supported.
+    }
+
+    private void handleRemoteClose(org.apache.qpid.proton4j.engine.Session session) {
+        if (session.getRemoteCondition() != null) {
+            // TODO - Process as failure cause if none set
+        }
+        CLOSED_UPDATER.lazySet(this, 1);
+        closeFuture.complete(this);
     }
 
     // TODO - Notify links and clean up resources etc.
