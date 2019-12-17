@@ -18,8 +18,6 @@ package org.messaginghub.amqperative;
 
 import java.util.concurrent.Future;
 
-import org.apache.qpid.proton4j.amqp.DeliveryTag;
-
 /**
  * Tracker object used to track the state of a sent {@link Message} at the remote
  * and allows for local settlement and disposition management.
@@ -42,7 +40,7 @@ public interface Tracker {
      *
      * @return the binary delivery tag that has been assigned to the sent message.
      */
-    DeliveryTag tag();
+    byte[] tag();
 
     /**
      * Settles the delivery locally, if not {@link SenderOptions#autoSettle() auto-settling}.

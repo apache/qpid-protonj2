@@ -69,6 +69,8 @@ public class ClientSender implements Sender {
     private final ScheduledExecutorService executor;
     private final AtomicReference<ClientException> failureCause = new AtomicReference<>();
     private final String senderId;
+    private final TransferTagGenerator tagGenerator = new TransferTagGenerator();
+
     private volatile int closed;
     private LinkCreditState drainingState;
     private Consumer<ClientSender> senderRemotelyClosedHandler;
@@ -444,7 +446,7 @@ public class ClientSender implements Sender {
             tracker.acknowledgeFuture().complete(tracker);
         }
 
-        delivery.setTag(new byte[] {0});
+        delivery.setTag(tagGenerator.getNextTag());  // TODO - Optimize tags with pooling later
         delivery.writeBytes(buffer);
         delivery.getContext().setLinkedResource(tracker);
 

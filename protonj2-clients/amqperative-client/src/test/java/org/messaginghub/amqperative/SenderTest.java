@@ -98,7 +98,7 @@ public class SenderTest extends AMQPerativeTestCase {
 
             URI remoteURI = peer.getServerURI();
 
-            LOG.info("Connect test started, peer listening on: {}", remoteURI);
+            LOG.info("Sender test started, peer listening on: {}", remoteURI);
 
             Client container = Client.create();
             Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
@@ -460,12 +460,12 @@ public class SenderTest extends AMQPerativeTestCase {
         }
     }
 
-    @Test
+    @Test(timeout = 60000)
     public void testCreateSenderWithQoSOfAtMostOnce() throws Exception {
         doTestCreateSenderWithConfiguredQoS(DeliveryMode.AT_MOST_ONCE);
     }
 
-    @Test
+    @Test(timeout = 60000)
     public void testCreateSenderWithQoSOfAtLeastOnce() throws Exception {
         doTestCreateSenderWithConfiguredQoS(DeliveryMode.AT_LEAST_ONCE);
     }
@@ -489,7 +489,7 @@ public class SenderTest extends AMQPerativeTestCase {
 
             URI remoteURI = peer.getServerURI();
 
-            LOG.info("Connect test started, peer listening on: {}", remoteURI);
+            LOG.info("Sender test started, peer listening on: {}", remoteURI);
 
             Client container = Client.create();
             Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
@@ -659,12 +659,12 @@ public class SenderTest extends AMQPerativeTestCase {
         }
     }
 
-    @Test
+    @Test(timeout = 60000)
     public void testSenderSendingSettledCompletesTrackerAcknowledgeFuture() throws Exception {
         doTestSenderSendingSettledCompletesTrackerAcknowledgeFuture(false);
     }
 
-    @Test
+    @Test(timeout = 60000)
     public void testSenderTrySendingSettledCompletesTrackerAcknowledgeFuture() throws Exception {
         doTestSenderSendingSettledCompletesTrackerAcknowledgeFuture(true);
     }
@@ -685,7 +685,7 @@ public class SenderTest extends AMQPerativeTestCase {
 
             URI remoteURI = peer.getServerURI();
 
-            LOG.info("Connect test started, peer listening on: {}", remoteURI);
+            LOG.info("Sender test started, peer listening on: {}", remoteURI);
 
             Client container = Client.create();
             Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort()).openFuture().get();
@@ -704,6 +704,7 @@ public class SenderTest extends AMQPerativeTestCase {
             final Message<String> message = Message.create("Hello World");
             final Tracker tracker;
             if (trySend) {
+                // TODO: This can return null if the flow isn't processed in time
                 tracker = sender.trySend(message);
             } else {
                 tracker = sender.send(message);
@@ -712,6 +713,57 @@ public class SenderTest extends AMQPerativeTestCase {
             assertNotNull(tracker);
             assertNotNull(tracker.acknowledgeFuture().isDone());
             assertNotNull(tracker.acknowledgeFuture().get().settled());
+
+            sender.close().get(10, TimeUnit.SECONDS);
+
+            connection.close().get(10, TimeUnit.SECONDS);
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test(timeout = 60000)
+    public void testSenderIncrementsTransferTagOnEachSend() throws Exception {
+        try (NettyTestPeer peer = new NettyTestPeer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().withRole(Role.SENDER).respond();
+            peer.remoteFlow().withLinkCredit(10).queue();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Sender test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort()).openFuture().get();
+
+            Session session = connection.openSession().openFuture().get();
+            SenderOptions options = new SenderOptions().deliveryMode(DeliveryMode.AT_MOST_ONCE);
+            Sender sender = session.openSender("test-tags", options).openFuture().get();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+            peer.expectTransfer().withPayload(notNullValue(ProtonBuffer.class))
+                                 .withDeliveryTag(new byte[] {0});
+            peer.expectTransfer().withPayload(notNullValue(ProtonBuffer.class))
+                                 .withDeliveryTag(new byte[] {1});
+            peer.expectTransfer().withPayload(notNullValue(ProtonBuffer.class))
+                                 .withDeliveryTag(new byte[] {2});
+            peer.expectDetach().respond();
+            peer.expectClose().respond();
+
+            final Message<String> message = Message.create("Hello World");
+            final Tracker tracker1 = sender.send(message);
+            final Tracker tracker2 = sender.send(message);
+            final Tracker tracker3 = sender.send(message);
+
+            assertNotNull(tracker1);
+            assertNotNull(tracker1.acknowledgeFuture().get().settled());
+            assertNotNull(tracker2);
+            assertNotNull(tracker2.acknowledgeFuture().get().settled());
+            assertNotNull(tracker3);
+            assertNotNull(tracker3.acknowledgeFuture().get().settled());
 
             sender.close().get(10, TimeUnit.SECONDS);
 
