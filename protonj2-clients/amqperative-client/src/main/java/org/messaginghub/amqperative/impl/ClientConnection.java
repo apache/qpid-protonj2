@@ -515,6 +515,10 @@ public class ClientConnection implements Connection {
         return options;
     }
 
+    ClientConnectionCapabilities getCapabilities() {
+        return capabilities;
+    }
+
     org.apache.qpid.proton4j.engine.Connection getProtonConnection() {
         return protonConnection;
     }
@@ -721,7 +725,7 @@ public class ClientConnection implements Connection {
         return connectionSender;
     }
 
-    private void checkAnonymousRelaySupported() throws ClientUnsupportedOperationException {
+    void checkAnonymousRelaySupported() throws ClientUnsupportedOperationException {
         if (!capabilities.anonymousRelaySupported()) {
             throw new ClientUnsupportedOperationException("Anonymous relay support not available from this connection");
         }

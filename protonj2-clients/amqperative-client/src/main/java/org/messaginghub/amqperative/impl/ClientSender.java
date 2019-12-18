@@ -20,7 +20,6 @@ import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
@@ -46,6 +45,7 @@ import org.messaginghub.amqperative.impl.exceptions.ClientOperationTimedOutExcep
 import org.messaginghub.amqperative.impl.exceptions.ClientResourceAllocationException;
 import org.messaginghub.amqperative.impl.exceptions.ClientResourceClosedException;
 import org.messaginghub.amqperative.impl.exceptions.ClientSendTimedOutException;
+import org.messaginghub.amqperative.impl.exceptions.ClientUnsupportedOperationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -123,12 +123,12 @@ public class ClientSender implements Sender {
     }
 
     @Override
-    public Future<Sender> openFuture() {
+    public ClientFuture<Sender> openFuture() {
         return openFuture;
     }
 
     @Override
-    public Future<Sender> close() {
+    public ClientFuture<Sender> close() {
         if (CLOSED_UPDATER.compareAndSet(this, 0, 1)) {
             executor.execute(() -> {
                 try {
@@ -150,7 +150,7 @@ public class ClientSender implements Sender {
     }
 
     @Override
-    public Future<Sender> detach() {
+    public ClientFuture<Sender> detach() {
         if (CLOSED_UPDATER.compareAndSet(this, 0, 1)) {
             executor.execute(() -> {
                 try {
@@ -293,6 +293,10 @@ public class ClientSender implements Sender {
         return closed > 0;
     }
 
+    boolean isAnonymous() {
+        return protonSender.getTarget().getAddress() == null;
+    }
+
     org.apache.qpid.proton4j.engine.Sender getProtonSender() {
         return this.protonSender;
     }
@@ -340,6 +344,8 @@ public class ClientSender implements Sender {
             } else {
                 failureCause.set(new ClientResourceClosedException("The sender has been remotely closed"));
             }
+
+            // TODO - Fail any held in flight sends as they will not otherwise be completed.
 
             openFuture.failed(failureCause.get());
             closeFuture.complete(this);
@@ -390,6 +396,23 @@ public class ClientSender implements Sender {
         if (options.autoSettle() && delivery.isRemotelySettled()) {
             delivery.settle();
         }
+    }
+
+    void handleAnonymousRelayNotSupported() {
+        // Open was never called on this sender so simple local cleanup is all that is required
+        CLOSED_UPDATER.set(this, 1);
+        failureCause.set(new ClientUnsupportedOperationException("Anonymous relay support not available from this connection"));
+        openFuture.failed(getFailureCause());
+        closeFuture.failed(getFailureCause());
+    }
+
+    void handleSessionRemotelyClosedBeforeSenderOpened() {
+        // Open was never called on this sender so simple local cleanup is all that is required
+        CLOSED_UPDATER.set(this, 1);
+        // TODO - Session remote error probably should be the failure cause if one was set
+        failureCause.set(new ClientResourceClosedException("Parent session closed before this Sender could be opened."));
+        openFuture.failed(getFailureCause());
+        closeFuture.failed(getFailureCause());
     }
 
     //----- Send Result Tracker used for send blocked on credit

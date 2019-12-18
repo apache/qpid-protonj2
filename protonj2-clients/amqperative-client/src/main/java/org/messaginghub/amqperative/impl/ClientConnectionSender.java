@@ -20,6 +20,7 @@ import java.util.concurrent.Future;
 
 import org.messaginghub.amqperative.Sender;
 import org.messaginghub.amqperative.SenderOptions;
+import org.messaginghub.amqperative.futures.ClientFuture;
 
 /**
  * Sender instance used by the connection for sends from the connection itself.
@@ -31,12 +32,12 @@ public final class ClientConnectionSender extends ClientSender {
     }
 
     @Override
-    public Future<Sender> close() {
+    public ClientFuture<Sender> close() {
         throw new UnsupportedOperationException("Sender owned by the Client Connection cannot be explicity closed.");
     }
 
     @Override
-	ClientConnectionSender open() {
+    ClientConnectionSender open() {
         super.open();
         return this;
     }

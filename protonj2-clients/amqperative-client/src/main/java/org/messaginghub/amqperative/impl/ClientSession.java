@@ -43,6 +43,7 @@ import org.messaginghub.amqperative.futures.ClientFuture;
 import org.messaginghub.amqperative.futures.ClientFutureFactory;
 import org.messaginghub.amqperative.impl.exceptions.ClientExceptionSupport;
 import org.messaginghub.amqperative.impl.exceptions.ClientOperationTimedOutException;
+import org.messaginghub.amqperative.impl.exceptions.ClientResourceClosedException;
 import org.messaginghub.amqperative.util.NoOpExecutor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -74,7 +75,8 @@ public class ClientSession implements Session {
     private final AtomicReference<Thread> deliveryThread = new AtomicReference<Thread>();
     private final AtomicReference<ClientException> failureCause = new AtomicReference<>();
 
-    // TODO - Ensure closed resources are removed from these
+    // TODO - Ensure closed resources are removed from these or find a way to use what the proton session knows
+    //        about sender and receiver links.
     private final List<ClientSender> senders = new ArrayList<>();
     private final List<ClientReceiver> receivers = new ArrayList<>();
 
@@ -273,7 +275,14 @@ public class ClientSession implements Session {
     }
 
     ClientSender internalOpenAnonymousSender(SenderOptions senderOptions) throws ClientException {
-        return register(senderBuilder.anonymousSender(senderOptions).open());
+        // When the connection is opened we are ok to check that the anonymous relay is supported
+        // and open the sender if so, otherwise we need to wait.
+        if (connection.openFuture().isDone()) {
+            connection.checkAnonymousRelaySupported();
+            return register(senderBuilder.anonymousSender(senderOptions).open());
+        } else {
+            return register(senderBuilder.anonymousSender(senderOptions));
+        }
     }
 
     ClientConnectionSender internalOpenConnectionSender() throws ClientException {
@@ -433,12 +442,36 @@ public class ClientSession implements Session {
 
         // TODO - Any held anonymous sender opens can be run now since the connection
         //        must now be open and know if they are supported.
+
+        senders.forEach(sender -> {
+            if (sender.isAnonymous()) {
+                if (connection.getCapabilities().anonymousRelaySupported()) {
+                    sender.open();
+                } else {
+                    sender.handleAnonymousRelayNotSupported();
+                }
+            }
+        });
     }
 
     private void handleRemoteClose(org.apache.qpid.proton4j.engine.Session session) {
-        if (session.getRemoteCondition() != null) {
-            // TODO - Process as failure cause if none set
+        if (!isClosed()) {
+            final ClientException error;
+            if (session.getRemoteCondition() != null) {
+                error = ClientErrorSupport.convertToNonFatalException(session.getRemoteCondition());
+            } else {
+                error = new ClientResourceClosedException("Session remotely closed without explanation");
+            }
+
+            failureCause.set(error);
         }
+
+        senders.forEach(sender -> {
+            if (sender.isAnonymous() && !sender.openFuture().isDone()) {
+                sender.handleSessionRemotelyClosedBeforeSenderOpened();
+            }
+        });
+
         CLOSED_UPDATER.lazySet(this, 1);
         closeFuture.complete(this);
     }
