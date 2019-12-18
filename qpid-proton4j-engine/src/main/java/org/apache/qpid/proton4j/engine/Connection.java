@@ -121,6 +121,20 @@ public interface Connection {
      */
     Session session() throws IllegalStateException;
 
+    // TODO - Method for walking through all currently locally opened sessions so user doesn't
+    //        have to track them redundantly.  Poses a larger question of granting access to
+    //        other tracked resources from the session like links and also if we should provide
+    //        event points for not only remote open / close of a resource but also local side
+    //        or else parent state changes like parent locally closed etc to allow for simplified
+    //        handling of these things in clients ?
+    //
+    //    /**
+    //     * Returns an unmodifiable {@link Set} of Sessions that are tracked by the Connection.
+    //     *
+    //     * @return an unmodifiable {@link Set} of Sessions tracked by this Connection.
+    //     */
+    //    Set<Session> sessions();
+
     /**
      * @return the Container ID assigned to this Connection
      */
