@@ -94,6 +94,8 @@ public class ClientConnection implements Connection {
     private Transport transport;
 
     // TODO - Ensure closed sessions are removed from this list - Use a Map otherwise there's gaps
+    //        We might be able to simplify how this is handled by extending events and or offering
+    //        APIs in proton4j to access these already known resources.
     private final List<ClientSession> sessions = new ArrayList<>();
 
     private SessionOptions defaultSessionOptions;
@@ -161,7 +163,7 @@ public class ClientConnection implements Connection {
 
     @Override
     public Future<Connection> close() {
-        if (CLOSED_UPDATER.compareAndSet(this, 0, 1) && !openFuture.isFailed()) {
+        if (CLOSED_UPDATER.compareAndSet(this, 0, 1)) {
             if (executor != null && !executor.isShutdown()) {
                 executor.execute(() -> {
                     try {
@@ -172,6 +174,7 @@ public class ClientConnection implements Connection {
                         protonConnection = null;
                     }
 
+                    // When already closed or a failure on write of close we can just shutdown the transport
                     if (protonConnection == null || protonConnection.getRemoteState() == ConnectionState.CLOSED) {
                         try {
                             transport.close();
@@ -182,7 +185,14 @@ public class ClientConnection implements Connection {
                 });
 
                 if (options.closeTimeout() > 0) {
-                    executor.schedule(() -> closeFuture.complete(this), options.closeTimeout(), TimeUnit.MILLISECONDS);
+                    // Ensure transport gets shut down and future completed if remote doesn't respond.
+                    executor.schedule(() -> {
+                        try {
+                            transport.close();
+                        } catch (Throwable ignore) {}
+
+                        closeFuture.complete(this);
+                    }, options.closeTimeout(), TimeUnit.MILLISECONDS);
                 }
             } else {
                 closeFuture.complete(this);
