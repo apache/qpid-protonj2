@@ -169,8 +169,18 @@ public class AttachInjectAction extends AbstractPerformativeInjectAction<Attach>
         return this;
     }
 
+    public AttachInjectAction withOfferedCapabilities(String... offeredCapabilities) {
+        attach.setOfferedCapabilities(TypeMapper.toSymbolArray(offeredCapabilities));
+        return this;
+    }
+
     public AttachInjectAction withOfferedCapabilities(Symbol... offeredCapabilities) {
         attach.setOfferedCapabilities(offeredCapabilities);
+        return this;
+    }
+
+    public AttachInjectAction withDesiredCapabilities(String... desiredCapabilities) {
+        attach.setDesiredCapabilities(TypeMapper.toSymbolArray(desiredCapabilities));
         return this;
     }
 

@@ -23,6 +23,7 @@ import org.apache.qpid.proton4j.amqp.UnsignedInteger;
 import org.apache.qpid.proton4j.amqp.UnsignedShort;
 import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
 import org.apache.qpid.proton4j.amqp.driver.codec.transport.Begin;
+import org.apache.qpid.proton4j.amqp.driver.codec.util.TypeMapper;
 
 /**
  * AMQP Begin injection action which can be added to a driver for write at a specific time or
@@ -121,8 +122,18 @@ public class BeginInjectAction extends AbstractPerformativeInjectAction<Begin> {
         return this;
     }
 
+    public BeginInjectAction withOfferedCapabilities(String... offeredCapabilities) {
+        begin.setOfferedCapabilities(TypeMapper.toSymbolArray(offeredCapabilities));
+        return this;
+    }
+
     public BeginInjectAction withOfferedCapabilities(Symbol... offeredCapabilities) {
         begin.setOfferedCapabilities(offeredCapabilities);
+        return this;
+    }
+
+    public BeginInjectAction withDesiredCapabilities(String... desiredCapabilities) {
+        begin.setDesiredCapabilities(TypeMapper.toSymbolArray(desiredCapabilities));
         return this;
     }
 

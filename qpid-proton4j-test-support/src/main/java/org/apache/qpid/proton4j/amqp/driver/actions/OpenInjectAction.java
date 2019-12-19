@@ -23,6 +23,7 @@ import org.apache.qpid.proton4j.amqp.UnsignedInteger;
 import org.apache.qpid.proton4j.amqp.UnsignedShort;
 import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
 import org.apache.qpid.proton4j.amqp.driver.codec.transport.Open;
+import org.apache.qpid.proton4j.amqp.driver.codec.util.TypeMapper;
 
 /**
  * AMQP Open injection action which can be added to a driver for write at a specific time or
@@ -92,8 +93,18 @@ public class OpenInjectAction extends AbstractPerformativeInjectAction<Open> {
         return this;
     }
 
+    public OpenInjectAction withOutgoingLocales(String... outgoingLocales) {
+        open.setOutgoingLocales(TypeMapper.toSymbolArray(outgoingLocales));
+        return this;
+    }
+
     public OpenInjectAction withOutgoingLocales(Symbol... outgoingLocales) {
         open.setOutgoingLocales(outgoingLocales);
+        return this;
+    }
+
+    public OpenInjectAction withIncomingLocales(String... incomingLocales) {
+        open.setIncomingLocales(TypeMapper.toSymbolArray(incomingLocales));
         return this;
     }
 
@@ -102,8 +113,18 @@ public class OpenInjectAction extends AbstractPerformativeInjectAction<Open> {
         return this;
     }
 
+    public OpenInjectAction withOfferedCapabilities(String... offeredCapabilities) {
+        open.setOfferedCapabilities(TypeMapper.toSymbolArray(offeredCapabilities));
+        return this;
+    }
+
     public OpenInjectAction withOfferedCapabilities(Symbol... offeredCapabilities) {
         open.setOfferedCapabilities(offeredCapabilities);
+        return this;
+    }
+
+    public OpenInjectAction withDesiredCapabilities(String... desiredCapabilities) {
+        open.setDesiredCapabilities(TypeMapper.toSymbolArray(desiredCapabilities));
         return this;
     }
 
