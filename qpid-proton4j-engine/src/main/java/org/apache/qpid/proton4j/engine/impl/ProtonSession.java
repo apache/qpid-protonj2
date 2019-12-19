@@ -82,6 +82,9 @@ public class ProtonSession implements Session {
     private boolean localBeginSent;
     private boolean localEndSent;
 
+    private EventHandler<Session> parentClosedHandler = (result) -> {
+        LOG.trace("Parent Connection: {} closed.", getConnection());
+    };
     private EventHandler<Session> remoteOpenHandler = (result) -> {
         LOG.trace("Remote session open arrived at default handler.");
     };
@@ -320,6 +323,12 @@ public class ProtonSession implements Session {
     }
 
     //----- Event handler registration for this Session
+
+    @Override
+    public ProtonSession connectionClosedHandler(EventHandler<Session> parentClosedHandler) {
+        this.parentClosedHandler = parentClosedHandler;
+        return this;
+    }
 
     @Override
     public ProtonSession openHandler(EventHandler<Session> remoteOpenEventHandler) {

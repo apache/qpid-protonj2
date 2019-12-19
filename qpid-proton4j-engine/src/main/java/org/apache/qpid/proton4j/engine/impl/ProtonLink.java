@@ -73,6 +73,10 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
 
     private EventHandler<T> remoteOpenHandler;
 
+    private EventHandler<T> parentClosedHandler = (result) -> {
+        LOG.trace("Parent session {} has been closed.", getSession());
+    };
+
     private EventHandler<T> remoteDetachHandler = (result) -> {
         LOG.trace("Remote link detach arrived at default handler.");
     };
@@ -424,6 +428,12 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
         return self();
     }
 
+    @Override
+    public T sessionClosedHandler(EventHandler<T> parentClosedHandler) {
+        this.parentClosedHandler = parentClosedHandler;
+        return self();
+    }
+
     //----- Process local events from the parent session
 
     void localBegin(Begin begin, int channel) {
@@ -452,7 +462,6 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
     void localEnd(End end, int channel) {
         if (!isLocallyClosed()) {
             // TODO - State as closed or detached ?
-            localState = LinkState.CLOSED;
             linkState().localClose(true);
             transitionedToLocallyClosed();
         }

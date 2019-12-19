@@ -391,6 +391,22 @@ public interface Link<T extends Link<T>> {
     //----- Remote events for AMQP Link resources
 
     /**
+     * Sets a {@link EventHandler} that is called when the parent {@link Session} is closed while the {@link Link}
+     * has itself not already been closed.
+     *
+     * Typically this is used by the client to determine that resource it has in use are now implicitly closed
+     * and they should update their state to reflect that fact.
+     *
+     * @param parentClosedHandler
+     *      The {@link EventHandler} to notify when the parent {@link Session} has been closed.
+     *
+     * @return the session for chaining.
+     *
+     * TODO - Work out the mechanics of this event
+     */
+    T sessionClosedHandler(EventHandler<T> parentClosedHandler);
+
+    /**
      * Sets a {@link EventHandler} for when an AMQP Begin frame is received from the remote peer for this
      * {@link Link} which would have been locally opened previously.
      *
