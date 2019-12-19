@@ -21,11 +21,14 @@ import org.apache.qpid.proton4j.amqp.transport.ReceiverSettleMode;
 import org.apache.qpid.proton4j.amqp.transport.Role;
 import org.apache.qpid.proton4j.amqp.transport.SenderSettleMode;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import org.hamcrest.Matchers;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.messaginghub.amqperative.impl.exceptions.ClientOperationTimedOutException;
 import org.messaginghub.amqperative.impl.exceptions.ClientSecurityException;
 import org.messaginghub.amqperative.impl.exceptions.ClientSendTimedOutException;
+import org.messaginghub.amqperative.impl.exceptions.ClientUnsupportedOperationException;
 import org.messaginghub.amqperative.test.AMQPerativeTestCase;
 import org.messaginghub.amqperative.util.AmqperativeTestRunner;
 import org.messaginghub.amqperative.util.Repeat;
@@ -768,6 +771,78 @@ public class SenderTest extends AMQPerativeTestCase {
             sender.close().get(10, TimeUnit.SECONDS);
 
             connection.close().get(10, TimeUnit.SECONDS);
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Repeat(repetitions = 1)
+    @Test(timeout = 60000)
+    public void testCreateAnonymousSenderFromWhenRemoteDoesNotOfferSupportForIt() throws Exception {
+        try (NettyTestPeer peer = new NettyTestPeer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectClose();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            Session session = connection.openSession().openFuture().get();
+
+            try {
+                session.openAnonymousSender();
+                fail("Should not be able to open an anonymous sender when remote does not offer anonymous relay");
+            } catch (ClientUnsupportedOperationException unsupported) {
+                LOG.info("Caught expected error: ", unsupported);
+            }
+
+            connection.close();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Ignore("Failed likely due to test driver issue") // TODO - Fix this test and the driver
+    @Repeat(repetitions = 1)
+    @Test(timeout = 60000)
+    public void testAnonymousSenderOpenHeldUntilConnectionOpenedAndSupportConfirmed() throws Exception {
+        try (NettyTestPeer peer = new NettyTestPeer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen();
+            peer.expectBegin();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            Session session = connection.openSession();
+            Sender sender = session.openAnonymousSender();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+
+            // This should happen after we inject the held open and attach
+            peer.expectAttach().withRole(Role.SENDER).withTarget().withAddress(Matchers.nullValue()).and().respond();
+            peer.expectClose().respond();
+
+            // Inject held responses to get the ball rolling again
+            peer.remoteOpen().withOfferedCapabilities("ANONYMOUS_REALY").now();
+            peer.remoteBegin().now();
+
+            try {
+                sender.openFuture().get();
+            } catch (ExecutionException ex) {
+                fail("Open of Sender failed waiting for response.");
+            }
+
+            connection.close();
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }

@@ -53,10 +53,11 @@ final class ClientSenderBuilder {
     }
 
     public ClientSender anonymousSender(SenderOptions senderOptions) throws ClientException {
+        final SenderOptions options = senderOptions != null ? senderOptions : getDefaultSenderOptions();
         final String senderId = nextSenderId();
-        final Sender protonSender = createSender(null, senderOptions, senderId);
+        final Sender protonSender = createSender(null, options, senderId);
 
-        return new ClientSender(session, senderOptions, senderId, protonSender);
+        return new ClientSender(session, options, senderId, protonSender);
     }
 
     public ClientConnectionSender connectionSender() {
