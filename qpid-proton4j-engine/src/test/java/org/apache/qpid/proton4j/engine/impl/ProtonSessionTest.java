@@ -29,6 +29,7 @@ import static org.junit.Assert.fail;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
@@ -38,6 +39,7 @@ import org.apache.qpid.proton4j.amqp.UnsignedInteger;
 import org.apache.qpid.proton4j.amqp.driver.ProtonTestPeer;
 import org.apache.qpid.proton4j.amqp.transport.AmqpError;
 import org.apache.qpid.proton4j.amqp.transport.ErrorCondition;
+import org.apache.qpid.proton4j.amqp.transport.Role;
 import org.apache.qpid.proton4j.common.logging.ProtonLogger;
 import org.apache.qpid.proton4j.common.logging.ProtonLoggerFactory;
 import org.apache.qpid.proton4j.engine.Connection;
@@ -46,6 +48,7 @@ import org.apache.qpid.proton4j.engine.Engine;
 import org.apache.qpid.proton4j.engine.EngineFactory;
 import org.apache.qpid.proton4j.engine.IncomingDelivery;
 import org.apache.qpid.proton4j.engine.Receiver;
+import org.apache.qpid.proton4j.engine.Sender;
 import org.apache.qpid.proton4j.engine.Session;
 import org.apache.qpid.proton4j.engine.exceptions.EngineFailedException;
 import org.apache.qpid.proton4j.engine.exceptions.EngineStateException;
@@ -828,5 +831,41 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
 
         peer.waitForScriptToComplete();
         assertNull(failure);
+    }
+
+    @Test
+    public void testSessionHandlesDeferredOpenAndBeginResponses() throws Exception {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result);
+        ProtonTestPeer peer = new ProtonTestPeer(engine);
+        engine.outputConsumer(peer);
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen();
+        peer.expectBegin();
+
+        Connection connection = engine.start();
+
+        connection.open();
+        Session session = connection.session();
+        session.open();
+
+        peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+
+        // This should happen after we inject the held open and attach
+        peer.expectAttach().withRole(Role.SENDER).respond();
+        peer.expectClose().respond();
+
+        // Inject held responses to get the ball rolling again
+        peer.remoteOpen().withOfferedCapabilities("ANONYMOUS_REALY").now();
+        peer.respondToLastBegin().now();
+
+        Sender sender = session.sender("sender-1");
+
+        sender.open();
+
+        connection.close();
+
+        peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
     }
 }

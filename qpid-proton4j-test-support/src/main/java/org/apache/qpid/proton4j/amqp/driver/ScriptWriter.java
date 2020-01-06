@@ -338,6 +338,27 @@ public abstract class ScriptWriter {
         return initialResponse;
     }
 
+    //----- Smart Scripted Response Actions
+
+    public BeginInjectAction respondToLastBegin() {
+        BeginInjectAction response = new BeginInjectAction(getDriver());
+
+        SessionTracker session = getDriver().getSessions().getLastOpenedSession();
+        if (session == null) {
+            throw new IllegalStateException("Cannot create response to Begin before one has been received.");
+        }
+
+        // Populate the response using data in the locally opened session, script can override this after return.
+        response.onChannel(session.getLocalChannel());
+        response.withRemoteChannel(getDriver().getSessions().getLastOpenedSession().getRemoteChannel());
+        response.withNextOutgoingId(session.getNextOutgoingId());
+        response.withIncomingWindow(session.getIncomingWindow());
+        response.withOutgoingWindow(session.getOutgoingWindow());
+        response.withHandleMax(session.getHandleMax());
+
+        return response;
+    }
+
     //----- Immediate operations performed outside the test script
 
     public void fire(AMQPHeader header) {
