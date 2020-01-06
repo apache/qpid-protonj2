@@ -22,7 +22,6 @@ import org.apache.qpid.proton4j.amqp.transport.Role;
 import org.apache.qpid.proton4j.amqp.transport.SenderSettleMode;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.hamcrest.Matchers;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.messaginghub.amqperative.impl.exceptions.ClientOperationTimedOutException;
@@ -807,7 +806,6 @@ public class SenderTest extends AMQPerativeTestCase {
         }
     }
 
-    @Ignore("Failed likely due to test driver issue") // TODO - Fix this test and the driver
     @Repeat(repetitions = 1)
     @Test(timeout = 60000)
     public void testAnonymousSenderOpenHeldUntilConnectionOpenedAndSupportConfirmed() throws Exception {
@@ -833,13 +831,13 @@ public class SenderTest extends AMQPerativeTestCase {
             peer.expectClose().respond();
 
             // Inject held responses to get the ball rolling again
-            peer.remoteOpen().withOfferedCapabilities("ANONYMOUS_REALY").now();
-            peer.remoteBegin().now();
+            peer.remoteOpen().withOfferedCapabilities("ANONYMOUS-RELAY").now();
+            peer.respondToLastBegin().now();
 
             try {
                 sender.openFuture().get();
             } catch (ExecutionException ex) {
-                fail("Open of Sender failed waiting for response.");
+                fail("Open of Sender failed waiting for response: " + ex.getCause());
             }
 
             connection.close();
