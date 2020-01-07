@@ -20,8 +20,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ScheduledExecutorService;
 
 import org.apache.qpid.proton4j.amqp.Symbol;
@@ -368,6 +370,19 @@ public class ProtonConnection implements Connection, AMQPHeader.HeaderHandler<Pr
         localSessions.put(localChannel, newSession);
 
         return newSession;
+    }
+
+    @Override
+    public Set<Session> sessions() throws IllegalStateException {
+        final Set<Session> result;
+
+        if (localSessions.isEmpty()) {
+            result = Collections.emptySet();
+        } else {
+            result = Collections.unmodifiableSet(new HashSet<>(localSessions.values()));
+        }
+
+        return result;
     }
 
     //----- Handle performatives sent from the remote to this Connection
