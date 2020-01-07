@@ -37,6 +37,7 @@ import org.apache.qpid.proton4j.amqp.transport.ErrorCondition;
 import org.apache.qpid.proton4j.amqp.transport.Role;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
+import org.hamcrest.Matchers;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -400,7 +401,7 @@ public class ConnectionTest extends AMQPerativeTestCase {
             Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
 
             try {
-                connection.openFuture().get(10, TimeUnit.SECONDS);
+                connection.openFuture().get();
             } catch (ExecutionException ex) {}
 
             try {
@@ -438,11 +439,6 @@ public class ConnectionTest extends AMQPerativeTestCase {
 
             Sender defaultSender = connection.defaultSender().openFuture().get(5, TimeUnit.SECONDS);
             assertNotNull(defaultSender);
-
-            try {
-                defaultSender.close();
-                fail("Should not be able to close the connection default sender");
-            } catch (UnsupportedOperationException nope) {}
 
             connection.close();
 
@@ -516,6 +512,45 @@ public class ConnectionTest extends AMQPerativeTestCase {
             receiver.close().get(10, TimeUnit.SECONDS);
 
             connection.close().get(10, TimeUnit.SECONDS);
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Repeat(repetitions = 1)
+    @Test(timeout = 60000)
+    public void testConnectionSenderOpenHeldUntilConnectionOpenedAndRelaySupportConfirmed() throws Exception {
+        try (NettyTestPeer peer = new NettyTestPeer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen();
+            peer.expectBegin();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            Sender sender = connection.defaultSender();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+
+            // This should happen after we inject the held open and attach
+            peer.expectAttach().withRole(Role.SENDER).withTarget().withAddress(Matchers.nullValue()).and().respond();
+            peer.expectClose().respond();
+
+            // Inject held responses to get the ball rolling again
+            peer.remoteOpen().withOfferedCapabilities("ANONYMOUS-RELAY").now();
+            peer.respondToLastBegin().now();
+
+            try {
+                sender.openFuture().get();
+            } catch (ExecutionException ex) {
+                fail("Open of Sender failed waiting for response: " + ex.getCause());
+            }
+
+            connection.close();
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }

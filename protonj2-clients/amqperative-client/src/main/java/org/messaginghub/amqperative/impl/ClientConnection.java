@@ -89,8 +89,8 @@ public class ClientConnection implements Connection {
     private final Map<ClientFuture<?>, ClientFuture<?>> requests = new ConcurrentHashMap<>();
     private final Engine engine;
     private org.apache.qpid.proton4j.engine.Connection protonConnection;
-    private ClientConnectionSession connectionSession;
-    private ClientConnectionSender connectionSender;
+    private ClientSession connectionSession;
+    private ClientSender connectionSender;
     private Transport transport;
 
     // TODO - Ensure closed sessions are removed from this list - Use a Map otherwise there's gaps
@@ -307,10 +307,6 @@ public class ClientConnection implements Connection {
         executor.execute(() -> {
             try {
                 checkClosed();
-
-                // TODO - Ensure this creates an anonymous sender, we won't know until connection remotely opened
-                //        which means right now we could race ahead and try to open before we know if we can.
-
                 defaultSender.complete(lazyCreateConnectionSender());
             } catch (Throwable error) {
                 defaultSender.failed(ClientExceptionSupport.createNonFatalOrPassthrough(error));
@@ -374,10 +370,6 @@ public class ClientConnection implements Connection {
         executor.execute(() -> {
             try {
                 checkClosed();
-
-                // TODO - Ensure this creates an anonymous sender, we won't know until connection remotely opened
-                //        which means right now we could race ahead and try to open before we know if we can.
-
                 result.complete(lazyCreateConnectionSender().send(message));
             } catch (Throwable error) {
                 result.failed(ClientExceptionSupport.createNonFatalOrPassthrough(error));
@@ -696,7 +688,7 @@ public class ClientConnection implements Connection {
 
     private ClientSession lazyCreateConnectionSession() {
         if (connectionSession == null) {
-            connectionSession = new ClientConnectionSession(getDefaultSessionOptions(), this, protonConnection.session());
+            connectionSession = new ClientSession(getDefaultSessionOptions(), this, protonConnection.session());
             sessions.add(connectionSession);
             try {
                 connectionSession.open();
@@ -710,8 +702,11 @@ public class ClientConnection implements Connection {
 
     private Sender lazyCreateConnectionSender() throws ClientException {
         if (connectionSender == null) {
-            checkAnonymousRelaySupported();
-            connectionSender = lazyCreateConnectionSession().internalOpenConnectionSender();
+            if (openFuture.isComplete()) {
+                checkAnonymousRelaySupported();
+            }
+
+            connectionSender = lazyCreateConnectionSession().internalOpenAnonymousSender(null);
             connectionSender.remotelyClosedHandler((sender) -> {
                 try {
                     sender.close();

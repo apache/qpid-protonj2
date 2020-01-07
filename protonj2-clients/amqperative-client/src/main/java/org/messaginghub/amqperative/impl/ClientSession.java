@@ -285,10 +285,6 @@ public class ClientSession implements Session {
         }
     }
 
-    ClientConnectionSender internalOpenConnectionSender() throws ClientException {
-        return register(senderBuilder.connectionSender().open());
-    }
-
     //----- Internal API accessible for use within the package
 
     ClientSession open() {
@@ -439,9 +435,6 @@ public class ClientSession implements Session {
     private void handleRemoteOpen(org.apache.qpid.proton4j.engine.Session session) {
         openFuture.complete(this);
         LOG.trace("Session:{} opened successfully.", id());
-
-        // TODO - Any held anonymous sender opens can be run now since the connection
-        //        must now be open and know if they are supported.
 
         senders.forEach(sender -> {
             if (sender.isAnonymous()) {

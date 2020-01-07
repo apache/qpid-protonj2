@@ -60,13 +60,6 @@ final class ClientSenderBuilder {
         return new ClientSender(session, options, senderId, protonSender);
     }
 
-    public ClientConnectionSender connectionSender() {
-        final String senderId = nextSenderId();
-        final Sender protonSender = createSender(null, getDefaultSenderOptions(), senderId);
-
-        return new ClientConnectionSender(session, getDefaultSenderOptions(), senderId, protonSender);
-    }
-
     private Sender createSender(String address, SenderOptions options, String senderId) {
         final String linkName;
 
