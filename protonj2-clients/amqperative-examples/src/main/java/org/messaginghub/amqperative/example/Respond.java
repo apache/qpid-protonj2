@@ -17,7 +17,6 @@
 package org.messaginghub.amqperative.example;
 
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 
 import org.messaginghub.amqperative.Client;
 import org.messaginghub.amqperative.ClientOptions;
@@ -50,7 +49,7 @@ public class Respond {
             receiverOptions.sourceOptions().capabilities("queue");
 
             Receiver receiver = connection.openReceiver(address, receiverOptions);
-            receiver.openFuture().get(5, TimeUnit.SECONDS);
+
             receiver.addCredit(1);
 
             Delivery request = receiver.receive(30_000);

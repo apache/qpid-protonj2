@@ -50,7 +50,7 @@ public class Samples {
 
         // =============== Create a client ===========
 
-        Client client = Client.create(); // No-arg
+        Client client = Client.create();
 
         ClientOptions options = new ClientOptions();
         options.containerId(UUID.randomUUID().toString());
@@ -125,7 +125,7 @@ public class Samples {
         // =============== Create a dynamic receiver for request ===========
 
         Receiver dynamicReceiver = connection.openDynamicReceiver();
-        dynamicReceiver.openFuture().get(5, TimeUnit.SECONDS);
+        dynamicReceiver.openFuture().get();
         String dynamicAddress = dynamicReceiver.address();
 
         Sender requestor = connection.openSender(address);
@@ -135,7 +135,7 @@ public class Samples {
         dynamicReceiver.addCredit(1);
         Delivery response = dynamicReceiver.receive(30_000);
 
-        // =============== Close/ detach ===========
+        // =============== Close / Detach ===========
 
         Future<Sender> closeFuture = sender.close();
         closeFuture.get(5, TimeUnit.SECONDS);
