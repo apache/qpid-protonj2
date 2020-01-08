@@ -16,8 +16,6 @@
  */
 package org.messaginghub.amqperative.example;
 
-import java.util.UUID;
-
 import org.messaginghub.amqperative.Client;
 import org.messaginghub.amqperative.ClientOptions;
 import org.messaginghub.amqperative.Connection;
@@ -39,7 +37,6 @@ public class Respond {
         String address = "examples";
 
         ClientOptions options = new ClientOptions();
-        options.containerId(UUID.randomUUID().toString());
         Client client = Client.create(options);
 
         try {
@@ -69,7 +66,7 @@ public class Respond {
             exp.printStackTrace(System.out);
             System.exit(1);
         } finally {
-            client.close();
+            client.close().get();
         }
     }
 }

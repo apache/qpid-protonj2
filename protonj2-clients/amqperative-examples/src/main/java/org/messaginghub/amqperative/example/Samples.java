@@ -73,7 +73,7 @@ public class Samples {
         // =============== Create a sender ===========
 
         Sender sender = connection.openSender(address); //address-only
-        sender.openFuture().get(5, TimeUnit.SECONDS);
+        sender.openFuture().get();
 
         SenderOptions senderOptions = new SenderOptions();
         senderOptions.targetOptions().capabilities("topic");
@@ -88,7 +88,7 @@ public class Samples {
         // =============== Create a receiver ===========
 
         Receiver receiver = connection.openReceiver(address); //address-only
-        receiver.openFuture().get(5, TimeUnit.SECONDS);
+        receiver.openFuture().get();
 
         ReceiverOptions receiverOptions = new ReceiverOptions();
         //receiverOptions.setCreditWindow(10);

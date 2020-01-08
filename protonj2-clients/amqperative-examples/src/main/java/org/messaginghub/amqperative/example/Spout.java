@@ -53,13 +53,12 @@ public class Spout {
 
                 tracker.acknowledgeFuture().get();
             }
-
-            connection.close().get();
         } catch (Exception exp) {
             System.out.println("Caught exception, exiting.");
             exp.printStackTrace(System.out);
             System.exit(1);
         } finally {
+            client.close().get();
         }
     }
 }

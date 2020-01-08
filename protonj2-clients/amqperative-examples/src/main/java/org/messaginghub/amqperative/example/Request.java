@@ -16,9 +16,6 @@
  */
 package org.messaginghub.amqperative.example;
 
-import java.util.UUID;
-import java.util.concurrent.TimeUnit;
-
 import org.messaginghub.amqperative.Client;
 import org.messaginghub.amqperative.ClientOptions;
 import org.messaginghub.amqperative.Connection;
@@ -44,7 +41,6 @@ public class Request {
         String address = "examples";
 
         ClientOptions options = new ClientOptions();
-        options.containerId(UUID.randomUUID().toString());
         Client client = Client.create(options);
 
         try {
@@ -70,7 +66,7 @@ public class Request {
             LOG.error("Caught exception during Request demo, exiting.", exp);
             System.exit(1);
         } finally {
-            client.close().get(5, TimeUnit.SECONDS);
+            client.close().get();
         }
     }
 }
