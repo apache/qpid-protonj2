@@ -70,8 +70,8 @@ public class ModifiedTypeCodecTest  extends CodecTestSupport {
         assertTrue(result instanceof Modified);
 
         value = (Modified) result;
-        assertFalse(value.getDeliveryFailed());
-        assertFalse(value.getUndeliverableHere());
+        assertFalse(value.isDeliveryFailed());
+        assertFalse(value.isUndeliverableHere());
     }
 
     @Test
@@ -89,8 +89,8 @@ public class ModifiedTypeCodecTest  extends CodecTestSupport {
         assertTrue(result instanceof Modified);
 
         value = (Modified) result;
-        assertTrue(value.getDeliveryFailed());
-        assertFalse(value.getUndeliverableHere());
+        assertTrue(value.isDeliveryFailed());
+        assertFalse(value.isUndeliverableHere());
     }
 
     @Test
@@ -109,8 +109,8 @@ public class ModifiedTypeCodecTest  extends CodecTestSupport {
         assertTrue(result instanceof Modified);
 
         value = (Modified) result;
-        assertTrue(value.getDeliveryFailed());
-        assertTrue(value.getUndeliverableHere());
+        assertTrue(value.isDeliveryFailed());
+        assertTrue(value.isUndeliverableHere());
     }
 
     @Test
@@ -131,8 +131,8 @@ public class ModifiedTypeCodecTest  extends CodecTestSupport {
         assertTrue(result instanceof Modified);
 
         value = (Modified) result;
-        assertFalse(value.getDeliveryFailed());
-        assertFalse(value.getUndeliverableHere());
+        assertFalse(value.isDeliveryFailed());
+        assertFalse(value.isUndeliverableHere());
         assertEquals(annotations, value.getMessageAnnotations());
     }
 
@@ -161,8 +161,8 @@ public class ModifiedTypeCodecTest  extends CodecTestSupport {
         assertNotNull(result);
         assertTrue(result instanceof Modified);
         value = (Modified) result;
-        assertFalse(value.getUndeliverableHere());
-        assertFalse(value.getDeliveryFailed());
+        assertFalse(value.isUndeliverableHere());
+        assertFalse(value.isDeliveryFailed());
     }
 
     @Test
@@ -292,8 +292,8 @@ public class ModifiedTypeCodecTest  extends CodecTestSupport {
         for (int i = 0; i < resultArray.length; ++i) {
             assertNotNull(resultArray[i]);
             assertTrue(resultArray[i] instanceof Modified);
-            assertEquals(array[i].getDeliveryFailed(), resultArray[i].getDeliveryFailed());
-            assertEquals(array[i].getUndeliverableHere(), resultArray[i].getUndeliverableHere());
+            assertEquals(array[i].isDeliveryFailed(), resultArray[i].isDeliveryFailed());
+            assertEquals(array[i].isUndeliverableHere(), resultArray[i].isUndeliverableHere());
         }
     }
 }

@@ -61,7 +61,7 @@ public class TargetTypeEncoder extends AbstractDescribedListTypeEncoder<Target> 
                 state.getEncoder().writeUnsignedInteger(buffer, state, target.getTimeout());
                 break;
             case 4:
-                buffer.writeByte(target.getDynamic() ? EncodingCodes.BOOLEAN_TRUE : EncodingCodes.BOOLEAN_FALSE);
+                buffer.writeByte(target.isDynamic() ? EncodingCodes.BOOLEAN_TRUE : EncodingCodes.BOOLEAN_FALSE);
                 break;
             case 5:
                 state.getEncoder().writeMap(buffer, state, target.getDynamicNodeProperties());
@@ -85,7 +85,7 @@ public class TargetTypeEncoder extends AbstractDescribedListTypeEncoder<Target> 
             return 7;
         } else if (target.getDynamicNodeProperties() != null) {
             return 6;
-        } else if (target.getDynamic()) {
+        } else if (target.isDynamic()) {
             return 5;
         } else if (target.getTimeout() != null && !target.getTimeout().equals(UnsignedInteger.ZERO)) {
             return 4;

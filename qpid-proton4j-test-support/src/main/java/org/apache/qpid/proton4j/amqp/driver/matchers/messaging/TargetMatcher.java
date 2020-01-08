@@ -148,7 +148,7 @@ public class TargetMatcher extends ListDescribedTypeMatcher {
             addFieldMatcher(Target.Field.TIMEOUT, nullValue());
         }
 
-        addFieldMatcher(Target.Field.DYNAMIC, equalTo(target.getDynamic()));
+        addFieldMatcher(Target.Field.DYNAMIC, equalTo(target.isDynamic()));
 
         if (target.getDynamicNodeProperties() != null) {
             addFieldMatcher(Target.Field.DYNAMIC_NODE_PROPERTIES, equalTo(target.getDynamicNodeProperties()));

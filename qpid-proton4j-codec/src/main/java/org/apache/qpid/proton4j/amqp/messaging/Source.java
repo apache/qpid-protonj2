@@ -113,7 +113,7 @@ public final class Source implements Terminus {
         return this;
     }
 
-    public boolean getDynamic() {
+    public boolean isDynamic() {
         return dynamic;
     }
 
@@ -183,7 +183,7 @@ public final class Source implements Terminus {
                ", durable=" + getDurable() +
                ", expiryPolicy=" + getExpiryPolicy() +
                ", timeout=" + getTimeout() +
-               ", dynamic=" + getDynamic() +
+               ", dynamic=" + isDynamic() +
                ", dynamicNodeProperties=" + getDynamicNodeProperties() +
                ", distributionMode=" + distributionMode +
                ", filter=" + filter +

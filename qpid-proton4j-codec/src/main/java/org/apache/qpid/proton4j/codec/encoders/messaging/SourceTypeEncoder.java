@@ -61,7 +61,7 @@ public class SourceTypeEncoder extends AbstractDescribedListTypeEncoder<Source> 
                 state.getEncoder().writeUnsignedInteger(buffer, state, source.getTimeout());
                 break;
             case 4:
-                buffer.writeByte(source.getDynamic() ? EncodingCodes.BOOLEAN_TRUE : EncodingCodes.BOOLEAN_FALSE);
+                buffer.writeByte(source.isDynamic() ? EncodingCodes.BOOLEAN_TRUE : EncodingCodes.BOOLEAN_FALSE);
                 break;
             case 5:
                 state.getEncoder().writeMap(buffer, state, source.getDynamicNodeProperties());
@@ -105,7 +105,7 @@ public class SourceTypeEncoder extends AbstractDescribedListTypeEncoder<Source> 
             return 7;
         } else if (source.getDynamicNodeProperties() != null) {
             return 6;
-        } else if (source.getDynamic()) {
+        } else if (source.isDynamic()) {
             return 5;
         } else if (source.getTimeout() != null && !source.getTimeout().equals(UnsignedInteger.ZERO)) {
             return 4;

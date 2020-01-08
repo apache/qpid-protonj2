@@ -31,7 +31,7 @@ public final class Modified implements DeliveryState, Outcome {
     private boolean undeliverableHere;
     private Map<Symbol, Object> messageAnnotations;
 
-    public boolean getDeliveryFailed() {
+    public boolean isDeliveryFailed() {
         return deliveryFailed;
     }
 
@@ -40,7 +40,7 @@ public final class Modified implements DeliveryState, Outcome {
         return this;
     }
 
-    public boolean getUndeliverableHere() {
+    public boolean isUndeliverableHere() {
         return undeliverableHere;
     }
 

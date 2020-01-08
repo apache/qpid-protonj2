@@ -186,7 +186,7 @@ public class SourceMatcher extends ListDescribedTypeMatcher {
             addFieldMatcher(Source.Field.TIMEOUT, nullValue());
         }
 
-        addFieldMatcher(Source.Field.DYNAMIC, equalTo(source.getDynamic()));
+        addFieldMatcher(Source.Field.DYNAMIC, equalTo(source.isDynamic()));
 
         if (source.getDynamicNodeProperties() != null) {
             addFieldMatcher(Source.Field.DYNAMIC_NODE_PROPERTIES, equalTo(source.getDynamicNodeProperties()));

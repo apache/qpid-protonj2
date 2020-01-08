@@ -61,7 +61,7 @@ public class SourceTypeTest {
         assertEquals(TerminusDurability.NONE, source.getDurable());
         assertEquals(TerminusExpiryPolicy.SESSION_END, source.getExpiryPolicy());
         assertEquals(UnsignedInteger.ZERO, source.getTimeout());
-        assertFalse(source.getDynamic());
+        assertFalse(source.isDynamic());
         assertNull(source.getDynamicNodeProperties());
         assertNull(source.getDistributionMode());
         assertNull(source.getFilter());
@@ -78,7 +78,7 @@ public class SourceTypeTest {
         assertEquals(TerminusDurability.NONE, source.getDurable());
         assertEquals(TerminusExpiryPolicy.SESSION_END, source.getExpiryPolicy());
         assertEquals(UnsignedInteger.ZERO, source.getTimeout());
-        assertFalse(source.getDynamic());
+        assertFalse(source.isDynamic());
         assertNull(source.getDynamicNodeProperties());
         assertNull(source.getDistributionMode());
         assertNull(source.getFilter());
@@ -92,7 +92,7 @@ public class SourceTypeTest {
         assertEquals(TerminusDurability.NONE, copy.getDurable());
         assertEquals(TerminusExpiryPolicy.SESSION_END, copy.getExpiryPolicy());
         assertEquals(UnsignedInteger.ZERO, copy.getTimeout());
-        assertFalse(copy.getDynamic());
+        assertFalse(copy.isDynamic());
         assertNull(copy.getDynamicNodeProperties());
         assertNull(copy.getDistributionMode());
         assertNull(copy.getFilter());
@@ -114,7 +114,7 @@ public class SourceTypeTest {
         assertEquals(TerminusDurability.NONE, source.getDurable());
         assertEquals(TerminusExpiryPolicy.SESSION_END, source.getExpiryPolicy());
         assertEquals(UnsignedInteger.ZERO, source.getTimeout());
-        assertFalse(source.getDynamic());
+        assertFalse(source.isDynamic());
         source.setDynamicNodeProperties(dynamicProperties);
         assertNotNull(source.getDynamicNodeProperties());
         assertNull(source.getDistributionMode());
@@ -132,7 +132,7 @@ public class SourceTypeTest {
         assertEquals(TerminusDurability.NONE, copy.getDurable());
         assertEquals(TerminusExpiryPolicy.SESSION_END, copy.getExpiryPolicy());
         assertEquals(UnsignedInteger.ZERO, copy.getTimeout());
-        assertFalse(copy.getDynamic());
+        assertFalse(copy.isDynamic());
         assertNotNull(copy.getDynamicNodeProperties());
         assertEquals(dynamicProperties, copy.getDynamicNodeProperties());
         assertNull(copy.getDistributionMode());

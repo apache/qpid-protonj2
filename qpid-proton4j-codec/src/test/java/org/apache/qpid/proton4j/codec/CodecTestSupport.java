@@ -235,7 +235,7 @@ public class CodecTestSupport {
         Assert.assertEquals("TerminusDurability values not equal", target1.getDurable(), target2.getDurable());
         Assert.assertEquals("TerminusExpiryPolicy values not equal", target1.getExpiryPolicy(), target2.getExpiryPolicy());
         Assert.assertEquals("Timeout values not equal", target1.getTimeout(), target2.getTimeout());
-        Assert.assertEquals("Dynamic values not equal", target1.getDynamic(), target2.getDynamic());
+        Assert.assertEquals("Dynamic values not equal", target1.isDynamic(), target2.isDynamic());
         Assert.assertEquals("Dynamic Node Properties values not equal", target1.getDynamicNodeProperties(), target2.getDynamicNodeProperties());
         Assert.assertArrayEquals("Capabilities values not equal", target1.getCapabilities(), target2.getCapabilities());
     }
@@ -262,7 +262,7 @@ public class CodecTestSupport {
         Assert.assertEquals("TerminusDurability values not equal", source1.getDurable(), source2.getDurable());
         Assert.assertEquals("TerminusExpiryPolicy values not equal", source1.getExpiryPolicy(), source2.getExpiryPolicy());
         Assert.assertEquals("Timeout values not equal", source1.getTimeout(), source2.getTimeout());
-        Assert.assertEquals("Dynamic values not equal", source1.getDynamic(), source2.getDynamic());
+        Assert.assertEquals("Dynamic values not equal", source1.isDynamic(), source2.isDynamic());
         Assert.assertEquals("Dynamic Node Properties values not equal", source1.getDynamicNodeProperties(), source2.getDynamicNodeProperties());
         Assert.assertEquals("Distribution Mode values not equal", source1.getDistributionMode(), source2.getDistributionMode());
         Assert.assertEquals("Filter values not equal", source1.getDefaultOutcome(), source2.getDefaultOutcome());

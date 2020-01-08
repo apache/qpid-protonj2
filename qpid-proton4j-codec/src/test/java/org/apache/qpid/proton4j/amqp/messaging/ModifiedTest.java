@@ -46,17 +46,17 @@ public class ModifiedTest {
     @Test
     public void testDeliveryFailed() {
         Modified modified = new Modified();
-        assertFalse(modified.getDeliveryFailed());
+        assertFalse(modified.isDeliveryFailed());
         modified.setDeliveryFailed(true);
-        assertTrue(modified.getDeliveryFailed());
+        assertTrue(modified.isDeliveryFailed());
     }
 
     @Test
     public void testUndeliverableHere() {
         Modified modified = new Modified();
-        assertFalse(modified.getUndeliverableHere());
+        assertFalse(modified.isUndeliverableHere());
         modified.setUndeliverableHere(true);
-        assertTrue(modified.getUndeliverableHere());
+        assertTrue(modified.isUndeliverableHere());
     }
 
     @Test

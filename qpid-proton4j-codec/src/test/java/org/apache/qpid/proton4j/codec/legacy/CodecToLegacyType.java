@@ -363,7 +363,7 @@ public abstract class CodecToLegacyType {
         if (source.getTimeout() != null) {
             legacySource.setTimeout(convertToLegacyType(source.getTimeout()));
         }
-        legacySource.setDynamic(source.getDynamic());
+        legacySource.setDynamic(source.isDynamic());
         if (source.getDynamicNodeProperties() != null) {
             legacySource.setDynamicNodeProperties(convertToLegacyType(source.getDynamicNodeProperties()));
         }
@@ -409,7 +409,7 @@ public abstract class CodecToLegacyType {
         if (target.getTimeout() != null) {
             legacyTarget.setTimeout(convertToLegacyType(target.getTimeout()));
         }
-        target.setDynamic(target.getDynamic());
+        target.setDynamic(target.isDynamic());
         if (target.getDynamicNodeProperties() != null) {
             legacyTarget.setDynamicNodeProperties(convertToLegacyType(target.getDynamicNodeProperties()));
         }
@@ -669,9 +669,9 @@ public abstract class CodecToLegacyType {
             return org.apache.qpid.proton.amqp.messaging.Released.getInstance();
         } else if (state instanceof Modified) {
             org.apache.qpid.proton.amqp.messaging.Modified modified = new org.apache.qpid.proton.amqp.messaging.Modified();
-            modified.setDeliveryFailed(((Modified) state).getDeliveryFailed());
+            modified.setDeliveryFailed(((Modified) state).isDeliveryFailed());
             modified.setMessageAnnotations(convertToLegacyType(((Modified) state).getMessageAnnotations()));
-            modified.setUndeliverableHere(((Modified) state).getUndeliverableHere());
+            modified.setUndeliverableHere(((Modified) state).isUndeliverableHere());
             return modified;
         } else if (state instanceof Received) {
             org.apache.qpid.proton.amqp.messaging.Received received = new org.apache.qpid.proton.amqp.messaging.Received();
@@ -711,9 +711,9 @@ public abstract class CodecToLegacyType {
             return org.apache.qpid.proton.amqp.messaging.Released.getInstance();
         } else if (outcome instanceof Modified) {
             org.apache.qpid.proton.amqp.messaging.Modified modified = new org.apache.qpid.proton.amqp.messaging.Modified();
-            modified.setDeliveryFailed(((Modified) outcome).getDeliveryFailed());
+            modified.setDeliveryFailed(((Modified) outcome).isDeliveryFailed());
             modified.setMessageAnnotations(convertToLegacyType(((Modified) outcome).getMessageAnnotations()));
-            modified.setUndeliverableHere(((Modified) outcome).getUndeliverableHere());
+            modified.setUndeliverableHere(((Modified) outcome).isUndeliverableHere());
             return modified;
         }
 

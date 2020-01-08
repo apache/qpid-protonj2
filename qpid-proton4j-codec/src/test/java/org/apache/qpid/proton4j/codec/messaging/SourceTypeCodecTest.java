@@ -114,7 +114,7 @@ public class SourceTypeCodecTest extends CodecTestSupport {
       assertEquals(TerminusDurability.UNSETTLED_STATE, result.getDurable());
       assertEquals(TerminusExpiryPolicy.SESSION_END, result.getExpiryPolicy());
       assertEquals(UnsignedInteger.valueOf(255), result.getTimeout());
-      assertEquals(true, result.getDynamic());
+      assertEquals(true, result.isDynamic());
       assertEquals(nodeProperties, result.getDynamicNodeProperties());
       assertEquals(Symbol.valueOf("mode"), result.getDistributionMode());
       assertEquals(filters, result.getFilter());
@@ -149,8 +149,8 @@ public class SourceTypeCodecTest extends CodecTestSupport {
        assertNotNull(result);
        assertTrue(result instanceof Modified);
        Modified modified = (Modified) result;
-       assertFalse(modified.getUndeliverableHere());
-       assertFalse(modified.getDeliveryFailed());
+       assertFalse(modified.isUndeliverableHere());
+       assertFalse(modified.isDeliveryFailed());
    }
 
    @Test
@@ -247,7 +247,7 @@ public class SourceTypeCodecTest extends CodecTestSupport {
            assertNotNull(resultArray[i]);
            assertTrue(resultArray[i] instanceof Source);
            assertEquals(array[i].getAddress(), resultArray[i].getAddress());
-           assertEquals(array[i].getDynamic(), resultArray[i].getDynamic());
+           assertEquals(array[i].isDynamic(), resultArray[i].isDynamic());
            assertEquals(array[i].getDefaultOutcome(), resultArray[i].getDefaultOutcome());
        }
    }

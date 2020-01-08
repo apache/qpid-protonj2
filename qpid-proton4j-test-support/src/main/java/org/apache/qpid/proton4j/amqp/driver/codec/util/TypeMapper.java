@@ -88,9 +88,9 @@ public abstract class TypeMapper {
                 case Modified:
                     Modified modified = new Modified();
                     modified.setDeliveryFailed(
-                        ((org.apache.qpid.proton4j.amqp.messaging.Modified) state).getDeliveryFailed());
+                        ((org.apache.qpid.proton4j.amqp.messaging.Modified) state).isDeliveryFailed());
                     modified.setUndeliverableHere(
-                        ((org.apache.qpid.proton4j.amqp.messaging.Modified) state).getUndeliverableHere());
+                        ((org.apache.qpid.proton4j.amqp.messaging.Modified) state).isUndeliverableHere());
                     modified.setMessageAnnotations(
                         ((org.apache.qpid.proton4j.amqp.messaging.Modified) state).getMessageAnnotations());
                     return modified;
@@ -183,7 +183,7 @@ public abstract class TypeMapper {
             mapped.setDurable(source.getDurable().getValue());
             mapped.setExpiryPolicy(source.getExpiryPolicy().getPolicy());
             mapped.setTimeout(source.getTimeout());
-            mapped.setDynamic(source.getDynamic());
+            mapped.setDynamic(source.isDynamic());
             mapped.setDynamicNodeProperties(source.getDynamicNodeProperties());
             mapped.setDistributionMode(source.getDistributionMode());
             mapped.setFilter(source.getFilter());
@@ -228,7 +228,7 @@ public abstract class TypeMapper {
             mapped.setDurable(target.getDurable().getValue());
             mapped.setExpiryPolicy(target.getExpiryPolicy().getPolicy());
             mapped.setTimeout(target.getTimeout());
-            mapped.setDynamic(target.getDynamic());
+            mapped.setDynamic(target.isDynamic());
             mapped.setDynamicNodeProperties(target.getDynamicNodeProperties());
             mapped.setCapabilities(target.getCapabilities());
 

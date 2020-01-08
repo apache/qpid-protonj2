@@ -97,7 +97,7 @@ public final class Target implements Terminus {
         return this;
     }
 
-    public boolean getDynamic() {
+    public boolean isDynamic() {
         return dynamic;
     }
 
@@ -131,7 +131,7 @@ public final class Target implements Terminus {
                ", durable=" + getDurable() +
                ", expiryPolicy=" + getExpiryPolicy() +
                ", timeout=" + getTimeout() +
-               ", dynamic=" + getDynamic() +
+               ", dynamic=" + isDynamic() +
                ", dynamicNodeProperties=" + getDynamicNodeProperties() +
                ", capabilities=" + (getCapabilities() == null ? null : Arrays.asList(getCapabilities())) +
                '}';

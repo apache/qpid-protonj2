@@ -161,8 +161,8 @@ public class AmqpValueTypeCodecTest extends CodecTestSupport {
         assertNotNull(result);
         assertTrue(result instanceof Modified);
         Modified modified = (Modified) result;
-        assertFalse(modified.getUndeliverableHere());
-        assertFalse(modified.getDeliveryFailed());
+        assertFalse(modified.isUndeliverableHere());
+        assertFalse(modified.isDeliveryFailed());
     }
 
     @Test

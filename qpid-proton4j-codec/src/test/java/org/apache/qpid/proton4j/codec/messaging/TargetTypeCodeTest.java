@@ -103,7 +103,7 @@ public class TargetTypeCodeTest extends CodecTestSupport {
       assertEquals(TerminusDurability.UNSETTLED_STATE, result.getDurable());
       assertEquals(TerminusExpiryPolicy.CONNECTION_CLOSE, result.getExpiryPolicy());
       assertEquals(UnsignedInteger.valueOf(1024), result.getTimeout());
-      assertEquals(false, result.getDynamic());
+      assertEquals(false, result.isDynamic());
       assertEquals(nodeProperties, result.getDynamicNodeProperties());
       assertArrayEquals(new Symbol[] {Symbol.valueOf("RELEASED"), Symbol.valueOf("MODIFIED")}, result.getCapabilities());
    }
@@ -134,8 +134,8 @@ public class TargetTypeCodeTest extends CodecTestSupport {
        assertNotNull(result);
        assertTrue(result instanceof Modified);
        Modified modified = (Modified) result;
-       assertFalse(modified.getUndeliverableHere());
-       assertFalse(modified.getDeliveryFailed());
+       assertFalse(modified.isUndeliverableHere());
+       assertFalse(modified.isDeliveryFailed());
    }
 
    @Test
@@ -232,7 +232,7 @@ public class TargetTypeCodeTest extends CodecTestSupport {
            assertNotNull(resultArray[i]);
            assertTrue(resultArray[i] instanceof Target);
            assertEquals(array[i].getAddress(), resultArray[i].getAddress());
-           assertEquals(array[i].getDynamic(), resultArray[i].getDynamic());
+           assertEquals(array[i].isDynamic(), resultArray[i].isDynamic());
            assertEquals(array[i].getDurable(), resultArray[i].getDurable());
        }
    }

@@ -248,8 +248,6 @@ public interface Session {
      *      The {@link EventHandler} to notify when the parent {@link Connection} has been closed.
      *
      * @return the session for chaining.
-     *
-     * TODO - Work out the mechanics of this event
      */
     Session connectionClosedHandler(EventHandler<Session> parentClosedHandler);
 
