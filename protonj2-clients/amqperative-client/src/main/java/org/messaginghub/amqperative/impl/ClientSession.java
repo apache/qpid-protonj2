@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -234,30 +235,21 @@ public class ClientSession implements Session {
     }
 
     @Override
-    public Map<String, Object> properties() {
-        if (openFuture.isDone()) {
-            return ClientConversionSupport.toStringKeyedMap(protonSession.getRemoteProperties());
-        } else {
-            return null;
-        }
+    public Map<String, Object> properties() throws ClientException {
+        waitForOpenToComplete();
+        return ClientConversionSupport.toStringKeyedMap(protonSession.getRemoteProperties());
     }
 
     @Override
-    public String[] offeredCapabilities() {
-        if (openFuture.isDone()) {
-            return ClientConversionSupport.toStringArray(protonSession.getRemoteOfferedCapabilities());
-        } else {
-            return null;
-        }
+    public String[] offeredCapabilities() throws ClientException {
+        waitForOpenToComplete();
+        return ClientConversionSupport.toStringArray(protonSession.getRemoteOfferedCapabilities());
     }
 
     @Override
-    public String[] desiredCapabilities() {
-        if (openFuture.isDone()) {
-            return ClientConversionSupport.toStringArray(protonSession.getRemoteDesiredCapabilities());
-        } else {
-            return null;
-        }
+    public String[] desiredCapabilities() throws ClientException {
+        waitForOpenToComplete();
+        return ClientConversionSupport.toStringArray(protonSession.getRemoteDesiredCapabilities());
     }
 
     //----- Internal resource open APIs expected to be called from the connection event loop
@@ -410,6 +402,21 @@ public class ClientSession implements Session {
             }
 
             throw error;
+        }
+    }
+
+    private void waitForOpenToComplete() throws ClientException {
+        if (!openFuture.isComplete() || openFuture.isFailed()) {
+            try {
+                openFuture.get();
+            } catch (ExecutionException | InterruptedException e) {
+                Thread.interrupted();
+                if (failureCause.get() != null) {
+                    throw failureCause.get();
+                } else {
+                    throw ClientExceptionSupport.createNonFatalOrPassthrough(e.getCause());
+                }
+            }
         }
     }
 

@@ -129,9 +129,7 @@ public interface Connection {
      */
     Receiver openDynamicReceiver(Map<String, Object> dynamicNodeProperties, ReceiverOptions receiverOptions) throws ClientException;
 
-    // TODO: Does this verify if the server supports anonymous senders and throw if they don't?
     // TODO: Why have both send + defaultSender methods? To allow for waiting for the attach/open to complete before send?
-    // TODO: If it gets closed, do we create a new one and have this return the updated one?
 
     /**
      * Returns the default anonymous sender used by this {@link Connection} for {@link #send(Message)}
@@ -169,10 +167,6 @@ public interface Connection {
      * @throws ClientException if an internal error occurs.
      */
     Sender openSender(String address, SenderOptions senderOptions) throws ClientException;
-
-    // TODO: Does this verify if the server supports anonymous senders and throw if they don't? Try and fail?
-    // (Well, actually, that would succeed since it isn't remotely opened on return...)
-    // Need to define what the exceptional cases are vs the going to fail later on wait cases.
 
     /**
      * Creates a sender that is established to the 'anonymous relay' and as such each
@@ -232,9 +226,6 @@ public interface Connection {
      */
     Session openSession(SessionOptions options) throws ClientException;
 
-    // TODO: Does this verify if the server supports anonymous senders and throw if they don't?
-    //       the contract isn't made entirely clear here and needs to be made more explicit.
-
     /**
      * Sends the given {@link Message} using the internal connection sender.
      * <p>
@@ -251,36 +242,36 @@ public interface Connection {
     Tracker send(Message<?> message) throws ClientException;
 
     /**
-     * Returns the properties that the remote provided upon successfully opening the {@link Connection}.
-     *
-     * Until the remote opens the connection the value returned from this method will be null, only once successfully
-     * connected will this method return a non-null Map value if the remote returned any properties otherwise it will
-     * continue to return null.
+     * Returns the properties that the remote provided upon successfully opening the {@link Connection}.  If the
+     * open has not completed yet this method will block to await the open response which carries the remote
+     * properties.  If the remote provides no properties this method will return null.
      *
      * @return any properties provided from the remote once the connection has successfully opened.
+     *
+     * @throws ClientException if an error occurs while obtaining the {@link Connection} remote properties.
      */
-    Map<String, Object> properties();
+    Map<String, Object> properties() throws ClientException;
 
     /**
-     * Returns the capabilities that the remote offers upon successfully opening the {@link Connection}.
-     *
-     * Until the remote opens the connection the value returned from this method will be null, only once successfully
-     * connected will this method return a non-null string array value if the remote returned any offered capabilities
-     * otherwise it will continue to return null.
+     * Returns the offered capabilities that the remote provided upon successfully opening the {@link Connection}.
+     * If the open has not completed yet this method will block to await the open response which carries the
+     * remote offered capabilities.  If the remote provides no capabilities this method will return null.
      *
      * @return any capabilities provided from the remote once the connection has successfully opened.
+     *
+     * @throws ClientException if an error occurs while obtaining the {@link Connection} remote offered capabilities.
      */
-    String[] offeredCapabilities();
+    String[] offeredCapabilities() throws ClientException;
 
     /**
-     * Returns the capabilities that the remote desires upon successfully opening the {@link Connection}.
-     *
-     * Until the remote opens the connection the value returned from this method will be null, only once successfully
-     * connected will this method return a non-null string array value if the remote returned any desired capabilities
-     * otherwise it will continue to return null.
+     * Returns the desired capabilities that the remote provided upon successfully opening the {@link Connection}.
+     * If the open has not completed yet this method will block to await the open response which carries the
+     * remote desired capabilities.  If the remote provides no capabilities this method will return null.
      *
      * @return any desired capabilities provided from the remote once the connection has successfully opened.
+     *
+     * @throws ClientException if an error occurs while obtaining the {@link Connection} remote desired capabilities.
      */
-    String[] desiredCapabilities();
+    String[] desiredCapabilities() throws ClientException;
 
 }

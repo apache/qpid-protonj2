@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -380,30 +381,21 @@ public class ClientConnection implements Connection {
     }
 
     @Override
-    public Map<String, Object> properties() {
-        if (openFuture.isDone()) {
-            return ClientConversionSupport.toStringKeyedMap(protonConnection.getRemoteProperties());
-        } else {
-            return null;
-        }
+    public Map<String, Object> properties() throws ClientException {
+        waitForOpenToComplete();
+        return ClientConversionSupport.toStringKeyedMap(protonConnection.getRemoteProperties());
     }
 
     @Override
-    public String[] offeredCapabilities() {
-        if (openFuture.isDone()) {
-            return ClientConversionSupport.toStringArray(protonConnection.getRemoteOfferedCapabilities());
-        } else {
-            return null;
-        }
+    public String[] offeredCapabilities() throws ClientException {
+        waitForOpenToComplete();
+        return ClientConversionSupport.toStringArray(protonConnection.getRemoteOfferedCapabilities());
     }
 
     @Override
-    public String[] desiredCapabilities() {
-        if (openFuture.isDone()) {
-            return ClientConversionSupport.toStringArray(protonConnection.getRemoteDesiredCapabilities());
-        } else {
-            return null;
-        }
+    public String[] desiredCapabilities() throws ClientException {
+        waitForOpenToComplete();
+        return ClientConversionSupport.toStringArray(protonConnection.getRemoteDesiredCapabilities());
     }
 
     //----- Internal API
@@ -732,6 +724,21 @@ public class ClientConnection implements Connection {
                 throw new ClientClosedException("The Connection failed", failureCause);
             } else {
                 throw new ClientClosedException("The Connection is closed");
+            }
+        }
+    }
+
+    private void waitForOpenToComplete() throws ClientException {
+        if (!openFuture.isComplete() || openFuture.isFailed()) {
+            try {
+                openFuture.get();
+            } catch (ExecutionException | InterruptedException e) {
+                Thread.interrupted();
+                if (failureCause != null) {
+                    throw failureCause;
+                } else {
+                    throw ClientExceptionSupport.createNonFatalOrPassthrough(e.getCause());
+                }
             }
         }
     }
