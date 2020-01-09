@@ -71,6 +71,10 @@ public interface Receiver {
     String address() throws ClientException;
 
     /**
+     * Returns an immutable view of the remote {@link Source} object assigned to this receiver link.  If the
+     * attach has not completed yet this method will block to await the attach response which carries the remote
+     * {@link Source}.
+     *
      * @return the remote {@link Source} node configuration.
      *
      * @throws ClientException if an error occurs while obtaining the {@link Receiver} remote {@link Source}.
@@ -78,6 +82,10 @@ public interface Receiver {
     Source source() throws ClientException;
 
     /**
+     * Returns an immutable view of the remote {@link Target} object assigned to this receiver link.  If the
+     * attach has not completed yet this method will block to await the attach response which carries the remote
+     * {@link Source}.
+     *
      * @return the remote {@link Target} node configuration.
      *
      * @throws ClientException if an error occurs while obtaining the {@link Receiver} remote {@link Target}.
@@ -85,11 +93,9 @@ public interface Receiver {
     Target target() throws ClientException;
 
     /**
-     * Returns the properties that the remote provided upon successfully opening the {@link Receiver}.
-     *
-     * Until the remote opens the receiver the value returned from this method will be null, only once successfully
-     * connected will this method return a non-null Map value if the remote returned any properties otherwise it will
-     * continue to return null.
+     * Returns the properties that the remote provided upon successfully opening the {@link Receiver}.  If the
+     * attach has not completed yet this method will block to await the attach response which carries the remote
+     * properties.  If the remote provides no properties this method will return null.
      *
      * @return any properties provided from the remote once the receiver has successfully opened.
      *
@@ -98,11 +104,9 @@ public interface Receiver {
     Map<String, Object> properties() throws ClientException;
 
     /**
-     * Returns the capabilities that the remote offers upon successfully opening the {@link Receiver}.
-     *
-     * Until the remote opens the receiver the value returned from this method will be null, only once successfully
-     * connected will this method return a non-null string array value if the remote returned any offered capabilities
-     * otherwise it will continue to return null.
+     * Returns the offered capabilities that the remote provided upon successfully opening the {@link Receiver}.
+     * If the attach has not completed yet this method will block to await the attach response which carries the
+     * remote offered capabilities.  If the remote provides no capabilities this method will return null.
      *
      * @return any capabilities provided from the remote once the receiver has successfully opened.
      *
@@ -111,11 +115,9 @@ public interface Receiver {
     String[] offeredCapabilities() throws ClientException;
 
     /**
-     * Returns the capabilities that the remote desires upon successfully opening the {@link Receiver}.
-     *
-     * Until the remote opens the receiver the value returned from this method will be null, only once successfully
-     * connected will this method return a non-null string array value if the remote returned any desired capabilities
-     * otherwise it will continue to return null.
+     * Returns the desired capabilities that the remote provided upon successfully opening the {@link Receiver}.
+     * If the attach has not completed yet this method will block to await the attach response which carries the
+     * remote desired capabilities.  If the remote provides no capabilities this method will return null.
      *
      * @return any desired capabilities provided from the remote once the receiver has successfully opened.
      *
