@@ -56,6 +56,8 @@ public interface Sender {
      *  <li>
      *    If the Sender was created with the dynamic sender methods then the method will return
      *    the dynamically created address once the remote has attached its end of the sender link.
+     *    Due to the need to await the remote peer to populate the dynamic address this method will
+     *    block until the open of the sender link has completed.
      *  </li>
      *  <li>
      *    If neither of the above is true then the address returned is the address passed to the original
@@ -64,51 +66,65 @@ public interface Sender {
      * </ul>
      *
      * @return the address that this {@link Sender} is sending to.
-     */
-    String address();
-
-    /**
-     * @return the remote {@link Source} node configuration.
-     */
-    Source source();
-
-    /**
-     * @return the remote {@link Target} node configuration.
-     */
-    Target target();
-
-    /**
-     * Returns the properties that the remote provided upon successfully opening the {@link Sender}.
      *
-     * Until the remote opens the sender the value returned from this method will be null, only once successfully
-     * connected will this method return a non-null Map value if the remote returned any properties otherwise it will
-     * continue to return null.
+     * @throws ClientException if an error occurs while obtaining the {@link Sender} address.
+     */
+    String address() throws ClientException;
+
+    /**
+     * Returns an immutable view of the remote {@link Source} object assigned to this sender link.  If the
+     * attach has not completed yet this method will block to await the attach response which carries the remote
+     * {@link Source}.
+     *
+     * @return the remote {@link Source} node configuration.
+     *
+     * @throws ClientException if an error occurs while obtaining the {@link Sender} remote {@link Source}.
+     */
+    Source source() throws ClientException;
+
+    /**
+     * Returns an immutable view of the remote {@link Target} object assigned to this sender link.  If the
+     * attach has not completed yet this method will block to await the attach response which carries the remote
+     * {@link Target}.
+     *
+     * @return the remote {@link Target} node configuration.
+     *
+     * @throws ClientException if an error occurs while obtaining the {@link Sender} remote {@link Target}.
+     */
+    Target target() throws ClientException;
+
+    /**
+     * Returns the properties that the remote provided upon successfully opening the {@link Sender}.  If the
+     * attach has not completed yet this method will block to await the attach response which carries the remote
+     * properties.  If the remote provides no properties this method will return null.
      *
      * @return any properties provided from the remote once the sender has successfully opened.
+     *
+     * @throws ClientException if an error occurs while obtaining the {@link Sender} remote properties.
      */
-    Map<String, Object> properties();
+    Map<String, Object> properties() throws ClientException;
 
     /**
-     * Returns the capabilities that the remote offers upon successfully opening the {@link Sender}.
-     *
-     * Until the remote opens the sender the value returned from this method will be null, only once successfully
-     * connected will this method return a non-null string array value if the remote returned any offered capabilities
-     * otherwise it will continue to return null.
+     * Returns the offered capabilities that the remote provided upon successfully opening the {@link Sender}.
+     * If the attach has not completed yet this method will block to await the attach response which carries the
+     * remote offered capabilities.  If the remote provides no capabilities this method will return null.
      *
      * @return any capabilities provided from the remote once the sender has successfully opened.
+     *
+     * @throws ClientException if an error occurs while obtaining the {@link Sender} remote offered capabilities.
      */
-    String[] offeredCapabilities();
+    String[] offeredCapabilities() throws ClientException;
 
     /**
-     * Returns the capabilities that the remote desires upon successfully opening the {@link Sender}.
-     *
-     * Until the remote opens the sender the value returned from this method will be null, only once successfully
-     * connected will this method return a non-null string array value if the remote returned any desired capabilities
-     * otherwise it will continue to return null.
+     * Returns the desired capabilities that the remote provided upon successfully opening the {@link Sender}.
+     * If the attach has not completed yet this method will block to await the attach response which carries the
+     * remote desired capabilities.  If the remote provides no capabilities this method will return null.
      *
      * @return any desired capabilities provided from the remote once the sender has successfully opened.
+     *
+     * @throws ClientException if an error occurs while obtaining the {@link Sender} remote desired capabilities.
      */
-    String[] desiredCapabilities();
+    String[] desiredCapabilities() throws ClientException;
 
     /**
      * @return the {@link Client} instance that holds this session's {@link Sender}

@@ -20,6 +20,7 @@ import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
@@ -41,6 +42,7 @@ import org.messaginghub.amqperative.Target;
 import org.messaginghub.amqperative.Tracker;
 import org.messaginghub.amqperative.futures.AsyncResult;
 import org.messaginghub.amqperative.futures.ClientFuture;
+import org.messaginghub.amqperative.impl.exceptions.ClientExceptionSupport;
 import org.messaginghub.amqperative.impl.exceptions.ClientOperationTimedOutException;
 import org.messaginghub.amqperative.impl.exceptions.ClientResourceAllocationException;
 import org.messaginghub.amqperative.impl.exceptions.ClientResourceClosedException;
@@ -89,21 +91,24 @@ public class ClientSender implements Sender {
     }
 
     @Override
-    public String address() {
-        if (protonSender.getRemoteState() != LinkState.IDLE && protonSender.getRemoteTarget() != null) {
-            return protonSender.getRemoteTarget().getAddress();
+    public String address() throws ClientException {
+        if (isDynamic()) {
+            waitForOpenToComplete();
+            return protonSender.getRemoteSource().getAddress();
         } else {
-            return protonSender.getTarget().getAddress();
+            return protonSender.getSource() != null ? protonSender.getTarget().getAddress() : null;
         }
     }
 
     @Override
-    public Source source() {
+    public Source source() throws ClientException {
+        waitForOpenToComplete();
         return remoteSource;
     }
 
     @Override
-    public Target target() {
+    public Target target() throws ClientException {
+        waitForOpenToComplete();
         return remoteTarget;
     }
 
@@ -212,30 +217,21 @@ public class ClientSender implements Sender {
     }
 
     @Override
-    public Map<String, Object> properties() {
-        if (openFuture.isDone()) {
-            return ClientConversionSupport.toStringKeyedMap(protonSender.getRemoteProperties());
-        } else {
-            return null;
-        }
+    public Map<String, Object> properties() throws ClientException {
+        waitForOpenToComplete();
+        return ClientConversionSupport.toStringKeyedMap(protonSender.getRemoteProperties());
     }
 
     @Override
-    public String[] offeredCapabilities() {
-        if (openFuture.isDone()) {
-            return ClientConversionSupport.toStringArray(protonSender.getRemoteOfferedCapabilities());
-        } else {
-            return null;
-        }
+    public String[] offeredCapabilities() throws ClientException {
+        waitForOpenToComplete();
+        return ClientConversionSupport.toStringArray(protonSender.getRemoteOfferedCapabilities());
     }
 
     @Override
-    public String[] desiredCapabilities() {
-        if (openFuture.isDone()) {
-            return ClientConversionSupport.toStringArray(protonSender.getRemoteDesiredCapabilities());
-        } else {
-            return null;
-        }
+    public String[] desiredCapabilities() throws ClientException {
+        waitForOpenToComplete();
+        return ClientConversionSupport.toStringArray(protonSender.getRemoteDesiredCapabilities());
     }
 
     //----- Internal API
@@ -299,6 +295,10 @@ public class ClientSender implements Sender {
 
     boolean isAnonymous() {
         return protonSender.getTarget().getAddress() == null;
+    }
+
+    boolean isDynamic() {
+        return protonSender.getTarget() != null && protonSender.getTarget().isDynamic();
     }
 
     org.apache.qpid.proton4j.engine.Sender getProtonSender() {
@@ -460,6 +460,21 @@ public class ClientSender implements Sender {
     }
 
     //----- Private implementation details
+
+    private void waitForOpenToComplete() throws ClientException {
+        if (!openFuture.isComplete() || openFuture.isFailed()) {
+            try {
+                openFuture.get();
+            } catch (ExecutionException | InterruptedException e) {
+                Thread.interrupted();
+                if (failureCause.get() != null) {
+                    throw failureCause.get();
+                } else {
+                    throw ClientExceptionSupport.createNonFatalOrPassthrough(e.getCause());
+                }
+            }
+        }
+    }
 
     private void assumeSendableAndSend(ClientMessage<?> message, AsyncResult<Tracker> request) {
         ProtonBuffer buffer = ClientMessageSupport.encodeMessage(message);

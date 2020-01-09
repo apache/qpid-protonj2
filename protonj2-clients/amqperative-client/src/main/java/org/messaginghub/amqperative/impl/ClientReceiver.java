@@ -95,21 +95,6 @@ public class ClientReceiver implements Receiver {
         }
     }
 
-    private void waitForOpenToComplete() throws ClientException {
-        if (!openFuture.isComplete() || openFuture.isFailed()) {
-            try {
-                openFuture.get();
-            } catch (ExecutionException | InterruptedException e) {
-                Thread.interrupted();
-                if (failureCause.get() != null) {
-                    throw failureCause.get();
-                } else {
-                    throw ClientExceptionSupport.createNonFatalOrPassthrough(e.getCause());
-                }
-            }
-        }
-    }
-
     @Override
     public Source source() throws ClientException {
         waitForOpenToComplete();
@@ -436,6 +421,21 @@ public class ClientReceiver implements Receiver {
     }
 
     //----- Private implementation details
+
+    private void waitForOpenToComplete() throws ClientException {
+        if (!openFuture.isComplete() || openFuture.isFailed()) {
+            try {
+                openFuture.get();
+            } catch (ExecutionException | InterruptedException e) {
+                Thread.interrupted();
+                if (failureCause.get() != null) {
+                    throw failureCause.get();
+                } else {
+                    throw ClientExceptionSupport.createNonFatalOrPassthrough(e.getCause());
+                }
+            }
+        }
+    }
 
     private void checkClosed() throws IllegalStateException {
         if (isClosed()) {
