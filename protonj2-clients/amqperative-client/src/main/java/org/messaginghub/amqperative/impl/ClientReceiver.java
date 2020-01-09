@@ -17,6 +17,7 @@
 package org.messaginghub.amqperative.impl;
 
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
@@ -36,6 +37,7 @@ import org.messaginghub.amqperative.Session;
 import org.messaginghub.amqperative.Source;
 import org.messaginghub.amqperative.Target;
 import org.messaginghub.amqperative.futures.ClientFuture;
+import org.messaginghub.amqperative.impl.exceptions.ClientExceptionSupport;
 import org.messaginghub.amqperative.impl.exceptions.ClientOperationTimedOutException;
 import org.messaginghub.amqperative.impl.exceptions.ClientResourceAllocationException;
 import org.messaginghub.amqperative.impl.exceptions.ClientResourceClosedException;
@@ -84,21 +86,39 @@ public class ClientReceiver implements Receiver {
     }
 
     @Override
-    public String address() {
-        if (remoteSource != null) {
-            return remoteSource.address();
+    public String address() throws ClientException {
+        if (isDynamic()) {
+            waitForOpenToComplete();
+            return protonReceiver.getRemoteSource().getAddress();
         } else {
             return protonReceiver.getSource() != null ? protonReceiver.getSource().getAddress() : null;
         }
     }
 
+    private void waitForOpenToComplete() throws ClientException {
+        if (!openFuture.isComplete() || openFuture.isFailed()) {
+            try {
+                openFuture.get();
+            } catch (ExecutionException | InterruptedException e) {
+                Thread.interrupted();
+                if (failureCause.get() != null) {
+                    throw failureCause.get();
+                } else {
+                    throw ClientExceptionSupport.createNonFatalOrPassthrough(e.getCause());
+                }
+            }
+        }
+    }
+
     @Override
-    public Source source() {
+    public Source source() throws ClientException {
+        waitForOpenToComplete();
         return remoteSource;
     }
 
     @Override
-    public Target target() {
+    public Target target() throws ClientException {
+        waitForOpenToComplete();
         return remoteTarget;
     }
 
@@ -156,7 +176,7 @@ public class ClientReceiver implements Receiver {
 
     @Override
     public Future<Receiver> close() {
-        if (CLOSED_UPDATER.compareAndSet(this, 0, 1) && !openFuture.isFailed()) {
+        if (CLOSED_UPDATER.compareAndSet(this, 0, 1)) {
             executor.execute(() -> {
                 try {
                     protonReceiver.close();
@@ -258,30 +278,21 @@ public class ClientReceiver implements Receiver {
     }
 
     @Override
-    public Map<String, Object> properties() {
-        if (openFuture.isDone()) {
-            return ClientConversionSupport.toStringKeyedMap(protonReceiver.getRemoteProperties());
-        } else {
-            return null;
-        }
+    public Map<String, Object> properties() throws ClientException {
+        waitForOpenToComplete();
+        return ClientConversionSupport.toStringKeyedMap(protonReceiver.getRemoteProperties());
     }
 
     @Override
-    public String[] offeredCapabilities() {
-        if (openFuture.isDone()) {
-            return ClientConversionSupport.toStringArray(protonReceiver.getRemoteOfferedCapabilities());
-        } else {
-            return null;
-        }
+    public String[] offeredCapabilities() throws ClientException {
+        waitForOpenToComplete();
+        return ClientConversionSupport.toStringArray(protonReceiver.getRemoteOfferedCapabilities());
     }
 
     @Override
-    public String[] desiredCapabilities() {
-        if (openFuture.isDone()) {
-            return ClientConversionSupport.toStringArray(protonReceiver.getRemoteDesiredCapabilities());
-        } else {
-            return null;
-        }
+    public String[] desiredCapabilities() throws ClientException {
+        waitForOpenToComplete();
+        return ClientConversionSupport.toStringArray(protonReceiver.getRemoteDesiredCapabilities());
     }
 
     //----- Internal API
@@ -309,9 +320,13 @@ public class ClientReceiver implements Receiver {
                         protonReceiver.close();
                     } catch (Throwable error) {
                         session.connection().handleClientIOException(error);
+                    } finally {
+                        failureCause.compareAndSet(null, new ClientOperationTimedOutException(
+                            "Receiver attach timed out waiting for remote to open"));
+                        CLOSED_UPDATER.lazySet(this, 1);
+                        closeFuture.complete(this);
+                        openFuture.failed(failureCause.get());
                     }
-                    openFuture.failed(new ClientOperationTimedOutException(
-                        "Receiver attach timed out waiting for remote to open"));
                 }
             }, options.openTimeout(), TimeUnit.MILLISECONDS);
         }
@@ -337,6 +352,10 @@ public class ClientReceiver implements Receiver {
 
     boolean isClosed() {
         return closed > 0;
+    }
+
+    boolean isDynamic() {
+        return protonReceiver.getSource() != null && protonReceiver.getSource().isDynamic();
     }
 
     org.apache.qpid.proton4j.engine.Receiver getProtonReceiver() {

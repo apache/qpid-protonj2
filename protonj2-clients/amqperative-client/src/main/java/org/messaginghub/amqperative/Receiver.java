@@ -21,6 +21,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.function.Consumer;
 
+import org.messaginghub.amqperative.impl.ClientException;
+
 public interface Receiver {
 
     /**
@@ -44,6 +46,8 @@ public interface Receiver {
      */
     Future<Receiver> detach();
 
+    // TODO - For these remote property reads do we support interruption on waiting for the open ?
+
     /**
      * Returns the address that the {@link Receiver} instance will be subscribed to.
      *
@@ -51,6 +55,8 @@ public interface Receiver {
      *  <li>
      *   If the Receiver was created with the dynamic receiver methods then the method will return
      *   the dynamically created address once the remote has attached its end of the receiver link.
+     *   Due to the need to await the remote peer to populate the dynamic address this method will
+     *   block until the open of the receiver link has completed.
      *  </li>
      *  <li>
      *   If not a dynamic receiver then the address returned is the address passed to the original
@@ -59,18 +65,24 @@ public interface Receiver {
      * </ul>
      *
      * @return the address that this {@link Receiver} is sending to.
+     *
+     * @throws ClientException if an error occurs while obtaining the {@link Receiver} address.
      */
-    String address();
+    String address() throws ClientException;
 
     /**
      * @return the remote {@link Source} node configuration.
+     *
+     * @throws ClientException if an error occurs while obtaining the {@link Receiver} remote {@link Source}.
      */
-    Source source();
+    Source source() throws ClientException;
 
     /**
      * @return the remote {@link Target} node configuration.
+     *
+     * @throws ClientException if an error occurs while obtaining the {@link Receiver} remote {@link Target}.
      */
-    Target target();
+    Target target() throws ClientException;
 
     /**
      * Returns the properties that the remote provided upon successfully opening the {@link Receiver}.
@@ -80,8 +92,10 @@ public interface Receiver {
      * continue to return null.
      *
      * @return any properties provided from the remote once the receiver has successfully opened.
+     *
+     * @throws ClientException if an error occurs while obtaining the {@link Receiver} remote properties.
      */
-    Map<String, Object> properties();
+    Map<String, Object> properties() throws ClientException;
 
     /**
      * Returns the capabilities that the remote offers upon successfully opening the {@link Receiver}.
@@ -91,8 +105,10 @@ public interface Receiver {
      * otherwise it will continue to return null.
      *
      * @return any capabilities provided from the remote once the receiver has successfully opened.
+     *
+     * @throws ClientException if an error occurs while obtaining the {@link Receiver} remote offered capabilities.
      */
-    String[] offeredCapabilities();
+    String[] offeredCapabilities() throws ClientException;
 
     /**
      * Returns the capabilities that the remote desires upon successfully opening the {@link Receiver}.
@@ -102,8 +118,10 @@ public interface Receiver {
      * otherwise it will continue to return null.
      *
      * @return any desired capabilities provided from the remote once the receiver has successfully opened.
+     *
+     * @throws ClientException if an error occurs while obtaining the {@link Receiver} remote desired capabilities.
      */
-    String[] desiredCapabilities();
+    String[] desiredCapabilities() throws ClientException;
 
     /**
      * @return the {@link Client} instance that holds this session's {@link Receiver}
@@ -114,6 +132,8 @@ public interface Receiver {
      * @return the {@link Session} that created and holds this {@link Receiver}.
      */
     Session session();
+
+    // TODO - Receive calls throw ClientException to better describe why it failed
 
     /**
      * Blocking receive method that waits forever for the remote to provide a Message for consumption.

@@ -94,7 +94,7 @@ public class RemoteSource implements Source {
 
     @Override
     public boolean dynamic() {
-        return remoteSource.getDynamic();
+        return remoteSource.isDynamic();
     }
 
     @Override

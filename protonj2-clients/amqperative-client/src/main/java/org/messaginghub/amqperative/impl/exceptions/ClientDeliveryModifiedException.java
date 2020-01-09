@@ -41,10 +41,10 @@ public class ClientDeliveryModifiedException extends ClientException {
     }
 
     public boolean isDeliveryFailed() {
-        return modification.getDeliveryFailed();
+        return modification.isDeliveryFailed();
     }
 
     public boolean isUndeliverableHere() {
-        return modification.getUndeliverableHere();
+        return modification.isUndeliverableHere();
     }
 }

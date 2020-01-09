@@ -178,8 +178,8 @@ public abstract class ClientDeliveryState implements DeliveryState {
         private final Modified modified = new Modified();
 
         ClientModified(Modified modified) {
-            modified.setDeliveryFailed(modified.getDeliveryFailed());
-            modified.setUndeliverableHere(modified.getUndeliverableHere());
+            modified.setDeliveryFailed(modified.isDeliveryFailed());
+            modified.setUndeliverableHere(modified.isUndeliverableHere());
             modified.setMessageAnnotations(new LinkedHashMap<>(modified.getMessageAnnotations()));
         }
 

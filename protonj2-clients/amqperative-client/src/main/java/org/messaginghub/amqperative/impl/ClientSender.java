@@ -263,9 +263,13 @@ public class ClientSender implements Sender {
                         protonSender.close();
                     } catch (Throwable error) {
                         session.connection().handleClientIOException(error);
+                    } finally {
+                        failureCause.compareAndSet(null, new ClientOperationTimedOutException(
+                            "Sender attach timed out waiting for remote to open"));
+                        CLOSED_UPDATER.lazySet(this, 1);
+                        closeFuture.complete(this);
+                        openFuture.failed(failureCause.get());
                     }
-                    openFuture.failed(new ClientOperationTimedOutException(
-                        "Sender attach timed out waiting for remote to open"));
                 }
             }, options.openTimeout(), TimeUnit.MILLISECONDS);
         }

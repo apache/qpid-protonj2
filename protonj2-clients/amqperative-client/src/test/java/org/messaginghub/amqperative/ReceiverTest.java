@@ -22,6 +22,7 @@ import org.apache.qpid.proton4j.amqp.transport.Role;
 import org.apache.qpid.proton4j.amqp.transport.SenderSettleMode;
 import org.hamcrest.Matcher;
 import org.junit.Test;
+import org.messaginghub.amqperative.impl.ClientException;
 import org.messaginghub.amqperative.impl.exceptions.ClientOperationTimedOutException;
 import org.messaginghub.amqperative.impl.exceptions.ClientSecurityException;
 import org.messaginghub.amqperative.test.AMQPerativeTestCase;
@@ -333,6 +334,69 @@ public class ReceiverTest extends AMQPerativeTestCase {
             receiver.close().get(10, TimeUnit.SECONDS);
 
             connection.close().get(10, TimeUnit.SECONDS);
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test(timeout = 60000)
+    public void testDynamicReceiverAddressWaitsForRemoteAttach() throws Exception {
+        tryReadDynamicReceiverAddress(true);
+    }
+
+    @Test(timeout = 60000)
+    public void testDynamicReceiverAddressFailsAfterOpenTimeout() throws Exception {
+        tryReadDynamicReceiverAddress(false);
+    }
+
+    private void tryReadDynamicReceiverAddress(boolean attachResponse) throws Exception {
+        try (NettyTestPeer peer = new NettyTestPeer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().withRole(Role.RECEIVER)
+                               .withSource().withDynamic(true).withAddress((String) null);
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Connect test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            ConnectionOptions options = new ConnectionOptions().openTimeout(100);
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), options);
+            connection.openFuture().get();
+
+            Session session = connection.openSession();
+            session.openFuture().get();
+
+            Receiver receiver = session.openDynamicReceiver();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+
+            if (attachResponse) {
+                peer.expectDetach().respond();
+                peer.respondToLastAttach().withSource().withAddress("test-dynamic-node").and().later(10);
+            } else {
+                peer.expectDetach();
+            }
+
+            if (attachResponse) {
+                assertNotNull("Remote should have assigned the address for the dynamic receiver", receiver.address());
+                assertEquals("test-dynamic-node", receiver.address());
+            } else {
+                try {
+                    receiver.address();
+                    fail("Should failed to get address due to no attach response");
+                } catch (ClientException ex) {
+                    LOG.debug("Caught expected exception from address call", ex);
+                }
+            }
+
+            receiver.close().get();
+
+            peer.expectClose().respond();
+            connection.close().get();
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }

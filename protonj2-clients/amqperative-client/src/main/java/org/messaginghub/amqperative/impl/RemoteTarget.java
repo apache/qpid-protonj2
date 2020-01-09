@@ -85,7 +85,7 @@ public class RemoteTarget implements Target {
 
     @Override
     public boolean dynamic() {
-        return remoteTarget.getDynamic();
+        return remoteTarget.isDynamic();
     }
 
     @Override
