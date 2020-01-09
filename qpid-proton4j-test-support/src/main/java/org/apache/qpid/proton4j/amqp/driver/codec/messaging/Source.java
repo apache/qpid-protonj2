@@ -60,6 +60,10 @@ public class Source extends ListDescribedType {
         super(Field.values().length, described);
     }
 
+    public Source(Source value) {
+        super(Field.values().length, value);
+    }
+
     @Override
     public Symbol getDescriptor() {
         return DESCRIPTOR_SYMBOL;

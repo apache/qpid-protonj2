@@ -33,6 +33,7 @@ import static org.junit.Assert.fail;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
@@ -1132,9 +1133,9 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         peer.expectAttach().respond();
         peer.expectFlow().withLinkCredit(100);
         peer.remoteTransfer().withDeliveryId(0)
-                               .withDeliveryTag(new byte[] {0})
-                               .withMore(false)
-                               .withMessageFormat(0).queue();
+                             .withDeliveryTag(new byte[] {0})
+                             .withMore(false)
+                             .withMessageFormat(0).queue();
         peer.expectDetach().respond();
 
         Connection connection = engine.start();
@@ -1179,13 +1180,13 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         peer.expectAttach().respond();
         peer.expectFlow().withLinkCredit(100);
         peer.remoteTransfer().withDeliveryId(0)
-                               .withDeliveryTag(new byte[] {0})
-                               .withMore(false)
-                               .withMessageFormat(0).queue();
+                             .withDeliveryTag(new byte[] {0})
+                             .withMore(false)
+                             .withMessageFormat(0).queue();
         peer.expectDisposition().withFirst(0)
-                                  .withSettled(true)
-                                  .withRole(Role.RECEIVER)
-                                  .withState(Accepted.getInstance());
+                                .withSettled(true)
+                                .withRole(Role.RECEIVER)
+                                .withState(Accepted.getInstance());
         peer.expectDetach().respond();
 
         Connection connection = engine.start();
@@ -1233,13 +1234,13 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         peer.expectAttach().respond();
         peer.expectFlow().withLinkCredit(100);
         peer.remoteTransfer().withDeliveryId(0)
-                               .withDeliveryTag(new byte[] {0})
-                               .withMore(false)
-                               .withMessageFormat(0).queue();
+                             .withDeliveryTag(new byte[] {0})
+                             .withMore(false)
+                             .withMessageFormat(0).queue();
         peer.expectDisposition().withFirst(0)
-                                  .withSettled(true)
-                                  .withRole(Role.RECEIVER)
-                                  .withState(Accepted.getInstance());
+                                .withSettled(true)
+                                .withRole(Role.RECEIVER)
+                                .withState(Accepted.getInstance());
         peer.expectDetach().respond();
 
         Connection connection = engine.start();
@@ -1294,17 +1295,17 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         peer.expectAttach().respond();
         peer.expectFlow().withLinkCredit(100);
         peer.remoteTransfer().withDeliveryId(0)
-                               .withDeliveryTag(new byte[] {0})
-                               .withMore(false)
-                               .withMessageFormat(0).queue();
+                             .withDeliveryTag(new byte[] {0})
+                             .withMore(false)
+                             .withMessageFormat(0).queue();
         peer.expectDisposition().withFirst(0)
-                                  .withSettled(false)
-                                  .withRole(Role.RECEIVER)
-                                  .withState(Accepted.getInstance());
+                                .withSettled(false)
+                                .withRole(Role.RECEIVER)
+                                .withState(Accepted.getInstance());
         peer.expectDisposition().withFirst(0)
-                                  .withSettled(true)
-                                  .withRole(Role.RECEIVER)
-                                  .withState(Released.getInstance());
+                                .withSettled(true)
+                                .withRole(Role.RECEIVER)
+                                .withState(Released.getInstance());
         peer.expectDetach().respond();
 
         Connection connection = engine.start();
@@ -1358,9 +1359,9 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         peer.expectAttach().respond();
         peer.expectFlow().withLinkCredit(1);
         peer.remoteTransfer().withDeliveryId(0)
-                               .withDeliveryTag(new byte[] {0})
-                               .withMore(false)
-                               .withMessageFormat(0).queue();
+                             .withDeliveryTag(new byte[] {0})
+                             .withMore(false)
+                             .withMessageFormat(0).queue();
         peer.expectClose();
 
         Connection connection = engine.start();
@@ -1421,13 +1422,13 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         peer.expectAttach().respond();
         peer.expectFlow().withLinkCredit(100);
         peer.remoteTransfer().withDeliveryId(0)
-                               .withDeliveryTag(new byte[] {0})
-                               .withMore(false)
-                               .withMessageFormat(0).queue();
+                             .withDeliveryTag(new byte[] {0})
+                             .withMore(false)
+                             .withMessageFormat(0).queue();
         peer.remoteDisposition().withSettled(true)
-                                  .withRole(Role.SENDER)
-                                  .withState(Accepted.getInstance())
-                                  .withFirst(0).queue();
+                                .withRole(Role.SENDER)
+                                .withState(Accepted.getInstance())
+                                .withFirst(0).queue();
         peer.expectDetach().respond();
 
         Connection connection = engine.start();
@@ -1485,18 +1486,18 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         peer.expectAttach().respond();
         peer.expectFlow().withLinkCredit(2);
         peer.remoteTransfer().withDeliveryId(0)
-                               .withDeliveryTag(new byte[] {0})
-                               .withMore(false)
-                               .withMessageFormat(0).queue();
+                             .withDeliveryTag(new byte[] {0})
+                             .withMore(false)
+                             .withMessageFormat(0).queue();
         peer.remoteTransfer().withDeliveryId(1)
-                               .withDeliveryTag(new byte[] {1})
-                               .withMore(false)
-                               .withMessageFormat(0).queue();
+                             .withDeliveryTag(new byte[] {1})
+                             .withMore(false)
+                             .withMessageFormat(0).queue();
         peer.remoteDisposition().withSettled(true)
-                                  .withRole(Role.SENDER)
-                                  .withState(Accepted.getInstance())
-                                  .withFirst(0)
-                                  .withLast(1).queue();
+                                .withRole(Role.SENDER)
+                                .withState(Accepted.getInstance())
+                                .withFirst(0)
+                                .withLast(1).queue();
         peer.expectDetach().respond();
 
         Connection connection = engine.start();
@@ -2182,5 +2183,49 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         // Check post conditions and done.
         peer.waitForScriptToComplete();
         assertNull(failure);
+    }
+
+    @Test
+    public void testReceiverHandlesDeferredOpenAndBeginAttachResponses() throws Exception {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result);
+        ProtonTestPeer peer = new ProtonTestPeer(engine);
+        engine.outputConsumer(peer);
+
+        final AtomicBoolean receiverRemotelyOpened = new AtomicBoolean();
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen();
+        peer.expectBegin();
+        peer.expectAttach().withRole(Role.RECEIVER)
+                           .withSource().withDynamic(true)
+                           .withAddress((String) null);
+
+        Connection connection = engine.start();
+
+        connection.open();
+        Session session = connection.session();
+        session.open();
+
+        Receiver receiver = session.receiver("receiver-1");
+        receiver.setSource(new Source().setDynamic(true).setAddress(null));
+        receiver.openHandler(result -> receiverRemotelyOpened.set(true)).open();
+
+        peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+
+        // This should happen after we inject the held open and attach
+        peer.expectClose().respond();
+
+        // Inject held responses to get the ball rolling again
+        peer.remoteOpen().withOfferedCapabilities("ANONYMOUS_REALY").now();
+        peer.respondToLastBegin().now();
+        peer.respondToLastAttach().now();
+
+        assertTrue("Receiver remote opened event did not fire", receiverRemotelyOpened.get());
+        assertNotNull(receiver.getRemoteSource().getAddress());
+
+        connection.close();
+
+        peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
     }
 }

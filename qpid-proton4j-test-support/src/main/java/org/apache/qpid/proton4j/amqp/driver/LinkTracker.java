@@ -17,8 +17,12 @@
 package org.apache.qpid.proton4j.amqp.driver;
 
 import org.apache.qpid.proton4j.amqp.UnsignedInteger;
+import org.apache.qpid.proton4j.amqp.driver.codec.messaging.Source;
+import org.apache.qpid.proton4j.amqp.driver.codec.messaging.Target;
 import org.apache.qpid.proton4j.amqp.driver.codec.transport.Attach;
+import org.apache.qpid.proton4j.amqp.transport.ReceiverSettleMode;
 import org.apache.qpid.proton4j.amqp.transport.Role;
+import org.apache.qpid.proton4j.amqp.transport.SenderSettleMode;
 
 /**
  * Tracks information about links that are opened be the client under test.
@@ -37,12 +41,32 @@ public class LinkTracker {
         return session;
     }
 
+    public String getName() {
+        return attach.getName();
+    }
+
     public Role getRole() {
         return isSender() ? Role.SENDER : Role.RECEIVER;
     }
 
+    public SenderSettleMode getSndSettleMode() {
+        return attach.getSndSettleMode() != null ? SenderSettleMode.valueOf(attach.getSndSettleMode()) : SenderSettleMode.MIXED;
+    }
+
+    public ReceiverSettleMode getRcvSettleMode() {
+        return attach.getRcvSettleMode() != null ? ReceiverSettleMode.valueOf(attach.getRcvSettleMode()) : ReceiverSettleMode.FIRST;
+    }
+
     public UnsignedInteger getHandle() {
         return attach.getHandle();
+    }
+
+    public Source getSource() {
+        return attach.getSource();
+    }
+
+    public Target getTarget() {
+        return attach.getTarget();
     }
 
     public boolean isSender() {

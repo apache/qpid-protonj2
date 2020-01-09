@@ -55,6 +55,10 @@ public class Target extends ListDescribedType {
         super(Field.values().length, described);
     }
 
+    public Target(Target value) {
+        super(Field.values().length, value);
+    }
+
     @Override
     public Symbol getDescriptor() {
         return DESCRIPTOR_SYMBOL;

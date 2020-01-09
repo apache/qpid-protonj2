@@ -36,6 +36,8 @@ import org.apache.qpid.proton4j.engine.impl.ProtonSession;
  */
 public interface Link<T extends Link<T>> {
 
+    // TODO - These should return the T type
+
     /**
      * Open this end of the link
      *

@@ -27,6 +27,7 @@ import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -1848,5 +1849,48 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         peer.waitForScriptToComplete();
 
         assertNull(failure);
+    }
+
+    @Test
+    public void testSenderHandlesDeferredOpenAndBeginAttachResponses() throws Exception {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result);
+        ProtonTestPeer peer = new ProtonTestPeer(engine);
+        engine.outputConsumer(peer);
+
+        final AtomicBoolean senderRemotelyOpened = new AtomicBoolean();
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen();
+        peer.expectBegin();
+        peer.expectAttach().withRole(Role.SENDER)
+                           .withTarget().withDynamic(true).withAddress((String) null);
+
+        Connection connection = engine.start();
+
+        connection.open();
+        Session session = connection.session();
+        session.open();
+
+        Sender sender = session.sender("sender-1");
+        sender.setTarget(new Target().setDynamic(true).setAddress(null));
+        sender.openHandler(result -> senderRemotelyOpened.set(true)).open();
+
+        peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+
+        // This should happen after we inject the held open and attach
+        peer.expectClose().respond();
+
+        // Inject held responses to get the ball rolling again
+        peer.remoteOpen().withOfferedCapabilities("ANONYMOUS_REALY").now();
+        peer.respondToLastBegin().now();
+        peer.respondToLastAttach().now();
+
+        assertTrue("Sender remote opened event did not fire", senderRemotelyOpened.get());
+        assertNotNull(sender.getRemoteTarget().getAddress());
+
+        connection.close();
+
+        peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
     }
 }

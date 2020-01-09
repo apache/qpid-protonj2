@@ -34,6 +34,22 @@ public abstract class ListDescribedType implements DescribedType {
         }
     }
 
+    public ListDescribedType(int numberOfFields, ListDescribedType described) {
+        if (described.fields.size() > numberOfFields) {
+            throw new IllegalArgumentException("List encoded exceeds expected number of elements for this type");
+        }
+
+        fields = new ArrayList<>(numberOfFields);
+
+        for (int i = 0; i < numberOfFields; ++i) {
+            if (i < described.fields.size()) {
+                fields.add(described.fields.get(i));
+            } else {
+                fields.add(null);
+            }
+        }
+    }
+
     public ListDescribedType(int numberOfFields, List<Object> described) {
         if (described.size() > numberOfFields) {
             throw new IllegalArgumentException("List encoded exceeds expected number of elements for this type");

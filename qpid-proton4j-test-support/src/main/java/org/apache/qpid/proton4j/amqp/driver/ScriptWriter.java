@@ -17,6 +17,7 @@
 package org.apache.qpid.proton4j.amqp.driver;
 
 import java.nio.charset.StandardCharsets;
+import java.util.UUID;
 
 import org.apache.qpid.proton4j.amqp.DescribedType;
 import org.apache.qpid.proton4j.amqp.driver.actions.AMQPHeaderInjectAction;
@@ -35,6 +36,8 @@ import org.apache.qpid.proton4j.amqp.driver.actions.SaslMechanismsInjectAction;
 import org.apache.qpid.proton4j.amqp.driver.actions.SaslOutcomeInjectAction;
 import org.apache.qpid.proton4j.amqp.driver.actions.SaslResponseInjectAction;
 import org.apache.qpid.proton4j.amqp.driver.actions.TransferInjectAction;
+import org.apache.qpid.proton4j.amqp.driver.codec.messaging.Source;
+import org.apache.qpid.proton4j.amqp.driver.codec.messaging.Target;
 import org.apache.qpid.proton4j.amqp.driver.expectations.AMQPHeaderExpectation;
 import org.apache.qpid.proton4j.amqp.driver.expectations.AttachExpectation;
 import org.apache.qpid.proton4j.amqp.driver.expectations.BeginExpectation;
@@ -340,6 +343,15 @@ public abstract class ScriptWriter {
 
     //----- Smart Scripted Response Actions
 
+    /**
+     * Creates a Begin response for the last session Begin that was received and fills in the Begin
+     * fields based on values from the remote.  The caller can further customize the Begin that is
+     * emitted by using the various with methods to assign values to the fields in the Begin.
+     *
+     * @return a new {@link BeginInjectAction} that can be queued or sent immediately.
+     *
+     * @throws IllegalStateException if no Begin has yet been received from the remote.
+     */
     public BeginInjectAction respondToLastBegin() {
         BeginInjectAction response = new BeginInjectAction(getDriver());
 
@@ -355,6 +367,47 @@ public abstract class ScriptWriter {
         response.withIncomingWindow(session.getIncomingWindow());
         response.withOutgoingWindow(session.getOutgoingWindow());
         response.withHandleMax(session.getHandleMax());
+
+        return response;
+    }
+
+    /**
+     * Creates a Attach response for the last link Attach that was received and fills in the Attach
+     * fields based on values from the remote.  The caller can further customize the Attach that is
+     * emitted by using the various with methods to assign values to the fields in the Attach.
+     *
+     * @return a new {@link AttachInjectAction} that can be queued or sent immediately.
+     *
+     * @throws IllegalStateException if no Attach has yet been received from the remote.
+     */
+    public AttachInjectAction respondToLastAttach() {
+        AttachInjectAction response = new AttachInjectAction(getDriver());
+
+        LinkTracker link = getDriver().getSessions().getLastOpenedSession().getLastOpenedLink();
+        if (link == null) {
+            throw new IllegalStateException("Cannot create response to Attach before one has been received.");
+        }
+
+        // Populate the response using data in the locally opened link, script can override this after return.
+        response.onChannel(link.getSession().getLocalChannel());
+        response.withHandle(link.getHandle());
+        response.withName(link.getName());
+        response.withRole(link.getRole());
+        response.withSndSettleMode(link.getSndSettleMode());
+        response.withRcvSettleMode(link.getRcvSettleMode());
+
+        if (link.getSource() != null) {
+            response.withSource(new Source(link.getSource()));
+            if (Boolean.TRUE.equals(link.getSource().getDynamic())) {
+                response.withSource().withAddress(UUID.randomUUID().toString());
+            }
+        }
+        if (link.getTarget() != null) {
+            response.withTarget(new Target(link.getTarget()));
+            if (Boolean.TRUE.equals(link.getTarget().getDynamic())) {
+                response.withTarget().withAddress(UUID.randomUUID().toString());
+            }
+        }
 
         return response;
     }
