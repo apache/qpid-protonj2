@@ -32,7 +32,6 @@ import org.apache.qpid.proton4j.amqp.transport.Disposition;
 import org.apache.qpid.proton4j.amqp.transport.End;
 import org.apache.qpid.proton4j.amqp.transport.ErrorCondition;
 import org.apache.qpid.proton4j.amqp.transport.Flow;
-import org.apache.qpid.proton4j.amqp.transport.Open;
 import org.apache.qpid.proton4j.amqp.transport.Role;
 import org.apache.qpid.proton4j.amqp.transport.Transfer;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
@@ -82,14 +81,17 @@ public class ProtonSession implements Session {
     private boolean localBeginSent;
     private boolean localEndSent;
 
-    private EventHandler<Session> parentClosedHandler = (result) -> {
-        LOG.trace("Parent Connection: {} closed.", getConnection());
-    };
     private EventHandler<Session> remoteOpenHandler = (result) -> {
         LOG.trace("Remote session open arrived at default handler.");
     };
     private EventHandler<Session> remoteCloseHandler = (result) -> {
         LOG.trace("Remote session close arrived at default handler.");
+    };
+    private EventHandler<Session> localOpenHandler = (result) -> {
+        LOG.trace("Session locally opened.");
+    };
+    private EventHandler<Session> localCloseHandler = (result) -> {
+        LOG.trace("Session locally closed.");
     };
 
     // No default for these handlers, Connection will process these if not set here.
@@ -166,7 +168,13 @@ public class ProtonSession implements Session {
             localState = SessionState.ACTIVE;
             incomingWindow.configureOutbound(localBegin);
             outgoingWindow.configureOutbound(localBegin);
-            processStateChangeAndRespond();
+            try {
+                processStateChangeAndRespond();
+            } finally {
+                if (localOpenHandler != null) {
+                    localOpenHandler.handle(this);
+                }
+            }
         }
 
         return this;
@@ -176,7 +184,13 @@ public class ProtonSession implements Session {
     public ProtonSession close() {
         if (getState() == SessionState.ACTIVE) {
             localState = SessionState.CLOSED;
-            processStateChangeAndRespond();
+            try {
+                processStateChangeAndRespond();
+            } finally {
+                if (localCloseHandler != null) {
+                    localCloseHandler.handle(this);
+                }
+            }
         }
 
         return this;
@@ -325,12 +339,6 @@ public class ProtonSession implements Session {
     //----- Event handler registration for this Session
 
     @Override
-    public ProtonSession connectionClosedHandler(EventHandler<Session> parentClosedHandler) {
-        this.parentClosedHandler = parentClosedHandler;
-        return this;
-    }
-
-    @Override
     public ProtonSession openHandler(EventHandler<Session> remoteOpenEventHandler) {
         this.remoteOpenHandler = remoteOpenEventHandler;
         return this;
@@ -339,6 +347,18 @@ public class ProtonSession implements Session {
     @Override
     public ProtonSession closeHandler(EventHandler<Session> remoteCloseEventHandler) {
         this.remoteCloseHandler = remoteCloseEventHandler;
+        return this;
+    }
+
+    @Override
+    public ProtonSession localOpenHandler(EventHandler<Session> localOpenEventHandler) {
+        this.localOpenHandler = localOpenEventHandler;
+        return this;
+    }
+
+    @Override
+    public ProtonSession localCloseHandler(EventHandler<Session> localCloseEventHandler) {
+        this.localCloseHandler = localCloseEventHandler;
         return this;
     }
 
@@ -364,32 +384,20 @@ public class ProtonSession implements Session {
 
     //----- Respond to local Connection changes
 
-    void localOpen(Open open) {
-        processStateChangeAndRespond();
-    }
-
-    void localClose(Close localClose) {
-        // If we weren't already closed we should report that as of now given our connection
-        // was just locally closed.
-        if (!isLocallyClosed()) {
-            localEndSent = true;
-            localState = SessionState.CLOSED;
-
-            for (ProtonLink<?> link : localLinks.values()) {
-                link.localClose(localClose);
-            }
+    void handleConnectionStateChanged(ProtonConnection connection) {
+        switch (connection.getState()) {
+            case IDLE:
+                return;
+            case ACTIVE:
+                processStateChangeAndRespond();
+                return;
+            case CLOSED:
+                processParentConnectionLocallyClosed();
+                return;
         }
     }
 
     //----- Handle incoming performatives
-
-    void remoteOpen(Open open, int channel) {
-        // TODO - Respond to connection being remotely opened
-    }
-
-    void remoteClose(Close close, int channel) {
-        // TODO - Respond to connection being remotely closed
-    }
 
     void remoteBegin(Begin begin, int channel) {
         remoteBegin = begin;
@@ -398,7 +406,7 @@ public class ProtonSession implements Session {
         incomingWindow.handleBegin(begin);
         outgoingWindow.handleBegin(begin);
 
-        if (getState() == SessionState.ACTIVE && remoteOpenHandler != null) {
+        if (isLocallyOpened() && remoteOpenHandler != null) {
             remoteOpenHandler.handle(this);
         }
     }
@@ -594,6 +602,12 @@ public class ProtonSession implements Session {
                 break;
             default:
                 throw new IllegalStateException("Session is in unknown state and cannot proceed");
+        }
+    }
+
+    private void processParentConnectionLocallyClosed() {
+        for (ProtonLink<?> link : localLinks.values()) {
+            link.localClose(new Close());  // TODO - change to informing link that session state changed.
         }
     }
 

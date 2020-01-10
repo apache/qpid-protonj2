@@ -249,7 +249,21 @@ public interface Session {
      *
      * @return the session for chaining.
      */
-    Session connectionClosedHandler(EventHandler<Session> parentClosedHandler);
+//    Session connectionClosedHandler(EventHandler<Session> parentClosedHandler);
+
+    /**
+     * Sets a {@link EventHandler} for when an this session is opened locally via a call to {@link Session#open()}
+     *
+     * Typically used by clients for logging or other state update event processing.  Clients should not perform any
+     * blocking calls within this context.  It is an error for the handler to throw an exception and the outcome of
+     * doing so is undefined.
+     *
+     * @param localOpenHandler
+     *      The {@link EventHandler} to notify when this session is locally opened.
+     *
+     * @return the session for chaining.
+     */
+    Session localOpenHandler(EventHandler<Session> localOpenHandler);
 
     /**
      * Sets a {@link EventHandler} for when an AMQP Begin frame is received from the remote peer for this
@@ -263,6 +277,20 @@ public interface Session {
      * @return the session for chaining.
      */
     Session openHandler(EventHandler<Session> remoteOpenHandler);
+
+    /**
+     * Sets a {@link EventHandler} for when an this session is closed locally via a call to {@link Session#close()}
+     *
+     * Typically used by clients for logging or other state update event processing.  Clients should not perform any
+     * blocking calls within this context.  It is an error for the handler to throw an exception and the outcome of
+     * doing so is undefined.
+     *
+     * @param localCloseHandler
+     *      The {@link EventHandler} to notify when this session is locally closed.
+     *
+     * @return the session for chaining.
+     */
+    Session localCloseHandler(EventHandler<Session> localCloseHandler);
 
     /**
      * Sets a {@link EventHandler} for when an AMQP End frame is received from the remote peer for this

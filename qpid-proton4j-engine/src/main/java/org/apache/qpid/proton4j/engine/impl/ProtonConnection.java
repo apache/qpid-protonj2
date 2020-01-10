@@ -145,7 +145,12 @@ public class ProtonConnection implements Connection, AMQPHeader.HeaderHandler<Pr
         if (getState() == ConnectionState.IDLE) {
             getEngine().checkShutdownOrFailed("Cannot open a connection when Engine is shutdown or failed.");
             localState = ConnectionState.ACTIVE;
-            processStateChangeAndRespond();
+            try {
+                processStateChangeAndRespond();
+            } finally {
+                ArrayList<ProtonSession> sessions = new ArrayList<>(localSessions.values());
+                sessions.forEach(session -> session.handleConnectionStateChanged(this));
+            }
         }
 
         return this;
@@ -156,7 +161,12 @@ public class ProtonConnection implements Connection, AMQPHeader.HeaderHandler<Pr
         if (getState() == ConnectionState.ACTIVE) {
             getEngine().checkShutdownOrFailed("Cannot close a connection when Engine is shutdown or failed.");
             localState = ConnectionState.CLOSED;
-            processStateChangeAndRespond();
+            try {
+                processStateChangeAndRespond();
+            } finally {
+                ArrayList<ProtonSession> sessions = new ArrayList<>(localSessions.values());
+                sessions.forEach(session -> session.handleConnectionStateChanged(this));
+            }
         }
 
         return this;
@@ -408,16 +418,6 @@ public class ProtonConnection implements Connection, AMQPHeader.HeaderHandler<Pr
         remoteState = ConnectionState.ACTIVE;
         remoteOpen = open;
 
-        // Filter events from flowing to child resources and event handlers if the connection
-        // was already closed indicating that the user is done with this connection.
-        if (!isLocallyClosed()) {
-            // Inform the local sessions that remote has opened this connection.
-            for (ProtonSession localSession : localSessions.values()) {
-                localSession.remoteOpen(open, channel);
-            }
-        }
-
-        // TODO - Should we signal remote open when locally closed or just await the final remote close ?
         if (remoteOpenHandler != null) {
             remoteOpenHandler.handle(this);
         }
@@ -427,15 +427,6 @@ public class ProtonConnection implements Connection, AMQPHeader.HeaderHandler<Pr
     public void handleClose(Close close, ProtonBuffer payload, int channel, ProtonEngine context) {
         remoteState = ConnectionState.CLOSED;
         setRemoteCondition(close.getError());
-
-        // Filter events from flowing to child resources and event handlers if the connection
-        // was already closed indicating that the user is done with this connection.
-        if (!isLocallyClosed()) {
-            // Inform the local sessions that remote has closed this connection.
-            for (ProtonSession session : localSessions.values()) {
-                session.remoteClose(close, channel);
-            }
-        }
 
         if (remoteCloseHandler != null) {
             remoteCloseHandler.handle(this);
@@ -604,8 +595,11 @@ public class ProtonConnection implements Connection, AMQPHeader.HeaderHandler<Pr
             // Once an incoming header arrives we can emit our open if locally opened and also send close if
             // that is what our state is already.
             if (state != ConnectionState.IDLE && headerReceived) {
+                boolean stateUpdated = false;
+
                 if (!localOpenSent) {
                     localOpenSent = true;
+                    stateUpdated = true;
                     engine.fireWrite(localOpen, 0, null, null);
                     engine.configuration().setMaxFrameSize((int) localOpen.getMaxFrameSize());
                     engine.configuration().recomputeEffectiveFrameSizeLimits();
@@ -613,24 +607,14 @@ public class ProtonConnection implements Connection, AMQPHeader.HeaderHandler<Pr
 
                 if (isLocallyClosed() && !localCloseSent) {
                     localCloseSent = true;
+                    stateUpdated = true;
                     Close localClose = new Close().setError(getCondition());
-                    // Inform all sessions that the connection has now written its local close
-                    ArrayList<ProtonSession> sessions = new ArrayList<>(localSessions.values());
-                    sessions.forEach(session -> {
-                        session.localClose(localClose);
-                    });
                     engine.fireWrite(localClose, 0, null, null);
                 }
 
-                // If we are already remotely closed then we shouldn't signal the session
-                // that we are opened just wait until locally closed at this point as that is
-                // the only remaining option for this Connection
-                if (isLocallyOpened() && !isRemotelyClosed()) {
-                    // Inform all sessions that the connection has now written its local open
+                if (stateUpdated) {
                     ArrayList<ProtonSession> sessions = new ArrayList<>(localSessions.values());
-                    sessions.forEach(session -> {
-                        session.localOpen(localOpen);
-                    });
+                    sessions.forEach(session -> session.handleConnectionStateChanged(this));
                 }
             }
         } else {

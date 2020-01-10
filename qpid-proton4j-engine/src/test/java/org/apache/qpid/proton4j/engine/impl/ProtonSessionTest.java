@@ -37,6 +37,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedInteger;
 import org.apache.qpid.proton4j.amqp.driver.ProtonTestPeer;
+import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
 import org.apache.qpid.proton4j.amqp.transport.AmqpError;
 import org.apache.qpid.proton4j.amqp.transport.ErrorCondition;
 import org.apache.qpid.proton4j.amqp.transport.Role;
@@ -62,6 +63,52 @@ import org.junit.Test;
 public class ProtonSessionTest extends ProtonEngineTestSupport {
 
     private static final ProtonLogger LOG = ProtonLoggerFactory.getLogger(ProtonEngineTestSupport.class);
+
+    @Test
+    public void testSessionEmitsOpenAndCloseEvents() throws Exception {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result);
+        ProtonTestPeer peer = new ProtonTestPeer(engine);
+        engine.outputConsumer(peer);
+
+        final AtomicBoolean sessionLocalOpen = new AtomicBoolean();
+        final AtomicBoolean sessionLocalClose = new AtomicBoolean();
+        final AtomicBoolean sessionRemoteOpen = new AtomicBoolean();
+        final AtomicBoolean sessionRemoteClose = new AtomicBoolean();
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond().withContainerId("driver");
+        peer.expectBegin().respond();
+        peer.expectEnd().respond();
+
+        Connection connection = engine.start();
+
+        // Default engine should start and return a connection immediately
+        assertNotNull(connection);
+
+        connection.open();
+        Session session = connection.session();
+
+        session.localOpenHandler(result -> sessionLocalOpen.set(true))
+               .localCloseHandler(result -> sessionLocalClose.set(true))
+               .openHandler(result -> sessionRemoteOpen.set(true))
+               .closeHandler(result -> sessionRemoteClose.set(true));
+
+        session.open();
+        session.close();
+
+        assertTrue("Session should have reported local open", sessionLocalOpen.get());
+        assertTrue("Session should have reported local close", sessionLocalClose.get());
+        assertTrue("Session should have reported remote open", sessionRemoteOpen.get());
+        assertTrue("Session should have reported remote close", sessionRemoteClose.get());
+
+        // Should not emit another end frame
+        session.close();
+
+        peer.waitForScriptToComplete();
+
+        assertNull(failure);
+    }
 
     @Test
     public void testSessionOpenAndCloseAreIdempotent() throws Exception {
@@ -234,6 +281,35 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
 
         peer.waitForScriptToComplete();
 
+        assertNull(failure);
+    }
+
+    @Test
+    public void testNoSessionPerformativesEmiitedIfConnectionOpenedAndClosedBeforeAnyRemoteResponses() {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result);
+        ProtonTestPeer peer = new ProtonTestPeer(engine);
+        engine.outputConsumer(peer);
+
+        // An opened session shouldn't write its begin until the parent connection
+        // is opened and once it is the begin should be automatically written.
+        Connection connection = engine.start();
+        Session session = connection.session();
+        session.open();
+
+        peer.expectAMQPHeader();
+
+        connection.open();
+
+        peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+
+        connection.close();
+
+        peer.expectOpen().respond();
+        peer.expectClose().respond();
+        peer.remoteHeader(AMQPHeader.getAMQPHeader()).now();
+
+        peer.waitForScriptToComplete();
         assertNull(failure);
     }
 
@@ -531,8 +607,11 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
         ProtonTestPeer peer = new ProtonTestPeer(engine);
         engine.outputConsumer(peer);
 
+        final AtomicBoolean sessionOpenedSignaled = new AtomicBoolean();
+
         Connection connection = engine.start();
         Session session = connection.session();
+        session.openHandler(result -> sessionOpenedSignaled.set(true));
         session.open();
         session.close();
 
@@ -542,7 +621,13 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
         peer.expectEnd().respond();
         peer.expectClose();
 
+        assertFalse("Session opened handler should not have been called yet", sessionOpenedSignaled.get());
+
         connection.open();
+
+        // Session was already closed so no open event should fire.
+        assertFalse("Session opened handler should not have been called yet", sessionOpenedSignaled.get());
+
         connection.close();
 
         peer.waitForScriptToComplete();
@@ -840,6 +925,9 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
         ProtonTestPeer peer = new ProtonTestPeer(engine);
         engine.outputConsumer(peer);
 
+        final AtomicInteger sessionOpened = new AtomicInteger();
+        final AtomicInteger sessionClosed = new AtomicInteger();
+
         peer.expectAMQPHeader().respondWithAMQPHeader();
         peer.expectOpen();
         peer.expectBegin();
@@ -848,12 +936,15 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
 
         connection.open();
         Session session = connection.session();
+        session.openHandler(result -> sessionOpened.incrementAndGet());
+        session.closeHandler(result -> sessionClosed.incrementAndGet());
         session.open();
 
         peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
 
         // This should happen after we inject the held open and attach
         peer.expectAttach().withRole(Role.SENDER).respond();
+        peer.expectEnd().respond();
         peer.expectClose().respond();
 
         // Inject held responses to get the ball rolling again
@@ -863,6 +954,11 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
         Sender sender = session.sender("sender-1");
 
         sender.open();
+
+        session.close();
+
+        assertEquals("Should get one opened event", 1, sessionOpened.get());
+        assertEquals("Should get one closed event", 1, sessionClosed.get());
 
         connection.close();
 
