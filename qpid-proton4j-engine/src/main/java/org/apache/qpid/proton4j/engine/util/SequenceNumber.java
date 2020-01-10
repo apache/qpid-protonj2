@@ -55,6 +55,24 @@ public class SequenceNumber extends Number implements Comparable<SequenceNumber>
         return this;
     }
 
+    /**
+     * Add one to the sequence value.
+     *
+     * @return this sequence value prior to the increment.
+     */
+    public SequenceNumber getAndIncrement() {
+        return new SequenceNumber(sequence++);
+    }
+
+    /**
+     * Subtract one to the sequence value.
+     *
+     * @return this sequence value prior to the decrement.
+     */
+    public SequenceNumber getAndDecrement() {
+        return new SequenceNumber(sequence--);
+    }
+
     @Override
     public int intValue() {
         return sequence;
@@ -67,12 +85,12 @@ public class SequenceNumber extends Number implements Comparable<SequenceNumber>
 
     @Override
     public float floatValue() {
-        return longValue();
+        return Float.intBitsToFloat(sequence);
     }
 
     @Override
     public double doubleValue() {
-        return longValue();
+        return Double.longBitsToDouble(longValue());
     }
 
     @Override

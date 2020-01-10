@@ -778,4 +778,44 @@ public class SplayMapTest {
 
         assertNull(map.lastEntry());
     }
+
+    @Test
+    public void testForEach() {
+        SplayMap<String> map = new SplayMap<>();
+
+        final int[] inputValues = {3, 0, -1, 1, -2, 2};
+        final int[] expectedOrder = {0, 1, 2, 3, -2, -1};
+
+        for (int entry : inputValues) {
+            map.put(entry, "" + entry);
+        }
+
+        final SequenceNumber index = new SequenceNumber(0);
+        map.forEach((k, v) -> {
+            int value = index.getAndIncrement().intValue();
+            assertEquals(expectedOrder[value], k.intValue());
+        });
+
+        assertEquals(index.intValue(), inputValues.length);
+    }
+
+    @Test
+    public void testForEachEntry() {
+        SplayMap<String> map = new SplayMap<>();
+
+        final int[] inputValues = {3, 0, -1, 1, -2, 2};
+        final int[] expectedOrder = {0, 1, 2, 3, -2, -1};
+
+        for (int entry : inputValues) {
+            map.put(entry, "" + entry);
+        }
+
+        final SequenceNumber index = new SequenceNumber(0);
+        map.forEach((value) -> {
+            int i = index.getAndIncrement().intValue();
+            assertEquals(expectedOrder[i] + "", value);
+        });
+
+        assertEquals(index.intValue(), inputValues.length);
+    }
 }

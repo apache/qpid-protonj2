@@ -26,8 +26,11 @@ import java.util.Map;
 import java.util.NavigableMap;
 import java.util.NavigableSet;
 import java.util.NoSuchElementException;
+import java.util.Objects;
 import java.util.Set;
 import java.util.SortedMap;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 import org.apache.qpid.proton4j.amqp.UnsignedInteger;
 
@@ -229,6 +232,53 @@ public class SplayMap<E> implements NavigableMap<UnsignedInteger, E> {
             entries = new SplayMapEntrySet();
         }
         return entries;
+    }
+
+    @Override
+    public void forEach(BiConsumer<? super UnsignedInteger, ? super E> action) {
+        Objects.requireNonNull(action);
+        firstEntry(this.root);
+
+        for (SplayedEntry<E> entry = firstEntry(root); entry != null; entry = successor(entry)) {
+            final UnsignedInteger key;
+            final E value;
+
+            try {
+                key = entry.getKey();
+                value = entry.getValue();
+            } catch (IllegalStateException ise) {
+                // this usually means the entry is no longer in the map.
+                throw new ConcurrentModificationException(ise);
+            }
+
+            action.accept(key, value);
+        }
+    }
+
+    /**
+     * A specialized forEach implementation that accepts a {@link Consumer} function that will
+     * be called for each value in the {@link SplayMap}.  This method can save overhead as it does not
+     * need to box the primitive key values into an object for the call to the provided function.
+     *
+     * @param action
+     *      The action to be performed for each of the values in the {@link SplayMap}.
+     */
+    public void forEach(Consumer<? super E> action) {
+        Objects.requireNonNull(action);
+        firstEntry(this.root);
+
+        for (SplayedEntry<E> entry = firstEntry(root); entry != null; entry = successor(entry)) {
+            final E value;
+
+            try {
+                value = entry.getValue();
+            } catch (IllegalStateException ise) {
+                // this usually means the entry is no longer in the map.
+                throw new ConcurrentModificationException(ise);
+            }
+
+            action.accept(value);
+        }
     }
 
     //----- Internal Implementation

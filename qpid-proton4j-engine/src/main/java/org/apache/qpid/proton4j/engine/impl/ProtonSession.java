@@ -630,22 +630,14 @@ public class ProtonSession implements Session {
     void fireSessionBegin() {
         localBeginSent = true;
         connection.getEngine().fireWrite(localBegin, localChannel, null, null);
-
-        // TODO - Implementing an efficient foreach on the MRU cache would be a nice to have.
-        for (ProtonLink<?> link : localLinks.values()) {
-            link.localBegin(localBegin, localChannel);
-        }
+        localLinks.forEach(link -> link.localBegin(localBegin, localChannel));
     }
 
     void fireSessionEnd() {
         localEndSent = true;
         connection.freeLocalChannel(localChannel);
         End localEnd = new End().setError(getCondition());
-
-        for (ProtonLink<?> link : localLinks.values()) {
-            link.localEnd(localEnd, localChannel);
-        }
-
+        localLinks.forEach(link -> link.localEnd(localEnd, localChannel));
         connection.getEngine().fireWrite(localEnd, localChannel, null, null);
     }
 
