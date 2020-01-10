@@ -89,6 +89,14 @@ public class ProtonConnection implements Connection, AMQPHeader.HeaderHandler<Pr
         LOG.trace("Remote close arrived at default handler.");
     };
 
+    private EventHandler<Connection> localOpenHandler = (result) -> {
+        LOG.trace("Connection has been locally opened.");
+    };
+
+    private EventHandler<Connection> localCloseHandler = (result) -> {
+        LOG.trace("Connection has been locally closed.");
+    };
+
     private EventHandler<Session> remoteSessionOpenEventHandler = (result) -> {
         LOG.trace("Remote session open arrived at default handler.");
     };
@@ -150,6 +158,9 @@ public class ProtonConnection implements Connection, AMQPHeader.HeaderHandler<Pr
             } finally {
                 ArrayList<ProtonSession> sessions = new ArrayList<>(localSessions.values());
                 sessions.forEach(session -> session.handleConnectionStateChanged(this));
+                if (localOpenHandler != null) {
+                    localOpenHandler.handle(this);
+                }
             }
         }
 
@@ -166,6 +177,9 @@ public class ProtonConnection implements Connection, AMQPHeader.HeaderHandler<Pr
             } finally {
                 ArrayList<ProtonSession> sessions = new ArrayList<>(localSessions.values());
                 sessions.forEach(session -> session.handleConnectionStateChanged(this));
+                if (localCloseHandler != null) {
+                    localCloseHandler.handle(this);
+                }
             }
         }
 
@@ -543,6 +557,18 @@ public class ProtonConnection implements Connection, AMQPHeader.HeaderHandler<Pr
     @Override
     public Connection closeHandler(EventHandler<Connection> remoteCloseEventHandler) {
         this.remoteCloseHandler = remoteCloseEventHandler;
+        return this;
+    }
+
+    @Override
+    public Connection localOpenHandler(EventHandler<Connection> localOpenEventHandler) {
+        this.localOpenHandler = localOpenEventHandler;
+        return this;
+    }
+
+    @Override
+    public Connection localCloseHandler(EventHandler<Connection> localCloseEventHandler) {
+        this.localCloseHandler = localCloseEventHandler;
         return this;
     }
 

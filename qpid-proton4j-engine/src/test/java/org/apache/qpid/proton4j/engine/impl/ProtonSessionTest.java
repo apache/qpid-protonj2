@@ -83,9 +83,6 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
 
         Connection connection = engine.start();
 
-        // Default engine should start and return a connection immediately
-        assertNotNull(connection);
-
         connection.open();
         Session session = connection.session();
 
@@ -101,9 +98,6 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
         assertTrue("Session should have reported local close", sessionLocalClose.get());
         assertTrue("Session should have reported remote open", sessionRemoteOpen.get());
         assertTrue("Session should have reported remote close", sessionRemoteClose.get());
-
-        // Should not emit another end frame
-        session.close();
 
         peer.waitForScriptToComplete();
 

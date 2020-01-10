@@ -330,6 +330,34 @@ public interface Connection {
     //----- Remote events for AMQP Connection resources
 
     /**
+     * Sets a {@link EventHandler} for when an this connection is opened locally via a call to {@link Connection#open()}
+     *
+     * Typically used by clients for logging or other state update event processing.  Clients should not perform any
+     * blocking calls within this context.  It is an error for the handler to throw an exception and the outcome of
+     * doing so is undefined.
+     *
+     * @param localOpenHandler
+     *      The {@link EventHandler} to notify when this connection is locally opened.
+     *
+     * @return this connection
+     */
+    Connection localOpenHandler(EventHandler<Connection> localOpenHandler);
+
+    /**
+     * Sets a {@link EventHandler} for when an this connection is closed locally via a call to {@link Connection#close()}
+     *
+     * Typically used by clients for logging or other state update event processing.  Clients should not perform any
+     * blocking calls within this context.  It is an error for the handler to throw an exception and the outcome of
+     * doing so is undefined.
+     *
+     * @param localCloseHandler
+     *      The {@link EventHandler} to notify when this connection is locally closed.
+     *
+     * @return this connection
+     */
+    Connection localCloseHandler(EventHandler<Connection> localCloseHandler);
+
+    /**
      * Sets a EventHandler for when an AMQP Open frame is received from the remote peer.
      *
      * Used to process remotely initiated Connections. Locally initiated sessions have their own EventHandler

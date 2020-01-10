@@ -55,6 +55,42 @@ import org.junit.Test;
 public class ProtonConnectionTest extends ProtonEngineTestSupport {
 
     @Test
+    public void testConnectionEmitsOpenAndCloseEvents() throws Exception {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result);
+        ProtonTestPeer peer = new ProtonTestPeer(engine);
+        engine.outputConsumer(peer);
+
+        final AtomicBoolean connectionLocalOpen = new AtomicBoolean();
+        final AtomicBoolean connectionLocalClose = new AtomicBoolean();
+        final AtomicBoolean connectionRemoteOpen = new AtomicBoolean();
+        final AtomicBoolean connectionRemoteClose = new AtomicBoolean();
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond().withContainerId("driver");
+        peer.expectClose().respond();
+
+        Connection connection = engine.start();
+
+        connection.localOpenHandler(result -> connectionLocalOpen.set(true))
+                  .localCloseHandler(result -> connectionLocalClose.set(true))
+                  .openHandler(result -> connectionRemoteOpen.set(true))
+                  .closeHandler(result -> connectionRemoteClose.set(true));
+
+        connection.open();
+        connection.close();
+
+        assertTrue("Connection should have reported local open", connectionLocalOpen.get());
+        assertTrue("Connection should have reported local close", connectionLocalClose.get());
+        assertTrue("Connection should have reported remote open", connectionRemoteOpen.get());
+        assertTrue("Connection should have reported remote close", connectionRemoteClose.get());
+
+        peer.waitForScriptToComplete();
+
+        assertNull(failure);
+    }
+
+    @Test
     public void testConnectionOpenAndCloseAreIdempotent() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
