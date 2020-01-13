@@ -92,7 +92,7 @@ public interface Connection {
     Engine getEngine();
 
     /**
-     * @return the local connection state only/
+     * @return the local connection state only
      */
     ConnectionState getState();
 
@@ -122,13 +122,6 @@ public interface Connection {
      */
     Session session() throws IllegalStateException;
 
-    // TODO - Method for walking through all currently locally observed sessions so user doesn't
-    //        have to track them redundantly.  Poses a larger question of granting access to
-    //        other tracked resources from the session like links and also if we should provide
-    //        event points for not only remote open / close of a resource but also local side
-    //        or else parent state changes like parent locally closed etc to allow for simplified
-    //        handling of these things in clients ?
-
     /**
      * Returns an unmodifiable {@link Set} of Sessions that are tracked by the Connection.
      *
@@ -142,7 +135,9 @@ public interface Connection {
     String getContainerId();
 
     /**
-     * Sets the Container Id to be used when opening this Connection.
+     * Sets the Container Id to be used when opening this Connection.  The container Id can only
+     * be modified prior to a call to {@link Connection#open()}, once the connection has been
+     * opened locally an error will be thrown if this method is called.
      *
      * @param containerId
      *      The Container Id used for this end of the Connection.
@@ -154,13 +149,17 @@ public interface Connection {
     Connection setContainerId(String containerId) throws IllegalStateException;
 
     /**
-     * Set the name of the host (either fully qualified or relative) to which
-     * this connection is connecting to.  This information may be used by the
-     * remote peer to determine the correct back-end service to connect the
-     * client to.  This value will be sent in the Open performative.
+     * Set the name of the host (either fully qualified or relative) to which this
+     * connection is connecting to.  This information may be used by the remote peer
+     * to determine the correct back-end service to connect the client to. This value
+     * will be sent in the Open performative.
      *
      * <b>Note that it is illegal to set the host name to a numeric IP
      * address or include a port number.</b>
+     *
+     * The host name value can only be modified prior to a call to {@link Connection#open()},
+     * once the connection has been opened locally an error will be thrown if this method
+     * is called.
      *
      * @param hostname the RFC1035 compliant host name.
      *
@@ -179,6 +178,10 @@ public interface Connection {
 
     /**
      * Set the channel max value for this Connection.
+     *
+     * The channel max value can only be modified prior to a call to {@link Connection#open()},
+     * once the connection has been opened locally an error will be thrown if this method
+     * is called.
      *
      * @param channelMax
      *      The value to set for channel max when opening the connection.
@@ -201,6 +204,10 @@ public interface Connection {
      *
      * The legal range for this value is defined as (512 - 2^32-1) bytes.
      *
+     * The max frame size value can only be modified prior to a call to {@link Connection#open()},
+     * once the connection has been opened locally an error will be thrown if this method
+     * is called.
+     *
      * @param maxFrameSize
      *      The maximum number of bytes allowed for a single
      *
@@ -217,6 +224,10 @@ public interface Connection {
 
     /**
      * Set the idle timeout value for this Connection.
+     *
+     * The idle timeout value can only be modified prior to a call to {@link Connection#open()},
+     * once the connection has been opened locally an error will be thrown if this method
+     * is called.
      *
      * @param idleTimeout
      *      The value to set for the idle timeout when opening the connection.
@@ -236,6 +247,10 @@ public interface Connection {
      * Sets the capabilities to be offered on to the remote when this Connection is
      * opened.
      *
+     * The offered capabilities value can only be modified prior to a call to {@link Connection#open()},
+     * once the connection has been opened locally an error will be thrown if this method
+     * is called.
+     *
      * @param capabilities
      *      The capabilities to be offered to the remote when the Connection is opened.
      *
@@ -254,6 +269,10 @@ public interface Connection {
      * Sets the capabilities that are desired from the remote when this Connection is
      * opened.
      *
+     * The desired capabilities value can only be modified prior to a call to {@link Connection#open()},
+     * once the connection has been opened locally an error will be thrown if this method
+     * is called.
+     *
      * @param capabilities
      *      The capabilities desired from the remote when the Connection is opened.
      *
@@ -270,6 +289,10 @@ public interface Connection {
 
     /**
      * Sets the properties to be sent to the remote when this Connection is Opened.
+     *
+     * The connection properties value can only be modified prior to a call to {@link Connection#open()},
+     * once the connection has been opened locally an error will be thrown if this method
+     * is called.
      *
      * @param properties
      *      The properties that will be sent to the remote when this Connection is opened.
