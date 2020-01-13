@@ -117,12 +117,12 @@ public class ProtonReceiver extends ProtonLink<Receiver> implements Receiver {
     public Receiver drain() {
         checkNotClosed("Cannot drain a closed Receiver");
 
-        if(drainStateSnapshot != null) {
+        if (drainStateSnapshot != null) {
             throw new IllegalStateException("Drain attempt already outstanding");
         }
 
         LinkCreditState snapshot = linkState.snapshotCreditState();
-        if(snapshot.getCredit() <= 0) {
+        if (snapshot.getCredit() <= 0) {
             throw new IllegalStateException("No existing credit to drain");
         }
 
@@ -229,5 +229,47 @@ public class ProtonReceiver extends ProtonLink<Receiver> implements Receiver {
             receiverDrainedEventHandler.handle(this);
         }
         return this;
+    }
+
+    //----- Handle link and parent resource state changes
+
+    @Override
+    protected void transitionedToLocallyOpened() {
+        // Nothing currently updated on this state change.
+    }
+
+    @Override
+    protected void transitionedToLocallyDetached() {
+        // Nothing currently updated on this state change.
+    }
+
+    @Override
+    protected void transitionedToLocallyClosed() {
+        // Nothing currently updated on this state change.
+    }
+
+    @Override
+    protected void transitionToRemotelyOpenedState() {
+        // Nothing currently updated on this state change.
+    }
+
+    @Override
+    protected void transitionToRemotelyDetachedState() {
+        // Nothing currently updated on this state change.
+    }
+
+    @Override
+    protected void transitionToRemotelyCosedState() {
+        // Nothing currently updated on this state change.
+    }
+
+    @Override
+    protected void transitionToParentLocallyClosedState() {
+        // Nothing currently updated on this state change.
+    }
+
+    @Override
+    protected void transitionToParentRemotelyClosedState() {
+        // Nothing currently updated on this state change.
     }
 }

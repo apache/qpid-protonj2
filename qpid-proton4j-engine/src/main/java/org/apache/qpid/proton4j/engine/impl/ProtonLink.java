@@ -26,10 +26,7 @@ import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.amqp.messaging.Source;
 import org.apache.qpid.proton4j.amqp.messaging.Target;
 import org.apache.qpid.proton4j.amqp.transport.Attach;
-import org.apache.qpid.proton4j.amqp.transport.Begin;
-import org.apache.qpid.proton4j.amqp.transport.Close;
 import org.apache.qpid.proton4j.amqp.transport.Detach;
-import org.apache.qpid.proton4j.amqp.transport.End;
 import org.apache.qpid.proton4j.amqp.transport.ErrorCondition;
 import org.apache.qpid.proton4j.amqp.transport.Flow;
 import org.apache.qpid.proton4j.amqp.transport.ReceiverSettleMode;
@@ -63,6 +60,9 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
     protected final Attach localAttach = new Attach();
     protected Attach remoteAttach;
 
+    private boolean localAttachSent;
+    private boolean localDetachSent;
+
     private final ProtonContext context = new ProtonContext();
 
     private LinkState localState = LinkState.IDLE;
@@ -73,11 +73,21 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
 
     private EventHandler<T> remoteOpenHandler;
 
+    private EventHandler<T> localOpenHandler = (result) -> {
+        LOG.trace("Link {} locally opened.", self());
+    };
+    private EventHandler<T> localCloseHandler = (result) -> {
+        LOG.trace("Link {} locally closed.", self());
+    };
+    private EventHandler<T> localDetachHandler = (result) -> {
+        LOG.trace("Link {} locally detached.", self());
+    };
+
     private EventHandler<T> remoteDetachHandler = (result) -> {
-        LOG.trace("Remote link detach arrived at default handler.");
+        LOG.trace("Link {} Remote link detach arrived at default handler.", self());
     };
     private EventHandler<T> remoteCloseHandler = (result) -> {
-        LOG.trace("Remote link close arrived at default handler.");
+        LOG.trace("Link {} Remote link close arrived at default handler.", self());
     };
 
     /**
@@ -168,14 +178,16 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
             long localHandle = session.findFreeLocalHandle(this);
             localAttach.setHandle(localHandle);
             transitionedToLocallyOpened();
-            trySendLocalAttach();
+            try {
+                syncLocalStateWithRemote();
+            } finally {
+                if (localOpenHandler != null) {
+                    localOpenHandler.handle(self());
+                }
+            }
         }
 
         return self();
-    }
-
-    protected void transitionedToLocallyOpened() {
-        // Subclass can respond to this state change as needed.
     }
 
     @Override
@@ -183,14 +195,16 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
         if (getState() == LinkState.ACTIVE) {
             localState = LinkState.DETACHED;
             transitionedToLocallyDetached();
-            trySendLocalDetach(false);
+            try {
+                syncLocalStateWithRemote();
+            } finally {
+                if (localDetachHandler != null) {
+                    localDetachHandler.handle(self());
+                }
+            }
         }
 
         return self();
-    }
-
-    protected void transitionedToLocallyDetached() {
-        // Subclass can respond to this state change as needed.
     }
 
     @Override
@@ -198,14 +212,16 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
         if (getState() == LinkState.ACTIVE) {
             localState = LinkState.CLOSED;
             transitionedToLocallyClosed();
-            trySendLocalDetach(true);
+            try {
+                syncLocalStateWithRemote();
+            } finally {
+                if (localCloseHandler != null) {
+                    localCloseHandler.handle(self());
+                }
+            }
         }
 
         return self();
-    }
-
-    protected void transitionedToLocallyClosed() {
-        // Subclass can respond to this state change as needed.
     }
 
     @Override
@@ -406,6 +422,26 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
         return null;
     }
 
+    //----- Event registration methods
+
+    @Override
+    public T localOpenHandler(EventHandler<T> localOpenHandler) {
+        this.localOpenHandler = localOpenHandler;
+        return self();
+    }
+
+    @Override
+    public T localCloseHandler(EventHandler<T> localCloseHandler) {
+        this.localCloseHandler = localCloseHandler;
+        return self();
+    }
+
+    @Override
+    public T localDetachHandler(EventHandler<T> localDetachHandler) {
+        this.localDetachHandler = localDetachHandler;
+        return self();
+    }
+
     @Override
     public T openHandler(EventHandler<T> remoteOpenHandler) {
         this.remoteOpenHandler = remoteOpenHandler;
@@ -424,36 +460,57 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
         return self();
     }
 
+    //----- Abstract Link methods needed to implement a fully functional Link type
+
+    protected abstract void transitionedToLocallyOpened();
+
+    protected abstract void transitionedToLocallyDetached();
+
+    protected abstract void transitionedToLocallyClosed();
+
+    protected abstract void transitionToRemotelyOpenedState();
+
+    protected abstract void transitionToRemotelyDetachedState();
+
+    protected abstract void transitionToRemotelyCosedState();
+
+    protected abstract void transitionToParentLocallyClosedState();
+
+    protected abstract void transitionToParentRemotelyClosedState();
+
     //----- Process local events from the parent session
 
-    void localBegin(Begin begin, int channel) {
-        // Fire held attach if link already marked as active.
-        if (getState().ordinal() >= LinkState.ACTIVE.ordinal()) {
-            trySendLocalAttach();
-        }
-
-        // If already closed or detached this is the time to send that along as well.
-        if (isLocallyDetached()) {
-            trySendLocalDetach(false);
-        } else if (isLocallyClosed()) {
-            trySendLocalDetach(true);
-        }
-    }
-
-    void localClose(Close localClose) {
-        if (!isLocallyClosed()) {
-            // TODO - State as closed or detached ?
-            localState = LinkState.CLOSED;
-            linkState().localClose(true);
-            transitionedToLocallyClosed();
+    void handleSessionStateChanged(ProtonSession session) {
+        switch (session.getState()) {
+            case IDLE:
+                return;
+            case ACTIVE:
+                syncLocalStateWithRemote();
+                return;
+            case CLOSED:
+                transitionToParentLocallyClosedState();
+                return;
         }
     }
 
-    void localEnd(End end, int channel) {
-        if (!isLocallyClosed()) {
-            // TODO - State as closed or detached ?
-            linkState().localClose(true);
-            transitionedToLocallyClosed();
+    void processParentConnectionLocallyClosed() {
+        transitionToParentLocallyClosedState();
+    }
+
+    private void syncLocalStateWithRemote() {
+        switch (getState()) {
+            case IDLE:
+                return;
+            case ACTIVE:
+                trySendLocalAttach();
+                break;
+            case CLOSED:
+            case DETACHED:
+                trySendLocalAttach();
+                trySendLocalDetach(isLocallyClosed());
+                break;
+            default:
+                throw new IllegalStateException("Link is in unknown state and cannot proceed");
         }
     }
 
@@ -463,6 +520,7 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
         remoteAttach = attach;
         remoteState = LinkState.ACTIVE;
         linkState().remoteAttach(attach);
+        transitionToRemotelyOpenedState();
 
         if (remoteOpenHandler != null) {
             remoteOpenHandler.handle(self());
@@ -494,11 +552,13 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
 
         if (detach.getClosed()) {
             remoteState = LinkState.CLOSED;
+            transitionToRemotelyCosedState();
             if (remoteCloseHandler != null) {
                 remoteCloseHandler.handle(self());
             }
         } else {
             remoteState = LinkState.DETACHED;
+            transitionToRemotelyDetachedState();
             if (remoteDetachHandler != null) {
                 remoteDetachHandler.handle(self());
             }
@@ -542,28 +602,40 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
         return getRemoteState() == LinkState.DETACHED;
     }
 
-    private void trySendLocalAttach() {
-        if ((session.isLocallyOpened() && session.wasLocalBeginSent()) &&
-            (connection.isLocallyOpened() && connection.wasLocalOpenSent())) {
+    boolean wasLocalAttachSent() {
+        return localAttachSent;
+    }
 
-            // TODO - Still need to check for transport being writable at this time.
-            session.getEngine().fireWrite(
-                linkState().configureAttach(localAttach), session.getLocalChannel(), null, null);
+    boolean wasLocalDetachSent() {
+        return localDetachSent;
+    }
+
+    private void trySendLocalAttach() {
+        if (!wasLocalAttachSent()) {
+            if ((session.isLocallyOpened() && session.wasLocalBeginSent()) &&
+                (connection.isLocallyOpened() && connection.wasLocalOpenSent())) {
+
+                localAttachSent = true;
+                session.getEngine().fireWrite(
+                    linkState().configureAttach(localAttach), session.getLocalChannel(), null, null);
+            }
         }
     }
 
     private void trySendLocalDetach(boolean closed) {
-        if ((session.isLocallyOpened() && session.wasLocalBeginSent()) &&
-            (connection.isLocallyOpened() && connection.wasLocalOpenSent())) {
+        if (!wasLocalDetachSent()) {
+            if ((session.isLocallyOpened() && session.wasLocalBeginSent()) &&
+                (connection.isLocallyOpened() && connection.wasLocalOpenSent())) {
 
-            // TODO - Still need to check that transport is writable
-            Detach detach = new Detach();
-            detach.setHandle(localAttach.getHandle());
-            detach.setClosed(closed);
-            detach.setError(getCondition());
+                Detach detach = new Detach();
+                detach.setHandle(localAttach.getHandle());
+                detach.setClosed(closed);
+                detach.setError(getCondition());
 
-            session.freeLocalHandle(localAttach.getHandle());
-            session.getEngine().fireWrite(detach, session.getLocalChannel(), null, null);
+                session.freeLocalHandle(localAttach.getHandle());
+                localDetachSent = true;
+                session.getEngine().fireWrite(detach, session.getLocalChannel(), null, null);
+            }
         }
     }
 

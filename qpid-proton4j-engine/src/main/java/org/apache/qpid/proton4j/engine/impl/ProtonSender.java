@@ -232,28 +232,60 @@ public class ProtonSender extends ProtonLink<Sender> implements Sender {
 
     @Override
     protected void transitionedToLocallyDetached() {
-        this.sendHandler = (delivery, buffer) -> {
-            throw new IllegalStateException("Cannot send when sender link is detached");
-        };
-        this.dispositionHandler = delivery -> {
-            throw new IllegalStateException("Cannot send a disposition when sender link is detached");
-        };
-        this.abortHandler = delivery -> {
-            throw new IllegalStateException("Cannot abort a delivery when sender link is detached");
-        };
+        disableAllSenderOperations("link is detached");
     }
 
     @Override
     protected void transitionedToLocallyClosed() {
+        disableAllSenderOperations("link is closed");
+    }
+
+    @Override
+    protected void transitionToRemotelyOpenedState() {
+        // Nothing to do yet on remotely opened.
+    }
+
+    @Override
+    protected void transitionToRemotelyDetachedState() {
+        if (isLocallyOpened()) {
+            disableAllSenderOperations("link is remotely detached");
+        }
+    }
+
+    @Override
+    protected void transitionToRemotelyCosedState() {
+        if (isLocallyOpened()) {
+            disableAllSenderOperations("link is remotely closed");
+        }
+    }
+
+    @Override
+    protected void transitionToParentLocallyClosedState() {
+        if (isLocallyOpened()) {
+            disableAllSenderOperations("parent resurce is locally closed");
+        }
+    }
+
+    @Override
+    protected void transitionToParentRemotelyClosedState() {
+        if (isLocallyOpened()) {
+            disableAllSenderOperations("parent resurce is remotely closed");
+        }
+    }
+
+    private void disableAllSenderOperations(String cause) {
         this.sendHandler = (delivery, buffer) -> {
-            throw new IllegalStateException("Cannot send when sender link is closed");
+            throw new IllegalStateException("Cannot send transfers due to: " + cause);
         };
         this.dispositionHandler = delivery -> {
-            throw new IllegalStateException("Cannot send a disposition when sender link is closed");
+            throw new IllegalStateException("Cannot send a disposition due to: " + cause);
         };
         this.abortHandler = delivery -> {
-            throw new IllegalStateException("Cannot abort a delivery when sender link is closed");
+            throw new IllegalStateException("Cannot abort a delivery due to:" + cause);
         };
+
+        // TODO - Setting this here for now, need to decide when to signal this changed.
+        this.linkState().setSendable(false);
     }
 
     private void sendSink(ProtonOutgoingDelivery delivery, ProtonBuffer payload) {

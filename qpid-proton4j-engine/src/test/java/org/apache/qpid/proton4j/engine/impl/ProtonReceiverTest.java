@@ -76,6 +76,80 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
                                                                      Modified.DESCRIPTOR_SYMBOL };
 
     @Test
+    public void testReceiverEmitsOpenAndCloseEvents() throws Exception {
+        doTestReceiverEmitsEvents(false);
+    }
+
+    @Test
+    public void testReceiverEmitsOpenAndDetachEvents() throws Exception {
+        doTestReceiverEmitsEvents(true);
+    }
+
+    private void doTestReceiverEmitsEvents(boolean detach) throws Exception {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result);
+        ProtonTestPeer peer = new ProtonTestPeer(engine);
+        engine.outputConsumer(peer);
+
+        final AtomicBoolean receiverLocalOpen = new AtomicBoolean();
+        final AtomicBoolean receiverLocalClose = new AtomicBoolean();
+        final AtomicBoolean receiverLocalDetach = new AtomicBoolean();
+        final AtomicBoolean receiverRemoteOpen = new AtomicBoolean();
+        final AtomicBoolean receiverRemoteClose = new AtomicBoolean();
+        final AtomicBoolean receiverRemoteDetach = new AtomicBoolean();
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond().withContainerId("driver");
+        peer.expectBegin().respond();
+        peer.expectAttach().respond();
+        peer.expectDetach().respond();
+        peer.expectEnd().respond();
+
+        Connection connection = engine.start();
+
+        connection.open();
+        Session session = connection.session();
+        session.open();
+
+        Receiver receiver = session.receiver("test");
+        receiver.localOpenHandler(result -> receiverLocalOpen.set(true))
+                .localCloseHandler(result -> receiverLocalClose.set(true))
+                .localDetachHandler(result -> receiverLocalDetach.set(true))
+                .openHandler(result -> receiverRemoteOpen.set(true))
+                .detachHandler(result -> receiverRemoteDetach.set(true))
+                .closeHandler(result -> receiverRemoteClose.set(true));
+
+        receiver.open();
+
+        if (detach) {
+            receiver.detach();
+        } else {
+            receiver.close();
+        }
+
+        assertTrue("Receiver should have reported local open", receiverLocalOpen.get());
+        assertTrue("Receiver should have reported remote open", receiverRemoteOpen.get());
+
+        if (detach) {
+            assertFalse("Receiver should not have reported local close", receiverLocalClose.get());
+            assertTrue("Receiver should have reported local detach", receiverLocalDetach.get());
+            assertFalse("Receiver should not have reported remote close", receiverRemoteClose.get());
+            assertTrue("Receiver should have reported remote close", receiverRemoteDetach.get());
+        } else {
+            assertTrue("Receiver should have reported local close", receiverLocalClose.get());
+            assertFalse("Receiver should not have reported local detach", receiverLocalDetach.get());
+            assertTrue("Receiver should have reported remote close", receiverRemoteClose.get());
+            assertFalse("Receiver should not have reported remote close", receiverRemoteDetach.get());
+        }
+
+        session.close();
+
+        peer.waitForScriptToComplete();
+
+        assertNull(failure);
+    }
+
+    @Test
     public void testReceiverOpenWithNoSenderOrReceiverSettleModes() throws Exception {
         doTestOpenReceiverWithConfiguredSenderAndReceiverSettlementModes(null, null);
     }

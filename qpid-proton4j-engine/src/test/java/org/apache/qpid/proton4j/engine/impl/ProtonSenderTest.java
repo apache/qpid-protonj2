@@ -63,6 +63,80 @@ import org.junit.Test;
 public class ProtonSenderTest extends ProtonEngineTestSupport {
 
     @Test
+    public void testSenderEmitsOpenAndCloseEvents() throws Exception {
+        doTestSenderEmitsEvents(false);
+    }
+
+    @Test
+    public void testSenderEmitsOpenAndDetachEvents() throws Exception {
+        doTestSenderEmitsEvents(true);
+    }
+
+    private void doTestSenderEmitsEvents(boolean detach) throws Exception {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result);
+        ProtonTestPeer peer = new ProtonTestPeer(engine);
+        engine.outputConsumer(peer);
+
+        final AtomicBoolean senderLocalOpen = new AtomicBoolean();
+        final AtomicBoolean senderLocalClose = new AtomicBoolean();
+        final AtomicBoolean senderLocalDetach = new AtomicBoolean();
+        final AtomicBoolean senderRemoteOpen = new AtomicBoolean();
+        final AtomicBoolean senderRemoteClose = new AtomicBoolean();
+        final AtomicBoolean senderRemoteDetach = new AtomicBoolean();
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond().withContainerId("driver");
+        peer.expectBegin().respond();
+        peer.expectAttach().respond();
+        peer.expectDetach().respond();
+        peer.expectEnd().respond();
+
+        Connection connection = engine.start();
+
+        connection.open();
+        Session session = connection.session();
+        session.open();
+
+        Sender sender = session.sender("test");
+        sender.localOpenHandler(result -> senderLocalOpen.set(true))
+              .localCloseHandler(result -> senderLocalClose.set(true))
+              .localDetachHandler(result -> senderLocalDetach.set(true))
+              .openHandler(result -> senderRemoteOpen.set(true))
+              .detachHandler(result -> senderRemoteDetach.set(true))
+              .closeHandler(result -> senderRemoteClose.set(true));
+
+        sender.open();
+
+        if (detach) {
+            sender.detach();
+        } else {
+            sender.close();
+        }
+
+        assertTrue("Sender should have reported local open", senderLocalOpen.get());
+        assertTrue("Sender should have reported remote open", senderRemoteOpen.get());
+
+        if (detach) {
+            assertFalse("Sender should not have reported local close", senderLocalClose.get());
+            assertTrue("Sender should have reported local detach", senderLocalDetach.get());
+            assertFalse("Sender should not have reported remote close", senderRemoteClose.get());
+            assertTrue("Sender should have reported remote close", senderRemoteDetach.get());
+        } else {
+            assertTrue("Sender should have reported local close", senderLocalClose.get());
+            assertFalse("Sender should not have reported local detach", senderLocalDetach.get());
+            assertTrue("Sender should have reported remote close", senderRemoteClose.get());
+            assertFalse("Sender should not have reported remote close", senderRemoteDetach.get());
+        }
+
+        session.close();
+
+        peer.waitForScriptToComplete();
+
+        assertNull(failure);
+    }
+
+    @Test
     public void testSenderOpenWithNoSenderOrReceiverSettleModes() throws Exception {
         doTestOpenSenderWithConfiguredSenderAndReceiverSettlementModes(null, null);
     }
@@ -1171,6 +1245,61 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         } catch (IllegalStateException ise) {
             // Should not allow writes on past delivery instances after connection closed
         }
+
+        peer.waitForScriptToComplete();
+
+        assertNull(failure);
+    }
+
+    @Test
+    public void testSenderCannotSendAfterSessionClosed() throws Exception {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result);
+        ProtonTestPeer peer = new ProtonTestPeer(engine);
+        engine.outputConsumer(peer);
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond().withContainerId("driver");
+        peer.expectBegin().respond();
+        peer.expectAttach().withRole(Role.SENDER).respond();
+        peer.remoteFlow().withDeliveryCount(0)
+                         .withLinkCredit(10)
+                         .withIncomingWindow(1024)
+                         .withOutgoingWindow(10)
+                         .withNextIncomingId(0)
+                         .withNextOutgoingId(1).queue();
+        peer.expectEnd().respond();
+        peer.expectClose().respond();
+
+        Connection connection = engine.start();
+
+        connection.open();
+        Session session = connection.session();
+        session.open();
+
+        Sender sender = session.sender("sender-1");
+
+        assertFalse(sender.isSendable());
+
+        OutgoingDelivery delivery = sender.next();
+        assertNotNull(delivery);
+
+        sender.open();
+
+        assertEquals(10, sender.getCredit());
+        assertTrue(sender.isSendable());
+
+        session.close();
+
+        assertFalse(sender.isSendable());
+        try {
+            delivery.writeBytes(ProtonByteBufferAllocator.DEFAULT.wrap(new byte[] { 1 }));
+            fail("Should not be able to write to delivery after session closed.");
+        } catch (IllegalStateException ise) {
+            // Should not allow writes on past delivery instances after session closed
+        }
+
+        connection.close();
 
         peer.waitForScriptToComplete();
 

@@ -25,7 +25,6 @@ import java.util.Map;
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.transport.Attach;
 import org.apache.qpid.proton4j.amqp.transport.Begin;
-import org.apache.qpid.proton4j.amqp.transport.Close;
 import org.apache.qpid.proton4j.amqp.transport.ConnectionError;
 import org.apache.qpid.proton4j.amqp.transport.Detach;
 import org.apache.qpid.proton4j.amqp.transport.Disposition;
@@ -169,7 +168,7 @@ public class ProtonSession implements Session {
             incomingWindow.configureOutbound(localBegin);
             outgoingWindow.configureOutbound(localBegin);
             try {
-                processStateChangeAndRespond();
+                syncLocalStateWithRemote();
             } finally {
                 if (localOpenHandler != null) {
                     localOpenHandler.handle(this);
@@ -185,7 +184,7 @@ public class ProtonSession implements Session {
         if (getState() == SessionState.ACTIVE) {
             localState = SessionState.CLOSED;
             try {
-                processStateChangeAndRespond();
+                syncLocalStateWithRemote();
             } finally {
                 if (localCloseHandler != null) {
                     localCloseHandler.handle(this);
@@ -389,7 +388,7 @@ public class ProtonSession implements Session {
             case IDLE:
                 return;
             case ACTIVE:
-                processStateChangeAndRespond();
+                syncLocalStateWithRemote();
                 return;
             case CLOSED:
                 processParentConnectionLocallyClosed();
@@ -589,7 +588,7 @@ public class ProtonSession implements Session {
         return localEndSent;
     }
 
-    private void processStateChangeAndRespond() {
+    private void syncLocalStateWithRemote() {
         switch (getState()) {
             case IDLE:
                 return;
@@ -607,7 +606,7 @@ public class ProtonSession implements Session {
 
     private void processParentConnectionLocallyClosed() {
         for (ProtonLink<?> link : localLinks.values()) {
-            link.localClose(new Close());  // TODO - change to informing link that session state changed.
+            link.processParentConnectionLocallyClosed();
         }
     }
 
@@ -630,15 +629,14 @@ public class ProtonSession implements Session {
     void fireSessionBegin() {
         localBeginSent = true;
         connection.getEngine().fireWrite(localBegin, localChannel, null, null);
-        localLinks.forEach(link -> link.localBegin(localBegin, localChannel));
+        localLinks.forEach(link -> link.handleSessionStateChanged(this));
     }
 
     void fireSessionEnd() {
         localEndSent = true;
         connection.freeLocalChannel(localChannel);
-        End localEnd = new End().setError(getCondition());
-        localLinks.forEach(link -> link.localEnd(localEnd, localChannel));
-        connection.getEngine().fireWrite(localEnd, localChannel, null, null);
+        connection.getEngine().fireWrite(new End().setError(getCondition()), localChannel, null, null);
+        localLinks.forEach(link -> link.handleSessionStateChanged(this));
     }
 
     long findFreeLocalHandle(ProtonLink<?> link) {

@@ -63,6 +63,10 @@ public class ProtonSenderState implements ProtonLinkState<ProtonOutgoingDelivery
         return sendable; // TODO Map other events that change sendable state into this boolean
     }
 
+    public void setSendable(boolean sendable) {
+        this.sendable = sendable;
+    }
+
     public boolean isDraining() {
         return draining;
     }
@@ -119,8 +123,6 @@ public class ProtonSenderState implements ProtonLinkState<ProtonOutgoingDelivery
         drained = getCredit() > 0;
 
         if (sender.getState() == LinkState.ACTIVE) {
-            // TODO - Signal for sendable, draining etc
-
             if (getCredit() > 0 && !sendable) {
                 sendable = true;
                 sender.signalSendable();
@@ -171,9 +173,6 @@ public class ProtonSenderState implements ProtonLinkState<ProtonOutgoingDelivery
 
             delivery.setDeliveryId(currentDelivery.longValue());
         }
-
-        // TODO - If not settled we should track within the link the list of unsettled deliveries
-        //        for later retrieval by a client.
 
         if (!delivery.isSettled()) {
             // TODO - Casting is ugly but right now our unsigned integers are longs

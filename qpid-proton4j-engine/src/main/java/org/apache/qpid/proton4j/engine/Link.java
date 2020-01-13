@@ -391,6 +391,48 @@ public interface Link<T extends Link<T>> {
     //----- Remote events for AMQP Link resources
 
     /**
+     * Sets a {@link EventHandler} for when an this link is opened locally via a call to {@link Link#open()}
+     *
+     * Typically used by clients for logging or other state update event processing.  Clients should not perform any
+     * blocking calls within this context.  It is an error for the handler to throw an exception and the outcome of
+     * doing so is undefined.
+     *
+     * @param localOpenHandler
+     *      The {@link EventHandler} to notify when this link is locally opened.
+     *
+     * @return the link for chaining.
+     */
+    T localOpenHandler(EventHandler<T> localOpenHandler);
+
+    /**
+     * Sets a {@link EventHandler} for when an this link is closed locally via a call to {@link Link#close()}
+     *
+     * Typically used by clients for logging or other state update event processing.  Clients should not perform any
+     * blocking calls within this context.  It is an error for the handler to throw an exception and the outcome of
+     * doing so is undefined.
+     *
+     * @param localCloseHandler
+     *      The {@link EventHandler} to notify when this link is locally closed.
+     *
+     * @return the link for chaining.
+     */
+    T localCloseHandler(EventHandler<T> localCloseHandler);
+
+    /**
+     * Sets a {@link EventHandler} for when an this link is detached locally via a call to {@link Link#detach()}
+     *
+     * Typically used by clients for logging or other state update event processing.  Clients should not perform any
+     * blocking calls within this context.  It is an error for the handler to throw an exception and the outcome of
+     * doing so is undefined.
+     *
+     * @param localDetachHandler
+     *      The {@link EventHandler} to notify when this link is locally detached.
+     *
+     * @return the link for chaining.
+     */
+    T localDetachHandler(EventHandler<T> localDetachHandler);
+
+    /**
      * Sets a {@link EventHandler} for when an AMQP Begin frame is received from the remote peer for this
      * {@link Link} which would have been locally opened previously.
      *
