@@ -36,8 +36,6 @@ import org.apache.qpid.proton4j.engine.impl.ProtonSession;
  */
 public interface Link<T extends Link<T>> {
 
-    // TODO - These should return the T type
-
     /**
      * Open this end of the link
      *
@@ -46,7 +44,7 @@ public interface Link<T extends Link<T>> {
      * @throws IllegalStateException if the underlying {@link Session} has already been closed.
      * @throws EngineStateException if an error occurs opening the Link or the Engine is shutdown.
      */
-    Link<T> open() throws IllegalStateException, EngineStateException;
+    T open() throws IllegalStateException, EngineStateException;
 
     /**
      * Close this end of the link
@@ -55,7 +53,7 @@ public interface Link<T extends Link<T>> {
      *
      * @throws EngineStateException if an error occurs closing the {@link Link} or the Engine is shutdown.
      */
-    Link<T> close() throws EngineStateException;
+    T close() throws EngineStateException;
 
     /**
      * Detach this end of the link.
@@ -64,7 +62,7 @@ public interface Link<T extends Link<T>> {
      *
      * @throws EngineStateException if an error occurs detaching the {@link Link} or the Engine is shutdown.
      */
-    Link<T> detach();
+    T detach();
 
     /**
      * @return the {@link Context} instance that is associated with this {@link Connection}
@@ -391,22 +389,6 @@ public interface Link<T extends Link<T>> {
     ErrorCondition getRemoteCondition();
 
     //----- Remote events for AMQP Link resources
-
-    /**
-     * Sets a {@link EventHandler} that is called when the parent {@link Session} is closed while the {@link Link}
-     * has itself not already been closed.
-     *
-     * Typically this is used by the client to determine that resource it has in use are now implicitly closed
-     * and they should update their state to reflect that fact.
-     *
-     * @param parentClosedHandler
-     *      The {@link EventHandler} to notify when the parent {@link Session} has been closed.
-     *
-     * @return the session for chaining.
-     *
-     * TODO - Work out the mechanics of this event
-     */
-    T sessionClosedHandler(EventHandler<T> parentClosedHandler);
 
     /**
      * Sets a {@link EventHandler} for when an AMQP Begin frame is received from the remote peer for this

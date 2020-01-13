@@ -73,10 +73,6 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
 
     private EventHandler<T> remoteOpenHandler;
 
-    private EventHandler<T> parentClosedHandler = (result) -> {
-        LOG.trace("Parent session {} has been closed.", getSession());
-    };
-
     private EventHandler<T> remoteDetachHandler = (result) -> {
         LOG.trace("Remote link detach arrived at default handler.");
     };
@@ -165,7 +161,7 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
     }
 
     @Override
-    public ProtonLink<T> open() {
+    public T open() {
         checkSessionNotClosed();
         if (getState() == LinkState.IDLE) {
             localState = LinkState.ACTIVE;
@@ -175,7 +171,7 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
             trySendLocalAttach();
         }
 
-        return this;
+        return self();
     }
 
     protected void transitionedToLocallyOpened() {
@@ -183,14 +179,14 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
     }
 
     @Override
-    public ProtonLink<T> detach() {
+    public T detach() {
         if (getState() == LinkState.ACTIVE) {
             localState = LinkState.DETACHED;
             transitionedToLocallyDetached();
             trySendLocalDetach(false);
         }
 
-        return this;
+        return self();
     }
 
     protected void transitionedToLocallyDetached() {
@@ -198,14 +194,14 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
     }
 
     @Override
-    public ProtonLink<T> close() {
+    public T close() {
         if (getState() == LinkState.ACTIVE) {
             localState = LinkState.CLOSED;
             transitionedToLocallyClosed();
             trySendLocalDetach(true);
         }
 
-        return this;
+        return self();
     }
 
     protected void transitionedToLocallyClosed() {
@@ -425,12 +421,6 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
     @Override
     public T closeHandler(EventHandler<T> remoteCloseHandler) {
         this.remoteCloseHandler = remoteCloseHandler;
-        return self();
-    }
-
-    @Override
-    public T sessionClosedHandler(EventHandler<T> parentClosedHandler) {
-        this.parentClosedHandler = parentClosedHandler;
         return self();
     }
 
