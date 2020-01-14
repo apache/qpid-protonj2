@@ -87,7 +87,7 @@ public interface Link<T extends Link<T>> {
      *
      * @return this Link.
      */
-    Link<T> setCondition(ErrorCondition condition);
+    T setCondition(ErrorCondition condition);
 
     /**
      * Get the credit that is currently available or assigned to this link.
@@ -102,6 +102,16 @@ public interface Link<T extends Link<T>> {
      * @return the {@link Role} that this end of the link is performing.
      */
     Role getRole();
+
+    /**
+     * @return true if this link is acting in a sender {@link Role}.
+     */
+    boolean isSender();
+
+    /**
+     * @return true if this link is acting in a receiver {@link Role}.
+     */
+    boolean isReceiver();
 
     /**
      * @return the parent {@link Connection} for the {@link Link}
@@ -145,7 +155,7 @@ public interface Link<T extends Link<T>> {
      *
      * @throws IllegalStateException if the {@link Link} has already been opened.
      */
-    Link<T> setSenderSettleMode(SenderSettleMode senderSettleMode);
+    T setSenderSettleMode(SenderSettleMode senderSettleMode) throws IllegalStateException;
 
     /**
      * Gets the local link sender settlement mode.
@@ -173,7 +183,7 @@ public interface Link<T extends Link<T>> {
      *
      * @throws IllegalStateException if the {@link Link} has already been opened.
      */
-    Link<T> setReceiverSettleMode(ReceiverSettleMode receiverSettleMode);
+    T setReceiverSettleMode(ReceiverSettleMode receiverSettleMode) throws IllegalStateException;
 
     /**
      * Gets the local link receiver settlement mode.
@@ -187,6 +197,8 @@ public interface Link<T extends Link<T>> {
     /**
      * Sets the {@link Source} to assign to the local end of this {@link Link}.
      *
+     * Must be called during link setup, i.e. before calling the {@link #open()} method.
+     *
      * @param source
      *      The {@link Source} that will be set on the local end of this link.
      *
@@ -194,7 +206,7 @@ public interface Link<T extends Link<T>> {
      *
      * @throws IllegalStateException if the {@link Link} has already been opened.
      */
-    Link<T> setSource(Source source) throws IllegalStateException;
+    T setSource(Source source) throws IllegalStateException;
 
     /**
      * @return the {@link Source} for the local end of this link.
@@ -204,6 +216,8 @@ public interface Link<T extends Link<T>> {
     /**
      * Sets the {@link Target} to assign to the local end of this {@link Link}.
      *
+     * Must be called during link setup, i.e. before calling the {@link #open()} method.
+     *
      * @param target
      *      The {@link Target} that will be set on the local end of this link.
      *
@@ -211,7 +225,7 @@ public interface Link<T extends Link<T>> {
      *
      * @throws IllegalStateException if the {@link Link} has already been opened.
      */
-    Link<T> setTarget(Target target) throws IllegalStateException;
+    T setTarget(Target target) throws IllegalStateException;
 
     /**
      * @return the {@link Target} for the local end of this link.
@@ -240,7 +254,7 @@ public interface Link<T extends Link<T>> {
      *
      * @throws IllegalStateException if the {@link Link} has already been opened.
      */
-    Link<T> setProperties(Map<Symbol, Object> properties) throws IllegalStateException;
+    T setProperties(Map<Symbol, Object> properties) throws IllegalStateException;
 
     /**
      * Sets the local link offered capabilities, to be conveyed to the peer via the Attach frame
@@ -255,7 +269,7 @@ public interface Link<T extends Link<T>> {
      *
      * @throws IllegalStateException if the {@link Link} has already been opened.
      */
-    Link<T> setOfferedCapabilities(Symbol... offeredCapabilities) throws IllegalStateException;
+    T setOfferedCapabilities(Symbol... offeredCapabilities) throws IllegalStateException;
 
     /**
      * Gets the local link offered capabilities.
@@ -279,7 +293,7 @@ public interface Link<T extends Link<T>> {
      *
      * @throws IllegalStateException if the {@link Link} has already been opened.
      */
-    Link<T> setDesiredCapabilities(Symbol... desiredCapabilities) throws IllegalStateException;
+    T setDesiredCapabilities(Symbol... desiredCapabilities) throws IllegalStateException;
 
     /**
      * Gets the local link desired capabilities.
@@ -303,7 +317,7 @@ public interface Link<T extends Link<T>> {
      *
      * @throws IllegalStateException if the {@link Link} has already been opened.
      */
-    Link<T> setMaxMessageSize(UnsignedLong maxMessageSize) throws IllegalStateException;
+    T setMaxMessageSize(UnsignedLong maxMessageSize) throws IllegalStateException;
 
     /**
      * Gets the local link max message size.

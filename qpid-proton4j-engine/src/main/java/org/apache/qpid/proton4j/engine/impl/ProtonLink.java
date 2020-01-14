@@ -82,7 +82,6 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
     private EventHandler<T> localDetachHandler = (result) -> {
         LOG.trace("Link {} locally detached.", self());
     };
-
     private EventHandler<T> remoteDetachHandler = (result) -> {
         LOG.trace("Link {} Remote link detach arrived at default handler.", self());
     };
@@ -126,6 +125,16 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
         return localAttach.getName();
     }
 
+    @Override
+    public boolean isSender() {
+        return getRole() == Role.SENDER;
+    }
+
+    @Override
+    public boolean isReceiver() {
+        return getRole() == Role.RECEIVER;
+    }
+
     protected abstract T self();
 
     protected abstract ProtonLinkState<?> linkState();
@@ -150,10 +159,10 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
     }
 
     @Override
-    public ProtonLink<T> setCondition(ErrorCondition condition) {
+    public T setCondition(ErrorCondition condition) {
         localError = condition == null ? null : condition.copy();
 
-        return this;
+        return self();
     }
 
     @Override
@@ -225,10 +234,10 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
     }
 
     @Override
-    public ProtonLink<T> setSenderSettleMode(SenderSettleMode senderSettleMode) {
+    public T setSenderSettleMode(SenderSettleMode senderSettleMode) {
         checkNotOpened("Cannot set Sender settlement mode on already opened Link");
         localAttach.setSenderSettleMode(senderSettleMode);
-        return this;
+        return self();
     }
 
     @Override
@@ -237,10 +246,10 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
     }
 
     @Override
-    public ProtonLink<T> setReceiverSettleMode(ReceiverSettleMode receiverSettleMode) {
+    public T setReceiverSettleMode(ReceiverSettleMode receiverSettleMode) {
         checkNotOpened("Cannot set Receiver settlement mode already opened Link");
         localAttach.setReceiverSettleMode(receiverSettleMode);
-        return this;
+        return self();
     }
 
     @Override
@@ -249,10 +258,10 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
     }
 
     @Override
-    public ProtonLink<T> setSource(Source source) {
+    public T setSource(Source source) {
         checkNotOpened("Cannot set Source on already opened Link");
         localAttach.setSource(source);
-        return this;
+        return self();
     }
 
     @Override
@@ -261,10 +270,10 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
     }
 
     @Override
-    public ProtonLink<T> setTarget(Target target) {
+    public T setTarget(Target target) {
         checkNotOpened("Cannot set Target on already opened Link");
         localAttach.setTarget(target);
-        return this;
+        return self();
     }
 
     @Override
@@ -273,7 +282,7 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
     }
 
     @Override
-    public ProtonLink<T> setProperties(Map<Symbol, Object> properties) {
+    public T setProperties(Map<Symbol, Object> properties) {
         checkNotOpened("Cannot set Properties on already opened Link");
 
         if (properties != null) {
@@ -282,7 +291,7 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
             localAttach.setProperties(properties);
         }
 
-        return this;
+        return self();
     }
 
     @Override
@@ -295,7 +304,7 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
     }
 
     @Override
-    public ProtonLink<T> setOfferedCapabilities(Symbol... capabilities) {
+    public T setOfferedCapabilities(Symbol... capabilities) {
         checkNotOpened("Cannot set Offered Capabilities on already opened Link");
 
         if (capabilities != null) {
@@ -304,7 +313,7 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
             localAttach.setOfferedCapabilities(capabilities);
         }
 
-        return this;
+        return self();
     }
 
     @Override
@@ -317,7 +326,7 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
     }
 
     @Override
-    public ProtonLink<T> setDesiredCapabilities(Symbol... capabilities) {
+    public T setDesiredCapabilities(Symbol... capabilities) {
         checkNotOpened("Cannot set Desired Capabilities on already opened Link");
 
         if (capabilities != null) {
@@ -326,7 +335,7 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
             localAttach.setDesiredCapabilities(capabilities);
         }
 
-        return this;
+        return self();
     }
 
     @Override
@@ -339,10 +348,10 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
     }
 
     @Override
-    public ProtonLink<T> setMaxMessageSize(UnsignedLong maxMessageSize) {
+    public T setMaxMessageSize(UnsignedLong maxMessageSize) {
         checkNotOpened("Cannot set Max Message Size on already opened Link");
         localAttach.setMaxMessageSize(maxMessageSize);
-        return this;
+        return self();
     }
 
     @Override

@@ -266,6 +266,9 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         Sender sender = session.sender("test");
         sender.open();
 
+        assertTrue(sender.isSender());
+        assertFalse(sender.isReceiver());
+
         if (close) {
             sender.close();
         } else {

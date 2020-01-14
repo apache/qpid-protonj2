@@ -294,6 +294,9 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         Receiver receiver = session.receiver("test");
         receiver.open();
 
+        assertTrue(receiver.isReceiver());
+        assertFalse(receiver.isSender());
+
         if (close) {
             receiver.close();
         } else {
