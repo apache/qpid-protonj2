@@ -53,7 +53,7 @@ abstract class ClientConversionSupport {
         if (symbolArray != null) {
             result = new String[symbolArray.length];
             for (int i = 0; i < symbolArray.length; ++i) {
-                result[i] = symbolArray.toString();
+                result[i] = symbolArray[i].toString();
             }
         }
 

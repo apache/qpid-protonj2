@@ -9,6 +9,8 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.net.URI;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -449,6 +451,320 @@ public class ReceiverTest extends AMQPerativeTestCase {
             receiver.close().get(10, TimeUnit.SECONDS);
 
             connection.close().get(10, TimeUnit.SECONDS);
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test(timeout = 60000)
+    public void testReceiverGetSourceWaitsForRemoteAttach() throws Exception {
+        tryReadReceiverSource(true);
+    }
+
+    @Test(timeout = 60000)
+    public void testReceiverGetSourceFailsAfterOpenTimeout() throws Exception {
+        tryReadReceiverSource(false);
+    }
+
+    private void tryReadReceiverSource(boolean attachResponse) throws Exception {
+        try (NettyTestPeer peer = new NettyTestPeer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().withRole(Role.RECEIVER);
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Connect test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            ConnectionOptions options = new ConnectionOptions().openTimeout(100);
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), options);
+            connection.openFuture().get();
+
+            Session session = connection.openSession();
+            session.openFuture().get();
+
+            Receiver receiver = session.openReceiver("test-receiver");
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+
+            if (attachResponse) {
+                peer.expectDetach().respond();
+                peer.respondToLastAttach().later(10);
+            } else {
+                peer.expectDetach();
+            }
+
+            if (attachResponse) {
+                assertNotNull("Remote should have responded with a Source value", receiver.source());
+                assertEquals("test-receiver", receiver.source().address());
+            } else {
+                try {
+                    receiver.source();
+                    fail("Should failed to get remote source due to no attach response");
+                } catch (ClientException ex) {
+                    LOG.debug("Caught expected exception from blocking call", ex);
+                }
+            }
+
+            receiver.close().get();
+
+            peer.expectClose().respond();
+            connection.close().get();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test(timeout = 60000)
+    public void testReceiverGetTargetWaitsForRemoteAttach() throws Exception {
+        tryReadReceiverTarget(true);
+    }
+
+    @Test(timeout = 60000)
+    public void testReceiverGetTargetFailsAfterOpenTimeout() throws Exception {
+        tryReadReceiverTarget(false);
+    }
+
+    private void tryReadReceiverTarget(boolean attachResponse) throws Exception {
+        try (NettyTestPeer peer = new NettyTestPeer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().withRole(Role.RECEIVER);
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Connect test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            ConnectionOptions options = new ConnectionOptions().openTimeout(100);
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), options);
+            connection.openFuture().get();
+
+            Session session = connection.openSession();
+            session.openFuture().get();
+
+            Receiver receiver = session.openReceiver("test-receiver");
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+
+            if (attachResponse) {
+                peer.expectDetach().respond();
+                peer.respondToLastAttach().later(10);
+            } else {
+                peer.expectDetach();
+            }
+
+            if (attachResponse) {
+                assertNotNull("Remote should have responded with a Target value", receiver.target());
+            } else {
+                try {
+                    receiver.target();
+                    fail("Should failed to get remote source due to no attach response");
+                } catch (ClientException ex) {
+                    LOG.debug("Caught expected exception from blocking call", ex);
+                }
+            }
+
+            receiver.close().get();
+
+            peer.expectClose().respond();
+            connection.close().get();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test(timeout = 60000)
+    public void testReceiverGetRemotePropertiesWaitsForRemoteAttach() throws Exception {
+        tryReadReceiverRemoteProperties(true);
+    }
+
+    @Test(timeout = 60000)
+    public void testReceiverGetRemotePropertiesFailsAfterOpenTimeout() throws Exception {
+        tryReadReceiverRemoteProperties(false);
+    }
+
+    private void tryReadReceiverRemoteProperties(boolean attachResponse) throws Exception {
+        try (NettyTestPeer peer = new NettyTestPeer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().withRole(Role.RECEIVER);
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Connect test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            ConnectionOptions options = new ConnectionOptions().openTimeout(100);
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), options);
+            connection.openFuture().get();
+
+            Session session = connection.openSession();
+            session.openFuture().get();
+
+            Receiver receiver = session.openReceiver("test-receiver");
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+
+            Map<String, Object> expectedProperties = new HashMap<>();
+            expectedProperties.put("TEST", "test-property");
+
+            if (attachResponse) {
+                peer.expectDetach().respond();
+                peer.respondToLastAttach().withPropertiesMap(expectedProperties).later(10);
+            } else {
+                peer.expectDetach();
+            }
+
+            if (attachResponse) {
+                assertNotNull("Remote should have responded with a remote properties value", receiver.properties());
+                assertEquals(expectedProperties, receiver.properties());
+            } else {
+                try {
+                    receiver.properties();
+                    fail("Should failed to get remote state due to no attach response");
+                } catch (ClientException ex) {
+                    LOG.debug("Caught expected exception from blocking call", ex);
+                }
+            }
+
+            receiver.close().get();
+
+            peer.expectClose().respond();
+            connection.close().get();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test(timeout = 60000)
+    public void testReceiverGetRemoteOfferedCapabilitiesWaitsForRemoteAttach() throws Exception {
+        tryReadReceiverRemoteOfferedCapabilities(true);
+    }
+
+    @Test(timeout = 60000)
+    public void testReceiverGetRemoteOfferedCapabilitiesFailsAfterOpenTimeout() throws Exception {
+        tryReadReceiverRemoteOfferedCapabilities(false);
+    }
+
+    private void tryReadReceiverRemoteOfferedCapabilities(boolean attachResponse) throws Exception {
+        try (NettyTestPeer peer = new NettyTestPeer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().withRole(Role.RECEIVER);
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Connect test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            ConnectionOptions options = new ConnectionOptions().openTimeout(100);
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), options);
+            connection.openFuture().get();
+
+            Session session = connection.openSession();
+            session.openFuture().get();
+
+            Receiver receiver = session.openReceiver("test-receiver");
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+
+            if (attachResponse) {
+                peer.expectDetach().respond();
+                peer.respondToLastAttach().withOfferedCapabilities("QUEUE").later(10);
+            } else {
+                peer.expectDetach();
+            }
+
+            if (attachResponse) {
+                assertNotNull("Remote should have responded with a remote offered Capabilities value", receiver.offeredCapabilities());
+                assertEquals(1, receiver.offeredCapabilities().length);
+                assertEquals("QUEUE", receiver.offeredCapabilities()[0]);
+            } else {
+                try {
+                    receiver.offeredCapabilities();
+                    fail("Should failed to get remote state due to no attach response");
+                } catch (ClientException ex) {
+                    LOG.debug("Caught expected exception from blocking call", ex);
+                }
+            }
+
+            receiver.close().get();
+
+            peer.expectClose().respond();
+            connection.close().get();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test(timeout = 60000)
+    public void testReceiverGetRemoteDesiredCapabilitiesWaitsForRemoteAttach() throws Exception {
+        tryReadReceiverRemoteDesiredCapabilities(true);
+    }
+
+    @Test(timeout = 60000)
+    public void testReceiverGetRemoteDesiredCapabilitiesFailsAfterOpenTimeout() throws Exception {
+        tryReadReceiverRemoteDesiredCapabilities(false);
+    }
+
+    private void tryReadReceiverRemoteDesiredCapabilities(boolean attachResponse) throws Exception {
+        try (NettyTestPeer peer = new NettyTestPeer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().withRole(Role.RECEIVER);
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Connect test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            ConnectionOptions options = new ConnectionOptions().openTimeout(100);
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), options);
+            connection.openFuture().get();
+
+            Session session = connection.openSession();
+            session.openFuture().get();
+
+            Receiver receiver = session.openReceiver("test-receiver");
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+
+            if (attachResponse) {
+                peer.expectDetach().respond();
+                peer.respondToLastAttach().withDesiredCapabilities("Error-Free").later(10);
+            } else {
+                peer.expectDetach();
+            }
+
+            if (attachResponse) {
+                assertNotNull("Remote should have responded with a remote desired Capabilities value", receiver.desiredCapabilities());
+                assertEquals(1, receiver.desiredCapabilities().length);
+                assertEquals("Error-Free", receiver.desiredCapabilities()[0]);
+            } else {
+                try {
+                    receiver.desiredCapabilities();
+                    fail("Should failed to get remote state due to no attach response");
+                } catch (ClientException ex) {
+                    LOG.debug("Caught expected exception from blocking call", ex);
+                }
+            }
+
+            receiver.close().get();
+
+            peer.expectClose().respond();
+            connection.close().get();
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
