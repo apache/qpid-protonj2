@@ -142,6 +142,11 @@ public class BeginInjectAction extends AbstractPerformativeInjectAction<Begin> {
         return this;
     }
 
+    public BeginInjectAction withPropertiesMap(Map<String, Object> properties) {
+        begin.setProperties(TypeMapper.toSymbolKeyedMap(properties));
+        return this;
+    }
+
     public BeginInjectAction withProperties(Map<Symbol, Object> properties) {
         begin.setProperties(properties);
         return this;

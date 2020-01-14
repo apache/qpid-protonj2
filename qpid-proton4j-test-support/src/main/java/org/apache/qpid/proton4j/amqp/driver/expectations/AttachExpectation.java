@@ -32,6 +32,7 @@ import org.apache.qpid.proton4j.amqp.driver.actions.AttachInjectAction;
 import org.apache.qpid.proton4j.amqp.driver.actions.BeginInjectAction;
 import org.apache.qpid.proton4j.amqp.driver.codec.ListDescribedType;
 import org.apache.qpid.proton4j.amqp.driver.codec.transport.Attach;
+import org.apache.qpid.proton4j.amqp.driver.codec.util.TypeMapper;
 import org.apache.qpid.proton4j.amqp.driver.matchers.messaging.SourceMatcher;
 import org.apache.qpid.proton4j.amqp.driver.matchers.messaging.TargetMatcher;
 import org.apache.qpid.proton4j.amqp.driver.matchers.transport.AttachMatcher;
@@ -220,6 +221,10 @@ public class AttachExpectation extends AbstractExpectation<Attach> {
 
     public AttachExpectation withProperties(Map<Symbol, Object> properties) {
         return withProperties(equalTo(properties));
+    }
+
+    public AttachExpectation withPropertiesMap(Map<String, Object> properties) {
+        return withProperties(equalTo(TypeMapper.toSymbolKeyedMap(properties)));
     }
 
     //----- Matcher based with methods for more complex validation

@@ -189,12 +189,12 @@ public class AttachInjectAction extends AbstractPerformativeInjectAction<Attach>
         return this;
     }
 
-    public AttachInjectAction withProperties(Map<String, Object> properties) {
+    public AttachInjectAction withPropertiesMap(Map<String, Object> properties) {
         attach.setProperties(TypeMapper.toSymbolKeyedMap(properties));
         return this;
     }
 
-    public AttachInjectAction withPropertiesMap(Map<Symbol, Object> properties) {
+    public AttachInjectAction withProperties(Map<Symbol, Object> properties) {
         attach.setProperties(properties);
         return this;
     }

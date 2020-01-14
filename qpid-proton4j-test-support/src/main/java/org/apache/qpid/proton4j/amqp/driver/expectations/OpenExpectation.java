@@ -28,6 +28,7 @@ import org.apache.qpid.proton4j.amqp.driver.actions.BeginInjectAction;
 import org.apache.qpid.proton4j.amqp.driver.actions.OpenInjectAction;
 import org.apache.qpid.proton4j.amqp.driver.codec.ListDescribedType;
 import org.apache.qpid.proton4j.amqp.driver.codec.transport.Open;
+import org.apache.qpid.proton4j.amqp.driver.codec.util.TypeMapper;
 import org.apache.qpid.proton4j.amqp.driver.matchers.messaging.OpenMatcher;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.hamcrest.Matcher;
@@ -140,6 +141,10 @@ public class OpenExpectation extends AbstractExpectation<Open> {
 
     public OpenExpectation withProperties(Map<Symbol, Object> properties) {
         return withProperties(equalTo(properties));
+    }
+
+    public OpenExpectation withPropertiesMap(Map<String, Object> properties) {
+        return withProperties(equalTo(TypeMapper.toSymbolKeyedMap(properties)));
     }
 
     //----- Matcher based with methods for more complex validation

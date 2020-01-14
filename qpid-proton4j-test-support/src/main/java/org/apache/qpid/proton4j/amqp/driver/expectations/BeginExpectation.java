@@ -28,6 +28,7 @@ import org.apache.qpid.proton4j.amqp.driver.SessionTracker;
 import org.apache.qpid.proton4j.amqp.driver.actions.BeginInjectAction;
 import org.apache.qpid.proton4j.amqp.driver.codec.ListDescribedType;
 import org.apache.qpid.proton4j.amqp.driver.codec.transport.Begin;
+import org.apache.qpid.proton4j.amqp.driver.codec.util.TypeMapper;
 import org.apache.qpid.proton4j.amqp.driver.matchers.transport.BeginMatcher;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.hamcrest.Matcher;
@@ -173,6 +174,10 @@ public class BeginExpectation extends AbstractExpectation<Begin> {
 
     public BeginExpectation withProperties(Map<Symbol, Object> properties) {
         return withProperties(equalTo(properties));
+    }
+
+    public BeginExpectation withPropertiesMap(Map<String, Object> properties) {
+        return withProperties(equalTo(TypeMapper.toSymbolKeyedMap(properties)));
     }
 
     //----- Matcher based with methods for more complex validation

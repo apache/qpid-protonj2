@@ -133,6 +133,11 @@ public class OpenInjectAction extends AbstractPerformativeInjectAction<Open> {
         return this;
     }
 
+    public OpenInjectAction withPropertiesMap(Map<String, Object> properties) {
+        open.setProperties(TypeMapper.toSymbolKeyedMap(properties));
+        return this;
+    }
+
     public OpenInjectAction withProperties(Map<Symbol, Object> properties) {
         open.setProperties(properties);
         return this;
