@@ -172,6 +172,8 @@ public class AMQPTestDriver implements Consumer<ProtonBuffer> {
                 if (scriptEntry.isOptional()) {
                     handleHeader(header);
                 } else {
+                    LOG.warn(t.getMessage());
+                    searchForScriptioCompletionAndTrigger();
                     throw t;
                 }
             }
@@ -195,6 +197,10 @@ public class AMQPTestDriver implements Consumer<ProtonBuffer> {
                 } else {
                     throw e;
                 }
+            } catch (AssertionError assertion) {
+                LOG.warn(assertion.getMessage());
+                searchForScriptioCompletionAndTrigger();
+                throw assertion;
             }
 
             prcessScript(scriptEntry);
@@ -222,6 +228,10 @@ public class AMQPTestDriver implements Consumer<ProtonBuffer> {
                 } else {
                     throw e;
                 }
+            } catch (AssertionError assertion) {
+                LOG.warn(assertion.getMessage());
+                searchForScriptioCompletionAndTrigger();
+                throw assertion;
             }
 
             prcessScript(scriptEntry);
@@ -446,6 +456,15 @@ public class AMQPTestDriver implements Consumer<ProtonBuffer> {
     }
 
     //----- Internal implementation
+
+    private void searchForScriptioCompletionAndTrigger() {
+        script.forEach(element -> {
+            if (element instanceof ScriptCompleteAction) {
+                ScriptCompleteAction completed = (ScriptCompleteAction) element;
+                completed.perform(this);
+            }
+        });
+    }
 
     private void prcessScript(ScriptedElement current) {
         while (current.performAfterwards() != null && failureCause == null) {
