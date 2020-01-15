@@ -17,12 +17,15 @@
 package org.messaginghub.amqperative;
 
 import static org.hamcrest.Matchers.nullValue;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.io.IOException;
 import java.net.URI;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -551,6 +554,164 @@ public class ConnectionTest extends AMQPerativeTestCase {
             }
 
             connection.close();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test(timeout = 60000)
+    public void testConnectionGetRemotePropertiesWaitsForRemoteBegin() throws Exception {
+        tryReadConnectionRemoteProperties(true);
+    }
+
+    @Test(timeout = 60000)
+    public void testConnectionGetRemotePropertiesFailsAfterOpenTimeout() throws Exception {
+        tryReadConnectionRemoteProperties(false);
+    }
+
+    private void tryReadConnectionRemoteProperties(boolean openResponse) throws Exception {
+        try (NettyTestPeer peer = new NettyTestPeer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Connect test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            ConnectionOptions options = new ConnectionOptions().openTimeout(100);
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), options);
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+
+            Map<String, Object> expectedProperties = new HashMap<>();
+            expectedProperties.put("TEST", "test-property");
+
+            if (openResponse) {
+                peer.expectClose().respond();
+                peer.remoteOpen().withPropertiesMap(expectedProperties).later(10);
+            } else {
+                peer.expectClose();
+            }
+
+            if (openResponse) {
+                assertNotNull("Remote should have responded with a remote properties value", connection.properties());
+                assertEquals(expectedProperties, connection.properties());
+            } else {
+                try {
+                    connection.properties();
+                    fail("Should failed to get remote state due to no open response");
+                } catch (ClientException ex) {
+                    LOG.debug("Caught expected exception from blocking call", ex);
+                }
+            }
+
+            connection.close().get();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test(timeout = 60000)
+    public void testConnectionGetRemoteOfferedCapabilitiesWaitsForRemoteBegin() throws Exception {
+        tryReadConnectionRemoteOfferedCapabilities(true);
+    }
+
+    @Test(timeout = 60000)
+    public void testConnectionGetRemoteOfferedCapabilitiesFailsAfterOpenTimeout() throws Exception {
+        tryReadConnectionRemoteOfferedCapabilities(false);
+    }
+
+    private void tryReadConnectionRemoteOfferedCapabilities(boolean openResponse) throws Exception {
+        try (NettyTestPeer peer = new NettyTestPeer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Connect test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            ConnectionOptions options = new ConnectionOptions().openTimeout(100);
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), options);
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+
+            if (openResponse) {
+                peer.expectClose().respond();
+                peer.remoteOpen().withOfferedCapabilities("transactions").later(10);
+            } else {
+                peer.expectClose();
+            }
+
+            if (openResponse) {
+                assertNotNull("Remote should have responded with a remote offered Capabilities value", connection.offeredCapabilities());
+                assertEquals(1, connection.offeredCapabilities().length);
+                assertEquals("transactions", connection.offeredCapabilities()[0]);
+            } else {
+                try {
+                    connection.offeredCapabilities();
+                    fail("Should failed to get remote state due to no open response");
+                } catch (ClientException ex) {
+                    LOG.debug("Caught expected exception from blocking call", ex);
+                }
+            }
+
+            connection.close().get();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test(timeout = 60000)
+    public void testConnectionGetRemoteDesiredCapabilitiesWaitsForRemoteBegin() throws Exception {
+        tryReadConnectionRemoteDesiredCapabilities(true);
+    }
+
+    @Test(timeout = 60000)
+    public void testConnectionGetRemoteDesiredCapabilitiesFailsAfterOpenTimeout() throws Exception {
+        tryReadConnectionRemoteDesiredCapabilities(false);
+    }
+
+    private void tryReadConnectionRemoteDesiredCapabilities(boolean openResponse) throws Exception {
+        try (NettyTestPeer peer = new NettyTestPeer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Connect test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            ConnectionOptions options = new ConnectionOptions().openTimeout(100);
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), options);
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+
+            if (openResponse) {
+                peer.expectClose().respond();
+                peer.remoteOpen().withDesiredCapabilities("Error-Free").later(10);
+            } else {
+                peer.expectClose();
+            }
+
+            if (openResponse) {
+                assertNotNull("Remote should have responded with a remote desired Capabilities value", connection.desiredCapabilities());
+                assertEquals(1, connection.desiredCapabilities().length);
+                assertEquals("Error-Free", connection.desiredCapabilities()[0]);
+            } else {
+                try {
+                    connection.desiredCapabilities();
+                    fail("Should failed to get remote state due to no open response");
+                } catch (ClientException ex) {
+                    LOG.debug("Caught expected exception from blocking call", ex);
+                }
+            }
+
+            connection.close().get();
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
