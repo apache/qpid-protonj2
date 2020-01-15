@@ -112,7 +112,7 @@ public class ClientSession implements Session {
 
     @Override
     public Future<Session> close() {
-        if (CLOSED_UPDATER.compareAndSet(this, 0, 1) && !openFuture.isFailed()) {
+        if (CLOSED_UPDATER.compareAndSet(this, 0, 1)) {
             serializer.execute(() -> {
                 try {
                     protonSession.close();
@@ -293,6 +293,8 @@ public class ClientSession implements Session {
                         } catch (Throwable error) {
                             connection.handleClientIOException(ClientExceptionSupport.createOrPassthroughFatal(error));
                         }
+                        CLOSED_UPDATER.lazySet(this, 1);
+                        closeFuture.complete(this);
                         openFuture.failed(new ClientOperationTimedOutException(
                             "Session Begin timed out waiting for remote to open"));
                     }
