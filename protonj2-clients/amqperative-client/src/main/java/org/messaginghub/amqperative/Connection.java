@@ -57,7 +57,9 @@ public interface Connection {
     Future<Connection> close();
 
     /**
-     * Creates a receiver used to consumer messages from the given node address.
+     * Creates a receiver used to consumer messages from the given node address.  The returned receiver will
+     * be configured using default options and will take its timeout configuration values from those specified
+     * in the parent {@link Connection}.
      *
      * @param address
      *            The source address to attach the consumer to.
@@ -69,7 +71,8 @@ public interface Connection {
     Receiver openReceiver(String address) throws ClientException;
 
     /**
-     * Creates a receiver used to consumer messages from the given node address.
+     * Creates a receiver used to consumer messages from the given node address.  The returned receiver
+     * will be configured using the options provided in the given {@link ReceiverOptions} instance.
      *
      * @param address
      *            The source address to attach the consumer to.
@@ -83,7 +86,9 @@ public interface Connection {
     Receiver openReceiver(String address, ReceiverOptions receiverOptions) throws ClientException;
 
     /**
-     * Creates a dynamic receiver used to consume messages from the given node address.
+     * Creates a dynamic receiver used to consume messages from the given node address.  The returned receiver
+     * will be configured using default options and will take its timeout configuration values from those
+     * specified in the parent {@link Connection}.
      *
      * @return the newly created {@link Receiver}
      *
@@ -143,7 +148,9 @@ public interface Connection {
     Sender defaultSender() throws ClientException;
 
     /**
-     * Creates a sender used to send messages to the given node address.
+     * Creates a sender used to send messages to the given node address.  The returned sender will
+     * be configured using default options and will take its timeout configuration values from those
+     * specified in the parent {@link Connection}.
      *
      * @param address
      *            The target address to attach to, cannot be null.
@@ -169,9 +176,10 @@ public interface Connection {
     Sender openSender(String address, SenderOptions senderOptions) throws ClientException;
 
     /**
-     * Creates a sender that is established to the 'anonymous relay' and as such each
-     * message that is sent using this sender must specify an address in its destination
-     * address field.
+     * Creates a sender that is established to the 'anonymous relay' and as such each message
+     * that is sent using this sender must specify an address in its destination address field.
+     * The returned sender will be configured using default options and will take its timeout
+     * configuration values from those specified in the parent {@link Connection}.
      *
      * @return the sender.
      *
@@ -206,7 +214,9 @@ public interface Connection {
     Session defaultSession() throws ClientException;
 
     /**
-     * Creates a new {@link Session} instance for use by the client application.
+     * Creates a new {@link Session} instance for use by the client application.  The returned session
+     * will be configured using default options and will take its timeout configuration values from those
+     * specified in the parent {@link Connection}.
      *
      * @return a new {@link Session} instance.
      *
