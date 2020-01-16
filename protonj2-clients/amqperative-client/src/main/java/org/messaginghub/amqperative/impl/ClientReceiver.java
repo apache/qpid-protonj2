@@ -160,6 +160,8 @@ public class ClientReceiver implements Receiver {
     public Future<Receiver> close() {
         if (CLOSED_UPDATER.compareAndSet(this, 0, 1)) {
             executor.execute(() -> {
+                messageQueue.stop();  // Ensure blocked receivers are all unblocked.
+
                 try {
                     protonReceiver.close();
                 } catch (Throwable error) {

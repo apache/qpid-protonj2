@@ -5,6 +5,7 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -12,6 +13,7 @@ import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
@@ -764,6 +766,48 @@ public class ReceiverTest extends AMQPerativeTestCase {
             receiver.close().get();
 
             peer.expectClose().respond();
+            connection.close().get();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test(timeout = 30000)
+    public void testBlockingReceiveCancelledWhenReceiverClosed() throws Exception {
+        try (NettyTestPeer peer = new NettyTestPeer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().withRole(Role.RECEIVER).respond();
+            peer.expectDetach().respond();
+            peer.expectClose().respond();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Connect test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            Session session = connection.openSession();
+            final Receiver receiver = session.openReceiver("test-queue");
+            receiver.openFuture().get();
+
+            ForkJoinPool.commonPool().submit(() -> {
+                try {
+                    Thread.sleep(15);
+                } catch (InterruptedException e) {
+                }
+
+                receiver.close();
+            });
+
+            try {
+                assertNull(receiver.receive());
+            } catch (IllegalStateException ise) {
+                // Can happen if receiver closed before the receive call gets executed.
+            }
+
             connection.close().get();
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
