@@ -18,8 +18,6 @@ package org.messaginghub.amqperative.impl;
 
 import java.io.IOException;
 import java.security.Principal;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
@@ -93,11 +91,6 @@ public class ClientConnection implements Connection {
     private ClientSession connectionSession;
     private ClientSender connectionSender;
     private Transport transport;
-
-    // TODO - Ensure closed sessions are removed from this list - Use a Map otherwise there's gaps
-    //        We might be able to simplify how this is handled by extending events and or offering
-    //        APIs in proton4j to access these already known resources.
-    private final List<ClientSession> sessions = new ArrayList<>();
 
     private SessionOptions defaultSessionOptions;
 
@@ -234,9 +227,7 @@ public class ClientConnection implements Connection {
         executor.execute(() -> {
             try {
                 checkClosed();
-                ClientSession session = new ClientSession(sessionOpts, ClientConnection.this, protonConnection.session());
-                sessions.add(session);
-                createSession.complete(session.open());
+                createSession.complete(new ClientSession(sessionOpts, ClientConnection.this, protonConnection.session()).open());
             } catch (Throwable error) {
                 createSession.failed(ClientExceptionSupport.createNonFatalOrPassthrough(error));
             }
@@ -416,7 +407,9 @@ public class ClientConnection implements Connection {
 
                 protonConnection = engine.start();
                 configureConnection(protonConnection);
-                protonConnection.openHandler(connection -> handleRemoteOpen(connection))
+                protonConnection.localOpenHandler(connection -> handleLocalOpen(connection))
+                                .localCloseHandler(connection -> handleLocalClose(connection))
+                                .openHandler(connection -> handleRemoteOpen(connection))
                                 .closeHandler(connection -> handleRemotecClose(connection));
 
             });
@@ -444,28 +437,12 @@ public class ClientConnection implements Connection {
                 return;
             }
 
-            // TODO - We aren't currently handling exceptions from the proton API methods
-            //        in any meaningful way so eventually we need to get round to doing that
-            //        From limited use of the API the current exception model may be a bit
-            //        to vague and we may need to consider checked exceptions or at least
-            //        some structured exceptions from the engine.
-            // TODO - Possible issue with tick kicking in and writing idle frames before remote
-            //        Open actually received.
             try {
                 if (client.containerId() != null) {
                     protonConnection.setContainerId(client.containerId());
                 }
 
-                protonConnection.open().tickAuto(executor);
-
-                if (options.openTimeout() > 0) {
-                    executor.schedule(() -> {
-                        if (!openFuture.isDone()) {
-                            handleClientIOException(new ClientOperationTimedOutException(
-                                "Connection Open timed out waiting for remote to open"));
-                        }
-                    }, options.openTimeout(), TimeUnit.MILLISECONDS);
-                }
+                protonConnection.open();
             } catch (Throwable error) {
                 LOG.trace("Error from proton engine during connection open", error);
                 handleClientIOException(ClientExceptionSupport.createOrPassthroughFatal(error));
@@ -551,9 +528,12 @@ public class ClientConnection implements Connection {
         CLOSED_UPDATER.set(this, 1);
         FAILURE_CAUSE_UPDATER.compareAndSet(this, null, error);
         try {
+            // Close should be idempotent so we can just respond here with a close in case
+            // of remotely closed connection.
             try {
                 protonConnection.close();
             } catch (Throwable ignored) {
+                LOG.trace("Error on attempt to close proton connection was ignored");
             }
 
             try {
@@ -565,10 +545,6 @@ public class ClientConnection implements Connection {
             } catch (IOException ignored) {
             }
 
-            sessions.forEach((session) -> {
-                session.connectionClosed(error);
-            });
-
             // Signal any waiters that the operation is done due to error.
             openFuture.failed(error);
             closeFuture.complete(ClientConnection.this);
@@ -579,26 +555,40 @@ public class ClientConnection implements Connection {
 
     //----- Private implementation events handlers and utility methods
 
+    private void handleLocalOpen(org.apache.qpid.proton4j.engine.Connection connection) {
+        // TODO - Possible issue with tick kicking in and writing idle frames before remote
+        //        Open actually received that should be investigated further.
+        connection.tickAuto(getScheduler());
+
+        if (options.openTimeout() > 0) {
+            executor.schedule(() -> {
+                if (!openFuture.isDone()) {
+                    handleClientIOException(new ClientOperationTimedOutException(
+                        "Connection Open timed out waiting for remote to open"));
+                }
+            }, options.openTimeout(), TimeUnit.MILLISECONDS);
+        }
+    }
+
+    private void handleLocalClose(org.apache.qpid.proton4j.engine.Connection connection) {
+        // TODO - A parent closed event from connection would simplify this in some ways
+        //        although could have some other issues
+
+        // Close all local sessions now that the connection is closed which will signal their
+        // local close handlers to allow for cleanup and future signaling.
+        protonConnection.sessions().forEach(session -> {
+            try {
+                session.close();
+            } catch (Throwable ignored) {}
+        });
+    }
+
     private void handleRemoteOpen(org.apache.qpid.proton4j.engine.Connection connection) {
         capabilities.determineCapabilities(connection);
         openFuture.complete(this);
     }
 
     private void handleRemotecClose(org.apache.qpid.proton4j.engine.Connection connection) {
-        // TODO - On remote close we need to ensure that sessions and their resources
-        //        all reflect the fact that they are now closed.  Also there is not a
-        //        way currently to reflect the fact that a remote closed happened in
-        //        the existing imperative client API.
-
-        // Close should be idempotent so we can just respond here with a close in case
-        // of remotely closed connection.  We should set error state from remote though
-        // so client can see it.
-        try {
-            connection.close();
-        } catch (Throwable ignored) {
-            LOG.trace("Error on attempt to close proton connection was ignored");
-        }
-
         final ClientException ex;
 
         if (connection.getRemoteCondition() != null) {
@@ -617,13 +607,18 @@ public class ClientConnection implements Connection {
             LOG.warn("Error while writing engine output to transport:", e);
             // TODO - Engine should handle thrown errors but we already see this one, we could just throw
             //        an Unchecked IOException here and let normal processing handle the error on the call
-            //        chain and the error handler callback,
+            //        chain and the error handler callback but for now that has issues because the proton
+            //        objects throw on close methods even if the engine is already shutdown or failed.
             handleEngineErrors(e);
         }
     }
 
     private void handleEngineErrors(Throwable error) {
         // TODO - Better handle errors and let all tracked resources know about them
+        //        Currently close APIs in the engine fail if the engine is shutdown
+        //        and it could make sense to instead always succeed unless a write of
+        //        the performative fails and otherwise just close down as normal to
+        //        allow the events to trigger.
         try {
             // Engine encountered critical error, shutdown.
             transport.close();
@@ -680,13 +675,7 @@ public class ClientConnection implements Connection {
 
     private ClientSession lazyCreateConnectionSession() {
         if (connectionSession == null) {
-            connectionSession = new ClientSession(getDefaultSessionOptions(), this, protonConnection.session());
-            sessions.add(connectionSession);
-            try {
-                connectionSession.open();
-             } catch (Throwable error) {
-                 sessions.remove(connectionSession);
-             }
+            connectionSession = new ClientSession(getDefaultSessionOptions(), this, protonConnection.session()).open();
         }
 
         return connectionSession;

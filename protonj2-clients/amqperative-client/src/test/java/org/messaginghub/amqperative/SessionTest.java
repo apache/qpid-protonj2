@@ -18,11 +18,13 @@ package org.messaginghub.amqperative;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.qpid.proton4j.amqp.driver.netty.NettyTestPeer;
@@ -30,6 +32,7 @@ import org.apache.qpid.proton4j.amqp.transport.AmqpError;
 import org.apache.qpid.proton4j.amqp.transport.ErrorCondition;
 import org.junit.Test;
 import org.messaginghub.amqperative.impl.ClientException;
+import org.messaginghub.amqperative.impl.exceptions.ClientOperationTimedOutException;
 import org.messaginghub.amqperative.test.AMQPerativeTestCase;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,12 +44,12 @@ public class SessionTest extends AMQPerativeTestCase {
 
     private static final Logger LOG = LoggerFactory.getLogger(SessionTest.class);
 
-    @Test(timeout = 60000)
+    @Test(timeout = 30000)
     public void testSessionOpenTimeoutWhenNoRemoteBeginArrivesTimeout() throws Exception {
         doTestSessionOpenTimeoutWhenNoRemoteBeginArrives(true);
     }
 
-    @Test(timeout = 60000)
+    @Test(timeout = 30000)
     public void testSessionOpenTimeoutWhenNoRemoteBeginArrivesNoTimeout() throws Exception {
         doTestSessionOpenTimeoutWhenNoRemoteBeginArrives(false);
     }
@@ -90,12 +93,12 @@ public class SessionTest extends AMQPerativeTestCase {
         }
     }
 
-    @Test(timeout = 60000)
+    @Test(timeout = 30000)
     public void testSessionCloseTimeoutWhenNoRemoteEndArrivesTimeout() throws Exception {
         doTestSessionCloseTimeoutWhenNoRemoteEndArrives(true);
     }
 
-    @Test(timeout = 60000)
+    @Test(timeout = 30000)
     public void testSessionCloseTimeoutWhenNoRemoteEndArrivesNoTimeout() throws Exception {
         doTestSessionCloseTimeoutWhenNoRemoteEndArrives(false);
     }
@@ -139,12 +142,12 @@ public class SessionTest extends AMQPerativeTestCase {
         }
     }
 
-    @Test(timeout = 60000)
+    @Test(timeout = 30000)
     public void testSessionCloseGetsResponseWithErrorDoesNotThrowTimedGet() throws Exception {
         doTestSessionCloseGetsResponseWithErrorThrows(true);
     }
 
-    @Test(timeout = 60000)
+    @Test(timeout = 30000)
     public void testConnectionCloseGetsResponseWithErrorDoesNotThrowUntimedGet() throws Exception {
         doTestSessionCloseGetsResponseWithErrorThrows(false);
     }
@@ -182,12 +185,12 @@ public class SessionTest extends AMQPerativeTestCase {
         }
     }
 
-    @Test(timeout = 60000)
+    @Test(timeout = 30000)
     public void testSessionGetRemotePropertiesWaitsForRemoteBegin() throws Exception {
         tryReadSessionRemoteProperties(true);
     }
 
-    @Test(timeout = 60000)
+    @Test(timeout = 30000)
     public void testSessionGetRemotePropertiesFailsAfterOpenTimeout() throws Exception {
         tryReadSessionRemoteProperties(false);
     }
@@ -243,12 +246,12 @@ public class SessionTest extends AMQPerativeTestCase {
         }
     }
 
-    @Test(timeout = 60000)
+    @Test(timeout = 30000)
     public void testSessionGetRemoteOfferedCapabilitiesWaitsForRemoteBegin() throws Exception {
         tryReadSessionRemoteOfferedCapabilities(true);
     }
 
-    @Test(timeout = 60000)
+    @Test(timeout = 30000)
     public void testSessionGetRemoteOfferedCapabilitiesFailsAfterOpenTimeout() throws Exception {
         tryReadSessionRemoteOfferedCapabilities(false);
     }
@@ -302,12 +305,12 @@ public class SessionTest extends AMQPerativeTestCase {
         }
     }
 
-    @Test(timeout = 60000)
+    @Test(timeout = 30000)
     public void testSessionGetRemoteDesiredCapabilitiesWaitsForRemoteBegin() throws Exception {
         tryReadSessionRemoteDesiredCapabilities(true);
     }
 
-    @Test(timeout = 60000)
+    @Test(timeout = 30000)
     public void testSessionGetRemoteDesiredCapabilitiesFailsAfterOpenTimeout() throws Exception {
         tryReadSessionRemoteDesiredCapabilities(false);
     }
@@ -355,6 +358,42 @@ public class SessionTest extends AMQPerativeTestCase {
             session.close().get();
 
             peer.expectClose().respond();
+            connection.close().get();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test(timeout = 30000)
+    public void testQuickOpenCloseWhenNoBeginResponseFailsFastOnOpenTimeout() throws Exception {
+        try (NettyTestPeer peer = new NettyTestPeer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin();
+            peer.expectEnd();
+            peer.expectClose().respond();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            ConnectionOptions options = new ConnectionOptions();
+            options.openTimeout(100);
+            options.closeTimeout(TimeUnit.HOURS.toMillis(1));  // Test would timeout if waited on.
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), options);
+            connection.openFuture().get();
+
+            try {
+                connection.openSession().close().get();
+                fail("Should fail quickly when waiting on close with quick open timeout");
+            } catch (ExecutionException error) {
+                // Expected so ignore any timeout based failures
+                assertTrue(error.getCause() instanceof ClientOperationTimedOutException);
+            }
+
             connection.close().get();
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);

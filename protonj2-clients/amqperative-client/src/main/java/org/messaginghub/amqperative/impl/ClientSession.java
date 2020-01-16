@@ -33,6 +33,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 
 import org.apache.qpid.proton4j.engine.Engine;
+import org.apache.qpid.proton4j.engine.SessionState;
 import org.messaginghub.amqperative.Receiver;
 import org.messaginghub.amqperative.ReceiverOptions;
 import org.messaginghub.amqperative.Sender;
@@ -60,6 +61,7 @@ public class ClientSession implements Session {
             AtomicIntegerFieldUpdater.newUpdater(ClientSession.class, "closed");
 
     private volatile int closed;
+    private ClientException failureCause;
 
     private final ClientFuture<Session> openFuture;
     private final ClientFuture<Session> closeFuture;
@@ -74,7 +76,6 @@ public class ClientSession implements Session {
 
     private volatile ThreadPoolExecutor deliveryExecutor;
     private final AtomicReference<Thread> deliveryThread = new AtomicReference<Thread>();
-    private final AtomicReference<ClientException> failureCause = new AtomicReference<>();
 
     // TODO - Ensure closed resources are removed from these or find a way to use what the proton session knows
     //        about sender and receiver links.
@@ -118,16 +119,6 @@ public class ClientSession implements Session {
                     protonSession.close();
                 } catch (Throwable error) {
                     connection.handleClientIOException(error);
-                }
-
-                if (!closeFuture.isDone()) {
-                    final long timeout = options.closeTimeout() >= 0 ?
-                            options.closeTimeout() : options.requestTimeout();
-
-                    if (timeout > 0) {
-                        connection.scheduleRequestTimeout(closeFuture, timeout, () ->
-                            new ClientOperationTimedOutException("Session close timed out waiting for remote to respond"));
-                    }
                 }
             });
         }
@@ -280,26 +271,13 @@ public class ClientSession implements Session {
     //----- Internal API accessible for use within the package
 
     ClientSession open() {
-        protonSession.openHandler(session -> handleRemoteOpen(session));
-        protonSession.closeHandler(session -> handleRemoteClose(session));
+        protonSession.localOpenHandler(session -> handleLocalOpen(session))
+                     .localCloseHandler(session -> handleLocalClose(session))
+                     .openHandler(session -> handleRemoteOpen(session))
+                     .closeHandler(session -> handleRemoteClose(session));
 
         try {
             protonSession.open();
-            if (options.openTimeout() > 0) {
-                serializer.schedule(() -> {
-                    if (!openFuture.isDone()) {
-                        try {
-                            protonSession.close();
-                        } catch (Throwable error) {
-                            connection.handleClientIOException(ClientExceptionSupport.createOrPassthroughFatal(error));
-                        }
-                        CLOSED_UPDATER.lazySet(this, 1);
-                        closeFuture.complete(this);
-                        openFuture.failed(new ClientOperationTimedOutException(
-                            "Session Begin timed out waiting for remote to open"));
-                    }
-                }, options.openTimeout(), TimeUnit.MILLISECONDS);
-            }
         } catch (Throwable error) {
             connection.handleClientIOException(ClientExceptionSupport.createOrPassthroughFatal(error));
         }
@@ -338,12 +316,8 @@ public class ClientSession implements Session {
         return exec;
     }
 
-    void setFailureCause(ClientException failureCause) {
-        this.failureCause.set(failureCause);
-    }
-
     ClientException getFailureCause() {
-        return failureCause.get();
+        return failureCause;
     }
 
     boolean isClosed() {
@@ -396,11 +370,11 @@ public class ClientSession implements Session {
         if (isClosed()) {
             IllegalStateException error = null;
 
-            if (failureCause.get() == null) {
+            if (failureCause == null) {
                 error = new IllegalStateException("The Session is closed");
             } else {
                 error = new IllegalStateException("The Session was closed due to an unrecoverable error.");
-                error.initCause(failureCause.get());
+                error.initCause(failureCause);
             }
 
             throw error;
@@ -413,8 +387,8 @@ public class ClientSession implements Session {
                 openFuture.get();
             } catch (ExecutionException | InterruptedException e) {
                 Thread.interrupted();
-                if (failureCause.get() != null) {
-                    throw failureCause.get();
+                if (failureCause != null) {
+                    throw failureCause;
                 } else {
                     throw ClientExceptionSupport.createNonFatalOrPassthrough(e.getCause());
                 }
@@ -441,6 +415,64 @@ public class ClientSession implements Session {
         return executor;
     }
 
+    private void handleLocalOpen(org.apache.qpid.proton4j.engine.Session session) {
+        if (options.openTimeout() > 0) {
+            serializer.schedule(() -> {
+                if (!openFuture.isDone()) {
+                    if (failureCause == null) {
+                        failureCause = new ClientOperationTimedOutException("Session open timed out waiting for remote to respond");
+                    }
+
+                    openFuture.failed(failureCause);
+
+                    if (protonSession.isLocallyClosed()) {
+                        // We didn't hear back from open and session was since closed so just fail
+                        // the close as we don't want to doubly wait for something that can't come.
+                        closeFuture.failed(failureCause);
+                    } else {
+                        try {
+                            protonSession.close();
+                        } catch (Throwable error) {
+                            connection.handleClientIOException(ClientExceptionSupport.createOrPassthroughFatal(error));
+                        }
+                    }
+                }
+            }, options.openTimeout(), TimeUnit.MILLISECONDS);
+        }
+    }
+
+    private void handleLocalClose(org.apache.qpid.proton4j.engine.Session session) {
+        CLOSED_UPDATER.lazySet(this, 1);
+
+        if (failureCause == null) {
+            failureCause = connection.getFailureCause();
+        }
+
+        // TODO - Need handling support for engine shutdown or failed at connection level
+        //        to trigger failure of any open / close futures waiting for responses
+        //        after the resource has been locally closed.
+
+        // If not yet remotely closed we only wait for a remote close if the connection isn't
+        // already failed and we have successfully opened the session without a timeout.
+        if (!connection.isClosed() && !openFuture.isFailed() && !session.isRemotelyClosed()) {
+            final long timeout = options.closeTimeout() >= 0 ?
+                    options.closeTimeout() : options.requestTimeout();
+
+            if (timeout > 0) {
+                connection.scheduleRequestTimeout(closeFuture, timeout, () ->
+                    new ClientOperationTimedOutException("Session close timed out waiting for remote to respond"));
+            }
+        } else {
+            if (failureCause != null) {
+                openFuture.failed(failureCause);
+            } else {
+                openFuture.complete(this);
+            }
+
+            closeFuture.complete(this);
+        }
+    }
+
     private void handleRemoteOpen(org.apache.qpid.proton4j.engine.Session session) {
         openFuture.complete(this);
         LOG.trace("Session:{} opened successfully.", id());
@@ -457,7 +489,7 @@ public class ClientSession implements Session {
     }
 
     private void handleRemoteClose(org.apache.qpid.proton4j.engine.Session session) {
-        if (!isClosed()) {
+        if (session.getState() != SessionState.CLOSED) {
             final ClientException error;
             if (session.getRemoteCondition() != null) {
                 error = ClientErrorSupport.convertToNonFatalException(session.getRemoteCondition());
@@ -465,30 +497,31 @@ public class ClientSession implements Session {
                 error = new ClientResourceClosedException("Session remotely closed without explanation");
             }
 
-            failureCause.set(error);
-        }
-
-        senders.forEach(sender -> {
-            if (sender.isAnonymous() && !sender.openFuture().isDone()) {
-                sender.handleSessionRemotelyClosedBeforeSenderOpened();
+            if (failureCause != null) {
+                failureCause = error;
             }
-        });
 
-        CLOSED_UPDATER.lazySet(this, 1);
-        closeFuture.complete(this);
-    }
+            // TODO - If Senders are linked into local open / close events
+            //        we could just close them locally after the session is closed.
+            senders.forEach(sender -> {
+                if (sender.isAnonymous() && !sender.openFuture().isDone()) {
+                    sender.handleSessionRemotelyClosedBeforeSenderOpened();
+                }
+            });
 
-    // TODO - Notify links and clean up resources etc.
-    void connectionClosed(ClientException error) {
-        CLOSED_UPDATER.set(this, 1);
-
-        if (error != null) {
-            failureCause.compareAndSet(null, error);
-            openFuture.failed(error);
+            try {
+                session.close();
+            } catch (Throwable ignore) {
+                LOG.trace("Error ignored from call to close session after remote close.", ignore);
+            }
         } else {
-            openFuture.complete(this);
-        }
+            if (failureCause != null) {
+                openFuture.failed(failureCause);
+            } else {
+                openFuture.complete(this);
+            }
 
-        closeFuture.complete(this);
+            closeFuture.complete(this);
+        }
     }
 }
