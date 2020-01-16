@@ -22,6 +22,8 @@ import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.amqp.messaging.Source;
 import org.apache.qpid.proton4j.amqp.messaging.Target;
+import org.apache.qpid.proton4j.amqp.transport.Attach;
+import org.apache.qpid.proton4j.amqp.transport.Detach;
 import org.apache.qpid.proton4j.amqp.transport.ErrorCondition;
 import org.apache.qpid.proton4j.amqp.transport.ReceiverSettleMode;
 import org.apache.qpid.proton4j.amqp.transport.Role;
@@ -63,6 +65,43 @@ public interface Link<T extends Link<T>> {
      * @throws EngineStateException if an error occurs detaching the {@link Link} or the Engine is shutdown.
      */
     T detach();
+
+    /**
+     * Returns true if this {@link Link} is currently locally open meaning the state returned
+     * from {@link Link#getState()} is equal to {@link LinkState#ACTIVE}.  A link
+     * is locally opened after a call to {@link Link#open()} and before a call to
+     * {@link Link#close()} or {@link Link#detach()}.
+     *
+     * @return true if the link is locally open.
+     *
+     * @see Session#isLocallyClosed()
+     * @see Link#isLocallyDetached()
+     */
+    boolean isLocallyOpened();
+
+    /**
+     * Returns true if this {@link Link} is currently locally closed meaning the state returned
+     * from {@link Link#getState()} is equal to {@link LinkState#CLOSED}.  A link
+     * is locally closed after a call to {@link Link#close()}.
+     *
+     * @return true if the link is locally closed.
+     *
+     * @see Link#isLocallyOpened()
+     * @see Link#isLocallyDetached()
+     */
+    boolean isLocallyClosed();
+
+    /**
+     * Returns true if this {@link Link} is currently locally detached meaning the state returned
+     * from {@link Link#getState()} is equal to {@link LinkState#DETACHED}.  A link
+     * is locally detached after a call to {@link Link#detach()}.
+     *
+     * @return true if the link is locally closed.
+     *
+     * @see Link#isLocallyOpened()
+     * @see Link#isLocallyClosed()
+     */
+    boolean isLocallyDetached();
 
     /**
      * @return the {@link Context} instance that is associated with this {@link Connection}
@@ -329,6 +368,44 @@ public interface Link<T extends Link<T>> {
     UnsignedLong getMaxMessageSize();
 
     //----- View of the state of the link at the remote
+
+    /**
+     * Returns true if this {@link Link} is currently remotely open meaning the state returned
+     * from {@link Link#getRemoteState()} is equal to {@link LinkState#ACTIVE}.  A link
+     * is remotely opened after an {@link Attach} has been received from the remote and before a
+     * {@link Detach} has been received from the remote.
+     *
+     * @return true if the link is remotely open.
+     *
+     * @see Link#isRemotelyClosed()
+     */
+    boolean isRemotelyOpened();
+
+    /**
+     * Returns true if this {@link Link} is currently remotely closed meaning the state returned
+     * from {@link Link#getRemoteState()} is equal to {@link LinkState#CLOSED}.  A link
+     * is remotely closed after an {@link Detach} has been received from the remote with the close
+     * flag equal to true.
+     *
+     * @return true if the link is remotely closed.
+     *
+     * @see Link#isRemotelyOpened()
+     * @see Link#isRemotelyDetached()
+     */
+    boolean isRemotelyClosed();
+
+    /**
+     * Returns true if this {@link Link} is currently remotely detached meaning the state returned
+     * from {@link Link#getRemoteState()} is equal to {@link LinkState#DETACHED}.  A link
+     * is remotely detached after an {@link Detach} has been received from the remote with the close
+     * flag equal to false.
+     *
+     * @return true if the link is remotely detached.
+     *
+     * @see Link#isRemotelyOpened()
+     * @see Link#isRemotelyClosed()
+     */
+    boolean isRemotelyDetached();
 
     /**
      * @return the {@link Source} for the remote end of this link.

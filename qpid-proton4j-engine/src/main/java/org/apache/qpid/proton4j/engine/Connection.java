@@ -21,7 +21,9 @@ import java.util.Set;
 import java.util.concurrent.ScheduledExecutorService;
 
 import org.apache.qpid.proton4j.amqp.Symbol;
+import org.apache.qpid.proton4j.amqp.transport.Close;
 import org.apache.qpid.proton4j.amqp.transport.ErrorCondition;
+import org.apache.qpid.proton4j.amqp.transport.Open;
 import org.apache.qpid.proton4j.engine.exceptions.EngineStateException;
 
 /**
@@ -112,6 +114,29 @@ public interface Connection {
     Connection setCondition(ErrorCondition condition);
 
     //----- Operations on local end of this Connection
+
+    /**
+     * Returns true if this {@link Connection} is currently locally open meaning the state returned
+     * from {@link Connection#getState()} is equal to {@link ConnectionState#ACTIVE}.  A connection
+     * is locally opened after a call to {@link Connection#open()} and before a call to
+     * {@link Connection#close()}.
+     *
+     * @return true if the connection is locally open.
+     *
+     * @see Connection#isLocallyClosed()
+     */
+    boolean isLocallyOpened();
+
+    /**
+     * Returns true if this {@link Connection} is currently locally closed meaning the state returned
+     * from {@link Connection#getState()} is equal to {@link ConnectionState#CLOSED}.  A connection
+     * is locally closed after a call to {@link Connection#close()}.
+     *
+     * @return true if the connection is locally closed.
+     *
+     * @see Connection#isLocallyOpened()
+     */
+    boolean isLocallyClosed();
 
     /**
      * Creates a new Session linked to this Connection
@@ -309,6 +334,29 @@ public interface Connection {
     Map<Symbol, Object> getProperties();
 
     //----- View state of remote end of this Connection
+
+    /**
+     * Returns true if this {@link Connection} is currently remotely open meaning the state returned
+     * from {@link Connection#getRemoteState()} is equal to {@link ConnectionState#ACTIVE}.  A connection
+     * is remotely opened after an {@link Open} has been received from the remote and before a {@link Close}
+     * has been received from the remote.
+     *
+     * @return true if the connection is remotely open.
+     *
+     * @see Connection#isRemotelyClosed()
+     */
+    boolean isRemotelyOpened();
+
+    /**
+     * Returns true if this {@link Connection} is currently remotely closed meaning the state returned
+     * from {@link Connection#getRemoteState()} is equal to {@link ConnectionState#CLOSED}.  A connection
+     * is remotely closed after an {@link Close} has been received from the remote.
+     *
+     * @return true if the connection is remotely closed.
+     *
+     * @see Connection#isRemotelyOpened()
+     */
+    boolean isRemotelyClosed();
 
     /**
      * @return the Container Id assigned to the remote end of the Connection.

@@ -201,6 +201,16 @@ public class ProtonConnection implements Connection, AMQPHeader.HeaderHandler<Pr
     }
 
     @Override
+    public boolean isLocallyClosed() {
+        return getState() == ConnectionState.CLOSED;
+    }
+
+    @Override
+    public boolean isRemotelyClosed() {
+        return getRemoteState() == ConnectionState.CLOSED;
+    }
+
+    @Override
     public ProtonConnection setContainerId(String containerId) {
         checkNotOpened("Cannot set Container Id on already opened Connection");
         localOpen.setContainerId(containerId);
@@ -327,6 +337,16 @@ public class ProtonConnection implements Connection, AMQPHeader.HeaderHandler<Pr
         }
 
         return null;
+    }
+
+    @Override
+    public boolean isLocallyOpened() {
+        return getState() == ConnectionState.ACTIVE;
+    }
+
+    @Override
+    public boolean isRemotelyOpened() {
+        return getRemoteState() == ConnectionState.ACTIVE;
     }
 
     @Override
@@ -665,22 +685,6 @@ public class ProtonConnection implements Connection, AMQPHeader.HeaderHandler<Pr
         }
 
         localSessions.remove(localChannel);
-    }
-
-    boolean isLocallyOpened() {
-        return getState() == ConnectionState.ACTIVE;
-    }
-
-    boolean isRemotelyOpened() {
-        return getRemoteState() == ConnectionState.ACTIVE;
-    }
-
-    boolean isLocallyClosed() {
-        return getState() == ConnectionState.CLOSED;
-    }
-
-    boolean isRemotelyClosed() {
-        return getRemoteState() == ConnectionState.CLOSED;
     }
 
     boolean wasHeaderSent() {

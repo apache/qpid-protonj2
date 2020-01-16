@@ -19,6 +19,8 @@ package org.apache.qpid.proton4j.engine;
 import java.util.Map;
 
 import org.apache.qpid.proton4j.amqp.Symbol;
+import org.apache.qpid.proton4j.amqp.transport.Begin;
+import org.apache.qpid.proton4j.amqp.transport.End;
 import org.apache.qpid.proton4j.amqp.transport.ErrorCondition;
 import org.apache.qpid.proton4j.engine.exceptions.EngineStateException;
 import org.apache.qpid.proton4j.engine.impl.ProtonConnection;
@@ -81,6 +83,29 @@ public interface Session {
      * @return the parent {@link Engine} for this Session.
      */
     Engine getEngine();
+
+    /**
+     * Returns true if this {@link Session} is currently locally open meaning the state returned
+     * from {@link Session#getState()} is equal to {@link SessionState#ACTIVE}.  A session
+     * is locally opened after a call to {@link Session#open()} and before a call to
+     * {@link Session#close()}.
+     *
+     * @return true if the session is locally open.
+     *
+     * @see Session#isLocallyClosed()
+     */
+    boolean isLocallyOpened();
+
+    /**
+     * Returns true if this {@link Session} is currently locally closed meaning the state returned
+     * from {@link Session#getState()} is equal to {@link SessionState#CLOSED}.  A session
+     * is locally closed after a call to {@link Session#close()}.
+     *
+     * @return true if the session is locally closed.
+     *
+     * @see Session#isLocallyOpened()
+     */
+    boolean isLocallyClosed();
 
     //----- Session sender and receiver factory methods
 
@@ -200,6 +225,29 @@ public interface Session {
     Symbol[] getDesiredCapabilities();
 
     //----- View the remote end of the Session configuration
+
+    /**
+     * Returns true if this {@link Session} is currently remotely open meaning the state returned
+     * from {@link Session#getRemoteState()} is equal to {@link SessionState#ACTIVE}.  A session
+     * is remotely opened after an {@link Begin} has been received from the remote and before a {@link End}
+     * has been received from the remote.
+     *
+     * @return true if the session is remotely open.
+     *
+     * @see Session#isRemotelyClosed()
+     */
+    boolean isRemotelyOpened();
+
+    /**
+     * Returns true if this {@link Session} is currently remotely closed meaning the state returned
+     * from {@link Session#getRemoteState()} is equal to {@link SessionState#CLOSED}.  A session
+     * is remotely closed after an {@link End} has been received from the remote.
+     *
+     * @return true if the session is remotely closed.
+     *
+     * @see Session#isRemotelyOpened()
+     */
+    boolean isRemotelyClosed();
 
     /**
      * Gets the remote session offered capabilities, as conveyed from the peer via the Begin frame

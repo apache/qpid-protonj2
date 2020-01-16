@@ -360,6 +360,36 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
     }
 
     @Override
+    public boolean isLocallyOpened() {
+        return getState() == LinkState.ACTIVE;
+    }
+
+    @Override
+    public boolean isLocallyClosed() {
+        return getState() == LinkState.CLOSED;
+    }
+
+    @Override
+    public boolean isLocallyDetached() {
+        return getState() == LinkState.DETACHED;
+    }
+
+    @Override
+    public boolean isRemotelyOpened() {
+        return getRemoteState() == LinkState.ACTIVE;
+    }
+
+    @Override
+    public boolean isRemotelyClosed() {
+        return getRemoteState() == LinkState.CLOSED;
+    }
+
+    @Override
+    public boolean isRemotelyDetached() {
+        return getRemoteState() == LinkState.DETACHED;
+    }
+
+    @Override
     public SenderSettleMode getRemoteSenderSettleMode() {
         if (remoteAttach != null) {
             return remoteAttach.getSenderSettleMode();
@@ -586,30 +616,6 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
     }
 
     //----- Internal methods
-
-    boolean isLocallyOpened() {
-        return getState() == LinkState.ACTIVE;
-    }
-
-    boolean isRemotelyOpened() {
-        return getRemoteState() == LinkState.ACTIVE;
-    }
-
-    boolean isLocallyClosed() {
-        return getState() == LinkState.CLOSED;
-    }
-
-    boolean isRemotelyClosed() {
-        return getRemoteState() == LinkState.CLOSED;
-    }
-
-    boolean isLocallyDetached() {
-        return getState() == LinkState.DETACHED;
-    }
-
-    boolean isRemotelyDetached() {
-        return getRemoteState() == LinkState.DETACHED;
-    }
 
     boolean wasLocalAttachSent() {
         return localAttachSent;

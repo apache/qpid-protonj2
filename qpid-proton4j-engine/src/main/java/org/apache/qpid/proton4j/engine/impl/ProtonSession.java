@@ -198,6 +198,16 @@ public class ProtonSession implements Session {
     //----- View and configure this end of the session endpoint
 
     @Override
+    public boolean isLocallyOpened() {
+        return getState() == SessionState.ACTIVE;
+    }
+
+    @Override
+    public boolean isLocallyClosed() {
+        return getState() == SessionState.CLOSED;
+    }
+
+    @Override
     public Session setIncomingCapacity(int incomingCapacity) {
         incomingWindow.setIncomingCapaity(incomingCapacity);
         return this;
@@ -275,6 +285,16 @@ public class ProtonSession implements Session {
     }
 
     //----- View of the remote end of this endpoint
+
+    @Override
+    public boolean isRemotelyOpened() {
+        return getRemoteState() == SessionState.ACTIVE;
+    }
+
+    @Override
+    public boolean isRemotelyClosed() {
+        return getRemoteState() == SessionState.CLOSED;
+    }
 
     @Override
     public Symbol[] getRemoteOfferedCapabilities() {
@@ -562,22 +582,6 @@ public class ProtonSession implements Session {
 
     ProtonSessionIncomingWindow getIncomingWindow() {
         return incomingWindow;
-    }
-
-    boolean isLocallyOpened() {
-        return getState() == SessionState.ACTIVE;
-    }
-
-    boolean isRemotelyOpened() {
-        return getRemoteState() == SessionState.ACTIVE;
-    }
-
-    boolean isLocallyClosed() {
-        return getState() == SessionState.CLOSED;
-    }
-
-    boolean isRemotelyClosed() {
-        return getRemoteState() == SessionState.CLOSED;
     }
 
     boolean wasLocalBeginSent() {
