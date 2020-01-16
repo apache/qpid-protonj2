@@ -41,7 +41,7 @@ import org.messaginghub.amqperative.impl.exceptions.ClientExceptionSupport;
 import org.messaginghub.amqperative.impl.exceptions.ClientOperationTimedOutException;
 import org.messaginghub.amqperative.impl.exceptions.ClientResourceAllocationException;
 import org.messaginghub.amqperative.impl.exceptions.ClientResourceClosedException;
-import org.messaginghub.amqperative.util.FifoMessageQueue;
+import org.messaginghub.amqperative.util.FifoDeliveryQueue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -61,7 +61,7 @@ public class ClientReceiver implements Receiver {
     private final ScheduledExecutorService executor;
     private final AtomicReference<ClientException> failureCause = new AtomicReference<>();
     private final String receiverId;
-    private final FifoMessageQueue messageQueue;
+    private final FifoDeliveryQueue messageQueue;
     private volatile int closed;
     private Consumer<ClientReceiver> receiverRemotelyClosedHandler;
 
@@ -81,7 +81,7 @@ public class ClientReceiver implements Receiver {
             protonReceiver.setCredit(options.creditWindow());
         }
 
-        messageQueue = new FifoMessageQueue(options.creditWindow());
+        messageQueue = new FifoDeliveryQueue(options.creditWindow());
         messageQueue.start();
     }
 

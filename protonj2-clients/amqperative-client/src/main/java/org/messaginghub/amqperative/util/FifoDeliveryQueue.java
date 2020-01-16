@@ -26,12 +26,12 @@ import java.util.concurrent.locks.ReentrantLock;
 import org.messaginghub.amqperative.Delivery;
 
 /**
- * Simple first in / first out Message Queue.
+ * Simple first in / first out {@link Delivery} Queue.
  */
-public final class FifoMessageQueue implements MessageQueue {
+public final class FifoDeliveryQueue implements DeliveryQueue {
 
-    protected static final AtomicIntegerFieldUpdater<FifoMessageQueue> STATE_FIELD_UPDATER =
-            AtomicIntegerFieldUpdater.newUpdater(FifoMessageQueue.class, "state");
+    protected static final AtomicIntegerFieldUpdater<FifoDeliveryQueue> STATE_FIELD_UPDATER =
+            AtomicIntegerFieldUpdater.newUpdater(FifoDeliveryQueue.class, "state");
 
     protected static final int CLOSED = 0;
     protected static final int STOPPED = 1;
@@ -44,8 +44,8 @@ public final class FifoMessageQueue implements MessageQueue {
 
     protected final Deque<Delivery> queue;
 
-    public FifoMessageQueue(int prefetchSize) {
-        this.queue = new ArrayDeque<Delivery>(Math.max(1, prefetchSize));
+    public FifoDeliveryQueue(int queueDepth) {
+        this.queue = new ArrayDeque<Delivery>(Math.max(1, queueDepth));
     }
 
     @Override
@@ -75,7 +75,7 @@ public final class FifoMessageQueue implements MessageQueue {
     public Delivery dequeue(long timeout) throws InterruptedException {
         lock.lock();
         try {
-            // Wait until the consumer is ready to deliver messages.
+            // Wait until the receiver is ready to deliver messages.
             while (timeout != 0 && isRunning() && queue.isEmpty()) {
                 if (timeout == -1) {
                     condition.await();
