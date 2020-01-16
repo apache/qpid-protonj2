@@ -130,10 +130,10 @@ public class ClientReceiver implements Receiver {
     @Override
     public Delivery receive() throws IllegalStateException {
         checkClosed();
-        //TODO: verify timeout conventions align
         try {
             return messageQueue.dequeue(-1);
         } catch (InterruptedException e) {
+            Thread.interrupted();
             throw new IllegalStateException(e);//TODO: better exception
         }
     }
@@ -145,6 +145,7 @@ public class ClientReceiver implements Receiver {
         try {
             return messageQueue.dequeue(timeout);
         } catch (InterruptedException e) {
+            Thread.interrupted();
             throw new IllegalStateException(e);//TODO: better exception
         }
     }
@@ -152,11 +153,7 @@ public class ClientReceiver implements Receiver {
     @Override
     public Delivery tryReceive() throws IllegalStateException {
         checkClosed();
-        try {
-            return messageQueue.dequeue(0);
-        } catch (InterruptedException e) {
-            throw new IllegalStateException(e);//TODO: better exception
-        }
+        return messageQueue.dequeueNoWait();
     }
 
     @Override
