@@ -36,6 +36,7 @@ import org.apache.qpid.proton4j.amqp.transport.Transfer;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.common.logging.ProtonLogger;
 import org.apache.qpid.proton4j.common.logging.ProtonLoggerFactory;
+import org.apache.qpid.proton4j.engine.Engine;
 import org.apache.qpid.proton4j.engine.EventHandler;
 import org.apache.qpid.proton4j.engine.Link;
 import org.apache.qpid.proton4j.engine.LinkState;
@@ -87,6 +88,9 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
     };
     private EventHandler<T> remoteCloseHandler = (result) -> {
         LOG.trace("Link {} Remote link close arrived at default handler.", self());
+    };
+    private EventHandler<Engine> engineShutdownHandler = (result) -> {
+        LOG.trace("The underlying engine for this Link {} has been explicitly shutdown.", self());
     };
 
     /**
@@ -202,6 +206,7 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
     @Override
     public T detach() {
         if (getState() == LinkState.ACTIVE) {
+            engine.checkFailed("Cannot close a link while the Engine is in the failed state.");
             localState = LinkState.DETACHED;
             transitionedToLocallyDetached();
             try {
@@ -219,6 +224,7 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
     @Override
     public T close() {
         if (getState() == LinkState.ACTIVE) {
+            engine.checkFailed("Cannot close a link while the Engine is in the failed state.");
             localState = LinkState.CLOSED;
             transitionedToLocallyClosed();
             try {
@@ -499,6 +505,16 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
         return self();
     }
 
+    @Override
+    public T engineShutdownHandler(EventHandler<Engine> engineShutdownEventHandler) {
+        this.engineShutdownHandler = engineShutdownEventHandler;
+        return self();
+    }
+
+    EventHandler<Engine> engineShutdownHandler() {
+        return engineShutdownHandler;
+    }
+
     //----- Abstract Link methods needed to implement a fully functional Link type
 
     protected abstract void transitionedToLocallyOpened();
@@ -551,6 +567,12 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
             default:
                 throw new IllegalStateException("Link is in unknown state and cannot proceed");
         }
+    }
+
+    void handleEngineShutdown(ProtonEngine protonEngine) {
+        try {
+            engineShutdownHandler.handle(protonEngine);
+        } catch (Throwable ignore) {}
     }
 
     //----- Handle incoming performatives
@@ -640,7 +662,7 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
     private void trySendLocalDetach(boolean closed) {
         if (!wasLocalDetachSent()) {
             if ((session.isLocallyOpened() && session.wasLocalBeginSent()) &&
-                (connection.isLocallyOpened() && connection.wasLocalOpenSent())) {
+                (connection.isLocallyOpened() && connection.wasLocalOpenSent()) && !engine.isShutdown()) {
 
                 Detach detach = new Detach();
                 detach.setHandle(localAttach.getHandle());

@@ -207,10 +207,18 @@ public class ProtonEngineTest extends ProtonEngineTestSupport {
         engine.engineFailed(new SaslException());
 
         assertFalse(engine.isWritable());
-        assertTrue(engine.isShutdown());
+        assertFalse(engine.isShutdown());
         assertTrue(engine.isFailed());
         assertNotNull(engine.failureCause());
         assertEquals(EngineState.FAILED, engine.state());
+
+        engine.shutdown();
+
+        assertFalse(engine.isWritable());
+        assertTrue(engine.isShutdown());
+        assertFalse(engine.isFailed());
+        assertNotNull(engine.failureCause());
+        assertEquals(EngineState.SHUTDOWN, engine.state());
 
         assertNotNull(connection);
         assertNotNull(failure);

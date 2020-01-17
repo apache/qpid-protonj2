@@ -24,6 +24,7 @@ import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.transport.Close;
 import org.apache.qpid.proton4j.amqp.transport.ErrorCondition;
 import org.apache.qpid.proton4j.amqp.transport.Open;
+import org.apache.qpid.proton4j.engine.exceptions.EngineFailedException;
 import org.apache.qpid.proton4j.engine.exceptions.EngineStateException;
 
 /**
@@ -45,13 +46,16 @@ public interface Connection {
 
     /**
      * Close the end point locally and send the Close performative immediately if possible or holds it
-     * until the Connection / Engine state allows it.
+     * until the Connection / Engine state allows it.  If the engine encounters an error writing the
+     * performative or the engine is in a failed state from a previous error then this method will
+     * throw an exception.  If the engine has been shutdown then this method will close out the local
+     * end of the connection and clean up any local resources before returning normally.
      *
      * @return this connection.
      *
-     * @throws EngineStateException if an error occurs closing the Connection or the Engine is shutdown.
+     * @throws EngineFailedException if an error occurs closing the Connection or the Engine is in a failed state.
      */
-    Connection close() throws EngineStateException;
+    Connection close() throws EngineFailedException;
 
     /**
      * Convenience method which is the same as calling {@link Engine#tick(long)}.
@@ -495,5 +499,16 @@ public interface Connection {
      * @return this connection
      */
     Connection receiverOpenHandler(EventHandler<Receiver> remoteReceiverOpenEventHandler);
+
+    /**
+     * Sets an {@link EventHandler} that is invoked when the engine that create this {@link Connection} is shutdown
+     * via a call to {@link Engine#shutdown()} which indicates a desire to terminate all engine operations.
+     *
+     * @param engineShutdownEventHandler
+     *      the EventHandler that will be signaled when this connection's engine is explicitly shutdown.
+     *
+     * @return this connection
+     */
+    Connection engineShutdownHandler(EventHandler<Engine> engineShutdownEventHandler);
 
 }

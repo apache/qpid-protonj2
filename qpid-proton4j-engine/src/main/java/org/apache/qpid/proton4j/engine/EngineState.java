@@ -37,6 +37,11 @@ public enum EngineState {
     STARTED,
 
     /**
+     * The engine has encountered an error and is no longer usable.
+     */
+    FAILED,
+
+    /**
      * Engine is shutting down and all pending work should be completed.
      */
     SHUTTING_DOWN,
@@ -44,11 +49,6 @@ public enum EngineState {
     /**
      * The engine has been shutdown and can no longer be used.
      */
-    SHUTDOWN,
-
-    /**
-     * The engine has encountered an error and is no longer usable.
-     */
-    FAILED;
+    SHUTDOWN
 
 }

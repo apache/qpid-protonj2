@@ -44,7 +44,7 @@ import org.apache.qpid.proton4j.engine.Connection;
 import org.apache.qpid.proton4j.engine.ConnectionState;
 import org.apache.qpid.proton4j.engine.Engine;
 import org.apache.qpid.proton4j.engine.EngineFactory;
-import org.apache.qpid.proton4j.engine.exceptions.EngineShutdownException;
+import org.apache.qpid.proton4j.engine.exceptions.EngineFailedException;
 import org.apache.qpid.proton4j.engine.exceptions.EngineStateException;
 import org.hamcrest.Matcher;
 import org.junit.Test;
@@ -84,6 +84,35 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
         assertTrue("Connection should have reported local close", connectionLocalClose.get());
         assertTrue("Connection should have reported remote open", connectionRemoteOpen.get());
         assertTrue("Connection should have reported remote close", connectionRemoteClose.get());
+
+        peer.waitForScriptToComplete();
+
+        assertNull(failure);
+    }
+
+    @Test
+    public void testEndpointEmitsEngineShutdownEvent() throws Exception {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result);
+        ProtonTestPeer peer = new ProtonTestPeer(engine);
+        engine.outputConsumer(peer);
+
+        final AtomicBoolean engineShutdown = new AtomicBoolean();
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond();
+        peer.expectClose().respond();
+
+        Connection connection = engine.start();
+
+        connection.engineShutdownHandler(result -> engineShutdown.set(true));
+
+        connection.open();
+        connection.close();
+
+        engine.shutdown();
+
+        assertTrue("Connection should have reported engine shutdown", engineShutdown.get());
 
         peer.waitForScriptToComplete();
 
@@ -604,21 +633,21 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
     }
 
     @Test
-    public void testCloseConnectionAfterShutdownThrowsEngineStateExceptionOpenWrittenAndResponse() throws Exception {
-        testCloseConnectionAfterShutdownThrowsEngineStateException(true, true);
+    public void testCloseConnectionAfterShutdownDoesNotThrowExceptionOpenWrittenAndResponse() throws Exception {
+        testCloseConnectionAfterShutdownNoOutputAndNoException(true, true);
     }
 
     @Test
-    public void testCloseConnectionAfterShutdownThrowsEngineStateExceptionOpenWrittenButNoResponse() throws Exception {
-        testCloseConnectionAfterShutdownThrowsEngineStateException(true, false);
+    public void testCloseConnectionAfterShutdownDoesNotThrowExceptionOpenWrittenButNoResponse() throws Exception {
+        testCloseConnectionAfterShutdownNoOutputAndNoException(true, false);
     }
 
     @Test
-    public void testCloseConnectionAfterShutdownThrowsEngineStateExceptionOpenNotWritten() throws Exception {
-        testCloseConnectionAfterShutdownThrowsEngineStateException(false, false);
+    public void testCloseConnectionAfterShutdownDoesNotThrowExceptionOpenNotWritten() throws Exception {
+        testCloseConnectionAfterShutdownNoOutputAndNoException(false, false);
     }
 
-    private void testCloseConnectionAfterShutdownThrowsEngineStateException(boolean respondToHeader, boolean respondToOpen) throws Exception {
+    private void testCloseConnectionAfterShutdownNoOutputAndNoException(boolean respondToHeader, boolean respondToOpen) throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
         ProtonTestPeer peer = new ProtonTestPeer(engine);
@@ -638,18 +667,66 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
         Connection connection = engine.start();
         connection.open();
 
-        // Shutdown before header response
         engine.shutdown();
 
-        // Close should not allow anything to be written as the engine is shutdown
-        try {
-            connection.close();
-            fail("Should fail on close when Engine already shutdown");
-        } catch (EngineShutdownException ex) {}
+        // Should clean up and not throw as we knowingly shutdown engine operations.
+        connection.close();
 
         peer.waitForScriptToComplete();
 
         assertNull(failure);
+    }
+
+    @Test
+    public void testCloseConnectionAfterFailureThrowsEngineStateExceptionOpenWrittenAndResponse() throws Exception {
+        testCloseConnectionAfterEngineFailedThrowsAndNoOutputWritten(true, true);
+    }
+
+    @Test
+    public void testCloseConnectionAfterFailureThrowsEngineStateExceptionOpenWrittenButNoResponse() throws Exception {
+        testCloseConnectionAfterEngineFailedThrowsAndNoOutputWritten(true, false);
+    }
+
+    @Test
+    public void testCloseConnectionAfterFailureThrowsEngineStateExceptionOpenNotWritten() throws Exception {
+        testCloseConnectionAfterEngineFailedThrowsAndNoOutputWritten(false, false);
+    }
+
+    private void testCloseConnectionAfterEngineFailedThrowsAndNoOutputWritten(boolean respondToHeader, boolean respondToOpen) throws Exception {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result);
+        ProtonTestPeer peer = new ProtonTestPeer(engine);
+        engine.outputConsumer(peer);
+
+        if (respondToHeader) {
+            peer.expectAMQPHeader().respondWithAMQPHeader();
+            if (respondToOpen) {
+                peer.expectOpen().respond();
+            } else {
+                peer.expectOpen();
+            }
+        } else {
+            peer.expectAMQPHeader();
+        }
+
+        Connection connection = engine.start();
+        connection.open();
+
+        engine.engineFailed(new IOException());
+
+        try {
+            connection.close();
+            fail("Should throw exception indicating engine is in a failed state.");
+        } catch (EngineFailedException efe) {}
+
+        engine.shutdown();  // Explicit shutdown now allows local close to complete
+
+        // Should clean up and not throw as we knowingly shutdown engine operations.
+        connection.close();
+
+        peer.waitForScriptToComplete();
+
+        assertNotNull(failure);
     }
 
     @Test

@@ -45,11 +45,13 @@ import org.apache.qpid.proton4j.common.logging.ProtonLogger;
 import org.apache.qpid.proton4j.common.logging.ProtonLoggerFactory;
 import org.apache.qpid.proton4j.engine.Connection;
 import org.apache.qpid.proton4j.engine.ConnectionState;
+import org.apache.qpid.proton4j.engine.Engine;
 import org.apache.qpid.proton4j.engine.EventHandler;
 import org.apache.qpid.proton4j.engine.Receiver;
 import org.apache.qpid.proton4j.engine.Sender;
 import org.apache.qpid.proton4j.engine.Session;
 import org.apache.qpid.proton4j.engine.SessionState;
+import org.apache.qpid.proton4j.engine.exceptions.EngineFailedException;
 import org.apache.qpid.proton4j.engine.exceptions.EngineStateException;
 import org.apache.qpid.proton4j.engine.exceptions.ProtocolViolationException;
 
@@ -84,29 +86,26 @@ public class ProtonConnection implements Connection, AMQPHeader.HeaderHandler<Pr
     private EventHandler<Connection> remoteOpenHandler = (result) -> {
         LOG.trace("Remote open arrived at default handler.");
     };
-
     private EventHandler<Connection> remoteCloseHandler = (result) -> {
         LOG.trace("Remote close arrived at default handler.");
     };
-
     private EventHandler<Connection> localOpenHandler = (result) -> {
         LOG.trace("Connection has been locally opened.");
     };
-
     private EventHandler<Connection> localCloseHandler = (result) -> {
         LOG.trace("Connection has been locally closed.");
     };
-
     private EventHandler<Session> remoteSessionOpenEventHandler = (result) -> {
         LOG.trace("Remote session open arrived at default handler.");
     };
-
     private EventHandler<Sender> remoteSenderOpenEventHandler = (result) -> {
         LOG.trace("Remote sender open arrived at default handler.");
     };
-
     private EventHandler<Receiver> remoteReceiverOpenEventHandler = (result) -> {
         LOG.trace("Remote receiver open arrived at default handler.");
+    };
+    private EventHandler<Engine> engineShutdownHandler = (result) -> {
+        LOG.trace("The underlying engine has been explicitly shutdown.");
     };
 
     /**
@@ -168,9 +167,9 @@ public class ProtonConnection implements Connection, AMQPHeader.HeaderHandler<Pr
     }
 
     @Override
-    public ProtonConnection close() throws EngineStateException {
+    public ProtonConnection close() throws EngineFailedException {
         if (getState() == ConnectionState.ACTIVE) {
-            getEngine().checkShutdownOrFailed("Cannot close a connection when Engine is shutdown or failed.");
+            getEngine().checkFailed("Cannot close a connection when Engine has failed.");
             localState = ConnectionState.CLOSED;
             try {
                 processStateChangeAndRespond();
@@ -618,6 +617,16 @@ public class ProtonConnection implements Connection, AMQPHeader.HeaderHandler<Pr
         return remoteReceiverOpenEventHandler;
     }
 
+    @Override
+    public Connection engineShutdownHandler(EventHandler<Engine> engineShutdownEventHandler) {
+        this.engineShutdownHandler = engineShutdownEventHandler;
+        return this;
+    }
+
+    EventHandler<Engine> engineShutdownHandler() {
+        return engineShutdownHandler;
+    }
+
     //----- Internal implementation
 
     private void checkNotOpened(String errorMessage) {
@@ -643,7 +652,7 @@ public class ProtonConnection implements Connection, AMQPHeader.HeaderHandler<Pr
             if (state != ConnectionState.IDLE && headerReceived) {
                 boolean stateUpdated = false;
 
-                if (!localOpenSent) {
+                if (!localOpenSent && !engine.isShutdown()) {
                     localOpenSent = true;
                     stateUpdated = true;
                     engine.fireWrite(localOpen, 0, null, null);
@@ -651,7 +660,7 @@ public class ProtonConnection implements Connection, AMQPHeader.HeaderHandler<Pr
                     engine.configuration().recomputeEffectiveFrameSizeLimits();
                 }
 
-                if (isLocallyClosed() && !localCloseSent) {
+                if (isLocallyClosed() && !localCloseSent && !engine.isShutdown()) {
                     localCloseSent = true;
                     stateUpdated = true;
                     Close localClose = new Close().setError(getCondition());
@@ -663,10 +672,27 @@ public class ProtonConnection implements Connection, AMQPHeader.HeaderHandler<Pr
                     sessions.forEach(session -> session.handleConnectionStateChanged(this));
                 }
             }
-        } else {
+        } else if (!engine.isShutdown()) {
             headerSent = true;
             engine.fireWrite(AMQPHeader.getAMQPHeader());
         }
+    }
+
+    void handleEngineShutdown(ProtonEngine protonEngine) {
+        Set<ProtonSession> sessions = new HashSet<>();
+
+        sessions.addAll(localSessions.values());
+        sessions.addAll(remoteSessions.values());
+
+        sessions.forEach(session -> {
+            try {
+                session.handleEngineShutdown(protonEngine);
+            } catch (Throwable ignore) {}
+        });
+
+        try {
+            engineShutdownHandler.handle(protonEngine);
+        } catch (Throwable ignore) {}
     }
 
     private int findFreeLocalChannel() {

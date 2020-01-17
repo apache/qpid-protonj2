@@ -64,7 +64,7 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
 
     private static final ProtonLogger LOG = ProtonLoggerFactory.getLogger(ProtonEngineTestSupport.class);
 
-    @Test
+    @Test(timeout = 30000)
     public void testSessionEmitsOpenAndCloseEvents() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
@@ -104,7 +104,74 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test
+    @Test(timeout = 30000)
+    public void testEngineShutdownEventNeitherEndClosed() throws Exception {
+        doTestEngineShutdownEvent(false, false);
+    }
+
+    @Test(timeout = 30000)
+    public void testEngineShutdownEventLocallyClosed() throws Exception {
+        doTestEngineShutdownEvent(true, false);
+    }
+
+    @Test(timeout = 30000)
+    public void testEngineShutdownEventRemotelyClosed() throws Exception {
+        doTestEngineShutdownEvent(false, true);
+    }
+
+    @Test(timeout = 30000)
+    public void testEngineShutdownEventBothEndsClosed() throws Exception {
+        doTestEngineShutdownEvent(true, true);
+    }
+
+    private void doTestEngineShutdownEvent(boolean locallyClosed, boolean remotelyClosed) throws Exception {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result);
+        ProtonTestPeer peer = new ProtonTestPeer(engine);
+        engine.outputConsumer(peer);
+
+        final AtomicBoolean engineShutdown = new AtomicBoolean();
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond();
+        peer.expectBegin().respond();
+
+        Connection connection = engine.start();
+
+        connection.open();
+
+        Session session = connection.session();
+        session.open();
+        session.engineShutdownHandler(result -> engineShutdown.set(true));
+
+        if (locallyClosed) {
+            if (remotelyClosed) {
+                peer.expectEnd().respond();
+            } else {
+                peer.expectEnd();
+            }
+
+            session.close();
+        }
+
+        if (remotelyClosed && !locallyClosed) {
+            peer.remoteEnd();
+        }
+
+        engine.shutdown();
+
+        if (locallyClosed && remotelyClosed) {
+            assertFalse("Should not have reported engine shutdown", engineShutdown.get());
+        } else {
+            assertTrue("Should have reported engine shutdown", engineShutdown.get());
+        }
+
+        peer.waitForScriptToComplete();
+
+        assertNull(failure);
+    }
+
+    @Test(timeout = 30000)
     public void testSessionOpenAndCloseAreIdempotent() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
@@ -138,12 +205,12 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test
+    @Test(timeout = 30000)
     public void testSenderCreateOnClosedSessionThrowsISE() throws Exception {
         testLinkCreateOnClosedSessionThrowsISE(false);
     }
 
-    @Test
+    @Test(timeout = 30000)
     public void testReceiverCreateOnClosedSessionThrowsISE() throws Exception {
         testLinkCreateOnClosedSessionThrowsISE(true);
     }
@@ -188,7 +255,7 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test
+    @Test(timeout = 30000)
     public void testOpenSessionBeforeOpenConnection() {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
@@ -211,7 +278,7 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test
+    @Test(timeout = 30000)
     public void testEngineEmitsBeginAfterLocalSessionOpened() throws IOException {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
@@ -242,7 +309,7 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test
+    @Test(timeout = 30000)
     public void testSessionFiresOpenedEventAfterRemoteOpensLocallyOpenedSession() throws IOException {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
@@ -278,7 +345,7 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test
+    @Test(timeout = 30000)
     public void testNoSessionPerformativesEmiitedIfConnectionOpenedAndClosedBeforeAnyRemoteResponses() {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
@@ -307,7 +374,7 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test
+    @Test(timeout = 30000)
     public void testOpenAndCloseMultipleSessions() throws IOException {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
@@ -340,7 +407,7 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test
+    @Test(timeout = 30000)
     public void testEngineFireRemotelyOpenedSessionEventWhenRemoteBeginArrives() throws IOException {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
@@ -379,17 +446,17 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test
+    @Test(timeout = 30000)
     public void testSessionPopulatesBeginUsingDefaults() throws IOException {
         doTestSessionOpenPopulatesBegin(false, false);
     }
 
-    @Test
+    @Test(timeout = 30000)
     public void testSessionPopulatesBeginWithConfiguredMaxFrameSizeButNoIncomingCapacity() throws IOException {
         doTestSessionOpenPopulatesBegin(true, false);
     }
 
-    @Test
+    @Test(timeout = 30000)
     public void testSessionPopulatesBeginWithConfiguredMaxFrameSizeAndIncomingCapacity() throws IOException {
         doTestSessionOpenPopulatesBegin(true, true);
     }
@@ -443,7 +510,7 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test
+    @Test(timeout = 30000)
     public void testSessionOpenFailsWhenConnectionClosed() throws EngineStateException {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
@@ -486,7 +553,7 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test
+    @Test(timeout = 30000)
     public void testSessionOpenFailsWhenConnectionRemotelyClosed() throws EngineStateException {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
@@ -528,7 +595,7 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test
+    @Test(timeout = 30000)
     public void testSessionOpenFailsWhenWriteOfBeginFailsWithException() throws EngineStateException {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
@@ -566,11 +633,11 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
 
         assertNotNull(failure);
         assertTrue(engine.isFailed());
-        assertTrue(engine.isShutdown());
+        assertFalse(engine.isShutdown());
         assertNotNull(engine.failureCause());
     }
 
-    @Test
+    @Test(timeout = 30000)
     public void testSessionOpenNotSentUntilConnectionOpened() throws EngineStateException {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
@@ -695,7 +762,7 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
         assertNotNull(failure);
     }
 
-    @Test
+    @Test(timeout = 30000)
     public void testCapabilitiesArePopulatedAndAccessible() throws Exception {
         final Symbol clientOfferedSymbol = Symbol.valueOf("clientOfferedCapability");
         final Symbol clientDesiredSymbol = Symbol.valueOf("clientDesiredCapability");
@@ -750,7 +817,7 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test
+    @Test(timeout = 30000)
     public void testPropertiesArePopulatedAndAccessible() throws Exception {
         final Symbol clientPropertyName = Symbol.valueOf("ClientPropertyName");
         final Integer clientPropertyValue = 1234;
@@ -803,7 +870,7 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test
+    @Test(timeout = 30000)
     public void testEmittedSessionIncomingWindowOnFirstFlow() {
         doSessionIncomingWindowTestImpl(false, false);
         doSessionIncomingWindowTestImpl(true, false);
@@ -912,7 +979,7 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test
+    @Test(timeout = 30000)
     public void testSessionHandlesDeferredOpenAndBeginResponses() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
@@ -957,5 +1024,137 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
         connection.close();
 
         peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+    }
+
+    @Test(timeout = 30000)
+    public void testCloseAfterShutdownDoesNotThrowExceptionOpenWrittenAndResponseBeginWrittenAndRsponse() throws Exception {
+        testCloseAfterShutdownNoOutputAndNoException(true, true, true);
+    }
+
+    @Test(timeout = 30000)
+    public void testCloseAfterShutdownDoesNotThrowExceptionOpenWrittenAndResponseBeginWrittenAndNoRsponse() throws Exception {
+        testCloseAfterShutdownNoOutputAndNoException(true, true, false);
+    }
+
+    @Test(timeout = 30000)
+    public void testCloseAfterShutdownDoesNotThrowExceptionOpenWrittenButNoResponse() throws Exception {
+        testCloseAfterShutdownNoOutputAndNoException(true, false, false);
+    }
+
+    @Test(timeout = 30000)
+    public void testCloseAfterShutdownDoesNotThrowExceptionOpenNotWritten() throws Exception {
+        testCloseAfterShutdownNoOutputAndNoException(false, false, false);
+    }
+
+    private void testCloseAfterShutdownNoOutputAndNoException(boolean respondToHeader, boolean respondToOpen, boolean respondToBegin) throws Exception {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result);
+        ProtonTestPeer peer = new ProtonTestPeer(engine);
+        engine.outputConsumer(peer);
+
+        if (respondToHeader) {
+            peer.expectAMQPHeader().respondWithAMQPHeader();
+            if (respondToOpen) {
+                peer.expectOpen().respond();
+                if (respondToBegin) {
+                    peer.expectBegin().respond();
+                } else {
+                    peer.expectBegin();
+                }
+            } else {
+                peer.expectOpen();
+                peer.expectBegin();
+            }
+        } else {
+            peer.expectAMQPHeader();
+        }
+
+        Connection connection = engine.start();
+        connection.open();
+
+        Session session = connection.session();
+        session.open();
+
+        engine.shutdown();
+
+        // Should clean up and not throw as we knowingly shutdown engine operations.
+        session.close();
+        connection.close();
+
+        peer.waitForScriptToComplete();
+
+        assertNull(failure);
+    }
+
+    @Test(timeout = 30000)
+    public void testCloseAfterFailureThrowsEngineStateExceptionOpenWrittenAndResponseBeginWrittenAndReponse() throws Exception {
+        testCloseAfterEngineFailedThrowsAndNoOutputWritten(true, true, true);
+    }
+
+    @Test(timeout = 30000)
+    public void testCloseAfterFailureThrowsEngineStateExceptionOpenWrittenAndResponseBeginWrittenAndNoResponse() throws Exception {
+        testCloseAfterEngineFailedThrowsAndNoOutputWritten(true, true, false);
+    }
+
+    @Test(timeout = 30000)
+    public void testCloseAfterFailureThrowsEngineStateExceptionOpenWrittenButNoResponse() throws Exception {
+        testCloseAfterEngineFailedThrowsAndNoOutputWritten(true, false, false);
+    }
+
+    @Test(timeout = 30000)
+    public void testCloseAfterFailureThrowsEngineStateExceptionOpenNotWritten() throws Exception {
+        testCloseAfterEngineFailedThrowsAndNoOutputWritten(false, false, false);
+    }
+
+    private void testCloseAfterEngineFailedThrowsAndNoOutputWritten(boolean respondToHeader, boolean respondToOpen, boolean respondToBegin) throws Exception {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result);
+        ProtonTestPeer peer = new ProtonTestPeer(engine);
+        engine.outputConsumer(peer);
+
+        if (respondToHeader) {
+            peer.expectAMQPHeader().respondWithAMQPHeader();
+            if (respondToOpen) {
+                peer.expectOpen().respond();
+                if (respondToBegin) {
+                    peer.expectBegin().respond();
+                } else {
+                    peer.expectBegin();
+                }
+            } else {
+                peer.expectOpen();
+                peer.expectBegin();
+            }
+        } else {
+            peer.expectAMQPHeader();
+        }
+
+        Connection connection = engine.start();
+        connection.open();
+
+        Session session = connection.session();
+        session.open();
+
+        engine.engineFailed(new IOException());
+
+        try {
+            session.close();
+            fail("Should throw exception indicating engine is in a failed state.");
+        } catch (EngineFailedException efe) {}
+
+        try {
+            connection.close();
+            fail("Should throw exception indicating engine is in a failed state.");
+        } catch (EngineFailedException efe) {}
+
+        engine.shutdown();  // Explicit shutdown now allows local close to complete
+
+        // Should clean up and not throw as we knowingly shutdown engine operations.
+        session.close();
+        connection.close();
+
+        peer.waitForScriptToComplete();
+
+        assertNotNull(failure);
     }
 }

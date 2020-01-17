@@ -135,8 +135,6 @@ public class ProtonEngine implements Engine {
             state = EngineState.SHUTDOWN;
             writable = false;
 
-            // TODO - We aren't currently checking connection state, do we want to close if open ?
-
             if (nextIdleTimeoutCheck != null) {
                 LOG.trace("Cancelling scheduled Idle Timeout Check");
                 nextIdleTimeoutCheck.cancel(false);
@@ -145,6 +143,10 @@ public class ProtonEngine implements Engine {
 
             try {
                 pipeline.fireEngineStateChanged();
+            } catch (Throwable ignored) {}
+
+            try {
+                connection.handleEngineShutdown(this);
             } catch (Throwable ignored) {}
         }
 
@@ -319,8 +321,14 @@ public class ProtonEngine implements Engine {
         }
     }
 
+    void checkFailed(String message) {
+        if (state == EngineState.FAILED) {
+            throw ProtonExceptionSupport.createFailedException(message, failureCause);
+        }
+    }
+
     void checkShutdownOrFailed(String message) {
-        if (isShutdown()) {
+        if (state.ordinal() > EngineState.STARTED.ordinal()) {
             if (isFailed()) {
                 throw ProtonExceptionSupport.createFailedException(message, failureCause);
             } else {

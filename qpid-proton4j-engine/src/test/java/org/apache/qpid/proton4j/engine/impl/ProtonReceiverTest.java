@@ -30,6 +30,7 @@ import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.UUID;
@@ -61,6 +62,7 @@ import org.apache.qpid.proton4j.engine.IncomingDelivery;
 import org.apache.qpid.proton4j.engine.LinkState;
 import org.apache.qpid.proton4j.engine.Receiver;
 import org.apache.qpid.proton4j.engine.Session;
+import org.apache.qpid.proton4j.engine.exceptions.EngineFailedException;
 import org.hamcrest.Matcher;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -143,6 +145,77 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         }
 
         session.close();
+
+        peer.waitForScriptToComplete();
+
+        assertNull(failure);
+    }
+
+    @Test(timeout = 30000)
+    public void testEngineShutdownEventNeitherEndClosed() throws Exception {
+        doTestEngineShutdownEvent(false, false);
+    }
+
+    @Test(timeout = 30000)
+    public void testEngineShutdownEventLocallyClosed() throws Exception {
+        doTestEngineShutdownEvent(true, false);
+    }
+
+    @Test(timeout = 30000)
+    public void testEngineShutdownEventRemotelyClosed() throws Exception {
+        doTestEngineShutdownEvent(false, true);
+    }
+
+    @Test(timeout = 30000)
+    public void testEngineShutdownEventBothEndsClosed() throws Exception {
+        doTestEngineShutdownEvent(true, true);
+    }
+
+    private void doTestEngineShutdownEvent(boolean locallyClosed, boolean remotelyClosed) throws Exception {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result);
+        ProtonTestPeer peer = new ProtonTestPeer(engine);
+        engine.outputConsumer(peer);
+
+        final AtomicBoolean engineShutdown = new AtomicBoolean();
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond();
+        peer.expectBegin().respond();
+        peer.expectAttach().respond();
+
+        Connection connection = engine.start();
+
+        connection.open();
+
+        Session session = connection.session();
+        session.open();
+
+        Receiver receiver = session.receiver("test");
+        receiver.open();
+        receiver.engineShutdownHandler(result -> engineShutdown.set(true));
+
+        if (locallyClosed) {
+            if (remotelyClosed) {
+                peer.expectDetach().respond();
+            } else {
+                peer.expectDetach();
+            }
+
+            receiver.close();
+        }
+
+        if (remotelyClosed && !locallyClosed) {
+            peer.remoteDetach();
+        }
+
+        engine.shutdown();
+
+        if (locallyClosed && remotelyClosed) {
+            assertFalse("Should not have reported engine shutdown", engineShutdown.get());
+        } else {
+            assertTrue("Should have reported engine shutdown", engineShutdown.get());
+        }
 
         peer.waitForScriptToComplete();
 
@@ -2304,5 +2377,174 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         connection.close();
 
         peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+    }
+
+    @Test
+    public void testCloseAfterShutdownDoesNotThrowExceptionOpenAndBeginWrittenAndResponseAttachWrittenAndRsponse() throws Exception {
+        testCloseAfterShutdownNoOutputAndNoException(true, true, true, true);
+    }
+
+    @Test
+    public void testCloseAfterShutdownDoesNotThrowExceptionOpenAndBeginWrittenAndResponseAttachWrittenAndNoRsponse() throws Exception {
+        testCloseAfterShutdownNoOutputAndNoException(true, true, true, false);
+    }
+
+    @Test
+    public void testCloseAfterShutdownDoesNotThrowExceptionOpenWrittenAndResponseBeginWrittenAndNoRsponse() throws Exception {
+        testCloseAfterShutdownNoOutputAndNoException(true, true, false, false);
+    }
+
+    @Test
+    public void testCloseAfterShutdownDoesNotThrowExceptionOpenWrittenButNoResponse() throws Exception {
+        testCloseAfterShutdownNoOutputAndNoException(true, false, false, false);
+    }
+
+    @Test
+    public void testCloseAfterShutdownDoesNotThrowExceptionOpenNotWritten() throws Exception {
+        testCloseAfterShutdownNoOutputAndNoException(false, false, false, false);
+    }
+
+    private void testCloseAfterShutdownNoOutputAndNoException(boolean respondToHeader, boolean respondToOpen, boolean respondToBegin, boolean respondToAttach) throws Exception {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result);
+        ProtonTestPeer peer = new ProtonTestPeer(engine);
+        engine.outputConsumer(peer);
+
+        if (respondToHeader) {
+            peer.expectAMQPHeader().respondWithAMQPHeader();
+            if (respondToOpen) {
+                peer.expectOpen().respond();
+                if (respondToBegin) {
+                    peer.expectBegin().respond();
+                    if (respondToAttach) {
+                        peer.expectAttach().respond();
+                    } else {
+                        peer.expectAttach();
+                    }
+                } else {
+                    peer.expectBegin();
+                    peer.expectAttach();
+                }
+            } else {
+                peer.expectOpen();
+                peer.expectBegin();
+                peer.expectAttach();
+            }
+        } else {
+            peer.expectAMQPHeader();
+        }
+
+        Connection connection = engine.start();
+        connection.open();
+
+        Session session = connection.session();
+        session.open();
+
+        Receiver receiver = session.receiver("test");
+        receiver.open();
+
+        engine.shutdown();
+
+        // Should clean up and not throw as we knowingly shutdown engine operations.
+        receiver.close();
+        session.close();
+        connection.close();
+
+        peer.waitForScriptToComplete();
+
+        assertNull(failure);
+    }
+
+    @Test
+    public void testCloseAfterFailureThrowsEngineStateExceptionOpenAndBeginWrittenAndResponseAttachWrittenAndReponse() throws Exception {
+        testCloseAfterEngineFailedThrowsAndNoOutputWritten(true, true, true, true);
+    }
+
+    @Test
+    public void testCloseAfterFailureThrowsEngineStateExceptionOpenAndBeginWrittenAndResponseAttachWrittenAndNoResponse() throws Exception {
+        testCloseAfterEngineFailedThrowsAndNoOutputWritten(true, true, true, false);
+    }
+
+    @Test
+    public void testCloseAfterFailureThrowsEngineStateExceptionOpenWrittenAndResponseBeginWrittenAndNoResponse() throws Exception {
+        testCloseAfterEngineFailedThrowsAndNoOutputWritten(true, true, true, false);
+    }
+
+    @Test
+    public void testCloseAfterFailureThrowsEngineStateExceptionOpenWrittenButNoResponse() throws Exception {
+        testCloseAfterEngineFailedThrowsAndNoOutputWritten(true, false, false, false);
+    }
+
+    @Test
+    public void testCloseAfterFailureThrowsEngineStateExceptionOpenNotWritten() throws Exception {
+        testCloseAfterEngineFailedThrowsAndNoOutputWritten(false, false, false, false);
+    }
+
+    private void testCloseAfterEngineFailedThrowsAndNoOutputWritten(boolean respondToHeader, boolean respondToOpen, boolean respondToBegin, boolean respondToAttach) throws Exception {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result);
+        ProtonTestPeer peer = new ProtonTestPeer(engine);
+        engine.outputConsumer(peer);
+
+        if (respondToHeader) {
+            peer.expectAMQPHeader().respondWithAMQPHeader();
+            if (respondToOpen) {
+                peer.expectOpen().respond();
+                if (respondToBegin) {
+                    peer.expectBegin().respond();
+                    if (respondToAttach) {
+                        peer.expectAttach().respond();
+                    } else {
+                        peer.expectAttach();
+                    }
+                } else {
+                    peer.expectBegin();
+                    peer.expectAttach();
+                }
+            } else {
+                peer.expectOpen();
+                peer.expectBegin();
+                peer.expectAttach();
+            }
+        } else {
+            peer.expectAMQPHeader();
+        }
+
+        Connection connection = engine.start();
+        connection.open();
+
+        Session session = connection.session();
+        session.open();
+
+        Receiver receiver = session.receiver("test");
+        receiver.open();
+
+        engine.engineFailed(new IOException());
+
+        try {
+            receiver.close();
+            fail("Should throw exception indicating engine is in a failed state.");
+        } catch (EngineFailedException efe) {}
+
+        try {
+            session.close();
+            fail("Should throw exception indicating engine is in a failed state.");
+        } catch (EngineFailedException efe) {}
+
+        try {
+            connection.close();
+            fail("Should throw exception indicating engine is in a failed state.");
+        } catch (EngineFailedException efe) {}
+
+        engine.shutdown();  // Explicit shutdown now allows local close to complete
+
+        // Should clean up and not throw as we knowingly shutdown engine operations.
+        receiver.close();
+        session.close();
+        connection.close();
+
+        peer.waitForScriptToComplete();
+
+        assertNotNull(failure);
     }
 }

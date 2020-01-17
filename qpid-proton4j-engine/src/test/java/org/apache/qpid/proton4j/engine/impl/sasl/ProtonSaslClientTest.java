@@ -17,6 +17,7 @@
 package org.apache.qpid.proton4j.engine.impl.sasl;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -196,7 +197,7 @@ public class ProtonSaslClientTest extends ProtonEngineTestSupport {
         peer.waitForScriptToComplete();
 
         assertNotNull(failure);
-        assertTrue(engine.isShutdown());
+        assertFalse(engine.isShutdown());
         assertTrue(engine.isFailed());
         assertEquals(failure, engine.failureCause());
         assertTrue(failure instanceof SaslAuthenticationException);

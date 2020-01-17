@@ -28,6 +28,7 @@ import org.apache.qpid.proton4j.amqp.transport.ErrorCondition;
 import org.apache.qpid.proton4j.amqp.transport.ReceiverSettleMode;
 import org.apache.qpid.proton4j.amqp.transport.Role;
 import org.apache.qpid.proton4j.amqp.transport.SenderSettleMode;
+import org.apache.qpid.proton4j.engine.exceptions.EngineFailedException;
 import org.apache.qpid.proton4j.engine.exceptions.EngineStateException;
 import org.apache.qpid.proton4j.engine.impl.ProtonSession;
 
@@ -49,13 +50,17 @@ public interface Link<T extends Link<T>> {
     T open() throws IllegalStateException, EngineStateException;
 
     /**
-     * Close this end of the link
+     * Close the end point locally and send the Close performative immediately if possible or holds it
+     * until the Session / Connection / Engine state allows it.  If the engine encounters an error writing
+     * the performative or the engine is in a failed state from a previous error then this method will
+     * throw an exception.  If the engine has been shutdown then this method will close out the local
+     * end of the {@link Link} and clean up any local resources before returning normally.
      *
-     * @return this Link.
+     * @return this Link
      *
-     * @throws EngineStateException if an error occurs closing the {@link Link} or the Engine is shutdown.
+     * @throws EngineFailedException if an error occurs closing the {@link Link} or the Engine is in a failed state.
      */
-    T close() throws EngineStateException;
+    T close() throws EngineFailedException;
 
     /**
      * Detach this end of the link.
@@ -560,5 +565,23 @@ public interface Link<T extends Link<T>> {
      * @return the link for chaining.
      */
     T closeHandler(EventHandler<T> remoteCloseHandler);
+
+
+    /**
+     * Sets an {@link EventHandler} that is invoked when the engine that supports this {@link Link} is shutdown
+     * via a call to {@link Engine#shutdown()} which indicates a desire to terminate all engine operations. Any
+     * link that has been both locally and remotely closed will not receive this event as it will no longer be
+     * tracked by the parent {@link Session}.
+     *
+     * A typical use of this event would be from a locally closed {@link Link} that is awaiting response from
+     * the remote.  If this event fires then there will never be a remote response and the client or server instance
+     * should react accordingly to clean up any related session resources etc.
+     *
+     * @param engineShutdownEventHandler
+     *      the EventHandler that will be signaled when this Link's engine is explicitly shutdown.
+     *
+     * @return this Link
+     */
+    T engineShutdownHandler(EventHandler<Engine> engineShutdownEventHandler);
 
 }

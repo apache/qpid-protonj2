@@ -19,8 +19,10 @@ package org.apache.qpid.proton4j.engine.impl;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.transport.Attach;
@@ -37,12 +39,14 @@ import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.common.logging.ProtonLogger;
 import org.apache.qpid.proton4j.common.logging.ProtonLoggerFactory;
 import org.apache.qpid.proton4j.engine.ConnectionState;
+import org.apache.qpid.proton4j.engine.Engine;
 import org.apache.qpid.proton4j.engine.EventHandler;
 import org.apache.qpid.proton4j.engine.LinkState;
 import org.apache.qpid.proton4j.engine.Receiver;
 import org.apache.qpid.proton4j.engine.Sender;
 import org.apache.qpid.proton4j.engine.Session;
 import org.apache.qpid.proton4j.engine.SessionState;
+import org.apache.qpid.proton4j.engine.exceptions.EngineFailedException;
 import org.apache.qpid.proton4j.engine.exceptions.EngineStateException;
 import org.apache.qpid.proton4j.engine.exceptions.ProtocolViolationException;
 import org.apache.qpid.proton4j.engine.util.SplayMap;
@@ -69,6 +73,7 @@ public class ProtonSession implements Session {
     private SplayMap<ProtonLink<?>> remoteLinks = new SplayMap<>();
 
     private final ProtonConnection connection;
+    private final ProtonEngine engine;
     private final ProtonContext context = new ProtonContext();
 
     private SessionState localState = SessionState.IDLE;
@@ -92,6 +97,9 @@ public class ProtonSession implements Session {
     private EventHandler<Session> localCloseHandler = (result) -> {
         LOG.trace("Session locally closed.");
     };
+    private EventHandler<Engine> engineShutdownHandler = (result) -> {
+        LOG.trace("The underlying engine for this Session has been explicitly shutdown.");
+    };
 
     // No default for these handlers, Connection will process these if not set here.
     private EventHandler<Sender> remoteSenderOpenEventHandler = null;
@@ -99,6 +107,7 @@ public class ProtonSession implements Session {
 
     public ProtonSession(ProtonConnection connection, int localChannel) {
         this.connection = connection;
+        this.engine = connection.getEngine();
         this.localChannel = localChannel;
 
         this.outgoingWindow = new ProtonSessionOutgoingWindow(this);
@@ -180,8 +189,9 @@ public class ProtonSession implements Session {
     }
 
     @Override
-    public ProtonSession close() {
+    public ProtonSession close() throws EngineFailedException {
         if (getState() == SessionState.ACTIVE) {
+            engine.checkFailed("Cannot close the session when engine is in the failed state");
             localState = SessionState.CLOSED;
             try {
                 syncLocalStateWithRemote();
@@ -401,6 +411,16 @@ public class ProtonSession implements Session {
         return remoteReceiverOpenEventHandler;
     }
 
+    @Override
+    public ProtonSession engineShutdownHandler(EventHandler<Engine> engineShutdownEventHandler) {
+        this.engineShutdownHandler = engineShutdownEventHandler;
+        return this;
+    }
+
+    EventHandler<Engine> engineShutdownHandler() {
+        return engineShutdownHandler;
+    }
+
     //----- Respond to local Connection changes
 
     void handleConnectionStateChanged(ProtonConnection connection) {
@@ -414,6 +434,23 @@ public class ProtonSession implements Session {
                 processParentConnectionLocallyClosed();
                 return;
         }
+    }
+
+    void handleEngineShutdown(ProtonEngine protonEngine) {
+        Set<ProtonLink<?>> links = new HashSet<>();
+
+        links.addAll(localLinks.values());
+        links.addAll(remoteLinks.values());
+
+        links.forEach(link -> {
+            try {
+                link.handleEngineShutdown(protonEngine);
+            } catch (Throwable ignore) {}
+        });
+
+        try {
+            engineShutdownHandler.handle(protonEngine);
+        } catch (Throwable ingore) {}
     }
 
     //----- Handle incoming performatives
@@ -624,7 +661,7 @@ public class ProtonSession implements Session {
 
     private void checkIfEndShouldBeSent() {
         if (!localEndSent) {
-            if (connection.isLocallyOpened() && connection.wasLocalOpenSent()) {
+            if (connection.isLocallyOpened() && connection.wasLocalOpenSent() && !engine.isShutdown()) {
                 fireSessionEnd();
             }
         }

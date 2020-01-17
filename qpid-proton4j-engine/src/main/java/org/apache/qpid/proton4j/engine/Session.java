@@ -22,6 +22,7 @@ import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.transport.Begin;
 import org.apache.qpid.proton4j.amqp.transport.End;
 import org.apache.qpid.proton4j.amqp.transport.ErrorCondition;
+import org.apache.qpid.proton4j.engine.exceptions.EngineFailedException;
 import org.apache.qpid.proton4j.engine.exceptions.EngineStateException;
 import org.apache.qpid.proton4j.engine.impl.ProtonConnection;
 
@@ -41,13 +42,17 @@ public interface Session {
     Session open() throws IllegalStateException, EngineStateException;
 
     /**
-     * Close the end point
+     * Close the end point locally and send the Close performative immediately if possible or holds it
+     * until the Session / Connection / Engine state allows it.  If the engine encounters an error writing
+     * the performative or the engine is in a failed state from a previous error then this method will
+     * throw an exception.  If the engine has been shutdown then this method will close out the local
+     * end of the session and clean up any local resources before returning normally.
      *
      * @return this Session
      *
-     * @throws EngineStateException if an error occurs closing the Session or the Engine is shutdown.
+     * @throws EngineFailedException if an error occurs closing the Session or the Engine is in a failed state.
      */
-    Session close() throws EngineStateException;
+    Session close() throws EngineFailedException;
 
     /**
      * @return the {@link Context} instance that is associated with this {@link Connection}
@@ -366,5 +371,22 @@ public interface Session {
      * @return this session for chaining
      */
     Session receiverOpenHandler(EventHandler<Receiver> remoteReceiverOpenEventHandler);
+
+    /**
+     * Sets an {@link EventHandler} that is invoked when the engine that create this {@link Session} is shutdown
+     * via a call to {@link Engine#shutdown()} which indicates a desire to terminate all engine operations.  Any
+     * session that has been both locally and remotely ended will not receive this event as it will no longer be
+     * tracked by the parent {@link Connection}.
+     *
+     * A typical use of this event would be from a locally closed {@link Session} that is awaiting response from
+     * the remote.  If this event fires then there will never be a remote response and the client or server instance
+     * should react accordingly to clean up any related session resources etc.
+     *
+     * @param engineShutdownEventHandler
+     *      the EventHandler that will be signaled when this Session's engine is explicitly shutdown.
+     *
+     * @return this Session
+     */
+    Session engineShutdownHandler(EventHandler<Engine> engineShutdownEventHandler);
 
 }
