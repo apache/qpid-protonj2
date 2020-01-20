@@ -303,4 +303,9 @@ public class ProtonSender extends ProtonLink<Sender> implements Sender {
     private void senderNotWritableSink(ProtonOutgoingDelivery delivery, ProtonBuffer buffer) {
         throw new IllegalStateException("Cannot send when sender is not currently writable");
     }
+
+    @Override
+    boolean isDeliveryCountInitialised() {
+        return true;
+    }
 }

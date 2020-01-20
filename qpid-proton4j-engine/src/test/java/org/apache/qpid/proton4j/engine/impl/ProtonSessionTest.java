@@ -941,7 +941,7 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
                              .withMessageFormat(0)
                              .withBody().withString("test-message").also().queue();
 
-        receiver.setCredit(1);
+        receiver.addCredit(1);
 
         assertEquals("Unexpected delivery count", 1, deliveryArrived.get());
         assertNotNull(delivered.get());
@@ -954,7 +954,7 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
         peer.expectFlow().withLinkCredit(1)
                            .withIncomingWindow(expectedWindowSize);
 
-        receiver.setCredit(1);
+        receiver.addCredit(1);
 
         // Settle the transfer then flow more credit, verify the emitted incoming window
         // (it should increase 1 if capacity and frame size set) otherwise remains unchanged.
@@ -967,7 +967,7 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
         // This will consume the bytes and free them from the session window tracking.
         assertNotNull(delivered.get().readAll());
 
-        receiver.setCredit(2);
+        receiver.addCredit(1);
 
         peer.expectDetach().respond();
         peer.expectEnd().respond();

@@ -1038,7 +1038,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         session.open();
         Receiver receiver = session.receiver("test");
         receiver.open();
-        receiver.setCredit(100);
+        receiver.addCredit(100);
         receiver.close();
 
         peer.waitForScriptToComplete();
@@ -1069,7 +1069,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         Session session = connection.session();
         session.open();
         Receiver receiver = session.receiver("test");
-        receiver.setCredit(100);
+        receiver.addCredit(100);
         receiver.open();
         receiver.close();
 
@@ -1095,7 +1095,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         Session session = connection.session();
         session.open();
         Receiver receiver = session.receiver("test");
-        receiver.setCredit(1);
+        receiver.addCredit(1);
         receiver.open();
 
         peer.expectBegin().respond();
@@ -1109,7 +1109,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test
+    @Test //TODO: questionable. If its going to no-op the credit then it should perhaps not do this (open before parent) to begin with, as strange to send the attaches but not credit?
     public void testReceiverOmitsFlowAfterConnectionOpenFinallySentWhenAfterDetached() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
@@ -1123,7 +1123,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         Session session = connection.session();
         session.open();
         Receiver receiver = session.receiver("test");
-        receiver.setCredit(1);
+        receiver.addCredit(1);
         receiver.open();
         receiver.detach();
 
@@ -1169,7 +1169,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         // Add some credit, verify not draining
         Matcher<Boolean> notDrainingMatcher = anyOf(equalTo(false), nullValue());
         peer.expectFlow().withDrain(notDrainingMatcher).withLinkCredit(creditWindow).withDeliveryCount(0);
-        receiver.setCredit(creditWindow);
+        receiver.addCredit(creditWindow);
 
         peer.waitForScriptToComplete();
 
@@ -1196,7 +1196,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
     }
 
     @Test
-    public void testReceiverFailsOnFlowAfterConnectionClosed() throws Exception {
+    public void testReceiverThrowsOnAddCreditAfterConnectionClosed() throws Exception {
                 Engine engine = EngineFactory.PROTON.createNonSaslEngine();
 
         engine.errorHandler(result -> failure = result);
@@ -1222,8 +1222,8 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         connection.close();
 
         try {
-            receiver.setCredit(100);
-            fail("Should not be able to flow credit after connection was closed");
+            receiver.addCredit(100);
+            fail("Should not be able to add credit after connection was closed");
         } catch (IllegalStateException ise) {
         }
 
@@ -1233,7 +1233,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
     }
 
     @Test
-    public void testReceiverFailsOnFlowAfterSessionClosed() throws Exception {
+    public void testReceiverThrowsOnAddCreditAfterSessionClosed() throws Exception {
                 Engine engine = EngineFactory.PROTON.createNonSaslEngine();
 
         engine.errorHandler(result -> failure = result);
@@ -1259,8 +1259,8 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         session.close();
 
         try {
-            receiver.setCredit(100);
-            fail("Should not be able to flow credit after connection was closed");
+            receiver.addCredit(100);
+            fail("Should not be able to add credit after session was closed");
         } catch (IllegalStateException ise) {
         }
 
@@ -1305,7 +1305,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
             receivedDelivery.set(delivery);
         });
         receiver.open();
-        receiver.setCredit(100);
+        receiver.addCredit(100);
         receiver.close();
 
         assertTrue("Delivery did not arrive at the receiver", deliveryArrived.get());
@@ -1358,7 +1358,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
             delivery.disposition(Accepted.getInstance(), true);
         });
         receiver.open();
-        receiver.setCredit(100);
+        receiver.addCredit(100);
 
         assertTrue("Delivery did not arrive at the receiver", deliveryArrived.get());
         assertFalse("Deliver should not be partial", receivedDelivery.get().isPartial());
@@ -1412,7 +1412,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
             delivery.disposition(Accepted.getInstance(), true);
         });
         receiver.open();
-        receiver.setCredit(100);
+        receiver.addCredit(100);
 
         assertTrue("Delivery did not arrive at the receiver", deliveryArrived.get());
         assertFalse("Deliver should not be partial", receivedDelivery.get().isPartial());
@@ -1477,7 +1477,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
             delivery.disposition(Accepted.getInstance(), false);
         });
         receiver.open();
-        receiver.setCredit(100);
+        receiver.addCredit(100);
 
         assertTrue("Delivery did not arrive at the receiver", deliveryArrived.get());
         assertFalse("Deliver should not be partial", receivedDelivery.get().isPartial());
@@ -1532,7 +1532,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         });
 
         receiver.open();
-        receiver.setCredit(1);
+        receiver.addCredit(1);
 
         assertTrue("Delivery did not arrive at the receiver", deliveryArrived.get());
         assertFalse("Deliver should not be partial", receivedDelivery.get().isPartial());
@@ -1609,7 +1609,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         });
 
         receiver.open();
-        receiver.setCredit(100);
+        receiver.addCredit(100);
         receiver.close();
 
         assertTrue("Delivery did not arrive at the receiver", deliveryArrived.get());
@@ -1677,7 +1677,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         });
 
         receiver.open();
-        receiver.setCredit(2);
+        receiver.addCredit(2);
         receiver.close();
 
         assertEquals("Not all deliveries arrived", 2, deliveryCounter.get());
@@ -1748,7 +1748,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         });
 
         receiver.open();
-        receiver.setCredit(2);
+        receiver.addCredit(2);
 
         assertTrue("Delivery did not arrive at the receiver", deliveryArrived.get());
         assertFalse("Delivery should not be partial", receivedDelivery.get().isPartial());
@@ -1843,8 +1843,8 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         receiver1.open();
         receiver2.open();
 
-        receiver1.setCredit(5);
-        receiver2.setCredit(5);
+        receiver1.addCredit(5);
+        receiver2.addCredit(5);
 
         assertNull("Should not have any delivery data yet on receiver 1", receivedDelivery1.get());
         assertNull("Should not have any delivery date yet on receiver 2", receivedDelivery2.get());
@@ -1955,7 +1955,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         session.open();
 
         Receiver receiver = session.receiver("receiver");
-        receiver.setCredit(2);
+        receiver.addCredit(2);
 
         final AtomicReference<IncomingDelivery> receivedDelivery = new AtomicReference<>();
         final AtomicInteger deliveryCounter = new AtomicInteger();
@@ -2022,7 +2022,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         // Test that delivery count updates correctly on next flow
         peer.expectFlow().withLinkCredit(10).withDeliveryCount(2);
 
-        receiver.setCredit(10);
+        receiver.addCredit(10);
 
         peer.expectDetach().respond();
         peer.expectEnd().respond();
@@ -2095,8 +2095,8 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         receiver1.open();
         receiver2.open();
 
-        receiver1.setCredit(5);
-        receiver2.setCredit(5);
+        receiver1.addCredit(5);
+        receiver2.addCredit(5);
 
         assertNull("Should not have any delivery data yet on receiver 1", receivedDelivery1.get());
         assertNull("Should not have any delivery date yet on receiver 2", receivedDelivery2.get());
@@ -2268,7 +2268,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         });
 
         receiver.open();
-        receiver.setCredit(5);
+        receiver.addCredit(5);
 
         assertNull("Should not have received delivery 1", receivedDelivery1.get());
         assertNull("Should not have received delivery 2", receivedDelivery2.get());

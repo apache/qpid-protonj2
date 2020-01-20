@@ -90,8 +90,8 @@ public class ProtonReceiver extends ProtonLink<Receiver> implements Receiver {
     }
 
     @Override
-    public ProtonReceiver setCredit(int credit) {
-        checkNotClosed("Cannot set credit on a closed Receiver");
+    public ProtonReceiver addCredit(int credit) {
+        checkNotClosed("Cannot add credit on a closed Receiver");
 
         // TODO - Better way to check all this state on each operation.
         //        One possible way of doing this is by having a Consumer<> type and
@@ -101,14 +101,10 @@ public class ProtonReceiver extends ProtonLink<Receiver> implements Receiver {
             throw new IllegalStateException("Cannot set credit when session or connection already closed");
         }
         if (credit < 0) {
-            throw new IllegalArgumentException("Set credit cannot be less than zero");
+            throw new IllegalArgumentException("additional credits cannot be less than zero");
         }
 
-        if (credit < getCredit()) {
-            throw new IllegalArgumentException("Cannot reduce outstanding credit, use drain to consume existing credit");
-        }
-
-        linkState.setCredit(credit);
+        linkState.addCredit(credit);
 
         return this;
     }
@@ -164,6 +160,11 @@ public class ProtonReceiver extends ProtonLink<Receiver> implements Receiver {
 
     void remoteDisposition(Disposition disposition, ProtonIncomingDelivery delivery) {
         linkState().remoteDisposition(disposition, delivery);
+    }
+
+    @Override
+    boolean isDeliveryCountInitialised() {
+        return linkState.isDeliveryCountInitialised();
     }
 
     //----- Delivery related access points

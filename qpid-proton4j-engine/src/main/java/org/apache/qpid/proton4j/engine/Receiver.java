@@ -27,19 +27,18 @@ import org.apache.qpid.proton4j.amqp.transport.DeliveryState;
 public interface Receiver extends Link<Receiver> {
 
     /**
-     * Sets the credit for the {@link Receiver} to the given amount.
+     * Adds the given amount of credit for the {@link Receiver}.
      *
-     * @param credit
-     *      the new credit amount to set.
+     * @param additionalCredit
+     *      the new amount of credits to add.
      *
      * @return this {@link Receiver}
      *
      * @throws IllegalArgumentException if the credit amount is negative.
      * @throws IllegalStateException if the Receiver is not open.
      */
-    Receiver setCredit(int credit);
+    Receiver addCredit(int additionalCredit);
 
-    // Receiver addCredit(int amount);
     // Receiver reduceCredit(int amount);
 
     /**

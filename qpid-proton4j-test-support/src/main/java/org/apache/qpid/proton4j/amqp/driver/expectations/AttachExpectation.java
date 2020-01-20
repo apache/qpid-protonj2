@@ -111,11 +111,18 @@ public class AttachExpectation extends AbstractExpectation<Attach> {
             if (attach.getSource() != null && Boolean.TRUE.equals(attach.getSource().getDynamic())) {
                 attach.getSource().setAddress(UUID.randomUUID().toString());
             }
-         }
+        }
         if (response.getPerformative().getTarget() == null && !response.isNullTargetRequired()) {
             response.withTarget(attach.getTarget());
             if (attach.getTarget() != null && Boolean.TRUE.equals(attach.getTarget().getDynamic())) {
                 attach.getTarget().setAddress(UUID.randomUUID().toString());
+            }
+        }
+
+        if (response.getPerformative().getInitialDeliveryCount() == null) {
+            Role role = Role.valueOf(response.getPerformative().getRole());
+            if (role == Role.SENDER) {
+                response.withInitialDeliveryCount(0);
             }
         }
 

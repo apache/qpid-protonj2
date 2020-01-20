@@ -693,4 +693,6 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
             throw new IllegalStateException("Cannot open link for session that has already been closed.");
         }
     }
+
+    abstract boolean isDeliveryCountInitialised();
 }

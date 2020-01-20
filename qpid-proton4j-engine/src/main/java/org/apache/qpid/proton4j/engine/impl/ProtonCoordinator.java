@@ -67,6 +67,11 @@ public class ProtonCoordinator extends ProtonLink<ProtonCoordinator> {
         return null;
     }
 
+    @Override
+    boolean isDeliveryCountInitialised() {
+        return true;
+    }
+
     public void declare() {
 
     }

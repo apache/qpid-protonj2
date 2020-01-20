@@ -46,7 +46,7 @@ public class ProtonSenderState implements ProtonLinkState<ProtonOutgoingDelivery
     private final ProtonSessionOutgoingWindow sessionWindow;
 
     private final DeliveryIdTracker currentDelivery = new DeliveryIdTracker();
-    private final ProtonLinkCreditState creditState = new ProtonLinkCreditState();
+    private final ProtonLinkCreditState creditState = new ProtonLinkCreditState(true);
 
     private boolean sendable;
     private boolean draining;
@@ -99,7 +99,7 @@ public class ProtonSenderState implements ProtonLinkState<ProtonOutgoingDelivery
 
     @Override
     public void localClose(boolean closed) {
-        creditState.setCredit(0);
+        creditState.clearCredit();
         sendable = false;
         unsettled.clear();
     }
@@ -111,14 +111,28 @@ public class ProtonSenderState implements ProtonLinkState<ProtonOutgoingDelivery
 
     @Override
     public void remoteDetach(Detach detach) {
-        creditState.setCredit(0);
+        creditState.clearCredit();
         sendable = false;
         unsettled.clear();
     }
 
     @Override
     public void remoteFlow(Flow flow) {
-        creditState.setCredit((int) (flow.getDeliveryCount() + flow.getLinkCredit() - getDeliveryCount()));
+        creditState.remoteFlow(flow);
+
+        int existingDeliveryCount = creditState.getDeliveryCount();
+        // int casts are expected, credit is a uint and delivery-count is really a uint sequence which wraps, so we just use the truncation and overflows.
+        // Receivers flow might not have any delivery-count, as sender initialises on attach! We initialise to 0 so we can just ignore that.
+        int remoteDeliveryCount = (int) flow.getDeliveryCount();
+        int newDeliveryCountLimit = remoteDeliveryCount + (int) flow.getLinkCredit();
+
+        long effectiveCredit = 0xFFFFFFFFL & (int)(newDeliveryCountLimit - existingDeliveryCount);
+        if ( effectiveCredit > 0 ) {
+            creditState.updateCredit((int) effectiveCredit);
+        } else {
+            creditState.updateCredit(0);
+        }
+
         draining = flow.getDrain();
         drained = getCredit() > 0;
 

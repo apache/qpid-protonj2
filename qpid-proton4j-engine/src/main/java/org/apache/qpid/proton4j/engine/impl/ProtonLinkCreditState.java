@@ -16,6 +16,7 @@
  */
 package org.apache.qpid.proton4j.engine.impl;
 
+import org.apache.qpid.proton4j.amqp.transport.Flow;
 import org.apache.qpid.proton4j.engine.LinkCreditState;
 
 /**
@@ -25,6 +26,17 @@ public class ProtonLinkCreditState implements LinkCreditState {
 
     private int credit;
     private int deliveryCount;
+
+    private boolean deliveryCountInitalised;
+
+    @SuppressWarnings("unused")
+    private long remoteDeliveryCount;
+    @SuppressWarnings("unused")
+    private long remoteLinkCredit;
+
+    public ProtonLinkCreditState(boolean sender) {
+        deliveryCountInitalised = sender;
+    }
 
     @Override
     public int getCredit() {
@@ -38,18 +50,16 @@ public class ProtonLinkCreditState implements LinkCreditState {
 
     //----- Internal API for managing credit state
 
-    ProtonLinkCreditState setCredit(int credit) {
-        this.credit = credit;
-        return this;
+    void incrementCredit(int credit) {
+        this.credit += credit;
     }
 
     void decrementCredit() {
         credit = credit == 0 ? 0 : credit - 1;
     }
 
-    ProtonLinkCreditState setDeliveryCount(int deliveryCount) {
-        this.deliveryCount = deliveryCount;
-        return this;
+    void clearCredit() {
+        credit = 0;
     }
 
     int incrementDeliveryCount() {
@@ -58,6 +68,30 @@ public class ProtonLinkCreditState implements LinkCreditState {
 
     int decrementDeliveryCount() {
         return deliveryCount--;
+    }
+
+    boolean isDeliveryCountInitalised() {
+        return deliveryCountInitalised;
+    }
+
+    void initialiseDeliveryCount(int deliveryCount) {
+        this.deliveryCount = deliveryCount;
+        deliveryCountInitalised = true;
+    }
+
+    public void updateCredit(int effectiveCredit) {
+        // TODO: change credit to a long, or ensure inc/decrements above work fully if it has wrapped.
+        this.credit = effectiveCredit;
+    }
+
+    public void updateDeliveryCount(int deliveryCount) {
+        // TODO: change deliveryCount to a long, or fix uses to account for it being a wrapping int
+        this.deliveryCount = deliveryCount;
+    }
+
+    void remoteFlow(Flow flow) {
+        remoteDeliveryCount = flow.getDeliveryCount();
+        remoteLinkCredit = flow.getLinkCredit();
     }
 
     /**
@@ -71,6 +105,7 @@ public class ProtonLinkCreditState implements LinkCreditState {
     }
 
     //----- Provide an immutable view type for protection
+
 
     private static class UnmodifiableLinkCreditState implements LinkCreditState {
 

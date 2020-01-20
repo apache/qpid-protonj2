@@ -485,6 +485,11 @@ public class ProtonSession implements Session {
                 return;
             }
 
+            //TODO: nicer handling of the error
+            if(!attach.hasInitialDeliveryCount() && attach.getRole() == Role.SENDER) {
+                throw new IllegalArgumentException("Sending peer attach had no initial delivery count");
+            }
+
             ProtonLink<?> link = findMatchingPendingLinkOpen(attach);
             if (link == null) {
                 link = (attach.getRole() == Role.RECEIVER) ? sender(attach.getName()) : receiver(attach.getName());
@@ -710,7 +715,10 @@ public class ProtonSession implements Session {
         if (link != null) {
             flow.setLinkCredit(link.linkState().getCredit());
             flow.setHandle(link.getHandle());
-            flow.setDeliveryCount(link.linkState().getDeliveryCount());
+            if(link.isDeliveryCountInitialised()) {
+                //TODO: type mismatch, will fail on deliveryCount wrap
+                flow.setDeliveryCount(link.linkState().getDeliveryCount());
+            }
             flow.setDrain(link.isDrain());
         }
 

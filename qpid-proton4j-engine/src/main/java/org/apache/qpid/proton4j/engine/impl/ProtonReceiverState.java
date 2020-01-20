@@ -45,7 +45,7 @@ public class ProtonReceiverState implements ProtonLinkState<ProtonIncomingDelive
     private final ProtonReceiver receiver;
     private final ProtonSessionIncomingWindow sessionWindow;
 
-    private final ProtonLinkCreditState creditState = new ProtonLinkCreditState();
+    private final ProtonLinkCreditState creditState = new ProtonLinkCreditState(false);
     private final DeliveryIdTracker currentDeliveryId = new DeliveryIdTracker();
     private final SplayMap<ProtonIncomingDelivery> unsettled = new SplayMap<>();
 
@@ -69,17 +69,17 @@ public class ProtonReceiverState implements ProtonLinkState<ProtonIncomingDelive
         return creditState.snapshot();
     }
 
-    void setCredit(int credit) {
-        if (getCredit() != credit) {
-            creditState.setCredit(credit);
-            if (receiver.isRemotelyOpened()) {
+    void addCredit(int credit) {
+        if (credit > 0) {
+            creditState.incrementCredit(credit);
+            if (receiver.isRemotelyOpened()) {  //TODO: delaying credit until remoteAttach(Attach attach) is called doesnt seem needed? Perhaps should be/include isLocallyOpen?....(also: rename that to isLocallyOpen, since its false if opened and then closed?)
                 sessionWindow.writeFlow(receiver);
             }
         }
     }
 
     void drain() {
-        if (receiver.isRemotelyOpened()) {
+        if (receiver.isRemotelyOpened()) { //TODO: delaying credit+drain until remoteAttach(Attach attach) is called doesnt seem needed?
             sessionWindow.writeFlow(receiver);
         }
     }
@@ -90,12 +90,19 @@ public class ProtonReceiverState implements ProtonLinkState<ProtonIncomingDelive
 
     @Override
     public void localClose(boolean closed) {
-        creditState.setCredit(0);
+        creditState.clearCredit();
         unsettled.clear();
     }
 
     @Override
     public void remoteAttach(Attach attach) {
+        if(!attach.hasInitialDeliveryCount()) {
+            //TODO: nicer handling of the error
+            throw new IllegalArgumentException("Sending peer attach had no initial delivery count");
+        }
+
+        creditState.initialiseDeliveryCount((int) attach.getInitialDeliveryCount());
+
         if (getCredit() > 0 && receiver.isLocallyOpened()) {
             sessionWindow.writeFlow(receiver);
         }
@@ -103,20 +110,22 @@ public class ProtonReceiverState implements ProtonLinkState<ProtonIncomingDelive
 
     @Override
     public void remoteDetach(Detach detach) {
-        creditState.setCredit(0);
+        creditState.clearCredit();
         unsettled.clear();
     }
 
     @Override
     public void remoteFlow(Flow flow) {
+        creditState.remoteFlow(flow);
+
         if (flow.getDrain()) {
-            creditState.setDeliveryCount((int) flow.getDeliveryCount());
-            creditState.setCredit((int) flow.getLinkCredit());
+            creditState.updateDeliveryCount((int) flow.getDeliveryCount());
+            creditState.updateCredit((int) flow.getLinkCredit());
             if (creditState.getCredit() != 0) {
                 throw new IllegalArgumentException("Receiver read flow with drain set but credit was not zero");
             }
 
-            // TODO - Error on credit being non-zero for drain response ?
+            // TODO - engine error on credit being non-zero for drain response ?
 
             receiver.signalReceiverDrained();
         }
@@ -245,5 +254,9 @@ public class ProtonReceiverState implements ProtonLinkState<ProtonIncomingDelive
 
     void deliveryRead(ProtonIncomingDelivery delivery, int bytesRead) {
         sessionWindow.deliveryRead(delivery, bytesRead);
+    }
+
+    public boolean isDeliveryCountInitialised() {
+        return creditState.isDeliveryCountInitalised();
     }
 }

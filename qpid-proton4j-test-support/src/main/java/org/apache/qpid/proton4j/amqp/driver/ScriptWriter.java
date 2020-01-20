@@ -56,6 +56,7 @@ import org.apache.qpid.proton4j.amqp.driver.expectations.SaslResponseExpectation
 import org.apache.qpid.proton4j.amqp.driver.expectations.TransferExpectation;
 import org.apache.qpid.proton4j.amqp.security.SaslCode;
 import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
+import org.apache.qpid.proton4j.amqp.transport.Role;
 
 /**
  * Class used to create test scripts using the {@link AMQPTestDriver}
@@ -406,6 +407,12 @@ public abstract class ScriptWriter {
             response.withTarget(new Target(link.getTarget()));
             if (Boolean.TRUE.equals(link.getTarget().getDynamic())) {
                 response.withTarget().withAddress(UUID.randomUUID().toString());
+            }
+        }
+
+        if (response.getPerformative().getInitialDeliveryCount() == null) {
+            if (link.getRole() == Role.SENDER) {
+                response.withInitialDeliveryCount(0);
             }
         }
 
