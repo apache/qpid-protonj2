@@ -91,7 +91,7 @@ public class Samples {
         receiver.openFuture().get();
 
         ReceiverOptions receiverOptions = new ReceiverOptions();
-        //receiverOptions.setCreditWindow(10);
+        //receiverOptions.setCreditWindow(50); // Defaults to 10. 0 disables automatic replenishment.
         receiverOptions.linkName("myLinkName");
         receiverOptions.sourceOptions().durabilityMode(DurabilityMode.CONFIGURATION);
         receiverOptions.sourceOptions().expiryPolicy(ExpiryPolicy.NEVER);
@@ -99,8 +99,6 @@ public class Samples {
         Receiver receiver2 = connection.openReceiver(address, receiverOptions); // address and options
 
         // =============== Receive a message ===========
-
-        receiver.addCredit(1); // Or configure a credit window (see above)
 
         Delivery delivery = receiver.receive(); // Waits forever
         Message<String> message1 = delivery.message();
@@ -132,7 +130,6 @@ public class Samples {
         Message<String> request = Message.create("Hello World").durable(true).replyTo(dynamicAddress);
         Tracker requestTracker = requestor.send(request);
 
-        dynamicReceiver.addCredit(1);
         Delivery response = dynamicReceiver.receive(30_000);
 
         // =============== Close / Detach ===========

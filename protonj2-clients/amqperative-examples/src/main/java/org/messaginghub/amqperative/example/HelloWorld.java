@@ -50,7 +50,7 @@ public class HelloWorld {
             Sender sender = connection.openSender(address);
             sender.send(Message.create("Hello World"));
 
-            Delivery delivery = receiver.addCredit(1).receive();
+            Delivery delivery = receiver.receive();
             Message<String> received = delivery.message();
             System.out.println(received.body());
 

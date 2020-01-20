@@ -58,7 +58,6 @@ public class Request {
             Message<String> request = Message.create("Hello World").durable(true).replyTo(dynamicAddress);
             requestor.send(request);
 
-            dynamicReceiver.addCredit(1);
             Delivery response = dynamicReceiver.receive(30_000);
             Message<String> received = response.message();
             LOG.info("Response to request message was: {}", received.body());

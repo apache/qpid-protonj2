@@ -34,7 +34,7 @@ public class ReceiverOptions {
 
     private boolean autoAccept = true;
     private DeliveryMode deliveryMode = DeliveryMode.AT_LEAST_ONCE;
-    private int creditWindow = -1;
+    private int creditWindow = 10;
     private String linkName;
 
     private final SourceOptions source = new SourceOptions();

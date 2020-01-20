@@ -78,7 +78,7 @@ public class ClientReceiver implements Receiver {
         this.protonReceiver = receiver;
 
         if (options.creditWindow() > 0) {
-            protonReceiver.setCredit(options.creditWindow());
+            protonReceiver.addCredit(options.creditWindow());
         }
 
         messageQueue = new FifoDeliveryQueue(options.creditWindow());
@@ -128,14 +128,8 @@ public class ClientReceiver implements Receiver {
     }
 
     @Override
-    public Delivery receive() throws IllegalStateException {
-        checkClosed();
-        try {
-            return messageQueue.dequeue(-1);
-        } catch (InterruptedException e) {
-            Thread.interrupted();
-            throw new IllegalStateException(e);//TODO: better exception
-        }
+    public Delivery receive() {
+        return receive(-1);
     }
 
     @Override
@@ -143,7 +137,10 @@ public class ClientReceiver implements Receiver {
         checkClosed();
         //TODO: verify timeout conventions align
         try {
-            return messageQueue.dequeue(timeout);
+            Delivery delivery = messageQueue.dequeue(timeout);
+            replenishCreditIfNeeded();
+
+            return delivery;
         } catch (InterruptedException e) {
             Thread.interrupted();
             throw new IllegalStateException(e);//TODO: better exception
@@ -153,7 +150,30 @@ public class ClientReceiver implements Receiver {
     @Override
     public Delivery tryReceive() throws IllegalStateException {
         checkClosed();
-        return messageQueue.dequeueNoWait();
+
+        Delivery delivery = messageQueue.dequeueNoWait();
+        replenishCreditIfNeeded();
+
+        return delivery;
+    }
+
+    private void replenishCreditIfNeeded() {
+        int creditWindow = options.creditWindow();
+        if(creditWindow > 0) {
+            executor.execute(() -> {
+                int currentCredit = protonReceiver.getCredit();
+                if (currentCredit <= creditWindow * 0.5) {
+                    int potentialPrefetch = currentCredit + messageQueue.size();
+
+                    if (potentialPrefetch <= creditWindow * 0.7) {
+                        int additionalCredit = creditWindow - potentialPrefetch;
+
+                        LOG.trace("Consumer granting additional credit: {}", additionalCredit);
+                        protonReceiver.addCredit(additionalCredit);
+                    }
+                }
+            });
+        }
     }
 
     @Override
@@ -227,8 +247,7 @@ public class ClientReceiver implements Receiver {
 
         executor.execute(() -> {
             // TODO - Are we draining?  If so you've done something wrong...bang!
-            // TODO - This is just a set without addition for now
-            protonReceiver.setCredit(credits);
+            protonReceiver.addCredit(credits);
         });
 
         return this;
@@ -243,6 +262,7 @@ public class ClientReceiver implements Receiver {
             // TODO: If already draining throw IllegalStateException type error as we don't allow stacked drains.
              if (protonReceiver.isDrain()) {
                  drained.failed(new ClientException("Already draining"));
+                 return;
              }
 
              if (protonReceiver.getCredit() == 0) {
@@ -404,9 +424,6 @@ public class ClientReceiver implements Receiver {
     private void handleDeliveryReceived(IncomingDelivery delivery) {
         LOG.debug("Delivery was updated: ", delivery);
         messageQueue.enqueue(new ClientDelivery(this, delivery));
-        // TODO: we never replenish the credit window if configured right now.
-        //       we should do something Qpid-JMS like and replenish on dispatch from
-        //       prefetch when we hit a certain threshold like 50% (configurable?)
     }
 
     private void handleDeliveryRemotelyUpdated(IncomingDelivery delivery) {

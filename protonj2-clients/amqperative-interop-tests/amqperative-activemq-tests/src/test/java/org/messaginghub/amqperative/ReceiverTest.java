@@ -85,7 +85,6 @@ public class ReceiverTest extends AMQPerativeTestSupport {
         assertNotNull(connection.openFuture().get(5, TimeUnit.SECONDS));
         Receiver receiver = connection.openReceiver(getTestName());
         assertSame(receiver, receiver.openFuture().get(5, TimeUnit.SECONDS));
-        receiver.addCredit(1);
 
         Wait.assertEquals(1, () -> receiver.getQueueSize());
         Delivery delivery = receiver.receive();
@@ -123,7 +122,6 @@ public class ReceiverTest extends AMQPerativeTestSupport {
         assertNotNull(connection.openFuture().get(5, TimeUnit.SECONDS));
         Receiver receiver = connection.openReceiver(getTestName());
         assertSame(receiver, receiver.openFuture().get(5, TimeUnit.SECONDS));
-        receiver.addCredit(1);
 
         Wait.assertEquals(1, () -> receiver.getQueueSize());
         Delivery delivery = receiver.receive();

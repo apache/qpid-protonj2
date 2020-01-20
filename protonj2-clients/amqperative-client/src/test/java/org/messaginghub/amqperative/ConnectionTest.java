@@ -495,6 +495,7 @@ public class ConnectionTest extends AMQPerativeTestCase {
             peer.expectAttach().withRole(Role.RECEIVER)
                                .withSource(new SourceMatcher().withDynamic(true).withAddress(nullValue()))
                                .respond();
+            peer.expectFlow();
             peer.expectDetach().respond();
             peer.expectClose().respond();
             peer.start();

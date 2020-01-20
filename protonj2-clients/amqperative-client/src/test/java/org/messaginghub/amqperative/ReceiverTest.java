@@ -53,6 +53,7 @@ public class ReceiverTest extends AMQPerativeTestCase {
             peer.expectOpen().respond();
             peer.expectBegin().respond();
             peer.expectAttach().withRole(Role.RECEIVER).respond();  // TODO match other options
+            peer.expectFlow().withDeliveryCount(0).withLinkCredit(10);
             peer.expectDetach().withClosed(close).respond();
             peer.expectClose().respond();
             peer.start();
@@ -91,6 +92,7 @@ public class ReceiverTest extends AMQPerativeTestCase {
             peer.expectOpen().respond();
             peer.expectBegin().respond();
             peer.expectAttach().respond().withSource((Source) null);
+            peer.expectFlow();
             peer.remoteDetach().withErrorCondition(new ErrorCondition(AmqpError.UNAUTHORIZED_ACCESS, "Cannot read from this address")).queue();
             peer.expectDetach();
             peer.start();
@@ -206,6 +208,7 @@ public class ReceiverTest extends AMQPerativeTestCase {
             peer.expectOpen().respond();
             peer.expectBegin().respond();
             peer.expectAttach().withRole(Role.RECEIVER).respond();
+            peer.expectFlow();
             peer.expectDetach();
             peer.expectClose().respond();
             peer.start();
@@ -256,7 +259,6 @@ public class ReceiverTest extends AMQPerativeTestCase {
 
     @Test(timeout = 20000)
     public void testReceiverDrainAllOutstanding() throws Exception {
-        int creditWindow = 10;
         try (NettyTestPeer peer = new NettyTestPeer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
@@ -276,22 +278,23 @@ public class ReceiverTest extends AMQPerativeTestCase {
             Session session = connection.openSession();
             session.openFuture().get(5, TimeUnit.SECONDS);
 
-            Receiver receiver = session.openReceiver("test-queue");
+            Receiver receiver = session.openReceiver("test-queue", new ReceiverOptions().creditWindow(0));
             receiver.openFuture().get(5, TimeUnit.SECONDS);
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
 
             // Add some credit, verify not draining
+            int credit = 7;
             Matcher<Boolean> drainMatcher = anyOf(equalTo(false), nullValue());
-            peer.expectFlow().withDrain(drainMatcher).withLinkCredit(creditWindow).withDeliveryCount(0);
+            peer.expectFlow().withDrain(drainMatcher).withLinkCredit(credit).withDeliveryCount(0);
 
-            receiver.addCredit(creditWindow);
+            receiver.addCredit(credit);
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
 
             // Drain all the credit
-            peer.expectFlow().withDrain(true).withLinkCredit(creditWindow).withDeliveryCount(0)
-                    .respond().withDrain(true).withLinkCredit(0).withDeliveryCount(creditWindow);
+            peer.expectFlow().withDrain(true).withLinkCredit(credit).withDeliveryCount(0)
+                    .respond().withDrain(true).withLinkCredit(0).withDeliveryCount(credit);
 
             Future<Receiver> draining = receiver.drain();
             draining.get(5, TimeUnit.SECONDS);
@@ -314,6 +317,7 @@ public class ReceiverTest extends AMQPerativeTestCase {
                                .withSource().withDynamic(true).withAddress((String) null)
                                .and().respond()
                                .withSource().withDynamic(true).withAddress("test-dynamic-node");
+            peer.expectFlow();
             peer.expectDetach().respond();
             peer.expectClose().respond();
             peer.start();
@@ -379,6 +383,7 @@ public class ReceiverTest extends AMQPerativeTestCase {
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
 
             if (attachResponse) {
+                peer.expectFlow();
                 peer.expectDetach().respond();
                 peer.respondToLastAttach().withSource().withAddress("test-dynamic-node").and().later(10);
             } else {
@@ -429,6 +434,7 @@ public class ReceiverTest extends AMQPerativeTestCase {
                                .respond()
                                .withSndSettleMode(sndMode)
                                .withRcvSettleMode(ReceiverSettleMode.FIRST);
+            peer.expectFlow();
             peer.expectDetach().respond();
             peer.expectClose().respond();
             peer.start();
@@ -493,6 +499,7 @@ public class ReceiverTest extends AMQPerativeTestCase {
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
 
             if (attachResponse) {
+                peer.expectFlow();
                 peer.expectDetach().respond();
                 peer.respondToLastAttach().later(10);
             } else {
@@ -555,6 +562,7 @@ public class ReceiverTest extends AMQPerativeTestCase {
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
 
             if (attachResponse) {
+                peer.expectFlow();
                 peer.expectDetach().respond();
                 peer.respondToLastAttach().later(10);
             } else {
@@ -619,6 +627,7 @@ public class ReceiverTest extends AMQPerativeTestCase {
             expectedProperties.put("TEST", "test-property");
 
             if (attachResponse) {
+                peer.expectFlow();
                 peer.expectDetach().respond();
                 peer.respondToLastAttach().withPropertiesMap(expectedProperties).later(10);
             } else {
@@ -681,6 +690,7 @@ public class ReceiverTest extends AMQPerativeTestCase {
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
 
             if (attachResponse) {
+                peer.expectFlow();
                 peer.expectDetach().respond();
                 peer.respondToLastAttach().withOfferedCapabilities("QUEUE").later(10);
             } else {
@@ -744,6 +754,7 @@ public class ReceiverTest extends AMQPerativeTestCase {
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
 
             if (attachResponse) {
+                peer.expectFlow();
                 peer.expectDetach().respond();
                 peer.respondToLastAttach().withDesiredCapabilities("Error-Free").later(10);
             } else {
@@ -779,6 +790,7 @@ public class ReceiverTest extends AMQPerativeTestCase {
             peer.expectOpen().respond();
             peer.expectBegin().respond();
             peer.expectAttach().withRole(Role.RECEIVER).respond();
+            peer.expectFlow();
             peer.expectDetach().respond();
             peer.expectClose().respond();
             peer.start();

@@ -47,8 +47,6 @@ public class Respond {
 
             Receiver receiver = connection.openReceiver(address, receiverOptions);
 
-            receiver.addCredit(1);
-
             Delivery request = receiver.receive(30_000);
             if (request != null) {
                 Message<String> received = request.message();

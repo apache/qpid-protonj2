@@ -401,7 +401,7 @@ public class SenderTest extends AMQPerativeTestCase {
             sender.openFuture().get(10, TimeUnit.SECONDS);
 
             // This ensures that the flow to sender is processed before we try-send
-            Receiver receiver = session.openReceiver("test-queue");
+            Receiver receiver = session.openReceiver("test-queue", new ReceiverOptions().creditWindow(0));
             receiver.openFuture().get(10, TimeUnit.SECONDS);
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
@@ -558,7 +558,7 @@ public class SenderTest extends AMQPerativeTestCase {
             sender.openFuture().get(10, TimeUnit.SECONDS);
 
             // This ensures that the flow to sender is processed before we try-send
-            Receiver receiver = session.openReceiver("test-queue");
+            Receiver receiver = session.openReceiver("test-queue", new ReceiverOptions().creditWindow(0));
             receiver.openFuture().get(10, TimeUnit.SECONDS);
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
@@ -631,7 +631,7 @@ public class SenderTest extends AMQPerativeTestCase {
             sender.openFuture().get(10, TimeUnit.SECONDS);
 
             // This ensures that the flow to sender is processed before we try-send
-            Receiver receiver = session.openReceiver("test-queue");
+            Receiver receiver = session.openReceiver("test-queue", new ReceiverOptions().creditWindow(0));
             receiver.openFuture().get(10, TimeUnit.SECONDS);
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
