@@ -216,7 +216,7 @@ public class ProtonEngineTest extends ProtonEngineTestSupport {
 
         assertFalse(engine.isWritable());
         assertTrue(engine.isShutdown());
-        assertFalse(engine.isFailed());
+        assertTrue(engine.isFailed());
         assertNotNull(engine.failureCause());
         assertEquals(EngineState.SHUTDOWN, engine.state());
 

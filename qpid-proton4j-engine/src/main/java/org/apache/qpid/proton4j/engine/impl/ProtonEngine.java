@@ -98,7 +98,7 @@ public class ProtonEngine implements Engine {
 
     @Override
     public boolean isFailed() {
-        return state == EngineState.FAILED;
+        return failureCause != null;
     }
 
     @Override
