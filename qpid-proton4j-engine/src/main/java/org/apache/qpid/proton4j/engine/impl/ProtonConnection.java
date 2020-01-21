@@ -419,10 +419,15 @@ public class ProtonConnection implements Connection, AMQPHeader.HeaderHandler<Pr
     public Set<Session> sessions() throws IllegalStateException {
         final Set<Session> result;
 
-        if (localSessions.isEmpty()) {
+        if (localSessions.isEmpty() && remoteSessions.isEmpty()) {
             result = Collections.emptySet();
         } else {
-            result = Collections.unmodifiableSet(new HashSet<>(localSessions.values()));
+            Set<Session> union = new HashSet<>(localSessions.size());
+
+            union.addAll(localSessions.values());
+            union.addAll(remoteSessions.values());
+
+            result = Collections.unmodifiableSet(union);
         }
 
         return result;
@@ -679,7 +684,7 @@ public class ProtonConnection implements Connection, AMQPHeader.HeaderHandler<Pr
     }
 
     void handleEngineShutdown(ProtonEngine protonEngine) {
-        Set<ProtonSession> sessions = new HashSet<>();
+        Set<ProtonSession> sessions = new HashSet<>(localSessions.size());
 
         sessions.addAll(localSessions.values());
         sessions.addAll(remoteSessions.values());

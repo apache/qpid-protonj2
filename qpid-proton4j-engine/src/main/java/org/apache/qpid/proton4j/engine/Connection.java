@@ -143,22 +143,6 @@ public interface Connection {
     boolean isLocallyClosed();
 
     /**
-     * Creates a new Session linked to this Connection
-     *
-     * @return a newly created {@link Session} linked to this {@link Connection}.
-     *
-     * @throws IllegalStateException if the {@link Connection} has already been closed.
-     */
-    Session session() throws IllegalStateException;
-
-    /**
-     * Returns an unmodifiable {@link Set} of Sessions that are tracked by the Connection.
-     *
-     * @return an unmodifiable {@link Set} of Sessions tracked by this Connection.
-     */
-    Set<Session> sessions();
-
-    /**
      * @return the Container ID assigned to this Connection
      */
     String getContainerId();
@@ -336,6 +320,27 @@ public interface Connection {
      * @return the configured properties sent to the remote when this Connection is opened.
      */
     Map<Symbol, Object> getProperties();
+
+    //----- Session specific APIs for this Connection
+
+    /**
+     * Creates a new Session linked to this Connection
+     *
+     * @return a newly created {@link Session} linked to this {@link Connection}.
+     *
+     * @throws IllegalStateException if the {@link Connection} has already been closed.
+     */
+    Session session() throws IllegalStateException;
+
+    /**
+     * Returns an unmodifiable {@link Set} of Sessions that are tracked by the Connection.
+     *
+     * The {@link Session} instances returned from this method will be locally or remotely open or
+     * both which gives the caller full view of the complete set of known {@link Session} instances.
+     *
+     * @return an unmodifiable {@link Set} of Sessions tracked by this Connection.
+     */
+    Set<Session> sessions();
 
     //----- View state of remote end of this Connection
 
