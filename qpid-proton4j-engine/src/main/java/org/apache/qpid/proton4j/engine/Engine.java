@@ -31,10 +31,11 @@ import org.apache.qpid.proton4j.engine.exceptions.ProtonException;
 public interface Engine extends Consumer<ProtonBuffer> {
 
     /**
-     * Returns true if the engine is accepting more input.
+     * Returns true if the engine is accepting input from the ingestion entry points.
      * <p>
      * When false any attempts to write more data into the engine will result in an
-     * error being returned from the write operation.
+     * error being returned from the write operation.  An engine that has not been
+     * started or that has been failed or shutdown will report as not writable.
      *
      * TODO What is the best why to reflect the state, how do we trigger changes
      *
@@ -48,7 +49,7 @@ public interface Engine extends Consumer<ProtonBuffer> {
     boolean isShutdown();
 
     /**
-     * @return true if the Engine has encountered a critical error and has shutdown.
+     * @return true if the Engine has encountered a critical error and cannot produce new data.
      */
     boolean isFailed();
 
@@ -74,6 +75,10 @@ public interface Engine extends Consumer<ProtonBuffer> {
     /**
      * Starts the engine and returns the {@link Connection} instance that is bound to this Engine.
      *
+     * A non-started Engine will not allow ingestion of any inbound data and a Connection linked to
+     * the engine that was obtained from the {@link Engine#connection()} method cannot produce any
+     * outbound data.
+     *
      * @return the Connection instance that is linked to this {@link Engine}
      *
      * @throws EngineStateException if the Engine state has already transition to shutdown or failed.
@@ -81,8 +86,12 @@ public interface Engine extends Consumer<ProtonBuffer> {
     Connection start() throws EngineStateException;
 
     /**
-     * Orderly shutdown of the engine, any open connection and associated sessions and
-     * session linked end points will be closed.
+     * Shutdown the engine preventing any future outbound or inbound processing.
+     *
+     * When the engine is shut down any resources, {@link Connection}, {@link Session} or {@link Link}
+     * instances that have an engine shutdown event handler registered will be notified and should react
+     * by locally closing that resource if they wish to ensure that the resource's local close event
+     * handler gets signaled.
      *
      * @return this Engine
      */
@@ -91,10 +100,10 @@ public interface Engine extends Consumer<ProtonBuffer> {
     /**
      * Transition the {@link Engine} to a failed state if not already closed or closing.
      *
-     * If called when the engine has not failed the engine will be shutdown and transition to
-     * a failed state and the method will return an appropriate {@link EngineFailedException}
-     * that wraps the given cause.  If called after the engine was shutdown the method returns
-     * an {@link EngineShutdownException} indicating that the engine was already shutdown.
+     * If called when the engine has not failed the engine will be transition to the failed state
+     * and the method will return an appropriate {@link EngineFailedException} that wraps the given
+     * cause.  If called after the engine was shutdown the method returns an {@link EngineShutdownException}
+     * indicating that the engine was already shutdown.
      *
      * @param cause
      *      The exception that caused the engine to be forcibly transitioned to the failed state.
