@@ -17,6 +17,7 @@
 package org.messaginghub.amqperative.impl;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.security.Principal;
 import java.util.Map;
 import java.util.Objects;
@@ -33,7 +34,6 @@ import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 import java.util.function.Supplier;
 
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
-import org.apache.qpid.proton4j.engine.ConnectionState;
 import org.apache.qpid.proton4j.engine.Engine;
 import org.apache.qpid.proton4j.engine.EngineFactory;
 import org.apache.qpid.proton4j.engine.sasl.client.SaslAuthenticator;
@@ -161,33 +161,11 @@ public class ClientConnection implements Connection {
             if (executor != null && !executor.isShutdown()) {
                 executor.execute(() -> {
                     try {
-                        if (protonConnection != null) {
-                            protonConnection.close();
-                        }
+                        protonConnection.close();
                     } catch (Throwable ignored) {
-                        protonConnection = null;
-                    }
-
-                    // When already closed or a failure on write of close we can just shutdown the transport
-                    if (protonConnection == null || protonConnection.getRemoteState() == ConnectionState.CLOSED) {
-                        try {
-                            transport.close();
-                        } catch (IOException ignore) {}
-
-                        closeFuture.complete(this);
+                        // Engine error handler will kick in if the write of Close fails
                     }
                 });
-
-                if (options.closeTimeout() > 0) {
-                    // Ensure transport gets shut down and future completed if remote doesn't respond.
-                    executor.schedule(() -> {
-                        try {
-                            transport.close();
-                        } catch (Throwable ignore) {}
-
-                        closeFuture.complete(this);
-                    }, options.closeTimeout(), TimeUnit.MILLISECONDS);
-                }
             } else {
                 closeFuture.complete(this);
             }
@@ -401,7 +379,7 @@ public class ClientConnection implements Connection {
 
                 engine.configuration().setBufferAllocator(transport.getBufferAllocator());
                 engine.outputHandler(toWrite -> handleEngineOutput(toWrite))
-                      .errorHandler(error -> handleEngineErrors(error));
+                      .errorHandler(error -> engine.shutdown());
 
                 configureEngineSaslSupport();
 
@@ -410,7 +388,8 @@ public class ClientConnection implements Connection {
                 protonConnection.localOpenHandler(connection -> handleLocalOpen(connection))
                                 .localCloseHandler(connection -> handleLocalClose(connection))
                                 .openHandler(connection -> handleRemoteOpen(connection))
-                                .closeHandler(connection -> handleRemotecClose(connection));
+                                .closeHandler(connection -> handleRemotecClose(connection))
+                                .engineShutdownHandler(engine -> handleEngineShutdown(engine));
 
             });
         } catch (Throwable e) {
@@ -445,7 +424,6 @@ public class ClientConnection implements Connection {
                 protonConnection.open();
             } catch (Throwable error) {
                 LOG.trace("Error from proton engine during connection open", error);
-                handleClientIOException(ClientExceptionSupport.createOrPassthroughFatal(error));
             }
         });
 
@@ -520,39 +498,6 @@ public class ClientConnection implements Connection {
         }
     }
 
-    void handleClientIOException(Throwable error) {
-        handleClientIOException(ClientExceptionSupport.createOrPassthroughFatal(error));
-    }
-
-    void handleClientIOException(ClientException error) {
-        CLOSED_UPDATER.set(this, 1);
-        FAILURE_CAUSE_UPDATER.compareAndSet(this, null, error);
-        try {
-            // Close should be idempotent so we can just respond here with a close in case
-            // of remotely closed connection.
-            try {
-                protonConnection.close();
-            } catch (Throwable ignored) {
-                LOG.trace("Error on attempt to close proton connection was ignored");
-            }
-
-            try {
-                engine.shutdown();
-            } catch (Throwable ingore) {}
-
-            try {
-                transport.close();
-            } catch (IOException ignored) {
-            }
-
-            // Signal any waiters that the operation is done due to error.
-            openFuture.failed(error);
-            closeFuture.complete(ClientConnection.this);
-        } catch (Throwable ingored) {
-            LOG.trace("Ignoring error while closing down from client internal exception: ", ingored);
-        }
-    }
-
     //----- Private implementation events handlers and utility methods
 
     private void handleLocalOpen(org.apache.qpid.proton4j.engine.Connection connection) {
@@ -563,7 +508,13 @@ public class ClientConnection implements Connection {
         if (options.openTimeout() > 0) {
             executor.schedule(() -> {
                 if (!openFuture.isDone()) {
-                    handleClientIOException(new ClientOperationTimedOutException(
+                    // Ensure a close write is attempted and then force failure regardless
+                    // as we don't expect the remote to respond given it hasn't done so yet.
+                    try {
+                        protonConnection.close();
+                    } catch (Throwable ignore) {}
+
+                    engine.engineFailed(new ClientOperationTimedOutException(
                         "Connection Open timed out waiting for remote to open"));
                 }
             }, options.openTimeout(), TimeUnit.MILLISECONDS);
@@ -571,16 +522,28 @@ public class ClientConnection implements Connection {
     }
 
     private void handleLocalClose(org.apache.qpid.proton4j.engine.Connection connection) {
-        // TODO - A parent closed event from connection would simplify this in some ways
-        //        although could have some other issues
+        if (!connection.isRemotelyClosed() && !engine.isShutdown()) {
+            // Ensure engine gets shut down and future completed if remote doesn't respond.
+            executor.schedule(() -> {
+                try {
+                    engine.shutdown();
+                } catch (Throwable ignore) {
+                }
+            }, options.closeTimeout(), TimeUnit.MILLISECONDS);
+        } else {
+            // TODO - Once session handles engine shutdown events we can remove this.
+            protonConnection.sessions().forEach(session -> {
+                try {
+                    session.close();
+                } catch (Throwable ignored) {}
+            });
 
-        // Close all local sessions now that the connection is closed which will signal their
-        // local close handlers to allow for cleanup and future signaling.
-        protonConnection.sessions().forEach(session -> {
+            // Ensure that engine is shutdown and cleanup processing kicks in.
             try {
-                session.close();
-            } catch (Throwable ignored) {}
-        });
+                engine.shutdown();
+            } catch (Throwable ignore) {
+            }
+        }
     }
 
     private void handleRemoteOpen(org.apache.qpid.proton4j.engine.Connection connection) {
@@ -589,15 +552,32 @@ public class ClientConnection implements Connection {
     }
 
     private void handleRemotecClose(org.apache.qpid.proton4j.engine.Connection connection) {
-        final ClientException ex;
-
-        if (connection.getRemoteCondition() != null) {
-            ex = ClientErrorSupport.convertToConnectionClosedException(this, connection.getRemoteCondition());
+        if (protonConnection.isLocallyClosed()) {
+            try {
+                engine.shutdown();
+            } catch (Throwable ignore) {
+                LOG.warn("Unexpected exception thrown from engine shutdown: ", ignore);
+            }
         } else {
-            ex = new ClientConnectionRemotelyClosedException("Remote closed with error");
-        }
+            final ClientException ex;
 
-        handleClientIOException(ex);
+            if (connection.getRemoteCondition() != null) {
+                ex = ClientErrorSupport.convertToConnectionClosedException(this, connection.getRemoteCondition());
+            } else {
+                ex = new ClientConnectionRemotelyClosedException("Remote closed with error");
+            }
+
+            FAILURE_CAUSE_UPDATER.compareAndSet(this, null, ex);
+
+            // Remote closed first so try and close locally and allow the local close processing
+            // to handle shutdown and cleanup as needed.
+
+            try {
+                protonConnection.close();
+            } catch (Throwable ignored) {
+                // Engine handlers will ensure we close down if not already locally closed.
+            }
+        }
     }
 
     private void handleEngineOutput(ProtonBuffer output) {
@@ -605,30 +585,34 @@ public class ClientConnection implements Connection {
             transport.writeAndFlush(output);
         } catch (IOException e) {
             LOG.warn("Error while writing engine output to transport:", e);
-            // TODO - Engine should handle thrown errors but we already see this one, we could just throw
-            //        an Unchecked IOException here and let normal processing handle the error on the call
-            //        chain and the error handler callback but for now that has issues because the proton
-            //        objects throw on close methods even if the engine is already shutdown or failed.
-            handleEngineErrors(e);
+            throw new UncheckedIOException(e);
         }
     }
 
-    private void handleEngineErrors(Throwable error) {
-        // TODO - Better handle errors and let all tracked resources know about them
-        //        Currently close APIs in the engine fail if the engine is shutdown
-        //        and it could make sense to instead always succeed unless a write of
-        //        the performative fails and otherwise just close down as normal to
-        //        allow the events to trigger.
-        try {
-            // Engine encountered critical error, shutdown.
-            transport.close();
-        } catch (IOException e) {
-            LOG.error("Engine encountered critical error", error);
-        } finally {
-            CLOSED_UPDATER.lazySet(this, 1);
-            openFuture.failed(new ClientException("Engine encountered critical error", error));
-            closeFuture.complete(this);
+    private void handleEngineShutdown(Engine engine) {
+        CLOSED_UPDATER.lazySet(this, 1);
+        if (engine.failureCause() != null) {
+            FAILURE_CAUSE_UPDATER.compareAndSet(this, null, ClientExceptionSupport.createOrPassthroughFatal(engine.failureCause()));
         }
+
+        try {
+            protonConnection.close();
+        } catch (Throwable ignore) {
+        }
+
+        try {
+            transport.close();
+        } catch (IOException ignored) {
+        }
+
+        // Signal any waiters that the operation is done due to error.
+        if (failureCause != null) {
+            openFuture.failed(failureCause);
+        } else {
+            openFuture.complete(this);
+        }
+
+        closeFuture.complete(this);
     }
 
     private Engine configureEngineSaslSupport() {

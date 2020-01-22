@@ -323,7 +323,7 @@ public class ClientReceiver implements Receiver {
                     try {
                         protonReceiver.close();
                     } catch (Throwable error) {
-                        session.connection().handleClientIOException(error);
+                        // Connection will handle all engine errors
                     } finally {
                         failureCause.compareAndSet(null, new ClientOperationTimedOutException(
                             "Receiver attach timed out waiting for remote to open"));

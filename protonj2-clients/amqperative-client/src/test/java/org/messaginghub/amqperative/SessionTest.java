@@ -237,7 +237,16 @@ public class SessionTest extends AMQPerativeTestCase {
                 }
             }
 
-            session.close().get();
+            if (beginResponse) {
+                session.close().get();
+            } else {
+                try {
+                    session.close().get();
+                    fail("Should fail close to indicate remote misbehaving when connection not closed");
+                } catch (ExecutionException ex) {
+                    LOG.debug("Caught expected exception from close call", ex);
+                }
+            }
 
             peer.expectClose().respond();
             connection.close().get();
@@ -296,7 +305,16 @@ public class SessionTest extends AMQPerativeTestCase {
                 }
             }
 
-            session.close().get();
+            if (beginResponse) {
+                session.close().get();
+            } else {
+                try {
+                    session.close().get();
+                    fail("Should fail close to indicate remote misbehaving when connection not closed");
+                } catch (ExecutionException ex) {
+                    LOG.debug("Caught expected exception from close call", ex);
+                }
+            }
 
             peer.expectClose().respond();
             connection.close().get();
@@ -355,7 +373,16 @@ public class SessionTest extends AMQPerativeTestCase {
                 }
             }
 
-            session.close().get();
+            if (beginResponse) {
+                session.close().get();
+            } else {
+                try {
+                    session.close().get();
+                    fail("Should fail close to indicate remote misbehaving when connection not closed");
+                } catch (ExecutionException ex) {
+                    LOG.debug("Caught expected exception from close call", ex);
+                }
+            }
 
             peer.expectClose().respond();
             connection.close().get();

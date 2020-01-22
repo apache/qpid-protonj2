@@ -872,7 +872,7 @@ public class SenderTest extends AMQPerativeTestCase {
             LOG.info("Connect test started, peer listening on: {}", remoteURI);
 
             Client container = Client.create();
-            ConnectionOptions options = new ConnectionOptions().openTimeout(100);
+            ConnectionOptions options = new ConnectionOptions().openTimeout(75);
             Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), options);
             connection.openFuture().get();
 
@@ -937,7 +937,7 @@ public class SenderTest extends AMQPerativeTestCase {
             LOG.info("Connect test started, peer listening on: {}", remoteURI);
 
             Client container = Client.create();
-            ConnectionOptions options = new ConnectionOptions().openTimeout(100);
+            ConnectionOptions options = new ConnectionOptions().openTimeout(75);
             Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), options);
             connection.openFuture().get();
 
@@ -1000,7 +1000,7 @@ public class SenderTest extends AMQPerativeTestCase {
             LOG.info("Connect test started, peer listening on: {}", remoteURI);
 
             Client container = Client.create();
-            ConnectionOptions options = new ConnectionOptions().openTimeout(100);
+            ConnectionOptions options = new ConnectionOptions().openTimeout(75);
             Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), options);
             connection.openFuture().get();
 

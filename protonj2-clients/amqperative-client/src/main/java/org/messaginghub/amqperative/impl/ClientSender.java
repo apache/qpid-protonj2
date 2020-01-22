@@ -258,7 +258,7 @@ public class ClientSender implements Sender {
                     try {
                         protonSender.close();
                     } catch (Throwable error) {
-                        session.connection().handleClientIOException(error);
+                        // Connection will handle all engine errors
                     } finally {
                         failureCause.compareAndSet(null, new ClientOperationTimedOutException(
                             "Sender attach timed out waiting for remote to open"));

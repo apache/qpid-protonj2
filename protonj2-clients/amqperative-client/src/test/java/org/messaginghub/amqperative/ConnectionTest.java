@@ -96,7 +96,7 @@ public class ConnectionTest extends AMQPerativeTestCase {
         }
     }
 
-    @Test(timeout = 60000)
+    @Test(timeout = 30000)
     public void testCreateConnectionString() throws Exception {
         try (NettyTestPeer peer = new NettyTestPeer()) {
             peer.expectSASLAnonymousConnect();
@@ -118,7 +118,7 @@ public class ConnectionTest extends AMQPerativeTestCase {
         }
     }
 
-    @Test(timeout = 60000)
+    @Test(timeout = 30000)
     public void testCreateConnectionStringWithDefaultTcpPort() throws Exception {
         try (NettyTestPeer peer = new NettyTestPeer()) {
             peer.expectSASLAnonymousConnect();
@@ -142,12 +142,12 @@ public class ConnectionTest extends AMQPerativeTestCase {
         }
     }
 
-    @Test(timeout = 60000)
+    @Test(timeout = 30000)
     public void testConnectionCloseGetsResponseWithErrorDoesNotThrowTimedGet() throws Exception {
         doTestConnectionCloseGetsResponseWithErrorDoesNotThrow(true);
     }
 
-    @Test(timeout = 60000)
+    @Test(timeout = 30000)
     public void testConnectionCloseGetsResponseWithErrorDoesNotThrowUntimedGet() throws Exception {
         doTestConnectionCloseGetsResponseWithErrorDoesNotThrow(false);
     }
@@ -181,7 +181,7 @@ public class ConnectionTest extends AMQPerativeTestCase {
         }
     }
 
-    @Test(timeout = 60000)
+    @Test(timeout = 30000)
     public void testConnectionRemoteClosedAfterOpened() throws Exception {
         try (NettyTestPeer peer = new NettyTestPeer()) {
             peer.expectSASLAnonymousConnect();
@@ -206,12 +206,12 @@ public class ConnectionTest extends AMQPerativeTestCase {
         }
     }
 
-    @Test(timeout = 60000)
+    @Test(timeout = 30000)
     public void testConnectionOpenFutureWaitCancelledOnConnectionDropWithTimeout() throws Exception {
         doTestConnectionOpenFutureWaitCancelledOnConnectionDrop(true);
     }
 
-    @Test(timeout = 60000)
+    @Test(timeout = 30000)
     public void testConnectionOpenFutureWaitCancelledOnConnectionDropNoTimeout() throws Exception {
         doTestConnectionOpenFutureWaitCancelledOnConnectionDrop(false);
     }
@@ -274,12 +274,12 @@ public class ConnectionTest extends AMQPerativeTestCase {
 
             Client container = Client.create();
             Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
-            connection.openFuture().get(10, TimeUnit.SECONDS);
+            connection.openFuture().get();
 
             Session session = connection.openSession();
 
             try {
-                session.openFuture().get(5, TimeUnit.SECONDS);
+                session.openFuture().get();
                 fail("Open should throw error when waiting for remote open and connection remotely closed.");
             } catch (ExecutionException error) {
                 LOG.info("Session open failed with error: ", error);
@@ -289,22 +289,22 @@ public class ConnectionTest extends AMQPerativeTestCase {
                 assertTrue(error.getCause() instanceof ClientConnectionRemotelyClosedException);
             }
 
-            session.close().get(5, TimeUnit.SECONDS);
+            session.close().get();
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
 
-            connection.close().get(10, TimeUnit.SECONDS);
+            connection.close().get();
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
     }
 
-    @Test(timeout = 60000)
+    @Test(timeout = 30000)
     public void testConnectionOpenTimeoutWhenNoRemoteOpenArrivesTimeout() throws Exception {
         doTestConnectionOpenTimeoutWhenNoRemoteOpenArrives(true);
     }
 
-    @Test(timeout = 60000)
+    @Test(timeout = 30000)
     public void testConnectionOpenTimeoutWhenNoRemoteOpenArrivesNoTimeout() throws Exception {
         doTestConnectionOpenTimeoutWhenNoRemoteOpenArrives(false);
     }
@@ -342,12 +342,12 @@ public class ConnectionTest extends AMQPerativeTestCase {
         }
     }
 
-    @Test(timeout = 60000)
+    @Test(timeout = 30000)
     public void testConnectionCloseTimeoutWhenNoRemoteCloseArrivesTimeout() throws Exception {
         doTestConnectionCloseTimeoutWhenNoRemoteCloseArrives(true);
     }
 
-    @Test(timeout = 60000)
+    @Test(timeout = 30000)
     public void testConnectionCloseTimeoutWhenNoRemoteCloseArrivesNoTimeout() throws Exception {
         doTestConnectionCloseTimeoutWhenNoRemoteCloseArrives(false);
     }
@@ -388,7 +388,7 @@ public class ConnectionTest extends AMQPerativeTestCase {
     }
 
     @Repeat(repetitions = 1)
-    @Test(timeout = 60000)
+    @Test(timeout = 30000)
     public void testCreateDefaultSenderFailsOnConnectionWithoutSupportForAnonymousRelay() throws Exception {
         try (NettyTestPeer peer = new NettyTestPeer()) {
             peer.expectSASLAnonymousConnect();
@@ -420,7 +420,7 @@ public class ConnectionTest extends AMQPerativeTestCase {
         }
     }
 
-    @Test(timeout = 60000)
+    @Test(timeout = 30000)
     public void testCreateDefaultSenderOnConnectionWithSupportForAnonymousRelay() throws Exception {
         try (NettyTestPeer peer = new NettyTestPeer()) {
             peer.expectSASLAnonymousConnect();
@@ -449,7 +449,7 @@ public class ConnectionTest extends AMQPerativeTestCase {
         }
     }
 
-    @Test(timeout = 60000)
+    @Test(timeout = 30000)
     public void testConnectionRecreatesAnonymousRelaySenderAfterRemoteCloseOfSender() throws Exception {
         try (NettyTestPeer peer = new NettyTestPeer()) {
             peer.expectSASLAnonymousConnect();
@@ -486,7 +486,7 @@ public class ConnectionTest extends AMQPerativeTestCase {
         }
     }
 
-    @Test(timeout = 60000)
+    @Test(timeout = 30000)
     public void testCreateDynamicReceiver() throws Exception {
         try (NettyTestPeer peer = new NettyTestPeer()) {
             peer.expectSASLAnonymousConnect();
@@ -522,7 +522,7 @@ public class ConnectionTest extends AMQPerativeTestCase {
     }
 
     @Repeat(repetitions = 1)
-    @Test(timeout = 60000)
+    @Test(timeout = 30000)
     public void testConnectionSenderOpenHeldUntilConnectionOpenedAndRelaySupportConfirmed() throws Exception {
         try (NettyTestPeer peer = new NettyTestPeer()) {
             peer.expectSASLAnonymousConnect();
@@ -560,12 +560,12 @@ public class ConnectionTest extends AMQPerativeTestCase {
         }
     }
 
-    @Test(timeout = 60000)
+    @Test(timeout = 30000)
     public void testConnectionGetRemotePropertiesWaitsForRemoteBegin() throws Exception {
         tryReadConnectionRemoteProperties(true);
     }
 
-    @Test(timeout = 60000)
+    @Test(timeout = 30000)
     public void testConnectionGetRemotePropertiesFailsAfterOpenTimeout() throws Exception {
         tryReadConnectionRemoteProperties(false);
     }
@@ -614,12 +614,12 @@ public class ConnectionTest extends AMQPerativeTestCase {
         }
     }
 
-    @Test(timeout = 60000)
+    @Test(timeout = 30000)
     public void testConnectionGetRemoteOfferedCapabilitiesWaitsForRemoteBegin() throws Exception {
         tryReadConnectionRemoteOfferedCapabilities(true);
     }
 
-    @Test(timeout = 60000)
+    @Test(timeout = 30000)
     public void testConnectionGetRemoteOfferedCapabilitiesFailsAfterOpenTimeout() throws Exception {
         tryReadConnectionRemoteOfferedCapabilities(false);
     }
@@ -666,12 +666,12 @@ public class ConnectionTest extends AMQPerativeTestCase {
         }
     }
 
-    @Test(timeout = 60000)
+    @Test(timeout = 30000)
     public void testConnectionGetRemoteDesiredCapabilitiesWaitsForRemoteBegin() throws Exception {
         tryReadConnectionRemoteDesiredCapabilities(true);
     }
 
-    @Test(timeout = 60000)
+    @Test(timeout = 30000)
     public void testConnectionGetRemoteDesiredCapabilitiesFailsAfterOpenTimeout() throws Exception {
         tryReadConnectionRemoteDesiredCapabilities(false);
     }

@@ -33,7 +33,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 
 import org.apache.qpid.proton4j.engine.Engine;
-import org.apache.qpid.proton4j.engine.SessionState;
 import org.messaginghub.amqperative.Receiver;
 import org.messaginghub.amqperative.ReceiverOptions;
 import org.messaginghub.amqperative.Sender;
@@ -61,7 +60,7 @@ public class ClientSession implements Session {
             AtomicIntegerFieldUpdater.newUpdater(ClientSession.class, "closed");
 
     private volatile int closed;
-    private ClientException failureCause;
+    private volatile ClientException failureCause;
 
     private final ClientFuture<Session> openFuture;
     private final ClientFuture<Session> closeFuture;
@@ -118,7 +117,7 @@ public class ClientSession implements Session {
                 try {
                     protonSession.close();
                 } catch (Throwable error) {
-                    connection.handleClientIOException(error);
+                    // Allow engine error handler to deal with this
                 }
             });
         }
@@ -274,12 +273,13 @@ public class ClientSession implements Session {
         protonSession.localOpenHandler(session -> handleLocalOpen(session))
                      .localCloseHandler(session -> handleLocalClose(session))
                      .openHandler(session -> handleRemoteOpen(session))
-                     .closeHandler(session -> handleRemoteClose(session));
+                     .closeHandler(session -> handleRemoteClose(session))
+                     .engineShutdownHandler(engine -> immediateSessionShutdown());
 
         try {
             protonSession.open();
         } catch (Throwable error) {
-            connection.handleClientIOException(ClientExceptionSupport.createOrPassthroughFatal(error));
+            // Connection is responding to all engine failed errors
         }
 
         return this;
@@ -415,6 +415,8 @@ public class ClientSession implements Session {
         return executor;
     }
 
+    //----- Handle Events from the Proton Session
+
     private void handleLocalOpen(org.apache.qpid.proton4j.engine.Session session) {
         if (options.openTimeout() > 0) {
             serializer.schedule(() -> {
@@ -423,17 +425,15 @@ public class ClientSession implements Session {
                         failureCause = new ClientOperationTimedOutException("Session open timed out waiting for remote to respond");
                     }
 
-                    openFuture.failed(failureCause);
-
                     if (protonSession.isLocallyClosed()) {
                         // We didn't hear back from open and session was since closed so just fail
                         // the close as we don't want to doubly wait for something that can't come.
-                        closeFuture.failed(failureCause);
+                        immediateSessionShutdown();
                     } else {
                         try {
                             protonSession.close();
                         } catch (Throwable error) {
-                            connection.handleClientIOException(ClientExceptionSupport.createOrPassthroughFatal(error));
+                            // Connection is responding to all engine failed errors
                         }
                     }
                 }
@@ -442,34 +442,21 @@ public class ClientSession implements Session {
     }
 
     private void handleLocalClose(org.apache.qpid.proton4j.engine.Session session) {
-        CLOSED_UPDATER.lazySet(this, 1);
-
         if (failureCause == null) {
             failureCause = connection.getFailureCause();
         }
 
-        // TODO - Need handling support for engine shutdown or failed at connection level
-        //        to trigger failure of any open / close futures waiting for responses
-        //        after the resource has been locally closed.
-
         // If not yet remotely closed we only wait for a remote close if the connection isn't
         // already failed and we have successfully opened the session without a timeout.
-        if (!connection.isClosed() && !openFuture.isFailed() && !session.isRemotelyClosed()) {
-            final long timeout = options.closeTimeout() >= 0 ?
-                    options.closeTimeout() : options.requestTimeout();
+        if (!connection.isClosed() && failureCause == null && !session.isRemotelyClosed()) {
+            final long timeout = options.closeTimeout();
 
             if (timeout > 0) {
                 connection.scheduleRequestTimeout(closeFuture, timeout, () ->
                     new ClientOperationTimedOutException("Session close timed out waiting for remote to respond"));
             }
         } else {
-            if (failureCause != null) {
-                openFuture.failed(failureCause);
-            } else {
-                openFuture.complete(this);
-            }
-
-            closeFuture.complete(this);
+            immediateSessionShutdown();
         }
     }
 
@@ -489,8 +476,9 @@ public class ClientSession implements Session {
     }
 
     private void handleRemoteClose(org.apache.qpid.proton4j.engine.Session session) {
-        if (session.getState() != SessionState.CLOSED) {
+        if (!session.isLocallyClosed()) {
             final ClientException error;
+
             if (session.getRemoteCondition() != null) {
                 error = ClientErrorSupport.convertToNonFatalException(session.getRemoteCondition());
             } else {
@@ -515,12 +503,35 @@ public class ClientSession implements Session {
                 LOG.trace("Error ignored from call to close session after remote close.", ignore);
             }
         } else {
-            if (failureCause != null) {
-                openFuture.failed(failureCause);
-            } else {
-                openFuture.complete(this);
-            }
+            immediateSessionShutdown();
+        }
+    }
 
+    private void immediateSessionShutdown() {
+        CLOSED_UPDATER.lazySet(this, 1);
+        if (failureCause == null) {
+            if (connection.getFailureCause() != null) {
+                failureCause = connection.getFailureCause();
+            } else if (getEngine().failureCause() != null) {
+                failureCause = ClientExceptionSupport.createOrPassthroughFatal(getEngine().failureCause());
+            }
+        }
+
+        try {
+            protonSession.close();
+        } catch (Throwable ignore) {
+        }
+
+        if (failureCause != null) {
+            openFuture.failed(failureCause);
+            // Connection failed so throw from session close won't give any tangible 
+            if (connection.getFailureCause() != null) {
+                closeFuture.complete(this);
+            } else {
+                closeFuture.failed(failureCause);
+            }
+        } else {
+            openFuture.complete(this);
             closeFuture.complete(this);
         }
     }
