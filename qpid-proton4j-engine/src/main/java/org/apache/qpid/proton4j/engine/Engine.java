@@ -21,6 +21,7 @@ import java.util.function.Consumer;
 
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.engine.exceptions.EngineFailedException;
+import org.apache.qpid.proton4j.engine.exceptions.EngineNotWritableException;
 import org.apache.qpid.proton4j.engine.exceptions.EngineShutdownException;
 import org.apache.qpid.proton4j.engine.exceptions.EngineStateException;
 import org.apache.qpid.proton4j.engine.exceptions.ProtonException;
@@ -36,8 +37,6 @@ public interface Engine extends Consumer<ProtonBuffer> {
      * When false any attempts to write more data into the engine will result in an
      * error being returned from the write operation.  An engine that has not been
      * started or that has been failed or shutdown will report as not writable.
-     *
-     * TODO What is the best why to reflect the state, how do we trigger changes
      *
      * @return true if the engine is current accepting more input.
      */
@@ -91,7 +90,7 @@ public interface Engine extends Consumer<ProtonBuffer> {
      * When the engine is shut down any resources, {@link Connection}, {@link Session} or {@link Link}
      * instances that have an engine shutdown event handler registered will be notified and should react
      * by locally closing that resource if they wish to ensure that the resource's local close event
-     * handler gets signaled.
+     * handler gets signaled if that resource is not already locally closed.
      *
      * @return this Engine
      */
@@ -103,7 +102,9 @@ public interface Engine extends Consumer<ProtonBuffer> {
      * If called when the engine has not failed the engine will be transition to the failed state
      * and the method will return an appropriate {@link EngineFailedException} that wraps the given
      * cause.  If called after the engine was shutdown the method returns an {@link EngineShutdownException}
-     * indicating that the engine was already shutdown.
+     * indicating that the engine was already shutdown.  Repeated calls to this method while the engine
+     * is in the failed state should not alter the original failure error or elicit new engine failed
+     * event notifications.
      *
      * @param cause
      *      The exception that caused the engine to be forcibly transitioned to the failed state.
@@ -113,7 +114,11 @@ public interface Engine extends Consumer<ProtonBuffer> {
     EngineStateException engineFailed(Throwable cause);
 
     /**
-     * Provide data input for this Engine from some external source.
+     * Provide data input for this Engine from some external source.  If the engine is not writable
+     * when this method is called an {@link EngineNotWritableException} will be thrown if unless the
+     * reason for the not writable state is due to engine failure or the engine already having been
+     * shut down in which case the appropriate {@link EngineStateException} will be thrown to indicate
+     * the reason.
      *
      * @param input
      *      The data to feed into to Engine.
@@ -125,7 +130,11 @@ public interface Engine extends Consumer<ProtonBuffer> {
     Engine ingest(ProtonBuffer input) throws EngineStateException;
 
     /**
-     * Provide data input for this Engine from some external source.
+     * Provide data input for this Engine from some external source.  If the engine is not writable
+     * when this method is called an {@link EngineNotWritableException} will be thrown if unless the
+     * reason for the not writable state is due to engine failure or the engine already having been
+     * shut down in which case the appropriate {@link EngineStateException} will be thrown to indicate
+     * the reason.
      *
      * @param input
      *      The data to feed into to Engine.
