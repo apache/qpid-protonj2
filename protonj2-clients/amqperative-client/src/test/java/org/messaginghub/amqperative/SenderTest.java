@@ -42,12 +42,12 @@ public class SenderTest extends AMQPerativeTestCase {
 
     private static final Logger LOG = LoggerFactory.getLogger(SenderTest.class);
 
-    @Test(timeout = 60000)
+    @Test(timeout = 20000)
     public void testCreateSenderAndClose() throws Exception {
         doTestCreateSenderAndCloseOrDeatch(true);
     }
 
-    @Test(timeout = 60000)
+    @Test(timeout = 20000)
     public void testCreateSenderAndDetach() throws Exception {
         doTestCreateSenderAndCloseOrDeatch(false);
     }
@@ -90,7 +90,7 @@ public class SenderTest extends AMQPerativeTestCase {
     }
 
     @Repeat(repetitions = 1)
-    @Test(timeout = 60000)
+    @Test(timeout = 30000)
     public void testSenderOpenRejectedByRemote() throws Exception {
         try (NettyTestPeer peer = new NettyTestPeer()) {
             peer.expectSASLAnonymousConnect();
@@ -134,12 +134,12 @@ public class SenderTest extends AMQPerativeTestCase {
         }
     }
 
-    @Test(timeout = 60000)
+    @Test(timeout = 30000)
     public void testOpenSenderTimesOutWhenNoAttachResponseReceivedTimeout() throws Exception {
         doTestOpenSenderTimesOutWhenNoAttachResponseReceived(true);
     }
 
-    @Test(timeout = 60000)
+    @Test(timeout = 30000)
     public void testOpenSenderTimesOutWhenNoAttachResponseReceivedNoTimeout() throws Exception {
         doTestOpenSenderTimesOutWhenNoAttachResponseReceived(false);
     }
@@ -186,22 +186,22 @@ public class SenderTest extends AMQPerativeTestCase {
         }
     }
 
-    @Test(timeout = 60000)
+    @Test(timeout = 30000)
     public void testCloseSenderTimesOutWhenNoCloseResponseReceivedTimeout() throws Exception {
         doTestCloseOrDetachSenderTimesOutWhenNoCloseResponseReceived(true, true);
     }
 
-    @Test(timeout = 60000)
+    @Test(timeout = 30000)
     public void testCloseSenderTimesOutWhenNoCloseResponseReceivedNoTimeout() throws Exception {
         doTestCloseOrDetachSenderTimesOutWhenNoCloseResponseReceived(true, false);
     }
 
-    @Test(timeout = 60000)
+    @Test(timeout = 30000)
     public void testDetachSenderTimesOutWhenNoCloseResponseReceivedTimeout() throws Exception {
         doTestCloseOrDetachSenderTimesOutWhenNoCloseResponseReceived(false, true);
     }
 
-    @Test(timeout = 60000)
+    @Test(timeout = 30000)
     public void testDetachSenderTimesOutWhenNoCloseResponseReceivedNoTimeout() throws Exception {
         doTestCloseOrDetachSenderTimesOutWhenNoCloseResponseReceived(false, false);
     }
@@ -260,7 +260,7 @@ public class SenderTest extends AMQPerativeTestCase {
         }
     }
 
-    @Test(timeout = 60000)
+    @Test(timeout = 30000)
     public void testSendTimesOutWhenNoCreditIssued() throws Exception {
         try (NettyTestPeer peer = new NettyTestPeer()) {
             peer.expectSASLAnonymousConnect();
@@ -304,7 +304,7 @@ public class SenderTest extends AMQPerativeTestCase {
         }
     }
 
-    @Test(timeout = 60000)
+    @Test(timeout = 30000)
     public void testSendCompletesWhenCreditEventuallyOffered() throws Exception {
         try (NettyTestPeer peer = new NettyTestPeer()) {
             peer.expectSASLAnonymousConnect();
@@ -360,12 +360,12 @@ public class SenderTest extends AMQPerativeTestCase {
         }
     }
 
-    @Test(timeout = 60000)
+    @Test(timeout = 30000)
     public void testSendWhenCreditIsAvailable() throws Exception {
         doTestSendWhenCreditIsAvailable(false);
     }
 
-    @Test(timeout = 60000)
+    @Test(timeout = 30000)
     public void testTrySendWhenCreditIsAvailable() throws Exception {
         doTestSendWhenCreditIsAvailable(true);
     }
@@ -427,7 +427,7 @@ public class SenderTest extends AMQPerativeTestCase {
         }
     }
 
-    @Test(timeout = 60000)
+    @Test(timeout = 30000)
     public void testTrySendWhenNoCreditAvailable() throws Exception {
         try (NettyTestPeer peer = new NettyTestPeer()) {
             peer.expectSASLAnonymousConnect();
@@ -465,12 +465,12 @@ public class SenderTest extends AMQPerativeTestCase {
         }
     }
 
-    @Test(timeout = 60000)
+    @Test(timeout = 30000)
     public void testCreateSenderWithQoSOfAtMostOnce() throws Exception {
         doTestCreateSenderWithConfiguredQoS(DeliveryMode.AT_MOST_ONCE);
     }
 
-    @Test(timeout = 60000)
+    @Test(timeout = 30000)
     public void testCreateSenderWithQoSOfAtLeastOnce() throws Exception {
         doTestCreateSenderWithConfiguredQoS(DeliveryMode.AT_LEAST_ONCE);
     }
@@ -517,12 +517,12 @@ public class SenderTest extends AMQPerativeTestCase {
         }
     }
 
-    @Test(timeout = 60000)
+    @Test(timeout = 30000)
     public void testSendAutoSettlesOnceRemoteSettles() throws Exception {
         doTestSentMessageGetsAutoSettledAfterRemtoeSettles(false);
     }
 
-    @Test(timeout = 60000)
+    @Test(timeout = 30000)
     public void testTrySendAutoSettlesOnceRemoteSettles() throws Exception {
         doTestSentMessageGetsAutoSettledAfterRemtoeSettles(true);
     }
@@ -590,12 +590,12 @@ public class SenderTest extends AMQPerativeTestCase {
         }
     }
 
-    @Test(timeout = 60000)
+    @Test(timeout = 30000)
     public void testSendDoesNotAutoSettlesOnceRemoteSettlesIfAutoSettleOff() throws Exception {
         doTestSentMessageNotAutoSettledAfterRemtoeSettles(false);
     }
 
-    @Test(timeout = 60000)
+    @Test(timeout = 30000)
     public void testTrySendDoesNotAutoSettlesOnceRemoteSettlesIfAutoSettleOff() throws Exception {
         doTestSentMessageNotAutoSettledAfterRemtoeSettles(true);
     }
@@ -664,12 +664,12 @@ public class SenderTest extends AMQPerativeTestCase {
         }
     }
 
-    @Test(timeout = 60000)
+    @Test(timeout = 30000)
     public void testSenderSendingSettledCompletesTrackerAcknowledgeFuture() throws Exception {
         doTestSenderSendingSettledCompletesTrackerAcknowledgeFuture(false);
     }
 
-    @Test(timeout = 60000)
+    @Test(timeout = 30000)
     public void testSenderTrySendingSettledCompletesTrackerAcknowledgeFuture() throws Exception {
         doTestSenderSendingSettledCompletesTrackerAcknowledgeFuture(true);
     }
@@ -727,7 +727,7 @@ public class SenderTest extends AMQPerativeTestCase {
         }
     }
 
-    @Test(timeout = 60000)
+    @Test(timeout = 30000)
     public void testSenderIncrementsTransferTagOnEachSend() throws Exception {
         try (NettyTestPeer peer = new NettyTestPeer()) {
             peer.expectSASLAnonymousConnect();
@@ -779,7 +779,7 @@ public class SenderTest extends AMQPerativeTestCase {
     }
 
     @Repeat(repetitions = 1)
-    @Test(timeout = 60000)
+    @Test(timeout = 30000)
     public void testCreateAnonymousSenderFromWhenRemoteDoesNotOfferSupportForIt() throws Exception {
         try (NettyTestPeer peer = new NettyTestPeer()) {
             peer.expectSASLAnonymousConnect();
@@ -810,7 +810,7 @@ public class SenderTest extends AMQPerativeTestCase {
     }
 
     @Repeat(repetitions = 1)
-    @Test(timeout = 60000)
+    @Test(timeout = 30000)
     public void testAnonymousSenderOpenHeldUntilConnectionOpenedAndSupportConfirmed() throws Exception {
         try (NettyTestPeer peer = new NettyTestPeer()) {
             peer.expectSASLAnonymousConnect();
@@ -849,12 +849,12 @@ public class SenderTest extends AMQPerativeTestCase {
         }
     }
 
-    @Test(timeout = 60000)
+    @Test(timeout = 30000)
     public void testSenderGetRemotePropertiesWaitsForRemoteAttach() throws Exception {
         tryReadSenderRemoteProperties(true);
     }
 
-    @Test(timeout = 60000)
+    @Test(timeout = 30000)
     public void testSenderGetRemotePropertiesFailsAfterOpenTimeout() throws Exception {
         tryReadSenderRemoteProperties(false);
     }
@@ -914,12 +914,12 @@ public class SenderTest extends AMQPerativeTestCase {
         }
     }
 
-    @Test(timeout = 60000)
+    @Test(timeout = 30000)
     public void testReceiverGetRemoteOfferedCapabilitiesWaitsForRemoteAttach() throws Exception {
         tryReadReceiverRemoteOfferedCapabilities(true);
     }
 
-    @Test(timeout = 60000)
+    @Test(timeout = 30000)
     public void testReceiverGetRemoteOfferedCapabilitiesFailsAfterOpenTimeout() throws Exception {
         tryReadReceiverRemoteOfferedCapabilities(false);
     }
@@ -977,12 +977,12 @@ public class SenderTest extends AMQPerativeTestCase {
         }
     }
 
-    @Test(timeout = 60000)
+    @Test(timeout = 30000)
     public void testReceiverGetRemoteDesiredCapabilitiesWaitsForRemoteAttach() throws Exception {
         tryReadReceiverRemoteDesiredCapabilities(true);
     }
 
-    @Test(timeout = 60000)
+    @Test(timeout = 30000)
     public void testReceiverGetRemoteDesiredCapabilitiesFailsAfterOpenTimeout() throws Exception {
         tryReadReceiverRemoteDesiredCapabilities(false);
     }

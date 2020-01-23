@@ -16,8 +16,6 @@
  */
 package org.messaginghub.amqperative.impl;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ExecutionException;
@@ -75,11 +73,6 @@ public class ClientSession implements Session {
 
     private volatile ThreadPoolExecutor deliveryExecutor;
     private final AtomicReference<Thread> deliveryThread = new AtomicReference<Thread>();
-
-    // TODO - Ensure closed resources are removed from these or find a way to use what the proton session knows
-    //        about sender and receiver links.
-    private final List<ClientSender> senders = new ArrayList<>();
-    private final List<ClientReceiver> receivers = new ArrayList<>();
 
     public ClientSession(SessionOptions options, ClientConnection connection, org.apache.qpid.proton4j.engine.Session session) {
         this.options = new SessionOptions(options);
@@ -245,15 +238,15 @@ public class ClientSession implements Session {
     //----- Internal resource open APIs expected to be called from the connection event loop
 
     ClientReceiver internalOpenReceiver(String address, ReceiverOptions receiverOptions) throws ClientException {
-        return register(receiverBuilder.receiver(address, receiverOptions).open());
+        return receiverBuilder.receiver(address, receiverOptions).open();
     }
 
     ClientReceiver internalOpenDynamicReceiver(Map<String, Object> dynamicNodeProperties, ReceiverOptions receiverOptions) throws ClientException {
-        return register(receiverBuilder.dynamicReceiver(dynamicNodeProperties, receiverOptions).open());
+        return receiverBuilder.dynamicReceiver(dynamicNodeProperties, receiverOptions).open();
     }
 
     ClientSender internalOpenSender(String address, SenderOptions senderOptions) throws ClientException {
-        return register(senderBuilder.sender(address, senderOptions).open());
+        return senderBuilder.sender(address, senderOptions).open();
     }
 
     ClientSender internalOpenAnonymousSender(SenderOptions senderOptions) throws ClientException {
@@ -261,9 +254,9 @@ public class ClientSession implements Session {
         // and open the sender if so, otherwise we need to wait.
         if (connection.openFuture().isDone()) {
             connection.checkAnonymousRelaySupported();
-            return register(senderBuilder.anonymousSender(senderOptions).open());
+            return senderBuilder.anonymousSender(senderOptions).open();
         } else {
-            return register(senderBuilder.anonymousSender(senderOptions));
+            return senderBuilder.anonymousSender(senderOptions);
         }
     }
 
@@ -350,17 +343,8 @@ public class ClientSession implements Session {
 
     //----- Private implementation methods
 
-    private <T extends ClientSender> T register(T sender) {
-        senders.add(sender);
-        return sender;
-    }
-
-    private <T extends ClientReceiver> T register(T receiver) {
-        receivers.add(receiver);
-        return receiver;
-    }
-
     private void configureSession() {
+        protonSession.getContext().setLinkedResource(this);
         protonSession.setOfferedCapabilities(ClientConversionSupport.toSymbolArray(options.offeredCapabilities()));
         protonSession.setDesiredCapabilities(ClientConversionSupport.toSymbolArray(options.desiredCapabilities()));
         protonSession.setProperties(ClientConversionSupport.toSymbolKeyedMap(options.properties()));
@@ -464,12 +448,17 @@ public class ClientSession implements Session {
         openFuture.complete(this);
         LOG.trace("Session:{} opened successfully.", id());
 
-        senders.forEach(sender -> {
-            if (sender.isAnonymous()) {
-                if (connection.getCapabilities().anonymousRelaySupported()) {
-                    sender.open();
-                } else {
-                    sender.handleAnonymousRelayNotSupported();
+        session.senders().forEach(sender -> {
+            if (!sender.isLocallyOpen()) {
+                try {
+                    ClientSender clientSender = sender.getContext().getLinkedResource(ClientSender.class);
+                    if (connection.getCapabilities().anonymousRelaySupported()) {
+                        clientSender.open();
+                    } else {
+                        clientSender.handleAnonymousRelayNotSupported();
+                    }
+                } catch (ClassCastException ignore) {
+                    LOG.debug("Found Sender without linked client resource on session open: {}", sender);
                 }
             }
         });
@@ -491,9 +480,14 @@ public class ClientSession implements Session {
 
             // TODO - If Senders are linked into local open / close events
             //        we could just close them locally after the session is closed.
-            senders.forEach(sender -> {
-                if (sender.isAnonymous() && !sender.openFuture().isDone()) {
-                    sender.handleSessionRemotelyClosedBeforeSenderOpened();
+            session.senders().forEach(sender -> {
+                try {
+                    ClientSender clientSender = sender.getContext().getLinkedResource(ClientSender.class);
+                    if (clientSender.isAnonymous() && !clientSender.openFuture().isDone()) {
+                        clientSender.handleSessionRemotelyClosedBeforeSenderOpened();
+                    }
+                } catch (ClassCastException ignored) {
+                    LOG.debug("Found sender without linked resource in session: {}", sender);
                 }
             });
 
@@ -524,7 +518,7 @@ public class ClientSession implements Session {
 
         if (failureCause != null) {
             openFuture.failed(failureCause);
-            // Connection failed so throw from session close won't give any tangible 
+            // Connection failed so throw from session close won't give any tangible
             if (connection.getFailureCause() != null) {
                 closeFuture.complete(this);
             } else {
