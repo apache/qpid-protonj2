@@ -48,6 +48,7 @@ import org.apache.qpid.proton4j.engine.ConnectionState;
 import org.apache.qpid.proton4j.engine.Engine;
 import org.apache.qpid.proton4j.engine.EngineFactory;
 import org.apache.qpid.proton4j.engine.IncomingDelivery;
+import org.apache.qpid.proton4j.engine.Link;
 import org.apache.qpid.proton4j.engine.Receiver;
 import org.apache.qpid.proton4j.engine.Sender;
 import org.apache.qpid.proton4j.engine.Session;
@@ -1156,5 +1157,147 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
         peer.waitForScriptToComplete();
 
         assertNotNull(failure);
+    }
+
+    @Test(timeout = 30000)
+    public void testSessionStopTrackingClosedSenders() throws Exception {
+        doTestSessionTrackingOfLinks(Role.SENDER, true, true, false, true);
+    }
+
+    @Test(timeout = 30000)
+    public void testSessionStopTrackingDetchedSenders() throws Exception {
+        doTestSessionTrackingOfLinks(Role.SENDER, true, true, false, false);
+    }
+
+    @Test(timeout = 30000)
+    public void testSessionStopTrackingClosedSendersRemoteGoesFirst() throws Exception {
+        doTestSessionTrackingOfLinks(Role.SENDER, true, true, true, true);
+    }
+
+    @Test(timeout = 30000)
+    public void testSessionStopTrackingDetachedSendersRemoteGoesFirst() throws Exception {
+        doTestSessionTrackingOfLinks(Role.SENDER, true, true, true, false);
+    }
+
+    @Test(timeout = 30000)
+    public void testSessionTracksRemotelyOpenSenders() throws Exception {
+        doTestSessionTrackingOfLinks(Role.SENDER, true, false, false, false);
+    }
+
+    @Test(timeout = 30000)
+    public void testSessionTracksLocallyOpenSenders() throws Exception {
+        doTestSessionTrackingOfLinks(Role.SENDER, false, true, false, false);
+    }
+
+    @Test(timeout = 30000)
+    public void testSessionStopTrackingClosedReceivers() throws Exception {
+        doTestSessionTrackingOfLinks(Role.RECEIVER, true, true, false, true);
+    }
+
+    @Test(timeout = 30000)
+    public void testSessionStopTrackingDetchedReceivers() throws Exception {
+        doTestSessionTrackingOfLinks(Role.RECEIVER, true, true, false, false);
+    }
+
+    @Test(timeout = 30000)
+    public void testSessionStopTrackingClosedReceiversRemoteGoesFirst() throws Exception {
+        doTestSessionTrackingOfLinks(Role.RECEIVER, true, true, true, true);
+    }
+
+    @Test(timeout = 30000)
+    public void testSessionStopTrackingDetachedReceiversRemoteGoesFirst() throws Exception {
+        doTestSessionTrackingOfLinks(Role.RECEIVER, true, true, true, false);
+    }
+
+    @Test(timeout = 30000)
+    public void testSessionTracksRemotelyOpenReceivers() throws Exception {
+        doTestSessionTrackingOfLinks(Role.RECEIVER, true, false, false, false);
+    }
+
+    @Test(timeout = 30000)
+    public void testSessionTracksLocallyOpenReceivers() throws Exception {
+        doTestSessionTrackingOfLinks(Role.RECEIVER, false, true, false, false);
+    }
+
+    private void doTestSessionTrackingOfLinks(Role role, boolean localDetach, boolean remoteDetach, boolean remoteGoesFirst, boolean close) throws Exception {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result);
+        ProtonTestPeer peer = new ProtonTestPeer(engine);
+        engine.outputConsumer(peer);
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond().withContainerId("driver");
+        peer.expectBegin().respond();
+
+        Connection connection = engine.start();
+
+        connection.open();
+        Session session = connection.session();
+
+        session.open();
+
+        assertTrue(session.senders().isEmpty());
+
+        peer.expectAttach().withRole(role).respond();
+
+        final Link<?> link;
+
+        if (role == Role.RECEIVER) {
+            link = session.receiver("test");
+        } else {
+            link = session.sender("test");
+        }
+
+        link.open();
+
+        if (role == Role.RECEIVER) {
+            assertFalse(session.receivers().isEmpty());
+            assertEquals(1, session.receivers().size());
+        } else {
+            assertFalse(session.senders().isEmpty());
+            assertEquals(1, session.senders().size());
+        }
+        assertFalse(session.links().isEmpty());
+        assertEquals(1, session.links().size());
+
+        if (remoteDetach && remoteGoesFirst) {
+            peer.remoteDetach().withClosed(close).now();
+        }
+
+        if (localDetach) {
+            peer.expectDetach().withClosed(close);
+            if (close) {
+                link.close();
+            } else {
+                link.detach();
+            }
+        }
+
+        if (remoteDetach && !remoteGoesFirst) {
+            peer.remoteDetach().withClosed(close).now();
+        }
+
+        if (remoteDetach && localDetach) {
+            assertTrue(session.receivers().isEmpty());
+            assertTrue(session.senders().isEmpty());
+            assertTrue(session.links().isEmpty());
+        } else {
+            if (role == Role.RECEIVER) {
+                assertFalse(session.receivers().isEmpty());
+                assertEquals(1, session.receivers().size());
+            } else {
+                assertFalse(session.senders().isEmpty());
+                assertEquals(1, session.senders().size());
+            }
+            assertFalse(session.links().isEmpty());
+            assertEquals(1, session.links().size());
+        }
+
+        peer.expectEnd().respond();
+        session.close();
+
+        peer.waitForScriptToComplete();
+
+        assertNull(failure);
     }
 }

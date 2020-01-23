@@ -126,8 +126,8 @@ public class ProtonSenderState implements ProtonLinkState<ProtonOutgoingDelivery
         int remoteDeliveryCount = (int) flow.getDeliveryCount();
         int newDeliveryCountLimit = remoteDeliveryCount + (int) flow.getLinkCredit();
 
-        long effectiveCredit = 0xFFFFFFFFL & (int)(newDeliveryCountLimit - existingDeliveryCount);
-        if ( effectiveCredit > 0 ) {
+        long effectiveCredit = 0xFFFFFFFFL & newDeliveryCountLimit - existingDeliveryCount;
+        if (effectiveCredit > 0) {
             creditState.updateCredit((int) effectiveCredit);
         } else {
             creditState.updateCredit(0);

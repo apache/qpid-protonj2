@@ -669,7 +669,7 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
                 detach.setClosed(closed);
                 detach.setError(getCondition());
 
-                session.freeLocalHandle(localAttach.getHandle());
+                session.freeLink(this);
                 localDetachSent = true;
                 session.getEngine().fireWrite(detach, session.getLocalChannel(), null, null);
             }

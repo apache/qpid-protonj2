@@ -41,6 +41,7 @@ import org.apache.qpid.proton4j.common.logging.ProtonLoggerFactory;
 import org.apache.qpid.proton4j.engine.ConnectionState;
 import org.apache.qpid.proton4j.engine.Engine;
 import org.apache.qpid.proton4j.engine.EventHandler;
+import org.apache.qpid.proton4j.engine.Link;
 import org.apache.qpid.proton4j.engine.LinkState;
 import org.apache.qpid.proton4j.engine.Receiver;
 import org.apache.qpid.proton4j.engine.Sender;
@@ -294,6 +295,50 @@ public class ProtonSession implements Session {
         return null;
     }
 
+    @SuppressWarnings("unchecked")
+    @Override
+    public Set<Link<?>> links() {
+        final Set<Link<?>> result;
+
+        if (senderByNameMap.isEmpty() && receiverByNameMap.isEmpty()) {
+            result = Collections.EMPTY_SET;
+        } else {
+            result = new HashSet<>(senderByNameMap.size() + receiverByNameMap.size());
+            result.addAll(senderByNameMap.values());
+            result.addAll(receiverByNameMap.values());
+        }
+
+        return result;
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public Set<Sender> senders() {
+        final Set<Sender> result;
+
+        if (senderByNameMap.isEmpty()) {
+            result = Collections.EMPTY_SET;
+        } else {
+            result = new HashSet<>(senderByNameMap.values());
+        }
+
+        return result;
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public Set<Receiver> receivers() {
+        final Set<Receiver> result;
+
+        if (receiverByNameMap.isEmpty()) {
+            result = Collections.EMPTY_SET;
+        } else {
+            result = new HashSet<>(receiverByNameMap.values());
+        }
+
+        return result;
+    }
+
     //----- View of the remote end of this endpoint
 
     @Override
@@ -486,7 +531,7 @@ public class ProtonSession implements Session {
             }
 
             //TODO: nicer handling of the error
-            if(!attach.hasInitialDeliveryCount() && attach.getRole() == Role.SENDER) {
+            if (!attach.hasInitialDeliveryCount() && attach.getRole() == Role.SENDER) {
                 throw new IllegalArgumentException("Sending peer attach had no initial delivery count");
             }
 
@@ -507,6 +552,16 @@ public class ProtonSession implements Session {
             getEngine().engineFailed(new ProtocolViolationException(
                 "Received uncorrelated handle on Detach from remote: " + channel));
         }
+
+        // Ensure that tracked links get cleared at some point as we don't currently have the concept
+        // of link free APIs to put this onto the user to manage.
+        if (link.isLocallyClosed() || link.isLocallyDetached()) {
+            if (link.isReceiver()) {
+                receiverByNameMap.remove(link.getName());
+            } else {
+                senderByNameMap.remove(link.getName());
+            }
+         }
 
         link.remoteDetach(detach);
     }
@@ -531,7 +586,8 @@ public class ProtonSession implements Session {
             link = null;
         }
 
-        //TODO: perhaps make this optional 'auto-echo'? Otherwise listeners above might not have had time to perform desired work before below occurs.
+        //TODO: perhaps make this optional 'auto-echo'? Otherwise listeners above might not have had time to
+        //      perform desired work before below occurs.
         if (flow.getEcho()) {
             writeFlow(link);
         }
@@ -560,6 +616,55 @@ public class ProtonSession implements Session {
     }
 
     //----- Internal implementation
+
+    ProtonSessionOutgoingWindow getOutgoingWindow() {
+        return outgoingWindow;
+    }
+
+    ProtonSessionIncomingWindow getIncomingWindow() {
+        return incomingWindow;
+    }
+
+    boolean wasLocalBeginSent() {
+        return localBeginSent;
+    }
+
+    boolean wasLocalEndSent() {
+        return localEndSent;
+    }
+
+    void freeLink(ProtonLink<?> linkToFree) {
+        freeLocalHandle(linkToFree.getHandle());
+
+        if (linkToFree.isRemotelyClosed() || linkToFree.isRemotelyDetached()) {
+            if (linkToFree.isReceiver()) {
+                receiverByNameMap.remove(linkToFree.getName());
+            } else {
+                senderByNameMap.remove(linkToFree.getName());
+            }
+        }
+    }
+
+    void writeFlow(ProtonLink<?> link) {
+        final Flow flow = new Flow();
+
+        flow.setNextIncomingId(getIncomingWindow().getNextIncomingId());
+        flow.setNextOutgoingId(getOutgoingWindow().getNextOutgoingId());
+        flow.setIncomingWindow(getIncomingWindow().getIncomingWindow());
+        flow.setOutgoingWindow(getOutgoingWindow().getOutgoingWindow());
+
+        if (link != null) {
+            flow.setLinkCredit(link.linkState().getCredit());
+            flow.setHandle(link.getHandle());
+            if (link.isDeliveryCountInitialised()) {
+                //TODO: type mismatch, will fail on deliveryCount wrap
+                flow.setDeliveryCount(link.linkState().getDeliveryCount());
+            }
+            flow.setDrain(link.isDrain());
+        }
+
+        getEngine().fireWrite(flow, localChannel, null, null);
+    }
 
     private void checkNotOpened(String errorMessage) {
         if (localState.ordinal() > SessionState.IDLE.ordinal()) {
@@ -618,22 +723,6 @@ public class ProtonSession implements Session {
         return true;
     }
 
-    ProtonSessionOutgoingWindow getOutgoingWindow() {
-        return outgoingWindow;
-    }
-
-    ProtonSessionIncomingWindow getIncomingWindow() {
-        return incomingWindow;
-    }
-
-    boolean wasLocalBeginSent() {
-        return localBeginSent;
-    }
-
-    boolean wasLocalEndSent() {
-        return localEndSent;
-    }
-
     private void syncLocalStateWithRemote() {
         switch (getState()) {
             case IDLE:
@@ -672,13 +761,13 @@ public class ProtonSession implements Session {
         }
     }
 
-    void fireSessionBegin() {
+    private void fireSessionBegin() {
         localBeginSent = true;
         connection.getEngine().fireWrite(localBegin, localChannel, null, null);
         localLinks.forEach(link -> link.handleSessionStateChanged(this));
     }
 
-    void fireSessionEnd() {
+    private void fireSessionEnd() {
         localEndSent = true;
         connection.freeLocalChannel(localChannel);
         connection.getEngine().fireWrite(new End().setError(getCondition()), localChannel, null, null);
@@ -696,32 +785,11 @@ public class ProtonSession implements Session {
         throw new IllegalStateException("no local handle available for allocation");
     }
 
-    void freeLocalHandle(long localHandle) {
+    private void freeLocalHandle(long localHandle) {
         if (localHandle > ProtonConstants.HANDLE_MAX) {
             throw new IllegalArgumentException("Specified local handle is out of range: " + localHandle);
         }
 
         localLinks.remove((int) localHandle);
-    }
-
-    void writeFlow(ProtonLink<?> link) {
-        final Flow flow = new Flow();
-
-        flow.setNextIncomingId(getIncomingWindow().getNextIncomingId());
-        flow.setNextOutgoingId(getOutgoingWindow().getNextOutgoingId());
-        flow.setIncomingWindow(getIncomingWindow().getIncomingWindow());
-        flow.setOutgoingWindow(getOutgoingWindow().getOutgoingWindow());
-
-        if (link != null) {
-            flow.setLinkCredit(link.linkState().getCredit());
-            flow.setHandle(link.getHandle());
-            if(link.isDeliveryCountInitialised()) {
-                //TODO: type mismatch, will fail on deliveryCount wrap
-                flow.setDeliveryCount(link.linkState().getDeliveryCount());
-            }
-            flow.setDrain(link.isDrain());
-        }
-
-        getEngine().fireWrite(flow, localChannel, null, null);
     }
 }

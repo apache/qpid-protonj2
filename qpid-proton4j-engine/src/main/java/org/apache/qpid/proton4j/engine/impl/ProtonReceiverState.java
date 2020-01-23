@@ -96,7 +96,7 @@ public class ProtonReceiverState implements ProtonLinkState<ProtonIncomingDelive
 
     @Override
     public void remoteAttach(Attach attach) {
-        if(!attach.hasInitialDeliveryCount()) {
+        if (!attach.hasInitialDeliveryCount()) {
             //TODO: nicer handling of the error
             throw new IllegalArgumentException("Sending peer attach had no initial delivery count");
         }

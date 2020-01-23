@@ -17,6 +17,7 @@
 package org.apache.qpid.proton4j.engine;
 
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.transport.Begin;
@@ -111,6 +112,28 @@ public interface Session {
      * @see Session#isLocallyOpen()
      */
     boolean isLocallyClosed();
+
+    /**
+     * Returns a {@link Set} of all {@link Sender} and {@link Receiver} instances that are being tracked by
+     * this {@link Session}.
+     *
+     * @return a set of Sender and Receiver instances tracked by this session.
+     */
+    Set<Link<?>> links();
+
+    /**
+     * Returns a {@link Set} of {@link Sender} instances that are being tracked by this {@link Session}.
+     *
+     * @return a set of Sender instances tracked by this session.
+     */
+    Set<Sender> senders();
+
+    /**
+     * Returns a {@link Set} of {@link Receiver} instances that are being tracked by this {@link Session}.
+     *
+     * @return a set of Receiver instances tracked by this session.
+     */
+    Set<Receiver> receivers();
 
     //----- Session sender and receiver factory methods
 
