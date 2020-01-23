@@ -22,7 +22,9 @@ import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -1294,6 +1296,75 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
         }
 
         peer.expectEnd().respond();
+        session.close();
+
+        peer.waitForScriptToComplete();
+
+        assertNull(failure);
+    }
+
+    @Test(timeout = 30000)
+    public void testGetSenderFromSessionByName() throws Exception {
+        doTestSessionLinkByName(Role.RECEIVER);
+    }
+
+    @Test(timeout = 30000)
+    public void testGetReceiverFromSessionByName() throws Exception {
+        doTestSessionLinkByName(Role.SENDER);
+    }
+
+    private void doTestSessionLinkByName(Role role) throws Exception {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result);
+        ProtonTestPeer peer = new ProtonTestPeer(engine);
+        engine.outputConsumer(peer);
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond().withContainerId("driver");
+        peer.expectBegin().respond();
+        peer.expectAttach().withRole(role).respond();
+        peer.expectDetach().respond();
+        peer.expectEnd().respond();
+
+        Connection connection = engine.start();
+
+        connection.open();
+        Session session = connection.session();
+
+        session.open();
+
+        assertTrue(session.senders().isEmpty());
+
+        final Link<?> link;
+
+        if (role == Role.RECEIVER) {
+            link = session.receiver("test");
+        } else {
+            link = session.sender("test");
+        }
+
+        link.open();
+
+        final Link<?> lookup;
+        if (role == Role.RECEIVER) {
+            lookup = session.receiver("test");
+        } else {
+            lookup = session.sender("test");
+        }
+
+        assertSame(link, lookup);
+
+        link.close();
+
+        final Link<?> newLink;
+        if (role == Role.RECEIVER) {
+            newLink = session.receiver("test");
+        } else {
+            newLink = session.sender("test");
+        }
+
+        assertNotSame(link, newLink);
+
         session.close();
 
         peer.waitForScriptToComplete();

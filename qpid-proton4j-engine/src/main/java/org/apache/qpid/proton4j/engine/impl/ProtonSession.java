@@ -378,19 +378,18 @@ public class ProtonSession implements Session {
         return null;
     }
 
-    //----- Session factory methods
+    //----- Session factory methods for Sender and Receiver
 
     @Override
     public ProtonSender sender(String name) {
         checkSessionClosed("Cannot create new Sender from closed Session");
 
-        if (senderByNameMap.containsKey(name)) {
-            // TODO Something sane with link stealing
-            throw new IllegalArgumentException("Sender with the given name already exists.");
-        }
+        ProtonSender sender = senderByNameMap.get(name);
 
-        ProtonSender sender = new ProtonSender(this, name);
-        senderByNameMap.put(name, sender);
+        if (sender == null) {
+            sender = new ProtonSender(this, name);
+            senderByNameMap.put(name, sender);
+        }
 
         return sender;
     }
@@ -399,13 +398,12 @@ public class ProtonSession implements Session {
     public ProtonReceiver receiver(String name) {
         checkSessionClosed("Cannot create new Receiver from closed Session");
 
-        if (receiverByNameMap.containsKey(name)) {
-            // TODO Something sane with link stealing
-            throw new IllegalArgumentException("Receiver with the given name already exists.");
-        }
+        ProtonReceiver receiver = receiverByNameMap.get(name);
 
-        ProtonReceiver receiver = new ProtonReceiver(this, name);
-        receiverByNameMap.put(name, receiver);
+        if (receiver == null) {
+            receiver = new ProtonReceiver(this, name);
+            receiverByNameMap.put(name, receiver);
+        }
 
         return receiver;
     }
