@@ -366,7 +366,7 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
     }
 
     @Override
-    public boolean isLocallyOpened() {
+    public boolean isLocallyOpen() {
         return getState() == LinkState.ACTIVE;
     }
 
@@ -649,8 +649,8 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
 
     private void trySendLocalAttach() {
         if (!wasLocalAttachSent()) {
-            if ((session.isLocallyOpened() && session.wasLocalBeginSent()) &&
-                (connection.isLocallyOpened() && connection.wasLocalOpenSent())) {
+            if ((session.isLocallyOpen() && session.wasLocalBeginSent()) &&
+                (connection.isLocallyOpen() && connection.wasLocalOpenSent())) {
 
                 localAttachSent = true;
                 session.getEngine().fireWrite(
@@ -661,8 +661,8 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
 
     private void trySendLocalDetach(boolean closed) {
         if (!wasLocalDetachSent()) {
-            if ((session.isLocallyOpened() && session.wasLocalBeginSent()) &&
-                (connection.isLocallyOpened() && connection.wasLocalOpenSent()) && !engine.isShutdown()) {
+            if ((session.isLocallyOpen() && session.wasLocalBeginSent()) &&
+                (connection.isLocallyOpen() && connection.wasLocalOpenSent()) && !engine.isShutdown()) {
 
                 Detach detach = new Detach();
                 detach.setHandle(localAttach.getHandle());

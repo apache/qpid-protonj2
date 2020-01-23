@@ -208,7 +208,7 @@ public class ProtonSession implements Session {
     //----- View and configure this end of the session endpoint
 
     @Override
-    public boolean isLocallyOpened() {
+    public boolean isLocallyOpen() {
         return getState() == SessionState.ACTIVE;
     }
 
@@ -462,7 +462,7 @@ public class ProtonSession implements Session {
         incomingWindow.handleBegin(begin);
         outgoingWindow.handleBegin(begin);
 
-        if (isLocallyOpened() && remoteOpenHandler != null) {
+        if (isLocallyOpen() && remoteOpenHandler != null) {
             remoteOpenHandler.handle(this);
         }
     }
@@ -658,7 +658,7 @@ public class ProtonSession implements Session {
 
     private void checkIfBeginShouldBeSent() {
         if (!localBeginSent) {
-            if (connection.isLocallyOpened() && connection.wasLocalOpenSent()) {
+            if (connection.isLocallyOpen() && connection.wasLocalOpenSent()) {
                 fireSessionBegin();
             }
         }
@@ -666,7 +666,7 @@ public class ProtonSession implements Session {
 
     private void checkIfEndShouldBeSent() {
         if (!localEndSent) {
-            if (connection.isLocallyOpened() && connection.wasLocalOpenSent() && !engine.isShutdown()) {
+            if (connection.isLocallyOpen() && connection.wasLocalOpenSent() && !engine.isShutdown()) {
                 fireSessionEnd();
             }
         }

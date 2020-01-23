@@ -247,28 +247,28 @@ public class ProtonSender extends ProtonLink<Sender> implements Sender {
 
     @Override
     protected void transitionToRemotelyDetachedState() {
-        if (isLocallyOpened()) {
+        if (isLocallyOpen()) {
             disableAllSenderOperations("link is remotely detached");
         }
     }
 
     @Override
     protected void transitionToRemotelyCosedState() {
-        if (isLocallyOpened()) {
+        if (isLocallyOpen()) {
             disableAllSenderOperations("link is remotely closed");
         }
     }
 
     @Override
     protected void transitionToParentLocallyClosedState() {
-        if (isLocallyOpened()) {
+        if (isLocallyOpen()) {
             disableAllSenderOperations("parent resurce is locally closed");
         }
     }
 
     @Override
     protected void transitionToParentRemotelyClosedState() {
-        if (isLocallyOpened()) {
+        if (isLocallyOpen()) {
             disableAllSenderOperations("parent resurce is remotely closed");
         }
     }

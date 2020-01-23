@@ -103,7 +103,7 @@ public class ProtonReceiverState implements ProtonLinkState<ProtonIncomingDelive
 
         creditState.initialiseDeliveryCount((int) attach.getInitialDeliveryCount());
 
-        if (getCredit() > 0 && receiver.isLocallyOpened()) {
+        if (getCredit() > 0 && receiver.isLocallyOpen()) {
             sessionWindow.writeFlow(receiver);
         }
     }

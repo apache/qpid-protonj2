@@ -99,7 +99,7 @@ public interface Session {
      *
      * @see Session#isLocallyClosed()
      */
-    boolean isLocallyOpened();
+    boolean isLocallyOpen();
 
     /**
      * Returns true if this {@link Session} is currently locally closed meaning the state returned
@@ -108,7 +108,7 @@ public interface Session {
      *
      * @return true if the session is locally closed.
      *
-     * @see Session#isLocallyOpened()
+     * @see Session#isLocallyOpen()
      */
     boolean isLocallyClosed();
 

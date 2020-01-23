@@ -82,7 +82,7 @@ public interface Link<T extends Link<T>> {
      * @see Session#isLocallyClosed()
      * @see Link#isLocallyDetached()
      */
-    boolean isLocallyOpened();
+    boolean isLocallyOpen();
 
     /**
      * Returns true if this {@link Link} is currently locally closed meaning the state returned
@@ -91,7 +91,7 @@ public interface Link<T extends Link<T>> {
      *
      * @return true if the link is locally closed.
      *
-     * @see Link#isLocallyOpened()
+     * @see Link#isLocallyOpen()
      * @see Link#isLocallyDetached()
      */
     boolean isLocallyClosed();
@@ -103,7 +103,7 @@ public interface Link<T extends Link<T>> {
      *
      * @return true if the link is locally closed.
      *
-     * @see Link#isLocallyOpened()
+     * @see Link#isLocallyOpen()
      * @see Link#isLocallyClosed()
      */
     boolean isLocallyDetached();

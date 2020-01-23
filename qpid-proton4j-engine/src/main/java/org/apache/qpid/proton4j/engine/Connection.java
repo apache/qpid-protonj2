@@ -129,7 +129,7 @@ public interface Connection {
      *
      * @see Connection#isLocallyClosed()
      */
-    boolean isLocallyOpened();
+    boolean isLocallyOpen();
 
     /**
      * Returns true if this {@link Connection} is currently locally closed meaning the state returned
@@ -138,7 +138,7 @@ public interface Connection {
      *
      * @return true if the connection is locally closed.
      *
-     * @see Connection#isLocallyOpened()
+     * @see Connection#isLocallyOpen()
      */
     boolean isLocallyClosed();
 

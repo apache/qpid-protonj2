@@ -339,7 +339,7 @@ public class ProtonConnection implements Connection, AMQPHeader.HeaderHandler<Pr
     }
 
     @Override
-    public boolean isLocallyOpened() {
+    public boolean isLocallyOpen() {
         return getState() == ConnectionState.ACTIVE;
     }
 
