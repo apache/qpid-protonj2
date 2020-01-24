@@ -50,6 +50,7 @@ import org.apache.qpid.proton4j.amqp.messaging.Rejected;
 import org.apache.qpid.proton4j.amqp.messaging.Released;
 import org.apache.qpid.proton4j.amqp.messaging.Source;
 import org.apache.qpid.proton4j.amqp.messaging.Target;
+import org.apache.qpid.proton4j.amqp.transport.ErrorCondition;
 import org.apache.qpid.proton4j.amqp.transport.ReceiverSettleMode;
 import org.apache.qpid.proton4j.amqp.transport.Role;
 import org.apache.qpid.proton4j.amqp.transport.SenderSettleMode;
@@ -2546,5 +2547,54 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         peer.waitForScriptToComplete();
 
         assertNotNull(failure);
+    }
+
+    @Test(timeout = 30000)
+    public void testCloseReceiverWithErrorCondition() throws Exception {
+        doTestCloseOrDetachWithErrorCondition(true);
+    }
+
+    @Test(timeout = 30000)
+    public void testDetachReceiverWithErrorCondition() throws Exception {
+        doTestCloseOrDetachWithErrorCondition(false);
+    }
+
+    public void doTestCloseOrDetachWithErrorCondition(boolean close) throws Exception {
+        final String condition = "amqp:link:detach-forced";
+        final String description = "something bad happened.";
+
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result);
+        ProtonTestPeer peer = new ProtonTestPeer(engine);
+        engine.outputConsumer(peer);
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond();
+        peer.expectBegin().respond();
+        peer.expectAttach().respond();
+        peer.expectDetach().withClosed(close)
+                           .withError(new ErrorCondition(Symbol.valueOf(condition), description))
+                           .respond();
+        peer.expectClose();
+
+        Connection connection = engine.start();
+
+        connection.open();
+        Session session = connection.session();
+        session.open();
+
+        Receiver receiver = session.receiver("receiver-1");
+        receiver.open();
+        receiver.setCondition(new ErrorCondition(Symbol.valueOf(condition), description));
+
+        if (close) {
+            receiver.close();
+        } else {
+            receiver.detach();
+        }
+
+        connection.close();
+
+        peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
     }
 }

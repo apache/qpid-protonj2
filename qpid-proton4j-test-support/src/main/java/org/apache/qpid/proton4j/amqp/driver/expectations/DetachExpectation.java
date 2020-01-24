@@ -18,6 +18,9 @@ package org.apache.qpid.proton4j.amqp.driver.expectations;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 
+import java.util.Map;
+
+import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedInteger;
 import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
 import org.apache.qpid.proton4j.amqp.driver.LinkTracker;
@@ -25,6 +28,7 @@ import org.apache.qpid.proton4j.amqp.driver.actions.BeginInjectAction;
 import org.apache.qpid.proton4j.amqp.driver.actions.DetachInjectAction;
 import org.apache.qpid.proton4j.amqp.driver.codec.ListDescribedType;
 import org.apache.qpid.proton4j.amqp.driver.codec.transport.Detach;
+import org.apache.qpid.proton4j.amqp.driver.codec.util.TypeMapper;
 import org.apache.qpid.proton4j.amqp.driver.matchers.transport.DetachMatcher;
 import org.apache.qpid.proton4j.amqp.transport.ErrorCondition;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
@@ -101,7 +105,18 @@ public class DetachExpectation extends AbstractExpectation<Detach> {
     }
 
     public DetachExpectation withError(ErrorCondition error) {
-        return withError(equalTo(error));
+        return withError(equalTo(TypeMapper.mapFromProtonType(error)));
+    }
+
+    public DetachExpectation withError(String condition, String description) {
+        return withError(equalTo(
+            TypeMapper.mapFromProtonType(new ErrorCondition(Symbol.valueOf(condition), description))));
+    }
+
+    public DetachExpectation withError(String condition, String description, Map<String, Object> info) {
+        return withError(equalTo(
+            TypeMapper.mapFromProtonType(
+                new ErrorCondition(Symbol.valueOf(condition), description, TypeMapper.toSymbolKeyedMap(info)))));
     }
 
     //----- Matcher based with methods for more complex validation

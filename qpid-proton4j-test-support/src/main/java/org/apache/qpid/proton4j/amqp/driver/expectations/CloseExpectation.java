@@ -18,6 +18,9 @@ package org.apache.qpid.proton4j.amqp.driver.expectations;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 
+import java.util.Map;
+
+import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
 import org.apache.qpid.proton4j.amqp.driver.actions.BeginInjectAction;
 import org.apache.qpid.proton4j.amqp.driver.actions.CloseInjectAction;
@@ -69,6 +72,17 @@ public class CloseExpectation extends AbstractExpectation<Close> {
 
     public CloseExpectation withError(ErrorCondition error) {
         return withError(equalTo(TypeMapper.mapFromProtonType(error)));
+    }
+
+    public CloseExpectation withError(String condition, String description) {
+        return withError(equalTo(
+            TypeMapper.mapFromProtonType(new ErrorCondition(Symbol.valueOf(condition), description))));
+    }
+
+    public CloseExpectation withError(String condition, String description, Map<String, Object> info) {
+        return withError(equalTo(
+            TypeMapper.mapFromProtonType(
+                new ErrorCondition(Symbol.valueOf(condition), description, TypeMapper.toSymbolKeyedMap(info)))));
     }
 
     //----- Matcher based with methods for more complex validation
