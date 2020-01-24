@@ -264,7 +264,7 @@ public interface Session {
      *
      * @see Session#isRemotelyClosed()
      */
-    boolean isRemotelyOpened();
+    boolean isRemotelyOpen();
 
     /**
      * Returns true if this {@link Session} is currently remotely closed meaning the state returned
@@ -273,7 +273,7 @@ public interface Session {
      *
      * @return true if the session is remotely closed.
      *
-     * @see Session#isRemotelyOpened()
+     * @see Session#isRemotelyOpen()
      */
     boolean isRemotelyClosed();
 

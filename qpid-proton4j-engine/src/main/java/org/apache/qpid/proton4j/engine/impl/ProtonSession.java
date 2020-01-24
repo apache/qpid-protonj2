@@ -342,7 +342,7 @@ public class ProtonSession implements Session {
     //----- View of the remote end of this endpoint
 
     @Override
-    public boolean isRemotelyOpened() {
+    public boolean isRemotelyOpen() {
         return getRemoteState() == SessionState.ACTIVE;
     }
 
@@ -598,7 +598,7 @@ public class ProtonSession implements Session {
                 "Received uncorrelated handle on Transfer from remote: " + channel));
         }
 
-        if (!link.isRemotelyOpened()) {
+        if (!link.isRemotelyOpen()) {
             getEngine().engineFailed(new ProtocolViolationException("Received Transfer for detached Receiver: " + link));
         }
 

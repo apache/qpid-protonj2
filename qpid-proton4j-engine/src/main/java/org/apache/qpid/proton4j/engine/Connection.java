@@ -354,7 +354,7 @@ public interface Connection {
      *
      * @see Connection#isRemotelyClosed()
      */
-    boolean isRemotelyOpened();
+    boolean isRemotelyOpen();
 
     /**
      * Returns true if this {@link Connection} is currently remotely closed meaning the state returned
@@ -363,7 +363,7 @@ public interface Connection {
      *
      * @return true if the connection is remotely closed.
      *
-     * @see Connection#isRemotelyOpened()
+     * @see Connection#isRemotelyOpen()
      */
     boolean isRemotelyClosed();
 

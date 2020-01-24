@@ -381,7 +381,7 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
     }
 
     @Override
-    public boolean isRemotelyOpened() {
+    public boolean isRemotelyOpen() {
         return getRemoteState() == LinkState.ACTIVE;
     }
 

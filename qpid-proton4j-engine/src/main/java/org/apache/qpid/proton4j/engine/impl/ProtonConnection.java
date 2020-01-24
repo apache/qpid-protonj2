@@ -344,7 +344,7 @@ public class ProtonConnection implements Connection, AMQPHeader.HeaderHandler<Pr
     }
 
     @Override
-    public boolean isRemotelyOpened() {
+    public boolean isRemotelyOpen() {
         return getRemoteState() == ConnectionState.ACTIVE;
     }
 

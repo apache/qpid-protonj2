@@ -384,7 +384,7 @@ public interface Link<T extends Link<T>> {
      *
      * @see Link#isRemotelyClosed()
      */
-    boolean isRemotelyOpened();
+    boolean isRemotelyOpen();
 
     /**
      * Returns true if this {@link Link} is currently remotely closed meaning the state returned
@@ -394,7 +394,7 @@ public interface Link<T extends Link<T>> {
      *
      * @return true if the link is remotely closed.
      *
-     * @see Link#isRemotelyOpened()
+     * @see Link#isRemotelyOpen()
      * @see Link#isRemotelyDetached()
      */
     boolean isRemotelyClosed();
@@ -407,7 +407,7 @@ public interface Link<T extends Link<T>> {
      *
      * @return true if the link is remotely detached.
      *
-     * @see Link#isRemotelyOpened()
+     * @see Link#isRemotelyOpen()
      * @see Link#isRemotelyClosed()
      */
     boolean isRemotelyDetached();
@@ -565,7 +565,6 @@ public interface Link<T extends Link<T>> {
      * @return the link for chaining.
      */
     T closeHandler(EventHandler<T> remoteCloseHandler);
-
 
     /**
      * Sets an {@link EventHandler} that is invoked when the engine that supports this {@link Link} is shutdown

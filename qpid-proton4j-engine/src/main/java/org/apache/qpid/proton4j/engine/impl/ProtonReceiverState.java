@@ -72,14 +72,14 @@ public class ProtonReceiverState implements ProtonLinkState<ProtonIncomingDelive
     void addCredit(int credit) {
         if (credit > 0) {
             creditState.incrementCredit(credit);
-            if (receiver.isRemotelyOpened()) {  //TODO: delaying credit until remoteAttach(Attach attach) is called doesnt seem needed? Perhaps should be/include isLocallyOpen?....(also: rename that to isLocallyOpen, since its false if opened and then closed?)
+            if (receiver.isRemotelyOpen()) {  //TODO: delaying credit until remoteAttach(Attach attach) is called doesnt seem needed? Perhaps should be/include isLocallyOpen?....(also: rename that to isLocallyOpen, since its false if opened and then closed?)
                 sessionWindow.writeFlow(receiver);
             }
         }
     }
 
     void drain() {
-        if (receiver.isRemotelyOpened()) { //TODO: delaying credit+drain until remoteAttach(Attach attach) is called doesnt seem needed?
+        if (receiver.isRemotelyOpen()) { //TODO: delaying credit+drain until remoteAttach(Attach attach) is called doesnt seem needed?
             sessionWindow.writeFlow(receiver);
         }
     }
