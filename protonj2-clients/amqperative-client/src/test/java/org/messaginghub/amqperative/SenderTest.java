@@ -1039,4 +1039,49 @@ public class SenderTest extends AMQPerativeTestCase {
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
     }
+
+    @Test(timeout = 30000)
+    public void testCloseSenderWithErrorCondition() throws Exception {
+        doTestCloseOrDetachWithErrorCondition(true);
+    }
+
+    @Test(timeout = 30000)
+    public void testDetachSenderWithErrorCondition() throws Exception {
+        doTestCloseOrDetachWithErrorCondition(false);
+    }
+
+    public void doTestCloseOrDetachWithErrorCondition(boolean close) throws Exception {
+        final String condition = "amqp:link:detach-forced";
+        final String description = "something bad happened.";
+
+        try (NettyTestPeer peer = new NettyTestPeer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().withRole(Role.SENDER).respond();
+            peer.expectDetach().withClosed(close).withError(condition, description).respond();
+            peer.expectClose().respond();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            Session session = connection.openSession();
+            Sender sender = session.openSender("test-sender");
+            sender.openFuture().get();
+
+            if (close) {
+                sender.close(org.messaginghub.amqperative.ErrorCondition.create(condition, description, null));
+            } else {
+                sender.detach(org.messaginghub.amqperative.ErrorCondition.create(condition, description, null));
+            }
+
+            connection.close().get();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
 }

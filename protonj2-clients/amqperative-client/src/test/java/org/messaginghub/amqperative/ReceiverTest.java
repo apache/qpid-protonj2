@@ -17,6 +17,7 @@ import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
+import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.driver.netty.NettyTestPeer;
 import org.apache.qpid.proton4j.amqp.messaging.Source;
 import org.apache.qpid.proton4j.amqp.transport.AmqpError;
@@ -831,6 +832,54 @@ public class ReceiverTest extends AMQPerativeTestCase {
                 assertNull(receiver.receive());
             } catch (IllegalStateException ise) {
                 // Can happen if receiver closed before the receive call gets executed.
+            }
+
+            connection.close().get();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test(timeout = 30000)
+    public void testCloseReceiverWithErrorCondition() throws Exception {
+        doTestCloseOrDetachWithErrorCondition(true);
+    }
+
+    @Test(timeout = 30000)
+    public void testDetachReceiverWithErrorCondition() throws Exception {
+        doTestCloseOrDetachWithErrorCondition(false);
+    }
+
+    public void doTestCloseOrDetachWithErrorCondition(boolean close) throws Exception {
+        final String condition = "amqp:link:detach-forced";
+        final String description = "something bad happened.";
+
+        try (NettyTestPeer peer = new NettyTestPeer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().withRole(Role.RECEIVER).respond();
+            peer.expectFlow();
+            peer.expectDetach().withClosed(close)
+                               .withError(new ErrorCondition(Symbol.valueOf(condition), description))
+                               .respond();
+            peer.expectClose().respond();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            Session session = connection.openSession();
+            final Receiver receiver = session.openReceiver("test-queue");
+            receiver.openFuture().get();
+
+            if (close) {
+                receiver.close(org.messaginghub.amqperative.ErrorCondition.create(condition, description, null));
+            } else {
+                receiver.detach(org.messaginghub.amqperative.ErrorCondition.create(condition, description, null));
             }
 
             connection.close().get();
