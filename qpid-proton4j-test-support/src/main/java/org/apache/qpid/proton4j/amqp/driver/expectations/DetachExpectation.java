@@ -119,6 +119,14 @@ public class DetachExpectation extends AbstractExpectation<Detach> {
                 new ErrorCondition(Symbol.valueOf(condition), description, TypeMapper.toSymbolKeyedMap(info)))));
     }
 
+    public DetachExpectation withError(Symbol condition, String description) {
+        return withError(equalTo(TypeMapper.mapFromProtonType(new ErrorCondition(condition, description))));
+    }
+
+    public DetachExpectation withError(Symbol condition, String description, Map<Symbol, Object> info) {
+        return withError(equalTo(TypeMapper.mapFromProtonType(new ErrorCondition(condition, description, info))));
+    }
+
     //----- Matcher based with methods for more complex validation
 
     public DetachExpectation withHandle(Matcher<?> m) {

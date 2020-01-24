@@ -85,6 +85,14 @@ public class CloseExpectation extends AbstractExpectation<Close> {
                 new ErrorCondition(Symbol.valueOf(condition), description, TypeMapper.toSymbolKeyedMap(info)))));
     }
 
+    public CloseExpectation withError(Symbol condition, String description) {
+        return withError(equalTo(TypeMapper.mapFromProtonType(new ErrorCondition(condition, description))));
+    }
+
+    public CloseExpectation withError(Symbol condition, String description, Map<Symbol, Object> info) {
+        return withError(equalTo(TypeMapper.mapFromProtonType(new ErrorCondition(condition, description, info))));
+    }
+
     //----- Matcher based with methods for more complex validation
 
     public CloseExpectation withError(Matcher<?> m) {

@@ -94,6 +94,14 @@ public class EndExpectation extends AbstractExpectation<End> {
                 new ErrorCondition(Symbol.valueOf(condition), description, TypeMapper.toSymbolKeyedMap(info)))));
     }
 
+    public EndExpectation withError(Symbol condition, String description) {
+        return withError(equalTo(TypeMapper.mapFromProtonType(new ErrorCondition(condition, description))));
+    }
+
+    public EndExpectation withError(Symbol condition, String description, Map<Symbol, Object> info) {
+        return withError(equalTo(TypeMapper.mapFromProtonType(new ErrorCondition(condition, description, info))));
+    }
+
     //----- Matcher based with methods for more complex validation
 
     public EndExpectation withError(Matcher<?> m) {
