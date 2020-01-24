@@ -35,7 +35,7 @@ public class Spout {
         int count = 100;
 
         ClientOptions options = new ClientOptions();
-        options.containerId(UUID.randomUUID().toString());
+        options.id(UUID.randomUUID().toString());
         Client client = Client.create(options);
 
         try {
@@ -47,9 +47,7 @@ public class Spout {
 
                 Tracker tracker = sender.send(message);  // Blocks on credit
 
-                System.out.println(
-                    String.format("Sent %s to %s: %s",
-                            new String(tracker.tag()), sender.address(), message.body()));
+                System.out.println(String.format("Sent message to %s: %s", sender.address(), message.body()));
 
                 tracker.acknowledgeFuture().get();
             }

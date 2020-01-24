@@ -28,6 +28,8 @@ public interface Sender {
      */
     Future<Sender> openFuture();
 
+    // TODO - Close and Detach need a variant with ErrorCondition
+
     /**
      * Requests a close of the {@link Sender} link at the remote and returns a {@link Future} that will be
      * completed once the link has been closed.

@@ -16,7 +16,6 @@
  */
 package org.messaginghub.amqperative.impl;
 
-import org.apache.qpid.proton4j.amqp.DeliveryTag;
 import org.apache.qpid.proton4j.amqp.messaging.Accepted;
 import org.apache.qpid.proton4j.engine.IncomingDelivery;
 import org.messaginghub.amqperative.Delivery;
@@ -105,13 +104,8 @@ public class ClientDelivery implements Delivery {
     //       confuse / harm the caller since it isn't really telling of actual remote settled.
 
     @Override
-    public boolean remotelySettled() {
+    public boolean remoteSettled() {
         return delivery.isRemotelySettled();
-    }
-
-    @Override
-    public DeliveryTag tag() {
-        return delivery.getTag();
     }
 
     @Override

@@ -58,7 +58,7 @@ public final class ClientInstance implements Client {
 
     public static ClientInstance create(ClientOptions options) {
         Objects.requireNonNull(options, "Client options must be non-null");
-        Objects.requireNonNull(options.containerId(), "User supplied container Id must be non-null");
+        Objects.requireNonNull(options.id(), "User supplied container Id must be non-null");
 
         return new ClientInstance(new ClientOptions(options));
     }
@@ -97,11 +97,15 @@ public final class ClientInstance implements Client {
 
     @Override
     public String containerId() {
-        return options.containerId();
+        return options.id();
     }
 
     String getClientUniqueId() {
         return clientUniqueId;
+    }
+
+    ClientOptions options() {
+        return options;
     }
 
     @Override

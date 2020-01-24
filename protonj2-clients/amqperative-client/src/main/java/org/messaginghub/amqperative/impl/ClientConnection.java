@@ -120,9 +120,9 @@ public class ClientConnection implements Connection {
         this.client = client;
         this.options = options;
         this.connectionId = client.nextConnectionId();
-        this.futureFactoy = ClientFutureFactory.create(options.futureType());
+        this.futureFactoy = ClientFutureFactory.create(client.options().futureType());
 
-        if (options.saslEnabled()) {
+        if (options.saslOptions().saslEnabled()) {
             // TODO - Check that all allowed mechanisms are actually supported ?
             engine = EngineFactory.PROTON.createEngine();
         } else {
@@ -616,15 +616,15 @@ public class ClientConnection implements Connection {
     }
 
     private Engine configureEngineSaslSupport() {
-        if (options.saslEnabled()) {
+        if (options.saslOptions().saslEnabled()) {
             SaslMechanismSelector mechSelector =
-                new SaslMechanismSelector(ClientConversionSupport.toSymbolSet(options.allowedMechanisms()));
+                new SaslMechanismSelector(ClientConversionSupport.toSymbolSet(options.saslOptions().allowedMechanisms()));
 
             engine.saslContext().client().setListener(new SaslAuthenticator(mechSelector, new SaslCredentialsProvider() {
 
                 @Override
                 public String vhost() {
-                    return options.vhost();
+                    return options.virtualHost();
                 }
 
                 @Override

@@ -34,7 +34,7 @@ public class Sink {
         int count = 100;
 
         ClientOptions options = new ClientOptions();
-        options.containerId(UUID.randomUUID().toString());
+        options.id(UUID.randomUUID().toString());
         Client client = Client.create(options);
 
         try {

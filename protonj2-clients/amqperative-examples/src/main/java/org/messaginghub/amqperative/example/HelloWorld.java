@@ -40,7 +40,7 @@ public class HelloWorld {
             String address = "examples";
 
             ClientOptions options = new ClientOptions();
-            options.containerId(UUID.randomUUID().toString());
+            options.id(UUID.randomUUID().toString());
             Client client = Client.create(options);
 
             Connection connection = client.connect(brokerHost, brokerPort);

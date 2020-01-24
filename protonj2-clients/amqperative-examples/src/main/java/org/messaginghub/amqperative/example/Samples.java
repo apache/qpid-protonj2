@@ -53,7 +53,7 @@ public class Samples {
         Client client = Client.create();
 
         ClientOptions options = new ClientOptions();
-        options.containerId(UUID.randomUUID().toString());
+        options.id(UUID.randomUUID().toString());
         Client client2 = Client.create(options); // With options
 
         // =============== Create a connection ===========

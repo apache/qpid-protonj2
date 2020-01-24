@@ -24,23 +24,10 @@ import java.util.concurrent.Future;
  */
 public interface Tracker {
 
-    // TODO Think about if we want to be able to return the original message from
-    //      a tracker which while nice has some definite complications such as if
-    //      the user happens to be sending the same message over and over with small
-    //      modifications.  JMS style rules are annoying but would need something that
-    //      give that sort of direction on when you can do this.
-
     /**
      * @return the {@link Sender} that was used to send the delivery that is being tracked.
      */
     Sender sender();
-
-    /**
-     * Gets the delivery tag for this delivery
-     *
-     * @return the binary delivery tag that has been assigned to the sent message.
-     */
-    byte[] tag();
 
     /**
      * Settles the delivery locally, if not {@link SenderOptions#autoSettle() auto-settling}.
@@ -73,14 +60,7 @@ public interface Tracker {
      *
      * @return whether the delivery is remotely settled
      */
-    boolean remotelySettled();
-
-    /**
-     * Accepts and settles the delivery.
-     *
-     * @return itself
-     */
-    Tracker accept();
+    boolean remoteSettled();
 
     /**
      * Updates the DeliveryState, and optionally settle the delivery as well.

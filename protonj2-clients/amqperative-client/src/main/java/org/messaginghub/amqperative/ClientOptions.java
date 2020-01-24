@@ -21,7 +21,8 @@ package org.messaginghub.amqperative;
  */
 public class ClientOptions {
 
-    private String containerId;
+    private String id;
+    private String futureType;
 
     public ClientOptions() {}
 
@@ -34,20 +35,41 @@ public class ClientOptions {
     /**
      * @return the ID configured the Container
      */
-    public String containerId() {
-        return containerId;
+    public String id() {
+        return id;
     }
 
     /**
      * Sets the container ID that should be used when creating Connections
      *
-     * @param containerId
+     * @param id
      *      The container Id that should be assigned to container connections.
      *
      * @return this options class for chaining.
      */
-    public ClientOptions containerId(String containerId) {
-        this.containerId = containerId;
+    public ClientOptions id(String id) {
+        this.id = id;
+        return this;
+    }
+
+    /**
+     * @return the configure future type to use for this client connection
+     */
+    public String futureType() {
+        return futureType;
+    }
+
+    /**
+     * Sets the desired future type that the client connection should use when creating
+     * the futures used by the API.
+     *
+     * @param futureType
+     *      The name of the future type to use.
+     *
+     * @return this options object for chaining.
+     */
+    public ClientOptions futureType(String futureType) {
+        this.futureType = futureType;
         return this;
     }
 
@@ -61,7 +83,9 @@ public class ClientOptions {
      * @return this options class for chaining.
      */
     public ClientOptions copyInto(ClientOptions other) {
-        other.containerId(containerId);
+        other.id(id);
+        other.futureType(futureType);
+
         return this;
     }
 }

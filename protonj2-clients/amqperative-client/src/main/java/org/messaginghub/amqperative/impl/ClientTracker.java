@@ -16,7 +16,6 @@
  */
 package org.messaginghub.amqperative.impl;
 
-import org.apache.qpid.proton4j.amqp.messaging.Accepted;
 import org.apache.qpid.proton4j.engine.OutgoingDelivery;
 import org.messaginghub.amqperative.DeliveryState;
 import org.messaginghub.amqperative.Sender;
@@ -66,14 +65,8 @@ public class ClientTracker implements Tracker {
     }
 
     @Override
-    public boolean remotelySettled() {
+    public boolean remoteSettled() {
         return remotelySetted;
-    }
-
-    @Override
-    public ClientTracker accept() {
-        sender.disposition(delivery, Accepted.getInstance(), true);
-        return this;
     }
 
     @Override
@@ -100,18 +93,6 @@ public class ClientTracker implements Tracker {
     @Override
     public boolean settled() {
         return delivery.isSettled();
-    }
-
-    @Override
-    public byte[] tag() {
-        byte[] result = null;
-
-        if (delivery.getTag() != null) {
-            // TODO - Ugly and need to decide what to do with tags
-            delivery.getTag().tagBytes().getBytes(0, result);
-        }
-
-        return result;
     }
 
     @Override

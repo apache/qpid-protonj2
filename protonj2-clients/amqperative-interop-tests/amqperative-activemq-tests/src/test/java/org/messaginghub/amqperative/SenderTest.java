@@ -40,7 +40,7 @@ public class SenderTest extends AMQPerativeTestSupport {
         URI brokerURI = getBrokerAmqpConnectionURI();
 
         ClientOptions options = new ClientOptions();
-        options.containerId(UUID.randomUUID().toString());
+        options.id(UUID.randomUUID().toString());
         Client container = Client.create(options);
         assertNotNull(container);
 
@@ -75,7 +75,7 @@ public class SenderTest extends AMQPerativeTestSupport {
         URI brokerURI = getBrokerAmqpConnectionURI();
 
         ClientOptions options = new ClientOptions();
-        options.containerId(UUID.randomUUID().toString());
+        options.id(UUID.randomUUID().toString());
         Client container = Client.create(options);
         assertNotNull(container);
 

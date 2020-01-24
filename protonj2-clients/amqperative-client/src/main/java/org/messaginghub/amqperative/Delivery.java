@@ -16,7 +16,6 @@
  */
 package org.messaginghub.amqperative;
 
-import org.apache.qpid.proton4j.amqp.DeliveryTag;
 import org.messaginghub.amqperative.impl.ClientException;
 
 /**
@@ -58,6 +57,8 @@ public interface Delivery {
 
     //TODO: other specific disposition helpers, or just direct to the below disposition catch-all?
 
+    //TODO: DeliveryState carries settlement so create of it default to settled.
+
     /**
      * Updates the DeliveryState, and optionally settle the delivery as well.
      *
@@ -95,22 +96,12 @@ public interface Delivery {
      */
     DeliveryState remoteState();
 
-    // TODO: Hide this not so useful and probably to low level API in a new
-    //       message interface or other construct for advanced AMQP bits
-
     /**
      * Gets whether the delivery was settled by the remote peer yet.
      *
      * @return whether the delivery is remotely settled
      */
-    boolean remotelySettled();
-
-    /**
-     * Gets the delivery tag for this delivery
-     *
-     * @return the tag
-     */
-    DeliveryTag tag();
+    boolean remoteSettled();
 
     /**
      * Gets the message format for the current delivery.

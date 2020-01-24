@@ -17,11 +17,8 @@
 package org.messaginghub.amqperative;
 
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.LinkedHashSet;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * Options that control the behaviour of the {@link Connection} created from them.
@@ -40,7 +37,6 @@ public class ConnectionOptions {
     public static final int DEFAULT_CHANNEL_MAX = 65535;
     public static final int DEFAULT_MAX_FRAME_SIZE = 65535;
     public static final boolean DEFAULT_ALLOW_INSECURE_REDIRECTS = false;
-    public static final boolean DEFAULT_SASL_ENABLED = true;
 
     private long sendTimeout = DEFAULT_SEND_TIMEOUT;
     private long requestTimeout = DEFAULT_REQUEST_TIMEOUT;
@@ -51,6 +47,7 @@ public class ConnectionOptions {
 
     private final TransportOptions transport = new TransportOptions();
     private final SslOptions ssl = new SslOptions();
+    private final SaslOptions sasl = new SaslOptions();
 
     private String user;
     private String password;
@@ -59,10 +56,7 @@ public class ConnectionOptions {
     private String[] offeredCapabilities;
     private String[] desiredCapabilities = DEFAULT_DESIRED_CAPABILITIES;
     private Map<String, Object> properties;
-    private String vhost;
-    private String futureType;
-    private boolean saslEnabled = DEFAULT_SASL_ENABLED;
-    private final Set<String> saslAllowedMechs = new LinkedHashSet<>();
+    private String virtualHost;
     private boolean allowInsecureRedirects = DEFAULT_ALLOW_INSECURE_REDIRECTS;
 
     public ConnectionOptions() {
@@ -92,11 +86,8 @@ public class ConnectionOptions {
         other.drainTimeout(drainTimeout);
         other.channelMax(channelMax);
         other.maxFrameSize(maxFrameSize);
-        other.futureType(futureType);
         other.user(user);
         other.password(password);
-        other.saslEnabled(saslEnabled);
-        other.saslAllowedMechs.addAll(this.saslAllowedMechs);
         other.allowInsecureRedirects(allowInsecureRedirects);
 
         if (offeredCapabilities != null) {
@@ -111,11 +102,12 @@ public class ConnectionOptions {
 
         transport.copyInto(other.transportOptions());
         ssl.copyInto(other.sslOptions());
+        sasl.copyInto(other.saslOptions());
 
         return this;
     }
 
-    // TODO - Proper Javadocs
+    // TODO - Proper Javadocs for the various configuration options
 
     public long closeTimeout() {
         return closeTimeout;
@@ -270,40 +262,20 @@ public class ConnectionOptions {
     }
 
     /**
-     * @return the configure future type to use for this client connection
+     * @return the virtual host value configured.
      */
-    public String futureType() {
-        return futureType;
+    public String virtualHost() {
+        return virtualHost;
     }
 
     /**
-     * Sets the desired future type that the client connection should use when creating
-     * the futures used by the API.
-     *
-     * @param futureType
-     *      The name of the future type to use.
-     *
-     * @return this options object for chaining.
-     */
-    public ConnectionOptions futureType(String futureType) {
-        this.futureType = futureType;
-        return this;
-    }
-
-    /**
-     * @return the vhost
-     */
-    public String vhost() {
-        return vhost;
-    }
-
-    /**
-     * @param vhost the vhost to set
+     * @param virtualHost
+     * 		the virtual host to set
      *
      * @return this options instance.
      */
-    public ConnectionOptions vhost(String vhost) {
-        this.vhost = vhost;
+    public ConnectionOptions virtualHost(String virtualHost) {
+        this.virtualHost = virtualHost;
         return this;
     }
 
@@ -356,6 +328,13 @@ public class ConnectionOptions {
     }
 
     /**
+     * @return the SASL options that will be used for the {@link Connection}.
+     */
+    public SaslOptions saslOptions() {
+        return sasl;
+    }
+
+    /**
      * @return the allowInsecureRedirects
      */
     public boolean allowInsecureRedirects() {
@@ -363,29 +342,18 @@ public class ConnectionOptions {
     }
 
     /**
+     * When the {@link Connection} is remotely closed with an error containing redirect information
+     * and that redirect would result in a connection being made using an insecure mechanism should
+     * that redirection be followed or disregarded.  For example a secure Web Socket connection could
+     * be redirected to and instructed to use a insecure Web Socket variant instead, this value controls
+     * whether that would be followed or ignored.
+     *
      * @param allowInsecureRedirects the allowInsecureRedirects to set
      *
      * @return this options instance.
      */
     public ConnectionOptions allowInsecureRedirects(boolean allowInsecureRedirects) {
         this.allowInsecureRedirects = allowInsecureRedirects;
-        return this;
-    }
-
-    /**
-     * @return the saslLayer
-     */
-    public boolean saslEnabled() {
-        return saslEnabled;
-    }
-
-    /**
-     * @param saslEnabled the saslLayer to set
-     *
-     * @return this options instance.
-     */
-    public ConnectionOptions saslEnabled(boolean saslEnabled) {
-        this.saslEnabled = saslEnabled;
         return this;
     }
 
@@ -406,28 +374,5 @@ public class ConnectionOptions {
     public ConnectionOptions sslEnabled(boolean sslEnabled) {
         ssl.sslEnabled(sslEnabled);
         return this;
-    }
-
-    /**
-     * Adds a mechanism to the list of allowed SASL mechanisms this client will use
-     * when selecting from the remote peers offered set of SASL mechanisms.  If no
-     * allowed mechanisms are configured then the client will select the first mechanism
-     * from the server offered mechanisms that is supported.
-     *
-     * @param mechanism
-     * 		The mechanism to allow.
-     *
-     * @return this options object for chaining.
-     */
-    public ConnectionOptions addAllowedMechanism(String mechanism) {
-        this.saslAllowedMechs.add(mechanism);
-        return this;
-    }
-
-    /**
-     * @return the current list of allowed SASL Mechanisms.
-     */
-    public Set<String> allowedMechanisms() {
-        return Collections.unmodifiableSet(saslAllowedMechs);
     }
 }
