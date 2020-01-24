@@ -28,8 +28,6 @@ public interface Sender {
      */
     Future<Sender> openFuture();
 
-    // TODO - Close and Detach need a variant with ErrorCondition
-
     /**
      * Requests a close of the {@link Sender} link at the remote and returns a {@link Future} that will be
      * completed once the link has been closed.
@@ -39,12 +37,34 @@ public interface Sender {
     Future<Sender> close();
 
     /**
+     * Requests a close of the {@link Sender} link at the remote and returns a {@link Future} that will be
+     * completed once the link has been closed.
+     *
+     * @param error
+     * 		The {@link ErrorCondition} to transmit to the remote along with the close operation.
+     *
+     * @return a {@link Future} that will be completed when the remote closes this {@link Sender} link.
+     */
+    Future<Sender> close(ErrorCondition error);
+
+    /**
      * Requests a detach of the {@link Sender} link at the remote and returns a {@link Future} that will be
      * completed once the link has been detached.
      *
      * @return a {@link Future} that will be completed when the remote detaches this {@link Sender} link.
      */
     Future<Sender> detach();
+
+    /**
+     * Requests a detach of the {@link Sender} link at the remote and returns a {@link Future} that will be
+     * completed once the link has been detached.
+     *
+     * @param error
+     * 		The {@link ErrorCondition} to transmit to the remote along with the detach operation.
+     *
+     * @return a {@link Future} that will be completed when the remote detaches this {@link Sender} link.
+     */
+    Future<Sender> detach(ErrorCondition error);
 
     /**
      * Returns the address that the {@link Sender} instance will send {@link Message} objects

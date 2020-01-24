@@ -39,12 +39,34 @@ public interface Receiver {
     Future<Receiver> close();
 
     /**
+     * Requests a close of the {@link Receiver} link at the remote and returns a {@link Future} that will be
+     * completed once the link has been closed.
+     *
+     * @param error
+     * 		The {@link ErrorCondition} to transmit to the remote along with the close operation.
+     *
+     * @return a {@link Future} that will be completed when the remote closes this {@link Receiver} link.
+     */
+    Future<Receiver> close(ErrorCondition error);
+
+    /**
      * Requests a detach of the {@link Receiver} link at the remote and returns a {@link Future} that will be
      * completed once the link has been detached.
      *
      * @return a {@link Future} that will be completed when the remote detaches this {@link Receiver} link.
      */
     Future<Receiver> detach();
+
+    /**
+     * Requests a detach of the {@link Receiver} link at the remote and returns a {@link Future} that will be
+     * completed once the link has been detached.
+     *
+     * @param error
+     * 		The {@link ErrorCondition} to transmit to the remote along with the detach operation.
+     *
+     * @return a {@link Future} that will be completed when the remote detaches this {@link Receiver} link.
+     */
+    Future<Receiver> detach(ErrorCondition error);
 
     // TODO - For these remote property reads do we support interruption on waiting for the open ?
 

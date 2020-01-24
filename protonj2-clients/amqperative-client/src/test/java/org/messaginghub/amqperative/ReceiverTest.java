@@ -37,12 +37,12 @@ public class ReceiverTest extends AMQPerativeTestCase {
 
     private static final Logger LOG = LoggerFactory.getLogger(ReceiverTest.class);
 
-    @Test(timeout = 60000)
+    @Test(timeout = 30000)
     public void testCreateReceiverAndClose() throws Exception {
         doTestCreateReceiverAndCloseOrDetachLink(true);
     }
 
-    @Test(timeout = 60000)
+    @Test(timeout = 30000)
     public void testCreateReceiverAndDetach() throws Exception {
         doTestCreateReceiverAndCloseOrDetachLink(false);
     }
@@ -60,7 +60,7 @@ public class ReceiverTest extends AMQPerativeTestCase {
 
             URI remoteURI = peer.getServerURI();
 
-            LOG.info("Connect test started, peer listening on: {}", remoteURI);
+            LOG.info("Test started, peer listening on: {}", remoteURI);
 
             Client container = Client.create();
             Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
@@ -85,7 +85,7 @@ public class ReceiverTest extends AMQPerativeTestCase {
         }
     }
 
-    @Test(timeout = 60000)
+    @Test(timeout = 30000)
     public void testReceiverOpenRejectedByRemote() throws Exception {
         try (NettyTestPeer peer = new NettyTestPeer()) {
             peer.expectSASLAnonymousConnect();
@@ -99,7 +99,7 @@ public class ReceiverTest extends AMQPerativeTestCase {
 
             URI remoteURI = peer.getServerURI();
 
-            LOG.info("Connect test started, peer listening on: {}", remoteURI);
+            LOG.info("Test started, peer listening on: {}", remoteURI);
 
             Client container = Client.create();
             Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
@@ -130,12 +130,12 @@ public class ReceiverTest extends AMQPerativeTestCase {
         }
     }
 
-    @Test(timeout = 60000)
+    @Test(timeout = 30000)
     public void testOpenReceiverTimesOutWhenNoAttachResponseReceivedTimeout() throws Exception {
         doTestOpenReceiverTimesOutWhenNoAttachResponseReceived(true);
     }
 
-    @Test(timeout = 60000)
+    @Test(timeout = 30000)
     public void testOpenReceiverTimesOutWhenNoAttachResponseReceivedNoTimeout() throws Exception {
         doTestOpenReceiverTimesOutWhenNoAttachResponseReceived(false);
     }
@@ -182,22 +182,22 @@ public class ReceiverTest extends AMQPerativeTestCase {
         }
     }
 
-    @Test(timeout = 60000)
+    @Test(timeout = 30000)
     public void testCloseReceiverTimesOutWhenNoCloseResponseReceivedTimeout() throws Exception {
         doTestCloseOrDetachReceiverTimesOutWhenNoCloseResponseReceived(true, true);
     }
 
-    @Test(timeout = 60000)
+    @Test(timeout = 30000)
     public void testCloseReceiverTimesOutWhenNoCloseResponseReceivedNoTimeout() throws Exception {
         doTestCloseOrDetachReceiverTimesOutWhenNoCloseResponseReceived(true, false);
     }
 
-    @Test(timeout = 60000)
+    @Test(timeout = 30000)
     public void testDetachReceiverTimesOutWhenNoCloseResponseReceivedTimeout() throws Exception {
         doTestCloseOrDetachReceiverTimesOutWhenNoCloseResponseReceived(false, true);
     }
 
-    @Test(timeout = 60000)
+    @Test(timeout = 30000)
     public void testDetachReceiverTimesOutWhenNoCloseResponseReceivedNoTimeout() throws Exception {
         doTestCloseOrDetachReceiverTimesOutWhenNoCloseResponseReceived(false, false);
     }
@@ -268,7 +268,7 @@ public class ReceiverTest extends AMQPerativeTestCase {
 
             URI remoteURI = peer.getServerURI();
 
-            LOG.info("Connect test started, peer listening on: {}", remoteURI);
+            LOG.info("Test started, peer listening on: {}", remoteURI);
 
             Client container = Client.create();
             Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
@@ -307,7 +307,7 @@ public class ReceiverTest extends AMQPerativeTestCase {
         }
     }
 
-    @Test(timeout = 60000)
+    @Test(timeout = 30000)
     public void testCreateDynamicReceiver() throws Exception {
         try (NettyTestPeer peer = new NettyTestPeer()) {
             peer.expectSASLAnonymousConnect();
@@ -324,7 +324,7 @@ public class ReceiverTest extends AMQPerativeTestCase {
 
             URI remoteURI = peer.getServerURI();
 
-            LOG.info("Connect test started, peer listening on: {}", remoteURI);
+            LOG.info("Test started, peer listening on: {}", remoteURI);
 
             Client container = Client.create();
             Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
@@ -347,12 +347,12 @@ public class ReceiverTest extends AMQPerativeTestCase {
         }
     }
 
-    @Test(timeout = 60000)
+    @Test(timeout = 30000)
     public void testDynamicReceiverAddressWaitsForRemoteAttach() throws Exception {
         tryReadDynamicReceiverAddress(true);
     }
 
-    @Test(timeout = 60000)
+    @Test(timeout = 30000)
     public void testDynamicReceiverAddressFailsAfterOpenTimeout() throws Exception {
         tryReadDynamicReceiverAddress(false);
     }
@@ -368,7 +368,7 @@ public class ReceiverTest extends AMQPerativeTestCase {
 
             URI remoteURI = peer.getServerURI();
 
-            LOG.info("Connect test started, peer listening on: {}", remoteURI);
+            LOG.info("Test started, peer listening on: {}", remoteURI);
 
             Client container = Client.create();
             ConnectionOptions options = new ConnectionOptions().openTimeout(100);
@@ -441,7 +441,7 @@ public class ReceiverTest extends AMQPerativeTestCase {
 
             URI remoteURI = peer.getServerURI();
 
-            LOG.info("Connect test started, peer listening on: {}", remoteURI);
+            LOG.info("Test started, peer listening on: {}", remoteURI);
 
             Client container = Client.create();
             Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
@@ -464,12 +464,12 @@ public class ReceiverTest extends AMQPerativeTestCase {
         }
     }
 
-    @Test(timeout = 60000)
+    @Test(timeout = 30000)
     public void testReceiverGetSourceWaitsForRemoteAttach() throws Exception {
         tryReadReceiverSource(true);
     }
 
-    @Test(timeout = 60000)
+    @Test(timeout = 30000)
     public void testReceiverGetSourceFailsAfterOpenTimeout() throws Exception {
         tryReadReceiverSource(false);
     }
@@ -484,7 +484,7 @@ public class ReceiverTest extends AMQPerativeTestCase {
 
             URI remoteURI = peer.getServerURI();
 
-            LOG.info("Connect test started, peer listening on: {}", remoteURI);
+            LOG.info("Test started, peer listening on: {}", remoteURI);
 
             Client container = Client.create();
             ConnectionOptions options = new ConnectionOptions().openTimeout(100);
@@ -527,12 +527,12 @@ public class ReceiverTest extends AMQPerativeTestCase {
         }
     }
 
-    @Test(timeout = 60000)
+    @Test(timeout = 30000)
     public void testReceiverGetTargetWaitsForRemoteAttach() throws Exception {
         tryReadReceiverTarget(true);
     }
 
-    @Test(timeout = 60000)
+    @Test(timeout = 30000)
     public void testReceiverGetTargetFailsAfterOpenTimeout() throws Exception {
         tryReadReceiverTarget(false);
     }
@@ -547,7 +547,7 @@ public class ReceiverTest extends AMQPerativeTestCase {
 
             URI remoteURI = peer.getServerURI();
 
-            LOG.info("Connect test started, peer listening on: {}", remoteURI);
+            LOG.info("Test started, peer listening on: {}", remoteURI);
 
             Client container = Client.create();
             ConnectionOptions options = new ConnectionOptions().openTimeout(100);
@@ -589,12 +589,12 @@ public class ReceiverTest extends AMQPerativeTestCase {
         }
     }
 
-    @Test(timeout = 60000)
+    @Test(timeout = 30000)
     public void testReceiverGetRemotePropertiesWaitsForRemoteAttach() throws Exception {
         tryReadReceiverRemoteProperties(true);
     }
 
-    @Test(timeout = 60000)
+    @Test(timeout = 30000)
     public void testReceiverGetRemotePropertiesFailsAfterOpenTimeout() throws Exception {
         tryReadReceiverRemoteProperties(false);
     }
@@ -609,7 +609,7 @@ public class ReceiverTest extends AMQPerativeTestCase {
 
             URI remoteURI = peer.getServerURI();
 
-            LOG.info("Connect test started, peer listening on: {}", remoteURI);
+            LOG.info("Test started, peer listening on: {}", remoteURI);
 
             Client container = Client.create();
             ConnectionOptions options = new ConnectionOptions().openTimeout(100);
@@ -655,12 +655,12 @@ public class ReceiverTest extends AMQPerativeTestCase {
         }
     }
 
-    @Test(timeout = 60000)
+    @Test(timeout = 30000)
     public void testReceiverGetRemoteOfferedCapabilitiesWaitsForRemoteAttach() throws Exception {
         tryReadReceiverRemoteOfferedCapabilities(true);
     }
 
-    @Test(timeout = 60000)
+    @Test(timeout = 30000)
     public void testReceiverGetRemoteOfferedCapabilitiesFailsAfterOpenTimeout() throws Exception {
         tryReadReceiverRemoteOfferedCapabilities(false);
     }
@@ -675,7 +675,7 @@ public class ReceiverTest extends AMQPerativeTestCase {
 
             URI remoteURI = peer.getServerURI();
 
-            LOG.info("Connect test started, peer listening on: {}", remoteURI);
+            LOG.info("Test started, peer listening on: {}", remoteURI);
 
             Client container = Client.create();
             ConnectionOptions options = new ConnectionOptions().openTimeout(100);
@@ -719,12 +719,12 @@ public class ReceiverTest extends AMQPerativeTestCase {
         }
     }
 
-    @Test(timeout = 60000)
+    @Test(timeout = 30000)
     public void testReceiverGetRemoteDesiredCapabilitiesWaitsForRemoteAttach() throws Exception {
         tryReadReceiverRemoteDesiredCapabilities(true);
     }
 
-    @Test(timeout = 60000)
+    @Test(timeout = 30000)
     public void testReceiverGetRemoteDesiredCapabilitiesFailsAfterOpenTimeout() throws Exception {
         tryReadReceiverRemoteDesiredCapabilities(false);
     }
@@ -739,7 +739,7 @@ public class ReceiverTest extends AMQPerativeTestCase {
 
             URI remoteURI = peer.getServerURI();
 
-            LOG.info("Connect test started, peer listening on: {}", remoteURI);
+            LOG.info("Test started, peer listening on: {}", remoteURI);
 
             Client container = Client.create();
             ConnectionOptions options = new ConnectionOptions().openTimeout(100);
@@ -785,19 +785,28 @@ public class ReceiverTest extends AMQPerativeTestCase {
 
     @Test(timeout = 30000)
     public void testBlockingReceiveCancelledWhenReceiverClosed() throws Exception {
+        doTtestBlockingReceiveCancelledWhenReceiverClosedOrDetached(true);
+    }
+
+    @Test(timeout = 30000)
+    public void testBlockingReceiveCancelledWhenReceiverDetached() throws Exception {
+        doTtestBlockingReceiveCancelledWhenReceiverClosedOrDetached(false);
+    }
+
+    public void doTtestBlockingReceiveCancelledWhenReceiverClosedOrDetached(boolean close) throws Exception {
         try (NettyTestPeer peer = new NettyTestPeer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();
             peer.expectAttach().withRole(Role.RECEIVER).respond();
             peer.expectFlow();
-            peer.expectDetach().respond();
+            peer.expectDetach().withClosed(close).respond();
             peer.expectClose().respond();
             peer.start();
 
             URI remoteURI = peer.getServerURI();
 
-            LOG.info("Connect test started, peer listening on: {}", remoteURI);
+            LOG.info("Test started, peer listening on: {}", remoteURI);
 
             Client container = Client.create();
             Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
@@ -811,7 +820,11 @@ public class ReceiverTest extends AMQPerativeTestCase {
                 } catch (InterruptedException e) {
                 }
 
-                receiver.close();
+                if (close) {
+                    receiver.close();
+                } else {
+                    receiver.detach();
+                }
             });
 
             try {

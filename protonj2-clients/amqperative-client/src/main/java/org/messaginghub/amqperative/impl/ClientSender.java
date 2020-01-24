@@ -19,6 +19,7 @@ package org.messaginghub.amqperative.impl;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
@@ -34,6 +35,7 @@ import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.engine.LinkCreditState;
 import org.apache.qpid.proton4j.engine.LinkState;
 import org.apache.qpid.proton4j.engine.OutgoingDelivery;
+import org.messaginghub.amqperative.ErrorCondition;
 import org.messaginghub.amqperative.Message;
 import org.messaginghub.amqperative.Sender;
 import org.messaginghub.amqperative.SenderOptions;
@@ -137,43 +139,51 @@ public class ClientSender implements Sender {
 
     @Override
     public ClientFuture<Sender> close() {
-        if (CLOSED_UPDATER.compareAndSet(this, 0, 1)) {
-            executor.execute(() -> {
-                try {
-                    protonSender.close();
-                } catch (Throwable error) {
-                    closeFuture.complete(this);
-                }
+        return doCloseOrDetach(true, null);
+    }
 
-                if (!closeFuture.isDone()) {
-                    final long timeout = options.closeTimeout() >= 0 ?
-                            options.closeTimeout() : options.requestTimeout();
+    @Override
+    public ClientFuture<Sender> close(ErrorCondition error) {
+        Objects.requireNonNull(error, "Error Condition cannot be null");
 
-                    session.scheduleRequestTimeout(closeFuture, timeout,
-                        () -> new ClientOperationTimedOutException("Timed out waiting for Sender to close"));
-                }
-            });
-        }
-        return closeFuture;
+        return doCloseOrDetach(true, error);
     }
 
     @Override
     public ClientFuture<Sender> detach() {
+        return doCloseOrDetach(false, null);
+    }
+
+    @Override
+    public ClientFuture<Sender> detach(ErrorCondition error) {
+        Objects.requireNonNull(error, "Error Condition cannot be null");
+
+        return doCloseOrDetach(false, error);
+    }
+
+    private ClientFuture<Sender> doCloseOrDetach(boolean close, ErrorCondition error) {
         if (CLOSED_UPDATER.compareAndSet(this, 0, 1)) {
             executor.execute(() -> {
                 try {
-                    protonSender.detach();
-                } catch (Throwable error) {
+                    if (error != null) {
+                        protonSender.setCondition(ClientErrorCondition.asProtonErrorCondition(error));
+                    }
+
+                    if (close) {
+                        protonSender.close();
+                    } else {
+                        protonSender.detach();
+                    }
+                } catch (Throwable ignore) {
                     closeFuture.complete(this);
                 }
 
                 if (!closeFuture.isDone()) {
-                    final long timeout = options.closeTimeout() >= 0 ?
-                            options.closeTimeout() : options.requestTimeout();
+                    final long timeout = options.closeTimeout();
 
                     if (timeout > 0) {
                         session.scheduleRequestTimeout(closeFuture, timeout,
-                            () -> new ClientOperationTimedOutException("Timed out waiting for Sender to detach"));
+                            () -> new ClientOperationTimedOutException("Timed out waiting for Sender to close or detach"));
                     }
                 }
             });

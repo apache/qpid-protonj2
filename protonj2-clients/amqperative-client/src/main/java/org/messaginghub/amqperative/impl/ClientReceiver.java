@@ -17,6 +17,7 @@
 package org.messaginghub.amqperative.impl;
 
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
@@ -31,6 +32,7 @@ import org.apache.qpid.proton4j.engine.IncomingDelivery;
 import org.apache.qpid.proton4j.engine.LinkState;
 import org.messaginghub.amqperative.Client;
 import org.messaginghub.amqperative.Delivery;
+import org.messaginghub.amqperative.ErrorCondition;
 import org.messaginghub.amqperative.Receiver;
 import org.messaginghub.amqperative.ReceiverOptions;
 import org.messaginghub.amqperative.Session;
@@ -180,47 +182,55 @@ public class ClientReceiver implements Receiver {
     }
 
     @Override
-    public Future<Receiver> close() {
-        if (CLOSED_UPDATER.compareAndSet(this, 0, 1)) {
-            executor.execute(() -> {
-                messageQueue.stop();  // Ensure blocked receivers are all unblocked.
-
-                try {
-                    protonReceiver.close();
-                } catch (Throwable error) {
-                    closeFuture.complete(this);
-                }
-
-                if (!closeFuture.isDone()) {
-                    final long timeout = options.closeTimeout() >= 0 ?
-                            options.closeTimeout() : options.requestTimeout();
-
-                    if (timeout > 0) {
-                        session.scheduleRequestTimeout(closeFuture, timeout,
-                            () -> new ClientOperationTimedOutException("Timed out waiting for Receiver to close"));
-                    }
-                }
-            });
-        }
-        return closeFuture;
+    public ClientFuture<Receiver> close() {
+        return doCloseOrDetach(true, null);
     }
 
     @Override
-    public Future<Receiver> detach() {
-        if (CLOSED_UPDATER.compareAndSet(this, 0, 1) && !openFuture.isFailed()) {
+    public ClientFuture<Receiver> close(ErrorCondition error) {
+        Objects.requireNonNull(error, "Error Condition cannot be null");
+
+        return doCloseOrDetach(true, error);
+    }
+
+    @Override
+    public ClientFuture<Receiver> detach() {
+        return doCloseOrDetach(false, null);
+    }
+
+    @Override
+    public ClientFuture<Receiver> detach(ErrorCondition error) {
+        Objects.requireNonNull(error, "Error Condition cannot be null");
+
+        return doCloseOrDetach(false, error);
+    }
+
+    private ClientFuture<Receiver> doCloseOrDetach(boolean close, ErrorCondition error) {
+        if (CLOSED_UPDATER.compareAndSet(this, 0, 1)) {
             executor.execute(() -> {
                 try {
-                    protonReceiver.detach();
-                } catch (Throwable error) {
+                    messageQueue.stop();  // Ensure blocked receivers are all unblocked.
+
+                    if (error != null) {
+                        protonReceiver.setCondition(ClientErrorCondition.asProtonErrorCondition(error));
+                    }
+
+                    if (close) {
+                        protonReceiver.close();
+                    } else {
+                        protonReceiver.detach();
+                    }
+                } catch (Throwable ignore) {
                     closeFuture.complete(this);
                 }
 
                 if (!closeFuture.isDone()) {
-                    final long timeout = options.closeTimeout() >= 0 ?
-                            options.closeTimeout() : options.requestTimeout();
+                    final long timeout = options.closeTimeout();
 
-                    session.scheduleRequestTimeout(closeFuture, timeout,
-                        () -> new ClientOperationTimedOutException("Timed out waiting for Receiver to detach"));
+                    if (timeout > 0) {
+                        session.scheduleRequestTimeout(closeFuture, timeout,
+                            () -> new ClientOperationTimedOutException("Timed out waiting for Receiver to close or detach"));
+                    }
                 }
             });
         }
