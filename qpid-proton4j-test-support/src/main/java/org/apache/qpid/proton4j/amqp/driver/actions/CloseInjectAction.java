@@ -16,6 +16,9 @@
  */
 package org.apache.qpid.proton4j.amqp.driver.actions;
 
+import java.util.Map;
+
+import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
 import org.apache.qpid.proton4j.amqp.driver.codec.transport.Close;
 import org.apache.qpid.proton4j.amqp.driver.codec.util.TypeMapper;
@@ -43,6 +46,26 @@ public class CloseInjectAction extends AbstractPerformativeInjectAction<Close> {
         return this;
     }
 
+    public CloseInjectAction withErrorCondition(String condition, String description) {
+        close.setError(TypeMapper.mapFromProtonType(new ErrorCondition(Symbol.valueOf(condition), description)));
+        return this;
+    }
+
+    public CloseInjectAction withErrorCondition(Symbol condition, String description) {
+        close.setError(TypeMapper.mapFromProtonType(new ErrorCondition(condition, description)));
+        return this;
+    }
+
+    public CloseInjectAction withErrorCondition(String condition, String description, Map<String, Object> info) {
+        close.setError(TypeMapper.mapFromProtonType(new ErrorCondition(Symbol.valueOf(condition), description, TypeMapper.toSymbolKeyedMap(info))));
+        return this;
+    }
+
+    public CloseInjectAction withErrorCondition(Symbol condition, String description, Map<Symbol, Object> info) {
+        close.setError(TypeMapper.mapFromProtonType(new ErrorCondition(condition, description, info)));
+        return this;
+    }
+
     @Override
     protected void beforeActionPerformed(AMQPTestDriver driver) {
         // We fill in a channel using the next available channel id if one isn't set, then
@@ -50,7 +73,5 @@ public class CloseInjectAction extends AbstractPerformativeInjectAction<Close> {
         if (onChannel() == CHANNEL_UNSET) {
             onChannel(0);
         }
-
-        // TODO - Process flow in the local side of the link when needed for added validation
     }
 }

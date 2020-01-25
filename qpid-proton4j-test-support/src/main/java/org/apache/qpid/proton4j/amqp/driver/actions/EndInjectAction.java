@@ -16,6 +16,9 @@
  */
 package org.apache.qpid.proton4j.amqp.driver.actions;
 
+import java.util.Map;
+
+import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
 import org.apache.qpid.proton4j.amqp.driver.codec.transport.End;
 import org.apache.qpid.proton4j.amqp.driver.codec.util.TypeMapper;
@@ -40,6 +43,26 @@ public class EndInjectAction extends AbstractPerformativeInjectAction<End> {
 
     public EndInjectAction withErrorCondition(ErrorCondition error) {
         end.setError(TypeMapper.mapFromProtonType(error));
+        return this;
+    }
+
+    public EndInjectAction withErrorCondition(String condition, String description) {
+        end.setError(TypeMapper.mapFromProtonType(new ErrorCondition(Symbol.valueOf(condition), description)));
+        return this;
+    }
+
+    public EndInjectAction withErrorCondition(Symbol condition, String description) {
+        end.setError(TypeMapper.mapFromProtonType(new ErrorCondition(condition, description)));
+        return this;
+    }
+
+    public EndInjectAction withErrorCondition(String condition, String description, Map<String, Object> info) {
+        end.setError(TypeMapper.mapFromProtonType(new ErrorCondition(Symbol.valueOf(condition), description, TypeMapper.toSymbolKeyedMap(info))));
+        return this;
+    }
+
+    public EndInjectAction withErrorCondition(Symbol condition, String description, Map<Symbol, Object> info) {
+        end.setError(TypeMapper.mapFromProtonType(new ErrorCondition(condition, description, info)));
         return this;
     }
 

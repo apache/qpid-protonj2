@@ -16,6 +16,9 @@
  */
 package org.apache.qpid.proton4j.amqp.driver.actions;
 
+import java.util.Map;
+
+import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedInteger;
 import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
 import org.apache.qpid.proton4j.amqp.driver.codec.transport.Detach;
@@ -61,6 +64,26 @@ public class DetachInjectAction extends AbstractPerformativeInjectAction<Detach>
 
     public DetachInjectAction withErrorCondition(ErrorCondition error) {
         detach.setError(TypeMapper.mapFromProtonType(error));
+        return this;
+    }
+
+    public DetachInjectAction withErrorCondition(String condition, String description) {
+        detach.setError(TypeMapper.mapFromProtonType(new ErrorCondition(Symbol.valueOf(condition), description)));
+        return this;
+    }
+
+    public DetachInjectAction withErrorCondition(Symbol condition, String description) {
+        detach.setError(TypeMapper.mapFromProtonType(new ErrorCondition(condition, description)));
+        return this;
+    }
+
+    public DetachInjectAction withErrorCondition(String condition, String description, Map<String, Object> info) {
+        detach.setError(TypeMapper.mapFromProtonType(new ErrorCondition(Symbol.valueOf(condition), description, TypeMapper.toSymbolKeyedMap(info))));
+        return this;
+    }
+
+    public DetachInjectAction withErrorCondition(Symbol condition, String description, Map<Symbol, Object> info) {
+        detach.setError(TypeMapper.mapFromProtonType(new ErrorCondition(condition, description, info)));
         return this;
     }
 
