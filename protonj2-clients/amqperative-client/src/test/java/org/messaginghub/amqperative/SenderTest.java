@@ -18,7 +18,6 @@ import org.apache.qpid.proton4j.amqp.driver.netty.NettyTestPeer;
 import org.apache.qpid.proton4j.amqp.messaging.Accepted;
 import org.apache.qpid.proton4j.amqp.messaging.Target;
 import org.apache.qpid.proton4j.amqp.transport.AmqpError;
-import org.apache.qpid.proton4j.amqp.transport.ErrorCondition;
 import org.apache.qpid.proton4j.amqp.transport.ReceiverSettleMode;
 import org.apache.qpid.proton4j.amqp.transport.Role;
 import org.apache.qpid.proton4j.amqp.transport.SenderSettleMode;
@@ -97,7 +96,7 @@ public class SenderTest extends AMQPerativeTestCase {
             peer.expectOpen().respond();
             peer.expectBegin().respond();
             peer.expectAttach().respond().withTarget((Target) null);
-            peer.remoteDetach().withErrorCondition(new ErrorCondition(AmqpError.UNAUTHORIZED_ACCESS, "Cannot read from this address")).queue();
+            peer.remoteDetach().withErrorCondition(AmqpError.UNAUTHORIZED_ACCESS, "Cannot read from this address").queue();
             peer.expectDetach();
             peer.start();
 
@@ -1074,9 +1073,9 @@ public class SenderTest extends AMQPerativeTestCase {
             sender.openFuture().get();
 
             if (close) {
-                sender.close(org.messaginghub.amqperative.ErrorCondition.create(condition, description, null));
+                sender.close(ErrorCondition.create(condition, description, null));
             } else {
-                sender.detach(org.messaginghub.amqperative.ErrorCondition.create(condition, description, null));
+                sender.detach(ErrorCondition.create(condition, description, null));
             }
 
             connection.close().get();

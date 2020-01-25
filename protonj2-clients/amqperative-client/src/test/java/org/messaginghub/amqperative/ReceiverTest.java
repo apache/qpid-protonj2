@@ -17,11 +17,9 @@ import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
-import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.driver.netty.NettyTestPeer;
 import org.apache.qpid.proton4j.amqp.messaging.Source;
 import org.apache.qpid.proton4j.amqp.transport.AmqpError;
-import org.apache.qpid.proton4j.amqp.transport.ErrorCondition;
 import org.apache.qpid.proton4j.amqp.transport.ReceiverSettleMode;
 import org.apache.qpid.proton4j.amqp.transport.Role;
 import org.apache.qpid.proton4j.amqp.transport.SenderSettleMode;
@@ -94,7 +92,7 @@ public class ReceiverTest extends AMQPerativeTestCase {
             peer.expectBegin().respond();
             peer.expectAttach().respond().withSource((Source) null);
             peer.expectFlow();
-            peer.remoteDetach().withErrorCondition(new ErrorCondition(AmqpError.UNAUTHORIZED_ACCESS, "Cannot read from this address")).queue();
+            peer.remoteDetach().withErrorCondition(AmqpError.UNAUTHORIZED_ACCESS, "Cannot read from this address").queue();
             peer.expectDetach();
             peer.start();
 
@@ -860,9 +858,7 @@ public class ReceiverTest extends AMQPerativeTestCase {
             peer.expectBegin().respond();
             peer.expectAttach().withRole(Role.RECEIVER).respond();
             peer.expectFlow();
-            peer.expectDetach().withClosed(close)
-                               .withError(new ErrorCondition(Symbol.valueOf(condition), description))
-                               .respond();
+            peer.expectDetach().withClosed(close).withError(condition, description).respond();
             peer.expectClose().respond();
             peer.start();
 
@@ -877,9 +873,9 @@ public class ReceiverTest extends AMQPerativeTestCase {
             receiver.openFuture().get();
 
             if (close) {
-                receiver.close(org.messaginghub.amqperative.ErrorCondition.create(condition, description, null));
+                receiver.close(ErrorCondition.create(condition, description, null));
             } else {
-                receiver.detach(org.messaginghub.amqperative.ErrorCondition.create(condition, description, null));
+                receiver.detach(ErrorCondition.create(condition, description, null));
             }
 
             connection.close().get();
