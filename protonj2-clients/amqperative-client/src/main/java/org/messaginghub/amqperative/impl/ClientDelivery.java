@@ -22,6 +22,7 @@ import org.messaginghub.amqperative.Delivery;
 import org.messaginghub.amqperative.DeliveryState;
 import org.messaginghub.amqperative.Message;
 import org.messaginghub.amqperative.Receiver;
+import org.messaginghub.amqperative.impl.exceptions.ClientPartialMessageException;
 
 /**
  * Client inbound delivery object.
@@ -51,8 +52,7 @@ public class ClientDelivery implements Delivery {
     @Override
     public <E> Message<E> message() throws ClientException {
         if (delivery.isPartial()) {
-            // TODO - Client exception of some sort, ClientPartialMessageException etc
-            throw new IllegalStateException("Message is still only partially delivered.");
+            throw new ClientPartialMessageException("Delivery contains only a partial amount of the message payload.");
         }
 
         Message<E> message = (Message<E>) cachedMessage;
@@ -73,11 +73,7 @@ public class ClientDelivery implements Delivery {
     public Delivery disposition(DeliveryState state, boolean settle) {
         org.apache.qpid.proton4j.amqp.transport.DeliveryState protonState = null;
         if (state != null) {
-            try {
-                protonState = ((ClientDeliveryState) state).getProtonDeliveryState();
-            } catch (ClassCastException ccex) {
-                throw new IllegalArgumentException("Unknown DeliveryState type given, no disposition applied to Delivery.");
-            }
+            protonState = ClientDeliveryState.asProtonType(state);
         }
 
         receiver.disposition(delivery, protonState, settle);
@@ -99,9 +95,6 @@ public class ClientDelivery implements Delivery {
     public DeliveryState remoteState() {
         return ClientDeliveryState.fromProtonType(delivery.getRemoteState());
     }
-
-    // TODO: Additional note about hiding this away someplace where it is less likely to
-    //       confuse / harm the caller since it isn't really telling of actual remote settled.
 
     @Override
     public boolean remoteSettled() {

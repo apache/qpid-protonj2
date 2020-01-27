@@ -73,11 +73,7 @@ public class ClientTracker implements Tracker {
     public ClientTracker disposition(DeliveryState state, boolean settle) {
         org.apache.qpid.proton4j.amqp.transport.DeliveryState protonState = null;
         if (state != null) {
-            try {
-                protonState = ((ClientDeliveryState) state).getProtonDeliveryState();
-            } catch (ClassCastException ccex) {
-                throw new IllegalArgumentException("Unknown DeliveryState type given, no disposition applied to Delivery.");
-            }
+            protonState = ClientDeliveryState.asProtonType(state);
         }
 
         sender.disposition(delivery, protonState, settle);

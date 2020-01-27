@@ -33,7 +33,6 @@ public interface DeliveryState {
         REJECTED,
         MODIFIED,
         RELEASED,
-        RECEIVED,
         TRANSACTIONAL
     }
 

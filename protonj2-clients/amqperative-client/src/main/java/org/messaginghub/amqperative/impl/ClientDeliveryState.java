@@ -95,6 +95,29 @@ public abstract class ClientDeliveryState implements DeliveryState {
         }
     }
 
+    static org.apache.qpid.proton4j.amqp.transport.DeliveryState asProtonType(DeliveryState state) {
+        if (state == null) {
+            return null;
+        } else if (state instanceof ClientDeliveryState) {
+            return ((ClientDeliveryState) state).getProtonDeliveryState();
+        } else {
+            switch (state.getType()) {
+                case ACCEPTED:
+                    return Accepted.getInstance();
+                case RELEASED:
+                    return Released.getInstance();
+                case REJECTED:
+                    return new Rejected(); // TODO - How do we aggregate the different values into one DeliveryState Object
+                case MODIFIED:
+                    return new Modified(); // TODO - How do we aggregate the different values into one DeliveryState Object
+                case TRANSACTIONAL:
+                    // TODO
+                default:
+                    throw new UnsupportedOperationException("Client does not support the given Delivery State type: " + state.getType());
+            }
+        }
+    }
+
     //----- Delivery State implementations
 
     public static class ClientAccepted extends ClientDeliveryState {
