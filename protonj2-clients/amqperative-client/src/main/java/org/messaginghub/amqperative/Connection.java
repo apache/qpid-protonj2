@@ -30,9 +30,6 @@ import org.messaginghub.amqperative.impl.ClientException;
  */
 public interface Connection {
 
-    // TODO - API docs should;d better reflect the implied state of the returned objects
-    //        like senders, receivers and session where the might not yet be remotely opened.
-
     /**
      * @return the {@link Client} instance that holds this {@link Connection}
      */
@@ -72,6 +69,11 @@ public interface Connection {
      * be configured using default options and will take its timeout configuration values from those specified
      * in the parent {@link Connection}.
      *
+     * The returned receiver may not have been opened on the remote when it is returned.  Some methods of the
+     * {@link Receiver} can block until the remote fully opens the receiver, the user can wait for the remote
+     * to respond to the open request by calling the {@link Receiver#openFuture()} method and using the
+     * {@link Future#get()} methods to wait for completion.
+     *
      * @param address
      *            The source address to attach the consumer to.
      *
@@ -84,6 +86,11 @@ public interface Connection {
     /**
      * Creates a receiver used to consumer messages from the given node address.  The returned receiver
      * will be configured using the options provided in the given {@link ReceiverOptions} instance.
+     *
+     * The returned receiver may not have been opened on the remote when it is returned.  Some methods of the
+     * {@link Receiver} can block until the remote fully opens the receiver, the user can wait for the remote
+     * to respond to the open request by calling the {@link Receiver#openFuture()} method and using the
+     * {@link Future#get()} methods to wait for completion.
      *
      * @param address
      *            The source address to attach the consumer to.
@@ -101,6 +108,11 @@ public interface Connection {
      * will be configured using default options and will take its timeout configuration values from those
      * specified in the parent {@link Connection}.
      *
+     * The returned receiver may not have been opened on the remote when it is returned.  Some methods of the
+     * {@link Receiver} can block until the remote fully opens the receiver, the user can wait for the remote
+     * to respond to the open request by calling the {@link Receiver#openFuture()} method and using the
+     * {@link Future#get()} methods to wait for completion.
+     *
      * @return the newly created {@link Receiver}
      *
      * @throws ClientException if an internal error occurs.
@@ -109,6 +121,11 @@ public interface Connection {
 
     /**
      * Creates a dynamic receiver used to consume messages from the given node address.
+     *
+     * The returned receiver may not have been opened on the remote when it is returned.  Some methods of the
+     * {@link Receiver} can block until the remote fully opens the receiver, the user can wait for the remote
+     * to respond to the open request by calling the {@link Receiver#openFuture()} method and using the
+     * {@link Future#get()} methods to wait for completion.
      *
      * @param dynamicNodeProperties
      * 		The dynamic node properties to be applied to the node created by the remote.
@@ -122,6 +139,11 @@ public interface Connection {
     /**
      * Creates a dynamic receiver used to consume messages from the given node address.
      *
+     * The returned receiver may not have been opened on the remote when it is returned.  Some methods of the
+     * {@link Receiver} can block until the remote fully opens the receiver, the user can wait for the remote
+     * to respond to the open request by calling the {@link Receiver#openFuture()} method and using the
+     * {@link Future#get()} methods to wait for completion.
+     *
      * @param receiverOptions
      * 		The options for this receiver.
      *
@@ -134,6 +156,11 @@ public interface Connection {
     /**
      * Creates a dynamic receiver used to consume messages from the given node address.
      *
+     * The returned receiver may not have been opened on the remote when it is returned.  Some methods of the
+     * {@link Receiver} can block until the remote fully opens the receiver, the user can wait for the remote
+     * to respond to the open request by calling the {@link Receiver#openFuture()} method and using the
+     * {@link Future#get()} methods to wait for completion.
+     *
      * @param dynamicNodeProperties
      * 		The dynamic node properties to be applied to the node created by the remote.
      * @param receiverOptions
@@ -144,8 +171,6 @@ public interface Connection {
      * @throws ClientException if an internal error occurs.
      */
     Receiver openDynamicReceiver(Map<String, Object> dynamicNodeProperties, ReceiverOptions receiverOptions) throws ClientException;
-
-    // TODO: Why have both send + defaultSender methods? To allow for waiting for the attach/open to complete before send?
 
     /**
      * Returns the default anonymous sender used by this {@link Connection} for {@link #send(Message)}
@@ -163,6 +188,11 @@ public interface Connection {
      * be configured using default options and will take its timeout configuration values from those
      * specified in the parent {@link Connection}.
      *
+     * The returned {@link Sender} may not have been opened on the remote when it is returned.  Some methods
+     * of the {@link Sender} can block until the remote fully opens the sender, the user can wait for the
+     * remote to respond to the open request by calling the {@link Sender#openFuture()} method and using the
+     * {@link Future#get()} methods to wait for completion.
+     *
      * @param address
      *            The target address to attach to, cannot be null.
      *
@@ -174,6 +204,11 @@ public interface Connection {
 
     /**
      * Creates a sender used to send messages to the given node address.
+     *
+     * The returned {@link Sender} may not have been opened on the remote when it is returned.  Some methods
+     * of the {@link Sender} can block until the remote fully opens the sender, the user can wait for the
+     * remote to respond to the open request by calling the {@link Sender#openFuture()} method and using the
+     * {@link Future#get()} methods to wait for completion.
      *
      * @param address
      *            The target address to attach to, cannot be null.
@@ -192,6 +227,11 @@ public interface Connection {
      * The returned sender will be configured using default options and will take its timeout
      * configuration values from those specified in the parent {@link Connection}.
      *
+     * The returned {@link Sender} may not have been opened on the remote when it is returned.  Some methods
+     * of the {@link Sender} can block until the remote fully opens the sender, the user can wait for the
+     * remote to respond to the open request by calling the {@link Sender#openFuture()} method and using the
+     * {@link Future#get()} methods to wait for completion.
+     *
      * @return the sender.
      *
      * @throws ClientException if an internal error occurs.
@@ -202,6 +242,11 @@ public interface Connection {
      * Creates a sender that is established to the 'anonymous relay' and as such each
      * message that is sent using this sender must specify an address in its destination
      * address field.
+     *
+     * The returned {@link Sender} may not have been opened on the remote when it is returned.  Some methods
+     * of the {@link Sender} can block until the remote fully opens the sender, the user can wait for the
+     * remote to respond to the open request by calling the {@link Sender#openFuture()} method and using the
+     * {@link Future#get()} methods to wait for completion.
      *
      * @param senderOptions
      *            The options for this sender.
@@ -229,6 +274,11 @@ public interface Connection {
      * will be configured using default options and will take its timeout configuration values from those
      * specified in the parent {@link Connection}.
      *
+     * The returned {@link Session} may not have been opened on the remote when it is returned.  Some methods
+     * of the {@link Session} can block until the remote fully opens the session, the user can wait for the
+     * remote to respond to the open request by calling the {@link Session#openFuture()} method and using the
+     * {@link Future#get()} methods to wait for completion.
+     *
      * @return a new {@link Session} instance.
      *
      * @throws ClientException if an internal error occurs.
@@ -237,6 +287,11 @@ public interface Connection {
 
     /**
      * Creates a new {@link Session} instance for use by the client application.
+     *
+     * The returned {@link Session} may not have been opened on the remote when it is returned.  Some methods
+     * of the {@link Session} can block until the remote fully opens the session, the user can wait for the
+     * remote to respond to the open request by calling the {@link Session#openFuture()} method and using the
+     * {@link Future#get()} methods to wait for completion.
      *
      * @param options
      *      The {@link SessionOptions} that control properties of the created session.
