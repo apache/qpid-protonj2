@@ -31,6 +31,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 
 import org.apache.qpid.proton4j.engine.Engine;
+import org.messaginghub.amqperative.ErrorCondition;
 import org.messaginghub.amqperative.Receiver;
 import org.messaginghub.amqperative.ReceiverOptions;
 import org.messaginghub.amqperative.Sender;
@@ -105,15 +106,29 @@ public class ClientSession implements Session {
 
     @Override
     public Future<Session> close() {
+        return doClose(null);
+    }
+
+    @Override
+    public Future<Session> close(ErrorCondition error) {
+        Objects.requireNonNull(error, "Supplied error condition cannot be null");
+        return doClose(error);
+    }
+
+    private Future<Session> doClose(ErrorCondition error) {
         if (CLOSED_UPDATER.compareAndSet(this, 0, 1)) {
             serializer.execute(() -> {
-                try {
-                    protonSession.close();
-                } catch (Throwable error) {
-                    // Allow engine error handler to deal with this
+                if (protonSession.isLocallyOpen()) {
+                    try {
+                        protonSession.setCondition(ClientErrorCondition.asProtonErrorCondition(error));
+                        protonSession.close();
+                    } catch (Throwable ignore) {
+                        // Allow engine error handler to deal with this
+                    }
                 }
             });
         }
+
         return closeFuture;
     }
 

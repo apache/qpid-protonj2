@@ -37,7 +37,7 @@ public class ClientTest extends AMQPerativeTestCase {
      * container id as that is mandatory and the only reason one would
      * be supplying ClientOptions instances.
      */
-    @Test
+    @Test(timeout = 20000)
     public void testCreateWithNoContainerIdFails() {
         ClientOptions options = new ClientOptions();
         assertNull(options.id());
@@ -50,7 +50,7 @@ public class ClientTest extends AMQPerativeTestCase {
         }
     }
 
-    @Test
+    @Test(timeout = 20000)
     public void testCreateWithContainerId() {
         final String id = "test-id";
 
@@ -63,7 +63,7 @@ public class ClientTest extends AMQPerativeTestCase {
         assertEquals(id, client.containerId());
     }
 
-    @Test
+    @Test(timeout = 20000)
     public void testCoseClientAndConnectShouldFail() throws ClientException {
         Client client = Client.create();
         assertTrue(client.close().isDone());

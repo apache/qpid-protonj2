@@ -57,6 +57,17 @@ public interface Connection {
     Future<Connection> close();
 
     /**
+     * Requests a close of the {@link Connection} at the remote and returns a {@link Future} that will be
+     * completed once the Connection has been fully closed.
+     *
+     * @param error
+     * 		The {@link ErrorCondition} to transmit to the remote along with the close operation.
+     *
+     * @return a {@link Future} that will be completed when the remote closes this {@link Connection}.
+     */
+    Future<Connection> close(ErrorCondition error);
+
+    /**
      * Creates a receiver used to consumer messages from the given node address.  The returned receiver will
      * be configured using default options and will take its timeout configuration values from those specified
      * in the parent {@link Connection}.

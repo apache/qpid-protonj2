@@ -29,7 +29,6 @@ import java.util.concurrent.TimeUnit;
 
 import org.apache.qpid.proton4j.amqp.driver.netty.NettyTestPeer;
 import org.apache.qpid.proton4j.amqp.transport.AmqpError;
-import org.apache.qpid.proton4j.amqp.transport.ErrorCondition;
 import org.junit.Test;
 import org.messaginghub.amqperative.impl.ClientException;
 import org.messaginghub.amqperative.impl.exceptions.ClientOperationTimedOutException;
@@ -157,8 +156,7 @@ public class SessionTest extends AMQPerativeTestCase {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin().respond();
-            peer.expectEnd().respond().withErrorCondition(
-                new ErrorCondition(AmqpError.INTERNAL_ERROR, "Something odd happened."));
+            peer.expectEnd().respond().withErrorCondition(AmqpError.INTERNAL_ERROR, "Something odd happened.");
             peer.expectClose().respond();
             peer.start();
 
@@ -420,6 +418,36 @@ public class SessionTest extends AMQPerativeTestCase {
                 // Expected so ignore any timeout based failures
                 assertTrue(error.getCause() instanceof ClientOperationTimedOutException);
             }
+
+            connection.close().get();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test(timeout = 30000)
+    public void testCloseWithErrorCondition() throws Exception {
+        final String condition = "amqp:precondition-failed";
+        final String description = "something bad happened.";
+
+        try (NettyTestPeer peer = new NettyTestPeer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectEnd().withError(condition, description).respond();
+            peer.expectClose().respond();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            Session session = connection.openSession();
+
+            session.openFuture().get();
+            session.close(ErrorCondition.create(condition, description, null));
 
             connection.close().get();
 

@@ -164,26 +164,26 @@ public class ClientSender implements Sender {
     private ClientFuture<Sender> doCloseOrDetach(boolean close, ErrorCondition error) {
         if (CLOSED_UPDATER.compareAndSet(this, 0, 1)) {
             executor.execute(() -> {
-                try {
-                    if (error != null) {
+                if (protonSender.isLocallyOpen()) {
+                    try {
                         protonSender.setCondition(ClientErrorCondition.asProtonErrorCondition(error));
+
+                        if (close) {
+                            protonSender.close();
+                        } else {
+                            protonSender.detach();
+                        }
+                    } catch (Throwable ignore) {
+                        closeFuture.complete(this);
                     }
 
-                    if (close) {
-                        protonSender.close();
-                    } else {
-                        protonSender.detach();
-                    }
-                } catch (Throwable ignore) {
-                    closeFuture.complete(this);
-                }
+                    if (!closeFuture.isDone()) {
+                        final long timeout = options.closeTimeout();
 
-                if (!closeFuture.isDone()) {
-                    final long timeout = options.closeTimeout();
-
-                    if (timeout > 0) {
-                        session.scheduleRequestTimeout(closeFuture, timeout,
-                            () -> new ClientOperationTimedOutException("Timed out waiting for Sender to close or detach"));
+                        if (timeout > 0) {
+                            session.scheduleRequestTimeout(closeFuture, timeout,
+                                () -> new ClientOperationTimedOutException("Timed out waiting for Sender to close or detach"));
+                        }
                     }
                 }
             });

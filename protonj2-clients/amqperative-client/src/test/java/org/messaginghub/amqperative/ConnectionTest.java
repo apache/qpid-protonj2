@@ -36,7 +36,6 @@ import org.apache.qpid.proton4j.amqp.driver.netty.NettyTestPeer;
 import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
 import org.apache.qpid.proton4j.amqp.transport.AmqpError;
 import org.apache.qpid.proton4j.amqp.transport.ConnectionError;
-import org.apache.qpid.proton4j.amqp.transport.ErrorCondition;
 import org.apache.qpid.proton4j.amqp.transport.Role;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
@@ -156,8 +155,7 @@ public class ConnectionTest extends AMQPerativeTestCase {
         try (NettyTestPeer peer = new NettyTestPeer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
-            peer.expectClose().respond().
-                               withErrorCondition(new ErrorCondition(ConnectionError.CONNECTION_FORCED, "Not accepting connections"));
+            peer.expectClose().respond().withErrorCondition(ConnectionError.CONNECTION_FORCED, "Not accepting connections");
             peer.start();
 
             URI remoteURI = peer.getServerURI();
@@ -186,8 +184,7 @@ public class ConnectionTest extends AMQPerativeTestCase {
         try (NettyTestPeer peer = new NettyTestPeer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
-            peer.remoteClose().withErrorCondition(
-                    new ErrorCondition(ConnectionError.CONNECTION_FORCED, "Not accepting connections")).queue();
+            peer.remoteClose().withErrorCondition(ConnectionError.CONNECTION_FORCED, "Not accepting connections").queue();
             peer.expectClose();
             peer.start();
 
@@ -264,7 +261,7 @@ public class ConnectionTest extends AMQPerativeTestCase {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
             peer.expectBegin();
-            peer.remoteClose().withErrorCondition(new ErrorCondition(AmqpError.NOT_ALLOWED, BREAD_CRUMB)).queue();
+            peer.remoteClose().withErrorCondition(AmqpError.NOT_ALLOWED, BREAD_CRUMB).queue();
             peer.expectClose();
             peer.start();
 
@@ -713,6 +710,30 @@ public class ConnectionTest extends AMQPerativeTestCase {
             }
 
             connection.close().get();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test(timeout = 30000)
+    public void testCloseWithErrorCondition() throws Exception {
+        final String condition = "amqp:precondition-failed";
+        final String description = "something bad happened.";
+
+        try (NettyTestPeer peer = new NettyTestPeer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectClose().withError(condition, description).respond();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort()).openFuture().get();
+
+            connection.close(ErrorCondition.create(condition, description, null));
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }

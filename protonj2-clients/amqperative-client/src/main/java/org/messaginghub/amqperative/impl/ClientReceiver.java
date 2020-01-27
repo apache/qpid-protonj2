@@ -208,28 +208,28 @@ public class ClientReceiver implements Receiver {
     private ClientFuture<Receiver> doCloseOrDetach(boolean close, ErrorCondition error) {
         if (CLOSED_UPDATER.compareAndSet(this, 0, 1)) {
             executor.execute(() -> {
-                try {
-                    messageQueue.stop();  // Ensure blocked receivers are all unblocked.
+                if (protonReceiver.isLocallyOpen()) {
+                    try {
+                        messageQueue.stop();  // Ensure blocked receivers are all unblocked.
 
-                    if (error != null) {
                         protonReceiver.setCondition(ClientErrorCondition.asProtonErrorCondition(error));
+
+                        if (close) {
+                            protonReceiver.close();
+                        } else {
+                            protonReceiver.detach();
+                        }
+                    } catch (Throwable ignore) {
+                        closeFuture.complete(this);
                     }
 
-                    if (close) {
-                        protonReceiver.close();
-                    } else {
-                        protonReceiver.detach();
-                    }
-                } catch (Throwable ignore) {
-                    closeFuture.complete(this);
-                }
+                    if (!closeFuture.isDone()) {
+                        final long timeout = options.closeTimeout();
 
-                if (!closeFuture.isDone()) {
-                    final long timeout = options.closeTimeout();
-
-                    if (timeout > 0) {
-                        session.scheduleRequestTimeout(closeFuture, timeout,
-                            () -> new ClientOperationTimedOutException("Timed out waiting for Receiver to close or detach"));
+                        if (timeout > 0) {
+                            session.scheduleRequestTimeout(closeFuture, timeout,
+                                () -> new ClientOperationTimedOutException("Timed out waiting for Receiver to close or detach"));
+                        }
                     }
                 }
             });

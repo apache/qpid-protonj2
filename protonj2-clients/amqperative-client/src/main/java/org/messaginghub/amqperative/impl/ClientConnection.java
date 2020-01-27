@@ -42,6 +42,7 @@ import org.apache.qpid.proton4j.engine.sasl.client.SaslMechanismSelector;
 import org.messaginghub.amqperative.Client;
 import org.messaginghub.amqperative.Connection;
 import org.messaginghub.amqperative.ConnectionOptions;
+import org.messaginghub.amqperative.ErrorCondition;
 import org.messaginghub.amqperative.Message;
 import org.messaginghub.amqperative.Receiver;
 import org.messaginghub.amqperative.ReceiverOptions;
@@ -157,18 +158,29 @@ public class ClientConnection implements Connection {
 
     @Override
     public Future<Connection> close() {
+        return doClose(null);
+    }
+
+    @Override
+    public Future<Connection> close(ErrorCondition error) {
+        Objects.requireNonNull(error, "Error supplied cannot be null");
+
+        return doClose(error);
+    }
+
+    private Future<Connection> doClose(ErrorCondition error) {
         if (CLOSED_UPDATER.compareAndSet(this, 0, 1)) {
-            if (executor != null && !executor.isShutdown()) {
-                executor.execute(() -> {
+            executor.execute(() -> {
+                if (protonConnection.isLocallyOpen()) {
+                    protonConnection.setCondition(ClientErrorCondition.asProtonErrorCondition(error));
+
                     try {
                         protonConnection.close();
                     } catch (Throwable ignored) {
                         // Engine error handler will kick in if the write of Close fails
                     }
-                });
-            } else {
-                closeFuture.complete(this);
-            }
+                }
+            });
         }
 
         return closeFuture;

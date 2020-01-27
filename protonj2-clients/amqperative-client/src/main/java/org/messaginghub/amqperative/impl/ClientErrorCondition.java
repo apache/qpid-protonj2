@@ -68,7 +68,9 @@ public final class ClientErrorCondition implements ErrorCondition {
     }
 
     static org.apache.qpid.proton4j.amqp.transport.ErrorCondition asProtonErrorCondition(ErrorCondition condition) {
-        if (condition instanceof ClientErrorCondition) {
+        if (condition == null) {
+            return null;
+        } else if (condition instanceof ClientErrorCondition) {
             return ((ClientErrorCondition) condition).getProtonErrorCondition();
         } else {
             return new ClientErrorCondition(condition).getProtonErrorCondition();
