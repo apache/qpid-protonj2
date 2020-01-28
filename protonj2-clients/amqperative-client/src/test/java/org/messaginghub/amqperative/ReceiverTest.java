@@ -611,14 +611,12 @@ public class ReceiverTest extends AMQPerativeTestCase {
             LOG.info("Test started, peer listening on: {}", remoteURI);
 
             Client container = Client.create();
-            ConnectionOptions options = new ConnectionOptions().openTimeout(100);
-            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), options);
-            connection.openFuture().get();
-
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
             Session session = connection.openSession();
             session.openFuture().get();
 
-            Receiver receiver = session.openReceiver("test-receiver");
+            ReceiverOptions options = new ReceiverOptions().openTimeout(100);
+            Receiver receiver = session.openReceiver("test-receiver", options);
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
 
