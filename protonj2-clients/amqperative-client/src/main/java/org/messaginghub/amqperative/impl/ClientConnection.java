@@ -543,13 +543,6 @@ public class ClientConnection implements Connection {
                 }
             }, options.closeTimeout(), TimeUnit.MILLISECONDS);
         } else {
-            // TODO - Once session handles engine shutdown events we can remove this.
-            protonConnection.sessions().forEach(session -> {
-                try {
-                    session.close();
-                } catch (Throwable ignored) {}
-            });
-
             // Ensure that engine is shutdown and cleanup processing kicks in.
             try {
                 engine.shutdown();
