@@ -65,7 +65,6 @@ public class ClientReceiver implements Receiver {
     private final String receiverId;
     private final FifoDeliveryQueue messageQueue;
     private volatile int closed;
-    private Consumer<ClientReceiver> receiverRemotelyClosedHandler;
 
     private volatile Source remoteSource;
     private volatile Target remoteTarget;
@@ -120,11 +119,6 @@ public class ClientReceiver implements Receiver {
     @Override
     public Session session() {
         return session;
-    }
-
-    ClientReceiver remotelyClosedHandler(Consumer<ClientReceiver> handler) {
-        this.receiverRemotelyClosedHandler = handler;
-        return this;
     }
 
     @Override
@@ -425,10 +419,6 @@ public class ClientReceiver implements Receiver {
 
             openFuture.failed(failureCause.get());
             closeFuture.complete(this);
-
-            if (receiverRemotelyClosedHandler != null) {
-                receiverRemotelyClosedHandler.accept(this);
-            }
         } else {
             closeFuture.complete(this);
         }
