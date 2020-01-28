@@ -273,10 +273,11 @@ class FrameDecoder {
                         "Frame body type expected to be " + Codec.DataType.DESCRIBED + " but was: " + dataType);
                 }
 
-                val = codec.getDescribedType();
-
-                // Reset for next frame.
-                codec.clear();
+                try {
+                    val = codec.getDescribedType();
+                } finally {
+                    codec.clear();
+                }
 
                 // Slice to the known Frame body size and use that as the buffer for any payload once
                 // the actual Performative has been decoded.  The implies that the data comprising the
