@@ -47,7 +47,6 @@ public class Request {
             Connection connection = client.connect(brokerHost, brokerPort);
 
             Receiver dynamicReceiver = connection.openDynamicReceiver();
-            dynamicReceiver.openFuture().get();  // Waiting for remote to provide address
             String dynamicAddress = dynamicReceiver.address();
             System.out.println("Waiting for response to requests on address: " + dynamicAddress);
 
