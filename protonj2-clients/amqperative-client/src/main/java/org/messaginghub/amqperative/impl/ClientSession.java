@@ -480,7 +480,7 @@ public class ClientSession implements Session {
     }
 
     private void handleRemoteClose(org.apache.qpid.proton4j.engine.Session session) {
-        if (!session.isLocallyClosed()) {
+        if (session.isLocallyOpen()) {
             final ClientException error;
 
             if (session.getRemoteCondition() != null) {
@@ -489,7 +489,7 @@ public class ClientSession implements Session {
                 error = new ClientResourceClosedException("Session remotely closed without explanation");
             }
 
-            if (failureCause != null) {
+            if (failureCause == null) {
                 failureCause = error;
             }
 

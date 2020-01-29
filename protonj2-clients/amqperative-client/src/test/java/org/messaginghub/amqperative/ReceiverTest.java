@@ -103,14 +103,14 @@ public class ReceiverTest extends AMQPerativeTestCase {
             Client container = Client.create();
             Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
 
-            connection.openFuture().get(10, TimeUnit.SECONDS);
+            connection.openFuture().get();
 
             Session session = connection.openSession();
-            session.openFuture().get(10, TimeUnit.SECONDS);
+            session.openFuture().get();
 
             Receiver receiver = session.openReceiver("test-queue");
             try {
-                receiver.openFuture().get(10, TimeUnit.SECONDS);
+                receiver.openFuture().get();
                 fail("Open of receiver should fail due to remote indicating pending close.");
             } catch (ExecutionException exe) {
                 assertNotNull(exe.getCause());
@@ -120,10 +120,10 @@ public class ReceiverTest extends AMQPerativeTestCase {
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
 
             // Should not result in any close being sent now, already closed.
-            receiver.close().get(10, TimeUnit.SECONDS);
+            receiver.close().get();
 
             peer.expectClose().respond();
-            connection.close().get(10, TimeUnit.SECONDS);
+            connection.close().get();
 
             peer.waitForScriptToComplete(1, TimeUnit.SECONDS);
         }
@@ -401,7 +401,16 @@ public class ReceiverTest extends AMQPerativeTestCase {
                 }
             }
 
-            receiver.close().get();
+            if (attachResponse) {
+                receiver.close().get();
+            } else {
+                try {
+                    receiver.close().get();
+                    fail("Should fail close to indicate remote misbehaving when connection not closed");
+                } catch (ExecutionException ex) {
+                    LOG.debug("Caught expected exception from close call", ex);
+                }
+            }
 
             peer.expectClose().respond();
             connection.close().get();
@@ -517,7 +526,16 @@ public class ReceiverTest extends AMQPerativeTestCase {
                 }
             }
 
-            receiver.close().get();
+            if (attachResponse) {
+                receiver.close().get();
+            } else {
+                try {
+                    receiver.close().get();
+                    fail("Should fail close to indicate remote misbehaving when connection not closed");
+                } catch (ExecutionException ex) {
+                    LOG.debug("Caught expected exception from close call", ex);
+                }
+            }
 
             peer.expectClose().respond();
             connection.close().get();
@@ -579,7 +597,16 @@ public class ReceiverTest extends AMQPerativeTestCase {
                 }
             }
 
-            receiver.close().get();
+            if (attachResponse) {
+                receiver.close().get();
+            } else {
+                try {
+                    receiver.close().get();
+                    fail("Should fail close to indicate remote misbehaving when connection not closed");
+                } catch (ExecutionException ex) {
+                    LOG.debug("Caught expected exception from close call", ex);
+                }
+            }
 
             peer.expectClose().respond();
             connection.close().get();
@@ -643,7 +670,16 @@ public class ReceiverTest extends AMQPerativeTestCase {
                 }
             }
 
-            receiver.close().get();
+            if (attachResponse) {
+                receiver.close().get();
+            } else {
+                try {
+                    receiver.close().get();
+                    fail("Should fail close to indicate remote misbehaving when connection not closed");
+                } catch (ExecutionException ex) {
+                    LOG.debug("Caught expected exception from close call", ex);
+                }
+            }
 
             peer.expectClose().respond();
             connection.close().get();
@@ -707,7 +743,16 @@ public class ReceiverTest extends AMQPerativeTestCase {
                 }
             }
 
-            receiver.close().get();
+            if (attachResponse) {
+                receiver.close().get();
+            } else {
+                try {
+                    receiver.close().get();
+                    fail("Should fail close to indicate remote misbehaving when connection not closed");
+                } catch (ExecutionException ex) {
+                    LOG.debug("Caught expected exception from close call", ex);
+                }
+            }
 
             peer.expectClose().respond();
             connection.close().get();
@@ -771,7 +816,16 @@ public class ReceiverTest extends AMQPerativeTestCase {
                 }
             }
 
-            receiver.close().get();
+            if (attachResponse) {
+                receiver.close().get();
+            } else {
+                try {
+                    receiver.close().get();
+                    fail("Should fail close to indicate remote misbehaving when connection not closed");
+                } catch (ExecutionException ex) {
+                    LOG.debug("Caught expected exception from close call", ex);
+                }
+            }
 
             peer.expectClose().respond();
             connection.close().get();
