@@ -567,20 +567,6 @@ public interface Link<T extends Link<T>> {
     T closeHandler(EventHandler<T> remoteCloseHandler);
 
     /**
-     * Sets an {@link EventHandler} that is called when the parent {@link Session} is locally closed.
-     *
-     * Used to trigger link related cleanup work should the parent {@link Session} be closed before
-     * this {@link Link} instance.  It is not required that an application deal with this event but it
-     * can provide a useful notification that this link and its associated resources should now be closed
-     * and cleaned up.
-     *
-     * @param sessionClosedEventHandler
-     *
-     * @return the link for chaining.
-     */
-    T sessionClosedHandler(EventHandler<T> sessionClosedEventHandler);
-
-    /**
      * Sets an {@link EventHandler} that is invoked when the engine that supports this {@link Link} is shutdown
      * via a call to {@link Engine#shutdown()} which indicates a desire to terminate all engine operations. Any
      * link that has been both locally and remotely closed will not receive this event as it will no longer be

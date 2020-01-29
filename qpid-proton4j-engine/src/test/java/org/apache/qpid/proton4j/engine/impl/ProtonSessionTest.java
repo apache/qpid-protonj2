@@ -108,38 +108,6 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
     }
 
     @Test(timeout = 30000)
-    public void testSessionSignalsConnectionClosedEvent() throws Exception {
-        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
-        engine.errorHandler(result -> failure = result);
-        ProtonTestPeer peer = new ProtonTestPeer(engine);
-        engine.outputConsumer(peer);
-
-        final AtomicBoolean connectionClosed = new AtomicBoolean();
-
-        peer.expectAMQPHeader().respondWithAMQPHeader();
-        peer.expectOpen().respond().withContainerId("driver");
-        peer.expectBegin().respond();
-        peer.expectClose().respond();
-
-        Connection connection = engine.start().open();
-        Session session = connection.session().open();
-
-        session.connectionClosedHandler(result -> {
-            connectionClosed.lazySet(true);
-            // Parent is closed so no frames should be emitted and no errors thrown
-            session.close();
-        });
-
-        connection.close();
-
-        assertTrue("Session should have reported parent connection closed", connectionClosed.get());
-
-        peer.waitForScriptToComplete();
-
-        assertNull(failure);
-    }
-
-    @Test(timeout = 30000)
     public void testEngineShutdownEventNeitherEndClosed() throws Exception {
         doTestEngineShutdownEvent(false, false);
     }

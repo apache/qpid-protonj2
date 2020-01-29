@@ -396,20 +396,6 @@ public interface Session {
     Session receiverOpenHandler(EventHandler<Receiver> remoteReceiverOpenEventHandler);
 
     /**
-     * Sets an {@link EventHandler} that is called when the parent connection is locally closed.
-     *
-     * Used to trigger session related cleanup work should the parent {@link Connection} be closed before
-     * this {@link Session} instance.  It is not required that an application deal with this event but it
-     * can provide a useful notification that this session and its associated resources should now be closed
-     * and cleaned up.
-     *
-     * @param connectionClosedEventHandler
-     *
-     * @return this session for chaining
-     */
-    Session connectionClosedHandler(EventHandler<Session> connectionClosedEventHandler);
-
-    /**
      * Sets an {@link EventHandler} that is invoked when the engine that create this {@link Session} is shutdown
      * via a call to {@link Engine#shutdown()} which indicates a desire to terminate all engine operations.  Any
      * session that has been both locally and remotely ended will not receive this event as it will no longer be

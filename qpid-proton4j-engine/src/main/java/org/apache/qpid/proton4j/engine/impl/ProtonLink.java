@@ -75,7 +75,6 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
     private EventHandler<T> localOpenHandler;
     private EventHandler<T> localCloseHandler;
     private EventHandler<T> localDetachHandler;
-    private EventHandler<T> sessionClosedHandler;
     private EventHandler<Engine> engineShutdownHandler;
 
     // Left default to null as the session or connection overrides this by default.
@@ -501,12 +500,6 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
     }
 
     @Override
-    public T sessionClosedHandler(EventHandler<T> sessionClosedEventHandler) {
-        this.sessionClosedHandler = sessionClosedEventHandler;
-        return self();
-    }
-
-    @Override
     public T engineShutdownHandler(EventHandler<Engine> engineShutdownEventHandler) {
         this.engineShutdownHandler = engineShutdownEventHandler;
         return self();
@@ -551,10 +544,6 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
 
     void processParentSessionLocallyClosed() {
         transitionToParentLocallyClosedState();
-
-        try {
-            sessionClosedHandler.handle(self());
-        } catch (Throwable ignored) {}
     }
 
     void processParentConnectionLocallyClosed() {

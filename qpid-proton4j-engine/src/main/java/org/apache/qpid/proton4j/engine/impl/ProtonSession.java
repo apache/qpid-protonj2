@@ -95,7 +95,6 @@ public class ProtonSession implements Session {
 
     private EventHandler<Session> localOpenHandler;
     private EventHandler<Session> localCloseHandler;
-    private EventHandler<Session> connectionClosedHandler;
     private EventHandler<Engine> engineShutdownHandler;
 
     // No default for these handlers, Connection will process these if not set here.
@@ -449,16 +448,6 @@ public class ProtonSession implements Session {
         return engineShutdownHandler;
     }
 
-    @Override
-    public ProtonSession connectionClosedHandler(EventHandler<Session> connectionClosedEventHandler) {
-        this.connectionClosedHandler = connectionClosedEventHandler;
-        return this;
-    }
-
-    EventHandler<Session> connectionClosedHandler() {
-        return connectionClosedHandler;
-    }
-
     //----- Respond to local Connection changes
 
     void handleConnectionStateChanged(ProtonConnection connection) {
@@ -728,10 +717,6 @@ public class ProtonSession implements Session {
     }
 
     private void processParentConnectionLocallyClosed() {
-        try {
-            connectionClosedHandler.handle(this);
-        } catch (Throwable ignored) {}
-
         for (ProtonLink<?> link : localLinks.values()) {
             link.processParentConnectionLocallyClosed();
         }
