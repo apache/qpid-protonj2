@@ -165,10 +165,10 @@ public class ProtonSession implements Session {
 
     @Override
     public ProtonSession open() throws IllegalStateException, EngineStateException {
-        checkConnectionClosed();
-        getEngine().checkShutdownOrFailed("Cannot open a session when Engine is shutdown or failed.");
-
         if (getState() == SessionState.IDLE) {
+            checkConnectionClosed();
+            getEngine().checkShutdownOrFailed("Cannot open a session when Engine is shutdown or failed.");
+
             localState = SessionState.ACTIVE;
             incomingWindow.configureOutbound(localBegin);
             outgoingWindow.configureOutbound(localBegin);
@@ -187,9 +187,9 @@ public class ProtonSession implements Session {
     @Override
     public ProtonSession close() throws EngineFailedException {
         if (getState() == SessionState.ACTIVE) {
-            engine.checkFailed("Cannot close the session when engine is in the failed state");
             localState = SessionState.CLOSED;
             try {
+                engine.checkFailed("Session close called but engine is in a failed state.");
                 syncLocalStateWithRemote();
             } finally {
                 if (localCloseHandler != null) {

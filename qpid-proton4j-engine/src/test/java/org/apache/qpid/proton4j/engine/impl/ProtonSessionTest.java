@@ -625,13 +625,6 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
             LOG.trace("Got expected engine failure from session Begin write.", failure);
         }
 
-        try {
-            session.open();
-            fail("Second open should now fail because engine is failed");
-        } catch (EngineFailedException failure) {
-            LOG.trace("Got expected engine failure from session Begin write.", failure);
-        }
-
         peer.waitForScriptToComplete();
 
         assertNotNull(failure);

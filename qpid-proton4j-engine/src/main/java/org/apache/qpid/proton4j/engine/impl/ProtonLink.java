@@ -179,8 +179,10 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
 
     @Override
     public T open() {
-        checkSessionNotClosed();
         if (getState() == LinkState.IDLE) {
+            checkSessionNotClosed();
+            getEngine().checkShutdownOrFailed("Cannot open a Link when Engine is shutdown or failed.");
+
             localState = LinkState.ACTIVE;
             long localHandle = session.findFreeLocalHandle(this);
             localAttach.setHandle(localHandle);
@@ -200,10 +202,10 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
     @Override
     public T detach() {
         if (getState() == LinkState.ACTIVE) {
-            engine.checkFailed("Cannot close a link while the Engine is in the failed state.");
             localState = LinkState.DETACHED;
             transitionedToLocallyDetached();
             try {
+                engine.checkFailed("Closed called on already failed connection");
                 syncLocalStateWithRemote();
             } finally {
                 if (localDetachHandler != null) {
@@ -218,10 +220,10 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
     @Override
     public T close() {
         if (getState() == LinkState.ACTIVE) {
-            engine.checkFailed("Cannot close a link while the Engine is in the failed state.");
             localState = LinkState.CLOSED;
             transitionedToLocallyClosed();
             try {
+                engine.checkFailed("Detached called on already failed connection");
                 syncLocalStateWithRemote();
             } finally {
                 if (localCloseHandler != null) {

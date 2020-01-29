@@ -162,9 +162,9 @@ public class ProtonConnection implements Connection, AMQPHeader.HeaderHandler<Pr
     @Override
     public ProtonConnection close() throws EngineFailedException {
         if (getState() == ConnectionState.ACTIVE) {
-            getEngine().checkFailed("Cannot close a connection when Engine has failed.");
             localState = ConnectionState.CLOSED;
             try {
+                getEngine().checkFailed("Connection close called while engine .");
                 processStateChangeAndRespond();
             } finally {
                 allSessions().forEach(session -> session.handleConnectionStateChanged(this));
