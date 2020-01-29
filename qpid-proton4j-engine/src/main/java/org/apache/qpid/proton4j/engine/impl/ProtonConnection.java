@@ -16,7 +16,6 @@
  */
 package org.apache.qpid.proton4j.engine.impl;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -89,12 +88,6 @@ public class ProtonConnection implements Connection, AMQPHeader.HeaderHandler<Pr
     private EventHandler<Connection> remoteCloseHandler = (result) -> {
         LOG.trace("Remote close arrived at default handler.");
     };
-    private EventHandler<Connection> localOpenHandler = (result) -> {
-        LOG.trace("Connection has been locally opened.");
-    };
-    private EventHandler<Connection> localCloseHandler = (result) -> {
-        LOG.trace("Connection has been locally closed.");
-    };
     private EventHandler<Session> remoteSessionOpenEventHandler = (result) -> {
         LOG.trace("Remote session open arrived at default handler.");
     };
@@ -104,9 +97,10 @@ public class ProtonConnection implements Connection, AMQPHeader.HeaderHandler<Pr
     private EventHandler<Receiver> remoteReceiverOpenEventHandler = (result) -> {
         LOG.trace("Remote receiver open arrived at default handler.");
     };
-    private EventHandler<Engine> engineShutdownHandler = (result) -> {
-        LOG.trace("The underlying engine has been explicitly shutdown.");
-    };
+
+    private EventHandler<Connection> localOpenHandler;
+    private EventHandler<Connection> localCloseHandler;
+    private EventHandler<Engine> engineShutdownHandler;
 
     /**
      * Create a new unbound Connection instance.
@@ -155,8 +149,7 @@ public class ProtonConnection implements Connection, AMQPHeader.HeaderHandler<Pr
             try {
                 processStateChangeAndRespond();
             } finally {
-                ArrayList<ProtonSession> sessions = new ArrayList<>(localSessions.values());
-                sessions.forEach(session -> session.handleConnectionStateChanged(this));
+                allSessions().forEach(session -> session.handleConnectionStateChanged(this));
                 if (localOpenHandler != null) {
                     localOpenHandler.handle(this);
                 }
@@ -174,8 +167,7 @@ public class ProtonConnection implements Connection, AMQPHeader.HeaderHandler<Pr
             try {
                 processStateChangeAndRespond();
             } finally {
-                ArrayList<ProtonSession> sessions = new ArrayList<>(localSessions.values());
-                sessions.forEach(session -> session.handleConnectionStateChanged(this));
+                allSessions().forEach(session -> session.handleConnectionStateChanged(this));
                 if (localCloseHandler != null) {
                     localCloseHandler.handle(this);
                 }
@@ -417,20 +409,7 @@ public class ProtonConnection implements Connection, AMQPHeader.HeaderHandler<Pr
 
     @Override
     public Set<Session> sessions() throws IllegalStateException {
-        final Set<Session> result;
-
-        if (localSessions.isEmpty() && remoteSessions.isEmpty()) {
-            result = Collections.emptySet();
-        } else {
-            Set<Session> union = new HashSet<>(localSessions.size());
-
-            union.addAll(localSessions.values());
-            union.addAll(remoteSessions.values());
-
-            result = Collections.unmodifiableSet(union);
-        }
-
-        return result;
+        return Collections.unmodifiableSet(allSessions());
     }
 
     //----- Handle performatives sent from the remote to this Connection
@@ -673,8 +652,7 @@ public class ProtonConnection implements Connection, AMQPHeader.HeaderHandler<Pr
                 }
 
                 if (stateUpdated) {
-                    ArrayList<ProtonSession> sessions = new ArrayList<>(localSessions.values());
-                    sessions.forEach(session -> session.handleConnectionStateChanged(this));
+                    allSessions().forEach(session -> session.handleConnectionStateChanged(this));
                 }
             }
         } else if (!engine.isShutdown()) {
@@ -708,6 +686,21 @@ public class ProtonConnection implements Connection, AMQPHeader.HeaderHandler<Pr
         }
 
         throw new IllegalStateException("no local channel available for allocation");
+    }
+
+    @SuppressWarnings("unchecked")
+    private Set<ProtonSession> allSessions() {
+        final Set<ProtonSession> result;
+
+        if (localSessions.isEmpty() && remoteSessions.isEmpty()) {
+            result = Collections.EMPTY_SET;
+        } else {
+            result = new HashSet<>(localSessions.size());
+            result.addAll(localSessions.values());
+            result.addAll(remoteSessions.values());
+        }
+
+        return result;
     }
 
     void freeLocalChannel(int localChannel) {

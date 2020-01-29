@@ -366,7 +366,7 @@ public interface Session {
     Session closeHandler(EventHandler<Session> remoteCloseHandler);
 
     /**
-     * Sets a EventHandler for when an AMQP Attach frame is received from the remote peer for a sending link.
+     * Sets a {@link EventHandler} for when an AMQP Attach frame is received from the remote peer for a sending link.
      *
      * Used to process remotely initiated sending link.  Locally initiated links have their own EventHandler
      * invoked instead.  This method is Typically used by servers to listen for remote Receiver creation.
@@ -381,7 +381,7 @@ public interface Session {
     Session senderOpenHandler(EventHandler<Sender> remoteSenderOpenEventHandler);
 
     /**
-     * Sets a EventHandler for when an AMQP Attach frame is received from the remote peer for a receiving link.
+     * Sets a {@link EventHandler} for when an AMQP Attach frame is received from the remote peer for a receiving link.
      *
      * Used to process remotely initiated receiving link.  Locally initiated links have their own EventHandler
      * invoked instead.  This method is Typically used by servers to listen for remote Sender creation.
@@ -394,6 +394,20 @@ public interface Session {
      * @return this session for chaining
      */
     Session receiverOpenHandler(EventHandler<Receiver> remoteReceiverOpenEventHandler);
+
+    /**
+     * Sets an {@link EventHandler} that is called when the parent connection is locally closed.
+     *
+     * Used to trigger session related cleanup work should the parent {@link Connection} be closed before
+     * this {@link Session} instance.  It is not required that an application deal with this event but it
+     * can provide a useful notification that this session and its associated resources should now be closed
+     * and cleaned up.
+     *
+     * @param connectionClosedEventHandler
+     *
+     * @return this session for chaining
+     */
+    Session connectionClosedHandler(EventHandler<Session> connectionClosedEventHandler);
 
     /**
      * Sets an {@link EventHandler} that is invoked when the engine that create this {@link Session} is shutdown

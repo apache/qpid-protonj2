@@ -72,25 +72,20 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
     private ErrorCondition localError;
     private ErrorCondition remoteError;
 
+    private EventHandler<T> localOpenHandler;
+    private EventHandler<T> localCloseHandler;
+    private EventHandler<T> localDetachHandler;
+    private EventHandler<T> sessionClosedHandler;
+    private EventHandler<Engine> engineShutdownHandler;
+
+    // Left default to null as the session or connection overrides this by default.
     private EventHandler<T> remoteOpenHandler;
 
-    private EventHandler<T> localOpenHandler = (result) -> {
-        LOG.trace("Link {} locally opened.", self());
-    };
-    private EventHandler<T> localCloseHandler = (result) -> {
-        LOG.trace("Link {} locally closed.", self());
-    };
-    private EventHandler<T> localDetachHandler = (result) -> {
-        LOG.trace("Link {} locally detached.", self());
-    };
     private EventHandler<T> remoteDetachHandler = (result) -> {
         LOG.trace("Link {} Remote link detach arrived at default handler.", self());
     };
     private EventHandler<T> remoteCloseHandler = (result) -> {
         LOG.trace("Link {} Remote link close arrived at default handler.", self());
-    };
-    private EventHandler<Engine> engineShutdownHandler = (result) -> {
-        LOG.trace("The underlying engine for this Link {} has been explicitly shutdown.", self());
     };
 
     /**
@@ -506,6 +501,12 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
     }
 
     @Override
+    public T sessionClosedHandler(EventHandler<T> sessionClosedEventHandler) {
+        this.sessionClosedHandler = sessionClosedEventHandler;
+        return self();
+    }
+
+    @Override
     public T engineShutdownHandler(EventHandler<Engine> engineShutdownEventHandler) {
         this.engineShutdownHandler = engineShutdownEventHandler;
         return self();
@@ -543,9 +544,17 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
                 syncLocalStateWithRemote();
                 return;
             case CLOSED:
-                transitionToParentLocallyClosedState();
+                processParentSessionLocallyClosed();
                 return;
         }
+    }
+
+    void processParentSessionLocallyClosed() {
+        transitionToParentLocallyClosedState();
+
+        try {
+            sessionClosedHandler.handle(self());
+        } catch (Throwable ignored) {}
     }
 
     void processParentConnectionLocallyClosed() {

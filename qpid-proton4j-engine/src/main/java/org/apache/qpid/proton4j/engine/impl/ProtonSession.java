@@ -92,15 +92,11 @@ public class ProtonSession implements Session {
     private EventHandler<Session> remoteCloseHandler = (result) -> {
         LOG.trace("Remote session close arrived at default handler.");
     };
-    private EventHandler<Session> localOpenHandler = (result) -> {
-        LOG.trace("Session locally opened.");
-    };
-    private EventHandler<Session> localCloseHandler = (result) -> {
-        LOG.trace("Session locally closed.");
-    };
-    private EventHandler<Engine> engineShutdownHandler = (result) -> {
-        LOG.trace("The underlying engine for this Session has been explicitly shutdown.");
-    };
+
+    private EventHandler<Session> localOpenHandler;
+    private EventHandler<Session> localCloseHandler;
+    private EventHandler<Session> connectionClosedHandler;
+    private EventHandler<Engine> engineShutdownHandler;
 
     // No default for these handlers, Connection will process these if not set here.
     private EventHandler<Sender> remoteSenderOpenEventHandler = null;
@@ -295,20 +291,9 @@ public class ProtonSession implements Session {
         return null;
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     public Set<Link<?>> links() {
-        final Set<Link<?>> result;
-
-        if (senderByNameMap.isEmpty() && receiverByNameMap.isEmpty()) {
-            result = Collections.EMPTY_SET;
-        } else {
-            result = new HashSet<>(senderByNameMap.size() + receiverByNameMap.size());
-            result.addAll(senderByNameMap.values());
-            result.addAll(receiverByNameMap.values());
-        }
-
-        return result;
+        return Collections.unmodifiableSet(allLinks());
     }
 
     @SuppressWarnings("unchecked")
@@ -464,6 +449,16 @@ public class ProtonSession implements Session {
         return engineShutdownHandler;
     }
 
+    @Override
+    public ProtonSession connectionClosedHandler(EventHandler<Session> connectionClosedEventHandler) {
+        this.connectionClosedHandler = connectionClosedEventHandler;
+        return this;
+    }
+
+    EventHandler<Session> connectionClosedHandler() {
+        return connectionClosedHandler;
+    }
+
     //----- Respond to local Connection changes
 
     void handleConnectionStateChanged(ProtonConnection connection) {
@@ -480,20 +475,15 @@ public class ProtonSession implements Session {
     }
 
     void handleEngineShutdown(ProtonEngine protonEngine) {
-        Set<ProtonLink<?>> links = new HashSet<>();
+        try {
+            engineShutdownHandler.handle(protonEngine);
+        } catch (Throwable ingore) {}
 
-        links.addAll(localLinks.values());
-        links.addAll(remoteLinks.values());
-
-        links.forEach(link -> {
+        allLinks().forEach(link -> {
             try {
                 link.handleEngineShutdown(protonEngine);
             } catch (Throwable ignore) {}
         });
-
-        try {
-            engineShutdownHandler.handle(protonEngine);
-        } catch (Throwable ingore) {}
     }
 
     //----- Handle incoming performatives
@@ -738,6 +728,10 @@ public class ProtonSession implements Session {
     }
 
     private void processParentConnectionLocallyClosed() {
+        try {
+            connectionClosedHandler.handle(this);
+        } catch (Throwable ignored) {}
+
         for (ProtonLink<?> link : localLinks.values()) {
             link.processParentConnectionLocallyClosed();
         }
@@ -781,6 +775,22 @@ public class ProtonSession implements Session {
         }
 
         throw new IllegalStateException("no local handle available for allocation");
+    }
+
+    @SuppressWarnings("unchecked")
+    private Set<ProtonLink<?>> allLinks() {
+        final Set<ProtonLink<?>> result;
+
+        if (localLinks.isEmpty() && remoteLinks.isEmpty()) {
+            return Collections.EMPTY_SET;
+        } else {
+            result = new HashSet<>(localLinks.size());
+
+            result.addAll(localLinks.values());
+            result.addAll(remoteLinks.values());
+        }
+
+        return result;
     }
 
     private void freeLocalHandle(long localHandle) {

@@ -140,6 +140,43 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
     }
 
     @Test(timeout = 30000)
+    public void testSenderSignalsSessionClosedEvent() throws Exception {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result);
+        ProtonTestPeer peer = new ProtonTestPeer(engine);
+        engine.outputConsumer(peer);
+
+        final AtomicBoolean senderClosed = new AtomicBoolean();
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond().withContainerId("driver");
+        peer.expectBegin().respond();
+        peer.expectAttach().respond();
+        peer.expectEnd().respond();
+        peer.expectClose().respond();
+
+        Connection connection = engine.start().open();
+        Session session = connection.session().open();
+        Sender sender = session.sender("test");
+
+        sender.sessionClosedHandler(result -> {
+            senderClosed.lazySet(true);
+            // Parent is closed so no frames should be emitted and no errors thrown
+            sender.close();
+        }).open();
+
+        session.close();
+
+        assertTrue("Link should have reported parent session closed", senderClosed.get());
+
+        connection.close();
+
+        peer.waitForScriptToComplete();
+
+        assertNull(failure);
+    }
+
+    @Test(timeout = 30000)
     public void testEngineShutdownEventNeitherEndClosed() throws Exception {
         doTestEngineShutdownEvent(false, false);
     }
