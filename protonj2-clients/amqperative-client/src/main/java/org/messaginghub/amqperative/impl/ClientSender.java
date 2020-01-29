@@ -32,6 +32,7 @@ import org.apache.qpid.proton4j.amqp.transport.DeliveryState;
 import org.apache.qpid.proton4j.amqp.transport.SenderSettleMode;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.engine.LinkCreditState;
+import org.apache.qpid.proton4j.engine.LinkState;
 import org.apache.qpid.proton4j.engine.OutgoingDelivery;
 import org.messaginghub.amqperative.ErrorCondition;
 import org.messaginghub.amqperative.Message;
@@ -433,20 +434,10 @@ public class ClientSender implements Sender {
     }
 
     void handleAnonymousRelayNotSupported() {
-        // Open was never called on this sender so simple local cleanup is all that is required
-        CLOSED_UPDATER.set(this, 1);
-        failureCause = new ClientUnsupportedOperationException("Anonymous relay support not available from this connection");
-        openFuture.failed(getFailureCause());
-        closeFuture.failed(getFailureCause());
-    }
-
-    void handleSessionRemotelyClosedBeforeSenderOpened() {
-        // Open was never called on this sender so simple local cleanup is all that is required
-        CLOSED_UPDATER.set(this, 1);
-        // TODO - Session remote error probably should be the failure cause if one was set
-        failureCause = new ClientResourceClosedException("Parent session closed before this Sender could be opened.");
-        openFuture.failed(getFailureCause());
-        closeFuture.failed(getFailureCause());
+        if (isAnonymous() && protonSender.getState() == LinkState.IDLE) {
+            failureCause = new ClientUnsupportedOperationException("Anonymous relay support not available from this connection");
+            immediateLinkShutdown();
+        }
     }
 
     //----- Send Result Tracker used for send blocked on credit

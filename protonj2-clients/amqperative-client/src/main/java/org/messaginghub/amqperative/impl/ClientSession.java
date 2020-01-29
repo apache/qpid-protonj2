@@ -493,19 +493,6 @@ public class ClientSession implements Session {
                 failureCause = error;
             }
 
-            // TODO - If Senders are linked into local open / close events
-            //        we could just close them locally after the session is closed.
-            session.senders().forEach(sender -> {
-                try {
-                    ClientSender clientSender = sender.getContext().getLinkedResource(ClientSender.class);
-                    if (clientSender.isAnonymous() && !clientSender.openFuture().isDone()) {
-                        clientSender.handleSessionRemotelyClosedBeforeSenderOpened();
-                    }
-                } catch (ClassCastException ignored) {
-                    LOG.debug("Found sender without linked resource in session: {}", sender);
-                }
-            });
-
             try {
                 session.close();
             } catch (Throwable ignore) {
