@@ -923,16 +923,16 @@ public class SenderTest extends AMQPerativeTestCase {
     }
 
     @Test(timeout = 30000)
-    public void testReceiverGetRemoteOfferedCapabilitiesWaitsForRemoteAttach() throws Exception {
-        tryReadReceiverRemoteOfferedCapabilities(true);
+    public void testGetRemoteOfferedCapabilitiesWaitsForRemoteAttach() throws Exception {
+        tryReadRemoteOfferedCapabilities(true);
     }
 
     @Test(timeout = 30000)
-    public void testReceiverGetRemoteOfferedCapabilitiesFailsAfterOpenTimeout() throws Exception {
-        tryReadReceiverRemoteOfferedCapabilities(false);
+    public void testGetRemoteOfferedCapabilitiesFailsAfterOpenTimeout() throws Exception {
+        tryReadRemoteOfferedCapabilities(false);
     }
 
-    private void tryReadReceiverRemoteOfferedCapabilities(boolean attachResponse) throws Exception {
+    private void tryReadRemoteOfferedCapabilities(boolean attachResponse) throws Exception {
         try (NettyTestPeer peer = new NettyTestPeer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
@@ -995,16 +995,16 @@ public class SenderTest extends AMQPerativeTestCase {
     }
 
     @Test(timeout = 30000)
-    public void testReceiverGetRemoteDesiredCapabilitiesWaitsForRemoteAttach() throws Exception {
-        tryReadReceiverRemoteDesiredCapabilities(true);
+    public void testGetRemoteDesiredCapabilitiesWaitsForRemoteAttach() throws Exception {
+        tryReadRemoteDesiredCapabilities(true);
     }
 
     @Test(timeout = 30000)
-    public void testReceiverGetRemoteDesiredCapabilitiesFailsAfterOpenTimeout() throws Exception {
-        tryReadReceiverRemoteDesiredCapabilities(false);
+    public void testGetRemoteDesiredCapabilitiesFailsAfterOpenTimeout() throws Exception {
+        tryReadRemoteDesiredCapabilities(false);
     }
 
-    private void tryReadReceiverRemoteDesiredCapabilities(boolean attachResponse) throws Exception {
+    private void tryReadRemoteDesiredCapabilities(boolean attachResponse) throws Exception {
         try (NettyTestPeer peer = new NettyTestPeer()) {
             peer.expectSASLAnonymousConnect();
             peer.expectOpen().respond();
