@@ -35,16 +35,16 @@
     <maven.compiler.target>1.8</maven.compiler.target>
 
     <!-- Test dependency versions -->
-    <junit-version>4.12</junit-version>
-    <mockito-version>3.2.0</mockito-version>
+    <junit-version>4.13</junit-version>
+    <mockito-version>3.2.4</mockito-version>
     <proton-version>0.33.3</proton-version>
-    <slf4j-version>1.7.25</slf4j-version>
+    <slf4j-version>1.7.30</slf4j-version>
     <hamcrest-version>2.2</hamcrest-version>
-    <netty-version>4.1.43.Final</netty-version>
+    <netty-version>4.1.45.Final</netty-version>
 
     <!-- Plugin versions -->
     <maven-bundle-plugin-version>4.2.1</maven-bundle-plugin-version>
-    <jacoco-plugin-version>0.8.4</jacoco-plugin-version>
+    <jacoco-plugin-version>0.8.5</jacoco-plugin-version>
 
     <!-- Test properties -->
     <maven.test.redirectTestOutputToFile>true</maven.test.redirectTestOutputToFile>
