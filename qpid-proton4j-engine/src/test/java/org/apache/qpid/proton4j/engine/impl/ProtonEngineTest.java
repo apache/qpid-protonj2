@@ -613,7 +613,7 @@ public class ProtonEngineTest extends ProtonEngineTestSupport {
 
         // Wait for less time than the deadline with no data - get the same value
         long interimTick = tick1 + 10;
-        assertTrue (interimTick < expectedDeadline1);
+        assertTrue(interimTick < expectedDeadline1);
         assertEquals("When the deadline hasn't been reached tick() should return the previous deadline",  expectedDeadline1, engine.tick(interimTick));
         assertEquals("When the deadline hasn't been reached tick() shouldn't write data", 1, peer.getPerformativeCount());
         assertNull(failure);
@@ -682,7 +682,7 @@ public class ProtonEngineTest extends ProtonEngineTestSupport {
 
         // Wait for less time than the deadline with no data - get the same value
         long interimTick = tick1 + 10;
-        assertTrue (interimTick < expectedDeadline1);
+        assertTrue(interimTick < expectedDeadline1);
         assertEquals("When the deadline hasn't been reached tick() should return the previous deadline",  expectedDeadline1, engine.tick(interimTick));
         assertEquals("When the deadline hasn't been reached tick() shouldn't write data", 1, peer.getPerformativeCount());
         assertEquals("When the deadline hasn't been reached tick() shouldn't write data", 0, peer.getEmptyFrameCount());
@@ -762,7 +762,7 @@ public class ProtonEngineTest extends ProtonEngineTestSupport {
 
         // Wait for less time than the deadline with no data - get the same value
         long interimTick = tick1 + 10;
-        assertTrue (interimTick < expectedDeadline1);
+        assertTrue(interimTick < expectedDeadline1);
         assertEquals("When the deadline hasn't been reached tick() should return the previous deadline",  expectedDeadline1, engine.tick(interimTick));
         assertEquals("When the deadline hasn't been reached tick() shouldn't write data", 0, peer.getEmptyFrameCount());
 

@@ -165,7 +165,10 @@ public class ProtonEngine implements Engine {
             throw new IllegalStateException("Automatic ticking previously initiated.");
         }
 
-        return performTick(currentTime);
+        performReadCheck(currentTime);
+        performWriteCheck(currentTime);
+
+        return nextTickDeadline(localIdleDeadline, remoteIdleDeadline);
     }
 
     @Override
@@ -350,29 +353,31 @@ public class ProtonEngine implements Engine {
         }
     }
 
-    private long performTick(long currentTime) {
+    //----- Idle Timeout processing methods and inner classes
 
-        long deadline = 0;
+    private void performReadCheck(long currentTime) {
         long localIdleTimeout = connection.getIdleTimeout();
-        long remoteIdleTimeout = connection.getRemoteIdleTimeout();
 
         if (localIdleTimeout > 0) {
             if (localIdleDeadline == 0 || lastInputSequence != inputSequence) {
                 localIdleDeadline = computeDeadline(currentTime, localIdleTimeout);
                 lastInputSequence = inputSequence;
             } else if (localIdleDeadline - currentTime <= 0) {
-                localIdleDeadline = computeDeadline(currentTime, localIdleTimeout);
                 if (connection.getState() != ConnectionState.CLOSED) {
                     ErrorCondition condition = new ErrorCondition(
                         Symbol.getSymbol("amqp:resource-limit-exceeded"), "local-idle-timeout expired");
                     connection.setCondition(condition);
                     connection.close();
                     engineFailed(new IdleTimeoutException("Remote idle timeout detected"));
-                    return 0;
+                } else {
+                    localIdleDeadline = computeDeadline(currentTime, localIdleTimeout);
                 }
             }
-            deadline = localIdleDeadline;
         }
+    }
+
+    private void performWriteCheck(long currentTime) {
+        long remoteIdleTimeout = connection.getRemoteIdleTimeout();
 
         if (remoteIdleTimeout > 0 && !connection.isLocallyClosed()) {
             if (remoteIdleDeadline == 0 || lastOutputSequence != outputSequence) {
@@ -383,21 +388,7 @@ public class ProtonEngine implements Engine {
                 pipeline.fireWrite(EMPTY_FRAME_BUFFER.duplicate());
                 lastOutputSequence++;
             }
-
-            if (deadline == 0) {
-                // There was no local deadline, so use whatever the remote is.
-                deadline = remoteIdleDeadline;
-            } else {
-                // Use the 'earlier' of the remote and local deadline values
-                if (remoteIdleDeadline - localIdleDeadline <= 0) {
-                    deadline = remoteIdleDeadline;
-                } else {
-                    deadline = localIdleDeadline;
-                }
-            }
         }
-
-        return deadline;
     }
 
     private long computeDeadline(long now, long timeout) {
@@ -407,7 +398,26 @@ public class ProtonEngine implements Engine {
         return deadline != 0 ? deadline : 1;
     }
 
-    //----- Utility classes for internal use only.
+    private static long nextTickDeadline(long localIdleDeadline, long remoteIdleDeadline) {
+        final long deadline;
+
+        // If there is no locally set idle timeout then we just honor the remote idle timeout
+        // value otherwise we need to use the lesser of the next local or remote idle timeout
+        // deadline values to compute the next time a check is needed.
+        if (localIdleDeadline == 0) {
+             deadline = remoteIdleDeadline;
+        } else if (remoteIdleDeadline == 0) {
+            deadline = localIdleDeadline;
+        } else {
+            if (remoteIdleDeadline - localIdleDeadline <= 0) {
+                deadline = remoteIdleDeadline;
+            } else {
+                deadline = localIdleDeadline;
+            }
+        }
+
+        return deadline;
+    }
 
     private final class IdleTimeoutCheck implements Runnable {
 
@@ -424,11 +434,14 @@ public class ProtonEngine implements Engine {
                 long now = TimeUnit.NANOSECONDS.toMillis(System.nanoTime());
 
                 try {
-                    long deadline = performTick(now);
+                    performReadCheck(now);
+                    performWriteCheck(now);
 
-                    // Tick will close down the engine and fire error so we need to check that engine state is
-                    // active and engine is not shutdown before scheduling again.
-                    if (deadline != 0 && connection.getState() == ConnectionState.ACTIVE && !isShutdown()) {
+                    final long deadline = nextTickDeadline(localIdleDeadline, remoteIdleDeadline);
+
+                    // Check methods will close down the engine and fire error so we need to check that engine
+                    // state is active and engine is not shutdown before scheduling again.
+                    if (deadline != 0 && connection.getState() == ConnectionState.ACTIVE && state() == EngineState.STARTED) {
                         // Run the next idle check at half the deadline to try and ensure we meet our
                         // obligation of sending our heart beat on time.
                         long delay = (deadline - now) / 2;
