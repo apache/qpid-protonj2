@@ -19,26 +19,43 @@ package org.apache.qpid.proton4j.engine.impl;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
+import org.apache.qpid.proton4j.amqp.UnsignedInteger;
+import org.apache.qpid.proton4j.amqp.transport.Attach;
 import org.apache.qpid.proton4j.amqp.transport.DeliveryState;
+import org.apache.qpid.proton4j.amqp.transport.Detach;
 import org.apache.qpid.proton4j.amqp.transport.Disposition;
+import org.apache.qpid.proton4j.amqp.transport.Flow;
 import org.apache.qpid.proton4j.amqp.transport.Role;
+import org.apache.qpid.proton4j.amqp.transport.Transfer;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.engine.EventHandler;
 import org.apache.qpid.proton4j.engine.LinkCreditState;
 import org.apache.qpid.proton4j.engine.OutgoingDelivery;
 import org.apache.qpid.proton4j.engine.Sender;
 import org.apache.qpid.proton4j.engine.Session;
+import org.apache.qpid.proton4j.engine.util.DeliveryIdTracker;
+import org.apache.qpid.proton4j.engine.util.SplayMap;
 
 /**
  * Proton Sender link implementation.
  */
 public class ProtonSender extends ProtonLink<Sender> implements Sender {
 
-    private final ProtonSenderState linkState;
+    private final ProtonSessionOutgoingWindow sessionWindow;
+
+    private final DeliveryIdTracker currentDelivery = new DeliveryIdTracker();
+    private final ProtonLinkCreditState creditState = new ProtonLinkCreditState(0);
+
+    private boolean sendable;
+    private boolean draining;
+    private boolean drained;  // TODO - This was added from old code, since we are reactive we probably don't need to retain this state.
+
+    private final SplayMap<ProtonOutgoingDelivery> unsettled = new SplayMap<>();
 
     private EventHandler<OutgoingDelivery> deliveryUpdatedEventHandler = null;
     private EventHandler<Sender> sendableEventHandler = null;
@@ -66,7 +83,8 @@ public class ProtonSender extends ProtonLink<Sender> implements Sender {
      */
     public ProtonSender(ProtonSession session, String name) {
         super(session, name);
-        this.linkState = new ProtonSenderState(this, session.getOutgoingWindow());
+
+        this.sessionWindow = session.getOutgoingWindow();
     }
 
     @Override
@@ -81,17 +99,12 @@ public class ProtonSender extends ProtonLink<Sender> implements Sender {
 
     @Override
     public int getCredit() {
-        return linkState.getCredit();
-    }
-
-    @Override
-    protected ProtonSenderState linkState() {
-        return linkState;
+        return creditState.getCredit();
     }
 
     @Override
     public boolean isSendable() {
-        return linkState.isSendable();
+        return sendable;
     }
 
     @Override
@@ -106,15 +119,34 @@ public class ProtonSender extends ProtonLink<Sender> implements Sender {
         return null;
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public Sender disposition(Predicate<OutgoingDelivery> filter, DeliveryState state, boolean settle) {
-        linkState.applyDisposition(filter, state, true);
+        List<UnsignedInteger> toRemove = settle ? new ArrayList<>() : Collections.EMPTY_LIST;
+
+        unsettled.forEach((deliveryId, delivery) -> {
+            if (filter.test(delivery)) {
+                if (filter != null) {
+                    delivery.localState(state);
+                }
+                if (settle) {
+                    delivery.locallySettled();
+                    toRemove.add(deliveryId);
+                }
+                sessionWindow.processDisposition(this, delivery);
+            }
+        });
+
+        if (!toRemove.isEmpty()) {
+            toRemove.forEach(deliveryId -> unsettled.remove(deliveryId));
+        }
+
         return this;
     }
 
     @Override
     public Sender settle(Predicate<OutgoingDelivery> filter) {
-        linkState.applyDisposition(filter, null, true);
+        disposition(filter, null, true);
         return this;
     }
 
@@ -136,17 +168,100 @@ public class ProtonSender extends ProtonLink<Sender> implements Sender {
     @SuppressWarnings("unchecked")
     @Override
     public Collection<OutgoingDelivery> unsettled() {
-        if (linkState.unsettledDeliveries().isEmpty()) {
+        if (unsettled.isEmpty()) {
             return Collections.EMPTY_LIST;
         } else {
-            return Collections.unmodifiableCollection(new ArrayList<>(linkState.unsettledDeliveries().values()));
+            return Collections.unmodifiableCollection(new ArrayList<>(unsettled.values()));
         }
     }
 
     //----- Handle remote events for this Sender
 
-    void remoteDisposition(Disposition disposition, ProtonOutgoingDelivery delivery) {
-        linkState().remoteDisposition(disposition, delivery);
+    @Override
+    protected final ProtonSender handleRemoteAttach(Attach attach) {
+        return this;
+    }
+
+    @Override
+    protected final ProtonSender handleRemoteDetach(Detach detach) {
+        return this;
+    }
+
+    @Override
+    protected final ProtonSender handleRemoteDisposition(Disposition disposition, ProtonIncomingDelivery delivery) {
+        throw new IllegalStateException("Sender link should never handle dispsotiions for incoming deliveries");
+    }
+
+    @Override
+    protected final ProtonSender handleRemoteDisposition(Disposition disposition, ProtonOutgoingDelivery delivery) {
+        boolean updated = false;
+
+        if (disposition.getState() != null && !disposition.getState().equals(delivery.getRemoteState())) {
+            updated = true;
+            delivery.remoteState(disposition.getState());
+        }
+
+        if (disposition.getSettled() && !delivery.isRemotelySettled()) {
+            updated = true;
+            // TODO - Casting is ugly but right now our unsigned integers are longs
+            unsettled.remove((int) delivery.getDeliveryId());
+            delivery.remotelySettled();
+        }
+
+        if (updated) {
+            delivery.getLink().signalDeliveryUpdated(delivery);
+        }
+
+        return this;
+    }
+
+    @Override
+    protected final ProtonIncomingDelivery handleRemoteTransfer(Transfer transfer, ProtonBuffer payload) {
+        throw new IllegalArgumentException("Sender end cannot process incoming transfers");
+    }
+
+    @Override
+    protected final ProtonSender handleRemoteFlow(Flow flow) {
+        creditState.remoteFlow(flow);
+
+        int existingDeliveryCount = creditState.getDeliveryCount();
+        // int casts are expected, credit is a uint and delivery-count is really a uint sequence which wraps, so we just use the truncation and overflows.
+        // Receivers flow might not have any delivery-count, as sender initialises on attach! We initialise to 0 so we can just ignore that.
+        int remoteDeliveryCount = (int) flow.getDeliveryCount();
+        int newDeliveryCountLimit = remoteDeliveryCount + (int) flow.getLinkCredit();
+
+        long effectiveCredit = 0xFFFFFFFFL & newDeliveryCountLimit - existingDeliveryCount;
+        if (effectiveCredit > 0) {
+            creditState.updateCredit((int) effectiveCredit);
+        } else {
+            creditState.updateCredit(0);
+        }
+
+        draining = flow.getDrain();
+        drained = getCredit() > 0;
+
+        if (isLocallyOpen()) {
+            if (getCredit() > 0 && !sendable) {
+                sendable = true;
+                signalSendable();
+            }
+
+            if (draining && !drained) {
+                signalDrainRequested();
+            }
+        }
+
+        return this;
+    }
+
+    @Override
+    protected final ProtonSender decorateOutgoingFlow(Flow flow) {
+        flow.setLinkCredit(getCredit());
+        flow.setHandle(getHandle());
+        flow.setDeliveryCount(currentDelivery.longValue());
+        flow.setDrain(isDrain());
+
+        return this;
     }
 
     //----- Delivery output related access points
@@ -209,7 +324,7 @@ public class ProtonSender extends ProtonLink<Sender> implements Sender {
         //        reduce link credit in case the remote has updated the credit since the event was
         //        triggered.
         if (drainRequestedEventHandler != null) {
-            drainRequestedEventHandler.handle(linkState.snapshotCreditState());
+            drainRequestedEventHandler.handle(creditState.snapshot());
         }
         return this;
     }
@@ -223,20 +338,26 @@ public class ProtonSender extends ProtonLink<Sender> implements Sender {
 
     @Override
     protected void transitionedToLocallyOpened() {
-        // TODO - Handle engine not writable and prevent or queue these ?
+        localAttach.setInitialDeliveryCount(currentDelivery.longValue());
 
-        this.sendHandler = (delivery, buffer) -> senderNotWritableSink(delivery, buffer);
-        this.dispositionHandler = delivery -> dispositionSink(delivery);
-        this.abortHandler = delivery -> abortSink(delivery);
+        sendHandler = (delivery, buffer) -> senderNotWritableSink(delivery, buffer);
+        dispositionHandler = delivery -> dispositionSink(delivery);
+        abortHandler = delivery -> abortSink(delivery);
     }
 
     @Override
     protected void transitionedToLocallyDetached() {
+        creditState.clearCredit();
+        sendable = false;
+
         disableAllSenderOperations("link is detached");
     }
 
     @Override
     protected void transitionedToLocallyClosed() {
+        creditState.clearCredit();
+        sendable = false;
+
         disableAllSenderOperations("link is closed");
     }
 
@@ -247,6 +368,9 @@ public class ProtonSender extends ProtonLink<Sender> implements Sender {
 
     @Override
     protected void transitionToRemotelyDetachedState() {
+        creditState.clearCredit();
+        sendable = false;
+
         if (isLocallyOpen()) {
             disableAllSenderOperations("link is remotely detached");
         }
@@ -254,6 +378,9 @@ public class ProtonSender extends ProtonLink<Sender> implements Sender {
 
     @Override
     protected void transitionToRemotelyCosedState() {
+        creditState.clearCredit();
+        sendable = false;
+
         if (isLocallyOpen()) {
             disableAllSenderOperations("link is remotely closed");
         }
@@ -285,27 +412,56 @@ public class ProtonSender extends ProtonLink<Sender> implements Sender {
         };
 
         // TODO - Setting this here for now, need to decide when to signal this changed.
-        this.linkState().setSendable(false);
+        sendable = false;
     }
 
     private void sendSink(ProtonOutgoingDelivery delivery, ProtonBuffer payload) {
-        linkState.send(delivery, payload);
+        if (!isSendable()) {
+            // TODO - Should we check here on each write or check someplace else that
+            //        the user can actually send anything.  We aren't buffering anything.
+        }
+
+        if (currentDelivery.isEmpty()) {
+            currentDelivery.set(sessionWindow.getAndIncrementNextDeliveryId());
+
+            delivery.setDeliveryId(currentDelivery.longValue());
+        }
+
+        if (!delivery.isSettled()) {
+            // TODO - Casting is ugly but right now our unsigned integers are longs
+            unsettled.put((int) delivery.getDeliveryId(), delivery);
+        }
+
+        sessionWindow.processSend(this, delivery, payload);
+
+        if (!delivery.isPartial()) {
+            currentDelivery.reset();
+            creditState.incrementDeliveryCount();
+            creditState.decrementCredit();
+
+            if (getCredit() == 0) {
+                sendable = false;
+            }
+        }
     }
 
     private void dispositionSink(ProtonOutgoingDelivery delivery) {
-        linkState.disposition(delivery);
+        if (delivery.isSettled()) {
+            // TODO - Casting is ugly but right now our unsigned integers are longs
+            unsettled.remove((int) delivery.getDeliveryId());
+        }
+
+        sessionWindow.processDisposition(this, delivery);
     }
 
     private void abortSink(ProtonOutgoingDelivery delivery) {
-        linkState.abort(delivery);
+        // TODO - Casting is ugly but right now our unsigned integers are longs
+        unsettled.remove((int) delivery.getDeliveryId());
+
+        sessionWindow.processAbort(this, delivery);
     }
 
     private void senderNotWritableSink(ProtonOutgoingDelivery delivery, ProtonBuffer buffer) {
         throw new IllegalStateException("Cannot send when sender is not currently writable");
-    }
-
-    @Override
-    boolean isDeliveryCountInitialised() {
-        return true;
     }
 }

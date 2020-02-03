@@ -27,6 +27,7 @@ import org.apache.qpid.proton4j.amqp.messaging.Source;
 import org.apache.qpid.proton4j.amqp.messaging.Target;
 import org.apache.qpid.proton4j.amqp.transport.Attach;
 import org.apache.qpid.proton4j.amqp.transport.Detach;
+import org.apache.qpid.proton4j.amqp.transport.Disposition;
 import org.apache.qpid.proton4j.amqp.transport.ErrorCondition;
 import org.apache.qpid.proton4j.amqp.transport.Flow;
 import org.apache.qpid.proton4j.amqp.transport.ReceiverSettleMode;
@@ -134,8 +135,6 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
     }
 
     protected abstract T self();
-
-    protected abstract ProtonLinkState<?> linkState();
 
     long getHandle() {
         return localAttach.getHandle();
@@ -507,10 +506,6 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
         return self();
     }
 
-    EventHandler<Engine> engineShutdownHandler() {
-        return engineShutdownHandler;
-    }
-
     //----- Abstract Link methods needed to implement a fully functional Link type
 
     protected abstract void transitionedToLocallyOpened();
@@ -531,7 +526,7 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
 
     //----- Process local events from the parent session
 
-    void handleSessionStateChanged(ProtonSession session) {
+    final void handleSessionStateChanged(ProtonSession session) {
         switch (session.getState()) {
             case IDLE:
                 return;
@@ -539,16 +534,12 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
                 syncLocalStateWithRemote();
                 return;
             case CLOSED:
-                processParentSessionLocallyClosed();
+                transitionToParentLocallyClosedState();
                 return;
         }
     }
 
-    void processParentSessionLocallyClosed() {
-        transitionToParentLocallyClosedState();
-    }
-
-    void processParentConnectionLocallyClosed() {
+    final void handleParentConnectionLocallyClosed() {
         transitionToParentLocallyClosedState();
     }
 
@@ -569,7 +560,7 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
         }
     }
 
-    void handleEngineShutdown(ProtonEngine protonEngine) {
+    final void handleEngineShutdown(ProtonEngine protonEngine) {
         try {
             engineShutdownHandler.handle(protonEngine);
         } catch (Throwable ignore) {}
@@ -577,10 +568,10 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
 
     //----- Handle incoming performatives
 
-    void remoteAttach(Attach attach) {
+    final void remoteAttach(Attach attach) {
         remoteAttach = attach;
         remoteState = LinkState.ACTIVE;
-        linkState().remoteAttach(attach);
+        handleRemoteAttach(attach);
         transitionToRemotelyOpenedState();
 
         if (remoteOpenHandler != null) {
@@ -606,10 +597,10 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
         }
     }
 
-    ProtonLink<?> remoteDetach(Detach detach) {
+    final ProtonLink<?> remoteDetach(Detach detach) {
         setRemoteCondition(detach.getError());
 
-        linkState().remoteDetach(detach);
+        handleRemoteDetach(detach);
 
         if (detach.getClosed()) {
             remoteState = LinkState.CLOSED;
@@ -628,14 +619,37 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
         return this;
     }
 
-    ProtonIncomingDelivery remoteTransfer(Transfer transfer, ProtonBuffer payload) {
-        return linkState().remoteTransfer(transfer, payload);
+    final ProtonIncomingDelivery remoteTransfer(Transfer transfer, ProtonBuffer payload) {
+        return handleRemoteTransfer(transfer, payload);
     }
 
-    ProtonLink<?> remoteFlow(Flow flow) {
-        linkState().remoteFlow(flow);
-        return this;
+    final T remoteFlow(Flow flow) {
+        return handleRemoteFlow(flow);
     }
+
+    final T remoteDisposition(Disposition disposition, ProtonOutgoingDelivery delivery) {
+        return handleRemoteDisposition(disposition, delivery);
+    }
+
+    final T remoteDisposition(Disposition disposition, ProtonIncomingDelivery delivery) {
+        return handleRemoteDisposition(disposition, delivery);
+    }
+
+    //----- Abstract performative handlers and decorators
+
+    protected abstract T handleRemoteAttach(Attach attach);
+
+    protected abstract T handleRemoteDetach(Detach detach);
+
+    protected abstract T handleRemoteFlow(Flow flow);
+
+    protected abstract T handleRemoteDisposition(Disposition disposition, ProtonOutgoingDelivery delivery);
+
+    protected abstract T handleRemoteDisposition(Disposition disposition, ProtonIncomingDelivery delivery);
+
+    protected abstract ProtonIncomingDelivery handleRemoteTransfer(Transfer transfer, ProtonBuffer payload);
+
+    protected abstract T decorateOutgoingFlow(Flow flow);
 
     //----- Internal methods
 
@@ -653,8 +667,7 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
                 (connection.isLocallyOpen() && connection.wasLocalOpenSent())) {
 
                 localAttachSent = true;
-                session.getEngine().fireWrite(
-                    linkState().configureAttach(localAttach), session.getLocalChannel(), null, null);
+                session.getEngine().fireWrite(localAttach, session.getLocalChannel(), null, null);
             }
         }
     }
@@ -693,6 +706,4 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
             throw new IllegalStateException("Cannot open link for session that has already been closed.");
         }
     }
-
-    abstract boolean isDeliveryCountInitialised();
 }

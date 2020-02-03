@@ -631,13 +631,7 @@ public class ProtonSession implements Session {
         flow.setOutgoingWindow(getOutgoingWindow().getOutgoingWindow());
 
         if (link != null) {
-            flow.setLinkCredit(link.linkState().getCredit());
-            flow.setHandle(link.getHandle());
-            if (link.isDeliveryCountInitialised()) {
-                //TODO: type mismatch, will fail on deliveryCount wrap
-                flow.setDeliveryCount(link.linkState().getDeliveryCount());
-            }
-            flow.setDrain(link.isDrain());
+            link.decorateOutgoingFlow(flow);
         }
 
         getEngine().fireWrite(flow, localChannel, null, null);
@@ -718,7 +712,7 @@ public class ProtonSession implements Session {
 
     private void processParentConnectionLocallyClosed() {
         for (ProtonLink<?> link : localLinks.values()) {
-            link.processParentConnectionLocallyClosed();
+            link.handleParentConnectionLocallyClosed();
         }
     }
 

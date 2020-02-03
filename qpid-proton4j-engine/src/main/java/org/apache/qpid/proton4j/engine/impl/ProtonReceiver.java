@@ -19,30 +19,42 @@ package org.apache.qpid.proton4j.engine.impl;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 import java.util.function.Predicate;
 
+import org.apache.qpid.proton4j.amqp.UnsignedInteger;
+import org.apache.qpid.proton4j.amqp.transport.Attach;
 import org.apache.qpid.proton4j.amqp.transport.DeliveryState;
+import org.apache.qpid.proton4j.amqp.transport.Detach;
 import org.apache.qpid.proton4j.amqp.transport.Disposition;
+import org.apache.qpid.proton4j.amqp.transport.Flow;
 import org.apache.qpid.proton4j.amqp.transport.Role;
+import org.apache.qpid.proton4j.amqp.transport.Transfer;
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.engine.EventHandler;
 import org.apache.qpid.proton4j.engine.IncomingDelivery;
 import org.apache.qpid.proton4j.engine.LinkCreditState;
 import org.apache.qpid.proton4j.engine.Receiver;
 import org.apache.qpid.proton4j.engine.Session;
+import org.apache.qpid.proton4j.engine.exceptions.ProtocolViolationException;
+import org.apache.qpid.proton4j.engine.util.DeliveryIdTracker;
+import org.apache.qpid.proton4j.engine.util.SplayMap;
 
 /**
  * Proton Receiver link implementation.
  */
 public class ProtonReceiver extends ProtonLink<Receiver> implements Receiver {
 
-    private final ProtonReceiverState linkState;
-
     private EventHandler<IncomingDelivery> deliveryReceivedEventHandler = null;
     private EventHandler<IncomingDelivery> deliveryUpdatedEventHandler = null;
     private EventHandler<Receiver> receiverDrainedEventHandler = null;
 
-    private DeliveryState defaultDeliveryState;
+    private final ProtonSessionIncomingWindow sessionWindow;
+    private final ProtonLinkCreditState creditState = new ProtonLinkCreditState();
+    private final DeliveryIdTracker currentDeliveryId = new DeliveryIdTracker();
+    private final SplayMap<ProtonIncomingDelivery> unsettled = new SplayMap<>();
 
+    private DeliveryState defaultDeliveryState;
     private LinkCreditState drainStateSnapshot;
 
     /**
@@ -55,7 +67,8 @@ public class ProtonReceiver extends ProtonLink<Receiver> implements Receiver {
      */
     public ProtonReceiver(ProtonSession session, String name) {
         super(session, name);
-        this.linkState = new ProtonReceiverState(this, session.getIncomingWindow());
+
+        this.sessionWindow = session.getIncomingWindow();
     }
 
     @Override
@@ -80,13 +93,8 @@ public class ProtonReceiver extends ProtonLink<Receiver> implements Receiver {
     }
 
     @Override
-    protected ProtonReceiverState linkState() {
-        return linkState;
-    }
-
-    @Override
     public int getCredit() {
-        return linkState.getCredit();
+        return creditState.getCredit();
     }
 
     @Override
@@ -100,11 +108,19 @@ public class ProtonReceiver extends ProtonLink<Receiver> implements Receiver {
             session.isRemotelyClosed() || connection.isRemotelyClosed()) {
             throw new IllegalStateException("Cannot set credit when session or connection already closed");
         }
+
         if (credit < 0) {
             throw new IllegalArgumentException("additional credits cannot be less than zero");
         }
 
-        linkState.addCredit(credit);
+        if (credit > 0) {
+            creditState.incrementCredit(credit);
+            if (isRemotelyOpen()) {
+                // TODO: delaying credit until remoteAttach(Attach attach) is called doesn't seem needed?
+                // Perhaps should be/include isLocallyOpen?
+                sessionWindow.writeFlow(this);
+            }
+        }
 
         return this;
     }
@@ -117,14 +133,17 @@ public class ProtonReceiver extends ProtonLink<Receiver> implements Receiver {
             throw new IllegalStateException("Drain attempt already outstanding");
         }
 
-        LinkCreditState snapshot = linkState.snapshotCreditState();
+        LinkCreditState snapshot = creditState.snapshot();
         if (snapshot.getCredit() <= 0) {
             throw new IllegalStateException("No existing credit to drain");
         }
 
         drainStateSnapshot = snapshot;
 
-        linkState.drain();
+        if (isRemotelyOpen()) {
+            // TODO: delaying credit+drain until remoteAttach(Attach attach) is called doesn't seem needed?
+            sessionWindow.writeFlow(this);
+        }
 
         return this;
     }
@@ -134,37 +153,44 @@ public class ProtonReceiver extends ProtonLink<Receiver> implements Receiver {
         return drainStateSnapshot != null;
     }
 
+    @SuppressWarnings("unchecked")
     @Override
-    public Receiver disposition(Predicate<IncomingDelivery> filter, DeliveryState state, boolean settle) {
-        linkState.applyDisposition(filter, state, true);
+    public Receiver disposition(Predicate<IncomingDelivery> filter, DeliveryState disposition, boolean settle) {
+        List<UnsignedInteger> toRemove = settle ? new ArrayList<>() : Collections.EMPTY_LIST;
+
+        unsettled.forEach((deliveryId, delivery) -> {
+            if (filter.test(delivery)) {
+                if (disposition != null) {
+                    delivery.localState(disposition);
+                }
+                if (settle) {
+                    delivery.locallySettled();
+                    toRemove.add(deliveryId);
+                }
+                sessionWindow.processDisposition(this, delivery);
+            }
+        });
+
+        if (!toRemove.isEmpty()) {
+            toRemove.forEach(deliveryId -> unsettled.remove(deliveryId));
+        }
+
         return this;
     }
 
     @Override
     public Receiver settle(Predicate<IncomingDelivery> filter) {
-        linkState.applyDisposition(filter, null, true);
-        return this;
+        return disposition(filter, null, true);
     }
 
     @SuppressWarnings("unchecked")
     @Override
     public Collection<IncomingDelivery> unsettled() {
-        if (linkState.unsettledDeliveries().isEmpty()) {
+        if (unsettled.isEmpty()) {
             return Collections.EMPTY_LIST;
         } else {
-            return Collections.unmodifiableCollection(new ArrayList<>(linkState.unsettledDeliveries().values()));
+            return Collections.unmodifiableCollection(new ArrayList<>(unsettled.values()));
         }
-    }
-
-    //----- Internal support methods
-
-    void remoteDisposition(Disposition disposition, ProtonIncomingDelivery delivery) {
-        linkState().remoteDisposition(disposition, delivery);
-    }
-
-    @Override
-    boolean isDeliveryCountInitialised() {
-        return linkState.isDeliveryCountInitialised();
     }
 
     //----- Delivery related access points
@@ -179,14 +205,19 @@ public class ProtonReceiver extends ProtonLink<Receiver> implements Receiver {
         }
 
         // TODO - Enforce not closed etc
-        linkState.disposition(delivery);
+        if (delivery.isSettled()) {
+            // TODO - Casting is ugly but right now our unsigned integers are longs
+            unsettled.remove((int) delivery.getDeliveryId());
+        }
+
+        sessionWindow.processDisposition(this, delivery);
     }
 
     void deliveryRead(ProtonIncomingDelivery delivery, int bytesRead) {
         // TODO - When any resource is closed we could still allow read of inbound data but the user
         //        can't operate on the delivery so do we want that ?
 
-        linkState.deliveryRead(delivery, bytesRead);
+        sessionWindow.deliveryRead(delivery, bytesRead);
     }
 
     //----- Receiver event handlers
@@ -241,12 +272,12 @@ public class ProtonReceiver extends ProtonLink<Receiver> implements Receiver {
 
     @Override
     protected void transitionedToLocallyDetached() {
-        // Nothing currently updated on this state change.
+        creditState.clearCredit();
     }
 
     @Override
     protected void transitionedToLocallyClosed() {
-        // Nothing currently updated on this state change.
+        creditState.clearCredit();
     }
 
     @Override
@@ -256,21 +287,171 @@ public class ProtonReceiver extends ProtonLink<Receiver> implements Receiver {
 
     @Override
     protected void transitionToRemotelyDetachedState() {
-        // Nothing currently updated on this state change.
+        creditState.clearCredit();
     }
 
     @Override
     protected void transitionToRemotelyCosedState() {
-        // Nothing currently updated on this state change.
+        creditState.clearCredit();
     }
 
     @Override
     protected void transitionToParentLocallyClosedState() {
-        // Nothing currently updated on this state change.
+        creditState.clearCredit();
     }
 
     @Override
     protected void transitionToParentRemotelyClosedState() {
-        // Nothing currently updated on this state change.
+        creditState.clearCredit();
+    }
+
+    //----- Handle incoming frames from the remote sender
+
+    @Override
+    protected final ProtonReceiver handleRemoteAttach(Attach attach) {
+        if (!attach.hasInitialDeliveryCount()) {
+            //TODO: nicer handling of the error
+            throw new IllegalArgumentException("Sending peer attach had no initial delivery count");
+        }
+
+        creditState.initialiseDeliveryCount((int) attach.getInitialDeliveryCount());
+
+        if (getCredit() > 0 && isLocallyOpen()) {
+            sessionWindow.writeFlow(this);
+        }
+
+        return this;
+    }
+
+    @Override
+    protected final ProtonReceiver handleRemoteDetach(Detach detach) {
+        creditState.clearCredit();
+        return this;
+    }
+
+    @Override
+    protected final ProtonReceiver handleRemoteFlow(Flow flow) {
+        creditState.remoteFlow(flow);
+
+        if (flow.getDrain()) {
+            creditState.updateDeliveryCount((int) flow.getDeliveryCount());
+            creditState.updateCredit((int) flow.getLinkCredit());
+            if (creditState.getCredit() != 0) {
+                throw new IllegalArgumentException("Receiver read flow with drain set but credit was not zero");
+            }
+
+            // TODO - engine error on credit being non-zero for drain response ?
+
+            signalReceiverDrained();
+        }
+
+        //TODO: else somehow notify of remote flow? (e.g session windows changed, peer echo'd its view of the state
+        return this;
+    }
+
+    @Override
+    protected final ProtonReceiver handleRemoteDisposition(Disposition disposition, ProtonIncomingDelivery delivery) {
+        boolean updated = false;
+
+        if (disposition.getState() != null && !disposition.getState().equals(delivery.getRemoteState())) {
+            updated = true;
+            delivery.remoteState(disposition.getState());
+        }
+
+        if (disposition.getSettled() && !delivery.isRemotelySettled()) {
+            updated = true;
+            // TODO - Casting is ugly but right now our unsigned integers are longs
+            unsettled.remove((int) delivery.getDeliveryId());
+            delivery.remotelySettled();
+        }
+
+        if (updated) {
+            delivery.getLink().signalDeliveryUpdated(delivery);
+        }
+
+        return this;
+    }
+
+    @Override
+    protected final ProtonReceiver handleRemoteDisposition(Disposition disposition, ProtonOutgoingDelivery delivery) {
+        throw new IllegalStateException("Receiver link should never handle dispsotiions for outgoing deliveries");
+    }
+
+    @Override
+    protected final ProtonIncomingDelivery handleRemoteTransfer(Transfer transfer, ProtonBuffer payload) {
+        final ProtonIncomingDelivery delivery;
+
+        if (!currentDeliveryId.isEmpty() && (!transfer.hasDeliveryId() || currentDeliveryId.equals((int) transfer.getDeliveryId()))) {
+            delivery = unsettled.get(currentDeliveryId.intValue());
+        } else {
+            verifyNewDeliveryIdSequence(transfer, currentDeliveryId);
+
+            delivery = new ProtonIncomingDelivery(this, transfer.getDeliveryId(), transfer.getDeliveryTag());
+            delivery.setMessageFormat((int) transfer.getMessageFormat());
+
+            // TODO - Casting is ugly but our ID values are longs
+            unsettled.put((int) transfer.getDeliveryId(), delivery);
+            currentDeliveryId.set((int) transfer.getDeliveryId());
+        }
+
+        if (transfer.hasState()) {
+            delivery.remoteState(transfer.getState());
+        }
+
+        if (transfer.getSettled() || transfer.getAborted()) {
+            delivery.remotelySettled();
+        }
+
+        delivery.appendTransferPayload(payload);
+
+        boolean done = transfer.getAborted() || !transfer.getMore();
+        if (done) {
+            if (transfer.getAborted()) {
+                delivery.aborted();
+            } else {
+                delivery.completed();
+            }
+
+            creditState.decrementCredit();
+            creditState.incrementDeliveryCount();
+            currentDeliveryId.reset();
+        }
+
+        if (delivery.isFirstTransfer()) {
+            signalDeliveryReceived(delivery);
+        } else {
+            signalDeliveryUpdated(delivery);
+        }
+
+        return delivery;
+    }
+
+    @Override
+    protected ProtonReceiver decorateOutgoingFlow(Flow flow) {
+        flow.setLinkCredit(getCredit());
+        flow.setHandle(getHandle());
+        if (creditState.isDeliveryCountInitalised()) {
+            flow.setDeliveryCount(creditState.getDeliveryCount());
+        }
+        flow.setDrain(isDrain());
+
+        return this;
+    }
+
+    private void verifyNewDeliveryIdSequence(Transfer transfer, DeliveryIdTracker currentDeliveryId) {
+        // TODO - Fail engine, session, or link ?
+
+        if (!transfer.hasDeliveryId()) {
+            getSession().getEngine().engineFailed(
+                 new ProtocolViolationException("No delivery-id specified on first Transfer of new delivery"));
+        }
+
+        sessionWindow.validateNextDeliveryId(transfer.getDeliveryId());
+
+        if (!currentDeliveryId.isEmpty()) {
+            getSession().getEngine().engineFailed(
+                new ProtocolViolationException("Illegal multiplex of deliveries on same link with delivery-id " +
+                                               currentDeliveryId + " and " + transfer.getDeliveryId()));
+        }
     }
 }

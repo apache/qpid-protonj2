@@ -19,7 +19,13 @@ package org.apache.qpid.proton4j.engine.impl;
 import org.apache.qpid.proton4j.amqp.transactions.Declare;
 import org.apache.qpid.proton4j.amqp.transactions.Declared;
 import org.apache.qpid.proton4j.amqp.transactions.Discharge;
+import org.apache.qpid.proton4j.amqp.transport.Attach;
+import org.apache.qpid.proton4j.amqp.transport.Detach;
+import org.apache.qpid.proton4j.amqp.transport.Disposition;
+import org.apache.qpid.proton4j.amqp.transport.Flow;
 import org.apache.qpid.proton4j.amqp.transport.Role;
+import org.apache.qpid.proton4j.amqp.transport.Transfer;
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.engine.EventHandler;
 
 /**
@@ -59,17 +65,6 @@ public class ProtonCoordinator extends ProtonLink<ProtonCoordinator> {
     @Override
     protected ProtonCoordinator self() {
         return this;
-    }
-
-    @Override
-    protected ProtonLinkState<?> linkState() {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    boolean isDeliveryCountInitialised() {
-        return true;
     }
 
     public void declare() {
@@ -134,5 +129,47 @@ public class ProtonCoordinator extends ProtonLink<ProtonCoordinator> {
     @Override
     protected void transitionToParentRemotelyClosedState() {
         // Nothing currently updated on this state change.
+    }
+
+    @Override
+    protected ProtonCoordinator handleRemoteAttach(Attach attach) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    protected ProtonCoordinator handleRemoteDetach(Detach detach) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    protected ProtonCoordinator handleRemoteFlow(Flow flow) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    protected ProtonCoordinator handleRemoteDisposition(Disposition disposition, ProtonOutgoingDelivery delivery) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    protected ProtonIncomingDelivery handleRemoteTransfer(Transfer transfer, ProtonBuffer payload) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    protected ProtonCoordinator decorateOutgoingFlow(Flow flow) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    protected ProtonCoordinator handleRemoteDisposition(Disposition disposition, ProtonIncomingDelivery delivery) {
+        // TODO Auto-generated method stub
+        return null;
     }
 }

@@ -34,8 +34,10 @@ public class ProtonLinkCreditState implements LinkCreditState {
     @SuppressWarnings("unused")
     private long remoteLinkCredit;
 
-    public ProtonLinkCreditState(boolean sender) {
-        deliveryCountInitalised = sender;
+    public ProtonLinkCreditState() {}
+
+    public ProtonLinkCreditState(int deliveryCount) {
+        initialiseDeliveryCount(deliveryCount);
     }
 
     @Override
