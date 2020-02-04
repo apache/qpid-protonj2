@@ -42,7 +42,7 @@ public class ProtonCoordinator extends ProtonLink<ProtonCoordinator> {
     // CoordinatorSender -> CoordinatorReceiver
 
     protected ProtonCoordinator(ProtonSession session, String name) {
-        super(session, name);
+        super(session, name, new ProtonLinkCreditState());
     }
 
     @Override
@@ -90,46 +90,6 @@ public class ProtonCoordinator extends ProtonLink<ProtonCoordinator> {
     }
 
     //----- Handle link and parent resource state changes
-
-    @Override
-    protected void transitionedToLocallyOpened() {
-        // Nothing currently updated on this state change.
-    }
-
-    @Override
-    protected void transitionedToLocallyDetached() {
-        // Nothing currently updated on this state change.
-    }
-
-    @Override
-    protected void transitionedToLocallyClosed() {
-        // Nothing currently updated on this state change.
-    }
-
-    @Override
-    protected void transitionToRemotelyOpenedState() {
-        // Nothing currently updated on this state change.
-    }
-
-    @Override
-    protected void transitionToRemotelyDetachedState() {
-        // Nothing currently updated on this state change.
-    }
-
-    @Override
-    protected void transitionToRemotelyCosedState() {
-        // Nothing currently updated on this state change.
-    }
-
-    @Override
-    protected void transitionToParentLocallyClosedState() {
-        // Nothing currently updated on this state change.
-    }
-
-    @Override
-    protected void transitionToParentRemotelyClosedState() {
-        // Nothing currently updated on this state change.
-    }
 
     @Override
     protected ProtonCoordinator handleRemoteAttach(Attach attach) {

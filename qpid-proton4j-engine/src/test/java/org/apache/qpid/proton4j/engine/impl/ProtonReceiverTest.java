@@ -65,7 +65,6 @@ import org.apache.qpid.proton4j.engine.Receiver;
 import org.apache.qpid.proton4j.engine.Session;
 import org.apache.qpid.proton4j.engine.exceptions.EngineFailedException;
 import org.hamcrest.Matcher;
-import org.junit.Ignore;
 import org.junit.Test;
 
 /**
@@ -571,13 +570,11 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         doTestRemotelyTerminateLinkAndThenCreateNewLink(false, false);
     }
 
-    @Ignore("Issue with untracking links by name currently")  // TODO - No Free in current API when to stop tracking ?
     @Test
     public void testRemotelyCloseReceiverAndOpenNewReceiverImmediatelyAfterWithSameLinkName() throws Exception {
         doTestRemotelyTerminateLinkAndThenCreateNewLink(true, true);
     }
 
-    @Ignore("Issue with untracking links by name currently")  // TODO - No Free in current API when to stop tracking ?
     @Test
     public void testRemotelyDetachReceiverAndOpenNewReceiverImmediatelyAfterWithSameLinkName() throws Exception {
         doTestRemotelyTerminateLinkAndThenCreateNewLink(false, true);
@@ -1181,7 +1178,8 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         });
 
         peer.expectFlow().withDrain(true).withLinkCredit(creditWindow).withDeliveryCount(0)
-            .respond().withDrain(true).withLinkCredit(0).withDeliveryCount(creditWindow);
+                         .respond()
+                         .withDrain(true).withLinkCredit(0).withDeliveryCount(creditWindow);
 
         receiver.drain();
 
@@ -1319,8 +1317,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
 
     @Test
     public void testReceiverSendsDispostionForTransfer() throws Exception {
-                Engine engine = EngineFactory.PROTON.createNonSaslEngine();
-
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
         ProtonTestPeer peer = new ProtonTestPeer(engine);
         engine.outputConsumer(peer);
@@ -1373,8 +1370,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
 
     @Test
     public void testReceiverSendsDispostionOnlyOnceForTransfer() throws Exception {
-                Engine engine = EngineFactory.PROTON.createNonSaslEngine();
-
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
         ProtonTestPeer peer = new ProtonTestPeer(engine);
         engine.outputConsumer(peer);
@@ -2596,5 +2592,274 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         connection.close();
 
         peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+    }
+
+    @Test(timeout = 30000)
+    public void testReceiverAddCreditFailsAfterReceiverLocallyClosed() throws Exception {
+        doTestReceiverAddCreditFailsWhenLinkIsNotOperable(true, false, false);
+    }
+
+    @Test(timeout = 30000)
+    public void testReceiverAddCreditFailsAfterReceiverLocallyDetached() throws Exception {
+        doTestReceiverAddCreditFailsWhenLinkIsNotOperable(true, false, true);
+    }
+
+    @Test(timeout = 30000)
+    public void testReceiverAddCreditFailsAfterReceiverRemotelyClosed() throws Exception {
+        doTestReceiverAddCreditFailsWhenLinkIsNotOperable(false, true, false);
+    }
+
+    @Test(timeout = 30000)
+    public void testReceiverAddCreditFailsAfterReceiverRemotelyDetached() throws Exception {
+        doTestReceiverAddCreditFailsWhenLinkIsNotOperable(false, true, true);
+    }
+
+    @Test(timeout = 30000)
+    public void testReceiverAddCreditFailsAfterReceiverFullyClosed() throws Exception {
+        doTestReceiverAddCreditFailsWhenLinkIsNotOperable(true, true, false);
+    }
+
+    @Test(timeout = 30000)
+    public void testReceiverAddCreditFailsAfterReceiverFullyDetached() throws Exception {
+        doTestReceiverAddCreditFailsWhenLinkIsNotOperable(true, true, true);
+    }
+
+    private void doTestReceiverAddCreditFailsWhenLinkIsNotOperable(boolean localClose, boolean remoteClose, boolean detach) {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result);
+        ProtonTestPeer peer = new ProtonTestPeer(engine);
+        engine.outputConsumer(peer);
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond().withContainerId("driver");
+        peer.expectBegin().respond();
+        peer.expectAttach().respond();
+
+        Connection connection = engine.start();
+        connection.open();
+        Session session = connection.session();
+        session.open();
+        Receiver receiver = session.receiver("test");
+        receiver.open();
+
+        if (localClose) {
+            if (remoteClose) {
+                peer.expectDetach().respond();
+            } else {
+                peer.expectDetach();
+            }
+
+            if (detach) {
+                receiver.detach();
+            } else {
+                receiver.close();
+            }
+        } else if (remoteClose) {
+            peer.remoteDetach().withClosed(!detach).now();
+        }
+
+        try {
+            receiver.addCredit(2);
+            fail("Receiver should not allow addCredit to be called");
+        } catch (IllegalStateException ise) {
+            // Expected
+        }
+
+        peer.waitForScriptToComplete();
+
+        assertNull(failure);
+    }
+
+    @Test(timeout = 30000)
+    public void testReceiverAddCreditFailsAfterSessionLocallyClosed() throws Exception {
+        doTestReceiverAddCreditFailsWhenSessionNotOperable(true, false);
+    }
+
+    @Test(timeout = 30000)
+    public void testReceiverAddCreditFailsAfterSessionRemotelyClosed() throws Exception {
+        doTestReceiverAddCreditFailsWhenSessionNotOperable(false, true);
+    }
+
+    @Test(timeout = 30000)
+    public void testReceiverAddCreditFailsAfterSessionFullyClosed() throws Exception {
+        doTestReceiverAddCreditFailsWhenSessionNotOperable(true, true);
+    }
+
+    private void doTestReceiverAddCreditFailsWhenSessionNotOperable(boolean localClose, boolean remoteClose) {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result);
+        ProtonTestPeer peer = new ProtonTestPeer(engine);
+        engine.outputConsumer(peer);
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond().withContainerId("driver");
+        peer.expectBegin().respond();
+        peer.expectAttach().respond();
+
+        Connection connection = engine.start();
+        connection.open();
+        Session session = connection.session();
+        session.open();
+        Receiver receiver = session.receiver("test");
+        receiver.open();
+
+        if (localClose) {
+            if (remoteClose) {
+                peer.expectEnd().respond();
+            } else {
+                peer.expectEnd();
+            }
+
+            session.close();
+        } else if (remoteClose) {
+            peer.remoteEnd().now();
+        }
+
+        try {
+            receiver.addCredit(2);
+            fail("Receiver should not allow addCredit to be called");
+        } catch (IllegalStateException ise) {
+            // Expected
+        }
+
+        peer.waitForScriptToComplete();
+
+        assertNull(failure);
+    }
+
+    @Test(timeout = 30000)
+    public void testReceiverAddCreditFailsAfterConnectionLocallyClosed() throws Exception {
+        doTestReceiverAddCreditFailsWhenConnectionNotOperable(true, false);
+    }
+
+    @Test(timeout = 30000)
+    public void testReceiverAddCreditFailsAfterConnectionRemotelyClosed() throws Exception {
+        doTestReceiverAddCreditFailsWhenConnectionNotOperable(false, true);
+    }
+
+    @Test(timeout = 30000)
+    public void testReceiverAddCreditFailsAfterConnectionFullyClosed() throws Exception {
+        doTestReceiverAddCreditFailsWhenConnectionNotOperable(true, true);
+    }
+
+    private void doTestReceiverAddCreditFailsWhenConnectionNotOperable(boolean localClose, boolean remoteClose) {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result);
+        ProtonTestPeer peer = new ProtonTestPeer(engine);
+        engine.outputConsumer(peer);
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond().withContainerId("driver");
+        peer.expectBegin().respond();
+        peer.expectAttach().respond();
+
+        Connection connection = engine.start();
+        connection.open();
+        Session session = connection.session();
+        session.open();
+        Receiver receiver = session.receiver("test");
+        receiver.open();
+
+        if (localClose) {
+            if (remoteClose) {
+                peer.expectClose().respond();
+            } else {
+                peer.expectClose();
+            }
+
+            connection.close();
+        } else if (remoteClose) {
+            peer.remoteClose().now();
+        }
+
+        try {
+            receiver.addCredit(2);
+            fail("Receiver should not allow addCredit to be called");
+        } catch (IllegalStateException ise) {
+            // Expected
+        }
+
+        peer.waitForScriptToComplete();
+
+        assertNull(failure);
+    }
+
+    @Test(timeout = 30000)
+    public void testReceiverDispositionFailsAfterReceiverLocallyClosed() throws Exception {
+        doTestReceiverDispositionFailsWhenLinkIsNotOperable(true, false, false);
+    }
+
+    @Test(timeout = 30000)
+    public void testReceiverDispositionFailsAfterReceiverLocallyDetached() throws Exception {
+        doTestReceiverDispositionFailsWhenLinkIsNotOperable(true, false, true);
+    }
+
+    @Test(timeout = 30000)
+    public void testReceiverDispositionFailsAfterReceiverRemotelyClosed() throws Exception {
+        doTestReceiverDispositionFailsWhenLinkIsNotOperable(false, true, false);
+    }
+
+    @Test(timeout = 30000)
+    public void testReceiverDispositionFailsAfterReceiverRemotelyDetached() throws Exception {
+        doTestReceiverDispositionFailsWhenLinkIsNotOperable(false, true, true);
+    }
+
+    @Test(timeout = 30000)
+    public void testReceiverDispositionFailsAfterReceiverFullyClosed() throws Exception {
+        doTestReceiverDispositionFailsWhenLinkIsNotOperable(true, true, false);
+    }
+
+    @Test(timeout = 30000)
+    public void testReceiverDispositionFailsAfterReceiverFullyDetached() throws Exception {
+        doTestReceiverDispositionFailsWhenLinkIsNotOperable(true, true, true);
+    }
+
+    private void doTestReceiverDispositionFailsWhenLinkIsNotOperable(boolean localClose, boolean remoteClose, boolean detach) {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result);
+        ProtonTestPeer peer = new ProtonTestPeer(engine);
+        engine.outputConsumer(peer);
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond().withContainerId("driver");
+        peer.expectBegin().respond();
+        peer.expectAttach().respond();
+
+        Connection connection = engine.start();
+        connection.open();
+        Session session = connection.session();
+        session.open();
+        Receiver receiver = session.receiver("test");
+        receiver.open();
+
+        // Should no-op with no deliveries
+        receiver.disposition(delivery -> true, Accepted.getInstance(), true);
+
+        if (localClose) {
+            if (remoteClose) {
+                peer.expectDetach().respond();
+            } else {
+                peer.expectDetach();
+            }
+
+            if (detach) {
+                receiver.detach();
+            } else {
+                receiver.close();
+            }
+        } else if (remoteClose) {
+            peer.remoteDetach().withClosed(!detach).now();
+        }
+
+        try {
+            receiver.disposition(delivery -> true, Accepted.getInstance(), true);
+            fail("Receiver should not allow dispotiion to be called");
+        } catch (IllegalStateException ise) {
+            // Expected
+        }
+
+        peer.waitForScriptToComplete();
+
+        assertNull(failure);
     }
 }

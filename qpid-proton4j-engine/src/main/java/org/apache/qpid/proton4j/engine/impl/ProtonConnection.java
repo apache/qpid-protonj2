@@ -147,9 +147,9 @@ public class ProtonConnection implements Connection, AMQPHeader.HeaderHandler<Pr
             getEngine().checkShutdownOrFailed("Cannot open a connection when Engine is shutdown or failed.");
             localState = ConnectionState.ACTIVE;
             try {
-                processStateChangeAndRespond();
+                syncLocalStateWithRemote();
             } finally {
-                allSessions().forEach(session -> session.handleConnectionStateChanged(this));
+                // TODO - Needed ? allSessions().forEach(session -> session.handleConnectionStateChanged(this));
                 if (localOpenHandler != null) {
                     localOpenHandler.handle(this);
                 }
@@ -165,9 +165,9 @@ public class ProtonConnection implements Connection, AMQPHeader.HeaderHandler<Pr
             localState = ConnectionState.CLOSED;
             try {
                 getEngine().checkFailed("Connection close called while engine .");
-                processStateChangeAndRespond();
+                syncLocalStateWithRemote();
             } finally {
-                allSessions().forEach(session -> session.handleConnectionStateChanged(this));
+                allSessions().forEach(session -> session.handleConnectionLocallyClosed(this));
                 if (localCloseHandler != null) {
                     localCloseHandler.handle(this);
                 }
@@ -417,7 +417,7 @@ public class ProtonConnection implements Connection, AMQPHeader.HeaderHandler<Pr
     @Override
     public void handleAMQPHeader(AMQPHeader header, ProtonEngine context) {
         headerReceived = true;
-        processStateChangeAndRespond();
+        syncLocalStateWithRemote();
     }
 
     @Override
@@ -444,6 +444,7 @@ public class ProtonConnection implements Connection, AMQPHeader.HeaderHandler<Pr
     public void handleClose(Close close, ProtonBuffer payload, int channel, ProtonEngine context) {
         remoteState = ConnectionState.CLOSED;
         setRemoteCondition(close.getError());
+        allSessions().forEach(session -> session.handleConnectionRemotelyClosed(this));
 
         if (remoteCloseHandler != null) {
             remoteCloseHandler.handle(this);
@@ -625,7 +626,7 @@ public class ProtonConnection implements Connection, AMQPHeader.HeaderHandler<Pr
         }
     }
 
-    private void processStateChangeAndRespond() {
+    private void syncLocalStateWithRemote() {
         // When the engine state changes or we have read an incoming AMQP header etc we need to check
         // if we have pending work to send and do so
         if (headerSent) {
@@ -634,11 +635,11 @@ public class ProtonConnection implements Connection, AMQPHeader.HeaderHandler<Pr
             // Once an incoming header arrives we can emit our open if locally opened and also send close if
             // that is what our state is already.
             if (state != ConnectionState.IDLE && headerReceived) {
-                boolean stateUpdated = false;
+                boolean resourceSyncNeeded = false;
 
                 if (!localOpenSent && !engine.isShutdown()) {
                     localOpenSent = true;
-                    stateUpdated = true;
+                    resourceSyncNeeded = true;
                     engine.fireWrite(localOpen, 0, null, null);
                     engine.configuration().setMaxFrameSize((int) localOpen.getMaxFrameSize());
                     engine.configuration().recomputeEffectiveFrameSizeLimits();
@@ -646,13 +647,13 @@ public class ProtonConnection implements Connection, AMQPHeader.HeaderHandler<Pr
 
                 if (isLocallyClosed() && !localCloseSent && !engine.isShutdown()) {
                     localCloseSent = true;
-                    stateUpdated = true;
+                    resourceSyncNeeded = false;  // Session resources can't write anything now
                     Close localClose = new Close().setError(getCondition());
                     engine.fireWrite(localClose, 0, null, null);
                 }
 
-                if (stateUpdated) {
-                    allSessions().forEach(session -> session.handleConnectionStateChanged(this));
+                if (resourceSyncNeeded) {
+                    allSessions().forEach(session -> session.trySyncLocalStateWithRemote());
                 }
             }
         } else if (!engine.isShutdown()) {
@@ -662,16 +663,7 @@ public class ProtonConnection implements Connection, AMQPHeader.HeaderHandler<Pr
     }
 
     void handleEngineShutdown(ProtonEngine protonEngine) {
-        Set<ProtonSession> sessions = new HashSet<>(localSessions.size());
-
-        sessions.addAll(localSessions.values());
-        sessions.addAll(remoteSessions.values());
-
-        sessions.forEach(session -> {
-            try {
-                session.handleEngineShutdown(protonEngine);
-            } catch (Throwable ignore) {}
-        });
+        allSessions().forEach(session -> session.handleEngineShutdown(protonEngine));
 
         try {
             engineShutdownHandler.handle(protonEngine);

@@ -50,7 +50,6 @@ public class ProtonReceiver extends ProtonLink<Receiver> implements Receiver {
     private EventHandler<Receiver> receiverDrainedEventHandler = null;
 
     private final ProtonSessionIncomingWindow sessionWindow;
-    private final ProtonLinkCreditState creditState = new ProtonLinkCreditState();
     private final DeliveryIdTracker currentDeliveryId = new DeliveryIdTracker();
     private final SplayMap<ProtonIncomingDelivery> unsettled = new SplayMap<>();
 
@@ -66,7 +65,7 @@ public class ProtonReceiver extends ProtonLink<Receiver> implements Receiver {
      *      The name assigned to this {@link Receiver} link.
      */
     public ProtonReceiver(ProtonSession session, String name) {
-        super(session, name);
+        super(session, name, new ProtonLinkCreditState());
 
         this.sessionWindow = session.getIncomingWindow();
     }
@@ -94,27 +93,19 @@ public class ProtonReceiver extends ProtonLink<Receiver> implements Receiver {
 
     @Override
     public int getCredit() {
-        return creditState.getCredit();
+        return getCreditState().getCredit();
     }
 
     @Override
     public ProtonReceiver addCredit(int credit) {
-        checkNotClosed("Cannot add credit on a closed Receiver");
-
-        // TODO - Better way to check all this state on each operation.
-        //        One possible way of doing this is by having a Consumer<> type and
-        //        swap the method when closed to one that always throws.
-        if (session.isLocallyClosed() || connection.isLocallyClosed() ||
-            session.isRemotelyClosed() || connection.isRemotelyClosed()) {
-            throw new IllegalStateException("Cannot set credit when session or connection already closed");
-        }
+        checkLinkOperable("Cannot add credit");
 
         if (credit < 0) {
             throw new IllegalArgumentException("additional credits cannot be less than zero");
         }
 
         if (credit > 0) {
-            creditState.incrementCredit(credit);
+            getCreditState().incrementCredit(credit);
             if (isRemotelyOpen()) {
                 // TODO: delaying credit until remoteAttach(Attach attach) is called doesn't seem needed?
                 // Perhaps should be/include isLocallyOpen?
@@ -127,18 +118,17 @@ public class ProtonReceiver extends ProtonLink<Receiver> implements Receiver {
 
     @Override
     public Receiver drain() {
-        checkNotClosed("Cannot drain a closed Receiver");
+        checkLinkOperable("Cannot drain Receiver");
 
         if (drainStateSnapshot != null) {
             throw new IllegalStateException("Drain attempt already outstanding");
         }
 
-        LinkCreditState snapshot = creditState.snapshot();
-        if (snapshot.getCredit() <= 0) {
+        if (getCredit() <= 0) {
             throw new IllegalStateException("No existing credit to drain");
         }
 
-        drainStateSnapshot = snapshot;
+        drainStateSnapshot = getCreditState().snapshot();
 
         if (isRemotelyOpen()) {
             // TODO: delaying credit+drain until remoteAttach(Attach attach) is called doesn't seem needed?
@@ -156,6 +146,8 @@ public class ProtonReceiver extends ProtonLink<Receiver> implements Receiver {
     @SuppressWarnings("unchecked")
     @Override
     public Receiver disposition(Predicate<IncomingDelivery> filter, DeliveryState disposition, boolean settle) {
+        checkLinkOperable("Cannot apply disposition");
+
         List<UnsignedInteger> toRemove = settle ? new ArrayList<>() : Collections.EMPTY_LIST;
 
         unsettled.forEach((deliveryId, delivery) -> {
@@ -196,15 +188,8 @@ public class ProtonReceiver extends ProtonLink<Receiver> implements Receiver {
     //----- Delivery related access points
 
     void disposition(ProtonIncomingDelivery delivery) {
-        checkNotClosed("Cannot set a disposition for a delivery on a closed Receiver");
+        checkLinkOperable("Cannot set a disposition for delivery");
 
-        // TODO - Better way to check all this state on each operation.
-        if (session.isLocallyClosed() || connection.isLocallyClosed() ||
-            session.isRemotelyClosed() || connection.isRemotelyClosed()) {
-            throw new IllegalStateException("Cannot set credit when session or connection already closed");
-        }
-
-        // TODO - Enforce not closed etc
         if (delivery.isSettled()) {
             // TODO - Casting is ugly but right now our unsigned integers are longs
             unsettled.remove((int) delivery.getDeliveryId());
@@ -263,48 +248,6 @@ public class ProtonReceiver extends ProtonLink<Receiver> implements Receiver {
         return this;
     }
 
-    //----- Handle link and parent resource state changes
-
-    @Override
-    protected void transitionedToLocallyOpened() {
-        // Nothing currently updated on this state change.
-    }
-
-    @Override
-    protected void transitionedToLocallyDetached() {
-        creditState.clearCredit();
-    }
-
-    @Override
-    protected void transitionedToLocallyClosed() {
-        creditState.clearCredit();
-    }
-
-    @Override
-    protected void transitionToRemotelyOpenedState() {
-        // Nothing currently updated on this state change.
-    }
-
-    @Override
-    protected void transitionToRemotelyDetachedState() {
-        creditState.clearCredit();
-    }
-
-    @Override
-    protected void transitionToRemotelyCosedState() {
-        creditState.clearCredit();
-    }
-
-    @Override
-    protected void transitionToParentLocallyClosedState() {
-        creditState.clearCredit();
-    }
-
-    @Override
-    protected void transitionToParentRemotelyClosedState() {
-        creditState.clearCredit();
-    }
-
     //----- Handle incoming frames from the remote sender
 
     @Override
@@ -314,7 +257,7 @@ public class ProtonReceiver extends ProtonLink<Receiver> implements Receiver {
             throw new IllegalArgumentException("Sending peer attach had no initial delivery count");
         }
 
-        creditState.initialiseDeliveryCount((int) attach.getInitialDeliveryCount());
+        getCreditState().initialiseDeliveryCount((int) attach.getInitialDeliveryCount());
 
         if (getCredit() > 0 && isLocallyOpen()) {
             sessionWindow.writeFlow(this);
@@ -325,12 +268,12 @@ public class ProtonReceiver extends ProtonLink<Receiver> implements Receiver {
 
     @Override
     protected final ProtonReceiver handleRemoteDetach(Detach detach) {
-        creditState.clearCredit();
         return this;
     }
 
     @Override
     protected final ProtonReceiver handleRemoteFlow(Flow flow) {
+        ProtonLinkCreditState creditState = getCreditState();
         creditState.remoteFlow(flow);
 
         if (flow.getDrain()) {
@@ -412,8 +355,8 @@ public class ProtonReceiver extends ProtonLink<Receiver> implements Receiver {
                 delivery.completed();
             }
 
-            creditState.decrementCredit();
-            creditState.incrementDeliveryCount();
+            getCreditState().decrementCredit();
+            getCreditState().incrementDeliveryCount();
             currentDeliveryId.reset();
         }
 
@@ -430,8 +373,8 @@ public class ProtonReceiver extends ProtonLink<Receiver> implements Receiver {
     protected ProtonReceiver decorateOutgoingFlow(Flow flow) {
         flow.setLinkCredit(getCredit());
         flow.setHandle(getHandle());
-        if (creditState.isDeliveryCountInitalised()) {
-            flow.setDeliveryCount(creditState.getDeliveryCount());
+        if (getCreditState().isDeliveryCountInitalised()) {
+            flow.setDeliveryCount(getCreditState().getDeliveryCount());
         }
         flow.setDrain(isDrain());
 
@@ -442,14 +385,14 @@ public class ProtonReceiver extends ProtonLink<Receiver> implements Receiver {
         // TODO - Fail engine, session, or link ?
 
         if (!transfer.hasDeliveryId()) {
-            getSession().getEngine().engineFailed(
-                 new ProtocolViolationException("No delivery-id specified on first Transfer of new delivery"));
+            getEngine().engineFailed(
+                new ProtocolViolationException("No delivery-id specified on first Transfer of new delivery"));
         }
 
         sessionWindow.validateNextDeliveryId(transfer.getDeliveryId());
 
         if (!currentDeliveryId.isEmpty()) {
-            getSession().getEngine().engineFailed(
+            getEngine().engineFailed(
                 new ProtocolViolationException("Illegal multiplex of deliveries on same link with delivery-id " +
                                                currentDeliveryId + " and " + transfer.getDeliveryId()));
         }

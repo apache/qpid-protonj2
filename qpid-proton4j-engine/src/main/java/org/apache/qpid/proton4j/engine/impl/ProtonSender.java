@@ -49,7 +49,6 @@ public class ProtonSender extends ProtonLink<Sender> implements Sender {
     private final ProtonSessionOutgoingWindow sessionWindow;
 
     private final DeliveryIdTracker currentDelivery = new DeliveryIdTracker();
-    private final ProtonLinkCreditState creditState = new ProtonLinkCreditState(0);
 
     private boolean sendable;
     private boolean draining;
@@ -82,7 +81,7 @@ public class ProtonSender extends ProtonLink<Sender> implements Sender {
      *      The name assigned to this {@link Sender} link.
      */
     public ProtonSender(ProtonSession session, String name) {
-        super(session, name);
+        super(session, name, new ProtonLinkCreditState(0));
 
         this.sessionWindow = session.getOutgoingWindow();
     }
@@ -99,7 +98,7 @@ public class ProtonSender extends ProtonLink<Sender> implements Sender {
 
     @Override
     public int getCredit() {
-        return creditState.getCredit();
+        return getCreditState().getCredit();
     }
 
     @Override
@@ -122,6 +121,8 @@ public class ProtonSender extends ProtonLink<Sender> implements Sender {
     @SuppressWarnings("unchecked")
     @Override
     public Sender disposition(Predicate<OutgoingDelivery> filter, DeliveryState state, boolean settle) {
+        checkLinkOperable("Cannot apply disposition");
+
         List<UnsignedInteger> toRemove = settle ? new ArrayList<>() : Collections.EMPTY_LIST;
 
         unsettled.forEach((deliveryId, delivery) -> {
@@ -157,6 +158,8 @@ public class ProtonSender extends ProtonLink<Sender> implements Sender {
 
     @Override
     public OutgoingDelivery next() {
+        checkLinkOperable("Cannot update next delivery");
+
         // TODO: null 'current' upon completion instead of checking partial here? Thats what current() doc suggests.
         if (current != null && current.isPartial()) {
             throw new IllegalStateException("Current delivery is not complete and cannot be advanced.");
@@ -222,6 +225,8 @@ public class ProtonSender extends ProtonLink<Sender> implements Sender {
 
     @Override
     protected final ProtonSender handleRemoteFlow(Flow flow) {
+        ProtonLinkCreditState creditState = getCreditState();
+
         creditState.remoteFlow(flow);
 
         int existingDeliveryCount = creditState.getDeliveryCount();
@@ -324,7 +329,7 @@ public class ProtonSender extends ProtonLink<Sender> implements Sender {
         //        reduce link credit in case the remote has updated the credit since the event was
         //        triggered.
         if (drainRequestedEventHandler != null) {
-            drainRequestedEventHandler.handle(creditState.snapshot());
+            drainRequestedEventHandler.handle(getCreditState().snapshot());
         }
         return this;
     }
@@ -347,7 +352,6 @@ public class ProtonSender extends ProtonLink<Sender> implements Sender {
 
     @Override
     protected void transitionedToLocallyDetached() {
-        creditState.clearCredit();
         sendable = false;
 
         disableAllSenderOperations("link is detached");
@@ -355,7 +359,6 @@ public class ProtonSender extends ProtonLink<Sender> implements Sender {
 
     @Override
     protected void transitionedToLocallyClosed() {
-        creditState.clearCredit();
         sendable = false;
 
         disableAllSenderOperations("link is closed");
@@ -367,8 +370,7 @@ public class ProtonSender extends ProtonLink<Sender> implements Sender {
     }
 
     @Override
-    protected void transitionToRemotelyDetachedState() {
-        creditState.clearCredit();
+    protected void transitionToRemotelyDetached() {
         sendable = false;
 
         if (isLocallyOpen()) {
@@ -377,8 +379,7 @@ public class ProtonSender extends ProtonLink<Sender> implements Sender {
     }
 
     @Override
-    protected void transitionToRemotelyCosedState() {
-        creditState.clearCredit();
+    protected void transitionToRemotelyCosed() {
         sendable = false;
 
         if (isLocallyOpen()) {
@@ -387,14 +388,14 @@ public class ProtonSender extends ProtonLink<Sender> implements Sender {
     }
 
     @Override
-    protected void transitionToParentLocallyClosedState() {
+    protected void transitionToParentLocallyClosed() {
         if (isLocallyOpen()) {
             disableAllSenderOperations("parent resurce is locally closed");
         }
     }
 
     @Override
-    protected void transitionToParentRemotelyClosedState() {
+    protected void transitionToParentRemotelyClosed() {
         if (isLocallyOpen()) {
             disableAllSenderOperations("parent resurce is remotely closed");
         }
@@ -436,8 +437,8 @@ public class ProtonSender extends ProtonLink<Sender> implements Sender {
 
         if (!delivery.isPartial()) {
             currentDelivery.reset();
-            creditState.incrementDeliveryCount();
-            creditState.decrementCredit();
+            getCreditState().incrementDeliveryCount();
+            getCreditState().decrementCredit();
 
             if (getCredit() == 0) {
                 sendable = false;

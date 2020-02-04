@@ -173,7 +173,7 @@ public class ProtonSession implements Session {
             incomingWindow.configureOutbound(localBegin);
             outgoingWindow.configureOutbound(localBegin);
             try {
-                syncLocalStateWithRemote();
+                trySyncLocalStateWithRemote();
             } finally {
                 if (localOpenHandler != null) {
                     localOpenHandler.handle(this);
@@ -190,8 +190,9 @@ public class ProtonSession implements Session {
             localState = SessionState.CLOSED;
             try {
                 engine.checkFailed("Session close called but engine is in a failed state.");
-                syncLocalStateWithRemote();
+                trySyncLocalStateWithRemote();
             } finally {
+                allLinks().forEach(link -> link.handleSessionLocallyClosed(this));
                 if (localCloseHandler != null) {
                     localCloseHandler.handle(this);
                 }
@@ -448,31 +449,22 @@ public class ProtonSession implements Session {
         return engineShutdownHandler;
     }
 
-    //----- Respond to local Connection changes
+    //----- Respond to Connection and Engine state changes
 
-    void handleConnectionStateChanged(ProtonConnection connection) {
-        switch (connection.getState()) {
-            case IDLE:
-                return;
-            case ACTIVE:
-                syncLocalStateWithRemote();
-                return;
-            case CLOSED:
-                processParentConnectionLocallyClosed();
-                return;
-        }
+    void handleConnectionLocallyClosed(ProtonConnection protonConnection) {
+        allLinks().forEach(link -> link.handleConnectionLocallyClosed(connection));
+    }
+
+    void handleConnectionRemotelyClosed(ProtonConnection protonConnection) {
+        allLinks().forEach(link -> link.handleConnectionRemotelyClosed(connection));
     }
 
     void handleEngineShutdown(ProtonEngine protonEngine) {
+        allLinks().forEach(link -> link.handleEngineShutdown(protonEngine));
+
         try {
             engineShutdownHandler.handle(protonEngine);
         } catch (Throwable ingore) {}
-
-        allLinks().forEach(link -> {
-            try {
-                link.handleEngineShutdown(protonEngine);
-            } catch (Throwable ignore) {}
-        });
     }
 
     //----- Handle incoming performatives
@@ -490,7 +482,7 @@ public class ProtonSession implements Session {
     }
 
     void remoteEnd(End end, int channel) {
-        // TODO - Fully implement handling for remote End
+        allLinks().forEach(link -> link.handleSessionRemotelyClosed(this));
 
         setRemoteCondition(end.getError());
         remoteState = SessionState.CLOSED;
@@ -694,7 +686,7 @@ public class ProtonSession implements Session {
         return true;
     }
 
-    private void syncLocalStateWithRemote() {
+    void trySyncLocalStateWithRemote() {
         switch (getState()) {
             case IDLE:
                 return;
@@ -707,12 +699,6 @@ public class ProtonSession implements Session {
                 break;
             default:
                 throw new IllegalStateException("Session is in unknown state and cannot proceed");
-        }
-    }
-
-    private void processParentConnectionLocallyClosed() {
-        for (ProtonLink<?> link : localLinks.values()) {
-            link.handleParentConnectionLocallyClosed();
         }
     }
 
@@ -735,14 +721,13 @@ public class ProtonSession implements Session {
     private void fireSessionBegin() {
         localBeginSent = true;
         connection.getEngine().fireWrite(localBegin, localChannel, null, null);
-        localLinks.forEach(link -> link.handleSessionStateChanged(this));
+        allLinks().forEach(link -> link.trySyncLocalStateWithRemote());
     }
 
     private void fireSessionEnd() {
         localEndSent = true;
         connection.freeLocalChannel(localChannel);
         connection.getEngine().fireWrite(new End().setError(getCondition()), localChannel, null, null);
-        localLinks.forEach(link -> link.handleSessionStateChanged(this));
     }
 
     long findFreeLocalHandle(ProtonLink<?> link) {
@@ -760,13 +745,13 @@ public class ProtonSession implements Session {
     private Set<ProtonLink<?>> allLinks() {
         final Set<ProtonLink<?>> result;
 
-        if (localLinks.isEmpty() && remoteLinks.isEmpty()) {
+        if (senderByNameMap.isEmpty() && receiverByNameMap.isEmpty()) {
             return Collections.EMPTY_SET;
         } else {
-            result = new HashSet<>(localLinks.size());
+            result = new HashSet<>(senderByNameMap.size());
 
-            result.addAll(localLinks.values());
-            result.addAll(remoteLinks.values());
+            result.addAll(senderByNameMap.values());
+            result.addAll(receiverByNameMap.values());
         }
 
         return result;

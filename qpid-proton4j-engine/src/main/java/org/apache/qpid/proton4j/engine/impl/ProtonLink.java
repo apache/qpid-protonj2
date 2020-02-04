@@ -44,7 +44,7 @@ import org.apache.qpid.proton4j.engine.LinkState;
 import org.apache.qpid.proton4j.engine.Receiver;
 import org.apache.qpid.proton4j.engine.Sender;
 import org.apache.qpid.proton4j.engine.Session;
-import org.apache.qpid.proton4j.engine.SessionState;
+import org.apache.qpid.proton4j.engine.exceptions.EngineFailedException;
 
 /**
  * Common base for Proton Senders and Receivers.
@@ -54,6 +54,19 @@ import org.apache.qpid.proton4j.engine.SessionState;
 public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
 
     private static final ProtonLogger LOG = ProtonLoggerFactory.getLogger(ProtonLink.class);
+
+    private enum LinkOperabilityState {
+        OK,
+        ENGINE_FAILED,
+        CONNECTION_REMOTELY_CLOSED,
+        CONNECTION_LOCALLY_CLOSED,
+        SESSION_REMOTELY_CLOSED,
+        SESSION_LOCALLY_CLOSED,
+        LINK_REMOTELY_CLOSED,
+        LINK_REMOTELY_DETACHED,
+        LINK_LOCALLY_CLOSED,
+        LINK_LOCALLY_DETACHED
+    }
 
     protected final ProtonConnection connection;
     protected final ProtonSession session;
@@ -66,7 +79,9 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
     private boolean localDetachSent;
 
     private final ProtonContext context = new ProtonContext();
+    private final ProtonLinkCreditState creditState;
 
+    private LinkOperabilityState operability = LinkOperabilityState.OK;
     private LinkState localState = LinkState.IDLE;
     private LinkState remoteState = LinkState.IDLE;
 
@@ -95,11 +110,14 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
      *      The {@link Session} that this link resides within.
      * @param name
      *      The name assigned to this {@link Link}
+     * @param creditState
+     *      The link credit state used to track credit for the link.
      */
-    protected ProtonLink(ProtonSession session, String name) {
+    protected ProtonLink(ProtonSession session, String name, ProtonLinkCreditState creditState) {
         this.session = session;
         this.connection = session.getConnection();
         this.engine = session.getEngine();
+        this.creditState = creditState;
         this.localAttach.setName(name);
         this.localAttach.setRole(getRole());
     }
@@ -179,15 +197,13 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
     @Override
     public T open() {
         if (getState() == LinkState.IDLE) {
-            checkSessionNotClosed();
-            getEngine().checkShutdownOrFailed("Cannot open a Link when Engine is shutdown or failed.");
-
+            checkLinkOperable("Cannot open Link");
             localState = LinkState.ACTIVE;
             long localHandle = session.findFreeLocalHandle(this);
             localAttach.setHandle(localHandle);
             transitionedToLocallyOpened();
             try {
-                syncLocalStateWithRemote();
+                trySyncLocalStateWithRemote();
             } finally {
                 if (localOpenHandler != null) {
                     localOpenHandler.handle(self());
@@ -202,10 +218,12 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
     public T detach() {
         if (getState() == LinkState.ACTIVE) {
             localState = LinkState.DETACHED;
+            operability = LinkOperabilityState.LINK_LOCALLY_DETACHED;
+            getCreditState().clearCredit();
             transitionedToLocallyDetached();
             try {
                 engine.checkFailed("Closed called on already failed connection");
-                syncLocalStateWithRemote();
+                trySyncLocalStateWithRemote();
             } finally {
                 if (localDetachHandler != null) {
                     localDetachHandler.handle(self());
@@ -220,10 +238,12 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
     public T close() {
         if (getState() == LinkState.ACTIVE) {
             localState = LinkState.CLOSED;
+            operability = LinkOperabilityState.LINK_LOCALLY_CLOSED;
+            getCreditState().clearCredit();
             transitionedToLocallyClosed();
             try {
                 engine.checkFailed("Detached called on already failed connection");
-                syncLocalStateWithRemote();
+                trySyncLocalStateWithRemote();
             } finally {
                 if (localCloseHandler != null) {
                     localCloseHandler.handle(self());
@@ -506,61 +526,80 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
         return self();
     }
 
-    //----- Abstract Link methods needed to implement a fully functional Link type
+    //----- Link state change handlers that can be overridden by specific link implementations
 
-    protected abstract void transitionedToLocallyOpened();
+    protected void transitionedToLocallyOpened() {
+        // Nothing currently updated on this state change.
+    }
 
-    protected abstract void transitionedToLocallyDetached();
+    protected void transitionedToLocallyDetached() {
+        // Nothing currently updated on this state change.
+    }
 
-    protected abstract void transitionedToLocallyClosed();
+    protected void transitionedToLocallyClosed() {
+        // Nothing currently updated on this state change.
+    }
 
-    protected abstract void transitionToRemotelyOpenedState();
+    protected void transitionToRemotelyOpenedState() {
+        // Nothing currently updated on this state change.
+    }
 
-    protected abstract void transitionToRemotelyDetachedState();
+    protected void transitionToRemotelyDetached() {
+        // Nothing currently updated on this state change.
+    }
 
-    protected abstract void transitionToRemotelyCosedState();
+    protected void transitionToRemotelyCosed() {
+        // Nothing currently updated on this state change.
+    }
 
-    protected abstract void transitionToParentLocallyClosedState();
+    protected void transitionToParentLocallyClosed() {
+        // Nothing currently updated on this state change.
+    }
 
-    protected abstract void transitionToParentRemotelyClosedState();
+    protected void transitionToParentRemotelyClosed() {
+        // Nothing currently updated on this state change.
+    }
 
-    //----- Process local events from the parent session
+    //----- Process local events from the parent session and connection
 
-    final void handleSessionStateChanged(ProtonSession session) {
-        switch (session.getState()) {
-            case IDLE:
-                return;
-            case ACTIVE:
-                syncLocalStateWithRemote();
-                return;
-            case CLOSED:
-                transitionToParentLocallyClosedState();
-                return;
+    final void handleSessionLocallyClosed(ProtonSession session) {
+        getCreditState().clearCredit();
+        if (operability.ordinal() < LinkOperabilityState.SESSION_LOCALLY_CLOSED.ordinal()) {
+            operability = LinkOperabilityState.SESSION_LOCALLY_CLOSED;
+            transitionToParentRemotelyClosed();
         }
     }
 
-    final void handleParentConnectionLocallyClosed() {
-        transitionToParentLocallyClosedState();
+    final void handleSessionRemotelyClosed(ProtonSession session) {
+        getCreditState().clearCredit();
+        if (operability.ordinal() < LinkOperabilityState.SESSION_REMOTELY_CLOSED.ordinal()) {
+            operability = LinkOperabilityState.SESSION_REMOTELY_CLOSED;
+            transitionToParentRemotelyClosed();
+        }
     }
 
-    private void syncLocalStateWithRemote() {
-        switch (getState()) {
-            case IDLE:
-                return;
-            case ACTIVE:
-                trySendLocalAttach();
-                break;
-            case CLOSED:
-            case DETACHED:
-                trySendLocalAttach();
-                trySendLocalDetach(isLocallyClosed());
-                break;
-            default:
-                throw new IllegalStateException("Link is in unknown state and cannot proceed");
+    final void handleConnectionLocallyClosed(ProtonConnection connection) {
+        getCreditState().clearCredit();
+        if (operability.ordinal() < LinkOperabilityState.CONNECTION_LOCALLY_CLOSED.ordinal()) {
+            operability = LinkOperabilityState.CONNECTION_LOCALLY_CLOSED;
+            transitionToParentLocallyClosed();
+        }
+    }
+
+    final void handleConnectionRemotelyClosed(ProtonConnection connection) {
+        getCreditState().clearCredit();
+        if (operability.ordinal() < LinkOperabilityState.CONNECTION_REMOTELY_CLOSED.ordinal()) {
+            operability = LinkOperabilityState.CONNECTION_REMOTELY_CLOSED;
+            transitionToParentRemotelyClosed();
         }
     }
 
     final void handleEngineShutdown(ProtonEngine protonEngine) {
+        getCreditState().clearCredit();
+        if (operability.ordinal() < LinkOperabilityState.ENGINE_FAILED.ordinal()) {
+            operability = LinkOperabilityState.ENGINE_FAILED;
+        }
+
         try {
             engineShutdownHandler.handle(protonEngine);
         } catch (Throwable ignore) {}
@@ -569,6 +608,8 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
     //----- Handle incoming performatives
 
     final void remoteAttach(Attach attach) {
+        LOG.trace("Link:{} Received remote Attach:{}", self(), attach);
+
         remoteAttach = attach;
         remoteState = LinkState.ACTIVE;
         handleRemoteAttach(attach);
@@ -598,19 +639,23 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
     }
 
     final ProtonLink<?> remoteDetach(Detach detach) {
+        LOG.trace("Link:{} Received remote Detach:{}", self(), detach);
         setRemoteCondition(detach.getError());
+        getCreditState().clearCredit();
 
         handleRemoteDetach(detach);
 
         if (detach.getClosed()) {
             remoteState = LinkState.CLOSED;
-            transitionToRemotelyCosedState();
+            operability = LinkOperabilityState.LINK_REMOTELY_CLOSED;
+            transitionToRemotelyCosed();
             if (remoteCloseHandler != null) {
                 remoteCloseHandler.handle(self());
             }
         } else {
             remoteState = LinkState.DETACHED;
-            transitionToRemotelyDetachedState();
+            operability = LinkOperabilityState.LINK_REMOTELY_DETACHED;
+            transitionToRemotelyDetached();
             if (remoteDetachHandler != null) {
                 remoteDetachHandler.handle(self());
             }
@@ -620,22 +665,26 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
     }
 
     final ProtonIncomingDelivery remoteTransfer(Transfer transfer, ProtonBuffer payload) {
+        LOG.trace("Link:{} Received new Transfer:{}", self(), transfer);
         return handleRemoteTransfer(transfer, payload);
     }
 
     final T remoteFlow(Flow flow) {
+        LOG.trace("Link:{} Received new Flow:{}", self(), flow);
         return handleRemoteFlow(flow);
     }
 
     final T remoteDisposition(Disposition disposition, ProtonOutgoingDelivery delivery) {
+        LOG.trace("Link:{} Received remote disposition:{} for sent delivery:{}", self(), disposition, delivery);
         return handleRemoteDisposition(disposition, delivery);
     }
 
     final T remoteDisposition(Disposition disposition, ProtonIncomingDelivery delivery) {
+        LOG.trace("Link:{} Received remote disposition:{} for received delivery:{}", self(), disposition, delivery);
         return handleRemoteDisposition(disposition, delivery);
     }
 
-    //----- Abstract performative handlers and decorators
+    //----- Abstract methods required for specialization of the link type
 
     protected abstract T handleRemoteAttach(Attach attach);
 
@@ -653,12 +702,33 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
 
     //----- Internal methods
 
+    ProtonLinkCreditState getCreditState() {
+        return creditState;
+    }
+
     boolean wasLocalAttachSent() {
         return localAttachSent;
     }
 
     boolean wasLocalDetachSent() {
         return localDetachSent;
+    }
+
+    void trySyncLocalStateWithRemote() {
+        switch (getState()) {
+            case IDLE:
+                return;
+            case ACTIVE:
+                trySendLocalAttach();
+                break;
+            case CLOSED:
+            case DETACHED:
+                trySendLocalAttach();
+                trySendLocalDetach(isLocallyClosed());
+                break;
+            default:
+                throw new IllegalStateException("Link is in unknown state and cannot proceed");
+        }
     }
 
     private void trySendLocalAttach() {
@@ -689,6 +759,17 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
         }
     }
 
+    protected void checkLinkOperable(String failurePrefix) {
+        switch (operability) {
+            case OK:
+                break;
+            case ENGINE_FAILED:
+                throw new EngineFailedException(failurePrefix + ": Engine Failed", engine.failureCause());
+            default:
+                throw new IllegalStateException(failurePrefix + ": " + operability.toString());
+        }
+    }
+
     protected void checkNotOpened(String errorMessage) {
         if (localState.ordinal() > LinkState.IDLE.ordinal()) {
             throw new IllegalStateException(errorMessage);
@@ -698,12 +779,6 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
     protected void checkNotClosed(String errorMessage) {
         if (localState.ordinal() > LinkState.ACTIVE.ordinal()) {
             throw new IllegalStateException(errorMessage);
-        }
-    }
-
-    private void checkSessionNotClosed() {
-        if (session.getState() == SessionState.CLOSED || session.getRemoteState() == SessionState.CLOSED) {
-            throw new IllegalStateException("Cannot open link for session that has already been closed.");
         }
     }
 }
