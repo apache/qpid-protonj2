@@ -610,19 +610,20 @@ public class ProtonSession implements Session {
         }
     }
 
-    void writeFlow(ProtonLink<?> link) {
-        final Flow flow = new Flow();
+    private final Flow cachedFlow = new Flow();
 
-        flow.setNextIncomingId(getIncomingWindow().getNextIncomingId());
-        flow.setNextOutgoingId(getOutgoingWindow().getNextOutgoingId());
-        flow.setIncomingWindow(getIncomingWindow().getIncomingWindow());
-        flow.setOutgoingWindow(getOutgoingWindow().getOutgoingWindow());
+    void writeFlow(ProtonLink<?> link) {
+        cachedFlow.reset();
+        cachedFlow.setNextIncomingId(getIncomingWindow().getNextIncomingId());
+        cachedFlow.setNextOutgoingId(getOutgoingWindow().getNextOutgoingId());
+        cachedFlow.setIncomingWindow(getIncomingWindow().getIncomingWindow());
+        cachedFlow.setOutgoingWindow(getOutgoingWindow().getOutgoingWindow());
 
         if (link != null) {
-            link.decorateOutgoingFlow(flow);
+            link.decorateOutgoingFlow(cachedFlow);
         }
 
-        getEngine().fireWrite(flow, localChannel, null, null);
+        getEngine().fireWrite(cachedFlow, localChannel, null, null);
     }
 
     private void checkNotOpened(String errorMessage) {

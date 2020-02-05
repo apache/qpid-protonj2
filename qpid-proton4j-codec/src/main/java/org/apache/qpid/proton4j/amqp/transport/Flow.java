@@ -118,6 +118,23 @@ public final class Flow implements Performative {
 
     //----- Access the AMQP Flow object ------------------------------------//
 
+    public Flow reset() {
+        modified = 0;
+        nextIncomingId = 0;
+        incomingWindow = 0;
+        nextOutgoingId = 0;
+        outgoingWindow = 0;
+        handle = 0;
+        deliveryCount = 0;
+        linkCredit = 0;
+        available = 0;
+        drain = false;
+        echo = false;
+        properties = null;
+
+        return this;
+    }
+
     public long getNextIncomingId() {
         return nextIncomingId;
     }
@@ -130,6 +147,12 @@ public final class Flow implements Performative {
         }
 
         this.nextIncomingId = nextIncomingId;
+        return this;
+    }
+
+    public Flow clearNextIncomingId() {
+        modified &= ~NEXT_INCOMING_ID;
+        nextIncomingId = 0;
         return this;
     }
 
@@ -148,6 +171,12 @@ public final class Flow implements Performative {
         return this;
     }
 
+    public Flow clearIncomingWindow() {
+        modified &= ~INCOMING_WINDOW;
+        incomingWindow = 0;
+        return this;
+    }
+
     public long getNextOutgoingId() {
         return nextOutgoingId;
     }
@@ -160,6 +189,12 @@ public final class Flow implements Performative {
         }
 
         this.nextOutgoingId = nextOutgoingId;
+        return this;
+    }
+
+    public Flow clearNextOutgoingId() {
+        modified &= ~NEXT_OUTGOING_ID;
+        nextOutgoingId = 0;
         return this;
     }
 
@@ -178,6 +213,12 @@ public final class Flow implements Performative {
         return this;
     }
 
+    public Flow clearOutgoingWindow() {
+        modified &= ~OUTGOING_WINDOW;
+        outgoingWindow = 0;
+        return this;
+    }
+
     public long getHandle() {
         return handle;
     }
@@ -190,6 +231,12 @@ public final class Flow implements Performative {
         }
 
         this.handle = handle;
+        return this;
+    }
+
+    public Flow clearHandle() {
+        modified &= ~HANDLE;
+        handle = 0;
         return this;
     }
 
@@ -208,6 +255,12 @@ public final class Flow implements Performative {
         return this;
     }
 
+    public Flow clearDeliveryCount() {
+        modified &= ~DELIVERY_COUNT;
+        deliveryCount = 0;
+        return this;
+    }
+
     public long getLinkCredit() {
         return linkCredit;
     }
@@ -220,6 +273,12 @@ public final class Flow implements Performative {
         }
 
         this.linkCredit = linkCredit;
+        return this;
+    }
+
+    public Flow clearLinkCredit() {
+        modified &= ~LINK_CREDIT;
+        linkCredit = 0;
         return this;
     }
 
@@ -238,6 +297,12 @@ public final class Flow implements Performative {
         return this;
     }
 
+    public Flow clearAvailable() {
+        modified &= ~AVAILABLE;
+        available = 0;
+        return this;
+    }
+
     public boolean getDrain() {
         return drain;
     }
@@ -248,6 +313,12 @@ public final class Flow implements Performative {
         return this;
     }
 
+    public Flow clearDrain() {
+        modified &= ~DRAIN;
+        drain = false;
+        return this;
+    }
+
     public boolean getEcho() {
         return echo;
     }
@@ -255,6 +326,12 @@ public final class Flow implements Performative {
     public Flow setEcho(boolean echo) {
         this.modified |= ECHO;
         this.echo = echo;
+        return this;
+    }
+
+    public Flow clearEcho() {
+        modified &= ~ECHO;
+        echo = false;
         return this;
     }
 
@@ -270,6 +347,12 @@ public final class Flow implements Performative {
         }
 
         this.properties = properties;
+        return this;
+    }
+
+    public Flow clearProperties() {
+        modified &= ~PROPERTIES;
+        properties = null;
         return this;
     }
 
