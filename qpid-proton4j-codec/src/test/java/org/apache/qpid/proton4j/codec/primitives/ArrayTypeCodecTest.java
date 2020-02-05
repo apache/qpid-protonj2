@@ -32,6 +32,8 @@ import java.util.Map;
 import java.util.Random;
 import java.util.UUID;
 
+import org.apache.qpid.proton4j.amqp.Symbol;
+import org.apache.qpid.proton4j.amqp.transport.AmqpError;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.codec.CodecTestSupport;
@@ -180,6 +182,42 @@ public class ArrayTypeCodecTest extends CodecTestSupport {
 
         assertEquals(stringArray[0][0], element1Array[0]);
         assertEquals(stringArray[1][0], element2Array[0]);
+    }
+
+    @Test
+    public void testEncodeArrayWithNullEntriesMatchesLegacy() throws Exception {
+        Symbol[] input1 = new Symbol[] { null };
+        Symbol[] input2 = new Symbol[] { AmqpError.DECODE_ERROR, null };
+
+        try {
+            legacyCodec.encodeUsingLegacyEncoder(input1);
+            fail("Should fail as no type encoder can be deduced");
+        } catch (NullPointerException npe) {
+            // Expected
+        }
+
+        try {
+            ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+            encoder.writeObject(buffer, encoderState, input1);
+            fail("Should fail as no type encoder can be deduced");
+        } catch (NullPointerException npe) {
+            // Expected
+        }
+
+        try {
+            legacyCodec.encodeUsingLegacyEncoder(input2);
+            fail("Should fail as no type encoder cannot handle null elements");
+        } catch (NullPointerException npe) {
+            // Expected
+        }
+
+        try {
+            ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+            encoder.writeObject(buffer, encoderState, input2);
+            fail("Should fail as no type encoder cannot handle null elements");
+        } catch (NullPointerException npe) {
+            // Expected
+        }
     }
 
     @Test
