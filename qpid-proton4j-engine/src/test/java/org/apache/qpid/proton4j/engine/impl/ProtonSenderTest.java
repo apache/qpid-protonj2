@@ -2279,7 +2279,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         doTestCloseOrDetachWithErrorCondition(false);
     }
 
-    public void doTestCloseOrDetachWithErrorCondition(boolean close) throws Exception {
+    private void doTestCloseOrDetachWithErrorCondition(boolean close) throws Exception {
         final String condition = "amqp:link:detach-forced";
         final String description = "something bad happened.";
 
