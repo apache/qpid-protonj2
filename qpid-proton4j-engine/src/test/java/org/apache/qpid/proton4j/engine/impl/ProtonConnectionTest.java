@@ -21,6 +21,7 @@ import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -31,6 +32,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.qpid.proton4j.amqp.Symbol;
@@ -84,6 +86,82 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
         assertTrue("Connection should have reported local close", connectionLocalClose.get());
         assertTrue("Connection should have reported remote open", connectionRemoteOpen.get());
         assertTrue("Connection should have reported remote close", connectionRemoteClose.get());
+
+        peer.waitForScriptToComplete();
+
+        assertNull(failure);
+    }
+
+    @Test
+    public void testConnectionPopulatesRemoteData() throws Exception {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result);
+        ProtonTestPeer peer = new ProtonTestPeer(engine);
+        engine.outputConsumer(peer);
+
+        Symbol[] offeredCapabilities = new Symbol[] { Symbol.valueOf("one"), Symbol.valueOf("two")};
+        Symbol[] desiredCapabilities = new Symbol[] { Symbol.valueOf("one"), Symbol.valueOf("two")};
+
+        Map<Symbol, Object> properties = new HashMap<>();
+        properties.put(Symbol.valueOf("test"), "value");
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond().withContainerId("test")
+                                   .withHostname("localhost")
+                                   .withIdleTimeOut(60000)
+                                   .withOfferedCapabilities(offeredCapabilities)
+                                   .withDesiredCapabilities(desiredCapabilities)
+                                   .withProperties(properties);
+        peer.expectClose();
+
+        Connection connection = engine.start().open();
+
+        assertEquals("test", connection.getRemoteContainerId());
+        assertEquals("localhost", connection.getRemoteHostname());
+        assertEquals(60000, connection.getRemoteIdleTimeout());
+
+        assertArrayEquals(offeredCapabilities, connection.getRemoteOfferedCapabilities());
+        assertArrayEquals(desiredCapabilities, connection.getRemoteOfferedCapabilities());
+        assertEquals(properties, connection.getRemoteProperties());
+
+        connection.close();
+
+        peer.waitForScriptToComplete();
+
+        assertNull(failure);
+    }
+
+    @Test(timeout = 30000)
+    public void testOpenAndCloseConnectionWithNullSetsOnConnectionOptions() throws IOException {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result);
+        ProtonTestPeer peer = new ProtonTestPeer(engine);
+        engine.outputConsumer(peer);
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond();
+        peer.expectClose();
+
+        Connection connection = engine.start();
+
+        connection.setProperties(null);
+        connection.setOfferedCapabilities((Symbol[]) null);
+        connection.setDesiredCapabilities((Symbol[]) null);
+        connection.setCondition(null);
+        connection.open();
+
+        assertNotNull(connection.getContext());
+        assertNull(connection.getProperties());
+        assertNull(connection.getOfferedCapabilities());
+        assertNull(connection.getDesiredCapabilities());
+        assertNull(connection.getCondition());
+
+        assertNull(connection.getRemoteProperties());
+        assertNull(connection.getRemoteOfferedCapabilities());
+        assertNull(connection.getRemoteDesiredCapabilities());
+        assertNull(connection.getRemoteCondition());
+
+        connection.close();
 
         peer.waitForScriptToComplete();
 
@@ -506,6 +584,11 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
         });
         connection.open();
 
+        assertTrue(connection.isLocallyOpen());
+        assertFalse(connection.isLocallyClosed());
+        assertFalse(connection.isRemotelyOpen());
+        assertTrue(connection.isRemotelyClosed());
+
         assertTrue("Connection remote opened event did not fire", remotelyOpened.get());
         assertTrue("Connection remote closed event did not fire", remotelyClosed.get());
 
@@ -515,6 +598,11 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
         assertEquals(remoteCondition, connection.getRemoteCondition());
 
         connection.close();
+
+        assertFalse(connection.isLocallyOpen());
+        assertTrue(connection.isLocallyClosed());
+        assertFalse(connection.isRemotelyOpen());
+        assertTrue(connection.isRemotelyClosed());
 
         peer.waitForScriptToComplete();
 
@@ -546,6 +634,11 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
             remotelyClosed.set(true);
         });
         connection.open();
+
+        assertTrue(connection.isLocallyOpen());
+        assertFalse(connection.isLocallyClosed());
+        assertTrue(connection.isRemotelyOpen());
+        assertFalse(connection.isRemotelyClosed());
 
         assertTrue("Connection remote opened event did not fire", remotelyOpened.get());
 
@@ -781,6 +874,30 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
 
         engine.shutdown();
 
+        assertNull(failure);
+    }
+
+    @Test(timeout = 20000)
+    public void testCloseOrDetachWithErrorCondition() throws Exception {
+        final String condition = "amqp:connection:forced";
+        final String description = "something bad happened.";
+
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result);
+        ProtonTestPeer peer = new ProtonTestPeer(engine);
+        engine.outputConsumer(peer);
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond();
+        peer.expectClose().withError(condition, description).respond();
+
+        Connection connection = engine.start();
+
+        connection.open();
+        connection.setCondition(new ErrorCondition(Symbol.valueOf(condition), description));
+        connection.close();
+
+        peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         assertNull(failure);
     }
 
@@ -1105,7 +1222,23 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
         peer.expectOpen().respond();
 
         Connection connection = engine.start();
+
+        try {
+            connection.setIdleTimeout(-1);
+            fail("Should not be able to set idle timeout when negative value given");
+        } catch (IllegalArgumentException error) {
+            // Expected
+        }
+        try {
+            connection.setIdleTimeout(Long.MAX_VALUE);
+            fail("Should not be able to set idle timeout greater than unsigned integer value");
+        } catch (IllegalArgumentException error) {
+            // Expected
+        }
+
         connection.open();
+
+        assertEquals(0, connection.getIdleTimeout());
 
         try {
             connection.setIdleTimeout(65535);
@@ -1113,6 +1246,8 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
         } catch (IllegalStateException error) {
             // Expected
         }
+
+        assertEquals(0, connection.getIdleTimeout());
 
         peer.waitForScriptToComplete();
 
@@ -1359,6 +1494,43 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
 
         peer.waitForScriptToComplete();
 
+        assertNull(failure);
+    }
+
+    @Test
+    public void testIterateAndCloseSessionsFromSessionsAPI() throws Exception {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result);
+        ProtonTestPeer peer = new ProtonTestPeer(engine);
+        engine.outputConsumer(peer);
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond();
+        peer.expectBegin().respond();
+        peer.expectBegin().respond();
+        peer.expectBegin().respond();
+
+        Connection connection = engine.start().open();
+
+        connection.session().open();
+        connection.session().open();
+        connection.session().open();
+
+        peer.waitForScriptToComplete();
+
+        peer.expectEnd().respond();
+        peer.expectEnd().respond();
+        peer.expectEnd().respond();
+        peer.expectClose();
+
+        connection.sessions().forEach(session -> session.close());
+        connection.close();
+
+        peer.waitForScriptToComplete();
+
+        assertTrue(connection.sessions().isEmpty());
+
+        peer.waitForScriptToComplete();
         assertNull(failure);
     }
 }
