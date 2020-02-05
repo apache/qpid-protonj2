@@ -445,10 +445,6 @@ public class ProtonSession implements Session {
         return this;
     }
 
-    EventHandler<Engine> engineShutdownHandler() {
-        return engineShutdownHandler;
-    }
-
     //----- Respond to Connection and Engine state changes
 
     void handleConnectionLocallyClosed(ProtonConnection protonConnection) {
@@ -703,7 +699,7 @@ public class ProtonSession implements Session {
     }
 
     private void checkIfBeginShouldBeSent() {
-        if (!localBeginSent) {
+        if (!wasLocalBeginSent()) {
             if (connection.isLocallyOpen() && connection.wasLocalOpenSent()) {
                 fireSessionBegin();
             }
@@ -711,7 +707,7 @@ public class ProtonSession implements Session {
     }
 
     private void checkIfEndShouldBeSent() {
-        if (!localEndSent) {
+        if (!wasLocalEndSent()) {
             if (connection.isLocallyOpen() && connection.wasLocalOpenSent() && !engine.isShutdown()) {
                 fireSessionEnd();
             }

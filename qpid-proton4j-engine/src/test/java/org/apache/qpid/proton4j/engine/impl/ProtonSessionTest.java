@@ -378,6 +378,48 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
     }
 
     @Test(timeout = 30000)
+    public void testOpenAndCloseSessionWithNullSetsOnSessionOptions() throws IOException {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result);
+        ProtonTestPeer peer = new ProtonTestPeer(engine);
+        engine.outputConsumer(peer);
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond().withContainerId("driver");
+        peer.expectBegin().onChannel(0).respond();
+        peer.expectEnd().onChannel(0).respond();
+        peer.expectClose();
+
+        Connection connection = engine.start();
+        connection.open();
+
+        Session session = connection.session();
+        session.setProperties(null);
+        session.setOfferedCapabilities((Symbol[]) null);
+        session.setDesiredCapabilities((Symbol[]) null);
+        session.setCondition(null);
+        session.open();
+
+        assertNotNull(session.getContext());
+        assertNull(session.getProperties());
+        assertNull(session.getOfferedCapabilities());
+        assertNull(session.getDesiredCapabilities());
+        assertNull(session.getCondition());
+
+        assertNull(session.getRemoteProperties());
+        assertNull(session.getRemoteOfferedCapabilities());
+        assertNull(session.getRemoteDesiredCapabilities());
+        assertNull(session.getRemoteCondition());
+
+        session.close();
+        connection.close();
+
+        peer.waitForScriptToComplete();
+
+        assertNull(failure);
+    }
+
+    @Test(timeout = 30000)
     public void testOpenAndCloseMultipleSessions() throws IOException {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
@@ -684,6 +726,57 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
 
         // Session was already closed so no open event should fire.
         assertFalse("Session opened handler should not have been called yet", sessionOpenedSignaled.get());
+
+        connection.close();
+
+        peer.waitForScriptToComplete();
+
+        assertNull(failure);
+    }
+
+    @Test(timeout = 20000)
+    public void testSessionRemotelyClosedWithError() throws EngineStateException {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result);
+        ProtonTestPeer peer = new ProtonTestPeer(engine);
+        engine.outputConsumer(peer);
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond();
+        peer.expectBegin().respond();
+
+        Connection connection = engine.start().open();
+        Session session = connection.session();
+        session.open();
+
+        peer.waitForScriptToComplete();
+
+        assertTrue(session.isLocallyOpen());
+        assertFalse(session.isLocallyClosed());
+        assertTrue(session.isRemotelyOpen());
+        assertFalse(session.isRemotelyClosed());
+
+        peer.expectEnd();
+        peer.expectClose();
+        peer.remoteEnd().withErrorCondition(new ErrorCondition(AmqpError.INTERNAL_ERROR, "Error")).now();
+
+        assertTrue(session.isLocallyOpen());
+        assertFalse(session.isLocallyClosed());
+        assertFalse(session.isRemotelyOpen());
+        assertTrue(session.isRemotelyClosed());
+
+        assertEquals(AmqpError.INTERNAL_ERROR, session.getRemoteCondition().getCondition());
+        assertEquals("Error", session.getRemoteCondition().getDescription());
+
+        session.close();
+
+        assertFalse(session.isLocallyOpen());
+        assertTrue(session.isLocallyClosed());
+        assertFalse(session.isRemotelyOpen());
+        assertTrue(session.isRemotelyClosed());
+
+        assertEquals(AmqpError.INTERNAL_ERROR, session.getRemoteCondition().getCondition());
+        assertEquals("Error", session.getRemoteCondition().getDescription());
 
         connection.close();
 
@@ -1108,6 +1201,8 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
         ProtonTestPeer peer = new ProtonTestPeer(engine);
         engine.outputConsumer(peer);
 
+        final AtomicBoolean engineFailedEvent = new AtomicBoolean();
+
         if (respondToHeader) {
             peer.expectAMQPHeader().respondWithAMQPHeader();
             if (respondToOpen) {
@@ -1129,6 +1224,7 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
         connection.open();
 
         Session session = connection.session();
+        session.engineShutdownHandler(event -> engineFailedEvent.lazySet(true));
         session.open();
 
         engine.engineFailed(new IOException());
@@ -1143,7 +1239,11 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
             fail("Should throw exception indicating engine is in a failed state.");
         } catch (EngineFailedException efe) {}
 
+        assertFalse("Session should not have signalled engine failure", engineFailedEvent.get());
+
         engine.shutdown();  // Explicit shutdown now allows local close to complete
+
+        assertTrue("Session should have signalled engine failure", engineFailedEvent.get());
 
         // Should clean up and not throw as we knowingly shutdown engine operations.
         session.close();
@@ -1298,12 +1398,12 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
 
     @Test(timeout = 30000)
     public void testGetSenderFromSessionByName() throws Exception {
-        doTestSessionLinkByName(Role.RECEIVER);
+        doTestSessionLinkByName(Role.SENDER);
     }
 
     @Test(timeout = 30000)
     public void testGetReceiverFromSessionByName() throws Exception {
-        doTestSessionLinkByName(Role.SENDER);
+        doTestSessionLinkByName(Role.RECEIVER);
     }
 
     private void doTestSessionLinkByName(Role role) throws Exception {
@@ -1363,5 +1463,34 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
         peer.waitForScriptToComplete();
 
         assertNull(failure);
+    }
+
+    @Test(timeout = 20000)
+    public void testCloseOrDetachWithErrorCondition() throws Exception {
+        final String condition = "amqp:session:window-violation";
+        final String description = "something bad happened.";
+
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result);
+        ProtonTestPeer peer = new ProtonTestPeer(engine);
+        engine.outputConsumer(peer);
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond();
+        peer.expectBegin().respond();
+        peer.expectEnd().withError(condition, description).respond();
+        peer.expectClose();
+
+        Connection connection = engine.start();
+
+        connection.open();
+        Session session = connection.session().open();
+
+        session.setCondition(new ErrorCondition(Symbol.valueOf(condition), description));
+        session.close();
+
+        connection.close();
+
+        peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
     }
 }
