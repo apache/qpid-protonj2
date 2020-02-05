@@ -34,6 +34,7 @@ import org.apache.qpid.proton4j.amqp.transport.End;
 import org.apache.qpid.proton4j.amqp.transport.ErrorCondition;
 import org.apache.qpid.proton4j.amqp.transport.Flow;
 import org.apache.qpid.proton4j.amqp.transport.Role;
+import org.apache.qpid.proton4j.amqp.transport.SessionError;
 import org.apache.qpid.proton4j.amqp.transport.Transfer;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.common.logging.ProtonLogger;
@@ -491,13 +492,14 @@ public class ProtonSession implements Session {
     void remoteAttach(Attach attach, int channel) {
         if (validateHandleMaxCompliance(attach)) {
             if (remoteLinks.containsKey((int) attach.getHandle())) {
-                // TODO fail because link already in use.
+                setCondition(new ErrorCondition(SessionError.HANDLE_IN_USE, "Attach received with handle that is already in use"));
+                close();
                 return;
             }
 
             //TODO: nicer handling of the error
             if (!attach.hasInitialDeliveryCount() && attach.getRole() == Role.SENDER) {
-                throw new IllegalArgumentException("Sending peer attach had no initial delivery count");
+                throw new ProtocolViolationException("Sending peer attach had no initial delivery count");
             }
 
             ProtonLink<?> link = findMatchingPendingLinkOpen(attach);
