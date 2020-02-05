@@ -139,7 +139,7 @@ public class ProtonReceiver extends ProtonLink<Receiver> implements Receiver {
     }
 
     @Override
-    public boolean isDrain() {
+    public boolean isDraining() {
         return drainStateSnapshot != null;
     }
 
@@ -376,7 +376,7 @@ public class ProtonReceiver extends ProtonLink<Receiver> implements Receiver {
         if (getCreditState().isDeliveryCountInitalised()) {
             flow.setDeliveryCount(getCreditState().getDeliveryCount());
         }
-        flow.setDrain(isDrain());
+        flow.setDrain(isDraining());
 
         return this;
     }

@@ -27,11 +27,6 @@ import org.apache.qpid.proton4j.amqp.transport.DeliveryState;
 public interface Sender extends Link<Sender> {
 
     /**
-     * @return true if the {@link Sender} is currently marked as draining.
-     */
-    boolean isDraining();
-
-    /**
      * Called when the {@link Receiver} has requested a drain of credit and the sender
      * has sent all available messages.
      *

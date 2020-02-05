@@ -264,7 +264,7 @@ public class ProtonSender extends ProtonLink<Sender> implements Sender {
         flow.setLinkCredit(getCredit());
         flow.setHandle(getHandle());
         flow.setDeliveryCount(currentDelivery.longValue());
-        flow.setDrain(isDrain());
+        flow.setDrain(isDraining());
 
         return this;
     }
@@ -332,11 +332,6 @@ public class ProtonSender extends ProtonLink<Sender> implements Sender {
             drainRequestedEventHandler.handle(getCreditState().snapshot());
         }
         return this;
-    }
-
-    @Override
-    public boolean isDrain() {
-        return false; //TODO
     }
 
     //----- Internal routing and state management

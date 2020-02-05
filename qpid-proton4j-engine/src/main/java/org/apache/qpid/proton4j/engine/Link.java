@@ -140,7 +140,15 @@ public interface Link<T extends Link<T>> {
      */
     int getCredit();
 
-    boolean isDrain();
+    /**
+     * Indicates if the link is draining. For a {@link Sender} link this indicates that the
+     * remote has requested that the Sender transmit deliveries up to the currently available
+     * credit or indicate that it has no more to send.  For a {@link Receiver} this indicates
+     * that the Receiver has requested that the Sender consume its outstanding credit.
+     *
+     * @return true if the {@link Link} is currently marked as draining.
+     */
+    boolean isDraining();
 
     /**
      * @return the {@link Role} that this end of the link is performing.

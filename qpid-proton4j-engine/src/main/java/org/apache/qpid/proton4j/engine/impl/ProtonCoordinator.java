@@ -52,7 +52,7 @@ public class ProtonCoordinator extends ProtonLink<ProtonCoordinator> {
     }
 
     @Override
-    public boolean isDrain() {
+    public boolean isDraining() {
         // TODO Auto-generated method stub
         return false;
     }
