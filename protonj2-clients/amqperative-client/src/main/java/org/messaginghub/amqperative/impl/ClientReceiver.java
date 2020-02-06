@@ -264,16 +264,15 @@ public class ClientReceiver implements Receiver {
         ClientFuture<Receiver> drained = session.getFutureFactory().createFuture();
 
         executor.execute(() -> {
-            // TODO: If already draining throw IllegalStateException type error as we don't allow stacked drains.
-             if (protonReceiver.isDrain()) {
-                 drained.failed(new ClientException("Already draining"));
-                 return;
-             }
+            if (protonReceiver.isDraining()) {
+                drained.failed(new ClientException("Already draining"));
+                return;
+            }
 
-             if (protonReceiver.getCredit() == 0) {
-                 drained.complete(this);
-                 return;
-             }
+            if (protonReceiver.getCredit() == 0) {
+                drained.complete(this);
+                return;
+            }
 
             // TODO: Maybe proton should be returning something here to indicate drain started.
             protonReceiver.drain();
