@@ -18,7 +18,6 @@ package org.apache.qpid.proton4j.amqp.transport;
 
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
-import org.apache.qpid.proton4j.amqp.UnsignedShort;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 
 public final class Disposition implements Performative {
@@ -127,7 +126,7 @@ public final class Disposition implements Performative {
     }
 
     public Disposition setLast(long last) {
-        if (last < 0 || last > UnsignedShort.MAX_VALUE.intValue()) {
+        if (last < 0 || last > UINT_MAX) {
             throw new IllegalArgumentException("Last value given is out of range: " + last);
         } else {
             modified |= LAST;

@@ -20,7 +20,9 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
+import org.apache.qpid.proton4j.amqp.UnsignedInteger;
 import org.junit.Test;
 
 public class DispositionTest {
@@ -33,6 +35,44 @@ public class DispositionTest {
     @Test
     public void testToStringOnFreshInstance() {
         assertNotNull(new Disposition().toString());
+    }
+
+    @Test
+    public void testLastValueRangeChecks() {
+        Disposition disposition = new Disposition();
+
+        disposition.setLast(0);
+        disposition.setLast(Integer.MAX_VALUE);
+        disposition.setLast(UnsignedInteger.MAX_VALUE.longValue());
+
+        try {
+            disposition.setLast(UnsignedInteger.MAX_VALUE.intValue());
+            fail("Should throw on value out of range.");
+        } catch (IllegalArgumentException iae) {}
+
+        try {
+            disposition.setLast(UnsignedInteger.MAX_VALUE.longValue() + 1);
+            fail("Should throw on value out of range.");
+        } catch (IllegalArgumentException iae) {}
+    }
+
+    @Test
+    public void testFirstValueRangeChecks() {
+        Disposition disposition = new Disposition();
+
+        disposition.setFirst(0);
+        disposition.setFirst(Integer.MAX_VALUE);
+        disposition.setFirst(UnsignedInteger.MAX_VALUE.longValue());
+
+        try {
+            disposition.setFirst(UnsignedInteger.MAX_VALUE.intValue());
+            fail("Should throw on value out of range.");
+        } catch (IllegalArgumentException iae) {}
+
+        try {
+            disposition.setFirst(UnsignedInteger.MAX_VALUE.longValue() + 1);
+            fail("Should throw on value out of range.");
+        } catch (IllegalArgumentException iae) {}
     }
 
     @Test
