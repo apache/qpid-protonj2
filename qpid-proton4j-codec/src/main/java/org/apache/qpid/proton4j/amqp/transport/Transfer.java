@@ -131,6 +131,12 @@ public final class Transfer implements Performative {
         return this;
     }
 
+    public Transfer clearHandle() {
+        modified &= ~HANDLE;
+        handle = 0;
+        return this;
+    }
+
     public long getDeliveryId() {
         return deliveryId;
     }
@@ -143,6 +149,12 @@ public final class Transfer implements Performative {
         }
 
         this.deliveryId = deliveryId;
+        return this;
+    }
+
+    public Transfer clearDeliveryId() {
+        modified &= ~DELIVERY_ID;
+        deliveryId = 0;
         return this;
     }
 
@@ -177,6 +189,12 @@ public final class Transfer implements Performative {
         return this;
     }
 
+    public Transfer clearDeliveryTag() {
+        modified &= ~DELIVERY_TAG;
+        deliveryTag = null;
+        return this;
+    }
+
     public long getMessageFormat() {
         return messageFormat;
     }
@@ -192,6 +210,12 @@ public final class Transfer implements Performative {
         return this;
     }
 
+    public Transfer clearMessageFormat() {
+        modified &= ~MESSAGE_FORMAT;
+        messageFormat = 0;
+        return this;
+    }
+
     public boolean getSettled() {
         return settled;
     }
@@ -202,6 +226,12 @@ public final class Transfer implements Performative {
         return this;
     }
 
+    public Transfer clearSettled() {
+        modified &= ~SETTLED;
+        settled = false;
+        return this;
+    }
+
     public boolean getMore() {
         return more;
     }
@@ -209,6 +239,12 @@ public final class Transfer implements Performative {
     public Transfer setMore(boolean more) {
         this.modified |= MORE;
         this.more = more;
+        return this;
+    }
+
+    public Transfer clearMore() {
+        modified &= ~MORE;
+        more = false;
         return this;
     }
 
@@ -227,6 +263,12 @@ public final class Transfer implements Performative {
         return this;
     }
 
+    public Transfer clearRcvSettleMode() {
+        modified &= ~RCV_SETTLE_MODE;
+        rcvSettleMode = null;
+        return this;
+    }
+
     public DeliveryState getState() {
         return state;
     }
@@ -242,6 +284,12 @@ public final class Transfer implements Performative {
         return this;
     }
 
+    public Transfer clearState() {
+        modified &= ~STATE;
+        state = null;
+        return this;
+    }
+
     public boolean getResume() {
         return resume;
     }
@@ -249,6 +297,12 @@ public final class Transfer implements Performative {
     public Transfer setResume(boolean resume) {
         this.modified |= RESUME;
         this.resume = resume;
+        return this;
+    }
+
+    public Transfer clearResume() {
+        modified &= ~RESUME;
+        resume = false;
         return this;
     }
 
@@ -262,6 +316,12 @@ public final class Transfer implements Performative {
         return this;
     }
 
+    public Transfer clearAborted() {
+        modified &= ~ABORTED;
+        aborted = false;
+        return this;
+    }
+
     public boolean getBatchable() {
         return batchable;
     }
@@ -269,6 +329,29 @@ public final class Transfer implements Performative {
     public Transfer setBatchable(boolean batchable) {
         this.modified |= BATCHABLE;
         this.batchable = batchable;
+        return this;
+    }
+
+    public Transfer clearBatchable() {
+        modified &= ~BATCHABLE;
+        batchable = false;
+        return this;
+    }
+
+    public Transfer reset() {
+        modified = 0;
+        handle = 0;
+        deliveryId = 0;
+        deliveryTag = null;
+        messageFormat = 0;
+        settled = false;
+        more = false;
+        rcvSettleMode = null;
+        state = null;
+        resume = false;
+        aborted = false;
+        batchable = false;
+
         return this;
     }
 

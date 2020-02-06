@@ -95,6 +95,12 @@ public final class Disposition implements Performative {
         return this;
     }
 
+    public Disposition clearRole() {
+        modified &= ~ROLE;
+        role = Role.SENDER;
+        return this;
+    }
+
     public long getFirst() {
         return first;
     }
@@ -107,6 +113,12 @@ public final class Disposition implements Performative {
         }
 
         this.first = first;
+        return this;
+    }
+
+    public Disposition clearFirst() {
+        modified &= ~FIRST;
+        first = 0;
         return this;
     }
 
@@ -125,6 +137,12 @@ public final class Disposition implements Performative {
         return this;
     }
 
+    public Disposition clearLast() {
+        modified &= ~LAST;
+        last = 0;
+        return this;
+    }
+
     public boolean getSettled() {
         return settled;
     }
@@ -132,6 +150,12 @@ public final class Disposition implements Performative {
     public Disposition setSettled(boolean settled) {
         this.modified |= SETTLED;
         this.settled = settled;
+        return this;
+    }
+
+    public Disposition clearSettled() {
+        modified &= ~SETTLED;
+        settled = false;
         return this;
     }
 
@@ -150,6 +174,12 @@ public final class Disposition implements Performative {
         return this;
     }
 
+    public Disposition clearState() {
+        modified &= ~STATE;
+        state = null;
+        return this;
+    }
+
     public boolean getBatchable() {
         return batchable;
     }
@@ -157,6 +187,24 @@ public final class Disposition implements Performative {
     public Disposition setBatchable(boolean batchable) {
         this.modified |= BATCHABLE;
         this.batchable = batchable;
+        return this;
+    }
+
+    public Disposition clearBatchable() {
+        modified &= ~BATCHABLE;
+        batchable = false;
+        return this;
+    }
+
+    public Disposition reset() {
+        modified = 0;
+        role = Role.SENDER;
+        first = 0;
+        last = 0;
+        settled = false;
+        state = null;
+        batchable = false;
+
         return this;
     }
 
