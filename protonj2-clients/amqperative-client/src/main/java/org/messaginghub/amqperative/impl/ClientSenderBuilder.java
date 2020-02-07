@@ -66,7 +66,7 @@ final class ClientSenderBuilder {
         if (options.linkName() != null) {
             linkName = options.linkName();
         } else {
-            linkName = "receiver-" + senderId;
+            linkName = "sender-" + senderId;
         }
 
         final Sender protonSender = session.getProtonSession().sender(linkName);

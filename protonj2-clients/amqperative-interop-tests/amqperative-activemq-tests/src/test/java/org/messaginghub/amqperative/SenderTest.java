@@ -25,11 +25,6 @@ import java.util.concurrent.TimeUnit;
 
 import org.apache.activemq.broker.jmx.QueueViewMBean;
 import org.junit.Test;
-import org.messaginghub.amqperative.Connection;
-import org.messaginghub.amqperative.Client;
-import org.messaginghub.amqperative.ClientOptions;
-import org.messaginghub.amqperative.Message;
-import org.messaginghub.amqperative.Sender;
 import org.messaginghub.amqperative.support.AMQPerativeTestSupport;
 import org.messaginghub.amqperative.support.Wait;
 
@@ -87,7 +82,7 @@ public class SenderTest extends AMQPerativeTestSupport {
         assertNotNull(sender);
 
         Message<String> message = Message.create("Hello World").durable(durable);
-        sender.send(message);
+        sender.send(message).acknowledgeFuture().get();
 
         final QueueViewMBean queueView = getProxyToQueue(getTestName());
         Wait.assertEquals(1, () -> queueView.getQueueSize());

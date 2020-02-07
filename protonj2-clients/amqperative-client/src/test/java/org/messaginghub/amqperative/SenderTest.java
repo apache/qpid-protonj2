@@ -9,7 +9,9 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -497,20 +499,17 @@ public class SenderTest extends AMQPerativeTestCase {
 
             Client container = Client.create();
             Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
-            connection.openFuture().get(10, TimeUnit.SECONDS);
-
             Session session = connection.openSession();
-            session.openFuture().get(10, TimeUnit.SECONDS);
 
             SenderOptions options = new SenderOptions().deliveryMode(qos);
             Sender sender = session.openSender("test-qos", options);
-            sender.openFuture().get(10, TimeUnit.SECONDS);
+            sender.openFuture().get();
 
             assertEquals("test-qos", sender.address());
 
-            sender.close().get(10, TimeUnit.SECONDS);
+            sender.close();
 
-            connection.close().get(10, TimeUnit.SECONDS);
+            connection.close().get();
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
@@ -551,8 +550,6 @@ public class SenderTest extends AMQPerativeTestCase {
             connection.openFuture().get(10, TimeUnit.SECONDS);
 
             Session session = connection.openSession();
-            session.openFuture().get(10, TimeUnit.SECONDS);
-
             Sender sender = session.openSender("test-queue");
             sender.openFuture().get(10, TimeUnit.SECONDS);
 
@@ -581,7 +578,7 @@ public class SenderTest extends AMQPerativeTestCase {
             assertNotNull(tracker.acknowledgeFuture().get(5, TimeUnit.SECONDS));
             assertEquals(tracker.remoteState().getType(), DeliveryState.Type.ACCEPTED);
 
-            sender.close().get(10, TimeUnit.SECONDS);
+            sender.close();
 
             connection.close().get(10, TimeUnit.SECONDS);
 
@@ -620,12 +617,7 @@ public class SenderTest extends AMQPerativeTestCase {
 
             Client container = Client.create();
             Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
-
-            connection.openFuture().get(10, TimeUnit.SECONDS);
-
             Session session = connection.openSession();
-            session.openFuture().get(10, TimeUnit.SECONDS);
-
             Sender sender = session.openSender("test-queue", new SenderOptions().autoSettle(false));
             sender.openFuture().get(10, TimeUnit.SECONDS);
 
@@ -655,9 +647,9 @@ public class SenderTest extends AMQPerativeTestCase {
             assertNull(tracker.state());
             assertFalse(tracker.settled());
 
-            sender.close().get(10, TimeUnit.SECONDS);
+            sender.close();
 
-            connection.close().get(10, TimeUnit.SECONDS);
+            connection.close().get();
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
@@ -1105,6 +1097,65 @@ public class SenderTest extends AMQPerativeTestCase {
                 sender.detach(ErrorCondition.create(condition, description, null));
             }
 
+            connection.close().get();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test(timeout = 30000)
+    public void testSendMultipleMessages() throws Exception {
+        final int CREDIT = 20;
+
+        try (NettyTestPeer peer = new NettyTestPeer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().withRole(Role.SENDER).respond();
+            peer.remoteFlow().withDeliveryCount(0).withLinkCredit(CREDIT).queue();
+            peer.expectAttach().withRole(Role.RECEIVER).respond();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Sender test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            Session session = connection.openSession();
+            Sender sender = session.openSender("test-queue");
+            sender.openFuture().get();
+
+            // This ensures that the flow to sender is processed before we try-send
+            Receiver receiver = session.openReceiver("test-queue", new ReceiverOptions().creditWindow(0));
+            receiver.openFuture().get();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+
+            final List<Tracker> sentMessages = new ArrayList<>();
+
+            for (int i = 0; i < CREDIT; ++i) {
+                peer.expectTransfer().withDeliveryId(i)
+                                     .withPayload(notNullValue(ProtonBuffer.class))
+                                     .withSettled(false)
+                                     .respond()
+                                     .withSettled(true)
+                                     .withState(Accepted.getInstance());
+                peer.expectDisposition().withSettled(true);
+            }
+            peer.expectDetach().respond();
+            peer.expectClose().respond();
+
+            Message<String> message = Message.create("Hello World");
+
+            for (int i = 0; i < CREDIT; ++i) {
+                final Tracker tracker = sender.send(message);
+                sentMessages.add(tracker);
+                tracker.acknowledgeFuture().get();
+            }
+            assertEquals(CREDIT, sentMessages.size());
+
+            sender.close().get();
             connection.close().get();
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);

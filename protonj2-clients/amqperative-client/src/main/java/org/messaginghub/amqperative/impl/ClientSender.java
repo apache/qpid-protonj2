@@ -195,6 +195,10 @@ public class ClientSender implements Sender {
         checkClosed();
         ClientFuture<Tracker> operation = session.getFutureFactory().createFuture();
 
+        // TODO - Message encode should occur on the client thread to avoid added work in
+        //        the IO thread, this allows encode errors to immediately propagate back
+        //        to the client.  Need to use thread safe encoding states for this.
+
         executor.execute(() -> {
             if (protonSender.isSendable()) {
                 assumeSendableAndSend((ClientMessage<?>) message, operation);
@@ -216,6 +220,10 @@ public class ClientSender implements Sender {
     public Tracker trySend(Message<?> message) throws ClientException {
         checkClosed();
         ClientFuture<Tracker> operation = session.getFutureFactory().createFuture();
+
+        // TODO - Message encode should occur on the client thread to avoid added work in
+        //        the IO thread, this allows encode errors to immediately propagate back
+        //        to the client.  Need to use thread safe encoding states for this.
 
         executor.execute(() -> {
             if (protonSender.isSendable()) {
