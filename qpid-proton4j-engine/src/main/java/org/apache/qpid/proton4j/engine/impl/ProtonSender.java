@@ -20,8 +20,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.function.BiConsumer;
-import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 import org.apache.qpid.proton4j.amqp.UnsignedInteger;
@@ -58,16 +56,6 @@ public class ProtonSender extends ProtonLink<Sender> implements Sender {
     private EventHandler<OutgoingDelivery> deliveryUpdatedEventHandler = null;
     private EventHandler<Sender> sendableEventHandler = null;
     private EventHandler<LinkCreditState> drainRequestedEventHandler = null;
-
-    private BiConsumer<ProtonOutgoingDelivery, ProtonBuffer> sendHandler = (delivery, buffer) -> {
-        throw new IllegalStateException("Cannot send when sender link has not been locally opened");
-    };
-    private Consumer<ProtonOutgoingDelivery> dispositionHandler = delivery -> {
-        throw new IllegalStateException("Cannot send a disposition when sender link has not been locally opened");
-    };
-    private Consumer<ProtonOutgoingDelivery> abortHandler = delivery -> {
-        throw new IllegalStateException("Cannot abort a delivery when sender link has not been locally opened");
-    };
 
     private OutgoingDelivery current;
 
@@ -230,8 +218,9 @@ public class ProtonSender extends ProtonLink<Sender> implements Sender {
         creditState.remoteFlow(flow);
 
         int existingDeliveryCount = creditState.getDeliveryCount();
-        // int casts are expected, credit is a uint and delivery-count is really a uint sequence which wraps, so we just use the truncation and overflows.
-        // Receivers flow might not have any delivery-count, as sender initialises on attach! We initialise to 0 so we can just ignore that.
+        // int casts are expected, credit is a uint and delivery-count is really a uint sequence which wraps, so we
+        // just use the truncation and overflows.  Receivers flow might not have any delivery-count, as sender initializes
+        // on attach! We initialize to 0 so we can just ignore that.
         int remoteDeliveryCount = (int) flow.getDeliveryCount();
         int newDeliveryCountLimit = remoteDeliveryCount + (int) flow.getLinkCredit();
 
@@ -270,15 +259,53 @@ public class ProtonSender extends ProtonLink<Sender> implements Sender {
     //----- Delivery output related access points
 
     void send(ProtonOutgoingDelivery delivery, ProtonBuffer buffer) {
-        sendHandler.accept(delivery, buffer);
+        if (!isSendable()) {
+            checkLinkOperable("Send failed due to link state");
+
+            throw new IllegalStateException("Cannot send when sender has no capacity to do so.");
+        }
+
+        if (currentDelivery.isEmpty()) {
+            currentDelivery.set(sessionWindow.getAndIncrementNextDeliveryId());
+
+            delivery.setDeliveryId(currentDelivery.longValue());
+        }
+
+        if (!delivery.isSettled()) {
+            // TODO - Casting is ugly but right now our unsigned integers are longs
+            unsettled.put((int) delivery.getDeliveryId(), delivery);
+        }
+
+        sessionWindow.processSend(this, delivery, buffer);
+
+        if (!delivery.isPartial()) {
+            currentDelivery.reset();
+            getCreditState().incrementDeliveryCount();
+            getCreditState().decrementCredit();
+
+            if (getCredit() == 0) {
+                sendable = false;
+            }
+        }
     }
 
     void disposition(ProtonOutgoingDelivery delivery) {
-        dispositionHandler.accept(delivery);
+        checkLinkOperable("Cannot set a disposition");
+
+        if (delivery.isSettled()) {
+            // TODO - Casting is ugly but right now our unsigned integers are longs
+            unsettled.remove((int) delivery.getDeliveryId());
+        }
+
+        sessionWindow.processDisposition(this, delivery);
     }
 
     void abort(ProtonOutgoingDelivery delivery) {
-        abortHandler.accept(delivery);
+        checkLinkOperable("Cannot abort Transfer");
+
+        unsettled.remove((int) delivery.getDeliveryId());
+
+        sessionWindow.processAbort(this, delivery);
     }
 
     //----- Sender event handlers
@@ -303,8 +330,6 @@ public class ProtonSender extends ProtonLink<Sender> implements Sender {
     }
 
     Sender signalSendable() {
-        this.sendHandler = this::sendSink;
-
         if (sendableEventHandler != null) {
             sendableEventHandler.handle(this);
         }
@@ -312,7 +337,7 @@ public class ProtonSender extends ProtonLink<Sender> implements Sender {
     }
 
     Sender signalNoLongerSendable() {
-        this.sendHandler = this::senderNotWritableSink;
+        sendable = false;
         return this;
     }
 
@@ -337,24 +362,19 @@ public class ProtonSender extends ProtonLink<Sender> implements Sender {
     @Override
     protected void transitionedToLocallyOpened() {
         localAttach.setInitialDeliveryCount(currentDelivery.longValue());
-
-        sendHandler = (delivery, buffer) -> senderNotWritableSink(delivery, buffer);
-        dispositionHandler = delivery -> dispositionSink(delivery);
-        abortHandler = delivery -> abortSink(delivery);
+        if (getCredit() > 0) {
+            sendable = true;
+        }
     }
 
     @Override
     protected void transitionedToLocallyDetached() {
         sendable = false;
-
-        disableAllSenderOperations("link is detached");
     }
 
     @Override
     protected void transitionedToLocallyClosed() {
         sendable = false;
-
-        disableAllSenderOperations("link is closed");
     }
 
     @Override
@@ -365,97 +385,20 @@ public class ProtonSender extends ProtonLink<Sender> implements Sender {
     @Override
     protected void transitionToRemotelyDetached() {
         sendable = false;
-
-        if (isLocallyOpen()) {
-            disableAllSenderOperations("link is remotely detached");
-        }
     }
 
     @Override
     protected void transitionToRemotelyCosed() {
         sendable = false;
-
-        if (isLocallyOpen()) {
-            disableAllSenderOperations("link is remotely closed");
-        }
     }
 
     @Override
     protected void transitionToParentLocallyClosed() {
-        if (isLocallyOpen()) {
-            disableAllSenderOperations("parent resurce is locally closed");
-        }
+        sendable = false;
     }
 
     @Override
     protected void transitionToParentRemotelyClosed() {
-        if (isLocallyOpen()) {
-            disableAllSenderOperations("parent resurce is remotely closed");
-        }
-    }
-
-    private void disableAllSenderOperations(String cause) {
-        this.sendHandler = (delivery, buffer) -> {
-            throw new IllegalStateException("Cannot send transfers due to: " + cause);
-        };
-        this.dispositionHandler = delivery -> {
-            throw new IllegalStateException("Cannot send a disposition due to: " + cause);
-        };
-        this.abortHandler = delivery -> {
-            throw new IllegalStateException("Cannot abort a delivery due to:" + cause);
-        };
-
-        // TODO - Setting this here for now, need to decide when to signal this changed.
         sendable = false;
-    }
-
-    private void sendSink(ProtonOutgoingDelivery delivery, ProtonBuffer payload) {
-        if (!isSendable()) {
-            // TODO - Should we check here on each write or check someplace else that
-            //        the user can actually send anything.  We aren't buffering anything.
-        }
-
-        if (currentDelivery.isEmpty()) {
-            currentDelivery.set(sessionWindow.getAndIncrementNextDeliveryId());
-
-            delivery.setDeliveryId(currentDelivery.longValue());
-        }
-
-        if (!delivery.isSettled()) {
-            // TODO - Casting is ugly but right now our unsigned integers are longs
-            unsettled.put((int) delivery.getDeliveryId(), delivery);
-        }
-
-        sessionWindow.processSend(this, delivery, payload);
-
-        if (!delivery.isPartial()) {
-            currentDelivery.reset();
-            getCreditState().incrementDeliveryCount();
-            getCreditState().decrementCredit();
-
-            if (getCredit() == 0) {
-                sendable = false;
-            }
-        }
-    }
-
-    private void dispositionSink(ProtonOutgoingDelivery delivery) {
-        if (delivery.isSettled()) {
-            // TODO - Casting is ugly but right now our unsigned integers are longs
-            unsettled.remove((int) delivery.getDeliveryId());
-        }
-
-        sessionWindow.processDisposition(this, delivery);
-    }
-
-    private void abortSink(ProtonOutgoingDelivery delivery) {
-        // TODO - Casting is ugly but right now our unsigned integers are longs
-        unsettled.remove((int) delivery.getDeliveryId());
-
-        sessionWindow.processAbort(this, delivery);
-    }
-
-    private void senderNotWritableSink(ProtonOutgoingDelivery delivery, ProtonBuffer buffer) {
-        throw new IllegalStateException("Cannot send when sender is not currently writable");
     }
 }

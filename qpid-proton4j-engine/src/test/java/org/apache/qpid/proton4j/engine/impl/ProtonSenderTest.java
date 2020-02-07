@@ -1323,6 +1323,13 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
             // Should not allow writes on past delivery instances after connection closed
         }
 
+        try {
+            sender.next();
+            fail("Should not be able get next after connection closed");
+        } catch (IllegalStateException ise) {
+            // Should not allow next message after close of connection
+        }
+
         peer.waitForScriptToComplete();
 
         assertNull(failure);
