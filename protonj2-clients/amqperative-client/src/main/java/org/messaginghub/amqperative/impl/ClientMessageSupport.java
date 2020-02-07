@@ -45,15 +45,20 @@ import org.messaginghub.amqperative.impl.exceptions.ClientExceptionSupport;
  */
 abstract class ClientMessageSupport {
 
+    private static final Encoder DEFAULT_ENCODER = CodecFactory.getDefaultEncoder();
+    private static final Decoder DEFAULT_DECODER = CodecFactory.getDefaultDecoder();
+
     //----- Message Encoding
 
     public static ProtonBuffer encodeMessage(ClientMessage<?> message) {
-        return encodeMessage(CodecFactory.getDefaultEncoder(), ProtonByteBufferAllocator.DEFAULT, message);
+        return encodeMessage(DEFAULT_ENCODER, DEFAULT_ENCODER.newEncoderState(), ProtonByteBufferAllocator.DEFAULT, message);
     }
 
     public static ProtonBuffer encodeMessage(Encoder encoder, ProtonBufferAllocator allocator, ClientMessage<?> message) {
-        // TODO - Hand in the Engine and use configured allocator and or cached encoder
-        EncoderState encoderState = encoder.newEncoderState();
+        return encodeMessage(encoder, encoder.newEncoderState(), ProtonByteBufferAllocator.DEFAULT, message);
+    }
+
+    public static ProtonBuffer encodeMessage(Encoder encoder, EncoderState encoderState, ProtonBufferAllocator allocator, ClientMessage<?> message) {
         ProtonBuffer buffer = allocator.allocate();
 
         Header header = message.getHeader();
@@ -92,9 +97,14 @@ abstract class ClientMessageSupport {
     //----- Message Decoding
 
     public static Message<?> decodeMessage(ProtonBuffer buffer) throws ClientException {
-        Decoder decoder = CodecFactory.getDefaultDecoder();
-        DecoderState state = decoder.newDecoderState();
+        return decodeMessage(DEFAULT_DECODER, DEFAULT_DECODER.newDecoderState(), buffer);
+    }
 
+    public static Message<?> decodeMessage(Decoder decoder, ProtonBuffer buffer) throws ClientException {
+        return decodeMessage(decoder, decoder.newDecoderState(), buffer);
+    }
+
+    public static Message<?> decodeMessage(Decoder decoder, DecoderState decoderState, ProtonBuffer buffer) throws ClientException {
         Header header = null;
         DeliveryAnnotations deliveryAnnotations = null;
         MessageAnnotations messageAnnotations = null;
@@ -106,7 +116,7 @@ abstract class ClientMessageSupport {
 
         while (buffer.isReadable()) {
             try {
-                section = (Section) decoder.readObject(buffer, state);
+                section = (Section) decoder.readObject(buffer, decoderState);
             } catch (IOException e) {
                 throw ClientExceptionSupport.createNonFatalOrPassthrough(e);
             }
