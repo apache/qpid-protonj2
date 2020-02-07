@@ -48,39 +48,33 @@ public class ProtonFrameLoggingHandler implements EngineHandler {
     @Override
     public void handleRead(EngineHandlerContext context, HeaderFrame header) {
         if (TRACE_FRM_ENABLED) {
-            System.out.println("<- " + header.getBody());
+            trace("<- AMQP", header.getBody(), null);
         }
 
-        LOG.trace("<- {}", header.getBody());
+        log("<- AMQP", header.getBody(), null);
+
         context.fireRead(header);
     }
 
     @Override
     public void handleRead(EngineHandlerContext context, SaslFrame frame) {
         if (TRACE_FRM_ENABLED) {
-            System.out.println("<- SASL: " + frame.getBody());
+            trace("<- SASL", frame.getBody(), null);
         }
 
-        LOG.trace("<- SASL: {}", frame.getBody());
+        log("<- SASL", frame.getBody(), frame.getPayload());
+
         context.fireRead(frame);
     }
 
     @Override
     public void handleRead(EngineHandlerContext context, ProtocolFrame frame) {
         if (TRACE_FRM_ENABLED) {
-            if (frame.getPayload() == null) {
-                System.out.println("<- AMQP: " + frame.getBody());
-            } else {
-                System.out.println("<- AMQP: " + frame.getBody() + " - " + StringUtils.toQuotedString(frame.getPayload(), PAYLOAD_STRING_LIMIT, true));
-            }
+            trace("<- AMQP", frame.getBody(), frame.getPayload());
         }
 
         if (LOG.isTraceEnabled()) {
-            if (frame.getPayload() == null) {
-                LOG.trace("<- AMQP: {}", frame.getBody());
-            } else {
-                LOG.trace("<- AMQP: {} - {}", frame.getBody(), StringUtils.toQuotedString(frame.getPayload(), PAYLOAD_STRING_LIMIT, true));
-            }
+            log("<- AMQP", frame.getBody(), frame.getPayload());
         }
 
         context.fireRead(frame);
@@ -89,29 +83,22 @@ public class ProtonFrameLoggingHandler implements EngineHandler {
     @Override
     public void handleWrite(EngineHandlerContext context, AMQPHeader header) {
         if (TRACE_FRM_ENABLED) {
-            System.out.println("-> AMQP: " + header);
+            trace("-> AMQP", header, null);
         }
 
-        LOG.trace("-> AMQP: {}", header);
+        log("-> AMQP", header, null);
+
         context.fireWrite(header);
     }
 
     @Override
     public void handleWrite(EngineHandlerContext context, Performative performative, int channel, ProtonBuffer payload, Runnable payloadToLarge) {
         if (TRACE_FRM_ENABLED) {
-            if (payload == null) {
-                System.out.println("-> AMQP: " + performative);
-            } else {
-                System.out.println("-> AMQP: " + performative + " - " + StringUtils.toQuotedString(payload, PAYLOAD_STRING_LIMIT, true));
-            }
+            trace("-> AMQP", performative, payload);
         }
 
         if (LOG.isTraceEnabled()) {
-            if (payload == null) {
-                LOG.trace("-> AMQP: {}", performative);
-            } else {
-                LOG.trace("-> AMQP: {} - {}", performative, StringUtils.toQuotedString(payload, PAYLOAD_STRING_LIMIT, true));
-            }
+            log("-> AMQP", performative, payload);
         }
 
         context.fireWrite(performative, channel, payload, payloadToLarge);
@@ -120,10 +107,27 @@ public class ProtonFrameLoggingHandler implements EngineHandler {
     @Override
     public void handleWrite(EngineHandlerContext context, SaslPerformative performative) {
         if (TRACE_FRM_ENABLED) {
-            System.out.println("-> SASL: " + performative);
+            trace("-> SASL", performative, null);
         }
 
-        LOG.trace("-> SASL: {}", performative);
+        log("-> SASL", performative, null);
+
         context.fireWrite(performative);
+    }
+
+    private static final void log(String prefix, Object performative, ProtonBuffer payload) {
+        if (payload == null) {
+            LOG.trace("{}: {}", prefix, performative);
+        } else {
+            LOG.trace("{}: {} - {}", prefix, performative, StringUtils.toQuotedString(payload, PAYLOAD_STRING_LIMIT, true));
+        }
+    }
+
+    private static final void trace(String prefix, Object performative, ProtonBuffer payload) {
+        if (payload == null) {
+            System.out.println(prefix + ": " + performative);
+        } else {
+            System.out.println(prefix + ": " + performative + " - " + StringUtils.toQuotedString(payload, PAYLOAD_STRING_LIMIT, true));
+        }
     }
 }
