@@ -52,7 +52,6 @@ public class ProtonSender extends ProtonLink<Sender> implements Sender {
 
     private boolean sendable;
     private boolean draining;
-    private boolean drained;  // TODO - This was added from old code, since we are reactive we probably don't need to retain this state.
 
     private final SplayMap<ProtonOutgoingDelivery> unsettled = new SplayMap<>();
 
@@ -108,14 +107,15 @@ public class ProtonSender extends ProtonLink<Sender> implements Sender {
 
     @Override
     public boolean isDraining() {
-        // TODO Auto-generated method stub
-        return false;
+        return draining;
     }
 
     @Override
     public Sender drained(LinkCreditState state) {
+        draining = false;
+
         // TODO Auto-generated method stub
-        return null;
+        return this;
     }
 
     @SuppressWarnings("unchecked")
@@ -242,16 +242,14 @@ public class ProtonSender extends ProtonLink<Sender> implements Sender {
             creditState.updateCredit(0);
         }
 
-        draining = flow.getDrain();
-        drained = getCredit() > 0;
-
         if (isLocallyOpen()) {
             if (getCredit() > 0 && !sendable) {
                 sendable = true;
                 signalSendable();
             }
 
-            if (draining && !drained) {
+            if (flow.getDrain() && getCredit() > 0) {
+                draining = true;
                 signalDrainRequested();
             }
         }
