@@ -194,16 +194,13 @@ public class ClientSender implements Sender {
     public Tracker send(Message<?> message) throws ClientException {
         checkClosed();
         ClientFuture<Tracker> operation = session.getFutureFactory().createFuture();
-
-        // TODO - Message encode should occur on the client thread to avoid added work in
-        //        the IO thread, this allows encode errors to immediately propagate back
-        //        to the client.  Need to use thread safe encoding states for this.
+        final ProtonBuffer buffer = ClientMessageSupport.encodeMessage((ClientMessage<?>) message);
 
         executor.execute(() -> {
             if (protonSender.isSendable()) {
-                assumeSendableAndSend((ClientMessage<?>) message, operation);
+                assumeSendableAndSend(buffer, operation);
             } else {
-                final InFlightSend send = new InFlightSend((ClientMessage<?>) message, operation);
+                final InFlightSend send = new InFlightSend(buffer, operation);
                 if (options.sendTimeout() > 0) {
                     send.timeout = session.scheduleRequestTimeout(
                         operation, options.sendTimeout(), () -> send.createSendTimedOutException());
@@ -220,14 +217,11 @@ public class ClientSender implements Sender {
     public Tracker trySend(Message<?> message) throws ClientException {
         checkClosed();
         ClientFuture<Tracker> operation = session.getFutureFactory().createFuture();
-
-        // TODO - Message encode should occur on the client thread to avoid added work in
-        //        the IO thread, this allows encode errors to immediately propagate back
-        //        to the client.  Need to use thread safe encoding states for this.
+        ProtonBuffer buffer = ClientMessageSupport.encodeMessage((ClientMessage<?>) message);
 
         executor.execute(() -> {
             if (protonSender.isSendable()) {
-                assumeSendableAndSend((ClientMessage<?>) message, operation);
+                assumeSendableAndSend(buffer, operation);
             } else {
                 operation.complete(null);
             }
@@ -452,12 +446,12 @@ public class ClientSender implements Sender {
 
     private class InFlightSend implements AsyncResult<Tracker> {
 
-        private final ClientMessage<?> message;
+        private final ProtonBuffer message;
         private final ClientFuture<Tracker> operation;
 
         private ScheduledFuture<?> timeout;
 
-        public InFlightSend(ClientMessage<?> message, ClientFuture<Tracker> operation) {
+        public InFlightSend(ProtonBuffer message, ClientFuture<Tracker> operation) {
             this.message = message;
             this.operation = operation;
         }
@@ -505,8 +499,7 @@ public class ClientSender implements Sender {
         }
     }
 
-    private void assumeSendableAndSend(ClientMessage<?> message, AsyncResult<Tracker> request) {
-        ProtonBuffer buffer = ClientMessageSupport.encodeMessage(message);
+    private void assumeSendableAndSend(ProtonBuffer buffer, AsyncResult<Tracker> request) {
         OutgoingDelivery delivery = protonSender.next();
         ClientTracker tracker = new ClientTracker(this, delivery);
 
