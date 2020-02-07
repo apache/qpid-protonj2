@@ -24,6 +24,7 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
 import org.messaginghub.amqperative.Delivery;
+import org.messaginghub.amqperative.impl.ClientDelivery;
 
 /**
  * Simple first in / first out {@link Delivery} Queue.
@@ -42,14 +43,14 @@ public final class FifoDeliveryQueue implements DeliveryQueue {
     protected final ReentrantLock lock = new ReentrantLock();
     protected final Condition condition = lock.newCondition();
 
-    protected final Deque<Delivery> queue;
+    protected final Deque<ClientDelivery> queue;
 
     public FifoDeliveryQueue(int queueDepth) {
-        this.queue = new ArrayDeque<Delivery>(Math.max(1, queueDepth));
+        this.queue = new ArrayDeque<ClientDelivery>(Math.max(1, queueDepth));
     }
 
     @Override
-    public void enqueueFirst(Delivery envelope) {
+    public void enqueueFirst(ClientDelivery envelope) {
         lock.lock();
         try {
             queue.addFirst(envelope);
@@ -60,7 +61,7 @@ public final class FifoDeliveryQueue implements DeliveryQueue {
     }
 
     @Override
-    public void enqueue(Delivery envelope) {
+    public void enqueue(ClientDelivery envelope) {
         lock.lock();
         try {
             queue.addLast(envelope);
@@ -72,7 +73,7 @@ public final class FifoDeliveryQueue implements DeliveryQueue {
 
 
     @Override
-    public Delivery dequeue(long timeout) throws InterruptedException {
+    public ClientDelivery dequeue(long timeout) throws InterruptedException {
         lock.lock();
         try {
             // Wait until the receiver is ready to deliver messages.
@@ -97,7 +98,7 @@ public final class FifoDeliveryQueue implements DeliveryQueue {
     }
 
     @Override
-    public final Delivery dequeueNoWait() {
+    public final ClientDelivery dequeueNoWait() {
         lock.lock();
         try {
             if (!isRunning()) {

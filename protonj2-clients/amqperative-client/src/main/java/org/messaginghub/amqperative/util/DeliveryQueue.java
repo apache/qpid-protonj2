@@ -18,6 +18,7 @@ package org.messaginghub.amqperative.util;
 
 import org.messaginghub.amqperative.Delivery;
 import org.messaginghub.amqperative.Receiver;
+import org.messaginghub.amqperative.impl.ClientDelivery;
 
 /**
  * Queue based storage interface for inbound AMQP {@link Delivery} objects.
@@ -30,7 +31,7 @@ public interface DeliveryQueue {
      * @param delivery
      *        The in-bound Delivery to enqueue.
      */
-    void enqueue(Delivery delivery);
+    void enqueue(ClientDelivery delivery);
 
     /**
      * Adds the given {@link Delivery} to the front of the queue.
@@ -38,7 +39,7 @@ public interface DeliveryQueue {
      * @param delivery
      *        The in-bound Delivery to enqueue.
      */
-    void enqueueFirst(Delivery delivery);
+    void enqueueFirst(ClientDelivery delivery);
 
     /**
      * Used to get an {@link Delivery}. The amount of time this method blocks is based on the timeout value
@@ -67,14 +68,14 @@ public interface DeliveryQueue {
      *
      * @throws InterruptedException if the wait is interrupted.
      */
-    Delivery dequeue(long timeout) throws InterruptedException;
+    ClientDelivery dequeue(long timeout) throws InterruptedException;
 
     /**
      * Used to get an enqueued {@link Delivery} if on exists, otherwise returns null.
      *
      * @return the next Delivery in the Queue if one exists, otherwise null.
      */
-    Delivery dequeueNoWait();
+    ClientDelivery dequeueNoWait();
 
     /**
      * Starts the Delivery Queue.  An non-started Queue will always return null for

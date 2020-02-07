@@ -33,6 +33,7 @@ public class ReceiverOptions {
     private long closeTimeout = ConnectionOptions.DEFAULT_CLOSE_TIMEOUT;
 
     private boolean autoAccept = true;
+    private boolean autoSettle = true;
     private DeliveryMode deliveryMode = DeliveryMode.AT_LEAST_ONCE;
     private int creditWindow = 10;
     private String linkName;
@@ -60,6 +61,15 @@ public class ReceiverOptions {
 
     public boolean autoAccept() {
         return autoAccept;
+    }
+
+    public ReceiverOptions autoSettle(boolean autoSettle) {
+        this.autoSettle = autoSettle;
+        return this;
+    }
+
+    public boolean autoSettle() {
+        return autoSettle;
     }
 
     public ReceiverOptions deliveryMode(DeliveryMode deliveryMode) {

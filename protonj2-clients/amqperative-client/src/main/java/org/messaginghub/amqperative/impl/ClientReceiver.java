@@ -132,10 +132,18 @@ public class ClientReceiver implements Receiver {
     @Override
     public Delivery receive(long timeout) throws IllegalStateException {
         checkClosed();
-        //TODO: verify timeout conventions align
         try {
-            Delivery delivery = messageQueue.dequeue(timeout);
-            replenishCreditIfNeeded();
+            // TODO:
+            // Auto accept / settle happens out of band using this approach vs requesting
+            // the delivery by executing in the IO thread.  Depending on how we ultimately
+            // want this to behave we might need to make some changes here.
+
+            ClientDelivery delivery = messageQueue.dequeue(timeout);
+            if (delivery != null && options.autoAccept()) {
+                delivery.disposition(org.messaginghub.amqperative.DeliveryState.accepted(), options.autoSettle());
+            } else {
+                replenishCreditIfNeeded();
+            }
 
             return delivery;
         } catch (InterruptedException e) {
@@ -148,15 +156,24 @@ public class ClientReceiver implements Receiver {
     public Delivery tryReceive() throws IllegalStateException {
         checkClosed();
 
+        // TODO:
+        // Auto accept / settle happens out of band using this approach vs requesting
+        // the delivery by executing in the IO thread.  Depending on how we ultimately
+        // want this to behave we might need to make some changes here.
+
         Delivery delivery = messageQueue.dequeueNoWait();
-        replenishCreditIfNeeded();
+        if (delivery != null && options.autoAccept()) {
+            delivery.disposition(org.messaginghub.amqperative.DeliveryState.accepted(), options.autoSettle());
+        } else {
+            replenishCreditIfNeeded();
+        }
 
         return delivery;
     }
 
     private void replenishCreditIfNeeded() {
         int creditWindow = options.creditWindow();
-        if(creditWindow > 0) {
+        if (creditWindow > 0) {
             executor.execute(() -> {
                 int currentCredit = protonReceiver.getCredit();
                 if (currentCredit <= creditWindow * 0.5) {
@@ -309,6 +326,7 @@ public class ClientReceiver implements Receiver {
         checkClosed();
         executor.execute(() -> {
             delivery.disposition(state, settled);
+            replenishCreditIfNeeded();
         });
     }
 

@@ -65,7 +65,7 @@ public class ClientDelivery implements Delivery {
 
     @Override
     public Delivery accept() {
-        receiver.disposition(delivery, Accepted.getInstance(), true);  // TODO - Are we Auto settling ?
+        receiver.disposition(delivery, Accepted.getInstance(), true);
         return this;
     }
 

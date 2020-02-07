@@ -32,13 +32,6 @@ import javax.jms.TextMessage;
 
 import org.apache.activemq.broker.jmx.QueueViewMBean;
 import org.junit.Test;
-import org.messaginghub.amqperative.Connection;
-import org.messaginghub.amqperative.Client;
-import org.messaginghub.amqperative.ClientOptions;
-import org.messaginghub.amqperative.Delivery;
-import org.messaginghub.amqperative.DeliveryState;
-import org.messaginghub.amqperative.Message;
-import org.messaginghub.amqperative.Receiver;
 import org.messaginghub.amqperative.support.AMQPerativeTestSupport;
 import org.messaginghub.amqperative.support.Wait;
 
@@ -120,7 +113,7 @@ public class ReceiverTest extends AMQPerativeTestSupport {
 
         Connection connection = container.connect(brokerURI.getHost(), brokerURI.getPort());
         assertNotNull(connection.openFuture().get(5, TimeUnit.SECONDS));
-        Receiver receiver = connection.openReceiver(getTestName());
+        Receiver receiver = connection.openReceiver(getTestName(), new ReceiverOptions().autoAccept(false));
         assertSame(receiver, receiver.openFuture().get(5, TimeUnit.SECONDS));
 
         Wait.assertEquals(1, () -> receiver.getQueueSize());
