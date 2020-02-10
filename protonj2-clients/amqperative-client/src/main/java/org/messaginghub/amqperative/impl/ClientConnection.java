@@ -84,7 +84,7 @@ public class ClientConnection implements Connection {
     private final ClientInstance client;
     private final ConnectionOptions options;
     private final ClientConnectionCapabilities capabilities = new ClientConnectionCapabilities();
-    private final ClientFutureFactory futureFactoy;
+    private final ClientFutureFactory futureFactory;
 
     private final Map<ClientFuture<?>, ClientFuture<?>> requests = new ConcurrentHashMap<>();
     private final Engine engine;
@@ -121,7 +121,7 @@ public class ClientConnection implements Connection {
         this.client = client;
         this.options = options;
         this.connectionId = client.nextConnectionId();
-        this.futureFactoy = ClientFutureFactory.create(client.options().futureType());
+        this.futureFactory = ClientFutureFactory.create(client.options().futureType());
 
         if (options.saslOptions().saslEnabled()) {
             // TODO - Check that all allowed mechanisms are actually supported ?
@@ -142,8 +142,8 @@ public class ClientConnection implements Connection {
                                           .threadFactory(transportThreadFactory)
                                           .build();
 
-        openFuture = futureFactoy.createFuture();
-        closeFuture = futureFactoy.createFuture();
+        openFuture = futureFactory.createFuture();
+        closeFuture = futureFactory.createFuture();
     }
 
     @Override
@@ -455,7 +455,7 @@ public class ClientConnection implements Connection {
     }
 
     ClientFutureFactory getFutureFactory() {
-        return futureFactoy;
+        return futureFactory;
     }
 
     ClientException getFailureCause() {
