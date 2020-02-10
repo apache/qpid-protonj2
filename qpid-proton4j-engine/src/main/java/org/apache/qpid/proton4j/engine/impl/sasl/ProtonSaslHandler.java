@@ -59,7 +59,7 @@ public final class ProtonSaslHandler implements EngineHandler {
         this.engine = null;
         this.context = null;
 
-        engine.registerSaslDriver(ProtonEngineNoOpSaslDriver.INSTANCE);
+        ((ProtonEngine) context.engine()).registerSaslDriver(ProtonEngineNoOpSaslDriver.INSTANCE);
     }
 
     @Override

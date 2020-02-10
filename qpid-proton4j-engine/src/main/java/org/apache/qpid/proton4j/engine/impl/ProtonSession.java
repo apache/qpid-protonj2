@@ -518,6 +518,7 @@ public class ProtonSession implements Session {
         if (link == null) {
             getEngine().engineFailed(new ProtocolViolationException(
                 "Received uncorrelated handle on Detach from remote: " + channel));
+            return;
         }
 
         // Ensure that tracked links get cleared at some point as we don't currently have the concept
@@ -565,13 +566,11 @@ public class ProtonSession implements Session {
         if (link == null) {
             getEngine().engineFailed(new ProtocolViolationException(
                 "Received uncorrelated handle on Transfer from remote: " + channel));
-        }
-
-        if (!link.isRemotelyOpen()) {
+        } else if (!link.isRemotelyOpen()) {
             getEngine().engineFailed(new ProtocolViolationException("Received Transfer for detached Receiver: " + link));
+        } else {
+            incomingWindow.handleTransfer(link, transfer, payload);
         }
-
-        incomingWindow.handleTransfer(link, transfer, payload);
     }
 
     void remoteDispsotion(Disposition disposition, int channel) {
@@ -730,9 +729,9 @@ public class ProtonSession implements Session {
     }
 
     long findFreeLocalHandle(ProtonLink<?> link) {
-        for (int i = 0; i < ProtonConstants.HANDLE_MAX; ++i) {
-            if (!localLinks.containsKey(i)) {
-                localLinks.put(i, link);
+        for (long i = 0; i < ProtonConstants.HANDLE_MAX; ++i) {
+            if (!localLinks.containsKey((int) i)) {
+                localLinks.put((int) i, link);
                 return i;
             }
         }

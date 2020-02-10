@@ -76,6 +76,7 @@ public class SaslAuthenticator implements SaslClientListener {
 
         if (chosenMechanism == null) {
             context.saslFailure(new SaslException("Could not find a matching mechanism to begin SASL Negotiations"));
+            return;
         }
 
         LOG.debug("SASL Negotiations proceeding using selected mechanisms: {}", chosenMechanism);
