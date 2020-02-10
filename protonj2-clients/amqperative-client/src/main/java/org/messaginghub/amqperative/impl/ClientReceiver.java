@@ -231,15 +231,6 @@ public class ClientReceiver implements Receiver {
                     } catch (Throwable ignore) {
                         closeFuture.complete(this);
                     }
-
-                    if (!closeFuture.isDone()) {
-                        final long timeout = options.closeTimeout();
-
-                        if (timeout > 0) {
-                            session.scheduleRequestTimeout(closeFuture, timeout,
-                                () -> new ClientOperationTimedOutException("Timed out waiting for Receiver to close or detach"));
-                        }
-                    }
                 }
             });
         }
