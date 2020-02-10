@@ -63,15 +63,17 @@ public class SplayMap<E> implements NavigableMap<UnsignedInteger, E> {
     public E get(int key) {
         if (root == null) {
             return null;
-        }
-
-        root = splay(root, key);
-
-        if (root.key == key) {
+        } else if (root.key == key) {
             return root.value;
-        }
+        } else {
+            root = splay(root, key);
 
-        return null;
+            if (root.key == key) {
+                return root.value;
+            } else {
+                return null;
+            }
+        }
     }
 
     public E put(int key, E value) {
@@ -162,13 +164,12 @@ public class SplayMap<E> implements NavigableMap<UnsignedInteger, E> {
 
     @Override
     public E get(Object key) {
-        Number uintKey = (Number) key;
-        return get(uintKey.intValue());
+        return get(Number.class.cast(key).intValue());
     }
 
     @Override
     public E remove(Object key) {
-        return remove(Number.class.cast(key));
+        return remove(Number.class.cast(key).intValue());
     }
 
     @Override

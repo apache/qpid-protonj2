@@ -320,6 +320,23 @@ public class SplayMapTest {
     }
 
     @Test
+    public void testRemoveInteger() {
+        SplayMap<String> map = new SplayMap<>();
+
+        map.put(0, "zero");
+        map.put(1, "one");
+        map.put(UnsignedInteger.valueOf(9), "nine");
+        map.put(7, "seven");
+        map.put(UnsignedInteger.valueOf(-1), "minus one");
+
+        assertEquals(5, map.size());
+        assertNull(map.remove(Integer.valueOf(5)));
+        assertEquals(5, map.size());
+        assertEquals("nine", map.remove(Integer.valueOf(9)));
+        assertEquals(4, map.size());
+    }
+
+    @Test
     public void testValuesCollection() {
         SplayMap<String> map = new SplayMap<>();
 
