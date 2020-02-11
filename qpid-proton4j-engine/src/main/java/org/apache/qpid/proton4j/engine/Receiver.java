@@ -44,6 +44,9 @@ public interface Receiver extends Link<Receiver> {
     /**
      * Initiate a drain of all remaining credit of this {@link Receiver} link.
      *
+     * TODO - Consider revisions to this method to return boolean indicating if a drain was started
+     *        and instead of an exception just return false if no credit.
+     *
      * @return this {@link Receiver} for chaining.
      * @throws IllegalStateException if there is no credit to drain, or an existing drain attempt is incomplete.
      */
