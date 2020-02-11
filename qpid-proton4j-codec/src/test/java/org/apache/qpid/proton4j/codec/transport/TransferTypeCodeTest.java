@@ -72,7 +72,7 @@ public class TransferTypeCodeTest extends CodecTestSupport {
 
         assertEquals(UnsignedInteger.MAX_VALUE.longValue(), result.getHandle());
         assertEquals(10, result.getDeliveryId());
-        assertEquals(tag, result.getDeliveryTag().tagBytes());
+        assertEquals(tag, result.getDeliveryTag().tagBuffer());
         assertEquals(0, result.getMessageFormat());
         assertFalse(result.getSettled());
         assertFalse(result.getBatchable());
@@ -120,7 +120,7 @@ public class TransferTypeCodeTest extends CodecTestSupport {
         Transfer value = (Transfer) result;
         assertEquals(UnsignedInteger.MAX_VALUE.longValue(), value.getHandle());
         assertEquals(10, value.getDeliveryId());
-        assertEquals(tag, value.getDeliveryTag().tagBytes());
+        assertEquals(tag, value.getDeliveryTag().tagBuffer());
         assertEquals(0, value.getMessageFormat());
         assertFalse(value.getSettled());
         assertFalse(value.getBatchable());

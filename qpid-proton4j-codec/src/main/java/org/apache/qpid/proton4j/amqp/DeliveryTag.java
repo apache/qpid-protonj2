@@ -36,14 +36,12 @@ public interface DeliveryTag {
     /**
      * @return the total number of bytes needed to represent the given tag.
      */
-    default int tagLength() {
-        return tagBytes().getReadableBytes();
-    }
+    int tagLength();
 
     /**
      * @return the ProtonBuffer view of the tag bytes.
      */
-    ProtonBuffer tagBytes();
+    ProtonBuffer tagBuffer();
 
     /**
      * Optional method used by tag implementations that provide pooling of tags.
@@ -83,7 +81,12 @@ public interface DeliveryTag {
         }
 
         @Override
-        public ProtonBuffer tagBytes() {
+        public int tagLength() {
+            return tagBuffer().getReadableBytes();
+        }
+
+        @Override
+        public ProtonBuffer tagBuffer() {
             return tag;
         }
 
@@ -106,7 +109,7 @@ public interface DeliveryTag {
                 return false;
             }
 
-            return tag.equals(((DeliveryTag) other).tagBytes());
+            return tag.equals(((DeliveryTag) other).tagBuffer());
         }
 
         @Override

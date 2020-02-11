@@ -63,7 +63,7 @@ public class TransferTypeEncoder extends AbstractDescribedListTypeEncoder<Transf
                 break;
             case 2:
                 if (transfer.hasDeliveryTag()) {
-                    state.getEncoder().writeBinary(buffer, state, transfer.getDeliveryTag().tagBytes());
+                    state.getEncoder().writeBinary(buffer, state, transfer.getDeliveryTag().tagBuffer());
                 } else {
                     buffer.writeByte(EncodingCodes.NULL);
                 }
