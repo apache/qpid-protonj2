@@ -219,21 +219,19 @@ public class ProtonSessionIncomingWindow {
 
     //----- Handle sender link actions in the session window context
 
-    void processDisposition(ProtonReceiver receiver, ProtonIncomingDelivery delivery) {
-        // TODO - Can we cache or pool these to not generate garbage on each send ?
-        Disposition disposition = new Disposition();
+    private final Disposition cachedDisposition = new Disposition();
 
-        disposition.setFirst(delivery.getDeliveryId());
-        disposition.setLast(delivery.getDeliveryId());
-        disposition.setRole(Role.RECEIVER);
-        disposition.setSettled(delivery.isSettled());
-        disposition.setBatchable(false);
-        disposition.setState(delivery.getState());
+    void processDisposition(ProtonReceiver receiver, ProtonIncomingDelivery delivery) {
+        cachedDisposition.reset();
+        cachedDisposition.setFirst(delivery.getDeliveryId());
+        cachedDisposition.setRole(Role.RECEIVER);
+        cachedDisposition.setSettled(delivery.isSettled());
+        cachedDisposition.setState(delivery.getState());
 
         // TODO - Casting is ugly but our ID values are longs
         unsettled.remove((int) delivery.getDeliveryId());
 
-        engine.fireWrite(disposition, session.getLocalChannel(), null, null);
+        engine.fireWrite(cachedDisposition, session.getLocalChannel(), null, null);
     }
 
     void deliveryRead(ProtonIncomingDelivery delivery, int bytesRead) {
