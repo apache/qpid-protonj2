@@ -19,7 +19,6 @@ package org.apache.qpid.proton4j.engine.impl;
 import org.apache.qpid.proton4j.amqp.DeliveryTag;
 import org.apache.qpid.proton4j.amqp.transport.DeliveryState;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
-import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.engine.OutgoingDelivery;
 
 /**
@@ -48,8 +47,6 @@ public class ProtonOutgoingDelivery implements OutgoingDelivery {
 
     private DeliveryState remoteState;
     private boolean remotelySettled;
-
-    private final ProtonBuffer payload = ProtonByteBufferAllocator.DEFAULT.allocate();
 
     public ProtonOutgoingDelivery(ProtonSender link) {
         this.link = link;
@@ -157,9 +154,8 @@ public class ProtonOutgoingDelivery implements OutgoingDelivery {
     @Override
     public OutgoingDelivery writeBytes(ProtonBuffer buffer) {
         checkCompleteOrAborted();
-        payload.writeBytes(buffer);  // TODO don't copy if we can
         complete = true;
-        link.send(this, payload);
+        link.send(this, buffer);
         return this;
     }
 
@@ -171,9 +167,8 @@ public class ProtonOutgoingDelivery implements OutgoingDelivery {
     @Override
     public OutgoingDelivery streamBytes(ProtonBuffer buffer, boolean complete) {
         checkCompleteOrAborted();
-        payload.writeBytes(buffer);  // TODO don't copy if we can
         this.complete = complete;
-        link.send(this, payload);
+        link.send(this, buffer);
         return this;
     }
 
