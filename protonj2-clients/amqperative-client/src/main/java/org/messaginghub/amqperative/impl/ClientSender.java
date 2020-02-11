@@ -502,9 +502,14 @@ public class ClientSender implements Sender {
         }
 
         delivery.setTag(tagGenerator.getNextTag());  // TODO - Optimize tags with pooling later
-        delivery.writeBytes(buffer);
         delivery.getContext().setLinkedResource(tracker);
 
+        // TODO - Simulate Qpid JMS send with delivery mode is not persistent.
+        // request.complete(tracker);
+
+        delivery.writeBytes(buffer);
+
+        // TODO - Simulate Qpid JMS send with delivery mode is not persistent.
         request.complete(tracker);
     }
 
