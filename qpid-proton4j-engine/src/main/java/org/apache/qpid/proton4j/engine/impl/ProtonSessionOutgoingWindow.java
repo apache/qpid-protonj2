@@ -170,6 +170,9 @@ public class ProtonSessionOutgoingWindow {
 
     //----- Handle sender link actions in the session window context
 
+    private final Transfer cachedTransfer = new Transfer();
+    private final Disposition cachedDisposition = new Disposition();
+
     void processSend(ProtonSender sender, ProtonOutgoingDelivery delivery, ProtonBuffer payload) {
         // For a transfer that hasn't completed but has no bytes in the final transfer write we want
         // to allow a transfer to go out with the more flag as false.
@@ -182,25 +185,19 @@ public class ProtonSessionOutgoingWindow {
         }
 
         do {
-            // TODO - Can we cache or pool these to not generate garbage on each send ?
-            Transfer transfer = new Transfer();
-
-            transfer.setDeliveryId(delivery.getDeliveryId());
+            cachedTransfer.reset();
+            cachedTransfer.setDeliveryId(delivery.getDeliveryId());
             // TODO - Delivery Tag improvements, have our own DeliveryTag type perhaps that pools etc.
             // TODO - If we track number of transfers for a larger delivery we could omit this on continuations
-            transfer.setDeliveryTag(delivery.getTag());
-            transfer.setMore(wasThereMore);
-            transfer.setResume(false);
-            transfer.setAborted(false);
-            transfer.setBatchable(false);
-            transfer.setRcvSettleMode(null);
-            transfer.setHandle(sender.getHandle());
-            transfer.setSettled(delivery.isSettled());
-            transfer.setState(delivery.getState());
+            cachedTransfer.setDeliveryTag(delivery.getTag());
+            cachedTransfer.setMore(wasThereMore);
+            cachedTransfer.setHandle(sender.getHandle());
+            cachedTransfer.setSettled(delivery.isSettled());
+            cachedTransfer.setState(delivery.getState());
 
             // TODO - Write up to session window limits or until done.
             try {
-                engine.fireWrite(transfer, session.getLocalChannel(), payload, () -> transfer.setMore(true));
+                engine.fireWrite(cachedTransfer, session.getLocalChannel(), payload, () -> cachedTransfer.setMore(true));
             } finally {
                 delivery.afterTransferWritten();
             }
@@ -211,42 +208,32 @@ public class ProtonSessionOutgoingWindow {
         } while (payload.isReadable());
     }
 
-    void processDisposition(ProtonSender sender, ProtonOutgoingDelivery delivery) {
-        // TODO - Can we cache or pool these to not generate garbage on each send ?
-        Disposition disposition = new Disposition();
 
-        disposition.setFirst(delivery.getDeliveryId());
-        disposition.setLast(delivery.getDeliveryId());
-        disposition.setRole(Role.SENDER);
-        disposition.setSettled(delivery.isSettled());
-        disposition.setBatchable(false);
-        disposition.setState(delivery.getState());
+    void processDisposition(ProtonSender sender, ProtonOutgoingDelivery delivery) {
+        cachedDisposition.reset();
+        cachedDisposition.setFirst(delivery.getDeliveryId());
+        cachedDisposition.setRole(Role.SENDER);
+        cachedDisposition.setSettled(delivery.isSettled());
+        cachedDisposition.setState(delivery.getState());
 
         // TODO - Casting is ugly but our ID values are longs
         unsettled.remove((int) delivery.getDeliveryId());
 
-        engine.fireWrite(disposition, session.getLocalChannel(), null, null);
+        engine.fireWrite(cachedDisposition, session.getLocalChannel(), null, null);
     }
 
     void processAbort(ProtonSender sender, ProtonOutgoingDelivery delivery) {
-        // TODO - Can we cache or pool these to not generate garbage on each send ?
-        Transfer transfer = new Transfer();
-
-        transfer.setDeliveryId(delivery.getDeliveryId());
-        transfer.setDeliveryTag(delivery.getTag());
-        transfer.setMore(false);
-        transfer.setState(null);
-        transfer.setSettled(true);
-        transfer.setResume(false);
-        transfer.setAborted(true);
-        transfer.setBatchable(false);
-        transfer.setRcvSettleMode(null);
-        transfer.setHandle(sender.getHandle());
+        cachedTransfer.reset();
+        cachedTransfer.setDeliveryId(delivery.getDeliveryId());
+        cachedTransfer.setDeliveryTag(delivery.getTag());
+        cachedTransfer.setSettled(true);
+        cachedTransfer.setAborted(true);
+        cachedTransfer.setHandle(sender.getHandle());
 
         // Ensure we don't track the aborted delivery any longer.
         unsettled.remove((int) delivery.getDeliveryId());
 
-        engine.fireWrite(transfer, session.getLocalChannel(), null, null);
+        engine.fireWrite(cachedTransfer, session.getLocalChannel(), null, null);
     }
 
     //----- Access to internal state useful for tests

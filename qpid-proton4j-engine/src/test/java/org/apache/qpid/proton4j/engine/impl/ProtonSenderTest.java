@@ -16,6 +16,8 @@
  */
 package org.apache.qpid.proton4j.engine.impl;
 
+import static org.hamcrest.CoreMatchers.anyOf;
+import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.junit.Assert.assertEquals;
@@ -1650,7 +1652,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
                              .withDeliveryTag(new byte[] {0})
                              .withAborted(true)
                              .withSettled(true)
-                             .withMore(false)
+                             .withMore(anyOf(nullValue(), is(false)))
                              .withPayload(nullValue(ProtonBuffer.class));
         peer.expectDetach().withHandle(0).respond();
 
@@ -1718,7 +1720,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
                              .withDeliveryTag(new byte[] {0})
                              .withAborted(true)
                              .withSettled(true)
-                             .withMore(false)
+                             .withMore(anyOf(nullValue(), is(false)))
                              .withPayload(nullValue(ProtonBuffer.class));
         peer.expectDetach().withHandle(0).respond();
 
