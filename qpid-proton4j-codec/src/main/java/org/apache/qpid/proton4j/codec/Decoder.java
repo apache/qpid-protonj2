@@ -25,6 +25,7 @@ import org.apache.qpid.proton4j.amqp.Binary;
 import org.apache.qpid.proton4j.amqp.Decimal128;
 import org.apache.qpid.proton4j.amqp.Decimal32;
 import org.apache.qpid.proton4j.amqp.Decimal64;
+import org.apache.qpid.proton4j.amqp.DeliveryTag;
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedByte;
 import org.apache.qpid.proton4j.amqp.UnsignedInteger;
@@ -101,6 +102,22 @@ public interface Decoder {
     Binary readBinary(ProtonBuffer buffer, DecoderState state) throws IOException;
 
     ProtonBuffer readBinaryAsBuffer(ProtonBuffer buffer, DecoderState state) throws IOException;
+
+    /**
+     * This method expects to read a {@link Binary} encoded type from the provided buffer and
+     * constructs a {@link DeliveryTag} type that wraps the bytes encoded.  If the encoding is
+     * a NULL AMQP type then this method returns <code>null</code>.
+     *
+     * @param buffer
+     *      The buffer to read a Binary encoded value from
+     * @param state
+     *      The current encoding state.
+     *
+     * @return a new DeliveryTag instance or null if an AMQP NULL encoding is found.
+     *
+     * @throws IOException if an error occurs while decoding the {@link DeliveryTag} instance.
+     */
+    DeliveryTag readDeliveryTag(ProtonBuffer buffer, DecoderState state) throws IOException;
 
     String readString(ProtonBuffer buffer, DecoderState state) throws IOException;
 

@@ -50,6 +50,22 @@ public abstract class AbstractBinaryTypeDecoder extends AbstractPrimitiveTypeDec
         return payload;
     }
 
+    public byte[] readValueAsArray(ProtonBuffer buffer, DecoderState state) {
+        int length = readSize(buffer);
+
+        if (length > buffer.getReadableBytes()) {
+            throw new IllegalArgumentException(
+                String.format("Binary data size %d is specified to be greater than the amount " +
+                              "of data available (%d)", length, buffer.getReadableBytes()));
+        }
+
+        byte[] payload = new byte[length];
+
+        buffer.readBytes(payload);
+
+        return payload;
+    }
+
     @Override
     public void skipValue(ProtonBuffer buffer, DecoderState state) throws IOException {
         int length = readSize(buffer);

@@ -26,6 +26,7 @@ import org.apache.qpid.proton4j.amqp.Binary;
 import org.apache.qpid.proton4j.amqp.Decimal128;
 import org.apache.qpid.proton4j.amqp.Decimal32;
 import org.apache.qpid.proton4j.amqp.Decimal64;
+import org.apache.qpid.proton4j.amqp.DeliveryTag;
 import org.apache.qpid.proton4j.amqp.DescribedType;
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedByte;
@@ -405,6 +406,15 @@ public class ProtonEncoder implements Encoder {
             buffer.writeByte(EncodingCodes.NULL);
         } else {
             binaryEncoder.writeType(buffer, state, value);
+        }
+    }
+
+    @Override
+    public void writeDeliveryTag(ProtonBuffer buffer, EncoderState state, DeliveryTag value) {
+        if (value == null) {
+            buffer.writeByte(EncodingCodes.NULL);
+        } else {
+            binaryEncoder.writeType(buffer, state, value.tagBytes());
         }
     }
 

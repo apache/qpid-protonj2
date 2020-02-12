@@ -16,12 +16,11 @@
  */
 package org.apache.qpid.proton4j.amqp;
 
-import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.Objects;
 
 import org.apache.qpid.proton4j.amqp.transport.Transfer;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
-import org.apache.qpid.proton4j.buffer.ProtonByteBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 
 /**
@@ -37,6 +36,11 @@ public interface DeliveryTag {
      * @return the total number of bytes needed to represent the given tag.
      */
     int tagLength();
+
+    /**
+     * @return the underlying tag bytes (not a copy, user should not modify).
+     */
+    byte[] tagBytes();
 
     /**
      * @return the ProtonBuffer view of the tag bytes.
@@ -62,42 +66,63 @@ public interface DeliveryTag {
      */
     public static class ProtonDeliveryTag implements DeliveryTag {
 
-        private static final ProtonByteBuffer EMPTY_TAG = new ProtonByteBuffer(0, 0);
+        private static final byte[] EMPTY_TAG_ARRAY = new byte[0];
 
-        private final ProtonBuffer tag;
+        private final byte[] tagBytes;
+        private ProtonBuffer tagView;
+        private Integer hashCode;
 
         public ProtonDeliveryTag() {
-            this.tag = EMPTY_TAG;
+            this.tagBytes = EMPTY_TAG_ARRAY;
         }
 
         public ProtonDeliveryTag(byte[] tagBytes) {
             Objects.requireNonNull(tagBytes, "Tag bytes cannot be null");
-            this.tag = ProtonByteBufferAllocator.DEFAULT.wrap(tagBytes);
+            this.tagBytes = tagBytes;
         }
 
         public ProtonDeliveryTag(ProtonBuffer tagBytes) {
             Objects.requireNonNull(tagBytes, "Tag bytes cannot be null");
-            this.tag = tagBytes;
+            if (tagBytes.hasArray() && tagBytes.getArrayOffset() == 0) {
+                this.tagBytes = tagBytes.getArray();
+            } else {
+                this.tagBytes = new byte[tagBytes.getReadableBytes()];
+                tagBytes.getBytes(tagBytes.getReadIndex(), this.tagBytes);
+            }
+            this.tagView = tagBytes;
+        }
+
+        @Override
+        public byte[] tagBytes() {
+            return tagBytes;
         }
 
         @Override
         public int tagLength() {
-            return tagBuffer().getReadableBytes();
+            return tagBytes.length;
         }
 
         @Override
         public ProtonBuffer tagBuffer() {
-            return tag;
+            if (tagView == null) {
+                tagView = ProtonByteBufferAllocator.DEFAULT.wrap(tagBytes);
+            }
+
+            return tagView;
         }
 
         @Override
         public DeliveryTag copy() {
-            return new ProtonDeliveryTag(tag.copy());
+            return new ProtonDeliveryTag(Arrays.copyOf(tagBytes, tagBytes.length));
         }
 
         @Override
         public int hashCode() {
-            return tag.hashCode();
+            if (hashCode == null) {
+                hashCode = Arrays.hashCode(tagBytes);
+            }
+
+            return hashCode.intValue();
         }
 
         @Override
@@ -109,12 +134,12 @@ public interface DeliveryTag {
                 return false;
             }
 
-            return tag.equals(((DeliveryTag) other).tagBuffer());
+            return Arrays.equals(tagBytes, ((DeliveryTag) other).tagBytes());
         }
 
         @Override
         public String toString() {
-            return "DeliveryTag: {" + tag.toString(StandardCharsets.UTF_8) + "}";
+            return "DeliveryTag: {" + Arrays.toString(tagBytes) + "}";
         }
     }
 }

@@ -28,6 +28,7 @@ import org.apache.qpid.proton4j.amqp.Binary;
 import org.apache.qpid.proton4j.amqp.Decimal128;
 import org.apache.qpid.proton4j.amqp.Decimal32;
 import org.apache.qpid.proton4j.amqp.Decimal64;
+import org.apache.qpid.proton4j.amqp.DeliveryTag;
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedByte;
 import org.apache.qpid.proton4j.amqp.UnsignedInteger;
@@ -749,6 +750,22 @@ public class ProtonDecoder implements Decoder {
                 return binary8Decoder.readValueAsBuffer(buffer, state);
             case EncodingCodes.VBIN32:
                 return binary32Decoder.readValueAsBuffer(buffer, state);
+            case EncodingCodes.NULL:
+                return null;
+            default:
+                throw new IOException("Expected Binary type but found encoding: " + (encodingCode & 0xFF));
+        }
+    }
+
+    @Override
+    public DeliveryTag readDeliveryTag(ProtonBuffer buffer, DecoderState state) throws IOException {
+        byte encodingCode = buffer.readByte();
+
+        switch (encodingCode) {
+            case EncodingCodes.VBIN8:
+                return new DeliveryTag.ProtonDeliveryTag(binary8Decoder.readValueAsArray(buffer, state));
+            case EncodingCodes.VBIN32:
+                return new DeliveryTag.ProtonDeliveryTag(binary32Decoder.readValueAsArray(buffer, state));
             case EncodingCodes.NULL:
                 return null;
             default:

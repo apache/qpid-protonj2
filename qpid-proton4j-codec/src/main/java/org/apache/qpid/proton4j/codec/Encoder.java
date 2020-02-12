@@ -25,6 +25,7 @@ import org.apache.qpid.proton4j.amqp.Binary;
 import org.apache.qpid.proton4j.amqp.Decimal128;
 import org.apache.qpid.proton4j.amqp.Decimal32;
 import org.apache.qpid.proton4j.amqp.Decimal64;
+import org.apache.qpid.proton4j.amqp.DeliveryTag;
 import org.apache.qpid.proton4j.amqp.DescribedType;
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedByte;
@@ -140,6 +141,21 @@ public interface Encoder {
     <T> void writeList(ProtonBuffer buffer, EncoderState state, List<T> value);
 
     <K, V> void writeMap(ProtonBuffer buffer, EncoderState state, Map<K, V> value);
+
+    /**
+     * Writes the contents of the given {@link DeliveryTag} value into the provided {@link ProtonBuffer}
+     * instance as an AMQP Binary type.
+     * <p>
+     * If the provided value to write is null an AMQP null type is encoded into the target buffer.
+     *
+     * @param buffer
+     *      the target buffer where the binary value is to be encoded
+     * @param state
+     *      the {@link EncoderState} instance that manages the calling threads state tracking.
+     * @param value
+     *      the {@link DeliveryTag} value to be encoded as an AMQP binary instance.
+     */
+    void writeDeliveryTag(ProtonBuffer buffer, EncoderState state, DeliveryTag value);
 
     void writeDescribedType(ProtonBuffer buffer, EncoderState state, DescribedType value);
 
