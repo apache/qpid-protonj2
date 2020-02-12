@@ -208,7 +208,6 @@ public class ProtonSessionOutgoingWindow {
         } while (payload.isReadable());
     }
 
-
     void processDisposition(ProtonSender sender, ProtonOutgoingDelivery delivery) {
         cachedDisposition.reset();
         cachedDisposition.setFirst(delivery.getDeliveryId());

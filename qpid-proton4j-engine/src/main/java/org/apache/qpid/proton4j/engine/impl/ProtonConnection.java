@@ -149,7 +149,6 @@ public class ProtonConnection implements Connection, AMQPHeader.HeaderHandler<Pr
             try {
                 syncLocalStateWithRemote();
             } finally {
-                // TODO - Needed ? allSessions().forEach(session -> session.handleConnectionStateChanged(this));
                 if (localOpenHandler != null) {
                     localOpenHandler.handle(this);
                 }

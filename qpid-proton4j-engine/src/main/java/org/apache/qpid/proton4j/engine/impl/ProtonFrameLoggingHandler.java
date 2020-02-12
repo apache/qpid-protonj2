@@ -36,6 +36,11 @@ public class ProtonFrameLoggingHandler implements EngineHandler {
 
     private static final ProtonLogger LOG = ProtonLoggerFactory.getLogger(ProtonFrameLoggingHandler.class);
 
+    private static final String AMQP_IN_PREFIX = "<- AMQP";
+    private static final String AMQP_OUT_PREFIX = "-> AMQP";
+    private static final String SASL_IN_PREFIX = "<- SASL";
+    private static final String SASL_OUT_PREFIX = "-> SASL";
+
     private static final int PAYLOAD_STRING_LIMIT = 64;
     private static final String PN_TRACE_FRM = "PN_TRACE_FRM";
     private static final boolean TRACE_FRM_ENABLED = checkTraceFramesEnabled();
@@ -48,10 +53,10 @@ public class ProtonFrameLoggingHandler implements EngineHandler {
     @Override
     public void handleRead(EngineHandlerContext context, HeaderFrame header) {
         if (TRACE_FRM_ENABLED) {
-            trace("<- AMQP", header.getBody(), null);
+            trace(AMQP_IN_PREFIX, header.getBody(), null);
         }
 
-        log("<- AMQP", header.getBody(), null);
+        log(AMQP_IN_PREFIX, header.getBody(), null);
 
         context.fireRead(header);
     }
@@ -59,10 +64,10 @@ public class ProtonFrameLoggingHandler implements EngineHandler {
     @Override
     public void handleRead(EngineHandlerContext context, SaslFrame frame) {
         if (TRACE_FRM_ENABLED) {
-            trace("<- SASL", frame.getBody(), null);
+            trace(SASL_IN_PREFIX, frame.getBody(), null);
         }
 
-        log("<- SASL", frame.getBody(), frame.getPayload());
+        log(SASL_IN_PREFIX, frame.getBody(), frame.getPayload());
 
         context.fireRead(frame);
     }
@@ -70,11 +75,11 @@ public class ProtonFrameLoggingHandler implements EngineHandler {
     @Override
     public void handleRead(EngineHandlerContext context, ProtocolFrame frame) {
         if (TRACE_FRM_ENABLED) {
-            trace("<- AMQP", frame.getBody(), frame.getPayload());
+            trace(AMQP_IN_PREFIX, frame.getBody(), frame.getPayload());
         }
 
         if (LOG.isTraceEnabled()) {
-            log("<- AMQP", frame.getBody(), frame.getPayload());
+            log(AMQP_IN_PREFIX, frame.getBody(), frame.getPayload());
         }
 
         context.fireRead(frame);
@@ -83,10 +88,10 @@ public class ProtonFrameLoggingHandler implements EngineHandler {
     @Override
     public void handleWrite(EngineHandlerContext context, AMQPHeader header) {
         if (TRACE_FRM_ENABLED) {
-            trace("-> AMQP", header, null);
+            trace(AMQP_OUT_PREFIX, header, null);
         }
 
-        log("-> AMQP", header, null);
+        log(AMQP_OUT_PREFIX, header, null);
 
         context.fireWrite(header);
     }
@@ -94,11 +99,11 @@ public class ProtonFrameLoggingHandler implements EngineHandler {
     @Override
     public void handleWrite(EngineHandlerContext context, Performative performative, int channel, ProtonBuffer payload, Runnable payloadToLarge) {
         if (TRACE_FRM_ENABLED) {
-            trace("-> AMQP", performative, payload);
+            trace(AMQP_OUT_PREFIX, performative, payload);
         }
 
         if (LOG.isTraceEnabled()) {
-            log("-> AMQP", performative, payload);
+            log(AMQP_OUT_PREFIX, performative, payload);
         }
 
         context.fireWrite(performative, channel, payload, payloadToLarge);
@@ -107,10 +112,10 @@ public class ProtonFrameLoggingHandler implements EngineHandler {
     @Override
     public void handleWrite(EngineHandlerContext context, SaslPerformative performative) {
         if (TRACE_FRM_ENABLED) {
-            trace("-> SASL", performative, null);
+            trace(SASL_OUT_PREFIX, performative, null);
         }
 
-        log("-> SASL", performative, null);
+        log(SASL_OUT_PREFIX, performative, null);
 
         context.fireWrite(performative);
     }
