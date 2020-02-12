@@ -29,17 +29,13 @@ public final class TransferTagGenerator {
      * @return a new tag value.
      */
     public byte[] getNextTag() {
-        byte[] tagBytes = null;
+        long tag = nextTagId++;
+        int size = encodingSize(tag);
 
-        if (tagBytes == null) {
-            long tag = nextTagId++;
-            int size = encodingSize(tag);
+        byte[] tagBytes = new byte[size];
 
-            tagBytes = new byte[size];
-
-            for (int i = 0; i < size; ++i) {
-                tagBytes[size - 1 - i] = (byte) (tag >>> (i * 8));
-            }
+        for (int i = 0; i < size; ++i) {
+            tagBytes[size - 1 - i] = (byte) (tag >>> (i * 8));
         }
 
         return tagBytes;
