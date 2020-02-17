@@ -58,6 +58,8 @@ public class ClientSender implements Sender {
 
     private static final Logger LOG = LoggerFactory.getLogger(ClientSender.class);
 
+    private static final byte[] EMPTY_BYTE_ARRAY = new byte[] {};
+
     private static final AtomicIntegerFieldUpdater<ClientSender> CLOSED_UPDATER =
             AtomicIntegerFieldUpdater.newUpdater(ClientSender.class, "closed");
 
@@ -494,22 +496,23 @@ public class ClientSender implements Sender {
         OutgoingDelivery delivery = protonSender.next();
         ClientTracker tracker = new ClientTracker(this, delivery);
 
+        delivery.getContext().setLinkedResource(tracker);
+
         if (protonSender.getSenderSettleMode() == SenderSettleMode.SETTLED) {
+            delivery.setTag(EMPTY_BYTE_ARRAY);
             delivery.settle();
 
             // Remote will not update this delivery so mark as acknowledged now.
             tracker.acknowledgeFuture().complete(tracker);
+        } else {
+            delivery.setTag(tagGenerator.getNextTag());  // TODO - Optimize tags with pooling later
         }
 
-        delivery.setTag(tagGenerator.getNextTag());  // TODO - Optimize tags with pooling later
-        delivery.getContext().setLinkedResource(tracker);
-
-        // TODO - Simulate Qpid JMS send with delivery mode is not persistent.
+        // TODO: How do we provide a send mode equivalent to Qpid JMS asynchronous send on NON_PERSISTENT Message.
+        //       Do we complete before write for presettled senders?
         // request.complete(tracker);
 
         delivery.writeBytes(buffer);
-
-        // TODO - Simulate Qpid JMS send with delivery mode is not persistent.
         request.complete(tracker);
     }
 

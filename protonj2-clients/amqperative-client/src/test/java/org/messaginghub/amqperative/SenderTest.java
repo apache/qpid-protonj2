@@ -736,16 +736,16 @@ public class SenderTest extends AMQPerativeTestCase {
             Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort()).openFuture().get();
 
             Session session = connection.openSession().openFuture().get();
-            SenderOptions options = new SenderOptions().deliveryMode(DeliveryMode.AT_MOST_ONCE);
+            SenderOptions options = new SenderOptions().deliveryMode(DeliveryMode.AT_LEAST_ONCE).autoSettle(false);
             Sender sender = session.openSender("test-tags", options).openFuture().get();
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
             peer.expectTransfer().withPayload(notNullValue(ProtonBuffer.class))
-                                 .withDeliveryTag(new byte[] {0});
+                                 .withDeliveryTag(new byte[] {0}).respond().withSettled(true).withState(Accepted.getInstance());
             peer.expectTransfer().withPayload(notNullValue(ProtonBuffer.class))
-                                 .withDeliveryTag(new byte[] {1});
+                                 .withDeliveryTag(new byte[] {1}).respond().withSettled(true).withState(Accepted.getInstance());
             peer.expectTransfer().withPayload(notNullValue(ProtonBuffer.class))
-                                 .withDeliveryTag(new byte[] {2});
+                                 .withDeliveryTag(new byte[] {2}).respond().withSettled(true).withState(Accepted.getInstance());
             peer.expectDetach().respond();
             peer.expectClose().respond();
 
