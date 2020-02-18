@@ -769,6 +769,57 @@ public class SenderTest extends AMQPerativeTestCase {
         }
     }
 
+    @Test(timeout = 30000)
+    public void testSenderSendsSettledInAtLeastOnceMode() throws Exception {
+        try (NettyTestPeer peer = new NettyTestPeer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().withRole(Role.SENDER).respond();
+            peer.remoteFlow().withLinkCredit(10).queue();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Sender test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort()).openFuture().get();
+
+            Session session = connection.openSession().openFuture().get();
+            SenderOptions options = new SenderOptions().deliveryMode(DeliveryMode.AT_MOST_ONCE).autoSettle(false);
+            Sender sender = session.openSender("test-tags", options).openFuture().get();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+            peer.expectTransfer().withPayload(notNullValue(ProtonBuffer.class))
+                                 .withDeliveryTag(new byte[] {}).withSettled(true);
+            peer.expectTransfer().withPayload(notNullValue(ProtonBuffer.class))
+                                 .withDeliveryTag(new byte[] {}).withSettled(true);
+            peer.expectTransfer().withPayload(notNullValue(ProtonBuffer.class))
+                                 .withDeliveryTag(new byte[] {}).withSettled(true);
+            peer.expectDetach().respond();
+            peer.expectClose().respond();
+
+            final Message<String> message = Message.create("Hello World");
+            final Tracker tracker1 = sender.send(message);
+            final Tracker tracker2 = sender.send(message);
+            final Tracker tracker3 = sender.send(message);
+
+            assertNotNull(tracker1);
+            assertNotNull(tracker1.acknowledgeFuture().get().settled());
+            assertNotNull(tracker2);
+            assertNotNull(tracker2.acknowledgeFuture().get().settled());
+            assertNotNull(tracker3);
+            assertNotNull(tracker3.acknowledgeFuture().get().settled());
+
+            sender.close().get();
+
+            connection.close().get();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
     @Repeat(repetitions = 1)
     @Test(timeout = 30000)
     public void testCreateAnonymousSenderFromWhenRemoteDoesNotOfferSupportForIt() throws Exception {
