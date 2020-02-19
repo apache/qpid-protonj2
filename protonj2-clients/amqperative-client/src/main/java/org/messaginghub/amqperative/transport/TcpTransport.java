@@ -264,7 +264,7 @@ public class TcpTransport implements Transport {
     @Override
     public TcpTransport write(ProtonBuffer output) throws IOException {
         checkConnected(output);
-        LOG.trace("Attempted write of: {} bytes", output.getReadableBytes());
+        LOG.trace("Attempted write of: {} bytes", output);
         channel.write(toOutputBuffer(output), channel.voidPromise());
         return this;
     }
@@ -272,7 +272,7 @@ public class TcpTransport implements Transport {
     @Override
     public TcpTransport writeAndFlush(ProtonBuffer output) throws IOException {
         checkConnected(output);
-        LOG.trace("Attempted write and flush of: {} bytes", output.getReadableBytes());
+        LOG.trace("Attempted write and flush of: {} bytes", output);
         channel.writeAndFlush(toOutputBuffer(output), channel.voidPromise());
         return this;
     }
