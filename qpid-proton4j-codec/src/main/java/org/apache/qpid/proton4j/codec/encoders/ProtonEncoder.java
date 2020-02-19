@@ -96,6 +96,7 @@ public class ProtonEncoder implements Encoder {
     private static final UnsignedShortTypeEncoder ushortEncoder = new UnsignedShortTypeEncoder();
     private static final UnsignedIntegerTypeEncoder uintEncoder = new UnsignedIntegerTypeEncoder();
     private static final UnsignedLongTypeEncoder ulongEncoder = new UnsignedLongTypeEncoder();
+    private static final DeliveryTagEncoder deliveryTagEncoder = new DeliveryTagEncoder();
 
     private final Map<Class<?>, TypeEncoder<?>> typeEncoders = new HashMap<>();
     {
@@ -124,6 +125,7 @@ public class ProtonEncoder implements Encoder {
         typeEncoders.put(ushortEncoder.getTypeClass(), ushortEncoder);
         typeEncoders.put(uintEncoder.getTypeClass(), uintEncoder);
         typeEncoders.put(ulongEncoder.getTypeClass(), ulongEncoder);
+        typeEncoders.put(deliveryTagEncoder.getTypeClass(), deliveryTagEncoder);
     }
 
     @Override
@@ -414,7 +416,7 @@ public class ProtonEncoder implements Encoder {
         if (value == null) {
             buffer.writeByte(EncodingCodes.NULL);
         } else {
-            binaryEncoder.writeType(buffer, state, value.tagBytes());
+            deliveryTagEncoder.writeType(buffer, state, value);
         }
     }
 

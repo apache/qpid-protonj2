@@ -96,7 +96,7 @@ public class ProtonCachingTransferTagGeneratorTest {
 
         final short tagValue = getShort(nextTagAfterWrap.tagBytes());
 
-        assertEquals(256, tagValue);
+        assertEquals(ProtonCachingTransferTagGenerator.MAX_NUM_CACHED_TAGS, tagValue);
     }
 
     private short getShort(byte[] tagBytes) {

@@ -23,7 +23,6 @@ import java.util.ConcurrentModificationException;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.util.Objects;
-import java.util.PriorityQueue;
 import java.util.Queue;
 
 /**
@@ -36,9 +35,6 @@ public class RingQueue<E> extends AbstractQueue<E> {
     private int read = 0;
     private int write = -1;
     private int size;
-
-    PriorityQueue<E> pq = new PriorityQueue<>();
-
     private int modCount = 0;
 
     private Object[] backingArray;
@@ -110,7 +106,6 @@ public class RingQueue<E> extends AbstractQueue<E> {
 
     @Override
     public boolean remove(Object o) {
-        // TODO: Remove any element and compact as needed
         throw new UnsupportedOperationException("Cannot remove other than from the Queue head methods");
     }
 
@@ -236,19 +231,6 @@ public class RingQueue<E> extends AbstractQueue<E> {
         @Override
         public void remove() {
             throw new UnsupportedOperationException();
-
-            // TODO - Remove needs to shift elements which is tricky
-            // if (lastReturned == null) {
-            //     throw new IllegalStateException();
-            // }
-            // if (modCount != expectedModCount) {
-            //     throw new ConcurrentModificationException();
-            // }
-            //
-            // compact the array elements after this which is a bit tricky
-            //
-            // expectedModCount = modCount;
-            // lastReturned = null;
         }
     }
 }

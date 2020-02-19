@@ -62,10 +62,21 @@ public interface DeliveryTag {
     DeliveryTag copy();
 
     /**
+     * Writes the tag as a sequence of bytes into the given buffer in the manner most efficient
+     * for the underlying {@link DeliveryTag} implementation.
+     *
+     * @param buffer
+     *      The target buffer where the tag bytes are to be written.
+     */
+    void writeTo(ProtonBuffer buffer);
+
+    /**
      * A default DeliveryTag implementation that can be used by a codec when decoding DeliveryTag
      * instances from the wire.
      */
     public static class ProtonDeliveryTag implements DeliveryTag {
+
+        public static final ProtonDeliveryTag EMPTY_TAG = new ProtonDeliveryTag();
 
         private static final byte[] EMPTY_TAG_ARRAY = new byte[0];
 
@@ -146,6 +157,11 @@ public interface DeliveryTag {
         @Override
         public String toString() {
             return "DeliveryTag: {" + Arrays.toString(tagBytes) + "}";
+        }
+
+        @Override
+        public void writeTo(ProtonBuffer buffer) {
+            buffer.writeBytes(tagBytes);
         }
     }
 }
