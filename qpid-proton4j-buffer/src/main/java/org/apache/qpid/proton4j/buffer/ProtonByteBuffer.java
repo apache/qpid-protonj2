@@ -135,33 +135,22 @@ public class ProtonByteBuffer extends ProtonAbstractBuffer {
 
     @Override
     public byte getByte(int index) {
-        return array[index];
+        return ProtonByteUtils.readByte(array, index);
     }
 
     @Override
     public short getShort(int index) {
-        return (short) ((array[index + 0] & 0xFF) << 8 |
-                        (array[index + 1] & 0xFF) << 0);
+        return ProtonByteUtils.readShort(array, index);
     }
 
     @Override
     public int getInt(int index) {
-        return (array[index + 0] & 0xFF) << 24 |
-               (array[index + 1] & 0xFF) << 16 |
-               (array[index + 2] & 0xFF) << 8 |
-               (array[index + 3] & 0xFF) << 0;
+        return ProtonByteUtils.readInt(array, index);
     }
 
     @Override
     public long getLong(int index) {
-        return (long) (array[index + 0] & 0xFF) << 56 |
-               (long) (array[index + 1] & 0xFF) << 48 |
-               (long) (array[index + 2] & 0xFF) << 40 |
-               (long) (array[index + 3] & 0xFF) << 32 |
-               (long) (array[index + 4] & 0xFF) << 24 |
-               (long) (array[index + 5] & 0xFF) << 16 |
-               (long) (array[index + 6] & 0xFF) << 8 |
-               (long) (array[index + 7] & 0xFF) << 0;
+        return ProtonByteUtils.readLong(array, index);
     }
 
     @Override
@@ -195,40 +184,25 @@ public class ProtonByteBuffer extends ProtonAbstractBuffer {
 
     @Override
     public ProtonBuffer setByte(int index, int value) {
-        array[index] = (byte) value;
-
+        ProtonByteUtils.writeByte((byte) value, array, index);
         return this;
     }
 
     @Override
     public ProtonBuffer setShort(int index, int value) {
-        array[index++] = (byte) (value >>> 8);
-        array[index++] = (byte) (value >>> 0);
-
+        ProtonByteUtils.writeShort((short) value, array, index);
         return this;
     }
 
     @Override
     public ProtonBuffer setInt(int index, int value) {
-        array[index++] = (byte) (value >>> 24);
-        array[index++] = (byte) (value >>> 16);
-        array[index++] = (byte) (value >>> 8);
-        array[index++] = (byte) (value >>> 0);
-
+        ProtonByteUtils.writeInt(value, array, index);
         return this;
     }
 
     @Override
     public ProtonBuffer setLong(int index, long value) {
-        array[index++] = (byte) (value >>> 56);
-        array[index++] = (byte) (value >>> 48);
-        array[index++] = (byte) (value >>> 40);
-        array[index++] = (byte) (value >>> 32);
-        array[index++] = (byte) (value >>> 24);
-        array[index++] = (byte) (value >>> 16);
-        array[index++] = (byte) (value >>> 8);
-        array[index++] = (byte) (value >>> 0);
-
+        ProtonByteUtils.writeLong(value, array, index);
         return this;
     }
 

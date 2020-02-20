@@ -19,8 +19,7 @@ package org.apache.qpid.proton4j.engine.impl;
 import java.util.Queue;
 
 import org.apache.qpid.proton4j.amqp.DeliveryTag;
-import org.apache.qpid.proton4j.buffer.ProtonBuffer;
-import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
+import org.apache.qpid.proton4j.buffer.ProtonByteUtils;
 import org.apache.qpid.proton4j.engine.util.RingQueue;
 
 /**
@@ -64,28 +63,16 @@ public class ProtonCachingTransferTagGenerator {
     }
 
     private static byte[] generateNextTagBytes(long tag) {
-        int size = encodingSize(tag);
-
-        byte[] tagBytes = new byte[size];
-
-        for (int i = 0; i < size; ++i) {
-            tagBytes[size - 1 - i] = (byte) (tag >>> (i * 8));
-        }
-
-        return tagBytes;
-    }
-
-    private static int encodingSize(long value) {
-        if (value < 0) {
-            return Long.BYTES;
-        } else if (value < 0x00000000000000FFl) {
-            return Byte.BYTES;
-        } else if (value < 0x000000000000FFFFl) {
-            return Short.BYTES;
-        } else if (value < 0x00000000FFFFFFFFl) {
-            return Integer.BYTES;
+        if (tag < 0) {
+            return ProtonByteUtils.toByteArray(tag);
+        } else if (tag <= 0x00000000000000FFl) {
+            return ProtonByteUtils.toByteArray((byte) tag);
+        } else if (tag <= 0x000000000000FFFFl) {
+            return ProtonByteUtils.toByteArray((short) tag);
+        } else if (tag <= 0x00000000FFFFFFFFl) {
+            return ProtonByteUtils.toByteArray((int) tag);
         } else {
-            return Long.BYTES;
+            return ProtonByteUtils.toByteArray(tag);
         }
     }
 
@@ -98,12 +85,10 @@ public class ProtonCachingTransferTagGenerator {
 
     //----- Specialized DeliveryTag and releases itself back to the cache
 
-    private class PooledProtonDeliveryTag implements DeliveryTag {
-
-        private final byte tagValue;
+    private class PooledProtonDeliveryTag extends DeliveryTag.ProtonDeliveryTag {
 
         public PooledProtonDeliveryTag(byte tagValue) {
-            this.tagValue = tagValue;
+            super(ProtonByteUtils.toByteArray(tagValue));
         }
 
         @Override
@@ -114,26 +99,6 @@ public class ProtonCachingTransferTagGenerator {
         @Override
         public int tagLength() {
             return Byte.BYTES;
-        }
-
-        @Override
-        public byte[] tagBytes() {
-            return tagBuffer().getArray();
-        }
-
-        @Override
-        public ProtonBuffer tagBuffer() {
-            return ProtonByteBufferAllocator.DEFAULT.allocate(2, 2).writeByte(tagValue);
-        }
-
-        @Override
-        public DeliveryTag copy() {
-            return new DeliveryTag.ProtonDeliveryTag(tagBytes());
-        }
-
-        @Override
-        public void writeTo(ProtonBuffer buffer) {
-            buffer.writeShort(tagValue);
         }
     }
 }
