@@ -156,6 +156,29 @@ public class ClientSession implements Session {
     }
 
     @Override
+    public Receiver openDurableReceiver(String address, String subscriptionName) throws ClientException {
+        return openDurableReceiver(address, subscriptionName, null);
+    }
+
+    @Override
+    public Receiver openDurableReceiver(String address, String subscriptionName, ReceiverOptions receiverOptions) throws ClientException {
+        checkClosed();
+        Objects.requireNonNull(address, "Cannot create a receiver with a null address");
+        final ClientFuture<Receiver> createReceiver = getFutureFactory().createFuture();
+
+        serializer.execute(() -> {
+            try {
+                checkClosed();
+                createReceiver.complete(internalOpenDurableReceiver(address, subscriptionName, receiverOptions));
+            } catch (Throwable error) {
+                createReceiver.failed(ClientExceptionSupport.createNonFatalOrPassthrough(error));
+            }
+        });
+
+        return connection.request(createReceiver, options.requestTimeout(), TimeUnit.MILLISECONDS);
+    }
+
+    @Override
     public Receiver openDynamicReceiver() throws ClientException {
         return openDynamicReceiver(null, null);
     }
@@ -254,6 +277,10 @@ public class ClientSession implements Session {
 
     ClientReceiver internalOpenReceiver(String address, ReceiverOptions receiverOptions) throws ClientException {
         return receiverBuilder.receiver(address, receiverOptions).open();
+    }
+
+    ClientReceiver internalOpenDurableReceiver(String address, String subscriptionName, ReceiverOptions receiverOptions) throws ClientException {
+        return receiverBuilder.durableReceiver(address, subscriptionName, receiverOptions).open();
     }
 
     ClientReceiver internalOpenDynamicReceiver(Map<String, Object> dynamicNodeProperties, ReceiverOptions receiverOptions) throws ClientException {

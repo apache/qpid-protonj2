@@ -41,4 +41,9 @@ public class ClientConstants {
     public static final Symbol NETWORK_HOST = Symbol.valueOf("network-host");
     public static final Symbol OPEN_HOSTNAME = Symbol.valueOf("hostname");
 
+    // Symbols used for receivers.
+    public static final Symbol COPY = Symbol.getSymbol("copy");
+    public static final Symbol SHARED = Symbol.valueOf("shared");
+    public static final Symbol GLOBAL = Symbol.valueOf("global");
+
 }

@@ -87,6 +87,38 @@ public interface Session {
     Receiver openReceiver(String address, ReceiverOptions receiverOptions) throws ClientException;
 
     /**
+     * Creates a receiver used to consume messages from the given node address and configure it
+     * such that the remote create a durable node.
+     *
+     * @param address
+     * 			The source address to attach the consumer to.
+     * @param subscriptionName
+     * 			The name to give the subscription (link name).
+     *
+     * @return the newly created {@link Receiver}
+     *
+     * @throws ClientException if an internal error occurs.
+     */
+    Receiver openDurableReceiver(String address, String subscriptionName) throws ClientException;
+
+    /**
+     * Creates a receiver used to consume messages from the given node address and configure it
+     * such that the remote create a durable node.
+     *
+     * @param address
+     *            The source address to attach the consumer to.
+     * @param subscriptionName
+     * 			The name to give the subscription (link name).
+     * @param receiverOptions
+     *            The options for this receiver.
+     *
+     * @return the newly created {@link Receiver}
+     *
+     * @throws ClientException if an internal error occurs.
+     */
+    Receiver openDurableReceiver(String address, String subscriptionName, ReceiverOptions receiverOptions) throws ClientException;
+
+    /**
      * Creates a dynamic receiver used to consume messages from the given node address.
      *
      * @return the newly created {@link Receiver}

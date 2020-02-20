@@ -19,10 +19,13 @@ package org.messaginghub.amqperative.impl;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.apache.qpid.proton4j.amqp.messaging.Modified;
+import org.apache.qpid.proton4j.amqp.Symbol;
+import org.apache.qpid.proton4j.amqp.messaging.Outcome;
 import org.apache.qpid.proton4j.amqp.messaging.Released;
 import org.apache.qpid.proton4j.amqp.messaging.Source;
 import org.apache.qpid.proton4j.amqp.messaging.Target;
+import org.apache.qpid.proton4j.amqp.messaging.TerminusDurability;
+import org.apache.qpid.proton4j.amqp.messaging.TerminusExpiryPolicy;
 import org.apache.qpid.proton4j.amqp.transport.ReceiverSettleMode;
 import org.apache.qpid.proton4j.amqp.transport.SenderSettleMode;
 import org.apache.qpid.proton4j.engine.Receiver;
@@ -52,19 +55,40 @@ final class ClientReceiverBuilder {
         final String receiverId = nextReceiverId();
         final Receiver protonReceiver = createReceiver(address, rcvOptions, receiverId);
 
+        protonReceiver.setSource(createSource(address, rcvOptions));
+        protonReceiver.setTarget(createTarget(address, rcvOptions));
+
+        return new ClientReceiver(session, rcvOptions, receiverId, protonReceiver);
+    }
+
+    public ClientReceiver durableReceiver(String address, String subscriptionName, ReceiverOptions receiverOptions) {
+        final ReceiverOptions rcvOptions = receiverOptions != null ? receiverOptions : getDefaultReceiverOptions();
+        final String receiverId = nextReceiverId();
+
+        rcvOptions.linkName(subscriptionName);
+
+        final Receiver protonReceiver = createReceiver(address, rcvOptions, receiverId);
+
+        protonReceiver.setSource(createDurableSource(address, rcvOptions));
+        protonReceiver.setTarget(createTarget(address, rcvOptions));
+
         return new ClientReceiver(session, rcvOptions, receiverId, protonReceiver);
     }
 
     public ClientReceiver dynamicReceiver(Map<String, Object> dynamicNodeProperties, ReceiverOptions receiverOptions) throws ClientException {
-        final ReceiverOptions options = receiverOptions != null ? receiverOptions : getDefaultReceiverOptions();
+        final ReceiverOptions rcvOptions = receiverOptions != null ? receiverOptions : getDefaultReceiverOptions();
         final String receiverId = nextReceiverId();
 
-        final Receiver protonReceiver = createReceiver(null, options, receiverId);
+        final Receiver protonReceiver = createReceiver(null, rcvOptions, receiverId);
 
+        protonReceiver.setSource(createSource(null, rcvOptions));
+        protonReceiver.setTarget(createTarget(null, rcvOptions));
+
+        // Configure the dynamic nature of the source now.
         protonReceiver.getSource().setDynamic(true);
         protonReceiver.getSource().setDynamicNodeProperties(ClientConversionSupport.toSymbolKeyedMap(dynamicNodeProperties));
 
-        return new ClientReceiver(session, options, receiverId, protonReceiver);
+        return new ClientReceiver(session, rcvOptions, receiverId, protonReceiver);
     }
 
     private String nextReceiverId() {
@@ -96,8 +120,6 @@ final class ClientReceiverBuilder {
         protonReceiver.setOfferedCapabilities(ClientConversionSupport.toSymbolArray(options.offeredCapabilities()));
         protonReceiver.setDesiredCapabilities(ClientConversionSupport.toSymbolArray(options.desiredCapabilities()));
         protonReceiver.setProperties(ClientConversionSupport.toSymbolKeyedMap(options.properties()));
-        protonReceiver.setSource(createSource(address, options));
-        protonReceiver.setTarget(createTarget(address, options));
         protonReceiver.setDefaultDeliveryState(Released.getInstance());
 
         return protonReceiver;
@@ -106,14 +128,35 @@ final class ClientReceiverBuilder {
     private Source createSource(String address, ReceiverOptions options) {
         final SourceOptions sourceOptions = options.sourceOptions();
 
-        // TODO: fully configure source from the options
         Source source = new Source();
         source.setAddress(address);
-        // TODO - User somehow sets their own desired outcomes for this receiver source.
+        if (sourceOptions.durabilityMode() != null) {
+            source.setDurable(TerminusDurability.valueOf(sourceOptions.durabilityMode().name()));
+        }
+        if (sourceOptions.expiryPolicy() != null) {
+            source.setExpiryPolicy(TerminusExpiryPolicy.valueOf(sourceOptions.expiryPolicy().name()));
+        }
+        if (sourceOptions.distributionMode() != null) {
+            source.setDistributionMode(Symbol.valueOf(sourceOptions.distributionMode().name()));
+        }
         source.setOutcomes(ClientConversionSupport.outcomesToSymbols(sourceOptions.outcomes()));
+        source.setDefaultOutcome((Outcome) ClientDeliveryState.asProtonType(sourceOptions.defaultOutcome()));
+        source.setCapabilities(ClientConversionSupport.toSymbolArray(sourceOptions.capabilities()));
 
-        Modified MODIFIED_FAILED = new Modified().setDeliveryFailed(true);
-        source.setDefaultOutcome(MODIFIED_FAILED);  // TODO set from source options.
+        return source;
+    }
+
+    private Source createDurableSource(String address, ReceiverOptions options) {
+        final SourceOptions sourceOptions = options.sourceOptions();
+
+        Source source = new Source();
+        source.setAddress(address);
+        source.setDurable(TerminusDurability.UNSETTLED_STATE);
+        source.setExpiryPolicy(TerminusExpiryPolicy.NEVER);
+        source.setDistributionMode(ClientConstants.COPY);
+        source.setOutcomes(ClientConversionSupport.outcomesToSymbols(sourceOptions.outcomes()));
+        source.setDefaultOutcome((Outcome) ClientDeliveryState.asProtonType(sourceOptions.defaultOutcome()));
+        source.setCapabilities(ClientConversionSupport.toSymbolArray(sourceOptions.capabilities()));
 
         return source;
     }

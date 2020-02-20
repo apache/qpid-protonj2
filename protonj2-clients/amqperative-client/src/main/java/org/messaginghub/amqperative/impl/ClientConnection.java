@@ -250,6 +250,29 @@ public class ClientConnection implements Connection {
     }
 
     @Override
+    public Receiver openDurableReceiver(String address, String subscriptionName) throws ClientException {
+        return openDurableReceiver(address, subscriptionName, null);
+    }
+
+    @Override
+    public Receiver openDurableReceiver(String address, String subscriptionName, ReceiverOptions receiverOptions) throws ClientException {
+        checkClosed();
+        Objects.requireNonNull(address, "Cannot create a receiver with a null address");
+        final ClientFuture<Receiver> createReceiver = getFutureFactory().createFuture();
+
+        executor.execute(() -> {
+            try {
+                checkClosed();
+                createReceiver.complete(lazyCreateConnectionSession().internalOpenDurableReceiver(address, subscriptionName, receiverOptions));
+            } catch (Throwable error) {
+                createReceiver.failed(ClientExceptionSupport.createNonFatalOrPassthrough(error));
+            }
+        });
+
+        return request(createReceiver, options.requestTimeout(), TimeUnit.MILLISECONDS);
+    }
+
+    @Override
     public Receiver openDynamicReceiver() throws ClientException {
         return openDynamicReceiver(null, null);
     }

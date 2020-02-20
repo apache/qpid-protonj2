@@ -120,6 +120,11 @@ public class Samples {
 
         delivery.accept(); // Or configure auto-accept?
 
+        // =============== Create a durable ===========
+
+        Receiver durableReceiver = connection.openDurableReceiver("test-queue", "durable-sub");
+        durableReceiver.openFuture().get();
+
         // =============== Create a dynamic receiver for request ===========
 
         Receiver dynamicReceiver = connection.openDynamicReceiver();
