@@ -20,11 +20,121 @@
  */
 package org.apache.qpid.proton4j.engine.util;
 
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.Map;
+import java.util.Set;
+
 import org.apache.qpid.proton4j.amqp.Binary;
+import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 
 public class StringUtils {
+
+    public static Symbol[] toSymbolArray(String[] stringArray) {
+        Symbol[] result = null;
+
+        if (stringArray != null) {
+            result = new Symbol[stringArray.length];
+            for (int i = 0; i < stringArray.length; ++i) {
+                result[i] = Symbol.valueOf(stringArray[i]);
+            }
+        }
+
+        return result;
+    }
+
+    public static String[] toStringArray(Symbol[] symbolArray) {
+        String[] result = null;
+
+        if (symbolArray != null) {
+            result = new String[symbolArray.length];
+            for (int i = 0; i < symbolArray.length; ++i) {
+                result[i] = symbolArray[i].toString();
+            }
+        }
+
+        return result;
+    }
+
+    public static Map<Symbol, Object> toSymbolKeyedMap(Map<String, Object> stringsMap) {
+        final Map<Symbol, Object> result;
+
+        if (stringsMap != null) {
+            result = new HashMap<>(stringsMap.size());
+            stringsMap.forEach((key, value) -> {
+                result.put(Symbol.valueOf(key), value);
+            });
+        } else {
+            result = null;
+        }
+
+        return result;
+    }
+
+    public static Map<String, Object> toStringKeyedMap(Map<Symbol, Object> symbolMap) {
+        Map<String, Object> result;
+
+        if (symbolMap != null) {
+            result = new LinkedHashMap<>(symbolMap.size());
+            symbolMap.forEach((key, value) -> {
+                result.put(key.toString(), value);
+            });
+        } else {
+            result = null;
+        }
+
+        return result;
+    }
+
+    public static Symbol[] toSymbolArray(Collection<String> stringsSet) {
+        final Symbol[] result;
+
+        if (stringsSet != null) {
+            result = new Symbol[stringsSet.size()];
+            int index = 0;
+            for (String entry : stringsSet) {
+                result[index++] = Symbol.valueOf(entry);
+            }
+        } else {
+            result = null;
+        }
+
+        return result;
+    }
+
+    public static Set<Symbol> toSymbolSet(Collection<String> stringsSet) {
+        final Set<Symbol> result;
+
+        if (stringsSet != null) {
+            result = new LinkedHashSet<>(stringsSet.size());
+            stringsSet.forEach((entry) -> {
+                result.add(Symbol.valueOf(entry));
+            });
+        } else {
+            result = null;
+        }
+
+        return result;
+    }
+
+    public static Set<String> toStringSet(Symbol[] symbols) {
+        Set<String> result;
+
+        if (symbols != null) {
+            result = new LinkedHashSet<>(symbols.length);
+            for (Symbol symbol : symbols) {
+                result.add(symbol.toString());
+            }
+        } else {
+            result = null;
+        }
+
+        return result;
+    }
 
     /**
      * Converts the Binary to a quoted string.

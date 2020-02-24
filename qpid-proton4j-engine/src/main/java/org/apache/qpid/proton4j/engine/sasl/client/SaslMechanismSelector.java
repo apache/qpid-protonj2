@@ -16,11 +16,13 @@
  */
 package org.apache.qpid.proton4j.engine.sasl.client;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
 import org.apache.qpid.proton4j.amqp.Symbol;
+import org.apache.qpid.proton4j.engine.util.StringUtils;
 
 /**
  * Client side mechanism used to select a matching mechanism from the server offered list of
@@ -35,14 +37,25 @@ public final class SaslMechanismSelector {
      * Creates a new {@link Mechanism} selector that will choose a match from all supported {@link Mechanism} types.
      */
     public SaslMechanismSelector() {
-        this(null);
+        this((Set<Symbol>) null);
     }
 
     /**
      * Creates a new {@link Mechanism} selector configured with the given set of allowed {@link Mechanism} names.
      *
      * @param allowed
-     *      A {@link Set} of SASL mechanism names that are allowed to be used when selecting a macthing mechanism.
+     *      A {@link Collection} of SASL mechanism names that are allowed to be used when selecting a matching mechanism.
+     */
+    @SuppressWarnings("unchecked")
+    public SaslMechanismSelector(Collection<String> allowed) {
+        this.allowedMechanisms = allowed != null ? StringUtils.toSymbolSet(allowed) : Collections.EMPTY_SET;
+    }
+
+    /**
+     * Creates a new {@link Mechanism} selector configured with the given set of allowed {@link Mechanism} names.
+     *
+     * @param allowed
+     *      A {@link Set} of SASL mechanism names that are allowed to be used when selecting a matching mechanism.
      */
     @SuppressWarnings("unchecked")
     public SaslMechanismSelector(Set<Symbol> allowed) {
