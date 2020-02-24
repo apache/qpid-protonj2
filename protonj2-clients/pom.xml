@@ -51,7 +51,7 @@
     <!--  Test Dependencies -->
     <qpid-jms-version>0.48.0</qpid-jms-version>
     <activemq-version>5.15.11</activemq-version>
-    <mockito-version>3.2.4</mockito-version>
+    <mockito-version>3.3.0</mockito-version>
     <junit-version>4.13</junit-version>
 
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
