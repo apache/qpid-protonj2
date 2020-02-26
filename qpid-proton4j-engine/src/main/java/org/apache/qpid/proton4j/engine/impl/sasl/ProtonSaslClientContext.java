@@ -19,11 +19,11 @@ package org.apache.qpid.proton4j.engine.impl.sasl;
 import java.util.Arrays;
 import java.util.Objects;
 
+import javax.security.sasl.AuthenticationException;
 import javax.security.sasl.SaslException;
 
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.security.SaslChallenge;
-import org.apache.qpid.proton4j.amqp.security.SaslCode;
 import org.apache.qpid.proton4j.amqp.security.SaslInit;
 import org.apache.qpid.proton4j.amqp.security.SaslMechanisms;
 import org.apache.qpid.proton4j.amqp.security.SaslOutcome;
@@ -37,10 +37,12 @@ import org.apache.qpid.proton4j.engine.EngineHandlerContext;
 import org.apache.qpid.proton4j.engine.EngineSaslDriver.SaslState;
 import org.apache.qpid.proton4j.engine.exceptions.EngineStateException;
 import org.apache.qpid.proton4j.engine.exceptions.ProtocolViolationException;
-import org.apache.qpid.proton4j.engine.exceptions.SaslAuthenticationException;
 import org.apache.qpid.proton4j.engine.impl.ProtonEngine;
+import org.apache.qpid.proton4j.engine.sasl.MechanismMismatchException;
 import org.apache.qpid.proton4j.engine.sasl.SaslClientContext;
 import org.apache.qpid.proton4j.engine.sasl.SaslClientListener;
+import org.apache.qpid.proton4j.engine.sasl.SaslSystemException;
+import org.apache.qpid.proton4j.engine.util.StringUtils;
 
 final class ProtonSaslClientContext extends ProtonSaslContext implements SaslClientContext {
 
@@ -227,13 +229,27 @@ final class ProtonSaslClientContext extends ProtonSaslContext implements SaslCli
             done(org.apache.qpid.proton4j.engine.sasl.SaslOutcome.values()[saslOutcome.getCode().ordinal()]);
 
             SaslException saslFailure = null;
-            if (!saslOutcome.getCode().equals(SaslCode.OK)) {
-                saslFailure = new SaslAuthenticationException(saslOutcome.getCode(), "SASL Authentication Failed");
+            switch (saslOutcome.getCode()) {
+                case AUTH:
+                    saslFailure = new AuthenticationException("SASL exchange failed to authenticate client");
+                    break;
+                case OK:
+                    break;
+                case SYS:
+                case SYS_TEMP:
+                    saslFailure = new SaslSystemException(false, "SASL handshake failed due to a transient error");
+                    break;
+                case SYS_PERM:
+                    saslFailure = new SaslSystemException(true, "SASL handshake failed due to a transient error");
+                    break;
+                default:
+                    saslFailure = new SaslException("SASL handshake failed due to an unknown error");
+                    break;
             }
 
             try {
                 client.handleSaslOutcome(ProtonSaslClientContext.this, getSaslOutcome(), saslOutcome.getAdditionalData());
-            } catch (Throwable error) {
+            } catch (Exception error) {
                 if (saslFailure == null) {
                     saslFailure = new SaslException("Client threw unknown error while processing the outcome", error);
                 }
@@ -302,7 +318,8 @@ final class ProtonSaslClientContext extends ProtonSaslContext implements SaslCli
            } else {
                ProtonSaslContext sasl = (ProtonSaslContext) context;
                sasl.done(org.apache.qpid.proton4j.engine.sasl.SaslOutcome.SASL_SYS);
-               context.saslFailure(new SaslAuthenticationException(SaslCode.SYS));
+               context.saslFailure(new MechanismMismatchException(
+                   "Proton default SASL handler only supports ANONYMOUS exchanges", StringUtils.toStringArray(mechanisms)));
            }
        }
 
@@ -310,14 +327,12 @@ final class ProtonSaslClientContext extends ProtonSaslContext implements SaslCli
         public void handleSaslChallenge(SaslClientContext context, ProtonBuffer challenge) {
             ProtonSaslContext sasl = (ProtonSaslContext) context;
             sasl.done(org.apache.qpid.proton4j.engine.sasl.SaslOutcome.SASL_SYS);
-            context.saslFailure(new SaslAuthenticationException(SaslCode.SYS));
+            context.saslFailure(new SaslSystemException(false, "Proton default SASL handler cannot process challenge steps"));
         }
 
         @Override
         public void handleSaslOutcome(SaslClientContext context, org.apache.qpid.proton4j.engine.sasl.SaslOutcome outcome, ProtonBuffer additional) {
-            ProtonSaslContext sasl = (ProtonSaslContext) context;
-            sasl.done(outcome);
-            // TODO - Finish default handler.
+            // Client need not do anything here the proton context handles the state updates.
         }
     }
 }

@@ -267,10 +267,6 @@ final class ProtonSaslServerContext extends ProtonSaslContext implements SaslSer
 
     //----- Default SASL Server listener that fails any negotiations
 
-    // TODO - Default behavior when server not configured ?
-    //        Present a Mechanism like PLAIN that always fails the authentication ?
-    //        Default to insecure and just offer ANONYMOUS ?
-
     public static class ProtonDefaultSaslServerListener implements SaslServerListener {
 
         private static final Symbol[] PLAIN = { Symbol.valueOf("PLAIN") };
@@ -287,7 +283,7 @@ final class ProtonSaslServerContext extends ProtonSaslContext implements SaslSer
 
         @Override
         public void handleSaslResponse(SaslServerContext context, ProtonBuffer response) {
-            // TODO Failure of engine, response not expected ?
+            throw new ProtocolViolationException("SASL Response arrived when no challenge was issued or supported.");
         }
     }
 }

@@ -107,7 +107,7 @@ public class SaslAuthenticator implements SaslClientListener {
             response = chosenMechanism.getChallengeResponse(credentials, challenge);
         } catch (SaslException se) {
             context.saslFailure(se);
-        } catch (Throwable unknown) {
+        } catch (Exception unknown) {
             context.saslFailure(new SaslException("Unknown error while fetching challenge response", unknown));
         }
 
@@ -123,7 +123,7 @@ public class SaslAuthenticator implements SaslClientListener {
             }
         } catch (SaslException se) {
             context.saslFailure(se);
-        } catch (RuntimeException unknown) {
+        } catch (Exception unknown) {
             context.saslFailure(new SaslException("Unknown error while verifying SASL negotiations completion", unknown));
         }
     }

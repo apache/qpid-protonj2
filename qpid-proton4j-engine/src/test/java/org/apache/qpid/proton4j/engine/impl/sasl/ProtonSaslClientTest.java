@@ -24,12 +24,13 @@ import static org.junit.Assert.assertTrue;
 
 import java.security.Principal;
 
+import javax.security.sasl.SaslException;
+
 import org.apache.qpid.proton4j.amqp.driver.ProtonTestPeer;
 import org.apache.qpid.proton4j.amqp.security.SaslCode;
 import org.apache.qpid.proton4j.engine.Connection;
 import org.apache.qpid.proton4j.engine.Engine;
 import org.apache.qpid.proton4j.engine.EngineFactory;
-import org.apache.qpid.proton4j.engine.exceptions.SaslAuthenticationException;
 import org.apache.qpid.proton4j.engine.impl.ProtonEngineTestSupport;
 import org.apache.qpid.proton4j.engine.sasl.client.SaslAuthenticator;
 import org.apache.qpid.proton4j.engine.sasl.client.SaslCredentialsProvider;
@@ -200,7 +201,7 @@ public class ProtonSaslClientTest extends ProtonEngineTestSupport {
         assertFalse(engine.isShutdown());
         assertTrue(engine.isFailed());
         assertEquals(failure, engine.failureCause());
-        assertTrue(failure instanceof SaslAuthenticationException);
+        assertTrue(failure instanceof SaslException);
     }
 
     private SaslAuthenticator createSaslPlainAuthenticator(String user, String password) {
