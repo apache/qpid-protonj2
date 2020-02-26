@@ -283,7 +283,7 @@ public class ProtonEngine implements Engine {
     }
 
     @Override
-    public EngineSaslDriver saslContext() {
+    public EngineSaslDriver saslDriver() {
         return saslDriver;
     }
 

@@ -83,9 +83,9 @@ public class ProtonEngineConfiguration implements EngineConfiguration {
         // be at this time.  Considerations to take into account are SASL state and
         // remote values once set.
 
-        if (engine.saslContext().getSaslState().ordinal() < SaslState.AUTHENTICATED.ordinal()) {
-            effectiveMaxInboundFrameSize = engine.saslContext().getMaxFrameSize();
-            effectiveMaxOutboundFrameSize = engine.saslContext().getMaxFrameSize();
+        if (engine.saslDriver().getSaslState().ordinal() < SaslState.AUTHENTICATED.ordinal()) {
+            effectiveMaxInboundFrameSize = engine.saslDriver().getMaxFrameSize();
+            effectiveMaxOutboundFrameSize = engine.saslDriver().getMaxFrameSize();
         } else {
             effectiveMaxInboundFrameSize = getMaxFrameSize();
             effectiveMaxOutboundFrameSize = Math.min(getMaxFrameSize(), remoteMaxFrameSize);

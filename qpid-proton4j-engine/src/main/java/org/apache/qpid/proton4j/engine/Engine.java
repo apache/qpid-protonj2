@@ -99,11 +99,11 @@ public interface Engine extends Consumer<ProtonBuffer> {
     /**
      * Transition the {@link Engine} to a failed state if not already closed or closing.
      *
-     * If called when the engine has not failed the engine will be transition to the failed state
+     * If called when the engine has not failed the engine will be transitioned to the failed state
      * and the method will return an appropriate {@link EngineFailedException} that wraps the given
      * cause.  If called after the engine was shutdown the method returns an {@link EngineShutdownException}
      * indicating that the engine was already shutdown.  Repeated calls to this method while the engine
-     * is in the failed state should not alter the original failure error or elicit new engine failed
+     * is in the failed state must not alter the original failure error or elicit new engine failed
      * event notifications.
      *
      * @param cause
@@ -205,12 +205,15 @@ public interface Engine extends Consumer<ProtonBuffer> {
     EngineConfiguration configuration();
 
     /**
-     * Gets the SASL context for this engine, if no SASL layer is configured then a
-     * default no-op context must be returned that indicates this.
+     * Gets the SASL driver for this engine, if no SASL layer is configured then a
+     * default no-op driver must be returned that indicates this.  The SASL driver provides
+     * the engine with client and server side SASL handshaking support.  An {@link Engine}
+     * implementation can support pluggable SASL drivers or exert tight control over the
+     * driver as it sees fit.
      *
-     * @return the SASL context for the engine.
+     * @return the SASL driver for the engine.
      */
-    EngineSaslDriver saslContext();
+    EngineSaslDriver saslDriver();
 
     //----- Engine event points
 

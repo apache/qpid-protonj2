@@ -35,8 +35,8 @@ public class ProtonEngineFactoryTest {
         Engine engine = EngineFactory.PROTON.createEngine();
 
         assertEquals(EngineState.IDLE, engine.state());
-        assertNotNull(engine.saslContext());
-        assertEquals(engine.saslContext().getSaslState(), SaslState.IDLE);
+        assertNotNull(engine.saslDriver());
+        assertEquals(engine.saslDriver().getSaslState(), SaslState.IDLE);
     }
 
     @Test
@@ -44,7 +44,7 @@ public class ProtonEngineFactoryTest {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
 
         assertEquals(EngineState.IDLE, engine.state());
-        assertNotNull(engine.saslContext());
-        assertEquals(engine.saslContext().getSaslState(), SaslState.NONE);
+        assertNotNull(engine.saslDriver());
+        assertEquals(engine.saslDriver().getSaslState(), SaslState.NONE);
     }
 }

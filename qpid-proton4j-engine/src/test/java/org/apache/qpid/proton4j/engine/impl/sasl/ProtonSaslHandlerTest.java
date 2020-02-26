@@ -70,7 +70,7 @@ public class ProtonSaslHandlerTest {
 
         Engine engine = createSaslServerEngine();
 
-        engine.saslContext().server().setListener(new SaslServerListener() {
+        engine.saslDriver().server().setListener(new SaslServerListener() {
 
             @Override
             public void handleSaslResponse(SaslServerContext context, ProtonBuffer response) {
@@ -123,7 +123,7 @@ public class ProtonSaslHandlerTest {
 
         Engine engine = createSaslServerEngine().start().getEngine();
 
-        engine.saslContext().server().setListener(new SaslServerListener() {
+        engine.saslDriver().server().setListener(new SaslServerListener() {
 
             @Override
             public void handleSaslHeader(SaslServerContext context, AMQPHeader header) {
@@ -177,7 +177,7 @@ public class ProtonSaslHandlerTest {
 
         Engine engine = createSaslServerEngine();
 
-        engine.saslContext().server().setListener(new SaslServerListener() {
+        engine.saslDriver().server().setListener(new SaslServerListener() {
 
             @Override
             public void handleSaslHeader(SaslServerContext context, AMQPHeader header) {
@@ -266,7 +266,7 @@ public class ProtonSaslHandlerTest {
         engine.pipeline().addLast("test", new FrameWriteSinkTransportHandler());
 
         // Ensure engine SASL driver is configured for server mode.
-        engine.saslContext().server();
+        engine.saslDriver().server();
 
         return engine;
     }

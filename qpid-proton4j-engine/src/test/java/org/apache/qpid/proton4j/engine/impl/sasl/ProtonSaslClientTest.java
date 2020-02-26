@@ -52,7 +52,7 @@ public class ProtonSaslClientTest extends ProtonEngineTestSupport {
         peer.expectOpen().respond();
         peer.expectClose().respond();
 
-        engine.saslContext().client().setListener(createSaslPlainAuthenticator(null, null));
+        engine.saslDriver().client().setListener(createSaslPlainAuthenticator(null, null));
 
         Connection connection = engine.start().open();
 
@@ -78,7 +78,7 @@ public class ProtonSaslClientTest extends ProtonEngineTestSupport {
         peer.expectOpen().respond();
         peer.expectClose().respond();
 
-        engine.saslContext().client().setListener(createSaslPlainAuthenticator(null, null));
+        engine.saslDriver().client().setListener(createSaslPlainAuthenticator(null, null));
 
         Connection connection = engine.start().open();
 
@@ -104,7 +104,7 @@ public class ProtonSaslClientTest extends ProtonEngineTestSupport {
         peer.expectOpen().respond();
         peer.expectClose().respond();
 
-        engine.saslContext().client().setListener(createSaslPlainAuthenticator(user, pass));
+        engine.saslDriver().client().setListener(createSaslPlainAuthenticator(user, pass));
 
         Connection connection = engine.start().open();
 
@@ -135,7 +135,7 @@ public class ProtonSaslClientTest extends ProtonEngineTestSupport {
         peer.expectOpen().respond();
         peer.expectClose().respond();
 
-        engine.saslContext().client().setListener(createSaslPlainAuthenticator(user, pass));
+        engine.saslDriver().client().setListener(createSaslPlainAuthenticator(user, pass));
 
         Connection connection = engine.start().open();
 
@@ -161,7 +161,7 @@ public class ProtonSaslClientTest extends ProtonEngineTestSupport {
         peer.expectOpen().respond();
         peer.expectClose().respond();
 
-        engine.saslContext().client().setListener(createSaslPlainAuthenticator(user, pass));
+        engine.saslDriver().client().setListener(createSaslPlainAuthenticator(user, pass));
 
         Connection connection = engine.start().open();
 
@@ -191,7 +191,7 @@ public class ProtonSaslClientTest extends ProtonEngineTestSupport {
         peer.expectSaslInit().withMechanism("PLAIN");
         peer.remoteSaslOutcome().withCode(saslFailureCode).queue();
 
-        engine.saslContext().client().setListener(createSaslPlainAuthenticator("user", "pass"));
+        engine.saslDriver().client().setListener(createSaslPlainAuthenticator("user", "pass"));
 
         engine.start().open();
 
