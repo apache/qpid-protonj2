@@ -31,6 +31,7 @@ import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
 import org.apache.qpid.proton4j.amqp.transport.Attach;
 import org.apache.qpid.proton4j.amqp.transport.Begin;
 import org.apache.qpid.proton4j.amqp.transport.Close;
+import org.apache.qpid.proton4j.amqp.transport.ConnectionError;
 import org.apache.qpid.proton4j.amqp.transport.Detach;
 import org.apache.qpid.proton4j.amqp.transport.Disposition;
 import org.apache.qpid.proton4j.amqp.transport.End;
@@ -455,10 +456,8 @@ public class ProtonConnection implements Connection, AMQPHeader.HeaderHandler<Pr
         ProtonSession session = null;
 
         if (channel > localOpen.getChannelMax()) {
-            // TODO Channel Max violation error handling
-        }
-
-        if (remoteSessions.containsKey(channel)) {
+            setCondition(new ErrorCondition(ConnectionError.FRAMING_ERROR, "Channel Max Exceeded for session Begin")).close();
+        } else if (remoteSessions.containsKey(channel)) {
             context.engineFailed(new ProtocolViolationException("Received second begin for Session from remote"));
         } else {
             // If there is a remote channel then this is an answer to a local open of a session, otherwise
