@@ -280,6 +280,7 @@ public class ProtonSender extends ProtonLink<Sender> implements Sender {
 
         if (!delivery.isPartial()) {
             currentDelivery.reset();
+            current = null;
             getCreditState().incrementDeliveryCount();
             getCreditState().decrementCredit();
 
@@ -306,7 +307,10 @@ public class ProtonSender extends ProtonLink<Sender> implements Sender {
     void abort(ProtonOutgoingDelivery delivery) {
         checkLinkOperable("Cannot abort Transfer");
 
+        // Clean up delivery related resources and then fire off the abort transfer
         unsettled.remove((int) delivery.getDeliveryId());
+        currentDelivery.reset();
+        current = null;
 
         sessionWindow.processAbort(this, delivery);
     }

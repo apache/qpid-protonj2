@@ -20,6 +20,8 @@ import java.util.Collection;
 import java.util.function.Predicate;
 
 import org.apache.qpid.proton4j.amqp.transport.DeliveryState;
+import org.apache.qpid.proton4j.amqp.transport.Transfer;
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 
 /**
  * AMQP Sender API
@@ -46,6 +48,14 @@ public interface Sender extends Link<Sender> {
 
     /**
      * Gets the current {@link OutgoingDelivery} for this {@link Sender} if one is available.
+     * <p>
+     * The sender only tracks a current delivery in the case that the next method has bee called
+     * and if any bytes are written to the delivery using the streaming based API
+     * {@link OutgoingDelivery#streamBytes(ProtonBuffer)} which allows for later writing of additional
+     * bytes to the delivery.  Once the method {@link OutgoingDelivery#writeBytes(ProtonBuffer)} is
+     * called the final {@link Transfer} is written indicating that the delivery is complete and the
+     * current delivery value is reset.  An outgoing delivery that is being streamed may also
+     * be completed by calling the {@link OutgoingDelivery#abort()} method.
      *
      * @return the current active outgoing delivery or null if there is no current delivery.
      */
@@ -53,7 +63,10 @@ public interface Sender extends Link<Sender> {
 
     /**
      * When there has been no deliveries so far or the current delivery has reached a complete state this
-     * method updates the current delivery to a new instance and returns that value.
+     * method updates the current delivery to a new instance and returns that value.  If the current
+     * {@link OutgoingDelivery} has not been completed by either calling the
+     * {@link OutgoingDelivery#writeBytes(ProtonBuffer)} or the {@link OutgoingDelivery#abort()} method then
+     * this method will throw an exception to indicate the sender state cannot allow a new delivery to be started.
      *
      * @return a new delivery instance unless the current delivery is not complete.
      *

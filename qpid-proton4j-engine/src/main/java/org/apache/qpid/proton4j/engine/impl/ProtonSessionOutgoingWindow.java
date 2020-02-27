@@ -16,6 +16,7 @@
  */
 package org.apache.qpid.proton4j.engine.impl;
 
+import org.apache.qpid.proton4j.amqp.DeliveryTag;
 import org.apache.qpid.proton4j.amqp.transport.Begin;
 import org.apache.qpid.proton4j.amqp.transport.Disposition;
 import org.apache.qpid.proton4j.amqp.transport.Flow;
@@ -184,32 +185,39 @@ public class ProtonSessionOutgoingWindow {
             unsettled.put((int) delivery.getDeliveryId(), delivery);
         }
 
-        do {
-            cachedTransfer.reset();
+        try {
             cachedTransfer.setDeliveryId(delivery.getDeliveryId());
-            // TODO - Delivery Tag improvements, have our own DeliveryTag type perhaps that pools etc.
-            // TODO - If we track number of transfers for a larger delivery we could omit this on continuations
-            cachedTransfer.setDeliveryTag(delivery.getTag());
             cachedTransfer.setMore(wasThereMore);
             cachedTransfer.setHandle(sender.getHandle());
             cachedTransfer.setSettled(delivery.isSettled());
             cachedTransfer.setState(delivery.getState());
 
             // TODO - Write up to session window limits or until done.
-            try {
-                engine.fireWrite(cachedTransfer, session.getLocalChannel(), payload, () -> cachedTransfer.setMore(true));
-            } finally {
-                delivery.afterTransferWritten();
-            }
+            do {
+                // Only the first transfer requires the delivery tag, afterwards we can omit it for efficiency.
+                if (delivery.getTransferCount() == 0) {
+                    cachedTransfer.setDeliveryTag(delivery.getTag());
+                } else {
+                    cachedTransfer.setDeliveryTag((DeliveryTag) null);
+                }
+                cachedTransfer.setMore(wasThereMore);
 
-            // Update session window tracking
-            nextOutgoingId++;
-            remoteIncomingWindow--;
-        } while (payload.isReadable());
+                try {
+                    engine.fireWrite(cachedTransfer, session.getLocalChannel(), payload, () -> cachedTransfer.setMore(true));
+                } finally {
+                    delivery.afterTransferWritten();
+                }
+
+                // Update session window tracking
+                nextOutgoingId++;
+                remoteIncomingWindow--;
+            } while (payload.isReadable());
+        } finally {
+            cachedTransfer.reset();
+        }
     }
 
     void processDisposition(ProtonSender sender, ProtonOutgoingDelivery delivery) {
-        cachedDisposition.reset();
         cachedDisposition.setFirst(delivery.getDeliveryId());
         cachedDisposition.setRole(Role.SENDER);
         cachedDisposition.setSettled(delivery.isSettled());
@@ -218,11 +226,14 @@ public class ProtonSessionOutgoingWindow {
         // TODO - Casting is ugly but our ID values are longs
         unsettled.remove((int) delivery.getDeliveryId());
 
-        engine.fireWrite(cachedDisposition, session.getLocalChannel(), null, null);
+        try {
+            engine.fireWrite(cachedDisposition, session.getLocalChannel(), null, null);
+        } finally {
+            cachedDisposition.reset();
+        }
     }
 
     void processAbort(ProtonSender sender, ProtonOutgoingDelivery delivery) {
-        cachedTransfer.reset();
         cachedTransfer.setDeliveryId(delivery.getDeliveryId());
         cachedTransfer.setDeliveryTag(delivery.getTag());
         cachedTransfer.setSettled(true);
@@ -232,7 +243,11 @@ public class ProtonSessionOutgoingWindow {
         // Ensure we don't track the aborted delivery any longer.
         unsettled.remove((int) delivery.getDeliveryId());
 
-        engine.fireWrite(cachedTransfer, session.getLocalChannel(), null, null);
+        try {
+            engine.fireWrite(cachedTransfer, session.getLocalChannel(), null, null);
+        } finally {
+            cachedTransfer.reset();
+        }
     }
 
     //----- Access to internal state useful for tests

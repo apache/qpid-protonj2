@@ -41,6 +41,7 @@ public class ProtonOutgoingDelivery implements OutgoingDelivery {
     private boolean complete;
     private int messageFormat;
     private boolean aborted;
+    private int transferCount;
 
     private DeliveryState localState;
     private boolean locallySettled;
@@ -197,9 +198,12 @@ public class ProtonOutgoingDelivery implements OutgoingDelivery {
         this.deliveryId = deliveryId;
     }
 
+    int getTransferCount() {
+        return transferCount;
+    }
+
     void afterTransferWritten() {
-        // TODO - Perform any cleanup needed like reclaiming buffer space if there
-        //        is a composite or other complex buffer type in use.
+        transferCount++;
     }
 
     ProtonOutgoingDelivery remotelySettled() {

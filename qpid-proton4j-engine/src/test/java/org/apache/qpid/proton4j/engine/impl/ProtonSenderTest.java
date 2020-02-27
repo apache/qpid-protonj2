@@ -53,6 +53,7 @@ import org.apache.qpid.proton4j.amqp.transport.SenderSettleMode;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.engine.Connection;
+import org.apache.qpid.proton4j.engine.Delivery;
 import org.apache.qpid.proton4j.engine.Engine;
 import org.apache.qpid.proton4j.engine.EngineFactory;
 import org.apache.qpid.proton4j.engine.OutgoingDelivery;
@@ -1254,8 +1255,9 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         Sender sender = session.sender("sender-1");
 
         final AtomicBoolean deliverySentAfterSenable = new AtomicBoolean();
+        final AtomicReference<Delivery> sent = new AtomicReference<>();
         sender.sendableHandler(handler -> {
-            handler.next().setTag(new byte[] {0}).writeBytes(payload);
+            sent.set(handler.next().setTag(new byte[] {0}).writeBytes(payload));
             deliverySentAfterSenable.set(true);
         });
 
@@ -1263,13 +1265,13 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
 
         assertTrue("Delivery should have been sent after credit arrived", deliverySentAfterSenable.get());
 
-        OutgoingDelivery delivery1 = sender.current();
-        delivery1.disposition(Accepted.getInstance(), true);
-        OutgoingDelivery delivery2 = sender.current();
-        OutgoingDelivery delivery3 = sender.next();
-        assertSame(delivery1, delivery2);
-        assertNotSame(delivery2, delivery3);
-        delivery3.disposition(Released.getInstance(), true);
+        assertNull(sender.current());
+
+        sent.get().disposition(Accepted.getInstance(), true);
+
+        OutgoingDelivery delivery2 = sender.next();
+        assertNotSame(delivery2, sent.get());
+        delivery2.disposition(Released.getInstance(), true);
 
         sender.close();
 
@@ -1477,7 +1479,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
                              .withState(Accepted.getInstance())
                              .withDeliveryId(0)
                              .withMore(false)
-                             .withDeliveryTag(new byte[] {1});
+                             .withDeliveryTag(nullValue());
         peer.expectTransfer().withHandle(1)
                              .withSettled(true)
                              .withState(Accepted.getInstance())
@@ -1490,7 +1492,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
                                  .withState(Accepted.getInstance())
                                  .withDeliveryId(1)
                                  .withMore(false)
-                                 .withDeliveryTag(new byte[] {2});
+                                 .withDeliveryTag(nullValue());
         }
 
         ProtonBuffer messageContent1 = createContentBuffer(contentLength1);
@@ -1514,7 +1516,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
 
     @Test
     public void testMaxFrameSizeOfPeerHasEffect() {
-        doMaxFrameSizeTestImpl(0, 0, 5700, 1);
+//        doMaxFrameSizeTestImpl(0, 0, 5700, 1);
         doMaxFrameSizeTestImpl(1024, 0, 5700, 6);
     }
 
@@ -1603,7 +1605,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
                                  .withState(Accepted.getInstance())
                                  .withDeliveryId(0)
                                  .withMore(i != expectedNumFrames ? true : false)
-                                 .withDeliveryTag(notNullValue())
+                                 .withDeliveryTag(i == 1 ? notNullValue() : nullValue())
                                  .withPayload(notNullValue(ProtonBuffer.class));
         }
 
@@ -1811,6 +1813,77 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
     }
 
     @Test
+    public void testAbortOnDeliveryThatHasNoWritesIsNoOpThenSendUsingCurrent() throws Exception {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result);
+        ProtonTestPeer peer = new ProtonTestPeer(engine);
+        engine.outputConsumer(peer);
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond().withContainerId("driver");
+        peer.expectBegin().respond();
+        peer.expectAttach().withRole(Role.SENDER).respond();
+        peer.remoteFlow().withDeliveryCount(0)
+                         .withLinkCredit(10)
+                         .withIncomingWindow(1024)
+                         .withOutgoingWindow(10)
+                         .withNextIncomingId(0)
+                         .withNextOutgoingId(1).queue();
+
+        ProtonBuffer payload = ProtonByteBufferAllocator.DEFAULT.wrap(new byte[] {0, 1, 2, 3, 4});
+
+        Connection connection = engine.start();
+
+        connection.open();
+        Session session = connection.session();
+        session.open();
+
+        Sender sender = session.sender("sender-1");
+        sender.open();
+
+        final AtomicBoolean senderMarkedSendable = new AtomicBoolean();
+        sender.sendableHandler(handler -> {
+            senderMarkedSendable.set(true);
+        });
+
+        OutgoingDelivery delivery = sender.next();
+        assertNotNull(delivery);
+
+        delivery.setTag(new byte[] {0});
+        delivery.abort();
+
+        assertSame(delivery, sender.current());
+        try {
+            sender.next();
+            fail("Should not be able to next as current was not aborted since nothing was ever written.");
+        } catch (IllegalStateException ise) {
+            // Expected
+        }
+        assertFalse(delivery.isAborted());
+        assertTrue(delivery.isPartial());
+        assertFalse(delivery.isSettled());
+
+        peer.expectTransfer().withHandle(0)
+                             .withSettled(false)
+                             .withState((DeliveryState) null)
+                             .withDeliveryId(0)
+                             .withDeliveryTag(new byte[] {1})
+                             .withPayload(payload.duplicate());
+        peer.expectDisposition().withFirst(0).withSettled(true).withState(Accepted.getInstance());
+        peer.expectDetach().withHandle(0).respond();
+
+        delivery = sender.current();
+        delivery.setTag(new byte[] {1}).writeBytes(payload);
+        delivery.disposition(Accepted.getInstance(), true);
+
+        sender.close();
+
+        peer.waitForScriptToComplete();
+
+        assertNull(failure);
+    }
+
+    @Test
     public void testSettleTransferWithNullDisposition() throws Exception {
         doTestSettleTransferWithSpecifiedOutcome(null);
     }
@@ -1884,8 +1957,9 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         Sender sender = session.sender("sender-1");
 
         final AtomicBoolean deliverySentAfterSenable = new AtomicBoolean();
+        final AtomicReference<Delivery> sentDelivery = new AtomicReference<>();
         sender.sendableHandler(handler -> {
-            handler.next().setTag(new byte[] {0}).writeBytes(payload);
+            sentDelivery.set(handler.next().setTag(new byte[] {0}).writeBytes(payload));
             deliverySentAfterSenable.set(true);
         });
 
@@ -1894,8 +1968,8 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         assertTrue("Delivery should have been sent after credit arrived", deliverySentAfterSenable.get());
 
         OutgoingDelivery delivery = sender.current();
-        assertNotNull(delivery);
-        delivery.disposition(state, true);
+        assertNull(delivery);
+        sentDelivery.get().disposition(state, true);
 
         sender.close();
 
@@ -1964,10 +2038,11 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         ProtonBuffer payload = ProtonByteBufferAllocator.DEFAULT.wrap(new byte[] {0, 1, 2, 3, 4});
 
         Sender sender = session.sender("sender-1");
+        final AtomicReference<Delivery> sentDelivery = new AtomicReference<>();
 
         final AtomicBoolean deliverySentAfterSenable = new AtomicBoolean();
         sender.sendableHandler(handler -> {
-            handler.next().setTag(new byte[] {0}).writeBytes(payload);
+            sentDelivery.set(handler.next().setTag(new byte[] {0}).writeBytes(payload));
             deliverySentAfterSenable.set(true);
         });
 
@@ -1976,14 +2051,14 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         assertTrue("Delivery should have been sent after credit arrived", deliverySentAfterSenable.get());
 
         OutgoingDelivery delivery = sender.current();
-        assertNotNull(delivery);
-        delivery.disposition(first, true);
+        assertNull(delivery);
+        sentDelivery.get().disposition(first, true);
 
         // A second attempt at the same outcome should result in no action.
-        delivery.disposition(first, true);
+        sentDelivery.get().disposition(first, true);
 
         try {
-            delivery.disposition(second, true);
+            sentDelivery.get().disposition(second, true);
             fail("Should not be able to update outcome on already setttled delivery");
         } catch (IllegalStateException ise) {
             // Expected
@@ -2037,8 +2112,9 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         Sender sender = session.sender("sender-1");
 
         final AtomicBoolean deliverySentAfterSenable = new AtomicBoolean();
+        final AtomicReference<Delivery> sentDelivery = new AtomicReference<>();
         sender.sendableHandler(handler -> {
-            handler.next().setTag(new byte[] {0}).writeBytes(payload);
+            sentDelivery.set(handler.next().setTag(new byte[] {0}).writeBytes(payload));
             deliverySentAfterSenable.set(true);
         });
 
@@ -2052,12 +2128,12 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
 
         assertTrue("Delivery should have been sent after credit arrived", deliverySentAfterSenable.get());
 
-        OutgoingDelivery delivery = sender.current();
-        assertNotNull(delivery);
-        assertTrue(delivery.isRemotelySettled());
-        assertSame(Accepted.getInstance(), delivery.getRemoteState());
-        assertNull(delivery.getState());
-        assertTrue(delivery.isSettled());
+        assertNull(sender.current());
+
+        assertTrue(sentDelivery.get().isRemotelySettled());
+        assertSame(Accepted.getInstance(), sentDelivery.get().getRemoteState());
+        assertNull(sentDelivery.get().getState());
+        assertTrue(sentDelivery.get().isSettled());
 
         sender.close();
 
