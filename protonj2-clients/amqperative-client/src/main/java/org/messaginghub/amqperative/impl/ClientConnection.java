@@ -648,7 +648,7 @@ public class ClientConnection implements Connection {
             SaslMechanismSelector mechSelector =
                 new SaslMechanismSelector(ClientConversionSupport.toSymbolSet(options.saslOptions().allowedMechanisms()));
 
-            engine.saslContext().client().setListener(new SaslAuthenticator(mechSelector, new SaslCredentialsProvider() {
+            engine.saslDriver().client().setListener(new SaslAuthenticator(mechSelector, new SaslCredentialsProvider() {
 
                 @Override
                 public String vhost() {
