@@ -147,6 +147,9 @@ public class ProtonDecoder implements Decoder {
     // decoders as well as the default decoders.
     private Map<Object, DescribedTypeDecoder<?>> describedTypeDecoders = new HashMap<>();
 
+    // Quick access to decoders that handle AMQP types like Transfer, Properties etc.
+    private final DescribedTypeDecoder<?>[] amqpTypeDecoders = new DescribedTypeDecoder[256];
+
     // Internal Decoders used to prevent user to access Proton specific decoding methods
     private static final Symbol8TypeDecoder symbol8Decoder;
     private static final Symbol32TypeDecoder symbol32Decoder;
@@ -221,21 +224,20 @@ public class ProtonDecoder implements Decoder {
         int encodingCode = buffer.readByte() & 0xFF;
 
         if (encodingCode == EncodingCodes.DESCRIBED_TYPE_INDICATOR) {
-            Object descriptor;
+            buffer.markReadIndex();
             try {
-                buffer.markReadIndex();
-                descriptor = readUnsignedLong(buffer, state);
+                final long result = readUnsignedLong(buffer, state, amqpTypeDecoders.length);
+
+                if (result > 0 && result < amqpTypeDecoders.length && amqpTypeDecoders[(int) result] != null) {
+                    return amqpTypeDecoders[(int) result];
+                } else {
+                    buffer.resetReadIndex();
+                    return slowReadNextTypeDecoder(buffer, state);
+                }
             } catch (Exception e) {
                 buffer.resetReadIndex();
-                descriptor = readObject(buffer, state);
+                return slowReadNextTypeDecoder(buffer, state);
             }
-
-            TypeDecoder<?> typeDecoder = describedTypeDecoders.get(descriptor);
-            if (typeDecoder == null) {
-                typeDecoder = handleUnknownDescribedType(descriptor);
-            }
-
-            return typeDecoder;
         } else {
             if (encodingCode > primitiveDecoders.length) {
                 throw new IOException("Read unknown encoding code from buffer");
@@ -243,6 +245,24 @@ public class ProtonDecoder implements Decoder {
 
             return primitiveDecoders[encodingCode];
         }
+    }
+
+    private TypeDecoder<?> slowReadNextTypeDecoder(ProtonBuffer buffer, DecoderState state) throws IOException {
+        Object descriptor;
+        buffer.markReadIndex();
+        try {
+            descriptor = readUnsignedLong(buffer, state);
+        } catch (Exception e) {
+            buffer.resetReadIndex();
+            descriptor = readObject(buffer, state);
+        }
+
+        TypeDecoder<?> typeDecoder = describedTypeDecoders.get(descriptor);
+        if (typeDecoder == null) {
+            typeDecoder = handleUnknownDescribedType(descriptor);
+        }
+
+        return typeDecoder;
     }
 
     @Override
@@ -258,6 +278,12 @@ public class ProtonDecoder implements Decoder {
     @Override
     public <V> ProtonDecoder registerDescribedTypeDecoder(DescribedTypeDecoder<V> decoder) {
         DescribedTypeDecoder<?> describedTypeDecoder = decoder;
+
+        // Cache AMQP type decoders in the quick lookup array.
+        if (decoder.getDescriptorCode().compareTo(amqpTypeDecoders.length) < 0) {
+            amqpTypeDecoders[decoder.getDescriptorCode().intValue()] = decoder;
+        }
+
         describedTypeDecoders.put(describedTypeDecoder.getDescriptorCode(), describedTypeDecoder);
         describedTypeDecoders.put(describedTypeDecoder.getDescriptorSymbol(), describedTypeDecoder);
 
