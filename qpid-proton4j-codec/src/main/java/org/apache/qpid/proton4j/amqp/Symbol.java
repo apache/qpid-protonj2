@@ -16,7 +16,8 @@
  */
 package org.apache.qpid.proton4j.amqp;
 
-import java.nio.charset.StandardCharsets;
+import static java.nio.charset.StandardCharsets.US_ASCII;
+
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -25,10 +26,12 @@ import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 
 public final class Symbol implements Comparable<Symbol> {
 
-    // TODO - We should limit the number of buffered symbols
     private static final Map<ProtonBuffer, Symbol> bufferToSymbols = new ConcurrentHashMap<>(2048);
+    private static final Map<String, Symbol> stringToSymbols = new ConcurrentHashMap<>(2048);
 
     private static final Symbol EMPTY_SYMBOL = new Symbol();
+
+    private static final int MAX_CACHED_SYMBOL_SIZE = 64;
 
     private String symbolString;
     private final ProtonBuffer underlying;
@@ -57,7 +60,14 @@ public final class Symbol implements Comparable<Symbol> {
     @Override
     public String toString() {
         if (symbolString == null && underlying.getReadableBytes() > 0) {
-            symbolString = underlying.toString(StandardCharsets.US_ASCII);
+            symbolString = underlying.toString(US_ASCII);
+
+            if (underlying.getReadableBytes() <= MAX_CACHED_SYMBOL_SIZE) {
+                final Symbol existing;
+                if ((existing = stringToSymbols.putIfAbsent(symbolString, this)) != null) {
+                    symbolString = existing.symbolString;
+                }
+            }
         }
 
         return symbolString;
@@ -113,28 +123,35 @@ public final class Symbol implements Comparable<Symbol> {
 
             // Don't cache overly large symbols to prevent holding large
             // amount of memory in the symbol cache.
-            if (symbolBuffer.getReadableBytes() > 64) {
-                return symbol;
-            }
-
-            Symbol existing;
-            if ((existing = bufferToSymbols.putIfAbsent(symbolBuffer, symbol)) != null) {
-                symbol = existing;
+            if (symbolBuffer.getReadableBytes() <= MAX_CACHED_SYMBOL_SIZE) {
+                final Symbol existing;
+                if ((existing = bufferToSymbols.putIfAbsent(symbolBuffer, symbol)) != null) {
+                    symbol = existing;
+                }
             }
         }
 
         return symbol;
     }
 
-    public static Symbol getSymbol(String symbolVal) {
-        if (symbolVal == null) {
+    public static Symbol getSymbol(String stringValue) {
+        if (stringValue == null) {
             return null;
-        } else if (symbolVal.isEmpty()) {
+        } else if (stringValue.isEmpty()) {
             return EMPTY_SYMBOL;
         }
 
-        byte[] symbolBytes = symbolVal.getBytes(StandardCharsets.US_ASCII);
+        Symbol symbol = stringToSymbols.get(stringValue);
+        if (symbol == null) {
+            symbol = getSymbol(ProtonByteBufferAllocator.DEFAULT.wrap(stringValue.getBytes(US_ASCII)));
 
-        return getSymbol(ProtonByteBufferAllocator.DEFAULT.wrap(symbolBytes));
+            // Don't cache overly large symbols to prevent holding large
+            // amount of memory in the symbol cache.
+            if (symbol.underlying.getReadableBytes() <= MAX_CACHED_SYMBOL_SIZE) {
+                stringToSymbols.put(stringValue, symbol);
+            }
+        }
+
+        return symbol;
     }
 }

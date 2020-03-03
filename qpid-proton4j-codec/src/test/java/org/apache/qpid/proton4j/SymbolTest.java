@@ -18,13 +18,27 @@ package org.apache.qpid.proton4j;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 
+import java.nio.charset.StandardCharsets;
+
 import org.apache.qpid.proton4j.amqp.Symbol;
+import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.junit.Test;
 
 public class SymbolTest {
+
+    private final String LARGE_SYMBOL_VALUIE = "Large String: " +
+        "The quick brown fox jumps over the lazy dog. " +
+        "The quick brown fox jumps over the lazy dog. " +
+        "The quick brown fox jumps over the lazy dog. " +
+        "The quick brown fox jumps over the lazy dog. " +
+        "The quick brown fox jumps over the lazy dog. " +
+        "The quick brown fox jumps over the lazy dog. " +
+        "The quick brown fox jumps over the lazy dog. " +
+        "The quick brown fox jumps over the lazy dog.";
 
     @Test
     public void testCompareTo() {
@@ -154,5 +168,29 @@ public class SymbolTest {
         assertEquals(symbolString, symbol2.toString());
 
         assertSame(symbol1, symbol2);
+    }
+
+    @Test
+    public void testToStringProducesSingelton() {
+        String symbolString = "Symbol-String";
+
+        Symbol symbol1 = Symbol.getSymbol(symbolString);
+        Symbol symbol2 = Symbol.getSymbol(symbolString);
+
+        assertEquals(symbolString, symbol1.toString());
+        assertEquals(symbolString, symbol2.toString());
+
+        assertSame(symbol1, symbol2);
+        assertSame(symbol1.toString(), symbol2.toString());
+    }
+
+    @Test
+    public void testLrageSymbolNotCached() {
+        Symbol symbol1 = Symbol.valueOf(LARGE_SYMBOL_VALUIE);
+        Symbol symbol2 = Symbol.getSymbol(
+            ProtonByteBufferAllocator.DEFAULT.wrap(LARGE_SYMBOL_VALUIE.getBytes(StandardCharsets.US_ASCII)));
+
+        assertNotSame(symbol1, symbol2);
+        assertNotSame(symbol1.toString(), symbol2.toString());
     }
 }
