@@ -19,6 +19,7 @@ package org.apache.qpid.proton4j.codec.primitives;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -28,10 +29,64 @@ import org.apache.qpid.proton4j.amqp.UnsignedInteger;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.codec.CodecTestSupport;
+import org.apache.qpid.proton4j.codec.EncodingCodes;
 import org.apache.qpid.proton4j.codec.TypeDecoder;
 import org.junit.Test;
 
 public class UnsignedIntegerTypeCodecTest extends CodecTestSupport {
+
+    @Test
+    public void testLookupTypeDecoderForType() throws Exception {
+        TypeDecoder<?> result = decoder.getTypeDecoder(UnsignedInteger.valueOf(127));
+
+        assertNotNull(result);
+        assertEquals(UnsignedInteger.class, result.getTypeClass());
+    }
+
+    @Test
+    public void testDecoderThrowsWhenAskedToReadWrongTypeAsThisType() throws Exception {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        buffer.writeByte(EncodingCodes.ULONG);
+        buffer.writeByte(EncodingCodes.ULONG);
+        buffer.writeByte(EncodingCodes.ULONG);
+
+        try {
+            decoder.readUnsignedInteger(buffer, decoderState);
+            fail("Should not allow read of integer type as this type");
+        } catch (IOException e) {}
+
+        try {
+            decoder.readUnsignedInteger(buffer, decoderState, (long) 0);
+            fail("Should not allow read of integer type as this type");
+        } catch (IOException e) {}
+
+        try {
+            decoder.readUnsignedInteger(buffer, decoderState, 0);
+            fail("Should not allow read of integer type as this type");
+        } catch (IOException e) {}
+    }
+
+    @Test
+    public void testReadUByteFromEncodingCode() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        buffer.writeByte(EncodingCodes.UINT0);
+        buffer.writeByte(EncodingCodes.UINT);
+        buffer.writeInt(42);
+        buffer.writeByte(EncodingCodes.SMALLUINT);
+        buffer.writeByte((byte) 43);
+        buffer.writeByte(EncodingCodes.NULL);
+        buffer.writeByte(EncodingCodes.NULL);
+        buffer.writeByte(EncodingCodes.NULL);
+
+        assertEquals(0, decoder.readUnsignedInteger(buffer, decoderState).intValue());
+        assertEquals(42, decoder.readUnsignedInteger(buffer, decoderState).intValue());
+        assertEquals(43, decoder.readUnsignedInteger(buffer, decoderState, 42));
+        assertNull(decoder.readUnsignedInteger(buffer, decoderState));
+        assertEquals(42, decoder.readUnsignedInteger(buffer, decoderState, 42));
+        assertEquals(42, decoder.readUnsignedInteger(buffer, decoderState, (long) 42));
+    }
 
     @Test
     public void testEncodeDecodeUnsignedInteger() throws Exception {

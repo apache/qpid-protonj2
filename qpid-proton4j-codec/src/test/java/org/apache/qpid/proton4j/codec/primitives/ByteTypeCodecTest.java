@@ -18,7 +18,9 @@ package org.apache.qpid.proton4j.codec.primitives;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.io.IOException;
 
@@ -34,6 +36,32 @@ import org.junit.Test;
 public class ByteTypeCodecTest extends CodecTestSupport {
 
     @Test
+    public void testLookupTypeDecoderForType() throws Exception {
+        TypeDecoder<?> result = decoder.getTypeDecoder(Byte.valueOf((byte) 127));
+
+        assertNotNull(result);
+        assertEquals(Byte.class, result.getTypeClass());
+    }
+
+    @Test
+    public void testDecoderThrowsWhenAskedToReadWrongTypeAsThisType() throws Exception {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        buffer.writeByte(EncodingCodes.UINT);
+        buffer.writeByte(EncodingCodes.UINT);
+
+        try {
+            decoder.readByte(buffer, decoderState);
+            fail("Should not allow read of integer type as byte");
+        } catch (IOException e) {}
+
+        try {
+            decoder.readByte(buffer, decoderState, (byte) 0);
+            fail("Should not allow read of integer type as byte");
+        } catch (IOException e) {}
+    }
+
+    @Test
     public void testGetTypeCode() {
         assertEquals(EncodingCodes.BYTE, (byte) new ByteTypeDecoder().getTypeCode());
     }
@@ -45,13 +73,31 @@ public class ByteTypeCodecTest extends CodecTestSupport {
     }
 
     @Test
-    public void testReadByteFromEncodingCode() throws IOException {
+    public void testPeekNextTypeDecoder() throws IOException {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
 
         buffer.writeByte(EncodingCodes.BYTE);
         buffer.writeByte((byte) 42);
 
+        assertEquals(Byte.class, decoder.peekNextTypeDecoder(buffer, decoderState).getTypeClass());
         assertEquals(42, decoder.readByte(buffer, decoderState).intValue());
+    }
+
+    @Test
+    public void testReadByteFromEncodingCode() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        buffer.writeByte(EncodingCodes.BYTE);
+        buffer.writeByte((byte) 42);
+        buffer.writeByte(EncodingCodes.BYTE);
+        buffer.writeByte((byte) 43);
+        buffer.writeByte(EncodingCodes.NULL);
+        buffer.writeByte(EncodingCodes.NULL);
+
+        assertEquals(42, decoder.readByte(buffer, decoderState).intValue());
+        assertEquals(43, decoder.readByte(buffer, decoderState, (byte) 42));
+        assertNull(decoder.readByte(buffer, decoderState));
+        assertEquals(42, decoder.readByte(buffer, decoderState, (byte) 42));
     }
 
     @Test

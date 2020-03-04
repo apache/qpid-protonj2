@@ -18,7 +18,9 @@ package org.apache.qpid.proton4j.codec.primitives;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.io.IOException;
 
@@ -32,6 +34,49 @@ import org.apache.qpid.proton4j.codec.encoders.primitives.FloatTypeEncoder;
 import org.junit.Test;
 
 public class FloatTypeCodecTest extends CodecTestSupport {
+
+    @Test
+    public void testLookupTypeDecoderForType() throws Exception {
+        TypeDecoder<?> result = decoder.getTypeDecoder(Float.valueOf(127));
+
+        assertNotNull(result);
+        assertEquals(Float.class, result.getTypeClass());
+    }
+
+    @Test
+    public void testDecoderThrowsWhenAskedToReadWrongTypeAsThisType() throws Exception {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        buffer.writeByte(EncodingCodes.UINT);
+        buffer.writeByte(EncodingCodes.UINT);
+
+        try {
+            decoder.readFloat(buffer, decoderState);
+            fail("Should not allow read of integer type as this type");
+        } catch (IOException e) {}
+
+        try {
+            decoder.readFloat(buffer, decoderState, 0f);
+            fail("Should not allow read of integer type as this type");
+        } catch (IOException e) {}
+    }
+
+    @Test
+    public void testReadUByteFromEncodingCode() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        buffer.writeByte(EncodingCodes.FLOAT);
+        buffer.writeFloat(42.0f);
+        buffer.writeByte(EncodingCodes.FLOAT);
+        buffer.writeFloat(43.0f);
+        buffer.writeByte(EncodingCodes.NULL);
+        buffer.writeByte(EncodingCodes.NULL);
+
+        assertEquals(42f, decoder.readFloat(buffer, decoderState).shortValue(), 0.0f);
+        assertEquals(43f, decoder.readFloat(buffer, decoderState, (short) 42), 0.0f);
+        assertNull(decoder.readFloat(buffer, decoderState));
+        assertEquals(43f, decoder.readFloat(buffer, decoderState, 43f), 0.0f);
+    }
 
     @Test
     public void testGetTypeCode() {

@@ -21,6 +21,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.io.IOException;
 
@@ -33,6 +34,49 @@ import org.apache.qpid.proton4j.codec.TypeDecoder;
 import org.junit.Test;
 
 public class UnsignedByteTypeCodecTest extends CodecTestSupport {
+
+    @Test
+    public void testLookupTypeDecoderForType() throws Exception {
+        TypeDecoder<?> result = decoder.getTypeDecoder(UnsignedByte.valueOf((byte) 127));
+
+        assertNotNull(result);
+        assertEquals(UnsignedByte.class, result.getTypeClass());
+    }
+
+    @Test
+    public void testDecoderThrowsWhenAskedToReadWrongTypeAsThisType() throws Exception {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        buffer.writeByte(EncodingCodes.UINT);
+        buffer.writeByte(EncodingCodes.UINT);
+
+        try {
+            decoder.readUnsignedByte(buffer, decoderState);
+            fail("Should not allow read of integer type as this type");
+        } catch (IOException e) {}
+
+        try {
+            decoder.readUnsignedByte(buffer, decoderState, (byte) 0);
+            fail("Should not allow read of integer type as this type");
+        } catch (IOException e) {}
+    }
+
+    @Test
+    public void testReadUByteFromEncodingCode() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        buffer.writeByte(EncodingCodes.UBYTE);
+        buffer.writeByte((byte) 42);
+        buffer.writeByte(EncodingCodes.UBYTE);
+        buffer.writeByte((byte) 43);
+        buffer.writeByte(EncodingCodes.NULL);
+        buffer.writeByte(EncodingCodes.NULL);
+
+        assertEquals(42, decoder.readUnsignedByte(buffer, decoderState).intValue());
+        assertEquals(43, decoder.readUnsignedByte(buffer, decoderState, (byte) 42));
+        assertNull(decoder.readUnsignedByte(buffer, decoderState));
+        assertEquals(42, decoder.readUnsignedByte(buffer, decoderState, (byte) 42));
+    }
 
     @Test
     public void testEncodeDecodeUnsignedByte() throws Exception {

@@ -18,7 +18,9 @@ package org.apache.qpid.proton4j.codec.primitives;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.io.IOException;
 
@@ -32,6 +34,49 @@ import org.apache.qpid.proton4j.codec.encoders.primitives.CharacterTypeEncoder;
 import org.junit.Test;
 
 public class CharacterTypeCodecTest extends CodecTestSupport {
+
+    @Test
+    public void testLookupTypeDecoderForType() throws Exception {
+        TypeDecoder<?> result = decoder.getTypeDecoder(Character.valueOf((char) 65));
+
+        assertNotNull(result);
+        assertEquals(Character.class, result.getTypeClass());
+    }
+
+    @Test
+    public void testDecoderThrowsWhenAskedToReadWrongTypeAsThisType() throws Exception {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        buffer.writeByte(EncodingCodes.UINT);
+        buffer.writeByte(EncodingCodes.UINT);
+
+        try {
+            decoder.readCharacter(buffer, decoderState);
+            fail("Should not allow read of integer type as this type");
+        } catch (IOException e) {}
+
+        try {
+            decoder.readCharacter(buffer, decoderState, (char) 0);
+            fail("Should not allow read of integer type as this type");
+        } catch (IOException e) {}
+    }
+
+    @Test
+    public void testTypeFromEncodingCode() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        buffer.writeByte(EncodingCodes.CHAR);
+        buffer.writeInt(42);
+        buffer.writeByte(EncodingCodes.CHAR);
+        buffer.writeInt(43);
+        buffer.writeByte(EncodingCodes.NULL);
+        buffer.writeByte(EncodingCodes.NULL);
+
+        assertEquals(42, decoder.readCharacter(buffer, decoderState).charValue());
+        assertEquals(43, decoder.readCharacter(buffer, decoderState, (char) 42));
+        assertNull(decoder.readCharacter(buffer, decoderState));
+        assertEquals(42, decoder.readCharacter(buffer, decoderState, (char) 42));
+    }
 
     @Test
     public void testGetTypeCode() {

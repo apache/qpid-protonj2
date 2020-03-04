@@ -18,7 +18,9 @@ package org.apache.qpid.proton4j.codec.primitives;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.io.IOException;
 
@@ -32,6 +34,58 @@ import org.apache.qpid.proton4j.codec.encoders.primitives.LongTypeEncoder;
 import org.junit.Test;
 
 public class LongTypeCodecTest extends CodecTestSupport {
+
+    @Test
+    public void testLookupTypeDecoderForType() throws Exception {
+        TypeDecoder<?> result = decoder.getTypeDecoder(Long.valueOf(Integer.MAX_VALUE));
+
+        assertNotNull(result);
+        assertEquals(Long.class, result.getTypeClass());
+    }
+
+    @Test
+    public void testDecoderThrowsWhenAskedToReadWrongTypeAsThisType() throws Exception {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        buffer.writeByte(EncodingCodes.UINT);
+        buffer.writeByte(EncodingCodes.UINT);
+        buffer.writeByte(EncodingCodes.UINT);
+
+        try {
+            decoder.readLong(buffer, decoderState);
+            fail("Should not allow read of integer type as this type");
+        } catch (IOException e) {}
+
+        try {
+            decoder.readLong(buffer, decoderState, 0);
+            fail("Should not allow read of integer type as this type");
+        } catch (IOException e) {}
+
+        try {
+            decoder.readLong(buffer, decoderState, 0l);
+            fail("Should not allow read of integer type as this type");
+        } catch (IOException e) {}
+    }
+
+    @Test
+    public void testReadUByteFromEncodingCode() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        buffer.writeByte(EncodingCodes.LONG);
+        buffer.writeLong(42);
+        buffer.writeByte(EncodingCodes.LONG);
+        buffer.writeLong(44);
+        buffer.writeByte(EncodingCodes.SMALLLONG);
+        buffer.writeByte(43);
+        buffer.writeByte(EncodingCodes.NULL);
+        buffer.writeByte(EncodingCodes.NULL);
+
+        assertEquals(42, decoder.readLong(buffer, decoderState).intValue());
+        assertEquals(44, decoder.readLong(buffer, decoderState, 42));
+        assertEquals(43, decoder.readLong(buffer, decoderState, 42));
+        assertNull(decoder.readLong(buffer, decoderState));
+        assertEquals(42, decoder.readLong(buffer, decoderState, 42l));
+    }
 
     @Test
     public void testGetTypeCode() {

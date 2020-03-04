@@ -21,6 +21,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.io.IOException;
 
@@ -33,6 +34,51 @@ import org.apache.qpid.proton4j.codec.TypeDecoder;
 import org.junit.Test;
 
 public class UnsignedLongTypeCodecTest extends CodecTestSupport {
+
+    @Test
+    public void testLookupTypeDecoderForType() throws Exception {
+        TypeDecoder<?> result = decoder.getTypeDecoder(UnsignedLong.valueOf(127));
+
+        assertNotNull(result);
+        assertEquals(UnsignedLong.class, result.getTypeClass());
+    }
+
+    @Test
+    public void testDecoderThrowsWhenAskedToReadWrongTypeAsThisType() throws Exception {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        buffer.writeByte(EncodingCodes.UINT);
+        buffer.writeByte(EncodingCodes.UINT);
+
+        try {
+            decoder.readUnsignedLong(buffer, decoderState);
+            fail("Should not allow read of integer type as this type");
+        } catch (IOException e) {}
+
+        try {
+            decoder.readUnsignedLong(buffer, decoderState, (short) 0);
+            fail("Should not allow read of integer type as this type");
+        } catch (IOException e) {}
+    }
+
+    @Test
+    public void testReadUByteFromEncodingCode() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        buffer.writeByte(EncodingCodes.ULONG0);
+        buffer.writeByte(EncodingCodes.ULONG);
+        buffer.writeLong(42);
+        buffer.writeByte(EncodingCodes.SMALLULONG);
+        buffer.writeByte((byte) 43);
+        buffer.writeByte(EncodingCodes.NULL);
+        buffer.writeByte(EncodingCodes.NULL);
+
+        assertEquals(0, decoder.readUnsignedLong(buffer, decoderState).intValue());
+        assertEquals(42, decoder.readUnsignedLong(buffer, decoderState).intValue());
+        assertEquals(43, decoder.readUnsignedLong(buffer, decoderState, 42));
+        assertNull(decoder.readUnsignedLong(buffer, decoderState));
+        assertEquals(42, decoder.readUnsignedLong(buffer, decoderState, 42));
+    }
 
     @Test
     public void testEncodeDecodeUnsignedLong() throws Exception {

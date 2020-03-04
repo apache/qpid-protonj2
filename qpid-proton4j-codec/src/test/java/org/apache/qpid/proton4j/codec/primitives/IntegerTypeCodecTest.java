@@ -18,7 +18,9 @@ package org.apache.qpid.proton4j.codec.primitives;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.io.IOException;
 
@@ -33,6 +35,52 @@ import org.apache.qpid.proton4j.codec.encoders.primitives.IntegerTypeEncoder;
 import org.junit.Test;
 
 public class IntegerTypeCodecTest extends CodecTestSupport {
+
+    @Test
+    public void testLookupTypeDecoderForType() throws Exception {
+        TypeDecoder<?> result = decoder.getTypeDecoder(Integer.valueOf(Integer.MAX_VALUE));
+
+        assertNotNull(result);
+        assertEquals(Integer.class, result.getTypeClass());
+    }
+
+    @Test
+    public void testDecoderThrowsWhenAskedToReadWrongTypeAsThisType() throws Exception {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        buffer.writeByte(EncodingCodes.UINT);
+        buffer.writeByte(EncodingCodes.UINT);
+
+        try {
+            decoder.readInteger(buffer, decoderState);
+            fail("Should not allow read of integer type as this type");
+        } catch (IOException e) {}
+
+        try {
+            decoder.readInteger(buffer, decoderState, (short) 0);
+            fail("Should not allow read of integer type as this type");
+        } catch (IOException e) {}
+    }
+
+    @Test
+    public void testReadUByteFromEncodingCode() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        buffer.writeByte(EncodingCodes.INT);
+        buffer.writeInt(42);
+        buffer.writeByte(EncodingCodes.INT);
+        buffer.writeInt(44);
+        buffer.writeByte(EncodingCodes.SMALLINT);
+        buffer.writeByte(43);
+        buffer.writeByte(EncodingCodes.NULL);
+        buffer.writeByte(EncodingCodes.NULL);
+
+        assertEquals(42, decoder.readInteger(buffer, decoderState).intValue());
+        assertEquals(44, decoder.readInteger(buffer, decoderState, 42));
+        assertEquals(43, decoder.readInteger(buffer, decoderState, 42));
+        assertNull(decoder.readInteger(buffer, decoderState));
+        assertEquals(42, decoder.readInteger(buffer, decoderState, 42));
+    }
 
     @Test
     public void testGetTypeCode() {

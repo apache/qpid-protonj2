@@ -239,10 +239,6 @@ public class ProtonDecoder implements Decoder {
                 return slowReadNextTypeDecoder(buffer, state);
             }
         } else {
-            if (encodingCode > primitiveDecoders.length) {
-                throw new IOException("Read unknown encoding code from buffer");
-            }
-
             return primitiveDecoders[encodingCode];
         }
     }

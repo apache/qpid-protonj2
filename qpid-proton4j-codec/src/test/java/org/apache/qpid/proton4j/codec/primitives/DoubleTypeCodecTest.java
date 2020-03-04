@@ -18,7 +18,9 @@ package org.apache.qpid.proton4j.codec.primitives;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.io.IOException;
 
@@ -32,6 +34,49 @@ import org.apache.qpid.proton4j.codec.encoders.primitives.DoubleTypeEncoder;
 import org.junit.Test;
 
 public class DoubleTypeCodecTest extends CodecTestSupport {
+
+    @Test
+    public void testLookupTypeDecoderForType() throws Exception {
+        TypeDecoder<?> result = decoder.getTypeDecoder(Double.valueOf(127));
+
+        assertNotNull(result);
+        assertEquals(Double.class, result.getTypeClass());
+    }
+
+    @Test
+    public void testDecoderThrowsWhenAskedToReadWrongTypeAsThisType() throws Exception {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        buffer.writeByte(EncodingCodes.UINT);
+        buffer.writeByte(EncodingCodes.UINT);
+
+        try {
+            decoder.readDouble(buffer, decoderState);
+            fail("Should not allow read of integer type as this type");
+        } catch (IOException e) {}
+
+        try {
+            decoder.readDouble(buffer, decoderState, 0.0);
+            fail("Should not allow read of integer type as this type");
+        } catch (IOException e) {}
+    }
+
+    @Test
+    public void testReadUByteFromEncodingCode() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        buffer.writeByte(EncodingCodes.DOUBLE);
+        buffer.writeDouble(42.0);
+        buffer.writeByte(EncodingCodes.DOUBLE);
+        buffer.writeDouble(43.0);
+        buffer.writeByte(EncodingCodes.NULL);
+        buffer.writeByte(EncodingCodes.NULL);
+
+        assertEquals(42.0, decoder.readDouble(buffer, decoderState).shortValue(), 0.0);
+        assertEquals(43.0, decoder.readDouble(buffer, decoderState, 42.0), 0.0);
+        assertNull(decoder.readDouble(buffer, decoderState));
+        assertEquals(43.0, decoder.readDouble(buffer, decoderState, 43.0), 0.0);
+    }
 
     @Test
     public void testGetTypeCode() {

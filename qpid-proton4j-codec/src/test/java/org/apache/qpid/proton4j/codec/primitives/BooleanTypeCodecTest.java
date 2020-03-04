@@ -87,6 +87,27 @@ public class BooleanTypeCodecTest extends CodecTestSupport {
     }
 
     @Test
+    public void testPeekNextTypeDecoder() throws Exception {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        buffer.writeByte(EncodingCodes.BOOLEAN_TRUE);
+        buffer.writeByte(EncodingCodes.BOOLEAN);
+        buffer.writeByte(0);
+        buffer.writeByte(EncodingCodes.BOOLEAN_FALSE);
+        buffer.writeByte(EncodingCodes.BOOLEAN);
+        buffer.writeByte(1);
+
+        assertEquals(Boolean.class, decoder.peekNextTypeDecoder(buffer, decoderState).getTypeClass());
+        assertTrue(decoder.readBoolean(buffer, decoderState));
+        assertEquals(Boolean.class, decoder.peekNextTypeDecoder(buffer, decoderState).getTypeClass());
+        assertFalse(decoder.readBoolean(buffer, decoderState));
+        assertEquals(Boolean.class, decoder.peekNextTypeDecoder(buffer, decoderState).getTypeClass());
+        assertFalse(decoder.readBoolean(buffer, decoderState));
+        assertEquals(Boolean.class, decoder.peekNextTypeDecoder(buffer, decoderState).getTypeClass());
+        assertTrue(decoder.readBoolean(buffer, decoderState));
+    }
+
+    @Test
     public void testDecodeBooleanEncodedBytesAsPrimtives() throws Exception {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
 

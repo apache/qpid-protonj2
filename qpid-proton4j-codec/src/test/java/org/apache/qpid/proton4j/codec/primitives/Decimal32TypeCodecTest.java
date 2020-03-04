@@ -18,7 +18,9 @@ package org.apache.qpid.proton4j.codec.primitives;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.io.IOException;
 
@@ -33,6 +35,38 @@ import org.apache.qpid.proton4j.codec.encoders.primitives.Decimal32TypeEncoder;
 import org.junit.Test;
 
 public class Decimal32TypeCodecTest extends CodecTestSupport {
+
+    @Test
+    public void testLookupTypeDecoderForType() throws Exception {
+        TypeDecoder<?> result = decoder.getTypeDecoder(new Decimal32(42));
+
+        assertNotNull(result);
+        assertEquals(Decimal32.class, result.getTypeClass());
+    }
+
+    @Test
+    public void testDecoderThrowsWhenAskedToReadWrongTypeAsThisType() throws Exception {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        buffer.writeByte(EncodingCodes.UINT);
+
+        try {
+            decoder.readDecimal32(buffer, decoderState);
+            fail("Should not allow read of integer type as this type");
+        } catch (IOException e) {}
+    }
+
+    @Test
+    public void testTypeFromEncodingCode() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        buffer.writeByte(EncodingCodes.DECIMAL32);
+        buffer.writeInt(42);
+        buffer.writeByte(EncodingCodes.NULL);
+
+        assertEquals(42, decoder.readDecimal32(buffer, decoderState).getBits());
+        assertNull(decoder.readDecimal32(buffer, decoderState));
+    }
 
     @Test
     public void testGetTypeCode() {
