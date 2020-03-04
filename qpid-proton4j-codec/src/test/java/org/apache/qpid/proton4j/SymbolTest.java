@@ -18,13 +18,16 @@ package org.apache.qpid.proton4j;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNotSame;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 
 import java.nio.charset.StandardCharsets;
 
 import org.apache.qpid.proton4j.amqp.Symbol;
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.junit.Test;
 
@@ -39,6 +42,30 @@ public class SymbolTest {
         "The quick brown fox jumps over the lazy dog. " +
         "The quick brown fox jumps over the lazy dog. " +
         "The quick brown fox jumps over the lazy dog.";
+
+
+    @Test
+    public void testGetSymbolWithNullString() {
+        assertNull(Symbol.getSymbol((String) null));
+    }
+
+    @Test
+    public void testGetSymbolWithNullBuffer() {
+        assertNull(Symbol.getSymbol((ProtonBuffer) null));
+    }
+
+    @Test
+    public void testGetSymbolWithEmptyString() {
+        assertNotNull(Symbol.getSymbol(""));
+        assertSame(Symbol.getSymbol(""), Symbol.getSymbol(""));
+    }
+
+    @Test
+    public void testGetSymbolWithEmptyBuffer() {
+        assertNotNull(Symbol.getSymbol(ProtonByteBufferAllocator.DEFAULT.allocate(0)));
+        assertSame(Symbol.getSymbol(ProtonByteBufferAllocator.DEFAULT.allocate(0)),
+                   Symbol.getSymbol(ProtonByteBufferAllocator.DEFAULT.allocate(0)));
+    }
 
     @Test
     public void testCompareTo() {

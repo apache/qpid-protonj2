@@ -39,6 +39,32 @@ import org.junit.Test;
 public class BooleanTypeCodecTest extends CodecTestSupport {
 
     @Test
+    public void testLookupTypeDecoderForBoolean() throws Exception {
+        TypeDecoder<?> result = decoder.getTypeDecoder(Boolean.TRUE);
+
+        assertNotNull(result);
+        assertEquals(Boolean.class, result.getTypeClass());
+    }
+
+    @Test
+    public void testDecoderThrowsWhenAskedToReadWrongTypeAsBoolean() throws Exception {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        buffer.writeByte(EncodingCodes.UINT);
+        buffer.writeByte(EncodingCodes.UINT);
+
+        try {
+            decoder.readBoolean(buffer, decoderState);
+            fail("Should not allow read of integer type as boolean");
+        } catch (IOException e) {}
+
+        try {
+            decoder.readBoolean(buffer, decoderState, false);
+            fail("Should not allow read of integer type as boolean");
+        } catch (IOException e) {}
+    }
+
+    @Test
     public void testDecodeBooleanEncodedBytes() throws Exception {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
 

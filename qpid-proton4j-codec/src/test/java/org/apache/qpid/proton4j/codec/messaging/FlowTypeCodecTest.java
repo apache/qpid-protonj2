@@ -39,6 +39,14 @@ import org.junit.Test;
 public class FlowTypeCodecTest extends CodecTestSupport {
 
     @Test
+    public void testLookupTypeDecoderForFlow() throws Exception {
+        TypeDecoder<?> result = decoder.getTypeDecoder(new Flow());
+
+        assertNotNull(result);
+        assertEquals(Flow.class, result.getTypeClass());
+    }
+
+    @Test
     public void testTypeClassReturnsCorrectType() throws IOException {
         assertEquals(Flow.class, new FlowTypeDecoder().getTypeClass());
         assertEquals(Flow.class, new FlowTypeEncoder().getTypeClass());

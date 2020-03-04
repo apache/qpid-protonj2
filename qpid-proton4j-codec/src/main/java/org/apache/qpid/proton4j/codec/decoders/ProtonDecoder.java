@@ -301,7 +301,7 @@ public class ProtonDecoder implements Decoder {
 
         if (decoder == null) {
             for (TypeDecoder<?> primitiveDecoder : primitiveDecoders) {
-                if (primitiveDecoder.getTypeClass().equals(instance.getClass())) {
+                if (primitiveDecoder != null && primitiveDecoder.getTypeClass().equals(instance.getClass())) {
                     decoder = primitiveDecoder;
                 }
             }
