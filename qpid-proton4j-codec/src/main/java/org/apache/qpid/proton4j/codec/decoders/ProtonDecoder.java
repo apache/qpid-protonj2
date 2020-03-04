@@ -82,7 +82,7 @@ import org.apache.qpid.proton4j.codec.decoders.primitives.UnsignedShortTypeDecod
 /**
  * The default AMQP Decoder implementation.
  */
-public class ProtonDecoder implements Decoder {
+public final class ProtonDecoder implements Decoder {
 
     // The decoders for primitives are fixed and cannot be altered by users who want
     // to register custom decoders.  The decoders created here are stateless and can be
@@ -193,7 +193,7 @@ public class ProtonDecoder implements Decoder {
         } else if (clazz.isAssignableFrom(result.getClass())) {
             return (T) result;
         } else {
-            throw signalUnexpectedType(result, Array.newInstance(clazz, 0).getClass());
+            throw signalUnexpectedType(result, clazz);
         }
     }
 
@@ -297,7 +297,7 @@ public class ProtonDecoder implements Decoder {
 
         if (decoder == null) {
             for (TypeDecoder<?> primitiveDecoder : primitiveDecoders) {
-                if (primitiveDecoder != null && primitiveDecoder.getTypeClass().equals(instance.getClass())) {
+                if (primitiveDecoder != null && primitiveDecoder.getTypeClass().isAssignableFrom(instance.getClass())) {
                     decoder = primitiveDecoder;
                 }
             }

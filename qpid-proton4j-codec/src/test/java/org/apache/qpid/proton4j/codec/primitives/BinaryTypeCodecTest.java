@@ -20,6 +20,7 @@ import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -38,6 +39,41 @@ import org.junit.Test;
  * Test the Binary codec for correctness
  */
 public class BinaryTypeCodecTest extends CodecTestSupport {
+
+    @Test
+    public void testLookupTypeDecoderForType() throws Exception {
+        TypeDecoder<?> result = decoder.getTypeDecoder(new Binary(new byte[0]));
+
+        assertNotNull(result);
+        assertEquals(Binary.class, result.getTypeClass());
+    }
+
+    @Test
+    public void testDecoderThrowsWhenAskedToReadWrongTypeAsThisType() throws Exception {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        buffer.writeByte(EncodingCodes.UINT);
+        buffer.writeByte(EncodingCodes.UINT);
+
+        try {
+            decoder.readBinary(buffer, decoderState);
+            fail("Should not allow read of integer type as this type");
+        } catch (IOException e) {}
+
+        try {
+            decoder.readBinaryAsBuffer(buffer, decoderState);
+            fail("Should not allow read of integer type as this type");
+        } catch (IOException e) {}
+    }
+
+    @Test
+    public void testReadFromNullEncodingCode() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        buffer.writeByte(EncodingCodes.NULL);
+
+        assertNull(decoder.readBinary(buffer, decoderState));
+    }
 
     @Test
     public void testEncodeDecodeEmptyArrayBinary() throws Exception {

@@ -39,6 +39,26 @@ import org.junit.Test;
 public class MapTypeCodecTest extends CodecTestSupport {
 
     @Test
+    public void testLookupTypeDecoderForType() throws Exception {
+        TypeDecoder<?> result = decoder.getTypeDecoder(new HashMap<String, String>());
+
+        assertNotNull(result);
+        assertEquals(Map.class, result.getTypeClass());
+    }
+
+    @Test
+    public void testDecoderThrowsWhenAskedToReadWrongTypeAsThisType() throws Exception {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        buffer.writeByte(EncodingCodes.UINT);
+
+        try {
+            decoder.readMap(buffer, decoderState);
+            fail("Should not allow read of integer type as this type");
+        } catch (IOException e) {}
+    }
+
+    @Test
     public void testDecodeSmallSeriesOfMaps() throws IOException {
         doTestDecodeMapSeries(SMALL_SIZE);
     }

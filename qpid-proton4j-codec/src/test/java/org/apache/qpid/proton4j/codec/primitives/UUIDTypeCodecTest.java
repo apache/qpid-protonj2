@@ -18,6 +18,7 @@ package org.apache.qpid.proton4j.codec.primitives;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -29,10 +30,46 @@ import org.apache.qpid.proton4j.amqp.messaging.Data;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.codec.CodecTestSupport;
+import org.apache.qpid.proton4j.codec.EncodingCodes;
 import org.apache.qpid.proton4j.codec.TypeDecoder;
 import org.junit.Test;
 
 public class UUIDTypeCodecTest extends CodecTestSupport {
+
+    @Test
+    public void testLookupTypeDecoderForType() throws Exception {
+        TypeDecoder<?> result = decoder.getTypeDecoder(UUID.randomUUID());
+
+        assertNotNull(result);
+        assertEquals(UUID.class, result.getTypeClass());
+    }
+
+    @Test
+    public void testDecoderThrowsWhenAskedToReadWrongTypeAsThisType() throws Exception {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        buffer.writeByte(EncodingCodes.UINT);
+
+        try {
+            decoder.readUUID(buffer, decoderState);
+            fail("Should not allow read of integer type as this type");
+        } catch (IOException e) {}
+    }
+
+    @Test
+    public void testReadFromNullEncodingCode() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        final UUID value = UUID.randomUUID();
+
+        buffer.writeByte(EncodingCodes.NULL);
+        buffer.writeByte(EncodingCodes.UUID);
+        buffer.writeLong(value.getMostSignificantBits());
+        buffer.writeLong(value.getLeastSignificantBits());
+
+        assertNull(decoder.readUUID(buffer, decoderState));
+        assertEquals(value, decoder.readUUID(buffer, decoderState));
+    }
 
     @Test
     public void testEncodeDecodeUUID() throws IOException {

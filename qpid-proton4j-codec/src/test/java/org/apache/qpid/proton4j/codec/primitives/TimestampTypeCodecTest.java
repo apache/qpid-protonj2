@@ -18,7 +18,9 @@ package org.apache.qpid.proton4j.codec.primitives;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.io.IOException;
 import java.util.Date;
@@ -33,6 +35,35 @@ import org.apache.qpid.proton4j.codec.encoders.primitives.TimestampTypeEncoder;
 import org.junit.Test;
 
 public class TimestampTypeCodecTest extends CodecTestSupport {
+
+    @Test
+    public void testDecoderThrowsWhenAskedToReadWrongTypeAsThisType() throws Exception {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        buffer.writeByte(EncodingCodes.UINT);
+        buffer.writeByte(EncodingCodes.UINT);
+
+        try {
+            decoder.readTimestamp(buffer, decoderState);
+            fail("Should not allow read of integer type as this type");
+        } catch (IOException e) {}
+
+        try {
+            decoder.readTimestamp(buffer, decoderState, 42l);
+            fail("Should not allow read of integer type as this type");
+        } catch (IOException e) {}
+    }
+
+    @Test
+    public void testReadFromNullEncodingCode() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        buffer.writeByte(EncodingCodes.NULL);
+        buffer.writeByte(EncodingCodes.NULL);
+
+        assertNull(decoder.readTimestamp(buffer, decoderState));
+        assertEquals(42l, decoder.readTimestamp(buffer, decoderState, 42l));
+    }
 
     @Test
     public void testGetTypeCode() {

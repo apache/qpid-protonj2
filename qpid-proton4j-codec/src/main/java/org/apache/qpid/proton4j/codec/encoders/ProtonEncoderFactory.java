@@ -60,7 +60,7 @@ import org.apache.qpid.proton4j.codec.encoders.transport.TransferTypeEncoder;
 /**
  * Factory that create and initializes new BuiltinEncoder instances
  */
-public class ProtonEncoderFactory {
+public final class ProtonEncoderFactory {
 
     private ProtonEncoderFactory() {
     }

@@ -66,7 +66,7 @@ import org.apache.qpid.proton4j.codec.encoders.primitives.UnsignedShortTypeEncod
 /**
  * The default AMQP Encoder implementation.
  */
-public class ProtonEncoder implements Encoder {
+public final class ProtonEncoder implements Encoder {
 
     // The encoders for primitives are fixed and cannot be altered by users who want
     // to register custom encoders, these encoders are stateless so they can be safely

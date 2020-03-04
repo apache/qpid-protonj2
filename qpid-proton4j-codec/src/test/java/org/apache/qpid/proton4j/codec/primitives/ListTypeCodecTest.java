@@ -18,11 +18,13 @@ package org.apache.qpid.proton4j.codec.primitives;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
@@ -41,6 +43,61 @@ import org.junit.Test;
  * Test for the Proton List encoder / decoder
  */
 public class ListTypeCodecTest extends CodecTestSupport {
+
+    @Test
+    public void testLookupTypeDecoderForType() throws Exception {
+        TypeDecoder<?> result = decoder.getTypeDecoder(new ArrayList<String>());
+
+        assertNotNull(result);
+        assertEquals(List.class, result.getTypeClass());
+    }
+
+    @Test
+    public void testDecoderThrowsWhenAskedToReadWrongTypeAsThisType() throws Exception {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        buffer.writeByte(EncodingCodes.UINT);
+
+        try {
+            decoder.readList(buffer, decoderState);
+            fail("Should not allow read of integer type as this type");
+        } catch (IOException e) {}
+    }
+
+    @Test
+    public void testReadFromEncodingCodes() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        buffer.writeByte(EncodingCodes.NULL);
+
+        buffer.writeByte(EncodingCodes.LIST0);
+
+        buffer.writeByte(EncodingCodes.LIST8);
+        buffer.writeByte(4);
+        buffer.writeByte(2);
+        buffer.writeByte(EncodingCodes.BYTE);
+        buffer.writeByte(1);
+        buffer.writeByte(EncodingCodes.BYTE);
+        buffer.writeByte(2);
+
+        buffer.writeByte(EncodingCodes.LIST32);
+        buffer.writeInt(4);
+        buffer.writeInt(2);
+        buffer.writeByte(EncodingCodes.BYTE);
+        buffer.writeByte(1);
+        buffer.writeByte(EncodingCodes.BYTE);
+        buffer.writeByte(2);
+
+        List<Byte> expected = new ArrayList<>();
+
+        expected.add(Byte.valueOf((byte) 1));
+        expected.add(Byte.valueOf((byte) 2));
+
+        assertNull(decoder.readList(buffer, decoderState));
+        assertEquals(Collections.EMPTY_LIST, decoder.readList(buffer, decoderState));
+        assertEquals(expected, decoder.readList(buffer, decoderState));
+        assertEquals(expected, decoder.readList(buffer, decoderState));
+    }
 
     @Test
     public void testDecodeSmallSeriesOfLists() throws IOException {

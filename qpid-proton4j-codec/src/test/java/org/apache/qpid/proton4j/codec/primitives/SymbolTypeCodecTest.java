@@ -50,6 +50,43 @@ public class SymbolTypeCodecTest extends CodecTestSupport {
         "The quick brown fox jumps over the lazy dog.";
 
     @Test
+    public void testLookupTypeDecoderForType() throws Exception {
+        TypeDecoder<?> result = decoder.getTypeDecoder(Symbol.valueOf(""));
+
+        assertNotNull(result);
+        assertEquals(Symbol.class, result.getTypeClass());
+    }
+
+    @Test
+    public void testDecoderThrowsWhenAskedToReadWrongTypeAsThisType() throws Exception {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        buffer.writeByte(EncodingCodes.UINT);
+        buffer.writeByte(EncodingCodes.UINT);
+
+        try {
+            decoder.readSymbol(buffer, decoderState);
+            fail("Should not allow read of integer type as this type");
+        } catch (IOException e) {}
+
+        try {
+            decoder.readSymbol(buffer, decoderState, "");
+            fail("Should not allow read of integer type as this type");
+        } catch (IOException e) {}
+    }
+
+    @Test
+    public void testReadFromNullEncodingCode() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        buffer.writeByte(EncodingCodes.NULL);
+        buffer.writeByte(EncodingCodes.NULL);
+
+        assertNull(decoder.readSymbol(buffer, decoderState));
+        assertEquals("", decoder.readSymbol(buffer, decoderState, ""));
+    }
+
+    @Test
     public void testEncodeSmallSymbol() throws IOException {
         doTestEncodeDecode(Symbol.valueOf(SMALL_SYMBOL_VALUIE));
     }

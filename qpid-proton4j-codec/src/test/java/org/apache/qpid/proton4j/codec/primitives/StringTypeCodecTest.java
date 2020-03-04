@@ -53,6 +53,35 @@ public class StringTypeCodecTest extends CodecTestSupport {
         "The quick brown fox jumps over the lazy dog.";
 
     @Test
+    public void testLookupTypeDecoderForType() throws Exception {
+        TypeDecoder<?> result = decoder.getTypeDecoder("");
+
+        assertNotNull(result);
+        assertEquals(String.class, result.getTypeClass());
+    }
+
+    @Test
+    public void testDecoderThrowsWhenAskedToReadWrongTypeAsThisType() throws Exception {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        buffer.writeByte(EncodingCodes.UINT);
+
+        try {
+            decoder.readString(buffer, decoderState);
+            fail("Should not allow read of integer type as this type");
+        } catch (IOException e) {}
+    }
+
+    @Test
+    public void testReadFromNullEncodingCode() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        buffer.writeByte(EncodingCodes.NULL);
+
+        assertNull(decoder.readString(buffer, decoderState));
+    }
+
+    @Test
     public void testEncodeSmallString() throws IOException {
         doTestEncodeDecode(SMALL_STRING_VALUIE);
     }
