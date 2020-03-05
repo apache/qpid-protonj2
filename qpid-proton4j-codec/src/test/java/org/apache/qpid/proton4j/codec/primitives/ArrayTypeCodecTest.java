@@ -1087,7 +1087,7 @@ public class ArrayTypeCodecTest extends CodecTestSupport {
 
         for (int i = 0; i < 10; ++i) {
             TypeDecoder<?> typeDecoder = decoder.readNextTypeDecoder(buffer, decoderState);
-            assertEquals(Object[].class, typeDecoder.getTypeClass());
+            assertEquals(Object.class, typeDecoder.getTypeClass());
             assertTrue(typeDecoder.isArrayType());
             typeDecoder.skipValue(buffer, decoderState);
         }

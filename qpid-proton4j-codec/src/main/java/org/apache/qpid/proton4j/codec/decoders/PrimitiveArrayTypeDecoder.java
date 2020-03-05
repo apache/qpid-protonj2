@@ -26,7 +26,7 @@ import org.apache.qpid.proton4j.codec.DecoderState;
  * with entry points to read arrays in a manner that support the desired Java array
  * type to be returned.
  */
-public interface PrimitiveArrayTypeDecoder extends PrimitiveTypeDecoder<Object[]> {
+public interface PrimitiveArrayTypeDecoder extends PrimitiveTypeDecoder<Object> {
 
     /**
      * Reads the encoded Array and returns it as an opaque Object[] meaning

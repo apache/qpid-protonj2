@@ -16,6 +16,7 @@
  */
 package org.apache.qpid.proton4j.codec.primitives;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -138,6 +139,41 @@ public class MapTypeCodecTest extends CodecTestSupport {
 
         for (int i = 0; i < map.length; ++i) {
             assertEquals(source[i], map[i]);
+        }
+    }
+
+    @SuppressWarnings({ "unchecked" })
+    @Test
+    public void testMapOfArraysOfUUIDsIndexedByString() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        UUID[] element1 = new UUID[] { UUID.randomUUID() };
+        UUID[] element2 = new UUID[] { UUID.randomUUID(), UUID.randomUUID() };
+        UUID[] element3 = new UUID[] { UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID() };
+
+        UUID[][] expected = new UUID[][] { element1, element2, element3 };
+
+        Map<String, UUID[]> source = new LinkedHashMap<>();
+        source.put("1", element1);
+        source.put("2", element2);
+        source.put("3", element3);
+
+        encoder.writeMap(buffer, encoderState, source);
+
+        Object result = decoder.readObject(buffer, decoderState);
+        assertNotNull(result);
+        assertTrue(result instanceof Map);
+
+        Map<String, UUID[]> map = (Map<String, UUID[]>) result;
+        assertEquals(source.size(), map.size());
+
+        for (int i = 1; i <= map.size(); ++i) {
+            Object entry = map.get(Integer.toString(i));
+            assertNotNull(entry);
+            assertTrue(entry.getClass().isArray());
+            UUID[] uuids = (UUID[]) entry;
+            assertEquals(i, uuids.length);
+            assertArrayEquals(expected[i - 1], uuids);
         }
     }
 

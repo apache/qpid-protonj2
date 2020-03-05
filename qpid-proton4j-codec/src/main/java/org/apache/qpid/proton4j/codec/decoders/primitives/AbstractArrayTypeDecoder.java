@@ -27,13 +27,16 @@ import org.apache.qpid.proton4j.codec.decoders.PrimitiveArrayTypeDecoder;
 import org.apache.qpid.proton4j.codec.decoders.PrimitiveTypeDecoder;
 
 /**
- * Base for the decoders of AMQP Array types.
+ * Base for the decoders of AMQP Array types that defaults to returning opaque Object
+ * values to match what the other decoders do.  External decoding tools will need to use
+ * the {@link PrimitiveArrayTypeDecoder#isArrayType()} checks to determine how they want
+ * to read and return array types.
  */
-public abstract class AbstractArrayTypeDecoder extends AbstractPrimitiveTypeDecoder<Object[]> implements PrimitiveArrayTypeDecoder {
+public abstract class AbstractArrayTypeDecoder extends AbstractPrimitiveTypeDecoder<Object> implements PrimitiveArrayTypeDecoder {
 
     @Override
-    public Class<Object[]> getTypeClass() {
-        return Object[].class;
+    public Class<Object> getTypeClass() {
+        return Object.class;
     }
 
     @Override
@@ -42,8 +45,8 @@ public abstract class AbstractArrayTypeDecoder extends AbstractPrimitiveTypeDeco
     }
 
     @Override
-    public Object[] readValue(ProtonBuffer buffer, DecoderState state) throws IOException {
-        return readValueAsObjectArray(buffer, state);
+    public Object readValue(ProtonBuffer buffer, DecoderState state) throws IOException {
+        return readValueAsObject(buffer, state);
     }
 
     @Override

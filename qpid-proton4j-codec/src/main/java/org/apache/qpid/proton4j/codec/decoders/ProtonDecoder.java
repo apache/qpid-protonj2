@@ -175,12 +175,7 @@ public final class ProtonDecoder implements Decoder {
             throw new IOException("Unknown type constructor in encoded bytes");
         }
 
-        if (decoder.isArrayType()) {
-            PrimitiveArrayTypeDecoder arrayDecoder = (PrimitiveArrayTypeDecoder) decoder;
-            return arrayDecoder.readValueAsObject(buffer, state);
-        } else {
-            return decoder.readValue(buffer, state);
-        }
+        return decoder.readValue(buffer, state);
     }
 
     @SuppressWarnings("unchecked")
