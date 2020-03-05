@@ -39,14 +39,6 @@ import org.junit.Test;
 public class MapTypeCodecTest extends CodecTestSupport {
 
     @Test
-    public void testLookupTypeDecoderForType() throws Exception {
-        TypeDecoder<?> result = decoder.getTypeDecoder(new HashMap<String, String>());
-
-        assertNotNull(result);
-        assertEquals(Map.class, result.getTypeClass());
-    }
-
-    @Test
     public void testDecoderThrowsWhenAskedToReadWrongTypeAsThisType() throws Exception {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
 

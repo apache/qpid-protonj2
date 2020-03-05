@@ -287,25 +287,6 @@ public final class ProtonDecoder implements Decoder {
     }
 
     @Override
-    public TypeDecoder<?> getTypeDecoder(Object instance) {
-        TypeDecoder<?> decoder = null;
-        for (TypeDecoder<?> describedTypeDecoder : describedTypeDecoders.values()) {
-            if (describedTypeDecoder.getTypeClass().equals(instance.getClass())) {
-                decoder = describedTypeDecoder;
-            }
-        }
-
-        if (decoder == null) {
-            for (TypeDecoder<?> primitiveDecoder : primitiveDecoders) {
-                if (primitiveDecoder != null && primitiveDecoder.getTypeClass().isAssignableFrom(instance.getClass())) {
-                    decoder = primitiveDecoder;
-                }
-            }
-        }
-        return decoder;
-    }
-
-    @Override
     public Boolean readBoolean(ProtonBuffer buffer, DecoderState state) throws IOException {
         byte encodingCode = buffer.readByte();
 

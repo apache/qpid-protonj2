@@ -41,14 +41,6 @@ import org.junit.Test;
 public class BinaryTypeCodecTest extends CodecTestSupport {
 
     @Test
-    public void testLookupTypeDecoderForType() throws Exception {
-        TypeDecoder<?> result = decoder.getTypeDecoder(new Binary(new byte[0]));
-
-        assertNotNull(result);
-        assertEquals(Binary.class, result.getTypeClass());
-    }
-
-    @Test
     public void testDecoderThrowsWhenAskedToReadWrongTypeAsThisType() throws Exception {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
 

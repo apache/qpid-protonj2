@@ -45,14 +45,6 @@ import org.junit.Test;
 public class ListTypeCodecTest extends CodecTestSupport {
 
     @Test
-    public void testLookupTypeDecoderForType() throws Exception {
-        TypeDecoder<?> result = decoder.getTypeDecoder(new ArrayList<String>());
-
-        assertNotNull(result);
-        assertEquals(List.class, result.getTypeClass());
-    }
-
-    @Test
     public void testDecoderThrowsWhenAskedToReadWrongTypeAsThisType() throws Exception {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
 

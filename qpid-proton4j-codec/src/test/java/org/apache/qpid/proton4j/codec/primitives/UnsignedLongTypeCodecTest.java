@@ -36,14 +36,6 @@ import org.junit.Test;
 public class UnsignedLongTypeCodecTest extends CodecTestSupport {
 
     @Test
-    public void testLookupTypeDecoderForType() throws Exception {
-        TypeDecoder<?> result = decoder.getTypeDecoder(UnsignedLong.valueOf(127));
-
-        assertNotNull(result);
-        assertEquals(UnsignedLong.class, result.getTypeClass());
-    }
-
-    @Test
     public void testDecoderThrowsWhenAskedToReadWrongTypeAsThisType() throws Exception {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
 

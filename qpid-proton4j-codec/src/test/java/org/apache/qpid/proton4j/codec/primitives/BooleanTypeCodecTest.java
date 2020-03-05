@@ -39,14 +39,6 @@ import org.junit.Test;
 public class BooleanTypeCodecTest extends CodecTestSupport {
 
     @Test
-    public void testLookupTypeDecoderForBoolean() throws Exception {
-        TypeDecoder<?> result = decoder.getTypeDecoder(Boolean.TRUE);
-
-        assertNotNull(result);
-        assertEquals(Boolean.class, result.getTypeClass());
-    }
-
-    @Test
     public void testDecoderThrowsWhenAskedToReadWrongTypeAsBoolean() throws Exception {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
 

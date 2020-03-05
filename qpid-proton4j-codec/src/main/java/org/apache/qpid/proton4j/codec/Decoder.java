@@ -147,6 +147,4 @@ public interface Decoder {
 
     <V> Decoder registerDescribedTypeDecoder(DescribedTypeDecoder<V> decoder);
 
-    TypeDecoder<?> getTypeDecoder(Object instance);
-
 }

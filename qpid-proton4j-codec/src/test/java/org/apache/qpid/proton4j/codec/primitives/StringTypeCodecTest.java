@@ -53,14 +53,6 @@ public class StringTypeCodecTest extends CodecTestSupport {
         "The quick brown fox jumps over the lazy dog.";
 
     @Test
-    public void testLookupTypeDecoderForType() throws Exception {
-        TypeDecoder<?> result = decoder.getTypeDecoder("");
-
-        assertNotNull(result);
-        assertEquals(String.class, result.getTypeClass());
-    }
-
-    @Test
     public void testDecoderThrowsWhenAskedToReadWrongTypeAsThisType() throws Exception {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
 

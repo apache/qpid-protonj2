@@ -50,14 +50,6 @@ public class SymbolTypeCodecTest extends CodecTestSupport {
         "The quick brown fox jumps over the lazy dog.";
 
     @Test
-    public void testLookupTypeDecoderForType() throws Exception {
-        TypeDecoder<?> result = decoder.getTypeDecoder(Symbol.valueOf(""));
-
-        assertNotNull(result);
-        assertEquals(Symbol.class, result.getTypeClass());
-    }
-
-    @Test
     public void testDecoderThrowsWhenAskedToReadWrongTypeAsThisType() throws Exception {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
 
