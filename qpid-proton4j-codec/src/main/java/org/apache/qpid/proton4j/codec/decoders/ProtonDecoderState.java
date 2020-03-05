@@ -29,7 +29,7 @@ import org.apache.qpid.proton4j.codec.DecoderState;
 /**
  * State object used by the Built in Decoder implementation.
  */
-public class ProtonDecoderState implements DecoderState {
+public final class ProtonDecoderState implements DecoderState {
 
     private final CharsetDecoder STRING_DECODER = StandardCharsets.UTF_8.newDecoder();
     private final ProtonDecoder decoder;

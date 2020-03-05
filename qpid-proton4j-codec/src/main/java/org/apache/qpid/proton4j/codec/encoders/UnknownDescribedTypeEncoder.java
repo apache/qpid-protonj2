@@ -25,7 +25,7 @@ import org.apache.qpid.proton4j.codec.TypeEncoder;
 /**
  * Encoder of AMQP Described Types to a byte stream.
  */
-public class UnknownDescribedTypeEncoder implements TypeEncoder<DescribedType> {
+public final class UnknownDescribedTypeEncoder implements TypeEncoder<DescribedType> {
 
     @Override
     public Class<DescribedType> getTypeClass() {

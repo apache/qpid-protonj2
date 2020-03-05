@@ -34,22 +34,22 @@ public abstract class UnknownDescribedTypeDecoder extends AbstractDescribedTypeD
     public abstract Object getDescriptor();
 
     @Override
-    public UnsignedLong getDescriptorCode() {
+    public final UnsignedLong getDescriptorCode() {
         return getDescriptor() instanceof UnsignedLong ? (UnsignedLong) getDescriptor() : null;
     }
 
     @Override
-    public Symbol getDescriptorSymbol() {
+    public final Symbol getDescriptorSymbol() {
         return getDescriptor() instanceof Symbol ? (Symbol) getDescriptor() : null;
     }
 
     @Override
-    public Class<DescribedType> getTypeClass() {
+    public final Class<DescribedType> getTypeClass() {
         return DescribedType.class;
     }
 
     @Override
-    public DescribedType readValue(ProtonBuffer buffer, DecoderState state) throws IOException {
+    public final DescribedType readValue(ProtonBuffer buffer, DecoderState state) throws IOException {
         TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
         Object described = decoder.readValue(buffer, state);
 
@@ -57,7 +57,7 @@ public abstract class UnknownDescribedTypeDecoder extends AbstractDescribedTypeD
     }
 
     @Override
-    public DescribedType[] readArrayElements(ProtonBuffer buffer, DecoderState state, int count) throws IOException {
+    public final DescribedType[] readArrayElements(ProtonBuffer buffer, DecoderState state, int count) throws IOException {
         TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
         UnknownDescribedType[] result = new UnknownDescribedType[count];
@@ -71,7 +71,7 @@ public abstract class UnknownDescribedTypeDecoder extends AbstractDescribedTypeD
     }
 
     @Override
-    public void skipValue(ProtonBuffer buffer, DecoderState state) throws IOException {
+    public final void skipValue(ProtonBuffer buffer, DecoderState state) throws IOException {
         state.getDecoder().readNextTypeDecoder(buffer, state).skipValue(buffer, state);
     }
 }

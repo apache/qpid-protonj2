@@ -22,7 +22,7 @@ import org.apache.qpid.proton4j.codec.EncoderState;
 /**
  * State object used by the Built in Encoder implementation.
  */
-public class ProtonEncoderState implements EncoderState {
+public final class ProtonEncoderState implements EncoderState {
 
     private final ProtonEncoder encoder;
 
