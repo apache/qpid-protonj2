@@ -50,7 +50,9 @@ public final class AmqpSequenceTypeEncoder extends AbstractDescribedTypeEncoder<
     @Override
     public void writeType(ProtonBuffer buffer, EncoderState state, AmqpSequence value) {
         buffer.writeByte(EncodingCodes.DESCRIBED_TYPE_INDICATOR);
-        state.getEncoder().writeUnsignedLong(buffer, state, getDescriptorCode());
+        buffer.writeByte(EncodingCodes.SMALLULONG);
+        buffer.writeByte(AmqpSequence.DESCRIPTOR_CODE.byteValue());
+
         state.getEncoder().writeList(buffer, state, value.getValue());
     }
 

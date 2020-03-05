@@ -53,7 +53,7 @@ public final class ReleasedTypeEncoder extends AbstractDescribedListTypeEncoder<
     public void writeType(ProtonBuffer buffer, EncoderState state, Released value) {
         buffer.writeByte(EncodingCodes.DESCRIBED_TYPE_INDICATOR);
         buffer.writeByte(EncodingCodes.SMALLULONG);
-        buffer.writeByte(getDescriptorCode().byteValue());
+        buffer.writeByte(Released.DESCRIPTOR_CODE.byteValue());
         buffer.writeByte(EncodingCodes.LIST0);
     }
 

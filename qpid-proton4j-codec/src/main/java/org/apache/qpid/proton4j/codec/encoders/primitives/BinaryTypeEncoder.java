@@ -46,15 +46,10 @@ public final class BinaryTypeEncoder extends AbstractPrimitiveTypeEncoder<Binary
             buffer.writeByte((byte) value.getReadableBytes());
         }
 
-        // buffer.ensureWritable(value.getReadableBytes());
-        // value.getBytes(value.getReadIndex(), buffer);
-        // TODO: In testing there are some possible bugs here that are encountered when trying to switch over
-        //       to proton buffer inside Binary types.  More tests needed, temporary working options is coded.
-        value.markReadIndex();
-        try {
-            buffer.writeBytes(value);
-        } finally {
-            value.resetReadIndex();
+        if (value.hasArray()) {
+            buffer.writeBytes(value.getArray(), value.getArrayOffset() + value.getReadIndex(), value.getReadableBytes());
+        } else {
+            buffer.writeBytes(value, value.getReadIndex(), value.getReadableBytes());
         }
     }
 

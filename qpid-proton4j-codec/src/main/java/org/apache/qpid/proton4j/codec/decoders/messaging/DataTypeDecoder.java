@@ -34,6 +34,8 @@ import org.apache.qpid.proton4j.codec.decoders.primitives.BinaryTypeDecoder;
  */
 public final class DataTypeDecoder extends AbstractDescribedTypeDecoder<Data> {
 
+    private static final Data EMPTY_DATA = new Data(null);
+
     @Override
     public Class<Data> getTypeClass() {
         return Data.class;
@@ -51,9 +53,8 @@ public final class DataTypeDecoder extends AbstractDescribedTypeDecoder<Data> {
 
     @Override
     public Data readValue(ProtonBuffer buffer, DecoderState state) throws IOException {
-        byte encodingCode = buffer.readByte();
-
-        int size = 0;
+        final byte encodingCode = buffer.readByte();
+        final int size;
 
         switch (encodingCode) {
             case EncodingCodes.VBIN8:
@@ -63,7 +64,7 @@ public final class DataTypeDecoder extends AbstractDescribedTypeDecoder<Data> {
                 size = buffer.readInt();
                 break;
             case EncodingCodes.NULL:
-                return new Data(null);
+                return EMPTY_DATA;
             default:
                 throw new IOException("Expected Binary type but found encoding: " + encodingCode);
         }
@@ -73,8 +74,9 @@ public final class DataTypeDecoder extends AbstractDescribedTypeDecoder<Data> {
                                                "amount of data available ("+ buffer.getReadableBytes()+")");
         }
 
-        int position = buffer.getReadIndex();
-        byte[] data = new byte[size];
+        final int position = buffer.getReadIndex();
+        final byte[] data = new byte[size];
+
         buffer.getBytes(position, data, 0, size);
         buffer.setReadIndex(position + size);
 
@@ -83,16 +85,16 @@ public final class DataTypeDecoder extends AbstractDescribedTypeDecoder<Data> {
 
     @Override
     public Data[] readArrayElements(ProtonBuffer buffer, DecoderState state, int count) throws IOException {
-        TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
+        final TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
         if (!(decoder instanceof BinaryTypeDecoder)) {
             throw new IOException("Expected Binary type indicator but got decoder for type: " + decoder.getClass().getSimpleName());
         }
 
-        BinaryTypeDecoder valueDecoder = (BinaryTypeDecoder) decoder;
-        Binary[] binaryArray = valueDecoder.readArrayElements(buffer, state, count);
+        final BinaryTypeDecoder valueDecoder = (BinaryTypeDecoder) decoder;
+        final Binary[] binaryArray = valueDecoder.readArrayElements(buffer, state, count);
 
-        Data[] dataArray = new Data[count];
+        final Data[] dataArray = new Data[count];
         for (int i = 0; i < count; ++i) {
             dataArray[i] = new Data(binaryArray[i]);
         }
@@ -102,7 +104,7 @@ public final class DataTypeDecoder extends AbstractDescribedTypeDecoder<Data> {
 
     @Override
     public void skipValue(ProtonBuffer buffer, DecoderState state) throws IOException {
-        TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
+        final TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
         if (!(decoder instanceof BinaryTypeDecoder)) {
             throw new IOException("Expected Binary type indicator but got decoder for type: " + decoder.getClass().getSimpleName());
