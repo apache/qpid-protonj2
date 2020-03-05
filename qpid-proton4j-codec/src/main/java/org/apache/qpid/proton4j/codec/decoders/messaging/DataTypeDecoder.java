@@ -23,6 +23,7 @@ import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.amqp.messaging.Data;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.codec.DecoderState;
 import org.apache.qpid.proton4j.codec.EncodingCodes;
 import org.apache.qpid.proton4j.codec.TypeDecoder;
@@ -75,9 +76,15 @@ public final class DataTypeDecoder extends AbstractDescribedTypeDecoder<Data> {
         }
 
         final int position = buffer.getReadIndex();
-        final byte[] data = new byte[size];
+        final ProtonBuffer data = ProtonByteBufferAllocator.DEFAULT.allocate(size, size);
 
-        buffer.getBytes(position, data, 0, size);
+        if (data.hasArray()) {
+            buffer.getBytes(position, data.getArray(), data.getArrayOffset(), size);
+        } else {
+            buffer.getBytes(position, data, 0, size);
+        }
+
+        data.setWriteIndex(size);
         buffer.setReadIndex(position + size);
 
         return new Data(new Binary(data));
