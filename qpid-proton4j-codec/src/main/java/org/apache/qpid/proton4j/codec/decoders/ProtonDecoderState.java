@@ -31,8 +31,11 @@ import org.apache.qpid.proton4j.codec.DecoderState;
  */
 public final class ProtonDecoderState implements DecoderState {
 
+    private static final int MAX_CHAR_BUFFER_CAHCE_SIZE = 100;
+
     private final CharsetDecoder STRING_DECODER = StandardCharsets.UTF_8.newDecoder();
     private final ProtonDecoder decoder;
+    private final char[] decodeCache = new char[MAX_CHAR_BUFFER_CAHCE_SIZE];
 
     private UTF8Decoder stringDecoder;
 
@@ -61,7 +64,7 @@ public final class ProtonDecoderState implements DecoderState {
     @Override
     public String decodeUTF8(ProtonBuffer buffer, int length) {
         if (stringDecoder == null) {
-            return internalDecode(buffer, length, STRING_DECODER);
+            return internalDecode(buffer, length, STRING_DECODER, length > MAX_CHAR_BUFFER_CAHCE_SIZE ? new char[length] : decodeCache);
         } else {
             // TODO - We could pass the buffer and length here as well and specify that the
             //        decoder must move the buffer position to consume them if we really trust
@@ -72,8 +75,7 @@ public final class ProtonDecoderState implements DecoderState {
         }
     }
 
-    private static String internalDecode(ProtonBuffer buffer, final int length, CharsetDecoder decoder) {
-        final char[] chars = new char[length];
+    private static String internalDecode(ProtonBuffer buffer, final int length, CharsetDecoder decoder, char[] scratch) {
         final int bufferInitialPosition = buffer.getReadIndex();
 
         int offset;
@@ -82,15 +84,15 @@ public final class ProtonDecoderState implements DecoderState {
             if (b < 0) {
                 break;
             }
-            chars[offset] = (char) b;
+            scratch[offset] = (char) b;
         }
 
         buffer.setReadIndex(bufferInitialPosition + offset);
 
         if (offset == length) {
-            return new String(chars, 0, length);
+            return new String(scratch, 0, length);
         } else {
-            return internalDecodeUTF8(buffer, length, chars, offset, decoder);
+            return internalDecodeUTF8(buffer, length, scratch, offset, decoder);
         }
     }
 
