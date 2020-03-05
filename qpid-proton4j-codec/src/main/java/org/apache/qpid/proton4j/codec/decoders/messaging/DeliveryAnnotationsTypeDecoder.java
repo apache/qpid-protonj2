@@ -33,7 +33,7 @@ import org.apache.qpid.proton4j.codec.decoders.primitives.NullTypeDecoder;
 /**
  * Decoder of AMQP Delivery Annotations type values from a byte stream.
  */
-public class DeliveryAnnotationsTypeDecoder extends AbstractDescribedTypeDecoder<DeliveryAnnotations> {
+public final class DeliveryAnnotationsTypeDecoder extends AbstractDescribedTypeDecoder<DeliveryAnnotations> {
 
     @Override
     public Class<DeliveryAnnotations> getTypeClass() {

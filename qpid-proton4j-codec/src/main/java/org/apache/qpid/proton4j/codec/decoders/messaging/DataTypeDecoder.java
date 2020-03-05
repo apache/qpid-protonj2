@@ -32,7 +32,7 @@ import org.apache.qpid.proton4j.codec.decoders.primitives.BinaryTypeDecoder;
 /**
  * Decoder of AMQP Data type values from a byte stream.
  */
-public class DataTypeDecoder extends AbstractDescribedTypeDecoder<Data> {
+public final class DataTypeDecoder extends AbstractDescribedTypeDecoder<Data> {
 
     @Override
     public Class<Data> getTypeClass() {

@@ -25,7 +25,7 @@ import org.apache.qpid.proton4j.codec.EncodingCodes;
 /**
  * Decoder of AMQP Boolean False values from a byte stream.
  */
-public class BooleanFalseTypeDecoder extends BooleanTypeDecoder {
+public final class BooleanFalseTypeDecoder extends BooleanTypeDecoder {
 
     @Override
     public Boolean readValue(ProtonBuffer buffer, DecoderState state) {

@@ -27,7 +27,7 @@ import org.apache.qpid.proton4j.codec.decoders.AbstractPrimitiveTypeDecoder;
 /**
  * Decoder of AMQP Decimal128 values from a byte stream
  */
-public class Decimal128TypeDecoder extends AbstractPrimitiveTypeDecoder<Decimal128> {
+public final class Decimal128TypeDecoder extends AbstractPrimitiveTypeDecoder<Decimal128> {
 
     @Override
     public Class<Decimal128> getTypeClass() {

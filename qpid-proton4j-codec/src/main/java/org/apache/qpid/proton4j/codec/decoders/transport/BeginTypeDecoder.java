@@ -31,7 +31,7 @@ import org.apache.qpid.proton4j.codec.decoders.primitives.ListTypeDecoder;
 /**
  * Decoder of AMQP Begin type values from a byte stream
  */
-public class BeginTypeDecoder extends AbstractDescribedTypeDecoder<Begin> {
+public final class BeginTypeDecoder extends AbstractDescribedTypeDecoder<Begin> {
 
     private static final int MIN_BEGIN_LIST_ENTRIES = 4;
     private static final int MAX_BEGIN_LIST_ENTRIES = 8;

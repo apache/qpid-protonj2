@@ -30,7 +30,7 @@ import org.apache.qpid.proton4j.codec.encoders.AbstractDescribedTypeEncoder;
 /**
  * Encoder of AMQP AmqpSequence type values to a byte stream.
  */
-public class AmqpSequenceTypeEncoder extends AbstractDescribedTypeEncoder<AmqpSequence> {
+public final class AmqpSequenceTypeEncoder extends AbstractDescribedTypeEncoder<AmqpSequence> {
 
     @Override
     public Class<AmqpSequence> getTypeClass() {

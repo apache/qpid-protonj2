@@ -27,7 +27,7 @@ import org.apache.qpid.proton4j.codec.encoders.AbstractDescribedListTypeEncoder;
 /**
  * Encoder of AMQP SaslOutcome type values to a byte stream
  */
-public class SaslOutcomeTypeEncoder extends AbstractDescribedListTypeEncoder<SaslOutcome> {
+public final class SaslOutcomeTypeEncoder extends AbstractDescribedListTypeEncoder<SaslOutcome> {
 
     @Override
     public Class<SaslOutcome> getTypeClass() {

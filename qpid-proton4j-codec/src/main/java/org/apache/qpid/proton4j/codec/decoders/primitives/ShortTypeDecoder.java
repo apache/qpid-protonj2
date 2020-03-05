@@ -26,7 +26,7 @@ import org.apache.qpid.proton4j.codec.decoders.AbstractPrimitiveTypeDecoder;
 /**
  * Decode AMQP Short values from a byte stream
  */
-public class ShortTypeDecoder extends AbstractPrimitiveTypeDecoder<Short> {
+public final class ShortTypeDecoder extends AbstractPrimitiveTypeDecoder<Short> {
 
     @Override
     public boolean isJavaPrimitive() {

@@ -22,11 +22,12 @@ import org.apache.qpid.proton4j.amqp.UnsignedInteger;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.DecoderState;
 import org.apache.qpid.proton4j.codec.EncodingCodes;
+import org.apache.qpid.proton4j.codec.decoders.AbstractPrimitiveTypeDecoder;
 
 /**
  * Decode AMQP Small Unsigned Integer values from a byte stream
  */
-public class UnsignedInteger8TypeDecoder extends UnsignedInteger32TypeDecoder {
+public class UnsignedInteger8TypeDecoder extends AbstractPrimitiveTypeDecoder<UnsignedInteger> {
 
     @Override
     public int getTypeCode() {
@@ -41,5 +42,10 @@ public class UnsignedInteger8TypeDecoder extends UnsignedInteger32TypeDecoder {
     @Override
     public void skipValue(ProtonBuffer buffer, DecoderState state) throws IOException {
         buffer.skipBytes(Byte.BYTES);
+    }
+
+    @Override
+    public Class<UnsignedInteger> getTypeClass() {
+        return UnsignedInteger.class;
     }
 }

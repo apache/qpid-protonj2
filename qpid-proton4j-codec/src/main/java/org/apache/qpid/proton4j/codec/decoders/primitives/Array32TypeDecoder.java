@@ -22,7 +22,7 @@ import org.apache.qpid.proton4j.codec.EncodingCodes;
 /**
  * Decoder of AMQP Arrays from a byte stream.
  */
-public class Array32TypeDecoder extends AbstractArrayTypeDecoder {
+public final class Array32TypeDecoder extends AbstractArrayTypeDecoder {
 
     @Override
     protected int readSize(ProtonBuffer buffer) {

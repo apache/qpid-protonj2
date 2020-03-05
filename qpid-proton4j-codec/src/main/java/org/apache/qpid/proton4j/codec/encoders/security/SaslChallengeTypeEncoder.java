@@ -27,7 +27,7 @@ import org.apache.qpid.proton4j.codec.encoders.AbstractDescribedListTypeEncoder;
 /**
  * Encoder of AMQP SaslChallenge type values to a byte stream
  */
-public class SaslChallengeTypeEncoder extends AbstractDescribedListTypeEncoder<SaslChallenge> {
+public final class SaslChallengeTypeEncoder extends AbstractDescribedListTypeEncoder<SaslChallenge> {
 
     @Override
     public Class<SaslChallenge> getTypeClass() {

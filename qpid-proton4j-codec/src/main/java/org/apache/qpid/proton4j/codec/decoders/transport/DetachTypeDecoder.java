@@ -32,7 +32,7 @@ import org.apache.qpid.proton4j.codec.decoders.primitives.ListTypeDecoder;
 /**
  * Decoder of AMQP Detach type values from a byte stream
  */
-public class DetachTypeDecoder extends AbstractDescribedTypeDecoder<Detach> {
+public final class DetachTypeDecoder extends AbstractDescribedTypeDecoder<Detach> {
 
     private static final int MIN_DETACH_LIST_ENTRIES = 1;
     private static final int MAX_DETACH_LIST_ENTRIES = 3;

@@ -30,7 +30,7 @@ import org.apache.qpid.proton4j.codec.decoders.primitives.ListTypeDecoder;
 /**
  * Decoder of AMQP SaslInit type values from a byte stream.
  */
-public class SaslInitTypeDecoder extends AbstractDescribedTypeDecoder<SaslInit> {
+public final class SaslInitTypeDecoder extends AbstractDescribedTypeDecoder<SaslInit> {
 
     private static final int MIN_SASL_INIT_LIST_ENTRIES = 0;
     private static final int MAX_SASL_INIT_LIST_ENTRIES = 3;

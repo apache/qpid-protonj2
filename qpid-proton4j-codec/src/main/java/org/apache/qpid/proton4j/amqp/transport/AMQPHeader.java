@@ -23,7 +23,7 @@ import org.apache.qpid.proton4j.buffer.ProtonByteBuffer;
  * Represents the AMQP protocol handshake packet that is sent during the
  * initial exchange with a remote peer.
  */
-public class AMQPHeader {
+public final class AMQPHeader {
 
     static final byte[] PREFIX = new byte[] { 'A', 'M', 'Q', 'P' };
 

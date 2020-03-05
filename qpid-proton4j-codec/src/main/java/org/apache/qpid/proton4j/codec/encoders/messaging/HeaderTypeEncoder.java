@@ -27,7 +27,7 @@ import org.apache.qpid.proton4j.codec.encoders.AbstractDescribedListTypeEncoder;
 /**
  * Encoder of AMQP Header type values to a byte stream
  */
-public class HeaderTypeEncoder extends AbstractDescribedListTypeEncoder<Header> {
+public final class HeaderTypeEncoder extends AbstractDescribedListTypeEncoder<Header> {
 
     @Override
     public Class<Header> getTypeClass() {

@@ -27,7 +27,7 @@ import org.apache.qpid.proton4j.codec.decoders.AbstractPrimitiveTypeDecoder;
 /**
  * Decoder of AMQP UUID values from a byte stream
  */
-public class UUIDTypeDecoder extends AbstractPrimitiveTypeDecoder<UUID> {
+public final class UUIDTypeDecoder extends AbstractPrimitiveTypeDecoder<UUID> {
 
     private static final int BYTES = Long.BYTES * 2;
 

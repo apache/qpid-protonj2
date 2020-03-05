@@ -24,7 +24,7 @@ import org.apache.qpid.proton4j.codec.encoders.AbstractPrimitiveTypeEncoder;
 /**
  * Encoder of AMQP Double type values to a byte stream.
  */
-public class DoubleTypeEncoder extends AbstractPrimitiveTypeEncoder<Double> {
+public final class DoubleTypeEncoder extends AbstractPrimitiveTypeEncoder<Double> {
 
     @Override
     public Class<Double> getTypeClass() {

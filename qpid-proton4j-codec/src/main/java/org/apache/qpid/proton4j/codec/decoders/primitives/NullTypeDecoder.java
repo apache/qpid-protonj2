@@ -26,7 +26,7 @@ import org.apache.qpid.proton4j.codec.decoders.AbstractPrimitiveTypeDecoder;
 /**
  * Decoder of AMQP Null values from a byte stream.
  */
-public class NullTypeDecoder extends AbstractPrimitiveTypeDecoder<Void> {
+public final class NullTypeDecoder extends AbstractPrimitiveTypeDecoder<Void> {
 
     @Override
     public int getTypeCode() {

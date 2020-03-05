@@ -31,7 +31,7 @@ import org.apache.qpid.proton4j.codec.decoders.primitives.ListTypeDecoder;
 /**
  * Decoder of AMQP SaslOutcome type values from a byte stream.
  */
-public class SaslOutcomeTypeDecoder extends AbstractDescribedTypeDecoder<SaslOutcome> {
+public final class SaslOutcomeTypeDecoder extends AbstractDescribedTypeDecoder<SaslOutcome> {
 
     private static final int MIN_SASL_OUTCOME_LIST_ENTRIES = 1;
     private static final int MAX_SASL_OUTCOME_LIST_ENTRIES = 2;

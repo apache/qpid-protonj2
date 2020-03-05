@@ -29,7 +29,7 @@ import org.apache.qpid.proton4j.codec.decoders.AbstractPrimitiveTypeDecoder;
  * Decoder of Zero sized AMQP List values from a byte stream.
  */
 @SuppressWarnings( { "unchecked", "rawtypes" } )
-public class List0TypeDecoder extends AbstractPrimitiveTypeDecoder<List> implements ListTypeDecoder {
+public final class List0TypeDecoder extends AbstractPrimitiveTypeDecoder<List> implements ListTypeDecoder {
 
     @Override
     public List<Object> readValue(ProtonBuffer buffer, DecoderState state) {

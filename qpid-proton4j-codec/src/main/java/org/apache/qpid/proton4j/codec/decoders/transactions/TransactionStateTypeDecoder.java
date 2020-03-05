@@ -31,7 +31,7 @@ import org.apache.qpid.proton4j.codec.decoders.primitives.ListTypeDecoder;
 /**
  * Decoder of AMQP TransactionState types from a byte stream.
  */
-public class TransactionStateTypeDecoder extends AbstractDescribedTypeDecoder<TransactionalState> {
+public final class TransactionStateTypeDecoder extends AbstractDescribedTypeDecoder<TransactionalState> {
 
     private static final int MIN_TRANSACTION_STATE_LIST_ENTRIES = 1;
     private static final int MAX_TRANSACTION_STATE_LIST_ENTRIES = 2;

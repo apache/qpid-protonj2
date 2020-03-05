@@ -26,7 +26,7 @@ import org.apache.qpid.proton4j.codec.encoders.AbstractDescribedListTypeEncoder;
 /**
  * Encoder of AMQP SaslMechanisms type values to a byte stream
  */
-public class SaslMechanismsTypeEncoder extends AbstractDescribedListTypeEncoder<SaslMechanisms> {
+public final class SaslMechanismsTypeEncoder extends AbstractDescribedListTypeEncoder<SaslMechanisms> {
 
     @Override
     public Class<SaslMechanisms> getTypeClass() {

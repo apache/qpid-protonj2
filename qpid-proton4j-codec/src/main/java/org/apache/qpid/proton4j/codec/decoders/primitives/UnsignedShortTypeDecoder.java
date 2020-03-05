@@ -27,7 +27,7 @@ import org.apache.qpid.proton4j.codec.decoders.AbstractPrimitiveTypeDecoder;
 /**
  * Decode AMQP Unsigned Short values from a byte stream
  */
-public class UnsignedShortTypeDecoder extends AbstractPrimitiveTypeDecoder<UnsignedShort> {
+public final class UnsignedShortTypeDecoder extends AbstractPrimitiveTypeDecoder<UnsignedShort> {
 
     @Override
     public Class<UnsignedShort> getTypeClass() {

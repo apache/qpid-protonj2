@@ -25,7 +25,7 @@ import org.apache.qpid.proton4j.codec.TypeEncoder;
 /**
  * Custom encoder for writing DeliveryTag types to a {@link ProtonBuffer}.
  */
-public class DeliveryTagEncoder implements TypeEncoder<DeliveryTag> {
+public final class DeliveryTagEncoder implements TypeEncoder<DeliveryTag> {
 
     @Override
     public Class<DeliveryTag> getTypeClass() {

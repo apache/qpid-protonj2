@@ -30,7 +30,7 @@ import org.apache.qpid.proton4j.codec.decoders.primitives.ListTypeDecoder;
 /**
  * Decoder of AMQP SaslChallenge type values from a byte stream.
  */
-public class SaslMechanismsTypeDecoder extends AbstractDescribedTypeDecoder<SaslMechanisms> {
+public final class SaslMechanismsTypeDecoder extends AbstractDescribedTypeDecoder<SaslMechanisms> {
 
     private static final int MIN_SASL_MECHANISMS_LIST_ENTRIES = 1;
 

@@ -34,7 +34,7 @@ import org.apache.qpid.proton4j.codec.decoders.primitives.ListTypeDecoder;
 /**
  * Decoder of AMQP Transfer type values from a byte stream
  */
-public class TransferTypeDecoder extends AbstractDescribedTypeDecoder<Transfer> {
+public final class TransferTypeDecoder extends AbstractDescribedTypeDecoder<Transfer> {
 
     private static final int MIN_TRANSFER_LIST_ENTRIES = 1;
     private static final int MAX_TRANSFER_LIST_ENTRIES = 11;

@@ -28,7 +28,7 @@ import org.apache.qpid.proton4j.codec.encoders.AbstractDescribedMapTypeEncoder;
 /**
  * Encoder of AMQP Footer type values to a byte stream
  */
-public class FooterTypeEncoder extends AbstractDescribedMapTypeEncoder<Object, Object, Footer> {
+public final class FooterTypeEncoder extends AbstractDescribedMapTypeEncoder<Object, Object, Footer> {
 
     @Override
     public Class<Footer> getTypeClass() {

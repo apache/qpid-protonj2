@@ -31,7 +31,7 @@ import org.apache.qpid.proton4j.codec.decoders.primitives.ListTypeDecoder;
 /**
  * Decoder of AMQP Open type values from a byte stream.
  */
-public class OpenTypeDecoder extends AbstractDescribedTypeDecoder<Open> {
+public final class OpenTypeDecoder extends AbstractDescribedTypeDecoder<Open> {
 
     private static final int MIN_OPEN_LIST_ENTRIES = 1;
     private static final int MAX_OPEN_LIST_ENTRIES = 10;

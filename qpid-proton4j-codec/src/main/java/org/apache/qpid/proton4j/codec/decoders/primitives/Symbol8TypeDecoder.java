@@ -22,7 +22,7 @@ import org.apache.qpid.proton4j.codec.EncodingCodes;
 /**
  * Decoder of AMQP Symbol values from a byte stream.
  */
-public class Symbol8TypeDecoder extends AbstractSymbolTypeDecoder {
+public final class Symbol8TypeDecoder extends AbstractSymbolTypeDecoder {
 
     @Override
     protected int readSize(ProtonBuffer buffer) {

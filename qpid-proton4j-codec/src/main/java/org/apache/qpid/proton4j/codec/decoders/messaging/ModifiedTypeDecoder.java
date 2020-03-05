@@ -30,7 +30,7 @@ import org.apache.qpid.proton4j.codec.decoders.primitives.ListTypeDecoder;
 /**
  * Decoder of AMQP Modified type values from a byte stream.
  */
-public class ModifiedTypeDecoder extends AbstractDescribedTypeDecoder<Modified> {
+public final class ModifiedTypeDecoder extends AbstractDescribedTypeDecoder<Modified> {
 
     private static final int MIN_MODIFIED_LIST_ENTRIES = 0;
     private static final int MAX_MODIFIED_LIST_ENTRIES = 3;

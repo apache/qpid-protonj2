@@ -27,7 +27,7 @@ import org.apache.qpid.proton4j.codec.encoders.AbstractDescribedListTypeEncoder;
 /**
  * Encoder of AMQP Modified type values to a byte stream.
  */
-public class ModifiedTypeEncoder extends AbstractDescribedListTypeEncoder<Modified> {
+public final class ModifiedTypeEncoder extends AbstractDescribedListTypeEncoder<Modified> {
 
     @Override
     public UnsignedLong getDescriptorCode() {

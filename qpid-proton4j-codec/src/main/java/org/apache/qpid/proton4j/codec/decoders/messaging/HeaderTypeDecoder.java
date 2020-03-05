@@ -31,7 +31,7 @@ import org.apache.qpid.proton4j.codec.decoders.primitives.ListTypeDecoder;
 /**
  * Decoder of AMQP Header types from a byte stream
  */
-public class HeaderTypeDecoder extends AbstractDescribedTypeDecoder<Header> {
+public final class HeaderTypeDecoder extends AbstractDescribedTypeDecoder<Header> {
 
     private static final int MIN_HEADER_LIST_ENTRIES = 0;
     private static final int MAX_HEADER_LIST_ENTRIES = 5;

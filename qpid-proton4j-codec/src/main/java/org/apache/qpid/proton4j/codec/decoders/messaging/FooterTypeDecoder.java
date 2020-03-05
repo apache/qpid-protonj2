@@ -31,7 +31,7 @@ import org.apache.qpid.proton4j.codec.decoders.primitives.NullTypeDecoder;
 /**
  * Decoder of AMQP Footer type values from a byte stream.
  */
-public class FooterTypeDecoder extends AbstractDescribedTypeDecoder<Footer> {
+public final class FooterTypeDecoder extends AbstractDescribedTypeDecoder<Footer> {
 
     @Override
     public Class<Footer> getTypeClass() {

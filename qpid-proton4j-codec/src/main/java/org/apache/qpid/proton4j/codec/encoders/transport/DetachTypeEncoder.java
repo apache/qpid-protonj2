@@ -27,7 +27,7 @@ import org.apache.qpid.proton4j.codec.encoders.AbstractDescribedListTypeEncoder;
 /**
  * Encoder of AMQP Detach type values to a byte stream.
  */
-public class DetachTypeEncoder extends AbstractDescribedListTypeEncoder<Detach> {
+public final class DetachTypeEncoder extends AbstractDescribedListTypeEncoder<Detach> {
 
     @Override
     public UnsignedLong getDescriptorCode() {

@@ -34,7 +34,7 @@ import org.apache.qpid.proton4j.codec.decoders.primitives.ListTypeDecoder;
 /**
  * Decoder of AMQP Source type values from a byte stream.
  */
-public class SourceTypeDecoder extends AbstractDescribedTypeDecoder<Source> {
+public final class SourceTypeDecoder extends AbstractDescribedTypeDecoder<Source> {
 
     private static final int MIN_SOURCE_LIST_ENTRIES = 0;
     private static final int MAX_SOURCE_LIST_ENTRIES = 11;

@@ -26,7 +26,7 @@ import org.apache.qpid.proton4j.codec.decoders.AbstractPrimitiveTypeDecoder;
 /**
  * Decoder of AMQP Character from a byte stream.
  */
-public class CharacterTypeDecoder extends AbstractPrimitiveTypeDecoder<Character> {
+public final class CharacterTypeDecoder extends AbstractPrimitiveTypeDecoder<Character> {
 
     @Override
     public boolean isJavaPrimitive() {

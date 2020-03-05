@@ -30,7 +30,7 @@ import org.apache.qpid.proton4j.codec.encoders.AbstractPrimitiveTypeEncoder;
  * Encoder of AMQP Map type values to a byte stream.
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })
-public class MapTypeEncoder extends AbstractPrimitiveTypeEncoder<Map> {
+public final class MapTypeEncoder extends AbstractPrimitiveTypeEncoder<Map> {
 
     @Override
     public Class<Map> getTypeClass() {

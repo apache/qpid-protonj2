@@ -31,7 +31,7 @@ import org.apache.qpid.proton4j.codec.decoders.primitives.ListTypeDecoder;
 /**
  * Decoder of AMQP Flow type values from a byte stream.
  */
-public class FlowTypeDecoder extends AbstractDescribedTypeDecoder<Flow> {
+public final class FlowTypeDecoder extends AbstractDescribedTypeDecoder<Flow> {
 
     private static final int MIN_FLOW_LIST_ENTRIES = 4;
     private static final int MAX_FLOW_LIST_ENTRIES = 11;

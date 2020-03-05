@@ -28,7 +28,7 @@ import org.apache.qpid.proton4j.codec.encoders.AbstractDescribedMapTypeEncoder;
 /**
  * Encoder of AMQP MessageAnnotations type values to a byte stream.
  */
-public class MessageAnnotationsTypeEncoder extends AbstractDescribedMapTypeEncoder<Symbol, Object, MessageAnnotations> {
+public final class MessageAnnotationsTypeEncoder extends AbstractDescribedMapTypeEncoder<Symbol, Object, MessageAnnotations> {
 
     @Override
     public Class<MessageAnnotations> getTypeClass() {

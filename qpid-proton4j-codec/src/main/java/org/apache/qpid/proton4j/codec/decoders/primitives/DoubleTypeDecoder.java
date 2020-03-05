@@ -26,7 +26,7 @@ import org.apache.qpid.proton4j.codec.decoders.AbstractPrimitiveTypeDecoder;
 /**
  * Decoder of AMQP Double values from a byte stream
  */
-public class DoubleTypeDecoder extends AbstractPrimitiveTypeDecoder<Double> {
+public final class DoubleTypeDecoder extends AbstractPrimitiveTypeDecoder<Double> {
 
     @Override
     public boolean isJavaPrimitive() {

@@ -24,7 +24,7 @@ import org.apache.qpid.proton4j.codec.encoders.AbstractPrimitiveTypeEncoder;
 /**
  * Encoder of AMQP String type values to a byte stream.
  */
-public class StringTypeEncoder extends AbstractPrimitiveTypeEncoder<String> {
+public final class StringTypeEncoder extends AbstractPrimitiveTypeEncoder<String> {
 
     @Override
     public Class<String> getTypeClass() {

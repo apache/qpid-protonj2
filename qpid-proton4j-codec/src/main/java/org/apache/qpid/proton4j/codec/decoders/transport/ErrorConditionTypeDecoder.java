@@ -31,7 +31,7 @@ import org.apache.qpid.proton4j.codec.decoders.primitives.ListTypeDecoder;
 /**
  * Decoder of AMQP ErrorCondition type values from a byte stream.
  */
-public class ErrorConditionTypeDecoder extends AbstractDescribedTypeDecoder<ErrorCondition> {
+public final class ErrorConditionTypeDecoder extends AbstractDescribedTypeDecoder<ErrorCondition> {
 
     private static final int MIN_ERROR_CONDITION_LIST_ENTRIES = 1;
     private static final int MAX_ERROR_CONDITION_LIST_ENTRIES = 3;

@@ -22,7 +22,7 @@ import org.apache.qpid.proton4j.codec.EncodingCodes;
 /**
  * Decoder of AMQP small Map types from a byte stream
  */
-public class Map8TypeDecoder extends AbstractMapTypeDecoder {
+public final class Map8TypeDecoder extends AbstractMapTypeDecoder {
 
     @Override
     public int getTypeCode() {

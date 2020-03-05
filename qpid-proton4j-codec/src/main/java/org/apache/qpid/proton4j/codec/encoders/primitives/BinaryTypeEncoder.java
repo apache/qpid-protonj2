@@ -25,7 +25,7 @@ import org.apache.qpid.proton4j.codec.encoders.AbstractPrimitiveTypeEncoder;
 /**
  * Encoder of AMQP Binary type values to a byte stream.
  */
-public class BinaryTypeEncoder extends AbstractPrimitiveTypeEncoder<Binary> {
+public final class BinaryTypeEncoder extends AbstractPrimitiveTypeEncoder<Binary> {
 
     @Override
     public Class<Binary> getTypeClass() {

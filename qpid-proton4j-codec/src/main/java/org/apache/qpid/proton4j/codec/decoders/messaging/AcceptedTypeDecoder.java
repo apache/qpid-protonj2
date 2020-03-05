@@ -30,7 +30,7 @@ import org.apache.qpid.proton4j.codec.decoders.primitives.ListTypeDecoder;
 /**
  * Decoder of AMQP Accepted type values from a byte stream.
  */
-public class AcceptedTypeDecoder extends AbstractDescribedTypeDecoder<Accepted> {
+public final class AcceptedTypeDecoder extends AbstractDescribedTypeDecoder<Accepted> {
 
     @Override
     public Class<Accepted> getTypeClass() {

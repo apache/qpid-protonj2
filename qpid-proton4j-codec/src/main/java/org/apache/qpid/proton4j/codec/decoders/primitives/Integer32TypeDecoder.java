@@ -26,7 +26,7 @@ import org.apache.qpid.proton4j.codec.decoders.AbstractPrimitiveTypeDecoder;
 /**
  * Decode AMQP Integer values from a byte stream
  */
-public class Integer32TypeDecoder extends AbstractPrimitiveTypeDecoder<Integer> {
+public final class Integer32TypeDecoder extends AbstractPrimitiveTypeDecoder<Integer> {
 
     @Override
     public boolean isJavaPrimitive() {

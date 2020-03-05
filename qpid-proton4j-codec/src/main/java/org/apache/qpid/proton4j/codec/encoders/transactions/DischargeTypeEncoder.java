@@ -27,7 +27,7 @@ import org.apache.qpid.proton4j.codec.encoders.AbstractDescribedListTypeEncoder;
 /**
  * Encoder of AMQP Discharge type values to a byte stream.
  */
-public class DischargeTypeEncoder extends AbstractDescribedListTypeEncoder<Discharge> {
+public final class DischargeTypeEncoder extends AbstractDescribedListTypeEncoder<Discharge> {
 
     @Override
     public UnsignedLong getDescriptorCode() {

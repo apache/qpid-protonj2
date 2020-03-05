@@ -27,7 +27,7 @@ import org.apache.qpid.proton4j.codec.encoders.AbstractDescribedListTypeEncoder;
 /**
  * Encoder of AMQP Begin type values to a byte stream.
  */
-public class BeginTypeEncoder extends AbstractDescribedListTypeEncoder<Begin> {
+public final class BeginTypeEncoder extends AbstractDescribedListTypeEncoder<Begin> {
 
     @Override
     public UnsignedLong getDescriptorCode() {

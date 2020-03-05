@@ -30,7 +30,7 @@ import org.apache.qpid.proton4j.codec.decoders.primitives.ListTypeDecoder;
 /**
  * Decoder of AMQP DeleteOnNoLinks type values from a byte stream
  */
-public class DeleteOnNoLinksTypeDecoder extends AbstractDescribedTypeDecoder<DeleteOnNoLinks> {
+public final class DeleteOnNoLinksTypeDecoder extends AbstractDescribedTypeDecoder<DeleteOnNoLinks> {
 
     @Override
     public Class<DeleteOnNoLinks> getTypeClass() {

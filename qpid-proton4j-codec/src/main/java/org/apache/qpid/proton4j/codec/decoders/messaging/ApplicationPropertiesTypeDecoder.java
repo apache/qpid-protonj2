@@ -34,7 +34,7 @@ import org.apache.qpid.proton4j.codec.decoders.primitives.NullTypeDecoder;
 /**
  * Decoder of AMQP ApplicationProperties types from a byte stream
  */
-public class ApplicationPropertiesTypeDecoder extends AbstractDescribedTypeDecoder<ApplicationProperties> {
+public final class ApplicationPropertiesTypeDecoder extends AbstractDescribedTypeDecoder<ApplicationProperties> {
 
     @Override
     public Class<ApplicationProperties> getTypeClass() {

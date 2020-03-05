@@ -30,7 +30,7 @@ import org.apache.qpid.proton4j.codec.decoders.primitives.ListTypeDecoder;
 /**
  * Decoder of AMQP Coordinator type values from a byte stream.
  */
-public class CoordinatorTypeDecoder extends AbstractDescribedTypeDecoder<Coordinator> {
+public final class CoordinatorTypeDecoder extends AbstractDescribedTypeDecoder<Coordinator> {
 
     private static final int MIN_COORDINATOR_LIST_ENTRIES = 0;
     private static final int MAX_COORDINATOR_LIST_ENTRIES = 1;

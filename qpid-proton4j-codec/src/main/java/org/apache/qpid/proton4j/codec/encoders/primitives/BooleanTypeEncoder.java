@@ -24,7 +24,7 @@ import org.apache.qpid.proton4j.codec.encoders.AbstractPrimitiveTypeEncoder;
 /**
  * Encoder of AMQP Boolean True types to a byte stream.
  */
-public class BooleanTypeEncoder extends AbstractPrimitiveTypeEncoder<Boolean> {
+public final class BooleanTypeEncoder extends AbstractPrimitiveTypeEncoder<Boolean> {
 
     @Override
     public Class<Boolean> getTypeClass() {

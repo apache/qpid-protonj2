@@ -36,7 +36,7 @@ import org.apache.qpid.proton4j.codec.decoders.primitives.ListTypeDecoder;
 /**
  * Decoder of AMQP Attach type values from a byte stream.
  */
-public class AttachTypeDecoder extends AbstractDescribedTypeDecoder<Attach> {
+public final class AttachTypeDecoder extends AbstractDescribedTypeDecoder<Attach> {
 
     private static final int MIN_ATTACH_LIST_ENTRIES = 3;
     private static final int MAX_ATTACH_LIST_ENTRIES = 14;

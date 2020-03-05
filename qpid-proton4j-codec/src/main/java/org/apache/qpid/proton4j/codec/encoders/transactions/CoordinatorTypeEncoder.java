@@ -27,7 +27,7 @@ import org.apache.qpid.proton4j.codec.encoders.AbstractDescribedListTypeEncoder;
 /**
  * Encoder of AMQP Coordinator type values to a byte stream.
  */
-public class CoordinatorTypeEncoder extends AbstractDescribedListTypeEncoder<Coordinator> {
+public final class CoordinatorTypeEncoder extends AbstractDescribedListTypeEncoder<Coordinator> {
 
     @Override
     public UnsignedLong getDescriptorCode() {

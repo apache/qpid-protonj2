@@ -30,7 +30,7 @@ import org.apache.qpid.proton4j.codec.decoders.primitives.ListTypeDecoder;
 /**
  * Decoder of AMQP DeleteOnClose type values from a byte stream
  */
-public class DeleteOnCloseTypeDecoder extends AbstractDescribedTypeDecoder<DeleteOnClose> {
+public final class DeleteOnCloseTypeDecoder extends AbstractDescribedTypeDecoder<DeleteOnClose> {
 
     @Override
     public Class<DeleteOnClose> getTypeClass() {

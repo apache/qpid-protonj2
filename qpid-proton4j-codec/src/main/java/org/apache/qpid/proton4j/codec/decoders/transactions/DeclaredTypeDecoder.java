@@ -30,7 +30,7 @@ import org.apache.qpid.proton4j.codec.decoders.primitives.ListTypeDecoder;
 /**
  * Decoder of AMQP Declared types from a byte stream.
  */
-public class DeclaredTypeDecoder extends AbstractDescribedTypeDecoder<Declared> {
+public final class DeclaredTypeDecoder extends AbstractDescribedTypeDecoder<Declared> {
 
     private static final int MIN_DECLARED_LIST_ENTRIES = 1;
     private static final int MAX_DECLARED_LIST_ENTRIES = 1;

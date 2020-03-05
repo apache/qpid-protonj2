@@ -29,7 +29,7 @@ import org.apache.qpid.proton4j.codec.decoders.AbstractDescribedTypeDecoder;
 /**
  * Decoder of AMQP Data type values from a byte stream.
  */
-public class AmqpValueTypeDecoder extends AbstractDescribedTypeDecoder<AmqpValue> {
+public final class AmqpValueTypeDecoder extends AbstractDescribedTypeDecoder<AmqpValue> {
 
     @Override
     public Class<AmqpValue> getTypeClass() {

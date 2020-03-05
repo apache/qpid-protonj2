@@ -24,7 +24,7 @@ import org.apache.qpid.proton4j.codec.encoders.AbstractPrimitiveTypeEncoder;
 /**
  * Encoder of AMQP Float type values to a byte stream.
  */
-public class FloatTypeEncoder extends AbstractPrimitiveTypeEncoder<Float> {
+public final class FloatTypeEncoder extends AbstractPrimitiveTypeEncoder<Float> {
 
     @Override
     public Class<Float> getTypeClass() {

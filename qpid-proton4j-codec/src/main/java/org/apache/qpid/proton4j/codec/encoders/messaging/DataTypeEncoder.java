@@ -28,7 +28,7 @@ import org.apache.qpid.proton4j.codec.encoders.AbstractDescribedTypeEncoder;
 /**
  * Encoder of AMQP Data type values to a byte stream.
  */
-public class DataTypeEncoder extends AbstractDescribedTypeEncoder<Data> {
+public final class DataTypeEncoder extends AbstractDescribedTypeEncoder<Data> {
 
     @Override
     public Class<Data> getTypeClass() {

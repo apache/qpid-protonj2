@@ -30,7 +30,7 @@ import org.apache.qpid.proton4j.codec.decoders.primitives.ListTypeDecoder;
 /**
  * Decoder of AMQP SaslResponse type values from a byte stream.
  */
-public class SaslResponseTypeDecoder extends AbstractDescribedTypeDecoder<SaslResponse> {
+public final class SaslResponseTypeDecoder extends AbstractDescribedTypeDecoder<SaslResponse> {
 
     private static final int REQUIRED_LIST_ENTRIES = 1;
 

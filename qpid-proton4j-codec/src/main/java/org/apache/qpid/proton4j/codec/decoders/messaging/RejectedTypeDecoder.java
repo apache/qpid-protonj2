@@ -31,7 +31,7 @@ import org.apache.qpid.proton4j.codec.decoders.primitives.ListTypeDecoder;
 /**
  * Decoder of AMQP Rejected type values from a byte stream.
  */
-public class RejectedTypeDecoder extends AbstractDescribedTypeDecoder<Rejected> {
+public final class RejectedTypeDecoder extends AbstractDescribedTypeDecoder<Rejected> {
 
     private static final int MIN_REJECTED_LIST_ENTRIES = 0;
     private static final int MAX_REJECTED_LIST_ENTRIES = 1;

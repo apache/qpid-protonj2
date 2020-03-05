@@ -33,7 +33,7 @@ import org.apache.qpid.proton4j.codec.decoders.primitives.ListTypeDecoder;
 /**
  * Decoder of AMQP Disposition type values from a byte stream.
  */
-public class DispositionTypeDecoder extends AbstractDescribedTypeDecoder<Disposition> {
+public final class DispositionTypeDecoder extends AbstractDescribedTypeDecoder<Disposition> {
 
     private static final int MIN_DISPOSITION_LIST_ENTRIES = 2;
     private static final int MAX_DISPOSITION_LIST_ENTRIES = 6;

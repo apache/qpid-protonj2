@@ -22,11 +22,12 @@ import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.DecoderState;
 import org.apache.qpid.proton4j.codec.EncodingCodes;
+import org.apache.qpid.proton4j.codec.decoders.AbstractPrimitiveTypeDecoder;
 
 /**
  * Decode AMQP Zero value Unsigned Long values from a byte stream
  */
-public class UnsignedLong0TypeDecoder extends UnsignedLong64TypeDecoder {
+public final class UnsignedLong0TypeDecoder extends AbstractPrimitiveTypeDecoder<UnsignedLong> {
 
     @Override
     public int getTypeCode() {
@@ -40,5 +41,10 @@ public class UnsignedLong0TypeDecoder extends UnsignedLong64TypeDecoder {
 
     @Override
     public void skipValue(ProtonBuffer buffer, DecoderState state) throws IOException {
+    }
+
+    @Override
+    public Class<UnsignedLong> getTypeClass() {
+        return UnsignedLong.class;
     }
 }

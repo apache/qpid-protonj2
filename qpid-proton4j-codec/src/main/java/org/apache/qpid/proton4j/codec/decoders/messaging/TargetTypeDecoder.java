@@ -33,7 +33,7 @@ import org.apache.qpid.proton4j.codec.decoders.primitives.ListTypeDecoder;
 /**
  * Decoder of AMQP Target type values from a byte stream
  */
-public class TargetTypeDecoder extends AbstractDescribedTypeDecoder<Target> {
+public final class TargetTypeDecoder extends AbstractDescribedTypeDecoder<Target> {
 
     private static final int MIN_TARGET_LIST_ENTRIES = 0;
     private static final int MAX_TARGET_LIST_ENTRIES = 7;

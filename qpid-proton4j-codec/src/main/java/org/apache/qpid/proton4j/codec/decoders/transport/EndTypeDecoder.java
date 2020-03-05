@@ -31,7 +31,7 @@ import org.apache.qpid.proton4j.codec.decoders.primitives.ListTypeDecoder;
 /**
  * Decoder of AMQP End type values from a byte stream
  */
-public class EndTypeDecoder extends AbstractDescribedTypeDecoder<End> {
+public final class EndTypeDecoder extends AbstractDescribedTypeDecoder<End> {
 
     private static final int MIN_END_LIST_ENTRIES = 0;
     private static final int MAX_END_LIST_ENTRIES = 1;

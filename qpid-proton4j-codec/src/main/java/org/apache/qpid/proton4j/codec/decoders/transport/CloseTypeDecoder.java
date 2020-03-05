@@ -31,7 +31,7 @@ import org.apache.qpid.proton4j.codec.decoders.primitives.ListTypeDecoder;
 /**
  * Decoder of AMQP Close type values from a byte stream
  */
-public class CloseTypeDecoder extends AbstractDescribedTypeDecoder<Close> {
+public final class CloseTypeDecoder extends AbstractDescribedTypeDecoder<Close> {
 
     private static final int MIN_CLOSE_LIST_ENTRIES = 0;
     private static final int MAX_CLOSE_LIST_ENTRIES = 1;

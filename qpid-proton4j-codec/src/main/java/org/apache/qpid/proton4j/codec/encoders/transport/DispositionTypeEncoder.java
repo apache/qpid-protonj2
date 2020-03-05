@@ -29,7 +29,7 @@ import org.apache.qpid.proton4j.codec.encoders.AbstractDescribedListTypeEncoder;
 /**
  * Encoder of AMQP Disposition type values to a byte stream
  */
-public class DispositionTypeEncoder extends AbstractDescribedListTypeEncoder<Disposition> {
+public final class DispositionTypeEncoder extends AbstractDescribedListTypeEncoder<Disposition> {
 
     @Override
     public UnsignedLong getDescriptorCode() {

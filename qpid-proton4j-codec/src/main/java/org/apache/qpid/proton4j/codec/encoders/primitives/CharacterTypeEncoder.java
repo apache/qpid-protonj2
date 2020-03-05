@@ -24,7 +24,7 @@ import org.apache.qpid.proton4j.codec.encoders.AbstractPrimitiveTypeEncoder;
 /**
  * Encoder of AMQP Character type values to a byte stream.
  */
-public class CharacterTypeEncoder extends AbstractPrimitiveTypeEncoder<Character> {
+public final class CharacterTypeEncoder extends AbstractPrimitiveTypeEncoder<Character> {
 
     @Override
     public Class<Character> getTypeClass() {

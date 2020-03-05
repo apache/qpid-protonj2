@@ -26,7 +26,7 @@ import org.apache.qpid.proton4j.codec.encoders.AbstractDescribedListTypeEncoder;
 /**
  * Encoder of AMQP SaslInit type values to a byte stream
  */
-public class SaslInitTypeEncoder extends AbstractDescribedListTypeEncoder<SaslInit> {
+public final class SaslInitTypeEncoder extends AbstractDescribedListTypeEncoder<SaslInit> {
 
     @Override
     public Class<SaslInit> getTypeClass() {

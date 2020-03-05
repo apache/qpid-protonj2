@@ -28,7 +28,7 @@ import org.apache.qpid.proton4j.codec.encoders.AbstractDescribedMapTypeEncoder;
 /**
  * Encoder of AMQP ApplicationProperties type values to a byte stream.
  */
-public class ApplicationPropertiesTypeEncoder extends AbstractDescribedMapTypeEncoder<String, Object, ApplicationProperties> {
+public final class ApplicationPropertiesTypeEncoder extends AbstractDescribedMapTypeEncoder<String, Object, ApplicationProperties> {
 
     @Override
     public Class<ApplicationProperties> getTypeClass() {

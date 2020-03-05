@@ -27,7 +27,7 @@ import org.apache.qpid.proton4j.codec.encoders.AbstractDescribedListTypeEncoder;
 /**
  * Encoder of AMQP DeleteOnNoLinksOrMessages type values to a byte stream
  */
-public class DeleteOnNoLinksOrMessagesTypeEncoder extends AbstractDescribedListTypeEncoder<DeleteOnNoLinksOrMessages> {
+public final class DeleteOnNoLinksOrMessagesTypeEncoder extends AbstractDescribedListTypeEncoder<DeleteOnNoLinksOrMessages> {
 
     @Override
     public UnsignedLong getDescriptorCode() {

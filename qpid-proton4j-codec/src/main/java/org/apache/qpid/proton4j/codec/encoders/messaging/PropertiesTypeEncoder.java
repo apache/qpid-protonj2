@@ -27,7 +27,7 @@ import org.apache.qpid.proton4j.codec.encoders.AbstractDescribedListTypeEncoder;
 /**
  * Encoder of AMQP Properties type value to a byte stream.
  */
-public class PropertiesTypeEncoder extends AbstractDescribedListTypeEncoder<Properties> {
+public final class PropertiesTypeEncoder extends AbstractDescribedListTypeEncoder<Properties> {
 
     @Override
     public UnsignedLong getDescriptorCode() {

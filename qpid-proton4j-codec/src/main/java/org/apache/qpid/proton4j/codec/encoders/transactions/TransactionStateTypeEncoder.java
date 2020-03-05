@@ -27,7 +27,7 @@ import org.apache.qpid.proton4j.codec.encoders.AbstractDescribedListTypeEncoder;
 /**
  * Encoder of AMQP TransactionState type values to a byte stream.
  */
-public class TransactionStateTypeEncoder extends AbstractDescribedListTypeEncoder<TransactionalState> {
+public final class TransactionStateTypeEncoder extends AbstractDescribedListTypeEncoder<TransactionalState> {
 
     @Override
     public UnsignedLong getDescriptorCode() {

@@ -31,7 +31,7 @@ import org.apache.qpid.proton4j.codec.decoders.primitives.ListTypeDecoder;
 /**
  * Decoder of AMQP Properties type values from a byte stream
  */
-public class PropertiesTypeDecoder extends AbstractDescribedTypeDecoder<Properties> {
+public final class PropertiesTypeDecoder extends AbstractDescribedTypeDecoder<Properties> {
 
     private static final int MIN_PROPERTIES_LIST_ENTRIES = 0;
     private static final int MAX_PROPERTIES_LIST_ENTRIES = 13;

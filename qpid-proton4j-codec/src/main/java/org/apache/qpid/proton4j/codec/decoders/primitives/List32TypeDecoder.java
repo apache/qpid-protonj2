@@ -22,7 +22,7 @@ import org.apache.qpid.proton4j.codec.EncodingCodes;
 /**
  * Decoder of AMQP List values from a byte stream
  */
-public class List32TypeDecoder extends AbstractListTypeDecoder {
+public final class List32TypeDecoder extends AbstractListTypeDecoder {
 
     @Override
     public int readSize(ProtonBuffer buffer) {

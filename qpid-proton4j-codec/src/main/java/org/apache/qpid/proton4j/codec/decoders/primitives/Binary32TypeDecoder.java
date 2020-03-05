@@ -22,7 +22,7 @@ import org.apache.qpid.proton4j.codec.EncodingCodes;
 /**
  * Decoder of AMQP Binary values from a byte stream.
  */
-public class Binary32TypeDecoder extends AbstractBinaryTypeDecoder {
+public final class Binary32TypeDecoder extends AbstractBinaryTypeDecoder {
 
     @Override
     public int getTypeCode() {

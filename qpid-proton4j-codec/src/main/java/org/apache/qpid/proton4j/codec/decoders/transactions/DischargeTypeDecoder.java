@@ -30,7 +30,7 @@ import org.apache.qpid.proton4j.codec.decoders.primitives.ListTypeDecoder;
 /**
  * Decoder of AMQP Discharge type values from a byte stream.
  */
-public class DischargeTypeDecoder extends AbstractDescribedTypeDecoder<Discharge> {
+public final class DischargeTypeDecoder extends AbstractDescribedTypeDecoder<Discharge> {
 
     private static final int MIN_DISCHARGE_LIST_ENTRIES = 1;
     private static final int MAX_DISCHARGE_LIST_ENTRIES = 2;

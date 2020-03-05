@@ -21,15 +21,21 @@ import java.io.IOException;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.DecoderState;
 import org.apache.qpid.proton4j.codec.EncodingCodes;
+import org.apache.qpid.proton4j.codec.decoders.AbstractPrimitiveTypeDecoder;
 
 /**
  * Decode AMQP small Integer values from a byte stream
  */
-public class Integer8TypeDecoder extends Integer32TypeDecoder {
+public final class Integer8TypeDecoder extends AbstractPrimitiveTypeDecoder<Integer> {
 
     @Override
     public Integer readValue(ProtonBuffer buffer, DecoderState state) {
         return buffer.readByte() & 0xff;
+    }
+
+    @Override
+    public Class<Integer> getTypeClass() {
+        return Integer.class;
     }
 
     @Override
@@ -40,5 +46,14 @@ public class Integer8TypeDecoder extends Integer32TypeDecoder {
     @Override
     public void skipValue(ProtonBuffer buffer, DecoderState state) throws IOException {
         buffer.skipBytes(Byte.BYTES);
+    }
+
+    @Override
+    public boolean isJavaPrimitive() {
+        return true;
+    }
+
+    public int readPrimitiveValue(ProtonBuffer buffer, DecoderState state) {
+        return buffer.readByte();
     }
 }

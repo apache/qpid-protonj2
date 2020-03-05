@@ -25,7 +25,7 @@ import org.apache.qpid.proton4j.codec.EncodingCodes;
 /**
  * Decode AMQP small Long values from a byte stream
  */
-public class Long8TypeDecoder extends LongTypeDecoder {
+public final class Long8TypeDecoder extends LongTypeDecoder {
 
     @Override
     public Long readValue(ProtonBuffer buffer, DecoderState state) {

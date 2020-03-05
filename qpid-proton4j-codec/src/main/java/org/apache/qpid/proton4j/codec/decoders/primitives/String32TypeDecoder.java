@@ -22,7 +22,7 @@ import org.apache.qpid.proton4j.codec.EncodingCodes;
 /**
  * Decoder of AMQP String values from a byte stream.
  */
-public class String32TypeDecoder extends AbstractStringTypeDecoder {
+public final class String32TypeDecoder extends AbstractStringTypeDecoder {
 
     @Override
     protected int readSize(ProtonBuffer buffer) {

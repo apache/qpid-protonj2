@@ -28,7 +28,7 @@ import org.apache.qpid.proton4j.codec.encoders.AbstractPrimitiveTypeEncoder;
  * Encoder of AMQP List type values to a byte stream.
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })
-public class ListTypeEncoder extends AbstractPrimitiveTypeEncoder<List> {
+public final class ListTypeEncoder extends AbstractPrimitiveTypeEncoder<List> {
 
     @Override
     public Class<List> getTypeClass() {

@@ -25,7 +25,7 @@ import org.apache.qpid.proton4j.codec.encoders.PrimitiveTypeEncoder;
 /**
  * Encoder of AMQP Array types to a byte stream.
  */
-public class ArrayTypeEncoder implements PrimitiveTypeEncoder<Object> {
+public final class ArrayTypeEncoder implements PrimitiveTypeEncoder<Object> {
 
     @Override
     public boolean isArrayType() {
