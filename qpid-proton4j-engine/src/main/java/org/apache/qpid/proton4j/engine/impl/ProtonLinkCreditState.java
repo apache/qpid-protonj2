@@ -27,6 +27,9 @@ public class ProtonLinkCreditState implements LinkCreditState {
     private int credit;
     private int deliveryCount;
 
+    private boolean drain;
+    private boolean echo;
+
     private boolean deliveryCountInitalised;
 
     @SuppressWarnings("unused")
@@ -50,7 +53,29 @@ public class ProtonLinkCreditState implements LinkCreditState {
         return deliveryCount;
     }
 
+    @Override
+    public boolean isDrain() {
+        return drain;
+    }
+
+    @Override
+    public boolean isEcho() {
+        return echo;
+    }
+
     //----- Internal API for managing credit state
+
+    void clearDrain() {
+        drain = false;
+    }
+
+    void clearEcho() {
+        echo = false;
+    }
+
+    void clearCredit() {
+        credit = 0;
+    }
 
     void incrementCredit(int credit) {
         this.credit += credit;
@@ -58,10 +83,6 @@ public class ProtonLinkCreditState implements LinkCreditState {
 
     void decrementCredit() {
         credit = credit == 0 ? 0 : credit - 1;
-    }
-
-    void clearCredit() {
-        credit = 0;
     }
 
     int incrementDeliveryCount() {
@@ -94,6 +115,8 @@ public class ProtonLinkCreditState implements LinkCreditState {
     void remoteFlow(Flow flow) {
         remoteDeliveryCount = flow.getDeliveryCount();
         remoteLinkCredit = flow.getLinkCredit();
+        echo = flow.getEcho();
+        drain = flow.getDrain();
     }
 
     /**
@@ -103,20 +126,23 @@ public class ProtonLinkCreditState implements LinkCreditState {
      * @return a snapshot of the current credit state.
      */
     LinkCreditState snapshot() {
-        return new UnmodifiableLinkCreditState(credit, deliveryCount);
+        return new UnmodifiableLinkCreditState(credit, deliveryCount, drain, echo);
     }
 
     //----- Provide an immutable view type for protection
-
 
     private static class UnmodifiableLinkCreditState implements LinkCreditState {
 
         private final int credit;
         private final int deliveryCount;
+        private final boolean drain;
+        private final boolean echo;
 
-        public UnmodifiableLinkCreditState(int credit, int deliveryCount) {
+        public UnmodifiableLinkCreditState(int credit, int deliveryCount, boolean drain, boolean echo) {
             this.credit = credit;
             this.deliveryCount = deliveryCount;
+            this.drain = drain;
+            this.echo = echo;
         }
 
         @Override
@@ -127,6 +153,16 @@ public class ProtonLinkCreditState implements LinkCreditState {
         @Override
         public int getDeliveryCount() {
             return deliveryCount;
+        }
+
+        @Override
+        public boolean isDrain() {
+            return drain;
+        }
+
+        @Override
+        public boolean isEcho() {
+            return echo;
         }
     }
 }

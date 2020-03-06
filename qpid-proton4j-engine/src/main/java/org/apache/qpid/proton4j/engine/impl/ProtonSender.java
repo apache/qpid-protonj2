@@ -49,12 +49,12 @@ public class ProtonSender extends ProtonLink<Sender> implements Sender {
     private final DeliveryIdTracker currentDelivery = new DeliveryIdTracker();
 
     private boolean sendable;
-    private boolean draining;
 
     private final SplayMap<ProtonOutgoingDelivery> unsettled = new SplayMap<>();
 
     private EventHandler<OutgoingDelivery> deliveryUpdatedEventHandler = null;
     private EventHandler<Sender> sendableEventHandler = null;
+    private EventHandler<Sender> linkCreditUpdatedHandler = null;
     private EventHandler<LinkCreditState> drainRequestedEventHandler = null;
 
     private OutgoingDelivery current;
@@ -95,12 +95,12 @@ public class ProtonSender extends ProtonLink<Sender> implements Sender {
 
     @Override
     public boolean isDraining() {
-        return draining;
+        return getCreditState().isDrain();
     }
 
     @Override
-    public Sender drained(LinkCreditState state) {
-        draining = false;
+    public Sender drained() {
+        getCreditState().clearDrain();
 
         // TODO Auto-generated method stub
         return this;
@@ -237,9 +237,10 @@ public class ProtonSender extends ProtonLink<Sender> implements Sender {
             }
 
             if (flow.getDrain() && getCredit() > 0) {
-                draining = true;
                 signalDrainRequested();
             }
+
+            signalLinkCreditUpdated();
         }
 
         return this;
@@ -315,6 +316,20 @@ public class ProtonSender extends ProtonLink<Sender> implements Sender {
     }
 
     //----- Sender event handlers
+
+    @Override
+    public Sender linkCreditUpdateHandler(EventHandler<Sender> handler) {
+        this.linkCreditUpdatedHandler = handler;
+        return this;
+    }
+
+    Sender signalLinkCreditUpdated() {
+        if (linkCreditUpdatedHandler != null) {
+            linkCreditUpdatedHandler.handle(this);
+        }
+
+        return this;
+    }
 
     @Override
     public Sender deliveryUpdatedHandler(EventHandler<OutgoingDelivery> handler) {

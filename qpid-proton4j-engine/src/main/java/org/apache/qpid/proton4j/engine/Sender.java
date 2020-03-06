@@ -20,6 +20,7 @@ import java.util.Collection;
 import java.util.function.Predicate;
 
 import org.apache.qpid.proton4j.amqp.transport.DeliveryState;
+import org.apache.qpid.proton4j.amqp.transport.Flow;
 import org.apache.qpid.proton4j.amqp.transport.Transfer;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 
@@ -32,12 +33,11 @@ public interface Sender extends Link<Sender> {
      * Called when the {@link Receiver} has requested a drain of credit and the sender
      * has sent all available messages.
      *
-     * @param state
-     *      The {@link Link} credit state that was given when the sender drain started.
-     *
      * @return this Sender instance for chaining.
+     *
+     * @throws IllegalStateException if the link is not draining currently.
      */
-    Sender drained(LinkCreditState state);
+    Sender drained();
 
     /**
      * Checks if the sender has credit and the session window allows for any bytes to be written currently.
@@ -111,6 +111,16 @@ public interface Sender extends Link<Sender> {
     //----- Event handlers for the Sender
 
     /**
+     * Handler for link credit updates that occur after a remote {@link Flow} arrives.
+     *
+     * @param handler
+     *      An event handler that will be signaled when the link credit is updated by a remote flow.
+     *
+     * @return this sender
+     */
+    Sender linkCreditUpdateHandler(EventHandler<Sender> handler);
+
+    /**
      * Handler for updates on this {@link Sender} that indicates that an event has occurred that has
      * placed this sender in a state where a send is possible.
      *
@@ -126,7 +136,7 @@ public interface Sender extends Link<Sender> {
      * credit for this {@link Sender}.
      *
      * The drain request is accompanied by the current credit state for this link which the application
-     * must hand back to the {@link Sender} when it has completed the drain request.
+     * can use to determine the scope of the credit being requested to drain.
      *
      * @param handler
      *      handler that will act on the drain request.

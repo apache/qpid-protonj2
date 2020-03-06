@@ -35,4 +35,14 @@ public interface LinkCreditState {
      */
     int getDeliveryCount();
 
+    /**
+     * @return true if the link drain is active.
+     */
+    boolean isDrain();
+
+    /**
+     * @return true if the link has been requested to echo its state.
+     */
+    boolean isEcho();
+
 }
