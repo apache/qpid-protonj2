@@ -77,7 +77,6 @@ public class ClientSender implements Sender {
     private final ScheduledExecutorService executor;
     private final String senderId;
     private final TransferTagGenerator tagGenerator = new TransferTagGenerator();
-    private LinkCreditState drainingState;
     private Consumer<ClientSender> senderRemotelyClosedHandler;
 
     private volatile Source remoteSource;
@@ -402,17 +401,14 @@ public class ClientSender implements Sender {
             }
         }
 
-        if (drainingState != null) {
-            sender.drained(drainingState);
-            drainingState = null;
+        if (sender.isDraining() && blocked.isEmpty()) {
+            sender.drained();
         }
     }
 
     private void handleRemoteRequestedDrain(LinkCreditState linkState) {
         if (blocked.isEmpty()) {
-            protonSender.drained(linkState);
-        } else {
-            drainingState = linkState;
+            protonSender.drained();
         }
     }
 
