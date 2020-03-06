@@ -525,10 +525,24 @@ public abstract class ProtonAbstractBuffer implements ProtonBuffer {
 
     @Override
     public int hashCode() {
+        final int readable = getReadableBytes();
+        final int readableInts = readable >>> 2;
+        final int remainingBytes = readable & 3;
+
         int hash = 1;
-        int index = getReadIndex();
-        for (int i = getReadableBytes() - 1; i >= index; i--) {
-            hash = 31 * hash + getByte(i);
+        int position = getReadIndex();
+
+        for (int i = readableInts; i > 0; i --) {
+            hash = 31 * hash + getInt(position);
+            position += 4;
+        }
+
+        for (int i = remainingBytes; i > 0; i --) {
+            hash = 31 * hash + getByte(position++);
+        }
+
+        if (hash == 0) {
+            hash = 1;
         }
 
         return hash;
@@ -548,11 +562,29 @@ public abstract class ProtonAbstractBuffer implements ProtonBuffer {
             return false;
         }
 
-        int index = getReadIndex();
-        for (int i = getReadableBytes() - 1, j = that.getReadableBytes() - 1; i >= index; i--, j--) {
-            if (!(getByte(i) == that.getByte(j))) {
+        final int readable = getReadableBytes();
+        final int longCount = readable >>> 3;
+        final int byteCount = readable & 7;
+
+        int positionSelf = getReadIndex();
+        int positionOther = that.getReadIndex();
+
+        for (int i = longCount; i > 0; i --) {
+            if (getLong(positionSelf) != that.getLong(positionOther)) {
                 return false;
             }
+
+            positionSelf += 8;
+            positionOther += 8;
+        }
+
+        for (int i = byteCount; i > 0; i --) {
+            if (getByte(positionSelf) != that.getByte(positionOther)) {
+                return false;
+            }
+
+            positionSelf++;
+            positionOther++;
         }
 
         return true;
