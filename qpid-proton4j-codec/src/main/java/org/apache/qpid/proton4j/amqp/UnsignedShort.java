@@ -79,15 +79,35 @@ public final class UnsignedShort extends Number implements Comparable<UnsignedSh
         return true;
     }
 
+    /**
+     * Compares the give short value to this unsigned short numerically treating the given value as unsigned.
+     *
+     * @param value
+     *       the short to compare to this unsigned short instance.
+     *
+     * @return the value 0 if this == value; a value less than 0 if this < value as unsigned values; and a value
+     *         greater than 0 if this > value as unsigned values
+     */
     public int compareTo(short value) {
         return Integer.signum(intValue() - Short.toUnsignedInt(value));
     }
 
     @Override
-    public int compareTo(UnsignedShort o) {
-        return Integer.signum(intValue() - o.intValue());
+    public int compareTo(UnsignedShort value) {
+        return Integer.signum(intValue() - value.intValue());
     }
 
+    /**
+     * Compares two short values numerically treating the values as unsigned.
+     *
+     * @param left
+     *       the left hand side short to compare
+     * @param right
+     *       the right hand side short to compare
+     *
+     * @return the value 0 if left == right; a value less than 0 if left < right as unsigned values; and a value
+     *         greater than 0 if left > right as unsigned values
+     */
     public static int compare(short left, short right) {
         return Integer.compareUnsigned(Short.toUnsignedInt(left), Short.toUnsignedInt(right));
     }
@@ -102,21 +122,59 @@ public final class UnsignedShort extends Number implements Comparable<UnsignedSh
         return String.valueOf(longValue());
     }
 
-    public static UnsignedShort valueOf(final short underlying) {
-        if ((underlying & 0xFF00) == 0) {
-            return cachedValues[underlying];
+    /**
+     * Returns an UnsignedShort instance representing the specified short value. This method always returns
+     * a cached {@link UnsignedShort} instance for values in the range [0...255] which can save space and time
+     * over calling the constructor {@link UnsignedShort#UnsignedShort(short)} which will always create a new
+     * instance of the {@link UnsignedShort} type.
+     *
+     * @param value
+     *      The short value to return as an {@link UnsignedShort} instance.
+     *
+     * @return an {@link UnsignedShort} instance representing the unsigned view of the given short.
+     */
+    public static UnsignedShort valueOf(final short value) {
+        if ((value & 0xFF00) == 0) {
+            return cachedValues[value];
         } else {
-            return new UnsignedShort(underlying);
+            return new UnsignedShort(value);
         }
     }
 
-    public static UnsignedShort valueOf(final int intValue) {
-        if (intValue < 0L || intValue >= (1L << 16)) {
-            throw new NumberFormatException("Value \"" + intValue + "\" lies outside the range [" + 0L + "-" + (1L << 16) + ").");
+    /**
+     * Returns an UnsignedShort instance representing the specified int value. This method always returns
+     * a cached {@link UnsignedShort} instance for values in the range [0...255] which can save space and time
+     * over calling the constructor {@link UnsignedShort#UnsignedShort(short)} which will always create a new
+     * instance of the {@link UnsignedShort} type.
+     *
+     * @param value
+     *      The short value to return as an {@link UnsignedShort} instance.
+     *
+     * @return an {@link UnsignedShort} instance representing the unsigned view of the given short.
+     *
+     * @throws NumberFormatException if the given value is greater than the max {@link UnsignedShort} value possible.
+     */
+    public static UnsignedShort valueOf(final int value) {
+        if (value < 0L || value >= (1L << 16)) {
+            throw new NumberFormatException("Value \"" + value + "\" lies outside the range [" + 0L + "-" + (1L << 16) + ").");
         }
-        return valueOf((short) intValue);
+        return valueOf((short) value);
     }
 
+    /**
+     * Returns an UnsignedShort instance representing the specified {@link String} value. This method always returns
+     * a cached {@link UnsignedShort} instance for values in the range [0...255] which can save space and time
+     * over calling the constructor {@link UnsignedShort#UnsignedShort(short)} which will always create a new
+     * instance of the {@link UnsignedShort} type.
+     *
+     * @param value
+     *      The short value to return as an {@link UnsignedShort} instance.
+     *
+     * @return an {@link UnsignedShort} instance representing the unsigned view of the given short.
+     *
+     * @throws NumberFormatException if the given value is greater than the max {@link UnsignedShort} value possible
+     *                               or the {@link String} value given cannot be converted to a numeric value.
+     */
     public static UnsignedShort valueOf(final String value) {
         int intVal = Integer.parseInt(value);
 
