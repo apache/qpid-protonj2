@@ -85,8 +85,8 @@ public final class UnsignedShort extends Number implements Comparable<UnsignedSh
      * @param value
      *       the short to compare to this unsigned short instance.
      *
-     * @return the value 0 if this == value; a value less than 0 if this < value as unsigned values; and a value
-     *         greater than 0 if this > value as unsigned values
+     * @return the value 0 if this == value; a value less than 0 if this &lt; value as unsigned values; and a value
+     *         greater than 0 if this &gt; value as unsigned values
      */
     public int compareTo(short value) {
         return Integer.signum(intValue() - Short.toUnsignedInt(value));
@@ -105,8 +105,8 @@ public final class UnsignedShort extends Number implements Comparable<UnsignedSh
      * @param right
      *       the right hand side short to compare
      *
-     * @return the value 0 if left == right; a value less than 0 if left < right as unsigned values; and a value
-     *         greater than 0 if left > right as unsigned values
+     * @return the value 0 if left == right; a value less than 0 if left &lt; right as unsigned values; and a value
+     *         greater than 0 if left &gt; right as unsigned values
      */
     public static int compare(short left, short right) {
         return Integer.compareUnsigned(Short.toUnsignedInt(left), Short.toUnsignedInt(right));
@@ -168,9 +168,9 @@ public final class UnsignedShort extends Number implements Comparable<UnsignedSh
      * instance of the {@link UnsignedShort} type.
      *
      * @param value
-     *      The short value to return as an {@link UnsignedShort} instance.
+     *      The String value to return as an {@link UnsignedShort} instance.
      *
-     * @return an {@link UnsignedShort} instance representing the unsigned view of the given short.
+     * @return an {@link UnsignedShort} instance representing the unsigned view of the given String.
      *
      * @throws NumberFormatException if the given value is greater than the max {@link UnsignedShort} value possible
      *                               or the {@link String} value given cannot be converted to a numeric value.

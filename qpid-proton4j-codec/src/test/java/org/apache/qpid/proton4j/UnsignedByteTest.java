@@ -75,6 +75,10 @@ public class UnsignedByteTest {
         assertTrue(UnsignedByte.valueOf((byte) 0).compareTo((byte) 0) == 0);
         assertTrue(UnsignedByte.valueOf((byte) 127).compareTo((byte) 126) > 0);
         assertTrue(UnsignedByte.valueOf((byte) 32).compareTo((byte) 64) < 0);
+        assertTrue(UnsignedByte.valueOf((byte) 255).compareTo((byte) 127) > 0);
+        assertTrue(UnsignedByte.valueOf((byte) 126).compareTo((byte) 255) < 0);
+        assertTrue(UnsignedByte.valueOf((byte) 255).compareTo((byte) 0) > 0);
+        assertTrue(UnsignedByte.valueOf((byte) 0).compareTo((byte) 255) < 0);
     }
 
     @Test
@@ -83,6 +87,10 @@ public class UnsignedByteTest {
         assertTrue(UnsignedByte.valueOf((byte) 0).compareTo(UnsignedByte.valueOf((byte) 0)) == 0);
         assertTrue(UnsignedByte.valueOf((byte) 127).compareTo(UnsignedByte.valueOf((byte) 126)) > 0);
         assertTrue(UnsignedByte.valueOf((byte) 32).compareTo(UnsignedByte.valueOf((byte) 64)) < 0);
+        assertTrue(UnsignedByte.valueOf((byte) 255).compareTo(UnsignedByte.valueOf((byte) 127)) > 0);
+        assertTrue(UnsignedByte.valueOf((byte) 126).compareTo(UnsignedByte.valueOf((byte) 255)) < 0);
+        assertTrue(UnsignedByte.valueOf((byte) 255).compareTo(UnsignedByte.valueOf((byte) 0)) > 0);
+        assertTrue(UnsignedByte.valueOf((byte) 0).compareTo(UnsignedByte.valueOf((byte) 255)) < 0);
     }
 
     @Test

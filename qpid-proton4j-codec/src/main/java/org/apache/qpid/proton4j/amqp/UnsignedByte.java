@@ -81,13 +81,37 @@ public final class UnsignedByte extends Number implements Comparable<UnsignedByt
         return true;
     }
 
+    /**
+     * Compares the give byte value to this unsigned byte numerically treating the given value as unsigned.
+     *
+     * @param value
+     *       the byte to compare to this unsigned byte instance.
+     *
+     * @return the value 0 if this == value; a value less than 0 if this &lt; value as unsigned values; and a value
+     *         greater than 0 if this &gt; value as unsigned values
+     */
     public int compareTo(byte value) {
-        return Byte.compare(underlying, value);
+        return compare(underlying, value);
     }
 
     @Override
     public int compareTo(UnsignedByte o) {
-        return Byte.compare(underlying, o.underlying);
+        return compare(underlying, o.underlying);
+    }
+
+    /**
+     * Compares two short values numerically treating the values as unsigned.
+     *
+     * @param left
+     *       the left hand side short to compare
+     * @param right
+     *       the right hand side short to compare
+     *
+     * @return the value 0 if left == right; a value less than 0 if left &lt; right as unsigned values; and a value
+     *         greater than 0 if left &gt; right as unsigned values
+     */
+    public static int compare(byte left, byte right) {
+        return Integer.compareUnsigned(Byte.toUnsignedInt(left), Byte.toUnsignedInt(right));
     }
 
     @Override
@@ -100,11 +124,35 @@ public final class UnsignedByte extends Number implements Comparable<UnsignedByt
         return String.valueOf(intValue());
     }
 
-    public static UnsignedByte valueOf(byte underlying) {
-        final int index = (underlying) & 0xFF;
+    /**
+     * Returns an UnsignedByte instance representing the specified byte value. This method always returns
+     * a cached {@link UnsignedByte} instance for values in the range [0...255] which can save space and time
+     * over calling the constructor {@link UnsignedByte#UnsignedByte(byte)} which will always create a new
+     * instance of the {@link UnsignedByte} type.
+     *
+     * @param value
+     *      The byte value to return as an {@link UnsignedByte} instance.
+     *
+     * @return an {@link UnsignedByte} instance representing the unsigned view of the given byte.
+     */
+    public static UnsignedByte valueOf(byte value) {
+        final int index = (value) & 0xFF;
         return cachedValues[index];
     }
 
+    /**
+     * Returns an {@link UnsignedByte} instance representing the specified {@link String} value. This method always
+     * returns a cached {@link UnsignedByte} instance for values in the range [0...255] which can save space and time
+     * over calling the constructor {@link UnsignedByte#UnsignedByte(byte)} which will always create a new instance
+     * of the {@link UnsignedByte} type.
+     *
+     * @param value
+     *      The byte value to return as an {@link UnsignedByte} instance.
+     *
+     * @return an {@link UnsignedByte} instance representing the unsigned view of the given byte.
+     *
+     * @throws NumberFormatException if the given {@link String} value given cannot be converted to a numeric value.
+     */
     public static UnsignedByte valueOf(final String value) throws NumberFormatException {
         int intVal = Integer.parseInt(value);
         if (intVal < 0 || intVal >= (1 << 8)) {
