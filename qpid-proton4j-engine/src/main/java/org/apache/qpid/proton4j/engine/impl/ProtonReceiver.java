@@ -106,9 +106,7 @@ public class ProtonReceiver extends ProtonLink<Receiver> implements Receiver {
 
         if (credit > 0) {
             getCreditState().incrementCredit(credit);
-            if (isRemotelyOpen()) {
-                // TODO: delaying credit until remoteAttach(Attach attach) is called doesn't seem needed?
-                // Perhaps should be/include isLocallyOpen?
+            if (isLocallyOpen() && wasLocalAttachSent()) {
                 sessionWindow.writeFlow(this);
             }
         }
@@ -130,8 +128,7 @@ public class ProtonReceiver extends ProtonLink<Receiver> implements Receiver {
 
         drainStateSnapshot = getCreditState().snapshot();
 
-        if (isRemotelyOpen()) {
-            // TODO: delaying credit+drain until remoteAttach(Attach attach) is called doesn't seem needed?
+        if (isLocallyOpen() && wasLocalAttachSent()) {
             sessionWindow.writeFlow(this);
         }
 
@@ -261,10 +258,6 @@ public class ProtonReceiver extends ProtonLink<Receiver> implements Receiver {
         }
 
         getCreditState().initialiseDeliveryCount((int) attach.getInitialDeliveryCount());
-
-        if (getCredit() > 0 && isLocallyOpen()) {
-            sessionWindow.writeFlow(this);
-        }
 
         return this;
     }

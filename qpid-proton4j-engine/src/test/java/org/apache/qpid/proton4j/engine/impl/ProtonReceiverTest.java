@@ -2332,6 +2332,63 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
+    @Test(timeout = 20000)
+    public void testReceiverFlowSentAfterAttachWrittenWhenCreditPrefilled() throws Exception {
+        doTestReceiverFlowSentAfterAttachWritten(true);
+    }
+
+    @Test(timeout = 20000)
+    public void testReceiverFlowSentAfterAttachWrittenWhenCreditAddedBeforeAttachResponse() throws Exception {
+        doTestReceiverFlowSentAfterAttachWritten(false);
+    }
+
+    private void doTestReceiverFlowSentAfterAttachWritten(boolean creditBeforeOpen) throws Exception {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result);
+        ProtonTestPeer peer = new ProtonTestPeer(engine);
+        engine.outputConsumer(peer);
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond();
+        peer.expectBegin().respond();
+
+        Connection connection = engine.start().open();
+        Session session = connection.session().open();
+
+        Receiver receiver = session.receiver("receiver");
+
+        if (creditBeforeOpen) {
+            // Add credit before open, no frame should be written until opened.
+            receiver.addCredit(5);
+        }
+
+        // Expect attach but don't respond to observe that flow is sent regardless.
+        peer.waitForScriptToComplete();
+        peer.expectAttach();
+        peer.expectFlow().withLinkCredit(5).withDeliveryCount(nullValue());
+
+        receiver.open();
+
+        if (!creditBeforeOpen) {
+            // Add credit after open, frame should be written regardless of no attach response
+            receiver.addCredit(5);
+        }
+
+        peer.respondToLastAttach().now();
+        peer.waitForScriptToComplete();
+        peer.expectDetach().respond();
+        peer.expectEnd().respond();
+        peer.expectClose().respond();
+
+        receiver.detach();
+        session.close();
+        connection.close();
+
+        // Check post conditions and done.
+        peer.waitForScriptToComplete();
+        assertNull(failure);
+    }
+
     @Test
     public void testReceiverHandlesDeferredOpenAndBeginAttachResponses() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();

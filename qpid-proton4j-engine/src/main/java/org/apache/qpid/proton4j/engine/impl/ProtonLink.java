@@ -738,6 +738,10 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
 
                 localAttachSent = true;
                 session.getEngine().fireWrite(localAttach, session.getLocalChannel(), null, null);
+
+                if (isLocallyOpen() && isReceiver() && getCreditState().hasCredit()) {
+                    session.writeFlow(this);
+                }
             }
         }
     }
