@@ -100,9 +100,21 @@ public class ProtonSender extends ProtonLink<Sender> implements Sender {
 
     @Override
     public Sender drained() {
-        getCreditState().clearDrain();
+        checkLinkOperable("Cannot report link drained.");
 
-        // TODO Auto-generated method stub
+        final ProtonLinkCreditState state = getCreditState();
+
+        if (state.isDrain() && state.hasCredit()) {
+            int drained = state.getCredit();
+
+            state.clearCredit();
+            state.incrementDeliveryCount(drained);
+
+            session.writeFlow(this);
+
+            state.clearDrain();
+        }
+
         return this;
     }
 
@@ -250,7 +262,7 @@ public class ProtonSender extends ProtonLink<Sender> implements Sender {
     protected final ProtonSender decorateOutgoingFlow(Flow flow) {
         flow.setLinkCredit(getCredit());
         flow.setHandle(getHandle());
-        flow.setDeliveryCount(currentDelivery.longValue());
+        flow.setDeliveryCount(getCreditState().getDeliveryCount());
         flow.setDrain(isDraining());
 
         return this;
@@ -276,8 +288,6 @@ public class ProtonSender extends ProtonLink<Sender> implements Sender {
             unsettled.put((int) delivery.getDeliveryId(), delivery);
         }
 
-        sessionWindow.processSend(this, delivery, buffer);
-
         if (!delivery.isPartial()) {
             currentDelivery.reset();
             current = null;
@@ -286,8 +296,11 @@ public class ProtonSender extends ProtonLink<Sender> implements Sender {
 
             if (getCredit() == 0) {
                 sendable = false;
+                getCreditState().clearDrain();
             }
         }
+
+        sessionWindow.processSend(this, delivery, buffer);
     }
 
     void disposition(ProtonOutgoingDelivery delivery) {

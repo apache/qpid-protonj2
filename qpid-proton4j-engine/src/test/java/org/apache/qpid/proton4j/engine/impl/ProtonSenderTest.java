@@ -2388,7 +2388,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         Session session = connection.session();
         session.open();
 
-        Sender sender = session.sender("receiver-1");
+        Sender sender = session.sender("sender-1");
         sender.open();
         sender.setCondition(new ErrorCondition(Symbol.valueOf(condition), description));
 
@@ -2398,6 +2398,96 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
             sender.detach();
         }
 
+        connection.close();
+
+        peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+    }
+
+    @Test(timeout = 20000)
+    public void testSenderSignalsDrainedWhenCreditOutstanding() {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result);
+        ProtonTestPeer peer = new ProtonTestPeer(engine);
+        engine.outputConsumer(peer);
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond();
+        peer.expectBegin().respond();
+        peer.expectAttach().respond();
+        peer.remoteFlow().withDeliveryCount(0).withLinkCredit(10).withDrain(true).queue();
+        peer.expectFlow().withDeliveryCount(10).withLinkCredit(0).withDrain(true);
+        peer.expectDetach().respond();
+        peer.expectClose().respond();
+
+        Connection connection = engine.start().open();
+        Session session = connection.session().open();
+        Sender sender = session.sender("sender-1");
+
+        sender.linkCreditUpdateHandler(link -> link.drained());
+        sender.open();
+        sender.close();
+
+        connection.close();
+
+        peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+    }
+
+    @Test(timeout = 20000)
+    public void testSenderOmitsFlowWhenDrainedCreditIsSatisfied() {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result);
+        ProtonTestPeer peer = new ProtonTestPeer(engine);
+        engine.outputConsumer(peer);
+
+        ProtonBuffer payload = ProtonByteBufferAllocator.DEFAULT.wrap(new byte[] {0, 1, 2, 3, 4});
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond();
+        peer.expectBegin().respond();
+        peer.expectAttach().respond();
+        peer.remoteFlow().withDeliveryCount(0).withLinkCredit(1).withDrain(true).queue();
+
+        peer.expectTransfer().withHandle(0)
+                             .withSettled(false)
+                             .withState((DeliveryState) null)
+                             .withDeliveryId(0)
+                             .withDeliveryTag(new byte[] {0})
+                             .respond()
+                             .withSettled(true)
+                             .withState(Accepted.getInstance());
+        peer.expectDisposition().withFirst(0)
+                                .withSettled(true)
+                                .withState(nullValue());
+
+        Connection connection = engine.start().open();
+        Session session = connection.session().open();
+        Sender sender = session.sender("sender-1");
+
+        final AtomicBoolean deliverySentAfterSenable = new AtomicBoolean();
+        final AtomicReference<Delivery> sentDelivery = new AtomicReference<>();
+        sender.linkCreditUpdateHandler(link -> {
+            if (link.isSendable()) {
+                sentDelivery.set(link.next().setTag(new byte[] {0}).writeBytes(payload));
+                deliverySentAfterSenable.set(true);
+            }
+        });
+
+        sender.deliveryUpdatedHandler((delivery) -> {
+            if (delivery.isRemotelySettled()) {
+                delivery.settle();
+            }
+        });
+
+        sender.open();
+
+        peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        peer.expectDetach().respond();
+        peer.expectClose().respond();
+
+        // Should not send a flow as the send fulfilled the requested drain amount.
+        sender.drained();
+
+        sender.close();
         connection.close();
 
         peer.waitForScriptToComplete(5, TimeUnit.SECONDS);

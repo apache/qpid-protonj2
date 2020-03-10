@@ -65,6 +65,10 @@ public class ProtonLinkCreditState implements LinkCreditState {
 
     //----- Internal API for managing credit state
 
+    boolean hasCredit() {
+        return Integer.compareUnsigned(credit, 0) > 0;
+    }
+
     void clearDrain() {
         drain = false;
     }
@@ -87,6 +91,10 @@ public class ProtonLinkCreditState implements LinkCreditState {
 
     int incrementDeliveryCount() {
         return deliveryCount++;
+    }
+
+    int incrementDeliveryCount(int amount) {
+        return deliveryCount += amount;
     }
 
     int decrementDeliveryCount() {
