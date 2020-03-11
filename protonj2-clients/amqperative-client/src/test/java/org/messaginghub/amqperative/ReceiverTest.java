@@ -52,7 +52,7 @@ public class ReceiverTest extends AMQPerativeTestCase {
             peer.expectOpen().respond();
             peer.expectBegin().respond();
             peer.expectAttach().withRole(Role.RECEIVER).respond();  // TODO match other options
-            peer.expectFlow().withDeliveryCount(0).withLinkCredit(10);
+            peer.expectFlow().withLinkCredit(10);
             peer.expectDetach().withClosed(close).respond();
             peer.expectClose().respond();
             peer.start();
@@ -145,6 +145,7 @@ public class ReceiverTest extends AMQPerativeTestCase {
             peer.expectOpen().respond();
             peer.expectBegin().respond();
             peer.expectAttach().withRole(Role.RECEIVER);
+            peer.expectFlow();
             peer.expectDetach();
             peer.expectClose().respond();
             peer.start();
@@ -363,6 +364,7 @@ public class ReceiverTest extends AMQPerativeTestCase {
             peer.expectBegin().respond();
             peer.expectAttach().withRole(Role.RECEIVER)
                                .withSource().withDynamic(true).withAddress((String) null);
+            peer.expectFlow();
             peer.start();
 
             URI remoteURI = peer.getServerURI();
@@ -382,7 +384,6 @@ public class ReceiverTest extends AMQPerativeTestCase {
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
 
             if (attachResponse) {
-                peer.expectFlow();
                 peer.expectDetach().respond();
                 peer.respondToLastAttach().withSource().withAddress("test-dynamic-node").and().later(10);
             } else {
@@ -488,6 +489,7 @@ public class ReceiverTest extends AMQPerativeTestCase {
             peer.expectOpen().respond();
             peer.expectBegin().respond();
             peer.expectAttach().withRole(Role.RECEIVER);
+            peer.expectFlow();
             peer.start();
 
             URI remoteURI = peer.getServerURI();
@@ -507,7 +509,6 @@ public class ReceiverTest extends AMQPerativeTestCase {
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
 
             if (attachResponse) {
-                peer.expectFlow();
                 peer.expectDetach().respond();
                 peer.respondToLastAttach().later(10);
             } else {
@@ -560,6 +561,7 @@ public class ReceiverTest extends AMQPerativeTestCase {
             peer.expectOpen().respond();
             peer.expectBegin().respond();
             peer.expectAttach().withRole(Role.RECEIVER);
+            peer.expectFlow();
             peer.start();
 
             URI remoteURI = peer.getServerURI();
@@ -579,7 +581,6 @@ public class ReceiverTest extends AMQPerativeTestCase {
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
 
             if (attachResponse) {
-                peer.expectFlow();
                 peer.expectDetach().respond();
                 peer.respondToLastAttach().later(10);
             } else {
@@ -631,6 +632,7 @@ public class ReceiverTest extends AMQPerativeTestCase {
             peer.expectOpen().respond();
             peer.expectBegin().respond();
             peer.expectAttach().withRole(Role.RECEIVER);
+            peer.expectFlow();
             peer.start();
 
             URI remoteURI = peer.getServerURI();
@@ -651,7 +653,6 @@ public class ReceiverTest extends AMQPerativeTestCase {
             expectedProperties.put("TEST", "test-property");
 
             if (attachResponse) {
-                peer.expectFlow();
                 peer.expectDetach().respond();
                 peer.respondToLastAttach().withPropertiesMap(expectedProperties).later(10);
             } else {
@@ -704,6 +705,7 @@ public class ReceiverTest extends AMQPerativeTestCase {
             peer.expectOpen().respond();
             peer.expectBegin().respond();
             peer.expectAttach().withRole(Role.RECEIVER);
+            peer.expectFlow();
             peer.start();
 
             URI remoteURI = peer.getServerURI();
@@ -723,7 +725,6 @@ public class ReceiverTest extends AMQPerativeTestCase {
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
 
             if (attachResponse) {
-                peer.expectFlow();
                 peer.expectDetach().respond();
                 peer.respondToLastAttach().withOfferedCapabilities("QUEUE").later(10);
             } else {
@@ -777,6 +778,7 @@ public class ReceiverTest extends AMQPerativeTestCase {
             peer.expectOpen().respond();
             peer.expectBegin().respond();
             peer.expectAttach().withRole(Role.RECEIVER);
+            peer.expectFlow();
             peer.start();
 
             URI remoteURI = peer.getServerURI();
@@ -796,7 +798,6 @@ public class ReceiverTest extends AMQPerativeTestCase {
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
 
             if (attachResponse) {
-                peer.expectFlow();
                 peer.expectDetach().respond();
                 peer.respondToLastAttach().withDesiredCapabilities("Error-Free").later(10);
             } else {
