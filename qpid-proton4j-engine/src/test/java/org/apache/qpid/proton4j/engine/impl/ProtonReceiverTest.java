@@ -833,7 +833,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         peer.expectAMQPHeader().respondWithAMQPHeader();
         peer.expectOpen().respond().withContainerId("driver");
         peer.expectBegin().respond();
-        peer.remoteEnd().queue(); // TODO This would be more fluent if there was a thenEnd() on the expect
+        peer.remoteEnd().queue();
 
         Connection connection = engine.start();
 

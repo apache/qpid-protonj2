@@ -60,7 +60,6 @@ import org.apache.qpid.proton4j.engine.OutgoingDelivery;
 import org.apache.qpid.proton4j.engine.Sender;
 import org.apache.qpid.proton4j.engine.Session;
 import org.apache.qpid.proton4j.engine.exceptions.EngineFailedException;
-import org.junit.Ignore;
 import org.junit.Test;
 
 /**
@@ -648,13 +647,11 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         doTestRemotelyTerminateLinkAndThenCreateNewLink(false, false);
     }
 
-    @Ignore("Issue with untracking links by name currently")  // TODO - No Free in current API when to stop tracking ?
     @Test
     public void testRemotelyCloseSenderAndOpenNewSenderImmediatelyAfterWithSameLinkName() throws Exception {
         doTestRemotelyTerminateLinkAndThenCreateNewLink(true, true);
     }
 
-    @Ignore("Issue with untracking links by name currently")  // TODO - No Free in current API when to stop tracking ?
     @Test
     public void testRemotelyDetachSenderAndOpenNewSenderImmediatelyAfterWithSameLinkName() throws Exception {
         doTestRemotelyTerminateLinkAndThenCreateNewLink(false, true);
@@ -957,9 +954,9 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         peer.expectOpen().respond().withContainerId("driver");
         peer.expectBegin().respond();
         peer.expectAttach().withRole(Role.SENDER).respond();
-        peer.remoteFlow().withDeliveryCount(0)     // TODO - Would be nice to automate filling in these
-                         .withLinkCredit(10)       //        these bits using last session opened values
-                         .withIncomingWindow(1024) //        plus some defaults or generated values.
+        peer.remoteFlow().withDeliveryCount(0)
+                         .withLinkCredit(10)
+                         .withIncomingWindow(1024)
                          .withOutgoingWindow(10)
                          .withNextIncomingId(0)
                          .withNextOutgoingId(1).queue();
@@ -1516,7 +1513,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
 
     @Test
     public void testMaxFrameSizeOfPeerHasEffect() {
-//        doMaxFrameSizeTestImpl(0, 0, 5700, 1);
+        doMaxFrameSizeTestImpl(0, 0, 5700, 1);
         doMaxFrameSizeTestImpl(1024, 0, 5700, 6);
     }
 
