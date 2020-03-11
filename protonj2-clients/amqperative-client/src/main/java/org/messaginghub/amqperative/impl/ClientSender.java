@@ -16,11 +16,10 @@
  */
 package org.messaginghub.amqperative.impl;
 
-import java.util.Iterator;
-import java.util.LinkedHashSet;
+import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -70,7 +69,7 @@ public class ClientSender implements Sender {
     private ClientException failureCause;
     private boolean remoteRejectedOpen;
 
-    private final Set<InFlightSend> blocked = new LinkedHashSet<InFlightSend>();
+    private final Deque<InFlightSend> blocked = new ArrayDeque<InFlightSend>();
     private final SenderOptions options;
     private final ClientSession session;
     private final org.apache.qpid.proton4j.engine.Sender protonSender;
@@ -198,7 +197,7 @@ public class ClientSender implements Sender {
                         operation, options.sendTimeout(), () -> send.createSendTimedOutException());
                 }
 
-                blocked.add(send);
+                blocked.offer(send);
             }
         });
 
@@ -389,15 +388,10 @@ public class ClientSender implements Sender {
 
     private void handleRemoteNowSendable(org.apache.qpid.proton4j.engine.Sender sender) {
         if (!blocked.isEmpty()) {
-            Iterator<InFlightSend> blockedSends = blocked.iterator();
-            while (sender.isSendable() && blockedSends.hasNext()) {
+            while (sender.isSendable() && !blocked.isEmpty()) {
                 LOG.trace("Dispatching previously held send");
-                InFlightSend held = blockedSends.next();
-                try {
-                    assumeSendableAndSend(held.message, held);
-                } finally {
-                    blockedSends.remove();
-                }
+                final InFlightSend held = blocked.poll();
+                assumeSendableAndSend(held.message, held);
             }
         }
 
@@ -506,10 +500,10 @@ public class ClientSender implements Sender {
 
         // TODO: How do we provide a send mode equivalent to Qpid JMS asynchronous send on NON_PERSISTENT Message.
         //       Do we complete before write for presettled senders?
-        // request.complete(tracker);
+        request.complete(tracker);
 
         delivery.writeBytes(buffer);
-        request.complete(tracker);
+        // request.complete(tracker);
     }
 
     private void checkClosed() throws IllegalStateException {
