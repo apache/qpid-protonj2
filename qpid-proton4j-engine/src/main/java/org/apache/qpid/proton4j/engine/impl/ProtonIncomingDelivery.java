@@ -220,7 +220,18 @@ public class ProtonIncomingDelivery implements IncomingDelivery {
     }
 
     ProtonIncomingDelivery aborted() {
-        this.aborted = true;
+        aborted = true;
+
+        if (payload != null) {
+            final int bytesRead = payload.getReadableBytes();
+
+            payload = null;
+            aggregate = null;
+
+            // Ensure Session no longer records these in the window metrics
+            link.deliveryRead(this, bytesRead);
+        }
+
         return this;
     }
 

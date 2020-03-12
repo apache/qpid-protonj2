@@ -1998,10 +1998,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         assertTrue("Should have a delivery updates on receiver", deliveryUpdated.get());
         assertTrue("Should now show that delivery is aborted", receivedDelivery.get().isAborted());
         assertTrue("Should now show that delivery is remotely settled", receivedDelivery.get().isRemotelySettled());
-
-        // TODO - At this point any bytes sent in the aborted delivery should be discarded and
-        //        session window should no longer track them
-        // assertNull(receivedDelivery.get().readAll());
+        assertNull("Aboarted Delivery should discard read bytes", receivedDelivery.get().readAll());
 
         // Another delivery now which should arrive just fine, no further frames on this one.
         peer.remoteTransfer().withDeliveryId(1)
