@@ -55,7 +55,6 @@ public final class DeleteOnCloseTypeDecoder extends AbstractDescribedTypeDecoder
             throw new IOException("Expected List type indicator but got decoder for type: " + decoder.getTypeClass().getName());
         }
 
-        // TODO - Should we validate list size ?
         decoder.skipValue(buffer, state);
 
         return DeleteOnClose.getInstance();

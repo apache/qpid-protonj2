@@ -97,7 +97,6 @@ public final class DetachTypeDecoder extends AbstractDescribedTypeDecoder<Detach
         int size = listDecoder.readSize(buffer);
         int count = listDecoder.readCount(buffer);
 
-        // TODO - Validate that mandatory fields are present, what error ? Here or further up the chain
         if (count < MIN_DETACH_LIST_ENTRIES) {
             throw new IllegalStateException("Not enough entries in Detach list encoding: " + count);
         }

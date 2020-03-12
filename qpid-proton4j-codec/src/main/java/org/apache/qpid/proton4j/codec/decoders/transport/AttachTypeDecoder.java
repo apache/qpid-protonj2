@@ -102,8 +102,6 @@ public final class AttachTypeDecoder extends AbstractDescribedTypeDecoder<Attach
         int size = listDecoder.readSize(buffer);
         int count = listDecoder.readCount(buffer);
 
-        // TODO - Validate that mandatory fields are present, what error ? Here or further up the chain
-
         if (count < MIN_ATTACH_LIST_ENTRIES) {
             throw new IllegalStateException("Not enough entries in Attach list encoding: " + count);
         }
