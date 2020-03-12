@@ -54,10 +54,6 @@ public abstract class ProtonAbstractBufferTest {
         random.setSeed(seed);
     }
 
-    // TODO - Some tests still wrongly assume that the buffer under test has a backing array
-    //        need to refactor one more time to move those to the types that will and replace
-    //        those tests with a bit more generic variants.
-
     //----- Test Buffer creation ---------------------------------------------//
 
     @Test
@@ -1194,10 +1190,11 @@ public abstract class ProtonAbstractBufferTest {
 
         assertEquals(buffer.getReadableBytes(), copy.getReadableBytes());
 
-        assertTrue(copy.hasArray());
-        assertNotNull(copy.getArray());
-
-        assertNotSame(buffer.getArray(), copy.getArray());
+        if (buffer.hasArray()) {
+            assertTrue(copy.hasArray());
+            assertNotNull(copy.getArray());
+            assertNotSame(buffer.getArray(), copy.getArray());
+        }
     }
 
     @Test
@@ -1292,11 +1289,14 @@ public abstract class ProtonAbstractBufferTest {
         ProtonBuffer buffer = new ProtonByteBuffer(10);
         ProtonBuffer duplicate = buffer.duplicate();
 
+        assertNotSame(buffer, duplicate);
         assertEquals(buffer.capacity(), duplicate.capacity());
         assertEquals(buffer.getReadableBytes(), duplicate.getReadableBytes());
 
-        assertSame(buffer.getArray(), duplicate.getArray());
-        assertEquals(0, buffer.getArrayOffset());
+        if (buffer.hasArray()) {
+            assertSame(buffer.getArray(), duplicate.getArray());
+            assertEquals(0, buffer.getArrayOffset());
+        }
     }
 
     @Test
@@ -1415,10 +1415,11 @@ public abstract class ProtonAbstractBufferTest {
 
         assertEquals(buffer.getReadableBytes(), byteBuffer.limit());
 
-        assertTrue(byteBuffer.hasArray());
-        assertNotNull(byteBuffer.array());
-
-        assertSame(buffer.getArray(), byteBuffer.array());
+        if (buffer.hasArray()) {
+            assertTrue(byteBuffer.hasArray());
+            assertNotNull(byteBuffer.array());
+            assertSame(buffer.getArray(), byteBuffer.array());
+        }
     }
 
     @Test
@@ -1428,9 +1429,11 @@ public abstract class ProtonAbstractBufferTest {
 
         assertEquals(buffer.getReadableBytes(), byteBuffer.limit());
 
-        assertTrue(byteBuffer.hasArray());
-        assertNotNull(byteBuffer.array());
-        assertSame(buffer.getArray(), byteBuffer.array());
+        if (buffer.hasArray()) {
+            assertTrue(byteBuffer.hasArray());
+            assertNotNull(byteBuffer.array());
+            assertSame(buffer.getArray(), byteBuffer.array());
+        }
     }
 
     @Test
