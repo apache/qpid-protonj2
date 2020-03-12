@@ -29,14 +29,15 @@ import org.apache.qpid.proton4j.engine.exceptions.EngineStateException;
 
 /**
  * AMQP Connection state container
- *
- * TODO - Better Document the Connection APIs
  */
 public interface Connection {
 
     /**
      * Open the end point locally, sending the Open performative immediately if possible or holding
      * it until SASL negotiations or the AMQP header exchange has completed.
+     *
+     * The {@link Connection} will signal any registered handler of the remote opening the Connection
+     * once the remote {@link Open} performative arrives.
      *
      * @return this connection.
      *
@@ -45,9 +46,9 @@ public interface Connection {
     Connection open() throws EngineStateException;
 
     /**
-     * Close the end point locally and send the Close performative immediately if possible or holds it
-     * until the Connection / Engine state allows it.  If the engine encounters an error writing the
-     * performative or the engine is in a failed state from a previous error then this method will
+     * Close the {@link Connection} locally and send the Close performative immediately if possible or
+     * holds it until the Connection / Engine state allows it.  If the engine encounters an error writing
+     * the performative or the engine is in a failed state from a previous error then this method will
      * throw an exception.  If the engine has been shutdown then this method will close out the local
      * end of the connection and clean up any local resources before returning normally.
      *
@@ -58,19 +59,23 @@ public interface Connection {
     Connection close() throws EngineFailedException;
 
     /**
-     * Convenience method which is the same as calling {@link Engine#tick(long)}.
+     * Performs a tick operation on the connection which checks that Connection Idle timeout processing
+     * is run.  This method is a convenience method that delegates the work to the {@link Engine#tick(long)}
+     * method.
+     *
+     * It is an error to call this method if {@link Connection#tickAuto(ScheduledExecutorService)} was called.
      *
      * @param current
      *      Current time value usually taken from {@link System#nanoTime()}
      *
-     * @return this {@link Connection} instance.
+     * @return the absolute deadline in milliseconds to next call tick by/at, or 0 if there is none.
      *
      * @throws IllegalStateException if the {@link Engine} is already performing auto tick handling.
      * @throws EngineStateException if the Engine state precludes accepting new input.
 
      * @see Engine#tick(long)
      */
-    Connection tick(long current) throws IllegalStateException, EngineStateException;
+    long tick(long current) throws IllegalStateException, EngineStateException;
 
     /**
      * Convenience method which is the same as calling {@link Engine#tickAuto(ScheduledExecutorService)}.

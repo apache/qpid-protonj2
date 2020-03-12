@@ -179,10 +179,9 @@ public class ProtonConnection implements Connection, AMQPHeader.HeaderHandler<Pr
     }
 
     @Override
-    public Connection tick(long current) {
+    public long tick(long current) {
         checkConnectionClosed("Cannot call tick on an already closed Connection");
-        engine.tick(current);
-        return this;
+        return engine.tick(current);
     }
 
     @Override
