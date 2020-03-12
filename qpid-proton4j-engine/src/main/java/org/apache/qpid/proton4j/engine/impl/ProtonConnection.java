@@ -28,6 +28,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedInteger;
 import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
+import org.apache.qpid.proton4j.amqp.transport.AmqpError;
 import org.apache.qpid.proton4j.amqp.transport.Attach;
 import org.apache.qpid.proton4j.amqp.transport.Begin;
 import org.apache.qpid.proton4j.amqp.transport.Close;
@@ -467,7 +468,7 @@ public class ProtonConnection implements Connection, AMQPHeader.HeaderHandler<Pr
                 int remoteChannel = begin.getRemoteChannel();
                 session = localSessions.get(begin.getRemoteChannel());
                 if (session == null) {
-                    // TODO What should be the correct response to this particular wrinkle
+                    setCondition(new ErrorCondition(AmqpError.PRECONDITION_FAILED, "No matching session found for remote channel given")).close();
                     engine.engineFailed(new ProtocolViolationException("Received uncorrelated channel on Begin from remote: " + remoteChannel));
                     return;
                 }

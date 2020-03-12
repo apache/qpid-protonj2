@@ -17,6 +17,7 @@
 package org.apache.qpid.proton4j.engine.impl;
 
 import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
@@ -57,7 +58,6 @@ import org.apache.qpid.proton4j.engine.Session;
 import org.apache.qpid.proton4j.engine.exceptions.EngineFailedException;
 import org.apache.qpid.proton4j.engine.exceptions.EngineStateException;
 import org.hamcrest.Matcher;
-import org.junit.Ignore;
 import org.junit.Test;
 
 /**
@@ -817,7 +817,6 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Ignore("Handle invalid begin either by connection close or end of remotely opened resource.")
     @Test
     public void testHandleRemoteBeginWithInvalidRemoteChannelSet() throws IOException {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
@@ -827,7 +826,8 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
 
         peer.expectAMQPHeader().respondWithAMQPHeader();
         peer.expectOpen().respond().withContainerId("driver");
-        peer.remoteBegin().withRemoteChannel(3);
+        peer.remoteBegin().withRemoteChannel(3).queue();
+        peer.expectClose().withError(not(nullValue()));
         final AtomicBoolean remoteOpened = new AtomicBoolean();
         final AtomicBoolean remoteSession = new AtomicBoolean();
 
@@ -836,10 +836,10 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
         // Default engine should start and return a connection immediately
         assertNotNull(connection);
 
-        connection.open();
         connection.openHandler((result) -> {
             remoteOpened.set(true);
         });
+        connection.open();
 
         connection.sessionOpenHandler(session -> {
             remoteSession.set(true);
@@ -847,7 +847,9 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
 
         peer.waitForScriptToComplete();
 
+        assertTrue("Rmote connection should have occured", remoteOpened.get());
         assertFalse("Should not have seen a remote session open.", remoteSession.get());
+
         assertNotNull(failure);
     }
 
