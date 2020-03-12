@@ -97,8 +97,6 @@ public final class DeclareTypeDecoder extends AbstractDescribedTypeDecoder<Decla
         int size = listDecoder.readSize(buffer);
         int count = listDecoder.readCount(buffer);
 
-        // TODO - Decoding correctness checks
-
         // Don't decode anything if things already look wrong.
         if (count < MIN_DECLARE_LIST_ENTRIES) {
             throw new IllegalStateException("Not enough entries in Declare list encoding: " + count);

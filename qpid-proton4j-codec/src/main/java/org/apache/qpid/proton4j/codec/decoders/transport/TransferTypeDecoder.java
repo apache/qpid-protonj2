@@ -99,11 +99,6 @@ public final class TransferTypeDecoder extends AbstractDescribedTypeDecoder<Tran
         int size = listDecoder.readSize(buffer);
         int count = listDecoder.readCount(buffer);
 
-        // TODO - Decoding correctness checks
-
-        // How much checking do we do, and do we provide a specific exception type for these
-        // decoding errors so the transport can tell if the error is fatal or not.
-
         // Don't decode anything if things already look wrong.
         if (count < MIN_TRANSFER_LIST_ENTRIES) {
             throw new IllegalStateException("Not enough entries in Transfer list encoding: " + count);

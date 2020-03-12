@@ -95,8 +95,6 @@ public final class CoordinatorTypeDecoder extends AbstractDescribedTypeDecoder<C
         int size = listDecoder.readSize(buffer);
         int count = listDecoder.readCount(buffer);
 
-        // TODO - Decoding correctness checks
-
         // Don't decode anything if things already look wrong.
         if (count < MIN_COORDINATOR_LIST_ENTRIES) {
             throw new IllegalStateException("Not enougn entries in Coordinator list encoding: " + count);

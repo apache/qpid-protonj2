@@ -94,7 +94,6 @@ public final class SaslMechanismsTypeDecoder extends AbstractDescribedTypeDecode
         int size = listDecoder.readSize(buffer);
         int count = listDecoder.readCount(buffer);
 
-        // TODO - Decoding correctness checks
         if (count < MIN_SASL_MECHANISMS_LIST_ENTRIES) {
             throw new IllegalStateException("SASL Mechanisms must contain at least one mechanisms entry: " + count);
         }

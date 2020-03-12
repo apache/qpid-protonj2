@@ -46,13 +46,11 @@ public final class UnknownDescribedTypeEncoder implements TypeEncoder<DescribedT
 
     @Override
     public void writeArray(ProtonBuffer buffer, EncoderState state, Object[] value) {
-        // TODO - Check each element to ensure they every described type is from the same class.
         throw new UnsupportedOperationException("Cannot write array of unknown described types.");
     }
 
     @Override
     public void writeRawArray(ProtonBuffer buffer, EncoderState state, Object[] values) {
-        // TODO - Check each element to ensure they every described type is from the same class.
         throw new UnsupportedOperationException("Cannot write array of unknown described types.");
     }
 }

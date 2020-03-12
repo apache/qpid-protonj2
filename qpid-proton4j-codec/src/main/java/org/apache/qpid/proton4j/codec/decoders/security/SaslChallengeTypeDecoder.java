@@ -94,7 +94,6 @@ public final class SaslChallengeTypeDecoder extends AbstractDescribedTypeDecoder
         int size = listDecoder.readSize(buffer);
         int count = listDecoder.readCount(buffer);
 
-        // TODO - Decoding correctness checks
         if (count != REQUIRED_LIST_ENTRIES) {
             throw new IllegalStateException("SASL Challenge must contain a single challenge binary: " + count);
         }

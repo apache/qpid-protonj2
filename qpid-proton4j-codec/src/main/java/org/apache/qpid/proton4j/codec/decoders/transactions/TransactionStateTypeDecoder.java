@@ -97,8 +97,6 @@ public final class TransactionStateTypeDecoder extends AbstractDescribedTypeDeco
         int size = listDecoder.readSize(buffer);
         int count = listDecoder.readCount(buffer);
 
-        // TODO - Decoding correctness checks
-
         // Don't decode anything if things already look wrong.
         if (count < MIN_TRANSACTION_STATE_LIST_ENTRIES) {
             throw new IllegalStateException("Not enough entries in TransactionalState list encoding: " + count);

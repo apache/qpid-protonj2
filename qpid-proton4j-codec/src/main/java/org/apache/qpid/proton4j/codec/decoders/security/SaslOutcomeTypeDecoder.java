@@ -96,8 +96,6 @@ public final class SaslOutcomeTypeDecoder extends AbstractDescribedTypeDecoder<S
         int size = listDecoder.readSize(buffer);
         int count = listDecoder.readCount(buffer);
 
-        // TODO - Decoding correctness checks
-
         // Don't decode anything if things already look wrong.
         if (count < MIN_SASL_OUTCOME_LIST_ENTRIES) {
             throw new IllegalStateException("Not enougn entries in SASL Outcome list encoding: " + count);
