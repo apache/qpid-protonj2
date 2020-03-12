@@ -1051,6 +1051,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
 
         assertTrue("Delivery should have been updated and state settled", deliveryUpdatedAndSettled.get());
         assertEquals(Accepted.getInstance(), updatedDelivery.get().getRemoteState());
+        assertFalse(sender.hasUnsettled());
 
         sender.close();
 
@@ -1269,6 +1270,8 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         OutgoingDelivery delivery2 = sender.next();
         assertNotSame(delivery2, sent.get());
         delivery2.disposition(Released.getInstance(), true);
+
+        assertFalse(sender.hasUnsettled());
 
         sender.close();
 
@@ -1742,6 +1745,9 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
 
         delivery.setTag(new byte[] {0});
         delivery.streamBytes(payload);
+
+        assertTrue(sender.hasUnsettled());
+
         delivery.abort();
 
         assertTrue(delivery.isAborted());

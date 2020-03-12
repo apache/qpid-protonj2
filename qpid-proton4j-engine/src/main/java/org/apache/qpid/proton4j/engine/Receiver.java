@@ -102,6 +102,11 @@ public interface Receiver extends Link<Receiver> {
      */
     Collection<IncomingDelivery> unsettled();
 
+    /**
+     * @return true if there are unsettled deliveries for this {@link Receiver} link.
+     */
+    boolean hasUnsettled();
+
     //----- Event handlers for the Receiver
 
     /**

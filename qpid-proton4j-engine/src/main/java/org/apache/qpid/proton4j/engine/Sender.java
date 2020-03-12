@@ -87,7 +87,7 @@ public interface Sender extends Link<Sender> {
      *
      * @return this sender for chaining.
      */
-    public Sender disposition(Predicate<OutgoingDelivery> filter, DeliveryState state, boolean settle);
+    Sender disposition(Predicate<OutgoingDelivery> filter, DeliveryState state, boolean settle);
 
     /**
      * For each unsettled outgoing delivery that is pending in the {@link Sender} apply the given predicate
@@ -98,7 +98,7 @@ public interface Sender extends Link<Sender> {
      *
      * @return this sender for chaining.
      */
-    public Sender settle(Predicate<OutgoingDelivery> filter);
+    Sender settle(Predicate<OutgoingDelivery> filter);
 
     /**
      * Retrieves the list of unsettled deliveries sent from this {@link Sender}.  The deliveries in the list
@@ -107,6 +107,11 @@ public interface Sender extends Link<Sender> {
      * @return a collection of unsettled deliveries or an empty list if no pending deliveries are outstanding.
      */
     Collection<OutgoingDelivery> unsettled();
+
+    /**
+     * @return true if there are unsettled deliveries for this {@link Sender} link.
+     */
+    boolean hasUnsettled();
 
     //----- Event handlers for the Sender
 

@@ -182,6 +182,11 @@ public class ProtonReceiver extends ProtonLink<Receiver> implements Receiver {
         }
     }
 
+    @Override
+    public boolean hasUnsettled() {
+        return !unsettled.isEmpty();
+    }
+
     //----- Delivery related access points
 
     void disposition(ProtonIncomingDelivery delivery) {

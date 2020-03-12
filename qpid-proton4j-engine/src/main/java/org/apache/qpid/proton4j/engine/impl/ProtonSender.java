@@ -177,6 +177,11 @@ public class ProtonSender extends ProtonLink<Sender> implements Sender {
         }
     }
 
+    @Override
+    public boolean hasUnsettled() {
+        return !unsettled.isEmpty();
+    }
+
     //----- Handle remote events for this Sender
 
     @Override

@@ -1360,6 +1360,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
 
         assertTrue("Delivery did not arrive at the receiver", deliveryArrived.get());
         assertFalse("Deliver should not be partial", receivedDelivery.get().isPartial());
+        assertFalse(receiver.hasUnsettled());
 
         receiver.close();
 
@@ -1478,6 +1479,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
 
         assertTrue("Delivery did not arrive at the receiver", deliveryArrived.get());
         assertFalse("Deliver should not be partial", receivedDelivery.get().isPartial());
+        assertTrue(receiver.hasUnsettled());
 
         // Second disposition should be sent as we didn't settle previously.
         receivedDelivery.get().disposition(Released.getInstance(), true);
