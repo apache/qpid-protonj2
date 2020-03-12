@@ -185,4 +185,28 @@ public final class UnsignedShort extends Number implements Comparable<UnsignedSh
 
         return valueOf((short) intVal);
     }
+
+    /**
+     * Returns a {@code int} that represents the unsigned view of the given {@code short} value.
+     *
+     * @param value
+     *      The integer whose unsigned value should be converted to a long.
+     *
+     * @return a positive long value that represents the given {@code short} as unsigned.
+     */
+    public static int toUnsignedInt(short value) {
+        return Short.toUnsignedInt(value);
+    }
+
+    /**
+     * Returns a {@code long} that represents the unsigned view of the given {@code short} value.
+     *
+     * @param value
+     *      The integer whose unsigned value should be converted to a long.
+     *
+     * @return a positive long value that represents the given {@code short} as unsigned.
+     */
+    public static long toUnsignedLong(short value) {
+        return Short.toUnsignedLong(value);
+    }
 }

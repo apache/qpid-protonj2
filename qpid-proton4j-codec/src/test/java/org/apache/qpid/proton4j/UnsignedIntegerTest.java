@@ -54,6 +54,28 @@ public class UnsignedIntegerTest {
     }
 
     @Test
+    public void testValueOfFromLong() {
+        long longValue = (long) Integer.MAX_VALUE + 1;
+
+        UnsignedInteger uint1 = UnsignedInteger.valueOf(1l);
+        UnsignedInteger uint2 = UnsignedInteger.valueOf(longValue);
+
+        assertEquals(1, uint1.intValue());
+        assertEquals(longValue, uint2.longValue());
+    }
+
+    @Test
+    public void testValueOfFromString() {
+        long longValue = (long) Integer.MAX_VALUE + 1;
+
+        UnsignedInteger uint1 = UnsignedInteger.valueOf("1");
+        UnsignedInteger uint2 = UnsignedInteger.valueOf(String.valueOf(longValue));
+
+        assertEquals(1, uint1.intValue());
+        assertEquals(longValue, uint2.longValue());
+    }
+
+    @Test
     public void testHashcode() {
         UnsignedInteger uint1 = UnsignedInteger.valueOf(1);
         UnsignedInteger uint2 = UnsignedInteger.valueOf(2);
@@ -113,10 +135,24 @@ public class UnsignedIntegerTest {
 
     @Test
     public void testLongValue() {
+        long longValue = (long) Integer.MAX_VALUE + 1;
+
         assertEquals(0l, UnsignedInteger.valueOf(0).longValue());
         assertEquals(65535l, UnsignedInteger.valueOf(65535).longValue());
         assertEquals(1l, UnsignedInteger.valueOf(1).longValue());
         assertEquals(127l, UnsignedInteger.valueOf(127).longValue());
+        assertEquals(longValue, UnsignedInteger.valueOf(Integer.MAX_VALUE + 1).longValue());
+    }
+
+    @Test
+    public void testToUnsignedLongValueFromInt() {
+        long longValue = (long) Integer.MAX_VALUE + 1;
+
+        assertEquals(0l, UnsignedInteger.toUnsignedLong(0));
+        assertEquals(65535l, UnsignedInteger.toUnsignedLong(65535));
+        assertEquals(1l, UnsignedInteger.toUnsignedLong(1));
+        assertEquals(127l, UnsignedInteger.toUnsignedLong(127));
+        assertEquals(longValue, UnsignedInteger.toUnsignedLong(Integer.MAX_VALUE + 1));
     }
 
     @Test

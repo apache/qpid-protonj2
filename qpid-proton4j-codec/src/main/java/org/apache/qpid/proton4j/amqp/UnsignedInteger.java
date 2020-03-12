@@ -44,7 +44,7 @@ public final class UnsignedInteger extends Number implements Comparable<Unsigned
 
     @Override
     public long longValue() {
-        return (underlying) & 0xFFFFFFFFl;
+        return Integer.toUnsignedLong(underlying);
     }
 
     @Override
@@ -230,5 +230,17 @@ public final class UnsignedInteger extends Number implements Comparable<Unsigned
             throw new NumberFormatException("Value \"" + value + "\" lies outside the range [" + 0L + "-" + (1L << 32) + ").");
         }
         return valueOf((int) value);
+    }
+
+    /**
+     * Returns a {@code long} that represents the unsigned view of the given {@code int} value.
+     *
+     * @param value
+     *      The integer whose unsigned value should be converted to a long.
+     *
+     * @return a positive long value that represents the given {@code int} as unsigned.
+     */
+    public static long toUnsignedLong(int value) {
+        return Integer.toUnsignedLong(value);
     }
 }

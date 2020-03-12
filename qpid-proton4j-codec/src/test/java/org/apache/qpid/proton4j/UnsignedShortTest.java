@@ -142,4 +142,26 @@ public class UnsignedShortTest {
             // expected
         }
     }
+
+    @Test
+    public void testToUnsignedIntValueFromShort() {
+        long longValue = (long) Short.MAX_VALUE + 1;
+
+        assertEquals(0l, UnsignedShort.toUnsignedInt((short) 0));
+        assertEquals(65535l, UnsignedShort.toUnsignedInt((short) 65535));
+        assertEquals(1l, UnsignedShort.toUnsignedInt((short) 1));
+        assertEquals(127l, UnsignedShort.toUnsignedInt((short) 127));
+        assertEquals(longValue, UnsignedShort.toUnsignedInt((short) (Short.MAX_VALUE + 1)));
+    }
+
+    @Test
+    public void testToUnsignedLongValueFromShort() {
+        long longValue = (long) Short.MAX_VALUE + 1;
+
+        assertEquals(0l, UnsignedShort.toUnsignedLong((short) 0));
+        assertEquals(65535l, UnsignedShort.toUnsignedLong((short) 65535));
+        assertEquals(1l, UnsignedShort.toUnsignedLong((short) 1));
+        assertEquals(127l, UnsignedShort.toUnsignedLong((short) 127));
+        assertEquals(longValue, UnsignedShort.toUnsignedLong((short) (Short.MAX_VALUE + 1)));
+    }
 }

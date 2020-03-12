@@ -122,4 +122,37 @@ public class UnsignedByteTest {
             // expected
         }
     }
+
+    @Test
+    public void testToUnsignedShortValueFromByte() {
+        short shortValue = Byte.MAX_VALUE + 1;
+
+        assertEquals(0, UnsignedByte.toUnsignedShort((byte) 0));
+        assertEquals(255, UnsignedByte.toUnsignedShort((byte) 255));
+        assertEquals(1, UnsignedByte.toUnsignedShort((byte) 1));
+        assertEquals(127, UnsignedByte.toUnsignedShort((byte) 127));
+        assertEquals(shortValue, UnsignedByte.toUnsignedShort((byte) (Byte.MAX_VALUE + 1)));
+    }
+
+    @Test
+    public void testToUnsignedIntValueFromByte() {
+        int intValue = Byte.MAX_VALUE + 1;
+
+        assertEquals(0, UnsignedByte.toUnsignedInt((byte) 0));
+        assertEquals(255, UnsignedByte.toUnsignedInt((byte) 255));
+        assertEquals(1, UnsignedByte.toUnsignedInt((byte) 1));
+        assertEquals(127, UnsignedByte.toUnsignedInt((byte) 127));
+        assertEquals(intValue, UnsignedByte.toUnsignedInt((byte) (Byte.MAX_VALUE + 1)));
+    }
+
+    @Test
+    public void testToUnsignedLongValueFromByte() {
+        long longValue = (long) Byte.MAX_VALUE + 1;
+
+        assertEquals(0l, UnsignedByte.toUnsignedLong((byte) 0));
+        assertEquals(255l, UnsignedByte.toUnsignedLong((byte) 255));
+        assertEquals(1l, UnsignedByte.toUnsignedLong((byte) 1));
+        assertEquals(127l, UnsignedByte.toUnsignedLong((byte) 127));
+        assertEquals(longValue, UnsignedByte.toUnsignedLong((byte) (Byte.MAX_VALUE + 1)));
+    }
 }

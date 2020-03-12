@@ -160,4 +160,40 @@ public final class UnsignedByte extends Number implements Comparable<UnsignedByt
         }
         return valueOf((byte) intVal);
     }
+
+    /**
+     * Returns a {@code short} that represents the unsigned view of the given {@code byte} value.
+     *
+     * @param value
+     *      The {@code short} whose unsigned value should be converted to a long.
+     *
+     * @return a positive {@code short} value that represents the given {@code byte} as unsigned.
+     */
+    public static short toUnsignedShort(byte value) {
+        return (short) (value & 0xff);
+    }
+
+    /**
+     * Returns a {@code int} that represents the unsigned view of the given {@code byte} value.
+     *
+     * @param value
+     *      The {@code int} whose unsigned value should be converted to a long.
+     *
+     * @return a positive {@code int} value that represents the given {@code short} as unsigned.
+     */
+    public static int toUnsignedInt(byte value) {
+        return Byte.toUnsignedInt(value);
+    }
+
+    /**
+     * Returns a {@code long} that represents the unsigned view of the given {@code byte} value.
+     *
+     * @param value
+     *      The {@code long} whose unsigned value should be converted to a long.
+     *
+     * @return a positive {@code long} value that represents the given {@code byte} as unsigned.
+     */
+    public static long toUnsignedLong(byte value) {
+        return Byte.toUnsignedLong(value);
+    }
 }
