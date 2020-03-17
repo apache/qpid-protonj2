@@ -36,6 +36,7 @@ import org.apache.qpid.proton4j.engine.LinkCreditState;
 import org.apache.qpid.proton4j.engine.OutgoingDelivery;
 import org.apache.qpid.proton4j.engine.Sender;
 import org.apache.qpid.proton4j.engine.Session;
+import org.apache.qpid.proton4j.engine.DeliveryTagGenerator;
 import org.apache.qpid.proton4j.engine.util.DeliveryIdTracker;
 import org.apache.qpid.proton4j.engine.util.SplayMap;
 
@@ -57,6 +58,7 @@ public class ProtonSender extends ProtonLink<Sender> implements Sender {
     private EventHandler<Sender> linkCreditUpdatedHandler = null;
     private EventHandler<LinkCreditState> drainRequestedEventHandler = null;
 
+    private DeliveryTagGenerator autoTagGenerator;
     private OutgoingDelivery current;
 
     /**
@@ -162,9 +164,14 @@ public class ProtonSender extends ProtonLink<Sender> implements Sender {
 
         if (current != null) {
             throw new IllegalStateException("Current delivery is not complete and cannot be advanced.");
+        } else {
+            current = new ProtonOutgoingDelivery(this);
+            if (autoTagGenerator != null) {
+                current.setTag(autoTagGenerator.nextTag());
+            }
         }
 
-        return current = new ProtonOutgoingDelivery(this);
+        return current;
     }
 
     @SuppressWarnings("unchecked")
@@ -180,6 +187,17 @@ public class ProtonSender extends ProtonLink<Sender> implements Sender {
     @Override
     public boolean hasUnsettled() {
         return !unsettled.isEmpty();
+    }
+
+    @Override
+    public Sender setDeliveryTagGenerator(DeliveryTagGenerator generator) {
+        this.autoTagGenerator = generator;
+        return this;
+    }
+
+    @Override
+    public DeliveryTagGenerator getDeliveryTagGenerator() {
+        return autoTagGenerator;
     }
 
     //----- Handle remote events for this Sender

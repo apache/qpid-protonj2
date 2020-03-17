@@ -22,13 +22,13 @@ import org.apache.qpid.proton4j.amqp.DeliveryTag;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.buffer.ProtonByteUtils;
-import org.apache.qpid.proton4j.engine.TransferTagGenerator;
+import org.apache.qpid.proton4j.engine.DeliveryTagGenerator;
 
 /**
- * Built in proton {@link TransferTagGenerator} that creates new {@link DeliveryTag} values
+ * Built in proton {@link DeliveryTagGenerator} that creates new {@link DeliveryTag} values
  * backed by randomly generated UUID instances.
  */
-public class ProtonUuidTagGenerator extends ProtonTransferTagGenerator {
+public class ProtonUuidTagGenerator extends ProtonDeliveryTagGenerator {
 
     @Override
     public DeliveryTag nextTag() {

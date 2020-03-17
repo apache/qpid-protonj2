@@ -26,9 +26,9 @@ import org.apache.qpid.proton4j.engine.util.RingQueue;
  * pool to reduce GC overhead by reusing tags that have been released from settled
  * messages.  When not using cached tags the generator creates new tags using a
  * running tag counter of type {@link Long} that assumes that when it wraps the user
- *  has already release all tags within the lower range of the tag counter.
+ * has already release all tags within the lower range of the tag counter.
  */
-public class ProtonCachingTagGenerator extends ProtonSequentialTagGenerator {
+public class ProtonPooledTagGenerator extends ProtonSequentialTagGenerator {
 
     public static final int MAX_NUM_CACHED_TAGS = 512;
 
@@ -73,13 +73,18 @@ public class ProtonCachingTagGenerator extends ProtonSequentialTagGenerator {
 
     private class ProtonCachedDeliveryTag extends ProtonNumericDeliveryTag {
 
+        private boolean released;
+
         public ProtonCachedDeliveryTag(long tagValue) {
             super(tagValue);
         }
 
         @Override
         public void release() {
-            tagCache.offer(this);
+            if (!released) {
+                tagCache.offer(this);
+                released = true;
+            }
         }
     }
 }

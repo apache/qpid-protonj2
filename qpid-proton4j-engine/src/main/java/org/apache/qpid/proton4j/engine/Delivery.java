@@ -37,7 +37,7 @@ public interface Delivery {
     //----- Delivery state
 
     /**
-     * @return the Delivery tag assigned to this Delivery.
+     * @return the {@link DeliveryTag} assigned to this Delivery.
      */
     DeliveryTag getTag();
 

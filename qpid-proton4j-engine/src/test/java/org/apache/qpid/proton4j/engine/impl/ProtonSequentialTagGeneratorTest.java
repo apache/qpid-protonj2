@@ -25,14 +25,14 @@ import static org.junit.Assert.assertTrue;
 import org.apache.qpid.proton4j.amqp.DeliveryTag;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
-import org.apache.qpid.proton4j.engine.TransferTagGenerator;
+import org.apache.qpid.proton4j.engine.DeliveryTagGenerator;
 import org.junit.Test;
 
 public class ProtonSequentialTagGeneratorTest {
 
     @Test
     public void testCreateTagGenerator() {
-        TransferTagGenerator generator = ProtonTransferTagGenerator.BUILTIN.SEQUENTIAL.createGenerator();
+        DeliveryTagGenerator generator = ProtonDeliveryTagGenerator.BUILTIN.SEQUENTIAL.createGenerator();
         assertTrue(generator instanceof ProtonSequentialTagGenerator);
     }
 

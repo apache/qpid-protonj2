@@ -20,13 +20,13 @@ import org.apache.qpid.proton4j.amqp.DeliveryTag;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.buffer.ProtonByteUtils;
-import org.apache.qpid.proton4j.engine.TransferTagGenerator;
+import org.apache.qpid.proton4j.engine.DeliveryTagGenerator;
 
 /**
- * A Built in proton {@link TransferTagGenerator} that creates new tags using a sequential
+ * A Built in proton {@link DeliveryTagGenerator} that creates new tags using a sequential
  * numeric value which is encoded using the most compact representation of the numeric value.
  */
-public class ProtonSequentialTagGenerator extends ProtonTransferTagGenerator {
+public class ProtonSequentialTagGenerator extends ProtonDeliveryTagGenerator {
 
     protected long nextTagId = 0;
 

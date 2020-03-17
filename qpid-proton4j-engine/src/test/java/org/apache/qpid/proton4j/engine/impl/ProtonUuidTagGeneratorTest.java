@@ -27,14 +27,14 @@ import java.util.UUID;
 import org.apache.qpid.proton4j.amqp.DeliveryTag;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
-import org.apache.qpid.proton4j.engine.TransferTagGenerator;
+import org.apache.qpid.proton4j.engine.DeliveryTagGenerator;
 import org.junit.Test;
 
 public class ProtonUuidTagGeneratorTest {
 
     @Test
     public void testCreateTagGenerator() {
-        TransferTagGenerator generator = ProtonTransferTagGenerator.BUILTIN.UUID.createGenerator();
+        DeliveryTagGenerator generator = ProtonDeliveryTagGenerator.BUILTIN.UUID.createGenerator();
         assertTrue(generator instanceof ProtonUuidTagGenerator);
     }
 

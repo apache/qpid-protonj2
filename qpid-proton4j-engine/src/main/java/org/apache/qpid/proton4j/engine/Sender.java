@@ -19,6 +19,7 @@ package org.apache.qpid.proton4j.engine;
 import java.util.Collection;
 import java.util.function.Predicate;
 
+import org.apache.qpid.proton4j.amqp.DeliveryTag;
 import org.apache.qpid.proton4j.amqp.transport.DeliveryState;
 import org.apache.qpid.proton4j.amqp.transport.Flow;
 import org.apache.qpid.proton4j.amqp.transport.Transfer;
@@ -33,7 +34,7 @@ public interface Sender extends Link<Sender> {
      * Called when the {@link Receiver} has requested a drain of credit and the sender
      * has sent all available messages.
      *
-     * @return this Sender instance for chaining.
+     * @return this {@link Sender} instance.
      *
      * @throws IllegalStateException if the link is not draining currently.
      */
@@ -85,7 +86,7 @@ public interface Sender extends Link<Sender> {
      * @param settle
      *      Boolean indicating if the matching unsettled deliveries should be settled.
      *
-     * @return this sender for chaining.
+     * @return this {@link Sender} instance.
      */
     Sender disposition(Predicate<OutgoingDelivery> filter, DeliveryState state, boolean settle);
 
@@ -96,7 +97,7 @@ public interface Sender extends Link<Sender> {
      * @param filter
      *      The predicate to apply to each unsettled delivery to test for a match.
      *
-     * @return this sender for chaining.
+     * @return this {@link Sender} instance.
      */
     Sender settle(Predicate<OutgoingDelivery> filter);
 
@@ -113,6 +114,23 @@ public interface Sender extends Link<Sender> {
      */
     boolean hasUnsettled();
 
+    /**
+     * Configures a {@link DeliveryTagGenerator} that will be used to create and set a {@link DeliveryTag}
+     * value on each new {@link OutgoingDelivery} that is created and returned from the {@link Sender#next()}
+     * method.
+     *
+     * @param generator
+     *      The {@link DeliveryTagGenerator} to use to create automatic {@link DeliveryTag} values.
+     *
+     * @return this {@link Sender} instance.
+     */
+    Sender setDeliveryTagGenerator(DeliveryTagGenerator generator);
+
+    /**
+     * @return the currently configured {@link DeliveryTagGenerator} for this {@link Sender}.
+     */
+    DeliveryTagGenerator getDeliveryTagGenerator();
+
     //----- Event handlers for the Sender
 
     /**
@@ -121,7 +139,7 @@ public interface Sender extends Link<Sender> {
      * @param handler
      *      An event handler that will be signaled when the link credit is updated by a remote flow.
      *
-     * @return this sender
+     * @return this {@link Sender} instance.
      */
     Sender linkCreditUpdateHandler(EventHandler<Sender> handler);
 
@@ -132,7 +150,7 @@ public interface Sender extends Link<Sender> {
      * @param handler
      *      An event handler that will be signaled when the link state changes to allow sends.
      *
-     * @return this sender
+     * @return this {@link Sender} instance.
      */
     Sender sendableHandler(EventHandler<Sender> handler);
 
@@ -146,7 +164,7 @@ public interface Sender extends Link<Sender> {
      * @param handler
      *      handler that will act on the drain request.
      *
-     * @return this sender
+     * @return this {@link Sender} instance.
      */
     Sender drainRequestedHandler(EventHandler<LinkCreditState> handler);
 
@@ -159,7 +177,7 @@ public interface Sender extends Link<Sender> {
      * @param handler
      *      The handler that will be invoked when a new update delivery arrives on this link.
      *
-     * @return this sender
+     * @return this {@link Sender} instance.
      */
     Sender deliveryUpdatedHandler(EventHandler<OutgoingDelivery> handler);
 

@@ -26,7 +26,7 @@ import org.apache.qpid.proton4j.amqp.DeliveryTag;
  * large number of messages to avoid GC overhead, while for other links simpler
  * generator types could be used.
  */
-public interface TransferTagGenerator {
+public interface DeliveryTagGenerator {
 
     /**
      * Creates and returns the next {@link DeliveryTag} tag that should be used when

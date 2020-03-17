@@ -34,8 +34,6 @@ public class ProtonOutgoingDelivery implements OutgoingDelivery {
 
     private long deliveryId = DELIVERY_INACTIVE;
 
-    // TODO - Creating an internal system for generating pooled tags so
-    //        that the user doesn't need to manage them would be nice
     private DeliveryTag deliveryTag;
 
     private boolean complete;
@@ -70,7 +68,17 @@ public class ProtonOutgoingDelivery implements OutgoingDelivery {
 
     @Override
     public OutgoingDelivery setTag(byte[] deliveryTag) {
+        if (transferCount > 0) {
+            throw new IllegalStateException("Cannot change delivery tag once Delivery has sent Transfers");
+        }
+
+        if (this.deliveryTag != null) {
+            this.deliveryTag.release();
+            this.deliveryTag = null;
+        }
+
         this.deliveryTag = new DeliveryTag.ProtonDeliveryTag(deliveryTag);
+
         return this;
     }
 
@@ -182,6 +190,9 @@ public class ProtonOutgoingDelivery implements OutgoingDelivery {
             aborted = true;
             locallySettled = true;
             link.abort(this);
+            if (deliveryTag != null) {
+                deliveryTag.release();
+            }
             deliveryId = DELIVERY_ABORTED;
         }
 

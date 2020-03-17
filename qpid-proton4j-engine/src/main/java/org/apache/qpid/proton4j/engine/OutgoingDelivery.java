@@ -32,7 +32,7 @@ public interface OutgoingDelivery extends Delivery {
     Sender getLink();
 
     /**
-     * Sets the delivery tag to assign to this outgoing delivery.
+     * Sets the delivery tag to assign to this outgoing delivery from the given byte array.
      *
      * @param deliveryTag
      *      a byte array containing the delivery tag to assign to this {@link OutgoingDelivery}
@@ -42,7 +42,7 @@ public interface OutgoingDelivery extends Delivery {
     OutgoingDelivery setTag(byte[] deliveryTag);
 
     /**
-     * Sets the delivery tag to assign to this outgoing delivery.
+     * Sets the {@link DeliveryTag} to assign to this outgoing delivery.
      *
      * @param deliveryTag
      *      a byte array containing the delivery tag to assign to this {@link OutgoingDelivery}

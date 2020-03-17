@@ -35,6 +35,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.apache.qpid.proton4j.amqp.Binary;
+import org.apache.qpid.proton4j.amqp.DeliveryTag;
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.driver.ProtonTestPeer;
 import org.apache.qpid.proton4j.amqp.messaging.Accepted;
@@ -54,6 +55,7 @@ import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.engine.Connection;
 import org.apache.qpid.proton4j.engine.Delivery;
+import org.apache.qpid.proton4j.engine.DeliveryTagGenerator;
 import org.apache.qpid.proton4j.engine.Engine;
 import org.apache.qpid.proton4j.engine.EngineFactory;
 import org.apache.qpid.proton4j.engine.OutgoingDelivery;
@@ -2494,5 +2496,211 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         connection.close();
 
         peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+    }
+
+    @Test
+    public void testSenderAppliesDeliveryTagGeneratorToNextDelivery() throws Exception {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result);
+        ProtonTestPeer peer = new ProtonTestPeer(engine);
+        engine.outputConsumer(peer);
+
+        final byte [] payloadBuffer = new byte[] {0, 1, 2, 3, 4};
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond().withContainerId("driver");
+        peer.expectBegin().respond();
+        peer.expectAttach().withRole(Role.SENDER).respond();
+        peer.remoteFlow().withDeliveryCount(0)
+                         .withLinkCredit(10)
+                         .withIncomingWindow(1024)
+                         .withOutgoingWindow(10)
+                         .withNextIncomingId(0)
+                         .withNextOutgoingId(1).queue();
+        peer.expectTransfer().withHandle(0)
+                             .withSettled(false)
+                             .withState((DeliveryState) null)
+                             .withDeliveryId(0)
+                             .withDeliveryTag(new byte[] {0})
+                             .withPayload(payloadBuffer);
+        peer.expectDetach().withHandle(0).respond();
+
+        Connection connection = engine.start();
+
+        connection.open();
+        Session session = connection.session();
+        session.open();
+
+        ProtonBuffer payload = ProtonByteBufferAllocator.DEFAULT.wrap(payloadBuffer);
+
+        Sender sender = session.sender("sender-1");
+
+        assertFalse(sender.isSendable());
+
+        sender.setDeliveryTagGenerator(ProtonDeliveryTagGenerator.BUILTIN.SEQUENTIAL.createGenerator());
+        sender.sendableHandler(handler -> {
+            handler.next().writeBytes(payload);
+        });
+
+        sender.open();
+        sender.close();
+
+        peer.waitForScriptToComplete();
+
+        assertNull(failure);
+    }
+
+    @Test(timeout = 20000)
+    public void testSenderAppliedGeneratedDeliveryTagCanBeOverriden() throws Exception {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result);
+        ProtonTestPeer peer = new ProtonTestPeer(engine);
+        engine.outputConsumer(peer);
+
+        final byte [] payloadBuffer = new byte[] {0, 1, 2, 3, 4};
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond().withContainerId("driver");
+        peer.expectBegin().respond();
+        peer.expectAttach().withRole(Role.SENDER).respond();
+        peer.remoteFlow().withDeliveryCount(0)
+                         .withLinkCredit(10)
+                         .withIncomingWindow(1024)
+                         .withOutgoingWindow(10)
+                         .withNextIncomingId(0)
+                         .withNextOutgoingId(1).queue();
+
+        Connection connection = engine.start();
+
+        connection.open();
+        Session session = connection.session();
+        session.open();
+
+        ProtonBuffer payload = ProtonByteBufferAllocator.DEFAULT.wrap(payloadBuffer);
+
+        Sender sender = session.sender("sender-1");
+
+        assertFalse(sender.isSendable());
+
+        final DeliveryTagGenerator generator = ProtonDeliveryTagGenerator.BUILTIN.POOLED.createGenerator();
+
+        sender.setDeliveryTagGenerator(generator);
+        sender.open();
+
+        peer.waitForScriptToComplete();
+        peer.expectTransfer().withHandle(0)
+                             .withSettled(false)
+                             .withState((DeliveryState) null)
+                             .withDeliveryId(0)
+                             .withDeliveryTag(new byte[] {127})
+                             .withPayload(payloadBuffer);
+        peer.expectDetach().withHandle(0).respond();
+
+        OutgoingDelivery delivery = sender.next();
+
+        DeliveryTag oldTag = delivery.getTag();
+
+        delivery.setTag(new byte[] {127});
+
+        // Pooled tag should be reused.
+        assertSame(oldTag, generator.nextTag());
+
+        delivery.writeBytes(payload);
+
+        sender.close();
+
+        peer.waitForScriptToComplete();
+
+        assertNull(failure);
+    }
+
+    @Test(timeout = 20000)
+    public void testSenderReleasesPooledDeliveryTagsAfterSettledByBoth() throws Exception {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result);
+        ProtonTestPeer peer = new ProtonTestPeer(engine);
+        engine.outputConsumer(peer);
+
+        ProtonBuffer payload = ProtonByteBufferAllocator.DEFAULT.wrap(new byte[] {0, 1, 2, 3, 4});
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond();
+        peer.expectBegin().respond();
+        peer.expectAttach().respond();
+        peer.remoteFlow().withDeliveryCount(0).withLinkCredit(1).withDrain(true).queue();
+
+        peer.expectTransfer().withHandle(0)
+                             .withSettled(false)
+                             .withState((DeliveryState) null)
+                             .withDeliveryId(0)
+                             .withDeliveryTag(new byte[] {0})
+                             .respond()
+                             .withSettled(true)
+                             .withState(Accepted.getInstance());
+        peer.expectDisposition().withFirst(0)
+                                .withSettled(true)
+                                .withState(nullValue());
+
+        Connection connection = engine.start().open();
+        Session session = connection.session().open();
+        Sender sender = session.sender("sender-1");
+
+        sender.setDeliveryTagGenerator(ProtonDeliveryTagGenerator.BUILTIN.POOLED.createGenerator());
+
+        final AtomicBoolean deliverySentAfterSenable = new AtomicBoolean();
+        final AtomicReference<Delivery> sentDelivery1 = new AtomicReference<>();
+        final AtomicReference<Delivery> sentDelivery2 = new AtomicReference<>();
+
+        sender.linkCreditUpdateHandler(link -> {
+            if (link.isSendable()) {
+                if (sentDelivery1.get() == null) {
+                    sentDelivery1.set(link.next().writeBytes(payload.duplicate()));
+                } else {
+                    sentDelivery2.set(link.next().writeBytes(payload.duplicate()));
+                }
+                deliverySentAfterSenable.set(true);
+            }
+        });
+
+        sender.deliveryUpdatedHandler((delivery) -> {
+            if (delivery.isRemotelySettled()) {
+                delivery.settle();
+            }
+        });
+
+        sender.open();
+
+        peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        peer.expectTransfer().withHandle(0)
+            .withSettled(false)
+            .withState((DeliveryState) null)
+            .withDeliveryId(1)
+            .withDeliveryTag(new byte[] {0})
+            .respond()
+            .withSettled(true)
+            .withState(Accepted.getInstance());
+        peer.expectDisposition().withFirst(1)
+            .withSettled(true)
+            .withState(nullValue());
+        peer.remoteFlow().withDeliveryCount(1).withLinkCredit(1).withDrain(true).now();
+        peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+
+        assertNotNull(sentDelivery1.get());
+        assertNotNull(sentDelivery2.get());
+        assertNotNull(sentDelivery1.get().getTag());
+        assertNotNull(sentDelivery2.get().getTag());
+        assertSame(sentDelivery1.get().getTag(), sentDelivery2.get().getTag());
+
+        peer.expectDetach().respond();
+        peer.expectClose().respond();
+
+        // Should not send a flow as the send fulfilled the requested drain amount.
+        sender.drained();
+
+        sender.close();
+        connection.close();
+
+        peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+
     }
 }

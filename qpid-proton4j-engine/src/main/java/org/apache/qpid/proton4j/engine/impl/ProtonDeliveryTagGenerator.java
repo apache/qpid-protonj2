@@ -16,37 +16,37 @@
  */
 package org.apache.qpid.proton4j.engine.impl;
 
-import org.apache.qpid.proton4j.engine.TransferTagGenerator;
+import org.apache.qpid.proton4j.engine.DeliveryTagGenerator;
 
 /**
- * Proton provided {@link TransferTagGenerator} utility.
+ * Proton provided {@link DeliveryTagGenerator} utility.
  */
-public abstract class ProtonTransferTagGenerator implements TransferTagGenerator {
+public abstract class ProtonDeliveryTagGenerator implements DeliveryTagGenerator {
 
     public enum BUILTIN {
         SEQUENTIAL {
 
             @Override
-            public TransferTagGenerator createGenerator() {
+            public DeliveryTagGenerator createGenerator() {
                 return new ProtonSequentialTagGenerator();
             }
         },
         UUID {
 
             @Override
-            public TransferTagGenerator createGenerator() {
+            public DeliveryTagGenerator createGenerator() {
                 return new ProtonUuidTagGenerator();
             }
         },
-        CACHING {
+        POOLED {
 
             @Override
-            public TransferTagGenerator createGenerator() {
-                return new ProtonCachingTagGenerator();
+            public DeliveryTagGenerator createGenerator() {
+                return new ProtonPooledTagGenerator();
             }
         };
 
-        public abstract TransferTagGenerator createGenerator();
+        public abstract DeliveryTagGenerator createGenerator();
 
     }
 }
