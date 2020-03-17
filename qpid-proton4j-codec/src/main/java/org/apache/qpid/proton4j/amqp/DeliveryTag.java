@@ -38,11 +38,21 @@ public interface DeliveryTag {
     int tagLength();
 
     /**
-     * @return the underlying tag bytes (not a copy, user should not modify).
+     * Returns a view of this {@link DeliveryTag} object as a byte array.  The returned array may
+     * be the actual underlying tag bytes or a synthetic view based on the value used to generate
+     * the tag.  It is advised not to modify the returned value and copy if such modification are
+     * necessary to the caller.
+     *
+     * @return the underlying tag bytes as a byte array that may or may no be a singleton instance..
      */
     byte[] tagBytes();
 
     /**
+     * Returns a view of this {@link DeliveryTag} object as a {@link ProtonBuffer}.  The returned array
+     * may be the actual underlying tag bytes or a synthetic view based on the value used to generate
+     * the tag.  It is advised not to modify the returned value and copy if such modification are
+     * necessary to the caller.
+     *
      * @return the ProtonBuffer view of the tag bytes.
      */
     ProtonBuffer tagBuffer();

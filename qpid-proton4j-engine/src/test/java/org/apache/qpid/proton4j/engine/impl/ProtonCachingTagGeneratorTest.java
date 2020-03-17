@@ -21,34 +21,41 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
 
 import java.util.ArrayList;
 
 import org.apache.qpid.proton4j.amqp.DeliveryTag;
+import org.apache.qpid.proton4j.engine.TransferTagGenerator;
 import org.junit.Test;
 
-public class ProtonCachingTransferTagGeneratorTest {
+public class ProtonCachingTagGeneratorTest {
+
+    @Test
+    public void testCreateTagGenerator() {
+        TransferTagGenerator generator = ProtonTransferTagGenerator.BUILTIN.CACHING.createGenerator();
+        assertTrue(generator instanceof ProtonCachingTagGenerator);
+    }
 
     @Test
     public void testCreateTag() {
-        ProtonCachingTransferTagGenerator generator = new ProtonCachingTransferTagGenerator();
-
+        ProtonCachingTagGenerator generator = new ProtonCachingTagGenerator();
         assertNotNull(generator.nextTag());
     }
 
     @Test
     public void testCreateTagsFromCacheAndReturn() {
-        ProtonCachingTransferTagGenerator generator = new ProtonCachingTransferTagGenerator();
+        ProtonCachingTagGenerator generator = new ProtonCachingTagGenerator();
 
-        final ArrayList<DeliveryTag> tags = new ArrayList<>(ProtonCachingTransferTagGenerator.MAX_NUM_CACHED_TAGS);
+        final ArrayList<DeliveryTag> tags = new ArrayList<>(ProtonCachingTagGenerator.MAX_NUM_CACHED_TAGS);
 
-        for (int i = 0; i < ProtonCachingTransferTagGenerator.MAX_NUM_CACHED_TAGS; ++i) {
+        for (int i = 0; i < ProtonCachingTagGenerator.MAX_NUM_CACHED_TAGS; ++i) {
             tags.add(generator.nextTag());
         }
 
         tags.forEach(tag -> tag.release());
 
-        for (int i = 0; i < ProtonCachingTransferTagGenerator.MAX_NUM_CACHED_TAGS; ++i) {
+        for (int i = 0; i < ProtonCachingTagGenerator.MAX_NUM_CACHED_TAGS; ++i) {
             assertSame(tags.get(i), generator.nextTag());
         }
 
@@ -60,7 +67,7 @@ public class ProtonCachingTransferTagGeneratorTest {
 
     @Test
     public void testConsumeAllCachedTagsAndThenReleaseAfterCreatingNonCached() {
-        ProtonCachingTransferTagGenerator generator = new ProtonCachingTransferTagGenerator();
+        ProtonCachingTagGenerator generator = new ProtonCachingTagGenerator();
 
         DeliveryTag cachedTag = generator.nextTag();
         DeliveryTag nonCached = generator.nextTag();
@@ -77,11 +84,11 @@ public class ProtonCachingTransferTagGeneratorTest {
 
     @Test
     public void testCreateTagsThatWrapAroundLimit() {
-        ProtonCachingTransferTagGenerator generator = new ProtonCachingTransferTagGenerator();
+        ProtonCachingTagGenerator generator = new ProtonCachingTagGenerator();
 
-        final ArrayList<DeliveryTag> tags = new ArrayList<>(ProtonCachingTransferTagGenerator.MAX_NUM_CACHED_TAGS);
+        final ArrayList<DeliveryTag> tags = new ArrayList<>(ProtonCachingTagGenerator.MAX_NUM_CACHED_TAGS);
 
-        for (int i = 0; i < ProtonCachingTransferTagGenerator.MAX_NUM_CACHED_TAGS; ++i) {
+        for (int i = 0; i < ProtonCachingTagGenerator.MAX_NUM_CACHED_TAGS; ++i) {
             tags.add(generator.nextTag());
         }
 
@@ -96,7 +103,37 @@ public class ProtonCachingTransferTagGeneratorTest {
 
         final short tagValue = getShort(nextTagAfterWrap.tagBytes());
 
-        assertEquals(ProtonCachingTransferTagGenerator.MAX_NUM_CACHED_TAGS, tagValue);
+        assertEquals(ProtonCachingTagGenerator.MAX_NUM_CACHED_TAGS, tagValue);
+
+        tags.get(0).release();
+
+        DeliveryTag tagAfterRelease = generator.nextTag();
+
+        assertSame(tags.get(0), tagAfterRelease);
+    }
+
+    @Test
+    public void testTakeAllTagsReturnThemAndTakeThemAgain() {
+        ProtonCachingTagGenerator generator = new ProtonCachingTagGenerator();
+
+        final ArrayList<DeliveryTag> tags1 = new ArrayList<>(ProtonCachingTagGenerator.MAX_NUM_CACHED_TAGS);
+        final ArrayList<DeliveryTag> tags2 = new ArrayList<>(ProtonCachingTagGenerator.MAX_NUM_CACHED_TAGS);
+
+        for (int i = 0; i < ProtonCachingTagGenerator.MAX_NUM_CACHED_TAGS; ++i) {
+            tags1.add(generator.nextTag());
+        }
+
+        for (int i = 0; i < ProtonCachingTagGenerator.MAX_NUM_CACHED_TAGS; ++i) {
+            tags1.get(i).release();
+        }
+
+        for (int i = 0; i < ProtonCachingTagGenerator.MAX_NUM_CACHED_TAGS; ++i) {
+            tags2.add(generator.nextTag());
+        }
+
+        for (int i = 0; i < ProtonCachingTagGenerator.MAX_NUM_CACHED_TAGS; ++i) {
+            assertSame(tags1.get(i), tags2.get(i));
+        }
     }
 
     private short getShort(byte[] tagBytes) {

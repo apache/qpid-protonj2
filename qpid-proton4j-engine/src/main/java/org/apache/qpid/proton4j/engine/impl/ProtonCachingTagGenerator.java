@@ -19,7 +19,6 @@ package org.apache.qpid.proton4j.engine.impl;
 import java.util.Queue;
 
 import org.apache.qpid.proton4j.amqp.DeliveryTag;
-import org.apache.qpid.proton4j.buffer.ProtonByteUtils;
 import org.apache.qpid.proton4j.engine.util.RingQueue;
 
 /**
@@ -29,13 +28,13 @@ import org.apache.qpid.proton4j.engine.util.RingQueue;
  * running tag counter of type {@link Long} that assumes that when it wraps the user
  *  has already release all tags within the lower range of the tag counter.
  */
-public class ProtonCachingTransferTagGenerator {
+public class ProtonCachingTagGenerator extends ProtonSequentialTagGenerator {
 
-    public static final int MAX_NUM_CACHED_TAGS = 256;
+    public static final int MAX_NUM_CACHED_TAGS = 512;
 
-    private long nextTagId = 0;
     private final Queue<DeliveryTag> tagCache = new RingQueue<>(MAX_NUM_CACHED_TAGS);
 
+    @Override
     public DeliveryTag nextTag() {
         DeliveryTag nextTag = tagCache.poll();
         if (nextTag == null) {
@@ -50,10 +49,10 @@ public class ProtonCachingTransferTagGenerator {
 
         if (nextTagId >= 0 && nextTagId < MAX_NUM_CACHED_TAGS) {
             // Cached tag that will return to cache on next release.
-            nextTag = new PooledProtonDeliveryTag((byte) nextTagId++);
+            nextTag = new ProtonCachedDeliveryTag((byte) nextTagId++);
         } else {
             // Non-cached tag that will not return to the cache on next release.
-            nextTag = new DeliveryTag.ProtonDeliveryTag(generateNextTagBytes(nextTagId++));
+            nextTag = super.nextTag();
             if (nextTagId == 0) {
                 nextTagId = MAX_NUM_CACHED_TAGS;
             }
@@ -62,43 +61,25 @@ public class ProtonCachingTransferTagGenerator {
         return nextTag;
     }
 
-    private static byte[] generateNextTagBytes(long tag) {
-        if (tag < 0) {
-            return ProtonByteUtils.toByteArray(tag);
-        } else if (tag <= 0x00000000000000FFl) {
-            return ProtonByteUtils.toByteArray((byte) tag);
-        } else if (tag <= 0x000000000000FFFFl) {
-            return ProtonByteUtils.toByteArray((short) tag);
-        } else if (tag <= 0x00000000FFFFFFFFl) {
-            return ProtonByteUtils.toByteArray((int) tag);
-        } else {
-            return ProtonByteUtils.toByteArray(tag);
-        }
-    }
-
     /*
      * Test entry point to validate tag cache and tag counter overflow.
      */
+    @Override
     void setNextTagId(long nextIdValue) {
         this.nextTagId = nextIdValue;
     }
 
     //----- Specialized DeliveryTag and releases itself back to the cache
 
-    private class PooledProtonDeliveryTag extends DeliveryTag.ProtonDeliveryTag {
+    private class ProtonCachedDeliveryTag extends ProtonNumericDeliveryTag {
 
-        public PooledProtonDeliveryTag(byte tagValue) {
-            super(ProtonByteUtils.toByteArray(tagValue));
+        public ProtonCachedDeliveryTag(long tagValue) {
+            super(tagValue);
         }
 
         @Override
         public void release() {
             tagCache.offer(this);
-        }
-
-        @Override
-        public int tagLength() {
-            return Byte.BYTES;
         }
     }
 }
