@@ -33,6 +33,7 @@ import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.engine.LinkCreditState;
 import org.apache.qpid.proton4j.engine.LinkState;
 import org.apache.qpid.proton4j.engine.OutgoingDelivery;
+import org.apache.qpid.proton4j.engine.impl.ProtonDeliveryTagGenerator;
 import org.messaginghub.amqperative.ErrorCondition;
 import org.messaginghub.amqperative.Message;
 import org.messaginghub.amqperative.Sender;
@@ -75,7 +76,6 @@ public class ClientSender implements Sender {
     private final org.apache.qpid.proton4j.engine.Sender protonSender;
     private final ScheduledExecutorService executor;
     private final String senderId;
-    private final TransferTagGenerator tagGenerator = new TransferTagGenerator();
     private Consumer<ClientSender> senderRemotelyClosedHandler;
 
     private volatile Source remoteSource;
@@ -89,6 +89,11 @@ public class ClientSender implements Sender {
         this.openFuture = session.getFutureFactory().createFuture();
         this.closeFuture = session.getFutureFactory().createFuture();
         this.protonSender = protonSender;
+
+        // Use a tag generator that will reuse old tags.  Later we might make this configurable.
+        if (protonSender.getSenderSettleMode() != SenderSettleMode.SETTLED) {
+            protonSender.setDeliveryTagGenerator(ProtonDeliveryTagGenerator.BUILTIN.POOLED.createGenerator());
+        }
 
         // Ensure that the sender can provide a link back to this object.
         protonSender.getContext().setLinkedResource(this);
@@ -494,8 +499,6 @@ public class ClientSender implements Sender {
 
             // Remote will not update this delivery so mark as acknowledged now.
             tracker.acknowledgeFuture().complete(tracker);
-        } else {
-            delivery.setTag(tagGenerator.getNextTag());  // TODO - Optimize tags with pooling later
         }
 
         // TODO: How do we provide a send mode equivalent to Qpid JMS asynchronous send on NON_PERSISTENT Message.
