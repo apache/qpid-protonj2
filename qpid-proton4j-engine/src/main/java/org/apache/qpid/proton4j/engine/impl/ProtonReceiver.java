@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Predicate;
 
 import org.apache.qpid.proton4j.amqp.UnsignedInteger;
@@ -144,6 +145,7 @@ public class ProtonReceiver extends ProtonLink<Receiver> implements Receiver {
     @Override
     public Receiver disposition(Predicate<IncomingDelivery> filter, DeliveryState disposition, boolean settle) {
         checkLinkOperable("Cannot apply disposition");
+        Objects.requireNonNull(filter, "Supplied filter cannot be null");
 
         List<UnsignedInteger> toRemove = settle ? new ArrayList<>() : Collections.EMPTY_LIST;
 

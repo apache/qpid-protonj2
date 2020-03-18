@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Predicate;
 
 import org.apache.qpid.proton4j.amqp.UnsignedInteger;
@@ -31,12 +32,12 @@ import org.apache.qpid.proton4j.amqp.transport.Flow;
 import org.apache.qpid.proton4j.amqp.transport.Role;
 import org.apache.qpid.proton4j.amqp.transport.Transfer;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import org.apache.qpid.proton4j.engine.DeliveryTagGenerator;
 import org.apache.qpid.proton4j.engine.EventHandler;
 import org.apache.qpid.proton4j.engine.LinkCreditState;
 import org.apache.qpid.proton4j.engine.OutgoingDelivery;
 import org.apache.qpid.proton4j.engine.Sender;
 import org.apache.qpid.proton4j.engine.Session;
-import org.apache.qpid.proton4j.engine.DeliveryTagGenerator;
 import org.apache.qpid.proton4j.engine.util.DeliveryIdTracker;
 import org.apache.qpid.proton4j.engine.util.SplayMap;
 
@@ -124,6 +125,7 @@ public class ProtonSender extends ProtonLink<Sender> implements Sender {
     @Override
     public Sender disposition(Predicate<OutgoingDelivery> filter, DeliveryState state, boolean settle) {
         checkLinkOperable("Cannot apply disposition");
+        Objects.requireNonNull(filter, "Supplied filter cannot be null");
 
         List<UnsignedInteger> toRemove = settle ? new ArrayList<>() : Collections.EMPTY_LIST;
 
