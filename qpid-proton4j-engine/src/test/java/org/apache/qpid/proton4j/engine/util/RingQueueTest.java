@@ -23,8 +23,10 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Queue;
 import java.util.Random;
 
@@ -151,6 +153,67 @@ public class RingQueueTest {
 
         for (int i = 0; i < COUNT; ++i) {
             assertTrue(testQ.contains("" + random.nextInt()));
+        }
+    }
+
+    @Test
+    public void testIterateOverQueue() {
+        final int COUNT = 100;
+        Queue<String> testQ = new RingQueue<>(COUNT);
+
+        for (int i = 0; i < COUNT; ++i) {
+            assertTrue(testQ.offer("" + random.nextInt()));
+        }
+
+        random.setSeed(seed);  // Reset
+
+        testQ.forEach(entry -> assertEquals(entry, String.valueOf(random.nextInt())));
+
+        random.setSeed(seed);  // Reset
+
+        for (int i = 0; i < COUNT / 2; ++i) {
+            assertEquals(String.valueOf(random.nextInt()), testQ.poll());
+        }
+
+        testQ.forEach(entry -> assertEquals(entry, String.valueOf(random.nextInt())));
+    }
+
+    @Test
+    public void testOfferPollAndOffer() {
+        final int ITERATIONS = 10;
+        final int COUNT = 100;
+
+        final List<String> dataSet = new ArrayList<>(COUNT);
+        for (int i = 0; i < COUNT; ++i) {
+            dataSet.add("" + random.nextInt());
+        }
+
+        Queue<String> testQ = new RingQueue<>(COUNT);
+
+        for (int iteration = 0; iteration < ITERATIONS; ++iteration) {
+            testQ.clear();
+
+            for (int i = 0; i < COUNT; ++i) {
+                assertTrue(testQ.offer(dataSet.get(i)));
+            }
+
+            assertFalse(testQ.isEmpty());
+
+            for (int i = 0; i < COUNT; ++i) {
+                assertNotNull(testQ.poll());
+            }
+
+            assertTrue(testQ.isEmpty());
+
+            for (int i = 0; i < COUNT; ++i) {
+                assertTrue(testQ.offer(dataSet.get(i)));
+            }
+
+            assertFalse(testQ.isEmpty());
+
+            for (int i = 0; i < COUNT; ++i) {
+                assertTrue(testQ.contains(dataSet.get(0)));
+            }
         }
     }
 }

@@ -54,7 +54,7 @@ public class RingQueue<E> extends AbstractQueue<E> {
         if (isFull()) {
             return false;
         } else {
-            write = advance(write);
+            write = advance(write, backingArray.length);
             size++;
             modCount++;
             backingArray[write] = e;
@@ -72,7 +72,7 @@ public class RingQueue<E> extends AbstractQueue<E> {
         } else {
             result = (E) backingArray[read];
             backingArray[read] = null;
-            read = advance(read);
+            read = advance(read, backingArray.length);
             size--;
             modCount++;
         }
@@ -97,9 +97,7 @@ public class RingQueue<E> extends AbstractQueue<E> {
             throw new IllegalStateException("Insuficcient sapce to add all elements of the collection to the queue");
         }
 
-        for (E value : c) {
-            offer(value);
-        }
+        c.forEach(value -> offer(value));
 
         return !c.isEmpty();
     }
@@ -156,7 +154,7 @@ public class RingQueue<E> extends AbstractQueue<E> {
                 if (backingArray[position] == null) {
                     return true;
                 }
-                position = advance(position);
+                position = advance(position, backingArray.length);
                 count--;
             }
         } else {
@@ -164,7 +162,7 @@ public class RingQueue<E> extends AbstractQueue<E> {
                 if (value.equals(backingArray[position])) {
                     return true;
                 }
-                position = advance(position);
+                position = advance(position, backingArray.length);
                 count--;
             }
         }
@@ -178,8 +176,8 @@ public class RingQueue<E> extends AbstractQueue<E> {
         return size == backingArray.length;
     }
 
-    private int advance(int value) {
-        return (value + 1) % backingArray.length;
+    private static int advance(int value, int limit) {
+        return (value + 1) % limit;
     }
 
     //----- Ring Queue Iterator Implementation
@@ -219,7 +217,7 @@ public class RingQueue<E> extends AbstractQueue<E> {
             lastReturned = entry;
 
             if (--remaining != 0) {
-                position = advance(position);
+                position = advance(position, backingArray.length);
                 nextElement = (E) backingArray[position];
             } else {
                 nextElement = null;
