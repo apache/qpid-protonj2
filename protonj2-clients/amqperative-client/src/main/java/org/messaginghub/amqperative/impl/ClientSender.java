@@ -58,8 +58,6 @@ public class ClientSender implements Sender {
 
     private static final Logger LOG = LoggerFactory.getLogger(ClientSender.class);
 
-    private static final byte[] EMPTY_BYTE_ARRAY = new byte[] {};
-
     private static final AtomicIntegerFieldUpdater<ClientSender> CLOSED_UPDATER =
             AtomicIntegerFieldUpdater.newUpdater(ClientSender.class, "closed");
 
@@ -91,7 +89,9 @@ public class ClientSender implements Sender {
         this.protonSender = protonSender;
 
         // Use a tag generator that will reuse old tags.  Later we might make this configurable.
-        if (protonSender.getSenderSettleMode() != SenderSettleMode.SETTLED) {
+        if (protonSender.getSenderSettleMode() == SenderSettleMode.SETTLED) {
+            protonSender.setDeliveryTagGenerator(ProtonDeliveryTagGenerator.BUILTIN.EMPTY.createGenerator());
+        } else {
             protonSender.setDeliveryTagGenerator(ProtonDeliveryTagGenerator.BUILTIN.POOLED.createGenerator());
         }
 
@@ -494,7 +494,6 @@ public class ClientSender implements Sender {
         delivery.getContext().setLinkedResource(tracker);
 
         if (protonSender.getSenderSettleMode() == SenderSettleMode.SETTLED) {
-            delivery.setTag(EMPTY_BYTE_ARRAY);
             delivery.settle();
 
             // Remote will not update this delivery so mark as acknowledged now.
