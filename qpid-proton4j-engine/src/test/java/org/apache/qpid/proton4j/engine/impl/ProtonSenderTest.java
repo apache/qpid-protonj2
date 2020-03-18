@@ -30,6 +30,8 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
@@ -2627,40 +2629,13 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         peer.expectOpen().respond();
         peer.expectBegin().respond();
         peer.expectAttach().respond();
-        peer.remoteFlow().withDeliveryCount(0).withLinkCredit(1).withDrain(true).queue();
-
-        peer.expectTransfer().withHandle(0)
-                             .withSettled(false)
-                             .withState((DeliveryState) null)
-                             .withDeliveryId(0)
-                             .withDeliveryTag(new byte[] {0})
-                             .respond()
-                             .withSettled(true)
-                             .withState(Accepted.getInstance());
-        peer.expectDisposition().withFirst(0)
-                                .withSettled(true)
-                                .withState(nullValue());
+        peer.remoteFlow().withDeliveryCount(0).withLinkCredit(10).queue();
 
         Connection connection = engine.start().open();
         Session session = connection.session().open();
         Sender sender = session.sender("sender-1");
 
         sender.setDeliveryTagGenerator(ProtonDeliveryTagGenerator.BUILTIN.POOLED.createGenerator());
-
-        final AtomicBoolean deliverySentAfterSenable = new AtomicBoolean();
-        final AtomicReference<Delivery> sentDelivery1 = new AtomicReference<>();
-        final AtomicReference<Delivery> sentDelivery2 = new AtomicReference<>();
-
-        sender.linkCreditUpdateHandler(link -> {
-            if (link.isSendable()) {
-                if (sentDelivery1.get() == null) {
-                    sentDelivery1.set(link.next().writeBytes(payload.duplicate()));
-                } else {
-                    sentDelivery2.set(link.next().writeBytes(payload.duplicate()));
-                }
-                deliverySentAfterSenable.set(true);
-            }
-        });
 
         sender.deliveryUpdatedHandler((delivery) -> {
             if (delivery.isRemotelySettled()) {
@@ -2671,25 +2646,33 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         sender.open();
 
         peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
-        peer.expectTransfer().withHandle(0)
-            .withSettled(false)
-            .withState((DeliveryState) null)
-            .withDeliveryId(1)
-            .withDeliveryTag(new byte[] {0})
-            .respond()
-            .withSettled(true)
-            .withState(Accepted.getInstance());
-        peer.expectDisposition().withFirst(1)
-            .withSettled(true)
-            .withState(nullValue());
-        peer.remoteFlow().withDeliveryCount(1).withLinkCredit(1).withDrain(true).now();
+
+        final int toSend = sender.getCredit();
+        final byte[] expectedTag = new byte[] {0};
+
+        List<Delivery> sent = new ArrayList<>(toSend);
+
+        for (int i = 0; i < toSend; ++i) {
+            peer.expectTransfer().withHandle(0)
+                                 .withSettled(false)
+                                 .withState((DeliveryState) null)
+                                 .withDeliveryId(i)
+                                 .withDeliveryTag(expectedTag)
+                                 .respond()
+                                 .withSettled(true)
+                                 .withState(Accepted.getInstance());
+            peer.expectDisposition().withFirst(i)
+                                    .withSettled(true)
+                                    .withState(nullValue());
+        }
+
+        for (int i = 0; i < toSend; ++i) {
+            sender.next().writeBytes(payload.duplicate());
+        }
+
         peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
 
-        assertNotNull(sentDelivery1.get());
-        assertNotNull(sentDelivery2.get());
-        assertNotNull(sentDelivery1.get().getTag());
-        assertNotNull(sentDelivery2.get().getTag());
-        assertSame(sentDelivery1.get().getTag(), sentDelivery2.get().getTag());
+        sent.forEach(delivery -> assertEquals(delivery.getTag().tagBytes() , expectedTag));
 
         peer.expectDetach().respond();
         peer.expectClose().respond();
@@ -2701,6 +2684,5 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         connection.close();
 
         peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
-
     }
 }

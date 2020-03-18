@@ -33,7 +33,7 @@ public class ProtonPooledTagGenerator extends ProtonSequentialTagGenerator {
     public static final int DEFAULT_MAX_NUM_POOLED_TAGS = 512;
 
     private final int tagPoolSize;
-    private final Queue<DeliveryTag> tagPool;
+    private final Queue<ProtonPooledDeliveryTag> tagPool;
 
     public ProtonPooledTagGenerator() {
         this(DEFAULT_MAX_NUM_POOLED_TAGS);
@@ -54,12 +54,12 @@ public class ProtonPooledTagGenerator extends ProtonSequentialTagGenerator {
 
     @Override
     public DeliveryTag nextTag() {
-        DeliveryTag nextTag = tagPool.poll();
-        if (nextTag == null) {
-            nextTag = createTag();
+        ProtonPooledDeliveryTag nextTag = tagPool.poll();
+        if (nextTag != null) {
+            return nextTag.checkOut();
+        } else {
+            return createTag();
         }
-
-        return nextTag;
     }
 
     private DeliveryTag createTag() {
@@ -67,7 +67,7 @@ public class ProtonPooledTagGenerator extends ProtonSequentialTagGenerator {
 
         if (nextTagId >= 0 && nextTagId < tagPoolSize) {
             // Pooled tag that will return to pool on next release.
-            nextTag = new ProtonPooledDeliveryTag((byte) nextTagId++);
+            nextTag = new ProtonPooledDeliveryTag((byte) nextTagId++).checkOut();
         } else {
             // Non-pooled tag that will not return to the pool on next release.
             nextTag = super.nextTag();
@@ -91,17 +91,22 @@ public class ProtonPooledTagGenerator extends ProtonSequentialTagGenerator {
 
     private class ProtonPooledDeliveryTag extends ProtonNumericDeliveryTag {
 
-        private boolean released;
+        private boolean checkedOut;
 
         public ProtonPooledDeliveryTag(long tagValue) {
             super(tagValue);
         }
 
+        public ProtonPooledDeliveryTag checkOut() {
+            this.checkedOut = true;
+            return this;
+        }
+
         @Override
         public void release() {
-            if (!released) {
+            if (checkedOut) {
                 tagPool.offer(this);
-                released = true;
+                checkedOut = false;
             }
         }
     }
