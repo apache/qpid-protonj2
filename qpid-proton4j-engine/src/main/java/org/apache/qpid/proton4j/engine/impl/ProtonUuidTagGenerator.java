@@ -100,5 +100,10 @@ public class ProtonUuidTagGenerator extends ProtonDeliveryTagGenerator {
 
             return tagValue.equals(((ProtonUuidDeliveryTag) obj).tagValue);
         }
+
+        @Override
+        public String toString() {
+            return tagValue.toString();
+        }
     }
 }

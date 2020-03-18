@@ -120,6 +120,11 @@ public class ProtonSequentialTagGenerator extends ProtonDeliveryTagGenerator {
         }
 
         @Override
+        public String toString() {
+            return "{" + tagValue + "}";
+        }
+
+        @Override
         public void writeTo(ProtonBuffer buffer) {
             if (tagValue < 0) {
                 buffer.writeLong(tagValue);
