@@ -22,6 +22,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.util.ArrayList;
 
@@ -29,12 +30,25 @@ import org.apache.qpid.proton4j.amqp.DeliveryTag;
 import org.apache.qpid.proton4j.engine.DeliveryTagGenerator;
 import org.junit.Test;
 
-public class ProtonCachingTagGeneratorTest {
+public class ProtonPooledTagGeneratorTest {
 
     @Test
     public void testCreateTagGenerator() {
         DeliveryTagGenerator generator = ProtonDeliveryTagGenerator.BUILTIN.POOLED.createGenerator();
         assertTrue(generator instanceof ProtonPooledTagGenerator);
+    }
+
+    @Test
+    public void testCreateTagGeneratorChecksPoolSze() {
+        try {
+            new ProtonPooledTagGenerator(0);
+            fail("Should not allow non-pooling pool");
+        } catch (IllegalArgumentException iae) {}
+
+        try {
+            new ProtonPooledTagGenerator(-1);
+            fail("Should not allow negative sized pool");
+        } catch (IllegalArgumentException iae) {}
     }
 
     @Test
@@ -44,18 +58,18 @@ public class ProtonCachingTagGeneratorTest {
     }
 
     @Test
-    public void testCreateTagsFromCacheAndReturn() {
+    public void testCreateTagsFromPoolAndReturn() {
         ProtonPooledTagGenerator generator = new ProtonPooledTagGenerator();
 
-        final ArrayList<DeliveryTag> tags = new ArrayList<>(ProtonPooledTagGenerator.MAX_NUM_CACHED_TAGS);
+        final ArrayList<DeliveryTag> tags = new ArrayList<>(ProtonPooledTagGenerator.DEFAULT_MAX_NUM_POOLED_TAGS);
 
-        for (int i = 0; i < ProtonPooledTagGenerator.MAX_NUM_CACHED_TAGS; ++i) {
+        for (int i = 0; i < ProtonPooledTagGenerator.DEFAULT_MAX_NUM_POOLED_TAGS; ++i) {
             tags.add(generator.nextTag());
         }
 
         tags.forEach(tag -> tag.release());
 
-        for (int i = 0; i < ProtonPooledTagGenerator.MAX_NUM_CACHED_TAGS; ++i) {
+        for (int i = 0; i < ProtonPooledTagGenerator.DEFAULT_MAX_NUM_POOLED_TAGS; ++i) {
             assertSame(tags.get(i), generator.nextTag());
         }
 
@@ -66,48 +80,48 @@ public class ProtonCachingTagGeneratorTest {
     }
 
     @Test
-    public void testConsumeAllCachedTagsAndThenReleaseAfterCreatingNonCached() {
+    public void testConsumeAllPooledTagsAndThenReleaseAfterCreatingNonPooled() {
         ProtonPooledTagGenerator generator = new ProtonPooledTagGenerator();
 
-        DeliveryTag cachedTag = generator.nextTag();
+        DeliveryTag pooledTag = generator.nextTag();
         DeliveryTag nonCached = generator.nextTag();
 
-        assertNotSame(cachedTag, nonCached);
+        assertNotSame(pooledTag, nonCached);
 
-        cachedTag.release();
+        pooledTag.release();
         nonCached.release();
 
         DeliveryTag shouldBeCached = generator.nextTag();
 
-        assertSame(cachedTag, shouldBeCached);
+        assertSame(pooledTag, shouldBeCached);
     }
 
     @Test
-    public void testCachedTagReleaseIsIdempotent() {
+    public void testPooledTagReleaseIsIdempotent() {
         ProtonPooledTagGenerator generator = new ProtonPooledTagGenerator();
 
-        DeliveryTag cachedTag = generator.nextTag();
+        DeliveryTag pooledTag = generator.nextTag();
 
-        cachedTag.release();
-        cachedTag.release();
-        cachedTag.release();
+        pooledTag.release();
+        pooledTag.release();
+        pooledTag.release();
 
-        assertSame(cachedTag, generator.nextTag());
-        assertNotSame(cachedTag, generator.nextTag());
-        assertNotSame(cachedTag, generator.nextTag());
+        assertSame(pooledTag, generator.nextTag());
+        assertNotSame(pooledTag, generator.nextTag());
+        assertNotSame(pooledTag, generator.nextTag());
     }
 
     @Test
     public void testCreateTagsThatWrapAroundLimit() {
         ProtonPooledTagGenerator generator = new ProtonPooledTagGenerator();
 
-        final ArrayList<DeliveryTag> tags = new ArrayList<>(ProtonPooledTagGenerator.MAX_NUM_CACHED_TAGS);
+        final ArrayList<DeliveryTag> tags = new ArrayList<>(ProtonPooledTagGenerator.DEFAULT_MAX_NUM_POOLED_TAGS);
 
-        for (int i = 0; i < ProtonPooledTagGenerator.MAX_NUM_CACHED_TAGS; ++i) {
+        for (int i = 0; i < ProtonPooledTagGenerator.DEFAULT_MAX_NUM_POOLED_TAGS; ++i) {
             tags.add(generator.nextTag());
         }
 
-        // Test that on wrap the tags start beyond the cached values.
+        // Test that on wrap the tags start beyond the pooled values.
         generator.setNextTagId(0xFFFFFFFFFFFFFFFFl);
 
         DeliveryTag maxUnsignedLong = generator.nextTag();
@@ -118,7 +132,7 @@ public class ProtonCachingTagGeneratorTest {
 
         final short tagValue = getShort(nextTagAfterWrap.tagBytes());
 
-        assertEquals(ProtonPooledTagGenerator.MAX_NUM_CACHED_TAGS, tagValue);
+        assertEquals(ProtonPooledTagGenerator.DEFAULT_MAX_NUM_POOLED_TAGS, tagValue);
 
         tags.get(0).release();
 
@@ -128,25 +142,40 @@ public class ProtonCachingTagGeneratorTest {
     }
 
     @Test
+    public void testTakeAllTagsReturnThemAndTakeThemAgainDefaultSize() {
+        doTestTakeAllTagsReturnThemAndTakeThemAgain(-1);
+    }
+
+    @Test
     public void testTakeAllTagsReturnThemAndTakeThemAgain() {
-        ProtonPooledTagGenerator generator = new ProtonPooledTagGenerator();
+        doTestTakeAllTagsReturnThemAndTakeThemAgain(64);
+    }
 
-        final ArrayList<DeliveryTag> tags1 = new ArrayList<>(ProtonPooledTagGenerator.MAX_NUM_CACHED_TAGS);
-        final ArrayList<DeliveryTag> tags2 = new ArrayList<>(ProtonPooledTagGenerator.MAX_NUM_CACHED_TAGS);
+    private void doTestTakeAllTagsReturnThemAndTakeThemAgain(int poolSize) {
+        final ProtonPooledTagGenerator generator;
+        if (poolSize == -1) {
+            generator = new ProtonPooledTagGenerator();
+            poolSize = ProtonPooledTagGenerator.DEFAULT_MAX_NUM_POOLED_TAGS;
+        } else {
+            generator = new ProtonPooledTagGenerator(poolSize);
+        }
 
-        for (int i = 0; i < ProtonPooledTagGenerator.MAX_NUM_CACHED_TAGS; ++i) {
+        final ArrayList<DeliveryTag> tags1 = new ArrayList<>(poolSize);
+        final ArrayList<DeliveryTag> tags2 = new ArrayList<>(poolSize);
+
+        for (int i = 0; i < poolSize; ++i) {
             tags1.add(generator.nextTag());
         }
 
-        for (int i = 0; i < ProtonPooledTagGenerator.MAX_NUM_CACHED_TAGS; ++i) {
+        for (int i = 0; i < poolSize; ++i) {
             tags1.get(i).release();
         }
 
-        for (int i = 0; i < ProtonPooledTagGenerator.MAX_NUM_CACHED_TAGS; ++i) {
+        for (int i = 0; i < poolSize; ++i) {
             tags2.add(generator.nextTag());
         }
 
-        for (int i = 0; i < ProtonPooledTagGenerator.MAX_NUM_CACHED_TAGS; ++i) {
+        for (int i = 0; i < poolSize; ++i) {
             assertSame(tags1.get(i), tags2.get(i));
         }
     }

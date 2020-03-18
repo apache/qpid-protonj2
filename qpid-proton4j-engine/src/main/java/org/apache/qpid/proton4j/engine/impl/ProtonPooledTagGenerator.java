@@ -30,13 +30,31 @@ import org.apache.qpid.proton4j.engine.util.RingQueue;
  */
 public class ProtonPooledTagGenerator extends ProtonSequentialTagGenerator {
 
-    public static final int MAX_NUM_CACHED_TAGS = 512;
+    public static final int DEFAULT_MAX_NUM_POOLED_TAGS = 512;
 
-    private final Queue<DeliveryTag> tagCache = new RingQueue<>(MAX_NUM_CACHED_TAGS);
+    private final int tagPoolSize;
+    private final Queue<DeliveryTag> tagPool;
+
+    public ProtonPooledTagGenerator() {
+        this(DEFAULT_MAX_NUM_POOLED_TAGS);
+    }
+
+    public ProtonPooledTagGenerator(int poolSize) {
+        if (poolSize == 0) {
+            throw new IllegalArgumentException("Cannot create a tag pool with zero pool size");
+        }
+
+        if (poolSize < 0) {
+            throw new IllegalArgumentException("Cannot create a tag pool with negative pool size");
+        }
+
+        tagPoolSize = poolSize;
+        tagPool = new RingQueue<>(tagPoolSize);
+    }
 
     @Override
     public DeliveryTag nextTag() {
-        DeliveryTag nextTag = tagCache.poll();
+        DeliveryTag nextTag = tagPool.poll();
         if (nextTag == null) {
             nextTag = createTag();
         }
@@ -47,14 +65,14 @@ public class ProtonPooledTagGenerator extends ProtonSequentialTagGenerator {
     private DeliveryTag createTag() {
         DeliveryTag nextTag = null;
 
-        if (nextTagId >= 0 && nextTagId < MAX_NUM_CACHED_TAGS) {
-            // Cached tag that will return to cache on next release.
-            nextTag = new ProtonCachedDeliveryTag((byte) nextTagId++);
+        if (nextTagId >= 0 && nextTagId < tagPoolSize) {
+            // Pooled tag that will return to pool on next release.
+            nextTag = new ProtonPooledDeliveryTag((byte) nextTagId++);
         } else {
-            // Non-cached tag that will not return to the cache on next release.
+            // Non-pooled tag that will not return to the pool on next release.
             nextTag = super.nextTag();
             if (nextTagId == 0) {
-                nextTagId = MAX_NUM_CACHED_TAGS;
+                nextTagId = tagPoolSize;
             }
         }
 
@@ -62,27 +80,27 @@ public class ProtonPooledTagGenerator extends ProtonSequentialTagGenerator {
     }
 
     /*
-     * Test entry point to validate tag cache and tag counter overflow.
+     * Test entry point to validate tag pool and tag counter overflow.
      */
     @Override
     void setNextTagId(long nextIdValue) {
         this.nextTagId = nextIdValue;
     }
 
-    //----- Specialized DeliveryTag and releases itself back to the cache
+    //----- Specialized DeliveryTag and releases itself back to the pool
 
-    private class ProtonCachedDeliveryTag extends ProtonNumericDeliveryTag {
+    private class ProtonPooledDeliveryTag extends ProtonNumericDeliveryTag {
 
         private boolean released;
 
-        public ProtonCachedDeliveryTag(long tagValue) {
+        public ProtonPooledDeliveryTag(long tagValue) {
             super(tagValue);
         }
 
         @Override
         public void release() {
             if (!released) {
-                tagCache.offer(this);
+                tagPool.offer(this);
                 released = true;
             }
         }
