@@ -90,4 +90,38 @@ public class SenderTest extends AMQPerativeTestSupport {
         assertNotNull(sender.close().get(5, TimeUnit.SECONDS));
         assertNotNull(connection.close().get(5, TimeUnit.SECONDS));
     }
+
+    @Test(timeout = 60000)
+    public void testSendMessagesToRemoteQueue() throws Exception {
+        final URI brokerURI = getBrokerAmqpConnectionURI();
+        final int MESSAGE_COUNT = 100;
+
+        ClientOptions options = new ClientOptions();
+        options.id(UUID.randomUUID().toString());
+        Client container = Client.create(options);
+        assertNotNull(container);
+
+        Connection connection = container.connect(brokerURI.getHost(), brokerURI.getPort());
+        assertNotNull(connection);
+        assertSame(connection, connection.openFuture().get(5, TimeUnit.SECONDS));
+
+        Sender sender = connection.openSender(getTestName()).openFuture().get(5, TimeUnit.SECONDS);
+        assertNotNull(sender);
+
+        Message<String> message = Message.create("Hello World").durable(false);
+
+        Tracker tracker = null;
+
+        for (int i = 0; i < MESSAGE_COUNT; ++i) {
+            tracker = sender.send(message);
+        }
+
+        final QueueViewMBean queueView = getProxyToQueue(getTestName());
+        Wait.assertEquals(MESSAGE_COUNT, () -> queueView.getQueueSize());
+
+        tracker.acknowledgeFuture().get();
+
+        assertNotNull(sender.close().get(5, TimeUnit.SECONDS));
+        assertNotNull(connection.close().get(5, TimeUnit.SECONDS));
+    }
 }
