@@ -23,6 +23,8 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import org.apache.qpid.proton.amqp.UnsignedInteger;
+import org.apache.qpid.proton4j.amqp.messaging.Target;
+import org.apache.qpid.proton4j.amqp.transactions.Coordinator;
 import org.junit.Test;
 
 public class AttachTest {
@@ -123,6 +125,63 @@ public class AttachTest {
             attach.setInitialDeliveryCount(UnsignedInteger.MAX_VALUE.longValue() + 1);
             fail("Cannot set long delivery count value bigger than uint max");
         } catch (IllegalArgumentException iae) {}
+    }
+
+    @Test
+    public void testHasTargetOrCoordinator() {
+        Attach attach = new Attach();
+
+        assertFalse(attach.hasCoordinator());
+        assertFalse(attach.hasTarget());
+        assertFalse(attach.hasTargetOrCoordinator());
+
+        attach.setTarget(new Target());
+
+        assertFalse(attach.hasCoordinator());
+        assertTrue(attach.hasTarget());
+        assertTrue(attach.hasTargetOrCoordinator());
+
+        attach.setTarget(new Coordinator());
+
+        assertTrue(attach.hasCoordinator());
+        assertFalse(attach.hasTarget());
+        assertTrue(attach.hasTargetOrCoordinator());
+
+        attach.setTarget((Target) null);
+
+        assertFalse(attach.hasCoordinator());
+        assertFalse(attach.hasTarget());
+        assertFalse(attach.hasTargetOrCoordinator());
+
+        attach.setCoordinator(new Coordinator());
+
+        assertTrue(attach.hasCoordinator());
+        assertFalse(attach.hasTarget());
+        assertTrue(attach.hasTargetOrCoordinator());
+    }
+
+    @Test
+    public void testCopyAttachWithTarget() {
+        Attach original = new Attach();
+
+        original.setTarget(new Target());
+
+        Attach copy = original.copy();
+
+        assertNotNull(copy.getTarget());
+        assertEquals(original.getTarget(), copy.getTarget());
+    }
+
+    @Test
+    public void testCopyAttachWithCoordinator() {
+        Attach original = new Attach();
+
+        original.setCoordinator(new Coordinator());
+
+        Attach copy = original.copy();
+
+        assertNotNull(copy.getCoordinator());
+        assertEquals(original.getCoordinator(), copy.getCoordinator());
     }
 
     @Test

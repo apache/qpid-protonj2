@@ -21,7 +21,7 @@ import java.io.IOException;
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.amqp.messaging.Source;
-import org.apache.qpid.proton4j.amqp.messaging.Target;
+import org.apache.qpid.proton4j.amqp.messaging.Terminus;
 import org.apache.qpid.proton4j.amqp.transport.Attach;
 import org.apache.qpid.proton4j.amqp.transport.ReceiverSettleMode;
 import org.apache.qpid.proton4j.amqp.transport.Role;
@@ -142,7 +142,7 @@ public final class AttachTypeDecoder extends AbstractDescribedTypeDecoder<Attach
                     attach.setSource(state.getDecoder().readObject(buffer, state, Source.class));
                     break;
                 case 6:
-                    attach.setTarget(state.getDecoder().readObject(buffer, state, Target.class));
+                    attach.setTarget(state.getDecoder().readObject(buffer, state, Terminus.class));
                     break;
                 case 7:
                     attach.setUnsettled(state.getDecoder().readMap(buffer, state));

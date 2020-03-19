@@ -30,6 +30,8 @@ import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.amqp.messaging.Source;
 import org.apache.qpid.proton4j.amqp.messaging.Target;
+import org.apache.qpid.proton4j.amqp.messaging.Terminus;
+import org.apache.qpid.proton4j.amqp.transactions.Coordinator;
 import org.apache.qpid.proton4j.amqp.transport.Attach;
 import org.apache.qpid.proton4j.amqp.transport.ReceiverSettleMode;
 import org.apache.qpid.proton4j.amqp.transport.Role;
@@ -60,7 +62,17 @@ public class AttachTypeCodecTest extends CodecTestSupport {
     }
 
     @Test
-    public void testEncodeDecodeType() throws Exception {
+    public void testEncodeDecodeTypeWithTarget() throws Exception {
+        doTestEncodeDecodeType(new Target());
+    }
+
+    @Test
+    public void testEncodeDecodeTypeWithCoordinator() throws Exception {
+        doTestEncodeDecodeType(new Coordinator());
+    }
+
+    private void doTestEncodeDecodeType(Terminus target) throws Exception {
+
        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
 
        Symbol[] offeredCapabilities = new Symbol[] {Symbol.valueOf("Cap-1"), Symbol.valueOf("Cap-2")};
@@ -76,7 +88,7 @@ public class AttachTypeCodecTest extends CodecTestSupport {
        input.setSenderSettleMode(SenderSettleMode.UNSETTLED);
        input.setReceiverSettleMode(ReceiverSettleMode.SECOND);
        input.setSource(new Source());
-       input.setTarget(new Target());
+       input.setTarget(target);
        input.setIncompleteUnsettled(false);
        input.setInitialDeliveryCount(10);
        input.setMaxMessageSize(UnsignedLong.valueOf(1024));
@@ -93,7 +105,7 @@ public class AttachTypeCodecTest extends CodecTestSupport {
        assertEquals(10, result.getInitialDeliveryCount());
        assertEquals(UnsignedLong.valueOf(1024), result.getMaxMessageSize());
        assertNotNull(result.getSource());
-       assertNotNull(result.getTarget());
+       assertNotNull(result.getTargetOrCoordinator());
        assertFalse(result.getIncompleteUnsettled());
        assertNull(result.getUnsettled());
        assertNull(result.getProperties());

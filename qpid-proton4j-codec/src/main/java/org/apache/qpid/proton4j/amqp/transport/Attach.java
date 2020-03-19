@@ -25,6 +25,8 @@ import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.amqp.messaging.Source;
 import org.apache.qpid.proton4j.amqp.messaging.Target;
+import org.apache.qpid.proton4j.amqp.messaging.Terminus;
+import org.apache.qpid.proton4j.amqp.transactions.Coordinator;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 
 public final class Attach implements Performative {
@@ -62,7 +64,7 @@ public final class Attach implements Performative {
     private SenderSettleMode sndSettleMode = SenderSettleMode.MIXED;
     private ReceiverSettleMode rcvSettleMode = ReceiverSettleMode.FIRST;
     private Source source;
-    private Target target;
+    private Terminus target;
     private Map<Binary, DeliveryState> unsettled;
     private boolean incompleteUnsettled;
     private long initialDeliveryCount;
@@ -142,8 +144,16 @@ public final class Attach implements Performative {
         return (modified & SOURCE) == SOURCE;
     }
 
-    public boolean hasTarget() {
+    public boolean hasTargetOrCoordinator() {
         return (modified & TARGET) == TARGET;
+    }
+
+    public boolean hasTarget() {
+        return (modified & TARGET) == TARGET && target instanceof Target;
+    }
+
+    public boolean hasCoordinator() {
+        return (modified & TARGET) == TARGET && target instanceof Coordinator;
     }
 
     public boolean hasUnsettled() {
@@ -266,11 +276,53 @@ public final class Attach implements Performative {
         return this;
     }
 
-    public Target getTarget() {
+    public Terminus getTargetOrCoordinator() {
         return target;
     }
 
+    public Target getTarget() {
+        return (Target) target;
+    }
+
+    public Attach setTarget(Terminus target) {
+        if (target instanceof Target) {
+            setTarget((Target) target);
+        } else if (target instanceof Coordinator) {
+            setTarget((Coordinator) target);
+        } else {
+            throw new IllegalArgumentException("Cannot set Target terminus to given value: " + target);
+        }
+
+        return this;
+    }
+
     public Attach setTarget(Target target) {
+        if (target != null) {
+            modified |= TARGET;
+        } else {
+            modified &= ~TARGET;
+        }
+
+        this.target = target;
+        return this;
+    }
+
+    public Attach setTarget(Coordinator target) {
+        if (target != null) {
+            modified |= TARGET;
+        } else {
+            modified &= ~TARGET;
+        }
+
+        this.target = target;
+        return this;
+    }
+
+    public Coordinator getCoordinator() {
+        return (Coordinator) target;
+    }
+
+    public Attach setCoordinator(Coordinator target) {
         if (target != null) {
             modified |= TARGET;
         } else {
