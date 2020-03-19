@@ -17,6 +17,7 @@
 package org.apache.qpid.proton4j.engine;
 
 import org.apache.qpid.proton4j.amqp.Binary;
+import org.apache.qpid.proton4j.amqp.transactions.Declare;
 import org.apache.qpid.proton4j.amqp.transport.ErrorCondition;
 
 /**
@@ -40,6 +41,15 @@ public interface Transaction<E extends Link<?>> {
      * @return true if the {@link Transaction} has been marked discharged by the {@link TransactionManager}.
      */
     boolean isDischareged();
+
+    /**
+     * The parent resource will mark the {@link Transaction} as failed is any of the operations performed on
+     * it cannot be successfully completed such as a {@link Declare} operation failing to write due to an IO
+     * error.
+     *
+     * @return true if the {@link Transaction} has been marked failed by the parent resource.
+     */
+    boolean isFailed();
 
     /**
      * If the declare or discharge of the transaction caused its state to become {@link TransactionState#FAILED}
