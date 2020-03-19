@@ -165,6 +165,9 @@ public class ProtonOutgoingDelivery implements OutgoingDelivery {
         checkCompleteOrAborted();
         complete = true;
         link.send(this, buffer);
+        if (isSettled()) {
+            retire();
+        }
         return this;
     }
 
@@ -190,9 +193,7 @@ public class ProtonOutgoingDelivery implements OutgoingDelivery {
             aborted = true;
             locallySettled = true;
             link.abort(this);
-            if (deliveryTag != null) {
-                deliveryTag.release();
-            }
+            retire();
             deliveryId = DELIVERY_ABORTED;
         }
 
@@ -200,6 +201,12 @@ public class ProtonOutgoingDelivery implements OutgoingDelivery {
     }
 
     //----- Internal methods meant only for use by Proton resources
+
+    void retire() {
+        if (deliveryTag != null) {
+            deliveryTag.release();
+        }
+    }
 
     long getDeliveryId() {
         return deliveryId;

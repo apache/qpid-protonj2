@@ -334,9 +334,7 @@ public class ProtonSender extends ProtonLink<Sender> implements Sender {
         if (delivery.isSettled()) {
             // TODO - Casting is ugly but right now our unsigned integers are longs
             unsettled.remove((int) delivery.getDeliveryId());
-            if (delivery.getTag() != null) {
-                delivery.getTag().release();
-            }
+            delivery.retire();
         }
 
         sessionWindow.processDisposition(this, delivery);

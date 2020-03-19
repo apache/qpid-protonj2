@@ -2618,6 +2618,15 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
 
     @Test(timeout = 20000)
     public void testSenderReleasesPooledDeliveryTagsAfterSettledByBoth() throws Exception {
+        doTestSenderReleasesPooledDeliveryTags(false);
+    }
+
+    @Test(timeout = 20000)
+    public void testSenderReleasesPooledDeliveryTagsSenderSettlesFirst() throws Exception {
+        doTestSenderReleasesPooledDeliveryTags(true);
+    }
+
+    private void doTestSenderReleasesPooledDeliveryTags(boolean sendSettled) throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
         ProtonTestPeer peer = new ProtonTestPeer(engine);
@@ -2654,20 +2663,27 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
 
         for (int i = 0; i < toSend; ++i) {
             peer.expectTransfer().withHandle(0)
-                                 .withSettled(false)
+                                 .withSettled(sendSettled)
                                  .withState((DeliveryState) null)
                                  .withDeliveryId(i)
                                  .withDeliveryTag(expectedTag)
                                  .respond()
                                  .withSettled(true)
                                  .withState(Accepted.getInstance());
-            peer.expectDisposition().withFirst(i)
-                                    .withSettled(true)
-                                    .withState(nullValue());
+            if (!sendSettled) {
+                peer.expectDisposition().withFirst(i)
+                                        .withSettled(true)
+                                        .withState(nullValue());
+            }
         }
 
         for (int i = 0; i < toSend; ++i) {
-            sender.next().writeBytes(payload.duplicate());
+            OutgoingDelivery delivery = sender.next();
+
+            if (sendSettled) {
+                delivery.settle();
+            }
+            delivery.writeBytes(payload.duplicate());
         }
 
         peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
