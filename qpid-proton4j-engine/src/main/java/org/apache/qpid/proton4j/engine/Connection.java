@@ -16,47 +16,15 @@
  */
 package org.apache.qpid.proton4j.engine;
 
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ScheduledExecutorService;
 
-import org.apache.qpid.proton4j.amqp.Symbol;
-import org.apache.qpid.proton4j.amqp.transport.Close;
-import org.apache.qpid.proton4j.amqp.transport.ErrorCondition;
-import org.apache.qpid.proton4j.amqp.transport.Open;
-import org.apache.qpid.proton4j.engine.exceptions.EngineFailedException;
 import org.apache.qpid.proton4j.engine.exceptions.EngineStateException;
 
 /**
  * AMQP Connection state container
  */
-public interface Connection {
-
-    /**
-     * Open the end point locally, sending the Open performative immediately if possible or holding
-     * it until SASL negotiations or the AMQP header exchange has completed.
-     *
-     * The {@link Connection} will signal any registered handler of the remote opening the Connection
-     * once the remote {@link Open} performative arrives.
-     *
-     * @return this connection.
-     *
-     * @throws EngineStateException if an error occurs opening the Connection or the Engine is shutdown.
-     */
-    Connection open() throws EngineStateException;
-
-    /**
-     * Close the {@link Connection} locally and send the Close performative immediately if possible or
-     * holds it until the Connection / Engine state allows it.  If the engine encounters an error writing
-     * the performative or the engine is in a failed state from a previous error then this method will
-     * throw an exception.  If the engine has been shutdown then this method will close out the local
-     * end of the connection and clean up any local resources before returning normally.
-     *
-     * @return this connection.
-     *
-     * @throws EngineFailedException if an error occurs closing the Connection or the Engine is in a failed state.
-     */
-    Connection close() throws EngineFailedException;
+public interface Connection extends Endpoint<Connection> {
 
     /**
      * Performs a tick operation on the connection which checks that Connection Idle timeout processing
@@ -93,59 +61,11 @@ public interface Connection {
     Connection tickAuto(ScheduledExecutorService executor);
 
     /**
-     * @return the {@link Context} instance that is associated with this {@link Connection}
-     */
-    Context getContext();
-
-    /**
-     * @return the {@link Engine} which created this {@link Connection} instance.
-     */
-    Engine getEngine();
-
-    /**
      * @return the local connection state only
      */
     ConnectionState getState();
 
-    /**
-     * @return the local endpoint error, or null if there is none
-     */
-    ErrorCondition getCondition();
-
-    /**
-     * Sets the local {@link ErrorCondition} to be applied to a {@link Connection} close.
-     *
-     * @param condition
-     *      The error condition to convey to the remote peer on connection close.
-     *
-     * @return this connection.
-     */
-    Connection setCondition(ErrorCondition condition);
-
     //----- Operations on local end of this Connection
-
-    /**
-     * Returns true if this {@link Connection} is currently locally open meaning the state returned
-     * from {@link Connection#getState()} is equal to {@link ConnectionState#ACTIVE}.  A connection
-     * is locally opened after a call to {@link Connection#open()} and before a call to
-     * {@link Connection#close()}.
-     *
-     * @return true if the connection is locally open.
-     *
-     * @see Connection#isLocallyClosed()
-     */
-    boolean isLocallyOpen();
-
-    /**
-     * Returns true if this {@link Connection} is currently locally closed meaning the state returned
-     * from {@link Connection#getState()} is equal to {@link ConnectionState#CLOSED}.  A connection
-     * is locally closed after a call to {@link Connection#close()}.
-     *
-     * @return true if the connection is locally closed.
-     *
-     * @see Connection#isLocallyOpen()
-     */
-    boolean isLocallyClosed();
 
     /**
      * @return the Container ID assigned to this Connection
@@ -261,71 +181,6 @@ public interface Connection {
      */
     long getIdleTimeout();
 
-    /**
-     * Sets the capabilities to be offered on to the remote when this Connection is
-     * opened.
-     *
-     * The offered capabilities value can only be modified prior to a call to {@link Connection#open()},
-     * once the connection has been opened locally an error will be thrown if this method
-     * is called.
-     *
-     * @param capabilities
-     *      The capabilities to be offered to the remote when the Connection is opened.
-     *
-     * @return this connection.
-     *
-     * @throws IllegalStateException if the Connection has already been opened.
-     */
-    Connection setOfferedCapabilities(Symbol... capabilities) throws IllegalStateException;
-
-    /**
-     * @return the configured capabilities that are offered to the remote when the Connection is opened.
-     */
-    Symbol[] getOfferedCapabilities();
-
-    /**
-     * Sets the capabilities that are desired from the remote when this Connection is
-     * opened.
-     *
-     * The desired capabilities value can only be modified prior to a call to {@link Connection#open()},
-     * once the connection has been opened locally an error will be thrown if this method
-     * is called.
-     *
-     * @param capabilities
-     *      The capabilities desired from the remote when the Connection is opened.
-     *
-     * @return this connection.
-     *
-     * @throws IllegalStateException if the Connection has already been opened.
-     */
-    Connection setDesiredCapabilities(Symbol... capabilities) throws IllegalStateException;
-
-    /**
-     * @return the configured desired capabilities that are sent to the remote when the Connection is opened.
-     */
-    Symbol[] getDesiredCapabilities();
-
-    /**
-     * Sets the properties to be sent to the remote when this Connection is Opened.
-     *
-     * The connection properties value can only be modified prior to a call to {@link Connection#open()},
-     * once the connection has been opened locally an error will be thrown if this method
-     * is called.
-     *
-     * @param properties
-     *      The properties that will be sent to the remote when this Connection is opened.
-     *
-     * @return this connection.
-     *
-     * @throws IllegalStateException if the Connection has already been opened.
-     */
-    Connection setProperties(Map<Symbol, Object> properties) throws IllegalStateException;
-
-    /**
-     * @return the configured properties sent to the remote when this Connection is opened.
-     */
-    Map<Symbol, Object> getProperties();
-
     //----- Session specific APIs for this Connection
 
     /**
@@ -350,29 +205,6 @@ public interface Connection {
     //----- View state of remote end of this Connection
 
     /**
-     * Returns true if this {@link Connection} is currently remotely open meaning the state returned
-     * from {@link Connection#getRemoteState()} is equal to {@link ConnectionState#ACTIVE}.  A connection
-     * is remotely opened after an {@link Open} has been received from the remote and before a {@link Close}
-     * has been received from the remote.
-     *
-     * @return true if the connection is remotely open.
-     *
-     * @see Connection#isRemotelyClosed()
-     */
-    boolean isRemotelyOpen();
-
-    /**
-     * Returns true if this {@link Connection} is currently remotely closed meaning the state returned
-     * from {@link Connection#getRemoteState()} is equal to {@link ConnectionState#CLOSED}.  A connection
-     * is remotely closed after an {@link Close} has been received from the remote.
-     *
-     * @return true if the connection is remotely closed.
-     *
-     * @see Connection#isRemotelyOpen()
-     */
-    boolean isRemotelyClosed();
-
-    /**
      * @return the Container Id assigned to the remote end of the Connection.
      */
     String getRemoteContainerId();
@@ -388,84 +220,11 @@ public interface Connection {
     long getRemoteIdleTimeout();
 
     /**
-     * @return the capabilities offered by the remote when it opened its end of the Connection.
-     */
-    Symbol[] getRemoteOfferedCapabilities();
-
-    /**
-     * @return the capabilities desired by the remote when it opened its end of the Connection.
-     */
-    Symbol[] getRemoteDesiredCapabilities();
-
-    /**
-     * @return the properties sent by the remote when it opened its end of the Connection.
-     */
-    Map<Symbol, Object> getRemoteProperties();
-
-    /**
      * @return the remote state (as last communicated)
      */
     ConnectionState getRemoteState();
 
-    /**
-     * @return the remote error, or null if there is none
-     */
-    ErrorCondition getRemoteCondition();
-
     //----- Remote events for AMQP Connection resources
-
-    /**
-     * Sets a {@link EventHandler} for when an this connection is opened locally via a call to {@link Connection#open()}
-     *
-     * Typically used by clients for logging or other state update event processing.  Clients should not perform any
-     * blocking calls within this context.  It is an error for the handler to throw an exception and the outcome of
-     * doing so is undefined.
-     *
-     * @param localOpenHandler
-     *      The {@link EventHandler} to notify when this connection is locally opened.
-     *
-     * @return this connection
-     */
-    Connection localOpenHandler(EventHandler<Connection> localOpenHandler);
-
-    /**
-     * Sets a {@link EventHandler} for when an this connection is closed locally via a call to {@link Connection#close()}
-     *
-     * Typically used by clients for logging or other state update event processing.  Clients should not perform any
-     * blocking calls within this context.  It is an error for the handler to throw an exception and the outcome of
-     * doing so is undefined.
-     *
-     * @param localCloseHandler
-     *      The {@link EventHandler} to notify when this connection is locally closed.
-     *
-     * @return this connection
-     */
-    Connection localCloseHandler(EventHandler<Connection> localCloseHandler);
-
-    /**
-     * Sets a EventHandler for when an AMQP Open frame is received from the remote peer.
-     *
-     * Used to process remotely initiated Connections. Locally initiated sessions have their own EventHandler
-     * invoked instead.  This method is typically used by servers to listen for the remote peer to open its
-     * connection, while a client would listen for the server to open its end of the connection once a local open
-     * has been performed.
-     *
-     * @param remoteOpenEventHandler
-     *          the EventHandler that will be signaled when the connection has been remotely opened
-     *
-     * @return this connection
-     */
-    Connection openHandler(EventHandler<Connection> remoteOpenEventHandler);
-
-    /**
-     * Sets a EventHandler for when an AMQP Close frame is received from the remote peer.
-     *
-     * @param remoteCloseEventHandler
-     *          the EventHandler that will be signaled when the connection is remotely closed.
-     *
-     * @return this connection
-     */
-    Connection closeHandler(EventHandler<Connection> remoteCloseEventHandler);
 
     /**
      * Sets a EventHandler for when an AMQP Begin frame is received from the remote peer.
@@ -509,16 +268,5 @@ public interface Connection {
      * @return this connection
      */
     Connection receiverOpenHandler(EventHandler<Receiver> remoteReceiverOpenEventHandler);
-
-    /**
-     * Sets an {@link EventHandler} that is invoked when the engine that create this {@link Connection} is shutdown
-     * via a call to {@link Engine#shutdown()} which indicates a desire to terminate all engine operations.
-     *
-     * @param engineShutdownEventHandler
-     *      the EventHandler that will be signaled when this connection's engine is explicitly shutdown.
-     *
-     * @return this connection
-     */
-    Connection engineShutdownHandler(EventHandler<Engine> engineShutdownEventHandler);
 
 }
