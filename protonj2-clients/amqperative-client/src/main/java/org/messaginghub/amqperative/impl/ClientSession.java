@@ -386,7 +386,7 @@ public class ClientSession implements Session {
     //----- Private implementation methods
 
     private void configureSession() {
-        protonSession.getContext().setLinkedResource(this);
+        protonSession.setLinkedResource(this);
         protonSession.setOfferedCapabilities(ClientConversionSupport.toSymbolArray(options.offeredCapabilities()));
         protonSession.setDesiredCapabilities(ClientConversionSupport.toSymbolArray(options.desiredCapabilities()));
         protonSession.setProperties(ClientConversionSupport.toSymbolKeyedMap(options.properties()));
@@ -493,7 +493,7 @@ public class ClientSession implements Session {
         session.senders().forEach(sender -> {
             if (!sender.isLocallyOpen()) {
                 try {
-                    ClientSender clientSender = sender.getContext().getLinkedResource(ClientSender.class);
+                    ClientSender clientSender = sender.getLinkedResource(ClientSender.class);
                     if (connection.getCapabilities().anonymousRelaySupported()) {
                         clientSender.open();
                     } else {

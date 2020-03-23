@@ -77,7 +77,7 @@ public class ClientReceiver implements Receiver {
         this.protonReceiver = receiver;
 
         // Ensure that the receiver can provide a link back to this object.
-        protonReceiver.getContext().setLinkedResource(this);
+        protonReceiver.setLinkedResource(this);
 
         if (options.creditWindow() > 0) {
             protonReceiver.addCredit(options.creditWindow());

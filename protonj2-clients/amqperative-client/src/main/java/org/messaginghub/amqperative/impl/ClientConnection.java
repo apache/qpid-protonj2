@@ -676,7 +676,7 @@ public class ClientConnection implements Connection {
     }
 
     private void configureConnection(org.apache.qpid.proton4j.engine.Connection protonConnection) {
-        protonConnection.getContext().setLinkedResource(this);
+        protonConnection.setLinkedResource(this);
         protonConnection.setChannelMax(options.channelMax());
         protonConnection.setMaxFrameSize(options.maxFrameSize());
         protonConnection.setHostname(transport.getHost());

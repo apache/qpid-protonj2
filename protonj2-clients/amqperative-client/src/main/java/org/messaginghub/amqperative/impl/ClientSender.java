@@ -96,7 +96,7 @@ public class ClientSender implements Sender {
         }
 
         // Ensure that the sender can provide a link back to this object.
-        protonSender.getContext().setLinkedResource(this);
+        protonSender.setLinkedResource(this);
     }
 
     @Override
@@ -413,7 +413,7 @@ public class ClientSender implements Sender {
 
     private void handleDeliveryUpdated(OutgoingDelivery delivery) {
         try {
-            delivery.getContext().getLinkedResource(ClientTracker.class).processDeliveryUpdated(delivery);
+            delivery.getLinkedResource(ClientTracker.class).processDeliveryUpdated(delivery);
         } catch (ClassCastException ccex) {
             LOG.debug("Sender received update on Delivery not linked to a Tracker: {}", delivery);
         }
@@ -491,7 +491,7 @@ public class ClientSender implements Sender {
         OutgoingDelivery delivery = protonSender.next();
         ClientTracker tracker = new ClientTracker(this, delivery);
 
-        delivery.getContext().setLinkedResource(tracker);
+        delivery.setLinkedResource(tracker);
 
         if (protonSender.getSenderSettleMode() == SenderSettleMode.SETTLED) {
             delivery.settle();
