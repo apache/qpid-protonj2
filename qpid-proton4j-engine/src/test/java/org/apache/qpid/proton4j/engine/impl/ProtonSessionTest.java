@@ -400,7 +400,7 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
         session.setCondition(null);
         session.open();
 
-        assertNotNull(session.getContext());
+        assertNotNull(session.getAttachments());
         assertNull(session.getProperties());
         assertNull(session.getOfferedCapabilities());
         assertNull(session.getDesiredCapabilities());

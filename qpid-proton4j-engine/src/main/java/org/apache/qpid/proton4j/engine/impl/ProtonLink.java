@@ -28,7 +28,6 @@ import org.apache.qpid.proton4j.amqp.messaging.Target;
 import org.apache.qpid.proton4j.amqp.transport.Attach;
 import org.apache.qpid.proton4j.amqp.transport.Detach;
 import org.apache.qpid.proton4j.amqp.transport.Disposition;
-import org.apache.qpid.proton4j.amqp.transport.ErrorCondition;
 import org.apache.qpid.proton4j.amqp.transport.Flow;
 import org.apache.qpid.proton4j.amqp.transport.ReceiverSettleMode;
 import org.apache.qpid.proton4j.amqp.transport.Role;
@@ -37,7 +36,6 @@ import org.apache.qpid.proton4j.amqp.transport.Transfer;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.common.logging.ProtonLogger;
 import org.apache.qpid.proton4j.common.logging.ProtonLoggerFactory;
-import org.apache.qpid.proton4j.engine.Engine;
 import org.apache.qpid.proton4j.engine.EventHandler;
 import org.apache.qpid.proton4j.engine.Link;
 import org.apache.qpid.proton4j.engine.LinkState;
@@ -51,7 +49,7 @@ import org.apache.qpid.proton4j.engine.exceptions.EngineFailedException;
  *
  * @param <T> the type of link, {@link Sender} or {@link Receiver}.
  */
-public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
+public abstract class ProtonLink<T extends Link<T>> extends ProtonEndpoint<T> implements Link<T> {
 
     private static final ProtonLogger LOG = ProtonLoggerFactory.getLogger(ProtonLink.class);
 
@@ -70,7 +68,6 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
 
     protected final ProtonConnection connection;
     protected final ProtonSession session;
-    protected final ProtonEngine engine;
 
     protected final Attach localAttach = new Attach();
     protected Attach remoteAttach;
@@ -78,30 +75,14 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
     private boolean localAttachSent;
     private boolean localDetachSent;
 
-    private final ProtonContext context = new ProtonContext();
     private final ProtonLinkCreditState creditState;
 
     private LinkOperabilityState operability = LinkOperabilityState.OK;
     private LinkState localState = LinkState.IDLE;
     private LinkState remoteState = LinkState.IDLE;
 
-    private ErrorCondition localError;
-    private ErrorCondition remoteError;
-
-    private EventHandler<T> localOpenHandler;
-    private EventHandler<T> localCloseHandler;
     private EventHandler<T> localDetachHandler;
-    private EventHandler<Engine> engineShutdownHandler;
-
-    // Left default to null as the session or connection overrides this by default.
-    private EventHandler<T> remoteOpenHandler;
-
-    private EventHandler<T> remoteDetachHandler = (result) -> {
-        LOG.trace("Link {} Remote link detach arrived at default handler.", self());
-    };
-    private EventHandler<T> remoteCloseHandler = (result) -> {
-        LOG.trace("Link {} Remote link close arrived at default handler.", self());
-    };
+    private EventHandler<T> remoteDetachHandler;
 
     /**
      * Create a new link instance with the given parent session.
@@ -114,9 +95,10 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
      *      The link credit state used to track credit for the link.
      */
     protected ProtonLink(ProtonSession session, String name, ProtonLinkCreditState creditState) {
+        super(session.getEngine());
+
         this.session = session;
         this.connection = session.getConnection();
-        this.engine = session.getEngine();
         this.creditState = creditState;
         this.localAttach.setName(name);
         this.localAttach.setRole(getRole());
@@ -130,11 +112,6 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
     @Override
     public ProtonSession getSession() {
         return session;
-    }
-
-    @Override
-    public ProtonEngine getEngine() {
-        return engine;
     }
 
     @Override
@@ -152,15 +129,11 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
         return getRole() == Role.RECEIVER;
     }
 
+    @Override
     protected abstract T self();
 
     long getHandle() {
         return localAttach.getHandle();
-    }
-
-    @Override
-    public ProtonContext getContext() {
-        return context;
     }
 
     @Override
@@ -169,29 +142,8 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
     }
 
     @Override
-    public ErrorCondition getCondition() {
-        return localError;
-    }
-
-    @Override
-    public T setCondition(ErrorCondition condition) {
-        localError = condition == null ? null : condition.copy();
-
-        return self();
-    }
-
-    @Override
     public LinkState getRemoteState() {
         return remoteState;
-    }
-
-    @Override
-    public ErrorCondition getRemoteCondition() {
-        return remoteError;
-    }
-
-    private void setRemoteCondition(ErrorCondition condition) {
-        remoteError = condition == null ? null : condition.copy();
     }
 
     @Override
@@ -205,9 +157,7 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
             try {
                 trySyncLocalStateWithRemote();
             } finally {
-                if (localOpenHandler != null) {
-                    localOpenHandler.handle(self());
-                }
+                fireLocalOpen();
             }
         }
 
@@ -245,9 +195,7 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
                 engine.checkFailed("Detached called on already failed connection");
                 trySyncLocalStateWithRemote();
             } finally {
-                if (localCloseHandler != null) {
-                    localCloseHandler.handle(self());
-                }
+                fireLocalClose();
             }
         }
 
@@ -485,26 +433,20 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
     //----- Event registration methods
 
     @Override
-    public T localOpenHandler(EventHandler<T> localOpenHandler) {
-        this.localOpenHandler = localOpenHandler;
-        return self();
-    }
-
-    @Override
-    public T localCloseHandler(EventHandler<T> localCloseHandler) {
-        this.localCloseHandler = localCloseHandler;
-        return self();
-    }
-
-    @Override
     public T localDetachHandler(EventHandler<T> localDetachHandler) {
         this.localDetachHandler = localDetachHandler;
         return self();
     }
 
-    @Override
-    public T openHandler(EventHandler<T> remoteOpenHandler) {
-        this.remoteOpenHandler = remoteOpenHandler;
+    EventHandler<T> localDetachHandler() {
+        return localDetachHandler;
+    }
+
+    T fireLocalDetach() {
+        if (localDetachHandler != null) {
+            localDetachHandler.handle(self());
+        }
+
         return self();
     }
 
@@ -514,15 +456,15 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
         return self();
     }
 
-    @Override
-    public T closeHandler(EventHandler<T> remoteCloseHandler) {
-        this.remoteCloseHandler = remoteCloseHandler;
-        return self();
+    EventHandler<T> detachHandler() {
+        return remoteDetachHandler;
     }
 
-    @Override
-    public T engineShutdownHandler(EventHandler<Engine> engineShutdownEventHandler) {
-        this.engineShutdownHandler = engineShutdownEventHandler;
+    T fireRemoteDetach() {
+        if (remoteDetachHandler != null) {
+            remoteDetachHandler.handle(self());
+        }
+
         return self();
     }
 
@@ -601,7 +543,7 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
         }
 
         try {
-            engineShutdownHandler.handle(protonEngine);
+            fireEngineShutdown();
         } catch (Throwable ignore) {}
     }
 
@@ -615,8 +557,8 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
         handleRemoteAttach(attach);
         transitionToRemotelyOpenedState();
 
-        if (remoteOpenHandler != null) {
-            remoteOpenHandler.handle(self());
+        if (openHandler() != null) {
+            fireRemoteOpen();
         } else {
             if (getRole() == Role.RECEIVER) {
                 if (session.receiverOpenEventHandler() != null) {
@@ -649,16 +591,12 @@ public abstract class ProtonLink<T extends Link<T>> implements Link<T> {
             remoteState = LinkState.CLOSED;
             operability = LinkOperabilityState.LINK_REMOTELY_CLOSED;
             transitionToRemotelyCosed();
-            if (remoteCloseHandler != null) {
-                remoteCloseHandler.handle(self());
-            }
+            fireRemoteClose();
         } else {
             remoteState = LinkState.DETACHED;
             operability = LinkOperabilityState.LINK_REMOTELY_DETACHED;
             transitionToRemotelyDetached();
-            if (remoteDetachHandler != null) {
-                remoteDetachHandler.handle(self());
-            }
+            fireRemoteDetach();
         }
 
         return this;

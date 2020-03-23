@@ -18,7 +18,6 @@ package org.apache.qpid.proton4j.engine.impl;
 
 import org.apache.qpid.proton4j.amqp.Binary;
 import org.apache.qpid.proton4j.amqp.transport.ErrorCondition;
-import org.apache.qpid.proton4j.engine.Context;
 import org.apache.qpid.proton4j.engine.Link;
 import org.apache.qpid.proton4j.engine.Transaction;
 import org.apache.qpid.proton4j.engine.TransactionController;
@@ -33,11 +32,12 @@ import org.apache.qpid.proton4j.engine.TransactionState;
  */
 public abstract class ProtonTransaction<E extends Link<?>> implements Transaction<E> {
 
-    private final ProtonContext context = new ProtonContext();
-
     private TransactionState state;
     private ErrorCondition condition;
     private Binary txnId;
+
+    private ProtonAttachments attachments;
+    private Object linkedResource;
 
     @Override
     public TransactionState getState() {
@@ -85,8 +85,23 @@ public abstract class ProtonTransaction<E extends Link<?>> implements Transactio
     }
 
     @Override
-    public Context getContext() {
-        return context;
+    public void setLinkedResource(Object resource) {
+        this.linkedResource = resource;
+    }
+
+    @Override
+    public Object getLinkedResource() {
+        return linkedResource;
+    }
+
+    @Override
+    public <T> T getLinkedResource(Class<T> typeClass) {
+        return typeClass.cast(linkedResource);
+    }
+
+    @Override
+    public ProtonAttachments getAttachments() {
+        return attachments == null ? attachments = new ProtonAttachments() : attachments;
     }
 
     /**

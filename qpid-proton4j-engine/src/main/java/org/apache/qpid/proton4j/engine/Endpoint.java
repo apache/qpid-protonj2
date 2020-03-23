@@ -59,14 +59,40 @@ public interface Endpoint<E extends Endpoint<E>> {
     E close() throws EngineFailedException;
 
     /**
-     * @return the {@link Context} instance that is associated with this {@link Endpoint}
+     * @return the {@link Attachments} instance that is associated with this {@link Endpoint}
      */
-    Context getContext();
+    Attachments getAttachments();
 
     /**
      * @return the {@link Engine} which created this {@link Endpoint} instance.
      */
     Engine getEngine();
+
+    /**
+     * Links a given resource to this {@link Endpoint}.
+     *
+     * @param resource
+     *      The resource to link to this {@link Endpoint}.
+     */
+    void setLinkedResource(Object resource);
+
+    /**
+     * @return the user set linked resource for this {@link Endpoint} instance.
+     */
+    Object getLinkedResource();
+
+    /**
+     * Gets the linked resource (if set) and returns it using the type information
+     * provided to cast the returned value.
+     *
+     * @param <T> The type to cast the linked resource to if one is set.
+     * @param typeClass the type's Class which is used for casting the returned value.
+     *
+     * @return the user set linked resource for this Context instance.
+     *
+     * @throws ClassCastException if the linked resource cannot be cast to the type requested.
+     */
+    <T> T getLinkedResource(Class<T> typeClass);
 
     //----- Operations on local end of this End Point
 

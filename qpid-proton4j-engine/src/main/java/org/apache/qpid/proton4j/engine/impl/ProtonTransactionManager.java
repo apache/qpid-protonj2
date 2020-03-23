@@ -30,7 +30,6 @@ import org.apache.qpid.proton4j.amqp.transport.ReceiverSettleMode;
 import org.apache.qpid.proton4j.amqp.transport.Role;
 import org.apache.qpid.proton4j.amqp.transport.SenderSettleMode;
 import org.apache.qpid.proton4j.engine.Connection;
-import org.apache.qpid.proton4j.engine.Context;
 import org.apache.qpid.proton4j.engine.Engine;
 import org.apache.qpid.proton4j.engine.EventHandler;
 import org.apache.qpid.proton4j.engine.LinkState;
@@ -45,12 +44,19 @@ import org.apache.qpid.proton4j.engine.exceptions.EngineStateException;
  * around a receiver link that responds to requests to {@link Declare} and to
  * {@link Discharge} AMQP {@link Transaction} instance.
  */
-public class ProtonTransactionManager implements TransactionManager {
+public class ProtonTransactionManager extends ProtonEndpoint<TransactionManager> implements TransactionManager {
 
     private final ProtonReceiver receiverLink;
 
     public ProtonTransactionManager(ProtonReceiver receiverLink) {
+        super(receiverLink.getEngine());
+
         this.receiverLink = receiverLink;
+    }
+
+    @Override
+    ProtonTransactionManager self() {
+        return this;
     }
 
     @Override
@@ -85,11 +91,6 @@ public class ProtonTransactionManager implements TransactionManager {
     @Override
     public boolean isLocallyDetached() {
         return receiverLink.isLocallyDetached();
-    }
-
-    @Override
-    public Context getContext() {
-        return receiverLink.getContext();
     }
 
     @Override
@@ -141,11 +142,6 @@ public class ProtonTransactionManager implements TransactionManager {
     @Override
     public Session getSession() {
         return receiverLink.getSession();
-    }
-
-    @Override
-    public Engine getEngine() {
-        return receiverLink.getEngine();
     }
 
     @Override
@@ -307,37 +303,13 @@ public class ProtonTransactionManager implements TransactionManager {
     }
 
     @Override
-    public TransactionManager localOpenHandler(EventHandler<TransactionManager> localOpenHandler) {
-        // TODO Auto-generated method stub
-        return this;
-    }
-
-    @Override
-    public TransactionManager localCloseHandler(EventHandler<TransactionManager> localCloseHandler) {
-        // TODO Auto-generated method stub
-        return this;
-    }
-
-    @Override
     public TransactionManager localDetachHandler(EventHandler<TransactionManager> localDetachHandler) {
         // TODO Auto-generated method stub
         return this;
     }
 
     @Override
-    public TransactionManager openHandler(EventHandler<TransactionManager> remoteOpenHandler) {
-        // TODO Auto-generated method stub
-        return this;
-    }
-
-    @Override
     public TransactionManager detachHandler(EventHandler<TransactionManager> remoteDetachHandler) {
-        // TODO Auto-generated method stub
-        return this;
-    }
-
-    @Override
-    public TransactionManager closeHandler(EventHandler<TransactionManager> remoteCloseHandler) {
         // TODO Auto-generated method stub
         return this;
     }

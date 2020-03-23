@@ -23,7 +23,7 @@ import org.apache.qpid.proton4j.amqp.security.SaslPerformative.SaslPerformativeH
 import org.apache.qpid.proton4j.amqp.transport.AMQPHeader.HeaderHandler;
 import org.apache.qpid.proton4j.engine.EngineHandlerContext;
 import org.apache.qpid.proton4j.engine.EngineSaslDriver.SaslState;
-import org.apache.qpid.proton4j.engine.impl.ProtonContext;
+import org.apache.qpid.proton4j.engine.impl.ProtonAttachments;
 import org.apache.qpid.proton4j.engine.impl.ProtonEngine;
 import org.apache.qpid.proton4j.engine.sasl.SaslContext;
 import org.apache.qpid.proton4j.engine.sasl.SaslOutcome;
@@ -35,7 +35,7 @@ abstract class ProtonSaslContext implements SaslContext {
 
     protected final ProtonSaslHandler saslHandler;
 
-    private final ProtonContext context = new ProtonContext();
+    private ProtonAttachments attachments;
 
     // Client negotiations tracking.
     protected Symbol[] serverMechanisms;
@@ -51,8 +51,8 @@ abstract class ProtonSaslContext implements SaslContext {
     }
 
     @Override
-    public ProtonContext getContext() {
-        return context;
+    public ProtonAttachments getAttachments() {
+        return attachments == null ? attachments = new ProtonAttachments() : attachments;
     }
 
     /**

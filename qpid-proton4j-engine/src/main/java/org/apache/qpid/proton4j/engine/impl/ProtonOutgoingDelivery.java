@@ -29,7 +29,6 @@ public class ProtonOutgoingDelivery implements OutgoingDelivery {
     private static final long DELIVERY_INACTIVE = -1;
     private static final long DELIVERY_ABORTED = -2;
 
-    private final ProtonContext context = new ProtonContext();
     private final ProtonSender link;
 
     private long deliveryId = DELIVERY_INACTIVE;
@@ -47,6 +46,9 @@ public class ProtonOutgoingDelivery implements OutgoingDelivery {
     private DeliveryState remoteState;
     private boolean remotelySettled;
 
+    private ProtonAttachments attachments;
+    private Object linkedResource;
+
     public ProtonOutgoingDelivery(ProtonSender link) {
         this.link = link;
     }
@@ -57,8 +59,23 @@ public class ProtonOutgoingDelivery implements OutgoingDelivery {
     }
 
     @Override
-    public ProtonContext getContext() {
-        return context;
+    public ProtonAttachments getAttachments() {
+        return attachments == null ? attachments = new ProtonAttachments() : attachments;
+    }
+
+    @Override
+    public void setLinkedResource(Object resource) {
+        this.linkedResource = resource;
+    }
+
+    @Override
+    public Object getLinkedResource() {
+        return linkedResource;
+    }
+
+    @Override
+    public <T> T getLinkedResource(Class<T> typeClass) {
+        return typeClass.cast(linkedResource);
     }
 
     @Override

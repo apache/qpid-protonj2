@@ -27,7 +27,6 @@ import org.apache.qpid.proton4j.engine.IncomingDelivery;
  */
 public class ProtonIncomingDelivery implements IncomingDelivery {
 
-    private final ProtonContext context = new ProtonContext();
     private final DeliveryTag deliveryTag;
     private final ProtonReceiver link;
     private final long deliveryId;
@@ -47,6 +46,9 @@ public class ProtonIncomingDelivery implements IncomingDelivery {
 
     private ProtonBuffer payload;
     private ProtonCompositeBuffer aggregate;
+
+    private ProtonAttachments attachments;
+    private Object linkedResource;
 
     /**
      * @param link
@@ -68,8 +70,23 @@ public class ProtonIncomingDelivery implements IncomingDelivery {
     }
 
     @Override
-    public ProtonContext getContext() {
-        return context;
+    public ProtonAttachments getAttachments() {
+        return attachments == null ? attachments = new ProtonAttachments() : attachments;
+    }
+
+    @Override
+    public void setLinkedResource(Object resource) {
+        this.linkedResource = resource;
+    }
+
+    @Override
+    public Object getLinkedResource() {
+        return linkedResource;
+    }
+
+    @Override
+    public <T> T getLinkedResource(Class<T> typeClass) {
+        return typeClass.cast(linkedResource);
     }
 
     @Override

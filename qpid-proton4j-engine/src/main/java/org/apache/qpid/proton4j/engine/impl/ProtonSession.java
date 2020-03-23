@@ -37,10 +37,7 @@ import org.apache.qpid.proton4j.amqp.transport.Role;
 import org.apache.qpid.proton4j.amqp.transport.SessionError;
 import org.apache.qpid.proton4j.amqp.transport.Transfer;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
-import org.apache.qpid.proton4j.common.logging.ProtonLogger;
-import org.apache.qpid.proton4j.common.logging.ProtonLoggerFactory;
 import org.apache.qpid.proton4j.engine.ConnectionState;
-import org.apache.qpid.proton4j.engine.Engine;
 import org.apache.qpid.proton4j.engine.EventHandler;
 import org.apache.qpid.proton4j.engine.Link;
 import org.apache.qpid.proton4j.engine.LinkState;
@@ -56,9 +53,7 @@ import org.apache.qpid.proton4j.engine.util.SplayMap;
 /**
  * Proton API for Session type.
  */
-public class ProtonSession implements Session {
-
-    private static final ProtonLogger LOG = ProtonLoggerFactory.getLogger(ProtonSession.class);
+public class ProtonSession extends ProtonEndpoint<Session> implements Session {
 
     private final Begin localBegin = new Begin();
     private Begin remoteBegin;
@@ -75,36 +70,21 @@ public class ProtonSession implements Session {
     private SplayMap<ProtonLink<?>> remoteLinks = new SplayMap<>();
 
     private final ProtonConnection connection;
-    private final ProtonEngine engine;
-    private final ProtonContext context = new ProtonContext();
 
     private SessionState localState = SessionState.IDLE;
     private SessionState remoteState = SessionState.IDLE;
 
-    private ErrorCondition localError;
-    private ErrorCondition remoteError;
-
     private boolean localBeginSent;
     private boolean localEndSent;
-
-    private EventHandler<Session> remoteOpenHandler = (result) -> {
-        LOG.trace("Remote session open arrived at default handler.");
-    };
-    private EventHandler<Session> remoteCloseHandler = (result) -> {
-        LOG.trace("Remote session close arrived at default handler.");
-    };
-
-    private EventHandler<Session> localOpenHandler;
-    private EventHandler<Session> localCloseHandler;
-    private EventHandler<Engine> engineShutdownHandler;
 
     // No default for these handlers, Connection will process these if not set here.
     private EventHandler<Sender> remoteSenderOpenEventHandler = null;
     private EventHandler<Receiver> remoteReceiverOpenEventHandler = null;
 
     public ProtonSession(ProtonConnection connection, int localChannel) {
+        super(connection.getEngine());
+
         this.connection = connection;
-        this.engine = connection.getEngine();
         this.localChannel = localChannel;
 
         this.outgoingWindow = new ProtonSessionOutgoingWindow(this);
@@ -112,13 +92,13 @@ public class ProtonSession implements Session {
     }
 
     @Override
-    public ProtonConnection getConnection() {
-        return connection;
+    ProtonSession self() {
+        return this;
     }
 
     @Override
-    public ProtonEngine getEngine() {
-        return connection.getEngine();
+    public ProtonConnection getConnection() {
+        return connection;
     }
 
     public int getLocalChannel() {
@@ -130,38 +110,13 @@ public class ProtonSession implements Session {
     }
 
     @Override
-    public ProtonContext getContext() {
-        return context;
-    }
-
-    @Override
     public SessionState getState() {
         return localState;
     }
 
     @Override
-    public ErrorCondition getCondition() {
-        return localError;
-    }
-
-    @Override
-    public ProtonSession setCondition(ErrorCondition condition) {
-        localError = condition == null ? null : condition.copy();
-        return this;
-    }
-
-    @Override
     public SessionState getRemoteState() {
         return remoteState;
-    }
-
-    @Override
-    public ErrorCondition getRemoteCondition() {
-        return remoteError;
-    }
-
-    private void setRemoteCondition(ErrorCondition condition) {
-        remoteError = condition == null ? null : condition.copy();
     }
 
     @Override
@@ -176,9 +131,7 @@ public class ProtonSession implements Session {
             try {
                 trySyncLocalStateWithRemote();
             } finally {
-                if (localOpenHandler != null) {
-                    localOpenHandler.handle(this);
-                }
+                fireLocalOpen();
             }
         }
 
@@ -194,9 +147,7 @@ public class ProtonSession implements Session {
                 trySyncLocalStateWithRemote();
             } finally {
                 allLinks().forEach(link -> link.handleSessionLocallyClosed(this));
-                if (localCloseHandler != null) {
-                    localCloseHandler.handle(this);
-                }
+                fireLocalClose();
             }
         }
 
@@ -397,30 +348,6 @@ public class ProtonSession implements Session {
     //----- Event handler registration for this Session
 
     @Override
-    public ProtonSession openHandler(EventHandler<Session> remoteOpenEventHandler) {
-        this.remoteOpenHandler = remoteOpenEventHandler;
-        return this;
-    }
-
-    @Override
-    public ProtonSession closeHandler(EventHandler<Session> remoteCloseEventHandler) {
-        this.remoteCloseHandler = remoteCloseEventHandler;
-        return this;
-    }
-
-    @Override
-    public ProtonSession localOpenHandler(EventHandler<Session> localOpenEventHandler) {
-        this.localOpenHandler = localOpenEventHandler;
-        return this;
-    }
-
-    @Override
-    public ProtonSession localCloseHandler(EventHandler<Session> localCloseEventHandler) {
-        this.localCloseHandler = localCloseEventHandler;
-        return this;
-    }
-
-    @Override
     public ProtonSession senderOpenHandler(EventHandler<Sender> remoteSenderOpenEventHandler) {
         this.remoteSenderOpenEventHandler = remoteSenderOpenEventHandler;
         return this;
@@ -440,12 +367,6 @@ public class ProtonSession implements Session {
         return remoteReceiverOpenEventHandler;
     }
 
-    @Override
-    public ProtonSession engineShutdownHandler(EventHandler<Engine> engineShutdownEventHandler) {
-        this.engineShutdownHandler = engineShutdownEventHandler;
-        return this;
-    }
-
     //----- Respond to Connection and Engine state changes
 
     void handleConnectionLocallyClosed(ProtonConnection protonConnection) {
@@ -460,7 +381,7 @@ public class ProtonSession implements Session {
         allLinks().forEach(link -> link.handleEngineShutdown(protonEngine));
 
         try {
-            engineShutdownHandler.handle(protonEngine);
+            fireEngineShutdown();
         } catch (Throwable ingore) {}
     }
 
@@ -473,8 +394,8 @@ public class ProtonSession implements Session {
         incomingWindow.handleBegin(begin);
         outgoingWindow.handleBegin(begin);
 
-        if (isLocallyOpen() && remoteOpenHandler != null) {
-            remoteOpenHandler.handle(this);
+        if (isLocallyOpen()) {
+            fireRemoteOpen();
         }
     }
 
@@ -484,9 +405,7 @@ public class ProtonSession implements Session {
         setRemoteCondition(end.getError());
         remoteState = SessionState.CLOSED;
 
-        if (remoteCloseHandler != null) {
-            remoteCloseHandler.handle(this);
-        }
+        fireRemoteClose();
     }
 
     void remoteAttach(Attach attach, int channel) {

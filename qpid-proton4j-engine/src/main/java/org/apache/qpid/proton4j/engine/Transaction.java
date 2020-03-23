@@ -78,8 +78,34 @@ public interface Transaction<E extends Link<?>> {
     Binary getTxnId();
 
     /**
-     * @return the {@link Context} instance that is associated with this {@link Transaction}
+     * @return the {@link Attachments} instance that is associated with this {@link Transaction}
      */
-    Context getContext();
+    Attachments getAttachments();
+
+    /**
+     * Links a given resource to this {@link Transaction}.
+     *
+     * @param resource
+     *      The resource to link to this {@link Transaction}.
+     */
+    void setLinkedResource(Object resource);
+
+    /**
+     * @return the user set linked resource for this {@link Transaction} instance.
+     */
+    Object getLinkedResource();
+
+    /**
+     * Gets the linked resource (if set) and returns it using the type information
+     * provided to cast the returned value.
+     *
+     * @param <T> The type to cast the linked resource to if one is set.
+     * @param typeClass the type's Class which is used for casting the returned value.
+     *
+     * @return the user set linked resource for this Context instance.
+     *
+     * @throws ClassCastException if the linked resource cannot be cast to the type requested.
+     */
+    <T> T getLinkedResource(Class<T> typeClass);
 
 }

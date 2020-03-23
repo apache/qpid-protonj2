@@ -42,11 +42,8 @@ import org.apache.qpid.proton4j.amqp.transport.Open;
 import org.apache.qpid.proton4j.amqp.transport.Performative;
 import org.apache.qpid.proton4j.amqp.transport.Transfer;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
-import org.apache.qpid.proton4j.common.logging.ProtonLogger;
-import org.apache.qpid.proton4j.common.logging.ProtonLoggerFactory;
 import org.apache.qpid.proton4j.engine.Connection;
 import org.apache.qpid.proton4j.engine.ConnectionState;
-import org.apache.qpid.proton4j.engine.Engine;
 import org.apache.qpid.proton4j.engine.EventHandler;
 import org.apache.qpid.proton4j.engine.Receiver;
 import org.apache.qpid.proton4j.engine.Sender;
@@ -59,11 +56,7 @@ import org.apache.qpid.proton4j.engine.exceptions.ProtocolViolationException;
 /**
  * Implements the proton4j Connection API
  */
-public class ProtonConnection implements Connection, AMQPHeader.HeaderHandler<ProtonEngine>, Performative.PerformativeHandler<ProtonEngine> {
-
-    private static final ProtonLogger LOG = ProtonLoggerFactory.getLogger(ProtonConnection.class);
-
-    private final ProtonEngine engine;
+public class ProtonConnection extends ProtonEndpoint<Connection> implements Connection, AMQPHeader.HeaderHandler<ProtonEngine>, Performative.PerformativeHandler<ProtonEngine> {
 
     private final Open localOpen = new Open();
     private Open remoteOpen;
@@ -71,38 +64,17 @@ public class ProtonConnection implements Connection, AMQPHeader.HeaderHandler<Pr
     private Map<Integer, ProtonSession> localSessions = new HashMap<>();
     private Map<Integer, ProtonSession> remoteSessions = new HashMap<>();
 
-    private final ProtonContext context = new ProtonContext();
-
     private ConnectionState localState = ConnectionState.IDLE;
     private ConnectionState remoteState = ConnectionState.IDLE;
-
-    private ErrorCondition localError;
-    private ErrorCondition remoteError;
 
     private boolean headerSent;
     private boolean headerReceived;
     private boolean localOpenSent;
     private boolean localCloseSent;
 
-    private EventHandler<Connection> remoteOpenHandler = (result) -> {
-        LOG.trace("Remote open arrived at default handler.");
-    };
-    private EventHandler<Connection> remoteCloseHandler = (result) -> {
-        LOG.trace("Remote close arrived at default handler.");
-    };
-    private EventHandler<Session> remoteSessionOpenEventHandler = (result) -> {
-        LOG.trace("Remote session open arrived at default handler.");
-    };
-    private EventHandler<Sender> remoteSenderOpenEventHandler = (result) -> {
-        LOG.trace("Remote sender open arrived at default handler.");
-    };
-    private EventHandler<Receiver> remoteReceiverOpenEventHandler = (result) -> {
-        LOG.trace("Remote receiver open arrived at default handler.");
-    };
-
-    private EventHandler<Connection> localOpenHandler;
-    private EventHandler<Connection> localCloseHandler;
-    private EventHandler<Engine> engineShutdownHandler;
+    private EventHandler<Session> remoteSessionOpenEventHandler;
+    private EventHandler<Sender> remoteSenderOpenEventHandler;
+    private EventHandler<Receiver> remoteReceiverOpenEventHandler;
 
     /**
      * Create a new unbound Connection instance.
@@ -110,7 +82,7 @@ public class ProtonConnection implements Connection, AMQPHeader.HeaderHandler<Pr
      * @param engine
      */
     ProtonConnection(ProtonEngine engine) {
-        this.engine = engine;
+        super(engine);
 
         // Base the initial max frame size on the value configured on the engine.
         // this.localOpen.setMaxFrameSize(engine.configuration().getMaxFrameSize());
@@ -118,13 +90,8 @@ public class ProtonConnection implements Connection, AMQPHeader.HeaderHandler<Pr
     }
 
     @Override
-    public ProtonEngine getEngine() {
-        return engine;
-    }
-
-    @Override
-    public ProtonContext getContext() {
-        return context;
+    ProtonConnection self() {
+        return this;
     }
 
     @Override
@@ -133,27 +100,14 @@ public class ProtonConnection implements Connection, AMQPHeader.HeaderHandler<Pr
     }
 
     @Override
-    public ErrorCondition getCondition() {
-        return localError;
-    }
-
-    @Override
-    public ProtonConnection setCondition(ErrorCondition condition) {
-        localError = condition == null ? null : condition.copy();
-        return this;
-    }
-
-    @Override
     public ProtonConnection open() throws EngineStateException {
         if (getState() == ConnectionState.IDLE) {
-            getEngine().checkShutdownOrFailed("Cannot open a connection when Engine is shutdown or failed.");
+            engine.checkShutdownOrFailed("Cannot open a connection when Engine is shutdown or failed.");
             localState = ConnectionState.ACTIVE;
             try {
                 syncLocalStateWithRemote();
             } finally {
-                if (localOpenHandler != null) {
-                    localOpenHandler.handle(this);
-                }
+                fireLocalOpen();
             }
         }
 
@@ -169,9 +123,7 @@ public class ProtonConnection implements Connection, AMQPHeader.HeaderHandler<Pr
                 syncLocalStateWithRemote();
             } finally {
                 allSessions().forEach(session -> session.handleConnectionLocallyClosed(this));
-                if (localCloseHandler != null) {
-                    localCloseHandler.handle(this);
-                }
+                fireLocalClose();
             }
         }
 
@@ -388,15 +340,6 @@ public class ProtonConnection implements Connection, AMQPHeader.HeaderHandler<Pr
     }
 
     @Override
-    public ErrorCondition getRemoteCondition() {
-        return remoteError;
-    }
-
-    private void setRemoteCondition(ErrorCondition condition) {
-        remoteError = condition == null ? null : condition.copy();
-    }
-
-    @Override
     public ProtonSession session() throws IllegalStateException {
         checkConnectionClosed("Cannot create a Session from a Connection that is already closed");
 
@@ -435,9 +378,7 @@ public class ProtonConnection implements Connection, AMQPHeader.HeaderHandler<Pr
         remoteState = ConnectionState.ACTIVE;
         remoteOpen = open;
 
-        if (remoteOpenHandler != null) {
-            remoteOpenHandler.handle(this);
-        }
+        fireRemoteOpen();
     }
 
     @Override
@@ -446,9 +387,7 @@ public class ProtonConnection implements Connection, AMQPHeader.HeaderHandler<Pr
         setRemoteCondition(close.getError());
         allSessions().forEach(session -> session.handleConnectionRemotelyClosed(this));
 
-        if (remoteCloseHandler != null) {
-            remoteCloseHandler.handle(this);
-        }
+        fireRemoteClose();
     }
 
     @Override
@@ -550,29 +489,6 @@ public class ProtonConnection implements Connection, AMQPHeader.HeaderHandler<Pr
 
     //----- API for event handling of Connection related remote events
 
-    @Override
-    public Connection openHandler(EventHandler<Connection> remoteOpenEventHandler) {
-        this.remoteOpenHandler = remoteOpenEventHandler;
-        return this;
-    }
-
-    @Override
-    public Connection closeHandler(EventHandler<Connection> remoteCloseEventHandler) {
-        this.remoteCloseHandler = remoteCloseEventHandler;
-        return this;
-    }
-
-    @Override
-    public Connection localOpenHandler(EventHandler<Connection> localOpenEventHandler) {
-        this.localOpenHandler = localOpenEventHandler;
-        return this;
-    }
-
-    @Override
-    public Connection localCloseHandler(EventHandler<Connection> localCloseEventHandler) {
-        this.localCloseHandler = localCloseEventHandler;
-        return this;
-    }
 
     @Override
     public Connection sessionOpenHandler(EventHandler<Session> remoteSessionOpenEventHandler) {
@@ -598,16 +514,6 @@ public class ProtonConnection implements Connection, AMQPHeader.HeaderHandler<Pr
 
     EventHandler<Receiver> receiverOpenEventHandler() {
         return remoteReceiverOpenEventHandler;
-    }
-
-    @Override
-    public Connection engineShutdownHandler(EventHandler<Engine> engineShutdownEventHandler) {
-        this.engineShutdownHandler = engineShutdownEventHandler;
-        return this;
-    }
-
-    EventHandler<Engine> engineShutdownHandler() {
-        return engineShutdownHandler;
     }
 
     //----- Internal implementation
@@ -664,8 +570,8 @@ public class ProtonConnection implements Connection, AMQPHeader.HeaderHandler<Pr
         allSessions().forEach(session -> session.handleEngineShutdown(protonEngine));
 
         try {
-            engineShutdownHandler.handle(protonEngine);
-        } catch (Throwable ignore) {}
+            fireEngineShutdown();
+        } catch (Exception ignore) {}
     }
 
     private int findFreeLocalChannel() {

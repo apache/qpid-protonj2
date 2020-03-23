@@ -19,30 +19,14 @@ package org.apache.qpid.proton4j.engine.impl;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.apache.qpid.proton4j.engine.Context;
+import org.apache.qpid.proton4j.engine.Attachments;
 
 /**
- * Proton implementation of a Context object.
+ * Proton implementation of an Attachments object.
  */
-public class ProtonContext implements Context {
+public class ProtonAttachments implements Attachments {
 
-    private Map<Object, Object> contextMap;
-    private Object linkedResource;
-
-    @Override
-    public void setLinkedResource(Object resource) {
-        this.linkedResource = resource;
-    }
-
-    @Override
-    public Object getLinkedResource() {
-        return linkedResource;
-    }
-
-    @Override
-    public <T> T getLinkedResource(Class<T> typeClass) {
-        return typeClass.cast(linkedResource);
-    }
+    private final Map<Object, Object> contextMap = new HashMap<>();
 
     @Override
     public Object get(String key) {
@@ -51,35 +35,26 @@ public class ProtonContext implements Context {
 
     @Override
     public <T> T get(String key, Class<T> typeClass) {
-        return contextMap == null ? null : typeClass.cast(contextMap.get(key));
+        return typeClass.cast(contextMap.get(key));
     }
 
     @Override
-    public ProtonContext set(String key, Object value) {
-        safeGetContextMap().put(key, value);
+    public ProtonAttachments set(String key, Object value) {
+        contextMap.put(key, value);
         return this;
     }
 
     @Override
     public boolean containsKey(String key) {
-        return contextMap == null ? false : contextMap.containsKey(key);
+        return contextMap.containsKey(key);
     }
 
     @Override
-    public Context clear() {
-        linkedResource = null;
+    public Attachments clear() {
         if (contextMap != null) {
             contextMap.clear();
         }
 
         return this;
-    }
-
-    private Map<Object, Object> safeGetContextMap() {
-        if (contextMap == null) {
-            contextMap = new HashMap<>();
-        }
-
-        return contextMap;
     }
 }

@@ -150,7 +150,7 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
         connection.setCondition(null);
         connection.open();
 
-        assertNotNull(connection.getContext());
+        assertNotNull(connection.getAttachments());
         assertNull(connection.getProperties());
         assertNull(connection.getOfferedCapabilities());
         assertNull(connection.getDesiredCapabilities());
