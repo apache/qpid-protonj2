@@ -27,6 +27,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.buffer.ProtonNettyByteBuffer;
 import org.junit.Test;
 import org.messaginghub.amqperative.SslOptions;
@@ -36,7 +37,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import io.netty.buffer.ByteBuf;
-import io.netty.buffer.ByteBufUtil;
 import io.netty.buffer.Unpooled;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.websocketx.WebSocketServerProtocolHandler.HandshakeComplete;
@@ -226,16 +226,16 @@ public class WebSocketTransportTest extends TcpTransportTest {
 
             assertEquals("Expected 2 data packets due to seperate websocket frames", 2, data.size());
 
-            ByteBuf receivedBuffer = Unpooled.buffer(FRAME_SIZE);
-            for(ByteBuf buf : data) {
-               buf.readBytes(receivedBuffer, buf.readableBytes());
+            ProtonBuffer receivedBuffer = ProtonByteBufferAllocator.DEFAULT.allocate(FRAME_SIZE);
+            for (ProtonBuffer buf : data) {
+               buf.readBytes(receivedBuffer, buf.getReadableBytes());
             }
 
-            assertEquals("Unexpected data length", FRAME_SIZE, receivedBuffer.readableBytes());
-            assertTrue("Unexpected data", ByteBufUtil.equals((ByteBuf) sendBuffer.unwrap(), 0, receivedBuffer, 0, FRAME_SIZE));
+            assertEquals("Unexpected data length", FRAME_SIZE, receivedBuffer.getReadableBytes());
+            assertEquals("Unexpected data", sendBuffer, receivedBuffer);
         } finally {
-            for (ByteBuf buf : data) {
-                buf.release();
+            for (ProtonBuffer buf : data) {
+                ((ByteBuf) buf.unwrap()).release();
             }
         }
 

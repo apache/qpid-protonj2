@@ -33,8 +33,6 @@ import javax.net.ssl.SSLEngine;
 
 import org.messaginghub.amqperative.SslOptions;
 import org.messaginghub.amqperative.TransportOptions;
-import org.messaginghub.amqperative.transport.SslSupport;
-import org.messaginghub.amqperative.transport.TcpTransport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

@@ -64,8 +64,8 @@ public class TcpTransportTest extends AMQPerativeTestCase {
     protected static final String HOSTNAME = "localhost";
 
     protected boolean transportClosed;
-    protected final List<Throwable> exceptions = new ArrayList<Throwable>();
-    protected final List<ByteBuf> data = new ArrayList<ByteBuf>();
+    protected final List<Throwable> exceptions = new ArrayList<>();
+    protected final List<ProtonBuffer> data = new ArrayList<>();
     protected final AtomicInteger bytesRead = new AtomicInteger();
 
     protected final TransportListener testListener = new NettyTransportListener(false);
@@ -437,7 +437,7 @@ public class TcpTransportTest extends AMQPerativeTestCase {
                 }
             }, 10000, 50));
 
-            assertEquals(SEND_BYTE_COUNT, data.get(0).readableBytes());
+            assertEquals(SEND_BYTE_COUNT, data.get(0).getReadableBytes());
 
             transport.close();
         }
@@ -817,13 +817,13 @@ public class TcpTransportTest extends AMQPerativeTestCase {
         }
 
         @Override
-        public void onData(ByteBuf incoming) {
-            LOG.debug("Client has new incoming data of size: {}", incoming.readableBytes());
+        public void onData(ProtonBuffer incoming) {
+            LOG.debug("Client has new incoming data of size: {}", incoming.getReadableBytes());
             data.add(incoming);
-            bytesRead.addAndGet(incoming.readableBytes());
+            bytesRead.addAndGet(incoming.getReadableBytes());
 
-            if(retainDataBufs) {
-                incoming.retain();
+            if (retainDataBufs) {
+                ((ByteBuf) incoming.unwrap()).retain();
             }
         }
 

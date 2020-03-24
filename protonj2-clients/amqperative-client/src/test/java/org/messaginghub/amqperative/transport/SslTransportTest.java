@@ -30,7 +30,6 @@ import java.util.concurrent.TimeUnit;
 
 import org.junit.Test;
 import org.messaginghub.amqperative.SslOptions;
-import org.messaginghub.amqperative.transport.Transport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

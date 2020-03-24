@@ -556,12 +556,15 @@ public class TcpTransport implements Transport {
         @Override
         protected void channelRead0(ChannelHandlerContext ctx, ByteBuf buffer) throws Exception {
             LOG.trace("New data read: {}", buffer);
+
+            final ProtonNettyByteBuffer wrapped = new ProtonNettyByteBuffer(buffer);
+
             // Avoid all doubts to the contrary
             if (channel.eventLoop().inEventLoop()) {
-                listener.onData(buffer);
+                listener.onData(wrapped);
             } else {
                 channel.eventLoop().execute(() -> {
-                    listener.onData(buffer);
+                    listener.onData(wrapped);
                 });
             }
         }

@@ -16,7 +16,7 @@
  */
 package org.messaginghub.amqperative.impl;
 
-import org.apache.qpid.proton4j.buffer.ProtonNettyByteBuffer;
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.engine.Engine;
 import org.apache.qpid.proton4j.engine.exceptions.EngineStateException;
 import org.messaginghub.amqperative.impl.exceptions.ClientExceptionSupport;
@@ -24,8 +24,6 @@ import org.messaginghub.amqperative.impl.exceptions.ClientFailedException;
 import org.messaginghub.amqperative.transport.TransportListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import io.netty.buffer.ByteBuf;
 
 /**
  * Listens for events from a connection linked Transport and informs the connection
@@ -44,18 +42,11 @@ public class ClientTransportListener implements TransportListener {
     }
 
     @Override
-    public void onData(ByteBuf incoming) {
-        // TODO - If the buffer is pooled then there can be issues with the life-cycle
-        //        of the data read from it if we don't copy anything we are preserving
-        //        for later use.  Currently proton4j is attempting to make copies for
-        //        all held buffers but we need to double check that we hit all those
-        //        cases.
-        ProtonNettyByteBuffer buffer = new ProtonNettyByteBuffer(incoming);
-
+    public void onData(ProtonBuffer incoming) {
         try {
             do {
-                engine.ingest(buffer);
-            } while (buffer.isReadable() && engine.isWritable());
+                engine.ingest(incoming);
+            } while (incoming.isReadable() && engine.isWritable());
             // TODO - How do we handle case of not all data read ?
         } catch (EngineStateException e) {
             LOG.warn("Caught problem during incoming data processing: {}", e.getMessage(), e);

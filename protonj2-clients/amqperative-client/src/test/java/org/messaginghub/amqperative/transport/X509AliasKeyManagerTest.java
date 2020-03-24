@@ -33,7 +33,6 @@ import javax.net.ssl.SSLEngine;
 import javax.net.ssl.X509ExtendedKeyManager;
 
 import org.junit.Test;
-import org.messaginghub.amqperative.transport.X509AliasKeyManager;
 
 public class X509AliasKeyManagerTest {
 

@@ -37,7 +37,6 @@ import javax.net.ssl.SSLEngine;
 import org.junit.Test;
 import org.messaginghub.amqperative.SslOptions;
 import org.messaginghub.amqperative.test.AMQPerativeTestCase;
-import org.messaginghub.amqperative.transport.SslSupport;
 
 import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.handler.ssl.OpenSsl;
