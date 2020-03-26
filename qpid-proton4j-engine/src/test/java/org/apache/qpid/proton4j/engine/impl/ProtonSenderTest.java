@@ -145,6 +145,52 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
+    @Test
+    public void testSenderRoutesDetachEventToCloseHandlerIfNonSset() throws Exception {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result);
+        ProtonTestPeer peer = new ProtonTestPeer(engine);
+        engine.outputConsumer(peer);
+
+        final AtomicBoolean senderLocalOpen = new AtomicBoolean();
+        final AtomicBoolean senderLocalClose = new AtomicBoolean();
+        final AtomicBoolean senderRemoteOpen = new AtomicBoolean();
+        final AtomicBoolean senderRemoteClose = new AtomicBoolean();
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond().withContainerId("driver");
+        peer.expectBegin().respond();
+        peer.expectAttach().respond();
+        peer.expectDetach().respond();
+        peer.expectEnd().respond();
+
+        Connection connection = engine.start();
+
+        connection.open();
+        Session session = connection.session();
+        session.open();
+
+        Sender sender = session.sender("test");
+        sender.localOpenHandler(result -> senderLocalOpen.set(true))
+              .localCloseHandler(result -> senderLocalClose.set(true))
+              .openHandler(result -> senderRemoteOpen.set(true))
+              .closeHandler(result -> senderRemoteClose.set(true));
+
+        sender.open();
+        sender.detach();
+
+        assertTrue("Sender should have reported local open", senderLocalOpen.get());
+        assertTrue("Sender should have reported remote open", senderRemoteOpen.get());
+        assertTrue("Sender should have reported local detach", senderLocalClose.get());
+        assertTrue("Sender should have reported remote detach", senderRemoteClose.get());
+
+        session.close();
+
+        peer.waitForScriptToComplete();
+
+        assertNull(failure);
+    }
+
     @Test(timeout = 30000)
     public void testEngineShutdownEventNeitherEndClosed() throws Exception {
         doTestEngineShutdownEvent(false, false);

@@ -320,6 +320,10 @@ public interface Link<T extends Link<T>> extends Endpoint<T> {
     /**
      * Sets a {@link EventHandler} for when an this link is detached locally via a call to {@link Link#detach()}
      *
+     * This is a convenience event that supplements the normal {@link Endpoint#localCloseHandler(EventHandler)}
+     * event point if set.  If no local detached event handler is set the endpoint will route the detached event
+     * to the local closed event handler if set and allow it to process the event in one location.
+     *
      * Typically used by clients for logging or other state update event processing.  Clients should not perform any
      * blocking calls within this context.  It is an error for the handler to throw an exception and the outcome of
      * doing so is undefined.
@@ -335,6 +339,10 @@ public interface Link<T extends Link<T>> extends Endpoint<T> {
      * Sets a {@link EventHandler} for when an AMQP Detach frame is received from the remote peer for this
      * {@link Link} which would have been locally opened previously, the Detach from would have been marked
      * as not having been closed.
+     *
+     * This is a convenience event that supplements the normal {@link Endpoint#closeHandler(EventHandler)}
+     * event point if set.  If no detached event handler is set the endpoint will route the detached event to the
+     * closed event handler if set and allow it to process the event in one location.
      *
      * @param remoteDetachHandler
      *      The {@link EventHandler} to notify when this link is remotely closed.

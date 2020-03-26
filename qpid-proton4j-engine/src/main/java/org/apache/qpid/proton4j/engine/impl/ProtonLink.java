@@ -175,9 +175,7 @@ public abstract class ProtonLink<T extends Link<T>> extends ProtonEndpoint<T> im
                 engine.checkFailed("Closed called on already failed connection");
                 trySyncLocalStateWithRemote();
             } finally {
-                if (localDetachHandler != null) {
-                    localDetachHandler.handle(self());
-                }
+                fireLocalDetach();
             }
         }
 
@@ -445,6 +443,8 @@ public abstract class ProtonLink<T extends Link<T>> extends ProtonEndpoint<T> im
     T fireLocalDetach() {
         if (localDetachHandler != null) {
             localDetachHandler.handle(self());
+        } else {
+            fireLocalClose();
         }
 
         return self();
@@ -463,6 +463,8 @@ public abstract class ProtonLink<T extends Link<T>> extends ProtonEndpoint<T> im
     T fireRemoteDetach() {
         if (remoteDetachHandler != null) {
             remoteDetachHandler.handle(self());
+        } else {
+            fireRemoteClose();
         }
 
         return self();
