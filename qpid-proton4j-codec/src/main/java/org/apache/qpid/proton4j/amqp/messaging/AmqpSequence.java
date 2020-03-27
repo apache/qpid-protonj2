@@ -29,8 +29,9 @@ public final class AmqpSequence implements Section {
 
     private final List<Object> value;
 
-    public AmqpSequence(List<Object> value) {
-        this.value = value;
+    @SuppressWarnings("unchecked")
+    public AmqpSequence(List<?> value) {
+        this.value = (List<Object>) value;
     }
 
     public List<Object> getValue() {

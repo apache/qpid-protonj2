@@ -110,8 +110,9 @@ public final class Target implements Terminus {
         return dynamicNodeProperties;
     }
 
-    public Target setDynamicNodeProperties(Map<Symbol, Object> dynamicNodeProperties) {
-        this.dynamicNodeProperties = dynamicNodeProperties;
+    @SuppressWarnings("unchecked")
+    public Target setDynamicNodeProperties(Map<Symbol, ?> dynamicNodeProperties) {
+        this.dynamicNodeProperties = (Map<Symbol, Object>) dynamicNodeProperties;
         return this;
     }
 

@@ -29,8 +29,9 @@ public final class ApplicationProperties implements Section {
 
     private final Map<String, Object> value;
 
-    public ApplicationProperties(Map<String, Object> value) {
-        this.value = value;
+    @SuppressWarnings("unchecked")
+    public ApplicationProperties(Map<String, ?> value) {
+        this.value = (Map<String, Object>) value;
     }
 
     public ApplicationProperties copy() {

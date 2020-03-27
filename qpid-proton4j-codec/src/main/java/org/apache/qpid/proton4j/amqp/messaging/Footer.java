@@ -29,8 +29,9 @@ public final class Footer implements Section {
 
     private final Map<Symbol, Object> value;
 
-    public Footer(Map<Symbol, Object> value) {
-        this.value = value;
+    @SuppressWarnings("unchecked")
+    public Footer(Map<Symbol, ?> value) {
+        this.value = (Map<Symbol, Object>) value;
     }
 
     public Footer copy() {

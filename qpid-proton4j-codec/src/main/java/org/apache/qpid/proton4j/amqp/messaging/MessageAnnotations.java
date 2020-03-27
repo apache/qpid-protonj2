@@ -29,8 +29,9 @@ public final class MessageAnnotations implements Section {
 
     private final Map<Symbol, Object> value;
 
-    public MessageAnnotations(Map<Symbol, Object> value) {
-        this.value = value;
+    @SuppressWarnings("unchecked")
+    public MessageAnnotations(Map<Symbol, ?> value) {
+        this.value = (Map<Symbol, Object>) value;
     }
 
     public MessageAnnotations copy() {

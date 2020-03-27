@@ -53,8 +53,9 @@ public final class Modified implements DeliveryState, Outcome {
         return messageAnnotations;
     }
 
-    public Modified setMessageAnnotations(Map<Symbol, Object> messageAnnotations) {
-        this.messageAnnotations = messageAnnotations;
+    @SuppressWarnings("unchecked")
+    public Modified setMessageAnnotations(Map<Symbol, ?> messageAnnotations) {
+        this.messageAnnotations = (Map<Symbol, Object>) messageAnnotations;
         return this;
     }
 

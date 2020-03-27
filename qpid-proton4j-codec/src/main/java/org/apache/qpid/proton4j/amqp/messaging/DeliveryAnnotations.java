@@ -29,8 +29,9 @@ public final class DeliveryAnnotations implements Section {
 
     private final Map<Symbol, Object> value;
 
-    public DeliveryAnnotations(Map<Symbol, Object> value) {
-        this.value = value;
+    @SuppressWarnings("unchecked")
+    public DeliveryAnnotations(Map<Symbol, ?> value) {
+        this.value = (Map<Symbol, Object>) value;
     }
 
     public DeliveryAnnotations copy() {

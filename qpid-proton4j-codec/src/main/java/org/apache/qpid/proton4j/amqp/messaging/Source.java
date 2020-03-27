@@ -126,8 +126,9 @@ public final class Source implements Terminus {
         return dynamicNodeProperties;
     }
 
-    public Source setDynamicNodeProperties(Map<Symbol, Object> dynamicNodeProperties) {
-        this.dynamicNodeProperties = dynamicNodeProperties;
+    @SuppressWarnings("unchecked")
+    public Source setDynamicNodeProperties(Map<Symbol, ?> dynamicNodeProperties) {
+        this.dynamicNodeProperties = (Map<Symbol, Object>) dynamicNodeProperties;
         return this;
     }
 
@@ -153,8 +154,9 @@ public final class Source implements Terminus {
         return filter;
     }
 
-    public Source setFilter(Map<Symbol, Object> filter) {
-        this.filter = filter;
+    @SuppressWarnings("unchecked")
+    public Source setFilter(Map<Symbol, ?> filter) {
+        this.filter = (Map<Symbol, Object>) filter;
         return this;
     }
 
