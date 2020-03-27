@@ -53,8 +53,9 @@ public abstract class ProtonEndpoint<E extends Endpoint<E>> implements Endpoint<
     }
 
     @Override
-    public void setLinkedResource(Object resource) {
+    public E setLinkedResource(Object resource) {
         this.linkedResource = resource;
+        return self();
     }
 
     @Override

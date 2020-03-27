@@ -73,8 +73,10 @@ public interface Endpoint<E extends Endpoint<E>> {
      *
      * @param resource
      *      The resource to link to this {@link Endpoint}.
+     *
+     * @return this {@link Endpoint} instance.
      */
-    void setLinkedResource(Object resource);
+    E setLinkedResource(Object resource);
 
     /**
      * @return the user set linked resource for this {@link Endpoint} instance.
