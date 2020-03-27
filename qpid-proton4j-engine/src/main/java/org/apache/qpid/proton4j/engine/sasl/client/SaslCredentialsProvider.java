@@ -17,6 +17,8 @@
 package org.apache.qpid.proton4j.engine.sasl.client;
 
 import java.security.Principal;
+import java.util.Collections;
+import java.util.Map;
 
 /**
  * Interface for a supplier of login credentials used by the SASL Authenticator to
@@ -32,4 +34,8 @@ public interface SaslCredentialsProvider {
 
     Principal localPrincipal();
 
+    @SuppressWarnings("unchecked")
+    default Map<String, Object> options() {
+        return Collections.EMPTY_MAP;
+    }
 }
