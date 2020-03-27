@@ -73,6 +73,7 @@ public final class Properties implements Section {
         this.groupId = other.groupId;
         this.groupSequence = other.groupSequence;
         this.replyToGroupId = other.replyToGroupId;
+        this.modified = other.modified;
     }
 
     public Properties copy() {

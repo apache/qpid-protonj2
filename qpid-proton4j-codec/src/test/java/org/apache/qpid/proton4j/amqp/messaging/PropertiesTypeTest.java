@@ -32,6 +32,20 @@ import org.junit.Test;
 
 public class PropertiesTypeTest {
 
+    private static final String TEST_MESSAGE_ID = "test";
+    private static final Binary TEST_USER_ID = new Binary(new byte[] {1});
+    private static final String TEST_TO_ADDRESS = "to";
+    private static final String TEST_TO_SUBJECT = "subject";
+    private static final String TEST_REPLYTO_ADDRESS = "reply-to";
+    private static final String TEST_CORRELATION_ID = "correlation";
+    private static final String TEST_CONTENT_TYPE = "text/test";
+    private static final String TEST_CONTENT_ENCODING = "UTF-8";
+    private static final long TEST_ABSOLUTE_EXPIRY_TIME = 100l;
+    private static final long TEST_CREATION_TIME = 200l;
+    private static final String TEST_GROUP_ID = "group-test";
+    private static final long TEST_GROUP_SEQUENCE = 300l;
+    private static final String TEST_REPLYTO_GROUPID = "reply-to-group";
+
     @Test
     public void testToStringOnEmptyObject() {
         assertNotNull(new Properties().toString());
@@ -101,6 +115,75 @@ public class PropertiesTypeTest {
         assertNull(copy.getReplyToGroupId());
         assertTrue(copy.isEmpty());
         assertEquals(0, copy.getElementCount());
+    }
+
+    @Test
+    public void testCopyConstructor() {
+        Properties properties = new Properties();
+
+        properties.setMessageId(TEST_MESSAGE_ID);
+        properties.setUserId(TEST_USER_ID);
+        properties.setTo(TEST_TO_ADDRESS);
+        properties.setSubject(TEST_TO_SUBJECT);
+        properties.setReplyTo(TEST_REPLYTO_ADDRESS);
+        properties.setCorrelationId(TEST_CORRELATION_ID);
+        properties.setContentType(TEST_CONTENT_TYPE);
+        properties.setContentEncoding(TEST_CONTENT_ENCODING);
+        properties.setAbsoluteExpiryTime(TEST_ABSOLUTE_EXPIRY_TIME);
+        properties.setCreationTime(TEST_CREATION_TIME);
+        properties.setGroupId(TEST_GROUP_ID);
+        properties.setGroupSequence(TEST_GROUP_SEQUENCE);
+        properties.setReplyToGroupId(TEST_REPLYTO_GROUPID);
+
+        Properties copy = new Properties(properties);
+
+        assertFalse(copy.isEmpty());
+
+        assertTrue(copy.hasMessageId());
+        assertTrue(copy.hasUserId());
+        assertTrue(copy.hasTo());
+        assertTrue(copy.hasSubject());
+        assertTrue(copy.hasReplyTo());
+        assertTrue(copy.hasCorrelationId());
+        assertTrue(copy.hasContentType());
+        assertTrue(copy.hasContentEncoding());
+        assertTrue(copy.hasAbsoluteExpiryTime());
+        assertTrue(copy.hasCreationTime());
+        assertTrue(copy.hasGroupId());
+        assertTrue(copy.hasGroupSequence());
+        assertTrue(copy.hasReplyToGroupId());
+
+        // Check boolean has methods
+        assertEquals(properties.hasMessageId(), copy.hasMessageId());
+        assertEquals(properties.hasUserId(), copy.hasUserId());
+        assertEquals(properties.hasTo(), copy.hasTo());
+        assertEquals(properties.hasSubject(), copy.hasSubject());
+        assertEquals(properties.hasReplyTo(), copy.hasReplyTo());
+        assertEquals(properties.hasCorrelationId(), copy.hasCorrelationId());
+        assertEquals(properties.hasContentType(), copy.hasContentType());
+        assertEquals(properties.hasContentEncoding(), copy.hasContentEncoding());
+        assertEquals(properties.hasAbsoluteExpiryTime(), copy.hasAbsoluteExpiryTime());
+        assertEquals(properties.hasCreationTime(), copy.hasCreationTime());
+        assertEquals(properties.hasGroupId(), copy.hasGroupId());
+        assertEquals(properties.hasGroupSequence(), copy.hasGroupSequence());
+        assertEquals(properties.hasReplyToGroupId(), copy.hasReplyToGroupId());
+
+        // Test actual values copied
+        assertEquals(properties.getMessageId(), copy.getMessageId());
+        assertEquals(properties.getUserId(), copy.getUserId());
+        assertEquals(properties.getTo(), copy.getTo());
+        assertEquals(properties.getSubject(), copy.getSubject());
+        assertEquals(properties.getReplyTo(), copy.getReplyTo());
+        assertEquals(properties.getCorrelationId(), copy.getCorrelationId());
+        assertEquals(properties.getContentType(), copy.getContentType());
+        assertEquals(properties.getContentEncoding(), copy.getContentEncoding());
+        assertEquals(properties.getAbsoluteExpiryTime(), copy.getAbsoluteExpiryTime());
+        assertEquals(properties.getCreationTime(), copy.getCreationTime());
+        assertEquals(properties.getGroupId(), copy.getGroupId());
+        assertEquals(properties.getGroupSequence(), copy.getGroupSequence());
+        assertEquals(properties.getReplyToGroupId(), copy.getReplyToGroupId());
+
+        assertEquals(properties.getElementCount(), copy.getElementCount());
     }
 
     @Test
