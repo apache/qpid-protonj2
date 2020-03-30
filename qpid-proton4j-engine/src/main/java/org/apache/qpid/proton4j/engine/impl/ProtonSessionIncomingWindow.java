@@ -45,7 +45,7 @@ public class ProtonSessionIncomingWindow {
     /**
      * Tracks the next expected incoming transfer ID from the remote
      */
-    private long nextIncomingId = 0;
+    private long nextIncomingId = 1;
 
     /**
      * Tracks the most recent delivery Id for validation against the next incoming delivery
