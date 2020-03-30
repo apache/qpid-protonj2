@@ -528,7 +528,7 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
         peer.expectAMQPHeader().respondWithAMQPHeader();
         peer.expectOpen().withMaxFrameSize(expectedMaxFrameSize).respond().withContainerId("driver");
         peer.expectBegin().withHandleMax(nullValue())
-                          .withNextOutgoingId(0)
+                          .withNextOutgoingId(1)
                           .withIncomingWindow(expectedIncomingWindow)
                           .withOutgoingWindow(Integer.MAX_VALUE)
                           .withOfferedCapabilities(nullValue())
