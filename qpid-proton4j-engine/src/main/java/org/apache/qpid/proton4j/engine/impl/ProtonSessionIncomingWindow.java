@@ -222,16 +222,20 @@ public class ProtonSessionIncomingWindow {
     private final Disposition cachedDisposition = new Disposition();
 
     void processDisposition(ProtonReceiver receiver, ProtonIncomingDelivery delivery) {
-        cachedDisposition.reset();
-        cachedDisposition.setFirst(delivery.getDeliveryId());
-        cachedDisposition.setRole(Role.RECEIVER);
-        cachedDisposition.setSettled(delivery.isSettled());
-        cachedDisposition.setState(delivery.getState());
+        if (delivery.isSettled()) {
+            // TODO - Casting is ugly but our ID values are longs
+            unsettled.remove((int) delivery.getDeliveryId());
+        }
 
-        // TODO - Casting is ugly but our ID values are longs
-        unsettled.remove((int) delivery.getDeliveryId());
+        if (!delivery.isRemotelySettled()) {
+            cachedDisposition.reset();
+            cachedDisposition.setFirst(delivery.getDeliveryId());
+            cachedDisposition.setRole(Role.RECEIVER);
+            cachedDisposition.setSettled(delivery.isSettled());
+            cachedDisposition.setState(delivery.getState());
 
-        engine.fireWrite(cachedDisposition, session.getLocalChannel(), null, null);
+            engine.fireWrite(cachedDisposition, session.getLocalChannel(), null, null);
+        }
     }
 
     void deliveryRead(ProtonIncomingDelivery delivery, int bytesRead) {

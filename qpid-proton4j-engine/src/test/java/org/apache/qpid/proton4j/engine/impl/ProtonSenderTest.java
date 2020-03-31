@@ -2149,9 +2149,6 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
                              .respond()
                                  .withSettled(true)
                                  .withState(Accepted.getInstance());
-        peer.expectDisposition().withFirst(0)
-                                .withSettled(true)
-                                .withState(nullValue());
         peer.expectDetach().withHandle(0).respond();
 
         Connection connection = engine.start();
@@ -2508,9 +2505,6 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
                              .respond()
                              .withSettled(true)
                              .withState(Accepted.getInstance());
-        peer.expectDisposition().withFirst(0)
-                                .withSettled(true)
-                                .withState(nullValue());
 
         Connection connection = engine.start().open();
         Session session = connection.session().open();
@@ -2664,15 +2658,20 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
 
     @Test(timeout = 20000)
     public void testSenderReleasesPooledDeliveryTagsAfterSettledByBoth() throws Exception {
-        doTestSenderReleasesPooledDeliveryTags(false);
+        doTestSenderReleasesPooledDeliveryTags(false, true);
+    }
+
+    @Test(timeout = 20000)
+    public void testSenderReleasesPooledDeliveryTagsAfterSettledAfterDispositionUpdate() throws Exception {
+        doTestSenderReleasesPooledDeliveryTags(false, false);
     }
 
     @Test(timeout = 20000)
     public void testSenderReleasesPooledDeliveryTagsSenderSettlesFirst() throws Exception {
-        doTestSenderReleasesPooledDeliveryTags(true);
+        doTestSenderReleasesPooledDeliveryTags(true, false);
     }
 
-    private void doTestSenderReleasesPooledDeliveryTags(boolean sendSettled) throws Exception {
+    private void doTestSenderReleasesPooledDeliveryTags(boolean sendSettled, boolean receiverSettles) throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
         ProtonTestPeer peer = new ProtonTestPeer(engine);
@@ -2693,9 +2692,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         sender.setDeliveryTagGenerator(ProtonDeliveryTagGenerator.BUILTIN.POOLED.createGenerator());
 
         sender.deliveryUpdatedHandler((delivery) -> {
-            if (delivery.isRemotelySettled()) {
-                delivery.settle();
-            }
+            delivery.settle();
         });
 
         sender.open();
@@ -2714,9 +2711,9 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
                                  .withDeliveryId(i)
                                  .withDeliveryTag(expectedTag)
                                  .respond()
-                                 .withSettled(true)
+                                 .withSettled(receiverSettles)
                                  .withState(Accepted.getInstance());
-            if (!sendSettled) {
+            if (!sendSettled && !receiverSettles) {
                 peer.expectDisposition().withFirst(i)
                                         .withSettled(true)
                                         .withState(nullValue());
