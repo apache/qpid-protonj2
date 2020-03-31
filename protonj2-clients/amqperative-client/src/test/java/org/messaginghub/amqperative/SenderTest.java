@@ -561,7 +561,6 @@ public class SenderTest extends AMQPerativeTestCase {
             peer.expectTransfer().withPayload(notNullValue(ProtonBuffer.class))
                                  .respond()
                                  .withSettled(true).withState(Accepted.getInstance());
-            peer.expectDisposition().withSettled(true);
             peer.expectDetach().respond();
             peer.expectClose().respond();
 
@@ -1192,7 +1191,6 @@ public class SenderTest extends AMQPerativeTestCase {
                                      .respond()
                                      .withSettled(true)
                                      .withState(Accepted.getInstance());
-                peer.expectDisposition().withSettled(true);
             }
             peer.expectDetach().respond();
             peer.expectClose().respond();
