@@ -230,8 +230,6 @@ public class ProtonSender extends ProtonLink<Sender> implements Sender {
 
         if (disposition.getSettled() && !delivery.isRemotelySettled()) {
             updated = true;
-            // TODO - Casting is ugly but right now our unsigned integers are longs
-            unsettled.remove((int) delivery.getDeliveryId());
             delivery.remotelySettled();
         }
 
@@ -344,6 +342,7 @@ public class ProtonSender extends ProtonLink<Sender> implements Sender {
         checkLinkOperable("Cannot abort Transfer");
 
         // Clean up delivery related resources and then fire off the abort transfer
+        // TODO - Casting is ugly but right now our unsigned integers are longs
         unsettled.remove((int) delivery.getDeliveryId());
         currentDelivery.reset();
         current = null;

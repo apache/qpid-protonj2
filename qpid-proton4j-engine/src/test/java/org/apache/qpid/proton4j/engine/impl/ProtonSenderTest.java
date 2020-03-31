@@ -1101,6 +1101,10 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
 
         assertTrue("Delivery should have been updated and state settled", deliveryUpdatedAndSettled.get());
         assertEquals(Accepted.getInstance(), updatedDelivery.get().getRemoteState());
+        assertTrue(sender.hasUnsettled());
+
+        sender.settle(delivery -> true);
+
         assertFalse(sender.hasUnsettled());
 
         sender.close();

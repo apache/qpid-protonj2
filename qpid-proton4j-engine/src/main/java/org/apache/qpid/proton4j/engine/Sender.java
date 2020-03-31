@@ -102,10 +102,14 @@ public interface Sender extends Link<Sender> {
     Sender settle(Predicate<OutgoingDelivery> filter);
 
     /**
-     * Retrieves the list of unsettled deliveries sent from this {@link Sender}.  The deliveries in the list
-     * cannot be written to but can have their settled state and disposition updated.
+     * Retrieves the list of unsettled deliveries sent from this {@link Sender}.  The deliveries in the {@link Collection}
+     * cannot be written to but can have their settled state and disposition updated.  Only when this {@link Sender}
+     * settles on its end are the {@link OutgoingDelivery} instances removed from the unsettled {@link Collection}.
      *
-     * @return a collection of unsettled deliveries or an empty list if no pending deliveries are outstanding.
+     * The {@link Collection} returned from this method is a copy of the internally maintained data and is
+     * not modifiable.  The caller should use this method judiciously to avoid excess GC overhead.
+     *
+     * @return a collection of unsettled deliveries or an empty collection if no pending deliveries are outstanding.
      */
     Collection<OutgoingDelivery> unsettled();
 

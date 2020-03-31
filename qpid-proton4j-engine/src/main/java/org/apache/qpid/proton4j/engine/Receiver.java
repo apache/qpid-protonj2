@@ -96,7 +96,11 @@ public interface Receiver extends Link<Receiver> {
 
     /**
      * Retrieves the list of unsettled deliveries for this {@link Receiver} link which have yet to be settled
-     * on this end of the link.
+     * on this end of the link.  When the {@link IncomingDelivery} is settled by the receiver the value will
+     * be removed from the collection.
+     *
+     * The {@link Collection} returned from this method is a copy of the internally maintained data and is
+     * not modifiable.  The caller should use this method judiciously to avoid excess GC overhead.
      *
      * @return a collection of unsettled deliveries or an empty list if no pending deliveries are outstanding.
      */

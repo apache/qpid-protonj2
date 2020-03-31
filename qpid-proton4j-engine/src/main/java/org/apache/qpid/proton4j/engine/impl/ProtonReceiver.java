@@ -306,8 +306,6 @@ public class ProtonReceiver extends ProtonLink<Receiver> implements Receiver {
 
         if (disposition.getSettled() && !delivery.isRemotelySettled()) {
             updated = true;
-            // TODO - Casting is ugly but right now our unsigned integers are longs
-            unsettled.remove((int) delivery.getDeliveryId());
             delivery.remotelySettled();
         }
 
