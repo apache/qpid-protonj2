@@ -327,27 +327,33 @@ public class ProtonSender extends ProtonLink<Sender> implements Sender {
     }
 
     void disposition(ProtonOutgoingDelivery delivery) {
-        checkLinkOperable("Cannot set a disposition");
-
-        if (delivery.isSettled()) {
-            // TODO - Casting is ugly but right now our unsigned integers are longs
-            unsettled.remove((int) delivery.getDeliveryId());
-            delivery.retire();
+        if (!delivery.isRemotelySettled()) {
+            checkLinkOperable("Cannot set a disposition");
         }
 
-        sessionWindow.processDisposition(this, delivery);
+        try {
+            sessionWindow.processDisposition(this, delivery);
+        } finally {
+            if (delivery.isSettled()) {
+                // TODO - Casting is ugly but right now our unsigned integers are longs
+                unsettled.remove((int) delivery.getDeliveryId());
+                delivery.retire();
+            }
+        }
     }
 
     void abort(ProtonOutgoingDelivery delivery) {
         checkLinkOperable("Cannot abort Transfer");
 
-        // Clean up delivery related resources and then fire off the abort transfer
-        // TODO - Casting is ugly but right now our unsigned integers are longs
-        unsettled.remove((int) delivery.getDeliveryId());
-        currentDelivery.reset();
-        current = null;
-
-        sessionWindow.processAbort(this, delivery);
+        try {
+            sessionWindow.processAbort(this, delivery);
+        } finally {
+            // TODO - Casting is ugly but right now our unsigned integers are longs
+            unsettled.remove((int) delivery.getDeliveryId());
+            currentDelivery.reset();
+            current = null;
+            delivery.retire();
+        }
     }
 
     //----- Sender event handlers

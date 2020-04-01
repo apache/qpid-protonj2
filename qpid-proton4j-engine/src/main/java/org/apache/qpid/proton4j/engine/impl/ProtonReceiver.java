@@ -192,17 +192,21 @@ public class ProtonReceiver extends ProtonLink<Receiver> implements Receiver {
     //----- Delivery related access points
 
     void disposition(ProtonIncomingDelivery delivery) {
-        checkLinkOperable("Cannot set a disposition for delivery");
-
-        if (delivery.isSettled()) {
-            // TODO - Casting is ugly but right now our unsigned integers are longs
-            unsettled.remove((int) delivery.getDeliveryId());
-            if (delivery.getTag() != null) {
-                delivery.getTag().release();
-            }
+        if (!delivery.isRemotelySettled()) {
+            checkLinkOperable("Cannot set a disposition for delivery");
         }
 
-        sessionWindow.processDisposition(this, delivery);
+        try {
+            sessionWindow.processDisposition(this, delivery);
+        } finally {
+            if (delivery.isSettled()) {
+                // TODO - Casting is ugly but right now our unsigned integers are longs
+                unsettled.remove((int) delivery.getDeliveryId());
+                if (delivery.getTag() != null) {
+                    delivery.getTag().release();
+                }
+            }
+        }
     }
 
     void deliveryRead(ProtonIncomingDelivery delivery, int bytesRead) {
