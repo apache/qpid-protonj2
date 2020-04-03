@@ -20,6 +20,8 @@ import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedInteger;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.amqp.messaging.Target;
+import org.apache.qpid.proton4j.amqp.messaging.TerminusDurability;
+import org.apache.qpid.proton4j.amqp.messaging.TerminusExpiryPolicy;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.EncoderState;
 import org.apache.qpid.proton4j.codec.EncodingCodes;
@@ -89,9 +91,9 @@ public final class TargetTypeEncoder extends AbstractDescribedListTypeEncoder<Ta
             return 5;
         } else if (target.getTimeout() != null && !target.getTimeout().equals(UnsignedInteger.ZERO)) {
             return 4;
-        } else if (target.getExpiryPolicy() != null) {
+        } else if (target.getExpiryPolicy() != null && target.getExpiryPolicy() != TerminusExpiryPolicy.SESSION_END) {
             return 3;
-        } else if (target.getDurable() != null) {
+        } else if (target.getDurable() != null && target.getDurable() != TerminusDurability.NONE) {
             return 2;
         } else if (target.getAddress() != null) {
             return 1;
