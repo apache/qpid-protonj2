@@ -16,6 +16,8 @@
  */
 package org.apache.qpid.proton4j.codec.primitives;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.core.StringContains.containsString;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -278,5 +280,71 @@ public class MapTypeCodecTest extends CodecTestSupport {
 
         Map<String, UUID> value = (Map<String, UUID>) result;
         assertEquals(expected, value);
+    }
+
+    @Test
+    public void testEncodeMapWithUnknownEntryValueType() throws Exception {
+        Map<String, Object> map = new HashMap<>();
+        map.put("unknown", new MyUnknownTestType());
+
+        doTestEncodeMapWithUnknownEntryValueTypeTestImpl(map);
+    }
+
+    @Test
+    public void testEncodeSubMapWithUnknownEntryValueType() throws Exception {
+        Map<String, Object> subMap = new HashMap<>();
+        subMap.put("unknown", new MyUnknownTestType());
+
+        Map<String, Object> map = new HashMap<>();
+        map.put("submap", subMap);
+
+        doTestEncodeMapWithUnknownEntryValueTypeTestImpl(map);
+    }
+
+    private void doTestEncodeMapWithUnknownEntryValueTypeTestImpl(Map<String, Object> map) {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        try {
+            encoder.writeMap(buffer, encoderState, map);
+            fail("Expected exception to be thrown");
+        } catch (IllegalArgumentException iae) {
+            assertThat(iae.getMessage(), containsString("Cannot find encoder for type"));
+            assertThat(iae.getMessage(), containsString(MyUnknownTestType.class.getSimpleName()));
+        }
+    }
+
+    @Test
+    public void testEncodeMapWithUnknownEntryKeyType() throws Exception {
+        Map<Object, String> map = new HashMap<>();
+        map.put(new MyUnknownTestType(), "unknown");
+
+        doTestEncodeMapWithUnknownEntryKeyTypeTestImpl(map);
+    }
+
+    @Test
+    public void testEncodeSubMapWithUnknownEntryKeyType() throws Exception {
+        Map<Object, String> subMap = new HashMap<>();
+        subMap.put(new MyUnknownTestType(), "unknown");
+
+        Map<String, Object> map = new HashMap<>();
+        map.put("submap", subMap);
+
+        doTestEncodeMapWithUnknownEntryKeyTypeTestImpl(map);
+    }
+
+    private void doTestEncodeMapWithUnknownEntryKeyTypeTestImpl(Map<?, ?> map) {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        try {
+            encoder.writeMap(buffer, encoderState, map);
+            fail("Expected exception to be thrown");
+        } catch (IllegalArgumentException iae) {
+            assertThat(iae.getMessage(), containsString("Cannot find encoder for type"));
+            assertThat(iae.getMessage(), containsString(MyUnknownTestType.class.getSimpleName()));
+        }
+    }
+
+    private static class MyUnknownTestType {
+
     }
 }

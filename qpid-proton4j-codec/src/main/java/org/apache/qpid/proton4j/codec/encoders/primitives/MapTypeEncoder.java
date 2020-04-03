@@ -67,9 +67,17 @@ public final class MapTypeEncoder extends AbstractPrimitiveTypeEncoder<Map> {
             Object entryValue = entry.getValue();
 
             TypeEncoder keyEncoder = state.getEncoder().getTypeEncoder(entryKey);
+            if (keyEncoder == null) {
+                throw new IllegalArgumentException("Cannot find encoder for type " + entryKey);
+            }
+
             keyEncoder.writeType(buffer, state, entryKey);
 
             TypeEncoder valueEncoder = state.getEncoder().getTypeEncoder(entryValue);
+            if (valueEncoder == null) {
+                throw new IllegalArgumentException("Cannot find encoder for type " + entryValue);
+            }
+
             valueEncoder.writeType(buffer, state, entryValue);
         }
 

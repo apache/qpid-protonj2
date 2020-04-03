@@ -16,6 +16,8 @@
  */
 package org.apache.qpid.proton4j.codec.primitives;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.core.StringContains.containsString;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -357,5 +359,40 @@ public class ListTypeCodecTest extends CodecTestSupport {
 
         List<UUID> value = (List<UUID>) result;
         assertEquals(expected, value);
+    }
+
+    @Test
+    public void testEncodeListWithUnknownEntryType() throws Exception {
+        List<Object> list = new ArrayList<>();
+        list.add(new MyUnknownTestType());
+
+        doTestEncodeListWithUnknownEntryTypeTestImpl(list);
+    }
+
+    @Test
+    public void testEncodeSubListWithUnknownEntryType() throws Exception {
+        List<Object> subList = new ArrayList<>();
+        subList.add(new MyUnknownTestType());
+
+        List<Object> list = new ArrayList<>();
+        list.add(subList);
+
+        doTestEncodeListWithUnknownEntryTypeTestImpl(list);
+    }
+
+    private void doTestEncodeListWithUnknownEntryTypeTestImpl(List<Object> list) {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        try {
+            encoder.writeObject(buffer, encoderState, list);
+            fail("Expected exception to be thrown");
+        } catch (IllegalArgumentException iae) {
+            assertThat(iae.getMessage(), containsString("Cannot find encoder for type"));
+            assertThat(iae.getMessage(), containsString(MyUnknownTestType.class.getSimpleName()));
+        }
+    }
+
+    private static class MyUnknownTestType {
+
     }
 }
