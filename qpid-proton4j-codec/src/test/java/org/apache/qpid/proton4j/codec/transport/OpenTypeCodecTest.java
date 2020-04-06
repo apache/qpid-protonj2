@@ -89,6 +89,27 @@ public class OpenTypeCodecTest extends CodecTestSupport {
     }
 
     @Test
+    public void testEncodeAndDecodeOpenWithMaxMaxFrameSize() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        Open input = new Open();
+
+        input.setContainerId("test");
+        input.setHostname("localhost");
+        input.setChannelMax(UnsignedShort.MAX_VALUE.intValue());
+        input.setMaxFrameSize(UnsignedInteger.MAX_VALUE.longValue());
+
+        encoder.writeObject(buffer, encoderState, input);
+
+        final Open result = (Open) decoder.readObject(buffer, decoderState);
+
+        assertEquals("test", result.getContainerId());
+        assertEquals("localhost", result.getHostname());
+        assertEquals(UnsignedShort.MAX_VALUE.intValue(), result.getChannelMax());
+        assertEquals(UnsignedInteger.MAX_VALUE.longValue(), result.getMaxFrameSize());
+    }
+
+    @Test
     public void testSkipValue() throws IOException {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
 
@@ -167,7 +188,7 @@ public class OpenTypeCodecTest extends CodecTestSupport {
 
         input.setContainerId("test");
         input.setHostname("localhost");
-        input.setMaxFrameSize(UnsignedInteger.ONE.longValue());
+        input.setMaxFrameSize(UnsignedInteger.MAX_VALUE.longValue());
         input.setIdleTimeOut(UnsignedInteger.ZERO.longValue());
         input.setOfferedCapabilities(offeredCapabilities);
         input.setDesiredCapabilities(desiredCapabilities);

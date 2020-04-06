@@ -121,13 +121,13 @@ public final class OpenTypeDecoder extends AbstractDescribedTypeDecoder<Open> {
                     open.setHostname(state.getDecoder().readString(buffer, state));
                     break;
                 case 2:
-                    open.setMaxFrameSize(state.getDecoder().readUnsignedInteger(buffer, state, 0));
+                    open.setMaxFrameSize(state.getDecoder().readUnsignedInteger(buffer, state, 0l));
                     break;
                 case 3:
                     open.setChannelMax(state.getDecoder().readUnsignedShort(buffer, state, 0));
                     break;
                 case 4:
-                    open.setIdleTimeOut(state.getDecoder().readUnsignedInteger(buffer, state, 0));
+                    open.setIdleTimeOut(state.getDecoder().readUnsignedInteger(buffer, state, 0l));
                     break;
                 case 5:
                     open.setOutgoingLocales(state.getDecoder().readMultiple(buffer, state, Symbol.class));
