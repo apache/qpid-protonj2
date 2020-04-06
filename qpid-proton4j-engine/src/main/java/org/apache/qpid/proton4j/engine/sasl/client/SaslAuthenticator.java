@@ -28,6 +28,7 @@ import org.apache.qpid.proton4j.engine.EventHandler;
 import org.apache.qpid.proton4j.engine.sasl.SaslClientContext;
 import org.apache.qpid.proton4j.engine.sasl.SaslClientListener;
 import org.apache.qpid.proton4j.engine.sasl.SaslOutcome;
+import org.apache.qpid.proton4j.engine.util.StringUtils;
 
 /**
  * Handles SASL traffic from the proton engine and drives the authentication process
@@ -82,7 +83,9 @@ public class SaslAuthenticator implements SaslClientListener {
         chosenMechanism = selector.select(mechanisms, credentials);
 
         if (chosenMechanism == null) {
-            context.saslFailure(new SaslException("Could not find a matching mechanism to begin SASL Negotiations"));
+            context.saslFailure(new SaslException(
+                "Could not find a suitable SASL Mechanism. No supported mechanism, or none usable with " +
+                "the available credentials. Server offered: " + StringUtils.toStringSet(mechanisms)));
             return;
         }
 
