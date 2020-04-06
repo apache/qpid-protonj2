@@ -131,6 +131,15 @@ public class ProtonConnection extends ProtonEndpoint<Connection> implements Conn
     }
 
     @Override
+    public Connection negotiate() {
+        checkConnectionClosed("Cannot start header negotiation on a closed connection");
+        if (!headerSent) {
+            fireAMQPHeader();
+        }
+        return this;
+    }
+
+    @Override
     public long tick(long current) {
         checkConnectionClosed("Cannot call tick on an already closed Connection");
         return engine.tick(current);
@@ -561,8 +570,7 @@ public class ProtonConnection extends ProtonEndpoint<Connection> implements Conn
                 }
             }
         } else if (!engine.isShutdown()) {
-            headerSent = true;
-            engine.fireWrite(AMQPHeader.getAMQPHeader());
+            fireAMQPHeader();
         }
     }
 
@@ -605,6 +613,11 @@ public class ProtonConnection extends ProtonEndpoint<Connection> implements Conn
         }
 
         localSessions.remove(localChannel);
+    }
+
+    void fireAMQPHeader() {
+        headerSent = true;
+        engine.fireWrite(AMQPHeader.getAMQPHeader());
     }
 
     boolean wasHeaderSent() {
