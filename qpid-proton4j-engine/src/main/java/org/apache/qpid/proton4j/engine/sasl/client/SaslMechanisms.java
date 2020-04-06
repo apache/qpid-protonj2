@@ -31,6 +31,11 @@ public enum SaslMechanisms {
         private final Mechanism INSTANCE = new ExternalMechanism();
 
         @Override
+        public Symbol getName() {
+            return ExternalMechanism.EXTERNAL;
+        }
+
+        @Override
         public Mechanism createMechanism() {
             return INSTANCE;
         }
@@ -41,6 +46,11 @@ public enum SaslMechanisms {
         }
     },
     SCRAM_SHA_256 {
+
+        @Override
+        public Symbol getName() {
+            return ScramSHA256Mechanism.SCRAM_SHA_256;
+        }
 
         @Override
         public Mechanism createMechanism() {
@@ -56,6 +66,11 @@ public enum SaslMechanisms {
     SCRAM_SHA_1 {
 
         @Override
+        public Symbol getName() {
+            return ScramSHA1Mechanism.SCRAM_SHA_1;
+        }
+
+        @Override
         public Mechanism createMechanism() {
             return new ScramSHA1Mechanism();
         }
@@ -67,6 +82,11 @@ public enum SaslMechanisms {
         }
     },
     CRAM_MD5 {
+
+        @Override
+        public Symbol getName() {
+            return CramMD5Mechanism.CRAM_MD5;
+        }
 
         @Override
         public Mechanism createMechanism() {
@@ -84,6 +104,11 @@ public enum SaslMechanisms {
         private final Mechanism INSTANCE = new PlainMechanism();
 
         @Override
+        public Symbol getName() {
+            return PlainMechanism.PLAIN;
+        }
+
+        @Override
         public Mechanism createMechanism() {
             return INSTANCE;
         }
@@ -97,6 +122,11 @@ public enum SaslMechanisms {
     XOAUTH2 {
 
         private final Pattern ACCESS_TOKEN_PATTERN = Pattern.compile("^[\\x20-\\x7F]+$");
+
+        @Override
+        public Symbol getName() {
+            return XOauth2Mechanism.XOAUTH2;
+        }
 
         @Override
         public Mechanism createMechanism() {
@@ -119,6 +149,11 @@ public enum SaslMechanisms {
         private final Mechanism INSTANCE = new AnonymousMechanism();
 
         @Override
+        public Symbol getName() {
+            return AnonymousMechanism.ANONYMOUS;
+        }
+
+        @Override
         public Mechanism createMechanism() {
             return INSTANCE;
         }
@@ -127,9 +162,7 @@ public enum SaslMechanisms {
     /**
      * @return the {@link Symbol} that represents the {@link Mechanism} name.
      */
-    public Symbol getName() {
-        return Symbol.valueOf(toString());
-    }
+    public abstract Symbol getName();
 
     /**
      * Creates the object that implements the SASL Mechanism represented by this enumeration.
@@ -171,7 +204,13 @@ public enum SaslMechanisms {
      * @return the matching {@link SaslMechanisms} for the given Symbol value.
      */
     public static SaslMechanisms valueOf(Symbol mechanism) {
-        return SaslMechanisms.valueOf(mechanism.toString());
+        for (SaslMechanisms value : SaslMechanisms.values()) {
+            if (value.getName().equals(mechanism)) {
+                return value;
+            }
+        }
+
+        throw new IllegalArgumentException("No Macthing SASL Mechanism with name: " + mechanism.toString());
     }
 
     /**
@@ -184,7 +223,7 @@ public enum SaslMechanisms {
      */
     public static boolean validate(String mechanism) {
         for (SaslMechanisms supported : SaslMechanisms.values()) {
-            if (supported.toString().equals(mechanism.toUpperCase())) {
+            if (supported.getName().toString().equals(mechanism.toUpperCase())) {
                 return true;
             }
         }

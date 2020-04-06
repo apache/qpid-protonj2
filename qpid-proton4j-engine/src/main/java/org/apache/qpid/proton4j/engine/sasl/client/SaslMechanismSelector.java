@@ -27,7 +27,9 @@ import org.apache.qpid.proton4j.engine.util.StringUtils;
 /**
  * Client side mechanism used to select a matching mechanism from the server offered list of
  * mechanisms.  The client configures the list of allowed {@link Mechanism} names and when the
- * server mechanisms are offered mechanism is chosen from the allowed set.
+ * server mechanisms are offered mechanism is chosen from the allowed set.  If the client does
+ * not configure any mechanisms then the selector chooses from all supported {@link Mechanism}
+ * types.
  */
 public final class SaslMechanismSelector {
 

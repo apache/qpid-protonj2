@@ -44,6 +44,10 @@ public class MechanismTestBase {
         return new UserCredentialsProvider(user, password, null, principal);
     }
 
+    protected SaslCredentialsProvider emptyCredentials() {
+        return new UserCredentialsProvider(null, null, null, false);
+    }
+
     private static class UserCredentialsProvider implements SaslCredentialsProvider {
 
         private final String username;
