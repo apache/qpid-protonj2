@@ -171,8 +171,15 @@ public class ProtonSessionOutgoingWindow {
 
     //----- Handle sender link actions in the session window context
 
-    private final Transfer cachedTransfer = new Transfer();
     private final Disposition cachedDisposition = new Disposition();
+    private final Transfer cachedTransfer = new Transfer();
+    private final Runnable cachedTransferUpdater = new Runnable() {
+
+        @Override
+        public void run() {
+            cachedTransfer.setMore(true);
+        }
+    };
 
     void processSend(ProtonSender sender, ProtonOutgoingDelivery delivery, ProtonBuffer payload) {
         // For a transfer that hasn't completed but has no bytes in the final transfer write we want
@@ -203,7 +210,7 @@ public class ProtonSessionOutgoingWindow {
                 cachedTransfer.setMore(wasThereMore);
 
                 try {
-                    engine.fireWrite(cachedTransfer, session.getLocalChannel(), payload, () -> cachedTransfer.setMore(true));
+                    engine.fireWrite(cachedTransfer, session.getLocalChannel(), payload, cachedTransferUpdater);
                 } finally {
                     delivery.afterTransferWritten();
                 }
