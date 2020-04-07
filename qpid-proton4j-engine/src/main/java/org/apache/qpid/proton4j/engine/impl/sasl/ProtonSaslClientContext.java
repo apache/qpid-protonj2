@@ -255,6 +255,10 @@ final class ProtonSaslClientContext extends ProtonSaslContext implements SaslCli
                 }
             }
 
+            // Request that the SASL handler be removed from the chain now that we are done with the SASL
+            // exchange, the engine driver will remain in place holding the state for later examination.
+            context.engine().pipeline().remove(saslHandler);
+
             if (saslFailure == null) {
                 if (pausedAMQPHeader != null) {
                     context.fireWrite(pausedAMQPHeader);

@@ -22,6 +22,7 @@ import org.apache.qpid.proton4j.amqp.transport.Performative;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.engine.EngineHandler;
 import org.apache.qpid.proton4j.engine.EngineHandlerContext;
+import org.apache.qpid.proton4j.engine.EngineState;
 import org.apache.qpid.proton4j.engine.HeaderFrame;
 import org.apache.qpid.proton4j.engine.ProtocolFrame;
 import org.apache.qpid.proton4j.engine.SaslFrame;
@@ -59,7 +60,12 @@ public final class ProtonSaslHandler implements EngineHandler {
         this.engine = null;
         this.context = null;
 
-        ((ProtonEngine) context.engine()).registerSaslDriver(ProtonEngineNoOpSaslDriver.INSTANCE);
+        // If the engine wasn't started then it is okay to remove this handler otherwise
+        // we would only be removed from the pipeline on completion of SASL negotiations
+        // and the driver must remain to convey the outcome.
+        if (context.engine().state() == EngineState.IDLE) {
+            ((ProtonEngine) context.engine()).registerSaslDriver(ProtonEngineNoOpSaslDriver.INSTANCE);
+        }
     }
 
     @Override

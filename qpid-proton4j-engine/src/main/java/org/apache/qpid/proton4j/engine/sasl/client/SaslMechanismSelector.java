@@ -31,7 +31,7 @@ import org.apache.qpid.proton4j.engine.util.StringUtils;
  * not configure any mechanisms then the selector chooses from all supported {@link Mechanism}
  * types.
  */
-public final class SaslMechanismSelector {
+public class SaslMechanismSelector {
 
     private final Set<Symbol> allowedMechanisms;
 
@@ -95,21 +95,43 @@ public final class SaslMechanismSelector {
         }
 
         for (Symbol match : candidates) {
-            final SaslMechanisms potential;
+            selected = evaluateMatchingMechanism(match, credentials);
 
-            try {
-                potential = SaslMechanisms.valueOf(match);
-            } catch (Throwable e) {
-                // No match in supported mechanisms
-                continue;
-            }
-
-            if (potential.isApplicable(credentials)) {
-                selected = potential.createMechanism();
+            if (selected != null) {
                 break;
             }
         }
 
         return selected;
+    }
+
+    /**
+     * If a configured allowed mechanism matches with a mechanism offered by the remote then we must
+     * evaluate it to determine if it is applicable and supported.  If we are able to both create a
+     * {@link Mechanism} instance from the match and it reports that it is applicable using the configured
+     * credentials we can return the matching {@link Mechanism} and allow SASL authentication to proceed
+     * using that {@link Mechanism}.
+     *
+     * @param mechanism
+     *      The name of the SASL mechanism that matches both the allowed and the server offered lists.
+     * @param credentials
+     *      The provided SASL credentials which will be used when authenticating with the remote.
+     *
+     * @return a new {@link Mechanism} instance if the candidate is applicable and supported by this selector.
+     */
+    protected Mechanism evaluateMatchingMechanism(Symbol mechanism, SaslCredentialsProvider credentials) {
+        try {
+            final SaslMechanisms potential = SaslMechanisms.valueOf(mechanism);
+
+            // If a match is found we still may skip it if the credentials given do not
+            // match with what is needed in order for it to operate.
+            if (potential.isApplicable(credentials)) {
+                return potential.createMechanism();
+            }
+        } catch (Throwable e) {
+            // No match in supported mechanisms or not applicable for given credentials
+        }
+
+        return null;
     }
 }

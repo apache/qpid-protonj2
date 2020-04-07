@@ -259,6 +259,9 @@ final class ProtonSaslServerContext extends ProtonSaslContext implements SaslSer
             if (headerWritten && mechanismsSent && !responseRequired) {
                 done(org.apache.qpid.proton4j.engine.sasl.SaslOutcome.valueOf(saslOutcome.getCode().getValue().byteValue()));
                 context.fireWrite(saslOutcome);
+                // Request that the SASL handler be removed from the chain now that we are done with the SASL
+                // exchange, the engine driver will remain in place holding the state for later examination.
+                context.engine().pipeline().remove(saslHandler);
             } else {
                 throw new ProtocolViolationException("SASL Outcome sent when state does not allow it");
             }
