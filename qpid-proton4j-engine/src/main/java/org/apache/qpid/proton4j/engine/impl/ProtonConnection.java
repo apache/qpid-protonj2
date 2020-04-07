@@ -22,6 +22,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ScheduledExecutorService;
 
@@ -60,6 +61,7 @@ public class ProtonConnection extends ProtonEndpoint<Connection> implements Conn
 
     private final Open localOpen = new Open();
     private Open remoteOpen;
+    private AMQPHeader remoteHeader;
 
     private Map<Integer, ProtonSession> localSessions = new HashMap<>();
     private Map<Integer, ProtonSession> remoteSessions = new HashMap<>();
@@ -72,6 +74,7 @@ public class ProtonConnection extends ProtonEndpoint<Connection> implements Conn
     private boolean localOpenSent;
     private boolean localCloseSent;
 
+    private EventHandler<AMQPHeader> remoteHeaderHandler;
     private EventHandler<Session> remoteSessionOpenEventHandler;
     private EventHandler<Sender> remoteSenderOpenEventHandler;
     private EventHandler<Receiver> remoteReceiverOpenEventHandler;
@@ -136,6 +139,24 @@ public class ProtonConnection extends ProtonEndpoint<Connection> implements Conn
         if (!headerSent) {
             fireAMQPHeader();
         }
+        return this;
+    }
+
+    @Override
+    public Connection negotiate(EventHandler<AMQPHeader> remoteAMQPHeaderHandler) {
+        Objects.requireNonNull(remoteAMQPHeaderHandler, "Provided AMQP Header received handler cannot be null");
+        checkConnectionClosed("Cannot start header negotiation on a closed connection");
+
+        if (!headerSent) {
+            fireAMQPHeader();
+        }
+
+        if (headerReceived) {
+            remoteAMQPHeaderHandler.handle(remoteHeader);
+        } else {
+            remoteHeaderHandler = remoteAMQPHeaderHandler;
+        }
+
         return this;
     }
 
@@ -369,6 +390,13 @@ public class ProtonConnection extends ProtonEndpoint<Connection> implements Conn
     @Override
     public void handleAMQPHeader(AMQPHeader header, ProtonEngine context) {
         headerReceived = true;
+        remoteHeader = header;
+
+        if (remoteHeaderHandler != null) {
+            remoteHeaderHandler.handle(remoteHeader);
+            remoteHeaderHandler = null;
+        }
+
         syncLocalStateWithRemote();
     }
 

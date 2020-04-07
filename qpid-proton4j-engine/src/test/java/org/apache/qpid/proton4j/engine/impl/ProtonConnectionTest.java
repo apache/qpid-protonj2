@@ -34,6 +34,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedInteger;
@@ -56,7 +57,7 @@ import org.junit.Test;
  */
 public class ProtonConnectionTest extends ProtonEngineTestSupport {
 
-    @Test
+    @Test(timeout = 10000)
     public void testNegotiateSendsAMQPHeader() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
@@ -74,12 +75,53 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test
+    @Test(timeout = 10000)
+    public void testNegotiateSendsAMQPHeaderAndFireRemoteHeaderEvent() throws Exception {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result);
+        ProtonTestPeer peer = new ProtonTestPeer(engine);
+        engine.outputConsumer(peer);
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+
+        Connection connection = engine.start();
+
+        connection.negotiate();
+
+        peer.waitForScriptToComplete();
+
+        assertNull(failure);
+    }
+
+    @Test(timeout = 10000)
+    public void testNegotiateSendsAMQPHeaderEnforcesNotNullEventHandler() throws Exception {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result);
+        ProtonTestPeer peer = new ProtonTestPeer(engine);
+        engine.outputConsumer(peer);
+
+        Connection connection = engine.start();
+
+        try {
+            connection.negotiate(null);
+            fail("Should not allow null event handler");
+        } catch (NullPointerException npe) {
+            // Expected
+        }
+
+        peer.waitForScriptToComplete();
+
+        assertNull(failure);
+    }
+
+    @Test(timeout = 10000)
     public void testNegotiateDoesNotSendAMQPHeaderAfterOpen() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
         ProtonTestPeer peer = new ProtonTestPeer(engine);
         engine.outputConsumer(peer);
+
+        final AtomicInteger headerReceivedCallback = new AtomicInteger();
 
         peer.expectAMQPHeader().respondWithAMQPHeader();
         peer.expectOpen().respond().withContainerId("driver");
@@ -88,7 +130,11 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
         Connection connection = engine.start();
 
         connection.open();
-        connection.negotiate();
+        connection.negotiate(amqpHeader -> headerReceivedCallback.incrementAndGet());
+        assertEquals(1, headerReceivedCallback.get());
+        connection.negotiate(amqpHeader -> headerReceivedCallback.incrementAndGet());
+        assertEquals(2, headerReceivedCallback.get());
+
         connection.close();
 
         peer.waitForScriptToComplete();
@@ -96,7 +142,7 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test
+    @Test(timeout = 10000)
     public void testConnectionEmitsOpenAndCloseEvents() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
@@ -132,7 +178,7 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test
+    @Test(timeout = 10000)
     public void testConnectionPopulatesRemoteData() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);

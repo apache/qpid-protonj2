@@ -48,6 +48,33 @@ public interface Connection extends Endpoint<Connection> {
     Connection negotiate() throws EngineStateException;
 
     /**
+     * If not already negotiated this method initiates the AMQP protocol negotiation phase of
+     * the connection process sending the {@link AMQPHeader} to the remote peer.  For a client
+     * application this could mean requesting the server to indicate if it supports the version
+     * of the protocol this client speaks.  In rare cases a server could use this to preemptively
+     * send its AMQP header.
+     *
+     * Once a header is sent the remote should respond with the AMQP Header that indicates what
+     * protocol level it supports and if there is a mismatch the the engine will be failed with
+     * a error indicating the protocol support was not successfully negotiated.
+     *
+     * If the engine has a configured SASL layer then by starting the AMQP Header exchange this
+     * will implicitly first attempt the SASL authentication step of the connection process.
+     *
+     * The provided remote AMQP Header handler will be called once the remote sends its AMQP Header to
+     * the either preemptively or as a response to offered AMQP Header from this peer, even if that has
+     * already happened prior to this call.
+     *
+     * @param remoteAMQPHeaderHandler
+     *      Handler to be called when an AMQP Header response has arrived.
+     *
+     * @return this {@link Connection} instance.
+     *
+     * @throws EngineStateException if the Engine state precludes accepting new input.
+     */
+    Connection negotiate(EventHandler<AMQPHeader> remoteAMQPHeaderHandler) throws EngineStateException;
+
+    /**
      * Performs a tick operation on the connection which checks that Connection Idle timeout processing
      * is run.  This method is a convenience method that delegates the work to the {@link Engine#tick(long)}
      * method.
