@@ -69,6 +69,13 @@ public interface Endpoint<E extends Endpoint<E>> {
     Engine getEngine();
 
     /**
+     * Gets the parent of this {@link Endpoint} which can be itself for {@link Connection} instance.
+     *
+     * @return the parent of this {@link Endpoint} or itself if this is a {@link Connection};
+     */
+    Endpoint<?> getParent();
+
+    /**
      * Links a given resource to this {@link Endpoint}.
      *
      * @param resource

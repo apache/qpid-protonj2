@@ -93,6 +93,11 @@ public class ProtonConnection extends ProtonEndpoint<Connection> implements Conn
     }
 
     @Override
+    public Connection getParent() {
+        return this;
+    }
+
+    @Override
     ProtonConnection self() {
         return this;
     }

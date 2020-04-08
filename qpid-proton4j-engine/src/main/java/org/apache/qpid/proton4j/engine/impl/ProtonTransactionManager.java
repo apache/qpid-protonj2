@@ -55,6 +55,11 @@ public class ProtonTransactionManager extends ProtonEndpoint<TransactionManager>
     }
 
     @Override
+    public ProtonSession getParent() {
+        return receiverLink.getSession();
+    }
+
+    @Override
     ProtonTransactionManager self() {
         return this;
     }

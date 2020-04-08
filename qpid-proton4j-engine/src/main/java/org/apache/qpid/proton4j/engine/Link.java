@@ -102,6 +102,12 @@ public interface Link<T extends Link<T>> extends Endpoint<T> {
     Session getSession();
 
     /**
+     * @return the parent {@link Session} of the {@link Link}
+     */
+    @Override
+    Session getParent();
+
+    /**
      * @return the link name that is assigned to this {@link Link}
      */
     String getName();

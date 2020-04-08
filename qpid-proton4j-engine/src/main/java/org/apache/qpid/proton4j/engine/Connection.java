@@ -113,6 +113,12 @@ public interface Connection extends Endpoint<Connection> {
      */
     ConnectionState getState();
 
+    /**
+     * @return this {@link Connection} as it is the root of the {@link Endpoint} hierarchy.
+     */
+    @Override
+    Connection getParent();
+
     //----- Operations on local end of this Connection
 
     /**

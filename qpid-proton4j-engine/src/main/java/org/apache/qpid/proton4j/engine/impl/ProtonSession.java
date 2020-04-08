@@ -101,6 +101,11 @@ public class ProtonSession extends ProtonEndpoint<Session> implements Session {
         return connection;
     }
 
+    @Override
+    public ProtonConnection getParent() {
+        return connection;
+    }
+
     public int getLocalChannel() {
         return localChannel;
     }

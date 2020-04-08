@@ -34,6 +34,12 @@ public interface Session extends Endpoint<Session> {
     Connection getConnection();
 
     /**
+     * @return the parent {@link Connection} of the {@link Link}
+     */
+    @Override
+    Connection getParent();
+
+    /**
      * Returns a {@link Set} of all {@link Sender} and {@link Receiver} instances that are being tracked by
      * this {@link Session}.
      *

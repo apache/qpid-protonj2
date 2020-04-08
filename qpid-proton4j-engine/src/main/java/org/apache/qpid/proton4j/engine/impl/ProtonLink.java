@@ -115,6 +115,11 @@ public abstract class ProtonLink<T extends Link<T>> extends ProtonEndpoint<T> im
     }
 
     @Override
+    public ProtonSession getParent() {
+        return session;
+    }
+
+    @Override
     public String getName() {
         return localAttach.getName();
     }
