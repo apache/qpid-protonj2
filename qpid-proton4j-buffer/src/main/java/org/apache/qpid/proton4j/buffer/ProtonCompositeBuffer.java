@@ -18,6 +18,7 @@ package org.apache.qpid.proton4j.buffer;
 
 import java.nio.ByteBuffer;
 import java.util.Objects;
+import java.util.function.Consumer;
 
 /**
  * A composite of 1 or more ProtonBuffer instances used when aggregating buffer views.
@@ -150,6 +151,47 @@ public final class ProtonCompositeBuffer extends ProtonAbstractBuffer {
      */
     public int numberOfBuffers() {
         return totalChunks;
+    }
+
+    /**
+     * For each of the buffers contained in this {@link ProtonCompositeBuffer} instance the
+     * given consumer will be invoked with a duplicate of the buffer that can be independently
+     * modified and not affect the contents of this buffer.
+     *
+     * @param consumer
+     *      The {@link Consumer} that will be called with each buffer instance.
+     *
+     * @return this {@link ProtonCompositeBuffer} instance.
+     */
+    public ProtonCompositeBuffer foreachBuffer(Consumer<ProtonBuffer> consumer) {
+        Chunk current = head.next;
+        while (current != tail) {
+            consumer.accept(current.buffer.duplicate());
+            current = current.next;
+        }
+
+        return this;
+    }
+
+    /**
+     * For each of the buffers contained in this {@link ProtonCompositeBuffer} instance the
+     * given consumer will be invoked with the {@link ProtonBuffer} that backs this composite
+     * instance.  Modifying the {@link ProtonBuffer} passed to the consumer modified the buffer
+     * backing this composite and as such leaves this composite in an unknown and invalid state.
+     *
+     * @param consumer
+     *      The {@link Consumer} that will be called with each buffer instance.
+     *
+     * @return this {@link ProtonCompositeBuffer} instance.
+     */
+    public ProtonCompositeBuffer foreachInternalBuffer(Consumer<ProtonBuffer> consumer) {
+        Chunk current = head.next;
+        while (current != tail) {
+            consumer.accept(current.buffer);
+            current = current.next;
+        }
+
+        return this;
     }
 
     //----- ProtonAbstractBuffer API implementation
@@ -532,6 +574,14 @@ public final class ProtonCompositeBuffer extends ProtonAbstractBuffer {
         }
 
         return this;
+    }
+
+    private void checkBufferIndex(int index) {
+        if (index < 0 || index > totalChunks) {
+            throw new IndexOutOfBoundsException(String.format(
+                    "The buffer index: %d (expected: >= 0 && <= numberOfBuffers(%d))",
+                    index, totalChunks));
+        }
     }
 
     /*

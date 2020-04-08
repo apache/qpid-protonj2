@@ -28,6 +28,7 @@ import static org.junit.Assume.assumeTrue;
 
 import java.nio.ByteBuffer;
 import java.nio.charset.CharacterCodingException;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.Test;
 
@@ -1517,6 +1518,58 @@ public class ProtonCompositeBufferTest extends ProtonAbstractBufferTest {
                 assertEquals(expectedValue[j], value[j]);
             }
         }
+    }
+
+    //----- Test buffer walking for each methods
+
+    @Test
+    public void testForeachBufferReturnsDuplicates() {
+        ProtonBuffer buffer1 = ProtonByteBufferAllocator.DEFAULT.wrap(new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 });
+        ProtonBuffer buffer2 = ProtonByteBufferAllocator.DEFAULT.wrap(new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 });
+
+        ProtonCompositeBuffer composite = new ProtonCompositeBuffer();
+
+        composite.append(buffer1);
+        composite.append(buffer2);
+
+        assertEquals(2, composite.numberOfBuffers());
+
+        final AtomicInteger walked = new AtomicInteger();
+
+        composite.foreachBuffer(buffer -> {
+            walked.incrementAndGet();
+
+            if (buffer == buffer1 || buffer == buffer2) {
+                throw new AssertionError("Buffer returned should not be any of the source buffers.");
+            }
+        });
+
+        assertEquals(2, walked.get());
+    }
+
+    @Test
+    public void testForeachInternalBufferReturnsDuplicates() {
+        ProtonBuffer buffer1 = ProtonByteBufferAllocator.DEFAULT.wrap(new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 });
+        ProtonBuffer buffer2 = ProtonByteBufferAllocator.DEFAULT.wrap(new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 });
+
+        ProtonCompositeBuffer composite = new ProtonCompositeBuffer();
+
+        composite.append(buffer1);
+        composite.append(buffer2);
+
+        assertEquals(2, composite.numberOfBuffers());
+
+        final AtomicInteger walked = new AtomicInteger();
+
+        composite.foreachInternalBuffer(buffer -> {
+            walked.incrementAndGet();
+
+            if (buffer != buffer1 && buffer != buffer2) {
+                throw new AssertionError("Buffer returned should be one of the source buffers.");
+            }
+        });
+
+        assertEquals(2, walked.get());
     }
 
     //----- Implement abstract methods from the abstract buffer test base class
