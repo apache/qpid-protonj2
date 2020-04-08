@@ -17,6 +17,7 @@
 package org.messaginghub.amqperative.transport;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.security.Principal;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ScheduledExecutorService;
@@ -26,6 +27,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonBufferAllocator;
+import org.apache.qpid.proton4j.buffer.ProtonCompositeBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonNettyByteBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonNettyByteBufferAllocator;
 import org.messaginghub.amqperative.SslOptions;
@@ -264,16 +266,24 @@ public class TcpTransport implements Transport {
     @Override
     public TcpTransport write(ProtonBuffer output) throws IOException {
         checkConnected(output);
-        LOG.trace("Attempted write of: {} bytes", output);
-        channel.write(toOutputBuffer(output), channel.voidPromise());
+        LOG.trace("Attempted write of buffer: {}", output);
+        if (output instanceof ProtonCompositeBuffer) {
+            writeComposite((ProtonCompositeBuffer) output, false);
+        } else {
+            channel.write(toOutputBuffer(output), channel.voidPromise());
+        }
         return this;
     }
 
     @Override
     public TcpTransport writeAndFlush(ProtonBuffer output) throws IOException {
         checkConnected(output);
-        LOG.trace("Attempted write and flush of: {} bytes", output);
-        channel.writeAndFlush(toOutputBuffer(output), channel.voidPromise());
+        LOG.trace("Attempted write and flush of buffer: {}", output);
+        if (output instanceof ProtonCompositeBuffer) {
+            writeComposite((ProtonCompositeBuffer) output, true);
+        } else {
+            channel.writeAndFlush(toOutputBuffer(output), channel.voidPromise());
+        }
         return this;
     }
 
@@ -338,6 +348,26 @@ public class TcpTransport implements Transport {
 
         this.ioThreadfactory = factory;
         return this;
+    }
+
+    protected final void writeComposite(final ProtonCompositeBuffer composite, boolean flushAtEnd) throws IOException {
+        try {
+            composite.foreachInternalBuffer(this::writeBufferDelegate);
+        } catch (UncheckedIOException uioe) {
+            throw uioe.getCause();
+        }
+
+        if (flushAtEnd) {
+            channel.flush();
+        }
+    }
+
+    private final void writeBufferDelegate(ProtonBuffer buffer) {
+        try {
+            channel.write(toOutputBuffer(buffer), channel.voidPromise());
+        } catch (IOException ioe) {
+            throw new UncheckedIOException(ioe);
+        }
     }
 
     protected final ByteBuf toOutputBuffer(final ProtonBuffer output) throws IOException {
