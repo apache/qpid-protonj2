@@ -21,7 +21,6 @@ import java.util.function.Predicate;
 
 import org.apache.qpid.proton4j.amqp.DeliveryTag;
 import org.apache.qpid.proton4j.amqp.transport.DeliveryState;
-import org.apache.qpid.proton4j.amqp.transport.Flow;
 import org.apache.qpid.proton4j.amqp.transport.Transfer;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 
@@ -138,41 +137,6 @@ public interface Sender extends Link<Sender> {
     //----- Event handlers for the Sender
 
     /**
-     * Handler for link credit updates that occur after a remote {@link Flow} arrives.
-     *
-     * @param handler
-     *      An event handler that will be signaled when the link credit is updated by a remote flow.
-     *
-     * @return this {@link Sender} instance.
-     */
-    Sender linkCreditUpdateHandler(EventHandler<Sender> handler);
-
-    /**
-     * Handler for updates on this {@link Sender} that indicates that an event has occurred that has
-     * placed this sender in a state where a send is possible.
-     *
-     * @param handler
-     *      An event handler that will be signaled when the link state changes to allow sends.
-     *
-     * @return this {@link Sender} instance.
-     */
-    Sender sendableHandler(EventHandler<Sender> handler);
-
-    /**
-     * Called when the {@link Receiver} end of the link has requested a drain of the outstanding
-     * credit for this {@link Sender}.
-     *
-     * The drain request is accompanied by the current credit state for this link which the application
-     * can use to determine the scope of the credit being requested to drain.
-     *
-     * @param handler
-     *      handler that will act on the drain request.
-     *
-     * @return this {@link Sender} instance.
-     */
-    Sender drainRequestedHandler(EventHandler<LinkCreditState> handler);
-
-    /**
      * Handler for updates for deliveries that have previously been sent.
      *
      * Updates can happen when the remote settles or otherwise modifies the delivery and the
@@ -183,6 +147,6 @@ public interface Sender extends Link<Sender> {
      *
      * @return this {@link Sender} instance.
      */
-    Sender deliveryUpdatedHandler(EventHandler<OutgoingDelivery> handler);
+    Sender deliveryStateUpdatedHandler(EventHandler<OutgoingDelivery> handler);
 
 }

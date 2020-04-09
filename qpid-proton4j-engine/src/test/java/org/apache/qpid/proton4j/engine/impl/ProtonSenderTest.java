@@ -1030,8 +1030,10 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
 
         assertFalse(sender.isSendable());
 
-        sender.sendableHandler(handler -> {
-            handler.next().setTag(new byte[] {0}).writeBytes(payload);
+        sender.creditStateUpdateHandler(handler -> {
+            if (handler.isSendable()) {
+                handler.next().setTag(new byte[] {0}).writeBytes(payload);
+            }
         });
 
         sender.open();
@@ -1083,7 +1085,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
 
         final AtomicBoolean deliveryUpdatedAndSettled = new AtomicBoolean();
         final AtomicReference<OutgoingDelivery> updatedDelivery = new AtomicReference<>();
-        sender.deliveryUpdatedHandler(delivery -> {
+        sender.deliveryStateUpdatedHandler(delivery -> {
             if (delivery.isRemotelySettled()) {
                 deliveryUpdatedAndSettled.set(true);
             }
@@ -1093,8 +1095,10 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
 
         assertFalse(sender.isSendable());
 
-        sender.sendableHandler(handler -> {
-            handler.next().setTag(new byte[] {0}).writeBytes(payload);
+        sender.creditStateUpdateHandler(handler -> {
+            if (handler.isSendable()) {
+                handler.next().setTag(new byte[] {0}).writeBytes(payload);
+            }
         });
 
         sender.open();
@@ -1308,9 +1312,12 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
 
         final AtomicBoolean deliverySentAfterSenable = new AtomicBoolean();
         final AtomicReference<Delivery> sent = new AtomicReference<>();
-        sender.sendableHandler(handler -> {
-            sent.set(handler.next().setTag(new byte[] {0}).writeBytes(payload));
-            deliverySentAfterSenable.set(true);
+
+        sender.creditStateUpdateHandler(handler -> {
+            if (handler.isSendable()) {
+                sent.set(handler.next().setTag(new byte[] {0}).writeBytes(payload));
+                deliverySentAfterSenable.set(true);
+            }
         });
 
         sender.open();
@@ -1492,13 +1499,13 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         sender2.open();
 
         final AtomicBoolean sender1MarkedSendable = new AtomicBoolean();
-        sender1.sendableHandler(handler -> {
-            sender1MarkedSendable.set(true);
+        sender1.creditStateUpdateHandler(handler -> {
+            sender1MarkedSendable.set(handler.isSendable());
         });
 
         final AtomicBoolean sender2MarkedSendable = new AtomicBoolean();
-        sender2.sendableHandler(handler -> {
-            sender2MarkedSendable.set(true);
+        sender2.creditStateUpdateHandler(handler -> {
+            sender2MarkedSendable.set(handler.isSendable());
         });
 
         peer.remoteFlow().withHandle(0)
@@ -1619,8 +1626,8 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         sender.open();
 
         final AtomicBoolean senderMarkedSendable = new AtomicBoolean();
-        sender.sendableHandler(handler -> {
-            senderMarkedSendable.set(true);
+        sender.creditStateUpdateHandler(handler -> {
+            senderMarkedSendable.set(handler.isSendable());
         });
 
         peer.remoteFlow().withHandle(0)
@@ -1636,13 +1643,13 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         // This calculation isn't entirely precise, there is some added performative/frame overhead not
         // accounted for...but values are chosen to work, and verified here.
         final int frameCount;
-        if(remoteMaxFrameSize == 0 && outboundFrameSizeLimit == 0) {
+        if (remoteMaxFrameSize == 0 && outboundFrameSizeLimit == 0) {
             frameCount = 1;
         } else if(remoteMaxFrameSize == 0 && outboundFrameSizeLimit != 0) {
             frameCount = (int) Math.ceil((double)contentLength / (double) outboundFrameSizeLimit);
         } else {
             int effectiveMaxFrameSize;
-            if(outboundFrameSizeLimit != 0) {
+            if (outboundFrameSizeLimit != 0) {
                 effectiveMaxFrameSize = Math.min(outboundFrameSizeLimit, remoteMaxFrameSize);
             } else {
                 effectiveMaxFrameSize = remoteMaxFrameSize;
@@ -1722,8 +1729,8 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         sender.open();
 
         final AtomicBoolean senderMarkedSendable = new AtomicBoolean();
-        sender.sendableHandler(handler -> {
-            senderMarkedSendable.set(true);
+        sender.creditStateUpdateHandler(handler -> {
+            senderMarkedSendable.set(sender.isSendable());
         });
 
         OutgoingDelivery delivery = sender.next();
@@ -1790,8 +1797,8 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         sender.open();
 
         final AtomicBoolean senderMarkedSendable = new AtomicBoolean();
-        sender.sendableHandler(handler -> {
-            senderMarkedSendable.set(true);
+        sender.creditStateUpdateHandler(handler -> {
+            senderMarkedSendable.set(sender.isSendable());
         });
 
         OutgoingDelivery delivery = sender.next();
@@ -1847,8 +1854,8 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         sender.open();
 
         final AtomicBoolean senderMarkedSendable = new AtomicBoolean();
-        sender.sendableHandler(handler -> {
-            senderMarkedSendable.set(true);
+        sender.creditStateUpdateHandler(handler -> {
+            senderMarkedSendable.set(sender.isSendable());
         });
 
         OutgoingDelivery delivery = sender.next();
@@ -1899,8 +1906,8 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         sender.open();
 
         final AtomicBoolean senderMarkedSendable = new AtomicBoolean();
-        sender.sendableHandler(handler -> {
-            senderMarkedSendable.set(true);
+        sender.creditStateUpdateHandler(handler -> {
+            senderMarkedSendable.set(sender.isSendable());
         });
 
         OutgoingDelivery delivery = sender.next();
@@ -2015,9 +2022,9 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
 
         final AtomicBoolean deliverySentAfterSenable = new AtomicBoolean();
         final AtomicReference<Delivery> sentDelivery = new AtomicReference<>();
-        sender.sendableHandler(handler -> {
+        sender.creditStateUpdateHandler(handler -> {
             sentDelivery.set(handler.next().setTag(new byte[] {0}).writeBytes(payload));
-            deliverySentAfterSenable.set(true);
+            deliverySentAfterSenable.set(sender.isSendable());
         });
 
         sender.open();
@@ -2098,9 +2105,9 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         final AtomicReference<Delivery> sentDelivery = new AtomicReference<>();
 
         final AtomicBoolean deliverySentAfterSenable = new AtomicBoolean();
-        sender.sendableHandler(handler -> {
+        sender.creditStateUpdateHandler(handler -> {
             sentDelivery.set(handler.next().setTag(new byte[] {0}).writeBytes(payload));
-            deliverySentAfterSenable.set(true);
+            deliverySentAfterSenable.set(sender.isSendable());
         });
 
         sender.open();
@@ -2167,12 +2174,12 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
 
         final AtomicBoolean deliverySentAfterSenable = new AtomicBoolean();
         final AtomicReference<Delivery> sentDelivery = new AtomicReference<>();
-        sender.sendableHandler(handler -> {
+        sender.creditStateUpdateHandler(handler -> {
             sentDelivery.set(handler.next().setTag(new byte[] {0}).writeBytes(payload));
-            deliverySentAfterSenable.set(true);
+            deliverySentAfterSenable.set(sender.isSendable());
         });
 
-        sender.deliveryUpdatedHandler((delivery) -> {
+        sender.deliveryStateUpdatedHandler((delivery) -> {
             if (delivery.isRemotelySettled()) {
                 delivery.settle();
             }
@@ -2477,7 +2484,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         Session session = connection.session().open();
         Sender sender = session.sender("sender-1");
 
-        sender.linkCreditUpdateHandler(link -> link.drained());
+        sender.creditStateUpdateHandler(link -> link.drained());
         sender.open();
         sender.close();
 
@@ -2516,14 +2523,14 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
 
         final AtomicBoolean deliverySentAfterSenable = new AtomicBoolean();
         final AtomicReference<Delivery> sentDelivery = new AtomicReference<>();
-        sender.linkCreditUpdateHandler(link -> {
+        sender.creditStateUpdateHandler(link -> {
             if (link.isSendable()) {
                 sentDelivery.set(link.next().setTag(new byte[] {0}).writeBytes(payload));
                 deliverySentAfterSenable.set(true);
             }
         });
 
-        sender.deliveryUpdatedHandler((delivery) -> {
+        sender.deliveryStateUpdatedHandler((delivery) -> {
             if (delivery.isRemotelySettled()) {
                 delivery.settle();
             }
@@ -2584,7 +2591,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         assertFalse(sender.isSendable());
 
         sender.setDeliveryTagGenerator(ProtonDeliveryTagGenerator.BUILTIN.SEQUENTIAL.createGenerator());
-        sender.sendableHandler(handler -> {
+        sender.creditStateUpdateHandler(handler -> {
             handler.next().writeBytes(payload);
         });
 
@@ -2695,7 +2702,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
 
         sender.setDeliveryTagGenerator(ProtonDeliveryTagGenerator.BUILTIN.POOLED.createGenerator());
 
-        sender.deliveryUpdatedHandler((delivery) -> {
+        sender.deliveryStateUpdatedHandler((delivery) -> {
             delivery.settle();
         });
 

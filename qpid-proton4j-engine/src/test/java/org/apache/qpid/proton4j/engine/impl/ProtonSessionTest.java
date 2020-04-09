@@ -1017,7 +1017,7 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
 
         final AtomicInteger deliveryArrived = new AtomicInteger();
         final AtomicReference<IncomingDelivery> delivered = new AtomicReference<>();
-        receiver.deliveryReceivedHandler(delivery -> {
+        receiver.deliveryReadHandler(delivery -> {
             deliveryArrived.incrementAndGet();
             delivered.set(delivery);
         });

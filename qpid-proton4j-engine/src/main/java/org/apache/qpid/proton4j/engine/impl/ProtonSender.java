@@ -34,7 +34,6 @@ import org.apache.qpid.proton4j.amqp.transport.Transfer;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.engine.DeliveryTagGenerator;
 import org.apache.qpid.proton4j.engine.EventHandler;
-import org.apache.qpid.proton4j.engine.LinkCreditState;
 import org.apache.qpid.proton4j.engine.OutgoingDelivery;
 import org.apache.qpid.proton4j.engine.Sender;
 import org.apache.qpid.proton4j.engine.Session;
@@ -55,9 +54,7 @@ public class ProtonSender extends ProtonLink<Sender> implements Sender {
     private final SplayMap<ProtonOutgoingDelivery> unsettled = new SplayMap<>();
 
     private EventHandler<OutgoingDelivery> deliveryUpdatedEventHandler = null;
-    private EventHandler<Sender> sendableEventHandler = null;
     private EventHandler<Sender> linkCreditUpdatedHandler = null;
-    private EventHandler<LinkCreditState> drainRequestedEventHandler = null;
 
     private DeliveryTagGenerator autoTagGenerator;
     private OutgoingDelivery current;
@@ -234,7 +231,7 @@ public class ProtonSender extends ProtonLink<Sender> implements Sender {
         }
 
         if (updated) {
-            delivery.getLink().signalDeliveryUpdated(delivery);
+            delivery.getLink().signalDeliveryStateUpdated(delivery);
         }
 
         return this;
@@ -268,14 +265,9 @@ public class ProtonSender extends ProtonLink<Sender> implements Sender {
         if (isLocallyOpen()) {
             if (getCredit() > 0 && !sendable) {
                 sendable = true;
-                signalSendable();
             }
 
-            if (flow.getDrain() && getCredit() > 0) {
-                signalDrainRequested();
-            }
-
-            signalLinkCreditUpdated();
+            signalLinkCreditStateUpdated();
         }
 
         return this;
@@ -356,15 +348,20 @@ public class ProtonSender extends ProtonLink<Sender> implements Sender {
         }
     }
 
+    Sender signalNoLongerSendable() {
+        sendable = false;
+        return this;
+    }
+
     //----- Sender event handlers
 
     @Override
-    public Sender linkCreditUpdateHandler(EventHandler<Sender> handler) {
+    public Sender creditStateUpdateHandler(EventHandler<Sender> handler) {
         this.linkCreditUpdatedHandler = handler;
         return this;
     }
 
-    Sender signalLinkCreditUpdated() {
+    Sender signalLinkCreditStateUpdated() {
         if (linkCreditUpdatedHandler != null) {
             linkCreditUpdatedHandler.handle(this);
         }
@@ -373,48 +370,14 @@ public class ProtonSender extends ProtonLink<Sender> implements Sender {
     }
 
     @Override
-    public Sender deliveryUpdatedHandler(EventHandler<OutgoingDelivery> handler) {
+    public Sender deliveryStateUpdatedHandler(EventHandler<OutgoingDelivery> handler) {
         this.deliveryUpdatedEventHandler = handler;
         return this;
     }
 
-    Sender signalDeliveryUpdated(OutgoingDelivery delivery) {
+    Sender signalDeliveryStateUpdated(OutgoingDelivery delivery) {
         if (deliveryUpdatedEventHandler != null) {
             deliveryUpdatedEventHandler.handle(delivery);
-        }
-        return this;
-    }
-
-    @Override
-    public Sender sendableHandler(EventHandler<Sender> handler) {
-        this.sendableEventHandler = handler;
-        return this;
-    }
-
-    Sender signalSendable() {
-        if (sendableEventHandler != null) {
-            sendableEventHandler.handle(this);
-        }
-        return this;
-    }
-
-    Sender signalNoLongerSendable() {
-        sendable = false;
-        return this;
-    }
-
-    @Override
-    public Sender drainRequestedHandler(EventHandler<LinkCreditState> handler) {
-        this.drainRequestedEventHandler = handler;
-        return this;
-    }
-
-    Sender signalDrainRequested() {
-        // TODO - The intention is to snapshot credit state here so that on drained we can properly
-        //        reduce link credit in case the remote has updated the credit since the event was
-        //        triggered.
-        if (drainRequestedEventHandler != null) {
-            drainRequestedEventHandler.handle(getCreditState().snapshot());
         }
         return this;
     }

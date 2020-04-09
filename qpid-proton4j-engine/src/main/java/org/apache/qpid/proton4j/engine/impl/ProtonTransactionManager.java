@@ -348,4 +348,10 @@ public class ProtonTransactionManager extends ProtonEndpoint<TransactionManager>
         // TODO Auto-generated method stub
         return this;
     }
+
+    @Override
+    public TransactionManager creditStateUpdateHandler(EventHandler<TransactionManager> handler) {
+        // TODO Auto-generated method stub
+        return null;
+    }
 }

@@ -21,6 +21,7 @@ import org.apache.qpid.proton4j.amqp.messaging.Source;
 import org.apache.qpid.proton4j.amqp.messaging.Target;
 import org.apache.qpid.proton4j.amqp.transport.Attach;
 import org.apache.qpid.proton4j.amqp.transport.Detach;
+import org.apache.qpid.proton4j.amqp.transport.Flow;
 import org.apache.qpid.proton4j.amqp.transport.ReceiverSettleMode;
 import org.apache.qpid.proton4j.amqp.transport.Role;
 import org.apache.qpid.proton4j.amqp.transport.SenderSettleMode;
@@ -353,8 +354,18 @@ public interface Link<T extends Link<T>> extends Endpoint<T> {
      * @param remoteDetachHandler
      *      The {@link EventHandler} to notify when this link is remotely closed.
      *
-     * @return the link for chaining.
+     * @return the {@link Link} for chaining.
      */
     T detachHandler(EventHandler<T> remoteDetachHandler);
+
+    /**
+     * Handler for link credit updates that occur after a remote {@link Flow} arrives.
+     *
+     * @param handler
+     *      An event handler that will be signaled when the link credit is updated by a remote flow.
+     *
+     * @return the {@link Link} for chaining.
+     */
+    T creditStateUpdateHandler(EventHandler<T> handler);
 
 }

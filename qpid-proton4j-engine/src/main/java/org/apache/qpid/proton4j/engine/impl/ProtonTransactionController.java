@@ -355,4 +355,10 @@ public class ProtonTransactionController extends ProtonEndpoint<TransactionContr
         // TODO Auto-generated method stub
         return this;
     }
+
+    @Override
+    public TransactionController creditStateUpdateHandler(EventHandler<TransactionController> handler) {
+        // TODO Auto-generated method stub
+        return null;
+    }
 }

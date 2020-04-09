@@ -20,6 +20,7 @@ import java.util.Collection;
 import java.util.function.Predicate;
 
 import org.apache.qpid.proton4j.amqp.transport.DeliveryState;
+import org.apache.qpid.proton4j.amqp.transport.Transfer;
 
 /**
  * AMQP Receiver API
@@ -39,19 +40,14 @@ public interface Receiver extends Link<Receiver> {
      */
     Receiver addCredit(int additionalCredit);
 
-    // Receiver reduceCredit(int amount);
-
     /**
      * Initiate a drain of all remaining credit of this {@link Receiver} link.
      *
-     * TODO - Consider revisions to this method to return boolean indicating if a drain was started
-     *        and instead of an exception just return false if no credit.
+     * @return true if a drain was started or false if the link already had no credit to drain.
      *
-     * @return this {@link Receiver} for chaining.
-     *
-     * @throws IllegalStateException if there is no credit to drain, or an existing drain attempt is incomplete.
+     * @throws IllegalStateException if an existing drain attempt is incomplete.
      */
-    Receiver drain() throws IllegalStateException;
+    boolean drain() throws IllegalStateException;
 
     /**
      * Configures a default DeliveryState to be used if a received delivery is settled/freed
@@ -114,40 +110,28 @@ public interface Receiver extends Link<Receiver> {
     //----- Event handlers for the Receiver
 
     /**
-     * When a drain is requested for this receiver an event handler will be signaled to indicate that
-     * the drain was successful.
-     *
-     * TODO -- What to do when drain won't complete, another event or signal this one with async
-     *         success or failure since it was asked for anyway async event isn't that unexpected.
+     * Handler for incoming deliveries that is called for each incoming {@link Transfer} frame that comprises
+     * either one complete delivery or a chunk of a split framed {@link IncomingDelivery}.  The handler should
+     * check that the delivery being read is partial or not and act accordingly, as there will be additional
+     * updates as more frames comprising that {@link IncomingDelivery} arrive.
      *
      * @param handler
-     *      The handler that will be invoked when receiver credit has been drained by the remote sender.
+     *      The handler that will be invoked when delivery arrives on this receiver link.
      *
      * @return this receiver
      */
-    Receiver drainStateUpdatedHandler(EventHandler<Receiver> handler);
+    Receiver deliveryReadHandler(EventHandler<IncomingDelivery> handler);
 
     /**
-     * Handler for incoming deliveries
-     *
-     * @param handler
-     *      The handler that will be invoked when a new delivery arrives on this receiver link.
-     *
-     * @return this receiver
-     */
-    Receiver deliveryReceivedHandler(EventHandler<IncomingDelivery> handler);
-
-    /**
-     * Handler for updates for deliveries that have previously been received.
-     *
-     * Updates can happen when the remote settles or otherwise modifies the delivery and the
-     * user needs to act on those changes.
+     * Handler for updates for deliveries that have previously been received.  Updates for an {@link IncomingDelivery}
+     * can happen when the remote settles a complete {@link IncomingDelivery} or otherwise modifies the delivery outcome
+     * and the user needs to act on those changes such as a spontaneous update to the {@link DeliveryState}.
      *
      * @param handler
      *      The handler that will be invoked when a new update delivery arrives on this link.
      *
      * @return this receiver
      */
-    Receiver deliveryUpdatedHandler(EventHandler<IncomingDelivery> handler);
+    Receiver deliveryStateUpdatedHandler(EventHandler<IncomingDelivery> handler);
 
 }

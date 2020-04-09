@@ -46,9 +46,9 @@ import org.apache.qpid.proton4j.engine.util.SplayMap;
  */
 public class ProtonReceiver extends ProtonLink<Receiver> implements Receiver {
 
-    private EventHandler<IncomingDelivery> deliveryReceivedEventHandler = null;
+    private EventHandler<IncomingDelivery> deliveryReadEventHandler = null;
     private EventHandler<IncomingDelivery> deliveryUpdatedEventHandler = null;
-    private EventHandler<Receiver> receiverDrainedEventHandler = null;
+    private EventHandler<Receiver> linkCreditUpdatedHandler = null;
 
     private final ProtonSessionIncomingWindow sessionWindow;
     private final DeliveryIdTracker currentDeliveryId = new DeliveryIdTracker();
@@ -116,24 +116,22 @@ public class ProtonReceiver extends ProtonLink<Receiver> implements Receiver {
     }
 
     @Override
-    public Receiver drain() {
+    public boolean drain() {
         checkLinkOperable("Cannot drain Receiver");
 
         if (drainStateSnapshot != null) {
             throw new IllegalStateException("Drain attempt already outstanding");
         }
 
-        if (getCredit() <= 0) {
-            throw new IllegalStateException("No existing credit to drain");
+        if (getCredit() > 0) {
+            drainStateSnapshot = getCreditState().snapshot();
+
+            if (isLocallyOpen() && wasLocalAttachSent()) {
+                sessionWindow.writeFlow(this);
+            }
         }
 
-        drainStateSnapshot = getCreditState().snapshot();
-
-        if (isLocallyOpen() && wasLocalAttachSent()) {
-            sessionWindow.writeFlow(this);
-        }
-
-        return this;
+        return isDraining();
     }
 
     @Override
@@ -219,26 +217,26 @@ public class ProtonReceiver extends ProtonLink<Receiver> implements Receiver {
     //----- Receiver event handlers
 
     @Override
-    public Receiver deliveryReceivedHandler(EventHandler<IncomingDelivery> handler) {
-        this.deliveryReceivedEventHandler = handler;
+    public Receiver deliveryReadHandler(EventHandler<IncomingDelivery> handler) {
+        this.deliveryReadEventHandler = handler;
         return this;
     }
 
-    Receiver signalDeliveryReceived(IncomingDelivery delivery) {
+    Receiver signalDeliveryRead(IncomingDelivery delivery) {
         //TODO: what if it is null? Limbo? Release? Should we instead error out?
-        if (deliveryReceivedEventHandler != null) {
-            deliveryReceivedEventHandler.handle(delivery);
+        if (deliveryReadEventHandler != null) {
+            deliveryReadEventHandler.handle(delivery);
         }
         return this;
     }
 
     @Override
-    public Receiver deliveryUpdatedHandler(EventHandler<IncomingDelivery> handler) {
+    public Receiver deliveryStateUpdatedHandler(EventHandler<IncomingDelivery> handler) {
         this.deliveryUpdatedEventHandler = handler;
         return this;
     }
 
-    Receiver signalDeliveryUpdated(IncomingDelivery delivery) {
+    Receiver signalDeliveryStateUpdated(IncomingDelivery delivery) {
         if (deliveryUpdatedEventHandler != null) {
             deliveryUpdatedEventHandler.handle(delivery);
         }
@@ -246,16 +244,16 @@ public class ProtonReceiver extends ProtonLink<Receiver> implements Receiver {
     }
 
     @Override
-    public Receiver drainStateUpdatedHandler(EventHandler<Receiver> handler) {
-        this.receiverDrainedEventHandler = handler;
+    public Receiver creditStateUpdateHandler(EventHandler<Receiver> handler) {
+        this.linkCreditUpdatedHandler = handler;
         return this;
     }
 
-    Receiver signalReceiverDrained() {
-        drainStateSnapshot = null;
-        if (receiverDrainedEventHandler != null) {
-            receiverDrainedEventHandler.handle(this);
+    Receiver signalLinkCreditStateUpdated() {
+        if (linkCreditUpdatedHandler != null) {
+            linkCreditUpdatedHandler.handle(this);
         }
+
         return this;
     }
 
@@ -288,14 +286,13 @@ public class ProtonReceiver extends ProtonLink<Receiver> implements Receiver {
             creditState.updateCredit((int) flow.getLinkCredit());
             if (creditState.getCredit() != 0) {
                 throw new IllegalArgumentException("Receiver read flow with drain set but credit was not zero");
+            } else {
+                drainStateSnapshot = null;
             }
-
-            // TODO - engine error on credit being non-zero for drain response ?
-
-            signalReceiverDrained();
         }
 
-        //TODO: else somehow notify of remote flow? (e.g session windows changed, peer echo'd its view of the state
+        signalLinkCreditStateUpdated();
+
         return this;
     }
 
@@ -314,7 +311,7 @@ public class ProtonReceiver extends ProtonLink<Receiver> implements Receiver {
         }
 
         if (updated) {
-            delivery.getLink().signalDeliveryUpdated(delivery);
+            signalDeliveryStateUpdated(delivery);
         }
 
         return this;
@@ -352,7 +349,7 @@ public class ProtonReceiver extends ProtonLink<Receiver> implements Receiver {
 
         delivery.appendTransferPayload(payload);
 
-        boolean done = transfer.getAborted() || !transfer.getMore();
+        final boolean done = transfer.getAborted() || !transfer.getMore();
         if (done) {
             if (transfer.getAborted()) {
                 delivery.aborted();
@@ -365,10 +362,11 @@ public class ProtonReceiver extends ProtonLink<Receiver> implements Receiver {
             currentDeliveryId.reset();
         }
 
-        if (delivery.isFirstTransfer()) {
-            signalDeliveryReceived(delivery);
-        } else {
-            signalDeliveryUpdated(delivery);
+        signalDeliveryRead(delivery);
+
+        if (isDraining() && getCredit() == 0) {
+            drainStateSnapshot = null;
+            signalLinkCreditStateUpdated();
         }
 
         return delivery;
