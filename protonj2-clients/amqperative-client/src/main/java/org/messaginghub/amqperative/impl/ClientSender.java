@@ -30,7 +30,6 @@ import java.util.function.Consumer;
 import org.apache.qpid.proton4j.amqp.transport.DeliveryState;
 import org.apache.qpid.proton4j.amqp.transport.SenderSettleMode;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
-import org.apache.qpid.proton4j.engine.LinkCreditState;
 import org.apache.qpid.proton4j.engine.LinkState;
 import org.apache.qpid.proton4j.engine.OutgoingDelivery;
 import org.apache.qpid.proton4j.engine.impl.ProtonDeliveryTagGenerator;
@@ -260,9 +259,8 @@ public class ClientSender implements Sender {
                     .openHandler(sender -> handleRemoteOpen(sender))
                     .closeHandler(sender -> handleRemoteCloseOrDetach(sender))
                     .detachHandler(sender -> handleRemoteCloseOrDetach(sender))
-                    .deliveryUpdatedHandler(delivery -> handleDeliveryUpdated(delivery))
-                    .drainRequestedHandler(linkState -> handleRemoteRequestedDrain(linkState))
-                    .sendableHandler(sender -> handleRemoteNowSendable(sender))
+                    .deliveryStateUpdatedHandler(delivery -> handleDeliveryUpdated(delivery))
+                    .creditStateUpdateHandler(linkState -> handleCreditStateUpdated(linkState))
                     .engineShutdownHandler(engine -> immediateLinkShutdown())
                     .open();
 
@@ -391,7 +389,7 @@ public class ClientSender implements Sender {
         }
     }
 
-    private void handleRemoteNowSendable(org.apache.qpid.proton4j.engine.Sender sender) {
+    private void handleCreditStateUpdated(org.apache.qpid.proton4j.engine.Sender sender) {
         if (!blocked.isEmpty()) {
             while (sender.isSendable() && !blocked.isEmpty()) {
                 LOG.trace("Dispatching previously held send");
@@ -402,12 +400,6 @@ public class ClientSender implements Sender {
 
         if (sender.isDraining() && blocked.isEmpty()) {
             sender.drained();
-        }
-    }
-
-    private void handleRemoteRequestedDrain(LinkCreditState linkState) {
-        if (blocked.isEmpty()) {
-            protonSender.drained();
         }
     }
 

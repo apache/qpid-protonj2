@@ -53,6 +53,7 @@ public class ClientReceiver implements Receiver {
 
     private final ClientFuture<Receiver> openFuture;
     private final ClientFuture<Receiver> closeFuture;
+    private ClientFuture<Receiver> drainingFuture;
 
     private final ReceiverOptions options;
     private final ClientSession session;
@@ -283,11 +284,9 @@ public class ClientReceiver implements Receiver {
             }
 
             // TODO: Maybe proton should be returning something here to indicate drain started.
-            protonReceiver.drain();
-            protonReceiver.drainStateUpdatedHandler(x -> {
-                protonReceiver.drainStateUpdatedHandler(null);
-                drained.complete(this);
-            });
+            if (protonReceiver.drain()) {
+                drainingFuture = drained;
+            }
         });
 
         return drained;
@@ -328,9 +327,9 @@ public class ClientReceiver implements Receiver {
                       .openHandler(receiver -> handleRemoteOpen(receiver))
                       .closeHandler(receiver -> handleRemoteCloseOrDetach(receiver))
                       .detachHandler(receiver -> handleRemoteCloseOrDetach(receiver))
-                      .deliveryUpdatedHandler(delivery -> handleDeliveryRemotelyUpdated(delivery))
-                      .deliveryReceivedHandler(delivery -> handleDeliveryReceived(delivery))
-                      .drainStateUpdatedHandler(receiver -> handleReceiverReportsDrained(receiver))
+                      .deliveryStateUpdatedHandler(delivery -> handleDeliveryRemotelyUpdated(delivery))
+                      .deliveryReadHandler(delivery -> handleDeliveryReceived(delivery))
+                      .creditStateUpdateHandler(receiver -> handleReceiverCreditUpdated(receiver))
                       .engineShutdownHandler(engine -> immediateLinkShutdown())
                       .open();
 
@@ -461,9 +460,15 @@ public class ClientReceiver implements Receiver {
         // TODO - event or other reaction
     }
 
-    private void handleReceiverReportsDrained(org.apache.qpid.proton4j.engine.Receiver receiver) {
+    private void handleReceiverCreditUpdated(org.apache.qpid.proton4j.engine.Receiver receiver) {
         LOG.debug("Receiver reports drained: ", receiver);
-        // TODO - event or other reaction, complete saved 'drained' future
+
+        if (drainingFuture != null) {
+            // TODO: What if remote send more credit and not draining any more.
+            if (receiver.getCredit() == 0) {
+                drainingFuture.complete(this);
+            }
+        }
     }
 
     //----- Private implementation details

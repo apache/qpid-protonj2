@@ -294,7 +294,7 @@ public class ReceiverTest extends AMQPerativeTestCase {
 
             // Drain all the credit
             peer.expectFlow().withDrain(true).withLinkCredit(credit).withDeliveryCount(0)
-                    .respond().withDrain(true).withLinkCredit(0).withDeliveryCount(credit);
+                   .respond().withDrain(true).withLinkCredit(0).withDeliveryCount(credit);
 
             Future<Receiver> draining = receiver.drain();
             draining.get(5, TimeUnit.SECONDS);

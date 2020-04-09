@@ -890,6 +890,7 @@ public class SenderTest extends AMQPerativeTestCase {
         }
     }
 
+    @Repeat(repetitions = 1000)
     @Test(timeout = 30000)
     public void testSenderGetRemotePropertiesWaitsForRemoteAttach() throws Exception {
         tryReadSenderRemoteProperties(true);
@@ -913,14 +914,14 @@ public class SenderTest extends AMQPerativeTestCase {
             LOG.info("Connect test started, peer listening on: {}", remoteURI);
 
             Client container = Client.create();
-            ConnectionOptions options = new ConnectionOptions().openTimeout(75);
-            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort(), options);
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
             connection.openFuture().get();
 
             Session session = connection.openSession();
             session.openFuture().get();
 
-            Sender sender = session.openSender("test-sender");
+            SenderOptions options = new SenderOptions().openTimeout(75);
+            Sender sender = session.openSender("test-sender", options);
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
 
@@ -956,6 +957,8 @@ public class SenderTest extends AMQPerativeTestCase {
                     LOG.debug("Caught expected exception from close call", ex);
                 }
             }
+
+            LOG.debug("*** Test read remote properties ***");
 
             peer.expectClose().respond();
             connection.close().get();
