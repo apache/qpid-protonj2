@@ -243,12 +243,13 @@ public class AMQPTestDriver implements Consumer<ProtonBuffer> {
         handlePerformative(HeartBeat.INSTANCE, channel, null);
     }
 
-    public void afterDelay(int delay, ScriptedAction action) {
+    public synchronized void afterDelay(int delay, ScriptedAction action) {
         Objects.requireNonNull(schedulerSupplier, "This driver cannot schedule delayed events, no scheduler available");
         ScheduledExecutorService scheduler = schedulerSupplier.get();
         Objects.requireNonNull(scheduler, "This driver cannot schedule delayed events, no scheduler available");
 
         scheduler.schedule(() -> {
+            LOG.trace("AMQPTestPeer running delayed action: {}", action);
             action.perform(this);
         }, delay, TimeUnit.MILLISECONDS);
     }
@@ -343,12 +344,13 @@ public class AMQPTestDriver implements Consumer<ProtonBuffer> {
     public void sendAMQPFrame(int channel, DescribedType performative, ProtonBuffer payload) {
         LOG.trace("Sending performative: {}", performative);
         // TODO - handle split frames when frame size requires it
-        ProtonBuffer buffer = frameEncoder.handleWrite(performative, channel, payload, null);
 
         try {
+            final ProtonBuffer buffer = frameEncoder.handleWrite(performative, channel, payload, null);
+            LOG.trace("Writing out buffer {} to consumer: {}", buffer, frameConsumer);
             frameConsumer.accept(buffer);
         } catch (Throwable t) {
-            signalFailure(new AssertionError("Frame was not consumed due to error.", t));
+            signalFailure(new AssertionError("Frame was not written due to error.", t));
         }
     }
 
@@ -368,12 +370,12 @@ public class AMQPTestDriver implements Consumer<ProtonBuffer> {
         }
 
         LOG.trace("Sending sasl performative: {}", performative);
-        ProtonBuffer buffer = frameEncoder.handleWrite(performative, channel);
 
         try {
+            final ProtonBuffer buffer = frameEncoder.handleWrite(performative, channel);
             frameConsumer.accept(buffer);
         } catch (Throwable t) {
-            signalFailure(new AssertionError("Frame was not consumed due to error.", t));
+            signalFailure(new AssertionError("Frame was not written due to error.", t));
         }
     }
 
@@ -434,8 +436,10 @@ public class AMQPTestDriver implements Consumer<ProtonBuffer> {
     public void signalFailure(Throwable ex) throws AssertionError {
         if (this.failureCause == null) {
             if (ex instanceof AssertionError) {
+                LOG.trace("Test Driver sending failure assertion due to: ", ex.getCause());
                 this.failureCause = (AssertionError) ex;
             } else {
+                LOG.trace("Test Driver sending failure assertion due to: ", ex);
                 this.failureCause = new AssertionError(ex);
             }
         }

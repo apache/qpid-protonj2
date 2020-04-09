@@ -29,7 +29,7 @@ public class FrameEncoder {
     public static final byte AMQP_FRAME_TYPE = (byte) 0;
     public static final byte SASL_FRAME_TYPE = (byte) 1;
 
-    private static final int AMQP_PERFORMATIVE_PAD = 256;
+    private static final int AMQP_PERFORMATIVE_PAD = 512;
     private static final int FRAME_HEADER_SIZE = 8;
 
     private static final int FRAME_START_BYTE = 0;
@@ -90,7 +90,9 @@ public class FrameEncoder {
         int performativeSize = output.getWriteIndex() - startIndex;
 
         if (performativeSize != encodedSize) {
-            throw new IllegalStateException("Unable to encode performative into provided proton buffer");
+            throw new IllegalStateException(String.format(
+                "Unable to encode performative %s of %d bytes into provided proton buffer, only wrote %d bytes",
+                performative, performativeSize, encodedSize));
         }
 
         if (onPayloadTooLarge != null && maxFrameSize > 0 && payload != null && (payload.getReadableBytes() + performativeSize) > maxFrameSize) {

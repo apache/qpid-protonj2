@@ -285,7 +285,6 @@ public class NettyTestPeer extends ScriptWriter implements AutoCloseable {
         driver.accept(input);
     }
 
-
     protected ScheduledExecutorService eventLoop() {
         if (channel == null || !channel.isActive()) {
             throw new IllegalStateException("Channel is not connected or has closed");
