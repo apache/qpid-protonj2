@@ -890,12 +890,13 @@ public class SenderTest extends AMQPerativeTestCase {
         }
     }
 
-    @Repeat(repetitions = 1000)
+    @Repeat(repetitions = 1)
     @Test(timeout = 30000)
     public void testSenderGetRemotePropertiesWaitsForRemoteAttach() throws Exception {
         tryReadSenderRemoteProperties(true);
     }
 
+    @Repeat(repetitions = 1)
     @Test(timeout = 30000)
     public void testSenderGetRemotePropertiesFailsAfterOpenTimeout() throws Exception {
         tryReadSenderRemoteProperties(false);
