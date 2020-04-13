@@ -24,7 +24,7 @@ import org.apache.qpid.proton4j.engine.EventHandler;
 /**
  * Proton abstract {@link Endpoint} implementation that provides some common facilities.
  *
- * @param <E>
+ * @param <E> The specific {@link Endpoint} type this abstract type implements.
  */
 public abstract class ProtonEndpoint<E extends Endpoint<E>> implements Endpoint<E> {
 
