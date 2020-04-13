@@ -17,6 +17,7 @@
 package org.apache.qpid.proton4j.engine.sasl.client;
 
 import java.nio.charset.StandardCharsets;
+import java.util.regex.Pattern;
 
 import javax.security.sasl.SaslException;
 
@@ -31,6 +32,8 @@ import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
  */
 public class XOauth2Mechanism extends AbstractMechanism {
 
+    private final Pattern ACCESS_TOKEN_PATTERN = Pattern.compile("^[\\x20-\\x7F]+$");
+
     public static final Symbol XOAUTH2 = Symbol.valueOf("XOAUTH2");
 
     private String additionalFailureInformation;
@@ -38,6 +41,17 @@ public class XOauth2Mechanism extends AbstractMechanism {
     @Override
     public Symbol getName() {
         return XOAUTH2;
+    }
+
+    @Override
+    public boolean isApplicable(SaslCredentialsProvider credentials) {
+        if (credentials.username() != null && !credentials.username().isEmpty()  &&
+            credentials.password() != null && !credentials.password().isEmpty()) {
+
+            return ACCESS_TOKEN_PATTERN.matcher(credentials.password()).matches();
+        } else {
+            return false;
+        }
     }
 
     @Override

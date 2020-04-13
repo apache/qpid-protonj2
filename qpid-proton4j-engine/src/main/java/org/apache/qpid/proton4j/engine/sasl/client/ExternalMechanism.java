@@ -26,6 +26,11 @@ public class ExternalMechanism extends AbstractMechanism {
     public static final Symbol EXTERNAL = Symbol.valueOf("EXTERNAL");
 
     @Override
+    public boolean isApplicable(SaslCredentialsProvider credentials) {
+        return credentials.localPrincipal() != null;
+    }
+
+    @Override
     public Symbol getName() {
         return EXTERNAL;
     }

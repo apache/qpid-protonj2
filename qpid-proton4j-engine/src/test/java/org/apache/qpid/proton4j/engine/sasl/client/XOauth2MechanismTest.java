@@ -48,55 +48,55 @@ public class XOauth2MechanismTest extends MechanismTestBase {
     @Test
     public void testIsNotApplicableWithNoCredentials() {
         assertFalse("Should not be applicable with no credentials",
-            SaslMechanisms.XOAUTH2.isApplicable(credentials(null, null, false)));
+            SaslMechanisms.XOAUTH2.createMechanism().isApplicable(credentials(null, null, false)));
     }
 
     @Test
     public void testIsNotApplicableWithNoUser() {
         assertFalse("Should not be applicable with no username",
-            SaslMechanisms.XOAUTH2.isApplicable(credentials(null, "pass", false)));
+            SaslMechanisms.XOAUTH2.createMechanism().isApplicable(credentials(null, "pass", false)));
     }
 
     @Test
     public void testIsNotApplicableWithNoToken() {
         assertFalse("Should not be applicable with no token",
-            SaslMechanisms.XOAUTH2.isApplicable(credentials("user", null, false)));
+            SaslMechanisms.XOAUTH2.createMechanism().isApplicable(credentials("user", null, false)));
     }
 
     @Test
     public void testIsNotApplicableWithEmtpyUser() {
         assertFalse("Should not be applicable with empty username",
-            SaslMechanisms.XOAUTH2.isApplicable(credentials("", "pass", false)));
+            SaslMechanisms.XOAUTH2.createMechanism().isApplicable(credentials("", "pass", false)));
     }
 
     @Test
     public void testIsNotApplicableWithEmtpyToken() {
         assertFalse("Should not be applicable with empty token",
-            SaslMechanisms.XOAUTH2.isApplicable(credentials("user", "", false)));
+            SaslMechanisms.XOAUTH2.createMechanism().isApplicable(credentials("user", "", false)));
     }
 
     /** RFC6749 defines the OAUTH2 an access token as comprising VSCHAR elements (\x20-7E) */
     @Test
     public void testIsNotApplicableWithIllegalAccessToken() {
         assertFalse("Should not be applicable with non vschars",
-            SaslMechanisms.XOAUTH2.isApplicable(credentials("user", "illegalChar\000", false)));
+            SaslMechanisms.XOAUTH2.createMechanism().isApplicable(credentials("user", "illegalChar\000", false)));
     }
 
     @Test
     public void testIsNotApplicableWithEmtpyUserAndToken() {
         assertFalse("Should not be applicable with empty user and token",
-            SaslMechanisms.XOAUTH2.isApplicable(credentials("", "", false)));
+            SaslMechanisms.XOAUTH2.createMechanism().isApplicable(credentials("", "", false)));
     }
 
     @Test
     public void testIsApplicableWithUserAndToken() {
         assertTrue("Should be applicable with user and token",
-            SaslMechanisms.XOAUTH2.isApplicable(credentials("user", "2YotnFZFEjr1zCsicMWpAA", false)));
+            SaslMechanisms.XOAUTH2.createMechanism().isApplicable(credentials("user", "2YotnFZFEjr1zCsicMWpAA", false)));
     }
 
     @Test
     public void testIsApplicableWithUserAndPasswordAndPrincipal() {
         assertTrue("Should be applicable with user and token and principal",
-            SaslMechanisms.XOAUTH2.isApplicable(credentials("user", "2YotnFZFEjr1zCsicMWpAA", true)));
+            SaslMechanisms.XOAUTH2.createMechanism().isApplicable(credentials("user", "2YotnFZFEjr1zCsicMWpAA", true)));
     }
 }

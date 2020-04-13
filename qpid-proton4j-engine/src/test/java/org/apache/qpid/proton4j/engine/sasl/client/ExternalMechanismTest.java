@@ -48,18 +48,18 @@ public class ExternalMechanismTest extends MechanismTestBase {
     @Test
     public void testIsNotApplicableWithUserAndPasswordButNoPrincipal() {
         assertFalse("Should not be applicable with user and password but no principal",
-            SaslMechanisms.EXTERNAL.isApplicable(credentials("user", "password", false)));
+            SaslMechanisms.EXTERNAL.createMechanism().isApplicable(credentials("user", "password", false)));
     }
 
     @Test
     public void testIsApplicableWithUserAndPasswordAndPrincipal() {
         assertTrue("Should be applicable with user and password and principal",
-            SaslMechanisms.EXTERNAL.isApplicable(credentials("user", "password", true)));
+            SaslMechanisms.EXTERNAL.createMechanism().isApplicable(credentials("user", "password", true)));
     }
 
     @Test
     public void testIsApplicableWithPrincipalOnly() {
         assertTrue("Should be applicable with principal only",
-            SaslMechanisms.EXTERNAL.isApplicable(credentials(null, null, true)));
+            SaslMechanisms.EXTERNAL.createMechanism().isApplicable(credentials(null, null, true)));
     }
 }

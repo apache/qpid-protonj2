@@ -16,8 +16,6 @@
  */
 package org.apache.qpid.proton4j.engine.sasl.client;
 
-import java.util.regex.Pattern;
-
 import org.apache.qpid.proton4j.amqp.Symbol;
 
 /**
@@ -39,11 +37,6 @@ public enum SaslMechanisms {
         public Mechanism createMechanism() {
             return INSTANCE;
         }
-
-        @Override
-        public boolean isApplicable(SaslCredentialsProvider credentials) {
-            return credentials.localPrincipal() != null;
-        }
     },
     SCRAM_SHA_256 {
 
@@ -55,12 +48,6 @@ public enum SaslMechanisms {
         @Override
         public Mechanism createMechanism() {
             return new ScramSHA256Mechanism();
-        }
-
-        @Override
-        public boolean isApplicable(SaslCredentialsProvider credentials) {
-            return credentials.username() != null && !credentials.username().isEmpty() &&
-                   credentials.password() != null && !credentials.password().isEmpty();
         }
     },
     SCRAM_SHA_1 {
@@ -74,12 +61,6 @@ public enum SaslMechanisms {
         public Mechanism createMechanism() {
             return new ScramSHA1Mechanism();
         }
-
-        @Override
-        public boolean isApplicable(SaslCredentialsProvider credentials) {
-            return credentials.username() != null && !credentials.username().isEmpty() &&
-                   credentials.password() != null && !credentials.password().isEmpty();
-        }
     },
     CRAM_MD5 {
 
@@ -91,12 +72,6 @@ public enum SaslMechanisms {
         @Override
         public Mechanism createMechanism() {
             return new CramMD5Mechanism();
-        }
-
-        @Override
-        public boolean isApplicable(SaslCredentialsProvider credentials) {
-            return credentials.username() != null && !credentials.username().isEmpty() &&
-                   credentials.password() != null && !credentials.password().isEmpty();
         }
     },
     PLAIN {
@@ -112,16 +87,8 @@ public enum SaslMechanisms {
         public Mechanism createMechanism() {
             return INSTANCE;
         }
-
-        @Override
-        public boolean isApplicable(SaslCredentialsProvider credentials) {
-            return credentials.username() != null && !credentials.username().isEmpty() &&
-                   credentials.password() != null && !credentials.password().isEmpty();
-        }
     },
     XOAUTH2 {
-
-        private final Pattern ACCESS_TOKEN_PATTERN = Pattern.compile("^[\\x20-\\x7F]+$");
 
         @Override
         public Symbol getName() {
@@ -131,17 +98,6 @@ public enum SaslMechanisms {
         @Override
         public Mechanism createMechanism() {
             return new XOauth2Mechanism();
-        }
-
-        @Override
-        public boolean isApplicable(SaslCredentialsProvider credentials) {
-            if (credentials.username() != null && !credentials.username().isEmpty()  &&
-                credentials.password() != null && !credentials.password().isEmpty()) {
-
-                return ACCESS_TOKEN_PATTERN.matcher(credentials.password()).matches();
-            } else {
-                return false;
-            }
         }
     },
     ANONYMOUS {
@@ -170,29 +126,6 @@ public enum SaslMechanisms {
      * @return a new SASL {@link Mechanism} type that will be used for authentication.
      */
     public abstract Mechanism createMechanism();
-
-    /**
-     * Allows the Mechanism to determine if it is a valid choice based on the configured
-     * credentials at the time of selection.
-     *
-     * @param credentials
-     * 		the login credentials available at the time of mechanism selection.
-     *
-     * @return true if the mechanism can be used with the provided credentials
-     */
-    public boolean isApplicable(SaslCredentialsProvider credentials) {
-        return true;
-    }
-
-    /**
-     * Allows the mechanism to indicate if it is enabled by default, or only when explicitly enabled
-     * through configuring the permitted SASL mechanisms.
-     *
-     * @return true if this Mechanism is enabled by default.
-     */
-    public boolean isEnabledByDefault() {
-        return true;
-    }
 
     /**
      * Returns the matching {@link SaslMechanisms} enumeration value for the given

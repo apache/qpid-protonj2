@@ -48,48 +48,48 @@ public class PlainMechanismTest extends MechanismTestBase {
     @Test
     public void testIsNotApplicableWithNoCredentials() {
         assertFalse("Should not be applicable with no credentials",
-            SaslMechanisms.PLAIN.isApplicable(credentials(null, null, false)));
+            SaslMechanisms.PLAIN.createMechanism().isApplicable(credentials(null, null, false)));
     }
 
     @Test
     public void testIsNotApplicableWithNoUser() {
         assertFalse("Should not be applicable with no username",
-            SaslMechanisms.PLAIN.isApplicable(credentials(null, "pass", false)));
+            SaslMechanisms.PLAIN.createMechanism().isApplicable(credentials(null, "pass", false)));
     }
 
     @Test
     public void testIsNotApplicableWithNoPassword() {
         assertFalse("Should not be applicable with no password",
-            SaslMechanisms.PLAIN.isApplicable(credentials("user", null, false)));
+            SaslMechanisms.PLAIN.createMechanism().isApplicable(credentials("user", null, false)));
     }
 
     @Test
     public void testIsNotApplicableWithEmtpyUser() {
         assertFalse("Should not be applicable with empty username",
-            SaslMechanisms.PLAIN.isApplicable(credentials("", "pass", false)));
+            SaslMechanisms.PLAIN.createMechanism().isApplicable(credentials("", "pass", false)));
     }
 
     @Test
     public void testIsNotApplicableWithEmtpyPassword() {
         assertFalse("Should not be applicable with empty password",
-            SaslMechanisms.PLAIN.isApplicable(credentials("user", "", false)));
+            SaslMechanisms.PLAIN.createMechanism().isApplicable(credentials("user", "", false)));
     }
 
     @Test
     public void testIsNotApplicableWithEmtpyUserAndPassword() {
         assertFalse("Should not be applicable with empty user and password",
-            SaslMechanisms.PLAIN.isApplicable(credentials("", "", false)));
+            SaslMechanisms.PLAIN.createMechanism().isApplicable(credentials("", "", false)));
     }
 
     @Test
     public void testIsApplicableWithUserAndPassword() {
         assertTrue("Should be applicable with user and password",
-            SaslMechanisms.PLAIN.isApplicable(credentials("user", "pass", false)));
+            SaslMechanisms.PLAIN.createMechanism().isApplicable(credentials("user", "pass", false)));
     }
 
     @Test
     public void testIsApplicableWithUserAndPasswordAndPrincipal() {
         assertTrue("Should be applicable with user and password and principal",
-            SaslMechanisms.PLAIN.isApplicable(credentials("user", "pass", true)));
+            SaslMechanisms.PLAIN.createMechanism().isApplicable(credentials("user", "pass", true)));
     }
 }

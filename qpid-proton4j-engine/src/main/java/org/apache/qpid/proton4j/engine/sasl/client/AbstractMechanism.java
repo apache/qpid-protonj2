@@ -45,6 +45,11 @@ public abstract class AbstractMechanism implements Mechanism {
     }
 
     @Override
+    public boolean isEnabledByDefault() {
+        return true;
+    }
+
+    @Override
     public String toString() {
         return "SASL-" + getName();
     }

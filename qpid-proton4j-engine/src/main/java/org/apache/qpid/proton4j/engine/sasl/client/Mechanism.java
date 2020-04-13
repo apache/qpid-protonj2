@@ -69,4 +69,28 @@ public interface Mechanism {
      */
     void verifyCompletion() throws SaslException;
 
+    /**
+     * Allows the Mechanism to determine if it is a valid choice based on the configured
+     * credentials at the time of selection.
+     *
+     * @param credentials
+     *      the login credentials available at the time of mechanism selection.
+     *
+     * @return true if the mechanism can be used with the provided credentials
+     */
+    boolean isApplicable(SaslCredentialsProvider credentials);
+
+    /**
+     * Allows the mechanism to indicate if it is enabled by default, or only when explicitly enabled
+     * through configuring the permitted SASL mechanisms.  Any mechanism selection logic should examine
+     * this value along with the configured allowed mechanism and decide if this one should be used.
+     *
+     * Typically most mechanisms can be enabled by default but some require explicit configuration
+     * in order to operate which implies that selecting them by default would always cause an authentication
+     * error if that mechanism matches the highest priority value offered by the remote peer.
+     *
+     * @return true if this Mechanism is enabled by default.
+     */
+    public boolean isEnabledByDefault();
+
 }

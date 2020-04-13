@@ -46,6 +46,12 @@ public class CramMD5Mechanism extends AbstractMechanism {
     }
 
     @Override
+    public boolean isApplicable(SaslCredentialsProvider credentials) {
+        return credentials.username() != null && !credentials.username().isEmpty() &&
+               credentials.password() != null && !credentials.password().isEmpty();
+    }
+
+    @Override
     public ProtonBuffer getInitialResponse(SaslCredentialsProvider credentials) {
         return null;
     }

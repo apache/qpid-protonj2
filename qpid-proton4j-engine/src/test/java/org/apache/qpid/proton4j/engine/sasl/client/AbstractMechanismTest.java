@@ -36,5 +36,10 @@ public class AbstractMechanismTest {
         public Symbol getName() {
             return Symbol.valueOf("TEST");
         }
+
+        @Override
+        public boolean isApplicable(SaslCredentialsProvider credentials) {
+            return true;
+        }
     }
 }

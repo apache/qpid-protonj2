@@ -62,6 +62,12 @@ abstract class AbstractScramSHAMechanism extends AbstractMechanism {
     }
 
     @Override
+    public boolean isApplicable(SaslCredentialsProvider credentials) {
+        return credentials.username() != null && !credentials.username().isEmpty() &&
+               credentials.password() != null && !credentials.password().isEmpty();
+    }
+
+    @Override
     public ProtonBuffer getInitialResponse(SaslCredentialsProvider credentials) throws SaslException {
         if (state != State.INITIAL) {
             throw new SaslException("Request for initial response not expected in state " + state);

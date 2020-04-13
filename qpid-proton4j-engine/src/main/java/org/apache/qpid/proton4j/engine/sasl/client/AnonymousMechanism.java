@@ -29,4 +29,9 @@ public class AnonymousMechanism extends AbstractMechanism {
     public Symbol getName() {
         return ANONYMOUS;
     }
+
+    @Override
+    public boolean isApplicable(SaslCredentialsProvider credentials) {
+        return true;
+    }
 }
