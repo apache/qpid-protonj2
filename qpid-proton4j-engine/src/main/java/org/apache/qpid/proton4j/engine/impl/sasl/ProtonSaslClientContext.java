@@ -199,6 +199,7 @@ final class ProtonSaslClientContext extends ProtonSaslContext implements SaslCli
         public void handleMechanisms(SaslMechanisms saslMechanisms, EngineHandlerContext context) {
             if (!mechanismsReceived) {
                 serverMechanisms = saslMechanisms.getSaslServerMechanisms();
+                mechanismsReceived = true;
                 client.handleSaslMechanisms(ProtonSaslClientContext.this, getServerMechanisms());
             } else {
                 throw new ProtocolViolationException("Remote sent illegal additional SASL Mechanisms frame.");
@@ -213,6 +214,7 @@ final class ProtonSaslClientContext extends ProtonSaslContext implements SaslCli
         @Override
         public void handleChallenge(SaslChallenge saslChallenge, EngineHandlerContext context) {
             if (mechanismsReceived) {
+                responseRequired = true;
                 client.handleSaslChallenge(ProtonSaslClientContext.this, saslChallenge.getChallenge());
             } else {
                 throw new ProtocolViolationException("Remote sent unexpected SASL Challenge frame.");
