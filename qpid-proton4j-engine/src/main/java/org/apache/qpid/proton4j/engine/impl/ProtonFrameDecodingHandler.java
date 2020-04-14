@@ -37,6 +37,7 @@ import org.apache.qpid.proton4j.engine.ProtocolFrame;
 import org.apache.qpid.proton4j.engine.ProtocolFramePool;
 import org.apache.qpid.proton4j.engine.SaslFrame;
 import org.apache.qpid.proton4j.engine.exceptions.EngineFailedException;
+import org.apache.qpid.proton4j.engine.exceptions.MalformedAMQPHeaderException;
 import org.apache.qpid.proton4j.engine.exceptions.ProtocolViolationException;
 import org.apache.qpid.proton4j.engine.exceptions.ProtonException;
 import org.apache.qpid.proton4j.engine.exceptions.ProtonIOException;
@@ -93,8 +94,8 @@ public class ProtonFrameDecodingHandler implements EngineHandler, SaslPerformati
             transitionToErrorStage(new ProtonIOException(ex)).fireError(context);
         } catch (ProtonException pex) {
             transitionToErrorStage(pex).fireError(context);
-        } catch (Throwable throwable) {
-            transitionToErrorStage(new ProtonException(throwable)).fireError(context);
+        } catch (Exception error) {
+            transitionToErrorStage(new ProtonException(error)).fireError(context);
         }
     }
 
@@ -183,7 +184,12 @@ public class ProtonFrameDecodingHandler implements EngineHandler, SaslPerformati
         public void parse(EngineHandlerContext context, ProtonBuffer incoming) throws IOException {
             while (incoming.isReadable() && headerByte < AMQPHeader.HEADER_SIZE_BYTES) {
                 byte nextByte = incoming.readByte();
-                AMQPHeader.validateByte(headerByte, nextByte);
+                try {
+                    AMQPHeader.validateByte(headerByte, nextByte);
+                } catch (IllegalArgumentException iae) {
+                    throw new MalformedAMQPHeaderException(
+                        String.format("Error on validation of header byte %d with value of %d", headerByte, nextByte), iae);
+                }
                 headerBytes[headerByte++] = nextByte;
             }
 

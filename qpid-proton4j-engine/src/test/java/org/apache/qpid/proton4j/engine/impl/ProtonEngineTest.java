@@ -35,6 +35,7 @@ import org.apache.qpid.proton4j.amqp.security.SaslInit;
 import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
 import org.apache.qpid.proton4j.amqp.transport.Open;
 import org.apache.qpid.proton4j.buffer.ProtonByteBuffer;
+import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.engine.Connection;
 import org.apache.qpid.proton4j.engine.ConnectionState;
 import org.apache.qpid.proton4j.engine.Engine;
@@ -44,9 +45,11 @@ import org.apache.qpid.proton4j.engine.HeaderFrame;
 import org.apache.qpid.proton4j.engine.ProtocolFramePool;
 import org.apache.qpid.proton4j.engine.SaslFrame;
 import org.apache.qpid.proton4j.engine.Session;
+import org.apache.qpid.proton4j.engine.exceptions.EngineFailedException;
 import org.apache.qpid.proton4j.engine.exceptions.EngineNotStartedException;
 import org.apache.qpid.proton4j.engine.exceptions.EngineShutdownException;
 import org.apache.qpid.proton4j.engine.exceptions.EngineStateException;
+import org.apache.qpid.proton4j.engine.exceptions.MalformedAMQPHeaderException;
 import org.junit.Test;
 import org.mockito.Mockito;
 
@@ -1120,5 +1123,28 @@ public class ProtonEngineTest extends ProtonEngineTestSupport {
             peer.waitForScriptToComplete();
             assertNull(failure);
         }
+    }
+
+    @Test(timeout = 10_000)
+    public void testEngineFailsWithMeaningfulErrorOnNonAMQPHeaderResponse() throws EngineStateException {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result);
+        ProtonTestPeer peer = new ProtonTestPeer(engine);
+        engine.outputConsumer(peer);
+
+        peer.expectAMQPHeader().respondWithBytes(ProtonByteBufferAllocator.DEFAULT.wrap(new byte[] { 1, 2, 3, 4 }));
+
+        Connection connection = engine.start();
+        assertNotNull(connection);
+
+        try {
+            connection.negotiate();
+            fail("Should not be able to negotiate with remote");
+        } catch (EngineFailedException efe) {
+            assertTrue(efe.getCause() instanceof MalformedAMQPHeaderException);
+        }
+
+        peer.waitForScriptToCompleteIgnoreErrors();
+        assertNotNull(failure);
     }
 }
