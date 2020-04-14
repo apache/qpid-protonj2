@@ -58,7 +58,7 @@ import org.mockito.Mockito;
  */
 public class ProtonEngineTest extends ProtonEngineTestSupport {
 
-    @Test
+    @Test(timeout = 10_000)
     public void testEnginePipelineWriteFailsBeforeStart() {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
@@ -97,7 +97,7 @@ public class ProtonEngineTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test
+    @Test(timeout = 10_000)
     public void testEnginePipelineReadFailsBeforeStart() {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
@@ -136,7 +136,7 @@ public class ProtonEngineTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test
+    @Test(timeout = 10_000)
     public void testEngineStart() {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
@@ -161,7 +161,7 @@ public class ProtonEngineTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test
+    @Test(timeout = 10_000)
     public void testEngineShutdown() {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
@@ -190,7 +190,7 @@ public class ProtonEngineTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test
+    @Test(timeout = 10_000)
     public void testEngineFailure() {
         ProtonEngine engine = (ProtonEngine) EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
@@ -228,7 +228,7 @@ public class ProtonEngineTest extends ProtonEngineTestSupport {
         assertTrue(failure instanceof SaslException);
     }
 
-    @Test
+    @Test(timeout = 10_000)
     public void testEngineEmitsAMQPHeaderOnConnectionOpen() {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
@@ -255,32 +255,32 @@ public class ProtonEngineTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test
+    @Test(timeout = 10_000)
     public void testTickFailsWhenConnectionNotOpenedNoLocalIdleSet() throws EngineStateException {
         doTestTickFailsBasedOnState(false, false, false, false);
     }
 
-    @Test
+    @Test(timeout = 10_000)
     public void testTickFailsWhenConnectionNotOpenedLocalIdleSet() throws EngineStateException {
         doTestTickFailsBasedOnState(true, false, false, false);
     }
 
-    @Test
+    @Test(timeout = 10_000)
     public void testTickFailsWhenEngineIsShutdownNoLocalIdleSet() throws EngineStateException {
         doTestTickFailsBasedOnState(false, true, true, true);
     }
 
-    @Test
+    @Test(timeout = 10_000)
     public void testTickFailsWhenEngineIsShutdownLocalIdleSet() throws EngineStateException {
         doTestTickFailsBasedOnState(true, true, true, true);
     }
 
-    @Test
+    @Test(timeout = 10_000)
     public void testTickFailsWhenEngineIsShutdownButCloseNotCalledNoLocalIdleSet() throws EngineStateException {
         doTestTickFailsBasedOnState(false, true, false, true);
     }
 
-    @Test
+    @Test(timeout = 10_000)
     public void testTickFailsWhenEngineIsShutdownButCloseNotCalledLocalIdleSet() throws EngineStateException {
         doTestTickFailsBasedOnState(true, true, false, true);
     }
@@ -323,22 +323,22 @@ public class ProtonEngineTest extends ProtonEngineTestSupport {
         }
     }
 
-    @Test
+    @Test(timeout = 10_000)
     public void testAutoTickFailsWhenConnectionNotOpenedNoLocalIdleSet() throws EngineStateException {
         doTestAutoTickFailsBasedOnState(false, false, false, false);
     }
 
-    @Test
+    @Test(timeout = 10_000)
     public void testAutoTickFailsWhenConnectionNotOpenedLocalIdleSet() throws EngineStateException {
         doTestAutoTickFailsBasedOnState(true, false, false, false);
     }
 
-    @Test
+    @Test(timeout = 10_000)
     public void testAutoTickFailsWhenEngineShutdownNoLocalIdleSet() throws EngineStateException {
         doTestAutoTickFailsBasedOnState(false, true, true, true);
     }
 
-    @Test
+    @Test(timeout = 10_000)
     public void testAutoTickFailsWhenEngineShutdownLocalIdleSet() throws EngineStateException {
         doTestAutoTickFailsBasedOnState(true, true, true, true);
     }
@@ -381,7 +381,7 @@ public class ProtonEngineTest extends ProtonEngineTestSupport {
         }
     }
 
-    @Test
+    @Test(timeout = 10_000)
     public void testTickAutoPreventsDoubleInvocation() {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
@@ -411,7 +411,7 @@ public class ProtonEngineTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test
+    @Test(timeout = 10_000)
     public void testCannotCallTickAfterTickAutoCalled() {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
@@ -441,7 +441,7 @@ public class ProtonEngineTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test
+    @Test(timeout = 10_000)
     public void testTickRemoteTimeout() throws EngineStateException {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
@@ -490,7 +490,7 @@ public class ProtonEngineTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test
+    @Test(timeout = 10_000)
     public void testTickLocalTimeout() throws EngineStateException {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
@@ -533,12 +533,12 @@ public class ProtonEngineTest extends ProtonEngineTestSupport {
         assertNotNull(failure);
     }
 
-    @Test
+    @Test(timeout = 10_000)
     public void testTickWithZeroIdleTimeoutsGivesZeroDeadline() throws EngineStateException {
         doTickWithNoIdleTimeoutGivesZeroDeadlineTestImpl(true);
     }
 
-    @Test
+    @Test(timeout = 10_000)
     public void testTickWithNullIdleTimeoutsGivesZeroDeadline() throws EngineStateException {
         doTickWithNoIdleTimeoutGivesZeroDeadlineTestImpl(false);
     }
@@ -576,7 +576,7 @@ public class ProtonEngineTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test
+    @Test(timeout = 10_000)
     public void testTickWithLocalTimeout() throws EngineStateException {
         // all-positive
         doTickWithLocalTimeoutTestImpl(4000, 10000, 14000, 18000, 22000);
@@ -646,7 +646,7 @@ public class ProtonEngineTest extends ProtonEngineTestSupport {
         assertNotNull(failure);
     }
 
-    @Test
+    @Test(timeout = 10_000)
     public void testTickWithRemoteTimeout() throws EngineStateException {
         // all-positive
         doTickWithRemoteTimeoutTestImpl(4000, 10000, 14000, 18000, 22000);
@@ -717,7 +717,7 @@ public class ProtonEngineTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test
+    @Test(timeout = 10_000)
     public void testTickWithBothTimeouts() throws EngineStateException {
         // all-positive
         doTickWithBothTimeoutsTestImpl(true, 5000, 2000, 10000, 12000, 14000, 15000);
@@ -806,12 +806,12 @@ public class ProtonEngineTest extends ProtonEngineTestSupport {
         }
     }
 
-    @Test
+    @Test(timeout = 10_000)
     public void testTickWithNanoTimeDerivedValueWhichWrapsLocalThenRemote() throws EngineStateException {
         doTickWithNanoTimeDerivedValueWhichWrapsLocalThenRemoteTestImpl(false);
     }
 
-    @Test
+    @Test(timeout = 10_000)
     public void testTickWithNanoTimeDerivedValueWhichWrapsLocalThenRemoteWithLocalTimeout() throws EngineStateException {
         doTickWithNanoTimeDerivedValueWhichWrapsLocalThenRemoteTestImpl(true);
     }
@@ -885,12 +885,12 @@ public class ProtonEngineTest extends ProtonEngineTestSupport {
         }
     }
 
-    @Test
+    @Test(timeout = 10_000)
     public void testTickWithNanoTimeDerivedValueWhichWrapsRemoteThenLocal() throws EngineStateException {
         doTickWithNanoTimeDerivedValueWhichWrapsRemoteThenLocalTestImpl(false);
     }
 
-    @Test
+    @Test(timeout = 10_000)
     public void testTickWithNanoTimeDerivedValueWhichWrapsRemoteThenLocalWithLocalTimeout() throws EngineStateException {
         doTickWithNanoTimeDerivedValueWhichWrapsRemoteThenLocalTestImpl(true);
     }
@@ -966,12 +966,12 @@ public class ProtonEngineTest extends ProtonEngineTestSupport {
         }
     }
 
-    @Test
+    @Test(timeout = 10_000)
     public void testTickWithNanoTimeDerivedValueWhichWrapsBothRemoteFirst() throws EngineStateException {
         doTickWithNanoTimeDerivedValueWhichWrapsBothRemoteFirstTestImpl(false);
     }
 
-    @Test
+    @Test(timeout = 10_000)
     public void testTickWithNanoTimeDerivedValueWhichWrapsBothRemoteFirstWithLocalTimeout() throws EngineStateException {
         doTickWithNanoTimeDerivedValueWhichWrapsBothRemoteFirstTestImpl(true);
     }
@@ -1046,12 +1046,12 @@ public class ProtonEngineTest extends ProtonEngineTestSupport {
         }
     }
 
-    @Test
+    @Test(timeout = 10_000)
     public void testTickWithNanoTimeDerivedValueWhichWrapsBothLocalFirst() throws EngineStateException {
         doTickWithNanoTimeDerivedValueWhichWrapsBothLocalFirstTestImpl(false);
     }
 
-    @Test
+    @Test(timeout = 10_000)
     public void testTickWithNanoTimeDerivedValueWhichWrapsBothLocalFirstWithLocalTimeout() throws EngineStateException {
         doTickWithNanoTimeDerivedValueWhichWrapsBothLocalFirstTestImpl(true);
     }
@@ -1126,13 +1126,53 @@ public class ProtonEngineTest extends ProtonEngineTestSupport {
     }
 
     @Test(timeout = 10_000)
-    public void testEngineFailsWithMeaningfulErrorOnNonAMQPHeaderResponse() throws EngineStateException {
+    public void testEngineFailsWithMeaningfulErrorOnNonAMQPHeaderResponseBadByte1() throws EngineStateException {
+        doTestEngineFailsWithMalformedHeaderException(new byte[] { 'a', 'M', 'Q', 'P', 0, 1, 0, 0 });
+    }
+
+    @Test(timeout = 10_000)
+    public void testEngineFailsWithMeaningfulErrorOnNonAMQPHeaderResponseBadByte2() throws EngineStateException {
+        doTestEngineFailsWithMalformedHeaderException(new byte[] { 'A', 'm', 'Q', 'P', 0, 1, 0, 0 });
+    }
+
+    @Test(timeout = 10_000)
+    public void testEngineFailsWithMeaningfulErrorOnNonAMQPHeaderResponseBadByte3() throws EngineStateException {
+        doTestEngineFailsWithMalformedHeaderException(new byte[] { 'A', 'M', 'q', 'P', 0, 1, 0, 0 });
+    }
+
+    @Test(timeout = 10_000)
+    public void testEngineFailsWithMeaningfulErrorOnNonAMQPHeaderResponseBadByte4() throws EngineStateException {
+        doTestEngineFailsWithMalformedHeaderException(new byte[] { 'A', 'M', 'Q', 'p', 0, 1, 0, 0 });
+    }
+
+    @Test(timeout = 10_000)
+    public void testEngineFailsWithMeaningfulErrorOnNonAMQPHeaderResponseBadByte5() throws EngineStateException {
+        doTestEngineFailsWithMalformedHeaderException(new byte[] { 'A', 'M', 'Q', 'P', 99, 1, 0, 0 });
+    }
+
+    @Test(timeout = 10_000)
+    public void testEngineFailsWithMeaningfulErrorOnNonAMQPHeaderResponseBadByte6() throws EngineStateException {
+        doTestEngineFailsWithMalformedHeaderException(new byte[] { 'A', 'M', 'Q', 'P', 0, 99, 0, 0 });
+    }
+
+    @Test(timeout = 10_000)
+    public void testEngineFailsWithMeaningfulErrorOnNonAMQPHeaderResponseBadByte7() throws EngineStateException {
+        doTestEngineFailsWithMalformedHeaderException(new byte[] { 'A', 'M', 'Q', 'P', 0, 1, 99, 0 });
+    }
+
+    @Test(timeout = 10_000)
+    public void testEngineFailsWithMeaningfulErrorOnNonAMQPHeaderResponseBadByte8() throws EngineStateException {
+        doTestEngineFailsWithMalformedHeaderException(new byte[] { 'A', 'M', 'Q', 'P', 0, 1, 0, 99 });
+    }
+
+    private final void doTestEngineFailsWithMalformedHeaderException(byte[] headerBytes) {
+
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
         ProtonTestPeer peer = new ProtonTestPeer(engine);
         engine.outputConsumer(peer);
 
-        peer.expectAMQPHeader().respondWithBytes(ProtonByteBufferAllocator.DEFAULT.wrap(new byte[] { 1, 2, 3, 4 }));
+        peer.expectAMQPHeader().respondWithBytes(ProtonByteBufferAllocator.DEFAULT.wrap(headerBytes));
 
         Connection connection = engine.start();
         assertNotNull(connection);
