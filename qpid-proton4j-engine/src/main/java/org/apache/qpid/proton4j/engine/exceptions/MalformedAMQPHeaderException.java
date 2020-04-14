@@ -20,7 +20,7 @@ package org.apache.qpid.proton4j.engine.exceptions;
  * Exception thrown when an incoming AMQP Header response does not conform to the
  * AMQP Header specification.
  */
-public class MalformedAMQPHeaderException extends ProtonException {
+public class MalformedAMQPHeaderException extends ProtocolViolationException {
 
     private static final long serialVersionUID = 6679970155102489530L;
 
