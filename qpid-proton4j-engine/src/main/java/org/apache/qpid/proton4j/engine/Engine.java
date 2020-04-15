@@ -92,7 +92,7 @@ public interface Engine extends Consumer<ProtonBuffer> {
      * by locally closing that resource if they wish to ensure that the resource's local close event
      * handler gets signaled if that resource is not already locally closed.
      *
-     * @return this Engine
+     * @return this {@link Engine}
      */
     Engine shutdown();
 
@@ -123,7 +123,7 @@ public interface Engine extends Consumer<ProtonBuffer> {
      * @param input
      *      The data to feed into to Engine.
      *
-     * @return this Engine
+     * @return this {@link Engine}
      *
      * @throws EngineStateException if the Engine state precludes accepting new input.
      */
@@ -187,8 +187,10 @@ public interface Engine extends Consumer<ProtonBuffer> {
      *
      * @throws IllegalStateException if the {@link Engine} is already performing auto tick handling.
      * @throws EngineStateException if the Engine state precludes accepting new input.
+     *
+     * @return this {@link Engine}
      */
-    void tickAuto(ScheduledExecutorService executor) throws IllegalStateException, EngineStateException;
+    Engine tickAuto(ScheduledExecutorService executor) throws IllegalStateException, EngineStateException;
 
     /**
      * Gets the EnginePipeline for this Engine.
@@ -224,7 +226,7 @@ public interface Engine extends Consumer<ProtonBuffer> {
      * @param output
      *      The {@link ProtonBuffer} handler instance that performs IO for the engine output.
      *
-     * @return this Engine
+     * @return this {@link Engine}
      */
     Engine outputHandler(EventHandler<ProtonBuffer> output);
 
@@ -235,7 +237,7 @@ public interface Engine extends Consumer<ProtonBuffer> {
      * @param consumer
      *      The {@link ProtonBuffer} consumer instance that performs IO for the engine output.
      *
-     * @return this Engine
+     * @return this {@link Engine}
      */
     default Engine outputConsumer(Consumer<ProtonBuffer> consumer) {
         outputHandler((output) -> {
@@ -251,8 +253,19 @@ public interface Engine extends Consumer<ProtonBuffer> {
      * @param engineFailure
      *      The {@link ProtonException} handler instance that will be notified if the engine fails.
      *
-     * @return this Engine
+     * @return this {@link Engine}
      */
     Engine errorHandler(EventHandler<Throwable> engineFailure);
+
+    /**
+     * Sets a handler instance that will be notified when the engine is shut down via a call to the
+     * {@link Engine#shutdown()} method is called.
+     *
+     * @param engineShutdownEventHandler
+     *      The {@link Engine} instance that was was explicitly shut down.
+     *
+     * @return this {@link Engine}
+     */
+    Engine engineShutdownHandler(EventHandler<Engine> engineShutdownEventHandler);
 
 }

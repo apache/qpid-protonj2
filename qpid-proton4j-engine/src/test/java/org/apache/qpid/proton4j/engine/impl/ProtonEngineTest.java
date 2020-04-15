@@ -27,6 +27,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.security.sasl.SaslException;
 
@@ -178,6 +179,9 @@ public class ProtonEngineTest extends ProtonEngineTestSupport {
         assertNull(engine.failureCause());
         assertEquals(EngineState.STARTED, engine.state());
 
+        final AtomicBoolean engineShutdownEventFired = new AtomicBoolean();
+
+        engine.engineShutdownHandler(theEngine -> engineShutdownEventFired.set(true));
         engine.shutdown();
 
         assertFalse(engine.isWritable());
@@ -185,6 +189,7 @@ public class ProtonEngineTest extends ProtonEngineTestSupport {
         assertFalse(engine.isFailed());
         assertNull(engine.failureCause());
         assertEquals(EngineState.SHUTDOWN, engine.state());
+        assertTrue(engineShutdownEventFired.get());
 
         assertNotNull(connection);
         assertNull(failure);

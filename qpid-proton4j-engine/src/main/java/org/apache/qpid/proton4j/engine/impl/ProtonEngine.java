@@ -77,8 +77,9 @@ public class ProtonEngine implements Engine {
 
     // Engine event points
     private EventHandler<ProtonBuffer> outputHandler;
+    private EventHandler<Engine> engineShutdownHandler;
     private EventHandler<Throwable> engineErrorHandler = (error) -> {
-        LOG.warn("Engine encounted error and will shutdown: ", error);
+        LOG.warn("Engine encounted error and will become inoperable: ", error);
     };
 
     @Override
@@ -143,11 +144,16 @@ public class ProtonEngine implements Engine {
 
             try {
                 pipeline.fireEngineStateChanged();
-            } catch (Throwable ignored) {}
+            } catch (Exception ignored) {}
 
             try {
                 connection.handleEngineShutdown(this);
-            } catch (Throwable ignored) {}
+            } catch (Exception ignored) {
+            } finally {
+                if (engineShutdownHandler != null) {
+                    engineShutdownHandler.handle(this);
+                }
+            }
         }
 
         return this;
@@ -172,7 +178,7 @@ public class ProtonEngine implements Engine {
     }
 
     @Override
-    public void tickAuto(ScheduledExecutorService executor) throws IllegalStateException, EngineStateException {
+    public ProtonEngine tickAuto(ScheduledExecutorService executor) throws IllegalStateException, EngineStateException {
         checkShutdownOrFailed("Cannot start auto tick on an Engine that has been shutdown or failed");
 
         Objects.requireNonNull(executor);
@@ -194,6 +200,8 @@ public class ProtonEngine implements Engine {
         LOG.trace("Auto Idle Timeout Check being initiated");
         idleTimeoutExecutor = executor;
         idleTimeoutExecutor.execute(new IdleTimeoutCheck());
+
+        return this;
     }
 
     @Override
@@ -270,6 +278,16 @@ public class ProtonEngine implements Engine {
 
     EventHandler<Throwable> errorHandler() {
         return engineErrorHandler;
+    }
+
+    @Override
+    public ProtonEngine engineShutdownHandler(EventHandler<Engine> handler) {
+        this.engineShutdownHandler = handler;
+        return this;
+    }
+
+    EventHandler<Engine> engineShutdownHandler() {
+        return engineShutdownHandler;
     }
 
     @Override
