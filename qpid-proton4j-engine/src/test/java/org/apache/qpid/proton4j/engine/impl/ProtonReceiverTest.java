@@ -1824,6 +1824,97 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
     }
 
     @Test
+    public void testReceiverReportsUpdateWhenLastFrameOfMultiFrameTransferHasNoPayload() throws Exception {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result);
+        ProtonTestPeer peer = new ProtonTestPeer(engine);
+        engine.outputConsumer(peer);
+
+        String text = "test-string-for-split-frame-delivery";
+        byte[] encoded = text.getBytes(StandardCharsets.UTF_8);
+
+        Binary first = new Binary(encoded, 0, encoded.length / 2);
+        Binary second = new Binary(encoded, encoded.length / 2, encoded.length - (encoded.length / 2));
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond().withContainerId("driver");
+        peer.expectBegin().respond();
+        peer.expectAttach().respond();
+        peer.expectFlow().withLinkCredit(1);
+        peer.remoteTransfer().withDeliveryId(0)
+                             .withDeliveryTag(new byte[] {0})
+                             .withMore(true)
+                             .withMessageFormat(0)
+                             .withBody().withData(first).also().queue();
+        peer.remoteTransfer().withDeliveryId(0)
+                             .withDeliveryTag(new byte[] {0})
+                             .withMore(true)
+                             .withMessageFormat(0)
+                             .withBody().withData(second).also().queue();
+        peer.remoteTransfer().withDeliveryId(0)
+                             .withMore(true)
+                             .withMessageFormat(0)
+                             .queue();
+        peer.remoteTransfer().withDeliveryId(0)
+                             .withMore(false)
+                             .withMessageFormat(0)
+                             .queue();
+        peer.expectDetach().respond();
+
+        Connection connection = engine.start();
+
+        // Default engine should start and return a connection immediately
+        assertNotNull(connection);
+
+        connection.open();
+        Session session = connection.session();
+        session.open();
+        Receiver receiver = session.receiver("test");
+
+        final AtomicBoolean deliveryArrived = new AtomicBoolean();
+        final AtomicReference<IncomingDelivery> receivedDelivery = new AtomicReference<>();
+        final AtomicInteger deliverReads = new AtomicInteger();
+
+        receiver.deliveryReadHandler(delivery -> {
+            deliveryArrived.set(true);
+            receivedDelivery.set(delivery);
+            deliverReads.incrementAndGet();
+        });
+
+        receiver.open();
+        receiver.addCredit(1);
+
+        assertTrue("Delivery did not arrive at the receiver", deliveryArrived.get());
+        assertFalse("Delivery should not be partial", receivedDelivery.get().isPartial());
+        assertEquals("Deliver should have been read twice for two transfers", 4, deliverReads.get());
+        assertSame("Delivery should be same object as first received", receivedDelivery.get(), receivedDelivery.get());
+
+        ProtonBuffer payload = receivedDelivery.get().readAll();
+
+        assertNotNull(payload);
+
+        // We are cheating a bit here as this ins't how the encoding would normally work.
+        Data section1 = decoder.readObject(payload, decoderState, Data.class);
+        Data section2 = decoder.readObject(payload, decoderState, Data.class);
+
+        Binary data1 = section1.getValue();
+        Binary data2 = section2.getValue();
+
+        ProtonBuffer combined = ProtonByteBufferAllocator.DEFAULT.allocate(encoded.length);
+
+        combined.writeBytes(data1.asByteBuffer());
+        combined.writeBytes(data2.asByteBuffer());
+
+        assertEquals("Encoded and Decoded strings don't match", text, combined.toString(StandardCharsets.UTF_8));
+
+        receiver.close();
+
+        peer.waitForScriptToComplete();
+
+        assertNull(failure);
+    }
+
+    @Test
     public void testMultiplexMultiFrameDeliveriesOnSingleSessionIncoming() throws Exception {
         doMultiplexMultiFrameDeliveryOnSingleSessionIncomingTestImpl(true);
     }

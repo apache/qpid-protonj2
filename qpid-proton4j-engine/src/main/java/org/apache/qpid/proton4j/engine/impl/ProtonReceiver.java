@@ -347,7 +347,9 @@ public class ProtonReceiver extends ProtonLink<Receiver> implements Receiver {
             delivery.remotelySettled();
         }
 
-        delivery.appendTransferPayload(payload);
+        if (payload != null) {
+            delivery.appendTransferPayload(payload);
+        }
 
         final boolean done = transfer.getAborted() || !transfer.getMore();
         if (done) {
