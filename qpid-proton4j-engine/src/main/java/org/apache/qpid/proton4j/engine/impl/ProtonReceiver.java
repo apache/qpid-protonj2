@@ -135,6 +135,37 @@ public class ProtonReceiver extends ProtonLink<Receiver> implements Receiver {
     }
 
     @Override
+    public boolean drain(int credits) {
+        checkLinkOperable("Cannot drain Receiver");
+
+        if (drainStateSnapshot != null) {
+            throw new IllegalStateException("Drain attempt already outstanding");
+        }
+
+        final int currentCredit = getCredit();
+
+        if (credits < 0) {
+            throw new IllegalArgumentException("Cannot drain negative link credit");
+        }
+
+        if (credits < currentCredit) {
+            throw new IllegalArgumentException("Cannot drain partial link credit");
+        }
+
+        getCreditState().incrementCredit(credits - currentCredit);
+
+        if (getCredit() > 0) {
+            drainStateSnapshot = getCreditState().snapshot();
+
+            if (isLocallyOpen() && wasLocalAttachSent()) {
+                sessionWindow.writeFlow(this);
+            }
+        }
+
+        return isDraining();
+    }
+
+    @Override
     public boolean isDraining() {
         return drainStateSnapshot != null;
     }

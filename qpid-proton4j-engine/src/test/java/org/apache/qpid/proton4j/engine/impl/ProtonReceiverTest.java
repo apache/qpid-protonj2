@@ -77,12 +77,12 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
                                                                      Released.DESCRIPTOR_SYMBOL,
                                                                      Modified.DESCRIPTOR_SYMBOL };
 
-    @Test
+    @Test(timeout = 20_000)
     public void testReceiverEmitsOpenAndCloseEvents() throws Exception {
         doTestReceiverEmitsEvents(false);
     }
 
-    @Test
+    @Test(timeout = 20_000)
     public void testReceiverEmitsOpenAndDetachEvents() throws Exception {
         doTestReceiverEmitsEvents(true);
     }
@@ -151,7 +151,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test
+    @Test(timeout = 20_000)
     public void testReceiverRoutesDetachEventToCloseHandlerIfNonSset() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
@@ -197,22 +197,22 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test(timeout = 30000)
+    @Test(timeout = 20_000)
     public void testEngineShutdownEventNeitherEndClosed() throws Exception {
         doTestEngineShutdownEvent(false, false);
     }
 
-    @Test(timeout = 30000)
+    @Test(timeout = 20_000)
     public void testEngineShutdownEventLocallyClosed() throws Exception {
         doTestEngineShutdownEvent(true, false);
     }
 
-    @Test(timeout = 30000)
+    @Test(timeout = 20_000)
     public void testEngineShutdownEventRemotelyClosed() throws Exception {
         doTestEngineShutdownEvent(false, true);
     }
 
-    @Test(timeout = 30000)
+    @Test(timeout = 20_000)
     public void testEngineShutdownEventBothEndsClosed() throws Exception {
         doTestEngineShutdownEvent(true, true);
     }
@@ -268,17 +268,17 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test
+    @Test(timeout = 20_000)
     public void testReceiverOpenWithNoSenderOrReceiverSettleModes() throws Exception {
         doTestOpenReceiverWithConfiguredSenderAndReceiverSettlementModes(null, null);
     }
 
-    @Test
+    @Test(timeout = 20_000)
     public void testReceiverOpenWithSettledAndFirst() throws Exception {
         doTestOpenReceiverWithConfiguredSenderAndReceiverSettlementModes(SenderSettleMode.SETTLED, ReceiverSettleMode.FIRST);
     }
 
-    @Test
+    @Test(timeout = 20_000)
     public void testReceiverOpenWithUnsettledAndSecond() throws Exception {
         doTestOpenReceiverWithConfiguredSenderAndReceiverSettlementModes(SenderSettleMode.UNSETTLED, ReceiverSettleMode.SECOND);
     }
@@ -330,7 +330,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test
+    @Test(timeout = 20_000)
     public void testCreateReceiverAndInspectRemoteEndpoint() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
@@ -382,12 +382,12 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test(timeout = 60000)
+    @Test(timeout = 20_000)
     public void testCreateReceiverAndClose() throws Exception {
         doTestCreateReceiverAndCloseOrDetachLink(true);
     }
 
-    @Test(timeout = 60000)
+    @Test(timeout = 20_000)
     public void testCreateReceiverAndDetach() throws Exception {
         doTestCreateReceiverAndCloseOrDetachLink(false);
     }
@@ -429,7 +429,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test
+    @Test(timeout = 20_000)
     public void testReceiverOpenAndCloseAreIdempotent() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
@@ -466,7 +466,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test
+    @Test(timeout = 20_000)
     public void testEngineEmitsAttachAfterLocalReceiverOpened() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
@@ -496,7 +496,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test
+    @Test(timeout = 20_000)
     public void testOpenBeginAttachBeforeRemoteResponds() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
@@ -524,7 +524,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test
+    @Test(timeout = 20_000)
     public void testReceiverFireOpenedEventAfterRemoteAttachArrives() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
@@ -562,7 +562,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test
+    @Test(timeout = 20_000)
     public void testReceiverFireClosedEventAfterRemoteDetachArrives() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
@@ -606,22 +606,22 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test
+    @Test(timeout = 20_000)
     public void testRemotelyCloseReceiverAndOpenNewReceiverImmediatelyAfterWithNewLinkName() throws Exception {
         doTestRemotelyTerminateLinkAndThenCreateNewLink(true, false);
     }
 
-    @Test
+    @Test(timeout = 20_000)
     public void testRemotelyDetachReceiverAndOpenNewReceiverImmediatelyAfterWithNewLinkName() throws Exception {
         doTestRemotelyTerminateLinkAndThenCreateNewLink(false, false);
     }
 
-    @Test
+    @Test(timeout = 20_000)
     public void testRemotelyCloseReceiverAndOpenNewReceiverImmediatelyAfterWithSameLinkName() throws Exception {
         doTestRemotelyTerminateLinkAndThenCreateNewLink(true, true);
     }
 
-    @Test
+    @Test(timeout = 20_000)
     public void testRemotelyDetachReceiverAndOpenNewReceiverImmediatelyAfterWithSameLinkName() throws Exception {
         doTestRemotelyTerminateLinkAndThenCreateNewLink(false, true);
     }
@@ -712,7 +712,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test
+    @Test(timeout = 20_000)
     public void testReceiverFireOpenedEventAfterRemoteAttachArrivesWithNullTarget() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
@@ -753,7 +753,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test
+    @Test(timeout = 20_000)
     public void testOpenAndCloseMultipleReceivers() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
@@ -788,7 +788,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test
+    @Test(timeout = 20_000)
     public void testConnectionSignalsRemoteReceiverOpen() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
@@ -832,7 +832,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test
+    @Test(timeout = 20_000)
     public void testCannotOpenReceiverAfterSessionClosed() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
@@ -869,7 +869,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test
+    @Test(timeout = 20_000)
     public void testCannotOpenReceiverAfterSessionRemotelyClosed() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
@@ -903,7 +903,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test
+    @Test(timeout = 20_000)
     public void testOpenReceiverBeforeOpenConnection() {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
@@ -932,7 +932,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test
+    @Test(timeout = 20_000)
     public void testOpenReceiverBeforeOpenSession() {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
@@ -962,12 +962,12 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test
+    @Test(timeout = 20_000)
     public void testReceiverDetachAfterEndSent() {
         doTestReceiverCloseOrDetachAfterEndSent(false);
     }
 
-    @Test
+    @Test(timeout = 20_000)
     public void testReceiverCloseAfterEndSent() {
         doTestReceiverCloseOrDetachAfterEndSent(true);
     }
@@ -1010,12 +1010,12 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test
+    @Test(timeout = 20_000)
     public void testReceiverDetachAfterCloseSent() {
         doTestReceiverClosedOrDetachedAfterCloseSent(false);
     }
 
-    @Test
+    @Test(timeout = 20_000)
     public void testReceiverCloseAfterCloseSent() {
         doTestReceiverClosedOrDetachedAfterCloseSent(true);
     }
@@ -1058,7 +1058,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test
+    @Test(timeout = 20_000)
     public void testReceiverSendsFlowWhenCreditSet() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
@@ -1090,7 +1090,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test
+    @Test(timeout = 20_000)
     public void testReceiverSendsFlowAfterOpenedWhenCreditSetBeforeOpened() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
@@ -1122,7 +1122,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test
+    @Test(timeout = 20_000)
     public void testReceiverSendsFlowAfterConnectionOpenFinallySent() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
@@ -1153,7 +1153,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test //TODO: questionable. If its going to no-op the credit then it should perhaps not do this (open before parent) to begin with, as strange to send the attaches but not credit?
+    @Test(timeout = 20_000) //TODO: questionable. If its going to no-op the credit then it should perhaps not do this (open before parent) to begin with, as strange to send the attaches but not credit?
     public void testReceiverOmitsFlowAfterConnectionOpenFinallySentWhenAfterDetached() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
@@ -1185,7 +1185,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test(timeout=20000)
+    @Test(timeout = 20_000)
     public void testReceiverDrainAllOutstanding() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
@@ -1240,7 +1240,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test
+    @Test(timeout = 20_000)
     public void testReceiverThrowsOnAddCreditAfterConnectionClosed() throws Exception {
                 Engine engine = EngineFactory.PROTON.createNonSaslEngine();
 
@@ -1277,7 +1277,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test
+    @Test(timeout = 20_000)
     public void testReceiverThrowsOnAddCreditAfterSessionClosed() throws Exception {
                 Engine engine = EngineFactory.PROTON.createNonSaslEngine();
 
@@ -1314,7 +1314,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test
+    @Test(timeout = 20_000)
     public void testReceiverDispatchesIncomingDelivery() throws Exception {
                 Engine engine = EngineFactory.PROTON.createNonSaslEngine();
 
@@ -1361,7 +1361,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test
+    @Test(timeout = 20_000)
     public void testReceiverSendsDispostionForTransfer() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
@@ -1415,7 +1415,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test
+    @Test(timeout = 20_000)
     public void testReceiverSendsDispostionOnlyOnceForTransfer() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
@@ -1476,7 +1476,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test
+    @Test(timeout = 20_000)
     public void testReceiverSendsUpdatedDispostionsForTransferBeforeSettlement() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
@@ -1541,7 +1541,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
      * Verify that no Disposition frame is emitted by the Transport should a Delivery
      * have disposition applied after the Close frame was sent.
      */
-    @Test
+    @Test(timeout = 20_000)
     public void testDispositionNoAllowedAfterCloseSent() {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
@@ -1604,7 +1604,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test
+    @Test(timeout = 20_000)
     public void testReceiverReportsDeliveryUpdatedOnDisposition() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
@@ -1668,7 +1668,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test
+    @Test(timeout = 20_000)
     public void testReceiverReportsDeliveryUpdatedOnDispositionForMultipleTransfers() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
@@ -1740,7 +1740,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test
+    @Test(timeout = 20_000)
     public void testReceiverReportsDeliveryUpdatedNextFrameForMultiFrameTransfer() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
@@ -1823,7 +1823,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test
+    @Test(timeout = 20_000)
     public void testReceiverReportsUpdateWhenLastFrameOfMultiFrameTransferHasNoPayload() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
@@ -1914,12 +1914,12 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test
+    @Test(timeout = 20_000)
     public void testMultiplexMultiFrameDeliveriesOnSingleSessionIncoming() throws Exception {
         doMultiplexMultiFrameDeliveryOnSingleSessionIncomingTestImpl(true);
     }
 
-    @Test
+    @Test(timeout = 20_000)
     public void testMultiplexMultiFrameDeliveryOnSingleSessionIncoming() throws Exception {
         doMultiplexMultiFrameDeliveryOnSingleSessionIncomingTestImpl(false);
     }
@@ -2050,7 +2050,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test
+    @Test(timeout = 20_000)
     public void testReceiverDeliveryIdTrackingHandlesAbortedDelivery() {
         // Check aborted=true, more=false, settled=true.
         doTestReceiverDeliveryIdTrackingHandlesAbortedDelivery(false, true);
@@ -2168,7 +2168,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test
+    @Test(timeout = 20_000)
     public void testDeliveryWithIdOmittedOnContinuationTransfers() {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
@@ -2333,7 +2333,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test
+    @Test(timeout = 20_000)
     public void testDeliveryIdThresholdsAndWraps() {
         // Check start from 0
         doDeliveryIdThresholdsWrapsTestImpl(UnsignedInteger.ZERO, UnsignedInteger.ONE, UnsignedInteger.valueOf(2));
@@ -2466,12 +2466,12 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test(timeout = 20000)
+    @Test(timeout = 20_000)
     public void testReceiverFlowSentAfterAttachWrittenWhenCreditPrefilled() throws Exception {
         doTestReceiverFlowSentAfterAttachWritten(true);
     }
 
-    @Test(timeout = 20000)
+    @Test(timeout = 20_000)
     public void testReceiverFlowSentAfterAttachWrittenWhenCreditAddedBeforeAttachResponse() throws Exception {
         doTestReceiverFlowSentAfterAttachWritten(false);
     }
@@ -2523,7 +2523,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test
+    @Test(timeout = 20_000)
     public void testReceiverHandlesDeferredOpenAndBeginAttachResponses() throws Exception {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
@@ -2567,27 +2567,27 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
     }
 
-    @Test
+    @Test(timeout = 20_000)
     public void testCloseAfterShutdownDoesNotThrowExceptionOpenAndBeginWrittenAndResponseAttachWrittenAndRsponse() throws Exception {
         testCloseAfterShutdownNoOutputAndNoException(true, true, true, true);
     }
 
-    @Test
+    @Test(timeout = 20_000)
     public void testCloseAfterShutdownDoesNotThrowExceptionOpenAndBeginWrittenAndResponseAttachWrittenAndNoRsponse() throws Exception {
         testCloseAfterShutdownNoOutputAndNoException(true, true, true, false);
     }
 
-    @Test
+    @Test(timeout = 20_000)
     public void testCloseAfterShutdownDoesNotThrowExceptionOpenWrittenAndResponseBeginWrittenAndNoRsponse() throws Exception {
         testCloseAfterShutdownNoOutputAndNoException(true, true, false, false);
     }
 
-    @Test
+    @Test(timeout = 20_000)
     public void testCloseAfterShutdownDoesNotThrowExceptionOpenWrittenButNoResponse() throws Exception {
         testCloseAfterShutdownNoOutputAndNoException(true, false, false, false);
     }
 
-    @Test
+    @Test(timeout = 20_000)
     public void testCloseAfterShutdownDoesNotThrowExceptionOpenNotWritten() throws Exception {
         testCloseAfterShutdownNoOutputAndNoException(false, false, false, false);
     }
@@ -2643,27 +2643,27 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test
+    @Test(timeout = 20_000)
     public void testCloseAfterFailureThrowsEngineStateExceptionOpenAndBeginWrittenAndResponseAttachWrittenAndReponse() throws Exception {
         testCloseAfterEngineFailedThrowsAndNoOutputWritten(true, true, true, true);
     }
 
-    @Test
+    @Test(timeout = 20_000)
     public void testCloseAfterFailureThrowsEngineStateExceptionOpenAndBeginWrittenAndResponseAttachWrittenAndNoResponse() throws Exception {
         testCloseAfterEngineFailedThrowsAndNoOutputWritten(true, true, true, false);
     }
 
-    @Test
+    @Test(timeout = 20_000)
     public void testCloseAfterFailureThrowsEngineStateExceptionOpenWrittenAndResponseBeginWrittenAndNoResponse() throws Exception {
         testCloseAfterEngineFailedThrowsAndNoOutputWritten(true, true, true, false);
     }
 
-    @Test
+    @Test(timeout = 20_000)
     public void testCloseAfterFailureThrowsEngineStateExceptionOpenWrittenButNoResponse() throws Exception {
         testCloseAfterEngineFailedThrowsAndNoOutputWritten(true, false, false, false);
     }
 
-    @Test
+    @Test(timeout = 20_000)
     public void testCloseAfterFailureThrowsEngineStateExceptionOpenNotWritten() throws Exception {
         testCloseAfterEngineFailedThrowsAndNoOutputWritten(false, false, false, false);
     }
@@ -2736,12 +2736,12 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         assertNotNull(failure);
     }
 
-    @Test(timeout = 30000)
+    @Test(timeout = 20_000)
     public void testCloseReceiverWithErrorCondition() throws Exception {
         doTestCloseOrDetachWithErrorCondition(true);
     }
 
-    @Test(timeout = 30000)
+    @Test(timeout = 20_000)
     public void testDetachReceiverWithErrorCondition() throws Exception {
         doTestCloseOrDetachWithErrorCondition(false);
     }
@@ -2785,32 +2785,32 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
     }
 
-    @Test(timeout = 30000)
+    @Test(timeout = 20_000)
     public void testReceiverAddCreditFailsAfterReceiverLocallyClosed() throws Exception {
         doTestReceiverAddCreditFailsWhenLinkIsNotOperable(true, false, false);
     }
 
-    @Test(timeout = 30000)
+    @Test(timeout = 20_000)
     public void testReceiverAddCreditFailsAfterReceiverLocallyDetached() throws Exception {
         doTestReceiverAddCreditFailsWhenLinkIsNotOperable(true, false, true);
     }
 
-    @Test(timeout = 30000)
+    @Test(timeout = 20_000)
     public void testReceiverAddCreditFailsAfterReceiverRemotelyClosed() throws Exception {
         doTestReceiverAddCreditFailsWhenLinkIsNotOperable(false, true, false);
     }
 
-    @Test(timeout = 30000)
+    @Test(timeout = 20_000)
     public void testReceiverAddCreditFailsAfterReceiverRemotelyDetached() throws Exception {
         doTestReceiverAddCreditFailsWhenLinkIsNotOperable(false, true, true);
     }
 
-    @Test(timeout = 30000)
+    @Test(timeout = 20_000)
     public void testReceiverAddCreditFailsAfterReceiverFullyClosed() throws Exception {
         doTestReceiverAddCreditFailsWhenLinkIsNotOperable(true, true, false);
     }
 
-    @Test(timeout = 30000)
+    @Test(timeout = 20_000)
     public void testReceiverAddCreditFailsAfterReceiverFullyDetached() throws Exception {
         doTestReceiverAddCreditFailsWhenLinkIsNotOperable(true, true, true);
     }
@@ -2861,17 +2861,17 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test(timeout = 30000)
+    @Test(timeout = 20_000)
     public void testReceiverAddCreditFailsAfterSessionLocallyClosed() throws Exception {
         doTestReceiverAddCreditFailsWhenSessionNotOperable(true, false);
     }
 
-    @Test(timeout = 30000)
+    @Test(timeout = 20_000)
     public void testReceiverAddCreditFailsAfterSessionRemotelyClosed() throws Exception {
         doTestReceiverAddCreditFailsWhenSessionNotOperable(false, true);
     }
 
-    @Test(timeout = 30000)
+    @Test(timeout = 20_000)
     public void testReceiverAddCreditFailsAfterSessionFullyClosed() throws Exception {
         doTestReceiverAddCreditFailsWhenSessionNotOperable(true, true);
     }
@@ -2918,17 +2918,17 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test(timeout = 30000)
+    @Test(timeout = 20_000)
     public void testReceiverAddCreditFailsAfterConnectionLocallyClosed() throws Exception {
         doTestReceiverAddCreditFailsWhenConnectionNotOperable(true, false);
     }
 
-    @Test(timeout = 30000)
+    @Test(timeout = 20_000)
     public void testReceiverAddCreditFailsAfterConnectionRemotelyClosed() throws Exception {
         doTestReceiverAddCreditFailsWhenConnectionNotOperable(false, true);
     }
 
-    @Test(timeout = 30000)
+    @Test(timeout = 20_000)
     public void testReceiverAddCreditFailsAfterConnectionFullyClosed() throws Exception {
         doTestReceiverAddCreditFailsWhenConnectionNotOperable(true, true);
     }
@@ -2975,32 +2975,32 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test(timeout = 30000)
+    @Test(timeout = 20_000)
     public void testReceiverDispositionFailsAfterReceiverLocallyClosed() throws Exception {
         doTestReceiverDispositionFailsWhenLinkIsNotOperable(true, false, false);
     }
 
-    @Test(timeout = 30000)
+    @Test(timeout = 20_000)
     public void testReceiverDispositionFailsAfterReceiverLocallyDetached() throws Exception {
         doTestReceiverDispositionFailsWhenLinkIsNotOperable(true, false, true);
     }
 
-    @Test(timeout = 30000)
+    @Test(timeout = 20_000)
     public void testReceiverDispositionFailsAfterReceiverRemotelyClosed() throws Exception {
         doTestReceiverDispositionFailsWhenLinkIsNotOperable(false, true, false);
     }
 
-    @Test(timeout = 30000)
+    @Test(timeout = 20_000)
     public void testReceiverDispositionFailsAfterReceiverRemotelyDetached() throws Exception {
         doTestReceiverDispositionFailsWhenLinkIsNotOperable(false, true, true);
     }
 
-    @Test(timeout = 30000)
+    @Test(timeout = 20_000)
     public void testReceiverDispositionFailsAfterReceiverFullyClosed() throws Exception {
         doTestReceiverDispositionFailsWhenLinkIsNotOperable(true, true, false);
     }
 
-    @Test(timeout = 30000)
+    @Test(timeout = 20_000)
     public void testReceiverDispositionFailsAfterReceiverFullyDetached() throws Exception {
         doTestReceiverDispositionFailsWhenLinkIsNotOperable(true, true, true);
     }
@@ -3048,6 +3048,158 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         } catch (IllegalStateException ise) {
             // Expected
         }
+
+        peer.waitForScriptToComplete();
+
+        assertNull(failure);
+    }
+
+    @Test(timeout = 20_000)
+    public void testDrainCreditAmountLessThanCurrentCreditThrowsIAE() throws Exception {
+        doTestReceiverDrainThrowsIAEForCertainDrainAmountScenarios(10, 1);
+    }
+
+    @Test(timeout = 20_000)
+    public void testDrainOfNegativeCreditAmountThrowsIAEWhenCreditIsZero() throws Exception {
+        doTestReceiverDrainThrowsIAEForCertainDrainAmountScenarios(0, -1);
+    }
+
+    @Test(timeout = 20_000)
+    public void testDrainOfNegativeCreditAmountThrowsIAEWhenCreditIsNotZero() throws Exception {
+        doTestReceiverDrainThrowsIAEForCertainDrainAmountScenarios(10, -1);
+    }
+
+    private void doTestReceiverDrainThrowsIAEForCertainDrainAmountScenarios(int credit, int drain) throws Exception {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result);
+        ProtonTestPeer peer = new ProtonTestPeer(engine);
+        engine.outputConsumer(peer);
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond().withContainerId("driver");
+        peer.expectBegin().respond();
+        peer.expectAttach().respond();
+
+        if (credit > 0) {
+            peer.expectFlow().withDrain(false).withLinkCredit(credit);
+        }
+
+        Connection connection = engine.start().open();
+        Session session = connection.session().open();
+        Receiver receiver = session.receiver("test").open().addCredit(credit);
+
+        peer.waitForScriptToComplete();
+
+        // Check that calling drain sends flow, and calls handler on response draining all credit
+        AtomicBoolean handlerCalled = new AtomicBoolean();
+        receiver.creditStateUpdateHandler(x -> {
+            handlerCalled.set(true);
+        });
+
+        try {
+            receiver.drain(drain);
+            fail("Should not be able to drain given amount");
+        } catch (IllegalArgumentException iae) {}
+
+        peer.waitForScriptToComplete();
+        assertFalse("Handler was called when no flow expected", handlerCalled.get());
+
+        peer.expectDetach().respond();
+        receiver.close();
+
+        peer.waitForScriptToComplete();
+
+        assertNull(failure);
+    }
+
+    @Test(timeout = 20_000)
+    public void testDrainRequestWithNoCreditPendingAndAmountRequestedAsZero() throws Exception {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result);
+        ProtonTestPeer peer = new ProtonTestPeer(engine);
+        engine.outputConsumer(peer);
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond().withContainerId("driver");
+        peer.expectBegin().respond();
+        peer.expectAttach().respond();
+
+        Connection connection = engine.start();
+
+        // Default engine should start and return a connection immediately
+        assertNotNull(connection);
+
+        connection.open();
+        Session session = connection.session();
+        session.open();
+        Receiver receiver = session.receiver("test");
+        receiver.open();
+
+        peer.waitForScriptToComplete();
+
+        // Check that calling drain sends flow, and calls handler on response draining all credit
+        AtomicBoolean handlerCalled = new AtomicBoolean();
+        receiver.creditStateUpdateHandler(x -> {
+            handlerCalled.set(true);
+        });
+
+        assertFalse(receiver.drain(0));
+
+        peer.waitForScriptToComplete();
+        assertFalse("Handler was not called", handlerCalled.get());
+
+        peer.expectDetach().respond();
+        receiver.close();
+
+        peer.waitForScriptToComplete();
+
+        assertNull(failure);
+    }
+
+    @Test(timeout = 20_000)
+    public void testReceiverDrainWithCreditsWhenNoCreditOutstanding() throws Exception {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result);
+        ProtonTestPeer peer = new ProtonTestPeer(engine);
+        engine.outputConsumer(peer);
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond().withContainerId("driver");
+        peer.expectBegin().respond();
+        peer.expectAttach().respond();
+
+        Connection connection = engine.start();
+
+        // Default engine should start and return a connection immediately
+        assertNotNull(connection);
+
+        connection.open();
+        Session session = connection.session();
+        session.open();
+        Receiver receiver = session.receiver("test");
+        receiver.open();
+
+        peer.waitForScriptToComplete();
+
+        final int drainAmount = 100;
+
+        // Check that calling drain sends flow, and calls handler on response draining all credit
+        AtomicBoolean handlerCalled = new AtomicBoolean();
+        receiver.creditStateUpdateHandler(x -> {
+            handlerCalled.set(true);
+        });
+
+        peer.expectFlow().withDrain(true).withLinkCredit(drainAmount).withDeliveryCount(0)
+                         .respond()
+                         .withDrain(true).withLinkCredit(0).withDeliveryCount(drainAmount);
+
+        receiver.drain(drainAmount);
+
+        peer.waitForScriptToComplete();
+        assertTrue("Handler was not called", handlerCalled.get());
+
+        peer.expectDetach().respond();
+        receiver.close();
 
         peer.waitForScriptToComplete();
 

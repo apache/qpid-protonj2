@@ -36,7 +36,6 @@ public interface Receiver extends Link<Receiver> {
      * @return this {@link Receiver}
      *
      * @throws IllegalArgumentException if the credit amount is negative.
-     * @throws IllegalStateException if the Receiver is not open.
      */
     Receiver addCredit(int additionalCredit);
 
@@ -47,7 +46,23 @@ public interface Receiver extends Link<Receiver> {
      *
      * @throws IllegalStateException if an existing drain attempt is incomplete.
      */
-    boolean drain() throws IllegalStateException;
+    boolean drain();
+
+    /**
+     * Initiate a drain of the given credit from this this {@link Receiver} link.  If the credit
+     * given is greater than the current link credit the current credit is increased, however if
+     * the amount of credit given is less that the current amount of link credit an exception is
+     * thrown.
+     *
+     * @param credit
+     *      The amount of credit that should be requested to be drained from this link.
+     *
+     * @return true if a drain was started or false if the value is zero and the link had no credit.
+     *
+     * @throws IllegalStateException if an existing drain attempt is incomplete.
+     * @throws IllegalArgumentException if the credit value given is less than the current value.
+     */
+    boolean drain(int credit);
 
     /**
      * Configures a default DeliveryState to be used if a received delivery is settled/freed
