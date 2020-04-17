@@ -59,7 +59,7 @@ public final class DataTypeDecoder extends AbstractDescribedTypeDecoder<Data> {
 
         switch (encodingCode) {
             case EncodingCodes.VBIN8:
-                size = buffer.readByte();
+                size = buffer.readByte() & 0xFF;
                 break;
             case EncodingCodes.VBIN32:
                 size = buffer.readInt();

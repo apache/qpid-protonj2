@@ -30,7 +30,9 @@ import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.ObjectOutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.UUID;
@@ -45,9 +47,12 @@ import org.apache.qpid.proton4j.amqp.UnsignedInteger;
 import org.apache.qpid.proton4j.amqp.driver.ProtonTestPeer;
 import org.apache.qpid.proton4j.amqp.messaging.Accepted;
 import org.apache.qpid.proton4j.amqp.messaging.Data;
+import org.apache.qpid.proton4j.amqp.messaging.MessageAnnotations;
 import org.apache.qpid.proton4j.amqp.messaging.Modified;
+import org.apache.qpid.proton4j.amqp.messaging.Properties;
 import org.apache.qpid.proton4j.amqp.messaging.Rejected;
 import org.apache.qpid.proton4j.amqp.messaging.Released;
+import org.apache.qpid.proton4j.amqp.messaging.Section;
 import org.apache.qpid.proton4j.amqp.messaging.Source;
 import org.apache.qpid.proton4j.amqp.messaging.Target;
 import org.apache.qpid.proton4j.amqp.transport.ErrorCondition;
@@ -64,6 +69,7 @@ import org.apache.qpid.proton4j.engine.LinkState;
 import org.apache.qpid.proton4j.engine.Receiver;
 import org.apache.qpid.proton4j.engine.Session;
 import org.apache.qpid.proton4j.engine.exceptions.EngineFailedException;
+import org.apache.qpid.proton4j.engine.util.SimplePojo;
 import org.hamcrest.Matcher;
 import org.junit.Test;
 
@@ -3200,6 +3206,102 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
 
         peer.expectDetach().respond();
         receiver.close();
+
+        peer.waitForScriptToComplete();
+
+        assertNull(failure);
+    }
+
+    @Test // (timeout = 20_000)
+    public void testReceiveComplexEndodedAMQPMessageAndDecode() throws IOException {
+        final Symbol SERIALIZED_JAVA_OBJECT_CONTENT_TYPE = Symbol.valueOf("application/x-java-serialized-object");
+        final Symbol JMS_MSG_TYPE = Symbol.valueOf("x-opt-jms-msg-type");
+
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result);
+        ProtonTestPeer peer = new ProtonTestPeer(engine);
+        engine.outputConsumer(peer);
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond().withContainerId("driver");
+        peer.expectBegin().respond();
+        peer.expectAttach().respond();
+        peer.expectFlow().withDrain(false).withLinkCredit(1);
+
+        Connection connection = engine.start().open();
+        Session session = connection.session().open();
+        Receiver receiver = session.receiver("test").open().addCredit(1);
+
+        peer.waitForScriptToComplete();
+
+        final AtomicReference<IncomingDelivery> received = new AtomicReference<>();
+        receiver.deliveryReadHandler(delivery -> {
+            received.set(delivery);
+
+            delivery.disposition(Accepted.getInstance(), true);
+        });
+
+        SimplePojo expectedContent = new SimplePojo(UUID.randomUUID());
+
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        ObjectOutputStream oos = new ObjectOutputStream(baos);
+        oos.writeObject(expectedContent);
+        oos.flush();
+        oos.close();
+        byte[] bytes = baos.toByteArray();
+
+        peer.expectDisposition().withState(Accepted.getInstance()).withSettled(true);
+        peer.remoteTransfer().withDeliveryTag(new byte[] {0})
+                             .withDeliveryId(0)
+                             .withProperties().withContentType(SERIALIZED_JAVA_OBJECT_CONTENT_TYPE).also()
+                             .withMessageAnnotations().withAnnotation("x-opt-jms-msg-type", (byte) 1).also()
+                             .withBody().withData(new Binary(bytes)).also()
+                             .now();
+
+        peer.waitForScriptToComplete();
+
+        assertNotNull(received.get());
+
+        ProtonBuffer buffer = received.get().readAll();
+
+        MessageAnnotations annotations;
+        Properties properties;
+        Section body;
+
+        try {
+            annotations = (MessageAnnotations) decoder.readObject(buffer, decoderState);
+            assertNotNull(annotations);
+            assertTrue(annotations.getValue().containsKey(JMS_MSG_TYPE));
+        } catch (Exception ex) {
+            fail("Should not encouter error on decode of MessageAnnotations: " + ex);
+        } finally {
+            decoderState.reset();
+        }
+
+        try {
+            properties = (Properties) decoder.readObject(buffer, decoderState);
+            assertNotNull(properties);
+            assertEquals(SERIALIZED_JAVA_OBJECT_CONTENT_TYPE.toString(), properties.getContentType());
+        } catch (Exception ex) {
+            fail("Should not encouter error on decode of Properties: " + ex);
+        } finally {
+            decoderState.reset();
+        }
+
+        try {
+            body = (Section) decoder.readObject(buffer, decoderState);
+            assertNotNull(body);
+            assertTrue(body instanceof Data);
+            Data payload = (Data) body;
+            assertEquals(bytes.length, payload.getValue().getLength());
+        } catch (Exception ex) {
+            fail("Should not encouter error on decode of Body section: " + ex);
+        } finally {
+            decoderState.reset();
+        }
+
+        peer.expectClose().respond();
+        connection.close();
 
         peer.waitForScriptToComplete();
 

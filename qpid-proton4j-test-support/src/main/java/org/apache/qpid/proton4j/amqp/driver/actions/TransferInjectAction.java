@@ -316,12 +316,12 @@ public final class TransferInjectAction extends AbstractPerformativeInjectAction
 
     public final class DeliveryAnnotationsBuilder extends SectionBuilder {
 
-        DeliveryAnnotationsBuilder withAnnotation(String key, Object value) {
+        public DeliveryAnnotationsBuilder withAnnotation(String key, Object value) {
             getOrCreateDeliveryAnnotations().setSymbolKeyedAnnotation(key, value);
             return this;
         }
 
-        DeliveryAnnotationsBuilder withAnnotation(Symbol key, Object value) {
+        public DeliveryAnnotationsBuilder withAnnotation(Symbol key, Object value) {
             getOrCreateDeliveryAnnotations().setSymbolKeyedAnnotation(key, value);
             return this;
         }
@@ -329,12 +329,12 @@ public final class TransferInjectAction extends AbstractPerformativeInjectAction
 
     public final class MessageAnnotationsBuilder extends SectionBuilder {
 
-        MessageAnnotationsBuilder withAnnotation(String key, Object value) {
+        public MessageAnnotationsBuilder withAnnotation(String key, Object value) {
             getOrCreateMessageAnnotations().setSymbolKeyedAnnotation(key, value);
             return this;
         }
 
-        MessageAnnotationsBuilder withAnnotation(Symbol key, Object value) {
+        public MessageAnnotationsBuilder withAnnotation(Symbol key, Object value) {
             getOrCreateMessageAnnotations().setSymbolKeyedAnnotation(key, value);
             return this;
         }
@@ -342,67 +342,77 @@ public final class TransferInjectAction extends AbstractPerformativeInjectAction
 
     public final class PropertiesBuilder extends SectionBuilder {
 
-        PropertiesBuilder withMessageId(Object value) {
+        public PropertiesBuilder withMessageId(Object value) {
             getOrCreateProperties().setMessageId(value);
             return this;
         }
 
-        PropertiesBuilder withUserID(Binary value) {
+        public PropertiesBuilder withUserID(Binary value) {
             getOrCreateProperties().setUserId(value);
             return this;
         }
 
-        PropertiesBuilder withTo(String value) {
+        public PropertiesBuilder withTo(String value) {
             getOrCreateProperties().setTo(value);
             return this;
         }
 
-        PropertiesBuilder withSubject(String value) {
+        public PropertiesBuilder withSubject(String value) {
             getOrCreateProperties().setSubject(value);
             return this;
         }
 
-        PropertiesBuilder withReplyTp(String value) {
+        public PropertiesBuilder withReplyTp(String value) {
             getOrCreateProperties().setReplyTo(value);
             return this;
         }
 
-        PropertiesBuilder withCorrelationId(Object value) {
+        public PropertiesBuilder withCorrelationId(Object value) {
             getOrCreateProperties().setCorrelationId(value);
             return this;
         }
 
-        PropertiesBuilder withContentType(String value) {
+        public PropertiesBuilder withContentType(String value) {
             getOrCreateProperties().setContentType(Symbol.valueOf(value));
             return this;
         }
 
-        PropertiesBuilder withContentEncoding(String value) {
+        public PropertiesBuilder withContentType(Symbol value) {
+            getOrCreateProperties().setContentType(value);
+            return this;
+        }
+
+        public PropertiesBuilder withContentEncoding(String value) {
             getOrCreateProperties().setContentEncoding(Symbol.valueOf(value));
             return this;
         }
 
-        PropertiesBuilder withAbsoluteExpiryTime(long value) {
+        public PropertiesBuilder withContentEncoding(Symbol value) {
+            getOrCreateProperties().setContentEncoding(value);
+            return this;
+        }
+
+        public PropertiesBuilder withAbsoluteExpiryTime(long value) {
             getOrCreateProperties().setAbsoluteExpiryTime(new Date(value));
             return this;
         }
 
-        PropertiesBuilder withCreationTime(long value) {
+        public PropertiesBuilder withCreationTime(long value) {
             getOrCreateProperties().setCreationTime(new Date(value));
             return this;
         }
 
-        PropertiesBuilder withGroupId(String value) {
+        public PropertiesBuilder withGroupId(String value) {
             getOrCreateProperties().setGroupId(value);
             return this;
         }
 
-        PropertiesBuilder withGroupSequence(long value) {
+        public PropertiesBuilder withGroupSequence(long value) {
             getOrCreateProperties().setGroupSequence(UnsignedInteger.valueOf(value));
             return this;
         }
 
-        PropertiesBuilder withReplyToGroupId(String value) {
+        public PropertiesBuilder withReplyToGroupId(String value) {
             getOrCreateProperties().setReplyToGroupId(value);
             return this;
         }
@@ -410,7 +420,7 @@ public final class TransferInjectAction extends AbstractPerformativeInjectAction
 
     public final class ApplicationPropertiesBuilder extends SectionBuilder {
 
-        ApplicationPropertiesBuilder withApplicationProperty(String key, Object value) {
+        public ApplicationPropertiesBuilder withApplicationProperty(String key, Object value) {
             getOrCreateApplicationProperties().setApplicationProperty(key, value);
             return this;
         }
@@ -441,7 +451,7 @@ public final class TransferInjectAction extends AbstractPerformativeInjectAction
 
     public final class FooterBuilder extends SectionBuilder {
 
-        FooterBuilder withFooter(Object key, Object value) {
+        public FooterBuilder withFooter(Object key, Object value) {
             getOrCreateFooter().setFooterProperty(key, value);
             return this;
         }

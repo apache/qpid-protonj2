@@ -22,7 +22,10 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.ObjectOutputStream;
+import java.util.UUID;
 
 import org.apache.qpid.proton4j.amqp.Binary;
 import org.apache.qpid.proton4j.amqp.messaging.Data;
@@ -34,6 +37,7 @@ import org.apache.qpid.proton4j.codec.EncodingCodes;
 import org.apache.qpid.proton4j.codec.TypeDecoder;
 import org.apache.qpid.proton4j.codec.decoders.messaging.DataTypeDecoder;
 import org.apache.qpid.proton4j.codec.encoders.messaging.DataTypeEncoder;
+import org.apache.qpid.proton4j.codec.util.SimplePojo;
 import org.junit.Test;
 
 public class DataTypeCodecTest extends CodecTestSupport {
@@ -86,6 +90,29 @@ public class DataTypeCodecTest extends CodecTestSupport {
 
             assertEquals(data.getValue(), decoded.getValue());
         }
+    }
+
+    @Test
+    public void testDecodeDataWithPayloadInUpperBoundsOfSmallBinaryEncoding() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        final int SIZE = 240;
+
+        Data data = new Data(new Binary(new byte[SIZE]));
+        for (int i = 0; i < SIZE; ++i) {
+            data.getValue().getArray()[i] = (byte) i;
+        }
+
+        encoder.writeObject(buffer, encoderState, data);
+
+        final Object result = decoder.readObject(buffer, decoderState);
+
+        assertNotNull(result);
+        assertTrue(result instanceof Data);
+
+        Data decoded = (Data) result;
+
+        assertEquals(data.getValue(), decoded.getValue());
     }
 
     @Test
@@ -204,6 +231,28 @@ public class DataTypeCodecTest extends CodecTestSupport {
             typeDecoder.skipValue(buffer, decoderState);
             fail("Should not be able to skip type with invalid encoding");
         } catch (IOException ex) {}
+    }
+
+    @Test
+    public void testDecodeSerializedTypeFromDataSection() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        SimplePojo expectedContent = new SimplePojo(UUID.randomUUID());
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        ObjectOutputStream oos = new ObjectOutputStream(baos);
+        oos.writeObject(expectedContent);
+        oos.flush();
+        oos.close();
+        byte[] bytes = baos.toByteArray();
+
+        encoder.writeObject(buffer, encoderState, new Binary(bytes));
+
+        final Object result = decoder.readObject(buffer, decoderState);
+
+        assertNotNull(result);
+        assertTrue(result instanceof Binary);
+        Binary binary = (Binary) result;
+        assertEquals(bytes.length, binary.getLength());
     }
 
     @Test
