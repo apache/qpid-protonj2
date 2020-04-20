@@ -89,6 +89,75 @@ public class OpenTypeCodecTest extends CodecTestSupport {
     }
 
     @Test
+    public void testOpenEncodesDefaultMaxFrameSizeWhenSet() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        final Open input = new Open();
+
+        encoder.writeObject(buffer, encoderState, input);
+
+        final Open resultWithDefault = (Open) decoder.readObject(buffer, decoderState);
+
+        assertFalse(resultWithDefault.hasMaxFrameSize());
+        assertEquals(UnsignedInteger.MAX_VALUE.longValue(), resultWithDefault.getMaxFrameSize());
+
+        input.setMaxFrameSize(UnsignedInteger.MAX_VALUE.longValue());
+
+        encoder.writeObject(buffer, encoderState, input);
+
+        final Open result = (Open) decoder.readObject(buffer, decoderState);
+
+        assertTrue(result.hasMaxFrameSize());
+        assertEquals(UnsignedInteger.MAX_VALUE.longValue(), result.getMaxFrameSize());
+    }
+
+    @Test
+    public void testOpenEncodesDefaultIdleTimeoutWhenSet() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        final Open input = new Open();
+
+        encoder.writeObject(buffer, encoderState, input);
+
+        final Open resultWithDefault = (Open) decoder.readObject(buffer, decoderState);
+
+        assertFalse(resultWithDefault.hasIdleTimeout());
+        assertEquals(UnsignedInteger.ZERO.longValue(), resultWithDefault.getIdleTimeOut());
+
+        input.setIdleTimeOut(UnsignedInteger.ZERO.longValue());
+
+        encoder.writeObject(buffer, encoderState, input);
+
+        final Open result = (Open) decoder.readObject(buffer, decoderState);
+
+        assertTrue(result.hasIdleTimeout());
+        assertEquals(UnsignedInteger.ZERO.longValue(), result.getIdleTimeOut());
+    }
+
+    @Test
+    public void testOpenEncodesDefaultChannelMaxWhenSet() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        final Open input = new Open();
+
+        encoder.writeObject(buffer, encoderState, input);
+
+        final Open resultWithDefault = (Open) decoder.readObject(buffer, decoderState);
+
+        assertFalse(resultWithDefault.hasChannelMax());
+        assertEquals(UnsignedShort.MAX_VALUE.intValue(), resultWithDefault.getChannelMax());
+
+        input.setChannelMax(UnsignedShort.MAX_VALUE.intValue());
+
+        encoder.writeObject(buffer, encoderState, input);
+
+        final Open result = (Open) decoder.readObject(buffer, decoderState);
+
+        assertTrue(result.hasChannelMax());
+        assertEquals(UnsignedShort.MAX_VALUE.intValue(), result.getChannelMax());
+    }
+
+    @Test
     public void testEncodeAndDecodeOpenWithMaxMaxFrameSize() throws IOException {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
 

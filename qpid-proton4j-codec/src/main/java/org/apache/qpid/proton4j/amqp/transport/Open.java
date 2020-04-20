@@ -187,8 +187,6 @@ public final class Open implements Performative {
     public Open setMaxFrameSize(long maxFrameSize) {
         if (maxFrameSize < 0 || maxFrameSize > UINT_MAX) {
             throw new IllegalArgumentException("The Max Frame size value given is out of range: " + maxFrameSize);
-        } else if (UnsignedInteger.MAX_VALUE.compareTo(maxFrameSize) == 0) {
-            modified &= ~MAX_FRAME_SIZE;
         } else {
             modified |= MAX_FRAME_SIZE;
         }
@@ -204,8 +202,6 @@ public final class Open implements Performative {
     public Open setChannelMax(int channelMax) {
         if (channelMax < 0 || channelMax > UnsignedShort.MAX_VALUE.intValue()) {
             throw new IllegalArgumentException("The Channel Max value given is out of range: " + channelMax);
-        } else if (UnsignedShort.MAX_VALUE.compareTo((short) channelMax) == 0) {
-            modified &= ~CHANNEL_MAX;
         } else {
             modified |= CHANNEL_MAX;
         }
