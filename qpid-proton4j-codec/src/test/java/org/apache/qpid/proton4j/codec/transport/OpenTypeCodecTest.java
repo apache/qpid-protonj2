@@ -71,7 +71,7 @@ public class OpenTypeCodecTest extends CodecTestSupport {
         input.setHostname("localhost");
         input.setChannelMax(UnsignedShort.valueOf(512).intValue());
         input.setMaxFrameSize(UnsignedInteger.ONE.longValue());
-        input.setIdleTimeOut(UnsignedInteger.ZERO.longValue());
+        input.setIdleTimeout(UnsignedInteger.ZERO.longValue());
         input.setOfferedCapabilities(offeredCapabilities);
         input.setDesiredCapabilities(desiredCapabilities);
 
@@ -83,7 +83,7 @@ public class OpenTypeCodecTest extends CodecTestSupport {
         assertEquals("localhost", result.getHostname());
         assertEquals(UnsignedShort.valueOf(512).intValue(), result.getChannelMax());
         assertEquals(UnsignedInteger.ONE.longValue(), result.getMaxFrameSize());
-        assertEquals(UnsignedInteger.ZERO.longValue(), result.getIdleTimeOut());
+        assertEquals(UnsignedInteger.ZERO.longValue(), result.getIdleTimeout());
         assertArrayEquals(offeredCapabilities, result.getOfferedCapabilities());
         assertArrayEquals(desiredCapabilities, result.getDesiredCapabilities());
     }
@@ -122,16 +122,16 @@ public class OpenTypeCodecTest extends CodecTestSupport {
         final Open resultWithDefault = (Open) decoder.readObject(buffer, decoderState);
 
         assertFalse(resultWithDefault.hasIdleTimeout());
-        assertEquals(UnsignedInteger.ZERO.longValue(), resultWithDefault.getIdleTimeOut());
+        assertEquals(UnsignedInteger.ZERO.longValue(), resultWithDefault.getIdleTimeout());
 
-        input.setIdleTimeOut(UnsignedInteger.ZERO.longValue());
+        input.setIdleTimeout(UnsignedInteger.ZERO.longValue());
 
         encoder.writeObject(buffer, encoderState, input);
 
         final Open result = (Open) decoder.readObject(buffer, decoderState);
 
         assertTrue(result.hasIdleTimeout());
-        assertEquals(UnsignedInteger.ZERO.longValue(), result.getIdleTimeOut());
+        assertEquals(UnsignedInteger.ZERO.longValue(), result.getIdleTimeout());
     }
 
     @Test
@@ -188,7 +188,7 @@ public class OpenTypeCodecTest extends CodecTestSupport {
         close.setHostname("google");
         close.setChannelMax(UnsignedShort.valueOf(256).intValue());
         close.setMaxFrameSize(UnsignedInteger.ZERO.longValue());
-        close.setIdleTimeOut(UnsignedInteger.ONE.longValue());
+        close.setIdleTimeout(UnsignedInteger.ONE.longValue());
 
         for (int i = 0; i < 10; ++i) {
             encoder.writeObject(buffer, encoderState, close);
@@ -198,7 +198,7 @@ public class OpenTypeCodecTest extends CodecTestSupport {
         close.setHostname("localhost");
         close.setChannelMax(UnsignedShort.valueOf(512).intValue());
         close.setMaxFrameSize(UnsignedInteger.ONE.longValue());
-        close.setIdleTimeOut(UnsignedInteger.ZERO.longValue());
+        close.setIdleTimeout(UnsignedInteger.ZERO.longValue());
 
         encoder.writeObject(buffer, encoderState, close);
 
@@ -218,7 +218,7 @@ public class OpenTypeCodecTest extends CodecTestSupport {
         assertEquals("localhost", value.getHostname());
         assertEquals(UnsignedShort.valueOf(512).intValue(), value.getChannelMax());
         assertEquals(UnsignedInteger.ONE.longValue(), value.getMaxFrameSize());
-        assertEquals(UnsignedInteger.ZERO.longValue(), value.getIdleTimeOut());
+        assertEquals(UnsignedInteger.ZERO.longValue(), value.getIdleTimeout());
         assertNull(value.getOfferedCapabilities());
         assertNull(value.getDesiredCapabilities());
     }
@@ -235,7 +235,7 @@ public class OpenTypeCodecTest extends CodecTestSupport {
         input.setContainerId("test");
         input.setHostname("localhost");
         input.setMaxFrameSize(UnsignedInteger.ONE.longValue());
-        input.setIdleTimeOut(UnsignedInteger.ZERO.longValue());
+        input.setIdleTimeout(UnsignedInteger.ZERO.longValue());
         input.setOfferedCapabilities(offeredCapabilities);
         input.setDesiredCapabilities(desiredCapabilities);
 
@@ -258,7 +258,7 @@ public class OpenTypeCodecTest extends CodecTestSupport {
         input.setContainerId("test");
         input.setHostname("localhost");
         input.setMaxFrameSize(UnsignedInteger.MAX_VALUE.longValue());
-        input.setIdleTimeOut(UnsignedInteger.ZERO.longValue());
+        input.setIdleTimeout(UnsignedInteger.ZERO.longValue());
         input.setOfferedCapabilities(offeredCapabilities);
         input.setDesiredCapabilities(desiredCapabilities);
 
@@ -352,10 +352,10 @@ public class OpenTypeCodecTest extends CodecTestSupport {
         Open open = new Open();
 
         assertFalse(open.hasIdleTimeout());
-        assertEquals(0, open.getIdleTimeOut());
-        open.setIdleTimeOut(1024);
+        assertEquals(0, open.getIdleTimeout());
+        open.setIdleTimeout(1024);
         assertTrue(open.hasIdleTimeout());
-        assertEquals(1024, open.getIdleTimeOut());
+        assertEquals(1024, open.getIdleTimeout());
     }
 
     @Test
@@ -447,7 +447,7 @@ public class OpenTypeCodecTest extends CodecTestSupport {
         open.setHostname("localhost");
         open.setMaxFrameSize(1024);
         open.setChannelMax(64);
-        open.setIdleTimeOut(360000);
+        open.setIdleTimeout(360000);
         open.setOutgoingLocales(outgoingLocale);
         open.setIncomingLocales(incomingLocale);
         open.setOfferedCapabilities(offeredCapability);
@@ -462,7 +462,7 @@ public class OpenTypeCodecTest extends CodecTestSupport {
         assertEquals("localhost", open.getHostname());
         assertEquals(1024, open.getMaxFrameSize());
         assertEquals(64, open.getChannelMax());
-        assertEquals(360000, open.getIdleTimeOut());
+        assertEquals(360000, open.getIdleTimeout());
         assertArrayEquals(new Symbol[] { Symbol.valueOf("outgoing") }, open.getOutgoingLocales());
         assertArrayEquals(new Symbol[] { Symbol.valueOf("incoming") }, open.getIncomingLocales());
         assertArrayEquals(new Symbol[] { Symbol.valueOf("offered") }, open.getOfferedCapabilities());
@@ -483,7 +483,7 @@ public class OpenTypeCodecTest extends CodecTestSupport {
         assertEquals("localhost", open.getHostname());
         assertEquals(1024, open.getMaxFrameSize());
         assertEquals(64, open.getChannelMax());
-        assertEquals(360000, open.getIdleTimeOut());
+        assertEquals(360000, open.getIdleTimeout());
         assertNull(open.getOutgoingLocales());
         assertNull(open.getIncomingLocales());
         assertNull(open.getOfferedCapabilities());
@@ -568,9 +568,9 @@ public class OpenTypeCodecTest extends CodecTestSupport {
         array[1] = new Open();
         array[2] = new Open();
 
-        array[0].setHostname("1").setIdleTimeOut(1).setMaxFrameSize(1);
-        array[1].setHostname("2").setIdleTimeOut(2).setMaxFrameSize(2);
-        array[2].setHostname("3").setIdleTimeOut(3).setMaxFrameSize(3);
+        array[0].setHostname("1").setIdleTimeout(1).setMaxFrameSize(1);
+        array[1].setHostname("2").setIdleTimeout(2).setMaxFrameSize(2);
+        array[2].setHostname("3").setIdleTimeout(3).setMaxFrameSize(3);
 
         encoder.writeObject(buffer, encoderState, array);
 
@@ -585,7 +585,7 @@ public class OpenTypeCodecTest extends CodecTestSupport {
             assertNotNull(resultArray[i]);
             assertTrue(resultArray[i] instanceof Open);
             assertEquals(array[i].getHostname(), resultArray[i].getHostname());
-            assertEquals(array[i].getIdleTimeOut(), resultArray[i].getIdleTimeOut());
+            assertEquals(array[i].getIdleTimeout(), resultArray[i].getIdleTimeout());
             assertEquals(array[i].getMaxFrameSize(), resultArray[i].getMaxFrameSize());
         }
     }

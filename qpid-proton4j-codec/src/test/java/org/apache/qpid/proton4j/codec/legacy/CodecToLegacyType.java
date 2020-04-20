@@ -163,7 +163,7 @@ public abstract class CodecToLegacyType {
             legacyOpen.setChannelMax(org.apache.qpid.proton.amqp.UnsignedShort.valueOf((short) open.getChannelMax()));
         }
         if (open.hasIdleTimeout()) {
-            legacyOpen.setIdleTimeOut(org.apache.qpid.proton.amqp.UnsignedInteger.valueOf(open.getIdleTimeOut()));
+            legacyOpen.setIdleTimeOut(org.apache.qpid.proton.amqp.UnsignedInteger.valueOf(open.getIdleTimeout()));
         }
         if (open.getOutgoingLocales() != null) {
             legacyOpen.setOutgoingLocales(convertToLegacyType(open.getOutgoingLocales()));

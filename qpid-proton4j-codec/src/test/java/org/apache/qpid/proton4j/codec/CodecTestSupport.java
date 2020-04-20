@@ -84,7 +84,7 @@ public class CodecTestSupport {
         Assert.assertEquals("Channel max values not equal", open1.getChannelMax(), open2.getChannelMax());
         Assert.assertEquals("Container Id values not equal", open1.getContainerId(), open2.getContainerId());
         Assert.assertEquals("Hostname values not equal", open1.getHostname(), open2.getHostname());
-        Assert.assertEquals("Idle timeout values not equal", open1.getIdleTimeOut(), open2.getIdleTimeOut());
+        Assert.assertEquals("Idle timeout values not equal", open1.getIdleTimeout(), open2.getIdleTimeout());
         Assert.assertEquals("Max Frame Size values not equal", open1.getMaxFrameSize(), open2.getMaxFrameSize());
         Assert.assertEquals("Properties Map values not equal", open1.getProperties(), open2.getProperties());
         Assert.assertArrayEquals("Desired Capabilities are not equal", open1.getDesiredCapabilities(), open2.getDesiredCapabilities());

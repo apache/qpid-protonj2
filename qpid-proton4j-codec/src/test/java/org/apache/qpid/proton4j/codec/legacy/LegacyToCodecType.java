@@ -176,7 +176,7 @@ public abstract class LegacyToCodecType {
             newOpen.setChannelMax(legacyOpen.getChannelMax().intValue());
         }
         if (legacyOpen.getIdleTimeOut() != null) {
-            newOpen.setIdleTimeOut(legacyOpen.getIdleTimeOut().longValue());
+            newOpen.setIdleTimeout(legacyOpen.getIdleTimeOut().longValue());
         }
         if (legacyOpen.getOutgoingLocales() != null) {
             newOpen.setOutgoingLocales(convertToCodecType(legacyOpen.getOutgoingLocales()));

@@ -77,7 +77,7 @@ public final class OpenTypeEncoder extends AbstractDescribedListTypeEncoder<Open
                 break;
             case 4:
                 if (open.hasIdleTimeout()) {
-                    state.getEncoder().writeUnsignedInteger(buffer, state, open.getIdleTimeOut());
+                    state.getEncoder().writeUnsignedInteger(buffer, state, open.getIdleTimeout());
                 } else {
                     state.getEncoder().writeNull(buffer, state);
                 }

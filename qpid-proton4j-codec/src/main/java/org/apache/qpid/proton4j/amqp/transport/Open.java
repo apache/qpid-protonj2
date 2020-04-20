@@ -55,7 +55,7 @@ public final class Open implements Performative {
     private String hostname;
     private long maxFrameSize = UnsignedInteger.MAX_VALUE.longValue();
     private int channelMax = UnsignedShort.MAX_VALUE.intValue();
-    private long idleTimeOut;
+    private long idleTimeout;
     private Symbol[] outgoingLocales;
     private Symbol[] incomingLocales;
     private Symbol[] offeredCapabilities;
@@ -77,7 +77,7 @@ public final class Open implements Performative {
             copy.setChannelMax(channelMax);
         }
         if (hasIdleTimeout()) {
-            copy.setIdleTimeOut(idleTimeOut);
+            copy.setIdleTimeout(idleTimeout);
         }
         if (hasOutgoingLocales()) {
             copy.setOutgoingLocales(Arrays.copyOf(outgoingLocales, outgoingLocales.length));
@@ -210,18 +210,18 @@ public final class Open implements Performative {
         return this;
     }
 
-    public long getIdleTimeOut() {
-        return idleTimeOut;
+    public long getIdleTimeout() {
+        return idleTimeout;
     }
 
-    public Open setIdleTimeOut(long idleTimeOut) {
+    public Open setIdleTimeout(long idleTimeOut) {
         if (idleTimeOut < 0 || idleTimeOut > UINT_MAX) {
             throw new IllegalArgumentException("The Idle Timeout value given is out of range: " + idleTimeOut);
         } else {
             modified |= IDLE_TIMEOUT;
         }
 
-        this.idleTimeOut = idleTimeOut;
+        this.idleTimeout = idleTimeOut;
         return this;
     }
 
@@ -317,7 +317,7 @@ public final class Open implements Performative {
                ", hostname='" + hostname + '\'' +
                ", maxFrameSize=" + maxFrameSize +
                ", channelMax=" + channelMax +
-               ", idleTimeOut=" + idleTimeOut +
+               ", idleTimeOut=" + idleTimeout +
                ", outgoingLocales=" + (outgoingLocales == null ? null : Arrays.asList(outgoingLocales)) +
                ", incomingLocales=" + (incomingLocales == null ? null : Arrays.asList(incomingLocales)) +
                ", offeredCapabilities=" + (offeredCapabilities == null ? null : Arrays.asList(offeredCapabilities)) +
