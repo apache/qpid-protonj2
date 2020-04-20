@@ -16,6 +16,7 @@
  */
 package org.apache.qpid.proton4j.engine.impl;
 
+import org.apache.qpid.proton4j.amqp.UnsignedInteger;
 import org.apache.qpid.proton4j.buffer.ProtonBufferAllocator;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.engine.EngineConfiguration;
@@ -28,33 +29,13 @@ public class ProtonEngineConfiguration implements EngineConfiguration {
 
     private final ProtonEngine engine;
 
-    private int maxFrameSize = ProtonConstants.MIN_MAX_AMQP_FRAME_SIZE;
     private ProtonBufferAllocator allocator = ProtonByteBufferAllocator.DEFAULT;
-
-    private int remoteMaxFrameSize = ProtonConstants.MIN_MAX_AMQP_FRAME_SIZE;
 
     private int effectiveMaxInboundFrameSize = ProtonConstants.MIN_MAX_AMQP_FRAME_SIZE;
     private int effectiveMaxOutboundFrameSize = ProtonConstants.MIN_MAX_AMQP_FRAME_SIZE;
 
     ProtonEngineConfiguration(ProtonEngine engine) {
         this.engine = engine;
-    }
-
-    @Override
-    public ProtonEngineConfiguration setMaxFrameSize(int maxFrameSize) {
-        // TODO - Hack the code to limit the max we would write to 2GB for now just for
-        //        now to test some of the max frame size code, more work to be done here.
-        if (maxFrameSize >= 0) {
-            this.maxFrameSize = Math.max(ProtonConstants.MIN_MAX_AMQP_FRAME_SIZE, maxFrameSize);
-        } else {
-            this.maxFrameSize = Integer.MAX_VALUE;
-        }
-        return this;
-    }
-
-    @Override
-    public int getMaxFrameSize() {
-        return maxFrameSize;
     }
 
     @Override
@@ -68,15 +49,9 @@ public class ProtonEngineConfiguration implements EngineConfiguration {
         return this;
     }
 
-    int getRemoteMaxFrameSize() {
-        return remoteMaxFrameSize;
-    }
-
-    void setRemoteMaxFrameSize(int remoteMaxFrameSize) {
-        this.remoteMaxFrameSize = remoteMaxFrameSize;
-    }
-
     //---- proton4j specific APIs
+
+    private static final long LONG_INT_MAX_VALUE = UnsignedInteger.valueOf(Integer.MAX_VALUE).longValue();
 
     void recomputeEffectiveFrameSizeLimits() {
         // Based on engine state compute what the max in and out frame size should
@@ -87,8 +62,15 @@ public class ProtonEngineConfiguration implements EngineConfiguration {
             effectiveMaxInboundFrameSize = engine.saslDriver().getMaxFrameSize();
             effectiveMaxOutboundFrameSize = engine.saslDriver().getMaxFrameSize();
         } else {
-            effectiveMaxInboundFrameSize = getMaxFrameSize();
-            effectiveMaxOutboundFrameSize = Math.min(getMaxFrameSize(), remoteMaxFrameSize);
+            final long localMaxFrameSize = engine.connection().getMaxFrameSize();
+            final long remoteMaxFrameSize = engine.connection().getRemoteMaxFrameSize();
+
+            // TODO: Ignoring local set values over 4GB not that 2GB would work either.
+            effectiveMaxInboundFrameSize = (int) Math.min(LONG_INT_MAX_VALUE, localMaxFrameSize);
+
+            final long intermediateMaxOutboundFrameSize = Math.min(localMaxFrameSize, remoteMaxFrameSize);
+
+            effectiveMaxOutboundFrameSize = (int) Math.min(LONG_INT_MAX_VALUE, intermediateMaxOutboundFrameSize);
         }
     }
 

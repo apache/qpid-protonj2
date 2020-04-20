@@ -31,6 +31,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.security.sasl.SaslException;
 
+import org.apache.qpid.proton4j.amqp.UnsignedInteger;
 import org.apache.qpid.proton4j.amqp.driver.ProtonTestPeer;
 import org.apache.qpid.proton4j.amqp.security.SaslInit;
 import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
@@ -1191,5 +1192,93 @@ public class ProtonEngineTest extends ProtonEngineTestSupport {
 
         peer.waitForScriptToCompleteIgnoreErrors();
         assertNotNull(failure);
+    }
+
+    @Test(timeout = 10_000)
+    public void testEngineConfiguresDefaultMaxFrameSizeLimits() {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result);
+        Connection connection = engine.start();
+        assertNotNull(connection);
+        ProtonEngineConfiguration configuration = (ProtonEngineConfiguration) engine.configuration();
+
+        ProtonTestPeer peer = new ProtonTestPeer(engine);
+        engine.outputConsumer(peer);
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().withMaxFrameSize(ProtonConstants.DEFAULT_MAX_AMQP_FRAME_SIZE).respond();
+
+        connection.open();
+
+        assertEquals(ProtonConstants.DEFAULT_MAX_AMQP_FRAME_SIZE, configuration.getOutboundMaxFrameSize());
+        assertEquals(ProtonConstants.DEFAULT_MAX_AMQP_FRAME_SIZE, configuration.getInboundMaxFrameSize());
+
+        // Default engine should start and return a connection immediately
+        assertNull(failure);
+    }
+
+    @Test(timeout = 10_000)
+    public void testEngineConfiguresSpecifiedMaxFrameSizeLimitsMatchesDefaultMinMax() {
+        doTestEngineConfiguresSpecifiedFrameSizeLimits(512, 512);
+    }
+
+    @Test(timeout = 10_000)
+    public void testEngineConfiguresSpecifiedMaxFrameSizeLimitsRemoteLargerThanLocal() {
+        doTestEngineConfiguresSpecifiedFrameSizeLimits(1024, 1025);
+    }
+
+    @Test(timeout = 10_000)
+    public void testEngineConfiguresSpecifiedMaxFrameSizeLimitsRemoteSmallerThanLocal() {
+        doTestEngineConfiguresSpecifiedFrameSizeLimits(1024, 1023);
+    }
+
+    @Test(timeout = 10_000)
+    public void testEngineConfiguresSpecifiedMaxFrameSizeLimitsGreaterThanDefaultValues() {
+        doTestEngineConfiguresSpecifiedFrameSizeLimits(
+            ProtonConstants.DEFAULT_MAX_AMQP_FRAME_SIZE + 32, ProtonConstants.DEFAULT_MAX_AMQP_FRAME_SIZE + 64);
+    }
+
+    @Test(timeout = 10_000)
+    public void testEngineConfiguresSpecifiedMaxFrameSizeLimitsGreaterThanImposedGlobalLimit() {
+        doTestEngineConfiguresSpecifiedFrameSizeLimits(
+            UnsignedInteger.MAX_VALUE.intValue(), UnsignedInteger.MAX_VALUE.intValue());
+    }
+
+    private void doTestEngineConfiguresSpecifiedFrameSizeLimits(int localValue, int remoteResponse) {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result);
+        Connection connection = engine.start();
+        assertNotNull(connection);
+        ProtonEngineConfiguration configuration = (ProtonEngineConfiguration) engine.configuration();
+
+        ProtonTestPeer peer = new ProtonTestPeer(engine);
+        engine.outputConsumer(peer);
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().withMaxFrameSize(Integer.toUnsignedLong(localValue))
+                         .respond()
+                         .withMaxFrameSize(Integer.toUnsignedLong(remoteResponse));
+
+        connection.setMaxFrameSize(Integer.toUnsignedLong(localValue));
+        connection.open();
+
+        if (localValue > 0) {
+            assertEquals(localValue, configuration.getInboundMaxFrameSize());
+        } else {
+            assertEquals(Integer.MAX_VALUE, configuration.getInboundMaxFrameSize());
+        }
+
+        if (remoteResponse > localValue) {
+            assertEquals(localValue, configuration.getOutboundMaxFrameSize());
+        } else {
+            if (remoteResponse > 0) {
+                assertEquals(remoteResponse, configuration.getOutboundMaxFrameSize());
+            } else {
+                assertEquals(Integer.MAX_VALUE, configuration.getOutboundMaxFrameSize());
+            }
+        }
+
+        // Default engine should start and return a connection immediately
+        assertNull(failure);
     }
 }

@@ -203,9 +203,9 @@ public class ProtonFrameDecodingHandlerTest {
         assertEquals("localhost", decoded.getHostname());
         assertTrue(decoded.hasMaxFrameSize());
         assertEquals(16384, decoded.getMaxFrameSize());
-        assertFalse(decoded.hasChannelMax());
+        assertTrue(decoded.hasChannelMax());
         assertTrue(decoded.hasIdleTimeout());
-        assertEquals(30000, decoded.getIdleTimeOut());
+        assertEquals(30000, decoded.getIdleTimeout());
         assertFalse(decoded.hasOutgoingLocales());
         assertFalse(decoded.hasIncomingLocales());
         assertFalse(decoded.hasOfferedCapabilites());
@@ -245,9 +245,9 @@ public class ProtonFrameDecodingHandlerTest {
         assertEquals("localhost", decoded.getHostname());
         assertTrue(decoded.hasMaxFrameSize());
         assertEquals(16384, decoded.getMaxFrameSize());
-        assertFalse(decoded.hasChannelMax());
+        assertTrue(decoded.hasChannelMax());
         assertTrue(decoded.hasIdleTimeout());
-        assertEquals(30000, decoded.getIdleTimeOut());
+        assertEquals(30000, decoded.getIdleTimeout());
         assertFalse(decoded.hasOutgoingLocales());
         assertFalse(decoded.hasIncomingLocales());
         assertFalse(decoded.hasOfferedCapabilites());

@@ -99,9 +99,6 @@ public interface EngineSaslDriver {
      * particular engine configuration allows such behavior then this method
      * should return null to indicate no SASL outcome is available.
      *
-     * TODO: Returning null opens user to NPE cases whereas having a 'no outcome' state
-     *       is not strictly a SASL outcome ? which is better ?
-     *
      * @return the SASL outcome code that results from authentication
      */
     SaslOutcome getSaslOutcome();

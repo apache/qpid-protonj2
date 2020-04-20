@@ -87,9 +87,9 @@ public class ProtonConnection extends ProtonEndpoint<Connection> implements Conn
     ProtonConnection(ProtonEngine engine) {
         super(engine);
 
-        // Base the initial max frame size on the value configured on the engine.
-        // this.localOpen.setMaxFrameSize(engine.configuration().getMaxFrameSize());
-        // TODO - This creates a default which we haven't settled on so leaving it off for now.
+        // This configures the default for the client which could later be made configurable
+        // by adding an option in EngineConfiguration but for now this is forced set here.
+        this.localOpen.setMaxFrameSize(ProtonConstants.DEFAULT_MAX_AMQP_FRAME_SIZE);
     }
 
     @Override
@@ -242,13 +242,13 @@ public class ProtonConnection extends ProtonEndpoint<Connection> implements Conn
         if (idleTimeout < 0 || idleTimeout > UnsignedInteger.MAX_VALUE.longValue()) {
             throw new IllegalArgumentException("Idle timeout cannot exceed the maximum value of an unsigned integer");
         }
-        localOpen.setIdleTimeOut(idleTimeout);
+        localOpen.setIdleTimeout(idleTimeout);
         return this;
     }
 
     @Override
     public long getIdleTimeout() {
-        return localOpen.getIdleTimeOut();
+        return localOpen.getIdleTimeout();
     }
 
     @Override
@@ -338,8 +338,13 @@ public class ProtonConnection extends ProtonEndpoint<Connection> implements Conn
     }
 
     @Override
+    public long getRemoteMaxFrameSize() {
+        return remoteOpen == null ? ProtonConstants.MIN_MAX_AMQP_FRAME_SIZE : remoteOpen.getMaxFrameSize();
+    }
+
+    @Override
     public long getRemoteIdleTimeout() {
-        return remoteOpen == null ? -1 : remoteOpen.getIdleTimeOut();
+        return remoteOpen == null ? -1 : remoteOpen.getIdleTimeout();
     }
 
     @Override
@@ -587,7 +592,6 @@ public class ProtonConnection extends ProtonEndpoint<Connection> implements Conn
                     localOpenSent = true;
                     resourceSyncNeeded = true;
                     engine.fireWrite(localOpen, 0, null, null);
-                    engine.configuration().setMaxFrameSize((int) localOpen.getMaxFrameSize());
                     engine.configuration().recomputeEffectiveFrameSizeLimits();
                 }
 

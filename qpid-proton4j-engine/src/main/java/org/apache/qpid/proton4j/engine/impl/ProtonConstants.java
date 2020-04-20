@@ -27,6 +27,12 @@ public final class ProtonConstants {
     public static final int MIN_MAX_AMQP_FRAME_SIZE = 512;
 
     /**
+     * The default AMQP max frame size used by the engine and connection if none is set
+     * by the client or remote peer.
+     */
+    public static final int DEFAULT_MAX_AMQP_FRAME_SIZE = 65535;
+
+    /**
      * The maximum value for AMQP channels as defined by the specification.
      */
     public static final int CHANNEL_MAX = 65535;

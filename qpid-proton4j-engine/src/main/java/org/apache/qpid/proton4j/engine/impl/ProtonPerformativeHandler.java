@@ -110,15 +110,10 @@ public class ProtonPerformativeHandler implements EngineHandler, HeaderHandler<E
             throw new ProtocolViolationException("Open not sent on channel zero");
         }
 
-        // TODO - This isn't storing the truth of what remote said, so configuration reports
-        //        our trimmed view when asked externally.
-        configuration.setRemoteMaxFrameSize(
-            (int) Math.min(open.getMaxFrameSize(), Integer.MAX_VALUE));
+        connection.handleOpen(open, payload, channel, engine);
 
         // Recompute max frame size now based on what remote told us.
         configuration.recomputeEffectiveFrameSizeLimits();
-
-        connection.handleOpen(open, payload, channel, engine);
     }
 
     @Override

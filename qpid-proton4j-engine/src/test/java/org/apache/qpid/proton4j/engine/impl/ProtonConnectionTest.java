@@ -473,7 +473,7 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
     private void doTestConnectionOpenPopulatesOpenCorrectly(boolean setMaxFrameSize, boolean setContainerId, boolean setChannelMax,
                                                             boolean setHostname, boolean setIdleTimeout) {
         int expectedMaxFrameSize = 32767;
-        Matcher<?> expectedMaxFrameSizeMatcher = nullValue();
+        Matcher<?> expectedMaxFrameSizeMatcher = equalTo(UnsignedInteger.valueOf(ProtonConstants.DEFAULT_MAX_AMQP_FRAME_SIZE));
         if (setMaxFrameSize) {
             expectedMaxFrameSizeMatcher = equalTo(UnsignedInteger.valueOf(expectedMaxFrameSize));
         }

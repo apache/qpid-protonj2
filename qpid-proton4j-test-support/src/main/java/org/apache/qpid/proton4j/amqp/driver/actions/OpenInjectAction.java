@@ -68,6 +68,11 @@ public class OpenInjectAction extends AbstractPerformativeInjectAction<Open> {
         return this;
     }
 
+    public OpenInjectAction withMaxFrameSize(long maxFrameSize) {
+        open.setMaxFrameSize(UnsignedInteger.valueOf(maxFrameSize));
+        return this;
+    }
+
     public OpenInjectAction withMaxFrameSize(UnsignedInteger maxFrameSize) {
         open.setMaxFrameSize(maxFrameSize);
         return this;
@@ -89,6 +94,11 @@ public class OpenInjectAction extends AbstractPerformativeInjectAction<Open> {
     }
 
     public OpenInjectAction withIdleTimeOut(int idleTimeout) {
+        open.setIdleTimeOut(UnsignedInteger.valueOf(idleTimeout));
+        return this;
+    }
+
+    public OpenInjectAction withIdleTimeOut(long idleTimeout) {
         open.setIdleTimeOut(UnsignedInteger.valueOf(idleTimeout));
         return this;
     }

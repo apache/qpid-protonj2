@@ -24,27 +24,6 @@ import org.apache.qpid.proton4j.buffer.ProtonBufferAllocator;
 public interface EngineConfiguration {
 
     /**
-     * Sets the maximum frame size the engine will accept.
-     * <p>
-     * The configured value cannot be set lower than the AMQP default max frame size
-     * value of 512 bytes.
-     *
-     * @param maxFrameSize
-     *      The value to assign as the maximum frame size.
-     *
-     * @return this {@link EngineConfiguration} for chaining.
-     *
-     * TODO - This is a little confusing as we have a setter in the Connection
-     *        and there doesn't seem to be any benefit of having this here  ?
-     */
-    EngineConfiguration setMaxFrameSize(int maxFrameSize);
-
-    /**
-     * @return the maximum frame size that the Engine will accept.
-     */
-    int getMaxFrameSize();
-
-    /**
      * Sets the ProtonBufferAllocator used by this Engine.
      * <p>
      * When copying data, encoding types or otherwise needing to allocate memory

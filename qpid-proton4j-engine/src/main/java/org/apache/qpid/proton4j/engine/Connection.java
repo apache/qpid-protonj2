@@ -274,6 +274,11 @@ public interface Connection extends Endpoint<Connection> {
     long getRemoteIdleTimeout();
 
     /**
+     * @return the remote set max frame size limit.
+     */
+    long getRemoteMaxFrameSize();
+
+    /**
      * @return the remote state (as last communicated)
      */
     ConnectionState getRemoteState();
