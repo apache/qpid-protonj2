@@ -40,7 +40,7 @@ import org.apache.qpid.proton4j.amqp.UnsignedInteger;
  *
  * @param <E> The type stored in the map entries
  */
-public class SplayMap<E> implements NavigableMap<UnsignedInteger, E> {
+public final class SplayMap<E> implements NavigableMap<UnsignedInteger, E> {
 
     private static final UnsignedComparator COMPARATOR = new UnsignedComparator();
 
@@ -718,7 +718,7 @@ public class SplayMap<E> implements NavigableMap<UnsignedInteger, E> {
 
         @Override
         public int hashCode() {
-            return key ^ (value==null ? 0 : value.hashCode());
+            return key ^ (value == null ? 0 : value.hashCode());
         }
 
         @Override
