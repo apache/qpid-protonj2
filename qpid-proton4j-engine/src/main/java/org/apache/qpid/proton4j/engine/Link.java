@@ -56,6 +56,20 @@ public interface Link<T extends Link<T>> extends Endpoint<T> {
     boolean isLocallyDetached();
 
     /**
+     * Returns true if this {@link Link} is currently locally detached or locally closed meaning the
+     * state returned from {@link Link#getState()} is equal to {@link LinkState#DETACHED} or
+     * {@link LinkState#CLOSED}.  A link is locally detached after a call to {@link Link#detach()} and
+     * is locally closed after a call to {@link Link#close()}.
+     *
+     * @return true if the link is locally closed or detached.
+     *
+     * @see Link#isLocallyOpen()
+     * @see Link#isLocallyDetached()
+     * @see Link#isLocallyClosed()
+     */
+    boolean isLocallyClosedOrDetached();
+
+    /**
      * @return the local link state
      */
     LinkState getState();
@@ -278,6 +292,20 @@ public interface Link<T extends Link<T>> extends Endpoint<T> {
      * @see Link#isRemotelyClosed()
      */
     boolean isRemotelyDetached();
+
+    /**
+     * Returns true if this {@link Link} is currently remotely detached or closed meaning the state
+     * returned from {@link Link#getRemoteState()} is equal to {@link LinkState#DETACHED} or
+     * {@link LinkState#CLOSED}.  A link is remotely detached or closed after a {@link Detach}
+     * has been received from the remote.
+     *
+     * @return true if the link is remotely detached or closed.
+     *
+     * @see Link#isRemotelyOpen()
+     * @see Link#isRemotelyClosed()
+     * @see Link#isRemotelyDetached()
+     */
+    boolean isRemotelyClosedOrDetached();
 
     /**
      * @return the {@link Source} for the remote end of this link.

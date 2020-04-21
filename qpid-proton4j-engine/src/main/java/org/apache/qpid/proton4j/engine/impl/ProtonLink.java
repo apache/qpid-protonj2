@@ -347,6 +347,11 @@ public abstract class ProtonLink<T extends Link<T>> extends ProtonEndpoint<T> im
     }
 
     @Override
+    public boolean isLocallyClosedOrDetached() {
+        return getState().ordinal() > LinkState.ACTIVE.ordinal();
+    }
+
+    @Override
     public boolean isRemotelyOpen() {
         return getRemoteState() == LinkState.ACTIVE;
     }
@@ -359,6 +364,11 @@ public abstract class ProtonLink<T extends Link<T>> extends ProtonEndpoint<T> im
     @Override
     public boolean isRemotelyDetached() {
         return getRemoteState() == LinkState.DETACHED;
+    }
+
+    @Override
+    public boolean isRemotelyClosedOrDetached() {
+        return getRemoteState().ordinal() > LinkState.ACTIVE.ordinal();
     }
 
     @Override
@@ -711,6 +721,19 @@ public abstract class ProtonLink<T extends Link<T>> extends ProtonEndpoint<T> im
     protected void checkLinkOperable(String failurePrefix) {
         switch (operability) {
             case OK:
+                break;
+            case ENGINE_FAILED:
+                throw new EngineFailedException(failurePrefix + ": Engine Failed", engine.failureCause());
+            default:
+                throw new IllegalStateException(failurePrefix + ": " + operability.toString());
+        }
+    }
+
+    protected void checkLinkOperableOrLocallyClosed(String failurePrefix) {
+        switch (operability) {
+            case OK:
+            case LINK_LOCALLY_CLOSED:
+            case LINK_LOCALLY_DETACHED:
                 break;
             case ENGINE_FAILED:
                 throw new EngineFailedException(failurePrefix + ": Engine Failed", engine.failureCause());

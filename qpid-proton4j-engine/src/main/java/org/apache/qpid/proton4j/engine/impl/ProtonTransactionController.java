@@ -94,6 +94,11 @@ public class ProtonTransactionController extends ProtonEndpoint<TransactionContr
     }
 
     @Override
+    public boolean isLocallyClosedOrDetached() {
+        return senderLink.isLocallyClosedOrDetached();
+    }
+
+    @Override
     public boolean isLocallyDetached() {
         senderLink.isLocallyDetached();
         return false;
@@ -256,6 +261,11 @@ public class ProtonTransactionController extends ProtonEndpoint<TransactionContr
     @Override
     public boolean isRemotelyDetached() {
         return senderLink.isRemotelyDetached();
+    }
+
+    @Override
+    public boolean isRemotelyClosedOrDetached() {
+        return senderLink.isRemotelyClosedOrDetached();
     }
 
     @Override

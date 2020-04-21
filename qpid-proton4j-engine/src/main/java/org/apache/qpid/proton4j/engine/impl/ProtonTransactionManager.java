@@ -99,6 +99,11 @@ public class ProtonTransactionManager extends ProtonEndpoint<TransactionManager>
     }
 
     @Override
+    public boolean isLocallyClosedOrDetached() {
+        return receiverLink.isLocallyClosedOrDetached();
+    }
+
+    @Override
     public LinkState getState() {
         return receiverLink.getState();
     }
@@ -255,6 +260,11 @@ public class ProtonTransactionManager extends ProtonEndpoint<TransactionManager>
     @Override
     public boolean isRemotelyDetached() {
         return receiverLink.isRemotelyDetached();
+    }
+
+    @Override
+    public boolean isRemotelyClosedOrDetached() {
+        return receiverLink.isRemotelyClosedOrDetached();
     }
 
     @Override
