@@ -18,13 +18,13 @@ package org.apache.qpid.proton4j.engine.util;
 
 import java.util.AbstractCollection;
 import java.util.AbstractSet;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.ConcurrentModificationException;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.NoSuchElementException;
-import java.util.Objects;
 import java.util.Set;
 
 import org.apache.qpid.proton4j.amqp.UnsignedInteger;
@@ -38,6 +38,11 @@ import org.apache.qpid.proton4j.amqp.UnsignedInteger;
  * @param <V> The type that this {@link Map} stores in its values.
  */
 public final class UnsignedIntegerMap<V> implements Map<UnsignedInteger, V> {
+
+    /**
+     * Rehashing marker that indicates an immediate rehash is needed on next access.
+     */
+    private static final int REHASHING_THRESHOLD = -1;
 
     /**
      * Minimum capacity (other than zero) for a UnsignedIntegerMap. Must be a power of two
@@ -56,6 +61,7 @@ public final class UnsignedIntegerMap<V> implements Map<UnsignedInteger, V> {
      * is set to half the minimum, so that the first resize will create a
      * minimum-sized table.
      */
+    @SuppressWarnings("rawtypes")
     private static final Entry[] EMPTY_TABLE = new UnsignedIntegerEntry[MINIMUM_CAPACITY >>> 1];
 
     /**
@@ -64,11 +70,29 @@ public final class UnsignedIntegerMap<V> implements Map<UnsignedInteger, V> {
     static final float DEFAULT_LOAD_FACTOR = .75F;
 
     /**
-     * A dummy entry in the circular linked list of entries in the map.
-     * The first real entry is header.nxt, and the last is header.prv.
-     * If the map is empty, header.nxt == header && header.prv == header.
+     * The hash table used to access elements from a hashed unsigned integer value.
      */
-    transient UnsignedIntegerEntry<V> header;
+    private transient UnsignedIntegerEntry<V>[] table;
+
+    /**
+     * A dummy entry in the circular linked list of entries in the map.
+     * The first real entry is root.next, and the last is header.pervious.
+     * If the map is empty, root.next == root && root.previous == root.
+     */
+    private final transient UnsignedIntegerEntry<V> root = new UnsignedIntegerEntry<>();
+
+    // Views - lazily initialized
+    private transient Set<UnsignedInteger> keySet;
+    private transient Set<Entry<UnsignedInteger, V>> entrySet;
+    private transient Collection<V> values;
+
+    /**
+     * The table is rehashed when its size exceeds this threshold.
+     * The value of this field is generally .75 * capacity, except when
+     * the capacity is zero, as described in the EMPTY_TABLE declaration
+     * above.
+     */
+    private transient int threshold;
 
     private int size;
     private int modCount;
@@ -76,8 +100,10 @@ public final class UnsignedIntegerMap<V> implements Map<UnsignedInteger, V> {
     /**
      * Creates an empty {@link UnsignedIntegerMap} with default initial capacity sizing.
      */
+    @SuppressWarnings("unchecked")
     public UnsignedIntegerMap() {
-        // TODO
+        table = (UnsignedIntegerEntry<V>[]) EMPTY_TABLE;
+        threshold = REHASHING_THRESHOLD;
     }
 
     /**
@@ -87,6 +113,10 @@ public final class UnsignedIntegerMap<V> implements Map<UnsignedInteger, V> {
      *      The initial capacity that the internal data structure of this mapping should use.
      */
     public UnsignedIntegerMap(int initialCapacity) {
+        if (initialCapacity < 0) {
+            throw new IllegalArgumentException("Initial Map Capacity cannot be negative: " + initialCapacity);
+        }
+
         // TODO
     }
 
@@ -100,8 +130,7 @@ public final class UnsignedIntegerMap<V> implements Map<UnsignedInteger, V> {
      * @throws NullPointerException if the given {@link Map} instance is null.
      */
     public UnsignedIntegerMap(Map<? extends UnsignedInteger, ? extends V> source) {
-        Objects.requireNonNull(source, "The source Map instance cannot be null");
-
+        this(source.size());
         // TODO
     }
 
@@ -117,19 +146,37 @@ public final class UnsignedIntegerMap<V> implements Map<UnsignedInteger, V> {
 
     @Override
     public boolean containsKey(Object key) {
-        // TODO Auto-generated method stub
+        if (key != null) {
+            final int keyValue = Number.class.cast(key).intValue();
+        }
+
         return false;
     }
 
     @Override
     public boolean containsValue(Object value) {
-        // TODO Auto-generated method stub
+        if (value != null) {
+            // Use the linked list of entries to avoid checking every table element when many
+            // will be null and instead only check the current contents.
+            UnsignedIntegerEntry<V> root = this.root;
+            for (UnsignedIntegerEntry<V> entry = root.next; entry != root; entry = entry.next) {
+                if (value.equals(entry.value)) {
+                    return true;
+                }
+            }
+        }
+
         return false;
     }
 
     @Override
     public V get(Object key) {
-        // TODO Auto-generated method stub
+        if (key != null) {
+            final int keyValue = Number.class.cast(key).intValue();
+
+            // TODO
+        }
+
         return null;
     }
 
@@ -141,7 +188,12 @@ public final class UnsignedIntegerMap<V> implements Map<UnsignedInteger, V> {
 
     @Override
     public V remove(Object key) {
-        // TODO Auto-generated method stub
+        if (key != null) {
+            final int keyValue = Number.class.cast(key).intValue();
+
+            // TODO
+        }
+
         return null;
     }
 
@@ -153,26 +205,50 @@ public final class UnsignedIntegerMap<V> implements Map<UnsignedInteger, V> {
 
     @Override
     public void clear() {
-        // TODO Auto-generated method stub
+        if (size != 0) {
+            Arrays.fill(table, null);
+            modCount++;
+            size = 0;
 
+            // Unlink all nodes for safely using a local reference to the list root.
+            UnsignedIntegerEntry<V> root = this.root;
+            for (UnsignedIntegerEntry<V> current = root.next; current != root; ) {
+                UnsignedIntegerEntry<V> next = current.next;
+                current.next = current.prev = null;
+                current = next;
+            }
+
+            root.next = root.prev = root;
+        }
     }
+
+    // Once requested we will create an store a single instance to a collection
+    // with no state for each of the key, values and entries types.  Since the
+    // types are stateless the trivial race on create is not important to the
+    // eventual outcome of having a cached instance.
 
     @Override
     public Set<UnsignedInteger> keySet() {
-        // TODO Auto-generated method stub
-        return null;
+        if (keySet == null) {
+            keySet = new UnsignedIntegerMapKeySet();
+        }
+        return keySet;
     }
 
     @Override
     public Collection<V> values() {
-        // TODO Auto-generated method stub
-        return null;
+        if (values == null) {
+            values = new UnsignedIntegerMapValues();
+        }
+        return values;
     }
 
     @Override
     public Set<Entry<UnsignedInteger, V>> entrySet() {
-        // TODO Auto-generated method stub
-        return null;
+        if (entrySet == null) {
+            entrySet = new UnsignedIntegerMapEntrySet();
+        }
+        return entrySet;
     }
 
     //----- Map Iterator implementation for EntrySet, KeySet and Values collections
@@ -197,34 +273,32 @@ public final class UnsignedIntegerMap<V> implements Map<UnsignedInteger, V> {
 
         protected UnsignedIntegerEntry<V> nextNode() {
             UnsignedIntegerEntry<V> entry = nextNode;
-            if (nextNode == null) {
+            if (nextNode == root) {
                 throw new NoSuchElementException();
             }
             if (expectedModCount != UnsignedIntegerMap.this.modCount) {
                 throw new ConcurrentModificationException();
             }
 
-            nextNode = null; // TODO successor(nextNode);
-            lastReturned = entry;
+            nextNode = entry.next;
 
-            return lastReturned;
+            return lastReturned = entry;
         }
 
         // Unused as of now but can be used for NavigableMap amongst other things
         @SuppressWarnings("unused")
         protected UnsignedIntegerEntry<V> previousNode() {
             UnsignedIntegerEntry<V> entry = nextNode;
-            if (nextNode == null) {
+            if (nextNode == root) {
                 throw new NoSuchElementException();
             }
             if (expectedModCount != UnsignedIntegerMap.this.modCount) {
                 throw new ConcurrentModificationException();
             }
 
-            // TODO nextNode = predecessor(nextNode);
-            lastReturned = entry;
+            nextNode = entry.prev;
 
-            return lastReturned;
+            return lastReturned = entry;
         }
 
         @Override
@@ -236,7 +310,7 @@ public final class UnsignedIntegerMap<V> implements Map<UnsignedInteger, V> {
                 throw new ConcurrentModificationException();
             }
 
-            // TODO delete(lastReturned);
+            delete(lastReturned);
 
             expectedModCount = modCount;
             lastReturned = null;
@@ -285,7 +359,7 @@ public final class UnsignedIntegerMap<V> implements Map<UnsignedInteger, V> {
 
         @Override
         public Iterator<V> iterator() {
-            return null; // TODO new UnsignedIntegerMapValueIterator(firstEntry(root));
+            return new UnsignedIntegerMapValueIterator(firstEntry());
         }
 
         @Override
@@ -300,12 +374,15 @@ public final class UnsignedIntegerMap<V> implements Map<UnsignedInteger, V> {
 
         @Override
         public boolean remove(Object target) {
-//            for (UnsignedIntegerEntry<E> e = firstEntry(root); e != null; e = successor(e)) {
-//                if (e.valueEquals(target)) {
-//                    delete(e);
-//                    return true;
-//                }
-//            }
+            final UnsignedIntegerEntry<V> root = UnsignedIntegerMap.this.root;
+
+            for (UnsignedIntegerEntry<V> entry = root.next; entry != root; entry = entry.next) {
+                if (entry.valueEquals(target)) {
+                    delete(entry);
+                    return true;
+                }
+            }
+
             return false;
         }
 
@@ -319,7 +396,7 @@ public final class UnsignedIntegerMap<V> implements Map<UnsignedInteger, V> {
 
         @Override
         public Iterator<UnsignedInteger> iterator() {
-            return null; // TODO new UnsignedIntegerMapKeyIterator(firstEntry(root));
+            return new UnsignedIntegerMapKeyIterator(firstEntry());
         }
 
         @Override
@@ -334,12 +411,15 @@ public final class UnsignedIntegerMap<V> implements Map<UnsignedInteger, V> {
 
         @Override
         public boolean remove(Object target) {
-//            for (UnsignedIntegerEntry<E> e = firstEntry(root); e != null; e = successor(e)) {
-//                if (e.keyEquals(target)) {
-//                    delete(e);
-//                    return true;
-//                }
-//            }
+            final UnsignedIntegerEntry<V> root = UnsignedIntegerMap.this.root;
+
+            for (UnsignedIntegerEntry<V> entry = root.next; entry != root; entry = entry.next) {
+                if (entry.keyEquals(target)) {
+                    delete(entry);
+                    return true;
+                }
+            }
+
             return false;
         }
 
@@ -353,7 +433,7 @@ public final class UnsignedIntegerMap<V> implements Map<UnsignedInteger, V> {
 
         @Override
         public Iterator<Entry<UnsignedInteger, V>> iterator() {
-            return null; // TODO new UnsignedIntegerMapEntryIterator(firstEntry(root));
+            return new UnsignedIntegerMapEntryIterator(firstEntry());
         }
 
         @Override
@@ -372,12 +452,14 @@ public final class UnsignedIntegerMap<V> implements Map<UnsignedInteger, V> {
                 throw new IllegalArgumentException("value provided is not an Entry type.");
             }
 
-//            for (UnsignedIntegerEntry<E> e = firstEntry(root); e != null; e = successor(e)) {
-//                if (e.equals(target)) {
-//                    delete(e);
-//                    return true;
-//                }
-//            }
+            final UnsignedIntegerEntry<V> root = UnsignedIntegerMap.this.root;
+
+            for (UnsignedIntegerEntry<V> entry = root.next; entry != root; entry = entry.next) {
+                if (entry.equals(target)) {
+                    delete(entry);
+                    return true;
+                }
+            }
 
             return false;
         }
@@ -399,11 +481,16 @@ public final class UnsignedIntegerMap<V> implements Map<UnsignedInteger, V> {
         UnsignedIntegerEntry<V> next;
         UnsignedIntegerEntry<V> prev;
 
-        UnsignedIntegerEntry(int key, V value, int hash, UnsignedIntegerEntry<V> next) {
+        UnsignedIntegerEntry() {
+            this(0, null, 0, null, null);
+        }
+
+        UnsignedIntegerEntry(int key, V value, int hash, UnsignedIntegerEntry<V> next, UnsignedIntegerEntry<V> previous) {
             this.key = key;
             this.value = value;
             this.hash = hash;
             this.next = next;
+            this.prev = previous;
         }
 
         @Override
@@ -491,5 +578,19 @@ public final class UnsignedIntegerMap<V> implements Map<UnsignedInteger, V> {
 
     private ImmutableUnsignedIntegerEntry export(UnsignedIntegerEntry<V> entry) {
         return entry == null ? null : new ImmutableUnsignedIntegerEntry(entry);
+    }
+
+    //----- Internal Hash Mapping support methods
+
+    private UnsignedIntegerEntry<V> firstEntry() {
+        return root.next;
+    }
+
+    private UnsignedIntegerEntry<V> lastEntry() {
+        return root.prev;
+    }
+
+    private void delete(UnsignedIntegerEntry<V> entry) {
+        // TODO - Remove from list and from tabular storage.
     }
 }
