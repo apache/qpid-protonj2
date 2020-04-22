@@ -45,8 +45,8 @@
   <properties>
     <proton4j-version>0.1.0-SNAPSHOT</proton4j-version>
     <slf4j-version>1.7.30</slf4j-version>
-    <netty-version>4.1.48.Final</netty-version>
-    <netty-tcnative-version>2.0.29.Final</netty-tcnative-version>
+    <netty-version>4.1.49.Final</netty-version>
+    <netty-tcnative-version>2.0.30.Final</netty-tcnative-version>
 
     <!--  Test Dependencies -->
     <qpid-jms-version>0.50.0</qpid-jms-version>
