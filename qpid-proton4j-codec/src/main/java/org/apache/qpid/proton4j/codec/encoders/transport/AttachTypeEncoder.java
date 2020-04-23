@@ -91,7 +91,7 @@ public final class AttachTypeEncoder extends AbstractDescribedListTypeEncoder<At
                 break;
             case 6:
                 if (attach.hasTargetOrCoordinator()) {
-                    state.getEncoder().writeObject(buffer, state, attach.getTargetOrCoordinator());
+                    state.getEncoder().writeObject(buffer, state, attach.getTarget());
                 } else {
                     buffer.writeByte(EncodingCodes.NULL);
                 }

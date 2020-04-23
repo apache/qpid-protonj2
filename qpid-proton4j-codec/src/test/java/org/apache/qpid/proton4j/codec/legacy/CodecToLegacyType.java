@@ -42,8 +42,10 @@ import org.apache.qpid.proton4j.amqp.messaging.Rejected;
 import org.apache.qpid.proton4j.amqp.messaging.Released;
 import org.apache.qpid.proton4j.amqp.messaging.Source;
 import org.apache.qpid.proton4j.amqp.messaging.Target;
+import org.apache.qpid.proton4j.amqp.messaging.Terminus;
 import org.apache.qpid.proton4j.amqp.messaging.TerminusDurability;
 import org.apache.qpid.proton4j.amqp.messaging.TerminusExpiryPolicy;
+import org.apache.qpid.proton4j.amqp.transactions.Coordinator;
 import org.apache.qpid.proton4j.amqp.transactions.Declared;
 import org.apache.qpid.proton4j.amqp.transactions.TransactionalState;
 import org.apache.qpid.proton4j.amqp.transport.Attach;
@@ -114,6 +116,8 @@ public abstract class CodecToLegacyType {
             return convertToLegacyType((Source) newType);
         } else if (newType instanceof Target) {
             return convertToLegacyType((Target) newType);
+        } else if (newType instanceof Coordinator) {
+            return convertToLegacyType((Coordinator) newType);
         } else if (newType instanceof LifetimePolicy) {
             return convertToLegacyType((LifetimePolicy) newType);
         }
@@ -307,7 +311,8 @@ public abstract class CodecToLegacyType {
             legacyAttach.setSource(convertToLegacyType(attach.getSource()));
         }
         if (attach.hasTarget()) {
-            legacyAttach.setTarget(convertToLegacyType(attach.getTarget()));
+            Terminus instance = attach.getTarget();
+            legacyAttach.setTarget((org.apache.qpid.proton.amqp.transport.Target) convertToLegacyType(instance));
         }
         if (attach.hasUnsettled()) {
             legacyAttach.setUnsettled(convertToLegacyType(attach.getUnsettled()));
@@ -418,6 +423,25 @@ public abstract class CodecToLegacyType {
         }
 
         return legacyTarget;
+    }
+
+    /**
+     * convert a new Codec type to a legacy type for encoding or other operation that requires a legacy type.
+     *
+     * @param coordinator
+     *      The new codec type to be converted to the legacy codec version
+     *
+     * @return the legacy version of the new type.
+     */
+    public static org.apache.qpid.proton.amqp.transaction.Coordinator convertToLegacyType(Coordinator coordinator) {
+        org.apache.qpid.proton.amqp.transaction.Coordinator legacyCoordinator =
+            new org.apache.qpid.proton.amqp.transaction.Coordinator();
+
+        if (coordinator.getCapabilities() != null) {
+            legacyCoordinator.setCapabilities(convertToLegacyType(coordinator.getCapabilities()));
+        }
+
+        return legacyCoordinator;
     }
 
     /**

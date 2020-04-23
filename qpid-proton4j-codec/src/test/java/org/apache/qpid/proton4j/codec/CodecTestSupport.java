@@ -24,6 +24,8 @@ import java.util.Map.Entry;
 import org.apache.qpid.proton4j.amqp.Binary;
 import org.apache.qpid.proton4j.amqp.messaging.Source;
 import org.apache.qpid.proton4j.amqp.messaging.Target;
+import org.apache.qpid.proton4j.amqp.messaging.Terminus;
+import org.apache.qpid.proton4j.amqp.transactions.Coordinator;
 import org.apache.qpid.proton4j.amqp.transport.Attach;
 import org.apache.qpid.proton4j.amqp.transport.Begin;
 import org.apache.qpid.proton4j.amqp.transport.Close;
@@ -188,7 +190,9 @@ public class CodecTestSupport {
         Assert.assertSame("Expected Attach with matching has Source values", attach1.hasSource(), attach2.hasSource());
         assertTypesEqual(attach1.getSource(), attach2.getSource());
         Assert.assertSame("Expected Attach with matching has Target values", attach1.hasTarget(), attach2.hasTarget());
-        assertTypesEqual(attach1.getTarget(), attach2.getTarget());
+        Target attach1Target = attach1.getTarget();
+        Target attach2Target = attach2.getTarget();
+        assertTypesEqual(attach1Target, attach2Target);
 
         Assert.assertSame("Expected Attach with matching has handle values", attach1.hasUnsettled(), attach2.hasUnsettled());
         assertTypesEqual(attach1.getUnsettled(), attach2.getUnsettled());
@@ -216,6 +220,37 @@ public class CodecTestSupport {
     /**
      * Compare a Target to another Target instance.
      *
+     * @param terminus1
+     *      A {@link Terminus} instances or null
+     * @param terminus2
+     *      A {@link Terminus} instances or null.
+     *
+     * @throws AssertionError
+     *      If the two types are not equal to one another.
+     */
+    public static void assertTypesEqual(Terminus terminus1, Terminus terminus2) throws AssertionError {
+        if (terminus1 == terminus2) {
+            return;
+        } else if (terminus1 == null || terminus2 == null) {
+            Assert.assertEquals(terminus1, terminus2);
+        } else if (terminus1.getClass().equals(terminus2.getClass())) {
+            Assert.fail("Terminus types are not equal");
+        }
+
+        if (terminus1 instanceof Source) {
+            assertTypesEqual((Source) terminus1, (Source) terminus2);
+        } else if (terminus1 instanceof Target) {
+            assertTypesEqual((Target) terminus1, (Target) terminus2);
+        } else if (terminus1 instanceof Coordinator) {
+            assertTypesEqual(terminus1, terminus2);
+        } else {
+            Assert.fail("Terminus types are of unknown origin.");
+        }
+    }
+
+    /**
+     * Compare a Target to another Target instance.
+     *
      * @param target1
      *      A {@link Target} instances or null
      * @param target2
@@ -238,6 +273,27 @@ public class CodecTestSupport {
         Assert.assertEquals("Dynamic values not equal", target1.isDynamic(), target2.isDynamic());
         Assert.assertEquals("Dynamic Node Properties values not equal", target1.getDynamicNodeProperties(), target2.getDynamicNodeProperties());
         Assert.assertArrayEquals("Capabilities values not equal", target1.getCapabilities(), target2.getCapabilities());
+    }
+
+    /**
+     * Compare a Target to another Target instance.
+     *
+     * @param coordinator1
+     *      A {@link Coordinator} instances or null
+     * @param coordinator2
+     *      A {@link Coordinator} instances or null.
+     *
+     * @throws AssertionError
+     *      If the two types are not equal to one another.
+     */
+    public static void assertTypesEqual(Coordinator coordinator1, Coordinator coordinator2) throws AssertionError {
+        if (coordinator1 == coordinator2) {
+            return;
+        } else if (coordinator1 == null || coordinator2 == null) {
+            Assert.assertEquals(coordinator1, coordinator2);
+        }
+
+        Assert.assertArrayEquals("Capabilities values not equal", coordinator1.getCapabilities(), coordinator2.getCapabilities());
     }
 
     /**

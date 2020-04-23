@@ -105,7 +105,7 @@ public class AttachTypeCodecTest extends CodecTestSupport {
        assertEquals(10, result.getInitialDeliveryCount());
        assertEquals(UnsignedLong.valueOf(1024), result.getMaxMessageSize());
        assertNotNull(result.getSource());
-       assertNotNull(result.getTargetOrCoordinator());
+       assertNotNull(result.getTarget());
        assertFalse(result.getIncompleteUnsettled());
        assertNull(result.getUnsettled());
        assertNull(result.getProperties());

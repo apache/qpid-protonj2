@@ -23,6 +23,8 @@ import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.amqp.messaging.Source;
 import org.apache.qpid.proton4j.amqp.messaging.Target;
+import org.apache.qpid.proton4j.amqp.messaging.Terminus;
+import org.apache.qpid.proton4j.amqp.transactions.Coordinator;
 import org.apache.qpid.proton4j.amqp.transactions.Declare;
 import org.apache.qpid.proton4j.amqp.transactions.Discharge;
 import org.apache.qpid.proton4j.amqp.transport.ErrorCondition;
@@ -199,7 +201,7 @@ public class ProtonTransactionManager extends ProtonEndpoint<TransactionManager>
     }
 
     @Override
-    public Target getTarget() {
+    public <T extends Terminus> T getTarget() {
         return receiverLink.getTarget();
     }
 
@@ -273,7 +275,7 @@ public class ProtonTransactionManager extends ProtonEndpoint<TransactionManager>
     }
 
     @Override
-    public Target getRemoteTarget() {
+    public <T extends Terminus> T getRemoteTarget() {
         return receiverLink.getRemoteTarget();
     }
 
@@ -361,6 +363,12 @@ public class ProtonTransactionManager extends ProtonEndpoint<TransactionManager>
 
     @Override
     public TransactionManager creditStateUpdateHandler(EventHandler<TransactionManager> handler) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public TransactionManager setTarget(Coordinator coordinatior) throws IllegalStateException {
         // TODO Auto-generated method stub
         return null;
     }

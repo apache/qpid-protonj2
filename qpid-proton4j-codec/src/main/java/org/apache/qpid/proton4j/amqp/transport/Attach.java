@@ -276,12 +276,9 @@ public final class Attach implements Performative {
         return this;
     }
 
-    public Terminus getTargetOrCoordinator() {
-        return target;
-    }
-
-    public Target getTarget() {
-        return (Target) target;
+    @SuppressWarnings("unchecked")
+    public <T extends Terminus> T getTarget() {
+        return (T) target;
     }
 
     public Attach setTarget(Terminus target) {
@@ -316,10 +313,6 @@ public final class Attach implements Performative {
 
         this.target = target;
         return this;
-    }
-
-    public Coordinator getCoordinator() {
-        return (Coordinator) target;
     }
 
     public Attach setCoordinator(Coordinator target) {

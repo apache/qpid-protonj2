@@ -25,6 +25,8 @@ import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.amqp.messaging.Source;
 import org.apache.qpid.proton4j.amqp.messaging.Target;
+import org.apache.qpid.proton4j.amqp.messaging.Terminus;
+import org.apache.qpid.proton4j.amqp.transactions.Coordinator;
 import org.apache.qpid.proton4j.amqp.transport.Attach;
 import org.apache.qpid.proton4j.amqp.transport.Detach;
 import org.apache.qpid.proton4j.amqp.transport.Disposition;
@@ -47,9 +49,9 @@ import org.apache.qpid.proton4j.engine.exceptions.EngineFailedException;
 /**
  * Common base for Proton Senders and Receivers.
  *
- * @param <T> the type of link, {@link Sender} or {@link Receiver}.
+ * @param <L> the type of link, {@link Sender} or {@link Receiver}.
  */
-public abstract class ProtonLink<T extends Link<T>> extends ProtonEndpoint<T> implements Link<T> {
+public abstract class ProtonLink<L extends Link<L>> extends ProtonEndpoint<L> implements Link<L> {
 
     private static final ProtonLogger LOG = ProtonLoggerFactory.getLogger(ProtonLink.class);
 
@@ -81,8 +83,8 @@ public abstract class ProtonLink<T extends Link<T>> extends ProtonEndpoint<T> im
     private LinkState localState = LinkState.IDLE;
     private LinkState remoteState = LinkState.IDLE;
 
-    private EventHandler<T> localDetachHandler;
-    private EventHandler<T> remoteDetachHandler;
+    private EventHandler<L> localDetachHandler;
+    private EventHandler<L> remoteDetachHandler;
 
     /**
      * Create a new link instance with the given parent session.
@@ -135,7 +137,7 @@ public abstract class ProtonLink<T extends Link<T>> extends ProtonEndpoint<T> im
     }
 
     @Override
-    protected abstract T self();
+    protected abstract L self();
 
     long getHandle() {
         return localAttach.getHandle();
@@ -152,7 +154,7 @@ public abstract class ProtonLink<T extends Link<T>> extends ProtonEndpoint<T> im
     }
 
     @Override
-    public T open() {
+    public L open() {
         if (getState() == LinkState.IDLE) {
             checkLinkOperable("Cannot open Link");
             localState = LinkState.ACTIVE;
@@ -170,7 +172,7 @@ public abstract class ProtonLink<T extends Link<T>> extends ProtonEndpoint<T> im
     }
 
     @Override
-    public T detach() {
+    public L detach() {
         if (getState() == LinkState.ACTIVE) {
             localState = LinkState.DETACHED;
             operability = LinkOperabilityState.LINK_LOCALLY_DETACHED;
@@ -188,7 +190,7 @@ public abstract class ProtonLink<T extends Link<T>> extends ProtonEndpoint<T> im
     }
 
     @Override
-    public T close() {
+    public L close() {
         if (getState() == LinkState.ACTIVE) {
             localState = LinkState.CLOSED;
             operability = LinkOperabilityState.LINK_LOCALLY_CLOSED;
@@ -206,7 +208,7 @@ public abstract class ProtonLink<T extends Link<T>> extends ProtonEndpoint<T> im
     }
 
     @Override
-    public T setSenderSettleMode(SenderSettleMode senderSettleMode) {
+    public L setSenderSettleMode(SenderSettleMode senderSettleMode) {
         checkNotOpened("Cannot set Sender settlement mode on already opened Link");
         localAttach.setSenderSettleMode(senderSettleMode);
         return self();
@@ -218,7 +220,7 @@ public abstract class ProtonLink<T extends Link<T>> extends ProtonEndpoint<T> im
     }
 
     @Override
-    public T setReceiverSettleMode(ReceiverSettleMode receiverSettleMode) {
+    public L setReceiverSettleMode(ReceiverSettleMode receiverSettleMode) {
         checkNotOpened("Cannot set Receiver settlement mode already opened Link");
         localAttach.setReceiverSettleMode(receiverSettleMode);
         return self();
@@ -230,7 +232,7 @@ public abstract class ProtonLink<T extends Link<T>> extends ProtonEndpoint<T> im
     }
 
     @Override
-    public T setSource(Source source) {
+    public L setSource(Source source) {
         checkNotOpened("Cannot set Source on already opened Link");
         localAttach.setSource(source);
         return self();
@@ -242,19 +244,27 @@ public abstract class ProtonLink<T extends Link<T>> extends ProtonEndpoint<T> im
     }
 
     @Override
-    public T setTarget(Target target) {
+    public L setTarget(Target target) {
         checkNotOpened("Cannot set Target on already opened Link");
         localAttach.setTarget(target);
         return self();
     }
 
+
     @Override
-    public Target getTarget() {
+    public L setTarget(Coordinator coordinatior) throws IllegalStateException {
+        checkNotOpened("Cannot set Coordinator on already opened Link");
+        localAttach.setTarget(coordinatior);
+        return self();
+    }
+
+    @Override
+    public <T extends Terminus> T getTarget() {
         return localAttach.getTarget();
     }
 
     @Override
-    public T setProperties(Map<Symbol, Object> properties) {
+    public L setProperties(Map<Symbol, Object> properties) {
         checkNotOpened("Cannot set Properties on already opened Link");
 
         if (properties != null) {
@@ -276,7 +286,7 @@ public abstract class ProtonLink<T extends Link<T>> extends ProtonEndpoint<T> im
     }
 
     @Override
-    public T setOfferedCapabilities(Symbol... capabilities) {
+    public L setOfferedCapabilities(Symbol... capabilities) {
         checkNotOpened("Cannot set Offered Capabilities on already opened Link");
 
         if (capabilities != null) {
@@ -298,7 +308,7 @@ public abstract class ProtonLink<T extends Link<T>> extends ProtonEndpoint<T> im
     }
 
     @Override
-    public T setDesiredCapabilities(Symbol... capabilities) {
+    public L setDesiredCapabilities(Symbol... capabilities) {
         checkNotOpened("Cannot set Desired Capabilities on already opened Link");
 
         if (capabilities != null) {
@@ -320,7 +330,7 @@ public abstract class ProtonLink<T extends Link<T>> extends ProtonEndpoint<T> im
     }
 
     @Override
-    public T setMaxMessageSize(UnsignedLong maxMessageSize) {
+    public L setMaxMessageSize(UnsignedLong maxMessageSize) {
         checkNotOpened("Cannot set Max Message Size on already opened Link");
         localAttach.setMaxMessageSize(maxMessageSize);
         return self();
@@ -398,10 +408,11 @@ public abstract class ProtonLink<T extends Link<T>> extends ProtonEndpoint<T> im
         return null;
     }
 
+    @SuppressWarnings("unchecked")
     @Override
-    public Target getRemoteTarget() {
+    public <T extends Terminus> T getRemoteTarget() {
         if (remoteAttach != null && remoteAttach.getTarget() != null) {
-            return remoteAttach.getTarget().copy();
+            return (T) remoteAttach.getTarget().copy();
         }
 
         return null;
@@ -446,16 +457,16 @@ public abstract class ProtonLink<T extends Link<T>> extends ProtonEndpoint<T> im
     //----- Event registration methods
 
     @Override
-    public T localDetachHandler(EventHandler<T> localDetachHandler) {
+    public L localDetachHandler(EventHandler<L> localDetachHandler) {
         this.localDetachHandler = localDetachHandler;
         return self();
     }
 
-    EventHandler<T> localDetachHandler() {
+    EventHandler<L> localDetachHandler() {
         return localDetachHandler;
     }
 
-    T fireLocalDetach() {
+    L fireLocalDetach() {
         if (localDetachHandler != null) {
             localDetachHandler.handle(self());
         } else {
@@ -466,16 +477,16 @@ public abstract class ProtonLink<T extends Link<T>> extends ProtonEndpoint<T> im
     }
 
     @Override
-    public T detachHandler(EventHandler<T> remoteDetachHandler) {
+    public L detachHandler(EventHandler<L> remoteDetachHandler) {
         this.remoteDetachHandler = remoteDetachHandler;
         return self();
     }
 
-    EventHandler<T> detachHandler() {
+    EventHandler<L> detachHandler() {
         return remoteDetachHandler;
     }
 
-    T fireRemoteDetach() {
+    L fireRemoteDetach() {
         if (remoteDetachHandler != null) {
             remoteDetachHandler.handle(self());
         } else {
@@ -624,36 +635,36 @@ public abstract class ProtonLink<T extends Link<T>> extends ProtonEndpoint<T> im
         return handleRemoteTransfer(transfer, payload);
     }
 
-    final T remoteFlow(Flow flow) {
+    final L remoteFlow(Flow flow) {
         LOG.trace("Link:{} Received new Flow:{}", self(), flow);
         return handleRemoteFlow(flow);
     }
 
-    final T remoteDisposition(Disposition disposition, ProtonOutgoingDelivery delivery) {
+    final L remoteDisposition(Disposition disposition, ProtonOutgoingDelivery delivery) {
         LOG.trace("Link:{} Received remote disposition:{} for sent delivery:{}", self(), disposition, delivery);
         return handleRemoteDisposition(disposition, delivery);
     }
 
-    final T remoteDisposition(Disposition disposition, ProtonIncomingDelivery delivery) {
+    final L remoteDisposition(Disposition disposition, ProtonIncomingDelivery delivery) {
         LOG.trace("Link:{} Received remote disposition:{} for received delivery:{}", self(), disposition, delivery);
         return handleRemoteDisposition(disposition, delivery);
     }
 
     //----- Abstract methods required for specialization of the link type
 
-    protected abstract T handleRemoteAttach(Attach attach);
+    protected abstract L handleRemoteAttach(Attach attach);
 
-    protected abstract T handleRemoteDetach(Detach detach);
+    protected abstract L handleRemoteDetach(Detach detach);
 
-    protected abstract T handleRemoteFlow(Flow flow);
+    protected abstract L handleRemoteFlow(Flow flow);
 
-    protected abstract T handleRemoteDisposition(Disposition disposition, ProtonOutgoingDelivery delivery);
+    protected abstract L handleRemoteDisposition(Disposition disposition, ProtonOutgoingDelivery delivery);
 
-    protected abstract T handleRemoteDisposition(Disposition disposition, ProtonIncomingDelivery delivery);
+    protected abstract L handleRemoteDisposition(Disposition disposition, ProtonIncomingDelivery delivery);
 
     protected abstract ProtonIncomingDelivery handleRemoteTransfer(Transfer transfer, ProtonBuffer payload);
 
-    protected abstract T decorateOutgoingFlow(Flow flow);
+    protected abstract L decorateOutgoingFlow(Flow flow);
 
     //----- Internal methods
 

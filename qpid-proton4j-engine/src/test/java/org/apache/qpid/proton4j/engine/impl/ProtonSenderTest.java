@@ -2239,7 +2239,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         peer.respondToLastAttach().now();
 
         assertTrue("Sender remote opened event did not fire", senderRemotelyOpened.get());
-        assertNotNull(sender.getRemoteTarget().getAddress());
+        assertNotNull(sender.<Target>getRemoteTarget().getAddress());
 
         connection.close();
 

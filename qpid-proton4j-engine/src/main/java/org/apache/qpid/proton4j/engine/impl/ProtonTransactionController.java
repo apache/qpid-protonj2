@@ -22,6 +22,8 @@ import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.amqp.messaging.Source;
 import org.apache.qpid.proton4j.amqp.messaging.Target;
+import org.apache.qpid.proton4j.amqp.messaging.Terminus;
+import org.apache.qpid.proton4j.amqp.transactions.Coordinator;
 import org.apache.qpid.proton4j.amqp.transactions.Declare;
 import org.apache.qpid.proton4j.amqp.transactions.Discharge;
 import org.apache.qpid.proton4j.amqp.transport.ErrorCondition;
@@ -200,7 +202,13 @@ public class ProtonTransactionController extends ProtonEndpoint<TransactionContr
     }
 
     @Override
-    public Target getTarget() {
+    public TransactionController setTarget(Coordinator coordinatior) throws IllegalStateException {
+        senderLink.setTarget(coordinatior);
+        return this;
+    }
+
+    @Override
+    public <T extends Terminus> T getTarget() {
         return senderLink.getTarget();
     }
 
@@ -274,7 +282,7 @@ public class ProtonTransactionController extends ProtonEndpoint<TransactionContr
     }
 
     @Override
-    public Target getRemoteTarget() {
+    public <T extends Terminus> T getRemoteTarget() {
         return senderLink.getRemoteTarget();
     }
 

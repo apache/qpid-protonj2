@@ -180,8 +180,13 @@ public class AttachTest {
 
         Attach copy = original.copy();
 
-        assertNotNull(copy.getCoordinator());
-        assertEquals(original.getCoordinator(), copy.getCoordinator());
+        assertNotNull(copy.getTarget());
+        assertEquals(original.getTarget(), copy.getTarget());
+
+        Coordinator coordinator = copy.getTarget();
+
+        assertNotNull(coordinator);
+        assertEquals(original.getTarget(), coordinator);
     }
 
     @Test

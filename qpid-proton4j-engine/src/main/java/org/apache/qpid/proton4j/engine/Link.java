@@ -19,6 +19,8 @@ package org.apache.qpid.proton4j.engine;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.amqp.messaging.Source;
 import org.apache.qpid.proton4j.amqp.messaging.Target;
+import org.apache.qpid.proton4j.amqp.messaging.Terminus;
+import org.apache.qpid.proton4j.amqp.transactions.Coordinator;
 import org.apache.qpid.proton4j.amqp.transport.Attach;
 import org.apache.qpid.proton4j.amqp.transport.Detach;
 import org.apache.qpid.proton4j.amqp.transport.Flow;
@@ -30,9 +32,9 @@ import org.apache.qpid.proton4j.engine.exceptions.EngineStateException;
 /**
  * Base API for {@link Sender} and {@link Receiver} links.
  *
- * @param <T> The link type that this {@link Link} represents, {@link Sender} or {@link Receiver}
+ * @param <L> The link type that this {@link Link} represents, {@link Sender} or {@link Receiver}
  */
-public interface Link<T extends Link<T>> extends Endpoint<T> {
+public interface Link<L extends Link<L>> extends Endpoint<L> {
 
     /**
      * Detach this end of the link.
@@ -41,7 +43,7 @@ public interface Link<T extends Link<T>> extends Endpoint<T> {
      *
      * @throws EngineStateException if an error occurs detaching the {@link Link} or the Engine is shutdown.
      */
-    T detach();
+    L detach();
 
     /**
      * Returns true if this {@link Link} is currently locally detached meaning the state returned
@@ -149,7 +151,7 @@ public interface Link<T extends Link<T>> extends Endpoint<T> {
      *
      * @throws IllegalStateException if the {@link Link} has already been opened.
      */
-    T setSenderSettleMode(SenderSettleMode senderSettleMode) throws IllegalStateException;
+    L setSenderSettleMode(SenderSettleMode senderSettleMode) throws IllegalStateException;
 
     /**
      * Gets the local link sender settlement mode.
@@ -177,7 +179,7 @@ public interface Link<T extends Link<T>> extends Endpoint<T> {
      *
      * @throws IllegalStateException if the {@link Link} has already been opened.
      */
-    T setReceiverSettleMode(ReceiverSettleMode receiverSettleMode) throws IllegalStateException;
+    L setReceiverSettleMode(ReceiverSettleMode receiverSettleMode) throws IllegalStateException;
 
     /**
      * Gets the local link receiver settlement mode.
@@ -200,7 +202,7 @@ public interface Link<T extends Link<T>> extends Endpoint<T> {
      *
      * @throws IllegalStateException if the {@link Link} has already been opened.
      */
-    T setSource(Source source) throws IllegalStateException;
+    L setSource(Source source) throws IllegalStateException;
 
     /**
      * @return the {@link Source} for the local end of this link.
@@ -219,12 +221,30 @@ public interface Link<T extends Link<T>> extends Endpoint<T> {
      *
      * @throws IllegalStateException if the {@link Link} has already been opened.
      */
-    T setTarget(Target target) throws IllegalStateException;
+    L setTarget(Target target) throws IllegalStateException;
 
     /**
-     * @return the {@link Target} for the local end of this link.
+     * Sets the {@link Coordinator} target to assign to the local end of this {@link Link}.
+     *
+     * Must be called during link setup, i.e. before calling the {@link #open()} method.
+     *
+     * @param coordinatior
+     *      The {@link Coordinator} target that will be set on the local end of this link.
+     *
+     * @return this Link.
+     *
+     * @throws IllegalStateException if the {@link Link} has already been opened.
      */
-    Target getTarget();
+    L setTarget(Coordinator coordinatior) throws IllegalStateException;
+
+    /**
+     * Returns the currently set Target for this {@link Link}.  A link target can be either
+     * a {@link Target} type for a {@link Sender} or {@link Receiver} link or if the link is
+     * to be transaction resource then the target type will be a {@link Coordinator} instance.
+     *
+     * @return the link target {@link Terminus} for the local end of this link.
+     */
+    <T extends Terminus> T getTarget();
 
     /**
      * Sets the local link max message size, to be conveyed to the peer via the Attach frame
@@ -239,7 +259,7 @@ public interface Link<T extends Link<T>> extends Endpoint<T> {
      *
      * @throws IllegalStateException if the {@link Link} has already been opened.
      */
-    T setMaxMessageSize(UnsignedLong maxMessageSize) throws IllegalStateException;
+    L setMaxMessageSize(UnsignedLong maxMessageSize) throws IllegalStateException;
 
     /**
      * Gets the local link max message size.
@@ -308,14 +328,27 @@ public interface Link<T extends Link<T>> extends Endpoint<T> {
     boolean isRemotelyClosedOrDetached();
 
     /**
-     * @return the {@link Source} for the remote end of this link.
+     * @return the source {@link Terminus} for the remote end of this link.
      */
     Source getRemoteSource();
 
     /**
-     * @return the {@link Target} for the remote end of this link.
+     * Returns the remote source {@link Terminus} cast to the given type.  This can be used when
+     * the underlying type is known by the caller or as a control to validate the assumption of the
+     * underlying type.
+     *
+     * the currently set Target for this {@link Link}.  A link target can be either a {@link Target}
+     * type for a {@link Sender} or {@link Receiver} link or if the link is to be transaction resource
+     * then the target type will be a {@link Coordinator} instance.
+     *
+     * @param sourceType
+     *      The class type to cast the remote source terminus to.
+     * @param <T>
+     *      The type that the remote {@link Terminus} will be cast to on return.
+     *
+     * @return the source {@link Terminus} for the remote end of this link.
      */
-    Target getRemoteTarget();
+    <T extends Terminus> T getRemoteTarget();
 
     /**
      * Gets the remote link sender settlement mode, as conveyed from the peer via the Attach frame
@@ -368,7 +401,7 @@ public interface Link<T extends Link<T>> extends Endpoint<T> {
      *
      * @return the link for chaining.
      */
-    T localDetachHandler(EventHandler<T> localDetachHandler);
+    L localDetachHandler(EventHandler<L> localDetachHandler);
 
     /**
      * Sets a {@link EventHandler} for when an AMQP Detach frame is received from the remote peer for this
@@ -384,7 +417,7 @@ public interface Link<T extends Link<T>> extends Endpoint<T> {
      *
      * @return the {@link Link} for chaining.
      */
-    T detachHandler(EventHandler<T> remoteDetachHandler);
+    L detachHandler(EventHandler<L> remoteDetachHandler);
 
     /**
      * Handler for link credit updates that occur after a remote {@link Flow} arrives.
@@ -394,6 +427,6 @@ public interface Link<T extends Link<T>> extends Endpoint<T> {
      *
      * @return the {@link Link} for chaining.
      */
-    T creditStateUpdateHandler(EventHandler<T> handler);
+    L creditStateUpdateHandler(EventHandler<L> handler);
 
 }
