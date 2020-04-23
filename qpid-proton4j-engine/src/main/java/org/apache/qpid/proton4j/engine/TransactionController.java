@@ -20,12 +20,12 @@ import org.apache.qpid.proton4j.amqp.messaging.Rejected;
 import org.apache.qpid.proton4j.amqp.transactions.Declare;
 
 /**
- * Transaction Controller link that handles the mechanics of declaring and discharging
+ * Transaction Controller link that implements the mechanics of declaring and discharging
  * AMQP transactions.  A {@link TransactionController} is typically used at the client side
- * of an AMQP {@link Link} to create {@link Transaction} instances in order to enlist incoming
- * and or outgoing Deliveries into.
+ * of an AMQP {@link Link} to create {@link Transaction} instances which the client application
+ * will enlist its incoming and outgoing deliveries into.
  */
-public interface TransactionController extends Link<TransactionController> {
+public interface TransactionController extends Endpoint<TransactionController> {
 
     /**
      * Request that the remote {@link TransactionManager} declare a new transaction and

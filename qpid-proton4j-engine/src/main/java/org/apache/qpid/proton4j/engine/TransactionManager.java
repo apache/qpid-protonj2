@@ -21,13 +21,13 @@ import org.apache.qpid.proton4j.amqp.transactions.Declare;
 import org.apache.qpid.proton4j.amqp.transactions.Discharge;
 
 /**
- * Transaction Manager link that handles the mechanics of handling the declaration
- * of and the requested discharge of AMQP transactions.  Typically an AMQP server
- * instance will host the transaction management services that are used by client
- * resources to declare and discharge transaction and handle the associated of
- * deliveries that are enlisted in active transactions.
+ * Transaction Manager endpoint that implements the mechanics of handling the declaration
+ * of and the requested discharge of AMQP transactions.  Typically an AMQP server  instance
+ * will host the transaction management services that are used by client resources to declare
+ * and discharge transaction and handle the associated of deliveries that are enlisted in
+ * active transactions.
  */
-public interface TransactionManager extends Link<TransactionManager> {
+public interface TransactionManager extends Endpoint<TransactionManager> {
 
     /**
      * Respond to a previous {@link Declare} request from the remote {@link TransactionController}

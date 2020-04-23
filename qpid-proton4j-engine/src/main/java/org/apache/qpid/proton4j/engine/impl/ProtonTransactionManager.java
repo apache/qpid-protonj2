@@ -20,22 +20,11 @@ import java.util.Map;
 
 import org.apache.qpid.proton4j.amqp.Binary;
 import org.apache.qpid.proton4j.amqp.Symbol;
-import org.apache.qpid.proton4j.amqp.UnsignedLong;
-import org.apache.qpid.proton4j.amqp.messaging.Source;
-import org.apache.qpid.proton4j.amqp.messaging.Target;
-import org.apache.qpid.proton4j.amqp.messaging.Terminus;
-import org.apache.qpid.proton4j.amqp.transactions.Coordinator;
 import org.apache.qpid.proton4j.amqp.transactions.Declare;
 import org.apache.qpid.proton4j.amqp.transactions.Discharge;
 import org.apache.qpid.proton4j.amqp.transport.ErrorCondition;
-import org.apache.qpid.proton4j.amqp.transport.ReceiverSettleMode;
-import org.apache.qpid.proton4j.amqp.transport.Role;
-import org.apache.qpid.proton4j.amqp.transport.SenderSettleMode;
-import org.apache.qpid.proton4j.engine.Connection;
 import org.apache.qpid.proton4j.engine.Engine;
 import org.apache.qpid.proton4j.engine.EventHandler;
-import org.apache.qpid.proton4j.engine.LinkState;
-import org.apache.qpid.proton4j.engine.Session;
 import org.apache.qpid.proton4j.engine.Transaction;
 import org.apache.qpid.proton4j.engine.TransactionManager;
 import org.apache.qpid.proton4j.engine.exceptions.EngineFailedException;
@@ -79,13 +68,6 @@ public class ProtonTransactionManager extends ProtonEndpoint<TransactionManager>
     }
 
     @Override
-    public TransactionManager detach() {
-        // TODO: Detach on a coordinator doesn't make a ton of sense, should be error or just close ?
-        receiverLink.detach();
-        return this;
-    }
-
-    @Override
     public boolean isLocallyOpen() {
         return receiverLink.isLocallyOpen();
     }
@@ -93,21 +75,6 @@ public class ProtonTransactionManager extends ProtonEndpoint<TransactionManager>
     @Override
     public boolean isLocallyClosed() {
         return receiverLink.isLocallyClosed();
-    }
-
-    @Override
-    public boolean isLocallyDetached() {
-        return receiverLink.isLocallyDetached();
-    }
-
-    @Override
-    public boolean isLocallyClosedOrDetached() {
-        return receiverLink.isLocallyClosedOrDetached();
-    }
-
-    @Override
-    public LinkState getState() {
-        return receiverLink.getState();
     }
 
     @Override
@@ -119,90 +86,6 @@ public class ProtonTransactionManager extends ProtonEndpoint<TransactionManager>
     public TransactionManager setCondition(ErrorCondition condition) {
         receiverLink.setCondition(condition);
         return this;
-    }
-
-    @Override
-    public int getCredit() {
-        return receiverLink.getCredit();
-    }
-
-    @Override
-    public boolean isDraining() {
-        return receiverLink.isDraining();
-    }
-
-    @Override
-    public Role getRole() {
-        return Role.RECEIVER;
-    }
-
-    @Override
-    public boolean isSender() {
-        return false;
-    }
-
-    @Override
-    public boolean isReceiver() {
-        return true;
-    }
-
-    @Override
-    public Connection getConnection() {
-        return receiverLink.getConnection();
-    }
-
-    @Override
-    public Session getSession() {
-        return receiverLink.getSession();
-    }
-
-    @Override
-    public String getName() {
-        return receiverLink.getName();
-    }
-
-    @Override
-    public TransactionManager setSenderSettleMode(SenderSettleMode senderSettleMode) throws IllegalStateException {
-        receiverLink.setSenderSettleMode(senderSettleMode);
-        return this;
-    }
-
-    @Override
-    public SenderSettleMode getSenderSettleMode() {
-        return receiverLink.getSenderSettleMode();
-    }
-
-    @Override
-    public TransactionManager setReceiverSettleMode(ReceiverSettleMode receiverSettleMode) throws IllegalStateException {
-        receiverLink.setReceiverSettleMode(receiverSettleMode);
-        return this;
-    }
-
-    @Override
-    public ReceiverSettleMode getReceiverSettleMode() {
-        return receiverLink.getReceiverSettleMode();
-    }
-
-    @Override
-    public TransactionManager setSource(Source source) throws IllegalStateException {
-        receiverLink.setSource(source);
-        return this;
-    }
-
-    @Override
-    public Source getSource() {
-        return receiverLink.getSource();
-    }
-
-    @Override
-    public TransactionManager setTarget(Target target) throws IllegalStateException {
-        receiverLink.setTarget(target);
-        return this;
-    }
-
-    @Override
-    public <T extends Terminus> T getTarget() {
-        return receiverLink.getTarget();
     }
 
     @Override
@@ -239,17 +122,6 @@ public class ProtonTransactionManager extends ProtonEndpoint<TransactionManager>
     }
 
     @Override
-    public TransactionManager setMaxMessageSize(UnsignedLong maxMessageSize) throws IllegalStateException {
-        receiverLink.setMaxMessageSize(maxMessageSize);
-        return this;
-    }
-
-    @Override
-    public UnsignedLong getMaxMessageSize() {
-        return receiverLink.getMaxMessageSize();
-    }
-
-    @Override
     public boolean isRemotelyOpen() {
         return receiverLink.isRemotelyOpen();
     }
@@ -257,36 +129,6 @@ public class ProtonTransactionManager extends ProtonEndpoint<TransactionManager>
     @Override
     public boolean isRemotelyClosed() {
         return receiverLink.isRemotelyClosed();
-    }
-
-    @Override
-    public boolean isRemotelyDetached() {
-        return receiverLink.isRemotelyDetached();
-    }
-
-    @Override
-    public boolean isRemotelyClosedOrDetached() {
-        return receiverLink.isRemotelyClosedOrDetached();
-    }
-
-    @Override
-    public Source getRemoteSource() {
-        return receiverLink.getRemoteSource();
-    }
-
-    @Override
-    public <T extends Terminus> T getRemoteTarget() {
-        return receiverLink.getRemoteTarget();
-    }
-
-    @Override
-    public SenderSettleMode getRemoteSenderSettleMode() {
-        return receiverLink.getRemoteSenderSettleMode();
-    }
-
-    @Override
-    public ReceiverSettleMode getRemoteReceiverSettleMode() {
-        return receiverLink.getRemoteReceiverSettleMode();
     }
 
     @Override
@@ -305,30 +147,8 @@ public class ProtonTransactionManager extends ProtonEndpoint<TransactionManager>
     }
 
     @Override
-    public UnsignedLong getRemoteMaxMessageSize() {
-        return receiverLink.getRemoteMaxMessageSize();
-    }
-
-    @Override
-    public LinkState getRemoteState() {
-        return receiverLink.getRemoteState();
-    }
-
-    @Override
     public ErrorCondition getRemoteCondition() {
         return receiverLink.getRemoteCondition();
-    }
-
-    @Override
-    public TransactionManager localDetachHandler(EventHandler<TransactionManager> localDetachHandler) {
-        // TODO Auto-generated method stub
-        return this;
-    }
-
-    @Override
-    public TransactionManager detachHandler(EventHandler<TransactionManager> remoteDetachHandler) {
-        // TODO Auto-generated method stub
-        return this;
     }
 
     @Override
@@ -359,17 +179,5 @@ public class ProtonTransactionManager extends ProtonEndpoint<TransactionManager>
     public TransactionManager discharge(EventHandler<Transaction<TransactionManager>> declaredEventHandler) {
         // TODO Auto-generated method stub
         return this;
-    }
-
-    @Override
-    public TransactionManager creditStateUpdateHandler(EventHandler<TransactionManager> handler) {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public TransactionManager setTarget(Coordinator coordinatior) throws IllegalStateException {
-        // TODO Auto-generated method stub
-        return null;
     }
 }

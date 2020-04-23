@@ -25,7 +25,7 @@ import org.apache.qpid.proton4j.amqp.transport.ErrorCondition;
  *
  * @param <E> The parent of this Transaction either a {@link TransactionController} or {@link TransactionManager}
  */
-public interface Transaction<E extends Link<?>> {
+public interface Transaction<E extends Endpoint<?>> {
 
     /**
      * @return the current {@link Transaction} state.
