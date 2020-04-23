@@ -45,6 +45,13 @@ public class CoordinatorTest {
 
         assertNotSame(copy.getCapabilities(), coordinator.getCapabilities());
         assertArrayEquals(copy.getCapabilities(), coordinator.getCapabilities());
+
+        coordinator.setCapabilities(TxnCapability.LOCAL_TXN, TxnCapability.PROMOTABLE_TXN);
+
+        copy = coordinator.copy();
+
+        assertNotSame(copy.getCapabilities(), coordinator.getCapabilities());
+        assertArrayEquals(copy.getCapabilities(), coordinator.getCapabilities());
     }
 
     @Test
