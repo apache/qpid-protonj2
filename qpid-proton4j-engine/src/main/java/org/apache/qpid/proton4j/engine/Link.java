@@ -228,14 +228,14 @@ public interface Link<L extends Link<L>> extends Endpoint<L> {
      *
      * Must be called during link setup, i.e. before calling the {@link #open()} method.
      *
-     * @param coordinatior
+     * @param coordinator
      *      The {@link Coordinator} target that will be set on the local end of this link.
      *
      * @return this Link.
      *
      * @throws IllegalStateException if the {@link Link} has already been opened.
      */
-    L setTarget(Coordinator coordinatior) throws IllegalStateException;
+    L setTarget(Coordinator coordinator) throws IllegalStateException;
 
     /**
      * Returns the currently set Target for this {@link Link}.  A link target can be either

@@ -33,6 +33,7 @@ import org.apache.qpid.proton4j.amqp.messaging.Source;
 import org.apache.qpid.proton4j.amqp.messaging.Target;
 import org.apache.qpid.proton4j.amqp.messaging.TerminusDurability;
 import org.apache.qpid.proton4j.amqp.messaging.TerminusExpiryPolicy;
+import org.apache.qpid.proton4j.amqp.transactions.Coordinator;
 import org.apache.qpid.proton4j.amqp.transport.DeliveryState;
 import org.apache.qpid.proton4j.amqp.transport.ReceiverSettleMode;
 import org.apache.qpid.proton4j.amqp.transport.Role;
@@ -121,7 +122,7 @@ public class AttachInjectAction extends AbstractPerformativeInjectAction<Attach>
 
     public AttachInjectAction withNullTarget() {
         nullTargetRequired = true;
-        attach.setTarget(null);
+        attach.setTarget((org.apache.qpid.proton4j.amqp.driver.codec.messaging.Target) null);
         return this;
     }
 
@@ -130,15 +131,32 @@ public class AttachInjectAction extends AbstractPerformativeInjectAction<Attach>
         return new TargetBuilder(getOrCreateTarget());
     }
 
+    public CoordinatorBuilder withCoordinator() {
+        nullSourceRequired = false;
+        return new CoordinatorBuilder(getOrCreateCoordinator());
+    }
+
     public AttachInjectAction withTarget(Target target) {
         nullTargetRequired = target == null;
         attach.setTarget(TypeMapper.mapFromProtonType(target));
         return this;
     }
 
+    public AttachInjectAction withTarget(Coordinator coordinator) {
+        nullTargetRequired = coordinator == null;
+        attach.setTarget(TypeMapper.mapFromProtonType(coordinator));
+        return this;
+    }
+
     public AttachInjectAction withTarget(org.apache.qpid.proton4j.amqp.driver.codec.messaging.Target target) {
         nullTargetRequired = target == null;
         attach.setTarget(target);
+        return this;
+    }
+
+    public AttachInjectAction withTarget(org.apache.qpid.proton4j.amqp.driver.codec.transactions.Coordinator coordinator) {
+        nullTargetRequired = coordinator == null;
+        attach.setTarget(coordinator);
         return this;
     }
 
@@ -219,7 +237,14 @@ public class AttachInjectAction extends AbstractPerformativeInjectAction<Attach>
         if (attach.getTarget() == null) {
             attach.setTarget(new org.apache.qpid.proton4j.amqp.driver.codec.messaging.Target());
         }
-        return attach.getTarget();
+        return (org.apache.qpid.proton4j.amqp.driver.codec.messaging.Target) attach.getTarget();
+    }
+
+    private org.apache.qpid.proton4j.amqp.driver.codec.transactions.Coordinator getOrCreateCoordinator() {
+        if (attach.getTarget() == null) {
+            attach.setTarget(new org.apache.qpid.proton4j.amqp.driver.codec.transactions.Coordinator());
+        }
+        return (org.apache.qpid.proton4j.amqp.driver.codec.transactions.Coordinator) attach.getTarget();
     }
 
     //----- Builders for Source and Target to make test writing simpler
@@ -384,6 +409,25 @@ public class AttachInjectAction extends AbstractPerformativeInjectAction<Attach>
 
         public TargetBuilder withCapabilities(Symbol... capabilities) {
             target.setCapabilities(capabilities);
+            return this;
+        }
+    }
+
+    public final class CoordinatorBuilder extends TerminusBuilder {
+
+        private final org.apache.qpid.proton4j.amqp.driver.codec.transactions.Coordinator coordinator;
+
+        public CoordinatorBuilder(org.apache.qpid.proton4j.amqp.driver.codec.transactions.Coordinator coordinator) {
+            this.coordinator = coordinator;
+        }
+
+        public CoordinatorBuilder withCapabilities(String... capabilities) {
+            coordinator.setCapabilities(TypeMapper.toSymbolArray(capabilities));
+            return this;
+        }
+
+        public CoordinatorBuilder withCapabilities(Symbol... capabilities) {
+            coordinator.setCapabilities(capabilities);
             return this;
         }
     }

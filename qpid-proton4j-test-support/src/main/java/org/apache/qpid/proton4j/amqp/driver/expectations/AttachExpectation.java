@@ -35,11 +35,13 @@ import org.apache.qpid.proton4j.amqp.driver.codec.transport.Attach;
 import org.apache.qpid.proton4j.amqp.driver.codec.util.TypeMapper;
 import org.apache.qpid.proton4j.amqp.driver.matchers.messaging.SourceMatcher;
 import org.apache.qpid.proton4j.amqp.driver.matchers.messaging.TargetMatcher;
+import org.apache.qpid.proton4j.amqp.driver.matchers.transactions.CoordinatorMatcher;
 import org.apache.qpid.proton4j.amqp.driver.matchers.transport.AttachMatcher;
 import org.apache.qpid.proton4j.amqp.messaging.Source;
 import org.apache.qpid.proton4j.amqp.messaging.Target;
 import org.apache.qpid.proton4j.amqp.messaging.TerminusDurability;
 import org.apache.qpid.proton4j.amqp.messaging.TerminusExpiryPolicy;
+import org.apache.qpid.proton4j.amqp.transactions.Coordinator;
 import org.apache.qpid.proton4j.amqp.transport.DeliveryState;
 import org.apache.qpid.proton4j.amqp.transport.ReceiverSettleMode;
 import org.apache.qpid.proton4j.amqp.transport.Role;
@@ -113,9 +115,19 @@ public class AttachExpectation extends AbstractExpectation<Attach> {
             }
         }
         if (response.getPerformative().getTarget() == null && !response.isNullTargetRequired()) {
-            response.withTarget(attach.getTarget());
-            if (attach.getTarget() != null && Boolean.TRUE.equals(attach.getTarget().getDynamic())) {
-                attach.getTarget().setAddress(UUID.randomUUID().toString());
+            if (attach.getTarget() != null) {
+                if (attach.getTarget() instanceof org.apache.qpid.proton4j.amqp.driver.codec.messaging.Target) {
+                    org.apache.qpid.proton4j.amqp.driver.codec.messaging.Target target =
+                        (org.apache.qpid.proton4j.amqp.driver.codec.messaging.Target) attach.getTarget();
+                    response.withTarget(target);
+                    if (target != null && Boolean.TRUE.equals(target.getDynamic())) {
+                        target.setAddress(UUID.randomUUID().toString());
+                    }
+                } else {
+                    org.apache.qpid.proton4j.amqp.driver.codec.transactions.Coordinator coordinator =
+                        (org.apache.qpid.proton4j.amqp.driver.codec.transactions.Coordinator) attach.getTarget();
+                    response.withTarget(coordinator);
+                }
             }
         }
 
@@ -184,6 +196,15 @@ public class AttachExpectation extends AbstractExpectation<Attach> {
         if (target != null) {
             TargetMatcher targetMatcher = new TargetMatcher(target);
             return withTarget(targetMatcher);
+        } else {
+            return withTarget(nullValue());
+        }
+    }
+
+    public AttachExpectation withTarget(Coordinator coordinator) {
+        if (coordinator != null) {
+            CoordinatorMatcher coordinatorMatcher = new CoordinatorMatcher();
+            return withTarget(coordinatorMatcher);
         } else {
             return withTarget(nullValue());
         }

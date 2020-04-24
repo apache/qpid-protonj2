@@ -27,6 +27,7 @@ import org.apache.qpid.proton4j.amqp.driver.codec.messaging.Rejected;
 import org.apache.qpid.proton4j.amqp.driver.codec.messaging.Released;
 import org.apache.qpid.proton4j.amqp.driver.codec.messaging.Source;
 import org.apache.qpid.proton4j.amqp.driver.codec.messaging.Target;
+import org.apache.qpid.proton4j.amqp.driver.codec.transactions.Coordinator;
 import org.apache.qpid.proton4j.amqp.driver.codec.transactions.Declared;
 import org.apache.qpid.proton4j.amqp.driver.codec.transactions.TransactionalState;
 import org.apache.qpid.proton4j.amqp.driver.codec.transport.ErrorCondition;
@@ -250,6 +251,31 @@ public abstract class TypeMapper {
             mapped.setDynamic(target.getDynamic());
             mapped.setDynamicNodeProperties(target.getDynamicNodeProperties());
             mapped.setCapabilities(target.getCapabilities());
+
+            return mapped;
+        } else {
+            return null;
+        }
+    }
+
+    public static Coordinator mapFromProtonType(org.apache.qpid.proton4j.amqp.transactions.Coordinator coordinator) {
+        if (coordinator != null) {
+            Coordinator mapped = new Coordinator();
+
+            mapped.setCapabilities(coordinator.getCapabilities());
+
+            return mapped;
+        } else {
+            return null;
+        }
+    }
+
+    public static org.apache.qpid.proton4j.amqp.transactions.Coordinator mapToProtonType(Coordinator coordinator) {
+        if (coordinator != null) {
+            org.apache.qpid.proton4j.amqp.transactions.Coordinator mapped =
+                new org.apache.qpid.proton4j.amqp.transactions.Coordinator();
+
+            mapped.setCapabilities(coordinator.getCapabilities());
 
             return mapped;
         } else {

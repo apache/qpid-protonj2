@@ -38,6 +38,7 @@ import org.apache.qpid.proton4j.amqp.driver.actions.SaslResponseInjectAction;
 import org.apache.qpid.proton4j.amqp.driver.actions.TransferInjectAction;
 import org.apache.qpid.proton4j.amqp.driver.codec.messaging.Source;
 import org.apache.qpid.proton4j.amqp.driver.codec.messaging.Target;
+import org.apache.qpid.proton4j.amqp.driver.codec.transactions.Coordinator;
 import org.apache.qpid.proton4j.amqp.driver.expectations.AMQPHeaderExpectation;
 import org.apache.qpid.proton4j.amqp.driver.expectations.AttachExpectation;
 import org.apache.qpid.proton4j.amqp.driver.expectations.BeginExpectation;
@@ -408,6 +409,9 @@ public abstract class ScriptWriter {
             if (Boolean.TRUE.equals(link.getTarget().getDynamic())) {
                 response.withTarget().withAddress(UUID.randomUUID().toString());
             }
+        }
+        if (link.getCoordinator() != null) {
+            response.withTarget(new Coordinator(link.getCoordinator()));
         }
 
         if (response.getPerformative().getInitialDeliveryCount() == null) {

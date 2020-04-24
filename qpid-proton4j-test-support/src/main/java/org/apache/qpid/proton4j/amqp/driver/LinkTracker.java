@@ -19,6 +19,7 @@ package org.apache.qpid.proton4j.amqp.driver;
 import org.apache.qpid.proton4j.amqp.UnsignedInteger;
 import org.apache.qpid.proton4j.amqp.driver.codec.messaging.Source;
 import org.apache.qpid.proton4j.amqp.driver.codec.messaging.Target;
+import org.apache.qpid.proton4j.amqp.driver.codec.transactions.Coordinator;
 import org.apache.qpid.proton4j.amqp.driver.codec.transport.Attach;
 import org.apache.qpid.proton4j.amqp.transport.ReceiverSettleMode;
 import org.apache.qpid.proton4j.amqp.transport.Role;
@@ -66,7 +67,11 @@ public class LinkTracker {
     }
 
     public Target getTarget() {
-        return attach.getTarget();
+        return attach.getTarget() instanceof Target ? (Target) attach.getTarget() : null;
+    }
+
+    public Coordinator getCoordinator() {
+        return attach.getTarget() instanceof Coordinator ? (Coordinator) attach.getTarget() : null;
     }
 
     public boolean isSender() {

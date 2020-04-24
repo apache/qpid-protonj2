@@ -27,6 +27,7 @@ import org.apache.qpid.proton4j.amqp.UnsignedInteger;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.amqp.driver.codec.messaging.Source;
 import org.apache.qpid.proton4j.amqp.driver.codec.messaging.Target;
+import org.apache.qpid.proton4j.amqp.driver.codec.transactions.Coordinator;
 import org.apache.qpid.proton4j.amqp.transport.ReceiverSettleMode;
 import org.apache.qpid.proton4j.amqp.transport.SenderSettleMode;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
@@ -133,8 +134,13 @@ public class Attach extends PerformativeDescribedType {
         return this;
     }
 
-    public Target getTarget() {
-        return (Target) getList().get(Field.TARGET.ordinal());
+    public Attach setTarget(Coordinator o) {
+        getList().set(Field.TARGET.ordinal(), o);
+        return this;
+    }
+
+    public Object getTarget() {
+        return getList().get(Field.TARGET.ordinal());
     }
 
     public Attach setUnsettled(Map<Binary, DescribedType> o) {
