@@ -36,10 +36,20 @@ import org.apache.qpid.proton4j.amqp.UnsignedInteger;
  *
  * @param <V> The type that this {@link Map} stores in its values.
  */
-public final class SequenceNumberMap<V> implements Map<Number, V> {
+public final class SequenceNumberMap<V> implements Map<UnsignedInteger, V> {
 
     /**
-     * Max capacity for a integer based Map.
+     * The default bucket size used to hold subsets of the sequence keyed values in the map
+     */
+    private static final int DEFAULT_BUCKET_SIZE = 512;
+
+    /**
+     * The minimum number of entries that is allow to be used for sequence number entry buckets.
+     */
+    private static final int MINIMUM_BUCKET_SIZE = 16;
+
+    /**
+     * Max capacity for a integer based {@link SequenceNumberMap}.
      */
     private static final long MAXIMUM_CAPACITY = 1 << 32;
 
@@ -50,32 +60,46 @@ public final class SequenceNumberMap<V> implements Map<Number, V> {
      */
     private final transient SequenceEntry<V> root = new SequenceEntry<>();
 
+    /**
+     * A dummy entry in the chain of map buckets that provides a constant fixed
+     * starting point for searches or other access operations that need bucket
+     * iteration.  The real first bucket is located at buckets.next.
+     */
+    private final transient SequenceNumberBucket<V> buckets = new SequenceNumberBucket<>();
+
+    /**
+     * The sequence number bucket size used to allocate the bucket arrays.
+     */
+    private final int bucketSize;
+
     // Views - lazily initialized
-    private transient Set<Number> keySet;
-    private transient Set<Entry<Number, V>> entrySet;
+    private transient Set<UnsignedInteger> keySet;
+    private transient Set<Entry<UnsignedInteger, V>> entrySet;
     private transient Collection<V> values;
 
     private int size;
-    private int modCount;
+    private transient int modCount;
 
     /**
      * Creates an empty {@link SequenceNumberMap} with default initial capacity sizing.
      */
     public SequenceNumberMap() {
+        this(DEFAULT_BUCKET_SIZE);
     }
 
     /**
-     * Creates an empty {@link SequenceNumberMap} with this given initial capacity value.
+     * Creates an empty {@link SequenceNumberMap} with this given bucket size value.
      *
-     * @param initialCapacity
-     *      The initial capacity that the internal data structure of this mapping should use.
+     * @param bucketSize
+     *      The size of the sequence number buckets that hold subsets of the Map values.
      */
-    public SequenceNumberMap(int initialCapacity) {
-        if (initialCapacity < 0) {
-            throw new IllegalArgumentException("Initial Map Capacity cannot be negative: " + initialCapacity);
+    public SequenceNumberMap(int bucketSize) {
+        if (bucketSize <= 0) {
+            throw new IllegalArgumentException("Initial Map Capacity cannot be negative: " + bucketSize);
         }
 
-        // TODO
+        this.bucketSize = Math.max(bucketSize, MINIMUM_BUCKET_SIZE);
+        this.buckets.next = new SequenceNumberBucket<>(0, this.bucketSize, this.buckets, this.buckets);
     }
 
     /**
@@ -87,9 +111,12 @@ public final class SequenceNumberMap<V> implements Map<Number, V> {
      *
      * @throws NullPointerException if the given {@link Map} instance is null.
      */
-    public SequenceNumberMap(Map<? extends Number, ? extends V> source) {
-        this(source.size());
-        // TODO
+    public SequenceNumberMap(Map<? extends UnsignedInteger, ? extends V> source) {
+        this(DEFAULT_BUCKET_SIZE);
+
+        // TODO: This should check if source is a SequenceNumberMap and optimize the put
+        //       using the internals of the other Map instance.
+        source.forEach((key, value) -> put(key, value));
     }
 
     @Override
@@ -105,8 +132,14 @@ public final class SequenceNumberMap<V> implements Map<Number, V> {
     @Override
     public boolean containsKey(Object key) {
         if (key != null) {
-            final int keyValue = Number.class.cast(key).intValue();
+            containsKey(Number.class.cast(key).intValue());
         }
+
+        return false;
+    }
+
+    public boolean containsKey(int key) {
+        final int bucketNumber = Integer.divideUnsigned(key, bucketSize);
 
         return false;
     }
@@ -130,35 +163,55 @@ public final class SequenceNumberMap<V> implements Map<Number, V> {
     @Override
     public V get(Object key) {
         if (key != null) {
-            final int keyValue = Number.class.cast(key).intValue();
-
-            // TODO
+            get(Number.class.cast(key).intValue());
         }
 
         return null;
     }
 
+    public V get(int key) {
+        final int bucketNumber = Integer.divideUnsigned(key, bucketSize);
+        // TODO
+
+        return null;
+    }
+
     @Override
-    public V put(Number key, V value) {
-        // TODO Auto-generated method stub
+    public V put(UnsignedInteger key, V value) {
+        return put(key.intValue(), value);
+    }
+
+    public V put(int key, V value) {
+        final int bucketNumber = Integer.divideUnsigned(key, bucketSize);
+
+        SequenceNumberBucket<V> bucket = buckets.next;
+        while (bucket != buckets) {
+            bucket = buckets.next;
+        }
+
         return null;
     }
 
     @Override
     public V remove(Object key) {
         if (key != null) {
-            final int keyValue = Number.class.cast(key).intValue();
-
-            // TODO
+            return remove(Number.class.cast(key).intValue());
         }
 
         return null;
     }
 
-    @Override
-    public void putAll(Map<? extends Number, ? extends V> m) {
-        // TODO Auto-generated method stub
+    public V remove(int key) {
+        final int bucketNumber = Integer.divideUnsigned(key, bucketSize);
 
+        // TODO
+
+        return null;
+    }
+
+    @Override
+    public void putAll(Map<? extends UnsignedInteger, ? extends V> source) {
+        source.forEach((key, value) -> put(key, value));
     }
 
     @Override
@@ -186,7 +239,7 @@ public final class SequenceNumberMap<V> implements Map<Number, V> {
     // eventual outcome of having a cached instance.
 
     @Override
-    public Set<Number> keySet() {
+    public Set<UnsignedInteger> keySet() {
         if (keySet == null) {
             keySet = new SeqeuenceNumberMapKeySet();
         }
@@ -202,11 +255,142 @@ public final class SequenceNumberMap<V> implements Map<Number, V> {
     }
 
     @Override
-    public Set<Entry<Number, V>> entrySet() {
+    public Set<Entry<UnsignedInteger, V>> entrySet() {
         if (entrySet == null) {
             entrySet = new SequenceNumberMapEntrySet();
         }
         return entrySet;
+    }
+
+    //----- Map bucket for a fixed chunk of the entries in the SequenceNumberMap
+
+    private static class SequenceNumberBucket<V> {
+
+        @SuppressWarnings("rawtypes")
+        private static final SequenceEntry[] EMPTY_BUCKET = new SequenceEntry[0];
+
+        private final int bucketIndex;
+        private final int bucketSize;
+        private final SequenceEntry<V>[] entries;
+
+        private SequenceNumberBucket<V> next;
+        private SequenceNumberBucket<V> prev;
+
+        private int size;
+
+        public SequenceNumberBucket() {
+            this(0, 0, null, null);
+        }
+
+        @SuppressWarnings("unchecked")
+        public SequenceNumberBucket(int bucketIndex, int bucketSize, SequenceNumberBucket<V> next, SequenceNumberBucket<V> prev) {
+            this.next = next;
+            this.prev = prev;
+            this.bucketSize = bucketSize;
+            this.bucketIndex = bucketIndex;
+
+            if (bucketSize != 0) {
+                this.entries = new SequenceEntry[bucketSize];
+            } else {
+                this.entries = EMPTY_BUCKET;
+            }
+        }
+
+        public int size() {
+            return size;
+        }
+
+        public V put(int index, int key, V value) {
+            return null;
+        }
+
+        public V get(int key) {
+            return null;
+        }
+
+        public int index() {
+            return bucketIndex;
+        }
+    }
+
+    //----- Map Entry node for the SeqeuenceNumberMap
+
+    private static class SequenceEntry<V> implements Entry<UnsignedInteger, V> {
+
+        final int key;
+
+        V value;
+        SequenceEntry<V> next;
+        SequenceEntry<V> prev;
+
+        // Locator data for faster access from the buckets
+        SequenceNumberBucket<V> bucket;
+        int bucketIndex = -1;
+
+        SequenceEntry() {
+            this(0, null, null, null);
+        }
+
+        SequenceEntry(int key, V value, SequenceEntry<V> next, SequenceEntry<V> previous) {
+            this.key = key;
+            this.value = value;
+            this.next = next;
+            this.prev = previous;
+        }
+
+        @Override
+        public final UnsignedInteger getKey() {
+            return UnsignedInteger.valueOf(key);
+        }
+
+        public int getIntKey() {
+            return key;
+        }
+
+        @Override
+        public final V getValue() {
+            return value;
+        }
+
+        @Override
+        public final V setValue(V value) {
+            V oldValue = this.value;
+            this.value = value;
+            return oldValue;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (!(o instanceof Map.Entry)) {
+                return false;
+            }
+
+            Map.Entry<?,?> e = (Map.Entry<?,?>)o;
+
+            return keyEquals(e.getKey()) && valueEquals(e.getValue());
+        }
+
+        @Override
+        public int hashCode() {
+            return key ^ (value == null ? 0 : value.hashCode());
+        }
+
+        @Override
+        public String toString() {
+            return "Node:{" + key + "," + value + "}";
+        }
+
+        boolean keyEquals(Object other) {
+            if (!(other instanceof Number)) {
+                return false;
+            }
+
+            return key == ((Number) other).intValue();
+        }
+
+        boolean valueEquals(Object other) {
+            return value != null ? value.equals(other) : other == null;
+        }
     }
 
     //----- Map Iterator implementation for EntrySet, KeySet and Values collections
@@ -275,26 +459,26 @@ public final class SequenceNumberMap<V> implements Map<Number, V> {
         }
     }
 
-    private class SequenceNumberMapEntryIterator extends SequenceNumberMapIterator<Entry<Number, V>> {
+    private class SequenceNumberMapEntryIterator extends SequenceNumberMapIterator<Entry<UnsignedInteger, V>> {
 
         public SequenceNumberMapEntryIterator(SequenceEntry<V> startAt) {
             super(startAt);
         }
 
         @Override
-        public Entry<Number, V> next() {
+        public Entry<UnsignedInteger, V> next() {
             return nextNode();
         }
     }
 
-    private class SequenceNumberMapKeyIterator extends SequenceNumberMapIterator<Number> {
+    private class SequenceNumberMapKeyIterator extends SequenceNumberMapIterator<UnsignedInteger> {
 
         public SequenceNumberMapKeyIterator(SequenceEntry<V> startAt) {
             super(startAt);
         }
 
         @Override
-        public Number next() {
+        public UnsignedInteger next() {
             return nextNode().getKey();
         }
     }
@@ -350,10 +534,10 @@ public final class SequenceNumberMap<V> implements Map<Number, V> {
         }
     }
 
-    private final class SeqeuenceNumberMapKeySet extends AbstractSet<Number> {
+    private final class SeqeuenceNumberMapKeySet extends AbstractSet<UnsignedInteger> {
 
         @Override
-        public Iterator<Number> iterator() {
+        public Iterator<UnsignedInteger> iterator() {
             return new SequenceNumberMapKeyIterator(firstEntry());
         }
 
@@ -387,10 +571,10 @@ public final class SequenceNumberMap<V> implements Map<Number, V> {
         }
     }
 
-    private final class SequenceNumberMapEntrySet extends AbstractSet<Entry<Number, V>> {
+    private final class SequenceNumberMapEntrySet extends AbstractSet<Entry<UnsignedInteger, V>> {
 
         @Override
-        public Iterator<Entry<Number, V>> iterator() {
+        public Iterator<Entry<UnsignedInteger, V>> iterator() {
             return new SequenceNumberMapEntryIterator(firstEntry());
         }
 
@@ -428,81 +612,7 @@ public final class SequenceNumberMap<V> implements Map<Number, V> {
         }
     }
 
-    //----- Map Entry node for the SeqeuenceNumberMap
-
-    private static class SequenceEntry<V> implements Entry<Number, V> {
-
-        final int key;
-
-        V value;
-        SequenceEntry<V> next;
-        SequenceEntry<V> prev;
-
-        SequenceEntry() {
-            this(0, null, null, null);
-        }
-
-        SequenceEntry(int key, V value, SequenceEntry<V> next, SequenceEntry<V> previous) {
-            this.key = key;
-            this.value = value;
-            this.next = next;
-            this.prev = previous;
-        }
-
-        @Override
-        public final Number getKey() {
-            return UnsignedInteger.valueOf(key);
-        }
-
-        public int getIntKey() {
-            return key;
-        }
-
-        @Override
-        public final V getValue() {
-            return value;
-        }
-
-        @Override
-        public final V setValue(V value) {
-            V oldValue = this.value;
-            this.value = value;
-            return oldValue;
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (!(o instanceof Map.Entry)) {
-                return false;
-            }
-
-            Map.Entry<?,?> e = (Map.Entry<?,?>)o;
-
-            return keyEquals(e.getKey()) && valueEquals(e.getValue());
-        }
-
-        @Override
-        public int hashCode() {
-            return key ^ (value == null ? 0 : value.hashCode());
-        }
-
-        @Override
-        public String toString() {
-            return "Node:{" + key + "," + value + "}";
-        }
-
-        boolean keyEquals(Object other) {
-            if (!(other instanceof Number)) {
-                return false;
-            }
-
-            return key == ((Number) other).intValue();
-        }
-
-        boolean valueEquals(Object other) {
-            return value != null ? value.equals(other) : other == null;
-        }
-    }
+    // Utility classes and methods for map data export
 
     /*
      * Immutable SequenceNumberEntry that is immutable and does not contain a link back
@@ -510,7 +620,7 @@ public final class SequenceNumberMap<V> implements Map<Number, V> {
      * prevent external code from holding entire sections of the mapping structures from
      * being GC'd
      */
-    public final class ImmutableSequenceNumberEntry implements Map.Entry<Number, V> {
+    public final class ImmutableSequenceNumberEntry implements Map.Entry<UnsignedInteger, V> {
 
         private final int key;
         private final V value;
@@ -521,7 +631,7 @@ public final class SequenceNumberMap<V> implements Map<Number, V> {
         }
 
         @Override
-        public Number getKey() {
+        public UnsignedInteger getKey() {
             return UnsignedInteger.valueOf(key);
         }
 
