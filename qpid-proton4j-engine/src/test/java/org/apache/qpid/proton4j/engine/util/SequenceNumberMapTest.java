@@ -17,10 +17,11 @@
 package org.apache.qpid.proton4j.engine.util;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
-import org.junit.Ignore;
+import org.apache.qpid.proton4j.amqp.UnsignedInteger;
 import org.junit.Test;
 
 /**
@@ -37,7 +38,42 @@ public class SequenceNumberMapTest {
         assertNull(map.get(1));
     }
 
-    @Ignore
+    @Test
+    public void testClear() {
+        SequenceNumberMap<String> map = new SequenceNumberMap<>();
+
+        assertEquals(0, map.size());
+        assertTrue(map.isEmpty());
+
+        map.put(2, "two");
+        map.put(0, "zero");
+        map.put(1, "one");
+
+        assertEquals(3, map.size());
+        assertFalse(map.isEmpty());
+
+        map.clear();
+
+        assertEquals(0, map.size());
+        assertTrue(map.isEmpty());
+
+        map.put(5, "five");
+        map.put(9, "nine");
+        map.put(3, "three");
+        map.put(7, "seven");
+        map.put(-1, "minus one");
+
+        assertEquals(5, map.size());
+        assertFalse(map.isEmpty());
+
+        map.clear();
+
+        assertEquals(0, map.size());
+        assertTrue(map.isEmpty());
+
+        map.clear();
+    }
+
     @Test
     public void testSize() {
         SequenceNumberMap<String> map = new SequenceNumberMap<>();
@@ -55,4 +91,45 @@ public class SequenceNumberMapTest {
         assertEquals(0, map.size());
     }
 
+    @Test
+    public void testPutIntoDifferentBucjetsDoesNotThrow() {
+        final int BUCKET_SIZE = 16;
+
+        SequenceNumberMap<String> map = new SequenceNumberMap<>(BUCKET_SIZE);
+
+        for (int i = 0; i < BUCKET_SIZE * BUCKET_SIZE; i += BUCKET_SIZE) {
+            map.put(i, String.valueOf(i));
+        }
+
+        assertEquals(BUCKET_SIZE, map.size());
+    }
+
+    @Test
+    public void testPutUnsignedIntegerIntoDifferentBucjetsDoesNotThrow() {
+        final int BUCKET_SIZE = 16;
+
+        SequenceNumberMap<String> map = new SequenceNumberMap<>(BUCKET_SIZE);
+
+        for (int i = 0; i < BUCKET_SIZE * BUCKET_SIZE; i += BUCKET_SIZE) {
+            map.put(UnsignedInteger.valueOf(i), String.valueOf(i));
+        }
+
+        assertEquals(BUCKET_SIZE, map.size());
+    }
+
+    @Test
+    public void testInsertAndReplace() {
+        SplayMap<String> map = new SplayMap<>();
+
+        map.put(0, "zero");
+        map.put(1, "one");
+        map.put(2, "foo");
+        assertEquals("foo", map.put(2, "two"));
+
+        assertEquals("zero", map.get(0));
+        assertEquals("one", map.get(1));
+        assertEquals("two", map.get(2));
+
+        assertEquals(3, map.size());
+    }
 }

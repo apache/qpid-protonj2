@@ -24,7 +24,10 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.Objects;
 import java.util.Set;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 import org.apache.qpid.proton4j.amqp.UnsignedInteger;
 
@@ -139,7 +142,18 @@ public final class SequenceNumberMap<V> implements Map<UnsignedInteger, V> {
     }
 
     public boolean containsKey(int key) {
-        final int bucketNumber = Integer.divideUnsigned(key, bucketSize);
+        final long longKey = Integer.toUnsignedLong(key);
+        final int bucketIndex = (int) (longKey / bucketSize);
+        final int buecketOffset = (int) (longKey % bucketSize);
+
+        final SequenceNumberBucket<V> bucket = findBucket(bucketIndex);
+        if (bucket != null) {
+            final SequenceEntry<V> entry = bucket.get(buecketOffset);
+
+            if (entry != null) {
+                return true;
+            }
+        }
 
         return false;
     }
@@ -170,8 +184,18 @@ public final class SequenceNumberMap<V> implements Map<UnsignedInteger, V> {
     }
 
     public V get(int key) {
-        final int bucketNumber = Integer.divideUnsigned(key, bucketSize);
-        // TODO
+        final long longKey = Integer.toUnsignedLong(key);
+        final int bucketIndex = (int) (longKey / bucketSize);
+        final int bucketOffset = (int) (longKey % bucketSize);
+
+        final SequenceNumberBucket<V> bucket = findBucket(bucketIndex);
+        if (bucket != null) {
+            final SequenceEntry<V> entry = bucket.get(bucketOffset);
+
+            if (entry != null) {
+                return entry.getValue();
+            }
+        }
 
         return null;
     }
@@ -182,14 +206,68 @@ public final class SequenceNumberMap<V> implements Map<UnsignedInteger, V> {
     }
 
     public V put(int key, V value) {
-        final int bucketNumber = Integer.divideUnsigned(key, bucketSize);
+        final long longKey = Integer.toUnsignedLong(key);
+        final int bucketIndex = (int) (longKey / bucketSize);
+        final int bucketOffset = (int) (longKey % bucketSize);
 
-        SequenceNumberBucket<V> bucket = buckets.next;
-        while (bucket != buckets) {
-            bucket = buckets.next;
+        final V oldValue;
+        final SequenceNumberBucket<V> bucket = findOrCreateBucket(bucketIndex);
+
+        SequenceEntry<V> entry = bucket.get(bucketOffset);
+        if (entry == null) {
+            oldValue = null;
+            entry = new SequenceEntry<>(key, bucket);
+            bucket.put(bucketOffset, entry);
+            size++;
+            // Insertion ordering of the sequence number entries recorded here
+            // and the list of entries doesn't change until an entry is removed.
+            entry.next = root;
+            entry.prev = root.prev;
+            root.prev.next = entry;
+            root.prev = entry;
+        } else {
+            oldValue = entry.getValue();
         }
 
+        // Update or set entry position in the linked set of entries.
+        entry.setValue(value);
+
+        modCount++;
+
+        return oldValue;
+    }
+
+    private SequenceNumberBucket<V> findBucket(int index) {
+        for (SequenceNumberBucket<V> current = buckets.next; current != buckets; current = current.next) {
+            if (current.index() == index) {
+                return current;
+            } else if (current.index() > index) {
+                break;
+            }
+         }
+
         return null;
+    }
+
+    private SequenceNumberBucket<V> findOrCreateBucket(int index) {
+        SequenceNumberBucket<V> successor = buckets;
+
+        for (SequenceNumberBucket<V> current = buckets.next; current != buckets; current = current.next) {
+            if (current.index() == index) {
+                return current;
+            } else if (current.index() > index) {
+                successor = current;
+                break;
+            }
+         }
+
+        SequenceNumberBucket<V> bucket = new SequenceNumberBucket<>(index, bucketSize, successor, successor.prev);
+
+        // Update links of surrounding buckets to account for the new one.
+        buckets.prev = bucket;
+        buckets.prev.next = bucket;
+
+        return bucket;
     }
 
     @Override
@@ -202,11 +280,29 @@ public final class SequenceNumberMap<V> implements Map<UnsignedInteger, V> {
     }
 
     public V remove(int key) {
-        final int bucketNumber = Integer.divideUnsigned(key, bucketSize);
+        final long longKey = Integer.toUnsignedLong(key);
+        final int bucketIndex = (int) (longKey / bucketSize);
+        final int bucketOffset = (int) (longKey % bucketSize);
 
-        // TODO
+        V oldValue = null;
 
-        return null;
+        final SequenceNumberBucket<V> bucket = findBucket(bucketIndex);
+        if (bucket != null) {
+            final SequenceEntry<V> entry = bucket.remove(bucketOffset);
+            if (entry != null) {
+                oldValue = entry.getValue();
+
+                // Must update the entries list to reflect removal of the element
+                // from both the bucket and the insertion order list.
+                entry.prev.next = entry.next;
+                entry.next.prev = entry.prev;
+
+                size--;
+                modCount++;
+            }
+        }
+
+        return oldValue;
     }
 
     @Override
@@ -262,31 +358,76 @@ public final class SequenceNumberMap<V> implements Map<UnsignedInteger, V> {
         return entrySet;
     }
 
+    @Override
+    public void forEach(BiConsumer<? super UnsignedInteger, ? super V> action) {
+        Objects.requireNonNull(action);
+
+        SequenceEntry<V> root = this.root;
+        for (SequenceEntry<V> entry = root.next; entry != root; entry = entry.next) {
+            final UnsignedInteger key;
+            final V value;
+
+            try {
+                key = entry.getKey();
+                value = entry.getValue();
+            } catch (IllegalStateException ise) {
+                // this usually means the entry is no longer in the map.
+                throw new ConcurrentModificationException(ise);
+            }
+
+            action.accept(key, value);
+        }
+    }
+
+    /**
+     * A specialized forEach implementation that accepts a {@link Consumer} function that will
+     * be called for each value in the {@link SequenceNumberMap}.  This method can save overhead
+     * as it does not need to box the primitive key values into an object for the call to the
+     * provided function.
+     *
+     * @param action
+     *      The action to be performed for each of the values in the {@link SequenceNumberMap}.
+     */
+    public void forEach(Consumer<? super V> action) {
+        Objects.requireNonNull(action);
+
+        SequenceEntry<V> root = this.root;
+        for (SequenceEntry<V> entry = root.next; entry != root; entry = entry.next) {
+            final V value;
+
+            try {
+                value = entry.getValue();
+            } catch (IllegalStateException ise) {
+                // this usually means the entry is no longer in the map.
+                throw new ConcurrentModificationException(ise);
+            }
+
+            action.accept(value);
+        }
+    }
+
     //----- Map bucket for a fixed chunk of the entries in the SequenceNumberMap
 
+    @SuppressWarnings({"unchecked", "rawtypes"})
     private static class SequenceNumberBucket<V> {
 
-        @SuppressWarnings("rawtypes")
         private static final SequenceEntry[] EMPTY_BUCKET = new SequenceEntry[0];
 
         private final int bucketIndex;
-        private final int bucketSize;
         private final SequenceEntry<V>[] entries;
 
         private SequenceNumberBucket<V> next;
         private SequenceNumberBucket<V> prev;
 
-        private int size;
+        private int population;
 
         public SequenceNumberBucket() {
-            this(0, 0, null, null);
+            this(-1, 0, null, null);
         }
 
-        @SuppressWarnings("unchecked")
         public SequenceNumberBucket(int bucketIndex, int bucketSize, SequenceNumberBucket<V> next, SequenceNumberBucket<V> prev) {
             this.next = next;
             this.prev = prev;
-            this.bucketSize = bucketSize;
             this.bucketIndex = bucketIndex;
 
             if (bucketSize != 0) {
@@ -296,16 +437,27 @@ public final class SequenceNumberMap<V> implements Map<UnsignedInteger, V> {
             }
         }
 
-        public int size() {
-            return size;
+        public int population() {
+            return population;
         }
 
-        public V put(int index, int key, V value) {
-            return null;
+        public void put(int key, SequenceEntry<V> value) {
+            entries[key] = value;
+            population++;
         }
 
-        public V get(int key) {
-            return null;
+        public SequenceEntry<V> get(int key) {
+            return entries[key];
+        }
+
+        public SequenceEntry<V> remove(int key) {
+            final SequenceEntry<V> entry = entries[key];
+
+            if (entry != null) {
+                population--;
+            }
+
+            return entry;
         }
 
         public int index() {
@@ -324,18 +476,19 @@ public final class SequenceNumberMap<V> implements Map<UnsignedInteger, V> {
         SequenceEntry<V> prev;
 
         // Locator data for faster access from the buckets
-        SequenceNumberBucket<V> bucket;
-        int bucketIndex = -1;
+        final SequenceNumberBucket<V> bucket;
 
         SequenceEntry() {
-            this(0, null, null, null);
+            this(0, null);
+
+            // Empty node is circular list to start.
+            this.next = this;
+            this.prev = this;
         }
 
-        SequenceEntry(int key, V value, SequenceEntry<V> next, SequenceEntry<V> previous) {
+        SequenceEntry(int key, SequenceNumberBucket<V> bucket) {
             this.key = key;
-            this.value = value;
-            this.next = next;
-            this.prev = previous;
+            this.bucket = bucket;
         }
 
         @Override
