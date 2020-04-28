@@ -728,6 +728,27 @@ public class SequenceNumberMapTest {
     }
 
     @Test
+    public void testForEachOverExtendedSparseRange() {
+        SequenceNumberMap<String> map = new SequenceNumberMap<>(16);
+
+        final int[] inputValues = {0, 1, 32, 34, 38, 65, 66, 99, 100, 1111, 1112, 65535, 65536, 128569, 128570, 2553560};
+
+        for (int entry : inputValues) {
+            map.put(entry, "" + entry);
+        }
+
+        final SequenceNumber index = new SequenceNumber(0);
+        map.forEach((k, v) -> {
+            int value = index.getAndIncrement().intValue();
+            assertEquals(inputValues[value], k.intValue());
+        });
+
+        assertEquals(index.intValue(), inputValues.length);
+
+        assertEquals(inputValues.length, map.size());
+    }
+
+    @Test
     public void testForEachEntry() {
         SequenceNumberMap<String> map = new SequenceNumberMap<>();
 
