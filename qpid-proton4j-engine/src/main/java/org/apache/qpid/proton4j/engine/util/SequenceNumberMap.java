@@ -61,7 +61,7 @@ public final class SequenceNumberMap<V> implements Map<UnsignedInteger, V> {
      * The first real entry is root.next, and the last is header.pervious.
      * If the map is empty, root.next == root && root.previous == root.
      */
-    private final transient SequenceEntry<V> root = new SequenceEntry<>();
+    private final transient SequenceEntry<V> entries = new SequenceEntry<>();
 
     /**
      * A dummy entry in the chain of map buckets that provides a constant fixed
@@ -102,7 +102,12 @@ public final class SequenceNumberMap<V> implements Map<UnsignedInteger, V> {
         }
 
         this.bucketSize = Math.max(bucketSize, MINIMUM_BUCKET_SIZE);
-        this.buckets.next = new SequenceNumberBucket<>(0, this.bucketSize, this.buckets, this.buckets);
+
+        // TODO - Perhaps initial bucket should be unallocated and only tied to an index chunk on first access
+        this.buckets.next = new SequenceNumberBucket<>(0, this.bucketSize);
+        this.buckets.prev = buckets.next;
+        this.buckets.next.next = buckets;
+        this.buckets.next.prev = buckets;
     }
 
     /**
@@ -135,10 +140,10 @@ public final class SequenceNumberMap<V> implements Map<UnsignedInteger, V> {
     @Override
     public boolean containsKey(Object key) {
         if (key != null) {
-            containsKey(Number.class.cast(key).intValue());
+            return containsKey(Number.class.cast(key).intValue());
+        } else {
+            return false;
         }
-
-        return false;
     }
 
     public boolean containsKey(int key) {
@@ -163,7 +168,7 @@ public final class SequenceNumberMap<V> implements Map<UnsignedInteger, V> {
         if (value != null) {
             // Use the linked list of entries to avoid checking every table element when many
             // will be null and instead only check the current contents.
-            SequenceEntry<V> root = this.root;
+            SequenceEntry<V> root = this.entries;
             for (SequenceEntry<V> entry = root.next; entry != root; entry = entry.next) {
                 if (value.equals(entry.value)) {
                     return true;
@@ -177,10 +182,10 @@ public final class SequenceNumberMap<V> implements Map<UnsignedInteger, V> {
     @Override
     public V get(Object key) {
         if (key != null) {
-            get(Number.class.cast(key).intValue());
+            return get(Number.class.cast(key).intValue());
+        } else {
+            return null;
         }
-
-        return null;
     }
 
     public V get(int key) {
@@ -202,7 +207,11 @@ public final class SequenceNumberMap<V> implements Map<UnsignedInteger, V> {
 
     @Override
     public V put(UnsignedInteger key, V value) {
-        return put(key.intValue(), value);
+        if (key != null) {
+            return put(key.intValue(), value);
+        } else {
+            return null;
+        }
     }
 
     public V put(int key, V value) {
@@ -216,15 +225,15 @@ public final class SequenceNumberMap<V> implements Map<UnsignedInteger, V> {
         SequenceEntry<V> entry = bucket.get(bucketOffset);
         if (entry == null) {
             oldValue = null;
-            entry = new SequenceEntry<>(key, bucket);
+            entry = new SequenceEntry<>(key, bucket, bucketOffset);
             bucket.put(bucketOffset, entry);
             size++;
             // Insertion ordering of the sequence number entries recorded here
             // and the list of entries doesn't change until an entry is removed.
-            entry.next = root;
-            entry.prev = root.prev;
-            root.prev.next = entry;
-            root.prev = entry;
+            entry.next = entries;
+            entry.prev = entries.prev;
+            entries.prev.next = entry;
+            entries.prev = entry;
         } else {
             oldValue = entry.getValue();
         }
@@ -238,6 +247,11 @@ public final class SequenceNumberMap<V> implements Map<UnsignedInteger, V> {
     }
 
     private SequenceNumberBucket<V> findBucket(int index) {
+        // TODO: Since sequence number population normally occurs on a forward moving march
+        //       we should search backwards through the list of buckets as that will likely
+        //       yield the solution faster.  However for remove the pattern generally goes
+        //       the other way so two methods should be written.
+
         for (SequenceNumberBucket<V> current = buckets.next; current != buckets; current = current.next) {
             if (current.index() == index) {
                 return current;
@@ -250,6 +264,12 @@ public final class SequenceNumberMap<V> implements Map<UnsignedInteger, V> {
     }
 
     private SequenceNumberBucket<V> findOrCreateBucket(int index) {
+        // TODO: Since sequence number population normally occurs on a forward moving march
+        //       we should search backwards through the list of buckets as that will likely
+        //       yield the solution faster.  Also we should move one empty bucket to the end
+        //       of the list or store it as an unclaimed bucket so that we can avoid some
+        //       allocations as the sequence access moves ever forward.
+
         SequenceNumberBucket<V> successor = buckets;
 
         for (SequenceNumberBucket<V> current = buckets.next; current != buckets; current = current.next) {
@@ -261,11 +281,13 @@ public final class SequenceNumberMap<V> implements Map<UnsignedInteger, V> {
             }
          }
 
-        SequenceNumberBucket<V> bucket = new SequenceNumberBucket<>(index, bucketSize, successor, successor.prev);
+        SequenceNumberBucket<V> bucket = new SequenceNumberBucket<>(index, bucketSize);
 
-        // Update links of surrounding buckets to account for the new one.
-        buckets.prev = bucket;
-        buckets.prev.next = bucket;
+        // insert this new bucket into the chain updating the links on both sides..
+        bucket.next = successor;
+        bucket.prev = successor.prev;
+        successor.prev.next = bucket;
+        successor.prev = bucket;
 
         return bucket;
     }
@@ -274,9 +296,9 @@ public final class SequenceNumberMap<V> implements Map<UnsignedInteger, V> {
     public V remove(Object key) {
         if (key != null) {
             return remove(Number.class.cast(key).intValue());
+        } else {
+            return null;
         }
-
-        return null;
     }
 
     public V remove(int key) {
@@ -318,7 +340,7 @@ public final class SequenceNumberMap<V> implements Map<UnsignedInteger, V> {
             size = 0;
 
             // Unlink all nodes for safely using a local reference to the list root.
-            SequenceEntry<V> root = this.root;
+            SequenceEntry<V> root = this.entries;
             for (SequenceEntry<V> current = root.next; current != root; ) {
                 SequenceEntry<V> next = current.next;
                 current.next = current.prev = null;
@@ -362,7 +384,7 @@ public final class SequenceNumberMap<V> implements Map<UnsignedInteger, V> {
     public void forEach(BiConsumer<? super UnsignedInteger, ? super V> action) {
         Objects.requireNonNull(action);
 
-        SequenceEntry<V> root = this.root;
+        SequenceEntry<V> root = this.entries;
         for (SequenceEntry<V> entry = root.next; entry != root; entry = entry.next) {
             final UnsignedInteger key;
             final V value;
@@ -391,7 +413,7 @@ public final class SequenceNumberMap<V> implements Map<UnsignedInteger, V> {
     public void forEach(Consumer<? super V> action) {
         Objects.requireNonNull(action);
 
-        SequenceEntry<V> root = this.root;
+        SequenceEntry<V> root = this.entries;
         for (SequenceEntry<V> entry = root.next; entry != root; entry = entry.next) {
             final V value;
 
@@ -404,6 +426,22 @@ public final class SequenceNumberMap<V> implements Map<UnsignedInteger, V> {
 
             action.accept(value);
         }
+    }
+
+    private void delete(SequenceEntry<V> entry) {
+        SequenceNumberBucket<V> bucket = entry.bucket;
+
+        // Remove the entry from the bucket
+        bucket.remove(entry.bucketOffset);
+
+        // TODO - Once the bucket is empty the bucket should either be
+        //        discarded or pinned on the end as an unused bucket that
+        //        can be claimed by the next insert that exceeds the value
+        //        of the last largest still accessible bucket.
+
+        // Remove the entry from the insertion ordered entry list.
+        entry.next.prev = entry.prev;
+        entry.prev.next = entry.next;
     }
 
     //----- Map bucket for a fixed chunk of the entries in the SequenceNumberMap
@@ -422,12 +460,14 @@ public final class SequenceNumberMap<V> implements Map<UnsignedInteger, V> {
         private int population;
 
         public SequenceNumberBucket() {
-            this(-1, 0, null, null);
+            this(-1, 0);
         }
 
-        public SequenceNumberBucket(int bucketIndex, int bucketSize, SequenceNumberBucket<V> next, SequenceNumberBucket<V> prev) {
-            this.next = next;
-            this.prev = prev;
+        public SequenceNumberBucket(int bucketIndex, int bucketSize) {
+            // Empty node is circular list to start.
+            this.next = this;
+            this.prev = this;
+
             this.bucketIndex = bucketIndex;
 
             if (bucketSize != 0) {
@@ -477,18 +517,20 @@ public final class SequenceNumberMap<V> implements Map<UnsignedInteger, V> {
 
         // Locator data for faster access from the buckets
         final SequenceNumberBucket<V> bucket;
+        final int bucketOffset;
 
         SequenceEntry() {
-            this(0, null);
+            this(-1, null, -1);
 
             // Empty node is circular list to start.
             this.next = this;
             this.prev = this;
         }
 
-        SequenceEntry(int key, SequenceNumberBucket<V> bucket) {
+        SequenceEntry(int key, SequenceNumberBucket<V> bucket, int bucketOffset) {
             this.key = key;
             this.bucket = bucket;
+            this.bucketOffset = bucketOffset;
         }
 
         @Override
@@ -563,12 +605,12 @@ public final class SequenceNumberMap<V> implements Map<UnsignedInteger, V> {
 
         @Override
         public boolean hasNext() {
-            return nextNode != null;
+            return nextNode != entries;
         }
 
         protected SequenceEntry<V> nextNode() {
             SequenceEntry<V> entry = nextNode;
-            if (nextNode == root) {
+            if (nextNode == entries) {
                 throw new NoSuchElementException();
             }
             if (expectedModCount != SequenceNumberMap.this.modCount) {
@@ -584,7 +626,7 @@ public final class SequenceNumberMap<V> implements Map<UnsignedInteger, V> {
         @SuppressWarnings("unused")
         protected SequenceEntry<V> previousNode() {
             SequenceEntry<V> entry = nextNode;
-            if (nextNode == root) {
+            if (nextNode == entries) {
                 throw new NoSuchElementException();
             }
             if (expectedModCount != SequenceNumberMap.this.modCount) {
@@ -669,7 +711,7 @@ public final class SequenceNumberMap<V> implements Map<UnsignedInteger, V> {
 
         @Override
         public boolean remove(Object target) {
-            final SequenceEntry<V> root = SequenceNumberMap.this.root;
+            final SequenceEntry<V> root = SequenceNumberMap.this.entries;
 
             for (SequenceEntry<V> entry = root.next; entry != root; entry = entry.next) {
                 if (entry.valueEquals(target)) {
@@ -706,7 +748,7 @@ public final class SequenceNumberMap<V> implements Map<UnsignedInteger, V> {
 
         @Override
         public boolean remove(Object target) {
-            final SequenceEntry<V> root = SequenceNumberMap.this.root;
+            final SequenceEntry<V> root = SequenceNumberMap.this.entries;
 
             for (SequenceEntry<V> entry = root.next; entry != root; entry = entry.next) {
                 if (entry.keyEquals(target)) {
@@ -747,7 +789,7 @@ public final class SequenceNumberMap<V> implements Map<UnsignedInteger, V> {
                 throw new IllegalArgumentException("value provided is not an Entry type.");
             }
 
-            final SequenceEntry<V> root = SequenceNumberMap.this.root;
+            final SequenceEntry<V> root = SequenceNumberMap.this.entries;
 
             for (SequenceEntry<V> entry = root.next; entry != root; entry = entry.next) {
                 if (entry.equals(target)) {
@@ -810,14 +852,10 @@ public final class SequenceNumberMap<V> implements Map<UnsignedInteger, V> {
     //----- Internal Hash Mapping support methods
 
     private SequenceEntry<V> firstEntry() {
-        return root.next;
+        return entries.next;
     }
 
     private SequenceEntry<V> lastEntry() {
-        return root.prev;
-    }
-
-    private void delete(SequenceEntry<V> entry) {
-        // TODO - Remove from list and from tabular storage.
+        return entries.prev;
     }
 }
