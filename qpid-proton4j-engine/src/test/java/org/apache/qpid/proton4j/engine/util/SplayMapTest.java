@@ -399,6 +399,8 @@ public class SplayMapTest {
 
         // Check that we really did iterate.
         assertEquals(intValues.length, counter);
+        assertTrue(map.isEmpty());
+        assertEquals(0, map.size());
     }
 
     @Test
@@ -526,6 +528,8 @@ public class SplayMapTest {
 
         // Check that we really did iterate.
         assertEquals(intValues.length, counter);
+        assertTrue(map.isEmpty());
+        assertEquals(0, map.size());
     }
 
     @Test
@@ -659,6 +663,8 @@ public class SplayMapTest {
 
         // Check that we really did iterate.
         assertEquals(intValues.length, counter);
+        assertTrue(map.isEmpty());
+        assertEquals(0, map.size());
     }
 
     @Test

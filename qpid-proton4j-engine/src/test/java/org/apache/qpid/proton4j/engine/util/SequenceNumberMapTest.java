@@ -27,17 +27,34 @@ import static org.junit.Assert.fail;
 import java.util.Collection;
 import java.util.ConcurrentModificationException;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.NoSuchElementException;
+import java.util.Random;
 import java.util.Set;
 
 import org.apache.qpid.proton4j.amqp.UnsignedInteger;
+import org.apache.qpid.proton4j.common.logging.ProtonLogger;
+import org.apache.qpid.proton4j.common.logging.ProtonLoggerFactory;
+import org.junit.Before;
 import org.junit.Test;
 
 /**
  * Test the functionality of the {@link SequenceNumberMap}
  */
 public class SequenceNumberMapTest {
+
+    private static final ProtonLogger LOG = ProtonLoggerFactory.getLogger(SequenceNumberMapTest.class);
+
+    protected long seed;
+    protected Random random;
+
+    @Before
+    public void setUp() {
+        seed = System.currentTimeMillis();
+        random = new Random();
+        random.setSeed(seed);
+    }
 
     @Test
     public void testComparator() {
@@ -125,6 +142,21 @@ public class SequenceNumberMapTest {
         }
 
         assertEquals(BUCKET_SIZE, map.size());
+    }
+
+    @Test
+    public void testNonSequentialPut() {
+        final int[] INPUTS = { 569309746, -1316559945, 524283256 };
+
+        SequenceNumberMap<String> map = new SequenceNumberMap<>();
+
+        for (int i = 0; i < INPUTS.length; ++i) {
+            map.put(INPUTS[i], String.valueOf(INPUTS[i]));
+        }
+
+        for (int i = 0; i < INPUTS.length; ++i) {
+            assertEquals(String.valueOf(INPUTS[i]), map.get(INPUTS[i]));
+        }
     }
 
     @Test
@@ -380,6 +412,8 @@ public class SequenceNumberMapTest {
 
         // Check that we really did iterate.
         assertEquals(intValues.length, counter);
+        assertTrue(map.isEmpty());
+        assertEquals(0, map.size());
     }
 
     @Test
@@ -569,6 +603,8 @@ public class SequenceNumberMapTest {
 
         // Check that we really did iterate.
         assertEquals(intValues.length, counter);
+        assertTrue(map.isEmpty());
+        assertEquals(0, map.size());
     }
 
     @Test
@@ -640,6 +676,8 @@ public class SequenceNumberMapTest {
 
         // Check that we really did iterate.
         assertEquals(intValues.length, counter);
+        assertTrue(map.isEmpty());
+        assertEquals(0, map.size());
     }
 
     @Test
@@ -766,5 +804,140 @@ public class SequenceNumberMapTest {
         });
 
         assertEquals(index.intValue(), inputValues.length);
+    }
+
+    @Test
+    public void testRandomValuePutThenGetThenRemove() {
+        SequenceNumberMap<String> map = new SequenceNumberMap<>();
+
+        final int INSERTIONS = 128;
+
+        try {
+            for (int i = 0; i < INSERTIONS; ++i) {
+                final int key = random.nextInt();
+                map.put(key, String.valueOf(key));
+            }
+
+            random.setSeed(seed);
+
+            for (int i = 0; i < INSERTIONS; ++i) {
+                final int key = random.nextInt();
+                assertEquals(String.valueOf(key), map.get(key));
+            }
+
+            random.setSeed(seed);
+
+            for (int i = 0; i < INSERTIONS; ++i) {
+                final int key = random.nextInt();
+                assertEquals(String.valueOf(key), map.remove(key));
+            }
+
+            assertTrue(map.isEmpty());
+            assertEquals(0, map.size());
+        } catch (AssertionError error) {
+            dumpRandomDataSet(INSERTIONS);
+            throw error;
+        }
+    }
+
+    @Test
+    public void testRandomPutAndThenValuesIteration() {
+        SequenceNumberMap<String> map = new SequenceNumberMap<>();
+
+        final int INSERTIONS = 128;
+
+        try {
+            for (int i = 0; i < INSERTIONS; ++i) {
+                final int key = random.nextInt();
+                map.put(key, String.valueOf(key));
+            }
+
+            random.setSeed(seed);
+
+            Collection<String> values = map.values();
+            for (String value : values) {
+                assertEquals(String.valueOf(random.nextInt()), value);
+            }
+
+            map.clear();
+
+            assertTrue(map.isEmpty());
+            assertEquals(0, map.size());
+        } catch (AssertionError error) {
+            dumpRandomDataSet(INSERTIONS);
+            throw error;
+        }
+    }
+
+    @Test
+    public void testRandomPutAndThenKeysIteration() {
+        SequenceNumberMap<String> map = new SequenceNumberMap<>();
+
+        final int INSERTIONS = 128;
+
+        try {
+            for (int i = 0; i < INSERTIONS; ++i) {
+                final int key = random.nextInt();
+                map.put(key, String.valueOf(key));
+            }
+
+            random.setSeed(seed);
+
+            Collection<UnsignedInteger> keys = map.keySet();
+            for (UnsignedInteger key : keys) {
+                assertEquals(UnsignedInteger.valueOf(random.nextInt()), key);
+            }
+
+            map.clear();
+
+            assertTrue(map.isEmpty());
+            assertEquals(0, map.size());
+        } catch (AssertionError error) {
+            dumpRandomDataSet(INSERTIONS);
+            throw error;
+        }
+    }
+
+    @Test
+    public void testRandomPutAndThenEntriesIteration() {
+        SequenceNumberMap<String> map = new SequenceNumberMap<>();
+
+        final int INSERTIONS = 128;
+
+        try {
+            for (int i = 0; i < INSERTIONS; ++i) {
+                final int key = random.nextInt();
+                map.put(key, String.valueOf(key));
+            }
+
+            random.setSeed(seed);
+
+            Collection<Map.Entry<UnsignedInteger, String>> entries = map.entrySet();
+            for (Map.Entry<UnsignedInteger, String> entry : entries) {
+                final int nextValue = random.nextInt();
+                assertEquals(UnsignedInteger.valueOf(nextValue), entry.getKey());
+                assertEquals(String.valueOf(nextValue), entry.getValue());
+            }
+
+            map.clear();
+
+            assertTrue(map.isEmpty());
+            assertEquals(0, map.size());
+        } catch (AssertionError error) {
+            dumpRandomDataSet(INSERTIONS);
+            throw error;
+        }
+    }
+
+    private void dumpRandomDataSet(int iterations) {
+        final int[] dataSet = new int[iterations];
+
+        random.setSeed(seed);
+
+        for (int i = 0; i < iterations; ++i) {
+            dataSet[i] = random.nextInt();
+        }
+
+        LOG.info("Entries in data set: {}", dataSet);
     }
 }
