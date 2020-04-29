@@ -100,11 +100,18 @@ public class ClientSender implements Sender {
 
     @Override
     public String address() throws ClientException {
+        final org.apache.qpid.proton4j.amqp.messaging.Target target;
         if (isDynamic()) {
             waitForOpenToComplete();
-            return protonSender.getRemoteSource().getAddress();
+            target = protonSender.getRemoteTarget();
         } else {
-            return protonSender.getSource() != null ? protonSender.getTarget().getAddress() : null;
+            target = protonSender.getTarget();
+        }
+
+        if (target != null) {
+            return target.getAddress();
+        } else {
+            return null;
         }
     }
 
@@ -288,11 +295,11 @@ public class ClientSender implements Sender {
     }
 
     boolean isAnonymous() {
-        return protonSender.getTarget().getAddress() == null;
+        return protonSender.<org.apache.qpid.proton4j.amqp.messaging.Target>getTarget().getAddress() == null;
     }
 
     boolean isDynamic() {
-        return protonSender.getTarget() != null && protonSender.getTarget().isDynamic();
+        return protonSender.getTarget() != null && protonSender.<org.apache.qpid.proton4j.amqp.messaging.Target>getTarget().isDynamic();
     }
 
     //----- Handlers for proton receiver events
