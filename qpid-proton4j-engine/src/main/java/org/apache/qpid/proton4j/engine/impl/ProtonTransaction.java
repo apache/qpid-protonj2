@@ -55,7 +55,7 @@ public abstract class ProtonTransaction<E extends Link<?>> implements Transactio
     }
 
     @Override
-    public boolean isDischareged() {
+    public boolean isDischarged() {
         return state.ordinal() == TransactionState.DISCHARGED.ordinal();
     }
 

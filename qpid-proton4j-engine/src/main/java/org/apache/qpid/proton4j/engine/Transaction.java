@@ -40,7 +40,7 @@ public interface Transaction<E extends Endpoint<?>> {
     /**
      * @return true if the {@link Transaction} has been marked discharged by the {@link TransactionManager}.
      */
-    boolean isDischareged();
+    boolean isDischarged();
 
     /**
      * The parent resource will mark the {@link Transaction} as failed is any of the operations performed on
