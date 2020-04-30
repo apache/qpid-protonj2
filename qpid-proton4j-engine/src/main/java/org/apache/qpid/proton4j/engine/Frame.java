@@ -77,4 +77,9 @@ public abstract class Frame<V> {
     public ProtonBuffer getPayload() {
         return payload;
     }
+
+    @Override
+    public String toString() {
+        return "Frame:[" + body + ", " + channel + ", " + frameSize + ", " + payload + "]";
+    }
 }
