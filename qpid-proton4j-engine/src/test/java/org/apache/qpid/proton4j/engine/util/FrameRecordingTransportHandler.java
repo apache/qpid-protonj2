@@ -36,6 +36,8 @@ public class FrameRecordingTransportHandler implements EngineHandler {
     private List<Frame<?>> framesRead = new ArrayList<>();
     private List<Frame<?>> framesWritten = new ArrayList<>();
 
+    private final ProtocolFramePool framePool = new ProtocolFramePool();
+
     public FrameRecordingTransportHandler() {
     }
 
@@ -73,7 +75,7 @@ public class FrameRecordingTransportHandler implements EngineHandler {
 
     @Override
     public void handleWrite(EngineHandlerContext context, Performative performative, int channel, ProtonBuffer payload, Runnable payloadToLarge) {
-        framesWritten.add(ProtocolFramePool.DEFAULT.take(performative, channel, 1, payload));
+        framesWritten.add(framePool.take(performative, channel, 1, payload));
         context.fireWrite(performative, channel, payload, payloadToLarge);
     }
 

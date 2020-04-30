@@ -54,7 +54,7 @@ public class ProtonFrameDecodingHandler implements EngineHandler, SaslPerformati
 
     public static final int FRAME_SIZE_BYTES = 4;
 
-    private final ProtocolFramePool framePool = ProtocolFramePool.DEFAULT;
+    private final ProtocolFramePool framePool = new ProtocolFramePool();
 
     private Decoder decoder;
     private DecoderState decoderState;

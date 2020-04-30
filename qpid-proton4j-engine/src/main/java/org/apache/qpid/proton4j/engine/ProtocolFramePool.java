@@ -27,8 +27,6 @@ import org.apache.qpid.proton4j.buffer.ProtonBuffer;
  */
 public class ProtocolFramePool {
 
-    public static final ProtocolFramePool DEFAULT = new ProtocolFramePool();
-
     public static final int DEFAULT_MAX_POOL_SIZE = 10;
 
     private int maxPoolSize = DEFAULT_MAX_POOL_SIZE;
