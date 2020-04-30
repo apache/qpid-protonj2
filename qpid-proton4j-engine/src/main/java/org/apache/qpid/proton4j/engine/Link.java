@@ -333,7 +333,7 @@ public interface Link<L extends Link<L>> extends Endpoint<L> {
     Source getRemoteSource();
 
     /**
-     * Returns the remote source {@link Terminus} cast to the given type.  This can be used when
+     * Returns the remote target {@link Terminus} cast to the given type.  This can be used when
      * the underlying type is known by the caller or as a control to validate the assumption of the
      * underlying type.
      *
@@ -341,8 +341,6 @@ public interface Link<L extends Link<L>> extends Endpoint<L> {
      * type for a {@link Sender} or {@link Receiver} link or if the link is to be transaction resource
      * then the target type will be a {@link Coordinator} instance.
      *
-     * @param sourceType
-     *      The class type to cast the remote source terminus to.
      * @param <T>
      *      The type that the remote {@link Terminus} will be cast to on return.
      *

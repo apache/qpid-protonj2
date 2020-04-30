@@ -17,6 +17,9 @@
 package org.apache.qpid.proton4j.engine;
 
 import org.apache.qpid.proton4j.amqp.Binary;
+import org.apache.qpid.proton4j.amqp.messaging.Source;
+import org.apache.qpid.proton4j.amqp.messaging.Terminus;
+import org.apache.qpid.proton4j.amqp.transactions.Coordinator;
 import org.apache.qpid.proton4j.amqp.transactions.Declare;
 import org.apache.qpid.proton4j.amqp.transactions.Discharge;
 
@@ -28,6 +31,59 @@ import org.apache.qpid.proton4j.amqp.transactions.Discharge;
  * active transactions.
  */
 public interface TransactionManager extends Endpoint<TransactionManager> {
+
+    /**
+     * Sets the {@link Source} to assign to the local end of this {@link TransactionManager}.
+     *
+     * Must be called during setup, i.e. before calling the {@link #open()} method.
+     *
+     * @param source
+     *      The {@link Source} that will be set on the local end of this transaction controller.
+     *
+     * @return this transaction controller instance.
+     *
+     * @throws IllegalStateException if the {@link TransactionManager} has already been opened.
+     */
+    TransactionManager setSource(Source source) throws IllegalStateException;
+
+    /**
+     * @return the {@link Source} for the local end of this {@link TransactionController}.
+     */
+    Source getSource();
+
+    /**
+     * Sets the {@link Coordinator} target to assign to the local end of this {@link TransactionManager}.
+     *
+     * Must be called during setup, i.e. before calling the {@link #open()} method.
+     *
+     * @param coordinator
+     *      The {@link Coordinator} target that will be set on the local end of this transaction controller.
+     *
+     * @return this transaction controller instance.
+     *
+     * @throws IllegalStateException if the {@link TransactionManager} has already been opened.
+     */
+    TransactionManager setCoordinator(Coordinator coordinator) throws IllegalStateException;
+
+    /**
+     * Returns the currently set Coordinator target for this {@link Link}.
+     *
+     * @return the link target {@link Coordinator} for the local end of this link.
+     */
+    Coordinator getCoordinator();
+
+    /**
+     * @return the source {@link Source} for the remote end of this {@link TransactionManager}.
+     */
+    Source getRemoteSource();
+
+    /**
+     * Returns the remote target {@link Terminus} for this transaction manager which must be of type
+     * {@link Coordinator} or null if remote did not set a terminus.
+     *
+     * @return the remote coordinator {@link Terminus} for the remote end of this link.
+     */
+    Coordinator getRemoteCoordinator();
 
     /**
      * Respond to a previous {@link Declare} request from the remote {@link TransactionController}

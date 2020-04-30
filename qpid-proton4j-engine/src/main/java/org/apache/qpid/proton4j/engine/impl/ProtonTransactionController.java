@@ -19,6 +19,8 @@ package org.apache.qpid.proton4j.engine.impl;
 import java.util.Map;
 
 import org.apache.qpid.proton4j.amqp.Symbol;
+import org.apache.qpid.proton4j.amqp.messaging.Source;
+import org.apache.qpid.proton4j.amqp.transactions.Coordinator;
 import org.apache.qpid.proton4j.amqp.transactions.Declare;
 import org.apache.qpid.proton4j.amqp.transactions.Discharge;
 import org.apache.qpid.proton4j.amqp.transport.ErrorCondition;
@@ -75,6 +77,28 @@ public class ProtonTransactionController extends ProtonEndpoint<TransactionContr
     public boolean isLocallyClosed() {
         senderLink.isLocallyClosed();
         return false;
+    }
+
+    @Override
+    public TransactionController setSource(Source source) throws IllegalStateException {
+        senderLink.setSource(source);
+        return this;
+    }
+
+    @Override
+    public Source getSource() {
+        return senderLink.getSource();
+    }
+
+    @Override
+    public TransactionController setCoordinator(Coordinator coordinator) throws IllegalStateException {
+        senderLink.setTarget(coordinator);
+        return this;
+    }
+
+    @Override
+    public Coordinator getCoordinator() {
+        return senderLink.getTarget();
     }
 
     @Override
@@ -149,6 +173,16 @@ public class ProtonTransactionController extends ProtonEndpoint<TransactionContr
     @Override
     public ErrorCondition getRemoteCondition() {
         return senderLink.getRemoteCondition();
+    }
+
+    @Override
+    public Source getRemoteSource() {
+        return senderLink.getRemoteSource();
+    }
+
+    @Override
+    public Coordinator getRemoteCoordinator() {
+        return senderLink.getRemoteTarget();
     }
 
     @Override
