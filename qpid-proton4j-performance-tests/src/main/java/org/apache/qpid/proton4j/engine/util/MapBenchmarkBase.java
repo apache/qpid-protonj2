@@ -41,12 +41,14 @@ import org.openjdk.jmh.runner.options.OptionsBuilder;
  */
 @State(Scope.Benchmark)
 @BenchmarkMode(Mode.AverageTime)
-@OutputTimeUnit(TimeUnit.NANOSECONDS)
+@OutputTimeUnit(TimeUnit.MILLISECONDS)
 @Warmup(iterations = 5, time = 1)
 @Measurement(iterations = 5, time = 1)
 public abstract class MapBenchmarkBase {
 
     public static final int DEFAULT_MAP_VALUE_RANGE = 8192;
+
+    protected final String DUMMY_STRING = "ASDFGHJ";
 
     protected Map<UnsignedInteger, String> map;
     protected Map<UnsignedInteger, String> filledMap;
@@ -60,14 +62,14 @@ public abstract class MapBenchmarkBase {
     @Benchmark
     public void put() {
         for (int i = 0; i < DEFAULT_MAP_VALUE_RANGE; ++i) {
-            map.put(UnsignedInteger.valueOf(i), String.valueOf(i));
+            map.put(UnsignedInteger.valueOf(i), DUMMY_STRING);
         }
     }
 
     @Benchmark
     public void get(Blackhole blackHole) {
         for (int i = 0; i < DEFAULT_MAP_VALUE_RANGE; ++i) {
-            blackHole.consume(filledMap.put(UnsignedInteger.valueOf(i), String.valueOf(i)));
+            blackHole.consume(filledMap.get(UnsignedInteger.valueOf(i)));
         }
     }
 
@@ -82,7 +84,7 @@ public abstract class MapBenchmarkBase {
 
     protected Map<UnsignedInteger, String> fillMap(Map<UnsignedInteger, String> target) {
         for (int i = 0; i < DEFAULT_MAP_VALUE_RANGE; ++i) {
-            target.put(UnsignedInteger.valueOf(i), String.valueOf(i));
+            target.put(UnsignedInteger.valueOf(i), DUMMY_STRING);
         }
 
         return target;

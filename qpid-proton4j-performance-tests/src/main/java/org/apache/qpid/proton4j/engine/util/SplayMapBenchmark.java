@@ -19,6 +19,9 @@ package org.apache.qpid.proton4j.engine.util;
 import java.util.Map;
 
 import org.apache.qpid.proton4j.amqp.UnsignedInteger;
+import org.openjdk.jmh.annotations.Benchmark;
+import org.openjdk.jmh.annotations.Setup;
+import org.openjdk.jmh.infra.Blackhole;
 import org.openjdk.jmh.runner.RunnerException;
 
 /**
@@ -30,6 +33,38 @@ public class SplayMapBenchmark extends MapBenchmarkBase {
         runBenchmark(SplayMapBenchmark.class);
     }
 
+    private SplayMap<String> sqMap;
+    private SplayMap<String> sqFilledMap;
+
+    @Override
+    @Setup
+    public void init() {
+        super.init();
+
+        this.sqMap = (SplayMap<String>) map;
+        this.sqFilledMap = (SplayMap<String>) filledMap;
+    }
+
+    @Benchmark
+    public void putWithPrimitive() {
+        for (int i = 0; i < DEFAULT_MAP_VALUE_RANGE; ++i) {
+            sqMap.put(i, DUMMY_STRING);
+        }
+    }
+
+    @Benchmark
+    public void getWithPrimitive(Blackhole blackHole) {
+        for (int i = 0; i < DEFAULT_MAP_VALUE_RANGE; ++i) {
+            blackHole.consume(sqFilledMap.get(i));
+        }
+    }
+
+    @Benchmark
+    public void removeWithPrimitive(Blackhole blackHole) {
+        for (int i = 0; i < DEFAULT_MAP_VALUE_RANGE; ++i) {
+            blackHole.consume(sqFilledMap.remove(i));
+        }
+    }
     @Override
     protected Map<UnsignedInteger, String> createMap() {
         return new SplayMap<>();
