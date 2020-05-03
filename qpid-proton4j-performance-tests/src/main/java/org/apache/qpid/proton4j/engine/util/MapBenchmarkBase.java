@@ -42,7 +42,7 @@ import org.openjdk.jmh.runner.options.OptionsBuilder;
 @State(Scope.Benchmark)
 @BenchmarkMode(Mode.AverageTime)
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
-@Warmup(iterations = 5, time = 1)
+@Warmup(iterations = 5, time = 2)
 @Measurement(iterations = 5, time = 1)
 public abstract class MapBenchmarkBase {
 
