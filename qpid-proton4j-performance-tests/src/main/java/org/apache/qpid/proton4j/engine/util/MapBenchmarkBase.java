@@ -17,6 +17,7 @@
 package org.apache.qpid.proton4j.engine.util;
 
 import java.util.Map;
+import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.qpid.proton4j.amqp.UnsignedInteger;
@@ -49,12 +50,14 @@ public abstract class MapBenchmarkBase {
     public static final int DEFAULT_MAP_VALUE_RANGE = 8192;
 
     protected final String DUMMY_STRING = "ASDFGHJ";
+    protected final Random random = new Random();
 
     protected Map<UnsignedInteger, String> map;
     protected Map<UnsignedInteger, String> filledMap;
 
     @Setup
     public void init() {
+        this.random.setSeed(System.currentTimeMillis());
         this.map = createMap();
         this.filledMap = fillMap(createMap());
     }
@@ -77,6 +80,33 @@ public abstract class MapBenchmarkBase {
     public void remove(Blackhole blackHole) {
         for (int i = 0; i < DEFAULT_MAP_VALUE_RANGE; ++i) {
             blackHole.consume(filledMap.remove(UnsignedInteger.valueOf(i)));
+        }
+    }
+
+    @Benchmark
+    public void produceAndConsume(Blackhole blackHole) {
+        for (int i = 0; i < 32; ++i) {
+            map.put(UnsignedInteger.valueOf(i), DUMMY_STRING);
+        }
+
+        for (int p = 0, c = map.size(); p < DEFAULT_MAP_VALUE_RANGE; ++p, ++c) {
+            blackHole.consume(filledMap.put(UnsignedInteger.valueOf(p), DUMMY_STRING));
+            blackHole.consume(filledMap.remove(UnsignedInteger.valueOf(c)));
+        }
+    }
+
+    @Benchmark
+    public void randomProduceAndConsume(Blackhole blackHole) {
+        for (int i = 0; i < 32; ++i) {
+            map.put(UnsignedInteger.valueOf(i), DUMMY_STRING);
+        }
+
+        for (int i = 0; i < DEFAULT_MAP_VALUE_RANGE; ++i) {
+            int p = random.nextInt(DEFAULT_MAP_VALUE_RANGE);
+            int c = random.nextInt(DEFAULT_MAP_VALUE_RANGE);
+
+            blackHole.consume(filledMap.put(UnsignedInteger.valueOf(p), DUMMY_STRING));
+            blackHole.consume(filledMap.remove(UnsignedInteger.valueOf(c)));
         }
     }
 

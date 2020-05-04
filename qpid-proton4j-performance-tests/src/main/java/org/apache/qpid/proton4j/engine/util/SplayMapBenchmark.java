@@ -65,6 +65,7 @@ public class SplayMapBenchmark extends MapBenchmarkBase {
             blackHole.consume(sqFilledMap.remove(i));
         }
     }
+
     @Override
     protected Map<UnsignedInteger, String> createMap() {
         return new SplayMap<>();
