@@ -31,15 +31,27 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.NoSuchElementException;
+import java.util.Random;
 import java.util.Set;
 
 import org.apache.qpid.proton4j.amqp.UnsignedInteger;
+import org.junit.Before;
 import org.junit.Test;
 
 /**
  * Test SplayMap type
  */
 public class SplayMapTest {
+
+    protected long seed;
+    protected Random random;
+
+    @Before
+    public void setUp() {
+        seed = System.currentTimeMillis();
+        random = new Random();
+        random.setSeed(seed);
+    }
 
     @Test
     public void testComparator() {
@@ -288,6 +300,30 @@ public class SplayMapTest {
         assertEquals(5, map.size());
         assertEquals("nine", map.remove(9));
         assertEquals(4, map.size());
+    }
+
+    @Test
+    public void testRemoveValueNotInMap() {
+        SplayMap<String> map = new SplayMap<>();
+
+        map.put(0, "zero");
+        map.put(1, "one");
+        map.put(9, "nine");
+        map.put(7, "seven");
+        map.put(-1, "minus one");
+
+        assertNull(map.remove(5));
+    }
+
+    @Test
+    public void testRemoveFirstEntryTwice() {
+        SplayMap<String> map = new SplayMap<>();
+
+        map.put(0, "zero");
+        map.put(16, "sixteen");
+
+        assertNotNull(map.remove(0));
+        assertNull(map.remove(0));
     }
 
     @Test
@@ -918,5 +954,25 @@ public class SplayMapTest {
         });
 
         assertEquals(index.intValue(), inputValues.length);
+    }
+
+    @Test
+    public void testRandomProduceAndConsumeWithBacklog() {
+        SplayMap<String> map = new SplayMap<>();
+
+        final int INSERTIONS = 8192;
+        final String DUMMY_STRING = "test";
+
+        for (int i = 0; i < INSERTIONS; ++i) {
+            map.put(UnsignedInteger.valueOf(i), DUMMY_STRING);
+        }
+
+        for (int i = 0; i < INSERTIONS; ++i) {
+            int p = random.nextInt(INSERTIONS);
+            int c = random.nextInt(INSERTIONS);
+
+            map.put(UnsignedInteger.valueOf(p), DUMMY_STRING);
+            map.remove(UnsignedInteger.valueOf(c));
+        }
     }
 }

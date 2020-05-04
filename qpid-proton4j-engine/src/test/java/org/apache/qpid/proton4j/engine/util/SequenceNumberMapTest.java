@@ -44,7 +44,7 @@ import org.junit.Test;
  */
 public class SequenceNumberMapTest {
 
-    private static final ProtonLogger LOG = ProtonLoggerFactory.getLogger(SequenceNumberMapTest.class);
+    protected static final ProtonLogger LOG = ProtonLoggerFactory.getLogger(SequenceNumberMapTest.class);
 
     protected long seed;
     protected Random random;
@@ -57,7 +57,7 @@ public class SequenceNumberMapTest {
     }
 
     @Test
-    public void testComparator() {
+    public void testCreateDefaultMap() {
         SequenceNumberMap<String> map = new SequenceNumberMap<>();
 
         assertEquals(0, map.size());
@@ -300,6 +300,30 @@ public class SequenceNumberMapTest {
         assertEquals(5, map.size());
         assertEquals("nine", map.remove(9));
         assertEquals(4, map.size());
+    }
+
+    @Test
+    public void testRemoveValueNotInMap() {
+        SequenceNumberMap<String> map = new SequenceNumberMap<>();
+
+        map.put(0, "zero");
+        map.put(1, "one");
+        map.put(9, "nine");
+        map.put(7, "seven");
+        map.put(-1, "minus one");
+
+        assertNull(map.remove(5));
+    }
+
+    @Test
+    public void testRemoveFirstEntryTwice() {
+        SequenceNumberMap<String> map = new SequenceNumberMap<>(16);
+
+        map.put(0, "zero");
+        map.put(16, "sixteen");
+
+        assertNotNull(map.remove(0));
+        assertNull(map.remove(0));
     }
 
     @Test
@@ -926,6 +950,26 @@ public class SequenceNumberMapTest {
         } catch (AssertionError error) {
             dumpRandomDataSet(INSERTIONS);
             throw error;
+        }
+    }
+
+    @Test
+    public void testRandomProduceAndConsumeWithBacklog() {
+        SequenceNumberMap<String> map = new SequenceNumberMap<>();
+
+        final int INSERTIONS = 8192;
+        final String DUMMY_STRING = "test";
+
+        for (int i = 0; i < INSERTIONS; ++i) {
+            map.put(UnsignedInteger.valueOf(i), DUMMY_STRING);
+        }
+
+        for (int i = 0; i < INSERTIONS; ++i) {
+            int p = random.nextInt(INSERTIONS);
+            int c = random.nextInt(INSERTIONS);
+
+            map.put(UnsignedInteger.valueOf(p), DUMMY_STRING);
+            map.remove(UnsignedInteger.valueOf(c));
         }
     }
 
