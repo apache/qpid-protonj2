@@ -86,37 +86,43 @@ public final class SplayMap<E> implements NavigableMap<UnsignedInteger, E> {
             if (root.key == key) {
                 oldValue = root.value;
                 root.value = value;
+                size--;
             } else {
-                SplayedEntry<E> node = new SplayedEntry<>(key, value);
+                final SplayedEntry<E> node = new SplayedEntry<>(key, value);
                 if (compare(key, root.key) < 0) {
-                    node.right = root;
-                    node.left = root.left;
-                    if (node.left != null) {
-                        node.left.parent = node;
-                    }
-                    root.left = null;
-                    root.parent = node;
+                    shiftRootRightOf(node);
                 } else {
-                    node.left = root;
-                    node.right = root.right;
-                    if (node.right != null) {
-                        node.right.parent = node;
-                    }
-                    root.right = null;
-                    root.parent = node;
+                    shiftRootLeftOf(node);
                 }
-
-                root = node;
             }
         }
 
-        if (oldValue == null) {
-            size++;
-        }
-
+        size++;
         modCount++;
 
         return oldValue;
+    }
+
+    private final void shiftRootRightOf(SplayedEntry<E> newRoot) {
+        newRoot.right = root;
+        newRoot.left = root.left;
+        if (newRoot.left != null) {
+            newRoot.left.parent = newRoot;
+        }
+        root.left = null;
+        root.parent = newRoot;
+        root = newRoot;
+    }
+
+    private final void shiftRootLeftOf(SplayedEntry<E> newRoot) {
+        newRoot.left = root;
+        newRoot.right = root.right;
+        if (newRoot.right != null) {
+            newRoot.right.parent = newRoot;
+        }
+        root.right = null;
+        root.parent = newRoot;
+        root = newRoot;
     }
 
     public E remove(UnsignedInteger key) {
@@ -371,7 +377,7 @@ public final class SplayMap<E> implements NavigableMap<UnsignedInteger, E> {
     }
 
     private void delete(SplayedEntry<E> node) {
-        SplayedEntry<E> grandparent = node.parent;
+        final SplayedEntry<E> grandparent = node.parent;
         SplayedEntry<E> replacement = node.right;
 
         if (node.left != null) {
@@ -490,7 +496,8 @@ public final class SplayMap<E> implements NavigableMap<UnsignedInteger, E> {
         }
 
         protected SplayedEntry<E> nextNode() {
-            SplayedEntry<E> entry = nextNode;
+            final SplayedEntry<E> entry = nextNode;
+
             if (nextNode == null) {
                 throw new NoSuchElementException();
             }
@@ -507,7 +514,8 @@ public final class SplayMap<E> implements NavigableMap<UnsignedInteger, E> {
         // Unused as of now but can be used for NavigableMap amongst other things
         @SuppressWarnings("unused")
         protected SplayedEntry<E> previousNode() {
-            SplayedEntry<E> entry = nextNode;
+            final SplayedEntry<E> entry = nextNode;
+
             if (nextNode == null) {
                 throw new NoSuchElementException();
             }
