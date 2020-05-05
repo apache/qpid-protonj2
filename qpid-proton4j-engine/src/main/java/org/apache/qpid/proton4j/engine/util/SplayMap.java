@@ -314,7 +314,12 @@ public final class SplayMap<E> implements NavigableMap<UnsignedInteger, E> {
         return rotated;
     }
 
-    private SplayedEntry<E> splay(SplayedEntry<E> root, int key) {
+    /*
+     * The requested key if present is brought to the root of the tree.  If it is not
+     * present then the last accessed element (nearest match) will be brought to the root
+     * as it is likely it will be the next accessed.
+     */
+    private final SplayedEntry<E> splay(SplayedEntry<E> root, int key) {
         if (root == null || root.key == key) {
             return root;
         }
@@ -324,15 +329,19 @@ public final class SplayMap<E> implements NavigableMap<UnsignedInteger, E> {
                 return root;
             }
 
-            if (compare(root.left.key, key) > 0) {
+            // The key is in the left subtree if present
+
+            final int comparison = compare(root.left.key, key);
+
+            if (comparison > 0) {
                 root.left.left = splay(root.left.left, key);
 
                 root = rightRotate(root);
-            } else if (compare(root.left.key, key) > 0) {
+            } else if (comparison < 0) {
                 root.left.right = splay(root.left.right, key);
 
                 if (root.left.right != null) {
-                    root.left = leftRotate(root);
+                    root.left = leftRotate(root.left);
                 }
             }
 
@@ -342,13 +351,17 @@ public final class SplayMap<E> implements NavigableMap<UnsignedInteger, E> {
                 return root;
             }
 
-            if (compare(root.right.key, key) > 0) {
+            // The key is in the right subtree if present
+
+            final int comparison = compare(root.right.key, key);
+
+            if (comparison > 0) {
                 root.right.left = splay(root.right.left, key);
 
                 if (root.right.left != null) {
                     root.right = rightRotate(root.right);
                 }
-            } else if (compare(root.right.key, key) < 0) {
+            } else if (comparison < 0) {
                 root.right.right = splay(root.right.right, key);
                 root = leftRotate(root);
             }
