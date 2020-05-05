@@ -24,7 +24,7 @@ import org.apache.qpid.proton4j.amqp.transport.Role;
 import org.apache.qpid.proton4j.amqp.transport.Transfer;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.engine.exceptions.ProtocolViolationException;
-import org.apache.qpid.proton4j.engine.util.SplayMap;
+import org.apache.qpid.proton4j.engine.util.SequenceNumberMap;
 
 /**
  * Holds Session level credit window information.
@@ -54,7 +54,7 @@ public class ProtonSessionOutgoingWindow {
     // marks when this value is set in stone.
     private long maxFrameSize;
 
-    private final SplayMap<ProtonOutgoingDelivery> unsettled = new SplayMap<>();
+    private final SequenceNumberMap<ProtonOutgoingDelivery> unsettled = new SequenceNumberMap<>();
 
     public ProtonSessionOutgoingWindow(ProtonSession session) {
         this.session = session;

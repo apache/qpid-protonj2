@@ -39,7 +39,7 @@ import org.apache.qpid.proton4j.engine.Receiver;
 import org.apache.qpid.proton4j.engine.Session;
 import org.apache.qpid.proton4j.engine.exceptions.ProtocolViolationException;
 import org.apache.qpid.proton4j.engine.util.DeliveryIdTracker;
-import org.apache.qpid.proton4j.engine.util.SplayMap;
+import org.apache.qpid.proton4j.engine.util.SequenceNumberMap;
 
 /**
  * Proton Receiver link implementation.
@@ -52,7 +52,7 @@ public class ProtonReceiver extends ProtonLink<Receiver> implements Receiver {
 
     private final ProtonSessionIncomingWindow sessionWindow;
     private final DeliveryIdTracker currentDeliveryId = new DeliveryIdTracker();
-    private final SplayMap<ProtonIncomingDelivery> unsettled = new SplayMap<>();
+    private final SequenceNumberMap<ProtonIncomingDelivery> unsettled = new SequenceNumberMap<>();
 
     private DeliveryState defaultDeliveryState;
     private LinkCreditState drainStateSnapshot;

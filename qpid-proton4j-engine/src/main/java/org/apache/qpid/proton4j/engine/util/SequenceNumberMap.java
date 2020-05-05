@@ -43,14 +43,14 @@ import org.apache.qpid.proton4j.amqp.UnsignedInteger;
 public final class SequenceNumberMap<V> implements Map<UnsignedInteger, V> {
 
     /**
-     * The default bucket size used to hold subsets of the sequence keyed values in the map
+     * The default table size used to hold subsets of the sequence keyed values in the map
      */
-    private static final int DEFAULT_BUCKET_SIZE = 256;
+    private static final int DEFAULT_TABLE_SIZE = 256;
 
     /**
-     * The minimum number of entries that is allow to be used for sequence number entry buckets.
+     * The minimum number of entries that is allow to be used for sequence number entry table.
      */
-    private static final int MINIMUM_BUCKET_SIZE = 16;
+    private static final int MINIMUM_TABLE_SIZE = 16;
 
     /**
      * A dummy entry in the circular linked list of entries in the map.
@@ -60,23 +60,15 @@ public final class SequenceNumberMap<V> implements Map<UnsignedInteger, V> {
     private final transient SequenceEntry<V> entries = new SequenceEntry<>();
 
     /**
-     * A dummy entry in the chain of map buckets that provides a constant fixed
-     * starting point for searches or other access operations that need bucket
-     * iteration.  The real first bucket is located at buckets.next.
+     * The hashed table of {@link SequenceEntry} elements which will be chained as the hashed
+     * keys collide to form a layered chain of sequence numbers.
      */
-    private final transient SequenceNumberBucket<V> buckets = new SequenceNumberBucket<>();
-
-    /**
-     * When a bucket is emptied it can be stored here so that the next put operations can try and
-     * use an already allocated empty bucket instead of creating a new one as the progression of
-     * sequence number usage moves forward.
-     */
-    private transient SequenceNumberBucket<V> spareBucket;
+    private final transient SequenceEntry<V>[] entriesTable;
 
     /**
      * The sequence number bucket size used to allocate the bucket arrays.
      */
-    private final int bucketSize;
+    private final int tableSize;
 
     // Singleton Views - lazily initialized
     private transient Set<UnsignedInteger> keySet;
@@ -90,25 +82,23 @@ public final class SequenceNumberMap<V> implements Map<UnsignedInteger, V> {
      * Creates an empty {@link SequenceNumberMap} with default initial capacity sizing.
      */
     public SequenceNumberMap() {
-        this(DEFAULT_BUCKET_SIZE);
+        this(DEFAULT_TABLE_SIZE);
     }
 
     /**
      * Creates an empty {@link SequenceNumberMap} with this given bucket size value.
      *
-     * @param bucketSize
-     *      The size of the sequence number buckets that hold subsets of the Map values.
+     * @param tableSize
+     *      The size of the sequence number table that hold subsets of the Map values.
      */
-    public SequenceNumberMap(int bucketSize) {
-        if (bucketSize <= 0) {
-            throw new IllegalArgumentException("Initial Map Capacity cannot be negative: " + bucketSize);
+    @SuppressWarnings("unchecked")
+    public SequenceNumberMap(int tableSize) {
+        if (tableSize <= 0) {
+            throw new IllegalArgumentException("Initial Map Capacity cannot be negative: " + tableSize);
         }
 
-        this.bucketSize = Math.max(bucketSize, MINIMUM_BUCKET_SIZE);
-
-        // Allocate a spare to be use to house the initial put operations which can start at any
-        // point in the sequence number range but will likely move forward from there.
-        this.spareBucket = new SequenceNumberBucket<>(-1, this.bucketSize);
+        this.tableSize = Math.max(tableSize, MINIMUM_TABLE_SIZE);
+        this.entriesTable = new SequenceEntry[tableSize];
     }
 
     /**
@@ -121,7 +111,7 @@ public final class SequenceNumberMap<V> implements Map<UnsignedInteger, V> {
      * @throws NullPointerException if the given {@link Map} instance is null.
      */
     public SequenceNumberMap(Map<? extends UnsignedInteger, ? extends V> source) {
-        this(DEFAULT_BUCKET_SIZE);
+        this(DEFAULT_TABLE_SIZE);
 
         source.forEach((key, value) -> put(key, value));
     }
@@ -146,20 +136,8 @@ public final class SequenceNumberMap<V> implements Map<UnsignedInteger, V> {
     }
 
     public boolean containsKey(int key) {
-        final long longKey = Integer.toUnsignedLong(key);
-        final int bucketIndex = (int) (longKey / bucketSize);
-        final int buecketOffset = (int) (longKey % bucketSize);
-
-        final SequenceNumberBucket<V> bucket = findBucketBackward(bucketIndex);
-        if (bucket != null) {
-            final SequenceEntry<V> entry = bucket.get(buecketOffset);
-
-            if (entry != null) {
-                return true;
-            }
-        }
-
-        return false;
+        SequenceEntry<V> entry = findEntry(Math.floorMod(key, tableSize), key);
+        return entry != null;
     }
 
     @Override
@@ -168,7 +146,7 @@ public final class SequenceNumberMap<V> implements Map<UnsignedInteger, V> {
             // Use the linked list of entries to avoid checking every table element when many
             // will be null and instead only check the current contents.
             SequenceEntry<V> root = this.entries;
-            for (SequenceEntry<V> entry = root.next; entry != root; entry = entry.next) {
+            for (SequenceEntry<V> entry = root.linkNext; entry != root; entry = entry.linkNext) {
                 if (value.equals(entry.value)) {
                     return true;
                 }
@@ -188,19 +166,8 @@ public final class SequenceNumberMap<V> implements Map<UnsignedInteger, V> {
     }
 
     public V get(int key) {
-        final int bucketIndex = Integer.divideUnsigned(key, bucketSize);
-        final int bucketOffset = Math.floorMod(key, bucketSize);
-
-        final SequenceNumberBucket<V> bucket = findBucketBackward(bucketIndex);
-        if (bucket != null) {
-            final SequenceEntry<V> entry = bucket.get(bucketOffset);
-
-            if (entry != null) {
-                return entry.getValue();
-            }
-        }
-
-        return null;
+        SequenceEntry<V> entry = findEntry(Math.floorMod(key, tableSize), key);
+        return entry == null ? null : entry.value;
     }
 
     @Override
@@ -213,27 +180,51 @@ public final class SequenceNumberMap<V> implements Map<UnsignedInteger, V> {
     }
 
     public V put(int key, V value) {
-        final int bucketIndex = Integer.divideUnsigned(key, bucketSize);
-        final int bucketOffset = Math.floorMod(key, bucketSize);
+        final int tableIndex = Math.floorMod(key, tableSize);
 
-        final SequenceNumberBucket<V> bucket = findOrCreateBucket(bucketIndex);
+        final SequenceEntry<V>[] table = this.entriesTable;
+        SequenceEntry<V> entry = table[tableIndex];
+        SequenceEntry<V> predecessor = entry;
 
-        SequenceEntry<V> entry = bucket.get(bucketOffset);
+        if (entry != null && entry.key != key && (entry = entry.nextEntry) != null) {
+            do {
+                if (entry.key == key) {
+                    break;
+                } else {
+                    predecessor = entry;
+                }
+            } while ((entry = entry.nextEntry) != null);
+        }
+
         if (entry == null) {
-            entry = new SequenceEntry<>(key, bucket, bucketOffset);
-            bucket.put(bucketOffset, entry);
+            entry = insertNewEntry(tableIndex, key, predecessor);
             size++;
-            // Insertion ordering of the sequence number entries recorded here
-            // and the list of entries doesn't change until an entry is removed.
-            entry.next = entries;
-            entry.prev = entries.prev;
-            entries.prev.next = entry;
-            entries.prev = entry;
         }
 
         modCount++;
 
         return entry.setValue(value);
+    }
+
+    private final SequenceEntry<V> insertNewEntry(int tableIndex, int key, SequenceEntry<V> predecessor) {
+        final SequenceEntry<V>[] table = this.entriesTable;
+        SequenceEntry<V> entry = new SequenceEntry<>(tableIndex, key);
+
+        if (predecessor == null) {
+            table[tableIndex] = entry;
+        } else {
+            predecessor.nextEntry = entry;
+            entry.prevEntry = predecessor;
+        }
+
+        // Insertion ordering of the sequence number entries recorded here
+        // and the list of entries doesn't change until an entry is removed.
+        entry.linkNext = entries;
+        entry.linkPrev = entries.linkPrev;
+        entries.linkPrev.linkNext = entry;
+        entries.linkPrev = entry;
+
+        return entry;
     }
 
     @Override
@@ -246,18 +237,12 @@ public final class SequenceNumberMap<V> implements Map<UnsignedInteger, V> {
     }
 
     public V remove(int key) {
-        final int bucketIndex = Integer.divideUnsigned(key, bucketSize);
-        final int bucketOffset = Math.floorMod(key, bucketSize);
-
         V oldValue = null;
 
-        final SequenceNumberBucket<V> bucket = findBucketForward(bucketIndex);
-        if (bucket != null) {
-            final SequenceEntry<V> entry = bucket.get(bucketOffset);
-            if (entry != null) {
-                oldValue = entry.getValue();
-                delete(entry);
-            }
+        SequenceEntry<V> entry = findEntry(Math.floorMod(key, tableSize), key);
+        if (entry != null) {
+            oldValue = entry.value;
+            delete(entry);
         }
 
         return oldValue;
@@ -274,23 +259,11 @@ public final class SequenceNumberMap<V> implements Map<UnsignedInteger, V> {
             modCount++;
             size = 0;
 
-            // When there isn't a spare already try and reclaim one before unlinking
-            // the buckets from the list.
-            if (spareBucket == null && buckets.next != buckets) {
-                SequenceNumberBucket<V> hotSpare = buckets.next;
-                Arrays.fill(hotSpare.entries, null);
-
-                hotSpare.next = hotSpare.prev = hotSpare;
-                hotSpare.bucketIndex = -1;
-
-                this.spareBucket = hotSpare;
-            }
-
             // Unlink all buckets and reset to no buckets state.
-            buckets.next = buckets.prev = buckets;
+            Arrays.fill(entriesTable, null);
 
             // Unlink all the entries and reset to no insertions state
-            entries.next = entries.prev = entries;
+            entries.linkNext = entries.linkPrev = entries;
         }
     }
 
@@ -328,7 +301,7 @@ public final class SequenceNumberMap<V> implements Map<UnsignedInteger, V> {
         Objects.requireNonNull(action);
 
         SequenceEntry<V> root = this.entries;
-        for (SequenceEntry<V> entry = root.next; entry != root; entry = entry.next) {
+        for (SequenceEntry<V> entry = root.linkNext; entry != root; entry = entry.linkNext) {
             final UnsignedInteger key;
             final V value;
 
@@ -357,7 +330,7 @@ public final class SequenceNumberMap<V> implements Map<UnsignedInteger, V> {
         Objects.requireNonNull(action);
 
         SequenceEntry<V> root = this.entries;
-        for (SequenceEntry<V> entry = root.next; entry != root; entry = entry.next) {
+        for (SequenceEntry<V> entry = root.linkNext; entry != root; entry = entry.linkNext) {
             final V value;
 
             try {
@@ -374,157 +347,49 @@ public final class SequenceNumberMap<V> implements Map<UnsignedInteger, V> {
     //----- Internal utility methods
 
     private void delete(SequenceEntry<V> entry) {
-        final SequenceNumberBucket<V> bucket = entry.bucket;
-
-        // Remove the entry from the bucket
-        bucket.remove(entry.bucketOffset);
+        int tableIndex = entry.tableIndex;
 
         size--;
         modCount++;
 
-        if (bucket.isEmpty()) {
-            bucket.bucketIndex = -1;
-            // Unlink this bucket from the chain
-            bucket.next.prev = bucket.prev;
-            bucket.prev.next = bucket.next;
-            // Clear old links to avoid retention
-            bucket.next = bucket.prev = bucket;
+        // Remove the entry from the table
+        if (entry.prevEntry != null) {
+            entry.prevEntry.nextEntry = entry.nextEntry;
+        }
 
-            if (spareBucket == null) {
-                spareBucket = bucket;
-            }
+        if (entry.nextEntry != null) {
+            entry.nextEntry.prevEntry = entry.prevEntry;
+        }
+
+        // No previous entry indicates entry was at the table index root so
+        // pull up the next entry (if there is one) to the root.
+        if (entry.prevEntry == null) {
+            entriesTable[tableIndex] = entry.nextEntry;
         }
 
         // Remove the entry from the insertion ordered entry list.
-        entry.next.prev = entry.prev;
-        entry.prev.next = entry.next;
-        entry.next = entry.prev = entry;
-    }
-
-    private SequenceNumberBucket<V> findBucketBackward(int bucketIndex) {
-        for (SequenceNumberBucket<V> current = buckets.prev; current != buckets; current = current.prev) {
-            if (current.index() == bucketIndex) {
-                return current;
-            } else if (current.index() < bucketIndex) {
-                break;
-            }
-         }
-
-        return null;
-    }
-
-    private SequenceNumberBucket<V> findBucketForward(int bucketIndex) {
-        for (SequenceNumberBucket<V> current = buckets.next; current != buckets; current = current.next) {
-            if (current.index() == bucketIndex) {
-                return current;
-            } else if (current.index() > bucketIndex) {
-                break;
-            }
-         }
-
-        return null;
-    }
-
-    private SequenceNumberBucket<V> findOrCreateBucket(int bucketIndex) {
-        SequenceNumberBucket<V> successor = buckets;
-
-        for (SequenceNumberBucket<V> current = buckets.prev; current != buckets; current = current.prev) {
-            if (current.index() == bucketIndex) {
-                return current;
-            } else if (current.index() < bucketIndex) {
-                break;
-            }
-
-            successor = current;
-         }
-
-        final SequenceNumberBucket<V> bucket;
-        if (spareBucket != null) {
-            bucket = spareBucket;
-            bucket.bucketIndex = bucketIndex;
-            spareBucket = null;
-        } else {
-            bucket = new SequenceNumberBucket<>(bucketIndex, bucketSize);
-        }
-
-        // insert this new bucket into the chain updating the links on both sides..
-        bucket.next = successor;
-        bucket.prev = successor.prev;
-        successor.prev.next = bucket;
-        successor.prev = bucket;
-
-        return bucket;
+        entry.linkNext.linkPrev = entry.linkPrev;
+        entry.linkPrev.linkNext = entry.linkNext;
+        entry.linkNext = entry.linkPrev = null;
     }
 
     private SequenceEntry<V> firstEntry() {
-        return entries.next;
+        return entries.linkNext;
     }
 
-    //----- Map bucket for a fixed chunk of the entries in the SequenceNumberMap
+    private final SequenceEntry<V> findEntry(int tableIndex, int key) {
+        final SequenceEntry<V>[] table = this.entriesTable;
+        SequenceEntry<V> entry = table[tableIndex];
 
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    private static class SequenceNumberBucket<V> {
-
-        private static final SequenceEntry[] EMPTY_BUCKET = new SequenceEntry[0];
-
-        private final SequenceEntry<V>[] entries;
-
-        private int bucketIndex;
-
-        private SequenceNumberBucket<V> next;
-        private SequenceNumberBucket<V> prev;
-
-        private int size;
-
-        public SequenceNumberBucket() {
-            this(-1, 0);
+        if (entry != null && entry.key != key && (entry = entry.nextEntry) != null) {
+            do {
+                if (entry.key == key) {
+                    break;
+                }
+            } while ((entry = entry.nextEntry) != null);
         }
 
-        public SequenceNumberBucket(int bucketIndex, int bucketSize) {
-            // Empty node is circular list to start.
-            this.next = this;
-            this.prev = this;
-
-            this.bucketIndex = bucketIndex;
-
-            if (bucketSize != 0) {
-                this.entries = new SequenceEntry[bucketSize];
-            } else {
-                this.entries = EMPTY_BUCKET;
-            }
-        }
-
-        public boolean isEmpty() {
-            return size == 0;
-        }
-
-        public void put(int key, SequenceEntry<V> value) {
-            entries[key] = value;
-            size++;
-        }
-
-        public SequenceEntry<V> get(int key) {
-            return entries[key];
-        }
-
-        public SequenceEntry<V> remove(int key) {
-            final SequenceEntry<V> entry = entries[key];
-
-            if (entry != null) {
-                size--;
-            }
-
-            return entry;
-        }
-
-        public int index() {
-            return bucketIndex;
-        }
-
-        @Override
-        public String toString() {
-            return "SequenceNumberBucket:{" + bucketIndex + ", size=" + size + "}";
-        }
+        return entry;
     }
 
     //----- Map Entry node for the SeqeuenceNumberMap
@@ -532,27 +397,29 @@ public final class SequenceNumberMap<V> implements Map<UnsignedInteger, V> {
     private static class SequenceEntry<V> implements Entry<UnsignedInteger, V> {
 
         final int key;
+        final int tableIndex;
 
         V value;
-        SequenceEntry<V> next;
-        SequenceEntry<V> prev;
 
-        // Locator data for faster access from the buckets
-        final SequenceNumberBucket<V> bucket;
-        final int bucketOffset;
+        // Insertion order chain
+        SequenceEntry<V> linkNext;
+        SequenceEntry<V> linkPrev;
+
+        // Table layered chain
+        SequenceEntry<V> nextEntry;
+        SequenceEntry<V> prevEntry;
 
         SequenceEntry() {
-            this(-1, null, -1);
+            this(-1, -1);
 
-            // Empty node is circular list to start.
-            this.next = this;
-            this.prev = this;
+            // Node is circular list to start.
+            this.linkNext = this;
+            this.linkPrev = this;
         }
 
-        SequenceEntry(int key, SequenceNumberBucket<V> bucket, int bucketOffset) {
+        SequenceEntry(int tableIndex, int key) {
+            this.tableIndex = tableIndex;
             this.key = key;
-            this.bucket = bucket;
-            this.bucketOffset = bucketOffset;
         }
 
         @Override
@@ -616,47 +483,31 @@ public final class SequenceNumberMap<V> implements Map<UnsignedInteger, V> {
     // Base class iterator that can be used for the collections returned from the Map
     private abstract class SequenceNumberMapIterator<T> implements Iterator<T> {
 
-        private SequenceEntry<V> nextNode;
+        private SequenceEntry<V> nextEntry;
         private SequenceEntry<V> lastReturned;
 
         private int expectedModCount;
 
         public SequenceNumberMapIterator(SequenceEntry<V> startAt) {
-            this.nextNode = startAt;
+            this.nextEntry = startAt;
             this.expectedModCount = SequenceNumberMap.this.modCount;
         }
 
         @Override
         public boolean hasNext() {
-            return nextNode != entries;
+            return nextEntry != entries;
         }
 
         protected SequenceEntry<V> nextNode() {
-            SequenceEntry<V> entry = nextNode;
-            if (nextNode == entries) {
+            SequenceEntry<V> entry = nextEntry;
+            if (nextEntry == entries) {
                 throw new NoSuchElementException();
             }
             if (expectedModCount != SequenceNumberMap.this.modCount) {
                 throw new ConcurrentModificationException();
             }
 
-            nextNode = entry.next;
-
-            return lastReturned = entry;
-        }
-
-        // Unused as of now but can be used for NavigableMap amongst other things
-        @SuppressWarnings("unused")
-        protected SequenceEntry<V> previousNode() {
-            SequenceEntry<V> entry = nextNode;
-            if (nextNode == entries) {
-                throw new NoSuchElementException();
-            }
-            if (expectedModCount != SequenceNumberMap.this.modCount) {
-                throw new ConcurrentModificationException();
-            }
-
-            nextNode = entry.prev;
+            nextEntry = entry.linkNext;
 
             return lastReturned = entry;
         }
@@ -736,7 +587,7 @@ public final class SequenceNumberMap<V> implements Map<UnsignedInteger, V> {
         public boolean remove(Object target) {
             final SequenceEntry<V> root = SequenceNumberMap.this.entries;
 
-            for (SequenceEntry<V> entry = root.next; entry != root; entry = entry.next) {
+            for (SequenceEntry<V> entry = root.linkNext; entry != root; entry = entry.linkNext) {
                 if (entry.valueEquals(target)) {
                     delete(entry);
                     return true;
@@ -773,7 +624,7 @@ public final class SequenceNumberMap<V> implements Map<UnsignedInteger, V> {
         public boolean remove(Object target) {
             final SequenceEntry<V> root = SequenceNumberMap.this.entries;
 
-            for (SequenceEntry<V> entry = root.next; entry != root; entry = entry.next) {
+            for (SequenceEntry<V> entry = root.linkNext; entry != root; entry = entry.linkNext) {
                 if (entry.keyEquals(target)) {
                     delete(entry);
                     return true;
@@ -814,7 +665,7 @@ public final class SequenceNumberMap<V> implements Map<UnsignedInteger, V> {
 
             final SequenceEntry<V> root = SequenceNumberMap.this.entries;
 
-            for (SequenceEntry<V> entry = root.next; entry != root; entry = entry.next) {
+            for (SequenceEntry<V> entry = root.linkNext; entry != root; entry = entry.linkNext) {
                 if (entry.equals(target)) {
                     delete(entry);
                     return true;

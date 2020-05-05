@@ -25,7 +25,7 @@ import org.apache.qpid.proton4j.amqp.transport.Transfer;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.engine.exceptions.ProtocolViolationException;
 import org.apache.qpid.proton4j.engine.util.SequenceNumber;
-import org.apache.qpid.proton4j.engine.util.SplayMap;
+import org.apache.qpid.proton4j.engine.util.SequenceNumberMap;
 
 /**
  * Tracks the incoming window and provides management of that window in relation to receiver links
@@ -57,7 +57,7 @@ public class ProtonSessionIncomingWindow {
 
     private long incomingBytes;
 
-    private SplayMap<ProtonIncomingDelivery> unsettled = new SplayMap<>();
+    private SequenceNumberMap<ProtonIncomingDelivery> unsettled = new SequenceNumberMap<>();
 
     public ProtonSessionIncomingWindow(ProtonSession session) {
         this.session = session;
