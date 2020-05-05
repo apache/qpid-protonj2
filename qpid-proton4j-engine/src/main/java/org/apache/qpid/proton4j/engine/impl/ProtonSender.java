@@ -38,7 +38,7 @@ import org.apache.qpid.proton4j.engine.OutgoingDelivery;
 import org.apache.qpid.proton4j.engine.Sender;
 import org.apache.qpid.proton4j.engine.Session;
 import org.apache.qpid.proton4j.engine.util.DeliveryIdTracker;
-import org.apache.qpid.proton4j.engine.util.SequenceNumberMap;
+import org.apache.qpid.proton4j.engine.util.SplayMap;
 
 /**
  * Proton Sender link implementation.
@@ -51,7 +51,7 @@ public class ProtonSender extends ProtonLink<Sender> implements Sender {
 
     private boolean sendable;
 
-    private final SequenceNumberMap<ProtonOutgoingDelivery> unsettled = new SequenceNumberMap<>();
+    private final SplayMap<ProtonOutgoingDelivery> unsettled = new SplayMap<>();
 
     private EventHandler<OutgoingDelivery> deliveryUpdatedEventHandler = null;
     private EventHandler<Sender> linkCreditUpdatedHandler = null;
