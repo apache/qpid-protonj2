@@ -120,17 +120,17 @@ public interface TransactionManager extends Endpoint<TransactionManager> {
      *
      * @return this {@link TransactionManager}.
      */
-    TransactionManager declare(EventHandler<Transaction<TransactionManager>> declaredEventHandler);
+    TransactionManager declareHandler(EventHandler<Transaction<TransactionManager>> declaredEventHandler);
 
     /**
      * Called when the {@link TransactionController} end of the link has requested a current transaction be
      * discharged using the information provided in the given {@link Discharge} instance.
      *
-     * @param declaredEventHandler
+     * @param dischargeEventHandler
      *      handler that will act on the transaction declaration request.
      *
      * @return this {@link TransactionManager}.
      */
-    TransactionManager discharge(EventHandler<Transaction<TransactionManager>> declaredEventHandler);
+    TransactionManager dischargeHandler(EventHandler<Transaction<TransactionManager>> dischargeEventHandler);
 
 }

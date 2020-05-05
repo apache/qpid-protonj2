@@ -16,6 +16,8 @@
  */
 package org.apache.qpid.proton4j.engine.impl;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.qpid.proton4j.amqp.Binary;
@@ -25,7 +27,6 @@ import org.apache.qpid.proton4j.amqp.transactions.Coordinator;
 import org.apache.qpid.proton4j.amqp.transactions.Declare;
 import org.apache.qpid.proton4j.amqp.transactions.Discharge;
 import org.apache.qpid.proton4j.amqp.transport.ErrorCondition;
-import org.apache.qpid.proton4j.engine.Engine;
 import org.apache.qpid.proton4j.engine.EventHandler;
 import org.apache.qpid.proton4j.engine.Transaction;
 import org.apache.qpid.proton4j.engine.TransactionManager;
@@ -37,9 +38,14 @@ import org.apache.qpid.proton4j.engine.exceptions.EngineStateException;
  * around a receiver link that responds to requests to {@link Declare} and to
  * {@link Discharge} AMQP {@link Transaction} instance.
  */
-public class ProtonTransactionManager extends ProtonEndpoint<TransactionManager> implements TransactionManager {
+public final class ProtonTransactionManager extends ProtonEndpoint<TransactionManager> implements TransactionManager {
 
     private final ProtonReceiver receiverLink;
+
+    private final List<ProtonManagerTransaction> transactions = new ArrayList<>();
+
+    private EventHandler<Transaction<TransactionManager>> declareEventHandler;
+    private EventHandler<Transaction<TransactionManager>> dischargeEventHandler;
 
     public ProtonTransactionManager(ProtonReceiver receiverLink) {
         super(receiverLink.getEngine());
@@ -56,6 +62,40 @@ public class ProtonTransactionManager extends ProtonEndpoint<TransactionManager>
     ProtonTransactionManager self() {
         return this;
     }
+
+    @Override
+    public TransactionManager declared(Transaction<TransactionManager> transaction, Binary txnId) {
+        // TODO Auto-generated method stub
+        return this;
+    }
+
+    @Override
+    public TransactionManager discharged(Transaction<TransactionManager> transaction) {
+        // TODO Auto-generated method stub
+        return this;
+    }
+
+    @Override
+    public TransactionManager declareHandler(EventHandler<Transaction<TransactionManager>> declaredEventHandler) {
+        this.declareEventHandler = declaredEventHandler;
+        return this;
+    }
+
+    EventHandler<Transaction<TransactionManager>> declareHandler() {
+        return declareEventHandler;
+    }
+
+    @Override
+    public TransactionManager dischargeHandler(EventHandler<Transaction<TransactionManager>> dischargeEventHandler) {
+        this.dischargeEventHandler = dischargeEventHandler;
+        return this;
+    }
+
+    EventHandler<Transaction<TransactionManager>> dischargeHandler() {
+        return dischargeEventHandler;
+    }
+
+    //----- Hand off methods for link specific elements.
 
     @Override
     public TransactionManager open() throws IllegalStateException, EngineStateException {
@@ -185,33 +225,19 @@ public class ProtonTransactionManager extends ProtonEndpoint<TransactionManager>
         return receiverLink.getRemoteTarget();
     }
 
-    @Override
-    public TransactionManager engineShutdownHandler(EventHandler<Engine> engineShutdownEventHandler) {
-        // TODO Auto-generated method stub
-        return this;
-    }
+    //----- The Manager specific Transaction implementation
 
-    @Override
-    public TransactionManager declared(Transaction<TransactionManager> transaction, Binary txnId) {
-        // TODO Auto-generated method stub
-        return this;
-    }
+    private final class ProtonManagerTransaction extends ProtonTransaction<ProtonTransactionManager> {
 
-    @Override
-    public TransactionManager discharged(Transaction<TransactionManager> transaction) {
-        // TODO Auto-generated method stub
-        return this;
-    }
+        private final ProtonTransactionManager manager;
 
-    @Override
-    public TransactionManager declare(EventHandler<Transaction<TransactionManager>> declaredEventHandler) {
-        // TODO Auto-generated method stub
-        return this;
-    }
+        public ProtonManagerTransaction(ProtonTransactionManager manager) {
+            this.manager = manager;
+        }
 
-    @Override
-    public TransactionManager discharge(EventHandler<Transaction<TransactionManager>> declaredEventHandler) {
-        // TODO Auto-generated method stub
-        return this;
+        @Override
+        public ProtonTransactionManager parent() {
+            return manager;
+        }
     }
 }

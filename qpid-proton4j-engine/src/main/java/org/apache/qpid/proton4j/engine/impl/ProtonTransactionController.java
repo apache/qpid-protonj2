@@ -16,6 +16,8 @@
  */
 package org.apache.qpid.proton4j.engine.impl;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.qpid.proton4j.amqp.Symbol;
@@ -39,6 +41,8 @@ public class ProtonTransactionController extends ProtonEndpoint<TransactionContr
 
     private final ProtonSender senderLink;
 
+    private final List<ProtonControllerTransaction> transactions = new ArrayList<>();
+
     public ProtonTransactionController(ProtonSender senderLink) {
         super(senderLink.getEngine());
 
@@ -54,6 +58,47 @@ public class ProtonTransactionController extends ProtonEndpoint<TransactionContr
     ProtonTransactionController self() {
         return this;
     }
+
+    @Override
+    public Transaction<TransactionController> declare() {
+        if (!senderLink.isSendable()) {
+            throw new IllegalStateException("Cannot Declare due to current capicity restrictions.");
+        }
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public TransactionController discharge(Transaction<TransactionController> transaction, boolean failed) {
+        // TODO Auto-generated method stub
+        return this;
+    }
+
+    @Override
+    public TransactionController declaredHandler(EventHandler<Transaction<TransactionController>> declaredEventHandler) {
+        // TODO Auto-generated method stub
+        return this;
+    }
+
+    @Override
+    public TransactionController declareFailureHandler(EventHandler<Transaction<TransactionController>> declareFailureEventHandler) {
+        // TODO Auto-generated method stub
+        return this;
+    }
+
+    @Override
+    public TransactionController dischargedHandler(EventHandler<Transaction<TransactionController>> dischargedEventHandler) {
+        // TODO Auto-generated method stub
+        return this;
+    }
+
+    @Override
+    public TransactionController dischargeFailureHandler(EventHandler<Transaction<TransactionController>> dischargeFailureEventHandler) {
+        // TODO Auto-generated method stub
+        return this;
+    }
+
+    //----- Hand off methods for link specific elements.
 
     @Override
     public TransactionController open() throws IllegalStateException, EngineStateException {
@@ -185,39 +230,19 @@ public class ProtonTransactionController extends ProtonEndpoint<TransactionContr
         return senderLink.getRemoteTarget();
     }
 
-    @Override
-    public Transaction<TransactionController> declare() {
-        // TODO Auto-generated method stub
-        return null;
-    }
+    //----- The Controller specific Transaction implementation
 
-    @Override
-    public TransactionController discharge(Transaction<TransactionController> transaction, boolean failed) {
-        // TODO Auto-generated method stub
-        return this;
-    }
+    private final class ProtonControllerTransaction extends ProtonTransaction<ProtonTransactionController> {
 
-    @Override
-    public TransactionController declared(EventHandler<Transaction<TransactionController>> declaredEventHandler) {
-        // TODO Auto-generated method stub
-        return this;
-    }
+        private final ProtonTransactionController controller;
 
-    @Override
-    public TransactionController declareFailure(EventHandler<Transaction<TransactionController>> declareFailureEventHandler) {
-        // TODO Auto-generated method stub
-        return this;
-    }
+        public ProtonControllerTransaction(ProtonTransactionController controller) {
+            this.controller = controller;
+        }
 
-    @Override
-    public TransactionController discharged(EventHandler<Transaction<TransactionController>> dischargedEventHandler) {
-        // TODO Auto-generated method stub
-        return this;
-    }
-
-    @Override
-    public TransactionController dischargeFailure(EventHandler<Transaction<TransactionController>> dischargeFailureEventHandler) {
-        // TODO Auto-generated method stub
-        return this;
+        @Override
+        public ProtonTransactionController parent() {
+            return controller;
+        }
     }
 }

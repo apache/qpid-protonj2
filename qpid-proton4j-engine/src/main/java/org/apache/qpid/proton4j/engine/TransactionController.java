@@ -86,7 +86,7 @@ public interface TransactionController extends Endpoint<TransactionController> {
     /**
      * Request that the remote {@link TransactionManager} declare a new transaction and
      * respond with a new transaction Id for that transaction.  Upon successful declaration of
-     * a new transaction the remote will respond and the {@link TransactionController#declared(EventHandler)}
+     * a new transaction the remote will respond and the {@link TransactionController#declaredHandler(EventHandler)}
      * event handler will be signaled.
      *
      * @return a new {@link Transaction} instance that can be correlated with later declared events.
@@ -96,7 +96,7 @@ public interface TransactionController extends Endpoint<TransactionController> {
     /**
      * Request that the remote {@link TransactionManager} discharge the given transaction and
      * with the specified failure state (true for failed).  Upon successful declaration of
-     * a new transaction the remote will respond and the {@link TransactionController#declared(EventHandler)}
+     * a new transaction the remote will respond and the {@link TransactionController#declaredHandler(EventHandler)}
      * event handler will be signaled.
      *
      * @param transaction
@@ -118,7 +118,7 @@ public interface TransactionController extends Endpoint<TransactionController> {
      *
      * @return this {@link TransactionController}.
      */
-    TransactionController declared(EventHandler<Transaction<TransactionController>> declaredEventHandler);
+    TransactionController declaredHandler(EventHandler<Transaction<TransactionController>> declaredEventHandler);
 
     /**
      * Called when the {@link TransactionManager} end of the link responds to a {@link Transaction} declaration
@@ -129,7 +129,7 @@ public interface TransactionController extends Endpoint<TransactionController> {
      *
      * @return this {@link TransactionController}.
      */
-    TransactionController declareFailure(EventHandler<Transaction<TransactionController>> declareFailureEventHandler);
+    TransactionController declareFailureHandler(EventHandler<Transaction<TransactionController>> declareFailureEventHandler);
 
     /**
      * Called when the {@link TransactionManager} end of the link has responded to a previous
@@ -141,7 +141,7 @@ public interface TransactionController extends Endpoint<TransactionController> {
      *
      * @return this {@link TransactionController}.
      */
-    TransactionController discharged(EventHandler<Transaction<TransactionController>> dischargedEventHandler);
+    TransactionController dischargedHandler(EventHandler<Transaction<TransactionController>> dischargedEventHandler);
 
     /**
      * Called when the {@link TransactionManager} end of the link has responded to a previous
@@ -153,6 +153,6 @@ public interface TransactionController extends Endpoint<TransactionController> {
      *
      * @return this {@link TransactionController}.
      */
-    TransactionController dischargeFailure(EventHandler<Transaction<TransactionController>> dischargeFailureEventHandler);
+    TransactionController dischargeFailureHandler(EventHandler<Transaction<TransactionController>> dischargeFailureEventHandler);
 
 }

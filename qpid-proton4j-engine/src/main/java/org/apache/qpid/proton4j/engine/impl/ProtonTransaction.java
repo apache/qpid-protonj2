@@ -18,7 +18,7 @@ package org.apache.qpid.proton4j.engine.impl;
 
 import org.apache.qpid.proton4j.amqp.Binary;
 import org.apache.qpid.proton4j.amqp.transport.ErrorCondition;
-import org.apache.qpid.proton4j.engine.Link;
+import org.apache.qpid.proton4j.engine.Endpoint;
 import org.apache.qpid.proton4j.engine.Transaction;
 import org.apache.qpid.proton4j.engine.TransactionController;
 import org.apache.qpid.proton4j.engine.TransactionManager;
@@ -30,9 +30,9 @@ import org.apache.qpid.proton4j.engine.TransactionState;
  *
  * @param <E> The parent type for this {@link Transaction}
  */
-public abstract class ProtonTransaction<E extends Link<?>> implements Transaction<E> {
+public abstract class ProtonTransaction<E extends Endpoint<?>> implements Transaction<E> {
 
-    private TransactionState state;
+    private TransactionState state = TransactionState.IDLE;
     private ErrorCondition condition;
     private Binary txnId;
 
