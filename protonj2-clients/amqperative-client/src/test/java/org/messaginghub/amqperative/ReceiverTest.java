@@ -18,11 +18,18 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.qpid.proton4j.amqp.driver.netty.NettyTestPeer;
+import org.apache.qpid.proton4j.amqp.messaging.Accepted;
+import org.apache.qpid.proton4j.amqp.messaging.AmqpValue;
+import org.apache.qpid.proton4j.amqp.messaging.Section;
 import org.apache.qpid.proton4j.amqp.messaging.Source;
 import org.apache.qpid.proton4j.amqp.transport.AmqpError;
 import org.apache.qpid.proton4j.amqp.transport.ReceiverSettleMode;
 import org.apache.qpid.proton4j.amqp.transport.Role;
 import org.apache.qpid.proton4j.amqp.transport.SenderSettleMode;
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
+import org.apache.qpid.proton4j.codec.CodecFactory;
+import org.apache.qpid.proton4j.codec.Encoder;
 import org.hamcrest.Matcher;
 import org.junit.Test;
 import org.messaginghub.amqperative.impl.ClientException;
@@ -868,7 +875,7 @@ public class ReceiverTest extends AMQPerativeTestCase {
 
             ForkJoinPool.commonPool().submit(() -> {
                 try {
-                    Thread.sleep(15);
+                    Thread.sleep(10);
                 } catch (InterruptedException e) {
                 }
 
@@ -935,5 +942,194 @@ public class ReceiverTest extends AMQPerativeTestCase {
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
+    }
+
+    @Test(timeout = 20_000)
+    public void testReceiveMessageInSplitTransferFrames() throws Exception {
+        try (NettyTestPeer peer = new NettyTestPeer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().withRole(Role.RECEIVER).respond();
+            peer.expectFlow();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            Session session = connection.openSession();
+            final Receiver receiver = session.openReceiver("test-queue");
+            receiver.openFuture().get();
+
+            ProtonBuffer payload = createEncodedMessage(new AmqpValue("Hello World"));
+
+            ProtonBuffer slice1 = payload.slice(0, 2); // Two bytes
+            ProtonBuffer slice2 = payload.slice(2, 2); // Two bytes
+            ProtonBuffer slice3 = payload.slice(4, payload.getReadableBytes() - 4); // Remaining bytes
+
+            peer.remoteTransfer().withHandle(0)
+                                 .withDeliveryId(0)
+                                 .withDeliveryTag(new byte[] { 1 })
+                                 .withMore(true)
+                                 .withMessageFormat(0)
+                                 .withPayload(slice1).now();
+
+            assertNull(receiver.tryReceive());
+
+            peer.remoteTransfer().withHandle(0)
+                                 .withMore(true)
+                                 .withMessageFormat(0)
+                                 .withPayload(slice2).now();
+
+            assertNull(receiver.tryReceive());
+
+            peer.remoteTransfer().withHandle(0)
+                                 .withMore(false)
+                                 .withMessageFormat(0)
+                                 .withPayload(slice3).now();
+
+            peer.expectDisposition().withSettled(true).withState(Accepted.getInstance());
+            peer.expectDetach().respond();
+            peer.expectClose().respond();
+
+            Delivery delivery = receiver.receive();
+            assertNotNull(delivery);
+            Message<?> received = delivery.message();
+            assertNotNull(received);
+            assertTrue(received.body() instanceof String);
+            String value = (String) received.body();
+            assertEquals("Hello World", value);
+
+            delivery.accept();
+            receiver.close();
+            connection.close().get();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test(timeout = 20_000)
+    public void testReceiverHandlesAbortedSplitFrameTransfer() throws Exception {
+        try (NettyTestPeer peer = new NettyTestPeer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().withRole(Role.RECEIVER).respond();
+            peer.expectFlow();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            Session session = connection.openSession();
+            final Receiver receiver = session.openReceiver("test-queue");
+            receiver.openFuture().get();
+
+            ProtonBuffer payload = createEncodedMessage(new AmqpValue("Hello World"));
+
+            peer.remoteTransfer().withHandle(0)
+                                 .withDeliveryId(0)
+                                 .withDeliveryTag(new byte[] { 1 })
+                                 .withMore(true)
+                                 .withMessageFormat(0)
+                                 .withPayload(payload.duplicate()).now();
+
+            assertNull(receiver.tryReceive());
+
+            peer.remoteTransfer().withHandle(0)
+                                 .withMore(false)
+                                 .withAborted(true)
+                                 .withMessageFormat(0)
+                                 .withPayload(payload.duplicate()).now();
+
+            peer.expectDetach().respond();
+            peer.expectClose().respond();
+
+            assertNull(receiver.tryReceive());
+
+            receiver.close();
+            connection.close().get();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test(timeout = 20_000)
+    public void testReceiverAddCreditOnAbortedTransferWhenNeeded() throws Exception {
+        try (NettyTestPeer peer = new NettyTestPeer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().withRole(Role.RECEIVER).respond();
+            peer.expectFlow();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            Session session = connection.openSession();
+            ReceiverOptions options = new ReceiverOptions();
+            options.creditWindow(1);
+            final Receiver receiver = session.openReceiver("test-queue", options);
+            receiver.openFuture().get();
+
+            ProtonBuffer payload = createEncodedMessage(new AmqpValue("Hello World"));
+
+            peer.remoteTransfer().withHandle(0)
+                                 .withDeliveryId(0)
+                                 .withDeliveryTag(new byte[] { 1 })
+                                 .withMore(true)
+                                 .withMessageFormat(0)
+                                 .withPayload(payload.duplicate()).now();
+
+            assertNull(receiver.tryReceive());
+
+            peer.expectFlow();
+            peer.remoteTransfer().withHandle(0)
+                                 .withDeliveryId(1)
+                                 .withMessageFormat(0)
+                                 .withMore(false)
+                                 .withPayload(payload).queue();
+            peer.expectDisposition().withSettled(true).withState(Accepted.getInstance());
+            peer.expectFlow();
+            peer.expectDetach().respond();
+            peer.expectClose().respond();
+
+            // Send final aborted transfer to complete first transfer and allow next to commence.
+            peer.remoteTransfer().withHandle(0)
+                                 .withMore(false)
+                                 .withAborted(true)
+                                 .withMessageFormat(0)
+                                 .withPayload(payload.duplicate()).now();
+
+            Delivery delivery = receiver.receive();
+            assertNotNull(delivery);
+            Message<?> received = delivery.message();
+            assertNotNull(received);
+            assertTrue(received.body() instanceof String);
+            String value = (String) received.body();
+            assertEquals("Hello World", value);
+
+            receiver.close();
+            connection.close().get();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    private ProtonBuffer createEncodedMessage(Section body) {
+        Encoder encoder = CodecFactory.getEncoder();
+        ProtonBuffer buffer = new ProtonByteBufferAllocator().allocate();
+        encoder.writeObject(buffer, encoder.newEncoderState(), body);
+        return buffer;
     }
 }

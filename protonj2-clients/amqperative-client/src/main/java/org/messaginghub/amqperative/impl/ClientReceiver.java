@@ -26,6 +26,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 import java.util.function.Consumer;
 
+import org.apache.qpid.proton4j.amqp.messaging.Released;
 import org.apache.qpid.proton4j.amqp.transport.DeliveryState;
 import org.apache.qpid.proton4j.engine.IncomingDelivery;
 import org.messaginghub.amqperative.Client;
@@ -452,7 +453,18 @@ public class ClientReceiver implements Receiver {
 
     private void handleDeliveryReceived(IncomingDelivery delivery) {
         LOG.debug("Delivery was updated: ", delivery);
-        messageQueue.enqueue(new ClientDelivery(this, delivery));
+
+        if (delivery.getDefaultDeliveryState() != null) {
+            delivery.setDefaultDeliveryState(Released.getInstance());
+        }
+
+        if (delivery.isAborted()) {
+            delivery.settle();
+            replenishCreditIfNeeded();
+        } else if (!delivery.isPartial()) {
+            LOG.trace("{} has incoming Message(s).", this);
+            messageQueue.enqueue(new ClientDelivery(this, delivery));
+        }
     }
 
     private void handleDeliveryRemotelyUpdated(IncomingDelivery delivery) {
