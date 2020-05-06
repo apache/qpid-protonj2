@@ -158,10 +158,7 @@ public class ProtonIncomingDelivery implements IncomingDelivery {
 
         this.locallySettled = settle;
         this.localState = state;
-
-        if (!remotelySettled) {
-            link.disposition(this);
-        }
+        this.link.disposition(this);
 
         return this;
     }

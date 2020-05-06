@@ -805,9 +805,9 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         peer.expectOpen().respond().withContainerId("driver");
         peer.expectBegin().respond();
         peer.remoteAttach().withName("sender")
-                             .withHandle(0)
-                             .withRole(Role.SENDER)
-                             .withInitialDeliveryCount(0).queue();
+                           .withHandle(0)
+                           .withRole(Role.SENDER)
+                           .withInitialDeliveryCount(0).queue();
         peer.expectAttach();
         peer.expectDetach().respond();
 
@@ -1248,8 +1248,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
 
     @Test(timeout = 20_000)
     public void testReceiverThrowsOnAddCreditAfterConnectionClosed() throws Exception {
-                Engine engine = EngineFactory.PROTON.createNonSaslEngine();
-
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
         ProtonTestPeer peer = new ProtonTestPeer(engine);
         engine.outputConsumer(peer);
@@ -1285,8 +1284,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
 
     @Test(timeout = 20_000)
     public void testReceiverThrowsOnAddCreditAfterSessionClosed() throws Exception {
-                Engine engine = EngineFactory.PROTON.createNonSaslEngine();
-
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
         ProtonTestPeer peer = new ProtonTestPeer(engine);
         engine.outputConsumer(peer);
@@ -1322,8 +1320,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
 
     @Test(timeout = 20_000)
     public void testReceiverDispatchesIncomingDelivery() throws Exception {
-                Engine engine = EngineFactory.PROTON.createNonSaslEngine();
-
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
         ProtonTestPeer peer = new ProtonTestPeer(engine);
         engine.outputConsumer(peer);
@@ -2098,6 +2095,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         receiver.addCredit(2);
 
         final AtomicReference<IncomingDelivery> receivedDelivery = new AtomicReference<>();
+        final AtomicReference<IncomingDelivery> abortedDelivery = new AtomicReference<>();
         final AtomicInteger deliveryCounter = new AtomicInteger();
         final AtomicBoolean deliveryUpdated = new AtomicBoolean();
         final byte[] payload = new byte[] { 1 };
@@ -2105,7 +2103,11 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         // Receiver 1 handlers for delivery processing.
         receiver.deliveryReadHandler(delivery -> {
             deliveryCounter.incrementAndGet();
-            receivedDelivery.set(delivery);
+            if (delivery.isAborted()) {
+                abortedDelivery.set(delivery);
+            } else {
+                receivedDelivery.set(delivery);
+            }
         });
         receiver.deliveryStateUpdatedHandler(delivery -> {
             deliveryUpdated.set(true);
@@ -2150,7 +2152,9 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
                              .withMessageFormat(0)
                              .withPayload(payload).now();
 
+        assertNotNull("should have one aborted delivery", abortedDelivery.get());
         assertNotNull("Should have delivery data on receiver", receivedDelivery.get());
+        assertNotSame("Should have a final non-aborted delivery", abortedDelivery.get(), receivedDelivery.get());
         assertEquals("Should have delivery data on receiver", 3, deliveryCounter.get());
         assertFalse("Should not have a delivery updates on receiver", deliveryUpdated.get());
         assertFalse("Should now show that delivery is not aborted", receivedDelivery.get().isAborted());
@@ -2160,6 +2164,82 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         peer.expectFlow().withLinkCredit(10).withDeliveryCount(2);
 
         receiver.addCredit(10);
+
+        peer.expectDetach().respond();
+        peer.expectEnd().respond();
+        peer.expectClose().respond();
+
+        receiver.close();
+        session.close();
+        connection.close();
+
+        // Check post conditions and done.
+        peer.waitForScriptToComplete();
+        assertNull(failure);
+    }
+
+    @Test(timeout = 20_000)
+    public void testAbortedTransferRemovedFromUnsettledListOnceSettledRemoteSettles() {
+        doTestAbortedTransferRemovedFromUnsettledListOnceSettled(true);
+    }
+
+    @Test(timeout = 20_000)
+    public void testAbortedTransferRemovedFromUnsettledListOnceSettledRemoteDoesNotSettle() {
+        doTestAbortedTransferRemovedFromUnsettledListOnceSettled(false);
+    }
+
+    private void doTestAbortedTransferRemovedFromUnsettledListOnceSettled(boolean remoteSettled) {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result);
+        ProtonTestPeer peer = new ProtonTestPeer(engine);
+        engine.outputConsumer(peer);
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond().withContainerId("driver");
+        peer.expectBegin().respond();
+        peer.expectAttach().respond();
+        peer.expectFlow().withLinkCredit(1);
+
+        Connection connection = engine.start();
+        connection.open();
+        Session session = connection.session();
+        session.open();
+
+        Receiver receiver = session.receiver("receiver");
+        receiver.addCredit(1);
+
+        final AtomicReference<IncomingDelivery> abortedDelivery = new AtomicReference<>();
+        final byte[] payload = new byte[] { 1 };
+
+        // Receiver 1 handlers for delivery processing.
+        receiver.deliveryReadHandler(delivery -> {
+            if (delivery.isAborted()) {
+                abortedDelivery.set(delivery);
+            }
+        });
+
+        receiver.open();
+
+        // Send one chunk then abort to check that local side can settle and clear
+        peer.remoteTransfer().withDeliveryId(0)
+                             .withDeliveryTag(new byte[] {1})
+                             .withMore(true)
+                             .withMessageFormat(0)
+                             .withPayload(payload).now();
+        peer.remoteTransfer().withDeliveryId(0)
+                             .withSettled(remoteSettled)
+                             .withMore(false)
+                             .withAborted(true)
+                             .withMessageFormat(0)
+                             .withPayload(payload).now();
+
+        assertNotNull("should have one aborted delivery", abortedDelivery.get());
+
+        assertTrue(receiver.hasUnsettled());
+        assertEquals(1, receiver.unsettled().size());
+        abortedDelivery.get().settle();
+        assertFalse(receiver.hasUnsettled());
+        assertEquals(0, receiver.unsettled().size());
 
         peer.expectDetach().respond();
         peer.expectEnd().respond();
@@ -3212,7 +3292,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
         assertNull(failure);
     }
 
-    @Test // (timeout = 20_000)
+    @Test(timeout = 20_000)
     public void testReceiveComplexEndodedAMQPMessageAndDecode() throws IOException {
         final Symbol SERIALIZED_JAVA_OBJECT_CONTENT_TYPE = Symbol.valueOf("application/x-java-serialized-object");
         final Symbol JMS_MSG_TYPE = Symbol.valueOf("x-opt-jms-msg-type");
