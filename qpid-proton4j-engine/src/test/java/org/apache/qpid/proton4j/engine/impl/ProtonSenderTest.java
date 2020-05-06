@@ -1045,7 +1045,17 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
     }
 
     @Test
-    public void testSenderSignalsDeliveryUpdatedOnSettled() throws Exception {
+    public void testSenderSignalsDeliveryUpdatedOnSettledThenSettleFromLinkAPI() throws Exception {
+        doTestSenderSignalsDeliveryUpdatedOnSettled(true);
+    }
+
+    @Test
+    public void testSenderSignalsDeliveryUpdatedOnSettledThenSettleDelivery() throws Exception {
+        doTestSenderSignalsDeliveryUpdatedOnSettled(false);
+    }
+
+    private void doTestSenderSignalsDeliveryUpdatedOnSettled(boolean settleFromLink) {
+
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
         ProtonTestPeer peer = new ProtonTestPeer(engine);
@@ -1106,10 +1116,16 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         assertTrue("Delivery should have been updated and state settled", deliveryUpdatedAndSettled.get());
         assertEquals(Accepted.getInstance(), updatedDelivery.get().getRemoteState());
         assertTrue(sender.hasUnsettled());
+        assertFalse(sender.unsettled().isEmpty());
 
-        sender.settle(delivery -> true);
+        if (settleFromLink) {
+            sender.settle(delivery -> true);
+        } else {
+            updatedDelivery.get().settle();
+        }
 
         assertFalse(sender.hasUnsettled());
+        assertTrue(sender.unsettled().isEmpty());
 
         sender.close();
 
