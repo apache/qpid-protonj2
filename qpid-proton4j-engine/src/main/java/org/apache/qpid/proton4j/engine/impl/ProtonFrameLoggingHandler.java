@@ -45,14 +45,24 @@ public class ProtonFrameLoggingHandler implements EngineHandler {
     private static final String PN_TRACE_FRM = "PN_TRACE_FRM";
     private static final boolean TRACE_FRM_ENABLED = checkTraceFramesEnabled();
 
+    private boolean traceFrames = TRACE_FRM_ENABLED;
+
     private static final boolean checkTraceFramesEnabled() {
         String value = System.getenv(PN_TRACE_FRM);
         return "true".equalsIgnoreCase(value) || "1".equals(value) || "yes".equalsIgnoreCase(value);
     }
 
+    void setTraceFrames(boolean traceFrames) {
+        this.traceFrames = traceFrames;
+    }
+
+    boolean isTraceFrames() {
+        return traceFrames;
+    }
+
     @Override
     public void handleRead(EngineHandlerContext context, HeaderFrame header) {
-        if (TRACE_FRM_ENABLED) {
+        if (traceFrames) {
             trace(AMQP_IN_PREFIX, header.getBody(), null);
         }
 
@@ -63,7 +73,7 @@ public class ProtonFrameLoggingHandler implements EngineHandler {
 
     @Override
     public void handleRead(EngineHandlerContext context, SaslFrame frame) {
-        if (TRACE_FRM_ENABLED) {
+        if (traceFrames) {
             trace(SASL_IN_PREFIX, frame.getBody(), null);
         }
 
@@ -74,7 +84,7 @@ public class ProtonFrameLoggingHandler implements EngineHandler {
 
     @Override
     public void handleRead(EngineHandlerContext context, ProtocolFrame frame) {
-        if (TRACE_FRM_ENABLED) {
+        if (traceFrames) {
             trace(AMQP_IN_PREFIX, frame.getBody(), frame.getPayload());
         }
 
@@ -87,7 +97,7 @@ public class ProtonFrameLoggingHandler implements EngineHandler {
 
     @Override
     public void handleWrite(EngineHandlerContext context, AMQPHeader header) {
-        if (TRACE_FRM_ENABLED) {
+        if (traceFrames) {
             trace(AMQP_OUT_PREFIX, header, null);
         }
 
@@ -98,7 +108,7 @@ public class ProtonFrameLoggingHandler implements EngineHandler {
 
     @Override
     public void handleWrite(EngineHandlerContext context, Performative performative, int channel, ProtonBuffer payload, Runnable payloadToLarge) {
-        if (TRACE_FRM_ENABLED) {
+        if (traceFrames) {
             trace(AMQP_OUT_PREFIX, performative, payload);
         }
 
@@ -111,7 +121,7 @@ public class ProtonFrameLoggingHandler implements EngineHandler {
 
     @Override
     public void handleWrite(EngineHandlerContext context, SaslPerformative performative) {
-        if (TRACE_FRM_ENABLED) {
+        if (traceFrames) {
             trace(SASL_OUT_PREFIX, performative, null);
         }
 

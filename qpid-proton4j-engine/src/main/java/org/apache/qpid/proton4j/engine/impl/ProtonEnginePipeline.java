@@ -220,6 +220,25 @@ public class ProtonEnginePipeline implements EnginePipeline {
     }
 
     @Override
+    public EngineHandler find(String name) {
+        EngineHandler handler = null;
+
+        if (name != null && !name.isEmpty()) {
+            ProtonEngineHandlerContext current = head.next;
+            while (current != tail) {
+                if (current.name().equals(name)) {
+                    handler = current.handler();
+                    break;
+                }
+
+                current = current.next;
+            }
+        }
+
+        return handler;
+    }
+
+    @Override
     public EngineHandler first() {
         return head.next == tail ? null : head.next.handler();
     }

@@ -103,6 +103,16 @@ public interface EnginePipeline {
     EnginePipeline remove(EngineHandler handler);
 
     /**
+     * Finds and returns first handler that is found in the pipeline that matches the given name.
+     *
+     * @param name
+     *      The name to search for in the pipeline moving from first to last.
+     *
+     * @return the {@link EngineHandler} that matches the given name or null if none in the pipeline.
+     */
+    EngineHandler find(String name);
+
+    /**
      * @return the first {@link EngineHandler} in the pipeline or null if empty.
      */
     EngineHandler first();

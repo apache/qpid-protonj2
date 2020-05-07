@@ -98,6 +98,12 @@ public class ProtonEnginePipelineProxy implements EnginePipeline {
     }
 
     @Override
+    public EngineHandler find(String name) {
+        engine().checkShutdownOrFailed("Cannot access pipeline resource when Engine is shutdown or failed");
+        return pipeline.find(name);
+    }
+
+    @Override
     public EngineHandler first() {
         engine().checkShutdownOrFailed("Cannot access pipeline resource when Engine is shutdown or failed");
         return pipeline.first();

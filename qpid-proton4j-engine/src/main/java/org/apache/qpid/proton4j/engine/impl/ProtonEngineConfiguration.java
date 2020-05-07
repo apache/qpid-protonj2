@@ -19,13 +19,18 @@ package org.apache.qpid.proton4j.engine.impl;
 import org.apache.qpid.proton4j.amqp.UnsignedInteger;
 import org.apache.qpid.proton4j.buffer.ProtonBufferAllocator;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
+import org.apache.qpid.proton4j.common.logging.ProtonLogger;
+import org.apache.qpid.proton4j.common.logging.ProtonLoggerFactory;
 import org.apache.qpid.proton4j.engine.EngineConfiguration;
+import org.apache.qpid.proton4j.engine.EngineHandler;
 import org.apache.qpid.proton4j.engine.EngineSaslDriver.SaslState;
 
 /**
  * Proton engine configuration API
  */
 public class ProtonEngineConfiguration implements EngineConfiguration {
+
+    private static final ProtonLogger LOG = ProtonLoggerFactory.getLogger(ProtonEngineConfiguration.class);
 
     private final ProtonEngine engine;
 
@@ -47,6 +52,31 @@ public class ProtonEngineConfiguration implements EngineConfiguration {
     public ProtonEngineConfiguration setBufferAllocator(ProtonBufferAllocator allocator) {
         this.allocator = allocator;
         return this;
+    }
+
+
+    @Override
+    public EngineConfiguration setTraceFrames(boolean traceFrames) {
+        // If the frame logging handler wasn't added or was removed for less overhead then
+        // the setting will have no effect and isTraceFrames will always return false
+        EngineHandler handler = engine.pipeline().find(ProtonConstants.FRAME_LOGGING_HANDLER);
+        if (handler != null && handler instanceof ProtonFrameLoggingHandler) {
+            ((ProtonFrameLoggingHandler) handler).setTraceFrames(traceFrames);
+        } else {
+            LOG.debug("Engine not configured with a frame logging handler: cannot apply traceFrames={}", traceFrames);
+        }
+
+        return this;
+    }
+
+    @Override
+    public boolean isTraceFrames() {
+        EngineHandler handler = engine.pipeline().find(ProtonConstants.FRAME_LOGGING_HANDLER);
+        if (handler != null && handler instanceof ProtonFrameLoggingHandler) {
+            return ((ProtonFrameLoggingHandler) handler).isTraceFrames();
+        } else {
+            return false;
+        }
     }
 
     //---- proton4j specific APIs

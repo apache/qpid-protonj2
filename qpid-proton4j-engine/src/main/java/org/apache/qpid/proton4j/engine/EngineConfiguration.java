@@ -42,4 +42,22 @@ public interface EngineConfiguration {
      */
     ProtonBufferAllocator getBufferAllocator();
 
+    /**
+     * Enables AMQP frame tracing from engine to the system output.  Depending
+     * on the underlying engine composition frame tracing may not be possible
+     * in which case this method will have no effect and the access method
+     * {@link EngineConfiguration#isTraceFrames()} will return false.
+     *
+     * @param traceFrames
+     *      true to enable engine frame tracing, false to disable it.
+     *
+     * @return this {@link EngineConfiguration} for chaining.
+     */
+    EngineConfiguration setTraceFrames(boolean traceFrames);
+
+    /**
+     * @return true if the engine will emit frames to system output.
+     */
+    boolean isTraceFrames();
+
 }
