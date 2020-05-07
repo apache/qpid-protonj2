@@ -144,7 +144,7 @@ public class ClientReceiver implements Receiver {
             if (delivery != null && options.autoAccept()) {
                 delivery.disposition(org.messaginghub.amqperative.DeliveryState.accepted(), options.autoSettle());
             } else {
-                replenishCreditIfNeeded();
+                asyncReplenishCreditIfNeeded();
             }
 
             return delivery;
@@ -167,28 +167,33 @@ public class ClientReceiver implements Receiver {
         if (delivery != null && options.autoAccept()) {
             delivery.disposition(org.messaginghub.amqperative.DeliveryState.accepted(), options.autoSettle());
         } else {
-            replenishCreditIfNeeded();
+            asyncReplenishCreditIfNeeded();
         }
 
         return delivery;
     }
 
+    private void asyncReplenishCreditIfNeeded() {
+        int creditWindow = options.creditWindow();
+        if (creditWindow > 0) {
+            executor.execute(() -> replenishCreditIfNeeded());
+        }
+    }
+
     private void replenishCreditIfNeeded() {
         int creditWindow = options.creditWindow();
         if (creditWindow > 0) {
-            executor.execute(() -> {
-                int currentCredit = protonReceiver.getCredit();
-                if (currentCredit <= creditWindow * 0.5) {
-                    int potentialPrefetch = currentCredit + messageQueue.size();
+            int currentCredit = protonReceiver.getCredit();
+            if (currentCredit <= creditWindow * 0.5) {
+                int potentialPrefetch = currentCredit + messageQueue.size();
 
-                    if (potentialPrefetch <= creditWindow * 0.7) {
-                        int additionalCredit = creditWindow - potentialPrefetch;
+                if (potentialPrefetch <= creditWindow * 0.7) {
+                    int additionalCredit = creditWindow - potentialPrefetch;
 
-                        LOG.trace("Consumer granting additional credit: {}", additionalCredit);
-                        protonReceiver.addCredit(additionalCredit);
-                    }
+                    LOG.trace("Consumer granting additional credit: {}", additionalCredit);
+                    protonReceiver.addCredit(additionalCredit);
                 }
-            });
+            }
         }
     }
 
@@ -452,7 +457,7 @@ public class ClientReceiver implements Receiver {
     }
 
     private void handleDeliveryReceived(IncomingDelivery delivery) {
-        LOG.debug("Delivery was updated: ", delivery);
+        LOG.trace("Delivery data was received: {}", delivery);
 
         if (delivery.getDefaultDeliveryState() != null) {
             delivery.setDefaultDeliveryState(Released.getInstance());
@@ -468,15 +473,14 @@ public class ClientReceiver implements Receiver {
     }
 
     private void handleDeliveryRemotelyUpdated(IncomingDelivery delivery) {
-        LOG.debug("Delivery was updated: ", delivery);
+        LOG.trace("Delivery was updated: {}", delivery);
         // TODO - event or other reaction
     }
 
     private void handleReceiverCreditUpdated(org.apache.qpid.proton4j.engine.Receiver receiver) {
-        LOG.debug("Receiver reports drained: ", receiver);
+        LOG.trace("Receiver credit update by remote: {}", receiver);
 
         if (drainingFuture != null) {
-            // TODO: What if remote send more credit and not draining any more.
             if (receiver.getCredit() == 0) {
                 drainingFuture.complete(this);
             }
