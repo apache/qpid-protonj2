@@ -19,8 +19,13 @@ package org.messaginghub.amqperative.debug;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.Arrays;
 import java.util.UUID;
 import java.util.Vector;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -30,6 +35,7 @@ import org.apache.activemq.broker.BrokerService;
 import org.apache.activemq.broker.region.policy.PolicyEntry;
 import org.apache.activemq.broker.region.policy.PolicyMap;
 import org.apache.activemq.broker.region.policy.VMPendingQueueMessageStoragePolicy;
+import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -39,6 +45,8 @@ import org.messaginghub.amqperative.Connection;
 import org.messaginghub.amqperative.Message;
 import org.messaginghub.amqperative.Receiver;
 import org.messaginghub.amqperative.Sender;
+import org.messaginghub.amqperative.SenderOptions;
+import org.messaginghub.amqperative.Tracker;
 import org.messaginghub.amqperative.support.AMQPerativeTestSupport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -57,12 +65,12 @@ public class ProducerAndConsumerBench extends AMQPerativeTestSupport  {
     private final int parallelConsumer = 1;
     private final Vector<Throwable> exceptions = new Vector<Throwable>();
 
-    private final long NUM_SENDS = 30000;
+    private final long NUM_SENDS = 300000;
 
     @Override
     @Before
     public void setUp() throws Exception {
-        super.setUp();
+        //super.setUp();
 
         for (int i = 0; i < PAYLOAD_SIZE; ++i) {
             payload[i] = (byte) (i % 255);
@@ -97,7 +105,7 @@ public class ProducerAndConsumerBench extends AMQPerativeTestSupport  {
                 @Override
                 public void run() {
                     try {
-                        publishMessages(sharedSendCount);
+                        publishMessagesInBatches(sharedSendCount);
                     } catch (Throwable e) {
                         exceptions.add(e);
                     }
@@ -113,6 +121,17 @@ public class ProducerAndConsumerBench extends AMQPerativeTestSupport  {
         double duration = System.currentTimeMillis() - start;
         LOG.info("Duration:            " + duration + "ms");
         LOG.info("Rate:                " + (NUM_SENDS * 1000 / duration) + "m/s");
+    }
+
+    @Override
+    public URI getBrokerAmqpConnectionURI() {
+        try {
+            return new URI("amqp://localhost:5672");
+        } catch (URISyntaxException e) {
+            e.printStackTrace();
+        }
+
+        return null;
     }
 
     private void consumeMessages(AtomicLong count) throws Exception {
@@ -148,6 +167,47 @@ public class ProducerAndConsumerBench extends AMQPerativeTestSupport  {
         }
         sender.close();
         connection.close();
+    }
+
+    private void publishMessagesInBatches(AtomicLong count) throws Exception {
+        ClientOptions options = new ClientOptions();
+        options.id(UUID.randomUUID().toString());
+        Client container = Client.create(options);
+        Connection connection = container.connect(getBrokerAmqpConnectionURI().getHost(), getBrokerAmqpConnectionURI().getPort());
+
+        final SenderOptions senderOptions = new SenderOptions();
+        final Sender sender = connection.openSender(getDestinationName(), senderOptions);
+
+        senderOptions.targetOptions().capabilities("queue");
+
+        int sent = 0;
+        final byte[] body = new byte[100];
+
+        Arrays.fill(body, (byte) 120);
+
+        Tracker lastSentTracker = null;
+
+        while (true) {
+            final Message<byte[]> message = Message.create(body);
+            final long stime = System.currentTimeMillis();
+
+            message.setApplicationProperty("SendTime", stime);
+            message.messageId(UnsignedLong.valueOf(sent));
+
+            lastSentTracker = sender.send(message);
+            sent++;
+
+            if (sent == count.get()) {
+                break;
+            }
+        }
+
+        try {
+            lastSentTracker.acknowledgeFuture().get();
+        } catch (InterruptedException | ExecutionException e) {
+            e.printStackTrace();
+            throw new IOException(e);
+        }
     }
 
     @Override
