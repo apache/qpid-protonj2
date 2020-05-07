@@ -58,6 +58,7 @@ public class ConnectionOptions {
     private Map<String, Object> properties;
     private String virtualHost;
     private boolean allowInsecureRedirects = DEFAULT_ALLOW_INSECURE_REDIRECTS;
+    private boolean traceFrames;
 
     public ConnectionOptions() {
     }
@@ -89,6 +90,7 @@ public class ConnectionOptions {
         other.user(user);
         other.password(password);
         other.allowInsecureRedirects(allowInsecureRedirects);
+        other.traceFrames(traceFrames);
 
         if (offeredCapabilities != null) {
             other.offeredCapabilities(Arrays.copyOf(offeredCapabilities, offeredCapabilities.length));
@@ -355,6 +357,27 @@ public class ConnectionOptions {
     public ConnectionOptions allowInsecureRedirects(boolean allowInsecureRedirects) {
         this.allowInsecureRedirects = allowInsecureRedirects;
         return this;
+    }
+
+    /**
+     * Configure if the newly created connection should enabled AMQP frame tracing to the
+     * system output.
+     *
+     * @param traceFrames
+     * 		true if frame tracing on this connection should be enabled.
+     *
+     * @return this options instance.
+     */
+    public ConnectionOptions traceFrames(boolean traceFrames) {
+        this.traceFrames = traceFrames;
+        return this;
+    }
+
+    /**
+     * @return true if the connection is configured to perform frame tracing.
+     */
+    public boolean traceFrames() {
+        return this.traceFrames;
     }
 
     /**

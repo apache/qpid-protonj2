@@ -130,6 +130,13 @@ public class ClientConnection implements Connection {
             engine = EngineFactory.PROTON.createNonSaslEngine();
         }
 
+        if (options.traceFrames()) {
+            engine.configuration().setTraceFrames(true);
+            if (!engine.configuration().isTraceFrames()) {
+                LOG.info("Connection frame tracing was enabled but protocol engine does not support it");
+            }
+        }
+
         ThreadFactory transportThreadFactory = new ClientThreadFactory(
             "ProtonConnection :(" + CONNECTION_SEQUENCE.incrementAndGet()
                           + "):[" + host + ":" + port + "]", true);
