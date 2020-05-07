@@ -1594,12 +1594,7 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
 
         try {
             receivedDelivery.get().disposition(Released.getInstance(), true);
-            fail("Should not be able to set a disposition after the connection was closed");
-        } catch (IllegalStateException ise) {}
-
-        try {
-            receivedDelivery.get().settle();
-            fail("Should not be able to settle after the connection was closed");
+            fail("Should not be able to update a disposition after the connection was closed");
         } catch (IllegalStateException ise) {}
 
         peer.waitForScriptToComplete();

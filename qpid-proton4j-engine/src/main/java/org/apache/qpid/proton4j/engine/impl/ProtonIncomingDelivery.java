@@ -153,7 +153,11 @@ public class ProtonIncomingDelivery implements IncomingDelivery {
     @Override
     public IncomingDelivery disposition(DeliveryState state, boolean settle) {
         if (locallySettled) {
-            throw new IllegalStateException("Cannot update disposition or settle and already settled Delivery");
+            if ((localState != null && !localState.equals(state)) || localState != state) {
+                throw new IllegalStateException("Cannot update disposition on an already settled Delivery");
+            } else {
+                return this;
+            }
         }
 
         this.locallySettled = settle;
