@@ -20,8 +20,6 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.Arrays;
 import java.util.UUID;
 import java.util.Vector;
@@ -70,7 +68,7 @@ public class ProducerAndConsumerBench extends AMQPerativeTestSupport  {
     @Override
     @Before
     public void setUp() throws Exception {
-        //super.setUp();
+        super.setUp();
 
         for (int i = 0; i < PAYLOAD_SIZE; ++i) {
             payload[i] = (byte) (i % 255);
@@ -123,16 +121,17 @@ public class ProducerAndConsumerBench extends AMQPerativeTestSupport  {
         LOG.info("Rate:                " + (NUM_SENDS * 1000 / duration) + "m/s");
     }
 
-    @Override
-    public URI getBrokerAmqpConnectionURI() {
-        try {
-            return new URI("amqp://localhost:5672");
-        } catch (URISyntaxException e) {
-            e.printStackTrace();
-        }
-
-        return null;
-    }
+    // Use this override to connect to a server outside the test
+//    @Override
+//    public URI getBrokerAmqpConnectionURI() {
+//        try {
+//            return new URI("amqp://localhost:5672");
+//        } catch (URISyntaxException e) {
+//            e.printStackTrace();
+//        }
+//
+//        return null;
+//    }
 
     private void consumeMessages(AtomicLong count) throws Exception {
         ClientOptions options = new ClientOptions();
@@ -151,7 +150,8 @@ public class ProducerAndConsumerBench extends AMQPerativeTestSupport  {
         consumer.close();
     }
 
-    private void publishMessages(AtomicLong count) throws Exception {
+    @SuppressWarnings("unused")
+    private void publishMessagesWaitOnEach(AtomicLong count) throws Exception {
         ClientOptions options = new ClientOptions();
         options.id(UUID.randomUUID().toString());
         Client container = Client.create(options);
