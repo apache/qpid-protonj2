@@ -40,6 +40,7 @@ import org.junit.Test;
 import org.messaginghub.amqperative.Client;
 import org.messaginghub.amqperative.ClientOptions;
 import org.messaginghub.amqperative.Connection;
+import org.messaginghub.amqperative.ConnectionOptions;
 import org.messaginghub.amqperative.Message;
 import org.messaginghub.amqperative.Receiver;
 import org.messaginghub.amqperative.Sender;
@@ -63,7 +64,7 @@ public class ProducerAndConsumerBench extends AMQPerativeTestSupport  {
     private final int parallelConsumer = 1;
     private final Vector<Throwable> exceptions = new Vector<Throwable>();
 
-    private final long NUM_SENDS = 300000;
+    private final long NUM_SENDS = 600000;
 
     @Override
     @Before
@@ -105,6 +106,7 @@ public class ProducerAndConsumerBench extends AMQPerativeTestSupport  {
                     try {
                         publishMessagesInBatches(sharedSendCount);
                     } catch (Throwable e) {
+                        System.err.println("Publisher failed during run: " + e.getMessage());
                         exceptions.add(e);
                     }
                 }
@@ -137,7 +139,9 @@ public class ProducerAndConsumerBench extends AMQPerativeTestSupport  {
         ClientOptions options = new ClientOptions();
         options.id(UUID.randomUUID().toString());
         Client container = Client.create(options);
-        Connection connection = container.connect(getBrokerAmqpConnectionURI().getHost(), getBrokerAmqpConnectionURI().getPort());
+        ConnectionOptions connOptions = new ConnectionOptions();
+        connOptions.traceFrames(false);
+        Connection connection = container.connect(getBrokerAmqpConnectionURI().getHost(), getBrokerAmqpConnectionURI().getPort(), connOptions);
         Receiver consumer = connection.openReceiver(getDestinationName());
 
         long v;
@@ -155,7 +159,9 @@ public class ProducerAndConsumerBench extends AMQPerativeTestSupport  {
         ClientOptions options = new ClientOptions();
         options.id(UUID.randomUUID().toString());
         Client container = Client.create(options);
-        Connection connection = container.connect(getBrokerAmqpConnectionURI().getHost(), getBrokerAmqpConnectionURI().getPort());
+        ConnectionOptions connOptions = new ConnectionOptions();
+        connOptions.traceFrames(false);
+        Connection connection = container.connect(getBrokerAmqpConnectionURI().getHost(), getBrokerAmqpConnectionURI().getPort(), connOptions);
         Sender sender = connection.openSender(getDestinationName());
 
         while (count.getAndDecrement() > 0) {
@@ -173,7 +179,9 @@ public class ProducerAndConsumerBench extends AMQPerativeTestSupport  {
         ClientOptions options = new ClientOptions();
         options.id(UUID.randomUUID().toString());
         Client container = Client.create(options);
-        Connection connection = container.connect(getBrokerAmqpConnectionURI().getHost(), getBrokerAmqpConnectionURI().getPort());
+        ConnectionOptions connOptions = new ConnectionOptions();
+        connOptions.traceFrames(false);
+        Connection connection = container.connect(getBrokerAmqpConnectionURI().getHost(), getBrokerAmqpConnectionURI().getPort(), connOptions);
 
         final SenderOptions senderOptions = new SenderOptions();
         final Sender sender = connection.openSender(getDestinationName(), senderOptions);
