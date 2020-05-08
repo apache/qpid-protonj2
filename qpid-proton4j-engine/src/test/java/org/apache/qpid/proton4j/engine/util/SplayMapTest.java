@@ -35,6 +35,8 @@ import java.util.Random;
 import java.util.Set;
 
 import org.apache.qpid.proton4j.amqp.UnsignedInteger;
+import org.apache.qpid.proton4j.common.logging.ProtonLogger;
+import org.apache.qpid.proton4j.common.logging.ProtonLoggerFactory;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -43,12 +45,14 @@ import org.junit.Test;
  */
 public class SplayMapTest {
 
+    protected static final ProtonLogger LOG = ProtonLoggerFactory.getLogger(SplayMapTest.class);
+
     protected long seed;
     protected Random random;
 
     @Before
     public void setUp() {
-        seed = System.currentTimeMillis();
+        seed = System.nanoTime();
         random = new Random();
         random.setSeed(seed);
     }
@@ -960,19 +964,96 @@ public class SplayMapTest {
     public void testRandomProduceAndConsumeWithBacklog() {
         SplayMap<String> map = new SplayMap<>();
 
-        final int INSERTIONS = 8192;
+        final int ITERATIONS = 8192;
         final String DUMMY_STRING = "test";
 
-        for (int i = 0; i < INSERTIONS; ++i) {
-            map.put(UnsignedInteger.valueOf(i), DUMMY_STRING);
+        try {
+            for (int i = 0; i < ITERATIONS; ++i) {
+                map.put(UnsignedInteger.valueOf(i), DUMMY_STRING);
+            }
+
+            for (int i = 0; i < ITERATIONS; ++i) {
+                int p = random.nextInt(ITERATIONS);
+                int c = random.nextInt(ITERATIONS);
+
+                map.put(UnsignedInteger.valueOf(p), DUMMY_STRING);
+                map.remove(UnsignedInteger.valueOf(c));
+            }
+        } catch (Throwable error) {
+            dumpRandomDataSet(ITERATIONS, true);
+            throw error;
+        }
+    }
+
+    @Test
+    public void testRandomPutAndGetIntoEmptyMap() {
+        SplayMap<String> map = new SplayMap<>();
+
+        final int ITERATIONS = 8192;
+        final String DUMMY_STRING = "test";
+
+        try {
+            for (int i = 0; i < ITERATIONS; ++i) {
+                int p = random.nextInt(ITERATIONS);
+                int c = random.nextInt(ITERATIONS);
+
+                map.put(UnsignedInteger.valueOf(p), DUMMY_STRING);
+                map.remove(UnsignedInteger.valueOf(c));
+            }
+        } catch (AssertionError error) {
+            dumpRandomDataSet(ITERATIONS, true);
+            throw error;
+        }
+    }
+
+    @Test
+    public void testPutRandomValueIntoMapThenRemoveInSameOrder() {
+        SplayMap<String> map = new SplayMap<>();
+
+        final int ITERATIONS = 8192;
+
+        try {
+            for (int i = 0; i < ITERATIONS; ++i) {
+                final int index = random.nextInt(ITERATIONS);
+                map.put(index, String.valueOf(index));
+            }
+
+            // Reset to verify insertions
+            random.setSeed(seed);
+
+            for (int i = 0; i < ITERATIONS; ++i) {
+                final int index = random.nextInt(ITERATIONS);
+                assertEquals(String.valueOf(index), map.get(index));
+            }
+
+            // Reset to remove
+            random.setSeed(seed);
+
+            for (int i = 0; i < ITERATIONS; ++i) {
+                final int index = random.nextInt(ITERATIONS);
+                map.remove(index);
+            }
+
+            assertTrue(map.isEmpty());
+        } catch (AssertionError error) {
+            dumpRandomDataSet(ITERATIONS, true);
+            throw error;
+        }
+    }
+
+    private void dumpRandomDataSet(int iterations, boolean bounded) {
+        final int[] dataSet = new int[iterations];
+
+        random.setSeed(seed);
+
+        for (int i = 0; i < iterations; ++i) {
+            if (bounded) {
+                dataSet[i] = random.nextInt(iterations);
+            } else {
+                dataSet[i] = random.nextInt();
+            }
         }
 
-        for (int i = 0; i < INSERTIONS; ++i) {
-            int p = random.nextInt(INSERTIONS);
-            int c = random.nextInt(INSERTIONS);
-
-            map.put(UnsignedInteger.valueOf(p), DUMMY_STRING);
-            map.remove(UnsignedInteger.valueOf(c));
-        }
+        LOG.info("Entries in data set: {}", dataSet);
     }
 }

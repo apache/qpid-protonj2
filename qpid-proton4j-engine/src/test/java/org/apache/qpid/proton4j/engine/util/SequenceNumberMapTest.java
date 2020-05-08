@@ -859,7 +859,7 @@ public class SequenceNumberMapTest {
             assertTrue(map.isEmpty());
             assertEquals(0, map.size());
         } catch (AssertionError error) {
-            dumpRandomDataSet(INSERTIONS);
+            dumpRandomDataSet(INSERTIONS, false);
             throw error;
         }
     }
@@ -888,7 +888,7 @@ public class SequenceNumberMapTest {
             assertTrue(map.isEmpty());
             assertEquals(0, map.size());
         } catch (AssertionError error) {
-            dumpRandomDataSet(INSERTIONS);
+            dumpRandomDataSet(INSERTIONS, false);
             throw error;
         }
     }
@@ -917,7 +917,7 @@ public class SequenceNumberMapTest {
             assertTrue(map.isEmpty());
             assertEquals(0, map.size());
         } catch (AssertionError error) {
-            dumpRandomDataSet(INSERTIONS);
+            dumpRandomDataSet(INSERTIONS, false);
             throw error;
         }
     }
@@ -948,7 +948,7 @@ public class SequenceNumberMapTest {
             assertTrue(map.isEmpty());
             assertEquals(0, map.size());
         } catch (AssertionError error) {
-            dumpRandomDataSet(INSERTIONS);
+            dumpRandomDataSet(INSERTIONS, false);
             throw error;
         }
     }
@@ -973,13 +973,68 @@ public class SequenceNumberMapTest {
         }
     }
 
-    private void dumpRandomDataSet(int iterations) {
+    @Test
+    public void testRandomPutAndGetIntoEmptyMap() {
+        SequenceNumberMap<String> map = new SequenceNumberMap<>();
+
+        final int INSERTIONS = 8192;
+        final String DUMMY_STRING = "test";
+
+        for (int i = 0; i < INSERTIONS; ++i) {
+            int p = random.nextInt(INSERTIONS);
+            int c = random.nextInt(INSERTIONS);
+
+            map.put(UnsignedInteger.valueOf(p), DUMMY_STRING);
+            map.remove(UnsignedInteger.valueOf(c));
+        }
+    }
+
+    @Test
+    public void testPutRandomValueIntoMapThenRemoveInSameOrder() {
+        SequenceNumberMap<String> map = new SequenceNumberMap<>();
+
+        final int ITERATIONS = 8192;
+
+        try {
+            for (int i = 0; i < ITERATIONS; ++i) {
+                final int index = random.nextInt(ITERATIONS);
+                map.put(index, String.valueOf(index));
+            }
+
+            // Reset to verify insertions
+            random.setSeed(seed);
+
+            for (int i = 0; i < ITERATIONS; ++i) {
+                final int index = random.nextInt(ITERATIONS);
+                assertEquals(String.valueOf(index), map.get(index));
+            }
+
+            // Reset to remove
+            random.setSeed(seed);
+
+            for (int i = 0; i < ITERATIONS; ++i) {
+                final int index = random.nextInt(ITERATIONS);
+                map.remove(index);
+            }
+
+            assertTrue(map.isEmpty());
+        } catch (AssertionError error) {
+            dumpRandomDataSet(ITERATIONS, true);
+            throw error;
+        }
+    }
+
+    private void dumpRandomDataSet(int iterations, boolean bounded) {
         final int[] dataSet = new int[iterations];
 
         random.setSeed(seed);
 
         for (int i = 0; i < iterations; ++i) {
-            dataSet[i] = random.nextInt();
+            if (bounded) {
+                dataSet[i] = random.nextInt(iterations);
+            } else {
+                dataSet[i] = random.nextInt();
+            }
         }
 
         LOG.info("Entries in data set: {}", dataSet);
