@@ -38,6 +38,12 @@ import org.apache.qpid.proton4j.amqp.UnsignedInteger;
  * Map class that is implemented using a Splay Tree and uses primitive integers as the keys
  * for the specified value type.
  *
+ * The splay tree is a specialized form of a binary search tree that is self balancing and
+ * provides faster access in general to frequently used items.  The splay tree serves well
+ * as an LRU cache of sorts where 80 percent of the accessed elements comes from 20 percent
+ * of the overall load in the {@link Map}.  The best case access time is generally O(long n)
+ * however it can be Theta(n) in a very worst case scenario.
+ *
  * @param <E> The type stored in the map entries
  */
 public final class SplayMap<E> implements NavigableMap<UnsignedInteger, E> {
@@ -60,6 +66,20 @@ public final class SplayMap<E> implements NavigableMap<UnsignedInteger, E> {
         return size == 0;
     }
 
+    /**
+     * Gets the value of the element stored in the {@link Map} with the key (treated as an
+     * unsigned integer for comparison.
+     *
+     * As a side effect of calling this method the tree that comprises the Map can be modified
+     * to bring up the found key or the last accessed key if the key given is not in the {@link Map}.
+     * For entries at the root of the tree that match the given search key the method returns
+     * immediately without modifying the {@link Map}.
+     *
+     * @param key
+     *      the integer key value to search for in the {@link SplayMap}.
+     *
+     * @return the value stored for the given key if found or null if not in the {@link Map}.
+     */
     public E get(int key) {
         if (root == null) {
             return null;
@@ -290,7 +310,19 @@ public final class SplayMap<E> implements NavigableMap<UnsignedInteger, E> {
 
     //----- Internal Implementation
 
-    private SplayedEntry<E> rightRotate(SplayedEntry<E> node) {
+    /*
+     * Rotations of tree elements form the basis of search and balance operations
+     * within the tree during put, get and remove type operations.
+     *
+     *       y                                     x
+     *      / \     Zig (Right Rotation)          /  \
+     *     x   T3   – - – - – - – - - ->         T1   y
+     *    / \       < - - - - - - - - -              / \
+     *   T1  T2     Zag (Left Rotation)            T2   T3
+     *
+     */
+
+    private final SplayedEntry<E> rightRotate(SplayedEntry<E> node) {
         SplayedEntry<E> rotated = node.left;
         node.left = rotated.right;
         rotated.right = node;
@@ -305,7 +337,7 @@ public final class SplayMap<E> implements NavigableMap<UnsignedInteger, E> {
         return rotated;
     }
 
-    private SplayedEntry<E> leftRotate(SplayedEntry<E> node) {
+    private final SplayedEntry<E> leftRotate(SplayedEntry<E> node) {
         SplayedEntry<E> rotated = node.right;
         node.right = rotated.left;
         rotated.left = node;
@@ -323,7 +355,8 @@ public final class SplayMap<E> implements NavigableMap<UnsignedInteger, E> {
     /*
      * The requested key if present is brought to the root of the tree.  If it is not
      * present then the last accessed element (nearest match) will be brought to the root
-     * as it is likely it will be the next accessed.
+     * as it is likely it will be the next accessed or one of the neighboring nodes which
+     * reduces the search time for that cluster.
      */
     private final SplayedEntry<E> splay(SplayedEntry<E> root, int key) {
         if (root == null || root.key == key) {
