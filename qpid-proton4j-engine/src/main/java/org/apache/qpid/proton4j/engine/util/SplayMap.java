@@ -363,50 +363,78 @@ public final class SplayMap<E> implements NavigableMap<UnsignedInteger, E> {
             return root;
         }
 
-        if (compare(root.key, key) > 0) {
-            if (root.left == null) {
-                return root;
-            }
+        SplayedEntry<E> node = new SplayedEntry<>(0, null);
+        SplayedEntry<E> leftTree = node;
+        SplayedEntry<E> rightTree = node;
 
-            // The key is in the left subtree if present
-
-            final int comparison = compare(root.left.key, key);
-
-            if (comparison > 0) {
-                root.left.left = splay(root.left.left, key);
-
-                root = rightRotate(root);
-            } else if (comparison < 0) {
-                root.left.right = splay(root.left.right, key);
-
-                if (root.left.right != null) {
-                    root.left = leftRotate(root.left);
+        while (true) {
+            if (compare(key, root.key) < 0) {
+                // Entry must be to the left of the current node so we bring that up
+                // and then work from there to see if we can find the key
+                if (root.left != null && compare(key, root.left.key) < 0) {
+                    root = rightRotate(root);
                 }
-            }
 
-            return root.left == null ? root : rightRotate(root);
-        } else {
-            if (root.right == null) {
-                return root;
-            }
-
-            // The key is in the right subtree if present
-
-            final int comparison = compare(root.right.key, key);
-
-            if (comparison > 0) {
-                root.right.left = splay(root.right.left, key);
-
-                if (root.right.left != null) {
-                    root.right = rightRotate(root.right);
+                // Is there nowhere else to go, if so we are done.
+                if (root.left == null) {
+                    break;
                 }
-            } else if (comparison < 0) {
-                root.right.right = splay(root.right.right, key);
-                root = leftRotate(root);
-            }
 
-            return root.right == null ? root : leftRotate(root);
+                // Haven't found it yet but we now know the current element is greater
+                // than the element we are looking for so it goes to the right tree.
+                rightTree.left = root;
+                rightTree.left.parent = rightTree;
+                rightTree = root;
+                root = root.left;
+                root.parent = null;
+            } else if(compare(key, root.key) > 0) {
+                // Entry must be to the right of the current node so we bring that up
+                // and then work from there to see if we can find the key
+                if (root.right != null && compare(key, root.right.key) > 0) {
+                    root = leftRotate(root);
+                }
+
+                // Is there nowhere else to go, if so we are done.
+                if (root.right == null) {
+                    break;
+                }
+
+                // Haven't found it yet but we now know the current element is less
+                // than the element we are looking for so it goes to the left tree.
+                leftTree.right = root;
+                leftTree.right.parent = leftTree;
+                leftTree = root;
+                root = root.right;
+                root.parent = null;
+            } else {
+                break; // Found it
+            }
         }
+
+        // Reassemble the tree from the left, right and middle the assembled nodes in the
+        // left and right should have their last element either nulled out or linked to the
+        // remaining items middle tree
+        leftTree.right = root.left;
+        if (leftTree.right != null) {
+            leftTree.right.parent = leftTree;
+        }
+        rightTree.left = root.right;
+        if (rightTree.left != null) {
+            rightTree.left.parent = rightTree;
+        }
+
+        // The found or last accessed element is now rooted to the splayed
+        // left and right trees and returned as the new tree.
+        root.left = node.right;
+        if (root.left != null) {
+            root.left.parent = root;
+        }
+        root.right = node.left;
+        if (root.right != null) {
+            root.right.parent = root;
+        }
+
+        return root;
     }
 
     private void delete(SplayedEntry<E> node) {
