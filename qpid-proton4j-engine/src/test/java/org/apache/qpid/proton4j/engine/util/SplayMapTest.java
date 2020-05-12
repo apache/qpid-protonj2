@@ -1054,6 +1054,7 @@ public class SplayMapTest {
             }
         }
 
+        LOG.info("Random seed was: {}" , seed);
         LOG.info("Entries in data set: {}", dataSet);
     }
 }
