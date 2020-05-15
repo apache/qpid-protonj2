@@ -363,9 +363,10 @@ public final class SplayMap<E> implements NavigableMap<UnsignedInteger, E> {
             return root;
         }
 
-        SplayedEntry<E> node = new SplayedEntry<>(0, null);
-        SplayedEntry<E> leftTree = node;
-        SplayedEntry<E> rightTree = node;
+        SplayedEntry<E> lessThanKeyRoot = null;
+        SplayedEntry<E> lessThanKeyNode = null;
+        SplayedEntry<E> greaterThanKeyRoot = null;
+        SplayedEntry<E> greaterThanKeyNode = null;
 
         while (true) {
             if (compare(key, root.key) < 0) {
@@ -382,12 +383,17 @@ public final class SplayMap<E> implements NavigableMap<UnsignedInteger, E> {
 
                 // Haven't found it yet but we now know the current element is greater
                 // than the element we are looking for so it goes to the right tree.
-                rightTree.left = root;
-                rightTree.left.parent = rightTree;
-                rightTree = root;
+                if (greaterThanKeyRoot == null) {
+                    greaterThanKeyRoot = greaterThanKeyNode = root;
+                } else {
+                    greaterThanKeyNode.left = root;
+                    greaterThanKeyNode.left.parent = greaterThanKeyNode;
+                    greaterThanKeyNode = root;
+                }
+
                 root = root.left;
                 root.parent = null;
-            } else if(compare(key, root.key) > 0) {
+            } else if (compare(key, root.key) > 0) {
                 // Entry must be to the right of the current node so we bring that up
                 // and then work from there to see if we can find the key
                 if (root.right != null && compare(key, root.right.key) > 0) {
@@ -401,9 +407,14 @@ public final class SplayMap<E> implements NavigableMap<UnsignedInteger, E> {
 
                 // Haven't found it yet but we now know the current element is less
                 // than the element we are looking for so it goes to the left tree.
-                leftTree.right = root;
-                leftTree.right.parent = leftTree;
-                leftTree = root;
+                if (lessThanKeyRoot == null) {
+                    lessThanKeyRoot = lessThanKeyNode = root;
+                } else {
+                    lessThanKeyNode.right = root;
+                    lessThanKeyNode.right.parent = lessThanKeyNode;
+                    lessThanKeyNode = root;
+                }
+
                 root = root.right;
                 root.parent = null;
             } else {
@@ -414,22 +425,31 @@ public final class SplayMap<E> implements NavigableMap<UnsignedInteger, E> {
         // Reassemble the tree from the left, right and middle the assembled nodes in the
         // left and right should have their last element either nulled out or linked to the
         // remaining items middle tree
-        leftTree.right = root.left;
-        if (leftTree.right != null) {
-            leftTree.right.parent = leftTree;
+        if (lessThanKeyRoot == null) {
+            lessThanKeyRoot = root.left;
+        } else {
+            lessThanKeyNode.right = root.left;
+            if (lessThanKeyNode.right != null) {
+                lessThanKeyNode.right.parent = lessThanKeyNode;
+            }
         }
-        rightTree.left = root.right;
-        if (rightTree.left != null) {
-            rightTree.left.parent = rightTree;
+
+        if (greaterThanKeyRoot == null) {
+            greaterThanKeyRoot = root.right;
+        } else {
+            greaterThanKeyNode.left = root.right;
+            if (greaterThanKeyNode.left != null) {
+                greaterThanKeyNode.left.parent = greaterThanKeyNode;
+            }
         }
 
         // The found or last accessed element is now rooted to the splayed
         // left and right trees and returned as the new tree.
-        root.left = node.right;
+        root.left = lessThanKeyRoot;
         if (root.left != null) {
             root.left.parent = root;
         }
-        root.right = node.left;
+        root.right = greaterThanKeyRoot;
         if (root.right != null) {
             root.right.parent = root;
         }
