@@ -52,6 +52,8 @@ public final class SplayMap<E> implements NavigableMap<UnsignedInteger, E> {
 
     private int size;
 
+    private RingQueue<SplayedEntry<E>> entryPool = new RingQueue<>(64);
+
     private SplayedEntry<E> root;
 
     public int modCount;
@@ -108,7 +110,8 @@ public final class SplayMap<E> implements NavigableMap<UnsignedInteger, E> {
                 root.value = value;
                 size--;
             } else {
-                final SplayedEntry<E> node = new SplayedEntry<>(key, value);
+                final SplayedEntry<E> node = entryPool.poll(SplayMap::createEmtry).initialize(key, value);
+
                 if (compare(key, root.key) < 0) {
                     shiftRootRightOf(node);
                 } else {
@@ -480,6 +483,10 @@ public final class SplayMap<E> implements NavigableMap<UnsignedInteger, E> {
             root = replacement;
         }
 
+        // Clear node before moving to cache
+        node.left = node.right = node.parent = null;
+        entryPool.offer(node);
+
         size--;
         modCount++;
     }
@@ -554,6 +561,10 @@ public final class SplayMap<E> implements NavigableMap<UnsignedInteger, E> {
 
     private static int compare(int lhs, int rhs) {
         return Integer.compareUnsigned(lhs, rhs);
+    }
+
+    private static <E> SplayedEntry<E> createEmtry() {
+        return new SplayedEntry<>();
     }
 
     //----- Map Iterator implementation for EntrySet, KeySet and Values collections
@@ -781,9 +792,17 @@ public final class SplayMap<E> implements NavigableMap<UnsignedInteger, E> {
         int key;
         E value;
 
+        public SplayedEntry() {
+        }
+
         public SplayedEntry(int key, E value) {
+            initialize(key, value);
+        }
+
+        public SplayedEntry<E> initialize(int key, E value) {
             this.key = key;
             this.value = value;
+            return this;
         }
 
         public int getIntKey() {

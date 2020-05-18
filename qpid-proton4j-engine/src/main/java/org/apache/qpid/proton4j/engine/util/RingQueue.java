@@ -24,6 +24,7 @@ import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Queue;
+import java.util.function.Supplier;
 
 /**
  * Simple Ring Queue implementation that has an enforced max size value.
@@ -78,6 +79,14 @@ public class RingQueue<E> extends AbstractQueue<E> {
         }
 
         return result;
+    }
+
+    public E poll(Supplier<E> createOnEmpty) {
+        if (isEmpty()) {
+            return createOnEmpty.get();
+        } else {
+            return poll();
+        }
     }
 
     @SuppressWarnings("unchecked")
