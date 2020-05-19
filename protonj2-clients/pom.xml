@@ -45,7 +45,7 @@
   <properties>
     <proton4j-version>0.1.0-SNAPSHOT</proton4j-version>
     <slf4j-version>1.7.30</slf4j-version>
-    <netty-version>4.1.49.Final</netty-version>
+    <netty-version>4.1.50.Final</netty-version>
     <netty-tcnative-version>2.0.30.Final</netty-tcnative-version>
 
     <!--  Test Dependencies -->
@@ -62,13 +62,13 @@
 
     <apache-rat-version>0.13</apache-rat-version>
     <maven-gpg-plugin-version>1.6</maven-gpg-plugin-version>
-    <maven-surefire-plugin-version>2.22.0</maven-surefire-plugin-version>
+    <maven-surefire-plugin-version>2.22.2</maven-surefire-plugin-version>
     <maven-release-plugin-version>2.5.3</maven-release-plugin-version>
     <nexus-staging-maven-plugin-version>1.6.8</nexus-staging-maven-plugin-version>
     <maven-bundle-plugin-version>4.2.1</maven-bundle-plugin-version>
     <maven-compiler-plugin-version>3.8.1</maven-compiler-plugin-version>
-    <maven-source-plugin-version>3.1.0</maven-source-plugin-version>
-    <maven-javadoc-plugin-version>3.1.1</maven-javadoc-plugin-version>
+    <maven-source-plugin-version>3.2.1</maven-source-plugin-version>
+    <maven-javadoc-plugin-version>3.2.0</maven-javadoc-plugin-version>
     <maven-deploy-plugin-version>2.8.2</maven-deploy-plugin-version>
     <findbugs-maven-plugin-version>3.0.2</findbugs-maven-plugin-version>
     <jacoco-plugin-version>0.8.5</jacoco-plugin-version>
