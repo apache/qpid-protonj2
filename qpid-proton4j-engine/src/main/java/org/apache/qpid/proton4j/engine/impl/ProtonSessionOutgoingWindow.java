@@ -223,7 +223,8 @@ public class ProtonSessionOutgoingWindow {
     }
 
     void processDisposition(ProtonSender sender, ProtonOutgoingDelivery delivery) {
-        if (delivery.isSettled()) {
+        // Would only be tracked if not already remotely settled.
+        if (delivery.isSettled() && !delivery.isRemotelySettled()) {
             // TODO - Casting is ugly but our ID values are longs
             unsettled.remove((int) delivery.getDeliveryId());
         }
