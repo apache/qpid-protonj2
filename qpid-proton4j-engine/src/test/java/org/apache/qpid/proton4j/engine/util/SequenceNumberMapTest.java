@@ -176,6 +176,23 @@ public class SequenceNumberMapTest {
     }
 
     @Test
+    public void testInsertAndRemove() {
+        SequenceNumberMap<String> map = new SequenceNumberMap<>();
+
+        map.put(0, "zero");
+        map.put(1, "one");
+        map.put(2, "two");
+
+        assertEquals(3, map.size());
+
+        assertEquals("zero", map.remove(0));
+        assertEquals("one", map.remove(1));
+        assertEquals("two", map.remove(2));
+
+        assertEquals(0, map.size());
+    }
+
+    @Test
     public void testGetWhenEmpty() {
         SequenceNumberMap<String> map = new SequenceNumberMap<>();
 

@@ -159,7 +159,28 @@ public class SplayMapTest {
         map.put(2, "foo");
         assertEquals("foo", map.put(2, "two"));
 
+        assertEquals("zero", map.get(0));
+        assertEquals("one", map.get(1));
+        assertEquals("two", map.get(2));
+
         assertEquals(3, map.size());
+    }
+
+    @Test
+    public void testInsertAndRemove() {
+        SplayMap<String> map = new SplayMap<>();
+
+        map.put(0, "zero");
+        map.put(1, "one");
+        map.put(2, "two");
+
+        assertEquals(3, map.size());
+
+        assertEquals("zero", map.remove(0));
+        assertEquals("one", map.remove(1));
+        assertEquals("two", map.remove(2));
+
+        assertEquals(0, map.size());
     }
 
     @Test
