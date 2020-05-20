@@ -320,6 +320,32 @@ public class SequenceNumberMapTest {
     }
 
     @Test
+    public void testRemoveIsIdempotent() {
+        SequenceNumberMap<String> map = new SequenceNumberMap<>();
+
+        map.put(0, "zero");
+        map.put(1, "one");
+        map.put(2, "two");
+
+        assertEquals(3, map.size());
+
+        assertEquals("zero", map.remove(0));
+        assertEquals(null, map.remove(0));
+
+        assertEquals(2, map.size());
+
+        assertEquals("one", map.remove(1));
+        assertEquals(null, map.remove(1));
+
+        assertEquals(1, map.size());
+
+        assertEquals("two", map.remove(2));
+        assertEquals(null, map.remove(2));
+
+        assertEquals(0, map.size());
+    }
+
+    @Test
     public void testRemoveValueNotInMap() {
         SequenceNumberMap<String> map = new SequenceNumberMap<>();
 
