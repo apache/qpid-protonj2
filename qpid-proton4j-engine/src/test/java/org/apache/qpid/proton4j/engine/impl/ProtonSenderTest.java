@@ -2574,49 +2574,59 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
         ProtonTestPeer peer = new ProtonTestPeer(engine);
         engine.outputConsumer(peer);
 
-        final byte [] payloadBuffer = new byte[] {0, 1, 2, 3, 4};
+        ProtonBuffer payload = ProtonByteBufferAllocator.DEFAULT.wrap(new byte[] {0, 1, 2, 3, 4});
 
         peer.expectAMQPHeader().respondWithAMQPHeader();
-        peer.expectOpen().respond().withContainerId("driver");
+        peer.expectOpen().respond();
         peer.expectBegin().respond();
         peer.expectAttach().withRole(Role.SENDER).respond();
-        peer.remoteFlow().withDeliveryCount(0)
-                         .withLinkCredit(10)
-                         .withIncomingWindow(1024)
-                         .withOutgoingWindow(10)
-                         .withNextIncomingId(0)
-                         .withNextOutgoingId(1).queue();
-        peer.expectTransfer().withHandle(0)
-                             .withSettled(false)
-                             .withState((DeliveryState) null)
-                             .withDeliveryId(0)
-                             .withDeliveryTag(new byte[] {0})
-                             .withPayload(payloadBuffer);
-        peer.expectDetach().withHandle(0).respond();
+        peer.remoteFlow().withLinkCredit(10).queue();
 
-        Connection connection = engine.start();
-
-        connection.open();
-        Session session = connection.session();
-        session.open();
-
-        ProtonBuffer payload = ProtonByteBufferAllocator.DEFAULT.wrap(payloadBuffer);
-
+        Connection connection = engine.start().open();
+        Session session = connection.session().open();
         Sender sender = session.sender("sender-1");
 
-        assertFalse(sender.isSendable());
-
         sender.setDeliveryTagGenerator(ProtonDeliveryTagGenerator.BUILTIN.SEQUENTIAL.createGenerator());
-        sender.creditStateUpdateHandler(handler -> {
-            handler.next().writeBytes(payload);
+        sender.deliveryStateUpdatedHandler((delivery) -> {
+            delivery.settle();
         });
 
         sender.open();
+
+        peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        peer.expectTransfer().withPayload(notNullValue(ProtonBuffer.class))
+                             .withDeliveryTag(new byte[] {0}).respond().withSettled(true).withState(Accepted.getInstance());
+        peer.expectTransfer().withPayload(notNullValue(ProtonBuffer.class))
+                             .withDeliveryTag(new byte[] {1}).respond().withSettled(true).withState(Accepted.getInstance());
+        peer.expectTransfer().withPayload(notNullValue(ProtonBuffer.class))
+                             .withDeliveryTag(new byte[] {2}).respond().withSettled(true).withState(Accepted.getInstance());
+
+        OutgoingDelivery delivery1 = sender.next();
+        delivery1.writeBytes(payload.duplicate());
+        OutgoingDelivery delivery2 = sender.next();
+        delivery2.writeBytes(payload.duplicate());
+        OutgoingDelivery delivery3 = sender.next();
+        delivery3.writeBytes(payload.duplicate());
+
+        peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+
+        assertNotNull(delivery1);
+        assertTrue(delivery1.isSettled());
+        assertTrue(delivery1.isRemotelySettled());
+        assertNotNull(delivery2);
+        assertTrue(delivery2.isSettled());
+        assertTrue(delivery2.isRemotelySettled());
+        assertNotNull(delivery3);
+        assertTrue(delivery3.isSettled());
+        assertTrue(delivery3.isRemotelySettled());
+
+        peer.expectDetach().respond();
+        peer.expectClose().respond();
+
         sender.close();
+        connection.close();
 
-        peer.waitForScriptToComplete();
-
-        assertNull(failure);
+        peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
     }
 
     @Test(timeout = 20000)
@@ -2765,6 +2775,89 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
 
         // Should not send a flow as the send fulfilled the requested drain amount.
         sender.drained();
+
+        sender.close();
+        connection.close();
+
+        peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+    }
+
+    @Test
+    public void testSenderHandlesDelayedDispositionsForSentTransfers() throws Exception {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result);
+        ProtonTestPeer peer = new ProtonTestPeer(engine);
+        engine.outputConsumer(peer);
+
+        ProtonBuffer payload = ProtonByteBufferAllocator.DEFAULT.wrap(new byte[] {0, 1, 2, 3, 4});
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond();
+        peer.expectBegin().respond();
+        peer.expectAttach().withRole(Role.SENDER).respond();
+        peer.remoteFlow().withLinkCredit(10).queue();
+
+        Connection connection = engine.start().open();
+        Session session = connection.session().open();
+        Sender sender = session.sender("sender-1");
+
+        sender.setDeliveryTagGenerator(ProtonDeliveryTagGenerator.BUILTIN.SEQUENTIAL.createGenerator());
+        sender.deliveryStateUpdatedHandler((delivery) -> {
+            delivery.settle();
+        });
+
+        sender.open();
+
+        peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        peer.expectTransfer().withPayload(notNullValue(ProtonBuffer.class))
+                             .withDeliveryTag(new byte[] {0});
+        peer.expectTransfer().withPayload(notNullValue(ProtonBuffer.class))
+                             .withDeliveryTag(new byte[] {1});
+        peer.expectTransfer().withPayload(notNullValue(ProtonBuffer.class))
+                             .withDeliveryTag(new byte[] {2});
+
+        OutgoingDelivery delivery1 = sender.next();
+        delivery1.writeBytes(payload.duplicate());
+        OutgoingDelivery delivery2 = sender.next();
+        delivery2.writeBytes(payload.duplicate());
+        OutgoingDelivery delivery3 = sender.next();
+        delivery3.writeBytes(payload.duplicate());
+
+        peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+
+        assertNotNull(delivery1);
+        assertNotNull(delivery2);
+        assertNotNull(delivery3);
+
+        peer.remoteDisposition().withRole(Role.RECEIVER).withFirst(0).withSettled(true).withState(Accepted.getInstance()).now();
+
+        assertTrue(delivery1.isSettled());
+        assertTrue(delivery1.isRemotelySettled());
+        assertFalse(delivery2.isSettled());
+        assertFalse(delivery2.isRemotelySettled());
+        assertFalse(delivery3.isSettled());
+        assertFalse(delivery3.isRemotelySettled());
+
+        peer.remoteDisposition().withRole(Role.RECEIVER).withFirst(1).withSettled(true).withState(Accepted.getInstance()).now();
+
+        assertTrue(delivery1.isSettled());
+        assertTrue(delivery1.isRemotelySettled());
+        assertTrue(delivery2.isSettled());
+        assertTrue(delivery2.isRemotelySettled());
+        assertFalse(delivery3.isSettled());
+        assertFalse(delivery3.isRemotelySettled());
+
+        peer.remoteDisposition().withRole(Role.RECEIVER).withFirst(2).withSettled(true).withState(Accepted.getInstance()).now();
+
+        assertTrue(delivery1.isSettled());
+        assertTrue(delivery1.isRemotelySettled());
+        assertTrue(delivery2.isSettled());
+        assertTrue(delivery2.isRemotelySettled());
+        assertTrue(delivery3.isSettled());
+        assertTrue(delivery3.isRemotelySettled());
+
+        peer.expectDetach().respond();
+        peer.expectClose().respond();
 
         sender.close();
         connection.close();

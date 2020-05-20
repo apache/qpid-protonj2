@@ -163,12 +163,10 @@ public class ProtonSessionIncomingWindow {
             //        is navigable then we can use a sub-map to limit the range to the first
             //        and last elements and then simply walk next until the end without checking
             //        each index between for its presence.
-            ProtonIncomingDelivery delivery = unsettled.get((int) index);
-            if (delivery != null) {
-                if (disposition.getSettled()) {
-                    unsettled.remove((int) index);
-                }
+            ProtonIncomingDelivery delivery = disposition.getSettled() ?
+                unsettled.remove((int) index) : unsettled.get((int) index);
 
+            if (delivery != null) {
                 delivery.getLink().remoteDisposition(disposition, delivery);
             }
         } while (++index <= last);

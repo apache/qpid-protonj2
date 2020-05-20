@@ -152,15 +152,13 @@ public class ProtonSessionOutgoingWindow {
             //        and last elements and then simply walk next until the end without checking
             //        each index between for its presence.
             // TODO - The casting required due to long to integer indexing is messy
-            ProtonOutgoingDelivery delivery = unsettled.get((int) index);
-            if (delivery != null) {
-                if (disposition.getSettled()) {
-                    unsettled.remove((int) index);
-                }
+            ProtonOutgoingDelivery delivery = disposition.getSettled() ?
+                unsettled.remove((int) index) : unsettled.get((int) index);
 
+            if (delivery != null) {
                 delivery.getLink().remoteDisposition(disposition, delivery);
             }
-        } while (index++ <= last);
+        } while (++index <= last);
 
         return disposition;
     }
