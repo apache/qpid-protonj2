@@ -30,6 +30,7 @@ import org.apache.qpid.proton4j.amqp.driver.actions.EmptyFrameInjectAction;
 import org.apache.qpid.proton4j.amqp.driver.actions.EndInjectAction;
 import org.apache.qpid.proton4j.amqp.driver.actions.FlowInjectAction;
 import org.apache.qpid.proton4j.amqp.driver.actions.OpenInjectAction;
+import org.apache.qpid.proton4j.amqp.driver.actions.RawBytesInjectAction;
 import org.apache.qpid.proton4j.amqp.driver.actions.SaslChallengeInjectAction;
 import org.apache.qpid.proton4j.amqp.driver.actions.SaslInitInjectAction;
 import org.apache.qpid.proton4j.amqp.driver.actions.SaslMechanismsInjectAction;
@@ -222,6 +223,10 @@ public abstract class ScriptWriter {
 
     public EmptyFrameInjectAction remoteEmptyFrame() {
         return new EmptyFrameInjectAction(getDriver());
+    }
+
+    public RawBytesInjectAction remoteBytes() {
+        return new RawBytesInjectAction(getDriver());
     }
 
     //----- Remote SASL operations that can be scripted during tests
