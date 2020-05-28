@@ -42,77 +42,77 @@ public interface Encoder {
 
     EncoderState newEncoderState();
 
-    void writeNull(ProtonBuffer buffer, EncoderState state);
+    void writeNull(ProtonBuffer buffer, EncoderState state) throws EncodeException;
 
-    void writeBoolean(ProtonBuffer buffer, EncoderState state, boolean value);
+    void writeBoolean(ProtonBuffer buffer, EncoderState state, boolean value) throws EncodeException;
 
-    void writeBoolean(ProtonBuffer buffer, EncoderState state, Boolean value);
+    void writeBoolean(ProtonBuffer buffer, EncoderState state, Boolean value) throws EncodeException;
 
-    void writeUnsignedByte(ProtonBuffer buffer, EncoderState state, UnsignedByte value);
+    void writeUnsignedByte(ProtonBuffer buffer, EncoderState state, UnsignedByte value) throws EncodeException;
 
-    void writeUnsignedByte(ProtonBuffer buffer, EncoderState state, byte value);
+    void writeUnsignedByte(ProtonBuffer buffer, EncoderState state, byte value) throws EncodeException;
 
-    void writeUnsignedShort(ProtonBuffer buffer, EncoderState state, UnsignedShort value);
+    void writeUnsignedShort(ProtonBuffer buffer, EncoderState state, UnsignedShort value) throws EncodeException;
 
-    void writeUnsignedShort(ProtonBuffer buffer, EncoderState state, short value);
+    void writeUnsignedShort(ProtonBuffer buffer, EncoderState state, short value) throws EncodeException;
 
-    void writeUnsignedShort(ProtonBuffer buffer, EncoderState state, int value);
+    void writeUnsignedShort(ProtonBuffer buffer, EncoderState state, int value) throws EncodeException;
 
-    void writeUnsignedInteger(ProtonBuffer buffer, EncoderState state, UnsignedInteger value);
+    void writeUnsignedInteger(ProtonBuffer buffer, EncoderState state, UnsignedInteger value) throws EncodeException;
 
-    void writeUnsignedInteger(ProtonBuffer buffer, EncoderState state, byte value);
+    void writeUnsignedInteger(ProtonBuffer buffer, EncoderState state, byte value) throws EncodeException;
 
-    void writeUnsignedInteger(ProtonBuffer buffer, EncoderState state, int value);
+    void writeUnsignedInteger(ProtonBuffer buffer, EncoderState state, int value) throws EncodeException;
 
-    void writeUnsignedInteger(ProtonBuffer buffer, EncoderState state, long value);
+    void writeUnsignedInteger(ProtonBuffer buffer, EncoderState state, long value) throws EncodeException;
 
-    void writeUnsignedLong(ProtonBuffer buffer, EncoderState state, UnsignedLong value);
+    void writeUnsignedLong(ProtonBuffer buffer, EncoderState state, UnsignedLong value) throws EncodeException;
 
-    void writeUnsignedLong(ProtonBuffer buffer, EncoderState state, byte value);
+    void writeUnsignedLong(ProtonBuffer buffer, EncoderState state, byte value) throws EncodeException;
 
-    void writeUnsignedLong(ProtonBuffer buffer, EncoderState state, long value);
+    void writeUnsignedLong(ProtonBuffer buffer, EncoderState state, long value) throws EncodeException;
 
-    void writeByte(ProtonBuffer buffer, EncoderState state, byte value);
+    void writeByte(ProtonBuffer buffer, EncoderState state, byte value) throws EncodeException;
 
-    void writeByte(ProtonBuffer buffer, EncoderState state, Byte value);
+    void writeByte(ProtonBuffer buffer, EncoderState state, Byte value) throws EncodeException;
 
-    void writeShort(ProtonBuffer buffer, EncoderState state, short value);
+    void writeShort(ProtonBuffer buffer, EncoderState state, short value) throws EncodeException;
 
-    void writeShort(ProtonBuffer buffer, EncoderState state, Short value);
+    void writeShort(ProtonBuffer buffer, EncoderState state, Short value) throws EncodeException;
 
-    void writeInteger(ProtonBuffer buffer, EncoderState state, int value);
+    void writeInteger(ProtonBuffer buffer, EncoderState state, int value) throws EncodeException;
 
-    void writeInteger(ProtonBuffer buffer, EncoderState state, Integer value);
+    void writeInteger(ProtonBuffer buffer, EncoderState state, Integer value) throws EncodeException;
 
-    void writeLong(ProtonBuffer buffer, EncoderState state, long value);
+    void writeLong(ProtonBuffer buffer, EncoderState state, long value) throws EncodeException;
 
-    void writeLong(ProtonBuffer buffer, EncoderState state, Long value);
+    void writeLong(ProtonBuffer buffer, EncoderState state, Long value) throws EncodeException;
 
-    void writeFloat(ProtonBuffer buffer, EncoderState state, float value);
+    void writeFloat(ProtonBuffer buffer, EncoderState state, float value) throws EncodeException;
 
-    void writeFloat(ProtonBuffer buffer, EncoderState state, Float value);
+    void writeFloat(ProtonBuffer buffer, EncoderState state, Float value) throws EncodeException;
 
-    void writeDouble(ProtonBuffer buffer, EncoderState state, double value);
+    void writeDouble(ProtonBuffer buffer, EncoderState state, double value) throws EncodeException;
 
-    void writeDouble(ProtonBuffer buffer, EncoderState state, Double value);
+    void writeDouble(ProtonBuffer buffer, EncoderState state, Double value) throws EncodeException;
 
-    void writeDecimal32(ProtonBuffer buffer, EncoderState state, Decimal32 value);
+    void writeDecimal32(ProtonBuffer buffer, EncoderState state, Decimal32 value) throws EncodeException;
 
-    void writeDecimal64(ProtonBuffer buffer, EncoderState state, Decimal64 value);
+    void writeDecimal64(ProtonBuffer buffer, EncoderState state, Decimal64 value) throws EncodeException;
 
-    void writeDecimal128(ProtonBuffer buffer, EncoderState state, Decimal128 value);
+    void writeDecimal128(ProtonBuffer buffer, EncoderState state, Decimal128 value) throws EncodeException;
 
-    void writeCharacter(ProtonBuffer buffer, EncoderState state, char value);
+    void writeCharacter(ProtonBuffer buffer, EncoderState state, char value) throws EncodeException;
 
-    void writeCharacter(ProtonBuffer buffer, EncoderState state, Character value);
+    void writeCharacter(ProtonBuffer buffer, EncoderState state, Character value) throws EncodeException;
 
-    void writeTimestamp(ProtonBuffer buffer, EncoderState state, long value);
+    void writeTimestamp(ProtonBuffer buffer, EncoderState state, long value) throws EncodeException;
 
-    void writeTimestamp(ProtonBuffer buffer, EncoderState state, Date value);
+    void writeTimestamp(ProtonBuffer buffer, EncoderState state, Date value) throws EncodeException;
 
-    void writeUUID(ProtonBuffer buffer, EncoderState state, UUID value);
+    void writeUUID(ProtonBuffer buffer, EncoderState state, UUID value) throws EncodeException;
 
-    void writeBinary(ProtonBuffer buffer, EncoderState state, Binary value);
+    void writeBinary(ProtonBuffer buffer, EncoderState state, Binary value) throws EncodeException;
 
     /**
      * Writes the contents of the given {@link ProtonBuffer} value into the provided {@link ProtonBuffer}
@@ -127,20 +127,22 @@ public interface Encoder {
      *      the {@link EncoderState} instance that manages the calling threads state tracking.
      * @param value
      *      the {@link ProtonBuffer} value to be encoded as an AMQP binary instance.
+     *
+     * @throws EncodeException if an error occurs while performing the encode
      */
-    void writeBinary(ProtonBuffer buffer, EncoderState state, ProtonBuffer value);
+    void writeBinary(ProtonBuffer buffer, EncoderState state, ProtonBuffer value) throws EncodeException;
 
-    void writeBinary(ProtonBuffer buffer, EncoderState state, byte[] value);
+    void writeBinary(ProtonBuffer buffer, EncoderState state, byte[] value) throws EncodeException;
 
-    void writeString(ProtonBuffer buffer, EncoderState state, String value);
+    void writeString(ProtonBuffer buffer, EncoderState state, String value) throws EncodeException;
 
-    void writeSymbol(ProtonBuffer buffer, EncoderState state, Symbol value);
+    void writeSymbol(ProtonBuffer buffer, EncoderState state, Symbol value) throws EncodeException;
 
-    void writeSymbol(ProtonBuffer buffer, EncoderState state, String value);
+    void writeSymbol(ProtonBuffer buffer, EncoderState state, String value) throws EncodeException;
 
-    <T> void writeList(ProtonBuffer buffer, EncoderState state, List<T> value);
+    <T> void writeList(ProtonBuffer buffer, EncoderState state, List<T> value) throws EncodeException;
 
-    <K, V> void writeMap(ProtonBuffer buffer, EncoderState state, Map<K, V> value);
+    <K, V> void writeMap(ProtonBuffer buffer, EncoderState state, Map<K, V> value) throws EncodeException;
 
     /**
      * Writes the contents of the given {@link DeliveryTag} value into the provided {@link ProtonBuffer}
@@ -154,50 +156,52 @@ public interface Encoder {
      *      the {@link EncoderState} instance that manages the calling threads state tracking.
      * @param value
      *      the {@link DeliveryTag} value to be encoded as an AMQP binary instance.
+     *
+     * @throws EncodeException if an error occurs while performing the encode
      */
-    void writeDeliveryTag(ProtonBuffer buffer, EncoderState state, DeliveryTag value);
+    void writeDeliveryTag(ProtonBuffer buffer, EncoderState state, DeliveryTag value) throws EncodeException;
 
-    void writeDescribedType(ProtonBuffer buffer, EncoderState state, DescribedType value);
+    void writeDescribedType(ProtonBuffer buffer, EncoderState state, DescribedType value) throws EncodeException;
 
-    void writeObject(ProtonBuffer buffer, EncoderState state, Object value);
+    void writeObject(ProtonBuffer buffer, EncoderState state, Object value) throws EncodeException;
 
-    void writeArray(ProtonBuffer buffer, EncoderState state, boolean[] value);
+    void writeArray(ProtonBuffer buffer, EncoderState state, boolean[] value) throws EncodeException;
 
-    void writeArray(ProtonBuffer buffer, EncoderState state, byte[] value);
+    void writeArray(ProtonBuffer buffer, EncoderState state, byte[] value) throws EncodeException;
 
-    void writeArray(ProtonBuffer buffer, EncoderState state, short[] value);
+    void writeArray(ProtonBuffer buffer, EncoderState state, short[] value) throws EncodeException;
 
-    void writeArray(ProtonBuffer buffer, EncoderState state, int[] value);
+    void writeArray(ProtonBuffer buffer, EncoderState state, int[] value) throws EncodeException;
 
-    void writeArray(ProtonBuffer buffer, EncoderState state, long[] value);
+    void writeArray(ProtonBuffer buffer, EncoderState state, long[] value) throws EncodeException;
 
-    void writeArray(ProtonBuffer buffer, EncoderState state, float[] value);
+    void writeArray(ProtonBuffer buffer, EncoderState state, float[] value) throws EncodeException;
 
-    void writeArray(ProtonBuffer buffer, EncoderState state, double[] value);
+    void writeArray(ProtonBuffer buffer, EncoderState state, double[] value) throws EncodeException;
 
-    void writeArray(ProtonBuffer buffer, EncoderState state, char[] value);
+    void writeArray(ProtonBuffer buffer, EncoderState state, char[] value) throws EncodeException;
 
-    void writeArray(ProtonBuffer buffer, EncoderState state, Object[] value);
+    void writeArray(ProtonBuffer buffer, EncoderState state, Object[] value) throws EncodeException;
 
-    void writeArray(ProtonBuffer buffer, EncoderState state, Decimal32[] value);
+    void writeArray(ProtonBuffer buffer, EncoderState state, Decimal32[] value) throws EncodeException;
 
-    void writeArray(ProtonBuffer buffer, EncoderState state, Decimal64[] value);
+    void writeArray(ProtonBuffer buffer, EncoderState state, Decimal64[] value) throws EncodeException;
 
-    void writeArray(ProtonBuffer buffer, EncoderState state, Decimal128[] value);
+    void writeArray(ProtonBuffer buffer, EncoderState state, Decimal128[] value) throws EncodeException;
 
-    void writeArray(ProtonBuffer buffer, EncoderState state, Symbol[] value);
+    void writeArray(ProtonBuffer buffer, EncoderState state, Symbol[] value) throws EncodeException;
 
-    void writeArray(ProtonBuffer buffer, EncoderState state, UnsignedByte[] value);
+    void writeArray(ProtonBuffer buffer, EncoderState state, UnsignedByte[] value) throws EncodeException;
 
-    void writeArray(ProtonBuffer buffer, EncoderState state, UnsignedShort[] value);
+    void writeArray(ProtonBuffer buffer, EncoderState state, UnsignedShort[] value) throws EncodeException;
 
-    void writeArray(ProtonBuffer buffer, EncoderState state, UnsignedInteger[] value);
+    void writeArray(ProtonBuffer buffer, EncoderState state, UnsignedInteger[] value) throws EncodeException;
 
-    void writeArray(ProtonBuffer buffer, EncoderState state, UnsignedLong[] value);
+    void writeArray(ProtonBuffer buffer, EncoderState state, UnsignedLong[] value) throws EncodeException;
 
-    void writeArray(ProtonBuffer buffer, EncoderState state, UUID[] value);
+    void writeArray(ProtonBuffer buffer, EncoderState state, UUID[] value) throws EncodeException;
 
-    <V> Encoder registerDescribedTypeEncoder(DescribedTypeEncoder<V> encoder);
+    <V> Encoder registerDescribedTypeEncoder(DescribedTypeEncoder<V> encoder) throws EncodeException;
 
     TypeEncoder<?> getTypeEncoder(Object value);
 
