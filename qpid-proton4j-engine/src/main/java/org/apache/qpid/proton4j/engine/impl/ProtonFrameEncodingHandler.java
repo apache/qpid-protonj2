@@ -21,10 +21,12 @@ import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
 import org.apache.qpid.proton4j.amqp.transport.Performative;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.CodecFactory;
+import org.apache.qpid.proton4j.codec.EncodeException;
 import org.apache.qpid.proton4j.codec.Encoder;
 import org.apache.qpid.proton4j.codec.EncoderState;
 import org.apache.qpid.proton4j.engine.EngineHandler;
 import org.apache.qpid.proton4j.engine.EngineHandlerContext;
+import org.apache.qpid.proton4j.engine.exceptions.FrameEncodingException;
 
 /**
  * Handler that encodes performatives into properly formed frames for IO
@@ -96,6 +98,8 @@ public class ProtonFrameEncodingHandler implements EngineHandler {
         if (performative != null) {
             try {
                 encoder.writeObject(output, encoderState, performative);
+            } catch (EncodeException ex) {
+                throw new FrameEncodingException(ex);
             } finally {
                 encoderState.reset();
             }

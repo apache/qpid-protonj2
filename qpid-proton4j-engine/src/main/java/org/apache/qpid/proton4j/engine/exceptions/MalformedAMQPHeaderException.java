@@ -16,6 +16,8 @@
  */
 package org.apache.qpid.proton4j.engine.exceptions;
 
+import org.apache.qpid.proton4j.amqp.transport.AmqpError;
+
 /**
  * Exception thrown when an incoming AMQP Header response does not conform to the
  * AMQP Header specification.
@@ -25,17 +27,18 @@ public class MalformedAMQPHeaderException extends ProtocolViolationException {
     private static final long serialVersionUID = 6679970155102489530L;
 
     public MalformedAMQPHeaderException() {
+        super(AmqpError.DECODE_ERROR);
     }
 
     public MalformedAMQPHeaderException(String message, Throwable cause) {
-        super(message, cause);
+        super(AmqpError.DECODE_ERROR, message, cause);
     }
 
     public MalformedAMQPHeaderException(String message) {
-        super(message);
+        super(AmqpError.DECODE_ERROR, message);
     }
 
     public MalformedAMQPHeaderException(Throwable cause) {
-        super(cause);
+        super(AmqpError.DECODE_ERROR, cause);
     }
 }

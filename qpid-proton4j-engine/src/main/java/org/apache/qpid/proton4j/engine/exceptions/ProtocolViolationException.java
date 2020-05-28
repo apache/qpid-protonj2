@@ -16,12 +16,16 @@
  */
 package org.apache.qpid.proton4j.engine.exceptions;
 
+import org.apache.qpid.proton4j.amqp.Symbol;
+
 /**
  * Error thrown when there has been a violation of the AMQP specification
  */
 public class ProtocolViolationException extends ProtonException {
 
     private static final long serialVersionUID = 1L;
+
+    private Symbol condition;
 
     public ProtocolViolationException() {
         super();
@@ -37,5 +41,33 @@ public class ProtocolViolationException extends ProtonException {
 
     public ProtocolViolationException(Throwable cause) {
         super(cause);
+    }
+
+    public ProtocolViolationException(Symbol condition) {
+        super();
+
+        this.condition = condition;
+    }
+
+    public ProtocolViolationException(Symbol condition, String message, Throwable cause) {
+        super(message, cause);
+
+        this.condition = condition;
+    }
+
+    public ProtocolViolationException(Symbol condition, String message) {
+        super(message);
+
+        this.condition = condition;
+    }
+
+    public ProtocolViolationException(Symbol condition, Throwable cause) {
+        super(cause);
+
+        this.condition = condition;
+    }
+
+    Symbol getErrorCondition() {
+        return condition;
     }
 }

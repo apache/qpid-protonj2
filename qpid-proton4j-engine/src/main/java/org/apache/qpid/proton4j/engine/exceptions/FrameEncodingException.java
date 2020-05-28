@@ -16,6 +16,8 @@
  */
 package org.apache.qpid.proton4j.engine.exceptions;
 
+import org.apache.qpid.proton4j.amqp.transport.AmqpError;
+
 /**
  * Exception thrown when the engine cannot encode a frame from a given performative
  * and or payload combination.
@@ -25,17 +27,18 @@ public class FrameEncodingException extends ProtocolViolationException {
     private static final long serialVersionUID = -5392939106677054003L;
 
     public FrameEncodingException() {
+        super(AmqpError.INTERNAL_ERROR);
     }
 
     public FrameEncodingException(String message, Throwable cause) {
-        super(message, cause);
+        super(AmqpError.INTERNAL_ERROR, message, cause);
     }
 
     public FrameEncodingException(String message) {
-        super(message);
+        super(AmqpError.INTERNAL_ERROR, message);
     }
 
     public FrameEncodingException(Throwable cause) {
-        super(cause);
+        super(AmqpError.INTERNAL_ERROR, cause);
     }
 }

@@ -16,8 +16,6 @@
  */
 package org.apache.qpid.proton4j.engine.impl;
 
-import java.io.IOException;
-
 import org.apache.qpid.proton4j.amqp.security.SaslOutcome;
 import org.apache.qpid.proton4j.amqp.security.SaslPerformative;
 import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
@@ -25,6 +23,7 @@ import org.apache.qpid.proton4j.amqp.transport.Performative;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.codec.CodecFactory;
+import org.apache.qpid.proton4j.codec.DecodeException;
 import org.apache.qpid.proton4j.codec.Decoder;
 import org.apache.qpid.proton4j.codec.DecoderState;
 import org.apache.qpid.proton4j.common.logging.ProtonLogger;
@@ -37,10 +36,9 @@ import org.apache.qpid.proton4j.engine.ProtocolFrame;
 import org.apache.qpid.proton4j.engine.ProtocolFramePool;
 import org.apache.qpid.proton4j.engine.SaslFrame;
 import org.apache.qpid.proton4j.engine.exceptions.EngineFailedException;
+import org.apache.qpid.proton4j.engine.exceptions.FrameDecodingException;
 import org.apache.qpid.proton4j.engine.exceptions.MalformedAMQPHeaderException;
-import org.apache.qpid.proton4j.engine.exceptions.ProtocolViolationException;
 import org.apache.qpid.proton4j.engine.exceptions.ProtonException;
-import org.apache.qpid.proton4j.engine.exceptions.ProtonIOException;
 
 /**
  * Handler used to parse incoming frame data input into the engine
@@ -90,10 +88,12 @@ public class ProtonFrameDecodingHandler implements EngineHandler, SaslPerformati
             while (buffer.isReadable() && engine.isWritable()) {
                 stage.parse(context, buffer);
             }
-        } catch (IOException ex) {
-            transitionToErrorStage(new ProtonIOException(ex)).fireError(context);
+        } catch (FrameDecodingException frameEx) {
+            transitionToErrorStage(frameEx).fireError(context);
         } catch (ProtonException pex) {
             transitionToErrorStage(pex).fireError(context);
+        } catch (DecodeException ex) {
+            transitionToErrorStage(new FrameDecodingException(ex)).fireError(context);
         } catch (Exception error) {
             transitionToErrorStage(new ProtonException(error)).fireError(context);
         }
@@ -155,10 +155,8 @@ public class ProtonFrameDecodingHandler implements EngineHandler, SaslPerformati
          *      The TransportHandlerContext that applies to the current event
          * @param input
          *      The ProtonBuffer containing new data to be parsed.
-         *
-         * @throws IOException if an error occurs while parsing incoming data.
          */
-        void parse(EngineHandlerContext context, ProtonBuffer input) throws IOException;
+        void parse(EngineHandlerContext context, ProtonBuffer input);
 
         /**
          * Reset the stage to its defaults for a new cycle of parsing.
@@ -181,7 +179,7 @@ public class ProtonFrameDecodingHandler implements EngineHandler, SaslPerformati
         private int headerByte;
 
         @Override
-        public void parse(EngineHandlerContext context, ProtonBuffer incoming) throws IOException {
+        public void parse(EngineHandlerContext context, ProtonBuffer incoming) {
             while (incoming.isReadable() && headerByte < AMQPHeader.HEADER_SIZE_BYTES) {
                 byte nextByte = incoming.readByte();
                 try {
@@ -226,7 +224,7 @@ public class ProtonFrameDecodingHandler implements EngineHandler, SaslPerformati
         private int multiplier = FRAME_SIZE_BYTES;
 
         @Override
-        public void parse(EngineHandlerContext context, ProtonBuffer input) throws IOException {
+        public void parse(EngineHandlerContext context, ProtonBuffer input) {
             while (input.isReadable()) {
                 frameSize |= ((input.readByte() & 0xFF) << --multiplier * Byte.SIZE);
                 if (multiplier == 0) {
@@ -249,14 +247,14 @@ public class ProtonFrameDecodingHandler implements EngineHandler, SaslPerformati
             }
         }
 
-        private void validateFrameSize() throws IOException {
+        private void validateFrameSize() throws FrameDecodingException {
             if (frameSize < 8) {
-               throw new ProtocolViolationException(String.format(
+               throw new FrameDecodingException(String.format(
                     "specified frame size %d smaller than minimum frame header size 8", frameSize));
             }
 
             if (frameSize > configuration.getInboundMaxFrameSize()) {
-                throw new ProtocolViolationException(String.format(
+                throw new FrameDecodingException(String.format(
                     "specified frame size %d larger than maximum frame size %d", frameSize, configuration.getInboundMaxFrameSize()));
             }
         }
@@ -274,7 +272,7 @@ public class ProtonFrameDecodingHandler implements EngineHandler, SaslPerformati
         private ProtonBuffer buffer;
 
         @Override
-        public void parse(EngineHandlerContext context, ProtonBuffer input) throws IOException {
+        public void parse(EngineHandlerContext context, ProtonBuffer input) {
             if (input.getReadableBytes() < buffer.getWritableBytes()) {
                 buffer.writeBytes(input);
             } else {
@@ -302,7 +300,7 @@ public class ProtonFrameDecodingHandler implements EngineHandler, SaslPerformati
         private int length;
 
         @Override
-        public void parse(EngineHandlerContext context, ProtonBuffer input) throws IOException {
+        public void parse(EngineHandlerContext context, ProtonBuffer input) {
             int dataOffset = (input.readByte() << 2) & 0x3FF;
             int frameSize = length + FRAME_SIZE_BYTES;
 
@@ -356,18 +354,18 @@ public class ProtonFrameDecodingHandler implements EngineHandler, SaslPerformati
                 // Ensure we process transition from SASL to AMQP header state
                 handleRead(context, saslFrame);
             } else {
-                throw new ProtocolViolationException(String.format("unknown frame type: %d", type));
+                throw new FrameDecodingException(String.format("unknown frame type: %d", type));
             }
         }
 
-        private void validateDataOffset(int dataOffset, int frameSize) throws ProtonException {
+        private void validateDataOffset(int dataOffset, int frameSize) throws FrameDecodingException {
             if (dataOffset < 8) {
-                throw new ProtocolViolationException(String.format(
+                throw new FrameDecodingException(String.format(
                     "specified frame data offset %d smaller than minimum frame header size %d", dataOffset, 8));
             }
 
             if (dataOffset > frameSize) {
-                throw new ProtocolViolationException(String.format(
+                throw new FrameDecodingException(String.format(
                     "specified frame data offset %d larger than the frame size %d", dataOffset, frameSize));
             }
         }
@@ -396,8 +394,8 @@ public class ProtonFrameDecodingHandler implements EngineHandler, SaslPerformati
         }
 
         @Override
-        public void parse(EngineHandlerContext context, ProtonBuffer input) throws IOException {
-            throw new IOException(parsingError);
+        public void parse(EngineHandlerContext context, ProtonBuffer input) {
+            throw new FrameDecodingException(parsingError);
         }
 
         @Override

@@ -16,6 +16,8 @@
  */
 package org.apache.qpid.proton4j.engine.exceptions;
 
+import org.apache.qpid.proton4j.amqp.transport.AmqpError;
+
 /**
  * Exception thrown when the engine cannot decode an incoming frame due to some
  * error either with the encoding itself or the contents which cause a specification
@@ -26,17 +28,18 @@ public class FrameDecodingException extends ProtocolViolationException {
     private static final long serialVersionUID = -1226121804157774724L;
 
     public FrameDecodingException() {
+        super(AmqpError.DECODE_ERROR);
     }
 
     public FrameDecodingException(String message, Throwable cause) {
-        super(message, cause);
+        super(AmqpError.DECODE_ERROR, message, cause);
     }
 
     public FrameDecodingException(String message) {
-        super(message);
+        super(AmqpError.DECODE_ERROR, message);
     }
 
     public FrameDecodingException(Throwable cause) {
-        super(cause);
+        super(AmqpError.DECODE_ERROR, cause);
     }
 }
