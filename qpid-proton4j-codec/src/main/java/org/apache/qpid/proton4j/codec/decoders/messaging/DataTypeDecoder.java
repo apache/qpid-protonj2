@@ -94,9 +94,7 @@ public final class DataTypeDecoder extends AbstractDescribedTypeDecoder<Data> {
     public Data[] readArrayElements(ProtonBuffer buffer, DecoderState state, int count) throws IOException {
         final TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
-        if (!(decoder instanceof BinaryTypeDecoder)) {
-            throw new IOException("Expected Binary type indicator but got decoder for type: " + decoder.getClass().getSimpleName());
-        }
+        checkIsExpectedType(BinaryTypeDecoder.class, decoder);
 
         final BinaryTypeDecoder valueDecoder = (BinaryTypeDecoder) decoder;
         final Binary[] binaryArray = valueDecoder.readArrayElements(buffer, state, count);
@@ -113,9 +111,7 @@ public final class DataTypeDecoder extends AbstractDescribedTypeDecoder<Data> {
     public void skipValue(ProtonBuffer buffer, DecoderState state) throws IOException {
         final TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
-        if (!(decoder instanceof BinaryTypeDecoder)) {
-            throw new IOException("Expected Binary type indicator but got decoder for type: " + decoder.getClass().getSimpleName());
-        }
+        checkIsExpectedType(BinaryTypeDecoder.class, decoder);
 
         decoder.skipValue(buffer, state);
     }

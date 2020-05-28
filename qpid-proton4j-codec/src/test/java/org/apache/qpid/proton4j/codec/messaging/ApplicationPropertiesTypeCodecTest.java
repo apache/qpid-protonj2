@@ -232,6 +232,25 @@ public class ApplicationPropertiesTypeCodecTest extends CodecTestSupport {
     }
 
     @Test
+    public void testSkipValueWithNullMapEncoding() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        buffer.writeByte((byte) 0); // Described Type Indicator
+        buffer.writeByte(EncodingCodes.SMALLULONG);
+        buffer.writeByte(ApplicationProperties.DESCRIPTOR_CODE.byteValue());
+        buffer.writeByte(EncodingCodes.NULL);
+
+        TypeDecoder<?> typeDecoder = decoder.readNextTypeDecoder(buffer, decoderState);
+        assertEquals(ApplicationProperties.class, typeDecoder.getTypeClass());
+
+        try {
+            typeDecoder.skipValue(buffer, decoderState);
+        } catch (IOException ex) {
+            fail("Should be able to skip type with null inner encoding");
+        }
+    }
+
+    @Test
     public void testEncodeDecodeArray() throws IOException {
         ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
 

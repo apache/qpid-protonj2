@@ -55,9 +55,7 @@ public final class EndTypeDecoder extends AbstractDescribedTypeDecoder<End> {
     public End readValue(ProtonBuffer buffer, DecoderState state) throws IOException {
         TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
-        if (!(decoder instanceof ListTypeDecoder)) {
-            throw new IOException("Expected List type indicator but got decoder for type: " + decoder.getTypeClass().getName());
-        }
+        checkIsExpectedType(ListTypeDecoder.class, decoder);
 
         return readEnd(buffer, state, (ListTypeDecoder) decoder);
     }
@@ -66,9 +64,7 @@ public final class EndTypeDecoder extends AbstractDescribedTypeDecoder<End> {
     public End[] readArrayElements(ProtonBuffer buffer, DecoderState state, int count) throws IOException {
         TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
-        if (!(decoder instanceof ListTypeDecoder)) {
-            throw new IOException("Expected List type indicator but got decoder for type: " + decoder.getTypeClass().getName());
-        }
+        checkIsExpectedType(ListTypeDecoder.class, decoder);
 
         End[] result = new End[count];
         for (int i = 0; i < count; ++i) {
@@ -82,9 +78,7 @@ public final class EndTypeDecoder extends AbstractDescribedTypeDecoder<End> {
     public void skipValue(ProtonBuffer buffer, DecoderState state) throws IOException {
         TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
-        if (!(decoder instanceof ListTypeDecoder)) {
-            throw new IOException("Expected List type indicator but got decoder for type: " + decoder.getTypeClass().getName());
-        }
+        checkIsExpectedType(ListTypeDecoder.class, decoder);
 
         decoder.skipValue(buffer, state);
     }

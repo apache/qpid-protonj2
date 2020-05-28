@@ -58,9 +58,7 @@ public final class FooterTypeDecoder extends AbstractDescribedTypeDecoder<Footer
             return new Footer(null);
         }
 
-        if (!(decoder instanceof MapTypeDecoder)) {
-            throw new IOException("Expected Map type indicator but got decoder for type: " + decoder.getClass().getSimpleName());
-        }
+        checkIsExpectedType(MapTypeDecoder.class, decoder);
 
         MapTypeDecoder mapDecoder = (MapTypeDecoder) decoder;
 
@@ -82,9 +80,7 @@ public final class FooterTypeDecoder extends AbstractDescribedTypeDecoder<Footer
             return result;
         }
 
-        if (!(decoder instanceof MapTypeDecoder)) {
-            throw new IOException("Expected Map type indicator but got decoder for type: " + decoder.getClass().getSimpleName());
-        }
+        checkIsExpectedType(MapTypeDecoder.class, decoder);
 
         MapTypeDecoder mapDecoder = (MapTypeDecoder) decoder;
 
@@ -100,10 +96,9 @@ public final class FooterTypeDecoder extends AbstractDescribedTypeDecoder<Footer
     public void skipValue(ProtonBuffer buffer, DecoderState state) throws IOException {
         TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
-        if (!(decoder instanceof MapTypeDecoder)) {
-            throw new IOException("Expected Map type indicator but got decoder for type: " + decoder.getClass().getSimpleName());
+        if (!(decoder instanceof NullTypeDecoder)) {
+            checkIsExpectedType(MapTypeDecoder.class, decoder);
+            decoder.skipValue(buffer, state);
         }
-
-        decoder.skipValue(buffer, state);
     }
 }

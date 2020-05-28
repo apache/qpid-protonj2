@@ -51,9 +51,7 @@ public final class DeleteOnNoLinksTypeDecoder extends AbstractDescribedTypeDecod
     public DeleteOnNoLinks readValue(ProtonBuffer buffer, DecoderState state) throws IOException {
         TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
-        if (!(decoder instanceof ListTypeDecoder)) {
-            throw new IOException("Expected List type indicator but got decoder for type: " + decoder.getTypeClass().getName());
-        }
+        checkIsExpectedType(ListTypeDecoder.class, decoder);
 
         decoder.skipValue(buffer, state);
 
@@ -64,9 +62,7 @@ public final class DeleteOnNoLinksTypeDecoder extends AbstractDescribedTypeDecod
     public DeleteOnNoLinks[] readArrayElements(ProtonBuffer buffer, DecoderState state, int count) throws IOException {
         TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
-        if (!(decoder instanceof ListTypeDecoder)) {
-            throw new IOException("Expected List type indicator but got decoder for type: " + decoder.getTypeClass().getName());
-        }
+        checkIsExpectedType(ListTypeDecoder.class, decoder);
 
         DeleteOnNoLinks[] result = new DeleteOnNoLinks[count];
 
@@ -82,9 +78,7 @@ public final class DeleteOnNoLinksTypeDecoder extends AbstractDescribedTypeDecod
     public void skipValue(ProtonBuffer buffer, DecoderState state) throws IOException {
         TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
-        if (!(decoder instanceof ListTypeDecoder)) {
-            throw new IOException("Expected List type indicator but got decoder for type: " + decoder.getTypeClass().getName());
-        }
+        checkIsExpectedType(ListTypeDecoder.class, decoder);
 
         decoder.skipValue(buffer, state);
     }

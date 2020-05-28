@@ -53,12 +53,9 @@ public final class TransactionStateTypeDecoder extends AbstractDescribedTypeDeco
 
     @Override
     public TransactionalState readValue(ProtonBuffer buffer, DecoderState state) throws IOException {
-
         TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
-        if (!(decoder instanceof ListTypeDecoder)) {
-            throw new IOException("Expected List type indicator but got decoder for type: " + decoder.getTypeClass().getName());
-        }
+        checkIsExpectedType(ListTypeDecoder.class, decoder);
 
         return readTransactionalState(buffer, state, (ListTypeDecoder) decoder);
     }
@@ -67,9 +64,7 @@ public final class TransactionStateTypeDecoder extends AbstractDescribedTypeDeco
     public TransactionalState[] readArrayElements(ProtonBuffer buffer, DecoderState state, int count) throws IOException {
         TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
-        if (!(decoder instanceof ListTypeDecoder)) {
-            throw new IOException("Expected List type indicator but got decoder for type: " + decoder.getTypeClass().getName());
-        }
+        checkIsExpectedType(ListTypeDecoder.class, decoder);
 
         TransactionalState[] result = new TransactionalState[count];
         for (int i = 0; i < count; ++i) {
@@ -83,9 +78,7 @@ public final class TransactionStateTypeDecoder extends AbstractDescribedTypeDeco
     public void skipValue(ProtonBuffer buffer, DecoderState state) throws IOException {
         TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
-        if (!(decoder instanceof ListTypeDecoder)) {
-            throw new IOException("Expected List type indicator but got decoder for type: " + decoder.getTypeClass().getName());
-        }
+        checkIsExpectedType(ListTypeDecoder.class, decoder);
 
         decoder.skipValue(buffer, state);
     }

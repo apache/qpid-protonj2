@@ -59,9 +59,7 @@ public final class ApplicationPropertiesTypeDecoder extends AbstractDescribedTyp
             return new ApplicationProperties(null);
         }
 
-        if (!(decoder instanceof MapTypeDecoder)) {
-            throw new IOException("Expected Map type indicator but got decoder for type: " + decoder.getClass().getSimpleName());
-        }
+        checkIsExpectedType(MapTypeDecoder.class, decoder);
 
         return new ApplicationProperties(readMap(buffer, state, (MapTypeDecoder) decoder));
     }
@@ -79,9 +77,7 @@ public final class ApplicationPropertiesTypeDecoder extends AbstractDescribedTyp
             return result;
         }
 
-        if (!(decoder instanceof MapTypeDecoder)) {
-            throw new IOException("Expected Map type indicator but got decoder for type: " + decoder.getClass().getSimpleName());
-        }
+        checkIsExpectedType(MapTypeDecoder.class, decoder);
 
         MapTypeDecoder mapDecoder = (MapTypeDecoder) decoder;
 
@@ -96,15 +92,10 @@ public final class ApplicationPropertiesTypeDecoder extends AbstractDescribedTyp
     public void skipValue(ProtonBuffer buffer, DecoderState state) throws IOException {
         TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
-        if (decoder instanceof NullTypeDecoder) {
-            return;
+        if (!(decoder instanceof NullTypeDecoder)) {
+            checkIsExpectedType(MapTypeDecoder.class, decoder);
+            decoder.skipValue(buffer, state);
         }
-
-        if (!(decoder instanceof MapTypeDecoder)) {
-            throw new IOException("Expected List type indicator but got decoder for type: " + decoder.getClass().getSimpleName());
-        }
-
-        decoder.skipValue(buffer, state);
     }
 
     private Map<String, Object> readMap(ProtonBuffer buffer, DecoderState state, MapTypeDecoder mapDecoder) throws IOException {

@@ -234,6 +234,25 @@ public class FooterTypeCodecTest extends CodecTestSupport {
         } catch (IOException ex) {}
     }
 
+    @Test
+    public void testSkipValueWithNullMapEncoding() throws IOException {
+        ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        buffer.writeByte((byte) 0); // Described Type Indicator
+        buffer.writeByte(EncodingCodes.SMALLULONG);
+        buffer.writeByte(Footer.DESCRIPTOR_CODE.byteValue());
+        buffer.writeByte(EncodingCodes.NULL);
+
+        TypeDecoder<?> typeDecoder = decoder.readNextTypeDecoder(buffer, decoderState);
+        assertEquals(Footer.class, typeDecoder.getTypeClass());
+
+        try {
+            typeDecoder.skipValue(buffer, decoderState);
+        } catch (IOException ex) {
+            fail("Should be able to skip type with null inner encoding");
+        }
+    }
+
     @Ignore("Test fails currently for some reason")
     @Test
     public void testEncodeDecodeArray() throws IOException {

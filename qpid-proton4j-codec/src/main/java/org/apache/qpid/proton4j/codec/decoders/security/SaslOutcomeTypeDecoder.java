@@ -55,9 +55,7 @@ public final class SaslOutcomeTypeDecoder extends AbstractDescribedTypeDecoder<S
     public SaslOutcome readValue(ProtonBuffer buffer, DecoderState state) throws IOException {
         TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
-        if (!(decoder instanceof ListTypeDecoder)) {
-            throw new IOException("Expected List type indicator but got decoder for type: " + decoder.getTypeClass().getName());
-        }
+        checkIsExpectedType(ListTypeDecoder.class, decoder);
 
         return readProperties(buffer, state, (ListTypeDecoder) decoder);
     }
@@ -66,9 +64,7 @@ public final class SaslOutcomeTypeDecoder extends AbstractDescribedTypeDecoder<S
     public void skipValue(ProtonBuffer buffer, DecoderState state) throws IOException {
         TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
-        if (!(decoder instanceof ListTypeDecoder)) {
-            throw new IOException("Expected List type indicator but got decoder for type: " + decoder.getTypeClass().getName());
-        }
+        checkIsExpectedType(ListTypeDecoder.class, decoder);
 
         decoder.skipValue(buffer, state);
     }
@@ -77,9 +73,7 @@ public final class SaslOutcomeTypeDecoder extends AbstractDescribedTypeDecoder<S
     public SaslOutcome[] readArrayElements(ProtonBuffer buffer, DecoderState state, int count) throws IOException {
         TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
-        if (!(decoder instanceof ListTypeDecoder)) {
-            throw new IOException("Expected List type indicator but got decoder for type: " + decoder.getTypeClass().getName());
-        }
+        checkIsExpectedType(ListTypeDecoder.class, decoder);
 
         SaslOutcome[] result = new SaslOutcome[count];
         for (int i = 0; i < count; ++i) {

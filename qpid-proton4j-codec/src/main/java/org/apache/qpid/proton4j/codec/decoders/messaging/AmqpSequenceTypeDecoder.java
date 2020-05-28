@@ -53,9 +53,7 @@ public final class AmqpSequenceTypeDecoder extends AbstractDescribedTypeDecoder<
     public AmqpSequence readValue(ProtonBuffer buffer, DecoderState state) throws IOException {
         TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
-        if (!(decoder instanceof ListTypeDecoder)) {
-            throw new IOException("Expected List type indicator but got decoder for type: " + decoder.getClass().getSimpleName());
-        }
+        checkIsExpectedType(ListTypeDecoder.class, decoder);
 
         ListTypeDecoder valueDecoder = (ListTypeDecoder) decoder;
         List<Object> result = valueDecoder.readValue(buffer, state);
@@ -68,9 +66,7 @@ public final class AmqpSequenceTypeDecoder extends AbstractDescribedTypeDecoder<
     public AmqpSequence[] readArrayElements(ProtonBuffer buffer, DecoderState state, int count) throws IOException {
         TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
-        if (!(decoder instanceof ListTypeDecoder)) {
-            throw new IOException("Expected List type indicator but got decoder for type: " + decoder.getClass().getSimpleName());
-        }
+        checkIsExpectedType(ListTypeDecoder.class, decoder);
 
         ListTypeDecoder valueDecoder = (ListTypeDecoder) decoder;
         List<Object>[] elements = valueDecoder.readArrayElements(buffer, state, count);
@@ -87,9 +83,7 @@ public final class AmqpSequenceTypeDecoder extends AbstractDescribedTypeDecoder<
     public void skipValue(ProtonBuffer buffer, DecoderState state) throws IOException {
         TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
-        if (!(decoder instanceof ListTypeDecoder)) {
-            throw new IOException("Expected List type indicator but got decoder for type: " + decoder.getClass().getSimpleName());
-        }
+        checkIsExpectedType(ListTypeDecoder.class, decoder);
 
         decoder.skipValue(buffer, state);
     }
