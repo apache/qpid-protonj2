@@ -16,8 +16,6 @@
  */
 package org.messaginghub.amqperative.impl;
 
-import java.io.IOException;
-
 import org.apache.qpid.proton4j.amqp.Binary;
 import org.apache.qpid.proton4j.amqp.messaging.AmqpSequence;
 import org.apache.qpid.proton4j.amqp.messaging.AmqpValue;
@@ -117,7 +115,7 @@ abstract class ClientMessageSupport {
         while (buffer.isReadable()) {
             try {
                 section = (Section) decoder.readObject(buffer, decoderState);
-            } catch (IOException e) {
+            } catch (Exception e) {
                 throw ClientExceptionSupport.createNonFatalOrPassthrough(e);
             }
 
