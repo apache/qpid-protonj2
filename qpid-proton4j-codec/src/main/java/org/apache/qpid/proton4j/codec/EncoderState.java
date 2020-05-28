@@ -42,7 +42,9 @@ public interface EncoderState {
      *      A {@link CharSequence} representing the UTF-8 bytes to encode
      *
      * @return a reference to the encoding buffer for chaining
+     *
+     * @throws EncodeException if an error occurs while encoding the {@link CharSequence}
      */
-    ProtonBuffer encodeUTF8(ProtonBuffer buffer, CharSequence sequence);
+    ProtonBuffer encodeUTF8(ProtonBuffer buffer, CharSequence sequence) throws EncodeException;
 
 }

@@ -16,13 +16,12 @@
  */
 package org.apache.qpid.proton4j.codec.decoders.transactions;
 
-import java.io.IOException;
-
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.amqp.transactions.Declare;
 import org.apache.qpid.proton4j.amqp.transactions.GlobalTxId;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import org.apache.qpid.proton4j.codec.DecodeException;
 import org.apache.qpid.proton4j.codec.DecoderState;
 import org.apache.qpid.proton4j.codec.TypeDecoder;
 import org.apache.qpid.proton4j.codec.decoders.AbstractDescribedTypeDecoder;
@@ -52,7 +51,7 @@ public final class DeclareTypeDecoder extends AbstractDescribedTypeDecoder<Decla
     }
 
     @Override
-    public Declare readValue(ProtonBuffer buffer, DecoderState state) throws IOException {
+    public Declare readValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
         TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
         checkIsExpectedType(ListTypeDecoder.class, decoder);
@@ -61,7 +60,7 @@ public final class DeclareTypeDecoder extends AbstractDescribedTypeDecoder<Decla
     }
 
     @Override
-    public Declare[] readArrayElements(ProtonBuffer buffer, DecoderState state, int count) throws IOException {
+    public Declare[] readArrayElements(ProtonBuffer buffer, DecoderState state, int count) throws DecodeException {
         TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
         checkIsExpectedType(ListTypeDecoder.class, decoder);
@@ -75,7 +74,7 @@ public final class DeclareTypeDecoder extends AbstractDescribedTypeDecoder<Decla
     }
 
     @Override
-    public void skipValue(ProtonBuffer buffer, DecoderState state) throws IOException {
+    public void skipValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
         TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
         checkIsExpectedType(ListTypeDecoder.class, decoder);
@@ -83,7 +82,7 @@ public final class DeclareTypeDecoder extends AbstractDescribedTypeDecoder<Decla
         decoder.skipValue(buffer, state);
     }
 
-    private Declare readDeclare(ProtonBuffer buffer, DecoderState state, ListTypeDecoder listDecoder) throws IOException {
+    private Declare readDeclare(ProtonBuffer buffer, DecoderState state, ListTypeDecoder listDecoder) throws DecodeException {
         Declare declare = new Declare();
 
         @SuppressWarnings("unused")
@@ -92,11 +91,11 @@ public final class DeclareTypeDecoder extends AbstractDescribedTypeDecoder<Decla
 
         // Don't decode anything if things already look wrong.
         if (count < MIN_DECLARE_LIST_ENTRIES) {
-            throw new IllegalStateException("Not enough entries in Declare list encoding: " + count);
+            throw new DecodeException("Not enough entries in Declare list encoding: " + count);
         }
 
         if (count > MAX_DECLARE_LIST_ENTRIES) {
-            throw new IllegalStateException("To many entries in Declare list encoding: " + count);
+            throw new DecodeException("To many entries in Declare list encoding: " + count);
         }
 
         for (int index = 0; index < count; ++index) {
@@ -105,7 +104,7 @@ public final class DeclareTypeDecoder extends AbstractDescribedTypeDecoder<Decla
                     declare.setGlobalId(state.getDecoder().readObject(buffer, state, GlobalTxId.class));
                     break;
                 default:
-                    throw new IllegalStateException("To many entries in Declare encoding");
+                    throw new DecodeException("To many entries in Declare encoding");
             }
         }
 

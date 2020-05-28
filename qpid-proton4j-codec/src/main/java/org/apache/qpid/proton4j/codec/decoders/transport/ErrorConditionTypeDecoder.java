@@ -16,13 +16,13 @@
  */
 package org.apache.qpid.proton4j.codec.decoders.transport;
 
-import java.io.IOException;
 import java.util.Map;
 
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.amqp.transport.ErrorCondition;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import org.apache.qpid.proton4j.codec.DecodeException;
 import org.apache.qpid.proton4j.codec.DecoderState;
 import org.apache.qpid.proton4j.codec.TypeDecoder;
 import org.apache.qpid.proton4j.codec.decoders.AbstractDescribedTypeDecoder;
@@ -52,7 +52,7 @@ public final class ErrorConditionTypeDecoder extends AbstractDescribedTypeDecode
     }
 
     @Override
-    public ErrorCondition readValue(ProtonBuffer buffer, DecoderState state) throws IOException {
+    public ErrorCondition readValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
         TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
         checkIsExpectedType(ListTypeDecoder.class, decoder);
@@ -61,7 +61,7 @@ public final class ErrorConditionTypeDecoder extends AbstractDescribedTypeDecode
     }
 
     @Override
-    public ErrorCondition[] readArrayElements(ProtonBuffer buffer, DecoderState state, int count) throws IOException {
+    public ErrorCondition[] readArrayElements(ProtonBuffer buffer, DecoderState state, int count) throws DecodeException {
         TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
         checkIsExpectedType(ListTypeDecoder.class, decoder);
@@ -75,7 +75,7 @@ public final class ErrorConditionTypeDecoder extends AbstractDescribedTypeDecode
     }
 
     @Override
-    public void skipValue(ProtonBuffer buffer, DecoderState state) throws IOException {
+    public void skipValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
         TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
         checkIsExpectedType(ListTypeDecoder.class, decoder);
@@ -83,17 +83,17 @@ public final class ErrorConditionTypeDecoder extends AbstractDescribedTypeDecode
         decoder.skipValue(buffer, state);
     }
 
-    private ErrorCondition readErrorCondition(ProtonBuffer buffer, DecoderState state, ListTypeDecoder listDecoder) throws IOException {
+    private ErrorCondition readErrorCondition(ProtonBuffer buffer, DecoderState state, ListTypeDecoder listDecoder) throws DecodeException {
         @SuppressWarnings("unused")
         int size = listDecoder.readSize(buffer);
         int count = listDecoder.readCount(buffer);
 
         // Don't decode anything if things already look wrong.
         if (count < MIN_ERROR_CONDITION_LIST_ENTRIES) {
-            throw new IllegalStateException("Not enough entries in ErrorCondition list encoding: " + count);
+            throw new DecodeException("Not enough entries in ErrorCondition list encoding: " + count);
         }
         if (count > MAX_ERROR_CONDITION_LIST_ENTRIES) {
-            throw new IllegalStateException("To many entries in ErrorCondition list encoding: " + count);
+            throw new DecodeException("To many entries in ErrorCondition list encoding: " + count);
         }
 
         Symbol condition = null;
@@ -112,7 +112,7 @@ public final class ErrorConditionTypeDecoder extends AbstractDescribedTypeDecode
                     info = state.getDecoder().readMap(buffer, state);
                     break;
                 default:
-                    throw new IllegalStateException("To many entries in ErrorCondition encoding");
+                    throw new DecodeException("To many entries in ErrorCondition encoding");
             }
         }
 

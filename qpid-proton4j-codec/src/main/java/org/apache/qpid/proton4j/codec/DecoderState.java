@@ -43,7 +43,9 @@ public interface DecoderState {
      *      The number of bytes in the passed buffer that comprise the UTF-8 encoding.
      *
      * @return a String that represents the UTF-8 decoded bytes.
+     *
+     * @throws DecodeException if an error occurs while decoding the string value.
      */
-    String decodeUTF8(ProtonBuffer buffer, int length);
+    String decodeUTF8(ProtonBuffer buffer, int length) throws DecodeException;
 
 }

@@ -16,12 +16,11 @@
  */
 package org.apache.qpid.proton4j.codec.decoders.messaging;
 
-import java.io.IOException;
-
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.amqp.messaging.DeleteOnNoLinks;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import org.apache.qpid.proton4j.codec.DecodeException;
 import org.apache.qpid.proton4j.codec.DecoderState;
 import org.apache.qpid.proton4j.codec.TypeDecoder;
 import org.apache.qpid.proton4j.codec.decoders.AbstractDescribedTypeDecoder;
@@ -48,7 +47,7 @@ public final class DeleteOnNoLinksTypeDecoder extends AbstractDescribedTypeDecod
     }
 
     @Override
-    public DeleteOnNoLinks readValue(ProtonBuffer buffer, DecoderState state) throws IOException {
+    public DeleteOnNoLinks readValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
         TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
         checkIsExpectedType(ListTypeDecoder.class, decoder);
@@ -59,7 +58,7 @@ public final class DeleteOnNoLinksTypeDecoder extends AbstractDescribedTypeDecod
     }
 
     @Override
-    public DeleteOnNoLinks[] readArrayElements(ProtonBuffer buffer, DecoderState state, int count) throws IOException {
+    public DeleteOnNoLinks[] readArrayElements(ProtonBuffer buffer, DecoderState state, int count) throws DecodeException {
         TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
         checkIsExpectedType(ListTypeDecoder.class, decoder);
@@ -75,7 +74,7 @@ public final class DeleteOnNoLinksTypeDecoder extends AbstractDescribedTypeDecod
     }
 
     @Override
-    public void skipValue(ProtonBuffer buffer, DecoderState state) throws IOException {
+    public void skipValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
         TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
         checkIsExpectedType(ListTypeDecoder.class, decoder);

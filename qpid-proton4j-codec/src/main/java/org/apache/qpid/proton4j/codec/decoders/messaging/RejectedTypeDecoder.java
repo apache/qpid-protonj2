@@ -16,13 +16,12 @@
  */
 package org.apache.qpid.proton4j.codec.decoders.messaging;
 
-import java.io.IOException;
-
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.amqp.messaging.Rejected;
 import org.apache.qpid.proton4j.amqp.transport.ErrorCondition;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import org.apache.qpid.proton4j.codec.DecodeException;
 import org.apache.qpid.proton4j.codec.DecoderState;
 import org.apache.qpid.proton4j.codec.TypeDecoder;
 import org.apache.qpid.proton4j.codec.decoders.AbstractDescribedTypeDecoder;
@@ -52,7 +51,7 @@ public final class RejectedTypeDecoder extends AbstractDescribedTypeDecoder<Reje
     }
 
     @Override
-    public Rejected readValue(ProtonBuffer buffer, DecoderState state) throws IOException {
+    public Rejected readValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
         TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
         checkIsExpectedType(ListTypeDecoder.class, decoder);
@@ -61,7 +60,7 @@ public final class RejectedTypeDecoder extends AbstractDescribedTypeDecoder<Reje
     }
 
     @Override
-    public Rejected[] readArrayElements(ProtonBuffer buffer, DecoderState state, int count) throws IOException {
+    public Rejected[] readArrayElements(ProtonBuffer buffer, DecoderState state, int count) throws DecodeException {
         TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
         checkIsExpectedType(ListTypeDecoder.class, decoder);
@@ -75,7 +74,7 @@ public final class RejectedTypeDecoder extends AbstractDescribedTypeDecoder<Reje
     }
 
     @Override
-    public void skipValue(ProtonBuffer buffer, DecoderState state) throws IOException {
+    public void skipValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
         TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
         checkIsExpectedType(ListTypeDecoder.class, decoder);
@@ -83,7 +82,7 @@ public final class RejectedTypeDecoder extends AbstractDescribedTypeDecoder<Reje
         decoder.skipValue(buffer, state);
     }
 
-    private Rejected readRejected(ProtonBuffer buffer, DecoderState state, ListTypeDecoder listDecoder) throws IOException {
+    private Rejected readRejected(ProtonBuffer buffer, DecoderState state, ListTypeDecoder listDecoder) throws DecodeException {
         Rejected rejected = new Rejected();
 
         @SuppressWarnings("unused")
@@ -92,11 +91,11 @@ public final class RejectedTypeDecoder extends AbstractDescribedTypeDecoder<Reje
 
         // Don't decode anything if things already look wrong.
         if (count < MIN_REJECTED_LIST_ENTRIES) {
-            throw new IllegalStateException("Not enough entries in Rejected list encoding: " + count);
+            throw new DecodeException("Not enough entries in Rejected list encoding: " + count);
         }
 
         if (count > MAX_REJECTED_LIST_ENTRIES) {
-            throw new IllegalStateException("To many entries in Rejected list encoding: " + count);
+            throw new DecodeException("To many entries in Rejected list encoding: " + count);
         }
 
         for (int index = 0; index < count; ++index) {
@@ -105,7 +104,7 @@ public final class RejectedTypeDecoder extends AbstractDescribedTypeDecoder<Reje
                     rejected.setError(state.getDecoder().readObject(buffer, state, ErrorCondition.class));
                     break;
                 default:
-                    throw new IllegalStateException("To many entries in Rejected encoding");
+                    throw new DecodeException("To many entries in Rejected encoding");
             }
         }
 

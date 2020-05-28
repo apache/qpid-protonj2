@@ -16,8 +16,6 @@
  */
 package org.apache.qpid.proton4j.codec.decoders.messaging;
 
-import java.io.IOException;
-
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedInteger;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
@@ -25,6 +23,7 @@ import org.apache.qpid.proton4j.amqp.messaging.Target;
 import org.apache.qpid.proton4j.amqp.messaging.TerminusDurability;
 import org.apache.qpid.proton4j.amqp.messaging.TerminusExpiryPolicy;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import org.apache.qpid.proton4j.codec.DecodeException;
 import org.apache.qpid.proton4j.codec.DecoderState;
 import org.apache.qpid.proton4j.codec.TypeDecoder;
 import org.apache.qpid.proton4j.codec.decoders.AbstractDescribedTypeDecoder;
@@ -54,7 +53,7 @@ public final class TargetTypeDecoder extends AbstractDescribedTypeDecoder<Target
     }
 
     @Override
-    public Target readValue(ProtonBuffer buffer, DecoderState state) throws IOException {
+    public Target readValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
         TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
         checkIsExpectedType(ListTypeDecoder.class, decoder);
@@ -63,7 +62,7 @@ public final class TargetTypeDecoder extends AbstractDescribedTypeDecoder<Target
     }
 
     @Override
-    public Target[] readArrayElements(ProtonBuffer buffer, DecoderState state, int count) throws IOException {
+    public Target[] readArrayElements(ProtonBuffer buffer, DecoderState state, int count) throws DecodeException {
         TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
         checkIsExpectedType(ListTypeDecoder.class, decoder);
@@ -77,7 +76,7 @@ public final class TargetTypeDecoder extends AbstractDescribedTypeDecoder<Target
     }
 
     @Override
-    public void skipValue(ProtonBuffer buffer, DecoderState state) throws IOException {
+    public void skipValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
         TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
         checkIsExpectedType(ListTypeDecoder.class, decoder);
@@ -85,7 +84,7 @@ public final class TargetTypeDecoder extends AbstractDescribedTypeDecoder<Target
         decoder.skipValue(buffer, state);
     }
 
-    private Target readTarget(ProtonBuffer buffer, DecoderState state, ListTypeDecoder listDecoder) throws IOException {
+    private Target readTarget(ProtonBuffer buffer, DecoderState state, ListTypeDecoder listDecoder) throws DecodeException {
         Target target = new Target();
 
         @SuppressWarnings("unused")
@@ -93,11 +92,11 @@ public final class TargetTypeDecoder extends AbstractDescribedTypeDecoder<Target
         int count = listDecoder.readCount(buffer);
 
         if (count < MIN_TARGET_LIST_ENTRIES) {
-            throw new IllegalStateException("Not enough entries in Target list encoding: " + count);
+            throw new DecodeException("Not enough entries in Target list encoding: " + count);
         }
 
         if (count > MAX_TARGET_LIST_ENTRIES) {
-            throw new IllegalStateException("To many entries in Target list encoding: " + count);
+            throw new DecodeException("To many entries in Target list encoding: " + count);
         }
 
         for (int index = 0; index < count; ++index) {
@@ -127,7 +126,7 @@ public final class TargetTypeDecoder extends AbstractDescribedTypeDecoder<Target
                     target.setCapabilities(state.getDecoder().readMultiple(buffer, state, Symbol.class));
                     break;
                 default:
-                    throw new IllegalStateException("To many entries in Target encoding");
+                    throw new DecodeException("To many entries in Target encoding");
             }
         }
 

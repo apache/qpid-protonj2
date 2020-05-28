@@ -16,9 +16,8 @@
  */
 package org.apache.qpid.proton4j.codec.decoders.primitives;
 
-import java.io.IOException;
-
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import org.apache.qpid.proton4j.codec.DecodeException;
 import org.apache.qpid.proton4j.codec.DecoderState;
 import org.apache.qpid.proton4j.codec.EncodingCodes;
 import org.apache.qpid.proton4j.codec.decoders.AbstractPrimitiveTypeDecoder;
@@ -39,11 +38,11 @@ public final class NullTypeDecoder extends AbstractPrimitiveTypeDecoder<Void> {
     }
 
     @Override
-    public Void readValue(ProtonBuffer buffer, DecoderState state) {
+    public Void readValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
         return null;
     }
 
     @Override
-    public void skipValue(ProtonBuffer buffer, DecoderState state) throws IOException {
+    public void skipValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
     }
 }

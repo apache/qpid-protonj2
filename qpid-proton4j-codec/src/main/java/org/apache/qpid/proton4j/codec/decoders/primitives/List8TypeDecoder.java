@@ -17,6 +17,7 @@
 package org.apache.qpid.proton4j.codec.decoders.primitives;
 
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import org.apache.qpid.proton4j.codec.DecodeException;
 import org.apache.qpid.proton4j.codec.EncodingCodes;
 
 /**
@@ -25,12 +26,12 @@ import org.apache.qpid.proton4j.codec.EncodingCodes;
 public final class List8TypeDecoder extends AbstractListTypeDecoder {
 
     @Override
-    public int readSize(ProtonBuffer buffer) {
+    public int readSize(ProtonBuffer buffer) throws DecodeException {
         return buffer.readByte() & 0xff;
     }
 
     @Override
-    public int readCount(ProtonBuffer buffer) {
+    public int readCount(ProtonBuffer buffer) throws DecodeException {
         return buffer.readByte() & 0xff;
     }
 

@@ -16,11 +16,11 @@
  */
 package org.apache.qpid.proton4j.codec.decoders.primitives;
 
-import java.io.IOException;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import org.apache.qpid.proton4j.codec.DecodeException;
 import org.apache.qpid.proton4j.codec.DecoderState;
 import org.apache.qpid.proton4j.codec.decoders.AbstractPrimitiveTypeDecoder;
 
@@ -31,11 +31,11 @@ import org.apache.qpid.proton4j.codec.decoders.AbstractPrimitiveTypeDecoder;
 public abstract class AbstractMapTypeDecoder extends AbstractPrimitiveTypeDecoder<Map> implements MapTypeDecoder {
 
     @Override
-    public Map<Object, Object> readValue(ProtonBuffer buffer, DecoderState state) throws IOException {
+    public Map<Object, Object> readValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
         int size = readSize(buffer);
 
         if (size > buffer.getReadableBytes()) {
-            throw new IllegalArgumentException(String.format(
+            throw new DecodeException(String.format(
                     "Map encoded size %d is specified to be greater than the amount " +
                     "of data available (%d)", size, buffer.getReadableBytes()));
         }
@@ -43,7 +43,7 @@ public abstract class AbstractMapTypeDecoder extends AbstractPrimitiveTypeDecode
         int count = readCount(buffer);
 
         if (count % 2 != 0) {
-            throw new IllegalArgumentException(String.format(
+            throw new DecodeException(String.format(
                 "Map encoded number of elements %d is not an even number.",
                 size, buffer.getReadableBytes()));
         }
@@ -61,7 +61,7 @@ public abstract class AbstractMapTypeDecoder extends AbstractPrimitiveTypeDecode
     }
 
     @Override
-    public void skipValue(ProtonBuffer buffer, DecoderState state) throws IOException {
+    public void skipValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
         buffer.skipBytes(readSize(buffer));
     }
 }

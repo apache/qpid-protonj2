@@ -16,12 +16,11 @@
  */
 package org.apache.qpid.proton4j.codec.decoders.messaging;
 
-import java.io.IOException;
-
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.amqp.messaging.Received;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import org.apache.qpid.proton4j.codec.DecodeException;
 import org.apache.qpid.proton4j.codec.DecoderState;
 import org.apache.qpid.proton4j.codec.TypeDecoder;
 import org.apache.qpid.proton4j.codec.decoders.AbstractDescribedTypeDecoder;
@@ -50,7 +49,7 @@ public final class ReceivedTypeDecoder extends AbstractDescribedTypeDecoder<Rece
     }
 
     @Override
-    public Received readValue(ProtonBuffer buffer, DecoderState state) throws IOException {
+    public Received readValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
         TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
         checkIsExpectedType(ListTypeDecoder.class, decoder);
@@ -59,7 +58,7 @@ public final class ReceivedTypeDecoder extends AbstractDescribedTypeDecoder<Rece
     }
 
     @Override
-    public Received[] readArrayElements(ProtonBuffer buffer, DecoderState state, int count) throws IOException {
+    public Received[] readArrayElements(ProtonBuffer buffer, DecoderState state, int count) throws DecodeException {
         TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
         checkIsExpectedType(ListTypeDecoder.class, decoder);
@@ -73,7 +72,7 @@ public final class ReceivedTypeDecoder extends AbstractDescribedTypeDecoder<Rece
     }
 
     @Override
-    public void skipValue(ProtonBuffer buffer, DecoderState state) throws IOException {
+    public void skipValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
         TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
         checkIsExpectedType(ListTypeDecoder.class, decoder);
@@ -81,7 +80,7 @@ public final class ReceivedTypeDecoder extends AbstractDescribedTypeDecoder<Rece
         decoder.skipValue(buffer, state);
     }
 
-    private Received readReceived(ProtonBuffer buffer, DecoderState state, ListTypeDecoder listDecoder) throws IOException {
+    private Received readReceived(ProtonBuffer buffer, DecoderState state, ListTypeDecoder listDecoder) throws DecodeException {
         Received received = new Received();
 
         @SuppressWarnings("unused")
@@ -90,7 +89,7 @@ public final class ReceivedTypeDecoder extends AbstractDescribedTypeDecoder<Rece
 
         // Don't decode anything if things already look wrong.
         if (count != REQUIRED_RECEIVED_LIST_ENTRIES) {
-            throw new IllegalStateException("Invalid number of entries in Received list encoding: " + count);
+            throw new DecodeException("Invalid number of entries in Received list encoding: " + count);
         }
 
         for (int index = 0; index < count; ++index) {
@@ -102,7 +101,7 @@ public final class ReceivedTypeDecoder extends AbstractDescribedTypeDecoder<Rece
                     received.setSectionOffset(state.getDecoder().readUnsignedLong(buffer, state));
                     break;
                 default:
-                    throw new IllegalStateException("To many entries in Received encoding");
+                    throw new DecodeException("To many entries in Received encoding");
             }
         }
 

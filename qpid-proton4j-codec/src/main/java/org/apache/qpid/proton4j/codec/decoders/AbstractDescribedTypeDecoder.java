@@ -16,8 +16,7 @@
  */
 package org.apache.qpid.proton4j.codec.decoders;
 
-import java.io.IOException;
-
+import org.apache.qpid.proton4j.codec.DecodeException;
 import org.apache.qpid.proton4j.codec.TypeDecoder;
 
 /**
@@ -38,9 +37,9 @@ public abstract class AbstractDescribedTypeDecoder<V> implements DescribedTypeDe
         return "DescribedTypeDecoder<" + getTypeClass().getSimpleName() + ">";
     }
 
-    protected static void checkIsExpectedType(Class<?> expected, TypeDecoder<?> actual) throws IOException {
+    protected static void checkIsExpectedType(Class<?> expected, TypeDecoder<?> actual) throws DecodeException {
         if (!expected.isAssignableFrom(actual.getClass())) {
-            throw new IOException(
+            throw new DecodeException(
                 "Expected " + expected + "encoding but got decoder for type: " + actual.getTypeClass().getName());
         }
     }

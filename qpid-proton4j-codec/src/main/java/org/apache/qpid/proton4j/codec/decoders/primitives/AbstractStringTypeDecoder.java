@@ -16,9 +16,8 @@
  */
 package org.apache.qpid.proton4j.codec.decoders.primitives;
 
-import java.io.IOException;
-
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import org.apache.qpid.proton4j.codec.DecodeException;
 import org.apache.qpid.proton4j.codec.DecoderState;
 import org.apache.qpid.proton4j.codec.decoders.AbstractPrimitiveTypeDecoder;
 
@@ -28,11 +27,11 @@ import org.apache.qpid.proton4j.codec.decoders.AbstractPrimitiveTypeDecoder;
 public abstract class AbstractStringTypeDecoder extends AbstractPrimitiveTypeDecoder<String> implements StringTypeDecoder {
 
     @Override
-    public String readValue(ProtonBuffer buffer, DecoderState state) throws IOException {
+    public String readValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
         int length = readSize(buffer);
 
         if (length > buffer.getReadableBytes()) {
-            throw new IllegalArgumentException(String.format(
+            throw new DecodeException(String.format(
                     "String encoded size %d is specified to be greater than the amount " +
                     "of data available (%d)", length, buffer.getReadableBytes()));
         }
@@ -45,7 +44,7 @@ public abstract class AbstractStringTypeDecoder extends AbstractPrimitiveTypeDec
     }
 
     @Override
-    public void skipValue(ProtonBuffer buffer, DecoderState state) throws IOException {
+    public void skipValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
         buffer.skipBytes(readSize(buffer));
     }
 

@@ -24,6 +24,7 @@ import java.nio.charset.CoderResult;
 import java.nio.charset.StandardCharsets;
 
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import org.apache.qpid.proton4j.codec.DecodeException;
 import org.apache.qpid.proton4j.codec.DecoderState;
 
 /**
@@ -62,7 +63,7 @@ public final class ProtonDecoderState implements DecoderState {
     }
 
     @Override
-    public String decodeUTF8(ProtonBuffer buffer, int length) {
+    public String decodeUTF8(ProtonBuffer buffer, int length) throws DecodeException {
         if (stringDecoder == null) {
             return internalDecode(buffer, length, STRING_DECODER, length > MAX_CHAR_BUFFER_CAHCE_SIZE ? new char[length] : decodeCache);
         } else {
@@ -71,7 +72,11 @@ public final class ProtonDecoderState implements DecoderState {
             //        that the user will actually do the right thing.
             ProtonBuffer slice = buffer.slice(buffer.getReadIndex(), length);
             buffer.skipBytes(length);
-            return stringDecoder.decodeUTF8(slice);
+            try {
+                return stringDecoder.decodeUTF8(slice);
+            } catch (Exception ex) {
+                throw new DecodeException("Cannot parse encoded UTF8 String", ex);
+            }
         }
     }
 
@@ -123,7 +128,7 @@ public final class ProtonDecoderState implements DecoderState {
 
             return out.flip().toString();
         } catch (CharacterCodingException e) {
-            throw new IllegalArgumentException("Cannot parse encoded UTF8 String");
+            throw new DecodeException("Cannot parse encoded UTF8 String", e);
         } finally {
             decoder.reset();
         }

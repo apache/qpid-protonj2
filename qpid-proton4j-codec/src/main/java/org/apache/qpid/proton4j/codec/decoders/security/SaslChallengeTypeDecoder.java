@@ -16,12 +16,11 @@
  */
 package org.apache.qpid.proton4j.codec.decoders.security;
 
-import java.io.IOException;
-
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.amqp.security.SaslChallenge;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import org.apache.qpid.proton4j.codec.DecodeException;
 import org.apache.qpid.proton4j.codec.DecoderState;
 import org.apache.qpid.proton4j.codec.TypeDecoder;
 import org.apache.qpid.proton4j.codec.decoders.AbstractDescribedTypeDecoder;
@@ -50,7 +49,7 @@ public final class SaslChallengeTypeDecoder extends AbstractDescribedTypeDecoder
     }
 
     @Override
-    public SaslChallenge readValue(ProtonBuffer buffer, DecoderState state) throws IOException {
+    public SaslChallenge readValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
         TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
         checkIsExpectedType(ListTypeDecoder.class, decoder);
@@ -59,7 +58,7 @@ public final class SaslChallengeTypeDecoder extends AbstractDescribedTypeDecoder
     }
 
     @Override
-    public void skipValue(ProtonBuffer buffer, DecoderState state) throws IOException {
+    public void skipValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
         TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
         checkIsExpectedType(ListTypeDecoder.class, decoder);
@@ -68,7 +67,7 @@ public final class SaslChallengeTypeDecoder extends AbstractDescribedTypeDecoder
     }
 
     @Override
-    public SaslChallenge[] readArrayElements(ProtonBuffer buffer, DecoderState state, int count) throws IOException {
+    public SaslChallenge[] readArrayElements(ProtonBuffer buffer, DecoderState state, int count) throws DecodeException {
         TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
         checkIsExpectedType(ListTypeDecoder.class, decoder);
@@ -81,7 +80,7 @@ public final class SaslChallengeTypeDecoder extends AbstractDescribedTypeDecoder
         return result;
     }
 
-    private SaslChallenge readProperties(ProtonBuffer buffer, DecoderState state, ListTypeDecoder listDecoder) throws IOException {
+    private SaslChallenge readProperties(ProtonBuffer buffer, DecoderState state, ListTypeDecoder listDecoder) throws DecodeException {
         SaslChallenge challenge = new SaslChallenge();
 
         @SuppressWarnings("unused")
@@ -89,7 +88,7 @@ public final class SaslChallengeTypeDecoder extends AbstractDescribedTypeDecoder
         int count = listDecoder.readCount(buffer);
 
         if (count != REQUIRED_LIST_ENTRIES) {
-            throw new IllegalStateException("SASL Challenge must contain a single challenge binary: " + count);
+            throw new DecodeException("SASL Challenge must contain a single challenge binary: " + count);
         }
 
         for (int index = 0; index < count; ++index) {
@@ -98,7 +97,7 @@ public final class SaslChallengeTypeDecoder extends AbstractDescribedTypeDecoder
                     challenge.setChallenge(state.getDecoder().readBinaryAsBuffer(buffer, state));
                     break;
                 default:
-                    throw new IllegalStateException("To many entries in Properties encoding");
+                    throw new DecodeException("To many entries in Properties encoding");
             }
         }
 

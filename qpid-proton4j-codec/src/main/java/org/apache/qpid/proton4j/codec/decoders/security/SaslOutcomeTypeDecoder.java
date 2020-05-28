@@ -16,13 +16,12 @@
  */
 package org.apache.qpid.proton4j.codec.decoders.security;
 
-import java.io.IOException;
-
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.amqp.security.SaslCode;
 import org.apache.qpid.proton4j.amqp.security.SaslOutcome;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import org.apache.qpid.proton4j.codec.DecodeException;
 import org.apache.qpid.proton4j.codec.DecoderState;
 import org.apache.qpid.proton4j.codec.TypeDecoder;
 import org.apache.qpid.proton4j.codec.decoders.AbstractDescribedTypeDecoder;
@@ -52,7 +51,7 @@ public final class SaslOutcomeTypeDecoder extends AbstractDescribedTypeDecoder<S
     }
 
     @Override
-    public SaslOutcome readValue(ProtonBuffer buffer, DecoderState state) throws IOException {
+    public SaslOutcome readValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
         TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
         checkIsExpectedType(ListTypeDecoder.class, decoder);
@@ -61,7 +60,7 @@ public final class SaslOutcomeTypeDecoder extends AbstractDescribedTypeDecoder<S
     }
 
     @Override
-    public void skipValue(ProtonBuffer buffer, DecoderState state) throws IOException {
+    public void skipValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
         TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
         checkIsExpectedType(ListTypeDecoder.class, decoder);
@@ -70,7 +69,7 @@ public final class SaslOutcomeTypeDecoder extends AbstractDescribedTypeDecoder<S
     }
 
     @Override
-    public SaslOutcome[] readArrayElements(ProtonBuffer buffer, DecoderState state, int count) throws IOException {
+    public SaslOutcome[] readArrayElements(ProtonBuffer buffer, DecoderState state, int count) throws DecodeException {
         TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
         checkIsExpectedType(ListTypeDecoder.class, decoder);
@@ -83,7 +82,7 @@ public final class SaslOutcomeTypeDecoder extends AbstractDescribedTypeDecoder<S
         return result;
     }
 
-    private SaslOutcome readProperties(ProtonBuffer buffer, DecoderState state, ListTypeDecoder listDecoder) throws IOException {
+    private SaslOutcome readProperties(ProtonBuffer buffer, DecoderState state, ListTypeDecoder listDecoder) throws DecodeException {
         SaslOutcome outcome = new SaslOutcome();
 
         @SuppressWarnings("unused")
@@ -92,11 +91,11 @@ public final class SaslOutcomeTypeDecoder extends AbstractDescribedTypeDecoder<S
 
         // Don't decode anything if things already look wrong.
         if (count < MIN_SASL_OUTCOME_LIST_ENTRIES) {
-            throw new IllegalStateException("Not enougn entries in SASL Outcome list encoding: " + count);
+            throw new DecodeException("Not enougn entries in SASL Outcome list encoding: " + count);
         }
 
         if (count > MAX_SASL_OUTCOME_LIST_ENTRIES) {
-            throw new IllegalStateException("To many entries in SASL Outcome list encoding: " + count);
+            throw new DecodeException("To many entries in SASL Outcome list encoding: " + count);
         }
 
         for (int index = 0; index < count; ++index) {
@@ -108,7 +107,7 @@ public final class SaslOutcomeTypeDecoder extends AbstractDescribedTypeDecoder<S
                     outcome.setAdditionalData(state.getDecoder().readBinaryAsBuffer(buffer, state));
                     break;
                 default:
-                    throw new IllegalStateException("To many entries in Properties encoding");
+                    throw new DecodeException("To many entries in Properties encoding");
             }
         }
 

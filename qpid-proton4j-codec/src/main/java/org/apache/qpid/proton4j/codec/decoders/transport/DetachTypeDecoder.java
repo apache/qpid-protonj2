@@ -16,13 +16,12 @@
  */
 package org.apache.qpid.proton4j.codec.decoders.transport;
 
-import java.io.IOException;
-
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.amqp.transport.Detach;
 import org.apache.qpid.proton4j.amqp.transport.ErrorCondition;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import org.apache.qpid.proton4j.codec.DecodeException;
 import org.apache.qpid.proton4j.codec.DecoderState;
 import org.apache.qpid.proton4j.codec.EncodingCodes;
 import org.apache.qpid.proton4j.codec.TypeDecoder;
@@ -53,7 +52,7 @@ public final class DetachTypeDecoder extends AbstractDescribedTypeDecoder<Detach
     }
 
     @Override
-    public Detach readValue(ProtonBuffer buffer, DecoderState state) throws IOException {
+    public Detach readValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
         TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
         checkIsExpectedType(ListTypeDecoder.class, decoder);
@@ -62,7 +61,7 @@ public final class DetachTypeDecoder extends AbstractDescribedTypeDecoder<Detach
     }
 
     @Override
-    public Detach[] readArrayElements(ProtonBuffer buffer, DecoderState state, int count) throws IOException {
+    public Detach[] readArrayElements(ProtonBuffer buffer, DecoderState state, int count) throws DecodeException {
         TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
         checkIsExpectedType(ListTypeDecoder.class, decoder);
@@ -76,7 +75,7 @@ public final class DetachTypeDecoder extends AbstractDescribedTypeDecoder<Detach
     }
 
     @Override
-    public void skipValue(ProtonBuffer buffer, DecoderState state) throws IOException {
+    public void skipValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
         TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
         checkIsExpectedType(ListTypeDecoder.class, decoder);
@@ -84,7 +83,7 @@ public final class DetachTypeDecoder extends AbstractDescribedTypeDecoder<Detach
         decoder.skipValue(buffer, state);
     }
 
-    private Detach readDetach(ProtonBuffer buffer, DecoderState state, ListTypeDecoder listDecoder) throws IOException {
+    private Detach readDetach(ProtonBuffer buffer, DecoderState state, ListTypeDecoder listDecoder) throws DecodeException {
         Detach detach = new Detach();
 
         @SuppressWarnings("unused")
@@ -92,11 +91,11 @@ public final class DetachTypeDecoder extends AbstractDescribedTypeDecoder<Detach
         int count = listDecoder.readCount(buffer);
 
         if (count < MIN_DETACH_LIST_ENTRIES) {
-            throw new IllegalStateException("Not enough entries in Detach list encoding: " + count);
+            throw new DecodeException("Not enough entries in Detach list encoding: " + count);
         }
 
         if (count > MAX_DETACH_LIST_ENTRIES) {
-            throw new IllegalStateException("To many entries in Detach list encoding: " + count);
+            throw new DecodeException("To many entries in Detach list encoding: " + count);
         }
 
         for (int index = 0; index < count; ++index) {
@@ -120,7 +119,7 @@ public final class DetachTypeDecoder extends AbstractDescribedTypeDecoder<Detach
                     detach.setError(state.getDecoder().readObject(buffer, state, ErrorCondition.class));
                     break;
                 default:
-                    throw new IllegalStateException("To many entries in Detach encoding");
+                    throw new DecodeException("To many entries in Detach encoding");
             }
         }
 

@@ -16,10 +16,9 @@
  */
 package org.apache.qpid.proton4j.codec.decoders.primitives;
 
-import java.io.IOException;
-
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import org.apache.qpid.proton4j.codec.DecodeException;
 import org.apache.qpid.proton4j.codec.DecoderState;
 import org.apache.qpid.proton4j.codec.decoders.AbstractPrimitiveTypeDecoder;
 
@@ -29,7 +28,7 @@ import org.apache.qpid.proton4j.codec.decoders.AbstractPrimitiveTypeDecoder;
 public abstract class AbstractSymbolTypeDecoder extends AbstractPrimitiveTypeDecoder<Symbol> implements SymbolTypeDecoder {
 
     @Override
-    public Symbol readValue(ProtonBuffer buffer, DecoderState state) throws IOException {
+    public Symbol readValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
         int length = readSize(buffer);
 
         if (length == 0) {
@@ -37,7 +36,7 @@ public abstract class AbstractSymbolTypeDecoder extends AbstractPrimitiveTypeDec
         }
 
         if (length > buffer.getReadableBytes()) {
-            throw new IllegalArgumentException(String.format(
+            throw new DecodeException(String.format(
                     "Symbol encoded size %d is specified to be greater than the amount " +
                     "of data available (%d)", length, buffer.getReadableBytes()));
         }
@@ -62,9 +61,9 @@ public abstract class AbstractSymbolTypeDecoder extends AbstractPrimitiveTypeDec
      *
      * @return a String view of the encoded Symbol value.
      *
-     * @throws IOException if an error occurs decoding the Symbol from the given buffer.
+     * @throws DecodeException if an error occurs decoding the Symbol from the given buffer.
      */
-    public String readString(ProtonBuffer buffer, DecoderState state) throws IOException {
+    public String readString(ProtonBuffer buffer, DecoderState state) throws DecodeException {
         int length = readSize(buffer);
 
         if (length == 0) {
@@ -78,7 +77,7 @@ public abstract class AbstractSymbolTypeDecoder extends AbstractPrimitiveTypeDec
     }
 
     @Override
-    public void skipValue(ProtonBuffer buffer, DecoderState state) throws IOException {
+    public void skipValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
         buffer.skipBytes(readSize(buffer));
     }
 
@@ -89,8 +88,10 @@ public abstract class AbstractSymbolTypeDecoder extends AbstractPrimitiveTypeDec
      * @param buffer
      *      The buffer to read the size from.
      *
-     * @return the number of bytes that make up the encoded Symbok value.
+     * @return the number of bytes that make up the encoded Symbol value.
+     *
+     * @throws DecodeException if an error occurs reading the size value.
      */
-    protected abstract int readSize(ProtonBuffer buffer);
+    protected abstract int readSize(ProtonBuffer buffer) throws DecodeException;
 
 }

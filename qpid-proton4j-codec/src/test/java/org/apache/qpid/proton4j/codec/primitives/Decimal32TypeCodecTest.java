@@ -28,6 +28,7 @@ import org.apache.qpid.proton4j.amqp.Decimal32;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.codec.CodecTestSupport;
+import org.apache.qpid.proton4j.codec.DecodeException;
 import org.apache.qpid.proton4j.codec.EncodingCodes;
 import org.apache.qpid.proton4j.codec.TypeDecoder;
 import org.apache.qpid.proton4j.codec.decoders.primitives.Decimal32TypeDecoder;
@@ -45,7 +46,7 @@ public class Decimal32TypeCodecTest extends CodecTestSupport {
         try {
             decoder.readDecimal32(buffer, decoderState);
             fail("Should not allow read of integer type as this type");
-        } catch (IOException e) {}
+        } catch (DecodeException e) {}
     }
 
     @Test

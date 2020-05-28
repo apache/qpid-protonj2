@@ -16,13 +16,12 @@
  */
 package org.apache.qpid.proton4j.codec.decoders.transport;
 
-import java.io.IOException;
-
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.amqp.transport.End;
 import org.apache.qpid.proton4j.amqp.transport.ErrorCondition;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import org.apache.qpid.proton4j.codec.DecodeException;
 import org.apache.qpid.proton4j.codec.DecoderState;
 import org.apache.qpid.proton4j.codec.TypeDecoder;
 import org.apache.qpid.proton4j.codec.decoders.AbstractDescribedTypeDecoder;
@@ -52,7 +51,7 @@ public final class EndTypeDecoder extends AbstractDescribedTypeDecoder<End> {
     }
 
     @Override
-    public End readValue(ProtonBuffer buffer, DecoderState state) throws IOException {
+    public End readValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
         TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
         checkIsExpectedType(ListTypeDecoder.class, decoder);
@@ -61,7 +60,7 @@ public final class EndTypeDecoder extends AbstractDescribedTypeDecoder<End> {
     }
 
     @Override
-    public End[] readArrayElements(ProtonBuffer buffer, DecoderState state, int count) throws IOException {
+    public End[] readArrayElements(ProtonBuffer buffer, DecoderState state, int count) throws DecodeException {
         TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
         checkIsExpectedType(ListTypeDecoder.class, decoder);
@@ -75,7 +74,7 @@ public final class EndTypeDecoder extends AbstractDescribedTypeDecoder<End> {
     }
 
     @Override
-    public void skipValue(ProtonBuffer buffer, DecoderState state) throws IOException {
+    public void skipValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
         TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
         checkIsExpectedType(ListTypeDecoder.class, decoder);
@@ -83,7 +82,7 @@ public final class EndTypeDecoder extends AbstractDescribedTypeDecoder<End> {
         decoder.skipValue(buffer, state);
     }
 
-    private End readEnd(ProtonBuffer buffer, DecoderState state, ListTypeDecoder listDecoder) throws IOException {
+    private End readEnd(ProtonBuffer buffer, DecoderState state, ListTypeDecoder listDecoder) throws DecodeException {
         End end = new End();
 
         @SuppressWarnings("unused")
@@ -91,11 +90,11 @@ public final class EndTypeDecoder extends AbstractDescribedTypeDecoder<End> {
         int count = listDecoder.readCount(buffer);
 
         if (count < MIN_END_LIST_ENTRIES) {
-            throw new IllegalStateException("Not enough entries in End list encoding: " + count);
+            throw new DecodeException("Not enough entries in End list encoding: " + count);
         }
 
         if (count > MAX_END_LIST_ENTRIES) {
-            throw new IllegalStateException("To many entries in End list encoding: " + count);
+            throw new DecodeException("To many entries in End list encoding: " + count);
         }
 
         for (int index = 0; index < count; ++index) {
@@ -104,7 +103,7 @@ public final class EndTypeDecoder extends AbstractDescribedTypeDecoder<End> {
                     end.setError(state.getDecoder().readObject(buffer, state, ErrorCondition.class));
                     break;
                 default:
-                    throw new IllegalStateException("To many entries in End encoding");
+                    throw new DecodeException("To many entries in End encoding");
             }
         }
 

@@ -35,6 +35,7 @@ import org.apache.qpid.proton4j.amqp.Binary;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.codec.CodecTestSupport;
+import org.apache.qpid.proton4j.codec.DecodeException;
 import org.apache.qpid.proton4j.codec.EncodingCodes;
 import org.apache.qpid.proton4j.codec.TypeDecoder;
 import org.junit.Test;
@@ -50,7 +51,7 @@ public class MapTypeCodecTest extends CodecTestSupport {
         try {
             decoder.readMap(buffer, decoderState);
             fail("Should not allow read of integer type as this type");
-        } catch (IOException e) {}
+        } catch (DecodeException e) {}
     }
 
     @Test

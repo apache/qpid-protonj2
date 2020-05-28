@@ -17,6 +17,7 @@
 package org.apache.qpid.proton4j.codec.decoders.primitives;
 
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import org.apache.qpid.proton4j.codec.DecodeException;
 import org.apache.qpid.proton4j.codec.EncodingCodes;
 
 /**
@@ -30,12 +31,12 @@ public final class Map32TypeDecoder extends AbstractMapTypeDecoder {
     }
 
     @Override
-    public int readSize(ProtonBuffer buffer) {
+    public int readSize(ProtonBuffer buffer) throws DecodeException {
         return buffer.readInt();
     }
 
     @Override
-    public int readCount(ProtonBuffer buffer) {
+    public int readCount(ProtonBuffer buffer) throws DecodeException {
         return buffer.readInt();
     }
 }

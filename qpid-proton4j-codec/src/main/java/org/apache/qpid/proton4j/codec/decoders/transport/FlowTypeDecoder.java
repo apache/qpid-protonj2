@@ -16,12 +16,11 @@
  */
 package org.apache.qpid.proton4j.codec.decoders.transport;
 
-import java.io.IOException;
-
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.amqp.transport.Flow;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import org.apache.qpid.proton4j.codec.DecodeException;
 import org.apache.qpid.proton4j.codec.DecoderState;
 import org.apache.qpid.proton4j.codec.EncodingCodes;
 import org.apache.qpid.proton4j.codec.TypeDecoder;
@@ -52,7 +51,7 @@ public final class FlowTypeDecoder extends AbstractDescribedTypeDecoder<Flow> {
     }
 
     @Override
-    public Flow readValue(ProtonBuffer buffer, DecoderState state) throws IOException {
+    public Flow readValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
         TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
         checkIsExpectedType(ListTypeDecoder.class, decoder);
@@ -61,7 +60,7 @@ public final class FlowTypeDecoder extends AbstractDescribedTypeDecoder<Flow> {
     }
 
     @Override
-    public Flow[] readArrayElements(ProtonBuffer buffer, DecoderState state, int count) throws IOException {
+    public Flow[] readArrayElements(ProtonBuffer buffer, DecoderState state, int count) throws DecodeException {
         TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
         checkIsExpectedType(ListTypeDecoder.class, decoder);
@@ -75,7 +74,7 @@ public final class FlowTypeDecoder extends AbstractDescribedTypeDecoder<Flow> {
     }
 
     @Override
-    public void skipValue(ProtonBuffer buffer, DecoderState state) throws IOException {
+    public void skipValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
         TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
         checkIsExpectedType(ListTypeDecoder.class, decoder);
@@ -83,7 +82,7 @@ public final class FlowTypeDecoder extends AbstractDescribedTypeDecoder<Flow> {
         decoder.skipValue(buffer, state);
     }
 
-    private Flow readFlow(ProtonBuffer buffer, DecoderState state, ListTypeDecoder listDecoder) throws IOException {
+    private Flow readFlow(ProtonBuffer buffer, DecoderState state, ListTypeDecoder listDecoder) throws DecodeException {
         Flow flow = new Flow();
 
         @SuppressWarnings("unused")
@@ -92,10 +91,10 @@ public final class FlowTypeDecoder extends AbstractDescribedTypeDecoder<Flow> {
 
         // Don't decode anything if things already look wrong.
         if (count < MIN_FLOW_LIST_ENTRIES) {
-            throw new IllegalStateException("Not enough entries in Flow list encoding: " + count);
+            throw new DecodeException("Not enough entries in Flow list encoding: " + count);
         }
         if (count > MAX_FLOW_LIST_ENTRIES) {
-            throw new IllegalStateException("To many entries in Flow list encoding: " + count);
+            throw new DecodeException("To many entries in Flow list encoding: " + count);
         }
 
         for (int index = 0; index < count; ++index) {
@@ -143,7 +142,7 @@ public final class FlowTypeDecoder extends AbstractDescribedTypeDecoder<Flow> {
                     flow.setProperties(state.getDecoder().readMap(buffer, state));
                     break;
                 default:
-                    throw new IllegalStateException("To many entries in Flow encoding");
+                    throw new DecodeException("To many entries in Flow encoding");
             }
         }
 

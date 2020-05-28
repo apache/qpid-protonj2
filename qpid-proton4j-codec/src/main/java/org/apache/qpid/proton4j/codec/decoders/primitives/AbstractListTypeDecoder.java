@@ -16,11 +16,11 @@
  */
 package org.apache.qpid.proton4j.codec.decoders.primitives;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import org.apache.qpid.proton4j.codec.DecodeException;
 import org.apache.qpid.proton4j.codec.DecoderState;
 import org.apache.qpid.proton4j.codec.decoders.AbstractPrimitiveTypeDecoder;
 
@@ -31,12 +31,12 @@ import org.apache.qpid.proton4j.codec.decoders.AbstractPrimitiveTypeDecoder;
 public abstract class AbstractListTypeDecoder extends AbstractPrimitiveTypeDecoder<List> implements ListTypeDecoder {
 
     @Override
-    public List<Object> readValue(ProtonBuffer buffer, DecoderState state) throws IOException {
+    public List<Object> readValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
         int size = readSize(buffer);
 
         // Ensure we do not allocate an array of size greater then the available data, otherwise there is a risk for an OOM error
         if (size > buffer.getReadableBytes()) {
-            throw new IllegalArgumentException(String.format(
+            throw new DecodeException(String.format(
                     "List element size %d is specified to be greater than the amount " +
                     "of data available (%d)", size, buffer.getReadableBytes()));
         }
@@ -44,7 +44,7 @@ public abstract class AbstractListTypeDecoder extends AbstractPrimitiveTypeDecod
         int count = readCount(buffer);
 
         if (count > buffer.getReadableBytes()) {
-            throw new IllegalArgumentException(String.format(
+            throw new DecodeException(String.format(
                     "Symbol encoded element count %d is specified to be greater than the amount " +
                     "of data available (%d)", count, buffer.getReadableBytes()));
         }
@@ -58,7 +58,7 @@ public abstract class AbstractListTypeDecoder extends AbstractPrimitiveTypeDecod
     }
 
     @Override
-    public void skipValue(ProtonBuffer buffer, DecoderState state) throws IOException {
+    public void skipValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
         buffer.skipBytes(readSize(buffer));
     }
 }

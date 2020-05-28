@@ -16,10 +16,9 @@
  */
 package org.apache.qpid.proton4j.codec.decoders.primitives;
 
-import java.io.IOException;
-
 import org.apache.qpid.proton4j.amqp.UnsignedInteger;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import org.apache.qpid.proton4j.codec.DecodeException;
 import org.apache.qpid.proton4j.codec.DecoderState;
 import org.apache.qpid.proton4j.codec.EncodingCodes;
 import org.apache.qpid.proton4j.codec.decoders.AbstractPrimitiveTypeDecoder;
@@ -35,12 +34,12 @@ public class UnsignedInteger8TypeDecoder extends AbstractPrimitiveTypeDecoder<Un
     }
 
     @Override
-    public UnsignedInteger readValue(ProtonBuffer buffer, DecoderState state) {
+    public UnsignedInteger readValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
         return UnsignedInteger.valueOf((buffer.readByte()) & 0xff);
     }
 
     @Override
-    public void skipValue(ProtonBuffer buffer, DecoderState state) throws IOException {
+    public void skipValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
         buffer.skipBytes(Byte.BYTES);
     }
 

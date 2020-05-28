@@ -16,9 +16,8 @@
  */
 package org.apache.qpid.proton4j.codec.decoders.primitives;
 
-import java.io.IOException;
-
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import org.apache.qpid.proton4j.codec.DecodeException;
 import org.apache.qpid.proton4j.codec.DecoderState;
 import org.apache.qpid.proton4j.codec.EncodingCodes;
 import org.apache.qpid.proton4j.codec.decoders.AbstractPrimitiveTypeDecoder;
@@ -27,11 +26,6 @@ import org.apache.qpid.proton4j.codec.decoders.AbstractPrimitiveTypeDecoder;
  * Decode AMQP small Integer values from a byte stream
  */
 public final class Integer8TypeDecoder extends AbstractPrimitiveTypeDecoder<Integer> {
-
-    @Override
-    public Integer readValue(ProtonBuffer buffer, DecoderState state) {
-        return buffer.readByte() & 0xff;
-    }
 
     @Override
     public Class<Integer> getTypeClass() {
@@ -44,16 +38,21 @@ public final class Integer8TypeDecoder extends AbstractPrimitiveTypeDecoder<Inte
     }
 
     @Override
-    public void skipValue(ProtonBuffer buffer, DecoderState state) throws IOException {
-        buffer.skipBytes(Byte.BYTES);
-    }
-
-    @Override
     public boolean isJavaPrimitive() {
         return true;
     }
 
-    public int readPrimitiveValue(ProtonBuffer buffer, DecoderState state) {
+    @Override
+    public void skipValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
+        buffer.skipBytes(Byte.BYTES);
+    }
+
+    public int readPrimitiveValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
         return buffer.readByte();
+    }
+
+    @Override
+    public Integer readValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
+        return buffer.readByte() & 0xff;
     }
 }

@@ -21,8 +21,6 @@ import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
 
-import java.io.IOException;
-
 import org.apache.qpid.proton4j.amqp.DeliveryTag;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
@@ -39,7 +37,7 @@ public class DeliveryTagCodecTest extends CodecTestSupport {
         try {
             decoder.readDeliveryTag(buffer, decoderState);
             fail("Should not allow read of integer type as this type");
-        } catch (IOException e) {}
+        } catch (DecodeException e) {}
     }
 
     @Test

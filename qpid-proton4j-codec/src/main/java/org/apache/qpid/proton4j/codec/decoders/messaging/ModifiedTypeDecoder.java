@@ -16,12 +16,11 @@
  */
 package org.apache.qpid.proton4j.codec.decoders.messaging;
 
-import java.io.IOException;
-
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.amqp.messaging.Modified;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import org.apache.qpid.proton4j.codec.DecodeException;
 import org.apache.qpid.proton4j.codec.DecoderState;
 import org.apache.qpid.proton4j.codec.TypeDecoder;
 import org.apache.qpid.proton4j.codec.decoders.AbstractDescribedTypeDecoder;
@@ -51,7 +50,7 @@ public final class ModifiedTypeDecoder extends AbstractDescribedTypeDecoder<Modi
     }
 
     @Override
-    public Modified readValue(ProtonBuffer buffer, DecoderState state) throws IOException {
+    public Modified readValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
         TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
         checkIsExpectedType(ListTypeDecoder.class, decoder);
@@ -60,7 +59,7 @@ public final class ModifiedTypeDecoder extends AbstractDescribedTypeDecoder<Modi
     }
 
     @Override
-    public Modified[] readArrayElements(ProtonBuffer buffer, DecoderState state, int count) throws IOException {
+    public Modified[] readArrayElements(ProtonBuffer buffer, DecoderState state, int count) throws DecodeException {
         TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
         checkIsExpectedType(ListTypeDecoder.class, decoder);
@@ -74,7 +73,7 @@ public final class ModifiedTypeDecoder extends AbstractDescribedTypeDecoder<Modi
     }
 
     @Override
-    public void skipValue(ProtonBuffer buffer, DecoderState state) throws IOException {
+    public void skipValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
         TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
         checkIsExpectedType(ListTypeDecoder.class, decoder);
@@ -82,7 +81,7 @@ public final class ModifiedTypeDecoder extends AbstractDescribedTypeDecoder<Modi
         decoder.skipValue(buffer, state);
     }
 
-    private Modified readModified(ProtonBuffer buffer, DecoderState state, ListTypeDecoder listDecoder) throws IOException {
+    private Modified readModified(ProtonBuffer buffer, DecoderState state, ListTypeDecoder listDecoder) throws DecodeException {
         Modified modified = new Modified();
 
         @SuppressWarnings("unused")
@@ -91,11 +90,11 @@ public final class ModifiedTypeDecoder extends AbstractDescribedTypeDecoder<Modi
 
         // Don't decode anything if things already look wrong.
         if (count < MIN_MODIFIED_LIST_ENTRIES) {
-            throw new IllegalStateException("Not enough entries in Modified list encoding: " + count);
+            throw new DecodeException("Not enough entries in Modified list encoding: " + count);
         }
 
         if (count > MAX_MODIFIED_LIST_ENTRIES) {
-            throw new IllegalStateException("To many entries in Modified list encoding: " + count);
+            throw new DecodeException("To many entries in Modified list encoding: " + count);
         }
 
         for (int index = 0; index < count; ++index) {
@@ -110,7 +109,7 @@ public final class ModifiedTypeDecoder extends AbstractDescribedTypeDecoder<Modi
                     modified.setMessageAnnotations(state.getDecoder().readMap(buffer, state));
                     break;
                 default:
-                    throw new IllegalStateException("To many entries in Modified encoding");
+                    throw new DecodeException("To many entries in Modified encoding");
             }
         }
 

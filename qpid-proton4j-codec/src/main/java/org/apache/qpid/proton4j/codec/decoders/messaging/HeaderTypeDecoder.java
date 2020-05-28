@@ -16,12 +16,11 @@
  */
 package org.apache.qpid.proton4j.codec.decoders.messaging;
 
-import java.io.IOException;
-
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.amqp.messaging.Header;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import org.apache.qpid.proton4j.codec.DecodeException;
 import org.apache.qpid.proton4j.codec.DecoderState;
 import org.apache.qpid.proton4j.codec.EncodingCodes;
 import org.apache.qpid.proton4j.codec.TypeDecoder;
@@ -52,7 +51,7 @@ public final class HeaderTypeDecoder extends AbstractDescribedTypeDecoder<Header
     }
 
     @Override
-    public Header readValue(ProtonBuffer buffer, DecoderState state) throws IOException {
+    public Header readValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
         TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
         checkIsExpectedType(ListTypeDecoder.class, decoder);
@@ -61,7 +60,7 @@ public final class HeaderTypeDecoder extends AbstractDescribedTypeDecoder<Header
     }
 
     @Override
-    public Header[] readArrayElements(ProtonBuffer buffer, DecoderState state, int count) throws IOException {
+    public Header[] readArrayElements(ProtonBuffer buffer, DecoderState state, int count) throws DecodeException {
         TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
         checkIsExpectedType(ListTypeDecoder.class, decoder);
@@ -75,7 +74,7 @@ public final class HeaderTypeDecoder extends AbstractDescribedTypeDecoder<Header
     }
 
     @Override
-    public void skipValue(ProtonBuffer buffer, DecoderState state) throws IOException {
+    public void skipValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
         TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
         checkIsExpectedType(ListTypeDecoder.class, decoder);
@@ -83,7 +82,7 @@ public final class HeaderTypeDecoder extends AbstractDescribedTypeDecoder<Header
         decoder.skipValue(buffer, state);
     }
 
-    private Header readHeader(ProtonBuffer buffer, DecoderState state, ListTypeDecoder listDecoder) throws IOException {
+    private Header readHeader(ProtonBuffer buffer, DecoderState state, ListTypeDecoder listDecoder) throws DecodeException {
         Header header = new Header();
 
         @SuppressWarnings("unused")
@@ -92,11 +91,11 @@ public final class HeaderTypeDecoder extends AbstractDescribedTypeDecoder<Header
 
         // Don't decode anything if things already look wrong.
         if (count < MIN_HEADER_LIST_ENTRIES) {
-            throw new IllegalStateException("Not enough entries in Header list encoding: " + count);
+            throw new DecodeException("Not enough entries in Header list encoding: " + count);
         }
 
         if (count > MAX_HEADER_LIST_ENTRIES) {
-            throw new IllegalStateException("To many entries in Header list encoding: " + count);
+            throw new DecodeException("To many entries in Header list encoding: " + count);
         }
 
         for (int index = 0; index < count; ++index) {
@@ -126,7 +125,7 @@ public final class HeaderTypeDecoder extends AbstractDescribedTypeDecoder<Header
                     header.setDeliveryCount(state.getDecoder().readUnsignedInteger(buffer, state, 0));
                     break;
                 default:
-                    throw new IllegalStateException("To many entries in Header encoding");
+                    throw new DecodeException("To many entries in Header encoding");
             }
         }
 

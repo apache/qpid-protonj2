@@ -16,12 +16,11 @@
  */
 package org.apache.qpid.proton4j.codec.decoders.transactions;
 
-import java.io.IOException;
-
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.amqp.transactions.Coordinator;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import org.apache.qpid.proton4j.codec.DecodeException;
 import org.apache.qpid.proton4j.codec.DecoderState;
 import org.apache.qpid.proton4j.codec.TypeDecoder;
 import org.apache.qpid.proton4j.codec.decoders.AbstractDescribedTypeDecoder;
@@ -51,7 +50,7 @@ public final class CoordinatorTypeDecoder extends AbstractDescribedTypeDecoder<C
     }
 
     @Override
-    public Coordinator readValue(ProtonBuffer buffer, DecoderState state) throws IOException {
+    public Coordinator readValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
         TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
         checkIsExpectedType(ListTypeDecoder.class, decoder);
@@ -60,7 +59,7 @@ public final class CoordinatorTypeDecoder extends AbstractDescribedTypeDecoder<C
     }
 
     @Override
-    public Coordinator[] readArrayElements(ProtonBuffer buffer, DecoderState state, int count) throws IOException {
+    public Coordinator[] readArrayElements(ProtonBuffer buffer, DecoderState state, int count) throws DecodeException {
         TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
         checkIsExpectedType(ListTypeDecoder.class, decoder);
@@ -74,7 +73,7 @@ public final class CoordinatorTypeDecoder extends AbstractDescribedTypeDecoder<C
     }
 
     @Override
-    public void skipValue(ProtonBuffer buffer, DecoderState state) throws IOException {
+    public void skipValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
         TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
         checkIsExpectedType(ListTypeDecoder.class, decoder);
@@ -82,7 +81,7 @@ public final class CoordinatorTypeDecoder extends AbstractDescribedTypeDecoder<C
         decoder.skipValue(buffer, state);
     }
 
-    private Coordinator readCoordinator(ProtonBuffer buffer, DecoderState state, ListTypeDecoder listDecoder) throws IOException {
+    private Coordinator readCoordinator(ProtonBuffer buffer, DecoderState state, ListTypeDecoder listDecoder) throws DecodeException {
         Coordinator coordinator = new Coordinator();
 
         @SuppressWarnings("unused")
@@ -91,11 +90,11 @@ public final class CoordinatorTypeDecoder extends AbstractDescribedTypeDecoder<C
 
         // Don't decode anything if things already look wrong.
         if (count < MIN_COORDINATOR_LIST_ENTRIES) {
-            throw new IllegalStateException("Not enougn entries in Coordinator list encoding: " + count);
+            throw new DecodeException("Not enougn entries in Coordinator list encoding: " + count);
         }
 
         if (count > MAX_COORDINATOR_LIST_ENTRIES) {
-            throw new IllegalStateException("To many entries in Coordinator list encoding: " + count);
+            throw new DecodeException("To many entries in Coordinator list encoding: " + count);
         }
 
         for (int index = 0; index < count; ++index) {
@@ -104,7 +103,7 @@ public final class CoordinatorTypeDecoder extends AbstractDescribedTypeDecoder<C
                     coordinator.setCapabilities(state.getDecoder().readMultiple(buffer, state, Symbol.class));
                     break;
                 default:
-                    throw new IllegalStateException("To many entries in Header encoding");
+                    throw new DecodeException("To many entries in Header encoding");
             }
         }
 

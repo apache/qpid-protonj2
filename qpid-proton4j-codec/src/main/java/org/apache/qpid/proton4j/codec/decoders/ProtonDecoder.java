@@ -16,7 +16,6 @@
  */
 package org.apache.qpid.proton4j.codec.decoders;
 
-import java.io.IOException;
 import java.lang.reflect.Array;
 import java.util.Collections;
 import java.util.HashMap;
@@ -35,6 +34,7 @@ import org.apache.qpid.proton4j.amqp.UnsignedInteger;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.amqp.UnsignedShort;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import org.apache.qpid.proton4j.codec.DecodeException;
 import org.apache.qpid.proton4j.codec.Decoder;
 import org.apache.qpid.proton4j.codec.DecoderState;
 import org.apache.qpid.proton4j.codec.EncodingCodes;
@@ -168,11 +168,11 @@ public final class ProtonDecoder implements Decoder {
     }
 
     @Override
-    public Object readObject(ProtonBuffer buffer, DecoderState state) throws IOException {
+    public Object readObject(ProtonBuffer buffer, DecoderState state) throws DecodeException {
         TypeDecoder<?> decoder = readNextTypeDecoder(buffer, state);
 
         if (decoder == null) {
-            throw new IOException("Unknown type constructor in encoded bytes");
+            throw new DecodeException("Unknown type constructor in encoded bytes");
         }
 
         return decoder.readValue(buffer, state);
@@ -180,7 +180,7 @@ public final class ProtonDecoder implements Decoder {
 
     @SuppressWarnings("unchecked")
     @Override
-    public <T> T readObject(ProtonBuffer buffer, DecoderState state, final Class<T> clazz) throws IOException {
+    public <T> T readObject(ProtonBuffer buffer, DecoderState state, final Class<T> clazz) throws DecodeException {
         Object result = readObject(buffer, state);
 
         if (result == null) {
@@ -194,7 +194,7 @@ public final class ProtonDecoder implements Decoder {
 
     @Override
     @SuppressWarnings("unchecked")
-    public <T> T[] readMultiple(ProtonBuffer buffer, DecoderState state, final Class<T> clazz) throws IOException {
+    public <T> T[] readMultiple(ProtonBuffer buffer, DecoderState state, final Class<T> clazz) throws DecodeException {
         Object val = readObject(buffer, state);
 
         if (val == null) {
@@ -215,7 +215,7 @@ public final class ProtonDecoder implements Decoder {
     }
 
     @Override
-    public TypeDecoder<?> readNextTypeDecoder(ProtonBuffer buffer, DecoderState state) throws IOException {
+    public TypeDecoder<?> readNextTypeDecoder(ProtonBuffer buffer, DecoderState state) throws DecodeException {
         int encodingCode = buffer.readByte() & 0xFF;
 
         if (encodingCode == EncodingCodes.DESCRIBED_TYPE_INDICATOR) {
@@ -238,7 +238,7 @@ public final class ProtonDecoder implements Decoder {
         }
     }
 
-    private TypeDecoder<?> slowReadNextTypeDecoder(ProtonBuffer buffer, DecoderState state) throws IOException {
+    private TypeDecoder<?> slowReadNextTypeDecoder(ProtonBuffer buffer, DecoderState state) throws DecodeException {
         Object descriptor;
         buffer.markReadIndex();
         try {
@@ -257,7 +257,7 @@ public final class ProtonDecoder implements Decoder {
     }
 
     @Override
-    public TypeDecoder<?> peekNextTypeDecoder(ProtonBuffer buffer, DecoderState state) throws IOException {
+    public TypeDecoder<?> peekNextTypeDecoder(ProtonBuffer buffer, DecoderState state) throws DecodeException {
         buffer.markReadIndex();
         try {
             return readNextTypeDecoder(buffer, state);
@@ -282,7 +282,7 @@ public final class ProtonDecoder implements Decoder {
     }
 
     @Override
-    public Boolean readBoolean(ProtonBuffer buffer, DecoderState state) throws IOException {
+    public Boolean readBoolean(ProtonBuffer buffer, DecoderState state) throws DecodeException {
         byte encodingCode = buffer.readByte();
 
         switch (encodingCode) {
@@ -295,12 +295,12 @@ public final class ProtonDecoder implements Decoder {
             case EncodingCodes.NULL:
                 return null;
             default:
-                throw new IOException("Expected boolean type but found encoding: " + (encodingCode & 0xFF));
+                throw new DecodeException("Expected boolean type but found encoding: " + (encodingCode & 0xFF));
         }
     }
 
     @Override
-    public boolean readBoolean(ProtonBuffer buffer, DecoderState state, boolean defaultValue) throws IOException {
+    public boolean readBoolean(ProtonBuffer buffer, DecoderState state, boolean defaultValue) throws DecodeException {
         byte encodingCode = buffer.readByte();
 
         switch (encodingCode) {
@@ -313,12 +313,12 @@ public final class ProtonDecoder implements Decoder {
             case EncodingCodes.NULL:
                 return defaultValue;
             default:
-                throw new IOException("Expected boolean type but found encoding: " + (encodingCode & 0xFF));
+                throw new DecodeException("Expected boolean type but found encoding: " + (encodingCode & 0xFF));
         }
     }
 
     @Override
-    public Byte readByte(ProtonBuffer buffer, DecoderState state) throws IOException {
+    public Byte readByte(ProtonBuffer buffer, DecoderState state) throws DecodeException {
         byte encodingCode = buffer.readByte();
 
         switch (encodingCode) {
@@ -327,12 +327,12 @@ public final class ProtonDecoder implements Decoder {
             case EncodingCodes.NULL:
                 return null;
             default:
-                throw new IOException("Expected byte type but found encoding: " + (encodingCode & 0xFF));
+                throw new DecodeException("Expected byte type but found encoding: " + (encodingCode & 0xFF));
         }
     }
 
     @Override
-    public byte readByte(ProtonBuffer buffer, DecoderState state, byte defaultValue) throws IOException {
+    public byte readByte(ProtonBuffer buffer, DecoderState state, byte defaultValue) throws DecodeException {
         byte encodingCode = buffer.readByte();
 
         switch (encodingCode) {
@@ -341,12 +341,12 @@ public final class ProtonDecoder implements Decoder {
             case EncodingCodes.NULL:
                 return defaultValue;
             default:
-                throw new IOException("Expected byte type but found encoding: " + (encodingCode & 0xFF));
+                throw new DecodeException("Expected byte type but found encoding: " + (encodingCode & 0xFF));
         }
     }
 
     @Override
-    public UnsignedByte readUnsignedByte(ProtonBuffer buffer, DecoderState state) throws IOException {
+    public UnsignedByte readUnsignedByte(ProtonBuffer buffer, DecoderState state) throws DecodeException {
         byte encodingCode = buffer.readByte();
 
         switch (encodingCode) {
@@ -355,12 +355,12 @@ public final class ProtonDecoder implements Decoder {
             case EncodingCodes.NULL:
                 return null;
             default:
-                throw new IOException("Expected unsigned byte type but found encoding: " + (encodingCode & 0xFF));
+                throw new DecodeException("Expected unsigned byte type but found encoding: " + (encodingCode & 0xFF));
         }
     }
 
     @Override
-    public byte readUnsignedByte(ProtonBuffer buffer, DecoderState state, byte defaultValue) throws IOException {
+    public byte readUnsignedByte(ProtonBuffer buffer, DecoderState state, byte defaultValue) throws DecodeException {
         byte encodingCode = buffer.readByte();
 
         switch (encodingCode) {
@@ -369,12 +369,12 @@ public final class ProtonDecoder implements Decoder {
             case EncodingCodes.NULL:
                 return defaultValue;
             default:
-                throw new IOException("Expected unsigned byte type but found encoding: " + (encodingCode & 0xFF));
+                throw new DecodeException("Expected unsigned byte type but found encoding: " + (encodingCode & 0xFF));
         }
     }
 
     @Override
-    public Character readCharacter(ProtonBuffer buffer, DecoderState state) throws IOException {
+    public Character readCharacter(ProtonBuffer buffer, DecoderState state) throws DecodeException {
         byte encodingCode = buffer.readByte();
 
         switch (encodingCode) {
@@ -383,12 +383,12 @@ public final class ProtonDecoder implements Decoder {
             case EncodingCodes.NULL:
                 return null;
             default:
-                throw new IOException("Expected Character type but found encoding: " + (encodingCode & 0xFF));
+                throw new DecodeException("Expected Character type but found encoding: " + (encodingCode & 0xFF));
         }
     }
 
     @Override
-    public char readCharacter(ProtonBuffer buffer, DecoderState state, char defaultValue) throws IOException {
+    public char readCharacter(ProtonBuffer buffer, DecoderState state, char defaultValue) throws DecodeException {
         byte encodingCode = buffer.readByte();
 
         switch (encodingCode) {
@@ -397,12 +397,12 @@ public final class ProtonDecoder implements Decoder {
             case EncodingCodes.NULL:
                 return defaultValue;
             default:
-                throw new IOException("Expected Character type but found encoding: " + (encodingCode & 0xFF));
+                throw new DecodeException("Expected Character type but found encoding: " + (encodingCode & 0xFF));
         }
     }
 
     @Override
-    public Decimal32 readDecimal32(ProtonBuffer buffer, DecoderState state) throws IOException {
+    public Decimal32 readDecimal32(ProtonBuffer buffer, DecoderState state) throws DecodeException {
         byte encodingCode = buffer.readByte();
 
         switch (encodingCode) {
@@ -411,12 +411,12 @@ public final class ProtonDecoder implements Decoder {
             case EncodingCodes.NULL:
                 return null;
             default:
-                throw new IOException("Expected Decimal32 type but found encoding: " + (encodingCode & 0xFF));
+                throw new DecodeException("Expected Decimal32 type but found encoding: " + (encodingCode & 0xFF));
         }
     }
 
     @Override
-    public Decimal64 readDecimal64(ProtonBuffer buffer, DecoderState state) throws IOException {
+    public Decimal64 readDecimal64(ProtonBuffer buffer, DecoderState state) throws DecodeException {
         byte encodingCode = buffer.readByte();
 
         switch (encodingCode) {
@@ -425,12 +425,12 @@ public final class ProtonDecoder implements Decoder {
             case EncodingCodes.NULL:
                 return null;
             default:
-                throw new IOException("Expected Decimal64 type but found encoding: " + (encodingCode & 0xFF));
+                throw new DecodeException("Expected Decimal64 type but found encoding: " + (encodingCode & 0xFF));
         }
     }
 
     @Override
-    public Decimal128 readDecimal128(ProtonBuffer buffer, DecoderState state) throws IOException {
+    public Decimal128 readDecimal128(ProtonBuffer buffer, DecoderState state) throws DecodeException {
         byte encodingCode = buffer.readByte();
 
         switch (encodingCode) {
@@ -439,12 +439,12 @@ public final class ProtonDecoder implements Decoder {
             case EncodingCodes.NULL:
                 return null;
             default:
-                throw new IOException("Expected Decimal128 type but found encoding: " + (encodingCode & 0xFF));
+                throw new DecodeException("Expected Decimal128 type but found encoding: " + (encodingCode & 0xFF));
         }
     }
 
     @Override
-    public Short readShort(ProtonBuffer buffer, DecoderState state) throws IOException {
+    public Short readShort(ProtonBuffer buffer, DecoderState state) throws DecodeException {
         byte encodingCode = buffer.readByte();
 
         switch (encodingCode) {
@@ -453,12 +453,12 @@ public final class ProtonDecoder implements Decoder {
             case EncodingCodes.NULL:
                 return null;
             default:
-                throw new IOException("Expected Short type but found encoding: " + (encodingCode & 0xFF));
+                throw new DecodeException("Expected Short type but found encoding: " + (encodingCode & 0xFF));
         }
     }
 
     @Override
-    public short readShort(ProtonBuffer buffer, DecoderState state, short defaultValue) throws IOException {
+    public short readShort(ProtonBuffer buffer, DecoderState state, short defaultValue) throws DecodeException {
         byte encodingCode = buffer.readByte();
 
         switch (encodingCode) {
@@ -467,12 +467,12 @@ public final class ProtonDecoder implements Decoder {
             case EncodingCodes.NULL:
                 return defaultValue;
             default:
-                throw new IOException("Expected Short type but found encoding: " + (encodingCode & 0xFF));
+                throw new DecodeException("Expected Short type but found encoding: " + (encodingCode & 0xFF));
         }
     }
 
     @Override
-    public UnsignedShort readUnsignedShort(ProtonBuffer buffer, DecoderState state) throws IOException {
+    public UnsignedShort readUnsignedShort(ProtonBuffer buffer, DecoderState state) throws DecodeException {
         byte encodingCode = buffer.readByte();
 
         switch (encodingCode) {
@@ -481,12 +481,12 @@ public final class ProtonDecoder implements Decoder {
             case EncodingCodes.NULL:
                 return null;
             default:
-                throw new IOException("Expected UnsignedShort type but found encoding: " + (encodingCode & 0xFF));
+                throw new DecodeException("Expected UnsignedShort type but found encoding: " + (encodingCode & 0xFF));
         }
     }
 
     @Override
-    public short readUnsignedShort(ProtonBuffer buffer, DecoderState state, short defaultValue) throws IOException {
+    public short readUnsignedShort(ProtonBuffer buffer, DecoderState state, short defaultValue) throws DecodeException {
         byte encodingCode = buffer.readByte();
 
         switch (encodingCode) {
@@ -495,12 +495,12 @@ public final class ProtonDecoder implements Decoder {
             case EncodingCodes.NULL:
                 return defaultValue;
             default:
-                throw new IOException("Expected UnsignedShort type but found encoding: " + (encodingCode & 0xFF));
+                throw new DecodeException("Expected UnsignedShort type but found encoding: " + (encodingCode & 0xFF));
         }
     }
 
     @Override
-    public int readUnsignedShort(ProtonBuffer buffer, DecoderState state, int defaultValue) throws IOException {
+    public int readUnsignedShort(ProtonBuffer buffer, DecoderState state, int defaultValue) throws DecodeException {
         byte encodingCode = buffer.readByte();
 
         switch (encodingCode) {
@@ -509,12 +509,12 @@ public final class ProtonDecoder implements Decoder {
             case EncodingCodes.NULL:
                 return defaultValue;
             default:
-                throw new IOException("Expected UnsignedShort type but found encoding: " + (encodingCode & 0xFF));
+                throw new DecodeException("Expected UnsignedShort type but found encoding: " + (encodingCode & 0xFF));
         }
     }
 
     @Override
-    public Integer readInteger(ProtonBuffer buffer, DecoderState state) throws IOException {
+    public Integer readInteger(ProtonBuffer buffer, DecoderState state) throws DecodeException {
         byte encodingCode = buffer.readByte();
 
         switch (encodingCode) {
@@ -525,12 +525,12 @@ public final class ProtonDecoder implements Decoder {
             case EncodingCodes.NULL:
                 return null;
             default:
-                throw new IOException("Expected Integer type but found encoding: " + (encodingCode & 0xFF));
+                throw new DecodeException("Expected Integer type but found encoding: " + (encodingCode & 0xFF));
         }
     }
 
     @Override
-    public int readInteger(ProtonBuffer buffer, DecoderState state, int defaultValue) throws IOException {
+    public int readInteger(ProtonBuffer buffer, DecoderState state, int defaultValue) throws DecodeException {
         byte encodingCode = buffer.readByte();
 
         switch (encodingCode) {
@@ -541,12 +541,12 @@ public final class ProtonDecoder implements Decoder {
             case EncodingCodes.NULL:
                 return defaultValue;
             default:
-                throw new IOException("Expected Integer type but found encoding: " + (encodingCode & 0xFF));
+                throw new DecodeException("Expected Integer type but found encoding: " + (encodingCode & 0xFF));
         }
     }
 
     @Override
-    public UnsignedInteger readUnsignedInteger(ProtonBuffer buffer, DecoderState state) throws IOException {
+    public UnsignedInteger readUnsignedInteger(ProtonBuffer buffer, DecoderState state) throws DecodeException {
         byte encodingCode = buffer.readByte();
 
         switch (encodingCode) {
@@ -559,12 +559,12 @@ public final class ProtonDecoder implements Decoder {
             case EncodingCodes.NULL:
                 return null;
             default:
-                throw new IOException("Expected UnsignedInteger type but found encoding: " + (encodingCode & 0xFF));
+                throw new DecodeException("Expected UnsignedInteger type but found encoding: " + (encodingCode & 0xFF));
         }
     }
 
     @Override
-    public int readUnsignedInteger(ProtonBuffer buffer, DecoderState state, int defaultValue) throws IOException {
+    public int readUnsignedInteger(ProtonBuffer buffer, DecoderState state, int defaultValue) throws DecodeException {
         byte encodingCode = buffer.readByte();
 
         switch (encodingCode) {
@@ -577,12 +577,12 @@ public final class ProtonDecoder implements Decoder {
             case EncodingCodes.NULL:
                 return defaultValue;
             default:
-                throw new IOException("Expected UnsignedInteger type but found encoding: " + (encodingCode & 0xFF));
+                throw new DecodeException("Expected UnsignedInteger type but found encoding: " + (encodingCode & 0xFF));
         }
     }
 
     @Override
-    public long readUnsignedInteger(ProtonBuffer buffer, DecoderState state, long defaultValue) throws IOException {
+    public long readUnsignedInteger(ProtonBuffer buffer, DecoderState state, long defaultValue) throws DecodeException {
         byte encodingCode = buffer.readByte();
 
         switch (encodingCode) {
@@ -595,12 +595,12 @@ public final class ProtonDecoder implements Decoder {
             case EncodingCodes.NULL:
                 return defaultValue;
             default:
-                throw new IOException("Expected UnsignedInteger type but found encoding: " + (encodingCode & 0xFF));
+                throw new DecodeException("Expected UnsignedInteger type but found encoding: " + (encodingCode & 0xFF));
         }
     }
 
     @Override
-    public Long readLong(ProtonBuffer buffer, DecoderState state) throws IOException {
+    public Long readLong(ProtonBuffer buffer, DecoderState state) throws DecodeException {
         byte encodingCode = buffer.readByte();
 
         switch (encodingCode) {
@@ -611,12 +611,12 @@ public final class ProtonDecoder implements Decoder {
             case EncodingCodes.NULL:
                 return null;
             default:
-                throw new IOException("Expected Long type but found encoding: " + (encodingCode & 0xFF));
+                throw new DecodeException("Expected Long type but found encoding: " + (encodingCode & 0xFF));
         }
     }
 
     @Override
-    public long readLong(ProtonBuffer buffer, DecoderState state, long defaultValue) throws IOException {
+    public long readLong(ProtonBuffer buffer, DecoderState state, long defaultValue) throws DecodeException {
         byte encodingCode = buffer.readByte();
 
         switch (encodingCode) {
@@ -627,12 +627,12 @@ public final class ProtonDecoder implements Decoder {
             case EncodingCodes.NULL:
                 return defaultValue;
             default:
-                throw new IOException("Expected Long type but found encoding: " + (encodingCode & 0xFF));
+                throw new DecodeException("Expected Long type but found encoding: " + (encodingCode & 0xFF));
         }
     }
 
     @Override
-    public UnsignedLong readUnsignedLong(ProtonBuffer buffer, DecoderState state) throws IOException {
+    public UnsignedLong readUnsignedLong(ProtonBuffer buffer, DecoderState state) throws DecodeException {
         byte encodingCode = buffer.readByte();
 
         switch (encodingCode) {
@@ -645,12 +645,12 @@ public final class ProtonDecoder implements Decoder {
             case EncodingCodes.NULL:
                 return null;
             default:
-                throw new IOException("Expected Long type but found encoding: " + (encodingCode & 0xFF));
+                throw new DecodeException("Expected Long type but found encoding: " + (encodingCode & 0xFF));
         }
     }
 
     @Override
-    public long readUnsignedLong(ProtonBuffer buffer, DecoderState state, long defaultValue) throws IOException {
+    public long readUnsignedLong(ProtonBuffer buffer, DecoderState state, long defaultValue) throws DecodeException {
         byte encodingCode = buffer.readByte();
 
         switch (encodingCode) {
@@ -663,12 +663,12 @@ public final class ProtonDecoder implements Decoder {
             case EncodingCodes.NULL:
                 return defaultValue;
             default:
-                throw new IOException("Expected Long type but found encoding: " + (encodingCode & 0xFF));
+                throw new DecodeException("Expected Long type but found encoding: " + (encodingCode & 0xFF));
         }
     }
 
     @Override
-    public Float readFloat(ProtonBuffer buffer, DecoderState state) throws IOException {
+    public Float readFloat(ProtonBuffer buffer, DecoderState state) throws DecodeException {
         byte encodingCode = buffer.readByte();
 
         switch (encodingCode) {
@@ -677,12 +677,12 @@ public final class ProtonDecoder implements Decoder {
             case EncodingCodes.NULL:
                 return null;
             default:
-                throw new IOException("Expected Float type but found encoding: " + (encodingCode & 0xFF));
+                throw new DecodeException("Expected Float type but found encoding: " + (encodingCode & 0xFF));
         }
     }
 
     @Override
-    public float readFloat(ProtonBuffer buffer, DecoderState state, float defaultValue) throws IOException {
+    public float readFloat(ProtonBuffer buffer, DecoderState state, float defaultValue) throws DecodeException {
         byte encodingCode = buffer.readByte();
 
         switch (encodingCode) {
@@ -691,12 +691,12 @@ public final class ProtonDecoder implements Decoder {
             case EncodingCodes.NULL:
                 return defaultValue;
             default:
-                throw new IOException("Expected Float type but found encoding: " + (encodingCode & 0xFF));
+                throw new DecodeException("Expected Float type but found encoding: " + (encodingCode & 0xFF));
         }
     }
 
     @Override
-    public Double readDouble(ProtonBuffer buffer, DecoderState state) throws IOException {
+    public Double readDouble(ProtonBuffer buffer, DecoderState state) throws DecodeException {
         byte encodingCode = buffer.readByte();
 
         switch (encodingCode) {
@@ -705,12 +705,12 @@ public final class ProtonDecoder implements Decoder {
             case EncodingCodes.NULL:
                 return null;
             default:
-                throw new IOException("Expected Double type but found encoding: " + (encodingCode & 0xFF));
+                throw new DecodeException("Expected Double type but found encoding: " + (encodingCode & 0xFF));
         }
     }
 
     @Override
-    public double readDouble(ProtonBuffer buffer, DecoderState state, double defaultValue) throws IOException {
+    public double readDouble(ProtonBuffer buffer, DecoderState state, double defaultValue) throws DecodeException {
         byte encodingCode = buffer.readByte();
 
         switch (encodingCode) {
@@ -719,12 +719,12 @@ public final class ProtonDecoder implements Decoder {
             case EncodingCodes.NULL:
                 return defaultValue;
             default:
-                throw new IOException("Expected Double type but found encoding: " + (encodingCode & 0xFF));
+                throw new DecodeException("Expected Double type but found encoding: " + (encodingCode & 0xFF));
         }
     }
 
     @Override
-    public Binary readBinary(ProtonBuffer buffer, DecoderState state) throws IOException {
+    public Binary readBinary(ProtonBuffer buffer, DecoderState state) throws DecodeException {
         byte encodingCode = buffer.readByte();
 
         switch (encodingCode) {
@@ -735,12 +735,12 @@ public final class ProtonDecoder implements Decoder {
             case EncodingCodes.NULL:
                 return null;
             default:
-                throw new IOException("Expected Binary type but found encoding: " + (encodingCode & 0xFF));
+                throw new DecodeException("Expected Binary type but found encoding: " + (encodingCode & 0xFF));
         }
     }
 
     @Override
-    public ProtonBuffer readBinaryAsBuffer(ProtonBuffer buffer, DecoderState state) throws IOException {
+    public ProtonBuffer readBinaryAsBuffer(ProtonBuffer buffer, DecoderState state) throws DecodeException {
         byte encodingCode = buffer.readByte();
 
         switch (encodingCode) {
@@ -751,12 +751,12 @@ public final class ProtonDecoder implements Decoder {
             case EncodingCodes.NULL:
                 return null;
             default:
-                throw new IOException("Expected Binary type but found encoding: " + (encodingCode & 0xFF));
+                throw new DecodeException("Expected Binary type but found encoding: " + (encodingCode & 0xFF));
         }
     }
 
     @Override
-    public DeliveryTag readDeliveryTag(ProtonBuffer buffer, DecoderState state) throws IOException {
+    public DeliveryTag readDeliveryTag(ProtonBuffer buffer, DecoderState state) throws DecodeException {
         byte encodingCode = buffer.readByte();
 
         switch (encodingCode) {
@@ -767,12 +767,12 @@ public final class ProtonDecoder implements Decoder {
             case EncodingCodes.NULL:
                 return null;
             default:
-                throw new IOException("Expected Binary type but found encoding: " + (encodingCode & 0xFF));
+                throw new DecodeException("Expected Binary type but found encoding: " + (encodingCode & 0xFF));
         }
     }
 
     @Override
-    public String readString(ProtonBuffer buffer, DecoderState state) throws IOException {
+    public String readString(ProtonBuffer buffer, DecoderState state) throws DecodeException {
         byte encodingCode = buffer.readByte();
 
         switch (encodingCode) {
@@ -783,12 +783,12 @@ public final class ProtonDecoder implements Decoder {
             case EncodingCodes.NULL:
                 return null;
             default:
-                throw new IOException("Expected String type but found encoding: " + (encodingCode & 0xFF));
+                throw new DecodeException("Expected String type but found encoding: " + (encodingCode & 0xFF));
         }
     }
 
     @Override
-    public Symbol readSymbol(ProtonBuffer buffer, DecoderState state) throws IOException {
+    public Symbol readSymbol(ProtonBuffer buffer, DecoderState state) throws DecodeException {
         byte encodingCode = buffer.readByte();
 
         switch (encodingCode) {
@@ -799,12 +799,12 @@ public final class ProtonDecoder implements Decoder {
             case EncodingCodes.NULL:
                 return null;
             default:
-                throw new IOException("Expected Symbol type but found encoding: " + (encodingCode & 0xFF));
+                throw new DecodeException("Expected Symbol type but found encoding: " + (encodingCode & 0xFF));
         }
     }
 
     @Override
-    public String readSymbol(ProtonBuffer buffer, DecoderState state, String defaultValue) throws IOException {
+    public String readSymbol(ProtonBuffer buffer, DecoderState state, String defaultValue) throws DecodeException {
         byte encodingCode = buffer.readByte();
 
         switch (encodingCode) {
@@ -815,12 +815,12 @@ public final class ProtonDecoder implements Decoder {
             case EncodingCodes.NULL:
                 return defaultValue;
             default:
-                throw new IOException("Expected Symbol type but found encoding: " + (encodingCode & 0xFF));
+                throw new DecodeException("Expected Symbol type but found encoding: " + (encodingCode & 0xFF));
         }
     }
 
     @Override
-    public Long readTimestamp(ProtonBuffer buffer, DecoderState state) throws IOException {
+    public Long readTimestamp(ProtonBuffer buffer, DecoderState state) throws DecodeException {
         byte encodingCode = buffer.readByte();
 
         switch (encodingCode) {
@@ -829,12 +829,12 @@ public final class ProtonDecoder implements Decoder {
             case EncodingCodes.NULL:
                 return null;
             default:
-                throw new IOException("Expected Timestamp type but found encoding: " + (encodingCode & 0xFF));
+                throw new DecodeException("Expected Timestamp type but found encoding: " + (encodingCode & 0xFF));
         }
     }
 
     @Override
-    public long readTimestamp(ProtonBuffer buffer, DecoderState state, long defaultValue) throws IOException {
+    public long readTimestamp(ProtonBuffer buffer, DecoderState state, long defaultValue) throws DecodeException {
         byte encodingCode = buffer.readByte();
 
         switch (encodingCode) {
@@ -843,12 +843,12 @@ public final class ProtonDecoder implements Decoder {
             case EncodingCodes.NULL:
                 return defaultValue;
             default:
-                throw new IOException("Expected Timestamp type but found encoding: " + (encodingCode & 0xFF));
+                throw new DecodeException("Expected Timestamp type but found encoding: " + (encodingCode & 0xFF));
         }
     }
 
     @Override
-    public UUID readUUID(ProtonBuffer buffer, DecoderState state) throws IOException {
+    public UUID readUUID(ProtonBuffer buffer, DecoderState state) throws DecodeException {
         byte encodingCode = buffer.readByte();
 
         switch (encodingCode) {
@@ -857,13 +857,13 @@ public final class ProtonDecoder implements Decoder {
             case EncodingCodes.NULL:
                 return null;
             default:
-                throw new IOException("Expected UUID type but found encoding: " + (encodingCode & 0xFF));
+                throw new DecodeException("Expected UUID type but found encoding: " + (encodingCode & 0xFF));
         }
     }
 
     @SuppressWarnings("unchecked")
     @Override
-    public <K, V> Map<K, V> readMap(ProtonBuffer buffer, DecoderState state) throws IOException {
+    public <K, V> Map<K, V> readMap(ProtonBuffer buffer, DecoderState state) throws DecodeException {
         byte encodingCode = buffer.readByte();
 
         switch (encodingCode) {
@@ -874,13 +874,13 @@ public final class ProtonDecoder implements Decoder {
             case EncodingCodes.NULL:
                 return null;
             default:
-                throw new IOException("Expected Map type but found encoding: " + (encodingCode & 0xFF));
+                throw new DecodeException("Expected Map type but found encoding: " + (encodingCode & 0xFF));
         }
     }
 
     @SuppressWarnings("unchecked")
     @Override
-    public <V> List<V> readList(ProtonBuffer buffer, DecoderState state) throws IOException {
+    public <V> List<V> readList(ProtonBuffer buffer, DecoderState state) throws DecodeException {
         byte encodingCode = buffer.readByte();
 
         switch (encodingCode) {
@@ -893,7 +893,7 @@ public final class ProtonDecoder implements Decoder {
             case EncodingCodes.NULL:
                 return null;
             default:
-                throw new IOException("Expected List type but found encoding: " + (encodingCode & 0xFF));
+                throw new DecodeException("Expected List type but found encoding: " + (encodingCode & 0xFF));
         }
     }
 

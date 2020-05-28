@@ -30,6 +30,7 @@ import org.apache.qpid.proton4j.amqp.transactions.Discharge;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.codec.CodecTestSupport;
+import org.apache.qpid.proton4j.codec.DecodeException;
 import org.apache.qpid.proton4j.codec.EncodingCodes;
 import org.apache.qpid.proton4j.codec.TypeDecoder;
 import org.apache.qpid.proton4j.codec.decoders.transactions.DischargeTypeDecoder;
@@ -167,7 +168,7 @@ public class DischargeTypeCodecTest extends CodecTestSupport {
         try {
             typeDecoder.skipValue(buffer, decoderState);
             fail("Should not be able to skip type with invalid encoding");
-        } catch (IOException ex) {}
+        } catch (DecodeException ex) {}
     }
 
     @Test
@@ -199,7 +200,7 @@ public class DischargeTypeCodecTest extends CodecTestSupport {
         try {
             decoder.readObject(buffer, decoderState);
             fail("Should not decode type with invalid encoding");
-        } catch (IOException ex) {}
+        } catch (DecodeException ex) {}
     }
 
     @Test

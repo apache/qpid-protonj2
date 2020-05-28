@@ -16,12 +16,11 @@
  */
 package org.apache.qpid.proton4j.codec.decoders.transport;
 
-import java.io.IOException;
-
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.amqp.transport.Open;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import org.apache.qpid.proton4j.codec.DecodeException;
 import org.apache.qpid.proton4j.codec.DecoderState;
 import org.apache.qpid.proton4j.codec.EncodingCodes;
 import org.apache.qpid.proton4j.codec.TypeDecoder;
@@ -52,7 +51,7 @@ public final class OpenTypeDecoder extends AbstractDescribedTypeDecoder<Open> {
     }
 
     @Override
-    public Open readValue(ProtonBuffer buffer, DecoderState state) throws IOException {
+    public Open readValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
         TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
         checkIsExpectedType(ListTypeDecoder.class, decoder);
@@ -61,7 +60,7 @@ public final class OpenTypeDecoder extends AbstractDescribedTypeDecoder<Open> {
     }
 
     @Override
-    public Open[] readArrayElements(ProtonBuffer buffer, DecoderState state, int count) throws IOException {
+    public Open[] readArrayElements(ProtonBuffer buffer, DecoderState state, int count) throws DecodeException {
         TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
         checkIsExpectedType(ListTypeDecoder.class, decoder);
@@ -75,7 +74,7 @@ public final class OpenTypeDecoder extends AbstractDescribedTypeDecoder<Open> {
     }
 
     @Override
-    public void skipValue(ProtonBuffer buffer, DecoderState state) throws IOException {
+    public void skipValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
         TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
         checkIsExpectedType(ListTypeDecoder.class, decoder);
@@ -83,7 +82,7 @@ public final class OpenTypeDecoder extends AbstractDescribedTypeDecoder<Open> {
         decoder.skipValue(buffer, state);
     }
 
-    private Open readOpen(ProtonBuffer buffer, DecoderState state, ListTypeDecoder listDecoder) throws IOException {
+    private Open readOpen(ProtonBuffer buffer, DecoderState state, ListTypeDecoder listDecoder) throws DecodeException {
         Open open = new Open();
 
         @SuppressWarnings("unused")
@@ -91,10 +90,10 @@ public final class OpenTypeDecoder extends AbstractDescribedTypeDecoder<Open> {
         int count = listDecoder.readCount(buffer);
 
         if (count < MIN_OPEN_LIST_ENTRIES) {
-            throw new IllegalStateException("Not enough entries in Open list encoding: " + count);
+            throw new DecodeException("Not enough entries in Open list encoding: " + count);
         }
         if (count > MAX_OPEN_LIST_ENTRIES) {
-            throw new IllegalStateException("To many entries in Open list encoding: " + count);
+            throw new DecodeException("To many entries in Open list encoding: " + count);
         }
 
         for (int index = 0; index < count; ++index) {
@@ -139,7 +138,7 @@ public final class OpenTypeDecoder extends AbstractDescribedTypeDecoder<Open> {
                     open.setProperties(state.getDecoder().readMap(buffer, state));
                     break;
                 default:
-                    throw new IllegalStateException("To many entries in Open encoding");
+                    throw new DecodeException("To many entries in Open encoding");
             }
         }
 

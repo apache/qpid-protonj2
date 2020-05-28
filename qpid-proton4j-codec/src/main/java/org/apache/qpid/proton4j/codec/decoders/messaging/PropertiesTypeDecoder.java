@@ -16,12 +16,11 @@
  */
 package org.apache.qpid.proton4j.codec.decoders.messaging;
 
-import java.io.IOException;
-
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.amqp.messaging.Properties;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import org.apache.qpid.proton4j.codec.DecodeException;
 import org.apache.qpid.proton4j.codec.DecoderState;
 import org.apache.qpid.proton4j.codec.EncodingCodes;
 import org.apache.qpid.proton4j.codec.TypeDecoder;
@@ -52,7 +51,7 @@ public final class PropertiesTypeDecoder extends AbstractDescribedTypeDecoder<Pr
     }
 
     @Override
-    public Properties readValue(ProtonBuffer buffer, DecoderState state) throws IOException {
+    public Properties readValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
         TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
         checkIsExpectedType(ListTypeDecoder.class, decoder);
@@ -61,7 +60,7 @@ public final class PropertiesTypeDecoder extends AbstractDescribedTypeDecoder<Pr
     }
 
     @Override
-    public Properties[] readArrayElements(ProtonBuffer buffer, DecoderState state, int count) throws IOException {
+    public Properties[] readArrayElements(ProtonBuffer buffer, DecoderState state, int count) throws DecodeException {
         TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
         checkIsExpectedType(ListTypeDecoder.class, decoder);
@@ -75,7 +74,7 @@ public final class PropertiesTypeDecoder extends AbstractDescribedTypeDecoder<Pr
     }
 
     @Override
-    public void skipValue(ProtonBuffer buffer, DecoderState state) throws IOException {
+    public void skipValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
         TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
         checkIsExpectedType(ListTypeDecoder.class, decoder);
@@ -83,7 +82,7 @@ public final class PropertiesTypeDecoder extends AbstractDescribedTypeDecoder<Pr
         decoder.skipValue(buffer, state);
     }
 
-    private Properties readProperties(ProtonBuffer buffer, DecoderState state, ListTypeDecoder listDecoder) throws IOException {
+    private Properties readProperties(ProtonBuffer buffer, DecoderState state, ListTypeDecoder listDecoder) throws DecodeException {
         Properties properties = new Properties();
 
         @SuppressWarnings("unused")
@@ -92,11 +91,11 @@ public final class PropertiesTypeDecoder extends AbstractDescribedTypeDecoder<Pr
 
         // Don't decode anything if things already look wrong.
         if (count < MIN_PROPERTIES_LIST_ENTRIES) {
-            throw new IllegalStateException("Not enough entries in Properties list encoding: " + count);
+            throw new DecodeException("Not enough entries in Properties list encoding: " + count);
         }
 
         if (count > MAX_PROPERTIES_LIST_ENTRIES) {
-            throw new IllegalStateException("To many entries in Properties list encoding: " + count);
+            throw new DecodeException("To many entries in Properties list encoding: " + count);
         }
 
         for (int index = 0; index < count; ++index) {
@@ -150,7 +149,7 @@ public final class PropertiesTypeDecoder extends AbstractDescribedTypeDecoder<Pr
                     properties.setReplyToGroupId(state.getDecoder().readString(buffer, state));
                     break;
                 default:
-                    throw new IllegalStateException("To many entries in Properties encoding");
+                    throw new DecodeException("To many entries in Properties encoding");
             }
         }
 

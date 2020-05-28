@@ -16,9 +16,8 @@
  */
 package org.apache.qpid.proton4j.codec.decoders.primitives;
 
-import java.io.IOException;
-
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import org.apache.qpid.proton4j.codec.DecodeException;
 import org.apache.qpid.proton4j.codec.DecoderState;
 import org.apache.qpid.proton4j.codec.EncodingCodes;
 import org.apache.qpid.proton4j.codec.TypeDecoder;
@@ -45,12 +44,12 @@ public abstract class AbstractArrayTypeDecoder extends AbstractPrimitiveTypeDeco
     }
 
     @Override
-    public Object readValue(ProtonBuffer buffer, DecoderState state) throws IOException {
+    public Object readValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
         return readValueAsObject(buffer, state);
     }
 
     @Override
-    public Object[] readValueAsObjectArray(ProtonBuffer buffer, DecoderState state) throws IOException {
+    public Object[] readValueAsObjectArray(ProtonBuffer buffer, DecoderState state) throws DecodeException {
         int size = readSize(buffer);
         int count = readCount(buffer);
 
@@ -61,7 +60,7 @@ public abstract class AbstractArrayTypeDecoder extends AbstractPrimitiveTypeDeco
         }
 
         if (size > buffer.getReadableBytes()) {
-            throw new IllegalArgumentException(String.format(
+            throw new DecodeException(String.format(
                 "Array size indicated %d is greater than the amount of data available to decode (%d)",
                 size, buffer.getReadableBytes()));
         }
@@ -70,7 +69,7 @@ public abstract class AbstractArrayTypeDecoder extends AbstractPrimitiveTypeDeco
     }
 
     @Override
-    public Object readValueAsObject(ProtonBuffer buffer, DecoderState state) throws IOException {
+    public Object readValueAsObject(ProtonBuffer buffer, DecoderState state) throws DecodeException {
         int size = readSize(buffer);
         int count = readCount(buffer);
 
@@ -81,7 +80,7 @@ public abstract class AbstractArrayTypeDecoder extends AbstractPrimitiveTypeDeco
         }
 
         if (size > buffer.getReadableBytes()) {
-            throw new IllegalArgumentException(String.format(
+            throw new DecodeException(String.format(
                 "Array size indicated %d is greater than the amount of data available to decode (%d)",
                 size, buffer.getReadableBytes()));
         }
@@ -90,7 +89,7 @@ public abstract class AbstractArrayTypeDecoder extends AbstractPrimitiveTypeDeco
     }
 
     @Override
-    public void skipValue(ProtonBuffer buffer, DecoderState state) throws IOException {
+    public void skipValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
         buffer.skipBytes(readSize(buffer));
     }
 
@@ -98,15 +97,15 @@ public abstract class AbstractArrayTypeDecoder extends AbstractPrimitiveTypeDeco
 
     protected abstract int readCount(ProtonBuffer buffer);
 
-    private static Object[] decodeAsArray(ProtonBuffer buffer, DecoderState state, final int count) throws IOException {
+    private static Object[] decodeAsArray(ProtonBuffer buffer, DecoderState state, final int count) throws DecodeException {
         PrimitiveTypeDecoder<?> decoder = (PrimitiveTypeDecoder<?>) state.getDecoder().readNextTypeDecoder(buffer, state);
         return decodeNonPrimitiveArray(decoder, buffer, state, count);
     }
 
-    private static Object[] decodeNonPrimitiveArray(TypeDecoder<?> decoder, ProtonBuffer buffer, DecoderState state, int count) throws IOException {
+    private static Object[] decodeNonPrimitiveArray(TypeDecoder<?> decoder, ProtonBuffer buffer, DecoderState state, int count) throws DecodeException {
 
         if (count > buffer.getReadableBytes()) {
-            throw new IllegalArgumentException(String.format(
+            throw new DecodeException(String.format(
                 "Array element count %d is specified to be greater than the amount of data available (%d)",
                 count, buffer.getReadableBytes()));
         }
@@ -125,7 +124,7 @@ public abstract class AbstractArrayTypeDecoder extends AbstractPrimitiveTypeDeco
         }
     }
 
-    private static Object decodeAsObject(ProtonBuffer buffer, DecoderState state, int count) throws IOException {
+    private static Object decodeAsObject(ProtonBuffer buffer, DecoderState state, int count) throws DecodeException {
 
         TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
@@ -133,7 +132,7 @@ public abstract class AbstractArrayTypeDecoder extends AbstractPrimitiveTypeDeco
             PrimitiveTypeDecoder<?> primitiveTypeDecoder = (PrimitiveTypeDecoder<?>) decoder;
             if (primitiveTypeDecoder.isJavaPrimitive()) {
                 if (count > buffer.getReadableBytes()) {
-                    throw new IllegalArgumentException(String.format(
+                    throw new DecodeException(String.format(
                         "Array element count %d is specified to be greater than the amount of data available (%d)",
                         count, buffer.getReadableBytes()));
                 }
@@ -157,7 +156,7 @@ public abstract class AbstractArrayTypeDecoder extends AbstractPrimitiveTypeDeco
                 } else if (Character.class.equals(typeClass)) {
                     return decodePrimitiveTypeArray((CharacterTypeDecoder) decoder, buffer, state, count);
                 } else {
-                    throw new ClassCastException("Unexpected class " + decoder.getClass().getName());
+                    throw new DecodeException("Unexpected class " + decoder.getClass().getName());
                 }
             }
         }

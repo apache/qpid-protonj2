@@ -16,14 +16,13 @@
  */
 package org.apache.qpid.proton4j.codec.decoders.messaging;
 
-import java.io.IOException;
-
 import org.apache.qpid.proton4j.amqp.Binary;
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.amqp.messaging.Data;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
+import org.apache.qpid.proton4j.codec.DecodeException;
 import org.apache.qpid.proton4j.codec.DecoderState;
 import org.apache.qpid.proton4j.codec.EncodingCodes;
 import org.apache.qpid.proton4j.codec.TypeDecoder;
@@ -53,7 +52,7 @@ public final class DataTypeDecoder extends AbstractDescribedTypeDecoder<Data> {
     }
 
     @Override
-    public Data readValue(ProtonBuffer buffer, DecoderState state) throws IOException {
+    public Data readValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
         final byte encodingCode = buffer.readByte();
         final int size;
 
@@ -67,12 +66,12 @@ public final class DataTypeDecoder extends AbstractDescribedTypeDecoder<Data> {
             case EncodingCodes.NULL:
                 return EMPTY_DATA;
             default:
-                throw new IOException("Expected Binary type but found encoding: " + encodingCode);
+                throw new DecodeException("Expected Binary type but found encoding: " + encodingCode);
         }
 
         if (size > buffer.getReadableBytes()) {
-            throw new IllegalArgumentException("Binary data size " + size + " is specified to be greater than the " +
-                                               "amount of data available ("+ buffer.getReadableBytes()+")");
+            throw new DecodeException("Binary data size " + size + " is specified to be greater than the " +
+                                      "amount of data available ("+ buffer.getReadableBytes()+")");
         }
 
         final int position = buffer.getReadIndex();
@@ -91,7 +90,7 @@ public final class DataTypeDecoder extends AbstractDescribedTypeDecoder<Data> {
     }
 
     @Override
-    public Data[] readArrayElements(ProtonBuffer buffer, DecoderState state, int count) throws IOException {
+    public Data[] readArrayElements(ProtonBuffer buffer, DecoderState state, int count) throws DecodeException {
         final TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
         checkIsExpectedType(BinaryTypeDecoder.class, decoder);
@@ -108,7 +107,7 @@ public final class DataTypeDecoder extends AbstractDescribedTypeDecoder<Data> {
     }
 
     @Override
-    public void skipValue(ProtonBuffer buffer, DecoderState state) throws IOException {
+    public void skipValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
         final TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
         checkIsExpectedType(BinaryTypeDecoder.class, decoder);

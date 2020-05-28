@@ -16,14 +16,13 @@
  */
 package org.apache.qpid.proton4j.codec.decoders.transport;
 
-import java.io.IOException;
-
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.amqp.transport.DeliveryState;
 import org.apache.qpid.proton4j.amqp.transport.Disposition;
 import org.apache.qpid.proton4j.amqp.transport.Role;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import org.apache.qpid.proton4j.codec.DecodeException;
 import org.apache.qpid.proton4j.codec.DecoderState;
 import org.apache.qpid.proton4j.codec.EncodingCodes;
 import org.apache.qpid.proton4j.codec.TypeDecoder;
@@ -54,7 +53,7 @@ public final class DispositionTypeDecoder extends AbstractDescribedTypeDecoder<D
     }
 
     @Override
-    public Disposition readValue(ProtonBuffer buffer, DecoderState state) throws IOException {
+    public Disposition readValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
         TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
         checkIsExpectedType(ListTypeDecoder.class, decoder);
@@ -63,7 +62,7 @@ public final class DispositionTypeDecoder extends AbstractDescribedTypeDecoder<D
     }
 
     @Override
-    public Disposition[] readArrayElements(ProtonBuffer buffer, DecoderState state, int count) throws IOException {
+    public Disposition[] readArrayElements(ProtonBuffer buffer, DecoderState state, int count) throws DecodeException {
         TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
         checkIsExpectedType(ListTypeDecoder.class, decoder);
@@ -77,7 +76,7 @@ public final class DispositionTypeDecoder extends AbstractDescribedTypeDecoder<D
     }
 
     @Override
-    public void skipValue(ProtonBuffer buffer, DecoderState state) throws IOException {
+    public void skipValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
         TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
         checkIsExpectedType(ListTypeDecoder.class, decoder);
@@ -85,7 +84,7 @@ public final class DispositionTypeDecoder extends AbstractDescribedTypeDecoder<D
         decoder.skipValue(buffer, state);
     }
 
-    private Disposition readDisposition(ProtonBuffer buffer, DecoderState state, ListTypeDecoder listDecoder) throws IOException {
+    private Disposition readDisposition(ProtonBuffer buffer, DecoderState state, ListTypeDecoder listDecoder) throws DecodeException {
         Disposition disposition = new Disposition();
 
         @SuppressWarnings("unused")
@@ -93,11 +92,11 @@ public final class DispositionTypeDecoder extends AbstractDescribedTypeDecoder<D
         int count = listDecoder.readCount(buffer);
 
         if (count < MIN_DISPOSITION_LIST_ENTRIES) {
-            throw new IllegalStateException("Not enough entries in Disposition list encoding: " + count);
+            throw new DecodeException("Not enough entries in Disposition list encoding: " + count);
         }
 
         if (count > MAX_DISPOSITION_LIST_ENTRIES) {
-            throw new IllegalStateException("To many entries in Disposition list encoding: " + count);
+            throw new DecodeException("To many entries in Disposition list encoding: " + count);
         }
 
         for (int index = 0; index < count; ++index) {
@@ -130,7 +129,7 @@ public final class DispositionTypeDecoder extends AbstractDescribedTypeDecoder<D
                     disposition.setBatchable(state.getDecoder().readBoolean(buffer, state, false));
                     break;
                 default:
-                    throw new IllegalStateException("To many entries in Disposition encoding");
+                    throw new DecodeException("To many entries in Disposition encoding");
             }
         }
 

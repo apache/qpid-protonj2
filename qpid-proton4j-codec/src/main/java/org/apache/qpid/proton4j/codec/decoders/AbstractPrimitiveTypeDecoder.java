@@ -16,10 +16,10 @@
  */
 package org.apache.qpid.proton4j.codec.decoders;
 
-import java.io.IOException;
 import java.lang.reflect.Array;
 
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import org.apache.qpid.proton4j.codec.DecodeException;
 import org.apache.qpid.proton4j.codec.DecoderState;
 
 /**
@@ -42,7 +42,7 @@ public abstract class AbstractPrimitiveTypeDecoder<V> implements PrimitiveTypeDe
 
     @SuppressWarnings("unchecked")
     @Override
-    public V[] readArrayElements(ProtonBuffer buffer, DecoderState state, int count) throws IOException {
+    public V[] readArrayElements(ProtonBuffer buffer, DecoderState state, int count) throws DecodeException {
         V[] array = (V[]) Array.newInstance(getTypeClass(), count);
         for (int i = 0; i < count; ++i) {
             array[i] = readValue(buffer, state);

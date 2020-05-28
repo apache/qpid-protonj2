@@ -16,9 +16,8 @@
  */
 package org.apache.qpid.proton4j.codec.decoders.primitives;
 
-import java.io.IOException;
-
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import org.apache.qpid.proton4j.codec.DecodeException;
 import org.apache.qpid.proton4j.codec.DecoderState;
 import org.apache.qpid.proton4j.codec.EncodingCodes;
 import org.apache.qpid.proton4j.codec.decoders.AbstractPrimitiveTypeDecoder;
@@ -44,16 +43,16 @@ public final class FloatTypeDecoder extends AbstractPrimitiveTypeDecoder<Float> 
     }
 
     @Override
-    public Float readValue(ProtonBuffer buffer, DecoderState state) {
+    public Float readValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
         return buffer.readFloat();
     }
 
-    public float readPrimitiveValue(ProtonBuffer buffer, DecoderState state) {
+    public float readPrimitiveValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
         return buffer.readFloat();
     }
 
     @Override
-    public void skipValue(ProtonBuffer buffer, DecoderState state) throws IOException {
+    public void skipValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
         buffer.skipBytes(Float.BYTES);
     }
 }

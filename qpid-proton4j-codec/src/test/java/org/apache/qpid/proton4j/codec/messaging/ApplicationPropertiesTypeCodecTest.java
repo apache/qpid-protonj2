@@ -33,6 +33,7 @@ import org.apache.qpid.proton4j.amqp.messaging.Modified;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.codec.CodecTestSupport;
+import org.apache.qpid.proton4j.codec.DecodeException;
 import org.apache.qpid.proton4j.codec.EncodingCodes;
 import org.apache.qpid.proton4j.codec.TypeDecoder;
 import org.apache.qpid.proton4j.codec.decoders.messaging.ApplicationPropertiesTypeDecoder;
@@ -228,7 +229,7 @@ public class ApplicationPropertiesTypeCodecTest extends CodecTestSupport {
         try {
             typeDecoder.skipValue(buffer, decoderState);
             fail("Should not be able to skip type with invalid encoding");
-        } catch (IOException ex) {}
+        } catch (DecodeException ex) {}
     }
 
     @Test
@@ -245,7 +246,7 @@ public class ApplicationPropertiesTypeCodecTest extends CodecTestSupport {
 
         try {
             typeDecoder.skipValue(buffer, decoderState);
-        } catch (IOException ex) {
+        } catch (DecodeException ex) {
             fail("Should be able to skip type with null inner encoding");
         }
     }

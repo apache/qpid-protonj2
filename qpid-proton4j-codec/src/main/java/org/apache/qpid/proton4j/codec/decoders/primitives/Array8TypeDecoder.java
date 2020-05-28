@@ -17,6 +17,7 @@
 package org.apache.qpid.proton4j.codec.decoders.primitives;
 
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import org.apache.qpid.proton4j.codec.DecodeException;
 import org.apache.qpid.proton4j.codec.EncodingCodes;
 
 /**
@@ -30,12 +31,12 @@ public final class Array8TypeDecoder extends AbstractArrayTypeDecoder {
     }
 
     @Override
-    protected int readSize(ProtonBuffer buffer) {
+    protected int readSize(ProtonBuffer buffer) throws DecodeException {
         return buffer.readByte() & 0xff;
     }
 
     @Override
-    protected int readCount(ProtonBuffer buffer) {
+    protected int readCount(ProtonBuffer buffer) throws DecodeException {
         return buffer.readByte() & 0xff;
     }
 }

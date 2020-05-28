@@ -16,9 +16,8 @@
  */
 package org.apache.qpid.proton4j.codec.decoders;
 
-import java.io.IOException;
-
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import org.apache.qpid.proton4j.codec.DecodeException;
 import org.apache.qpid.proton4j.codec.DecoderState;
 
 /**
@@ -41,9 +40,9 @@ public interface PrimitiveArrayTypeDecoder extends PrimitiveTypeDecoder<Object> 
      *
      * @return an opaque Object[] that represents the underlying array.
      *
-     * @throws IOException if an error occurs during the decode.
+     * @throws DecodeException if an error occurs during the decode.
      */
-    Object[] readValueAsObjectArray(ProtonBuffer buffer, DecoderState state) throws IOException;
+    Object[] readValueAsObjectArray(ProtonBuffer buffer, DecoderState state) throws DecodeException;
 
     /**
      * Reads the encoded Array and returns it as an opaque Object rather
@@ -57,8 +56,8 @@ public interface PrimitiveArrayTypeDecoder extends PrimitiveTypeDecoder<Object> 
      *
      * @return an opaque object that represents the underlying array.
      *
-     * @throws IOException if an error occurs during the decode.
+     * @throws DecodeException if an error occurs during the decode.
      */
-    Object readValueAsObject(ProtonBuffer buffer, DecoderState state) throws IOException;
+    Object readValueAsObject(ProtonBuffer buffer, DecoderState state) throws DecodeException;
 
 }

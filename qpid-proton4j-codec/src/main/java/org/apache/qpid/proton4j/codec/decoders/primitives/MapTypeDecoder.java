@@ -19,6 +19,7 @@ package org.apache.qpid.proton4j.codec.decoders.primitives;
 import java.util.Map;
 
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import org.apache.qpid.proton4j.codec.DecodeException;
 import org.apache.qpid.proton4j.codec.decoders.PrimitiveTypeDecoder;
 
 /**
@@ -39,8 +40,10 @@ public interface MapTypeDecoder extends PrimitiveTypeDecoder<Map> {
      *      The buffer containing the encoded Map type.
      *
      * @return the size in bytes of the encoded Map.
+     *
+     * @throws DecodeException if an error occurs reading the value
      */
-    int readSize(ProtonBuffer buffer);
+    int readSize(ProtonBuffer buffer) throws DecodeException;
 
     /**
      * Reads the count of entries in the encoded Map.
@@ -52,7 +55,9 @@ public interface MapTypeDecoder extends PrimitiveTypeDecoder<Map> {
      *      The buffer containing the encoded Map type.
      *
      * @return the number of elements that we encoded from the original Map.
+     *
+     * @throws DecodeException if an error occurs reading the value
      */
-    int readCount(ProtonBuffer buffer);
+    int readCount(ProtonBuffer buffer) throws DecodeException;
 
 }

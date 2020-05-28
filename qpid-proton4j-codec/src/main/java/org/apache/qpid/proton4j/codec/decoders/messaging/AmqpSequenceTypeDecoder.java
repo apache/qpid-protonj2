@@ -16,13 +16,13 @@
  */
 package org.apache.qpid.proton4j.codec.decoders.messaging;
 
-import java.io.IOException;
 import java.util.List;
 
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.amqp.messaging.AmqpSequence;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import org.apache.qpid.proton4j.codec.DecodeException;
 import org.apache.qpid.proton4j.codec.DecoderState;
 import org.apache.qpid.proton4j.codec.TypeDecoder;
 import org.apache.qpid.proton4j.codec.decoders.AbstractDescribedTypeDecoder;
@@ -50,7 +50,7 @@ public final class AmqpSequenceTypeDecoder extends AbstractDescribedTypeDecoder<
 
     @SuppressWarnings("unchecked")
     @Override
-    public AmqpSequence readValue(ProtonBuffer buffer, DecoderState state) throws IOException {
+    public AmqpSequence readValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
         TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
         checkIsExpectedType(ListTypeDecoder.class, decoder);
@@ -63,7 +63,7 @@ public final class AmqpSequenceTypeDecoder extends AbstractDescribedTypeDecoder<
 
     @SuppressWarnings("unchecked")
     @Override
-    public AmqpSequence[] readArrayElements(ProtonBuffer buffer, DecoderState state, int count) throws IOException {
+    public AmqpSequence[] readArrayElements(ProtonBuffer buffer, DecoderState state, int count) throws DecodeException {
         TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
         checkIsExpectedType(ListTypeDecoder.class, decoder);
@@ -80,7 +80,7 @@ public final class AmqpSequenceTypeDecoder extends AbstractDescribedTypeDecoder<
     }
 
     @Override
-    public void skipValue(ProtonBuffer buffer, DecoderState state) throws IOException {
+    public void skipValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
         TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
         checkIsExpectedType(ListTypeDecoder.class, decoder);

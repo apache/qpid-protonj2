@@ -27,6 +27,7 @@ import java.util.UUID;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.codec.CodecTestSupport;
+import org.apache.qpid.proton4j.codec.DecodeException;
 import org.apache.qpid.proton4j.codec.EncodingCodes;
 import org.junit.Test;
 
@@ -54,7 +55,7 @@ public class ProtonDecoderTest extends CodecTestSupport {
         try {
             decoder.readObject(buffer, decoderState);
             fail("Should throw if no type decoder exists for given type");
-        } catch (IOException ioe) {}
+        } catch (DecodeException ioe) {}
     }
 
     @Test

@@ -16,11 +16,11 @@
  */
 package org.apache.qpid.proton4j.codec.decoders.primitives;
 
-import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import org.apache.qpid.proton4j.codec.DecodeException;
 import org.apache.qpid.proton4j.codec.DecoderState;
 import org.apache.qpid.proton4j.codec.EncodingCodes;
 import org.apache.qpid.proton4j.codec.decoders.AbstractPrimitiveTypeDecoder;
@@ -32,7 +32,7 @@ import org.apache.qpid.proton4j.codec.decoders.AbstractPrimitiveTypeDecoder;
 public final class List0TypeDecoder extends AbstractPrimitiveTypeDecoder<List> implements ListTypeDecoder {
 
     @Override
-    public List<Object> readValue(ProtonBuffer buffer, DecoderState state) {
+    public List<Object> readValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
         return Collections.EMPTY_LIST;
     }
 
@@ -42,16 +42,16 @@ public final class List0TypeDecoder extends AbstractPrimitiveTypeDecoder<List> i
     }
 
     @Override
-    public void skipValue(ProtonBuffer buffer, DecoderState state) throws IOException {
+    public void skipValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
     }
 
     @Override
-    public int readSize(ProtonBuffer buffer) {
+    public int readSize(ProtonBuffer buffer) throws DecodeException {
         return 0;
     }
 
     @Override
-    public int readCount(ProtonBuffer buffer) {
+    public int readCount(ProtonBuffer buffer) throws DecodeException {
         return 0;
     }
 }

@@ -16,7 +16,6 @@
  */
 package org.apache.qpid.proton4j.codec.decoders.messaging;
 
-import java.io.IOException;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -24,6 +23,7 @@ import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.amqp.messaging.ApplicationProperties;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import org.apache.qpid.proton4j.codec.DecodeException;
 import org.apache.qpid.proton4j.codec.Decoder;
 import org.apache.qpid.proton4j.codec.DecoderState;
 import org.apache.qpid.proton4j.codec.TypeDecoder;
@@ -52,7 +52,7 @@ public final class ApplicationPropertiesTypeDecoder extends AbstractDescribedTyp
     }
 
     @Override
-    public ApplicationProperties readValue(ProtonBuffer buffer, DecoderState state) throws IOException {
+    public ApplicationProperties readValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
         TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
         if (decoder instanceof NullTypeDecoder) {
@@ -65,7 +65,7 @@ public final class ApplicationPropertiesTypeDecoder extends AbstractDescribedTyp
     }
 
     @Override
-    public ApplicationProperties[] readArrayElements(ProtonBuffer buffer, DecoderState state, int count) throws IOException {
+    public ApplicationProperties[] readArrayElements(ProtonBuffer buffer, DecoderState state, int count) throws DecodeException {
         TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
         ApplicationProperties[] result = new ApplicationProperties[count];
@@ -89,7 +89,7 @@ public final class ApplicationPropertiesTypeDecoder extends AbstractDescribedTyp
     }
 
     @Override
-    public void skipValue(ProtonBuffer buffer, DecoderState state) throws IOException {
+    public void skipValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
         TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
         if (!(decoder instanceof NullTypeDecoder)) {
@@ -98,12 +98,12 @@ public final class ApplicationPropertiesTypeDecoder extends AbstractDescribedTyp
         }
     }
 
-    private Map<String, Object> readMap(ProtonBuffer buffer, DecoderState state, MapTypeDecoder mapDecoder) throws IOException {
+    private Map<String, Object> readMap(ProtonBuffer buffer, DecoderState state, MapTypeDecoder mapDecoder) throws DecodeException {
         int size = mapDecoder.readSize(buffer);
         int count = mapDecoder.readCount(buffer);
 
         if (count > buffer.getReadableBytes()) {
-            throw new IllegalArgumentException(String.format(
+            throw new DecodeException(String.format(
                     "Map encoded size %d is specified to be greater than the amount " +
                     "of data available (%d)", size, buffer.getReadableBytes()));
         }

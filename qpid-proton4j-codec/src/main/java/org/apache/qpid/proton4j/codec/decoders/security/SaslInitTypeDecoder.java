@@ -16,12 +16,11 @@
  */
 package org.apache.qpid.proton4j.codec.decoders.security;
 
-import java.io.IOException;
-
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.amqp.security.SaslInit;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import org.apache.qpid.proton4j.codec.DecodeException;
 import org.apache.qpid.proton4j.codec.DecoderState;
 import org.apache.qpid.proton4j.codec.TypeDecoder;
 import org.apache.qpid.proton4j.codec.decoders.AbstractDescribedTypeDecoder;
@@ -51,7 +50,7 @@ public final class SaslInitTypeDecoder extends AbstractDescribedTypeDecoder<Sasl
     }
 
     @Override
-    public SaslInit readValue(ProtonBuffer buffer, DecoderState state) throws IOException {
+    public SaslInit readValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
         TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
         checkIsExpectedType(ListTypeDecoder.class, decoder);
@@ -60,7 +59,7 @@ public final class SaslInitTypeDecoder extends AbstractDescribedTypeDecoder<Sasl
     }
 
     @Override
-    public void skipValue(ProtonBuffer buffer, DecoderState state) throws IOException {
+    public void skipValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
         TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
         checkIsExpectedType(ListTypeDecoder.class, decoder);
@@ -69,7 +68,7 @@ public final class SaslInitTypeDecoder extends AbstractDescribedTypeDecoder<Sasl
     }
 
     @Override
-    public SaslInit[] readArrayElements(ProtonBuffer buffer, DecoderState state, int count) throws IOException {
+    public SaslInit[] readArrayElements(ProtonBuffer buffer, DecoderState state, int count) throws DecodeException {
         TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
         checkIsExpectedType(ListTypeDecoder.class, decoder);
@@ -82,7 +81,7 @@ public final class SaslInitTypeDecoder extends AbstractDescribedTypeDecoder<Sasl
         return result;
     }
 
-    private SaslInit readProperties(ProtonBuffer buffer, DecoderState state, ListTypeDecoder listDecoder) throws IOException {
+    private SaslInit readProperties(ProtonBuffer buffer, DecoderState state, ListTypeDecoder listDecoder) throws DecodeException {
         SaslInit init = new SaslInit();
 
         @SuppressWarnings("unused")
@@ -91,11 +90,11 @@ public final class SaslInitTypeDecoder extends AbstractDescribedTypeDecoder<Sasl
 
         // Don't decode anything if things already look wrong.
         if (count < MIN_SASL_INIT_LIST_ENTRIES) {
-            throw new IllegalStateException("Not enougn entries in SaslInit list encoding: " + count);
+            throw new DecodeException("Not enougn entries in SaslInit list encoding: " + count);
         }
 
         if (count > MAX_SASL_INIT_LIST_ENTRIES) {
-            throw new IllegalStateException("To many entries in SaslInit list encoding: " + count);
+            throw new DecodeException("To many entries in SaslInit list encoding: " + count);
         }
 
         for (int index = 0; index < count; ++index) {
@@ -110,7 +109,7 @@ public final class SaslInitTypeDecoder extends AbstractDescribedTypeDecoder<Sasl
                     init.setHostname(state.getDecoder().readString(buffer, state));
                     break;
                 default:
-                    throw new IllegalStateException("To many entries in Properties encoding");
+                    throw new DecodeException("To many entries in Properties encoding");
             }
         }
 

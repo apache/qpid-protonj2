@@ -16,12 +16,11 @@
  */
 package org.apache.qpid.proton4j.codec.decoders.transactions;
 
-import java.io.IOException;
-
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.amqp.transactions.Discharge;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import org.apache.qpid.proton4j.codec.DecodeException;
 import org.apache.qpid.proton4j.codec.DecoderState;
 import org.apache.qpid.proton4j.codec.TypeDecoder;
 import org.apache.qpid.proton4j.codec.decoders.AbstractDescribedTypeDecoder;
@@ -51,7 +50,7 @@ public final class DischargeTypeDecoder extends AbstractDescribedTypeDecoder<Dis
     }
 
     @Override
-    public Discharge readValue(ProtonBuffer buffer, DecoderState state) throws IOException {
+    public Discharge readValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
         TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
         checkIsExpectedType(ListTypeDecoder.class, decoder);
@@ -60,7 +59,7 @@ public final class DischargeTypeDecoder extends AbstractDescribedTypeDecoder<Dis
     }
 
     @Override
-    public Discharge[] readArrayElements(ProtonBuffer buffer, DecoderState state, int count) throws IOException {
+    public Discharge[] readArrayElements(ProtonBuffer buffer, DecoderState state, int count) throws DecodeException {
         TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
         checkIsExpectedType(ListTypeDecoder.class, decoder);
@@ -74,7 +73,7 @@ public final class DischargeTypeDecoder extends AbstractDescribedTypeDecoder<Dis
     }
 
     @Override
-    public void skipValue(ProtonBuffer buffer, DecoderState state) throws IOException {
+    public void skipValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
         TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
         checkIsExpectedType(ListTypeDecoder.class, decoder);
@@ -82,7 +81,7 @@ public final class DischargeTypeDecoder extends AbstractDescribedTypeDecoder<Dis
         decoder.skipValue(buffer, state);
     }
 
-    private Discharge readDischarge(ProtonBuffer buffer, DecoderState state, ListTypeDecoder listDecoder) throws IOException {
+    private Discharge readDischarge(ProtonBuffer buffer, DecoderState state, ListTypeDecoder listDecoder) throws DecodeException {
         Discharge discharge = new Discharge();
 
         @SuppressWarnings("unused")
@@ -91,11 +90,11 @@ public final class DischargeTypeDecoder extends AbstractDescribedTypeDecoder<Dis
 
         // Don't decode anything if things already look wrong.
         if (count < MIN_DISCHARGE_LIST_ENTRIES) {
-            throw new IllegalStateException("Not enough entries in Discharge list encoding: " + count);
+            throw new DecodeException("Not enough entries in Discharge list encoding: " + count);
         }
 
         if (count > MAX_DISCHARGE_LIST_ENTRIES) {
-            throw new IllegalStateException("To many entries in Discharge list encoding: " + count);
+            throw new DecodeException("To many entries in Discharge list encoding: " + count);
         }
 
         for (int index = 0; index < count; ++index) {
@@ -107,7 +106,7 @@ public final class DischargeTypeDecoder extends AbstractDescribedTypeDecoder<Dis
                     discharge.setFail(state.getDecoder().readBoolean(buffer, state, false));
                     break;
                 default:
-                    throw new IllegalStateException("To many entries in Discharge encoding");
+                    throw new DecodeException("To many entries in Discharge encoding");
             }
         }
 

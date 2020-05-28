@@ -16,9 +16,8 @@
  */
 package org.apache.qpid.proton4j.codec.decoders.primitives;
 
-import java.io.IOException;
-
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import org.apache.qpid.proton4j.codec.DecodeException;
 import org.apache.qpid.proton4j.codec.DecoderState;
 import org.apache.qpid.proton4j.codec.EncodingCodes;
 
@@ -28,7 +27,7 @@ import org.apache.qpid.proton4j.codec.EncodingCodes;
 public final class BooleanTrueTypeDecoder extends BooleanTypeDecoder {
 
     @Override
-    public Boolean readValue(ProtonBuffer buffer, DecoderState state) {
+    public Boolean readValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
         return Boolean.TRUE;
     }
 
@@ -38,6 +37,6 @@ public final class BooleanTrueTypeDecoder extends BooleanTypeDecoder {
     }
 
     @Override
-    public void skipValue(ProtonBuffer buffer, DecoderState state) throws IOException {
+    public void skipValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
     }
 }

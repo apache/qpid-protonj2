@@ -16,12 +16,11 @@
  */
 package org.apache.qpid.proton4j.codec.decoders.transport;
 
-import java.io.IOException;
-
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.amqp.transport.Begin;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import org.apache.qpid.proton4j.codec.DecodeException;
 import org.apache.qpid.proton4j.codec.DecoderState;
 import org.apache.qpid.proton4j.codec.EncodingCodes;
 import org.apache.qpid.proton4j.codec.TypeDecoder;
@@ -52,7 +51,7 @@ public final class BeginTypeDecoder extends AbstractDescribedTypeDecoder<Begin> 
     }
 
     @Override
-    public Begin readValue(ProtonBuffer buffer, DecoderState state) throws IOException {
+    public Begin readValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
         TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
         checkIsExpectedType(ListTypeDecoder.class, decoder);
@@ -61,7 +60,7 @@ public final class BeginTypeDecoder extends AbstractDescribedTypeDecoder<Begin> 
     }
 
     @Override
-    public Begin[] readArrayElements(ProtonBuffer buffer, DecoderState state, int count) throws IOException {
+    public Begin[] readArrayElements(ProtonBuffer buffer, DecoderState state, int count) throws DecodeException {
         TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
         checkIsExpectedType(ListTypeDecoder.class, decoder);
@@ -75,7 +74,7 @@ public final class BeginTypeDecoder extends AbstractDescribedTypeDecoder<Begin> 
     }
 
     @Override
-    public void skipValue(ProtonBuffer buffer, DecoderState state) throws IOException {
+    public void skipValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
         TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
         checkIsExpectedType(ListTypeDecoder.class, decoder);
@@ -83,7 +82,7 @@ public final class BeginTypeDecoder extends AbstractDescribedTypeDecoder<Begin> 
         decoder.skipValue(buffer, state);
     }
 
-    private Begin readBegin(ProtonBuffer buffer, DecoderState state, ListTypeDecoder listDecoder) throws IOException {
+    private Begin readBegin(ProtonBuffer buffer, DecoderState state, ListTypeDecoder listDecoder) throws DecodeException {
         Begin begin = new Begin();
 
         @SuppressWarnings("unused")
@@ -91,11 +90,11 @@ public final class BeginTypeDecoder extends AbstractDescribedTypeDecoder<Begin> 
         int count = listDecoder.readCount(buffer);
 
         if (count < MIN_BEGIN_LIST_ENTRIES) {
-            throw new IllegalStateException("Not enough entries in Begin list encoding: " + count);
+            throw new DecodeException("Not enough entries in Begin list encoding: " + count);
         }
 
         if (count > MAX_BEGIN_LIST_ENTRIES) {
-            throw new IllegalStateException("To many entries in Begin list encoding: " + count);
+            throw new DecodeException("To many entries in Begin list encoding: " + count);
         }
 
         for (int index = 0; index < count; ++index) {
@@ -134,7 +133,7 @@ public final class BeginTypeDecoder extends AbstractDescribedTypeDecoder<Begin> 
                     begin.setProperties(state.getDecoder().readMap(buffer, state));
                     break;
                 default:
-                    throw new IllegalStateException("To many entries in Begin encoding");
+                    throw new DecodeException("To many entries in Begin encoding");
             }
         }
 

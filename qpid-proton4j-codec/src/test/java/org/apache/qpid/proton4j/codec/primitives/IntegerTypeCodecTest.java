@@ -27,6 +27,7 @@ import java.io.IOException;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.codec.CodecTestSupport;
+import org.apache.qpid.proton4j.codec.DecodeException;
 import org.apache.qpid.proton4j.codec.EncodingCodes;
 import org.apache.qpid.proton4j.codec.TypeDecoder;
 import org.apache.qpid.proton4j.codec.decoders.primitives.Integer32TypeDecoder;
@@ -46,12 +47,12 @@ public class IntegerTypeCodecTest extends CodecTestSupport {
         try {
             decoder.readInteger(buffer, decoderState);
             fail("Should not allow read of integer type as this type");
-        } catch (IOException e) {}
+        } catch (DecodeException e) {}
 
         try {
             decoder.readInteger(buffer, decoderState, (short) 0);
             fail("Should not allow read of integer type as this type");
-        } catch (IOException e) {}
+        } catch (DecodeException e) {}
     }
 
     @Test

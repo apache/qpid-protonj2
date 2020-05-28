@@ -16,11 +16,10 @@
  */
 package org.apache.qpid.proton4j.codec.decoders.primitives;
 
-import java.io.IOException;
-
 import org.apache.qpid.proton4j.amqp.Binary;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
+import org.apache.qpid.proton4j.codec.DecodeException;
 import org.apache.qpid.proton4j.codec.DecoderState;
 import org.apache.qpid.proton4j.codec.decoders.AbstractPrimitiveTypeDecoder;
 
@@ -30,15 +29,15 @@ import org.apache.qpid.proton4j.codec.decoders.AbstractPrimitiveTypeDecoder;
 public abstract class AbstractBinaryTypeDecoder extends AbstractPrimitiveTypeDecoder<Binary> implements BinaryTypeDecoder {
 
     @Override
-    public Binary readValue(ProtonBuffer buffer, DecoderState state) {
+    public Binary readValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
         return new Binary(readValueAsBuffer(buffer, state));
     }
 
-    public ProtonBuffer readValueAsBuffer(ProtonBuffer buffer, DecoderState state) {
+    public ProtonBuffer readValueAsBuffer(ProtonBuffer buffer, DecoderState state) throws DecodeException {
         int length = readSize(buffer);
 
         if (length > buffer.getReadableBytes()) {
-            throw new IllegalArgumentException(
+            throw new DecodeException(
                 String.format("Binary data size %d is specified to be greater than the amount " +
                               "of data available (%d)", length, buffer.getReadableBytes()));
         }
@@ -50,11 +49,11 @@ public abstract class AbstractBinaryTypeDecoder extends AbstractPrimitiveTypeDec
         return payload;
     }
 
-    public byte[] readValueAsArray(ProtonBuffer buffer, DecoderState state) {
+    public byte[] readValueAsArray(ProtonBuffer buffer, DecoderState state) throws DecodeException {
         int length = readSize(buffer);
 
         if (length > buffer.getReadableBytes()) {
-            throw new IllegalArgumentException(
+            throw new DecodeException(
                 String.format("Binary data size %d is specified to be greater than the amount " +
                               "of data available (%d)", length, buffer.getReadableBytes()));
         }
@@ -67,11 +66,11 @@ public abstract class AbstractBinaryTypeDecoder extends AbstractPrimitiveTypeDec
     }
 
     @Override
-    public void skipValue(ProtonBuffer buffer, DecoderState state) throws IOException {
+    public void skipValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
         int length = readSize(buffer);
 
         if (length > buffer.getReadableBytes()) {
-            throw new IllegalArgumentException(
+            throw new DecodeException(
                 String.format("Binary data size %d is specified to be greater than the amount " +
                               "of data available (%d)", length, buffer.getReadableBytes()));
         }

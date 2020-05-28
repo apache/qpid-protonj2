@@ -16,13 +16,12 @@
  */
 package org.apache.qpid.proton4j.codec.decoders.transactions;
 
-import java.io.IOException;
-
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.amqp.messaging.Outcome;
 import org.apache.qpid.proton4j.amqp.transactions.TransactionalState;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import org.apache.qpid.proton4j.codec.DecodeException;
 import org.apache.qpid.proton4j.codec.DecoderState;
 import org.apache.qpid.proton4j.codec.TypeDecoder;
 import org.apache.qpid.proton4j.codec.decoders.AbstractDescribedTypeDecoder;
@@ -52,7 +51,7 @@ public final class TransactionStateTypeDecoder extends AbstractDescribedTypeDeco
     }
 
     @Override
-    public TransactionalState readValue(ProtonBuffer buffer, DecoderState state) throws IOException {
+    public TransactionalState readValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
         TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
         checkIsExpectedType(ListTypeDecoder.class, decoder);
@@ -61,7 +60,7 @@ public final class TransactionStateTypeDecoder extends AbstractDescribedTypeDeco
     }
 
     @Override
-    public TransactionalState[] readArrayElements(ProtonBuffer buffer, DecoderState state, int count) throws IOException {
+    public TransactionalState[] readArrayElements(ProtonBuffer buffer, DecoderState state, int count) throws DecodeException {
         TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
         checkIsExpectedType(ListTypeDecoder.class, decoder);
@@ -75,7 +74,7 @@ public final class TransactionStateTypeDecoder extends AbstractDescribedTypeDeco
     }
 
     @Override
-    public void skipValue(ProtonBuffer buffer, DecoderState state) throws IOException {
+    public void skipValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
         TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
         checkIsExpectedType(ListTypeDecoder.class, decoder);
@@ -83,7 +82,7 @@ public final class TransactionStateTypeDecoder extends AbstractDescribedTypeDeco
         decoder.skipValue(buffer, state);
     }
 
-    private TransactionalState readTransactionalState(ProtonBuffer buffer, DecoderState state, ListTypeDecoder listDecoder) throws IOException {
+    private TransactionalState readTransactionalState(ProtonBuffer buffer, DecoderState state, ListTypeDecoder listDecoder) throws DecodeException {
         TransactionalState transactionalState = new TransactionalState();
 
         @SuppressWarnings("unused")
@@ -92,11 +91,11 @@ public final class TransactionStateTypeDecoder extends AbstractDescribedTypeDeco
 
         // Don't decode anything if things already look wrong.
         if (count < MIN_TRANSACTION_STATE_LIST_ENTRIES) {
-            throw new IllegalStateException("Not enough entries in TransactionalState list encoding: " + count);
+            throw new DecodeException("Not enough entries in TransactionalState list encoding: " + count);
         }
 
         if (count > MAX_TRANSACTION_STATE_LIST_ENTRIES) {
-            throw new IllegalStateException("To many entries in TransactionalState list encoding: " + count);
+            throw new DecodeException("To many entries in TransactionalState list encoding: " + count);
         }
 
         for (int index = 0; index < count; ++index) {
@@ -108,7 +107,7 @@ public final class TransactionStateTypeDecoder extends AbstractDescribedTypeDeco
                     transactionalState.setOutcome((Outcome) state.getDecoder().readObject(buffer, state));
                     break;
                 default:
-                    throw new IllegalStateException("To many entries in TransactionalState encoding");
+                    throw new DecodeException("To many entries in TransactionalState encoding");
             }
         }
 

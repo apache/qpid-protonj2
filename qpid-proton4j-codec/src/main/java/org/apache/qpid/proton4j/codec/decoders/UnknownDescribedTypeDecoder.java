@@ -16,13 +16,12 @@
  */
 package org.apache.qpid.proton4j.codec.decoders;
 
-import java.io.IOException;
-
 import org.apache.qpid.proton4j.amqp.DescribedType;
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnknownDescribedType;
 import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import org.apache.qpid.proton4j.codec.DecodeException;
 import org.apache.qpid.proton4j.codec.DecoderState;
 import org.apache.qpid.proton4j.codec.TypeDecoder;
 
@@ -49,7 +48,7 @@ public abstract class UnknownDescribedTypeDecoder extends AbstractDescribedTypeD
     }
 
     @Override
-    public final DescribedType readValue(ProtonBuffer buffer, DecoderState state) throws IOException {
+    public final DescribedType readValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
         TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
         Object described = decoder.readValue(buffer, state);
 
@@ -57,7 +56,7 @@ public abstract class UnknownDescribedTypeDecoder extends AbstractDescribedTypeD
     }
 
     @Override
-    public final DescribedType[] readArrayElements(ProtonBuffer buffer, DecoderState state, int count) throws IOException {
+    public final DescribedType[] readArrayElements(ProtonBuffer buffer, DecoderState state, int count) throws DecodeException {
         TypeDecoder<?> decoder = state.getDecoder().readNextTypeDecoder(buffer, state);
 
         UnknownDescribedType[] result = new UnknownDescribedType[count];
@@ -71,7 +70,7 @@ public abstract class UnknownDescribedTypeDecoder extends AbstractDescribedTypeD
     }
 
     @Override
-    public final void skipValue(ProtonBuffer buffer, DecoderState state) throws IOException {
+    public final void skipValue(ProtonBuffer buffer, DecoderState state) throws DecodeException {
         state.getDecoder().readNextTypeDecoder(buffer, state).skipValue(buffer, state);
     }
 }

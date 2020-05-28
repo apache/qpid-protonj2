@@ -47,8 +47,10 @@ public interface TypeEncoder<V> {
      * 		The current encoder state
      * @param value
      * 		The value that is to be written.
+     *
+     * @throws EncodeException if an error occurs while encoding the given value.
      */
-    void writeType(ProtonBuffer buffer, EncoderState state, V value);
+    void writeType(ProtonBuffer buffer, EncoderState state, V value) throws EncodeException;
 
     /**
      * Write an array elements of the AMQP type to the given byte buffer.
@@ -62,8 +64,10 @@ public interface TypeEncoder<V> {
      *      The current encoder state
      * @param values
      *      The array of values that is to be written.
+     *
+     * @throws EncodeException if an error occurs while encoding the given value.
      */
-    void writeArray(ProtonBuffer buffer, EncoderState state, Object[] values);
+    void writeArray(ProtonBuffer buffer, EncoderState state, Object[] values) throws EncodeException;
 
     /**
      * Write an array elements of the AMQP type to the given byte buffer.
@@ -78,7 +82,9 @@ public interface TypeEncoder<V> {
      *      The current encoder state
      * @param values
      *      The array of values that is to be written.
+     *
+     * @throws EncodeException if an error occurs while encoding the given value.
      */
-    void writeRawArray(ProtonBuffer buffer, EncoderState state, Object[] values);
+    void writeRawArray(ProtonBuffer buffer, EncoderState state, Object[] values) throws EncodeException;
 
 }

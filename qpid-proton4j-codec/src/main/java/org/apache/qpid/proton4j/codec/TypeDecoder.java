@@ -16,8 +16,6 @@
  */
 package org.apache.qpid.proton4j.codec;
 
-import java.io.IOException;
-
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 
 /**
@@ -47,9 +45,9 @@ public interface TypeDecoder<V> {
      *
      * @return the next instance in the stream that this decoder handles.
      *
-     * @throws IOException if an error is encountered while reading the next value.
+     * @throws DecodeException if an error is encountered while reading the next value.
      */
-    V readValue(ProtonBuffer buffer, DecoderState state) throws IOException;
+    V readValue(ProtonBuffer buffer, DecoderState state) throws DecodeException;
 
     /**
      * Skips over the bytes that compose the type this descriptor decodes.
@@ -63,9 +61,9 @@ public interface TypeDecoder<V> {
      * @param state
      *      The decoder state.
      *
-     * @throws IOException if an error occurs while skipping the value.
+     * @throws DecodeException if an error occurs while skipping the value.
      */
-    void skipValue(ProtonBuffer buffer, DecoderState state) throws IOException;
+    void skipValue(ProtonBuffer buffer, DecoderState state) throws DecodeException;
 
     /**
      * Reads a series of this type that have been encoded into the body of an Array type.
@@ -83,8 +81,8 @@ public interface TypeDecoder<V> {
      *
      * @return the next instance in the stream that this decoder handles.
      *
-     * @throws IOException if an error is encountered while reading the next value.
+     * @throws DecodeException if an error is encountered while reading the next value.
      */
-    V[] readArrayElements(ProtonBuffer buffer, DecoderState state, int count) throws IOException;
+    V[] readArrayElements(ProtonBuffer buffer, DecoderState state, int count) throws DecodeException;
 
 }
