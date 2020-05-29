@@ -245,9 +245,9 @@ public class FlowTypeCodecTest extends CodecTestSupport {
         array[1] = new Flow();
         array[2] = new Flow();
 
-        array[0].setHandle(1).setDeliveryCount(1).setLinkCredit(1);
-        array[1].setHandle(2).setDeliveryCount(2).setLinkCredit(2);
-        array[2].setHandle(3).setDeliveryCount(3).setLinkCredit(3);
+        array[0].setHandle(0).setLinkCredit(0).setDeliveryCount(1).setIncomingWindow(1024).setNextOutgoingId(1).setOutgoingWindow(128);
+        array[1].setHandle(1).setLinkCredit(1).setDeliveryCount(1).setIncomingWindow(2048).setNextOutgoingId(2).setOutgoingWindow(256);
+        array[2].setHandle(2).setLinkCredit(2).setDeliveryCount(1).setIncomingWindow(4096).setNextOutgoingId(3).setOutgoingWindow(512);
 
         encoder.writeObject(buffer, encoderState, array);
 

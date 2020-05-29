@@ -619,6 +619,34 @@ public class ProtonConnection extends ProtonEndpoint<Connection> implements Conn
         } catch (Exception ignore) {}
     }
 
+    void handleEngineFailed(ProtonEngine protonEngine, Throwable cause) {
+        if (localOpenSent && !localCloseSent) {
+            localCloseSent = true;
+
+            try {
+                if (getCondition() == null) {
+                    setCondition(errorConditionFromFailureCause(cause));
+                }
+
+                engine.fireWrite(new Close().setError(getCondition()), 0, null, null);
+            } catch (Exception ignore) {}
+        }
+    }
+
+    private ErrorCondition errorConditionFromFailureCause(Throwable cause) {
+        final Symbol condition;
+        final String description = cause.getMessage();
+
+        if (cause instanceof ProtocolViolationException) {
+            ProtocolViolationException error = (ProtocolViolationException) cause;
+            condition = error.getErrorCondition();
+        } else {
+            condition = AmqpError.INTERNAL_ERROR;
+        }
+
+        return new ErrorCondition(condition, description);
+    }
+
     private int findFreeLocalChannel() {
         for (int i = 0; i < ProtonConstants.CHANNEL_MAX; ++i) {
             if (!localSessions.containsKey(i)) {

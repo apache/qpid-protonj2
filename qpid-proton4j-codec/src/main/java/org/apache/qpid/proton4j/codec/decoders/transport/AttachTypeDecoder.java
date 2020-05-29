@@ -95,10 +95,7 @@ public final class AttachTypeDecoder extends AbstractDescribedTypeDecoder<Attach
         int count = listDecoder.readCount(buffer);
 
         if (count < MIN_ATTACH_LIST_ENTRIES) {
-            throw new DecodeException("Not enough entries in Attach list encoding: " + count);
-        }
-        if (count > MAX_ATTACH_LIST_ENTRIES) {
-            throw new DecodeException("To many entries in Attach list encoding: " + count);
+            throw new DecodeException(errorForMissingRequiredFields(count));
         }
 
         for (int index = 0; index < count; ++index) {
@@ -107,6 +104,11 @@ public final class AttachTypeDecoder extends AbstractDescribedTypeDecoder<Attach
             // state in the modification entry.
             boolean nullValue = buffer.getByte(buffer.getReadIndex()) == EncodingCodes.NULL;
             if (nullValue) {
+                // Ensure mandatory fields are set
+                if (index < MIN_ATTACH_LIST_ENTRIES) {
+                    throw new DecodeException(errorForMissingRequiredFields(index));
+                }
+
                 buffer.readByte();
                 continue;
             }
@@ -158,10 +160,22 @@ public final class AttachTypeDecoder extends AbstractDescribedTypeDecoder<Attach
                     attach.setProperties(state.getDecoder().readMap(buffer, state));
                     break;
                 default:
-                    throw new DecodeException("To many entries in Attach encoding");
+                    throw new DecodeException(
+                        "To many entries in Attach list encoding: " + count + " max allowed entries = " + MAX_ATTACH_LIST_ENTRIES);
             }
         }
 
         return attach;
+    }
+
+    private String errorForMissingRequiredFields(int present) {
+        switch (present) {
+            case 2:
+                return "The role field cannot be omitted";
+            case 1:
+                return "The handle field cannot be omitted";
+            default:
+                return "The name field cannot be omitted";
+        }
     }
 }

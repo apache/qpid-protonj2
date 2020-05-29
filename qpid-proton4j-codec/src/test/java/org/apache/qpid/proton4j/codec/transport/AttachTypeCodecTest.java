@@ -286,9 +286,9 @@ public class AttachTypeCodecTest extends CodecTestSupport {
         array[1] = new Attach();
         array[2] = new Attach();
 
-        array[0].setHandle(0).setName("0").setInitialDeliveryCount(0);
-        array[1].setHandle(1).setName("1").setInitialDeliveryCount(1);
-        array[2].setHandle(2).setName("2").setInitialDeliveryCount(2);
+        array[0].setHandle(0).setName("0").setInitialDeliveryCount(0).setRole(Role.SENDER);
+        array[1].setHandle(1).setName("1").setInitialDeliveryCount(1).setRole(Role.SENDER);
+        array[2].setHandle(2).setName("2").setInitialDeliveryCount(2).setRole(Role.SENDER);
 
         encoder.writeObject(buffer, encoderState, array);
 

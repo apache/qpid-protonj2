@@ -443,8 +443,6 @@ public class AMQPTestDriver implements Consumer<ProtonBuffer> {
                 this.failureCause = new AssertionError(ex);
             }
         }
-
-        throw failureCause;
     }
 
     /**

@@ -90,11 +90,7 @@ public final class BeginTypeDecoder extends AbstractDescribedTypeDecoder<Begin> 
         int count = listDecoder.readCount(buffer);
 
         if (count < MIN_BEGIN_LIST_ENTRIES) {
-            throw new DecodeException("Not enough entries in Begin list encoding: " + count);
-        }
-
-        if (count > MAX_BEGIN_LIST_ENTRIES) {
-            throw new DecodeException("To many entries in Begin list encoding: " + count);
+            throw new DecodeException(errorForMissingRequiredFields(count));
         }
 
         for (int index = 0; index < count; ++index) {
@@ -103,6 +99,11 @@ public final class BeginTypeDecoder extends AbstractDescribedTypeDecoder<Begin> 
             // state in the modification entry.
             boolean nullValue = buffer.getByte(buffer.getReadIndex()) == EncodingCodes.NULL;
             if (nullValue) {
+                // Ensure mandatory fields are set
+                if (index > 0 && index < MIN_BEGIN_LIST_ENTRIES) {
+                    throw new DecodeException(errorForMissingRequiredFields(index));
+                }
+
                 buffer.readByte();
                 continue;
             }
@@ -133,10 +134,22 @@ public final class BeginTypeDecoder extends AbstractDescribedTypeDecoder<Begin> 
                     begin.setProperties(state.getDecoder().readMap(buffer, state));
                     break;
                 default:
-                    throw new DecodeException("To many entries in Begin encoding");
+                    throw new DecodeException(
+                        "To many entries in Begin list encoding: " + count + " max allowed entries = " + MAX_BEGIN_LIST_ENTRIES);
             }
         }
 
         return begin;
+    }
+
+    private String errorForMissingRequiredFields(int present) {
+        switch (present) {
+            case 3:
+                return "The outgoing-window field cannot be omitted";
+            case 2:
+                return "The incoming-window field cannot be omitted";
+            default:
+                return "The next-outgoing-id field cannot be omitted";
+        }
     }
 }

@@ -91,10 +91,7 @@ public final class FlowTypeDecoder extends AbstractDescribedTypeDecoder<Flow> {
 
         // Don't decode anything if things already look wrong.
         if (count < MIN_FLOW_LIST_ENTRIES) {
-            throw new DecodeException("Not enough entries in Flow list encoding: " + count);
-        }
-        if (count > MAX_FLOW_LIST_ENTRIES) {
-            throw new DecodeException("To many entries in Flow list encoding: " + count);
+            throw new DecodeException(errorForMissingRequiredFields(count));
         }
 
         for (int index = 0; index < count; ++index) {
@@ -103,6 +100,11 @@ public final class FlowTypeDecoder extends AbstractDescribedTypeDecoder<Flow> {
             // state in the modification entry.
             boolean nullValue = buffer.getByte(buffer.getReadIndex()) == EncodingCodes.NULL;
             if (nullValue) {
+                // Ensure mandatory fields are set
+                if (index > 0 && index < MIN_FLOW_LIST_ENTRIES) {
+                    throw new DecodeException(errorForMissingRequiredFields(index));
+                }
+
                 buffer.readByte();
                 continue;
             }
@@ -142,10 +144,22 @@ public final class FlowTypeDecoder extends AbstractDescribedTypeDecoder<Flow> {
                     flow.setProperties(state.getDecoder().readMap(buffer, state));
                     break;
                 default:
-                    throw new DecodeException("To many entries in Flow encoding");
+                    throw new DecodeException(
+                        "To many entries in Flow list encoding: " + count + " max allowed entries = " + MAX_FLOW_LIST_ENTRIES);
             }
         }
 
         return flow;
+    }
+
+    private String errorForMissingRequiredFields(int present) {
+        switch (present) {
+            case 3:
+                return "The outgoing-window field cannot be omitted";
+            case 2:
+                return "The next-outgoing-id field cannot be omitted";
+            default:
+                return "The incoming-window field cannot be omitted";
+        }
     }
 }

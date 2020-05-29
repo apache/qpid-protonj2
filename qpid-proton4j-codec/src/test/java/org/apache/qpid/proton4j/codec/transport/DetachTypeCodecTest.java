@@ -198,9 +198,9 @@ public class DetachTypeCodecTest extends CodecTestSupport {
 
         Detach[] array = new Detach[3];
 
-        array[0] = new Detach();
-        array[1] = new Detach();
-        array[2] = new Detach();
+        array[0] = new Detach().setHandle(0);
+        array[1] = new Detach().setHandle(1);
+        array[2] = new Detach().setHandle(2);
 
         array[0].setError(new ErrorCondition(AmqpError.DECODE_ERROR, "1"));
         array[1].setError(new ErrorCondition(AmqpError.UNAUTHORIZED_ACCESS, "2"));

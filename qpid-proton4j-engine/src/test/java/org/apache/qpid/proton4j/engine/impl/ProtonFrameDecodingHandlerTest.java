@@ -137,10 +137,10 @@ public class ProtonFrameDecodingHandlerTest {
     @Test
     public void testDecodeEmptyOpenEncodedFrame() throws Exception {
         // Frame data for: Open
-        //   Open{ containerId='null', hostname='null', maxFrameSize=4294967295, channelMax=65535,
+        //   Open{ containerId="", hostname='null', maxFrameSize=4294967295, channelMax=65535,
         //         idleTimeOut=null, outgoingLocales=null, incomingLocales=null, offeredCapabilities=null,
         //         desiredCapabilities=null, properties=null}
-        final byte[] emptyOpen = new byte[] {0, 0, 0, 15, 2, 0, 0, 0, 0, 83, 16, -64, 2, 1, 64};
+        final byte[] emptyOpen = new byte[] {0, 0, 0, 16, 2, 0, 0, 0, 0, 83, 16, -64, 3, 1, -95, 0};
 
         ArgumentCaptor<ProtocolFrame> argument = ArgumentCaptor.forClass(ProtocolFrame.class);
 

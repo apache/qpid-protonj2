@@ -47,7 +47,6 @@ import org.apache.qpid.proton4j.engine.HeaderFrame;
 import org.apache.qpid.proton4j.engine.ProtocolFramePool;
 import org.apache.qpid.proton4j.engine.SaslFrame;
 import org.apache.qpid.proton4j.engine.Session;
-import org.apache.qpid.proton4j.engine.exceptions.EngineFailedException;
 import org.apache.qpid.proton4j.engine.exceptions.EngineNotStartedException;
 import org.apache.qpid.proton4j.engine.exceptions.EngineShutdownException;
 import org.apache.qpid.proton4j.engine.exceptions.EngineStateException;
@@ -1182,16 +1181,12 @@ public class ProtonEngineTest extends ProtonEngineTestSupport {
 
         Connection connection = engine.start();
         assertNotNull(connection);
-
-        try {
-            connection.negotiate();
-            fail("Should not be able to negotiate with remote");
-        } catch (EngineFailedException efe) {
-            assertTrue(efe.getCause() instanceof MalformedAMQPHeaderException);
-        }
+        connection.negotiate();
 
         peer.waitForScriptToCompleteIgnoreErrors();
+
         assertNotNull(failure);
+        assertTrue(failure instanceof MalformedAMQPHeaderException);
     }
 
     @Test(timeout = 10_000)

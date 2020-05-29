@@ -154,6 +154,9 @@ public class BeginTypeCodecTest extends CodecTestSupport {
         Begin begin = new Begin();
 
         begin.setRemoteChannel(1);
+        begin.setNextOutgoingId(0);
+        begin.setIncomingWindow(1024);
+        begin.setOutgoingWindow(1024);
         begin.setHandleMax(25);
 
         for (int i = 0; i < 10; ++i) {
@@ -161,6 +164,9 @@ public class BeginTypeCodecTest extends CodecTestSupport {
         }
 
         begin.setRemoteChannel(2);
+        begin.setNextOutgoingId(0);
+        begin.setIncomingWindow(1024);
+        begin.setOutgoingWindow(1024);
         begin.setHandleMax(50);
 
         encoder.writeObject(buffer, encoderState, begin);

@@ -1217,9 +1217,11 @@ public class ProtonSessionTest extends ProtonEngineTestSupport {
                 } else {
                     peer.expectBegin();
                 }
+                peer.expectClose();
             } else {
                 peer.expectOpen();
                 peer.expectBegin();
+                peer.expectClose();
             }
         } else {
             peer.expectAMQPHeader();

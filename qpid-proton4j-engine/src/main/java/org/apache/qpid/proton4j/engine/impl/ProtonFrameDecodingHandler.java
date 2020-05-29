@@ -93,9 +93,9 @@ public class ProtonFrameDecodingHandler implements EngineHandler, SaslPerformati
         } catch (ProtonException pex) {
             transitionToErrorStage(pex).fireError(context);
         } catch (DecodeException ex) {
-            transitionToErrorStage(new FrameDecodingException(ex)).fireError(context);
+            transitionToErrorStage(new FrameDecodingException(ex.getMessage(), ex)).fireError(context);
         } catch (Exception error) {
-            transitionToErrorStage(new ProtonException(error)).fireError(context);
+            transitionToErrorStage(new ProtonException(error.getMessage(), error)).fireError(context);
         }
     }
 

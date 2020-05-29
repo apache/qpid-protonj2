@@ -218,7 +218,7 @@ public class ProtonEngine implements Engine {
             if (input.getReadIndex() != startIndex) {
                 inputSequence++;
             }
-        } catch (Throwable error) {
+        } catch (Exception error) {
             throw engineFailed(error);
         }
 
@@ -229,7 +229,7 @@ public class ProtonEngine implements Engine {
     public EngineStateException engineFailed(Throwable cause) {
         final EngineStateException failure;
 
-        if (state.ordinal() < EngineState.SHUTTING_DOWN.ordinal()) {
+        if (state.ordinal() < EngineState.SHUTTING_DOWN.ordinal() && state != EngineState.FAILED) {
             state = EngineState.FAILED;
             failureCause = cause;
             writable = false;
@@ -244,7 +244,12 @@ public class ProtonEngine implements Engine {
 
             try {
                 pipeline.fireFailed((EngineFailedException) failure);
-            } catch (Throwable ignored) {}
+            } catch (Exception ignored) {}
+
+            try {
+                connection.handleEngineFailed(this, cause);
+            } catch (Exception ignored) {
+            }
 
             engineErrorHandler.handle(cause);
         } else {

@@ -94,11 +94,7 @@ public final class TransferTypeDecoder extends AbstractDescribedTypeDecoder<Tran
 
         // Don't decode anything if things already look wrong.
         if (count < MIN_TRANSFER_LIST_ENTRIES) {
-            throw new DecodeException("Not enough entries in Transfer list encoding: " + count);
-        }
-
-        if (count > MAX_TRANSFER_LIST_ENTRIES) {
-            throw new DecodeException("To many entries in Transfer list encoding: " + count);
+            throw new DecodeException("The handle field cannot be omitted");
         }
 
         for (int index = 0; index < count; ++index) {
@@ -107,6 +103,10 @@ public final class TransferTypeDecoder extends AbstractDescribedTypeDecoder<Tran
             // state in the modification entry.
             boolean nullValue = buffer.getByte(buffer.getReadIndex()) == EncodingCodes.NULL;
             if (nullValue) {
+                if (index == 0) {
+                    throw new DecodeException("The handle field cannot be omitted");
+                }
+
                 buffer.readByte();
                 continue;
             }
@@ -147,7 +147,8 @@ public final class TransferTypeDecoder extends AbstractDescribedTypeDecoder<Tran
                     transfer.setBatchable(state.getDecoder().readBoolean(buffer, state, false));
                     break;
                 default:
-                    throw new DecodeException("To many entries in Transfer encoding");
+                    throw new DecodeException(
+                        "To many entries in Flow list encoding: " + count + " max allowed entries = " + MAX_TRANSFER_LIST_ENTRIES);
             }
         }
 

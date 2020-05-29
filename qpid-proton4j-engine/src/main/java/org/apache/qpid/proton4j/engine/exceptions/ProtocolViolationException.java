@@ -67,7 +67,7 @@ public class ProtocolViolationException extends ProtonException {
         this.condition = condition;
     }
 
-    Symbol getErrorCondition() {
+    public Symbol getErrorCondition() {
         return condition;
     }
 }

@@ -2770,10 +2770,12 @@ public class ProtonReceiverTest extends ProtonEngineTestSupport {
                     peer.expectBegin();
                     peer.expectAttach();
                 }
+                peer.expectClose();
             } else {
                 peer.expectOpen();
                 peer.expectBegin();
                 peer.expectAttach();
+                peer.expectClose();
             }
         } else {
             peer.expectAMQPHeader();

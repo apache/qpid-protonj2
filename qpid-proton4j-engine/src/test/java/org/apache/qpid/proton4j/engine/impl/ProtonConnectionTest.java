@@ -881,8 +881,10 @@ public class ProtonConnectionTest extends ProtonEngineTestSupport {
             peer.expectAMQPHeader().respondWithAMQPHeader();
             if (respondToOpen) {
                 peer.expectOpen().respond();
+                peer.expectClose();
             } else {
                 peer.expectOpen();
+                peer.expectClose();
             }
         } else {
             peer.expectAMQPHeader();

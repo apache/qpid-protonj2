@@ -90,10 +90,7 @@ public final class OpenTypeDecoder extends AbstractDescribedTypeDecoder<Open> {
         int count = listDecoder.readCount(buffer);
 
         if (count < MIN_OPEN_LIST_ENTRIES) {
-            throw new DecodeException("Not enough entries in Open list encoding: " + count);
-        }
-        if (count > MAX_OPEN_LIST_ENTRIES) {
-            throw new DecodeException("To many entries in Open list encoding: " + count);
+            throw new DecodeException("The container-id field cannot be omitted");
         }
 
         for (int index = 0; index < count; ++index) {
@@ -102,6 +99,9 @@ public final class OpenTypeDecoder extends AbstractDescribedTypeDecoder<Open> {
             // state in the modification entry.
             boolean nullValue = buffer.getByte(buffer.getReadIndex()) == EncodingCodes.NULL;
             if (nullValue) {
+                if (index == 0) {
+                    throw new DecodeException("The container-id field cannot be omitted");
+                }
                 buffer.readByte();
                 continue;
             }
@@ -138,7 +138,8 @@ public final class OpenTypeDecoder extends AbstractDescribedTypeDecoder<Open> {
                     open.setProperties(state.getDecoder().readMap(buffer, state));
                     break;
                 default:
-                    throw new DecodeException("To many entries in Open encoding");
+                    throw new DecodeException(
+                        "To many entries in Open list encoding: " + count + " max allowed entries = " + MAX_OPEN_LIST_ENTRIES);
             }
         }
 

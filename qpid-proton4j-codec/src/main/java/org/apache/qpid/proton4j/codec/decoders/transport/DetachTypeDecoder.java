@@ -91,11 +91,7 @@ public final class DetachTypeDecoder extends AbstractDescribedTypeDecoder<Detach
         int count = listDecoder.readCount(buffer);
 
         if (count < MIN_DETACH_LIST_ENTRIES) {
-            throw new DecodeException("Not enough entries in Detach list encoding: " + count);
-        }
-
-        if (count > MAX_DETACH_LIST_ENTRIES) {
-            throw new DecodeException("To many entries in Detach list encoding: " + count);
+            throw new DecodeException("The handle field is mandatory");
         }
 
         for (int index = 0; index < count; ++index) {
@@ -104,6 +100,9 @@ public final class DetachTypeDecoder extends AbstractDescribedTypeDecoder<Detach
             // state in the modification entry.
             boolean nullValue = buffer.getByte(buffer.getReadIndex()) == EncodingCodes.NULL;
             if (nullValue) {
+                if (index == 0) {
+                    throw new DecodeException("The handle field is mandatory");
+                }
                 buffer.readByte();
                 continue;
             }
@@ -119,7 +118,8 @@ public final class DetachTypeDecoder extends AbstractDescribedTypeDecoder<Detach
                     detach.setError(state.getDecoder().readObject(buffer, state, ErrorCondition.class));
                     break;
                 default:
-                    throw new DecodeException("To many entries in Detach encoding");
+                    throw new DecodeException(
+                        "To many entries in Detach list encoding: " + count + " max allowed entries = " + MAX_DETACH_LIST_ENTRIES);
             }
         }
 

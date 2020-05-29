@@ -28,6 +28,7 @@ public class LegacyCodecOpenFramesTestDataGenerator {
     public static void main(String[] args) {
         // 1: Empty Open - No fields set
         Open emptyOpen = new Open();
+        emptyOpen.setContainerId("");
         String emptyOpenFrameString = LegacyFrmaeDataGenerator.generateUnitTestVariable("emptyOpen", emptyOpen);
         System.out.println(emptyOpenFrameString);
 

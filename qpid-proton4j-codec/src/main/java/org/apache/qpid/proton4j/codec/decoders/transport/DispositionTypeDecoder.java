@@ -92,11 +92,7 @@ public final class DispositionTypeDecoder extends AbstractDescribedTypeDecoder<D
         int count = listDecoder.readCount(buffer);
 
         if (count < MIN_DISPOSITION_LIST_ENTRIES) {
-            throw new DecodeException("Not enough entries in Disposition list encoding: " + count);
-        }
-
-        if (count > MAX_DISPOSITION_LIST_ENTRIES) {
-            throw new DecodeException("To many entries in Disposition list encoding: " + count);
+            throw new DecodeException(errorForMissingRequiredFields(count));
         }
 
         for (int index = 0; index < count; ++index) {
@@ -105,6 +101,11 @@ public final class DispositionTypeDecoder extends AbstractDescribedTypeDecoder<D
             // state in the modification entry.
             boolean nullValue = buffer.getByte(buffer.getReadIndex()) == EncodingCodes.NULL;
             if (nullValue) {
+                // Ensure mandatory fields are set
+                if (index < MIN_DISPOSITION_LIST_ENTRIES) {
+                    throw new DecodeException(errorForMissingRequiredFields(index));
+                }
+
                 buffer.readByte();
                 continue;
             }
@@ -129,10 +130,20 @@ public final class DispositionTypeDecoder extends AbstractDescribedTypeDecoder<D
                     disposition.setBatchable(state.getDecoder().readBoolean(buffer, state, false));
                     break;
                 default:
-                    throw new DecodeException("To many entries in Disposition encoding");
+                    throw new DecodeException(
+                        "To many entries in Disposition list encoding: " + count + " max allowed entries = " + MAX_DISPOSITION_LIST_ENTRIES);
             }
         }
 
         return disposition;
+    }
+
+    private String errorForMissingRequiredFields(int present) {
+        switch (present) {
+            case 1:
+                return "The first field cannot be omitted";
+            default:
+                return "The role field cannot be omitted";
+        }
     }
 }

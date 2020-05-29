@@ -21,6 +21,8 @@ import java.util.Map;
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.UnsignedInteger;
 import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
+import org.apache.qpid.proton4j.amqp.driver.LinkTracker;
+import org.apache.qpid.proton4j.amqp.driver.SessionTracker;
 import org.apache.qpid.proton4j.amqp.driver.codec.transport.Flow;
 
 /**
@@ -97,18 +99,28 @@ public class FlowInjectAction extends AbstractPerformativeInjectAction<Flow> {
 
     @Override
     protected void beforeActionPerformed(AMQPTestDriver driver) {
+        final SessionTracker session = driver.getSessions().getLastOpenedSession();
+        final LinkTracker link = driver.getSessions().getLastOpenedSession().getLastOpenedLink();
+
         // We fill in a channel using the next available channel id if one isn't set, then
         // report the outbound begin to the session so it can track this new session.
         if (onChannel() == CHANNEL_UNSET) {
-            onChannel(driver.getSessions().getLastOpenedSession().getLocalChannel().intValue());
+            onChannel(session.getLocalChannel().intValue());
         }
 
         // Auto select last opened sender on last opened session.  Later an option could
         // be added to allow forcing the handle to be null for testing specification requirements.
         if (flow.getHandle() == null) {
-            flow.setHandle(driver.getSessions().getLastOpenedSession().getLastOpenedSender().getHandle());
+            flow.setHandle(link.getHandle());
         }
-
-        // TODO - Process flow in the local side of the link when needed for added validation
+        if (flow.getIncomingWindow() == null) {
+            flow.setIncomingWindow(session.getIncomingWindow());
+        }
+        if (flow.getNextOutgoingId() == null) {
+            flow.setNextOutgoingId(session.getNextOutgoingId());
+        }
+        if (flow.getOutgoingWindow() == null) {
+            flow.setOutgoingWindow(session.getOutgoingWindow());
+        }
     }
 }
