@@ -25,12 +25,35 @@ import org.apache.qpid.proton4j.amqp.transactions.Discharge;
 
 /**
  * Transaction Manager endpoint that implements the mechanics of handling the declaration
- * of and the requested discharge of AMQP transactions.  Typically an AMQP server  instance
+ * of and the requested discharge of AMQP transactions.  Typically an AMQP server instance
  * will host the transaction management services that are used by client resources to declare
  * and discharge transaction and handle the associated of deliveries that are enlisted in
  * active transactions.
  */
 public interface TransactionManager extends Endpoint<TransactionManager> {
+
+    /**
+     * Adds the given amount of credit for the {@link TransactionManager} which allows
+     * the {@link TransactionController} to send {@link Declare} and {@link Discharge}
+     * requests to this manager.  The {@link TransactionController} cannot send any requests
+     * to start or complete a transaction without having credit to do so which implies that
+     * the {@link TransactionManager} owner must grant credit as part of its normal processing.
+     *
+     * @param additionalCredit
+     *      the new amount of credits to add.
+     *
+     * @return this {@link TransactionManager}
+     *
+     * @throws IllegalArgumentException if the credit amount is negative.
+     */
+    TransactionManager addCredit(int additionalCredit);
+
+    /**
+     * Get the credit that is currently available or assigned to this {@link TransactionManager}.
+     *
+     * @return the current unused credit.
+     */
+    int getCredit();
 
     /**
      * Sets the {@link Source} to assign to the local end of this {@link TransactionManager}.

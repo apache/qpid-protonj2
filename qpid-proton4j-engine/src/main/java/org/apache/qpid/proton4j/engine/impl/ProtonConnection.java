@@ -50,6 +50,7 @@ import org.apache.qpid.proton4j.engine.Receiver;
 import org.apache.qpid.proton4j.engine.Sender;
 import org.apache.qpid.proton4j.engine.Session;
 import org.apache.qpid.proton4j.engine.SessionState;
+import org.apache.qpid.proton4j.engine.TransactionManager;
 import org.apache.qpid.proton4j.engine.exceptions.EngineFailedException;
 import org.apache.qpid.proton4j.engine.exceptions.EngineStateException;
 import org.apache.qpid.proton4j.engine.exceptions.ProtocolViolationException;
@@ -78,6 +79,7 @@ public class ProtonConnection extends ProtonEndpoint<Connection> implements Conn
     private EventHandler<Session> remoteSessionOpenEventHandler;
     private EventHandler<Sender> remoteSenderOpenEventHandler;
     private EventHandler<Receiver> remoteReceiverOpenEventHandler;
+    private EventHandler<TransactionManager> remoteTxnManagerOpenEventHandler;
 
     /**
      * Create a new unbound Connection instance.
@@ -536,15 +538,14 @@ public class ProtonConnection extends ProtonEndpoint<Connection> implements Conn
 
     //----- API for event handling of Connection related remote events
 
-
     @Override
-    public Connection sessionOpenHandler(EventHandler<Session> remoteSessionOpenEventHandler) {
+    public ProtonConnection sessionOpenHandler(EventHandler<Session> remoteSessionOpenEventHandler) {
         this.remoteSessionOpenEventHandler = remoteSessionOpenEventHandler;
         return this;
     }
 
     @Override
-    public Connection senderOpenHandler(EventHandler<Sender> remoteSenderOpenEventHandler) {
+    public ProtonConnection senderOpenHandler(EventHandler<Sender> remoteSenderOpenEventHandler) {
         this.remoteSenderOpenEventHandler = remoteSenderOpenEventHandler;
         return this;
     }
@@ -554,13 +555,23 @@ public class ProtonConnection extends ProtonEndpoint<Connection> implements Conn
     }
 
     @Override
-    public Connection receiverOpenHandler(EventHandler<Receiver> remoteReceiverOpenEventHandler) {
+    public ProtonConnection receiverOpenHandler(EventHandler<Receiver> remoteReceiverOpenEventHandler) {
         this.remoteReceiverOpenEventHandler = remoteReceiverOpenEventHandler;
         return this;
     }
 
     EventHandler<Receiver> receiverOpenEventHandler() {
         return remoteReceiverOpenEventHandler;
+    }
+
+    @Override
+    public ProtonConnection transactionManagerOpenHandler(EventHandler<TransactionManager> remoteTxnManagerOpenEventHandler) {
+        this.remoteTxnManagerOpenEventHandler = remoteTxnManagerOpenEventHandler;
+        return this;
+    }
+
+    EventHandler<TransactionManager> transactionManagerOpenHandler() {
+        return remoteTxnManagerOpenEventHandler;
     }
 
     //----- Internal implementation

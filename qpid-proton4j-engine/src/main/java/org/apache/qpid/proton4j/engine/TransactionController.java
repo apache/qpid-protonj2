@@ -21,6 +21,7 @@ import org.apache.qpid.proton4j.amqp.messaging.Source;
 import org.apache.qpid.proton4j.amqp.messaging.Terminus;
 import org.apache.qpid.proton4j.amqp.transactions.Coordinator;
 import org.apache.qpid.proton4j.amqp.transactions.Declare;
+import org.apache.qpid.proton4j.amqp.transactions.Discharge;
 
 /**
  * Transaction Controller link that implements the mechanics of declaring and discharging
@@ -29,6 +30,16 @@ import org.apache.qpid.proton4j.amqp.transactions.Declare;
  * will enlist its incoming and outgoing deliveries into.
  */
 public interface TransactionController extends Endpoint<TransactionController> {
+
+    /**
+     * Returns <code>true</code> if the {@link TransactionController} has capacity to send or buffer
+     * and {@link Transaction} command to {@link Declare} or {@link Discharge}.  If no capacity then
+     * a call to {@link TransactionController#declare()} or to
+     * {@link TransactionController#discharge(Transaction, boolean)} would throw an exception.
+     *
+     * @return true if the controller will allow declaring or discharging a transaction at this time.
+     */
+    boolean hasCapacity();
 
     /**
      * Sets the {@link Source} to assign to the local end of this {@link TransactionController}.

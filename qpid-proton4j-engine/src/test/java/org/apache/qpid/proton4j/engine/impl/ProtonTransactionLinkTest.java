@@ -17,10 +17,13 @@
 package org.apache.qpid.proton4j.engine.impl;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.driver.ProtonTestPeer;
@@ -31,12 +34,14 @@ import org.apache.qpid.proton4j.amqp.messaging.Released;
 import org.apache.qpid.proton4j.amqp.messaging.Source;
 import org.apache.qpid.proton4j.amqp.transactions.Coordinator;
 import org.apache.qpid.proton4j.amqp.transactions.TxnCapability;
+import org.apache.qpid.proton4j.amqp.transport.Role;
 import org.apache.qpid.proton4j.engine.Connection;
 import org.apache.qpid.proton4j.engine.Engine;
 import org.apache.qpid.proton4j.engine.EngineFactory;
 import org.apache.qpid.proton4j.engine.Receiver;
 import org.apache.qpid.proton4j.engine.Sender;
 import org.apache.qpid.proton4j.engine.Session;
+import org.apache.qpid.proton4j.engine.TransactionManager;
 import org.junit.Test;
 
 /**
@@ -93,6 +98,201 @@ public class ProtonTransactionLinkTest extends ProtonEngineTestSupport {
         assertEquals(TxnCapability.LOCAL_TXN, remoteCoordinator.getCapabilities()[0]);
 
         sender.detach();
+        session.close();
+        connection.close();
+
+        peer.waitForScriptToComplete();
+        assertNull(failure);
+    }
+
+    @Test(timeout = 20_000)
+    public void testRemoteCoordinatorSenderSignalsTransactionManagerFromSessionWhenEnabled() {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result);
+        ProtonTestPeer peer = new ProtonTestPeer(engine);
+        engine.outputConsumer(peer);
+
+        Coordinator coordinator = new Coordinator();
+        coordinator.setCapabilities(TxnCapability.LOCAL_TXN);
+
+        Symbol[] outcomes = new Symbol[] { Accepted.DESCRIPTOR_SYMBOL,
+                                           Rejected.DESCRIPTOR_SYMBOL,
+                                           Released.DESCRIPTOR_SYMBOL,
+                                           Modified.DESCRIPTOR_SYMBOL };
+
+        Source source = new Source();
+        source.setOutcomes(outcomes);
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond();
+        peer.expectBegin().respond();
+        peer.remoteAttach().withName("TXN-Link")
+                           .withHandle(0)
+                           .withRole(Role.SENDER)
+                           .withSource(source)
+                           .withInitialDeliveryCount(0)
+                           .withTarget(coordinator).queue();
+
+        Connection connection = engine.start().open();
+        Session session = connection.session();
+
+        final AtomicReference<TransactionManager> transactionManager = new AtomicReference<>();
+        session.transactionManagerOpenHandler(manager -> {
+            transactionManager.set(manager);
+        });
+
+        session.open();
+
+        peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        peer.expectAttach().withRole(Role.RECEIVER)
+                           .withSource(source)
+                           .withTarget(coordinator);
+        peer.expectDetach().respond();
+        peer.expectEnd().respond();
+        peer.expectClose().respond();
+
+        assertNotNull(transactionManager.get());
+        assertNotNull(transactionManager.get().getRemoteCoordinator());
+
+        TransactionManager manager = transactionManager.get();
+
+        assertEquals(TxnCapability.LOCAL_TXN, manager.getRemoteCoordinator().getCapabilities()[0]);
+
+        manager.setCoordinator(manager.getRemoteCoordinator().copy());
+        manager.setSource(manager.getRemoteSource().copy());
+        manager.open();
+
+        manager.close();
+        session.close();
+        connection.close();
+
+        peer.waitForScriptToComplete();
+        assertNull(failure);
+    }
+
+    @Test(timeout = 20_000)
+    public void testRemoteCoordinatorSenderSignalsTransactionManagerFromConnectionWhenEnabled() {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result);
+        ProtonTestPeer peer = new ProtonTestPeer(engine);
+        engine.outputConsumer(peer);
+
+        Coordinator coordinator = new Coordinator();
+        coordinator.setCapabilities(TxnCapability.LOCAL_TXN);
+
+        Symbol[] outcomes = new Symbol[] { Accepted.DESCRIPTOR_SYMBOL,
+                                           Rejected.DESCRIPTOR_SYMBOL,
+                                           Released.DESCRIPTOR_SYMBOL,
+                                           Modified.DESCRIPTOR_SYMBOL };
+
+        Source source = new Source();
+        source.setOutcomes(outcomes);
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond();
+        peer.expectBegin().respond();
+        peer.remoteAttach().withName("TXN-Link")
+                           .withHandle(0)
+                           .withRole(Role.SENDER)
+                           .withSource(source)
+                           .withInitialDeliveryCount(0)
+                           .withTarget(coordinator).queue();
+
+        Connection connection = engine.start().open();
+        Session session = connection.session();
+
+        final AtomicReference<TransactionManager> transactionManager = new AtomicReference<>();
+        connection.transactionManagerOpenHandler(manager -> {
+            transactionManager.set(manager);
+        });
+
+        session.open();
+
+        peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        peer.expectAttach().withRole(Role.RECEIVER)
+                           .withSource(source)
+                           .withTarget(coordinator);
+        peer.expectDetach().respond();
+        peer.expectEnd().respond();
+        peer.expectClose().respond();
+
+        TransactionManager manager = transactionManager.get();
+
+        assertNotNull(transactionManager.get());
+        assertNotNull(transactionManager.get().getRemoteCoordinator());
+
+        assertEquals(TxnCapability.LOCAL_TXN, manager.getRemoteCoordinator().getCapabilities()[0]);
+
+        manager.setCoordinator(manager.getRemoteCoordinator().copy());
+        manager.setSource(manager.getRemoteSource().copy());
+        manager.open();
+
+        manager.close();
+        session.close();
+        connection.close();
+
+        peer.waitForScriptToComplete();
+        assertNull(failure);
+    }
+
+    @Test(timeout = 20_000)
+    public void testRemoteCoordinatorTriggersSenderCreateWhenManagerHandlerNotSet() {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result);
+        ProtonTestPeer peer = new ProtonTestPeer(engine);
+        engine.outputConsumer(peer);
+
+        Coordinator coordinator = new Coordinator();
+        coordinator.setCapabilities(TxnCapability.LOCAL_TXN);
+
+        Symbol[] outcomes = new Symbol[] { Accepted.DESCRIPTOR_SYMBOL,
+                                           Rejected.DESCRIPTOR_SYMBOL,
+                                           Released.DESCRIPTOR_SYMBOL,
+                                           Modified.DESCRIPTOR_SYMBOL };
+
+        Source source = new Source();
+        source.setOutcomes(outcomes);
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond();
+        peer.expectBegin().respond();
+        peer.remoteAttach().withName("TXN-Link")
+                           .withHandle(0)
+                           .withRole(Role.SENDER)
+                           .withSource(source)
+                           .withInitialDeliveryCount(0)
+                           .withTarget(coordinator).queue();
+
+        Connection connection = engine.start().open();
+        Session session = connection.session();
+
+        final AtomicReference<Receiver> transactionManager = new AtomicReference<>();
+        session.receiverOpenHandler(txnReceiver -> {
+            transactionManager.set(txnReceiver);
+        });
+
+        session.open();
+
+        peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        peer.expectAttach().withRole(Role.RECEIVER)
+                           .withSource(source)
+                           .withTarget(coordinator);
+        peer.expectDetach().respond();
+        peer.expectEnd().respond();
+        peer.expectClose().respond();
+
+        Receiver manager = transactionManager.get();
+
+        assertNotNull(transactionManager.get());
+        assertNotNull(transactionManager.get().getRemoteTarget());
+
+        assertEquals(TxnCapability.LOCAL_TXN, manager.<Coordinator>getRemoteTarget().getCapabilities()[0]);
+
+        manager.setTarget(manager.<Coordinator>getRemoteTarget().copy());
+        manager.setSource(manager.getRemoteSource().copy());
+        manager.open();
+
+        manager.close();
         session.close();
         connection.close();
 

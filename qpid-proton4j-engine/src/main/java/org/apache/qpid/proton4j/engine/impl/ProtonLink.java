@@ -589,6 +589,14 @@ public abstract class ProtonLink<L extends Link<L>> extends ProtonEndpoint<L> im
             fireRemoteOpen();
         } else {
             if (getRole() == Role.RECEIVER) {
+                if (attach.getTarget() instanceof Coordinator) {
+                    if (session.transactionManagerOpenHandler() != null) {
+                        session.transactionManagerOpenHandler().handle(new ProtonTransactionManager((ProtonReceiver) this));
+                    } else if (connection.transactionManagerOpenHandler() != null) {
+                        connection.transactionManagerOpenHandler().handle(new ProtonTransactionManager((ProtonReceiver) this));
+                    }
+                }
+
                 if (session.receiverOpenEventHandler() != null) {
                     session.receiverOpenEventHandler().handle((Receiver) this);
                 } else if (connection.receiverOpenEventHandler() != null) {

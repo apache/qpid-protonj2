@@ -286,7 +286,7 @@ public interface Connection extends Endpoint<Connection> {
     //----- Remote events for AMQP Connection resources
 
     /**
-     * Sets a EventHandler for when an AMQP Begin frame is received from the remote peer.
+     * Sets a {@link EventHandler} for when an AMQP Begin frame is received from the remote peer.
      *
      * Used to process remotely initiated Sessions. Locally initiated sessions have their own EventHandler
      * invoked instead.  This method is Typically used by servers to listen for remote Session creation.
@@ -299,7 +299,7 @@ public interface Connection extends Endpoint<Connection> {
     Connection sessionOpenHandler(EventHandler<Session> remoteSessionOpenEventHandler);
 
     /**
-     * Sets a EventHandler for when an AMQP Attach frame is received from the remote peer for a sending link.
+     * Sets a {@link EventHandler} for when an AMQP Attach frame is received from the remote peer for a sending link.
      *
      * Used to process remotely initiated sending link.  Locally initiated links have their own EventHandler
      * invoked instead.  This method is Typically used by servers to listen for remote Receiver creation.
@@ -314,7 +314,7 @@ public interface Connection extends Endpoint<Connection> {
     Connection senderOpenHandler(EventHandler<Sender> remoteSenderOpenEventHandler);
 
     /**
-     * Sets a EventHandler for when an AMQP Attach frame is received from the remote peer for a receiving link.
+     * Sets a {@link EventHandler} for when an AMQP Attach frame is received from the remote peer for a receiving link.
      *
      * Used to process remotely initiated receiving link.  Locally initiated links have their own EventHandler
      * invoked instead.  This method is Typically used by servers to listen for remote Sender creation.
@@ -327,5 +327,21 @@ public interface Connection extends Endpoint<Connection> {
      * @return this connection
      */
     Connection receiverOpenHandler(EventHandler<Receiver> remoteReceiverOpenEventHandler);
+
+    /**
+     * Sets a {@link EventHandler} for when an AMQP Attach frame is received from the remote peer for a transaction
+     * coordination link.
+     *
+     * Used to process remotely initiated transaction manager link.  Locally initiated links have their own EventHandler
+     * invoked instead.  This method is Typically used by servers to listen for remote {@link TransactionController}
+     * creation.  If an event handler for remote {@link TransactionController} open is registered on the Session that the
+     * link is owned by then that handler will be invoked instead of this one.
+     *
+     * @param remoteTxnManagerOpenEventHandler
+     *          the EventHandler that will be signaled when a {@link TransactionController} link is remotely opened.
+     *
+     * @return this connection
+     */
+    Connection transactionManagerOpenHandler(EventHandler<TransactionManager> remoteTxnManagerOpenEventHandler);
 
 }

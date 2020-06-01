@@ -87,6 +87,18 @@ public interface Session extends Endpoint<Session> {
      */
     Receiver receiver(String name) throws IllegalStateException;
 
+    /**
+     * Create a new {@link TransactionController} using the provided name.
+     *
+     * @param name
+     *      The name to assign to the created {@link TransactionController}
+     *
+     * @return a newly created {@link TransactionController} instance.
+     *
+     * @throws IllegalStateException if the {@link Session} has already been closed.
+     */
+    TransactionController coordinator(String name) throws IllegalStateException;
+
     //----- Configure the local end of the Session
 
     /**
@@ -144,5 +156,22 @@ public interface Session extends Endpoint<Session> {
      * @return this session for chaining
      */
     Session receiverOpenHandler(EventHandler<Receiver> remoteReceiverOpenEventHandler);
+
+    /**
+     * Sets a {@link EventHandler} for when an AMQP Attach frame is received from the remote peer for a transaction
+     * coordination link.
+     *
+     * Used to process remotely initiated transaction manager link.  Locally initiated links have their own EventHandler
+     * invoked instead.  This method is Typically used by servers to listen for remote {@link TransactionController}
+     * creation.  If an event handler for remote {@link TransactionController} open is registered on this Session for a
+     * {@link TransactionController} scoped to it then this handler will be invoked instead of the variant in the
+     * {@link Connection} API.
+     *
+     * @param remoteTxnManagerOpenEventHandler
+     *          the EventHandler that will be signaled when a {@link TransactionController} link is remotely opened.
+     *
+     * @return this session for chaining
+     */
+    Session transactionManagerOpenHandler(EventHandler<TransactionManager> remoteTxnManagerOpenEventHandler);
 
 }

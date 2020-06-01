@@ -45,6 +45,8 @@ import org.apache.qpid.proton4j.engine.Receiver;
 import org.apache.qpid.proton4j.engine.Sender;
 import org.apache.qpid.proton4j.engine.Session;
 import org.apache.qpid.proton4j.engine.SessionState;
+import org.apache.qpid.proton4j.engine.TransactionController;
+import org.apache.qpid.proton4j.engine.TransactionManager;
 import org.apache.qpid.proton4j.engine.exceptions.EngineFailedException;
 import org.apache.qpid.proton4j.engine.exceptions.EngineStateException;
 import org.apache.qpid.proton4j.engine.exceptions.ProtocolViolationException;
@@ -78,8 +80,9 @@ public class ProtonSession extends ProtonEndpoint<Session> implements Session {
     private boolean localEndSent;
 
     // No default for these handlers, Connection will process these if not set here.
-    private EventHandler<Sender> remoteSenderOpenEventHandler = null;
-    private EventHandler<Receiver> remoteReceiverOpenEventHandler = null;
+    private EventHandler<Sender> remoteSenderOpenEventHandler;
+    private EventHandler<Receiver> remoteReceiverOpenEventHandler;
+    private EventHandler<TransactionManager> remoteTxnManagerOpenEventHandler;
 
     public ProtonSession(ProtonConnection connection, int localChannel) {
         super(connection.getEngine());
@@ -350,6 +353,20 @@ public class ProtonSession extends ProtonEndpoint<Session> implements Session {
         return receiver;
     }
 
+    @Override
+    public TransactionController coordinator(String name) throws IllegalStateException {
+        checkSessionClosed("Cannot create new TransactionController from closed Session");
+
+        ProtonSender sender = senderByNameMap.get(name);
+
+        if (sender == null) {
+            sender = new ProtonSender(this, name);
+            senderByNameMap.put(name, sender);
+        }
+
+        return new ProtonTransactionController(sender);
+    }
+
     //----- Event handler registration for this Session
 
     @Override
@@ -370,6 +387,16 @@ public class ProtonSession extends ProtonEndpoint<Session> implements Session {
 
     EventHandler<Receiver> receiverOpenEventHandler() {
         return remoteReceiverOpenEventHandler;
+    }
+
+    @Override
+    public ProtonSession transactionManagerOpenHandler(EventHandler<TransactionManager> remoteTxnManagerOpenEventHandler) {
+        this.remoteTxnManagerOpenEventHandler = remoteTxnManagerOpenEventHandler;
+        return this;
+    }
+
+    EventHandler<TransactionManager> transactionManagerOpenHandler() {
+        return remoteTxnManagerOpenEventHandler;
     }
 
     //----- Respond to Connection and Engine state changes
@@ -428,7 +455,7 @@ public class ProtonSession extends ProtonEndpoint<Session> implements Session {
 
             ProtonLink<?> link = findMatchingPendingLinkOpen(attach);
             if (link == null) {
-                link = (attach.getRole() == Role.RECEIVER) ? sender(attach.getName()) : receiver(attach.getName());
+                link = attach.getRole() == Role.RECEIVER ? sender(attach.getName()) : receiver(attach.getName());
             }
 
             remoteLinks.put((int) attach.getHandle(), link);

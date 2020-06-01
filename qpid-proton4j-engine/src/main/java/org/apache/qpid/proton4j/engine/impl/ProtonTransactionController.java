@@ -60,6 +60,11 @@ public class ProtonTransactionController extends ProtonEndpoint<TransactionContr
     }
 
     @Override
+    public boolean hasCapacity() {
+        return senderLink.isSendable();  // TODO: If we buffer some commands add check for that too.
+    }
+
+    @Override
     public Transaction<TransactionController> declare() {
         if (!senderLink.isSendable()) {
             throw new IllegalStateException("Cannot Declare due to current capicity restrictions.");

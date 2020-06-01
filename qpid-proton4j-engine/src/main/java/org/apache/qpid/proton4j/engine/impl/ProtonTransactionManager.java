@@ -64,6 +64,17 @@ public final class ProtonTransactionManager extends ProtonEndpoint<TransactionMa
     }
 
     @Override
+    public TransactionManager addCredit(int additional) {
+        receiverLink.addCredit(additional);
+        return this;
+    }
+
+    @Override
+    public int getCredit() {
+        return receiverLink.getCredit();
+    }
+
+    @Override
     public TransactionManager declared(Transaction<TransactionManager> transaction, Binary txnId) {
         // TODO Auto-generated method stub
         return this;
