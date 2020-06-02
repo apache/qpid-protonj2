@@ -29,6 +29,7 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
@@ -291,5 +292,45 @@ public class StringTypeCodecTest extends CodecTestSupport {
 
         String value = (String) result;
         assertEquals(expected, value);
+    }
+
+    @Test
+    public void testDecodeNonStringWhenStringExpectedReportsUsefulError() {
+        final ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+        final UUID encoded = UUID.randomUUID();
+
+        buffer.writeByte(EncodingCodes.UUID);
+        buffer.writeLong(encoded.getMostSignificantBits());
+        buffer.writeLong(encoded.getLeastSignificantBits());
+
+        TypeDecoder<?> nextType = decoder.peekNextTypeDecoder(buffer, decoderState);
+        assertEquals(UUID.class, nextType.getTypeClass());
+
+        buffer.markReadIndex();
+
+        try {
+            decoder.readString(buffer, decoderState);
+        } catch (DecodeException ex) {
+            // Should indicate the type that it found in the error
+            assertTrue(ex.getMessage().contains(EncodingCodes.toString(EncodingCodes.UUID)));
+        }
+
+        buffer.resetReadIndex();
+        UUID actual = decoder.readUUID(buffer, decoderState);
+        assertEquals(encoded, actual);
+    }
+
+    @Test
+    public void testDecodeUnknownTypeWhenStringExpectedReportsUsefulError() {
+        final ProtonBuffer buffer = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        buffer.writeByte((byte) 0x01);
+
+        try {
+            decoder.readString(buffer, decoderState);
+        } catch (DecodeException ex) {
+            // Should indicate the type that it found in the error
+            assertTrue(ex.getMessage().contains("Unknown-Type:0x01"));
+        }
     }
 }
