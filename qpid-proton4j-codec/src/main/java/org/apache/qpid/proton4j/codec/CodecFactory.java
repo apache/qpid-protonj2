@@ -33,25 +33,59 @@ public final class CodecFactory {
     private CodecFactory() {
     }
 
+    /**
+     * Sets an {@link Encoder} instance that will be returned from all calls to the
+     * {@link CodecFactory#getEncoder()}.  If no {@link Encoder} is configured then the
+     * calls to get an Encoder instance will return the default Encoder from the library.
+     *
+     * @param encoder
+     *      The encoder to return from all calls to the {@link CodecFactory#getEncoder()} method/
+     */
     public static void setEncoder(Encoder encoder) {
         amqpTypeEncoder = encoder;
     }
 
-    public static void setSaslEncoder(Encoder encoder) {
-        saslTypeEncoder = encoder;
-    }
-
+    /**
+     * Sets an {@link Decoder} instance that will be returned from all calls to the
+     * {@link CodecFactory#getDecoder()}.  If no {@link Decoder} is configured then the
+     * calls to get an Decoder instance will return the default Decoder from the library.
+     *
+     * @param decoder
+     *      The decoder to return from all calls to the {@link CodecFactory#getDecoder()} method/
+     */
     public static void setDecoder(Decoder decoder) {
         amqpTypeDecoder = decoder;
     }
 
+    /**
+     * Sets an {@link Encoder} instance that will be returned from all calls to the
+     * {@link CodecFactory#getSaslEncoder()}.  If no {@link Encoder} is configured then the
+     * calls to get an Encoder instance will return the default Encoder from the library.
+     * The Encoder configured should only accept encodes of the SASL AMQP types.
+     *
+     * @param encoder
+     *      The encoder to return from all calls to the {@link CodecFactory#getSaslEncoder()} method/
+     */
+    public static void setSaslEncoder(Encoder encoder) {
+        saslTypeEncoder = encoder;
+    }
+
+    /**
+     * Sets an {@link Decoder} instance that will be returned from all calls to the
+     * {@link CodecFactory#getSaslDecoder()}.  If no {@link Decoder} is configured then the
+     * calls to get an Decoder instance will return the default Decoder from the library.
+     * The Decoder configured should only decode the SASL AMQP types.
+     *
+     * @param decoder
+     *      The decoder to return from all calls to the {@link CodecFactory#getSaslDecoder()} method/
+     */
     public static void setSaslDecoder(Decoder decoder) {
         saslTypeDecoder = decoder;
     }
 
     public static Encoder getEncoder() {
         if (amqpTypeEncoder == null) {
-            return getDefaultEncoder();
+            amqpTypeEncoder = getDefaultEncoder();
         }
 
         return amqpTypeEncoder;
@@ -59,7 +93,7 @@ public final class CodecFactory {
 
     public static Decoder getDecoder() {
         if (amqpTypeDecoder == null) {
-            return getDefaultDecoder();
+            amqpTypeDecoder = getDefaultDecoder();
         }
 
         return amqpTypeDecoder;
@@ -67,7 +101,7 @@ public final class CodecFactory {
 
     public static Encoder getSaslEncoder() {
         if (saslTypeEncoder == null) {
-            return getDefaultSaslEncoder();
+            saslTypeEncoder = getDefaultSaslEncoder();
         }
 
         return saslTypeEncoder;
@@ -75,7 +109,7 @@ public final class CodecFactory {
 
     public static Decoder getSaslDecoder() {
         if (saslTypeDecoder == null) {
-            return getDefaultSaslDecoder();
+            saslTypeDecoder = getDefaultSaslDecoder();
         }
 
         return saslTypeDecoder;
