@@ -56,7 +56,9 @@ public interface Decoder {
     /**
      * Return a singleton {@link DecoderState} instance that is meant to be shared within single threaded
      * decoder interactions.  If more than one thread makes use of this cached {@link DecoderState} the
-     * results of any decoding done using this state object is not guaranteed to be correct.
+     * results of any decoding done using this state object is not guaranteed to be correct.  The returned
+     * instance will have its reset method called to ensure that any previously stored state data is cleared
+     * before the next use.
      *
      * @return a cached {@link DecoderState} linked to this Decoder instance that has been reset.
      */
