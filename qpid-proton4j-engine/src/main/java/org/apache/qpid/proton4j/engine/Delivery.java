@@ -45,7 +45,7 @@ public interface Delivery {
     /**
      * @return the user set linked resource for this {@link Endpoint} instance.
      */
-    Object getLinkedResource();
+    <T> T getLinkedResource();
 
     /**
      * Gets the linked resource (if set) and returns it using the type information
