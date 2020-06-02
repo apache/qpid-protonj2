@@ -150,6 +150,8 @@ public final class ProtonDecoder implements Decoder {
     // Quick access to decoders that handle AMQP types like Transfer, Properties etc.
     private final DescribedTypeDecoder<?>[] amqpTypeDecoders = new DescribedTypeDecoder[256];
 
+    private ProtonDecoderState singleThreadedState;
+
     // Internal Decoders used to prevent user to access Proton specific decoding methods
     private static final Symbol8TypeDecoder symbol8Decoder;
     private static final Symbol32TypeDecoder symbol32Decoder;
@@ -165,6 +167,16 @@ public final class ProtonDecoder implements Decoder {
     @Override
     public ProtonDecoderState newDecoderState() {
         return new ProtonDecoderState(this);
+    }
+
+    @Override
+    public ProtonDecoderState getCachedDecoderState() {
+        ProtonDecoderState state = singleThreadedState;
+        if (state == null) {
+            state = newDecoderState();
+        }
+
+        return state.reset();
     }
 
     @Override

@@ -30,8 +30,10 @@ public interface EncoderState {
 
     /**
      * Resets any intermediate state back to default values.
+     *
+     * @return this {@link EncoderState} instance.
      */
-    void reset();
+    EncoderState reset();
 
     /**
      * Encodes the given sequence of characters in UTF8 to the given buffer.

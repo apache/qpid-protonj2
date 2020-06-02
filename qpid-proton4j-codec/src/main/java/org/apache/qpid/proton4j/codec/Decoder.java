@@ -38,7 +38,29 @@ import org.apache.qpid.proton4j.codec.decoders.DescribedTypeDecoder;
  */
 public interface Decoder {
 
+    /**
+     * Creates a new {@link DecoderState} instance that can be used when interacting with the
+     * Decoder.  For decoding that occurs on more than one thread while sharing a single
+     * {@link Decoder} instance a different state object per thread is required as the
+     * {@link DecoderState} object can retain some state information during the decode process
+     * that could be corrupted if more than one thread were to share a single instance.
+     *
+     * For single threaded decoding work the {@link Decoder} offers a utility
+     * cached {@link DecoderState} API that will return the same instance on each call which can
+     * reduce allocation overhead and make using the {@link Decoder} simpler.
+     *
+     * @return a newly constructed {@link EncoderState} instance.
+     */
     DecoderState newDecoderState();
+
+    /**
+     * Return a singleton {@link DecoderState} instance that is meant to be shared within single threaded
+     * decoder interactions.  If more than one thread makes use of this cached {@link DecoderState} the
+     * results of any decoding done using this state object is not guaranteed to be correct.
+     *
+     * @return a cached {@link DecoderState} linked to this Decoder instance that has been reset.
+     */
+    DecoderState getCachedDecoderState();
 
     Boolean readBoolean(ProtonBuffer buffer, DecoderState state) throws DecodeException;
 

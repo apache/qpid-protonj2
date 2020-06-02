@@ -50,8 +50,9 @@ public final class ProtonDecoderState implements DecoderState {
     }
 
     @Override
-    public void reset() {
+    public ProtonDecoderState reset() {
         // No intermediate state to reset
+        return this;
     }
 
     public UTF8Decoder getStringDecoder() {

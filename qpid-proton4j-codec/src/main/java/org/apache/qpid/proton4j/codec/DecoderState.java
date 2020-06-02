@@ -25,8 +25,10 @@ public interface DecoderState {
 
     /**
      * Resets any intermediate state back to default values.
+     *
+     * @return this {@link DecoderState} instance.
      */
-    void reset();
+    DecoderState reset();
 
     /**
      * @return the decoder that created this state object

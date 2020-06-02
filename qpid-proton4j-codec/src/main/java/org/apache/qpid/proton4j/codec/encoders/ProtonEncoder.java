@@ -99,6 +99,8 @@ public final class ProtonEncoder implements Encoder {
     private static final UnsignedLongTypeEncoder ulongEncoder = new UnsignedLongTypeEncoder();
     private static final DeliveryTagEncoder deliveryTagEncoder = new DeliveryTagEncoder();
 
+    private ProtonEncoderState singleThreadedState;
+
     private final Map<Class<?>, TypeEncoder<?>> typeEncoders = new HashMap<>();
     {
         typeEncoders.put(arrayEncoder.getTypeClass(), arrayEncoder);
@@ -132,6 +134,16 @@ public final class ProtonEncoder implements Encoder {
     @Override
     public ProtonEncoderState newEncoderState() {
         return new ProtonEncoderState(this);
+    }
+
+    @Override
+    public ProtonEncoderState getCachedEncoderState() {
+        ProtonEncoderState state = singleThreadedState;
+        if (state == null) {
+            state = newEncoderState();
+        }
+
+        return state.reset();
     }
 
     @Override

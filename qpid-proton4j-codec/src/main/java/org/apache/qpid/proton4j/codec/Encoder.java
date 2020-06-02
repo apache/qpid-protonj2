@@ -40,7 +40,31 @@ import org.apache.qpid.proton4j.codec.encoders.DescribedTypeEncoder;
  */
 public interface Encoder {
 
+    /**
+     * Creates a new {@link EncoderState} instance that can be used when interacting with the
+     * Encoder.  For encoding that occurs on more than one thread while sharing a single
+     * {@link Encoder} instance a different state object per thread is required as the
+     * {@link EncoderState} object can retain some state information during the encode process
+     * that could be corrupted if more than one thread were to share a single instance.
+     *
+     * For single threaded encoding work the {@link Encoder} offers a utility
+     * cached {@link EncoderState} API that will return the same instance on each call which can
+     * reduce allocation overhead and make using the {@link Encoder} simpler.
+     *
+     * @return a newly constructed {@link EncoderState} instance.
+     */
     EncoderState newEncoderState();
+
+    /**
+     * Return a singleton {@link EncoderState} instance that is meant to be shared within single threaded
+     * encoder interactions.  If more than one thread makes use of this cache {@link EncoderState} the
+     * results of any encoding done using this state object is not guaranteed to be correct.  The returned
+     * instance will have its reset method called to ensure that any previously stored state data is cleared
+     * before the next use.
+     *
+     * @return a cached {@link EncoderState} linked to this Encoder instance.
+     */
+    EncoderState getCachedEncoderState();
 
     void writeNull(ProtonBuffer buffer, EncoderState state) throws EncodeException;
 
