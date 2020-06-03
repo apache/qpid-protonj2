@@ -28,6 +28,7 @@ import org.apache.qpid.proton4j.amqp.driver.codec.messaging.Released;
 import org.apache.qpid.proton4j.amqp.driver.codec.messaging.Source;
 import org.apache.qpid.proton4j.amqp.driver.codec.messaging.Target;
 import org.apache.qpid.proton4j.amqp.driver.codec.transactions.Coordinator;
+import org.apache.qpid.proton4j.amqp.driver.codec.transactions.Declare;
 import org.apache.qpid.proton4j.amqp.driver.codec.transactions.Declared;
 import org.apache.qpid.proton4j.amqp.driver.codec.transactions.TransactionalState;
 import org.apache.qpid.proton4j.amqp.driver.codec.transport.ErrorCondition;
@@ -276,6 +277,31 @@ public abstract class TypeMapper {
                 new org.apache.qpid.proton4j.amqp.transactions.Coordinator();
 
             mapped.setCapabilities(coordinator.getCapabilities());
+
+            return mapped;
+        } else {
+            return null;
+        }
+    }
+
+    public static Declare mapFromProtonType(org.apache.qpid.proton4j.amqp.transactions.Declare declare) {
+        if (declare != null) {
+            Declare mapped = new Declare();
+
+            // TODO mapped.setGlobalId(declare.getGlobalId());
+
+            return mapped;
+        } else {
+            return null;
+        }
+    }
+
+    public static org.apache.qpid.proton4j.amqp.transactions.Declare mapToProtonType(Declare declare) {
+        if (declare != null) {
+            org.apache.qpid.proton4j.amqp.transactions.Declare mapped =
+                new org.apache.qpid.proton4j.amqp.transactions.Declare();
+
+            // TODO mapped.setGlobalId(declare.getGlobalId());
 
             return mapped;
         } else {

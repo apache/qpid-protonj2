@@ -41,6 +41,7 @@ import org.apache.qpid.proton4j.engine.EngineFactory;
 import org.apache.qpid.proton4j.engine.Receiver;
 import org.apache.qpid.proton4j.engine.Sender;
 import org.apache.qpid.proton4j.engine.Session;
+import org.apache.qpid.proton4j.engine.TransactionController;
 import org.apache.qpid.proton4j.engine.TransactionManager;
 import org.junit.Test;
 
@@ -48,6 +49,11 @@ import org.junit.Test;
  * Tests for AMQP transaction over normal {@link Sender} and {@link Receiver} links.
  */
 public class ProtonTransactionLinkTest extends ProtonEngineTestSupport {
+
+    private Symbol[] DEFAULT_OUTCOMES = new Symbol[] { Accepted.DESCRIPTOR_SYMBOL,
+                                                       Rejected.DESCRIPTOR_SYMBOL,
+                                                       Released.DESCRIPTOR_SYMBOL,
+                                                       Modified.DESCRIPTOR_SYMBOL };
 
     @Test(timeout = 20_000)
     public void testCreateCoordinatorSender() {
@@ -293,6 +299,58 @@ public class ProtonTransactionLinkTest extends ProtonEngineTestSupport {
         manager.open();
 
         manager.close();
+        session.close();
+        connection.close();
+
+        peer.waitForScriptToComplete();
+        assertNull(failure);
+    }
+
+    @Test(timeout = 20_000)
+    public void testTransactionControllerDeclaresTransaction() {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result);
+        ProtonTestPeer peer = new ProtonTestPeer(engine);
+        engine.outputConsumer(peer);
+
+        Coordinator coordinator = new Coordinator();
+        coordinator.setCapabilities(TxnCapability.LOCAL_TXN);
+        Source source = new Source();
+        source.setOutcomes(DEFAULT_OUTCOMES);
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond();
+        peer.expectBegin().respond();
+        peer.expectAttach().withSource(source).withTarget(coordinator).respond();
+        peer.remoteFlow().withLinkCredit(1).queue();
+
+        Connection connection = engine.start().open();
+        Session session = connection.session().open();
+        TransactionController txnController = session.coordinator("test-coordinator");
+
+        txnController.setSource(source);
+        txnController.setCoordinator(coordinator);
+
+        final AtomicBoolean openedWithCoordinatorTarget = new AtomicBoolean();
+        txnController.openHandler(result -> {
+            if (result.getRemoteCoordinator() instanceof Coordinator) {
+                openedWithCoordinatorTarget.set(true);
+            }
+        });
+
+        txnController.open();
+
+        peer.waitForScriptToComplete();
+        peer.expectDeclare();
+        peer.expectDetach().withClosed(true).respond();
+        peer.expectEnd().respond();
+        peer.expectClose().respond();
+
+        assertTrue(openedWithCoordinatorTarget.get());
+
+        assertNotNull(txnController.declare());
+
+        txnController.close();
         session.close();
         connection.close();
 
