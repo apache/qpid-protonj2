@@ -16,19 +16,30 @@
  */
 package org.apache.qpid.proton4j.engine.impl;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 
 import org.apache.qpid.proton4j.amqp.Symbol;
+import org.apache.qpid.proton4j.amqp.messaging.AmqpValue;
 import org.apache.qpid.proton4j.amqp.messaging.Source;
 import org.apache.qpid.proton4j.amqp.transactions.Coordinator;
 import org.apache.qpid.proton4j.amqp.transactions.Declare;
 import org.apache.qpid.proton4j.amqp.transactions.Discharge;
+import org.apache.qpid.proton4j.amqp.transport.DeliveryState;
 import org.apache.qpid.proton4j.amqp.transport.ErrorCondition;
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
+import org.apache.qpid.proton4j.codec.CodecFactory;
+import org.apache.qpid.proton4j.codec.Encoder;
+import org.apache.qpid.proton4j.codec.EncoderState;
+import org.apache.qpid.proton4j.common.logging.ProtonLogger;
+import org.apache.qpid.proton4j.common.logging.ProtonLoggerFactory;
+import org.apache.qpid.proton4j.engine.Engine;
 import org.apache.qpid.proton4j.engine.EventHandler;
+import org.apache.qpid.proton4j.engine.OutgoingDelivery;
+import org.apache.qpid.proton4j.engine.Sender;
 import org.apache.qpid.proton4j.engine.Transaction;
 import org.apache.qpid.proton4j.engine.TransactionController;
+import org.apache.qpid.proton4j.engine.TransactionState;
 import org.apache.qpid.proton4j.engine.exceptions.EngineFailedException;
 import org.apache.qpid.proton4j.engine.exceptions.EngineStateException;
 
@@ -39,14 +50,43 @@ import org.apache.qpid.proton4j.engine.exceptions.EngineStateException;
  */
 public class ProtonTransactionController extends ProtonEndpoint<TransactionController> implements TransactionController {
 
-    private final ProtonSender senderLink;
+    private static final ProtonLogger LOG = ProtonLoggerFactory.getLogger(ProtonTransactionController.class);
 
-    private final List<ProtonControllerTransaction> transactions = new ArrayList<>();
+    private static final ProtonBuffer ENCODED_DECLARE;
+
+    static {
+        Encoder declareEncoder = CodecFactory.getEncoder();
+        EncoderState state = declareEncoder.newEncoderState();
+
+        ENCODED_DECLARE = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+        try {
+            declareEncoder.writeObject(ENCODED_DECLARE, state, new AmqpValue(new Declare()));
+        } finally {
+            state.reset();
+        }
+    }
+
+    private final ProtonSender senderLink;
+    private final Encoder commandEncoder = CodecFactory.getEncoder();
+    private final ProtonBuffer encoding = ProtonByteBufferAllocator.DEFAULT.allocate();
+
+    private EventHandler<Transaction<TransactionController>> declaredEventHandler;
+    private EventHandler<Transaction<TransactionController>> declareFailureEventHandler;
+    private EventHandler<Transaction<TransactionController>> dischargedEventHandler;
+    private EventHandler<Transaction<TransactionController>> dischargeFailureEventHandler;
 
     public ProtonTransactionController(ProtonSender senderLink) {
         super(senderLink.getEngine());
 
         this.senderLink = senderLink;
+        this.senderLink.deliveryStateUpdatedHandler(this::handleDeliveryRemotelyUpdated)
+                       .creditStateUpdateHandler(this::handleLinkCreditUpdated)
+                       .openHandler(this::handleSenderLinkOpened)
+                       .closeHandler(this::handleSenderLinkClosed)
+                       .localOpenHandler(this::handleSenderLinkLocallyOpened)
+                       .localCloseHandler(this::handleSenderLinkLocallyClosed)
+                       .engineShutdownHandler(this::handleEngineShutdown);
     }
 
     @Override
@@ -61,7 +101,7 @@ public class ProtonTransactionController extends ProtonEndpoint<TransactionContr
 
     @Override
     public boolean hasCapacity() {
-        return senderLink.isSendable();  // TODO: If we buffer some commands add check for that too.
+        return senderLink.isSendable();
     }
 
     @Override
@@ -69,38 +109,93 @@ public class ProtonTransactionController extends ProtonEndpoint<TransactionContr
         if (!senderLink.isSendable()) {
             throw new IllegalStateException("Cannot Declare due to current capicity restrictions.");
         }
-        // TODO Auto-generated method stub
-        return null;
+
+        ProtonControllerTransaction transaction = new ProtonControllerTransaction(this);
+        transaction.setState(TransactionState.DECLARING);
+
+        OutgoingDelivery command = senderLink.next();
+
+        command.setLinkedResource(transaction);
+        command.writeBytes(ENCODED_DECLARE);
+
+        return transaction;
     }
 
     @Override
     public TransactionController discharge(Transaction<TransactionController> transaction, boolean failed) {
-        // TODO Auto-generated method stub
+        if (transaction.getState() != TransactionState.DECLARED) {
+            throw new IllegalStateException("Cannot discharge a transaction that is not currently actively declared.");
+        }
+
+        ((ProtonTransaction<TransactionController>) transaction).setState(TransactionState.DISCHARGING);
+
+        Discharge discharge = new Discharge();
+        discharge.setFail(failed);
+        discharge.setTxnId(transaction.getTxnId());
+
+        commandEncoder.writeObject(encoding.clear(), commandEncoder.getCachedEncoderState(), new AmqpValue(discharge));
+
+        OutgoingDelivery command = senderLink.next();
+        command.setLinkedResource(transaction);
+        command.writeBytes(encoding);
+
         return this;
     }
 
     @Override
     public TransactionController declaredHandler(EventHandler<Transaction<TransactionController>> declaredEventHandler) {
-        // TODO Auto-generated method stub
+        this.declaredEventHandler = declaredEventHandler;
         return this;
     }
 
     @Override
     public TransactionController declareFailureHandler(EventHandler<Transaction<TransactionController>> declareFailureEventHandler) {
-        // TODO Auto-generated method stub
+        this.declareFailureEventHandler = declareFailureEventHandler;
         return this;
     }
 
     @Override
     public TransactionController dischargedHandler(EventHandler<Transaction<TransactionController>> dischargedEventHandler) {
-        // TODO Auto-generated method stub
+        this.dischargedEventHandler = dischargedEventHandler;
         return this;
     }
 
     @Override
     public TransactionController dischargeFailureHandler(EventHandler<Transaction<TransactionController>> dischargeFailureEventHandler) {
-        // TODO Auto-generated method stub
+        this.dischargeFailureEventHandler = dischargeFailureEventHandler;
         return this;
+    }
+
+    private void fireDeclaredEvent(ProtonControllerTransaction transaction) {
+        if (declaredEventHandler != null) {
+            declaredEventHandler.handle(transaction);
+        } else {
+            LOG.debug("Transaction {} declared successfully but no handler registered to signal result", transaction);
+        }
+    }
+
+    private void fireDeclareFailureEvent(ProtonControllerTransaction transaction) {
+        if (declareFailureEventHandler != null) {
+            declareFailureEventHandler.handle(transaction);
+        } else {
+            LOG.debug("Transaction {} declare failed but no handler registered to signal result", transaction);
+        }
+    }
+
+    private void fireDischargedEvent(ProtonControllerTransaction transaction) {
+        if (dischargedEventHandler != null) {
+            dischargedEventHandler.handle(transaction);
+        } else {
+            LOG.debug("Transaction {} discharged successfully but no handler registered to signal result", transaction);
+        }
+    }
+
+    private void fireDischargeFailureEvent(ProtonControllerTransaction transaction) {
+        if (dischargeFailureEventHandler != null) {
+            dischargeFailureEventHandler.handle(transaction);
+        } else {
+            LOG.debug("Transaction {} discharge failed but no handler registered to signal result", transaction);
+        }
     }
 
     //----- Hand off methods for link specific elements.
@@ -235,9 +330,65 @@ public class ProtonTransactionController extends ProtonEndpoint<TransactionContr
         return senderLink.getRemoteTarget();
     }
 
+    //----- Link event handlers
+
+    private void handleSenderLinkLocallyOpened(Sender sender) {
+        fireLocalOpen();
+    }
+
+    private void handleSenderLinkLocallyClosed(Sender sender) {
+        fireLocalClose();
+    }
+
+    private void handleSenderLinkOpened(Sender sender) {
+        fireRemoteOpen();
+    }
+
+    private void handleSenderLinkClosed(Sender sender) {
+        fireRemoteClose();
+    }
+
+    private void handleEngineShutdown(Engine engine) {
+        fireEngineShutdown();
+    }
+
+    private void handleLinkCreditUpdated(Sender sender) {
+        // Nothing needed here yet stubbed for now for future use.
+    }
+
+    private void handleDeliveryRemotelyUpdated(OutgoingDelivery delivery) {
+        ProtonControllerTransaction transaction = delivery.getLinkedResource();
+
+        DeliveryState state = delivery.getRemoteState();
+        TransactionState transactionState = transaction.getState();
+
+        try {
+            switch (state.getType()) {
+                case Declared:
+                    transaction.setState(TransactionState.DECLARED);
+                    fireDeclaredEvent(transaction);
+                    break;
+                case Rejected:
+                    transaction.setState(TransactionState.FAILED);
+                    if (transactionState == TransactionState.DECLARING) {
+                        fireDeclareFailureEvent(transaction);
+                    } else {
+                        fireDischargeFailureEvent(transaction);
+                    }
+                    break;
+                default:
+                    transaction.setState(TransactionState.DISCHARGED);
+                    fireDischargedEvent(transaction);
+                    break;
+            }
+        } finally {
+            delivery.settle();
+        }
+    }
+
     //----- The Controller specific Transaction implementation
 
-    private final class ProtonControllerTransaction extends ProtonTransaction<ProtonTransactionController> {
+    private final class ProtonControllerTransaction extends ProtonTransaction<TransactionController> implements Transaction<TransactionController> {
 
         private final ProtonTransactionController controller;
 

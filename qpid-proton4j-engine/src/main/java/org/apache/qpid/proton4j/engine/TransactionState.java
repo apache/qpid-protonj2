@@ -31,10 +31,22 @@ public enum TransactionState {
     IDLE,
 
     /**
+     * A {@link Transaction} is considered declaring once a Declare command has been sent to the remote
+     * but before any response has been received which assigns the transaction ID.
+     */
+    DECLARING,
+
+    /**
      * A {@link Transaction} is considered declared once the {@link TransactionManager} has responded
      * in the affirmative and assigned a transaction Id.
      */
     DECLARED,
+
+    /**
+     * A {@link Transaction} is considered to b discharging once a Discharge command has been sent to the remote
+     * but before any response has been received indicating the outcome of the attempted discharge.
+     */
+    DISCHARGING,
 
     /**
      * A {@link Transaction} is considered discharged once a {@link Discharge} has been requested and
@@ -47,4 +59,5 @@ public enum TransactionState {
      * to either the {@link Declare} action or the {@link Discharge} action.
      */
     FAILED;
+
 }

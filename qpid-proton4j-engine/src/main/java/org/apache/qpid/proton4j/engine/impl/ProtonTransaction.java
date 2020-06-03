@@ -51,7 +51,7 @@ public abstract class ProtonTransaction<E extends Endpoint<?>> implements Transa
 
     @Override
     public boolean isDeclared() {
-        return state.ordinal()== TransactionState.DECLARED.ordinal();
+        return state.ordinal() == TransactionState.DECLARED.ordinal();
     }
 
     @Override

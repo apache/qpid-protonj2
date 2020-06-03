@@ -16,8 +16,6 @@
  */
 package org.apache.qpid.proton4j.engine.impl;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 
 import org.apache.qpid.proton4j.amqp.Binary;
@@ -27,7 +25,9 @@ import org.apache.qpid.proton4j.amqp.transactions.Coordinator;
 import org.apache.qpid.proton4j.amqp.transactions.Declare;
 import org.apache.qpid.proton4j.amqp.transactions.Discharge;
 import org.apache.qpid.proton4j.amqp.transport.ErrorCondition;
+import org.apache.qpid.proton4j.engine.Engine;
 import org.apache.qpid.proton4j.engine.EventHandler;
+import org.apache.qpid.proton4j.engine.Receiver;
 import org.apache.qpid.proton4j.engine.Transaction;
 import org.apache.qpid.proton4j.engine.TransactionManager;
 import org.apache.qpid.proton4j.engine.exceptions.EngineFailedException;
@@ -42,8 +42,6 @@ public final class ProtonTransactionManager extends ProtonEndpoint<TransactionMa
 
     private final ProtonReceiver receiverLink;
 
-    private final List<ProtonManagerTransaction> transactions = new ArrayList<>();
-
     private EventHandler<Transaction<TransactionManager>> declareEventHandler;
     private EventHandler<Transaction<TransactionManager>> dischargeEventHandler;
 
@@ -51,6 +49,11 @@ public final class ProtonTransactionManager extends ProtonEndpoint<TransactionMa
         super(receiverLink.getEngine());
 
         this.receiverLink = receiverLink;
+        this.receiverLink.openHandler(this::handleReceiverLinkOpened)
+                         .closeHandler(this::handleReceiverLinkClosed)
+                         .localOpenHandler(this::handleReceiverLinkLocallyOpened)
+                         .localCloseHandler(this::handleReceiverLinkLocallyClosed)
+                         .engineShutdownHandler(this::handleEngineShutdown);
     }
 
     @Override
@@ -234,6 +237,28 @@ public final class ProtonTransactionManager extends ProtonEndpoint<TransactionMa
     @Override
     public Coordinator getRemoteCoordinator() {
         return receiverLink.getRemoteTarget();
+    }
+
+    //----- Link event handlers
+
+    private void handleReceiverLinkLocallyOpened(Receiver receiver) {
+        fireLocalOpen();
+    }
+
+    private void handleReceiverLinkLocallyClosed(Receiver receiver) {
+        fireLocalClose();
+    }
+
+    private void handleReceiverLinkOpened(Receiver receiver) {
+        fireRemoteOpen();
+    }
+
+    private void handleReceiverLinkClosed(Receiver receiver) {
+        fireRemoteClose();
+    }
+
+    private void handleEngineShutdown(Engine engine) {
+        fireEngineShutdown();
     }
 
     //----- The Manager specific Transaction implementation
