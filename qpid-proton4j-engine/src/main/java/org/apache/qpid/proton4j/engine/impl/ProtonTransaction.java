@@ -79,7 +79,7 @@ public abstract class ProtonTransaction<E extends Endpoint<?>> implements Transa
         return txnId;
     }
 
-    ProtonTransaction<E> getTxnId(Binary txnId) {
+    ProtonTransaction<E> setTxnId(Binary txnId) {
         this.txnId = txnId;
         return this;
     }

@@ -29,7 +29,12 @@ import org.apache.qpid.proton4j.amqp.driver.codec.security.SaslResponse;
 import org.apache.qpid.proton4j.amqp.driver.codec.transport.Transfer;
 import org.apache.qpid.proton4j.amqp.driver.codec.util.TypeMapper;
 import org.apache.qpid.proton4j.amqp.driver.matchers.transport.TransferMatcher;
+import org.apache.qpid.proton4j.amqp.messaging.Accepted;
+import org.apache.qpid.proton4j.amqp.messaging.Modified;
+import org.apache.qpid.proton4j.amqp.messaging.Rejected;
+import org.apache.qpid.proton4j.amqp.messaging.Released;
 import org.apache.qpid.proton4j.amqp.transport.DeliveryState;
+import org.apache.qpid.proton4j.amqp.transport.ErrorCondition;
 import org.apache.qpid.proton4j.amqp.transport.ReceiverSettleMode;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
@@ -45,7 +50,7 @@ public class TransferExpectation extends AbstractExpectation<Transfer> {
 
     private Matcher<ProtonBuffer> payloadMatcher = Matchers.any(ProtonBuffer.class);
 
-    private DispositionInjectAction response;
+    protected DispositionInjectAction response;
 
     public TransferExpectation(AMQPTestDriver driver) {
         super(driver);
@@ -53,6 +58,42 @@ public class TransferExpectation extends AbstractExpectation<Transfer> {
 
     public DispositionInjectAction respond() {
         response = new DispositionInjectAction(driver);
+        driver.addScriptedElement(response);
+        return response;
+    }
+
+    public DispositionInjectAction accept() {
+        response = new DispositionInjectAction(driver);
+        response.withSettled(true);
+        response.withState(Accepted.getInstance());
+
+        driver.addScriptedElement(response);
+        return response;
+    }
+
+    public DispositionInjectAction release() {
+        response = new DispositionInjectAction(driver);
+        response.withSettled(true);
+        response.withState(Released.getInstance());
+
+        driver.addScriptedElement(response);
+        return response;
+    }
+
+    public DispositionInjectAction reject(ErrorCondition error) {
+        response = new DispositionInjectAction(driver);
+        response.withSettled(true);
+        response.withState(new Rejected().setError(error));
+
+        driver.addScriptedElement(response);
+        return response;
+    }
+
+    public DispositionInjectAction modify(boolean failed, boolean undeliverable) {
+        response = new DispositionInjectAction(driver);
+        response.withSettled(true);
+        response.withState(new Modified().setDeliveryFailed(failed).setUndeliverableHere(undeliverable));
+
         driver.addScriptedElement(response);
         return response;
     }

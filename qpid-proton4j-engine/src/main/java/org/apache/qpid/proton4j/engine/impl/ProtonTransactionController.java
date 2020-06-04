@@ -23,6 +23,7 @@ import org.apache.qpid.proton4j.amqp.messaging.AmqpValue;
 import org.apache.qpid.proton4j.amqp.messaging.Source;
 import org.apache.qpid.proton4j.amqp.transactions.Coordinator;
 import org.apache.qpid.proton4j.amqp.transactions.Declare;
+import org.apache.qpid.proton4j.amqp.transactions.Declared;
 import org.apache.qpid.proton4j.amqp.transactions.Discharge;
 import org.apache.qpid.proton4j.amqp.transport.DeliveryState;
 import org.apache.qpid.proton4j.amqp.transport.ErrorCondition;
@@ -365,7 +366,9 @@ public class ProtonTransactionController extends ProtonEndpoint<TransactionContr
         try {
             switch (state.getType()) {
                 case Declared:
+                    Declared declared = (Declared) state;
                     transaction.setState(TransactionState.DECLARED);
+                    transaction.setTxnId(declared.getTxnId());
                     fireDeclaredEvent(transaction);
                     break;
                 case Rejected:

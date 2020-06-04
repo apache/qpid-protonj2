@@ -2531,9 +2531,7 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
                              .withState((DeliveryState) null)
                              .withDeliveryId(0)
                              .withDeliveryTag(new byte[] {0})
-                             .respond()
-                             .withSettled(true)
-                             .withState(Accepted.getInstance());
+                             .accept();
 
         Connection connection = engine.start().open();
         Session session = connection.session().open();
@@ -2597,11 +2595,11 @@ public class ProtonSenderTest extends ProtonEngineTestSupport {
 
         peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         peer.expectTransfer().withPayload(notNullValue(ProtonBuffer.class))
-                             .withDeliveryTag(new byte[] {0}).respond().withSettled(true).withState(Accepted.getInstance());
+                             .withDeliveryTag(new byte[] {0}).accept();
         peer.expectTransfer().withPayload(notNullValue(ProtonBuffer.class))
-                             .withDeliveryTag(new byte[] {1}).respond().withSettled(true).withState(Accepted.getInstance());
+                             .withDeliveryTag(new byte[] {1}).accept();
         peer.expectTransfer().withPayload(notNullValue(ProtonBuffer.class))
-                             .withDeliveryTag(new byte[] {2}).respond().withSettled(true).withState(Accepted.getInstance());
+                             .withDeliveryTag(new byte[] {2}).accept();
 
         OutgoingDelivery delivery1 = sender.next();
         delivery1.writeBytes(payload.duplicate());

@@ -16,10 +16,15 @@
  */
 package org.apache.qpid.proton4j.amqp.driver.expectations;
 
+import java.util.Random;
+
+import org.apache.qpid.proton4j.amqp.Binary;
 import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
+import org.apache.qpid.proton4j.amqp.driver.actions.DispositionInjectAction;
 import org.apache.qpid.proton4j.amqp.driver.codec.transactions.Declare;
 import org.apache.qpid.proton4j.amqp.driver.codec.util.TypeMapper;
 import org.apache.qpid.proton4j.amqp.driver.matchers.types.EncodedAmqpValueMatcher;
+import org.apache.qpid.proton4j.amqp.transactions.Declared;
 
 /**
  * Expectation used to script incoming transaction declarations.
@@ -32,6 +37,26 @@ public class DeclareExpectation extends TransferExpectation {
         super(driver);
 
         withPayload(defaultPayloadMatcher);
+    }
+
+    @Override
+    public DispositionInjectAction accept() {
+        final byte[] txnId = new byte[4];
+
+        Random rand = new Random();
+        rand.setSeed(System.nanoTime());
+        rand.nextBytes(txnId);
+
+        return accept(txnId);
+    }
+
+    public DispositionInjectAction accept(byte[] txnId) {
+        response = new DispositionInjectAction(driver);
+        response.withSettled(true);
+        response.withState(new Declared().setTxnId(new Binary(txnId)));
+
+        driver.addScriptedElement(response);
+        return response;
     }
 
     @Override

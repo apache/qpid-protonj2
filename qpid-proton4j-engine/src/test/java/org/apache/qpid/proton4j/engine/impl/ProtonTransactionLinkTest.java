@@ -16,6 +16,7 @@
  */
 package org.apache.qpid.proton4j.engine.impl;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -338,17 +339,28 @@ public class ProtonTransactionLinkTest extends ProtonEngineTestSupport {
             }
         });
 
+        final byte[] TXN_ID = new byte[] { 1, 2, 3, 4 };
+
+        final AtomicReference<byte[]> declaredTxnId = new AtomicReference<>();
+        txnController.declaredHandler(result -> {
+            declaredTxnId.set(result.getTxnId().arrayCopy());
+        });
+
         txnController.open();
 
         peer.waitForScriptToComplete();
-        peer.expectDeclare();
-        peer.expectDetach().withClosed(true).respond();
-        peer.expectEnd().respond();
-        peer.expectClose().respond();
+        peer.expectDeclare().accept(TXN_ID);
 
         assertTrue(openedWithCoordinatorTarget.get());
 
         assertNotNull(txnController.declare());
+
+        peer.waitForScriptToComplete();
+        peer.expectDetach().withClosed(true).respond();
+        peer.expectEnd().respond();
+        peer.expectClose().respond();
+
+        assertArrayEquals(TXN_ID, declaredTxnId.get());
 
         txnController.close();
         session.close();
