@@ -30,6 +30,7 @@ import org.apache.qpid.proton4j.amqp.driver.codec.messaging.Target;
 import org.apache.qpid.proton4j.amqp.driver.codec.transactions.Coordinator;
 import org.apache.qpid.proton4j.amqp.driver.codec.transactions.Declare;
 import org.apache.qpid.proton4j.amqp.driver.codec.transactions.Declared;
+import org.apache.qpid.proton4j.amqp.driver.codec.transactions.Discharge;
 import org.apache.qpid.proton4j.amqp.driver.codec.transactions.TransactionalState;
 import org.apache.qpid.proton4j.amqp.driver.codec.transport.ErrorCondition;
 import org.apache.qpid.proton4j.amqp.messaging.Outcome;
@@ -302,6 +303,35 @@ public abstract class TypeMapper {
                 new org.apache.qpid.proton4j.amqp.transactions.Declare();
 
             // TODO mapped.setGlobalId(declare.getGlobalId());
+
+            return mapped;
+        } else {
+            return null;
+        }
+    }
+
+    public static Discharge mapFromProtonType(org.apache.qpid.proton4j.amqp.transactions.Discharge discharge) {
+        if (discharge != null) {
+            Discharge mapped = new Discharge();
+
+            mapped.setFail(discharge.getFail());
+            mapped.setTxnId(discharge.getTxnId().copy());
+
+            return mapped;
+        } else {
+            return null;
+        }
+    }
+
+    public static org.apache.qpid.proton4j.amqp.transactions.Discharge mapToProtonType(Discharge discharge) {
+        if (discharge != null) {
+            org.apache.qpid.proton4j.amqp.transactions.Discharge mapped =
+                new org.apache.qpid.proton4j.amqp.transactions.Discharge();
+
+            if (discharge.getFail() != null) {
+                mapped.setFail(discharge.getFail().booleanValue());
+            }
+            mapped.setTxnId(discharge.getTxnId().copy());
 
             return mapped;
         } else {
