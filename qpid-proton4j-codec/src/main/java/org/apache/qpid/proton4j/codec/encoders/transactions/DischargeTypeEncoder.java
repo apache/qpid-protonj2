@@ -69,10 +69,6 @@ public final class DischargeTypeEncoder extends AbstractDescribedListTypeEncoder
 
     @Override
     public int getElementCount(Discharge discharge) {
-        if (discharge.getFail()) {
-            return 2;
-        } else {
-            return 1;
-        }
+        return 2;
     }
 }
