@@ -117,7 +117,11 @@ public class ProtonTransactionController extends ProtonEndpoint<TransactionContr
         OutgoingDelivery command = senderLink.next();
 
         command.setLinkedResource(transaction);
-        command.writeBytes(ENCODED_DECLARE);
+        try {
+            command.writeBytes(ENCODED_DECLARE);
+        } finally {
+            ENCODED_DECLARE.setReadIndex(0);
+        }
 
         return transaction;
     }
@@ -354,7 +358,13 @@ public class ProtonTransactionController extends ProtonEndpoint<TransactionContr
     }
 
     private void handleLinkCreditUpdated(Sender sender) {
-        // Nothing needed here yet stubbed for now for future use.
+        if (sender.isSendable()) {
+            // TODO: if not previously able to send then signal capacity is available.
+        }
+
+        if (sender.isDraining()) {
+            sender.drained();
+        }
     }
 
     private void handleDeliveryRemotelyUpdated(OutgoingDelivery delivery) {
@@ -362,6 +372,10 @@ public class ProtonTransactionController extends ProtonEndpoint<TransactionContr
 
         DeliveryState state = delivery.getRemoteState();
         TransactionState transactionState = transaction.getState();
+
+        // TODO: Check error states for disposition outside of expected state boundaries
+        //       and deal with settlement after delivery state sent as unexpected but possible
+        //       case of responding to a requested transaction command..
 
         try {
             switch (state.getType()) {
@@ -371,17 +385,17 @@ public class ProtonTransactionController extends ProtonEndpoint<TransactionContr
                     transaction.setTxnId(declared.getTxnId());
                     fireDeclaredEvent(transaction);
                     break;
-                case Rejected:
+                case Accepted:
+                    transaction.setState(TransactionState.DISCHARGED);
+                    fireDischargedEvent(transaction);
+                    break;
+                default:
                     transaction.setState(TransactionState.FAILED);
                     if (transactionState == TransactionState.DECLARING) {
                         fireDeclareFailureEvent(transaction);
                     } else {
                         fireDischargeFailureEvent(transaction);
                     }
-                    break;
-                default:
-                    transaction.setState(TransactionState.DISCHARGED);
-                    fireDischargedEvent(transaction);
                     break;
             }
         } finally {

@@ -42,6 +42,7 @@ import org.apache.qpid.proton4j.engine.EngineFactory;
 import org.apache.qpid.proton4j.engine.Receiver;
 import org.apache.qpid.proton4j.engine.Sender;
 import org.apache.qpid.proton4j.engine.Session;
+import org.apache.qpid.proton4j.engine.Transaction;
 import org.apache.qpid.proton4j.engine.TransactionController;
 import org.apache.qpid.proton4j.engine.TransactionManager;
 import org.junit.Test;
@@ -361,6 +362,73 @@ public class ProtonTransactionLinkTest extends ProtonEngineTestSupport {
         peer.expectClose().respond();
 
         assertArrayEquals(TXN_ID, declaredTxnId.get());
+
+        txnController.close();
+        session.close();
+        connection.close();
+
+        peer.waitForScriptToComplete();
+        assertNull(failure);
+    }
+
+    @Test(timeout = 20_000)
+    public void testTransactionControllerDeclareAndDischargeOneTransaction() {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result);
+        ProtonTestPeer peer = new ProtonTestPeer(engine);
+        engine.outputConsumer(peer);
+
+        Coordinator coordinator = new Coordinator();
+        coordinator.setCapabilities(TxnCapability.LOCAL_TXN);
+        Source source = new Source();
+        source.setOutcomes(DEFAULT_OUTCOMES);
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond();
+        peer.expectBegin().respond();
+        peer.expectAttach().withSource(source).withTarget(coordinator).respond();
+        peer.remoteFlow().withLinkCredit(2).queue();
+
+        Connection connection = engine.start().open();
+        Session session = connection.session().open();
+        TransactionController txnController = session.coordinator("test-coordinator");
+
+        txnController.setSource(source);
+        txnController.setCoordinator(coordinator);
+
+        final byte[] TXN_ID = new byte[] { 1, 2, 3, 4 };
+
+        final AtomicReference<byte[]> declaredTxnId = new AtomicReference<>();
+        final AtomicReference<byte[]> dischargedTxnId = new AtomicReference<>();
+
+        txnController.declaredHandler(result -> {
+            declaredTxnId.set(result.getTxnId().arrayCopy());
+        });
+        txnController.dischargedHandler(result -> {
+            dischargedTxnId.set(result.getTxnId().arrayCopy());
+        });
+
+        txnController.open();
+
+        peer.waitForScriptToComplete();
+        peer.expectDeclare().accept(TXN_ID);
+
+        final Transaction<TransactionController> txn = txnController.declare();
+        assertNotNull(txn);
+
+        peer.waitForScriptToComplete();
+        peer.expectDischarge().withTxnId(TXN_ID).withFail(false).accept();
+
+        assertArrayEquals(TXN_ID, declaredTxnId.get());
+
+        txnController.discharge(txn, false);
+
+        peer.waitForScriptToComplete();
+        peer.expectDetach().withClosed(true).respond();
+        peer.expectEnd().respond();
+        peer.expectClose().respond();
+
+        assertArrayEquals(TXN_ID, dischargedTxnId.get());
 
         txnController.close();
         session.close();
