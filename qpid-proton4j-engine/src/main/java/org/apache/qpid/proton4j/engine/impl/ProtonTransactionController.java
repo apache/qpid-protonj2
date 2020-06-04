@@ -16,6 +16,8 @@
  */
 package org.apache.qpid.proton4j.engine.impl;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.qpid.proton4j.amqp.Symbol;
@@ -79,6 +81,8 @@ public class ProtonTransactionController extends ProtonEndpoint<TransactionContr
     private EventHandler<Transaction<TransactionController>> dischargedEventHandler;
     private EventHandler<Transaction<TransactionController>> dischargeFailureEventHandler;
 
+    private List<EventHandler<TransactionController>> capacityObservers = new ArrayList<>();
+
     public ProtonTransactionController(ProtonSender senderLink) {
         super(senderLink.getEngine());
 
@@ -105,6 +109,17 @@ public class ProtonTransactionController extends ProtonEndpoint<TransactionContr
     @Override
     public boolean hasCapacity() {
         return senderLink.isSendable();
+    }
+
+    @Override
+    public ProtonTransactionController registerCapacityAvailableHandler(EventHandler<TransactionController> handler) {
+        if (hasCapacity()) {
+            handler.handle(this);
+        } else {
+            capacityObservers.add(handler);
+        }
+
+        return this;
     }
 
     @Override
@@ -361,7 +376,15 @@ public class ProtonTransactionController extends ProtonEndpoint<TransactionContr
 
     private void handleLinkCreditUpdated(Sender sender) {
         if (sender.isSendable()) {
-            // TODO: if not previously able to send then signal capacity is available.
+            // Remove all that can be invoked and leave the rest in place for next credit update.
+            capacityObservers.removeIf(handler -> {
+                if (hasCapacity()) {
+                    handler.handle(this);
+                    return true;
+                }
+
+                return false;
+            });
         }
 
         if (sender.isDraining()) {

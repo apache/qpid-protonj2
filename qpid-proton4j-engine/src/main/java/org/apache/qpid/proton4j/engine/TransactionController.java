@@ -21,6 +21,7 @@ import org.apache.qpid.proton4j.amqp.messaging.Source;
 import org.apache.qpid.proton4j.amqp.messaging.Terminus;
 import org.apache.qpid.proton4j.amqp.transactions.Coordinator;
 import org.apache.qpid.proton4j.amqp.transactions.Declare;
+import org.apache.qpid.proton4j.amqp.transactions.Declared;
 import org.apache.qpid.proton4j.amqp.transactions.Discharge;
 
 /**
@@ -165,5 +166,25 @@ public interface TransactionController extends Endpoint<TransactionController> {
      * @return this {@link TransactionController}.
      */
     TransactionController dischargeFailureHandler(EventHandler<Transaction<TransactionController>> dischargeFailureEventHandler);
+
+    /**
+     * Allows the caller to register an {@link EventHandler} that will be signaled when the underlying
+     * link for this {@link TransactionController} has been granted credit which would then allow for
+     * transaction {@link Declared} and {@link Discharge} commands to be sent to the remote Transactional
+     * Resource.
+     *
+     * If the controller already has credit to send then the handler will be invoked immediately otherwise
+     * it will be stored until credit becomes available.  Once a handler is signaled it is no longer retained
+     * for future updates and the caller will need to register it again once more transactional work is to be
+     * completed.  Because more than one handler can be added at a time the caller should check again before
+     * attempting to perform a transaction {@link Declared} or {@link Discharge} is performed as other tasks
+     * might have already consumed credit if work is done via some asynchronous mechanism.
+     *
+     * @param handler
+     *      The {@link EventHandler} that will be signaled once credit is available for transaction work.
+     *
+     * @return this {@link TransactionController} instance.
+     */
+    TransactionController registerCapacityAvailableHandler(EventHandler<TransactionController> handler);
 
 }
