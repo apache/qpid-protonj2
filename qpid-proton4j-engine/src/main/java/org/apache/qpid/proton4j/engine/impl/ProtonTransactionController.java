@@ -20,12 +20,14 @@ import java.util.Map;
 
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.messaging.AmqpValue;
+import org.apache.qpid.proton4j.amqp.messaging.Rejected;
 import org.apache.qpid.proton4j.amqp.messaging.Source;
 import org.apache.qpid.proton4j.amqp.transactions.Coordinator;
 import org.apache.qpid.proton4j.amqp.transactions.Declare;
 import org.apache.qpid.proton4j.amqp.transactions.Declared;
 import org.apache.qpid.proton4j.amqp.transactions.Discharge;
 import org.apache.qpid.proton4j.amqp.transport.DeliveryState;
+import org.apache.qpid.proton4j.amqp.transport.DeliveryState.DeliveryStateType;
 import org.apache.qpid.proton4j.amqp.transport.ErrorCondition;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
@@ -391,6 +393,11 @@ public class ProtonTransactionController extends ProtonEndpoint<TransactionContr
                     break;
                 default:
                     transaction.setState(TransactionState.FAILED);
+                    if (state.getType() == DeliveryStateType.Rejected) {
+                        Rejected rejected = (Rejected) state;
+                        transaction.setCondition(rejected.getError());
+                    }
+
                     if (transactionState == TransactionState.DECLARING) {
                         fireDeclareFailureEvent(transaction);
                     } else {
