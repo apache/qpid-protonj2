@@ -255,4 +255,96 @@ public interface Session {
      */
     String[] desiredCapabilities() throws ClientException;
 
+    /**
+     * Opens a new transaction scoped to this {@link Session} if one is not already active.
+     *
+     * A {@link Session} that has an active transaction will perform all sends and all delivery dispositions
+     * under that active transaction.  If the user wishes to send with the same session but outside of a
+     * transaction they user must commit the active transaction and not request that a new one be started.
+     * A session can only have one active transaction at a time and as such any call to begin while there is
+     * a currently active transaction will throw an {@link IllegalStateException} to indicate that the operation
+     * being requested is not valid at that time.
+     *
+     * This is a blocking method that will return successfully only after a new transaction has been started.
+     *
+     * @return this {@link Session} instance.
+     *
+     * @throws ClientException if an error occurs while attempting to begin a new transaction.
+     */
+    Session begin() throws ClientException;
+
+    /**
+     * Commit the currently active transaction in this Session.
+     *
+     * Commit the currently active transaction in this Session but does not start a new transaction
+     * automatically.  If there is no current transaction this method will throw an {@link IllegalStateException}
+     * to indicate this error.  If the active transaction has entered an in doubt state or was remotely rolled
+     * back this method will throw an error to indicate that the commit failed and that a new transaction
+     * need to be started by the user.  When a transaction rolled back error occurs the user should assume that
+     * all work performed under that transaction has failed and will need to be attempted under a new transaction.
+     *
+     * This is a blocking method that will return successfully only after the current transaction has been committed.
+     *
+     * @return this {@link Session} instance.
+     *
+     * @throws ClientException if an error occurs while attempting to commit the current transaction.
+     */
+    Session commit() throws ClientException;
+
+    /**
+     * Commit the currently active transaction in this Session.
+     *
+     * Commit the currently active transaction in this Session and start a new transaction if the supplied
+     * start new transaction parameter is <code>true</code>.  If there is no current transaction this method
+     * will throw an {@link IllegalStateException} to indicate this error.  If the active transaction has
+     * entered an in doubt state or was remotely rolled back this method will throw an error to indicate that
+     * the commit failed and that a new transaction need to be started by the user.  When a transaction rolled
+     * back error occurs the user should assume that all work performed under that transaction has failed and
+     * will need to be attempted under a new transaction.
+     *
+     * This is a blocking method that will return successfully only after the current transaction has been committed
+     * and if requested only after a new transaction has also been started.
+     *
+     * @param startNewTxn
+     * 		indicates if this commit operation should immediately start a new transaction.
+     *
+     * @return this {@link Session} instance.
+     *
+     * @throws ClientException if an error occurs while attempting to commit the current transaction.
+     */
+    Session commit(boolean startNewTxn) throws ClientException;
+
+    /**
+     * Roll back the currently active transaction in this Session.
+     *
+     * Roll back the currently active transaction in this Session but does not automatically start a new
+     * transaction.  If there is no current transaction this method will throw an {@link IllegalStateException}
+     * to indicate this error.  If the active transaction has entered an in doubt state or was remotely rolled
+     * back this method will throw an error to indicate that the roll back failed and that a new transaction need
+     * to be started by the user.
+     *
+     * @return this {@link Session} instance.
+     *
+     * @throws ClientException if an error occurs while attempting to roll back the current transaction.
+     */
+    Session rollback() throws ClientException;
+
+    /**
+     * Roll back the currently active transaction in this Session.
+     *
+     * Roll back the currently active transaction in this Session and start a new transaction if the supplied
+     * start new transaction parameter is <code>true</code>.  If there is no current transaction this method
+     * will throw an {@link IllegalStateException} to indicate this error.  If the active transaction has
+     * entered an in doubt state or was remotely rolled back this method will throw an error to indicate that
+     * the roll back failed and that a new transaction need to be started by the user.
+     *
+     * @param startNewTxn
+     * 		indicates if this roll back operation should immediately start a new transaction.
+     *
+     * @return this {@link Session} instance.
+     *
+     * @throws ClientException if an error occurs while attempting to rollback the current transaction.
+     */
+    Session rollback(boolean startNewTxn) throws ClientException;
+
 }

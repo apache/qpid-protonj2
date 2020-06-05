@@ -31,6 +31,8 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 
 import org.apache.qpid.proton4j.engine.Engine;
+import org.apache.qpid.proton4j.engine.Transaction;
+import org.apache.qpid.proton4j.engine.TransactionController;
 import org.messaginghub.amqperative.ErrorCondition;
 import org.messaginghub.amqperative.Receiver;
 import org.messaginghub.amqperative.ReceiverOptions;
@@ -70,6 +72,9 @@ public class ClientSession implements Session {
     private final String sessionId;
     private final ClientSenderBuilder senderBuilder;
     private final ClientReceiverBuilder receiverBuilder;
+
+    private Transaction<TransactionController> currentTxn;
+    private TransactionController txnController;
 
     private volatile ThreadPoolExecutor deliveryExecutor;
     private final AtomicReference<Thread> deliveryThread = new AtomicReference<Thread>();
@@ -270,6 +275,43 @@ public class ClientSession implements Session {
     public String[] desiredCapabilities() throws ClientException {
         waitForOpenToComplete();
         return ClientConversionSupport.toStringArray(protonSession.getRemoteDesiredCapabilities());
+    }
+
+    //----- Transaction state management
+
+    @Override
+    public Session begin() throws ClientException {
+        checkClosed();
+        // TODO Auto-generated method stub
+        return this;
+    }
+
+    @Override
+    public Session commit() throws ClientException {
+        checkClosed();
+        // TODO Auto-generated method stub
+        return this;
+    }
+
+    @Override
+    public Session commit(boolean startNewTxn) throws ClientException {
+        checkClosed();
+        // TODO Auto-generated method stub
+        return this;
+    }
+
+    @Override
+    public Session rollback() throws ClientException {
+        checkClosed();
+        // TODO Auto-generated method stub
+        return this;
+    }
+
+    @Override
+    public Session rollback(boolean startNewTxn) throws ClientException {
+        checkClosed();
+        // TODO Auto-generated method stub
+        return this;
     }
 
     //----- Internal resource open APIs expected to be called from the connection event loop
@@ -557,4 +599,7 @@ public class ClientSession implements Session {
             closeFuture.complete(this);
         }
     }
+
+    //----- Handle Events from the Session TransactionController
+
 }
