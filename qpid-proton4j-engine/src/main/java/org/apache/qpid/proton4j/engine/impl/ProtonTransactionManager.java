@@ -25,8 +25,11 @@ import org.apache.qpid.proton4j.amqp.transactions.Coordinator;
 import org.apache.qpid.proton4j.amqp.transactions.Declare;
 import org.apache.qpid.proton4j.amqp.transactions.Discharge;
 import org.apache.qpid.proton4j.amqp.transport.ErrorCondition;
+import org.apache.qpid.proton4j.codec.CodecFactory;
+import org.apache.qpid.proton4j.codec.Decoder;
 import org.apache.qpid.proton4j.engine.Engine;
 import org.apache.qpid.proton4j.engine.EventHandler;
+import org.apache.qpid.proton4j.engine.IncomingDelivery;
 import org.apache.qpid.proton4j.engine.Receiver;
 import org.apache.qpid.proton4j.engine.Transaction;
 import org.apache.qpid.proton4j.engine.TransactionManager;
@@ -41,6 +44,7 @@ import org.apache.qpid.proton4j.engine.exceptions.EngineStateException;
 public final class ProtonTransactionManager extends ProtonEndpoint<TransactionManager> implements TransactionManager {
 
     private final ProtonReceiver receiverLink;
+    private final Decoder payloadDecoder;
 
     private EventHandler<Transaction<TransactionManager>> declareEventHandler;
     private EventHandler<Transaction<TransactionManager>> dischargeEventHandler;
@@ -48,12 +52,16 @@ public final class ProtonTransactionManager extends ProtonEndpoint<TransactionMa
     public ProtonTransactionManager(ProtonReceiver receiverLink) {
         super(receiverLink.getEngine());
 
+        this.payloadDecoder = CodecFactory.getDecoder();
+        
         this.receiverLink = receiverLink;
         this.receiverLink.openHandler(this::handleReceiverLinkOpened)
                          .closeHandler(this::handleReceiverLinkClosed)
                          .localOpenHandler(this::handleReceiverLinkLocallyOpened)
                          .localCloseHandler(this::handleReceiverLinkLocallyClosed)
-                         .engineShutdownHandler(this::handleEngineShutdown);
+                         .engineShutdownHandler(this::handleEngineShutdown)
+                         .deliveryReadHandler(this::handleDeliveryRead)
+                         .deliveryStateUpdatedHandler(this::handleDeliveryStateUpdate);
     }
 
     @Override
@@ -261,11 +269,22 @@ public final class ProtonTransactionManager extends ProtonEndpoint<TransactionMa
         fireEngineShutdown();
     }
 
+    private void handleDeliveryRead(IncomingDelivery delivery) {
+
+    }
+
+    private void handleDeliveryStateUpdate(IncomingDelivery delivery) {
+
+    }
+
     //----- The Manager specific Transaction implementation
 
     private final class ProtonManagerTransaction extends ProtonTransaction<ProtonTransactionManager> {
 
         private final ProtonTransactionManager manager;
+
+        private IncomingDelivery declare;
+        private IncomingDelivery discharge;
 
         public ProtonManagerTransaction(ProtonTransactionManager manager) {
             this.manager = manager;
@@ -274,6 +293,22 @@ public final class ProtonTransactionManager extends ProtonEndpoint<TransactionMa
         @Override
         public ProtonTransactionManager parent() {
             return manager;
+        }
+
+        public void setDeclare(IncomingDelivery delivery) {
+            this.declare = delivery;
+        }
+
+        public IncomingDelivery getDeclare() {
+            return declare;
+        }
+
+        public void setDischarge(IncomingDelivery delivery) {
+            this.declare = delivery;
+        }
+
+        public IncomingDelivery getDischarge() {
+            return declare;
         }
     }
 }
