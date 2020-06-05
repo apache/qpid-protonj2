@@ -14,17 +14,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.messaginghub.amqperative.impl.exceptions;
+package org.messaginghub.amqperative.exceptions;
 
-public class ClientClosedException extends ClientIOException {
+import org.messaginghub.amqperative.impl.ClientException;
 
-    private static final long serialVersionUID = 1L;
+/**
+ * Thrown when a message send operation times out in the Provider layer.
+ */
+public class ClientTransactionRolledBackException extends ClientException {
 
-    public ClientClosedException(String message) {
-        super(message);
+    private static final long serialVersionUID = 222325890763309867L;
+
+    public ClientTransactionRolledBackException(String message) {
+        super(message, null);
     }
 
-    public ClientClosedException(String message, Throwable cause) {
+    public ClientTransactionRolledBackException(String message, Throwable cause) {
         super(message, cause);
     }
 }

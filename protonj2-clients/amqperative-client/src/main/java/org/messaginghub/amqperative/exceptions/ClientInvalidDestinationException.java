@@ -14,19 +14,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.messaginghub.amqperative.impl.exceptions;
+package org.messaginghub.amqperative.exceptions;
 
 import org.messaginghub.amqperative.impl.ClientException;
 
-public class ClientIllegalStateException extends ClientException {
+public class ClientInvalidDestinationException extends ClientException {
 
-    private static final long serialVersionUID = -2188225056209312580L;
+    private static final long serialVersionUID = 2356310049638567033L;
 
-    public ClientIllegalStateException(String message) {
+    public ClientInvalidDestinationException(String message) {
         super(message);
     }
 
-    public ClientIllegalStateException(String message, Throwable cause) {
+    public ClientInvalidDestinationException(String message, Throwable cause) {
         super(message, cause);
     }
 }

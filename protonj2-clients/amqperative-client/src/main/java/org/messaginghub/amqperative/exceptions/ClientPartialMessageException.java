@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.messaginghub.amqperative.impl.exceptions;
+package org.messaginghub.amqperative.exceptions;
 
 import org.messaginghub.amqperative.impl.ClientException;
 

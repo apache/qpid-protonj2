@@ -14,19 +14,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.messaginghub.amqperative.impl.exceptions;
+package org.messaginghub.amqperative.exceptions;
 
-import org.messaginghub.amqperative.impl.ClientException;
+import org.messaginghub.amqperative.Connection;
 
-public class ClientInvalidDestinationException extends ClientException {
+/**
+ * Exception thrown from client APIs when the underling resource (Connection, Session etc) has
+ * already been closed by a call to its close method such as {@link Connection#close()}.
+ */
+public class ClientClosedException extends ClientIOException {
 
-    private static final long serialVersionUID = 2356310049638567033L;
+    private static final long serialVersionUID = 1L;
 
-    public ClientInvalidDestinationException(String message) {
+    public ClientClosedException(String message) {
         super(message);
     }
 
-    public ClientInvalidDestinationException(String message, Throwable cause) {
+    public ClientClosedException(String message, Throwable cause) {
         super(message, cause);
     }
 }

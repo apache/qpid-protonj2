@@ -14,37 +14,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.messaginghub.amqperative.impl.exceptions;
+package org.messaginghub.amqperative.exceptions;
 
-import org.apache.qpid.proton4j.amqp.messaging.Modified;
 import org.messaginghub.amqperative.impl.ClientException;
 
 /**
- * Thrown when a send fails because the remote modified the delivery
+ * Indicates that an operation in the provider timed out waiting for completion
  */
-public class ClientDeliveryModifiedException extends ClientException {
+public class ClientOperationTimedOutException extends ClientException {
 
-    private static final long serialVersionUID = 4099784529012859035L;
+    private static final long serialVersionUID = 4182665270566847828L;
 
-    private final Modified modification;
-
-    public ClientDeliveryModifiedException(String message, Modified modification) {
+    public ClientOperationTimedOutException(String message) {
         super(message);
-
-        this.modification = modification;
     }
 
-    public ClientDeliveryModifiedException(String message, Throwable cause, Modified modification) {
+    public ClientOperationTimedOutException(String message, Throwable cause) {
         super(message, cause);
-
-        this.modification = modification;
-    }
-
-    public boolean isDeliveryFailed() {
-        return modification.isDeliveryFailed();
-    }
-
-    public boolean isUndeliverableHere() {
-        return modification.isUndeliverableHere();
     }
 }

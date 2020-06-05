@@ -14,22 +14,37 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.messaginghub.amqperative.impl.exceptions;
+package org.messaginghub.amqperative.exceptions;
 
+import org.apache.qpid.proton4j.amqp.messaging.Modified;
 import org.messaginghub.amqperative.impl.ClientException;
 
 /**
- * Thrown when a message send operation times out in the Provider layer.
+ * Thrown when a send fails because the remote modified the delivery
  */
-public class ClientTransactionRolledBackException extends ClientException {
+public class ClientDeliveryModifiedException extends ClientException {
 
-    private static final long serialVersionUID = 222325890763309867L;
+    private static final long serialVersionUID = 4099784529012859035L;
 
-    public ClientTransactionRolledBackException(String message) {
-        super(message, null);
+    private final Modified modification;
+
+    public ClientDeliveryModifiedException(String message, Modified modification) {
+        super(message);
+
+        this.modification = modification;
     }
 
-    public ClientTransactionRolledBackException(String message, Throwable cause) {
+    public ClientDeliveryModifiedException(String message, Throwable cause, Modified modification) {
         super(message, cause);
+
+        this.modification = modification;
+    }
+
+    public boolean isDeliveryFailed() {
+        return modification.isDeliveryFailed();
+    }
+
+    public boolean isUndeliverableHere() {
+        return modification.isUndeliverableHere();
     }
 }

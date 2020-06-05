@@ -14,22 +14,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.messaginghub.amqperative.impl.exceptions;
+package org.messaginghub.amqperative.exceptions;
 
-import org.messaginghub.amqperative.impl.ClientException;
+import org.apache.qpid.proton4j.amqp.transport.Close;
+import org.messaginghub.amqperative.Connection;
 
 /**
- * Indicates that an operation in the provider timed out waiting for completion
+ * Exception thrown when the remote peer actively closes the {@link Connection} by sending
+ * and AMQP {@link Close} frame.
  */
-public class ClientOperationTimedOutException extends ClientException {
+public class ClientConnectionRemotelyClosedException extends ClientIOException {
 
-    private static final long serialVersionUID = 4182665270566847828L;
+    private static final long serialVersionUID = 5728349272688210550L;
 
-    public ClientOperationTimedOutException(String message) {
+    public ClientConnectionRemotelyClosedException(String message) {
         super(message);
     }
 
-    public ClientOperationTimedOutException(String message, Throwable cause) {
+    public ClientConnectionRemotelyClosedException(String message, Throwable cause) {
         super(message, cause);
     }
 }

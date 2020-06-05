@@ -36,7 +36,6 @@ import org.apache.qpid.proton4j.codec.DecoderState;
 import org.apache.qpid.proton4j.codec.Encoder;
 import org.apache.qpid.proton4j.codec.EncoderState;
 import org.messaginghub.amqperative.Message;
-import org.messaginghub.amqperative.impl.exceptions.ClientExceptionSupport;
 
 /**
  * Support methods dealing with Message types and encode or decode operations.

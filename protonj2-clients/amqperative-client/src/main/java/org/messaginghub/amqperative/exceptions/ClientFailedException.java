@@ -14,27 +14,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.messaginghub.amqperative.impl.exceptions;
+package org.messaginghub.amqperative.exceptions;
 
-/**
- * Thrown when a message send operation times out in the Provider layer.
- */
-public class ClientSendTimedOutException extends ClientOperationTimedOutException {
+public class ClientFailedException extends ClientIOException {
 
-    private static final long serialVersionUID = 222325890763309867L;
+    private static final long serialVersionUID = 1L;
 
-//    private final JmsMessage unsentMessage;  TODO
-
-    public ClientSendTimedOutException(String reason) {
-        super(reason);
+    public ClientFailedException(String message) {
+        super(message);
     }
 
-//    public ProviderSendTimedOutException(String reason, JmsMessage unsentMessage) {
-//        super(reason, null);
-//        this.unsentMessage = unsentMessage;
-//    }
-
-//    public JmsMessage getUnsentMessage() {
-//        return unsentMessage;
-//    }
+    public ClientFailedException(String message, Throwable cause) {
+        super(message, cause);
+    }
 }

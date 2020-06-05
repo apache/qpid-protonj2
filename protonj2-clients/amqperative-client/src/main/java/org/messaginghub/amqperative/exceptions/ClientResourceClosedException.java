@@ -14,23 +14,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.messaginghub.amqperative.impl.exceptions;
+package org.messaginghub.amqperative.exceptions;
 
 import org.messaginghub.amqperative.impl.ClientException;
 
-/**
- * Security Exception used to indicate a security violation has occurred that is non-fatal
- * such as link creation blocked because user does not have access etc.
- */
-public class ClientSecurityException extends ClientException {
+public class ClientResourceClosedException extends ClientException {
 
-    private static final long serialVersionUID = -1895132556606592253L;
+    private static final long serialVersionUID = 5601827103553513599L;
 
-    public ClientSecurityException(String message) {
+    public ClientResourceClosedException(String message) {
         super(message);
     }
 
-    public ClientSecurityException(String message, Throwable cause) {
+    public ClientResourceClosedException(String message, Throwable cause) {
         super(message, cause);
     }
 }

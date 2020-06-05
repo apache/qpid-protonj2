@@ -22,7 +22,7 @@ import org.messaginghub.amqperative.Delivery;
 import org.messaginghub.amqperative.DeliveryState;
 import org.messaginghub.amqperative.Message;
 import org.messaginghub.amqperative.Receiver;
-import org.messaginghub.amqperative.impl.exceptions.ClientPartialMessageException;
+import org.messaginghub.amqperative.exceptions.ClientPartialMessageException;
 
 /**
  * Client inbound delivery object.

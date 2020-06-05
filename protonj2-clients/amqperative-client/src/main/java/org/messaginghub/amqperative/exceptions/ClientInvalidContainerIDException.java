@@ -14,20 +14,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.messaginghub.amqperative.impl.exceptions;
+package org.messaginghub.amqperative.exceptions;
+
+import org.messaginghub.amqperative.Connection;
 
 /**
- * Thrown when the Provider fails a connection due to idle timeout.
+ * Exception thrown when the remote closes a {@link Connection} because it considers the set
+ * container ID to be invalid.
  */
-public class ClientIdleTimeoutException extends ClientIOException {
+public class ClientInvalidContainerIDException extends ClientConnectionRemotelyClosedException {
 
-    private static final long serialVersionUID = 7925210908123213499L;
+    private static final long serialVersionUID = 904517921855721540L;
 
-    public ClientIdleTimeoutException(String message) {
+    public ClientInvalidContainerIDException(String message) {
         super(message);
     }
 
-    public ClientIdleTimeoutException(String message, Throwable cause) {
+    public ClientInvalidContainerIDException(String message, Throwable cause) {
         super(message, cause);
     }
 }

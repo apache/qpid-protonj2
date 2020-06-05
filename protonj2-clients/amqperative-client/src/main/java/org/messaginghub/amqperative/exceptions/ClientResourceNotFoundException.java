@@ -14,20 +14,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.messaginghub.amqperative.impl.exceptions;
+package org.messaginghub.amqperative.exceptions;
 
-/**
- * Connection level Security Exception used to indicate a security violation has occurred.
- */
-public class ClientConnectionSecurityException extends ClientConnectionRemotelyClosedException {
+import org.messaginghub.amqperative.impl.ClientException;
 
-    private static final long serialVersionUID = -1895132556606592253L;
+public class ClientResourceNotFoundException extends ClientException {
 
-    public ClientConnectionSecurityException(String message) {
+    private static final long serialVersionUID = -6757753762024560537L;
+
+    public ClientResourceNotFoundException(String message) {
         super(message);
     }
 
-    public ClientConnectionSecurityException(String message, Throwable cause) {
+    public ClientResourceNotFoundException(String message, Throwable cause) {
         super(message, cause);
     }
 }

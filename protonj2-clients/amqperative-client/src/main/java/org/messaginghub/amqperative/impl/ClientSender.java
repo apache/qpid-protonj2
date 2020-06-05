@@ -40,13 +40,12 @@ import org.messaginghub.amqperative.SenderOptions;
 import org.messaginghub.amqperative.Source;
 import org.messaginghub.amqperative.Target;
 import org.messaginghub.amqperative.Tracker;
+import org.messaginghub.amqperative.exceptions.ClientOperationTimedOutException;
+import org.messaginghub.amqperative.exceptions.ClientResourceClosedException;
+import org.messaginghub.amqperative.exceptions.ClientSendTimedOutException;
+import org.messaginghub.amqperative.exceptions.ClientUnsupportedOperationException;
 import org.messaginghub.amqperative.futures.AsyncResult;
 import org.messaginghub.amqperative.futures.ClientFuture;
-import org.messaginghub.amqperative.impl.exceptions.ClientExceptionSupport;
-import org.messaginghub.amqperative.impl.exceptions.ClientOperationTimedOutException;
-import org.messaginghub.amqperative.impl.exceptions.ClientResourceClosedException;
-import org.messaginghub.amqperative.impl.exceptions.ClientSendTimedOutException;
-import org.messaginghub.amqperative.impl.exceptions.ClientUnsupportedOperationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

@@ -14,22 +14,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.messaginghub.amqperative.impl.exceptions;
+package org.messaginghub.amqperative.exceptions;
 
 import org.messaginghub.amqperative.impl.ClientException;
 
-/**
- * Thrown when an action request is not supported through this provider.
- */
-public class ClientUnsupportedOperationException extends ClientException {
+public class ClientIllegalStateException extends ClientException {
 
-    private static final long serialVersionUID = -680156277783719903L;
+    private static final long serialVersionUID = -2188225056209312580L;
 
-    public ClientUnsupportedOperationException(String message) {
+    public ClientIllegalStateException(String message) {
         super(message);
     }
 
-    public ClientUnsupportedOperationException(String message, Throwable cause) {
+    public ClientIllegalStateException(String message, Throwable cause) {
         super(message, cause);
     }
 }

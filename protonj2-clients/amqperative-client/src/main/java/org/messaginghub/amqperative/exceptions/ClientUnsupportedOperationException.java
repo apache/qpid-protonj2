@@ -14,19 +14,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.messaginghub.amqperative.impl.exceptions;
+package org.messaginghub.amqperative.exceptions;
 
 import org.messaginghub.amqperative.impl.ClientException;
 
-public class ClientResourceNotFoundException extends ClientException {
+/**
+ * Thrown when an action request is not supported through this provider.
+ */
+public class ClientUnsupportedOperationException extends ClientException {
 
-    private static final long serialVersionUID = -6757753762024560537L;
+    private static final long serialVersionUID = -680156277783719903L;
 
-    public ClientResourceNotFoundException(String message) {
+    public ClientUnsupportedOperationException(String message) {
         super(message);
     }
 
-    public ClientResourceNotFoundException(String message, Throwable cause) {
+    public ClientUnsupportedOperationException(String message, Throwable cause) {
         super(message, cause);
     }
 }

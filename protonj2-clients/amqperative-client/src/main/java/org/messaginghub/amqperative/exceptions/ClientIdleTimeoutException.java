@@ -14,19 +14,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.messaginghub.amqperative.impl.exceptions;
+package org.messaginghub.amqperative.exceptions;
 
-import org.messaginghub.amqperative.impl.ClientException;
+/**
+ * Thrown when the Provider fails a connection due to idle timeout.
+ */
+public class ClientIdleTimeoutException extends ClientIOException {
 
-public class ClientResourceClosedException extends ClientException {
+    private static final long serialVersionUID = 7925210908123213499L;
 
-    private static final long serialVersionUID = 5601827103553513599L;
-
-    public ClientResourceClosedException(String message) {
+    public ClientIdleTimeoutException(String message) {
         super(message);
     }
 
-    public ClientResourceClosedException(String message, Throwable cause) {
+    public ClientIdleTimeoutException(String message, Throwable cause) {
         super(message, cause);
     }
 }

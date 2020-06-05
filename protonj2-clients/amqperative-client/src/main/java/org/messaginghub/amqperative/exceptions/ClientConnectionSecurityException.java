@@ -14,17 +14,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.messaginghub.amqperative.impl.exceptions;
+package org.messaginghub.amqperative.exceptions;
 
-public class ClientInvalidClientIDException extends ClientConnectionRemotelyClosedException {
+/**
+ * Connection level Security Exception used to indicate a security violation has occurred.
+ */
+public class ClientConnectionSecurityException extends ClientConnectionRemotelyClosedException {
 
-    private static final long serialVersionUID = 904517921855721540L;
+    private static final long serialVersionUID = -1895132556606592253L;
 
-    public ClientInvalidClientIDException(String message) {
+    public ClientConnectionSecurityException(String message) {
         super(message);
     }
 
-    public ClientInvalidClientIDException(String message, Throwable cause) {
+    public ClientConnectionSecurityException(String message, Throwable cause) {
         super(message, cause);
     }
 }

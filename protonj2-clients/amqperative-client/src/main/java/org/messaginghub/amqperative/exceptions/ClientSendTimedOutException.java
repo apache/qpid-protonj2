@@ -14,17 +14,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.messaginghub.amqperative.impl.exceptions;
+package org.messaginghub.amqperative.exceptions;
 
-public class ClientConnectionResourceNotFoundException extends ClientConnectionRemotelyClosedException {
+/**
+ * Thrown when a message send operation times out in the Provider layer.
+ */
+public class ClientSendTimedOutException extends ClientOperationTimedOutException {
 
-    private static final long serialVersionUID = -6757753762024560537L;
+    private static final long serialVersionUID = 222325890763309867L;
 
-    public ClientConnectionResourceNotFoundException(String message) {
-        super(message);
+//    private final JmsMessage unsentMessage;  TODO
+
+    public ClientSendTimedOutException(String reason) {
+        super(reason);
     }
 
-    public ClientConnectionResourceNotFoundException(String message, Throwable cause) {
-        super(message, cause);
-    }
+//    public ProviderSendTimedOutException(String reason, JmsMessage unsentMessage) {
+//        super(reason, null);
+//        this.unsentMessage = unsentMessage;
+//    }
+
+//    public JmsMessage getUnsentMessage() {
+//        return unsentMessage;
+//    }
 }

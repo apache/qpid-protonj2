@@ -14,22 +14,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.messaginghub.amqperative.impl.exceptions;
+package org.messaginghub.amqperative.exceptions;
 
 import org.messaginghub.amqperative.impl.ClientException;
 
 /**
- * Thrown when a send fails because the remote released the delivery
+ * Security Exception used to indicate a security violation has occurred that is non-fatal
+ * such as link creation blocked because user does not have access etc.
  */
-public class ClientDeliveryReleasedException extends ClientException {
+public class ClientSecurityException extends ClientException {
 
-    private static final long serialVersionUID = 4749969190587880823L;
+    private static final long serialVersionUID = -1895132556606592253L;
 
-    public ClientDeliveryReleasedException(String message) {
+    public ClientSecurityException(String message) {
         super(message);
     }
 
-    public ClientDeliveryReleasedException(String message, Throwable cause) {
+    public ClientSecurityException(String message, Throwable cause) {
         super(message, cause);
     }
 }

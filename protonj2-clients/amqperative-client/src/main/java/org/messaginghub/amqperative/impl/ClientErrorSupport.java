@@ -26,16 +26,16 @@ import org.apache.qpid.proton4j.amqp.transactions.TransactionErrors;
 import org.apache.qpid.proton4j.amqp.transport.AmqpError;
 import org.apache.qpid.proton4j.amqp.transport.ConnectionError;
 import org.apache.qpid.proton4j.amqp.transport.ErrorCondition;
-import org.messaginghub.amqperative.impl.exceptions.ClientConnectionRedirectedException;
-import org.messaginghub.amqperative.impl.exceptions.ClientConnectionRemotelyClosedException;
-import org.messaginghub.amqperative.impl.exceptions.ClientConnectionResourceAllocationException;
-import org.messaginghub.amqperative.impl.exceptions.ClientConnectionResourceNotFoundException;
-import org.messaginghub.amqperative.impl.exceptions.ClientConnectionSecurityException;
-import org.messaginghub.amqperative.impl.exceptions.ClientInvalidClientIDException;
-import org.messaginghub.amqperative.impl.exceptions.ClientInvalidDestinationException;
-import org.messaginghub.amqperative.impl.exceptions.ClientResourceAllocationException;
-import org.messaginghub.amqperative.impl.exceptions.ClientSecurityException;
-import org.messaginghub.amqperative.impl.exceptions.ClientTransactionRolledBackException;
+import org.messaginghub.amqperative.exceptions.ClientConnectionRedirectedException;
+import org.messaginghub.amqperative.exceptions.ClientConnectionRemotelyClosedException;
+import org.messaginghub.amqperative.exceptions.ClientConnectionResourceAllocationException;
+import org.messaginghub.amqperative.exceptions.ClientConnectionResourceNotFoundException;
+import org.messaginghub.amqperative.exceptions.ClientConnectionSecurityException;
+import org.messaginghub.amqperative.exceptions.ClientInvalidContainerIDException;
+import org.messaginghub.amqperative.exceptions.ClientInvalidDestinationException;
+import org.messaginghub.amqperative.exceptions.ClientResourceAllocationException;
+import org.messaginghub.amqperative.exceptions.ClientSecurityException;
+import org.messaginghub.amqperative.exceptions.ClientTransactionRolledBackException;
 
 /**
  * Support methods for working with AMQP ErrorCondition types
@@ -73,7 +73,7 @@ public abstract class ClientErrorSupport {
             } else if (error.equals(AmqpError.INVALID_FIELD)) {
                 Map<?, ?> info = errorCondition.getInfo();
                 if (info != null && CONTAINER_ID.equals(info.get(INVALID_FIELD))) {
-                    remoteError = new ClientInvalidClientIDException(message);
+                    remoteError = new ClientInvalidContainerIDException(message);
                 } else {
                     remoteError = new ClientConnectionRemotelyClosedException(message);
                 }

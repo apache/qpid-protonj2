@@ -14,14 +14,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.messaginghub.amqperative.impl.exceptions;
+package org.messaginghub.amqperative.exceptions;
 
-import java.io.IOException;
 import java.net.URI;
 
 /**
- * {@link IOException} derivative that defines that the remote peer has requested that this
- * connection be redirected to some alternative peer.
+ * A {@link ClientIOException} type that defines that the remote peer has requested that this
+ * connection be redirected to some alternative peer.  The redirect information can be obtained
+ * by calling the {@link ClientConnectionRedirectedException#getRedirectionURI()} method which
+ * return the URI of the peer the client is being redirect to.
  */
 public class ClientConnectionRedirectedException extends ClientConnectionRemotelyClosedException {
 

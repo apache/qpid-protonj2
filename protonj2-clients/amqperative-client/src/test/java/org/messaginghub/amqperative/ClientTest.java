@@ -23,8 +23,8 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import org.junit.Test;
+import org.messaginghub.amqperative.exceptions.ClientClosedException;
 import org.messaginghub.amqperative.impl.ClientException;
-import org.messaginghub.amqperative.impl.exceptions.ClientClosedException;
 import org.messaginghub.amqperative.test.AMQPerativeTestCase;
 
 /**
