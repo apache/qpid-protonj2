@@ -16,15 +16,18 @@
  */
 package org.apache.qpid.proton4j.engine.impl;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.qpid.proton4j.amqp.Binary;
 import org.apache.qpid.proton4j.amqp.Symbol;
+import org.apache.qpid.proton4j.amqp.messaging.AmqpValue;
 import org.apache.qpid.proton4j.amqp.messaging.Source;
 import org.apache.qpid.proton4j.amqp.transactions.Coordinator;
 import org.apache.qpid.proton4j.amqp.transactions.Declare;
 import org.apache.qpid.proton4j.amqp.transactions.Discharge;
 import org.apache.qpid.proton4j.amqp.transport.ErrorCondition;
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.CodecFactory;
 import org.apache.qpid.proton4j.codec.Decoder;
 import org.apache.qpid.proton4j.engine.Engine;
@@ -35,6 +38,7 @@ import org.apache.qpid.proton4j.engine.Transaction;
 import org.apache.qpid.proton4j.engine.TransactionManager;
 import org.apache.qpid.proton4j.engine.exceptions.EngineFailedException;
 import org.apache.qpid.proton4j.engine.exceptions.EngineStateException;
+import org.apache.qpid.proton4j.engine.exceptions.ProtocolViolationException;
 
 /**
  * {@link TransactionManager} implementation that implements the abstraction
@@ -49,11 +53,13 @@ public final class ProtonTransactionManager extends ProtonEndpoint<TransactionMa
     private EventHandler<Transaction<TransactionManager>> declareEventHandler;
     private EventHandler<Transaction<TransactionManager>> dischargeEventHandler;
 
+    private Map<ProtonBuffer, ProtonManagerTransaction> transactions = new HashMap<>();
+
     public ProtonTransactionManager(ProtonReceiver receiverLink) {
         super(receiverLink.getEngine());
 
         this.payloadDecoder = CodecFactory.getDecoder();
-        
+
         this.receiverLink = receiverLink;
         this.receiverLink.openHandler(this::handleReceiverLinkOpened)
                          .closeHandler(this::handleReceiverLinkClosed)
@@ -98,6 +104,20 @@ public final class ProtonTransactionManager extends ProtonEndpoint<TransactionMa
     }
 
     @Override
+    public TransactionManager declareFailed(Transaction<TransactionManager> transaction, ErrorCondition condition) {
+        // TODO Auto-generated method stub
+        return this;
+    }
+
+    @Override
+    public TransactionManager dischargeFailed(Transaction<TransactionManager> transaction, ErrorCondition condition) {
+        // TODO Auto-generated method stub
+        return this;
+    }
+
+    //----- Transaction event APIs
+
+    @Override
     public TransactionManager declareHandler(EventHandler<Transaction<TransactionManager>> declaredEventHandler) {
         this.declareEventHandler = declaredEventHandler;
         return this;
@@ -105,6 +125,14 @@ public final class ProtonTransactionManager extends ProtonEndpoint<TransactionMa
 
     EventHandler<Transaction<TransactionManager>> declareHandler() {
         return declareEventHandler;
+    }
+
+    TransactionManager fireDeclare(ProtonManagerTransaction transaction) {
+        if (declareEventHandler != null) {
+            declareEventHandler.handle(transaction);
+        }
+
+        return this;
     }
 
     @Override
@@ -115,6 +143,14 @@ public final class ProtonTransactionManager extends ProtonEndpoint<TransactionMa
 
     EventHandler<Transaction<TransactionManager>> dischargeHandler() {
         return dischargeEventHandler;
+    }
+
+    TransactionManager fireDischarge(ProtonManagerTransaction transaction) {
+        if (dischargeEventHandler != null) {
+            dischargeEventHandler.handle(transaction);
+        }
+
+        return this;
     }
 
     //----- Hand off methods for link specific elements.
@@ -269,17 +305,42 @@ public final class ProtonTransactionManager extends ProtonEndpoint<TransactionMa
         fireEngineShutdown();
     }
 
-    private void handleDeliveryRead(IncomingDelivery delivery) {
+    // container
 
+    private void handleDeliveryRead(IncomingDelivery delivery) {
+        if (delivery.isAborted()) {
+            delivery.settle();
+        }
+
+        if (!delivery.isPartial()) {
+            ProtonBuffer payload = delivery.readAll();
+
+            AmqpValue container = (AmqpValue) payloadDecoder.readObject(payload, payloadDecoder.getCachedDecoderState());
+
+            if (container.getValue() instanceof Declare) {
+                fireDeclare(new ProtonManagerTransaction(this).setDeclare(delivery));
+            } else if (container.getValue() instanceof Discharge) {
+                Discharge discharge = (Discharge) container.getValue();
+                Binary txnId = discharge.getTxnId();
+                boolean rollback = discharge.getFail();
+
+                ProtonManagerTransaction transaction = transactions.get(txnId.asProtonBuffer());
+                if (transaction != null) {
+                    fireDischarge(transaction);
+                }
+            } else {
+                throw new ProtocolViolationException("TXN Coordinator expects Declare and Dishcahrge Delivery payloads only");
+            }
+        }
     }
 
     private void handleDeliveryStateUpdate(IncomingDelivery delivery) {
-
+        // Nothing to do yet
     }
 
     //----- The Manager specific Transaction implementation
 
-    private final class ProtonManagerTransaction extends ProtonTransaction<ProtonTransactionManager> {
+    private static final class ProtonManagerTransaction extends ProtonTransaction<TransactionManager> {
 
         private final ProtonTransactionManager manager;
 
@@ -295,16 +356,18 @@ public final class ProtonTransactionManager extends ProtonEndpoint<TransactionMa
             return manager;
         }
 
-        public void setDeclare(IncomingDelivery delivery) {
+        public ProtonManagerTransaction setDeclare(IncomingDelivery delivery) {
             this.declare = delivery;
+            return this;
         }
 
         public IncomingDelivery getDeclare() {
             return declare;
         }
 
-        public void setDischarge(IncomingDelivery delivery) {
+        public ProtonManagerTransaction setDischarge(IncomingDelivery delivery) {
             this.declare = delivery;
+            return this;
         }
 
         public IncomingDelivery getDischarge() {

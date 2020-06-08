@@ -22,6 +22,7 @@ import org.apache.qpid.proton4j.amqp.messaging.Terminus;
 import org.apache.qpid.proton4j.amqp.transactions.Coordinator;
 import org.apache.qpid.proton4j.amqp.transactions.Declare;
 import org.apache.qpid.proton4j.amqp.transactions.Discharge;
+import org.apache.qpid.proton4j.amqp.transport.ErrorCondition;
 
 /**
  * Transaction Manager endpoint that implements the mechanics of handling the declaration
@@ -123,6 +124,19 @@ public interface TransactionManager extends Endpoint<TransactionManager> {
     TransactionManager declared(Transaction<TransactionManager> transaction, Binary txnId);
 
     /**
+     * Respond to a previous {@link Declare} request from the remote {@link TransactionController}
+     * indicating that the requested transaction declaration has failed and is not active.
+     *
+     * @param transaction
+     *      The transaction instance that is associated with the declared transaction.
+     * @param condition
+     *      The {@link ErrorCondition} that described the reason for the transaction failure.
+     *
+     * @return this {@link TransactionManager}.
+     */
+    TransactionManager declareFailed(Transaction<TransactionManager> transaction, ErrorCondition condition);
+
+    /**
      * Respond to a previous {@link Discharge} request from the remote {@link TransactionController}
      * indicating that the discharge completed on the transaction identified by given transaction Id
      * has now been retired.
@@ -133,6 +147,20 @@ public interface TransactionManager extends Endpoint<TransactionManager> {
      * @return this {@link TransactionManager}.
      */
     TransactionManager discharged(Transaction<TransactionManager> transaction);
+
+    /**
+     * Respond to a previous {@link Discharge} request from the remote {@link TransactionController}
+     * indicating that the discharge resulted in an error and the transaction must be considered rolled
+     * back.
+     *
+     * @param transaction
+     *      The {@link Transaction} instance that has been discharged and is now retired.
+     * @param condition
+     *      The {@link ErrorCondition} that described the reason for the transaction failure.
+     *
+     * @return this {@link TransactionManager}.
+     */
+    TransactionManager dischargeFailed(Transaction<TransactionManager> transaction, ErrorCondition condition);
 
     /**
      * Called when the {@link TransactionController} end of the link has requested a new transaction be
