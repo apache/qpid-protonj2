@@ -25,12 +25,14 @@ public interface Attachments {
      * Gets the user attached value that is associated with the given key, or null
      * if no data is mapped to the key.
      *
+     * @param <T> The type to cast the attached mapped value to if one is set.
+     *
      * @param key
      *      The key to use to lookup the mapped data.
      *
      * @return the object associated with the given key in this {@link Attachments} instance.
      */
-    Object get(String key);
+    <T> T get(String key);
 
     /**
      * Gets the user set {@link Attachments} value that is associated with the given key, or null
