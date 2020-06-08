@@ -31,8 +31,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 
 import org.apache.qpid.proton4j.engine.Engine;
-import org.apache.qpid.proton4j.engine.Transaction;
-import org.apache.qpid.proton4j.engine.TransactionController;
 import org.messaginghub.amqperative.ErrorCondition;
 import org.messaginghub.amqperative.Receiver;
 import org.messaginghub.amqperative.ReceiverOptions;
@@ -72,9 +70,7 @@ public class ClientSession implements Session {
     private final String sessionId;
     private final ClientSenderBuilder senderBuilder;
     private final ClientReceiverBuilder receiverBuilder;
-
-    private Transaction<TransactionController> currentTxn;
-    private TransactionController txnController;
+    private final ClientTransactionContext txnContext;
 
     private volatile ThreadPoolExecutor deliveryExecutor;
     private final AtomicReference<Thread> deliveryThread = new AtomicReference<Thread>();
@@ -89,6 +85,7 @@ public class ClientSession implements Session {
         this.closeFuture = connection.getFutureFactory().createFuture();
         this.senderBuilder = new ClientSenderBuilder(this);
         this.receiverBuilder = new ClientReceiverBuilder(this);
+        this.txnContext = new ClientTransactionContext(this);
 
         configureSession();
     }
@@ -282,36 +279,64 @@ public class ClientSession implements Session {
     @Override
     public Session begin() throws ClientException {
         checkClosed();
-        // TODO Auto-generated method stub
-        return this;
+        final ClientFuture<Session> beginFuture = getFutureFactory().createFuture();
+
+        serializer.execute(() -> {
+            try {
+                checkClosed();
+                txnContext.begin(beginFuture);
+            } catch (Throwable error) {
+                beginFuture.failed(ClientExceptionSupport.createNonFatalOrPassthrough(error));
+            }
+        });
+
+        return connection.request(beginFuture, options.requestTimeout(), TimeUnit.MILLISECONDS);
     }
 
     @Override
     public Session commit() throws ClientException {
         checkClosed();
-        // TODO Auto-generated method stub
-        return this;
+        return commit(false);
     }
 
     @Override
     public Session commit(boolean startNewTxn) throws ClientException {
         checkClosed();
-        // TODO Auto-generated method stub
-        return this;
+        final ClientFuture<Session> commitFuture = getFutureFactory().createFuture();
+
+        serializer.execute(() -> {
+            try {
+                checkClosed();
+                txnContext.commit(commitFuture, startNewTxn);
+            } catch (Throwable error) {
+                commitFuture.failed(ClientExceptionSupport.createNonFatalOrPassthrough(error));
+            }
+        });
+
+        return connection.request(commitFuture, options.requestTimeout(), TimeUnit.MILLISECONDS);
     }
 
     @Override
     public Session rollback() throws ClientException {
         checkClosed();
-        // TODO Auto-generated method stub
-        return this;
+        return rollback(false);
     }
 
     @Override
     public Session rollback(boolean startNewTxn) throws ClientException {
         checkClosed();
-        // TODO Auto-generated method stub
-        return this;
+        final ClientFuture<Session> rollbackFuture = getFutureFactory().createFuture();
+
+        serializer.execute(() -> {
+            try {
+                checkClosed();
+                txnContext.commit(rollbackFuture, startNewTxn);
+            } catch (Throwable error) {
+                rollbackFuture.failed(ClientExceptionSupport.createNonFatalOrPassthrough(error));
+            }
+        });
+
+        return connection.request(rollbackFuture, options.requestTimeout(), TimeUnit.MILLISECONDS);
     }
 
     //----- Internal resource open APIs expected to be called from the connection event loop

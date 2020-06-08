@@ -517,6 +517,7 @@ public class ClientConnection implements Connection {
                 return request.get();
             }
         } catch (Throwable error) {
+            request.cancel(false);
             throw ClientExceptionSupport.createNonFatalOrPassthrough(error);
         } finally {
             requests.remove(request);
