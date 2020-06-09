@@ -63,6 +63,40 @@ public class ProtonTransactionLinkTest extends ProtonEngineTestSupport {
                                                        Modified.DESCRIPTOR_SYMBOL };
 
     @Test(timeout = 20_000)
+    public void testCreateDefaultCoordinatorSender() {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result);
+        ProtonTestPeer peer = new ProtonTestPeer(engine);
+        engine.outputConsumer(peer);
+
+        Coordinator coordinator = new Coordinator();
+        Source source = new Source();
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond();
+        peer.expectBegin().respond();
+        peer.expectCoordinatorAttach().respond();
+        peer.expectDetach().respond();
+        peer.expectEnd().respond();
+        peer.expectClose().respond();
+
+        Connection connection = engine.start().open();
+        Session session = connection.session().open();
+        Sender sender = session.sender("test-coordinator");
+
+        sender.setSource(source);
+        sender.setTarget(coordinator);
+
+        sender.open();
+        sender.detach();
+        session.close();
+        connection.close();
+
+        peer.waitForScriptToComplete();
+        assertNull(failure);
+    }
+
+    @Test(timeout = 20_000)
     public void testCreateCoordinatorSender() {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);

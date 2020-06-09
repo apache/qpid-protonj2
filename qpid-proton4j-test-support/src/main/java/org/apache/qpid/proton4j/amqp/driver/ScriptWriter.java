@@ -16,6 +16,8 @@
  */
 package org.apache.qpid.proton4j.amqp.driver;
 
+import static org.hamcrest.CoreMatchers.notNullValue;
+
 import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 
@@ -61,6 +63,7 @@ import org.apache.qpid.proton4j.amqp.driver.expectations.TransferExpectation;
 import org.apache.qpid.proton4j.amqp.security.SaslCode;
 import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
 import org.apache.qpid.proton4j.amqp.transport.Role;
+import org.hamcrest.Matchers;
 
 /**
  * Class used to create test scripts using the {@link AMQPTestDriver}
@@ -144,6 +147,17 @@ public abstract class ScriptWriter {
     }
 
     //----- Transaction expectations
+
+    public AttachExpectation expectCoordinatorAttach() {
+        AttachExpectation expecting = new AttachExpectation(getDriver());
+
+        expecting.withRole(Role.SENDER);
+        expecting.withTarget(Matchers.isA(Coordinator.class));
+        expecting.withSource(notNullValue());
+
+        getDriver().addScriptedElement(expecting);
+        return expecting;
+    }
 
     public DeclareExpectation expectDeclare() {
         DeclareExpectation expecting = new DeclareExpectation(getDriver());
