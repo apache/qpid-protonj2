@@ -26,6 +26,7 @@ import org.apache.qpid.proton4j.amqp.transactions.Coordinator;
 import org.apache.qpid.proton4j.amqp.transactions.TxnCapability;
 import org.apache.qpid.proton4j.engine.Transaction;
 import org.apache.qpid.proton4j.engine.TransactionController;
+import org.apache.qpid.proton4j.engine.TransactionState;
 import org.messaginghub.amqperative.Session;
 import org.messaginghub.amqperative.futures.ClientFuture;
 import org.slf4j.Logger;
@@ -52,6 +53,8 @@ public class ClientTransactionContext {
     }
 
     public void begin(ClientFuture<Session> beginFuture) {
+        checkCanBeginNewTransaction();
+
         TransactionController txnController = getOrCreateNewTxnController();
 
         txnController.registerCapacityAvailableHandler(controller -> {
@@ -62,6 +65,8 @@ public class ClientTransactionContext {
     }
 
     public void commit(ClientFuture<Session> commitFuture, boolean startNew) {
+        checkCanCommitTransaction();
+
         TransactionController txnController = getOrCreateNewTxnController();
 
         currentTxn.getAttachments().set(DISCHARGE_FUTURE_NAME, commitFuture);
@@ -73,6 +78,8 @@ public class ClientTransactionContext {
     }
 
     public void rollback(ClientFuture<Session> rollbackFuture, boolean startNew) {
+        checkCanRollbackTransaction();
+
         TransactionController txnController = getOrCreateNewTxnController();
 
         currentTxn.getAttachments().set(DISCHARGE_FUTURE_NAME, rollbackFuture);
@@ -81,6 +88,10 @@ public class ClientTransactionContext {
         txnController.registerCapacityAvailableHandler(controller -> {
             txnController.discharge(currentTxn, false);
         });
+    }
+
+    public boolean isInTransaction() {
+        return currentTxn != null && currentTxn.getState() == TransactionState.DECLARED;
     }
 
     private TransactionController getOrCreateNewTxnController() {
@@ -107,9 +118,42 @@ public class ClientTransactionContext {
                          .openHandler(this::handleCoordinatorOpen)
                          .closeHandler(this::handleCoordinatorClose)
                          .open();
+
+            this.txnController = txnController;
         }
 
         return txnController;
+    }
+
+    private void checkCanBeginNewTransaction() {
+        if (currentTxn != null) {
+            switch (currentTxn.getState()) {
+                case DECLARING:
+                    throw new IllegalStateException("A transaction is already in the process of being started");
+                case DECLARED:
+                    throw new IllegalStateException("A transaction is already active in this Session");
+                case DISCHARGING:
+                    throw new IllegalStateException("A transaction is still being retired and a new one cannot yet be started");
+                default:
+                    throw new IllegalStateException("Cannot begin a new transaction until the existing transaction completes");
+                }
+        }
+    }
+
+    private void checkCanCommitTransaction() {
+        if (currentTxn == null) {
+            throw new IllegalStateException("Commit called with no active transaction");
+        } else {
+
+        }
+    }
+
+    private void checkCanRollbackTransaction() {
+        if (currentTxn == null) {
+            throw new IllegalStateException("Rollback called with no active transaction");
+        } else {
+
+        }
     }
 
     //----- Handle events from the Transaction Controller
