@@ -28,9 +28,10 @@ public class ProtonAttachments implements Attachments {
 
     private final Map<Object, Object> contextMap = new HashMap<>();
 
+    @SuppressWarnings("unchecked")
     @Override
-    public Object get(String key) {
-        return contextMap == null ? null : contextMap.get(key);
+    public <T> T get(String key) {
+        return contextMap == null ? null : (T) contextMap.get(key);
     }
 
     @Override
