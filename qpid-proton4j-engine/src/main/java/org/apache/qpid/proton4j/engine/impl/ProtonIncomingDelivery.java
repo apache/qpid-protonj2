@@ -79,9 +79,10 @@ public class ProtonIncomingDelivery implements IncomingDelivery {
         this.linkedResource = resource;
     }
 
+    @SuppressWarnings("unchecked")
     @Override
-    public Object getLinkedResource() {
-        return linkedResource;
+    public <T> T getLinkedResource() {
+        return (T) linkedResource;
     }
 
     @Override

@@ -58,9 +58,10 @@ public abstract class ProtonEndpoint<E extends Endpoint<E>> implements Endpoint<
         return self();
     }
 
+    @SuppressWarnings("unchecked")
     @Override
-    public Object getLinkedResource() {
-        return linkedResource;
+    public <T> T getLinkedResource() {
+        return (T) linkedResource;
     }
 
     @Override
