@@ -96,14 +96,39 @@ public interface TransactionController extends Endpoint<TransactionController> {
     Coordinator getRemoteCoordinator();
 
     /**
+     * Creates a new {@link Transaction} instances that is returned in the {@link TransactionState#IDLE} state
+     * which can be populated with application specific attachments or assigned a linked resource prior to calling
+     * the
+     *
+     * @return a new {@link Transaction} instance that can be correlated with later declared events.
+     */
+    Transaction<TransactionController> newTransaction();
+
+    /**
      * Request that the remote {@link TransactionManager} declare a new transaction and
      * respond with a new transaction Id for that transaction.  Upon successful declaration of
      * a new transaction the remote will respond and the {@link TransactionController#declaredHandler(EventHandler)}
      * event handler will be signaled.
      *
+     * This is a convenience method that is the same as first calling {@link TransactionController#newTransaction()}
+     * and then passing the result of that to the {@link TransactionController#declare(Transaction)} method.
+     *
      * @return a new {@link Transaction} instance that can be correlated with later declared events.
      */
     Transaction<TransactionController> declare();
+
+    /**
+     * Request that the remote {@link TransactionManager} declare a new transaction and
+     * respond with a new transaction Id for that transaction.  Upon successful declaration of
+     * a new transaction the remote will respond and the {@link TransactionController#declaredHandler(EventHandler)}
+     * event handler will be signaled.
+     *
+     * @param transaction
+     *      The {@link Transaction} that is will be associated with the eventual declared transaction.
+     *
+     * @return this {@link TransactionController}
+     */
+    TransactionController declare(Transaction<TransactionController> transaction);
 
     /**
      * Request that the remote {@link TransactionManager} discharge the given transaction and

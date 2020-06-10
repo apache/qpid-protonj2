@@ -122,6 +122,42 @@ public class ProtonTransactionController extends ProtonEndpoint<TransactionContr
         return this;
     }
 
+
+    @Override
+    public Transaction<TransactionController> newTransaction() {
+        return new ProtonControllerTransaction(this);
+    }
+
+    @Override
+    public TransactionController declare(Transaction<TransactionController> transaction) {
+        if (!senderLink.isSendable()) {
+            throw new IllegalStateException("Cannot Declare due to current capicity restrictions.");
+        }
+
+        if (transaction.getState() != TransactionState.IDLE) {
+            throw new IllegalStateException("Cannot declare a transaction that has already been used previously");
+        }
+
+        if (transaction.parent() != this) {
+            throw new IllegalArgumentException("Cannot declare a transaction that was created by another controller.");
+        }
+
+        ProtonControllerTransaction protonTransaction = (ProtonControllerTransaction) transaction;
+
+        protonTransaction.setState(TransactionState.DECLARING);
+
+        OutgoingDelivery command = senderLink.next();
+
+        command.setLinkedResource(protonTransaction);
+        try {
+            command.writeBytes(ENCODED_DECLARE);
+        } finally {
+            ENCODED_DECLARE.setReadIndex(0);
+        }
+
+        return this;
+    }
+
     @Override
     public Transaction<TransactionController> declare() {
         if (!senderLink.isSendable()) {
@@ -129,16 +165,7 @@ public class ProtonTransactionController extends ProtonEndpoint<TransactionContr
         }
 
         ProtonControllerTransaction transaction = new ProtonControllerTransaction(this);
-        transaction.setState(TransactionState.DECLARING);
-
-        OutgoingDelivery command = senderLink.next();
-
-        command.setLinkedResource(transaction);
-        try {
-            command.writeBytes(ENCODED_DECLARE);
-        } finally {
-            ENCODED_DECLARE.setReadIndex(0);
-        }
+        declare(transaction);
 
         return transaction;
     }
@@ -147,6 +174,10 @@ public class ProtonTransactionController extends ProtonEndpoint<TransactionContr
     public TransactionController discharge(Transaction<TransactionController> transaction, boolean failed) {
         if (transaction.getState() != TransactionState.DECLARED) {
             throw new IllegalStateException("Cannot discharge a transaction that is not currently actively declared.");
+        }
+
+        if (transaction.parent() != this) {
+            throw new IllegalArgumentException("Cannot discharge a transaction that was created by another controller.");
         }
 
         ((ProtonTransaction<TransactionController>) transaction).setState(TransactionState.DISCHARGING);

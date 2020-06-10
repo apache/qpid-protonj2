@@ -22,6 +22,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -391,7 +392,16 @@ public class ProtonTransactionLinkTest extends ProtonEngineTestSupport {
     }
 
     @Test(timeout = 20_000)
-    public void testTransactionControllerDeclareAndDischargeOneTransaction() {
+    public void testTransactionControllerDeclareAndDischargeOneTransactionDirect() {
+        doTestTransactionControllerDeclareAndDischargeOneTransaction(false);
+    }
+
+    @Test(timeout = 20_000)
+    public void testTransactionControllerDeclareAndDischargeOneTransactionInDirect() {
+        doTestTransactionControllerDeclareAndDischargeOneTransaction(true);
+    }
+
+    private void doTestTransactionControllerDeclareAndDischargeOneTransaction(boolean useNewTransactionAPI) {
         Engine engine = EngineFactory.PROTON.createNonSaslEngine();
         engine.errorHandler(result -> failure = result);
         ProtonTestPeer peer = new ProtonTestPeer(engine);
@@ -432,7 +442,15 @@ public class ProtonTransactionLinkTest extends ProtonEngineTestSupport {
         peer.waitForScriptToComplete();
         peer.expectDeclare().accept(TXN_ID);
 
-        final Transaction<TransactionController> txn = txnController.declare();
+        final Transaction<TransactionController> txn;
+        if (useNewTransactionAPI) {
+            txn = txnController.newTransaction();
+            assertEquals(TransactionState.IDLE, txn.getState());
+            txnController.declare(txn);
+        } else {
+            txn = txnController.declare();
+        }
+
         assertNotNull(txn);
 
         peer.waitForScriptToComplete();
@@ -576,6 +594,152 @@ public class ProtonTransactionLinkTest extends ProtonEngineTestSupport {
         assertEquals(failureError, txn.getCondition());
 
         txnController.close();
+        session.close();
+        connection.close();
+
+        peer.waitForScriptToComplete();
+        assertNull(failure);
+    }
+
+    @Test(timeout = 20_000)
+    public void testCannotDeclareTransactionFromOneControllerInAnother() {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result);
+        ProtonTestPeer peer = new ProtonTestPeer(engine);
+        engine.outputConsumer(peer);
+
+        Coordinator coordinator = new Coordinator();
+        coordinator.setCapabilities(TxnCapability.LOCAL_TXN);
+        Source source = new Source();
+        source.setOutcomes(DEFAULT_OUTCOMES);
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond();
+        peer.expectBegin().respond();
+        peer.expectAttach().withSource(source).withTarget(coordinator).respond();
+        peer.remoteFlow().withLinkCredit(2).queue();
+        peer.expectAttach().withSource(source).withTarget(coordinator).respond();
+        peer.remoteFlow().withLinkCredit(2).queue();
+
+        Connection connection = engine.start().open();
+        Session session = connection.session().open();
+
+        TransactionController txnController1 = session.coordinator("test-coordinator-1");
+        TransactionController txnController2 = session.coordinator("test-coordinator-2");
+
+        txnController1.setSource(source);
+        txnController1.setCoordinator(coordinator);
+        txnController1.open();
+
+        txnController2.setSource(source);
+        txnController2.setCoordinator(coordinator);
+        txnController2.open();
+
+        peer.waitForScriptToComplete();
+
+        assertTrue(txnController1.hasCapacity());
+        assertTrue(txnController2.hasCapacity());
+
+        final Transaction<TransactionController> txn1 = txnController1.newTransaction();
+        final Transaction<TransactionController> txn2 = txnController2.newTransaction();
+
+        try {
+            txnController1.declare(txn2);
+            fail("Should not be able to declare a transaction with TXN created from another controller");
+        } catch (IllegalArgumentException iae) {
+            // Expected
+        }
+
+        try {
+            txnController2.declare(txn1);
+            fail("Should not be able to declare a transaction with TXN created from another controller");
+        } catch (IllegalArgumentException iae) {
+            // Expected
+        }
+
+        peer.expectDetach().withClosed(true).respond();
+        peer.expectDetach().withClosed(true).respond();
+        peer.expectEnd().respond();
+        peer.expectClose().respond();
+
+        txnController1.close();
+        txnController2.close();
+
+        session.close();
+        connection.close();
+
+        peer.waitForScriptToComplete();
+        assertNull(failure);
+    }
+
+    @Test(timeout = 20_000)
+    public void testCannotDischargeTransactionFromOneControllerInAnother() {
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result);
+        ProtonTestPeer peer = new ProtonTestPeer(engine);
+        engine.outputConsumer(peer);
+
+        Coordinator coordinator = new Coordinator();
+        coordinator.setCapabilities(TxnCapability.LOCAL_TXN);
+        Source source = new Source();
+        source.setOutcomes(DEFAULT_OUTCOMES);
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond();
+        peer.expectBegin().respond();
+        peer.expectAttach().withSource(source).withTarget(coordinator).respond();
+        peer.remoteFlow().withLinkCredit(2).queue();
+        peer.expectAttach().withSource(source).withTarget(coordinator).respond();
+        peer.remoteFlow().withLinkCredit(2).queue();
+
+        Connection connection = engine.start().open();
+        Session session = connection.session().open();
+
+        TransactionController txnController1 = session.coordinator("test-coordinator-1");
+        TransactionController txnController2 = session.coordinator("test-coordinator-2");
+
+        txnController1.setSource(source);
+        txnController1.setCoordinator(coordinator);
+        txnController1.open();
+
+        txnController2.setSource(source);
+        txnController2.setCoordinator(coordinator);
+        txnController2.open();
+
+        peer.waitForScriptToComplete();
+        peer.expectDeclare().accept();
+        peer.expectDeclare().accept();
+
+        assertTrue(txnController1.hasCapacity());
+        assertTrue(txnController2.hasCapacity());
+
+        final Transaction<TransactionController> txn1 = txnController1.declare();
+        final Transaction<TransactionController> txn2 = txnController2.declare();
+
+        peer.waitForScriptToComplete();
+
+        try {
+            txnController1.discharge(txn2, false);
+            fail("Should not be able to discharge a transaction with TXN created from another controller");
+        } catch (IllegalArgumentException iae) {
+            // Expected
+        }
+
+        try {
+            txnController2.discharge(txn1, false);
+            fail("Should not be able to discharge a transaction with TXN created from another controller");
+        } catch (IllegalArgumentException iae) {
+            // Expected
+        }
+
+        peer.expectDetach().withClosed(true).respond();
+        peer.expectDetach().withClosed(true).respond();
+        peer.expectEnd().respond();
+        peer.expectClose().respond();
+
+        txnController1.close();
+        txnController2.close();
+
         session.close();
         connection.close();
 
