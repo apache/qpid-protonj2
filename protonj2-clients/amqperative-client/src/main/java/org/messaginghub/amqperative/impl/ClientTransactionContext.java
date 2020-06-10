@@ -16,6 +16,8 @@
  */
 package org.messaginghub.amqperative.impl;
 
+import java.util.Arrays;
+
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.messaging.Accepted;
 import org.apache.qpid.proton4j.amqp.messaging.Modified;
@@ -43,6 +45,11 @@ public class ClientTransactionContext {
 
     private static final Logger LOG = LoggerFactory.getLogger(ClientTransactionContext.class);
 
+    private static final Symbol[] SUPPORTED_OUTCOMES = new Symbol[] { Accepted.DESCRIPTOR_SYMBOL,
+                                                                      Rejected.DESCRIPTOR_SYMBOL,
+                                                                      Released.DESCRIPTOR_SYMBOL,
+                                                                      Modified.DESCRIPTOR_SYMBOL };
+
     private final String DECLARE_FUTURE_NAME = "Declare:Future";
     private final String DISCHARGE_FUTURE_NAME = "Discharge:Future";
     private final String START_TRANSACTION_MARKER = "Transaction:Start";
@@ -61,17 +68,7 @@ public class ClientTransactionContext {
 
     public void begin(ClientFuture<Session> beginFuture) throws ClientIllegalStateException {
         checkCanBeginNewTransaction();
-
-        TransactionController txnController = getOrCreateNewTxnController();
-
-        txnController.registerCapacityAvailableHandler(controller -> {
-            currentTxn = txnController.declare();
-            currentTxn.setLinkedResource(this);
-            currentTxn.getAttachments().set(DECLARE_FUTURE_NAME, beginFuture);
-
-            cachedReceiverOutcome = null;
-            cachedSenderOutcome = null;
-        });
+        beginNewTransaction(beginFuture);
     }
 
     public void commit(ClientFuture<Session> commitFuture, boolean startNew) throws ClientIllegalStateException {
@@ -122,18 +119,28 @@ public class ClientTransactionContext {
         }
     }
 
+    private void beginNewTransaction(ClientFuture<Session> beginFuture) {
+        TransactionController txnController = getOrCreateNewTxnController();
+
+        currentTxn = txnController.newTransaction();
+        currentTxn.setLinkedResource(this);
+        currentTxn.getAttachments().set(DECLARE_FUTURE_NAME, beginFuture);
+
+        cachedReceiverOutcome = null;
+        cachedSenderOutcome = null;
+
+        txnController.registerCapacityAvailableHandler(controller -> {
+            txnController.declare(currentTxn);
+        });
+    }
+
     private TransactionController getOrCreateNewTxnController() {
         if (txnController == null) {
             Coordinator coordinator = new Coordinator();
             coordinator.setCapabilities(TxnCapability.LOCAL_TXN);
 
-            Symbol[] outcomes = new Symbol[] { Accepted.DESCRIPTOR_SYMBOL,
-                                               Rejected.DESCRIPTOR_SYMBOL,
-                                               Released.DESCRIPTOR_SYMBOL,
-                                               Modified.DESCRIPTOR_SYMBOL };
-
             Source source = new Source();
-            source.setOutcomes(outcomes);
+            source.setOutcomes(Arrays.copyOf(SUPPORTED_OUTCOMES, SUPPORTED_OUTCOMES.length));
 
             TransactionController txnController = session.getProtonSession().coordinator("Coordinator:" + session.id());
             txnController.setSource(source)
@@ -231,14 +238,7 @@ public class ClientTransactionContext {
         future.complete(session);
 
         if (Boolean.TRUE.equals(transaction.getAttachments().get(START_TRANSACTION_MARKER))) {
-            txnController.registerCapacityAvailableHandler(controller -> {
-                currentTxn = txnController.declare();
-                currentTxn.setLinkedResource(this);
-                currentTxn.getAttachments().set(DECLARE_FUTURE_NAME, future);
-
-                cachedReceiverOutcome = null;
-                cachedSenderOutcome = null;
-            });
+            beginNewTransaction(future);
         }
     }
 

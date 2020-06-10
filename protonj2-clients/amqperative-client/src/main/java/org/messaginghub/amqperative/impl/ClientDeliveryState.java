@@ -24,6 +24,7 @@ import org.apache.qpid.proton4j.amqp.messaging.Accepted;
 import org.apache.qpid.proton4j.amqp.messaging.Modified;
 import org.apache.qpid.proton4j.amqp.messaging.Rejected;
 import org.apache.qpid.proton4j.amqp.messaging.Released;
+import org.apache.qpid.proton4j.amqp.transactions.TransactionalState;
 import org.apache.qpid.proton4j.amqp.transport.ErrorCondition;
 import org.messaginghub.amqperative.DeliveryState;
 
@@ -77,7 +78,7 @@ public abstract class ClientDeliveryState implements DeliveryState {
             case Modified:
                 return ClientModified.fromProtonType((Modified) state);
             case Transactional:
-                throw new UnsupportedOperationException("Client does not yet support Transactional operations");
+                return ClientTransactional.fromProtonType((TransactionalState) state);
             default:
                 throw new IllegalArgumentException("Cannot map to unknown Proton Delivery State type");
         }
@@ -201,9 +202,9 @@ public abstract class ClientDeliveryState implements DeliveryState {
         private final Modified modified = new Modified();
 
         ClientModified(Modified modified) {
-            modified.setDeliveryFailed(modified.isDeliveryFailed());
-            modified.setUndeliverableHere(modified.isUndeliverableHere());
-            modified.setMessageAnnotations(new LinkedHashMap<>(modified.getMessageAnnotations()));
+            this.modified.setDeliveryFailed(modified.isDeliveryFailed());
+            this.modified.setUndeliverableHere(modified.isUndeliverableHere());
+            this.modified.setMessageAnnotations(new LinkedHashMap<>(modified.getMessageAnnotations()));
         }
 
         public ClientModified(boolean failed, boolean undeliverable) {
@@ -219,7 +220,7 @@ public abstract class ClientDeliveryState implements DeliveryState {
 
         @Override
         public Type getType() {
-            return Type.RELEASED;
+            return Type.MODIFIED;
         }
 
         @Override
@@ -229,6 +230,30 @@ public abstract class ClientDeliveryState implements DeliveryState {
 
         public static ClientModified fromProtonType(Modified modified) {
             return new ClientModified(modified);
+        }
+    }
+
+    public static class ClientTransactional extends ClientDeliveryState {
+
+        private final TransactionalState txnState = new TransactionalState();
+
+        ClientTransactional(TransactionalState txnState) {
+            this.txnState.setOutcome(txnState.getOutcome());
+            this.txnState.setTxnId(txnState.getTxnId().copy());
+        }
+
+        @Override
+        public Type getType() {
+            return Type.TRANSACTIONAL;
+        }
+
+        @Override
+        org.apache.qpid.proton4j.amqp.transport.DeliveryState getProtonDeliveryState() {
+            return txnState;
+        }
+
+        public static ClientTransactional fromProtonType(TransactionalState txnState) {
+            return new ClientTransactional(txnState);
         }
     }
 }

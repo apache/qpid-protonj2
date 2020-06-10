@@ -486,16 +486,18 @@ public class ClientSender implements Sender {
     }
 
     private void assumeSendableAndSend(ProtonBuffer buffer, AsyncResult<Tracker> request) {
-        OutgoingDelivery delivery = protonSender.next();
-        ClientTracker tracker = new ClientTracker(this, delivery);
+        final OutgoingDelivery delivery = protonSender.next();
+        final ClientTracker tracker = new ClientTracker(this, delivery);
 
         delivery.setLinkedResource(tracker);
 
         if (protonSender.getSenderSettleMode() == SenderSettleMode.SETTLED) {
-            delivery.settle();
+            delivery.disposition(session.getTransactionContext().enlistSendInCurrentTransaction(this), true);
 
             // Remote will not update this delivery so mark as acknowledged now.
             tracker.acknowledgeFuture().complete(tracker);
+        } else {
+            delivery.disposition(session.getTransactionContext().enlistSendInCurrentTransaction(this), false);
         }
 
         // TODO: How do we provide a send mode equivalent to Qpid JMS asynchronous send on NON_PERSISTENT Message.

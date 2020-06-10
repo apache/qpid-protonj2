@@ -449,6 +449,10 @@ public class ClientSession implements Session {
         return protonSession;
     }
 
+    ClientTransactionContext getTransactionContext() {
+        return txnContext;
+    }
+
     //----- Private implementation methods
 
     private void configureSession() {
@@ -624,7 +628,4 @@ public class ClientSession implements Session {
             closeFuture.complete(this);
         }
     }
-
-    //----- Handle Events from the Session TransactionController
-
 }

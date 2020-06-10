@@ -16,12 +16,21 @@
  */
 package org.messaginghub.amqperative;
 
+import static org.hamcrest.CoreMatchers.notNullValue;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.net.URI;
 import java.util.concurrent.TimeUnit;
 
+import org.apache.qpid.proton4j.amqp.Binary;
 import org.apache.qpid.proton4j.amqp.driver.netty.NettyTestPeer;
+import org.apache.qpid.proton4j.amqp.messaging.Accepted;
+import org.apache.qpid.proton4j.amqp.transactions.TransactionalState;
+import org.apache.qpid.proton4j.amqp.transport.Role;
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.junit.Test;
 import org.messaginghub.amqperative.exceptions.ClientIllegalStateException;
 import org.messaginghub.amqperative.test.AMQPerativeTestCase;
@@ -102,7 +111,7 @@ public class TransactionsTest extends AMQPerativeTestCase {
         }
     }
 
-    @Test // (timeout = 20000)
+    @Test(timeout = 20000)
     public void testBeginAndCommitTransactions() throws Exception {
         final byte[] txnId1 = new byte[] { 0, 1, 2, 3 };
         final byte[] txnId2 = new byte[] { 1, 1, 2, 3 };
@@ -180,6 +189,59 @@ public class TransactionsTest extends AMQPerativeTestCase {
             } catch (ClientIllegalStateException cliEx) {
                 // Expected
             }
+
+            session.close();
+            connection.close().get(10, TimeUnit.SECONDS);
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test(timeout = 20_000)
+    public void testSendMessageInsideOfTransaction() throws Exception {
+        final byte[] txnId = new byte[] { 0, 1, 2, 3 };
+
+        try (NettyTestPeer peer = new NettyTestPeer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().withRole(Role.SENDER).respond();
+            peer.remoteFlow().withLinkCredit(1).queue();
+            peer.expectCoordinatorAttach().respond();
+            peer.remoteFlow().withLinkCredit(2).queue();
+            peer.expectDeclare().accept(txnId);
+            peer.expectTransfer().withHandle(0)
+                                 .withPayload(notNullValue(ProtonBuffer.class))
+                                 .withState(new TransactionalState().setTxnId(new Binary(txnId)))
+                                 .respond()
+                                 .withState(new TransactionalState().setTxnId(new Binary(txnId)).setOutcome(Accepted.getInstance()))
+                                 .withSettled(true);
+            peer.expectDischarge().withFail(false).withTxnId(txnId).accept();
+            peer.expectEnd().respond();
+            peer.expectClose().respond();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Sender test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            Session session = connection.openSession().openFuture().get();
+            Sender sender = session.openSender("address").openFuture().get();
+
+            session.begin();
+
+            final Tracker tracker = sender.send(Message.create("test-message"));
+
+            assertNotNull(tracker);
+            assertNotNull(tracker.acknowledgeFuture().get());
+            assertEquals(tracker.remoteState().getType(), DeliveryState.Type.TRANSACTIONAL);
+            assertNotNull(tracker.state());
+            assertEquals(tracker.state().getType(), DeliveryState.Type.TRANSACTIONAL);
+            assertTrue(tracker.settled());
+
+            session.commit();
 
             session.close();
             connection.close().get(10, TimeUnit.SECONDS);
