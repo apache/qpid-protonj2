@@ -16,8 +16,10 @@
  */
 package org.apache.qpid.proton4j.engine.impl;
 
+import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
@@ -28,6 +30,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
+import org.apache.qpid.proton4j.amqp.Binary;
 import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.driver.ProtonTestPeer;
 import org.apache.qpid.proton4j.amqp.messaging.Accepted;
@@ -37,13 +40,18 @@ import org.apache.qpid.proton4j.amqp.messaging.Released;
 import org.apache.qpid.proton4j.amqp.messaging.Source;
 import org.apache.qpid.proton4j.amqp.transactions.Coordinator;
 import org.apache.qpid.proton4j.amqp.transactions.TransactionErrors;
+import org.apache.qpid.proton4j.amqp.transactions.TransactionalState;
 import org.apache.qpid.proton4j.amqp.transactions.TxnCapability;
 import org.apache.qpid.proton4j.amqp.transport.AmqpError;
+import org.apache.qpid.proton4j.amqp.transport.DeliveryState;
 import org.apache.qpid.proton4j.amqp.transport.ErrorCondition;
 import org.apache.qpid.proton4j.amqp.transport.Role;
+import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.engine.Connection;
 import org.apache.qpid.proton4j.engine.Engine;
 import org.apache.qpid.proton4j.engine.EngineFactory;
+import org.apache.qpid.proton4j.engine.OutgoingDelivery;
 import org.apache.qpid.proton4j.engine.Receiver;
 import org.apache.qpid.proton4j.engine.Sender;
 import org.apache.qpid.proton4j.engine.Session;
@@ -745,5 +753,75 @@ public class ProtonTransactionLinkTest extends ProtonEngineTestSupport {
 
         peer.waitForScriptToComplete();
         assertNull(failure);
+    }
+
+    @Test(timeout = 20000)
+    public void testSendMessageInsideOfTransaction() throws Exception {
+        final byte[] TXN_ID = new byte[] { 1, 2, 3, 4 };
+        final byte [] payloadBuffer = new byte[] {0, 1, 2, 3, 4};
+        final ProtonBuffer payload = ProtonByteBufferAllocator.DEFAULT.wrap(payloadBuffer);
+
+        Engine engine = EngineFactory.PROTON.createNonSaslEngine();
+        engine.errorHandler(result -> failure = result);
+        ProtonTestPeer peer = new ProtonTestPeer(engine);
+        engine.outputConsumer(peer);
+
+        Coordinator coordinator = new Coordinator();
+        coordinator.setCapabilities(TxnCapability.LOCAL_TXN);
+        Source source = new Source();
+        source.setOutcomes(DEFAULT_OUTCOMES);
+
+        peer.expectAMQPHeader().respondWithAMQPHeader();
+        peer.expectOpen().respond();
+        peer.expectBegin().respond();
+        peer.expectAttach().withRole(Role.SENDER).respond();
+        peer.remoteFlow().withLinkCredit(1).queue();
+        peer.expectCoordinatorAttach().respond();
+        peer.remoteFlow().withLinkCredit(2).queue();
+        peer.expectDeclare().accept(TXN_ID);
+
+        Connection connection = engine.start().open();
+        Session session = connection.session().open();
+        Sender sender = session.sender("test").open();
+
+        TransactionController txnController = session.coordinator("test-coordinator");
+
+        txnController.setSource(source);
+        txnController.setCoordinator(coordinator);
+        txnController.open();
+
+        Transaction<TransactionController> txn = txnController.declare();
+
+        peer.waitForScriptToComplete();
+        peer.expectTransfer().withHandle(0)
+                             .withPayload(notNullValue(ProtonBuffer.class))
+                             .withState(new TransactionalState().setTxnId(new Binary(TXN_ID)))
+                             .respond()
+                             .withState(new TransactionalState().setTxnId(new Binary(TXN_ID)).setOutcome(Accepted.getInstance()))
+                             .withSettled(true);
+        peer.expectDischarge().withFail(false).withTxnId(TXN_ID).accept();
+        peer.expectEnd().respond();
+        peer.expectClose().respond();
+
+        assertTrue(sender.isSendable());
+
+        OutgoingDelivery delivery = sender.next();
+
+        delivery.disposition(new TransactionalState().setTxnId(new Binary(TXN_ID)), false);
+        delivery.writeBytes(payload);
+
+        txnController.discharge(txn, false);
+
+        assertNotNull(delivery);
+        assertNotNull(delivery.getRemoteState());
+        assertEquals(delivery.getRemoteState().getType(), DeliveryState.DeliveryStateType.Transactional);
+        assertNotNull(delivery.getState());
+        assertEquals(delivery.getState().getType(), DeliveryState.DeliveryStateType.Transactional);
+        assertFalse(delivery.isSettled());
+
+        session.close();
+        connection.close();
+
+        peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
     }
 }
