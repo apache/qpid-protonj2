@@ -19,7 +19,8 @@ package org.apache.qpid.proton4j.amqp.transport;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 
-import org.apache.qpid.proton4j.amqp.UnsignedByte;
+import org.apache.qpid.proton4j.types.UnsignedByte;
+import org.apache.qpid.proton4j.types.transport.ReceiverSettleMode;
 import org.junit.Test;
 
 public class ReceiverSettleModeTest {

@@ -25,13 +25,13 @@ import static org.junit.Assert.fail;
 
 import java.io.IOException;
 
-import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.codec.CodecTestSupport;
 import org.apache.qpid.proton4j.codec.DecodeException;
 import org.apache.qpid.proton4j.codec.EncodingCodes;
 import org.apache.qpid.proton4j.codec.TypeDecoder;
+import org.apache.qpid.proton4j.types.UnsignedLong;
 import org.junit.Test;
 
 public class UnsignedLongTypeCodecTest extends CodecTestSupport {

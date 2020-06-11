@@ -26,11 +26,6 @@ import static org.junit.Assert.fail;
 
 import java.io.IOException;
 
-import org.apache.qpid.proton4j.amqp.Binary;
-import org.apache.qpid.proton4j.amqp.messaging.Accepted;
-import org.apache.qpid.proton4j.amqp.messaging.Rejected;
-import org.apache.qpid.proton4j.amqp.messaging.Released;
-import org.apache.qpid.proton4j.amqp.transactions.TransactionalState;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.codec.CodecTestSupport;
@@ -39,6 +34,11 @@ import org.apache.qpid.proton4j.codec.EncodingCodes;
 import org.apache.qpid.proton4j.codec.TypeDecoder;
 import org.apache.qpid.proton4j.codec.decoders.transactions.TransactionStateTypeDecoder;
 import org.apache.qpid.proton4j.codec.encoders.transactions.TransactionStateTypeEncoder;
+import org.apache.qpid.proton4j.types.Binary;
+import org.apache.qpid.proton4j.types.messaging.Accepted;
+import org.apache.qpid.proton4j.types.messaging.Rejected;
+import org.apache.qpid.proton4j.types.messaging.Released;
+import org.apache.qpid.proton4j.types.transactions.TransactionalState;
 import org.junit.Test;
 
 /**

@@ -18,10 +18,10 @@ package org.apache.qpid.proton4j.engine;
 
 import java.util.Map;
 
-import org.apache.qpid.proton4j.amqp.Symbol;
-import org.apache.qpid.proton4j.amqp.transport.ErrorCondition;
 import org.apache.qpid.proton4j.engine.exceptions.EngineFailedException;
 import org.apache.qpid.proton4j.engine.exceptions.EngineStateException;
+import org.apache.qpid.proton4j.types.Symbol;
+import org.apache.qpid.proton4j.types.transport.ErrorCondition;
 
 /**
  * Represents a conceptual endpoint type used to provide common operations that

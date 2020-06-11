@@ -16,8 +16,8 @@
  */
 package org.apache.qpid.proton4j.engine;
 
-import org.apache.qpid.proton4j.amqp.transport.Performative;
-import org.apache.qpid.proton4j.amqp.transport.Performative.PerformativeHandler;
+import org.apache.qpid.proton4j.types.transport.Performative;
+import org.apache.qpid.proton4j.types.transport.Performative.PerformativeHandler;
 
 /**
  * Frame object that carries an AMQP Performative

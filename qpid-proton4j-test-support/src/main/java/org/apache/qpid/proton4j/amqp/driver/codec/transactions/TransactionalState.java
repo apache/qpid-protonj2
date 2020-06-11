@@ -18,11 +18,11 @@ package org.apache.qpid.proton4j.amqp.driver.codec.transactions;
 
 import java.util.List;
 
-import org.apache.qpid.proton4j.amqp.Binary;
-import org.apache.qpid.proton4j.amqp.DescribedType;
-import org.apache.qpid.proton4j.amqp.Symbol;
-import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.amqp.driver.codec.ListDescribedType;
+import org.apache.qpid.proton4j.types.Binary;
+import org.apache.qpid.proton4j.types.DescribedType;
+import org.apache.qpid.proton4j.types.Symbol;
+import org.apache.qpid.proton4j.types.UnsignedLong;
 
 public class TransactionalState extends ListDescribedType {
 

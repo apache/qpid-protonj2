@@ -20,17 +20,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.qpid.proton4j.amqp.Symbol;
-import org.apache.qpid.proton4j.amqp.messaging.AmqpValue;
-import org.apache.qpid.proton4j.amqp.messaging.Rejected;
-import org.apache.qpid.proton4j.amqp.messaging.Source;
-import org.apache.qpid.proton4j.amqp.transactions.Coordinator;
-import org.apache.qpid.proton4j.amqp.transactions.Declare;
-import org.apache.qpid.proton4j.amqp.transactions.Declared;
-import org.apache.qpid.proton4j.amqp.transactions.Discharge;
-import org.apache.qpid.proton4j.amqp.transport.DeliveryState;
-import org.apache.qpid.proton4j.amqp.transport.DeliveryState.DeliveryStateType;
-import org.apache.qpid.proton4j.amqp.transport.ErrorCondition;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.codec.CodecFactory;
@@ -47,6 +36,17 @@ import org.apache.qpid.proton4j.engine.exceptions.EngineFailedException;
 import org.apache.qpid.proton4j.engine.exceptions.EngineStateException;
 import org.apache.qpid.proton4j.logging.ProtonLogger;
 import org.apache.qpid.proton4j.logging.ProtonLoggerFactory;
+import org.apache.qpid.proton4j.types.Symbol;
+import org.apache.qpid.proton4j.types.messaging.AmqpValue;
+import org.apache.qpid.proton4j.types.messaging.Rejected;
+import org.apache.qpid.proton4j.types.messaging.Source;
+import org.apache.qpid.proton4j.types.transactions.Coordinator;
+import org.apache.qpid.proton4j.types.transactions.Declare;
+import org.apache.qpid.proton4j.types.transactions.Declared;
+import org.apache.qpid.proton4j.types.transactions.Discharge;
+import org.apache.qpid.proton4j.types.transport.DeliveryState;
+import org.apache.qpid.proton4j.types.transport.ErrorCondition;
+import org.apache.qpid.proton4j.types.transport.DeliveryState.DeliveryStateType;
 
 /**
  * {@link TransactionController} implementation that implements the abstraction

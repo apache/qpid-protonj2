@@ -16,8 +16,8 @@
  */
 package org.apache.qpid.proton4j.amqp.driver.codec;
 
-import org.apache.qpid.proton4j.amqp.Decimal32;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import org.apache.qpid.proton4j.types.Decimal32;
 
 class Decimal32Element extends AtomicElement<Decimal32> {
 

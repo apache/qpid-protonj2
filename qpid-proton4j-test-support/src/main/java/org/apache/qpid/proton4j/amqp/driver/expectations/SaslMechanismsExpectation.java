@@ -18,11 +18,11 @@ package org.apache.qpid.proton4j.amqp.driver.expectations;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 
-import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
 import org.apache.qpid.proton4j.amqp.driver.codec.ListDescribedType;
 import org.apache.qpid.proton4j.amqp.driver.codec.security.SaslMechanisms;
 import org.apache.qpid.proton4j.amqp.driver.matchers.security.SaslMechanismsMatcher;
+import org.apache.qpid.proton4j.types.Symbol;
 import org.hamcrest.Matcher;
 
 /**

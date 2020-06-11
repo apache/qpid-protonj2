@@ -27,21 +27,6 @@ import java.util.HashMap;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
-import org.apache.qpid.proton4j.amqp.Binary;
-import org.apache.qpid.proton4j.amqp.Symbol;
-import org.apache.qpid.proton4j.amqp.UnsignedByte;
-import org.apache.qpid.proton4j.amqp.UnsignedInteger;
-import org.apache.qpid.proton4j.amqp.UnsignedShort;
-import org.apache.qpid.proton4j.amqp.messaging.Accepted;
-import org.apache.qpid.proton4j.amqp.messaging.ApplicationProperties;
-import org.apache.qpid.proton4j.amqp.messaging.Data;
-import org.apache.qpid.proton4j.amqp.messaging.Header;
-import org.apache.qpid.proton4j.amqp.messaging.MessageAnnotations;
-import org.apache.qpid.proton4j.amqp.messaging.Properties;
-import org.apache.qpid.proton4j.amqp.transport.Disposition;
-import org.apache.qpid.proton4j.amqp.transport.Flow;
-import org.apache.qpid.proton4j.amqp.transport.Role;
-import org.apache.qpid.proton4j.amqp.transport.Transfer;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.codec.CodecFactory;
@@ -49,6 +34,21 @@ import org.apache.qpid.proton4j.codec.Decoder;
 import org.apache.qpid.proton4j.codec.DecoderState;
 import org.apache.qpid.proton4j.codec.Encoder;
 import org.apache.qpid.proton4j.codec.EncoderState;
+import org.apache.qpid.proton4j.types.Binary;
+import org.apache.qpid.proton4j.types.Symbol;
+import org.apache.qpid.proton4j.types.UnsignedByte;
+import org.apache.qpid.proton4j.types.UnsignedInteger;
+import org.apache.qpid.proton4j.types.UnsignedShort;
+import org.apache.qpid.proton4j.types.messaging.Accepted;
+import org.apache.qpid.proton4j.types.messaging.ApplicationProperties;
+import org.apache.qpid.proton4j.types.messaging.Data;
+import org.apache.qpid.proton4j.types.messaging.Header;
+import org.apache.qpid.proton4j.types.messaging.MessageAnnotations;
+import org.apache.qpid.proton4j.types.messaging.Properties;
+import org.apache.qpid.proton4j.types.transport.Disposition;
+import org.apache.qpid.proton4j.types.transport.Flow;
+import org.apache.qpid.proton4j.types.transport.Role;
+import org.apache.qpid.proton4j.types.transport.Transfer;
 
 public class Benchmark implements Runnable {
 

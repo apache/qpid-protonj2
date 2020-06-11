@@ -16,8 +16,8 @@
  */
 package org.apache.qpid.proton4j.amqp.driver.codec;
 
-import org.apache.qpid.proton4j.amqp.UnsignedByte;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import org.apache.qpid.proton4j.types.UnsignedByte;
 
 class UnsignedByteElement extends AtomicElement<UnsignedByte> {
 

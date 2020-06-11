@@ -19,8 +19,8 @@ package org.apache.qpid.proton4j.engine;
 import java.util.Set;
 import java.util.concurrent.ScheduledExecutorService;
 
-import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
 import org.apache.qpid.proton4j.engine.exceptions.EngineStateException;
+import org.apache.qpid.proton4j.types.transport.AMQPHeader;
 
 /**
  * AMQP Connection state container

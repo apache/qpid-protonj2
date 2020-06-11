@@ -21,8 +21,9 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertNull;
 
-import org.apache.qpid.proton4j.amqp.Binary;
-import org.apache.qpid.proton4j.amqp.messaging.Section.SectionType;
+import org.apache.qpid.proton4j.types.Binary;
+import org.apache.qpid.proton4j.types.messaging.Data;
+import org.apache.qpid.proton4j.types.messaging.Section.SectionType;
 import org.junit.Test;
 
 public class DataTest {

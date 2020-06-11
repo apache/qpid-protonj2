@@ -16,9 +16,9 @@
  */
 package org.apache.qpid.proton4j.amqp.driver.codec.messaging;
 
-import org.apache.qpid.proton4j.amqp.Symbol;
-import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.amqp.driver.codec.MapDescribedType;
+import org.apache.qpid.proton4j.types.Symbol;
+import org.apache.qpid.proton4j.types.UnsignedLong;
 
 public class Footer extends MapDescribedType {
 

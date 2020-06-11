@@ -22,18 +22,7 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 
-import org.apache.qpid.proton4j.amqp.UnsignedInteger;
-import org.apache.qpid.proton4j.amqp.UnsignedShort;
 import org.apache.qpid.proton4j.amqp.driver.codec.Codec;
-import org.apache.qpid.proton4j.amqp.messaging.Source;
-import org.apache.qpid.proton4j.amqp.messaging.Target;
-import org.apache.qpid.proton4j.amqp.transport.Attach;
-import org.apache.qpid.proton4j.amqp.transport.Begin;
-import org.apache.qpid.proton4j.amqp.transport.Open;
-import org.apache.qpid.proton4j.amqp.transport.Performative;
-import org.apache.qpid.proton4j.amqp.transport.ReceiverSettleMode;
-import org.apache.qpid.proton4j.amqp.transport.Role;
-import org.apache.qpid.proton4j.amqp.transport.SenderSettleMode;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.codec.CodecFactory;
@@ -41,6 +30,17 @@ import org.apache.qpid.proton4j.codec.Decoder;
 import org.apache.qpid.proton4j.codec.DecoderState;
 import org.apache.qpid.proton4j.codec.Encoder;
 import org.apache.qpid.proton4j.codec.EncoderState;
+import org.apache.qpid.proton4j.types.UnsignedInteger;
+import org.apache.qpid.proton4j.types.UnsignedShort;
+import org.apache.qpid.proton4j.types.messaging.Source;
+import org.apache.qpid.proton4j.types.messaging.Target;
+import org.apache.qpid.proton4j.types.transport.Attach;
+import org.apache.qpid.proton4j.types.transport.Begin;
+import org.apache.qpid.proton4j.types.transport.Open;
+import org.apache.qpid.proton4j.types.transport.Performative;
+import org.apache.qpid.proton4j.types.transport.ReceiverSettleMode;
+import org.apache.qpid.proton4j.types.transport.Role;
+import org.apache.qpid.proton4j.types.transport.SenderSettleMode;
 import org.junit.Test;
 
 /**

@@ -18,11 +18,11 @@ package org.apache.qpid.proton4j.amqp.driver.actions;
 
 import java.util.Map;
 
-import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
 import org.apache.qpid.proton4j.amqp.driver.codec.transport.Close;
 import org.apache.qpid.proton4j.amqp.driver.codec.util.TypeMapper;
-import org.apache.qpid.proton4j.amqp.transport.ErrorCondition;
+import org.apache.qpid.proton4j.types.Symbol;
+import org.apache.qpid.proton4j.types.transport.ErrorCondition;
 
 /**
  * AMQP Close injection action which can be added to a driver for write at a specific time or

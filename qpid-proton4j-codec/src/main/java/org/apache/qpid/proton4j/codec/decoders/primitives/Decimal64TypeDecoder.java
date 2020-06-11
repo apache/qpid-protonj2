@@ -16,12 +16,12 @@
  */
 package org.apache.qpid.proton4j.codec.decoders.primitives;
 
-import org.apache.qpid.proton4j.amqp.Decimal64;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.DecodeException;
 import org.apache.qpid.proton4j.codec.DecoderState;
 import org.apache.qpid.proton4j.codec.EncodingCodes;
 import org.apache.qpid.proton4j.codec.decoders.AbstractPrimitiveTypeDecoder;
+import org.apache.qpid.proton4j.types.Decimal64;
 
 /**
  * Decoder of AMQP Decimal64 values from a byte stream

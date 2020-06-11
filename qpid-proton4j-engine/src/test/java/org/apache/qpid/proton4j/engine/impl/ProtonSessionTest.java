@@ -37,13 +37,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
-import org.apache.qpid.proton4j.amqp.Symbol;
-import org.apache.qpid.proton4j.amqp.UnsignedInteger;
 import org.apache.qpid.proton4j.amqp.driver.ProtonTestPeer;
-import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
-import org.apache.qpid.proton4j.amqp.transport.AmqpError;
-import org.apache.qpid.proton4j.amqp.transport.ErrorCondition;
-import org.apache.qpid.proton4j.amqp.transport.Role;
 import org.apache.qpid.proton4j.engine.Connection;
 import org.apache.qpid.proton4j.engine.ConnectionState;
 import org.apache.qpid.proton4j.engine.Engine;
@@ -57,6 +51,12 @@ import org.apache.qpid.proton4j.engine.exceptions.EngineFailedException;
 import org.apache.qpid.proton4j.engine.exceptions.EngineStateException;
 import org.apache.qpid.proton4j.logging.ProtonLogger;
 import org.apache.qpid.proton4j.logging.ProtonLoggerFactory;
+import org.apache.qpid.proton4j.types.Symbol;
+import org.apache.qpid.proton4j.types.UnsignedInteger;
+import org.apache.qpid.proton4j.types.transport.AMQPHeader;
+import org.apache.qpid.proton4j.types.transport.AmqpError;
+import org.apache.qpid.proton4j.types.transport.ErrorCondition;
+import org.apache.qpid.proton4j.types.transport.Role;
 import org.hamcrest.Matcher;
 import org.junit.Test;
 

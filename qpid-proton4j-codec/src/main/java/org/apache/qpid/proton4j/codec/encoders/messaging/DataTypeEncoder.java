@@ -16,14 +16,14 @@
  */
 package org.apache.qpid.proton4j.codec.encoders.messaging;
 
-import org.apache.qpid.proton4j.amqp.Binary;
-import org.apache.qpid.proton4j.amqp.Symbol;
-import org.apache.qpid.proton4j.amqp.UnsignedLong;
-import org.apache.qpid.proton4j.amqp.messaging.Data;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.EncoderState;
 import org.apache.qpid.proton4j.codec.EncodingCodes;
 import org.apache.qpid.proton4j.codec.encoders.AbstractDescribedTypeEncoder;
+import org.apache.qpid.proton4j.types.Binary;
+import org.apache.qpid.proton4j.types.Symbol;
+import org.apache.qpid.proton4j.types.UnsignedLong;
+import org.apache.qpid.proton4j.types.messaging.Data;
 
 /**
  * Encoder of AMQP Data type values to a byte stream.

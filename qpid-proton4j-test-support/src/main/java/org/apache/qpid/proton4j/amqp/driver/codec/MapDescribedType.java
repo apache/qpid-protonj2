@@ -19,7 +19,7 @@ package org.apache.qpid.proton4j.amqp.driver.codec;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.apache.qpid.proton4j.amqp.DescribedType;
+import org.apache.qpid.proton4j.types.DescribedType;
 
 /**
  * Basic Described type that contains a Map as the value.

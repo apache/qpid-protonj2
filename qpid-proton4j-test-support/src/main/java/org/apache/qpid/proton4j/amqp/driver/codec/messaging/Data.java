@@ -16,10 +16,10 @@
  */
 package org.apache.qpid.proton4j.amqp.driver.codec.messaging;
 
-import org.apache.qpid.proton4j.amqp.Binary;
-import org.apache.qpid.proton4j.amqp.DescribedType;
-import org.apache.qpid.proton4j.amqp.Symbol;
-import org.apache.qpid.proton4j.amqp.UnsignedLong;
+import org.apache.qpid.proton4j.types.Binary;
+import org.apache.qpid.proton4j.types.DescribedType;
+import org.apache.qpid.proton4j.types.Symbol;
+import org.apache.qpid.proton4j.types.UnsignedLong;
 
 public class Data implements DescribedType {
 

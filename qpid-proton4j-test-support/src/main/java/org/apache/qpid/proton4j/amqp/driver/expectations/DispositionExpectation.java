@@ -18,14 +18,14 @@ package org.apache.qpid.proton4j.amqp.driver.expectations;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 
-import org.apache.qpid.proton4j.amqp.UnsignedInteger;
 import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
 import org.apache.qpid.proton4j.amqp.driver.codec.ListDescribedType;
 import org.apache.qpid.proton4j.amqp.driver.codec.transport.Disposition;
 import org.apache.qpid.proton4j.amqp.driver.codec.util.TypeMapper;
 import org.apache.qpid.proton4j.amqp.driver.matchers.transport.DispositionMatcher;
-import org.apache.qpid.proton4j.amqp.transport.DeliveryState;
-import org.apache.qpid.proton4j.amqp.transport.Role;
+import org.apache.qpid.proton4j.types.UnsignedInteger;
+import org.apache.qpid.proton4j.types.transport.DeliveryState;
+import org.apache.qpid.proton4j.types.transport.Role;
 import org.hamcrest.Matcher;
 
 /**

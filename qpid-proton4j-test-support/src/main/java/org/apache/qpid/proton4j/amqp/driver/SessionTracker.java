@@ -21,15 +21,15 @@ import java.util.Deque;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import org.apache.qpid.proton4j.amqp.UnsignedInteger;
-import org.apache.qpid.proton4j.amqp.UnsignedShort;
 import org.apache.qpid.proton4j.amqp.driver.codec.transport.Attach;
 import org.apache.qpid.proton4j.amqp.driver.codec.transport.Begin;
 import org.apache.qpid.proton4j.amqp.driver.codec.transport.Detach;
 import org.apache.qpid.proton4j.amqp.driver.codec.transport.End;
 import org.apache.qpid.proton4j.amqp.driver.codec.transport.Transfer;
-import org.apache.qpid.proton4j.amqp.transport.Role;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import org.apache.qpid.proton4j.types.UnsignedInteger;
+import org.apache.qpid.proton4j.types.UnsignedShort;
+import org.apache.qpid.proton4j.types.transport.Role;
 
 /**
  * Tracks information related to an opened Session and its various links

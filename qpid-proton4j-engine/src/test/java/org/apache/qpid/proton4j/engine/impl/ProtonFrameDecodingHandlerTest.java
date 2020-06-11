@@ -26,8 +26,6 @@ import static org.junit.Assert.fail;
 
 import java.util.List;
 
-import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
-import org.apache.qpid.proton4j.amqp.transport.Open;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.engine.EmptyFrame;
 import org.apache.qpid.proton4j.engine.Engine;
@@ -38,6 +36,8 @@ import org.apache.qpid.proton4j.engine.exceptions.ProtocolViolationException;
 import org.apache.qpid.proton4j.engine.util.FrameReadSinkTransportHandler;
 import org.apache.qpid.proton4j.engine.util.FrameRecordingTransportHandler;
 import org.apache.qpid.proton4j.engine.util.FrameWriteSinkTransportHandler;
+import org.apache.qpid.proton4j.types.transport.AMQPHeader;
+import org.apache.qpid.proton4j.types.transport.Open;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;

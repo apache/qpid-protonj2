@@ -25,13 +25,6 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
-import org.apache.qpid.proton4j.amqp.Binary;
-import org.apache.qpid.proton4j.amqp.Symbol;
-import org.apache.qpid.proton4j.amqp.security.SaslCode;
-import org.apache.qpid.proton4j.amqp.security.SaslInit;
-import org.apache.qpid.proton4j.amqp.security.SaslMechanisms;
-import org.apache.qpid.proton4j.amqp.security.SaslPerformative;
-import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.engine.Engine;
 import org.apache.qpid.proton4j.engine.EngineState;
@@ -45,6 +38,13 @@ import org.apache.qpid.proton4j.engine.sasl.SaslServerContext;
 import org.apache.qpid.proton4j.engine.sasl.SaslServerListener;
 import org.apache.qpid.proton4j.engine.util.FrameRecordingTransportHandler;
 import org.apache.qpid.proton4j.engine.util.FrameWriteSinkTransportHandler;
+import org.apache.qpid.proton4j.types.Binary;
+import org.apache.qpid.proton4j.types.Symbol;
+import org.apache.qpid.proton4j.types.security.SaslCode;
+import org.apache.qpid.proton4j.types.security.SaslInit;
+import org.apache.qpid.proton4j.types.security.SaslMechanisms;
+import org.apache.qpid.proton4j.types.security.SaslPerformative;
+import org.apache.qpid.proton4j.types.transport.AMQPHeader;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -248,8 +248,8 @@ public class ProtonSaslHandlerTest {
                     assertTrue(frame.getType() == SaslFrame.SASL_FRAME_TYPE);
                     saslFrame = (SaslFrame) frame;
                     assertEquals(SaslPerformative.SaslPerformativeType.OUTCOME, saslFrame.getBody().getPerformativeType());
-                    org.apache.qpid.proton4j.amqp.security.SaslOutcome outcome =
-                        (org.apache.qpid.proton4j.amqp.security.SaslOutcome) saslFrame.getBody();
+                    org.apache.qpid.proton4j.types.security.SaslOutcome outcome =
+                        (org.apache.qpid.proton4j.types.security.SaslOutcome) saslFrame.getBody();
                     assertEquals(SaslCode.OK, outcome.getCode());
                     break;
                 default:

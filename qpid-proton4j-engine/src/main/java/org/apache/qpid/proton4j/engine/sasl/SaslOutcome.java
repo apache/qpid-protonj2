@@ -16,7 +16,7 @@
  */
 package org.apache.qpid.proton4j.engine.sasl;
 
-import org.apache.qpid.proton4j.amqp.security.SaslCode;
+import org.apache.qpid.proton4j.types.security.SaslCode;
 
 /**
  * Represents the outcome of a SASL exchange

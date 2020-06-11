@@ -16,13 +16,13 @@
  */
 package org.apache.qpid.proton4j.codec.encoders.messaging;
 
-import org.apache.qpid.proton4j.amqp.Symbol;
-import org.apache.qpid.proton4j.amqp.UnsignedLong;
-import org.apache.qpid.proton4j.amqp.messaging.Modified;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.EncoderState;
 import org.apache.qpid.proton4j.codec.EncodingCodes;
 import org.apache.qpid.proton4j.codec.encoders.AbstractDescribedListTypeEncoder;
+import org.apache.qpid.proton4j.types.Symbol;
+import org.apache.qpid.proton4j.types.UnsignedLong;
+import org.apache.qpid.proton4j.types.messaging.Modified;
 
 /**
  * Encoder of AMQP Modified type values to a byte stream.

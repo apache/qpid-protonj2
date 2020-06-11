@@ -32,7 +32,7 @@ import java.util.SortedMap;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
-import org.apache.qpid.proton4j.amqp.UnsignedInteger;
+import org.apache.qpid.proton4j.types.UnsignedInteger;
 
 /**
  * Map class that is implemented using a Splay Tree and uses primitive integers as the keys

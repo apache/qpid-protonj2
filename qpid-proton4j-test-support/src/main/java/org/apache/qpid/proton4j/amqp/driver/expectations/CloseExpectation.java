@@ -20,7 +20,6 @@ import static org.hamcrest.CoreMatchers.equalTo;
 
 import java.util.Map;
 
-import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
 import org.apache.qpid.proton4j.amqp.driver.actions.BeginInjectAction;
 import org.apache.qpid.proton4j.amqp.driver.actions.CloseInjectAction;
@@ -28,8 +27,9 @@ import org.apache.qpid.proton4j.amqp.driver.codec.ListDescribedType;
 import org.apache.qpid.proton4j.amqp.driver.codec.transport.Close;
 import org.apache.qpid.proton4j.amqp.driver.codec.util.TypeMapper;
 import org.apache.qpid.proton4j.amqp.driver.matchers.transport.CloseMatcher;
-import org.apache.qpid.proton4j.amqp.transport.ErrorCondition;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import org.apache.qpid.proton4j.types.Symbol;
+import org.apache.qpid.proton4j.types.transport.ErrorCondition;
 import org.hamcrest.Matcher;
 
 /**

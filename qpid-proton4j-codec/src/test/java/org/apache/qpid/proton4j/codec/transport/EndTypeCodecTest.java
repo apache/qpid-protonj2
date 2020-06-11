@@ -26,10 +26,6 @@ import java.io.IOException;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import org.apache.qpid.proton4j.amqp.Symbol;
-import org.apache.qpid.proton4j.amqp.transport.AmqpError;
-import org.apache.qpid.proton4j.amqp.transport.End;
-import org.apache.qpid.proton4j.amqp.transport.ErrorCondition;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.codec.CodecTestSupport;
@@ -38,6 +34,10 @@ import org.apache.qpid.proton4j.codec.EncodingCodes;
 import org.apache.qpid.proton4j.codec.TypeDecoder;
 import org.apache.qpid.proton4j.codec.decoders.transport.EndTypeDecoder;
 import org.apache.qpid.proton4j.codec.encoders.transport.EndTypeEncoder;
+import org.apache.qpid.proton4j.types.Symbol;
+import org.apache.qpid.proton4j.types.transport.AmqpError;
+import org.apache.qpid.proton4j.types.transport.End;
+import org.apache.qpid.proton4j.types.transport.ErrorCondition;
 import org.junit.Test;
 
 public class EndTypeCodecTest extends CodecTestSupport {

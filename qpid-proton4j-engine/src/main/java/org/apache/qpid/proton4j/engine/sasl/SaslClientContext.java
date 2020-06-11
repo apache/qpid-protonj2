@@ -18,11 +18,11 @@ package org.apache.qpid.proton4j.engine.sasl;
 
 import javax.security.sasl.SaslException;
 
-import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.engine.Connection;
 import org.apache.qpid.proton4j.engine.Engine;
 import org.apache.qpid.proton4j.engine.exceptions.EngineStateException;
+import org.apache.qpid.proton4j.types.Symbol;
 
 /**
  * SASL Client operating context used by an {@link Engine} that has been

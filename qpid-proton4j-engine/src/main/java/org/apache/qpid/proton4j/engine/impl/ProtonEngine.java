@@ -21,10 +21,6 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
-import org.apache.qpid.proton4j.amqp.Symbol;
-import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
-import org.apache.qpid.proton4j.amqp.transport.ErrorCondition;
-import org.apache.qpid.proton4j.amqp.transport.Performative;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.engine.ConnectionState;
@@ -43,6 +39,10 @@ import org.apache.qpid.proton4j.engine.exceptions.IdleTimeoutException;
 import org.apache.qpid.proton4j.engine.exceptions.ProtonExceptionSupport;
 import org.apache.qpid.proton4j.logging.ProtonLogger;
 import org.apache.qpid.proton4j.logging.ProtonLoggerFactory;
+import org.apache.qpid.proton4j.types.Symbol;
+import org.apache.qpid.proton4j.types.transport.AMQPHeader;
+import org.apache.qpid.proton4j.types.transport.ErrorCondition;
+import org.apache.qpid.proton4j.types.transport.Performative;
 
 /**
  * The default proton4j Engine implementation.

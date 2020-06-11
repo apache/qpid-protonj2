@@ -23,14 +23,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.function.Predicate;
 
-import org.apache.qpid.proton4j.amqp.UnsignedInteger;
-import org.apache.qpid.proton4j.amqp.transport.Attach;
-import org.apache.qpid.proton4j.amqp.transport.DeliveryState;
-import org.apache.qpid.proton4j.amqp.transport.Detach;
-import org.apache.qpid.proton4j.amqp.transport.Disposition;
-import org.apache.qpid.proton4j.amqp.transport.Flow;
-import org.apache.qpid.proton4j.amqp.transport.Role;
-import org.apache.qpid.proton4j.amqp.transport.Transfer;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.engine.EventHandler;
 import org.apache.qpid.proton4j.engine.IncomingDelivery;
@@ -40,6 +32,14 @@ import org.apache.qpid.proton4j.engine.Session;
 import org.apache.qpid.proton4j.engine.exceptions.ProtocolViolationException;
 import org.apache.qpid.proton4j.engine.util.DeliveryIdTracker;
 import org.apache.qpid.proton4j.engine.util.SplayMap;
+import org.apache.qpid.proton4j.types.UnsignedInteger;
+import org.apache.qpid.proton4j.types.transport.Attach;
+import org.apache.qpid.proton4j.types.transport.DeliveryState;
+import org.apache.qpid.proton4j.types.transport.Detach;
+import org.apache.qpid.proton4j.types.transport.Disposition;
+import org.apache.qpid.proton4j.types.transport.Flow;
+import org.apache.qpid.proton4j.types.transport.Role;
+import org.apache.qpid.proton4j.types.transport.Transfer;
 
 /**
  * Proton Receiver link implementation.

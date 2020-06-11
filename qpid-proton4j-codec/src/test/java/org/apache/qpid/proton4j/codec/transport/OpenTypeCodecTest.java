@@ -28,11 +28,6 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.apache.qpid.proton4j.amqp.Symbol;
-import org.apache.qpid.proton4j.amqp.UnsignedInteger;
-import org.apache.qpid.proton4j.amqp.UnsignedShort;
-import org.apache.qpid.proton4j.amqp.transport.Open;
-import org.apache.qpid.proton4j.amqp.transport.Performative;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.codec.CodecTestSupport;
@@ -41,6 +36,11 @@ import org.apache.qpid.proton4j.codec.EncodingCodes;
 import org.apache.qpid.proton4j.codec.TypeDecoder;
 import org.apache.qpid.proton4j.codec.decoders.transport.OpenTypeDecoder;
 import org.apache.qpid.proton4j.codec.encoders.transport.OpenTypeEncoder;
+import org.apache.qpid.proton4j.types.Symbol;
+import org.apache.qpid.proton4j.types.UnsignedInteger;
+import org.apache.qpid.proton4j.types.UnsignedShort;
+import org.apache.qpid.proton4j.types.transport.Open;
+import org.apache.qpid.proton4j.types.transport.Performative;
 import org.junit.Test;
 
 public class OpenTypeCodecTest extends CodecTestSupport {

@@ -24,9 +24,6 @@ import static org.junit.Assert.fail;
 
 import java.io.IOException;
 
-import org.apache.qpid.proton4j.amqp.Binary;
-import org.apache.qpid.proton4j.amqp.security.SaslCode;
-import org.apache.qpid.proton4j.amqp.security.SaslOutcome;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.codec.CodecTestSupport;
@@ -37,6 +34,9 @@ import org.apache.qpid.proton4j.codec.decoders.ProtonDecoderFactory;
 import org.apache.qpid.proton4j.codec.decoders.security.SaslOutcomeTypeDecoder;
 import org.apache.qpid.proton4j.codec.encoders.ProtonEncoderFactory;
 import org.apache.qpid.proton4j.codec.encoders.security.SaslOutcomeTypeEncoder;
+import org.apache.qpid.proton4j.types.Binary;
+import org.apache.qpid.proton4j.types.security.SaslCode;
+import org.apache.qpid.proton4j.types.security.SaslOutcome;
 import org.junit.Before;
 import org.junit.Test;
 

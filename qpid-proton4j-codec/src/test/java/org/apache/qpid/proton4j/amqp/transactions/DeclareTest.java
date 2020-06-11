@@ -19,6 +19,8 @@ package org.apache.qpid.proton4j.amqp.transactions;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 
+import org.apache.qpid.proton4j.types.transactions.Declare;
+import org.apache.qpid.proton4j.types.transactions.GlobalTxId;
 import org.junit.Test;
 
 public class DeclareTest {

@@ -18,10 +18,10 @@
  */
 package org.apache.qpid.proton4j.amqp.driver.matchers.types;
 
-import org.apache.qpid.proton4j.amqp.Binary;
-import org.apache.qpid.proton4j.amqp.Symbol;
-import org.apache.qpid.proton4j.amqp.UnsignedLong;
-import org.apache.qpid.proton4j.amqp.messaging.AmqpValue;
+import org.apache.qpid.proton4j.types.Binary;
+import org.apache.qpid.proton4j.types.Symbol;
+import org.apache.qpid.proton4j.types.UnsignedLong;
+import org.apache.qpid.proton4j.types.messaging.AmqpValue;
 import org.hamcrest.Description;
 
 public class EncodedDataMatcher extends EncodedAmqpTypeMatcher {

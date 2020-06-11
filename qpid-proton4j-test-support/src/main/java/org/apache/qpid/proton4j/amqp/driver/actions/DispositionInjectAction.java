@@ -16,12 +16,12 @@
  */
 package org.apache.qpid.proton4j.amqp.driver.actions;
 
-import org.apache.qpid.proton4j.amqp.UnsignedInteger;
 import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
 import org.apache.qpid.proton4j.amqp.driver.codec.transport.Disposition;
 import org.apache.qpid.proton4j.amqp.driver.codec.util.TypeMapper;
-import org.apache.qpid.proton4j.amqp.transport.DeliveryState;
-import org.apache.qpid.proton4j.amqp.transport.Role;
+import org.apache.qpid.proton4j.types.UnsignedInteger;
+import org.apache.qpid.proton4j.types.transport.DeliveryState;
+import org.apache.qpid.proton4j.types.transport.Role;
 
 /**
  * AMQP Disposition injection action which can be added to a driver for write at a specific time or

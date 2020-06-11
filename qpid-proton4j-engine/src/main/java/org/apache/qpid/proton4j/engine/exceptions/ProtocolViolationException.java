@@ -16,7 +16,7 @@
  */
 package org.apache.qpid.proton4j.engine.exceptions;
 
-import org.apache.qpid.proton4j.amqp.Symbol;
+import org.apache.qpid.proton4j.types.Symbol;
 
 /**
  * Error thrown when there has been a violation of the AMQP specification

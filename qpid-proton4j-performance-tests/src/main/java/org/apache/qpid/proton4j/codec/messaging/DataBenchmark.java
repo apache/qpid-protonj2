@@ -18,9 +18,9 @@ package org.apache.qpid.proton4j.codec.messaging;
 
 import java.io.IOException;
 
-import org.apache.qpid.proton4j.amqp.Binary;
-import org.apache.qpid.proton4j.amqp.messaging.Data;
 import org.apache.qpid.proton4j.codec.CodecBenchmarkBase;
+import org.apache.qpid.proton4j.types.Binary;
+import org.apache.qpid.proton4j.types.messaging.Data;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.Setup;
 import org.openjdk.jmh.infra.Blackhole;

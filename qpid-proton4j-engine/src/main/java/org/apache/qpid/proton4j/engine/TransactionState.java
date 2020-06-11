@@ -16,8 +16,8 @@
  */
 package org.apache.qpid.proton4j.engine;
 
-import org.apache.qpid.proton4j.amqp.transactions.Declare;
-import org.apache.qpid.proton4j.amqp.transactions.Discharge;
+import org.apache.qpid.proton4j.types.transactions.Declare;
+import org.apache.qpid.proton4j.types.transactions.Discharge;
 
 /**
  * Indicates the current state of a given {@link Transaction}

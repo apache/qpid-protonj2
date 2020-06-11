@@ -16,10 +16,6 @@
  */
 package org.apache.qpid.proton4j.engine.impl;
 
-import org.apache.qpid.proton4j.amqp.security.SaslOutcome;
-import org.apache.qpid.proton4j.amqp.security.SaslPerformative;
-import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
-import org.apache.qpid.proton4j.amqp.transport.Performative;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.codec.CodecFactory;
@@ -39,6 +35,10 @@ import org.apache.qpid.proton4j.engine.exceptions.MalformedAMQPHeaderException;
 import org.apache.qpid.proton4j.engine.exceptions.ProtonException;
 import org.apache.qpid.proton4j.logging.ProtonLogger;
 import org.apache.qpid.proton4j.logging.ProtonLoggerFactory;
+import org.apache.qpid.proton4j.types.security.SaslOutcome;
+import org.apache.qpid.proton4j.types.security.SaslPerformative;
+import org.apache.qpid.proton4j.types.transport.AMQPHeader;
+import org.apache.qpid.proton4j.types.transport.Performative;
 
 /**
  * Handler used to parse incoming frame data input into the engine

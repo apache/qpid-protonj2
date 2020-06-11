@@ -25,8 +25,6 @@ import static org.junit.Assert.fail;
 import java.io.IOException;
 import java.util.Random;
 
-import org.apache.qpid.proton4j.amqp.Binary;
-import org.apache.qpid.proton4j.amqp.transactions.Declared;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.codec.CodecTestSupport;
@@ -35,6 +33,8 @@ import org.apache.qpid.proton4j.codec.EncodingCodes;
 import org.apache.qpid.proton4j.codec.TypeDecoder;
 import org.apache.qpid.proton4j.codec.decoders.transactions.DeclaredTypeDecoder;
 import org.apache.qpid.proton4j.codec.encoders.transactions.DeclaredTypeEncoder;
+import org.apache.qpid.proton4j.types.Binary;
+import org.apache.qpid.proton4j.types.transactions.Declared;
 import org.junit.Test;
 
 /**

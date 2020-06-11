@@ -16,9 +16,9 @@
  */
 package org.apache.qpid.proton4j.amqp.driver.actions;
 
-import org.apache.qpid.proton4j.amqp.DescribedType;
 import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
 import org.apache.qpid.proton4j.amqp.driver.ScriptedAction;
+import org.apache.qpid.proton4j.types.DescribedType;
 
 /**
  * Abstract base used by inject actions of SASL Performatives

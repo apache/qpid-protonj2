@@ -16,13 +16,13 @@
  */
 package org.apache.qpid.proton4j.engine.impl;
 
-import org.apache.qpid.proton4j.amqp.Binary;
-import org.apache.qpid.proton4j.amqp.transport.ErrorCondition;
 import org.apache.qpid.proton4j.engine.Endpoint;
 import org.apache.qpid.proton4j.engine.Transaction;
 import org.apache.qpid.proton4j.engine.TransactionController;
 import org.apache.qpid.proton4j.engine.TransactionManager;
 import org.apache.qpid.proton4j.engine.TransactionState;
+import org.apache.qpid.proton4j.types.Binary;
+import org.apache.qpid.proton4j.types.transport.ErrorCondition;
 
 /**
  * Base {@link Transaction} implementation that provides the basic functionality needed

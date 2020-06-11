@@ -16,9 +16,6 @@
  */
 package org.apache.qpid.proton4j.engine.impl;
 
-import org.apache.qpid.proton4j.amqp.security.SaslPerformative;
-import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
-import org.apache.qpid.proton4j.amqp.transport.Performative;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.CodecFactory;
 import org.apache.qpid.proton4j.codec.EncodeException;
@@ -27,6 +24,9 @@ import org.apache.qpid.proton4j.codec.EncoderState;
 import org.apache.qpid.proton4j.engine.EngineHandler;
 import org.apache.qpid.proton4j.engine.EngineHandlerContext;
 import org.apache.qpid.proton4j.engine.exceptions.FrameEncodingException;
+import org.apache.qpid.proton4j.types.security.SaslPerformative;
+import org.apache.qpid.proton4j.types.transport.AMQPHeader;
+import org.apache.qpid.proton4j.types.transport.Performative;
 
 /**
  * Handler that encodes performatives into properly formed frames for IO

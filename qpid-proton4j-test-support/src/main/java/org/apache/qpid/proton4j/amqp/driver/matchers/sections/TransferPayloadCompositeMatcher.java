@@ -22,8 +22,8 @@ package org.apache.qpid.proton4j.amqp.driver.matchers.sections;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 
-import org.apache.qpid.proton4j.amqp.Binary;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import org.apache.qpid.proton4j.types.Binary;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 import org.hamcrest.StringDescription;

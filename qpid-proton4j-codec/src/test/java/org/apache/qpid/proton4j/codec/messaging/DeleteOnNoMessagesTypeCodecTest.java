@@ -24,8 +24,6 @@ import static org.junit.Assert.fail;
 
 import java.io.IOException;
 
-import org.apache.qpid.proton4j.amqp.messaging.DeleteOnNoMessages;
-import org.apache.qpid.proton4j.amqp.messaging.Modified;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.codec.CodecTestSupport;
@@ -34,6 +32,8 @@ import org.apache.qpid.proton4j.codec.EncodingCodes;
 import org.apache.qpid.proton4j.codec.TypeDecoder;
 import org.apache.qpid.proton4j.codec.decoders.messaging.DeleteOnNoMessagesTypeDecoder;
 import org.apache.qpid.proton4j.codec.encoders.messaging.DeleteOnNoMessagesTypeEncoder;
+import org.apache.qpid.proton4j.types.messaging.DeleteOnNoMessages;
+import org.apache.qpid.proton4j.types.messaging.Modified;
 import org.junit.Test;
 
 /**

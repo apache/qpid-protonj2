@@ -18,7 +18,7 @@ package org.apache.qpid.proton4j.engine.sasl.client;
 
 import java.util.UUID;
 
-import org.apache.qpid.proton4j.amqp.Symbol;
+import org.apache.qpid.proton4j.types.Symbol;
 
 /**
  * Implements the SASL Scram SHA 256 authentication Mechanism.

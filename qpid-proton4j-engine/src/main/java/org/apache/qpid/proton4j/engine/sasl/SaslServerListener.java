@@ -16,10 +16,10 @@
  */
 package org.apache.qpid.proton4j.engine.sasl;
 
-import org.apache.qpid.proton4j.amqp.Symbol;
-import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.engine.Engine;
+import org.apache.qpid.proton4j.types.Symbol;
+import org.apache.qpid.proton4j.types.transport.AMQPHeader;
 
 /**
  * Listener for SASL frame arrival to facilitate relevant handling for the SASL

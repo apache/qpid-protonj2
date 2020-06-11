@@ -19,7 +19,8 @@ package org.apache.qpid.proton4j.amqp.messaging;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
-import org.apache.qpid.proton4j.amqp.UnsignedInteger;
+import org.apache.qpid.proton4j.types.UnsignedInteger;
+import org.apache.qpid.proton4j.types.messaging.TerminusDurability;
 import org.junit.Test;
 
 public class TerminusDurabilityTest {

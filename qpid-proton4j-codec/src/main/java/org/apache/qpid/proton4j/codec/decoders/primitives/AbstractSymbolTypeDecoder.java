@@ -16,11 +16,11 @@
  */
 package org.apache.qpid.proton4j.codec.decoders.primitives;
 
-import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.DecodeException;
 import org.apache.qpid.proton4j.codec.DecoderState;
 import org.apache.qpid.proton4j.codec.decoders.AbstractPrimitiveTypeDecoder;
+import org.apache.qpid.proton4j.types.Symbol;
 
 /**
  * Base class for the Symbol decoders used on AMQP Symbol types.

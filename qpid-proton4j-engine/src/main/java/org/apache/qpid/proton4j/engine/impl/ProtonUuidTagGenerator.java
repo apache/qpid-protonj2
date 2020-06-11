@@ -18,11 +18,11 @@ package org.apache.qpid.proton4j.engine.impl;
 
 import java.util.UUID;
 
-import org.apache.qpid.proton4j.amqp.DeliveryTag;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.buffer.ProtonByteUtils;
 import org.apache.qpid.proton4j.engine.DeliveryTagGenerator;
+import org.apache.qpid.proton4j.types.DeliveryTag;
 
 /**
  * Built in proton {@link DeliveryTagGenerator} that creates new {@link DeliveryTag} values

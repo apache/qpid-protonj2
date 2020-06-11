@@ -16,12 +16,12 @@
  */
 package org.apache.qpid.proton4j.codec.util;
 
-import org.apache.qpid.proton4j.amqp.Symbol;
-import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.DecodeException;
 import org.apache.qpid.proton4j.codec.DecoderState;
 import org.apache.qpid.proton4j.codec.decoders.AbstractDescribedTypeDecoder;
+import org.apache.qpid.proton4j.types.Symbol;
+import org.apache.qpid.proton4j.types.UnsignedLong;
 
 public class NoLocalTypeDecoder extends AbstractDescribedTypeDecoder<NoLocalType> {
 

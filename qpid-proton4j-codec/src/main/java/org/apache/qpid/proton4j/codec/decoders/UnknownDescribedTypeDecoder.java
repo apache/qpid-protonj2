@@ -16,14 +16,14 @@
  */
 package org.apache.qpid.proton4j.codec.decoders;
 
-import org.apache.qpid.proton4j.amqp.DescribedType;
-import org.apache.qpid.proton4j.amqp.Symbol;
-import org.apache.qpid.proton4j.amqp.UnknownDescribedType;
-import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.DecodeException;
 import org.apache.qpid.proton4j.codec.DecoderState;
 import org.apache.qpid.proton4j.codec.TypeDecoder;
+import org.apache.qpid.proton4j.types.DescribedType;
+import org.apache.qpid.proton4j.types.Symbol;
+import org.apache.qpid.proton4j.types.UnknownDescribedType;
+import org.apache.qpid.proton4j.types.UnsignedLong;
 
 /**
  * Decoder of AMQP Described type values from a byte stream.

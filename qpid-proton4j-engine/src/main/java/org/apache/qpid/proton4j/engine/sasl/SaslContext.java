@@ -16,9 +16,9 @@
  */
 package org.apache.qpid.proton4j.engine.sasl;
 
-import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.engine.Attachments;
 import org.apache.qpid.proton4j.engine.EngineSaslDriver.SaslState;
+import org.apache.qpid.proton4j.types.Symbol;
 
 /**
  * The basic SASL context APIs common to both client and server sides of the SASL exchange.

@@ -16,12 +16,12 @@
  */
 package org.apache.qpid.proton4j.codec.decoders.primitives;
 
-import org.apache.qpid.proton4j.amqp.UnsignedInteger;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.DecodeException;
 import org.apache.qpid.proton4j.codec.DecoderState;
 import org.apache.qpid.proton4j.codec.EncodingCodes;
 import org.apache.qpid.proton4j.codec.decoders.AbstractPrimitiveTypeDecoder;
+import org.apache.qpid.proton4j.types.UnsignedInteger;
 
 /**
  * Decode AMQP Small Unsigned Integer values from a byte stream

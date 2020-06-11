@@ -19,8 +19,8 @@ package org.apache.qpid.proton4j.engine;
 import java.util.Collection;
 import java.util.function.Predicate;
 
-import org.apache.qpid.proton4j.amqp.transport.DeliveryState;
-import org.apache.qpid.proton4j.amqp.transport.Transfer;
+import org.apache.qpid.proton4j.types.transport.DeliveryState;
+import org.apache.qpid.proton4j.types.transport.Transfer;
 
 /**
  * AMQP Receiver API

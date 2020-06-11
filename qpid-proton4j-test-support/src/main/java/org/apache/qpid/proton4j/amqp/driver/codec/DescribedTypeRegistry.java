@@ -20,7 +20,6 @@ import java.lang.reflect.Constructor;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.apache.qpid.proton4j.amqp.DescribedType;
 import org.apache.qpid.proton4j.amqp.driver.codec.messaging.Accepted;
 import org.apache.qpid.proton4j.amqp.driver.codec.messaging.AmqpSequence;
 import org.apache.qpid.proton4j.amqp.driver.codec.messaging.AmqpValue;
@@ -61,6 +60,7 @@ import org.apache.qpid.proton4j.amqp.driver.codec.transport.ErrorCondition;
 import org.apache.qpid.proton4j.amqp.driver.codec.transport.Flow;
 import org.apache.qpid.proton4j.amqp.driver.codec.transport.Open;
 import org.apache.qpid.proton4j.amqp.driver.codec.transport.Transfer;
+import org.apache.qpid.proton4j.types.DescribedType;
 
 /**
  * Registry of described types know to the Data type codec

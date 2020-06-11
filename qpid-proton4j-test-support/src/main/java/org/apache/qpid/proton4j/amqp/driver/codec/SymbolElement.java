@@ -18,8 +18,8 @@ package org.apache.qpid.proton4j.amqp.driver.codec;
 
 import java.nio.charset.Charset;
 
-import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import org.apache.qpid.proton4j.types.Symbol;
 
 class SymbolElement extends AtomicElement<Symbol> {
 

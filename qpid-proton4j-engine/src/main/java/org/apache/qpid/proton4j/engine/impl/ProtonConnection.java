@@ -26,22 +26,6 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ScheduledExecutorService;
 
-import org.apache.qpid.proton4j.amqp.Symbol;
-import org.apache.qpid.proton4j.amqp.UnsignedInteger;
-import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
-import org.apache.qpid.proton4j.amqp.transport.AmqpError;
-import org.apache.qpid.proton4j.amqp.transport.Attach;
-import org.apache.qpid.proton4j.amqp.transport.Begin;
-import org.apache.qpid.proton4j.amqp.transport.Close;
-import org.apache.qpid.proton4j.amqp.transport.ConnectionError;
-import org.apache.qpid.proton4j.amqp.transport.Detach;
-import org.apache.qpid.proton4j.amqp.transport.Disposition;
-import org.apache.qpid.proton4j.amqp.transport.End;
-import org.apache.qpid.proton4j.amqp.transport.ErrorCondition;
-import org.apache.qpid.proton4j.amqp.transport.Flow;
-import org.apache.qpid.proton4j.amqp.transport.Open;
-import org.apache.qpid.proton4j.amqp.transport.Performative;
-import org.apache.qpid.proton4j.amqp.transport.Transfer;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.engine.Connection;
 import org.apache.qpid.proton4j.engine.ConnectionState;
@@ -54,6 +38,22 @@ import org.apache.qpid.proton4j.engine.TransactionManager;
 import org.apache.qpid.proton4j.engine.exceptions.EngineFailedException;
 import org.apache.qpid.proton4j.engine.exceptions.EngineStateException;
 import org.apache.qpid.proton4j.engine.exceptions.ProtocolViolationException;
+import org.apache.qpid.proton4j.types.Symbol;
+import org.apache.qpid.proton4j.types.UnsignedInteger;
+import org.apache.qpid.proton4j.types.transport.AMQPHeader;
+import org.apache.qpid.proton4j.types.transport.AmqpError;
+import org.apache.qpid.proton4j.types.transport.Attach;
+import org.apache.qpid.proton4j.types.transport.Begin;
+import org.apache.qpid.proton4j.types.transport.Close;
+import org.apache.qpid.proton4j.types.transport.ConnectionError;
+import org.apache.qpid.proton4j.types.transport.Detach;
+import org.apache.qpid.proton4j.types.transport.Disposition;
+import org.apache.qpid.proton4j.types.transport.End;
+import org.apache.qpid.proton4j.types.transport.ErrorCondition;
+import org.apache.qpid.proton4j.types.transport.Flow;
+import org.apache.qpid.proton4j.types.transport.Open;
+import org.apache.qpid.proton4j.types.transport.Performative;
+import org.apache.qpid.proton4j.types.transport.Transfer;
 
 /**
  * Implements the proton4j Connection API

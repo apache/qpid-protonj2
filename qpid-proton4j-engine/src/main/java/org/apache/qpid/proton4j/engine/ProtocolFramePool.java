@@ -19,8 +19,8 @@ package org.apache.qpid.proton4j.engine;
 import java.util.ArrayDeque;
 import java.util.Deque;
 
-import org.apache.qpid.proton4j.amqp.transport.Performative;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import org.apache.qpid.proton4j.types.transport.Performative;
 
 /**
  * Pooled of ProtocolFrame instances used to reduce allocations on incoming frames.

@@ -16,16 +16,16 @@
  */
 package org.apache.qpid.proton4j.codec.encoders.messaging;
 
-import org.apache.qpid.proton4j.amqp.Symbol;
-import org.apache.qpid.proton4j.amqp.UnsignedInteger;
-import org.apache.qpid.proton4j.amqp.UnsignedLong;
-import org.apache.qpid.proton4j.amqp.messaging.Target;
-import org.apache.qpid.proton4j.amqp.messaging.TerminusDurability;
-import org.apache.qpid.proton4j.amqp.messaging.TerminusExpiryPolicy;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.EncoderState;
 import org.apache.qpid.proton4j.codec.EncodingCodes;
 import org.apache.qpid.proton4j.codec.encoders.AbstractDescribedListTypeEncoder;
+import org.apache.qpid.proton4j.types.Symbol;
+import org.apache.qpid.proton4j.types.UnsignedInteger;
+import org.apache.qpid.proton4j.types.UnsignedLong;
+import org.apache.qpid.proton4j.types.messaging.Target;
+import org.apache.qpid.proton4j.types.messaging.TerminusDurability;
+import org.apache.qpid.proton4j.types.messaging.TerminusExpiryPolicy;
 
 /**
  * Encoder of AMQP Target type values to a byte stream.

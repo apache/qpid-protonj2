@@ -16,12 +16,12 @@
  */
 package org.apache.qpid.proton4j.codec.decoders.primitives;
 
-import org.apache.qpid.proton4j.amqp.UnsignedShort;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.DecodeException;
 import org.apache.qpid.proton4j.codec.DecoderState;
 import org.apache.qpid.proton4j.codec.EncodingCodes;
 import org.apache.qpid.proton4j.codec.decoders.AbstractPrimitiveTypeDecoder;
+import org.apache.qpid.proton4j.types.UnsignedShort;
 
 /**
  * Decode AMQP Unsigned Short values from a byte stream

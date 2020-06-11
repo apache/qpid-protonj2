@@ -25,14 +25,14 @@ import static org.junit.Assert.assertTrue;
 import java.io.IOException;
 import java.util.UUID;
 
-import org.apache.qpid.proton4j.amqp.messaging.AmqpValue;
-import org.apache.qpid.proton4j.amqp.messaging.Modified;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.codec.CodecTestSupport;
 import org.apache.qpid.proton4j.codec.TypeDecoder;
 import org.apache.qpid.proton4j.codec.decoders.messaging.AmqpValueTypeDecoder;
 import org.apache.qpid.proton4j.codec.encoders.messaging.AmqpValueTypeEncoder;
+import org.apache.qpid.proton4j.types.messaging.AmqpValue;
+import org.apache.qpid.proton4j.types.messaging.Modified;
 import org.junit.Test;
 
 /**

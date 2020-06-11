@@ -16,8 +16,8 @@
  */
 package org.apache.qpid.proton4j.amqp.driver.codec;
 
-import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import org.apache.qpid.proton4j.types.UnsignedLong;
 
 class UnsignedLongElement extends AtomicElement<UnsignedLong> {
 

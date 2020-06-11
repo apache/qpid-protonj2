@@ -16,7 +16,7 @@
  */
 package org.apache.qpid.proton4j.engine;
 
-import org.apache.qpid.proton4j.amqp.transport.Performative.PerformativeHandler;
+import org.apache.qpid.proton4j.types.transport.Performative.PerformativeHandler;
 
 /**
  * An empty frame which can be used to drive transport activity when idle.

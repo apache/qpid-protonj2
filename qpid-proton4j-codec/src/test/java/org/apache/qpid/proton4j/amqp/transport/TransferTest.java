@@ -22,6 +22,8 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import org.apache.qpid.proton4j.types.transport.Performative;
+import org.apache.qpid.proton4j.types.transport.Transfer;
 import org.junit.Test;
 
 public class TransferTest {

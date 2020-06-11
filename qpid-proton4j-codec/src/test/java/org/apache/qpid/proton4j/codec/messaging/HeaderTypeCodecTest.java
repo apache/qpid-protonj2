@@ -24,7 +24,6 @@ import static org.junit.Assert.fail;
 
 import java.io.IOException;
 
-import org.apache.qpid.proton4j.amqp.messaging.Header;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.codec.CodecTestSupport;
@@ -33,6 +32,7 @@ import org.apache.qpid.proton4j.codec.EncodingCodes;
 import org.apache.qpid.proton4j.codec.TypeDecoder;
 import org.apache.qpid.proton4j.codec.decoders.messaging.HeaderTypeDecoder;
 import org.apache.qpid.proton4j.codec.encoders.messaging.HeaderTypeEncoder;
+import org.apache.qpid.proton4j.types.messaging.Header;
 import org.junit.Test;
 
 /**

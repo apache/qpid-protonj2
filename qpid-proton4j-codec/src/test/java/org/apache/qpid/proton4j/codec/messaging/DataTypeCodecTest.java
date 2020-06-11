@@ -27,9 +27,6 @@ import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.util.UUID;
 
-import org.apache.qpid.proton4j.amqp.Binary;
-import org.apache.qpid.proton4j.amqp.messaging.Data;
-import org.apache.qpid.proton4j.amqp.messaging.Modified;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.codec.CodecTestSupport;
@@ -39,6 +36,9 @@ import org.apache.qpid.proton4j.codec.TypeDecoder;
 import org.apache.qpid.proton4j.codec.decoders.messaging.DataTypeDecoder;
 import org.apache.qpid.proton4j.codec.encoders.messaging.DataTypeEncoder;
 import org.apache.qpid.proton4j.codec.util.SimplePojo;
+import org.apache.qpid.proton4j.types.Binary;
+import org.apache.qpid.proton4j.types.messaging.Data;
+import org.apache.qpid.proton4j.types.messaging.Modified;
 import org.junit.Test;
 
 public class DataTypeCodecTest extends CodecTestSupport {

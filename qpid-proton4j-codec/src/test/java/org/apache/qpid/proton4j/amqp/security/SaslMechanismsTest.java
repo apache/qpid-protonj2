@@ -25,9 +25,10 @@ import static org.junit.Assert.fail;
 
 import java.util.concurrent.atomic.AtomicReference;
 
-import org.apache.qpid.proton4j.amqp.Symbol;
-import org.apache.qpid.proton4j.amqp.security.SaslPerformative.SaslPerformativeHandler;
-import org.apache.qpid.proton4j.amqp.security.SaslPerformative.SaslPerformativeType;
+import org.apache.qpid.proton4j.types.Symbol;
+import org.apache.qpid.proton4j.types.security.SaslMechanisms;
+import org.apache.qpid.proton4j.types.security.SaslPerformative.SaslPerformativeHandler;
+import org.apache.qpid.proton4j.types.security.SaslPerformative.SaslPerformativeType;
 import org.junit.Test;
 
 public class SaslMechanismsTest {

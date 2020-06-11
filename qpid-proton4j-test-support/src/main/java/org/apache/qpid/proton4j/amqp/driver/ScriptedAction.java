@@ -32,8 +32,8 @@ import org.apache.qpid.proton4j.amqp.driver.codec.transport.End;
 import org.apache.qpid.proton4j.amqp.driver.codec.transport.Flow;
 import org.apache.qpid.proton4j.amqp.driver.codec.transport.Open;
 import org.apache.qpid.proton4j.amqp.driver.codec.transport.Transfer;
-import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import org.apache.qpid.proton4j.types.transport.AMQPHeader;
 
 /**
  * Entry in the test script that produces some output to be sent to the AMQP

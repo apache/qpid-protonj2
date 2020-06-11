@@ -24,9 +24,10 @@ import static org.junit.Assert.assertNull;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.apache.qpid.proton4j.amqp.Symbol;
-import org.apache.qpid.proton4j.amqp.messaging.Section.SectionType;
-import org.apache.qpid.proton4j.amqp.transport.AmqpError;
+import org.apache.qpid.proton4j.types.Symbol;
+import org.apache.qpid.proton4j.types.messaging.DeliveryAnnotations;
+import org.apache.qpid.proton4j.types.messaging.Section.SectionType;
+import org.apache.qpid.proton4j.types.transport.AmqpError;
 import org.junit.Test;
 
 public class DeliveryAnnotationsTest {

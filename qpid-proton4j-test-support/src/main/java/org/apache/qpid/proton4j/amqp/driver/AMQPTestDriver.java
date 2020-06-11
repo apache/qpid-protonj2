@@ -24,7 +24,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
-import org.apache.qpid.proton4j.amqp.DescribedType;
 import org.apache.qpid.proton4j.amqp.driver.actions.ScriptCompleteAction;
 import org.apache.qpid.proton4j.amqp.driver.codec.security.SaslDescribedType;
 import org.apache.qpid.proton4j.amqp.driver.codec.security.SaslOutcome;
@@ -32,8 +31,9 @@ import org.apache.qpid.proton4j.amqp.driver.codec.transport.HeartBeat;
 import org.apache.qpid.proton4j.amqp.driver.codec.transport.PerformativeDescribedType;
 import org.apache.qpid.proton4j.amqp.driver.codec.transport.PerformativeDescribedType.PerformativeType;
 import org.apache.qpid.proton4j.amqp.driver.exceptions.UnexpectedPerformativeError;
-import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import org.apache.qpid.proton4j.types.DescribedType;
+import org.apache.qpid.proton4j.types.transport.AMQPHeader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

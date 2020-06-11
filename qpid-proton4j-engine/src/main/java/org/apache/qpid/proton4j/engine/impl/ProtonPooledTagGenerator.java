@@ -18,8 +18,8 @@ package org.apache.qpid.proton4j.engine.impl;
 
 import java.util.Queue;
 
-import org.apache.qpid.proton4j.amqp.DeliveryTag;
 import org.apache.qpid.proton4j.engine.util.RingQueue;
+import org.apache.qpid.proton4j.types.DeliveryTag;
 
 /**
  * Built in Transfer {@link DeliveryTag} generator that uses a fixed size tag

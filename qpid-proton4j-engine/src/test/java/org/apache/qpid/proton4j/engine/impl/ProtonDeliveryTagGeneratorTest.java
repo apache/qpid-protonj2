@@ -20,8 +20,8 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertSame;
 
-import org.apache.qpid.proton4j.amqp.DeliveryTag;
 import org.apache.qpid.proton4j.engine.DeliveryTagGenerator;
+import org.apache.qpid.proton4j.types.DeliveryTag;
 import org.junit.Test;
 
 public class ProtonDeliveryTagGeneratorTest {

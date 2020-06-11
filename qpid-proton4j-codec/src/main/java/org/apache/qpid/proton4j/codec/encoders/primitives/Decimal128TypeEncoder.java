@@ -16,11 +16,11 @@
  */
 package org.apache.qpid.proton4j.codec.encoders.primitives;
 
-import org.apache.qpid.proton4j.amqp.Decimal128;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.EncoderState;
 import org.apache.qpid.proton4j.codec.EncodingCodes;
 import org.apache.qpid.proton4j.codec.encoders.AbstractPrimitiveTypeEncoder;
+import org.apache.qpid.proton4j.types.Decimal128;
 
 /**
  * Encoder of AMQP Decimal128 type values to a byte stream

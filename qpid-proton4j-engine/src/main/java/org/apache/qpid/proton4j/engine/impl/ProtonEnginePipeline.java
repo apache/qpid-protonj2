@@ -16,9 +16,6 @@
  */
 package org.apache.qpid.proton4j.engine.impl;
 
-import org.apache.qpid.proton4j.amqp.security.SaslPerformative;
-import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
-import org.apache.qpid.proton4j.amqp.transport.Performative;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.engine.EngineHandler;
 import org.apache.qpid.proton4j.engine.EngineHandlerContext;
@@ -29,6 +26,9 @@ import org.apache.qpid.proton4j.engine.ProtocolFrame;
 import org.apache.qpid.proton4j.engine.SaslFrame;
 import org.apache.qpid.proton4j.engine.exceptions.EngineFailedException;
 import org.apache.qpid.proton4j.engine.exceptions.ProtonException;
+import org.apache.qpid.proton4j.types.security.SaslPerformative;
+import org.apache.qpid.proton4j.types.transport.AMQPHeader;
+import org.apache.qpid.proton4j.types.transport.Performative;
 
 /**
  * Pipeline of {@link EngineHandler} instances used to process IO

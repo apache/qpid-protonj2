@@ -16,11 +16,11 @@
  */
 package org.apache.qpid.proton4j.amqp.driver.actions;
 
-import org.apache.qpid.proton4j.amqp.Binary;
 import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
 import org.apache.qpid.proton4j.amqp.driver.codec.security.SaslOutcome;
-import org.apache.qpid.proton4j.amqp.security.SaslCode;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import org.apache.qpid.proton4j.types.Binary;
+import org.apache.qpid.proton4j.types.security.SaslCode;
 
 /**
  * AMQP SaslOutcome injection action which can be added to a driver for write at a specific time or

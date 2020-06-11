@@ -18,7 +18,7 @@ package org.apache.qpid.proton4j.engine.sasl.client;
 
 import static org.junit.Assert.assertTrue;
 
-import org.apache.qpid.proton4j.amqp.Symbol;
+import org.apache.qpid.proton4j.types.Symbol;
 import org.junit.Test;
 
 public class AbstractMechanismTest {

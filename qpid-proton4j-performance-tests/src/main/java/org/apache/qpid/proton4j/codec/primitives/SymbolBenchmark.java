@@ -18,8 +18,8 @@ package org.apache.qpid.proton4j.codec.primitives;
 
 import java.io.IOException;
 
-import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.codec.CodecBenchmarkBase;
+import org.apache.qpid.proton4j.types.Symbol;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.Setup;
 import org.openjdk.jmh.infra.Blackhole;

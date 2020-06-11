@@ -30,7 +30,7 @@ import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
-import org.apache.qpid.proton4j.amqp.UnsignedInteger;
+import org.apache.qpid.proton4j.types.UnsignedInteger;
 
 /**
  * A {@link Map} implementation that provides both <code>int</code> key access as well

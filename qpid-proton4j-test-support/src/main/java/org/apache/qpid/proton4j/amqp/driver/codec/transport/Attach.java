@@ -19,18 +19,18 @@ package org.apache.qpid.proton4j.amqp.driver.codec.transport;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.qpid.proton4j.amqp.Binary;
-import org.apache.qpid.proton4j.amqp.DescribedType;
-import org.apache.qpid.proton4j.amqp.Symbol;
-import org.apache.qpid.proton4j.amqp.UnsignedByte;
-import org.apache.qpid.proton4j.amqp.UnsignedInteger;
-import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.amqp.driver.codec.messaging.Source;
 import org.apache.qpid.proton4j.amqp.driver.codec.messaging.Target;
 import org.apache.qpid.proton4j.amqp.driver.codec.transactions.Coordinator;
-import org.apache.qpid.proton4j.amqp.transport.ReceiverSettleMode;
-import org.apache.qpid.proton4j.amqp.transport.SenderSettleMode;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import org.apache.qpid.proton4j.types.Binary;
+import org.apache.qpid.proton4j.types.DescribedType;
+import org.apache.qpid.proton4j.types.Symbol;
+import org.apache.qpid.proton4j.types.UnsignedByte;
+import org.apache.qpid.proton4j.types.UnsignedInteger;
+import org.apache.qpid.proton4j.types.UnsignedLong;
+import org.apache.qpid.proton4j.types.transport.ReceiverSettleMode;
+import org.apache.qpid.proton4j.types.transport.SenderSettleMode;
 
 public class Attach extends PerformativeDescribedType {
 

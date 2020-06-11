@@ -16,10 +16,10 @@
  */
 package org.apache.qpid.proton4j.engine.impl;
 
-import org.apache.qpid.proton4j.amqp.transport.ErrorCondition;
 import org.apache.qpid.proton4j.engine.Endpoint;
 import org.apache.qpid.proton4j.engine.Engine;
 import org.apache.qpid.proton4j.engine.EventHandler;
+import org.apache.qpid.proton4j.types.transport.ErrorCondition;
 
 /**
  * Proton abstract {@link Endpoint} implementation that provides some common facilities.

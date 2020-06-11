@@ -16,9 +16,9 @@
  */
 package org.apache.qpid.proton4j.engine;
 
-import org.apache.qpid.proton4j.amqp.DeliveryTag;
-import org.apache.qpid.proton4j.amqp.transport.Transfer;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import org.apache.qpid.proton4j.types.DeliveryTag;
+import org.apache.qpid.proton4j.types.transport.Transfer;
 
 /**
  * API for an outgoing Delivery.

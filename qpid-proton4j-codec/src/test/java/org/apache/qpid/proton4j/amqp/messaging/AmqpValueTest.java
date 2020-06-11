@@ -20,7 +20,8 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 
-import org.apache.qpid.proton4j.amqp.messaging.Section.SectionType;
+import org.apache.qpid.proton4j.types.messaging.AmqpValue;
+import org.apache.qpid.proton4j.types.messaging.Section.SectionType;
 import org.junit.Test;
 
 public class AmqpValueTest {

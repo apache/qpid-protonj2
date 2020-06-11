@@ -16,11 +16,11 @@
  */
 package org.apache.qpid.proton4j.codec.encoders;
 
-import org.apache.qpid.proton4j.amqp.DescribedType;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.EncoderState;
 import org.apache.qpid.proton4j.codec.EncodingCodes;
 import org.apache.qpid.proton4j.codec.TypeEncoder;
+import org.apache.qpid.proton4j.types.DescribedType;
 
 /**
  * Encoder of AMQP Described Types to a byte stream.

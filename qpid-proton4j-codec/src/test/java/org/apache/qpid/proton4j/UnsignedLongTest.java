@@ -23,7 +23,7 @@ import static org.junit.Assert.fail;
 
 import java.math.BigInteger;
 
-import org.apache.qpid.proton4j.amqp.UnsignedLong;
+import org.apache.qpid.proton4j.types.UnsignedLong;
 import org.junit.Test;
 
 public class UnsignedLongTest {

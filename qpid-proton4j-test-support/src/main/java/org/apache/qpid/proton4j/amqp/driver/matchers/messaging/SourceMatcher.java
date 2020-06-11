@@ -21,14 +21,14 @@ import static org.hamcrest.CoreMatchers.nullValue;
 
 import java.util.Map;
 
-import org.apache.qpid.proton4j.amqp.Symbol;
-import org.apache.qpid.proton4j.amqp.UnsignedInteger;
 import org.apache.qpid.proton4j.amqp.driver.codec.messaging.Source;
 import org.apache.qpid.proton4j.amqp.driver.codec.util.TypeMapper;
 import org.apache.qpid.proton4j.amqp.driver.matchers.ListDescribedTypeMatcher;
-import org.apache.qpid.proton4j.amqp.messaging.TerminusDurability;
-import org.apache.qpid.proton4j.amqp.messaging.TerminusExpiryPolicy;
-import org.apache.qpid.proton4j.amqp.transport.DeliveryState;
+import org.apache.qpid.proton4j.types.Symbol;
+import org.apache.qpid.proton4j.types.UnsignedInteger;
+import org.apache.qpid.proton4j.types.messaging.TerminusDurability;
+import org.apache.qpid.proton4j.types.messaging.TerminusExpiryPolicy;
+import org.apache.qpid.proton4j.types.transport.DeliveryState;
 import org.hamcrest.Matcher;
 
 public class SourceMatcher extends ListDescribedTypeMatcher {
@@ -37,7 +37,7 @@ public class SourceMatcher extends ListDescribedTypeMatcher {
         super(Source.Field.values().length, Source.DESCRIPTOR_CODE, Source.DESCRIPTOR_SYMBOL);
     }
 
-    public SourceMatcher(org.apache.qpid.proton4j.amqp.messaging.Source source) {
+    public SourceMatcher(org.apache.qpid.proton4j.types.messaging.Source source) {
         super(Source.Field.values().length, Source.DESCRIPTOR_CODE, Source.DESCRIPTOR_SYMBOL);
 
         addSourceMatchers(source);
@@ -161,7 +161,7 @@ public class SourceMatcher extends ListDescribedTypeMatcher {
 
     //----- Populate the matcher from a given Source object
 
-    private void addSourceMatchers(org.apache.qpid.proton4j.amqp.messaging.Source source) {
+    private void addSourceMatchers(org.apache.qpid.proton4j.types.messaging.Source source) {
         if (source.getAddress() != null) {
             addFieldMatcher(Source.Field.ADDRESS, equalTo(source.getAddress()));
         } else {

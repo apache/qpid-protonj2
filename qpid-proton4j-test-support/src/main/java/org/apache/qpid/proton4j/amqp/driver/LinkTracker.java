@@ -16,14 +16,14 @@
  */
 package org.apache.qpid.proton4j.amqp.driver;
 
-import org.apache.qpid.proton4j.amqp.UnsignedInteger;
 import org.apache.qpid.proton4j.amqp.driver.codec.messaging.Source;
 import org.apache.qpid.proton4j.amqp.driver.codec.messaging.Target;
 import org.apache.qpid.proton4j.amqp.driver.codec.transactions.Coordinator;
 import org.apache.qpid.proton4j.amqp.driver.codec.transport.Attach;
-import org.apache.qpid.proton4j.amqp.transport.ReceiverSettleMode;
-import org.apache.qpid.proton4j.amqp.transport.Role;
-import org.apache.qpid.proton4j.amqp.transport.SenderSettleMode;
+import org.apache.qpid.proton4j.types.UnsignedInteger;
+import org.apache.qpid.proton4j.types.transport.ReceiverSettleMode;
+import org.apache.qpid.proton4j.types.transport.Role;
+import org.apache.qpid.proton4j.types.transport.SenderSettleMode;
 
 /**
  * Tracks information about links that are opened be the client under test.

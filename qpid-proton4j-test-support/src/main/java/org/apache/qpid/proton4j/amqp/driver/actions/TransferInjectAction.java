@@ -19,11 +19,6 @@ package org.apache.qpid.proton4j.amqp.driver.actions;
 import java.util.Date;
 import java.util.List;
 
-import org.apache.qpid.proton4j.amqp.Binary;
-import org.apache.qpid.proton4j.amqp.DescribedType;
-import org.apache.qpid.proton4j.amqp.Symbol;
-import org.apache.qpid.proton4j.amqp.UnsignedByte;
-import org.apache.qpid.proton4j.amqp.UnsignedInteger;
 import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
 import org.apache.qpid.proton4j.amqp.driver.codec.messaging.AmqpSequence;
 import org.apache.qpid.proton4j.amqp.driver.codec.messaging.AmqpValue;
@@ -36,10 +31,15 @@ import org.apache.qpid.proton4j.amqp.driver.codec.messaging.MessageAnnotations;
 import org.apache.qpid.proton4j.amqp.driver.codec.messaging.Properties;
 import org.apache.qpid.proton4j.amqp.driver.codec.transport.Transfer;
 import org.apache.qpid.proton4j.amqp.driver.codec.util.TypeMapper;
-import org.apache.qpid.proton4j.amqp.transport.DeliveryState;
-import org.apache.qpid.proton4j.amqp.transport.ReceiverSettleMode;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
+import org.apache.qpid.proton4j.types.Binary;
+import org.apache.qpid.proton4j.types.DescribedType;
+import org.apache.qpid.proton4j.types.Symbol;
+import org.apache.qpid.proton4j.types.UnsignedByte;
+import org.apache.qpid.proton4j.types.UnsignedInteger;
+import org.apache.qpid.proton4j.types.transport.DeliveryState;
+import org.apache.qpid.proton4j.types.transport.ReceiverSettleMode;
 
 /**
  * AMQP Close injection action which can be added to a driver for write at a specific time or

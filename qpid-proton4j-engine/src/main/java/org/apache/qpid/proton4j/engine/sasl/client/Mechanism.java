@@ -18,8 +18,8 @@ package org.apache.qpid.proton4j.engine.sasl.client;
 
 import javax.security.sasl.SaslException;
 
-import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import org.apache.qpid.proton4j.types.Symbol;
 
 /**
  * Interface for all SASL authentication mechanism implementations.

@@ -16,10 +16,10 @@
  */
 package org.apache.qpid.proton4j.amqp.driver;
 
-import org.apache.qpid.proton4j.amqp.DescribedType;
 import org.apache.qpid.proton4j.amqp.driver.codec.Codec;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
+import org.apache.qpid.proton4j.types.DescribedType;
 
 /**
  * Encodes AMQP performatives into frames for transmission

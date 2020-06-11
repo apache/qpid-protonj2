@@ -21,12 +21,12 @@ import static org.hamcrest.CoreMatchers.nullValue;
 
 import java.util.Map;
 
-import org.apache.qpid.proton4j.amqp.Symbol;
-import org.apache.qpid.proton4j.amqp.UnsignedInteger;
 import org.apache.qpid.proton4j.amqp.driver.codec.messaging.Target;
 import org.apache.qpid.proton4j.amqp.driver.matchers.ListDescribedTypeMatcher;
-import org.apache.qpid.proton4j.amqp.messaging.TerminusDurability;
-import org.apache.qpid.proton4j.amqp.messaging.TerminusExpiryPolicy;
+import org.apache.qpid.proton4j.types.Symbol;
+import org.apache.qpid.proton4j.types.UnsignedInteger;
+import org.apache.qpid.proton4j.types.messaging.TerminusDurability;
+import org.apache.qpid.proton4j.types.messaging.TerminusExpiryPolicy;
 import org.hamcrest.Matcher;
 
 public class TargetMatcher extends ListDescribedTypeMatcher {
@@ -35,7 +35,7 @@ public class TargetMatcher extends ListDescribedTypeMatcher {
         super(Target.Field.values().length, Target.DESCRIPTOR_CODE, Target.DESCRIPTOR_SYMBOL);
     }
 
-    public TargetMatcher(org.apache.qpid.proton4j.amqp.messaging.Target target) {
+    public TargetMatcher(org.apache.qpid.proton4j.types.messaging.Target target) {
         super(Target.Field.values().length, Target.DESCRIPTOR_CODE, Target.DESCRIPTOR_SYMBOL);
 
         addTargetMatchers(target);
@@ -123,7 +123,7 @@ public class TargetMatcher extends ListDescribedTypeMatcher {
 
     //----- Populate the matcher from a given Source object
 
-    private void addTargetMatchers(org.apache.qpid.proton4j.amqp.messaging.Target target) {
+    private void addTargetMatchers(org.apache.qpid.proton4j.types.messaging.Target target) {
         if (target.getAddress() != null) {
             addFieldMatcher(Target.Field.ADDRESS, equalTo(target.getAddress()));
         } else {

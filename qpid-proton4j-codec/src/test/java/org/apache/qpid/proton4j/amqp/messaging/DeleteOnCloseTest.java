@@ -19,6 +19,7 @@ package org.apache.qpid.proton4j.amqp.messaging;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertSame;
 
+import org.apache.qpid.proton4j.types.messaging.DeleteOnClose;
 import org.junit.Test;
 
 public class DeleteOnCloseTest {

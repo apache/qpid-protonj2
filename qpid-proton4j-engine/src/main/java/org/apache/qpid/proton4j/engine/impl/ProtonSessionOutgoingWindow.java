@@ -16,15 +16,15 @@
  */
 package org.apache.qpid.proton4j.engine.impl;
 
-import org.apache.qpid.proton4j.amqp.DeliveryTag;
-import org.apache.qpid.proton4j.amqp.transport.Begin;
-import org.apache.qpid.proton4j.amqp.transport.Disposition;
-import org.apache.qpid.proton4j.amqp.transport.Flow;
-import org.apache.qpid.proton4j.amqp.transport.Role;
-import org.apache.qpid.proton4j.amqp.transport.Transfer;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.engine.exceptions.ProtocolViolationException;
 import org.apache.qpid.proton4j.engine.util.SplayMap;
+import org.apache.qpid.proton4j.types.DeliveryTag;
+import org.apache.qpid.proton4j.types.transport.Begin;
+import org.apache.qpid.proton4j.types.transport.Disposition;
+import org.apache.qpid.proton4j.types.transport.Flow;
+import org.apache.qpid.proton4j.types.transport.Role;
+import org.apache.qpid.proton4j.types.transport.Transfer;
 
 /**
  * Holds Session level credit window information.

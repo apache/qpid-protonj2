@@ -16,9 +16,9 @@
  */
 package org.apache.qpid.proton4j.codec.decoders;
 
-import org.apache.qpid.proton4j.amqp.Symbol;
-import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.codec.TypeDecoder;
+import org.apache.qpid.proton4j.types.Symbol;
+import org.apache.qpid.proton4j.types.UnsignedLong;
 
 /**
  * Interface for all DescribedType decoder implementations

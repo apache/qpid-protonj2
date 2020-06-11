@@ -24,18 +24,6 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.qpid.proton4j.amqp.Symbol;
-import org.apache.qpid.proton4j.amqp.transport.Attach;
-import org.apache.qpid.proton4j.amqp.transport.Begin;
-import org.apache.qpid.proton4j.amqp.transport.ConnectionError;
-import org.apache.qpid.proton4j.amqp.transport.Detach;
-import org.apache.qpid.proton4j.amqp.transport.Disposition;
-import org.apache.qpid.proton4j.amqp.transport.End;
-import org.apache.qpid.proton4j.amqp.transport.ErrorCondition;
-import org.apache.qpid.proton4j.amqp.transport.Flow;
-import org.apache.qpid.proton4j.amqp.transport.Role;
-import org.apache.qpid.proton4j.amqp.transport.SessionError;
-import org.apache.qpid.proton4j.amqp.transport.Transfer;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.engine.ConnectionState;
 import org.apache.qpid.proton4j.engine.EventHandler;
@@ -51,6 +39,18 @@ import org.apache.qpid.proton4j.engine.exceptions.EngineFailedException;
 import org.apache.qpid.proton4j.engine.exceptions.EngineStateException;
 import org.apache.qpid.proton4j.engine.exceptions.ProtocolViolationException;
 import org.apache.qpid.proton4j.engine.util.SplayMap;
+import org.apache.qpid.proton4j.types.Symbol;
+import org.apache.qpid.proton4j.types.transport.Attach;
+import org.apache.qpid.proton4j.types.transport.Begin;
+import org.apache.qpid.proton4j.types.transport.ConnectionError;
+import org.apache.qpid.proton4j.types.transport.Detach;
+import org.apache.qpid.proton4j.types.transport.Disposition;
+import org.apache.qpid.proton4j.types.transport.End;
+import org.apache.qpid.proton4j.types.transport.ErrorCondition;
+import org.apache.qpid.proton4j.types.transport.Flow;
+import org.apache.qpid.proton4j.types.transport.Role;
+import org.apache.qpid.proton4j.types.transport.SessionError;
+import org.apache.qpid.proton4j.types.transport.Transfer;
 
 /**
  * Proton API for Session type.

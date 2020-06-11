@@ -23,16 +23,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-import org.apache.qpid.proton4j.amqp.Binary;
-import org.apache.qpid.proton4j.amqp.Decimal128;
-import org.apache.qpid.proton4j.amqp.Decimal32;
-import org.apache.qpid.proton4j.amqp.Decimal64;
-import org.apache.qpid.proton4j.amqp.DeliveryTag;
-import org.apache.qpid.proton4j.amqp.Symbol;
-import org.apache.qpid.proton4j.amqp.UnsignedByte;
-import org.apache.qpid.proton4j.amqp.UnsignedInteger;
-import org.apache.qpid.proton4j.amqp.UnsignedLong;
-import org.apache.qpid.proton4j.amqp.UnsignedShort;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.DecodeException;
 import org.apache.qpid.proton4j.codec.Decoder;
@@ -78,6 +68,16 @@ import org.apache.qpid.proton4j.codec.decoders.primitives.UnsignedLong0TypeDecod
 import org.apache.qpid.proton4j.codec.decoders.primitives.UnsignedLong64TypeDecoder;
 import org.apache.qpid.proton4j.codec.decoders.primitives.UnsignedLong8TypeDecoder;
 import org.apache.qpid.proton4j.codec.decoders.primitives.UnsignedShortTypeDecoder;
+import org.apache.qpid.proton4j.types.Binary;
+import org.apache.qpid.proton4j.types.Decimal128;
+import org.apache.qpid.proton4j.types.Decimal32;
+import org.apache.qpid.proton4j.types.Decimal64;
+import org.apache.qpid.proton4j.types.DeliveryTag;
+import org.apache.qpid.proton4j.types.Symbol;
+import org.apache.qpid.proton4j.types.UnsignedByte;
+import org.apache.qpid.proton4j.types.UnsignedInteger;
+import org.apache.qpid.proton4j.types.UnsignedLong;
+import org.apache.qpid.proton4j.types.UnsignedShort;
 
 /**
  * The default AMQP Decoder implementation.

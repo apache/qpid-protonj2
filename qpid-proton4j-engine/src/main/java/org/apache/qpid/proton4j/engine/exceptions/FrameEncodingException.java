@@ -16,7 +16,7 @@
  */
 package org.apache.qpid.proton4j.engine.exceptions;
 
-import org.apache.qpid.proton4j.amqp.transport.AmqpError;
+import org.apache.qpid.proton4j.types.transport.AmqpError;
 
 /**
  * Exception thrown when the engine cannot encode a frame from a given performative

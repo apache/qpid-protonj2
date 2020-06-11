@@ -20,7 +20,6 @@ import java.util.Objects;
 
 import javax.security.sasl.SaslException;
 
-import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.engine.EventHandler;
 import org.apache.qpid.proton4j.engine.sasl.SaslClientContext;
@@ -29,6 +28,7 @@ import org.apache.qpid.proton4j.engine.sasl.SaslOutcome;
 import org.apache.qpid.proton4j.engine.util.StringUtils;
 import org.apache.qpid.proton4j.logging.ProtonLogger;
 import org.apache.qpid.proton4j.logging.ProtonLoggerFactory;
+import org.apache.qpid.proton4j.types.Symbol;
 
 /**
  * Handles SASL traffic from the proton engine and drives the authentication process

@@ -20,7 +20,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import org.apache.qpid.proton4j.amqp.DescribedType;
+import org.apache.qpid.proton4j.types.DescribedType;
 
 public abstract class ListDescribedType implements DescribedType {
 

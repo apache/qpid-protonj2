@@ -19,8 +19,6 @@ package org.apache.qpid.proton4j.amqp.driver.codec.util;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.apache.qpid.proton4j.amqp.DescribedType;
-import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.driver.codec.messaging.Accepted;
 import org.apache.qpid.proton4j.amqp.driver.codec.messaging.Modified;
 import org.apache.qpid.proton4j.amqp.driver.codec.messaging.Rejected;
@@ -33,10 +31,12 @@ import org.apache.qpid.proton4j.amqp.driver.codec.transactions.Declared;
 import org.apache.qpid.proton4j.amqp.driver.codec.transactions.Discharge;
 import org.apache.qpid.proton4j.amqp.driver.codec.transactions.TransactionalState;
 import org.apache.qpid.proton4j.amqp.driver.codec.transport.ErrorCondition;
-import org.apache.qpid.proton4j.amqp.messaging.Outcome;
-import org.apache.qpid.proton4j.amqp.messaging.TerminusDurability;
-import org.apache.qpid.proton4j.amqp.messaging.TerminusExpiryPolicy;
-import org.apache.qpid.proton4j.amqp.transport.DeliveryState;
+import org.apache.qpid.proton4j.types.DescribedType;
+import org.apache.qpid.proton4j.types.Symbol;
+import org.apache.qpid.proton4j.types.messaging.Outcome;
+import org.apache.qpid.proton4j.types.messaging.TerminusDurability;
+import org.apache.qpid.proton4j.types.messaging.TerminusExpiryPolicy;
+import org.apache.qpid.proton4j.types.transport.DeliveryState;
 
 public abstract class TypeMapper {
 
@@ -86,28 +86,28 @@ public abstract class TypeMapper {
                     return new Accepted();
                 case Declared:
                     Declared declared = new Declared();
-                    declared.setTxnId(((org.apache.qpid.proton4j.amqp.transactions.Declared) state).getTxnId());
+                    declared.setTxnId(((org.apache.qpid.proton4j.types.transactions.Declared) state).getTxnId());
                     return declared;
                 case Modified:
                     Modified modified = new Modified();
                     modified.setDeliveryFailed(
-                        ((org.apache.qpid.proton4j.amqp.messaging.Modified) state).isDeliveryFailed());
+                        ((org.apache.qpid.proton4j.types.messaging.Modified) state).isDeliveryFailed());
                     modified.setUndeliverableHere(
-                        ((org.apache.qpid.proton4j.amqp.messaging.Modified) state).isUndeliverableHere());
+                        ((org.apache.qpid.proton4j.types.messaging.Modified) state).isUndeliverableHere());
                     modified.setMessageAnnotations(
-                        ((org.apache.qpid.proton4j.amqp.messaging.Modified) state).getMessageAnnotations());
+                        ((org.apache.qpid.proton4j.types.messaging.Modified) state).getMessageAnnotations());
                     return modified;
                 case Rejected:
                     Rejected rejected = new Rejected();
-                    rejected.setError(mapFromProtonType(((org.apache.qpid.proton4j.amqp.messaging.Rejected) state).getError()));
+                    rejected.setError(mapFromProtonType(((org.apache.qpid.proton4j.types.messaging.Rejected) state).getError()));
                     return rejected;
                 case Released:
                     return new Released();
                 case Transactional:
                     TransactionalState tx = new TransactionalState();
                     tx.setOutcome(mapFromProtonType((DeliveryState)
-                        ((org.apache.qpid.proton4j.amqp.transactions.TransactionalState) state).getOutcome()));
-                    tx.setTxnId(((org.apache.qpid.proton4j.amqp.transactions.TransactionalState) state).getTxnId());
+                        ((org.apache.qpid.proton4j.types.transactions.TransactionalState) state).getOutcome()));
+                    tx.setTxnId(((org.apache.qpid.proton4j.types.transactions.TransactionalState) state).getTxnId());
                     return tx;
                 default:
                     break;
@@ -122,29 +122,29 @@ public abstract class TypeMapper {
         if (state != null) {
             DeliveryState result = null;
             if (state instanceof Accepted) {
-                result = org.apache.qpid.proton4j.amqp.messaging.Accepted.getInstance();
+                result = org.apache.qpid.proton4j.types.messaging.Accepted.getInstance();
             } else if (state instanceof Declared) {
-                org.apache.qpid.proton4j.amqp.transactions.Declared declared =
-                    new org.apache.qpid.proton4j.amqp.transactions.Declared();
+                org.apache.qpid.proton4j.types.transactions.Declared declared =
+                    new org.apache.qpid.proton4j.types.transactions.Declared();
                 declared.setTxnId(((TransactionalState) state).getTxnId());
                 result = declared;
             } else if (state instanceof Rejected) {
-                org.apache.qpid.proton4j.amqp.messaging.Rejected rejected =
-                    new org.apache.qpid.proton4j.amqp.messaging.Rejected();
+                org.apache.qpid.proton4j.types.messaging.Rejected rejected =
+                    new org.apache.qpid.proton4j.types.messaging.Rejected();
                 rejected.setError(mapToProtonType(((Rejected) state).getError()));
                 result = rejected;
             } else if (state instanceof Released) {
-                result = org.apache.qpid.proton4j.amqp.messaging.Released.getInstance();
+                result = org.apache.qpid.proton4j.types.messaging.Released.getInstance();
             } else if (state instanceof Modified) {
-                org.apache.qpid.proton4j.amqp.messaging.Modified modified =
-                    new org.apache.qpid.proton4j.amqp.messaging.Modified();
+                org.apache.qpid.proton4j.types.messaging.Modified modified =
+                    new org.apache.qpid.proton4j.types.messaging.Modified();
                 modified.setDeliveryFailed(((Modified) state).getDeliveryFailed());
                 modified.setUndeliverableHere(((Modified) state).getUndeliverableHere());
                 modified.setMessageAnnotations(((Modified) state).getMessageAnnotations());
                 result = modified;
             } else if (state instanceof TransactionalState) {
-                org.apache.qpid.proton4j.amqp.transactions.TransactionalState tx =
-                    new org.apache.qpid.proton4j.amqp.transactions.TransactionalState();
+                org.apache.qpid.proton4j.types.transactions.TransactionalState tx =
+                    new org.apache.qpid.proton4j.types.transactions.TransactionalState();
                 tx.setTxnId(((TransactionalState) state).getTxnId());
                 tx.setOutcome((Outcome) mapToProtonType(((TransactionalState) state).getOutcome()));
                 result = tx;
@@ -155,7 +155,7 @@ public abstract class TypeMapper {
         }
     }
 
-    public static ErrorCondition mapFromProtonType(org.apache.qpid.proton4j.amqp.transport.ErrorCondition error) {
+    public static ErrorCondition mapFromProtonType(org.apache.qpid.proton4j.types.transport.ErrorCondition error) {
         if (error != null) {
             ErrorCondition condition = new ErrorCondition();
 
@@ -169,16 +169,16 @@ public abstract class TypeMapper {
         }
     }
 
-    public static org.apache.qpid.proton4j.amqp.transport.ErrorCondition mapToProtonType(ErrorCondition error) {
+    public static org.apache.qpid.proton4j.types.transport.ErrorCondition mapToProtonType(ErrorCondition error) {
         if (error != null) {
-            return new org.apache.qpid.proton4j.amqp.transport.ErrorCondition(
+            return new org.apache.qpid.proton4j.types.transport.ErrorCondition(
                 error.getCondition(), error.getDescription(), error.getInfo());
         } else {
             return null;
         }
     }
 
-    public static Source mapFromProtonType(org.apache.qpid.proton4j.amqp.messaging.Source source) {
+    public static Source mapFromProtonType(org.apache.qpid.proton4j.types.messaging.Source source) {
         if (source != null) {
             Source mapped = new Source();
 
@@ -200,10 +200,10 @@ public abstract class TypeMapper {
         }
     }
 
-    public static org.apache.qpid.proton4j.amqp.messaging.Source mapToProtonType(Source source) {
+    public static org.apache.qpid.proton4j.types.messaging.Source mapToProtonType(Source source) {
         if (source != null) {
-            org.apache.qpid.proton4j.amqp.messaging.Source mapped =
-                new org.apache.qpid.proton4j.amqp.messaging.Source();
+            org.apache.qpid.proton4j.types.messaging.Source mapped =
+                new org.apache.qpid.proton4j.types.messaging.Source();
 
             mapped.setAddress(source.getAddress());
             mapped.setDurable(TerminusDurability.valueOf(source.getDurable()));
@@ -223,7 +223,7 @@ public abstract class TypeMapper {
         }
     }
 
-    public static Target mapFromProtonType(org.apache.qpid.proton4j.amqp.messaging.Target target) {
+    public static Target mapFromProtonType(org.apache.qpid.proton4j.types.messaging.Target target) {
         if (target != null) {
             Target mapped = new Target();
 
@@ -241,10 +241,10 @@ public abstract class TypeMapper {
         }
     }
 
-    public static org.apache.qpid.proton4j.amqp.messaging.Target mapToProtonType(Target target) {
+    public static org.apache.qpid.proton4j.types.messaging.Target mapToProtonType(Target target) {
         if (target != null) {
-            org.apache.qpid.proton4j.amqp.messaging.Target mapped =
-                new org.apache.qpid.proton4j.amqp.messaging.Target();
+            org.apache.qpid.proton4j.types.messaging.Target mapped =
+                new org.apache.qpid.proton4j.types.messaging.Target();
 
             mapped.setAddress(target.getAddress());
             mapped.setDurable(TerminusDurability.valueOf(target.getDurable()));
@@ -260,7 +260,7 @@ public abstract class TypeMapper {
         }
     }
 
-    public static Coordinator mapFromProtonType(org.apache.qpid.proton4j.amqp.transactions.Coordinator coordinator) {
+    public static Coordinator mapFromProtonType(org.apache.qpid.proton4j.types.transactions.Coordinator coordinator) {
         if (coordinator != null) {
             Coordinator mapped = new Coordinator();
 
@@ -272,10 +272,10 @@ public abstract class TypeMapper {
         }
     }
 
-    public static org.apache.qpid.proton4j.amqp.transactions.Coordinator mapToProtonType(Coordinator coordinator) {
+    public static org.apache.qpid.proton4j.types.transactions.Coordinator mapToProtonType(Coordinator coordinator) {
         if (coordinator != null) {
-            org.apache.qpid.proton4j.amqp.transactions.Coordinator mapped =
-                new org.apache.qpid.proton4j.amqp.transactions.Coordinator();
+            org.apache.qpid.proton4j.types.transactions.Coordinator mapped =
+                new org.apache.qpid.proton4j.types.transactions.Coordinator();
 
             mapped.setCapabilities(coordinator.getCapabilities());
 
@@ -285,7 +285,7 @@ public abstract class TypeMapper {
         }
     }
 
-    public static Declare mapFromProtonType(org.apache.qpid.proton4j.amqp.transactions.Declare declare) {
+    public static Declare mapFromProtonType(org.apache.qpid.proton4j.types.transactions.Declare declare) {
         if (declare != null) {
             Declare mapped = new Declare();
 
@@ -297,10 +297,10 @@ public abstract class TypeMapper {
         }
     }
 
-    public static org.apache.qpid.proton4j.amqp.transactions.Declare mapToProtonType(Declare declare) {
+    public static org.apache.qpid.proton4j.types.transactions.Declare mapToProtonType(Declare declare) {
         if (declare != null) {
-            org.apache.qpid.proton4j.amqp.transactions.Declare mapped =
-                new org.apache.qpid.proton4j.amqp.transactions.Declare();
+            org.apache.qpid.proton4j.types.transactions.Declare mapped =
+                new org.apache.qpid.proton4j.types.transactions.Declare();
 
             // TODO mapped.setGlobalId(declare.getGlobalId());
 
@@ -310,7 +310,7 @@ public abstract class TypeMapper {
         }
     }
 
-    public static Discharge mapFromProtonType(org.apache.qpid.proton4j.amqp.transactions.Discharge discharge) {
+    public static Discharge mapFromProtonType(org.apache.qpid.proton4j.types.transactions.Discharge discharge) {
         if (discharge != null) {
             Discharge mapped = new Discharge();
 
@@ -323,10 +323,10 @@ public abstract class TypeMapper {
         }
     }
 
-    public static org.apache.qpid.proton4j.amqp.transactions.Discharge mapToProtonType(Discharge discharge) {
+    public static org.apache.qpid.proton4j.types.transactions.Discharge mapToProtonType(Discharge discharge) {
         if (discharge != null) {
-            org.apache.qpid.proton4j.amqp.transactions.Discharge mapped =
-                new org.apache.qpid.proton4j.amqp.transactions.Discharge();
+            org.apache.qpid.proton4j.types.transactions.Discharge mapped =
+                new org.apache.qpid.proton4j.types.transactions.Discharge();
 
             if (discharge.getFail() != null) {
                 mapped.setFail(discharge.getFail().booleanValue());

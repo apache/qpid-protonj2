@@ -16,13 +16,13 @@
  */
 package org.apache.qpid.proton4j.engine;
 
-import org.apache.qpid.proton4j.amqp.messaging.Rejected;
-import org.apache.qpid.proton4j.amqp.messaging.Source;
-import org.apache.qpid.proton4j.amqp.messaging.Terminus;
-import org.apache.qpid.proton4j.amqp.transactions.Coordinator;
-import org.apache.qpid.proton4j.amqp.transactions.Declare;
-import org.apache.qpid.proton4j.amqp.transactions.Declared;
-import org.apache.qpid.proton4j.amqp.transactions.Discharge;
+import org.apache.qpid.proton4j.types.messaging.Rejected;
+import org.apache.qpid.proton4j.types.messaging.Source;
+import org.apache.qpid.proton4j.types.messaging.Terminus;
+import org.apache.qpid.proton4j.types.transactions.Coordinator;
+import org.apache.qpid.proton4j.types.transactions.Declare;
+import org.apache.qpid.proton4j.types.transactions.Declared;
+import org.apache.qpid.proton4j.types.transactions.Discharge;
 
 /**
  * Transaction Controller link that implements the mechanics of declaring and discharging

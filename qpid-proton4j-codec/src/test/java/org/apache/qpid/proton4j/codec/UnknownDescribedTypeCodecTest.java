@@ -27,10 +27,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.qpid.proton4j.amqp.UnknownDescribedType;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.codec.util.NoLocalType;
+import org.apache.qpid.proton4j.types.UnknownDescribedType;
 import org.junit.Test;
 
 /**

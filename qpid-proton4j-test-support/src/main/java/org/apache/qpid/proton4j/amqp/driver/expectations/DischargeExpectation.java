@@ -16,12 +16,12 @@
  */
 package org.apache.qpid.proton4j.amqp.driver.expectations;
 
-import org.apache.qpid.proton4j.amqp.Binary;
 import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
 import org.apache.qpid.proton4j.amqp.driver.codec.transactions.Discharge;
 import org.apache.qpid.proton4j.amqp.driver.codec.util.TypeMapper;
 import org.apache.qpid.proton4j.amqp.driver.matchers.types.EncodedAmqpValueMatcher;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import org.apache.qpid.proton4j.types.Binary;
 
 /**
  * Expectation used to script incoming transaction declarations.
@@ -89,7 +89,7 @@ public class DischargeExpectation extends TransferExpectation {
         return this;
     }
 
-    public DischargeExpectation withDischarge(org.apache.qpid.proton4j.amqp.transactions.Discharge discharge) {
+    public DischargeExpectation withDischarge(org.apache.qpid.proton4j.types.transactions.Discharge discharge) {
         withPayload(new EncodedAmqpValueMatcher(TypeMapper.mapFromProtonType(discharge)));
         return this;
     }

@@ -16,7 +16,7 @@
  */
 package org.apache.qpid.proton4j.engine.util;
 
-import org.apache.qpid.proton4j.amqp.UnsignedInteger;
+import org.apache.qpid.proton4j.types.UnsignedInteger;
 
 /**
  * Tracker of Delivery ID values, implements a sequence number and provides ability to

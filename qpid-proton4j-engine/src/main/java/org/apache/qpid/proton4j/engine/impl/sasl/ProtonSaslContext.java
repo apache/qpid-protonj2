@@ -18,15 +18,15 @@ package org.apache.qpid.proton4j.engine.impl.sasl;
 
 import java.util.Arrays;
 
-import org.apache.qpid.proton4j.amqp.Symbol;
-import org.apache.qpid.proton4j.amqp.security.SaslPerformative.SaslPerformativeHandler;
-import org.apache.qpid.proton4j.amqp.transport.AMQPHeader.HeaderHandler;
 import org.apache.qpid.proton4j.engine.EngineHandlerContext;
 import org.apache.qpid.proton4j.engine.EngineSaslDriver.SaslState;
 import org.apache.qpid.proton4j.engine.impl.ProtonAttachments;
 import org.apache.qpid.proton4j.engine.impl.ProtonEngine;
 import org.apache.qpid.proton4j.engine.sasl.SaslContext;
 import org.apache.qpid.proton4j.engine.sasl.SaslOutcome;
+import org.apache.qpid.proton4j.types.Symbol;
+import org.apache.qpid.proton4j.types.security.SaslPerformative.SaslPerformativeHandler;
+import org.apache.qpid.proton4j.types.transport.AMQPHeader.HeaderHandler;
 
 /**
  * The State engine for a SASL exchange.

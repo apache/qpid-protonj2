@@ -20,24 +20,24 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import org.apache.qpid.proton4j.amqp.Binary;
-import org.apache.qpid.proton4j.amqp.DescribedType;
-import org.apache.qpid.proton4j.amqp.Symbol;
-import org.apache.qpid.proton4j.amqp.UnsignedInteger;
-import org.apache.qpid.proton4j.amqp.UnsignedLong;
 import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
 import org.apache.qpid.proton4j.amqp.driver.codec.transport.Attach;
 import org.apache.qpid.proton4j.amqp.driver.codec.util.TypeMapper;
-import org.apache.qpid.proton4j.amqp.messaging.Outcome;
-import org.apache.qpid.proton4j.amqp.messaging.Source;
-import org.apache.qpid.proton4j.amqp.messaging.Target;
-import org.apache.qpid.proton4j.amqp.messaging.TerminusDurability;
-import org.apache.qpid.proton4j.amqp.messaging.TerminusExpiryPolicy;
-import org.apache.qpid.proton4j.amqp.transactions.Coordinator;
-import org.apache.qpid.proton4j.amqp.transport.DeliveryState;
-import org.apache.qpid.proton4j.amqp.transport.ReceiverSettleMode;
-import org.apache.qpid.proton4j.amqp.transport.Role;
-import org.apache.qpid.proton4j.amqp.transport.SenderSettleMode;
+import org.apache.qpid.proton4j.types.Binary;
+import org.apache.qpid.proton4j.types.DescribedType;
+import org.apache.qpid.proton4j.types.Symbol;
+import org.apache.qpid.proton4j.types.UnsignedInteger;
+import org.apache.qpid.proton4j.types.UnsignedLong;
+import org.apache.qpid.proton4j.types.messaging.Outcome;
+import org.apache.qpid.proton4j.types.messaging.Source;
+import org.apache.qpid.proton4j.types.messaging.Target;
+import org.apache.qpid.proton4j.types.messaging.TerminusDurability;
+import org.apache.qpid.proton4j.types.messaging.TerminusExpiryPolicy;
+import org.apache.qpid.proton4j.types.transactions.Coordinator;
+import org.apache.qpid.proton4j.types.transport.DeliveryState;
+import org.apache.qpid.proton4j.types.transport.ReceiverSettleMode;
+import org.apache.qpid.proton4j.types.transport.Role;
+import org.apache.qpid.proton4j.types.transport.SenderSettleMode;
 
 /**
  * AMQP Attach injection action which can be added to a driver for write at a specific time or

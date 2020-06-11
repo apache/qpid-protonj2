@@ -26,16 +26,6 @@ import static org.junit.Assert.fail;
 
 import java.io.IOException;
 
-import org.apache.qpid.proton4j.amqp.Symbol;
-import org.apache.qpid.proton4j.amqp.UnsignedLong;
-import org.apache.qpid.proton4j.amqp.messaging.Source;
-import org.apache.qpid.proton4j.amqp.messaging.Target;
-import org.apache.qpid.proton4j.amqp.messaging.Terminus;
-import org.apache.qpid.proton4j.amqp.transactions.Coordinator;
-import org.apache.qpid.proton4j.amqp.transport.Attach;
-import org.apache.qpid.proton4j.amqp.transport.ReceiverSettleMode;
-import org.apache.qpid.proton4j.amqp.transport.Role;
-import org.apache.qpid.proton4j.amqp.transport.SenderSettleMode;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.codec.CodecTestSupport;
@@ -44,6 +34,16 @@ import org.apache.qpid.proton4j.codec.EncodingCodes;
 import org.apache.qpid.proton4j.codec.TypeDecoder;
 import org.apache.qpid.proton4j.codec.decoders.transport.AttachTypeDecoder;
 import org.apache.qpid.proton4j.codec.encoders.transport.AttachTypeEncoder;
+import org.apache.qpid.proton4j.types.Symbol;
+import org.apache.qpid.proton4j.types.UnsignedLong;
+import org.apache.qpid.proton4j.types.messaging.Source;
+import org.apache.qpid.proton4j.types.messaging.Target;
+import org.apache.qpid.proton4j.types.messaging.Terminus;
+import org.apache.qpid.proton4j.types.transactions.Coordinator;
+import org.apache.qpid.proton4j.types.transport.Attach;
+import org.apache.qpid.proton4j.types.transport.ReceiverSettleMode;
+import org.apache.qpid.proton4j.types.transport.Role;
+import org.apache.qpid.proton4j.types.transport.SenderSettleMode;
 import org.junit.Test;
 
 public class AttachTypeCodecTest extends CodecTestSupport {

@@ -16,7 +16,7 @@
  */
 package org.apache.qpid.proton4j.amqp.driver.codec;
 
-import org.apache.qpid.proton4j.amqp.DescribedType;
+import org.apache.qpid.proton4j.types.DescribedType;
 
 class DescribedTypeImpl implements DescribedType {
 

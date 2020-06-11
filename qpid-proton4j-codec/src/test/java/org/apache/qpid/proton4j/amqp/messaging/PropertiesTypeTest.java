@@ -25,9 +25,10 @@ import static org.junit.Assert.fail;
 
 import java.nio.charset.StandardCharsets;
 
-import org.apache.qpid.proton4j.amqp.Binary;
-import org.apache.qpid.proton4j.amqp.UnsignedInteger;
-import org.apache.qpid.proton4j.amqp.messaging.Section.SectionType;
+import org.apache.qpid.proton4j.types.Binary;
+import org.apache.qpid.proton4j.types.UnsignedInteger;
+import org.apache.qpid.proton4j.types.messaging.Properties;
+import org.apache.qpid.proton4j.types.messaging.Section.SectionType;
 import org.junit.Test;
 
 public class PropertiesTypeTest {

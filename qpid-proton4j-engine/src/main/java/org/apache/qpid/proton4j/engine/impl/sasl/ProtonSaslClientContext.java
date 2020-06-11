@@ -22,15 +22,6 @@ import java.util.Objects;
 import javax.security.sasl.AuthenticationException;
 import javax.security.sasl.SaslException;
 
-import org.apache.qpid.proton4j.amqp.Symbol;
-import org.apache.qpid.proton4j.amqp.security.SaslChallenge;
-import org.apache.qpid.proton4j.amqp.security.SaslInit;
-import org.apache.qpid.proton4j.amqp.security.SaslMechanisms;
-import org.apache.qpid.proton4j.amqp.security.SaslOutcome;
-import org.apache.qpid.proton4j.amqp.security.SaslPerformative.SaslPerformativeHandler;
-import org.apache.qpid.proton4j.amqp.security.SaslResponse;
-import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
-import org.apache.qpid.proton4j.amqp.transport.AMQPHeader.HeaderHandler;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.engine.EngineHandlerContext;
@@ -43,6 +34,15 @@ import org.apache.qpid.proton4j.engine.sasl.SaslClientContext;
 import org.apache.qpid.proton4j.engine.sasl.SaslClientListener;
 import org.apache.qpid.proton4j.engine.sasl.SaslSystemException;
 import org.apache.qpid.proton4j.engine.util.StringUtils;
+import org.apache.qpid.proton4j.types.Symbol;
+import org.apache.qpid.proton4j.types.security.SaslChallenge;
+import org.apache.qpid.proton4j.types.security.SaslInit;
+import org.apache.qpid.proton4j.types.security.SaslMechanisms;
+import org.apache.qpid.proton4j.types.security.SaslOutcome;
+import org.apache.qpid.proton4j.types.security.SaslResponse;
+import org.apache.qpid.proton4j.types.security.SaslPerformative.SaslPerformativeHandler;
+import org.apache.qpid.proton4j.types.transport.AMQPHeader;
+import org.apache.qpid.proton4j.types.transport.AMQPHeader.HeaderHandler;
 
 final class ProtonSaslClientContext extends ProtonSaslContext implements SaslClientContext {
 

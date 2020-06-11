@@ -16,9 +16,9 @@
  */
 package org.apache.qpid.proton4j.engine;
 
-import org.apache.qpid.proton4j.amqp.security.SaslPerformative;
-import org.apache.qpid.proton4j.amqp.security.SaslPerformative.SaslPerformativeHandler;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import org.apache.qpid.proton4j.types.security.SaslPerformative;
+import org.apache.qpid.proton4j.types.security.SaslPerformative.SaslPerformativeHandler;
 
 /**
  * Frame object containing a SASL performative

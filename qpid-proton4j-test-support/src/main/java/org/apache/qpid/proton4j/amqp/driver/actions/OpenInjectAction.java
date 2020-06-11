@@ -18,12 +18,12 @@ package org.apache.qpid.proton4j.amqp.driver.actions;
 
 import java.util.Map;
 
-import org.apache.qpid.proton4j.amqp.Symbol;
-import org.apache.qpid.proton4j.amqp.UnsignedInteger;
-import org.apache.qpid.proton4j.amqp.UnsignedShort;
 import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
 import org.apache.qpid.proton4j.amqp.driver.codec.transport.Open;
 import org.apache.qpid.proton4j.amqp.driver.codec.util.TypeMapper;
+import org.apache.qpid.proton4j.types.Symbol;
+import org.apache.qpid.proton4j.types.UnsignedInteger;
+import org.apache.qpid.proton4j.types.UnsignedShort;
 
 /**
  * AMQP Open injection action which can be added to a driver for write at a specific time or

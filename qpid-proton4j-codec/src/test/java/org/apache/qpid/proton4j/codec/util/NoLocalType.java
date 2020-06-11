@@ -16,9 +16,9 @@
  */
 package org.apache.qpid.proton4j.codec.util;
 
-import org.apache.qpid.proton4j.amqp.DescribedType;
-import org.apache.qpid.proton4j.amqp.Symbol;
-import org.apache.qpid.proton4j.amqp.UnsignedLong;
+import org.apache.qpid.proton4j.types.DescribedType;
+import org.apache.qpid.proton4j.types.Symbol;
+import org.apache.qpid.proton4j.types.UnsignedLong;
 
 /**
  * A Described Type wrapper for JMS no local option for MessageConsumer.

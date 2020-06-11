@@ -24,7 +24,6 @@ import static org.junit.Assert.fail;
 
 import java.io.IOException;
 
-import org.apache.qpid.proton4j.amqp.Decimal128;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.codec.CodecTestSupport;
@@ -33,6 +32,7 @@ import org.apache.qpid.proton4j.codec.EncodingCodes;
 import org.apache.qpid.proton4j.codec.TypeDecoder;
 import org.apache.qpid.proton4j.codec.decoders.primitives.Decimal128TypeDecoder;
 import org.apache.qpid.proton4j.codec.encoders.primitives.Decimal128TypeEncoder;
+import org.apache.qpid.proton4j.types.Decimal128;
 import org.junit.Test;
 
 public class Decimal128TypeCodecTest extends CodecTestSupport {

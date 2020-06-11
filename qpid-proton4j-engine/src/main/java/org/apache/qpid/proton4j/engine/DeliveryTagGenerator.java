@@ -16,7 +16,7 @@
  */
 package org.apache.qpid.proton4j.engine;
 
-import org.apache.qpid.proton4j.amqp.DeliveryTag;
+import org.apache.qpid.proton4j.types.DeliveryTag;
 
 /**
  * Transfer tag generators can be assigned to {@link Sender} links in order to

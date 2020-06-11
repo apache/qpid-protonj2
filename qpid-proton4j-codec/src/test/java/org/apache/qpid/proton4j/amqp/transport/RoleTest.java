@@ -19,6 +19,7 @@ package org.apache.qpid.proton4j.amqp.transport;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 
+import org.apache.qpid.proton4j.types.transport.Role;
 import org.junit.Test;
 
 public class RoleTest {

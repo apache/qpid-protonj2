@@ -16,8 +16,8 @@
  */
 package org.apache.qpid.proton4j.engine.impl;
 
-import org.apache.qpid.proton4j.amqp.DeliveryTag;
 import org.apache.qpid.proton4j.engine.DeliveryTagGenerator;
+import org.apache.qpid.proton4j.types.DeliveryTag;
 
 /**
  * Proton provided {@link DeliveryTagGenerator} utility.

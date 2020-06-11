@@ -20,7 +20,8 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
 
-import org.apache.qpid.proton4j.amqp.Binary;
+import org.apache.qpid.proton4j.types.Binary;
+import org.apache.qpid.proton4j.types.transactions.Discharge;
 import org.junit.Test;
 
 public class DischargeTest {

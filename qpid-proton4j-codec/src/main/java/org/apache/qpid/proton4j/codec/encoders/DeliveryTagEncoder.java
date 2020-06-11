@@ -16,11 +16,11 @@
  */
 package org.apache.qpid.proton4j.codec.encoders;
 
-import org.apache.qpid.proton4j.amqp.DeliveryTag;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.EncoderState;
 import org.apache.qpid.proton4j.codec.EncodingCodes;
 import org.apache.qpid.proton4j.codec.TypeEncoder;
+import org.apache.qpid.proton4j.types.DeliveryTag;
 
 /**
  * Custom encoder for writing DeliveryTag types to a {@link ProtonBuffer}.

@@ -21,7 +21,6 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.apache.qpid.proton4j.amqp.driver.ProtonTestPeer;
-import org.apache.qpid.proton4j.amqp.transport.AmqpError;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.engine.Connection;
@@ -32,6 +31,7 @@ import org.apache.qpid.proton4j.engine.Receiver;
 import org.apache.qpid.proton4j.engine.Sender;
 import org.apache.qpid.proton4j.engine.Session;
 import org.apache.qpid.proton4j.engine.exceptions.FrameDecodingException;
+import org.apache.qpid.proton4j.types.transport.AmqpError;
 import org.junit.Test;
 
 public class ProtonDecodeErrorTest extends ProtonEngineTestSupport {

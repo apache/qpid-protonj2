@@ -21,7 +21,6 @@ import static org.hamcrest.CoreMatchers.notNullValue;
 import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 
-import org.apache.qpid.proton4j.amqp.DescribedType;
 import org.apache.qpid.proton4j.amqp.driver.actions.AMQPHeaderInjectAction;
 import org.apache.qpid.proton4j.amqp.driver.actions.AttachInjectAction;
 import org.apache.qpid.proton4j.amqp.driver.actions.BeginInjectAction;
@@ -60,9 +59,10 @@ import org.apache.qpid.proton4j.amqp.driver.expectations.SaslMechanismsExpectati
 import org.apache.qpid.proton4j.amqp.driver.expectations.SaslOutcomeExpectation;
 import org.apache.qpid.proton4j.amqp.driver.expectations.SaslResponseExpectation;
 import org.apache.qpid.proton4j.amqp.driver.expectations.TransferExpectation;
-import org.apache.qpid.proton4j.amqp.security.SaslCode;
-import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
-import org.apache.qpid.proton4j.amqp.transport.Role;
+import org.apache.qpid.proton4j.types.DescribedType;
+import org.apache.qpid.proton4j.types.security.SaslCode;
+import org.apache.qpid.proton4j.types.transport.AMQPHeader;
+import org.apache.qpid.proton4j.types.transport.Role;
 import org.hamcrest.Matchers;
 
 /**

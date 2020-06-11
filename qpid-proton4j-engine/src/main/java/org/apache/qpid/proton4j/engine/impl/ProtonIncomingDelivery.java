@@ -16,11 +16,11 @@
  */
 package org.apache.qpid.proton4j.engine.impl;
 
-import org.apache.qpid.proton4j.amqp.DeliveryTag;
-import org.apache.qpid.proton4j.amqp.transport.DeliveryState;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonCompositeBuffer;
 import org.apache.qpid.proton4j.engine.IncomingDelivery;
+import org.apache.qpid.proton4j.types.DeliveryTag;
+import org.apache.qpid.proton4j.types.transport.DeliveryState;
 
 /**
  * Proton Incoming Delivery implementation

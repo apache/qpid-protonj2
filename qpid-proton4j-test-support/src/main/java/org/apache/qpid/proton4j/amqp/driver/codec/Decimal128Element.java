@@ -16,8 +16,8 @@
  */
 package org.apache.qpid.proton4j.amqp.driver.codec;
 
-import org.apache.qpid.proton4j.amqp.Decimal128;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import org.apache.qpid.proton4j.types.Decimal128;
 
 class Decimal128Element extends AtomicElement<Decimal128> {
 

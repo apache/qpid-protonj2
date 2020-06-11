@@ -23,8 +23,8 @@ import org.apache.qpid.proton4j.amqp.driver.AMQPTestDriver;
 import org.apache.qpid.proton4j.amqp.driver.ScriptedExpectation;
 import org.apache.qpid.proton4j.amqp.driver.actions.AMQPHeaderInjectAction;
 import org.apache.qpid.proton4j.amqp.driver.actions.ProtonBufferInjectAction;
-import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
+import org.apache.qpid.proton4j.types.transport.AMQPHeader;
 
 /**
  * Expectation entry for AMQP Headers

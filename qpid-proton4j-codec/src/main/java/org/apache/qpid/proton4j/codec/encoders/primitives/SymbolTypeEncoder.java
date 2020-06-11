@@ -16,11 +16,11 @@
  */
 package org.apache.qpid.proton4j.codec.encoders.primitives;
 
-import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.codec.EncoderState;
 import org.apache.qpid.proton4j.codec.EncodingCodes;
 import org.apache.qpid.proton4j.codec.encoders.AbstractPrimitiveTypeEncoder;
+import org.apache.qpid.proton4j.types.Symbol;
 
 /**
  * Encoder of AMQP Symbol type values to a byte stream.

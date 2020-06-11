@@ -33,9 +33,9 @@ import java.util.NoSuchElementException;
 import java.util.Random;
 import java.util.Set;
 
-import org.apache.qpid.proton4j.amqp.UnsignedInteger;
 import org.apache.qpid.proton4j.logging.ProtonLogger;
 import org.apache.qpid.proton4j.logging.ProtonLoggerFactory;
+import org.apache.qpid.proton4j.types.UnsignedInteger;
 import org.junit.Before;
 import org.junit.Test;
 

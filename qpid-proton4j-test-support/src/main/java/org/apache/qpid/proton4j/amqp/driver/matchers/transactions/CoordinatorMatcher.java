@@ -19,9 +19,9 @@ package org.apache.qpid.proton4j.amqp.driver.matchers.transactions;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.nullValue;
 
-import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.amqp.driver.codec.transactions.Coordinator;
 import org.apache.qpid.proton4j.amqp.driver.matchers.ListDescribedTypeMatcher;
+import org.apache.qpid.proton4j.types.Symbol;
 import org.hamcrest.Matcher;
 
 public class CoordinatorMatcher extends ListDescribedTypeMatcher {
@@ -30,7 +30,7 @@ public class CoordinatorMatcher extends ListDescribedTypeMatcher {
         super(Coordinator.Field.values().length, Coordinator.DESCRIPTOR_CODE, Coordinator.DESCRIPTOR_SYMBOL);
     }
 
-    public CoordinatorMatcher(org.apache.qpid.proton4j.amqp.transactions.Coordinator coordinator) {
+    public CoordinatorMatcher(org.apache.qpid.proton4j.types.transactions.Coordinator coordinator) {
         super(Coordinator.Field.values().length, Coordinator.DESCRIPTOR_CODE, Coordinator.DESCRIPTOR_SYMBOL);
 
         addCoordinatorMatchers(coordinator);
@@ -56,7 +56,7 @@ public class CoordinatorMatcher extends ListDescribedTypeMatcher {
 
     //----- Populate the matcher from a given Source object
 
-    private void addCoordinatorMatchers(org.apache.qpid.proton4j.amqp.transactions.Coordinator coordinator) {
+    private void addCoordinatorMatchers(org.apache.qpid.proton4j.types.transactions.Coordinator coordinator) {
         if (coordinator.getCapabilities() != null) {
             addFieldMatcher(Coordinator.Field.CAPABILITIES, equalTo(coordinator.getCapabilities()));
         } else {

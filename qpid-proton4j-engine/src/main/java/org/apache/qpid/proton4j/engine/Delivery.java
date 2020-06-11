@@ -16,8 +16,8 @@
  */
 package org.apache.qpid.proton4j.engine;
 
-import org.apache.qpid.proton4j.amqp.DeliveryTag;
-import org.apache.qpid.proton4j.amqp.transport.DeliveryState;
+import org.apache.qpid.proton4j.types.DeliveryTag;
+import org.apache.qpid.proton4j.types.transport.DeliveryState;
 
 /**
  * Root of an AMQP Delivery

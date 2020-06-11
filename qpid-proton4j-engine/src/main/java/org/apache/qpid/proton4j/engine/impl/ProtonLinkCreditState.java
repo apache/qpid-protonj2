@@ -16,8 +16,8 @@
  */
 package org.apache.qpid.proton4j.engine.impl;
 
-import org.apache.qpid.proton4j.amqp.transport.Flow;
 import org.apache.qpid.proton4j.engine.LinkCreditState;
+import org.apache.qpid.proton4j.types.transport.Flow;
 
 /**
  * Holds the current credit state for a given link.

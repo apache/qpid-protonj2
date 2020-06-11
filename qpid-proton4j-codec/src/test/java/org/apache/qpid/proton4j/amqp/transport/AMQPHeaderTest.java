@@ -26,9 +26,10 @@ import static org.junit.Assert.fail;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
-import org.apache.qpid.proton4j.amqp.transport.AMQPHeader.HeaderHandler;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
+import org.apache.qpid.proton4j.types.transport.AMQPHeader;
+import org.apache.qpid.proton4j.types.transport.AMQPHeader.HeaderHandler;
 import org.junit.Test;
 
 public class AMQPHeaderTest {
