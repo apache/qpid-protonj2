@@ -20,7 +20,7 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;
 
-import org.apache.qpid.proton4j.amqp.Symbol;
+import org.apache.qpid.proton4j.types.Symbol;
 import org.messaginghub.amqperative.ErrorCondition;
 
 /**
@@ -29,19 +29,19 @@ import org.messaginghub.amqperative.ErrorCondition;
  */
 public final class ClientErrorCondition implements ErrorCondition {
 
-    private final org.apache.qpid.proton4j.amqp.transport.ErrorCondition error;
+    private final org.apache.qpid.proton4j.types.transport.ErrorCondition error;
 
     public ClientErrorCondition(ErrorCondition condition) {
         Objects.requireNonNull(condition, "The error condition value cannot be null");
 
-        error = new org.apache.qpid.proton4j.amqp.transport.ErrorCondition(
+        error = new org.apache.qpid.proton4j.types.transport.ErrorCondition(
             Symbol.valueOf(condition.condition()), condition.description(), ClientConversionSupport.toSymbolKeyedMap(condition.info()));
     }
 
     public ClientErrorCondition(String condition, String description, Map<String, Object> info) {
         Objects.requireNonNull(condition, "The error condition value cannot be null");
 
-        error = new org.apache.qpid.proton4j.amqp.transport.ErrorCondition(
+        error = new org.apache.qpid.proton4j.types.transport.ErrorCondition(
             Symbol.valueOf(condition), description, ClientConversionSupport.toSymbolKeyedMap(info));
     }
 
@@ -63,11 +63,11 @@ public final class ClientErrorCondition implements ErrorCondition {
 
     //----- Internal methods used by Client resources
 
-    org.apache.qpid.proton4j.amqp.transport.ErrorCondition getProtonErrorCondition() {
+    org.apache.qpid.proton4j.types.transport.ErrorCondition getProtonErrorCondition() {
         return error;
     }
 
-    static org.apache.qpid.proton4j.amqp.transport.ErrorCondition asProtonErrorCondition(ErrorCondition condition) {
+    static org.apache.qpid.proton4j.types.transport.ErrorCondition asProtonErrorCondition(ErrorCondition condition) {
         if (condition == null) {
             return null;
         } else if (condition instanceof ClientErrorCondition) {

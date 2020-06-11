@@ -27,12 +27,12 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 import java.util.function.Consumer;
 
-import org.apache.qpid.proton4j.amqp.transport.DeliveryState;
-import org.apache.qpid.proton4j.amqp.transport.SenderSettleMode;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.engine.LinkState;
 import org.apache.qpid.proton4j.engine.OutgoingDelivery;
 import org.apache.qpid.proton4j.engine.impl.ProtonDeliveryTagGenerator;
+import org.apache.qpid.proton4j.types.transport.DeliveryState;
+import org.apache.qpid.proton4j.types.transport.SenderSettleMode;
 import org.messaginghub.amqperative.ErrorCondition;
 import org.messaginghub.amqperative.Message;
 import org.messaginghub.amqperative.Sender;
@@ -99,7 +99,7 @@ public class ClientSender implements Sender {
 
     @Override
     public String address() throws ClientException {
-        final org.apache.qpid.proton4j.amqp.messaging.Target target;
+        final org.apache.qpid.proton4j.types.messaging.Target target;
         if (isDynamic()) {
             waitForOpenToComplete();
             target = protonSender.getRemoteTarget();
@@ -294,11 +294,11 @@ public class ClientSender implements Sender {
     }
 
     boolean isAnonymous() {
-        return protonSender.<org.apache.qpid.proton4j.amqp.messaging.Target>getTarget().getAddress() == null;
+        return protonSender.<org.apache.qpid.proton4j.types.messaging.Target>getTarget().getAddress() == null;
     }
 
     boolean isDynamic() {
-        return protonSender.getTarget() != null && protonSender.<org.apache.qpid.proton4j.amqp.messaging.Target>getTarget().isDynamic();
+        return protonSender.getTarget() != null && protonSender.<org.apache.qpid.proton4j.types.messaging.Target>getTarget().isDynamic();
     }
 
     //----- Handlers for proton receiver events

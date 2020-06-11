@@ -26,10 +26,10 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 import java.util.function.Consumer;
 
-import org.apache.qpid.proton4j.amqp.messaging.Outcome;
-import org.apache.qpid.proton4j.amqp.messaging.Released;
-import org.apache.qpid.proton4j.amqp.transport.DeliveryState;
 import org.apache.qpid.proton4j.engine.IncomingDelivery;
+import org.apache.qpid.proton4j.types.messaging.Outcome;
+import org.apache.qpid.proton4j.types.messaging.Released;
+import org.apache.qpid.proton4j.types.transport.DeliveryState;
 import org.messaginghub.amqperative.Client;
 import org.messaginghub.amqperative.Delivery;
 import org.messaginghub.amqperative.ErrorCondition;

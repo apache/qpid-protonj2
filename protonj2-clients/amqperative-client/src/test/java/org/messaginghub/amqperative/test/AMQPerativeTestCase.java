@@ -21,11 +21,11 @@ package org.messaginghub.amqperative.test;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.apache.qpid.proton4j.amqp.messaging.Section;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
 import org.apache.qpid.proton4j.codec.CodecFactory;
 import org.apache.qpid.proton4j.codec.Encoder;
+import org.apache.qpid.proton4j.types.messaging.Section;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;

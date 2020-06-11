@@ -28,7 +28,7 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import org.apache.qpid.proton4j.amqp.Symbol;
+import org.apache.qpid.proton4j.types.Symbol;
 import org.messaginghub.amqperative.util.URISupport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

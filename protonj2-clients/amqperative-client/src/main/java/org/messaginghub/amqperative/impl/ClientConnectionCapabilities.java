@@ -20,8 +20,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import org.apache.qpid.proton4j.amqp.Symbol;
 import org.apache.qpid.proton4j.engine.Connection;
+import org.apache.qpid.proton4j.types.Symbol;
 
 /**
  * Tracks available known capabilities for the connection to allow the client

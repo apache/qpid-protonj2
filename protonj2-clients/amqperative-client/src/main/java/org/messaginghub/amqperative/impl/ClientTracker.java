@@ -71,7 +71,7 @@ public class ClientTracker implements Tracker {
 
     @Override
     public ClientTracker disposition(DeliveryState state, boolean settle) {
-        org.apache.qpid.proton4j.amqp.transport.DeliveryState protonState = null;
+        org.apache.qpid.proton4j.types.transport.DeliveryState protonState = null;
         if (state != null) {
             protonState = ClientDeliveryState.asProtonType(state);
         }

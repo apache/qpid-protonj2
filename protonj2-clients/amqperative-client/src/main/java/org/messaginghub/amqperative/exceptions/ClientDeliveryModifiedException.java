@@ -16,7 +16,7 @@
  */
 package org.messaginghub.amqperative.exceptions;
 
-import org.apache.qpid.proton4j.amqp.messaging.Modified;
+import org.apache.qpid.proton4j.types.messaging.Modified;
 import org.messaginghub.amqperative.impl.ClientException;
 
 /**

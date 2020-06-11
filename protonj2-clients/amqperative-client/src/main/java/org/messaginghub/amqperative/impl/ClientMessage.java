@@ -20,15 +20,15 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.function.Supplier;
 
-import org.apache.qpid.proton4j.amqp.Binary;
-import org.apache.qpid.proton4j.amqp.Symbol;
-import org.apache.qpid.proton4j.amqp.messaging.ApplicationProperties;
-import org.apache.qpid.proton4j.amqp.messaging.DeliveryAnnotations;
-import org.apache.qpid.proton4j.amqp.messaging.Footer;
-import org.apache.qpid.proton4j.amqp.messaging.Header;
-import org.apache.qpid.proton4j.amqp.messaging.MessageAnnotations;
-import org.apache.qpid.proton4j.amqp.messaging.Properties;
-import org.apache.qpid.proton4j.amqp.messaging.Section;
+import org.apache.qpid.proton4j.types.Binary;
+import org.apache.qpid.proton4j.types.Symbol;
+import org.apache.qpid.proton4j.types.messaging.ApplicationProperties;
+import org.apache.qpid.proton4j.types.messaging.DeliveryAnnotations;
+import org.apache.qpid.proton4j.types.messaging.Footer;
+import org.apache.qpid.proton4j.types.messaging.Header;
+import org.apache.qpid.proton4j.types.messaging.MessageAnnotations;
+import org.apache.qpid.proton4j.types.messaging.Properties;
+import org.apache.qpid.proton4j.types.messaging.Section;
 import org.messaginghub.amqperative.Message;
 
 public class ClientMessage<E> implements Message<E> {

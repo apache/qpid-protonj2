@@ -19,13 +19,13 @@ package org.messaginghub.amqperative.impl;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import org.apache.qpid.proton4j.amqp.Symbol;
-import org.apache.qpid.proton4j.amqp.messaging.Accepted;
-import org.apache.qpid.proton4j.amqp.messaging.Modified;
-import org.apache.qpid.proton4j.amqp.messaging.Rejected;
-import org.apache.qpid.proton4j.amqp.messaging.Released;
-import org.apache.qpid.proton4j.amqp.transactions.TransactionalState;
-import org.apache.qpid.proton4j.amqp.transport.ErrorCondition;
+import org.apache.qpid.proton4j.types.Symbol;
+import org.apache.qpid.proton4j.types.messaging.Accepted;
+import org.apache.qpid.proton4j.types.messaging.Modified;
+import org.apache.qpid.proton4j.types.messaging.Rejected;
+import org.apache.qpid.proton4j.types.messaging.Released;
+import org.apache.qpid.proton4j.types.transactions.TransactionalState;
+import org.apache.qpid.proton4j.types.transport.ErrorCondition;
 import org.messaginghub.amqperative.DeliveryState;
 
 /**
@@ -41,11 +41,11 @@ public abstract class ClientDeliveryState implements DeliveryState {
      *
      * @return the Proton state object that this type maps to.
      */
-    abstract org.apache.qpid.proton4j.amqp.transport.DeliveryState getProtonDeliveryState();
+    abstract org.apache.qpid.proton4j.types.transport.DeliveryState getProtonDeliveryState();
 
     //----- Create Delivery State from Proton instance
 
-    static DeliveryState fromProtonType(org.apache.qpid.proton4j.amqp.messaging.Outcome outcome) {
+    static DeliveryState fromProtonType(org.apache.qpid.proton4j.types.messaging.Outcome outcome) {
         if (outcome == null) {
             return null;
         }
@@ -63,7 +63,7 @@ public abstract class ClientDeliveryState implements DeliveryState {
         throw new IllegalArgumentException("Cannot map to unknown Proton Outcome to a DeliveryStateType: " + outcome);
     }
 
-    static DeliveryState fromProtonType(org.apache.qpid.proton4j.amqp.transport.DeliveryState state) {
+    static DeliveryState fromProtonType(org.apache.qpid.proton4j.types.transport.DeliveryState state) {
         if (state == null) {
             return null;
         }
@@ -96,7 +96,7 @@ public abstract class ClientDeliveryState implements DeliveryState {
         }
     }
 
-    static org.apache.qpid.proton4j.amqp.transport.DeliveryState asProtonType(DeliveryState state) {
+    static org.apache.qpid.proton4j.types.transport.DeliveryState asProtonType(DeliveryState state) {
         if (state == null) {
             return null;
         } else if (state instanceof ClientDeliveryState) {
@@ -131,7 +131,7 @@ public abstract class ClientDeliveryState implements DeliveryState {
         }
 
         @Override
-        org.apache.qpid.proton4j.amqp.transport.DeliveryState getProtonDeliveryState() {
+        org.apache.qpid.proton4j.types.transport.DeliveryState getProtonDeliveryState() {
             return Accepted.getInstance();
         }
 
@@ -150,7 +150,7 @@ public abstract class ClientDeliveryState implements DeliveryState {
         }
 
         @Override
-        org.apache.qpid.proton4j.amqp.transport.DeliveryState getProtonDeliveryState() {
+        org.apache.qpid.proton4j.types.transport.DeliveryState getProtonDeliveryState() {
             return Released.getInstance();
         }
 
@@ -188,7 +188,7 @@ public abstract class ClientDeliveryState implements DeliveryState {
         }
 
         @Override
-        org.apache.qpid.proton4j.amqp.transport.DeliveryState getProtonDeliveryState() {
+        org.apache.qpid.proton4j.types.transport.DeliveryState getProtonDeliveryState() {
             return rejected;
         }
 
@@ -224,7 +224,7 @@ public abstract class ClientDeliveryState implements DeliveryState {
         }
 
         @Override
-        org.apache.qpid.proton4j.amqp.transport.DeliveryState getProtonDeliveryState() {
+        org.apache.qpid.proton4j.types.transport.DeliveryState getProtonDeliveryState() {
             return modified;
         }
 
@@ -248,7 +248,7 @@ public abstract class ClientDeliveryState implements DeliveryState {
         }
 
         @Override
-        org.apache.qpid.proton4j.amqp.transport.DeliveryState getProtonDeliveryState() {
+        org.apache.qpid.proton4j.types.transport.DeliveryState getProtonDeliveryState() {
             return txnState;
         }
 

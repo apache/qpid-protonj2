@@ -16,17 +16,6 @@
  */
 package org.messaginghub.amqperative.impl;
 
-import org.apache.qpid.proton4j.amqp.Binary;
-import org.apache.qpid.proton4j.amqp.messaging.AmqpSequence;
-import org.apache.qpid.proton4j.amqp.messaging.AmqpValue;
-import org.apache.qpid.proton4j.amqp.messaging.ApplicationProperties;
-import org.apache.qpid.proton4j.amqp.messaging.Data;
-import org.apache.qpid.proton4j.amqp.messaging.DeliveryAnnotations;
-import org.apache.qpid.proton4j.amqp.messaging.Footer;
-import org.apache.qpid.proton4j.amqp.messaging.Header;
-import org.apache.qpid.proton4j.amqp.messaging.MessageAnnotations;
-import org.apache.qpid.proton4j.amqp.messaging.Properties;
-import org.apache.qpid.proton4j.amqp.messaging.Section;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonBufferAllocator;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
@@ -35,6 +24,17 @@ import org.apache.qpid.proton4j.codec.Decoder;
 import org.apache.qpid.proton4j.codec.DecoderState;
 import org.apache.qpid.proton4j.codec.Encoder;
 import org.apache.qpid.proton4j.codec.EncoderState;
+import org.apache.qpid.proton4j.types.Binary;
+import org.apache.qpid.proton4j.types.messaging.AmqpSequence;
+import org.apache.qpid.proton4j.types.messaging.AmqpValue;
+import org.apache.qpid.proton4j.types.messaging.ApplicationProperties;
+import org.apache.qpid.proton4j.types.messaging.Data;
+import org.apache.qpid.proton4j.types.messaging.DeliveryAnnotations;
+import org.apache.qpid.proton4j.types.messaging.Footer;
+import org.apache.qpid.proton4j.types.messaging.Header;
+import org.apache.qpid.proton4j.types.messaging.MessageAnnotations;
+import org.apache.qpid.proton4j.types.messaging.Properties;
+import org.apache.qpid.proton4j.types.messaging.Section;
 import org.messaginghub.amqperative.Message;
 
 /**

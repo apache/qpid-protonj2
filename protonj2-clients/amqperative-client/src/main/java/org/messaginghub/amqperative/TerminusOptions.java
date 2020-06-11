@@ -18,8 +18,8 @@ package org.messaginghub.amqperative;
 
 import java.util.Arrays;
 
-import org.apache.qpid.proton4j.amqp.messaging.Source;
-import org.apache.qpid.proton4j.amqp.messaging.Target;
+import org.apache.qpid.proton4j.types.messaging.Source;
+import org.apache.qpid.proton4j.types.messaging.Target;
 
 /**
  * Base options type for configuration of {@link Source} and {@link Target} types

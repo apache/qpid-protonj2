@@ -21,11 +21,11 @@ import static org.messaginghub.amqperative.impl.ClientConstants.INVALID_FIELD;
 
 import java.util.Map;
 
-import org.apache.qpid.proton4j.amqp.Symbol;
-import org.apache.qpid.proton4j.amqp.transactions.TransactionErrors;
-import org.apache.qpid.proton4j.amqp.transport.AmqpError;
-import org.apache.qpid.proton4j.amqp.transport.ConnectionError;
-import org.apache.qpid.proton4j.amqp.transport.ErrorCondition;
+import org.apache.qpid.proton4j.types.Symbol;
+import org.apache.qpid.proton4j.types.transactions.TransactionErrors;
+import org.apache.qpid.proton4j.types.transport.AmqpError;
+import org.apache.qpid.proton4j.types.transport.ConnectionError;
+import org.apache.qpid.proton4j.types.transport.ErrorCondition;
 import org.messaginghub.amqperative.exceptions.ClientConnectionRedirectedException;
 import org.messaginghub.amqperative.exceptions.ClientConnectionRemotelyClosedException;
 import org.messaginghub.amqperative.exceptions.ClientConnectionResourceAllocationException;

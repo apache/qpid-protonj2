@@ -36,8 +36,8 @@ import javax.net.ssl.SSLSession;
 
 import org.apache.qpid.proton4j.amqp.driver.netty.NettyTestPeer;
 import org.apache.qpid.proton4j.amqp.driver.netty.ServerOptions;
-import org.apache.qpid.proton4j.amqp.security.SaslCode;
-import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
+import org.apache.qpid.proton4j.types.security.SaslCode;
+import org.apache.qpid.proton4j.types.transport.AMQPHeader;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.messaginghub.amqperative.test.AMQPerativeTestCase;

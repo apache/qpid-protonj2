@@ -16,7 +16,7 @@
  */
 package org.messaginghub.amqperative.impl;
 
-import org.apache.qpid.proton4j.amqp.Symbol;
+import org.apache.qpid.proton4j.types.Symbol;
 
 /**
  * Constants that are used throughout the client implementation.
