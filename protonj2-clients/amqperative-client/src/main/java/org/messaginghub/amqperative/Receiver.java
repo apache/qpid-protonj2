@@ -157,6 +157,24 @@ public interface Receiver {
      */
     Session session();
 
+    /**
+     * Adds credit to the {@link Receiver} link for use when there receiver has not been configured
+     * with a credit window.  When credit window is configured credit replenishment is automatic and
+     * calling this method will result in an exception indicating that the operation is invalid.
+     *
+     * If the {@link Receiver} is draining and this method is called an exception will be thrown
+     * to indicate that credit cannot be replenished until the remote has drained the existing link
+     * credit.
+     *
+     * @param credits
+     *      The number of credits to add to the {@link Receiver} link.
+     *
+     * @return this {@link Receiver} instance.
+     *
+     * @throws ClientException if an error occurs while attempting to add new {@link Receiver} link credit.
+     */
+    Receiver addCredit(int credits) throws ClientException;
+
     // TODO - Receive calls throw ClientException to better describe why it failed
 
     /**
@@ -194,7 +212,5 @@ public interface Receiver {
     Receiver onMessage(Consumer<Delivery> handler);
 
     Receiver onMessage(Consumer<Delivery> handler, ExecutorService executor);
-
-    Receiver addCredit(int credits) throws IllegalStateException;
 
 }

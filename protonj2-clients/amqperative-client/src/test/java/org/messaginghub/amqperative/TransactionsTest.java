@@ -28,6 +28,7 @@ import java.util.concurrent.TimeUnit;
 import org.apache.qpid.proton4j.amqp.Binary;
 import org.apache.qpid.proton4j.amqp.driver.netty.NettyTestPeer;
 import org.apache.qpid.proton4j.amqp.messaging.Accepted;
+import org.apache.qpid.proton4j.amqp.messaging.AmqpValue;
 import org.apache.qpid.proton4j.amqp.transactions.TransactionalState;
 import org.apache.qpid.proton4j.amqp.transport.Role;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
@@ -245,6 +246,61 @@ public class TransactionsTest extends AMQPerativeTestCase {
 
             session.close();
             connection.close().get(10, TimeUnit.SECONDS);
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test(timeout = 20_000)
+    public void testReceiveMessageInsideOfTransaction() throws Exception {
+        final byte[] txnId = new byte[] { 0, 1, 2, 3 };
+
+        try (NettyTestPeer peer = new NettyTestPeer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().withRole(Role.RECEIVER).respond();
+            peer.expectFlow();
+            peer.start();
+
+            final URI remoteURI = peer.getServerURI();
+            final ProtonBuffer payload = createEncodedMessage(new AmqpValue("Hello World"));
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            Session session = connection.openSession();
+            Receiver receiver = session.openReceiver("test-queue").openFuture().get();
+
+            peer.expectCoordinatorAttach().respond();
+            peer.remoteFlow().withLinkCredit(2).queue();
+            peer.expectDeclare().accept(txnId);
+            peer.remoteTransfer().withHandle(0)
+                                 .withDeliveryId(0)
+                                 .withDeliveryTag(new byte[] { 1 })
+                                 .withMore(false)
+                                 .withMessageFormat(0)
+                                 .withPayload(payload).queue();
+            peer.expectDisposition().withSettled(true)
+                                    .withState(new TransactionalState().setOutcome(Accepted.getInstance()).setTxnId(new Binary(txnId)));
+            peer.expectDischarge().withFail(false).withTxnId(txnId).accept();
+            peer.expectDetach().respond();
+            peer.expectClose().respond();
+
+            session.begin();
+
+            Delivery delivery = receiver.receive(100);
+            assertNotNull(delivery);
+            Message<?> received = delivery.message();
+            assertNotNull(received);
+            assertTrue(received.body() instanceof String);
+            String value = (String) received.body();
+            assertEquals("Hello World", value);
+
+            session.commit();
+            receiver.close();
+            connection.close().get();
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }

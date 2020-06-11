@@ -4,6 +4,7 @@ import static org.hamcrest.Matchers.anyOf;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -20,18 +21,15 @@ import java.util.concurrent.TimeUnit;
 import org.apache.qpid.proton4j.amqp.driver.netty.NettyTestPeer;
 import org.apache.qpid.proton4j.amqp.messaging.Accepted;
 import org.apache.qpid.proton4j.amqp.messaging.AmqpValue;
-import org.apache.qpid.proton4j.amqp.messaging.Section;
 import org.apache.qpid.proton4j.amqp.messaging.Source;
 import org.apache.qpid.proton4j.amqp.transport.AmqpError;
 import org.apache.qpid.proton4j.amqp.transport.ReceiverSettleMode;
 import org.apache.qpid.proton4j.amqp.transport.Role;
 import org.apache.qpid.proton4j.amqp.transport.SenderSettleMode;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
-import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
-import org.apache.qpid.proton4j.codec.CodecFactory;
-import org.apache.qpid.proton4j.codec.Encoder;
 import org.hamcrest.Matcher;
 import org.junit.Test;
+import org.messaginghub.amqperative.exceptions.ClientIllegalStateException;
 import org.messaginghub.amqperative.exceptions.ClientOperationTimedOutException;
 import org.messaginghub.amqperative.exceptions.ClientSecurityException;
 import org.messaginghub.amqperative.impl.ClientException;
@@ -301,7 +299,8 @@ public class ReceiverTest extends AMQPerativeTestCase {
 
             // Drain all the credit
             peer.expectFlow().withDrain(true).withLinkCredit(credit).withDeliveryCount(0)
-                   .respond().withDrain(true).withLinkCredit(0).withDeliveryCount(credit);
+                             .respond()
+                             .withDrain(true).withLinkCredit(0).withDeliveryCount(credit);
 
             Future<Receiver> draining = receiver.drain();
             draining.get(5, TimeUnit.SECONDS);
@@ -314,6 +313,89 @@ public class ReceiverTest extends AMQPerativeTestCase {
         }
     }
 
+    @Test(timeout = 20000)
+    public void testAddCreditFailsWhileDrainPending() throws Exception {
+        try (NettyTestPeer peer = new NettyTestPeer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().withRole(Role.RECEIVER).respond();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            Session session = connection.openSession();
+            Receiver receiver = session.openReceiver("test-queue", new ReceiverOptions().creditWindow(0));
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+
+            // Add some credit, verify not draining
+            int credit = 7;
+            Matcher<Boolean> drainMatcher = anyOf(equalTo(false), nullValue());
+            peer.expectFlow().withDrain(drainMatcher).withLinkCredit(credit).withDeliveryCount(0);
+
+            receiver.addCredit(credit);
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+
+            // Drain all the credit
+            peer.expectFlow().withDrain(true).withLinkCredit(credit).withDeliveryCount(0);
+            peer.expectClose().respond();
+
+            Future<Receiver> draining = receiver.drain();
+            assertFalse(draining.isDone());
+
+            try {
+                receiver.addCredit(1);
+                fail("Should not allow add credit when drain is pending");
+            } catch (ClientIllegalStateException ise) {
+                // Expected
+            }
+
+            connection.close().get();
+
+            peer.waitForScriptToComplete(1, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test(timeout = 20000)
+    public void testAddCreditFailsWhenCreditWindowEnabled() throws Exception {
+        try (NettyTestPeer peer = new NettyTestPeer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectAttach().withRole(Role.RECEIVER).respond();
+            peer.expectFlow().withLinkCredit(10);
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            Session session = connection.openSession();
+            Receiver receiver = session.openReceiver("test-queue", new ReceiverOptions().creditWindow(10));
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+            peer.expectClose();
+
+            try {
+                receiver.addCredit(1);
+                fail("Should not allow add credit when credit window configured");
+            } catch (ClientIllegalStateException ise) {
+                // Expected
+            }
+
+            connection.close();
+
+            peer.waitForScriptToComplete(1, TimeUnit.SECONDS);
+        }
+    }
     @Test(timeout = 30000)
     public void testCreateDynamicReceiver() throws Exception {
         try (NettyTestPeer peer = new NettyTestPeer()) {
@@ -1124,12 +1206,5 @@ public class ReceiverTest extends AMQPerativeTestCase {
 
             peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
         }
-    }
-
-    private ProtonBuffer createEncodedMessage(Section body) {
-        Encoder encoder = CodecFactory.getEncoder();
-        ProtonBuffer buffer = new ProtonByteBufferAllocator().allocate();
-        encoder.writeObject(buffer, encoder.newEncoderState(), body);
-        return buffer;
     }
 }

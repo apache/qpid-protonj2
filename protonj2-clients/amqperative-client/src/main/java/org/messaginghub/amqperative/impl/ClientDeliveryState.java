@@ -112,7 +112,7 @@ public abstract class ClientDeliveryState implements DeliveryState {
                 case MODIFIED:
                     return new Modified(); // TODO - How do we aggregate the different values into one DeliveryState Object
                 case TRANSACTIONAL:
-                    // TODO
+                    throw new IllegalArgumentException("Cannot manually enlist delivery in AMQP Transactions");
                 default:
                     throw new UnsupportedOperationException("Client does not support the given Delivery State type: " + state.getType());
             }

@@ -26,6 +26,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 import java.util.function.Consumer;
 
+import org.apache.qpid.proton4j.amqp.messaging.Outcome;
 import org.apache.qpid.proton4j.amqp.messaging.Released;
 import org.apache.qpid.proton4j.amqp.transport.DeliveryState;
 import org.apache.qpid.proton4j.engine.IncomingDelivery;
@@ -37,6 +38,7 @@ import org.messaginghub.amqperative.ReceiverOptions;
 import org.messaginghub.amqperative.Session;
 import org.messaginghub.amqperative.Source;
 import org.messaginghub.amqperative.Target;
+import org.messaginghub.amqperative.exceptions.ClientIllegalStateException;
 import org.messaginghub.amqperative.exceptions.ClientOperationTimedOutException;
 import org.messaginghub.amqperative.exceptions.ClientResourceClosedException;
 import org.messaginghub.amqperative.futures.ClientFuture;
@@ -134,11 +136,6 @@ public class ClientReceiver implements Receiver {
     public Delivery receive(long timeout) throws IllegalStateException {
         checkClosed();
         try {
-            // TODO:
-            // Auto accept / settle happens out of band using this approach vs requesting
-            // the delivery by executing in the IO thread.  Depending on how we ultimately
-            // want this to behave we might need to make some changes here.
-
             ClientDelivery delivery = messageQueue.dequeue(timeout);
             if (delivery != null && options.autoAccept()) {
                 delivery.disposition(org.messaginghub.amqperative.DeliveryState.accepted(), options.autoSettle());
@@ -149,18 +146,13 @@ public class ClientReceiver implements Receiver {
             return delivery;
         } catch (InterruptedException e) {
             Thread.interrupted();
-            throw new IllegalStateException(e);//TODO: better exception
+            throw new IllegalStateException(e);
         }
     }
 
     @Override
     public Delivery tryReceive() throws IllegalStateException {
         checkClosed();
-
-        // TODO:
-        // Auto accept / settle happens out of band using this approach vs requesting
-        // the delivery by executing in the IO thread.  Depending on how we ultimately
-        // want this to behave we might need to make some changes here.
 
         Delivery delivery = messageQueue.dequeueNoWait();
         if (delivery != null && options.autoAccept()) {
@@ -190,7 +182,11 @@ public class ClientReceiver implements Receiver {
                     int additionalCredit = creditWindow - potentialPrefetch;
 
                     LOG.trace("Consumer granting additional credit: {}", additionalCredit);
-                    protonReceiver.addCredit(additionalCredit);
+                    try {
+                        protonReceiver.addCredit(additionalCredit);
+                    } catch (Exception ex) {
+                        LOG.debug("Error caught during credit top-up", ex);
+                    }
                 }
             }
         }
@@ -261,40 +257,60 @@ public class ClientReceiver implements Receiver {
     }
 
     @Override
-    public Receiver addCredit(int credits) throws IllegalStateException {
+    public Receiver addCredit(int credits) throws IllegalStateException, ClientException {
         checkClosed();
+        ClientFuture<Receiver> creditAdded = session.getFutureFactory().createFuture();
 
         executor.execute(() -> {
-            // TODO - Are we draining?  If so you've done something wrong...bang!
-            protonReceiver.addCredit(credits);
+            checkClosed();
+
+            if (options.creditWindow() != 0) {
+                creditAdded.failed(new ClientIllegalStateException("Cannot add credit when a credit window has been configured"));
+            } else if (protonReceiver.isDraining()) {
+                creditAdded.failed(new ClientIllegalStateException("Cannot add credit while a drain is pending"));
+            } else {
+                try {
+                    protonReceiver.addCredit(credits);
+                    creditAdded.complete(this);
+                } catch (Exception ex) {
+                    creditAdded.failed(ClientExceptionSupport.createNonFatalOrPassthrough(ex));
+                }
+            }
         });
 
-        return this;
+        return session.request(creditAdded, options.requestTimeout(), TimeUnit.MILLISECONDS);
     }
 
     @Override
     public Future<Receiver> drain() {
         checkClosed();
-        ClientFuture<Receiver> drained = session.getFutureFactory().createFuture();
+        ClientFuture<Receiver> drainComplete = session.getFutureFactory().createFuture();
 
         executor.execute(() -> {
+            checkClosed();
+
             if (protonReceiver.isDraining()) {
-                drained.failed(new ClientException("Already draining"));
+                drainComplete.failed(new ClientException("Already draining"));
                 return;
             }
 
             if (protonReceiver.getCredit() == 0) {
-                drained.complete(this);
+                drainComplete.complete(this);
                 return;
             }
 
-            // TODO: Maybe proton should be returning something here to indicate drain started.
-            if (protonReceiver.drain()) {
-                drainingFuture = drained;
+            try {
+                if (protonReceiver.drain()) {
+                    drainingFuture = drainComplete;
+                } else {
+                    drainComplete.complete(this);
+                }
+            } catch (Exception ex) {
+                drainComplete.failed(ClientExceptionSupport.createNonFatalOrPassthrough(ex));
             }
         });
 
-        return drained;
+        return drainComplete;
     }
 
     @Override
@@ -320,7 +336,14 @@ public class ClientReceiver implements Receiver {
     void disposition(IncomingDelivery delivery, DeliveryState state, boolean settled) {
         checkClosed();
         executor.execute(() -> {
-            delivery.disposition(state, settled);
+            checkClosed();
+
+            if (session.getTransactionContext().isInTransaction()) {
+                delivery.disposition(session.getTransactionContext().enlistAcknowledgeInCurrentTransaction(this, (Outcome) state), settled);
+            } else {
+                delivery.disposition(state, settled);
+            }
+
             replenishCreditIfNeeded();
         });
     }
@@ -418,6 +441,8 @@ public class ClientReceiver implements Receiver {
             if (receiver.getRemoteTarget() != null) {
                 remoteTarget = new RemoteTarget(receiver.getRemoteTarget());
             }
+
+            replenishCreditIfNeeded();
 
             openFuture.complete(this);
             LOG.trace("Receiver opened successfully: {}", receiverId);
