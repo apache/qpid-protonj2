@@ -35,8 +35,8 @@ import java.util.Random;
 import java.util.Set;
 
 import org.apache.qpid.proton4j.amqp.UnsignedInteger;
-import org.apache.qpid.proton4j.common.logging.ProtonLogger;
-import org.apache.qpid.proton4j.common.logging.ProtonLoggerFactory;
+import org.apache.qpid.proton4j.logging.ProtonLogger;
+import org.apache.qpid.proton4j.logging.ProtonLoggerFactory;
 import org.junit.Before;
 import org.junit.Test;
 

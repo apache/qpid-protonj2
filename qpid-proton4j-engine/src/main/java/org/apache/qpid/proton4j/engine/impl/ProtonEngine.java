@@ -27,8 +27,6 @@ import org.apache.qpid.proton4j.amqp.transport.ErrorCondition;
 import org.apache.qpid.proton4j.amqp.transport.Performative;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
-import org.apache.qpid.proton4j.common.logging.ProtonLogger;
-import org.apache.qpid.proton4j.common.logging.ProtonLoggerFactory;
 import org.apache.qpid.proton4j.engine.ConnectionState;
 import org.apache.qpid.proton4j.engine.Engine;
 import org.apache.qpid.proton4j.engine.EnginePipeline;
@@ -43,6 +41,8 @@ import org.apache.qpid.proton4j.engine.exceptions.EngineStartedException;
 import org.apache.qpid.proton4j.engine.exceptions.EngineStateException;
 import org.apache.qpid.proton4j.engine.exceptions.IdleTimeoutException;
 import org.apache.qpid.proton4j.engine.exceptions.ProtonExceptionSupport;
+import org.apache.qpid.proton4j.logging.ProtonLogger;
+import org.apache.qpid.proton4j.logging.ProtonLoggerFactory;
 
 /**
  * The default proton4j Engine implementation.

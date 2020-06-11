@@ -26,8 +26,6 @@ import org.apache.qpid.proton4j.codec.CodecFactory;
 import org.apache.qpid.proton4j.codec.DecodeException;
 import org.apache.qpid.proton4j.codec.Decoder;
 import org.apache.qpid.proton4j.codec.DecoderState;
-import org.apache.qpid.proton4j.common.logging.ProtonLogger;
-import org.apache.qpid.proton4j.common.logging.ProtonLoggerFactory;
 import org.apache.qpid.proton4j.engine.EmptyFrame;
 import org.apache.qpid.proton4j.engine.EngineHandler;
 import org.apache.qpid.proton4j.engine.EngineHandlerContext;
@@ -39,6 +37,8 @@ import org.apache.qpid.proton4j.engine.exceptions.EngineFailedException;
 import org.apache.qpid.proton4j.engine.exceptions.FrameDecodingException;
 import org.apache.qpid.proton4j.engine.exceptions.MalformedAMQPHeaderException;
 import org.apache.qpid.proton4j.engine.exceptions.ProtonException;
+import org.apache.qpid.proton4j.logging.ProtonLogger;
+import org.apache.qpid.proton4j.logging.ProtonLoggerFactory;
 
 /**
  * Handler used to parse incoming frame data input into the engine

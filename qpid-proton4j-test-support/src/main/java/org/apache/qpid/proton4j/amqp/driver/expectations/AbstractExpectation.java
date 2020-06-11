@@ -39,9 +39,9 @@ import org.apache.qpid.proton4j.amqp.driver.codec.transport.Transfer;
 import org.apache.qpid.proton4j.amqp.driver.exceptions.UnexpectedPerformativeError;
 import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
-import org.apache.qpid.proton4j.common.logging.ProtonLogger;
-import org.apache.qpid.proton4j.common.logging.ProtonLoggerFactory;
 import org.hamcrest.Matcher;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Abstract base for expectations that need to handle matchers against fields in the
@@ -51,7 +51,7 @@ import org.hamcrest.Matcher;
  */
 public abstract class AbstractExpectation<T extends ListDescribedType> implements ScriptedExpectation {
 
-    private static final ProtonLogger LOG = ProtonLoggerFactory.getLogger(AbstractExpectation.class);
+    private static final Logger LOG = LoggerFactory.getLogger(AMQPTestDriver.class);
 
     public static int ANY_CHANNEL = -1;
 

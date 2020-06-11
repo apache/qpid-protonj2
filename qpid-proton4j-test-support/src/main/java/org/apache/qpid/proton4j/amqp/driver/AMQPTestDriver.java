@@ -34,15 +34,15 @@ import org.apache.qpid.proton4j.amqp.driver.codec.transport.PerformativeDescribe
 import org.apache.qpid.proton4j.amqp.driver.exceptions.UnexpectedPerformativeError;
 import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
-import org.apache.qpid.proton4j.common.logging.ProtonLogger;
-import org.apache.qpid.proton4j.common.logging.ProtonLoggerFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Test driver object used to drive inputs and inspect outputs of an Engine.
  */
 public class AMQPTestDriver implements Consumer<ProtonBuffer> {
 
-    private static final ProtonLogger LOG = ProtonLoggerFactory.getLogger(AMQPTestDriver.class);
+    private static final Logger LOG = LoggerFactory.getLogger(AMQPTestDriver.class);
 
     private final FrameDecoder frameParser;
     private final FrameEncoder frameEncoder;

@@ -23,12 +23,12 @@ import org.apache.qpid.proton4j.amqp.driver.codec.transport.PerformativeDescribe
 import org.apache.qpid.proton4j.amqp.transport.AMQPHeader;
 import org.apache.qpid.proton4j.buffer.ProtonBuffer;
 import org.apache.qpid.proton4j.buffer.ProtonByteBufferAllocator;
-import org.apache.qpid.proton4j.common.logging.ProtonLogger;
-import org.apache.qpid.proton4j.common.logging.ProtonLoggerFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 class FrameDecoder {
 
-    private static final ProtonLogger LOG = ProtonLoggerFactory.getLogger(FrameDecoder.class);
+    private static final Logger LOG = LoggerFactory.getLogger(AMQPTestDriver.class);
 
     public static final byte AMQP_FRAME_TYPE = (byte) 0;
     public static final byte SASL_FRAME_TYPE = (byte) 1;
