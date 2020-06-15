@@ -25,7 +25,7 @@ import java.util.concurrent.Executors;
 
 import org.apache.activemq.broker.jmx.QueueViewMBean;
 import org.junit.Test;
-import org.messaginghub.amqperative.impl.ClientException;
+import org.messaginghub.amqperative.exceptions.ClientException;
 import org.messaginghub.amqperative.support.AMQPerativeTestSupport;
 import org.messaginghub.amqperative.support.Wait;
 

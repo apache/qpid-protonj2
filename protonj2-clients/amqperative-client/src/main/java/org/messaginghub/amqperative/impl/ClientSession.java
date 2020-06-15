@@ -38,6 +38,7 @@ import org.messaginghub.amqperative.Sender;
 import org.messaginghub.amqperative.SenderOptions;
 import org.messaginghub.amqperative.Session;
 import org.messaginghub.amqperative.SessionOptions;
+import org.messaginghub.amqperative.exceptions.ClientException;
 import org.messaginghub.amqperative.exceptions.ClientOperationTimedOutException;
 import org.messaginghub.amqperative.exceptions.ClientResourceClosedException;
 import org.messaginghub.amqperative.futures.AsyncResult;

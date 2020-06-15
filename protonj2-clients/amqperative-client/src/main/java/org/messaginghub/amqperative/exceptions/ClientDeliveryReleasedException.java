@@ -16,8 +16,6 @@
  */
 package org.messaginghub.amqperative.exceptions;
 
-import org.messaginghub.amqperative.impl.ClientException;
-
 /**
  * Thrown when a send fails because the remote released the delivery
  */

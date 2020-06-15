@@ -16,7 +16,7 @@
  */
 package org.messaginghub.amqperative;
 
-import org.messaginghub.amqperative.impl.ClientException;
+import org.messaginghub.amqperative.exceptions.ClientException;
 
 /**
  * Incoming Delivery type that provides access to the message and the delivery

@@ -16,8 +16,6 @@
  */
 package org.messaginghub.amqperative.exceptions;
 
-import org.messaginghub.amqperative.impl.ClientException;
-
 /**
  * Indicates that an operation in the provider timed out waiting for completion
  */

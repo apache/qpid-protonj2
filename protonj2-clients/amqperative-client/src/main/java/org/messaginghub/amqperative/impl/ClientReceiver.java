@@ -38,6 +38,7 @@ import org.messaginghub.amqperative.ReceiverOptions;
 import org.messaginghub.amqperative.Session;
 import org.messaginghub.amqperative.Source;
 import org.messaginghub.amqperative.Target;
+import org.messaginghub.amqperative.exceptions.ClientException;
 import org.messaginghub.amqperative.exceptions.ClientIllegalStateException;
 import org.messaginghub.amqperative.exceptions.ClientOperationTimedOutException;
 import org.messaginghub.amqperative.exceptions.ClientResourceClosedException;

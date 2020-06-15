@@ -22,6 +22,7 @@ import org.messaginghub.amqperative.Delivery;
 import org.messaginghub.amqperative.DeliveryState;
 import org.messaginghub.amqperative.Message;
 import org.messaginghub.amqperative.Receiver;
+import org.messaginghub.amqperative.exceptions.ClientException;
 import org.messaginghub.amqperative.exceptions.ClientPartialMessageException;
 
 /**

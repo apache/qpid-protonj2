@@ -34,7 +34,7 @@ import org.messaginghub.amqperative.ReceiverOptions;
 import org.messaginghub.amqperative.Sender;
 import org.messaginghub.amqperative.SenderOptions;
 import org.messaginghub.amqperative.Tracker;
-import org.messaginghub.amqperative.impl.ClientException;
+import org.messaginghub.amqperative.exceptions.ClientException;
 
 public class Samples {
 

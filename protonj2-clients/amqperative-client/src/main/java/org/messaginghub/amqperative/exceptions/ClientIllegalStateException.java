@@ -16,8 +16,6 @@
  */
 package org.messaginghub.amqperative.exceptions;
 
-import org.messaginghub.amqperative.impl.ClientException;
-
 public class ClientIllegalStateException extends ClientException {
 
     private static final long serialVersionUID = -2188225056209312580L;

@@ -16,8 +16,6 @@
  */
 package org.messaginghub.amqperative.exceptions;
 
-import org.messaginghub.amqperative.impl.ClientException;
-
 public class ClientInvalidDestinationException extends ClientException {
 
     private static final long serialVersionUID = 2356310049638567033L;

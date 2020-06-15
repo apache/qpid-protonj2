@@ -53,6 +53,7 @@ import org.messaginghub.amqperative.SessionOptions;
 import org.messaginghub.amqperative.Tracker;
 import org.messaginghub.amqperative.exceptions.ClientClosedException;
 import org.messaginghub.amqperative.exceptions.ClientConnectionRemotelyClosedException;
+import org.messaginghub.amqperative.exceptions.ClientException;
 import org.messaginghub.amqperative.exceptions.ClientOperationTimedOutException;
 import org.messaginghub.amqperative.exceptions.ClientUnsupportedOperationException;
 import org.messaginghub.amqperative.futures.AsyncResult;

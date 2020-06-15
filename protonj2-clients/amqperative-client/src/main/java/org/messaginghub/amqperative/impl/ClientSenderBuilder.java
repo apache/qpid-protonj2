@@ -27,6 +27,7 @@ import org.messaginghub.amqperative.SenderOptions;
 import org.messaginghub.amqperative.SessionOptions;
 import org.messaginghub.amqperative.SourceOptions;
 import org.messaginghub.amqperative.TargetOptions;
+import org.messaginghub.amqperative.exceptions.ClientException;
 
 /**
  * Session owned builder of {@link Sender} objects.

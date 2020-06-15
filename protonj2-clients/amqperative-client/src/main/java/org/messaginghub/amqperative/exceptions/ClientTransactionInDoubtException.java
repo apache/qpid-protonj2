@@ -16,8 +16,6 @@
  */
 package org.messaginghub.amqperative.exceptions;
 
-import org.messaginghub.amqperative.impl.ClientException;
-
 /**
  * Thrown when a transaction operation fails and state is now unknown.
  */

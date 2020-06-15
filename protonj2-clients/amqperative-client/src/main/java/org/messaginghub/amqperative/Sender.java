@@ -19,7 +19,7 @@ package org.messaginghub.amqperative;
 import java.util.Map;
 import java.util.concurrent.Future;
 
-import org.messaginghub.amqperative.impl.ClientException;
+import org.messaginghub.amqperative.exceptions.ClientException;
 
 public interface Sender {
 

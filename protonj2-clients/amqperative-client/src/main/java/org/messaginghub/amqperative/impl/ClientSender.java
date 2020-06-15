@@ -40,6 +40,7 @@ import org.messaginghub.amqperative.SenderOptions;
 import org.messaginghub.amqperative.Source;
 import org.messaginghub.amqperative.Target;
 import org.messaginghub.amqperative.Tracker;
+import org.messaginghub.amqperative.exceptions.ClientException;
 import org.messaginghub.amqperative.exceptions.ClientOperationTimedOutException;
 import org.messaginghub.amqperative.exceptions.ClientResourceClosedException;
 import org.messaginghub.amqperative.exceptions.ClientSendTimedOutException;

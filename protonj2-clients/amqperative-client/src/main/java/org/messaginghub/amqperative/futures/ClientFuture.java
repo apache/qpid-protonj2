@@ -22,7 +22,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 
-import org.messaginghub.amqperative.impl.ClientException;
+import org.messaginghub.amqperative.exceptions.ClientException;
 
 /**
  * Asynchronous Client Future class.

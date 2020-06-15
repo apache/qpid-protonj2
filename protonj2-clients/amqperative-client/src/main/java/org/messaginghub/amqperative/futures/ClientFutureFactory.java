@@ -18,7 +18,7 @@ package org.messaginghub.amqperative.futures;
 
 import java.util.concurrent.Future;
 
-import org.messaginghub.amqperative.impl.ClientException;
+import org.messaginghub.amqperative.exceptions.ClientException;
 
 /**
  * Factory for client future instances that will create specific versions based on

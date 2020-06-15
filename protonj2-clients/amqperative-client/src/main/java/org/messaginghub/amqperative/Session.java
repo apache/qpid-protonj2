@@ -19,7 +19,7 @@ package org.messaginghub.amqperative;
 import java.util.Map;
 import java.util.concurrent.Future;
 
-import org.messaginghub.amqperative.impl.ClientException;
+import org.messaginghub.amqperative.exceptions.ClientException;
 
 /**
  * Session object used to create {@link Sender} and {@link Receiver} instances.

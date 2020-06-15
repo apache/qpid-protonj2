@@ -16,8 +16,6 @@
  */
 package org.messaginghub.amqperative.exceptions;
 
-import org.messaginghub.amqperative.impl.ClientException;
-
 public class ClientResourceNotFoundException extends ClientException {
 
     private static final long serialVersionUID = -6757753762024560537L;

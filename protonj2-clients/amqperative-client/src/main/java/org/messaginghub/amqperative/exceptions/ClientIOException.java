@@ -16,8 +16,6 @@
  */
 package org.messaginghub.amqperative.exceptions;
 
-import org.messaginghub.amqperative.impl.ClientException;
-
 /**
  * Exception type that is thrown when the provider has encountered an unrecoverable error.
  */

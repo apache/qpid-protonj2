@@ -36,6 +36,7 @@ import org.apache.qpid.proton4j.types.messaging.MessageAnnotations;
 import org.apache.qpid.proton4j.types.messaging.Properties;
 import org.apache.qpid.proton4j.types.messaging.Section;
 import org.messaginghub.amqperative.Message;
+import org.messaginghub.amqperative.exceptions.ClientException;
 
 /**
  * Support methods dealing with Message types and encode or decode operations.

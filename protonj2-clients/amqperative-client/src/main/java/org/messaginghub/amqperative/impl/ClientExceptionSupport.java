@@ -16,6 +16,7 @@
  */
 package org.messaginghub.amqperative.impl;
 
+import org.messaginghub.amqperative.exceptions.ClientException;
 import org.messaginghub.amqperative.exceptions.ClientIOException;
 
 public class ClientExceptionSupport {

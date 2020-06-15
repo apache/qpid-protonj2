@@ -16,8 +16,6 @@
  */
 package org.messaginghub.amqperative.exceptions;
 
-import org.messaginghub.amqperative.impl.ClientException;
-
 /**
  * Thrown in cases where an action was requested that cannot be performed because
  * the delivery being operated on is only the partial Transfer payload.

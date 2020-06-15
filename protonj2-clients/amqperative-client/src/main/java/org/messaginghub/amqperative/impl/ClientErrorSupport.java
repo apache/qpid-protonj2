@@ -31,6 +31,7 @@ import org.messaginghub.amqperative.exceptions.ClientConnectionRemotelyClosedExc
 import org.messaginghub.amqperative.exceptions.ClientConnectionResourceAllocationException;
 import org.messaginghub.amqperative.exceptions.ClientConnectionResourceNotFoundException;
 import org.messaginghub.amqperative.exceptions.ClientConnectionSecurityException;
+import org.messaginghub.amqperative.exceptions.ClientException;
 import org.messaginghub.amqperative.exceptions.ClientInvalidContainerIDException;
 import org.messaginghub.amqperative.exceptions.ClientInvalidDestinationException;
 import org.messaginghub.amqperative.exceptions.ClientResourceAllocationException;

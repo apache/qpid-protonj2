@@ -24,7 +24,7 @@ import static org.junit.Assert.fail;
 
 import org.junit.Test;
 import org.messaginghub.amqperative.exceptions.ClientClosedException;
-import org.messaginghub.amqperative.impl.ClientException;
+import org.messaginghub.amqperative.exceptions.ClientException;
 import org.messaginghub.amqperative.test.AMQPerativeTestCase;
 
 /**

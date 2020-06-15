@@ -29,6 +29,7 @@ import org.messaginghub.amqperative.ClientOptions;
 import org.messaginghub.amqperative.Connection;
 import org.messaginghub.amqperative.ConnectionOptions;
 import org.messaginghub.amqperative.exceptions.ClientClosedException;
+import org.messaginghub.amqperative.exceptions.ClientException;
 import org.messaginghub.amqperative.futures.ClientFutureFactory;
 import org.messaginghub.amqperative.util.IdGenerator;
 import org.slf4j.Logger;

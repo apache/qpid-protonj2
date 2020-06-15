@@ -16,8 +16,6 @@
  */
 package org.messaginghub.amqperative.exceptions;
 
-import org.messaginghub.amqperative.impl.ClientException;
-
 /**
  * Security Exception used to indicate a security violation has occurred that is non-fatal
  * such as link creation blocked because user does not have access etc.

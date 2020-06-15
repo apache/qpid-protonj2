@@ -16,7 +16,7 @@
  */
 package org.messaginghub.amqperative.futures;
 
-import org.messaginghub.amqperative.impl.ClientException;
+import org.messaginghub.amqperative.exceptions.ClientException;
 
 /**
  * Defines a result interface for Asynchronous operations.

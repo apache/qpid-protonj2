@@ -16,7 +16,7 @@
  */
 package org.messaginghub.amqperative.futures;
 
-import org.messaginghub.amqperative.impl.ClientException;
+import org.messaginghub.amqperative.exceptions.ClientException;
 
 /**
  * Simple NoOp implementation used when the result of the operation does not matter.
