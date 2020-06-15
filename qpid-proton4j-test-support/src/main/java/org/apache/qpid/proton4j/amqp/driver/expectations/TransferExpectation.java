@@ -80,6 +80,10 @@ public class TransferExpectation extends AbstractExpectation<Transfer> {
         return response;
     }
 
+    public DispositionInjectAction reject() {
+        return reject(null);
+    }
+
     public DispositionInjectAction reject(ErrorCondition error) {
         response = new DispositionInjectAction(driver);
         response.withSettled(true);
@@ -87,6 +91,10 @@ public class TransferExpectation extends AbstractExpectation<Transfer> {
 
         driver.addScriptedElement(response);
         return response;
+    }
+
+    public DispositionInjectAction modify(boolean failed) {
+        return modify(failed, false);
     }
 
     public DispositionInjectAction modify(boolean failed, boolean undeliverable) {
