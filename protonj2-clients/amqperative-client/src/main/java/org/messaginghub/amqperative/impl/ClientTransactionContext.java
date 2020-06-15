@@ -261,7 +261,34 @@ public class ClientTransactionContext {
     }
 
     private void handleCoordinatorClose(TransactionController controller) {
-        // TODO - Handle closed due to some error
+        if (currentTxn != null) {
+            ClientException cause = ClientErrorSupport.convertToNonFatalException(controller.getRemoteCondition());
+            ClientFuture<Session> future = null;
+
+            switch (currentTxn.getState()) {
+                case IDLE:
+                case DECLARING:
+                    cause = new ClientTransactionInDoubtException(cause.getMessage(), cause);
+                    future = currentTxn.getAttachments().get(DECLARE_FUTURE_NAME);
+                    break;
+                case DISCHARGING:
+                    if (!(cause instanceof ClientTransactionRolledBackException)) {
+                        cause = new ClientTransactionRolledBackException(cause.getMessage(), cause);
+                    }
+                    future = currentTxn.getAttachments().get(DISCHARGE_FUTURE_NAME);
+                    break;
+                case DECLARED:
+                case DISCHARGED:
+                case FAILED:
+                default:
+                    break;
+            }
+
+            // Any pending operation needs to be signaled that it cannot complete due to remote closing us.
+            if (future != null) {
+                future.failed(cause);
+            }
+        }
 
         this.cachedReceiverOutcome = null;
         this.cachedSenderOutcome = null;

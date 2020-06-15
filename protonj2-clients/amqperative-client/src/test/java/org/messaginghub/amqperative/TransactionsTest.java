@@ -34,8 +34,10 @@ import org.apache.qpid.proton4j.types.messaging.Modified;
 import org.apache.qpid.proton4j.types.messaging.Rejected;
 import org.apache.qpid.proton4j.types.messaging.Released;
 import org.apache.qpid.proton4j.types.transactions.TransactionalState;
+import org.apache.qpid.proton4j.types.transport.AmqpError;
 import org.apache.qpid.proton4j.types.transport.Role;
 import org.junit.Test;
+import org.messaginghub.amqperative.exceptions.ClientException;
 import org.messaginghub.amqperative.exceptions.ClientIllegalStateException;
 import org.messaginghub.amqperative.exceptions.ClientOperationTimedOutException;
 import org.messaginghub.amqperative.exceptions.ClientTransactionRolledBackException;
@@ -109,6 +111,131 @@ public class TransactionsTest extends AMQPerativeTestCase {
                 fail("Begin should have timoued out after no response.");
             } catch (ClientOperationTimedOutException expected) {
                 // Expect this to time out.
+            }
+
+            session.close();
+            connection.close().get();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test(timeout = 20_000)
+    public void testExceptionOnBeginWhenCoordinatorLinkRefused() throws Exception {
+        final String errorMessage = "CoordinatorLinkRefusal-breadcrumb";
+
+        try (NettyTestPeer peer = new NettyTestPeer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            // TODO - Test driver should make this easier to reject the attach
+            peer.expectCoordinatorAttach().respond().withNullTarget();
+            peer.remoteDetach().withClosed(true)
+                               .withErrorCondition(AmqpError.NOT_IMPLEMENTED, errorMessage).queue();
+            peer.expectEnd().respond();
+            peer.expectClose().respond();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Sender test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            Session session = connection.openSession().openFuture().get();
+
+            try {
+                session.begin();
+                fail("Begin should have failed after link closed.");
+            } catch (ClientException expected) {
+                // Expect this to time out.
+                String message = expected.getMessage();
+                assertTrue(message.contains(errorMessage));
+            }
+
+            session.close();
+            connection.close().get();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test(timeout = 20_000)
+    public void testExceptionOnBeginWhenCoordinatorLinkClosedAfterDeclare() throws Exception {
+        final String errorMessage = "CoordinatorLinkClosed-breadcrumb";
+
+        try (NettyTestPeer peer = new NettyTestPeer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectCoordinatorAttach().respond();
+            peer.remoteFlow().withLinkCredit(2).queue();
+            peer.expectDeclare();
+            peer.remoteDetach().withClosed(true)
+                               .withErrorCondition(AmqpError.NOT_IMPLEMENTED, errorMessage).queue();
+            peer.expectEnd().respond();
+            peer.expectClose().respond();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Sender test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            Session session = connection.openSession().openFuture().get();
+
+            try {
+                session.begin();
+                fail("Begin should have failed after link closed.");
+            } catch (ClientException expected) {
+                // Expect this to time out.
+                String message = expected.getMessage();
+                assertTrue(message.contains(errorMessage));
+            }
+
+            session.close();
+            connection.close().get();
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test(timeout = 20_000)
+    public void testExceptionOnCommitWhenCoordinatorLinkClosedAfterDischargeSent() throws Exception {
+        final String errorMessage = "CoordinatorLinkClosed-breadcrumb";
+
+        try (NettyTestPeer peer = new NettyTestPeer()) {
+            peer.expectSASLAnonymousConnect();
+            peer.expectOpen().respond();
+            peer.expectBegin().respond();
+            peer.expectCoordinatorAttach().respond();
+            peer.remoteFlow().withLinkCredit(2).queue();
+            peer.expectDeclare().accept();
+            peer.expectDischarge();
+            peer.remoteDetach().withClosed(true)
+                               .withErrorCondition(AmqpError.RESOURCE_DELETED, errorMessage).queue();
+            peer.expectEnd().respond();
+            peer.expectClose().respond();
+            peer.start();
+
+            URI remoteURI = peer.getServerURI();
+
+            LOG.info("Sender test started, peer listening on: {}", remoteURI);
+
+            Client container = Client.create();
+            Connection connection = container.connect(remoteURI.getHost(), remoteURI.getPort());
+            Session session = connection.openSession().openFuture().get();
+
+            session.begin();
+
+            try {
+                session.commit();
+                fail("Commit should have failed after link closed.");
+            } catch (ClientTransactionRolledBackException expected) {
+                // Expect this to time out.
+                String message = expected.getMessage();
+                assertTrue(message.contains(errorMessage));
             }
 
             session.close();
